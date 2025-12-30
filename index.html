@@ -461,7 +461,7 @@
   right: 10px;
   width: 22px;
   height: 22px;
-  background: url("/handcuffs.png") center / contain no-repeat;
+  background: url("./handcuffs.png") center / contain no-repeat;
   pointer-events: none;
   opacity: 0.92;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.45));
@@ -498,8 +498,6 @@ button.locked,
 button.greyed-locked{
   position: relative;
 }
-
-    }
 
     .card h3 {
       margin: 0 0 8px;
@@ -653,8 +651,6 @@ button.greyed-locked,
 .greyed-locked *{
   cursor: url("cursor-dollar-plane-64.png") 10 10, pointer !important;
 }
-
-    }
 
     #bookTitle {
       font-size: 2.2em;
@@ -1039,7 +1035,7 @@ button.greyed-locked,
 
     <div class="invitation-text" id="invitationText">
       <!-- text injected -->
-      <img class="copyIconImg" id="copyIconImg" src="/copy.png" alt="Copy">
+      <img class="copyIconImg" id="copyIconImg" src="./copy.png" alt="Copy">
     </div>
 
     <button id="iveSentItBtn">I've sent it</button>
@@ -1362,7 +1358,8 @@ button.greyed-locked,
   </div>
 
 <script>
-window.addEventListener('load', () => {
+window.addEventListener('load', () => 
+
   // ---------------------------- CONFIG ----------------------------
   // TODO: change these to YOUR deployed proxy endpoints
   const PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
@@ -1627,37 +1624,49 @@ window.addEventListener('load', () => {
 
   // ---------------------------- COUPLE MODE (Mock) ----------------------------
   let currentRoomCode = null;
+// --- Copy icon asset paths (single source of truth)
+const COPY_ICON = '/copy.png';
+const COPIED_ICON = '/copied.png';
 
-  on('createRoomBtn','click', () => {
-    currentRoomCode = Math.random().toString(36).substr(2, 6).toUpperCase();
-    hide('coupleConnect');
-    show('invite');
-    const text = `Your private Storybound chamber is ready.\n\nInvitation code: ${currentRoomCode}\n\nAsk your partner to open Storybound, choose Couple mode, and enter this code.`;
-    $('invitationText').textContent = text.trim();
-    // Re-append icon inside the block (because textContent overwrites children)
-    const img = document.createElement('img');
-    img.className = 'copyIconImg';
-    img.id = 'copyIconImg';
-    img.src = '/copy.png';
-    img.alt = 'Copy';
-    $('invitationText').appendChild(img);
-    attachCopyHandler();
-  });
+// --- Create Couple Room + Invitation
+on('createRoomBtn','click', () => {
+  currentRoomCode = Math.random().toString(36).substr(2, 6).toUpperCase();
 
-  function attachCopyHandler(){
-    const icon = $('copyIconImg');
-    if (!icon) return;
-    icon.onclick = async () => {
-      const txt = ($('invitationText').textContent || '').trim();
-      try{
-        await navigator.clipboard.writeText(txt);
-        icon.src = '/copied.png';
-        setTimeout(() => { icon.src = '/copy.png'; }, 1200);
-      }catch(e){
-        alert('Copy failed—try selecting and copying manually.');
-      }
-    };
-  }
+  hide('coupleConnect');
+  show('invite');
+
+  const text =
+`Your private Storybound chamber is ready.
+
+Invitation code: ${currentRoomCode}
+
+Ask your partner to open Storybound, choose Couple mode, and enter this code.`;
+
+  $('invitationText').innerHTML = `
+    ${escapeHTML(text).replaceAll('\n','<br>')}
+    <img class="copyIconImg" id="copyIconImg" src="${COPY_ICON}" alt="Copy">
+  `;
+  
+  attachCopyHandler();
+});
+
+// --- Copy handler
+function attachCopyHandler(){
+  const icon = $('copyIconImg');
+  if (!icon) return;
+
+  icon.onclick = async () => {
+    const txt = ($('invitationText').innerText || '').trim();
+    try{
+      await navigator.clipboard.writeText(txt);
+      icon.src = COPIED_ICON;
+      setTimeout(() => { icon.src = COPY_ICON; }, 1200);
+    }catch(e){
+      alert('Copy failed—try selecting and copying manually.');
+    }
+  };
+}
+
   attachCopyHandler();
 
   on('iveSentItBtn','click', () => {
@@ -1965,7 +1974,7 @@ window.addEventListener('load', () => {
     }, 300);
   }
 
-  // ---------------------------- TEASE LOCKS (inputs/controls only) ----------------------------
+// ---------------------------- TEASE LOCKS (inputs/controls only) ----------------------------
 function applyTeaseSoloLocks(){
   const isTeaseSolo = (tier === 'free' && mode === 'solo');
 
@@ -1974,230 +1983,179 @@ function applyTeaseSoloLocks(){
   const saveBtn = $('saveGameBtn');
   const storyCtrlBtn = $('storyControlBtn');
 
-  // Helpers: apply lock visuals to WRAPPERS (reliable for ::after)
-  function lockBoxFor(el){
+  // Lock visuals apply best to the wrapper so ::after can show reliably
+  function lockBox(el){
     const box = el?.closest?.('.input-box');
-    if (box){
-      box.classList.add('greyed-locked','paywall-cursor');
-    }
+    if (box) box.classList.add('greyed-locked','paywall-cursor');
   }
-  function unlockBoxFor(el){
+  function unlockBox(el){
     const box = el?.closest?.('.input-box');
-    if (box){
-      box.classList.remove('greyed-locked','paywall-cursor');
-    }
+    if (box) box.classList.remove('greyed-locked','paywall-cursor');
   }
   function lockBtn(btn){
     if (!btn) return;
-    btn.disabled = false; // keep clickable so it can open paywall
-    btn.classList.add('locked','paywall-cursor','greyed-locked');
+    btn.disabled = false; // keep clickable so it can open the paywall
+    btn.classList.add('greyed-locked','paywall-cursor','locked');
   }
   function unlockBtn(btn){
     if (!btn) return;
     btn.disabled = false;
-    btn.classList.remove('locked','paywall-cursor','greyed-locked');
+    btn.classList.remove('greyed-locked','paywall-cursor','locked');
   }
 
-  // If NOT Tease/Solo: everything should be normal
+  // Not Tease/Solo => everything unlocked
   if (!isTeaseSolo){
-    if (action){ action.readOnly = false; action.disabled = false; }
-    if (dialogue){ dialogue.readOnly = false; dialogue.disabled = false; }
-
-    unlockBoxFor(action);
-    unlockBoxFor(dialogue);
-
+    if (action){ action.readOnly = false; action.disabled = false; unlockBox(action); }
+    if (dialogue){ dialogue.readOnly = false; dialogue.disabled = false; unlockBox(dialogue); }
     unlockBtn(saveBtn);
     unlockBtn(storyCtrlBtn);
-
-    // If you still have AI Suggest buttons in the DOM somewhere, ensure they’re normal
-    $('suggestActionBtn')?.classList.remove('locked','greyed-locked','paywall-cursor');
-    $('suggestDialogueBtn')?.classList.remove('locked','greyed-locked','paywall-cursor');
-
     return;
   }
 
   // --- Tease + Solo gating ---
-  // Text inputs:
-  // Use readOnly (NOT disabled) so clicks still fire and can open the paywall.
+  // Use readOnly (NOT disabled) so clicks can trigger unlock modal.
   if (!storyTextUnlockPurchased){
-    if (action){ action.readOnly = true; action.disabled = false; }
-    if (dialogue){ dialogue.readOnly = true; dialogue.disabled = false; }
-
-    lockBoxFor(action);
-    lockBoxFor(dialogue);
+    if (action){ action.readOnly = true; action.disabled = false; lockBox(action); }
+    if (dialogue){ dialogue.readOnly = true; dialogue.disabled = false; lockBox(dialogue); }
     lockBtn(saveBtn);
   } else {
-    if (action){ action.readOnly = false; action.disabled = false; }
-    if (dialogue){ dialogue.readOnly = false; dialogue.disabled = false; }
-
-    unlockBoxFor(action);
-    unlockBoxFor(dialogue);
+    if (action){ action.readOnly = false; action.disabled = false; unlockBox(action); }
+    if (dialogue){ dialogue.readOnly = false; dialogue.disabled = false; unlockBox(dialogue); }
     unlockBtn(saveBtn);
   }
 
-  // Story Controls gating
-  if (!storyControlsUnlockPurc
+  if (!storyControlsUnlockPurchased){
+    lockBtn(storyCtrlBtn);
+  } else {
+    unlockBtn(storyCtrlBtn);
+  }
+}
 
-// keep Save clickable so it can open the pay flow
-$('saveGameBtn').disabled = false;
+// ---------------------------- UNLOCK FLOW (text/controls/style) ----------------------------
+function openUnlock(type){
+  pendingUnlockType = type;
+  $('unlockCopy').textContent =
+    type === 'text'
+      ? 'Unlock text inputs + saving for this story only.'
+      : type === 'controls'
+        ? 'Unlock Story Controls for this story only.'
+        : 'Unlock Story Styles for this story only.';
+  $('unlockModal').style.display = 'flex';
+}
 
+on('unlockCancelBtn','click', () => { $('unlockModal').style.display = 'none'; pendingUnlockType = null; });
 
-      paywalled.forEach(id => {
-        $(id)?.classList.add('greyed-locked');
-        setPaywallCursor($(id), true);
-      });
-    } else {
-$('actionInput').readOnly = false;
-$('dialogueInput').readOnly = false;
-$('saveGameBtn').disabled = false;
+on('unlockProceedBtn','click', () => {
+  $('unlockModal').style.display = 'none';
+  $('purchaseFlowModal').style.display = 'flex';
+});
 
+on('purchaseCancelBtn','click', () => { $('purchaseFlowModal').style.display = 'none'; pendingUnlockType = null; });
 
-      paywalled.forEach(id => {
-        $(id)?.classList.remove('greyed-locked');
-        setPaywallCursor($(id), false);
-      });
-    }
+on('purchaseConfirmBtn','click', () => {
+  if (!$('unlockConfirm').checked){
+    alert('Please confirm payment (mock).');
+    return;
+  }
+  $('purchaseFlowModal').style.display = 'none';
 
-    if (!storyControlsUnlockPurchased){
-      controlsPaywalled.forEach(id => {
-        $(id)?.classList.add('greyed-locked');
-        setPaywallCursor($(id), true);
-      });
-    } else {
-      controlsPaywalled.forEach(id => {
-        $(id)?.classList.remove('greyed-locked');
-        setPaywallCursor($(id), false);
-      });
+  if (pendingUnlockType === 'text'){
+    storyTextUnlockPurchased = true;
+    alert('Unlocked text inputs + saving for this story!');
+  } else if (pendingUnlockType === 'controls'){
+    storyControlsUnlockPurchased = true;
+    alert('Unlocked Story Controls for this story!');
+  } else if (pendingUnlockType === 'style'){
+    storyStyleUnlockPurchased = true;
+    alert('Unlocked Story Styles for this story!');
+    applyStyleLocks();
+    if (pendingStyleValue){
+      selectSingleStyle(pendingStyleValue);
+      pendingStyleValue = null;
     }
   }
+  pendingUnlockType = null;
+  applyTeaseSoloLocks();
+});
 
-  function openUnlock(type){
-    pendingUnlockType = type;
-    $('unlockCopy').textContent =
-      type === 'text'
-        ? 'Unlock text inputs + AI suggestions + saving for this story only.'
-        : type === 'controls'
-          ? 'Unlock Story Controls for this story only.'
-          : 'Unlock Story Styles for this story only.';
-    $('unlockModal').style.display = 'flex';
-  }
-
-  on('unlockCancelBtn','click', () => { $('unlockModal').style.display = 'none'; pendingUnlockType = null; });
-  on('unlockProceedBtn','click', () => {
-    $('unlockModal').style.display = 'none';
-    $('purchaseFlowModal').style.display = 'flex';
-  });
-  on('purchaseCancelBtn','click', () => { $('purchaseFlowModal').style.display = 'none'; pendingUnlockType = null; });
-
-  on('purchaseConfirmBtn','click', () => {
-    if (!$('unlockConfirm').checked){
-      alert('Please confirm payment (mock).');
-      return;
-    }
-    $('purchaseFlowModal').style.display = 'none';
-    unlockCurrentStory();
-  });
-
-  function unlockCurrentStory(){
-    if (pendingUnlockType === 'text'){
-      storyTextUnlockPurchased = true;
-      alert('Unlocked text inputs + suggestions for this story!');
-    } else if (pendingUnlockType === 'controls'){
-      storyControlsUnlockPurchased = true;
-      alert('Unlocked Story Controls for this story!');
-    } else if (pendingUnlockType === 'style'){
-      storyStyleUnlockPurchased = true;
-      alert('Unlocked Story Styles for this story!');
-      applyStyleLocks();
-      if (pendingStyleValue){
-        selectSingleStyle(pendingStyleValue);
-        pendingStyleValue = null;
-      }
-    }
-    pendingUnlockType = null;
-    applyTeaseSoloLocks();
-  }
-
-  // Click-to-unlock hooks (ONLY for textboxes/controls; NEVER for dual-options)
-  on('actionInput','click', () => {
-    if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased) openUnlock('text');
-  });
-  on('dialogueInput','click', () => {
-    if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased) openUnlock('text');
-  });
-// Make the entire locked input box clickable (not just the textarea)
+// Click-to-unlock hooks (textbox + wrapper)
+on('actionInput','click', () => {
+  if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased) openUnlock('text');
+});
+on('dialogueInput','click', () => {
+  if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased) openUnlock('text');
+});
 document.querySelectorAll('.input-box').forEach(box => {
   box.addEventListener('click', () => {
-    if (tier === 'free' && mode === 'solo' && !storyTextUnlockPurchased) {
-      openUnlock('text');
-    }
+    if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased) openUnlock('text');
   });
 });
 
-  // ---------------------------- STORY CONTROLS ----------------------------
-  on('storyControlBtn','click', () => {
-    if (tier==='free' && mode==='solo' && !storyControlsUnlockPurchased){
-      openUnlock('controls');
-      return;
-    }
-    renderStoryControls();
-    $('storyControlModal').style.display = 'flex';
-  });
-  on('storyControlCancelBtn','click', () => { $('storyControlModal').style.display = 'none'; });
-  on('storyControlApplyBtn','click', () => {
-    const txt = ($('storyControlInput').value || '').trim();
-    if (txt){
-      storyControlsActive.push(txt);
-      $('storyControlInput').value = '';
-    }
-    renderStoryControls();
-    $('storyControlModal').style.display = 'none';
-  });
-
-  function renderStoryControls(){
-    const active = $('activeControls');
-    const archived = $('archivedControls');
-    if (!active || !archived) return;
-
-    active.innerHTML = '';
-    archived.innerHTML = '';
-
-    storyControlsActive.forEach((c, idx) => {
-      const span = document.createElement('span');
-      span.style.display = 'inline-block';
-      span.style.margin = '6px';
-      span.style.padding = '8px 12px';
-      span.style.borderRadius = '999px';
-      span.style.border = '1px solid rgba(255,105,180,0.55)';
-      span.style.background = 'rgba(139,0,139,0.55)';
-      span.style.cursor = 'pointer';
-      span.textContent = `✕ ${c}`;
-      span.onclick = () => {
-        const [removed] = storyControlsActive.splice(idx, 1);
-        storyControlsArchived.push(removed);
-        renderStoryControls();
-      };
-      active.appendChild(span);
-    });
-
-    storyControlsArchived.forEach((c, idx) => {
-      const span = document.createElement('span');
-      span.style.display = 'inline-block';
-      span.style.margin = '6px';
-      span.style.padding = '8px 12px';
-      span.style.borderRadius = '999px';
-      span.style.border = '1px solid rgba(255,105,180,0.35)';
-      span.style.background = 'rgba(60,60,60,0.55)';
-      span.style.cursor = 'pointer';
-      span.textContent = `+ ${c}`;
-      span.onclick = () => {
-        const [added] = storyControlsArchived.splice(idx, 1);
-        storyControlsActive.push(added);
-        renderStoryControls();
-      };
-      archived.appendChild(span);
-    });
+// ---------------------------- STORY CONTROLS ----------------------------
+on('storyControlBtn','click', () => {
+  if (tier==='free' && mode==='solo' && !storyControlsUnlockPurchased){
+    openUnlock('controls');
+    return;
   }
+  renderStoryControls();
+  $('storyControlModal').style.display = 'flex';
+});
+on('storyControlCancelBtn','click', () => { $('storyControlModal').style.display = 'none'; });
+on('storyControlApplyBtn','click', () => {
+  const txt = ($('storyControlInput').value || '').trim();
+  if (txt){
+    storyControlsActive.push(txt);
+    $('storyControlInput').value = '';
+  }
+  renderStoryControls();
+  $('storyControlModal').style.display = 'none';
+});
+
+function renderStoryControls(){
+  const active = $('activeControls');
+  const archived = $('archivedControls');
+  if (!active || !archived) return;
+
+  active.innerHTML = '';
+  archived.innerHTML = '';
+
+  storyControlsActive.forEach((c, idx) => {
+    const span = document.createElement('span');
+    span.style.display = 'inline-block';
+    span.style.margin = '6px';
+    span.style.padding = '8px 12px';
+    span.style.borderRadius = '999px';
+    span.style.border = '1px solid rgba(255,105,180,0.55)';
+    span.style.background = 'rgba(139,0,139,0.55)';
+    span.style.cursor = 'pointer';
+    span.textContent = `✕ ${c}`;
+    span.onclick = () => {
+      const [removed] = storyControlsActive.splice(idx, 1);
+      storyControlsArchived.push(removed);
+      renderStoryControls();
+    };
+    active.appendChild(span);
+  });
+
+  storyControlsArchived.forEach((c, idx) => {
+    const span = document.createElement('span');
+    span.style.display = 'inline-block';
+    span.style.margin = '6px';
+    span.style.padding = '8px 12px';
+    span.style.borderRadius = '999px';
+    span.style.border = '1px solid rgba(255,105,180,0.35)';
+    span.style.background = 'rgba(60,60,60,0.55)';
+    span.style.cursor = 'pointer';
+    span.textContent = `+ ${c}`;
+    span.onclick = () => {
+      const [added] = storyControlsArchived.splice(idx, 1);
+      storyControlsActive.push(added);
+      renderStoryControls();
+    };
+    archived.appendChild(span);
+  });
+}
+
 
   // ---------------------------- NAME GENERATION (gender-aligned) ----------------------------
   const usedNamesKey = 'storybound_used_names';
@@ -2874,7 +2832,8 @@ ${storySoFar}`;
       // Add separator and scroll to the beginning of the new section
       appendSeparator();
       scrollToSectionTop();
-StoryboundCards.burnAndRedeal();
+if (window.StoryboundCards?.burnAndRedeal) StoryboundCards.burnAndRedeal();
+
 
       // If Tease mode, refresh choices if present
       if (tier === 'free' && mode === 'solo'){
