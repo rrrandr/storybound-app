@@ -452,19 +452,32 @@
       opacity: 0.42;
     }
 
-    /* Handcuff badge in top-right (black outline, gold fill) */
-    .card.locked::after{
-      content: "";
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 22px;
-      height: 22px;
-      background-size: 22px 22px;
-      background-repeat: no-repeat;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'><g fill='none' stroke='%23000' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'><path d='M18 20c-6 0-10 4-10 10v6c0 6 4 10 10 10h6c6 0 10-4 10-10v-6c0-6-4-10-10-10h-6z'/><path d='M40 20c-6 0-10 4-10 10v6c0 6 4 10 10 10h6c6 0 10-4 10-10v-6c0-6-4-10-10-10h-6z'/><path d='M34 32h-4'/></g><g fill='%23ffd700' opacity='0.95'><path d='M18 20h6c6 0 10 4 10 10v6c0 6-4 10-10 10h-6c-6 0-10-4-10-10v-6c0-6 4-10 10-10z'/><path d='M40 20h6c6 0 10 4 10 10v6c0 6-4 10-10 10h-6c-6 0-10-4-10-10v-6c0-6 4-10 10-10z'/></g></svg>");
-      pointer-events: none;
-      filter: drop-shadow(0 0 6px rgba(255,20,147,0.25));
+    /* Handcuff badge (PNG asset, stable) */
+.card.locked::after,
+.greyed-locked::after{
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  background: url("/handcuffs.png") center / contain no-repeat;
+  pointer-events: none;
+  opacity: 0.92;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.45));
+  transition: transform .14s ease, opacity .14s ease, filter .14s ease;
+}
+
+/* Tasteful hover glow */
+.card.locked:hover::after,
+.card.locked:focus-within::after{
+  opacity: 1;
+  transform: scale(1.06);
+  filter:
+    drop-shadow(0 2px 3px rgba(0,0,0,0.55))
+    drop-shadow(0 0 10px rgba(255,105,180,0.35));
+}
+
     }
 
     .card h3 {
@@ -609,8 +622,10 @@
     }
 
     /* Dollar bill cursor for locked/paywalled */
-    .paywall-cursor{
-      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='32' viewBox='0 0 64 32'><rect x='2' y='4' width='60' height='24' rx='4' fill='%23ffd700' stroke='%23000' stroke-width='2'/><circle cx='32' cy='16' r='6' fill='none' stroke='%23000' stroke-width='2'/><text x='29' y='20' font-size='12' font-family='Arial' fill='%23000'>$</text></svg>") 10 10, pointer !important;
+.paywall-cursor{
+  cursor: url("/paper money plane cursor.png") 10 10, pointer !important;
+}
+
     }
 
     #bookTitle {
