@@ -875,6 +875,11 @@ button.greyed-locked,
       font-style: italic;
       font-size: 0.95em;
     }
+    /* AI Suggest deprecated — Tarot replaces it */
+#suggestActionBtn,
+#suggestDialogueBtn{
+  display: none !important;
+}
   </style>
 </head>
 
@@ -1232,7 +1237,6 @@ button.greyed-locked,
     <div style="text-align:center;margin-top:18px">
       <button id="sendBtn" type="button" style="display:block;margin:0 auto 10px auto">Submit</button>
     </div>
-const move = StoryboundCards.getCurrentMove();
 
     <div>
       <button class="small" id="saveGameBtn" type="button">Save</button>
