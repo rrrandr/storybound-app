@@ -290,6 +290,39 @@ button:disabled {
   cursor: not-allowed;
   transform: none;
 }
+/* =========================
+   STORYBOUND SELECTED STATES
+   ========================= */
+
+.choice-btn,
+.pill-btn,
+.card-choice-btn {
+  position: relative;
+}
+
+.choice-btn.selected,
+.pill-btn.selected,
+.card-choice-btn.selected,
+.intensity-btn.active {
+  outline: 2px solid rgba(255,105,180,0.9);
+  box-shadow: 0 0 0 4px rgba(255,105,180,0.22);
+  transform: translateY(-1px);
+}
+
+.choice-btn.locked,
+.pill-btn.locked,
+.card-choice-btn.locked {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+  cursor: not-allowed !important;
+}
+
+.choice-btn.locked:hover,
+.pill-btn.locked:hover,
+.card-choice-btn.locked:hover {
+  transform: none;
+  box-shadow: none;
+}
 
 /* story typography */
 #story {
@@ -732,8 +765,6 @@ button.greyed-locked,
   font-style: italic;
   font-size: 0.95em;
 }
-/* ====== BLOCK 1/4 — PASTE INTO YOUR <style> (near the end) ====== */
-
 /* Option pills: selectable + locked (paywalled) */
 .opt-pill{
   display:inline-flex; align-items:center; gap:10px;
@@ -1312,6 +1343,43 @@ window.STORYBOUND_CARDS_CONFIG = {
       ['ageGate','tosGate','tierChoice','mainTitle','mainSubtitle','modeChoices','setup','game','coupleConnect','invite','waiting']
         .forEach(hide);
     }
+// ---------------------------- CHOICE GROUPS (Genre / Dynamic / POV / Style) ----------------------------
+function wireChoiceGroup(containerId, btnSelector, maxPick){
+  var box = $(containerId);
+  if (!box) return;
+
+  box.addEventListener('click', function(e){
+    var btn = e.target.closest(btnSelector);
+    if (!btn) return;
+
+    if (btn.classList.contains('locked')) return;
+
+    // multi-pick groups (Genre allow up to 3, others single)
+    if (maxPick && maxPick > 1){
+      btn.classList.toggle('selected');
+
+      // enforce maxPick
+      var selected = box.querySelectorAll(btnSelector + '.selected');
+      if (selected.length > maxPick){
+        btn.classList.remove('selected');
+        return;
+      }
+    } else {
+      // single pick
+      var all = box.querySelectorAll(btnSelector);
+      all.forEach(function(b){ b.classList.remove('selected'); });
+      btn.classList.add('selected');
+    }
+  });
+}
+
+// Call these with your actual container IDs:
+// IMPORTANT: If your IDs differ, change ONLY the first argument.
+// (Leave the selector as '.choice-btn' unless you used a different class.)
+wireChoiceGroup('genreGrid', '.choice-btn', 3);
+wireChoiceGroup('dynamicGrid', '.choice-btn', 1);
+wireChoiceGroup('povGrid', '.choice-btn', 1);
+wireChoiceGroup('styleGrid', '.choice-btn', 1);
 
     function goToAgeGate(){ hideAllScreens(); show('ageGate','flex'); hideBurger(); }
     function goToTOS(){ hideAllScreens(); show('tosGate','flex'); hideBurger(); }
@@ -1489,38 +1557,41 @@ window.STORYBOUND_CARDS_CONFIG = {
         });
       };
    }
+// ---------------------------- INTENSITY ----------------------------
+function setIntensity(val){
+  intensity = val || 'naughty';
 
-    // ---------------------------- INTENSITY ----------------------------
-    function setIntensity(val){
-      intensity = val;
-      var mapHint = {
-        clean: 'Flirt, chemistry, and longing. No explicit anatomy.',
-        naughty: 'Direct teasing with tasteful sensuality.',
-        erotic: 'More explicit intimacy and sensual detail.',
-        dirty: 'Very explicit language and bold scenes.'
-      };
-      $('intensityHint').textContent = mapHint[intensity] || mapHint.clean;
+  var mapHint = {
+    clean: 'Flirt, chemistry, and longing. No explicit anatomy.',
+    naughty: 'Direct teasing with tasteful sensuality.',
+    erotic: 'More explicit intimacy and sensual detail.',
+    dirty: 'Very explicit language and bold scenes.'
+  };
+  if ($('intensityHint')) $('intensityHint').textContent = mapHint[intensity] || mapHint.naughty;
 
-      // simple "active" toggle
-      ['intensityCleanBtn','intensityNaughtyBtn','intensityEroticBtn','intensityDirtyBtn'].forEach(function(id){
-        var el=$(id); if(el) el.classList.remove('active');
-      });
-      var activeId =
-        intensity==='clean' ? 'intensityCleanBtn' :
-        intensity==='naughty' ? 'intensityNaughtyBtn' :
-        intensity==='erotic' ? 'intensityEroticBtn' :
-        'intensityDirtyBtn';
-      if ($(activeId)) $(activeId).classList.add('active');
+  // visible active toggle
+  ['intensityCleanBtn','intensityNaughtyBtn','intensityEroticBtn','intensityDirtyBtn'].forEach(function(id){
+    var el=$(id); if(el) el.classList.remove('active');
+  });
 
-      // notify Fatecards (if present)
-      if (window.StoryboundCards && window.StoryboundCards.setIntensity){
-        window.StoryboundCards.setIntensity(intensity);
-      }
-    }
-    on('intensityCleanBtn','click', function(){ setIntensity('clean'); });
-    on('intensityNaughtyBtn','click', function(){ setIntensity('naughty'); });
-    on('intensityEroticBtn','click', function(){ setIntensity('erotic'); });
-    on('intensityDirtyBtn','click', function(){ setIntensity('dirty'); });
+  var activeId =
+    intensity==='clean' ? 'intensityCleanBtn' :
+    intensity==='erotic' ? 'intensityEroticBtn' :
+    intensity==='dirty' ? 'intensityDirtyBtn' :
+    'intensityNaughtyBtn';
+
+  if ($(activeId)) $(activeId).classList.add('active');
+
+  // notify Fatecards (if present)
+  if (window.StoryboundCards && window.StoryboundCards.setIntensity){
+    window.StoryboundCards.setIntensity(intensity);
+  }
+}
+
+on('intensityCleanBtn','click', function(){ setIntensity('clean'); });
+on('intensityNaughtyBtn','click', function(){ setIntensity('naughty'); });
+on('intensityEroticBtn','click', function(){ setIntensity('erotic'); });
+on('intensityDirtyBtn','click', function(){ setIntensity('dirty'); });
 
     // ---------------------------- PREVIEW MODAL ----------------------------
     function openModalPreview(text){
@@ -1586,19 +1657,93 @@ window.STORYBOUND_CARDS_CONFIG = {
       adv.style.display = (adv.style.display === 'none' || !adv.style.display) ? 'grid' : 'none';
     });
 
-    // ---------------------------- BOOT ----------------------------
+// ---------------------------- FATECARDS UI WIRING (works even if storybound-cards.js is dumb) ----------------------------
+var selectedCardEl = null;
+
+function lockInputs(isLocked){
+  var a = $('actionInput'), d = $('dialogueInput'), s = $('sendBtn');
+  if (a) { a.disabled = !!isLocked; a.style.opacity = isLocked ? '0.5' : '1'; }
+  if (d) { d.disabled = !!isLocked; d.style.opacity = isLocked ? '0.5' : '1'; }
+  if (s) { s.disabled = !!isLocked; s.style.opacity = isLocked ? '0.5' : '1'; s.style.cursor = isLocked ? 'not-allowed' : 'pointer'; }
+}
+
+function applyTeaseCardLimits(){
+  // In Tease/free: only first 2 cards selectable
+  var mount = $('cardMount');
+  if (!mount) return;
+  var cards = mount.querySelectorAll('.sb-card, .fate-card, .card');
+  var isTease = (tier === 'free');
+
+  cards.forEach(function(card, idx){
+    // always clickable for FLIP, but "locked" for SELECT if tease and idx>=2
+    if (isTease && idx >= 2) card.classList.add('sb-select-locked');
+    else card.classList.remove('sb-select-locked');
+  });
+}
+
+function wireCardMount(){
+  var mount = $('cardMount');
+  if (!mount) return;
+
+  // Delegate click for whatever card class exists
+  mount.addEventListener('click', function(e){
+    var card = e.target.closest('.sb-card, .fate-card, .card');
+    if (!card) return;
+
+    // 1) FLIP (always)
+    card.classList.toggle('flipped'); // your CSS should flip on .flipped
+
+    // 2) SELECT (blocked in Tease for cards 3+)
+    var isLockedSelect = card.classList.contains('sb-select-locked');
+    if (isLockedSelect) {
+      // still flips, but doesn't select/populate
+      return;
+    }
+
+    // 3) Persist selection highlight
+    if (selectedCardEl && selectedCardEl !== card) selectedCardEl.classList.remove('selected');
+    selectedCardEl = card;
+    card.classList.add('selected');
+
+    // 4) Populate inputs if data exists (best practice: storybound-cards.js sets these)
+    var action = card.getAttribute('data-action') || '';
+    var say = card.getAttribute('data-say') || card.getAttribute('data-dialogue') || '';
+
+    if (action && $('actionInput')) $('actionInput').value = action;
+    if (say && $('dialogueInput')) $('dialogueInput').value = say;
+
+    // Unlock inputs once a valid card is selected (if you want them locked until selection)
+    lockInputs(false);
+  });
+}
+
+// Extra CSS via JS (so you don’t have to hunt styles) for locked select cursor + cuffs feel
+function injectCardLockStyle(){
+  var css =
+    '#cardMount .sb-select-locked{ opacity:.55; cursor:not-allowed !important; }' +
+    '#cardMount .sb-select-locked:after{ content:"🔒"; position:absolute; top:8px; right:10px; font-size:18px; opacity:.85; }';
+  var style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+}
+
   // ---------------------------- BOOT ----------------------------
 function boot(){
+  injectCardLockStyle();
+
   // mount Fatecards if file loaded
   if (window.StoryboundCards && window.StoryboundCards.mount){
-    window.StoryboundCards.mount(window.STORYBOUND_CARDS_CONFIG);
-    setIntensity(intensity);
-  } else {
-    console.error('StoryboundCards not found. Check /fatecards/storybound-cards.js exists at site root.');
+    window.StoryboundCards.mount({ mountId: 'cardMount' });
   }
+
+  wireCardMount();          // ✅ makes clicks flip + populate
+  setIntensity('naughty');  // ✅ Naughty default + active highlight
+  lockInputs(true);         // ✅ locked until a selectable card is chosen
+  applyTeaseCardLimits();   // ✅ tease limits (only first 2 selectable)
 
   goToAgeGate();
 }
+
 boot();
 
   })();
