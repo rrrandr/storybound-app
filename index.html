@@ -1269,6 +1269,7 @@ textarea.locked{
   <!-- ✅ APP SCRIPT (plain static) -->
   <script>
   (function(){
+    
     // ---------------------------- CONFIG ----------------------------
     // These are placeholders. If your proxies don't exist, story generation won't work —
     // but the site WILL load and the UI will function.
@@ -1284,6 +1285,16 @@ textarea.locked{
     var mode = null;   // solo|couple
     var tier = null;   // free|indulge
     var intensity = 'clean';
+// Tell storybound-cards.js which elements to control
+window.STORYBOUND_CARDS_CONFIG = {
+  mountId: "cardMount",
+  actionId: "actionInput",
+  dialogueId: "dialogueInput",
+  submitId: "sendBtn",
+  tierVar: "tier",
+  modeVar: "mode",
+  intensityVar: "intensity"
+};
 
     var currentRoomCode = null;
 
@@ -1578,17 +1589,20 @@ textarea.locked{
     });
 
     // ---------------------------- BOOT ----------------------------
-    function boot(){
-      // mount Fatecards if file loaded
-      if (window.StoryboundCards && window.StoryboundCards.mount){
-        window.StoryboundCards.mount({ mountId: 'cardMount' });
-        setIntensity(intensity);
-      } else {
-        console.error('StoryboundCards not found. Check /fatecards/storybound-cards.js exists at site root.');
-      }
-      goToAgeGate();
-    }
-    boot();
+  // ---------------------------- BOOT ----------------------------
+function boot(){
+  // mount Fatecards if file loaded
+  if (window.StoryboundCards && window.StoryboundCards.mount){
+    window.StoryboundCards.mount(window.STORYBOUND_CARDS_CONFIG);
+    setIntensity(intensity);
+  } else {
+    console.error('StoryboundCards not found. Check /fatecards/storybound-cards.js exists at site root.');
+  }
+
+  goToAgeGate();
+}
+boot();
+
   })();
   </script>
 </body>
