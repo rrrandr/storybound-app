@@ -1764,27 +1764,59 @@ on('intensityDirtyBtn','click', function(){ setIntensity('dirty'); });
       story.scrollTop = story.scrollHeight;
     }
 
-    on('begin-btn','click', function(){
-      goToGame();
-      $('bookTitle').textContent = 'A Door With Teeth';
-      $('bookTitle').style.display = 'block';
-      $('bookHook').textContent = 'A glittering invitation, a dangerous rival, and a single choice that turns desire into leverage.';
-      $('bookHook').style.display = 'block';
-      $('story').innerHTML = '<div class="story-separator">⚜</div>';
-      appendStoryLine('This build is running as a static site. Your proxy endpoints can be wired in next — but the UI is alive.');
-      appendStoryLine('Select a Fate card below to steer the next beat.');
+on('begin-btn','click', async function(){
+  goToGame();
+
+  $('bookTitle').textContent = 'A Door With Teeth';
+  $('bookTitle').style.display = 'block';
+  $('bookHook').textContent = 'A glittering invitation, a dangerous rival, and a single choice that turns desire into leverage.';
+  $('bookHook').style.display = 'block';
+  $('story').innerHTML = '';
+
+  try{
+    // If your proxy expects different payload keys, adjust here.
+    var payload = {
+      phase: 'begin',
+      tier: tier,
+      mode: mode,
+      intensity: intensity,
+      picks: (window.STORYBOUND_SELECTIONS || {})
+    };
+
+    show('loadingOverlay','flex');
+    $('loadingOverlayStatus').textContent = 'Weaving your story...';
+
+    var res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
 
-    on('sendBtn','click', function(){
-      var a = ($('actionInput').value||'').trim();
-      var d = ($('dialogueInput').value||'').trim();
-      if (!a && !d) return alert('Add an action or a line of dialogue.');
-      appendStoryLine('You move: ' + (a || '(no action)') + ' / You say: ' + (d || '(no dialogue)'));
-      $('actionInput').value=''; $('dialogueInput').value='';
-      if (window.StoryboundCards && window.StoryboundCards.burnAndRedeal){
-        window.StoryboundCards.burnAndRedeal();
-      }
+    var data = await res.json().catch(function(){ return {}; });
+
+    hide('loadingOverlay');
+
+    if (!res.ok){
+      appendStoryLine('Story error: ' + (data.error || ('HTTP ' + res.status)));
+      return;
+    }
+
+    // Expecting { text: "..." } or { story: "..." }
+    var text = data.text || data.story || '';
+    if (!text){
+      appendStoryLine('Story error: proxy returned no text.');
+      return;
+    }
+
+    text.split(/\n+/).forEach(function(line){
+      if (line.trim()) appendStoryLine(line.trim());
     });
+
+  }catch(e){
+    hide('loadingOverlay');
+    appendStoryLine('Story error: ' + (e && e.message ? e.message : 'unknown'));
+  }
+});
 
     on('exitGameBtn','click', goToModeChoice);
 
@@ -1876,6 +1908,9 @@ function boot(){
   if (window.StoryboundCards && window.StoryboundCards.mount){
     window.StoryboundCards.mount({ mountId: 'cardMount' });
   }
+setIntensity('naughty');
+applyStoryControlsLock();
+if (window.StoryboundCards && window.StoryboundCards.applyTeaseCardLimits) window.StoryboundCards.applyTeaseCardLimits();
 
   wireCardMount();          // ✅ makes clicks flip + populate
   setIntensity('naughty');  // ✅ Naughty default + active highlight
