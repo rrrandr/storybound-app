@@ -14,9 +14,7 @@
   <style>
 /* =========================
    STORYBOUND LOCKED CARDS UI
-   (namespaced to avoid collisions)
    ========================= */
-
 .sb-cards-wrap { margin: 14px 0 10px; }
 .sb-hand {
   position: relative;
@@ -155,304 +153,284 @@
   100%{ opacity:0; transform: translateY(10px) scale(.88); filter: blur(3px); }
 }
 
-    :root{
-      --bg1:#0a001f;
-      --bg2:#2a0033;
-      --pink:#ff69b4;
-      --hot:#ff1493;
-      --gold:#ffd700;
-      --ink:#f0e6ff;
-      --panel: rgba(20,0,40,.6);
-      --panel2: rgba(10,0,30,.8);
-      --line: rgba(255,105,180,0.35);
+:root{
+  --bg1:#0a001f;
+  --bg2:#2a0033;
+  --pink:#ff69b4;
+  --hot:#ff1493;
+  --gold:#ffd700;
+  --ink:#f0e6ff;
+  --panel: rgba(20,0,40,.6);
+  --panel2: rgba(10,0,30,.8);
 
-      --p1:#ffd6ef;  /* Player 1 */
-      --p2:#d7f1ff;  /* Love interest */
-      --npc:#e7e0ff; /* Others */
-    }
+  --p1:#ffd6ef;  /* Player 1 */
+  --p2:#d7f1ff;  /* Love interest */
+  --npc:#e7e0ff; /* Others */
+}
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
-      color: var(--ink);
-      overflow-x: hidden;
-    }
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  color: var(--ink);
+  overflow-x: hidden;
+}
 
-    body {
-      font-family: 'Lora', serif; /* keep Lora everywhere */
-      text-align: center;
-      padding: 8px;
-    }
+body {
+  font-family: 'Lora', serif;
+  text-align: center;
+  padding: 8px;
+}
 
-    h1, h2, #mainTitle, #bookTitle, .section-title {
-      font-family: 'lust-script-display', 'lust-script', 'Lora', serif;
-      color: var(--pink);
-      text-shadow: 0 0 15px var(--hot);
-    }
+h1, h2, #mainTitle, #bookTitle, .section-title {
+  font-family: 'lust-script-display', 'lust-script', 'Lora', serif;
+  color: var(--pink);
+  text-shadow: 0 0 15px var(--hot);
+}
 
-    .section-title{
-      font-size: 2.1em;
-      margin: 18px 0 10px;
-      text-align:center;
-    }
+.section-title{
+  font-size: 2.1em;
+  margin: 18px 0 10px;
+  text-align:center;
+}
 
-    .subtitle {
-      font-size: 1.1em;
-      font-style: italic;
-      color: var(--gold);
-      margin: 25px 0 45px;
-      line-height: 1.3;
-    }
+.subtitle {
+  font-size: 1.1em;
+  font-style: italic;
+  color: var(--gold);
+  margin: 25px 0 45px;
+  line-height: 1.3;
+}
 
-    .choice-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      margin: 45px auto;
-      max-width: 240px;
-    }
-    @media (min-width: 768px) {
-      .choice-buttons {
-        flex-direction: row;
-        gap: 50px;
-        max-width: none;
-      }
-    }
+.choice-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 45px auto;
+  max-width: 240px;
+}
+@media (min-width: 768px) {
+  .choice-buttons {
+    flex-direction: row;
+    gap: 50px;
+    max-width: none;
+  }
+}
 
-    button.choice {
-      background: linear-gradient(145deg, #8b008b, var(--hot));
-      color: var(--gold);
-      padding: 15px 45px;
-      border: none;
-      border-radius: 30px;
-      font-size: 1.6em;
-      cursor: pointer;
-      box-shadow: 0 0 30px rgba(255, 20, 147, .6);
-      transition: .3s;
-      font-family: 'lust-script-display', 'lust-script', 'Lora', serif;
-    }
-    button.choice:hover {
-      transform: scale(1.12);
-      box-shadow: 0 0 45px rgba(255, 105, 180, 1);
-    }
+button.choice {
+  background: linear-gradient(145deg, #8b008b, var(--hot));
+  color: var(--gold);
+  padding: 15px 45px;
+  border: none;
+  border-radius: 30px;
+  font-size: 1.6em;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(255, 20, 147, .6);
+  transition: .3s;
+  font-family: 'lust-script-display', 'lust-script', 'Lora', serif;
+}
+button.choice:hover {
+  transform: scale(1.12);
+  box-shadow: 0 0 45px rgba(255, 105, 180, 1);
+}
 
-    .box {
-      max-width: 88%;
-      width: 560px;
-      margin: 20px auto;
-      padding: 25px;
-      background: var(--panel);
-      border-radius: 15px;
-      border: 1.2px solid var(--pink);
-      box-shadow: 0 0 20px rgba(255, 105, 180, .4);
-      text-align: center;
-    }
+.box {
+  max-width: 88%;
+  width: 560px;
+  margin: 20px auto;
+  padding: 25px;
+  background: var(--panel);
+  border-radius: 15px;
+  border: 1.2px solid var(--pink);
+  box-shadow: 0 0 20px rgba(255, 105, 180, .4);
+  text-align: center;
+}
 
-    input, select, textarea {
-      width: 92%;
-      padding: 10px;
-      margin: 10px auto;
-      background: rgba(30, 0, 50, .95);
-      color: var(--ink);
-      border: 1.2px solid var(--pink);
-      border-radius: 9px;
-      font-size: 0.98em;
-      font-family: 'Lora', serif;
-      box-sizing: border-box;
-    }
+input, select, textarea {
+  width: 92%;
+  padding: 10px;
+  margin: 10px auto;
+  background: rgba(30, 0, 50, .95);
+  color: var(--ink);
+  border: 1.2px solid var(--pink);
+  border-radius: 9px;
+  font-size: 0.98em;
+  font-family: 'Lora', serif;
+  box-sizing: border-box;
+}
 
-    input:focus, textarea:focus, select:focus {
-      background: rgba(40, 0, 60, 1) !important;
-      outline: none;
-      box-shadow: 0 0 12px var(--pink);
-      color: #fff;
-    }
+input:focus, textarea:focus, select:focus {
+  background: rgba(40, 0, 60, 1) !important;
+  outline: none;
+  box-shadow: 0 0 12px var(--pink);
+  color: #fff;
+}
 
-    button {
-      background: linear-gradient(145deg, #8b008b, var(--hot));
-      color: var(--gold);
-      padding: 10px 30px;
-      border: none;
-      border-radius: 25px;
-      font-size: 1em;
-      cursor: pointer;
-      box-shadow: 0 0 18px rgba(255, 20, 147, .6);
-      transition: .3s;
-      margin: 6px;
-      font-family: 'Lora', serif;
-      position: relative;
-    }
-    button:hover {
-      transform: scale(1.08);
-      box-shadow: 0 0 30px rgba(255, 105, 180, .9);
-    }
-    button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none;
-    }
+button {
+  background: linear-gradient(145deg, #8b008b, var(--hot));
+  color: var(--gold);
+  padding: 10px 30px;
+  border: none;
+  border-radius: 25px;
+  font-size: 1em;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(255, 20, 147, .6);
+  transition: .3s;
+  margin: 6px;
+  font-family: 'Lora', serif;
+  position: relative;
+}
+button:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 30px rgba(255, 105, 180, .9);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 
-    /* === NOVEL FEEL: story typography === */
-    #story {
-      background: var(--panel2);
-      padding: 26px 26px 30px;
-      margin: 18px auto 24px;
-      max-width: 920px;
-      width: 92%;
-      text-align: left;
+/* story typography */
+#story {
+  background: var(--panel2);
+  padding: 26px 26px 30px;
+  margin: 18px auto 24px;
+  max-width: 920px;
+  width: 92%;
+  text-align: left;
 
-      font-family: 'Lora', serif;
-      font-size: 1.12em;
-      line-height: 1.95;
-      letter-spacing: 0.1px;
+  font-family: 'Lora', serif;
+  font-size: 1.12em;
+  line-height: 1.95;
 
-      border-left: 5px solid var(--hot);
-      min-height: 360px;
-      overflow-y: auto;
-      border-radius: 12px;
-      box-shadow: inset 0 0 0 1px rgba(255,105,180,0.12);
-    }
+  border-left: 5px solid var(--hot);
+  min-height: 360px;
+  overflow-y: auto;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255,105,180,0.12);
+}
 
-    .story-line{
-      margin: 1.05em 0;
-      opacity: 0.98;
-    }
+.story-line{ margin: 1.05em 0; opacity: 0.98; }
 
-    /* Dialogue lines only: italic + colored, and speaker-coded */
-    .dialogue-line{
-      margin: 0.95em 0;
-      padding-left: 16px;
-      border-left: 3px solid rgba(255,105,180,0.95);
-      font-family: 'Lora', serif;
-      font-style: italic;
-      font-size: 1.18em;
-      line-height: 1.9;
-      color: var(--npc);
-    }
-    .dialogue-p1{ color: var(--p1) !important; }
-    .dialogue-p2{ color: var(--p2) !important; }
+.dialogue-line{
+  margin: 0.95em 0;
+  padding-left: 16px;
+  border-left: 3px solid rgba(255,105,180,0.95);
+  font-style: italic;
+  font-size: 1.18em;
+  line-height: 1.9;
+  color: var(--npc);
+}
+.dialogue-p1{ color: var(--p1) !important; }
+.dialogue-p2{ color: var(--p2) !important; }
 
-    /* Inline dialogue spans inside narration if needed */
-    .dialogue-inline{
-      font-style: italic;
-      color: var(--npc);
-    }
-    .dialogue-inline.p1{ color: var(--p1); }
-    .dialogue-inline.p2{ color: var(--p2); }
+.story-separator {
+  margin: 18px 0 12px;
+  text-align: center;
+  font-size: 1.55em;
+  color: var(--gold);
+  opacity: 0.95;
+  text-shadow: 0 0 10px rgba(255,20,147,0.35);
+  user-select: none;
+}
 
-    /* Fleur-de-lis separator */
-    .story-separator {
-      margin: 18px 0 12px;
-      text-align: center;
-      font-size: 1.55em;
-      color: var(--gold);
-      opacity: 0.95;
-      text-shadow: 0 0 10px rgba(255,20,147,0.35);
-      user-select: none;
-    }
+.story-image{
+  margin: 14px 0 10px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,105,180,0.35);
+  box-shadow: 0 0 26px rgba(255,20,147,0.22);
+  background: rgba(0,0,0,0.25);
+}
+.story-image img{
+  width: 100%;
+  display:block;
+  max-height: 62vh;
+  object-fit: cover;
+}
+.story-image figcaption{
+  padding: 10px 12px;
+  color: var(--gold);
+  opacity: 0.9;
+  font-style: italic;
+  font-size: 0.95em;
+  background: rgba(0,0,0,0.25);
+}
 
-    /* Inserted story image */
-    .story-image{
-      margin: 14px 0 10px;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid rgba(255,105,180,0.35);
-      box-shadow: 0 0 26px rgba(255,20,147,0.22);
-      background: rgba(0,0,0,0.25);
-    }
-    .story-image img{
-      width: 100%;
-      display:block;
-      max-height: 62vh;
-      object-fit: cover;
-    }
-    .story-image figcaption{
-      padding: 10px 12px;
-      color: var(--gold);
-      opacity: 0.9;
-      font-style: italic;
-      font-size: 0.95em;
-      background: rgba(0,0,0,0.25);
-    }
+/* Setting shot */
+#settingShotWrap{
+  display:none;
+  margin: 12px auto 0;
+  max-width: 920px;
+  width: 92%;
+  text-align:left;
+}
+#settingShotImg{
+  width:100%;
+  max-height: 52vh;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(255,105,180,0.35);
+  box-shadow: 0 0 26px rgba(255,20,147,0.25);
+  background: rgba(0,0,0,0.25);
+  display:block;
+}
+#settingShotCaption{
+  margin-top: 8px;
+  color: var(--gold);
+  opacity:0.9;
+  font-style: italic;
+  font-size:0.95em;
+}
 
-    /* Setting shot */
-    #settingShotWrap{
-      display:none;
-      margin: 12px auto 0;
-      max-width: 920px;
-      width: 92%;
-      text-align:left;
-    }
-    #settingShotImg{
-      width:100%;
-      max-height: 52vh;
-      object-fit: cover;
-      border-radius: 12px;
-      border: 1px solid rgba(255,105,180,0.35);
-      box-shadow: 0 0 26px rgba(255,20,147,0.25);
-      background: rgba(0,0,0,0.25);
-      display:block;
-    }
-    #settingShotCaption{
-      margin-top: 8px;
-      color: var(--gold);
-      opacity:0.9;
-      font-style: italic;
-      font-size:0.95em;
-    }
+.turn {
+  font-size: 1.05em;
+  color: var(--gold);
+  margin: 10px 30px 0;
+  text-shadow: 0 0 10px var(--hot);
+  font-weight: normal;
+}
 
-    .turn {
-      font-size: 1.05em;
-      color: var(--gold);
-      margin: 10px 30px 0;
-      text-shadow: 0 0 10px var(--hot);
-      font-weight: normal;
-    }
+.status {
+  font-size: 1.1em;
+  color: var(--gold);
+  margin: 18px 0 12px;
+  font-style: italic;
+}
 
-    .status {
-      font-size: 1.1em;
-      color: var(--gold);
-      margin: 18px 0 12px;
-      font-style: italic;
-    }
+.style-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin: 18px 0;
+}
 
-    .style-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-      margin: 18px 0;
-    }
+.card {
+  background: #252525;
+  border-radius: 12px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all .25s;
+  border: 2px solid transparent;
+  text-align:left;
+  position: relative;
+  overflow: hidden;
+}
+.card:hover {
+  border-color: #ff6b6b;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(255, 107, 107, .2);
+}
+.card.selected {
+  border-color: #ff6b6b;
+  background: #333;
+}
 
-    .card {
-      background: #252525;
-      border-radius: 12px;
-      padding: 18px;
-      cursor: pointer;
-      transition: all .25s;
-      border: 2px solid transparent;
-      text-align:left;
-      position: relative;
-      overflow: hidden;
-    }
-    .card:hover {
-      border-color: #ff6b6b;
-      transform: translateY(-4px);
-      box-shadow: 0 10px 20px rgba(255, 107, 107, .2);
-    }
-    .card.selected {
-      border-color: #ff6b6b;
-      background: #333;
-    }
+/* Locked style cards */
+.card.locked{ cursor: pointer; opacity: 0.42; }
 
-    /* Locked style cards */
-    .card.locked{
-      cursor: pointer;
-      opacity: 0.42;
-    }
-
-    /* Handcuff badge (PNG asset, stable) */
+/* Handcuff badge (expects /handcuffs.png at site root; optional) */
 .card.locked::after,
 .card.greyed-locked::after{
   content: "";
@@ -461,7 +439,7 @@
   right: 10px;
   width: 22px;
   height: 22px;
-  background: url("./handcuffs.png") center / contain no-repeat;
+  background: url("/handcuffs.png") center / contain no-repeat;
   pointer-events: none;
   opacity: 0.92;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.45));
@@ -479,7 +457,7 @@
     drop-shadow(0 2px 3px rgba(0,0,0,0.55))
     drop-shadow(0 0 10px rgba(255,105,180,0.35));
 }
-/* Handcuff badge for locked buttons (AI Suggest, etc.) */
+
 button.locked::after,
 button.greyed-locked::after{
   content: "";
@@ -488,158 +466,18 @@ button.greyed-locked::after{
   right: 8px;
   width: 22px;
   height: 22px;
-  background: url("handcuffs.png") center / contain no-repeat;
+  background: url("/handcuffs.png") center / contain no-repeat;
   pointer-events: none;
   opacity: 0.95;
   filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
 }
-/* Required so ::after can position correctly */
+
 button.locked,
 button.greyed-locked{
   position: relative;
 }
 
-    .card h3 {
-      margin: 0 0 8px;
-      color: #ff6b6b;
-      font-size: 1.05em;
-    }
-    .card p {
-      font-size: 0.95em;
-      opacity: .92;
-      margin: 0 0 10px;
-    }
-
-    .preview-btn {
-      background: #333;
-      padding: 8px 14px;
-      font-size: 0.95em;
-      margin-top: 8px;
-      border-radius: 10px;
-      box-shadow: none;
-    }
-    .preview-btn:hover { background:#444; }
-
-    #modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, .82);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    #modal-content {
-      background: #1e1e1e;
-      padding: 26px;
-      border-radius: 12px;
-      max-width: 860px;
-      width: 92%;
-      text-align: left;
-      border: 1px solid rgba(255,105,180,0.35);
-      box-shadow: 0 0 30px rgba(255,20,147,0.35);
-    }
-
-    /* Gates */
-    #ageGate, #tosGate, #tierChoice {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #000;
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      color: #fff;
-      text-align: center;
-      padding: 20px;
-      font-family: 'Lora', serif;
-    }
-
-    /* Loading overlay */
-    #loadingOverlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.65);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-    }
-    #loadingOverlayInner {
-      background: rgba(10, 0, 30, 0.95);
-      padding: 18px 26px 14px 26px;
-      border-radius: 14px;
-      box-shadow: 0 0 35px rgba(255, 20, 147, 0.8);
-      min-width: 280px;
-      text-align: left;
-      font-size: 0.95em;
-    }
-    #loadingOverlayBar {
-      width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 999px;
-      overflow: hidden;
-      margin-top: 8px;
-    }
-    #loadingOverlayFill {
-      width: 0%;
-      height: 100%;
-      background: var(--pink);
-      transition: width 0.25s;
-    }
-
-    /* Tease choices */
-    #teaseChoiceButtons {
-      display: none;
-      flex-direction: column;
-      gap: 14px;
-      margin: 18px auto 10px;
-      max-width: 520px;
-    }
-    .tease-choice-btn {
-      background: linear-gradient(145deg, #6b006b, #cc1177);
-      color: var(--gold);
-      padding: 14px 20px;
-      border: none;
-      border-radius: 22px;
-      font-size: 1.1em;
-      cursor: pointer;
-      box-shadow: 0 0 20px rgba(255, 20, 147, .5);
-      transition: .25s;
-      font-family: 'Lora', serif;
-      text-align: center;
-    }
-    .tease-choice-btn:hover {
-      transform: scale(1.04);
-      box-shadow: 0 0 28px rgba(255, 105, 180, .8);
-    }
-
-    /* Locked overlay class */
-    .greyed-locked{
-      opacity: 0.35 !important;
-      position: relative !important;
-    }
-    /* Swap lock for handcuffs (bigger, outlined) */
-    .greyed-locked::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 38px;
-      height: 38px;
-      background-size: 38px 38px;
-      background-repeat: no-repeat;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'><g fill='none' stroke='%23000' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'><path d='M18 20c-6 0-10 4-10 10v6c0 6 4 10 10 10h6c6 0 10-4 10-10v-6c0-6-4-10-10-10h-6z'/><path d='M40 20c-6 0-10 4-10 10v6c0 6 4 10 10 10h6c6 0 10-4 10-10v-6c0-6-4-10-10-10h-6z'/><path d='M34 32h-4'/></g><g fill='%23ffd700' opacity='0.95'><path d='M18 20h6c6 0 10 4 10 10v6c0 6-4 10-10 10h-6c-6 0-10-4-10-10v-6c0-6 4-10 10-10z'/><path d='M40 20h6c6 0 10 4 10 10v6c0 6-4 10-10 10h-6c-6 0-10-4-10-10v-6c0-6 4-10 10-10z'/></g></svg>");
-      pointer-events: none;
-      filter: drop-shadow(0 0 10px rgba(255,20,147,0.25));
-    }
-/* Dollar-plane cursor for anything paywalled (robust) */
+/* paywall cursor (optional; if file missing browser just falls back) */
 .paywall-cursor,
 .locked,
 .greyed-locked,
@@ -649,229 +487,253 @@ button.locked,
 button.greyed-locked,
 .locked *,
 .greyed-locked *{
-  cursor: url("cursor-dollar-plane-64.png") 10 10, pointer !important;
+  cursor: url("/cursor-dollar-plane-64.png") 10 10, pointer !important;
 }
 
-    #bookTitle {
-      font-size: 2.2em;
-      color: var(--gold);
-      margin: 8px 0 6px;
-      text-shadow: 0 0 15px var(--hot);
-      text-align: center;
-      display:none;
-      position: relative;
-      cursor: help;
-    }
-    #bookHook {
-      font-size: 1.05em;
-      color: #f8d57b;
-      margin: 0 0 14px;
-      font-style: italic;
-      text-align:center;
-      display:none;
-      max-width: 920px;
-      width: 92%;
-      margin-left:auto;
-      margin-right:auto;
-    }
+.card h3 { margin: 0 0 8px; color: #ff6b6b; font-size: 1.05em; }
+.card p { font-size: 0.95em; opacity: .92; margin: 0 0 10px; }
 
-    /* Title hover popover */
-    #titleMetaPopover{
-      position: fixed;
-      display:none;
-      z-index: 250;
-      background: rgba(10,0,30,0.95);
-      border: 1px solid rgba(255,105,180,0.35);
-      box-shadow: 0 0 26px rgba(255,20,147,0.25);
-      border-radius: 12px;
-      padding: 12px 14px;
-      max-width: 420px;
-      text-align:left;
-      color: var(--ink);
-      font-size: 0.95em;
-      line-height: 1.45;
-    }
-    #titleMetaPopover .k{ color: var(--gold); opacity: 0.95; }
-    #titleMetaPopover .v{ color: var(--ink); opacity: 0.95; }
+.preview-btn {
+  background: #333;
+  padding: 8px 14px;
+  font-size: 0.95em;
+  margin-top: 8px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.preview-btn:hover { background:#444; }
 
-    /* Intensity segmented control */
-    .seg-wrap{
-      margin: 10px auto 12px;
-      width: 92%;
-      max-width: 560px;
-      text-align:center;
-    }
-    .seg{
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      flex-wrap:wrap;
-    }
-    .seg button{
-      background: rgba(40,0,60,0.85);
-      border: 1px solid rgba(255,105,180,0.55);
-      box-shadow: none;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-size: 0.95em;
-      transform:none;
-      margin: 0;
-      min-width: 0;
-      width: auto;
-    }
-    .seg button:hover{
-      box-shadow: 0 0 18px rgba(255,20,147,0.35);
-      transform:none;
-    }
-    .seg button.active{
-      background: linear-gradient(145deg, #8b008b, var(--hot));
-      border-color: rgba(255,105,180,0.95);
-      box-shadow: 0 0 18px rgba(255,20,147,0.45);
-    }
-    .seg-hint{
-      color: var(--gold);
-      opacity:0.9;
-      font-size:0.95em;
-      margin-top:8px;
-      font-style: italic;
-    }
-    @media (max-width: 420px){
-      .seg{ flex-direction: column; align-items:center; }
-      .seg button{ width: 88%; }
-    }
+#modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, .82);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+#modal-content {
+  background: #1e1e1e;
+  padding: 26px;
+  border-radius: 12px;
+  max-width: 860px;
+  width: 92%;
+  text-align: left;
+  border: 1px solid rgba(255,105,180,0.35);
+  box-shadow: 0 0 30px rgba(255,20,147,0.35);
+}
 
-    /* Burger */
-    #burgerMenuBtn {
-      background: rgba(0,0,0,0.6) !important;
-      border-radius: 50% !important;
-      border: 1px solid var(--pink) !important;
-      box-shadow: none !important;
-      padding: 0 !important;
-      width: 38px !important;
-      height: 38px !important;
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 5000;
-      color: var(--gold);
-      font-size: 1.3em;
-      display:none;
-    }
+/* Gates */
+#ageGate, #tosGate, #tierChoice {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #000;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+  font-family: 'Lora', serif;
+}
 
-    /* Invitation */
-    .invitation-text {
-      position: relative;
-      background: #000;
-      padding: 16px 52px 16px 16px; /* room for icon */
-      border-radius: 10px;
-      margin: 16px 0;
-      font-size: 1.02em;
-      line-height: 1.6;
-      color: var(--gold);
-      word-break: break-word;
-      text-align:left;
-      border: 1px solid rgba(255,105,180,0.2);
-    }
+/* Loading overlay */
+#loadingOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+#loadingOverlayInner {
+  background: rgba(10, 0, 30, 0.95);
+  padding: 18px 26px 14px 26px;
+  border-radius: 14px;
+  box-shadow: 0 0 35px rgba(255, 20, 147, 0.8);
+  min-width: 280px;
+  text-align: left;
+  font-size: 0.95em;
+}
+#loadingOverlayBar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+#loadingOverlayFill {
+  width: 0%;
+  height: 100%;
+  background: var(--pink);
+  transition: width 0.25s;
+}
 
-    /* Copy icon inside the text block */
-    .copyIconImg {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 30px;
-      height: 30px;
-      cursor: pointer;
-      opacity: 0.95;
-      user-select: none;
-      filter: drop-shadow(0 0 4px rgba(0,0,0,0.8));
-    }
-    .copyIconImg:active { transform: scale(0.95); }
+/* Tease choices */
+#teaseChoiceButtons {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  margin: 18px auto 10px;
+  max-width: 520px;
+}
+.tease-choice-btn {
+  background: linear-gradient(145deg, #6b006b, #cc1177);
+  color: var(--gold);
+  padding: 14px 20px;
+  border: none;
+  border-radius: 22px;
+  font-size: 1.1em;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(255, 20, 147, .5);
+  transition: .25s;
+  font-family: 'Lora', serif;
+  text-align: center;
+}
+.tease-choice-btn:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 28px rgba(255, 105, 180, .8);
+}
 
-    /* Image modal content */
-    #vizImage {
-      width: 100%;
-      max-height: 70vh;
-      object-fit: contain;
-      border-radius: 12px;
-      border: 1px solid rgba(255,105,180,0.35);
-      background: rgba(0,0,0,0.3);
-      display:none;
-      margin-top: 10px;
-    }
+/* Burger */
+#burgerMenuBtn {
+  background: rgba(0,0,0,0.6) !important;
+  border-radius: 50% !important;
+  border: 1px solid var(--pink) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: 38px !important;
+  height: 38px !important;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 5000;
+  color: var(--gold);
+  font-size: 1.3em;
+  display:none;
+}
 
-    /* Suggest buttons inside textarea wrappers */
-    .input-group { text-align:left; width: 92%; margin: 0 auto; max-width: 920px; }
-    .input-box{
-      position: relative;
-      margin: 10px auto 18px;
-      width: 100%;
-    }
-    .input-box label{
-      display:block;
-      color: var(--gold);
-      margin: 8px 0 6px;
-      font-size: 1em;
-    }
-    .input-box textarea{
-      width: 100%;
-      padding-right: 140px;
-      margin: 0;
-      min-height: 76px;
-    }
-    .suggest-inside{
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      padding: 8px 12px;
-      font-size: 0.9em;
-      border-radius: 999px;
-      box-shadow: 0 0 14px rgba(255,20,147,0.45);
-      white-space: nowrap;
-    }
-    @media (max-width: 520px){
-      .input-box textarea{ padding-right: 12px; }
-      .suggest-inside{
-        position: static;
-        width: 100%;
-        margin-top: 8px;
-      }
-    }
+/* Invitation */
+.invitation-text {
+  position: relative;
+  background: #000;
+  padding: 16px 52px 16px 16px;
+  border-radius: 10px;
+  margin: 16px 0;
+  font-size: 1.02em;
+  line-height: 1.6;
+  color: var(--gold);
+  word-break: break-word;
+  text-align:left;
+  border: 1px solid rgba(255,105,180,0.2);
+}
 
-    /* Unlock style modal */
-    #styleUnlockModal, #signupModal, #unlockModal, #purchaseFlowModal, #strangerModal, #storyControlModal {
-      position:fixed;top:0;left:0;width:100%;height:100%;
-      background:rgba(0,0,0,.85);
-      display:none;align-items:center;justify-content:center;
-    }
+.copyIconImg {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  opacity: 0.95;
+  user-select: none;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.8));
+}
+.copyIconImg:active { transform: scale(0.95); }
 
-    /* Viz controls row */
-    .viz-controls{
-      display:flex;
-      gap:10px;
-      flex-wrap: wrap;
-      align-items:center;
-      justify-content: space-between;
-      margin-top: 12px;
-    }
-    .viz-controls .left, .viz-controls .right{
-      display:flex;
-      gap:10px;
-      flex-wrap: wrap;
-      align-items:center;
-    }
-    .viz-controls select{
-      width: auto;
-      margin: 0;
-      padding: 8px 10px;
-      border-radius: 10px;
-    }
-    .viz-count{
-      color: var(--gold);
-      opacity: 0.9;
-      font-style: italic;
-      font-size: 0.95em;
-    }
-    /* AI Suggest deprecated — Tarot replaces it */
+/* Image modal content */
+#vizImage {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(255,105,180,0.35);
+  background: rgba(0,0,0,0.3);
+  display:none;
+  margin-top: 10px;
+}
+
+/* Suggest buttons inside textarea wrappers */
+.input-group { text-align:left; width: 92%; margin: 0 auto; max-width: 920px; }
+.input-box{
+  position: relative;
+  margin: 10px auto 18px;
+  width: 100%;
+}
+.input-box label{
+  display:block;
+  color: var(--gold);
+  margin: 8px 0 6px;
+  font-size: 1em;
+}
+.input-box textarea{
+  width: 100%;
+  padding-right: 140px;
+  margin: 0;
+  min-height: 76px;
+}
+.suggest-inside{
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 8px 12px;
+  font-size: 0.9em;
+  border-radius: 999px;
+  box-shadow: 0 0 14px rgba(255,20,147,0.45);
+  white-space: nowrap;
+}
+@media (max-width: 520px){
+  .input-box textarea{ padding-right: 12px; }
+  .suggest-inside{
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+  }
+}
+
+/* Unlock/Signup/etc modals */
+#styleUnlockModal, #signupModal, #unlockModal, #purchaseFlowModal, #strangerModal, #storyControlModal {
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.85);
+  display:none;align-items:center;justify-content:center;
+}
+
+/* Viz controls row */
+.viz-controls{
+  display:flex;
+  gap:10px;
+  flex-wrap: wrap;
+  align-items:center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.viz-controls .left, .viz-controls .right{
+  display:flex;
+  gap:10px;
+  flex-wrap: wrap;
+  align-items:center;
+}
+.viz-controls select{
+  width: auto;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+.viz-count{
+  color: var(--gold);
+  opacity: 0.9;
+  font-style: italic;
+  font-size: 0.95em;
+}
+
+/* AI Suggest deprecated — Tarot replaces it (keep off) */
 #suggestActionBtn,
 #suggestDialogueBtn{
   display: none !important;
@@ -940,7 +802,7 @@ button.greyed-locked,
         <p style="font-size:0.9em;max-width:260px;margin:6px auto 0;line-height:1.4;font-family:'Lora',serif">
           Longer openings, deeper memory, full control, saved stories.
         </p>
-        <p style="font-size:0.8em;margin-top:4px;opacity:0.8;fontamily:'Lora',serif">From $6/mo</p>
+        <p style="font-size:0.8em;margin-top:4px;opacity:0.8;font-family:'Lora',serif">From $6/mo</p>
       </div>
     </div>
     <p style="font-size:1em;margin-top:40px;opacity:0.8">Free play is limited — upgrade to unleash the full passion.</p>
@@ -966,7 +828,7 @@ button.greyed-locked,
     </div>
   </div>
 
-  <!-- STYLE UNLOCK MODAL (for locked Story Styles) -->
+  <!-- STYLE UNLOCK MODAL -->
   <div id="styleUnlockModal">
     <div style="background:#1e1e1e;padding:28px;border-radius:14px;max-width:560px;width:90%;text-align:center;border:1px solid rgba(255,105,180,0.35);box-shadow:0 0 30px rgba(255,20,147,0.25)">
       <h3 style="margin-top:0;margin-bottom:12px;font-family:'lust-script-display','lust-script','Lora',serif;color:#ff69b4;font-size:1.9em">
@@ -1033,10 +895,7 @@ button.greyed-locked,
     <p class="status">Now bind your fate to the star-crossed love you plan to seduce.</p>
     <p>Copy the invitation text below and send it to your partner.</p>
 
-    <div class="invitation-text" id="invitationText">
-      <!-- text injected -->
-      <img class="copyIconImg" id="copyIconImg" src="./copy.png" alt="Copy">
-    </div>
+    <div class="invitation-text" id="invitationText"></div>
 
     <button id="iveSentItBtn">I've sent it</button>
   </div>
@@ -1051,16 +910,17 @@ button.greyed-locked,
 
   <!-- SETUP -->
   <div id="setup" class="box" style="display:none">
-
     <div class="section-title">Eroticism Intensity</div>
-    <div class="seg-wrap">
-      <div class="seg">
+    <div style="margin: 10px auto 12px; width: 92%; max-width: 560px;">
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button type="button" id="intensityCleanBtn" class="active">Clean</button>
         <button type="button" id="intensityNaughtyBtn">Naughty</button>
         <button type="button" id="intensityEroticBtn">Erotic</button>
         <button type="button" id="intensityDirtyBtn">Dirty</button>
       </div>
-      <div class="seg-hint" id="intensityHint">Flirt, chemistry, and longing. No explicit anatomy.</div>
+      <div id="intensityHint" style="color:var(--gold);opacity:0.9;font-size:0.95em;margin-top:8px;font-style:italic">
+        Flirt, chemistry, and longing. No explicit anatomy.
+      </div>
     </div>
 
     <div class="section-title">Genres (choose up to 3)</div>
@@ -1181,9 +1041,8 @@ button.greyed-locked,
   <div id="game" class="box" style="display:none;max-width:980px;width:92%">
     <div id="storyError" style="display:none;color:#ff8080;margin-bottom:10px;font-size:0.95em;"></div>
 
-    <h2 id="bookTitle"></h2>
-    <div id="titleMetaPopover"></div>
-    <p id="bookHook"></p>
+    <h2 id="bookTitle" style="display:none"></h2>
+    <p id="bookHook" style="display:none"></p>
 
     <div id="settingShotWrap">
       <img id="settingShotImg" alt="Setting visualization">
@@ -1203,30 +1062,17 @@ button.greyed-locked,
       <button id="visualizeBtn" type="button">Visualize</button>
     </div>
 
-    <div class="section-title" style="margin-top:18px">Eroticism Intensity</div>
-    <div class="seg-wrap">
-      <div class="seg">
-        <button type="button" id="intensityCleanBtn2" class="active">Clean</button>
-        <button type="button" id="intensityNaughtyBtn2">Naughty</button>
-        <button type="button" id="intensityEroticBtn2">Erotic</button>
-        <button type="button" id="intensityDirtyBtn2">Dirty</button>
-      </div>
-      <div class="seg-hint" id="intensityHint2">Flirt, chemistry, and longing. No explicit anatomy.</div>
-    </div>
-
-<div id="cardMount"></div>
+    <div id="cardMount"></div>
 
     <div class="input-group">
       <div class="input-box">
         <label id="actionLabel">What do you do?</label>
         <textarea id="actionInput" rows="3" placeholder="Describe your action..."></textarea>
-        <button class="suggest-inside" id="suggestActionBtn" type="button">AI Suggest Action (5)</button>
       </div>
 
       <div class="input-box">
         <label id="dialogueLabel">What do you say?</label>
         <textarea id="dialogueInput" rows="3" placeholder="Your exact words..."></textarea>
-        <button class="suggest-inside" id="suggestDialogueBtn" type="button">AI Suggest Dialogue (5)</button>
       </div>
     </div>
 
@@ -1238,96 +1084,15 @@ button.greyed-locked,
       <button class="small" id="saveGameBtn" type="button">Save</button>
       <button class="small" id="exitGameBtn" type="button">Exit</button>
     </div>
-
-    <div style="margin-top:15px">
-      <button class="small" id="storyControlBtn" type="button">Story Controls</button>
-    </div>
   </div>
 
   <!-- PREVIEW / VISUALIZE MODAL -->
   <div id="modal">
     <div id="modal-content">
       <p id="modal-preview" style="margin:0 0 12px;line-height:1.7"></p>
-
       <img id="vizImage" alt="Visualization">
-
-      <div class="viz-controls" id="vizControls" style="display:none">
-        <div class="left">
-          <span class="viz-count" id="vizReCount">Re-Visualize (2)</span>
-          <select id="vizModelSelect" title="Choose a model for visualization">
-            <option value="grok">Grok</option>
-            <option value="gpt4">GPT-4</option>
-            <option value="gemini">Gemini</option>
-          </select>
-        </div>
-        <div class="right">
-          <button id="vizRevBtn" type="button">Re-Visualize</button>
-          <button id="vizInsertBtn" type="button">Insert</button>
-          <button id="modal-close" type="button" style="background:#ff6b6b">Close</button>
-        </div>
-      </div>
-
-      <div id="modalCloseOnly" style="text-align:right">
+      <div style="text-align:right">
         <button id="modal-close-only" type="button" style="background:#ff6b6b">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- STORY CONTROL MODAL -->
-  <div id="storyControlModal">
-    <div style="background:#1e1e1e;padding:24px;border-radius:12px;max-width:600px;width:90%;text-align:left">
-      <h3 style="margin-top:0;margin-bottom:10px">Story Controls</h3>
-      <p style="font-size:0.9em;opacity:0.9;margin-bottom:10px">
-        Change tone, words, scenes, POV, names.
-      </p>
-      <div style="margin:12px 0;padding:10px;background:rgba(20,0,40,0.4);border-radius:10px">
-        <div style="color:#ffd700;margin-bottom:8px">Active Controls</div>
-        <div id="activeControls"></div>
-      </div>
-      <div style="margin:12px 0;padding:10px;background:rgba(20,0,40,0.4);border-radius:10px">
-        <div style="color:#ffd700;margin-bottom:8px">Archived Controls</div>
-        <div id="archivedControls"></div>
-      </div>
-      <textarea id="storyControlInput" rows="6" style="width:100%;margin-top:10px" placeholder="Examples: Ban the word 'moist'. Keep it elegant."></textarea>
-      <div style="text-align:right;margin-top:10px">
-        <button id="storyControlCancelBtn" type="button" style="background:#555">Cancel</button>
-        <button id="storyControlApplyBtn" type="button">Apply</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- UNLOCK MODAL (mock $1 for story-level unlocks like text/controls/styles) -->
-  <div id="unlockModal">
-    <div style="background:#1e1e1e;padding:28px;border-radius:14px;max-width:520px;width:90%;text-align:center">
-      <h3 style="margin-top:0;margin-bottom:12px;font-family:'lust-script-display','lust-script','Lora',serif;color:#ff69b4;font-size:1.8em">
-        Unlock for this story (Mock $1)
-      </h3>
-      <p style="font-size:0.95em;opacity:0.9;margin-bottom:18px;line-height:1.5" id="unlockCopy">
-        Unlock this feature for this story only.
-      </p>
-      <div style="text-align:center;margin-top:18px">
-        <button id="unlockCancelBtn" style="background:#555;margin-right:10px" type="button">Maybe Later</button>
-        <button id="unlockProceedBtn" style="font-size:1.2em" type="button">Access ($1)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PURCHASE FLOW MODAL -->
-  <div id="purchaseFlowModal">
-    <div style="background:#1e1e1e;padding:28px;border-radius:14px;max-width:520px;width:90%;text-align:left">
-      <h3 style="margin-top:0;margin-bottom:12px;font-family:'lust-script-display','lust-script','Lora',serif;color:#ff69b4">Complete Mock Purchase</h3>
-      <p style="font-size:0.9em;opacity:0.9;margin-bottom:12px">Mock purchase only.</p>
-      <label style="font-size:0.9em">Email</label>
-      <input type="email" id="unlockEmail" placeholder="you@example.com" style="width:92%">
-      <label style="font-size:0.9em">Payment Method (Mock)</label>
-      <input type="text" id="unlockCard" placeholder="4242 4242 4242 4242" style="width:92%">
-      <div style="margin-top:12px;font-size:0.9em"><strong>Amount:</strong> $1.00 USD</div>
-      <label style="font-size:0.9em;display:block;margin-top:12px">
-        <input type="checkbox" id="unlockConfirm"> I confirm payment for this unlock.
-      </label>
-      <div style="text-align:right;margin-top:18px">
-        <button id="purchaseCancelBtn" style="background:#555" type="button">Cancel</button>
-        <button id="purchaseConfirmBtn" type="button">Complete Purchase (Mock)</button>
       </div>
     </div>
   </div>
@@ -1357,1716 +1122,331 @@ button.greyed-locked,
     </div>
   </div>
 
-<script>
-window.addEventListener('load', () => 
+  <!-- ✅ IMPORTANT: load Fatecards file FIRST (root-relative, static-safe) -->
+  <script src="/fatecards/storybound-cards.js"></script>
 
-  // ---------------------------- CONFIG ----------------------------
-  // TODO: change these to YOUR deployed proxy endpoints
-  const PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
-  const IMAGE_PROXY_URL = 'https://storybound-proxy.vercel.app/api/image';
+  <!-- ✅ APP SCRIPT (plain static) -->
+  <script>
+  (function(){
+    // ---------------------------- CONFIG ----------------------------
+    // These are placeholders. If your proxies don't exist, story generation won't work —
+    // but the site WILL load and the UI will function.
+    var PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
+    var IMAGE_PROXY_URL = 'https://storybound-proxy.vercel.app/api/image';
+    var STORY_MODEL = 'grok-4-1-fast-reasoning';
 
-  // Story model (whatever your proxy expects)
-  const STORY_MODEL = 'grok-4-1-fast-reasoning';
+    // Copy icons (single source of truth)
+    var COPY_ICON = '/copy.png';
+    var COPIED_ICON = '/copied.png';
 
-  // Image models: passed through to your proxy; map server-side
-  const IMAGE_MODELS = {
-    grok: 'grok-2-image-1212',
-    gpt4: 'gpt-image-1',
-    gemini: 'gemini-2.0-flash-image'
-  };
+    // ---------------------------- STATE ----------------------------
+    var mode = null;   // solo|couple
+    var tier = null;   // free|indulge
+    var intensity = 'clean';
 
-  // ---------------------------- STATE ----------------------------
-  let mode = null;          // solo|couple
-  let tier = null;          // free|indulge
-  let pov = 'first';
-  let style = 'breathless';
-  let genre = 'romantasy';
-  let dynamic = '';
-  let char1 = '';
-  let gender = 'Male';
-  let intensity = 'clean';
+    var currentRoomCode = null;
 
-  let loveName = '';        // inferred from synopsis when possible
-  let lastViz = null;       // {url|b64, prompt, modelKey}
+    // Stranger counters
+    var strangerUniqueKey = 'storybound_stranger_unique_v1';
+    var strangerClicksKey = 'storybound_stranger_clicks_v1';
 
-  // Story Controls
-  let storyControlsActive = [];
-  let storyControlsArchived = [];
+    // ---------------------------- DOM ----------------------------
+    function $(id){ return document.getElementById(id); }
+    function on(id, evt, fn){ var el = $(id); if (el) el.addEventListener(evt, fn); }
+    function show(id, display){ var el=$(id); if(el) el.style.display = display || 'block'; }
+    function hide(id){ var el=$(id); if(el) el.style.display='none'; }
 
-  // Tease story-level unlocks
-  let storyTextUnlockPurchased = false;
-  let storyControlsUnlockPurchased = false;
-  let storyStyleUnlockPurchased = false;
-  let pendingUnlockType = null; // 'text'|'controls'|'style'
-
-  // Suggest counters + history per turn for variety
-  let suggestRemaining = { action: 5, dialogue: 5 };
-  let suggestHistory = { action: [], dialogue: [] };
-
-  // Re-visualize limit (per visualize open)
-  let vizRemaining = 2;
-
-  // Stranger counters
-  const strangerUniqueKey = 'storybound_stranger_unique_v1';
-  const strangerClicksKey = 'storybound_stranger_clicks_v1';
-
-  // ---------------------------- DOM HELPERS ----------------------------
-  function $(id){ return document.getElementById(id); }
-  function on(id, evt, fn){ const el = $(id); if (el) el.addEventListener(evt, fn); }
-  function show(id, display='block'){ const el=$(id); if(el) el.style.display=display; }
-  function hide(id){ const el=$(id); if(el) el.style.display='none'; }
-
-  function hideAllScreens(){
-    ['ageGate','tosGate','tierChoice','mainTitle','mainSubtitle','modeChoices','setup','game','coupleConnect','invite','waiting']
-      .forEach(hide);
-  }
-
-  function showBurger(){ if ($('burgerMenuBtn')) $('burgerMenuBtn').style.display = 'block'; }
-  function hideBurger(){ if ($('burgerMenuBtn')) $('burgerMenuBtn').style.display = 'none'; }
-
-  function scrollToTopHard(){
-    window.scrollTo(0,0);
-    requestAnimationFrame(() => window.scrollTo(0,0));
-  }
-
-  // ---------------------------- NAV ----------------------------
-  function goToAgeGate(){ hideAllScreens(); show('ageGate','flex'); hideBurger(); }
-  function goToTOS(){ hideAllScreens(); show('tosGate','flex'); hideBurger(); }
-  function goToTierChoice(){
-    hideAllScreens();
-    show('tierChoice','flex');
-    showBurger();
-    mode = null;
-    // Make sure tier choice buttons are always active
-    $('teaseBtn').disabled = false;
-    $('indulgeBtn').disabled = false;
-  }
-  function goToModeChoice(){
-    hideAllScreens();
-    show('mainTitle');
-    show('mainSubtitle');
-    show('modeChoices','flex');
-    showBurger();
-    scrollToTopHard();
-  }
-  function goToSetup(){
-    hideAllScreens();
-    show('setup');
-    showBurger();
-    scrollToTopHard();
-  }
-  function goToGame(){
-    hideAllScreens();
-    show('game');
-    showBurger();
-    scrollToTopHard(); // required: when story starts, scroll top
-  }
-  function goToCoupleConnect(){
-    hideAllScreens();
-    show('coupleConnect');
-    showBurger();
-    scrollToTopHard();
-  }
-
-  // ---------------------------- BURGER MENU ----------------------------
-  on('burgerMenuBtn','click', () => { $('mainMenuOverlay').style.display = 'flex'; });
-  on('menuCloseBtn','click', () => { $('mainMenuOverlay').style.display = 'none'; });
-
-  on('menuBackToTierBtn','click', () => {
-    $('mainMenuOverlay').style.display = 'none';
-    goToTierChoice();
-  });
-
-  on('menuRestartStoryBtn','click', () => {
-    $('mainMenuOverlay').style.display = 'none';
-    restartStorySoft();
-  });
-
-  function restartStorySoft(){
-    $('story').innerHTML = '';
-    $('bookTitle').textContent = '';
-    $('bookHook').textContent = '';
-    $('bookTitle').style.display = 'none';
-    $('bookHook').style.display = 'none';
-    hide('settingShotWrap');
-
-    $('turn-indicator').style.display = 'block';
-    $('turn-indicator').textContent = 'Your story is taking shape...';
-
-    $('actionInput').value = '';
-    $('dialogueInput').value = '';
-
-    storyTextUnlockPurchased = false;
-    storyControlsUnlockPurchased = false;
-    storyStyleUnlockPurchased = false;
-    pendingUnlockType = null;
-
-    suggestRemaining = { action: 5, dialogue: 5 };
-    suggestHistory = { action: [], dialogue: [] };
-    syncSuggestButtons();
-
-    hide('teaseChoiceButtons');
-    loveName = '';
-    lastViz = null;
-
-    goToModeChoice();
-  }
-
-  // ---------------------------- AGE / TOS ----------------------------
-  on('ageYesBtn','click', goToTOS);
-  on('ageNoBtn','click', () => { alert('You must be 18 to use Storybound.'); window.location.href='https://google.com'; });
-
-  on('tosAgree','change', (e) => {
-    const btn = $('tosEnterBtn');
-    btn.disabled = !e.target.checked;
-    btn.style.background = e.target.checked ? '#ff69b4' : '#666';
-  });
-  on('tosEnterBtn','click', goToTierChoice);
-
-  // ---------------------------- TIER SELECTION ----------------------------
-  // Tease
-  on('teaseBtn','click', () => {
-    tier = 'free';
-    storyTextUnlockPurchased = false;
-    storyControlsUnlockPurchased = false;
-    storyStyleUnlockPurchased = false;
-
-    // Name locked in Tease
-    $('char1').disabled = true;
-    $('char1').value = '';
-    $('char1Marquee').style.display = 'block';
-
-    // Lock styles beyond Breathless by default; clicking locked styles triggers unlock modal
-    applyStyleLocks();
-    // Default select Breathless
-    selectSingleStyle('breathless');
-
-    goToModeChoice();
-  });
-
-  // Indulge: MUST be independent of Tease
-  on('indulgeBtn','click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    $('signupModal').style.display = 'flex';
-  });
-
-  on('signupCancelBtn','click', () => {
-    $('signupModal').style.display = 'none';
-    // Stay on tierChoice
-    show('tierChoice','flex');
-  });
-
-  on('signupConfirmBtn','click', () => {
-    if (!$('signupAgeConfirm').checked) {
-      alert('Please confirm you are 18+ and agree to the Terms.');
-      return;
+    function hideAllScreens(){
+      ['ageGate','tosGate','tierChoice','mainTitle','mainSubtitle','modeChoices','setup','game','coupleConnect','invite','waiting']
+        .forEach(hide);
     }
-    tier = 'indulge';
-    $('signupModal').style.display = 'none';
 
-    $('char1').disabled = false;
-    $('char1Marquee').style.display = 'none';
-
-    // Unlock all styles
-    storyStyleUnlockPurchased = true; // effectively unlocked
-    applyStyleLocks(true);
-
-    // Keep selected style
-    if (!style) style = 'breathless';
-    selectSingleStyle(style);
-
-    goToModeChoice();
-  });
-
-  // ---------------------------- MODE SELECTION ----------------------------
-  on('soloBtn','click', () => { mode = 'solo'; goToSetup(); });
-  on('coupleBtn','click', () => { mode = 'couple'; goToCoupleConnect(); });
-
-  // Stranger popup + counters
-  on('strangerBtn','click', () => {
-    incrementStrangerCounters();
-    const stats = readStrangerStats();
-    $('strangerStats').textContent = `So far: ${stats.unique} unique visitor(s) chose Stranger, ${stats.clicks} total selection(s).`;
-    $('strangerModal').style.display = 'flex';
-  });
-  on('strangerCloseBtn','click', () => { $('strangerModal').style.display = 'none'; });
-
-  function incrementStrangerCounters(){
-    try{
-      const uid = getOrCreateVisitorId();
-      const u = JSON.parse(localStorage.getItem(strangerUniqueKey) || '[]');
-      if (!u.includes(uid)) u.push(uid);
-      localStorage.setItem(strangerUniqueKey, JSON.stringify(u.slice(-5000)));
-
-      const clicks = parseInt(localStorage.getItem(strangerClicksKey) || '0', 10) || 0;
-      localStorage.setItem(strangerClicksKey, String(clicks + 1));
-    }catch(e){}
-  }
-  function readStrangerStats(){
-    try{
-      const u = JSON.parse(localStorage.getItem(strangerUniqueKey) || '[]');
-      const clicks = parseInt(localStorage.getItem(strangerClicksKey) || '0', 10) || 0;
-      return { unique: u.length, clicks };
-    }catch(e){
-      return { unique: 0, clicks: 0 };
+    function goToAgeGate(){ hideAllScreens(); show('ageGate','flex'); hideBurger(); }
+    function goToTOS(){ hideAllScreens(); show('tosGate','flex'); hideBurger(); }
+    function goToTierChoice(){ hideAllScreens(); show('tierChoice','flex'); showBurger(); mode=null; }
+    function goToModeChoice(){
+      hideAllScreens();
+      show('mainTitle');
+      show('mainSubtitle');
+      show('modeChoices','flex');
+      showBurger();
+      window.scrollTo(0,0);
     }
-  }
-  function getOrCreateVisitorId(){
-    const k = 'storybound_visitor_id_v1';
-    let v = localStorage.getItem(k);
-    if (!v){
-      v = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem(k, v);
+    function goToSetup(){ hideAllScreens(); show('setup'); showBurger(); window.scrollTo(0,0); }
+    function goToGame(){ hideAllScreens(); show('game'); showBurger(); window.scrollTo(0,0); }
+    function goToCoupleConnect(){ hideAllScreens(); show('coupleConnect'); showBurger(); window.scrollTo(0,0); }
+
+    function showBurger(){ if ($('burgerMenuBtn')) $('burgerMenuBtn').style.display='block'; }
+    function hideBurger(){ if ($('burgerMenuBtn')) $('burgerMenuBtn').style.display='none'; }
+
+    // ---------------------------- BASIC UTIL ----------------------------
+    function escapeHTML(str){
+      return (str || '')
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;');
     }
-    return v;
-  }
 
-  // ---------------------------- COUPLE MODE (Mock) ----------------------------
-  let currentRoomCode = null;
-// --- Copy icon asset paths (single source of truth)
-const COPY_ICON = '/copy.png';
-const COPIED_ICON = '/copied.png';
+    // ---------------------------- AGE / TOS ----------------------------
+    on('ageYesBtn','click', goToTOS);
+    on('ageNoBtn','click', function(){ alert('You must be 18 to use Storybound.'); window.location.href='https://google.com'; });
 
-// --- Create Couple Room + Invitation
-on('createRoomBtn','click', () => {
-  currentRoomCode = Math.random().toString(36).substr(2, 6).toUpperCase();
-
-  hide('coupleConnect');
-  show('invite');
-
-  const text =
-`Your private Storybound chamber is ready.
-
-Invitation code: ${currentRoomCode}
-
-Ask your partner to open Storybound, choose Couple mode, and enter this code.`;
-
-  $('invitationText').innerHTML = `
-    ${escapeHTML(text).replaceAll('\n','<br>')}
-    <img class="copyIconImg" id="copyIconImg" src="${COPY_ICON}" alt="Copy">
-  `;
-  
-  attachCopyHandler();
-});
-
-// --- Copy handler
-function attachCopyHandler(){
-  const icon = $('copyIconImg');
-  if (!icon) return;
-
-  icon.onclick = async () => {
-    const txt = ($('invitationText').innerText || '').trim();
-    try{
-      await navigator.clipboard.writeText(txt);
-      icon.src = COPIED_ICON;
-      setTimeout(() => { icon.src = COPY_ICON; }, 1200);
-    }catch(e){
-      alert('Copy failed—try selecting and copying manually.');
-    }
-  };
-}
-
-  attachCopyHandler();
-
-  on('iveSentItBtn','click', () => {
-    hide('invite');
-    show('waiting');
-    $('waitingStatus').textContent = currentRoomCode
-      ? `Waiting for your partner in chamber ${currentRoomCode}...`
-      : `Waiting for your partner...`;
-  });
-
-  on('forceSyncBtn','click', () => {
-    alert('Force sync is mocked—assuming partner has joined.');
-    mode = 'couple';
-    goToSetup();
-  });
-
-  on('withdrawInvitationBtn','click', () => {
-    currentRoomCode = null;
-    goToModeChoice();
-  });
-
-  on('exploreSoloBtn','click', () => {
-    mode = 'solo';
-    goToSetup();
-  });
-
-  on('joinRoomBtn','click', () => {
-    const code = ($('joinCode').value || '').trim().toUpperCase();
-    if (!code) return alert('Enter a code first.');
-    currentRoomCode = code;
-    alert('Join is mocked — assuming chamber connected.');
-    mode = 'couple';
-    goToSetup();
-  });
-
-  // ---------------------------- CARD SELECTION ----------------------------
-  function setupCardSelection(containerId, maxSelect, stateName, attrName, hiddenInputId){
-    const container = $(containerId);
-    const hidden = hiddenInputId ? $(hiddenInputId) : null;
-    if (!container) return;
-
-    container.addEventListener('click', (e) => {
-      const card = e.target.closest('.card');
-      if (!card) return;
-
-      const value = card.getAttribute(attrName);
-      if (!value) return;
-
-      // Locked styles: open unlock modal
-      if (stateName === 'style' && card.classList.contains('locked')){
-        openStyleUnlock(value);
-        return;
-      }
-
-      let arr = [];
-      if (stateName === 'genre') arr = genre.split(',').filter(Boolean);
-      if (stateName === 'dynamic') arr = dynamic.split(',').filter(Boolean);
-
-      if (maxSelect === 1){
-        if (stateName === 'style'){
-          selectSingleStyle(value);
-          if (hidden) hidden.value = value;
-          return;
-        }
-        if (stateName === 'pov'){
-          container.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
-          pov = value;
-          if (hidden) hidden.value = value;
-          return;
-        }
-      } else {
-        if (card.classList.contains('selected')){
-          card.classList.remove('selected');
-          arr = arr.filter(v => v !== value);
-        } else {
-          if (arr.length >= maxSelect){
-            alert(`You can choose up to ${maxSelect} options here.`);
-            return;
-          }
-          card.classList.add('selected');
-          arr.push(value);
-        }
-        if (stateName === 'genre'){
-          genre = arr.join(',');
-          if (hidden) hidden.value = genre;
-        } else if (stateName === 'dynamic'){
-          dynamic = arr.join(',');
-          if (hidden) hidden.value = dynamic;
-        }
-      }
+    on('tosAgree','change', function(e){
+      var btn = $('tosEnterBtn');
+      btn.disabled = !e.target.checked;
+      btn.style.background = e.target.checked ? '#ff69b4' : '#666';
     });
-  }
+    on('tosEnterBtn','click', goToTierChoice);
 
-  function selectSingleStyle(value){
-    document.querySelectorAll('#core-styles .card, #advanced-styles .card').forEach(c => c.classList.remove('selected'));
-    const match = document.querySelector(`.card[data-style="${CSS.escape(value)}"]`);
-    if (match) match.classList.add('selected');
-    style = value;
-    const hidden = $('style');
-    if (hidden) hidden.value = value;
-  }
+    // ---------------------------- BURGER ----------------------------
+    on('burgerMenuBtn','click', function(){ $('mainMenuOverlay').style.display = 'flex'; });
+    on('menuCloseBtn','click', function(){ $('mainMenuOverlay').style.display = 'none'; });
+    on('menuBackToTierBtn','click', function(){ $('mainMenuOverlay').style.display='none'; goToTierChoice(); });
+    on('menuRestartStoryBtn','click', function(){
+      $('mainMenuOverlay').style.display='none';
+      // light reset
+      if ($('story')) $('story').innerHTML='';
+      goToModeChoice();
+    });
 
-  setupCardSelection('genre-main', 3, 'genre', 'data-genre', 'genre');
-  setupCardSelection('genre-more', 3, 'genre', 'data-genre', 'genre');
-  setupCardSelection('dynamic-cards', 3, 'dynamic', 'data-dynamic', 'dynamic');
-  setupCardSelection('pov-styles', 1, 'pov', 'data-pov', 'pov');
-  setupCardSelection('core-styles', 1, 'style', 'data-style', 'style');
-  setupCardSelection('advanced-styles', 1, 'style', 'data-style', 'style');
+    // ---------------------------- TIER ----------------------------
+    on('teaseBtn','click', function(){
+      tier = 'free';
+      goToModeChoice();
+    });
 
-  on('moreGenresBtn','click', () => {
-    const more = $('genre-more');
-    more.style.display = (more.style.display === 'none' || !more.style.display) ? 'grid' : 'none';
-  });
-
-  on('moreStylesBtn','click', () => {
-    const adv = $('advanced-styles');
-    adv.style.display = (adv.style.display === 'none' || !adv.style.display) ? 'grid' : 'none';
-  });
-
-  // Preview modal always works
-  document.querySelectorAll('.preview-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    on('indulgeBtn','click', function(e){
       e.preventDefault();
       e.stopPropagation();
-      const card = e.target.closest('.card');
-      if (!card) return;
-      const previewText = card.getAttribute('data-preview') || 'Preview unavailable.';
-      $('modal-preview').textContent = previewText;
-      $('vizImage').style.display = 'none';
-      hide('vizControls');
-      show('modalCloseOnly','block');
-      $('modal').style.display = 'flex';
+      $('signupModal').style.display = 'flex';
     });
-  });
 
-  on('modal-close-only','click', () => { $('modal').style.display = 'none'; });
-  on('modal-close','click', () => { $('modal').style.display = 'none'; });
+    on('signupCancelBtn','click', function(){
+      $('signupModal').style.display = 'none';
+      show('tierChoice','flex');
+    });
 
-  // ---------------------------- STYLE LOCKS + UNLOCK FLOW ----------------------------
-  let pendingStyleValue = null;
-
-  function applyStyleLocks(forceUnlockAll=false){
-    const unlocked = forceUnlockAll || (tier === 'indulge') || storyStyleUnlockPurchased;
-
-    // In Tease (free), lock all but Breathless by default
-    document.querySelectorAll('#core-styles .card').forEach((c, i) => {
-      c.classList.remove('locked','paywall-cursor');
-      if (!unlocked && i !== 0){
-        c.classList.add('locked','paywall-cursor');
+    on('signupConfirmBtn','click', function(){
+      if (!$('signupAgeConfirm').checked){
+        alert('Please confirm you are 18+ and agree to the Terms.');
+        return;
       }
+      tier = 'indulge';
+      $('signupModal').style.display = 'none';
+      goToModeChoice();
     });
-    document.querySelectorAll('#advanced-styles .card').forEach((c) => {
-      c.classList.remove('locked','paywall-cursor');
-      if (!unlocked){
-        c.classList.add('locked','paywall-cursor');
+
+    // ---------------------------- MODE ----------------------------
+    on('soloBtn','click', function(){ mode='solo'; goToSetup(); });
+    on('coupleBtn','click', function(){ mode='couple'; goToCoupleConnect(); });
+
+    on('strangerBtn','click', function(){
+      incrementStrangerCounters();
+      var stats = readStrangerStats();
+      $('strangerStats').textContent = 'So far: ' + stats.unique + ' unique visitor(s) chose Stranger, ' + stats.clicks + ' total selection(s).';
+      $('strangerModal').style.display='flex';
+    });
+    on('strangerCloseBtn','click', function(){ $('strangerModal').style.display='none'; });
+
+    function getOrCreateVisitorId(){
+      var k = 'storybound_visitor_id_v1';
+      var v = localStorage.getItem(k);
+      if (!v){
+        v = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem(k, v);
       }
-    });
-  }
-
-  function openStyleUnlock(styleValue){
-    pendingStyleValue = styleValue;
-    $('styleUnlockCopy').textContent = `Unlock “${styleValue}” for $1 (this story) — or unlock everything with Indulge.`;
-    $('styleUnlockModal').style.display = 'flex';
-  }
-
-  on('styleUnlockCancelBtn','click', () => {
-    pendingStyleValue = null;
-    $('styleUnlockModal').style.display = 'none';
-  });
-
-  on('styleUnlockAllBtn','click', () => {
-    // Route into Indulge signup (mock)
-    $('styleUnlockModal').style.display = 'none';
-    $('signupModal').style.display = 'flex';
-  });
-
-  on('styleUnlockStoryBtn','click', () => {
-    $('styleUnlockModal').style.display = 'none';
-    pendingUnlockType = 'style';
-    $('unlockCopy').textContent = 'Unlock all Story Styles for this story only.';
-    $('unlockModal').style.display = 'flex';
-  });
-
-  // ---------------------------- PRONOUN CUSTOM ----------------------------
-  on('gender','change', () => {
-    const val = $('gender').value;
-    if (val === 'Custom') show('customGender'); else hide('customGender');
-  });
-
-  on('pronouns','change', () => {
-    const val = $('pronouns').value;
-    if (val === 'Custom') show('customPronouns'); else hide('customPronouns');
-  });
-
-  // ---------------------------- INTENSITY (sync) ----------------------------
-  function setIntensity(newVal){
-    intensity = newVal;
-    const mapHint = {
-      clean: 'Flirt, chemistry, and longing. No explicit anatomy.',
-      naughty: 'Direct teasing with tasteful sensuality.',
-      erotic: 'More explicit intimacy and sensual detail.',
-      dirty: 'Very explicit language and bold scenes.'
-    };
-    if ($('intensityHint')) $('intensityHint').textContent = mapHint[intensity] || mapHint.clean;
-    if ($('intensityHint2')) $('intensityHint2').textContent = mapHint[intensity] || mapHint.clean;
-
-    const ids1 = ['intensityCleanBtn','intensityNaughtyBtn','intensityEroticBtn','intensityDirtyBtn'];
-    const ids2 = ['intensityCleanBtn2','intensityNaughtyBtn2','intensityEroticBtn2','intensityDirtyBtn2'];
-    [...ids1, ...ids2].forEach(id => { const el=$(id); if(el) el.classList.remove('active'); });
-
-    const activate = (id) => $(id)?.classList.add('active');
-    if (intensity === 'clean'){ activate('intensityCleanBtn'); activate('intensityCleanBtn2'); }
-    if (intensity === 'naughty'){ activate('intensityNaughtyBtn'); activate('intensityNaughtyBtn2'); }
-    if (intensity === 'erotic'){ activate('intensityEroticBtn'); activate('intensityEroticBtn2'); }
-    if (intensity === 'dirty'){ activate('intensityDirtyBtn'); activate('intensityDirtyBtn2'); }
-  }
-
-  on('intensityCleanBtn','click', () => setIntensity('clean'));
-  on('intensityNaughtyBtn','click', () => setIntensity('naughty'));
-  on('intensityEroticBtn','click', () => setIntensity('erotic'));
-  on('intensityDirtyBtn','click', () => setIntensity('dirty'));
-  on('intensityCleanBtn2','click', () => setIntensity('clean'));
-  on('intensityNaughtyBtn2','click', () => setIntensity('naughty'));
-  on('intensityEroticBtn2','click', () => setIntensity('erotic'));
-  on('intensityDirtyBtn2','click', () => setIntensity('dirty'));
-
-  // ---------------------------- LOADING (smooth, non-bouncy) ----------------------------
-  const loadingSets = {
-    story: [
-      'Weaving your story...',
-      'Stoking the embers...',
-      'Sharpening the tension...',
-      'Lacing the scene with consequence...',
-      'Setting the hook in the dark...'
-    ],
-    suggest: [
-      'Consulting your desires...',
-      'Finding a better next move...',
-      'Threading your choice into the scene...',
-      'Shaping a direction that fits the tone...'
-    ],
-    visualize: [
-      'Painting the moment...',
-      'Stealing a frame from the page...',
-      'Summoning a visual...',
-      'Fixing the lighting and mood...'
-    ],
-    setting: [
-      'Opening the world...',
-      'Unveiling the skyline...',
-      'Lighting the first scene...'
-    ]
-  };
-
-  function startLoading(kind='story'){
-    const o = $('loadingOverlay');
-    const f = $('loadingOverlayFill');
-    const s = $('loadingOverlayStatus');
-    const p = $('loadingOverlayPercent');
-
-    const msgs = loadingSets[kind] || loadingSets.story;
-    if (o._int) clearInterval(o._int);
-
-    o.style.display = 'flex';
-    f.style.width = '0%';
-    p.textContent = '1%';
-    s.textContent = msgs[0];
-
-    let pr = 1;
-    let m = 0;
-
-    const i = setInterval(() => {
-      const cap = 96;
-      const step = pr < 70 ? 4 : (pr < 88 ? 2 : 1);
-      if (pr < cap) pr = Math.min(cap, pr + step);
-
-      f.style.width = `${pr}%`;
-      p.textContent = `${pr}%`;
-
-      if (pr % 18 === 0){
-        m++;
-        s.textContent = msgs[Math.min(m, msgs.length-1)];
-      }
-    }, 260);
-
-    o._int = i;
-  }
-
-  function finishLoading(){
-    const o = $('loadingOverlay');
-    const f = $('loadingOverlayFill');
-    const p = $('loadingOverlayPercent');
-    const s = $('loadingOverlayStatus');
-
-    if (o._int) clearInterval(o._int);
-    f.style.width = '100%';
-    p.textContent = '100%';
-    s.textContent = 'Done.';
-    setTimeout(() => {
-      o.style.display = 'none';
-      f.style.width = '0%';
-      p.textContent = '';
-      s.textContent = '';
-    }, 300);
-  }
-
-// ---------------------------- TEASE LOCKS (inputs/controls only) ----------------------------
-function applyTeaseSoloLocks(){
-  const isTeaseSolo = (tier === 'free' && mode === 'solo');
-
-  const action = $('actionInput');
-  const dialogue = $('dialogueInput');
-  const saveBtn = $('saveGameBtn');
-  const storyCtrlBtn = $('storyControlBtn');
-
-  // Lock visuals apply best to the wrapper so ::after can show reliably
-  function lockBox(el){
-    const box = el?.closest?.('.input-box');
-    if (box) box.classList.add('greyed-locked','paywall-cursor');
-  }
-  function unlockBox(el){
-    const box = el?.closest?.('.input-box');
-    if (box) box.classList.remove('greyed-locked','paywall-cursor');
-  }
-  function lockBtn(btn){
-    if (!btn) return;
-    btn.disabled = false; // keep clickable so it can open the paywall
-    btn.classList.add('greyed-locked','paywall-cursor','locked');
-  }
-  function unlockBtn(btn){
-    if (!btn) return;
-    btn.disabled = false;
-    btn.classList.remove('greyed-locked','paywall-cursor','locked');
-  }
-
-  // Not Tease/Solo => everything unlocked
-  if (!isTeaseSolo){
-    if (action){ action.readOnly = false; action.disabled = false; unlockBox(action); }
-    if (dialogue){ dialogue.readOnly = false; dialogue.disabled = false; unlockBox(dialogue); }
-    unlockBtn(saveBtn);
-    unlockBtn(storyCtrlBtn);
-    return;
-  }
-
-  // --- Tease + Solo gating ---
-  // Use readOnly (NOT disabled) so clicks can trigger unlock modal.
-  if (!storyTextUnlockPurchased){
-    if (action){ action.readOnly = true; action.disabled = false; lockBox(action); }
-    if (dialogue){ dialogue.readOnly = true; dialogue.disabled = false; lockBox(dialogue); }
-    lockBtn(saveBtn);
-  } else {
-    if (action){ action.readOnly = false; action.disabled = false; unlockBox(action); }
-    if (dialogue){ dialogue.readOnly = false; dialogue.disabled = false; unlockBox(dialogue); }
-    unlockBtn(saveBtn);
-  }
-
-  if (!storyControlsUnlockPurchased){
-    lockBtn(storyCtrlBtn);
-  } else {
-    unlockBtn(storyCtrlBtn);
-  }
-}
-
-// ---------------------------- UNLOCK FLOW (text/controls/style) ----------------------------
-function openUnlock(type){
-  pendingUnlockType = type;
-  $('unlockCopy').textContent =
-    type === 'text'
-      ? 'Unlock text inputs + saving for this story only.'
-      : type === 'controls'
-        ? 'Unlock Story Controls for this story only.'
-        : 'Unlock Story Styles for this story only.';
-  $('unlockModal').style.display = 'flex';
-}
-
-on('unlockCancelBtn','click', () => { $('unlockModal').style.display = 'none'; pendingUnlockType = null; });
-
-on('unlockProceedBtn','click', () => {
-  $('unlockModal').style.display = 'none';
-  $('purchaseFlowModal').style.display = 'flex';
-});
-
-on('purchaseCancelBtn','click', () => { $('purchaseFlowModal').style.display = 'none'; pendingUnlockType = null; });
-
-on('purchaseConfirmBtn','click', () => {
-  if (!$('unlockConfirm').checked){
-    alert('Please confirm payment (mock).');
-    return;
-  }
-  $('purchaseFlowModal').style.display = 'none';
-
-  if (pendingUnlockType === 'text'){
-    storyTextUnlockPurchased = true;
-    alert('Unlocked text inputs + saving for this story!');
-  } else if (pendingUnlockType === 'controls'){
-    storyControlsUnlockPurchased = true;
-    alert('Unlocked Story Controls for this story!');
-  } else if (pendingUnlockType === 'style'){
-    storyStyleUnlockPurchased = true;
-    alert('Unlocked Story Styles for this story!');
-    applyStyleLocks();
-    if (pendingStyleValue){
-      selectSingleStyle(pendingStyleValue);
-      pendingStyleValue = null;
+      return v;
     }
-  }
-  pendingUnlockType = null;
-  applyTeaseSoloLocks();
-});
+    function incrementStrangerCounters(){
+      try{
+        var uid = getOrCreateVisitorId();
+        var u = JSON.parse(localStorage.getItem(strangerUniqueKey) || '[]');
+        if (u.indexOf(uid) === -1) u.push(uid);
+        localStorage.setItem(strangerUniqueKey, JSON.stringify(u.slice(-5000)));
 
-// Click-to-unlock hooks (textbox + wrapper)
-on('actionInput','click', () => {
-  if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased) openUnlock('text');
-});
-on('dialogueInput','click', () => {
-  if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased) openUnlock('text');
-});
-document.querySelectorAll('.input-box').forEach(box => {
-  box.addEventListener('click', () => {
-    if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased) openUnlock('text');
-  });
-});
-
-// ---------------------------- STORY CONTROLS ----------------------------
-on('storyControlBtn','click', () => {
-  if (tier==='free' && mode==='solo' && !storyControlsUnlockPurchased){
-    openUnlock('controls');
-    return;
-  }
-  renderStoryControls();
-  $('storyControlModal').style.display = 'flex';
-});
-on('storyControlCancelBtn','click', () => { $('storyControlModal').style.display = 'none'; });
-on('storyControlApplyBtn','click', () => {
-  const txt = ($('storyControlInput').value || '').trim();
-  if (txt){
-    storyControlsActive.push(txt);
-    $('storyControlInput').value = '';
-  }
-  renderStoryControls();
-  $('storyControlModal').style.display = 'none';
-});
-
-function renderStoryControls(){
-  const active = $('activeControls');
-  const archived = $('archivedControls');
-  if (!active || !archived) return;
-
-  active.innerHTML = '';
-  archived.innerHTML = '';
-
-  storyControlsActive.forEach((c, idx) => {
-    const span = document.createElement('span');
-    span.style.display = 'inline-block';
-    span.style.margin = '6px';
-    span.style.padding = '8px 12px';
-    span.style.borderRadius = '999px';
-    span.style.border = '1px solid rgba(255,105,180,0.55)';
-    span.style.background = 'rgba(139,0,139,0.55)';
-    span.style.cursor = 'pointer';
-    span.textContent = `✕ ${c}`;
-    span.onclick = () => {
-      const [removed] = storyControlsActive.splice(idx, 1);
-      storyControlsArchived.push(removed);
-      renderStoryControls();
-    };
-    active.appendChild(span);
-  });
-
-  storyControlsArchived.forEach((c, idx) => {
-    const span = document.createElement('span');
-    span.style.display = 'inline-block';
-    span.style.margin = '6px';
-    span.style.padding = '8px 12px';
-    span.style.borderRadius = '999px';
-    span.style.border = '1px solid rgba(255,105,180,0.35)';
-    span.style.background = 'rgba(60,60,60,0.55)';
-    span.style.cursor = 'pointer';
-    span.textContent = `+ ${c}`;
-    span.onclick = () => {
-      const [added] = storyControlsArchived.splice(idx, 1);
-      storyControlsActive.push(added);
-      renderStoryControls();
-    };
-    archived.appendChild(span);
-  });
-}
-
-
-  // ---------------------------- NAME GENERATION (gender-aligned) ----------------------------
-  const usedNamesKey = 'storybound_used_names';
-  const usedLastNamesKey = 'storybound_used_lastnames';
-
-  function getUsedList(key){
-    try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){ return []; }
-  }
-  function addUsed(key, val){
-    const arr = getUsedList(key);
-    if (!arr.includes(val)) arr.push(val);
-    localStorage.setItem(key, JSON.stringify(arr.slice(-150)));
-  }
-  function randomFrom(list){ return list[Math.floor(Math.random()*list.length)]; }
-
-  function generateTeaseName(selectedGender){
-    const maleFirsts = ['Rowan','Julian','Elias','Adrian','Dorian','Cassian','Lucian','Soren','Theo','Silas','Raphael','Nico','Kieran','Miles','Gideon','Jasper'];
-    const femaleFirsts = ['Ava','Mara','Nina','Sable','Lena','Rhea','Talia','Iris','Selene','Noelle','Jade','Vera','Aria','Cora','Maeve','Skye'];
-    const neutralFirsts = ['Ash','Remy','Sage','Quinn','River','Avery','Ellis','Rowan','Kai','Noa','Nova','Sky','Wren','Indigo','Phoenix','Arden'];
-
-    // "McMiser" style but less obvious
-    const lastNames = ['Bargainsworth','Pennicar','Nicklehart','Thrifton','Budgett','Lowell','Frugalstone','Piecemeal','Scantwell','Miserlynn'];
-
-    const usedFirst = getUsedList(usedNamesKey);
-    const usedLast = getUsedList(usedLastNamesKey);
-
-    const g = (selectedGender || '').toLowerCase();
-    const pool =
-      g.includes('female') ? femaleFirsts :
-      g.includes('male') ? maleFirsts :
-      neutralFirsts;
-
-    let f = pool.find(x => !usedFirst.includes(x)) || randomFrom(pool);
-    let l = lastNames.find(x => !usedLast.includes(x)) || randomFrom(lastNames);
-
-    addUsed(usedNamesKey, f);
-    addUsed(usedLastNamesKey, l);
-    return `${f} ${l}`;
-  }
-
-  // ---------------------------- SAFETY (kept, without the word you hate) ----------------------------
-  // You asked to remove "consensual" mentions. We do that in UI + prompts,
-  // while still enforcing adult-only / no sexual violence / no minors.
-  function safetyRules(){
-    return [
-      `Safety: Adult characters only. No minors (real or fictional).`,
-      `Safety: No sexual violence. No coercion. If roleplay appears, it must be clearly wanted and bounded (safeword/limits).`,
-      `Safety: No real-person sexual content without permission.`,
-    ].join('\n');
-  }
-
-  // ---------------------------- POV RULES ----------------------------
-  function synopsisPOVRule(){
-    // Synopsis always 3rd, except 5th uses Author voice
-    if (pov === 'fifth') return `Synopsis voice: Author voice.`;
-    return `Synopsis voice: Always third-person, regardless of story POV.`;
-  }
-
-  function povRules(){
-    if (pov === 'first') return `POV: Strict first-person. Narration uses "I".`;
-    if (pov === 'second') return `POV: Strict second-person. Narration addresses the player as "you".`;
-    if (pov === 'third') return `POV: Strict third-person only.`;
-    if (pov === 'fourth') return `POV: Strict "we" voice only.`;
-    if (pov === 'fifth') return `POV: Author voice. The Author is a presence; subtle, not intrusive.`;
-    return `POV: Strict first-person.`;
-  }
-
-  function intensityRules(){
-    if (intensity === 'clean') return `Heat: Clean. Flirtation, longing. No explicit anatomy.`;
-    if (intensity === 'naughty') return `Heat: Naughty. Teasing and sensual detail; still tasteful.`;
-    if (intensity === 'erotic') return `Heat: Erotic. More explicit intimacy and sensual detail.`;
-    return `Heat: Dirty. Very explicit language and bold scenes.`;
-  }
-
-  function classifyNoMagic(genresCSV){
-    const gs = (genresCSV || '').split(',').map(s => s.trim()).filter(Boolean);
-    const hasFantasy = gs.some(g => ['romantasy','paranormal-modern','gothic'].some(k => g.includes(k)));
-    const hasContemporary = gs.some(g => ['contemporary','billionaire','sports','romcom','small-town','new-adult','organized-crime'].some(k => g.includes(k)));
-    return (hasContemporary && !hasFantasy);
-  }
-
-  function buildSystemPrompt(isOpening=false){
-    const noMagic = classifyNoMagic(genre);
-
-    const controlsText = storyControlsActive.length
-      ? `\nControls:\n- ${storyControlsActive.join('\n- ')}`
-      : '';
-
-    const usedFirst = getUsedList(usedNamesKey).slice(-30).join(', ');
-    const usedLast = getUsedList(usedLastNamesKey).slice(-30).join(', ');
-
-    const plotRule = `Plot: From the start, establish an overarching plot with a nemesis with hidden goals, alliances, and escalating complications that interrupt desire and force choices. Keep motives consistent.`;
-    const antiCliche = `Style rule: Avoid clichés and stock phrases. Do not use "time stood still", "electric touch", "couldn’t help but", etc.`;
-    const realismRule = noMagic
-      ? `Genre constraint: Real-world contemporary. No magic or supernatural mechanics.`
-      : `Genre constraint: If fantasy elements appear, keep them coherent and tied to plot (not random trinkets).`;
-
-    // Longer openings: 6–10 paragraphs, world-building, artful hints, no straight exposition, no sex
-    const openingLengthRule = isOpening
-      ? `Opening length: 6–10 paragraphs, 3–6 sentences each. World-building, background, setting, and artful hints. No straight exposition dumps. No sex in the opening.`
-      : `Length: Continuations are 2–4 paragraphs, 3–6 sentences each. Keep it moving.`;
-
-    const dialogueFormatRule =
-      `Dialogue formatting: Put spoken dialogue in quotation marks. Whenever possible, prefix spoken lines with "SPEAKER:" (e.g., "${char1}:"). Keep it natural; don’t overdo tags.`;
-
-    const nameRule =
-      `Names: Generate fresh, non-repeating names. Avoid reusing: ${usedFirst || '(none)'}. Avoid reusing last names: ${usedLast || '(none)'}.`;
-
-    const titleRule =
-`Output format for the opening ONLY (MUST follow exactly):
-Title: <short title>
-Synopsis: <35-60 words, back-of-book-jacket tease; name ONLY the player character and the love interest; no other named characters; no long exposition>
-Then write the story body.`;
-
-    // Tease choices: no “Do you…?”, choices written in POV voice
-    const teaseChoiceRule = (tier === 'free' && mode === 'solo')
-      ? `At the end of every reply, output exactly two choices on their own lines, prefixed with "CHOICE 1:" and "CHOICE 2:". Each choice must be written in the active POV voice and should read like an action the player would take. Do not ask a question. Do not add anything after CHOICE 2.`
-      : '';
-
-    return [
-      `You are a master storyteller for romance/romantasy with heat and plot.`,
-      povRules(),
-      synopsisPOVRule(),
-      intensityRules(),
-      realismRule,
-      plotRule,
-      openingLengthRule,
-      antiCliche,
-      dialogueFormatRule,
-      safetyRules(),
-      `Player alignment: Respect the player's chosen gender and pronouns for the player character.`,
-      nameRule,
-      titleRule,
-      controlsText,
-      teaseChoiceRule
-    ].filter(Boolean).join('\n');
-  }
-
-  // ---------------------------- API CALLS ----------------------------
-  async function callChat(messages){
-    const body = { model: STORY_MODEL, messages };
-    const res = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify(body)
-    }).catch((e) => {
-      throw new Error(`Failed to fetch story proxy. Check PROXY_URL and CORS. (${e?.message || e})`);
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok){
-      const msg = data?.error?.message || data?.error || `${res.status} ${res.statusText}`;
-      throw new Error(msg);
+        var clicks = parseInt(localStorage.getItem(strangerClicksKey) || '0', 10) || 0;
+        localStorage.setItem(strangerClicksKey, String(clicks + 1));
+      }catch(e){}
     }
-    return data?.choices?.[0]?.message?.content || '';
-  }
-
-  function extractImageFromResponse(data){
-    let url = data?.data?.[0]?.url || null;
-    let b64 = data?.data?.[0]?.b64_json || null;
-    if (!url && !b64) url = data?.url || data?.image_url || data?.output?.[0]?.url || null;
-    if (!url && !b64) b64 = data?.b64_json || data?.output?.[0]?.b64_json || null;
-    if (!url && !b64) url = data?.images?.[0]?.url || null;
-    return { url, b64 };
-  }
-
-  async function callImage(prompt, modelKey='grok'){
-    const model = IMAGE_MODELS[modelKey] || IMAGE_MODELS.grok;
-    // IMPORTANT: Your image proxy must accept: { model, prompt, n, response_format }
-    const body = { model, prompt, n: 1, response_format: "url" };
-
-    const res = await fetch(IMAGE_PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify(body)
-    }).catch((e) => {
-      throw new Error(`Failed to fetch image proxy. Check IMAGE_PROXY_URL, deployment, and CORS. (${e?.message || e})`);
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok){
-      const msg = data?.error?.message || data?.error || `${res.status} ${res.statusText}`;
-      throw new Error(msg);
-    }
-    return data;
-  }
-
-  // ---------------------------- STORY FORMATTING ----------------------------
-  function escapeHTML(str){
-    return (str || '')
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;');
-  }
-
-  // Extract choices written as:
-  // CHOICE 1: ...
-  // CHOICE 2: ...
-  function splitChoices(raw){
-    const text = (raw || '').replace(/\r/g,'');
-    const c1 = text.match(/^\s*CHOICE 1:\s*(.+)\s*$/mi);
-    const c2 = text.match(/^\s*CHOICE 2:\s*(.+)\s*$/mi);
-    if (!c1 || !c2) return { body: text.trim(), choice1: null, choice2: null };
-
-    // Remove the choice lines from body
-    const body = text
-      .replace(/^\s*CHOICE 1:.*$/mi,'')
-      .replace(/^\s*CHOICE 2:.*$/mi,'')
-      .trim();
-
-    return { body, choice1: c1[1].trim(), choice2: c2[1].trim() };
-  }
-
-  // Find speaker from "Name:" prefix
-  function parseSpeakerPrefix(line){
-    const m = (line || '').match(/^([A-Z][A-Za-z'’\-]+(?:\s+[A-Z][A-Za-z'’\-]+)?)\s*:\s*(.+)$/);
-    if (!m) return null;
-    return { speaker: m[1].trim(), rest: m[2].trim() };
-  }
-
-  // Dialogue detection: extract quoted segments; render ONLY quoted segments as dialogue-line
-  // plus optional trailing attribution fragments like "he said."
-  function extractDialogueSegments(paragraph){
-    const p = paragraph || '';
-    // Handle both “ ” and " "
-    const patterns = [
-      /“([^”]+)”(\s*(?:,?\s*(?:he|she|they)\s+(?:said|asked|replied|murmured|whispered|snapped|laughed|breathed|added|warned|ordered)[^.]*)?\.?)/gi,
-      /"([^"]+)"(\s*(?:,?\s*(?:he|she|they)\s+(?:said|asked|replied|murmured|whispered|snapped|laughed|breathed|added|warned|ordered)[^.]*)?\.?)/gi
-    ];
-    const segs = [];
-    for (const re of patterns){
-      let m;
-      while ((m = re.exec(p)) !== null){
-        const full = `"${m[1].trim()}"${(m[2]||'')}`;
-        segs.push({ raw: full.trim() });
+    function readStrangerStats(){
+      try{
+        var u = JSON.parse(localStorage.getItem(strangerUniqueKey) || '[]');
+        var clicks = parseInt(localStorage.getItem(strangerClicksKey) || '0', 10) || 0;
+        return { unique: u.length, clicks: clicks };
+      }catch(e){
+        return { unique: 0, clicks: 0 };
       }
     }
-    return segs;
-  }
 
-  function formatStoryTextToHTML(raw){
-    const text = (raw || '').replace(/\r/g,'').trim();
-    if (!text) return '';
+    // ---------------------------- COUPLE (Mock) ----------------------------
+    on('createRoomBtn','click', function(){
+      currentRoomCode = Math.random().toString(36).substr(2, 6).toUpperCase();
+      hide('coupleConnect'); show('invite');
 
-    const paras = text.split(/\n{2,}/).map(s => s.trim()).filter(Boolean);
-    const out = [];
+      var text =
+'Your private Storybound chamber is ready.\n\n' +
+'Invitation code: ' + currentRoomCode + '\n\n' +
+'Ask your partner to open Storybound, choose Couple mode, and enter this code.';
 
-    for (const para of paras){
-      // Separator markers from model (optional)
-      if (/^§§§$/.test(para)){
-        out.push(`<div class="story-separator">⚜</div>`);
-        continue;
-      }
+      $('invitationText').innerHTML =
+        escapeHTML(text).replace(/\n/g,'<br>') +
+        '<img class="copyIconImg" id="copyIconImg" src="' + COPY_ICON + '" alt="Copy">';
 
-      // If paragraph contains explicit choice markers, ignore them (we handle separately)
-      if (/^\s*CHOICE\s+\d\s*:/i.test(para)) continue;
+      attachCopyHandler(); // ✅ must be after innerHTML inject
+    });
 
-      // If speaker prefix present and rest contains quotes, treat as dialogue
-      const pref = parseSpeakerPrefix(para);
-      if (pref){
-        const cls = speakerClass(pref.speaker);
-        // remove speaker label in display
-        out.push(`<p class="dialogue-line ${cls}">${escapeHTML(pref.rest)}</p>`);
-        continue;
-      }
+    on('joinRoomBtn','click', function(){
+      var code = (($('joinCode').value || '').trim().toUpperCase());
+      if (!code) return alert('Enter a code first.');
+      currentRoomCode = code;
+      alert('Join is mocked — assuming chamber connected.');
+      mode='couple';
+      goToSetup();
+    });
 
-      // Pull dialogue-only segments as separate dialogue lines when present
-      const segs = extractDialogueSegments(para);
-      if (segs.length){
-        // Render non-dialogue remainder as story-line (with the quoted segments removed)
-        let remainder = para;
-        remainder = remainder.replace(/“[^”]+”(\s*(?:,?\s*(?:he|she|they)\s+(?:said|asked|replied|murmured|whispered|snapped|laughed|breathed|added|warned|ordered)[^.]*)?\.?)?/gi, '').trim();
-        remainder = remainder.replace(/"[^"]+"(\s*(?:,?\s*(?:he|she|they)\s+(?:said|asked|replied|murmured|whispered|snapped|laughed|breathed|added|warned|ordered)[^.]*)?\.?)?/gi, '').trim();
+    on('iveSentItBtn','click', function(){
+      hide('invite'); show('waiting');
+      $('waitingStatus').textContent = currentRoomCode
+        ? ('Waiting for your partner in chamber ' + currentRoomCode + '...')
+        : 'Waiting for your partner...';
+    });
 
-        if (remainder){
-          out.push(`<p class="story-line">${escapeHTML(remainder)}</p>`);
+    on('forceSyncBtn','click', function(){
+      alert('Force sync is mocked—assuming partner has joined.');
+      mode='couple';
+      goToSetup();
+    });
+
+    on('withdrawInvitationBtn','click', function(){ currentRoomCode=null; goToModeChoice(); });
+    on('exploreSoloBtn','click', function(){ mode='solo'; goToSetup(); });
+
+    function attachCopyHandler(){
+      var icon = $('copyIconImg');
+      if (!icon) return;
+      icon.onclick = function(){
+        var txt = ($('invitationText').innerText || '').trim();
+        if (!navigator.clipboard || !navigator.clipboard.writeText){
+          alert('Clipboard not available. Select and copy manually.');
+          return;
         }
-
-        for (const s of segs){
-          const cls = inferDialogueClassFromContext(s.raw);
-          out.push(`<p class="dialogue-line ${cls}">${escapeHTML(s.raw)}</p>`);
-        }
-        continue;
-      }
-
-      out.push(`<p class="story-line">${escapeHTML(para)}</p>`);
-    }
-
-    return out.join('');
-  }
-
-  function speakerClass(name){
-    const n = (name || '').trim().toLowerCase();
-    const p1 = (char1 || '').trim().split(/\s+/)[0]?.toLowerCase();
-    const p2 = (loveName || '').trim().split(/\s+/)[0]?.toLowerCase();
-    if (p1 && n.includes(p1)) return 'dialogue-p1';
-    if (p2 && n.includes(p2)) return 'dialogue-p2';
-    return '';
-  }
-
-  function inferDialogueClassFromContext(dialogueRaw){
-    // naive: if dialogue contains "I" heavily and POV is first, lean p1; if contains "you" heavily and POV second, lean p1
-    // otherwise default npc
-    const t = (dialogueRaw || '').toLowerCase();
-    const p1Hint = (pov === 'first' && (t.includes(' i ') || t.startsWith('"i '))) ||
-                   (pov === 'second' && (t.includes(' you ') || t.startsWith('"you ')));
-    return p1Hint ? 'dialogue-p1' : '';
-  }
-
-  // Insert a fleur-de-lis separator before new sections
-  function appendSeparator(){
-    const div = document.createElement('div');
-    div.className = 'story-separator';
-    div.textContent = '⚜';
-    $('story').appendChild(div);
-  }
-
-  // Scroll so new section begins at top of viewport (not just inside story box)
-  function scrollToSectionTop(){
-    const storyEl = $('story');
-    if (!storyEl) return;
-    const rect = storyEl.getBoundingClientRect();
-    const y = window.scrollY + rect.top - 14;
-    window.scrollTo({ top: y, behavior: 'smooth' });
-  }
-
-  // ---------------------------- TITLE META POPOVER ----------------------------
-  function updateTitlePopoverContent(){
-    const pop = $('titleMetaPopover');
-    pop.innerHTML =
-      `<div><span class="k">Genre:</span> <span class="v">${escapeHTML(genre || '')}</span></div>` +
-      `<div><span class="k">Dynamic:</span> <span class="v">${escapeHTML(dynamic || '(none)')}</span></div>` +
-      `<div><span class="k">POV:</span> <span class="v">${escapeHTML(pov || '')}</span></div>` +
-      `<div><span class="k">Style:</span> <span class="v">${escapeHTML(style || '')}</span></div>` +
-      `<div style="margin-top:8px;color:#ffd700;opacity:0.85;font-style:italic">Hover-only. Not shown to your partner.</div>`;
-  }
-
-  function showTitlePopoverAt(x,y){
-    const pop = $('titleMetaPopover');
-    updateTitlePopoverContent();
-    pop.style.left = Math.min(x + 14, window.innerWidth - 460) + 'px';
-    pop.style.top  = Math.min(y + 14, window.innerHeight - 180) + 'px';
-    pop.style.display = 'block';
-  }
-
-  function hideTitlePopover(){
-    $('titleMetaPopover').style.display = 'none';
-  }
-
-  $('bookTitle').addEventListener('mouseenter', (e) => {
-    const r = $('bookTitle').getBoundingClientRect();
-    showTitlePopoverAt(r.left + r.width/2, r.top + 10);
-  });
-  $('bookTitle').addEventListener('mousemove', (e) => showTitlePopoverAt(e.clientX, e.clientY));
-  $('bookTitle').addEventListener('mouseleave', hideTitlePopover);
-
-  // ---------------------------- TEASE CHOICE UI ----------------------------
-  function setupTeaseUI(choice1, choice2){
-    if (!choice1 || !choice2){
-      hide('teaseChoiceButtons');
-      return;
-    }
-    $('teaseChoice1').textContent = choice1;
-    $('teaseChoice2').textContent = choice2;
-    $('teaseChoiceButtons').style.display = 'flex';
-  }
-
-  // IMPORTANT: Clicking dual options is FREE and does not open purchase flow,
-  // and does NOT auto-fill text inputs.
-  on('teaseChoice1','click', () => sendChoice($('teaseChoice1').textContent));
-  on('teaseChoice2','click', () => sendChoice($('teaseChoice2').textContent));
-
-  async function sendChoice(choiceText){
-    // Treat as an action-only choice; do NOT fill boxes
-    await send({ action: choiceText, dialogue: '' }, { fromChoice: true });
-  }
-
-  // ---------------------------- BEGIN STORY ----------------------------
-  on('begin-btn','click', async () => {
-    startLoading('story');
-    goToGame();
-    scrollToTopHard();
-
-    $('storyError').style.display = 'none';
-    $('storyError').textContent = '';
-    hide('settingShotWrap');
-
-    try{
-      // Pull state from setup
-      genre = $('genre').value || genre;
-      dynamic = $('dynamic').value || dynamic;
-      pov = $('pov').value || pov;
-      style = $('style').value || style;
-      gender = $('gender').value || gender;
-
-      // Custom style override
-      const customStyleTxt = ($('custom-style-text')?.value || '').trim();
-      if (style === 'custom' && customStyleTxt) style = `custom: ${customStyleTxt}`;
-
-      // Name
-      if (tier === 'free'){
-        char1 = generateTeaseName(gender);
-      } else {
-        char1 = ($('char1').value || '').trim();
-        if (!char1) char1 = 'Rowan Vale';
-      }
-
-      // Apply style locks now that tier chosen
-      applyStyleLocks();
-
-      // Reset unlocks per new story
-      storyTextUnlockPurchased = false;
-      storyControlsUnlockPurchased = false;
-      pendingUnlockType = null;
-
-      // Reset suggests per new story
-      suggestRemaining = { action: 5, dialogue: 5 };
-      suggestHistory = { action: [], dialogue: [] };
-      syncSuggestButtons();
-
-      // Clear story
-      $('story').innerHTML = '';
-      $('turn-indicator').style.display = 'block';
-      $('turn-indicator').textContent = 'Your story is taking shape...';
-
-      const systemPrompt = buildSystemPrompt(true);
-      const userPrompt =
-`Start a new story.
-Genres: ${genre}
-Dynamics: ${dynamic}
-Player: ${char1} (${gender})
-Style: ${style}
-Important: Output Title + Synopsis exactly as instructed.`;
-
-      const raw = await callChat([
-        { role:'system', content: systemPrompt },
-        { role:'user', content: userPrompt }
-      ]);
-
-      // Parse title/synopsis/body + tease choices
-      const parsed = parseTitleSynopsisBody(raw);
-      const split = splitChoices(parsed.body || '');
-
-      renderParsedOpening({ title: parsed.title, synopsis: parsed.synopsis, body: split.body });
-
-      // Infer love interest name from synopsis (best-effort)
-      loveName = inferLoveInterestName(parsed.synopsis, char1);
-
-      // Generate setting shot (non-fatal)
-      await generateSettingShot(parsed.synopsis || '');
-
-      // Tease: show choices (free dual-options)
-      if (tier === 'free' && mode === 'solo'){
-        setupTeaseUI(split.choice1, split.choice2);
-      } else {
-        hide('teaseChoiceButtons');
-      }
-
-      applyTeaseSoloLocks();
-
-      $('turn-indicator').style.display = 'none';
-      $('turn-indicator').textContent = '';
-
-      // Ensure the story starts at top for the user
-      scrollToTopHard();
-      scrollToSectionTop();
-
-    }catch(err){
-      $('storyError').textContent = `Story failed: ${err.message || err}`;
-      $('storyError').style.display = 'block';
-      $('story').innerHTML = formatStoryTextToHTML('The storyteller fell silent.');
-    }finally{
-      finishLoading();
-    }
-  });
-
-  function stripStars(s){ return (s || '').replace(/\*\*/g,'').trim(); }
-
-  function parseTitleSynopsisBody(text){
-    const lines = (text || '').replace(/\r/g,'').split('\n').map(l => stripStars(l).trim());
-    let title = '';
-    let synopsis = '';
-    let bodyStartIndex = 0;
-
-    for (let i=0;i<Math.min(lines.length, 14);i++){
-      const low = lines[i].toLowerCase();
-      if (low.startsWith('title:')){
-        title = lines[i].slice(6).trim();
-        bodyStartIndex = Math.max(bodyStartIndex, i+1);
-      }
-      if (low.startsWith('synopsis:')){
-        synopsis = lines[i].slice(9).trim();
-        bodyStartIndex = Math.max(bodyStartIndex, i+1);
-      }
-    }
-
-    let body = lines.join('\n');
-    if (title || synopsis){
-      body = lines.slice(bodyStartIndex).join('\n').trim();
-    }
-    return { title, synopsis, body };
-  }
-
-  function renderParsedOpening(parsed){
-    const { title, synopsis, body } = parsed;
-
-    if (title){
-      $('bookTitle').textContent = title;
-      $('bookTitle').style.display = 'block';
-    } else {
-      $('bookTitle').style.display = 'none';
-    }
-
-    if (synopsis){
-      $('bookHook').textContent = synopsis;
-      $('bookHook').style.display = 'block';
-    } else {
-      $('bookHook').style.display = 'none';
-    }
-
-    // Insert a fleur separator between hook and body (brings it back)
-    $('story').innerHTML = '';
-    if (body && body.trim()){
-      $('story').innerHTML =
-        `<div class="story-separator">⚜</div>` +
-        formatStoryTextToHTML(body);
-    } else {
-      $('story').innerHTML = `<div class="story-separator">⚜</div>`;
-    }
-
-    $('story').scrollTop = 0;
-  }
-
-  function inferLoveInterestName(synopsis, playerName){
-    const s = (synopsis || '');
-    const playerFirst = (playerName || '').split(/\s+/)[0];
-    // Grab capitalized name pairs
-    const candidates = s.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || [];
-    const filtered = candidates.filter(x => x !== playerFirst && x !== playerName);
-    // Prefer first plausible different name
-    return filtered[0] || '';
-  }
-
-  // ---------------------------- SETTING SHOT (opening image) ----------------------------
-  async function generateSettingShot(synopsis){
-    startLoading('setting');
-    try{
-      // Better beauty + cinematic + no explicit nudity
-      const sysPrompt =
-`Write ONE image-generation prompt (<=80 words). Establishing shot only: landscape/cityscape/world/setting. Cinematic lighting. High-end, beautiful, luxurious atmosphere. No explicit nudity. No text overlay.`;
-
-      const userPrompt = `Write an establishing-shot image prompt based on this synopsis:\n${(synopsis || '').slice(0, 900)}`;
-
-      const promptText = await callChat([
-        { role:'system', content: sysPrompt },
-        { role:'user', content: userPrompt }
-      ]);
-
-      const cleanedPrompt = stripStars(promptText).trim().slice(0, 1500);
-
-      // Default to Grok model unless user changes later in viz modal
-      const imgData = await callImage(cleanedPrompt, 'grok');
-      const { url, b64 } = extractImageFromResponse(imgData);
-
-      if (!url && !b64){
-        throw new Error('Image response missing url/b64_json. Check your /api/image proxy response shape.');
-      }
-
-      const imgEl = $('settingShotImg');
-      imgEl.src = url ? url : `data:image/jpeg;base64,${b64}`;
-      $('settingShotCaption').textContent = 'A first glimpse of the world…';
-      show('settingShotWrap','block');
-    }catch(err){
-      hide('settingShotWrap');
-      console.warn('Setting shot failed:', err);
-    }finally{
-      finishLoading();
-    }
-  }
-
-  // ---------------------------- GAME INTERACTIONS ----------------------------
-  on('exitGameBtn','click', goToModeChoice);
-  on('saveGameBtn','click', () => {
-  if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased){
-    openUnlock('text');
-    return;
-  }
-  saveGame();
-});
-
-  on('sendBtn','click', () => send());
-
-  function syncSuggestButtons(){
-    const a = $('suggestActionBtn');
-    const d = $('suggestDialogueBtn');
-    if (a) a.textContent = `AI Suggest Action (${suggestRemaining.action})`;
-    if (d) d.textContent = `AI Suggest Dialogue (${suggestRemaining.dialogue})`;
-  }
-
-  // Suggestions: vary widely; last two become more surprising
-  on('suggestActionBtn','click', () => suggest('action'));
-  on('suggestDialogueBtn','click', () => suggest('dialogue'));
-
-  async function suggest(type){
-    // If user clicks after 0, we auto-advance the story with a teasing “you hesitated” beat
-    if ((type === 'action' && suggestRemaining.action <= 0) ||
-        (type === 'dialogue' && suggestRemaining.dialogue <= 0)){
-      await autoAdvanceForHesitation(type);
-      return;
-    }
-
-    startLoading('suggest');
-    try{
-      const history = $('story').textContent.slice(-2400);
-      const sys = buildSystemPrompt(false);
-
-      const used = suggestHistory[type].slice(-4).join(' | ');
-      const remaining = (type === 'action') ? suggestRemaining.action : suggestRemaining.dialogue;
-
-      const user =
-`Generate ONE short player suggestion (3–8 words).
-It must be clearly different from recent suggestions: ${used || '(none)'}.
-Variety rule:
-- If remaining clicks are 5–3: safer, grounded.
-- If remaining clicks are 2–1: bolder, surprising, high-contrast (still plausible).
-Return ONLY the phrase. No quotes. No bullets.
-
-Story so far:
-${history}
-
-Suggestion type: ${type}`;
-
-      const out = await callChat([{ role:'system', content: sys }, { role:'user', content: user }]);
-      const phrase = stripStars(out).split('\n')[0].trim().replace(/^[-•]\s*/,'').slice(0, 80);
-
-      if (type === 'action'){
-        suggestRemaining.action = Math.max(0, suggestRemaining.action - 1);
-        $('actionInput').value = phrase;
-      } else {
-        suggestRemaining.dialogue = Math.max(0, suggestRemaining.dialogue - 1);
-        $('dialogueInput').value = phrase;
-      }
-
-      suggestHistory[type].push(phrase);
-      syncSuggestButtons();
-    }catch(err){
-      console.warn('Suggest failed:', err);
-    }finally{
-      finishLoading();
-    }
-  }
-
-  async function autoAdvanceForHesitation(type){
-    startLoading('story');
-    try{
-      appendSeparator();
-
-      const sys = buildSystemPrompt(false);
-      const storySoFar = $('story').textContent.slice(-2600);
-
-      const user =
-`Continue the story.
-Add a playful, teasing note that the player hesitated too long or couldn't decide, so the moment chose for them.
-Then advance the scene naturally.
-Do NOT repeat any "CHOICE" lines.
-End normally (no special formatting).
-Story so far:
-${storySoFar}`;
-
-      const raw = await callChat([{ role:'system', content: sys }, { role:'user', content: user }]);
-      const parsed = splitChoices(raw);
-      $('story').insertAdjacentHTML('beforeend', formatStoryTextToHTML(parsed.body || raw));
-
-      // Add separator and scroll to the beginning of the new section
-      appendSeparator();
-      scrollToSectionTop();
-if (window.StoryboundCards?.burnAndRedeal) StoryboundCards.burnAndRedeal();
-
-
-      // If Tease mode, refresh choices if present
-      if (tier === 'free' && mode === 'solo'){
-        if (parsed.choice1 && parsed.choice2){
-          setupTeaseUI(parsed.choice1, parsed.choice2);
-        } else {
-          hide('teaseChoiceButtons');
-        }
-      }
-    }catch(err){
-      console.warn('Auto-advance failed:', err);
-    }finally{
-      finishLoading();
-    }
-  }
-
-  // Sending player input
-  async function send(payload=null, opts={ fromChoice:false }){
-    const isTeaseSolo = (tier==='free' && mode==='solo');
-
-    if (isTeaseSolo && !storyTextUnlockPurchased && !opts.fromChoice){
-      // In Tease Solo, text inputs are locked unless unlocked
-      openUnlock('text');
-      return;
-    }
-
-    const action = payload ? (payload.action || '') : ($('actionInput').value || '').trim();
-    const dialogue = payload ? (payload.dialogue || '') : ($('dialogueInput').value || '').trim();
-
-    if (!action && !dialogue){
-      alert('Add an action or a line of dialogue.');
-      return;
-    }
-
-    startLoading('story');
-    try{
-      appendSeparator();
-
-      // Clear boxes after submit (but NOT for choice auto-fill because we never filled them)
-      if (!opts.fromChoice){
-        $('actionInput').value = '';
-        $('dialogueInput').value = '';
-      }
-
-      const sys = buildSystemPrompt(false);
-
-      const history = $('story').textContent.slice(-2800);
-      const user =
-`Continue the story with the player's input.
-Player action: ${action || '(none)'}
-Player dialogue: ${dialogue || '(none)'}
-Do NOT repeat the player's input verbatim as a "choice" list.
-If in Tease mode, end with CHOICE 1 and CHOICE 2 lines.
-
-Story so far:
-${history}`;
-
-      const raw = await callChat([{ role:'system', content: sys }, { role:'user', content: user }]);
-      const parsed = splitChoices(raw);
-
-      $('story').insertAdjacentHTML('beforeend', formatStoryTextToHTML(parsed.body || raw));
-
-      // Insert fleur before the next “chunk” feels complete
-      appendSeparator();
-
-      // Scroll to the beginning of the new section
-      scrollToSectionTop();
-
-      // Tease choices (free)
-      if (isTeaseSolo){
-        setupTeaseUI(parsed.choice1, parsed.choice2);
-      } else {
-        hide('teaseChoiceButtons');
-      }
-
-      // New “turn” => refresh suggest counters + history
-      suggestRemaining = { action: 5, dialogue: 5 };
-      suggestHistory = { action: [], dialogue: [] };
-      syncSuggestButtons();
-
-    }catch(err){
-      $('storyError').textContent = `Story failed: ${err.message || err}`;
-      $('storyError').style.display = 'block';
-    }finally{
-      finishLoading();
-    }
-  }
-
-  // ---------------------------- VISUALIZE + INSERT ----------------------------
-  on('visualizeBtn','click', async () => {
-    await visualizeCurrentMoment(false);
-  });
-
-  async function visualizeCurrentMoment(isRe=false){
-    startLoading('visualize');
-
-    try{
-      // Prompt for beauty
-      const sys =
-`Write ONE image-generation prompt (<=90 words).
-Goal: beautiful characters, high-end cinematic fashion/beauty, elegant lighting, dramatic composition.
-No explicit nudity. No graphic sexual detail. No text overlay.
-Return only the prompt.`;
-
-      const storySoFar = $('story').textContent.slice(-2200);
-      const user =
-`Create a visualization prompt for the current moment of this story.
-Story excerpt:
-${storySoFar}`;
-
-      const promptText = await callChat([{ role:'system', content: sys }, { role:'user', content: user }]);
-      const prompt = stripStars(promptText).trim().slice(0, 1600);
-
-      const modelKey = $('vizModelSelect')?.value || 'grok';
-      const imgData = await callImage(prompt, modelKey);
-      const { url, b64 } = extractImageFromResponse(imgData);
-
-      if (!url && !b64){
-        throw new Error('Image response missing url/b64_json. Check your image proxy.');
-      }
-
-      lastViz = { url, b64, prompt, modelKey };
-
-      // Open modal in viz mode
-      $('modal-preview').textContent = '';
-      $('vizImage').style.display = 'block';
-      $('vizImage').src = url ? url : `data:image/jpeg;base64,${b64}`;
-      show('vizControls','flex');
-      hide('modalCloseOnly');
-
-      if (!isRe) vizRemaining = 2;
-      updateVizCount();
-
-      $('modal').style.display = 'flex';
-    }catch(err){
-      // If visualize failed, show a clear error
-      $('modal-preview').textContent = `Visualize failed: ${err.message || err}`;
-      $('vizImage').style.display = 'none';
-      hide('vizControls');
-      show('modalCloseOnly','block');
-      $('modal').style.display = 'flex';
-      console.warn(err);
-    }finally{
-      finishLoading();
-    }
-  }
-
-  function updateVizCount(){
-    const el = $('vizReCount');
-    if (!el) return;
-    el.textContent = `Re-Visualize (${vizRemaining})`;
-    $('vizRevBtn').disabled = vizRemaining <= 0;
-  }
-
-  on('vizRevBtn','click', async () => {
-    if (vizRemaining <= 0) return;
-    vizRemaining = Math.max(0, vizRemaining - 1);
-    updateVizCount();
-    await visualizeCurrentMoment(true);
-  });
-
-  on('vizInsertBtn','click', () => {
-    if (!lastViz) return;
-    insertVizIntoStory(lastViz);
-    $('modal').style.display = 'none';
-  });
-
-  function insertVizIntoStory(v){
-    // Insert image into story as a figure
-    const src = v.url ? v.url : `data:image/jpeg;base64,${v.b64}`;
-    appendSeparator();
-    const html =
-      `<figure class="story-image">
-        <img src="${src}" alt="Story visualization">
-        <figcaption>A stolen frame from the scene…</figcaption>
-      </figure>`;
-    $('story').insertAdjacentHTML('beforeend', html);
-    appendSeparator();
-    scrollToSectionTop();
-  }
-
-  // ---------------------------- SAVE (simple localStorage) ----------------------------
-  const lastSaveKey = 'storybound_save_v2';
-
-  function saveGame(){
-    try{
-      const data = {
-        tier, mode, pov, style, genre, dynamic, char1, gender, intensity,
-        loveName,
-        storyHTML: $('story').innerHTML,
-        bookTitle: $('bookTitle').textContent || '',
-        bookHook: $('bookHook').textContent || '',
-        ts: Date.now()
+        navigator.clipboard.writeText(txt).then(function(){
+          icon.src = COPIED_ICON;
+          setTimeout(function(){ icon.src = COPY_ICON; }, 1200);
+        }).catch(function(){
+          alert('Copy failed—try selecting and copying manually.');
+        });
       };
-      localStorage.setItem(lastSaveKey, JSON.stringify(data));
-      alert('Saved locally.');
-    }catch(e){
-      alert('Save failed.');
     }
-  }
 
-  // ---------------------------- STYLE LOCKS ON LOAD ----------------------------
-  // If user refreshes without choosing tier, default to AgeGate -> TierChoice flow
-  function boot(){
-    goToAgeGate();
-  }
+    // ---------------------------- INTENSITY ----------------------------
+    function setIntensity(val){
+      intensity = val;
+      var mapHint = {
+        clean: 'Flirt, chemistry, and longing. No explicit anatomy.',
+        naughty: 'Direct teasing with tasteful sensuality.',
+        erotic: 'More explicit intimacy and sensual detail.',
+        dirty: 'Very explicit language and bold scenes.'
+      };
+      $('intensityHint').textContent = mapHint[intensity] || mapHint.clean;
 
-  // ---------------------------- VISUAL MODEL SELECT DEFAULT ----------------------------
-  // Default to Grok
-  if ($('vizModelSelect')) $('vizModelSelect').value = 'grok';
+      // simple "active" toggle
+      ['intensityCleanBtn','intensityNaughtyBtn','intensityEroticBtn','intensityDirtyBtn'].forEach(function(id){
+        var el=$(id); if(el) el.classList.remove('active');
+      });
+      var activeId =
+        intensity==='clean' ? 'intensityCleanBtn' :
+        intensity==='naughty' ? 'intensityNaughtyBtn' :
+        intensity==='erotic' ? 'intensityEroticBtn' :
+        'intensityDirtyBtn';
+      if ($(activeId)) $(activeId).classList.add('active');
 
-  // ---------------------------- VISUALIZE MODAL CLOSE ----------------------------
-  // close button already wired
-
-  // ---------------------------- SETUP STYLE LOCKS INIT ----------------------------
-  applyStyleLocks();
-
-  // ---------------------------- LOCKED STYLE CARD HOVER CURSOR ----------------------------
-  // already done via .paywall-cursor class
-
-  // ---------------------------- FINISH INIT ----------------------------
-  boot();
-});
-</script>
-<script src="./fatecards/storybound-cards.js"></script>
-<script>
-  window.addEventListener("load", () => {
-    if (!window.StoryboundCards) {
-      console.error("StoryboundCards not found. Check ./fatecards/storybound-cards.js path / deployment.");
-      return;
+      // notify Fatecards (if present)
+      if (window.StoryboundCards && window.StoryboundCards.setIntensity){
+        window.StoryboundCards.setIntensity(intensity);
+      }
     }
-    StoryboundCards.mount({ mountId: "cardMount" });
-  });
-</script>
+    on('intensityCleanBtn','click', function(){ setIntensity('clean'); });
+    on('intensityNaughtyBtn','click', function(){ setIntensity('naughty'); });
+    on('intensityEroticBtn','click', function(){ setIntensity('erotic'); });
+    on('intensityDirtyBtn','click', function(){ setIntensity('dirty'); });
+
+    // ---------------------------- PREVIEW MODAL ----------------------------
+    function openModalPreview(text){
+      $('modal-preview').textContent = text || '';
+      $('vizImage').style.display = 'none';
+      $('modal').style.display='flex';
+    }
+    on('modal-close-only','click', function(){ $('modal').style.display='none'; });
+
+    // preview buttons
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.preview-btn');
+      if (!btn) return;
+      e.preventDefault(); e.stopPropagation();
+      var card = e.target.closest('.card');
+      if (!card) return;
+      openModalPreview(card.getAttribute('data-preview') || 'Preview unavailable.');
+    });
+
+    // ---------------------------- STORY (stub so UI works even without proxy) ----------------------------
+    // You can plug your real proxy calls back in; this just prevents "nothing happens".
+    function appendStoryLine(txt){
+      var story = $('story');
+      if (!story) return;
+      var p = document.createElement('p');
+      p.className = 'story-line';
+      p.textContent = txt;
+      story.appendChild(p);
+      story.scrollTop = story.scrollHeight;
+    }
+
+    on('begin-btn','click', function(){
+      goToGame();
+      $('bookTitle').textContent = 'A Door With Teeth';
+      $('bookTitle').style.display = 'block';
+      $('bookHook').textContent = 'A glittering invitation, a dangerous rival, and a single choice that turns desire into leverage.';
+      $('bookHook').style.display = 'block';
+      $('story').innerHTML = '<div class="story-separator">⚜</div>';
+      appendStoryLine('This build is running as a static site. Your proxy endpoints can be wired in next — but the UI is alive.');
+      appendStoryLine('Select a Fate card below to steer the next beat.');
+    });
+
+    on('sendBtn','click', function(){
+      var a = ($('actionInput').value||'').trim();
+      var d = ($('dialogueInput').value||'').trim();
+      if (!a && !d) return alert('Add an action or a line of dialogue.');
+      appendStoryLine('You move: ' + (a || '(no action)') + ' / You say: ' + (d || '(no dialogue)'));
+      $('actionInput').value=''; $('dialogueInput').value='';
+      if (window.StoryboundCards && window.StoryboundCards.burnAndRedeal){
+        window.StoryboundCards.burnAndRedeal();
+      }
+    });
+
+    on('exitGameBtn','click', goToModeChoice);
+
+    // ---------------------------- GENRE / STYLE TOGGLES (minimal: preserve your UI) ----------------------------
+    on('moreGenresBtn','click', function(){
+      var more = $('genre-more');
+      more.style.display = (more.style.display === 'none' || !more.style.display) ? 'grid' : 'none';
+    });
+    on('moreStylesBtn','click', function(){
+      var adv = $('advanced-styles');
+      adv.style.display = (adv.style.display === 'none' || !adv.style.display) ? 'grid' : 'none';
+    });
+
+    // ---------------------------- BOOT ----------------------------
+    function boot(){
+      // mount Fatecards if file loaded
+      if (window.StoryboundCards && window.StoryboundCards.mount){
+        window.StoryboundCards.mount({ mountId: 'cardMount' });
+        setIntensity(intensity);
+      } else {
+        console.error('StoryboundCards not found. Check /fatecards/storybound-cards.js exists at site root.');
+      }
+      goToAgeGate();
+    }
+    boot();
+  })();
+  </script>
 </body>
 </html>
