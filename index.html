@@ -1966,44 +1966,91 @@ window.addEventListener('load', () => {
   }
 
   // ---------------------------- TEASE LOCKS (inputs/controls only) ----------------------------
-  function applyTeaseSoloLocks(){
-    const isTeaseSolo = (tier === 'free' && mode === 'solo');
+function applyTeaseSoloLocks(){
+  const isTeaseSolo = (tier === 'free' && mode === 'solo');
 
-    // NOTE: Tease dual-options are FREE and never locked
-    // Only lock textboxes/suggest/save and story controls in Solo Tease
-    const paywalled = ['actionInput','dialogueInput','suggestActionBtn','suggestDialogueBtn','saveGameBtn'];
-    const controlsPaywalled = ['storyControlBtn'];
+  const action = $('actionInput');
+  const dialogue = $('dialogueInput');
+  const saveBtn = $('saveGameBtn');
+  const storyCtrlBtn = $('storyControlBtn');
 
-    function setPaywallCursor(el, on){
-      if (!el) return;
-      if (on) el.classList.add('paywall-cursor');
-      else el.classList.remove('paywall-cursor');
+  // Helpers: apply lock visuals to WRAPPERS (reliable for ::after)
+  function lockBoxFor(el){
+    const box = el?.closest?.('.input-box');
+    if (box){
+      box.classList.add('greyed-locked','paywall-cursor');
     }
-
-    if (!isTeaseSolo){
-      [...paywalled, ...controlsPaywalled].forEach(id => {
-        $(id)?.classList.remove('greyed-locked');
-        setPaywallCursor($(id), false);
-      });
-      $('actionInput').disabled = false;
-      $('dialogueInput').disabled = false;
-      $('saveGameBtn').disabled = false;
-      return;
+  }
+  function unlockBoxFor(el){
+    const box = el?.closest?.('.input-box');
+    if (box){
+      box.classList.remove('greyed-locked','paywall-cursor');
     }
+  }
+  function lockBtn(btn){
+    if (!btn) return;
+    btn.disabled = false; // keep clickable so it can open paywall
+    btn.classList.add('locked','paywall-cursor','greyed-locked');
+  }
+  function unlockBtn(btn){
+    if (!btn) return;
+    btn.disabled = false;
+    btn.classList.remove('locked','paywall-cursor','greyed-locked');
+  }
 
-    if (!storyTextUnlockPurchased){
-      $('actionInput').disabled = true;
-      $('dialogueInput').disabled = true;
-      $('saveGameBtn').disabled = true;
+  // If NOT Tease/Solo: everything should be normal
+  if (!isTeaseSolo){
+    if (action){ action.readOnly = false; action.disabled = false; }
+    if (dialogue){ dialogue.readOnly = false; dialogue.disabled = false; }
+
+    unlockBoxFor(action);
+    unlockBoxFor(dialogue);
+
+    unlockBtn(saveBtn);
+    unlockBtn(storyCtrlBtn);
+
+    // If you still have AI Suggest buttons in the DOM somewhere, ensure they’re normal
+    $('suggestActionBtn')?.classList.remove('locked','greyed-locked','paywall-cursor');
+    $('suggestDialogueBtn')?.classList.remove('locked','greyed-locked','paywall-cursor');
+
+    return;
+  }
+
+  // --- Tease + Solo gating ---
+  // Text inputs:
+  // Use readOnly (NOT disabled) so clicks still fire and can open the paywall.
+  if (!storyTextUnlockPurchased){
+    if (action){ action.readOnly = true; action.disabled = false; }
+    if (dialogue){ dialogue.readOnly = true; dialogue.disabled = false; }
+
+    lockBoxFor(action);
+    lockBoxFor(dialogue);
+    lockBtn(saveBtn);
+  } else {
+    if (action){ action.readOnly = false; action.disabled = false; }
+    if (dialogue){ dialogue.readOnly = false; dialogue.disabled = false; }
+
+    unlockBoxFor(action);
+    unlockBoxFor(dialogue);
+    unlockBtn(saveBtn);
+  }
+
+  // Story Controls gating
+  if (!storyControlsUnlockPurc
+
+// keep Save clickable so it can open the pay flow
+$('saveGameBtn').disabled = false;
+
 
       paywalled.forEach(id => {
         $(id)?.classList.add('greyed-locked');
         setPaywallCursor($(id), true);
       });
     } else {
-      $('actionInput').disabled = false;
-      $('dialogueInput').disabled = false;
-      $('saveGameBtn').disabled = false;
+$('actionInput').readOnly = false;
+$('dialogueInput').readOnly = false;
+$('saveGameBtn').disabled = false;
+
 
       paywalled.forEach(id => {
         $(id)?.classList.remove('greyed-locked');
@@ -2078,6 +2125,14 @@ window.addEventListener('load', () => {
   on('dialogueInput','click', () => {
     if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased) openUnlock('text');
   });
+// Make the entire locked input box clickable (not just the textarea)
+document.querySelectorAll('.input-box').forEach(box => {
+  box.addEventListener('click', () => {
+    if (tier === 'free' && mode === 'solo' && !storyTextUnlockPurchased) {
+      openUnlock('text');
+    }
+  });
+});
 
   // ---------------------------- STORY CONTROLS ----------------------------
   on('storyControlBtn','click', () => {
@@ -2725,7 +2780,14 @@ Important: Output Title + Synopsis exactly as instructed.`;
 
   // ---------------------------- GAME INTERACTIONS ----------------------------
   on('exitGameBtn','click', goToModeChoice);
-  on('saveGameBtn','click', saveGame);
+  on('saveGameBtn','click', () => {
+  if (tier==='free' && mode==='solo' && !storyTextUnlockPurchased){
+    openUnlock('text');
+    return;
+  }
+  saveGame();
+});
+
   on('sendBtn','click', () => send());
 
   function syncSuggestButtons(){
@@ -3037,9 +3099,15 @@ ${storySoFar}`;
   boot();
 });
 </script>
-<script src="/fatecards/storybound-cards.js"></script>
+<script src="./fatecards/storybound-cards.js"></script>
 <script>
-  StoryboundCards.mount({ mountId: "cardMount" });
+  window.addEventListener("load", () => {
+    if (!window.StoryboundCards) {
+      console.error("StoryboundCards not found. Check ./fatecards/storybound-cards.js path / deployment.");
+      return;
+    }
+    StoryboundCards.mount({ mountId: "cardMount" });
+  });
 </script>
 </body>
 </html>
