@@ -641,14 +641,17 @@ button.greyed-locked{
       pointer-events: none;
       filter: drop-shadow(0 0 10px rgba(255,20,147,0.25));
     }
-
-/* Dollar-plane cursor for anything paywalled */
+/* Dollar-plane cursor for anything paywalled (robust) */
 .paywall-cursor,
 .locked,
 .greyed-locked,
+.card.locked,
+.card.greyed-locked,
+button.locked,
+button.greyed-locked,
 .locked *,
 .greyed-locked *{
-  cursor: url("/paper-money-plane-cursor.png") 10 10, pointer !important;
+  cursor: url("/cursor-dollar-plane-64.png") 10 10, pointer !important;
 }
 
     }
