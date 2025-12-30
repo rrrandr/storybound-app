@@ -625,6 +625,13 @@
 .paywall-cursor{
   cursor: url("/paper-money-plane-cursor.png") 10 10, pointer !important;
 }
+/* Apply paywall cursor to any locked thing */
+.locked,
+.greyed-locked,
+.locked * ,
+.greyed-locked *{
+  cursor: url("/paper-money-plane-cursor.png") 10 10, pointer !important; /* or the %20 version */
+}
 
     }
 
