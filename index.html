@@ -454,7 +454,7 @@
 
     /* Handcuff badge (PNG asset, stable) */
 .card.locked::after,
-.greyed-locked::after{
+.card.greyed-locked::after{
   content: "";
   position: absolute;
   top: 10px;
@@ -470,12 +470,33 @@
 
 /* Tasteful hover glow */
 .card.locked:hover::after,
-.card.locked:focus-within::after{
+.card.locked:focus-within::after,
+.card.greyed-locked:hover::after,
+.card.greyed-locked:focus-within::after{
   opacity: 1;
   transform: scale(1.06);
   filter:
     drop-shadow(0 2px 3px rgba(0,0,0,0.55))
     drop-shadow(0 0 10px rgba(255,105,180,0.35));
+}
+/* Handcuff badge for locked buttons (AI Suggest, etc.) */
+button.locked::after,
+button.greyed-locked::after{
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  background: url("/handcuffs.png") center / contain no-repeat;
+  pointer-events: none;
+  opacity: 0.95;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
+}
+/* Required so ::after can position correctly */
+button.locked,
+button.greyed-locked{
+  position: relative;
 }
 
     }
@@ -621,16 +642,13 @@
       filter: drop-shadow(0 0 10px rgba(255,20,147,0.25));
     }
 
-    /* Dollar bill cursor for locked/paywalled */
-.paywall-cursor{
-  cursor: url("/paper-money-plane-cursor.png") 10 10, pointer !important;
-}
-/* Apply paywall cursor to any locked thing */
+/* Dollar-plane cursor for anything paywalled */
+.paywall-cursor,
 .locked,
 .greyed-locked,
-.locked * ,
+.locked *,
 .greyed-locked *{
-  cursor: url("/paper-money-plane-cursor.png") 10 10, pointer !important; /* or the %20 version */
+  cursor: url("/paper-money-plane-cursor.png") 10 10, pointer !important;
 }
 
     }
