@@ -732,6 +732,99 @@ button.greyed-locked,
   font-style: italic;
   font-size: 0.95em;
 }
+/* ====== BLOCK 1/4 — PASTE INTO YOUR <style> (near the end) ====== */
+
+/* Option pills: selectable + locked (paywalled) */
+.opt-pill{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:10px 14px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.22);
+  background: rgba(0,0,0,.18);
+  cursor:pointer;
+  user-select:none;
+}
+.opt-pill.selected{
+  box-shadow: 0 0 0 2px rgba(255,105,180,.8);
+  border-color: rgba(255,105,180,.9);
+}
+.opt-pill.locked{
+  opacity:.45;
+  filter: grayscale(1);
+  /* use your dollar-plane PNG cursor if you have it */
+  cursor: url('/dollar-plane.png') 2 2, pointer;
+  position:relative;
+}
+.opt-pill.locked .cuffs{
+  width:18px; height:18px;
+  background: url('/handcuffs.png') no-repeat center/contain;
+  opacity:.9;
+  pointer-events:none;
+}
+
+/* Say/Do lock */
+textarea.locked{
+  opacity:.55;
+  filter: grayscale(1);
+  background: rgba(255,255,255,.06);
+  cursor:not-allowed;
+}
+
+/* Fate cards layout: 5 across, 3+2 on smaller screens */
+.fate-grid{
+  display:grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+@media (max-width: 900px){ .fate-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px){ .fate-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Tarot card shape + flip that STAYS flipped */
+.fate-card{
+  width:100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 16px;
+  position:relative;
+  perspective: 1000px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: transparent;
+  padding:0;
+  overflow:hidden;
+}
+.fate-card .inner{
+  position:absolute; inset:0;
+  transform-style: preserve-3d;
+  transition: transform .5s ease;
+  border-radius: inherit;
+}
+.fate-card.flipped .inner{ transform: rotateY(180deg); }
+
+.fate-card .front,
+.fate-card .back{
+  position:absolute; inset:0;
+  backface-visibility:hidden;
+  border-radius: inherit;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+}
+.fate-card .front{ background: rgba(0,0,0,.25); }
+.fate-card .back{
+  transform: rotateY(180deg);
+  background: rgba(255,255,255,.06);
+}
+
+.fate-card.selected{
+  box-shadow: 0 0 0 2px rgba(255,105,180,.8);
+}
+
+/* Poof on Submit */
+.fate-card.poof{ animation: poof .6s ease forwards; }
+@keyframes poof{
+  0%{ transform: scale(1); opacity:1; filter:none; }
+  100%{ transform: scale(.92); opacity:0; filter: blur(2px); }
+}
 
 /* AI Suggest deprecated — Tarot replaces it (keep off) */
 #suggestActionBtn,
@@ -1062,7 +1155,55 @@ button.greyed-locked,
       <button id="visualizeBtn" type="button">Visualize</button>
     </div>
 
-    <div id="cardMount"></div>
+   <!-- ====== FATE CARDS (REPLACEMENT) ====== -->
+<div id="fateGrid" class="fate-grid">
+  <button class="fate-card" type="button" data-index="0" data-card="Temptation"
+    data-say="I let the silence linger—long enough to feel dangerous."
+    data-do="I step closer, just inside your boundary, and wait to see if you yield.">
+    <span class="inner">
+      <span class="front">Temptation</span>
+      <span class="back">Temptation</span>
+    </span>
+  </button>
+
+  <button class="fate-card" type="button" data-index="1" data-card="Confession"
+    data-say="Fine. Here’s the truth I’ve been editing out."
+    data-do="I name the want out loud, then hold your gaze without flinching.">
+    <span class="inner">
+      <span class="front">Confession</span>
+      <span class="back">Confession</span>
+    </span>
+  </button>
+
+  <button class="fate-card" type="button" data-index="2" data-card="Boundary"
+    data-say="No. Not like that. Not unless you ask."
+    data-do="I set a rule—calmly—then make you choose whether to honor it.">
+    <span class="inner">
+      <span class="front">Boundary</span>
+      <span class="back">Boundary</span>
+    </span>
+  </button>
+
+  <button class="fate-card" type="button" data-index="3" data-card="Power Shift"
+    data-say="Careful. If you give me that… I won’t give it back easily."
+    data-do="I turn your advantage into mine with one deliberate move.">
+    <span class="inner">
+      <span class="front">Power Shift</span>
+      <span class="back">Power Shift</span>
+    </span>
+  </button>
+
+  <button class="fate-card" type="button" data-index="4" data-card="Silence"
+    data-say="…"
+    data-do="I do nothing—on purpose—forcing you to fill the space.">
+    <span class="inner">
+      <span class="front">Silence</span>
+      <span class="back">Silence</span>
+    </span>
+  </button>
+</div>
+<!-- ====== END FATE CARDS ====== -->
+
 
     <div class="input-group">
       <div class="input-box">
