@@ -1,142 +1,158 @@
+/* storybound-cards.js (static, no build tools) */
 (function(){
-  // Canonical 5 cards (locked)
-  var CARDS = [
-    { key:'temptation', label:'Temptation', sig:'T', art:'/fatecards/art/temptation.jpg' },
-    { key:'confession', label:'Confession', sig:'C', art:'/fatecards/art/confession.jpg' },
-    { key:'boundary', label:'Boundary', sig:'B', art:'/fatecards/art/boundary.jpg' },
-    { key:'power-shift', label:'Power Shift', sig:'P', art:'/fatecards/art/power-shift.jpg' },
-    { key:'silence', label:'Silence', sig:'S', art:'/fatecards/art/silence.jpg' },
-  ];
-
   var state = {
-    mounted: false,
-    mountEl: null,
-    intensity: 'clean', // clean|naughty|erotic|dirty
-    selectedKey: null
+    mountId: null,
+    actionId: null,
+    dialogueId: null,
+    submitId: null,
+    getTier: function(){ return 'free'; },
+    intensity: 'naughty',
+    selectedIndex: null
   };
 
-  function intensityPct(intensity){
-    if (intensity === 'clean') return 25;
-    if (intensity === 'naughty') return 55;
-    if (intensity === 'erotic') return 78;
-    return 92; // dirty
+  var CARDS = [
+    { title:'Gilded Provocation', tease:true,  fillA:'I step closer, letting the silence dare them.', fillD:'Careful—your confidence is showing.' },
+    { title:'Velvet Ultimatum',    tease:true,  fillA:'I offer a choice that sounds like mercy.',      fillD:'Pick wisely. I enjoy watching you decide.' },
+    { title:'Hostile Attraction',  tease:false, fillA:'I turn the tension into a weapon I can aim.',   fillD:'You keep looking at me like you want a fight.' },
+    { title:'Leverage & Lace',     tease:false, fillA:'I trade a secret for a touch—on my terms.',     fillD:'Let’s negotiate. Slowly.' },
+    { title:'Ruinous Kiss',        tease:false, fillA:'I close the distance like I own it.',           fillD:'Say “stop” if you don’t mean it.' }
+  ];
+
+  function $(id){ return document.getElementById(id); }
+
+  function ensureStyles(){
+    if (document.getElementById('sbCardsInjectedStyles')) return;
+    var s = document.createElement('style');
+    s.id = 'sbCardsInjectedStyles';
+    s.textContent = `
+      .sb-hand{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start}
+      @media (max-width:820px){.sb-hand{grid-template-columns:repeat(3,minmax(0,1fr))}}
+      .sb-card{width:100%;aspect-ratio:2/3;border-radius:14px;position:relative;transform-style:preserve-3d;transition:transform 260ms ease, box-shadow 260ms ease;box-shadow:0 10px 28px rgba(0,0,0,.35)}
+      .sb-card:hover{transform:translateY(-4px)}
+      .sb-card.is-flipped{transform:rotateY(180deg)}
+      .sb-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+      .sb-front{background:radial-gradient(circle at 30% 20%, rgba(255,105,180,.35), rgba(30,30,30,.95));border:1px solid rgba(255,105,180,.25)}
+      .sb-back{transform:rotateY(180deg);background:rgba(10,10,10,.9);border:1px solid rgba(255,215,0,.25);padding:12px;text-align:center;line-height:1.25}
+      .sb-card.sb-disabled{opacity:.45;pointer-events:none;filter:grayscale(.35)}
+      .sb-burn{animation:sbBurn 520ms ease forwards}
+      @keyframes sbBurn{to{opacity:0;transform:translateY(10px) scale(.98)}}
+    `;
+    document.head.appendChild(s);
   }
 
-  function safeImg(url){
-    // if you don't provide art images, we still render a nice “no-art” gradient
-    var img = document.createElement('img');
-    img.alt = '';
-    img.loading = 'lazy';
-    img.referrerPolicy = 'no-referrer';
-    img.onerror = function(){
-      img.style.display = 'none';
-      if (img.parentNode){
-        img.parentNode.style.background =
-          'radial-gradient(circle at 35% 30%, rgba(255,215,0,.12), transparent 55%), ' +
-          'linear-gradient(135deg, rgba(255,20,147,.12), rgba(0,0,0,.85))';
-      }
-    };
-    img.src = url;
-    return img;
+  function getTier(){
+    try{
+      // allow either global var name or window.tier directly
+      if (typeof window.tier === 'string') return window.tier === 'indulge' ? 'indulge' : 'free';
+      return state.getTier();
+    }catch(e){
+      return 'free';
+    }
   }
 
-  function el(tag, cls){
-    var n = document.createElement(tag);
-    if (cls) n.className = cls;
-    return n;
+  function lockTeaseCards(){
+    var tier = getTier();
+    var hand = $(state.mountId);
+    if (!hand) return;
+
+    var cardEls = hand.querySelectorAll('.sb-card');
+    cardEls.forEach(function(el){
+      var idx = parseInt(el.getAttribute('data-idx'), 10);
+      var isAllowed = (tier !== 'free') || (idx === 0 || idx === 1);
+      el.classList.toggle('sb-disabled', !isAllowed);
+    });
+  }
+
+  function writeToInputs(idx){
+    var c = CARDS[idx];
+    var a = $(state.actionId);
+    var d = $(state.dialogueId);
+    if (a) a.value = c.fillA || '';
+    if (d) d.value = c.fillD || '';
   }
 
   function render(){
-    if (!state.mountEl) return;
+    ensureStyles();
+    var mount = $(state.mountId);
+    if (!mount) return;
 
-    state.mountEl.innerHTML = '';
+    mount.innerHTML = '';
+    var hand = document.createElement('div');
+    hand.className = 'sb-hand';
 
-    var wrap = el('div','sb-cards-wrap');
-    var hand = el('div','sb-hand');
+    CARDS.forEach(function(c, idx){
+      var card = document.createElement('div');
+      card.className = 'sb-card';
+      card.setAttribute('data-idx', String(idx));
+      card.setAttribute('role','button');
+      card.setAttribute('tabindex','0');
 
-    var pct = intensityPct(state.intensity);
+      var front = document.createElement('div');
+      front.className = 'sb-face sb-front';
+      front.innerHTML = '<div style="font-weight:700;letter-spacing:0.04em;opacity:.95">Fate</div>';
 
-    CARDS.forEach(function(c, i){
-      var slot = el('div','sb-slot');
-      slot.setAttribute('data-i', String(i));
+      var back = document.createElement('div');
+      back.className = 'sb-face sb-back';
+      back.innerHTML =
+        '<div style="font-weight:700;margin-bottom:6px;color:#ffd700">'+ c.title +'</div>' +
+        '<div style="font-size:0.95em;opacity:.9">Click to choose this beat.</div>';
 
-      if (state.selectedKey === c.key) slot.classList.add('sb-selected');
-      else if (state.selectedKey) slot.classList.add('sb-dim');
-
-      var card = el('div','sb-card');
-      var inner = el('div','sb-inner');
-
-      var back = el('div','sb-face sb-back');
-      var badge = el('div','sb-badge');
-
-      var sig = el('div','sb-sig'); sig.textContent = c.sig;
-      var lbl = el('div','sb-lbl'); lbl.textContent = c.label;
-
-      badge.appendChild(sig);
-      badge.appendChild(lbl);
-      back.appendChild(badge);
-
-      var bar = el('div','sb-intensity');
-      var fill = el('div'); fill.style.width = pct + '%';
-      bar.appendChild(fill);
-      back.appendChild(bar);
-
-      var front = el('div','sb-face sb-front');
-      front.appendChild(safeImg(c.art));
-
-      inner.appendChild(back);
-      inner.appendChild(front);
-      card.appendChild(inner);
-      slot.appendChild(card);
+      card.appendChild(front);
+      card.appendChild(back);
 
       card.addEventListener('click', function(){
-        state.selectedKey = (state.selectedKey === c.key) ? null : c.key;
-        render();
+        // if disabled in Tease
+        if (card.classList.contains('sb-disabled')) return;
+
+        // flip & persist
+        card.classList.add('is-flipped');
+        state.selectedIndex = idx;
+
+        // populate inputs
+        writeToInputs(idx);
       });
 
-      hand.appendChild(slot);
+      hand.appendChild(card);
     });
 
-    wrap.appendChild(hand);
-    state.mountEl.appendChild(wrap);
+    mount.appendChild(hand);
+    lockTeaseCards();
   }
 
   function burnAndRedeal(){
-    if (!state.mountEl) return;
-    state.selectedKey = null;
-
-    // “poof” animation
-    var slots = state.mountEl.querySelectorAll('.sb-slot');
-    for (var i=0;i<slots.length;i++){
-      slots[i].classList.add('sb-poof');
-    }
+    var mount = $(state.mountId);
+    if (!mount) return;
+    var cards = mount.querySelectorAll('.sb-card');
+    cards.forEach(function(c){ c.classList.add('sb-burn'); });
     setTimeout(function(){
+      state.selectedIndex = null;
       render();
-    }, 260);
-  }
-
-  function mount(opts){
-    if (state.mounted) return;
-    var id = (opts && opts.mountId) ? opts.mountId : null;
-    if (!id) throw new Error('StoryboundCards.mount requires { mountId }');
-
-    var elMount = document.getElementById(id);
-    if (!elMount) throw new Error('Mount element not found: #' + id);
-
-    state.mountEl = elMount;
-    state.mounted = true;
-    render();
-  }
-
-  function setIntensity(intensity){
-    state.intensity = intensity || 'clean';
-    render();
+    }, 540);
   }
 
   window.StoryboundCards = {
-    mount: mount,
-    burnAndRedeal: burnAndRedeal,
-    setIntensity: setIntensity,
-    getSelected: function(){ return state.selectedKey; }
+    mount: function(cfg){
+      cfg = cfg || {};
+      // allow global config too
+      var g = window.STORYBOUND_CARDS_CONFIG || {};
+
+      state.mountId = cfg.mountId || g.mountId || 'cardMount';
+      state.actionId = cfg.actionId || g.actionId || 'actionInput';
+      state.dialogueId = cfg.dialogueId || g.dialogueId || 'dialogueInput';
+      state.submitId = cfg.submitId || g.submitId || 'sendBtn';
+
+      // Optional: let page supply a tier getter
+      if (typeof cfg.getTier === 'function') state.getTier = cfg.getTier;
+
+      render();
+      return true;
+    },
+    setIntensity: function(val){
+      state.intensity = val || 'naughty';
+    },
+    applyTeaseCardLimits: function(){
+      lockTeaseCards();
+    },
+    burnAndRedeal: burnAndRedeal
   };
 })();
