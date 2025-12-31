@@ -14,7 +14,7 @@
     /* GLOBAL VARS */
     :root{ 
         --bg1:#0a001f; --bg2:#2a0033; --pink:#ff69b4; --hot:#ff1493; --gold:#ffd700; --ink:#f0e6ff; --panel:rgba(20,0,40,.6); 
-        --p1-color: #f0e6ff; --p2-color: #f0e6ff; /* Dynamic Dialogue Colors */
+        --p1-color: #f0e6ff; --p2-color: #f0e6ff;
     }
     
     /* THEMES */
@@ -38,7 +38,6 @@
     button { background:linear-gradient(145deg,#8b008b,var(--hot)); color:var(--gold); padding:10px 30px; border:none; border-radius:25px; font-size:1em; cursor:pointer; box-shadow:0 0 18px rgba(255,20,147,.6); transition:.3s; font-family:'Lora',serif; position:relative; }
     button:hover { transform:scale(1.05); box-shadow:0 0 30px rgba(255,105,180,.9); }
     button:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
-    .intensity-btn.active { border: 2px solid var(--gold); background: linear-gradient(145deg, #ff1493, #ff69b4); box-shadow: 0 0 15px var(--gold); transform: scale(1.05); }
     .small-btn { font-size: 0.9em; padding: 8px 16px; background: #444; box-shadow:none; }
 
     /* UTILS */
@@ -52,9 +51,24 @@
     .input-wrapper label { display:block; text-align:left; color:var(--gold); margin-bottom:5px; font-size:0.9em; font-family:'Lora',serif; }
     textarea, input, select { width:100%; padding:12px; background:rgba(30,0,50,.9); color:var(--ink); border:1px solid var(--pink); border-radius:8px; font-size:1em; font-family:'Lora',serif; box-sizing:border-box; }
     
-    /* LOCKS */
-    .locked-input textarea, .locked-style { opacity:0.5; filter:grayscale(0.8); cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='fill:gold'><text y='20' font-size='20'>💸</text></svg>"), pointer !important; pointer-events:none; }
-    .locked-input::after, .locked-style::after { content:""; position:absolute; top:10px; right:10px; width:24px; height:24px; background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; opacity:0.9; pointer-events:none; }
+    /* LOCKS - Handcuffs & Dollar Cursor */
+    .locked-input textarea, 
+    .locked-style { 
+        opacity:0.5; 
+        filter:grayscale(0.8); 
+        cursor:url("/cursor-dollar-plane-64.png"), pointer !important; 
+        pointer-events:none; /* Clicks hit wrapper */
+    }
+    .locked-input::after, 
+    .locked-style::after { 
+        content:""; 
+        position:absolute; 
+        top:10px; right:10px; 
+        width:24px; height:24px; 
+        background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; 
+        opacity:0.9; 
+        pointer-events:none; 
+    }
     .locked-input::after { top: 42px; right: 15px; } 
 
     /* STYLE CARDS */
@@ -78,18 +92,23 @@
     .fate-card.poof { animation: smokePoof 0.6s forwards; }
     @keyframes smokePoof { 0%{ opacity:1; transform:scale(1); } 100%{ opacity:0; transform:scale(0.5); } }
 
-    /* INTENSITY MINI */
+    /* INTENSITY BUTTONS (Original Size) */
+    .intensity-wrap { margin: 10px 0; }
+    .intensity-btn { margin: 5px; opacity: 0.6; }
+    .intensity-btn.active { opacity: 1; border: 2px solid var(--gold); box-shadow: 0 0 15px var(--hot); }
+    
+    /* INTENSITY MINI (Game Screen) */
     .intensity-mini { display:flex; gap:5px; justify-content:center; margin: 15px 0; }
     .intensity-mini button { padding: 5px 15px; font-size: 0.8em; opacity: 0.6; }
     .intensity-mini button.active { opacity: 1; border: 1px solid var(--gold); }
 
-    /* LOADING OVERLAY */
-    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: none; align-items: center; justify-content: center; z-index: 200; flex-direction: column;}
-    #loadingOverlayInner { background: rgba(10, 0, 30, 0.95); padding: 20px; border-radius: 14px; text-align: center; border: 1px solid var(--pink); }
-    #loadingOverlayBar { width: 200px; height: 4px; background: #333; border-radius: 999px; overflow: hidden; margin-top: 15px; }
-    #loadingOverlayFill { width: 0%; height: 100%; background: var(--pink); transition: width 0.3s; }
+    /* LOADING BAR (Restored from Reference) */
+    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); display: none; align-items: center; justify-content: center; z-index: 200; }
+    #loadingOverlayInner { background: rgba(10, 0, 30, 0.95); padding: 18px 26px 14px 26px; border-radius: 14px; box-shadow: 0 0 35px rgba(255, 20, 147, 0.8); min-width: 280px; text-align: left; font-size: 0.95em; }
+    #loadingOverlayBar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; overflow: hidden; margin-top: 8px; }
+    #loadingOverlayFill { width: 0%; height: 100%; background: var(--pink); transition: width 0.25s; }
 
-    /* BURGER */
+    /* BURGER (No Circle) */
     #burgerBtn { position:fixed; top:15px; right:15px; z-index:5000; font-size:1.8em; background:none; border:none; color:var(--pink); padding:0; cursor:pointer; text-shadow: 0 0 5px var(--hot); box-shadow:none; }
     #burgerBtn:hover { transform: scale(1.1); box-shadow:none; }
 
@@ -252,69 +271,78 @@
     </div>
 
     <div class="section-title">Intensity</div>
-    <div id="intensityBtns">
-      <button data-val="Clean" data-desc="Flirt, chemistry, and longing." class="intensity-btn">Clean</button>
+    <div id="intensityBtns" class="intensity-wrap">
+      <button data-val="Clean" data-desc="Flirtation, chemistry, and longing. No explicit anatomy." class="intensity-btn">Clean</button>
       <button data-val="Naughty" data-desc="Direct teasing with tasteful sensuality." class="intensity-btn active">Naughty</button>
-      <button data-val="Erotic" data-desc="Explicit intimacy and detail." class="intensity-btn">Erotic</button>
+      <button data-val="Erotic" data-desc="Explicit intimacy and sensual detail." class="intensity-btn">Erotic</button>
       <button data-val="Dirty" data-desc="Very explicit language and bold scenes." class="intensity-btn">Dirty</button>
     </div>
-    <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px;">(Naughty) chosen. Direct teasing with tasteful sensuality.</p>
+    <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px;">(Naughty) Direct teasing with tasteful sensuality.</p>
 
     <div class="section-title">Genres <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="genreGrid">
-      <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>Magic and desire.</p></div>
-      <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary</h3><p>Modern settings.</p></div>
-      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical</h3><p>Period romance.</p></div>
-      <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal</h3><p>Vampires/Shifters.</p></div>
-      <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray.</p></div>
-      <div class="card" data-grp="genre" data-val="Suspense"><h3>Suspense</h3><p>Danger & mystery.</p></div>
-      <div class="card" data-grp="genre" data-val="Sports"><h3>Sports</h3><p>Competitive tension.</p></div>
-      <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime</h3><p>Forbidden love.</p></div>
+      <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and intense romantic stakes.</p></div>
+      <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary Romance</h3><p>Modern settings and present-day relationships.</p></div>
+      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical Romance</h3><p>Pre-mid-20th century love with period rules.</p></div>
+      <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal Modern Romance</h3><p>Vampires, shifters, witches in today’s world.</p></div>
+      <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray heat; player defines boundaries.</p></div>
+      <div class="card" data-grp="genre" data-val="Suspense"><h3>Romantic Suspense</h3><p>Romance entangled with danger and mystery.</p></div>
+      <div class="card" data-grp="genre" data-val="Sports"><h3>Sports Romance</h3><p>Athletes and competitive tension.</p></div>
+      <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime Romance</h3><p>Forbidden love in criminal worlds.</p></div>
     </div>
     
     <button class="small-btn" onclick="toggle('moreGenres')">More Genres</button>
     <div id="moreGenres" class="style-cards hidden">
-       <div class="card" data-grp="genre" data-val="Billionaire"><h3>Billionaire</h3><p>Wealth and power.</p></div>
-       <div class="card" data-grp="genre" data-val="Gothic"><h3>Gothic</h3><p>Moody and haunted.</p></div>
-       <div class="card" data-grp="genre" data-val="LGBTQ"><h3>LGBTQ+</h3><p>Inclusive stories.</p></div>
-       <div class="card" data-grp="genre" data-val="SecondChance"><h3>Second Chance</h3><p>Ex-lovers reunited.</p></div>
-       <div class="card" data-grp="genre" data-val="SmallTown"><h3>Small Town</h3><p>Cozy vibes.</p></div>
-       <div class="card" data-grp="genre" data-val="Romcom"><h3>RomCom</h3><p>Banter and light chaos.</p></div>
+       <div class="card" data-grp="genre" data-val="Billionaire"><h3>Billionaire Romance</h3><p>Ultra-wealthy leads, power, polish.</p></div>
+       <div class="card" data-grp="genre" data-val="Gothic"><h3>Gothic Romance</h3><p>Moody, haunted settings.</p></div>
+       <div class="card" data-grp="genre" data-val="LGBTQ"><h3>Queer LGBTQ+</h3><p>Inclusive love stories.</p></div>
+       <div class="card" data-grp="genre" data-val="SecondChance"><h3>Second Chance</h3><p>Ex-lovers reunited with baggage.</p></div>
+       <div class="card" data-grp="genre" data-val="SmallTown"><h3>Small Town</h3><p>Cozy community vibes.</p></div>
+       <div class="card" data-grp="genre" data-val="Romcom"><h3>Romantic Comedy</h3><p>Bantery, light chaos.</p></div>
     </div>
 
     <div class="section-title">Dynamics <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="dynamicGrid">
-      <div class="card" data-grp="dynamic" data-val="Enemies"><h3>Enemies to Lovers</h3><p>Rivals to heat.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Taboo desires.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Status gaps.</p></div>
-      <div class="card" data-grp="dynamic" data-val="SlowBurn"><h3>Slow Burn</h3><p>High restraint.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends to Lovers</h3><p>Safety to heat.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Close quarters.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Secret"><h3>Secret Identity</h3><p>Truths revealed.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive</h3><p>Dark devotion.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated Mates</h3><p>Destined bond.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker</h3><p>Vulnerability.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Enemies"><h3>Enemies → Lovers</h3><p>Rivals whose friction turns to heat.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Desire under rules and taboo.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Player defines boundaries and limits.</p></div>
+      <div class="card" data-grp="dynamic" data-val="SlowBurn"><h3>Slow Burn</h3><p>High restraint, earned payoff.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends → Lovers</h3><p>Safety tipping into heat.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Close quarters, rising tension.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Secret"><h3>Secret Identity</h3><p>Truths revealed at the worst time.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Intense focus, player sets bounds.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated Mates / Soulbond</h3><p>Destined bond, fast intensity.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker / Wounded One</h3><p>Vulnerability and steady support.</p></div>
+    </div>
+
+    <div class="section-title">Story POV</div>
+    <div class="style-cards" id="povGrid">
+      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>Intimate, confessional, inside your pulse.</p><button class="preview-btn" data-txt="I held my breath as the door clicked shut behind him.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>Immediate, immersive, hands-on tension.</p><button class="preview-btn" data-txt="You feel the room shift the moment he looks at you.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>Wider lens, cinematic, controlled heat.</p><button class="preview-btn" data-txt="He kept his voice calm, but the way his gaze lingered betrayed the hunger.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>Choral, conspiratorial, shared gaze.</p><button class="preview-btn" data-txt="We watched them circle each other—two storms pretending to be weather.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>Playful narrator with a hand on the page.</p><button class="preview-btn" data-txt="The Author hesitated—then smiled—and offered them a door.">Preview</button></div>
     </div>
 
     <div class="section-title">Story Style <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="styleGrid">
-      <div class="card selected" data-grp="style" data-val="Breathless"><h3>Breathless</h3><p>Fast tension.</p><button class="preview-btn" data-txt="His attention was a slow hand...">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Epic" data-locked="true"><h3>Epic</h3><p>Grand stakes.</p><button class="preview-btn" data-txt="The city burned like a crown...">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Playful" data-locked="true"><h3>Playful</h3><p>Flirty banter.</p><button class="preview-btn" data-txt="You're staring. I'm appreciating.">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Dark" data-locked="true"><h3>Dark</h3><p>Moody tension.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Raw" data-locked="true"><h3>Raw</h3><p>Direct emotion.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Regency" data-locked="true"><h3>Regency</h3><p>Polite knives.</p><button class="preview-btn" data-txt="Your reputation is in danger.">Preview</button></div>
+      <div class="card selected" data-grp="style" data-val="Breathless"><h3>Breathless Romance</h3><p>Fast tension, close POV, lush romantic heat.</p><button class="preview-btn" data-txt="His attention was a slow hand. It didn’t touch her—yet she felt it everywhere.">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Epic" data-locked="true"><h3>Epic Fantasy</h3><p>Grand stakes, wonder, danger, sweeping romance.</p><button class="preview-btn" data-txt="The city burned like a crown—and someone inside it was waiting to claim her.">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Playful" data-locked="true"><h3>Playful Heat</h3><p>Flirty banter, teasing humor, spark-first chemistry.</p><button class="preview-btn" data-txt="“You’re staring.” “I’m appreciating.”">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Dark" data-locked="true"><h3>Dark Desire</h3><p>Moody, dangerous tension with boundaries respected.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Raw" data-locked="true"><h3>Raw Passion</h3><p>Direct emotion, embodied desire, grounded intensity.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Regency" data-locked="true"><h3>Regency Restraint</h3><p>Polite knives, forbidden longing, exquisite restraint.</p><button class="preview-btn" data-txt="“Your reputation is in danger,” she murmured.">Preview</button></div>
     </div>
     
     <button class="small-btn" onclick="toggle('moreStyles')">More Styles</button>
     <div id="moreStyles" class="style-cards hidden">
-       <div class="card" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry</h3><p>Dry wit.</p></div>
-       <div class="card" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic</h3><p>Calculated.</p></div>
-       <div class="card" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal</h3><p>Dreamlike.</p></div>
-       <div class="card" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal</h3><p>Razor sharp.</p></div>
-       <div class="card" data-grp="style" data-val="Satirical" data-locked="true"><h3>Satirical</h3><p>Witty fun.</p></div>
-       <div class="card" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Poetic.</p></div>
-       <div class="card" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Futuristic.</p></div>
+       <div class="card" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry Confession</h3><p>Dry wit, sharp honesty, intimate tension.</p></div>
+       <div class="card" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic Intensity</h3><p>Calculated seduction, power games.</p></div>
+       <div class="card" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal Bloom</h3><p>Dreamlike imagery, symbolic heat.</p></div>
+       <div class="card" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal Edge</h3><p>Blunt honesty, razor tension.</p></div>
+       <div class="card" data-grp="style" data-val="Satirical" data-locked="true"><h3>Satirical Fantasy</h3><p>Witty fantasy, playful stakes.</p></div>
+       <div class="card" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Elevated cadence, poetic desire.</p></div>
+       <div class="card" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Grand futuristic worlds, high stakes.</p></div>
     </div>
 
     <div class="section-title">Story Controls</div>
@@ -383,13 +411,12 @@
 
   // --- HELPERS ---
   function $(id){ return document.getElementById(id); }
-  function toggle(id){ $(id).classList.toggle('hidden'); }
+  window.toggle = function(id){ $(id).classList.toggle('hidden'); }
   function hideAll(){ ['modeSelect','setup','game'].forEach(x => $(x)?.classList.add('hidden')); }
-  function checkCustom(selectId, inputId){
+  window.checkCustom = function(selectId, inputId){
       if($(selectId).value === 'Custom') $(inputId).classList.remove('hidden');
       else $(inputId).classList.add('hidden');
   }
-  window.checkCustom = checkCustom; // Expose for HTML
 
   // --- COLORS FOR DIALOGUE ---
   function getGenderColor(g){
@@ -453,19 +480,15 @@
   function formatStory(text){
       let p1Color = getGenderColor(state.gender);
       let p2Color = getGenderColor(state.loveInterest);
-      
       document.documentElement.style.setProperty('--p1-color', p1Color);
       document.documentElement.style.setProperty('--p2-color', p2Color);
 
       let html = text.replace(/\n/g, '<br><br>');
-      
-      // Dialogue formatting
       html = html.replace(/"([^"]+)"/g, (match, content) => {
           let isP1 = state.pov === 'First' || content.toLowerCase().includes(" i ");
           let cls = isP1 ? 'p1' : 'p2';
           return `<span class="dialogue ${cls}">"${content}"</span>`;
       });
-      
       html = html.replace(/Player Action:|What do you do\?/gi, "");
       return html;
   }
@@ -500,6 +523,7 @@
       POV: ${state.picks.pov}.
       Player is ${state.gender}. Love Interest is ${state.loveInterest}.
       Intensity: ${state.intensity}.
+      IMPORTANT: This is the OPENING. NO sex acts yet. Focus on PLOT, WORLD-BUILDING, and TENSION. Establish a nemesis and high stakes. Characters must have agendas.
       Output format: Title: <title>\nSynopsis: <synopsis>\n<story body>`;
       
       try {
@@ -545,7 +569,7 @@
       startLoading();
       const lastText = $('storyText').textContent.slice(-500);
       try {
-          const promptMsg = await callChat([{role:'user', content:`Describe this scene for an image generator (no nudity, cinematic): ${lastText}`}]);
+          const promptMsg = await callChat([{role:'user', content:`Describe this scene for an image generator (no nudity, cinematic, elegant fantasy art): ${lastText}`}]);
           const res = await fetch(IMAGE_PROXY_URL, {
               method:'POST',
               headers:{'Content-Type':'application/json'},
@@ -557,7 +581,10 @@
           $('vizPreviewImg').src = tempImgUrl;
           $('vizModal').classList.remove('hidden');
       } catch(e){
-          alert("Viz failed: " + e.message);
+          // Fallback so it doesn't just crash
+          tempImgUrl = 'https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?q=80&w=600&auto=format&fit=crop'; 
+          $('vizPreviewImg').src = tempImgUrl;
+          $('vizModal').classList.remove('hidden');
       }
       stopLoading();
   };
@@ -582,6 +609,12 @@
       }
       const grp = card.getAttribute('data-grp');
       const val = card.getAttribute('data-val');
+      const locked = card.getAttribute('data-locked');
+
+      if(state.tier === 'free' && locked === 'true'){
+          window.showPaywall('unlock'); 
+          return;
+      }
       
       if(['genre','dynamic','style'].includes(grp)){
           if(!state.picks[grp]) state.picks[grp] = [];
@@ -606,7 +639,8 @@
           document.querySelectorAll('.intensity-btn').forEach(x => x.classList.remove('active'));
           b.classList.add('active');
           state.intensity = b.getAttribute('data-val');
-          if($('intensityDesc')) $('intensityDesc').innerText = `(${state.intensity}) selected.`;
+          const desc = b.getAttribute('data-desc');
+          if($('intensityDesc')) $('intensityDesc').innerText = `(${state.intensity}) ${desc}`;
       }
   });
 
