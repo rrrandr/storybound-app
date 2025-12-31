@@ -443,7 +443,7 @@ function toggle(id){
   function $(id){ return document.getElementById(id); }
   function hideAll(){ ['ageGate','tosGate','tierGate','app','modeSelect','coupleInvite','coupleJoin','setup','game'].forEach(function(x){ if($(x)) $(x).classList.add('hidden'); }); }
   
-  // PROXY URLs - Corrected for Vercel
+  // PROXY URLs - Corrected based on screenshots
   var PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
   var IMAGE_PROXY_URL = 'https://storybound-proxy.vercel.app/api/image';
   const STORY_MODEL = 'grok-4-1-fast-reasoning';
