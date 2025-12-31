@@ -1,149 +1,109 @@
-/* storybound-cards.js (DOM-Enhancement Version) */
+/* storybound-cards.js */
 (function(){
-  
   var state = {
-    tier: 'free',       // free|indulge
-    activeCard: null,   // currently selected DOM element
-    cfg: {}             // config passed from main page
+    tier: 'free',
+    hasFlippedOnce: false,
+    selectedCard: null,
+    cfg: {}
   };
 
   function byId(id){ return document.getElementById(id); }
 
   function mount(cfg){
     state.cfg = cfg || {};
-    var mountId = cfg.mountId || 'cardMount';
-    var root = byId(mountId);
-
-    if (!root){ 
-      console.error('StoryboundCards: Root element #' + mountId + ' not found.'); 
-      return; 
-    }
-
-    // 1. Find the EXISTING cards in your HTML (don't overwrite them)
-    // We look for .fate-card (your current class) or .sb-card (legacy support)
-    var cards = root.querySelectorAll('.fate-card, .sb-card');
-
-    if (cards.length === 0) {
-      console.warn('StoryboundCards: No cards found inside #' + mountId);
-      return;
-    }
-
-    // 2. Attach logic to each existing card
-    cards.forEach(function(el, idx){
-      // Ensure it has an index for locking logic
-      el.setAttribute('data-idx', idx);
-
-      // Remove old listeners (by cloning) if necessary, or just add new one
-      // For safety in this setup, we just add the listener.
-      el.onclick = function(e){
-        handleCardClick(el, idx);
-      };
-    });
-
-    // 3. Apply initial locks based on default tier
-    updateLocks();
-  }
-
-  function handleCardClick(el, idx){
-    // A. FLIP: Always allow visual flipping
-    el.classList.toggle('flipped');
-    el.classList.toggle('is-flipped'); 
-
-    // B. CHECK LOCK: Is this card allowed in the current tier?
-    // (Tease Mode: Index 0 and 1 are free. Index 2+ are locked)
-    var isLocked = (state.tier === 'free' && idx >= 2);
-
-    if (isLocked) {
-      // It's locked. We flipped it visually, but we DO NOT select it.
-      return;
-    }
-
-    // C. SELECT: Handle radio-button behavior
-    if (state.activeCard && state.activeCard !== el) {
-      state.activeCard.classList.remove('selected');
-      state.activeCard.classList.remove('is-selected');
-    }
-    state.activeCard = el;
-    el.classList.add('selected');
-    el.classList.add('is-selected');
-
-    // D. POPULATE: specific inputs
-    populateInputs(el);
-  }
-
-  function populateInputs(cardEl){
-    var actionInput = byId(state.cfg.actionId || 'actionInput');
-    var dialogueInput = byId(state.cfg.dialogueId || 'dialogueInput');
-    var submitBtn = byId(state.cfg.submitId || 'sendBtn');
-
-    // Read data attributes from your HTML
-    // Note: The HTML uses data-do="..." and data-say="..."
-    var doText = cardEl.getAttribute('data-do') || cardEl.getAttribute('data-action') || '';
-    var sayText = cardEl.getAttribute('data-say') || cardEl.getAttribute('data-dialogue') || '';
-
-    if (actionInput) {
-      actionInput.value = doText;
-      actionInput.disabled = false;     // Unlock input
-      actionInput.classList.remove('is-locked', 'sb-locked');
-    }
-    
-    if (dialogueInput) {
-      dialogueInput.value = sayText;
-      dialogueInput.disabled = false;   // Unlock input
-      dialogueInput.classList.remove('is-locked', 'sb-locked');
-    }
-
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.classList.remove('is-locked', 'sb-locked');
-    }
-  }
-
-  function updateLocks(){
-    var root = byId(state.cfg.mountId || 'cardMount');
+    var root = byId(cfg.mountId || 'cardMount');
     if (!root) return;
 
-    var cards = root.querySelectorAll('.fate-card, .sb-card');
+    var cards = root.querySelectorAll('.fate-card');
+    
     cards.forEach(function(el, idx){
-      // Tease Rule: Index 2, 3, 4 are locked
-      var isLocked = (state.tier === 'free' && idx >= 2);
+      el.setAttribute('data-idx', idx);
+      el.onclick = function(e){ handleCardClick(el, idx, cards); };
+    });
 
-      if (isLocked){
-        el.classList.add('sb-select-locked');
-        // Optional: Add visual lock indicator if your CSS supports it
-      } else {
-        el.classList.remove('sb-select-locked');
+    applyLocks();
+  }
+
+  function handleCardClick(clickedEl, idx, allCards){
+    // 1. FIRST FLIP EVENT (Global)
+    if (!state.hasFlippedOnce) {
+      state.hasFlippedOnce = true;
+      
+      // Flip ALL cards immediately
+      allCards.forEach(function(c){ c.classList.add('flipped'); });
+
+      // If Tease Mode: Wait 4s, then flip back the locked ones (indices 2, 3, 4)
+      if (state.tier === 'free') {
+        setTimeout(function(){
+          allCards.forEach(function(c, i){
+            if (i >= 2) c.classList.remove('flipped'); // Hide them again
+          });
+        }, 4000);
       }
+      return; // Don't select on the very first "reveal" click
+    }
+
+    // 2. CHECK LOCKS
+    var isLocked = (state.tier === 'free' && idx >= 2);
+    if (isLocked) return; // Locked cards don't respond after the initial show
+
+    // 3. FLIP (Individual toggle allowed for unlocked cards)
+    // clickedEl.classList.toggle('flipped'); // Optional: if you want them to toggle back/forth
+
+    // 4. SELECT
+    if (state.selectedCard && state.selectedCard !== clickedEl) {
+      state.selectedCard.classList.remove('selected');
+    }
+    state.selectedCard = clickedEl;
+    clickedEl.classList.add('selected');
+
+    // 5. POPULATE INPUTS
+    var say = clickedEl.getAttribute('data-say');
+    var doAction = clickedEl.getAttribute('data-do');
+    
+    var dInput = byId(state.cfg.dialogueId || 'dialogueInput');
+    var aInput = byId(state.cfg.actionId || 'actionInput');
+
+    if(dInput) dInput.value = say || '';
+    if(aInput) aInput.value = doAction || '';
+  }
+
+  function applyLocks(){
+    var root = byId(state.cfg.mountId || 'cardMount');
+    if(!root) return;
+    var cards = root.querySelectorAll('.fate-card');
+    cards.forEach(function(c, i){
+      if(state.tier === 'free' && i >= 2) c.classList.add('sb-locked-card');
+      else c.classList.remove('sb-locked-card');
     });
   }
 
   function setTier(t){
-    state.tier = (t === 'indulge' ? 'indulge' : 'free');
-    updateLocks();
-    
-    // If we just downgraded to free, and a premium card was selected, deselect it
-    if (state.tier === 'free' && state.activeCard) {
-      var idx = parseInt(state.activeCard.getAttribute('data-idx') || '0');
-      if (idx >= 2) {
-        state.activeCard.classList.remove('selected', 'is-selected');
-        state.activeCard = null;
-        // Optionally clear inputs here if you want
-      }
-    }
+    state.tier = t;
+    state.hasFlippedOnce = false; // Reset flip logic on tier change
+    applyLocks();
   }
 
-  // --- Stubs for other calls if your main app tries to use them ---
-  function setSelections(obj){ /* stored for future logic if needed */ }
-  function setIntensity(val){ /* stored for future logic if needed */ }
-  function burnAndRedeal(){ /* animation hook */ }
+  // Submit animation
+  function poofAndClear(){
+    var root = byId(state.cfg.mountId || 'cardMount');
+    if(!root) return;
+    var cards = root.querySelectorAll('.fate-card');
+    
+    cards.forEach(function(c, i){
+      setTimeout(function(){
+        c.classList.add('poof');
+        setTimeout(function(){ c.classList.remove('flipped', 'selected', 'poof'); }, 600);
+      }, i * 100);
+    });
+    
+    state.hasFlippedOnce = false; // Reset for next hand
+    state.selectedCard = null;
+  }
 
-  // --- EXPORT ---
   window.StoryboundCards = {
     mount: mount,
     setTier: setTier,
-    setSelections: setSelections,
-    setIntensity: setIntensity,
-    burnAndRedeal: burnAndRedeal
+    poof: poofAndClear
   };
-
 })();
