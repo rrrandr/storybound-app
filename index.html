@@ -426,8 +426,8 @@ function toggle(id){
   var API_STORY = 'https://storybound-proxy.vercel.app/api/proxy';
   var API_IMAGE = 'https://storybound-proxy.vercel.app/api/image';
 
-  var state = { tier:'free', picks:{ genre:[], dynamic:[], pov:'First', style:'Breathless' } };
-
+// Change 'style' from a string 'Breathless' to an array ['Breathless']
+var state = { tier:'free', picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] } };
   // --- EXPOSE FUNCTIONS TO WINDOW FOR ONCLICK ---
   window.restart = function(){ window.location.reload(); };
   window.changeTier = function(){ $('menuOverlay').classList.add('hidden'); setTier(state.tier === 'free' ? 'indulge' : 'free'); };
@@ -646,7 +646,8 @@ function toggle(id){
             genre: state.picks.genre,
             dynamic: state.picks.dynamic,
             pov: state.picks.pov,
-            style: state.picks.style
+            // Join style array into a string: "Breathless, Dark, Wry"
+            style: Array.isArray(state.picks.style) ? state.picks.style.join(', ') : state.picks.style
         };
 
         var res = await fetch(API_STORY, {
