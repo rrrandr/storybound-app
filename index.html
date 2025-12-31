@@ -532,11 +532,12 @@ function toggle(id){
     }
   });
 
-  // --- SELECTION GRID LOGIC ---
+// --- SELECTION GRID LOGIC ---
   document.addEventListener('click', function(e){
     var el = e.target.closest('.card');
     if(!el) return;
     
+    // Preview Button?
     if(e.target.classList.contains('preview-btn')){
       e.stopPropagation(); e.preventDefault();
       $('previewText').textContent = e.target.getAttribute('data-txt');
@@ -548,22 +549,38 @@ function toggle(id){
     var val = el.getAttribute('data-val');
     var locked = el.getAttribute('data-locked');
 
+    // Locked Style Logic (Tease Tier)
     if(state.tier === 'free' && locked === 'true'){
       window.showPaywall('unlock'); 
       return;
     }
 
-    if(grp === 'genre' || grp === 'dynamic'){
+    // MULTI-SELECT LOGIC (Genre, Dynamic, AND Style)
+    if(grp === 'genre' || grp === 'dynamic' || grp === 'style'){
+      
+      // Ensure the array exists
+      if(!state.picks[grp]) state.picks[grp] = [];
+      // Handle legacy string defaults if any
+      if(typeof state.picks[grp] === 'string') state.picks[grp] = [state.picks[grp]];
+
       var current = state.picks[grp];
+
       if(el.classList.contains('selected')){
+         // Deselect
          el.classList.remove('selected');
          state.picks[grp] = current.filter(function(x){ return x !== val; });
       } else {
-         if(current.length >= 3) return alert("Select up to 3.");
+         // Select (Check Limit)
+         if(current.length >= 3) {
+             alert("You have already selected 3 " + grp + "s. Deselect one to add another.");
+             return;
+         }
          el.classList.add('selected');
          state.picks[grp].push(val);
       }
-    } else {
+    } 
+    // SINGLE-SELECT LOGIC (POV)
+    else {
       document.querySelectorAll('.card[data-grp="'+grp+'"]').forEach(function(c){ c.classList.remove('selected'); });
       el.classList.add('selected');
       state.picks[grp] = val;
