@@ -950,6 +950,106 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 @keyframes sbBurn {
   to { opacity: 0; transform: translateY(10px) scale(0.98); }
 }
+/* =========================
+   SELECTION CARDS (Genre/Dynamics/POV/Style)
+   Works with data-pick-group + data-pick-value
+   ========================= */
+[data-pick-group][data-pick-value]{
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+[data-pick-group][data-pick-value].active{
+  outline: 2px solid rgba(255,105,180,0.95);
+  box-shadow: 0 0 0 4px rgba(255,105,180,0.18);
+}
+
+/* =========================
+   PAYWALL / LOCKS (Tease vs Indulge)
+   Add data-tier="indulge" to anything that should be locked in Tease
+   ========================= */
+.locked{
+  opacity: 0.45 !important;
+  filter: grayscale(0.9);
+  pointer-events: none !important;
+}
+.locked-wrap{
+  position: relative;
+}
+.locked-wrap .cuffs{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* =========================
+   Fatecards mount sizing/layout (tarot-ish)
+   ========================= */
+#cardMount{ margin-top: 14px; }
+.sb-cards-wrap{ display:flex; justify-content:center; }
+.sb-hand{
+  display: grid;
+  grid-template-columns: repeat(5, minmax(86px, 1fr));
+  gap: 12px;
+  width: min(920px, 96vw);
+}
+@media (max-width: 820px){
+  .sb-hand{
+    grid-template-columns: repeat(3, minmax(86px, 1fr));
+  }
+}
+.sb-card{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.5 / 3.5; /* tarot-ish */
+  border-radius: 14px;
+  transform-style: preserve-3d;
+  transition: transform 280ms ease, filter 200ms ease;
+  cursor: pointer;
+}
+.sb-card:hover{ filter: brightness(1.05); }
+
+.sb-card.is-flipped{ transform: rotateY(180deg); }
+.sb-face{
+  position:absolute; inset:0;
+  backface-visibility:hidden;
+  border-radius: 14px;
+  display:flex; align-items:center; justify-content:center;
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+.sb-front{ background: rgba(30,30,30,0.95); }
+.sb-back{
+  transform: rotateY(180deg);
+  background: rgba(20,20,20,0.95);
+}
+
+.sb-card.is-disabled{
+  opacity: 0.35;
+  pointer-events: none;
+  filter: grayscale(1);
+}
+.sb-card.is-selected{
+  outline: 2px solid rgba(255,215,0,0.95);
+  box-shadow: 0 0 0 4px rgba(255,215,0,0.18);
+}
+
+/* =========================
+   Do/Say lock styles (Tease)
+   ========================= */
+.input-box textarea.is-locked{
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  pointer-events: none;
+}
+button.is-locked{
+  opacity: 0.55;
+  pointer-events: none;
+}
 
 /* AI Suggest deprecated — Tarot replaces it (keep off) */
 #suggestActionBtn,
@@ -1390,6 +1490,36 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
   <!-- ✅ IMPORTANT: load Fatecards file FIRST (root-relative, static-safe) -->
   <script src="/fatecards/storybound-cards.js"></script>
+<!-- Fatecards library must load BEFORE your app script mounts it -->
+<script src="/fatecards/storybound-cards.js"></script>
+
+<!-- ✅ APP SCRIPT (plain static) -->
+<script>
+(function(){
+  // ...your existing code...
+
+  // BOOT: add these two lines
+  wirePickGroups();
+
+  function boot(){
+    // mount Fatecards
+    if (window.StoryboundCards && window.StoryboundCards.mount){
+      window.StoryboundCards.mount({
+        mountId: "cardMount",
+        actionId: "actionInput",
+        dialogueId: "dialogueInput",
+        submitId: "sendBtn"
+      });
+      applyTierLocks(); // enforce tease locks immediately
+    } else {
+      console.error('StoryboundCards not found. Check /fatecards/storybound-cards.js exists at site root.');
+    }
+    goToAgeGate();
+  }
+  boot();
+
+})();
+</script>
 
   <!-- ✅ APP SCRIPT (plain static) -->
   <script>
@@ -1500,6 +1630,60 @@ wireChoiceGroup('styleGrid', '.choice-btn', 1);
         .replace(/</g,'&lt;')
         .replace(/>/g,'&gt;');
     }
+// ---------------------------- PICK GROUPS (Genre/Dynamics/POV/Style) ----------------------------
+// Any clickable option must have:
+//   data-pick-group="genre" (or dynamics/pov/style)
+//   data-pick-value="Romantasy" (etc)
+window.STORYBOUND_SELECTIONS = window.STORYBOUND_SELECTIONS || {};
+
+function wirePickGroups(){
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('[data-pick-group][data-pick-value]');
+    if (!el) return;
+
+    var group = el.getAttribute('data-pick-group');
+    var val = el.getAttribute('data-pick-value');
+
+    // Clear active in same group
+    document.querySelectorAll('[data-pick-group="'+group+'"][data-pick-value].active')
+      .forEach(function(n){ n.classList.remove('active'); });
+
+    el.classList.add('active');
+    window.STORYBOUND_SELECTIONS[group] = val;
+
+    // Tell Fatecards (optional)
+    if (window.StoryboundCards && window.StoryboundCards.setSelections){
+      window.StoryboundCards.setSelections(window.STORYBOUND_SELECTIONS);
+    }
+  });
+}
+
+// ---------------------------- TIER LOCKS (Tease vs Indulge) ----------------------------
+function applyTierLocks(){
+  var isTease = (tier === 'free');
+
+  // Lock anything marked data-tier="indulge" in Tease
+  document.querySelectorAll('[data-tier="indulge"]').forEach(function(node){
+    node.classList.toggle('locked', isTease);
+  });
+
+  // Lock Story Controls in Tease (if you have a container with this id)
+  var sc = document.getElementById('storyControls');
+  if (sc) sc.classList.toggle('locked', isTease);
+
+  // Lock Do/Say + Submit in Tease
+  var a = document.getElementById('actionInput');
+  var d = document.getElementById('dialogueInput');
+  var s = document.getElementById('sendBtn');
+  if (a) a.classList.toggle('is-locked', isTease);
+  if (d) d.classList.toggle('is-locked', isTease);
+  if (s) s.classList.toggle('is-locked', isTease);
+
+  // Inform Fatecards about tier so it can enforce card limits
+  if (window.StoryboundCards && window.StoryboundCards.setTier){
+    window.StoryboundCards.setTier(tier);
+  }
+}
 
     // ---------------------------- AGE / TOS ----------------------------
     on('ageYesBtn','click', goToTOS);
