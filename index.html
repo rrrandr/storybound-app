@@ -1,4 +1,669 @@
-// --- GAME START (Patched with Debugging) ---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Storybound: Danger and Decadence</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
+
+  <style>
+    /* GLOBAL */
+    :root{ --bg1:#0a001f; --bg2:#2a0033; --pink:#ff69b4; --hot:#ff1493; --gold:#ffd700; --ink:#f0e6ff; --panel:rgba(20,0,40,.6); }
+    html, body { margin:0; padding:0; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--ink); font-family:'Lora',serif; overflow-x:hidden; min-height:100vh; }
+    body { text-align:center; padding:10px; }
+    
+    /* TYPOGRAPHY */
+    h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
+    
+    .section-title { font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
+    
+    .instruction-text {
+        font-family: 'Lora', serif;
+        font-size: 0.5em;
+        color: var(--ink);
+        opacity: 0.7;
+        vertical-align: middle;
+        margin-left: 12px;
+        letter-spacing: 0;
+        text-shadow: none;
+    }
+    
+    /* BUTTONS */
+    button { background:linear-gradient(145deg,#8b008b,var(--hot)); color:var(--gold); padding:10px 30px; border:none; border-radius:25px; font-size:1em; cursor:pointer; box-shadow:0 0 18px rgba(255,20,147,.6); transition:.3s; font-family:'Lora',serif; position:relative; }
+    button:hover { transform:scale(1.05); box-shadow:0 0 30px rgba(255,105,180,.9); }
+    button:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    
+    .intensity-btn.active {
+        border: 2px solid var(--gold);
+        background: linear-gradient(145deg, #ff1493, #ff69b4);
+        box-shadow: 0 0 15px var(--gold);
+        transform: scale(1.05);
+    }
+    
+    .small-btn { font-size: 0.9em; padding: 8px 16px; background: #444; box-shadow:none; }
+
+    /* UTILS */
+    .box { max-width:600px; margin:20px auto; padding:25px; background:var(--panel); border:1px solid var(--pink); border-radius:15px; box-shadow:0 0 20px rgba(255,105,180,.4); }
+    .choice-buttons { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin:30px auto; max-width:800px; }
+    .choice { padding:15px 40px; font-size:1.4em; border-radius:30px; font-family:'lust-script-display',serif; }
+    .hidden { display:none !important; }
+    
+    /* INPUTS & LOCKS */
+    .input-wrapper { position: relative; width: 95%; margin: 0 auto 15px; }
+    .input-wrapper label { display:block; text-align:left; color:var(--gold); margin-bottom:5px; font-size:0.9em; font-family:'Lora',serif; }
+    textarea, input, select { width:100%; padding:12px; background:rgba(30,0,50,.9); color:var(--ink); border:1px solid var(--pink); border-radius:8px; font-size:1em; font-family:'Lora',serif; box-sizing:border-box; }
+    
+    .locked-input textarea { opacity:0.6; pointer-events:none; filter:grayscale(0.5); }
+    .locked-input::after { content: "🔒"; position: absolute; top: 38px; right: 10px; font-size: 1.2em; opacity: 0.8; pointer-events: none; }
+    .locked-input { cursor: url("/cursor-dollar-plane-64.png"), pointer !important; }
+    
+    /* STYLE CARDS */
+    .style-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:15px 0; }
+    .card { background:#252525; border-radius:12px; padding:15px; cursor:pointer; text-align:left; border:2px solid transparent; position:relative; transition:.2s; }
+    .card:hover { transform:translateY(-3px); border-color:#ff6b6b; }
+    .card.selected { border-color:#ff69b4; background:#333; box-shadow:0 0 15px rgba(255,105,180,0.3); }
+    .card h3 { margin:0 0 5px; color:#ff6b6b; font-size:1.1em; font-family:'lust-script-display',serif; }
+    .card p { font-size:0.9em; opacity:0.9; margin:0; font-family:'Lora',serif; }
+    
+    .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:5; position:relative; }
+    .preview-btn:hover { background:rgba(255,255,255,0.2); }
+
+    .locked-style { opacity:0.5; filter:grayscale(0.8); cursor:url("/cursor-dollar-plane-64.png"), pointer !important; }
+    .locked-style::after { content:""; position:absolute; top:10px; right:10px; width:20px; height:20px; background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; opacity:0.8; }
+    
+    /* FATE CARDS */
+    .fate-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:20px auto; max-width:500px; perspective:1000px; }
+    .fate-card { width:100%; aspect-ratio:2/3; position:relative; cursor:pointer; background:none; border:none; padding:0; transform-style:preserve-3d; transition:transform 0.6s, opacity 0.5s; }
+    
+    .fate-card .inner { position:absolute; inset:0; border-radius:8px; transform-style:preserve-3d; transition:transform 0.8s; box-shadow:0 5px 15px rgba(0,0,0,0.5); }
+    .fate-card.flipped .inner { transform:rotateY(180deg); }
+    
+    .fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); }
+    .fate-card .front { background:#111; z-index:2; } 
+    .fate-card .front h3 { font-size:0.9em; margin:0; }
+    .fate-card .back { background:#2a0033; transform:rotateY(180deg); z-index:1; }
+    .fate-card .back div { font-size:20px; } 
+
+    .fate-card.selected .inner { box-shadow:0 0 0 2px #ff69b4, 0 0 15px #ff69b4; }
+    
+    /* Animations */
+    .fate-card.poof { animation: smokePoof 0.6s forwards; }
+    @keyframes smokePoof { 0%{ opacity:1; transform:scale(1); } 50%{ opacity:0.5; filter:blur(5px); transform:scale(1.1); } 100%{ opacity:0; transform:scale(0.5); } }
+    
+    /* STORY TEXT */
+    .story-section { margin-bottom: 20px; animation: fadeIn 1s ease; }
+    .story-image { width:100%; border-radius:12px; margin:15px 0; border:1px solid var(--pink); box-shadow:0 0 20px rgba(255,20,147,0.3); }
+    .separator { text-align:center; font-size:1.5em; color:var(--gold); margin:30px 0; opacity:0.8; }
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+    /* RESPONSIVE */
+    @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
+
+    /* BURGER */
+    #burgerBtn { position:fixed; top:15px; right:15px; z-index:5000; font-size:1.5em; background:rgba(0,0,0,0.5); border:1px solid #ff69b4; width:40px; height:40px; padding:0; display:none; }
+  </style>
+</head>
+
+<body>
+
+<button id="burgerBtn">☰</button>
+<div id="menuOverlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:4999; align-items:center; justify-content:center; display:flex;">
+  <div class="box">
+    <h3>Menu</h3>
+    <button onclick="restart()">Restart Story</button>
+    <button onclick="changeTier()">Change Tier</button>
+    <button onclick="document.getElementById('menuOverlay').classList.add('hidden')" style="background:#444">Close</button>
+  </div>
+</div>
+
+<div id="ageGate" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+  <h2>Storybound</h2>
+  <p style="font-size:1.2em; max-width:500px; margin:20px;">Explicit adult themes. 18+ Only.</p>
+  <button id="ageYes">I am 18+</button>
+  <button onclick="location.href='https://google.com'" style="background:#333">Exit</button>
+</div>
+
+<div id="tosGate" class="hidden" style="position:fixed; inset:0; background:#000; z-index:9998; flex-direction:column; align-items:center; justify-content:center; display:flex;">
+  <h2>Terms of Service</h2>
+  <div class="box" style="text-align:left; height:50vh; overflow-y:auto; font-size:0.9em; line-height:1.5;">
+    <p><strong>1. Age Requirement.</strong> You represent and warrant that you are at least 18 years of age.</p>
+    <p><strong>2. Adult Content.</strong> Storybound includes erotic and sexually explicit themes.</p>
+    <p><strong>3. Safety Baseline.</strong> No minors. No sexual violence. No real-person content without permission.</p>
+    <p><strong>4. User Content.</strong> You are responsible for your inputs and shared content.</p>
+    <p><strong>5. Ownership.</strong> You own your original inputs. AI generation varies by jurisdiction.</p>
+    <p><strong>6. License.</strong> You grant Storybound a license to use anonymized data to improve models.</p>
+    <p><strong>7. Prohibited Uses.</strong> No illegal content, harassment, or doxxing.</p>
+    <p><strong>8. Disclaimer.</strong> Storybound is entertainment, not professional advice.</p>
+    <p><strong>9. Availability.</strong> Services may change or discontinue at any time.</p>
+    <p><strong>10. Liability.</strong> We are not liable for indirect or consequential damages.</p>
+    <p><em>Last updated: Dec 2025</em></p>
+  </div>
+  <label><input type="checkbox" id="tosCheck"> I agree to the Terms</label>
+  <br>
+  <button id="tosBtn" disabled>Enter Storybound</button>
+</div>
+
+<div id="tierGate" class="hidden" style="position:fixed; inset:0; background:#000; z-index:9997; flex-direction:column; align-items:center; justify-content:center; display:flex;">
+  <h2>Choose Your Path</h2>
+  <div class="choice-buttons">
+    <div style="text-align:center">
+      <button class="choice" id="btnTease">Tease</button>
+      <p style="opacity:0.7">Free. Limited Styles.</p>
+    </div>
+    <div style="text-align:center">
+      <button class="choice" id="btnIndulge">Indulge</button>
+      <p style="opacity:0.7">Premium. Unlocked.</p>
+    </div>
+  </div>
+</div>
+
+<div id="payModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:10000; align-items:center; justify-content:center; display:flex;">
+  <div class="box" style="text-align:center">
+    <h3>Unshackle Your Fate</h3>
+    <p style="margin-bottom:20px; font-style:italic; color:#ffd700">"Why stop when it's just getting good?"</p>
+    
+    <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
+        <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:200px;">
+            <h4>Unlock This Story</h4>
+            <p>Inputs, saves, and styles for <strong>this session</strong>.</p>
+            <button id="payOneTime" style="width:100%">Unlock ($1)</button>
+        </div>
+        <div id="optSub" style="background:#400020; padding:15px; border-radius:10px; border:1px solid gold; width:200px;">
+            <h4>Indulge Forever</h4>
+            <p>Unlimited access to all styles and features.</p>
+            <button id="paySub" style="width:100%">Subscribe ($6/mo)</button>
+        </div>
+    </div>
+    <br>
+    <button onclick="document.getElementById('payModal').classList.add('hidden')" style="background:#444">Cancel</button>
+  </div>
+</div>
+
+<div id="strangerModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10002; align-items:center; justify-content:center; display:flex;">
+  <div class="box">
+    <h3>How Daring...</h3>
+    <p>You aren't the only one tempting fate today.</p>
+    <p id="strangerCount" style="color:gold; font-size:1.2em; margin:20px 0;"></p>
+    <button onclick="document.getElementById('strangerModal').classList.add('hidden')">Close</button>
+  </div>
+</div>
+
+<div id="previewModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10001; align-items:center; justify-content:center; display:flex;">
+  <div class="box">
+    <p id="previewText" style="font-size:1.3em; font-style:italic; line-height:1.6"></p>
+    <button onclick="document.getElementById('previewModal').classList.add('hidden')">Close</button>
+  </div>
+</div>
+
+<div id="loadingOverlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10005; align-items:center; justify-content:center; display:flex;">
+  <div style="text-align:center">
+     <h3>Weaving your fate...</h3>
+     <p>Connecting to Storybound Oracle...</p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  
+  <div id="modeSelect">
+    <h1 style="margin-top:40px">Storybound</h1>
+    <p style="color:var(--gold); font-style:italic; margin-bottom:40px;">Will you enter a world of danger and decadence alone, or with a liaison?</p>
+    <div class="choice-buttons">
+      <button class="choice" onclick="setMode('solo')">Solo</button>
+      <button class="choice" onclick="setMode('couple')">Couple</button>
+      <button class="choice" onclick="showStranger()">Stranger</button>
+    </div>
+  </div>
+
+  <div id="coupleInvite" class="hidden box">
+    <h3>Invite Your Partner</h3>
+    <p style="font-size:0.9em">Send this code to your partner to link your fates.</p>
+    <div style="background:#000; padding:15px; font-size:1.5em; letter-spacing:2px; color:var(--pink); margin:15px 0; border:1px dashed var(--gold);" id="inviteCodeDisplay"></div>
+    
+    <button onclick="copyInvite()" class="small-btn">Copy Invitation</button>
+    <div id="copyFeedback" style="color:gold; font-size:0.8em; margin-top:5px; height:15px;"></div>
+    
+    <hr style="border-color:#333; margin:20px 0;">
+    
+    <button onclick="setMode('solo')" style="margin-bottom:10px;">Play Solo Until They Join</button>
+    <br>
+    <button onclick="setMode(null)" style="background:#333; font-size:0.8em">Withdraw Invitation</button>
+  </div>
+
+  <div id="coupleJoin" class="hidden box">
+    <h3>Join Room</h3>
+    <input placeholder="Enter Partner Code" id="partnerCodeInput">
+    <button onclick="joinRoom()">Join</button>
+    <br><br>
+    <button onclick="setMode('couple')" style="background:#333; font-size:0.8em">Back</button>
+  </div>
+
+  <div id="setup" class="hidden" style="max-width:800px; margin:0 auto; padding-bottom:50px;">
+    
+    <div class="section-title">Intensity</div>
+    <div id="intensityBtns">
+      <button data-val="Clean" data-desc="Flirt, chemistry, and longing." class="intensity-btn">Clean</button>
+      <button data-val="Naughty" data-desc="Direct teasing with tasteful sensuality." class="intensity-btn active">Naughty</button>
+      <button data-val="Erotic" data-desc="Explicit intimacy and detail." class="intensity-btn">Erotic</button>
+      <button data-val="Dirty" data-desc="Very explicit language and bold scenes." class="intensity-btn">Dirty</button>
+    </div>
+    <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px;">(Naughty) chosen. Direct teasing with tasteful sensuality.</p>
+
+    <div class="section-title">Genres <span class="instruction-text">(Select up to 3)</span></div>
+    <div class="style-cards" id="genreGrid">
+      <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and desire.</p></div>
+      <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary</h3><p>Modern settings, present-day relationships.</p></div>
+      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical</h3><p>Period romance and forbidden rules.</p></div>
+      <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal</h3><p>Vampires, shifters, modern witches.</p></div>
+      <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray heat; player boundaries.</p></div>
+      <div class="card" data-grp="genre" data-val="Suspense"><h3>Romantic Suspense</h3><p>Danger, mystery, and adrenaline.</p></div>
+    </div>
+    
+    <button class="small-btn" onclick="toggle('moreGenres')">More Genres</button>
+    <div id="moreGenres" class="style-cards hidden">
+       <div class="card" data-grp="genre" data-val="Sports"><h3>Sports</h3><p>Competitive tension and athletes.</p></div>
+       <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime</h3><p>Forbidden love in criminal worlds.</p></div>
+       <div class="card" data-grp="genre" data-val="Billionaire"><h3>Billionaire</h3><p>Wealth and power.</p></div>
+       <div class="card" data-grp="genre" data-val="Gothic"><h3>Gothic</h3><p>Moody and haunted.</p></div>
+       <div class="card" data-grp="genre" data-val="LGBTQ"><h3>LGBTQ+</h3><p>Inclusive stories.</p></div>
+       <div class="card" data-grp="genre" data-val="SecondChance"><h3>Second Chance</h3><p>Ex-lovers reunited.</p></div>
+       <div class="card" data-grp="genre" data-val="SmallTown"><h3>Small Town</h3><p>Cozy vibes.</p></div>
+       <div class="card" data-grp="genre" data-val="Romcom"><h3>RomCom</h3><p>Banter and light chaos.</p></div>
+    </div>
+
+    <div class="section-title">Dynamics <span class="instruction-text">(Select up to 3)</span></div>
+    <div class="style-cards" id="dynamicGrid">
+      <div class="card" data-grp="dynamic" data-val="Enemies"><h3>Enemies to Lovers</h3><p>Rivals to heat.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Taboo desires.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Status gaps.</p></div>
+      <div class="card" data-grp="dynamic" data-val="SlowBurn"><h3>Slow Burn</h3><p>High restraint.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends to Lovers</h3><p>Safety to heat.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Close quarters.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Secret"><h3>Secret Identity</h3><p>Truths revealed.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive</h3><p>Dark devotion.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated Mates</h3><p>Destined bond.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker</h3><p>Vulnerability.</p></div>
+    </div>
+
+    <div class="section-title">POV</div>
+    <div class="style-cards" id="povGrid">
+      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>Intimate.</p><button class="preview-btn" data-txt="I held my breath...">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>Immersive.</p><button class="preview-btn" data-txt="You feel the room shift...">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>Cinematic.</p><button class="preview-btn" data-txt="He kept his voice calm...">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>Choral.</p><button class="preview-btn" data-txt="We watched them circle like storms...">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>Playful.</p><button class="preview-btn" data-txt="The Author hesitated, then chose chaos...">Preview</button></div>
+    </div>
+
+    <div class="section-title">Story Style <span class="instruction-text">(Select up to 3)</span></div>
+    <div class="style-cards" id="styleGrid">
+      <div class="card selected" data-grp="style" data-val="Breathless">
+         <h3>Breathless</h3><p>Fast tension.</p><button class="preview-btn" data-txt="His attention was a slow hand...">Preview</button>
+      </div>
+      
+      <div class="card" data-grp="style" data-val="Epic" data-locked="true">
+         <h3>Epic Fantasy</h3><p>Grand stakes.</p><button class="preview-btn" data-txt="The city burned like a crown...">Preview</button>
+      </div>
+      <div class="card" data-grp="style" data-val="Playful" data-locked="true">
+         <h3>Playful Heat</h3><p>Flirty banter.</p><button class="preview-btn" data-txt="You're staring. I'm appreciating.">Preview</button>
+      </div>
+      <div class="card" data-grp="style" data-val="Dark" data-locked="true">
+         <h3>Dark Desire</h3><p>Moody tension.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button>
+      </div>
+      <div class="card" data-grp="style" data-val="Raw" data-locked="true">
+         <h3>Raw Passion</h3><p>Direct emotion.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button>
+      </div>
+       <div class="card" data-grp="style" data-val="Regency" data-locked="true">
+         <h3>Regency</h3><p>Polite knives.</p><button class="preview-btn" data-txt="Your reputation is in danger.">Preview</button>
+      </div>
+    </div>
+    
+    <button class="small-btn" onclick="toggle('moreStyles')">More Styles</button>
+    <div id="moreStyles" class="style-cards hidden">
+       <div class="card" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry</h3><p>Dry wit.</p><button class="preview-btn" data-txt="She lied. He admired it.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic</h3><p>Calculated.</p><button class="preview-btn" data-txt="Silence did the flirting for him.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal</h3><p>Dreamlike.</p><button class="preview-btn" data-txt="The candles leaned in to listen.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal Edge</h3><p>Razor sharp.</p><button class="preview-btn" data-txt="No soft words. Just truth.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Satirical" data-locked="true"><h3>Satirical</h3><p>Witty fun.</p><button class="preview-btn" data-txt="The prophecy was inconvenient.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Poetic.</p><button class="preview-btn" data-txt="Speak low, sweet peril.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Futuristic.</p><button class="preview-btn" data-txt="Stars like spilled ink.">Preview</button></div>
+    </div>
+
+    <div class="section-title">Story Controls</div>
+    <div id="storyControlsBox" class="input-wrapper locked-input" onclick="showPaywall('unlock')">
+       <textarea id="storyControls" rows="3" placeholder="E.g. No vampires, more dialogue..." disabled></textarea>
+    </div>
+
+    <br>
+    <button id="beginBtn" style="font-size:1.5em; margin-top:20px;">Begin Story</button>
+  </div>
+
+  <div id="game" class="hidden" style="max-width:900px; margin:0 auto; padding-bottom:60px;">
+    <h2 id="storyTitle"></h2>
+    <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:20px;"></p>
+    
+    <div id="storyText" class="box" style="text-align:left; max-width:100%; min-height:300px; margin-bottom:30px;">
+      </div>
+
+    <div class="section-title" style="font-size:1.8em; margin-top:0;">Guide Your Fate</div>
+    <p style="opacity:0.8; font-style:italic;">Take control with explicit instructions, or let fate guide you.</p>
+    
+    <div id="cardMount" class="fate-grid">
+      <button class="fate-card" type="button" data-say="I let the silence linger." data-do="I step closer.">
+        <span class="inner">
+          <span class="front"><h3>FATE</h3></span>
+          <span class="back"><div style="font-size:30px">🍷</div></span>
+        </span>
+      </button>
+      <button class="fate-card" type="button" data-say="I want this." data-do="I touch you.">
+        <span class="inner">
+          <span class="front"><h3>FATE</h3></span>
+          <span class="back"><div style="font-size:30px">🔥</div></span>
+        </span>
+      </button>
+      <button class="fate-card" type="button" data-say="Stop." data-do="I hold up a hand.">
+        <span class="inner">
+          <span class="front"><h3>FATE</h3></span>
+          <span class="back"><div style="font-size:30px">⚔️</div></span>
+        </span>
+      </button>
+      <button class="fate-card" type="button" data-say="Make me." data-do="I challenge you.">
+        <span class="inner">
+          <span class="front"><h3>FATE</h3></span>
+          <span class="back"><div style="font-size:30px">👑</div></span>
+        </span>
+      </button>
+      <button class="fate-card" type="button" data-say="..." data-do="I wait.">
+        <span class="inner">
+          <span class="front"><h3>FATE</h3></span>
+          <span class="back"><div style="font-size:30px">🕊️</div></span>
+        </span>
+      </button>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
+      <div class="input-wrapper locked-input" id="actionWrapper" onclick="showPaywall('unlock')">
+          <label>What do you do?</label>
+          <textarea id="actionInput" rows="3" placeholder="Action..." disabled></textarea>
+      </div>
+      <div class="input-wrapper locked-input" id="dialogueWrapper" onclick="showPaywall('unlock')">
+          <label>What do you say?</label>
+          <textarea id="dialogueInput" rows="3" placeholder="Dialogue..." disabled></textarea>
+      </div>
+    </div>
+
+    <div style="margin-top:20px; display:flex; gap:10px; justify-content:center; align-items:center;">
+       <button id="saveBtn" class="small-btn locked-style" onclick="showPaywall('unlock')">Save</button>
+       <button id="submitBtn" style="font-size:1.3em;">Submit Turn</button>
+       <button id="vizBtn" class="small-btn" onclick="visualize()">Visualize</button>
+    </div>
+    
+    <div style="margin-top:10px;">
+       <button id="gameControlsBtn" class="small-btn locked-style" onclick="showPaywall('unlock')">Story Controls</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="/fatecards/storybound-cards.js"></script>
+<script>
+// --- GLOBAL SCOPE HELPERS (Must be visible to onclick) ---
+function toggle(id){ 
+    var el=document.getElementById(id); 
+    if(el) el.classList.toggle('hidden'); 
+}
+
+(function(){
+  // --- HELPERS ---
+  function $(id){ return document.getElementById(id); }
+  function hideAll(){ ['ageGate','tosGate','tierGate','app','modeSelect','coupleInvite','coupleJoin','setup','game'].forEach(function(x){ if($(x)) $(x).classList.add('hidden'); }); }
+  
+  // PROXY URLs
+  var API_STORY = 'https://storybound-proxy.vercel.app/api/proxy';
+  var API_IMAGE = 'https://storybound-proxy.vercel.app/api/image';
+
+  var state = { tier:'free', picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] } };
+
+  // --- EXPOSE FUNCTIONS TO WINDOW FOR ONCLICK ---
+  window.restart = function(){ 
+      $('menuOverlay').classList.add('hidden');
+      $('game').classList.add('hidden');
+      $('setup').classList.add('hidden');
+      // Go back to Mode Select (Keep Tier)
+      $('app').classList.remove('hidden');
+      $('modeSelect').classList.remove('hidden');
+      $('storyText').innerHTML = ''; // Clear text
+  };
+  
+  window.changeTier = function(){ $('menuOverlay').classList.add('hidden'); setTier(state.tier === 'free' ? 'indulge' : 'free'); };
+  
+  window.showStranger = function(){
+    var count = parseInt(localStorage.getItem('sb_stranger_clicks') || '0') + 1;
+    localStorage.setItem('sb_stranger_clicks', count);
+    $('strangerCount').textContent = count + " souls have tempted fate.";
+    $('strangerModal').classList.remove('hidden');
+  };
+
+  window.setMode = function(m){
+    // Reset Views
+    $('modeSelect').classList.add('hidden');
+    $('coupleInvite').classList.add('hidden');
+    $('coupleJoin').classList.add('hidden');
+    $('setup').classList.add('hidden');
+
+    if(m === 'solo') $('setup').classList.remove('hidden');
+    else if(m === 'couple') {
+        $('coupleInvite').classList.remove('hidden');
+        var code = Math.random().toString(36).substring(2,6).toUpperCase();
+        $('inviteCodeDisplay').textContent = code;
+        $('inviteCodeDisplay').setAttribute('data-code', code);
+    }
+    else if(m === 'couple-joined') $('setup').classList.remove('hidden');
+    else $('modeSelect').classList.remove('hidden'); 
+  };
+  
+  window.copyInvite = function(){
+     var code = $('inviteCodeDisplay').getAttribute('data-code');
+     var text = "Join me in Storybound. Code: " + code;
+     navigator.clipboard.writeText(text).then(function(){
+        $('copyFeedback').textContent = "Copied!";
+        setTimeout(function(){ $('copyFeedback').textContent = ""; }, 2000);
+     });
+  };
+
+  window.joinRoom = function(){
+      var val = $('partnerCodeInput').value;
+      if(!val) return alert("Enter code.");
+      setMode('couple-joined');
+  };
+  
+  window.showPaywall = function(type){
+     if(state.tier === 'indulge') return; 
+     $('payModal').classList.remove('hidden');
+     if(type === 'unlock') $('optUnlock').classList.remove('hidden');
+     else $('optUnlock').classList.add('hidden');
+  };
+  
+  window.visualize = function(){
+     $('loadingOverlay').classList.remove('hidden');
+     
+     // 1. Get Context from Story (Last Paragraph)
+     var paragraphs = document.querySelectorAll('#storyText p');
+     var lastText = paragraphs.length > 0 ? paragraphs[paragraphs.length - 1].textContent : "Cinematic romantic fantasy illustration";
+     
+     var payload = {
+         prompt: lastText.substring(0, 500), 
+         size: "1024x1024"
+     };
+
+     console.log("[Storybound Debug] Visualize Request:", { url: API_IMAGE, payload: payload });
+
+     fetch(API_IMAGE, { 
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(payload)
+     })
+     .then(res => {
+         if(!res.ok) throw new Error("HTTP " + res.status);
+         return res.json();
+     })
+     .then(data => { 
+         $('loadingOverlay').classList.add('hidden');
+         var img = document.createElement('img');
+         img.src = data.url || 'https://picsum.photos/600/400?grayscale&blur=2';
+         img.className = 'story-image';
+         img.alt = "Generated Scene";
+         $('storyText').appendChild(img);
+         img.scrollIntoView({behavior:'smooth'});
+     })
+     .catch(e => { 
+         console.error("[Storybound Debug] Visualize Failed:", e);
+         // Mock Fallback
+         setTimeout(function(){ 
+            $('loadingOverlay').classList.add('hidden'); 
+            var img = document.createElement('img');
+            img.src = 'https://picsum.photos/600/400?grayscale&blur=2';
+            img.className = 'story-image';
+            $('storyText').appendChild(img);
+            img.scrollIntoView({behavior:'smooth'});
+            // Alert user only on console/debug
+            console.warn("Visualizer used fallback due to connection failure.");
+         }, 1000); 
+     });
+  };
+
+  // --- GATES ---
+  $('ageYes').onclick = function(){ hideAll(); $('tosGate').classList.remove('hidden'); };
+  $('tosCheck').onchange = function(e){ $('tosBtn').disabled = !e.target.checked; };
+  $('tosBtn').onclick = function(){ hideAll(); $('tierGate').classList.remove('hidden'); };
+  
+  // --- TIER SELECTION ---
+  $('btnTease').onclick = function(){ setTier('free'); };
+  $('btnIndulge').onclick = function(){ window.showPaywall('sub'); };
+  
+  $('payOneTime').onclick = function(){
+     state.tier = 'single-unlocked';
+     $('payModal').classList.add('hidden');
+     updateLocks();
+     alert("Story unlocked! Saves, Controls, and Inputs active for this session.");
+  };
+
+  $('paySub').onclick = function(){
+     state.tier = 'indulge';
+     $('payModal').classList.add('hidden');
+     setTier('indulge'); 
+     alert("Welcome to Indulge Tier.");
+  };
+
+  function setTier(t){
+    state.tier = t;
+    if(window.StoryboundCards) window.StoryboundCards.setTier(t);
+    hideAll(); 
+    $('app').classList.remove('hidden');
+    $('burgerBtn').style.display='block';
+    $('modeSelect').classList.remove('hidden'); 
+    updateLocks();
+  }
+
+  // --- INTENSITY ---
+  var iBtns = document.querySelectorAll('.intensity-btn');
+  iBtns.forEach(function(b){
+    b.onclick = function(){
+       iBtns.forEach(function(x){x.classList.remove('active')});
+       b.classList.add('active');
+       var val = b.getAttribute('data-val');
+       var desc = b.getAttribute('data-desc');
+       $('intensityDesc').textContent = "(" + val + ") chosen. " + desc;
+    }
+  });
+
+  // --- SELECTION GRID LOGIC ---
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('.card');
+    if(!el) return;
+    
+    if(e.target.classList.contains('preview-btn')){
+      e.stopPropagation(); e.preventDefault();
+      $('previewText').textContent = e.target.getAttribute('data-txt');
+      $('previewModal').classList.remove('hidden');
+      return;
+    }
+
+    var grp = el.getAttribute('data-grp');
+    var val = el.getAttribute('data-val');
+    var locked = el.getAttribute('data-locked');
+
+    if(state.tier === 'free' && locked === 'true'){
+      window.showPaywall('unlock'); 
+      return;
+    }
+
+    if(grp === 'genre' || grp === 'dynamic' || grp === 'style'){
+      
+      if(!state.picks[grp]) state.picks[grp] = [];
+      if(typeof state.picks[grp] === 'string') state.picks[grp] = [state.picks[grp]];
+      
+      var current = state.picks[grp];
+
+      if(el.classList.contains('selected')){
+         el.classList.remove('selected');
+         state.picks[grp] = current.filter(function(x){ return x !== val; });
+      } else {
+         if(current.length >= 3) return alert("Select up to 3 options.");
+         el.classList.add('selected');
+         state.picks[grp].push(val);
+      }
+    } else {
+      document.querySelectorAll('.card[data-grp="'+grp+'"]').forEach(function(c){ c.classList.remove('selected'); });
+      el.classList.add('selected');
+      state.picks[grp] = val;
+    }
+  });
+
+  // --- LOCK UPDATE ---
+  function updateLocks(){
+    var isLocked = (state.tier === 'free');
+    
+    // Styles
+    document.querySelectorAll('.card[data-locked="true"]').forEach(function(c){
+       if(isLocked) c.classList.add('locked-style');
+       else c.classList.remove('locked-style');
+    });
+
+    // Inputs
+    var inputWrappers = ['storyControlsBox', 'actionWrapper', 'dialogueWrapper'];
+    inputWrappers.forEach(function(id){
+        var w = $(id);
+        var input = w.querySelector('textarea');
+        if(isLocked){
+            w.classList.add('locked-input');
+            w.onclick = function(){ window.showPaywall('unlock'); };
+            input.disabled = true;
+        } else {
+            w.classList.remove('locked-input');
+            w.onclick = null;
+            input.disabled = false;
+        }
+    });
+
+    // Buttons
+    var lockedBtns = ['saveBtn','gameControlsBtn'];
+    lockedBtns.forEach(function(id){
+       var b = $(id);
+       if(isLocked) {
+           b.classList.add('locked-style');
+           b.onclick = function(){ window.showPaywall('unlock'); };
+       } else {
+           b.classList.remove('locked-style');
+           b.onclick = null;
+       }
+    });
+  }
+
+  // --- GAME START ---
   $('beginBtn').onclick = async function(){
     hideAll();
     $('app').classList.remove('hidden');
@@ -10,60 +675,109 @@
     $('storySynopsis').textContent = "Consulting the oracle...";
     $('loadingOverlay').classList.remove('hidden');
 
-    // 1. Construct Payload
     var payload = {
         phase: 'begin',
         tier: state.tier,
         genre: state.picks.genre,
         dynamic: state.picks.dynamic,
         pov: state.picks.pov,
-        // Ensure style is a string for the prompt
         style: Array.isArray(state.picks.style) ? state.picks.style.join(', ') : state.picks.style
     };
 
-    console.log("[Storybound Debug] Begin Request:", { url: API_STORY, payload: payload });
+    console.log("[Storybound Debug] Begin:", payload);
 
     try {
-        // 2. Fetch
         var res = await fetch(API_STORY, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
-
-        // 3. Log Raw Response
-        var rawText = await res.text();
-        console.log("[Storybound Debug] Begin Response:", { status: res.status, raw: rawText });
-
-        if(!res.ok) throw new Error(`HTTP ${res.status}: ${rawText}`);
-
-        // 4. Parse & Update
-        var data = JSON.parse(rawText); // Manual parse to catch errors
         
+        var rawText = await res.text();
+        console.log("[Storybound Debug] Response:", rawText);
+
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        
+        var data = JSON.parse(rawText);
         $('storyTitle').textContent = data.title || "A Door With Teeth";
         $('storySynopsis').textContent = data.synopsis || "Generated synopsis...";
         $('storyText').innerHTML = data.story || "<p>Story text...</p>";
 
     } catch(e) {
-        console.error("[Storybound Debug] Begin Failed:", e);
-        
-        // Fallback
+        console.error("[Storybound Debug] Failed:", e);
+        // High Quality Fallback Text
         $('storyTitle').textContent = "A Door With Teeth";
-        $('storySynopsis').textContent = "A breathless encounter...";
+        $('storySynopsis').textContent = "A breathless encounter where every choice cuts deep.";
         var txt = "<p>The atmosphere thickened. Shadows lengthened across the floor as the silence between them grew heavy with unsaid things.</p>";
         txt += "<p>He watched you from across the room, his gaze a physical weight. You knew you shouldn't be here—not with him, not after everything that happened—but the pull was undeniable.</p>";
         txt += "<p>'You came back,' he said, his voice low and rough, like gravel over velvet. 'I didn't think you would dare.'</p>";
         txt += "<p>You stepped forward, your heart hammering a frantic rhythm against your ribs. 'I had to know,' you whispered. 'I had to know if it was real.'</p>";
         $('storyText').innerHTML = txt;
         
-        // Visible Error for Debugging (remove later)
-        var errNote = document.createElement('p');
-        errNote.style.color = 'red';
-        errNote.style.fontSize = '0.8em';
-        errNote.textContent = "Debug Note: Proxy failed. Check Console (F12). Error: " + e.message;
-        $('storyText').appendChild(errNote);
+        var err = document.createElement('p');
+        err.style.color = '#ff6b6b';
+        err.style.fontSize = '0.8em';
+        err.style.marginTop = '20px';
+        err.textContent = "Note: Backend connection failed. Using fallback text.";
+        $('storyText').appendChild(err);
     }
 
     $('loadingOverlay').classList.add('hidden');
     if(window.StoryboundCards) window.StoryboundCards.mount({ mountId:'cardMount', dialogueId:'dialogueInput', actionId:'actionInput' });
   };
+
+  // --- SUBMIT TURN ---
+  $('submitBtn').onclick = async function(){
+    if(window.StoryboundCards) window.StoryboundCards.poof();
+    
+    // 1. Capture & Clear Inputs
+    var actionVal = $('actionInput').value;
+    var dialogueVal = $('dialogueInput').value;
+    $('actionInput').value = "";
+    $('dialogueInput').value = "";
+
+    // 2. Create Separator & Section
+    var sep = document.createElement('div');
+    sep.className = 'separator';
+    sep.innerHTML = "⚜";
+    $('storyText').appendChild(sep);
+
+    var newSection = document.createElement('div');
+    newSection.className = 'story-section';
+    newSection.innerHTML = "<p><i>Weaving fate...</i></p>";
+    $('storyText').appendChild(newSection);
+    newSection.scrollIntoView({behavior:'smooth'});
+
+    // 3. Payload
+    var payload = { phase: 'turn', action: actionVal, dialogue: dialogueVal };
+    console.log("[Storybound Debug] Turn:", payload);
+
+    try {
+        var res = await fetch(API_STORY, {
+             method: 'POST',
+             headers: {'Content-Type': 'application/json'},
+             body: JSON.stringify(payload)
+        });
+        
+        var rawText = await res.text();
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        
+        var data = JSON.parse(rawText);
+        newSection.innerHTML = data.story || "<p>Next chapter...</p>";
+    } catch(e) {
+        console.error("[Storybound Debug] Failed:", e);
+        setTimeout(function(){
+            var newTxt = "<p>You spoke, and the air in the room shifted. He tilted his head, considering your words as if they were a puzzle he hadn't quite solved yet.</p>";
+            newTxt += "<p>'Is that so?' he murmured, stepping closer until you could feel the heat radiating from him. 'Then show me.'</p>";
+            newTxt += "<p>The choice hung between you, sharp and dangerous.</p>";
+            newSection.innerHTML = newTxt;
+        }, 800);
+    }
+  };
+
+  $('burgerBtn').onclick = function(){ $('menuOverlay').classList.remove('hidden'); };
+
+})();
+</script>
+</body>
+</html>
