@@ -63,7 +63,7 @@
         opacity:0.5; 
         filter:grayscale(0.8); 
         cursor:url("/cursor-dollar-plane-64.png"), pointer !important; 
-        pointer-events:none; /* Clicks go to wrapper/parent */
+        pointer-events:none; 
     }
     
     .locked-input::after,
@@ -92,7 +92,7 @@
     .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:5; position:relative; }
     .preview-btn:hover { background:rgba(255,255,255,0.2); }
     
-    /* FATE CARDS (50% Smaller) */
+    /* FATE CARDS */
     .fate-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:20px auto; max-width:500px; perspective:1000px; }
     .fate-card { width:100%; aspect-ratio:2/3; position:relative; cursor:pointer; background:none; border:none; padding:0; transform-style:preserve-3d; transition:transform 0.6s, opacity 0.5s; }
     
@@ -438,9 +438,9 @@ function toggle(id){
   function $(id){ return document.getElementById(id); }
   function hideAll(){ ['ageGate','tosGate','tierGate','app','modeSelect','coupleInvite','coupleJoin','setup','game'].forEach(function(x){ if($(x)) $(x).classList.add('hidden'); }); }
   
-  // PROXY URLs
-  var API_STORY = 'https://storybound-proxy.vercel.app/api/proxy';
-  var API_IMAGE = 'https://storybound-proxy.vercel.app/api/image';
+  // PROXY URLs - Corrected for Vercel
+  var API_STORY = 'https://storybound-app.vercel.app/api/proxy';
+  var API_IMAGE = 'https://storybound-app.vercel.app/api/image';
 
   var state = { tier:'free', picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] } };
 
@@ -452,7 +452,7 @@ function toggle(id){
       // Go back to Mode Select (Keep Tier)
       $('app').classList.remove('hidden');
       $('modeSelect').classList.remove('hidden');
-      $('storyText').innerHTML = ''; // Clear text
+      $('storyText').innerHTML = ''; 
   };
   
   window.changeTier = function(){ 
@@ -511,7 +511,6 @@ function toggle(id){
   window.visualize = function(){
      $('loadingOverlay').classList.remove('hidden');
      
-     // 1. Get Context from Story (Last Paragraph)
      var paragraphs = document.querySelectorAll('#storyText p');
      var lastText = paragraphs.length > 0 ? paragraphs[paragraphs.length - 1].textContent : "Cinematic romantic fantasy illustration";
      
@@ -535,7 +534,7 @@ function toggle(id){
      .then(data => { 
          $('loadingOverlay').classList.add('hidden');
          var img = document.createElement('img');
-         img.src = data.url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop';
+         img.src = data.url || 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=600&auto=format&fit=crop';
          img.className = 'story-image';
          img.alt = "Generated Scene";
          $('storyText').appendChild(img);
@@ -543,11 +542,11 @@ function toggle(id){
      })
      .catch(e => { 
          console.error("[Storybound Debug] Visualize Failed:", e);
-         // Fallback - Fantasy Landscape
+         // Fallback - Generic Fantasy Landscape
          setTimeout(function(){ 
             $('loadingOverlay').classList.add('hidden'); 
             var img = document.createElement('img');
-            img.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop';
+            img.src = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=600&auto=format&fit=crop';
             img.className = 'story-image';
             $('storyText').appendChild(img);
             img.scrollIntoView({behavior:'smooth'});
