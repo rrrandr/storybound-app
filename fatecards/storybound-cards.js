@@ -1,128 +1,149 @@
-/* storybound-cards.js (static-friendly) */
+/* storybound-cards.js (DOM-Enhancement Version) */
 (function(){
+  
   var state = {
-    mounted: false,
-    tier: 'free',              // free|indulge
-    selections: {},
-    chosenIndex: null,
-    cards: []
+    tier: 'free',       // free|indulge
+    activeCard: null,   // currently selected DOM element
+    cfg: {}             // config passed from main page
   };
 
   function byId(id){ return document.getElementById(id); }
 
   function mount(cfg){
-    cfg = cfg || {};
+    state.cfg = cfg || {};
     var mountId = cfg.mountId || 'cardMount';
-
     var root = byId(mountId);
-    if (!root){ console.error('StoryboundCards mount: missing #' + mountId); return; }
 
-    state.cfg = cfg;
-    state.mounted = true;
+    if (!root){ 
+      console.error('StoryboundCards: Root element #' + mountId + ' not found.'); 
+      return; 
+    }
 
-    root.innerHTML = (
-      '<div class="sb-cards-wrap">' +
-        '<div class="sb-hand" id="sbHand"></div>' +
-      '</div>'
-    );
+    // 1. Find the EXISTING cards in your HTML (don't overwrite them)
+    // We look for .fate-card (your current class) or .sb-card (legacy support)
+    var cards = root.querySelectorAll('.fate-card, .sb-card');
 
-    // Simple starter deck (replace later with your real Fatecard data)
-    state.cards = [
-      { title:'Whispered Bargain', action:'You step closer, testing the edge of consent with a velvet dare.', dialogue:'"Tell me what you want… and don’t lie."' },
-      { title:'Dangerous Smile', action:'You hold their gaze, letting the power imbalance flicker—controlled, deliberate.', dialogue:'"Careful. I bite back."' },
-      { title:'Velvet Threat', action:'You circle them like a promise you can’t take back.', dialogue:'"Say yes… or make me earn it."' },
-      { title:'Golden Leverage', action:'You offer a deal that sounds sweet—until the hook reveals itself.', dialogue:'"If you want it, you’ll pay in honesty."' },
-      { title:'Door With Teeth', action:'You cross the threshold anyway. The trap is half the thrill.', dialogue:'"I know it’s dangerous. I’m still here."' }
-    ];
+    if (cards.length === 0) {
+      console.warn('StoryboundCards: No cards found inside #' + mountId);
+      return;
+    }
 
-    render();
+    // 2. Attach logic to each existing card
+    cards.forEach(function(el, idx){
+      // Ensure it has an index for locking logic
+      el.setAttribute('data-idx', idx);
+
+      // Remove old listeners (by cloning) if necessary, or just add new one
+      // For safety in this setup, we just add the listener.
+      el.onclick = function(e){
+        handleCardClick(el, idx);
+      };
+    });
+
+    // 3. Apply initial locks based on default tier
+    updateLocks();
   }
 
-  function render(){
-    var hand = document.getElementById('sbHand');
-    if (!hand) return;
+  function handleCardClick(el, idx){
+    // A. FLIP: Always allow visual flipping
+    el.classList.toggle('flipped');
+    el.classList.toggle('is-flipped'); 
 
-    hand.innerHTML = '';
-    state.cards.forEach(function(card, idx){
-      var disabled = (state.tier === 'free' && idx > 1); // Tease: only first two selectable
-      var isSelected = (state.chosenIndex === idx);
+    // B. CHECK LOCK: Is this card allowed in the current tier?
+    // (Tease Mode: Index 0 and 1 are free. Index 2+ are locked)
+    var isLocked = (state.tier === 'free' && idx >= 2);
 
-      var el = document.createElement('div');
-      el.className = 'sb-card' +
-        (disabled ? ' is-disabled' : '') +
-        (isSelected ? ' is-selected' : '');
-      el.setAttribute('data-idx', String(idx));
+    if (isLocked) {
+      // It's locked. We flipped it visually, but we DO NOT select it.
+      return;
+    }
 
-      el.innerHTML =
-        '<div class="sb-face sb-front">' +
-          '<div style="text-align:center;padding:10px">' +
-            '<div style="font-family:inherit;font-size:0.95em;opacity:0.9">FATE</div>' +
-            '<div style="margin-top:8px;font-size:1.05em;line-height:1.2">' + escapeHTML(card.title) + '</div>' +
-            (disabled ? '<div style="margin-top:10px;font-size:0.9em;opacity:0.85;color:#ffd700">🔒 Indulge</div>' : '') +
-          '</div>' +
-        '</div>' +
-        '<div class="sb-face sb-back">' +
-          '<div style="padding:12px;font-size:0.95em;line-height:1.35;text-align:left">' +
-            '<div style="opacity:0.85;margin-bottom:8px"><b>Action</b>: ' + escapeHTML(card.action) + '</div>' +
-            '<div style="opacity:0.9"><b>Say</b>: ' + escapeHTML(card.dialogue) + '</div>' +
-          '</div>' +
-        '</div>';
+    // C. SELECT: Handle radio-button behavior
+    if (state.activeCard && state.activeCard !== el) {
+      state.activeCard.classList.remove('selected');
+      state.activeCard.classList.remove('is-selected');
+    }
+    state.activeCard = el;
+    el.classList.add('selected');
+    el.classList.add('is-selected');
 
-      el.addEventListener('click', function(){
-        // Flip always (even if disabled)
-        el.classList.toggle('is-flipped');
+    // D. POPULATE: specific inputs
+    populateInputs(el);
+  }
 
-        // Selection only if allowed
-        if (disabled) return;
+  function populateInputs(cardEl){
+    var actionInput = byId(state.cfg.actionId || 'actionInput');
+    var dialogueInput = byId(state.cfg.dialogueId || 'dialogueInput');
+    var submitBtn = byId(state.cfg.submitId || 'sendBtn');
 
-        state.chosenIndex = idx;
-        fillInputs(card);
-        render(); // update selected outlines
-      });
+    // Read data attributes from your HTML
+    // Note: The HTML uses data-do="..." and data-say="..."
+    var doText = cardEl.getAttribute('data-do') || cardEl.getAttribute('data-action') || '';
+    var sayText = cardEl.getAttribute('data-say') || cardEl.getAttribute('data-dialogue') || '';
 
-      hand.appendChild(el);
+    if (actionInput) {
+      actionInput.value = doText;
+      actionInput.disabled = false;     // Unlock input
+      actionInput.classList.remove('is-locked', 'sb-locked');
+    }
+    
+    if (dialogueInput) {
+      dialogueInput.value = sayText;
+      dialogueInput.disabled = false;   // Unlock input
+      dialogueInput.classList.remove('is-locked', 'sb-locked');
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('is-locked', 'sb-locked');
+    }
+  }
+
+  function updateLocks(){
+    var root = byId(state.cfg.mountId || 'cardMount');
+    if (!root) return;
+
+    var cards = root.querySelectorAll('.fate-card, .sb-card');
+    cards.forEach(function(el, idx){
+      // Tease Rule: Index 2, 3, 4 are locked
+      var isLocked = (state.tier === 'free' && idx >= 2);
+
+      if (isLocked){
+        el.classList.add('sb-select-locked');
+        // Optional: Add visual lock indicator if your CSS supports it
+      } else {
+        el.classList.remove('sb-select-locked');
+      }
     });
   }
 
-  function fillInputs(card){
-    var cfg = state.cfg || {};
-    var actionEl = byId(cfg.actionId || 'actionInput');
-    var dialogueEl = byId(cfg.dialogueId || 'dialogueInput');
-
-    if (actionEl) actionEl.value = card.action || '';
-    if (dialogueEl) dialogueEl.value = card.dialogue || '';
-  }
-
   function setTier(t){
-    state.tier = (t === 'indulge') ? 'indulge' : 'free';
-    // If tease and currently-selected card is >1, clear it
-    if (state.tier === 'free' && state.chosenIndex != null && state.chosenIndex > 1){
-      state.chosenIndex = null;
+    state.tier = (t === 'indulge' ? 'indulge' : 'free');
+    updateLocks();
+    
+    // If we just downgraded to free, and a premium card was selected, deselect it
+    if (state.tier === 'free' && state.activeCard) {
+      var idx = parseInt(state.activeCard.getAttribute('data-idx') || '0');
+      if (idx >= 2) {
+        state.activeCard.classList.remove('selected', 'is-selected');
+        state.activeCard = null;
+        // Optionally clear inputs here if you want
+      }
     }
-    render();
   }
 
-  function setSelections(obj){
-    state.selections = obj || {};
-  }
+  // --- Stubs for other calls if your main app tries to use them ---
+  function setSelections(obj){ /* stored for future logic if needed */ }
+  function setIntensity(val){ /* stored for future logic if needed */ }
+  function burnAndRedeal(){ /* animation hook */ }
 
-  function burnAndRedeal(){
-    // optional hook for your submit button
-    state.chosenIndex = null;
-    render();
-  }
-
-  function escapeHTML(str){
-    return (str || '')
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;');
-  }
-
+  // --- EXPORT ---
   window.StoryboundCards = {
     mount: mount,
     setTier: setTier,
     setSelections: setSelections,
+    setIntensity: setIntensity,
     burnAndRedeal: burnAndRedeal
   };
+
 })();
