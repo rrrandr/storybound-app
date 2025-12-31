@@ -29,8 +29,17 @@
     .choice { padding:15px 40px; font-size:1.4em; border-radius:30px; font-family:'lust-script-display',serif; }
     .hidden { display:none !important; }
     
-    /* INPUTS */
-    textarea, input, select { width:95%; padding:12px; background:rgba(30,0,50,.9); color:var(--ink); border:1px solid var(--pink); border-radius:8px; font-size:1em; font-family:'Lora',serif; margin-bottom:10px; }
+    /* INPUTS & LOCKS */
+    .input-wrapper { position: relative; width: 95%; margin: 0 auto 15px; }
+    .input-wrapper label { display:block; text-align:left; color:var(--gold); margin-bottom:5px; font-size:0.9em; }
+    textarea, input, select { width:100%; padding:12px; background:rgba(30,0,50,.9); color:var(--ink); border:1px solid var(--pink); border-radius:8px; font-size:1em; font-family:'Lora',serif; box-sizing:border-box; }
+    
+    /* Locked Input Styling */
+    .locked-input textarea { opacity:0.6; pointer-events:none; filter:grayscale(0.5); }
+    .locked-input::after {
+       content: "🔒"; position: absolute; top: 38px; right: 10px; font-size: 1.2em; opacity: 0.8; pointer-events: none;
+    }
+    .locked-input { cursor: url("/cursor-dollar-plane-64.png"), pointer !important; }
     
     /* STYLE CARDS */
     .style-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:15px 0; }
@@ -40,9 +49,10 @@
     .card h3 { margin:0 0 5px; color:#ff6b6b; font-size:1.1em; }
     .card p { font-size:0.9em; opacity:0.9; margin:0; }
     
-    .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; }
-    
-    /* LOCKS (Tease Tier) */
+    .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:5; position:relative; }
+    .preview-btn:hover { background:rgba(255,255,255,0.2); }
+
+    /* LOCKS (Tease Tier Styles) */
     .locked-style { opacity:0.5; filter:grayscale(0.8); cursor:url("/cursor-dollar-plane-64.png"), pointer !important; }
     .locked-style::after { content:""; position:absolute; top:10px; right:10px; width:20px; height:20px; background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; opacity:0.8; }
     
@@ -54,12 +64,9 @@
     .fate-card.flipped .inner { transform:rotateY(180deg); }
     
     .fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); }
-    
-    /* Back is the "cover" (User sees this first) */
     .fate-card .front { background:#111; z-index:2; } 
-    /* Front is the "reveal" (Image/Icon only) */
     .fate-card .back { background:#2a0033; transform:rotateY(180deg); z-index:1; }
-    .fate-card .back img { width:60%; opacity:0.8; filter:drop-shadow(0 0 5px gold); }
+    .fate-card .back div { font-size:30px; }
 
     .fate-card.selected .inner { box-shadow:0 0 0 3px #ff69b4, 0 0 20px #ff69b4; }
     
@@ -128,13 +135,34 @@
   </div>
 </div>
 
-<div id="payModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; display:flex;">
-  <div class="box">
-    <h3>Unlock Indulgence</h3>
-    <p>Unlock all Styles, Intensity levels, and full Card control.</p>
-    <input type="text" placeholder="Email (Mock)">
-    <button id="payConfirm">Unlock Now ($1)</button>
+<div id="payModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:10000; align-items:center; justify-content:center; display:flex;">
+  <div class="box" style="text-align:center">
+    <h3>Unshackle Your Fate</h3>
+    <p style="margin-bottom:20px; font-style:italic; color:#ffd700">"Why stop when it's just getting good?"</p>
+    
+    <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
+        <div style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:200px;">
+            <h4>Single Story</h4>
+            <p>Unlock inputs, saves, and styles for <strong>this story only</strong>.</p>
+            <button id="payOneTime" style="width:100%">Unlock ($1)</button>
+        </div>
+        <div style="background:#400020; padding:15px; border-radius:10px; border:1px solid gold; width:200px;">
+            <h4>Indulge Forever</h4>
+            <p>Unlimited access to all styles and features.</p>
+            <button id="paySub" style="width:100%">Subscribe ($6/mo)</button>
+        </div>
+    </div>
+    <br>
     <button onclick="document.getElementById('payModal').classList.add('hidden')" style="background:#444">Cancel</button>
+  </div>
+</div>
+
+<div id="strangerModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10002; align-items:center; justify-content:center; display:flex;">
+  <div class="box">
+    <h3>How Daring...</h3>
+    <p>You aren't the only one tempting fate today.</p>
+    <p id="strangerCount" style="color:gold; font-size:1.2em; margin:20px 0;"></p>
+    <button onclick="document.getElementById('strangerModal').classList.add('hidden')">Close</button>
   </div>
 </div>
 
@@ -142,6 +170,13 @@
   <div class="box">
     <p id="previewText" style="font-size:1.3em; font-style:italic; line-height:1.6"></p>
     <button onclick="document.getElementById('previewModal').classList.add('hidden')">Close</button>
+  </div>
+</div>
+
+<div id="loadingOverlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10005; align-items:center; justify-content:center; display:flex;">
+  <div style="text-align:center">
+     <h3>Weaving your fate...</h3>
+     <p>Connecting to Storybound Oracle...</p>
   </div>
 </div>
 
@@ -180,18 +215,23 @@
 
     <div class="section-title">Genres (Select up to 3)</div>
     <div class="style-cards" id="genreGrid">
-      <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and intense romantic stakes.</p></div>
-      <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary</h3><p>Modern settings and present-day relationships.</p></div>
-      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical</h3><p>Pre-mid-20th century love with period rules.</p></div>
-      <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal</h3><p>Vampires, shifters, witches in today’s world.</p></div>
-      <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray heat; player defines boundaries.</p></div>
-      <div class="card" data-grp="genre" data-val="Suspense"><h3>Romantic Suspense</h3><p>Romance entangled with danger and mystery.</p></div>
+      <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>Magic and desire.</p></div>
+      <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary</h3><p>Modern love.</p></div>
+      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical</h3><p>Period romance.</p></div>
+      <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal</h3><p>Vampires & shifters.</p></div>
+      <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray heat.</p></div>
+      <div class="card" data-grp="genre" data-val="Suspense"><h3>Romantic Suspense</h3><p>Danger & mystery.</p></div>
+      <div class="card" data-grp="genre" data-val="Sports"><h3>Sports</h3><p>Competitive tension.</p></div>
+      <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime</h3><p>Forbidden worlds.</p></div>
     </div>
     <button class="small-btn" onclick="toggle('moreGenres')">More Genres</button>
     <div id="moreGenres" class="style-cards hidden">
        <div class="card" data-grp="genre" data-val="Billionaire"><h3>Billionaire</h3><p>Wealth and power.</p></div>
        <div class="card" data-grp="genre" data-val="Gothic"><h3>Gothic</h3><p>Moody and haunted.</p></div>
        <div class="card" data-grp="genre" data-val="LGBTQ"><h3>LGBTQ+</h3><p>Inclusive stories.</p></div>
+       <div class="card" data-grp="genre" data-val="SecondChance"><h3>Second Chance</h3><p>Reunited lovers.</p></div>
+       <div class="card" data-grp="genre" data-val="SmallTown"><h3>Small Town</h3><p>Cozy vibes.</p></div>
+       <div class="card" data-grp="genre" data-val="Romcom"><h3>RomCom</h3><p>Banter & chaos.</p></div>
     </div>
 
     <div class="section-title">Dynamics (Select up to 3)</div>
@@ -200,6 +240,12 @@
       <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Taboo desires.</p></div>
       <div class="card" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Status gaps.</p></div>
       <div class="card" data-grp="dynamic" data-val="SlowBurn"><h3>Slow Burn</h3><p>High restraint.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends to Lovers</h3><p>Safety to heat.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Close quarters.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Secret"><h3>Secret Identity</h3><p>Truths revealed.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive</h3><p>Dark devotion.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated Mates</h3><p>Destined bond.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker</h3><p>Vulnerability.</p></div>
     </div>
 
     <div class="section-title">POV</div>
@@ -207,6 +253,8 @@
       <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>Intimate.</p><button class="preview-btn" data-txt="I held my breath...">Preview</button></div>
       <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>Immersive.</p><button class="preview-btn" data-txt="You feel the room shift...">Preview</button></div>
       <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>Cinematic.</p><button class="preview-btn" data-txt="He kept his voice calm...">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>Choral.</p><button class="preview-btn" data-txt="We watched them circle like storms...">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>Playful.</p><button class="preview-btn" data-txt="The Author hesitated, then chose chaos...">Preview</button></div>
     </div>
 
     <div class="section-title">Writing Style</div>
@@ -224,16 +272,28 @@
       <div class="card" data-grp="style" data-val="Dark" data-locked="true">
          <h3>Dark Desire</h3><p>Moody tension.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button>
       </div>
+      <div class="card" data-grp="style" data-val="Raw" data-locked="true">
+         <h3>Raw Passion</h3><p>Direct emotion.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button>
+      </div>
+       <div class="card" data-grp="style" data-val="Regency" data-locked="true">
+         <h3>Regency</h3><p>Polite knives.</p><button class="preview-btn" data-txt="Your reputation is in danger.">Preview</button>
+      </div>
     </div>
     <button class="small-btn" onclick="toggle('moreStyles')">More Styles</button>
+    
     <div id="moreStyles" class="style-cards hidden">
        <div class="card" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry</h3><p>Dry wit.</p><button class="preview-btn" data-txt="She lied. He admired it.">Preview</button></div>
-       <div class="card" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal</h3><p>Razor edge.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic</h3><p>Calculated.</p><button class="preview-btn" data-txt="Silence did the flirting for him.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal</h3><p>Dreamlike.</p><button class="preview-btn" data-txt="The candles leaned in to listen.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal Edge</h3><p>Razor sharp.</p><button class="preview-btn" data-txt="No soft words. Just truth.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Satirical" data-locked="true"><h3>Satirical</h3><p>Witty fun.</p><button class="preview-btn" data-txt="The prophecy was inconvenient.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Poetic.</p><button class="preview-btn" data-txt="Speak low, sweet peril.">Preview</button></div>
+       <div class="card" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Futuristic.</p><button class="preview-btn" data-txt="Stars like spilled ink.">Preview</button></div>
     </div>
 
     <div class="section-title">Story Controls</div>
-    <div id="storyControlsBox">
-       <textarea id="storyControls" rows="3" placeholder="E.g. No vampires, more dialogue..."></textarea>
+    <div id="storyControlsBox" class="input-wrapper locked-input" onclick="showPaywall('unlock')">
+       <textarea id="storyControls" rows="3" placeholder="E.g. No vampires, more dialogue..." disabled></textarea>
     </div>
 
     <br>
@@ -247,7 +307,8 @@
     <div id="storyText" class="box" style="text-align:left; max-width:100%; min-height:300px; margin-bottom:30px;">
       </div>
 
-    <div class="section-title" style="font-size:1.5em; margin-top:0;">Your Turn</div>
+    <div class="section-title" style="font-size:1.8em; margin-top:0;">Guide Your Fate</div>
+    <p style="opacity:0.8; font-style:italic;">Take control with explicit instructions, or let fate guide you.</p>
     
     <div id="cardMount" class="fate-grid">
       <button class="fate-card" type="button" data-say="I let the silence linger." data-do="I step closer.">
@@ -283,18 +344,24 @@
     </div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
-      <textarea id="actionInput" rows="3" placeholder="Action..."></textarea>
-      <textarea id="dialogueInput" rows="3" placeholder="Dialogue..."></textarea>
+      <div class="input-wrapper locked-input" id="actionWrapper" onclick="showPaywall('unlock')">
+          <label>What do you do?</label>
+          <textarea id="actionInput" rows="3" placeholder="Action..." disabled></textarea>
+      </div>
+      <div class="input-wrapper locked-input" id="dialogueWrapper" onclick="showPaywall('unlock')">
+          <label>What do you say?</label>
+          <textarea id="dialogueInput" rows="3" placeholder="Dialogue..." disabled></textarea>
+      </div>
     </div>
 
     <div style="margin-top:20px; display:flex; gap:10px; justify-content:center; align-items:center;">
-       <button id="saveBtn" class="small-btn locked-style">Save</button>
+       <button id="saveBtn" class="small-btn locked-style" onclick="showPaywall('unlock')">Save</button>
        <button id="submitBtn" style="font-size:1.3em;">Submit Turn</button>
-       <button id="vizBtn" class="small-btn">Visualize</button>
+       <button id="vizBtn" class="small-btn" onclick="visualize()">Visualize</button>
     </div>
     
     <div style="margin-top:10px;">
-       <button id="gameControlsBtn" class="small-btn locked-style">Story Controls</button>
+       <button id="gameControlsBtn" class="small-btn locked-style" onclick="showPaywall('unlock')">Story Controls</button>
     </div>
 
   </div>
@@ -309,6 +376,8 @@
   function toggle(id){ var el=$(id); el.classList.toggle('hidden'); }
   function hideAll(){ ['ageGate','tosGate','tierGate','app','modeSelect','coupleSetup','setup','game'].forEach(function(x){ if($(x)) $(x).classList.add('hidden'); }); }
   
+  // PROXY URL (Restored)
+  var PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
   var state = { tier:'free', picks:{ genre:[], dynamic:[], pov:'First', style:'Breathless' } };
 
   // --- GATES ---
@@ -318,41 +387,66 @@
   
   // --- TIER SELECTION ---
   $('btnTease').onclick = function(){ setTier('free'); };
-  $('btnIndulge').onclick = function(){ $('payModal').classList.remove('hidden'); };
-  $('payConfirm').onclick = function(){ setTier('indulge'); $('payModal').classList.add('hidden'); };
+  $('btnIndulge').onclick = function(){ showPaywall('sub'); };
+  
+  // PAYWALL LOGIC
+  window.showPaywall = function(type){
+     if(state.tier === 'indulge') return; // Already unlocked
+     $('payModal').classList.remove('hidden');
+  };
+
+  $('payOneTime').onclick = function(){
+     // Mock Unlock for SINGLE Story
+     state.tier = 'single-unlocked';
+     $('payModal').classList.add('hidden');
+     updateLocks();
+     alert("Story unlocked! Saves, Controls, and Inputs active for this session.");
+  };
+
+  $('paySub').onclick = function(){
+     state.tier = 'indulge';
+     $('payModal').classList.add('hidden');
+     setTier('indulge'); // Full unlock
+     alert("Welcome to Indulge Tier.");
+  };
 
   function setTier(t){
     state.tier = t;
-    // Notify Cards Lib
     if(window.StoryboundCards) window.StoryboundCards.setTier(t);
     
     hideAll(); 
     $('app').classList.remove('hidden');
     $('burgerBtn').style.display='block';
-    // Show Mode Select First
     $('modeSelect').classList.remove('hidden'); 
     
     updateLocks();
   }
 
+  // --- STRANGER LOGIC ---
+  window.showStranger = function(){
+    // 1. Get/Set Count
+    var count = parseInt(localStorage.getItem('sb_stranger_clicks') || '0') + 1;
+    localStorage.setItem('sb_stranger_clicks', count);
+    
+    // 2. Display
+    $('strangerCount').textContent = count + " souls have tempted fate.";
+    $('strangerModal').classList.remove('hidden');
+  };
+
   // --- MODE ---
   window.setMode = function(m){
     $('modeSelect').classList.add('hidden');
     $('coupleSetup').classList.add('hidden');
-    
     if(m === 'solo') $('setup').classList.remove('hidden');
     else if(m === 'couple') $('coupleSetup').classList.remove('hidden');
     else if(m === 'couple-joined') $('setup').classList.remove('hidden');
-    else $('modeSelect').classList.remove('hidden'); // back
+    else $('modeSelect').classList.remove('hidden'); 
   };
-  
-  window.showStranger = function(){ alert("Stranger Mode coming soon..."); };
 
-  // --- INTENSITY ---
+  // --- INTENSITY (Unlocked in Tease) ---
   var iBtns = document.getElementById('intensityBtns').querySelectorAll('button');
   iBtns.forEach(function(b){
     b.onclick = function(){
-       if(state.tier === 'free') return alert("Intensity locked in Tease mode.");
        iBtns.forEach(function(x){x.classList.remove('active')});
        b.classList.add('active');
        $('intensityDesc').textContent = b.getAttribute('data-val') + " selected.";
@@ -378,7 +472,7 @@
 
     // Locked Style Logic
     if(state.tier === 'free' && locked === 'true'){
-      $('payModal').classList.remove('hidden');
+      showPaywall('sub');
       return;
     }
 
@@ -394,7 +488,6 @@
          state.picks[grp].push(val);
       }
     } else {
-      // Single Select (POV, Style)
       document.querySelectorAll('.card[data-grp="'+grp+'"]').forEach(function(c){ c.classList.remove('selected'); });
       el.classList.add('selected');
       state.picks[grp] = val;
@@ -403,64 +496,125 @@
 
   // --- LOCK UPDATE ---
   function updateLocks(){
-    var isTease = (state.tier === 'free');
+    var isLocked = (state.tier === 'free');
     
-    // Style Cards
+    // Styles
     document.querySelectorAll('.card[data-locked="true"]').forEach(function(c){
-       if(isTease) c.classList.add('locked-style');
+       if(isLocked) c.classList.add('locked-style');
        else c.classList.remove('locked-style');
     });
 
-    // Story Controls
-    var sc = $('storyControls');
-    if(isTease) { sc.disabled=true; sc.parentElement.classList.add('locked-style'); }
-    else { sc.disabled=false; sc.parentElement.classList.remove('locked-style'); }
+    // Inputs (Story Controls, Action, Dialogue)
+    var inputWrappers = ['storyControlsBox', 'actionWrapper', 'dialogueWrapper'];
+    inputWrappers.forEach(function(id){
+        var w = $(id);
+        var input = w.querySelector('textarea');
+        if(isLocked){
+            w.classList.add('locked-input');
+            w.onclick = function(){ showPaywall('unlock'); };
+            input.disabled = true;
+        } else {
+            w.classList.remove('locked-input');
+            w.onclick = null;
+            input.disabled = false;
+        }
+    });
 
-    // Bottom buttons
+    // Buttons
     var lockedBtns = ['saveBtn','gameControlsBtn'];
     lockedBtns.forEach(function(id){
        var b = $(id);
-       if(isTease) b.classList.add('locked-style');
-       else b.classList.remove('locked-style');
+       if(isLocked) {
+           b.classList.add('locked-style');
+           b.onclick = function(){ showPaywall('unlock'); };
+       } else {
+           b.classList.remove('locked-style');
+           b.onclick = null; // Remove lock handler
+       }
     });
   }
 
-  // --- GAME START ---
-  $('beginBtn').onclick = function(){
+  // --- GAME START (Grok Call) ---
+  $('beginBtn').onclick = async function(){
     hideAll();
     $('app').classList.remove('hidden');
     $('setup').classList.add('hidden');
     $('game').classList.remove('hidden');
     window.scrollTo(0,0);
     
-    $('storyTitle').textContent = "A Door With Teeth";
-    $('storySynopsis').textContent = "A breathless encounter in a world of " + state.picks.genre.join(', ') + "...";
-    
-    // Generate mock text
-    var txt = "";
-    for(var i=0; i<8; i++) txt += "<p>The atmosphere thickened. Shadows lengthened across the floor as the silence between them grew heavy with unsaid things. This is paragraph " + (i+1) + " of the generated story, weaving in elements of " + state.picks.dynamic.join(' and ') + ".</p>";
-    $('storyText').innerHTML = txt;
+    // Placeholder while loading
+    $('storyTitle').textContent = "Loading...";
+    $('storySynopsis').textContent = "Consulting the oracle...";
+    $('loadingOverlay').classList.remove('hidden');
 
+    try {
+        var payload = {
+            phase: 'begin',
+            tier: state.tier,
+            genre: state.picks.genre,
+            dynamic: state.picks.dynamic,
+            pov: state.picks.pov,
+            style: state.picks.style
+        };
+
+        // Real Fetch Call
+        var res = await fetch(PROXY_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        var data = await res.json();
+        
+        // Handle Success or Fallback
+        var title = data.title || "A Door With Teeth";
+        var syn = data.synopsis || "A glittering invitation, a dangerous rival, and a single choice.";
+        var text = data.story || "<p>The atmosphere thickened. (Backend connection failed, using fallback text). Shadows lengthened across the floor as the silence between them grew heavy with unsaid things...</p>";
+
+        $('storyTitle').textContent = title;
+        $('storySynopsis').textContent = syn;
+        $('storyText').innerHTML = text;
+
+    } catch(e) {
+        // Fallback if proxy fails
+        $('storyTitle').textContent = "A Door With Teeth";
+        $('storySynopsis').textContent = "A breathless encounter...";
+        var txt = "";
+        for(var i=0; i<6; i++) txt += "<p>The atmosphere thickened. Shadows lengthened across the floor as the silence between them grew heavy with unsaid things. This is paragraph " + (i+1) + " of the generated story, weaving in elements of " + state.picks.dynamic.join(' and ') + ".</p>";
+        $('storyText').innerHTML = txt;
+    }
+
+    $('loadingOverlay').classList.add('hidden');
+    
     // Initialize Cards
     if(window.StoryboundCards) window.StoryboundCards.mount({ mountId:'cardMount', dialogueId:'dialogueInput', actionId:'actionInput' });
   };
 
   // --- SUBMIT TURN ---
   $('submitBtn').onclick = function(){
-    // Poof Animation
     if(window.StoryboundCards) window.StoryboundCards.poof();
     
-    // Mock Next Chapter Load
+    // Mock Next Chapter
     setTimeout(function(){
        var newTxt = "";
        for(var i=0; i<4; i++) newTxt += "<p>The choice was made. Consequences rippled outward. This is the next chapter, paragraph " + (i+1) + ".</p>";
        $('storyText').innerHTML = newTxt;
        $('storyText').scrollTop = 0;
-       $('actionInput').value = "";
-       $('dialogueInput').value = "";
+       if(state.tier !== 'free'){
+          $('actionInput').value = "";
+          $('dialogueInput').value = "";
+       }
     }, 800);
   };
   
+  // --- VISUALIZE ---
+  window.visualize = function(){
+     $('loadingOverlay').classList.remove('hidden');
+     setTimeout(function(){
+         $('loadingOverlay').classList.add('hidden');
+         alert("Visualizer connected! (Mock: Image would appear here)");
+     }, 1500);
+  };
+
   // --- MENU ---
   window.restart = function(){ window.location.reload(); };
   window.changeTier = function(){ $('menuOverlay').classList.add('hidden'); setTier(state.tier === 'free' ? 'indulge' : 'free'); };
