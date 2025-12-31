@@ -602,1514 +602,234 @@ button.greyed-locked,
   overflow: hidden;
   margin-top: 8px;
 }
-#loadingOverlayFill {
-  width: 0%;
-  height: 100%;
-  background: var(--pink);
-  transition: width 0.25s;
-}
-
-/* Tease choices */
-#teaseChoiceButtons {
-  display: none;
-  flex-direction: column;
-  gap: 14px;
-  margin: 18px auto 10px;
-  max-width: 520px;
-}
-.tease-choice-btn {
-  background: linear-gradient(145deg, #6b006b, #cc1177);
-  color: var(--gold);
-  padding: 14px 20px;
-  border: none;
-  border-radius: 22px;
-  font-size: 1.1em;
-  cursor: pointer;
-  box-shadow: 0 0 20px rgba(255, 20, 147, .5);
-  transition: .25s;
-  font-family: 'Lora', serif;
-  text-align: center;
-}
-.tease-choice-btn:hover {
-  transform: scale(1.04);
-  box-shadow: 0 0 28px rgba(255, 105, 180, .8);
-}
-
-/* Burger */
-#burgerMenuBtn {
-  background: rgba(0,0,0,0.6) !important;
-  border-radius: 50% !important;
-  border: 1px solid var(--pink) !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  width: 38px !important;
-  height: 38px !important;
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 5000;
-  color: var(--gold);
-  font-size: 1.3em;
-  display:none;
-}
-
-/* Invitation */
-.invitation-text {
-  position: relative;
-  background: #000;
-  padding: 16px 52px 16px 16px;
-  border-radius: 10px;
-  margin: 16px 0;
-  font-size: 1.02em;
-  line-height: 1.6;
-  color: var(--gold);
-  word-break: break-word;
-  text-align:left;
-  border: 1px solid rgba(255,105,180,0.2);
-}
-
-.copyIconImg {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  opacity: 0.95;
-  user-select: none;
-  filter: drop-shadow(0 0 4px rgba(0,0,0,0.8));
-}
-.copyIconImg:active { transform: scale(0.95); }
-
-/* Image modal content */
-#vizImage {
-  width: 100%;
-  max-height: 70vh;
-  object-fit: contain;
-  border-radius: 12px;
-  border: 1px solid rgba(255,105,180,0.35);
-  background: rgba(0,0,0,0.3);
-  display:none;
-  margin-top: 10px;
-}
-
-/* Suggest buttons inside textarea wrappers */
-.input-group { text-align:left; width: 92%; margin: 0 auto; max-width: 920px; }
-.input-box{
-  position: relative;
-  margin: 10px auto 18px;
-  width: 100%;
-}
-.input-box label{
-  display:block;
-  color: var(--gold);
-  margin: 8px 0 6px;
-  font-size: 1em;
-}
-.input-box textarea{
-  width: 100%;
-  padding-right: 140px;
-  margin: 0;
-  min-height: 76px;
-}
-.suggest-inside{
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  padding: 8px 12px;
-  font-size: 0.9em;
-  border-radius: 999px;
-  box-shadow: 0 0 14px rgba(255,20,147,0.45);
-  white-space: nowrap;
-}
-@media (max-width: 520px){
-  .input-box textarea{ padding-right: 12px; }
-  .suggest-inside{
-    position: static;
-    width: 100%;
-    margin-top: 8px;
-  }
-}
-
-/* Unlock/Signup/etc modals */
-#styleUnlockModal, #signupModal, #unlockModal, #purchaseFlowModal, #strangerModal, #storyControlModal {
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,.85);
-  display:none;align-items:center;justify-content:center;
-}
-
-/* Viz controls row */
-.viz-controls{
-  display:flex;
-  gap:10px;
-  flex-wrap: wrap;
-  align-items:center;
-  justify-content: space-between;
-  margin-top: 12px;
-}
-.viz-controls .left, .viz-controls .right{
-  display:flex;
-  gap:10px;
-  flex-wrap: wrap;
-  align-items:center;
-}
-.viz-controls select{
-  width: auto;
-  margin: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-}
-.viz-count{
-  color: var(--gold);
-  opacity: 0.9;
-  font-style: italic;
-  font-size: 0.95em;
-}
-/* Option pills: selectable + locked (paywalled) */
-.opt-pill{
-  display:inline-flex; align-items:center; gap:10px;
-  padding:10px 14px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.22);
-  background: rgba(0,0,0,.18);
-  cursor:pointer;
-  user-select:none;
-}
-.opt-pill.selected{
-  box-shadow: 0 0 0 2px rgba(255,105,180,.8);
-  border-color: rgba(255,105,180,.9);
-}
-.opt-pill.locked{
-  opacity:.45;
-  filter: grayscale(1);
-  /* use your dollar-plane PNG cursor if you have it */
-  cursor: url('/dollar-plane.png') 2 2, pointer;
-  position:relative;
-}
-.opt-pill.locked .cuffs{
-  width:18px; height:18px;
-  background: url('/handcuffs.png') no-repeat center/contain;
-  opacity:.9;
-  pointer-events:none;
-}
-
-/* Say/Do lock */
-textarea.locked{
-  opacity:.55;
-  filter: grayscale(1);
-  background: rgba(255,255,255,.06);
-  cursor:not-allowed;
-}
-
-/* Fate cards layout: 5 across, 3+2 on smaller screens */
-.fate-grid{
-  display:grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
-  align-items: stretch;
-}
-@media (max-width: 900px){ .fate-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 520px){ .fate-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
-/* Tarot card shape + flip that STAYS flipped */
-.fate-card{
-  width:100%;
-  aspect-ratio: 2 / 3;
-  border-radius: 16px;
-  position:relative;
-  perspective: 1000px;
-  border: 1px solid rgba(255,255,255,.22);
-  background: transparent;
-  padding:0;
-  overflow:hidden;
-}
-.fate-card .inner{
-  position:absolute; inset:0;
-  transform-style: preserve-3d;
-  transition: transform .5s ease;
-  border-radius: inherit;
-}
-.fate-card.flipped .inner{ transform: rotateY(180deg); }
-
-.fate-card .front,
-.fate-card .back{
-  position:absolute; inset:0;
-  backface-visibility:hidden;
-  border-radius: inherit;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:14px;
-}
-.fate-card .front{ background: rgba(0,0,0,.25); }
-.fate-card .back{
-  transform: rotateY(180deg);
-  background: rgba(255,255,255,.06);
-}
-
-.fate-card.selected{
-  box-shadow: 0 0 0 2px rgba(255,105,180,.8);
-}
-
-/* Poof on Submit */
-.fate-card.poof{ animation: poof .6s ease forwards; }
-@keyframes poof{
-  0%{ transform: scale(1); opacity:1; filter:none; }
-  100%{ transform: scale(.92); opacity:0; filter: blur(2px); }
-}
-/* =========================
-   FIX: Clickability + Active states
-   ========================= */
-button, .pill, .chip, .choice, .option { cursor: pointer; }
-button:disabled { cursor: not-allowed; opacity: 0.55; }
-
-/* Make selected buttons obvious */
-.is-active, .active {
-  outline: 2px solid rgba(255,105,180,0.9);
-  box-shadow: 0 0 0 3px rgba(255,105,180,0.2);
-}
-
-/* Lock state for Story Controls only */
-.sb-locked {
-  opacity: 0.55;
-  filter: grayscale(0.2);
-  pointer-events: none;
-}
-
-/* Ensure no invisible overlay is swallowing clicks */
-#mainMenuOverlay { pointer-events: none; }
-#mainMenuOverlay[style*="display: flex"] { pointer-events: auto; }
-
-/* =========================
-   Fate cards layout (tarot)
-   ========================= */
-#cardMount { margin: 16px 0 10px; }
-.sb-hand {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-  align-items: start;
-}
-
-@media (max-width: 820px){
-  .sb-hand { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .sb-hand .sb-card:nth-child(4),
-  .sb-hand .sb-card:nth-child(5){
-    grid-column: span 1;
-  }
-}
-
-.sb-card {
-  width: 100%;
-  aspect-ratio: 2 / 3; /* tarot */
-  border-radius: 14px;
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 260ms ease, box-shadow 260ms ease;
-  box-shadow: 0 10px 28px rgba(0,0,0,0.35);
-}
-
-.sb-card:hover { transform: translateY(-4px); }
-
-.sb-card.is-flipped { transform: rotateY(180deg); }
-
-.sb-face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  border-radius: 14px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sb-front {
-  background: radial-gradient(circle at 30% 20%, rgba(255,105,180,0.35), rgba(30,30,30,0.95));
-  border: 1px solid rgba(255,105,180,0.25);
-}
-
-.sb-back {
-  transform: rotateY(180deg);
-  background: rgba(10,10,10,0.9);
-  border: 1px solid rgba(255,215,0,0.25);
-  padding: 12px;
-  text-align: center;
-  line-height: 1.25;
-}
-
-.sb-card.sb-disabled {
-  opacity: 0.45;
-  pointer-events: none;
-  filter: grayscale(0.35);
-}
-
-.sb-burn {
-  animation: sbBurn 520ms ease forwards;
-}
-
-@keyframes sbBurn {
-  to { opacity: 0; transform: translateY(10px) scale(0.98); }
-}
-/* =========================
-   SELECTION CARDS (Genre/Dynamics/POV/Style)
-   Works with data-pick-group + data-pick-value
-   ========================= */
-[data-pick-group][data-pick-value]{
-  cursor: pointer;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-[data-pick-group][data-pick-value].active{
-  outline: 2px solid rgba(255,105,180,0.95);
-  box-shadow: 0 0 0 4px rgba(255,105,180,0.18);
-}
-
-/* =========================
-   PAYWALL / LOCKS (Tease vs Indulge)
-   Add data-tier="indulge" to anything that should be locked in Tease
-   ========================= */
-.locked{
-  opacity: 0.45 !important;
-  filter: grayscale(0.9);
-  pointer-events: none !important;
-}
-.locked-wrap{
-  position: relative;
-}
-.locked-wrap .cuffs{
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 22px;
-  height: 22px;
-  opacity: 0.9;
-  pointer-events: none;
-}
-
-/* =========================
-   Fatecards mount sizing/layout (tarot-ish)
-   ========================= */
-#cardMount{ margin-top: 14px; }
-.sb-cards-wrap{ display:flex; justify-content:center; }
-.sb-hand{
-  display: grid;
-  grid-template-columns: repeat(5, minmax(86px, 1fr));
-  gap: 12px;
-  width: min(920px, 96vw);
-}
-@media (max-width: 820px){
-  .sb-hand{
-    grid-template-columns: repeat(3, minmax(86px, 1fr));
-  }
-}
-.sb-card{
-  position: relative;
-  width: 100%;
-  aspect-ratio: 2.5 / 3.5; /* tarot-ish */
-  border-radius: 14px;
-  transform-style: preserve-3d;
-  transition: transform 280ms ease, filter 200ms ease;
-  cursor: pointer;
-}
-.sb-card:hover{ filter: brightness(1.05); }
-
-.sb-card.is-flipped{ transform: rotateY(180deg); }
-.sb-face{
-  position:absolute; inset:0;
-  backface-visibility:hidden;
-  border-radius: 14px;
-  display:flex; align-items:center; justify-content:center;
-  border: 1px solid rgba(255,255,255,0.18);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
-}
-.sb-front{ background: rgba(30,30,30,0.95); }
-.sb-back{
-  transform: rotateY(180deg);
-  background: rgba(20,20,20,0.95);
-}
-
-.sb-card.is-disabled{
-  opacity: 0.35;
-  pointer-events: none;
-  filter: grayscale(1);
-}
-.sb-card.is-selected{
-  outline: 2px solid rgba(255,215,0,0.95);
-  box-shadow: 0 0 0 4px rgba(255,215,0,0.18);
-}
-
-/* =========================
-   Do/Say lock styles (Tease)
-   ========================= */
-.input-box textarea.is-locked{
-  opacity: 0.45;
-  filter: grayscale(0.6);
-  pointer-events: none;
-}
-button.is-locked{
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-/* AI Suggest deprecated — Tarot replaces it (keep off) */
-#suggestActionBtn,
-#suggestDialogueBtn{
-  display: none !important;
-}
-  </style>
-</head>
-
-<body>
-  <!-- AGE GATE -->
-  <div id="ageGate">
-    <h2 style="font-size:2.8em;margin-bottom:20px">Storybound</h2>
-    <p style="font-size:1.4em;max-width:650px;margin:20px auto;line-height:1.5">
-      This experience contains explicit adult themes, including sensual romance and mature fantasy scenarios.
-    </p>
-    <p style="font-size:1.4em;margin:30px 0">You must be 18 years or older to enter.</p>
-    <button id="ageYesBtn" style="background:#ff69b4;color:#000;padding:18px 50px;border:none;border-radius:30px;font-size:1.6em;cursor:pointer;margin:20px;box-shadow:0 0 30px rgba(255,105,180,.8)">
-      I am 18 or older — Continue
-    </button>
-    <button id="ageNoBtn" style="background:#444;color:#ffd700;padding:12px 32px;border:none;border-radius:24px;font-size:1.1em;cursor:pointer;box-shadow:0 0 18px rgba(0,0,0,.6)">
-      I'm not 18 — get me out of here.
-    </button>
-  </div>
-
-  <!-- TOS GATE -->
-  <div id="tosGate" style="display:none">
-    <h2 style="font-size:2.4em;margin-bottom:20px">Terms of Service</h2>
-    <p>By checking the box below and entering Storybound, you agree to the following:</p>
-    <div style="max-width:760px;margin:20px auto;background:rgba(20,0,40,.6);padding:20px;border-radius:12px;overflow-y:auto;max-height:55vh;font-size:1em;line-height:1.6;text-align:left">
-      <p><strong>1. Age Requirement.</strong> You represent and warrant that you are at least 18 years of age (or the age of majority in your jurisdiction).</p>
-      <p><strong>2. Adult Content Notice.</strong> Storybound includes erotic and sexually explicit themes. Do not use if such content is illegal where you live or personally unwelcome.</p>
-      <p><strong>3. Safety Baseline.</strong> Storybound is for adult fantasy and roleplay between adults. No minors (real or fictional). No sexual violence. No real-person sexual content without permission. We may remove or block content that violates this baseline.</p>
-      <p><strong>4. User Content.</strong> You control what you input. You are responsible for your prompts, selections, and any content you share with others (including invitations and saved exports).</p>
-      <p><strong>5. Ownership.</strong> You retain ownership of your original inputs. Story output may be generated by AI models; availability and fidelity are not guaranteed.</p>
-      <p><strong>6. License to Storybound.</strong> You grant Storybound a worldwide, perpetual, irrevocable, royalty-free license to use <em>anonymized</em> and <em>aggregated</em> usage data and de-identified excerpts solely to improve the product and market it (unless you opt out where offered).</p>
-      <p><strong>7. Prohibited Uses.</strong> You agree not to use Storybound to generate illegal content, harassment, sexual content involving minors, instructions for wrongdoing, doxxing, or anything that violates applicable law.</p>
-      <p><strong>8. No Professional Advice.</strong> Storybound is entertainment. It does not provide medical, legal, psychological, or relationship therapy advice.</p>
-      <p><strong>9. Availability + Changes.</strong> Features may change, pause, or discontinue at any time. We may update these Terms; continued use indicates acceptance.</p>
-      <p><strong>10. Disclaimer of Warranties.</strong> Storybound is provided “as is” and “as available” without warranties of any kind.</p>
-      <p><strong>11. Limitation of Liability.</strong> To the maximum extent permitted by law, Storybound will not be liable for indirect, incidental, special, consequential, or punitive damages, or loss of data.</p>
-      <p><strong>12. Disputes.</strong> If a dispute arises, you agree to first contact us to attempt informal resolution. (Formal dispute terms should be added when you have counsel.)</p>
-      <p style="margin-top:20px;font-style:italic">Last updated: December 27, 2025</p>
-    </div>
-    <div style="margin:20px auto;font-size:1.2em;display:flex;flex-direction:column;align-items:center;gap:6px">
-      <input type="checkbox" id="tosAgree">
-      <span>I have read and agree to the Terms of Service</span>
-    </div>
-    <button id="tosEnterBtn" style="background:#666;padding:10px 30px;border:none;border-radius:25px;font-size:1em;cursor:pointer" disabled>
-      Enter Storybound
-    </button>
-  </div>
-
-  <!-- TIER CHOICE -->
-  <div id="tierChoice" style="display:none">
-    <h2 style="font-size:2.8em;margin-bottom:20px">Storybound</h2>
-    <p style="font-size:1.4em;max-width:650px;margin:20px auto;line-height:1.5">Choose how deeply you wish to indulge...</p>
-    <div class="choice-buttons">
-      <div>
-        <button class="choice" id="teaseBtn">Tease</button>
-        <p style="font-size:0.9em;max-width:260px;margin:6px auto 0;line-height:1.4;font-family:'Lora',serif">
-          A playful warmup—gentle choices, tension, and atmosphere.
-        </p>
-        <p style="font-size:0.8em;margin-top:4px;opacity:0.8;font-family:'Lora',serif">From $0/mo</p>
-      </div>
-      <div>
-        <button class="choice" id="indulgeBtn">Indulge</button>
-        <p style="font-size:0.9em;max-width:260px;margin:6px auto 0;line-height:1.4;font-family:'Lora',serif">
-          Longer openings, deeper memory, full control, saved stories.
-        </p>
-        <p style="font-size:0.8em;margin-top:4px;opacity:0.8;font-family:'Lora',serif">From $6/mo</p>
-      </div>
-    </div>
-    <p style="font-size:1em;margin-top:40px;opacity:0.8">Free play is limited — upgrade to unleash the full passion.</p>
-  </div>
-
-  <!-- INDULGE SIGNUP MODAL (Mock) -->
-  <div id="signupModal">
-    <div style="background:#1e1e1e;padding:26px;border-radius:14px;max-width:520px;width:90%;text-align:left;border:1px solid rgba(255,105,180,0.25);box-shadow:0 0 30px rgba(255,20,147,0.25)">
-      <h3 style="margin-top:0;margin-bottom:10px;font-family:'lust-script-display','lust-script','Lora',serif;color:#ff69b4">Indulge Sign-Up (Mock)</h3>
-      <p style="font-size:0.9em;opacity:0.9;margin-bottom:10px">Mock flow. No real payment processed.</p>
-      <label style="font-size:0.9em">Email</label>
-      <input type="email" id="signupEmail" placeholder="you@example.com">
-      <label style="font-size:0.9em">Create Password</label>
-      <input type="password" id="signupPassword" placeholder="••••••••">
-      <label style="font-size:0.9em;display:block;margin-top:8px">
-        <input type="checkbox" id="signupAgeConfirm">
-        I confirm I am 18+ and agree to the Terms of Service.
-      </label>
-      <div style="text-align:right;margin-top:14px">
-        <button id="signupCancelBtn" style="background:#555" type="button">Cancel</button>
-        <button id="signupConfirmBtn" type="button">Start Indulging (Mock)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- STYLE UNLOCK MODAL -->
-  <div id="styleUnlockModal">
-    <div style="background:#1e1e1e;padding:28px;border-radius:14px;max-width:560px;width:90%;text-align:center;border:1px solid rgba(255,105,180,0.35);box-shadow:0 0 30px rgba(255,20,147,0.25)">
-      <h3 style="margin-top:0;margin-bottom:12px;font-family:'lust-script-display','lust-script','Lora',serif;color:#ff69b4;font-size:1.9em">
-        Unshackle this style?
-      </h3>
-      <p style="font-size:1em;opacity:0.95;line-height:1.55;margin:0 0 10px" id="styleUnlockCopy">
-        Unlock this Story Style.
-      </p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px">
-        <button id="styleUnlockStoryBtn" type="button">Unlock for $1 (this story)</button>
-        <button id="styleUnlockAllBtn" type="button">Unlock all from $6/mo</button>
-        <button id="styleUnlockCancelBtn" style="background:#555" type="button">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- BURGER -->
-  <button id="burgerMenuBtn">☰</button>
-  <div id="mainMenuOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:4999">
-    <div style="background:#1e1e1e;padding:24px;border-radius:12px;max-width:420px;width:90%;text-align:left">
-      <h3 style="margin-top:0;margin-bottom:10px;font-family:'lust-script-display','lust-script','Lora',serif;color:#ff69b4">Menu</h3>
-      <button id="menuBackToTierBtn" style="width:100%;margin:4px 0">Back to Tease / Indulge</button>
-      <button id="menuRestartStoryBtn" style="width:100%;margin:4px 0">Restart Story</button>
-      <button id="menuCloseBtn" style="width:100%;margin:10px 0;background:#555">Close</button>
-    </div>
-  </div>
-
-  <!-- MAIN TITLE -->
-  <h1 id="mainTitle" style="display:none">Storybound</h1>
-  <p class="subtitle" id="mainSubtitle" style="display:none">Will you enter a world of danger and decadence alone, or with a liaison?</p>
-
-  <!-- MODE CHOICES -->
-  <div class="choice-buttons" id="modeChoices" style="display:none">
-    <div>
-      <button class="choice" id="soloBtn">Solo</button>
-      <p style="font-size:0.9em;max-width:260px;margin:10px auto 0;line-height:1.4">
-        Your private laboratory—intentional, charged.
-      </p>
-    </div>
-    <div>
-      <button class="choice" id="coupleBtn">Couple</button>
-      <p style="font-size:0.9em;max-width:260px;margin:10px auto 0;line-height:1.4">
-        Link devices and co-create a shared seduction.
-      </p>
-    </div>
-    <div>
-      <button class="choice" id="strangerBtn">Stranger</button>
-      <p style="font-size:0.9em;max-width:260px;margin:10px auto 0;line-height:1.4">
-        Tempt fate with a random encounter. (Coming soon.)
-      </p>
-    </div>
-  </div>
-
-  <!-- COUPLE CONNECT -->
-  <div id="coupleConnect" class="box" style="display:none">
-    <button id="createRoomBtn">Create Private Chamber</button>
-    <p class="status">Or enter the invitation code your paramour sent:</p>
-    <input type="text" id="joinCode" placeholder="Their invitation code...">
-    <button id="joinRoomBtn">Accept The Invitation</button>
-  </div>
-
-  <!-- INVITE SCREEN -->
-  <div id="invite" class="box" style="display:none">
-    <p class="status">Now bind your fate to the star-crossed love you plan to seduce.</p>
-    <p>Copy the invitation text below and send it to your partner.</p>
-
-    <div class="invitation-text" id="invitationText"></div>
-
-    <button id="iveSentItBtn">I've sent it</button>
-  </div>
-
-  <!-- WAITING SCREEN -->
-  <div id="waiting" class="box" style="display:none">
-    <div class="status" id="waitingStatus">The air thickens... Waiting for them to accept your invitation.</div>
-    <button id="forceSyncBtn">Force Sync</button>
-    <button id="withdrawInvitationBtn">Withdraw the Invitation</button>
-    <button id="exploreSoloBtn">Explore Solo Until Partner Joins</button>
-  </div>
-
-  <!-- SETUP -->
-  <div id="setup" class="box" style="display:none">
-    <div class="section-title">Eroticism Intensity</div>
-    <div style="margin: 10px auto 12px; width: 92%; max-width: 560px;">
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <button type="button" id="intensityCleanBtn" class="active">Clean</button>
-        <button type="button" id="intensityNaughtyBtn">Naughty</button>
-        <button type="button" id="intensityEroticBtn">Erotic</button>
-        <button type="button" id="intensityDirtyBtn">Dirty</button>
-      </div>
-      <div id="intensityHint" style="color:var(--gold);opacity:0.9;font-size:0.95em;margin-top:8px;font-style:italic">
-        Flirt, chemistry, and longing. No explicit anatomy.
-      </div>
-    </div>
-
-    <div class="section-title">Genres (choose up to 3)</div>
-    <div class="style-cards" id="genre-main">
-      <div class="card selected" data-genre="romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and intense romantic stakes.</p></div>
-      <div class="card" data-genre="contemporary"><h3>Contemporary Romance</h3><p>Modern settings and present-day relationships.</p></div>
-      <div class="card" data-genre="historical"><h3>Historical Romance</h3><p>Pre-mid-20th century love with period rules.</p></div>
-      <div class="card" data-genre="paranormal-modern"><h3>Paranormal Modern Romance</h3><p>Vampires, shifters, witches in today’s world.</p></div>
-      <div class="card" data-genre="dark"><h3>Dark Romance</h3><p>Morally gray heat; player defines boundaries.</p></div>
-      <div class="card" data-genre="romantic-suspense"><h3>Romantic Suspense</h3><p>Romance entangled with danger and mystery.</p></div>
-      <div class="card" data-genre="sports"><h3>Sports Romance</h3><p>Athletes and competitive tension.</p></div>
-      <div class="card" data-genre="organized-crime"><h3>Organized Crime Romance</h3><p>Forbidden love in criminal worlds.</p></div>
-    </div>
-
-    <div style="text-align:center;margin-top:12px">
-      <button id="moreGenresBtn" type="button">More Genres</button>
-    </div>
-
-    <div id="genre-more" class="style-cards" style="display:none">
-      <div class="card" data-genre="billionaire"><h3>Billionaire Romance</h3><p>Ultra-wealthy leads, power, polish.</p></div>
-      <div class="card" data-genre="second-chance"><h3>Second Chance</h3><p>Ex-lovers reunited with baggage.</p></div>
-      <div class="card" data-genre="small-town"><h3>Small Town</h3><p>Cozy community vibes.</p></div>
-      <div class="card" data-genre="gothic"><h3>Gothic Romance</h3><p>Moody, haunted settings.</p></div>
-      <div class="card" data-genre="romcom"><h3>Romantic Comedy</h3><p>Bantery, light chaos.</p></div>
-      <div class="card" data-genre="new-adult"><h3>New Adult</h3><p>Early-20s intensity & discovery.</p></div>
-      <div class="card" data-genre="western"><h3>Western / Cowboy</h3><p>Ranch heat & grit.</p></div>
-      <div class="card" data-genre="lgbtq"><h3>Queer LGBTQ+</h3><p>Inclusive love stories.</p></div>
-    </div>
-
-    <input type="hidden" id="genre" value="romantasy">
-    <input type="text" id="customGenre" placeholder="Custom genre (optional)...">
-
-    <div class="section-title">Relationship Dynamics (choose up to 3)</div>
-    <div class="style-cards" id="dynamic-cards">
-      <div class="card" data-dynamic="Enemies → Lovers"><h3>Enemies → Lovers</h3><p>Rivals whose friction turns to heat.</p></div>
-      <div class="card" data-dynamic="Forbidden Love"><h3>Forbidden Love</h3><p>Desire under rules and taboo.</p></div>
-      <div class="card" data-dynamic="Power Imbalance"><h3>Power Imbalance</h3><p>Player defines boundaries and limits.</p></div>
-      <div class="card" data-dynamic="Slow Burn"><h3>Slow Burn</h3><p>High restraint, earned payoff.</p></div>
-      <div class="card" data-dynamic="Friends → Lovers"><h3>Friends → Lovers</h3><p>Safety tipping into heat.</p></div>
-      <div class="card" data-dynamic="Forced Proximity"><h3>Forced Proximity</h3><p>Close quarters, rising tension.</p></div>
-      <div class="card" data-dynamic="Secret Identity"><h3>Secret Identity</h3><p>Truths revealed at the worst time.</p></div>
-      <div class="card" data-dynamic="Obsessive Devotion"><h3>Obsessive Devotion</h3><p>Intense focus, player sets bounds.</p></div>
-      <div class="card" data-dynamic="Fated Mates / Soulbond"><h3>Fated Mates / Soulbond</h3><p>Destined bond, fast intensity.</p></div>
-      <div class="card" data-dynamic="Caretaker / Wounded One"><h3>Caretaker / Wounded One</h3><p>Vulnerability and steady support.</p></div>
-    </div>
-    <input type="hidden" id="dynamic" value="">
-
-    <div class="section-title">Story POV</div>
-    <div class="style-cards" id="pov-styles">
-      <div class="card selected" data-pov="first" data-preview="I held my breath as the door clicked shut behind him—too final, too intimate."><h3>1st Person (I)</h3><p>Intimate, confessional, inside your pulse.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-pov="second" data-preview="You feel the room shift the moment he looks at you—as if your name is a secret he already knows."><h3>2nd Person (You)</h3><p>Immediate, immersive, hands-on tension.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-pov="third" data-preview="He kept his voice calm, but the way his gaze lingered betrayed the hunger he wouldn’t name yet."><h3>3rd Person (They)</h3><p>Wider lens, cinematic, controlled heat.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-pov="fourth" data-preview="We watched them circle each other—two storms pretending to be weather."><h3>4th Person (We)</h3><p>Choral, conspiratorial, shared gaze.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-pov="fifth" data-preview="The Author hesitated—then smiled—and offered them a door that would cost them something beautiful to open."><h3>5th Person (Author)</h3><p>Playful narrator with a hand on the page.</p><button class="preview-btn" type="button">Preview</button></div>
-    </div>
-    <input type="hidden" id="pov" value="first">
-
-    <div class="section-title">Story Style</div>
-    <div class="style-cards" id="core-styles">
-      <div class="card selected" data-style="breathless" data-preview="His attention was a slow hand. It didn’t touch her—yet she felt it everywhere."><h3>Breathless Romance</h3><p>Fast tension, close POV, lush romantic heat.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="epic" data-preview="Beyond the black ridge, the city burned like a crown—and someone inside it was waiting to claim her."><h3>Epic Fantasy</h3><p>Grand stakes, wonder, danger, sweeping romance.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="playful" data-preview="“You’re staring.” “I’m appreciating.” “That’s the same thing.” “Not the way I do it.”"><h3>Playful Heat</h3><p>Flirty banter, teasing humor, spark-first chemistry.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="dark" data-preview="The corridor smelled of rain and old vows. He smiled like a promise with teeth."><h3>Dark Desire</h3><p>Moody, dangerous tension with boundaries respected.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="raw" data-preview="He stepped closer. She didn’t move away. That was the only permission he needed to ask for again."><h3>Raw Passion</h3><p>Direct emotion, embodied desire, grounded intensity.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="regency" data-preview="“Your reputation is in danger,” she murmured. He bowed slightly. “Only if you wish it so.”"><h3>Regency Restraint</h3><p>Polite knives, forbidden longing, exquisite restraint.</p><button class="preview-btn" type="button">Preview</button></div>
-    </div>
-
-    <div style="text-align:center;margin-top:12px">
-      <button id="moreStylesBtn" type="button">More Styles</button>
-    </div>
-
-    <div id="advanced-styles" class="style-cards" style="display:none">
-      <div class="card" data-style="wry" data-preview="“Naturally,” she said, as if the world hadn’t tilted. He admired the lie. He admired her more."><h3>Wry Confession</h3><p>Dry wit, sharp honesty, intimate tension.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="strategic" data-preview="He let silence do the flirting—then offered one precise sentence that moved her like a lever."><h3>Strategic Intensity</h3><p>Calculated seduction, power games, quiet precision.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="surreal" data-preview="The candles leaned toward her as if listening. Even the shadows seemed curious about what she’d choose."><h3>Surreal Bloom</h3><p>Dreamlike imagery, symbolic heat, uncanny romance.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="brutal" data-preview="He didn’t soften it. He didn’t hide it. He only asked once—clearly—then waited for her answer."><h3>Brutal Edge</h3><p>Blunt honesty, razor tension, clarity.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="satirical" data-preview="The prophecy was inconvenient, the villain was charming, and the nearest dungeon had a dress code."><h3>Satirical Fantasy</h3><p>Witty fantasy, playful stakes, sly romance.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="shakespearean" data-preview="Speak low, sweet peril—lest my resolve become a reed; yet still I lean, and break, and call it fate."><h3>Shakespearean</h3><p>Elevated cadence, ornate metaphors, poetic desire.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="scifi-opera" data-preview="The station’s windows held a galaxy like spilled ink, and he watched her as if her name were a star he meant to steal."><h3>SciFi Opera</h3><p>Grand futuristic worlds, high stakes, glamorous romance.</p><button class="preview-btn" type="button">Preview</button></div>
-      <div class="card" data-style="custom"><h3>Custom Style</h3><p>Describe your style below.</p><textarea id="custom-style-text" rows="3" placeholder="e.g., Lush, poetic, but modern."></textarea></div>
-    </div>
-
-    <input type="hidden" id="style" value="breathless">
-
-    <div class="section-title">Your Character Name (Player 1)</div>
-    <div style="position:relative;width:92%;margin:10px auto">
-      <input type="text" id="char1" placeholder="e.g., Roman">
-      <div id="char1Marquee" style="display:none;position:absolute;left:10px;right:10px;top:50%;transform:translateY(-50%);overflow:hidden;white-space:nowrap;font-size:0.95em;color:#bbb;pointer-events:none">
-        <span id="char1MarqueeText">In Tease Tier, you’ll be assigned a name. Upgrade to Indulge to customize.</span>
-      </div>
-    </div>
-
-    <div class="section-title">Your Gender</div>
-    <select id="gender">
-      <option>Male</option>
-      <option>Female</option>
-      <option>Non-binary</option>
-      <option>Custom</option>
-    </select>
-    <input type="text" id="customGender" placeholder="Custom gender (optional)..." style="display:none">
-
-    <div class="section-title">Your Pronouns</div>
-    <select id="pronouns">
-      <option>he/him</option>
-      <option>she/her</option>
-      <option>they/them</option>
-      <option>Custom</option>
-    </select>
-    <input type="text" id="customPronouns" placeholder="Custom pronouns..." style="display:none">
-
-    <div class="section-title">Story Controls (optional)</div>
-    <textarea id="prompt" rows="6" placeholder="Examples: Ban the word 'moist'. Keep dialogue elegant."></textarea>
-
-    <button id="begin-btn" type="button">Begin Story</button>
-  </div>
-
-  <!-- GAME -->
-  <div id="game" class="box" style="display:none;max-width:980px;width:92%">
-    <div id="storyError" style="display:none;color:#ff8080;margin-bottom:10px;font-size:0.95em;"></div>
-
-    <h2 id="bookTitle" style="display:none"></h2>
-    <p id="bookHook" style="display:none"></p>
-
-    <div id="settingShotWrap">
-      <img id="settingShotImg" alt="Setting visualization">
-      <div id="settingShotCaption">A first glimpse of the world…</div>
-    </div>
-
-    <div class="turn" id="turn-indicator">Your story is taking shape...</div>
-
-    <div id="story"></div>
-
-    <div id="teaseChoiceButtons">
-      <button class="tease-choice-btn" id="teaseChoice1"></button>
-      <button class="tease-choice-btn" id="teaseChoice2"></button>
-    </div>
-
-    <div style="text-align:center;margin-top:14px">
-      <button id="visualizeBtn" type="button">Visualize</button>
-    </div>
-
-   <!-- ====== FATE CARDS (REPLACEMENT) ====== -->
-<div id="fateGrid" class="fate-grid">
-  <button class="fate-card" type="button" data-index="0" data-card="Temptation"
-    data-say="I let the silence linger—long enough to feel dangerous."
-    data-do="I step closer, just inside your boundary, and wait to see if you yield.">
-    <span class="inner">
-      <span class="front">Temptation</span>
-      <span class="back">Temptation</span>
-    </span>
-  </button>
-
-  <button class="fate-card" type="button" data-index="1" data-card="Confession"
-    data-say="Fine. Here’s the truth I’ve been editing out."
-    data-do="I name the want out loud, then hold your gaze without flinching.">
-    <span class="inner">
-      <span class="front">Confession</span>
-      <span class="back">Confession</span>
-    </span>
-  </button>
-
-  <button class="fate-card" type="button" data-index="2" data-card="Boundary"
-    data-say="No. Not like that. Not unless you ask."
-    data-do="I set a rule—calmly—then make you choose whether to honor it.">
-    <span class="inner">
-      <span class="front">Boundary</span>
-      <span class="back">Boundary</span>
-    </span>
-  </button>
-
-  <button class="fate-card" type="button" data-index="3" data-card="Power Shift"
-    data-say="Careful. If you give me that… I won’t give it back easily."
-    data-do="I turn your advantage into mine with one deliberate move.">
-    <span class="inner">
-      <span class="front">Power Shift</span>
-      <span class="back">Power Shift</span>
-    </span>
-  </button>
-
-  <button class="fate-card" type="button" data-index="4" data-card="Silence"
-    data-say="…"
-    data-do="I do nothing—on purpose—forcing you to fill the space.">
-    <span class="inner">
-      <span class="front">Silence</span>
-      <span class="back">Silence</span>
-    </span>
-  </button>
-</div>
-<!-- ====== END FATE CARDS ====== -->
-
-
-    <div class="input-group">
-      <div class="input-box">
-        <label id="actionLabel">What do you do?</label>
-        <textarea id="actionInput" rows="3" placeholder="Describe your action..."></textarea>
-      </div>
-
-      <div class="input-box">
-        <label id="dialogueLabel">What do you say?</label>
-        <textarea id="dialogueInput" rows="3" placeholder="Your exact words..."></textarea>
-      </div>
-    </div>
-
-    <div style="text-align:center;margin-top:18px">
-      <button id="sendBtn" type="button" style="display:block;margin:0 auto 10px auto">Submit</button>
-    </div>
-
-    <div>
-      <button class="small" id="saveGameBtn" type="button">Save</button>
-      <button class="small" id="exitGameBtn" type="button">Exit</button>
-    </div>
-  </div>
-
-  <!-- PREVIEW / VISUALIZE MODAL -->
-  <div id="modal">
-    <div id="modal-content">
-      <p id="modal-preview" style="margin:0 0 12px;line-height:1.7"></p>
-      <img id="vizImage" alt="Visualization">
-      <div style="text-align:right">
-        <button id="modal-close-only" type="button" style="background:#ff6b6b">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- STRANGER POPUP -->
-  <div id="strangerModal">
-    <div style="background:#1e1e1e;padding:26px;border-radius:14px;max-width:560px;width:90%;text-align:center;border:1px solid rgba(255,105,180,0.35);box-shadow:0 0 30px rgba(255,20,147,0.25)">
-      <h3 style="margin-top:0;margin-bottom:12px;font-family:'lust-script-display','lust-script','Lora',serif;color:#ff69b4;font-size:1.9em">
-        How daring of you…
-      </h3>
-      <p style="font-size:1em;opacity:0.95;line-height:1.55;margin:0 0 10px">
-        …to tempt fate with random encounters. This feature is coming soon, if you so desire.
-      </p>
-      <p style="font-size:0.95em;color:#ffd700;opacity:0.95;margin:10px 0 0" id="strangerStats"></p>
-      <div style="text-align:center;margin-top:16px">
-        <button id="strangerCloseBtn" style="background:#555" type="button">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- LOADING OVERLAY -->
-  <div id="loadingOverlay">
-    <div id="loadingOverlayInner">
-      <div id="loadingOverlayStatus">Weaving your story...</div>
-      <div id="loadingOverlayBar"><div id="loadingOverlayFill"></div></div>
-      <div id="loadingOverlayPercent" style="margin-top:4px;font-size:0.85em;opacity:0.8">0%</div>
-    </div>
-  </div>
-
-  <!-- ✅ IMPORTANT: load Fatecards file FIRST (root-relative, static-safe) -->
-  <script src="/fatecards/storybound-cards.js"></script>
-<!-- Fatecards library must load BEFORE your app script mounts it -->
 <script src="/fatecards/storybound-cards.js"></script>
 
-<!-- ✅ APP SCRIPT (plain static) -->
 <script>
 (function(){
-  // ...your existing code...
 
-  // BOOT: add these two lines
-  wirePickGroups();
+  // --- CONFIG & STATE ---
+  var PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
+  var STORY_MODEL = 'grok-4-1-fast-reasoning';
+  var COPY_ICON = '/copy.png';
+  var COPIED_ICON = '/copied.png';
 
-  function boot(){
-    // mount Fatecards
-    if (window.StoryboundCards && window.StoryboundCards.mount){
-      window.StoryboundCards.mount({
-        mountId: "cardMount",
-        actionId: "actionInput",
-        dialogueId: "dialogueInput",
-        submitId: "sendBtn"
+  var mode = null;      // solo|couple
+  var tier = null;      // free|indulge
+  var intensity = 'clean';
+  var currentRoomCode = null;
+  var selectedCardEl = null;
+
+  // Stranger counters
+  var strangerUniqueKey = 'storybound_stranger_unique_v1';
+  var strangerClicksKey = 'storybound_stranger_clicks_v1';
+
+  // --- DOM HELPERS ---
+  function $(id){ return document.getElementById(id); }
+  function on(id, evt, fn){ var el = $(id); if (el) el.addEventListener(evt, fn); }
+  function show(id, display){ var el=$(id); if(el) el.style.display = display || 'block'; }
+  function hide(id){ var el=$(id); if(el) el.style.display='none'; }
+  
+  function hideAllScreens(){
+    ['ageGate','tosGate','tierChoice','mainTitle','mainSubtitle','modeChoices','setup','game','coupleConnect','invite','waiting']
+      .forEach(hide);
+  }
+
+  function showBurger(){ if ($('burgerMenuBtn')) $('burgerMenuBtn').style.display='block'; }
+  function hideBurger(){ if ($('burgerMenuBtn')) $('burgerMenuBtn').style.display='none'; }
+
+  // --- NAVIGATION ---
+  function goToAgeGate(){ hideAllScreens(); show('ageGate','flex'); hideBurger(); }
+  function goToTOS(){ hideAllScreens(); show('tosGate','flex'); hideBurger(); }
+  function goToTierChoice(){ hideAllScreens(); show('tierChoice','flex'); showBurger(); mode=null; }
+  
+  function goToModeChoice(){ 
+    hideAllScreens(); 
+    show('mainTitle'); show('mainSubtitle'); show('modeChoices','flex'); 
+    showBurger(); window.scrollTo(0,0); 
+  }
+  
+  function goToSetup(){ hideAllScreens(); show('setup'); showBurger(); window.scrollTo(0,0); }
+  function goToGame(){ hideAllScreens(); show('game'); showBurger(); window.scrollTo(0,0); }
+  function goToCoupleConnect(){ hideAllScreens(); show('coupleConnect'); showBurger(); window.scrollTo(0,0); }
+
+  // --- TIER & LOCKS LOGIC ---
+  function applyTierLocks(){
+    var isTease = (tier === 'free');
+    
+    // 1. Lock Elements marked data-tier="indulge"
+    document.querySelectorAll('[data-tier="indulge"]').forEach(function(node){
+      node.classList.toggle('locked', isTease);
+    });
+
+    // 2. Lock Inputs (Do/Say/Submit)
+    var ids = ['actionInput','dialogueInput','sendBtn'];
+    ids.forEach(function(id){
+       var el = $(id);
+       if(!el) return;
+       
+       if(isTease){
+          el.classList.add('is-locked', 'sb-locked');
+          el.disabled = true;
+       } else {
+          el.classList.remove('is-locked', 'sb-locked');
+          el.disabled = false;
+       }
+    });
+
+    // 3. Card Selection Locks (Tease limit)
+    var mount = $('cardMount');
+    if (mount) {
+      var cards = mount.querySelectorAll('.fate-card, .sb-card');
+      cards.forEach(function(card, idx){
+        // In Tease, lock cards index 2, 3, 4 (the last three)
+        if (isTease && idx >= 2) {
+            card.classList.add('sb-select-locked');
+        } else {
+            card.classList.remove('sb-select-locked');
+        }
       });
-      applyTierLocks(); // enforce tease locks immediately
-    } else {
-      console.error('StoryboundCards not found. Check /fatecards/storybound-cards.js exists at site root.');
     }
+  }
+
+  // --- INTENSITY LOGIC ---
+  function setIntensity(val){
+    intensity = val || 'naughty';
+    var mapHint = {
+      clean: 'Flirt, chemistry, and longing. No explicit anatomy.',
+      naughty: 'Direct teasing with tasteful sensuality.',
+      erotic: 'More explicit intimacy and sensual detail.',
+      dirty: 'Very explicit language and bold scenes.'
+    };
+    if ($('intensityHint')) $('intensityHint').textContent = mapHint[intensity];
+
+    // Toggle active classes
+    ['clean','naughty','erotic','dirty'].forEach(function(k){
+      var btn = $('intensity'+ k.charAt(0).toUpperCase() + k.slice(1) + 'Btn');
+      if(btn) {
+          if(k === intensity) btn.classList.add('is-active', 'active');
+          else btn.classList.remove('is-active', 'active');
+      }
+    });
+  }
+
+  // --- SELECTION GROUPS (Genre, POV, etc) ---
+  function wirePickGroups(){
+    window.STORYBOUND_SELECTIONS = window.STORYBOUND_SELECTIONS || {};
+    document.addEventListener('click', function(e){
+      var el = e.target.closest('[data-pick-group][data-pick-value]');
+      if (!el || el.classList.contains('sb-disabled') || el.disabled) return;
+
+      var group = el.getAttribute('data-pick-group');
+      var val = el.getAttribute('data-pick-value');
+
+      // Clear active in this group
+      document.querySelectorAll('[data-pick-group="'+group+'"]').forEach(function(n){ 
+          n.classList.remove('active', 'is-active'); 
+      });
+
+      el.classList.add('active', 'is-active');
+      window.STORYBOUND_SELECTIONS[group] = val;
+    });
+  }
+
+  // --- CARD INTERACTION (The Critical Part) ---
+  function wireCardMount(){
+    var mount = $('cardMount');
+    if (!mount) return;
+
+    mount.addEventListener('click', function(e){
+      var card = e.target.closest('.fate-card, .sb-card');
+      if (!card) return;
+
+      // 1. FLIP (Always allowed)
+      card.classList.toggle('flipped');
+      card.classList.toggle('is-flipped'); // Support both classes
+
+      // 2. CHECK LOCKS
+      if (card.classList.contains('sb-select-locked')) return;
+
+      // 3. SELECT
+      if (selectedCardEl && selectedCardEl !== card) selectedCardEl.classList.remove('selected');
+      selectedCardEl = card;
+      card.classList.add('selected');
+
+      // 4. POPULATE INPUTS
+      var say = card.getAttribute('data-say');
+      var doAction = card.getAttribute('data-do'); // Note: attribute is data-do
+      
+      if ($('dialogueInput') && say) $('dialogueInput').value = say;
+      if ($('actionInput') && doAction) $('actionInput').value = doAction;
+    });
+  }
+
+  // --- EVENT LISTENERS ---
+  
+  // Gates
+  on('ageYesBtn', 'click', goToTOS);
+  on('ageNoBtn', 'click', function(){ window.location.href='https://google.com'; });
+  on('tosAgree', 'change', function(e){
+      var btn=$('tosEnterBtn'); 
+      btn.disabled=!e.target.checked; 
+      btn.style.background=e.target.checked?'#ff69b4':'#666'; 
+  });
+  on('tosEnterBtn', 'click', goToTierChoice);
+
+  // Burger
+  on('burgerMenuBtn','click', function(){ $('mainMenuOverlay').style.display='flex'; });
+  on('menuCloseBtn','click', function(){ $('mainMenuOverlay').style.display='none'; });
+  on('menuBackToTierBtn','click', function(){ $('mainMenuOverlay').style.display='none'; goToTierChoice(); });
+  on('menuRestartStoryBtn','click', function(){ $('mainMenuOverlay').style.display='none'; if($('story'))$('story').innerHTML=''; goToModeChoice(); });
+
+  // Tier Choice
+  on('teaseBtn', 'click', function(){ tier='free'; applyTierLocks(); goToModeChoice(); });
+  on('indulgeBtn', 'click', function(){ $('signupModal').style.display='flex'; });
+  on('signupCancelBtn', 'click', function(){ $('signupModal').style.display='none'; });
+  on('signupConfirmBtn', 'click', function(){
+      if (!$('signupAgeConfirm').checked) return alert('Please confirm age.');
+      tier='indulge';
+      $('signupModal').style.display='none';
+      applyTierLocks();
+      goToModeChoice();
+  });
+
+  // Mode
+  on('soloBtn', 'click', function(){ mode='solo'; goToSetup(); });
+  on('coupleBtn', 'click', goToCoupleConnect);
+  on('exitGameBtn', 'click', goToModeChoice);
+
+  // Intensity Buttons
+  on('intensityCleanBtn','click', function(){ setIntensity('clean'); });
+  on('intensityNaughtyBtn','click', function(){ setIntensity('naughty'); });
+  on('intensityEroticBtn','click', function(){ setIntensity('erotic'); });
+  on('intensityDirtyBtn','click', function(){ setIntensity('dirty'); });
+
+  // Start Story (Mock)
+  on('begin-btn', 'click', function(){
+      goToGame();
+      $('bookTitle').style.display='block'; $('bookTitle').textContent='A Door With Teeth';
+      if($('story')) $('story').innerHTML = '<p class="story-line">The system is ready. Your story begins now...</p>';
+  });
+
+  // --- BOOT SEQUENCE ---
+  function boot(){
+    // 1. Wire up logic
+    wirePickGroups();
+    wireCardMount();
+    
+    // 2. Set Defaults
+    setIntensity('clean'); // Default
+    
+    // 3. Inject CSS for locked cards
+    var style = document.createElement('style');
+    style.textContent = '.sb-select-locked { opacity: 0.6; cursor: not-allowed; } .sb-select-locked:after { content:"🔒"; position:absolute; top:10px; right:10px; font-size:20px; }';
+    document.head.appendChild(style);
+
+    // 4. Start at Age Gate
     goToAgeGate();
   }
+
+  // Run Boot
   boot();
 
 })();
 </script>
-
-  <!-- ✅ APP SCRIPT (plain static) -->
-  <script>
-  (function(){
-    
-    // ---------------------------- CONFIG ----------------------------
-    // These are placeholders. If your proxies don't exist, story generation won't work —
-    // but the site WILL load and the UI will function.
-    var PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
-    var IMAGE_PROXY_URL = 'https://storybound-proxy.vercel.app/api/image';
-    var STORY_MODEL = 'grok-4-1-fast-reasoning';
-
-    // Copy icons (single source of truth)
-    var COPY_ICON = '/copy.png';
-    var COPIED_ICON = '/copied.png';
-
-    // ---------------------------- STATE ----------------------------
-    var mode = null;   // solo|couple
-    var tier = null;   // free|indulge
-    var intensity = 'clean';
-// Tell storybound-cards.js which elements to control
-window.STORYBOUND_CARDS_CONFIG = {
-  mountId: "cardMount",
-  actionId: "actionInput",
-  dialogueId: "dialogueInput",
-  submitId: "sendBtn",
-  tierVar: "tier",
-  modeVar: "mode",
-  intensityVar: "intensity"
-};
-
-    var currentRoomCode = null;
-
-    // Stranger counters
-    var strangerUniqueKey = 'storybound_stranger_unique_v1';
-    var strangerClicksKey = 'storybound_stranger_clicks_v1';
-
-    // ---------------------------- DOM ----------------------------
-    function $(id){ return document.getElementById(id); }
-    function on(id, evt, fn){ var el = $(id); if (el) el.addEventListener(evt, fn); }
-    function show(id, display){ var el=$(id); if(el) el.style.display = display || 'block'; }
-    function hide(id){ var el=$(id); if(el) el.style.display='none'; }
-
-    function hideAllScreens(){
-      ['ageGate','tosGate','tierChoice','mainTitle','mainSubtitle','modeChoices','setup','game','coupleConnect','invite','waiting']
-        .forEach(hide);
-    }
-// ---------------------------- CHOICE GROUPS (Genre / Dynamic / POV / Style) ----------------------------
-function wireChoiceGroup(containerId, btnSelector, maxPick){
-  var box = $(containerId);
-  if (!box) return;
-
-  box.addEventListener('click', function(e){
-    var btn = e.target.closest(btnSelector);
-    if (!btn) return;
-
-    if (btn.classList.contains('locked')) return;
-
-    // multi-pick groups (Genre allow up to 3, others single)
-    if (maxPick && maxPick > 1){
-      btn.classList.toggle('selected');
-
-      // enforce maxPick
-      var selected = box.querySelectorAll(btnSelector + '.selected');
-      if (selected.length > maxPick){
-        btn.classList.remove('selected');
-        return;
-      }
-    } else {
-      // single pick
-      var all = box.querySelectorAll(btnSelector);
-      all.forEach(function(b){ b.classList.remove('selected'); });
-      btn.classList.add('selected');
-    }
-  });
-}
-
-// Call these with your actual container IDs:
-// IMPORTANT: If your IDs differ, change ONLY the first argument.
-// (Leave the selector as '.choice-btn' unless you used a different class.)
-wireChoiceGroup('genreGrid', '.choice-btn', 3);
-wireChoiceGroup('dynamicGrid', '.choice-btn', 1);
-wireChoiceGroup('povGrid', '.choice-btn', 1);
-wireChoiceGroup('styleGrid', '.choice-btn', 1);
-
-    function goToAgeGate(){ hideAllScreens(); show('ageGate','flex'); hideBurger(); }
-    function goToTOS(){ hideAllScreens(); show('tosGate','flex'); hideBurger(); }
-    function goToTierChoice(){ hideAllScreens(); show('tierChoice','flex'); showBurger(); mode=null; }
-    function goToModeChoice(){
-      hideAllScreens();
-      show('mainTitle');
-      show('mainSubtitle');
-      show('modeChoices','flex');
-      showBurger();
-      window.scrollTo(0,0);
-    }
-    function goToSetup(){ hideAllScreens(); show('setup'); showBurger(); window.scrollTo(0,0); }
-    function goToGame(){ hideAllScreens(); show('game'); showBurger(); window.scrollTo(0,0); }
-    function goToCoupleConnect(){ hideAllScreens(); show('coupleConnect'); showBurger(); window.scrollTo(0,0); }
-
-    function showBurger(){ if ($('burgerMenuBtn')) $('burgerMenuBtn').style.display='block'; }
-    function hideBurger(){ if ($('burgerMenuBtn')) $('burgerMenuBtn').style.display='none'; }
-
-    // ---------------------------- BASIC UTIL ----------------------------
-    function escapeHTML(str){
-      return (str || '')
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;');
-    }
-// ---------------------------- PICK GROUPS (Genre/Dynamics/POV/Style) ----------------------------
-// Any clickable option must have:
-//   data-pick-group="genre" (or dynamics/pov/style)
-//   data-pick-value="Romantasy" (etc)
-window.STORYBOUND_SELECTIONS = window.STORYBOUND_SELECTIONS || {};
-
-function wirePickGroups(){
-  document.addEventListener('click', function(e){
-    var el = e.target.closest('[data-pick-group][data-pick-value]');
-    if (!el) return;
-
-    var group = el.getAttribute('data-pick-group');
-    var val = el.getAttribute('data-pick-value');
-
-    // Clear active in same group
-    document.querySelectorAll('[data-pick-group="'+group+'"][data-pick-value].active')
-      .forEach(function(n){ n.classList.remove('active'); });
-
-    el.classList.add('active');
-    window.STORYBOUND_SELECTIONS[group] = val;
-
-    // Tell Fatecards (optional)
-    if (window.StoryboundCards && window.StoryboundCards.setSelections){
-      window.StoryboundCards.setSelections(window.STORYBOUND_SELECTIONS);
-    }
-  });
-}
-
-// ---------------------------- TIER LOCKS (Tease vs Indulge) ----------------------------
-function applyTierLocks(){
-  var isTease = (tier === 'free');
-
-  // Lock anything marked data-tier="indulge" in Tease
-  document.querySelectorAll('[data-tier="indulge"]').forEach(function(node){
-    node.classList.toggle('locked', isTease);
-  });
-
-  // Lock Story Controls in Tease (if you have a container with this id)
-  var sc = document.getElementById('storyControls');
-  if (sc) sc.classList.toggle('locked', isTease);
-
-  // Lock Do/Say + Submit in Tease
-  var a = document.getElementById('actionInput');
-  var d = document.getElementById('dialogueInput');
-  var s = document.getElementById('sendBtn');
-  if (a) a.classList.toggle('is-locked', isTease);
-  if (d) d.classList.toggle('is-locked', isTease);
-  if (s) s.classList.toggle('is-locked', isTease);
-
-  // Inform Fatecards about tier so it can enforce card limits
-  if (window.StoryboundCards && window.StoryboundCards.setTier){
-    window.StoryboundCards.setTier(tier);
-  }
-}
-
-    // ---------------------------- AGE / TOS ----------------------------
-    on('ageYesBtn','click', goToTOS);
-    on('ageNoBtn','click', function(){ alert('You must be 18 to use Storybound.'); window.location.href='https://google.com'; });
-
-    on('tosAgree','change', function(e){
-      var btn = $('tosEnterBtn');
-      btn.disabled = !e.target.checked;
-      btn.style.background = e.target.checked ? '#ff69b4' : '#666';
-    });
-    on('tosEnterBtn','click', goToTierChoice);
-
-    // ---------------------------- BURGER ----------------------------
-    on('burgerMenuBtn','click', function(){ $('mainMenuOverlay').style.display = 'flex'; });
-    on('menuCloseBtn','click', function(){ $('mainMenuOverlay').style.display = 'none'; });
-    on('menuBackToTierBtn','click', function(){ $('mainMenuOverlay').style.display='none'; goToTierChoice(); });
-    on('menuRestartStoryBtn','click', function(){
-      $('mainMenuOverlay').style.display='none';
-      // light reset
-      if ($('story')) $('story').innerHTML='';
-      goToModeChoice();
-    });
-
-    // ---------------------------- TIER ----------------------------
-on('teaseBtn','click', function(){
-  tier = 'free';
-  applyTierLocks();      // ✅ ADD THIS LINE
-  goToModeChoice();
-});
-
-on('indulgeBtn','click', function(e){
-  e.preventDefault();
-  e.stopPropagation();
-  $('signupModal').style.display = 'flex';
-});
-
-on('signupCancelBtn','click', function(){
-  $('signupModal').style.display = 'none';
-  show('tierChoice','flex');
-});
-
-on('signupConfirmBtn','click', function(){
-  if (!$('signupAgeConfirm').checked){
-    alert('Please confirm you are 18+ and agree to the Terms.');
-    return;
-  }
-  tier = 'indulge';
-  $('signupModal').style.display = 'none';
-  applyTierLocks();      // ✅ ADD THIS LINE
-  goToModeChoice();
-});
-
-
-    // ---------------------------- MODE ----------------------------
-    on('soloBtn','click', function(){ mode='solo'; goToSetup(); });
-    on('coupleBtn','click', function(){ mode='couple'; goToCoupleConnect(); });
-
-    on('strangerBtn','click', function(){
-      incrementStrangerCounters();
-      var stats = readStrangerStats();
-      $('strangerStats').textContent = 'So far: ' + stats.unique + ' unique visitor(s) chose Stranger, ' + stats.clicks + ' total selection(s).';
-      $('strangerModal').style.display='flex';
-    });
-    on('strangerCloseBtn','click', function(){ $('strangerModal').style.display='none'; });
-
-    function getOrCreateVisitorId(){
-      var k = 'storybound_visitor_id_v1';
-      var v = localStorage.getItem(k);
-      if (!v){
-        v = Math.random().toString(36).slice(2) + Date.now().toString(36);
-        localStorage.setItem(k, v);
-      }
-      return v;
-    }
-    function incrementStrangerCounters(){
-      try{
-        var uid = getOrCreateVisitorId();
-        var u = JSON.parse(localStorage.getItem(strangerUniqueKey) || '[]');
-        if (u.indexOf(uid) === -1) u.push(uid);
-        localStorage.setItem(strangerUniqueKey, JSON.stringify(u.slice(-5000)));
-
-        var clicks = parseInt(localStorage.getItem(strangerClicksKey) || '0', 10) || 0;
-        localStorage.setItem(strangerClicksKey, String(clicks + 1));
-      }catch(e){}
-    }
-    function readStrangerStats(){
-      try{
-        var u = JSON.parse(localStorage.getItem(strangerUniqueKey) || '[]');
-        var clicks = parseInt(localStorage.getItem(strangerClicksKey) || '0', 10) || 0;
-        return { unique: u.length, clicks: clicks };
-      }catch(e){
-        return { unique: 0, clicks: 0 };
-      }
-    }
-// ---------------------------- SELECTION (Genre/Dynamic/POV/Style) ----------------------------
-// Works by delegation: anything with data-pick-group + data-pick-value becomes selectable.
-document.addEventListener('click', function(e){
-  var btn = e.target.closest('[data-pick-group][data-pick-value]');
-  if (!btn) return;
-
-  // if explicitly disabled, ignore
-  if (btn.classList.contains('sb-disabled') || btn.disabled) return;
-
-  var group = btn.getAttribute('data-pick-group');
-  var val = btn.getAttribute('data-pick-value');
-
-  // clear active in group
-  document.querySelectorAll('[data-pick-group="'+group+'"]').forEach(function(el){
-    el.classList.remove('is-active','active');
-  });
-
-  btn.classList.add('is-active');
-
-  // store on window (simple, debuggable)
-  window.STORYBOUND_SELECTIONS = window.STORYBOUND_SELECTIONS || {};
-  window.STORYBOUND_SELECTIONS[group] = val;
-});
-
-// ---------------------------- STORY CONTROLS LOCK (Tease) ----------------------------
-function applyStoryControlsLock(){
-  var locked = (tier === 'free'); // Tease
-  var ids = ['actionInput','dialogueInput','sendBtn'];
-  ids.forEach(function(id){
-    var el = $(id);
-    if (!el) return;
-    el.disabled = !!locked;
-    if (locked) el.classList.add('sb-locked');
-    else el.classList.remove('sb-locked');
-  });
-
-  // Also visually lock the containing boxes if present
-  var group = document.querySelector('.input-group');
-  if (group){
-    if (locked) group.classList.add('sb-locked');
-    else group.classList.remove('sb-locked');
-  }
-}
-
-    // ---------------------------- COUPLE (Mock) ----------------------------
-    on('createRoomBtn','click', function(){
-      currentRoomCode = Math.random().toString(36).substr(2, 6).toUpperCase();
-      hide('coupleConnect'); show('invite');
-
-      var text =
-'Your private Storybound chamber is ready.\n\n' +
-'Invitation code: ' + currentRoomCode + '\n\n' +
-'Ask your partner to open Storybound, choose Couple mode, and enter this code.';
-
-      $('invitationText').innerHTML =
-        escapeHTML(text).replace(/\n/g,'<br>') +
-        '<img class="copyIconImg" id="copyIconImg" src="' + COPY_ICON + '" alt="Copy">';
-
-      attachCopyHandler(); // ✅ must be after innerHTML inject
-    });
-
-    on('joinRoomBtn','click', function(){
-      var code = (($('joinCode').value || '').trim().toUpperCase());
-      if (!code) return alert('Enter a code first.');
-      currentRoomCode = code;
-      alert('Join is mocked — assuming chamber connected.');
-      mode='couple';
-      goToSetup();
-    });
-
-    on('iveSentItBtn','click', function(){
-      hide('invite'); show('waiting');
-      $('waitingStatus').textContent = currentRoomCode
-        ? ('Waiting for your partner in chamber ' + currentRoomCode + '...')
-        : 'Waiting for your partner...';
-    });
-
-    on('forceSyncBtn','click', function(){
-      alert('Force sync is mocked—assuming partner has joined.');
-      mode='couple';
-      goToSetup();
-    });
-
-    on('withdrawInvitationBtn','click', function(){ currentRoomCode=null; goToModeChoice(); });
-    on('exploreSoloBtn','click', function(){ mode='solo'; goToSetup(); });
-
-    function attachCopyHandler(){
-      var icon = $('copyIconImg');
-      if (!icon) return;
-      icon.onclick = function(){
-        var txt = ($('invitationText').innerText || '').trim();
-        if (!navigator.clipboard || !navigator.clipboard.writeText){
-          alert('Clipboard not available. Select and copy manually.');
-          return;
-        }
-        navigator.clipboard.writeText(txt).then(function(){
-          icon.src = COPIED_ICON;
-          setTimeout(function(){ icon.src = COPY_ICON; }, 1200);
-        }).catch(function(){
-          alert('Copy failed—try selecting and copying manually.');
-        });
-      };
-   }
-// ---------------------------- INTENSITY ----------------------------
-function setIntensity(val){
-  intensity = val || 'naughty';
-
-  var mapHint = {
-    clean: 'Flirt, chemistry, and longing. No explicit anatomy.',
-    naughty: 'Direct teasing with tasteful sensuality.',
-    erotic: 'More explicit intimacy and sensual detail.',
-    dirty: 'Very explicit language and bold scenes.'
-  };
-  if ($('intensityHint')) $('intensityHint').textContent = mapHint[intensity] || mapHint.naughty;
-
-  // visual active state
-  var ids = ['intensityCleanBtn','intensityNaughtyBtn','intensityEroticBtn','intensityDirtyBtn'];
-  ids.forEach(function(id){
-    var el = $(id);
-    if (el) el.classList.remove('is-active','active');
-  });
-
-  var activeId =
-    intensity==='clean' ? 'intensityCleanBtn' :
-    intensity==='erotic' ? 'intensityEroticBtn' :
-    intensity==='dirty' ? 'intensityDirtyBtn' :
-    'intensityNaughtyBtn';
-
-  if ($(activeId)) $(activeId).classList.add('is-active');
-
-  // notify Fatecards (if present)
-  if (window.StoryboundCards && window.StoryboundCards.setIntensity){
-    window.StoryboundCards.setIntensity(intensity);
-  }
-}
-
-// Make the buttons actually clickable
-on('intensityCleanBtn','click', function(){ setIntensity('clean'); });
-on('intensityNaughtyBtn','click', function(){ setIntensity('naughty'); });
-on('intensityEroticBtn','click', function(){ setIntensity('erotic'); });
-on('intensityDirtyBtn','click', function(){ setIntensity('dirty'); });
-
-
-    // ---------------------------- PREVIEW MODAL ----------------------------
-    function openModalPreview(text){
-      $('modal-preview').textContent = text || '';
-      $('vizImage').style.display = 'none';
-      $('modal').style.display='flex';
-    }
-    on('modal-close-only','click', function(){ $('modal').style.display='none'; });
-
-    // preview buttons
-    document.addEventListener('click', function(e){
-      var btn = e.target.closest('.preview-btn');
-      if (!btn) return;
-      e.preventDefault(); e.stopPropagation();
-      var card = e.target.closest('.card');
-      if (!card) return;
-      openModalPreview(card.getAttribute('data-preview') || 'Preview unavailable.');
-    });
-
-    // ---------------------------- STORY (stub so UI works even without proxy) ----------------------------
-    // You can plug your real proxy calls back in; this just prevents "nothing happens".
-    function appendStoryLine(txt){
-      var story = $('story');
-      if (!story) return;
-      var p = document.createElement('p');
-      p.className = 'story-line';
-      p.textContent = txt;
-      story.appendChild(p);
-      story.scrollTop = story.scrollHeight;
-    }
-
-on('begin-btn','click', async function(){
-  goToGame();
-
-  $('bookTitle').textContent = 'A Door With Teeth';
-  $('bookTitle').style.display = 'block';
-  $('bookHook').textContent = 'A glittering invitation, a dangerous rival, and a single choice that turns desire into leverage.';
-  $('bookHook').style.display = 'block';
-  $('story').innerHTML = '';
-
-  try{
-    // If your proxy expects different payload keys, adjust here.
-    var payload = {
-      phase: 'begin',
-      tier: tier,
-      mode: mode,
-      intensity: intensity,
-      picks: (window.STORYBOUND_SELECTIONS || {})
-    };
-
-    show('loadingOverlay','flex');
-    $('loadingOverlayStatus').textContent = 'Weaving your story...';
-
-    var res = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    var data = await res.json().catch(function(){ return {}; });
-
-    hide('loadingOverlay');
-
-    if (!res.ok){
-      appendStoryLine('Story error: ' + (data.error || ('HTTP ' + res.status)));
-      return;
-    }
-
-    // Expecting { text: "..." } or { story: "..." }
-    var text = data.text || data.story || '';
-    if (!text){
-      appendStoryLine('Story error: proxy returned no text.');
-      return;
-    }
-
-    text.split(/\n+/).forEach(function(line){
-      if (line.trim()) appendStoryLine(line.trim());
-    });
-
-  }catch(e){
-    hide('loadingOverlay');
-    appendStoryLine('Story error: ' + (e && e.message ? e.message : 'unknown'));
-  }
-});
-
-    on('exitGameBtn','click', goToModeChoice);
-
-    // ---------------------------- GENRE / STYLE TOGGLES (minimal: preserve your UI) ----------------------------
-    on('moreGenresBtn','click', function(){
-      var more = $('genre-more');
-      more.style.display = (more.style.display === 'none' || !more.style.display) ? 'grid' : 'none';
-    });
-    on('moreStylesBtn','click', function(){
-      var adv = $('advanced-styles');
-      adv.style.display = (adv.style.display === 'none' || !adv.style.display) ? 'grid' : 'none';
-    });
-
-// ---------------------------- FATECARDS UI WIRING (works even if storybound-cards.js is dumb) ----------------------------
-var selectedCardEl = null;
-
-function lockInputs(isLocked){
-  var a = $('actionInput'), d = $('dialogueInput'), s = $('sendBtn');
-  if (a) { a.disabled = !!isLocked; a.style.opacity = isLocked ? '0.5' : '1'; }
-  if (d) { d.disabled = !!isLocked; d.style.opacity = isLocked ? '0.5' : '1'; }
-  if (s) { s.disabled = !!isLocked; s.style.opacity = isLocked ? '0.5' : '1'; s.style.cursor = isLocked ? 'not-allowed' : 'pointer'; }
-}
-
-function applyTeaseCardLimits(){
-  // In Tease/free: only first 2 cards selectable
-  var mount = $('cardMount');
-  if (!mount) return;
-  var cards = mount.querySelectorAll('.sb-card, .fate-card, .card');
-  var isTease = (tier === 'free');
-
-  cards.forEach(function(card, idx){
-    // always clickable for FLIP, but "locked" for SELECT if tease and idx>=2
-    if (isTease && idx >= 2) card.classList.add('sb-select-locked');
-    else card.classList.remove('sb-select-locked');
-  });
-}
-
-function wireCardMount(){
-  var mount = $('cardMount');
-  if (!mount) return;
-
-  // Delegate click for whatever card class exists
-  mount.addEventListener('click', function(e){
-    var card = e.target.closest('.sb-card, .fate-card, .card');
-    if (!card) return;
-
-    // 1) FLIP (always)
-    card.classList.toggle('flipped'); // your CSS should flip on .flipped
-
-    // 2) SELECT (blocked in Tease for cards 3+)
-    var isLockedSelect = card.classList.contains('sb-select-locked');
-    if (isLockedSelect) {
-      // still flips, but doesn't select/populate
-      return;
-    }
-
-    // 3) Persist selection highlight
-    if (selectedCardEl && selectedCardEl !== card) selectedCardEl.classList.remove('selected');
-    selectedCardEl = card;
-    card.classList.add('selected');
-
-    // 4) Populate inputs if data exists (best practice: storybound-cards.js sets these)
-    var action = card.getAttribute('data-action') || '';
-    var say = card.getAttribute('data-say') || card.getAttribute('data-dialogue') || '';
-
-    if (action && $('actionInput')) $('actionInput').value = action;
-    if (say && $('dialogueInput')) $('dialogueInput').value = say;
-
-    // Unlock inputs once a valid card is selected (if you want them locked until selection)
-    lockInputs(false);
-  });
-}
-
-// Extra CSS via JS (so you don’t have to hunt styles) for locked select cursor + cuffs feel
-function injectCardLockStyle(){
-  var css =
-    '#cardMount .sb-select-locked{ opacity:.55; cursor:not-allowed !important; }' +
-    '#cardMount .sb-select-locked:after{ content:"🔒"; position:absolute; top:8px; right:10px; font-size:18px; opacity:.85; }';
-  var style = document.createElement('style');
-  style.textContent = css;
-  document.head.appendChild(style);
-}
-
-  // ---------------------------- BOOT ----------------------------
-function boot(){
-  injectCardLockStyle();
-
-  // mount Fatecards if file loaded
-  if (window.StoryboundCards && window.StoryboundCards.mount){
-    window.StoryboundCards.mount({ mountId: 'cardMount' });
-  }
-setIntensity('naughty');
-applyStoryControlsLock();
-if (window.StoryboundCards && window.StoryboundCards.applyTeaseCardLimits) window.StoryboundCards.applyTeaseCardLimits();
-
-  wireCardMount();          // ✅ makes clicks flip + populate
-  setIntensity('naughty');  // ✅ Naughty default + active highlight
-  lockInputs(true);         // ✅ locked until a selectable card is chosen
-  applyTeaseCardLimits();   // ✅ tease limits (only first 2 selectable)
-
-  goToAgeGate();
-}
-
-boot();
-
-  })();
-  </script>
-</body>
-</html>
