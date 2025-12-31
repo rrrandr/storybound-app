@@ -1,158 +1,128 @@
-/* storybound-cards.js (static, no build tools) */
+/* storybound-cards.js (static-friendly) */
 (function(){
   var state = {
-    mountId: null,
-    actionId: null,
-    dialogueId: null,
-    submitId: null,
-    getTier: function(){ return 'free'; },
-    intensity: 'naughty',
-    selectedIndex: null
+    mounted: false,
+    tier: 'free',              // free|indulge
+    selections: {},
+    chosenIndex: null,
+    cards: []
   };
 
-  var CARDS = [
-    { title:'Gilded Provocation', tease:true,  fillA:'I step closer, letting the silence dare them.', fillD:'Careful—your confidence is showing.' },
-    { title:'Velvet Ultimatum',    tease:true,  fillA:'I offer a choice that sounds like mercy.',      fillD:'Pick wisely. I enjoy watching you decide.' },
-    { title:'Hostile Attraction',  tease:false, fillA:'I turn the tension into a weapon I can aim.',   fillD:'You keep looking at me like you want a fight.' },
-    { title:'Leverage & Lace',     tease:false, fillA:'I trade a secret for a touch—on my terms.',     fillD:'Let’s negotiate. Slowly.' },
-    { title:'Ruinous Kiss',        tease:false, fillA:'I close the distance like I own it.',           fillD:'Say “stop” if you don’t mean it.' }
-  ];
+  function byId(id){ return document.getElementById(id); }
 
-  function $(id){ return document.getElementById(id); }
+  function mount(cfg){
+    cfg = cfg || {};
+    var mountId = cfg.mountId || 'cardMount';
 
-  function ensureStyles(){
-    if (document.getElementById('sbCardsInjectedStyles')) return;
-    var s = document.createElement('style');
-    s.id = 'sbCardsInjectedStyles';
-    s.textContent = `
-      .sb-hand{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start}
-      @media (max-width:820px){.sb-hand{grid-template-columns:repeat(3,minmax(0,1fr))}}
-      .sb-card{width:100%;aspect-ratio:2/3;border-radius:14px;position:relative;transform-style:preserve-3d;transition:transform 260ms ease, box-shadow 260ms ease;box-shadow:0 10px 28px rgba(0,0,0,.35)}
-      .sb-card:hover{transform:translateY(-4px)}
-      .sb-card.is-flipped{transform:rotateY(180deg)}
-      .sb-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-      .sb-front{background:radial-gradient(circle at 30% 20%, rgba(255,105,180,.35), rgba(30,30,30,.95));border:1px solid rgba(255,105,180,.25)}
-      .sb-back{transform:rotateY(180deg);background:rgba(10,10,10,.9);border:1px solid rgba(255,215,0,.25);padding:12px;text-align:center;line-height:1.25}
-      .sb-card.sb-disabled{opacity:.45;pointer-events:none;filter:grayscale(.35)}
-      .sb-burn{animation:sbBurn 520ms ease forwards}
-      @keyframes sbBurn{to{opacity:0;transform:translateY(10px) scale(.98)}}
-    `;
-    document.head.appendChild(s);
-  }
+    var root = byId(mountId);
+    if (!root){ console.error('StoryboundCards mount: missing #' + mountId); return; }
 
-  function getTier(){
-    try{
-      // allow either global var name or window.tier directly
-      if (typeof window.tier === 'string') return window.tier === 'indulge' ? 'indulge' : 'free';
-      return state.getTier();
-    }catch(e){
-      return 'free';
-    }
-  }
+    state.cfg = cfg;
+    state.mounted = true;
 
-  function lockTeaseCards(){
-    var tier = getTier();
-    var hand = $(state.mountId);
-    if (!hand) return;
+    root.innerHTML = (
+      '<div class="sb-cards-wrap">' +
+        '<div class="sb-hand" id="sbHand"></div>' +
+      '</div>'
+    );
 
-    var cardEls = hand.querySelectorAll('.sb-card');
-    cardEls.forEach(function(el){
-      var idx = parseInt(el.getAttribute('data-idx'), 10);
-      var isAllowed = (tier !== 'free') || (idx === 0 || idx === 1);
-      el.classList.toggle('sb-disabled', !isAllowed);
-    });
-  }
+    // Simple starter deck (replace later with your real Fatecard data)
+    state.cards = [
+      { title:'Whispered Bargain', action:'You step closer, testing the edge of consent with a velvet dare.', dialogue:'"Tell me what you want… and don’t lie."' },
+      { title:'Dangerous Smile', action:'You hold their gaze, letting the power imbalance flicker—controlled, deliberate.', dialogue:'"Careful. I bite back."' },
+      { title:'Velvet Threat', action:'You circle them like a promise you can’t take back.', dialogue:'"Say yes… or make me earn it."' },
+      { title:'Golden Leverage', action:'You offer a deal that sounds sweet—until the hook reveals itself.', dialogue:'"If you want it, you’ll pay in honesty."' },
+      { title:'Door With Teeth', action:'You cross the threshold anyway. The trap is half the thrill.', dialogue:'"I know it’s dangerous. I’m still here."' }
+    ];
 
-  function writeToInputs(idx){
-    var c = CARDS[idx];
-    var a = $(state.actionId);
-    var d = $(state.dialogueId);
-    if (a) a.value = c.fillA || '';
-    if (d) d.value = c.fillD || '';
+    render();
   }
 
   function render(){
-    ensureStyles();
-    var mount = $(state.mountId);
-    if (!mount) return;
+    var hand = document.getElementById('sbHand');
+    if (!hand) return;
 
-    mount.innerHTML = '';
-    var hand = document.createElement('div');
-    hand.className = 'sb-hand';
+    hand.innerHTML = '';
+    state.cards.forEach(function(card, idx){
+      var disabled = (state.tier === 'free' && idx > 1); // Tease: only first two selectable
+      var isSelected = (state.chosenIndex === idx);
 
-    CARDS.forEach(function(c, idx){
-      var card = document.createElement('div');
-      card.className = 'sb-card';
-      card.setAttribute('data-idx', String(idx));
-      card.setAttribute('role','button');
-      card.setAttribute('tabindex','0');
+      var el = document.createElement('div');
+      el.className = 'sb-card' +
+        (disabled ? ' is-disabled' : '') +
+        (isSelected ? ' is-selected' : '');
+      el.setAttribute('data-idx', String(idx));
 
-      var front = document.createElement('div');
-      front.className = 'sb-face sb-front';
-      front.innerHTML = '<div style="font-weight:700;letter-spacing:0.04em;opacity:.95">Fate</div>';
+      el.innerHTML =
+        '<div class="sb-face sb-front">' +
+          '<div style="text-align:center;padding:10px">' +
+            '<div style="font-family:inherit;font-size:0.95em;opacity:0.9">FATE</div>' +
+            '<div style="margin-top:8px;font-size:1.05em;line-height:1.2">' + escapeHTML(card.title) + '</div>' +
+            (disabled ? '<div style="margin-top:10px;font-size:0.9em;opacity:0.85;color:#ffd700">🔒 Indulge</div>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="sb-face sb-back">' +
+          '<div style="padding:12px;font-size:0.95em;line-height:1.35;text-align:left">' +
+            '<div style="opacity:0.85;margin-bottom:8px"><b>Action</b>: ' + escapeHTML(card.action) + '</div>' +
+            '<div style="opacity:0.9"><b>Say</b>: ' + escapeHTML(card.dialogue) + '</div>' +
+          '</div>' +
+        '</div>';
 
-      var back = document.createElement('div');
-      back.className = 'sb-face sb-back';
-      back.innerHTML =
-        '<div style="font-weight:700;margin-bottom:6px;color:#ffd700">'+ c.title +'</div>' +
-        '<div style="font-size:0.95em;opacity:.9">Click to choose this beat.</div>';
+      el.addEventListener('click', function(){
+        // Flip always (even if disabled)
+        el.classList.toggle('is-flipped');
 
-      card.appendChild(front);
-      card.appendChild(back);
+        // Selection only if allowed
+        if (disabled) return;
 
-      card.addEventListener('click', function(){
-        // if disabled in Tease
-        if (card.classList.contains('sb-disabled')) return;
-
-        // flip & persist
-        card.classList.add('is-flipped');
-        state.selectedIndex = idx;
-
-        // populate inputs
-        writeToInputs(idx);
+        state.chosenIndex = idx;
+        fillInputs(card);
+        render(); // update selected outlines
       });
 
-      hand.appendChild(card);
+      hand.appendChild(el);
     });
+  }
 
-    mount.appendChild(hand);
-    lockTeaseCards();
+  function fillInputs(card){
+    var cfg = state.cfg || {};
+    var actionEl = byId(cfg.actionId || 'actionInput');
+    var dialogueEl = byId(cfg.dialogueId || 'dialogueInput');
+
+    if (actionEl) actionEl.value = card.action || '';
+    if (dialogueEl) dialogueEl.value = card.dialogue || '';
+  }
+
+  function setTier(t){
+    state.tier = (t === 'indulge') ? 'indulge' : 'free';
+    // If tease and currently-selected card is >1, clear it
+    if (state.tier === 'free' && state.chosenIndex != null && state.chosenIndex > 1){
+      state.chosenIndex = null;
+    }
+    render();
+  }
+
+  function setSelections(obj){
+    state.selections = obj || {};
   }
 
   function burnAndRedeal(){
-    var mount = $(state.mountId);
-    if (!mount) return;
-    var cards = mount.querySelectorAll('.sb-card');
-    cards.forEach(function(c){ c.classList.add('sb-burn'); });
-    setTimeout(function(){
-      state.selectedIndex = null;
-      render();
-    }, 540);
+    // optional hook for your submit button
+    state.chosenIndex = null;
+    render();
+  }
+
+  function escapeHTML(str){
+    return (str || '')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
   }
 
   window.StoryboundCards = {
-    mount: function(cfg){
-      cfg = cfg || {};
-      // allow global config too
-      var g = window.STORYBOUND_CARDS_CONFIG || {};
-
-      state.mountId = cfg.mountId || g.mountId || 'cardMount';
-      state.actionId = cfg.actionId || g.actionId || 'actionInput';
-      state.dialogueId = cfg.dialogueId || g.dialogueId || 'dialogueInput';
-      state.submitId = cfg.submitId || g.submitId || 'sendBtn';
-
-      // Optional: let page supply a tier getter
-      if (typeof cfg.getTier === 'function') state.getTier = cfg.getTier;
-
-      render();
-      return true;
-    },
-    setIntensity: function(val){
-      state.intensity = val || 'naughty';
-    },
-    applyTeaseCardLimits: function(){
-      lockTeaseCards();
-    },
+    mount: mount,
+    setTier: setTier,
+    setSelections: setSelections,
     burnAndRedeal: burnAndRedeal
   };
 })();
