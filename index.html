@@ -23,6 +23,8 @@
     button:hover { transform:scale(1.05); box-shadow:0 0 30px rgba(255,105,180,.9); }
     button:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
     
+    .small-btn { font-size: 0.9em; padding: 8px 16px; background: #444; box-shadow:none; }
+
     /* UTILS */
     .box { max-width:600px; margin:20px auto; padding:25px; background:var(--panel); border:1px solid var(--pink); border-radius:15px; box-shadow:0 0 20px rgba(255,105,180,.4); }
     .choice-buttons { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin:30px auto; max-width:800px; }
@@ -74,6 +76,11 @@
     .fate-card.poof { animation: smokePoof 0.6s forwards; }
     @keyframes smokePoof { 0%{ opacity:1; transform:scale(1); } 50%{ opacity:0.5; filter:blur(5px); transform:scale(1.1); } 100%{ opacity:0; transform:scale(0.5); } }
     
+    /* STORY TEXT */
+    .story-section { margin-bottom: 20px; animation: fadeIn 1s ease; }
+    .separator { text-align:center; font-size:1.5em; color:var(--gold); margin:30px 0; opacity:0.8; }
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
     /* RESPONSIVE */
     @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
 
@@ -141,12 +148,12 @@
     <p style="margin-bottom:20px; font-style:italic; color:#ffd700">"Why stop when it's just getting good?"</p>
     
     <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
-        <div style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:200px;">
-            <h4>Single Story</h4>
-            <p>Unlock inputs, saves, and styles for <strong>this story only</strong>.</p>
+        <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:200px;">
+            <h4>Unlock This Story</h4>
+            <p>Inputs, saves, and styles for <strong>this session</strong>.</p>
             <button id="payOneTime" style="width:100%">Unlock ($1)</button>
         </div>
-        <div style="background:#400020; padding:15px; border-radius:10px; border:1px solid gold; width:200px;">
+        <div id="optSub" style="background:#400020; padding:15px; border-radius:10px; border:1px solid gold; width:200px;">
             <h4>Indulge Forever</h4>
             <p>Unlimited access to all styles and features.</p>
             <button id="paySub" style="width:100%">Subscribe ($6/mo)</button>
@@ -192,46 +199,60 @@
     </div>
   </div>
 
-  <div id="coupleSetup" class="hidden box">
-    <h3>Couple Play</h3>
-    <button onclick="alert('Room Created: 8X92 (Mock)')">Create Room</button>
-    <p>OR</p>
-    <input placeholder="Enter Partner Code">
-    <button onclick="setMode('couple-joined')">Join Room</button>
+  <div id="coupleInvite" class="hidden box">
+    <h3>Invite Your Partner</h3>
+    <p style="font-size:0.9em">Send this code to your partner to link your fates.</p>
+    <div style="background:#000; padding:15px; font-size:1.5em; letter-spacing:2px; color:var(--pink); margin:15px 0; border:1px dashed var(--gold);" id="inviteCodeDisplay"></div>
+    
+    <button onclick="copyInvite()" class="small-btn">Copy Invitation</button>
+    <div id="copyFeedback" style="color:gold; font-size:0.8em; margin-top:5px; height:15px;"></div>
+    
+    <hr style="border-color:#333; margin:20px 0;">
+    
+    <button onclick="setMode('solo')" style="margin-bottom:10px;">Play Solo Until They Join</button>
+    <br>
+    <button onclick="setMode(null)" style="background:#333; font-size:0.8em">Withdraw Invitation</button>
+  </div>
+
+  <div id="coupleJoin" class="hidden box">
+    <h3>Join Room</h3>
+    <input placeholder="Enter Partner Code" id="partnerCodeInput">
+    <button onclick="joinRoom()">Join</button>
     <br><br>
-    <button onclick="setMode(null)" style="background:#333; font-size:0.8em">Back</button>
+    <button onclick="setMode('couple')" style="background:#333; font-size:0.8em">Back</button>
   </div>
 
   <div id="setup" class="hidden" style="max-width:800px; margin:0 auto; padding-bottom:50px;">
     
     <div class="section-title">Intensity</div>
     <div id="intensityBtns">
-      <button data-val="clean">Clean</button>
-      <button data-val="naughty" class="active">Naughty</button>
-      <button data-val="erotic">Erotic</button>
-      <button data-val="dirty">Dirty</button>
+      <button data-val="Clean" data-desc="Flirt, chemistry, and longing.">Clean</button>
+      <button data-val="Naughty" data-desc="Direct teasing with tasteful sensuality." class="active">Naughty</button>
+      <button data-val="Erotic" data-desc="Explicit intimacy and detail.">Erotic</button>
+      <button data-val="Dirty" data-desc="Very explicit language and bold scenes.">Dirty</button>
     </div>
-    <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px;">Direct teasing with tasteful sensuality.</p>
+    <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px;">(Naughty) chosen. Direct teasing with tasteful sensuality.</p>
 
     <div class="section-title">Genres (Select up to 3)</div>
     <div class="style-cards" id="genreGrid">
-      <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>Magic and desire.</p></div>
-      <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary</h3><p>Modern love.</p></div>
-      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical</h3><p>Period romance.</p></div>
-      <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal</h3><p>Vampires & shifters.</p></div>
-      <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray heat.</p></div>
-      <div class="card" data-grp="genre" data-val="Suspense"><h3>Romantic Suspense</h3><p>Danger & mystery.</p></div>
-      <div class="card" data-grp="genre" data-val="Sports"><h3>Sports</h3><p>Competitive tension.</p></div>
-      <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime</h3><p>Forbidden worlds.</p></div>
+      <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and desire.</p></div>
+      <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary</h3><p>Modern settings, present-day relationships.</p></div>
+      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical</h3><p>Period romance and forbidden rules.</p></div>
+      <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal</h3><p>Vampires, shifters, modern witches.</p></div>
+      <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray heat; player boundaries.</p></div>
+      <div class="card" data-grp="genre" data-val="Suspense"><h3>Romantic Suspense</h3><p>Danger, mystery, and adrenaline.</p></div>
+      <div class="card" data-grp="genre" data-val="Sports"><h3>Sports</h3><p>Competitive tension and athletes.</p></div>
+      <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime</h3><p>Forbidden love in criminal worlds.</p></div>
     </div>
+    
     <button class="small-btn" onclick="toggle('moreGenres')">More Genres</button>
     <div id="moreGenres" class="style-cards hidden">
        <div class="card" data-grp="genre" data-val="Billionaire"><h3>Billionaire</h3><p>Wealth and power.</p></div>
        <div class="card" data-grp="genre" data-val="Gothic"><h3>Gothic</h3><p>Moody and haunted.</p></div>
        <div class="card" data-grp="genre" data-val="LGBTQ"><h3>LGBTQ+</h3><p>Inclusive stories.</p></div>
-       <div class="card" data-grp="genre" data-val="SecondChance"><h3>Second Chance</h3><p>Reunited lovers.</p></div>
+       <div class="card" data-grp="genre" data-val="SecondChance"><h3>Second Chance</h3><p>Ex-lovers reunited.</p></div>
        <div class="card" data-grp="genre" data-val="SmallTown"><h3>Small Town</h3><p>Cozy vibes.</p></div>
-       <div class="card" data-grp="genre" data-val="Romcom"><h3>RomCom</h3><p>Banter & chaos.</p></div>
+       <div class="card" data-grp="genre" data-val="Romcom"><h3>RomCom</h3><p>Banter and light chaos.</p></div>
     </div>
 
     <div class="section-title">Dynamics (Select up to 3)</div>
@@ -279,8 +300,8 @@
          <h3>Regency</h3><p>Polite knives.</p><button class="preview-btn" data-txt="Your reputation is in danger.">Preview</button>
       </div>
     </div>
-    <button class="small-btn" onclick="toggle('moreStyles')">More Styles</button>
     
+    <button class="small-btn" onclick="toggle('moreStyles')">More Styles</button>
     <div id="moreStyles" class="style-cards hidden">
        <div class="card" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry</h3><p>Dry wit.</p><button class="preview-btn" data-txt="She lied. He admired it.">Preview</button></div>
        <div class="card" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic</h3><p>Calculated.</p><button class="preview-btn" data-txt="Silence did the flirting for him.">Preview</button></div>
@@ -373,11 +394,13 @@
 (function(){
   // --- HELPERS ---
   function $(id){ return document.getElementById(id); }
-  function toggle(id){ var el=$(id); el.classList.toggle('hidden'); }
-  function hideAll(){ ['ageGate','tosGate','tierGate','app','modeSelect','coupleSetup','setup','game'].forEach(function(x){ if($(x)) $(x).classList.add('hidden'); }); }
+  function toggle(id){ var el=$(id); if(el) el.classList.toggle('hidden'); }
+  function hideAll(){ ['ageGate','tosGate','tierGate','app','modeSelect','coupleInvite','coupleJoin','setup','game'].forEach(function(x){ if($(x)) $(x).classList.add('hidden'); }); }
   
-  // PROXY URL (Restored)
-  var PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
+  // PROXY URLs (Endpoints)
+  var API_STORY = 'https://storybound-proxy.vercel.app/api/proxy';
+  var API_IMAGE = 'https://storybound-proxy.vercel.app/api/image';
+
   var state = { tier:'free', picks:{ genre:[], dynamic:[], pov:'First', style:'Breathless' } };
 
   // --- GATES ---
@@ -392,11 +415,19 @@
   // PAYWALL LOGIC
   window.showPaywall = function(type){
      if(state.tier === 'indulge') return; // Already unlocked
+
      $('payModal').classList.remove('hidden');
+     
+     // "Unlock" (locked item) shows $1 option + Sub
+     if(type === 'unlock') {
+         $('optUnlock').classList.remove('hidden');
+     } else {
+         // "Sub" (Indulge btn) shows ONLY Sub
+         $('optUnlock').classList.add('hidden');
+     }
   };
 
   $('payOneTime').onclick = function(){
-     // Mock Unlock for SINGLE Story
      state.tier = 'single-unlocked';
      $('payModal').classList.add('hidden');
      updateLocks();
@@ -406,7 +437,7 @@
   $('paySub').onclick = function(){
      state.tier = 'indulge';
      $('payModal').classList.add('hidden');
-     setTier('indulge'); // Full unlock
+     setTier('indulge'); 
      alert("Welcome to Indulge Tier.");
   };
 
@@ -424,32 +455,56 @@
 
   // --- STRANGER LOGIC ---
   window.showStranger = function(){
-    // 1. Get/Set Count
     var count = parseInt(localStorage.getItem('sb_stranger_clicks') || '0') + 1;
     localStorage.setItem('sb_stranger_clicks', count);
-    
-    // 2. Display
     $('strangerCount').textContent = count + " souls have tempted fate.";
     $('strangerModal').classList.remove('hidden');
   };
 
-  // --- MODE ---
+  // --- COUPLE LOGIC ---
   window.setMode = function(m){
+    // Reset Views
     $('modeSelect').classList.add('hidden');
-    $('coupleSetup').classList.add('hidden');
+    $('coupleInvite').classList.add('hidden');
+    $('coupleJoin').classList.add('hidden');
+    $('setup').classList.add('hidden');
+
     if(m === 'solo') $('setup').classList.remove('hidden');
-    else if(m === 'couple') $('coupleSetup').classList.remove('hidden');
+    else if(m === 'couple') {
+        $('coupleInvite').classList.remove('hidden');
+        // Generate Mock Code
+        var code = Math.random().toString(36).substring(2,6).toUpperCase();
+        $('inviteCodeDisplay').textContent = code;
+        $('inviteCodeDisplay').setAttribute('data-code', code);
+    }
     else if(m === 'couple-joined') $('setup').classList.remove('hidden');
     else $('modeSelect').classList.remove('hidden'); 
   };
+  
+  window.copyInvite = function(){
+     var code = $('inviteCodeDisplay').getAttribute('data-code');
+     var text = "Join me in Storybound. Code: " + code;
+     navigator.clipboard.writeText(text).then(function(){
+        $('copyFeedback').textContent = "Copied!";
+        setTimeout(function(){ $('copyFeedback').textContent = ""; }, 2000);
+     });
+  };
 
-  // --- INTENSITY (Unlocked in Tease) ---
+  window.joinRoom = function(){
+      var val = $('partnerCodeInput').value;
+      if(!val) return alert("Enter code.");
+      setMode('couple-joined');
+  };
+
+  // --- INTENSITY ---
   var iBtns = document.getElementById('intensityBtns').querySelectorAll('button');
   iBtns.forEach(function(b){
     b.onclick = function(){
        iBtns.forEach(function(x){x.classList.remove('active')});
        b.classList.add('active');
-       $('intensityDesc').textContent = b.getAttribute('data-val') + " selected.";
+       var val = b.getAttribute('data-val');
+       var desc = b.getAttribute('data-desc');
+       $('intensityDesc').textContent = "(" + val + ") chosen. " + desc;
     }
   });
 
@@ -472,7 +527,7 @@
 
     // Locked Style Logic
     if(state.tier === 'free' && locked === 'true'){
-      showPaywall('sub');
+      showPaywall('unlock'); // Clicking a specific locked item triggers unlock flow
       return;
     }
 
@@ -529,7 +584,7 @@
            b.onclick = function(){ showPaywall('unlock'); };
        } else {
            b.classList.remove('locked-style');
-           b.onclick = null; // Remove lock handler
+           b.onclick = null;
        }
     });
   }
@@ -542,7 +597,6 @@
     $('game').classList.remove('hidden');
     window.scrollTo(0,0);
     
-    // Placeholder while loading
     $('storyTitle').textContent = "Loading...";
     $('storySynopsis').textContent = "Consulting the oracle...";
     $('loadingOverlay').classList.remove('hidden');
@@ -558,29 +612,30 @@
         };
 
         // Real Fetch Call
-        var res = await fetch(PROXY_URL, {
+        var res = await fetch(API_STORY, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
+        
+        if(!res.ok) throw new Error("API Error");
+        
         var data = await res.json();
         
-        // Handle Success or Fallback
-        var title = data.title || "A Door With Teeth";
-        var syn = data.synopsis || "A glittering invitation, a dangerous rival, and a single choice.";
-        var text = data.story || "<p>The atmosphere thickened. (Backend connection failed, using fallback text). Shadows lengthened across the floor as the silence between them grew heavy with unsaid things...</p>";
-
-        $('storyTitle').textContent = title;
-        $('storySynopsis').textContent = syn;
-        $('storyText').innerHTML = text;
+        $('storyTitle').textContent = data.title || "A Door With Teeth";
+        $('storySynopsis').textContent = data.synopsis || "Generated synopsis...";
+        $('storyText').innerHTML = data.story || "<p>Story text...</p>";
 
     } catch(e) {
-        // Fallback if proxy fails
+        // Fallback
         $('storyTitle').textContent = "A Door With Teeth";
         $('storySynopsis').textContent = "A breathless encounter...";
         var txt = "";
         for(var i=0; i<6; i++) txt += "<p>The atmosphere thickened. Shadows lengthened across the floor as the silence between them grew heavy with unsaid things. This is paragraph " + (i+1) + " of the generated story, weaving in elements of " + state.picks.dynamic.join(' and ') + ".</p>";
         $('storyText').innerHTML = txt;
+        
+        // Add disclaimer about backend if needed
+        $('storyText').innerHTML += "<p style='color:red;font-size:0.8em'>Note: Backend connection failed (" + e.message + "). Using fallback text.</p>";
     }
 
     $('loadingOverlay').classList.add('hidden');
@@ -590,29 +645,66 @@
   };
 
   // --- SUBMIT TURN ---
-  $('submitBtn').onclick = function(){
+  $('submitBtn').onclick = async function(){
     if(window.StoryboundCards) window.StoryboundCards.poof();
     
-    // Mock Next Chapter
-    setTimeout(function(){
-       var newTxt = "";
-       for(var i=0; i<4; i++) newTxt += "<p>The choice was made. Consequences rippled outward. This is the next chapter, paragraph " + (i+1) + ".</p>";
-       $('storyText').innerHTML = newTxt;
-       $('storyText').scrollTop = 0;
-       if(state.tier !== 'free'){
-          $('actionInput').value = "";
-          $('dialogueInput').value = "";
-       }
-    }, 800);
+    // Create Separator
+    var sep = document.createElement('div');
+    sep.className = 'separator';
+    sep.innerHTML = "⚜";
+    $('storyText').appendChild(sep);
+
+    // Create New Section Container
+    var newSection = document.createElement('div');
+    newSection.className = 'story-section';
+    newSection.innerHTML = "<p><i>Weaving fate...</i></p>";
+    $('storyText').appendChild(newSection);
+    
+    // Scroll
+    newSection.scrollIntoView({behavior:'smooth'});
+
+    // Fetch Next Chunk
+    try {
+        var res = await fetch(API_STORY, {
+             method: 'POST',
+             headers: {'Content-Type': 'application/json'},
+             body: JSON.stringify({ phase: 'turn', action: $('actionInput').value })
+        });
+        var data = await res.json();
+        newSection.innerHTML = data.story || "<p>Next chapter...</p>";
+    } catch(e) {
+        // Fallback
+        setTimeout(function(){
+            var newTxt = "";
+            for(var i=0; i<4; i++) newTxt += "<p>The choice was made. Consequences rippled outward. This is the next chapter, paragraph " + (i+1) + ".</p>";
+            newSection.innerHTML = newTxt;
+        }, 800);
+    }
+    
+    if(state.tier !== 'free'){
+       $('actionInput').value = "";
+       $('dialogueInput').value = "";
+    }
   };
   
   // --- VISUALIZE ---
   window.visualize = function(){
      $('loadingOverlay').classList.remove('hidden');
-     setTimeout(function(){
+     
+     // Real API Call Attempt
+     fetch(API_IMAGE, { method: 'POST' })
+     .then(res => res.json())
+     .then(data => {
+         // handle image
+         alert("Image generated!");
          $('loadingOverlay').classList.add('hidden');
-         alert("Visualizer connected! (Mock: Image would appear here)");
-     }, 1500);
+     })
+     .catch(e => {
+         setTimeout(function(){
+             $('loadingOverlay').classList.add('hidden');
+             alert("Visualizer connected! (Mock: Backend unreachable)");
+         }, 1500);
+     });
   };
 
   // --- MENU ---
