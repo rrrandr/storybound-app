@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Storybound: Danger and Decadence</title>
+  <title>Storybound</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +14,7 @@
     /* GLOBAL VARS */
     :root{ 
         --bg1:#0a001f; --bg2:#2a0033; --pink:#ff69b4; --hot:#ff1493; --gold:#ffd700; --ink:#f0e6ff; --panel:rgba(20,0,40,.6); 
-        --p1-color: #f0e6ff; --p2-color: #f0e6ff;
+        --p1-color: #B0E0E6; --p2-color: #FFB6C1;
     }
     
     /* THEMES */
@@ -53,21 +53,27 @@
     
     /* LOCKS - Handcuffs & Dollar Cursor */
     .locked-input textarea, 
+    .card.locked,
     .locked-style { 
-        opacity:0.5; 
-        filter:grayscale(0.8); 
+        opacity:0.4; 
+        filter:grayscale(0.9); 
         cursor:url("/cursor-dollar-plane-64.png"), pointer !important; 
-        pointer-events:none; /* Clicks hit wrapper */
+        pointer-events: none; /* Clicks hit parent wrapper */
     }
+    
+    /* We apply the lock icon to the PARENT wrapper for inputs, or the element itself for cards */
     .locked-input::after, 
+    .card.locked::after,
     .locked-style::after { 
         content:""; 
         position:absolute; 
         top:10px; right:10px; 
-        width:24px; height:24px; 
+        width:28px; height:28px; 
         background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; 
-        opacity:0.9; 
+        opacity:0.95; 
         pointer-events:none; 
+        filter: drop-shadow(0 0 5px #000);
+        z-index: 10;
     }
     .locked-input::after { top: 42px; right: 15px; } 
 
@@ -78,7 +84,13 @@
     .card.selected { border-color:#ff69b4; background:#333; box-shadow:0 0 15px rgba(255,105,180,0.3); }
     .card h3 { margin:0 0 5px; color:#ff6b6b; font-size:1.1em; font-family:'lust-script-display',serif; }
     .card p { font-size:0.9em; opacity:0.9; margin:0; font-family:'Lora',serif; }
-    .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:5; position:relative; pointer-events: auto !important; cursor: pointer !important;}
+    
+    .preview-btn { 
+        margin-top:10px; font-size:0.75em; padding:4px 10px; 
+        background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); 
+        box-shadow:none; z-index:20; position:relative; 
+        pointer-events: auto !important; cursor: pointer !important;
+    }
     .preview-btn:hover { background:rgba(255,255,255,0.2); }
 
     /* FATE CARDS */
@@ -92,35 +104,37 @@
     .fate-card.poof { animation: smokePoof 0.6s forwards; }
     @keyframes smokePoof { 0%{ opacity:1; transform:scale(1); } 100%{ opacity:0; transform:scale(0.5); } }
 
-    /* INTENSITY BUTTONS (Original Size) */
+    /* INTENSITY BUTTONS */
     .intensity-wrap { margin: 10px 0; }
     .intensity-btn { margin: 5px; opacity: 0.6; }
     .intensity-btn.active { opacity: 1; border: 2px solid var(--gold); box-shadow: 0 0 15px var(--hot); }
     
-    /* INTENSITY MINI (Game Screen) */
     .intensity-mini { display:flex; gap:5px; justify-content:center; margin: 15px 0; }
     .intensity-mini button { padding: 5px 15px; font-size: 0.8em; opacity: 0.6; }
     .intensity-mini button.active { opacity: 1; border: 1px solid var(--gold); }
 
-    /* LOADING BAR (Restored from Reference) */
-    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); display: none; align-items: center; justify-content: center; z-index: 200; }
+    /* LOADING BAR */
+    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 200; }
     #loadingOverlayInner { background: rgba(10, 0, 30, 0.95); padding: 18px 26px 14px 26px; border-radius: 14px; box-shadow: 0 0 35px rgba(255, 20, 147, 0.8); min-width: 280px; text-align: left; font-size: 0.95em; }
     #loadingOverlayBar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; overflow: hidden; margin-top: 8px; }
     #loadingOverlayFill { width: 0%; height: 100%; background: var(--pink); transition: width 0.25s; }
 
-    /* BURGER (No Circle) */
+    /* BURGER */
     #burgerBtn { position:fixed; top:15px; right:15px; z-index:5000; font-size:1.8em; background:none; border:none; color:var(--pink); padding:0; cursor:pointer; text-shadow: 0 0 5px var(--hot); box-shadow:none; }
     #burgerBtn:hover { transform: scale(1.1); box-shadow:none; }
 
     /* VISUALIZE MODAL */
     .viz-modal-content { text-align: center; max-width: 600px; width: 90%; }
     .viz-controls { display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap; }
-    #vizPreviewImg { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 400px; object-fit: contain; background:#000; }
+    #vizPreviewImg { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 400px; object-fit: contain; background:#000; min-height:200px; display:none; }
+    #vizPlaceholder { width: 100%; height:200px; display:flex; align-items:center; justify-content:center; border:1px dashed #444; margin-top:10px; color:#666; font-style:italic;}
 
     /* STORY TEXT */
     .story-section { margin-bottom: 20px; animation: fadeIn 1s ease; }
     .story-image { width:100%; border-radius:12px; margin:15px 0; border:1px solid var(--pink); box-shadow:0 0 20px rgba(255,20,147,0.3); }
     .separator { text-align:center; font-size:1.5em; color:var(--gold); margin:30px 0; opacity:0.8; }
+    #settingShotWrap { margin-bottom: 30px; animation: fadeIn 2s ease; border-radius: 12px; overflow: hidden; border: 1px solid var(--pink); box-shadow: 0 0 20px rgba(255,20,147,0.3); }
+    #settingShotWrap img { width: 100%; display: block; }
     @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
 
     @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
@@ -154,15 +168,16 @@
   </div>
 </div>
 
-<div id="vizModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:3000; align-items:center; justify-content:center; display:flex;">
+<div id="vizModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:3000; align-items:center; justify-content:center; display:flex;">
   <div class="box viz-modal-content">
     <h3>Visualization</h3>
-    <img id="vizPreviewImg" src="" alt="Generating...">
+    <div id="vizPlaceholder">Generating...</div>
+    <img id="vizPreviewImg" alt="Scene">
     <div class="viz-controls">
         <select id="vizModel" style="width:auto; padding:5px;">
             <option value="grok-2-image-1212">Grok 2</option>
-            <option value="dall-e-3">DALL-E 3</option>
-            <option value="midjourney">Midjourney (Mock)</option>
+            <option value="gpt-4-dalle">GPT-4 (DALL-E)</option>
+            <option value="gemini-pro-vision">Gemini</option>
         </select>
         <button class="small-btn" onclick="visualize(true)">Re-Visualize</button>
         <button onclick="insertImage()">Insert</button>
@@ -183,9 +198,9 @@
   <div class="box" style="text-align:left; height:60vh; overflow-y:auto; font-size:0.85em; line-height:1.5;">
     <p><strong>TERMS OF SERVICE</strong></p>
     <p>1. <strong>Age Requirement:</strong> You must be 18+.</p>
-    <p>2. <strong>Content:</strong> Adult fantasy roleplay only. No non-consensual content, violence, or minors.</p>
-    <p>3. <strong>Liability:</strong> Use at your own risk. Storybound is entertainment.</p>
-    <p><em>(Full text abbreviated for display, but legally binding).</em></p>
+    <p>2. <strong>Content Policy:</strong> Adult fantasy roleplay only. No non-consensual content, violence, or minors.</p>
+    <p>3. <strong>Data & AI:</strong> Content generated by AI models. User inputs processed by third parties.</p>
+    <p>4. <strong>Liability:</strong> Use at your own risk. Entertainment purposes only.</p>
   </div>
   <label><input type="checkbox" id="tosCheck"> I agree to the Terms</label>
   <br>
@@ -283,7 +298,7 @@
     <div class="style-cards" id="genreGrid">
       <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and intense romantic stakes.</p></div>
       <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary Romance</h3><p>Modern settings and present-day relationships.</p></div>
-      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical Romance</h3><p>Pre-mid-20th century love with period rules.</p></div>
+      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical Romance</h3><p>Period romance and forbidden rules.</p></div>
       <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal Modern Romance</h3><p>Vampires, shifters, witches in today’s world.</p></div>
       <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray heat; player defines boundaries.</p></div>
       <div class="card" data-grp="genre" data-val="Suspense"><h3>Romantic Suspense</h3><p>Romance entangled with danger and mystery.</p></div>
@@ -327,22 +342,22 @@
     <div class="section-title">Story Style <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="styleGrid">
       <div class="card selected" data-grp="style" data-val="Breathless"><h3>Breathless Romance</h3><p>Fast tension, close POV, lush romantic heat.</p><button class="preview-btn" data-txt="His attention was a slow hand. It didn’t touch her—yet she felt it everywhere.">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Epic" data-locked="true"><h3>Epic Fantasy</h3><p>Grand stakes, wonder, danger, sweeping romance.</p><button class="preview-btn" data-txt="The city burned like a crown—and someone inside it was waiting to claim her.">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Playful" data-locked="true"><h3>Playful Heat</h3><p>Flirty banter, teasing humor, spark-first chemistry.</p><button class="preview-btn" data-txt="“You’re staring.” “I’m appreciating.”">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Dark" data-locked="true"><h3>Dark Desire</h3><p>Moody, dangerous tension with boundaries respected.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Raw" data-locked="true"><h3>Raw Passion</h3><p>Direct emotion, embodied desire, grounded intensity.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button></div>
-      <div class="card" data-grp="style" data-val="Regency" data-locked="true"><h3>Regency Restraint</h3><p>Polite knives, forbidden longing, exquisite restraint.</p><button class="preview-btn" data-txt="“Your reputation is in danger,” she murmured.">Preview</button></div>
+      <div class="card locked" data-grp="style" data-val="Epic" data-locked="true"><h3>Epic Fantasy</h3><p>Grand stakes, wonder, danger, sweeping romance.</p><button class="preview-btn" data-txt="The city burned like a crown—and someone inside it was waiting to claim her.">Preview</button></div>
+      <div class="card locked" data-grp="style" data-val="Playful" data-locked="true"><h3>Playful Heat</h3><p>Flirty banter, teasing humor, spark-first chemistry.</p><button class="preview-btn" data-txt="“You’re staring.” “I’m appreciating.”">Preview</button></div>
+      <div class="card locked" data-grp="style" data-val="Dark" data-locked="true"><h3>Dark Desire</h3><p>Moody, dangerous tension with boundaries respected.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button></div>
+      <div class="card locked" data-grp="style" data-val="Raw" data-locked="true"><h3>Raw Passion</h3><p>Direct emotion, embodied desire, grounded intensity.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button></div>
+      <div class="card locked" data-grp="style" data-val="Regency" data-locked="true"><h3>Regency Restraint</h3><p>Polite knives, forbidden longing, exquisite restraint.</p><button class="preview-btn" data-txt="“Your reputation is in danger,” she murmured.">Preview</button></div>
     </div>
     
     <button class="small-btn" onclick="toggle('moreStyles')">More Styles</button>
     <div id="moreStyles" class="style-cards hidden">
-       <div class="card" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry Confession</h3><p>Dry wit, sharp honesty, intimate tension.</p></div>
-       <div class="card" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic Intensity</h3><p>Calculated seduction, power games.</p></div>
-       <div class="card" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal Bloom</h3><p>Dreamlike imagery, symbolic heat.</p></div>
-       <div class="card" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal Edge</h3><p>Blunt honesty, razor tension.</p></div>
-       <div class="card" data-grp="style" data-val="Satirical" data-locked="true"><h3>Satirical Fantasy</h3><p>Witty fantasy, playful stakes.</p></div>
-       <div class="card" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Elevated cadence, poetic desire.</p></div>
-       <div class="card" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Grand futuristic worlds, high stakes.</p></div>
+       <div class="card locked" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry Confession</h3><p>Dry wit, sharp honesty, intimate tension.</p></div>
+       <div class="card locked" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic Intensity</h3><p>Calculated seduction, power games.</p></div>
+       <div class="card locked" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal Bloom</h3><p>Dreamlike imagery, symbolic heat.</p></div>
+       <div class="card locked" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal Edge</h3><p>Blunt honesty, razor tension.</p></div>
+       <div class="card locked" data-grp="style" data-val="Satirical" data-locked="true"><h3>Satirical Fantasy</h3><p>Witty fantasy, playful stakes.</p></div>
+       <div class="card locked" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Elevated cadence, poetic desire.</p></div>
+       <div class="card locked" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Grand futuristic worlds, high stakes.</p></div>
     </div>
 
     <div class="section-title">Story Controls</div>
@@ -358,6 +373,10 @@
     <h2 id="storyTitle"></h2>
     <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:20px;"></p>
     
+    <div id="settingShotWrap">
+        <img id="settingShotImg" src="" alt="Setting">
+    </div>
+
     <div id="storyText" class="box" style="text-align:left; max-width:100%; min-height:300px; margin-bottom:20px;"></div>
 
     <div style="text-align:center; margin-bottom:10px;">
@@ -408,11 +427,12 @@
 
   var state = { tier:'free', picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] }, gender:'Female', loveInterest:'Male', intensity:'Naughty' };
   var tempImgUrl = null;
+  const cheapNames = ["Thrifton", "Pennywise", "McMiser", "Scrooge", "Tightwad", "Pinchpenny"];
 
   // --- HELPERS ---
   function $(id){ return document.getElementById(id); }
   window.toggle = function(id){ $(id).classList.toggle('hidden'); }
-  function hideAll(){ ['modeSelect','setup','game'].forEach(x => $(x)?.classList.add('hidden')); }
+  function hideAll(){ ['ageGate','tosGate','tierGate','modeSelect','setup','game'].forEach(x => $(x)?.classList.add('hidden')); }
   window.checkCustom = function(selectId, inputId){
       if($(selectId).value === 'Custom') $(inputId).classList.remove('hidden');
       else $(inputId).classList.add('hidden');
@@ -423,6 +443,16 @@
       if(g === 'Male') return '#B0E0E6'; // Powder Blue
       if(g === 'Female') return '#FFB6C1'; // Powder Pink
       return '#77DD77'; // Pastel Green
+  }
+
+  // --- MEMORY: USED NAMES ---
+  function getUsedNames(){
+      return JSON.parse(localStorage.getItem('sb_used_names') || '[]');
+  }
+  function addUsedName(name){
+      let list = getUsedNames();
+      if(!list.includes(name)) list.push(name);
+      localStorage.setItem('sb_used_names', JSON.stringify(list));
   }
 
   // --- API CALL ---
@@ -493,12 +523,16 @@
       return html;
   }
 
-  // --- NAVIGATION ---
+  // --- NAVIGATION FLOW ---
+  // Start hidden
+  hideAll();
+  $('ageGate').classList.remove('hidden');
+
   $('ageYes').onclick = function(){ $('ageGate').classList.add('hidden'); $('tosGate').classList.remove('hidden'); };
   $('tosCheck').onchange = function(e){ $('tosBtn').disabled = !e.target.checked; };
   $('tosBtn').onclick = function(){ $('tosGate').classList.add('hidden'); $('tierGate').classList.remove('hidden'); };
   
-  $('btnTease').onclick = function(){ state.tier='free'; $('tierGate').classList.add('hidden'); $('app').classList.remove('hidden'); };
+  $('btnTease').onclick = function(){ state.tier='free'; $('tierGate').classList.add('hidden'); $('modeSelect').classList.remove('hidden'); updateLocks(); };
   $('btnIndulge').onclick = function(){ window.showPaywall('sub'); };
 
   window.setMode = function(m){
@@ -506,23 +540,41 @@
   };
 
   window.setTheme = function(t){ document.body.className = 'theme-' + t; };
+  
+  window.restart = function(){
+      $('menuOverlay').classList.add('hidden');
+      $('game').classList.add('hidden');
+      $('setup').classList.add('hidden');
+      $('modeSelect').classList.remove('hidden');
+      $('storyText').innerHTML = '';
+  }
 
   // --- BEGIN STORY ---
   $('beginBtn').onclick = async function(){
       state.gender = $('playerGender').value === 'Custom' ? $('customPlayerGender').value : $('playerGender').value;
       state.loveInterest = $('loveInterestGender').value === 'Custom' ? $('customLoveInterest').value : $('loveInterestGender').value;
       
+      let lastName = "";
+      if(state.tier === 'free') {
+          lastName = cheapNames[Math.floor(Math.random() * cheapNames.length)];
+      }
+
       startLoading();
       hideAll();
       $('game').classList.remove('hidden');
       initCards();
+      
+      // Parallel Setting Shot
+      generateSettingShot();
 
+      const usedNames = getUsedNames().join(', ');
       const sys = `You are a master storyteller. 
       Genre: ${state.picks.genre.join(',')}. 
       Style: ${state.picks.style.join(',')}.
       POV: ${state.picks.pov}.
-      Player is ${state.gender}. Love Interest is ${state.loveInterest}.
+      Player is ${state.gender} (Last Name if free tier: ${lastName}). Love Interest is ${state.loveInterest}.
       Intensity: ${state.intensity}.
+      Constraints: Do NOT use names: ${usedNames}.
       IMPORTANT: This is the OPENING. NO sex acts yet. Focus on PLOT, WORLD-BUILDING, and TENSION. Establish a nemesis and high stakes. Characters must have agendas.
       Output format: Title: <title>\nSynopsis: <synopsis>\n<story body>`;
       
@@ -540,11 +592,32 @@
           $('storyTitle').textContent = title;
           $('storySynopsis').textContent = syn;
           $('storyText').innerHTML = formatStory(body);
+          
+          // Add names found to memory (simple heuristic)
+          const namesFound = body.match(/[A-Z][a-z]+/g) || [];
+          namesFound.forEach(n => addUsedName(n));
+
+          window.scrollTo(0,0);
+
       } catch(e) {
           $('storyText').innerHTML = "<p>Backend failed. Fallback loaded.</p>";
       }
       stopLoading();
   };
+
+  async function generateSettingShot(){
+      try {
+          const prompt = "Cinematic establishing shot, fantasy or modern setting, mysterious atmosphere, no text, highly detailed, 8k resolution.";
+          const res = await fetch(IMAGE_PROXY_URL, {
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ prompt: prompt })
+          });
+          const data = await res.json();
+          const url = data.url || 'https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?q=80&w=800';
+          $('settingShotImg').src = url;
+      } catch(e) {}
+  }
 
   // --- SUBMIT TURN ---
   $('submitBtn').onclick = async function(){
@@ -568,6 +641,10 @@
   window.visualize = async function(isRe){
       startLoading();
       const lastText = $('storyText').textContent.slice(-500);
+      $('vizPreviewImg').style.display = 'none';
+      $('vizPlaceholder').style.display = 'flex';
+      $('vizModal').classList.remove('hidden');
+
       try {
           const promptMsg = await callChat([{role:'user', content:`Describe this scene for an image generator (no nudity, cinematic, elegant fantasy art): ${lastText}`}]);
           const res = await fetch(IMAGE_PROXY_URL, {
@@ -579,12 +656,10 @@
           tempImgUrl = data.url || 'https://via.placeholder.com/600x400?text=Mock+Image+Fallback';
           
           $('vizPreviewImg').src = tempImgUrl;
-          $('vizModal').classList.remove('hidden');
+          $('vizPreviewImg').style.display = 'block';
+          $('vizPlaceholder').style.display = 'none';
       } catch(e){
-          // Fallback so it doesn't just crash
-          tempImgUrl = 'https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?q=80&w=600&auto=format&fit=crop'; 
-          $('vizPreviewImg').src = tempImgUrl;
-          $('vizModal').classList.remove('hidden');
+          alert("Viz failed: " + e.message);
       }
       stopLoading();
   };
@@ -601,20 +676,24 @@
   document.addEventListener('click', e => {
       const card = e.target.closest('.card');
       if(!card) return;
+      
+      // Preview
       if(e.target.classList.contains('preview-btn')){
           e.stopPropagation();
           $('previewText').innerText = e.target.getAttribute('data-txt');
           $('previewModal').classList.remove('hidden');
           return;
       }
-      const grp = card.getAttribute('data-grp');
-      const val = card.getAttribute('data-val');
-      const locked = card.getAttribute('data-locked');
 
+      // Check Locks
+      const locked = card.getAttribute('data-locked');
       if(state.tier === 'free' && locked === 'true'){
           window.showPaywall('unlock'); 
           return;
       }
+      
+      const grp = card.getAttribute('data-grp');
+      const val = card.getAttribute('data-val');
       
       if(['genre','dynamic','style'].includes(grp)){
           if(!state.picks[grp]) state.picks[grp] = [];
@@ -643,6 +722,26 @@
           if($('intensityDesc')) $('intensityDesc').innerText = `(${state.intensity}) ${desc}`;
       }
   });
+
+  // --- SHOW PAYWALL ---
+  window.showPaywall = function(type){
+     if(state.tier === 'indulge') return; 
+     $('payModal').classList.remove('hidden');
+     if(type === 'unlock') $('optUnlock').classList.remove('hidden');
+     else $('optUnlock').classList.add('hidden');
+  };
+
+  function updateLocks(){
+      if(state.tier === 'free'){
+          // Add locked class to non-breathless styles
+          document.querySelectorAll('.card[data-locked="true"]').forEach(c => c.classList.add('locked'));
+      } else {
+          document.querySelectorAll('.card').forEach(c => c.classList.remove('locked'));
+      }
+  }
+
+  // --- BURGER ---
+  $('burgerBtn').onclick = function(){ $('menuOverlay').classList.remove('hidden'); };
 
 })();
 </script>
