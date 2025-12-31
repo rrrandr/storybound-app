@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Storybound</title>
+  <title>Storybound: Danger and Decadence</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,6 +27,7 @@
     /* TYPOGRAPHY */
     h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
     .section-title { font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
+    .instruction-text { font-family: 'Lora', serif; font-size: 0.5em; color: var(--ink); opacity: 0.7; vertical-align: middle; margin-left: 12px; letter-spacing: 0; text-shadow: none; }
     
     /* DIALOGUE STYLING */
     .dialogue { font-size: 1.15em; font-style: italic; display: block; margin: 12px 0; padding-left: 15px; border-left: 2px solid var(--pink); }
@@ -37,6 +38,7 @@
     button { background:linear-gradient(145deg,#8b008b,var(--hot)); color:var(--gold); padding:10px 30px; border:none; border-radius:25px; font-size:1em; cursor:pointer; box-shadow:0 0 18px rgba(255,20,147,.6); transition:.3s; font-family:'Lora',serif; position:relative; }
     button:hover { transform:scale(1.05); box-shadow:0 0 30px rgba(255,105,180,.9); }
     button:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    .intensity-btn.active { border: 2px solid var(--gold); background: linear-gradient(145deg, #ff1493, #ff69b4); box-shadow: 0 0 15px var(--gold); transform: scale(1.05); }
     .small-btn { font-size: 0.9em; padding: 8px 16px; background: #444; box-shadow:none; }
 
     /* UTILS */
@@ -53,7 +55,17 @@
     /* LOCKS */
     .locked-input textarea, .locked-style { opacity:0.5; filter:grayscale(0.8); cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='fill:gold'><text y='20' font-size='20'>💸</text></svg>"), pointer !important; pointer-events:none; }
     .locked-input::after, .locked-style::after { content:""; position:absolute; top:10px; right:10px; width:24px; height:24px; background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; opacity:0.9; pointer-events:none; }
-    .locked-input::after { top: 42px; right: 15px; } /* Adjust for textarea label */
+    .locked-input::after { top: 42px; right: 15px; } 
+
+    /* STYLE CARDS */
+    .style-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:15px 0; }
+    .card { background:#252525; border-radius:12px; padding:15px; cursor:pointer; text-align:left; border:2px solid transparent; position:relative; transition:.2s; }
+    .card:hover { transform:translateY(-3px); border-color:#ff6b6b; }
+    .card.selected { border-color:#ff69b4; background:#333; box-shadow:0 0 15px rgba(255,105,180,0.3); }
+    .card h3 { margin:0 0 5px; color:#ff6b6b; font-size:1.1em; font-family:'lust-script-display',serif; }
+    .card p { font-size:0.9em; opacity:0.9; margin:0; font-family:'Lora',serif; }
+    .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:5; position:relative; pointer-events: auto !important; cursor: pointer !important;}
+    .preview-btn:hover { background:rgba(255,255,255,0.2); }
 
     /* FATE CARDS */
     .fate-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:20px auto; max-width:500px; perspective:1000px; }
@@ -86,12 +98,13 @@
     .viz-controls { display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap; }
     #vizPreviewImg { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 400px; object-fit: contain; background:#000; }
 
-    /* STYLE CARDS */
-    .style-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:15px 0; }
-    .card { background:#252525; border-radius:12px; padding:15px; cursor:pointer; text-align:left; border:2px solid transparent; position:relative; transition:.2s; }
-    .card:hover { transform:translateY(-3px); border-color:#ff6b6b; }
-    .card.selected { border-color:#ff69b4; background:#333; box-shadow:0 0 15px rgba(255,105,180,0.3); }
-    .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:5; position:relative; }
+    /* STORY TEXT */
+    .story-section { margin-bottom: 20px; animation: fadeIn 1s ease; }
+    .story-image { width:100%; border-radius:12px; margin:15px 0; border:1px solid var(--pink); box-shadow:0 0 20px rgba(255,20,147,0.3); }
+    .separator { text-align:center; font-size:1.5em; color:var(--gold); margin:30px 0; opacity:0.8; }
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+    @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
   </style>
 </head>
 
@@ -134,7 +147,42 @@
         </select>
         <button class="small-btn" onclick="visualize(true)">Re-Visualize</button>
         <button onclick="insertImage()">Insert</button>
-        <button class="small-btn" style="background:#555" onclick="document.getElementById('vizModal').classList.add('hidden')">Cancel</button>
+        <button class="small-btn" style="background:#555" onclick="closeViz()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="ageGate" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+  <h2>Storybound</h2>
+  <p style="font-size:1.2em; max-width:500px; margin:20px;">Explicit adult themes. 18+ Only.</p>
+  <button id="ageYes">I am 18+</button>
+  <button onclick="location.href='https://google.com'" style="background:#333">Exit</button>
+</div>
+
+<div id="tosGate" class="hidden" style="position:fixed; inset:0; background:#000; z-index:9998; flex-direction:column; align-items:center; justify-content:center; display:flex;">
+  <h2>Terms of Service</h2>
+  <div class="box" style="text-align:left; height:60vh; overflow-y:auto; font-size:0.85em; line-height:1.5;">
+    <p><strong>TERMS OF SERVICE</strong></p>
+    <p>1. <strong>Age Requirement:</strong> You must be 18+.</p>
+    <p>2. <strong>Content:</strong> Adult fantasy roleplay only. No non-consensual content, violence, or minors.</p>
+    <p>3. <strong>Liability:</strong> Use at your own risk. Storybound is entertainment.</p>
+    <p><em>(Full text abbreviated for display, but legally binding).</em></p>
+  </div>
+  <label><input type="checkbox" id="tosCheck"> I agree to the Terms</label>
+  <br>
+  <button id="tosBtn" disabled>Enter Storybound</button>
+</div>
+
+<div id="tierGate" class="hidden" style="position:fixed; inset:0; background:#000; z-index:9997; flex-direction:column; align-items:center; justify-content:center; display:flex;">
+  <h2>Choose Your Path</h2>
+  <div class="choice-buttons">
+    <div style="text-align:center">
+      <button class="choice" id="btnTease">Tease</button>
+      <p style="opacity:0.7">Free. Limited Styles.</p>
+    </div>
+    <div style="text-align:center">
+      <button class="choice" id="btnIndulge">Indulge</button>
+      <p style="opacity:0.7">Premium. Unlocked.</p>
     </div>
   </div>
 </div>
@@ -142,25 +190,30 @@
 <div id="payModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:10000; align-items:center; justify-content:center; display:flex;">
   <div class="box" style="text-align:center">
     <h3>Unshackle Your Fate</h3>
-    <p style="margin-bottom:20px; font-style:italic; color:#ffd700">"Why stop when it's just getting good?"</p>
-    <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
+    <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
         <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:200px;">
             <h4>Unlock This Story</h4>
-            <p>Inputs, saves, and styles for <strong>this session</strong>.</p>
+            <p>Inputs & features for this session.</p>
             <button id="payOneTime" style="width:100%">Unlock ($1)</button>
         </div>
         <div id="optSub" style="background:#400020; padding:15px; border-radius:10px; border:1px solid gold; width:200px;">
             <h4>Indulge Forever</h4>
-            <p>Unlimited access to all styles.</p>
+            <p>Unlimited access.</p>
             <button id="paySub" style="width:100%">Subscribe ($6/mo)</button>
         </div>
     </div>
-    <br>
     <button onclick="document.getElementById('payModal').classList.add('hidden')" style="background:#444">Cancel</button>
   </div>
 </div>
 
-<div id="app">
+<div id="previewModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:5000; align-items:center; justify-content:center; display:flex;">
+  <div class="box">
+    <p id="previewText" style="font-size:1.3em; font-style:italic; line-height:1.6"></p>
+    <button onclick="document.getElementById('previewModal').classList.add('hidden')">Close</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
 
   <div id="modeSelect">
     <h1 style="margin-top:40px">Storybound</h1>
@@ -178,29 +231,34 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:95%; margin:0 auto;">
         <div>
             <label>Your Gender</label>
-            <select id="playerGender">
+            <select id="playerGender" onchange="checkCustom('playerGender', 'customPlayerGender')">
                 <option value="Female">Female</option>
                 <option value="Male">Male</option>
                 <option value="Non-Binary">Non-Binary</option>
+                <option value="Custom">Custom</option>
             </select>
+            <input id="customPlayerGender" type="text" placeholder="Enter gender..." class="hidden" style="margin-top:5px;">
         </div>
         <div>
             <label>Love Interest</label>
-            <select id="loveInterestGender">
+            <select id="loveInterestGender" onchange="checkCustom('loveInterestGender', 'customLoveInterest')">
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Non-Binary">Non-Binary</option>
+                <option value="Custom">Custom</option>
             </select>
+            <input id="customLoveInterest" type="text" placeholder="Enter gender..." class="hidden" style="margin-top:5px;">
         </div>
     </div>
 
     <div class="section-title">Intensity</div>
     <div id="intensityBtns">
-      <button data-val="Clean" class="intensity-btn">Clean</button>
-      <button data-val="Naughty" class="intensity-btn active">Naughty</button>
-      <button data-val="Erotic" class="intensity-btn">Erotic</button>
-      <button data-val="Dirty" class="intensity-btn">Dirty</button>
+      <button data-val="Clean" data-desc="Flirt, chemistry, and longing." class="intensity-btn">Clean</button>
+      <button data-val="Naughty" data-desc="Direct teasing with tasteful sensuality." class="intensity-btn active">Naughty</button>
+      <button data-val="Erotic" data-desc="Explicit intimacy and detail." class="intensity-btn">Erotic</button>
+      <button data-val="Dirty" data-desc="Very explicit language and bold scenes." class="intensity-btn">Dirty</button>
     </div>
+    <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px;">(Naughty) chosen. Direct teasing with tasteful sensuality.</p>
 
     <div class="section-title">Genres <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="genreGrid">
@@ -210,30 +268,58 @@
       <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal</h3><p>Vampires/Shifters.</p></div>
       <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray.</p></div>
       <div class="card" data-grp="genre" data-val="Suspense"><h3>Suspense</h3><p>Danger & mystery.</p></div>
+      <div class="card" data-grp="genre" data-val="Sports"><h3>Sports</h3><p>Competitive tension.</p></div>
+      <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime</h3><p>Forbidden love.</p></div>
     </div>
     
+    <button class="small-btn" onclick="toggle('moreGenres')">More Genres</button>
+    <div id="moreGenres" class="style-cards hidden">
+       <div class="card" data-grp="genre" data-val="Billionaire"><h3>Billionaire</h3><p>Wealth and power.</p></div>
+       <div class="card" data-grp="genre" data-val="Gothic"><h3>Gothic</h3><p>Moody and haunted.</p></div>
+       <div class="card" data-grp="genre" data-val="LGBTQ"><h3>LGBTQ+</h3><p>Inclusive stories.</p></div>
+       <div class="card" data-grp="genre" data-val="SecondChance"><h3>Second Chance</h3><p>Ex-lovers reunited.</p></div>
+       <div class="card" data-grp="genre" data-val="SmallTown"><h3>Small Town</h3><p>Cozy vibes.</p></div>
+       <div class="card" data-grp="genre" data-val="Romcom"><h3>RomCom</h3><p>Banter and light chaos.</p></div>
+    </div>
+
     <div class="section-title">Dynamics <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="dynamicGrid">
       <div class="card" data-grp="dynamic" data-val="Enemies"><h3>Enemies to Lovers</h3><p>Rivals to heat.</p></div>
       <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Taboo desires.</p></div>
       <div class="card" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Status gaps.</p></div>
       <div class="card" data-grp="dynamic" data-val="SlowBurn"><h3>Slow Burn</h3><p>High restraint.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends to Lovers</h3><p>Safety to heat.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Close quarters.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Secret"><h3>Secret Identity</h3><p>Truths revealed.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive</h3><p>Dark devotion.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated Mates</h3><p>Destined bond.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker</h3><p>Vulnerability.</p></div>
     </div>
 
     <div class="section-title">Story Style <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="styleGrid">
-      <div class="card selected" data-grp="style" data-val="Breathless">
-         <h3>Breathless</h3><p>Fast tension.</p><button class="preview-btn" data-txt="His attention was a slow hand...">Preview</button>
-      </div>
-      <div class="card" data-grp="style" data-val="Epic" data-locked="true">
-         <h3>Epic</h3><p>Grand stakes.</p><button class="preview-btn" data-txt="The city burned like a crown...">Preview</button>
-      </div>
-      <div class="card" data-grp="style" data-val="Playful" data-locked="true">
-         <h3>Playful</h3><p>Flirty banter.</p><button class="preview-btn" data-txt="You're staring. I'm appreciating.">Preview</button>
-      </div>
-      <div class="card" data-grp="style" data-val="Dark" data-locked="true">
-         <h3>Dark</h3><p>Moody tension.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button>
-      </div>
+      <div class="card selected" data-grp="style" data-val="Breathless"><h3>Breathless</h3><p>Fast tension.</p><button class="preview-btn" data-txt="His attention was a slow hand...">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Epic" data-locked="true"><h3>Epic</h3><p>Grand stakes.</p><button class="preview-btn" data-txt="The city burned like a crown...">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Playful" data-locked="true"><h3>Playful</h3><p>Flirty banter.</p><button class="preview-btn" data-txt="You're staring. I'm appreciating.">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Dark" data-locked="true"><h3>Dark</h3><p>Moody tension.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Raw" data-locked="true"><h3>Raw</h3><p>Direct emotion.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button></div>
+      <div class="card" data-grp="style" data-val="Regency" data-locked="true"><h3>Regency</h3><p>Polite knives.</p><button class="preview-btn" data-txt="Your reputation is in danger.">Preview</button></div>
+    </div>
+    
+    <button class="small-btn" onclick="toggle('moreStyles')">More Styles</button>
+    <div id="moreStyles" class="style-cards hidden">
+       <div class="card" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry</h3><p>Dry wit.</p></div>
+       <div class="card" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic</h3><p>Calculated.</p></div>
+       <div class="card" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal</h3><p>Dreamlike.</p></div>
+       <div class="card" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal</h3><p>Razor sharp.</p></div>
+       <div class="card" data-grp="style" data-val="Satirical" data-locked="true"><h3>Satirical</h3><p>Witty fun.</p></div>
+       <div class="card" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Poetic.</p></div>
+       <div class="card" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Futuristic.</p></div>
+    </div>
+
+    <div class="section-title">Story Controls</div>
+    <div id="storyControlsBox" class="input-wrapper locked-input" onclick="showPaywall('unlock')">
+       <textarea id="storyControls" rows="3" placeholder="E.g. No vampires, more dialogue..." disabled></textarea>
     </div>
 
     <br>
@@ -252,8 +338,7 @@
 
     <div class="section-title" style="font-size:1.8em; margin-top:0;">Guide Your Fate</div>
     
-    <div id="cardMount" class="fate-grid">
-      </div>
+    <div id="cardMount" class="fate-grid"></div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
       <div class="input-wrapper locked-input" id="actionWrapper" onclick="showPaywall('unlock')">
@@ -286,32 +371,31 @@
 
 </div>
 
-<div id="previewModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:5000; align-items:center; justify-content:center; display:flex;">
-  <div class="box">
-    <p id="previewText" style="font-size:1.3em; font-style:italic; line-height:1.6"></p>
-    <button onclick="document.getElementById('previewModal').classList.add('hidden')">Close</button>
-  </div>
-</div>
-
 <script>
 (function(){
   // --- CONFIG ---
   var PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
   var IMAGE_PROXY_URL = 'https://storybound-proxy.vercel.app/api/image';
-  const STORY_MODEL = 'grok-4-1-fast-reasoning'; // or grok-beta
+  const STORY_MODEL = 'grok-4-1-fast-reasoning'; 
 
   var state = { tier:'free', picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] }, gender:'Female', loveInterest:'Male', intensity:'Naughty' };
   var tempImgUrl = null;
 
   // --- HELPERS ---
   function $(id){ return document.getElementById(id); }
-  function hideAll(){ ['modeSelect','setup','game'].forEach(x => $(x).classList.add('hidden')); }
-  
+  function toggle(id){ $(id).classList.toggle('hidden'); }
+  function hideAll(){ ['modeSelect','setup','game'].forEach(x => $(x)?.classList.add('hidden')); }
+  function checkCustom(selectId, inputId){
+      if($(selectId).value === 'Custom') $(inputId).classList.remove('hidden');
+      else $(inputId).classList.add('hidden');
+  }
+  window.checkCustom = checkCustom; // Expose for HTML
+
   // --- COLORS FOR DIALOGUE ---
   function getGenderColor(g){
       if(g === 'Male') return '#B0E0E6'; // Powder Blue
       if(g === 'Female') return '#FFB6C1'; // Powder Pink
-      return '#77DD77'; // Pastel Green (Other)
+      return '#77DD77'; // Pastel Green
   }
 
   // --- API CALL ---
@@ -358,7 +442,7 @@
           btn.onclick = () => {
               btn.classList.toggle('flipped');
               if(btn.classList.contains('flipped')){
-                  $('actionInput').value = "I take a calculated risk."; // Mock fill
+                  $('actionInput').value = "I take a calculated risk."; 
               }
           };
           m.appendChild(btn);
@@ -370,41 +454,40 @@
       let p1Color = getGenderColor(state.gender);
       let p2Color = getGenderColor(state.loveInterest);
       
-      // Set CSS Vars
       document.documentElement.style.setProperty('--p1-color', p1Color);
       document.documentElement.style.setProperty('--p2-color', p2Color);
 
-      // Detect Dialogue
       let html = text.replace(/\n/g, '<br><br>');
       
-      // Heuristic: If "I" say it -> P1. If "He/She" says it -> P2.
-      // This is rudimentary but works for visual demo.
+      // Dialogue formatting
       html = html.replace(/"([^"]+)"/g, (match, content) => {
-          // Check context (simple check)
           let isP1 = state.pov === 'First' || content.toLowerCase().includes(" i ");
           let cls = isP1 ? 'p1' : 'p2';
           return `<span class="dialogue ${cls}">"${content}"</span>`;
       });
       
-      // Remove AI artifacts like "Player Action:"
       html = html.replace(/Player Action:|What do you do\?/gi, "");
-      
       return html;
   }
 
-  // --- MAIN ACTIONS ---
+  // --- NAVIGATION ---
+  $('ageYes').onclick = function(){ $('ageGate').classList.add('hidden'); $('tosGate').classList.remove('hidden'); };
+  $('tosCheck').onchange = function(e){ $('tosBtn').disabled = !e.target.checked; };
+  $('tosBtn').onclick = function(){ $('tosGate').classList.add('hidden'); $('tierGate').classList.remove('hidden'); };
+  
+  $('btnTease').onclick = function(){ state.tier='free'; $('tierGate').classList.add('hidden'); $('app').classList.remove('hidden'); };
+  $('btnIndulge').onclick = function(){ window.showPaywall('sub'); };
+
   window.setMode = function(m){
-      if(m === 'solo') { hideAll(); $('setup').classList.remove('hidden'); }
-      // ... couple/stranger logic omitted for brevity in this paste
+      if(m === 'solo') { $('modeSelect').classList.add('hidden'); $('setup').classList.remove('hidden'); }
   };
 
-  window.setTheme = function(t){
-      document.body.className = 'theme-' + t;
-  };
+  window.setTheme = function(t){ document.body.className = 'theme-' + t; };
 
+  // --- BEGIN STORY ---
   $('beginBtn').onclick = async function(){
-      state.gender = $('playerGender').value;
-      state.loveInterest = $('loveInterestGender').value;
+      state.gender = $('playerGender').value === 'Custom' ? $('customPlayerGender').value : $('playerGender').value;
+      state.loveInterest = $('loveInterestGender').value === 'Custom' ? $('customLoveInterest').value : $('loveInterestGender').value;
       
       startLoading();
       hideAll();
@@ -424,12 +507,10 @@
           
           let title="Storybound", syn="A tale of desire...", body=raw;
           const lines = raw.split('\n');
-          // Basic Parse
           lines.forEach(l => {
               if(l.startsWith("Title:")) title = l.replace("Title:","").trim();
               else if(l.startsWith("Synopsis:")) syn = l.replace("Synopsis:","").trim();
           });
-          // Remove metadata from body
           body = body.replace(/Title:.*\n/,'').replace(/Synopsis:.*\n/,'');
 
           $('storyTitle').textContent = title;
@@ -441,12 +522,10 @@
       stopLoading();
   };
 
+  // --- SUBMIT TURN ---
   $('submitBtn').onclick = async function(){
       startLoading();
-      
-      // 1. Fleur de Lis
       $('storyText').innerHTML += `<div class="separator">⚜</div>`;
-      
       const act = $('actionInput').value;
       $('actionInput').value = ''; 
       
@@ -455,32 +534,25 @@
           const raw = await callChat([{role:'system', content:sys}, {role:'user', content: "Next scene."}]);
           $('storyText').innerHTML += formatStory(raw);
           $('storyText').lastElementChild.scrollIntoView({behavior:'smooth'});
-      } catch(e){
-          console.log(e);
-      }
+      } catch(e){ console.log(e); }
       
-      // Flip cards back?
       document.querySelectorAll('.fate-card').forEach(c => c.classList.remove('flipped'));
       stopLoading();
   };
 
+  // --- VISUALIZE ---
   window.visualize = async function(isRe){
       startLoading();
-      // Generate prompt from last paragraph
       const lastText = $('storyText').textContent.slice(-500);
-      
       try {
-          // 1. Get Prompt
           const promptMsg = await callChat([{role:'user', content:`Describe this scene for an image generator (no nudity, cinematic): ${lastText}`}]);
-          
-          // 2. Call Image API
           const res = await fetch(IMAGE_PROXY_URL, {
               method:'POST',
               headers:{'Content-Type':'application/json'},
               body: JSON.stringify({ prompt: promptMsg })
           });
           const data = await res.json();
-          tempImgUrl = data.url || 'https://via.placeholder.com/600x400?text=Mock+Image';
+          tempImgUrl = data.url || 'https://via.placeholder.com/600x400?text=Mock+Image+Fallback';
           
           $('vizPreviewImg').src = tempImgUrl;
           $('vizModal').classList.remove('hidden');
@@ -496,6 +568,7 @@
           $('vizModal').classList.add('hidden');
       }
   };
+  window.closeViz = function(){ $('vizModal').classList.add('hidden'); };
 
   // --- SELECTION LOGIC ---
   document.addEventListener('click', e => {
@@ -507,11 +580,9 @@
           $('previewModal').classList.remove('hidden');
           return;
       }
-      // Toggle logic...
       const grp = card.getAttribute('data-grp');
       const val = card.getAttribute('data-val');
       
-      // Multi-select logic for Genre/Dynamic/Style
       if(['genre','dynamic','style'].includes(grp)){
           if(!state.picks[grp]) state.picks[grp] = [];
           if(state.picks[grp].includes(val)){
@@ -523,24 +594,24 @@
               card.classList.add('selected');
           }
       } else {
-          // Single select (POV)
           document.querySelectorAll(`[data-grp="${grp}"]`).forEach(c=>c.classList.remove('selected'));
           card.classList.add('selected');
           state.picks[grp] = val;
       }
   });
 
-  // --- INIT ---
-  // Apply locks, wire up Intensity buttons...
+  // --- INTENSITY LOGIC ---
   document.querySelectorAll('.intensity-btn').forEach(b => {
       b.onclick = function(){
           document.querySelectorAll('.intensity-btn').forEach(x => x.classList.remove('active'));
           b.classList.add('active');
           state.intensity = b.getAttribute('data-val');
+          if($('intensityDesc')) $('intensityDesc').innerText = `(${state.intensity}) selected.`;
       }
   });
 
 })();
 </script>
+<script src="/fatecards/storybound-cards.js"></script>
 </body>
 </html>
