@@ -1708,31 +1708,34 @@ function applyTierLocks(){
     });
 
     // ---------------------------- TIER ----------------------------
-    on('teaseBtn','click', function(){
-      tier = 'free';
-      goToModeChoice();
-    });
+on('teaseBtn','click', function(){
+  tier = 'free';
+  applyTierLocks();      // ✅ ADD THIS LINE
+  goToModeChoice();
+});
 
-    on('indulgeBtn','click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      $('signupModal').style.display = 'flex';
-    });
+on('indulgeBtn','click', function(e){
+  e.preventDefault();
+  e.stopPropagation();
+  $('signupModal').style.display = 'flex';
+});
 
-    on('signupCancelBtn','click', function(){
-      $('signupModal').style.display = 'none';
-      show('tierChoice','flex');
-    });
+on('signupCancelBtn','click', function(){
+  $('signupModal').style.display = 'none';
+  show('tierChoice','flex');
+});
 
-    on('signupConfirmBtn','click', function(){
-      if (!$('signupAgeConfirm').checked){
-        alert('Please confirm you are 18+ and agree to the Terms.');
-        return;
-      }
-      tier = 'indulge';
-      $('signupModal').style.display = 'none';
-      goToModeChoice();
-    });
+on('signupConfirmBtn','click', function(){
+  if (!$('signupAgeConfirm').checked){
+    alert('Please confirm you are 18+ and agree to the Terms.');
+    return;
+  }
+  tier = 'indulge';
+  $('signupModal').style.display = 'none';
+  applyTierLocks();      // ✅ ADD THIS LINE
+  goToModeChoice();
+});
+
 
     // ---------------------------- MODE ----------------------------
     on('soloBtn','click', function(){ mode='solo'; goToSetup(); });
