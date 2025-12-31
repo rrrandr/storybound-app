@@ -18,32 +18,14 @@
     
     /* TYPOGRAPHY */
     h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
-    
     .section-title { font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
-    
-    .instruction-text {
-        font-family: 'Lora', serif;
-        font-size: 0.5em;
-        color: var(--ink);
-        opacity: 0.7;
-        vertical-align: middle;
-        margin-left: 12px;
-        letter-spacing: 0;
-        text-shadow: none;
-    }
+    .instruction-text { font-family: 'Lora', serif; font-size: 0.5em; color: var(--ink); opacity: 0.7; vertical-align: middle; margin-left: 12px; letter-spacing: 0; text-shadow: none; }
     
     /* BUTTONS */
     button { background:linear-gradient(145deg,#8b008b,var(--hot)); color:var(--gold); padding:10px 30px; border:none; border-radius:25px; font-size:1em; cursor:pointer; box-shadow:0 0 18px rgba(255,20,147,.6); transition:.3s; font-family:'Lora',serif; position:relative; }
     button:hover { transform:scale(1.05); box-shadow:0 0 30px rgba(255,105,180,.9); }
     button:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
-    
-    .intensity-btn.active {
-        border: 2px solid var(--gold);
-        background: linear-gradient(145deg, #ff1493, #ff69b4);
-        box-shadow: 0 0 15px var(--gold);
-        transform: scale(1.05);
-    }
-    
+    .intensity-btn.active { border: 2px solid var(--gold); background: linear-gradient(145deg, #ff1493, #ff69b4); box-shadow: 0 0 15px var(--gold); transform: scale(1.05); }
     .small-btn { font-size: 0.9em; padding: 8px 16px; background: #444; box-shadow:none; }
 
     /* UTILS */
@@ -58,26 +40,8 @@
     textarea, input, select { width:100%; padding:12px; background:rgba(30,0,50,.9); color:var(--ink); border:1px solid var(--pink); border-radius:8px; font-size:1em; font-family:'Lora',serif; box-sizing:border-box; }
     
     /* HANDCUFF LOCK STYLE */
-    .locked-input textarea, 
-    .locked-style { 
-        opacity:0.5; 
-        filter:grayscale(0.8); 
-        cursor:url("/cursor-dollar-plane-64.png"), pointer !important; 
-        pointer-events:none; 
-    }
-    
-    .locked-input::after,
-    .locked-style::after { 
-        content:""; 
-        position:absolute; 
-        top:10px; right:10px; 
-        width:24px; height:24px; 
-        background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; 
-        opacity:0.9; 
-        pointer-events:none;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-    }
-    
+    .locked-input textarea, .locked-style { opacity:0.5; filter:grayscale(0.8); cursor:url("/cursor-dollar-plane-64.png"), pointer !important; pointer-events:none; }
+    .locked-input::after, .locked-style::after { content:""; position:absolute; top:10px; right:10px; width:24px; height:24px; background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; opacity:0.9; pointer-events:none; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
     .locked-input::after { top: 42px; right: 15px; }
     
     /* STYLE CARDS */
@@ -94,19 +58,14 @@
     /* FATE CARDS (50% Smaller) */
     .fate-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:20px auto; max-width:500px; perspective:1000px; }
     .fate-card { width:100%; aspect-ratio:2/3; position:relative; cursor:pointer; background:none; border:none; padding:0; transform-style:preserve-3d; transition:transform 0.6s, opacity 0.5s; }
-    
     .fate-card .inner { position:absolute; inset:0; border-radius:8px; transform-style:preserve-3d; transition:transform 0.8s; box-shadow:0 5px 15px rgba(0,0,0,0.5); }
     .fate-card.flipped .inner { transform:rotateY(180deg); }
-    
     .fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); }
     .fate-card .front { background:#111; z-index:2; } 
     .fate-card .front h3 { font-size:0.9em; margin:0; }
     .fate-card .back { background:#2a0033; transform:rotateY(180deg); z-index:1; }
     .fate-card .back div { font-size:20px; } 
-
     .fate-card.selected .inner { box-shadow:0 0 0 2px #ff69b4, 0 0 15px #ff69b4; }
-    
-    /* Animations */
     .fate-card.poof { animation: smokePoof 0.6s forwards; }
     @keyframes smokePoof { 0%{ opacity:1; transform:scale(1); } 50%{ opacity:0.5; filter:blur(5px); transform:scale(1.1); } 100%{ opacity:0; transform:scale(0.5); } }
     
@@ -122,10 +81,7 @@
     #loadingOverlayBar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; overflow: hidden; margin-top: 8px; }
     #loadingOverlayFill { width: 0%; height: 100%; background: var(--pink); transition: width 0.25s; }
 
-    /* RESPONSIVE */
     @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
-
-    /* BURGER */
     #burgerBtn { position:fixed; top:15px; right:15px; z-index:5000; font-size:1.5em; background:rgba(0,0,0,0.5); border:1px solid #ff69b4; width:40px; height:40px; padding:0; display:none; }
   </style>
 </head>
@@ -443,14 +399,35 @@ function toggle(id){
   function $(id){ return document.getElementById(id); }
   function hideAll(){ ['ageGate','tosGate','tierGate','app','modeSelect','coupleInvite','coupleJoin','setup','game'].forEach(function(x){ if($(x)) $(x).classList.add('hidden'); }); }
   
-  // PROXY URLs
+  // PROXY URLs - Using your deployed endpoints
   var PROXY_URL = 'https://storybound-app.vercel.app/api/proxy';
   var IMAGE_PROXY_URL = 'https://storybound-app.vercel.app/api/image';
   const STORY_MODEL = 'grok-4-1-fast-reasoning';
 
   var state = { tier:'free', picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] } };
 
-  // --- API CALL HELPERS (GRAFTED FROM REF) ---
+  // --- PROMPT BUILDER (RESTORED FROM REF) ---
+  function buildSystemPrompt(isOpening){
+      const genres = state.picks.genre.join(', ');
+      const dynamics = state.picks.dynamic.join(', ');
+      const styles = state.picks.style.join(', ');
+      const pov = state.picks.pov;
+      
+      return `You are a master storyteller for adult romance and romantasy.
+      Genre: ${genres}.
+      Dynamics: ${dynamics}.
+      Writing Style: ${styles}.
+      POV: ${pov}.
+      
+      Rules:
+      1. Write in a sophisticated, gripping, and emotionally resonant tone.
+      2. If "Breathless" is chosen, use short sentences and high tension.
+      3. If "Gothic" is chosen, focus on atmosphere and sensory details.
+      4. Adult content is allowed but should fit the user's selected intensity level.
+      ${isOpening ? '5. Output format:\nTitle: <title>\nSynopsis: <synopsis>\n<story body>' : ''}`;
+  }
+
+  // --- API CALL HELPERS ---
   async function callChat(messages){
     const body = { model: STORY_MODEL, messages };
     const res = await fetch(PROXY_URL, {
@@ -537,7 +514,6 @@ function toggle(id){
      var paragraphs = document.querySelectorAll('#storyText p');
      var lastText = paragraphs.length > 0 ? paragraphs[paragraphs.length - 1].textContent : "Cinematic romantic fantasy illustration";
      
-     // Construct Image Prompt on Client
      const sys = `Write ONE image-generation prompt (<=90 words). Goal: beautiful characters, high-end cinematic fashion/beauty, elegant lighting. No explicit nudity. Return only the prompt.`;
      const user = `Create a visualization prompt for this scene:\n${lastText.substring(0, 1500)}`;
 
@@ -545,7 +521,6 @@ function toggle(id){
          const promptText = await callChat([{ role:'system', content: sys }, { role:'user', content: user }]);
          const prompt = promptText.trim();
 
-         // Call Image API
          const body = { model: 'grok-2-image-1212', prompt, n: 1, response_format: "url" };
          const res = await fetch(IMAGE_PROXY_URL, {
              method: 'POST',
@@ -627,7 +602,6 @@ function toggle(id){
     var el = e.target.closest('.card');
     if(!el) return;
     
-    // Check Preview Button FIRST
     if(e.target.classList.contains('preview-btn')){
       e.stopPropagation(); e.preventDefault();
       $('previewText').textContent = e.target.getAttribute('data-txt');
@@ -639,7 +613,6 @@ function toggle(id){
     var val = el.getAttribute('data-val');
     var locked = el.getAttribute('data-locked');
 
-    // Locked Style Logic (Card Body Click)
     if(state.tier === 'free' && locked === 'true'){
       window.showPaywall('unlock'); 
       return;
@@ -708,7 +681,7 @@ function toggle(id){
 
   // --- LOADING UTILS ---
   const loadingSets = {
-    story: ['Stoking the embers...', 'Sharpening the tension...', 'Setting the hook in the dark...'],
+    story: ['Stoking the embers...', 'Consulting your desires...', 'Sharpening the tension...', 'Setting the hook in the dark...'],
     visualize: ['Painting the moment...', 'Stealing a frame from the page...', 'Fixing the lighting...']
   };
 
@@ -746,18 +719,7 @@ function toggle(id){
     $('game').classList.remove('hidden');
     window.scrollTo(0,0);
 
-    // Build System Prompt Client-Side
-    var styleStr = Array.isArray(state.picks.style) ? state.picks.style.join(', ') : state.picks.style;
-    const systemPrompt = `You are a master storyteller. 
-    Genre: ${state.picks.genre}
-    Dynamics: ${state.picks.dynamic}
-    Style: ${styleStr}
-    POV: ${state.picks.pov}
-    Output format: 
-    Title: <title>
-    Synopsis: <synopsis>
-    <story body>`;
-    
+    const systemPrompt = buildSystemPrompt(true);
     const userPrompt = "Begin the story.";
 
     try {
@@ -772,7 +734,6 @@ function toggle(id){
         let synopsis = "A breathless encounter...";
         let body = "";
         
-        // Heuristic parsing
         lines.forEach(line => {
             if(line.startsWith("Title:")) title = line.replace("Title:", "").trim();
             else if(line.startsWith("Synopsis:")) synopsis = line.replace("Synopsis:", "").trim();
@@ -816,10 +777,11 @@ function toggle(id){
     $('storyText').appendChild(newSection);
     newSection.scrollIntoView({behavior:'smooth'});
 
-    // Construct Messages for Turn
+    // Client-side prompt construction
+    const systemPrompt = buildSystemPrompt(false);
     const history = $('storyText').textContent.slice(-2000);
     const msgs = [
-        { role: 'system', content: "Continue the story based on the player's action." },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: `Story so far: ${history}\n\nPlayer Action: ${actionVal}\nPlayer Dialogue: ${dialogueVal}` }
     ];
 
