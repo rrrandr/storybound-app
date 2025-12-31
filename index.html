@@ -57,9 +57,29 @@
     .input-wrapper label { display:block; text-align:left; color:var(--gold); margin-bottom:5px; font-size:0.9em; font-family:'Lora',serif; }
     textarea, input, select { width:100%; padding:12px; background:rgba(30,0,50,.9); color:var(--ink); border:1px solid var(--pink); border-radius:8px; font-size:1em; font-family:'Lora',serif; box-sizing:border-box; }
     
-    .locked-input textarea { opacity:0.6; pointer-events:none; filter:grayscale(0.5); }
-    .locked-input::after { content: "🔒"; position: absolute; top: 38px; right: 10px; font-size: 1.2em; opacity: 0.8; pointer-events: none; }
-    .locked-input { cursor: url("/cursor-dollar-plane-64.png"), pointer !important; }
+    /* HANDCUFF LOCK STYLE */
+    .locked-input textarea, 
+    .locked-style { 
+        opacity:0.5; 
+        filter:grayscale(0.8); 
+        cursor:url("/cursor-dollar-plane-64.png"), pointer !important; 
+        pointer-events:none; /* Clicks go to wrapper/parent */
+    }
+    
+    .locked-input::after,
+    .locked-style::after { 
+        content:""; 
+        position:absolute; 
+        top:10px; right:10px; 
+        width:24px; height:24px; 
+        background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; 
+        opacity:0.9; 
+        pointer-events:none;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+    
+    /* Specific positioning for input wrapper lock */
+    .locked-input::after { top: 42px; right: 15px; }
     
     /* STYLE CARDS */
     .style-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:15px 0; }
@@ -71,11 +91,8 @@
     
     .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:5; position:relative; }
     .preview-btn:hover { background:rgba(255,255,255,0.2); }
-
-    .locked-style { opacity:0.5; filter:grayscale(0.8); cursor:url("/cursor-dollar-plane-64.png"), pointer !important; }
-    .locked-style::after { content:""; position:absolute; top:10px; right:10px; width:20px; height:20px; background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; opacity:0.8; }
     
-    /* FATE CARDS */
+    /* FATE CARDS (50% Smaller) */
     .fate-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:20px auto; max-width:500px; perspective:1000px; }
     .fate-card { width:100%; aspect-ratio:2/3; position:relative; cursor:pointer; background:none; border:none; padding:0; transform-style:preserve-3d; transition:transform 0.6s, opacity 0.5s; }
     
@@ -438,7 +455,11 @@ function toggle(id){
       $('storyText').innerHTML = ''; // Clear text
   };
   
-  window.changeTier = function(){ $('menuOverlay').classList.add('hidden'); setTier(state.tier === 'free' ? 'indulge' : 'free'); };
+  window.changeTier = function(){ 
+      $('menuOverlay').classList.add('hidden'); 
+      hideAll();
+      $('tierGate').classList.remove('hidden');
+  };
   
   window.showStranger = function(){
     var count = parseInt(localStorage.getItem('sb_stranger_clicks') || '0') + 1;
@@ -503,6 +524,7 @@ function toggle(id){
 
      fetch(API_IMAGE, { 
          method: 'POST',
+         mode: 'cors', // Enable CORS for remote backend
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify(payload)
      })
@@ -513,7 +535,7 @@ function toggle(id){
      .then(data => { 
          $('loadingOverlay').classList.add('hidden');
          var img = document.createElement('img');
-         img.src = data.url || 'https://picsum.photos/600/400?grayscale&blur=2';
+         img.src = data.url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop';
          img.className = 'story-image';
          img.alt = "Generated Scene";
          $('storyText').appendChild(img);
@@ -521,15 +543,14 @@ function toggle(id){
      })
      .catch(e => { 
          console.error("[Storybound Debug] Visualize Failed:", e);
-         // Mock Fallback
+         // Fallback - Fantasy Landscape
          setTimeout(function(){ 
             $('loadingOverlay').classList.add('hidden'); 
             var img = document.createElement('img');
-            img.src = 'https://picsum.photos/600/400?grayscale&blur=2';
+            img.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop';
             img.className = 'story-image';
             $('storyText').appendChild(img);
             img.scrollIntoView({behavior:'smooth'});
-            // Alert user only on console/debug
             console.warn("Visualizer used fallback due to connection failure.");
          }, 1000); 
      });
@@ -689,6 +710,7 @@ function toggle(id){
     try {
         var res = await fetch(API_STORY, {
             method: 'POST',
+            mode: 'cors', // Enable CORS
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
@@ -718,7 +740,7 @@ function toggle(id){
         err.style.color = '#ff6b6b';
         err.style.fontSize = '0.8em';
         err.style.marginTop = '20px';
-        err.textContent = "Note: Backend connection failed. Using fallback text.";
+        err.textContent = "Note: Backend connection failed (" + e.message + "). Using fallback text.";
         $('storyText').appendChild(err);
     }
 
@@ -755,6 +777,7 @@ function toggle(id){
     try {
         var res = await fetch(API_STORY, {
              method: 'POST',
+             mode: 'cors',
              headers: {'Content-Type': 'application/json'},
              body: JSON.stringify(payload)
         });
