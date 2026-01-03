@@ -23,7 +23,7 @@
         --story-size: 1.15em;
         --line-height: 1.8; 
         --letter-spacing: 0.02em;
-        --cursor-url: url('https://raw.githubusercontent.com/rrrandr/storybound-app/1347ea65b81435cf03275d95aab21db4b1af8579/cursor-dollar-plane-64.png');
+        --cursor-url: url('https://raw.githubusercontent.com/rrrandr/storybound-app/1347ea65b81435cf03275d95aab21db4b1af8579/cursor-dollar-plane-64.png') 2 2;
     }
     
     /* THEMES */
@@ -100,18 +100,33 @@
         box-shadow: 0 0 10px rgba(255,105,180,0.4);
     }
 
-    /* LOCKS & CURSOR */
-    .locked-input textarea, .locked-style, .card.locked { 
+    /* LOCKS & CURSOR (Consolidated) */
+    /* Add position: relative to all containers that can be locked */
+    .locked-input, .locked-style, .card.locked, .fate-card.locked {
+        position: relative;
+    }
+    .locked-style { display: inline-block; }
+
+    /* The visual lock effect */
+    .locked-input textarea, .locked-style, .card.locked, .fate-card.locked { 
         opacity:0.6; filter:grayscale(0.9); 
         cursor: var(--cursor-url), pointer !important; 
         pointer-events: auto; 
     }
-    /* Handcuff Overlay */
-    .locked-input::after, .locked-style::after, .card.locked::after { 
-        content:""; position:absolute; top:5px; right:5px; width:24px; height:24px; 
+    
+    /* Handcuff Overlay Icon */
+    .locked-input::after, .locked-style::after, .card.locked::after, .fate-card.locked::after { 
+        content:""; 
+        position:absolute; 
+        top:5px; right:5px; 
+        width:24px; height:24px; 
         background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; 
-        opacity:0.8; pointer-events:none; z-index: 10; filter: drop-shadow(0 0 2px black);
+        opacity:0.8; 
+        pointer-events:none; 
+        z-index: 10; 
+        filter: drop-shadow(0 0 2px black);
     }
+    /* Specific adjustment for input wrappers */
     .locked-input::after { top: 40px; right: 10px; } 
 
     /* STYLE CARDS */
@@ -264,7 +279,7 @@
 <div id="strangerModal" class="hidden" style="position:fixed; inset:0; background:#000; z-index:9990; align-items:center; justify-content:center; display:flex;">
   <div class="box">
     <h3>How Daring...</h3>
-    <p>12,408 others are seeking a connection right now.</p>
+    <p><span id="strangerCount">12,408</span> others are seeking a connection right now.</p>
     <p style="font-style:italic; color:var(--gold)">Matching is currently unavailable in this version.</p>
     <button onclick="showScreen('modeSelect')" style="background:#444">Return</button>
   </div>
@@ -642,199 +657,161 @@
           app.classList.add('hidden');
       }
   }
+
   // =========================
-  // FIX PACK: Gates, Menu, Cards, Intensity, Paywall helpers
-  // Paste near top of IIFE (after showScreen)
+  // PATCH: GATES + PAYWALL + MENU + TIER APPLY
   // =========================
 
-  // --- Burger menu open ---
-  (function wireBurger(){
-    const b = $('burgerBtn');
-    const overlay = $('menuOverlay');
-    if (b && overlay) {
-      b.addEventListener('click', () => overlay.classList.remove('hidden'));
-    }
-  })();
+  function applyTierUI(){
+    const paid = (state.tier !== 'free');
 
-  // --- Age -> TOS ---
-  (function wireAgeGate(){
-    const yes = $('ageYes');
-    if (yes) yes.addEventListener('click', () => showScreen('tosGate'));
-  })();
-
-  // --- TOS checkbox enables Enter ---
-  (function wireTos(){
-    const chk = $('tosCheck');
-    const btn = $('tosBtn');
-    if (chk && btn) {
-      const sync = () => { btn.disabled = !chk.checked; };
-      chk.addEventListener('change', sync);
-      sync();
-      btn.addEventListener('click', () => showScreen('tierGate'));
-    }
-  })();
-
-  // --- Tier buttons (Tease/Indulge) ---
-  (function wireTier(){
-    const tease = $('btnTease');
-    const indulge = $('btnIndulge');
-
-    if (tease) tease.addEventListener('click', () => {
-      state.tier = 'free';
-      showScreen('modeSelect');
-      initCards();
+    // Unlock inputs in paid
+    ['actionInput','dialogueInput','storyControls'].forEach(id => {
+      const el = $(id);
+      if(!el) return;
+      el.disabled = !paid ? true : false;
     });
 
-    if (indulge) indulge.addEventListener('click', () => {
-      state.tier = 'paid';
-      showScreen('modeSelect');
-      initCards();
+    // Remove lock styling when paid
+    ['actionWrapper','dialogueWrapper','storyControlsBox'].forEach(id => {
+      const wrap = $(id);
+      if(!wrap) return;
+      if(paid) wrap.classList.remove('locked-input');
+      else wrap.classList.add('locked-input');
     });
-  })();
 
-  // --- Paywall helpers (prevent crashes) ---
-  window.restart = window.restart || function(){ location.reload(); };
-  window.changeTier = window.changeTier || function(){ showScreen('tierGate'); };
+    // Unlock style cards when paid
+    document.querySelectorAll('.card[data-locked="true"]').forEach(card => {
+      if(paid) card.classList.remove('locked');
+      else card.classList.add('locked');
+    });
 
-  window.showPaywall = window.showPaywall || function(mode){
-    const modal = $('payModal');
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    const optUnlock = $('optUnlock');
-    if (optUnlock) {
-      if (mode === 'unlock') optUnlock.classList.remove('hidden');
-      else optUnlock.classList.add('hidden');
+    // Lock/unlock buttons
+    const saveBtn = $('saveBtn');
+    const gameControlsBtn = $('gameControlsBtn');
+    if(saveBtn){
+      if(paid){ saveBtn.classList.remove('locked-style'); saveBtn.onclick = () => alert("Saved (stub)."); }
+      else { saveBtn.classList.add('locked-style'); saveBtn.onclick = () => showPaywall('unlock'); }
     }
+    if(gameControlsBtn){
+      if(paid){ gameControlsBtn.classList.remove('locked-style'); gameControlsBtn.onclick = () => alert("Story Controls (stub)."); }
+      else { gameControlsBtn.classList.add('locked-style'); gameControlsBtn.onclick = () => showPaywall('unlock'); }
+    }
+
+    // Fate cards locking is already handled in initCards() by tier
+    initCards();
+  }
+
+  window.showPaywall = function(mode){
+    // mode can be 'unlock' or 'sub' later — right now just show modal
+    const pm = $('payModal');
+    if(!pm) return;
+    $('optUnlock')?.classList.toggle('hidden', state.tier !== 'free'); // show one-time only if free
+    pm.classList.remove('hidden');
   };
 
-  // --- Card selection logic (single + multi up to 3 + preview modal) ---
-  (function wireCards(){
-    const root = document; // event delegation
+  // Simulated purchase buttons (replace with Stripe later)
+  $('payOneTime')?.addEventListener('click', () => {
+    state.tier = 'paid';
+    $('payModal').classList.add('hidden');
+    applyTierUI();
+  });
+  $('paySub')?.addEventListener('click', () => {
+    state.tier = 'paid';
+    $('payModal').classList.add('hidden');
+    applyTierUI();
+  });
 
-    function getKey(grp){
-      // your state uses genre/dynamic/pov/style
-      if (grp === 'dynamic') return 'dynamic';
-      if (grp === 'genre') return 'genre';
-      if (grp === 'style') return 'style';
-      if (grp === 'pov') return 'pov';
-      return grp;
-    }
+  window.restart = function(){
+    // Reset to setup
+    state.turnCount = 0;
+    $('storyText').innerHTML = '';
+    $('storyTitle').textContent = '';
+    $('storySynopsis').textContent = '';
+    $('settingShotImg').style.display = 'none';
+    $('settingError').classList.add('hidden');
+    showScreen('setup');
+    window.scrollTo(0,0);
+  };
 
-    function isLocked(card){
-      return card.classList.contains('locked') || card.dataset.locked === 'true';
-    }
+  window.changeTier = function(){
+    // Go back to tier picker
+    showScreen('tierGate');
+  };
 
-    function syncCardUI(grp){
-      const key = getKey(grp);
-      const cards = root.querySelectorAll(`.card[data-grp="${grp}"]`);
-      cards.forEach(c => {
-        const val = c.dataset.val;
-        if (grp === 'pov') {
-          c.classList.toggle('selected', state.picks.pov === val);
-        } else {
-          const arr = state.picks[key] || [];
-          c.classList.toggle('selected', Array.isArray(arr) && arr.includes(val));
-        }
-      });
-    }
+  // Burger menu toggle
+  $('burgerBtn')?.addEventListener('click', () => {
+    const mo = $('menuOverlay');
+    if(!mo) return;
+    mo.classList.toggle('hidden');
+  });
 
-    root.addEventListener('click', (e) => {
-      // Preview buttons: open modal, do not toggle selection
-      const prevBtn = e.target.closest('.preview-btn');
-      if (prevBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        const txt = prevBtn.dataset.txt || '';
-        const pm = $('previewModal');
-        const pt = $('previewText');
-        if (pt) pt.textContent = txt;
-        if (pm) pm.classList.remove('hidden');
-        return;
-      }
+  // Age gate -> TOS -> Tier
+  $('ageYes')?.addEventListener('click', () => showScreen('tosGate'));
 
-      // Card clicks
-      const card = e.target.closest('.card');
-      if (!card) return;
+  $('tosCheck')?.addEventListener('change', (e) => {
+    $('tosBtn').disabled = !e.target.checked;
+  });
 
-      const grp = card.dataset.grp;
-      const val = card.dataset.val;
-      if (!grp || !val) return;
+  $('tosBtn')?.addEventListener('click', () => showScreen('tierGate'));
 
-      // Paywall locked styles (and any locked card) in free tier
-      if (isLocked(card) && state.tier === 'free') {
-        window.showPaywall('unlock');
-        return;
-      }
+  // Tier buttons
+  $('btnTease')?.addEventListener('click', () => {
+    state.tier = 'free';
+    applyTierUI();
+    showScreen('modeSelect');
+  });
 
-      const key = getKey(grp);
+  $('btnIndulge')?.addEventListener('click', () => {
+    state.tier = 'paid';
+    applyTierUI();
+    showScreen('modeSelect');
+  });
 
-      if (grp === 'pov') {
-        state.picks.pov = val;
-        syncCardUI('pov');
-        return;
-      }
-
-      // multi-select up to 3: genre/dynamic/style
-      if (!Array.isArray(state.picks[key])) state.picks[key] = [];
-      const arr = state.picks[key];
-      const idx = arr.indexOf(val);
-
-      if (idx >= 0) {
-        arr.splice(idx, 1);
-      } else {
-        if (arr.length >= 3) return; // enforce max 3
-        arr.push(val);
-      }
-
-      syncCardUI(grp);
+  // Game intensity buttons (mini)
+  window.setGameIntensity = function(level){
+    state.intensity = level;
+    document.querySelectorAll('#gameIntensity button').forEach(b => {
+      b.classList.toggle('active', b.textContent.trim() === level);
     });
+  };
 
-    // initial sync for default selected markup
-    ['genre','dynamic','pov','style'].forEach(syncCardUI);
-  })();
+  // Setup intensity buttons
+  document.querySelectorAll('#intensityBtns .intensity-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#intensityBtns .intensity-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.intensity = btn.dataset.val;
+      $('intensityDesc').textContent = `(${btn.dataset.val}) ${btn.dataset.desc}`;
+    });
+  });
 
-  // --- Intensity wiring (setup + in-game) ---
-  (function wireIntensity(){
-    const wrap = $('intensityBtns');
-    const desc = $('intensityDesc');
-
-    function setIntensity(v, d){
-      state.intensity = v;
-      if (wrap) {
-        wrap.querySelectorAll('.intensity-btn').forEach(b => {
-          b.classList.toggle('active', b.dataset.val === v);
-        });
+  // Preview modal buttons
+  document.querySelectorAll('.preview-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      $('previewText').textContent = btn.dataset.txt || '';
+      $('previewModal').classList.remove('hidden');
+    });
+  });
+  
+  // STRANGER COUNT
+  function updateStrangerCount(){
+      const el = document.getElementById('strangerCount');
+      if(!el) return;
+      // session-stable “believable” placeholder
+      let n = localStorage.getItem('sb_stranger_count');
+      if(!n){
+        const base = 9000 + Math.floor(Math.random() * 12000); // 9,000–21,000
+        n = String(base);
+        localStorage.setItem('sb_stranger_count', n);
       }
-      if (desc) {
-        const text = d || (wrap?.querySelector(`.intensity-btn[data-val="${v}"]`)?.dataset.desc) || '';
-        desc.textContent = `(${v}) ${text}`;
-      }
+      el.textContent = Number(n).toLocaleString();
+  }
 
-      // mirror to in-game mini buttons if present
-      const gameWrap = $('gameIntensity');
-      if (gameWrap) {
-        gameWrap.querySelectorAll('button').forEach(b => {
-          const label = (b.getAttribute('onclick') || '').match(/'([^']+)'/)?.[1] || b.textContent.trim();
-          b.classList.toggle('active', label === v);
-        });
-      }
-    }
-
-    if (wrap) {
-      wrap.addEventListener('click', (e) => {
-        const btn = e.target.closest('.intensity-btn');
-        if (!btn) return;
-        setIntensity(btn.dataset.val, btn.dataset.desc);
-      });
-      // ensure Naughty default + desc stays consistent
-      setIntensity(state.intensity || 'Naughty');
-    }
-
-    // Required global for your onclick handlers in gameIntensity
-    window.setGameIntensity = function(v){
-      setIntensity(v);
-    };
-  })();
+  // Start the app at Age Gate
+  showScreen('ageGate');
+  applyTierUI();
 
   window.checkCustom = function(select, inputId){
       const input = document.getElementById(inputId);
@@ -845,7 +822,10 @@
   window.setMode = function(m){
       if(m === 'solo') showScreen('setup');
       if(m === 'couple') showScreen('coupleInvite');
-      if(m === 'stranger') showScreen('strangerModal');
+      if(m === 'stranger'){
+          updateStrangerCount();
+          showScreen('strangerModal');
+      }
   };
 
   window.setTheme = function(t){
@@ -1201,8 +1181,8 @@
               headers:{'Content-Type':'application/json'},
               body: JSON.stringify({ 
                   prompt: prompt + " " + safety,
-                  provider: 'openai',
-                  model: 'dall-e-3', 
+                  provider: 'grok',
+                  model: 'grok-2-image-1212', 
                   size: '1024x1024'
               })
           });
@@ -1224,11 +1204,15 @@
           img.onerror = () => { throw new Error("Load Fail"); };
 
       } catch(e) {
-          $('settingError').innerText = "Apologies: The image could not be generated. Error (" + (e.message || "API") + ")";
-          $('settingError').classList.remove('hidden');
-          const keywords = synopsis.split(' ').filter(w => w.length > 5).slice(0,2).join(',');
-          $('settingShotImg').src = 'https://source.unsplash.com/1600x900/?' + keywords;
-          $('settingShotImg').style.display = 'block';
+          const FALLBACKS = [
+            "https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?q=80&w=1024&auto=format&fit=crop", 
+            "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=1024&auto=format&fit=crop", 
+            "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?q=80&w=1024&auto=format&fit=crop"  
+          ];
+          const img = $('settingShotImg');
+          const pick = FALLBACKS[Math.floor(Math.random() * FALLBACKS.length)];
+          img.src = pick + (pick.includes("?") ? "&" : "?") + "cb=" + Date.now();
+          img.style.display = 'block';
       }
   }
 
@@ -1319,11 +1303,10 @@
 
           const modelSel = $('vizModel').value;
           let provider = 'xai';
-          let modelToSend = 'grok-2-image-1212'; // Default
+          let modelToSend = modelSel;
 
-          if (modelSel.includes('gpt') || modelSel.includes('dall-e')) { provider = 'openai'; modelToSend = 'dall-e-3'; }
-          if (modelSel.includes('gemini')) { provider = 'google'; modelToSend = 'imagen-3'; }
-          if (modelSel.includes('grok')) { provider = 'xai'; modelToSend = 'grok-2-image-1212'; }
+          if (modelSel.includes('gpt') || modelSel.includes('openai')) { provider = 'openai'; modelToSend = 'gpt-image-1'; }
+          if (modelSel.includes('gemini')) { provider = 'gemini'; modelToSend = 'gemini-2.5-flash-image'; }
 
           let safety = "";
           if(state.intensity === 'Dirty' || state.intensity === 'Erotic') safety = "Artistic, suggestive, safe-for-work, no explicit nudity.";
