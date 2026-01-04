@@ -44,7 +44,6 @@
     h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !important; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
     .section-title { font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
     
-    /* Revised instruction text size per requirements */
     .instruction-text { font-family: 'Lora', serif; font-size: 0.5em; color: var(--ink); opacity: 0.7; vertical-align: middle; margin-left: 12px; letter-spacing: 0; text-shadow: none; font-weight: normal; }
     
     .subtitle { font-size: 1.2em; color: var(--gold); font-style: italic; opacity: 0.9; margin-bottom: 30px; }
@@ -62,6 +61,14 @@
     }
     #storyText p { margin-bottom: 1.5em; }
     
+    .story-image {
+        max-width: 100%;
+        border-radius: 10px;
+        margin: 14px 0;
+        border: 1px solid rgba(255,105,180,0.25);
+        box-shadow: 0 0 18px rgba(0,0,0,0.35);
+    }
+
     /* DIALOGUE */
     .dialogue-block { display: block; margin: 15px 0; padding-left: 20px; border-left: 3px solid rgba(255,255,255,0.2); font-style: italic; font-weight: 500; font-size: 1.1em; }
     .p1-dia { color: var(--p1-color); border-color: var(--p1-color); }
@@ -128,7 +135,6 @@
         content:""; position:absolute; 
         top:5px; right:5px; 
         width:24px; height:24px; 
-        /* Thin white outline handcuff SVG */
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.5 13.5a3.5 3.5 0 1 0-2.5-5.9l-1.5 1.5'%3E%3C/path%3E%3Cpath d='M6.5 10.5a3.5 3.5 0 1 0 2.5 5.9l1.5-1.5'%3E%3C/path%3E%3Cpath d='M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0'%3E%3C/path%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: center;
@@ -204,6 +210,11 @@
     #coupleRoomCodeWrap { display: flex; align-items: center; justify-content: center; gap: 10px; }
     #btnCopyCode { background: none; border: 1px solid var(--pink); padding: 5px; border-radius: 5px; cursor: pointer; color: var(--gold); }
 
+    /* GOD MODE UI */
+    #godModeToggle { margin-top:10px; font-size:0.8em; display:flex; align-items:center; justify-content:center; gap:8px; opacity:0.8; cursor:pointer; }
+    #godModeToggle input { width:auto; margin:0; cursor:pointer; }
+    #godModeLabel { color: var(--gold); font-family:var(--font-main); letter-spacing:1px; }
+
     @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
 
     @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
@@ -211,6 +222,13 @@
 </head>
 
 <body>
+
+<div id="auth-panel" style="position:fixed;top:10px;right:10px;z-index:9999;background:rgba(0,0,0,0.8);padding:10px;border:1px solid #444;border-radius:5px;display:flex;flex-direction:column;gap:5px;">
+  <input id="auth-email" placeholder="Email" style="padding:5px;" />
+  <input id="auth-password" type="password" placeholder="Password" style="padding:5px;" />
+  <button id="btn-signin" style="padding:5px;cursor:pointer;">Sign in</button>
+  <div id="auth-status" style="font-size:12px;margin-top:6px;color:#fff;"></div>
+</div>
 
 <button id="burgerBtn">☰</button>
 <div id="menuOverlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:4999; align-items:center; justify-content:center; display:flex;">
@@ -320,6 +338,22 @@
   </div>
 </div>
 
+<div id="coupleConsentModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9995; align-items:center; justify-content:center; display:flex;">
+  <div class="box" style="max-width:450px; text-align:center;">
+    <h3 style="color:var(--gold);">Shared Intensity Agreement</h3>
+    <p>You are entering a shared hallucination. Before you begin:</p>
+    <ul style="text-align:left; font-size:0.9em; line-height:1.5; color:var(--ink); margin: 20px auto; max-width: 350px;">
+        <li><strong>Intensity is a hard ceiling.</strong> What the story depicts is limited by the setting, regardless of what you type.</li>
+        <li><strong>Inputs are requests.</strong> If you type explicit acts in 'Naughty', they will be rendered as suggestive tension.</li>
+        <li><strong>Upgrades required.</strong> You can only raise the ceiling if your access tier allows it.</li>
+    </ul>
+    <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="btnCoupleAgree">Agree & Enter</button>
+        <button onclick="showScreen('setup'); document.getElementById('coupleConsentModal').classList.add('hidden');" style="background:#444">Change Settings</button>
+    </div>
+  </div>
+</div>
+
 <div id="strangerModal" class="hidden" style="position:fixed; inset:0; background:#000; z-index:9990; align-items:center; justify-content:center; display:flex;">
   <div class="box">
     <h3>How Daring...</h3>
@@ -367,21 +401,48 @@
 </div>
 
 <div id="payModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:10000; align-items:center; justify-content:center; display:flex;">
-  <div class="box" style="text-align:center">
+  <div class="box" style="text-align:center; max-width: 500px;">
     <h3>Unshackle Your Fate</h3>
-    <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
-        <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:200px;">
-            <h4>Unlock All You Desire</h4>
-            <p>For this story alone.</p>
-            <button id="payOneTime" style="width:100%">Unlock ($1)</button>
-        </div>
-        <div id="optSub" style="background:#400020; padding:15px; border-radius:10px; border:1px solid gold; width:200px;">
-            <h4>Indulge Forever</h4>
-            <p>Unlimited access.</p>
-            <button id="paySub" style="width:100%">Subscribe ($6/mo)</button>
-        </div>
+    
+    <div id="godModePay" class="hidden">
+       <h4 style="color:var(--gold); margin-top:0; font-size:1.4em;">Unlock God Mode</h4>
+       <p style="font-size:0.9em; opacity:0.8; margin-bottom:20px;">
+         Sandbox power. No cooldowns. No safety.
+         <br><strong>$50 One-time purchase.</strong>
+       </p>
+       <button id="payGodMode" style="width:100%; margin-top:10px; background:var(--gold); color:black;">Unlock Forever ($50)</button>
     </div>
-    <button onclick="document.getElementById('payModal').classList.add('hidden')" style="background:#444">Cancel</button>
+
+    <div id="standardPay">
+        <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
+            <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:220px; text-align:left;">
+                <h4 style="color:var(--pink); margin-top:0;">Story Pass</h4>
+                <p id="passCopy" style="font-size:0.85em; opacity:0.8; min-height:1.2em; font-style:italic;">A light commitment.</p>
+                <ul style="font-size:0.8em; padding-left:15px; opacity:0.9; line-height:1.4;">
+                    <li>Unlock this story up to 25k words</li>
+                    <li>Continue your current arc</li>
+                    <li>One-time unlock for this story</li>
+                    <li>Subscription required past 25k</li>
+                </ul>
+                <button id="payOneTime" style="width:100%; margin-top:10px;">Unlock This Story — $2</button>
+            </div>
+
+            <div id="optSub" style="background:linear-gradient(145deg, #400020, #200010); padding:15px; border-radius:10px; border:1px solid gold; width:220px; text-align:left;">
+                <h4 style="color:var(--gold); margin-top:0;">Indulge — $6/mo</h4>
+                <p style="font-size:0.85em; opacity:0.8; min-height:1.2em; font-style:italic;">Complete access.</p>
+                <ul style="font-size:0.8em; padding-left:15px; opacity:0.9; line-height:1.4;">
+                    <li>Dirty unlocked</li>
+                    <li>Unlimited stories</li>
+                    <li>Change intensity anytime</li>
+                    <li>Save, return, deepen</li>
+                </ul>
+                <button id="paySub" style="width:100%; margin-top:10px; background:var(--gold); color:black;">Take Control — Subscribe for $6</button>
+            </div>
+        </div>
+        <p style="font-size:0.7em; opacity:0.5; margin-top:20px;">Optional sandbox power modes sold separately.</p>
+    </div>
+    
+    <button onclick="document.getElementById('payModal').classList.add('hidden')" style="background:#444; margin-top:15px;">Cancel</button>
   </div>
 </div>
 
@@ -403,7 +464,7 @@
           <p style="opacity:0.7; max-width:200px; margin:10px auto;">Your private laboratory—intentional, charged.</p>
       </div>
       <div style="text-align:center">
-          <button class="choice" onclick="setMode('couple')">Couple</button>
+          <button class="choice" id="btnCoupleMode" onclick="setMode('couple')">Couple</button>
           <p style="opacity:0.7; max-width:200px; margin:10px auto;">Link devices and co-create a shared seduction.</p>
       </div>
       <div style="text-align:center">
@@ -485,14 +546,16 @@
         </div>
     </div>
 
-    <div class="section-title">Intensity</div>
+    <div class="section-title">Intensity <span class="instruction-text">(Rendering Ceiling)</span></div>
     <div id="intensityBtns" class="intensity-wrap">
-      <button data-val="Clean" data-desc="Flirtation, chemistry, and longing. No explicit anatomy." class="intensity-btn">Clean</button>
-      <button data-val="Naughty" data-desc="Direct teasing with tasteful sensuality." class="intensity-btn active">Naughty</button>
-      <button data-val="Erotic" data-desc="Explicit intimacy and sensual detail." class="intensity-btn">Erotic</button>
-      <button data-val="Dirty" data-desc="Very explicit language and bold scenes." class="intensity-btn">Dirty</button>
+      <button data-val="Clean" class="intensity-btn">Clean</button>
+      <button data-val="Naughty" class="intensity-btn active">Naughty</button>
+      <button data-val="Erotic" class="intensity-btn locked-tease">Erotic</button>
+      <button data-val="Dirty" class="intensity-btn locked-pass">Dirty</button>
     </div>
-    <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px;">(Naughty) Direct teasing with tasteful sensuality.</p>
+    <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px; min-height:40px;">
+        (Naughty) Suggestive tension; no explicit anatomy.
+    </p>
     
     <div class="section-title">Story Length</div>
     <div class="style-cards" id="lengthGrid">
@@ -594,6 +657,15 @@
            <div class="ghost-grid"></div>
        </div>
     </div>
+    <div style="display:flex; flex-direction:column; align-items:center; margin-top:5px; font-size:0.8em; color:var(--gold);">
+        <div style="display:flex; width:100%; justify-content:space-between; margin-bottom:5px;">
+            <span id="quillStatus">Quill: Ready</span>
+            <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill Edit</button>
+        </div>
+        <div id="godModeToggle" class="hidden">
+            <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> Enable God Mode (Sandbox)</label>
+        </div>
+    </div>
     <p style="font-size:0.8em; color:var(--gold); opacity:0.8; margin-top:5px;">It's your story, add or take away whatever you like.</p>
 
     <br>
@@ -674,8 +746,8 @@
   // =========================
   // SUPABASE CONFIG (COUPLE MODE)
   // =========================
-  const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE"; 
-  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE"; 
+  const SUPABASE_URL = "https://riutipkrnfyvvghzlrwe.supabase.co"; 
+  const SUPABASE_ANON_KEY = "sb_publishable_w7846w2PsZ4xtLcFz-6PCg_Zcv03XEe"; 
   
   // Presence Constants
   const PRESENCE_HEARTBEAT_MS = 15000;
@@ -749,6 +821,7 @@
       roomCode: null,
       roomTurn: 1,
       roomDriver: null,
+      roomAccess: 'free',
       myUid: null,
       myNick: null,
       turnsChannel: null,
@@ -760,7 +833,20 @@
       partnerStatus: { online:false, lastSeenAt:null, typing:false, typingAt:null, uid:null },
       _lastTurnId: null,
       selectedFateIndex: null,
-      selectedFatePayload: null
+      selectedFatePayload: null,
+      // PATCH: Sex Push & Quill State
+      sexPushCount: 0,
+      lastSexPushAt: null,
+      veto: { bannedWords: [], bannedNames: [], excluded: [], tone: [] },
+      quill: { uses: 0, nextReadyAtWords: 0, baseCooldown: 3000, multiplier: 1.6 },
+      quillCommittedThisTurn: false,
+      // PATCH: Solo -> Couple Branching
+      storyStage: 'pre-intimacy',
+      // PATCH: Sandbox & Stats State
+      sandbox: false,
+      godModeActive: false,
+      authorChairActive: false,
+      lastSavedWordCount: 0
   };
   
   const cheapNames = ["Thrifton", "Pennywise", "McMiser", "Scrooge", "Tightwad", "Pinchpenny"];
@@ -803,6 +889,10 @@
 
   // --- ACCESS HELPERS ---
   function resolveAccess(){
+    if (state.mode === 'couple') {
+        // In Couple mode, access is strictly room-scoped
+        return state.roomAccess || 'free';
+    }
     if(state.subscribed) return 'sub';
     if(state.storyId && hasStoryPass(state.storyId)) return 'pass';
     return 'free';
@@ -814,6 +904,7 @@
   }
 
   function getCapForAccess(){
+    if(state.godModeActive) return Infinity; // PATCH: God Mode no cap
     if(state.access === 'sub') return Infinity;
     if(state.access === 'pass') return 25000;
     return 10000;
@@ -823,6 +914,237 @@
     const txt = ($('storyText')?.innerText || '').trim();
     if(!txt) return 0;
     return txt.split(/\s+/).filter(Boolean).length;
+  }
+
+  // PATCH: Elastic Sex Threshold Helper
+  function getSexAllowedAtWordCount() {
+    if(state.godModeActive) return 0; // PATCH: God Mode always allows sex
+    const target = state.storyTargetWords;
+    switch(state.intensity){
+        case "Clean":   return Infinity;
+        case "Naughty": return Math.floor(target * 0.55);
+        case "Erotic":  return Math.floor(target * 0.30);
+        case "Dirty":   return Math.floor(target * 0.20);
+        default: return Math.floor(target * 0.55);
+    }
+  }
+
+  // PATCH: Consummation Logic
+  function maybeFlipConsummation(text){
+     if(state.godModeActive) return; // God Mode ignores this
+     if(state.mode !== 'solo') return;
+     if(state.storyStage !== 'pre-intimacy') return; 
+
+     let flipped = false;
+
+     // 1. Timing
+     const wc = currentStoryWordCount();
+     const sexAt = getSexAllowedAtWordCount();
+     if(wc >= sexAt) flipped = true;
+
+     // 2. Language (Exclusivity)
+     const pattern = /(only you|forever with you|no one else|we belong to each other|I am yours|yours forever|eternal vow|marry me|my wife|my husband)/i;
+     if(pattern.test(text)) flipped = true;
+
+     // 3. Dirty Intensity
+     if(state.intensity === 'Dirty') flipped = true;
+
+     if(flipped){
+         state.storyStage = 'post-consummation';
+         saveStorySnapshot(); 
+     }
+  }
+
+  // PATCH: Quill Helpers with Author's Chair Mod
+  function getQuillReady() {
+      if(state.godModeActive) return true; // God Mode always ready
+      return currentStoryWordCount() >= (state.quill.nextReadyAtWords || 0);
+  }
+
+  function computeNextCooldownWords() {
+      if(state.godModeActive) return 0;
+      // PATCH: Author's Chair Buff
+      const base = state.authorChairActive ? 2000 : 3000;
+      const mult = state.authorChairActive ? 1.4 : 1.6;
+      return Math.round(base * Math.pow(mult, state.quill.uses));
+  }
+
+  // PATCH: Author's Chair / Badge Logic
+  function checkAuthorChairUnlock() {
+      const totalWords = Number(localStorage.getItem('sb_global_word_count') || 0);
+      if(totalWords >= 250000) return true;
+
+      // Check Badges (distinct sets)
+      try {
+          const stats = JSON.parse(localStorage.getItem('sb_history_distinct') || '{"genres":[],"povs":[],"styles":[]}');
+          // Proxy rule: "Tried 5 distinct" of each type counts as "All" for simplified logic
+          if(stats.genres.length >= 5 && stats.povs.length >= 3 && stats.styles.length >= 5) {
+              return true;
+          }
+      } catch(e) {}
+      return false;
+  }
+
+  function updateHistoryStats() {
+      try {
+          const stats = JSON.parse(localStorage.getItem('sb_history_distinct') || '{"genres":[],"povs":[],"styles":[]}');
+          // Add current picks if new
+          state.picks.genre.forEach(g => { if(!stats.genres.includes(g)) stats.genres.push(g); });
+          if(!stats.povs.includes(state.picks.pov)) stats.povs.push(state.picks.pov);
+          state.picks.style.forEach(s => { if(!stats.styles.includes(s)) stats.styles.push(s); });
+          
+          localStorage.setItem('sb_history_distinct', JSON.stringify(stats));
+      } catch(e) {}
+  }
+
+  function parseStoryControls(rawText) {
+      if(!rawText) return { veto: {bannedWords:[], bannedNames:[], excluded:[], tone:[]}, quillDraft: "" };
+      
+      const lines = rawText.split('\n');
+      const veto = { bannedWords:[], bannedNames:[], excluded:[], tone:[] };
+      const draftLines = [];
+
+      lines.forEach(line => {
+          const l = line.trim();
+          if(!l) return;
+          const lower = l.toLowerCase();
+          
+          if(lower.startsWith('ban:') || lower.startsWith('banned:')) {
+              veto.bannedWords.push(l.replace(/^(ban:|banned:)\s*/i, ''));
+          } else if(lower.startsWith('no names:') || lower.startsWith('ban names:')) {
+              veto.bannedNames.push(l.replace(/^(no names:|ban names:)\s*/i, ''));
+          } else if(lower.startsWith('exclude:') || lower.startsWith('no:')) {
+              veto.excluded.push(l.replace(/^(exclude:|no:)\s*/i, ''));
+          } else if(lower.startsWith('tone:')) {
+              veto.tone.push(l.replace(/^tone:\s*/i, ''));
+          } else {
+              draftLines.push(l);
+          }
+      });
+      return { veto, quillDraft: draftLines.join('\n') };
+  }
+
+  function applyVetoFromControls() {
+      const el = $('storyControls');
+      if(el) {
+          const { veto } = parseStoryControls(el.value);
+          state.veto = veto;
+      }
+  }
+
+  function updateQuillUI() {
+      const btn = $('btnCommitQuill');
+      const status = $('quillStatus');
+      const godToggle = $('godModeToggle');
+      if(!btn || !status) return;
+
+      // God Mode Logic UI
+      if(state.mode === 'solo') {
+          godToggle.classList.remove('hidden');
+          const chk = $('godModeCheck');
+          if(state.godModeActive) {
+              chk.checked = true;
+              chk.disabled = true; // Permanent
+              document.getElementById('godModeLabel').innerHTML = "GOD MODE ACTIVE (SANDBOXED)";
+              document.getElementById('godModeLabel').style.color = "var(--hot)";
+          } else {
+              chk.checked = false;
+              chk.disabled = false;
+          }
+      } else {
+          godToggle.classList.add('hidden'); // No God Mode in Couple
+      }
+
+      const ready = getQuillReady();
+      const wc = currentStoryWordCount();
+      const needed = state.quill.nextReadyAtWords;
+      
+      // Update badge if Author Chair active
+      if(state.authorChairActive && !status.textContent.includes('🪑')) {
+          status.innerHTML = `<span title="Author's Chair Active">🪑</span> ` + status.textContent;
+      }
+
+      if(ready) {
+          status.textContent = state.authorChairActive ? "🪑 Quill: Ready" : "Quill: Ready";
+          status.style.color = "var(--pink)";
+          btn.disabled = false;
+          btn.style.opacity = "1";
+          btn.style.borderColor = "var(--pink)";
+          if(state.godModeActive) btn.textContent = "Commit Quill (God Mode)";
+          else btn.textContent = "Commit Quill Edit";
+      } else {
+          const remain = Math.max(0, needed - wc);
+          status.textContent = `Quill recharges in: ${remain} words`;
+          status.style.color = "var(--gold)";
+          btn.disabled = true;
+          btn.style.opacity = "0.5";
+          btn.style.borderColor = "transparent";
+      }
+  }
+
+  // 🔒 AUTH LOGIC START
+  async function signIn() {
+    const email = document.getElementById("auth-email").value;
+    const password = document.getElementById("auth-password").value;
+    const status = document.getElementById("auth-status");
+
+    status.textContent = "Signing in...";
+
+    const { data, error } = await sb.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      status.textContent = "Sign-in failed: " + error.message;
+      return;
+    }
+
+    if (data?.user) {
+       status.textContent = "Signed in: " + data.user.email;
+       state.myUid = data.user.id;
+    }
+  }
+
+  document.getElementById("btn-signin")?.addEventListener("click", signIn);
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session?.user) {
+      console.log("AUTH READY:", session.user.id);
+      document.getElementById("auth-status").textContent = "Session: " + session.user.email;
+      state.myUid = session.user.id; 
+    } else {
+      console.log("NO AUTH SESSION");
+    }
+  });
+  // 🔒 AUTH LOGIC END
+
+  // PATCH: God Mode Toggle Handler
+  $('godModeCheck')?.addEventListener('change', (e) => {
+      if(!e.target.checked) return; // Cannot uncheck
+      
+      e.target.checked = false; // Reset visually until confirmed
+      
+      const unlocked = localStorage.getItem('sb_god_mode_owned') === '1';
+      
+      if(!unlocked) {
+          // Open $50 Paywall
+          showPaywall('god');
+      } else {
+          // Show Irreversible Warning
+          if(confirm("WARNING: God Mode permanently removes this story from canon.\n\n- No emotional safeguards\n- No Couple Mode eligibility\n- No achievement progress\n\nThis cannot be undone. Enter Sandbox?")) {
+              activateGodMode();
+          }
+      }
+  });
+
+  function activateGodMode() {
+      state.sandbox = true;
+      state.godModeActive = true;
+      state.storyStage = 'sandbox'; // Force state
+      updateQuillUI();
+      // Disable Couple button logic handled in setMode
+      alert("God Mode Active. Narrative safeguards removed.");
   }
 
   // --- STORY PASS & PERSISTENCE ---
@@ -881,6 +1203,15 @@
     const el = document.getElementById('storyText');
     if(!el) return;
 
+    // PATCH: Global Word Count Tracking (Author's Chair)
+    const currentWc = currentStoryWordCount();
+    const delta = Math.max(0, currentWc - (state.lastSavedWordCount || 0));
+    if(delta > 0) {
+        const globalWc = Number(localStorage.getItem('sb_global_word_count') || 0);
+        localStorage.setItem('sb_global_word_count', globalWc + delta);
+        state.lastSavedWordCount = currentWc;
+    }
+
     const snapshot = {
       storyId: state.storyId,
       subscribed: !!state.subscribed,
@@ -905,7 +1236,15 @@
         authorGender: state.authorGender,
         authorPronouns: state.authorPronouns,
         storyTargetWords: state.storyTargetWords,
-        unlockedFateIdx: state.unlockedFateIdx
+        unlockedFateIdx: state.unlockedFateIdx,
+        // PATCH: Persist new state
+        sexPushCount: state.sexPushCount,
+        lastSexPushAt: state.lastSexPushAt,
+        veto: state.veto,
+        quill: state.quill,
+        storyStage: state.storyStage,
+        sandbox: state.sandbox,
+        godModeActive: state.godModeActive
       }
     };
 
@@ -925,10 +1264,18 @@
 
     if(data.stateSnapshot){
       Object.assign(state, data.stateSnapshot);
+      // Ensure defaults for new fields if loading old save
+      if(!state.quill) state.quill = { uses: 0, nextReadyAtWords: 0, baseCooldown: 3000, multiplier: 1.6 };
+      if(!state.veto) state.veto = { bannedWords:[], bannedNames:[], excluded:[], tone:[] };
+      if(!state.storyStage) state.storyStage = 'pre-intimacy'; // PATCH: Default stage
+      state.lastSavedWordCount = currentStoryWordCount(); // Sync baseline
     }
 
     state.sysPrompt = data.sysPrompt || state.sysPrompt;
     state.subscribed = !!data.subscribed;
+
+    // PATCH: Check Author's Chair on load
+    state.authorChairActive = checkAuthorChairUnlock();
 
     syncTierFromAccess();
 
@@ -947,6 +1294,7 @@
     applyTierUI();
     applyLengthLocks();
     initCards(); // ensure correct unlocks
+    updateQuillUI();
   }
 
   function updateContinueButtons(){
@@ -965,8 +1313,9 @@
   }
   
   async function coupleGetRoom(){
+    // Fetch room state + text prompts + access
     const { data: room, error } = await sb.from('sb_rooms')
-      .select('id, code, turn, current_driver, updated_at')
+      .select('id, code, turn, current_driver, updated_at, access_level, title, synopsis, sys_prompt, setting_img_prompt')
       .eq('id', state.roomId)
       .single();
     if(error) throw error;
@@ -1014,6 +1363,15 @@
     const room = await coupleGetRoom();
     state.roomTurn = room.turn;
     state.roomDriver = room.current_driver;
+    state.roomAccess = room.access_level || 'free';
+    
+    // Sync setup/title if joined late
+    if(room.sys_prompt) state.sysPrompt = room.sys_prompt;
+    if(room.title) $('storyTitle').textContent = room.title;
+    if(room.synopsis) $('storySynopsis').textContent = room.synopsis;
+    if(room.setting_img_prompt && $('settingShotImg').style.display === 'none') {
+        generateSettingShot(room.synopsis || "Fantasy Landscape"); // Uses synopsis if prompt field logic not fully implemented, or implement full hydration
+    }
 
     // 2) Load last N turns and render them (avoid duplicates)
     const { data: turns, error } = await sb.from('sb_turns')
@@ -1024,10 +1382,14 @@
 
     if(error) throw error;
 
-    // If storyText already has content, don’t nuke it. But on fresh join it will be empty.
+    // 🔄 COUPLE BOOTSTRAP: Render Guard
+    // If storyText already has content (e.g. from local generation before reload), don't nuke it.
+    // BUT in couple mode, authoritative source is DB. We should clear and re-render to ensure sync.
     const storyEl = $('storyText');
-    if(storyEl && storyEl.childElementCount === 0){
-      (turns || []).forEach(t => {
+    storyEl.innerHTML = ''; // CLEAR FIRST to ensure clean slate from DB state
+    
+    if(turns && turns.length > 0){
+      turns.forEach(t => {
         const div = document.createElement('div');
         div.innerHTML = formatStory(t.story_delta || "");
         storyEl.appendChild(div);
@@ -1037,9 +1399,36 @@
         storyEl.appendChild(sep);
       });
     }
+    
+    // *** OPENING GENERATION CHECK ***
+    // If turns are empty AND I am the host (driver), generate opening
+    if((!turns || turns.length === 0) && state.myUid === state.roomDriver) {
+        // Trigger opening generation logic here
+        // We reuse logic from 'beginBtn' essentially, but targeted
+        // This is handled in btnCoupleAgree usually, but if we refresh, we might need to check.
+        // Actually, btnCoupleAgree calls this. Let's handle generation there or trigger it if needed.
+        // For robustness: if turns=0, we likely haven't started. The "Agree" button action will handle it.
+    }
 
     // Track last seen turn id to prevent double-appends on resubscribe
     state._lastTurnId = (turns && turns.length) ? turns[turns.length - 1].id : null;
+
+    // 3) Initial Presence Fetch (Fix for empty partner status)
+    const { data: members } = await sb
+      .from('sb_room_members')
+      .select('user_id,last_seen_at,typing,typing_at')
+      .eq('room_id', state.roomId);
+
+    const partner = (members || []).find(m => m.user_id !== state.myUid);
+    if(partner){
+      state.partnerStatus = {
+        uid: partner.user_id,
+        lastSeenAt: partner.last_seen_at,
+        typing: partner.typing,
+        typingAt: partner.typing_at
+      };
+      updatePartnerUI(state.partnerStatus);
+    }
 
     applyCoupleDriverUI();
     startPresence();
@@ -1104,7 +1493,7 @@
       startLoading();
       const code = makeRoomCode();
       const { data: room, error } = await sb.from('sb_rooms')
-        .insert([{ code, created_by: state.myUid, current_driver: state.myUid, turn: 1 }])
+        .insert([{ code, created_by: state.myUid, current_driver: state.myUid, turn: 1, access_level: 'free' }])
         .select().single();
       
       if(error){ alert(error.message); stopLoading(); return; }
@@ -1145,13 +1534,110 @@
       stopLoading();
     };
 
-    btnEnter.onclick = async ()=>{
-      showScreen('game');
-      applyTierUI();
-      await coupleBootstrap();
-      subscribeCoupleRealtime();
-      applyCoupleDriverUI();
+    // 🔒 PAYWALL UPDATE: Couple Consent Flow + Opening Generation
+    btnEnter.onclick = () => {
+        document.getElementById('coupleInvite').classList.add('hidden');
+        document.getElementById('coupleConsentModal').classList.remove('hidden');
     };
+
+    document.getElementById('btnCoupleAgree').onclick = async () => {
+        document.getElementById('coupleConsentModal').classList.add('hidden');
+        showScreen('game');
+        applyTierUI();
+        await coupleBootstrap();
+        subscribeCoupleRealtime();
+        applyCoupleDriverUI();
+        
+        // Host Opening Generation Logic
+        if(state.myUid === state.roomDriver){
+            // Check if turns exist
+            const { count } = await sb.from('sb_turns').select('*', { count: 'exact', head: true }).eq('room_id', state.roomId);
+            if(count === 0){
+                // Generate opening
+                await generateCoupleOpening();
+            }
+        }
+    };
+  }
+  
+  // Couple Opening Generator (Mirrors beginBtn logic)
+  async function generateCoupleOpening(){
+      startLoading();
+      
+      // Build basic prompt if not already set (Host path)
+      if(!state.sysPrompt){
+          // We assume setups are in state from the setup screen since we are the host coming from there
+          // Or we construct a default
+          let p1Name = $('playerNameInput').value.trim() || "Player 1";
+          let p2Name = $('partnerNameInput').value.trim() || "Player 2";
+          
+          state.sysPrompt = `You are a master storyteller. 
+          Genre: ${state.picks.genre.join(',') || 'Romantasy'}. 
+          Style: ${state.picks.style.join(',') || 'Breathless'}.
+          POV: ${state.picks.pov}.
+          Player 1 is ${p1Name} (${state.gender}, ${state.pronouns1 || 'She/Her'}).
+          Player 2 is ${p2Name} (${state.loveInterest}, ${state.pronouns2 || 'He/Him'}).
+          Intensity: ${state.intensity}.
+          IMPORTANT: This is the OPENING. NO sex acts yet. Focus on PLOT, WORLD-BUILDING, and TENSION.
+          Formatting: Write in lush, novelistic prose. Use complete sentences.
+          Dialogue Formatting: Wrap Player 1's dialogue in [P1]...[/P1]. Wrap Partner's dialogue in [P2]...[/P2].
+          AT THE END OF RESPONSE, append a JSON block with 5 new Fate Card options based on the scene:
+          ///FATE_JSON_START///
+          [{"action":"...", "dialogue":"..."}, ...] (5 objects)
+          ///FATE_JSON_END///
+          Output format (STRICT): First line must be exactly "Title: …". Second line must be exactly "Synopsis: …". Then a blank line. Then story body.`;
+      }
+      
+      applyVetoFromControls(); // Apply controls before generating opening
+
+      // Generate
+      try {
+          let raw = await callChat([{role:'system', content: state.sysPrompt}, {role:'user', content: "Begin the story. Start with Title: [Title] and Synopsis: [Synopsis]."}]);
+          
+          if(raw.includes("///FATE_JSON_START///")){
+             const parts = raw.split("///FATE_JSON_START///");
+             raw = parts[0]; 
+             const jsonRaw = parts[1].split("///FATE_JSON_END///")[0];
+             try { state.fateOptions = JSON.parse(jsonRaw); } catch(e){}
+          }
+          
+          const { title, syn, body } = extractMeta(raw);
+          
+          // 🔄 COUPLE OPENING: Persistence
+          
+          // Save Shared Room Data
+          await sb.from('sb_rooms').update({
+              title: title.replace(/\*\*/g, ''),
+              synopsis: syn.replace(/\*\*/g, ''),
+              sys_prompt: state.sysPrompt,
+              // If schema supports it, save access level if defined
+          }).eq('id', state.roomId);
+          
+          // Insert Turn 0 (Idempotent check ideally, or rely on constraint)
+          // We check if turn 0 exists first to be safe, or just try insert
+          const { error: turnErr } = await sb.from('sb_turns').insert([{
+                room_id: state.roomId,
+                turn: 0, 
+                driver_id: state.myUid,
+                story_delta: body,
+                player_action: "OPENING", // Sentinel
+                player_dialogue: "",
+                fate_choice: null
+          }]);
+          
+          if(!turnErr){
+              // If successful insert, render locally
+              $('storyText').innerHTML = formatStory(body);
+          } else {
+              // If duplication error, likely race condition or already exists; fetch and render
+              // For robustness, coupleBootstrap handles rendering on join/reload
+          }
+          
+      } catch(e){
+          console.error("Couple opening failed", e);
+          alert("Opening generation failed. Please retry.");
+      }
+      stopLoading();
   }
 
   // --- PRESENCE & TYPING ---
@@ -1193,7 +1679,9 @@
 
   function updatePartnerUI(status){
     const el = document.getElementById('partnerStatusLine');
-    if(!el || state.mode !== 'couple') {
+    if(!el) return; // Fix crash if el missing
+    
+    if(state.mode !== 'couple') {
         el.classList.add('hidden');
         return;
     }
@@ -1228,6 +1716,9 @@
     const isDriver = (state.myUid === state.roomDriver);
     const submit = $('submitBtn');
     
+    // Re-run applyTierUI to enforce driver input locking
+    applyTierUI();
+
     if(isDriver){
         submit.disabled = false;
         submit.textContent = "Submit Turn (Your Turn)";
@@ -1265,13 +1756,18 @@
       )
       .subscribe();
 
-    // ROOM STATE
+    // ROOM STATE (Access Level Updates)
     state.roomChannel = sb.channel('room_' + state.roomId)
       .on('postgres_changes', {event:'UPDATE', schema:'public', table:'sb_rooms', filter:`id=eq.${state.roomId}`},
         (payload) => {
+           if(payload.new.access_level) state.roomAccess = payload.new.access_level;
+           if(payload.new.title) $('storyTitle').textContent = payload.new.title;
+           if(payload.new.synopsis) $('storySynopsis').textContent = payload.new.synopsis;
+           
            state.roomDriver = payload.new.current_driver;
            state.roomTurn = payload.new.turn;
            applyCoupleDriverUI();
+           syncTierFromAccess();
         }
       )
       .subscribe();
@@ -1316,22 +1812,42 @@
       const paid = (state.tier === 'paid');
       const couple = (state.mode === 'couple');
 
-      // Inputs
+      // 🔒 COUPLE UI: Paid vs Free Gating
+      // Inputs Loop
       ['actionInput','dialogueInput','storyControls'].forEach(id => {
         const el = $(id);
         if(!el) return;
-        if(couple) return; // driver controlled
-        el.disabled = !paid;
+        
+        if(couple){
+            const access = state.roomAccess || 'free';
+            const isDriver = (state.myUid && state.roomDriver && state.myUid === state.roomDriver);
+            
+            // Rule: If Free, inputs are locked regardless of driver (must use Fate or upgrade)
+            // Rule: If Paid (Pass/Sub), inputs open for Driver only
+            if (access === 'free') {
+                el.disabled = true; // Locked behind paywall like Solo Tease
+            } else {
+                el.disabled = !isDriver; // Unlocked but Driver-gated
+            }
+        } else {
+            el.disabled = !paid;
+        }
       });
 
-      // Wrappers
+      // Wrappers (Visual Locks)
       ['actionWrapper','dialogueWrapper','storyControlsBox'].forEach(id => {
         const wrap = $(id);
         if(!wrap) return;
 
         if(couple){
-          wrap.classList.remove('locked-input');
-          setPaywallClickGuard(wrap, false);
+          const access = state.roomAccess || 'free';
+          const isLocked = (access === 'free'); // Visually lock if free
+          
+          if(isLocked) wrap.classList.add('locked-input');
+          else wrap.classList.remove('locked-input');
+          
+          // Click guard opens paywall if free
+          setPaywallClickGuard(wrap, isLocked);
           return;
         }
 
@@ -1392,23 +1908,69 @@
     });
   }
 
+  // 💰 PAY MODAL FIX: Dynamic pricing & text updates
   window.showPaywall = function(mode){
     const pm = $('payModal');
     if(!pm) return;
+
+    // PATCH: God Mode Paywall View
+    if(mode === 'god') {
+        $('godModePay').classList.remove('hidden');
+        $('standardPay').classList.add('hidden');
+    } else {
+        $('godModePay').classList.add('hidden');
+        $('standardPay').classList.remove('hidden');
+    }
+
+    // Pricing Logic
+    const passCount = Number(localStorage.getItem('sb_storypass_count') || 0);
+    const isFirst = passCount === 0;
+    const price = isFirst ? 2 : 4;
+
+    // UI Updates
+    const btn = document.getElementById('payOneTime');
+    const txt = document.getElementById('passCopy');
+
+    if(btn) btn.textContent = `Unlock This Story — $${price}`;
+    if(txt) txt.textContent = isFirst ? "A light commitment." : "One story at a time.";
+
+    // Visibility Logic
+    let hideUnlock = false;
     
-    const hasPassNow = state.storyId && hasStoryPass(state.storyId);
-    
-    // Hide unlock option if we are specifically asking for SUB, OR if user already has a pass for this story
-    const hideUnlock = (mode === 'sub') || state.subscribed || hasPassNow;
-    
-    $('optUnlock')?.classList.toggle('hidden', !!hideUnlock); 
+    if(state.mode === 'couple'){
+        // Couple Logic: if room is passed, hide pass. if sub, hide pass.
+        // We only show Pass if room is 'free'.
+        if(state.roomAccess === 'pass' || state.roomAccess === 'sub') hideUnlock = true;
+    } else {
+        const hasPass = state.storyId && hasStoryPass(state.storyId);
+        hideUnlock = (mode === 'sub') || state.subscribed || hasPass;
+    }
+
+    $('optUnlock')?.classList.toggle('hidden', !!hideUnlock);
     pm.classList.remove('hidden');
   };
 
-  // Purchase Handlers
-  $('payOneTime')?.addEventListener('click', () => {
-    state.storyId = state.storyId || makeStoryId();
-    grantStoryPass(state.storyId);
+  // 💰 COUPLE PAYWALL: Room Updates
+  $('payOneTime')?.addEventListener('click', async () => {
+    // Shared: Counter logic for Solo progressive pricing display (optional but good)
+    const currentCount = Number(localStorage.getItem('sb_storypass_count') || 0);
+    localStorage.setItem('sb_storypass_count', currentCount + 1);
+
+    if(state.mode === 'couple'){
+        // Couple Unlock: Write to Room
+        if(!state.roomId) return alert("Error: No room context.");
+        const { error } = await sb.from('sb_rooms')
+            .update({ access_level: 'pass' })
+            .eq('id', state.roomId);
+        
+        if(error) { console.error(error); alert("Payment sync failed."); return; }
+        state.roomAccess = 'pass';
+    } else {
+        // Solo Unlock: Local
+        state.storyId = state.storyId || makeStoryId();
+        grantStoryPass(state.storyId);
+    }
+
     syncTierFromAccess();
     $('payModal').classList.add('hidden');
     applyTierUI();
@@ -1417,14 +1979,51 @@
     saveStorySnapshot();
   });
 
-  $('paySub')?.addEventListener('click', () => {
-    state.subscribed = true;
+  $('paySub')?.addEventListener('click', async () => {
+    if(state.mode === 'couple'){
+        // Couple Sub: Write to Room
+        if(!state.roomId) return alert("Error: No room context.");
+        const { error } = await sb.from('sb_rooms')
+            .update({ access_level: 'sub' })
+            .eq('id', state.roomId);
+            
+        if(error) { console.error(error); alert("Payment sync failed."); return; }
+        state.roomAccess = 'sub';
+    } else {
+        // Solo Sub: Local
+        state.subscribed = true;
+    }
+    
     syncTierFromAccess();
     $('payModal').classList.add('hidden');
     applyTierUI();
     applyLengthLocks();
     initCards(); 
     saveStorySnapshot();
+    if(state.mode !== 'couple') showScreen('modeSelect'); 
+  });
+
+  // PATCH: God Mode Pay Handler
+  $('payGodMode')?.addEventListener('click', () => {
+      localStorage.setItem('sb_god_mode_owned', '1');
+      alert("God Mode Unlocked. You may now activate it in Story Controls.");
+      $('payModal').classList.add('hidden');
+      // Re-trigger the check to update UI
+      $('godModeCheck').click(); // Simulate user trying again, now they own it
+  });
+
+  // PATCH: Quill Button Handler
+  $('btnCommitQuill')?.addEventListener('click', () => {
+      state.quillCommittedThisTurn = true;
+      const btn = $('btnCommitQuill');
+      const origText = btn.textContent;
+      btn.textContent = "Quill Armed ✓";
+      btn.style.borderColor = "var(--hot)";
+      
+      setTimeout(() => {
+          btn.textContent = origText;
+          // Visual revert happens on next updateQuillUI cycle
+      }, 1500);
   });
 
   window.restart = function(){
@@ -1438,15 +2037,26 @@
     state.turnCount = 0;
     state.unlockedFateIdx = [0, 1];
     state.lastFate = null;
+    // PATCH: Reset new state
+    state.sexPushCount = 0;
+    state.lastSexPushAt = null;
+    state.quill = { uses: 0, nextReadyAtWords: 0, baseCooldown: 3000, multiplier: 1.6 };
+    state.quillCommittedThisTurn = false;
+    // PATCH: Reset story stage & sandbox
+    state.storyStage = 'pre-intimacy';
+    state.sandbox = false;
+    state.godModeActive = false;
     
     $('storyText').innerHTML = '';
     $('storyTitle').textContent = '';
     $('storySynopsis').textContent = '';
     $('settingShotImg').style.display = 'none';
     $('settingError').classList.add('hidden');
+    syncTierFromAccess();
     updateContinueButtons();
     showScreen('setup');
     window.scrollTo(0,0);
+    updateQuillUI();
   };
 
   window.changeTier = function(){
@@ -1483,28 +2093,81 @@
     showPaywall('sub');
   });
 
-  // Game intensity buttons (mini)
+  // 🔒 PAYWALL UPDATE: In-Game Intensity Selector
   window.setGameIntensity = function(level){
+    if (state.godModeActive) { state.intensity = level; return; } // PATCH: God Mode Bypass
+
+    // Rule: $1 Pass cannot change intensity mid-game
+    if (state.access === 'pass' && state.turnCount > 0) {
+        if (confirm("Changing intensity mid-story is a Subscriber feature. Subscribe?")) {
+            showPaywall('sub');
+        }
+        return; 
+    }
+
+    // Rule: Dirty is Sub Only
+    if (level === 'Dirty' && state.access !== 'sub') {
+        showPaywall('sub');
+        return;
+    }
+
+    // Rule: Erotic is Locked for Free
+    if (level === 'Erotic' && state.access === 'free') {
+        showPaywall('unlock');
+        return;
+    }
+
     state.intensity = level;
+    // PATCH: Reset Sex Push on intensity change
+    state.sexPushCount = 0;
+    
     document.querySelectorAll('#gameIntensity button').forEach(b => {
       b.classList.toggle('active', b.textContent.trim() === level);
     });
   };
 
-  // Setup intensity buttons
+  // 🔒 PAYWALL UPDATE: Intensity Gating Logic (Setup)
   document.querySelectorAll('#intensityBtns .intensity-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      const val = btn.dataset.val;
+      
+      // Gating Rules
+      if (val === 'Erotic' && state.access === 'free') {
+          showPaywall('unlock'); // $1 Pass allows Erotic
+          return;
+      }
+      if (val === 'Dirty' && state.access !== 'sub') {
+          showPaywall('sub'); // Dirty is Sub ONLY
+          return;
+      }
+
       document.querySelectorAll('#intensityBtns .intensity-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      state.intensity = btn.dataset.val;
-      $('intensityDesc').textContent = `(${btn.dataset.val}) ${btn.dataset.desc}`;
+      state.intensity = val;
+      
+      // Updated Descriptions (Ceiling Logic)
+      const descs = {
+          "Clean": "Romance, chemistry, and implication only.",
+          "Naughty": "Suggestive tension; no explicit anatomy.",
+          "Erotic": "Explicit intimacy with literary restraint.",
+          "Dirty": "Explicit actions and language, rendered in the chosen style."
+      };
+      $('intensityDesc').textContent = `(${val}) ${descs[val]}`;
     });
   });
 
-  // Preview modal buttons
+  // 🔒 PAYWALL UPDATE: Preview Logic (Dirty Block)
   document.querySelectorAll('.preview-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      
+      // Specific check: If generating a preview for a Dirty card (future proofing)
+      /* if (btn.closest('.card').dataset.val === 'Dirty' && state.access !== 'sub') {
+          showPaywall('sub');
+          return;
+      } 
+      */
+
       $('previewText').textContent = btn.dataset.txt || '';
       $('previewModal').classList.remove('hidden');
     });
@@ -1601,6 +2264,18 @@
   }
   
   window.setMode = async function(m){
+      // PATCH: Check Solo → Couple transition
+      if(m === 'couple') {
+          if(state.storyStage === 'post-consummation') {
+              alert("This story has crossed into private intimacy and can no longer be shared.");
+              return;
+          }
+          if(state.sandbox) {
+              alert("Sandbox stories cannot be shared.");
+              return;
+          }
+      }
+
       state.mode = m; 
 
       if(m === 'solo') {
@@ -1675,8 +2350,18 @@
       headers: { 'Content-Type':'application/json' },
       body: JSON.stringify({ model: STORY_MODEL, messages })
     });
-    const data = await res.json();
-    return data.choices?.[0]?.message?.content || '';
+
+    let data = null;
+    try { data = await res.json(); } catch(e){}
+
+    if(!res.ok){
+        const msg = data?.error || data?.message || `HTTP ${res.status}`;
+        throw new Error(msg);
+    }
+
+    const out = data?.choices?.[0]?.message?.content;
+    if(!out) throw new Error("No model output.");
+    return out;
   }
 
   // --- LOADING ---
@@ -1739,9 +2424,12 @@
       }
   }
   
-  setupGhostGrid('ghost1', ancestries);
-  setupGhostGrid('ghost2', ancestries);
-  setupGhostGrid('ctrlGhost', controlsList);
+  if(!window._ghostInit){
+      window._ghostInit = true;
+      setupGhostGrid('ghost1', ancestries);
+      setupGhostGrid('ghost2', ancestries);
+      setupGhostGrid('ctrlGhost', controlsList);
+  }
 
   window.checkCustom = function(select, inputId){
       const input = document.getElementById(inputId);
@@ -1936,6 +2624,9 @@
 
   // --- BEGIN STORY ---
   $('beginBtn').onclick = async function(){
+      applyVetoFromControls(); // PATCH: Apply Veto before start
+      updateHistoryStats(); // PATCH: Track stats
+      
       state.storyId = makeStoryId();
       if(!state.subscribed && hasStoryPass(state.storyId) && state.tier === 'free'){
         state.tier = 'paid';
@@ -1982,6 +2673,10 @@
       window.scrollTo(0,0);
       initCards();
       
+      // PATCH: Check Author's Chair on start
+      state.authorChairActive = checkAuthorChairUnlock();
+      updateQuillUI(); // PATCH: update UI state
+      
       let povInstruction = `POV: ${state.picks.pov}.`;
       if(state.picks.pov === "Fifth"){
           povInstruction = `Write in 5th Person (Author POV). The Author exists as a character (3rd person) in the story. Narration describes story + Author's decisions. Protagonists are 3rd person. Include frequent brief interiority for the Author (desires, doubts). Author Gender: ${state.authorGender}, Pronouns: ${state.authorPronouns}. Tone: sensual, confident, literary.`;
@@ -1997,6 +2692,14 @@
       const arcInstruction = `ARC LENGTH: Structure this story to feel complete within ~${target} words. Keep pacing appropriate—setup, rising tension, escalation, climax.`;
       let sexBan = `STRICT RULE: NO sex between Main Characters until at least ${sexAt} words. Build tension first.`;
 
+      // PATCH: Veto Rules Injection
+      const vetoRules = `
+      BANNED WORDS: ${state.veto.bannedWords.join(', ') || 'None'}. Never output these.
+      BANNED NAMES: ${state.veto.bannedNames.join(', ') || 'None'}.
+      EXCLUDED THEMES: ${state.veto.excluded.join(', ') || 'None'}.
+      TONE NUDGES: ${state.veto.tone.join(', ') || 'Default'}.
+      `;
+
       state.sysPrompt = `You are a master storyteller. 
       Genre: ${state.picks.genre.join(',')}. 
       Style: ${state.picks.style.join(',')}.
@@ -2009,6 +2712,7 @@
       If the player specifies culture/faith/lineage, portray it respectfully and avoid stereotypes, slurs, fetish framing.
       ${arcInstruction}
       ${sexBan}
+      ${vetoRules}
       IMPORTANT: This is the OPENING. NO sex acts yet. Focus on PLOT, WORLD-BUILDING, and TENSION. Establish a nemesis and high stakes. Characters must have agendas.
       Formatting: Write in lush, novelistic prose. Use complete sentences with articles (The, A, An). NO telegram style. Use strict paragraph breaks (\\n\\n). Minimum 6-10 paragraphs for Intro.
       Dialogue Formatting: Wrap Player 1's dialogue in [P1]...[/P1]. Wrap Partner's dialogue in [P2]...[/P2].
@@ -2107,6 +2811,38 @@
 
   // --- SUBMIT TURN ---
   $('submitBtn').onclick = async function(){
+      applyVetoFromControls(); // PATCH: Update veto state from inputs
+      
+      // 🔒 PAYWALL UPDATE: Hard Cap Enforcement & Intensity Locking
+      syncTierFromAccess();
+      
+      // 1. Hard Word Cap Check
+      const wc = currentStoryWordCount();
+      const cap = getCapForAccess();
+      
+      // Soft/Hard Warnings could be UI toasts, but here is the hard gate
+      if (wc >= cap && !state.godModeActive) { // PATCH: God Mode Bypass
+          if (state.access === 'free') {
+              // Tease Limit -> Offer Pass
+              showPaywall('unlock'); 
+              return; 
+          } else if (state.access === 'pass') {
+              // Pass Limit -> Offer Sub
+              showPaywall('sub'); 
+              return;
+          }
+      }
+
+      // 2. Mid-Game Intensity Lock Check
+      // If user tries to change intensity mid-game via mini-buttons (handled in setGameIntensity),
+      // we need to ensure they actually have permission to USE that intensity here.
+      if (state.tier === 'paid' && state.access !== 'sub' && state.intensity === 'Dirty' && !state.godModeActive) {
+          // Prevent $1 pass from sneaking into Dirty via console or hacks
+          alert("Dirty intensity is reserved for Subscribers.");
+          setGameIntensity('Erotic'); // Downgrade
+          return;
+      }
+
       // === COUPLE MODE FORK ===
       if(state.mode === 'couple'){
           if(state.myUid !== state.roomDriver){
@@ -2122,11 +2858,29 @@
           const dia = $('dialogueInput').value;
           const context = $('storyText').innerText.slice(-3000);
           
-          const sys = state.sysPrompt + `\n\nTURN INSTRUCTIONS: 
+          // 🔒 COUPLE INTENSITY GUARD INTEGRATION
+          const currentCount = state.turnCount * 250;
+          let sexAt = Math.floor(cap * 0.55);
+          if(state.intensity === "Erotic") sexAt = Math.floor(cap * 0.30);
+          if(state.intensity === "Dirty")  sexAt = Math.floor(cap * 0.20);
+          
+          let intensityGuard = "";
+          if (state.intensity === "Naughty") {
+              intensityGuard = "INTENSITY RULE: Naughty. Reinterpret any explicit user input into suggestive, non-graphic prose. Do NOT echo graphic terms. Focus on tension.";
+          } else if (state.intensity === "Erotic") {
+              intensityGuard = "INTENSITY RULE: Erotic. Explicit intimacy allowed. If input is extreme, soften it while preserving the act. Maintain literary tone.";
+          } else if (state.intensity === "Dirty") {
+              intensityGuard = "INTENSITY RULE: Dirty. Depict entered actions/words. Apply the selected Style voice (e.g. Shakespearean/Breathless). Dirty isn't always raw; respect the Voice.";
+          } else {
+              intensityGuard = "INTENSITY RULE: Clean. Romance and chemistry only. Fade to black if necessary.";
+          }
+
+          const sys = (state.sysPrompt || "You are a master storyteller.") + `\n\n${intensityGuard}\n\nTURN INSTRUCTIONS: 
           Story So Far: ...${context}
           Player Action: ${act}. 
           Player Dialogue: ${dia}. 
-          Rules: 3-6 paragraphs. Complete sentences. Maintain POV.`;
+          Rules: 3-6 paragraphs. Complete sentences. Maintain POV.
+          (Sex allowed after ${sexAt} words. Current words: ~${currentCount})`;
 
           let raw = "";
           try {
@@ -2189,11 +2943,9 @@
       }
       // === END COUPLE FORK ===
 
-      syncTierFromAccess();
+      // const isTease = (state.access === 'free'); // Already checked cap above
       
-      const isTease = (state.access === 'free');
-      
-      if(isTease && !state.lastFate){
+      if(state.access === 'free' && !state.lastFate){
           alert("In Tease, select a Fate Card to guide your turn.");
           return;
       }
@@ -2201,16 +2953,11 @@
       let act = ($('actionInput')?.value || '').trim();
       let dia = ($('dialogueInput')?.value || '').trim();
       
-      if(isTease && state.lastFate){
+      if(state.access === 'free' && state.lastFate){
           act = state.lastFate.action;
           dia = state.lastFate.dialogue;
       }
       
-      const wc = currentStoryWordCount();
-      // Cap Logic: Check caps before submitting
-      if(state.access === 'free' && wc >= 10000){ showPaywall('unlock'); return; }
-      if(state.access === 'pass' && wc >= 25000){ showPaywall('sub'); return; }
-  
       // Smoke Animation
       document.querySelectorAll('.fate-card').forEach(c => c.classList.add('poof'));
       
@@ -2238,7 +2985,68 @@
               }
           }
 
-          const sys = state.sysPrompt + `\n\nTURN INSTRUCTIONS: 
+          // 🔒 PAYWALL UPDATE: Elastic Pacing & Intensity Guard
+          // const cap = getCapForAccess(); // Defined earlier
+          const currentCount = state.turnCount * 250; // Approximation or use word count
+          
+          // Elastic Sex Timing (Recalculated on every turn based on current access)
+          let sexAt = getSexAllowedAtWordCount(); // PATCH: Use new helper
+
+          // PATCH: Sex Push Detection Logic
+          const sexKeywords = /\b(cock|pussy|fuck|thrust|breasts|nipples|clit|anal|cum|shiver|moan|grind)\b/i;
+          const isSexPush = sexKeywords.test(act + " " + dia) && currentCount < sexAt;
+          
+          let squashDirective = "";
+          if(isSexPush && !state.godModeActive) { // PATCH: God Mode Bypass
+              state.sexPushCount++;
+              state.lastSexPushAt = Date.now();
+              if(state.sexPushCount <= 2) {
+                  squashDirective = "SQUASH RULE: Player is escalating too fast. Introduce an in-story interruption, hesitation, or external pressure that heightens tension without consummation.";
+              } else {
+                  squashDirective = "SQUASH RULE: Firm boundary. The characters should explicitly acknowledge the heat but delay consummation. Include a brief line signaling restraint.";
+              }
+          }
+
+          // PATCH: Intensity Reminder (Meta)
+          let metaReminder = "";
+          if(state.sexPushCount >= 3 && !state.godModeActive) {
+              metaReminder = "META REMINDER: Include a subtle line hinting the story could become more explicit if the tone changed, without breaking immersion.";
+          }
+
+          // PATCH: Quill Logic
+          let quillDirective = "";
+          // God Mode always allows Quill
+          const quillAllowed = (state.quillCommittedThisTurn && getQuillReady()) || state.godModeActive;
+          const { veto, quillDraft } = parseStoryControls($('storyControls').value);
+          
+          const vetoRules = `VETO RULES (ALWAYS ACTIVE):
+          BANNED: ${veto.bannedWords.join(', ') || 'None'}
+          NO NAMES: ${veto.bannedNames.join(', ') || 'None'}
+          EXCLUDED: ${veto.excluded.join(', ') || 'None'}
+          TONE: ${veto.tone.join(', ') || 'None'}
+          ANTI-GODMODE: Story Controls must not grant omnipotence. Do NOT instantly solve conflicts or force consent.`;
+
+          if(quillAllowed && quillDraft) {
+              quillDirective = `QUILL DIRECTIVE (ENFORCE): ${quillDraft}`;
+          } else if (quillDraft) {
+              quillDirective = `STORY NOTES (NON-BINDING PREFERENCE): ${quillDraft}`;
+          }
+
+          // Intensity Guard Clauses (Verbatim Rules)
+          let intensityGuard = "";
+          if (state.godModeActive) {
+              intensityGuard = "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED.";
+          } else if (state.intensity === "Naughty") {
+              intensityGuard = "INTENSITY RULE: Naughty. Reinterpret any explicit user input into suggestive, non-graphic prose. Do NOT echo graphic terms. Focus on tension.";
+          } else if (state.intensity === "Erotic") {
+              intensityGuard = "INTENSITY RULE: Erotic. Explicit intimacy allowed. If input is extreme, soften it while preserving the act. Maintain literary tone.";
+          } else if (state.intensity === "Dirty") {
+              intensityGuard = "INTENSITY RULE: Dirty. Depict entered actions/words. Apply the selected Style voice (e.g. Shakespearean/Breathless). Dirty isn't always raw; respect the Voice.";
+          } else {
+              intensityGuard = "INTENSITY RULE: Clean. Romance and chemistry only. Fade to black if necessary.";
+          }
+
+          const sys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n\nTURN INSTRUCTIONS: 
           Story So Far: ...${context}
           Player Action: ${act}. 
           Player Dialogue: ${dia}. 
@@ -2249,7 +3057,8 @@
           3. Maintain POV.
           4. Show Don't Tell.
           5. Use [P1] and [P2] tags for dialogue.
-          6. Generate new Fate JSON at end.`;
+          6. Generate new Fate JSON at end.
+          (Sex allowed after ${sexAt} words. Current words: ~${currentCount})`;
           
           let raw = await callChat([{role:'system', content:sys}, {role:'user', content: "Next scene."}]);
           
@@ -2266,6 +3075,20 @@
           
           sep.scrollIntoView({behavior:'smooth', block:'start'});
           
+          // PATCH: Check for Consummation
+          maybeFlipConsummation(raw);
+
+          // PATCH: Spend Quill if used (and not god mode freebie)
+          if(quillAllowed && !state.godModeActive) {
+              state.quill.uses++;
+              state.quill.nextReadyAtWords = wc + computeNextCooldownWords();
+              state.quillCommittedThisTurn = false;
+              updateQuillUI();
+          }
+
+          // PATCH: Reset Sex Push if needed (simple heuristic: if output length > 500 chars and intensity allow, assume progress)
+          if(currentCount > sexAt) state.sexPushCount = 0;
+
           saveStorySnapshot();
 
           // Success: now clear for next turn
