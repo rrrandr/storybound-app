@@ -5,6 +5,8 @@
   <title>Storybound</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
@@ -41,7 +43,10 @@
     /* TYPOGRAPHY */
     h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !important; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
     .section-title { font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
-    .instruction-text { font-family: 'Lora', serif; font-size: 0.5em; color: var(--ink); opacity: 0.7; vertical-align: middle; margin-left: 12px; letter-spacing: 0; text-shadow: none; }
+    
+    /* Revised instruction text size per requirements */
+    .instruction-text { font-family: 'Lora', serif; font-size: 0.5em; color: var(--ink); opacity: 0.7; vertical-align: middle; margin-left: 12px; letter-spacing: 0; text-shadow: none; font-weight: normal; }
+    
     .subtitle { font-size: 1.2em; color: var(--gold); font-style: italic; opacity: 0.9; margin-bottom: 30px; }
 
     /* STORY READING EXPERIENCE */
@@ -70,8 +75,15 @@
 
     /* UTILS */
     .box { max-width:600px; margin:20px auto; padding:25px; background:var(--panel); border:1px solid var(--pink); border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.2); }
+    
+    /* CHOICE BUTTONS - Mobile Fix */
     .choice-buttons { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin:30px auto; max-width:800px; }
-    .choice { padding:15px 40px; font-size:1.4em; border-radius:30px; font-family:'lust-script-display',serif; }
+    @media (max-width: 600px) {
+        .choice-buttons { flex-direction: column; align-items: center; }
+        .choice-buttons > div { width: 100%; max-width: 300px; }
+    }
+    
+    .choice { padding:15px 40px; font-size:1.4em; border-radius:30px; font-family:'lust-script-display',serif; width: 100%; box-sizing: border-box; }
     .hidden { display:none !important; }
     
     /* INPUTS & LOCKS */
@@ -100,33 +112,32 @@
         box-shadow: 0 0 10px rgba(255,105,180,0.4);
     }
 
-    /* LOCKS & CURSOR (Consolidated) */
-    /* Add position: relative to all containers that can be locked */
-    .locked-input, .locked-style, .card.locked, .fate-card.locked {
-        position: relative;
-    }
-    .locked-style { display: inline-block; }
-
-    /* The visual lock effect */
+    /* LOCKS & CURSOR */
     .locked-input textarea, .locked-style, .card.locked, .fate-card.locked { 
         opacity:0.6; filter:grayscale(0.9); 
         cursor: var(--cursor-url), pointer !important; 
         pointer-events: auto; 
     }
-    
-    /* Handcuff Overlay Icon */
+    .locked-input, .locked-style, .card.locked, .fate-card.locked {
+        position: relative;
+    }
+    .locked-style { display: inline-block; }
+
+    /* HANDCUFF OVERLAY - Updated to SVG for better quality/transparency */
     .locked-input::after, .locked-style::after, .card.locked::after, .fate-card.locked::after { 
-        content:""; 
-        position:absolute; 
+        content:""; position:absolute; 
         top:5px; right:5px; 
         width:24px; height:24px; 
-        background:url("https://img.icons8.com/ios-filled/50/ffffff/handcuffs.png") center/contain no-repeat; 
-        opacity:0.8; 
+        /* Thin white outline handcuff SVG */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.5 13.5a3.5 3.5 0 1 0-2.5-5.9l-1.5 1.5'%3E%3C/path%3E%3Cpath d='M6.5 10.5a3.5 3.5 0 1 0 2.5 5.9l1.5-1.5'%3E%3C/path%3E%3Cpath d='M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        opacity:0.9; 
         pointer-events:none; 
         z-index: 10; 
         filter: drop-shadow(0 0 2px black);
     }
-    /* Specific adjustment for input wrappers */
     .locked-input::after { top: 40px; right: 10px; } 
 
     /* STYLE CARDS */
@@ -189,6 +200,10 @@
     #metaControls .meta-stance { opacity: 0.5; border: 1px solid transparent; }
     #metaControls .meta-stance.active { opacity: 1; border: 1px solid var(--gold); box-shadow: 0 0 5px var(--gold); }
 
+    /* COUPLE UI */
+    #coupleRoomCodeWrap { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    #btnCopyCode { background: none; border: 1px solid var(--pink); padding: 5px; border-radius: 5px; cursor: pointer; color: var(--gold); }
+
     @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
 
     @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
@@ -203,6 +218,7 @@
     <h3>Menu</h3>
     <button onclick="restart()">Restart Story</button>
     <button onclick="changeTier()">Change Tier</button>
+    <button id="continueStoryBtn" class="hidden" onclick="window.continueStory()">Continue Saved Story</button>
     <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
     
     <label style="color:var(--gold); display:block; margin-bottom:5px;">Theme</label>
@@ -255,9 +271,10 @@
 
     <div class="viz-controls">
         <select id="vizModel" style="width:auto; padding:5px;">
-            <option value="grok-2-image-1212">Grok 2 (Most Explicit)</option>
+            <option value="auto">Auto (Best Available)</option>
+            <option value="grok-2-image-1212">Grok 2</option>
             <option value="openai">OpenAI (DALL-E 3)</option>
-            <option value="gemini">Gemini (Best Fantasy)</option>
+            <option value="gemini">Gemini (Fantasy)</option>
         </select>
         <button class="small-btn" onclick="visualize(true)">Re-Visualize</button>
         <button onclick="insertImage()">Insert</button>
@@ -267,12 +284,39 @@
 </div>
 
 <div id="coupleInvite" class="hidden" style="position:fixed; inset:0; background:#000; z-index:9990; align-items:center; justify-content:center; display:flex;">
-  <div class="box">
+  <div class="box" style="max-width:520px; text-align:center;">
     <h3>Open a Private Chamber</h3>
-    <p>Share this code to link your fates.</p>
-    <div style="font-size:2em; letter-spacing:3px; color:var(--gold); margin:20px; border:1px dashed var(--pink); padding:10px;">X7K-9L</div>
-    <button onclick="setMode('solo')">Enter Together</button>
-    <button onclick="showScreen('modeSelect')" style="background:#444">Back</button>
+
+    <div style="text-align:left; margin:10px 0 15px; font-size:0.95em; border-bottom:1px solid #444; padding-bottom:10px;">
+      <div><strong>Your nickname:</strong> <span id="sbNickLabel" style="color:var(--gold)">…</span></div>
+      <div><strong>Status:</strong> <span id="coupleStatus" style="font-style:italic">Not connected</span></div>
+      <div><strong>Room Code:</strong> <span id="coupleRoomCodeLabel" style="font-family:monospace; color:var(--pink)">—</span></div>
+    </div>
+
+    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
+      <button id="btnCreateRoom">Create Room</button>
+      <button id="btnJoinRoom" style="background:#444">Join Room</button>
+    </div>
+
+    <div id="joinRow" class="hidden" style="margin-bottom:15px; display:flex; gap:10px; justify-content:center;">
+      <input id="joinCodeInput" placeholder="Enter 6-char Code" style="text-transform:uppercase; text-align:center; width:150px;">
+      <button id="btnJoinGo">Enter</button>
+    </div>
+
+    <div id="roomCodeWrap" class="hidden" style="margin-bottom:15px;">
+      <p style="margin:0 0 5px; font-size:0.9em; opacity:0.8;">Share this code with your partner:</p>
+      <div id="coupleRoomCodeWrap">
+         <div id="roomCodeBig" style="font-size:2.5em; letter-spacing:6px; color:var(--gold); border:2px dashed var(--pink); padding:10px; background:rgba(255,105,180,0.1);">—</div>
+         <button id="btnCopyCode" title="Copy Code">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+         </button>
+      </div>
+    </div>
+
+    <div>
+      <button id="btnEnterCoupleGame" class="hidden" style="width:100%; margin-bottom:10px;">Enter Together</button>
+      <button onclick="coupleCleanup(); showScreen('modeSelect')" style="background:transparent; border:1px solid #444; font-size:0.9em;">Back</button>
+    </div>
   </div>
 </div>
 
@@ -297,7 +341,7 @@
   <div class="box" style="text-align:left; height:60vh; overflow-y:auto; font-size:0.85em; line-height:1.5;">
     <p><strong>TERMS OF SERVICE</strong></p>
     <p>1. <strong>Age Requirement:</strong> You must be 18+.</p>
-    <p>2. <strong>Content Policy:</strong> Adult fantasy roleplay only. No non-consensual content, violence, or minors.</p>
+    <p>2. <strong>Content Policy:</strong> Adult fantasy roleplay only. Content must be consensual. Optional power play/roleplay is permitted only if explicitly opted-in by user. No depiction of non-consensual sexual acts, sexual violence, or minors.</p>
     <p>3. <strong>Data & AI:</strong> Content generated by third-party AI models. We may anonymize and aggregate data to improve the Service.</p>
     <p>4. <strong>Liability:</strong> Use at your own risk. Entertainment purposes only.</p>
     <p><em>(Full text abbreviated for display, but legally binding).</em></p>
@@ -319,6 +363,7 @@
       <p style="opacity:0.7; max-width:250px; margin:10px auto;">Longer openings, deeper memory, full control, saved stories.<br><br><strong>From $6/mo</strong></p>
     </div>
   </div>
+  <button id="continueFromTierBtn" class="choice hidden" style="margin-top:20px; width:80%" onclick="window.continueStory()">Continue Saved Story</button>
 </div>
 
 <div id="payModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:10000; align-items:center; justify-content:center; display:flex;">
@@ -403,7 +448,7 @@
             <input id="customPlayerPronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
 
             <label style="color:var(--gold); margin-top:10px;">Ancestry / Nature</label>
-            <div class="input-wrapper relative" style="height: 120px;">
+            <div class="input-wrapper relative" style="height: 140px;">
                 <textarea id="playerAncestry" style="color:transparent; background:transparent; z-index:2; position:relative; height:100%;"></textarea>
                 <div class="ghost-overlay" id="ghost1">
                     <div class="ghost-grid"></div>
@@ -431,7 +476,7 @@
             <input id="customLovePronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
 
             <label style="color:var(--gold); margin-top:10px;">Ancestry / Nature</label>
-            <div class="input-wrapper relative" style="height: 120px;">
+            <div class="input-wrapper relative" style="height: 140px;">
                 <textarea id="loveAncestry" style="color:transparent; background:transparent; z-index:2; position:relative; height:100%;"></textarea>
                 <div class="ghost-overlay" id="ghost2">
                     <div class="ghost-grid"></div>
@@ -448,6 +493,33 @@
       <button data-val="Dirty" data-desc="Very explicit language and bold scenes." class="intensity-btn">Dirty</button>
     </div>
     <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px;">(Naughty) Direct teasing with tasteful sensuality.</p>
+    
+    <div class="section-title">Story Length</div>
+    <div class="style-cards" id="lengthGrid">
+      <div class="card selected" data-grp="length" data-val="10000">
+        <h3>Short Story (10k)</h3>
+        <p>Free in Tease. A complete arc in one sitting.</p>
+      </div>
+
+      <div class="card locked" data-grp="length" data-val="25000" data-locked="pass">
+        <h3>Novella (25k)</h3>
+        <p>$1 Story Pass. Unlocks controls + options, but capped at 25k.</p>
+      </div>
+
+      <div class="card locked" data-grp="length" data-val="50000" data-locked="sub">
+        <h3>Short Novel (50k)</h3>
+        <p>Subscribe to continue past Tease/Pass limits.</p>
+      </div>
+
+      <div class="card locked" data-grp="length" data-val="100000" data-locked="sub">
+        <h3>Full Novel (100k+)</h3>
+        <p>Subscribe for long-form arcs and deeper continuity.</p>
+      </div>
+    </div>
+
+    <p style="font-size:0.85em; color:var(--gold); opacity:0.85; margin-top:10px;">
+      Tease and Story Pass stories will pause at their length cap. Subscribe to continue.
+    </p>
 
     <div class="section-title">Genres <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="genreGrid">
@@ -532,6 +604,8 @@
     <h2 id="storyTitle"></h2>
     <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:20px;"></p>
     
+    <div id="partnerStatusLine" class="hidden" style="text-align:center; font-size:0.85em; color:var(--pink); margin-bottom:15px; height:20px;"></div>
+
     <div id="settingShotWrap">
         <div id="settingError" class="img-error-msg hidden"></div>
         <img id="settingShotImg" src="" alt="Setting" style="display:none; width:100%;">
@@ -596,10 +670,42 @@
   var PROXY_URL = 'https://storybound-proxy.vercel.app/api/proxy';
   var IMAGE_PROXY_URL = 'https://storybound-proxy.vercel.app/api/image';
   const STORY_MODEL = 'grok-4-1-fast-reasoning'; 
+  
+  // =========================
+  // SUPABASE CONFIG (COUPLE MODE)
+  // =========================
+  const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE"; 
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE"; 
+  
+  // Presence Constants
+  const PRESENCE_HEARTBEAT_MS = 15000;
+  const ONLINE_THRESHOLD_MS = 45000;
+  const TYPING_THROTTLE_MS = 900;
+  const TYPING_IDLE_OFF_MS = 1600;
+
+  const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  async function ensureAnonSession(){
+    if(!sb) return null;
+    const { data: { session } } = await sb.auth.getSession();
+    if(session?.user?.id) return session.user.id;
+    const { data, error } = await sb.auth.signInAnonymously();
+    if(error) { console.error(error); return null; }
+    return data.user.id;
+  }
+
+  function getNickname(){
+    let n = localStorage.getItem("sb_nickname");
+    if(!n){
+      n = prompt("Enter a nickname for Couple Mode:", "Guest") || "Guest";
+      localStorage.setItem("sb_nickname", n);
+    }
+    return n;
+  }
 
   const META_DIRECTIVES = {
       aid: [
-          "Include a brief beat where the characters sense an unseen guidance and choose to follow the offered path—like accepting an omen.",
+          "Include a brief beat where the characters sense an unseen guidance and choose to follow the offered path—like accepting an omen. Keep it understated.",
           "Let the characters notice the scene tightening as though arranged; they quietly lean into it, trusting the pressure as permission.",
           "Add a small moment of recognition: the world seems to 'nudge' them, and they consent to be led—curious, willing, unafraid."
       ],
@@ -629,11 +735,36 @@
       stance: 'aid', 
       metaChance: 0.10, 
       consecutiveFate: 0, 
-      consecutiveAid: 0 
+      consecutiveAid: 0,
+      storyId: null,
+      access: 'free',
+      subscribed: false,
+      authorGender: 'Female',
+      authorPronouns: 'She/Her',
+      storyTargetWords: 10000,
+      unlockedFateIdx: [0, 1],
+      lastFate: null,
+      mode: 'solo',
+      roomId: null,
+      roomCode: null,
+      roomTurn: 1,
+      roomDriver: null,
+      myUid: null,
+      myNick: null,
+      turnsChannel: null,
+      roomChannel: null,
+      membersChannel: null,
+      presenceInterval: null,
+      typingTimer: null,
+      lastTypingSentAt: 0,
+      partnerStatus: { online:false, lastSeenAt:null, typing:false, typingAt:null, uid:null },
+      _lastTurnId: null,
+      selectedFateIndex: null,
+      selectedFatePayload: null
   };
   
   const cheapNames = ["Thrifton", "Pennywise", "McMiser", "Scrooge", "Tightwad", "Pinchpenny"];
-  const ancestries = ["Jewish", "First Nations", "Slavic", "Pacific Islander", "Yoruba", "Celtic", "Han Chinese", "Inca", "Inuit", "Bedouin", "Dwarven", "Demonkin", "Asgardian", "Fae-Touched", "Cyber-Construct", "Deep One", "Star-Born", "Persian", "Maori", "Viking", "Cambion", "Orc", "Siren", "Angel", "Lycanthrope"];
+  const ancestries = ["Dwarven", "Demonkin", "Asgardian", "Fae-Touched", "Cyber-Construct", "Deep One", "Star-Born", "Cambion", "Orc", "Siren", "Angel", "Lycanthrope", "Titan-Blooded", "Shadow-Weaver", "Void-Walker", "Nymph", "Dryad", "High Elf", "Dark Elf", "Moon-Child", "Sun-Touched", "Water-Genasi", "Fire-Genasi", "Earth-Genasi", "Air-Genasi", "Any culture, faith, or lineage you can imagine"];
   const controlsList = ["Ban 'moist'", "Rhyming dialogue", "Start in bathhouse", "Villain named Bob", "Make me an Emperor", "Force Proximity", "Setting: Atlantis", "Superpowers", "Start w/ explosion", "Include Dragon", "Make it Musical", "No Magic", "I am the Villain", "Extreme Slow Burn", "Love interest is Ghost", "Love Triangle", "Enemies to Lovers", "Only one bed", "Secret Baby", "Fake Dating", "Marriage of Convenience"];
 
   // --- HELPERS ---
@@ -656,86 +787,669 @@
       } else {
           app.classList.add('hidden');
       }
+      
+      // Auto-scroll top on screen change
+      window.scrollTo(0,0);
+  }
+  
+  function pickTwoIndices(){
+      const pool = [0,1,2,3,4];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool.slice(0, 2);
+  }
+
+  // --- ACCESS HELPERS ---
+  function resolveAccess(){
+    if(state.subscribed) return 'sub';
+    if(state.storyId && hasStoryPass(state.storyId)) return 'pass';
+    return 'free';
+  }
+
+  function syncTierFromAccess(){
+    state.access = resolveAccess();
+    state.tier = (state.access === 'free') ? 'free' : 'paid';
+  }
+
+  function getCapForAccess(){
+    if(state.access === 'sub') return Infinity;
+    if(state.access === 'pass') return 25000;
+    return 10000;
+  }
+
+  function currentStoryWordCount(){
+    const txt = ($('storyText')?.innerText || '').trim();
+    if(!txt) return 0;
+    return txt.split(/\s+/).filter(Boolean).length;
+  }
+
+  // --- STORY PASS & PERSISTENCE ---
+  function makeStoryId(){
+    const existing = localStorage.getItem('sb_current_story_id');
+    if(existing) return existing;
+    const id = 'sb_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+    localStorage.setItem('sb_current_story_id', id);
+    return id;
+  }
+
+  function getStoryPassKey(storyId){
+    return `sb_storypass_${storyId}`;
+  }
+
+  function hasStoryPass(storyId){
+    if(!storyId) return false;
+    return localStorage.getItem(getStoryPassKey(storyId)) === '1';
+  }
+
+  function grantStoryPass(storyId){
+    if(!storyId) return;
+    localStorage.setItem(getStoryPassKey(storyId), '1');
+  }
+
+  function clearCurrentStoryId(){
+    localStorage.removeItem('sb_current_story_id');
+  }
+
+  function hasSavedStory(){
+    return !!localStorage.getItem('sb_saved_story');
+  }
+
+  // Set-based used names to prevent duplicates
+  const usedNamesSet = new Set(
+    (() => {
+      try { return JSON.parse(localStorage.getItem('sb_used_names') || '[]'); }
+      catch(e){ return []; }
+    })()
+  );
+
+  function getUsedNames(){
+    return Array.from(usedNamesSet);
+  }
+
+  function addUsedName(name){
+    const n = (name || '').toString().trim();
+    if(!n) return;
+    if(!usedNamesSet.has(n)){
+      usedNamesSet.add(n);
+      try { localStorage.setItem('sb_used_names', JSON.stringify(Array.from(usedNamesSet))); } catch(e){}
+    }
+  }
+
+  function saveStorySnapshot(){
+    const el = document.getElementById('storyText');
+    if(!el) return;
+
+    const snapshot = {
+      storyId: state.storyId,
+      subscribed: !!state.subscribed,
+      tier: state.tier,
+      sysPrompt: state.sysPrompt,
+      title: document.getElementById('storyTitle')?.textContent || '',
+      synopsis: document.getElementById('storySynopsis')?.textContent || '',
+      storyHTML: el.innerHTML,
+      stateSnapshot: {
+        picks: state.picks,
+        gender: state.gender,
+        loveInterest: state.loveInterest,
+        intensity: state.intensity,
+        turnCount: state.turnCount,
+        fateOptions: state.fateOptions,
+        fatePressure: state.fatePressure,
+        awareness: state.awareness,
+        stance: state.stance,
+        metaChance: state.metaChance,
+        consecutiveFate: state.consecutiveFate,
+        consecutiveAid: state.consecutiveAid,
+        authorGender: state.authorGender,
+        authorPronouns: state.authorPronouns,
+        storyTargetWords: state.storyTargetWords,
+        unlockedFateIdx: state.unlockedFateIdx
+      }
+    };
+
+    localStorage.setItem('sb_saved_story', JSON.stringify(snapshot));
+    updateContinueButtons();
+  }
+
+  window.continueStory = function(){
+    const raw = localStorage.getItem('sb_saved_story');
+    if(!raw) return;
+
+    const data = JSON.parse(raw);
+    if(!data || !data.storyId) return;
+
+    state.storyId = data.storyId;
+    localStorage.setItem('sb_current_story_id', state.storyId);
+
+    if(data.stateSnapshot){
+      Object.assign(state, data.stateSnapshot);
+    }
+
+    state.sysPrompt = data.sysPrompt || state.sysPrompt;
+    state.subscribed = !!data.subscribed;
+
+    syncTierFromAccess();
+
+    document.getElementById('storyTitle').textContent = data.title || '';
+    document.getElementById('storySynopsis').textContent = data.synopsis || '';
+    document.getElementById('storyText').innerHTML = data.storyHTML || '';
+    
+    // Fallback setting shot if none exists
+    const img = document.getElementById('settingShotImg');
+    if(!img.src || img.style.display === 'none'){
+       // Force a fallback reload if empty
+       generateSettingShot(data.synopsis || "Fantasy Landscape");
+    }
+
+    showScreen('game');
+    applyTierUI();
+    applyLengthLocks();
+    initCards(); // ensure correct unlocks
+  }
+
+  function updateContinueButtons(){
+    const show = hasSavedStory();
+    document.getElementById('continueStoryBtn')?.classList.toggle('hidden', !show);
+    document.getElementById('continueFromTierBtn')?.classList.toggle('hidden', !show);
   }
 
   // =========================
-  // PATCH: GATES + PAYWALL + MENU + TIER APPLY
+  // COUPLE MODE HELPERS
   // =========================
 
+  function makeRoomCode(){
+    const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    return Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  }
+  
+  async function coupleGetRoom(){
+    const { data: room, error } = await sb.from('sb_rooms')
+      .select('id, code, turn, current_driver, updated_at')
+      .eq('id', state.roomId)
+      .single();
+    if(error) throw error;
+    return room;
+  }
+  
+  // Compare-and-swap: only advance turn if we still own the driver seat at this turn.
+  async function coupleAdvanceTurnCAS(nextDriver){
+    const expectedTurn = state.roomTurn;
+    const expectedDriver = state.myUid;
+
+    const { data, error } = await sb.from('sb_rooms')
+      .update({
+        current_driver: nextDriver,
+        turn: expectedTurn + 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', state.roomId)
+      .eq('turn', expectedTurn)
+      .eq('current_driver', expectedDriver)
+      .select('turn,current_driver')
+      .maybeSingle();
+
+    if(error) throw error;
+
+    // If no row updated, someone else advanced or we lost driver.
+    if(!data){
+      // Refresh authoritative room state
+      const room = await coupleGetRoom();
+      state.roomTurn = room.turn;
+      state.roomDriver = room.current_driver;
+      applyCoupleDriverUI();
+      throw new Error("Turn conflict: room advanced elsewhere. Resynced.");
+    }
+
+    // Success
+    state.roomTurn = data.turn;
+    state.roomDriver = data.current_driver;
+  }
+  
+  async function coupleBootstrap(){
+    if(!state.roomId) return;
+
+    // 1) Fetch room authoritative state
+    const room = await coupleGetRoom();
+    state.roomTurn = room.turn;
+    state.roomDriver = room.current_driver;
+
+    // 2) Load last N turns and render them (avoid duplicates)
+    const { data: turns, error } = await sb.from('sb_turns')
+      .select('id, turn, story_delta, created_at')
+      .eq('room_id', state.roomId)
+      .order('turn', { ascending: true })
+      .limit(200);
+
+    if(error) throw error;
+
+    // If storyText already has content, don’t nuke it. But on fresh join it will be empty.
+    const storyEl = $('storyText');
+    if(storyEl && storyEl.childElementCount === 0){
+      (turns || []).forEach(t => {
+        const div = document.createElement('div');
+        div.innerHTML = formatStory(t.story_delta || "");
+        storyEl.appendChild(div);
+        const sep = document.createElement('div');
+        sep.className = 'separator';
+        sep.innerHTML = "⚜";
+        storyEl.appendChild(sep);
+      });
+    }
+
+    // Track last seen turn id to prevent double-appends on resubscribe
+    state._lastTurnId = (turns && turns.length) ? turns[turns.length - 1].id : null;
+
+    applyCoupleDriverUI();
+    startPresence();
+  }
+  
+  function coupleCleanup(){
+    try {
+      if(state.turnsChannel) sb.removeChannel(state.turnsChannel);
+      if(state.roomChannel) sb.removeChannel(state.roomChannel);
+      if(state.membersChannel) sb.removeChannel(state.membersChannel);
+    } catch(e){}
+    stopPresence();
+    stopTyping(false);
+    state.turnsChannel = null;
+    state.roomChannel = null;
+    state.membersChannel = null;
+    state.roomId = null;
+    state.roomCode = null;
+    state.roomTurn = 1;
+    state.roomDriver = null;
+    state._lastTurnId = null;
+  }
+
+  function wireCoupleInviteUI(){
+    if(window._coupleWired) return;
+    window._coupleWired = true;
+
+    const btnCreate = document.getElementById('btnCreateRoom');
+    const btnJoin = document.getElementById('btnJoinRoom');
+    const btnJoinGo = document.getElementById('btnJoinGo');
+    const btnEnter = document.getElementById('btnEnterCoupleGame');
+    const joinRow = document.getElementById('joinRow');
+    const roomCodeWrap = document.getElementById('roomCodeWrap');
+    const roomCodeBig = document.getElementById('roomCodeBig');
+    const joinInput = document.getElementById('joinCodeInput');
+    const btnCopy = document.getElementById('btnCopyCode');
+
+    // Attach typing listeners once
+    ['actionInput', 'dialogueInput'].forEach(id => {
+       const el = document.getElementById(id);
+       if(el){
+           el.addEventListener('input', markTyping);
+           el.addEventListener('keydown', markTyping);
+       }
+    });
+
+    // Copy Handler
+    if(btnCopy){
+        btnCopy.onclick = () => {
+             const code = state.roomCode || roomCodeBig.textContent;
+             if(code && code !== '—') {
+                 navigator.clipboard.writeText(code).then(() => {
+                     const original = btnCopy.innerHTML;
+                     btnCopy.innerHTML = "✓";
+                     setTimeout(() => btnCopy.innerHTML = original, 2000);
+                 });
+             }
+        };
+    }
+
+    btnCreate.onclick = async ()=>{
+      startLoading();
+      const code = makeRoomCode();
+      const { data: room, error } = await sb.from('sb_rooms')
+        .insert([{ code, created_by: state.myUid, current_driver: state.myUid, turn: 1 }])
+        .select().single();
+      
+      if(error){ alert(error.message); stopLoading(); return; }
+
+      await sb.from('sb_room_members').insert([{ room_id: room.id, user_id: state.myUid, role:'host', last_seen_at: new Date().toISOString() }]);
+
+      state.roomId = room.id;
+      state.roomCode = code;
+      state.roomDriver = state.myUid;
+      
+      roomCodeBig.textContent = code;
+      document.getElementById('coupleRoomCodeLabel').textContent = code;
+      
+      roomCodeWrap.classList.remove('hidden');
+      btnEnter.classList.remove('hidden');
+      stopLoading();
+    };
+
+    btnJoin.onclick = ()=> joinRow.classList.toggle('hidden');
+
+    btnJoinGo.onclick = async ()=>{
+      const code = joinInput.value.trim().toUpperCase();
+      if(!code) return;
+      startLoading();
+      
+      const { data: room, error } = await sb.from('sb_rooms').select('*').eq('code',code).single();
+      if(error || !room){ alert("Room not found or error."); stopLoading(); return; }
+
+      await sb.from('sb_room_members').insert([{ room_id: room.id, user_id: state.myUid, role:'member', last_seen_at: new Date().toISOString() }]);
+      
+      state.roomId = room.id;
+      state.roomCode = code;
+      state.roomDriver = room.current_driver;
+
+      document.getElementById('coupleRoomCodeLabel').textContent = code;
+      btnEnter.classList.remove('hidden');
+      alert("Joined! Wait for host to start.");
+      stopLoading();
+    };
+
+    btnEnter.onclick = async ()=>{
+      showScreen('game');
+      applyTierUI();
+      await coupleBootstrap();
+      subscribeCoupleRealtime();
+      applyCoupleDriverUI();
+    };
+  }
+
+  // --- PRESENCE & TYPING ---
+  async function presenceBeat(extraFields={}){
+    if(!state.roomId || !state.myUid) return;
+    await sb.from('sb_room_members')
+      .update({ last_seen_at: new Date().toISOString(), ...extraFields })
+      .eq('room_id', state.roomId)
+      .eq('user_id', state.myUid);
+  }
+
+  function startPresence(){
+    if(state.presenceInterval) clearInterval(state.presenceInterval);
+    presenceBeat();
+    state.presenceInterval = setInterval(() => presenceBeat(), PRESENCE_HEARTBEAT_MS);
+  }
+
+  function stopPresence(){
+    if(state.presenceInterval) clearInterval(state.presenceInterval);
+    state.presenceInterval = null;
+  }
+
+  function markTyping(){
+    if(state.mode !== 'couple' || !state.roomId) return;
+    const now = Date.now();
+    if(now - state.lastTypingSentAt > TYPING_THROTTLE_MS){
+       state.lastTypingSentAt = now;
+       presenceBeat({ typing: true, typing_at: new Date().toISOString() });
+    }
+    if(state.typingTimer) clearTimeout(state.typingTimer);
+    state.typingTimer = setTimeout(() => stopTyping(true), TYPING_IDLE_OFF_MS);
+  }
+
+  function stopTyping(send=true){
+    if(state.typingTimer) clearTimeout(state.typingTimer);
+    state.typingTimer = null;
+    if(send && state.mode === 'couple') presenceBeat({ typing: false });
+  }
+
+  function updatePartnerUI(status){
+    const el = document.getElementById('partnerStatusLine');
+    if(!el || state.mode !== 'couple') {
+        el.classList.add('hidden');
+        return;
+    }
+    
+    // Partner is only "Online" if lastSeenAt is recent
+    const now = new Date();
+    const seen = status.lastSeenAt ? new Date(status.lastSeenAt) : null;
+    const isOnline = seen && (now - seen < ONLINE_THRESHOLD_MS);
+    
+    // Partner is "Typing" if typing=true AND typed recently (stale typing prevention)
+    const typedAt = status.typingAt ? new Date(status.typingAt) : null;
+    const isTyping = status.typing && typedAt && (now - typedAt < ONLINE_THRESHOLD_MS);
+
+    if(isTyping){
+        el.textContent = "Partner is writing...";
+        el.classList.remove('hidden');
+    } else if (isOnline){
+        el.textContent = "Partner: Online";
+        el.classList.remove('hidden');
+    } else if (seen) {
+        // Simple diff
+        const mins = Math.floor((now - seen) / 60000);
+        el.textContent = `Partner: Last seen ${mins}m ago`;
+        el.classList.remove('hidden');
+    } else {
+        el.textContent = "Partner: Offline";
+        el.classList.remove('hidden');
+    }
+  }
+
+  function applyCoupleDriverUI(){
+    const isDriver = (state.myUid === state.roomDriver);
+    const submit = $('submitBtn');
+    
+    if(isDriver){
+        submit.disabled = false;
+        submit.textContent = "Submit Turn (Your Turn)";
+        $('game').style.opacity = "1";
+    } else {
+        submit.disabled = true;
+        submit.textContent = "Waiting for Partner...";
+        $('game').style.opacity = "0.7";
+    }
+  }
+
+  function subscribeCoupleRealtime(){
+    if(state.turnsChannel || state.roomChannel) return;
+    if(!state.roomId) return;
+
+    // TURNS
+    state.turnsChannel = sb.channel('turns_' + state.roomId)
+      .on('postgres_changes', {event:'INSERT', schema:'public', table:'sb_turns', filter:`room_id=eq.${state.roomId}`},
+        (payload) => {
+           if(state._lastTurnId && payload.new.id === state._lastTurnId) return;
+           state._lastTurnId = payload.new.id;
+
+           const delta = payload.new.story_delta || "";
+           const div = document.createElement('div');
+           div.innerHTML = formatStory(delta);
+           $('storyText').appendChild(div);
+           
+           const sep = document.createElement('div');
+           sep.className = 'separator';
+           sep.innerHTML = "⚜";
+           $('storyText').appendChild(sep);
+
+           sep.scrollIntoView({behavior:'smooth'});
+        }
+      )
+      .subscribe();
+
+    // ROOM STATE
+    state.roomChannel = sb.channel('room_' + state.roomId)
+      .on('postgres_changes', {event:'UPDATE', schema:'public', table:'sb_rooms', filter:`id=eq.${state.roomId}`},
+        (payload) => {
+           state.roomDriver = payload.new.current_driver;
+           state.roomTurn = payload.new.turn;
+           applyCoupleDriverUI();
+        }
+      )
+      .subscribe();
+
+    // MEMBERS / PRESENCE
+    state.membersChannel = sb.channel('members_' + state.roomId)
+      .on('postgres_changes', {event:'*', schema:'public', table:'sb_room_members', filter:`room_id=eq.${state.roomId}`},
+        (payload) => {
+           // We only care about the row that ISN'T us
+           const row = payload.new || payload.old; // handle updates
+           if(!row) return;
+           if(row.user_id === state.myUid) return;
+
+           state.partnerStatus = {
+             uid: row.user_id,
+             lastSeenAt: row.last_seen_at,
+             typing: row.typing,
+             typingAt: row.typing_at
+           };
+           updatePartnerUI(state.partnerStatus);
+        }
+      )
+      .subscribe();
+  }
+
+  // =========================
+  // UI LOGIC
+  // =========================
+
+  function setPaywallClickGuard(el, enabled){
+    if(!el) return;
+    if(enabled){
+      el.setAttribute('onclick', "showPaywall('unlock')");
+      el.onclick = () => showPaywall('unlock');
+    } else {
+      el.removeAttribute('onclick');
+      el.onclick = null;
+    }
+  }
+
   function applyTierUI(){
-    const paid = (state.tier !== 'free');
+      const paid = (state.tier === 'paid');
+      const couple = (state.mode === 'couple');
 
-    // Unlock inputs in paid
-    ['actionInput','dialogueInput','storyControls'].forEach(id => {
-      const el = $(id);
-      if(!el) return;
-      el.disabled = !paid ? true : false;
+      // Inputs
+      ['actionInput','dialogueInput','storyControls'].forEach(id => {
+        const el = $(id);
+        if(!el) return;
+        if(couple) return; // driver controlled
+        el.disabled = !paid;
+      });
+
+      // Wrappers
+      ['actionWrapper','dialogueWrapper','storyControlsBox'].forEach(id => {
+        const wrap = $(id);
+        if(!wrap) return;
+
+        if(couple){
+          wrap.classList.remove('locked-input');
+          setPaywallClickGuard(wrap, false);
+          return;
+        }
+
+        if(paid) wrap.classList.remove('locked-input');
+        else wrap.classList.add('locked-input');
+
+        setPaywallClickGuard(wrap, !paid);
+      });
+
+      // Style cards
+      document.querySelectorAll('.card[data-locked="true"]').forEach(card => {
+        if(couple) return;
+        if(paid) card.classList.remove('locked');
+        else card.classList.add('locked');
+      });
+
+      // Buttons
+      const saveBtn = $('saveBtn');
+      const gameControlsBtn = $('gameControlsBtn');
+
+      if(saveBtn){
+        if(couple || paid){
+          saveBtn.classList.remove('locked-style');
+          saveBtn.onclick = () => saveStorySnapshot();
+        } else {
+          saveBtn.classList.add('locked-style');
+          saveBtn.onclick = () => showPaywall('unlock');
+        }
+      }
+
+      if(gameControlsBtn){
+        if(couple || paid){
+          gameControlsBtn.classList.remove('locked-style');
+          gameControlsBtn.onclick = () => alert("Story Controls (stub).");
+        } else {
+          gameControlsBtn.classList.add('locked-style');
+          gameControlsBtn.onclick = () => showPaywall('unlock');
+        }
+      }
+  }
+
+  function applyLengthLocks(){
+    syncTierFromAccess();
+    const cards = document.querySelectorAll('#lengthGrid .card[data-grp="length"]');
+    cards.forEach(card => {
+      const lockType = card.dataset.locked; 
+      let locked = false;
+      if(lockType === 'pass') locked = (state.access === 'free');
+      if(lockType === 'sub')  locked = (state.access !== 'sub');
+      card.classList.toggle('locked', locked);
     });
-
-    // Remove lock styling when paid
-    ['actionWrapper','dialogueWrapper','storyControlsBox'].forEach(id => {
-      const wrap = $(id);
-      if(!wrap) return;
-      if(paid) wrap.classList.remove('locked-input');
-      else wrap.classList.add('locked-input');
+    
+    const cap = getCapForAccess();
+    if(state.storyTargetWords > cap) state.storyTargetWords = cap;
+    
+    document.querySelectorAll('#lengthGrid .card[data-grp="length"]').forEach(c => {
+      c.classList.toggle('selected', Number(c.dataset.val) === Number(state.storyTargetWords));
     });
-
-    // Unlock style cards when paid
-    document.querySelectorAll('.card[data-locked="true"]').forEach(card => {
-      if(paid) card.classList.remove('locked');
-      else card.classList.add('locked');
-    });
-
-    // Lock/unlock buttons
-    const saveBtn = $('saveBtn');
-    const gameControlsBtn = $('gameControlsBtn');
-    if(saveBtn){
-      if(paid){ saveBtn.classList.remove('locked-style'); saveBtn.onclick = () => alert("Saved (stub)."); }
-      else { saveBtn.classList.add('locked-style'); saveBtn.onclick = () => showPaywall('unlock'); }
-    }
-    if(gameControlsBtn){
-      if(paid){ gameControlsBtn.classList.remove('locked-style'); gameControlsBtn.onclick = () => alert("Story Controls (stub)."); }
-      else { gameControlsBtn.classList.add('locked-style'); gameControlsBtn.onclick = () => showPaywall('unlock'); }
-    }
-
-    // Fate cards locking is already handled in initCards() by tier
-    initCards();
   }
 
   window.showPaywall = function(mode){
-    // mode can be 'unlock' or 'sub' later — right now just show modal
     const pm = $('payModal');
     if(!pm) return;
-    $('optUnlock')?.classList.toggle('hidden', state.tier !== 'free'); // show one-time only if free
+    
+    const hasPassNow = state.storyId && hasStoryPass(state.storyId);
+    
+    // Hide unlock option if we are specifically asking for SUB, OR if user already has a pass for this story
+    const hideUnlock = (mode === 'sub') || state.subscribed || hasPassNow;
+    
+    $('optUnlock')?.classList.toggle('hidden', !!hideUnlock); 
     pm.classList.remove('hidden');
   };
 
-  // Simulated purchase buttons (replace with Stripe later)
+  // Purchase Handlers
   $('payOneTime')?.addEventListener('click', () => {
-    state.tier = 'paid';
+    state.storyId = state.storyId || makeStoryId();
+    grantStoryPass(state.storyId);
+    syncTierFromAccess();
     $('payModal').classList.add('hidden');
     applyTierUI();
+    applyLengthLocks();
+    initCards(); 
+    saveStorySnapshot();
   });
+
   $('paySub')?.addEventListener('click', () => {
-    state.tier = 'paid';
+    state.subscribed = true;
+    syncTierFromAccess();
     $('payModal').classList.add('hidden');
     applyTierUI();
+    applyLengthLocks();
+    initCards(); 
+    saveStorySnapshot();
   });
 
   window.restart = function(){
-    // Reset to setup
+    if(state.mode === 'couple') coupleCleanup();
+    state.mode = 'solo';
+    clearCurrentStoryId();
+    state.storyId = null;
+    if(!state.subscribed) state.tier = 'free';
+    localStorage.removeItem('sb_saved_story');
+    
     state.turnCount = 0;
+    state.unlockedFateIdx = [0, 1];
+    state.lastFate = null;
+    
     $('storyText').innerHTML = '';
     $('storyTitle').textContent = '';
     $('storySynopsis').textContent = '';
     $('settingShotImg').style.display = 'none';
     $('settingError').classList.add('hidden');
+    updateContinueButtons();
     showScreen('setup');
     window.scrollTo(0,0);
   };
 
   window.changeTier = function(){
-    // Go back to tier picker
     showScreen('tierGate');
   };
 
@@ -758,14 +1472,15 @@
   // Tier buttons
   $('btnTease')?.addEventListener('click', () => {
     state.tier = 'free';
+    state.access = 'free';
     applyTierUI();
     showScreen('modeSelect');
+    initCards();
   });
 
   $('btnIndulge')?.addEventListener('click', () => {
-    state.tier = 'paid';
-    applyTierUI();
-    showScreen('modeSelect');
+    // Indulge opens pay modal, doesn't grant paid immediately
+    showPaywall('sub');
   });
 
   // Game intensity buttons (mini)
@@ -794,36 +1509,130 @@
       $('previewModal').classList.remove('hidden');
     });
   });
+
+  // --- SELECTION HANDLER ---
+  function initSelectionHandlers(){
+    document.querySelectorAll('.card[data-grp]').forEach(card => {
+      if(card.dataset.bound === '1') return;
+      card.dataset.bound = '1';
+
+      card.addEventListener('click', (e) => {
+        if(e.target && e.target.classList && e.target.classList.contains('preview-btn')) return;
+
+        const grp = card.dataset.grp;
+        const val = card.dataset.val;
+        if(!grp || !val) return;
+
+        // Length Handling
+        if(grp === 'length'){
+           const lockType = card.dataset.locked;
+           if(lockType === 'pass' && state.access === 'free'){ showPaywall('unlock'); return; }
+           if(lockType === 'sub' && state.access !== 'sub'){ showPaywall('sub'); return; }
+           
+           state.storyTargetWords = Number(val);
+           document.querySelectorAll('.card[data-grp="length"]').forEach(c => c.classList.remove('selected'));
+           card.classList.add('selected');
+           return;
+        }
+
+        // Enforce locked style cards in free tier
+        const isLocked = card.dataset.locked === 'true' || card.classList.contains('locked');
+        const paid = (state.tier === 'paid');
+        if(grp === 'style' && isLocked && !paid){
+          showPaywall('unlock');
+          return;
+        }
+
+        // POV: single select
+        if(grp === 'pov'){
+          state.picks.pov = val;
+          document.querySelectorAll('.card[data-grp="pov"]').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          return;
+        }
+
+        // Multi-select groups with max 3
+        const key = grp; 
+        if(!state.picks[key]) state.picks[key] = [];
+        const arr = state.picks[key];
+
+        const idx = arr.indexOf(val);
+        if(idx >= 0){
+          arr.splice(idx, 1);
+          card.classList.remove('selected');
+        } else {
+          if(arr.length >= 3) return alert("Select up to 3 only."); 
+          arr.push(val);
+          card.classList.add('selected');
+        }
+      });
+    });
+  }
   
-  // STRANGER COUNT
+  // STRANGER COUNT & TRACKING
+  async function trackStrangerClick(){
+      const visitorId = localStorage.getItem('sb_visitor_id') || 'v_' + Date.now() + Math.random().toString(36).slice(2);
+      localStorage.setItem('sb_visitor_id', visitorId);
+
+      // Local Increment
+      let clicks = parseInt(localStorage.getItem('sb_stranger_clicks') || '0');
+      clicks++;
+      localStorage.setItem('sb_stranger_clicks', clicks);
+
+      // Supabase metric if available
+      if(sb){
+         try {
+             // Best effort - fire and forget
+             await sb.from('sb_metrics').insert([{ type: 'stranger_click', visitor_id: visitorId }]);
+         } catch(e) { /* ignore tracking error */ }
+      }
+  }
+
   function updateStrangerCount(){
       const el = document.getElementById('strangerCount');
       if(!el) return;
-      // session-stable “believable” placeholder
       let n = localStorage.getItem('sb_stranger_count');
       if(!n){
-        const base = 9000 + Math.floor(Math.random() * 12000); // 9,000–21,000
+        const base = 9000 + Math.floor(Math.random() * 12000); 
         n = String(base);
         localStorage.setItem('sb_stranger_count', n);
       }
       el.textContent = Number(n).toLocaleString();
   }
-
-  // Start the app at Age Gate
-  showScreen('ageGate');
-  applyTierUI();
-
-  window.checkCustom = function(select, inputId){
-      const input = document.getElementById(inputId);
-      if(select.value === 'Custom') input.classList.remove('hidden');
-      else input.classList.add('hidden');
-  }
   
-  window.setMode = function(m){
-      if(m === 'solo') showScreen('setup');
-      if(m === 'couple') showScreen('coupleInvite');
+  window.setMode = async function(m){
+      state.mode = m; 
+
+      if(m === 'solo') {
+          showScreen('setup');
+          return;
+      }
+
+      if(m === 'couple'){
+          showScreen('coupleInvite');
+          
+          if(sb){
+              state.myNick = getNickname();
+              document.getElementById('sbNickLabel').textContent = state.myNick;
+              document.getElementById('coupleStatus').textContent = "Connecting to auth...";
+              
+              state.myUid = await ensureAnonSession();
+              
+              if(state.myUid){
+                  document.getElementById('coupleStatus').textContent = "Connected (Anon)";
+                  wireCoupleInviteUI();
+              } else {
+                  document.getElementById('coupleStatus').textContent = "Auth Failed (Check Config)";
+              }
+          } else {
+               document.getElementById('coupleStatus').textContent = "Supabase Not Configured";
+          }
+          return;
+      }
+
       if(m === 'stranger'){
           updateStrangerCount();
+          trackStrangerClick();
           showScreen('strangerModal');
       }
   };
@@ -837,20 +1646,26 @@
   window.setFontSize = function(size){ document.documentElement.style.setProperty('--story-size', size + "px"); }
 
   // --- COLORS FOR DIALOGUE ---
-  function getGenderColor(g){
-      if(g === 'Male') return '#B0E0E6'; 
-      if(g === 'Female') return '#FFB6C1'; 
-      return '#77DD77'; 
-  }
+  // Returns hex codes based on pairings
+  function determineDialogueColors(){
+      // Normalization helpers
+      const isM = (g) => g === 'Male';
+      const isF = (g) => g === 'Female';
+      const p1 = state.gender;
+      const p2 = state.loveInterest;
 
-  // --- MEMORY ---
-  function getUsedNames(){
-      return JSON.parse(localStorage.getItem('sb_used_names') || '[]');
-  }
-  function addUsedName(name){
-      let list = getUsedNames();
-      if(!list.includes(name)) list.push(name);
-      localStorage.setItem('sb_used_names', JSON.stringify(list));
+      // P1 Male, P2 Male -> Blue / DarkBlue
+      if(isM(p1) && isM(p2)) return { p1: '#B0E0E6', p2: '#87CEEB' };
+      
+      // P1 Female, P2 Female -> Pink / HotPink
+      if(isF(p1) && isF(p2)) return { p1: '#FFB6C1', p2: '#FF69B4' };
+      
+      // Mixed M/F
+      if(isM(p1) && isF(p2)) return { p1: '#B0E0E6', p2: '#FFB6C1' };
+      if(isF(p1) && isM(p2)) return { p1: '#FFB6C1', p2: '#B0E0E6' };
+      
+      // Queer / NB / Custom fallback
+      return { p1: '#8A2BE2', p2: '#FF7F00' };
   }
 
   // --- API CALL ---
@@ -867,21 +1682,29 @@
   // --- LOADING ---
   const loadingPhrases = ["Stoking the embers...", "Consulting your desires...", "Sharpening tension...", "Weaving fate...", "Bribing the muse...", "Checking for traps...", "Summoning the stars...", "Opening the void...", "Setting the hook...", "Negotiating with destiny..."];
   let loadInt;
+  let isLoading = false;
+
   function startLoading(){
+    if(isLoading) return;
     $('loadingOverlay').style.display = 'flex';
+    isLoading = true;
     let i=0;
     $('loadingText').innerText = loadingPhrases[0];
     $('loadingOverlayFill').style.width = '10%';
     loadInt = setInterval(() => {
         i++;
         $('loadingText').innerText = loadingPhrases[i % loadingPhrases.length];
-        $('loadingOverlayFill').style.width = Math.min(90, i*20) + '%';
+        // Cap at 90% until done
+        const w = Math.min(90, i*20);
+        $('loadingOverlayFill').style.width = w + '%';
     }, 1200);
   }
+
   function stopLoading(){
-    clearInterval(loadInt);
-    $('loadingOverlayFill').style.width = '100%';
-    setTimeout(() => { $('loadingOverlay').style.display = 'none'; $('loadingOverlayFill').style.width='0%'; }, 300);
+    if(loadInt) clearInterval(loadInt);
+    isLoading = false;
+    $('loadingOverlay').style.display = 'none';
+    $('loadingOverlayFill').style.width = '0%';
   }
 
   // --- GHOST PILLS LOGIC (Cycling Grid) ---
@@ -920,46 +1743,62 @@
   setupGhostGrid('ghost2', ancestries);
   setupGhostGrid('ctrlGhost', controlsList);
 
-  // --- META SYSTEM (5th POV) ---
+  window.checkCustom = function(select, inputId){
+      const input = document.getElementById(inputId);
+      if(select.value === 'Custom') input.classList.remove('hidden');
+      else input.classList.add('hidden');
+  }
+
+  // --- META STATE (5th Person / Author=Fate system) ---
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+  
   window.setMetaStance = function(s){
       state.stance = s;
       document.querySelectorAll('.meta-stance').forEach(b => {
          b.classList.remove('active');
-         if(b.innerText.toLowerCase() === s) b.classList.add('active');
+         if(b.innerText.trim().toLowerCase() === s) b.classList.add('active');
       });
+      updateMetaReadout();
   };
 
-  function updateMetaState(action){
-      if(action.type === 'fate'){
-          state.consecutiveFate++;
-          if(state.consecutiveFate >= 2) state.awareness = Math.min(3, state.awareness + 1);
-          if(['Silence', 'Boundary'].includes(action.card)) state.awareness = Math.min(3, state.awareness + 1);
-      } else {
-          state.consecutiveFate = 0;
-      }
+  function updateMetaReadout(){
+    const r = $('metaReadout');
+    if(!r) return;
+    r.textContent = `Awareness: ${state.awareness}/3 | Pressure: ${state.fatePressure}/3`;
+  }
 
-      if(state.stance === 'aid'){
-          state.consecutiveAid++;
-          if(state.consecutiveAid >= 2) state.awareness = Math.max(0, state.awareness - 1);
-      } else {
-          state.consecutiveAid = 0;
-      }
+  function updateMetaState(evt){
+    // evt: {type:'fate'|'input', card?, text?}
+    const stance = state.stance || 'aid';
 
-      if(state.stance === 'rebel' && /refuse|no|won't|stop|not yours|defy/i.test(action.text)){
-          state.awareness = Math.min(3, state.awareness + 1);
-      }
+    if(evt && evt.type === 'fate'){
+      state.consecutiveFate = (state.consecutiveFate || 0) + 1;
+      if(state.consecutiveFate >= 1) state.fatePressure = clamp((state.fatePressure || 1) + 1, 1, 3);
+      if(state.consecutiveFate >= 2) state.awareness = clamp((state.awareness || 0) + 1, 0, 3);
+      state.metaChance = clamp((state.metaChance || 0.10) + 0.08, 0.05, 0.60);
+      if(stance === 'aid')    state.metaChance = clamp(state.metaChance + 0.02, 0.05, 0.60);
+      if(stance === 'rebel')  state.awareness  = clamp(state.awareness + 0.1, 0, 3);
+      if(stance === 'seduce') state.metaChance = clamp(state.metaChance + 0.01, 0.05, 0.60);
+    }
 
-      if(state.stance === 'rebel' && state.awareness >= 2) state.fatePressure = Math.min(3, state.fatePressure + 1);
-      if(action.card === 'Power Shift') state.fatePressure = Math.min(3, state.fatePressure + 1);
-      if(['Dirty','Erotic'].includes(state.intensity)) state.fatePressure = Math.min(3, state.fatePressure + 1);
+    if(evt && evt.type === 'input'){
+      state.consecutiveFate = clamp((state.consecutiveFate || 0) - 1, 0, 999);
+      if((state.fatePressure || 1) > 1) state.fatePressure = clamp(state.fatePressure - 1, 1, 3);
       
-      if(state.stance === 'aid' && ['Clean','Naughty'].includes(state.intensity)){
-          state.fatePressure = Math.max(0, state.fatePressure - 1);
-      }
+      const baseline = 0.10;
+      const cur = (state.metaChance || baseline);
+      state.metaChance = clamp(cur - 0.05, 0.05, 0.60);
+      if(state.metaChance < baseline) state.metaChance = baseline;
 
-      state.metaChance = Math.min(0.25, Math.max(0.05, 0.05 + (state.awareness * 0.05) + (state.fatePressure * 0.03)));
+      if(stance === 'rebel') state.metaChance = clamp(state.metaChance + 0.01, 0.05, 0.60);
+      if(stance === 'aid')   state.metaChance = clamp(state.metaChance - 0.01, 0.05, 0.60);
+    }
 
-      $('metaReadout').innerText = `Awareness: ${state.awareness}/3 | Pressure: ${state.fatePressure}/3`;
+    state.awareness = clamp(state.awareness || 0, 0, 3);
+    state.fatePressure = clamp(state.fatePressure || 1, 1, 3);
+    state.metaChance = clamp(state.metaChance || 0.10, 0.05, 0.60);
+
+    updateMetaReadout();
   }
 
   // --- FATE CARDS RENDER ---
@@ -984,7 +1823,15 @@
       labels.forEach((l, i) => {
           const btn = document.createElement('button');
           btn.className = 'fate-card';
-          if(state.tier === 'free' && i > 1) btn.classList.add('locked');
+          
+          let locked = false;
+
+          // In COUPLE mode: Fate is always available (no paywall)
+          if(state.mode !== 'couple'){
+            if (state.access === 'free' && state.unlockedFateIdx && !state.unlockedFateIdx.includes(i)) locked = true;
+          }
+
+          if (locked) btn.classList.add('locked');
 
           btn.innerHTML = `<div class="inner"><div class="front"><h3>${l}</h3></div><div class="back"><div style="font-size:30px">${backs[i]}</div></div></div>`;
           btn.onclick = () => {
@@ -1003,16 +1850,38 @@
               let prefixDia = `Fate ${verbs[i]} ${names[i]}:`; 
               
               if(state.picks.pov === "Fifth") {
-                  prefixAction = `The Author weaves ${names[i]}:`;
-                  prefixDia = `The Author guides you to say:`;
+                  // Author POV Phrasing (Short & Decisive)
+                  const authorActions = [
+                    "The Author's pen fills the moment with Temptation:", 
+                    "The Author writes Confession into the subtext:", 
+                    "The Author inks a Boundary across the scene:", 
+                    "The Author drafts a Power Shift in your posture:", 
+                    "The Author edits you into Silence:" 
+                  ];
+                  prefixAction = authorActions[i];
+                  prefixDia = "The Author writes:";
               }
               
               let cleanDia = dialogues[i];
               if(cleanDia !== "(Silence)" && !cleanDia.startsWith('"')) cleanDia = `"${cleanDia}"`;
 
-              $('actionInput').value = `${prefixAction} ${actions[i]}`;
-              $('dialogueInput').value = `${prefixDia} ${cleanDia}`;
+              const finalAct = `${prefixAction} ${actions[i]}`;
+              const finalDia = `${prefixDia} ${cleanDia}`;
+
+              // Store selection for Tease mode
+              state.lastFate = { action: finalAct, dialogue: finalDia };
+
+              // Persist selection for DB (Couple mode)
+              state.selectedFateIndex = i;
+              state.selectedFatePayload = { index: i, name: names[i], action: finalAct, dialogue: finalDia };
+
+              // Visual update
+              $('actionInput').value = finalAct;
+              $('dialogueInput').value = finalDia;
               
+              // Trigger typing if couple mode
+              markTyping();
+
               if(state.picks.pov === 'Fifth') updateMetaState({ type: 'fate', card: names[i] });
           };
           m.appendChild(btn);
@@ -1030,10 +1899,9 @@
   }
 
   function formatStory(text){
-      let p1Color = getGenderColor(state.gender);
-      let p2Color = getGenderColor(state.loveInterest);
-      document.documentElement.style.setProperty('--p1-color', p1Color);
-      document.documentElement.style.setProperty('--p2-color', p2Color);
+      const colors = determineDialogueColors();
+      document.documentElement.style.setProperty('--p1-color', colors.p1);
+      document.documentElement.style.setProperty('--p2-color', colors.p2);
 
       let safe = escapeHTML(text);
       // Strip Markdown headers/bold
@@ -1068,6 +1936,14 @@
 
   // --- BEGIN STORY ---
   $('beginBtn').onclick = async function(){
+      state.storyId = makeStoryId();
+      if(!state.subscribed && hasStoryPass(state.storyId) && state.tier === 'free'){
+        state.tier = 'paid';
+        applyTierUI();
+      }
+      
+      syncTierFromAccess();
+
       state.gender = $('playerGender').value === 'Custom' ? $('customPlayerGender').value : $('playerGender').value;
       state.loveInterest = $('loveInterestGender').value === 'Custom' ? $('customLoveInterest').value : $('loveInterestGender').value;
       state.ancestry1 = $('playerAncestry').value || "Unspecified";
@@ -1090,29 +1966,36 @@
       }
       if(!p1Name) p1Name = "The Protagonist";
       if(!p2Name) p2Name = "The Stranger";
+      
+      // MIRROR AUTHOR IDENTITY
+      state.authorGender = state.gender;
+      state.authorPronouns = state.pronouns1;
 
-      if(state.picks.pov === 'Fifth') $('metaControls').classList.remove('hidden');
+      if(state.picks.pov === 'Fifth'){
+          $('metaControls').classList.remove('hidden');
+          // Default stance
+          window.setMetaStance('aid');
+      }
 
       startLoading();
       showScreen('game');
       window.scrollTo(0,0);
       initCards();
       
-      const usedNames = getUsedNames().join(', ');
-      
       let povInstruction = `POV: ${state.picks.pov}.`;
       if(state.picks.pov === "Fifth"){
-          povInstruction = `Write in 5th Person (Author POV). The Author exists as a character (3rd person). Narration describes story + Author's decisions. Protagonists are 3rd person. Meta awareness: 1-in-10 chance. Tone: sensual, confident, literary.`;
+          povInstruction = `Write in 5th Person (Author POV). The Author exists as a character (3rd person) in the story. Narration describes story + Author's decisions. Protagonists are 3rd person. Include frequent brief interiority for the Author (desires, doubts). Author Gender: ${state.authorGender}, Pronouns: ${state.authorPronouns}. Tone: sensual, confident, literary.`;
       }
 
-      let wordCountLimit = 30000;
-      if (state.intensity === "Clean")   wordCountLimit = 999999;
-      if (state.intensity === "Naughty") wordCountLimit = 30000;
-      if (state.intensity === "Erotic")  wordCountLimit = 7000;
-      if (state.intensity === "Dirty")   wordCountLimit = 2000;
-      if (state.picks.dynamic.includes("SlowBurn")) wordCountLimit = 70000;
-
-      let sexBan = `STRICT RULE: NO SEX between Main Characters until ${wordCountLimit} words. Build tension.`;
+      // ELASTIC PACING
+      const target = Number(state.storyTargetWords || 10000);
+      let sexAt = Math.floor(target * 0.55); // Naughty default
+      if(state.intensity === "Clean")   sexAt = 999999999;
+      if(state.intensity === "Erotic")  sexAt = Math.floor(target * 0.30);
+      if(state.intensity === "Dirty")   sexAt = Math.floor(target * 0.20);
+      
+      const arcInstruction = `ARC LENGTH: Structure this story to feel complete within ~${target} words. Keep pacing appropriate—setup, rising tension, escalation, climax.`;
+      let sexBan = `STRICT RULE: NO sex between Main Characters until at least ${sexAt} words. Build tension first.`;
 
       state.sysPrompt = `You are a master storyteller. 
       Genre: ${state.picks.genre.join(',')}. 
@@ -1121,7 +2004,10 @@
       Player 1 is ${p1Name} (${state.gender}, ${state.pronouns1}), Ancestry: ${state.ancestry1}.
       Player 2 (Partner) is ${p2Name} (${state.loveInterest}, ${state.pronouns2}), Ancestry: ${state.ancestry2}.
       Intensity: ${state.intensity}.
-      Constraints: Do NOT use names: ${usedNames}. Never refer to the love interest as 'the love interest'. Use Show Don't Tell.
+      Constraints: Do NOT use names: ${getUsedNames().join(', ')}. Never refer to the love interest as 'the love interest'. Use Show Don't Tell.
+      The AI must not invent or assign real-world ethnicities, religions, or nationalities to any character unless the player explicitly specifies them in inputs.
+      If the player specifies culture/faith/lineage, portray it respectfully and avoid stereotypes, slurs, fetish framing.
+      ${arcInstruction}
       ${sexBan}
       IMPORTANT: This is the OPENING. NO sex acts yet. Focus on PLOT, WORLD-BUILDING, and TENSION. Establish a nemesis and high stakes. Characters must have agendas.
       Formatting: Write in lush, novelistic prose. Use complete sentences with articles (The, A, An). NO telegram style. Use strict paragraph breaks (\\n\\n). Minimum 6-10 paragraphs for Intro.
@@ -1130,7 +2016,8 @@
       ///FATE_JSON_START///
       [{"action":"...", "dialogue":"..."}, ...] (5 objects)
       ///FATE_JSON_END///
-      Output format (STRICT): First line must be exactly "Title: …". Second line must be exactly "Synopsis: …". Then a blank line. Then story body ONLY (do NOT repeat Title or Synopsis again).`;
+      Output format (STRICT): First line must be exactly "Title: …". Second line must be exactly "Synopsis: …". Then a blank line. Then story body ONLY (do NOT repeat Title or Synopsis again).
+      If the player's access is FREE or STORY PASS, and the story approaches the cap (10k or 25k), begin steering toward a charged cliffhanger. ACCESS: ${state.access}. CAP_WORDS: ${getCapForAccess()}.`;
       
       try {
           let raw = await callChat([{role:'system', content: state.sysPrompt}, {role:'user', content: "Begin the story. Start with Title: [Title] and Synopsis: [Synopsis]. Synopsis must use complete, flowery sentences. No telegraphese."}]);
@@ -1162,6 +2049,8 @@
           
           const namesFound = body.match(/[A-Z][a-z]+/g) || [];
           namesFound.forEach(n => addUsedName(n));
+          
+          saveStorySnapshot();
 
       } catch(e) {
           $('storyText').innerHTML = "<p>Backend failed. Fallback loaded.</p>";
@@ -1181,7 +2070,7 @@
               headers:{'Content-Type':'application/json'},
               body: JSON.stringify({ 
                   prompt: prompt + " " + safety,
-                  provider: 'grok',
+                  provider: 'xai',
                   model: 'grok-2-image-1212', 
                   size: '1024x1024'
               })
@@ -1218,17 +2107,122 @@
 
   // --- SUBMIT TURN ---
   $('submitBtn').onclick = async function(){
+      // === COUPLE MODE FORK ===
+      if(state.mode === 'couple'){
+          if(state.myUid !== state.roomDriver){
+             alert("Not your turn!"); 
+             return;
+          }
+
+          stopTyping(true); // Ensure typing is off
+
+          startLoading();
+          
+          const act = $('actionInput').value;
+          const dia = $('dialogueInput').value;
+          const context = $('storyText').innerText.slice(-3000);
+          
+          const sys = state.sysPrompt + `\n\nTURN INSTRUCTIONS: 
+          Story So Far: ...${context}
+          Player Action: ${act}. 
+          Player Dialogue: ${dia}. 
+          Rules: 3-6 paragraphs. Complete sentences. Maintain POV.`;
+
+          let raw = "";
+          try {
+             raw = await callChat([{role:'system', content:sys}, {role:'user', content: "Next scene."}]);
+          } catch(e){
+             console.log(e);
+             alert("AI generation failed.");
+             stopLoading();
+             return;
+          }
+          
+          try {
+            // Compare-and-swap
+            const { data: members, error: memErr } = await sb
+              .from('sb_room_members')
+              .select('user_id, role, joined_at')
+              .eq('room_id', state.roomId)
+              .order('joined_at', { ascending: true });
+
+            if(memErr) throw memErr;
+
+            const other = (members || []).find(m => m.user_id !== state.myUid);
+            const nextDriver = other?.user_id || state.myUid;
+            
+            await coupleAdvanceTurnCAS(nextDriver);
+
+            const { error: insertErr } = await sb.from('sb_turns').insert([{
+                room_id: state.roomId,
+                turn: state.roomTurn - 1, 
+                driver_id: state.myUid,
+                story_delta: raw,
+                player_action: act,
+                player_dialogue: dia,
+                fate_choice: state.selectedFatePayload || null
+            }]);
+
+            if(insertErr){
+                if(insertErr.code === '23505'){ // Unique Violation
+                   alert("Synced — that turn was already recorded.");
+                   await coupleBootstrap(); // Resync state
+                } else {
+                   throw insertErr;
+                }
+            }
+
+          } catch(e){
+            console.error(e);
+            alert("Sync conflict. Please retry.");
+            stopLoading();
+            return;
+          }
+          
+          // Clear local state
+          $('actionInput').value = ''; 
+          $('dialogueInput').value = '';
+          state.selectedFateIndex = null;
+          state.selectedFatePayload = null;
+          stopLoading();
+          return;
+      }
+      // === END COUPLE FORK ===
+
+      syncTierFromAccess();
+      
+      const isTease = (state.access === 'free');
+      
+      if(isTease && !state.lastFate){
+          alert("In Tease, select a Fate Card to guide your turn.");
+          return;
+      }
+      
+      let act = ($('actionInput')?.value || '').trim();
+      let dia = ($('dialogueInput')?.value || '').trim();
+      
+      if(isTease && state.lastFate){
+          act = state.lastFate.action;
+          dia = state.lastFate.dialogue;
+      }
+      
+      const wc = currentStoryWordCount();
+      // Cap Logic: Check caps before submitting
+      if(state.access === 'free' && wc >= 10000){ showPaywall('unlock'); return; }
+      if(state.access === 'pass' && wc >= 25000){ showPaywall('sub'); return; }
+  
+      // Smoke Animation
+      document.querySelectorAll('.fate-card').forEach(c => c.classList.add('poof'));
+      
+      // Wait for smoke...
+      await new Promise(r => setTimeout(r, 650));
+      
       startLoading();
       state.turnCount++;
       const sep = document.createElement('div');
       sep.className = 'separator';
       sep.innerHTML = "⚜";
       $('storyText').appendChild(sep);
-
-      const act = $('actionInput').value;
-      const dia = $('dialogueInput').value;
-      $('actionInput').value = ''; 
-      $('dialogueInput').value = ''; 
       
       const context = $('storyText').innerText.slice(-3000);
       if(state.picks.pov === 'Fifth') updateMetaState({ type: 'input', text: act + " " + dia });
@@ -1266,30 +2260,60 @@
              try { state.fateOptions = JSON.parse(jsonRaw); } catch(e){}
           }
           
-          initCards(); 
-          
           const newDiv = document.createElement('div');
           newDiv.innerHTML = formatStory(raw);
           $('storyText').appendChild(newDiv);
           
           sep.scrollIntoView({behavior:'smooth', block:'start'});
+          
+          saveStorySnapshot();
 
-      } catch(e){ console.log(e); }
+          // Success: now clear for next turn
+          $('actionInput').value = '';
+          $('dialogueInput').value = '';
+          state.lastFate = null;
+          state.selectedFateIndex = null;
+          state.selectedFatePayload = null;
+          
+          // Reshuffle and unlock random 2 for free tier (only on success)
+          if (state.access === 'free') {
+            state.unlockedFateIdx = pickTwoIndices();
+          }
+          initCards(); 
+
+      } catch(e){
+          console.log(e);
+
+          if (state.access === 'free') {
+            state.unlockedFateIdx = pickTwoIndices();
+            initCards();
+          }
+
+          if (state.access === 'free' && state.lastFate) {
+            $('actionInput').value = state.lastFate.action || $('actionInput').value;
+            $('dialogueInput').value = state.lastFate.dialogue || $('dialogueInput').value;
+          }
+
+          alert("Network hiccup — your Fate choice is preserved. Try Submit again.");
+      }
       
+      // Clean up animation classes
       document.querySelectorAll('.fate-card').forEach(c => {
           c.classList.remove('flipped');
+          c.classList.remove('poof');
           c.style.opacity = '1';
       });
       stopLoading();
   };
 
-  // --- VISUALIZE ---
+  // --- VISUALIZE (With Fallback) ---
   window.visualize = async function(isRe){
+      $('vizModal').classList.remove('hidden');
       startLoading();
       const lastText = $('storyText').textContent.slice(-600);
       $('vizPreviewImg').style.display = 'none';
       $('vizPlaceholder').style.display = 'flex';
-      $('vizModal').classList.remove('hidden');
+      $('vizError').classList.add('hidden');
 
       try {
           let promptMsg = $('vizPromptInput').value;
@@ -1302,45 +2326,65 @@
           }
 
           const modelSel = $('vizModel').value;
-          let provider = 'xai';
-          let modelToSend = modelSel;
-
-          if (modelSel.includes('gpt') || modelSel.includes('openai')) { provider = 'openai'; modelToSend = 'gpt-image-1'; }
-          if (modelSel.includes('gemini')) { provider = 'gemini'; modelToSend = 'gemini-2.5-flash-image'; }
+          // Fallback Chain: requested -> grok -> openai -> gemini
+          let chain = [];
+          
+          if(modelSel !== 'auto') chain.push(modelSel);
+          
+          chain.push('grok-2-image-1212', 'dall-e-3', 'gemini-2.0-flash-exp'); 
+          
+          // Deduplicate
+          chain = [...new Set(chain)];
 
           let safety = "";
           if(state.intensity === 'Dirty' || state.intensity === 'Erotic') safety = "Artistic, suggestive, safe-for-work, no explicit nudity.";
-
-          const res = await fetch(IMAGE_PROXY_URL, {
-              method:'POST',
-              headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ 
-                  prompt: promptMsg + " " + safety,
-                  provider: provider,
-                  model: modelToSend,
-                  size: "1024x1024",
-                  n: 1
-              })
-          });
           
-          let data;
-          try { data = await res.json(); } catch(e){}
+          let successUrl = null;
+          let lastErr = null;
 
-          if(!res.ok){
-              throw new Error(data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`));
+          for(let m of chain){
+              let provider = 'xai';
+              let modelToSend = m;
+
+              if (m.includes('dall-e') || m.includes('openai')) { provider = 'openai'; modelToSend = 'dall-e-3'; }
+              if (m.includes('gemini')) { provider = 'gemini'; modelToSend = 'gemini-2.0-flash-exp'; }
+              if (m.includes('grok')) { provider = 'xai'; modelToSend = 'grok-2-image-1212'; }
+
+              try {
+                  const res = await fetch(IMAGE_PROXY_URL, {
+                      method:'POST',
+                      headers:{'Content-Type':'application/json'},
+                      body: JSON.stringify({ 
+                          prompt: promptMsg + " " + safety,
+                          provider: provider,
+                          model: modelToSend,
+                          size: "1024x1024",
+                          n: 1
+                      })
+                  });
+
+                  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+                  let data = await res.json();
+                  
+                  const imageUrl =
+                    data.url ||
+                    data.data?.[0]?.url ||
+                    (data.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : null);
+                  
+                  if(imageUrl) {
+                      successUrl = imageUrl;
+                      break; // Success!
+                  }
+              } catch(e) {
+                  console.log("Model fail:", m, e);
+                  lastErr = e;
+              }
           }
-          
-          const imageUrl =
-            data.url ||
-            data.data?.[0]?.url ||
-            (data.data?.[0]?.b64_json
-                ? `data:image/png;base64,${data.data[0].b64_json}`
-                : null);
-          
-          if(!imageUrl) throw new Error("No image URL in response");
+
+          if(!successUrl) throw lastErr || new Error("All image providers failed.");
 
           const img = $('vizPreviewImg');
-          img.src = imageUrl;
+          img.src = successUrl;
           img.onload = () => { 
               img.style.display = 'block'; 
               $('vizPlaceholder').style.display = 'none';
@@ -1351,7 +2395,7 @@
       } catch(e){
           const errDiv = $('vizError');
           if(errDiv){
-              errDiv.innerText = "Apologies: " + e.message;
+              errDiv.innerText = "Generation failed. Try a different model or rephrase.";
               errDiv.classList.remove('hidden');
           }
       }
@@ -1369,6 +2413,16 @@
       $('vizModal').classList.add('hidden'); 
       tempImgUrl = null; 
   };
+
+  // INITIAL LOAD
+  state.storyId = localStorage.getItem('sb_current_story_id');
+  if(!state.subscribed && hasStoryPass(state.storyId) && state.tier === 'free'){
+      state.tier = 'paid';
+  }
+  applyTierUI();
+  updateContinueButtons();
+
+  initSelectionHandlers();
 
 })();
 </script>
