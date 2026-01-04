@@ -747,8 +747,11 @@
   // SUPABASE CONFIG (COUPLE MODE)
   // =========================
   const SUPABASE_URL = "https://riutipkrnfyvvghzlrwe.supabase.co"; 
-  const SUPABASE_ANON_KEY = "sb_publishable_w7846w2PsZ4xtLcFz-6PCg_Zcv03XEe"; 
-  
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdXRpcGtybmZ5dnZnaHpscndlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NzEyMjQsImV4cCI6MjA4MzA0NzIyNH0.-YCYDxM8OUybL75B0S4JE9HBgXV-K8Bhog6A-nPxUKQ"; 
+  // create once, reuse forever
+  window.supabaseClient = window.supabaseClient || supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
   // Presence Constants
   const PRESENCE_HEARTBEAT_MS = 15000;
   const ONLINE_THRESHOLD_MS = 45000;
