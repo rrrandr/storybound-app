@@ -881,14 +881,59 @@
       window.scrollTo(0,0);
   }
   
-  function pickTwoIndices(){
-      const pool = [0,1,2,3,4];
-      for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
-      }
-      return pool.slice(0, 2);
+  // ══════════════════════════════════════════════════════════════════
+  // PHASE 4: FATE CARD TIER-BASED CAPACITY
+  // Tease (free): 2 of 5, Fling (pass): 3 of 5, Subscriber: 5 of 5
+  // Per-turn entropy: which cards are selectable is randomized each turn
+  // ══════════════════════════════════════════════════════════════════
+  function getSelectableCount() {
+      if (state.mode === 'couple') return 5; // Couple mode: all cards available
+      if (state.subscribed || state.access === 'sub') return 5;
+      if (state.access === 'pass') return 3;
+      return 2; // free tier
   }
+
+  function pickNIndices(n) {
+      const pool = [0, 1, 2, 3, 4];
+      // Fisher-Yates shuffle
+      for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool.slice(0, Math.min(n, 5));
+  }
+
+  // Backward compatibility wrapper
+  function pickTwoIndices() {
+      return pickNIndices(2);
+  }
+
+  // PHASE 4: Unlock additional fate cards after mid-turn upgrade
+  // Does NOT re-deal - unlocks more cards from current turn's locked set
+  window.unlockAdditionalFateCards = function() {
+      const newCount = getSelectableCount();
+      const currentCount = state.unlockedFateIdx ? state.unlockedFateIdx.length : 0;
+
+      // No change needed if capacity hasn't increased
+      if (newCount <= currentCount) return;
+
+      // Find currently locked indices
+      const allIndices = [0, 1, 2, 3, 4];
+      const lockedIndices = allIndices.filter(i => !state.unlockedFateIdx.includes(i));
+
+      // How many more to unlock
+      const toUnlock = newCount - currentCount;
+
+      // Randomly select from locked cards
+      const shuffledLocked = lockedIndices.sort(() => Math.random() - 0.5);
+      const unlocking = shuffledLocked.slice(0, toUnlock);
+
+      // Add to unlocked set
+      state.unlockedFateIdx = [...state.unlockedFateIdx, ...unlocking];
+
+      // Re-render with new unlock state (same cards, fewer locks)
+      initCards();
+  };
 
   // --- ACCESS HELPERS ---
   function resolveAccess(){
@@ -1978,7 +2023,8 @@
     $('payModal').classList.add('hidden');
     applyTierUI();
     applyLengthLocks();
-    initCards(); 
+    // PHASE 4: Unlock additional cards for THIS turn (not re-deal)
+    if(window.unlockAdditionalFateCards) window.unlockAdditionalFateCards();
     saveStorySnapshot();
   });
 
@@ -2001,9 +2047,10 @@
     $('payModal').classList.add('hidden');
     applyTierUI();
     applyLengthLocks();
-    initCards(); 
+    // PHASE 4: Unlock additional cards for THIS turn (not re-deal)
+    if(window.unlockAdditionalFateCards) window.unlockAdditionalFateCards();
     saveStorySnapshot();
-    if(state.mode !== 'couple') showScreen('modeSelect'); 
+    if(state.mode !== 'couple') showScreen('modeSelect');
   });
 
   // PATCH: God Mode Pay Handler
@@ -2517,9 +2564,13 @@
           
           let locked = false;
 
-          // In COUPLE mode: Fate is always available (no paywall)
-          if(state.mode !== 'couple'){
-            if (state.access === 'free' && state.unlockedFateIdx && !state.unlockedFateIdx.includes(i)) locked = true;
+          // PHASE 4: Tier-based locking
+          // Couple mode: all cards available (no paywall)
+          // Subscriber: all 5 cards available
+          // Pass: 3 cards selectable (others locked)
+          // Free: 2 cards selectable (others locked)
+          if(state.mode !== 'couple' && state.access !== 'sub'){
+            if (state.unlockedFateIdx && !state.unlockedFateIdx.includes(i)) locked = true;
           }
 
           if (locked) btn.classList.add('locked');
@@ -3101,9 +3152,9 @@
           state.selectedFateIndex = null;
           state.selectedFatePayload = null;
           
-          // Reshuffle and unlock random 2 for free tier (only on success)
-          if (state.access === 'free') {
-            state.unlockedFateIdx = pickTwoIndices();
+          // PHASE 4: Reshuffle for non-subscriber tiers (per-turn entropy)
+          if (state.access !== 'sub' && state.mode !== 'couple') {
+            state.unlockedFateIdx = pickNIndices(getSelectableCount());
           }
           initCards(); 
 
