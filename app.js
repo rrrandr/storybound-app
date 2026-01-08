@@ -3,7 +3,7 @@
   // --- CONFIG ---
   let config = {};
   try {
-      const res = await fetch('/api/config', { cache: 'no-store' });
+      const res = await fetch('/api/config.json', { cache: 'no-store' });
       if (res.ok) config = await res.json();
   } catch (e) { 
       console.warn("Config load failed (using defaults)", e); 
@@ -15,15 +15,33 @@
   var IMAGE_PROXY_URL = config.imageProxyUrl || 'https://storybound-proxy.vercel.app/api/image';
   const STORY_MODEL = 'grok-4-1-fast-reasoning'; 
   
-  // Singleton Supabase Client (Graceful Degradation)
+   // Singleton Supabase Client (Graceful Degradation)
   let sb = null;
-  if (window.supabase && SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY) {
-    try {
-        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch(e) { console.error("Supabase init error:", e); }
-  } else {
-    console.warn("Supabase not configured. Couple mode disabled.");
+
+  async function waitForSupabaseSDK(timeoutMs = 2000) {
+  const start = Date.now();
+  while (!(window.supabase && typeof window.supabase.createClient === 'function') && (Date.now() - start) < timeoutMs) {
+    await new Promise(r => setTimeout(r, 25));
   }
+  return (window.supabase && typeof window.supabase.createClient === 'function') ? window.supabase : null;
+}
+
+  const sdk = await waitForSupabaseSDK();
+  if (sdk && SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY) {
+    try {
+      sb = sdk.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log("Supabase configured:", SUPABASE_URL);
+    } catch(e) {
+      console.error("Supabase init error:", e);
+    }
+  } else {
+    console.warn("Supabase not configured. Couple mode disabled.", {
+      hasSdk: !!sdk,
+      urlOk: SUPABASE_URL.startsWith('http'),
+      keyLen: (SUPABASE_ANON_KEY || "").length
+    });
+  }
+
 
   // Disable couple mode UI if backend missing
   if(!sb) {

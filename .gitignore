@@ -1,0 +1,8 @@
+# Runtime config (real values, never commit)
+api/config.json
+api/config.json.save
+api/config
+.DS_Store
+
+# Local backups
+index.html.backup
