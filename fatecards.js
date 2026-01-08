@@ -1,11 +1,6 @@
 (function(window){
     // Card Definitions
     const fateDeck = [
-        { id: 'temptation', title: 'Temptation', desc: 'A sudden, overwhelming urge.', action: 'You feel a pull towards something forbidden.', dialogue: '"I shouldn\'t..."' },
-        { id: 'confession', title: 'Confession', desc: 'A secret spills out.', action: 'The truth burns on your tongue.', dialogue: '"There is something I must tell you."' },
-        { id: 'boundary', title: 'Boundary', desc: 'A line is drawn or crossed.', action: 'You step back, or push forward.', dialogue: '"Stop." / "More."' },
-        { id: 'power', title: 'Power Shift', desc: 'Control changes hands.', action: 'You take the lead, or surrender it.', dialogue: '"Look at me."' },
-        { id: 'silence', title: 'Silence', desc: 'Words fail. Actions speak.', action: 'You let the quiet do the work.', dialogue: '(Silence)' },
         { id: 'touch', title: 'The Touch', desc: 'Skin against skin.', action: 'You reach out.', dialogue: '(Gasp)' },
         { id: 'gaze', title: 'The Gaze', desc: 'Eyes lock. The world fades.', action: 'You refuse to look away.', dialogue: '"I see you."' },
         { id: 'hesitation', title: 'Hesitation', desc: 'A moment of doubt.', action: 'You pause, heart racing.', dialogue: '"Are we sure?"' },
@@ -17,11 +12,10 @@
         const mount = document.getElementById('cardMount');
         if(!mount) return;
         
-        // Only re-deal if empty
-        if(mount.children.length > 0) return;
-
-        // Create 5 placeholders
+        // Reset if we need a clean slate or it's empty
         mount.innerHTML = '';
+        
+        // Create 5 placeholders (backs only)
         for(let i=0; i<5; i++){
             const card = document.createElement('div');
             card.className = 'fate-card';
@@ -38,18 +32,28 @@
     window.dealFateCards = function() {
         const mount = document.getElementById('cardMount');
         if(!mount) return;
+        
+        // Safety: Ensure state exists before trying to write to it
+        if (!window.state) {
+            console.warn("State not ready for dealing cards.");
+            return;
+        }
 
-        // Shuffle
+        // Shuffle the 5 cards
         const shuffled = [...fateDeck].sort(() => 0.5 - Math.random());
+        // Select top 5 (which is all of them, just randomized order)
         const selected = shuffled.slice(0, 5);
-        state.fateOptions = selected;
+        
+        // Write to Global State
+        window.state.fateOptions = selected;
 
         mount.innerHTML = '';
         selected.forEach((data, i) => {
             const card = document.createElement('div');
             card.className = 'fate-card';
-            // Locked check logic could go here if needed, currently cards are open unless specific state
-            const lockedClass = ''; 
+            
+            // Optional: Check if we should lock based on tier (currently open)
+            // const isLocked = window.state.access === 'free' && i > 2; 
             
             card.innerHTML = `
                 <div class="inner">
@@ -62,15 +66,16 @@
             `;
             
             card.onclick = () => {
+                // If the card itself has a lock class manually added
                 if(card.classList.contains('locked')) {
-                    window.showPaywall('unlock');
+                    if(window.showPaywall) window.showPaywall('unlock');
                     return;
                 }
                 
                 // Flip animation
                 card.classList.add('flipped');
                 
-                // Apply content to inputs after short delay
+                // Apply content to inputs after animation delay
                 setTimeout(() => {
                     const actInput = document.getElementById('actionInput');
                     const diaInput = document.getElementById('dialogueInput');
@@ -79,10 +84,11 @@
                     
                     // Poof effect
                     card.classList.add('poof');
+                    
+                    // Cleanup visual after poof finishes
                     setTimeout(() => {
-                        // Reset card visual after poof (optional, or remove)
-                        card.classList.remove('flipped', 'poof');
-                    }, 1000);
+                        card.style.visibility = 'hidden'; 
+                    }, 600);
                 }, 600);
             };
             

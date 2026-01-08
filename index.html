@@ -403,14 +403,32 @@
       <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal Modern Romance</h3><p>Vampires, shifters, witches in today’s world.</p></div>
       <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray heat; player defines boundaries.</p></div>
       <div class="card" data-grp="genre" data-val="Suspense"><h3>Romantic Suspense</h3><p>Romance entangled with danger and mystery.</p></div>
+      <div class="card" data-grp="genre" data-val="Sports"><h3>Sports Romance</h3><p>Athletes and competitive tension.</p></div>
+      <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime Romance</h3><p>Forbidden love in criminal worlds.</p></div>
     </div>
     
     <button class="small-btn" onclick="document.getElementById('moreGenres').classList.toggle('hidden')">More Genres</button>
     <div id="moreGenres" class="style-cards hidden">
-       <div class="card" data-grp="genre" data-val="Sports"><h3>Sports Romance</h3><p>Athletes and competitive tension.</p></div>
-       <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime</h3><p>Forbidden love in criminal worlds.</p></div>
-       <div class="card" data-grp="genre" data-val="Billionaire"><h3>Billionaire</h3><p>Ultra-wealthy leads, power, polish.</p></div>
+       <div class="card" data-grp="genre" data-val="Billionaire"><h3>Billionaire Romance</h3><p>Ultra-wealthy leads, power, polish.</p></div>
+       <div class="card" data-grp="genre" data-val="Gothic"><h3>Gothic Romance</h3><p>Moody, haunted settings.</p></div>
        <div class="card" data-grp="genre" data-val="LGBTQ"><h3>Queer LGBTQ+</h3><p>Inclusive love stories.</p></div>
+       <div class="card" data-grp="genre" data-val="SecondChance"><h3>Second Chance</h3><p>Ex-lovers reunited with baggage.</p></div>
+       <div class="card" data-grp="genre" data-val="SmallTown"><h3>Small Town</h3><p>Cozy community vibes.</p></div>
+       <div class="card" data-grp="genre" data-val="Romcom"><h3>Romantic Comedy</h3><p>Bantery, light chaos.</p></div>
+    </div>
+
+    <div class="section-title">Dynamics <span class="instruction-text">(Select up to 3)</span></div>
+    <div class="style-cards" id="dynamicGrid">
+      <div class="card" data-grp="dynamic" data-val="Enemies"><h3>Enemies → Lovers</h3><p>Rivals whose friction turns to heat.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Desire under rules and taboo.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Player defines boundaries and limits.</p></div>
+      <div class="card" data-grp="dynamic" data-val="SlowBurn"><h3>Slow Burn</h3><p>High restraint, earned payoff.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends → Lovers</h3><p>Safety tipping into heat.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Close quarters, rising tension.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Secret"><h3>Secret Identity</h3><p>Truths revealed at the worst time.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Intense focus, player sets bounds.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated Mates / Soulbond</h3><p>Destined bond, fast intensity.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker / Wounded One</h3><p>Vulnerability and steady support.</p></div>
     </div>
 
     <div class="section-title">Story POV</div>
@@ -418,13 +436,29 @@
       <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>Intimate, confessional, inside your pulse.</p><button class="preview-btn" data-txt="I held my breath as the door clicked shut behind him.">Preview</button></div>
       <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>Immediate, immersive, hands-on tension.</p><button class="preview-btn" data-txt="You feel the room shift the moment he looks at you.">Preview</button></div>
       <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>Wider lens, cinematic, controlled heat.</p><button class="preview-btn" data-txt="He kept his voice calm, but the way his gaze lingered betrayed the hunger.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>Choral, conspiratorial, shared gaze.</p><button class="preview-btn" data-txt="We watched them circle each other—two storms pretending to be weather.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>Playful narrator with a hand on the page.</p><button class="preview-btn" data-txt="The Author hesitated—then smiled—and offered them a door.">Preview</button></div>
     </div>
 
     <div class="section-title">Story Style <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="styleGrid">
       <div class="card selected" data-grp="style" data-val="Breathless"><h3>Breathless Romance</h3><p>Fast tension, close POV, lush romantic heat.</p><button class="preview-btn" data-txt="His attention was a slow hand. It didn’t touch her—yet she felt it everywhere.">Preview</button></div>
       <div class="card locked" data-grp="style" data-val="Epic" data-locked="true"><h3>Epic Fantasy</h3><p>Grand stakes, wonder, danger, sweeping romance.</p><button class="preview-btn" data-txt="The city burned like a crown—and someone inside it was waiting to claim her.">Preview</button></div>
+      <div class="card locked" data-grp="style" data-val="Playful" data-locked="true"><h3>Playful Heat</h3><p>Flirty banter, teasing humor, spark-first chemistry.</p><button class="preview-btn" data-txt="“You’re staring.” “I’m appreciating.”">Preview</button></div>
       <div class="card locked" data-grp="style" data-val="Dark" data-locked="true"><h3>Dark Desire</h3><p>Moody, dangerous tension with boundaries respected.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button></div>
+      <div class="card locked" data-grp="style" data-val="Raw" data-locked="true"><h3>Raw Passion</h3><p>Direct emotion, embodied desire, grounded intensity.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button></div>
+      <div class="card locked" data-grp="style" data-val="Regency" data-locked="true"><h3>Regency Restraint</h3><p>Polite knives, forbidden longing, exquisite restraint.</p><button class="preview-btn" data-txt="“Your reputation is in danger,” she murmured.">Preview</button></div>
+    </div>
+    
+    <button class="small-btn" onclick="document.getElementById('moreStyles').classList.toggle('hidden')">More Styles</button>
+    <div id="moreStyles" class="style-cards hidden">
+       <div class="card locked" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry Confession</h3><p>Dry wit, sharp honesty, intimate tension.</p><button class="preview-btn" data-txt="She lied. He admired it.">Preview</button></div>
+       <div class="card locked" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic Intensity</h3><p>Calculated seduction, power games.</p><button class="preview-btn" data-txt="Silence did the flirting.">Preview</button></div>
+       <div class="card locked" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal Bloom</h3><p>Dreamlike imagery, symbolic heat.</p><button class="preview-btn" data-txt="The candles leaned in to listen.">Preview</button></div>
+       <div class="card locked" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal Edge</h3><p>Blunt honesty, razor tension.</p><button class="preview-btn" data-txt="No soft words. Just truth.">Preview</button></div>
+       <div class="card locked" data-grp="style" data-val="Satirical" data-locked="true"><h3>Satirical Fantasy</h3><p>Witty fantasy, playful stakes.</p><button class="preview-btn" data-txt="The prophecy was inconvenient.">Preview</button></div>
+       <div class="card locked" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Elevated cadence, poetic desire.</p><button class="preview-btn" data-txt="Speak low, sweet peril.">Preview</button></div>
+       <div class="card locked" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Grand futuristic worlds, high stakes.</p><button class="preview-btn" data-txt="Stars like spilled ink.">Preview</button></div>
     </div>
 
     <div class="section-title">Story Controls</div>
@@ -548,6 +582,6 @@
 </div>
 
 <script src="fatecards.js"></script>
-<script src="app.js?v=3"></script>
+<script src="app.js"></script>
 </body>
 </html>

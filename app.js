@@ -1,9 +1,20 @@
+// Wait for Supabase SDK to be available before using it
+async function waitForSupabaseSDK(timeoutMs = 2000) {
+  const start = Date.now();
+  while (
+    !(window.supabase && typeof window.supabase.createClient === 'function') &&
+    (Date.now() - start) < timeoutMs
+  ) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  return window.supabase || null;
+}
 (async function(){
   let tempImgUrl = null;
   // --- CONFIG ---
   let config = {};
   try {
-      const res = await fetch('/api/config.json', { cache: 'no-store' });
+      const res = await fetch('/api/config', { cache: 'no-store' });
       if (res.ok) config = await res.json();
   } catch (e) { 
       console.warn("Config load failed (using defaults)", e); 
@@ -15,42 +26,23 @@
   var IMAGE_PROXY_URL = config.imageProxyUrl || 'https://storybound-proxy.vercel.app/api/image';
   const STORY_MODEL = 'grok-4-1-fast-reasoning'; 
   
-   // Singleton Supabase Client (Graceful Degradation)
+  // Singleton Supabase Client
   let sb = null;
-
-  async function waitForSupabaseSDK(timeoutMs = 2000) {
-  const start = Date.now();
-  while (!(window.supabase && typeof window.supabase.createClient === 'function') && (Date.now() - start) < timeoutMs) {
-    await new Promise(r => setTimeout(r, 25));
-  }
-  return (window.supabase && typeof window.supabase.createClient === 'function') ? window.supabase : null;
-}
-
-  const sdk = await waitForSupabaseSDK();
-  if (sdk && SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY) {
+  if (window.supabase && SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY) {
     try {
-      sb = sdk.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log("Supabase configured:", SUPABASE_URL);
-    } catch(e) {
-      console.error("Supabase init error:", e);
-    }
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch(e) { console.error("Supabase init error:", e); }
   } else {
-    console.warn("Supabase not configured. Couple mode disabled.", {
-      hasSdk: !!sdk,
-      urlOk: SUPABASE_URL.startsWith('http'),
-      keyLen: (SUPABASE_ANON_KEY || "").length
-    });
+    console.warn("Supabase not configured. Couple mode disabled.");
   }
 
-
-  // Disable couple mode UI if backend missing
   if(!sb) {
      const btnCouple = document.getElementById('btnCoupleMode');
      if(btnCouple){
          btnCouple.disabled = true;
-         // Ensure next sibling exists before accessing
-         if(btnCouple.nextElementSibling && btnCouple.nextElementSibling.classList.contains('choice-desc')) {
-             btnCouple.nextElementSibling.textContent = "Unavailable on this deployment.";
+         const desc = btnCouple.nextElementSibling;
+         if(desc && desc.classList.contains('choice-desc')) {
+             desc.textContent = "Unavailable on this deployment.";
          }
      }
   }
@@ -110,20 +102,23 @@
   const META_DIRECTIVES = {
       aid: [
           "Include a brief beat where the characters sense an unseen guidance and choose to follow the offered path—like accepting an omen. Keep it understated.",
-          "Let the characters notice the scene tightening as though arranged; they quietly lean into it, trusting the pressure as permission."
+          "Let the characters notice the scene tightening as though arranged; they quietly lean into it, trusting the pressure as permission.",
+          "Add a small moment of recognition: the world seems to 'nudge' them, and they consent to be led—curious, willing, unafraid."
       ],
       rebel: [
-          "Include a brief beat where the characters feel the scene being steered and deliberately choose a resisting move—an inconvenient truth, a refusal, a delay.",
-          "Let the characters sense a pattern closing around them and try to break it—one quiet defiance that alters the rhythm."
+          "Include a brief beat where the characters feel the scene being steered and deliberately choose a resisting move—an inconvenient truth, a refusal, a delay. Keep it intimate and plausible, not theatrical.",
+          "Let the characters sense a pattern closing around them and try to break it—one quiet defiance that alters the rhythm.",
+          "Add a small moment where they realize something is arranging them and they push back—choosing the harder option on purpose."
       ],
       seduce: [
           "Include a brief beat where the characters treat the unseen influence as an intimate interlocutor—offering a bargain or a dare.",
-          "Let the characters sense the hand behind events and respond with a quiet, provocative negotiation—'if you want this, then give me that.'"
+          "Let the characters sense the hand behind events and respond with a quiet, provocative negotiation—'if you want this, then give me that.'",
+          "Add a small moment where they acknowledge the manipulation and try to entice it into a kinder or sharper turn—flirtation as bargaining with destiny."
       ]
   };
 
-  // --- STATE INITIALIZATION ---
-  var state = { 
+  // --- GLOBAL STATE INITIALIZATION ---
+  window.state = { 
       tier:'free', 
       picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] }, 
       gender:'Female', 
@@ -215,6 +210,8 @@
       }
   };
   
+  var state = window.state;
+
   // LATCH for Visualize Re-entrancy
   let _vizInFlight = false;
 
@@ -223,7 +220,7 @@
   function toggle(id){ const el = document.getElementById(id); if(el) el.classList.toggle('hidden'); }
   function resetTurnSnapshotFlag(){ state._snapshotThisTurn = false; }
 
-  // NAV HELPER (Hardened)
+  // NAV HELPER
   function closeAllOverlays() {
       ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal'].forEach(id => {
           const el = document.getElementById(id);
@@ -295,7 +292,6 @@
               if (el.tagName === 'DIV') el.classList.add('screen');
           });
       }
-      // Explicitly mark root containers
       ['ageGate', 'tosGate', 'tierGate'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.classList.add('screen');
@@ -307,7 +303,17 @@
           backBtn.addEventListener('click', goBack);
       }
       
-      // Auth Panel Toggle (Ctrl+Shift+A)
+      // Global Locked Click Delegation
+      document.addEventListener('click', (e) => {
+          const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-tease, .locked-pass, [data-locked]');
+          if (lockedTarget) {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              window.openPaywall('unlock');
+          }
+      }, true); 
+
       document.addEventListener('keydown', (e) => {
           if (e.ctrlKey && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
               const p = document.getElementById('auth-panel');
@@ -358,7 +364,10 @@
 
   // --- ACCESS HELPERS ---
   function resolveAccess(){
-    if (state.mode === 'couple') return state.roomAccess || 'free';
+    if (state.mode === 'couple') {
+        const roomAcc = state.roomAccess || 'free';
+        return (state.subscribed) ? 'sub' : roomAcc; 
+    }
     if (state.subscribed) return 'sub';
     if (state.storyId && hasStoryPass(state.storyId)) return 'pass';
     return 'free';
@@ -370,15 +379,22 @@
     const inGrace = (state.billingStatus === 'grace' && Date.now() < state.billingGraceUntil);
     const invalidSub = state.billingStatus === 'canceled' || (state.billingStatus === 'past_due' && !inGrace);
 
-    // Prioritize subscription state
     if (state.subscribed && !invalidSub) {
         state.access = 'sub';
+    } else if (state.storyId && hasStoryPass(state.storyId)) {
+        state.access = 'pass';
     } else {
-        state.access = resolveAccess();
+        state.access = (state.mode === 'couple' ? (state.roomAccess || 'free') : 'free');
     }
     
     state.tier = (state.access === 'free') ? 'free' : 'paid';
   }
+
+  window.openPaywall = function(reason) {
+      if(typeof window.showPaywall === 'function') {
+          window.showPaywall(reason === 'god' ? 'god' : 'sub');
+      }
+  };
 
   function currentStoryWordCount(){
     const txt = (document.getElementById('storyText')?.innerText || '').trim();
@@ -1152,48 +1168,177 @@
     completePurchase();
   });
 
+  // --- META SYSTEM (RESTORED) ---
+  function buildMetaDirective(){
+     if(state.awareness === 0) return "";
+     if(Math.random() > state.metaChance) return "";
+     const stance = META_DIRECTIVES[state.stance] || META_DIRECTIVES['aid'];
+     const directive = stance[Math.floor(Math.random() * stance.length)];
+     return `META-NARRATIVE INTERVENTION: ${directive}`;
+  }
+
+  window.setMetaStance = function(s){
+      state.stance = s;
+      document.querySelectorAll('.meta-stance').forEach(b => b.classList.remove('active'));
+      const btn = document.querySelector(`.meta-stance[onclick="window.setMetaStance('${s}')"]`);
+      if(btn) btn.classList.add('active');
+  };
+
+  // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
     const pName = $('playerNameInput').value.trim() || "The Protagonist";
     const lName = $('partnerNameInput').value.trim() || "The Love Interest";
+    const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
+    const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
+    const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
+    const lPro = $('customLovePronouns')?.value.trim() || $('lovePronouns').value;
     
-    // Simple gender logic
-    state.gender = $('playerGender').value;
-    state.loveInterest = $('loveInterestGender').value;
-    state.authorGender = (state.gender === 'Female') ? 'Female' : 'Male'; // Simplified for offline
-    
+    // Determine Author Identity based on selections
+    if(pGen === 'Male' && lGen === 'Female') { state.authorGender = 'Female'; state.authorPronouns = 'She/Her'; }
+    else if(pGen === 'Male' && lGen === 'Male') { state.authorGender = 'Male'; state.authorPronouns = 'He/Him'; }
+    else if(pGen === 'Female' && lGen === 'Female') { state.authorGender = 'Female'; state.authorPronouns = 'She/Her'; }
+    else { state.authorGender = 'Non-Binary'; state.authorPronouns = 'They/Them'; }
+
     applyVetoFromControls(); 
     
+    // Check for LGBTQ Colors
+    state.gender = $('playerGender').value;
+    state.loveInterest = $('loveInterestGender').value;
+    const isQueer = (state.gender === state.loveInterest) || state.gender === 'Non-Binary' || state.loveInterest === 'Non-Binary';
+    if(isQueer) document.body.classList.add('lgbtq-mode');
+    else document.body.classList.remove('lgbtq-mode');
+    
+    // Persist Nickname for Couple Mode
+    if(state.mode === 'couple' && !state.myNick) {
+       state.myNick = pName.split(' ')[0];
+       localStorage.setItem("sb_nickname", state.myNick);
+    }
+    
+    state.gender = pGen;
+    state.loveInterest = lGen;
+    
+    const safetyStr = buildConsentDirectives();
+    
+    const sys = `You are a bestselling erotica author (Voice: ${state.authorGender}, ${state.authorPronouns}).
+    You are writing a story in the "${state.picks.genre.join(', ')}" genre.
+    Style: ${state.picks.style.join(', ')}.
+    POV: ${state.picks.pov}.
+    Dynamics: ${state.picks.dynamic.join(', ')}.
+    
+    Protagonist: ${pName} (${pGen}, ${pPro}).
+    Love Interest: ${lName} (${lGen}, ${lPro}).
+    
+    ${safetyStr}
+
+    Current Intensity: ${state.intensity}
+    (Clean: Romance only. Naughty: Tension/Heat. Erotic: Explicit. Dirty: Raw/Unfiltered).
+    
+    RULES:
+    1. Write in the selected POV.
+    2. Respond to the player's actions naturally.
+    3. Keep pacing slow and tense (unless Dirty).
+    4. Focus on sensory details, longing, and chemistry.
+    5. Be creative, surprising, and emotionally resonant.
+    6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
+    7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
+    `;
+    
+    state.sysPrompt = sys;
     state.storyId = state.storyId || makeStoryId();
     
     window.showScreen('game');
+    
     startLoading("Conjuring the world...");
     
-    // Simulate AI for offline reliability in this prompt context
-    const introText = "The candlelight flickered against the stone walls, casting long shadows that seemed to dance with anticipation. " + pName + " stood by the window, watching the storm roll in, while " + lName + " watched from the doorway, silent and watchful. The air between them was thick with things unsaid.";
+    const introPrompt = `Write the opening scene (approx 200 words).
+    Setting: A place full of tension and atmosphere fitting the genre.
+    Situation: The Protagonist and Love Interest are thrown together.
+    Establish the dynamic immediately.
+    End with a hook or a moment of tension.`;
     
-    setTimeout(() => {
-        document.getElementById('storyTitle').textContent = "The Silent Storm";
-        document.getElementById('storySynopsis').textContent = "A tense encounter in a storm-swept keep.";
-        document.getElementById('storyText').innerHTML = `<p>${introText}</p>`;
+    try {
+        const text = await callChat([
+            {role:'system', content: state.sysPrompt},
+            {role:'user', content: introPrompt}
+        ]);
+        
+        const title = await callChat([{role:'user', content:`Based on this opening, give me a 3-word title:\n${text}`}]);
+        const synopsis = await callChat([{role:'user', content:`Summarize the setting in one sentence:\n${text}`}]);
+        
+        document.getElementById('storyTitle').textContent = title.replace(/"/g,'');
+        document.getElementById('storySynopsis').textContent = synopsis;
+        document.getElementById('storyText').innerHTML = formatStory(text);
+        
+        generateSettingShot(synopsis);
+        
+        // Initial Snapshot
         saveStorySnapshot();
+        
+        if(state.mode === 'couple') {
+           broadcastTurn(text, true); 
+        }
+
+    } catch(e) {
+        alert("Fate stumbled. Please try again.");
+        window.showScreen('setup');
+    } finally {
         stopLoading();
         if(window.initCards) window.initCards();
         updateQuillUI();
-    }, 1500);
+        updateBatedBreathState();
+    }
   });
 
   // --- API CALLS ---
   async function callChat(messages, temp=0.7) {
-    // Stub for offline safety in this specific output generation
-    // In real app, this calls proxy
-    return "API Placeholder Response";
+    const payload = {
+       messages: messages,
+       model: STORY_MODEL, 
+       temperature: temp,
+       max_tokens: 1000
+    };
+    
+    try {
+        const res = await fetch(PROXY_URL, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if(!res.ok) throw new Error("API Error");
+        const data = await res.json();
+        return data.choices[0].message.content;
+    } catch(e){
+        console.error(e);
+        throw e;
+    }
   }
 
   async function generateSettingShot(desc) {
      const img = document.getElementById('settingShotImg');
      if(!img) return;
-     // Fallback placeholder logic
+     const wrap = document.getElementById('settingShotWrap');
+     if(wrap) wrap.style.display = 'flex';
      img.style.display = 'none';
+     
+     try {
+         const res = await fetch(IMAGE_PROXY_URL, {
+             method:'POST',
+             headers:{'Content-Type':'application/json'},
+             body: JSON.stringify({ 
+                 prompt: `Cinematic establishing shot, atmospheric, fantasy art style. No text. ${desc}`,
+                 provider: 'xai', 
+                 size: "1024x1024",
+                 n: 1
+             })
+         });
+         const data = await res.json();
+         if(data.url || data.image || data.b64_json) {
+             let url = data.url || data.image || data.b64_json;
+             if(!url.startsWith('http') && !url.startsWith('data:')) url = `data:image/png;base64,${url}`;
+             img.src = url;
+             img.onload = () => { img.style.display = 'block'; };
+         }
+     } catch(e) { console.warn("Setting shot failed", e); }
   }
 
   // --- VISUALIZE (STABILIZED) ---
@@ -1206,6 +1351,7 @@
       const img = document.getElementById('vizPreviewImg');
       const ph = document.getElementById('vizPlaceholder');
       const errDiv = document.getElementById('vizError');
+      const storyText = document.getElementById('storyText');
 
       if (!img) { _vizInFlight = false; return; }
 
@@ -1213,24 +1359,101 @@
       if(retryBtn) retryBtn.disabled = true;
 
       startLoading();
+      
+      const lastText = storyText ? storyText.textContent.slice(-600) : "";
+      await ensureVisualBible(storyText ? storyText.textContent : "");
+      const anchorText = buildVisualAnchorsText();
+
       img.onload = null; img.onerror = null;
       img.style.display = 'none';
       if(ph) ph.style.display = 'flex';
       if(errDiv) errDiv.classList.add('hidden');
 
       try {
-          // Simulation for reliability check
-          await new Promise(r => setTimeout(r, 1000));
-          // For real usage, would call fetch(IMAGE_PROXY_URL) here.
-          // Simulating failure to test retry:
-          // throw new Error("Simulated Viz Error");
+          let promptMsg = document.getElementById('vizPromptInput').value;
+          if(!isRe || !promptMsg) {
+              try {
+                  promptMsg = await Promise.race([
+                      callChat([{
+                          role:'user', 
+                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire. Return only the prompt: ${lastText}`
+                      }]),
+                      new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
+                  ]);
+              } catch (e) {
+                  promptMsg = "Fantasy scene, detailed, atmospheric."; 
+              }
+              document.getElementById('vizPromptInput').value = promptMsg;
+          }
+
+          const modelEl = document.getElementById('vizModel');
+          const userModel = modelEl ? modelEl.value : "";
+          const um = (userModel || "").toLowerCase();
           
-          // Simulating Success:
-          // img.src = "data:image/png;base64,..."; 
-          // For now, we just stop loading to show "generation complete" state logic
+          const isOpenAI = um.includes("gpt") || um.includes("openai");
+          const isGemini = um.includes("gemini");
+
+          const attempts = [];
+          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel });
+          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1' });
+          attempts.push({ provider: 'gemini', model: isGemini ? userModel : 'gemini-2.5-flash-image' });
+
+          let rawUrl = null;
+          let lastErr = null;
+
+          for(const attempt of attempts){
+             try {
+                const res = await fetch(IMAGE_PROXY_URL, {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ 
+                        prompt: anchorText + "\n\nSCENE:\n" + promptMsg + (state.intensity === 'Dirty' || state.intensity === 'Erotic' ? " Artistic, suggestive, safe-for-work." : "") + "\n\n(Generate art without any text/lettering.)",
+                        provider: attempt.provider,
+                        model: attempt.model,
+                        size: "1024x1024",
+                        n: 1
+                    })
+                });
+                
+                let data;
+                try { data = await res.json(); } catch(e){}
+
+                if(!res.ok) throw new Error(data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`));
+                
+                rawUrl = data.url || data.image || data.b64_json;
+                if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
+                    rawUrl = data.data[0].url || data.data[0].b64_json;
+                }
+
+                if(rawUrl) break; 
+             } catch(e) {
+                 lastErr = e;
+             }
+          }
+
+          if (!rawUrl) throw lastErr || new Error("All image providers failed.");
           
+          let imageUrl = rawUrl;
+          if (!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
+              imageUrl = `data:image/png;base64,${rawUrl}`;
+          }
+          
+          img.src = imageUrl;
+          
+          await new Promise((resolve, reject) => {
+              img.onload = () => {
+                  img.style.display = 'block'; 
+                  if(ph) ph.style.display = 'none';
+                  state.visual.lastImageUrl = img.src;
+                  if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
+                  saveStorySnapshot();
+                  resolve();
+              };
+              img.onerror = () => reject(new Error("Image failed to render"));
+          });
+
       } catch(e) {
-          if(errDiv) { errDiv.innerText = "Visualization failed."; errDiv.classList.remove('hidden'); }
+          if(errDiv) { errDiv.innerText = "Visualization failed. Fate is cloudy."; errDiv.classList.remove('hidden'); }
       } finally {
           stopLoading();
           _vizInFlight = false;
@@ -1246,10 +1469,17 @@
   };
   
   window.insertImage = function(){
+      const img = document.getElementById('vizPreviewImg');
+      if(!img.src) return;
+      const newImg = document.createElement('img');
+      newImg.src = img.src;
+      newImg.className = 'story-image';
+      document.getElementById('storyText').appendChild(newImg);
       window.closeViz();
+      saveStorySnapshot();
   };
 
-  // --- GAME LOOP ---
+  // --- GAME LOOP (RESTORED) ---
   $('submitBtn')?.addEventListener('click', async () => {
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
       if (billingLock) { window.showPaywall('unlock'); return; }
@@ -1268,36 +1498,158 @@
 
       startLoading("Fate is weaving...");
       
+      const context = document.getElementById('storyText').innerText.slice(-3000);
+      
+      let intensityGuard = "";
+      if (state.godModeActive) {
+          intensityGuard = "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED.";
+      } else if (state.intensity === "Naughty") {
+          intensityGuard = "INTENSITY RULE: Naughty. Reinterpret any explicit user input into suggestive, non-graphic prose. Do NOT echo graphic terms. Focus on tension.";
+      } else if (state.intensity === "Erotic") {
+          intensityGuard = "INTENSITY RULE: Erotic. Explicit intimacy allowed. If input is extreme, soften it while preserving the act. Maintain literary tone.";
+      } else if (state.intensity === "Dirty") {
+          intensityGuard = "INTENSITY RULE: Dirty. Depict entered actions/words. Apply the selected Style voice (e.g. Shakespearean/Breathless). Dirty isn't always raw; respect the Voice.";
+      } else {
+          intensityGuard = "INTENSITY RULE: Clean. Romance and chemistry only. Fade to black if necessary.";
+      }
+
+      // PACING HELPER
+      function buildPacingDirective() {
+          const wc = currentStoryWordCount();
+          const len = state.storyLength || 'voyeur';
+          // Heuristic based on stage
+          if (state.storyStage === 'post-consummation') state.flingClimaxDone = true;
+
+          let dir = "";
+          if (len === 'voyeur') {
+             if (wc > 6500) {
+               dir = "PACING ALERT (VOYEUR TIER): Approaching limit. Build extreme tension but DENY release. Steer narrative toward an unresolved cliffhanger ending. Do NOT resolve the desire.";
+             }
+          } else if (len === 'fling') {
+             if (state.flingClimaxDone) {
+                dir = "PACING ALERT (FLING TIER): Climax occurred. Now introduce a complication, regret, or external consequence. Steer toward an unresolved ending/cliffhanger regarding this new problem. Do NOT resolve fully.";
+             } else if (wc > 15000) {
+                dir = "PACING ALERT (FLING TIER): Approaching story limit. Push for the single permitted erotic climax now.";
+             }
+          } else if (['affair', 'soulmates'].includes(len)) {
+             dir = "PACING: Standard arc pacing. Allow beats to breathe. Avoid abrupt cliffhangers unless consistent with chapter flow. Resolve arcs naturally.";
+          }
+          return dir;
+      }
+
+      const pacingDirective = buildPacingDirective();
+      const bbDirective = getBatedBreathDirective(); 
+      const safetyDirective = state.godModeActive ? "" : "Remember Safety: No sexual violence. No non-con (unless implied/consensual roleplay).";
+      const edgeDirective = (state.edgeCovenant.active) 
+        ? `EDGE COVENANT ACTIVE (Level ${state.edgeCovenant.level}): You are authorized to be more dominant, push boundaries, and create higher tension/stakes. Use more imperative language.` 
+        : "";
+      
+      const metaMsg = buildMetaDirective();
+      const squashDirective = "Do not repeat the user's input verbatim. Weave it into the narrative flow.";
+      
+      const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
+      
+      const vetoRules = `Banned Words: ${state.veto.bannedWords.join(', ')}. Excluded Concepts: ${state.veto.excluded.join(', ')}. Required Tone: ${state.veto.tone.join(', ')}.`;
+
+      const quillDirective = (state.quillCommittedThisTurn) ? `NOTE: The user just edited the previous beat (Quill). Respect the new context strictly.` : "";
+
+      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n\nTURN INSTRUCTIONS: 
+      Story So Far: ...${context}
+      Player Action: ${act}. 
+      Player Dialogue: ${dia}. 
+      ${metaMsg}
+      
+      Write the next beat (150-250 words).`;
+
       try {
+          // USER TURN RENDER
           const uDiv = document.createElement('div');
           uDiv.className = 'dialogue-block p1-dia';
           uDiv.innerHTML = `<strong>You:</strong> ${act} <br> "${dia}"`;
           document.getElementById('storyText').appendChild(uDiv);
 
-          // Simulate API delay
-          await new Promise(r => setTimeout(r, 1000));
-          
-          const newDiv = document.createElement('div');
-          newDiv.innerHTML = `<p>The story continues... (Simulated Response)</p>`;
-          document.getElementById('storyText').appendChild(newDiv);
+          const raw = await callChat([
+              {role:'system', content: fullSys},
+              {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
+          ]);
           
           state.turnCount++;
+          
+          const sep = document.createElement('hr');
+          sep.style.borderColor = 'var(--pink)';
+          sep.style.opacity = '0.3';
+          document.getElementById('storyText').appendChild(sep);
+
+          const newDiv = document.createElement('div');
+          newDiv.innerHTML = formatStory(raw);
+          document.getElementById('storyText').appendChild(newDiv);
+          
+          sep.scrollIntoView({behavior:'smooth', block:'start'});
+
+          resetTurnSnapshotFlag(); 
+          
+          maybeFlipConsummation(raw); 
+
+          // Manage Fling Latch
+          if (state.storyStage === 'post-consummation') {
+              if (state.flingClimaxDone) {
+                  state.flingConsequenceShown = true;
+              }
+              state.flingClimaxDone = true;
+          }
+
+          const wc = currentStoryWordCount();
+          if(state.quill && !state.godModeActive) {
+              state.quill.uses++;
+              state.quill.nextReadyAtWords = wc + computeNextCooldownWords();
+              state.quillCommittedThisTurn = false;
+              updateQuillUI();
+          }
+
+          if(wc > getSexAllowedAtWordCount()) state.sexPushCount = 0;
+
+          // Fate Card Deal (Solo)
+          if (state.mode === 'solo' && Math.random() < 0.45) {
+               if(window.dealFateCards) window.dealFateCards();
+          }
+
           saveStorySnapshot();
           checkStoryEndCaps();
+
           $('actionInput').value = '';
           $('dialogueInput').value = '';
+          
+          if(state.mode === 'couple') {
+              broadcastTurn(raw);
+          }
 
       } catch(e) {
+          console.error(e);
           alert("Fate was silent. Try again.");
       } finally {
           stopLoading();
       }
   });
 
-  // --- COUPLE MODE STUBS ---
+  function formatStory(text){
+      return text.split('\n').map(p => {
+          if(!p.trim()) return '';
+          if(p.trim().startsWith('"')) return `<p style="color:var(--p2-color); font-weight:500;">${p}</p>`;
+          return `<p>${p}</p>`;
+      }).join('');
+  }
+
+  // --- COUPLE MODE LOGIC ---
   window.coupleCleanup = function(){ if(sb) sb.removeAllChannels(); };
+  
   window.setMode = function(m){
-     if(m === 'couple' && !sb){ alert("Couple mode unavailable."); return; }
+     if(m === 'couple') {
+         if(!sb){ alert("Couple mode unavailable (No backend)."); return; }
+         if(state.storyOrigin === 'solo' && state.storyStage === 'post-consummation') {
+             alert("The die is cast. You have crossed a threshold alone; a partner cannot join now.");
+             return;
+         }
+     }
      state.mode = m;
      state.storyOrigin = m;
      if(m === 'solo') window.showScreen('setup');
@@ -1305,18 +1657,9 @@
      if(m === 'stranger') window.showScreen('strangerModal');
   };
 
-  // --- META SYSTEM ---
-  window.setMetaStance = function(s){
-      state.stance = s;
-      document.querySelectorAll('.meta-stance').forEach(b => b.classList.remove('active'));
-      const btn = document.querySelector(`.meta-stance[onclick="window.setMetaStance('${s}')"]`);
-      if(btn) btn.classList.add('active');
-  };
-
   // --- EDGE COVENANT ---
   window.openEdgeCovenantModal = function(){
       document.getElementById('edgeCovenantModal').classList.remove('hidden');
-      // Hide couple controls if solo
       const invite = document.getElementById('btnInviteEdge');
       const couple = document.getElementById('coupleEdgeControls');
       if(invite) invite.classList.toggle('hidden', state.mode === 'couple');

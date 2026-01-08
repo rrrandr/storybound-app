@@ -89,6 +89,9 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 .p1-dia { color: var(--p1-color); border-color: var(--p1-color); }
 .p2-dia { color: var(--p2-color); border-color: var(--p2-color); }
 
+body.lgbtq-mode .p1-dia { color: #bf55ec !important; border-color: #bf55ec !important; }
+body.lgbtq-mode .p2-dia { color: #ffae00 !important; border-color: #ffae00 !important; }
+
 /* BUTTONS */
 button { background:var(--btn-bg); color:var(--btn-txt); padding:10px 30px; border:none; border-radius:25px; font-size:1em; cursor:pointer; box-shadow:0 0 18px rgba(0,0,0,0.2); transition:.3s; font-family:var(--font-main); position:relative; }
 button:hover { transform:scale(1.05); filter:brightness(1.2); }
@@ -110,11 +113,14 @@ button:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
 .choice-buttons > div {
     flex: 1 1 200px;
     max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 @media (max-width: 640px) {
     .choice-buttons { flex-direction: column; align-items: center; width: 100%; }
     .choice-buttons > div { width: 100%; max-width: 100%; flex: 1 1 100%; }
-    .choice { width: 100%; }
+    .choice { width: 100%; margin: 0 auto; }
 }
 
 .choice { padding:15px 40px; font-size:1.4em; border-radius:30px; font-family:'lust-script-display',serif; width: 100%; box-sizing: border-box; }
