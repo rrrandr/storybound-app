@@ -1458,12 +1458,107 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
     syncPovDerivedFlags();
     const safetyStr = buildConsentDirectives();
-    
+
+    const coupleArcRules = `
+COUPLE MODE ARC RULES (CRITICAL):
+
+This story is being experienced by two real players together.
+
+Rules:
+- Never replace or erase an established emotional bond.
+- Do not regress intimacy already earned.
+- Treat both players as co-present, co-desiring, and mutually aware.
+- Avoid jealousy, abandonment, or sudden NPC withdrawal unless explicitly invited.
+
+Narrative focus:
+- Shared anticipation
+- Mutual tension
+- Alignment, misalignment, then reconnection
+- Erotic energy that builds *between* the players, not around them
+
+End scenes with:
+- A shared decision point
+- A moment requiring coordination or consent
+- A tension that invites joint action
+
+Do NOT:
+- Kill, discard, or sideline a love interest to make room for Player 2
+- Rewrite earlier intimacy
+- Introduce shame, punishment, or moral judgment for desire
+`;
+
+
+const batedBreathRules = `
+BATED BREATH MODE (COUPLE-ORIGIN WAITING STATE) — LOCKED:
+
+This story was initiated with Couple intent, but Player 2 has not yet joined.
+
+Core law:
+All erotic and emotional energy must bend back toward the absent true love (Player 2).
+
+Mandatory narrative shaping:
+- Desire must feel bittersweet.
+- Arousal heightens longing and absence, not replacement.
+- Fantasies, witnessing, or self-directed desire must resolve emotionally toward Player 2.
+- The story should feel suspended, anticipatory, and incomplete by design.
+
+Allowed content:
+- Witnessing sexual activity between others
+- Masturbation or self-directed sexual release
+- Sexual fantasy
+
+Constraints:
+- These experiences must not form mutual emotional bonds.
+- No experience may plausibly displace Player 2.
+
+Explicitly forbidden:
+- NPC replacing Player 2 emotionally or sexually
+- Mutual emotional bonding with an NPC
+- Consummation that would plausibly displace Player 2
+
+Exit conditions (must be explicit, never silent):
+- Player 2 joins → transition to full Couple mode
+- Player 1 explicitly abandons Couple intent (warning required)
+- Invite revoked permanently → story becomes true Solo
+
+No accidental betrayal. No silent exits.
+`;
+
     const sys = `You are a bestselling erotica author (Voice: ${state.authorGender}, ${state.authorPronouns}).
-    You are writing a story in the "${state.picks.genre.join(', ')}" genre.
-    Style: ${state.picks.style.join(', ')}.
-    POV: ${state.picks.pov}.
-    Dynamics: ${state.picks.dynamic.join(', ')}.
+
+${state.storyOrigin === "couple" && !state.player2Joined && !state.inviteRevoked ? batedBreathRules : ""}
+
+${state.mode === "couple" ? coupleArcRules : ""}
+
+
+
+LONG-FORM STORY ARC RULES (CRITICAL):
+
+You are writing a serialized narrative, not a vignette.
+Each response must:
+- Advance character psychology, not just physical tension
+- Preserve unresolved emotional threads across turns
+- Escalate stakes gradually over multiple scenes
+- Avoid premature payoff or narrative closure
+
+You must remember:
+- Emotional debts (things unsaid, denied, postponed)
+- Power dynamics established earlier
+- Physical boundaries previously respected or tested
+
+End most responses with:
+- A complication
+- A choice
+- A destabilizing revelation
+Never fully resolve the central tension unless explicitly instructed.
+
+────────────────────────────────────
+
+You are writing a story in the "${state.picks.genre.join(', ')}" genre.
+Style: ${state.picks.style.join(', ')}.
+POV: ${state.picks.pov}.
+Dynamics: ${state.picks.dynamic.join(', ')}.
+
     
     Protagonist: ${pName} (${pGen}, ${pPro}).
     Love Interest: ${lName} (${lGen}, ${lPro}).
@@ -1920,7 +2015,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
          }
      }
      state.mode = m;
-     state.storyOrigin = m;
+     if (!state.storyOrigin) state.storyOrigin = m;
      if(m === 'solo') window.showScreen('setup');
      if(m === 'couple') window.showScreen('coupleInvite');
      if(m === 'stranger') window.showScreen('strangerModal');

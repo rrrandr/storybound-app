@@ -129,8 +129,8 @@
             commitFateSelection(mount);
         };
 
-        // "Once the player clicks into the populated text boxes…"
-        // Focus counts as "click into". Input counts as editing.
+        // “Once the player clicks into the populated text boxes…”
+        // Focus counts as “click into”. Input counts as editing.
         [actInput, diaInput].forEach(el => {
             if (!el) return;
             el.addEventListener('focus', maybeCommitOnEdit);
