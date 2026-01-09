@@ -177,14 +177,17 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       lastTypingSentAt: 0,
       partnerStatus: { online:false, lastSeenAt:null, typing:false, typingAt:null, uid:null },
       _lastTurnId: null,
-      selectedFateIndex: null,
+      selectedFateIndex: -1,
+      fateSelectedIndex: -1,
+      fateCommitted: false,
       selectedFatePayload: null,
       _snapshotThisTurn: false,
       sexPushCount: 0,
       lastSexPushAt: null,
-      veto: { bannedWords: [], bannedNames: [], excluded: [], tone: [] },
-      quill: { uses: 0, nextReadyAtWords: 0, baseCooldown: 3000, multiplier: 1.6 },
+      veto: { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] },
+      quill: { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600 },
       quillCommittedThisTurn: false,
+      quillIntent: '',
       storyStage: 'pre-intimacy',
       sandbox: false,
       godModeActive: false,
@@ -207,7 +210,17 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           violence: true,
           boundaries: ["No sexual violence"],
           mode: 'balanced'
-      }
+      },
+
+      // 5TH PERSON POV (AUTHOR) CONTROL
+      povMode: window.state?.povMode || 'normal',                // 'normal' | 'author5th'
+      authorPresence: window.state?.authorPresence || 'normal',  // 'normal' | 'frequent'
+      authorCadenceWords: window.state?.authorCadenceWords || 40, // target avg words between Author mentions
+      fateCardVoice: window.state?.fateCardVoice || 'neutral',   // 'neutral' | 'authorial'
+      allowAuthorAwareness: window.state?.allowAuthorAwareness ?? true,
+      authorAwarenessChance: window.state?.authorAwarenessChance || 0.13,
+      authorAwarenessWindowWords: window.state?.authorAwarenessWindowWords || 1300,
+      authorAwarenessMaxDurationWords: window.state?.authorAwarenessMaxDurationWords || 2500
   };
   
   var state = window.state;
@@ -219,6 +232,52 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   function $(id){ return document.getElementById(id); }
   function toggle(id){ const el = document.getElementById(id); if(el) el.classList.toggle('hidden'); }
   function resetTurnSnapshotFlag(){ state._snapshotThisTurn = false; }
+
+  // --- THEME & FONT HELPERS ---
+  window.setTheme = function(name) {
+      document.body.classList.remove('theme-sepia', 'theme-midnight', 'theme-print', 'theme-easy');
+      if (name && name !== 'default') {
+          document.body.classList.add('theme-' + name);
+      }
+  };
+
+  window.setFont = function(fontValue) {
+      document.documentElement.style.setProperty('--font-story', fontValue);
+  };
+
+  window.setFontSize = function(size) {
+      document.documentElement.style.setProperty('--story-size', size + 'px');
+  };
+
+  window.setGameIntensity = function(level) {
+      // honour access tiers: dirty requires subscription, erotic requires non-free
+      if (level === 'Dirty' && window.state.access !== 'sub') { window.showPaywall('sub'); return; }
+      if (level === 'Erotic' && window.state.access === 'free') { window.openEroticPreview(); return; }
+      window.state.intensity = level;
+      updateIntensityUI();
+  };
+
+  window.checkCustom = function(selectEl, inputId) {
+      const input = document.getElementById(inputId);
+      if (input) {
+          input.classList.toggle('hidden', selectEl.value !== 'Custom');
+      }
+  };
+
+  function syncPovDerivedFlags(){
+      if(!window.state) return;
+      const pov = (window.state.picks?.pov || '').toLowerCase();
+      const is5th = /fifth|5th|author/.test(pov) || window.state.povMode === 'author5th';
+      if(is5th){
+          window.state.povMode = 'author5th';
+          window.state.authorPresence = 'frequent';
+          window.state.fateCardVoice = 'authorial';
+      } else {
+          window.state.povMode = 'normal';
+          window.state.authorPresence = 'normal';
+          window.state.fateCardVoice = 'neutral';
+      }
+  }
 
   // NAV HELPER
   function closeAllOverlays() {
@@ -283,6 +342,11 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       window.scrollTo(0,0);
       _currentScreenId = id;
       updateNavUI();
+
+      // Populate suggestion pills when entering setup screen
+      if(id === 'setup') {
+          populatePills();
+      }
   };
 
   function initNavBindings() {
@@ -464,9 +528,11 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   function computeNextCooldownWords() {
       if(state.godModeActive) return 0;
-      const base = state.authorChairActive ? 2000 : 3000;
-      const mult = state.authorChairActive ? 1.4 : 1.6;
-      return Math.round(base * Math.pow(mult, state.quill.uses));
+      // Base 1200, +600 per use, cap at 3600
+      const base = 1200;
+      const perUse = 600;
+      const cap = 3600;
+      return Math.min(cap, base + (state.quill.uses * perUse));
   }
 
   function checkAuthorChairUnlock() {
@@ -474,33 +540,149 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       return totalWords >= 250000;
   }
 
-  function parseStoryControls(rawText) {
-      if(!rawText) return { veto: {bannedWords:[], bannedNames:[], excluded:[], tone:[]}, quillDraft: "" };
+  // Veto patterns that indicate scene/event demands (rejected)
+  const VETO_SCENE_PATTERNS = [
+      /^(make|have|let|force|ensure|require|demand|insist|want|need)\s+(them|him|her|it|the|a)\b/i,
+      /^bring\s+(them|him|her)\s+to/i,
+      /^start\s+a\s+(scene|chapter|sequence)/i,
+      /^introduce\s+(a|the|new)\b/i,
+      /^add\s+(a|the|new)\s+(scene|character|kink|setting)/i
+  ];
+
+  function parseVetoInput(rawText) {
+      if(!rawText) return { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
       const lines = rawText.split('\n');
-      const veto = { bannedWords:[], bannedNames:[], excluded:[], tone:[] };
-      const draftLines = [];
+      const result = { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
+
       lines.forEach(line => {
           const l = line.trim();
           if(!l) return;
           const lower = l.toLowerCase();
-          if(lower.startsWith('ban:')) veto.bannedWords.push(l.replace(/^ban:\s*/i, ''));
-          else draftLines.push(l);
+
+          // Check if this is a scene/event demand (reject it)
+          const isSceneDemand = VETO_SCENE_PATTERNS.some(p => p.test(l));
+          if(isSceneDemand) {
+              result.rejected.push(l);
+              return;
+          }
+
+          // HARD EXCLUSIONS: ban:, no , never
+          if(lower.startsWith('ban:') || lower.startsWith('ban ')) {
+              result.exclusions.push(l.replace(/^ban[:\s]+/i, '').trim());
+          } else if(lower.startsWith('no ') || lower.startsWith('never ')) {
+              result.exclusions.push(l);
+          }
+          // EDITORIAL CORRECTIONS: rename:, replace:, call
+          else if(lower.startsWith('rename:') || lower.startsWith('replace:')) {
+              result.corrections.push(l);
+          } else if(lower.includes('->') || lower.includes('→')) {
+              result.corrections.push(l);
+          } else if(lower.startsWith('call ') && lower.includes(' not ')) {
+              result.corrections.push(l);
+          }
+          // AMBIENT MODIFIERS: add more, increase, keep, make it, let the
+          else if(/^(add\s+more|increase|decrease|keep|make\s+it|let\s+the|more\s+)/i.test(l)) {
+              result.ambientMods.push(l);
+          }
+          // Default: treat as exclusion
+          else {
+              result.exclusions.push(l);
+          }
       });
-      return { veto, quillDraft: draftLines.join('\n') };
+      return result;
+  }
+
+  function applyVetoFromInput() {
+      const el = document.getElementById('vetoInput');
+      if(!el) return;
+      const parsed = parseVetoInput(el.value);
+
+      // Show rejection toast if any lines were rejected
+      if(parsed.rejected.length > 0) {
+          showToast("Veto removes elements or applies ambient constraints. It can't be used to make events happen.");
+      }
+
+      // Map to existing state.veto structure
+      state.veto.bannedWords = parsed.exclusions;
+      state.veto.excluded = parsed.exclusions;
+      state.veto.corrections = parsed.corrections;
+      state.veto.ambientMods = parsed.ambientMods;
+  }
+
+  // Legacy compatibility wrapper
+  function parseStoryControls(rawText) {
+      const vetoResult = parseVetoInput(rawText);
+      return {
+          veto: {
+              bannedWords: vetoResult.exclusions,
+              bannedNames: [],
+              excluded: vetoResult.exclusions,
+              tone: vetoResult.ambientMods
+          },
+          quillDraft: ""
+      };
   }
 
   function applyVetoFromControls() {
-      const el = document.getElementById('storyControls');
-      if(el) {
-          const { veto } = parseStoryControls(el.value);
-          state.veto = veto;
-      }
+      applyVetoFromInput();
+  }
+
+  // --- SUGGESTION PILLS ---
+  const VETO_SUGGESTIONS = [
+      "ban: moist", "no tattoos", "no scars", "no cheating", "no amnesia",
+      "rename: -> ", "more description", "keep pacing slower", "no second-person"
+  ];
+  const QUILL_SUGGESTIONS = [
+      "enemies to lovers", "only one bed", "bring them somewhere private",
+      "increase tension", "confession scene", "near-miss moment", "jealousy beat"
+  ];
+
+  function populatePills() {
+      const vetoPillsEl = document.getElementById('vetoPills');
+      const quillPillsEl = document.getElementById('quillPills');
+      if(!vetoPillsEl || !quillPillsEl) return;
+
+      vetoPillsEl.innerHTML = '';
+      quillPillsEl.innerHTML = '';
+
+      // Shuffle and pick 4 random veto suggestions
+      const shuffledVeto = [...VETO_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 4);
+      shuffledVeto.forEach(txt => {
+          const pill = document.createElement('span');
+          pill.className = 'pill veto-pill';
+          pill.textContent = txt;
+          pill.onclick = () => {
+              const input = document.getElementById('vetoInput');
+              if(input) {
+                  input.value = input.value ? input.value + '\n' + txt : txt;
+              }
+              pill.remove();
+          };
+          vetoPillsEl.appendChild(pill);
+      });
+
+      // Shuffle and pick 3 random quill suggestions
+      const shuffledQuill = [...QUILL_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 3);
+      shuffledQuill.forEach(txt => {
+          const pill = document.createElement('span');
+          pill.className = 'pill quill-pill';
+          pill.textContent = txt;
+          pill.onclick = () => {
+              const input = document.getElementById('quillInput');
+              if(input) {
+                  input.value = input.value ? input.value + '\n' + txt : txt;
+              }
+              pill.remove();
+          };
+          quillPillsEl.appendChild(pill);
+      });
   }
 
   function updateQuillUI() {
       const btn = document.getElementById('btnCommitQuill');
       const status = document.getElementById('quillStatus');
       const godToggle = document.getElementById('godModeToggle');
+      const quillBox = document.getElementById('quillBox');
       if(!btn || !status) return;
 
       if(state.mode === 'solo') {
@@ -515,24 +697,26 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
               }
           }
       } else {
-          if(godToggle) godToggle.classList.add('hidden'); 
+          if(godToggle) godToggle.classList.add('hidden');
       }
 
       const ready = getQuillReady();
       const wc = currentStoryWordCount();
       const needed = state.quill.nextReadyAtWords;
-      
+
       if(ready) {
-          status.textContent = state.authorChairActive ? "🪑 Quill: Ready" : "Quill: Ready";
+          status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
           status.style.color = "var(--pink)";
           btn.disabled = false;
           btn.style.opacity = "1";
           btn.style.borderColor = "var(--pink)";
-          btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill Edit";
+          btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
+          if(quillBox) quillBox.classList.remove('locked-input');
       } else {
           const remain = Math.max(0, needed - wc);
-          status.textContent = `Quill recharges in: ${remain} words`;
+          status.textContent = `Quill: Spent (${remain} words to recharge)`;
           status.style.color = "var(--gold)";
+          if(quillBox) quillBox.classList.add('locked-input');
           btn.disabled = true;
           btn.style.opacity = "0.5";
           btn.style.borderColor = "transparent";
@@ -708,13 +892,13 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           }
       });
 
-      const storyCtrl = document.getElementById('storyControls');
-      if(storyCtrl) {
-          storyCtrl.disabled = false;
-          storyCtrl.readOnly = !paid;
+      const quillCtrl = document.getElementById('quillInput');
+      if(quillCtrl) {
+          quillCtrl.disabled = false;
+          quillCtrl.readOnly = !paid;
       }
 
-      ['storyControlsBox', 'actionWrapper', 'dialogueWrapper'].forEach(id => {
+      ['quillBox', 'actionWrapper', 'dialogueWrapper'].forEach(id => {
         const wrap = document.getElementById(id);
         if(wrap) {
             if (shouldLock) {
@@ -780,7 +964,12 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       setPaywallClickGuard(card, locked);
       card.classList.toggle('selected', val === state.storyLength);
     });
-    
+
+    // Auto-select fling if pass tier and current selection is voyeur (now hidden)
+    if (state.access === 'pass' && state.storyLength === 'voyeur') {
+        state.storyLength = 'fling';
+    }
+
     bindLengthHandlers();
   }
 
@@ -1057,6 +1246,17 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   window.changeTier = function(){ window.showScreen('tierGate'); };
 
+  $('saveBtn')?.addEventListener('click', (e) => {
+      const hasAccess = (window.state.access !== 'free') || (window.state.mode === 'couple');
+      if (!hasAccess) {
+          e.stopPropagation();
+          window.showPaywall('unlock');
+          return;
+      }
+      saveStorySnapshot();
+      showToast("Story saved.");
+  });
+
   $('burgerBtn')?.addEventListener('click', () => document.getElementById('menuOverlay').classList.remove('hidden'));
   $('ageYes')?.addEventListener('click', () => window.showScreen('tosGate'));
   $('tosCheck')?.addEventListener('change', (e) => $('tosBtn').disabled = !e.target.checked);
@@ -1163,9 +1363,48 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   $('paySub')?.addEventListener('click', () => {
     state.subscribed = true;
-    state.lastPurchaseType = 'sub'; 
+    state.lastPurchaseType = 'sub';
     localStorage.setItem('sb_subscribed', '1');
     completePurchase();
+  });
+
+  $('payGodMode')?.addEventListener('click', () => {
+      localStorage.setItem('sb_god_mode_owned', '1');
+      document.getElementById('payModal')?.classList.add('hidden');
+      if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
+          activateGodMode();
+      }
+  });
+
+  $('btnCommitQuill')?.addEventListener('click', () => {
+      if (!getQuillReady()) return;
+      const quillEl = document.getElementById('quillInput');
+      if (!quillEl) return;
+      const quillText = quillEl.value.trim();
+      if (!quillText) { showToast("No Quill edit to commit."); return; }
+
+      // Also apply any pending veto constraints
+      applyVetoFromInput();
+
+      // Store quill intent in state for prompt injection
+      window.state.quillIntent = quillText;
+
+      const storyEl = document.getElementById('storyText');
+      if (storyEl && quillText) {
+          const div = document.createElement('div');
+          div.className = 'quill-intervention';
+          div.style.cssText = 'font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;';
+          div.innerHTML = formatStory(quillText);
+          storyEl.appendChild(div);
+      }
+
+      window.state.quillCommittedThisTurn = true;
+      window.state.quill.uses++;
+      window.state.quill.nextReadyAtWords = currentStoryWordCount() + computeNextCooldownWords();
+      quillEl.value = '';
+      updateQuillUI();
+      saveStorySnapshot();
+      showToast("Quill committed.");
   });
 
   // --- META SYSTEM (RESTORED) ---
@@ -1216,7 +1455,8 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     
     state.gender = pGen;
     state.loveInterest = lGen;
-    
+
+    syncPovDerivedFlags();
     const safetyStr = buildConsentDirectives();
 
     const coupleArcRules = `
@@ -1336,6 +1576,13 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     5. Be creative, surprising, and emotionally resonant.
     6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
     7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
+    ${state.povMode === 'author5th' ? `
+    5TH PERSON (AUTHOR) DIRECTIVES:
+    - You are the Author, a visible conductor of the narrative.
+    - Presence: ${state.authorPresence}. Cadence: ~${state.authorCadenceWords} words between Author references.
+    - Fate card voice: ${state.fateCardVoice}.
+    - Author awareness: ${state.allowAuthorAwareness ? 'enabled' : 'disabled'}, chance ${state.authorAwarenessChance}, window ${state.authorAwarenessWindowWords}w, max ${state.authorAwarenessMaxDurationWords}w.
+    ` : ''}
     `;
     
     state.sysPrompt = sys;
@@ -1644,9 +1891,19 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       
       const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
       
-      const vetoRules = `Banned Words: ${state.veto.bannedWords.join(', ')}. Excluded Concepts: ${state.veto.excluded.join(', ')}. Required Tone: ${state.veto.tone.join(', ')}.`;
+      // Build VETO constraints
+      const vetoExclusions = state.veto.excluded.length ? `VETO EXCLUSIONS (treat as nonexistent): ${state.veto.excluded.join('; ')}.` : '';
+      const vetoCorrections = state.veto.corrections?.length ? `VETO CORRECTIONS (apply going forward): ${state.veto.corrections.join('; ')}.` : '';
+      const vetoAmbient = state.veto.ambientMods?.length ? `VETO AMBIENT (apply if world allows): ${state.veto.ambientMods.join('; ')}.` : '';
+      const vetoRules = [vetoExclusions, vetoCorrections, vetoAmbient].filter(Boolean).join('\n');
 
-      const quillDirective = (state.quillCommittedThisTurn) ? `NOTE: The user just edited the previous beat (Quill). Respect the new context strictly.` : "";
+      // Build QUILL directive
+      let quillDirective = '';
+      if (state.quillCommittedThisTurn && state.quillIntent) {
+          quillDirective = `QUILL INTENT (honor as Fate allows, may be delayed/partial/costly): ${state.quillIntent}`;
+      } else if (state.quillCommittedThisTurn) {
+          quillDirective = `NOTE: The user just committed a Quill edit. Honor the authorial intent.`;
+      }
 
       const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n\nTURN INSTRUCTIONS: 
       Story So Far: ...${context}
@@ -1698,6 +1955,7 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
               state.quill.uses++;
               state.quill.nextReadyAtWords = wc + computeNextCooldownWords();
               state.quillCommittedThisTurn = false;
+              state.quillIntent = '';
               updateQuillUI();
           }
 
@@ -1705,7 +1963,12 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
           // Fate Card Deal (Solo)
           if (state.mode === 'solo' && Math.random() < 0.45) {
-               if(window.dealFateCards) window.dealFateCards();
+               if (window.dealFateCards) {
+                   window.dealFateCards();
+                   if (state.batedBreathActive && state.fateOptions) {
+                       state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
+                   }
+               }
           }
 
           saveStorySnapshot();
@@ -1736,7 +1999,13 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
   // --- COUPLE MODE LOGIC ---
   window.coupleCleanup = function(){ if(sb) sb.removeAllChannels(); };
-  
+
+  function broadcastTurn(text, isInit = false) {
+      if (!sb || window.state.mode !== 'couple' || !window.state.roomId) return;
+      // Stub implementation; real Supabase broadcast can be added later
+      console.log("broadcastTurn stub:", { isInit, textLength: text?.length });
+  }
+
   window.setMode = function(m){
      if(m === 'couple') {
          if(!sb){ alert("Couple mode unavailable (No backend)."); return; }
@@ -1784,6 +2053,60 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       document.getElementById('edgeActions').classList.remove('hidden');
       document.getElementById('edgeAcceptance').classList.add('hidden');
   };
+
+  // --- COUPLE MODE BUTTON HANDLERS ---
+  $('btnCreateRoom')?.addEventListener('click', async () => {
+      if (!sb) { alert("Couple mode unavailable."); return; }
+      const uid = await ensureAnonSession();
+      if (!uid) { alert("Auth failed."); return; }
+      window.state.myUid = uid;
+      window.state.myNick = getNickname();
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      window.state.roomCode = code;
+      window.state.roomId = 'room_' + code;
+
+      const lbl = document.getElementById('coupleRoomCodeLabel');
+      const big = document.getElementById('roomCodeBig');
+      const wrap = document.getElementById('roomCodeWrap');
+      if (lbl) lbl.textContent = code;
+      if (big) big.textContent = code;
+      if (wrap) wrap.classList.remove('hidden');
+
+      document.getElementById('coupleStatus').textContent = 'Waiting for partner...';
+      document.getElementById('sbNickLabel').textContent = window.state.myNick;
+  });
+
+  $('btnJoinRoom')?.addEventListener('click', () => {
+      document.getElementById('joinRow')?.classList.toggle('hidden');
+  });
+
+  $('btnJoinGo')?.addEventListener('click', async () => {
+      if (!sb) { alert("Couple mode unavailable."); return; }
+      const code = document.getElementById('joinCodeInput')?.value.trim().toUpperCase();
+      if (!code || code.length !== 6) { alert("Enter a 6-character code."); return; }
+
+      const uid = await ensureAnonSession();
+      if (!uid) { alert("Auth failed."); return; }
+      window.state.myUid = uid;
+      window.state.myNick = getNickname();
+      window.state.roomCode = code;
+      window.state.roomId = 'room_' + code;
+
+      document.getElementById('coupleStatus').textContent = 'Joined room ' + code;
+      document.getElementById('sbNickLabel').textContent = window.state.myNick;
+      document.getElementById('btnEnterCoupleGame')?.classList.remove('hidden');
+  });
+
+  $('btnCopyCode')?.addEventListener('click', () => {
+      if (window.state.roomCode) {
+          navigator.clipboard.writeText(window.state.roomCode);
+          showToast("Code copied!");
+      }
+  });
+
+  $('btnEnterCoupleGame')?.addEventListener('click', () => {
+      window.showScreen('setup');
+  });
 
   // --- INIT ---
   initSelectionHandlers();

@@ -232,8 +232,8 @@
         <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
             <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:220px; text-align:left;">
                 <h4 style="color:var(--pink); margin-top:0;">Unlock This Story</h4>
-                <p style="font-size:0.9em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, and control.<br><strong>Single Story Pass.</strong></p>
-                <button id="payOneTime" style="width:100%; margin-top:15px;">Unlock ($1)</button>
+                <p style="font-size:0.9em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, and control.<br><strong>$3 Story Pass.</strong></p>
+                <button id="payOneTime" style="width:100%; margin-top:15px;">Unlock ($3)</button>
             </div>
 
             <div id="optSub" style="background:linear-gradient(145deg, #400020, #200010); padding:15px; border-radius:10px; border:1px solid gold; width:220px; text-align:left;">
@@ -461,17 +461,32 @@
        <div class="card locked" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Grand futuristic worlds, high stakes.</p><button class="preview-btn" data-txt="Stars like spilled ink.">Preview</button></div>
     </div>
 
-    <div class="section-title">Story Controls</div>
-    <div id="storyControlsBox" class="input-wrapper locked-input" style="height: 140px;" onclick="window.showPaywall('unlock')">
-       <textarea id="storyControls" rows="3" style="color:transparent; background:transparent; z-index:2; position:relative; height:100%;"></textarea>
-       <div class="ghost-overlay" id="ctrlGhost">
-           <div class="ghost-grid"></div>
-       </div>
+    <div class="section-title">Quill & Veto</div>
+
+    <div class="quill-veto-container">
+        <div class="qv-section">
+            <label class="qv-label">Veto</label>
+            <p class="qv-hint-above">Block elements you never want to appear. Vetoes are immediate and permanent.</p>
+            <div id="vetoPills" class="pill-tray"></div>
+            <textarea id="vetoInput" rows="2" placeholder="ban: word&#10;rename: Old Name -> New Name&#10;no tattoos"></textarea>
+            <p class="qv-hint-below">Vetoes remove content from consideration. They cannot start scenes or direct the story.</p>
+        </div>
+
+        <div class="qv-section">
+            <label class="qv-label">Quill</label>
+            <p class="qv-hint-above">Use the Quill to gently steer tone, boundaries, or direction without rewriting what's already happened.</p>
+            <div id="quillPills" class="pill-tray"></div>
+            <div id="quillBox" class="input-wrapper locked-input" onclick="window.showPaywall('unlock')">
+                <textarea id="quillInput" rows="2" placeholder="Bring them to a moonlit garden..."></textarea>
+            </div>
+            <p class="qv-hint-below">Quill edits shape what follows and may persist. Each use exhausts the Quill, requiring time and words before it can be wielded again.</p>
+        </div>
     </div>
+
     <div class="quill-ui">
         <div style="display:flex; width:100%; justify-content:space-between; margin-bottom:5px;">
-            <span id="quillStatus">Quill: Ready</span>
-            <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill Edit</button>
+            <span id="quillStatus">Quill: Poised</span>
+            <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
         </div>
         <div id="godModeToggle" class="hidden">
             <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> Enable God Mode (Sandbox)</label>
