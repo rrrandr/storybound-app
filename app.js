@@ -209,7 +209,17 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           violence: true,
           boundaries: ["No sexual violence"],
           mode: 'balanced'
-      }
+      },
+
+      // 5TH PERSON POV (AUTHOR) CONTROL
+      povMode: window.state?.povMode || 'normal',                // 'normal' | 'author5th'
+      authorPresence: window.state?.authorPresence || 'normal',  // 'normal' | 'frequent'
+      authorCadenceWords: window.state?.authorCadenceWords || 40, // target avg words between Author mentions
+      fateCardVoice: window.state?.fateCardVoice || 'neutral',   // 'neutral' | 'authorial'
+      allowAuthorAwareness: window.state?.allowAuthorAwareness ?? true,
+      authorAwarenessChance: window.state?.authorAwarenessChance || 0.13,
+      authorAwarenessWindowWords: window.state?.authorAwarenessWindowWords || 1300,
+      authorAwarenessMaxDurationWords: window.state?.authorAwarenessMaxDurationWords || 2500
   };
   
   var state = window.state;
@@ -252,6 +262,21 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           input.classList.toggle('hidden', selectEl.value !== 'Custom');
       }
   };
+
+  function syncPovDerivedFlags(){
+      if(!window.state) return;
+      const pov = (window.state.picks?.pov || '').toLowerCase();
+      const is5th = /fifth|5th|author/.test(pov) || window.state.povMode === 'author5th';
+      if(is5th){
+          window.state.povMode = 'author5th';
+          window.state.authorPresence = 'frequent';
+          window.state.fateCardVoice = 'authorial';
+      } else {
+          window.state.povMode = 'normal';
+          window.state.authorPresence = 'normal';
+          window.state.fateCardVoice = 'neutral';
+      }
+  }
 
   // NAV HELPER
   function closeAllOverlays() {
@@ -1298,7 +1323,8 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     
     state.gender = pGen;
     state.loveInterest = lGen;
-    
+
+    syncPovDerivedFlags();
     const safetyStr = buildConsentDirectives();
     
     const sys = `You are a bestselling erotica author (Voice: ${state.authorGender}, ${state.authorPronouns}).
@@ -1323,6 +1349,13 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     5. Be creative, surprising, and emotionally resonant.
     6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
     7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
+    ${state.povMode === 'author5th' ? `
+    5TH PERSON (AUTHOR) DIRECTIVES:
+    - You are the Author, a visible conductor of the narrative.
+    - Presence: ${state.authorPresence}. Cadence: ~${state.authorCadenceWords} words between Author references.
+    - Fate card voice: ${state.fateCardVoice}.
+    - Author awareness: ${state.allowAuthorAwareness ? 'enabled' : 'disabled'}, chance ${state.authorAwarenessChance}, window ${state.authorAwarenessWindowWords}w, max ${state.authorAwarenessMaxDurationWords}w.
+    ` : ''}
     `;
     
     state.sysPrompt = sys;
