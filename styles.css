@@ -269,13 +269,18 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .qv-section textarea { width:100%; min-height:50px; resize:vertical; }
 
 /* PILL TRAY */
-.pill-tray { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; min-height:24px; }
-.pill { padding:4px 10px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,105,180,0.3); border-radius:15px; font-size:0.75em; cursor:pointer; transition:0.2s; color:var(--ink); opacity:0.8; }
-.pill:hover { background:rgba(255,105,180,0.2); opacity:1; border-color:var(--pink); }
+.pill-tray { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; min-height:28px; align-items:flex-start; }
+.pill { padding:4px 10px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,105,180,0.3); border-radius:15px; font-size:0.75em; cursor:pointer; transition:all 0.2s; color:var(--ink); opacity:0.85; }
+.pill:hover { background:rgba(255,105,180,0.25); opacity:1; border-color:var(--pink); transform:scale(1.05); }
 .pill.veto-pill { border-color:rgba(255,69,69,0.4); }
-.pill.veto-pill:hover { border-color:#ff6b6b; background:rgba(255,69,69,0.15); }
+.pill.veto-pill:hover { border-color:#ff6b6b; background:rgba(255,69,69,0.2); }
 .pill.quill-pill { border-color:rgba(255,215,0,0.4); }
-.pill.quill-pill:hover { border-color:var(--gold); background:rgba(255,215,0,0.15); }
+.pill.quill-pill:hover { border-color:var(--gold); background:rgba(255,215,0,0.2); }
+
+/* In-game Quill & Veto panel */
+#gameQvPanel { animation: fadeIn 0.3s ease; }
+#gameQvPanel .quill-veto-container { gap:15px; }
+#gameQvPanel .qv-section { padding:12px; }
 
 /* AUTH PANEL */
 #auth-panel { position:fixed; top:10px; right:60px; z-index:2000; background:rgba(0,0,0,0.9); padding:10px; border:1px solid #444; border-radius:5px; display:flex; flex-direction:column; gap:5px; }

@@ -484,10 +484,11 @@
     </div>
 
     <div class="quill-ui">
-        <div style="display:flex; width:100%; justify-content:space-between; margin-bottom:5px;">
+        <div style="display:flex; width:100%; justify-content:space-between; align-items:center; margin-bottom:5px;">
             <span id="quillStatus">Quill: Poised</span>
             <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
         </div>
+        <p id="quillHelper" style="font-size:0.75em; opacity:0.7; margin:5px 0; font-style:italic; text-align:center;">Quill edits shape what follows. After committing, the Quill rests before it can be used again.</p>
         <div id="godModeToggle" class="hidden">
             <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> Enable God Mode (Sandbox)</label>
         </div>
@@ -557,8 +558,34 @@
     </div>
     
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-       <button id="gameControlsBtn" class="small-btn locked-style">Story Controls</button>
+       <button id="gameControlsBtn" class="small-btn">Quill & Veto</button>
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
+    </div>
+
+    <!-- IN-GAME QUILL & VETO PANEL -->
+    <div id="gameQvPanel" class="hidden" style="margin-top:20px; padding:20px; background:rgba(0,0,0,0.4); border:1px solid var(--pink); border-radius:12px;">
+        <div class="section-title" style="font-size:1.4em; margin:0 0 15px; border:none; padding:0;">Quill & Veto</div>
+        <div class="quill-veto-container" style="width:100%; margin:0;">
+            <div class="qv-section">
+                <label class="qv-label">Veto</label>
+                <p class="qv-hint-above">Block elements from appearing.</p>
+                <div id="gameVetoPills" class="pill-tray"></div>
+                <textarea id="gameVetoInput" rows="2" placeholder="ban: word&#10;no tattoos"></textarea>
+            </div>
+            <div class="qv-section">
+                <label class="qv-label">Quill</label>
+                <p class="qv-hint-above">Steer the story's direction.</p>
+                <div id="gameQuillPills" class="pill-tray"></div>
+                <div id="gameQuillBox" class="input-wrapper">
+                    <textarea id="gameQuillInput" rows="2" placeholder="Bring them somewhere private..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="quill-ui" style="margin-top:10px;">
+            <span id="gameQuillStatus">Quill: Poised</span>
+            <p id="gameQuillHelper" style="font-size:0.75em; opacity:0.7; margin:5px 0; font-style:italic;">Quill edits shape what follows. After committing, the Quill rests before it can be used again.</p>
+            <button id="gameBtnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit Quill</button>
+        </div>
     </div>
 
   </div>

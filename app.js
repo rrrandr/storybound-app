@@ -347,6 +347,15 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       if(id === 'setup') {
           populatePills();
       }
+
+      // Initialize game screen elements
+      if(id === 'game') {
+          if(window.initCards) window.initCards();
+          if(window.dealFateCards && (!state.fateOptions || state.fateOptions.length === 0)) {
+              window.dealFateCards();
+          }
+          updateQuillUI();
+      }
   };
 
   function initNavBindings() {
@@ -630,60 +639,107 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   // --- SUGGESTION PILLS ---
   const VETO_SUGGESTIONS = [
       "ban: moist", "no tattoos", "no scars", "no cheating", "no amnesia",
-      "rename: -> ", "more description", "keep pacing slower", "no second-person"
+      "rename: -> ", "more description", "keep pacing slower", "no second-person",
+      "no pregnancy", "no marriage proposals", "no love triangles", "no flashbacks",
+      "no jealousy", "no miscommunication trope", "ban: orbs", "no cliffhangers"
   ];
   const QUILL_SUGGESTIONS = [
       "enemies to lovers", "only one bed", "bring them somewhere private",
-      "increase tension", "confession scene", "near-miss moment", "jealousy beat"
+      "increase tension", "confession scene", "near-miss moment", "jealousy beat",
+      "rain scene", "caught staring", "interrupted kiss", "secret revealed",
+      "first touch", "power shift", "vulnerability moment", "heated argument"
   ];
 
-  function populatePills() {
-      const vetoPillsEl = document.getElementById('vetoPills');
-      const quillPillsEl = document.getElementById('quillPills');
+  // Track used pills to avoid repeats within a session
+  let _usedVetoPills = [];
+  let _usedQuillPills = [];
+
+  function createPill(txt, type, inputId, trayEl) {
+      const pill = document.createElement('span');
+      pill.className = `pill ${type}-pill`;
+      pill.textContent = '+ ' + txt;
+      pill.dataset.suggestion = txt;
+      pill.onclick = () => {
+          const input = document.getElementById(inputId);
+          if(input) {
+              input.value = input.value ? input.value + '\n' + txt : txt;
+          }
+          // Track as used
+          if(type === 'veto') _usedVetoPills.push(txt);
+          else _usedQuillPills.push(txt);
+
+          // Fade out animation
+          pill.style.transition = 'opacity 0.3s, transform 0.3s';
+          pill.style.opacity = '0';
+          pill.style.transform = 'scale(0.8)';
+
+          // Replace with a new pill after delay
+          setTimeout(() => {
+              pill.remove();
+              addReplacementPill(type, inputId, trayEl);
+          }, 300);
+      };
+      return pill;
+  }
+
+  function addReplacementPill(type, inputId, trayEl) {
+      const pool = type === 'veto' ? VETO_SUGGESTIONS : QUILL_SUGGESTIONS;
+      const used = type === 'veto' ? _usedVetoPills : _usedQuillPills;
+      const currentPills = Array.from(trayEl.querySelectorAll('.pill')).map(p => p.dataset.suggestion);
+
+      // Find unused suggestions
+      const available = pool.filter(s => !used.includes(s) && !currentPills.includes(s));
+      if(available.length === 0) {
+          // Reset used if we've exhausted options
+          if(type === 'veto') _usedVetoPills = [];
+          else _usedQuillPills = [];
+          return; // Don't add more if pool exhausted
+      }
+
+      const newTxt = available[Math.floor(Math.random() * available.length)];
+      const newPill = createPill(newTxt, type, inputId, trayEl);
+      newPill.style.opacity = '0';
+      trayEl.appendChild(newPill);
+
+      // Fade in
+      requestAnimationFrame(() => {
+          newPill.style.transition = 'opacity 0.3s';
+          newPill.style.opacity = '1';
+      });
+  }
+
+  function populatePills(isGamePanel = false) {
+      const vetoId = isGamePanel ? 'gameVetoPills' : 'vetoPills';
+      const quillId = isGamePanel ? 'gameQuillPills' : 'quillPills';
+      const vetoInputId = isGamePanel ? 'gameVetoInput' : 'vetoInput';
+      const quillInputId = isGamePanel ? 'gameQuillInput' : 'quillInput';
+
+      const vetoPillsEl = document.getElementById(vetoId);
+      const quillPillsEl = document.getElementById(quillId);
       if(!vetoPillsEl || !quillPillsEl) return;
 
       vetoPillsEl.innerHTML = '';
       quillPillsEl.innerHTML = '';
 
-      // Shuffle and pick 4 random veto suggestions
-      const shuffledVeto = [...VETO_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 4);
+      // Shuffle and pick 9 random veto suggestions
+      const shuffledVeto = [...VETO_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 9);
       shuffledVeto.forEach(txt => {
-          const pill = document.createElement('span');
-          pill.className = 'pill veto-pill';
-          pill.textContent = txt;
-          pill.onclick = () => {
-              const input = document.getElementById('vetoInput');
-              if(input) {
-                  input.value = input.value ? input.value + '\n' + txt : txt;
-              }
-              pill.remove();
-          };
-          vetoPillsEl.appendChild(pill);
+          vetoPillsEl.appendChild(createPill(txt, 'veto', vetoInputId, vetoPillsEl));
       });
 
-      // Shuffle and pick 3 random quill suggestions
-      const shuffledQuill = [...QUILL_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 3);
+      // Shuffle and pick 9 random quill suggestions
+      const shuffledQuill = [...QUILL_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 9);
       shuffledQuill.forEach(txt => {
-          const pill = document.createElement('span');
-          pill.className = 'pill quill-pill';
-          pill.textContent = txt;
-          pill.onclick = () => {
-              const input = document.getElementById('quillInput');
-              if(input) {
-                  input.value = input.value ? input.value + '\n' + txt : txt;
-              }
-              pill.remove();
-          };
-          quillPillsEl.appendChild(pill);
+          quillPillsEl.appendChild(createPill(txt, 'quill', quillInputId, quillPillsEl));
       });
   }
 
   function updateQuillUI() {
-      const btn = document.getElementById('btnCommitQuill');
-      const status = document.getElementById('quillStatus');
+      // Update both setup and game panel Quill UIs
+      const btns = [document.getElementById('btnCommitQuill'), document.getElementById('gameBtnCommitQuill')];
+      const statuses = [document.getElementById('quillStatus'), document.getElementById('gameQuillStatus')];
       const godToggle = document.getElementById('godModeToggle');
-      const quillBox = document.getElementById('quillBox');
-      if(!btn || !status) return;
+      const quillBoxes = [document.getElementById('quillBox'), document.getElementById('gameQuillBox')];
 
       if(state.mode === 'solo') {
           if(godToggle) godToggle.classList.remove('hidden');
@@ -703,24 +759,51 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       const ready = getQuillReady();
       const wc = currentStoryWordCount();
       const needed = state.quill.nextReadyAtWords;
+      const hasPaidAccess = (state.access === 'sub' || state.access === 'pass');
 
-      if(ready) {
-          status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
-          status.style.color = "var(--pink)";
-          btn.disabled = false;
-          btn.style.opacity = "1";
-          btn.style.borderColor = "var(--pink)";
-          btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
-          if(quillBox) quillBox.classList.remove('locked-input');
-      } else {
-          const remain = Math.max(0, needed - wc);
-          status.textContent = `Quill: Spent (${remain} words to recharge)`;
-          status.style.color = "var(--gold)";
-          if(quillBox) quillBox.classList.add('locked-input');
-          btn.disabled = true;
-          btn.style.opacity = "0.5";
-          btn.style.borderColor = "transparent";
-      }
+      btns.forEach(btn => {
+          if(!btn) return;
+          if(ready && hasPaidAccess) {
+              btn.disabled = false;
+              btn.style.opacity = "1";
+              btn.style.borderColor = "var(--pink)";
+              btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
+          } else if(!hasPaidAccess) {
+              btn.disabled = true;
+              btn.style.opacity = "0.5";
+              btn.style.borderColor = "transparent";
+          } else {
+              btn.disabled = true;
+              btn.style.opacity = "0.5";
+              btn.style.borderColor = "transparent";
+          }
+      });
+
+      statuses.forEach(status => {
+          if(!status) return;
+          if(!hasPaidAccess) {
+              status.textContent = "Quill: Locked (Upgrade to use)";
+              status.style.color = "#888";
+          } else if(ready) {
+              status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
+              status.style.color = "var(--pink)";
+          } else {
+              const remain = Math.max(0, needed - wc);
+              status.textContent = `Quill: Spent (${remain} words to recharge)`;
+              status.style.color = "var(--gold)";
+          }
+      });
+
+      quillBoxes.forEach(quillBox => {
+          if(!quillBox) return;
+          if(!hasPaidAccess) {
+              quillBox.classList.add('locked-input');
+          } else if(ready) {
+              quillBox.classList.remove('locked-input');
+          } else {
+              quillBox.classList.add('locked-input');
+          }
+      });
   }
   
   function updateBatedBreathState(){
@@ -950,23 +1033,31 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     const cards = document.querySelectorAll('#lengthGrid .card[data-grp="length"]');
     cards.forEach(card => {
       const val = card.dataset.val;
-      let locked = true; 
-      let hidden = false;
+      let locked = true;
 
-      if (state.access === 'free' && val === 'voyeur') locked = false;
-      else if (state.access === 'pass' && val === 'fling') locked = false;
-      else if (state.access === 'sub' && ['fling', 'affair', 'soulmates'].includes(val)) locked = false;
-      
-      if(state.access !== 'free' && val === 'voyeur') { locked = true; hidden = true; }
+      // GATING RULES:
+      // Free: Voyeur Tease only
+      // Pass ($3): Voyeur Tease + Fling
+      // Sub ($6/mo): All lengths (Voyeur Tease, Fling, Affair, Soulmates)
+      if (state.access === 'free') {
+          locked = (val !== 'voyeur');
+      } else if (state.access === 'pass') {
+          locked = !['voyeur', 'fling'].includes(val);
+      } else if (state.access === 'sub') {
+          locked = false; // All unlocked
+      }
 
       card.classList.toggle('locked', locked);
-      card.style.display = hidden ? 'none' : '';
+      card.style.display = ''; // Always show all lengths
       setPaywallClickGuard(card, locked);
       card.classList.toggle('selected', val === state.storyLength);
     });
 
-    // Auto-select fling if pass tier and current selection is voyeur (now hidden)
-    if (state.access === 'pass' && state.storyLength === 'voyeur') {
+    // Auto-select appropriate default if current selection is locked
+    if (state.access === 'free' && state.storyLength !== 'voyeur') {
+        state.storyLength = 'voyeur';
+    }
+    if (state.access === 'pass' && !['voyeur', 'fling'].includes(state.storyLength)) {
         state.storyLength = 'fling';
     }
 
@@ -1079,33 +1170,41 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   function completePurchase() {
       const pm = document.getElementById('payModal');
       if(pm) pm.classList.add('hidden');
-      
+
+      const wasFreeBefore = (state.access === 'free');
+
       if(state.pendingUpgradeToAffair || state.lastPurchaseType === 'sub') {
           state.subscribed = true;
-          localStorage.setItem('sb_subscribed', '1'); 
+          state.billingStatus = 'active';
+          localStorage.setItem('sb_subscribed', '1');
+          localStorage.setItem('sb_billing_status', 'active');
       }
-      
+
       syncTierFromAccess();
-      
+
       let upgraded = false;
       if (state.lastPurchaseType === 'pass' && state.storyLength === 'voyeur') {
           state.storyLength = 'fling';
           upgraded = true;
           showToast("Story expanded to Fling.");
       }
-      if (state.lastPurchaseType === 'sub' && ['fling', 'voyeur'].includes(state.storyLength)) {
-          state.storyLength = 'affair';
-          upgraded = true;
-          showToast("Story upgraded to Affair.");
+      if (state.lastPurchaseType === 'sub') {
+          if(['fling', 'voyeur'].includes(state.storyLength)) {
+              state.storyLength = 'affair';
+              upgraded = true;
+          }
+          // Show subscription confirmation toast
+          showToast("Upgraded to Soulmates tier!");
       }
 
       if (upgraded) state.storyEnded = false;
 
-      state.lastPurchaseType = null; 
+      state.lastPurchaseType = null;
       state.pendingUpgradeToAffair = false;
 
-      applyAccessLocks(); 
-      if(window.initCards) window.initCards(); 
+      applyAccessLocks();
+      updateQuillUI(); // Ensure Quill unlocks immediately
+      if(window.initCards) window.initCards();
       saveStorySnapshot();
       if (state.purchaseContext === 'tierGate') window.showScreen('modeSelect');
   }
@@ -1376,15 +1475,30 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       }
   });
 
-  $('btnCommitQuill')?.addEventListener('click', () => {
+  // --- COMMIT QUILL HANDLER (shared logic) ---
+  function commitQuill(quillInputId, vetoInputId) {
       if (!getQuillReady()) return;
-      const quillEl = document.getElementById('quillInput');
+      if (state.access === 'free') {
+          showPaywall('unlock');
+          return;
+      }
+      const quillEl = document.getElementById(quillInputId);
       if (!quillEl) return;
       const quillText = quillEl.value.trim();
       if (!quillText) { showToast("No Quill edit to commit."); return; }
 
-      // Also apply any pending veto constraints
-      applyVetoFromInput();
+      // Also apply any pending veto constraints from the appropriate input
+      const vetoEl = document.getElementById(vetoInputId);
+      if (vetoEl) {
+          const parsed = parseVetoInput(vetoEl.value);
+          if(parsed.rejected.length > 0) {
+              showToast("Veto removes elements. It can't make events happen.");
+          }
+          state.veto.bannedWords = parsed.exclusions;
+          state.veto.excluded = parsed.exclusions;
+          state.veto.corrections = parsed.corrections;
+          state.veto.ambientMods = parsed.ambientMods;
+      }
 
       // Store quill intent in state for prompt injection
       window.state.quillIntent = quillText;
@@ -1405,6 +1519,42 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       updateQuillUI();
       saveStorySnapshot();
       showToast("Quill committed.");
+  }
+
+  $('btnCommitQuill')?.addEventListener('click', () => {
+      commitQuill('quillInput', 'vetoInput');
+  });
+
+  // --- IN-GAME QUILL & VETO PANEL ---
+  $('gameControlsBtn')?.addEventListener('click', () => {
+      const panel = document.getElementById('gameQvPanel');
+      if (!panel) return;
+
+      const isHidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden');
+
+      if (isHidden) {
+          // Populate pills when opening
+          populatePills(true);
+          updateQuillUI();
+
+          // Sync veto input from setup if game input is empty
+          const setupVeto = document.getElementById('vetoInput');
+          const gameVeto = document.getElementById('gameVetoInput');
+          if (gameVeto && setupVeto && !gameVeto.value && setupVeto.value) {
+              gameVeto.value = setupVeto.value;
+          }
+      }
+  });
+
+  $('gameBtnCommitQuill')?.addEventListener('click', () => {
+      commitQuill('gameQuillInput', 'gameVetoInput');
+      // Sync back to setup input
+      const gameVeto = document.getElementById('gameVetoInput');
+      const setupVeto = document.getElementById('vetoInput');
+      if (gameVeto && setupVeto) {
+          setupVeto.value = gameVeto.value;
+      }
   });
 
   // --- META SYSTEM (RESTORED) ---
@@ -1577,11 +1727,13 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
     7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
     ${state.povMode === 'author5th' ? `
-    5TH PERSON (AUTHOR) DIRECTIVES:
-    - You are the Author, a visible conductor of the narrative.
-    - Presence: ${state.authorPresence}. Cadence: ~${state.authorCadenceWords} words between Author references.
-    - Fate card voice: ${state.fateCardVoice}.
-    - Author awareness: ${state.allowAuthorAwareness ? 'enabled' : 'disabled'}, chance ${state.authorAwarenessChance}, window ${state.authorAwarenessWindowWords}w, max ${state.authorAwarenessMaxDurationWords}w.
+    AUTHOR POV RULES:
+    - The Author (${state.authorGender}, ${state.authorPronouns}) is an on-page presence woven into the narration, not a separate speaker tag.
+    - Mention the Author naturally about every ~40 words on average—as texture, not interruption.
+    - The Author foreshadows, shapes pacing, reveals writerly intent or doubt, without breaking immersion.
+    - NEVER announce "Author here" or similar meta-asides. Integrate as narrative texture.
+    - Examples: "The Author hesitated before letting them touch." / "A sentence rewrote itself." / "The story leaned closer."
+    - Author may doubt, boast, or foreshadow—but always as part of the prose, never parenthetical.
     ` : ''}
     `;
     
