@@ -1,79 +1,156 @@
 (function(window){
-    // ═══════════════════════════════════════════════════════════════════
-    // STORYBOUND FATE CARDS — AUTHORITATIVE IMPLEMENTATION
-    // ═══════════════════════════════════════════════════════════════════
-    // Fate Cards exist to reintroduce constraint, consequence, and uncertainty.
-    // They are NOT powers, NOT cheats, NOT god-mode controls.
-    // They represent Fate nudging reality, not the player rewriting it.
-    // ═══════════════════════════════════════════════════════════════════
-
-    // Canonical Deck (Exactly 5)
+    // Card Definitions
     const fateDeck = [
-        {
-            id: 'temptation',
-            title: 'Temptation',
-            desc: 'A sudden, overwhelming urge.',
-            action: 'You feel a pull towards something forbidden.',
-            dialogue: '"I shouldn\'t..."'
-        },
-        {
-            id: 'confession',
-            title: 'Confession',
-            desc: 'A secret spills out.',
-            action: 'The truth burns on your tongue.',
-            dialogue: '"There is something I must tell you."'
-        },
-        {
-            id: 'boundary',
-            title: 'Boundary',
-            desc: 'A line is drawn or crossed.',
-            action: 'You step back, or push forward.',
-            dialogue: '"Stop." / "More."'
-        },
-        {
-            id: 'power',
-            title: 'Power Shift',
-            desc: 'Control changes hands.',
-            action: 'You take the lead, or surrender it.',
-            dialogue: '"Look at me."'
-        },
-        {
-            id: 'silence',
-            title: 'Silence',
-            desc: 'Words fail. Actions speak.',
-            action: 'You let the quiet do the work.',
-            dialogue: '(Silence)'
-        }
+        { id: 'temptation', title: 'Temptation', desc: 'A sudden, overwhelming urge.', action: 'You feel a pull towards something forbidden.', dialogue: '"I shouldn\'t..."' },
+        { id: 'confession', title: 'Confession', desc: 'A secret spills out.', action: 'The truth burns on your tongue.', dialogue: '"There is something I must tell you."' },
+        { id: 'boundary', title: 'Boundary', desc: 'A line is drawn or crossed.', action: 'You step back, or push forward.', dialogue: '"Stop." / "More."' },
+        { id: 'power', title: 'Power Shift', desc: 'Control changes hands.', action: 'You take the lead, or surrender it.', dialogue: '"Look at me."' },
+        { id: 'silence', title: 'Silence', desc: 'Words fail. Actions speak.', action: 'You let the quiet do the work.', dialogue: '(Silence)' }
     ];
 
-    // Track state for this turn's cards
-    let cardsRevealed = false;
-    let selectedCardIndex = null;
-    let committed = false;
+    // --- Surgical glue: minimal shared helpers / guards ---
+    let _commitHooksBound = false;
+    let _inputsBound = false;
+    let _allFlipped = false;
+    let _pendingApplyTimer = null;
 
-    // Determine how many cards are unlocked based on tier
-    function getUnlockedCount() {
-        if (!window.state) return 2;
-        const access = window.state.access || 'free';
-        if (access === 'sub' || window.state.subscribed) return 5;
-        if (access === 'pass') return 3;
-        return 2; // free
+    function resolveUnlockCount(){
+        // Highest priority: explicit override if app.js sets it
+        if (window.state && typeof window.state.fateUnlockCount === 'number') {
+            return Math.max(0, Math.min(5, window.state.fateUnlockCount));
+        }
+
+        // Best-effort inference from existing state fields (non-invasive defaults)
+        const access = window.state ? window.state.access : null;
+        if (access === 'free') return 2;
+        if (access === 'sub') return 5;
+
+        // Default paid-but-not-sub tier
+        return 3;
     }
 
-    // Initialize with face-down placeholders
+    function flipAllCards(mount){
+        if (_allFlipped) return;
+        _allFlipped = true;
+        const cards = mount.querySelectorAll('.fate-card');
+        cards.forEach(c => c.classList.add('flipped'));
+    }
+
+    function clearPendingTimer(){
+        if (_pendingApplyTimer) {
+            clearTimeout(_pendingApplyTimer);
+            _pendingApplyTimer = null;
+        }
+    }
+
+    function setSelectedState(mount, selectedCardEl){
+        const cards = mount.querySelectorAll('.fate-card');
+        cards.forEach(c => c.classList.remove('selected'));
+        if (selectedCardEl) selectedCardEl.classList.add('selected');
+
+        // Track selection in state without changing shape elsewhere
+        if (window.state) {
+            const idx = Number(selectedCardEl && selectedCardEl.dataset && selectedCardEl.dataset.cardIndex);
+            if (!Number.isNaN(idx)) window.state.fateSelectedIndex = idx;
+        }
+    }
+
+    function commitFateSelection(mount){
+        // Commit means: lock choice, poof unchosen 4, disable further selection
+        if (!window.state) return;
+        if (window.state.fateCommitted) return;
+
+        const selectedIdx = typeof window.state.fateSelectedIndex === 'number' ? window.state.fateSelectedIndex : -1;
+        if (selectedIdx < 0) return; // nothing selected -> nothing to commit
+
+        window.state.fateCommitted = true;
+
+        const cards = mount.querySelectorAll('.fate-card');
+        cards.forEach((cardEl) => {
+            const idx = Number(cardEl.dataset && cardEl.dataset.cardIndex);
+            if (idx !== selectedIdx) {
+                cardEl.classList.add('poof');
+                // Cleanup visual after poof finishes
+                setTimeout(() => {
+                    cardEl.style.visibility = 'hidden';
+                }, 600);
+            } else {
+                // Keep chosen visible; disable further clicking
+                cardEl.classList.add('chosen');
+            }
+
+            cardEl.style.pointerEvents = 'none';
+        });
+
+        clearPendingTimer();
+    }
+
+    function bindCommitHooks(mount){
+        if (_commitHooksBound) return;
+        _commitHooksBound = true;
+
+        // Best-effort submit bindings without assuming your HTML structure.
+        // If these elements don't exist, nothing happens.
+        const tryBindClick = (id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('click', () => commitFateSelection(mount), { passive: true });
+        };
+
+        // Common IDs across builds (safe no-op if missing)
+        ['submitBtn','sendBtn','submitTurn','turnSubmit','submit'].forEach(tryBindClick);
+
+        // If there's a form, committing on submit is also reasonable and non-invasive.
+        const forms = [];
+        const f1 = document.getElementById('turnForm');
+        if (f1) forms.push(f1);
+        // Bind any parent form of actionInput if present
+        const act = document.getElementById('actionInput');
+        if (act && act.form) forms.push(act.form);
+
+        // Deduplicate and bind
+        [...new Set(forms)].forEach(form => {
+            form.addEventListener('submit', () => commitFateSelection(mount), { passive: true });
+        });
+    }
+
+    function bindInputCommit(mount){
+        if (_inputsBound) return;
+        _inputsBound = true;
+
+        const actInput = document.getElementById('actionInput');
+        const diaInput = document.getElementById('dialogueInput');
+
+        const maybeCommitOnEdit = () => {
+            if (!window.state) return;
+            if (window.state.fateCommitted) return;
+            // Only commit if a card has been selected
+            if (typeof window.state.fateSelectedIndex !== 'number') return;
+            commitFateSelection(mount);
+        };
+
+        // "Once the player clicks into the populated text boxes…"
+        // Focus counts as "click into". Input counts as editing.
+        [actInput, diaInput].forEach(el => {
+            if (!el) return;
+            el.addEventListener('focus', maybeCommitOnEdit);
+            el.addEventListener('input', maybeCommitOnEdit);
+        });
+    }
+
     window.initCards = function() {
         const mount = document.getElementById('cardMount');
-        if (!mount) return;
+        if(!mount) return;
 
-        // Reset turn state
-        cardsRevealed = false;
-        selectedCardIndex = null;
-        committed = false;
-
+        // Reset if we need a clean slate or it's empty
         mount.innerHTML = '';
 
-        // Create 5 face-down placeholders
-        for (let i = 0; i < 5; i++) {
+        // Reset per-hand runtime flags
+        _allFlipped = false;
+        clearPendingTimer();
+
+        // Create 5 placeholders (backs only)
+        for(let i=0; i<5; i++){
             const card = document.createElement('div');
             card.className = 'fate-card';
             card.innerHTML = `
@@ -86,40 +163,46 @@
         }
     };
 
-    // Deal 5 shuffled cards for this turn
     window.dealFateCards = function() {
         const mount = document.getElementById('cardMount');
-        if (!mount) return;
+        if(!mount) return;
 
+        // Safety: Ensure state exists before trying to write to it
         if (!window.state) {
             console.warn("State not ready for dealing cards.");
             return;
         }
 
-        // Reset turn state
-        cardsRevealed = false;
-        selectedCardIndex = null;
-        committed = false;
+        // Reset per-hand state (surgical: only fate-related fields)
+        window.state.fateOptions = null;
+        window.state.fateSelectedIndex = -1;
+        window.state.fateCommitted = false;
 
-        // Shuffle the deck
+        // Reset per-hand runtime flags
+        _allFlipped = false;
+        clearPendingTimer();
+
+        const unlockCount = resolveUnlockCount();
+
+        // Shuffle the 5 cards
         const shuffled = [...fateDeck].sort(() => 0.5 - Math.random());
+        // Select top 5 (which is all of them, just randomized order)
+        const selected = shuffled.slice(0, 5);
 
-        // All 5 cards, shuffled order
-        window.state.fateOptions = shuffled;
-
-        const unlockedCount = getUnlockedCount();
+        // Write to Global State
+        window.state.fateOptions = selected;
 
         mount.innerHTML = '';
-        shuffled.forEach((data, i) => {
+
+        selected.forEach((data, i) => {
             const card = document.createElement('div');
             card.className = 'fate-card';
-            card.dataset.index = i;
+            card.dataset.cardIndex = String(i);
 
-            // Lock cards beyond the tier's allowance
-            const isLocked = i >= unlockedCount;
-            if (isLocked) {
-                card.classList.add('locked');
-            }
+            // Lock logic: only first N (by position after shuffle) are selectable.
+            // Visible but greyed/locked for the rest.
+            const isLocked = (i >= unlockCount);
+            if (isLocked) card.classList.add('locked');
 
             card.innerHTML = `
                 <div class="inner">
@@ -127,186 +210,43 @@
                     <div class="back">
                         <h3>${data.title}</h3>
                         <p>${data.desc}</p>
-                        ${isLocked ? '<div class="lock-overlay"></div>' : ''}
                     </div>
                 </div>
             `;
 
-            card.onclick = () => handleCardClick(card, data, i, isLocked);
+            card.onclick = () => {
+                // If already committed, ignore all clicks
+                if (window.state && window.state.fateCommitted) return;
+
+                // First interaction flips all 5 at once
+                flipAllCards(mount);
+
+                // Locked cards trigger paywall and do not select
+                if(card.classList.contains('locked')) {
+                    if(window.showPaywall) window.showPaywall('unlock');
+                    return;
+                }
+
+                // Selecting a different unlocked card wipes/replaces suggestions
+                setSelectedState(mount, card);
+
+                clearPendingTimer();
+
+                // Apply content to inputs after animation delay (match existing 600ms timing)
+                _pendingApplyTimer = setTimeout(() => {
+                    const actInput = document.getElementById('actionInput');
+                    const diaInput = document.getElementById('dialogueInput');
+                    if(actInput) actInput.value = data.action;
+                    if(diaInput) diaInput.value = data.dialogue;
+                }, 600);
+            };
 
             mount.appendChild(card);
         });
 
-        // Listen for manual edits to inputs (triggers commitment)
-        setupCommitmentListeners();
-    };
-
-    function handleCardClick(card, data, index, isLocked) {
-        // If already committed this turn, no more interactions
-        if (committed) return;
-
-        // FIRST CLICK ON ANY CARD: Reveal all 5 simultaneously
-        if (!cardsRevealed) {
-            revealAllCards();
-            cardsRevealed = true;
-
-            // If this specific card is locked, show paywall
-            if (isLocked) {
-                if (window.showPaywall) window.showPaywall('unlock');
-                return;
-            }
-
-            // Select this card
-            selectCard(card, data, index);
-            return;
-        }
-
-        // Already revealed - handle selection
-        if (isLocked) {
-            if (window.showPaywall) window.showPaywall('unlock');
-            return;
-        }
-
-        // Select/switch to this card
-        selectCard(card, data, index);
-    }
-
-    function revealAllCards() {
-        const mount = document.getElementById('cardMount');
-        if (!mount) return;
-
-        const cards = mount.querySelectorAll('.fate-card');
-        cards.forEach(card => {
-            card.classList.add('flipped');
-        });
-    }
-
-    function selectCard(card, data, index) {
-        const mount = document.getElementById('cardMount');
-        if (!mount) return;
-
-        // Clear previous selection
-        const cards = mount.querySelectorAll('.fate-card');
-        cards.forEach(c => c.classList.remove('selected'));
-
-        // Mark this card as selected
-        card.classList.add('selected');
-        selectedCardIndex = index;
-
-        // Populate inputs with suggestions (not commands)
-        const actInput = document.getElementById('actionInput');
-        const diaInput = document.getElementById('dialogueInput');
-
-        if (actInput) actInput.value = data.action;
-        if (diaInput) diaInput.value = data.dialogue;
-
-        // Store the selected card data for narrative injection
-        window.state.selectedFateCard = data;
-    }
-
-    function setupCommitmentListeners() {
-        const actInput = document.getElementById('actionInput');
-        const diaInput = document.getElementById('dialogueInput');
-
-        // Manual edit = commitment (after a card was selected)
-        const onEdit = () => {
-            if (selectedCardIndex !== null && !committed) {
-                // User edited the text - this counts as commitment
-                // Don't dissolve yet - wait for Submit
-            }
-        };
-
-        if (actInput) {
-            actInput.removeEventListener('input', onEdit);
-            actInput.addEventListener('input', onEdit);
-        }
-        if (diaInput) {
-            diaInput.removeEventListener('input', onEdit);
-            diaInput.addEventListener('input', onEdit);
-        }
-    }
-
-    // Called when Submit is clicked - dissolve unselected cards
-    window.commitFateCard = function() {
-        if (committed) return;
-        committed = true;
-
-        const mount = document.getElementById('cardMount');
-        if (!mount) return;
-
-        const cards = mount.querySelectorAll('.fate-card');
-
-        cards.forEach((card, i) => {
-            if (i === selectedCardIndex) {
-                // The chosen card gets a subtle glow then fades
-                card.classList.add('committed');
-                setTimeout(() => {
-                    card.classList.add('fade-out');
-                }, 400);
-            } else {
-                // Unselected cards dissolve in smoke
-                card.classList.add('smoke-dissolve');
-            }
-        });
-
-        // Clear the mount after animations complete
-        setTimeout(() => {
-            mount.innerHTML = '';
-        }, 1200);
-    };
-
-    // Called to clear cards without commitment (e.g., turn ended without playing)
-    window.discardFateCards = function() {
-        const mount = document.getElementById('cardMount');
-        if (!mount) return;
-
-        const cards = mount.querySelectorAll('.fate-card');
-        cards.forEach(card => {
-            card.classList.add('smoke-dissolve');
-        });
-
-        setTimeout(() => {
-            mount.innerHTML = '';
-            // Reset state
-            if (window.state) {
-                window.state.fateOptions = [];
-                window.state.selectedFateCard = null;
-            }
-        }, 800);
-
-        // Reset turn state
-        cardsRevealed = false;
-        selectedCardIndex = null;
-        committed = false;
-    };
-
-    // Get the selected card's context for narrative injection
-    // Returns context modifier, NOT direct text injection
-    window.getFateCardContext = function() {
-        if (!window.state || !window.state.selectedFateCard) return null;
-
-        const card = window.state.selectedFateCard;
-
-        // Return narrative pressure/context, not commands
-        // The AI uses this to flavor the response, not as direct instruction
-        return {
-            id: card.id,
-            pressure: card.desc,
-            tendency: card.action,
-            // Cards may NOT: force explicit outcomes, override consent, function as commands
-            // This is a nudge, not an order
-            directive: `[FATE PRESSURE: The scene carries a subtle weight of "${card.title.toLowerCase()}" — ${card.desc.toLowerCase()} This is atmospheric, not a command. Resolve naturally within existing narrative constraints.]`
-        };
-    };
-
-    // Reset for new turn
-    window.resetFateCards = function() {
-        cardsRevealed = false;
-        selectedCardIndex = null;
-        committed = false;
-        if (window.state) {
-            window.state.selectedFateCard = null;
-        }
+        // Bind commitment triggers once (safe no-op if elements missing)
+        bindCommitHooks(mount);
+        bindInputCommit(mount);
     };
 
 })(window);
