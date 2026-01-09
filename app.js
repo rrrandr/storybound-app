@@ -177,7 +177,9 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       lastTypingSentAt: 0,
       partnerStatus: { online:false, lastSeenAt:null, typing:false, typingAt:null, uid:null },
       _lastTurnId: null,
-      selectedFateIndex: null,
+      selectedFateIndex: -1,
+      fateSelectedIndex: -1,
+      fateCommitted: false,
       selectedFatePayload: null,
       _snapshotThisTurn: false,
       sexPushCount: 0,
@@ -219,6 +221,37 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   function $(id){ return document.getElementById(id); }
   function toggle(id){ const el = document.getElementById(id); if(el) el.classList.toggle('hidden'); }
   function resetTurnSnapshotFlag(){ state._snapshotThisTurn = false; }
+
+  // --- THEME & FONT HELPERS ---
+  window.setTheme = function(name) {
+      document.body.classList.remove('theme-sepia', 'theme-midnight', 'theme-print', 'theme-easy');
+      if (name && name !== 'default') {
+          document.body.classList.add('theme-' + name);
+      }
+  };
+
+  window.setFont = function(fontValue) {
+      document.documentElement.style.setProperty('--font-story', fontValue);
+  };
+
+  window.setFontSize = function(size) {
+      document.documentElement.style.setProperty('--story-size', size + 'px');
+  };
+
+  window.setGameIntensity = function(level) {
+      // honour access tiers: dirty requires subscription, erotic requires non-free
+      if (level === 'Dirty' && window.state.access !== 'sub') { window.showPaywall('sub'); return; }
+      if (level === 'Erotic' && window.state.access === 'free') { window.openEroticPreview(); return; }
+      window.state.intensity = level;
+      updateIntensityUI();
+  };
+
+  window.checkCustom = function(selectEl, inputId) {
+      const input = document.getElementById(inputId);
+      if (input) {
+          input.classList.toggle('hidden', selectEl.value !== 'Custom');
+      }
+  };
 
   // NAV HELPER
   function closeAllOverlays() {
@@ -780,7 +813,12 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       setPaywallClickGuard(card, locked);
       card.classList.toggle('selected', val === state.storyLength);
     });
-    
+
+    // Auto-select fling if pass tier and current selection is voyeur (now hidden)
+    if (state.access === 'pass' && state.storyLength === 'voyeur') {
+        state.storyLength = 'fling';
+    }
+
     bindLengthHandlers();
   }
 
@@ -1057,6 +1095,17 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   window.changeTier = function(){ window.showScreen('tierGate'); };
 
+  $('saveBtn')?.addEventListener('click', (e) => {
+      const hasAccess = (window.state.access !== 'free') || (window.state.mode === 'couple');
+      if (!hasAccess) {
+          e.stopPropagation();
+          window.showPaywall('unlock');
+          return;
+      }
+      saveStorySnapshot();
+      showToast("Story saved.");
+  });
+
   $('burgerBtn')?.addEventListener('click', () => document.getElementById('menuOverlay').classList.remove('hidden'));
   $('ageYes')?.addEventListener('click', () => window.showScreen('tosGate'));
   $('tosCheck')?.addEventListener('change', (e) => $('tosBtn').disabled = !e.target.checked);
@@ -1163,9 +1212,42 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   $('paySub')?.addEventListener('click', () => {
     state.subscribed = true;
-    state.lastPurchaseType = 'sub'; 
+    state.lastPurchaseType = 'sub';
     localStorage.setItem('sb_subscribed', '1');
     completePurchase();
+  });
+
+  $('payGodMode')?.addEventListener('click', () => {
+      localStorage.setItem('sb_god_mode_owned', '1');
+      document.getElementById('payModal')?.classList.add('hidden');
+      if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
+          activateGodMode();
+      }
+  });
+
+  $('btnCommitQuill')?.addEventListener('click', () => {
+      if (!getQuillReady()) return;
+      const ctrl = document.getElementById('storyControls');
+      if (!ctrl) return;
+      const { quillDraft } = parseStoryControls(ctrl.value);
+      if (!quillDraft.trim()) { showToast("No Quill edit to commit."); return; }
+
+      const storyEl = document.getElementById('storyText');
+      if (storyEl && quillDraft) {
+          const div = document.createElement('div');
+          div.className = 'quill-intervention';
+          div.style.cssText = 'font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;';
+          div.innerHTML = formatStory(quillDraft);
+          storyEl.appendChild(div);
+      }
+
+      window.state.quillCommittedThisTurn = true;
+      window.state.quill.uses++;
+      window.state.quill.nextReadyAtWords = currentStoryWordCount() + computeNextCooldownWords();
+      ctrl.value = '';
+      updateQuillUI();
+      saveStorySnapshot();
+      showToast("Quill edit committed.");
   });
 
   // --- META SYSTEM (RESTORED) ---
@@ -1610,7 +1692,12 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
           // Fate Card Deal (Solo)
           if (state.mode === 'solo' && Math.random() < 0.45) {
-               if(window.dealFateCards) window.dealFateCards();
+               if (window.dealFateCards) {
+                   window.dealFateCards();
+                   if (state.batedBreathActive && state.fateOptions) {
+                       state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
+                   }
+               }
           }
 
           saveStorySnapshot();
@@ -1641,7 +1728,13 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   // --- COUPLE MODE LOGIC ---
   window.coupleCleanup = function(){ if(sb) sb.removeAllChannels(); };
-  
+
+  function broadcastTurn(text, isInit = false) {
+      if (!sb || window.state.mode !== 'couple' || !window.state.roomId) return;
+      // Stub implementation; real Supabase broadcast can be added later
+      console.log("broadcastTurn stub:", { isInit, textLength: text?.length });
+  }
+
   window.setMode = function(m){
      if(m === 'couple') {
          if(!sb){ alert("Couple mode unavailable (No backend)."); return; }
@@ -1689,6 +1782,60 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       document.getElementById('edgeActions').classList.remove('hidden');
       document.getElementById('edgeAcceptance').classList.add('hidden');
   };
+
+  // --- COUPLE MODE BUTTON HANDLERS ---
+  $('btnCreateRoom')?.addEventListener('click', async () => {
+      if (!sb) { alert("Couple mode unavailable."); return; }
+      const uid = await ensureAnonSession();
+      if (!uid) { alert("Auth failed."); return; }
+      window.state.myUid = uid;
+      window.state.myNick = getNickname();
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      window.state.roomCode = code;
+      window.state.roomId = 'room_' + code;
+
+      const lbl = document.getElementById('coupleRoomCodeLabel');
+      const big = document.getElementById('roomCodeBig');
+      const wrap = document.getElementById('roomCodeWrap');
+      if (lbl) lbl.textContent = code;
+      if (big) big.textContent = code;
+      if (wrap) wrap.classList.remove('hidden');
+
+      document.getElementById('coupleStatus').textContent = 'Waiting for partner...';
+      document.getElementById('sbNickLabel').textContent = window.state.myNick;
+  });
+
+  $('btnJoinRoom')?.addEventListener('click', () => {
+      document.getElementById('joinRow')?.classList.toggle('hidden');
+  });
+
+  $('btnJoinGo')?.addEventListener('click', async () => {
+      if (!sb) { alert("Couple mode unavailable."); return; }
+      const code = document.getElementById('joinCodeInput')?.value.trim().toUpperCase();
+      if (!code || code.length !== 6) { alert("Enter a 6-character code."); return; }
+
+      const uid = await ensureAnonSession();
+      if (!uid) { alert("Auth failed."); return; }
+      window.state.myUid = uid;
+      window.state.myNick = getNickname();
+      window.state.roomCode = code;
+      window.state.roomId = 'room_' + code;
+
+      document.getElementById('coupleStatus').textContent = 'Joined room ' + code;
+      document.getElementById('sbNickLabel').textContent = window.state.myNick;
+      document.getElementById('btnEnterCoupleGame')?.classList.remove('hidden');
+  });
+
+  $('btnCopyCode')?.addEventListener('click', () => {
+      if (window.state.roomCode) {
+          navigator.clipboard.writeText(window.state.roomCode);
+          showToast("Code copied!");
+      }
+  });
+
+  $('btnEnterCoupleGame')?.addEventListener('click', () => {
+      window.showScreen('setup');
+  });
 
   // --- INIT ---
   initSelectionHandlers();
