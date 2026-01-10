@@ -188,6 +188,8 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       quill: { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600 },
       quillCommittedThisTurn: false,
       quillIntent: '',
+      vetoCommittedThisTurn: false,
+      vetoIntentRaw: '',
       storyStage: 'pre-intimacy',
       sandbox: false,
       godModeActive: false,
@@ -636,76 +638,134 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       applyVetoFromInput();
   }
 
-  // --- SUGGESTION PILLS ---
+  // --- SUGGESTION PILLS (CHRISTMAS LIGHTS) ---
   const VETO_SUGGESTIONS = [
       "ban: moist", "no tattoos", "no scars", "no cheating", "no amnesia",
       "rename: -> ", "more description", "keep pacing slower", "no second-person",
       "no pregnancy", "no marriage proposals", "no love triangles", "no flashbacks",
-      "no jealousy", "no miscommunication trope", "ban: orbs", "no cliffhangers"
+      "no jealousy", "no miscommunication trope", "ban: orbs", "no cliffhangers",
+      "no body shaming", "no gore", "no public scenes", "no workplace romance"
   ];
   const QUILL_SUGGESTIONS = [
       "enemies to lovers", "only one bed", "bring them somewhere private",
       "increase tension", "confession scene", "near-miss moment", "jealousy beat",
       "rain scene", "caught staring", "interrupted kiss", "secret revealed",
-      "first touch", "power shift", "vulnerability moment", "heated argument"
+      "first touch", "power shift", "vulnerability moment", "heated argument",
+      "gentle morning after", "dance scene", "rescue moment", "whispered promise"
   ];
 
-  // Track used pills to avoid repeats within a session
-  let _usedVetoPills = [];
-  let _usedQuillPills = [];
+  // Per-tray timer maps: trayId -> Map(slotIndex -> timerId)
+  const _pillTimers = {};
 
-  function createPill(txt, type, inputId, trayEl) {
+  function getRandomCycleDelay() {
+      return 4000 + Math.random() * 2000; // 4-6 seconds
+  }
+
+  function getAvailableSuggestion(type, trayEl) {
+      const pool = type === 'veto' ? VETO_SUGGESTIONS : QUILL_SUGGESTIONS;
+      const currentPills = Array.from(trayEl.querySelectorAll('.pill')).map(p => p.dataset.suggestion);
+      const available = pool.filter(s => !currentPills.includes(s));
+      if (available.length === 0) return pool[Math.floor(Math.random() * pool.length)];
+      return available[Math.floor(Math.random() * available.length)];
+  }
+
+  function createPill(txt, type, inputId, trayEl, slotIndex) {
       const pill = document.createElement('span');
       pill.className = `pill ${type}-pill`;
       pill.textContent = '+ ' + txt;
       pill.dataset.suggestion = txt;
+      pill.dataset.slot = slotIndex;
+      pill.dataset.type = type;
+
+      // Quill pills paywalled when Quill is locked
+      const isQuillLocked = type === 'quill' && state.access === 'free';
+      if (isQuillLocked) {
+          pill.style.opacity = '0.4';
+          pill.style.cursor = 'not-allowed';
+      }
+
       pill.onclick = () => {
+          // Quill pills trigger paywall if locked
+          if (type === 'quill' && state.access === 'free') {
+              showPaywall('sub');
+              return;
+          }
+
           const input = document.getElementById(inputId);
-          if(input) {
+          if (input) {
               input.value = input.value ? input.value + '\n' + txt : txt;
           }
-          // Track as used
-          if(type === 'veto') _usedVetoPills.push(txt);
-          else _usedQuillPills.push(txt);
 
-          // Fade out animation
-          pill.style.transition = 'opacity 0.3s, transform 0.3s';
+          // Clear this slot's timer
+          const trayId = trayEl.id;
+          if (_pillTimers[trayId] && _pillTimers[trayId].has(slotIndex)) {
+              clearTimeout(_pillTimers[trayId].get(slotIndex));
+          }
+
+          // Fade out and replace quickly
+          pill.style.transition = 'opacity 0.15s, transform 0.15s';
           pill.style.opacity = '0';
           pill.style.transform = 'scale(0.8)';
 
-          // Replace with a new pill after delay
           setTimeout(() => {
-              pill.remove();
-              addReplacementPill(type, inputId, trayEl);
-          }, 300);
+              replacePillInSlot(trayEl, slotIndex, type, inputId);
+          }, 150);
       };
+
       return pill;
   }
 
-  function addReplacementPill(type, inputId, trayEl) {
-      const pool = type === 'veto' ? VETO_SUGGESTIONS : QUILL_SUGGESTIONS;
-      const used = type === 'veto' ? _usedVetoPills : _usedQuillPills;
-      const currentPills = Array.from(trayEl.querySelectorAll('.pill')).map(p => p.dataset.suggestion);
+  function replacePillInSlot(trayEl, slotIndex, type, inputId) {
+      const trayId = trayEl.id;
+      const oldPill = trayEl.querySelector(`.pill[data-slot="${slotIndex}"]`);
+      if (oldPill) oldPill.remove();
 
-      // Find unused suggestions
-      const available = pool.filter(s => !used.includes(s) && !currentPills.includes(s));
-      if(available.length === 0) {
-          // Reset used if we've exhausted options
-          if(type === 'veto') _usedVetoPills = [];
-          else _usedQuillPills = [];
-          return; // Don't add more if pool exhausted
-      }
-
-      const newTxt = available[Math.floor(Math.random() * available.length)];
-      const newPill = createPill(newTxt, type, inputId, trayEl);
+      const newTxt = getAvailableSuggestion(type, trayEl);
+      const newPill = createPill(newTxt, type, inputId, trayEl, slotIndex);
       newPill.style.opacity = '0';
       trayEl.appendChild(newPill);
 
       // Fade in
       requestAnimationFrame(() => {
           newPill.style.transition = 'opacity 0.3s';
-          newPill.style.opacity = '1';
+          newPill.style.opacity = (type === 'quill' && state.access === 'free') ? '0.4' : '1';
       });
+
+      // Schedule next auto-replacement (Christmas lights cycling)
+      schedulePillCycle(trayEl, slotIndex, type, inputId);
+  }
+
+  function schedulePillCycle(trayEl, slotIndex, type, inputId) {
+      const trayId = trayEl.id;
+      if (!_pillTimers[trayId]) _pillTimers[trayId] = new Map();
+
+      // Clear existing timer for this slot
+      if (_pillTimers[trayId].has(slotIndex)) {
+          clearTimeout(_pillTimers[trayId].get(slotIndex));
+      }
+
+      const delay = getRandomCycleDelay();
+      const timerId = setTimeout(() => {
+          const pill = trayEl.querySelector(`.pill[data-slot="${slotIndex}"]`);
+          if (!pill) return;
+
+          // Fade out
+          pill.style.transition = 'opacity 0.3s';
+          pill.style.opacity = '0';
+
+          setTimeout(() => {
+              replacePillInSlot(trayEl, slotIndex, type, inputId);
+          }, 300);
+      }, delay);
+
+      _pillTimers[trayId].set(slotIndex, timerId);
+  }
+
+  function clearTrayTimers(trayId) {
+      if (_pillTimers[trayId]) {
+          _pillTimers[trayId].forEach(timerId => clearTimeout(timerId));
+          _pillTimers[trayId].clear();
+      }
   }
 
   function populatePills(isGamePanel = false) {
@@ -716,21 +776,30 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
       const vetoPillsEl = document.getElementById(vetoId);
       const quillPillsEl = document.getElementById(quillId);
-      if(!vetoPillsEl || !quillPillsEl) return;
+      if (!vetoPillsEl || !quillPillsEl) return;
+
+      // Clear existing timers
+      clearTrayTimers(vetoId);
+      clearTrayTimers(quillId);
 
       vetoPillsEl.innerHTML = '';
       quillPillsEl.innerHTML = '';
 
       // Shuffle and pick 9 random veto suggestions
       const shuffledVeto = [...VETO_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 9);
-      shuffledVeto.forEach(txt => {
-          vetoPillsEl.appendChild(createPill(txt, 'veto', vetoInputId, vetoPillsEl));
+      shuffledVeto.forEach((txt, i) => {
+          const pill = createPill(txt, 'veto', vetoInputId, vetoPillsEl, i);
+          vetoPillsEl.appendChild(pill);
+          // Stagger initial timers so they don't all cycle at once
+          setTimeout(() => schedulePillCycle(vetoPillsEl, i, 'veto', vetoInputId), i * 500 + Math.random() * 1000);
       });
 
       // Shuffle and pick 9 random quill suggestions
       const shuffledQuill = [...QUILL_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 9);
-      shuffledQuill.forEach(txt => {
-          quillPillsEl.appendChild(createPill(txt, 'quill', quillInputId, quillPillsEl));
+      shuffledQuill.forEach((txt, i) => {
+          const pill = createPill(txt, 'quill', quillInputId, quillPillsEl, i);
+          quillPillsEl.appendChild(pill);
+          setTimeout(() => schedulePillCycle(quillPillsEl, i, 'quill', quillInputId), i * 500 + Math.random() * 1000);
       });
   }
 
@@ -1557,6 +1626,50 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       }
   });
 
+  // --- COMMIT VETO HANDLER ---
+  function commitVeto(vetoInputId) {
+      const vetoEl = document.getElementById(vetoInputId);
+      if (!vetoEl) return;
+      const vetoText = vetoEl.value.trim();
+      if (!vetoText) { showToast("No Veto constraints to commit."); return; }
+
+      const parsed = parseVetoInput(vetoText);
+      if (parsed.rejected.length > 0) {
+          showToast("Veto removes elements. It can't make events happen.");
+      }
+
+      state.veto.bannedWords = parsed.exclusions;
+      state.veto.excluded = parsed.exclusions;
+      state.veto.corrections = parsed.corrections;
+      state.veto.ambientMods = parsed.ambientMods;
+      state.vetoCommittedThisTurn = true;
+      state.vetoIntentRaw = vetoText;
+
+      updateVetoUI();
+      saveStorySnapshot();
+      showToast("Veto committed.");
+  }
+
+  function updateVetoUI() {
+      const statuses = [document.getElementById('gameVetoStatus')];
+      const committed = state.vetoCommittedThisTurn;
+      statuses.forEach(el => {
+          if (!el) return;
+          el.textContent = committed ? 'Veto: Committed' : 'Veto: Ready';
+          el.style.color = committed ? 'var(--hot)' : 'var(--gold)';
+      });
+  }
+
+  $('gameBtnCommitVeto')?.addEventListener('click', () => {
+      commitVeto('gameVetoInput');
+      // Sync back to setup input
+      const gameVeto = document.getElementById('gameVetoInput');
+      const setupVeto = document.getElementById('vetoInput');
+      if (gameVeto && setupVeto) {
+          setupVeto.value = gameVeto.value;
+      }
+  });
+
   // --- META SYSTEM (RESTORED) ---
   function buildMetaDirective(){
      if(state.awareness === 0) return "";
@@ -2110,6 +2223,11 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
               state.quillIntent = '';
               updateQuillUI();
           }
+
+          // Reset veto state for next turn
+          state.vetoCommittedThisTurn = false;
+          state.vetoIntentRaw = '';
+          updateVetoUI();
 
           if(wc > getSexAllowedAtWordCount()) state.sexPushCount = 0;
 

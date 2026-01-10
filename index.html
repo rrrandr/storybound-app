@@ -571,6 +571,11 @@
                 <p class="qv-hint-above">Block elements from appearing.</p>
                 <div id="gameVetoPills" class="pill-tray"></div>
                 <textarea id="gameVetoInput" rows="2" placeholder="ban: word&#10;no tattoos"></textarea>
+                <p class="qv-hint-below">Veto blocks elements from appearing. Commit to confirm your constraints.</p>
+                <div class="veto-ui" style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="gameVetoStatus" style="font-size:0.8em; color:var(--gold);">Veto: Ready</span>
+                    <button id="gameBtnCommitVeto" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit Veto</button>
+                </div>
             </div>
             <div class="qv-section">
                 <label class="qv-label">Quill</label>
@@ -579,12 +584,14 @@
                 <div id="gameQuillBox" class="input-wrapper">
                     <textarea id="gameQuillInput" rows="2" placeholder="Bring them somewhere private..."></textarea>
                 </div>
+                <div class="quill-ui" style="margin-top:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span id="gameQuillStatus">Quill: Poised</span>
+                        <button id="gameBtnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit Quill</button>
+                    </div>
+                    <p id="gameQuillHelper" style="font-size:0.75em; opacity:0.7; margin:5px 0 0; font-style:italic;">Quill edits shape what follows. After committing, the Quill rests before it can be used again.</p>
+                </div>
             </div>
-        </div>
-        <div class="quill-ui" style="margin-top:10px;">
-            <span id="gameQuillStatus">Quill: Poised</span>
-            <p id="gameQuillHelper" style="font-size:0.75em; opacity:0.7; margin:5px 0; font-style:italic;">Quill edits shape what follows. After committing, the Quill rests before it can be used again.</p>
-            <button id="gameBtnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit Quill</button>
         </div>
     </div>
 
