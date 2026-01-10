@@ -200,9 +200,10 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   window.state = { 
       tier:'free', 
       picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] }, 
-      gender:'Female', 
-      loveInterest:'Male', 
-      intensity:'Naughty', 
+      gender:'Female',
+      loveInterest:'Male',
+      ancestry: '',
+      intensity:'Naughty',
       turnCount:0,
       sysPrompt: "",
       fateOptions: [],
@@ -438,6 +439,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       // Populate suggestion pills when entering setup screen
       if(id === 'setup') {
           populatePills();
+          populateAncestryPills();
       }
 
       // Initialize game screen elements
@@ -743,6 +745,12 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       "first touch", "power shift", "vulnerability moment", "heated argument",
       "gentle morning after", "dance scene", "rescue moment", "whispered promise"
   ];
+  const ANCESTRY_SUGGESTIONS = [
+      "Starborn", "Dragonkin", "Fae-touched", "Dwarven", "Elven", "Cyborg",
+      "Mediterranean heritage", "Nordic ancestry", "Island roots", "Mountain clan",
+      "Nomadic lineage", "Mixed heritage", "Old money family", "Working class roots",
+      "Immigrant family", "First-generation", "Royal bloodline", "Seafarer descent"
+  ];
 
   // Per-tray timer maps: trayId -> Map(slotIndex -> timerId)
   const _pillTimers = {};
@@ -752,7 +760,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   }
 
   function getAvailableSuggestion(type, trayEl) {
-      const pool = type === 'veto' ? VETO_SUGGESTIONS : QUILL_SUGGESTIONS;
+      const pool = type === 'veto' ? VETO_SUGGESTIONS : type === 'ancestry' ? ANCESTRY_SUGGESTIONS : QUILL_SUGGESTIONS;
       const currentPills = Array.from(trayEl.querySelectorAll('.pill')).map(p => p.dataset.suggestion);
       const available = pool.filter(s => !currentPills.includes(s));
       if (available.length === 0) return pool[Math.floor(Math.random() * pool.length)];
@@ -891,6 +899,48 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           quillPillsEl.appendChild(pill);
           setTimeout(() => schedulePillCycle(quillPillsEl, i, 'quill', quillInputId), i * 500 + Math.random() * 1000);
       });
+  }
+
+  // Ancestry pills: click replaces text (single-select), cycles periodically
+  function populateAncestryPills() {
+      const trayEl = document.getElementById('ancestryPills');
+      const inputId = 'ancestryInput';
+      if (!trayEl) return;
+
+      clearTrayTimers('ancestryPills');
+      trayEl.innerHTML = '';
+
+      const shuffled = [...ANCESTRY_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 6);
+      shuffled.forEach((txt, i) => {
+          const pill = document.createElement('span');
+          pill.className = 'pill ancestry-pill';
+          pill.textContent = txt;
+          pill.dataset.suggestion = txt;
+          pill.dataset.slot = i;
+          pill.dataset.type = 'ancestry';
+
+          pill.onclick = () => {
+              const input = document.getElementById(inputId);
+              if (input) {
+                  // Replace text (not append) for single-select behavior
+                  input.value = txt;
+              }
+              // Update selected state on all pills
+              trayEl.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+              pill.classList.add('selected');
+          };
+
+          trayEl.appendChild(pill);
+          setTimeout(() => schedulePillCycle(trayEl, i, 'ancestry', inputId), i * 800 + Math.random() * 2000);
+      });
+
+      // Clear selected state when user manually edits the input
+      const input = document.getElementById(inputId);
+      if (input) {
+          input.addEventListener('input', () => {
+              trayEl.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+          });
+      }
   }
 
   function updateQuillUI() {
@@ -1787,7 +1837,9 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
     const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
     const lPro = $('customLovePronouns')?.value.trim() || $('lovePronouns').value;
-    
+    const pAncestry = $('ancestryInput')?.value.trim() || '';
+    state.ancestry = pAncestry;
+
     // Determine Author Identity based on selections
     if(pGen === 'Male' && lGen === 'Female') { state.authorGender = 'Female'; state.authorPronouns = 'She/Her'; }
     else if(pGen === 'Male' && lGen === 'Male') { state.authorGender = 'Male'; state.authorPronouns = 'He/Him'; }
@@ -1916,9 +1968,11 @@ POV: ${state.picks.pov}.
 Dynamics: ${state.picks.dynamic.join(', ')}.
 
     
-    Protagonist: ${pName} (${pGen}, ${pPro}).
+    Protagonist: ${pName} (${pGen}, ${pPro})${pAncestry ? `, Ancestry/Culture: ${pAncestry}` : ''}.
     Love Interest: ${lName} (${lGen}, ${lPro}).
-    
+    ${pAncestry ? `
+    ANCESTRY/CULTURE DIRECTIVE: Treat "${pAncestry}" as narrative texture only—voice, customs, subtle context. Integrate naturally and respectfully. Avoid stereotyping, fetishization, or deterministic behavior. This field does not gate content, alter intensity, or change consent/safety rules.
+    ` : ''}
     ${safetyStr}
 
     Current Intensity: ${state.intensity}

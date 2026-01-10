@@ -278,6 +278,9 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .pill.veto-pill:hover { border-color:#ff6b6b; background:rgba(255,69,69,0.2); }
 .pill.quill-pill { border-color:rgba(255,215,0,0.4); }
 .pill.quill-pill:hover { border-color:var(--gold); background:rgba(255,215,0,0.2); }
+.pill.ancestry-pill { border-color:rgba(180,130,255,0.4); }
+.pill.ancestry-pill:hover { border-color:#b482ff; background:rgba(180,130,255,0.2); }
+.pill.ancestry-pill.selected { border-color:#b482ff; background:rgba(180,130,255,0.35); opacity:1; }
 
 /* In-game Quill & Veto panel */
 #gameQvPanel { animation: fadeIn 0.3s ease; }
