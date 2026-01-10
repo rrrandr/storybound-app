@@ -2535,10 +2535,25 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       state.couple.lastTurnId = payload.turnId;
 
       // Append storyChunk to the story UI exactly once (do NOT call the model)
+      // Use same approach as local path for consistency
       const storyEl = document.getElementById('storyText');
       if (storyEl && payload.storyChunk) {
-          storyEl.innerHTML += formatStory(payload.storyChunk);
-          storyEl.scrollTop = storyEl.scrollHeight;
+          if (payload.isInit) {
+              // Initial story: replace content (same as beginBtn handler)
+              storyEl.innerHTML = formatStory(payload.storyChunk);
+          } else {
+              // Subsequent turns: add separator + div wrapper (same as submitBtn handler)
+              const sep = document.createElement('hr');
+              sep.style.borderColor = 'var(--pink)';
+              sep.style.opacity = '0.3';
+              storyEl.appendChild(sep);
+
+              const newDiv = document.createElement('div');
+              newDiv.innerHTML = formatStory(payload.storyChunk);
+              storyEl.appendChild(newDiv);
+
+              sep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
       }
 
       // Update couple.turnIndex to payload.turnIndex + 1
