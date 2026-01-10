@@ -1304,7 +1304,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           e.target.checked = false; 
           const unlocked = localStorage.getItem('sb_god_mode_owned') === '1';
           if(!unlocked) window.showPaywall('god');
-          else if(confirm("WARNING: God Mode permanently removes this story from canon.")) activateGodMode();
+          else if(confirm("God Mode unlocks unrestricted authorial control.\n\nChoices made in God Mode do not affect progression, balance, or unlocks.")) activateGodMode();
       });
   }
 
@@ -1449,7 +1449,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   });
 
   function initSelectionHandlers(){
-    state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"] };
+    state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"], safewords:[] };
     
     // Bind Visual Auto-Lock
     const chkLock = document.getElementById('chkAutoLockVisual');
@@ -1539,7 +1539,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   $('payGodMode')?.addEventListener('click', () => {
       localStorage.setItem('sb_god_mode_owned', '1');
       document.getElementById('payModal')?.classList.add('hidden');
-      if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
+      if (confirm("God Mode unlocks unrestricted authorial control.\n\nChoices made in God Mode do not affect progression, balance, or unlocks.")) {
           activateGodMode();
       }
   });
@@ -1576,7 +1576,8 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       if (storyEl && quillText) {
           const div = document.createElement('div');
           div.className = 'quill-intervention';
-          div.style.cssText = 'font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;';
+          // Debossed/etched look: inset shadow, gold tint, border
+          div.style.cssText = 'font-style:italic; color:var(--gold); border-left:3px solid var(--gold); padding:10px 15px; margin:15px 0; background:rgba(255,215,0,0.08); box-shadow:inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 2px rgba(255,215,0,0.1); border-radius:4px; text-shadow:0 1px 1px rgba(0,0,0,0.3);';
           div.innerHTML = formatStory(quillText);
           storyEl.appendChild(div);
       }
@@ -1839,9 +1840,14 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     5. Be creative, surprising, and emotionally resonant.
     6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
     7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
+    8. NAME INTEGRITY (CRITICAL): Do NOT alter the protagonist's name "${pName}" under any circumstances. Never silently change it to a full name, nickname, or variant (e.g., "Dani" must NOT become "Daniel" or "Danielle"). Name changes ONLY allowed if: (a) the player explicitly requests via Quill or Veto, OR (b) an NPC uses a clearly in-world nickname.
     ${state.povMode === 'author5th' ? `
-    AUTHOR POV RULES:
+    AUTHOR POV RULES (MANDATORY - DO NOT SKIP):
+    - CRITICAL: The very FIRST WORDS of the story MUST begin with "The Author..." (e.g., "The Author smiled...", "The Author paused...", "The Author considered...").
+    - In the opening scene (before the first player choice), the Author MUST appear 3-5 times woven into the prose.
     - The Author (${state.authorGender}, ${state.authorPronouns}) is an on-page presence woven into the narration, not a separate speaker tag.
+    - Author tone: CONFIDENT, conductor-like, foreshadowing. The Author shapes the world with certainty.
+    - Author must NEVER be apologetic, passive, hesitant, or merely reactive. The Author is in control.
     - Mention the Author naturally about every ~40 words on average—as texture, not interruption.
     - The Author foreshadows, shapes pacing, reveals writerly intent or doubt, without breaking immersion.
     - NEVER announce "Author here" or similar meta-asides. Integrate as narrative texture.
@@ -2060,7 +2066,10 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
           });
 
       } catch(e) {
+          // Clear loading state on failure
+          if(ph) ph.style.display = 'none';
           if(errDiv) { errDiv.innerText = "Visualization failed. Fate is cloudy."; errDiv.classList.remove('hidden'); }
+          console.warn("Visualization error:", e);
       } finally {
           stopLoading();
           _vizInFlight = false;
@@ -2146,9 +2155,13 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
       const pacingDirective = buildPacingDirective();
       const bbDirective = getBatedBreathDirective(); 
-      const safetyDirective = state.godModeActive ? "" : "Remember Safety: No sexual violence. No non-con (unless implied/consensual roleplay).";
-      const edgeDirective = (state.edgeCovenant.active) 
-        ? `EDGE COVENANT ACTIVE (Level ${state.edgeCovenant.level}): You are authorized to be more dominant, push boundaries, and create higher tension/stakes. Use more imperative language.` 
+      let safetyDirective = state.godModeActive ? "" : "Remember Safety: No sexual violence. No non-con (unless implied/consensual roleplay).";
+      // Inject safewords as hard stops
+      if (state.safety?.safewords?.length > 0) {
+          safetyDirective += ` SAFEWORDS (HARD STOP - if player or character uses any of these, IMMEDIATELY de-escalate and soften the scene): ${state.safety.safewords.join(', ')}.`;
+      }
+      const edgeDirective = (state.edgeCovenant.active)
+        ? `EDGE COVENANT ACTIVE (Level ${state.edgeCovenant.level}): You are authorized to be more dominant, push boundaries, and create higher tension/stakes. Use more imperative language. Safewords always override Edge Covenant.`
         : "";
       
       const metaMsg = buildMetaDirective();
@@ -2170,7 +2183,16 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
           quillDirective = `NOTE: The user just committed a Quill edit. Honor the authorial intent.`;
       }
 
-      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n\nTURN INSTRUCTIONS: 
+      // Build FATE CARD directive
+      let fateDirective = '';
+      if (state.fateCommitted && state.fateSelectedIndex >= 0 && state.fateOptions?.length > 0) {
+          const chosenCard = state.fateOptions[state.fateSelectedIndex];
+          if (chosenCard) {
+              fateDirective = `FATE CARD CHOSEN: "${chosenCard.title}" - ${chosenCard.desc}. Weave this thematic element into the scene.`;
+          }
+      }
+
+      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${fateDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n\nTURN INSTRUCTIONS: 
       Story So Far: ...${context}
       Player Action: ${act}. 
       Player Dialogue: ${dia}. 
@@ -2312,6 +2334,12 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
   };
   
   window.acceptEdgeCovenant = function(){
+      // Read safewords from input
+      const swInput = document.getElementById('safewordInput');
+      if (swInput && swInput.value.trim()) {
+          const words = swInput.value.split(/[,\n]+/).map(w => w.trim()).filter(Boolean);
+          state.safety.safewords = words;
+      }
       state.edgeCovenant.active = true;
       state.edgeCovenant.acceptedAtTurn = state.turnCount;
       document.getElementById('edgeCovenantModal').classList.add('hidden');
@@ -2326,9 +2354,9 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
   // --- COUPLE MODE BUTTON HANDLERS ---
   $('btnCreateRoom')?.addEventListener('click', async () => {
-      if (!sb) { alert("Couple mode unavailable."); return; }
+      if (!sb) { alert("Couple mode unavailable. Supabase not configured."); return; }
       const uid = await ensureAnonSession();
-      if (!uid) { alert("Auth failed."); return; }
+      if (!uid) { alert("Auth failed. Check network connection or try refreshing the page."); return; }
       window.state.myUid = uid;
       window.state.myNick = getNickname();
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -2356,7 +2384,7 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       if (!code || code.length !== 6) { alert("Enter a 6-character code."); return; }
 
       const uid = await ensureAnonSession();
-      if (!uid) { alert("Auth failed."); return; }
+      if (!uid) { alert("Auth failed. Check network connection or try refreshing the page."); return; }
       window.state.myUid = uid;
       window.state.myNick = getNickname();
       window.state.roomCode = code;
