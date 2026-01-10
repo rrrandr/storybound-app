@@ -50,12 +50,31 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   // Presence Constants
   const PRESENCE_HEARTBEAT_MS = 15000;
   
+  // COUPLE NOTE: Requires Supabase with:
+  // 1. Anonymous sign-ins enabled (Auth → Providers → Anonymous)
+  // 2. SUPABASE_URL and SUPABASE_ANON_KEY configured in environment
+  // 3. RLS policies allowing anonymous room access
+  // If any are missing, user sees descriptive error in #chamberStatus.
   async function ensureAnonSession(){
     if(!sb) return null;
     const { data: { session } } = await sb.auth.getSession();
     if(session?.user?.id) return session.user.id;
     const { data, error } = await sb.auth.signInAnonymously();
-    if(error) { console.error("Auth error:", error); return null; }
+    if(error) {
+      console.error("[COUPLE] Auth error:", error);
+      const chamberStatus = document.getElementById('chamberStatus');
+      let msg = "Auth failed: " + (error.message || "Unknown error");
+      if(error.message?.includes('Anonymous sign-ins are disabled')) {
+        msg = "Couple mode is offline: Supabase anonymous sign-ins are disabled. Enable Auth → Providers → Anonymous in Supabase.";
+      }
+      if(chamberStatus) {
+        chamberStatus.classList.remove('hidden');
+        chamberStatus.textContent = msg;
+        chamberStatus.style.color = 'var(--hot)';
+      }
+      showToast(msg);
+      return null;
+    }
     return data.user.id;
   }
 
@@ -1321,9 +1340,11 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           if(['fling', 'voyeur'].includes(state.storyLength)) {
               state.storyLength = 'affair';
               upgraded = true;
+              showToast("Story expanded to Affair.");
+          } else if (!upgraded) {
+              // Already on affair/soulmates, just confirm subscription
+              showToast("Subscription active. All tiers unlocked.");
           }
-          // Show subscription confirmation toast
-          showToast("Upgraded to Soulmates tier!");
       }
 
       if (upgraded) state.storyEnded = false;
@@ -1957,6 +1978,7 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     } finally {
         stopLoading();
         if(window.initCards) window.initCards();
+        if(window.dealFateCards) window.dealFateCards();
         updateQuillUI();
         updateBatedBreathState();
     }
@@ -2417,25 +2439,35 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
   };
 
   // --- COUPLE MODE BUTTON HANDLERS ---
+  function showChamberStatus(msg, isError = false) {
+      const el = document.getElementById('chamberStatus');
+      if(el) {
+          el.classList.remove('hidden');
+          el.textContent = msg;
+          el.style.color = isError ? 'var(--hot)' : 'var(--gold)';
+      }
+  }
+
   $('btnCreateRoom')?.addEventListener('click', async () => {
-      if (!sb) { alert("Couple mode unavailable. Supabase not configured."); return; }
+      if (!sb) {
+          showChamberStatus("Couple mode unavailable. Supabase not configured.", true);
+          return;
+      }
+      showChamberStatus("Creating invitation...");
       const uid = await ensureAnonSession();
-      if (!uid) { alert("Auth failed. Check network connection or try refreshing the page."); return; }
+      if (!uid) return; // ensureAnonSession already shows error in chamberStatus
       window.state.myUid = uid;
       window.state.myNick = getNickname();
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       window.state.roomCode = code;
       window.state.roomId = 'room_' + code;
 
-      const lbl = document.getElementById('coupleRoomCodeLabel');
       const big = document.getElementById('roomCodeBig');
       const wrap = document.getElementById('roomCodeWrap');
-      if (lbl) lbl.textContent = code;
       if (big) big.textContent = code;
       if (wrap) wrap.classList.remove('hidden');
 
-      document.getElementById('coupleStatus').textContent = 'Waiting for partner...';
-      document.getElementById('sbNickLabel').textContent = window.state.myNick;
+      showChamberStatus("Invitation ready: " + code + " — Share this code with your partner.");
   });
 
   $('btnJoinRoom')?.addEventListener('click', () => {
@@ -2443,19 +2475,24 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
   });
 
   $('btnJoinGo')?.addEventListener('click', async () => {
-      if (!sb) { alert("Couple mode unavailable."); return; }
+      if (!sb) {
+          showChamberStatus("Couple mode unavailable. Supabase not configured.", true);
+          return;
+      }
       const code = document.getElementById('joinCodeInput')?.value.trim().toUpperCase();
-      if (!code || code.length !== 6) { alert("Enter a 6-character code."); return; }
-
+      if (!code || code.length !== 6) {
+          showChamberStatus("Enter a 6-character code.", true);
+          return;
+      }
+      showChamberStatus("Connecting to chamber...");
       const uid = await ensureAnonSession();
-      if (!uid) { alert("Auth failed. Check network connection or try refreshing the page."); return; }
+      if (!uid) return; // ensureAnonSession already shows error in chamberStatus
       window.state.myUid = uid;
       window.state.myNick = getNickname();
       window.state.roomCode = code;
       window.state.roomId = 'room_' + code;
 
-      document.getElementById('coupleStatus').textContent = 'Joined room ' + code;
-      document.getElementById('sbNickLabel').textContent = window.state.myNick;
+      showChamberStatus("Joined room " + code);
       document.getElementById('btnEnterCoupleGame')?.classList.remove('hidden');
   });
 

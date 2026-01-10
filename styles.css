@@ -190,6 +190,8 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .fate-card h3 { font-size: 0.8em; margin-bottom: 5px; text-transform: uppercase; color: var(--gold); }
 .fate-card p { font-size: 0.6em; line-height: 1.2; opacity: 0.9; }
 .fate-card.poof { animation: smokePoof 0.6s forwards; }
+.fate-card.selected .inner { box-shadow: 0 0 15px var(--gold), 0 5px 15px rgba(0,0,0,0.5); }
+.fate-card.chosen .inner { box-shadow: 0 0 20px var(--pink), 0 5px 15px rgba(0,0,0,0.5); }
 @keyframes smokePoof { 0%{ opacity:1; transform:scale(1); } 100%{ opacity:0; transform:scale(0.5); } }
 @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
 

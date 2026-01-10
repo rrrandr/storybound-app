@@ -77,7 +77,7 @@
 <div id="vizModal" class="overlay hidden">
   <div class="box viz-modal-content">
     <h3>Visualization</h3>
-    <textarea id="vizPromptInput" rows="4" style="width:100%; resize:vertical; min-height:80px;" placeholder="Prompt will appear here..."></textarea>
+    <textarea id="vizPromptInput" rows="6" style="width:100%; resize:vertical; min-height:120px; max-height:200px; overflow-y:auto;" placeholder="Prompt will appear here..."></textarea>
     <div id="vizPlaceholder">Generating...</div>
     
     <div id="vizImgContainer">
@@ -113,18 +113,14 @@
 
 <div id="coupleInvite" class="overlay hidden">
   <div class="box" style="max-width:520px; text-align:center;">
-    <h3>Open a Private Chamber</h3>
-
-    <div class="couple-status-box">
-      <div><strong>Your nickname:</strong> <span id="sbNickLabel" style="color:var(--gold)">…</span></div>
-      <div><strong>Status:</strong> <span id="coupleStatus" style="font-style:italic">Not connected</span></div>
-      <div><strong>Room Code:</strong> <span id="coupleRoomCodeLabel" style="font-family:monospace; color:var(--pink)">—</span></div>
-    </div>
+    <h3>Enter a Private Chamber</h3>
 
     <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
-      <button id="btnCreateRoom">Create Room</button>
-      <button id="btnJoinRoom" style="background:#444">Join Room</button>
+      <button id="btnCreateRoom">Send an Invitation</button>
+      <button id="btnJoinRoom" style="background:#444">Accept an Invitation</button>
     </div>
+
+    <div id="chamberStatus" class="hidden" style="margin:15px 0; padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9em; color:var(--gold);"></div>
 
     <div id="joinRow" class="hidden" style="margin-bottom:15px; display:flex; gap:10px; justify-content:center;">
       <input id="joinCodeInput" placeholder="Enter 6-char Code" style="text-transform:uppercase; text-align:center; width:150px;">
