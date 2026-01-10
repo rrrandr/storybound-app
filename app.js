@@ -285,6 +285,17 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       nonConPushCount: 0,
       lastNonConPushAt: 0,
       lastSafewordAt: 0,
+
+      // COUPLE REALTIME STATE
+      couple: {
+          connected: false,
+          channel: null,
+          hostUid: "",
+          joinerUid: "",
+          turnIndex: 0,
+          lastTurnId: "",
+          isHost: false
+      },
       safety: {
           darkThemes: true,
           nonConImplied: false,
@@ -2182,6 +2193,12 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
       if (billingLock) { window.showPaywall('unlock'); return; }
 
+      // Couple mode: enforce alternating turns
+      if (state.mode === 'couple' && state.couple.connected && !isMyTurn()) {
+          showToast("It's your partner's turn.");
+          return;
+      }
+
       const act = $('actionInput').value.trim();
       const dia = $('dialogueInput').value.trim();
       if(!act && !dia) return alert("Input required.");
@@ -2372,12 +2389,203 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
   }
 
   // --- COUPLE MODE LOGIC ---
-  window.coupleCleanup = function(){ if(sb) sb.removeAllChannels(); };
+  window.coupleCleanup = function(){
+      if(sb) sb.removeAllChannels();
+      state.couple.connected = false;
+      state.couple.channel = null;
+  };
 
-  function broadcastTurn(text, isInit = false) {
-      if (!sb || window.state.mode !== 'couple' || !window.state.roomId) return;
-      // Stub implementation; real Supabase broadcast can be added later
-      console.log("broadcastTurn stub:", { isInit, textLength: text?.length });
+  // Join/create a Supabase realtime channel for couple mode
+  async function joinCoupleRoom(roomId, isHost) {
+      if (!sb || !roomId) return false;
+
+      // Clean up existing channel
+      if (state.couple.channel) {
+          await sb.removeChannel(state.couple.channel);
+          state.couple.channel = null;
+      }
+
+      state.couple.isHost = isHost;
+      state.couple.turnIndex = 0;
+      state.couple.lastTurnId = "";
+
+      if (isHost) {
+          state.couple.hostUid = state.myUid;
+          state.couple.joinerUid = "";
+      } else {
+          state.couple.joinerUid = state.myUid;
+          state.couple.hostUid = "";
+      }
+
+      const channel = sb.channel(roomId, {
+          config: {
+              presence: { key: state.myUid }
+          }
+      });
+
+      // Track presence with uid + nick
+      channel.on('presence', { event: 'sync' }, () => {
+          const presenceState = channel.presenceState();
+          const uids = Object.keys(presenceState);
+          console.log("[COUPLE] Presence sync:", uids);
+
+          // Identify partner
+          for (const uid of uids) {
+              if (uid !== state.myUid) {
+                  if (isHost) {
+                      state.couple.joinerUid = uid;
+                  } else {
+                      state.couple.hostUid = uid;
+                  }
+                  const presData = presenceState[uid]?.[0];
+                  if (presData?.nick) {
+                      state.partnerStatus.nick = presData.nick;
+                  }
+                  state.partnerStatus.online = true;
+                  state.partnerStatus.uid = uid;
+                  showChamberStatus("Partner connected: " + (presData?.nick || "Anonymous"));
+              }
+          }
+          updateCoupleTurnUI();
+      });
+
+      channel.on('presence', { event: 'leave' }, ({ key }) => {
+          if (key && key !== state.myUid) {
+              state.partnerStatus.online = false;
+              showChamberStatus("Partner disconnected", true);
+          }
+      });
+
+      // Listen for broadcast event 'turn'
+      channel.on('broadcast', { event: 'turn' }, ({ payload }) => {
+          console.log("[COUPLE] Received turn broadcast:", payload);
+          handleIncomingTurn(payload);
+      });
+
+      const { error } = await channel.subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+              console.log("[COUPLE] Channel subscribed:", roomId);
+              await channel.track({
+                  uid: state.myUid,
+                  nick: state.myNick || "Anonymous",
+                  online_at: new Date().toISOString()
+              });
+              state.couple.connected = true;
+              state.couple.channel = channel;
+              updateCoupleTurnUI();
+          }
+      });
+
+      if (error) {
+          console.error("[COUPLE] Channel subscribe error:", error);
+          showChamberStatus("Failed to connect to room: " + error.message, true);
+          return false;
+      }
+
+      return true;
+  }
+
+  // Broadcast a turn to the couple channel
+  function broadcastTurn(storyChunk, isSubmit = true) {
+      if (!sb || state.mode !== 'couple' || !state.roomId || !state.couple.channel) {
+          console.warn("[COUPLE] broadcastTurn: not connected");
+          return;
+      }
+
+      const turnId = 'turn_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+      const payload = {
+          turnId: turnId,
+          turnIndex: state.couple.turnIndex,
+          authorUid: state.myUid,
+          authorNick: state.myNick || "Anonymous",
+          storyChunk: storyChunk,
+          isInit: !isSubmit,
+          timestamp: Date.now()
+      };
+
+      state.couple.channel.send({
+          type: 'broadcast',
+          event: 'turn',
+          payload: payload
+      });
+
+      // Increment our turn index after broadcasting
+      state.couple.turnIndex++;
+      state.couple.lastTurnId = turnId;
+
+      console.log("[COUPLE] Broadcasted turn:", { turnId, turnIndex: state.couple.turnIndex - 1 });
+      updateCoupleTurnUI();
+  }
+
+  // Handle incoming turn from partner
+  function handleIncomingTurn(payload) {
+      if (!payload || !payload.turnId) return;
+
+      // Dedupe by turnId
+      if (payload.turnId === state.couple.lastTurnId) {
+          console.log("[COUPLE] Duplicate turn ignored:", payload.turnId);
+          return;
+      }
+
+      // Ignore our own broadcasts (echoed back)
+      if (payload.authorUid === state.myUid) {
+          return;
+      }
+
+      state.couple.lastTurnId = payload.turnId;
+
+      // Append storyChunk to the story UI exactly once (do NOT call the model)
+      const storyEl = document.getElementById('storyText');
+      if (storyEl && payload.storyChunk) {
+          storyEl.innerHTML += formatStory(payload.storyChunk);
+          storyEl.scrollTop = storyEl.scrollHeight;
+      }
+
+      // Update couple.turnIndex to payload.turnIndex + 1
+      state.couple.turnIndex = payload.turnIndex + 1;
+
+      console.log("[COUPLE] Applied incoming turn:", {
+          from: payload.authorNick,
+          turnId: payload.turnId,
+          newTurnIndex: state.couple.turnIndex
+      });
+
+      // Update turn status UI
+      updateCoupleTurnUI();
+      showToast(payload.authorNick + "'s turn complete");
+  }
+
+  // Check if it's currently my turn (Alternating Driver Mode B)
+  function isMyTurn() {
+      if (state.mode !== 'couple' || !state.couple.connected) return true;
+      // Host drives turn 0, 2, 4, ... (even indices)
+      // Joiner drives turn 1, 3, 5, ... (odd indices)
+      const turnIndex = state.couple.turnIndex;
+      if (state.couple.isHost) {
+          return turnIndex % 2 === 0;
+      } else {
+          return turnIndex % 2 === 1;
+      }
+  }
+
+  // Update the "Your turn / Partner's turn" status UI
+  function updateCoupleTurnUI() {
+      const turnStatusEl = document.getElementById('coupleTurnStatus');
+      if (!turnStatusEl) return;
+
+      if (state.mode !== 'couple' || !state.couple.connected) {
+          turnStatusEl.classList.add('hidden');
+          return;
+      }
+
+      turnStatusEl.classList.remove('hidden');
+      if (isMyTurn()) {
+          turnStatusEl.textContent = "Your turn";
+          turnStatusEl.style.color = 'var(--gold)';
+      } else {
+          turnStatusEl.textContent = "Partner's turn";
+          turnStatusEl.style.color = 'var(--muted)';
+      }
   }
 
   window.setMode = function(m){
@@ -2467,7 +2675,14 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       if (big) big.textContent = code;
       if (wrap) wrap.classList.remove('hidden');
 
-      showChamberStatus("Invitation ready: " + code + " — Share this code with your partner.");
+      // Join the realtime channel as host
+      const joined = await joinCoupleRoom(window.state.roomId, true);
+      if (joined) {
+          showChamberStatus("Invitation ready: " + code + " — Share this code with your partner.");
+          document.getElementById('btnEnterCoupleGame')?.classList.remove('hidden');
+      } else {
+          showChamberStatus("Failed to create room channel.", true);
+      }
   });
 
   $('btnJoinRoom')?.addEventListener('click', () => {
@@ -2492,8 +2707,14 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       window.state.roomCode = code;
       window.state.roomId = 'room_' + code;
 
-      showChamberStatus("Joined room " + code);
-      document.getElementById('btnEnterCoupleGame')?.classList.remove('hidden');
+      // Join the realtime channel as joiner (non-host)
+      const joined = await joinCoupleRoom(window.state.roomId, false);
+      if (joined) {
+          showChamberStatus("Joined room " + code + " — Waiting for host...");
+          document.getElementById('btnEnterCoupleGame')?.classList.remove('hidden');
+      } else {
+          showChamberStatus("Failed to join room channel.", true);
+      }
   });
 
   $('btnCopyCode')?.addEventListener('click', () => {
