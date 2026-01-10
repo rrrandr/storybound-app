@@ -67,7 +67,67 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     }
     return n;
   }
-  
+
+  // =========================
+  // STRANGER CLICK TRACKING
+  // =========================
+  function getStrangerSessionId() {
+    let sid = localStorage.getItem('sb_stranger_session');
+    if (!sid) {
+      sid = 'sess_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+      localStorage.setItem('sb_stranger_session', sid);
+    }
+    return sid;
+  }
+
+  async function trackStrangerClick() {
+    if (!sb) return;
+    const sessionId = getStrangerSessionId();
+    try {
+      await sb.from('stranger_clicks').insert({ session_id: sessionId });
+    } catch (e) {
+      console.warn('Stranger click tracking unavailable:', e.message);
+    }
+  }
+
+  async function fetchStrangerCounts() {
+    if (!sb) return { total: 0, unique: 0 };
+    try {
+      // Get total clicks
+      const { count: total, error: totalErr } = await sb
+        .from('stranger_clicks')
+        .select('*', { count: 'exact', head: true });
+
+      if (totalErr) throw totalErr;
+
+      // Get unique sessions
+      const { data: uniqueData, error: uniqueErr } = await sb
+        .from('stranger_clicks')
+        .select('session_id');
+
+      if (uniqueErr) throw uniqueErr;
+
+      const uniqueSessions = new Set(uniqueData.map(r => r.session_id));
+      return { total: total || 0, unique: uniqueSessions.size };
+    } catch (e) {
+      console.warn('Stranger count fetch unavailable:', e.message);
+      return { total: 0, unique: 0 };
+    }
+  }
+
+  async function updateStrangerCountDisplay() {
+    const counts = await fetchStrangerCounts();
+    const el = document.getElementById('strangerCount');
+    if (el && counts.total > 0) {
+      el.textContent = counts.unique.toLocaleString();
+      // Update subtitle if exists
+      const subtitle = document.getElementById('strangerCountSubtitle');
+      if (subtitle) {
+        subtitle.textContent = `(${counts.total.toLocaleString()} total visits)`;
+      }
+    }
+  }
+
   // =========================
   // STORYBOUND EVENT LOGGER
   // =========================
@@ -2310,7 +2370,11 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
      if (!state.storyOrigin) state.storyOrigin = m;
      if(m === 'solo') window.showScreen('setup');
      if(m === 'couple') window.showScreen('coupleInvite');
-     if(m === 'stranger') window.showScreen('strangerModal');
+     if(m === 'stranger') {
+         window.showScreen('strangerModal');
+         trackStrangerClick();
+         updateStrangerCountDisplay();
+     }
   };
 
   // --- EDGE COVENANT ---
