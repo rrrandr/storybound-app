@@ -434,6 +434,14 @@ ANTI-HERO ENFORCEMENT:
   function $(id){ return document.getElementById(id); }
   function toggle(id){ const el = document.getElementById(id); if(el) el.classList.toggle('hidden'); }
   function resetTurnSnapshotFlag(){ state._snapshotThisTurn = false; }
+  function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+  }
 
   // --- THEME & FONT HELPERS ---
   window.setTheme = function(name) {
@@ -1784,7 +1792,7 @@ ANTI-HERO ENFORCEMENT:
           const div = document.createElement('div');
           div.className = 'quill-intervention';
           div.style.cssText = 'font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;';
-          div.innerHTML = formatStory(quillText);
+          div.innerHTML = formatStory(quillText, true);
           storyEl.appendChild(div);
       }
 
@@ -2316,7 +2324,7 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
           // USER TURN RENDER
           const uDiv = document.createElement('div');
           uDiv.className = 'dialogue-block p1-dia';
-          uDiv.innerHTML = `<strong>You:</strong> ${act} <br> "${dia}"`;
+          uDiv.innerHTML = `<strong>You:</strong> ${escapeHTML(act)} <br> "${escapeHTML(dia)}"`;
           document.getElementById('storyText').appendChild(uDiv);
 
           const raw = await callChat([
@@ -2388,11 +2396,13 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       }
   });
 
-  function formatStory(text){
+  function formatStory(text, shouldEscape = false){
+      const process = shouldEscape ? escapeHTML : (s => s);
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
-          if(p.trim().startsWith('"')) return `<p style="color:var(--p2-color); font-weight:500;">${p}</p>`;
-          return `<p>${p}</p>`;
+          const safe = process(p);
+          if(p.trim().startsWith('"')) return `<p style="color:var(--p2-color); font-weight:500;">${safe}</p>`;
+          return `<p>${safe}</p>`;
       }).join('');
   }
 
