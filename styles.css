@@ -282,4 +282,26 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 #auth-panel input { padding:5px; width: 150px; font-size: 0.8em; }
 #auth-status { font-size:12px; margin-top:6px; color:#fff; }
 
+/* ARCHETYPE SYSTEM */
+.archetype-header-text { font-size: 1.1em; color: var(--ink); opacity: 0.9; margin: 0 0 5px; text-align: center; }
+.archetype-subtext { font-size: 0.9em; color: var(--gold); opacity: 0.8; margin: 0 0 20px; text-align: center; font-style: italic; }
+.archetype-selection { width: 95%; margin: 0 auto 20px; }
+.archetype-group { margin-bottom: 20px; }
+.archetype-group-label { display: block; font-size: 0.85em; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; text-align: center; }
+.archetype-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.archetype-pill { padding: 8px 16px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,105,180,0.3); border-radius: 25px; font-size: 0.9em; cursor: pointer; transition: all 0.2s; color: var(--ink); font-family: var(--font-main); }
+.archetype-pill:hover { background: rgba(255,105,180,0.15); border-color: var(--pink); transform: translateY(-2px); }
+.archetype-pill.selected { background: rgba(255,105,180,0.25); border-color: var(--hot); box-shadow: 0 0 12px rgba(255,20,147,0.4); color: var(--gold); font-weight: 600; }
+.archetype-pill.primary-only { border-style: dashed; }
+.archetype-pill.primary-only::after { content: " ★"; font-size: 0.7em; opacity: 0.7; }
+.archetype-pill.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.archetype-constraint-text { font-size: 0.75em; color: var(--ink); opacity: 0.6; margin: 15px 0 0; text-align: center; font-style: italic; }
+.archetype-preview { width: 95%; margin: 15px auto; padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,105,180,0.2); border-radius: 10px; text-align: left; }
+.archetype-preview-name { font-family: 'lust-script-display', serif; font-size: 1.3em; color: var(--pink); margin: 0 0 8px; }
+.archetype-preview-summary { font-size: 0.95em; color: var(--ink); line-height: 1.5; margin: 0 0 10px; }
+.archetype-preview-shadow { font-size: 0.85em; color: var(--gold); opacity: 0.9; font-style: italic; margin: 0; padding-left: 10px; border-left: 2px solid var(--gold); }
+.archetype-preview-modifier { margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,105,180,0.2); }
+.archetype-preview-modifier-label { font-size: 0.8em; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 5px; }
+.archetype-preview-modifier-style { font-size: 0.9em; color: var(--ink); opacity: 0.9; margin: 0; }
+
 @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }

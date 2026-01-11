@@ -117,12 +117,214 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       ]
   };
 
+  // =========================
+  // ARCHETYPE SYSTEM (LOCKED)
+  // =========================
+  const ARCHETYPES = {
+      ROMANTIC: {
+          id: 'ROMANTIC',
+          name: 'The Romantic',
+          desireStyle: 'Expressive, devoted, emotionally fluent',
+          summary: 'The Romantic — expressive and devoted, offering love openly and poetically, binding through attention, longing, and emotional presence.',
+          shadow: 'Shadow: risks overgiving, binding too tightly, and losing themselves in longing.',
+          primaryOnly: false
+      },
+      CLOISTERED: {
+          id: 'CLOISTERED',
+          name: 'The Cloistered',
+          desireStyle: 'Sheltered curiosity, restrained longing, awakening',
+          summary: 'The Cloistered — sheltered and restrained, approaching desire as discovery, awakening slowly through trust, patience, and chosen intimacy.',
+          shadow: 'Shadow: withdraws or delays, letting fear of awakening stall intimacy.',
+          primaryOnly: false
+      },
+      ROGUE: {
+          id: 'ROGUE',
+          name: 'The Rogue',
+          desireStyle: 'Playful danger, charm, irreverent confidence',
+          summary: 'The Rogue — playful and irreverent, using charm and danger to seduce, testing connection through flirtation, risk, and rule-bending confidence.',
+          shadow: 'Shadow: deflects depth with charm, testing how far desire can go without consequence.',
+          primaryOnly: false
+      },
+      DANGEROUS: {
+          id: 'DANGEROUS',
+          name: 'The Dangerous',
+          desireStyle: 'Controlled menace, restraint, implied power',
+          summary: 'The Dangerous — controlled and restrained, radiating implied power and menace, creating heat through what is held back rather than revealed.',
+          shadow: 'Shadow: withholds warmth, letting restraint harden into distance or intimidation.',
+          primaryOnly: false
+      },
+      GUARDIAN: {
+          id: 'GUARDIAN',
+          name: 'The Guardian',
+          desireStyle: 'Protection, steadiness, containment',
+          summary: 'The Guardian — steady and protective, offering safety as intimacy, building desire through reliability, containment, and earned trust.',
+          shadow: 'Shadow: overcontains, mistaking protection for control or emotional silence.',
+          primaryOnly: false
+      },
+      SOVEREIGN: {
+          id: 'SOVEREIGN',
+          name: 'The Sovereign',
+          desireStyle: 'Authority, composure, invitation rather than pursuit',
+          summary: 'The Sovereign — composed and authoritative, inviting rather than pursuing, framing desire as permission granted, not attention sought.',
+          shadow: 'Shadow: waits too long to yield, risking isolation behind authority.',
+          primaryOnly: false
+      },
+      ENCHANTING: {
+          id: 'ENCHANTING',
+          name: 'The Enchanting',
+          desireStyle: 'Allure, knowing control, magnetic presence',
+          summary: 'The Enchanting — magnetic and intentional, wielding allure with knowing control, choosing rather than chasing, shaping desire through presence alone.',
+          shadow: 'Shadow: keeps desire at a remove, fearing loss of control if fully seen.',
+          primaryOnly: false
+      },
+      DEVOTED: {
+          id: 'DEVOTED',
+          name: 'The Devoted',
+          desireStyle: 'Focused attention, affection, emotional exclusivity',
+          summary: 'The Devoted — focused and emotionally exclusive, expressing intensity through presence, loyalty, and the act of choosing again and again.',
+          shadow: 'Shadow: clings too closely, risking suffocation or fear of abandonment.',
+          primaryOnly: false
+      },
+      STRATEGIST: {
+          id: 'STRATEGIST',
+          name: 'The Strategist',
+          desireStyle: 'Anticipation, intelligence, teasing foresight',
+          summary: 'The Strategist — intelligent and anticipatory, seducing through foresight and teasing precision, turning desire into a game you want to lose.',
+          shadow: 'Shadow: overcalculates, turning intimacy into a game that delays surrender.',
+          primaryOnly: false
+      },
+      BEAUTIFUL_RUIN: {
+          id: 'BEAUTIFUL_RUIN',
+          name: 'The Beautiful Ruin',
+          desireStyle: 'Desire corrupted by distrust; love fractured, tested, and re-bound through choice',
+          summary: 'The Beautiful Ruin — desired yet disillusioned, shaped by wounds that make love feel suspect, testing and fracturing bonds until someone chooses them with clear eyes and stays.',
+          shadow: 'Shadow: tests and fractures bonds, fearing that love offered freely is not real.',
+          primaryOnly: true,
+          genderedExpression: {
+              male: 'Power + unworthiness → possessive devotion → fear of being chosen',
+              female: 'Desire + disillusionment → testing and withdrawal → fear of being falsely loved'
+          }
+      },
+      ANTI_HERO: {
+          id: 'ANTI_HERO',
+          name: 'The Anti-Hero',
+          desireStyle: 'Restrained longing shaped by duty, guilt, or a consuming moral code',
+          summary: 'The Anti-Hero — burdened by duty, guilt, or a consuming code, suppressing desire to prevent collateral harm, resisting love even as it draws them closer.',
+          shadow: 'Shadow: isolates themselves behind duty and self-denial, letting loneliness harden into resignation or controlled rage.',
+          primaryOnly: true,
+          coreFantasy: 'They want love, but refuse it because intimacy would endanger others, compromise their mission, or violate their personal code. They are not afraid of love. They are afraid of what love would cost.'
+      }
+  };
+
+  const ARCHETYPE_ORDER = [
+      'ROMANTIC', 'CLOISTERED', 'ROGUE', 'DANGEROUS', 'GUARDIAN',
+      'SOVEREIGN', 'ENCHANTING', 'DEVOTED', 'STRATEGIST', 'BEAUTIFUL_RUIN', 'ANTI_HERO'
+  ];
+
+  function getArchetypeSectionTitle(loveInterestGender) {
+      const g = (loveInterestGender || '').toLowerCase();
+      if (g === 'male') return 'Shape Your Storybeau';
+      if (g === 'female') return 'Shape Your Storybelle';
+      return 'Shape Your Storyboo';
+  }
+
+  function validateArchetypeSelection(primaryId, modifierId) {
+      const errors = [];
+      if (!primaryId) {
+          errors.push('You must select exactly one Primary Archetype.');
+          return { valid: false, errors };
+      }
+      const primary = ARCHETYPES[primaryId];
+      if (!primary) {
+          errors.push('Invalid Primary Archetype selected.');
+          return { valid: false, errors };
+      }
+      if (modifierId) {
+          const modifier = ARCHETYPES[modifierId];
+          if (!modifier) {
+              errors.push('Invalid Modifier Archetype selected.');
+              return { valid: false, errors };
+          }
+          if (modifier.primaryOnly) {
+              errors.push(`${modifier.name} may only be chosen as a Primary Archetype.`);
+              return { valid: false, errors };
+          }
+          if (primaryId === modifierId) {
+              errors.push('Primary and Modifier cannot be the same archetype.');
+              return { valid: false, errors };
+          }
+      }
+      return { valid: true, errors: [] };
+  }
+
+  function buildArchetypeDirectives(primaryId, modifierId, loveInterestGender) {
+      if (!primaryId) return '';
+      const primary = ARCHETYPES[primaryId];
+      if (!primary) return '';
+
+      let directive = `
+LOVE INTEREST ARCHETYPE DIRECTIVES (LOCKED):
+
+Primary Archetype: ${primary.name}
+${primary.summary}
+${primary.shadow}
+`;
+
+      if (primary.id === 'BEAUTIFUL_RUIN' && primary.genderedExpression) {
+          const g = (loveInterestGender || '').toLowerCase();
+          if (g === 'male') {
+              directive += `\nGendered Expression: ${primary.genderedExpression.male}\n`;
+          } else if (g === 'female') {
+              directive += `\nGendered Expression: ${primary.genderedExpression.female}\n`;
+          }
+      }
+
+      if (primary.id === 'ANTI_HERO' && primary.coreFantasy) {
+          directive += `\nCore Fantasy: ${primary.coreFantasy}\n`;
+      }
+
+      if (modifierId) {
+          const modifier = ARCHETYPES[modifierId];
+          if (modifier) {
+              directive += `
+Modifier Archetype: ${modifier.name}
+The Modifier colors expression style only. It does not override the Primary's emotional arc or shadow.
+Modifier Desire Style: ${modifier.desireStyle}
+`;
+          }
+      }
+
+      directive += `
+STORYTELLER ENFORCEMENT:
+- Treat the Primary Archetype as dominant.
+- Use the Shadow Clause as the main source of relational tension.
+- Allow fracture and repair without erasing the shadow.
+- Never "heal away" the archetype.
+`;
+
+      if (primary.id === 'ANTI_HERO') {
+          directive += `
+ANTI-HERO ENFORCEMENT:
+- Treat self-restraint as the dominant tension driver.
+- Surface conflict through refusal, withdrawal, sacrifice, delayed or denied intimacy.
+- Allow love to progress only through breach of code, not casual erosion.
+- Do not trivialize the code or duty.
+- Do not turn restraint into coyness.
+- Do not resolve the arc by removing responsibility.
+- Anti-Hero arcs hinge on choice under cost, not healing-through-love.
+`;
+      }
+
+      return directive;
+  }
+
   // --- GLOBAL STATE INITIALIZATION ---
-  window.state = { 
-      tier:'free', 
-      picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] }, 
-      gender:'Female', 
-      loveInterest:'Male', 
+  window.state = {
+      tier:'free',
+      picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] },
+      gender:'Female',
+      loveInterest:'Male',
+      archetype: { primary: null, modifier: null }, 
       intensity:'Naughty', 
       turnCount:0,
       sysPrompt: "",
@@ -1317,6 +1519,183 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
         else { if(arr.length >= 3) return alert("Select up to 3 only."); arr.push(val); card.classList.add('selected'); }
       });
     });
+
+    // Initialize Archetype System
+    initArchetypeUI();
+  }
+
+  // =========================
+  // ARCHETYPE UI HANDLERS
+  // =========================
+  function initArchetypeUI() {
+      renderArchetypePills();
+      bindArchetypeHandlers();
+      bindLoveInterestGenderWatcher();
+      updateArchetypeSectionTitle();
+  }
+
+  function renderArchetypePills() {
+      const primaryContainer = document.getElementById('primaryArchetypePills');
+      const modifierContainer = document.getElementById('modifierArchetypePills');
+      if (!primaryContainer || !modifierContainer) return;
+
+      primaryContainer.innerHTML = '';
+      modifierContainer.innerHTML = '';
+
+      ARCHETYPE_ORDER.forEach(id => {
+          const arch = ARCHETYPES[id];
+          if (!arch) return;
+
+          // Primary pill
+          const primaryPill = document.createElement('button');
+          primaryPill.className = 'archetype-pill' + (arch.primaryOnly ? ' primary-only' : '');
+          primaryPill.dataset.archetype = id;
+          primaryPill.dataset.role = 'primary';
+          primaryPill.textContent = arch.name;
+          primaryPill.type = 'button';
+          if (state.archetype.primary === id) primaryPill.classList.add('selected');
+          primaryContainer.appendChild(primaryPill);
+
+          // Modifier pill (only for non-primary-only archetypes)
+          if (!arch.primaryOnly) {
+              const modPill = document.createElement('button');
+              modPill.className = 'archetype-pill';
+              modPill.dataset.archetype = id;
+              modPill.dataset.role = 'modifier';
+              modPill.textContent = arch.name;
+              modPill.type = 'button';
+              if (state.archetype.modifier === id) modPill.classList.add('selected');
+              if (state.archetype.primary === id) modPill.classList.add('disabled');
+              modifierContainer.appendChild(modPill);
+          }
+      });
+  }
+
+  function bindArchetypeHandlers() {
+      document.querySelectorAll('.archetype-pill').forEach(pill => {
+          if (pill.dataset.bound === '1') return;
+          pill.dataset.bound = '1';
+          pill.addEventListener('click', handleArchetypePillClick);
+      });
+  }
+
+  function handleArchetypePillClick(e) {
+      const pill = e.currentTarget;
+      const id = pill.dataset.archetype;
+      const role = pill.dataset.role;
+
+      if (pill.classList.contains('disabled')) return;
+
+      if (role === 'primary') {
+          if (state.archetype.primary === id) {
+              // Deselect
+              state.archetype.primary = null;
+          } else {
+              // Select new primary
+              state.archetype.primary = id;
+              // If modifier is same as new primary, clear modifier
+              if (state.archetype.modifier === id) {
+                  state.archetype.modifier = null;
+              }
+          }
+      } else if (role === 'modifier') {
+          const arch = ARCHETYPES[id];
+          if (arch && arch.primaryOnly) {
+              showToast(`${arch.name} may only be chosen as a Primary.`);
+              return;
+          }
+          if (state.archetype.primary === id) {
+              showToast('Modifier cannot be the same as Primary.');
+              return;
+          }
+          if (state.archetype.modifier === id) {
+              // Deselect
+              state.archetype.modifier = null;
+          } else {
+              // Select new modifier
+              state.archetype.modifier = id;
+          }
+      }
+
+      updateArchetypePillStates();
+      updateArchetypePreview();
+  }
+
+  function updateArchetypePillStates() {
+      // Update primary pills
+      document.querySelectorAll('.archetype-pill[data-role="primary"]').forEach(pill => {
+          const id = pill.dataset.archetype;
+          pill.classList.toggle('selected', state.archetype.primary === id);
+      });
+
+      // Update modifier pills
+      document.querySelectorAll('.archetype-pill[data-role="modifier"]').forEach(pill => {
+          const id = pill.dataset.archetype;
+          pill.classList.toggle('selected', state.archetype.modifier === id);
+          pill.classList.toggle('disabled', state.archetype.primary === id);
+      });
+  }
+
+  function updateArchetypePreview() {
+      const previewEl = document.getElementById('archetypePreview');
+      const contentEl = document.getElementById('archetypePreviewContent');
+      if (!previewEl || !contentEl) return;
+
+      if (!state.archetype.primary) {
+          previewEl.classList.add('hidden');
+          return;
+      }
+
+      const primary = ARCHETYPES[state.archetype.primary];
+      if (!primary) {
+          previewEl.classList.add('hidden');
+          return;
+      }
+
+      let html = `
+          <h4 class="archetype-preview-name">${primary.name}</h4>
+          <p class="archetype-preview-summary">${primary.summary}</p>
+          <p class="archetype-preview-shadow">${primary.shadow}</p>
+      `;
+
+      if (state.archetype.modifier) {
+          const modifier = ARCHETYPES[state.archetype.modifier];
+          if (modifier) {
+              html += `
+                  <div class="archetype-preview-modifier">
+                      <p class="archetype-preview-modifier-label">Modifier: ${modifier.name}</p>
+                      <p class="archetype-preview-modifier-style">Expression Style: ${modifier.desireStyle}</p>
+                  </div>
+              `;
+          }
+      }
+
+      contentEl.innerHTML = html;
+      previewEl.classList.remove('hidden');
+  }
+
+  function updateArchetypeSectionTitle() {
+      const titleEl = document.getElementById('archetypeSectionTitle');
+      if (!titleEl) return;
+      const loveGender = document.getElementById('loveInterestGender')?.value ||
+                         document.getElementById('customLoveInterest')?.value ||
+                         'Male';
+      titleEl.textContent = getArchetypeSectionTitle(loveGender);
+  }
+
+  function bindLoveInterestGenderWatcher() {
+      const genderSelect = document.getElementById('loveInterestGender');
+      const customInput = document.getElementById('customLoveInterest');
+
+      if (genderSelect && genderSelect.dataset.archetypeBound !== '1') {
+          genderSelect.dataset.archetypeBound = '1';
+          genderSelect.addEventListener('change', updateArchetypeSectionTitle);
+      }
+
+      if (customInput && customInput.dataset.archetypeBound !== '1') {
+          customInput.dataset.archetypeBound = '1';
+          customInput.addEventListener('input', updateArchetypeSectionTitle);
+      }
   }
 
   // --- LOADING OVERLAY ---
@@ -1559,10 +1938,12 @@ Style: ${state.picks.style.join(', ')}.
 POV: ${state.picks.pov}.
 Dynamics: ${state.picks.dynamic.join(', ')}.
 
-    
+
     Protagonist: ${pName} (${pGen}, ${pPro}).
     Love Interest: ${lName} (${lGen}, ${lPro}).
-    
+
+    ${buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen)}
+
     ${safetyStr}
 
     Current Intensity: ${state.intensity}
