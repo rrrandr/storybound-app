@@ -2806,8 +2806,36 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       }
   }
 
-  // Invitation copy template
-  const INVITE_COPY = (code) => `I've opened a private chamber in Storybound. Enter code ${code} at storybound.app to join me. Bring your imagination.`;
+  // Invitation copy templates (canonical - do not rewrite)
+  const INVITE_COPY_SHORT = (code) => `You are invited to a private chamber.
+
+Discretion is assumed.
+Curiosity is expected.
+
+Present this code when prompted:
+${code}
+
+Arrive alone. Or not at all.`;
+
+  const INVITE_COPY_LONG = (code) => `You are invited to a private chamber.
+
+What happens inside is not spoken of.
+What is shared remains shared.
+
+At the appointed moment, you will be asked for a code.
+Present this:
+
+${code}
+
+No names are required.
+No explanations will be given.
+
+Should you choose to attend, arrive with intent.
+
+— Storybound`;
+
+  // Track whether delivery action has been triggered
+  let inviteDeliveryTriggered = false;
 
   $('btnCreateRoom')?.addEventListener('click', async () => {
       if (!sb) {
@@ -2838,33 +2866,77 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       if (inviteCopy) inviteCopy.classList.remove('hidden');
       if (inviteCodeInline) inviteCodeInline.textContent = code;
 
-      // Wire up email/SMS links
-      const inviteText = INVITE_COPY(code);
+      // Wire up email/SMS links with canonical copy
+      const shortCopy = INVITE_COPY_SHORT(code);
+      const longCopy = INVITE_COPY_LONG(code);
       const emailLink = document.getElementById('inviteEmailLink');
       const smsLink = document.getElementById('inviteSmsLink');
+      const emailSmsLink = document.getElementById('inviteEmailSmsLink');
       const inviteDelivery = document.getElementById('inviteDelivery');
       if (inviteDelivery) inviteDelivery.classList.remove('hidden');
+
+      // Email uses long copy with "An Invitation" subject
       if (emailLink) {
-          emailLink.href = `mailto:?subject=${encodeURIComponent('Join me in Storybound')}&body=${encodeURIComponent(inviteText)}`;
+          emailLink.href = `mailto:?subject=${encodeURIComponent('An Invitation')}&body=${encodeURIComponent(longCopy)}`;
       }
+      // SMS uses short copy
       if (smsLink) {
-          smsLink.href = `sms:?body=${encodeURIComponent(inviteText)}`;
+          smsLink.href = `sms:?body=${encodeURIComponent(shortCopy)}`;
+      }
+      // Store current invite copy in state for Email+SMS handler
+      window.state.currentInviteLong = longCopy;
+      window.state.currentInviteShort = shortCopy;
+
+      // Reset delivery state for new invitation
+      inviteDeliveryTriggered = false;
+      const confirmBtn = document.getElementById('btnConfirmInviteSent');
+      if (confirmBtn) {
+          confirmBtn.disabled = true;
+          confirmBtn.style.opacity = '0.5';
       }
 
       // Join the realtime channel as host
       const joined = await joinCoupleRoom(window.state.roomId, true);
       if (joined) {
           showChamberStatus("Invitation ready: " + code + " — Send it via email or SMS below.");
-          // Show "I've sent the invitation" button
+          // Show "I've sent the invitation" button (disabled until delivery triggered)
           const confirmBtn = document.getElementById('btnConfirmInviteSent');
           if (confirmBtn) {
               confirmBtn.classList.remove('hidden');
-              confirmBtn.disabled = false;
-              confirmBtn.style.opacity = '1';
+              // Stays disabled until delivery action triggered
           }
       } else {
           showChamberStatus("Failed to create room channel.", true);
       }
+  });
+
+  // Helper to enable confirm button after delivery
+  function enableConfirmButton() {
+      inviteDeliveryTriggered = true;
+      const confirmBtn = document.getElementById('btnConfirmInviteSent');
+      if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.style.opacity = '1';
+      }
+  }
+
+  // Wire delivery links to enable confirm button
+  $('inviteEmailLink')?.addEventListener('click', enableConfirmButton);
+  $('inviteSmsLink')?.addEventListener('click', enableConfirmButton);
+
+  // Email + SMS opens both (uses stored copy from state)
+  $('inviteEmailSmsLink')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const longCopy = window.state.currentInviteLong;
+      const shortCopy = window.state.currentInviteShort;
+      if (!longCopy || !shortCopy) return;
+      // Open email first
+      window.location.href = `mailto:?subject=${encodeURIComponent('An Invitation')}&body=${encodeURIComponent(longCopy)}`;
+      // Open SMS after slight delay
+      setTimeout(() => {
+          window.location.href = `sms:?body=${encodeURIComponent(shortCopy)}`;
+      }, 500);
+      enableConfirmButton();
   });
 
   $('btnJoinRoom')?.addEventListener('click', () => {

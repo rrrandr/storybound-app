@@ -136,12 +136,18 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
          </button>
       </div>
-      <div id="inviteCopyText" class="hidden" style="margin:10px 0; padding:10px; background:rgba(255,215,0,0.1); border:1px solid rgba(255,215,0,0.3); border-radius:8px; font-size:0.85em; font-style:italic; color:var(--ink);">
-        "I've opened a private chamber in Storybound. Enter code <span id="inviteCodeInline">—</span> at storybound.app to join me. Bring your imagination."
-      </div>
+      <div id="inviteCopyText" class="hidden" style="margin:15px 0; padding:15px; background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.25); border-radius:8px; font-size:0.85em; font-style:italic; color:var(--ink); text-align:left; white-space:pre-line; line-height:1.6;">You are invited to a private chamber.
+
+Discretion is assumed.
+Curiosity is expected.
+
+Present this code when prompted:
+<span id="inviteCodeInline" style="display:block; text-align:center; font-size:1.4em; font-weight:bold; color:var(--gold); margin:10px 0; font-style:normal; letter-spacing:2px;">—</span>
+Arrive alone. Or not at all.</div>
       <div id="inviteDelivery" class="hidden" style="margin:10px 0; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <a id="inviteEmailLink" href="#" style="display:inline-block; padding:8px 16px; background:var(--gold); color:#1a1a2e; border-radius:6px; text-decoration:none; font-size:0.9em;">📧 Email</a>
         <a id="inviteSmsLink" href="#" style="display:inline-block; padding:8px 16px; background:var(--pink); color:#fff; border-radius:6px; text-decoration:none; font-size:0.9em;">💬 SMS</a>
+        <a id="inviteEmailSmsLink" href="#" style="display:inline-block; padding:8px 16px; background:linear-gradient(135deg, var(--gold), var(--pink)); color:#1a1a2e; border-radius:6px; text-decoration:none; font-size:0.9em;">📧💬 Both</a>
       </div>
     </div>
 
