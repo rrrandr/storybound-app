@@ -46,6 +46,15 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
          }
      }
   }
+// GLOBAL CONFIG (TEMP – UNTIL EXTERNALIZED CLEANLY)
+window.config = window.config || {
+  enableAncestry: true,
+  enableStorybeau: true,
+  enableQuill: true,
+  enableVeto: true,
+  enablePillCycling: true,
+  enableAdvancedUI: true
+};
 
   // Presence Constants
   const PRESENCE_HEARTBEAT_MS = 15000;
