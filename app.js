@@ -47,6 +47,21 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
      }
   }
 
+  // --- DEEP LINK HANDLING ---
+  // Parse ?invite=CODE from URL for direct couple invitations
+  let pendingInviteCode = null;
+  (function parseInviteFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const inviteCode = params.get('invite');
+      if (inviteCode && /^[A-Z0-9]{6}$/i.test(inviteCode)) {
+          pendingInviteCode = inviteCode.toUpperCase();
+          console.log("[DEEP LINK] Invite code from URL:", pendingInviteCode);
+          // Clean URL without reload
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+      }
+  })();
+
   // Presence Constants
   const PRESENCE_HEARTBEAT_MS = 15000;
   
@@ -449,6 +464,27 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
               window.dealFateCards();
           }
           updateQuillUI();
+      }
+
+      // Handle deep link: auto-navigate to couple join if invite code pending
+      if(id === 'modeSelect' && pendingInviteCode && sb) {
+          console.log("[DEEP LINK] Redirecting to couple join with code:", pendingInviteCode);
+          // Small delay to let modeSelect render, then redirect
+          setTimeout(() => {
+              state.mode = 'couple';
+              window.showScreen('coupleInvite');
+              // Pre-fill the join code and show join row
+              const joinInput = document.getElementById('joinCodeInput');
+              const joinRow = document.getElementById('joinRow');
+              if (joinInput) joinInput.value = pendingInviteCode;
+              if (joinRow) joinRow.classList.remove('hidden');
+              // Clear pending code
+              pendingInviteCode = null;
+              // Auto-click join button
+              setTimeout(() => {
+                  document.getElementById('btnJoinGo')?.click();
+              }, 100);
+          }, 50);
       }
   };
 
@@ -2807,12 +2843,18 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
   }
 
   // Invitation copy templates (canonical - do not rewrite)
+  // Deep link URL for direct access
+  const getInviteUrl = (code) => `https://storybound.app?invite=${code}`;
+
   const INVITE_COPY_SHORT = (code) => `You are invited to a private chamber.
 
 Discretion is assumed.
 Curiosity is expected.
 
-Present this code when prompted:
+Enter here:
+${getInviteUrl(code)}
+
+Or present this code when prompted:
 ${code}
 
 Arrive alone. Or not at all.`;
@@ -2826,6 +2868,9 @@ At the appointed moment, you will be asked for a code.
 Present this:
 
 ${code}
+
+Or simply follow this link:
+${getInviteUrl(code)}
 
 No names are required.
 No explanations will be given.
@@ -2860,11 +2905,17 @@ Should you choose to attend, arrive with intent.
       if (big) big.textContent = code;
       if (wrap) wrap.classList.remove('hidden');
 
-      // Show invite copy text with code
+      // Show invite copy text with code and link
       const inviteCopy = document.getElementById('inviteCopyText');
       const inviteCodeInline = document.getElementById('inviteCodeInline');
+      const inviteLinkInline = document.getElementById('inviteLinkInline');
+      const inviteUrl = getInviteUrl(code);
       if (inviteCopy) inviteCopy.classList.remove('hidden');
       if (inviteCodeInline) inviteCodeInline.textContent = code;
+      if (inviteLinkInline) {
+          inviteLinkInline.href = inviteUrl;
+          inviteLinkInline.textContent = inviteUrl;
+      }
 
       // Wire up email/SMS links with canonical copy
       const shortCopy = INVITE_COPY_SHORT(code);
