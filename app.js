@@ -770,7 +770,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   function createPill(txt, type, inputId, trayEl, slotIndex) {
       const pill = document.createElement('span');
       pill.className = `pill ${type}-pill`;
-      pill.textContent = type === 'ancestry' ? txt : '+ ' + txt;
+      pill.textContent = '+ ' + txt;
       pill.dataset.suggestion = txt;
       pill.dataset.slot = slotIndex;
       pill.dataset.type = type;
@@ -783,9 +783,9 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       }
 
       pill.onclick = () => {
-          // Quill pills trigger paywall if locked
+          // C2: Quill pills in Tease (free) mode are inspiration only - do not populate
           if (type === 'quill' && state.access === 'free') {
-              showPaywall('sub');
+              showToast("Quill is inspiration only in Tease mode. Upgrade to use.");
               return;
           }
 
@@ -1549,7 +1549,9 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
     window.showScreen('game');
     if (state.fateOptions && state.fateOptions.length) state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
-    if(window.initCards) window.initCards(); 
+    // F2: Rehydrate Fate cards with click handlers
+    if(window.initCards) window.initCards();
+    if(window.dealFateCards) window.dealFateCards();
     resetTurnSnapshotFlag();
     updateQuillUI();
   };
