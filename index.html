@@ -96,6 +96,10 @@
         <button onclick="window.insertImage()">Insert</button>
         <button class="small-btn" style="background:#555" onclick="window.closeViz()">Cancel</button>
     </div>
+    <label style="font-size:0.8em; color:var(--gold); opacity:0.8; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; cursor:pointer;">
+        <input type="checkbox" id="chkAutoLockVisual" checked>
+        Lock character look after first Visualize
+    </label>
   </div>
 </div>
 
@@ -361,17 +365,17 @@
     </div>
 
     <div class="section-title">Safety & Boundaries</div>
-    <div class="consent-controls">
-        <label><input type="checkbox" id="chkDark" checked> Dark Themes Allowed</label>
-        <label><input type="checkbox" id="chkNonCon"> Non-consent themes (IMPLIED ONLY)</label>
+    <div class="consent-controls horizontal">
+        <label><input type="checkbox" id="chkDark" checked> Dark Themes</label>
+        <label><input type="checkbox" id="chkNonCon"> Implied Non-consent</label>
         <label><input type="checkbox" id="chkViolence" checked> Violence / Peril</label>
     </div>
     <div class="boundary-chips" id="boundaryChips">
         <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
-        <div class="chip">No coercion</div>
-        <div class="chip">No degradation language</div>
-        <div class="chip">No captivity</div>
-        <div class="chip">No blackmail</div>
+        <div class="chip" data-boundary="coercion">No coercion</div>
+        <div class="chip" data-boundary="degradation">No degradation language</div>
+        <div class="chip" data-boundary="captivity">No captivity</div>
+        <div class="chip" data-boundary="blackmail">No blackmail</div>
     </div>
 
     <div class="section-title">Intensity <span class="instruction-text">(Rendering Ceiling)</span></div>
@@ -384,11 +388,6 @@
     <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px; min-height:40px;">
         (Naughty) Suggestive tension; no explicit anatomy.
     </p>
-    
-    <label style="font-size:0.85em; color:var(--gold); opacity:0.8; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:5px; cursor:pointer;">
-        <input type="checkbox" id="chkAutoLockVisual" checked> 
-        Lock character look after first Visualize
-    </label>
 
     <div id="lengthSection">
         <div class="section-title">Story Length</div>
@@ -443,23 +442,23 @@
     <div class="style-cards" id="dynamicGrid">
       <div class="card" data-grp="dynamic" data-val="Enemies"><h3>Enemies → Lovers</h3><p>Rivals whose friction turns to heat.</p></div>
       <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Desire under rules and taboo.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Player defines boundaries and limits.</p></div>
+      <div class="card selected" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Unequal footing, charged tension, control as currency.</p></div>
       <div class="card" data-grp="dynamic" data-val="SlowBurn"><h3>Slow Burn</h3><p>High restraint, earned payoff.</p></div>
       <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends → Lovers</h3><p>Safety tipping into heat.</p></div>
       <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Close quarters, rising tension.</p></div>
       <div class="card" data-grp="dynamic" data-val="Secret"><h3>Secret Identity</h3><p>Truths revealed at the worst time.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Intense focus, player sets bounds.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Intense focus, consuming attention.</p></div>
       <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated Mates / Soulbond</h3><p>Destined bond, fast intensity.</p></div>
       <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker / Wounded One</h3><p>Vulnerability and steady support.</p></div>
     </div>
 
     <div class="section-title">Story POV</div>
     <div class="style-cards" id="povGrid">
-      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>Intimate, confessional, inside your pulse.</p><button class="preview-btn" data-txt="I held my breath as the door clicked shut behind him.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>Immediate, immersive, hands-on tension.</p><button class="preview-btn" data-txt="You feel the room shift the moment he looks at you.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>Wider lens, cinematic, controlled heat.</p><button class="preview-btn" data-txt="He kept his voice calm, but the way his gaze lingered betrayed the hunger.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>Choral, conspiratorial, shared gaze.</p><button class="preview-btn" data-txt="We watched them circle each other—two storms pretending to be weather.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>Playful narrator with a hand on the page.</p><button class="preview-btn" data-txt="The Author hesitated—then smiled—and offered them a door.">Preview</button></div>
+      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>I wanted something intimate, confessional—a voice inside my own pulse.</p><button class="preview-btn" data-txt="I held my breath as the door clicked shut behind him.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>You wanted to feel it directly—every glance, every silence, happening to you.</p><button class="preview-btn" data-txt="You feel the room shift the moment he looks at you.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>She preferred a wider lens—close enough to feel, distant enough to see.</p><button class="preview-btn" data-txt="He kept his voice calm, but the way his gaze lingered betrayed the hunger.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>We gather here, witnesses to the inevitable—watching what they cannot yet see.</p><button class="preview-btn" data-txt="We watched them circle each other—two storms pretending to be weather.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>The Author hoped you were adventurous enough to let her hold the pen.</p><button class="preview-btn" data-txt="The Author hesitated—then smiled—and offered them a door.">Preview</button></div>
     </div>
 
     <div class="section-title">Story Style <span class="instruction-text">(Select up to 3)</span></div>

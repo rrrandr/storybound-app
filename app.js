@@ -1496,13 +1496,35 @@ ANTI-HERO ENFORCEMENT:
 
   function initSelectionHandlers(){
     state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"] };
-    
+
+    // Initialize default dynamics (Power Imbalance)
+    if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
+        state.picks.dynamic = ['Power'];
+    }
+
     // Bind Visual Auto-Lock
     const chkLock = document.getElementById('chkAutoLockVisual');
     if(chkLock && chkLock.dataset.bound !== '1') {
         chkLock.dataset.bound = '1';
         chkLock.addEventListener('change', (e) => { state.visual.autoLock = e.target.checked; saveStorySnapshot(); });
     }
+
+    // Bind boundary chips (non-locked ones)
+    document.querySelectorAll('.boundary-chips .chip[data-boundary]').forEach(chip => {
+        if (chip.dataset.bound === '1') return;
+        chip.dataset.bound = '1';
+        chip.addEventListener('click', () => {
+            chip.classList.toggle('active');
+            const boundary = chip.textContent.trim();
+            if (chip.classList.contains('active')) {
+                if (!state.safety.boundaries.includes(boundary)) {
+                    state.safety.boundaries.push(boundary);
+                }
+            } else {
+                state.safety.boundaries = state.safety.boundaries.filter(b => b !== boundary);
+            }
+        });
+    });
 
     bindLengthHandlers();
 
@@ -1720,23 +1742,48 @@ ANTI-HERO ENFORCEMENT:
   // --- LOADING OVERLAY ---
   let _loadingTimer = null;
   let _loadingActive = false;
+  let _loadingMsgTimer = null;
 
-  function startLoading(msg){
+  const LOADING_MESSAGES = [
+      "Painting the scene...",
+      "Saying it with his eyes...",
+      "Letting the silence linger...",
+      "Adding longing...",
+      "Shaping the moment...",
+      "Tracing the tension...",
+      "Capturing the unspoken...",
+      "Finding the perfect light..."
+  ];
+
+  function startLoading(msg, rotate = false){
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
-    document.getElementById('loadingText').textContent = msg || "Loading...";
-    
+    const textEl = document.getElementById('loadingText');
+    if (textEl) textEl.textContent = msg || "Loading...";
+
     _loadingActive = true;
     if(fill) fill.style.width = '0%';
     if(overlay) overlay.classList.remove('hidden');
 
     if(_loadingTimer) clearInterval(_loadingTimer);
+    if(_loadingMsgTimer) clearInterval(_loadingMsgTimer);
+
     let p = 0;
     _loadingTimer = setInterval(() => {
       if(!_loadingActive) return;
       p = Math.min(91, p + Math.random() * 6);
       if(fill) fill.style.width = p.toFixed(0) + '%';
     }, 250);
+
+    // Rotate messages if requested (for visualize)
+    if (rotate && textEl) {
+        let msgIdx = 0;
+        _loadingMsgTimer = setInterval(() => {
+            if (!_loadingActive) return;
+            msgIdx = (msgIdx + 1) % LOADING_MESSAGES.length;
+            textEl.textContent = LOADING_MESSAGES[msgIdx];
+        }, 2000);
+    }
   }
 
   function stopLoading(){
@@ -1745,6 +1792,7 @@ ANTI-HERO ENFORCEMENT:
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
     if(_loadingTimer) { clearInterval(_loadingTimer); _loadingTimer = null; }
+    if(_loadingMsgTimer) { clearInterval(_loadingMsgTimer); _loadingMsgTimer = null; }
     if(fill) fill.style.width = '100%';
     setTimeout(() => {
       if(overlay) overlay.classList.add('hidden');
@@ -1999,20 +2047,43 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     
     startLoading("Conjuring the world...");
     
+    // Pacing rules based on intensity
+    const pacingRules = {
+        'Clean': 'Focus only on atmosphere, world-building, and hints of the protagonist\'s past. No tension, no longing—just setting and mystery.',
+        'Naughty': 'Focus on atmosphere and world-building. Light emotional undertones allowed, but no romantic tension yet.',
+        'Erotic': 'Build atmosphere first. Romantic tension may simmer beneath the surface, but keep the focus on setting.',
+        'Dirty': 'Atmosphere first, but charged undercurrents are allowed. The heat can be present from the start.'
+    };
+    const pacingRule = pacingRules[state.intensity] || pacingRules['Naughty'];
+    const liAppears = state.intensity === 'Dirty' || Math.random() < 0.25;
+
     const introPrompt = `Write the opening scene (approx 200 words).
-    Setting: A place full of tension and atmosphere fitting the genre.
-    Situation: The Protagonist and Love Interest are thrown together.
-    Establish the dynamic immediately.
-    End with a hook or a moment of tension.`;
-    
+
+FIRST SECTION RULES:
+- ${pacingRule}
+- Focus on: World setup, hints at overall arc, the protagonist's past or situation.
+${liAppears ? '- The love interest may appear briefly or be hinted at.' : '- The love interest should NOT appear yet. Build anticipation.'}
+- End with a hook, a question, or atmospheric tension—NOT a romantic moment.
+
+Setting: A place full of atmosphere and sensory detail fitting the genre.
+Situation: The Protagonist is alone with their thoughts, or engaged in something unrelated to romance.`;
+
     try {
         const text = await callChat([
             {role:'system', content: state.sysPrompt},
             {role:'user', content: introPrompt}
         ]);
-        
-        const title = await callChat([{role:'user', content:`Based on this opening, give me a 3-word title:\n${text}`}]);
-        const synopsis = await callChat([{role:'user', content:`Summarize the setting in one sentence:\n${text}`}]);
+
+        const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title that is:
+- Poetic and evocative
+- Mysterious, not literal
+- Avoids clichés like "Forbidden", "Dangerous", "Seduction"
+Return ONLY the title, no quotes or explanation:\n${text}`}]);
+        const synopsis = await callChat([{role:'user', content:`Write back-cover copy for this story in ONE sentence. It should:
+- Tease themes and mood, not plot
+- Imply conflict without revealing it
+- Sound like a published novel blurb
+Return ONLY the sentence:\n${text}`}]);
         
         document.getElementById('storyTitle').textContent = title.replace(/"/g,'');
         document.getElementById('storySynopsis').textContent = synopsis;
@@ -2064,18 +2135,20 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
   async function generateSettingShot(desc) {
      const img = document.getElementById('settingShotImg');
+     const errDiv = document.getElementById('settingError');
      if(!img) return;
      const wrap = document.getElementById('settingShotWrap');
      if(wrap) wrap.style.display = 'flex';
      img.style.display = 'none';
-     
+     if(errDiv) errDiv.classList.add('hidden');
+
      try {
          const res = await fetch(IMAGE_PROXY_URL, {
              method:'POST',
              headers:{'Content-Type':'application/json'},
-             body: JSON.stringify({ 
+             body: JSON.stringify({
                  prompt: `Cinematic establishing shot, atmospheric, fantasy art style. No text. ${desc}`,
-                 provider: 'xai', 
+                 provider: 'xai',
                  size: "1024x1024",
                  n: 1
              })
@@ -2086,8 +2159,17 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
              if(!url.startsWith('http') && !url.startsWith('data:')) url = `data:image/png;base64,${url}`;
              img.src = url;
              img.onload = () => { img.style.display = 'block'; };
+             img.onerror = () => {
+                 img.style.display = 'none';
+                 if(errDiv) { errDiv.textContent = 'The scene resists capture...'; errDiv.classList.remove('hidden'); }
+             };
+         } else {
+             if(errDiv) { errDiv.textContent = 'The scene resists capture...'; errDiv.classList.remove('hidden'); }
          }
-     } catch(e) { console.warn("Setting shot failed", e); }
+     } catch(e) {
+         console.warn("Setting shot failed", e);
+         if(errDiv) { errDiv.textContent = 'The scene resists capture...'; errDiv.classList.remove('hidden'); }
+     }
   }
 
   // --- VISUALIZE (STABILIZED) ---
@@ -2107,8 +2189,8 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
 
-      startLoading();
-      
+      startLoading("Painting the scene...", true);
+
       const lastText = storyText ? storyText.textContent.slice(-600) : "";
       await ensureVisualBible(storyText ? storyText.textContent : "");
       const anchorText = buildVisualAnchorsText();
@@ -2228,6 +2310,16 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       saveStorySnapshot();
   };
 
+  // Helper: Insert Fate Card separator into story
+  function insertFateCardSeparator(cardTitle) {
+      const storyEl = document.getElementById('storyText');
+      if (!storyEl || !cardTitle) return;
+      const sep = document.createElement('div');
+      sep.className = 'fate-card-separator';
+      sep.innerHTML = `<div class="fate-mini"><h4>${escapeHTML(cardTitle)}</h4></div>`;
+      storyEl.appendChild(sep);
+  }
+
   // --- GAME LOOP (RESTORED) ---
   $('submitBtn')?.addEventListener('click', async () => {
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
@@ -2236,6 +2328,12 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       const act = $('actionInput').value.trim();
       const dia = $('dialogueInput').value.trim();
       if(!act && !dia) return alert("Input required.");
+
+      // Get selected Fate Card title for separator
+      let selectedFateCard = null;
+      if (state.fateOptions && typeof state.fateSelectedIndex === 'number' && state.fateSelectedIndex >= 0) {
+          selectedFateCard = state.fateOptions[state.fateSelectedIndex];
+      }
       
       const { safeAction, safeDialogue, flags } = sanitizeUserIntent(act, dia);
       if (flags.includes("redirect_nonconsent")) {
@@ -2294,7 +2392,13 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
         : "";
       
       const metaMsg = buildMetaDirective();
-      const squashDirective = "Do not repeat the user's input verbatim. Weave it into the narrative flow.";
+      const squashDirective = `CRITICAL REINTERPRETATION RULE:
+- NEVER repeat the player's action or dialogue verbatim in your response.
+- ALWAYS reinterpret their intent into the story's voice, tone, and character.
+- Transform their words into the narrative style of this story.
+- If they write "I kiss him", describe a kiss in your literary voice.
+- If they write clunky dialogue, render it as the character would actually speak.
+- The player provides intent. You provide craft.`;
       
       const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
       
@@ -2321,6 +2425,11 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       Write the next beat (150-250 words).`;
 
       try {
+          // Insert Fate Card separator if a card was selected (K)
+          if (selectedFateCard && selectedFateCard.title) {
+              insertFateCardSeparator(selectedFateCard.title);
+          }
+
           // USER TURN RENDER
           const uDiv = document.createElement('div');
           uDiv.className = 'dialogue-block p1-dia';
@@ -2331,9 +2440,9 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
               {role:'system', content: fullSys},
               {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
           ]);
-          
+
           state.turnCount++;
-          
+
           const sep = document.createElement('hr');
           sep.style.borderColor = 'var(--pink)';
           sep.style.opacity = '0.3';
@@ -2342,8 +2451,16 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
           const newDiv = document.createElement('div');
           newDiv.innerHTML = formatStory(raw);
           document.getElementById('storyText').appendChild(newDiv);
-          
-          sep.scrollIntoView({behavior:'smooth', block:'start'});
+
+          // Scroll to the new content
+          if (selectedFateCard) {
+              // If Fate Card was used, scroll to top of new section
+              const separator = document.querySelector('.fate-card-separator:last-child');
+              if (separator) separator.scrollIntoView({behavior:'smooth', block:'start'});
+              else sep.scrollIntoView({behavior:'smooth', block:'start'});
+          } else {
+              sep.scrollIntoView({behavior:'smooth', block:'start'});
+          }
 
           resetTurnSnapshotFlag(); 
           
@@ -2401,7 +2518,14 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
           const safe = process(p);
-          if(p.trim().startsWith('"')) return `<p style="color:var(--p2-color); font-weight:500;">${safe}</p>`;
+          // Format dialogue with special styling
+          // Match dialogue and dialogue tag up to first period after closing quote
+          const dialogueMatch = safe.match(/^(\s*)(".*?"[^.]*\.?)(.*)/);
+          if (dialogueMatch) {
+              const [, indent, dialoguePart, rest] = dialogueMatch;
+              return `<p>${indent}<span class="story-dialogue">${dialoguePart}</span>${rest}</p>`;
+          }
+          if(p.trim().startsWith('"')) return `<p class="story-dialogue">${safe}</p>`;
           return `<p>${safe}</p>`;
       }).join('');
   }
