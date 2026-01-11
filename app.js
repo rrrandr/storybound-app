@@ -270,7 +270,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       presenceInterval: null,
       typingTimer: null,
       lastTypingSentAt: 0,
-      partnerStatus: { online:false, lastSeenAt:null, typing:false, typingAt:null, uid:null },
+      partnerStatus: { online:false, lastSeenAt:null, typing:false, typingAt:null, uid:null, nick:null },
       _lastTurnId: null,
       selectedFateIndex: -1,
       fateSelectedIndex: -1,
@@ -467,24 +467,30 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       }
 
       // Handle deep link: auto-navigate to couple join if invite code pending
-      if(id === 'modeSelect' && pendingInviteCode && sb) {
-          console.log("[DEEP LINK] Redirecting to couple join with code:", pendingInviteCode);
-          // Small delay to let modeSelect render, then redirect
-          setTimeout(() => {
-              state.mode = 'couple';
-              window.showScreen('coupleInvite');
-              // Pre-fill the join code and show join row
-              const joinInput = document.getElementById('joinCodeInput');
-              const joinRow = document.getElementById('joinRow');
-              if (joinInput) joinInput.value = pendingInviteCode;
-              if (joinRow) joinRow.classList.remove('hidden');
-              // Clear pending code
+      if(id === 'modeSelect' && pendingInviteCode) {
+          if (!sb) {
+              // Supabase unavailable - notify user
+              showToast("Couple mode unavailable on this deployment.");
               pendingInviteCode = null;
-              // Auto-click join button
+          } else {
+              console.log("[DEEP LINK] Redirecting to couple join with code:", pendingInviteCode);
+              // Small delay to let modeSelect render, then redirect
               setTimeout(() => {
-                  document.getElementById('btnJoinGo')?.click();
-              }, 100);
-          }, 50);
+                  state.mode = 'couple';
+                  window.showScreen('coupleInvite');
+                  // Pre-fill the join code and show join row
+                  const joinInput = document.getElementById('joinCodeInput');
+                  const joinRow = document.getElementById('joinRow');
+                  if (joinInput) joinInput.value = pendingInviteCode;
+                  if (joinRow) joinRow.classList.remove('hidden');
+                  // Clear pending code
+                  pendingInviteCode = null;
+                  // Auto-click join button
+                  setTimeout(() => {
+                      document.getElementById('btnJoinGo')?.click();
+                  }, 100);
+              }, 50);
+          }
       }
   };
 
@@ -2151,7 +2157,7 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
         saveStorySnapshot();
         
         if(state.mode === 'couple') {
-           broadcastTurn(text, true); 
+           broadcastTurn(text, false); // isSubmit=false → isInit=true for initial story
         }
 
     } catch(e) {
@@ -2564,6 +2570,19 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       if(sb) sb.removeAllChannels();
       state.couple.connected = false;
       state.couple.channel = null;
+      state.partnerStatus.online = false;
+      state.partnerStatus.nick = null;
+      // Reset invite UI state
+      document.getElementById('roomCodeWrap')?.classList.add('hidden');
+      document.getElementById('inviteCopyText')?.classList.add('hidden');
+      document.getElementById('inviteDelivery')?.classList.add('hidden');
+      document.getElementById('joinRow')?.classList.add('hidden');
+      document.getElementById('btnConfirmInviteSent')?.classList.add('hidden');
+      document.getElementById('btnPlaySoloWaiting')?.classList.add('hidden');
+      document.getElementById('btnEnterCoupleGame')?.classList.add('hidden');
+      document.getElementById('chamberStatus')?.classList.add('hidden');
+      const createBtn = document.getElementById('btnCreateRoom');
+      if (createBtn) createBtn.textContent = 'Send an Invitation';
   };
 
   // Join/create a Supabase realtime channel for couple mode
@@ -2981,12 +3000,12 @@ Should you choose to attend, arrive with intent.
       const longCopy = window.state.currentInviteLong;
       const shortCopy = window.state.currentInviteShort;
       if (!longCopy || !shortCopy) return;
-      // Open email first
-      window.location.href = `mailto:?subject=${encodeURIComponent('An Invitation')}&body=${encodeURIComponent(longCopy)}`;
+      // Open email in new window/tab to avoid blocking SMS
+      window.open(`mailto:?subject=${encodeURIComponent('An Invitation')}&body=${encodeURIComponent(longCopy)}`, '_blank');
       // Open SMS after slight delay
       setTimeout(() => {
           window.location.href = `sms:?body=${encodeURIComponent(shortCopy)}`;
-      }, 500);
+      }, 300);
       enableConfirmButton();
   });
 
@@ -3026,6 +3045,14 @@ Should you choose to attend, arrive with intent.
       if (window.state.roomCode) {
           navigator.clipboard.writeText(window.state.roomCode);
           showToast("Code copied!");
+      }
+  });
+
+  $('btnCopyLink')?.addEventListener('click', () => {
+      const linkEl = document.getElementById('inviteLinkInline');
+      if (linkEl && linkEl.href && linkEl.href !== '#') {
+          navigator.clipboard.writeText(linkEl.href);
+          showToast("Link copied!");
       }
   });
 
