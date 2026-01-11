@@ -1437,7 +1437,11 @@ ANTI-HERO ENFORCEMENT:
     state.turnCount = 0;
     state.storyLength = 'voyeur';
     state.storyEnded = false;
+    state.archetype = { primary: null, modifier: null };
     document.getElementById('storyText').innerHTML = '';
+    // Re-render archetype pills to clear selection
+    if (typeof renderArchetypePills === 'function') renderArchetypePills();
+    if (typeof updateArchetypePreview === 'function') updateArchetypePreview();
     
     updateContinueButtons();
     window.showScreen('setup');
@@ -1677,9 +1681,16 @@ ANTI-HERO ENFORCEMENT:
   function updateArchetypeSectionTitle() {
       const titleEl = document.getElementById('archetypeSectionTitle');
       if (!titleEl) return;
-      const loveGender = document.getElementById('loveInterestGender')?.value ||
-                         document.getElementById('customLoveInterest')?.value ||
-                         'Male';
+      const genderSelect = document.getElementById('loveInterestGender');
+      const customInput = document.getElementById('customLoveInterest');
+      let loveGender = 'Male';
+      if (genderSelect) {
+          if (genderSelect.value === 'Custom' && customInput && customInput.value.trim()) {
+              loveGender = customInput.value.trim();
+          } else {
+              loveGender = genderSelect.value;
+          }
+      }
       titleEl.textContent = getArchetypeSectionTitle(loveGender);
   }
 
@@ -1804,6 +1815,13 @@ ANTI-HERO ENFORCEMENT:
 
   // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
+    // Validate archetype selection before proceeding
+    const archetypeValidation = validateArchetypeSelection(state.archetype.primary, state.archetype.modifier);
+    if (!archetypeValidation.valid) {
+        showToast(archetypeValidation.errors[0] || 'Please select a Primary Archetype.');
+        return;
+    }
+
     const pName = $('playerNameInput').value.trim() || "The Protagonist";
     const lName = $('partnerNameInput').value.trim() || "The Love Interest";
     const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
