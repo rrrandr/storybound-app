@@ -824,17 +824,36 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   function replacePillInSlot(trayEl, slotIndex, type, inputId) {
       const trayId = trayEl.id;
       const oldPill = trayEl.querySelector(`.pill[data-slot="${slotIndex}"]`);
-      if (oldPill) oldPill.remove();
+
+      // B4: Inherit width from old pill for size stability
+      let inheritedWidth = null;
+      if (oldPill) {
+          inheritedWidth = oldPill.offsetWidth;
+      }
 
       const newTxt = getAvailableSuggestion(type, trayEl);
       const newPill = createPill(newTxt, type, inputId, trayEl, slotIndex);
       newPill.style.opacity = '0';
-      trayEl.appendChild(newPill);
+
+      // B4: Apply inherited width to prevent layout reflow
+      if (inheritedWidth) {
+          newPill.style.minWidth = inheritedWidth + 'px';
+      }
+
+      // B1: Replace in same DOM position (no sliding)
+      if (oldPill) {
+          oldPill.parentNode.insertBefore(newPill, oldPill);
+          oldPill.remove();
+      } else {
+          trayEl.appendChild(newPill);
+      }
 
       // Fade in
       requestAnimationFrame(() => {
           newPill.style.transition = 'opacity 0.3s';
           newPill.style.opacity = (type === 'quill' && state.access === 'free') ? '0.4' : '1';
+          // Clear minWidth after transition to allow natural sizing
+          setTimeout(() => { newPill.style.minWidth = ''; }, 350);
       });
 
       // Schedule next auto-replacement (Christmas lights cycling)
@@ -1641,24 +1660,64 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   // --- LOADING OVERLAY ---
   let _loadingTimer = null;
+  let _loadingTextTimer = null;
   let _loadingActive = false;
+
+  // E1: Cycling loading text phrases
+  const LOADING_PHRASES = [
+    "Setting traps",
+    "Manifesting drama",
+    "Naming the animals",
+    "Crafting each individual snowflake",
+    "Making it hot",
+    "Loading double entendres",
+    "Cleaning up triple-entendres",
+    "Darkening the past",
+    "Amping the feels",
+    "Making it mean something",
+    "Stoking the embers",
+    "Whispering secrets",
+    "Tangling the sheets",
+    "Raising the stakes",
+    "Sharpening the tension",
+    "Polishing the prose"
+  ];
 
   function startLoading(msg){
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
-    document.getElementById('loadingText').textContent = msg || "Loading...";
-    
+    const textEl = document.getElementById('loadingText');
+    const percentEl = document.getElementById('loadingPercent');
+
+    if (textEl) textEl.textContent = msg || LOADING_PHRASES[0];
+    if (percentEl) percentEl.textContent = '0%';
+
     _loadingActive = true;
     if(fill) fill.style.width = '0%';
     if(overlay) overlay.classList.remove('hidden');
 
+    // Clear existing timers
     if(_loadingTimer) clearInterval(_loadingTimer);
+    if(_loadingTextTimer) clearInterval(_loadingTextTimer);
+
     let p = 0;
+    let phraseIndex = 0;
+
+    // Progress bar timer
     _loadingTimer = setInterval(() => {
       if(!_loadingActive) return;
       p = Math.min(91, p + Math.random() * 6);
-      if(fill) fill.style.width = p.toFixed(0) + '%';
+      const pct = Math.round(p);
+      if(fill) fill.style.width = pct + '%';
+      if(percentEl) percentEl.textContent = pct + '%';
     }, 250);
+
+    // Cycling text timer (change phrase every 1.5-2.5 seconds)
+    _loadingTextTimer = setInterval(() => {
+      if(!_loadingActive) return;
+      phraseIndex = (phraseIndex + 1) % LOADING_PHRASES.length;
+      if(textEl) textEl.textContent = LOADING_PHRASES[phraseIndex] + '...';
+    }, 1500 + Math.random() * 1000);
   }
 
   function stopLoading(){
@@ -1666,8 +1725,14 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     _loadingActive = false;
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
+    const percentEl = document.getElementById('loadingPercent');
+
     if(_loadingTimer) { clearInterval(_loadingTimer); _loadingTimer = null; }
+    if(_loadingTextTimer) { clearInterval(_loadingTextTimer); _loadingTextTimer = null; }
+
     if(fill) fill.style.width = '100%';
+    if(percentEl) percentEl.textContent = '100%';
+
     setTimeout(() => {
       if(overlay) overlay.classList.add('hidden');
       if(fill) fill.style.width = '0%';
@@ -2014,10 +2079,14 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     
     state.sysPrompt = sys;
     state.storyId = state.storyId || makeStoryId();
-    
-    window.showScreen('game');
-    
+
+    // E2: Clear story content before showing game screen (render discipline)
+    document.getElementById('storyTitle').textContent = '';
+    document.getElementById('storySynopsis').textContent = '';
+    document.getElementById('storyText').innerHTML = '';
+
     startLoading("Conjuring the world...");
+    window.showScreen('game');
     
     const introPrompt = `Write the opening scene (approx 200 words).
     Setting: A place full of tension and atmosphere fitting the genre.
@@ -2735,6 +2804,9 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       }
   }
 
+  // Invitation copy template
+  const INVITE_COPY = (code) => `I've opened a private chamber in Storybound. Enter code ${code} at storybound.app to join me. Bring your imagination.`;
+
   $('btnCreateRoom')?.addEventListener('click', async () => {
       if (!sb) {
           showChamberStatus("Couple mode unavailable. Supabase not configured.", true);
@@ -2749,16 +2821,45 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       window.state.roomCode = code;
       window.state.roomId = 'room_' + code;
 
+      // Update button label to "New Invitation" after first creation
+      const createBtn = document.getElementById('btnCreateRoom');
+      if (createBtn) createBtn.textContent = 'New Invitation';
+
       const big = document.getElementById('roomCodeBig');
       const wrap = document.getElementById('roomCodeWrap');
       if (big) big.textContent = code;
       if (wrap) wrap.classList.remove('hidden');
 
+      // Show invite copy text with code
+      const inviteCopy = document.getElementById('inviteCopyText');
+      const inviteCodeInline = document.getElementById('inviteCodeInline');
+      if (inviteCopy) inviteCopy.classList.remove('hidden');
+      if (inviteCodeInline) inviteCodeInline.textContent = code;
+
+      // Wire up email/SMS links
+      const inviteText = INVITE_COPY(code);
+      const emailLink = document.getElementById('inviteEmailLink');
+      const smsLink = document.getElementById('inviteSmsLink');
+      const inviteDelivery = document.getElementById('inviteDelivery');
+      if (inviteDelivery) inviteDelivery.classList.remove('hidden');
+      if (emailLink) {
+          emailLink.href = `mailto:?subject=${encodeURIComponent('Join me in Storybound')}&body=${encodeURIComponent(inviteText)}`;
+      }
+      if (smsLink) {
+          smsLink.href = `sms:?body=${encodeURIComponent(inviteText)}`;
+      }
+
       // Join the realtime channel as host
       const joined = await joinCoupleRoom(window.state.roomId, true);
       if (joined) {
-          showChamberStatus("Invitation ready: " + code + " — Share this code with your partner.");
-          document.getElementById('btnEnterCoupleGame')?.classList.remove('hidden');
+          showChamberStatus("Invitation ready: " + code + " — Send it via email or SMS below.");
+          // Show "I've sent the invitation" button
+          const confirmBtn = document.getElementById('btnConfirmInviteSent');
+          if (confirmBtn) {
+              confirmBtn.classList.remove('hidden');
+              confirmBtn.disabled = false;
+              confirmBtn.style.opacity = '1';
+          }
       } else {
           showChamberStatus("Failed to create room channel.", true);
       }
@@ -2803,7 +2904,27 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       }
   });
 
+  // A4: Entry gating - "I've sent the invitation" reveals "Play Solo" option
+  $('btnConfirmInviteSent')?.addEventListener('click', () => {
+      const confirmBtn = document.getElementById('btnConfirmInviteSent');
+      const playSoloBtn = document.getElementById('btnPlaySoloWaiting');
+      if (confirmBtn) confirmBtn.classList.add('hidden');
+      if (playSoloBtn) playSoloBtn.classList.remove('hidden');
+      showChamberStatus("Waiting for your partner to join with code: " + window.state.roomCode);
+  });
+
+  // A4: "Play Solo until your paramour joins" - enters chamber in waiting mode
+  $('btnPlaySoloWaiting')?.addEventListener('click', () => {
+      state.batedBreathActive = true; // Enable Bated Breath mode (waiting for partner)
+      window.showScreen('setup');
+  });
+
+  // Enter together only when partner has actually joined
   $('btnEnterCoupleGame')?.addEventListener('click', () => {
+      if (!state.couple.connected || !state.partnerStatus.online) {
+          showToast("Waiting for partner to connect...");
+          return;
+      }
       window.showScreen('setup');
   });
 

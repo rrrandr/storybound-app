@@ -71,6 +71,7 @@
   <div id="loadingOverlayInner">
     <div id="loadingText">Stoking the embers...</div>
     <div id="loadingOverlayBar"><div id="loadingOverlayFill"></div></div>
+    <div id="loadingPercent" style="font-size:0.9em; opacity:0.7; margin-top:8px;">0%</div>
   </div>
 </div>
 
@@ -135,9 +136,18 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
          </button>
       </div>
+      <div id="inviteCopyText" class="hidden" style="margin:10px 0; padding:10px; background:rgba(255,215,0,0.1); border:1px solid rgba(255,215,0,0.3); border-radius:8px; font-size:0.85em; font-style:italic; color:var(--ink);">
+        "I've opened a private chamber in Storybound. Enter code <span id="inviteCodeInline">—</span> at storybound.app to join me. Bring your imagination."
+      </div>
+      <div id="inviteDelivery" class="hidden" style="margin:10px 0; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <a id="inviteEmailLink" href="#" style="display:inline-block; padding:8px 16px; background:var(--gold); color:#1a1a2e; border-radius:6px; text-decoration:none; font-size:0.9em;">📧 Email</a>
+        <a id="inviteSmsLink" href="#" style="display:inline-block; padding:8px 16px; background:var(--pink); color:#fff; border-radius:6px; text-decoration:none; font-size:0.9em;">💬 SMS</a>
+      </div>
     </div>
 
-    <div>
+    <div id="inviteGateWrap">
+      <button id="btnConfirmInviteSent" class="hidden" disabled style="width:100%; margin-bottom:10px; opacity:0.5;">I've sent the invitation</button>
+      <button id="btnPlaySoloWaiting" class="hidden" style="width:100%; margin-bottom:10px; background:#444;">Play Solo until your paramour joins</button>
       <button id="btnEnterCoupleGame" class="hidden" style="width:100%; margin-bottom:10px;">Enter Together</button>
       <button onclick="window.coupleCleanup(); window.showScreen('modeSelect')" style="background:transparent; border:1px solid #444; font-size:0.9em;">Back</button>
     </div>
