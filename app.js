@@ -770,7 +770,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   function createPill(txt, type, inputId, trayEl, slotIndex) {
       const pill = document.createElement('span');
       pill.className = `pill ${type}-pill`;
-      pill.textContent = '+ ' + txt;
+      pill.textContent = type === 'ancestry' ? txt : '+ ' + txt;
       pill.dataset.suggestion = txt;
       pill.dataset.slot = slotIndex;
       pill.dataset.type = type;
@@ -791,7 +791,15 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
           const input = document.getElementById(inputId);
           if (input) {
-              input.value = input.value ? input.value + '\n' + txt : txt;
+              if (type === 'ancestry') {
+                  // Ancestry: replace text, manage selected state
+                  input.value = txt;
+                  trayEl.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+                  pill.classList.add('selected');
+              } else {
+                  // Veto/Quill: append text
+                  input.value = input.value ? input.value + '\n' + txt : txt;
+              }
           }
 
           // Clear this slot's timer
@@ -934,12 +942,14 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           setTimeout(() => schedulePillCycle(trayEl, i, 'ancestry', inputId), i * 800 + Math.random() * 2000);
       });
 
-      // Clear selected state when user manually edits the input
+      // Clear selected state when user manually edits the input (prevent duplicate listeners)
       const input = document.getElementById(inputId);
-      if (input) {
+      if (input && !input._ancestryListenerAdded) {
           input.addEventListener('input', () => {
-              trayEl.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+              const tray = document.getElementById('ancestryPills');
+              if (tray) tray.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
           });
+          input._ancestryListenerAdded = true;
       }
   }
 
