@@ -2374,16 +2374,16 @@ Situation: The Protagonist is alone with their thoughts, or engaged in something
         return errors;
     }
 
-    const validationErrors = validatePayload(diagnosticPayload);
+    const payloadErrors = validatePayload(diagnosticPayload);
 
-    if (validationErrors.length > 0) {
+    if (payloadErrors.length > 0) {
         console.group('STORYBOUND VALIDATION FAILED');
-        console.error('Errors:', validationErrors);
+        console.error('Errors:', payloadErrors);
         console.log('Payload at failure:', diagnosticPayload);
         console.groupEnd();
 
         stopLoading();
-        const errorMessage = `Story setup incomplete: ${validationErrors[0]}`;
+        const errorMessage = `Story setup incomplete: ${payloadErrors[0]}`;
         showToast(errorMessage);
         console.error('FATE STUMBLED PREVENTED:', errorMessage);
         window.showScreen('setup');
