@@ -2298,38 +2298,99 @@ ${liAppears ? '- The love interest may appear briefly or be hinted at.' : '- The
 Setting: A place full of atmosphere and sensory detail fitting the genre.
 Situation: The Protagonist is alone with their thoughts, or engaged in something unrelated to romance.`;
 
-    // FATE STUMBLED DEBUG - Log all directives before API call
+    // FATE STUMBLED DIAGNOSTIC - Structured payload logging
     const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
     const ancestryLI = $('ancestryInputLI')?.value.trim() || '';
     const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
 
-    console.log('=== FATE STUMBLED DEBUG ===');
-    console.log('Tier:', state.access);
-    console.log('Mode:', state.mode);
-    console.log('Genre:', state.picks.genre);
-    console.log('Archetype Primary:', state.archetype.primary);
-    console.log('Archetype Modifier:', state.archetype.modifier);
-    console.log('Archetype Directives:', archetypeDirectives);
-    console.log('Ancestry (Yours):', ancestryPlayer || '(not set)');
-    console.log('Ancestry (Storybeau):', ancestryLI || '(not set)');
-    console.log('Intensity:', state.intensity);
-    console.log('Story Length:', state.storyLength);
-    console.log('System Prompt Length:', state.sysPrompt.length);
-    console.log('===========================');
+    // Determine unlock tier
+    const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+    let tier = 'free';
+    if (state.subscribed) tier = 'subscribed';
+    else if (quillUnlocked) tier = 'quill_unlocked';
+    else if (state.storyId && hasStoryPass(state.storyId)) tier = 'story_unlocked';
 
-    // Check for missing required directives - surface user-facing message if missing
-    const missingDirectives = [];
-    if (!state.archetype.primary) missingDirectives.push('Primary Archetype');
-    if (!state.picks.genre || state.picks.genre.length === 0) missingDirectives.push('Genre');
-    if (!state.picks.style || state.picks.style.length === 0) missingDirectives.push('Style');
+    // Build structured payload for diagnostic
+    const diagnosticPayload = {
+        mode: state.mode || 'solo',
+        tier: tier,
+        genre: state.picks.genre || [],
+        archetype: {
+            primary: state.archetype.primary || null,
+            modifier: state.archetype.modifier || null,
+            directives: archetypeDirectives || '(none built)'
+        },
+        ancestry: {
+            yours: ancestryPlayer || '(empty)',
+            storybeau: ancestryLI || '(empty)'
+        },
+        quill: {
+            unlocked: quillUnlocked,
+            directives: quillUnlocked ? (state.quillIntent || '(none this turn)') : '(LOCKED - not injected)'
+        },
+        veto: {
+            bannedWords: state.veto?.bannedWords || [],
+            tone: state.veto?.tone || []
+        },
+        intensity: state.intensity || 'Naughty',
+        pov: state.picks.pov || 'Third Person Limited',
+        style: state.picks.style || [],
+        dynamic: state.picks.dynamic || [],
+        storyLength: state.storyLength || 'novella',
+        systemPromptLength: state.sysPrompt?.length || 0
+    };
 
-    if (missingDirectives.length > 0) {
-        console.error('FATE STUMBLED: Missing required directives:', missingDirectives);
+    // Log the full payload
+    console.group('STORYBOUND FINAL PROMPT PAYLOAD');
+    console.log(diagnosticPayload);
+    console.groupEnd();
+
+    // VALIDATION GUARD - Check all required fields before model call
+    function validatePayload(payload) {
+        const errors = [];
+
+        // Required field checks
+        if (!payload.mode) errors.push('Mode is undefined');
+        if (!payload.genre || payload.genre.length === 0) errors.push('Genre is missing or empty');
+        if (!payload.style || payload.style.length === 0) errors.push('Style is missing or empty');
+        if (!payload.archetype.primary) errors.push('Primary Archetype not selected (default: Beautiful Ruin)');
+        if (!payload.intensity) errors.push('Intensity is undefined');
+        if (!payload.pov) errors.push('POV is undefined');
+        if (payload.systemPromptLength === 0) errors.push('System prompt is empty (critical failure)');
+
+        // Check for null/undefined in directive arrays
+        if (payload.veto.bannedWords.some(w => w === null || w === undefined)) {
+            errors.push('Veto bannedWords array contains null/undefined');
+        }
+        if (payload.veto.tone.some(t => t === null || t === undefined)) {
+            errors.push('Veto tone array contains null/undefined');
+        }
+
+        // Check archetype directives actually built
+        if (payload.archetype.directives === '(none built)' || !payload.archetype.directives) {
+            errors.push('Archetype directives failed to build');
+        }
+
+        return errors;
+    }
+
+    const validationErrors = validatePayload(diagnosticPayload);
+
+    if (validationErrors.length > 0) {
+        console.group('STORYBOUND VALIDATION FAILED');
+        console.error('Errors:', validationErrors);
+        console.log('Payload at failure:', diagnosticPayload);
+        console.groupEnd();
+
         stopLoading();
-        showToast(`Missing: ${missingDirectives.join(', ')}. Please complete setup.`);
+        const errorMessage = `Story setup incomplete: ${validationErrors[0]}`;
+        showToast(errorMessage);
+        console.error('FATE STUMBLED PREVENTED:', errorMessage);
         window.showScreen('setup');
         return;
     }
+
+    console.log('STORYBOUND VALIDATION PASSED - Proceeding to model call');
 
     try {
         const text = await callChat([
@@ -2362,7 +2423,15 @@ Return ONLY the sentence:\n${text}`}]);
         }
 
     } catch(e) {
-        alert("Fate stumbled. Please try again.");
+        console.group('STORYBOUND FATE STUMBLED - API ERROR');
+        console.error('Error object:', e);
+        console.error('Error message:', e?.message || '(no message)');
+        console.error('Error stack:', e?.stack || '(no stack)');
+        console.log('System prompt length at failure:', state.sysPrompt?.length || 0);
+        console.log('Intro prompt length at failure:', introPrompt?.length || 0);
+        console.groupEnd();
+
+        alert("Fate stumbled. Please try again. (Check console for diagnostics)");
         window.showScreen('setup');
     } finally {
         stopLoading();
@@ -2376,22 +2445,37 @@ Return ONLY the sentence:\n${text}`}]);
   async function callChat(messages, temp=0.7) {
     const payload = {
        messages: messages,
-       model: STORY_MODEL, 
+       model: STORY_MODEL,
        temperature: temp,
        max_tokens: 1000
     };
-    
+
     try {
         const res = await fetch(PROXY_URL, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify(payload)
         });
-        if(!res.ok) throw new Error("API Error");
+        if(!res.ok) {
+            const errorText = await res.text().catch(() => '(could not read response body)');
+            console.group('STORYBOUND API ERROR');
+            console.error('HTTP Status:', res.status, res.statusText);
+            console.error('Response body:', errorText);
+            console.error('Request payload size:', JSON.stringify(payload).length, 'bytes');
+            console.error('System message length:', messages[0]?.content?.length || 0);
+            console.groupEnd();
+            throw new Error(`API Error: ${res.status} ${res.statusText}`);
+        }
         const data = await res.json();
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            console.group('STORYBOUND API MALFORMED RESPONSE');
+            console.error('Response data:', data);
+            console.groupEnd();
+            throw new Error('API returned malformed response (no choices)');
+        }
         return data.choices[0].message.content;
     } catch(e){
-        console.error(e);
+        console.error('callChat error:', e);
         throw e;
     }
   }
