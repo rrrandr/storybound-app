@@ -578,7 +578,13 @@ ANTI-HERO ENFORCEMENT:
       }
       
       // Global Locked Click Delegation
+      // Allows preview buttons within locked cards to still function
       document.addEventListener('click', (e) => {
+          // Allow preview buttons to work even in locked cards
+          if (e.target.classList.contains('preview-btn')) {
+              return; // Let the preview button handle its own click
+          }
+
           const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-tease, .locked-pass, [data-locked]');
           if (lockedTarget) {
               e.preventDefault();
@@ -837,54 +843,173 @@ ANTI-HERO ENFORCEMENT:
       applyVetoFromInput();
   }
 
-  // --- SUGGESTION PILLS ---
-  const VETO_SUGGESTIONS = [
-      "ban: moist", "no tattoos", "no scars", "no cheating", "no amnesia",
-      "rename: -> ", "more description", "keep pacing slower", "no second-person"
+  // --- SUGGESTION PILLS (12 PILLS SYSTEM) ---
+  // Pills organized by word count: 2-word, 3-word, 4-word
+  const VETO_PILLS = {
+      two: ["no tattoos", "no scars", "ban: moist", "no cheating", "no amnesia", "no pregnancy", "no betrayal", "no ghosts"],
+      three: ["keep pacing slower", "no second person", "avoid physical violence", "no love triangles", "less explicit dialogue", "no supernatural elements"],
+      four: ["no sudden time skips", "avoid overly flowery language", "keep descriptions more grounded", "no breaking fourth wall"]
+  };
+  const QUILL_PILLS = {
+      two: ["increase tension", "confession scene", "jealousy beat", "stolen glance", "charged silence", "longing pause", "near miss", "secret revealed"],
+      three: ["only one bed", "enemies to lovers", "forced proximity moment", "emotional vulnerability scene", "unspoken desire lingers", "touch that lingers"],
+      four: ["bring them somewhere private", "build romantic tension slowly", "introduce an unexpected interruption", "let desire simmer beneath"]
+  };
+  const ANCESTRY_SUGGESTIONS = [
+      "Mediterranean", "East Asian", "Celtic", "Afro-Caribbean", "Nordic", "South Asian",
+      "Middle Eastern", "Latin American", "Slavic", "Indigenous American", "Pacific Islander"
   ];
-  const QUILL_SUGGESTIONS = [
-      "enemies to lovers", "only one bed", "bring them somewhere private",
-      "increase tension", "confession scene", "near-miss moment", "jealousy beat"
-  ];
+
+  // Track which pills are currently showing (for replacement)
+  let activePills = { veto: [], quill: [] };
+
+  function getWordCount(str) {
+      return str.trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  function getRandomPillByWordCount(pool, wordCount, usedSet) {
+      const bucket = wordCount === 2 ? pool.two : wordCount === 3 ? pool.three : pool.four;
+      const available = bucket.filter(p => !usedSet.has(p));
+      if (available.length === 0) return null;
+      return available[Math.floor(Math.random() * available.length)];
+  }
+
+  function generatePillSet(pool, count) {
+      // Row structure: 2, 2, 3, 4 per row (4 pills per row, 3 rows = 12 pills)
+      const rowPattern = [2, 2, 3, 4];
+      const pills = [];
+      const used = new Set();
+
+      for (let row = 0; row < Math.ceil(count / 4); row++) {
+          for (let i = 0; i < rowPattern.length && pills.length < count; i++) {
+              const wc = rowPattern[i];
+              const pill = getRandomPillByWordCount(pool, wc, used);
+              if (pill) {
+                  pills.push({ text: pill, wordCount: wc });
+                  used.add(pill);
+              }
+          }
+      }
+      return pills;
+  }
+
+  function createPillElement(text, type, index) {
+      const pill = document.createElement('span');
+      pill.className = `pill ${type}-pill fade-in`;
+      pill.textContent = text;
+      pill.dataset.index = index;
+      pill.dataset.wordCount = getWordCount(text);
+
+      pill.onclick = () => {
+          const inputId = type === 'veto' ? 'vetoInput' : 'quillInput';
+          const input = document.getElementById(inputId);
+          if (input) {
+              input.value = input.value ? input.value + '\n' + text : text;
+          }
+          replacePill(pill, type, index);
+      };
+
+      return pill;
+  }
+
+  function replacePill(pill, type, index) {
+      const pool = type === 'veto' ? VETO_PILLS : QUILL_PILLS;
+      const wordCount = parseInt(pill.dataset.wordCount, 10);
+      const usedSet = new Set(activePills[type].map(p => p.text));
+
+      // Fade out
+      pill.classList.remove('fade-in');
+      pill.classList.add('fade-out');
+
+      setTimeout(() => {
+          const newText = getRandomPillByWordCount(pool, wordCount, usedSet);
+          if (newText) {
+              pill.textContent = newText;
+              pill.dataset.wordCount = getWordCount(newText);
+              activePills[type][index] = { text: newText, wordCount: getWordCount(newText) };
+              pill.classList.remove('fade-out');
+              pill.classList.add('fade-in');
+
+              // Update click handler for new text
+              pill.onclick = () => {
+                  const inputId = type === 'veto' ? 'vetoInput' : 'quillInput';
+                  const input = document.getElementById(inputId);
+                  if (input) {
+                      input.value = input.value ? input.value + '\n' + newText : newText;
+                  }
+                  replacePill(pill, type, index);
+              };
+          } else {
+              // No replacement available, just fade back in with same content
+              pill.classList.remove('fade-out');
+              pill.classList.add('fade-in');
+          }
+      }, 300);
+  }
 
   function populatePills() {
       const vetoPillsEl = document.getElementById('vetoPills');
       const quillPillsEl = document.getElementById('quillPills');
-      if(!vetoPillsEl || !quillPillsEl) return;
+      if (!vetoPillsEl || !quillPillsEl) return;
 
       vetoPillsEl.innerHTML = '';
       quillPillsEl.innerHTML = '';
+      activePills = { veto: [], quill: [] };
 
-      // Shuffle and pick 4 random veto suggestions
-      const shuffledVeto = [...VETO_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 4);
-      shuffledVeto.forEach(txt => {
-          const pill = document.createElement('span');
-          pill.className = 'pill veto-pill';
-          pill.textContent = txt;
-          pill.onclick = () => {
-              const input = document.getElementById('vetoInput');
-              if(input) {
-                  input.value = input.value ? input.value + '\n' + txt : txt;
-              }
-              pill.remove();
-          };
-          vetoPillsEl.appendChild(pill);
+      // Generate 12 pills for each
+      const vetoPillSet = generatePillSet(VETO_PILLS, 12);
+      const quillPillSet = generatePillSet(QUILL_PILLS, 12);
+
+      vetoPillSet.forEach((p, i) => {
+          activePills.veto.push(p);
+          vetoPillsEl.appendChild(createPillElement(p.text, 'veto', i));
       });
 
-      // Shuffle and pick 3 random quill suggestions
-      const shuffledQuill = [...QUILL_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 3);
-      shuffledQuill.forEach(txt => {
+      quillPillSet.forEach((p, i) => {
+          activePills.quill.push(p);
+          quillPillsEl.appendChild(createPillElement(p.text, 'quill', i));
+      });
+
+      // Also populate ancestry pills
+      populateAncestryPills();
+  }
+
+  function populateAncestryPills() {
+      const container = document.getElementById('ancestryPills');
+      if (!container) return;
+
+      container.innerHTML = '';
+      const shuffled = [...ANCESTRY_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 6);
+
+      shuffled.forEach(txt => {
           const pill = document.createElement('span');
-          pill.className = 'pill quill-pill';
+          pill.className = 'ancestry-pill fade-in';
           pill.textContent = txt;
           pill.onclick = () => {
-              const input = document.getElementById('quillInput');
-              if(input) {
-                  input.value = input.value ? input.value + '\n' + txt : txt;
+              const input = document.getElementById('ancestryInput');
+              if (input) {
+                  input.value = txt;
               }
-              pill.remove();
+              // Fade and replace
+              pill.classList.remove('fade-in');
+              pill.classList.add('fade-out');
+              setTimeout(() => {
+                  const remaining = ANCESTRY_SUGGESTIONS.filter(s =>
+                      !Array.from(container.querySelectorAll('.ancestry-pill')).some(p => p.textContent === s)
+                  );
+                  if (remaining.length > 0) {
+                      const newTxt = remaining[Math.floor(Math.random() * remaining.length)];
+                      pill.textContent = newTxt;
+                      pill.onclick = () => {
+                          const input = document.getElementById('ancestryInput');
+                          if (input) input.value = newTxt;
+                      };
+                  }
+                  pill.classList.remove('fade-out');
+                  pill.classList.add('fade-in');
+              }, 300);
           };
-          quillPillsEl.appendChild(pill);
+          container.appendChild(pill);
       });
   }
 
@@ -1853,6 +1978,18 @@ ANTI-HERO ENFORCEMENT:
       showToast("Quill committed.");
   });
 
+  // Commit Veto Button Handler
+  $('btnCommitVeto')?.addEventListener('click', () => {
+      const vetoEl = document.getElementById('vetoInput');
+      if (!vetoEl) return;
+      const vetoText = vetoEl.value.trim();
+      if (!vetoText) { showToast("No veto to commit."); return; }
+
+      applyVetoFromInput();
+      vetoEl.value = '';
+      showToast("Veto committed. Boundaries updated.");
+  });
+
   // --- META SYSTEM (RESTORED) ---
   function buildMetaDirective(){
      if(state.awareness === 0) return "";
@@ -1869,12 +2006,40 @@ ANTI-HERO ENFORCEMENT:
       if(btn) btn.classList.add('active');
   };
 
+  // --- BEGIN STORY VALIDATION GUARDRAIL ---
+  function validateBeginStory() {
+      const errors = [];
+
+      // Check archetype selection
+      const archetypeValidation = validateArchetypeSelection(state.archetype.primary, state.archetype.modifier);
+      if (!archetypeValidation.valid) {
+          errors.push(archetypeValidation.errors[0] || 'Please select a Primary Archetype.');
+      }
+
+      // Check for at least one genre selected
+      if (!state.picks.genre || state.picks.genre.length === 0) {
+          errors.push('Please select at least one Genre.');
+      }
+
+      // Check for at least one dynamic selected
+      if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
+          errors.push('Please select at least one Dynamic.');
+      }
+
+      // Check for at least one style selected
+      if (!state.picks.style || state.picks.style.length === 0) {
+          errors.push('Please select at least one Story Style.');
+      }
+
+      return errors;
+  }
+
   // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
-    // Validate archetype selection before proceeding
-    const archetypeValidation = validateArchetypeSelection(state.archetype.primary, state.archetype.modifier);
-    if (!archetypeValidation.valid) {
-        showToast(archetypeValidation.errors[0] || 'Please select a Primary Archetype.');
+    // Comprehensive validation before proceeding
+    const validationErrors = validateBeginStory();
+    if (validationErrors.length > 0) {
+        showToast(validationErrors[0]);
         return;
     }
 

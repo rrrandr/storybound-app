@@ -342,6 +342,15 @@
         </div>
     </div>
 
+    <div class="section-title">Ancestry / Culture</div>
+    <p class="ancestry-subtext">Optional: ground the Love Interest in a cultural or ancestral context.</p>
+    <div class="ancestry-container">
+        <div id="ancestryPills" class="ancestry-pills"></div>
+        <div class="input-wrapper" style="margin-top:10px;">
+            <input id="ancestryInput" type="text" placeholder="e.g. Mediterranean, East Asian, Celtic, Afro-Caribbean...">
+        </div>
+    </div>
+
     <div class="section-title" id="archetypeSectionTitle">Shape Your Storybeau</div>
     <p class="archetype-header-text">Choose a core desire style for this character.</p>
     <p class="archetype-subtext">Select one Primary archetype. You may optionally add one Modifier to refine how it shows up.</p>
@@ -504,10 +513,16 @@
         </div>
     </div>
 
-    <div class="quill-ui">
-        <div style="display:flex; width:100%; justify-content:space-between; margin-bottom:5px;">
-            <span id="quillStatus">Quill: Poised</span>
-            <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
+    <div class="quill-veto-ui">
+        <div style="display:flex; width:100%; justify-content:space-between; align-items:center; margin-bottom:5px; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="vetoStatus" style="font-size:0.85em; color:var(--pink);">Veto: Ready</span>
+                <button id="btnCommitVeto" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit Veto</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="quillStatus">Quill: Poised</span>
+                <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
+            </div>
         </div>
         <div id="godModeToggle" class="hidden">
             <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> Enable God Mode (Sandbox)</label>
