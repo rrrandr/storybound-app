@@ -328,15 +328,14 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 
 /* ANCESTRY / CULTURE SECTION */
 .ancestry-subtext { font-size: 0.9em; color: var(--gold); opacity: 0.8; margin: 0 0 15px; text-align: center; font-style: italic; }
-.ancestry-container { width: 95%; margin: 0 auto 20px; }
-.ancestry-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 32px; }
-.ancestry-pill { padding: 6px 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,105,180,0.3); border-radius: 20px; font-size: 0.85em; cursor: pointer; transition: all 0.3s; color: var(--ink); opacity: 0.8; }
-.ancestry-pill:hover { background: rgba(255,105,180,0.15); border-color: var(--pink); opacity: 1; }
-.ancestry-pill.fade-out { opacity: 0; transform: scale(0.9); }
-.ancestry-pill.fade-in { animation: pillFadeIn 0.3s ease forwards; }
-@keyframes pillFadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 0.8; transform: scale(1); } }
+.ancestry-container { width: 95%; margin: 0 auto 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 600px) { .ancestry-container { grid-template-columns: 1fr; } }
+.ancestry-subsection { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 15px; }
+.ancestry-label { font-size: 0.95em; color: var(--pink); font-family: 'lust-script-display', serif; margin-bottom: 12px; text-align: center; }
+.ancestry-pills { min-height: 90px; }
+@keyframes pillFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 0.85; transform: scale(1); } }
 
-/* QUILL & VETO - 12 PILLS GRID LAYOUT */
+/* PILL SYSTEM - FIXED WIDTH CLASSES (MANDATORY) */
 .pill-tray {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -350,23 +349,36 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 @media (max-width: 380px) {
     .pill-tray { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Base pill styles */
 .pill {
-    padding: 4px 8px;
+    padding: 5px 10px;
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,105,180,0.3);
     border-radius: 15px;
     font-size: 0.72em;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: opacity 0.3s, transform 0.3s;
     color: var(--ink);
-    opacity: 0.8;
+    opacity: 0.85;
     text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
 }
-.pill.fade-out { opacity: 0; pointer-events: none; }
+
+/* Fixed width classes - pills may NOT resize dynamically */
+.pill.pill-small { width: 85px; }  /* ~2 words */
+.pill.pill-medium { width: 115px; } /* ~3 words */
+.pill.pill-large { width: 145px; }  /* ~4 words */
+
+/* Leading + indicator */
+.pill::before { content: "+ "; opacity: 0.7; }
+
+.pill.fade-out { opacity: 0; pointer-events: none; transform: scale(0.95); }
 .pill.fade-in { animation: pillFadeIn 0.3s ease forwards; }
+.pill.fading { opacity: 0.4; }
 
 /* PAYWALLED ELEMENTS - CURSOR AND VISIBILITY */
 .locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked-tease, .intensity-btn.locked-pass {

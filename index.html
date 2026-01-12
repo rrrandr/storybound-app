@@ -126,7 +126,7 @@
     </div>
 
     <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
-      <button id="btnCreateRoom">Create Room</button>
+      <button id="btnCreateRoom">New Invitation</button>
       <button id="btnJoinRoom" style="background:#444">Join Room</button>
     </div>
 
@@ -136,17 +136,30 @@
     </div>
 
     <div id="roomCodeWrap" class="hidden" style="margin-bottom:15px;">
-      <p style="margin:0 0 5px; font-size:0.9em; opacity:0.8;">Share this code with your partner:</p>
-      <div id="coupleRoomCodeWrap">
-         <div id="roomCodeBig">—</div>
-         <button id="btnCopyCode" title="Copy Code">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-         </button>
+      <div class="invitation-card" style="background: rgba(255,105,180,0.08); border: 1px solid rgba(255,105,180,0.3); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+        <p id="invitationText" style="font-style: italic; color: var(--ink); margin: 0 0 15px; line-height: 1.5;">
+          "A private chamber awaits. The mask is optional. The curiosity is not."
+        </p>
+        <div id="coupleRoomCodeWrap">
+           <div id="roomCodeBig">—</div>
+           <button id="btnCopyCode" title="Copy Code">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+           </button>
+        </div>
       </div>
+
+      <p style="margin:0 0 10px; font-size:0.85em; color:var(--gold);">Send invitation via:</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
+        <button id="btnSendEmail" class="invite-send-btn" style="background:#444; font-size:0.85em; padding:8px 16px;">Email</button>
+        <button id="btnSendSMS" class="invite-send-btn" style="background:#444; font-size:0.85em; padding:8px 16px;">SMS</button>
+        <button id="btnSendBoth" class="invite-send-btn" style="background:#444; font-size:0.85em; padding:8px 16px;">Both</button>
+      </div>
+      <p id="inviteSentStatus" class="hidden" style="color:var(--gold); font-size:0.85em; margin:10px 0;">Invitation sent. Awaiting your paramour...</p>
     </div>
 
     <div>
-      <button id="btnEnterCoupleGame" class="hidden" style="width:100%; margin-bottom:10px;">Enter Together</button>
+      <button id="btnEnterCoupleGame" class="hidden" style="width:100%; margin-bottom:10px;" disabled>Enter Chamber Together</button>
+      <button id="btnPlaySoloWaiting" class="hidden" style="width:100%; margin-bottom:10px; background:#333; border:1px solid var(--gold);">Play Solo Until Your Paramour Joins</button>
       <button onclick="window.coupleCleanup(); window.showScreen('modeSelect')" style="background:transparent; border:1px solid #444; font-size:0.9em;">Back</button>
     </div>
   </div>
@@ -234,21 +247,27 @@
 
     <div id="standardPay">
         <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
-            <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:220px; text-align:left;">
+            <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:200px; text-align:left;">
                 <h4 style="color:var(--pink); margin-top:0;">Unlock This Story</h4>
-                <p style="font-size:0.9em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, and control.<br><strong>$3 Story Pass.</strong></p>
+                <p style="font-size:0.85em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, and control.<br><strong>$3 Story Pass.</strong></p>
                 <button id="payOneTime" style="width:100%; margin-top:15px;">Unlock ($3)</button>
             </div>
 
-            <div id="optSub" style="background:linear-gradient(145deg, #400020, #200010); padding:15px; border-radius:10px; border:1px solid gold; width:220px; text-align:left;">
+            <div id="optQuill" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--gold); width:200px; text-align:left;">
+                <h4 style="color:var(--gold); margin-top:0;">Unlock Quill</h4>
+                <p style="font-size:0.85em; line-height:1.4;">Wield the Quill in this story.<br>Steer tone, boundaries, direction.<br><strong>$3 for this story.</strong></p>
+                <button id="payQuill" style="width:100%; margin-top:15px; background:var(--gold); color:black;">Unlock Quill ($3)</button>
+            </div>
+
+            <div id="optSub" style="background:linear-gradient(145deg, #400020, #200010); padding:15px; border-radius:10px; border:1px solid gold; width:200px; text-align:left;">
                 <h4 style="color:var(--gold); margin-top:0;">Indulge Limits</h4>
-                <ul style="font-size:0.85em; padding-left:15px; opacity:0.9; line-height:1.4; list-style-type: '⚜ ';">
+                <ul style="font-size:0.8em; padding-left:15px; opacity:0.9; line-height:1.4; list-style-type: '⚜ ';">
                     <li>Dirty intensity</li>
-                    <li>Long-form stories (Affair/Soulmates)</li>
-                    <li>Save & return anytime</li>
-                    <li>Cancel anytime</li>
+                    <li>Long-form stories</li>
+                    <li>Unlimited Quill</li>
+                    <li>Save anytime</li>
                 </ul>
-                <div style="text-align:center; font-size:0.9em; margin:15px 0; color:var(--gold);">$6/month</div>
+                <div style="text-align:center; font-size:0.9em; margin:10px 0; color:var(--gold);">$6/month</div>
                 <button id="paySub" style="width:100%; background:linear-gradient(145deg, gold, #b8860b); color:black; font-weight:bold;">Subscribe</button>
             </div>
         </div>
@@ -343,11 +362,23 @@
     </div>
 
     <div class="section-title">Ancestry / Culture</div>
-    <p class="ancestry-subtext">Optional: ground the Love Interest in a cultural or ancestral context.</p>
+    <p class="ancestry-subtext">Optional: ground the characters in a cultural or ancestral context.</p>
+
     <div class="ancestry-container">
-        <div id="ancestryPills" class="ancestry-pills"></div>
-        <div class="input-wrapper" style="margin-top:10px;">
-            <input id="ancestryInput" type="text" placeholder="e.g. Mediterranean, East Asian, Celtic, Afro-Caribbean...">
+        <div class="ancestry-subsection">
+            <div class="ancestry-label">Yours</div>
+            <div id="ancestryPillsPlayer" class="ancestry-pills pill-tray"></div>
+            <div class="input-wrapper" style="margin-top:10px;">
+                <input id="ancestryInputPlayer" type="text" placeholder="e.g. Mediterranean, East Asian, Celtic...">
+            </div>
+        </div>
+
+        <div class="ancestry-subsection">
+            <div class="ancestry-label" id="ancestryLabelLI">Your Storybeau's</div>
+            <div id="ancestryPillsLI" class="ancestry-pills pill-tray"></div>
+            <div class="input-wrapper" style="margin-top:10px;">
+                <input id="ancestryInputLI" type="text" placeholder="e.g. Nordic, South Asian, Afro-Caribbean...">
+            </div>
         </div>
     </div>
 
@@ -427,7 +458,7 @@
 
     <div class="section-title">Genres <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="genreGrid">
-      <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and intense romantic stakes.</p></div>
+      <div class="card selected" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and intense romantic stakes.</p></div>
       <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary Romance</h3><p>Modern settings and present-day relationships.</p></div>
       <div class="card" data-grp="genre" data-val="Historical"><h3>Historical Romance</h3><p>Period romance and forbidden rules.</p></div>
       <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal Modern Romance</h3><p>Vampires, shifters, witches in today’s world.</p></div>

@@ -321,7 +321,7 @@ ANTI-HERO ENFORCEMENT:
   // --- GLOBAL STATE INITIALIZATION ---
   window.state = {
       tier:'free',
-      picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] },
+      picks:{ genre:['Romantasy'], dynamic:[], pov:'First', style:['Breathless'] },
       gender:'Female',
       loveInterest:'Male',
       archetype: { primary: null, modifier: null }, 
@@ -843,78 +843,82 @@ ANTI-HERO ENFORCEMENT:
       applyVetoFromInput();
   }
 
-  // --- SUGGESTION PILLS (12 PILLS SYSTEM) ---
-  // Pills organized by word count: 2-word, 3-word, 4-word
+  // --- SUGGESTION PILLS (12 PILLS SYSTEM WITH FIXED WIDTH CLASSES) ---
+  // Pills organized by width class: small (~2 words), medium (~3 words), large (~4 words)
   const VETO_PILLS = {
-      two: ["no tattoos", "no scars", "ban: moist", "no cheating", "no amnesia", "no pregnancy", "no betrayal", "no ghosts"],
-      three: ["keep pacing slower", "no second person", "avoid physical violence", "no love triangles", "less explicit dialogue", "no supernatural elements"],
-      four: ["no sudden time skips", "avoid overly flowery language", "keep descriptions more grounded", "no breaking fourth wall"]
+      small: ["no tattoos", "no scars", "ban: moist", "no cheating", "no amnesia", "no pregnancy", "no betrayal", "no ghosts", "no death", "no crying"],
+      medium: ["keep pacing slower", "no second person", "avoid violence", "no love triangles", "less explicit talk", "no supernatural"],
+      large: ["no sudden time skips", "avoid flowery language", "keep it grounded", "no fourth wall breaks"]
   };
   const QUILL_PILLS = {
-      two: ["increase tension", "confession scene", "jealousy beat", "stolen glance", "charged silence", "longing pause", "near miss", "secret revealed"],
-      three: ["only one bed", "enemies to lovers", "forced proximity moment", "emotional vulnerability scene", "unspoken desire lingers", "touch that lingers"],
-      four: ["bring them somewhere private", "build romantic tension slowly", "introduce an unexpected interruption", "let desire simmer beneath"]
+      small: ["more tension", "confession", "jealousy beat", "stolen glance", "charged silence", "longing pause", "near miss", "secret out", "heated look", "soft touch"],
+      medium: ["only one bed", "enemies to lovers", "forced proximity", "vulnerability scene", "desire lingers", "touch lingers"],
+      large: ["take them somewhere private", "build tension slowly", "unexpected interruption", "let desire simmer"]
   };
-  const ANCESTRY_SUGGESTIONS = [
-      "Mediterranean", "East Asian", "Celtic", "Afro-Caribbean", "Nordic", "South Asian",
-      "Middle Eastern", "Latin American", "Slavic", "Indigenous American", "Pacific Islander"
-  ];
+  const ANCESTRY_PILLS = {
+      small: ["Celtic", "Nordic", "Slavic", "Persian", "Greek", "Roman", "Korean", "Japanese", "Chinese", "Indian", "Mayan", "Inuit"],
+      medium: ["East Asian", "South Asian", "West African", "Latin American", "Middle Eastern", "Pacific Islander"],
+      large: ["Afro-Caribbean descent", "Indigenous American", "Southeast Asian heritage", "Mediterranean roots"]
+  };
 
-  // Track which pills are currently showing (for replacement)
-  let activePills = { veto: [], quill: [] };
+  // Track active pills and cycling state
+  let activePills = { veto: [], quill: [], ancestryPlayer: [], ancestryLI: [] };
+  let pillCycleIntervals = {};
 
-  function getWordCount(str) {
-      return str.trim().split(/\s+/).filter(Boolean).length;
+  // Width class helpers
+  function getWidthClass(size) {
+      return size === 'small' ? 'pill-small' : size === 'medium' ? 'pill-medium' : 'pill-large';
   }
 
-  function getRandomPillByWordCount(pool, wordCount, usedSet) {
-      const bucket = wordCount === 2 ? pool.two : wordCount === 3 ? pool.three : pool.four;
+  function getRandomFromPool(pool, sizeClass, usedSet) {
+      const bucket = pool[sizeClass];
+      if (!bucket) return null;
       const available = bucket.filter(p => !usedSet.has(p));
       if (available.length === 0) return null;
       return available[Math.floor(Math.random() * available.length)];
   }
 
   function generatePillSet(pool, count) {
-      // Row structure: 2, 2, 3, 4 per row (4 pills per row, 3 rows = 12 pills)
-      const rowPattern = [2, 2, 3, 4];
+      // Row structure: 2 small, 1 medium, 1 large per row (4 pills per row, 3 rows = 12 pills)
+      const rowPattern = ['small', 'small', 'medium', 'large'];
       const pills = [];
       const used = new Set();
 
       for (let row = 0; row < Math.ceil(count / 4); row++) {
           for (let i = 0; i < rowPattern.length && pills.length < count; i++) {
-              const wc = rowPattern[i];
-              const pill = getRandomPillByWordCount(pool, wc, used);
-              if (pill) {
-                  pills.push({ text: pill, wordCount: wc });
-                  used.add(pill);
+              const sizeClass = rowPattern[i];
+              const text = getRandomFromPool(pool, sizeClass, used);
+              if (text) {
+                  pills.push({ text, sizeClass });
+                  used.add(text);
               }
           }
       }
       return pills;
   }
 
-  function createPillElement(text, type, index) {
+  function createPillElement(text, type, index, sizeClass, inputId) {
       const pill = document.createElement('span');
-      pill.className = `pill ${type}-pill fade-in`;
+      pill.className = `pill ${type}-pill ${getWidthClass(sizeClass)} fade-in`;
       pill.textContent = text;
       pill.dataset.index = index;
-      pill.dataset.wordCount = getWordCount(text);
+      pill.dataset.sizeClass = sizeClass;
+      pill.dataset.type = type;
 
       pill.onclick = () => {
-          const inputId = type === 'veto' ? 'vetoInput' : 'quillInput';
           const input = document.getElementById(inputId);
           if (input) {
               input.value = input.value ? input.value + '\n' + text : text;
           }
-          replacePill(pill, type, index);
+          triggerPillReplace(pill, type, index);
       };
 
       return pill;
   }
 
-  function replacePill(pill, type, index) {
-      const pool = type === 'veto' ? VETO_PILLS : QUILL_PILLS;
-      const wordCount = parseInt(pill.dataset.wordCount, 10);
+  function triggerPillReplace(pill, type, index) {
+      const pool = type === 'veto' ? VETO_PILLS : type === 'quill' ? QUILL_PILLS : ANCESTRY_PILLS;
+      const sizeClass = pill.dataset.sizeClass;
       const usedSet = new Set(activePills[type].map(p => p.text));
 
       // Fade out
@@ -922,29 +926,43 @@ ANTI-HERO ENFORCEMENT:
       pill.classList.add('fade-out');
 
       setTimeout(() => {
-          const newText = getRandomPillByWordCount(pool, wordCount, usedSet);
+          const newText = getRandomFromPool(pool, sizeClass, usedSet);
           if (newText) {
               pill.textContent = newText;
-              pill.dataset.wordCount = getWordCount(newText);
-              activePills[type][index] = { text: newText, wordCount: getWordCount(newText) };
-              pill.classList.remove('fade-out');
-              pill.classList.add('fade-in');
+              activePills[type][index] = { text: newText, sizeClass };
 
-              // Update click handler for new text
+              // Update click handler
+              const inputId = type === 'veto' ? 'vetoInput' : type === 'quill' ? 'quillInput' :
+                  type === 'ancestryPlayer' ? 'ancestryInputPlayer' : 'ancestryInputLI';
               pill.onclick = () => {
-                  const inputId = type === 'veto' ? 'vetoInput' : 'quillInput';
                   const input = document.getElementById(inputId);
                   if (input) {
                       input.value = input.value ? input.value + '\n' + newText : newText;
                   }
-                  replacePill(pill, type, index);
+                  triggerPillReplace(pill, type, index);
               };
-          } else {
-              // No replacement available, just fade back in with same content
-              pill.classList.remove('fade-out');
-              pill.classList.add('fade-in');
           }
+          pill.classList.remove('fade-out');
+          pill.classList.add('fade-in');
       }, 300);
+  }
+
+  // Continuous cycling - at least one pill always fading
+  function startPillCycling(containerId, type) {
+      if (pillCycleIntervals[type]) clearInterval(pillCycleIntervals[type]);
+
+      pillCycleIntervals[type] = setInterval(() => {
+          const container = document.getElementById(containerId);
+          if (!container) return;
+
+          const pills = container.querySelectorAll('.pill:not(.fade-out)');
+          if (pills.length === 0) return;
+
+          // Pick a random pill to cycle
+          const randomPill = pills[Math.floor(Math.random() * pills.length)];
+          const index = parseInt(randomPill.dataset.index, 10);
+          triggerPillReplace(randomPill, type, index);
+      }, 3000 + Math.random() * 2000); // Cycle every 3-5 seconds
   }
 
   function populatePills() {
@@ -954,7 +972,8 @@ ANTI-HERO ENFORCEMENT:
 
       vetoPillsEl.innerHTML = '';
       quillPillsEl.innerHTML = '';
-      activePills = { veto: [], quill: [] };
+      activePills.veto = [];
+      activePills.quill = [];
 
       // Generate 12 pills for each
       const vetoPillSet = generatePillSet(VETO_PILLS, 12);
@@ -962,55 +981,59 @@ ANTI-HERO ENFORCEMENT:
 
       vetoPillSet.forEach((p, i) => {
           activePills.veto.push(p);
-          vetoPillsEl.appendChild(createPillElement(p.text, 'veto', i));
+          vetoPillsEl.appendChild(createPillElement(p.text, 'veto', i, p.sizeClass, 'vetoInput'));
       });
 
       quillPillSet.forEach((p, i) => {
           activePills.quill.push(p);
-          quillPillsEl.appendChild(createPillElement(p.text, 'quill', i));
+          quillPillsEl.appendChild(createPillElement(p.text, 'quill', i, p.sizeClass, 'quillInput'));
       });
 
-      // Also populate ancestry pills
+      // Start continuous cycling
+      startPillCycling('vetoPills', 'veto');
+      startPillCycling('quillPills', 'quill');
+
+      // Populate ancestry pills for both subsections
       populateAncestryPills();
   }
 
   function populateAncestryPills() {
-      const container = document.getElementById('ancestryPills');
-      if (!container) return;
+      const playerContainer = document.getElementById('ancestryPillsPlayer');
+      const liContainer = document.getElementById('ancestryPillsLI');
 
-      container.innerHTML = '';
-      const shuffled = [...ANCESTRY_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 6);
+      if (playerContainer) {
+          playerContainer.innerHTML = '';
+          activePills.ancestryPlayer = [];
+          const playerPillSet = generatePillSet(ANCESTRY_PILLS, 12);
+          playerPillSet.forEach((p, i) => {
+              activePills.ancestryPlayer.push(p);
+              playerContainer.appendChild(createPillElement(p.text, 'ancestryPlayer', i, p.sizeClass, 'ancestryInputPlayer'));
+          });
+          startPillCycling('ancestryPillsPlayer', 'ancestryPlayer');
+      }
 
-      shuffled.forEach(txt => {
-          const pill = document.createElement('span');
-          pill.className = 'ancestry-pill fade-in';
-          pill.textContent = txt;
-          pill.onclick = () => {
-              const input = document.getElementById('ancestryInput');
-              if (input) {
-                  input.value = txt;
-              }
-              // Fade and replace
-              pill.classList.remove('fade-in');
-              pill.classList.add('fade-out');
-              setTimeout(() => {
-                  const remaining = ANCESTRY_SUGGESTIONS.filter(s =>
-                      !Array.from(container.querySelectorAll('.ancestry-pill')).some(p => p.textContent === s)
-                  );
-                  if (remaining.length > 0) {
-                      const newTxt = remaining[Math.floor(Math.random() * remaining.length)];
-                      pill.textContent = newTxt;
-                      pill.onclick = () => {
-                          const input = document.getElementById('ancestryInput');
-                          if (input) input.value = newTxt;
-                      };
-                  }
-                  pill.classList.remove('fade-out');
-                  pill.classList.add('fade-in');
-              }, 300);
-          };
-          container.appendChild(pill);
-      });
+      if (liContainer) {
+          liContainer.innerHTML = '';
+          activePills.ancestryLI = [];
+          const liPillSet = generatePillSet(ANCESTRY_PILLS, 12);
+          liPillSet.forEach((p, i) => {
+              activePills.ancestryLI.push(p);
+              liContainer.appendChild(createPillElement(p.text, 'ancestryLI', i, p.sizeClass, 'ancestryInputLI'));
+          });
+          startPillCycling('ancestryPillsLI', 'ancestryLI');
+      }
+
+      // Update LI ancestry label based on gender
+      updateAncestryLILabel();
+  }
+
+  function updateAncestryLILabel() {
+      const label = document.getElementById('ancestryLabelLI');
+      if (!label) return;
+      const liGender = document.getElementById('loveInterestGender')?.value || 'Male';
+      if (liGender === 'Male') label.textContent = "Your Storybeau's";
+      else if (liGender === 'Female') label.textContent = "Your Storybelle's";
+      else label.textContent = "Your Storyboo's";
   }
 
   function updateQuillUI() {
@@ -1039,19 +1062,39 @@ ANTI-HERO ENFORCEMENT:
       const wc = currentStoryWordCount();
       const needed = state.quill.nextReadyAtWords;
 
-      if(ready) {
+      // Check if quill is unlocked (subscription, quill pass, or god mode)
+      const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasQuillPass(state.storyId));
+
+      if (!quillUnlocked) {
+          // Quill is paywalled
+          status.textContent = "Quill: Locked";
+          status.style.color = "var(--gold)";
+          if(quillBox) {
+              quillBox.classList.add('locked-input');
+              quillBox.onclick = () => window.showPaywall('unlock');
+          }
+          btn.disabled = true;
+          btn.style.opacity = "0.5";
+      } else if(ready) {
           status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
           status.style.color = "var(--pink)";
           btn.disabled = false;
           btn.style.opacity = "1";
           btn.style.borderColor = "var(--pink)";
           btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
-          if(quillBox) quillBox.classList.remove('locked-input');
+          if(quillBox) {
+              quillBox.classList.remove('locked-input');
+              quillBox.onclick = null;
+          }
       } else {
           const remain = Math.max(0, needed - wc);
           status.textContent = `Quill: Spent (${remain} words to recharge)`;
           status.style.color = "var(--gold)";
-          if(quillBox) quillBox.classList.add('locked-input');
+          // Don't lock for cooldown - just disable button
+          if(quillBox) {
+              quillBox.classList.remove('locked-input');
+              quillBox.onclick = null;
+          }
           btn.disabled = true;
           btn.style.opacity = "0.5";
           btn.style.borderColor = "transparent";
@@ -1408,8 +1451,31 @@ ANTI-HERO ENFORCEMENT:
     const hideUnlock = (mode === 'sub') || state.subscribed || hasPassNow;
     const optUnlock = document.getElementById('optUnlock');
     if(optUnlock) optUnlock.classList.toggle('hidden', !!hideUnlock);
+
+    // Show Quill unlock option when in quill mode or generally available
+    const optQuill = document.getElementById('optQuill');
+    const hasQuillUnlock = state.storyId && hasQuillPass(state.storyId);
+    const hideQuill = state.subscribed || hasQuillUnlock;
+    if(optQuill) optQuill.classList.toggle('hidden', !!hideQuill);
+
     pm.classList.remove('hidden');
   };
+
+  // Quill pass storage helpers
+  function hasQuillPass(storyId) {
+      if (!storyId) return false;
+      const passes = JSON.parse(localStorage.getItem('sb_quill_passes') || '[]');
+      return passes.includes(storyId);
+  }
+
+  function addQuillPass(storyId) {
+      if (!storyId) return;
+      const passes = JSON.parse(localStorage.getItem('sb_quill_passes') || '[]');
+      if (!passes.includes(storyId)) {
+          passes.push(storyId);
+          localStorage.setItem('sb_quill_passes', JSON.stringify(passes));
+      }
+  }
 
   function completePurchase() {
       const pm = document.getElementById('payModal');
@@ -1853,14 +1919,19 @@ ANTI-HERO ENFORCEMENT:
       const genderSelect = document.getElementById('loveInterestGender');
       const customInput = document.getElementById('customLoveInterest');
 
+      function onGenderChange() {
+          updateArchetypeSectionTitle();
+          updateAncestryLILabel();
+      }
+
       if (genderSelect && genderSelect.dataset.archetypeBound !== '1') {
           genderSelect.dataset.archetypeBound = '1';
-          genderSelect.addEventListener('change', updateArchetypeSectionTitle);
+          genderSelect.addEventListener('change', onGenderChange);
       }
 
       if (customInput && customInput.dataset.archetypeBound !== '1') {
           customInput.dataset.archetypeBound = '1';
-          customInput.addEventListener('input', updateArchetypeSectionTitle);
+          customInput.addEventListener('input', onGenderChange);
       }
   }
 
@@ -1945,6 +2016,23 @@ ANTI-HERO ENFORCEMENT:
       if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
           activateGodMode();
       }
+  });
+
+  $('payQuill')?.addEventListener('click', () => {
+      state.storyId = state.storyId || makeStoryId();
+      state.lastPurchaseType = 'quill';
+      addQuillPass(state.storyId);
+
+      // Unlock the Quill UI
+      const quillBox = document.getElementById('quillBox');
+      if (quillBox) {
+          quillBox.classList.remove('locked-input');
+          quillBox.removeAttribute('onclick');
+      }
+
+      document.getElementById('payModal')?.classList.add('hidden');
+      showToast("Quill unlocked for this story.");
+      updateQuillUI();
   });
 
   $('btnCommitQuill')?.addEventListener('click', () => {
@@ -2802,7 +2890,71 @@ Return ONLY the sentence:\n${text}`}]);
       }
   });
 
+  // Invitation send handlers
+  const INVITATION_TEXTS = [
+      "A private chamber awaits. The mask is optional. The curiosity is not.",
+      "Behind this door, two become one story. Enter if you dare.",
+      "The candles are lit. The words are waiting. Only you are missing.",
+      "Some invitations cannot be declined. This is one of them."
+  ];
+
+  function getInvitationMessage() {
+      const text = INVITATION_TEXTS[Math.floor(Math.random() * INVITATION_TEXTS.length)];
+      const code = window.state.roomCode || '------';
+      return `${text}\n\nYour chamber code: ${code}\n\nJoin at: ${window.location.origin}`;
+  }
+
+  function markInvitationSent() {
+      const status = document.getElementById('inviteSentStatus');
+      const enterBtn = document.getElementById('btnEnterCoupleGame');
+      const soloBtn = document.getElementById('btnPlaySoloWaiting');
+
+      if (status) status.classList.remove('hidden');
+      if (enterBtn) {
+          enterBtn.classList.remove('hidden');
+          enterBtn.disabled = false;
+      }
+      if (soloBtn) soloBtn.classList.remove('hidden');
+
+      window.state.invitationSent = true;
+  }
+
+  $('btnSendEmail')?.addEventListener('click', () => {
+      const subject = encodeURIComponent("You're invited to a Private Chamber");
+      const body = encodeURIComponent(getInvitationMessage());
+      window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+      markInvitationSent();
+      showToast("Email invitation opened.");
+  });
+
+  $('btnSendSMS')?.addEventListener('click', () => {
+      const body = encodeURIComponent(getInvitationMessage());
+      window.open(`sms:?body=${body}`, '_blank');
+      markInvitationSent();
+      showToast("SMS invitation opened.");
+  });
+
+  $('btnSendBoth')?.addEventListener('click', () => {
+      const subject = encodeURIComponent("You're invited to a Private Chamber");
+      const body = encodeURIComponent(getInvitationMessage());
+      window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+      setTimeout(() => {
+          window.open(`sms:?body=${body}`, '_blank');
+      }, 500);
+      markInvitationSent();
+      showToast("Invitations opened.");
+  });
+
+  $('btnPlaySoloWaiting')?.addEventListener('click', () => {
+      window.state.batedBreathActive = true;
+      window.showScreen('setup');
+  });
+
   $('btnEnterCoupleGame')?.addEventListener('click', () => {
+      if (!window.state.invitationSent) {
+          showToast("Please send an invitation first.");
+          return;
+      }
       window.showScreen('setup');
   });
 
