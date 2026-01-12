@@ -550,6 +550,7 @@
         <div class="qv-section">
             <label class="qv-label">Veto</label>
             <p class="qv-hint-above">Block elements you never want to appear. Vetoes are immediate and permanent.</p>
+            <div id="vetoCommitted" class="committed-phrases"></div>
             <div class="fate-input-row">
                 <div class="input-wrapper fate-input-wrapper fate-textarea-wrapper">
                     <textarea id="vetoInput" rows="2" class="fate-field" data-fate-type="veto"></textarea>
@@ -573,6 +574,7 @@
         <div class="qv-section">
             <label class="qv-label">Quill</label>
             <p class="qv-hint-above">Use the Quill to gently steer tone, boundaries, or direction without rewriting what's already happened.</p>
+            <div id="quillCommitted" class="committed-phrases"></div>
             <div class="fate-input-row">
                 <div id="quillBox" class="input-wrapper fate-input-wrapper fate-textarea-wrapper locked-input" onclick="window.showPaywall('unlock')">
                     <textarea id="quillInput" rows="2" class="fate-field" data-fate-type="quill"></textarea>
@@ -674,7 +676,7 @@
     </div>
     
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-       <button id="gameControlsBtn" class="small-btn locked-style">Story Controls</button>
+       <button id="gameControlsBtn" class="small-btn">Quill & Veto</button>
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
     </div>
 

@@ -591,6 +591,20 @@ ANTI-HERO ENFORCEMENT:
               e.preventDefault();
               e.stopPropagation();
               e.stopImmediatePropagation();
+
+              // For locked Story Style cards, show preview THEN paywall
+              if (lockedTarget.classList.contains('card') && lockedTarget.dataset.grp === 'style') {
+                  const previewBtn = lockedTarget.querySelector('.preview-btn');
+                  if (previewBtn && previewBtn.dataset.txt) {
+                      const previewText = document.getElementById('previewText');
+                      const previewModal = document.getElementById('previewModal');
+                      if (previewText && previewModal) {
+                          previewText.textContent = previewBtn.dataset.txt;
+                          previewModal.classList.remove('hidden');
+                      }
+                  }
+              }
+
               window.openPaywall('unlock');
           }
       }, true); 
@@ -953,6 +967,11 @@ ANTI-HERO ENFORCEMENT:
 
       if (!input || !treeCard) return;
 
+      // TEASE MODE: Quill fate hand is disabled
+      if (type === 'quill' && isTeaseMode()) {
+          return;
+      }
+
       // Get all cards in the hand
       const cards = hand.querySelectorAll('.fate-hand-card');
       const centerCard = cards[2]; // Middle card
@@ -1003,6 +1022,11 @@ ANTI-HERO ENFORCEMENT:
       if (!input || !hand) return;
 
       const type = hand.dataset.type;
+
+      // TEASE MODE: Quill tree card is disabled
+      if (type === 'quill' && isTeaseMode()) {
+          return;
+      }
 
       // Animate leaf fall then reset
       if (leaf) {
@@ -1336,15 +1360,20 @@ ANTI-HERO ENFORCEMENT:
           }
       }
 
-      ['saveBtn', 'gameControlsBtn'].forEach(id => {
-          const btn = document.getElementById(id);
-          if(btn) {
-              if(couple || paid) btn.classList.remove('locked-style');
-              else btn.classList.add('locked-style');
-              
-              setPaywallClickGuard(btn, !(couple || paid));
-          }
-      });
+      // Save button follows paywall rules
+      const saveBtn = document.getElementById('saveBtn');
+      if(saveBtn) {
+          if(couple || paid) saveBtn.classList.remove('locked-style');
+          else saveBtn.classList.add('locked-style');
+          setPaywallClickGuard(saveBtn, !(couple || paid));
+      }
+
+      // Quill & Veto button is ALWAYS unlocked (even in Tease)
+      const controlsBtn = document.getElementById('gameControlsBtn');
+      if(controlsBtn) {
+          controlsBtn.classList.remove('locked-style');
+          setPaywallClickGuard(controlsBtn, false);
+      }
 
       if (!couple) {
           applyLengthLocks();
@@ -2073,6 +2102,64 @@ ANTI-HERO ENFORCEMENT:
       }
   });
 
+  // Track committed phrases in state
+  if (!state.committedQuill) state.committedQuill = [];
+  if (!state.committedVeto) state.committedVeto = [];
+
+  // Add a committed phrase to the UI
+  function addCommittedPhrase(container, text, type, index) {
+      const phrase = document.createElement('div');
+      phrase.className = `committed-phrase ${type}-phrase`;
+      phrase.dataset.index = index;
+      phrase.innerHTML = `
+          <button class="committed-phrase-remove" title="Remove">&times;</button>
+          <span class="committed-phrase-text">${text}</span>
+      `;
+      // Insert at top (new commits above old)
+      container.insertBefore(phrase, container.firstChild);
+
+      // Bind remove button
+      phrase.querySelector('.committed-phrase-remove').addEventListener('click', () => {
+          removeCommittedPhrase(type, index);
+      });
+  }
+
+  // Remove a committed phrase
+  function removeCommittedPhrase(type, index) {
+      const arr = type === 'quill' ? state.committedQuill : state.committedVeto;
+      arr.splice(index, 1);
+      renderCommittedPhrases(type);
+      // Update veto state if needed
+      if (type === 'veto') rebuildVetoFromCommitted();
+      saveStorySnapshot();
+  }
+
+  // Render all committed phrases for a type
+  function renderCommittedPhrases(type) {
+      const container = document.getElementById(type === 'quill' ? 'quillCommitted' : 'vetoCommitted');
+      const arr = type === 'quill' ? state.committedQuill : state.committedVeto;
+      if (!container) return;
+      container.innerHTML = '';
+      arr.forEach((text, i) => addCommittedPhrase(container, text, type, i));
+  }
+
+  // Rebuild veto state from committed phrases
+  function rebuildVetoFromCommitted() {
+      state.veto = state.veto || { bannedWords: [], tone: [] };
+      state.veto.bannedWords = [];
+      state.veto.tone = [];
+      state.committedVeto.forEach(line => {
+          const l = line.trim().toLowerCase();
+          if (l.startsWith('ban:')) {
+              state.veto.bannedWords.push(l.replace('ban:', '').trim());
+          } else if (l.startsWith('no ') || l.startsWith('avoid ')) {
+              state.veto.tone.push(line.trim());
+          } else {
+              state.veto.tone.push(line.trim());
+          }
+      });
+  }
+
   $('btnCommitQuill')?.addEventListener('click', () => {
       if (!getQuillReady()) return;
       const quillEl = document.getElementById('quillInput');
@@ -2085,6 +2172,10 @@ ANTI-HERO ENFORCEMENT:
 
       // Store quill intent in state for prompt injection
       window.state.quillIntent = quillText;
+
+      // Add to committed phrases
+      state.committedQuill.push(quillText);
+      renderCommittedPhrases('quill');
 
       const storyEl = document.getElementById('storyText');
       if (storyEl && quillText) {
@@ -2111,8 +2202,18 @@ ANTI-HERO ENFORCEMENT:
       const vetoText = vetoEl.value.trim();
       if (!vetoText) { showToast("No veto to commit."); return; }
 
+      // Add each line as separate committed phrase
+      const lines = vetoText.split('\n').filter(l => l.trim());
+      lines.forEach(line => {
+          if (!state.committedVeto.includes(line.trim())) {
+              state.committedVeto.push(line.trim());
+          }
+      });
+      renderCommittedPhrases('veto');
+
       applyVetoFromInput();
       vetoEl.value = '';
+      saveStorySnapshot();
       showToast("Veto committed. Boundaries updated.");
   });
 
@@ -2496,7 +2597,9 @@ Return ONLY the sentence:\n${text}`}]);
         window.showScreen('setup');
     } finally {
         stopLoading();
-        if(window.initCards) window.initCards();
+        // Deal fresh fate cards for first turn
+        if(window.dealFateCards) window.dealFateCards();
+        else if(window.initCards) window.initCards();
         updateQuillUI();
         updateBatedBreathState();
     }
@@ -2900,6 +3003,9 @@ Return ONLY the sentence:\n${text}`}]);
       
       Write the next beat (150-250 words).`;
 
+      // Flag to track if story was successfully displayed (prevents false positive errors)
+      let storyDisplayed = false;
+
       try {
           // Insert Fate Card separator if a card was selected (K)
           if (selectedFateCard && selectedFateCard.title) {
@@ -2917,6 +3023,11 @@ Return ONLY the sentence:\n${text}`}]);
               {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
           ]);
 
+          // Validate response shape before marking as success
+          if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {
+              throw new Error('Invalid response: empty or malformed story text');
+          }
+
           state.turnCount++;
 
           const sep = document.createElement('hr');
@@ -2928,19 +3039,26 @@ Return ONLY the sentence:\n${text}`}]);
           newDiv.innerHTML = formatStory(raw);
           document.getElementById('storyText').appendChild(newDiv);
 
+          // CRITICAL: Mark story as displayed AFTER successful DOM insertion
+          storyDisplayed = true;
+
           // Scroll to the new content
-          if (selectedFateCard) {
-              // If Fate Card was used, scroll to top of new section
-              const separator = document.querySelector('.fate-card-separator:last-child');
-              if (separator) separator.scrollIntoView({behavior:'smooth', block:'start'});
-              else sep.scrollIntoView({behavior:'smooth', block:'start'});
-          } else {
-              sep.scrollIntoView({behavior:'smooth', block:'start'});
+          try {
+              if (selectedFateCard) {
+                  // If Fate Card was used, scroll to top of new section
+                  const separator = document.querySelector('.fate-card-separator:last-child');
+                  if (separator) separator.scrollIntoView({behavior:'smooth', block:'start'});
+                  else sep.scrollIntoView({behavior:'smooth', block:'start'});
+              } else {
+                  sep.scrollIntoView({behavior:'smooth', block:'start'});
+              }
+          } catch(scrollErr) {
+              console.warn('Scroll failed (non-critical):', scrollErr);
           }
 
-          resetTurnSnapshotFlag(); 
-          
-          maybeFlipConsummation(raw); 
+          resetTurnSnapshotFlag();
+
+          maybeFlipConsummation(raw);
 
           // Manage Fling Latch
           if (state.storyStage === 'post-consummation') {
@@ -2961,14 +3079,17 @@ Return ONLY the sentence:\n${text}`}]);
 
           if(wc > getSexAllowedAtWordCount()) state.sexPushCount = 0;
 
-          // Fate Card Deal (Solo)
-          if (state.mode === 'solo' && Math.random() < 0.45) {
-               if (window.dealFateCards) {
-                   window.dealFateCards();
-                   if (state.batedBreathActive && state.fateOptions) {
-                       state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
-                   }
-               }
+          // Fate Card Deal - deal fresh cards each turn for interaction
+          // Wrapped to prevent false positive errors
+          try {
+              if (window.dealFateCards) {
+                  window.dealFateCards();
+                  if (state.batedBreathActive && state.fateOptions) {
+                      state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
+                  }
+              }
+          } catch(fateErr) {
+              console.warn('Fate card deal failed (non-critical):', fateErr);
           }
 
           saveStorySnapshot();
@@ -2976,14 +3097,17 @@ Return ONLY the sentence:\n${text}`}]);
 
           $('actionInput').value = '';
           $('dialogueInput').value = '';
-          
+
           if(state.mode === 'couple') {
               broadcastTurn(raw);
           }
 
       } catch(e) {
-          console.error(e);
-          alert("Fate was silent. Try again.");
+          console.error('Turn submission error:', e);
+          // Only show error alert if story was NOT successfully displayed
+          if (!storyDisplayed) {
+              alert("Fate was silent. Try again.");
+          }
       } finally {
           stopLoading();
       }
