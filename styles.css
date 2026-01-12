@@ -239,9 +239,13 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 }
 
 /* LOADING BAR */
-#loadingOverlayInner { background: rgba(10, 0, 30, 0.95); padding: 18px 26px 14px 26px; border-radius: 14px; box-shadow: 0 0 35px rgba(255, 20, 147, 0.8); min-width: 280px; text-align: left; font-size: 0.95em; }
+#loadingOverlayInner { background: rgba(10, 0, 30, 0.95); padding: 18px 26px 14px 26px; border-radius: 14px; box-shadow: 0 0 35px rgba(255, 20, 147, 0.8); min-width: 280px; text-align: left; font-size: 0.95em; position: relative; }
 #loadingOverlayBar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; overflow: hidden; margin-top: 8px; }
 #loadingOverlayFill { width: 0%; height: 100%; background: var(--pink); transition: width 0.25s; }
+#loadingPercent { font-size: 0.8em; color: rgba(255,255,255,0.7); margin-top: 4px; text-align: right; }
+.loading-cancel-btn { position: absolute; top: 5px; right: 8px; background: none; border: none; color: rgba(255,255,255,0.6); font-size: 1.4em; cursor: pointer; padding: 0; line-height: 1; display: none; }
+.loading-cancel-btn:hover { color: var(--pink); }
+.loading-cancel-btn.visible { display: block; }
 
 /* BURGER */
 #burgerBtn { position:fixed; top:15px; right:15px; z-index:5000; font-size:1.8em; background:none; border:none; color:var(--pink); padding:0; cursor:pointer; text-shadow: 0 0 5px var(--hot); box-shadow:none; }

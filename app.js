@@ -1201,7 +1201,17 @@ ANTI-HERO ENFORCEMENT:
 
   // --- VISUAL HELPERS ---
   async function ensureVisualBible(textContext) {
-      if(!state.visual) state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
+      // Guard against null/undefined - initialize safe defaults
+      if (!state.visual) {
+          state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
+      }
+      if (!state.visual.bible) {
+          state.visual.bible = { style: "", setting: "", characters: {} };
+      }
+      if (!state.visual.bible.characters || typeof state.visual.bible.characters !== 'object') {
+          state.visual.bible.characters = {};
+      }
+      // Check if bible is already populated
       if (state.visual.bible.style && Object.keys(state.visual.bible.characters).length > 0) return;
       
       const genre = Array.isArray(state?.picks?.genre) ? state.picks.genre.join(', ') : "";
@@ -1933,6 +1943,8 @@ ANTI-HERO ENFORCEMENT:
   let _loadingTimer = null;
   let _loadingActive = false;
   let _loadingMsgTimer = null;
+  let _loadingCancelled = false;
+  let _loadingCancelCallback = null;
 
   const LOADING_MESSAGES = [
       "Painting the scene...",
@@ -1945,35 +1957,65 @@ ANTI-HERO ENFORCEMENT:
       "Finding the perfect light..."
   ];
 
-  function startLoading(msg, rotate = false){
+  function startLoading(msg, rotate = false, cancellable = false, onCancel = null){
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
     const textEl = document.getElementById('loadingText');
+    const percentEl = document.getElementById('loadingPercent');
+    const cancelBtn = document.getElementById('loadingCancelBtn');
+
     if (textEl) textEl.textContent = msg || "Loading...";
+    if (percentEl) percentEl.textContent = '0%';
 
     _loadingActive = true;
+    _loadingCancelled = false;
+    _loadingCancelCallback = onCancel;
+
     if(fill) fill.style.width = '0%';
     if(overlay) overlay.classList.remove('hidden');
+
+    // Show/hide cancel button based on cancellable flag
+    if (cancelBtn) {
+        if (cancellable) {
+            cancelBtn.classList.add('visible');
+        } else {
+            cancelBtn.classList.remove('visible');
+        }
+    }
 
     if(_loadingTimer) clearInterval(_loadingTimer);
     if(_loadingMsgTimer) clearInterval(_loadingMsgTimer);
 
     let p = 0;
     _loadingTimer = setInterval(() => {
-      if(!_loadingActive) return;
+      if(!_loadingActive || _loadingCancelled) return;
       p = Math.min(91, p + Math.random() * 6);
       if(fill) fill.style.width = p.toFixed(0) + '%';
+      if(percentEl) percentEl.textContent = p.toFixed(0) + '%';
     }, 250);
 
     // Rotate messages if requested (for visualize)
     if (rotate && textEl) {
         let msgIdx = 0;
         _loadingMsgTimer = setInterval(() => {
-            if (!_loadingActive) return;
+            if (!_loadingActive || _loadingCancelled) return;
             msgIdx = (msgIdx + 1) % LOADING_MESSAGES.length;
             textEl.textContent = LOADING_MESSAGES[msgIdx];
         }, 2000);
     }
+  }
+
+  function cancelLoading() {
+    _loadingCancelled = true;
+    if (_loadingCancelCallback) {
+        _loadingCancelCallback();
+        _loadingCancelCallback = null;
+    }
+    stopLoading();
+  }
+
+  function isLoadingCancelled() {
+    return _loadingCancelled;
   }
 
   function stopLoading(){
@@ -1981,14 +2023,24 @@ ANTI-HERO ENFORCEMENT:
     _loadingActive = false;
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
+    const percentEl = document.getElementById('loadingPercent');
+    const cancelBtn = document.getElementById('loadingCancelBtn');
+
     if(_loadingTimer) { clearInterval(_loadingTimer); _loadingTimer = null; }
     if(_loadingMsgTimer) { clearInterval(_loadingMsgTimer); _loadingMsgTimer = null; }
     if(fill) fill.style.width = '100%';
+    if(percentEl) percentEl.textContent = '100%';
+    if(cancelBtn) cancelBtn.classList.remove('visible');
+
     setTimeout(() => {
       if(overlay) overlay.classList.add('hidden');
       if(fill) fill.style.width = '0%';
+      if(percentEl) percentEl.textContent = '0%';
     }, 120);
   }
+
+  // Bind cancel button
+  document.getElementById('loadingCancelBtn')?.addEventListener('click', cancelLoading);
 
   $('payOneTime')?.addEventListener('click', () => {
     state.storyId = state.storyId || makeStoryId();
@@ -2520,9 +2572,12 @@ Return ONLY the sentence:\n${text}`}]);
   }
 
   // --- VISUALIZE (STABILIZED) ---
+  let _vizCancelled = false;
+
   window.visualize = async function(isRe){
       if (_vizInFlight) return;
       _vizInFlight = true;
+      _vizCancelled = false;
 
       const modal = document.getElementById('vizModal');
       const retryBtn = document.getElementById('vizRetryBtn');
@@ -2536,10 +2591,21 @@ Return ONLY the sentence:\n${text}`}]);
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
 
-      startLoading("Painting the scene...", true);
+      // Start cancellable loading with cancel callback
+      startLoading("Painting the scene...", true, true, () => {
+          _vizCancelled = true;
+      });
 
       const lastText = storyText ? storyText.textContent.slice(-600) : "";
       await ensureVisualBible(storyText ? storyText.textContent : "");
+
+      // Check if cancelled during bible build
+      if (_vizCancelled) {
+          _vizInFlight = false;
+          if(retryBtn) retryBtn.disabled = false;
+          return;
+      }
+
       const anchorText = buildVisualAnchorsText();
 
       img.onload = null; img.onerror = null;
@@ -2553,85 +2619,139 @@ Return ONLY the sentence:\n${text}`}]);
               try {
                   promptMsg = await Promise.race([
                       callChat([{
-                          role:'user', 
+                          role:'user',
                           content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire. Return only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
               } catch (e) {
-                  promptMsg = "Fantasy scene, detailed, atmospheric."; 
+                  promptMsg = "Fantasy scene, detailed, atmospheric.";
               }
               document.getElementById('vizPromptInput').value = promptMsg;
+          }
+
+          // Check if cancelled during prompt generation
+          if (_vizCancelled) {
+              _vizInFlight = false;
+              if(retryBtn) retryBtn.disabled = false;
+              return;
           }
 
           const modelEl = document.getElementById('vizModel');
           const userModel = modelEl ? modelEl.value : "";
           const um = (userModel || "").toLowerCase();
-          
+
           const isOpenAI = um.includes("gpt") || um.includes("openai");
           const isGemini = um.includes("gemini");
 
+          // Provider fallback order - will try each until one succeeds
           const attempts = [];
-          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel });
-          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1' });
-          attempts.push({ provider: 'gemini', model: isGemini ? userModel : 'gemini-2.5-flash-image' });
+          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel, name: 'Grok' });
+          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1', name: 'OpenAI' });
+          attempts.push({ provider: 'gemini', model: isGemini ? userModel : 'gemini-2.5-flash-image', name: 'Gemini' });
 
           let rawUrl = null;
           let lastErr = null;
+          let attemptCount = 0;
 
           for(const attempt of attempts){
+             // Check if cancelled before each attempt
+             if (_vizCancelled) {
+                 _vizInFlight = false;
+                 if(retryBtn) retryBtn.disabled = false;
+                 return;
+             }
+
+             attemptCount++;
              try {
+                // Add timeout to fetch to prevent infinite hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
                 const res = await fetch(IMAGE_PROXY_URL, {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         prompt: anchorText + "\n\nSCENE:\n" + promptMsg + (state.intensity === 'Dirty' || state.intensity === 'Erotic' ? " Artistic, suggestive, safe-for-work." : "") + "\n\n(Generate art without any text/lettering.)",
                         provider: attempt.provider,
                         model: attempt.model,
                         size: "1024x1024",
                         n: 1
-                    })
+                    }),
+                    signal: controller.signal
                 });
-                
-                let data;
-                try { data = await res.json(); } catch(e){}
 
-                if(!res.ok) throw new Error(data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`));
-                
+                clearTimeout(timeoutId);
+
+                let data;
+                try { data = await res.json(); } catch(e){ data = null; }
+
+                // Handle 502 and other errors - continue to fallback
+                if(!res.ok) {
+                    const errMsg = data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`);
+                    console.warn(`Visualize: ${attempt.name} failed (${res.status}), trying fallback...`);
+                    throw new Error(errMsg);
+                }
+
                 rawUrl = data.url || data.image || data.b64_json;
                 if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
                     rawUrl = data.data[0].url || data.data[0].b64_json;
                 }
 
-                if(rawUrl) break; 
+                if(rawUrl) break;
              } catch(e) {
                  lastErr = e;
+                 // Don't throw - continue to next fallback provider
              }
           }
 
+          // Check if cancelled after all attempts
+          if (_vizCancelled) {
+              _vizInFlight = false;
+              if(retryBtn) retryBtn.disabled = false;
+              return;
+          }
+
           if (!rawUrl) throw lastErr || new Error("All image providers failed.");
-          
+
           let imageUrl = rawUrl;
           if (!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
               imageUrl = `data:image/png;base64,${rawUrl}`;
           }
-          
+
           img.src = imageUrl;
-          
+
           await new Promise((resolve, reject) => {
+              // Add timeout for image load
+              const loadTimeout = setTimeout(() => {
+                  reject(new Error("Image load timeout"));
+              }, 30000);
+
               img.onload = () => {
-                  img.style.display = 'block'; 
+                  clearTimeout(loadTimeout);
+                  img.style.display = 'block';
                   if(ph) ph.style.display = 'none';
                   state.visual.lastImageUrl = img.src;
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
                   saveStorySnapshot();
                   resolve();
               };
-              img.onerror = () => reject(new Error("Image failed to render"));
+              img.onerror = () => {
+                  clearTimeout(loadTimeout);
+                  reject(new Error("Image failed to render"));
+              };
           });
 
       } catch(e) {
-          if(errDiv) { errDiv.innerText = "Visualization failed. Fate is cloudy."; errDiv.classList.remove('hidden'); }
+          // Don't show error if cancelled
+          if (!_vizCancelled) {
+              console.error("Visualize error:", e);
+              if(errDiv) {
+                  errDiv.innerText = "Visualization failed. Fate is cloudy.";
+                  errDiv.classList.remove('hidden');
+              }
+              if(ph) ph.style.display = 'none';
+          }
       } finally {
           stopLoading();
           _vizInFlight = false;
