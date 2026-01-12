@@ -185,7 +185,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .card.selected { border-color:#ff69b4; background:#333; box-shadow:0 0 15px rgba(255,105,180,0.3); }
 .card h3 { margin:0 0 5px; color:#ff6b6b; font-size:1.1em; font-family:'lust-script-display',serif; }
 .card p { font-size:0.9em; opacity:0.9; margin:0; font-family:var(--font-main); }
-.preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:5; position:relative; pointer-events: auto !important; cursor: pointer !important;}
+.preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:15; position:relative; pointer-events: auto !important; cursor: pointer !important;}
 .preview-btn:hover { background:rgba(255,255,255,0.2); }
 
 /* FATE CARDS */

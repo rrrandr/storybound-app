@@ -581,7 +581,8 @@ ANTI-HERO ENFORCEMENT:
       // Allows preview buttons within locked cards to still function
       document.addEventListener('click', (e) => {
           // Allow preview buttons to work even in locked cards
-          if (e.target.classList.contains('preview-btn')) {
+          // Use closest() to catch clicks on button or any child element
+          if (e.target.closest('.preview-btn')) {
               return; // Let the preview button handle its own click
           }
 
