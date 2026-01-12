@@ -553,9 +553,9 @@ ANTI-HERO ENFORCEMENT:
       _currentScreenId = id;
       updateNavUI();
 
-      // Populate suggestion pills when entering setup screen
+      // Initialize fate hand system when entering setup screen
       if(id === 'setup') {
-          populatePills();
+          initFateHandSystem();
       }
   };
 
@@ -844,200 +844,209 @@ ANTI-HERO ENFORCEMENT:
       applyVetoFromInput();
   }
 
-  // --- SUGGESTION PILLS (12 PILLS SYSTEM WITH FIXED WIDTH CLASSES) ---
-  // Pills organized by width class: small (~2 words), medium (~3 words), large (~4 words)
-  const VETO_PILLS = {
-      small: ["no tattoos", "no scars", "ban: moist", "no cheating", "no amnesia", "no pregnancy", "no betrayal", "no ghosts", "no death", "no crying"],
-      medium: ["keep pacing slower", "no second person", "avoid violence", "no love triangles", "less explicit talk", "no supernatural"],
-      large: ["no sudden time skips", "avoid flowery language", "keep it grounded", "no fourth wall breaks"]
+  // --- FATE HAND SYSTEM (Replaces pill system) ---
+  // Suggestion pools for rotating placeholders and fate draws
+  const FATE_SUGGESTIONS = {
+      ancestry: [
+          "Celtic", "Nordic", "Slavic", "Persian", "Greek", "Roman", "Korean", "Japanese",
+          "Chinese", "Indian", "Fae-touched", "Half-elf", "Cyborg exile", "Forgotten royal line",
+          "East Asian", "South Asian", "West African", "Mediterranean", "Pacific Islander",
+          "Afro-Caribbean", "Indigenous", "Southeast Asian", "Middle Eastern", "Latin American"
+      ],
+      veto: [
+          "No humiliation", "No betrayal", 'No "M\'Lady"', "No tattoos", "No scars",
+          "No cheating", "No amnesia", "No pregnancy", "No ghosts", "No death",
+          "No love triangles", "No supernatural", "No time skips", "No flowery language",
+          "No second person", "No violence", "No crying scenes", "No miscommunication trope"
+      ],
+      quill: [
+          "Public Bathhouse Setting", "Make it bigger", "Make it a Musical",
+          "More tension", "Confession scene", "Jealousy beat", "Stolen glance",
+          "Only one bed", "Enemies to lovers", "Forced proximity", "Vulnerability scene",
+          "Take them somewhere private", "Build tension slowly", "Unexpected interruption",
+          "Moonlit garden", "Charged silence", "Near miss moment", "Secret revealed"
+      ]
   };
-  const QUILL_PILLS = {
-      small: ["more tension", "confession", "jealousy beat", "stolen glance", "charged silence", "longing pause", "near miss", "secret out", "heated look", "soft touch"],
-      medium: ["only one bed", "enemies to lovers", "forced proximity", "vulnerability scene", "desire lingers", "touch lingers"],
-      large: ["take them somewhere private", "build tension slowly", "unexpected interruption", "let desire simmer"]
-  };
-  const ANCESTRY_PILLS = {
-      small: ["Celtic", "Nordic", "Slavic", "Persian", "Greek", "Roman", "Korean", "Japanese", "Chinese", "Indian", "Mayan", "Inuit"],
-      medium: ["East Asian", "South Asian", "West African", "Latin American", "Middle Eastern", "Pacific Islander"],
-      large: ["Afro-Caribbean descent", "Indigenous American", "Southeast Asian heritage", "Mediterranean roots"]
-  };
 
-  // Track active pills and cycling state
-  let activePills = { veto: [], quill: [], ancestryPlayer: [], ancestryLI: [] };
-  let pillCycleIntervals = {};
+  let fateHandInitialized = false;
+  let placeholderAnimations = {};
 
-  // Width class helpers
-  function getWidthClass(size) {
-      return size === 'small' ? 'pill-small' : size === 'medium' ? 'pill-medium' : 'pill-large';
-  }
-
-  function getRandomFromPool(pool, sizeClass, usedSet) {
-      const bucket = pool[sizeClass];
-      if (!bucket) return null;
-      const available = bucket.filter(p => !usedSet.has(p));
-      if (available.length === 0) return null;
-      return available[Math.floor(Math.random() * available.length)];
-  }
-
-  function generatePillSet(pool, count) {
-      // Row structure: 2 small, 1 medium, 1 large per row (4 pills per row, 3 rows = 12 pills)
-      const rowPattern = ['small', 'small', 'medium', 'large'];
-      const pills = [];
-      const used = new Set();
-
-      for (let row = 0; row < Math.ceil(count / 4); row++) {
-          for (let i = 0; i < rowPattern.length && pills.length < count; i++) {
-              const sizeClass = rowPattern[i];
-              const text = getRandomFromPool(pool, sizeClass, used);
-              if (text) {
-                  pills.push({ text, sizeClass });
-                  used.add(text);
-              }
-          }
-      }
-      return pills;
-  }
-
-  // Tease mode check - Quill pills do nothing in Tease (voyeur + free)
+  // Tease mode check
   function isTeaseMode() {
       return state.storyLength === 'voyeur' && state.access === 'free';
   }
 
-  function createPillElement(text, type, index, sizeClass, inputId) {
-      const pill = document.createElement('span');
-      pill.className = `pill ${type}-pill ${getWidthClass(sizeClass)} fade-in`;
-      pill.textContent = text;
-      pill.dataset.index = index;
-      pill.dataset.sizeClass = sizeClass;
-      pill.dataset.type = type;
+  // Get random suggestion from pool
+  function getRandomSuggestion(type, exclude = []) {
+      const pool = FATE_SUGGESTIONS[type] || [];
+      const available = pool.filter(s => !exclude.includes(s));
+      if (available.length === 0) return pool[Math.floor(Math.random() * pool.length)];
+      return available[Math.floor(Math.random() * available.length)];
+  }
 
-      pill.onclick = () => {
-          // TEASE MODE GUARD: Quill pills do nothing in Tease
-          if (type === 'quill' && isTeaseMode()) {
-              return; // Do nothing
-          }
+  // Initialize rotating placeholder for a field
+  function initRotatingPlaceholder(inputId, type) {
+      const input = document.getElementById(inputId);
+      const placeholder = document.querySelector(`.rotating-placeholder[data-for="${inputId}"]`);
+      if (!input || !placeholder) return;
 
-          const input = document.getElementById(inputId);
-          if (input) {
-              input.value = input.value ? input.value + '\n' + text : text;
-          }
-          triggerPillReplace(pill, type, index);
+      const suggestions = FATE_SUGGESTIONS[type] || [];
+      if (suggestions.length === 0) return;
+
+      // Build scrolling content (duplicate for seamless loop)
+      const buildContent = () => {
+          let html = '<span class="rotating-placeholder-inner">';
+          // Double the suggestions for seamless scroll
+          const doubled = [...suggestions, ...suggestions];
+          doubled.forEach((s, i) => {
+              const glowClass = Math.random() < 0.1 ? ' glow' : '';
+              html += `<span class="suggestion${glowClass}">${s}</span>`;
+              if (i < doubled.length - 1) html += '<span class="separator">•</span>';
+          });
+          html += '</span>';
+          return html;
       };
 
-      return pill;
-  }
+      placeholder.innerHTML = buildContent();
 
-  function triggerPillReplace(pill, type, index) {
-      const pool = type === 'veto' ? VETO_PILLS : type === 'quill' ? QUILL_PILLS : ANCESTRY_PILLS;
-      const sizeClass = pill.dataset.sizeClass;
-      const usedSet = new Set(activePills[type].map(p => p.text));
-
-      // Fade out
-      pill.classList.remove('fade-in');
-      pill.classList.add('fade-out');
-
-      setTimeout(() => {
-          const newText = getRandomFromPool(pool, sizeClass, usedSet);
-          if (newText) {
-              pill.textContent = newText;
-              activePills[type][index] = { text: newText, sizeClass };
-
-              // Update click handler
-              const inputId = type === 'veto' ? 'vetoInput' : type === 'quill' ? 'quillInput' :
-                  type === 'ancestryPlayer' ? 'ancestryInputPlayer' : 'ancestryInputLI';
-              pill.onclick = () => {
-                  // TEASE MODE GUARD: Quill pills do nothing in Tease
-                  if (type === 'quill' && isTeaseMode()) {
-                      return;
-                  }
-
-                  const input = document.getElementById(inputId);
-                  if (input) {
-                      input.value = input.value ? input.value + '\n' + newText : newText;
-                  }
-                  triggerPillReplace(pill, type, index);
-              };
+      // Show/hide placeholder based on input content
+      const updateVisibility = () => {
+          if (input.value.trim()) {
+              placeholder.classList.add('hidden');
+          } else {
+              placeholder.classList.remove('hidden');
           }
-          pill.classList.remove('fade-out');
-          pill.classList.add('fade-in');
-      }, 300);
+      };
+
+      // Pause animation on focus
+      input.addEventListener('focus', () => {
+          const inner = placeholder.querySelector('.rotating-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'paused';
+      });
+      input.addEventListener('blur', () => {
+          const inner = placeholder.querySelector('.rotating-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'running';
+          updateVisibility();
+      });
+      input.addEventListener('input', updateVisibility);
+
+      updateVisibility();
+
+      // Random glow effect
+      setInterval(() => {
+          const spans = placeholder.querySelectorAll('.suggestion');
+          spans.forEach(s => s.classList.remove('glow'));
+          if (spans.length > 0 && Math.random() < 0.3) {
+              const randomSpan = spans[Math.floor(Math.random() * spans.length)];
+              randomSpan.classList.add('glow');
+              setTimeout(() => randomSpan.classList.remove('glow'), 2000);
+          }
+      }, 4000);
   }
 
-  // Continuous cycling - at least one pill always fading
-  function startPillCycling(containerId, type) {
-      if (pillCycleIntervals[type]) clearInterval(pillCycleIntervals[type]);
+  // Handle fate hand click - reveal card and populate field
+  function handleFateHandClick(hand) {
+      const targetId = hand.dataset.target;
+      const type = hand.dataset.type;
+      const input = document.getElementById(targetId);
+      const treeCard = document.querySelector(`.fate-tree-card[data-target="${targetId}"]`);
 
-      pillCycleIntervals[type] = setInterval(() => {
-          const container = document.getElementById(containerId);
-          if (!container) return;
+      if (!input || !treeCard) return;
 
-          const pills = container.querySelectorAll('.pill:not(.fade-out)');
-          if (pills.length === 0) return;
+      // Get all cards in the hand
+      const cards = hand.querySelectorAll('.fate-hand-card');
+      const centerCard = cards[2]; // Middle card
 
-          // Pick a random pill to cycle
-          const randomPill = pills[Math.floor(Math.random() * pills.length)];
-          const index = parseInt(randomPill.dataset.index, 10);
-          triggerPillReplace(randomPill, type, index);
-      }, 3000 + Math.random() * 2000); // Cycle every 3-5 seconds
-  }
+      // Flip center card
+      centerCard.classList.add('flipping');
 
-  function populatePills() {
-      const vetoPillsEl = document.getElementById('vetoPills');
-      const quillPillsEl = document.getElementById('quillPills');
-      if (!vetoPillsEl || !quillPillsEl) return;
-
-      vetoPillsEl.innerHTML = '';
-      quillPillsEl.innerHTML = '';
-      activePills.veto = [];
-      activePills.quill = [];
-
-      // Generate 12 pills for each
-      const vetoPillSet = generatePillSet(VETO_PILLS, 12);
-      const quillPillSet = generatePillSet(QUILL_PILLS, 12);
-
-      vetoPillSet.forEach((p, i) => {
-          activePills.veto.push(p);
-          vetoPillsEl.appendChild(createPillElement(p.text, 'veto', i, p.sizeClass, 'vetoInput'));
+      // Fade out other cards
+      cards.forEach((card, i) => {
+          if (i !== 2) card.classList.add('fading');
       });
 
-      quillPillSet.forEach((p, i) => {
-          activePills.quill.push(p);
-          quillPillsEl.appendChild(createPillElement(p.text, 'quill', i, p.sizeClass, 'quillInput'));
-      });
+      // After flip completes
+      setTimeout(() => {
+          // Hide the hand, show the tree card
+          hand.style.display = 'none';
+          treeCard.classList.remove('hidden');
 
-      // Start continuous cycling
-      startPillCycling('vetoPills', 'veto');
-      startPillCycling('quillPills', 'quill');
+          // Populate the field
+          const suggestion = getRandomSuggestion(type);
+          if (input.tagName === 'TEXTAREA') {
+              input.value = input.value ? input.value + '\n' + suggestion : suggestion;
+          } else {
+              if (!input.value.trim()) {
+                  input.value = suggestion;
+              }
+          }
 
-      // Populate ancestry pills for both subsections
-      populateAncestryPills();
+          // Hide placeholder
+          const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
+          if (placeholder) placeholder.classList.add('hidden');
+
+          // Trigger leaf fall animation
+          const leaf = treeCard.querySelector('.falling-leaf');
+          if (leaf) {
+              leaf.classList.add('falling');
+          }
+      }, 450);
   }
 
-  function populateAncestryPills() {
-      const playerContainer = document.getElementById('ancestryPillsPlayer');
-      const liContainer = document.getElementById('ancestryPillsLI');
+  // Handle tree card click - invoke fate again
+  function handleTreeCardClick(treeCard) {
+      const targetId = treeCard.dataset.target;
+      const hand = document.querySelector(`.fate-hand[data-target="${targetId}"]`);
+      const input = document.getElementById(targetId);
+      const leaf = treeCard.querySelector('.falling-leaf');
 
-      if (playerContainer) {
-          playerContainer.innerHTML = '';
-          activePills.ancestryPlayer = [];
-          const playerPillSet = generatePillSet(ANCESTRY_PILLS, 12);
-          playerPillSet.forEach((p, i) => {
-              activePills.ancestryPlayer.push(p);
-              playerContainer.appendChild(createPillElement(p.text, 'ancestryPlayer', i, p.sizeClass, 'ancestryInputPlayer'));
-          });
-          startPillCycling('ancestryPillsPlayer', 'ancestryPlayer');
+      if (!input || !hand) return;
+
+      const type = hand.dataset.type;
+
+      // Animate leaf fall then reset
+      if (leaf) {
+          leaf.classList.remove('falling', 'reset');
+          void leaf.offsetWidth; // Force reflow
+          leaf.classList.add('falling');
+
+          setTimeout(() => {
+              // Reset leaf
+              leaf.classList.remove('falling');
+              leaf.classList.add('reset');
+              setTimeout(() => leaf.classList.remove('reset'), 300);
+          }, 1000);
       }
 
-      if (liContainer) {
-          liContainer.innerHTML = '';
-          activePills.ancestryLI = [];
-          const liPillSet = generatePillSet(ANCESTRY_PILLS, 12);
-          liPillSet.forEach((p, i) => {
-              activePills.ancestryLI.push(p);
-              liContainer.appendChild(createPillElement(p.text, 'ancestryLI', i, p.sizeClass, 'ancestryInputLI'));
-          });
-          startPillCycling('ancestryPillsLI', 'ancestryLI');
+      // Populate with new suggestion
+      const suggestion = getRandomSuggestion(type, [input.value]);
+      if (input.tagName === 'TEXTAREA') {
+          input.value = input.value ? input.value + '\n' + suggestion : suggestion;
+      } else {
+          input.value = suggestion;
       }
+  }
+
+  // Initialize the entire fate hand system
+  function initFateHandSystem() {
+      if (fateHandInitialized) return;
+      fateHandInitialized = true;
+
+      // Initialize rotating placeholders
+      initRotatingPlaceholder('ancestryInputPlayer', 'ancestry');
+      initRotatingPlaceholder('ancestryInputLI', 'ancestry');
+      initRotatingPlaceholder('vetoInput', 'veto');
+      initRotatingPlaceholder('quillInput', 'quill');
+
+      // Bind fate hand clicks
+      document.querySelectorAll('.fate-hand').forEach(hand => {
+          hand.addEventListener('click', () => handleFateHandClick(hand));
+      });
+
+      // Bind tree card clicks
+      document.querySelectorAll('.fate-tree-card').forEach(card => {
+          card.addEventListener('click', () => handleTreeCardClick(card));
+      });
 
       // Update LI ancestry label based on gender
       updateAncestryLILabel();

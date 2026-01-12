@@ -405,3 +405,220 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     pointer-events: auto !important;
     cursor: pointer !important;
 }
+
+/* ========================================
+   FATE HAND SYSTEM & ROTATING PLACEHOLDERS
+   ======================================== */
+
+/* Ancestry container - responsive side-by-side */
+.ancestry-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.ancestry-subsection {
+    flex: 1;
+    min-width: 280px;
+}
+@media (max-width: 640px) {
+    .ancestry-container { flex-direction: column; }
+    .ancestry-subsection { min-width: 100%; }
+}
+
+/* Fate input row - contains input + fate hand */
+.fate-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.fate-input-wrapper {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+}
+
+.fate-field {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #fff;
+    font-family: var(--font-main);
+    font-size: 0.95em;
+}
+.fate-field:focus {
+    outline: none;
+    border-color: var(--pink);
+    box-shadow: 0 0 8px rgba(255,105,180,0.3);
+}
+textarea.fate-field {
+    resize: none;
+    min-height: 50px;
+}
+
+/* Rotating placeholder */
+.rotating-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    right: 60px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    overflow: hidden;
+    white-space: nowrap;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.9em;
+    font-style: italic;
+}
+.rotating-placeholder.textarea-placeholder {
+    top: 14px;
+    transform: none;
+}
+.rotating-placeholder.hidden { display: none; }
+
+.rotating-placeholder-inner {
+    display: inline-block;
+    animation: scrollPlaceholder 30s linear infinite;
+}
+.rotating-placeholder-inner .suggestion {
+    display: inline;
+}
+.rotating-placeholder-inner .separator {
+    display: inline;
+    margin: 0 8px;
+    opacity: 0.5;
+}
+.rotating-placeholder-inner .glow {
+    color: var(--gold);
+    text-shadow: 0 0 6px var(--gold);
+    transition: all 0.5s ease;
+}
+
+@keyframes scrollPlaceholder {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* 5-Card Fate Hand */
+.fate-hand {
+    display: flex;
+    width: 55px;
+    height: 36px;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.fate-hand-card {
+    position: absolute;
+    width: 20px;
+    height: 30px;
+    background: #000;
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    transform-origin: bottom center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+/* Fan positions */
+.fate-hand-card:nth-child(1) { left: 0; transform: rotate(-12deg); z-index: 1; }
+.fate-hand-card:nth-child(2) { left: 8px; transform: rotate(-6deg); z-index: 2; }
+.fate-hand-card:nth-child(3) { left: 16px; transform: rotate(0deg); z-index: 3; }
+.fate-hand-card:nth-child(4) { left: 24px; transform: rotate(6deg); z-index: 4; }
+.fate-hand-card:nth-child(5) { left: 32px; transform: rotate(12deg); z-index: 5; }
+
+.fate-hand:hover .fate-hand-card {
+    border-color: #ffd700;
+    box-shadow: 0 0 8px rgba(255,215,0,0.4);
+}
+
+/* Card flip state */
+.fate-hand-card.flipping {
+    animation: cardFlip 0.45s ease-in-out forwards;
+}
+.fate-hand-card.fading {
+    animation: cardFadeOut 0.3s ease forwards;
+}
+
+@keyframes cardFlip {
+    0% { transform: rotateY(0deg) rotate(0deg); }
+    50% { transform: rotateY(90deg) rotate(0deg) scale(1.1); }
+    100% { transform: rotateY(180deg) rotate(0deg) scale(1); }
+}
+@keyframes cardFadeOut {
+    to { opacity: 0; transform: scale(0.8); }
+}
+
+/* Fate Tree Card (revealed oracle) */
+.fate-tree-card {
+    width: 32px;
+    height: 44px;
+    background: linear-gradient(145deg, #d4af37, #b8860b);
+    border: 1px solid #ffd700;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(255,215,0,0.3);
+    transition: box-shadow 0.3s ease;
+}
+.fate-tree-card:hover {
+    box-shadow: 0 0 12px rgba(255,215,0,0.5);
+}
+.fate-tree-card.hidden { display: none; }
+
+/* Tree silhouette */
+.tree-silhouette {
+    position: absolute;
+    inset: 4px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 28 L12 12 M12 12 C8 8 4 6 2 4 M12 12 C16 8 20 6 22 4 M12 14 C9 11 6 10 4 9 M12 14 C15 11 18 10 20 9 M12 16 C10 14 8 13 6 12 M12 16 C14 14 16 13 18 12 M12 18 C11 17 9 16 8 15 M12 18 C13 17 15 16 16 15' stroke='%23000' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.85;
+}
+
+/* Falling leaf */
+.falling-leaf {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #000;
+    border-radius: 50% 0 50% 50%;
+    transform: rotate(45deg);
+    top: 8px;
+    left: 50%;
+    margin-left: -3px;
+    opacity: 0.9;
+}
+.falling-leaf.falling {
+    animation: leafFall 1s ease-in forwards;
+}
+@keyframes leafFall {
+    0% { top: 8px; opacity: 0.9; transform: rotate(45deg); }
+    30% { transform: rotate(60deg); }
+    60% { transform: rotate(30deg); }
+    100% { top: 34px; opacity: 0.7; transform: rotate(50deg); }
+}
+.falling-leaf.reset {
+    animation: leafReset 0.3s ease forwards;
+}
+@keyframes leafReset {
+    to { top: 8px; opacity: 0.9; }
+}
+
+/* Quill-Veto container adjustments */
+.quill-veto-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.qv-section {
+    width: 100%;
+}
+.fate-textarea-wrapper {
+    width: 100%;
+}

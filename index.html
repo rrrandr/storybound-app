@@ -363,17 +363,43 @@
     <div class="ancestry-container">
         <div class="ancestry-subsection">
             <div class="ancestry-label">Yours</div>
-            <div id="ancestryPillsPlayer" class="ancestry-pills pill-tray"></div>
-            <div class="input-wrapper" style="margin-top:10px;">
-                <input id="ancestryInputPlayer" type="text" placeholder="e.g. Mediterranean, East Asian, Celtic...">
+            <div class="fate-input-row">
+                <div class="input-wrapper fate-input-wrapper">
+                    <input id="ancestryInputPlayer" type="text" class="fate-field" data-fate-type="ancestry">
+                    <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
+                </div>
+                <div class="fate-hand" data-target="ancestryInputPlayer" data-type="ancestry">
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                </div>
+                <div class="fate-tree-card hidden" data-target="ancestryInputPlayer">
+                    <div class="tree-silhouette"></div>
+                    <div class="falling-leaf"></div>
+                </div>
             </div>
         </div>
 
         <div class="ancestry-subsection">
             <div class="ancestry-label" id="ancestryLabelLI">Your Storybeau's</div>
-            <div id="ancestryPillsLI" class="ancestry-pills pill-tray"></div>
-            <div class="input-wrapper" style="margin-top:10px;">
-                <input id="ancestryInputLI" type="text" placeholder="e.g. Nordic, South Asian, Afro-Caribbean...">
+            <div class="fate-input-row">
+                <div class="input-wrapper fate-input-wrapper">
+                    <input id="ancestryInputLI" type="text" class="fate-field" data-fate-type="ancestry">
+                    <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
+                </div>
+                <div class="fate-hand" data-target="ancestryInputLI" data-type="ancestry">
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                </div>
+                <div class="fate-tree-card hidden" data-target="ancestryInputLI">
+                    <div class="tree-silhouette"></div>
+                    <div class="falling-leaf"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -524,17 +550,45 @@
         <div class="qv-section">
             <label class="qv-label">Veto</label>
             <p class="qv-hint-above">Block elements you never want to appear. Vetoes are immediate and permanent.</p>
-            <div id="vetoPills" class="pill-tray"></div>
-            <textarea id="vetoInput" rows="2" placeholder="ban: word&#10;rename: Old Name -> New Name&#10;no tattoos"></textarea>
+            <div class="fate-input-row">
+                <div class="input-wrapper fate-input-wrapper fate-textarea-wrapper">
+                    <textarea id="vetoInput" rows="2" class="fate-field" data-fate-type="veto"></textarea>
+                    <div class="rotating-placeholder textarea-placeholder" data-for="vetoInput"></div>
+                </div>
+                <div class="fate-hand" data-target="vetoInput" data-type="veto">
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                </div>
+                <div class="fate-tree-card hidden" data-target="vetoInput">
+                    <div class="tree-silhouette"></div>
+                    <div class="falling-leaf"></div>
+                </div>
+            </div>
             <p class="qv-hint-below">Vetoes remove content from consideration. They cannot start scenes or direct the story.</p>
         </div>
 
         <div class="qv-section">
             <label class="qv-label">Quill</label>
             <p class="qv-hint-above">Use the Quill to gently steer tone, boundaries, or direction without rewriting what's already happened.</p>
-            <div id="quillPills" class="pill-tray"></div>
-            <div id="quillBox" class="input-wrapper locked-input" onclick="window.showPaywall('unlock')">
-                <textarea id="quillInput" rows="2" placeholder="Bring them to a moonlit garden..."></textarea>
+            <div class="fate-input-row">
+                <div id="quillBox" class="input-wrapper fate-input-wrapper fate-textarea-wrapper locked-input" onclick="window.showPaywall('unlock')">
+                    <textarea id="quillInput" rows="2" class="fate-field" data-fate-type="quill"></textarea>
+                    <div class="rotating-placeholder textarea-placeholder" data-for="quillInput"></div>
+                </div>
+                <div class="fate-hand" data-target="quillInput" data-type="quill">
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                </div>
+                <div class="fate-tree-card hidden" data-target="quillInput">
+                    <div class="tree-silhouette"></div>
+                    <div class="falling-leaf"></div>
+                </div>
             </div>
             <p class="qv-hint-below">Quill edits shape what follows and may persist. Each use exhausts the Quill, requiring time and words before it can be wielded again.</p>
         </div>
