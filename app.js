@@ -1077,8 +1077,8 @@ ANTI-HERO ENFORCEMENT:
       const wc = currentStoryWordCount();
       const needed = state.quill.nextReadyAtWords;
 
-      // Check if quill is unlocked (subscription, quill pass, or god mode)
-      const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasQuillPass(state.storyId));
+      // Quill unlocks with: subscription, story pass, or god mode
+      const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
 
       if (!quillUnlocked) {
           // Quill is paywalled
@@ -1467,30 +1467,8 @@ ANTI-HERO ENFORCEMENT:
     const optUnlock = document.getElementById('optUnlock');
     if(optUnlock) optUnlock.classList.toggle('hidden', !!hideUnlock);
 
-    // Show Quill unlock option when in quill mode or generally available
-    const optQuill = document.getElementById('optQuill');
-    const hasQuillUnlock = state.storyId && hasQuillPass(state.storyId);
-    const hideQuill = state.subscribed || hasQuillUnlock;
-    if(optQuill) optQuill.classList.toggle('hidden', !!hideQuill);
-
     pm.classList.remove('hidden');
   };
-
-  // Quill pass storage helpers
-  function hasQuillPass(storyId) {
-      if (!storyId) return false;
-      const passes = JSON.parse(localStorage.getItem('sb_quill_passes') || '[]');
-      return passes.includes(storyId);
-  }
-
-  function addQuillPass(storyId) {
-      if (!storyId) return;
-      const passes = JSON.parse(localStorage.getItem('sb_quill_passes') || '[]');
-      if (!passes.includes(storyId)) {
-          passes.push(storyId);
-          localStorage.setItem('sb_quill_passes', JSON.stringify(passes));
-      }
-  }
 
   function completePurchase() {
       const pm = document.getElementById('payModal');
@@ -2031,23 +2009,6 @@ ANTI-HERO ENFORCEMENT:
       if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
           activateGodMode();
       }
-  });
-
-  $('payQuill')?.addEventListener('click', () => {
-      state.storyId = state.storyId || makeStoryId();
-      state.lastPurchaseType = 'quill';
-      addQuillPass(state.storyId);
-
-      // Unlock the Quill UI
-      const quillBox = document.getElementById('quillBox');
-      if (quillBox) {
-          quillBox.classList.remove('locked-input');
-          quillBox.removeAttribute('onclick');
-      }
-
-      document.getElementById('payModal')?.classList.add('hidden');
-      showToast("Quill unlocked for this story.");
-      updateQuillUI();
   });
 
   $('btnCommitQuill')?.addEventListener('click', () => {
