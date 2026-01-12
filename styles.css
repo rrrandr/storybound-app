@@ -342,17 +342,21 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     gap: 6px;
     margin-bottom: 8px;
     min-height: 90px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden; /* Layout safety - prevent pill explosions */
 }
 @media (max-width: 500px) {
-    .pill-tray { grid-template-columns: repeat(3, 1fr); }
+    .pill-tray { grid-template-columns: repeat(3, 1fr); max-width: 380px; }
 }
 @media (max-width: 380px) {
-    .pill-tray { grid-template-columns: repeat(2, 1fr); }
+    .pill-tray { grid-template-columns: repeat(2, 1fr); max-width: 260px; }
 }
 
-/* Base pill styles */
+/* Base pill styles - fixed dimensions, no auto-expansion */
 .pill {
-    padding: 5px 10px;
+    padding: 5px 8px;
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,105,180,0.3);
     border-radius: 15px;
@@ -366,12 +370,15 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     align-items: center;
     justify-content: center;
     height: 28px;
+    overflow: hidden;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 
 /* Fixed width classes - pills may NOT resize dynamically */
-.pill.pill-small { width: 85px; }  /* ~2 words */
-.pill.pill-medium { width: 115px; } /* ~3 words */
-.pill.pill-large { width: 145px; }  /* ~4 words */
+.pill.pill-small { width: 85px; min-width: 85px; max-width: 85px; }
+.pill.pill-medium { width: 115px; min-width: 115px; max-width: 115px; }
+.pill.pill-large { width: 145px; min-width: 145px; max-width: 145px; }
 
 /* Leading + indicator */
 .pill::before { content: "+ "; opacity: 0.7; }

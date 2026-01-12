@@ -897,6 +897,11 @@ ANTI-HERO ENFORCEMENT:
       return pills;
   }
 
+  // Tease mode check - Quill pills do nothing in Tease (voyeur + free)
+  function isTeaseMode() {
+      return state.storyLength === 'voyeur' && state.access === 'free';
+  }
+
   function createPillElement(text, type, index, sizeClass, inputId) {
       const pill = document.createElement('span');
       pill.className = `pill ${type}-pill ${getWidthClass(sizeClass)} fade-in`;
@@ -906,6 +911,11 @@ ANTI-HERO ENFORCEMENT:
       pill.dataset.type = type;
 
       pill.onclick = () => {
+          // TEASE MODE GUARD: Quill pills do nothing in Tease
+          if (type === 'quill' && isTeaseMode()) {
+              return; // Do nothing
+          }
+
           const input = document.getElementById(inputId);
           if (input) {
               input.value = input.value ? input.value + '\n' + text : text;
@@ -935,6 +945,11 @@ ANTI-HERO ENFORCEMENT:
               const inputId = type === 'veto' ? 'vetoInput' : type === 'quill' ? 'quillInput' :
                   type === 'ancestryPlayer' ? 'ancestryInputPlayer' : 'ancestryInputLI';
               pill.onclick = () => {
+                  // TEASE MODE GUARD: Quill pills do nothing in Tease
+                  if (type === 'quill' && isTeaseMode()) {
+                      return;
+                  }
+
                   const input = document.getElementById(inputId);
                   if (input) {
                       input.value = input.value ? input.value + '\n' + newText : newText;
@@ -2321,6 +2336,39 @@ ${liAppears ? '- The love interest may appear briefly or be hinted at.' : '- The
 Setting: A place full of atmosphere and sensory detail fitting the genre.
 Situation: The Protagonist is alone with their thoughts, or engaged in something unrelated to romance.`;
 
+    // FATE STUMBLED DEBUG - Log all directives before API call
+    const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
+    const ancestryLI = $('ancestryInputLI')?.value.trim() || '';
+    const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
+
+    console.log('=== FATE STUMBLED DEBUG ===');
+    console.log('Tier:', state.access);
+    console.log('Mode:', state.mode);
+    console.log('Genre:', state.picks.genre);
+    console.log('Archetype Primary:', state.archetype.primary);
+    console.log('Archetype Modifier:', state.archetype.modifier);
+    console.log('Archetype Directives:', archetypeDirectives);
+    console.log('Ancestry (Yours):', ancestryPlayer || '(not set)');
+    console.log('Ancestry (Storybeau):', ancestryLI || '(not set)');
+    console.log('Intensity:', state.intensity);
+    console.log('Story Length:', state.storyLength);
+    console.log('System Prompt Length:', state.sysPrompt.length);
+    console.log('===========================');
+
+    // Check for missing required directives - surface user-facing message if missing
+    const missingDirectives = [];
+    if (!state.archetype.primary) missingDirectives.push('Primary Archetype');
+    if (!state.picks.genre || state.picks.genre.length === 0) missingDirectives.push('Genre');
+    if (!state.picks.style || state.picks.style.length === 0) missingDirectives.push('Style');
+
+    if (missingDirectives.length > 0) {
+        console.error('FATE STUMBLED: Missing required directives:', missingDirectives);
+        stopLoading();
+        showToast(`Missing: ${missingDirectives.join(', ')}. Please complete setup.`);
+        window.showScreen('setup');
+        return;
+    }
+
     try {
         const text = await callChat([
             {role:'system', content: state.sysPrompt},
@@ -2922,27 +2970,26 @@ Return ONLY the sentence:\n${text}`}]);
   $('btnSendEmail')?.addEventListener('click', () => {
       const subject = encodeURIComponent("You're invited to a Private Chamber");
       const body = encodeURIComponent(getInvitationMessage());
-      window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+      // Use location.href for proper mailto handling with default email client
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
       markInvitationSent();
-      showToast("Email invitation opened.");
+      showToast("Email client opened.");
   });
 
   $('btnSendSMS')?.addEventListener('click', () => {
       const body = encodeURIComponent(getInvitationMessage());
-      window.open(`sms:?body=${body}`, '_blank');
+      window.location.href = `sms:?body=${body}`;
       markInvitationSent();
-      showToast("SMS invitation opened.");
+      showToast("SMS opened.");
   });
 
   $('btnSendBoth')?.addEventListener('click', () => {
       const subject = encodeURIComponent("You're invited to a Private Chamber");
       const body = encodeURIComponent(getInvitationMessage());
-      window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-      setTimeout(() => {
-          window.open(`sms:?body=${body}`, '_blank');
-      }, 500);
+      // Open email first via location.href
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
       markInvitationSent();
-      showToast("Invitations opened.");
+      showToast("Email client opened. Use SMS button for text.");
   });
 
   $('btnPlaySoloWaiting')?.addEventListener('click', () => {
