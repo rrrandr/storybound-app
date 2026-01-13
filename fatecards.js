@@ -72,6 +72,14 @@
         const objectMatches = recentText.match(/\b(door|window|glass|drink|phone|letter|ring|key|photograph|mirror|candle|fire|rain|storm)\b/g) || [];
         const sceneObjects = [...new Set(objectMatches)].slice(0, 3);
 
+        // Calculate confidence score (0-1) based on how much context we found
+        let confidence = 0;
+        if (liName && recentText.includes(liName.toLowerCase())) confidence += 0.3;
+        if (lastEmotionalBeat !== 'neutral') confidence += 0.25;
+        if (unresolvedTension.length > 0) confidence += 0.2;
+        if (currentLocation) confidence += 0.15;
+        if (sceneObjects.length > 0) confidence += 0.1;
+
         return {
             presentCharacters,
             lastEmotionalBeat,
@@ -79,7 +87,8 @@
             currentLocation,
             sceneObjects,
             liName,
-            liIntroduced: liName && recentText.includes(liName.toLowerCase())
+            liIntroduced: liName && recentText.includes(liName.toLowerCase()),
+            confidence
         };
     }
 
@@ -109,17 +118,76 @@
         return GENERIC_VERBS.some(v => lower.includes(v));
     }
 
+    // SOFT FALLBACKS: Restrained options for low-confidence scenes
+    // These are warmer than hard generics but don't assume specific context
+    const SOFT_FALLBACKS = {
+        temptation: {
+            action: 'Something pulls at you—not quite nameable, but undeniable.',
+            dialogue: '"I shouldn\'t... but I want to."',
+            altAction: 'A quiet want stirs. You could follow it.',
+            altDialogue: '"Maybe just this once."'
+        },
+        confession: {
+            action: 'Words you\'ve kept inside press against your teeth.',
+            dialogue: '"There\'s something I need to say."',
+            altAction: 'The weight of unspoken truth grows heavier.',
+            altDialogue: '"I haven\'t been honest."'
+        },
+        boundary: {
+            action: 'You sense a threshold ahead. Cross it, or hold the line.',
+            dialogue: '"I need to decide what I\'m willing to risk."',
+            altAction: 'The moment asks: how far?',
+            altDialogue: '"Tell me if this is too much."'
+        },
+        power: {
+            action: 'The dynamic between you shifts. Lean into it or resist.',
+            dialogue: '"Who\'s in control here?"',
+            altAction: 'You feel the balance tipping. Guide it.',
+            altDialogue: '"Your move."'
+        },
+        silence: {
+            action: 'Words feel inadequate. Let the quiet say what you can\'t.',
+            dialogue: '(The silence means something.)',
+            altAction: 'Sometimes not speaking is the strongest choice.',
+            altDialogue: '(You hold the pause.)'
+        }
+    };
+
+    // Confidence threshold for using full contextual options
+    const CONFIDENCE_THRESHOLD = 0.35;
+
     // Contextual card generation with full scene awareness
     function generateContextualCard(baseCard, sceneContext, usedInThisDraw) {
         const state = window.state || {};
         const turnCount = state.turnCount || 0;
         const intensity = state.intensity || 'Naughty';
 
-        const { presentCharacters, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, liName, liIntroduced } = sceneContext;
+        const { presentCharacters, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, liName, liIntroduced, confidence } = sceneContext;
 
         // Determine story phase
         const isSetup = turnCount === 0;
         const isEarlyStory = turnCount <= 2;
+
+        // LOW CONFIDENCE: Use soft fallbacks instead of full contextual options
+        // This avoids over-specific language when we're not sure what's happening
+        if (confidence < CONFIDENCE_THRESHOLD && !isSetup) {
+            const fallback = SOFT_FALLBACKS[baseCard.id];
+            if (fallback) {
+                const allUsed = [...usedInThisDraw, ...lastTurnPhrases];
+                let action = fallback.action;
+                let dialogue = fallback.dialogue;
+
+                // Still check for repetition, use alt if needed
+                if (isPhraseTooSimilar(action, allUsed)) {
+                    action = fallback.altAction;
+                }
+                if (isPhraseTooSimilar(dialogue, allUsed)) {
+                    dialogue = fallback.altDialogue;
+                }
+
+                return { ...baseCard, action, dialogue };
+            }
+        }
 
         // Generate options based on card type with scene awareness
         const options = generateCardOptions(baseCard.id, {
