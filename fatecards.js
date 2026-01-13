@@ -8,232 +8,493 @@
         { id: 'silence', title: 'Silence', desc: 'Words fail. Actions speak.', actionTemplate: 'You let the moment breathe without words.', dialogueTemplate: '(Silence speaks louder)' }
     ];
 
-    // Contextual card generation based on story state
-    function generateContextualCard(baseCard) {
+    // SCENE AWARENESS: Extract critical context from story
+    function extractSceneContext(storyText, state) {
+        const recentText = storyText.slice(-800).toLowerCase();
+        const veryRecentText = storyText.slice(-300).toLowerCase();
+
+        // Extract named characters present in scene
+        const presentCharacters = [];
+        const liName = state.loveInterestName || '';
+        const playerName = state.playerName || 'you';
+        if (liName && recentText.includes(liName.toLowerCase())) {
+            presentCharacters.push(liName);
+        }
+        // Check for other named characters mentioned recently
+        const nameMatches = recentText.match(/\b[A-Z][a-z]{2,12}\b/g) || [];
+        nameMatches.forEach(name => {
+            if (name !== liName && name !== playerName && !presentCharacters.includes(name)) {
+                if (recentText.split(name.toLowerCase()).length > 2) {
+                    presentCharacters.push(name);
+                }
+            }
+        });
+
+        // Detect last emotional beat
+        let lastEmotionalBeat = 'neutral';
+        if (/kiss(ed|ing)?|lips\s+(met|touch|press)/.test(veryRecentText)) {
+            lastEmotionalBeat = 'intimacy';
+        } else if (/argue|anger|frustrat|shouted|yelled|storm(ed)?/.test(veryRecentText)) {
+            lastEmotionalBeat = 'conflict';
+        } else if (/laugh(ed|ing)?|smiled|grinned|joy/.test(veryRecentText)) {
+            lastEmotionalBeat = 'relief';
+        } else if (/heart\s+(pound|race)|breath\s+(catch|hitch)|tense|charged/.test(veryRecentText)) {
+            lastEmotionalBeat = 'tension';
+        } else if (/tears?|cried|confess|vulnerab|admit/.test(veryRecentText)) {
+            lastEmotionalBeat = 'vulnerability';
+        } else if (/secret|hidden|conceal|lie|lying/.test(veryRecentText)) {
+            lastEmotionalBeat = 'deception';
+        }
+
+        // Detect unresolved tension
+        const unresolvedTension = [];
+        if (/but\s+didn't|almost\s+said|wanted\s+to\s+but|held\s+back|stopped\s+(your|him|her)self/.test(recentText)) {
+            unresolvedTension.push('withheld action');
+        }
+        if (/question\s+hung|unanswered|didn't\s+respond|silence\s+stretched|no\s+reply/.test(recentText)) {
+            unresolvedTension.push('unanswered question');
+        }
+        if (/secret|hiding|haven't\s+told|don't\s+know\s+that/.test(recentText)) {
+            unresolvedTension.push('hidden truth');
+        }
+        if (/interrupt(ed)?|cut\s+off|phone\s+rang|door\s+(opened|burst)|someone\s+(entered|arrived)/.test(recentText)) {
+            unresolvedTension.push('interrupted moment');
+        }
+        if (/promise|swore|vowed|committed/.test(recentText) && /break|betray|doubt/.test(recentText)) {
+            unresolvedTension.push('threatened promise');
+        }
+
+        // Extract location/setting elements
+        const locationMatches = recentText.match(/\b(room|bedroom|office|garden|balcony|kitchen|hallway|car|restaurant|bar|street|roof|beach|forest|library|study)\b/g) || [];
+        const currentLocation = locationMatches.length > 0 ? locationMatches[locationMatches.length - 1] : null;
+
+        // Extract objects/props mentioned
+        const objectMatches = recentText.match(/\b(door|window|glass|drink|phone|letter|ring|key|photograph|mirror|candle|fire|rain|storm)\b/g) || [];
+        const sceneObjects = [...new Set(objectMatches)].slice(0, 3);
+
+        return {
+            presentCharacters,
+            lastEmotionalBeat,
+            unresolvedTension,
+            currentLocation,
+            sceneObjects,
+            liName,
+            liIntroduced: liName && recentText.includes(liName.toLowerCase())
+        };
+    }
+
+    // NON-REPETITION: Track recently used phrases
+    let lastTurnPhrases = [];
+
+    function isPhraseTooSimilar(phrase, usedPhrases) {
+        const normalized = phrase.toLowerCase().replace(/[^a-z\s]/g, '');
+        for (const used of usedPhrases) {
+            const usedNorm = used.toLowerCase().replace(/[^a-z\s]/g, '');
+            // Check for high overlap
+            const words1 = normalized.split(/\s+/);
+            const words2 = usedNorm.split(/\s+/);
+            const overlap = words1.filter(w => words2.includes(w) && w.length > 3).length;
+            if (overlap >= 3 || (overlap >= 2 && words1.length <= 5)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // GENERIC VERB AVOIDANCE: Only allow if contextualized
+    const GENERIC_VERBS = ['lean in', 'step closer', 'hesitate', 'lock eyes', 'move toward', 'pull away', 'look away'];
+
+    function hasGenericVerb(phrase) {
+        const lower = phrase.toLowerCase();
+        return GENERIC_VERBS.some(v => lower.includes(v));
+    }
+
+    // Contextual card generation with full scene awareness
+    function generateContextualCard(baseCard, sceneContext, usedInThisDraw) {
         const state = window.state || {};
-        // REPAIR: Get story content from pagination system (all pages), not visible DOM
-        const allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
-        const storyText = allContent.replace(/<[^>]*>/g, ' '); // Strip HTML tags
         const turnCount = state.turnCount || 0;
         const intensity = state.intensity || 'Naughty';
+
+        const { presentCharacters, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, liName, liIntroduced } = sceneContext;
 
         // Determine story phase
         const isSetup = turnCount === 0;
         const isEarlyStory = turnCount <= 2;
-        const liName = state.loveInterestName || '';
 
-        // Check if love interest has actually appeared in the story
-        const liIntroduced = liName && storyText.toLowerCase().includes(liName.toLowerCase());
+        // Generate options based on card type with scene awareness
+        const options = generateCardOptions(baseCard.id, {
+            isSetup,
+            isEarlyStory,
+            liIntroduced,
+            liName,
+            intensity,
+            lastEmotionalBeat,
+            unresolvedTension,
+            currentLocation,
+            sceneObjects,
+            presentCharacters
+        });
 
-        // Detect recent story moments from last ~500 chars
-        const recentText = storyText.slice(-500).toLowerCase();
-        const recentMoments = {
-            kissed: /kiss(ed|ing|es)?|lips\s+(met|touched|pressed)/.test(recentText),
-            touched: /touch(ed|ing)?|hand\s+(on|against)|fingers\s+(brush|trace)/.test(recentText),
-            tension: /heart\s+(pound|race|skip)|breath\s+(catch|hitch)|pulse\s+quick/.test(recentText),
-            argument: /argue|anger|frustrat|storm(ed)?\s+out|walked\s+away/.test(recentText),
-            vulnerable: /tears?|cried|confess|admit|truth|secret/.test(recentText),
-            alone: /alone\s+together|empty\s+room|door\s+(close|shut)|private/.test(recentText)
-        };
+        // Filter out repetitive or generic options
+        let action = options.action;
+        let dialogue = options.dialogue;
 
-        // Phase-appropriate suggestions that respond to recent story events
-        const contextualMods = {
-            temptation: getTemptationMod(isSetup, isEarlyStory, liIntroduced, liName, intensity, recentMoments),
-            confession: getConfessionMod(isSetup, isEarlyStory, liIntroduced, intensity, recentMoments),
-            boundary: getBoundaryMod(isSetup, liIntroduced, intensity, recentMoments),
-            power: getPowerMod(isSetup, liIntroduced, liName, intensity, recentMoments),
-            silence: getSilenceMod(isSetup, liIntroduced, liName, intensity, recentMoments)
-        };
+        // Check against used phrases in this draw and last turn
+        const allUsed = [...usedInThisDraw, ...lastTurnPhrases];
 
-        const mod = contextualMods[baseCard.id] || {};
+        if (isPhraseTooSimilar(action, allUsed) || (hasGenericVerb(action) && !currentLocation && !liName)) {
+            action = options.altAction || baseCard.actionTemplate;
+        }
+        if (isPhraseTooSimilar(dialogue, allUsed)) {
+            dialogue = options.altDialogue || baseCard.dialogueTemplate;
+        }
+
         return {
             ...baseCard,
-            action: mod.action || baseCard.actionTemplate,
-            dialogue: mod.dialogue || baseCard.dialogueTemplate
+            action,
+            dialogue
         };
     }
 
-    function getTemptationMod(isSetup, isEarly, liIntro, liName, intensity, recent) {
+    // ACTIONABLE OPTIONS: Each should change the next beat differently
+    function generateCardOptions(cardId, ctx) {
+        const { isSetup, isEarlyStory, liIntroduced, liName, intensity, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, presentCharacters } = ctx;
+
+        const locationPhrase = currentLocation ? `in the ${currentLocation}` : '';
+        const objectPhrase = sceneObjects.length > 0 ? sceneObjects[0] : '';
+        const tensionPhrase = unresolvedTension.length > 0 ? unresolvedTension[0] : '';
+
+        switch(cardId) {
+            case 'temptation':
+                return getTemptationOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
+            case 'confession':
+                return getConfessionOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
+            case 'boundary':
+                return getBoundaryOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
+            case 'power':
+                return getPowerOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
+            case 'silence':
+                return getSilenceOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
+            default:
+                return { action: '', dialogue: '' };
+        }
+    }
+
+    function getTemptationOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity } = ctx;
+
         if (isSetup) {
             return {
-                action: 'Something catches your attention—a scent, a sound, a half-remembered feeling.',
-                dialogue: '"What is this place...?"'
+                action: 'A pull toward something forbidden tugs at you. Act on it, or resist.',
+                dialogue: '"This feeling... I should ignore it."',
+                altAction: 'Something here calls to you against your better judgment.',
+                altDialogue: '"Why does this feel so familiar?"'
             };
         }
-        if (!liIntro) {
+
+        if (!liIntroduced) {
             return {
-                action: 'A pull toward something unknown. Curiosity, or something deeper.',
-                dialogue: '"I should leave this alone..."'
+                action: 'Your curiosity sharpens into want. Follow it deeper.',
+                dialogue: '"I need to know more..."',
+                altAction: 'A dangerous curiosity takes hold. Pursue it.',
+                altDialogue: '"This is reckless. I don\'t care."'
             };
         }
-        // Respond to recent story moments
-        if (recent.kissed) {
+
+        // ESCALATE based on last emotional beat
+        if (lastEmotionalBeat === 'intimacy') {
             return {
-                action: `The memory of that kiss lingers. You want more.`,
-                dialogue: '"That wasn\'t enough..."'
+                action: `That taste of ${liName} wasn't enough. Take more.`,
+                dialogue: '"I want that again."',
+                altAction: `Your body remembers ${liName}'s touch. It wants more.`,
+                altDialogue: '"Once wasn\'t enough."'
             };
         }
-        if (recent.argument) {
+        if (lastEmotionalBeat === 'conflict') {
             return {
-                action: `Even angry, you can\'t stop thinking about ${liName}.`,
-                dialogue: '"Why do I still want this?"'
+                action: `Your anger at ${liName} burns—but so does something else.`,
+                dialogue: '"I hate how much I still want this."',
+                altAction: `Fighting with ${liName} lit something you can't extinguish.`,
+                altDialogue: '"This doesn\'t change anything." (It does.)'
             };
         }
-        if (recent.alone) {
+        if (lastEmotionalBeat === 'tension') {
             return {
-                action: `Alone with ${liName}, the air feels charged.`,
-                dialogue: '"We shouldn\'t... but..."'
+                action: `The air between you and ${liName} crackles. Break the tension—or let it break you.`,
+                dialogue: '"If you don\'t stop looking at me like that..."',
+                altAction: `The tension demands release. You could give in.`,
+                altDialogue: '"We both know what happens next."'
             };
         }
-        if (intensity === 'Clean') {
-            return {
-                action: `Your thoughts drift to ${liName}. You catch yourself.`,
-                dialogue: '"I wonder what they\'re thinking..."'
-            };
-        }
+
+        // Default with context
+        const locContext = locationPhrase ? ` ${locationPhrase}` : '';
         return {
-            action: `You find yourself wanting to move closer to ${liName}.`,
-            dialogue: '"I keep thinking about..."'
+            action: `${liName} is right there${locContext}. Your restraint wavers.`,
+            dialogue: '"I keep telling myself to stop wanting this."',
+            altAction: `Every moment near ${liName} tests your resolve.`,
+            altDialogue: '"Just this once..."'
         };
     }
 
-    function getConfessionMod(isSetup, isEarly, liIntro, intensity, recent) {
+    function getConfessionOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, unresolvedTension } = ctx;
+
         if (isSetup) {
             return {
-                action: 'Something you\'ve been carrying demands to be spoken.',
-                dialogue: '"I\'ve never told anyone this..."'
+                action: 'A truth you\'ve buried demands air. Speak it now, or swallow it again.',
+                dialogue: '"There\'s something I\'ve never said out loud..."',
+                altAction: 'Words you\'ve rehearsed a thousand times rise unbidden.',
+                altDialogue: '"Before anything else happens, you need to know..."'
             };
         }
-        if (!liIntro) {
+
+        if (!liIntroduced) {
             return {
-                action: 'A truth rises unbidden to your lips.',
-                dialogue: '"There\'s something you should know..."'
+                action: 'The weight of an unspoken truth becomes unbearable.',
+                dialogue: '"I can\'t keep pretending..."',
+                altAction: 'Silence feels like lying. Speak.',
+                altDialogue: '"The truth is..."'
             };
         }
-        // Respond to recent moments
-        if (recent.kissed) {
+
+        // REVEAL based on unresolved tension
+        if (tensionPhrase === 'hidden truth') {
             return {
-                action: 'After that kiss, holding back feels impossible.',
-                dialogue: '"I need to tell you what this means to me..."'
+                action: `The secret you've kept from ${liName} claws at your throat. Let it out.`,
+                dialogue: '"There\'s something I should have told you."',
+                altAction: `Continuing to hide this from ${liName} is corroding you.`,
+                altDialogue: '"I\'ve been lying. About everything."'
             };
         }
-        if (recent.vulnerable) {
+        if (lastEmotionalBeat === 'vulnerability') {
             return {
-                action: 'The vulnerability unlocks something deeper.',
-                dialogue: '"Since we\'re being honest..."'
+                action: `${liName}'s openness deserves your own. Match it.`,
+                dialogue: '"Since you were honest with me..."',
+                altAction: `Their vulnerability unlocked something in you. Reciprocate.`,
+                altDialogue: '"I\'ve felt the same way. Longer than you know."'
             };
         }
-        if (recent.argument) {
+        if (lastEmotionalBeat === 'conflict') {
             return {
-                action: 'The fight stripped away your defenses.',
-                dialogue: '"The truth is, I\'m scared of how much I..."'
+                action: `The fight stripped your defenses. Say what the argument was really about.`,
+                dialogue: '"That\'s not why I\'m angry. The truth is..."',
+                altAction: `Anger made you honest. Don't retreat now.`,
+                altDialogue: '"I only fight this hard because I..."'
             };
         }
+
         return {
-            action: 'The weight of an unspoken truth presses against your chest.',
-            dialogue: '"Before this goes any further, I need you to know..."'
+            action: `The moment demands truth. Tell ${liName} what you've been holding back.`,
+            dialogue: '"I need you to understand something."',
+            altAction: `Silence is a form of lying. Choose honesty.`,
+            altDialogue: '"What I haven\'t said is..."'
         };
     }
 
-    function getBoundaryMod(isSetup, liIntro, intensity, recent) {
+    function getBoundaryOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity, currentLocation } = ctx;
+
         if (isSetup) {
             return {
-                action: 'You decide what you will and won\'t allow in this moment.',
-                dialogue: '"Not yet."'
+                action: 'Decide now what you will and won\'t permit—before the moment decides for you.',
+                dialogue: '"Not yet. Not like this."',
+                altAction: 'Draw a line. Or erase the one that\'s there.',
+                altDialogue: '"I need to know where this is going."'
             };
         }
-        // Respond to recent moments
-        if (recent.kissed || recent.touched) {
+
+        // COMPLICATE based on what just happened
+        if (lastEmotionalBeat === 'intimacy') {
             return {
-                action: 'After what just happened, you need to decide: more, or stop here.',
-                dialogue: '"Wait... or don\'t stop?"'
+                action: 'What just happened changes things. Decide: further, or stop here.',
+                dialogue: '"That was... do we keep going?"',
+                altAction: 'The line you told yourself you wouldn\'t cross is behind you. Draw a new one.',
+                altDialogue: '"If we do more, there\'s no going back."'
             };
         }
-        if (recent.tension) {
+        if (lastEmotionalBeat === 'tension') {
             return {
-                action: 'The tension is unbearable. You must choose.',
-                dialogue: '"If we do this..."'
+                action: `The tension is a knife's edge. Tip it one direction.`,
+                dialogue: '"Either we do this, or we walk away. Now."',
+                altAction: `This can\'t stay suspended. Force a resolution.`,
+                altDialogue: '"Make a choice. I need to know."'
             };
         }
-        if (intensity === 'Clean') {
+        if (tensionPhrase === 'interrupted moment') {
             return {
-                action: 'You take a breath and create space.',
-                dialogue: '"I need a moment."'
+                action: 'The interruption gave you an exit. Take it, or refuse it.',
+                dialogue: '"Maybe that was a sign we should stop."',
+                altAction: 'You could let this moment die. Or resurrect it.',
+                altDialogue: '"Where were we? I don\'t want to lose this."'
             };
         }
+
+        // Location-specific
+        if (currentLocation === 'bedroom' || currentLocation === 'room') {
+            return {
+                action: `Here, in this ${currentLocation}, the choice is inescapable. Decide.`,
+                dialogue: '"Do you want me to stay, or go?"',
+                altAction: `The ${currentLocation} demands a decision.`,
+                altDialogue: '"Tell me what you want."'
+            };
+        }
+
         return {
-            action: 'You decide how far this moment will go.',
-            dialogue: '"Is this what you want?"'
+            action: `Set the terms with ${liName}. What happens next is your call.`,
+            dialogue: '"Before this goes further—"',
+            altAction: `You have power here. Use it to draw a line or invite ${liName} past it.`,
+            altDialogue: '"Is this what you want?"'
         };
     }
 
-    function getPowerMod(isSetup, liIntro, liName, intensity, recent) {
-        if (isSetup || !liIntro) {
+    function getPowerOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, presentCharacters } = ctx;
+
+        if (isSetup || !liIntroduced) {
             return {
-                action: 'You sense the balance of control shifting around you.',
-                dialogue: '"Your move."'
+                action: 'The balance of control wavers. Tip it in your favor, or cede ground.',
+                dialogue: '"Your move."',
+                altAction: 'Someone must lead. Decide if it\'s you.',
+                altDialogue: '"I\'m waiting."'
             };
         }
-        // Respond to recent moments
-        if (recent.kissed) {
+
+        // WITHDRAW or ASSERT based on beat
+        if (lastEmotionalBeat === 'intimacy') {
             return {
-                action: 'After that kiss, who leads next?',
-                dialogue: '"Your turn... or mine?"'
+                action: `After that closeness, reclaim control—or surrender more.`,
+                dialogue: '"Now it\'s my turn."',
+                altAction: `${liName} had you vulnerable. Reassert yourself, or let them keep the advantage.`,
+                altDialogue: '"You think you have the upper hand?"'
             };
         }
-        if (recent.argument) {
+        if (lastEmotionalBeat === 'conflict') {
             return {
-                action: `The argument leaves you both raw. Someone must yield first.`,
-                dialogue: '"I\'m not backing down."'
+                action: `The argument left you both exposed. Seize the advantage, or extend mercy.`,
+                dialogue: '"I could end this. But I won\'t."',
+                altAction: `One of you must yield. Make ${liName} bend first, or offer the first surrender.`,
+                altDialogue: '"Admit you were wrong."'
             };
         }
-        if (recent.vulnerable) {
+        if (lastEmotionalBeat === 'vulnerability') {
             return {
-                action: `Vulnerability is its own kind of power.`,
-                dialogue: '"You have me at a disadvantage."'
+                action: `${liName}'s vulnerability is power. Protect it, or exploit it.`,
+                dialogue: '"You just gave me everything."',
+                altAction: `They trusted you with weakness. Honor that, or use it.`,
+                altDialogue: '"Thank you for trusting me."'
             };
         }
+
+        // Third party present
+        if (presentCharacters.length > 1) {
+            const otherPerson = presentCharacters.find(p => p !== liName) || 'them';
+            return {
+                action: `With ${otherPerson} watching, assert your claim on ${liName}—or defer.`,
+                dialogue: `"${liName} is with me."`,
+                altAction: `The presence of others changes the dynamic. Use it.`,
+                altDialogue: '"We should discuss this privately."'
+            };
+        }
+
         return {
-            action: `The balance between you and ${liName} shifts. You feel it.`,
-            dialogue: '"Look at me."'
+            action: `Shift the balance with ${liName}. Command, or invite them to lead.`,
+            dialogue: '"Come here."',
+            altAction: `You could take charge. Or make ${liName} earn it.`,
+            altDialogue: '"Show me what you want."'
         };
     }
 
-    function getSilenceMod(isSetup, liIntro, liName, intensity, recent) {
-        if (isSetup || !liIntro) {
+    function getSilenceOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, currentLocation, sceneObjects } = ctx;
+
+        if (isSetup || !liIntroduced) {
             return {
-                action: 'You let the silence speak for you.',
-                dialogue: '(The moment stretches, full of meaning.)'
+                action: 'Let the silence speak. Your stillness is a statement.',
+                dialogue: '(The quiet holds meaning.)',
+                altAction: 'Words would break this. Stay silent on purpose.',
+                altDialogue: '(You let the moment stretch.)'
             };
         }
-        // Respond to recent moments
-        if (recent.kissed) {
+
+        // MISDIRECT through silence
+        if (lastEmotionalBeat === 'conflict') {
             return {
-                action: 'No words could follow that. You simply breathe together.',
-                dialogue: '(The silence says everything.)'
+                action: 'Refuse to fill the silence after the fight. Let it suffocate.',
+                dialogue: '(Your silence is louder than any words.)',
+                altAction: `Don't give ${liName} the satisfaction of a response.`,
+                altDialogue: '(You say nothing. That is your answer.)'
             };
         }
-        if (recent.argument) {
+        if (lastEmotionalBeat === 'intimacy') {
             return {
-                action: 'After the shouting, the quiet is deafening.',
-                dialogue: '(The silence demands attention.)'
+                action: 'No words could hold what just passed between you. Breathe together.',
+                dialogue: '(The silence is sacred.)',
+                altAction: 'Speaking would cheapen it. Stay wordless.',
+                altDialogue: '(Your eyes say everything.)'
             };
         }
-        if (recent.tension) {
+        if (tensionPhrase === 'unanswered question') {
             return {
-                action: `The tension between you and ${liName} is palpable.`,
-                dialogue: '(Neither of you dares speak first.)'
+                action: 'They asked. You don\'t answer. Let the silence be your reply.',
+                dialogue: '(The question hangs. You let it.)',
+                altAction: 'Your non-answer is deliberate. Hold it.',
+                altDialogue: '(Some questions don\'t deserve words.)'
             };
         }
+
+        // Object-based silence
+        if (objectPhrase === 'window') {
+            return {
+                action: `Turn to the window. Let ${liName} wonder what you\'re thinking.`,
+                dialogue: '(Your gaze says: follow me or don\'t.)',
+                altAction: 'The window offers escape from conversation. Take it.',
+                altDialogue: '(Silence and distance speak together.)'
+            };
+        }
+        if (objectPhrase === 'drink' || objectPhrase === 'glass') {
+            return {
+                action: `Sip your drink instead of speaking. Make ${liName} break first.`,
+                dialogue: '(The glass buys you time.)',
+                altAction: 'Hide behind the ritual of drinking. Wait them out.',
+                altDialogue: '(Actions louder than words.)'
+            };
+        }
+
         return {
-            action: `You hold ${liName}'s gaze. No words needed.`,
-            dialogue: '(Your eyes say everything.)'
+            action: `Hold ${liName}\'s gaze without speaking. See who breaks first.`,
+            dialogue: '(The air between you thickens.)',
+            altAction: 'Your silence is a test. Will they fill it, or endure?',
+            altDialogue: '(Neither of you speaks. Neither looks away.)'
         };
     }
 
     // Generate the deck with contextual awareness
     function buildFateDeck() {
-        return fateDeckBase.map(generateContextualCard);
+        const state = window.state || {};
+        const allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
+        const storyText = allContent.replace(/<[^>]*>/g, ' ');
+
+        // Extract scene context once for all cards
+        const sceneContext = extractSceneContext(storyText, state);
+
+        // Track used phrases in this draw to prevent repetition
+        const usedInThisDraw = [];
+
+        return fateDeckBase.map(baseCard => {
+            const card = generateContextualCard(baseCard, sceneContext, usedInThisDraw);
+            // Track what we generated to avoid repetition in same draw
+            usedInThisDraw.push(card.action);
+            usedInThisDraw.push(card.dialogue);
+            return card;
+        });
+    }
+
+    // Store phrases from last turn for non-repetition
+    function recordLastTurnPhrases(options) {
+        if (options && Array.isArray(options)) {
+            lastTurnPhrases = options.flatMap(o => [o.action || '', o.dialogue || '']).filter(Boolean);
+        }
     }
 
     const fateDeck = fateDeckBase;
@@ -432,8 +693,8 @@
             commitFateSelection(mount);
         };
 
-        // “Once the player clicks into the populated text boxes…”
-        // Focus counts as “click into”. Input counts as editing.
+        // "Once the player clicks into the populated text boxes…"
+        // Focus counts as "click into". Input counts as editing.
         [actInput, diaInput].forEach(el => {
             if (!el) return;
             el.addEventListener('focus', maybeCommitOnEdit);
@@ -474,6 +735,11 @@
         if (!window.state) {
             console.warn("State not ready for dealing cards.");
             return;
+        }
+
+        // Record last turn's phrases for non-repetition before resetting
+        if (window.state.fateOptions) {
+            recordLastTurnPhrases(window.state.fateOptions);
         }
 
         // Reset per-hand state (surgical: only fate-related fields)
