@@ -1,12 +1,59 @@
 (function(window){
-    // Card Definitions
-    const fateDeck = [
-        { id: 'temptation', title: 'Temptation', desc: 'A sudden, overwhelming urge.', action: 'You feel a pull towards something forbidden.', dialogue: '"I shouldn\'t..."' },
-        { id: 'confession', title: 'Confession', desc: 'A secret spills out.', action: 'The truth burns on your tongue.', dialogue: '"There is something I must tell you."' },
-        { id: 'boundary', title: 'Boundary', desc: 'A line is drawn or crossed.', action: 'You step back, or push forward.', dialogue: '"Stop." / "More."' },
-        { id: 'power', title: 'Power Shift', desc: 'Control changes hands.', action: 'You take the lead, or surrender it.', dialogue: '"Look at me."' },
-        { id: 'silence', title: 'Silence', desc: 'Words fail. Actions speak.', action: 'You let the quiet do the work.', dialogue: '(Silence)' }
+    // Card Definitions - Base templates
+    const fateDeckBase = [
+        { id: 'temptation', title: 'Temptation', desc: 'A sudden, overwhelming urge.', actionTemplate: 'You feel drawn to something you know you shouldn\'t want.', dialogueTemplate: '"I shouldn\'t want this..."' },
+        { id: 'confession', title: 'Confession', desc: 'A secret spills out.', actionTemplate: 'The truth rises to your lips.', dialogueTemplate: '"There\'s something I need to tell you."' },
+        { id: 'boundary', title: 'Boundary', desc: 'A line is drawn or crossed.', actionTemplate: 'You decide whether to stop or go further.', dialogueTemplate: '"Wait." / "Don\'t stop."' },
+        { id: 'power', title: 'Power Shift', desc: 'Control changes hands.', actionTemplate: 'You take control, or yield it willingly.', dialogueTemplate: '"Look at me."' },
+        { id: 'silence', title: 'Silence', desc: 'Words fail. Actions speak.', actionTemplate: 'You let the moment breathe without words.', dialogueTemplate: '(Silence speaks louder)' }
     ];
+
+    // Contextual card generation based on story state
+    function generateContextualCard(baseCard) {
+        const state = window.state || {};
+        const storyEl = document.getElementById('storyText');
+        const context = storyEl ? storyEl.textContent.slice(-500) : '';
+        const liName = state.loveInterestName || 'them';
+        const intensity = state.intensity || 'Naughty';
+
+        // Build contextual suggestions based on card type
+        const contextualMods = {
+            temptation: {
+                action: `You find yourself wanting to move closer to ${liName}.`,
+                dialogue: `"I keep thinking about..."`
+            },
+            confession: {
+                action: `The weight of an unspoken truth presses against your chest.`,
+                dialogue: `"Before this goes any further, I need you to know..."`
+            },
+            boundary: {
+                action: intensity === 'Clean' ? `You take a breath and create space.` : `You decide how far this moment will go.`,
+                dialogue: intensity === 'Clean' ? `"I need a moment."` : `"Is this what you want?"`
+            },
+            power: {
+                action: `The balance between you shifts. You can feel it.`,
+                dialogue: `"Your move."`
+            },
+            silence: {
+                action: `You hold ${liName}'s gaze. No words needed.`,
+                dialogue: `(Your eyes say everything)`
+            }
+        };
+
+        const mod = contextualMods[baseCard.id] || {};
+        return {
+            ...baseCard,
+            action: mod.action || baseCard.actionTemplate,
+            dialogue: mod.dialogue || baseCard.dialogueTemplate
+        };
+    }
+
+    // Generate the deck with contextual awareness
+    function buildFateDeck() {
+        return fateDeckBase.map(generateContextualCard);
+    }
+
+    const fateDeck = fateDeckBase;
 
     // --- Surgical glue: minimal shared helpers / guards ---
     let _commitHooksBound = false;
@@ -184,8 +231,9 @@
 
         const unlockCount = resolveUnlockCount();
 
-        // Shuffle the 5 cards
-        const shuffled = [...fateDeck].sort(() => 0.5 - Math.random());
+        // Build contextual deck and shuffle
+        const contextualDeck = buildFateDeck();
+        const shuffled = [...contextualDeck].sort(() => 0.5 - Math.random());
         // Select top 5 (which is all of them, just randomized order)
         const selected = shuffled.slice(0, 5);
 

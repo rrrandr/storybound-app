@@ -126,12 +126,214 @@ window.config = window.config || {
       ]
   };
 
+  // =========================
+  // ARCHETYPE SYSTEM (LOCKED)
+  // =========================
+  const ARCHETYPES = {
+      ROMANTIC: {
+          id: 'ROMANTIC',
+          name: 'The Romantic',
+          desireStyle: 'Expressive, devoted, emotionally fluent',
+          summary: 'The Romantic — expressive and devoted, offering love openly and poetically, binding through attention, longing, and emotional presence.',
+          shadow: 'Shadow: risks overgiving, binding too tightly, and losing themselves in longing.',
+          primaryOnly: false
+      },
+      CLOISTERED: {
+          id: 'CLOISTERED',
+          name: 'The Cloistered',
+          desireStyle: 'Sheltered curiosity, restrained longing, awakening',
+          summary: 'The Cloistered — sheltered and restrained, approaching desire as discovery, awakening slowly through trust, patience, and chosen intimacy.',
+          shadow: 'Shadow: withdraws or delays, letting fear of awakening stall intimacy.',
+          primaryOnly: false
+      },
+      ROGUE: {
+          id: 'ROGUE',
+          name: 'The Rogue',
+          desireStyle: 'Playful danger, charm, irreverent confidence',
+          summary: 'The Rogue — playful and irreverent, using charm and danger to seduce, testing connection through flirtation, risk, and rule-bending confidence.',
+          shadow: 'Shadow: deflects depth with charm, testing how far desire can go without consequence.',
+          primaryOnly: false
+      },
+      DANGEROUS: {
+          id: 'DANGEROUS',
+          name: 'The Dangerous',
+          desireStyle: 'Controlled menace, restraint, implied power',
+          summary: 'The Dangerous — controlled and restrained, radiating implied power and menace, creating heat through what is held back rather than revealed.',
+          shadow: 'Shadow: withholds warmth, letting restraint harden into distance or intimidation.',
+          primaryOnly: false
+      },
+      GUARDIAN: {
+          id: 'GUARDIAN',
+          name: 'The Guardian',
+          desireStyle: 'Protection, steadiness, containment',
+          summary: 'The Guardian — steady and protective, offering safety as intimacy, building desire through reliability, containment, and earned trust.',
+          shadow: 'Shadow: overcontains, mistaking protection for control or emotional silence.',
+          primaryOnly: false
+      },
+      SOVEREIGN: {
+          id: 'SOVEREIGN',
+          name: 'The Sovereign',
+          desireStyle: 'Authority, composure, invitation rather than pursuit',
+          summary: 'The Sovereign — composed and authoritative, inviting rather than pursuing, framing desire as permission granted, not attention sought.',
+          shadow: 'Shadow: waits too long to yield, risking isolation behind authority.',
+          primaryOnly: false
+      },
+      ENCHANTING: {
+          id: 'ENCHANTING',
+          name: 'The Enchanting',
+          desireStyle: 'Allure, knowing control, magnetic presence',
+          summary: 'The Enchanting — magnetic and intentional, wielding allure with knowing control, choosing rather than chasing, shaping desire through presence alone.',
+          shadow: 'Shadow: keeps desire at a remove, fearing loss of control if fully seen.',
+          primaryOnly: false
+      },
+      DEVOTED: {
+          id: 'DEVOTED',
+          name: 'The Devoted',
+          desireStyle: 'Focused attention, affection, emotional exclusivity',
+          summary: 'The Devoted — focused and emotionally exclusive, expressing intensity through presence, loyalty, and the act of choosing again and again.',
+          shadow: 'Shadow: clings too closely, risking suffocation or fear of abandonment.',
+          primaryOnly: false
+      },
+      STRATEGIST: {
+          id: 'STRATEGIST',
+          name: 'The Strategist',
+          desireStyle: 'Anticipation, intelligence, teasing foresight',
+          summary: 'The Strategist — intelligent and anticipatory, seducing through foresight and teasing precision, turning desire into a game you want to lose.',
+          shadow: 'Shadow: overcalculates, turning intimacy into a game that delays surrender.',
+          primaryOnly: false
+      },
+      BEAUTIFUL_RUIN: {
+          id: 'BEAUTIFUL_RUIN',
+          name: 'The Beautiful Ruin',
+          desireStyle: 'Desire corrupted by distrust; love fractured, tested, and re-bound through choice',
+          summary: 'The Beautiful Ruin — desired yet disillusioned, shaped by wounds that make love feel suspect, testing and fracturing bonds until someone chooses them with clear eyes and stays.',
+          shadow: 'Shadow: tests and fractures bonds, fearing that love offered freely is not real.',
+          primaryOnly: true,
+          genderedExpression: {
+              male: 'Power + unworthiness → possessive devotion → fear of being chosen',
+              female: 'Desire + disillusionment → testing and withdrawal → fear of being falsely loved'
+          }
+      },
+      ANTI_HERO: {
+          id: 'ANTI_HERO',
+          name: 'The Anti-Hero',
+          desireStyle: 'Restrained longing shaped by duty, guilt, or a consuming moral code',
+          summary: 'The Anti-Hero — burdened by duty, guilt, or a consuming code, suppressing desire to prevent collateral harm, resisting love even as it draws them closer.',
+          shadow: 'Shadow: isolates themselves behind duty and self-denial, letting loneliness harden into resignation or controlled rage.',
+          primaryOnly: true,
+          coreFantasy: 'They want love, but refuse it because intimacy would endanger others, compromise their mission, or violate their personal code. They are not afraid of love. They are afraid of what love would cost.'
+      }
+  };
+
+  const ARCHETYPE_ORDER = [
+      'ROMANTIC', 'CLOISTERED', 'ROGUE', 'DANGEROUS', 'GUARDIAN',
+      'SOVEREIGN', 'ENCHANTING', 'DEVOTED', 'STRATEGIST', 'BEAUTIFUL_RUIN', 'ANTI_HERO'
+  ];
+
+  function getArchetypeSectionTitle(loveInterestGender) {
+      const g = (loveInterestGender || '').toLowerCase();
+      if (g === 'male') return 'Shape Your Storybeau';
+      if (g === 'female') return 'Shape Your Storybelle';
+      return 'Shape Your Storyboo';
+  }
+
+  function validateArchetypeSelection(primaryId, modifierId) {
+      const errors = [];
+      if (!primaryId) {
+          errors.push('You must select exactly one Primary Archetype.');
+          return { valid: false, errors };
+      }
+      const primary = ARCHETYPES[primaryId];
+      if (!primary) {
+          errors.push('Invalid Primary Archetype selected.');
+          return { valid: false, errors };
+      }
+      if (modifierId) {
+          const modifier = ARCHETYPES[modifierId];
+          if (!modifier) {
+              errors.push('Invalid Modifier Archetype selected.');
+              return { valid: false, errors };
+          }
+          if (modifier.primaryOnly) {
+              errors.push(`${modifier.name} may only be chosen as a Primary Archetype.`);
+              return { valid: false, errors };
+          }
+          if (primaryId === modifierId) {
+              errors.push('Primary and Modifier cannot be the same archetype.');
+              return { valid: false, errors };
+          }
+      }
+      return { valid: true, errors: [] };
+  }
+
+  function buildArchetypeDirectives(primaryId, modifierId, loveInterestGender) {
+      if (!primaryId) return '';
+      const primary = ARCHETYPES[primaryId];
+      if (!primary) return '';
+
+      let directive = `
+LOVE INTEREST ARCHETYPE DIRECTIVES (LOCKED):
+
+Primary Archetype: ${primary.name}
+${primary.summary}
+${primary.shadow}
+`;
+
+      if (primary.id === 'BEAUTIFUL_RUIN' && primary.genderedExpression) {
+          const g = (loveInterestGender || '').toLowerCase();
+          if (g === 'male') {
+              directive += `\nGendered Expression: ${primary.genderedExpression.male}\n`;
+          } else if (g === 'female') {
+              directive += `\nGendered Expression: ${primary.genderedExpression.female}\n`;
+          }
+      }
+
+      if (primary.id === 'ANTI_HERO' && primary.coreFantasy) {
+          directive += `\nCore Fantasy: ${primary.coreFantasy}\n`;
+      }
+
+      if (modifierId) {
+          const modifier = ARCHETYPES[modifierId];
+          if (modifier) {
+              directive += `
+Modifier Archetype: ${modifier.name}
+The Modifier colors expression style only. It does not override the Primary's emotional arc or shadow.
+Modifier Desire Style: ${modifier.desireStyle}
+`;
+          }
+      }
+
+      directive += `
+STORYTELLER ENFORCEMENT:
+- Treat the Primary Archetype as dominant.
+- Use the Shadow Clause as the main source of relational tension.
+- Allow fracture and repair without erasing the shadow.
+- Never "heal away" the archetype.
+`;
+
+      if (primary.id === 'ANTI_HERO') {
+          directive += `
+ANTI-HERO ENFORCEMENT:
+- Treat self-restraint as the dominant tension driver.
+- Surface conflict through refusal, withdrawal, sacrifice, delayed or denied intimacy.
+- Allow love to progress only through breach of code, not casual erosion.
+- Do not trivialize the code or duty.
+- Do not turn restraint into coyness.
+- Do not resolve the arc by removing responsibility.
+- Anti-Hero arcs hinge on choice under cost, not healing-through-love.
+`;
+      }
+
+      return directive;
+  }
+
   // --- GLOBAL STATE INITIALIZATION ---
-  window.state = { 
-      tier:'free', 
-      picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] }, 
-      gender:'Female', 
-      loveInterest:'Male', 
+  window.state = {
+      tier:'free',
+      picks:{ genre:['Romantasy'], dynamic:[], pov:'First', style:['Breathless'] },
+      gender:'Female',
+      loveInterest:'Male',
+      archetype: { primary: null, modifier: null }, 
       intensity:'Naughty', 
       turnCount:0,
       sysPrompt: "",
@@ -241,6 +443,14 @@ window.config = window.config || {
   function $(id){ return document.getElementById(id); }
   function toggle(id){ const el = document.getElementById(id); if(el) el.classList.toggle('hidden'); }
   function resetTurnSnapshotFlag(){ state._snapshotThisTurn = false; }
+  function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+  }
 
   // --- THEME & FONT HELPERS ---
   window.setTheme = function(name) {
@@ -352,9 +562,9 @@ window.config = window.config || {
       _currentScreenId = id;
       updateNavUI();
 
-      // Populate suggestion pills when entering setup screen
+      // Initialize fate hand system when entering setup screen
       if(id === 'setup') {
-          populatePills();
+          initFateHandSystem();
       }
   };
 
@@ -377,12 +587,33 @@ window.config = window.config || {
       }
       
       // Global Locked Click Delegation
+      // Allows preview buttons within locked cards to still function
       document.addEventListener('click', (e) => {
+          // Allow preview buttons to work even in locked cards
+          // Use closest() to catch clicks on button or any child element
+          if (e.target.closest('.preview-btn')) {
+              return; // Let the preview button handle its own click
+          }
+
           const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-tease, .locked-pass, [data-locked]');
           if (lockedTarget) {
               e.preventDefault();
               e.stopPropagation();
               e.stopImmediatePropagation();
+
+              // For locked Story Style cards, show preview THEN paywall
+              if (lockedTarget.classList.contains('card') && lockedTarget.dataset.grp === 'style') {
+                  const previewBtn = lockedTarget.querySelector('.preview-btn');
+                  if (previewBtn && previewBtn.dataset.txt) {
+                      const previewText = document.getElementById('previewText');
+                      const previewModal = document.getElementById('previewModal');
+                      if (previewText && previewModal) {
+                          previewText.textContent = previewBtn.dataset.txt;
+                          previewModal.classList.remove('hidden');
+                      }
+                  }
+              }
+
               window.openPaywall('unlock');
           }
       }, true); 
@@ -636,55 +867,231 @@ window.config = window.config || {
       applyVetoFromInput();
   }
 
-  // --- SUGGESTION PILLS ---
-  const VETO_SUGGESTIONS = [
-      "ban: moist", "no tattoos", "no scars", "no cheating", "no amnesia",
-      "rename: -> ", "more description", "keep pacing slower", "no second-person"
-  ];
-  const QUILL_SUGGESTIONS = [
-      "enemies to lovers", "only one bed", "bring them somewhere private",
-      "increase tension", "confession scene", "near-miss moment", "jealousy beat"
-  ];
+  // --- FATE HAND SYSTEM (Replaces pill system) ---
+  // Suggestion pools for rotating placeholders and fate draws
+  const FATE_SUGGESTIONS = {
+      ancestry: [
+          "Celtic", "Nordic", "Slavic", "Persian", "Greek", "Roman", "Korean", "Japanese",
+          "Chinese", "Indian", "Fae-touched", "Half-elf", "Cyborg exile", "Forgotten royal line",
+          "East Asian", "South Asian", "West African", "Mediterranean", "Pacific Islander",
+          "Afro-Caribbean", "Indigenous", "Southeast Asian", "Middle Eastern", "Latin American"
+      ],
+      veto: [
+          "No humiliation", "No betrayal", 'No "M\'Lady"', "No tattoos", "No scars",
+          "No cheating", "No amnesia", "No pregnancy", "No ghosts", "No death",
+          "No love triangles", "No supernatural", "No time skips", "No flowery language",
+          "No second person", "No violence", "No crying scenes", "No miscommunication trope"
+      ],
+      quill: [
+          "Public Bathhouse Setting", "Make it bigger", "Make it a Musical",
+          "More tension", "Confession scene", "Jealousy beat", "Stolen glance",
+          "Only one bed", "Enemies to lovers", "Forced proximity", "Vulnerability scene",
+          "Take them somewhere private", "Build tension slowly", "Unexpected interruption",
+          "Moonlit garden", "Charged silence", "Near miss moment", "Secret revealed"
+      ]
+  };
 
-  function populatePills() {
-      const vetoPillsEl = document.getElementById('vetoPills');
-      const quillPillsEl = document.getElementById('quillPills');
-      if(!vetoPillsEl || !quillPillsEl) return;
+  let fateHandInitialized = false;
+  let placeholderAnimations = {};
 
-      vetoPillsEl.innerHTML = '';
-      quillPillsEl.innerHTML = '';
+  // Tease mode check
+  function isTeaseMode() {
+      return state.storyLength === 'voyeur' && state.access === 'free';
+  }
 
-      // Shuffle and pick 4 random veto suggestions
-      const shuffledVeto = [...VETO_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 4);
-      shuffledVeto.forEach(txt => {
-          const pill = document.createElement('span');
-          pill.className = 'pill veto-pill';
-          pill.textContent = txt;
-          pill.onclick = () => {
-              const input = document.getElementById('vetoInput');
-              if(input) {
-                  input.value = input.value ? input.value + '\n' + txt : txt;
-              }
-              pill.remove();
-          };
-          vetoPillsEl.appendChild(pill);
+  // Get random suggestion from pool
+  function getRandomSuggestion(type, exclude = []) {
+      const pool = FATE_SUGGESTIONS[type] || [];
+      const available = pool.filter(s => !exclude.includes(s));
+      if (available.length === 0) return pool[Math.floor(Math.random() * pool.length)];
+      return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // Initialize rotating placeholder for a field
+  function initRotatingPlaceholder(inputId, type) {
+      const input = document.getElementById(inputId);
+      const placeholder = document.querySelector(`.rotating-placeholder[data-for="${inputId}"]`);
+      if (!input || !placeholder) return;
+
+      const suggestions = FATE_SUGGESTIONS[type] || [];
+      if (suggestions.length === 0) return;
+
+      // Build scrolling content (duplicate for seamless loop)
+      const buildContent = () => {
+          let html = '<span class="rotating-placeholder-inner">';
+          // Double the suggestions for seamless scroll
+          const doubled = [...suggestions, ...suggestions];
+          doubled.forEach((s, i) => {
+              const glowClass = Math.random() < 0.1 ? ' glow' : '';
+              html += `<span class="suggestion${glowClass}">${s}</span>`;
+              if (i < doubled.length - 1) html += '<span class="separator">•</span>';
+          });
+          html += '</span>';
+          return html;
+      };
+
+      placeholder.innerHTML = buildContent();
+
+      // Show/hide placeholder based on input content
+      const updateVisibility = () => {
+          if (input.value.trim()) {
+              placeholder.classList.add('hidden');
+          } else {
+              placeholder.classList.remove('hidden');
+          }
+      };
+
+      // Pause animation on focus
+      input.addEventListener('focus', () => {
+          const inner = placeholder.querySelector('.rotating-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'paused';
+      });
+      input.addEventListener('blur', () => {
+          const inner = placeholder.querySelector('.rotating-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'running';
+          updateVisibility();
+      });
+      input.addEventListener('input', updateVisibility);
+
+      updateVisibility();
+
+      // Random glow effect
+      setInterval(() => {
+          const spans = placeholder.querySelectorAll('.suggestion');
+          spans.forEach(s => s.classList.remove('glow'));
+          if (spans.length > 0 && Math.random() < 0.3) {
+              const randomSpan = spans[Math.floor(Math.random() * spans.length)];
+              randomSpan.classList.add('glow');
+              setTimeout(() => randomSpan.classList.remove('glow'), 2000);
+          }
+      }, 4000);
+  }
+
+  // Handle fate hand click - reveal card and populate field
+  function handleFateHandClick(hand) {
+      const targetId = hand.dataset.target;
+      const type = hand.dataset.type;
+      const input = document.getElementById(targetId);
+      const treeCard = document.querySelector(`.fate-tree-card[data-target="${targetId}"]`);
+
+      if (!input || !treeCard) return;
+
+      // TEASE MODE: Quill fate hand is disabled
+      if (type === 'quill' && isTeaseMode()) {
+          return;
+      }
+
+      // Get all cards in the hand
+      const cards = hand.querySelectorAll('.fate-hand-card');
+      const centerCard = cards[2]; // Middle card
+
+      // Flip center card
+      centerCard.classList.add('flipping');
+
+      // Fade out other cards
+      cards.forEach((card, i) => {
+          if (i !== 2) card.classList.add('fading');
       });
 
-      // Shuffle and pick 3 random quill suggestions
-      const shuffledQuill = [...QUILL_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 3);
-      shuffledQuill.forEach(txt => {
-          const pill = document.createElement('span');
-          pill.className = 'pill quill-pill';
-          pill.textContent = txt;
-          pill.onclick = () => {
-              const input = document.getElementById('quillInput');
-              if(input) {
-                  input.value = input.value ? input.value + '\n' + txt : txt;
+      // After flip completes
+      setTimeout(() => {
+          // Hide the hand, show the tree card
+          hand.style.display = 'none';
+          treeCard.classList.remove('hidden');
+
+          // Populate the field
+          const suggestion = getRandomSuggestion(type);
+          if (input.tagName === 'TEXTAREA') {
+              input.value = input.value ? input.value + '\n' + suggestion : suggestion;
+          } else {
+              if (!input.value.trim()) {
+                  input.value = suggestion;
               }
-              pill.remove();
-          };
-          quillPillsEl.appendChild(pill);
+          }
+
+          // Hide placeholder
+          const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
+          if (placeholder) placeholder.classList.add('hidden');
+
+          // Trigger leaf fall animation
+          const leaf = treeCard.querySelector('.falling-leaf');
+          if (leaf) {
+              leaf.classList.add('falling');
+          }
+      }, 450);
+  }
+
+  // Handle tree card click - invoke fate again
+  function handleTreeCardClick(treeCard) {
+      const targetId = treeCard.dataset.target;
+      const hand = document.querySelector(`.fate-hand[data-target="${targetId}"]`);
+      const input = document.getElementById(targetId);
+      const leaf = treeCard.querySelector('.falling-leaf');
+
+      if (!input || !hand) return;
+
+      const type = hand.dataset.type;
+
+      // TEASE MODE: Quill tree card is disabled
+      if (type === 'quill' && isTeaseMode()) {
+          return;
+      }
+
+      // Animate leaf fall then reset
+      if (leaf) {
+          leaf.classList.remove('falling', 'reset');
+          void leaf.offsetWidth; // Force reflow
+          leaf.classList.add('falling');
+
+          setTimeout(() => {
+              // Reset leaf
+              leaf.classList.remove('falling');
+              leaf.classList.add('reset');
+              setTimeout(() => leaf.classList.remove('reset'), 300);
+          }, 1000);
+      }
+
+      // Populate with new suggestion
+      const suggestion = getRandomSuggestion(type, [input.value]);
+      if (input.tagName === 'TEXTAREA') {
+          input.value = input.value ? input.value + '\n' + suggestion : suggestion;
+      } else {
+          input.value = suggestion;
+      }
+  }
+
+  // Initialize the entire fate hand system
+  function initFateHandSystem() {
+      if (fateHandInitialized) return;
+      fateHandInitialized = true;
+
+      // Initialize rotating placeholders
+      initRotatingPlaceholder('ancestryInputPlayer', 'ancestry');
+      initRotatingPlaceholder('ancestryInputLI', 'ancestry');
+      initRotatingPlaceholder('vetoInput', 'veto');
+      initRotatingPlaceholder('quillInput', 'quill');
+
+      // Bind fate hand clicks
+      document.querySelectorAll('.fate-hand').forEach(hand => {
+          hand.addEventListener('click', () => handleFateHandClick(hand));
       });
+
+      // Bind tree card clicks
+      document.querySelectorAll('.fate-tree-card').forEach(card => {
+          card.addEventListener('click', () => handleTreeCardClick(card));
+      });
+
+      // Update LI ancestry label based on gender
+      updateAncestryLILabel();
+  }
+
+  function updateAncestryLILabel() {
+      const label = document.getElementById('ancestryLabelLI');
+      if (!label) return;
+      const liGender = document.getElementById('loveInterestGender')?.value || 'Male';
+      if (liGender === 'Male') label.textContent = "Your Storybeau's";
+      else if (liGender === 'Female') label.textContent = "Your Storybelle's";
+      else label.textContent = "Your Storyboo's";
   }
 
   function updateQuillUI() {
@@ -713,19 +1120,39 @@ window.config = window.config || {
       const wc = currentStoryWordCount();
       const needed = state.quill.nextReadyAtWords;
 
-      if(ready) {
+      // Quill unlocks with: subscription, story pass, or god mode
+      const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+
+      if (!quillUnlocked) {
+          // Quill is paywalled
+          status.textContent = "Quill: Locked";
+          status.style.color = "var(--gold)";
+          if(quillBox) {
+              quillBox.classList.add('locked-input');
+              quillBox.onclick = () => window.showPaywall('unlock');
+          }
+          btn.disabled = true;
+          btn.style.opacity = "0.5";
+      } else if(ready) {
           status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
           status.style.color = "var(--pink)";
           btn.disabled = false;
           btn.style.opacity = "1";
           btn.style.borderColor = "var(--pink)";
           btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
-          if(quillBox) quillBox.classList.remove('locked-input');
+          if(quillBox) {
+              quillBox.classList.remove('locked-input');
+              quillBox.onclick = null;
+          }
       } else {
           const remain = Math.max(0, needed - wc);
           status.textContent = `Quill: Spent (${remain} words to recharge)`;
           status.style.color = "var(--gold)";
-          if(quillBox) quillBox.classList.add('locked-input');
+          // Don't lock for cooldown - just disable button
+          if(quillBox) {
+              quillBox.classList.remove('locked-input');
+              quillBox.onclick = null;
+          }
           btn.disabled = true;
           btn.style.opacity = "0.5";
           btn.style.borderColor = "transparent";
@@ -816,7 +1243,17 @@ window.config = window.config || {
 
   // --- VISUAL HELPERS ---
   async function ensureVisualBible(textContext) {
-      if(!state.visual) state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
+      // Guard against null/undefined - initialize safe defaults
+      if (!state.visual) {
+          state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
+      }
+      if (!state.visual.bible) {
+          state.visual.bible = { style: "", setting: "", characters: {} };
+      }
+      if (!state.visual.bible.characters || typeof state.visual.bible.characters !== 'object') {
+          state.visual.bible.characters = {};
+      }
+      // Check if bible is already populated
       if (state.visual.bible.style && Object.keys(state.visual.bible.characters).length > 0) return;
       
       const genre = Array.isArray(state?.picks?.genre) ? state.picks.genre.join(', ') : "";
@@ -932,15 +1369,20 @@ window.config = window.config || {
           }
       }
 
-      ['saveBtn', 'gameControlsBtn'].forEach(id => {
-          const btn = document.getElementById(id);
-          if(btn) {
-              if(couple || paid) btn.classList.remove('locked-style');
-              else btn.classList.add('locked-style');
-              
-              setPaywallClickGuard(btn, !(couple || paid));
-          }
-      });
+      // Save button follows paywall rules
+      const saveBtn = document.getElementById('saveBtn');
+      if(saveBtn) {
+          if(couple || paid) saveBtn.classList.remove('locked-style');
+          else saveBtn.classList.add('locked-style');
+          setPaywallClickGuard(saveBtn, !(couple || paid));
+      }
+
+      // Quill & Veto button is ALWAYS unlocked (even in Tease)
+      const controlsBtn = document.getElementById('gameControlsBtn');
+      if(controlsBtn) {
+          controlsBtn.classList.remove('locked-style');
+          setPaywallClickGuard(controlsBtn, false);
+      }
 
       if (!couple) {
           applyLengthLocks();
@@ -1082,6 +1524,7 @@ window.config = window.config || {
     const hideUnlock = (mode === 'sub') || state.subscribed || hasPassNow;
     const optUnlock = document.getElementById('optUnlock');
     if(optUnlock) optUnlock.classList.toggle('hidden', !!hideUnlock);
+
     pm.classList.remove('hidden');
   };
 
@@ -1244,7 +1687,11 @@ window.config = window.config || {
     state.turnCount = 0;
     state.storyLength = 'voyeur';
     state.storyEnded = false;
+    state.archetype = { primary: null, modifier: null };
     document.getElementById('storyText').innerHTML = '';
+    // Re-render archetype pills to clear selection
+    if (typeof renderArchetypePills === 'function') renderArchetypePills();
+    if (typeof updateArchetypePreview === 'function') updateArchetypePreview();
     
     updateContinueButtons();
     window.showScreen('setup');
@@ -1382,13 +1829,35 @@ window.config = window.config || {
 
   function initSelectionHandlers(){
     state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"] };
-    
+
+    // Initialize default dynamics (Power Imbalance)
+    if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
+        state.picks.dynamic = ['Power'];
+    }
+
     // Bind Visual Auto-Lock
     const chkLock = document.getElementById('chkAutoLockVisual');
     if(chkLock && chkLock.dataset.bound !== '1') {
         chkLock.dataset.bound = '1';
         chkLock.addEventListener('change', (e) => { state.visual.autoLock = e.target.checked; saveStorySnapshot(); });
     }
+
+    // Bind boundary chips (non-locked ones)
+    document.querySelectorAll('.boundary-chips .chip[data-boundary]').forEach(chip => {
+        if (chip.dataset.bound === '1') return;
+        chip.dataset.bound = '1';
+        chip.addEventListener('click', () => {
+            chip.classList.toggle('active');
+            const boundary = chip.textContent.trim();
+            if (chip.classList.contains('active')) {
+                if (!state.safety.boundaries.includes(boundary)) {
+                    state.safety.boundaries.push(boundary);
+                }
+            } else {
+                state.safety.boundaries = state.safety.boundaries.filter(b => b !== boundary);
+            }
+        });
+    });
 
     bindLengthHandlers();
 
@@ -1417,28 +1886,274 @@ window.config = window.config || {
         else { if(arr.length >= 3) return alert("Select up to 3 only."); arr.push(val); card.classList.add('selected'); }
       });
     });
+
+    // Initialize Archetype System
+    initArchetypeUI();
+  }
+
+  // =========================
+  // ARCHETYPE UI HANDLERS
+  // =========================
+  function initArchetypeUI() {
+      renderArchetypePills();
+      bindArchetypeHandlers();
+      bindLoveInterestGenderWatcher();
+      updateArchetypeSectionTitle();
+  }
+
+  function renderArchetypePills() {
+      const primaryContainer = document.getElementById('primaryArchetypePills');
+      const modifierContainer = document.getElementById('modifierArchetypePills');
+      if (!primaryContainer || !modifierContainer) return;
+
+      primaryContainer.innerHTML = '';
+      modifierContainer.innerHTML = '';
+
+      ARCHETYPE_ORDER.forEach(id => {
+          const arch = ARCHETYPES[id];
+          if (!arch) return;
+
+          // Primary pill
+          const primaryPill = document.createElement('button');
+          primaryPill.className = 'archetype-pill' + (arch.primaryOnly ? ' primary-only' : '');
+          primaryPill.dataset.archetype = id;
+          primaryPill.dataset.role = 'primary';
+          primaryPill.textContent = arch.name;
+          primaryPill.type = 'button';
+          if (state.archetype.primary === id) primaryPill.classList.add('selected');
+          primaryContainer.appendChild(primaryPill);
+
+          // Modifier pill (only for non-primary-only archetypes)
+          if (!arch.primaryOnly) {
+              const modPill = document.createElement('button');
+              modPill.className = 'archetype-pill';
+              modPill.dataset.archetype = id;
+              modPill.dataset.role = 'modifier';
+              modPill.textContent = arch.name;
+              modPill.type = 'button';
+              if (state.archetype.modifier === id) modPill.classList.add('selected');
+              if (state.archetype.primary === id) modPill.classList.add('disabled');
+              modifierContainer.appendChild(modPill);
+          }
+      });
+  }
+
+  function bindArchetypeHandlers() {
+      document.querySelectorAll('.archetype-pill').forEach(pill => {
+          if (pill.dataset.bound === '1') return;
+          pill.dataset.bound = '1';
+          pill.addEventListener('click', handleArchetypePillClick);
+      });
+  }
+
+  function handleArchetypePillClick(e) {
+      const pill = e.currentTarget;
+      const id = pill.dataset.archetype;
+      const role = pill.dataset.role;
+
+      if (pill.classList.contains('disabled')) return;
+
+      if (role === 'primary') {
+          if (state.archetype.primary === id) {
+              // Deselect
+              state.archetype.primary = null;
+          } else {
+              // Select new primary
+              state.archetype.primary = id;
+              // If modifier is same as new primary, clear modifier
+              if (state.archetype.modifier === id) {
+                  state.archetype.modifier = null;
+              }
+          }
+      } else if (role === 'modifier') {
+          const arch = ARCHETYPES[id];
+          if (arch && arch.primaryOnly) {
+              showToast(`${arch.name} may only be chosen as a Primary.`);
+              return;
+          }
+          if (state.archetype.primary === id) {
+              showToast('Modifier cannot be the same as Primary.');
+              return;
+          }
+          if (state.archetype.modifier === id) {
+              // Deselect
+              state.archetype.modifier = null;
+          } else {
+              // Select new modifier
+              state.archetype.modifier = id;
+          }
+      }
+
+      updateArchetypePillStates();
+      updateArchetypePreview();
+  }
+
+  function updateArchetypePillStates() {
+      // Update primary pills
+      document.querySelectorAll('.archetype-pill[data-role="primary"]').forEach(pill => {
+          const id = pill.dataset.archetype;
+          pill.classList.toggle('selected', state.archetype.primary === id);
+      });
+
+      // Update modifier pills
+      document.querySelectorAll('.archetype-pill[data-role="modifier"]').forEach(pill => {
+          const id = pill.dataset.archetype;
+          pill.classList.toggle('selected', state.archetype.modifier === id);
+          pill.classList.toggle('disabled', state.archetype.primary === id);
+      });
+  }
+
+  function updateArchetypePreview() {
+      const previewEl = document.getElementById('archetypePreview');
+      const contentEl = document.getElementById('archetypePreviewContent');
+      if (!previewEl || !contentEl) return;
+
+      if (!state.archetype.primary) {
+          previewEl.classList.add('hidden');
+          return;
+      }
+
+      const primary = ARCHETYPES[state.archetype.primary];
+      if (!primary) {
+          previewEl.classList.add('hidden');
+          return;
+      }
+
+      let html = `
+          <h4 class="archetype-preview-name">${primary.name}</h4>
+          <p class="archetype-preview-summary">${primary.summary}</p>
+          <p class="archetype-preview-shadow">${primary.shadow}</p>
+      `;
+
+      if (state.archetype.modifier) {
+          const modifier = ARCHETYPES[state.archetype.modifier];
+          if (modifier) {
+              html += `
+                  <div class="archetype-preview-modifier">
+                      <p class="archetype-preview-modifier-label">Modifier: ${modifier.name}</p>
+                      <p class="archetype-preview-modifier-style">Expression Style: ${modifier.desireStyle}</p>
+                  </div>
+              `;
+          }
+      }
+
+      contentEl.innerHTML = html;
+      previewEl.classList.remove('hidden');
+  }
+
+  function updateArchetypeSectionTitle() {
+      const titleEl = document.getElementById('archetypeSectionTitle');
+      if (!titleEl) return;
+      const genderSelect = document.getElementById('loveInterestGender');
+      const customInput = document.getElementById('customLoveInterest');
+      let loveGender = 'Male';
+      if (genderSelect) {
+          if (genderSelect.value === 'Custom' && customInput && customInput.value.trim()) {
+              loveGender = customInput.value.trim();
+          } else {
+              loveGender = genderSelect.value;
+          }
+      }
+      titleEl.textContent = getArchetypeSectionTitle(loveGender);
+  }
+
+  function bindLoveInterestGenderWatcher() {
+      const genderSelect = document.getElementById('loveInterestGender');
+      const customInput = document.getElementById('customLoveInterest');
+
+      function onGenderChange() {
+          updateArchetypeSectionTitle();
+          updateAncestryLILabel();
+      }
+
+      if (genderSelect && genderSelect.dataset.archetypeBound !== '1') {
+          genderSelect.dataset.archetypeBound = '1';
+          genderSelect.addEventListener('change', onGenderChange);
+      }
+
+      if (customInput && customInput.dataset.archetypeBound !== '1') {
+          customInput.dataset.archetypeBound = '1';
+          customInput.addEventListener('input', onGenderChange);
+      }
   }
 
   // --- LOADING OVERLAY ---
   let _loadingTimer = null;
   let _loadingActive = false;
+  let _loadingMsgTimer = null;
+  let _loadingCancelled = false;
+  let _loadingCancelCallback = null;
 
-  function startLoading(msg){
+  const LOADING_MESSAGES = [
+      "Painting the scene...",
+      "Saying it with his eyes...",
+      "Letting the silence linger...",
+      "Adding longing...",
+      "Shaping the moment...",
+      "Tracing the tension...",
+      "Capturing the unspoken...",
+      "Finding the perfect light..."
+  ];
+
+  function startLoading(msg, rotate = false, cancellable = false, onCancel = null){
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
-    document.getElementById('loadingText').textContent = msg || "Loading...";
-    
+    const textEl = document.getElementById('loadingText');
+    const percentEl = document.getElementById('loadingPercent');
+    const cancelBtn = document.getElementById('loadingCancelBtn');
+
+    if (textEl) textEl.textContent = msg || "Loading...";
+    if (percentEl) percentEl.textContent = '0%';
+
     _loadingActive = true;
+    _loadingCancelled = false;
+    _loadingCancelCallback = onCancel;
+
     if(fill) fill.style.width = '0%';
     if(overlay) overlay.classList.remove('hidden');
 
+    // Show/hide cancel button based on cancellable flag
+    if (cancelBtn) {
+        if (cancellable) {
+            cancelBtn.classList.add('visible');
+        } else {
+            cancelBtn.classList.remove('visible');
+        }
+    }
+
     if(_loadingTimer) clearInterval(_loadingTimer);
+    if(_loadingMsgTimer) clearInterval(_loadingMsgTimer);
+
     let p = 0;
     _loadingTimer = setInterval(() => {
-      if(!_loadingActive) return;
+      if(!_loadingActive || _loadingCancelled) return;
       p = Math.min(91, p + Math.random() * 6);
       if(fill) fill.style.width = p.toFixed(0) + '%';
+      if(percentEl) percentEl.textContent = p.toFixed(0) + '%';
     }, 250);
+
+    // Rotate messages if requested (for visualize)
+    if (rotate && textEl) {
+        let msgIdx = 0;
+        _loadingMsgTimer = setInterval(() => {
+            if (!_loadingActive || _loadingCancelled) return;
+            msgIdx = (msgIdx + 1) % LOADING_MESSAGES.length;
+            textEl.textContent = LOADING_MESSAGES[msgIdx];
+        }, 2000);
+    }
+  }
+
+  function cancelLoading() {
+    _loadingCancelled = true;
+    if (_loadingCancelCallback) {
+        _loadingCancelCallback();
+        _loadingCancelCallback = null;
+    }
+    stopLoading();
+  }
+
+  function isLoadingCancelled() {
+    return _loadingCancelled;
   }
 
   function stopLoading(){
@@ -1446,13 +2161,24 @@ window.config = window.config || {
     _loadingActive = false;
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
+    const percentEl = document.getElementById('loadingPercent');
+    const cancelBtn = document.getElementById('loadingCancelBtn');
+
     if(_loadingTimer) { clearInterval(_loadingTimer); _loadingTimer = null; }
+    if(_loadingMsgTimer) { clearInterval(_loadingMsgTimer); _loadingMsgTimer = null; }
     if(fill) fill.style.width = '100%';
+    if(percentEl) percentEl.textContent = '100%';
+    if(cancelBtn) cancelBtn.classList.remove('visible');
+
     setTimeout(() => {
       if(overlay) overlay.classList.add('hidden');
       if(fill) fill.style.width = '0%';
+      if(percentEl) percentEl.textContent = '0%';
     }, 120);
   }
+
+  // Bind cancel button
+  document.getElementById('loadingCancelBtn')?.addEventListener('click', cancelLoading);
 
   $('payOneTime')?.addEventListener('click', () => {
     state.storyId = state.storyId || makeStoryId();
@@ -1476,6 +2202,64 @@ window.config = window.config || {
       }
   });
 
+  // Track committed phrases in state
+  if (!state.committedQuill) state.committedQuill = [];
+  if (!state.committedVeto) state.committedVeto = [];
+
+  // Add a committed phrase to the UI
+  function addCommittedPhrase(container, text, type, index) {
+      const phrase = document.createElement('div');
+      phrase.className = `committed-phrase ${type}-phrase`;
+      phrase.dataset.index = index;
+      phrase.innerHTML = `
+          <button class="committed-phrase-remove" title="Remove">&times;</button>
+          <span class="committed-phrase-text">${text}</span>
+      `;
+      // Insert at top (new commits above old)
+      container.insertBefore(phrase, container.firstChild);
+
+      // Bind remove button
+      phrase.querySelector('.committed-phrase-remove').addEventListener('click', () => {
+          removeCommittedPhrase(type, index);
+      });
+  }
+
+  // Remove a committed phrase
+  function removeCommittedPhrase(type, index) {
+      const arr = type === 'quill' ? state.committedQuill : state.committedVeto;
+      arr.splice(index, 1);
+      renderCommittedPhrases(type);
+      // Update veto state if needed
+      if (type === 'veto') rebuildVetoFromCommitted();
+      saveStorySnapshot();
+  }
+
+  // Render all committed phrases for a type
+  function renderCommittedPhrases(type) {
+      const container = document.getElementById(type === 'quill' ? 'quillCommitted' : 'vetoCommitted');
+      const arr = type === 'quill' ? state.committedQuill : state.committedVeto;
+      if (!container) return;
+      container.innerHTML = '';
+      arr.forEach((text, i) => addCommittedPhrase(container, text, type, i));
+  }
+
+  // Rebuild veto state from committed phrases
+  function rebuildVetoFromCommitted() {
+      state.veto = state.veto || { bannedWords: [], tone: [] };
+      state.veto.bannedWords = [];
+      state.veto.tone = [];
+      state.committedVeto.forEach(line => {
+          const l = line.trim().toLowerCase();
+          if (l.startsWith('ban:')) {
+              state.veto.bannedWords.push(l.replace('ban:', '').trim());
+          } else if (l.startsWith('no ') || l.startsWith('avoid ')) {
+              state.veto.tone.push(line.trim());
+          } else {
+              state.veto.tone.push(line.trim());
+          }
+      });
+  }
+
   $('btnCommitQuill')?.addEventListener('click', () => {
       if (!getQuillReady()) return;
       const quillEl = document.getElementById('quillInput');
@@ -1489,12 +2273,16 @@ window.config = window.config || {
       // Store quill intent in state for prompt injection
       window.state.quillIntent = quillText;
 
+      // Add to committed phrases
+      state.committedQuill.push(quillText);
+      renderCommittedPhrases('quill');
+
       const storyEl = document.getElementById('storyText');
       if (storyEl && quillText) {
           const div = document.createElement('div');
           div.className = 'quill-intervention';
           div.style.cssText = 'font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;';
-          div.innerHTML = formatStory(quillText);
+          div.innerHTML = formatStory(quillText, true);
           storyEl.appendChild(div);
       }
 
@@ -1505,6 +2293,28 @@ window.config = window.config || {
       updateQuillUI();
       saveStorySnapshot();
       showToast("Quill committed.");
+  });
+
+  // Commit Veto Button Handler
+  $('btnCommitVeto')?.addEventListener('click', () => {
+      const vetoEl = document.getElementById('vetoInput');
+      if (!vetoEl) return;
+      const vetoText = vetoEl.value.trim();
+      if (!vetoText) { showToast("No veto to commit."); return; }
+
+      // Add each line as separate committed phrase
+      const lines = vetoText.split('\n').filter(l => l.trim());
+      lines.forEach(line => {
+          if (!state.committedVeto.includes(line.trim())) {
+              state.committedVeto.push(line.trim());
+          }
+      });
+      renderCommittedPhrases('veto');
+
+      applyVetoFromInput();
+      vetoEl.value = '';
+      saveStorySnapshot();
+      showToast("Veto committed. Boundaries updated.");
   });
 
   // --- META SYSTEM (RESTORED) ---
@@ -1523,8 +2333,43 @@ window.config = window.config || {
       if(btn) btn.classList.add('active');
   };
 
+  // --- BEGIN STORY VALIDATION GUARDRAIL ---
+  function validateBeginStory() {
+      const errors = [];
+
+      // Check archetype selection
+      const archetypeValidation = validateArchetypeSelection(state.archetype.primary, state.archetype.modifier);
+      if (!archetypeValidation.valid) {
+          errors.push(archetypeValidation.errors[0] || 'Please select a Primary Archetype.');
+      }
+
+      // Check for at least one genre selected
+      if (!state.picks.genre || state.picks.genre.length === 0) {
+          errors.push('Please select at least one Genre.');
+      }
+
+      // Check for at least one dynamic selected
+      if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
+          errors.push('Please select at least one Dynamic.');
+      }
+
+      // Check for at least one style selected
+      if (!state.picks.style || state.picks.style.length === 0) {
+          errors.push('Please select at least one Story Style.');
+      }
+
+      return errors;
+  }
+
   // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
+    // Comprehensive validation before proceeding
+    const validationErrors = validateBeginStory();
+    if (validationErrors.length > 0) {
+        showToast(validationErrors[0]);
+        return;
+    }
+
     const pName = $('playerNameInput').value.trim() || "The Protagonist";
     const lName = $('partnerNameInput').value.trim() || "The Love Interest";
     const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
@@ -1659,10 +2504,12 @@ Style: ${state.picks.style.join(', ')}.
 POV: ${state.picks.pov}.
 Dynamics: ${state.picks.dynamic.join(', ')}.
 
-    
+
     Protagonist: ${pName} (${pGen}, ${pPro}).
     Love Interest: ${lName} (${lGen}, ${lPro}).
-    
+
+    ${buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen)}
+
     ${safetyStr}
 
     Current Intensity: ${state.intensity}
@@ -1692,20 +2539,137 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     
     startLoading("Conjuring the world...");
     
+    // Pacing rules based on intensity
+    const pacingRules = {
+        'Clean': 'Focus only on atmosphere, world-building, and hints of the protagonist\'s past. No tension, no longing—just setting and mystery.',
+        'Naughty': 'Focus on atmosphere and world-building. Light emotional undertones allowed, but no romantic tension yet.',
+        'Erotic': 'Build atmosphere first. Romantic tension may simmer beneath the surface, but keep the focus on setting.',
+        'Dirty': 'Atmosphere first, but charged undercurrents are allowed. The heat can be present from the start.'
+    };
+    const pacingRule = pacingRules[state.intensity] || pacingRules['Naughty'];
+    const liAppears = state.intensity === 'Dirty' || Math.random() < 0.25;
+
     const introPrompt = `Write the opening scene (approx 200 words).
-    Setting: A place full of tension and atmosphere fitting the genre.
-    Situation: The Protagonist and Love Interest are thrown together.
-    Establish the dynamic immediately.
-    End with a hook or a moment of tension.`;
-    
+
+FIRST SECTION RULES:
+- ${pacingRule}
+- Focus on: World setup, hints at overall arc, the protagonist's past or situation.
+${liAppears ? '- The love interest may appear briefly or be hinted at.' : '- The love interest should NOT appear yet. Build anticipation.'}
+- End with a hook, a question, or atmospheric tension—NOT a romantic moment.
+
+Setting: A place full of atmosphere and sensory detail fitting the genre.
+Situation: The Protagonist is alone with their thoughts, or engaged in something unrelated to romance.`;
+
+    // FATE STUMBLED DIAGNOSTIC - Structured payload logging
+    const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
+    const ancestryLI = $('ancestryInputLI')?.value.trim() || '';
+    const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
+
+    // Determine unlock tier
+    const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+    let tier = 'free';
+    if (state.subscribed) tier = 'subscribed';
+    else if (quillUnlocked) tier = 'quill_unlocked';
+    else if (state.storyId && hasStoryPass(state.storyId)) tier = 'story_unlocked';
+
+    // Build structured payload for diagnostic
+    const diagnosticPayload = {
+        mode: state.mode || 'solo',
+        tier: tier,
+        genre: state.picks.genre || [],
+        archetype: {
+            primary: state.archetype.primary || null,
+            modifier: state.archetype.modifier || null,
+            directives: archetypeDirectives || '(none built)'
+        },
+        ancestry: {
+            yours: ancestryPlayer || '(empty)',
+            storybeau: ancestryLI || '(empty)'
+        },
+        quill: {
+            unlocked: quillUnlocked,
+            directives: quillUnlocked ? (state.quillIntent || '(none this turn)') : '(LOCKED - not injected)'
+        },
+        veto: {
+            bannedWords: state.veto?.bannedWords || [],
+            tone: state.veto?.tone || []
+        },
+        intensity: state.intensity || 'Naughty',
+        pov: state.picks.pov || 'Third Person Limited',
+        style: state.picks.style || [],
+        dynamic: state.picks.dynamic || [],
+        storyLength: state.storyLength || 'novella',
+        systemPromptLength: state.sysPrompt?.length || 0
+    };
+
+    // Log the full payload
+    console.group('STORYBOUND FINAL PROMPT PAYLOAD');
+    console.log(diagnosticPayload);
+    console.groupEnd();
+
+    // VALIDATION GUARD - Check all required fields before model call
+    function validatePayload(payload) {
+        const errors = [];
+
+        // Required field checks
+        if (!payload.mode) errors.push('Mode is undefined');
+        if (!payload.genre || payload.genre.length === 0) errors.push('Genre is missing or empty');
+        if (!payload.style || payload.style.length === 0) errors.push('Style is missing or empty');
+        if (!payload.archetype.primary) errors.push('Primary Archetype not selected (default: Beautiful Ruin)');
+        if (!payload.intensity) errors.push('Intensity is undefined');
+        if (!payload.pov) errors.push('POV is undefined');
+        if (payload.systemPromptLength === 0) errors.push('System prompt is empty (critical failure)');
+
+        // Check for null/undefined in directive arrays
+        if (payload.veto.bannedWords.some(w => w === null || w === undefined)) {
+            errors.push('Veto bannedWords array contains null/undefined');
+        }
+        if (payload.veto.tone.some(t => t === null || t === undefined)) {
+            errors.push('Veto tone array contains null/undefined');
+        }
+
+        // Check archetype directives actually built
+        if (payload.archetype.directives === '(none built)' || !payload.archetype.directives) {
+            errors.push('Archetype directives failed to build');
+        }
+
+        return errors;
+    }
+
+    const payloadErrors = validatePayload(diagnosticPayload);
+
+    if (payloadErrors.length > 0) {
+        console.group('STORYBOUND VALIDATION FAILED');
+        console.error('Errors:', payloadErrors);
+        console.log('Payload at failure:', diagnosticPayload);
+        console.groupEnd();
+
+        stopLoading();
+        const errorMessage = `Story setup incomplete: ${payloadErrors[0]}`;
+        showToast(errorMessage);
+        console.error('FATE STUMBLED PREVENTED:', errorMessage);
+        window.showScreen('setup');
+        return;
+    }
+
+    console.log('STORYBOUND VALIDATION PASSED - Proceeding to model call');
+
     try {
         const text = await callChat([
             {role:'system', content: state.sysPrompt},
             {role:'user', content: introPrompt}
         ]);
-        
-        const title = await callChat([{role:'user', content:`Based on this opening, give me a 3-word title:\n${text}`}]);
-        const synopsis = await callChat([{role:'user', content:`Summarize the setting in one sentence:\n${text}`}]);
+
+        const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title that is:
+- Poetic and evocative
+- Mysterious, not literal
+- Avoids clichés like "Forbidden", "Dangerous", "Seduction"
+Return ONLY the title, no quotes or explanation:\n${text}`}]);
+        const synopsis = await callChat([{role:'user', content:`Write back-cover copy for this story in ONE sentence. It should:
+- Tease themes and mood, not plot
+- Imply conflict without revealing it
+- Sound like a published novel blurb
+Return ONLY the sentence:\n${text}`}]);
         
         document.getElementById('storyTitle').textContent = title.replace(/"/g,'');
         document.getElementById('storySynopsis').textContent = synopsis;
@@ -1721,11 +2685,21 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
         }
 
     } catch(e) {
-        alert("Fate stumbled. Please try again.");
+        console.group('STORYBOUND FATE STUMBLED - API ERROR');
+        console.error('Error object:', e);
+        console.error('Error message:', e?.message || '(no message)');
+        console.error('Error stack:', e?.stack || '(no stack)');
+        console.log('System prompt length at failure:', state.sysPrompt?.length || 0);
+        console.log('Intro prompt length at failure:', introPrompt?.length || 0);
+        console.groupEnd();
+
+        alert("Fate stumbled. Please try again. (Check console for diagnostics)");
         window.showScreen('setup');
     } finally {
         stopLoading();
-        if(window.initCards) window.initCards();
+        // Deal fresh fate cards for first turn
+        if(window.dealFateCards) window.dealFateCards();
+        else if(window.initCards) window.initCards();
         updateQuillUI();
         updateBatedBreathState();
     }
@@ -1735,40 +2709,57 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
   async function callChat(messages, temp=0.7) {
     const payload = {
        messages: messages,
-       model: STORY_MODEL, 
+       model: STORY_MODEL,
        temperature: temp,
        max_tokens: 1000
     };
-    
+
     try {
         const res = await fetch(PROXY_URL, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify(payload)
         });
-        if(!res.ok) throw new Error("API Error");
+        if(!res.ok) {
+            const errorText = await res.text().catch(() => '(could not read response body)');
+            console.group('STORYBOUND API ERROR');
+            console.error('HTTP Status:', res.status, res.statusText);
+            console.error('Response body:', errorText);
+            console.error('Request payload size:', JSON.stringify(payload).length, 'bytes');
+            console.error('System message length:', messages[0]?.content?.length || 0);
+            console.groupEnd();
+            throw new Error(`API Error: ${res.status} ${res.statusText}`);
+        }
         const data = await res.json();
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            console.group('STORYBOUND API MALFORMED RESPONSE');
+            console.error('Response data:', data);
+            console.groupEnd();
+            throw new Error('API returned malformed response (no choices)');
+        }
         return data.choices[0].message.content;
     } catch(e){
-        console.error(e);
+        console.error('callChat error:', e);
         throw e;
     }
   }
 
   async function generateSettingShot(desc) {
      const img = document.getElementById('settingShotImg');
+     const errDiv = document.getElementById('settingError');
      if(!img) return;
      const wrap = document.getElementById('settingShotWrap');
      if(wrap) wrap.style.display = 'flex';
      img.style.display = 'none';
-     
+     if(errDiv) errDiv.classList.add('hidden');
+
      try {
          const res = await fetch(IMAGE_PROXY_URL, {
              method:'POST',
              headers:{'Content-Type':'application/json'},
-             body: JSON.stringify({ 
+             body: JSON.stringify({
                  prompt: `Cinematic establishing shot, atmospheric, fantasy art style. No text. ${desc}`,
-                 provider: 'xai', 
+                 provider: 'xai',
                  size: "1024x1024",
                  n: 1
              })
@@ -1779,14 +2770,26 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
              if(!url.startsWith('http') && !url.startsWith('data:')) url = `data:image/png;base64,${url}`;
              img.src = url;
              img.onload = () => { img.style.display = 'block'; };
+             img.onerror = () => {
+                 img.style.display = 'none';
+                 if(errDiv) { errDiv.textContent = 'The scene resists capture...'; errDiv.classList.remove('hidden'); }
+             };
+         } else {
+             if(errDiv) { errDiv.textContent = 'The scene resists capture...'; errDiv.classList.remove('hidden'); }
          }
-     } catch(e) { console.warn("Setting shot failed", e); }
+     } catch(e) {
+         console.warn("Setting shot failed", e);
+         if(errDiv) { errDiv.textContent = 'The scene resists capture...'; errDiv.classList.remove('hidden'); }
+     }
   }
 
   // --- VISUALIZE (STABILIZED) ---
+  let _vizCancelled = false;
+
   window.visualize = async function(isRe){
       if (_vizInFlight) return;
       _vizInFlight = true;
+      _vizCancelled = false;
 
       const modal = document.getElementById('vizModal');
       const retryBtn = document.getElementById('vizRetryBtn');
@@ -1800,10 +2803,21 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
 
-      startLoading();
-      
+      // Start cancellable loading with cancel callback
+      startLoading("Painting the scene...", true, true, () => {
+          _vizCancelled = true;
+      });
+
       const lastText = storyText ? storyText.textContent.slice(-600) : "";
       await ensureVisualBible(storyText ? storyText.textContent : "");
+
+      // Check if cancelled during bible build
+      if (_vizCancelled) {
+          _vizInFlight = false;
+          if(retryBtn) retryBtn.disabled = false;
+          return;
+      }
+
       const anchorText = buildVisualAnchorsText();
 
       img.onload = null; img.onerror = null;
@@ -1817,85 +2831,139 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
               try {
                   promptMsg = await Promise.race([
                       callChat([{
-                          role:'user', 
+                          role:'user',
                           content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire. Return only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
               } catch (e) {
-                  promptMsg = "Fantasy scene, detailed, atmospheric."; 
+                  promptMsg = "Fantasy scene, detailed, atmospheric.";
               }
               document.getElementById('vizPromptInput').value = promptMsg;
+          }
+
+          // Check if cancelled during prompt generation
+          if (_vizCancelled) {
+              _vizInFlight = false;
+              if(retryBtn) retryBtn.disabled = false;
+              return;
           }
 
           const modelEl = document.getElementById('vizModel');
           const userModel = modelEl ? modelEl.value : "";
           const um = (userModel || "").toLowerCase();
-          
+
           const isOpenAI = um.includes("gpt") || um.includes("openai");
           const isGemini = um.includes("gemini");
 
+          // Provider fallback order - will try each until one succeeds
           const attempts = [];
-          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel });
-          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1' });
-          attempts.push({ provider: 'gemini', model: isGemini ? userModel : 'gemini-2.5-flash-image' });
+          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel, name: 'Grok' });
+          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1', name: 'OpenAI' });
+          attempts.push({ provider: 'gemini', model: isGemini ? userModel : 'gemini-2.5-flash-image', name: 'Gemini' });
 
           let rawUrl = null;
           let lastErr = null;
+          let attemptCount = 0;
 
           for(const attempt of attempts){
+             // Check if cancelled before each attempt
+             if (_vizCancelled) {
+                 _vizInFlight = false;
+                 if(retryBtn) retryBtn.disabled = false;
+                 return;
+             }
+
+             attemptCount++;
              try {
+                // Add timeout to fetch to prevent infinite hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
                 const res = await fetch(IMAGE_PROXY_URL, {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         prompt: anchorText + "\n\nSCENE:\n" + promptMsg + (state.intensity === 'Dirty' || state.intensity === 'Erotic' ? " Artistic, suggestive, safe-for-work." : "") + "\n\n(Generate art without any text/lettering.)",
                         provider: attempt.provider,
                         model: attempt.model,
                         size: "1024x1024",
                         n: 1
-                    })
+                    }),
+                    signal: controller.signal
                 });
-                
-                let data;
-                try { data = await res.json(); } catch(e){}
 
-                if(!res.ok) throw new Error(data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`));
-                
+                clearTimeout(timeoutId);
+
+                let data;
+                try { data = await res.json(); } catch(e){ data = null; }
+
+                // Handle 502 and other errors - continue to fallback
+                if(!res.ok) {
+                    const errMsg = data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`);
+                    console.warn(`Visualize: ${attempt.name} failed (${res.status}), trying fallback...`);
+                    throw new Error(errMsg);
+                }
+
                 rawUrl = data.url || data.image || data.b64_json;
                 if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
                     rawUrl = data.data[0].url || data.data[0].b64_json;
                 }
 
-                if(rawUrl) break; 
+                if(rawUrl) break;
              } catch(e) {
                  lastErr = e;
+                 // Don't throw - continue to next fallback provider
              }
           }
 
+          // Check if cancelled after all attempts
+          if (_vizCancelled) {
+              _vizInFlight = false;
+              if(retryBtn) retryBtn.disabled = false;
+              return;
+          }
+
           if (!rawUrl) throw lastErr || new Error("All image providers failed.");
-          
+
           let imageUrl = rawUrl;
           if (!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
               imageUrl = `data:image/png;base64,${rawUrl}`;
           }
-          
+
           img.src = imageUrl;
-          
+
           await new Promise((resolve, reject) => {
+              // Add timeout for image load
+              const loadTimeout = setTimeout(() => {
+                  reject(new Error("Image load timeout"));
+              }, 30000);
+
               img.onload = () => {
-                  img.style.display = 'block'; 
+                  clearTimeout(loadTimeout);
+                  img.style.display = 'block';
                   if(ph) ph.style.display = 'none';
                   state.visual.lastImageUrl = img.src;
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
                   saveStorySnapshot();
                   resolve();
               };
-              img.onerror = () => reject(new Error("Image failed to render"));
+              img.onerror = () => {
+                  clearTimeout(loadTimeout);
+                  reject(new Error("Image failed to render"));
+              };
           });
 
       } catch(e) {
-          if(errDiv) { errDiv.innerText = "Visualization failed. Fate is cloudy."; errDiv.classList.remove('hidden'); }
+          // Don't show error if cancelled
+          if (!_vizCancelled) {
+              console.error("Visualize error:", e);
+              if(errDiv) {
+                  errDiv.innerText = "Visualization failed. Fate is cloudy.";
+                  errDiv.classList.remove('hidden');
+              }
+              if(ph) ph.style.display = 'none';
+          }
       } finally {
           stopLoading();
           _vizInFlight = false;
@@ -1921,6 +2989,16 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       saveStorySnapshot();
   };
 
+  // Helper: Insert Fate Card separator into story
+  function insertFateCardSeparator(cardTitle) {
+      const storyEl = document.getElementById('storyText');
+      if (!storyEl || !cardTitle) return;
+      const sep = document.createElement('div');
+      sep.className = 'fate-card-separator';
+      sep.innerHTML = `<div class="fate-mini"><h4>${escapeHTML(cardTitle)}</h4></div>`;
+      storyEl.appendChild(sep);
+  }
+
   // --- GAME LOOP (RESTORED) ---
   $('submitBtn')?.addEventListener('click', async () => {
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
@@ -1929,6 +3007,12 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       const act = $('actionInput').value.trim();
       const dia = $('dialogueInput').value.trim();
       if(!act && !dia) return alert("Input required.");
+
+      // Get selected Fate Card title for separator
+      let selectedFateCard = null;
+      if (state.fateOptions && typeof state.fateSelectedIndex === 'number' && state.fateSelectedIndex >= 0) {
+          selectedFateCard = state.fateOptions[state.fateSelectedIndex];
+      }
       
       const { safeAction, safeDialogue, flags } = sanitizeUserIntent(act, dia);
       if (flags.includes("redirect_nonconsent")) {
@@ -1987,7 +3071,13 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
         : "";
       
       const metaMsg = buildMetaDirective();
-      const squashDirective = "Do not repeat the user's input verbatim. Weave it into the narrative flow.";
+      const squashDirective = `CRITICAL REINTERPRETATION RULE:
+- NEVER repeat the player's action or dialogue verbatim in your response.
+- ALWAYS reinterpret their intent into the story's voice, tone, and character.
+- Transform their words into the narrative style of this story.
+- If they write "I kiss him", describe a kiss in your literary voice.
+- If they write clunky dialogue, render it as the character would actually speak.
+- The player provides intent. You provide craft.`;
       
       const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
       
@@ -2013,20 +3103,33 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       
       Write the next beat (150-250 words).`;
 
+      // Flag to track if story was successfully displayed (prevents false positive errors)
+      let storyDisplayed = false;
+
       try {
+          // Insert Fate Card separator if a card was selected (K)
+          if (selectedFateCard && selectedFateCard.title) {
+              insertFateCardSeparator(selectedFateCard.title);
+          }
+
           // USER TURN RENDER
           const uDiv = document.createElement('div');
           uDiv.className = 'dialogue-block p1-dia';
-          uDiv.innerHTML = `<strong>You:</strong> ${act} <br> "${dia}"`;
+          uDiv.innerHTML = `<strong>You:</strong> ${escapeHTML(act)} <br> "${escapeHTML(dia)}"`;
           document.getElementById('storyText').appendChild(uDiv);
 
           const raw = await callChat([
               {role:'system', content: fullSys},
               {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
           ]);
-          
+
+          // Validate response shape before marking as success
+          if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {
+              throw new Error('Invalid response: empty or malformed story text');
+          }
+
           state.turnCount++;
-          
+
           const sep = document.createElement('hr');
           sep.style.borderColor = 'var(--pink)';
           sep.style.opacity = '0.3';
@@ -2035,12 +3138,27 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
           const newDiv = document.createElement('div');
           newDiv.innerHTML = formatStory(raw);
           document.getElementById('storyText').appendChild(newDiv);
-          
-          sep.scrollIntoView({behavior:'smooth', block:'start'});
 
-          resetTurnSnapshotFlag(); 
-          
-          maybeFlipConsummation(raw); 
+          // CRITICAL: Mark story as displayed AFTER successful DOM insertion
+          storyDisplayed = true;
+
+          // Scroll to the new content
+          try {
+              if (selectedFateCard) {
+                  // If Fate Card was used, scroll to top of new section
+                  const separator = document.querySelector('.fate-card-separator:last-child');
+                  if (separator) separator.scrollIntoView({behavior:'smooth', block:'start'});
+                  else sep.scrollIntoView({behavior:'smooth', block:'start'});
+              } else {
+                  sep.scrollIntoView({behavior:'smooth', block:'start'});
+              }
+          } catch(scrollErr) {
+              console.warn('Scroll failed (non-critical):', scrollErr);
+          }
+
+          resetTurnSnapshotFlag();
+
+          maybeFlipConsummation(raw);
 
           // Manage Fling Latch
           if (state.storyStage === 'post-consummation') {
@@ -2061,14 +3179,17 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
           if(wc > getSexAllowedAtWordCount()) state.sexPushCount = 0;
 
-          // Fate Card Deal (Solo)
-          if (state.mode === 'solo' && Math.random() < 0.45) {
-               if (window.dealFateCards) {
-                   window.dealFateCards();
-                   if (state.batedBreathActive && state.fateOptions) {
-                       state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
-                   }
-               }
+          // Fate Card Deal - deal fresh cards each turn for interaction
+          // Wrapped to prevent false positive errors
+          try {
+              if (window.dealFateCards) {
+                  window.dealFateCards();
+                  if (state.batedBreathActive && state.fateOptions) {
+                      state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
+                  }
+              }
+          } catch(fateErr) {
+              console.warn('Fate card deal failed (non-critical):', fateErr);
           }
 
           saveStorySnapshot();
@@ -2076,24 +3197,36 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
           $('actionInput').value = '';
           $('dialogueInput').value = '';
-          
+
           if(state.mode === 'couple') {
               broadcastTurn(raw);
           }
 
       } catch(e) {
-          console.error(e);
-          alert("Fate was silent. Try again.");
+          console.error('Turn submission error:', e);
+          // Only show error alert if story was NOT successfully displayed
+          if (!storyDisplayed) {
+              alert("Fate was silent. Try again.");
+          }
       } finally {
           stopLoading();
       }
   });
 
-  function formatStory(text){
+  function formatStory(text, shouldEscape = false){
+      const process = shouldEscape ? escapeHTML : (s => s);
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
-          if(p.trim().startsWith('"')) return `<p style="color:var(--p2-color); font-weight:500;">${p}</p>`;
-          return `<p>${p}</p>`;
+          const safe = process(p);
+          // Format dialogue with special styling
+          // Match dialogue and dialogue tag up to first period after closing quote
+          const dialogueMatch = safe.match(/^(\s*)(".*?"[^.]*\.?)(.*)/);
+          if (dialogueMatch) {
+              const [, indent, dialoguePart, rest] = dialogueMatch;
+              return `<p>${indent}<span class="story-dialogue">${dialoguePart}</span>${rest}</p>`;
+          }
+          if(p.trim().startsWith('"')) return `<p class="story-dialogue">${safe}</p>`;
+          return `<p>${safe}</p>`;
       }).join('');
   }
 
@@ -2204,7 +3337,70 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       }
   });
 
+  // Invitation send handlers
+  const INVITATION_TEXTS = [
+      "A private chamber awaits. The mask is optional. The curiosity is not.",
+      "Behind this door, two become one story. Enter if you dare.",
+      "The candles are lit. The words are waiting. Only you are missing.",
+      "Some invitations cannot be declined. This is one of them."
+  ];
+
+  function getInvitationMessage() {
+      const text = INVITATION_TEXTS[Math.floor(Math.random() * INVITATION_TEXTS.length)];
+      const code = window.state.roomCode || '------';
+      return `${text}\n\nYour chamber code: ${code}\n\nJoin at: ${window.location.origin}`;
+  }
+
+  function markInvitationSent() {
+      const status = document.getElementById('inviteSentStatus');
+      const enterBtn = document.getElementById('btnEnterCoupleGame');
+      const soloBtn = document.getElementById('btnPlaySoloWaiting');
+
+      if (status) status.classList.remove('hidden');
+      if (enterBtn) {
+          enterBtn.classList.remove('hidden');
+          enterBtn.disabled = false;
+      }
+      if (soloBtn) soloBtn.classList.remove('hidden');
+
+      window.state.invitationSent = true;
+  }
+
+  $('btnSendEmail')?.addEventListener('click', () => {
+      const subject = encodeURIComponent("You're invited to a Private Chamber");
+      const body = encodeURIComponent(getInvitationMessage());
+      // Use location.href for proper mailto handling with default email client
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      markInvitationSent();
+      showToast("Email client opened.");
+  });
+
+  $('btnSendSMS')?.addEventListener('click', () => {
+      const body = encodeURIComponent(getInvitationMessage());
+      window.location.href = `sms:?body=${body}`;
+      markInvitationSent();
+      showToast("SMS opened.");
+  });
+
+  $('btnSendBoth')?.addEventListener('click', () => {
+      const subject = encodeURIComponent("You're invited to a Private Chamber");
+      const body = encodeURIComponent(getInvitationMessage());
+      // Open email first via location.href
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      markInvitationSent();
+      showToast("Email client opened. Use SMS button for text.");
+  });
+
+  $('btnPlaySoloWaiting')?.addEventListener('click', () => {
+      window.state.batedBreathActive = true;
+      window.showScreen('setup');
+  });
+
   $('btnEnterCoupleGame')?.addEventListener('click', () => {
+      if (!window.state.invitationSent) {
+          showToast("Please send an invitation first.");
+          return;
+      }
       window.showScreen('setup');
   });
 
