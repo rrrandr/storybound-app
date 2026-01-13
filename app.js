@@ -190,6 +190,35 @@ window.config = window.config || {
           }
       }
 
+      // FIX: Update story header display based on current page
+      // Page 1: Large title, synopsis, intro image
+      // Page 2+: Smaller title only, no synopsis or intro image
+      function updateStoryHeaderDisplay() {
+          const titleEl = document.getElementById('storyTitle');
+          const synopsisEl = document.getElementById('storySynopsis');
+          const settingShotWrap = document.getElementById('settingShotWrap');
+
+          if (currentPageIndex === 0) {
+              // Page 1: Full display
+              if (titleEl) titleEl.style.fontSize = '';
+              if (synopsisEl) synopsisEl.style.display = '';
+              if (settingShotWrap) settingShotWrap.style.display = '';
+          } else {
+              // Page 2+: Compact display
+              if (titleEl) titleEl.style.fontSize = '1.2em';
+              if (synopsisEl) synopsisEl.style.display = 'none';
+              if (settingShotWrap) settingShotWrap.style.display = 'none';
+          }
+      }
+
+      // FIX: Scroll to story text container (not Fate Cards)
+      function scrollToStoryTop() {
+          const storyText = document.getElementById('storyText');
+          if (storyText) {
+              storyText.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+      }
+
       function renderCurrentPage(animate = false, direction = 'forward') {
           // REPAIR: Always try to get container before rendering
           if (!ensureInitialized()) {
@@ -206,6 +235,8 @@ window.config = window.config || {
               currentPage.classList.add('active');
               container.appendChild(currentPage);
               updateNavigation();
+              updateStoryHeaderDisplay();
+              scrollToStoryTop();
               triggerPostRenderHooks();
               return;
           }
@@ -219,6 +250,8 @@ window.config = window.config || {
               currentPage.classList.add('active');
               container.appendChild(currentPage);
               updateNavigation();
+              updateStoryHeaderDisplay();
+              scrollToStoryTop();
               triggerPostRenderHooks();
               return;
           }
@@ -246,6 +279,8 @@ window.config = window.config || {
               currentPage.classList.add('active');
               isAnimating = false;
               updateNavigation();
+              updateStoryHeaderDisplay();
+              scrollToStoryTop();
               triggerPostRenderHooks();
           }, 500);
       }
@@ -1583,7 +1618,8 @@ ANTI-HERO ENFORCEMENT:
       });
   }
 
-  function setPaywallClickGuard(el, enabled){
+  // FIX: Added paywallMode parameter to support sub_only for Dirty intensity
+  function setPaywallClickGuard(el, enabled, paywallMode = 'unlock'){
     if(!el) return;
     if (!el.dataset.paywallBound) {
         el.dataset.paywallBound = "true";
@@ -1592,11 +1628,14 @@ ANTI-HERO ENFORCEMENT:
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                window.showPaywall('unlock');
+                // Use element's stored paywall mode (defaults to 'unlock')
+                const mode = el.dataset.paywallMode || 'unlock';
+                window.showPaywall(mode);
             }
         }, { capture: true });
     }
     el.dataset.paywallActive = enabled ? "true" : "false";
+    el.dataset.paywallMode = paywallMode;
   }
 
   function applyTierUI(){
@@ -1690,18 +1729,20 @@ ANTI-HERO ENFORCEMENT:
     const cards = document.querySelectorAll('#lengthGrid .card[data-grp="length"]');
     cards.forEach(card => {
       const val = card.dataset.val;
-      let locked = true; 
+      let locked = true;
       let hidden = false;
 
       if (state.access === 'free' && val === 'voyeur') locked = false;
       else if (state.access === 'pass' && val === 'fling') locked = false;
       else if (state.access === 'sub' && ['fling', 'affair', 'soulmates'].includes(val)) locked = false;
-      
+
       if(state.access !== 'free' && val === 'voyeur') { locked = true; hidden = true; }
 
       card.classList.toggle('locked', locked);
       card.style.display = hidden ? 'none' : '';
-      setPaywallClickGuard(card, locked);
+      // FIX: Affair and Soulmates require subscription - use sub_only mode
+      const paywallMode = ['affair', 'soulmates'].includes(val) ? 'sub_only' : 'unlock';
+      setPaywallClickGuard(card, locked, paywallMode);
       card.classList.toggle('selected', val === state.storyLength);
     });
 
@@ -1736,10 +1777,12 @@ ANTI-HERO ENFORCEMENT:
           let locked = false;
           if (access === 'free' && ['Erotic', 'Dirty'].includes(level)) locked = true;
           if (access === 'pass' && level === 'Dirty') locked = true;
-          
+
           btn.classList.toggle('locked', locked);
           if(locked) btn.classList.remove('active');
-          setPaywallClickGuard(btn, locked);
+          // FIX: Dirty always requires subscription - use sub_only mode
+          const paywallMode = (level === 'Dirty') ? 'sub_only' : 'unlock';
+          setPaywallClickGuard(btn, locked, paywallMode);
       };
 
       setupBtns.forEach(b => updateLock(b, b.dataset.val));
@@ -1822,14 +1865,15 @@ ANTI-HERO ENFORCEMENT:
   function completePurchase() {
       const pm = document.getElementById('payModal');
       if(pm) pm.classList.add('hidden');
-      
+
       if(state.pendingUpgradeToAffair || state.lastPurchaseType === 'sub') {
           state.subscribed = true;
-          localStorage.setItem('sb_subscribed', '1'); 
+          localStorage.setItem('sb_subscribed', '1');
       }
-      
+
+      // FIX: Force access resolution first
       syncTierFromAccess();
-      
+
       let upgraded = false;
       if (state.lastPurchaseType === 'pass' && state.storyLength === 'voyeur') {
           state.storyLength = 'fling';
@@ -1844,11 +1888,15 @@ ANTI-HERO ENFORCEMENT:
 
       if (upgraded) state.storyEnded = false;
 
-      state.lastPurchaseType = null; 
+      state.lastPurchaseType = null;
       state.pendingUpgradeToAffair = false;
 
-      applyAccessLocks(); 
-      if(window.initCards) window.initCards(); 
+      // FIX: Force full UI unlock propagation
+      syncTierFromAccess();
+      applyTierUI();
+      applyAccessLocks();
+
+      if(window.initCards) window.initCards();
       saveStorySnapshot();
       if (state.purchaseContext === 'tierGate') window.showScreen('modeSelect');
   }
@@ -2583,8 +2631,11 @@ ANTI-HERO ENFORCEMENT:
 
   $('payOneTime')?.addEventListener('click', () => {
     state.storyId = state.storyId || makeStoryId();
-    state.lastPurchaseType = 'pass'; 
+    state.lastPurchaseType = 'pass';
     grantStoryPass(state.storyId);
+    // FIX: Immediately set access state before completePurchase
+    state.access = 'pass';
+    state.tier = 'paid';
     completePurchase();
   });
 
