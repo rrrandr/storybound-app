@@ -3328,6 +3328,96 @@ Return ONLY the sentence:\n${text}`}]);
   // --- VISUALIZE (STABILIZED) ---
   let _vizCancelled = false;
 
+  // Visualize intensity bias based on player's selected eroticism level
+  function getVisualizeIntensityBias() {
+      const intensity = state.intensity || 'Naughty';
+      switch(intensity) {
+          case 'Clean':
+              return 'Clean, non-sexual imagery. Romantic but modest. No nudity or explicit content.';
+          case 'Naughty':
+              return 'Suggestive, flirtatious imagery. Sensual tension without explicit nudity. Tasteful allure.';
+          case 'Erotic':
+              return 'Explicit, sensual imagery. Passionate and intimate. Artistic nudity permitted.';
+          case 'Dirty':
+              return 'As explicit as community standards allow. Intensely passionate and provocative.';
+          default:
+              return 'Suggestive, flirtatious imagery. Sensual tension.';
+      }
+  }
+
+  // Default visual quality biases for attractive characters
+  const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
+
+  // Initialize Visualize modifier pills interaction
+  function initVizModifierPills() {
+      const pills = document.querySelectorAll('.viz-pill');
+      const pillsContainer = document.getElementById('vizModifierPills');
+      const modifierInput = document.getElementById('vizModifierInput');
+      const promptInput = document.getElementById('vizPromptInput');
+
+      if (!pillsContainer || !modifierInput || !promptInput) return;
+
+      // Pill click: append modifier to prompt
+      pills.forEach(pill => {
+          pill.addEventListener('click', () => {
+              const mod = pill.dataset.mod;
+              if (!mod) return;
+              const current = promptInput.value.trim();
+              if (current) {
+                  promptInput.value = current + ', ' + mod;
+              } else {
+                  promptInput.value = mod;
+              }
+          });
+      });
+
+      // Typing in modifier input hides pills
+      modifierInput.addEventListener('focus', () => {
+          pillsContainer.classList.add('hidden');
+      });
+
+      // When modifier input loses focus and is empty, show pills again
+      modifierInput.addEventListener('blur', () => {
+          setTimeout(() => {
+              if (!modifierInput.value.trim()) {
+                  pillsContainer.classList.remove('hidden');
+              }
+          }, 150);
+      });
+
+      // When user submits modifier (Enter key), append to prompt
+      modifierInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+              const mod = modifierInput.value.trim();
+              if (mod) {
+                  const current = promptInput.value.trim();
+                  if (current) {
+                      promptInput.value = current + ', ' + mod;
+                  } else {
+                      promptInput.value = mod;
+                  }
+                  modifierInput.value = '';
+              }
+          }
+      });
+  }
+
+  // Reset modifier UI when modal opens
+  function resetVizModifierUI() {
+      const pillsContainer = document.getElementById('vizModifierPills');
+      const modifierInput = document.getElementById('vizModifierInput');
+      if (pillsContainer) pillsContainer.classList.remove('hidden');
+      if (modifierInput) modifierInput.value = '';
+  }
+
+  // Initialize modifier pills on DOMContentLoaded
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initVizModifierPills);
+  } else {
+      initVizModifierPills();
+  }
+
   window.visualize = async function(isRe){
       if (_vizInFlight) return;
       _vizInFlight = true;
@@ -3341,6 +3431,9 @@ Return ONLY the sentence:\n${text}`}]);
       const storyText = document.getElementById('storyText');
 
       if (!img) { _vizInFlight = false; return; }
+
+      // Reset modifier UI when opening modal
+      resetVizModifierUI();
 
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
@@ -3370,12 +3463,15 @@ Return ONLY the sentence:\n${text}`}]);
 
       try {
           let promptMsg = document.getElementById('vizPromptInput').value;
+          // Get intensity bias for prompt generation
+          const intensityBias = getVisualizeIntensityBias();
+
           if(!isRe || !promptMsg) {
               try {
                   promptMsg = await Promise.race([
                       callChat([{
                           role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire. Return only the prompt: ${lastText}`
+                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
@@ -3423,11 +3519,21 @@ Return ONLY the sentence:\n${text}`}]);
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
+                // Build final prompt with intensity bias and quality defaults
+                const modifierInput = document.getElementById('vizModifierInput');
+                const userModifiers = modifierInput ? modifierInput.value.trim() : '';
+                const fullPrompt = anchorText +
+                    "\n\nINTENSITY: " + intensityBias +
+                    "\n\nQUALITY: " + VISUAL_QUALITY_DEFAULTS +
+                    "\n\nSCENE:\n" + promptMsg +
+                    (userModifiers ? ", " + userModifiers : "") +
+                    "\n\nArt style: cinematic, painterly, tasteful. (Generate art without any text/lettering.)";
+
                 const res = await fetch(IMAGE_PROXY_URL, {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({
-                        prompt: anchorText + "\n\nSCENE:\n" + promptMsg + " Characters are depicted with elegant beauty, healthy appearance, and refined features. Art style: cinematic, painterly, tasteful." + "\n\n(Generate art without any text/lettering.)",
+                        prompt: fullPrompt,
                         provider: attempt.provider,
                         model: attempt.model,
                         size: "1024x1024",

@@ -80,8 +80,34 @@
   <div class="box viz-modal-content">
     <h3>Visualization</h3>
     <textarea id="vizPromptInput" placeholder="Prompt will appear here..."></textarea>
+
+    <!-- Modifier section: suggestion pills + free text input -->
+    <div id="vizModifierSection">
+        <div id="vizModifierPills" class="viz-modifier-pills">
+            <span class="viz-pill" data-mod="more muscular">More muscular</span>
+            <span class="viz-pill" data-mod="more elegant">More elegant</span>
+            <span class="viz-pill" data-mod="brighter lighting">Brighter lighting</span>
+            <span class="viz-pill" data-mod="darker mood">Darker mood</span>
+            <span class="viz-pill" data-mod="hotter, sexier">Hotter / sexier</span>
+            <span class="viz-pill" data-mod="cuter">Cuter</span>
+            <span class="viz-pill" data-mod="funnier">Funnier</span>
+            <span class="viz-pill" data-mod="scarier">Scarier</span>
+            <span class="viz-pill" data-mod="softer facial features">Softer facial features</span>
+            <span class="viz-pill" data-mod="strong jawline">Strong jawline</span>
+            <span class="viz-pill" data-mod="hourglass figure">Hourglass figure</span>
+            <span class="viz-pill" data-mod="athletic gymnast build">Athletic gymnast build</span>
+            <span class="viz-pill" data-mod="blonde hair">Blonde hair</span>
+            <span class="viz-pill" data-mod="dark hair">Dark hair</span>
+            <span class="viz-pill" data-mod="no porn face, natural expression">No porn face</span>
+            <span class="viz-pill" data-mod="cinematic lighting">Cinematic lighting</span>
+            <span class="viz-pill" data-mod="high detail, realistic">High detail / realistic</span>
+            <span class="viz-pill" data-mod="dreamlike, painterly">Dreamlike / painterly</span>
+        </div>
+        <input type="text" id="vizModifierInput" placeholder="Type custom modifiers or click pills above...">
+    </div>
+
     <div id="vizPlaceholder">Generating...</div>
-    
+
     <div id="vizImgContainer">
         <img id="vizPreviewImg" alt="Scene" style="display:none">
         <div id="vizError" class="img-error-msg hidden"></div>
