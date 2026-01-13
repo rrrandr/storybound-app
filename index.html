@@ -565,6 +565,36 @@
   
   <div id="toast" class="toast hidden">Boundaries redirected the scene.</div>
 
+<div id="gameQuillVetoModal" class="overlay hidden" style="z-index:10004;">
+  <div class="box" style="max-width:600px; text-align:center;">
+    <h3 style="color:var(--gold)">Story Controls</h3>
+
+    <div class="quill-veto-container" style="grid-template-columns:1fr;">
+        <div class="qv-section">
+            <label class="qv-label">Veto</label>
+            <p class="qv-hint-above">Block elements you never want to appear.</p>
+            <div id="gameVetoPills" class="pill-tray"></div>
+            <textarea id="gameVetoInput" rows="2" placeholder="ban: word&#10;rename: Old Name -> New Name"></textarea>
+        </div>
+
+        <div class="qv-section">
+            <label class="qv-label">Quill</label>
+            <p class="qv-hint-above">Steer tone, boundaries, or direction.</p>
+            <div id="gameQuillPills" class="pill-tray"></div>
+            <div id="gameQuillBox" class="input-wrapper">
+                <textarea id="gameQuillInput" rows="2" placeholder="Bring them to a moonlit garden..."></textarea>
+            </div>
+            <div class="quill-ui" style="margin-top:10px;">
+                <span id="gameQuillStatus">Quill: Poised</span>
+                <button id="btnGameCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; margin-left:10px;">Commit Quill</button>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="document.getElementById('gameQuillVetoModal').classList.add('hidden')" style="background:#444; margin-top:15px;">Close</button>
+  </div>
+</div>
+
 <div id="edgeCovenantModal" class="overlay hidden" style="z-index:10005;">
   <div class="box" style="max-width:500px; text-align:center;">
     <h3 style="color:var(--pink)">The Covenant</h3>

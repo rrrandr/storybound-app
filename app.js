@@ -290,7 +290,7 @@ window.config = window.config || {
 
   // NAV HELPER
   function closeAllOverlays() {
-      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal'].forEach(id => {
+      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'gameQuillVetoModal'].forEach(id => {
           const el = document.getElementById(id);
           if(el) el.classList.add('hidden');
       });
@@ -1265,6 +1265,97 @@ window.config = window.config || {
       saveStorySnapshot();
       showToast("Story saved.");
   });
+
+  // Story Controls button - toggle Quill & Veto modal
+  $('gameControlsBtn')?.addEventListener('click', (e) => {
+      const hasAccess = (window.state.access !== 'free') || (window.state.mode === 'couple');
+      if (!hasAccess) {
+          e.stopPropagation();
+          window.showPaywall('unlock');
+          return;
+      }
+      updateGameQuillUI();
+      document.getElementById('gameQuillVetoModal')?.classList.remove('hidden');
+  });
+
+  // Game Quill commit button
+  $('btnGameCommitQuill')?.addEventListener('click', () => {
+      if (!getQuillReady()) return;
+      const quillEl = document.getElementById('gameQuillInput');
+      if (!quillEl) return;
+      const quillText = quillEl.value.trim();
+      if (!quillText) { showToast("No Quill edit to commit."); return; }
+
+      // Also apply any pending veto constraints from game modal
+      applyGameVetoFromInput();
+
+      window.state.quillIntent = quillText;
+      const storyEl = document.getElementById('storyText');
+      if (storyEl && quillText) {
+          const div = document.createElement('div');
+          div.className = 'quill-intervention';
+          div.style.cssText = 'color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;';
+          div.innerHTML = formatStory(quillText);
+          storyEl.appendChild(div);
+      }
+      window.state.quillCommittedThisTurn = true;
+      window.state.quill.uses++;
+      window.state.quill.nextReadyAtWords = currentStoryWordCount() + computeNextCooldownWords();
+      quillEl.value = '';
+      updateQuillUI();
+      updateGameQuillUI();
+      document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
+      showToast("Quill committed.");
+  });
+
+  function updateGameQuillUI() {
+      const btn = document.getElementById('btnGameCommitQuill');
+      const status = document.getElementById('gameQuillStatus');
+      const quillBox = document.getElementById('gameQuillBox');
+      if (!btn || !status) return;
+
+      const ready = getQuillReady();
+      const needed = state.quill.nextReadyAtWords;
+      const wc = currentStoryWordCount();
+      const remain = Math.max(0, needed - wc);
+
+      if (ready || state.godModeActive) {
+          status.textContent = state.authorChairActive ? "Quill: Poised" : "Quill: Poised";
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
+          if (quillBox) quillBox.classList.remove('locked-input');
+      } else {
+          status.textContent = `Quill: Spent (${remain} words to recharge)`;
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+          if (quillBox) quillBox.classList.add('locked-input');
+      }
+  }
+
+  function applyGameVetoFromInput() {
+      const vetoEl = document.getElementById('gameVetoInput');
+      if (!vetoEl) return;
+      const txt = vetoEl.value.trim();
+      if (!txt) return;
+      // Parse and add to veto state (same as setup veto)
+      txt.split('\n').forEach(line => {
+          line = line.trim();
+          if (!line) return;
+          if (line.toLowerCase().startsWith('ban:')) {
+              const word = line.slice(4).trim();
+              if (word && !state.veto.bannedWords.includes(word)) state.veto.bannedWords.push(word);
+          } else if (line.toLowerCase().startsWith('rename:')) {
+              const parts = line.slice(7).split('->').map(s => s.trim());
+              if (parts.length === 2 && parts[0] && parts[1]) {
+                  state.veto.corrections.push({ from: parts[0], to: parts[1] });
+              }
+          } else {
+              if (!state.veto.excluded.includes(line)) state.veto.excluded.push(line);
+          }
+      });
+      vetoEl.value = '';
+  }
 
   $('burgerBtn')?.addEventListener('click', () => document.getElementById('menuOverlay').classList.remove('hidden'));
   $('ageYes')?.addEventListener('click', () => window.showScreen('tosGate'));
