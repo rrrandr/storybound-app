@@ -180,6 +180,16 @@ window.config = window.config || {
           if (indicator) indicator.textContent = pages.length > 0 ? `Page ${currentPageIndex + 1} of ${pages.length}` : 'Page 1 of 1';
       }
 
+      // FIX #4: Post-render hook for tier UI rehydration
+      function triggerPostRenderHooks() {
+          if (typeof window.applyAccessLocks === 'function') {
+              window.applyAccessLocks();
+          }
+          if (typeof window.applyTierUI === 'function') {
+              window.applyTierUI();
+          }
+      }
+
       function renderCurrentPage(animate = false, direction = 'forward') {
           // REPAIR: Always try to get container before rendering
           if (!ensureInitialized()) {
@@ -196,6 +206,7 @@ window.config = window.config || {
               currentPage.classList.add('active');
               container.appendChild(currentPage);
               updateNavigation();
+              triggerPostRenderHooks();
               return;
           }
 
@@ -208,6 +219,7 @@ window.config = window.config || {
               currentPage.classList.add('active');
               container.appendChild(currentPage);
               updateNavigation();
+              triggerPostRenderHooks();
               return;
           }
 
@@ -234,6 +246,7 @@ window.config = window.config || {
               currentPage.classList.add('active');
               isAnimating = false;
               updateNavigation();
+              triggerPostRenderHooks();
           }, 500);
       }
 
@@ -1665,6 +1678,10 @@ ANTI-HERO ENFORCEMENT:
 
   function applyAccessLocks(){ applyTierUI(); }
 
+  // FIX #4: Expose for post-render tier rehydration
+  window.applyAccessLocks = applyAccessLocks;
+  window.applyTierUI = applyTierUI;
+
   function applyLengthLocks(){
     syncTierFromAccess();
     const section = document.getElementById('lengthSection');
@@ -2022,6 +2039,12 @@ ANTI-HERO ENFORCEMENT:
 
   // Story Controls button - toggle Quill & Veto modal (always opens, Quill locked in Tease)
   $('gameControlsBtn')?.addEventListener('click', (e) => {
+      // FIX #3: Clear inputs on modal open to prevent ghost text
+      const quillInput = document.getElementById('gameQuillInput');
+      const vetoInput = document.getElementById('gameVetoInput');
+      if (quillInput) quillInput.value = '';
+      if (vetoInput) vetoInput.value = '';
+
       updateGameQuillUI();
       document.getElementById('gameQuillVetoModal')?.classList.remove('hidden');
   });
@@ -3597,18 +3620,15 @@ FATE CARD ADAPTATION (CRITICAL):
           // Build new page content
           let pageContent = '';
 
-          // Add Fate Card separator if a card was selected
+          // FIX #1: Fate Card separator shows ONLY title icon, no descriptive text
           if (selectedFateCard && selectedFateCard.title) {
               pageContent += `<div class="fate-card-separator"><div class="fate-mini"><h4>${escapeHTML(selectedFateCard.title)}</h4></div></div>`;
           }
 
-          // Add user action/dialogue
-          pageContent += `<div class="dialogue-block p1-dia"><strong>You:</strong> ${escapeHTML(act)} <br> "${escapeHTML(dia)}"</div>`;
+          // FIX #2: Removed user dialogue block - AI alone narrates the action
+          // User input is passed to AI but not rendered as prose to avoid duplication
 
-          // Add separator
-          pageContent += `<hr style="border-color:var(--pink); opacity:0.3;">`;
-
-          // Add AI response
+          // Add AI response only
           pageContent += formatStory(raw);
 
           // Add new page with animation
