@@ -90,6 +90,51 @@
         }
     }
 
+    // Golden flow animation from card to inputs
+    function triggerGoldenFlow(fromEl, toEl) {
+        if (!fromEl || !toEl) return;
+
+        const fromRect = fromEl.getBoundingClientRect();
+        const toRect = toEl.getBoundingClientRect();
+
+        const startX = fromRect.left + fromRect.width / 2;
+        const startY = fromRect.top + fromRect.height / 2;
+        const endX = toRect.left + toRect.width / 2;
+        const endY = toRect.top + toRect.height / 2;
+
+        const flow = document.createElement('div');
+        flow.className = 'golden-flow';
+        flow.style.left = startX + 'px';
+        flow.style.top = startY + 'px';
+        document.body.appendChild(flow);
+
+        // Animate position
+        const duration = 1200;
+        const startTime = performance.now();
+
+        function animate(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Eased progress
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            const currentX = startX + (endX - startX) * eased;
+            const currentY = startY + (endY - startY) * eased;
+
+            flow.style.left = currentX + 'px';
+            flow.style.top = currentY + 'px';
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                flow.remove();
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
     function setSelectedState(mount, selectedCardEl){
         const cards = mount.querySelectorAll('.fate-card');
         cards.forEach(c => c.classList.remove('selected'));
@@ -280,10 +325,16 @@
 
                 clearPendingTimer();
 
+                // Trigger golden flow animations to inputs
+                const actInput = document.getElementById('actionInput');
+                const diaInput = document.getElementById('dialogueInput');
+                if (actInput) triggerGoldenFlow(card, actInput);
+                setTimeout(() => {
+                    if (diaInput) triggerGoldenFlow(card, diaInput);
+                }, 150); // Slight stagger for elegance
+
                 // Apply content to inputs after animation delay (match existing 600ms timing)
                 _pendingApplyTimer = setTimeout(() => {
-                    const actInput = document.getElementById('actionInput');
-                    const diaInput = document.getElementById('dialogueInput');
                     if(actInput) actInput.value = data.action;
                     if(diaInput) diaInput.value = data.dialogue;
                 }, 600);

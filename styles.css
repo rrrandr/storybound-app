@@ -204,6 +204,24 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .fate-card.chosen .inner { border: 2px solid var(--pink); }
 @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
 
+/* GOLDEN FLOW - subtle animation from Fate Card to inputs */
+.golden-flow {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    animation: goldenFlowAnim 1.2s ease-out forwards;
+}
+@keyframes goldenFlowAnim {
+    0% { opacity: 0.8; transform: scale(1); }
+    20% { opacity: 0.9; transform: scale(1.5); }
+    100% { opacity: 0; transform: scale(0.5); }
+}
+
 /* FATE CARD SEPARATOR IN STORY */
 .fate-card-separator { display: flex; justify-content: center; margin: 25px auto; padding: 15px 0; border-top: 1px solid rgba(255,215,0,0.3); border-bottom: 1px solid rgba(255,215,0,0.3); background: rgba(0,0,0,0.2); }
 .fate-card-separator .fate-mini { width: 60px; aspect-ratio: 2/3; background: linear-gradient(145deg, #2a0033, #400020); border: 1px solid var(--gold); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5px; box-shadow: 0 0 10px rgba(255,215,0,0.3); }
@@ -570,44 +588,45 @@ textarea.fate-field {
 }
 .fate-tree-card.hidden { display: none; }
 
-/* Tree silhouette */
+/* Tree silhouette - leafless with clear side branches */
 .tree-silhouette {
     position: absolute;
     inset: 4px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 28 L12 12 M12 12 C8 8 4 6 2 4 M12 12 C16 8 20 6 22 4 M12 14 C9 11 6 10 4 9 M12 14 C15 11 18 10 20 9 M12 16 C10 14 8 13 6 12 M12 16 C14 14 16 13 18 12 M12 18 C11 17 9 16 8 15 M12 18 C13 17 15 16 16 15' stroke='%23000' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 30 L12 10 M12 10 L6 4 M12 10 L18 4 M12 13 L5 8 M12 13 L19 8 M12 16 L7 12 M12 16 L17 12 M12 19 L8 15 M12 19 L16 15 M12 22 L9 19 M12 22 L15 19 M6 4 L4 2 M6 4 L7 2 M18 4 L20 2 M18 4 L17 2 M5 8 L3 6 M19 8 L21 6' stroke='%23000' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
     opacity: 0.85;
 }
 
-/* Falling leaf */
+/* Falling leaf - starts from right side branch */
 .falling-leaf {
     position: absolute;
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     background: #000;
     border-radius: 50% 0 50% 50%;
     transform: rotate(45deg);
-    top: 8px;
-    left: 50%;
-    margin-left: -3px;
+    top: 10px;
+    right: 6px;
+    left: auto;
     opacity: 0.9;
 }
 .falling-leaf.falling {
     animation: leafFall 1s ease-in forwards;
 }
 @keyframes leafFall {
-    0% { top: 8px; opacity: 0.9; transform: rotate(45deg); }
-    30% { transform: rotate(60deg); }
-    60% { transform: rotate(30deg); }
-    100% { top: 34px; opacity: 0.7; transform: rotate(50deg); }
+    0% { top: 10px; right: 6px; opacity: 0.9; transform: rotate(45deg); }
+    25% { right: 8px; transform: rotate(70deg); }
+    50% { right: 5px; transform: rotate(20deg); }
+    75% { right: 10px; transform: rotate(55deg); }
+    100% { top: 36px; right: 12px; opacity: 0.7; transform: rotate(40deg); }
 }
 .falling-leaf.reset {
     animation: leafReset 0.3s ease forwards;
 }
 @keyframes leafReset {
-    to { top: 8px; opacity: 0.9; }
+    to { top: 10px; right: 6px; opacity: 0.9; }
 }
 
 /* Quill-Veto container adjustments */
