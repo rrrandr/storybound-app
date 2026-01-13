@@ -104,6 +104,260 @@ window.config = window.config || {
   window.sbDumpAnalytics = () => JSON.parse(localStorage.getItem(SB_ANALYTICS_KEY) || "[]");
 
   // =========================
+  // STORY PAGINATION SYSTEM
+  // =========================
+  const StoryPagination = (function() {
+      let pages = [];           // Array of page content (HTML strings)
+      let currentPageIndex = 0;
+      let isAnimating = false;
+      let isInitialized = false;
+
+      // DOM references
+      let container = null;
+      let prevBtn = null;
+      let nextBtn = null;
+      let indicator = null;
+
+      function init() {
+          if (isInitialized) return;
+          container = document.getElementById('storyPagesContainer');
+          prevBtn = document.getElementById('prevPageBtn');
+          nextBtn = document.getElementById('nextPageBtn');
+          indicator = document.getElementById('pageIndicator');
+
+          if (!container) return;
+
+          // Bind navigation buttons
+          if (prevBtn) prevBtn.addEventListener('click', () => goToPrevPage());
+          if (nextBtn) nextBtn.addEventListener('click', () => goToNextPage());
+
+          // Keyboard navigation
+          document.addEventListener('keydown', handleKeyNav);
+
+          // Swipe navigation (touch devices)
+          let touchStartX = 0;
+          let touchEndX = 0;
+
+          container.addEventListener('touchstart', (e) => {
+              touchStartX = e.changedTouches[0].screenX;
+          }, { passive: true });
+
+          container.addEventListener('touchend', (e) => {
+              touchEndX = e.changedTouches[0].screenX;
+              handleSwipe();
+          }, { passive: true });
+
+          function handleSwipe() {
+              const diff = touchStartX - touchEndX;
+              const threshold = 50;
+              if (Math.abs(diff) < threshold) return;
+              if (diff > 0) goToNextPage();  // Swipe left = next
+              else goToPrevPage();            // Swipe right = prev
+          }
+
+          isInitialized = true;
+      }
+
+      function handleKeyNav(e) {
+          // Only handle arrow keys when story is visible
+          const storyText = document.getElementById('storyText');
+          if (!storyText || storyText.offsetParent === null) return;
+
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              goToNextPage();
+          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              goToPrevPage();
+          }
+      }
+
+      function createPageElement(content, index) {
+          const page = document.createElement('div');
+          page.className = 'story-page';
+          page.dataset.pageIndex = index;
+          page.innerHTML = content;
+          return page;
+      }
+
+      function updateNavigation() {
+          if (prevBtn) prevBtn.disabled = currentPageIndex === 0 || isAnimating;
+          if (nextBtn) nextBtn.disabled = currentPageIndex >= pages.length - 1 || isAnimating;
+          if (indicator) indicator.textContent = `Page ${currentPageIndex + 1} of ${pages.length}`;
+      }
+
+      function renderCurrentPage(animate = false, direction = 'forward') {
+          if (!container) return;
+
+          const existingPages = container.querySelectorAll('.story-page');
+          const currentPage = createPageElement(pages[currentPageIndex] || '', currentPageIndex);
+
+          if (!animate || existingPages.length === 0) {
+              // No animation - just show the page
+              container.innerHTML = '';
+              currentPage.classList.add('active');
+              container.appendChild(currentPage);
+              updateNavigation();
+              return;
+          }
+
+          // Check for reduced motion preference
+          const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+          if (prefersReducedMotion) {
+              // Instant transition for reduced motion
+              container.innerHTML = '';
+              currentPage.classList.add('active');
+              container.appendChild(currentPage);
+              updateNavigation();
+              return;
+          }
+
+          // Animated page turn
+          isAnimating = true;
+          updateNavigation();
+
+          const oldPage = existingPages[0];
+          const outClass = direction === 'forward' ? 'turning-out' : 'turning-out-reverse';
+          const inClass = direction === 'forward' ? 'turning-in' : 'turning-in-reverse';
+
+          // Add new page
+          container.appendChild(currentPage);
+
+          // Start animation
+          oldPage.classList.remove('active');
+          oldPage.classList.add(outClass);
+          currentPage.classList.add(inClass);
+
+          // Clean up after animation
+          setTimeout(() => {
+              oldPage.remove();
+              currentPage.classList.remove(inClass);
+              currentPage.classList.add('active');
+              isAnimating = false;
+              updateNavigation();
+          }, 500);
+      }
+
+      function goToNextPage() {
+          if (isAnimating || currentPageIndex >= pages.length - 1) return;
+          currentPageIndex++;
+          renderCurrentPage(true, 'forward');
+      }
+
+      function goToPrevPage() {
+          if (isAnimating || currentPageIndex <= 0) return;
+          currentPageIndex--;
+          renderCurrentPage(true, 'backward');
+      }
+
+      function goToPage(index, animate = false) {
+          if (index < 0 || index >= pages.length) return;
+          const direction = index > currentPageIndex ? 'forward' : 'backward';
+          currentPageIndex = index;
+          renderCurrentPage(animate, direction);
+      }
+
+      function addPage(content, goToNew = true) {
+          pages.push(content);
+          if (goToNew) {
+              currentPageIndex = pages.length - 1;
+              renderCurrentPage(pages.length > 1, 'forward');
+          } else {
+              updateNavigation();
+          }
+      }
+
+      function updateCurrentPage(content) {
+          if (pages.length === 0) {
+              addPage(content);
+              return;
+          }
+          pages[currentPageIndex] = content;
+          // Update DOM without animation
+          const activePage = container?.querySelector('.story-page.active');
+          if (activePage) {
+              activePage.innerHTML = content;
+          }
+      }
+
+      function appendToCurrentPage(content) {
+          if (pages.length === 0) {
+              addPage(content);
+              return;
+          }
+          pages[currentPageIndex] += content;
+          // Update DOM without animation
+          const activePage = container?.querySelector('.story-page.active');
+          if (activePage) {
+              activePage.innerHTML = pages[currentPageIndex];
+          }
+      }
+
+      function clear() {
+          pages = [];
+          currentPageIndex = 0;
+          if (container) container.innerHTML = '';
+          updateNavigation();
+      }
+
+      function getPageCount() {
+          return pages.length;
+      }
+
+      function getCurrentPageIndex() {
+          return currentPageIndex;
+      }
+
+      function getAllContent() {
+          return pages.join('');
+      }
+
+      function setAllContent(htmlContent) {
+          // Convert existing HTML into a single page (for loading saved stories)
+          clear();
+          if (htmlContent && htmlContent.trim()) {
+              addPage(htmlContent, true);
+          }
+      }
+
+      function getPages() {
+          return [...pages];
+      }
+
+      function setPages(pageArray) {
+          pages = [...pageArray];
+          currentPageIndex = Math.min(currentPageIndex, pages.length - 1);
+          if (currentPageIndex < 0) currentPageIndex = 0;
+          renderCurrentPage(false);
+      }
+
+      return {
+          init,
+          addPage,
+          updateCurrentPage,
+          appendToCurrentPage,
+          goToNextPage,
+          goToPrevPage,
+          goToPage,
+          clear,
+          getPageCount,
+          getCurrentPageIndex,
+          getAllContent,
+          setAllContent,
+          getPages,
+          setPages,
+          isAnimating: () => isAnimating
+      };
+  })();
+
+  // Initialize pagination when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => StoryPagination.init());
+
+  // Expose for debugging
+  window.StoryPagination = StoryPagination;
+
+  // =========================
   // GROK PREVIEW GENERATOR
   // =========================
   const EROTIC_PREVIEW_TEXT = "The air in the room grew heavy, charged with a raw, undeniable hunger. His hands didn't hesitate, sliding up her thighs with possessive intent, fingers digging into soft flesh. She gasped, arching into the touch, her breath hitching as he leaned in to bite gently at the sensitive cord of her neck. There was no room for coy games now; the heat radiating between them demanded friction, skin against skin. He guided her hips, aligning them with a rough urgency that made her knees weak. As they connected, the world narrowed down to the rhythm of their bodies and the sharp, exquisite friction of movement. It was unpolished, desperate, and entirely consuming.";
@@ -700,7 +954,11 @@ ANTI-HERO ENFORCEMENT:
   };
 
   function currentStoryWordCount(){
-    const txt = (document.getElementById('storyText')?.innerText || '').trim();
+    // Get all content across all pages for accurate word count
+    const allContent = StoryPagination.getAllContent();
+    if (!allContent) return 0;
+    // Strip HTML tags and count words
+    const txt = allContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
     if(!txt) return 0;
     return txt.split(/\s+/).filter(Boolean).length;
   }
@@ -746,7 +1004,8 @@ ANTI-HERO ENFORCEMENT:
           div.style.textAlign = 'center';
           div.style.border = '1px solid var(--gold)';
           div.innerHTML = `<p style="font-style:italic; color:var(--gold)">The moment hangs, unresolved.</p>`;
-          document.getElementById('storyText').appendChild(div);
+          // Append ending to current page
+          StoryPagination.appendToCurrentPage(div.outerHTML);
           return;
       }
 
@@ -1575,7 +1834,8 @@ ANTI-HERO ENFORCEMENT:
       div.style.textAlign = 'center';
       div.style.border = '1px solid var(--pink)';
       div.innerHTML = `<h3 style="color:var(--pink)">Not finished.</h3><p>A Fling burns hot and leaves a mark. But an Affair lingers.</p><button onclick="window.upgradeFlingToAffair()" style="background:var(--pink); color:black; font-weight:bold; margin-top:10px;">Make it an Affair</button>`;
-      document.getElementById('storyText')?.appendChild(div);
+      // Append fling ending to current page
+      StoryPagination.appendToCurrentPage(div.outerHTML);
   }
 
   window.upgradeFlingToAffair = function() {
@@ -1649,7 +1909,8 @@ ANTI-HERO ENFORCEMENT:
       sysPrompt: state.sysPrompt,
       title: document.getElementById('storyTitle')?.textContent || '',
       synopsis: document.getElementById('storySynopsis')?.textContent || '',
-      storyHTML: el.innerHTML,
+      storyHTML: StoryPagination.getAllContent(),  // Full content for fallback
+      storyPages: StoryPagination.getPages(),       // Individual pages for pagination
       stateSnapshot: cleanState
     };
     try {
@@ -1684,7 +1945,16 @@ ANTI-HERO ENFORCEMENT:
 
     document.getElementById('storyTitle').textContent = data.title || '';
     document.getElementById('storySynopsis').textContent = data.synopsis || '';
-    document.getElementById('storyText').innerHTML = data.storyHTML || '';
+
+    // Load story into pagination system
+    StoryPagination.clear();
+    if (data.storyPages && Array.isArray(data.storyPages) && data.storyPages.length > 0) {
+        // Load saved pages
+        StoryPagination.setPages(data.storyPages);
+    } else if (data.storyHTML) {
+        // Fallback: load as single page
+        StoryPagination.addPage(data.storyHTML, true);
+    }
     state.lastSavedWordCount = currentStoryWordCount(); 
 
     const img = document.getElementById('settingShotImg');
@@ -1718,7 +1988,8 @@ ANTI-HERO ENFORCEMENT:
     state.storyLength = 'voyeur';
     state.storyEnded = false;
     state.archetype = { primary: null, modifier: null };
-    document.getElementById('storyText').innerHTML = '';
+    // Clear pagination system
+    StoryPagination.clear();
     // Re-render archetype pills to clear selection
     if (typeof renderArchetypePills === 'function') renderArchetypePills();
     if (typeof updateArchetypePreview === 'function') updateArchetypePreview();
@@ -1761,13 +2032,9 @@ ANTI-HERO ENFORCEMENT:
       applyGameVetoFromInput();
 
       window.state.quillIntent = quillText;
-      const storyEl = document.getElementById('storyText');
-      if (storyEl && quillText) {
-          const div = document.createElement('div');
-          div.className = 'quill-intervention';
-          div.style.cssText = 'color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;';
-          div.innerHTML = formatStory(quillText);
-          storyEl.appendChild(div);
+      if (quillText) {
+          const quillHtml = `<div class="quill-intervention" style="color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;">${formatStory(quillText)}</div>`;
+          StoryPagination.appendToCurrentPage(quillHtml);
       }
       window.state.quillCommittedThisTurn = true;
       window.state.quill.uses++;
@@ -2380,13 +2647,9 @@ ANTI-HERO ENFORCEMENT:
       state.committedQuill.push(quillText);
       renderCommittedPhrases('quill');
 
-      const storyEl = document.getElementById('storyText');
-      if (storyEl && quillText) {
-          const div = document.createElement('div');
-          div.className = 'quill-intervention';
-          div.style.cssText = 'font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;';
-          div.innerHTML = formatStory(quillText, true);
-          storyEl.appendChild(div);
+      if (quillText) {
+          const quillHtml = `<div class="quill-intervention" style="font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;">${formatStory(quillText, true)}</div>`;
+          StoryPagination.appendToCurrentPage(quillHtml);
       }
 
       window.state.quillCommittedThisTurn = true;
@@ -2789,10 +3052,13 @@ Return ONLY the sentence:\n${text}`}]);
         
         document.getElementById('storyTitle').textContent = title.replace(/"/g,'');
         document.getElementById('storySynopsis').textContent = synopsis;
-        document.getElementById('storyText').innerHTML = formatStory(text);
-        
+
+        // Use pagination system for story display
+        StoryPagination.clear();
+        StoryPagination.addPage(formatStory(text), true);
+
         generateSettingShot(synopsis);
-        
+
         // Initial Snapshot
         saveStorySnapshot();
         
@@ -3002,8 +3268,9 @@ Return ONLY the sentence:\n${text}`}]);
           _vizCancelled = true;
       });
 
-      const lastText = storyText ? storyText.textContent.slice(-600) : "";
-      await ensureVisualBible(storyText ? storyText.textContent : "");
+      const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+      const lastText = allStoryContent.slice(-600) || "";
+      await ensureVisualBible(allStoryContent);
 
       // Check if cancelled during bible build
       if (_vizCancelled) {
@@ -3181,10 +3448,9 @@ Return ONLY the sentence:\n${text}`}]);
   window.insertImage = function(){
       const img = document.getElementById('vizPreviewImg');
       if(!img.src) return;
-      const newImg = document.createElement('img');
-      newImg.src = img.src;
-      newImg.className = 'story-image';
-      document.getElementById('storyText').appendChild(newImg);
+      // Append visualized image to current page
+      const imgHtml = `<img src="${img.src}" class="story-image" alt="Visualized scene">`;
+      StoryPagination.appendToCurrentPage(imgHtml);
       window.closeViz();
       saveStorySnapshot();
   };
@@ -3223,8 +3489,10 @@ Return ONLY the sentence:\n${text}`}]);
       }
 
       startLoading("Fate is weaving...", STORY_LOADING_MESSAGES);
-      
-      const context = document.getElementById('storyText').innerText.slice(-3000);
+
+      // Get story context from all pages
+      const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+      const context = allContent.slice(-3000);
       
       let intensityGuard = "";
       if (state.godModeActive) {
@@ -3317,17 +3585,7 @@ FATE CARD ADAPTATION (CRITICAL):
       let storyDisplayed = false;
 
       try {
-          // Insert Fate Card separator if a card was selected (K)
-          if (selectedFateCard && selectedFateCard.title) {
-              insertFateCardSeparator(selectedFateCard.title);
-          }
-
-          // USER TURN RENDER
-          const uDiv = document.createElement('div');
-          uDiv.className = 'dialogue-block p1-dia';
-          uDiv.innerHTML = `<strong>You:</strong> ${escapeHTML(act)} <br> "${escapeHTML(dia)}"`;
-          document.getElementById('storyText').appendChild(uDiv);
-
+          // Generate AI response first
           const raw = await callChat([
               {role:'system', content: fullSys},
               {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
@@ -3340,14 +3598,25 @@ FATE CARD ADAPTATION (CRITICAL):
 
           state.turnCount++;
 
-          const sep = document.createElement('hr');
-          sep.style.borderColor = 'var(--pink)';
-          sep.style.opacity = '0.3';
-          document.getElementById('storyText').appendChild(sep);
+          // Build new page content
+          let pageContent = '';
 
-          const newDiv = document.createElement('div');
-          newDiv.innerHTML = formatStory(raw);
-          document.getElementById('storyText').appendChild(newDiv);
+          // Add Fate Card separator if a card was selected
+          if (selectedFateCard && selectedFateCard.title) {
+              pageContent += `<div class="fate-card-separator"><div class="fate-mini"><h4>${escapeHTML(selectedFateCard.title)}</h4></div></div>`;
+          }
+
+          // Add user action/dialogue
+          pageContent += `<div class="dialogue-block p1-dia"><strong>You:</strong> ${escapeHTML(act)} <br> "${escapeHTML(dia)}"</div>`;
+
+          // Add separator
+          pageContent += `<hr style="border-color:var(--pink); opacity:0.3;">`;
+
+          // Add AI response
+          pageContent += formatStory(raw);
+
+          // Add new page with animation
+          StoryPagination.addPage(pageContent, true);
 
           // CRITICAL: Mark story as displayed AFTER successful DOM insertion
           storyDisplayed = true;
@@ -3357,8 +3626,6 @@ FATE CARD ADAPTATION (CRITICAL):
               const fateHeader = document.getElementById('fateCardHeader');
               if (fateHeader) {
                   fateHeader.scrollIntoView({behavior:'smooth', block:'start'});
-              } else {
-                  sep.scrollIntoView({behavior:'smooth', block:'start'});
               }
           } catch(scrollErr) {
               console.warn('Scroll failed (non-critical):', scrollErr);

@@ -633,7 +633,19 @@
         <img id="settingShotImg" src="" alt="Setting" style="display:none; width:100%;">
     </div>
 
-    <div id="storyText" class="box"></div>
+    <div id="storyText" class="box">
+        <div class="story-pages-container" id="storyPagesContainer"></div>
+    </div>
+
+    <div class="page-nav-controls" id="pageNavControls">
+        <button class="page-nav-btn" id="prevPageBtn" disabled>
+            <span>←</span> Previous
+        </button>
+        <span class="page-indicator" id="pageIndicator">Page 1 of 1</span>
+        <button class="page-nav-btn" id="nextPageBtn" disabled>
+            Next <span>→</span>
+        </button>
+    </div>
 
     <div style="text-align:center; margin-bottom:10px;">
         <button onclick="window.visualize()" style="font-size:0.9em; background:#444;">✨ Visualize This Scene</button>
