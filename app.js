@@ -743,7 +743,7 @@ ANTI-HERO ENFORCEMENT:
 
   window.setGameIntensity = function(level) {
       // honour access tiers: dirty requires subscription, erotic requires non-free
-      if (level === 'Dirty' && window.state.access !== 'sub') { window.showPaywall('sub'); return; }
+      if (level === 'Dirty' && window.state.access !== 'sub') { window.showPaywall('sub_only'); return; }
       if (level === 'Erotic' && window.state.access === 'free') { window.openEroticPreview(); return; }
       window.state.intensity = level;
       updateIntensityUI();
@@ -1519,7 +1519,7 @@ ANTI-HERO ENFORCEMENT:
           banner.innerHTML = `<strong>Payment Issue:</strong> You’re in a grace period.`;
           banner.style.display = 'block';
       } else if (state.billingStatus === 'past_due' || state.billingStatus === 'canceled') {
-          banner.innerHTML = `Subscription inactive. <button onclick="window.showPaywall('sub')" style="margin-left:10px; background:var(--pink); color:black;">Resume the Affair</button>`;
+          banner.innerHTML = `Subscription inactive. <button onclick="window.showPaywall('sub_only')" style="margin-left:10px; background:var(--pink); color:black;">Resume the Affair</button>`;
           banner.style.display = 'block';
       } else {
           banner.style.display = 'none';
@@ -1776,7 +1776,7 @@ ANTI-HERO ENFORCEMENT:
   function wireIntensityHandlers(){
       const handler = (level, e) => {
           e.stopPropagation();
-          if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub'); return; }
+          if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub_only'); return; }
           if(level === 'Erotic' && state.access === 'free'){ window.openEroticPreview(); return; }
           state.intensity = level;
           updateIntensityUI();
@@ -1810,7 +1810,9 @@ ANTI-HERO ENFORCEMENT:
         if(sp) sp.classList.remove('hidden');
     }
     const hasPassNow = state.storyId && hasStoryPass(state.storyId);
-    const hideUnlock = (mode === 'sub') || state.subscribed || hasPassNow;
+    // LOGIC FIX: Show $3 Story Pass alongside $6 Subscribe for most paywall triggers
+    // Hide unlock ONLY if: user already has pass, is subscribed, or mode is 'sub_only' (true sub-required features)
+    const hideUnlock = (mode === 'sub_only') || state.subscribed || hasPassNow;
     const optUnlock = document.getElementById('optUnlock');
     if(optUnlock) optUnlock.classList.toggle('hidden', !!hideUnlock);
 
@@ -1867,7 +1869,7 @@ ANTI-HERO ENFORCEMENT:
       if(state.access === 'sub') {
           completePurchase(); // Already subbed, just process upgrade
       } else {
-          window.showPaywall('sub');
+          window.showPaywall('sub_only'); // Affair requires subscription
       }
   };
 
@@ -2172,7 +2174,7 @@ ANTI-HERO ENFORCEMENT:
     if(window.initCards) window.initCards();
   });
 
-  $('btnIndulge')?.addEventListener('click', () => window.showPaywall('sub'));
+  $('btnIndulge')?.addEventListener('click', () => window.showPaywall('sub_only'));
 
   document.querySelectorAll('.preview-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
