@@ -443,7 +443,6 @@ window.config = window.config || {
           name: 'The Romantic',
           desireStyle: 'Expressive, devoted, emotionally fluent',
           summary: 'The Romantic — expressive and devoted, offering love openly and poetically, binding through attention, longing, and emotional presence.',
-          shadow: 'Shadow: risks overgiving, binding too tightly, and losing themselves in longing.',
           primaryOnly: false
       },
       CLOISTERED: {
@@ -451,7 +450,6 @@ window.config = window.config || {
           name: 'The Cloistered',
           desireStyle: 'Sheltered curiosity, restrained longing, awakening',
           summary: 'The Cloistered — sheltered and restrained, approaching desire as discovery, awakening slowly through trust, patience, and chosen intimacy.',
-          shadow: 'Shadow: withdraws or delays, letting fear of awakening stall intimacy.',
           primaryOnly: false
       },
       ROGUE: {
@@ -459,7 +457,6 @@ window.config = window.config || {
           name: 'The Rogue',
           desireStyle: 'Playful danger, charm, irreverent confidence',
           summary: 'The Rogue — playful and irreverent, using charm and danger to seduce, testing connection through flirtation, risk, and rule-bending confidence.',
-          shadow: 'Shadow: deflects depth with charm, testing how far desire can go without consequence.',
           primaryOnly: false
       },
       DANGEROUS: {
@@ -467,7 +464,6 @@ window.config = window.config || {
           name: 'The Dangerous',
           desireStyle: 'Controlled menace, restraint, implied power',
           summary: 'The Dangerous — controlled and restrained, radiating implied power and menace, creating heat through what is held back rather than revealed.',
-          shadow: 'Shadow: withholds warmth, letting restraint harden into distance or intimidation.',
           primaryOnly: false
       },
       GUARDIAN: {
@@ -475,7 +471,6 @@ window.config = window.config || {
           name: 'The Guardian',
           desireStyle: 'Protection, steadiness, containment',
           summary: 'The Guardian — steady and protective, offering safety as intimacy, building desire through reliability, containment, and earned trust.',
-          shadow: 'Shadow: overcontains, mistaking protection for control or emotional silence.',
           primaryOnly: false
       },
       SOVEREIGN: {
@@ -483,7 +478,6 @@ window.config = window.config || {
           name: 'The Sovereign',
           desireStyle: 'Authority, composure, invitation rather than pursuit',
           summary: 'The Sovereign — composed and authoritative, inviting rather than pursuing, framing desire as permission granted, not attention sought.',
-          shadow: 'Shadow: waits too long to yield, risking isolation behind authority.',
           primaryOnly: false
       },
       ENCHANTING: {
@@ -491,7 +485,6 @@ window.config = window.config || {
           name: 'The Enchanting',
           desireStyle: 'Allure, knowing control, magnetic presence',
           summary: 'The Enchanting — magnetic and intentional, wielding allure with knowing control, choosing rather than chasing, shaping desire through presence alone.',
-          shadow: 'Shadow: keeps desire at a remove, fearing loss of control if fully seen.',
           primaryOnly: false
       },
       DEVOTED: {
@@ -499,7 +492,6 @@ window.config = window.config || {
           name: 'The Devoted',
           desireStyle: 'Focused attention, affection, emotional exclusivity',
           summary: 'The Devoted — focused and emotionally exclusive, expressing intensity through presence, loyalty, and the act of choosing again and again.',
-          shadow: 'Shadow: clings too closely, risking suffocation or fear of abandonment.',
           primaryOnly: false
       },
       STRATEGIST: {
@@ -507,7 +499,6 @@ window.config = window.config || {
           name: 'The Strategist',
           desireStyle: 'Anticipation, intelligence, teasing foresight',
           summary: 'The Strategist — intelligent and anticipatory, seducing through foresight and teasing precision, turning desire into a game you want to lose.',
-          shadow: 'Shadow: overcalculates, turning intimacy into a game that delays surrender.',
           primaryOnly: false
       },
       BEAUTIFUL_RUIN: {
@@ -515,7 +506,6 @@ window.config = window.config || {
           name: 'The Beautiful Ruin',
           desireStyle: 'Desire corrupted by distrust; love fractured, tested, and re-bound through choice',
           summary: 'The Beautiful Ruin — desired yet disillusioned, shaped by wounds that make love feel suspect, testing and fracturing bonds until someone chooses them with clear eyes and stays.',
-          shadow: 'Shadow: tests and fractures bonds, fearing that love offered freely is not real.',
           primaryOnly: true,
           genderedExpression: {
               male: 'Power + unworthiness → possessive devotion → fear of being chosen',
@@ -527,7 +517,6 @@ window.config = window.config || {
           name: 'The Anti-Hero',
           desireStyle: 'Restrained longing shaped by duty, guilt, or a consuming moral code',
           summary: 'The Anti-Hero — burdened by duty, guilt, or a consuming code, suppressing desire to prevent collateral harm, resisting love even as it draws them closer.',
-          shadow: 'Shadow: isolates themselves behind duty and self-denial, letting loneliness harden into resignation or controlled rage.',
           primaryOnly: true,
           coreFantasy: 'They want love, but refuse it because intimacy would endanger others, compromise their mission, or violate their personal code. They are not afraid of love. They are afraid of what love would cost.'
       }
@@ -584,7 +573,6 @@ LOVE INTEREST ARCHETYPE DIRECTIVES (LOCKED):
 
 Primary Archetype: ${primary.name}
 ${primary.summary}
-${primary.shadow}
 `;
 
       if (primary.id === 'BEAUTIFUL_RUIN' && primary.genderedExpression) {
@@ -605,7 +593,7 @@ ${primary.shadow}
           if (modifier) {
               directive += `
 Modifier Archetype: ${modifier.name}
-The Modifier colors expression style only. It does not override the Primary's emotional arc or shadow.
+The Modifier colors expression style only. It does not override the Primary's emotional arc.
 Modifier Desire Style: ${modifier.desireStyle}
 `;
           }
@@ -614,8 +602,8 @@ Modifier Desire Style: ${modifier.desireStyle}
       directive += `
 STORYTELLER ENFORCEMENT:
 - Treat the Primary Archetype as dominant.
-- Use the Shadow Clause as the main source of relational tension.
-- Allow fracture and repair without erasing the shadow.
+- Let the archetype's nature emerge organically through story events.
+- Allow fracture and repair through narrative discovery.
 - Never "heal away" the archetype.
 `;
 
@@ -2427,7 +2415,6 @@ ANTI-HERO ENFORCEMENT:
       let html = `
           <h4 class="archetype-preview-name">${primary.name}</h4>
           <p class="archetype-preview-summary">${primary.summary}</p>
-          <p class="archetype-preview-shadow">${primary.shadow}</p>
       `;
 
       if (state.archetype.modifier) {
@@ -3121,10 +3108,16 @@ Situation: The Protagonist is alone with their thoughts, or engaged in something
             {role:'user', content: introPrompt}
         ]);
 
-        const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title that is:
-- Poetic and evocative
-- Mysterious, not literal
-- Avoids clichés like "Forbidden", "Dangerous", "Seduction"
+        const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
+
+PROCESS: First, internally identify the story's emotional promise or arc (longing, danger, desire, destiny, transformation). Then craft a title that hints at that promise.
+
+QUALITY RULES:
+- The title must feel like a promise of experience, not a mood collage
+- Avoid abstract noun clusters ("Veiled Whispers of the Dark")
+- Prefer titles that imply stakes, longing, or transformation
+- Good examples: "What the Sky Took", "The Wanting", "Before You Burned"
+
 Return ONLY the title, no quotes or explanation:\n${text}`}]);
         const synopsis = await callChat([{role:'user', content:`Write back-cover copy for this story in ONE sentence. It should:
 - Tease themes and mood, not plot
