@@ -1873,7 +1873,7 @@ ANTI-HERO ENFORCEMENT:
       if(card.dataset.bound === '1') return;
       card.dataset.bound = '1';
       card.addEventListener('click', (e) => {
-        if(e.target.classList.contains('preview-btn')) return;
+        if(e.target.closest('.preview-btn')) return;
         const grp = card.dataset.grp;
         const val = card.dataset.val;
         if(!grp || !val || grp === 'length') return; 
