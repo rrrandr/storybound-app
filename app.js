@@ -601,19 +601,6 @@ ANTI-HERO ENFORCEMENT:
               e.stopPropagation();
               e.stopImmediatePropagation();
 
-              // For locked Story Style cards, show preview THEN paywall
-              if (lockedTarget.classList.contains('card') && lockedTarget.dataset.grp === 'style') {
-                  const previewBtn = lockedTarget.querySelector('.preview-btn');
-                  if (previewBtn && previewBtn.dataset.txt) {
-                      const previewText = document.getElementById('previewText');
-                      const previewModal = document.getElementById('previewModal');
-                      if (previewText && previewModal) {
-                          previewText.textContent = previewBtn.dataset.txt;
-                          previewModal.classList.remove('hidden');
-                      }
-                  }
-              }
-
               window.openPaywall('unlock');
           }
       }, true); 
