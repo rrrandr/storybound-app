@@ -1627,8 +1627,20 @@ ANTI-HERO ENFORCEMENT:
     const currentWc = currentStoryWordCount();
     if (currentWc > state.lastSavedWordCount) {
         const globalWc = Number(localStorage.getItem('sb_global_word_count') || 0);
-        localStorage.setItem('sb_global_word_count', globalWc + (currentWc - state.lastSavedWordCount));
+        try {
+            localStorage.setItem('sb_global_word_count', globalWc + (currentWc - state.lastSavedWordCount));
+        } catch(e) { console.warn('Word count save failed', e); }
         state.lastSavedWordCount = currentWc;
+    }
+    // Create clean state snapshot without heavy data
+    const cleanState = { ...state };
+    // Prevent storing large visual bible data that causes QuotaExceededError
+    if (cleanState.visual) {
+        cleanState.visual = {
+            ...cleanState.visual,
+            lastImageUrl: '', // Don't persist images
+            bible: { style: cleanState.visual.bible?.style || '', setting: cleanState.visual.bible?.setting || '', characters: {} }
+        };
     }
     const snapshot = {
       storyId: state.storyId,
@@ -1638,9 +1650,20 @@ ANTI-HERO ENFORCEMENT:
       title: document.getElementById('storyTitle')?.textContent || '',
       synopsis: document.getElementById('storySynopsis')?.textContent || '',
       storyHTML: el.innerHTML,
-      stateSnapshot: state
+      stateSnapshot: cleanState
     };
-    localStorage.setItem('sb_saved_story', JSON.stringify(snapshot));
+    try {
+        localStorage.setItem('sb_saved_story', JSON.stringify(snapshot));
+    } catch(e) {
+        // QuotaExceededError - try to free space
+        console.warn('Storage quota exceeded, cleaning up...', e);
+        try {
+            localStorage.removeItem(SB_ANALYTICS_KEY); // Remove analytics data
+            localStorage.setItem('sb_saved_story', JSON.stringify(snapshot));
+        } catch(e2) {
+            console.error('Storage save failed after cleanup', e2);
+        }
+    }
     updateContinueButtons();
   }
 
@@ -1754,6 +1777,19 @@ ANTI-HERO ENFORCEMENT:
       updateGameQuillUI();
       document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
       showToast("Quill committed.");
+  });
+
+  // Game Veto commit button
+  $('btnGameCommitVeto')?.addEventListener('click', () => {
+      const vetoEl = document.getElementById('gameVetoInput');
+      if (!vetoEl) return;
+      const vetoText = vetoEl.value.trim();
+      if (!vetoText) { showToast("No Veto rules to commit."); return; }
+
+      applyGameVetoFromInput();
+      vetoEl.value = '';
+      document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
+      showToast("Veto committed. Boundaries updated.");
   });
 
   function updateGameQuillUI() {
@@ -2591,8 +2627,10 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
     7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
     ${state.povMode === 'author5th' ? `
-    5TH PERSON (AUTHOR) DIRECTIVES:
-    - You are the Author, a visible conductor of the narrative.
+    5TH PERSON (AUTHOR) DIRECTIVES - CRITICAL:
+    - Write as if The Author is a visible conductor of the narrative, referred to in THIRD PERSON only.
+    - NEVER use first person ("I", "me", "my", "myself"). Always use "The Author" as the subject.
+    - Example: "The Author watched with quiet satisfaction" NOT "I watched with quiet satisfaction".
     - Presence: ${state.authorPresence}. Cadence: ~${state.authorCadenceWords} words between Author references.
     - Fate card voice: ${state.fateCardVoice}.
     - Author awareness: ${state.allowAuthorAwareness ? 'enabled' : 'disabled'}, chance ${state.authorAwarenessChance}, window ${state.authorAwarenessWindowWords}w, max ${state.authorAwarenessMaxDurationWords}w.
@@ -2620,10 +2658,11 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 AUTHOR PRESENCE (5TH PERSON) - CRITICAL FOR OPENING:
 - The Author must be PALPABLY present from the first paragraph.
 - Comment on the world as it forms around the protagonist—as if arranging set pieces.
-- Reflect knowingly on the protagonist's ignorance of what you have planned for them.
+- Reflect knowingly on the protagonist's ignorance of what The Author has planned for them.
 - Express quiet intention, anticipation, and subtle manipulation.
-- Use phrases like: "I placed...", "I watched...", "They didn't yet know...", "I had been waiting..."
-- The Author is a visible hand, orchestrating with relish.
+- CRITICAL: NEVER use first person ("I", "me", "my"). Always refer to "The Author" in third person.
+- Use phrases like: "The Author placed...", "The Author watched...", "They didn't yet know what The Author had planned...", "The Author had been waiting..."
+- The Author is a visible hand, orchestrating with relish—but always referred to as "The Author", never "I".
 ` : '';
 
     const introPrompt = `Write the opening scene (approx 200 words).
@@ -2828,6 +2867,7 @@ Return ONLY the sentence:\n${text}`}]);
      if(!img) return;
      const wrap = document.getElementById('settingShotWrap');
      if(wrap) wrap.style.display = 'flex';
+     img.onload = null; img.onerror = null;
      img.style.display = 'none';
      if(errDiv) {
          errDiv.textContent = 'Conjuring the scene...';
@@ -2837,15 +2877,21 @@ Return ONLY the sentence:\n${text}`}]);
 
      const prompt = `Cinematic establishing shot, atmospheric, fantasy art style. No text, no words. ${desc}`;
 
-     // Fallback chain: try multiple providers
+     // Fallback chain: try multiple providers (matches Visualize)
      const attempts = [
          { provider: 'xai', name: 'Grok' },
          { provider: 'openai', model: 'gpt-image-1', name: 'OpenAI' }
      ];
 
-     let success = false;
+     let rawUrl = null;
+     let lastErr = null;
+
      for(const attempt of attempts) {
          try {
+             // Add timeout to fetch to prevent infinite hanging (matches Visualize)
+             const controller = new AbortController();
+             const timeoutId = setTimeout(() => controller.abort(), 60000);
+
              const res = await fetch(IMAGE_PROXY_URL, {
                  method:'POST',
                  headers:{'Content-Type':'application/json'},
@@ -2855,37 +2901,73 @@ Return ONLY the sentence:\n${text}`}]);
                      model: attempt.model || '',
                      size: "1024x1024",
                      n: 1
-                 })
+                 }),
+                 signal: controller.signal
              });
-             const data = await res.json();
-             if(data.url || data.image || data.b64_json) {
-                 let url = data.url || data.image || data.b64_json;
-                 if(!url.startsWith('http') && !url.startsWith('data:')) url = `data:image/png;base64,${url}`;
-                 img.src = url;
-                 img.onload = () => {
-                     img.style.display = 'block';
-                     if(errDiv) errDiv.classList.add('hidden');
-                 };
-                 img.onerror = () => {
-                     img.style.display = 'none';
-                     if(errDiv) {
-                         errDiv.textContent = 'The scene resists capture...';
-                         errDiv.style.color = '#ff6b6b';
-                         errDiv.classList.remove('hidden');
-                     }
-                 };
-                 success = true;
-                 break;
+
+             clearTimeout(timeoutId);
+
+             let data;
+             try { data = await res.json(); } catch(e) { data = null; }
+
+             // Handle 404 and other HTTP errors - continue to fallback
+             if(!res.ok) {
+                 console.warn(`Setting shot: ${attempt.name} failed (${res.status}), trying fallback...`);
+                 throw new Error(`HTTP ${res.status}`);
              }
+
+             rawUrl = data.url || data.image || data.b64_json;
+             if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
+                 rawUrl = data.data[0].url || data.data[0].b64_json;
+             }
+
+             if(rawUrl) break;
          } catch(e) {
+             lastErr = e;
              console.warn(`Setting shot failed with ${attempt.name}`, e);
+             // Continue to next fallback provider
          }
      }
 
-     if(!success && errDiv) {
-         errDiv.innerHTML = 'The scene resists capture... <button onclick="window.retrySettingShot()" style="margin-left:10px; background:var(--gold); color:black; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Retry</button>';
-         errDiv.style.color = '#ff6b6b';
-         errDiv.classList.remove('hidden');
+     if(rawUrl) {
+         let imageUrl = rawUrl;
+         if(!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
+             imageUrl = `data:image/png;base64,${rawUrl}`;
+         }
+         img.src = imageUrl;
+
+         // Add timeout for image load (matches Visualize)
+         const loadTimeout = setTimeout(() => {
+             img.style.display = 'none';
+             if(errDiv) {
+                 errDiv.innerHTML = 'The scene resists capture... <button onclick="window.retrySettingShot()" style="margin-left:10px; background:var(--gold); color:black; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Retry</button>';
+                 errDiv.style.color = '#ff6b6b';
+                 errDiv.classList.remove('hidden');
+             }
+         }, 30000);
+
+         img.onload = () => {
+             clearTimeout(loadTimeout);
+             img.style.display = 'block';
+             if(errDiv) errDiv.classList.add('hidden');
+         };
+         img.onerror = () => {
+             clearTimeout(loadTimeout);
+             img.style.display = 'none';
+             if(errDiv) {
+                 errDiv.innerHTML = 'The scene resists capture... <button onclick="window.retrySettingShot()" style="margin-left:10px; background:var(--gold); color:black; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Retry</button>';
+                 errDiv.style.color = '#ff6b6b';
+                 errDiv.classList.remove('hidden');
+             }
+         };
+     } else {
+         // All providers failed: non-blocking placeholder, story continues
+         if(errDiv) {
+             errDiv.innerHTML = 'The scene resists capture... <button onclick="window.retrySettingShot()" style="margin-left:10px; background:var(--gold); color:black; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Retry</button>';
+             errDiv.style.color = '#ff6b6b';
+             errDiv.classList.remove('hidden');
+         }
+         // Story continues normally - no toast, no blocking
      }
   }
 
@@ -3055,7 +3137,13 @@ Return ONLY the sentence:\n${text}`}]);
                   clearTimeout(loadTimeout);
                   img.style.display = 'block';
                   if(ph) ph.style.display = 'none';
-                  state.visual.lastImageUrl = img.src;
+                  // Don't store base64 images to avoid QuotaExceededError
+                  // Only store external URLs (not data: or blob:)
+                  if (img.src && !img.src.startsWith('data:') && !img.src.startsWith('blob:')) {
+                      state.visual.lastImageUrl = img.src;
+                  } else {
+                      state.visual.lastImageUrl = ''; // Clear to prevent storage overflow
+                  }
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
                   saveStorySnapshot();
                   resolve();
@@ -3183,13 +3271,23 @@ Return ONLY the sentence:\n${text}`}]);
         : "";
       
       const metaMsg = buildMetaDirective();
+
+      // Build stronger squash directive, especially if Fate Card was used
+      const fateCardUsed = selectedFateCard && selectedFateCard.title;
       const squashDirective = `CRITICAL REINTERPRETATION RULE:
 - NEVER repeat the player's action or dialogue verbatim in your response.
 - ALWAYS reinterpret their intent into the story's voice, tone, and character.
 - Transform their words into the narrative style of this story.
 - If they write "I kiss him", describe a kiss in your literary voice.
 - If they write clunky dialogue, render it as the character would actually speak.
-- The player provides intent. You provide craft.`;
+- The player provides intent. You provide craft.${fateCardUsed ? `
+
+FATE CARD ADAPTATION (CRITICAL):
+- The player used a Fate Card "${selectedFateCard.title}" - their input reflects that card's suggestion.
+- You MUST transform the Fate Card text completely into your own prose.
+- DO NOT echo phrases like "${(act || '').slice(0, 30)}..." verbatim.
+- The Fate Card is a prompt, not a script. Capture the ESSENCE, never the exact words.
+- Write as if YOU conceived this beat, not as if you're following a template.` : ''}`;
       
       const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
       
@@ -3254,13 +3352,11 @@ Return ONLY the sentence:\n${text}`}]);
           // CRITICAL: Mark story as displayed AFTER successful DOM insertion
           storyDisplayed = true;
 
-          // Scroll to the new content
+          // Scroll to Fate Card header so player can pick next card
           try {
-              if (selectedFateCard) {
-                  // If Fate Card was used, scroll to top of new section
-                  const separator = document.querySelector('.fate-card-separator:last-child');
-                  if (separator) separator.scrollIntoView({behavior:'smooth', block:'start'});
-                  else sep.scrollIntoView({behavior:'smooth', block:'start'});
+              const fateHeader = document.getElementById('fateCardHeader');
+              if (fateHeader) {
+                  fateHeader.scrollIntoView({behavior:'smooth', block:'start'});
               } else {
                   sep.scrollIntoView({behavior:'smooth', block:'start'});
               }
@@ -3330,15 +3426,17 @@ Return ONLY the sentence:\n${text}`}]);
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
           const safe = process(p);
-          // Format dialogue with special styling
-          // Match dialogue and dialogue tag up to first period after closing quote
-          const dialogueMatch = safe.match(/^(\s*)(".*?"[^.]*\.?)(.*)/);
-          if (dialogueMatch) {
-              const [, indent, dialoguePart, rest] = dialogueMatch;
-              return `<p>${indent}<span class="story-dialogue">${dialoguePart}</span>${rest}</p>`;
+          // Format dialogue with special styling - handle all dialogue inline without breaking
+          // Replace all quoted dialogue segments with styled spans
+          const formatted = safe.replace(/"([^"]*)"([^"]*?)(?="|$)/g, (match, quote, after) => {
+              // Include the quote and any dialogue tag (he said, she whispered, etc.) up to next sentence
+              return `<span class="story-dialogue">"${quote}"${after.match(/^[^.!?]*[.!?]?/)?.[0] || ''}</span>${after.replace(/^[^.!?]*[.!?]?/, '')}`;
+          });
+          // If the line is entirely dialogue, use dialogue class on the paragraph
+          if(p.trim().startsWith('"') && p.trim().endsWith('"')) {
+              return `<p class="story-dialogue">${safe}</p>`;
           }
-          if(p.trim().startsWith('"')) return `<p class="story-dialogue">${safe}</p>`;
-          return `<p>${safe}</p>`;
+          return `<p>${formatted}</p>`;
       }).join('');
   }
 

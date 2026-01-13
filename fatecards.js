@@ -23,15 +23,25 @@
 
         // Check if love interest has actually appeared in the story
         const liIntroduced = liName && storyText.toLowerCase().includes(liName.toLowerCase());
-        const anyIntimacyEarned = turnCount >= 3 && !['Clean'].includes(intensity);
 
-        // Phase-appropriate suggestions that NEVER reference what hasn't been earned
+        // Detect recent story moments from last ~500 chars
+        const recentText = storyText.slice(-500).toLowerCase();
+        const recentMoments = {
+            kissed: /kiss(ed|ing|es)?|lips\s+(met|touched|pressed)/.test(recentText),
+            touched: /touch(ed|ing)?|hand\s+(on|against)|fingers\s+(brush|trace)/.test(recentText),
+            tension: /heart\s+(pound|race|skip)|breath\s+(catch|hitch)|pulse\s+quick/.test(recentText),
+            argument: /argue|anger|frustrat|storm(ed)?\s+out|walked\s+away/.test(recentText),
+            vulnerable: /tears?|cried|confess|admit|truth|secret/.test(recentText),
+            alone: /alone\s+together|empty\s+room|door\s+(close|shut)|private/.test(recentText)
+        };
+
+        // Phase-appropriate suggestions that respond to recent story events
         const contextualMods = {
-            temptation: getTemptationMod(isSetup, isEarlyStory, liIntroduced, liName, intensity),
-            confession: getConfessionMod(isSetup, isEarlyStory, liIntroduced, intensity),
-            boundary: getBoundaryMod(isSetup, liIntroduced, intensity),
-            power: getPowerMod(isSetup, liIntroduced, liName, intensity),
-            silence: getSilenceMod(isSetup, liIntroduced, liName, intensity)
+            temptation: getTemptationMod(isSetup, isEarlyStory, liIntroduced, liName, intensity, recentMoments),
+            confession: getConfessionMod(isSetup, isEarlyStory, liIntroduced, intensity, recentMoments),
+            boundary: getBoundaryMod(isSetup, liIntroduced, intensity, recentMoments),
+            power: getPowerMod(isSetup, liIntroduced, liName, intensity, recentMoments),
+            silence: getSilenceMod(isSetup, liIntroduced, liName, intensity, recentMoments)
         };
 
         const mod = contextualMods[baseCard.id] || {};
@@ -42,7 +52,7 @@
         };
     }
 
-    function getTemptationMod(isSetup, isEarly, liIntro, liName, intensity) {
+    function getTemptationMod(isSetup, isEarly, liIntro, liName, intensity, recent) {
         if (isSetup) {
             return {
                 action: 'Something catches your attention—a scent, a sound, a half-remembered feeling.',
@@ -55,7 +65,25 @@
                 dialogue: '"I should leave this alone..."'
             };
         }
-        // LI introduced
+        // Respond to recent story moments
+        if (recent.kissed) {
+            return {
+                action: `The memory of that kiss lingers. You want more.`,
+                dialogue: '"That wasn\'t enough..."'
+            };
+        }
+        if (recent.argument) {
+            return {
+                action: `Even angry, you can\'t stop thinking about ${liName}.`,
+                dialogue: '"Why do I still want this?"'
+            };
+        }
+        if (recent.alone) {
+            return {
+                action: `Alone with ${liName}, the air feels charged.`,
+                dialogue: '"We shouldn\'t... but..."'
+            };
+        }
         if (intensity === 'Clean') {
             return {
                 action: `Your thoughts drift to ${liName}. You catch yourself.`,
@@ -68,11 +96,36 @@
         };
     }
 
-    function getConfessionMod(isSetup, isEarly, liIntro, intensity) {
-        if (isSetup || !liIntro) {
+    function getConfessionMod(isSetup, isEarly, liIntro, intensity, recent) {
+        if (isSetup) {
             return {
                 action: 'Something you\'ve been carrying demands to be spoken.',
                 dialogue: '"I\'ve never told anyone this..."'
+            };
+        }
+        if (!liIntro) {
+            return {
+                action: 'A truth rises unbidden to your lips.',
+                dialogue: '"There\'s something you should know..."'
+            };
+        }
+        // Respond to recent moments
+        if (recent.kissed) {
+            return {
+                action: 'After that kiss, holding back feels impossible.',
+                dialogue: '"I need to tell you what this means to me..."'
+            };
+        }
+        if (recent.vulnerable) {
+            return {
+                action: 'The vulnerability unlocks something deeper.',
+                dialogue: '"Since we\'re being honest..."'
+            };
+        }
+        if (recent.argument) {
+            return {
+                action: 'The fight stripped away your defenses.',
+                dialogue: '"The truth is, I\'m scared of how much I..."'
             };
         }
         return {
@@ -81,11 +134,24 @@
         };
     }
 
-    function getBoundaryMod(isSetup, liIntro, intensity) {
+    function getBoundaryMod(isSetup, liIntro, intensity, recent) {
         if (isSetup) {
             return {
                 action: 'You decide what you will and won\'t allow in this moment.',
                 dialogue: '"Not yet."'
+            };
+        }
+        // Respond to recent moments
+        if (recent.kissed || recent.touched) {
+            return {
+                action: 'After what just happened, you need to decide: more, or stop here.',
+                dialogue: '"Wait... or don\'t stop?"'
+            };
+        }
+        if (recent.tension) {
+            return {
+                action: 'The tension is unbearable. You must choose.',
+                dialogue: '"If we do this..."'
             };
         }
         if (intensity === 'Clean') {
@@ -100,11 +166,30 @@
         };
     }
 
-    function getPowerMod(isSetup, liIntro, liName, intensity) {
+    function getPowerMod(isSetup, liIntro, liName, intensity, recent) {
         if (isSetup || !liIntro) {
             return {
                 action: 'You sense the balance of control shifting around you.',
                 dialogue: '"Your move."'
+            };
+        }
+        // Respond to recent moments
+        if (recent.kissed) {
+            return {
+                action: 'After that kiss, who leads next?',
+                dialogue: '"Your turn... or mine?"'
+            };
+        }
+        if (recent.argument) {
+            return {
+                action: `The argument leaves you both raw. Someone must yield first.`,
+                dialogue: '"I\'m not backing down."'
+            };
+        }
+        if (recent.vulnerable) {
+            return {
+                action: `Vulnerability is its own kind of power.`,
+                dialogue: '"You have me at a disadvantage."'
             };
         }
         return {
@@ -113,11 +198,30 @@
         };
     }
 
-    function getSilenceMod(isSetup, liIntro, liName, intensity) {
+    function getSilenceMod(isSetup, liIntro, liName, intensity, recent) {
         if (isSetup || !liIntro) {
             return {
                 action: 'You let the silence speak for you.',
                 dialogue: '(The moment stretches, full of meaning.)'
+            };
+        }
+        // Respond to recent moments
+        if (recent.kissed) {
+            return {
+                action: 'No words could follow that. You simply breathe together.',
+                dialogue: '(The silence says everything.)'
+            };
+        }
+        if (recent.argument) {
+            return {
+                action: 'After the shouting, the quiet is deafening.',
+                dialogue: '(The silence demands attention.)'
+            };
+        }
+        if (recent.tension) {
+            return {
+                action: `The tension between you and ${liName} is palpable.`,
+                dialogue: '(Neither of you dares speak first.)'
             };
         }
         return {
@@ -168,7 +272,7 @@
         }
     }
 
-    // Golden flow animation from card to inputs
+    // Golden flow animation from card to inputs - continuous gentle stream
     function triggerGoldenFlow(fromEl, toEl) {
         if (!fromEl || !toEl) return;
 
@@ -180,37 +284,65 @@
         const endX = toRect.left + toRect.width / 2;
         const endY = toRect.top + toRect.height / 2;
 
-        const flow = document.createElement('div');
-        flow.className = 'golden-flow';
-        flow.style.left = startX + 'px';
-        flow.style.top = startY + 'px';
-        document.body.appendChild(flow);
+        const container = document.createElement('div');
+        container.className = 'golden-flow-container';
+        document.body.appendChild(container);
 
-        // Animate position
-        const duration = 1200;
-        const startTime = performance.now();
+        const particleCount = 12;
+        const streamDuration = 800;
+        const particleDuration = 600;
 
-        function animate(currentTime) {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
+        // Create particles with staggered starts for continuous flow effect
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'golden-flow-particle';
+            container.appendChild(particle);
 
-            // Eased progress
-            const eased = 1 - Math.pow(1 - progress, 3);
+            const delay = (i / particleCount) * streamDuration;
 
-            const currentX = startX + (endX - startX) * eased;
-            const currentY = startY + (endY - startY) * eased;
+            setTimeout(() => {
+                const pStartTime = performance.now();
 
-            flow.style.left = currentX + 'px';
-            flow.style.top = currentY + 'px';
+                function animateParticle(currentTime) {
+                    const elapsed = currentTime - pStartTime;
+                    const progress = Math.min(elapsed / particleDuration, 1);
 
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                flow.remove();
-            }
+                    // Gentle ease-in-out
+                    const eased = progress < 0.5
+                        ? 2 * progress * progress
+                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+                    // Slight wave for organic feel
+                    const wave = Math.sin(progress * Math.PI * 2) * 8;
+
+                    const currentX = startX + (endX - startX) * eased;
+                    const currentY = startY + (endY - startY) * eased + wave;
+
+                    particle.style.left = currentX + 'px';
+                    particle.style.top = currentY + 'px';
+
+                    // Fade in/out for continuous stream look
+                    if (progress < 0.2) {
+                        particle.style.opacity = progress / 0.2 * 0.7;
+                    } else if (progress > 0.8) {
+                        particle.style.opacity = (1 - progress) / 0.2 * 0.7;
+                    } else {
+                        particle.style.opacity = 0.7;
+                    }
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animateParticle);
+                    } else {
+                        particle.remove();
+                    }
+                }
+
+                requestAnimationFrame(animateParticle);
+            }, delay);
         }
 
-        requestAnimationFrame(animate);
+        // Remove container after all particles done
+        setTimeout(() => container.remove(), streamDuration + particleDuration + 100);
     }
 
     function setSelectedState(mount, selectedCardEl){

@@ -208,27 +208,25 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .fate-card.chosen .inner { border: 2px solid var(--pink); }
 @media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
 
-/* GOLDEN FLOW - subtle animation from Fate Card to inputs */
-.golden-flow {
+/* GOLDEN FLOW - continuous gentle stream from Fate Card to inputs */
+.golden-flow-container {
     position: fixed;
-    width: 8px;
-    height: 8px;
-    background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
-    border-radius: 50%;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0;
-    animation: goldenFlowAnim 1.2s ease-out forwards;
 }
-@keyframes goldenFlowAnim {
-    0% { opacity: 0.8; transform: scale(1); }
-    20% { opacity: 0.9; transform: scale(1.5); }
-    100% { opacity: 0; transform: scale(0.5); }
+.golden-flow-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--gold), 0 0 10px rgba(255,215,0,0.5);
+    opacity: 0;
 }
 
 /* FATE CARD SEPARATOR IN STORY */
 .fate-card-separator { display: flex; justify-content: center; margin: 25px auto; padding: 15px 0; border-top: 1px solid rgba(255,215,0,0.3); border-bottom: 1px solid rgba(255,215,0,0.3); background: rgba(0,0,0,0.2); }
-.fate-card-separator .fate-mini { width: 60px; aspect-ratio: 2/3; background: linear-gradient(145deg, #2a0033, #400020); border: 1px solid var(--gold); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5px; box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+.fate-card-separator .fate-mini { width: 60px; aspect-ratio: 5/7; background: linear-gradient(145deg, #2a0033, #400020); border: 1px solid var(--gold); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5px; box-shadow: 0 0 10px rgba(255,215,0,0.3); }
 .fate-card-separator .fate-mini h4 { font-size: 0.6em; color: var(--gold); margin: 0 0 3px; text-transform: uppercase; }
 
 /* INTENSITY BUTTONS */

@@ -648,8 +648,8 @@
       </div>
     </div>
 
-    <div class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
-    
+    <div id="fateCardHeader" class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
+
     <div id="cardMount" class="fate-grid"></div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
@@ -686,8 +686,6 @@
 
 <div id="gameQuillVetoModal" class="overlay hidden" style="z-index:10004;">
   <div class="box" style="max-width:90vw; width:700px; text-align:left;">
-    <h3 style="color:var(--gold); text-align:center; margin-bottom:20px;">Story Controls</h3>
-
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
         <div class="qv-section">
             <label class="qv-label" style="display:block; margin-bottom:8px;">Veto</label>
@@ -697,6 +695,9 @@
                     <textarea id="gameVetoInput" rows="3" class="fate-field" data-fate-type="veto" placeholder="ban: word&#10;rename: Old -> New"></textarea>
                     <div class="rotating-placeholder" data-for="gameVetoInput"></div>
                 </div>
+            </div>
+            <div class="veto-ui" style="display:flex; align-items:center; justify-content:flex-end;">
+                <button id="btnGameCommitVeto" class="small-btn" style="padding:6px 12px; font-size:0.85em;">Commit Veto</button>
             </div>
         </div>
 
