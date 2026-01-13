@@ -2320,34 +2320,20 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       window.showScreen('setup');
   });
 
-  // --- GAME QUILL & VETO PANEL ---
-  function initGameQuillVetoPanel() {
+  // --- QUILL & VETO MODAL ---
+  function initQuillVetoModal() {
       const btn = document.getElementById('gameControlsBtn');
-      const panel = document.getElementById('gameQuillVetoPanel');
-      const treeIcon = document.getElementById('gameQuillTreeIcon');
-      const quillSection = document.getElementById('gameQuillSection');
-      const quillBox = document.getElementById('gameQuillBox');
-      const quillInput = document.getElementById('gameQuillInput');
-      const commitBtn = document.getElementById('gameCommitQuill');
-      const statusEl = document.getElementById('gameQuillStatus');
+      const modal = document.getElementById('quillVetoModal');
+      const commitBtn = document.getElementById('modalCommitQuill');
+      const quillBox = document.getElementById('modalQuillBox');
+      const quillInput = document.getElementById('modalQuillInput');
+      const statusEl = document.getElementById('modalQuillStatus');
 
-      // Toggle panel visibility
-      if (btn && panel) {
+      // Button opens modal
+      if (btn && modal) {
           btn.addEventListener('click', () => {
-              panel.classList.toggle('hidden');
-              if (!panel.classList.contains('hidden')) {
-                  updateGameQuillUI();
-              }
-          });
-      }
-
-      // Tree icon click - trigger paywall in Tease mode
-      if (treeIcon) {
-          treeIcon.addEventListener('click', (e) => {
-              e.stopPropagation();
-              if (state.access === 'free') {
-                  window.showPaywall('unlock');
-              }
+              modal.classList.remove('hidden');
+              updateModalQuillUI();
           });
       }
 
@@ -2362,10 +2348,10 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
               const quillText = quillInput?.value.trim();
               if (!quillText) { showToast("No Quill edit to commit."); return; }
 
-              // Apply veto from game panel
-              const gameVetoInput = document.getElementById('gameVetoInput');
-              if (gameVetoInput) {
-                  const parsed = parseVetoInput(gameVetoInput.value);
+              // Apply veto from modal
+              const vetoInput = document.getElementById('modalVetoInput');
+              if (vetoInput && vetoInput.value.trim()) {
+                  const parsed = parseVetoInput(vetoInput.value);
                   state.veto.bannedWords = parsed.exclusions;
                   state.veto.excluded = parsed.exclusions;
                   state.veto.corrections = parsed.corrections;
@@ -2379,26 +2365,36 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
               window.state.quill.nextReadyAtWords = currentStoryWordCount() + computeNextCooldownWords();
 
               if (quillInput) quillInput.value = '';
-              updateGameQuillUI();
+              updateModalQuillUI();
               updateQuillUI();
               saveStorySnapshot();
               showToast("Quill committed.");
+              modal.classList.add('hidden');
           });
+      }
+
+      // Fate Tree click triggers paywall in Tease mode
+      const fateTree = document.getElementById('fateTree');
+      if (fateTree) {
+          fateTree.addEventListener('click', () => {
+              if (state.access === 'free') {
+                  window.showPaywall('unlock');
+              }
+          });
+          fateTree.style.cursor = 'pointer';
       }
   }
 
-  function updateGameQuillUI() {
-      const treeIcon = document.getElementById('gameQuillTreeIcon');
-      const quillBox = document.getElementById('gameQuillBox');
-      const quillInput = document.getElementById('gameQuillInput');
-      const commitBtn = document.getElementById('gameCommitQuill');
-      const statusEl = document.getElementById('gameQuillStatus');
+  function updateModalQuillUI() {
+      const quillBox = document.getElementById('modalQuillBox');
+      const quillInput = document.getElementById('modalQuillInput');
+      const commitBtn = document.getElementById('modalCommitQuill');
+      const statusEl = document.getElementById('modalQuillStatus');
 
       const isFree = (state.access === 'free');
       const ready = getQuillReady();
 
       // Lock quill in Tease (free) mode
-      if (treeIcon) treeIcon.classList.toggle('locked', isFree);
       if (quillBox) quillBox.classList.toggle('locked-input', isFree || !ready);
       if (quillInput) quillInput.readOnly = isFree || !ready;
       if (commitBtn) {
@@ -2428,7 +2424,7 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
   initSelectionHandlers();
   initNavBindings();
   wireIntensityHandlers();
-  initGameQuillVetoPanel();
+  initQuillVetoModal();
 
   // Initial Load
   state.storyId = localStorage.getItem('sb_current_story_id');

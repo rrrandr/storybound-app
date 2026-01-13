@@ -261,6 +261,31 @@
   </div>
 </div>
 
+<div id="quillVetoModal" class="overlay hidden" style="z-index:5001;">
+  <div class="box" style="max-width:700px;">
+    <h3>Quill & Veto</h3>
+    <div class="quill-veto-container">
+        <div class="qv-section">
+            <label class="qv-label">Veto</label>
+            <p class="qv-hint-above">Block elements you never want to appear.</p>
+            <textarea id="modalVetoInput" rows="3" placeholder="ban: word&#10;rename: Old Name -> New Name&#10;no tattoos"></textarea>
+        </div>
+        <div class="qv-section">
+            <label class="qv-label">Quill</label>
+            <p class="qv-hint-above">Steer tone and direction.</p>
+            <div id="modalQuillBox" class="input-wrapper">
+                <textarea id="modalQuillInput" rows="3" placeholder="Bring them somewhere private..."></textarea>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                <span id="modalQuillStatus">Quill: Poised</span>
+                <button id="modalCommitQuill" class="small-btn" style="padding:4px 10px;">Commit Quill</button>
+            </div>
+        </div>
+    </div>
+    <button onclick="document.getElementById('quillVetoModal').classList.add('hidden')" style="margin-top:15px; background:#444;">Close</button>
+  </div>
+</div>
+
 <div id="app" class="hidden">
 
   <div id="modeSelect" class="screen">
@@ -587,33 +612,6 @@
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
        <button id="gameControlsBtn" class="small-btn">Quill & Veto</button>
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
-    </div>
-
-    <div id="gameQuillVetoPanel" class="quill-veto-container hidden" style="margin-top:15px;">
-        <div class="qv-section">
-            <label class="qv-label">Veto</label>
-            <p class="qv-hint-above">Block elements from appearing. Always active.</p>
-            <div id="gameVetoPills" class="pill-tray"></div>
-            <textarea id="gameVetoInput" rows="2" placeholder="ban: word&#10;no tattoos"></textarea>
-        </div>
-
-        <div class="qv-section" id="gameQuillSection">
-            <label class="qv-label">
-                Quill
-                <span id="gameQuillTreeIcon" class="quill-tree-icon" title="Unlock Quill">🌳</span>
-            </label>
-            <p class="qv-hint-above">Steer tone and direction. Requires unlock.</p>
-            <div id="gameQuillPills" class="pill-tray"></div>
-            <div id="gameQuillBox" class="input-wrapper">
-                <textarea id="gameQuillInput" rows="2" placeholder="Bring them somewhere private..."></textarea>
-            </div>
-            <div class="quill-ui" style="margin-top:8px;">
-                <div style="display:flex; width:100%; justify-content:space-between;">
-                    <span id="gameQuillStatus">Quill: Poised</span>
-                    <button id="gameCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit</button>
-                </div>
-            </div>
-        </div>
     </div>
 
   </div>

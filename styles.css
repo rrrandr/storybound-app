@@ -480,23 +480,6 @@ input[type="checkbox"]:focus:checked {
 .pill.quill-pill { border-color:rgba(255,215,0,0.4); }
 .pill.quill-pill:hover { border-color:var(--gold); background:rgba(255,215,0,0.15); }
 
-/* QUILL TREE ICON */
-.quill-tree-icon {
-    cursor: pointer;
-    font-size: 1.2em;
-    margin-left: 8px;
-    filter: drop-shadow(0 0 3px var(--gold));
-    transition: transform 0.3s, filter 0.3s;
-}
-.quill-tree-icon:hover {
-    transform: scale(1.2);
-    filter: drop-shadow(0 0 6px var(--gold));
-}
-.quill-tree-icon.locked {
-    filter: grayscale(0.8) drop-shadow(0 0 2px rgba(255,255,255,0.3));
-    cursor: var(--cursor-url), pointer;
-}
-
 /* AUTH PANEL */
 #auth-panel { position:fixed; top:10px; right:60px; z-index:2000; background:rgba(0,0,0,0.9); padding:10px; border:1px solid #444; border-radius:5px; display:flex; flex-direction:column; gap:5px; }
 #auth-panel input { padding:5px; width: 150px; font-size: 0.8em; }
