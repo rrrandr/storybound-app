@@ -273,7 +273,7 @@
   </div>
 </div>
 
-<div id="previewModal" class="overlay hidden" style="z-index:5000;">
+<div id="previewModal" class="overlay hidden" style="z-index:10010;">
   <div class="box">
     <p id="previewText" style="font-size:1.3em; font-style:italic; line-height:1.6"></p>
     <button onclick="document.getElementById('previewModal').classList.add('hidden')">Close</button>
@@ -685,32 +685,40 @@
   <div id="toast" class="toast hidden">Boundaries redirected the scene.</div>
 
 <div id="gameQuillVetoModal" class="overlay hidden" style="z-index:10004;">
-  <div class="box" style="max-width:600px; text-align:center;">
-    <h3 style="color:var(--gold)">Story Controls</h3>
+  <div class="box" style="max-width:90vw; width:700px; text-align:left;">
+    <h3 style="color:var(--gold); text-align:center; margin-bottom:20px;">Story Controls</h3>
 
-    <div class="quill-veto-container" style="grid-template-columns:1fr;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
         <div class="qv-section">
-            <label class="qv-label">Veto</label>
-            <p class="qv-hint-above">Block elements you never want to appear.</p>
-            <div id="gameVetoPills" class="pill-tray"></div>
-            <textarea id="gameVetoInput" rows="2" placeholder="ban: word&#10;rename: Old Name -> New Name"></textarea>
+            <label class="qv-label" style="display:block; margin-bottom:8px;">Veto</label>
+            <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Block elements you never want to appear.</p>
+            <div class="fate-input-row" style="margin-bottom:10px;">
+                <div class="input-wrapper fate-input-wrapper" style="flex:1;">
+                    <textarea id="gameVetoInput" rows="3" class="fate-field" data-fate-type="veto" placeholder="ban: word&#10;rename: Old -> New"></textarea>
+                    <div class="rotating-placeholder" data-for="gameVetoInput"></div>
+                </div>
+            </div>
         </div>
 
         <div class="qv-section">
-            <label class="qv-label">Quill</label>
-            <p class="qv-hint-above">Steer tone, boundaries, or direction.</p>
-            <div id="gameQuillPills" class="pill-tray"></div>
-            <div id="gameQuillBox" class="input-wrapper">
-                <textarea id="gameQuillInput" rows="2" placeholder="Bring them to a moonlit garden..."></textarea>
+            <label class="qv-label" style="display:block; margin-bottom:8px;">Quill</label>
+            <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Steer tone, boundaries, or direction.</p>
+            <div class="fate-input-row" style="margin-bottom:10px;">
+                <div id="gameQuillBox" class="input-wrapper fate-input-wrapper" style="flex:1;">
+                    <textarea id="gameQuillInput" rows="3" class="fate-field" data-fate-type="quill" placeholder="Bring them to a moonlit garden..."></textarea>
+                    <div class="rotating-placeholder" data-for="gameQuillInput"></div>
+                </div>
             </div>
-            <div class="quill-ui" style="margin-top:10px;">
-                <span id="gameQuillStatus">Quill: Poised</span>
-                <button id="btnGameCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; margin-left:10px;">Commit Quill</button>
+            <div class="quill-ui" style="display:flex; align-items:center; justify-content:space-between;">
+                <span id="gameQuillStatus" style="font-size:0.9em;">Quill: Poised</span>
+                <button id="btnGameCommitQuill" class="small-btn" style="padding:6px 12px; font-size:0.85em;">Commit Quill</button>
             </div>
         </div>
     </div>
 
-    <button onclick="document.getElementById('gameQuillVetoModal').classList.add('hidden')" style="background:#444; margin-top:15px;">Close</button>
+    <div style="text-align:center; margin-top:20px;">
+        <button onclick="document.getElementById('gameQuillVetoModal').classList.add('hidden')" style="background:#444;">Close</button>
+    </div>
   </div>
 </div>
 

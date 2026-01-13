@@ -12,32 +12,26 @@
     function generateContextualCard(baseCard) {
         const state = window.state || {};
         const storyEl = document.getElementById('storyText');
-        const context = storyEl ? storyEl.textContent.slice(-500) : '';
-        const liName = state.loveInterestName || 'them';
+        const storyText = storyEl ? storyEl.textContent : '';
+        const turnCount = state.turnCount || 0;
         const intensity = state.intensity || 'Naughty';
 
-        // Build contextual suggestions based on card type
+        // Determine story phase
+        const isSetup = turnCount === 0;
+        const isEarlyStory = turnCount <= 2;
+        const liName = state.loveInterestName || '';
+
+        // Check if love interest has actually appeared in the story
+        const liIntroduced = liName && storyText.toLowerCase().includes(liName.toLowerCase());
+        const anyIntimacyEarned = turnCount >= 3 && !['Clean'].includes(intensity);
+
+        // Phase-appropriate suggestions that NEVER reference what hasn't been earned
         const contextualMods = {
-            temptation: {
-                action: `You find yourself wanting to move closer to ${liName}.`,
-                dialogue: `"I keep thinking about..."`
-            },
-            confession: {
-                action: `The weight of an unspoken truth presses against your chest.`,
-                dialogue: `"Before this goes any further, I need you to know..."`
-            },
-            boundary: {
-                action: intensity === 'Clean' ? `You take a breath and create space.` : `You decide how far this moment will go.`,
-                dialogue: intensity === 'Clean' ? `"I need a moment."` : `"Is this what you want?"`
-            },
-            power: {
-                action: `The balance between you shifts. You can feel it.`,
-                dialogue: `"Your move."`
-            },
-            silence: {
-                action: `You hold ${liName}'s gaze. No words needed.`,
-                dialogue: `(Your eyes say everything)`
-            }
+            temptation: getTemptationMod(isSetup, isEarlyStory, liIntroduced, liName, intensity),
+            confession: getConfessionMod(isSetup, isEarlyStory, liIntroduced, intensity),
+            boundary: getBoundaryMod(isSetup, liIntroduced, intensity),
+            power: getPowerMod(isSetup, liIntroduced, liName, intensity),
+            silence: getSilenceMod(isSetup, liIntroduced, liName, intensity)
         };
 
         const mod = contextualMods[baseCard.id] || {};
@@ -45,6 +39,90 @@
             ...baseCard,
             action: mod.action || baseCard.actionTemplate,
             dialogue: mod.dialogue || baseCard.dialogueTemplate
+        };
+    }
+
+    function getTemptationMod(isSetup, isEarly, liIntro, liName, intensity) {
+        if (isSetup) {
+            return {
+                action: 'Something catches your attention—a scent, a sound, a half-remembered feeling.',
+                dialogue: '"What is this place...?"'
+            };
+        }
+        if (!liIntro) {
+            return {
+                action: 'A pull toward something unknown. Curiosity, or something deeper.',
+                dialogue: '"I should leave this alone..."'
+            };
+        }
+        // LI introduced
+        if (intensity === 'Clean') {
+            return {
+                action: `Your thoughts drift to ${liName}. You catch yourself.`,
+                dialogue: '"I wonder what they\'re thinking..."'
+            };
+        }
+        return {
+            action: `You find yourself wanting to move closer to ${liName}.`,
+            dialogue: '"I keep thinking about..."'
+        };
+    }
+
+    function getConfessionMod(isSetup, isEarly, liIntro, intensity) {
+        if (isSetup || !liIntro) {
+            return {
+                action: 'Something you\'ve been carrying demands to be spoken.',
+                dialogue: '"I\'ve never told anyone this..."'
+            };
+        }
+        return {
+            action: 'The weight of an unspoken truth presses against your chest.',
+            dialogue: '"Before this goes any further, I need you to know..."'
+        };
+    }
+
+    function getBoundaryMod(isSetup, liIntro, intensity) {
+        if (isSetup) {
+            return {
+                action: 'You decide what you will and won\'t allow in this moment.',
+                dialogue: '"Not yet."'
+            };
+        }
+        if (intensity === 'Clean') {
+            return {
+                action: 'You take a breath and create space.',
+                dialogue: '"I need a moment."'
+            };
+        }
+        return {
+            action: 'You decide how far this moment will go.',
+            dialogue: '"Is this what you want?"'
+        };
+    }
+
+    function getPowerMod(isSetup, liIntro, liName, intensity) {
+        if (isSetup || !liIntro) {
+            return {
+                action: 'You sense the balance of control shifting around you.',
+                dialogue: '"Your move."'
+            };
+        }
+        return {
+            action: `The balance between you and ${liName} shifts. You feel it.`,
+            dialogue: '"Look at me."'
+        };
+    }
+
+    function getSilenceMod(isSetup, liIntro, liName, intensity) {
+        if (isSetup || !liIntro) {
+            return {
+                action: 'You let the silence speak for you.',
+                dialogue: '(The moment stretches, full of meaning.)'
+            };
+        }
+        return {
+            action: `You hold ${liName}'s gaze. No words needed.`,
+            dialogue: '(Your eyes say everything.)'
         };
     }
 

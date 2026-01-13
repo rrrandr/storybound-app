@@ -588,22 +588,34 @@ ANTI-HERO ENFORCEMENT:
       
       // Global Locked Click Delegation
       // Allows preview buttons within locked cards to still function
-      document.addEventListener('click', (e) => {
-          // Allow preview buttons to work even in locked cards
-          // Use closest() to catch clicks on button or any child element
-          if (e.target.closest('.preview-btn')) {
-              return; // Let the preview button handle its own click
-          }
+      if (!document._lockedClickBound) {
+          document._lockedClickBound = true;
+          document.addEventListener('click', (e) => {
+              // Allow preview buttons to work even in locked cards
+              // Check both the target and all ancestors for .preview-btn
+              const previewBtn = e.target.closest('.preview-btn');
+              if (previewBtn) {
+                  // Explicitly show preview and stop - don't let anything else handle this
+                  e.stopPropagation();
+                  const previewText = document.getElementById('previewText');
+                  const previewModal = document.getElementById('previewModal');
+                  if (previewText && previewModal && previewBtn.dataset.txt) {
+                      previewText.textContent = previewBtn.dataset.txt;
+                      previewModal.classList.remove('hidden');
+                  }
+                  return;
+              }
 
-          const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-tease, .locked-pass, [data-locked]');
-          if (lockedTarget) {
-              e.preventDefault();
-              e.stopPropagation();
-              e.stopImmediatePropagation();
+              const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-tease, .locked-pass, [data-locked]');
+              if (lockedTarget) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.stopImmediatePropagation();
 
-              window.openPaywall('unlock');
-          }
-      }, true); 
+                  window.openPaywall('unlock');
+              }
+          }, true);
+      } 
 
       document.addEventListener('keydown', (e) => {
           if (e.ctrlKey && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
@@ -1062,6 +1074,9 @@ ANTI-HERO ENFORCEMENT:
       initRotatingPlaceholder('ancestryInputLI', 'ancestry');
       initRotatingPlaceholder('vetoInput', 'veto');
       initRotatingPlaceholder('quillInput', 'quill');
+      // Game modal rotating placeholders
+      initRotatingPlaceholder('gameVetoInput', 'veto');
+      initRotatingPlaceholder('gameQuillInput', 'quill');
 
       // Bind fate hand clicks
       document.querySelectorAll('.fate-hand').forEach(hand => {
@@ -2091,6 +2106,7 @@ ANTI-HERO ENFORCEMENT:
   let _loadingMsgTimer = null;
   let _loadingCancelled = false;
   let _loadingCancelCallback = null;
+  let _lastSettingShotDesc = '';
 
   const STORY_LOADING_MESSAGES = [
       // Required phrases
@@ -2600,8 +2616,18 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     const pacingRule = pacingRules[state.intensity] || pacingRules['Naughty'];
     const liAppears = state.intensity === 'Dirty' || Math.random() < 0.25;
 
-    const introPrompt = `Write the opening scene (approx 200 words).
+    const authorOpeningDirective = state.povMode === 'author5th' ? `
+AUTHOR PRESENCE (5TH PERSON) - CRITICAL FOR OPENING:
+- The Author must be PALPABLY present from the first paragraph.
+- Comment on the world as it forms around the protagonist—as if arranging set pieces.
+- Reflect knowingly on the protagonist's ignorance of what you have planned for them.
+- Express quiet intention, anticipation, and subtle manipulation.
+- Use phrases like: "I placed...", "I watched...", "They didn't yet know...", "I had been waiting..."
+- The Author is a visible hand, orchestrating with relish.
+` : '';
 
+    const introPrompt = `Write the opening scene (approx 200 words).
+${authorOpeningDirective}
 FIRST SECTION RULES:
 - ${pacingRule}
 - Focus on: World setup, hints at overall arc, the protagonist's past or situation.
@@ -2796,6 +2822,7 @@ Return ONLY the sentence:\n${text}`}]);
   }
 
   async function generateSettingShot(desc) {
+     _lastSettingShotDesc = desc; // Store for retry
      const img = document.getElementById('settingShotImg');
      const errDiv = document.getElementById('settingError');
      if(!img) return;
@@ -2856,11 +2883,17 @@ Return ONLY the sentence:\n${text}`}]);
      }
 
      if(!success && errDiv) {
-         errDiv.textContent = 'The scene resists capture...';
+         errDiv.innerHTML = 'The scene resists capture... <button onclick="window.retrySettingShot()" style="margin-left:10px; background:var(--gold); color:black; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Retry</button>';
          errDiv.style.color = '#ff6b6b';
          errDiv.classList.remove('hidden');
      }
   }
+
+  window.retrySettingShot = function() {
+      if (_lastSettingShotDesc) {
+          generateSettingShot(_lastSettingShotDesc);
+      }
+  };
 
   // --- VISUALIZE (STABILIZED) ---
   let _vizCancelled = false;
@@ -2963,7 +2996,7 @@ Return ONLY the sentence:\n${text}`}]);
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({
-                        prompt: anchorText + "\n\nSCENE:\n" + promptMsg + " Characters have gorgeous, striking faces and ideal proportions reflecting peak human beauty and health." + (state.intensity === 'Dirty' || state.intensity === 'Erotic' ? " Artistic, suggestive, safe-for-work." : "") + "\n\n(Generate art without any text/lettering.)",
+                        prompt: anchorText + "\n\nSCENE:\n" + promptMsg + " Characters are depicted with elegant beauty, healthy appearance, and refined features. Art style: cinematic, painterly, tasteful." + "\n\n(Generate art without any text/lettering.)",
                         provider: attempt.provider,
                         model: attempt.model,
                         size: "1024x1024",
