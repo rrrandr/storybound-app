@@ -593,7 +593,7 @@ ${primary.summary}
           if (modifier) {
               directive += `
 Modifier Archetype: ${modifier.name}
-The Modifier colors expression style only. It does not override the Primary's emotional arc.
+The Modifier colors expression style only. It does not override the Primary's emotional arc or shadow.
 Modifier Desire Style: ${modifier.desireStyle}
 `;
           }
@@ -602,8 +602,8 @@ Modifier Desire Style: ${modifier.desireStyle}
       directive += `
 STORYTELLER ENFORCEMENT:
 - Treat the Primary Archetype as dominant.
-- Let the archetype's nature emerge organically through story events.
-- Allow fracture and repair through narrative discovery.
+- Use the Shadow Clause as the main source of relational tension.
+- Allow fracture and repair without erasing the shadow.
 - Never "heal away" the archetype.
 `;
 
