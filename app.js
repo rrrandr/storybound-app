@@ -2934,6 +2934,30 @@ Never fully resolve the central tension unless explicitly instructed.
 
 ────────────────────────────────────
 
+DIALOGUE BALANCE RULES (LONG-ARC):
+
+Before writing dialogue, internally assess:
+- Who is physically present in the scene
+- Who is emotionally engaged or affected
+- Who has reason to speak, react, or withhold
+
+Single-Voice Prevention:
+- Dialogue must not come exclusively from the player character across multiple pages.
+- If another character is present and engaged, they must eventually speak—unless silence is narratively intentional.
+- Intentional silence is valid only when: (1) explicitly described as meaningful (refusal, distance, threat, awe), and (2) temporary, not sustained across multiple pages.
+
+Natural Turn-Taking:
+- Avoid 3+ consecutive dialogue beats from the same speaker when others are present.
+- Encourage response, interruption, deflection, or reaction from other characters.
+- Dialogue should feel exchanged, not monologic.
+
+Long-Arc Presence Awareness:
+- Track whether each present character has spoken recently over multiple pages.
+- If a character has been silent too long without narrative justification, bias toward giving them a voice.
+- This is guidance, not a rigid quota—let silence breathe when it serves the story.
+
+────────────────────────────────────
+
 You are writing a story in the "${state.picks.genre.join(', ')}" genre.
 Style: ${state.picks.style.join(', ')}.
 POV: ${state.picks.pov}.
