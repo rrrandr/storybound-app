@@ -89,8 +89,8 @@
         <select id="vizModel">
             <option value="auto">Auto (Best Available)</option>
             <option value="grok-2-image-1212">Grok 2</option>
-            <option value="openai">OpenAI (DALL-E 3)</option>
-            <option value="gemini">Gemini (Fantasy)</option>
+            <option value="gpt-image-1">OpenAI (GPT Image)</option>
+            <option value="dall-e-3">OpenAI (DALL-E 3)</option>
         </select>
         <button class="small-btn" id="vizRetryBtn" onclick="window.visualize(true)">Re-Visualize</button>
         <button onclick="window.insertImage()">Insert</button>
@@ -530,7 +530,35 @@
     </div>
 
     <div class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
-    
+
+    <div class="fate-tree-container">
+        <svg id="fateTree" class="fate-tree" viewBox="0 0 60 80">
+            <!-- Trunk -->
+            <path class="fate-tree-trunk" d="M30 80 L30 45" />
+            <!-- Left branches (side) -->
+            <path class="fate-tree-branch" d="M30 65 L15 55" />
+            <path class="fate-tree-branch" d="M15 55 L8 48" />
+            <path class="fate-tree-branch" d="M15 55 L12 62" />
+            <path class="fate-tree-branch" d="M30 55 L18 42" />
+            <path class="fate-tree-branch" d="M18 42 L10 35" />
+            <path class="fate-tree-branch" d="M18 42 L22 32" />
+            <!-- Right branches (side) -->
+            <path class="fate-tree-branch" d="M30 60 L45 50" />
+            <path class="fate-tree-branch" d="M45 50 L52 42" />
+            <path class="fate-tree-branch" d="M45 50 L48 58" />
+            <path class="fate-tree-branch" d="M30 50 L42 38" />
+            <path class="fate-tree-branch" d="M42 38 L50 30" />
+            <path class="fate-tree-branch" d="M42 38 L38 28" />
+            <!-- Top branches -->
+            <path class="fate-tree-branch" d="M30 45 L25 30" />
+            <path class="fate-tree-branch" d="M30 45 L35 32" />
+            <path class="fate-tree-branch" d="M25 30 L20 18" />
+            <path class="fate-tree-branch" d="M35 32 L40 20" />
+            <!-- Falling leaf (starts on right side branch) -->
+            <ellipse class="fate-leaf" cx="50" cy="30" rx="4" ry="6" />
+        </svg>
+    </div>
+
     <div id="cardMount" class="fate-grid"></div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
@@ -557,8 +585,35 @@
     </div>
     
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-       <button id="gameControlsBtn" class="small-btn locked-style">Story Controls</button>
+       <button id="gameControlsBtn" class="small-btn">Quill & Veto</button>
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
+    </div>
+
+    <div id="gameQuillVetoPanel" class="quill-veto-container hidden" style="margin-top:15px;">
+        <div class="qv-section">
+            <label class="qv-label">Veto</label>
+            <p class="qv-hint-above">Block elements from appearing. Always active.</p>
+            <div id="gameVetoPills" class="pill-tray"></div>
+            <textarea id="gameVetoInput" rows="2" placeholder="ban: word&#10;no tattoos"></textarea>
+        </div>
+
+        <div class="qv-section" id="gameQuillSection">
+            <label class="qv-label">
+                Quill
+                <span id="gameQuillTreeIcon" class="quill-tree-icon" title="Unlock Quill">🌳</span>
+            </label>
+            <p class="qv-hint-above">Steer tone and direction. Requires unlock.</p>
+            <div id="gameQuillPills" class="pill-tray"></div>
+            <div id="gameQuillBox" class="input-wrapper">
+                <textarea id="gameQuillInput" rows="2" placeholder="Bring them somewhere private..."></textarea>
+            </div>
+            <div class="quill-ui" style="margin-top:8px;">
+                <div style="display:flex; width:100%; justify-content:space-between;">
+                    <span id="gameQuillStatus">Quill: Poised</span>
+                    <button id="gameCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit</button>
+                </div>
+            </div>
+        </div>
     </div>
 
   </div>

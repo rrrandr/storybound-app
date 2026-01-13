@@ -34,6 +34,12 @@
         _allFlipped = true;
         const cards = mount.querySelectorAll('.fate-card');
         cards.forEach(c => c.classList.add('flipped'));
+
+        // Reveal the fate tree when cards flip
+        const fateTree = document.getElementById('fateTree');
+        if (fateTree) {
+            fateTree.classList.add('revealed');
+        }
     }
 
     function clearPendingTimer(){
@@ -41,6 +47,102 @@
             clearTimeout(_pendingApplyTimer);
             _pendingApplyTimer = null;
         }
+    }
+
+    // Golden flow animation from card to inputs
+    function triggerGoldenFlow(cardEl) {
+        const actionWrapper = document.getElementById('actionWrapper');
+        const dialogueWrapper = document.getElementById('dialogueWrapper');
+        if (!cardEl || !actionWrapper || !dialogueWrapper) return;
+
+        // Get positions
+        const cardRect = cardEl.getBoundingClientRect();
+        const actionRect = actionWrapper.getBoundingClientRect();
+        const dialogueRect = dialogueWrapper.getBoundingClientRect();
+
+        // Create container if not exists
+        let container = document.querySelector('.golden-flow-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'golden-flow-container';
+            document.body.appendChild(container);
+        }
+        container.innerHTML = '';
+
+        // Create particles flowing to both inputs
+        const targets = [
+            { rect: actionRect, wrapper: actionWrapper },
+            { rect: dialogueRect, wrapper: dialogueWrapper }
+        ];
+
+        targets.forEach((target, targetIdx) => {
+            // Add glow effect to target wrapper
+            target.wrapper.classList.add('receiving-flow');
+            setTimeout(() => {
+                target.wrapper.classList.remove('receiving-flow');
+            }, 1500);
+
+            // Create flowing particles
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'golden-flow-particle';
+
+                // Start position (center of card)
+                const startX = cardRect.left + cardRect.width / 2;
+                const startY = cardRect.top + cardRect.height / 2;
+
+                // End position (center of target, with some randomness)
+                const endX = target.rect.left + target.rect.width / 2 + (Math.random() - 0.5) * 40;
+                const endY = target.rect.top + target.rect.height / 2 + (Math.random() - 0.5) * 20;
+
+                // Set start position
+                particle.style.left = startX + 'px';
+                particle.style.top = startY + 'px';
+
+                // Calculate path with delay
+                const delay = i * 80 + targetIdx * 100;
+                const duration = 1200 + Math.random() * 300;
+
+                // Animate via custom keyframes
+                particle.animate([
+                    {
+                        left: startX + 'px',
+                        top: startY + 'px',
+                        opacity: 0.8,
+                        transform: 'scale(1)'
+                    },
+                    {
+                        left: (startX + endX) / 2 + (Math.random() - 0.5) * 60 + 'px',
+                        top: (startY + endY) / 2 + (Math.random() - 0.5) * 30 + 'px',
+                        opacity: 0.6,
+                        transform: 'scale(0.8)'
+                    },
+                    {
+                        left: endX + 'px',
+                        top: endY + 'px',
+                        opacity: 0,
+                        transform: 'scale(0.3)'
+                    }
+                ], {
+                    duration: duration,
+                    delay: delay,
+                    easing: 'ease-out',
+                    fill: 'forwards'
+                });
+
+                container.appendChild(particle);
+
+                // Cleanup after animation
+                setTimeout(() => {
+                    particle.remove();
+                }, duration + delay + 100);
+            }
+        });
+
+        // Cleanup container after all animations
+        setTimeout(() => {
+            container.innerHTML = '';
+        }, 2000);
     }
 
     function setSelectedState(mount, selectedCardEl){
@@ -182,6 +284,12 @@
         _allFlipped = false;
         clearPendingTimer();
 
+        // Reset fate tree state
+        const fateTree = document.getElementById('fateTree');
+        if (fateTree) {
+            fateTree.classList.remove('revealed');
+        }
+
         const unlockCount = resolveUnlockCount();
 
         // Shuffle the 5 cards
@@ -231,6 +339,9 @@
                 setSelectedState(mount, card);
 
                 clearPendingTimer();
+
+                // Trigger golden flow animation
+                triggerGoldenFlow(card);
 
                 // Apply content to inputs after animation delay (match existing 600ms timing)
                 _pendingApplyTimer = setTimeout(() => {

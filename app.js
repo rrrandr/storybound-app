@@ -352,9 +352,12 @@ window.config = window.config || {
       _currentScreenId = id;
       updateNavUI();
 
-      // Populate suggestion pills when entering setup screen
+      // Populate suggestion pills and start ancestry rotation when entering setup screen
       if(id === 'setup') {
           populatePills();
+          startAncestryPlaceholderRotation();
+      } else {
+          stopAncestryPlaceholderRotation();
       }
   };
 
@@ -378,6 +381,10 @@ window.config = window.config || {
       
       // Global Locked Click Delegation
       document.addEventListener('click', (e) => {
+          // Allow preview buttons to work even on locked cards
+          if (e.target.classList.contains('preview-btn') || e.target.closest('.preview-btn')) {
+              return; // Let the preview handler run
+          }
           const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-tease, .locked-pass, [data-locked]');
           if (lockedTarget) {
               e.preventDefault();
@@ -645,6 +652,62 @@ window.config = window.config || {
       "enemies to lovers", "only one bed", "bring them somewhere private",
       "increase tension", "confession scene", "near-miss moment", "jealousy beat"
   ];
+
+  // --- ANCESTRY PLACEHOLDERS (50% fantasy, 50% real-world) ---
+  const ANCESTRY_FANTASY = [
+      "e.g. Fae nobility", "e.g. Half-elf wanderer", "e.g. Starborn exile",
+      "e.g. Clockwork heir", "e.g. Night Court spy", "e.g. Dragon-touched",
+      "e.g. Witch lineage", "e.g. Selkie blood", "e.g. Shadow fey",
+      "e.g. Celestial marked", "e.g. Vampire-born", "e.g. Phoenix clan"
+  ];
+  const ANCESTRY_REAL = [
+      "e.g. Celtic roots", "e.g. Andean heritage", "e.g. Levantine descent",
+      "e.g. Nordic ancestry", "e.g. Edo-era family", "e.g. Moorish lineage",
+      "e.g. Gaelic blood", "e.g. Silk Road trader", "e.g. Mediterranean",
+      "e.g. Highland clan", "e.g. Venetian noble", "e.g. Persian origin"
+  ];
+
+  let _ancestryPlaceholderTimer = null;
+  let _ancestryPlaceholderIndex = 0;
+
+  function getBalancedAncestryPlaceholder() {
+      // Alternates between fantasy and real to maintain 50/50 balance
+      const useFantasy = (_ancestryPlaceholderIndex % 2 === 0);
+      const list = useFantasy ? ANCESTRY_FANTASY : ANCESTRY_REAL;
+      const randomIdx = Math.floor(Math.random() * list.length);
+      _ancestryPlaceholderIndex++;
+      return list[randomIdx];
+  }
+
+  function startAncestryPlaceholderRotation() {
+      const playerInput = document.getElementById('playerNameInput');
+      const partnerInput = document.getElementById('partnerNameInput');
+      if (!playerInput || !partnerInput) return;
+
+      // Set initial placeholders
+      playerInput.placeholder = getBalancedAncestryPlaceholder();
+      partnerInput.placeholder = getBalancedAncestryPlaceholder();
+
+      // Clear any existing timer
+      if (_ancestryPlaceholderTimer) clearInterval(_ancestryPlaceholderTimer);
+
+      // Rotate every 3 seconds
+      _ancestryPlaceholderTimer = setInterval(() => {
+          if (playerInput && !playerInput.value) {
+              playerInput.placeholder = getBalancedAncestryPlaceholder();
+          }
+          if (partnerInput && !partnerInput.value) {
+              partnerInput.placeholder = getBalancedAncestryPlaceholder();
+          }
+      }, 3000);
+  }
+
+  function stopAncestryPlaceholderRotation() {
+      if (_ancestryPlaceholderTimer) {
+          clearInterval(_ancestryPlaceholderTimer);
+          _ancestryPlaceholderTimer = null;
+      }
+  }
 
   function populatePills() {
       const vetoPillsEl = document.getElementById('vetoPills');
@@ -1331,23 +1394,100 @@ window.config = window.config || {
   // --- LOADING OVERLAY ---
   let _loadingTimer = null;
   let _loadingActive = false;
+  let _phraseTimer = null;
+  let _phraseIndex = 0;
 
-  function startLoading(msg){
+  // Story loading phrases (playful, literary, worldbuilding-themed)
+  const STORY_LOADING_PHRASES = [
+    "Conjuring your world",
+    "Crafting each individual snowflake",
+    "Setting traps",
+    "Naming the animals",
+    "Manifesting drama",
+    "Cleaning up double entendres",
+    "Darkening the past",
+    "Amping the feels",
+    "Polishing forbidden glances",
+    "Brewing unspoken tension",
+    "Threading fate through fingers",
+    "Lighting candles in empty hallways",
+    "Tuning the heartstrings",
+    "Weaving secrets into silk",
+    "Sharpening witty retorts",
+    "Rehearsing stolen moments",
+    "Arranging moonlit encounters",
+    "Distilling longing into words",
+    "Summoning inconvenient desires"
+  ];
+
+  // Visualize loading phrases (painting, longing, eyes, glances, light, posture)
+  const VISUALIZE_LOADING_PHRASES = [
+    "Painting the scene",
+    "Capturing the longing",
+    "Rendering stolen glances",
+    "Illuminating hidden corners",
+    "Sculpting posture and poise",
+    "Mixing colors of desire",
+    "Focusing on the eyes",
+    "Tracing the light on skin",
+    "Composing the frame",
+    "Brushing shadows into place",
+    "Catching the perfect angle",
+    "Developing the tension",
+    "Freezing the moment",
+    "Adjusting the atmosphere",
+    "Highlighting the chemistry"
+  ];
+
+  let _currentPhraseList = STORY_LOADING_PHRASES;
+  let _usedPhraseIndices = [];
+
+  function getNextPhrase() {
+    // If all phrases used, reset the list
+    if (_usedPhraseIndices.length >= _currentPhraseList.length) {
+      _usedPhraseIndices = [];
+    }
+    // Pick a random unused phrase
+    let availableIndices = [];
+    for (let i = 0; i < _currentPhraseList.length; i++) {
+      if (!_usedPhraseIndices.includes(i)) availableIndices.push(i);
+    }
+    const randIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+    _usedPhraseIndices.push(randIdx);
+    return _currentPhraseList[randIdx];
+  }
+
+  function startLoading(msg, useVisualizePhrases = false){
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
-    document.getElementById('loadingText').textContent = msg || "Loading...";
-    
+    const textEl = document.getElementById('loadingText');
+
+    // Set phrase list based on context
+    _currentPhraseList = useVisualizePhrases ? VISUALIZE_LOADING_PHRASES : STORY_LOADING_PHRASES;
+    _usedPhraseIndices = [];
+
+    // Set initial phrase
+    if (textEl) textEl.textContent = msg || getNextPhrase();
+
     _loadingActive = true;
     if(fill) fill.style.width = '0%';
     if(overlay) overlay.classList.remove('hidden');
 
     if(_loadingTimer) clearInterval(_loadingTimer);
+    if(_phraseTimer) clearInterval(_phraseTimer);
+
     let p = 0;
     _loadingTimer = setInterval(() => {
       if(!_loadingActive) return;
       p = Math.min(91, p + Math.random() * 6);
       if(fill) fill.style.width = p.toFixed(0) + '%';
     }, 250);
+
+    // Rotate phrases every 1-1.5 seconds
+    _phraseTimer = setInterval(() => {
+      if(!_loadingActive) return;
+      if(textEl) textEl.textContent = getNextPhrase();
+    }, 1000 + Math.random() * 500);
   }
 
   function stopLoading(){
@@ -1356,6 +1496,7 @@ window.config = window.config || {
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
     if(_loadingTimer) { clearInterval(_loadingTimer); _loadingTimer = null; }
+    if(_phraseTimer) { clearInterval(_phraseTimer); _phraseTimer = null; }
     if(fill) fill.style.width = '100%';
     setTimeout(() => {
       if(overlay) overlay.classList.add('hidden');
@@ -1598,8 +1739,8 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     state.storyId = state.storyId || makeStoryId();
     
     window.showScreen('game');
-    
-    startLoading("Conjuring the world...");
+
+    startLoading(); // Uses rotating story phrases
     
     const introPrompt = `Write the opening scene (approx 200 words).
     Setting: A place full of tension and atmosphere fitting the genre.
@@ -1668,28 +1809,86 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
      const img = document.getElementById('settingShotImg');
      if(!img) return;
      const wrap = document.getElementById('settingShotWrap');
+     const errorDiv = document.getElementById('settingError');
      if(wrap) wrap.style.display = 'flex';
      img.style.display = 'none';
-     
-     try {
-         const res = await fetch(IMAGE_PROXY_URL, {
-             method:'POST',
-             headers:{'Content-Type':'application/json'},
-             body: JSON.stringify({ 
-                 prompt: `Cinematic establishing shot, atmospheric, fantasy art style. No text. ${desc}`,
-                 provider: 'xai', 
-                 size: "1024x1024",
-                 n: 1
-             })
-         });
-         const data = await res.json();
-         if(data.url || data.image || data.b64_json) {
-             let url = data.url || data.image || data.b64_json;
-             if(!url.startsWith('http') && !url.startsWith('data:')) url = `data:image/png;base64,${url}`;
-             img.src = url;
-             img.onload = () => { img.style.display = 'block'; };
+     if(errorDiv) errorDiv.classList.add('hidden');
+
+     // Show loading state
+     if(wrap) {
+         wrap.innerHTML = '<div class="img-error-msg" style="opacity:0.6;">Conjuring landscape...</div>' + wrap.innerHTML;
+     }
+
+     const prompt = `Cinematic establishing shot, atmospheric, fantasy art style. No text. Gorgeous lighting. ${desc}`;
+
+     // Try multiple providers with fallback
+     const attempts = [
+         { provider: 'xai', model: '' },
+         { provider: 'openai', model: 'gpt-image-1' },
+         { provider: 'openai', model: 'dall-e-3' }
+     ];
+
+     let rawUrl = null;
+     let lastErr = null;
+
+     for(const attempt of attempts) {
+         try {
+             const res = await fetch(IMAGE_PROXY_URL, {
+                 method:'POST',
+                 headers:{'Content-Type':'application/json'},
+                 body: JSON.stringify({
+                     prompt: prompt,
+                     provider: attempt.provider,
+                     model: attempt.model,
+                     size: "1024x1024",
+                     n: 1
+                 })
+             });
+
+             let data;
+             try { data = await res.json(); } catch(e){}
+
+             if(!res.ok) {
+                 lastErr = new Error(data?.error || `HTTP ${res.status}`);
+                 continue;
+             }
+
+             rawUrl = data.url || data.image || data.b64_json;
+             if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
+                 rawUrl = data.data[0].url || data.data[0].b64_json;
+             }
+
+             if(rawUrl) break;
+         } catch(e) {
+             lastErr = e;
          }
-     } catch(e) { console.warn("Setting shot failed", e); }
+     }
+
+     // Remove loading message
+     const loadingMsg = wrap?.querySelector('.img-error-msg');
+     if(loadingMsg && !loadingMsg.id) loadingMsg.remove();
+
+     if(rawUrl) {
+         let imageUrl = rawUrl;
+         if(!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
+             imageUrl = `data:image/png;base64,${rawUrl}`;
+         }
+         img.src = imageUrl;
+         img.onload = () => { img.style.display = 'block'; };
+         img.onerror = () => {
+             console.warn("Setting shot image load error");
+             if(errorDiv) {
+                 errorDiv.textContent = "The mists obscure the view...";
+                 errorDiv.classList.remove('hidden');
+             }
+         };
+     } else {
+         console.warn("Setting shot failed", lastErr);
+         if(errorDiv) {
+             errorDiv.textContent = "The mists obscure the view...";
+             errorDiv.classList.remove('hidden');
+         }
+     }
   }
 
   // --- VISUALIZE (STABILIZED) ---
@@ -1709,7 +1908,7 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
 
-      startLoading();
+      startLoading(null, true); // Use visualize-specific phrases
       
       const lastText = storyText ? storyText.textContent.slice(-600) : "";
       await ensureVisualBible(storyText ? storyText.textContent : "");
@@ -1740,25 +1939,29 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
           const modelEl = document.getElementById('vizModel');
           const userModel = modelEl ? modelEl.value : "";
           const um = (userModel || "").toLowerCase();
-          
-          const isOpenAI = um.includes("gpt") || um.includes("openai");
-          const isGemini = um.includes("gemini");
 
+          const isOpenAI = um.includes("gpt") || um.includes("openai") || um.includes("dall-e");
+
+          // Valid models only: gpt-image-1, dall-e-3, chatgpt-image-latest
+          // Remove invalid gemini-2.5-flash-image - Gemini not supported for images
           const attempts = [];
-          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel });
-          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1' });
-          attempts.push({ provider: 'gemini', model: isGemini ? userModel : 'gemini-2.5-flash-image' });
+          attempts.push({ provider: 'xai', model: isOpenAI ? '' : userModel });
+          attempts.push({ provider: 'openai', model: 'gpt-image-1' });
+          attempts.push({ provider: 'openai', model: 'dall-e-3' });
 
           let rawUrl = null;
           let lastErr = null;
+
+          // Character beauty prompt addition (Visualize only)
+          const beautyPrompt = "Characters: gorgeous, striking faces. Ideal human health, proportion, desirability. ";
 
           for(const attempt of attempts){
              try {
                 const res = await fetch(IMAGE_PROXY_URL, {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ 
-                        prompt: anchorText + "\n\nSCENE:\n" + promptMsg + (state.intensity === 'Dirty' || state.intensity === 'Erotic' ? " Artistic, suggestive, safe-for-work." : "") + "\n\n(Generate art without any text/lettering.)",
+                    body: JSON.stringify({
+                        prompt: beautyPrompt + anchorText + "\n\nSCENE:\n" + promptMsg + (state.intensity === 'Dirty' || state.intensity === 'Erotic' ? " Artistic, suggestive, safe-for-work." : "") + "\n\n(Generate art without any text/lettering.)",
                         provider: attempt.provider,
                         model: attempt.model,
                         size: "1024x1024",
@@ -1847,8 +2050,8 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
           return; 
       }
 
-      startLoading("Fate is weaving...");
-      
+      startLoading(); // Uses rotating story phrases
+
       const context = document.getElementById('storyText').innerText.slice(-3000);
       
       let intensityGuard = "";
@@ -2117,16 +2320,121 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       window.showScreen('setup');
   });
 
+  // --- GAME QUILL & VETO PANEL ---
+  function initGameQuillVetoPanel() {
+      const btn = document.getElementById('gameControlsBtn');
+      const panel = document.getElementById('gameQuillVetoPanel');
+      const treeIcon = document.getElementById('gameQuillTreeIcon');
+      const quillSection = document.getElementById('gameQuillSection');
+      const quillBox = document.getElementById('gameQuillBox');
+      const quillInput = document.getElementById('gameQuillInput');
+      const commitBtn = document.getElementById('gameCommitQuill');
+      const statusEl = document.getElementById('gameQuillStatus');
+
+      // Toggle panel visibility
+      if (btn && panel) {
+          btn.addEventListener('click', () => {
+              panel.classList.toggle('hidden');
+              if (!panel.classList.contains('hidden')) {
+                  updateGameQuillUI();
+              }
+          });
+      }
+
+      // Tree icon click - trigger paywall in Tease mode
+      if (treeIcon) {
+          treeIcon.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (state.access === 'free') {
+                  window.showPaywall('unlock');
+              }
+          });
+      }
+
+      // Commit button
+      if (commitBtn) {
+          commitBtn.addEventListener('click', () => {
+              if (state.access === 'free') {
+                  window.showPaywall('unlock');
+                  return;
+              }
+              if (!getQuillReady()) return;
+              const quillText = quillInput?.value.trim();
+              if (!quillText) { showToast("No Quill edit to commit."); return; }
+
+              // Apply veto from game panel
+              const gameVetoInput = document.getElementById('gameVetoInput');
+              if (gameVetoInput) {
+                  const parsed = parseVetoInput(gameVetoInput.value);
+                  state.veto.bannedWords = parsed.exclusions;
+                  state.veto.excluded = parsed.exclusions;
+                  state.veto.corrections = parsed.corrections;
+                  state.veto.ambientMods = parsed.ambientMods;
+              }
+
+              // Store quill intent
+              window.state.quillIntent = quillText;
+              window.state.quillCommittedThisTurn = true;
+              window.state.quill.uses++;
+              window.state.quill.nextReadyAtWords = currentStoryWordCount() + computeNextCooldownWords();
+
+              if (quillInput) quillInput.value = '';
+              updateGameQuillUI();
+              updateQuillUI();
+              saveStorySnapshot();
+              showToast("Quill committed.");
+          });
+      }
+  }
+
+  function updateGameQuillUI() {
+      const treeIcon = document.getElementById('gameQuillTreeIcon');
+      const quillBox = document.getElementById('gameQuillBox');
+      const quillInput = document.getElementById('gameQuillInput');
+      const commitBtn = document.getElementById('gameCommitQuill');
+      const statusEl = document.getElementById('gameQuillStatus');
+
+      const isFree = (state.access === 'free');
+      const ready = getQuillReady();
+
+      // Lock quill in Tease (free) mode
+      if (treeIcon) treeIcon.classList.toggle('locked', isFree);
+      if (quillBox) quillBox.classList.toggle('locked-input', isFree || !ready);
+      if (quillInput) quillInput.readOnly = isFree || !ready;
+      if (commitBtn) {
+          commitBtn.disabled = isFree || !ready;
+          commitBtn.style.opacity = (isFree || !ready) ? '0.5' : '1';
+      }
+
+      // Update status
+      if (statusEl) {
+          if (isFree) {
+              statusEl.textContent = 'Quill: Locked (Unlock to use)';
+              statusEl.style.color = 'var(--gold)';
+          } else if (ready) {
+              statusEl.textContent = 'Quill: Poised';
+              statusEl.style.color = 'var(--pink)';
+          } else {
+              const wc = currentStoryWordCount();
+              const needed = state.quill.nextReadyAtWords;
+              const remain = Math.max(0, needed - wc);
+              statusEl.textContent = `Quill: Spent (${remain} words to recharge)`;
+              statusEl.style.color = 'var(--gold)';
+          }
+      }
+  }
+
   // --- INIT ---
   initSelectionHandlers();
   initNavBindings();
   wireIntensityHandlers();
-  
+  initGameQuillVetoPanel();
+
   // Initial Load
   state.storyId = localStorage.getItem('sb_current_story_id');
   state.subscribed = localStorage.getItem('sb_subscribed') === '1';
   state.billingStatus = localStorage.getItem('sb_billing_status') || 'active';
-  
+
   syncTierFromAccess();
   updateContinueButtons();
 
