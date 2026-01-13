@@ -110,52 +110,45 @@ window.config = window.config || {
       let pages = [];           // Array of page content (HTML strings)
       let currentPageIndex = 0;
       let isAnimating = false;
-      let isInitialized = false;
 
-      // DOM references
+      // DOM references - lazily initialized
       let container = null;
       let prevBtn = null;
       let nextBtn = null;
       let indicator = null;
 
-      function init() {
-          if (isInitialized) return;
-          container = document.getElementById('storyPagesContainer');
-          prevBtn = document.getElementById('prevPageBtn');
-          nextBtn = document.getElementById('nextPageBtn');
-          indicator = document.getElementById('pageIndicator');
-
-          if (!container) return;
-
-          // Bind navigation buttons
-          if (prevBtn) prevBtn.addEventListener('click', () => goToPrevPage());
-          if (nextBtn) nextBtn.addEventListener('click', () => goToNextPage());
-
-          // Keyboard navigation
-          document.addEventListener('keydown', handleKeyNav);
-
-          // Swipe navigation (touch devices)
-          let touchStartX = 0;
-          let touchEndX = 0;
-
-          container.addEventListener('touchstart', (e) => {
-              touchStartX = e.changedTouches[0].screenX;
-          }, { passive: true });
-
-          container.addEventListener('touchend', (e) => {
-              touchEndX = e.changedTouches[0].screenX;
-              handleSwipe();
-          }, { passive: true });
-
-          function handleSwipe() {
-              const diff = touchStartX - touchEndX;
-              const threshold = 50;
-              if (Math.abs(diff) < threshold) return;
-              if (diff > 0) goToNextPage();  // Swipe left = next
-              else goToPrevPage();            // Swipe right = prev
+      // REPAIR: Lazy initialization - ensures container is found before any operation
+      function ensureInitialized() {
+          if (!container) {
+              container = document.getElementById('storyPagesContainer');
           }
+          if (!prevBtn) {
+              prevBtn = document.getElementById('prevPageBtn');
+              if (prevBtn && !prevBtn._bound) {
+                  prevBtn.addEventListener('click', () => goToPrevPage());
+                  prevBtn._bound = true;
+              }
+          }
+          if (!nextBtn) {
+              nextBtn = document.getElementById('nextPageBtn');
+              if (nextBtn && !nextBtn._bound) {
+                  nextBtn.addEventListener('click', () => goToNextPage());
+                  nextBtn._bound = true;
+              }
+          }
+          if (!indicator) {
+              indicator = document.getElementById('pageIndicator');
+          }
+          return !!container;
+      }
 
-          isInitialized = true;
+      function init() {
+          ensureInitialized();
+          // Keyboard navigation
+          if (!document._paginationKeyBound) {
+              document.addEventListener('keydown', handleKeyNav);
+              document._paginationKeyBound = true;
+          }
       }
 
       function handleKeyNav(e) {
@@ -181,13 +174,18 @@ window.config = window.config || {
       }
 
       function updateNavigation() {
+          ensureInitialized();
           if (prevBtn) prevBtn.disabled = currentPageIndex === 0 || isAnimating;
           if (nextBtn) nextBtn.disabled = currentPageIndex >= pages.length - 1 || isAnimating;
-          if (indicator) indicator.textContent = `Page ${currentPageIndex + 1} of ${pages.length}`;
+          if (indicator) indicator.textContent = pages.length > 0 ? `Page ${currentPageIndex + 1} of ${pages.length}` : 'Page 1 of 1';
       }
 
       function renderCurrentPage(animate = false, direction = 'forward') {
-          if (!container) return;
+          // REPAIR: Always try to get container before rendering
+          if (!ensureInitialized()) {
+              console.warn('StoryPagination: container not found, retrying...');
+              return;
+          }
 
           const existingPages = container.querySelectorAll('.story-page');
           const currentPage = createPageElement(pages[currentPageIndex] || '', currentPageIndex);
@@ -275,6 +273,7 @@ window.config = window.config || {
           }
           pages[currentPageIndex] = content;
           // Update DOM without animation
+          ensureInitialized();
           const activePage = container?.querySelector('.story-page.active');
           if (activePage) {
               activePage.innerHTML = content;
@@ -288,6 +287,7 @@ window.config = window.config || {
           }
           pages[currentPageIndex] += content;
           // Update DOM without animation
+          ensureInitialized();
           const activePage = container?.querySelector('.story-page.active');
           if (activePage) {
               activePage.innerHTML = pages[currentPageIndex];
@@ -297,6 +297,7 @@ window.config = window.config || {
       function clear() {
           pages = [];
           currentPageIndex = 0;
+          ensureInitialized();
           if (container) container.innerHTML = '';
           updateNavigation();
       }
@@ -352,7 +353,12 @@ window.config = window.config || {
   })();
 
   // Initialize pagination when DOM is ready
-  document.addEventListener('DOMContentLoaded', () => StoryPagination.init());
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => StoryPagination.init());
+  } else {
+      // DOM already loaded
+      StoryPagination.init();
+  }
 
   // Expose for debugging
   window.StoryPagination = StoryPagination;
@@ -3455,17 +3461,7 @@ Return ONLY the sentence:\n${text}`}]);
       saveStorySnapshot();
   };
 
-  // Helper: Insert Fate Card separator into story
-  function insertFateCardSeparator(cardTitle) {
-      const storyEl = document.getElementById('storyText');
-      if (!storyEl || !cardTitle) return;
-      const sep = document.createElement('div');
-      sep.className = 'fate-card-separator';
-      sep.innerHTML = `<div class="fate-mini"><h4>${escapeHTML(cardTitle)}</h4></div>`;
-      storyEl.appendChild(sep);
-  }
-
-  // --- GAME LOOP (RESTORED) ---
+  // --- GAME LOOP ---
   $('submitBtn')?.addEventListener('click', async () => {
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
       if (billingLock) { window.showPaywall('unlock'); return; }

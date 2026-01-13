@@ -11,8 +11,9 @@
     // Contextual card generation based on story state
     function generateContextualCard(baseCard) {
         const state = window.state || {};
-        const storyEl = document.getElementById('storyText');
-        const storyText = storyEl ? storyEl.textContent : '';
+        // REPAIR: Get story content from pagination system (all pages), not visible DOM
+        const allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
+        const storyText = allContent.replace(/<[^>]*>/g, ' '); // Strip HTML tags
         const turnCount = state.turnCount || 0;
         const intensity = state.intensity || 'Naughty';
 
