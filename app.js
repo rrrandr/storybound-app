@@ -1874,6 +1874,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       card.classList.toggle('locked', locked);
       card.style.display = hidden ? 'none' : '';
 
+      // CRITICAL FIX: Remove data-locked attribute when unlocked (CSS targets [data-locked])
+      if (locked) {
+          // Keep or set data-locked attribute for CSS styling
+          if (!card.dataset.locked) {
+              card.dataset.locked = (val === 'fling') ? 'pass' : 'sub';
+          }
+      } else {
+          // Remove attribute so CSS [data-locked] selector doesn't apply
+          card.removeAttribute('data-locked');
+      }
+
       // Set paywall mode: affair/soulmates require sub_only
       const paywallMode = ['affair', 'soulmates'].includes(val) ? 'sub_only' : 'unlock';
       setPaywallClickGuard(card, locked, paywallMode);
@@ -1923,6 +1934,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if (access === 'pass' && level === 'Dirty') locked = true;
 
           btn.classList.toggle('locked', locked);
+          // CRITICAL FIX: Remove preset locked-tease/locked-pass classes when unlocked
+          if (!locked) {
+              btn.classList.remove('locked-tease', 'locked-pass');
+          }
           if(locked) btn.classList.remove('active');
           // FIX: Dirty always requires subscription - use sub_only mode
           const paywallMode = (level === 'Dirty') ? 'sub_only' : 'unlock';
@@ -1947,6 +1962,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           const v = raw.toLowerCase().trim();
           let locked = !paid && v !== 'breathless';
           card.classList.toggle('locked', locked);
+          // CRITICAL FIX: Remove data-locked attribute when unlocked
+          if (locked) {
+              if (!card.dataset.locked) card.dataset.locked = 'true';
+          } else {
+              card.removeAttribute('data-locked');
+          }
           setPaywallClickGuard(card, locked);
       });
   }
