@@ -3864,6 +3864,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   // IMAGE PROVIDER ROUTER - Unified image generation system
   // ============================================================
 
+  // FLUX PROMPT HARD CONSTRAINTS (MANDATORY)
+  const FLUX_PROMPT_PREFIX = 'Painterly cinematic realism, oil-painting style, realistic anatomy, natural proportions, non-anime.';
+  const FLUX_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. No extra limbs. No extra people.';
+
   // PERCHANCE PROMPT HARD CONSTRAINTS (MANDATORY)
   const PERCHANCE_PROMPT_PREFIX = 'default Art Style is oil painting 70s pulp, cinematic lighting, realistic proportions, oil-painting style, non-anime.';
   const PERCHANCE_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. One head, two arms, two legs. No extra limbs. No extra people.';
@@ -3883,7 +3887,55 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       console.warn('[IMAGE-GEN]', JSON.stringify(logData));
   }
 
-  // OPENAI PROVIDER: Call OpenAI image generation
+  // FLUX PRIMARY: Call Flux Uncensored image generation (via Replicate or self-hosted)
+  async function callFluxImageGen(prompt, size = '1024x1024', timeout = 60000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      // Flux endpoint - Replicate API or self-hosted inference server
+      const fluxUrl = (typeof FLUX_PROXY_URL !== 'undefined' && FLUX_PROXY_URL)
+          ? FLUX_PROXY_URL
+          : IMAGE_PROXY_URL;
+
+      // Apply mandatory prefix and suffix constraints
+      const constrainedPrompt = `${FLUX_PROMPT_PREFIX} ${prompt} ${FLUX_PROMPT_SUFFIX}`;
+
+      const res = await fetch(fluxUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: constrainedPrompt,
+              provider: 'flux',
+              model: 'flux-uncensored',
+              size: size,
+              n: 1
+          }),
+          signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Flux HTTP ${res.status}`);
+      }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('Flux invalid response'); }
+
+      const imageUrl = data?.url || data?.image || data?.b64_json ||
+          (Array.isArray(data?.data) && data.data[0]?.url) ||
+          (Array.isArray(data?.data) && data.data[0]?.b64_json) ||
+          (Array.isArray(data?.output) && data.output[0]);
+
+      if (!imageUrl) {
+          throw new Error('Flux returned no image');
+      }
+
+      return imageUrl;
+  }
+
+  // OPENAI LAST RESORT: Call OpenAI image generation
   async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -4008,6 +4060,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
   // All image generation MUST route through this function
+  // Provider order: Flux → Perchance → Gemini → OpenAI
   async function generateImageWithFallback({ prompt, tier, shape = 'portrait', context = 'visualize' }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
@@ -4015,28 +4068,24 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Determine size based on shape
       const size = shape === 'landscape' ? '1792x1024' : '1024x1024';
 
-      // FALLBACK CHAIN: Define provider order based on tier
-      // CLEAN/NAUGHTY: OpenAI → Gemini
-      // EROTIC/DIRTY: Perchance → OpenAI → Gemini
-      let providerChain;
-      let preparedPrompt;
+      // Prepare prompts for different provider requirements
+      const eroticPrompt = restoreEroticLanguage(prompt);
+      const sanitizedPrompt = sanitizeImagePrompt(prompt);
 
-      if (isExplicitTier) {
-          // Erotic/Dirty: restore erotic language, try Perchance first
-          preparedPrompt = restoreEroticLanguage(prompt);
-          providerChain = [
-              { name: 'Perchance', fn: callPerchanceImageGen, prompt: preparedPrompt },
-              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizeImagePrompt(prompt) },
-              { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizeImagePrompt(prompt) }
-          ];
-      } else {
-          // Clean/Naughty: sanitized prompt, OpenAI first
-          preparedPrompt = sanitizeImagePrompt(prompt);
-          providerChain = [
-              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: preparedPrompt },
-              { name: 'Gemini', fn: callGeminiImageGen, prompt: preparedPrompt }
-          ];
-      }
+      // Use erotic prompt for explicit tiers, sanitized for others
+      const basePrompt = isExplicitTier ? eroticPrompt : prompt;
+
+      // FALLBACK CHAIN: Flux → Perchance → Gemini → OpenAI (same for ALL tiers)
+      const providerChain = [
+          // FLUX PRIMARY - accepts full prompts, no extra censorship
+          { name: 'Flux', fn: callFluxImageGen, prompt: basePrompt },
+          // PERCHANCE FALLBACK
+          { name: 'Perchance', fn: callPerchanceImageGen, prompt: basePrompt },
+          // GEMINI FALLBACK
+          { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
+          // OPENAI LAST RESORT
+          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt }
+      ];
 
       let lastError = null;
 
