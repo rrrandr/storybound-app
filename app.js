@@ -2105,6 +2105,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (typeof applyStyleLocks === 'function') applyStyleLocks();
       if (typeof applyTierUI === 'function') applyTierUI();
 
+      // CRITICAL FIX: Update Quill UI on both setup and game screens
+      if (typeof updateQuillUI === 'function') updateQuillUI();
+      if (typeof updateGameQuillUI === 'function') updateGameQuillUI();
+
       // Reinitialize cards if function exists
       if (window.initCards) window.initCards();
 
@@ -2506,6 +2510,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Paid users: normal Quill logic
       if (quillSection) quillSection.style.opacity = '1';
+      // CRITICAL FIX: Ensure paywall click guard is disabled for paid users
+      if (quillBox) {
+          quillBox.dataset.paywallActive = 'false';
+      }
 
       const ready = getQuillReady();
       const needed = state.quill.nextReadyAtWords;
