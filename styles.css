@@ -838,12 +838,16 @@ textarea.fate-field {
 .falling-leaf {
     position: absolute;
     width: 8px;
-    height: 8px;
+    height: 9px;
     right: 8px;
     top: 23px; /* Initial: mid-air, halfway down fall path */
     transform: rotate(35deg);
     pointer-events: none;
-    background: url('image_61.png') center/contain no-repeat;
+}
+.falling-leaf svg {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 /* Stage 1: Fall from mid-air to ground */
