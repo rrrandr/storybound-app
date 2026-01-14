@@ -8,7 +8,7 @@
     --story-size: 1.15em;
     --line-height: 1.8; 
     --letter-spacing: 0.02em;
-    --cursor-url: url('https://raw.githubusercontent.com/rrrandr/storybound-app/1347ea65b81435cf03275d95aab21db4b1af8579/cursor-dollar-plane-64.png') 2 2;
+    --cursor-url: url('cursor-dollar-plane-64.png');
 }
 
 /* THEMES */
@@ -346,7 +346,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .locked-input textarea, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
 .intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
     opacity:0.6; filter:grayscale(0.9);
-    cursor: var(--cursor-url), pointer !important;
+    cursor: var(--cursor-url) 2 2, pointer !important;
     pointer-events: auto !important;
 }
 .locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,

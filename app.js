@@ -2445,7 +2445,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   });
 
   // Game Quill commit button
-  $('btnGameCommitQuill')?.addEventListener('click', () => {
+  $('btnGameCommitQuill')?.addEventListener('click', (e) => {
+      e.preventDefault(); // Prevent scroll to top
       if (!getQuillReady()) return;
       const quillEl = document.getElementById('gameQuillInput');
       if (!quillEl) return;
@@ -3082,7 +3083,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
   }
 
-  $('btnCommitQuill')?.addEventListener('click', () => {
+  $('btnCommitQuill')?.addEventListener('click', (e) => {
+      e.preventDefault(); // Prevent scroll to top
       if (!getQuillReady()) return;
       const quillEl = document.getElementById('quillInput');
       if (!quillEl) return;
