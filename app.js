@@ -104,6 +104,323 @@ window.config = window.config || {
   window.sbDumpAnalytics = () => JSON.parse(localStorage.getItem(SB_ANALYTICS_KEY) || "[]");
 
   // =========================
+  // STORY PAGINATION SYSTEM
+  // =========================
+  const StoryPagination = (function() {
+      let pages = [];           // Array of page content (HTML strings)
+      let currentPageIndex = 0;
+      let isAnimating = false;
+
+      // DOM references - lazily initialized
+      let container = null;
+      let prevBtn = null;
+      let nextBtn = null;
+      let indicator = null;
+
+      // REPAIR: Lazy initialization - ensures container is found before any operation
+      function ensureInitialized() {
+          if (!container) {
+              container = document.getElementById('storyPagesContainer');
+          }
+          if (!prevBtn) {
+              prevBtn = document.getElementById('prevPageBtn');
+              if (prevBtn && !prevBtn._bound) {
+                  prevBtn.addEventListener('click', () => goToPrevPage());
+                  prevBtn._bound = true;
+              }
+          }
+          if (!nextBtn) {
+              nextBtn = document.getElementById('nextPageBtn');
+              if (nextBtn && !nextBtn._bound) {
+                  nextBtn.addEventListener('click', () => goToNextPage());
+                  nextBtn._bound = true;
+              }
+          }
+          if (!indicator) {
+              indicator = document.getElementById('pageIndicator');
+          }
+          return !!container;
+      }
+
+      function init() {
+          ensureInitialized();
+          // Keyboard navigation
+          if (!document._paginationKeyBound) {
+              document.addEventListener('keydown', handleKeyNav);
+              document._paginationKeyBound = true;
+          }
+      }
+
+      function handleKeyNav(e) {
+          // Only handle arrow keys when story is visible
+          const storyText = document.getElementById('storyText');
+          if (!storyText || storyText.offsetParent === null) return;
+
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              goToNextPage();
+          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              goToPrevPage();
+          }
+      }
+
+      function createPageElement(content, index) {
+          const page = document.createElement('div');
+          page.className = 'story-page';
+          page.dataset.pageIndex = index;
+          page.innerHTML = content;
+          return page;
+      }
+
+      function updateNavigation() {
+          ensureInitialized();
+          if (prevBtn) prevBtn.disabled = currentPageIndex === 0 || isAnimating;
+          if (nextBtn) nextBtn.disabled = currentPageIndex >= pages.length - 1 || isAnimating;
+          if (indicator) indicator.textContent = pages.length > 0 ? `Page ${currentPageIndex + 1} of ${pages.length}` : 'Page 1 of 1';
+      }
+
+      // FIX #4: Post-render hook for tier UI rehydration
+      function triggerPostRenderHooks() {
+          if (typeof window.applyAccessLocks === 'function') {
+              window.applyAccessLocks();
+          }
+          if (typeof window.applyTierUI === 'function') {
+              window.applyTierUI();
+          }
+      }
+
+      // FIX: Update story header display based on current page
+      // Page 1: Large title, synopsis, intro image
+      // Page 2+: Smaller title only, no synopsis or intro image
+      function updateStoryHeaderDisplay() {
+          const titleEl = document.getElementById('storyTitle');
+          const synopsisEl = document.getElementById('storySynopsis');
+          const settingShotWrap = document.getElementById('settingShotWrap');
+          const sceneNumberEl = document.getElementById('sceneNumber');
+
+          // Update scene number based on current page
+          if (sceneNumberEl) {
+              sceneNumberEl.textContent = 'Scene ' + (currentPageIndex + 1);
+          }
+
+          if (currentPageIndex === 0) {
+              // Page 1: Full display
+              if (titleEl) titleEl.style.fontSize = '';
+              if (synopsisEl) synopsisEl.style.display = '';
+              if (settingShotWrap) settingShotWrap.style.display = '';
+          } else {
+              // Page 2+: Compact display
+              if (titleEl) titleEl.style.fontSize = '1.2em';
+              if (synopsisEl) synopsisEl.style.display = 'none';
+              if (settingShotWrap) settingShotWrap.style.display = 'none';
+          }
+      }
+
+      // CORRECTIVE: Scroll to very top (title) on scene transitions
+      function scrollToStoryTop() {
+          const titleEl = document.getElementById('storyTitle');
+          if (titleEl) {
+              // Scroll to title to ensure Scene # is visible
+              titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              // Also scroll window to absolute top
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+      }
+
+      function renderCurrentPage(animate = false, direction = 'forward') {
+          // REPAIR: Always try to get container before rendering
+          if (!ensureInitialized()) {
+              console.warn('StoryPagination: container not found, retrying...');
+              return;
+          }
+
+          const existingPages = container.querySelectorAll('.story-page');
+          const currentPage = createPageElement(pages[currentPageIndex] || '', currentPageIndex);
+
+          if (!animate || existingPages.length === 0) {
+              // No animation - just show the page
+              container.innerHTML = '';
+              currentPage.classList.add('active');
+              container.appendChild(currentPage);
+              updateNavigation();
+              updateStoryHeaderDisplay();
+              scrollToStoryTop();
+              triggerPostRenderHooks();
+              return;
+          }
+
+          // Check for reduced motion preference
+          const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+          if (prefersReducedMotion) {
+              // Instant transition for reduced motion
+              container.innerHTML = '';
+              currentPage.classList.add('active');
+              container.appendChild(currentPage);
+              updateNavigation();
+              updateStoryHeaderDisplay();
+              scrollToStoryTop();
+              triggerPostRenderHooks();
+              return;
+          }
+
+          // Animated page turn
+          isAnimating = true;
+          updateNavigation();
+
+          const oldPage = existingPages[0];
+          const outClass = direction === 'forward' ? 'turning-out' : 'turning-out-reverse';
+          const inClass = direction === 'forward' ? 'turning-in' : 'turning-in-reverse';
+
+          // Add new page
+          container.appendChild(currentPage);
+
+          // Start animation
+          oldPage.classList.remove('active');
+          oldPage.classList.add(outClass);
+          currentPage.classList.add(inClass);
+
+          // Clean up after animation
+          setTimeout(() => {
+              oldPage.remove();
+              currentPage.classList.remove(inClass);
+              currentPage.classList.add('active');
+              isAnimating = false;
+              updateNavigation();
+              updateStoryHeaderDisplay();
+              scrollToStoryTop();
+              triggerPostRenderHooks();
+          }, 500);
+      }
+
+      function goToNextPage() {
+          if (isAnimating || currentPageIndex >= pages.length - 1) return;
+          currentPageIndex++;
+          renderCurrentPage(true, 'forward');
+      }
+
+      function goToPrevPage() {
+          if (isAnimating || currentPageIndex <= 0) return;
+          currentPageIndex--;
+          renderCurrentPage(true, 'backward');
+      }
+
+      function goToPage(index, animate = false) {
+          if (index < 0 || index >= pages.length) return;
+          const direction = index > currentPageIndex ? 'forward' : 'backward';
+          currentPageIndex = index;
+          renderCurrentPage(animate, direction);
+      }
+
+      function addPage(content, goToNew = true) {
+          pages.push(content);
+          if (goToNew) {
+              currentPageIndex = pages.length - 1;
+              renderCurrentPage(pages.length > 1, 'forward');
+          } else {
+              updateNavigation();
+          }
+      }
+
+      function updateCurrentPage(content) {
+          if (pages.length === 0) {
+              addPage(content);
+              return;
+          }
+          pages[currentPageIndex] = content;
+          // Update DOM without animation
+          ensureInitialized();
+          const activePage = container?.querySelector('.story-page.active');
+          if (activePage) {
+              activePage.innerHTML = content;
+          }
+      }
+
+      function appendToCurrentPage(content) {
+          if (pages.length === 0) {
+              addPage(content);
+              return;
+          }
+          pages[currentPageIndex] += content;
+          // Update DOM without animation
+          ensureInitialized();
+          const activePage = container?.querySelector('.story-page.active');
+          if (activePage) {
+              activePage.innerHTML = pages[currentPageIndex];
+          }
+      }
+
+      function clear() {
+          pages = [];
+          currentPageIndex = 0;
+          ensureInitialized();
+          if (container) container.innerHTML = '';
+          updateNavigation();
+      }
+
+      function getPageCount() {
+          return pages.length;
+      }
+
+      function getCurrentPageIndex() {
+          return currentPageIndex;
+      }
+
+      function getAllContent() {
+          return pages.join('');
+      }
+
+      function setAllContent(htmlContent) {
+          // Convert existing HTML into a single page (for loading saved stories)
+          clear();
+          if (htmlContent && htmlContent.trim()) {
+              addPage(htmlContent, true);
+          }
+      }
+
+      function getPages() {
+          return [...pages];
+      }
+
+      function setPages(pageArray) {
+          pages = [...pageArray];
+          currentPageIndex = Math.min(currentPageIndex, pages.length - 1);
+          if (currentPageIndex < 0) currentPageIndex = 0;
+          renderCurrentPage(false);
+      }
+
+      return {
+          init,
+          addPage,
+          updateCurrentPage,
+          appendToCurrentPage,
+          goToNextPage,
+          goToPrevPage,
+          goToPage,
+          clear,
+          getPageCount,
+          getCurrentPageIndex,
+          getAllContent,
+          setAllContent,
+          getPages,
+          setPages,
+          isAnimating: () => isAnimating
+      };
+  })();
+
+  // Initialize pagination when DOM is ready
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => StoryPagination.init());
+  } else {
+      // DOM already loaded
+      StoryPagination.init();
+  }
+
+  // Expose for debugging
+  window.StoryPagination = StoryPagination;
+
+  // =========================
   // GROK PREVIEW GENERATOR
   // =========================
   const EROTIC_PREVIEW_TEXT = "The air in the room grew heavy, charged with a raw, undeniable hunger. His hands didn't hesitate, sliding up her thighs with possessive intent, fingers digging into soft flesh. She gasped, arching into the touch, her breath hitching as he leaned in to bite gently at the sensitive cord of her neck. There was no room for coy games now; the heat radiating between them demanded friction, skin against skin. He guided her hips, aligning them with a rough urgency that made her knees weak. As they connected, the world narrowed down to the rhythm of their bodies and the sharp, exquisite friction of movement. It was unpolished, desperate, and entirely consuming.";
@@ -126,12 +443,202 @@ window.config = window.config || {
       ]
   };
 
+  // =========================
+  // ARCHETYPE SYSTEM (LOCKED)
+  // =========================
+  const ARCHETYPES = {
+      ROMANTIC: {
+          id: 'ROMANTIC',
+          name: 'The Romantic',
+          desireStyle: 'Expressive, devoted, emotionally fluent',
+          summary: 'The Romantic — expressive and devoted, offering love openly and poetically, binding through attention, longing, and emotional presence.',
+          primaryOnly: false
+      },
+      CLOISTERED: {
+          id: 'CLOISTERED',
+          name: 'The Cloistered',
+          desireStyle: 'Sheltered curiosity, restrained longing, awakening',
+          summary: 'The Cloistered — sheltered and restrained, approaching desire as discovery, awakening slowly through trust, patience, and chosen intimacy.',
+          primaryOnly: false
+      },
+      ROGUE: {
+          id: 'ROGUE',
+          name: 'The Rogue',
+          desireStyle: 'Playful danger, charm, irreverent confidence',
+          summary: 'The Rogue — playful and irreverent, using charm and danger to seduce, testing connection through flirtation, risk, and rule-bending confidence.',
+          primaryOnly: false
+      },
+      DANGEROUS: {
+          id: 'DANGEROUS',
+          name: 'The Dangerous',
+          desireStyle: 'Controlled menace, restraint, implied power',
+          summary: 'The Dangerous — controlled and restrained, radiating implied power and menace, creating heat through what is held back rather than revealed.',
+          primaryOnly: false
+      },
+      GUARDIAN: {
+          id: 'GUARDIAN',
+          name: 'The Guardian',
+          desireStyle: 'Protection, steadiness, containment',
+          summary: 'The Guardian — steady and protective, offering safety as intimacy, building desire through reliability, containment, and earned trust.',
+          primaryOnly: false
+      },
+      SOVEREIGN: {
+          id: 'SOVEREIGN',
+          name: 'The Sovereign',
+          desireStyle: 'Authority, composure, invitation rather than pursuit',
+          summary: 'The Sovereign — composed and authoritative, inviting rather than pursuing, framing desire as permission granted, not attention sought.',
+          primaryOnly: false
+      },
+      ENCHANTING: {
+          id: 'ENCHANTING',
+          name: 'The Enchanting',
+          desireStyle: 'Allure, knowing control, magnetic presence',
+          summary: 'The Enchanting — magnetic and intentional, wielding allure with knowing control, choosing rather than chasing, shaping desire through presence alone.',
+          primaryOnly: false
+      },
+      DEVOTED: {
+          id: 'DEVOTED',
+          name: 'The Devoted',
+          desireStyle: 'Focused attention, affection, emotional exclusivity',
+          summary: 'The Devoted — focused and emotionally exclusive, expressing intensity through presence, loyalty, and the act of choosing again and again.',
+          primaryOnly: false
+      },
+      STRATEGIST: {
+          id: 'STRATEGIST',
+          name: 'The Strategist',
+          desireStyle: 'Anticipation, intelligence, teasing foresight',
+          summary: 'The Strategist — intelligent and anticipatory, seducing through foresight and teasing precision, turning desire into a game you want to lose.',
+          primaryOnly: false
+      },
+      BEAUTIFUL_RUIN: {
+          id: 'BEAUTIFUL_RUIN',
+          name: 'The Beautiful Ruin',
+          desireStyle: 'Desire corrupted by distrust; love fractured, tested, and re-bound through choice',
+          summary: 'The Beautiful Ruin — desired yet disillusioned, shaped by wounds that make love feel suspect, testing and fracturing bonds until someone chooses them with clear eyes and stays.',
+          primaryOnly: true,
+          genderedExpression: {
+              male: 'Power + unworthiness → possessive devotion → fear of being chosen',
+              female: 'Desire + disillusionment → testing and withdrawal → fear of being falsely loved'
+          }
+      },
+      ANTI_HERO: {
+          id: 'ANTI_HERO',
+          name: 'The Anti-Hero',
+          desireStyle: 'Restrained longing shaped by duty, guilt, or a consuming moral code',
+          summary: 'The Anti-Hero — burdened by duty, guilt, or a consuming code, suppressing desire to prevent collateral harm, resisting love even as it draws them closer.',
+          primaryOnly: true,
+          coreFantasy: 'They want love, but refuse it because intimacy would endanger others, compromise their mission, or violate their personal code. They are not afraid of love. They are afraid of what love would cost.'
+      }
+  };
+
+  const ARCHETYPE_ORDER = [
+      'ROMANTIC', 'CLOISTERED', 'ROGUE', 'DANGEROUS', 'GUARDIAN',
+      'SOVEREIGN', 'ENCHANTING', 'DEVOTED', 'STRATEGIST', 'BEAUTIFUL_RUIN', 'ANTI_HERO'
+  ];
+
+  function getArchetypeSectionTitle(loveInterestGender) {
+      const g = (loveInterestGender || '').toLowerCase();
+      if (g === 'male') return 'Shape Your Storybeau';
+      if (g === 'female') return 'Shape Your Storybelle';
+      return 'Shape Your Storyboo';
+  }
+
+  function validateArchetypeSelection(primaryId, modifierId) {
+      const errors = [];
+      if (!primaryId) {
+          errors.push('You must select exactly one Primary Archetype.');
+          return { valid: false, errors };
+      }
+      const primary = ARCHETYPES[primaryId];
+      if (!primary) {
+          errors.push('Invalid Primary Archetype selected.');
+          return { valid: false, errors };
+      }
+      if (modifierId) {
+          const modifier = ARCHETYPES[modifierId];
+          if (!modifier) {
+              errors.push('Invalid Modifier Archetype selected.');
+              return { valid: false, errors };
+          }
+          if (modifier.primaryOnly) {
+              errors.push(`${modifier.name} may only be chosen as a Primary Archetype.`);
+              return { valid: false, errors };
+          }
+          if (primaryId === modifierId) {
+              errors.push('Primary and Modifier cannot be the same archetype.');
+              return { valid: false, errors };
+          }
+      }
+      return { valid: true, errors: [] };
+  }
+
+  function buildArchetypeDirectives(primaryId, modifierId, loveInterestGender) {
+      if (!primaryId) return '';
+      const primary = ARCHETYPES[primaryId];
+      if (!primary) return '';
+
+      let directive = `
+LOVE INTEREST ARCHETYPE DIRECTIVES (LOCKED):
+
+Primary Archetype: ${primary.name}
+${primary.summary}
+`;
+
+      if (primary.id === 'BEAUTIFUL_RUIN' && primary.genderedExpression) {
+          const g = (loveInterestGender || '').toLowerCase();
+          if (g === 'male') {
+              directive += `\nGendered Expression: ${primary.genderedExpression.male}\n`;
+          } else if (g === 'female') {
+              directive += `\nGendered Expression: ${primary.genderedExpression.female}\n`;
+          }
+      }
+
+      if (primary.id === 'ANTI_HERO' && primary.coreFantasy) {
+          directive += `\nCore Fantasy: ${primary.coreFantasy}\n`;
+      }
+
+      if (modifierId) {
+          const modifier = ARCHETYPES[modifierId];
+          if (modifier) {
+              directive += `
+Modifier Archetype: ${modifier.name}
+The Modifier colors expression style only. It does not override the Primary's emotional arc or shadow.
+Modifier Desire Style: ${modifier.desireStyle}
+`;
+          }
+      }
+
+      directive += `
+STORYTELLER ENFORCEMENT:
+- Treat the Primary Archetype as dominant.
+- Use the Shadow Clause as the main source of relational tension.
+- Allow fracture and repair without erasing the shadow.
+- Never "heal away" the archetype.
+`;
+
+      if (primary.id === 'ANTI_HERO') {
+          directive += `
+ANTI-HERO ENFORCEMENT:
+- Treat self-restraint as the dominant tension driver.
+- Surface conflict through refusal, withdrawal, sacrifice, delayed or denied intimacy.
+- Allow love to progress only through breach of code, not casual erosion.
+- Do not trivialize the code or duty.
+- Do not turn restraint into coyness.
+- Do not resolve the arc by removing responsibility.
+- Anti-Hero arcs hinge on choice under cost, not healing-through-love.
+`;
+      }
+
+      return directive;
+  }
+
   // --- GLOBAL STATE INITIALIZATION ---
-  window.state = { 
-      tier:'free', 
-      picks:{ genre:[], dynamic:[], pov:'First', style:['Breathless'] }, 
-      gender:'Female', 
-      loveInterest:'Male', 
+  window.state = {
+      tier:'free',
+      picks:{ genre:['Romantasy'], dynamic:[], pov:'First', style:['Breathless'] },
+      gender:'Female',
+      loveInterest:'Male',
+      archetype: { primary: null, modifier: null }, 
       intensity:'Naughty', 
       turnCount:0,
       sysPrompt: "",
@@ -241,6 +748,14 @@ window.config = window.config || {
   function $(id){ return document.getElementById(id); }
   function toggle(id){ const el = document.getElementById(id); if(el) el.classList.toggle('hidden'); }
   function resetTurnSnapshotFlag(){ state._snapshotThisTurn = false; }
+  function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+  }
 
   // --- THEME & FONT HELPERS ---
   window.setTheme = function(name) {
@@ -260,7 +775,7 @@ window.config = window.config || {
 
   window.setGameIntensity = function(level) {
       // honour access tiers: dirty requires subscription, erotic requires non-free
-      if (level === 'Dirty' && window.state.access !== 'sub') { window.showPaywall('sub'); return; }
+      if (level === 'Dirty' && window.state.access !== 'sub') { window.showPaywall('sub_only'); return; }
       if (level === 'Erotic' && window.state.access === 'free') { window.openEroticPreview(); return; }
       window.state.intensity = level;
       updateIntensityUI();
@@ -290,7 +805,7 @@ window.config = window.config || {
 
   // NAV HELPER
   function closeAllOverlays() {
-      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal'].forEach(id => {
+      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'gameQuillVetoModal'].forEach(id => {
           const el = document.getElementById(id);
           if(el) el.classList.add('hidden');
       });
@@ -328,7 +843,9 @@ window.config = window.config || {
 
   window.showScreen = function(id, isBack = false){
       closeAllOverlays();
-      
+      // PASS 1 FIX: Clear any stuck toasts on screen change
+      if (typeof clearToasts === 'function') clearToasts();
+
       if(id === 'modeSelect') {
           _navHistory = []; 
       } else if (!isBack && _currentScreenId && _currentScreenId !== id) {
@@ -352,9 +869,9 @@ window.config = window.config || {
       _currentScreenId = id;
       updateNavUI();
 
-      // Populate suggestion pills when entering setup screen
+      // Initialize fate hand system when entering setup screen
       if(id === 'setup') {
-          populatePills();
+          initFateHandSystem();
       }
   };
 
@@ -377,15 +894,35 @@ window.config = window.config || {
       }
       
       // Global Locked Click Delegation
-      document.addEventListener('click', (e) => {
-          const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-tease, .locked-pass, [data-locked]');
-          if (lockedTarget) {
-              e.preventDefault();
-              e.stopPropagation();
-              e.stopImmediatePropagation();
-              window.openPaywall('unlock');
-          }
-      }, true); 
+      // Allows preview buttons within locked cards to still function
+      if (!document._lockedClickBound) {
+          document._lockedClickBound = true;
+          document.addEventListener('click', (e) => {
+              // Allow preview buttons to work even in locked cards
+              // Check both the target and all ancestors for .preview-btn
+              const previewBtn = e.target.closest('.preview-btn');
+              if (previewBtn) {
+                  // Explicitly show preview and stop - don't let anything else handle this
+                  e.stopPropagation();
+                  const previewText = document.getElementById('previewText');
+                  const previewModal = document.getElementById('previewModal');
+                  if (previewText && previewModal && previewBtn.dataset.txt) {
+                      previewText.textContent = previewBtn.dataset.txt;
+                      previewModal.classList.remove('hidden');
+                  }
+                  return;
+              }
+
+              const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-tease, .locked-pass, [data-locked]');
+              if (lockedTarget) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.stopImmediatePropagation();
+
+                  window.openPaywall('unlock');
+              }
+          }, true);
+      } 
 
       document.addEventListener('keydown', (e) => {
           if (e.ctrlKey && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
@@ -396,14 +933,46 @@ window.config = window.config || {
   }
 
   // --- SAFETY & CONSENT ---
+  // PASS 1 FIX: Toast system with proper auto-dismiss and anti-stacking
+  let _toastTimer = null;
+
   function showToast(msg) {
       const t = document.getElementById('toast');
-      if(t) {
-          t.textContent = msg;
-          t.classList.remove('hidden');
+      if (!t) return;
+
+      // Clear any existing toast timer to prevent stacking
+      if (_toastTimer) {
+          clearTimeout(_toastTimer);
+          _toastTimer = null;
+      }
+
+      // Set content and show
+      t.textContent = msg;
+      t.classList.remove('hidden');
+
+      // Reset animation by forcing reflow
+      t.style.animation = 'none';
+      void t.offsetWidth;
+      t.style.animation = 'toastFadeInOut 3s forwards';
+
+      // Explicit hide after animation completes (failsafe)
+      _toastTimer = setTimeout(() => {
+          t.classList.add('hidden');
           t.style.animation = 'none';
-          void t.offsetWidth;
-          t.style.animation = 'fadeInOut 3s forwards';
+          _toastTimer = null;
+      }, 3100);
+  }
+
+  // Clear any stuck toasts (call on state changes)
+  function clearToasts() {
+      const t = document.getElementById('toast');
+      if (t) {
+          t.classList.add('hidden');
+          t.style.animation = 'none';
+      }
+      if (_toastTimer) {
+          clearTimeout(_toastTimer);
+          _toastTimer = null;
       }
   }
 
@@ -436,31 +1005,52 @@ window.config = window.config || {
   }
 
   // --- ACCESS HELPERS ---
-  function resolveAccess(){
-    if (state.mode === 'couple') {
-        const roomAcc = state.roomAccess || 'free';
-        return (state.subscribed) ? 'sub' : roomAcc; 
+  // PASS 1 FIX: Canonical access resolver - ALL access checks must use this
+  function resolveAccess() {
+    // Read subscribed status from localStorage (source of truth)
+    if (localStorage.getItem('sb_subscribed') === '1') {
+        state.subscribed = true;
     }
-    if (state.subscribed) return 'sub';
-    if (state.storyId && hasStoryPass(state.storyId)) return 'pass';
-    return 'free';
-  }
 
-  function syncTierFromAccess(){
-    if(localStorage.getItem('sb_subscribed') === '1') state.subscribed = true;
-
+    // Check billing validity
     const inGrace = (state.billingStatus === 'grace' && Date.now() < state.billingGraceUntil);
     const invalidSub = state.billingStatus === 'canceled' || (state.billingStatus === 'past_due' && !inGrace);
 
+    // Determine access tier (priority order: sub > pass > free)
     if (state.subscribed && !invalidSub) {
-        state.access = 'sub';
-    } else if (state.storyId && hasStoryPass(state.storyId)) {
-        state.access = 'pass';
-    } else {
-        state.access = (state.mode === 'couple' ? (state.roomAccess || 'free') : 'free');
+        return 'sub';
     }
-    
-    state.tier = (state.access === 'free') ? 'free' : 'paid';
+
+    if (state.mode === 'couple') {
+        const roomAcc = state.roomAccess || 'free';
+        return roomAcc;
+    }
+
+    if (state.storyId && hasStoryPass(state.storyId)) {
+        return 'pass';
+    }
+
+    return 'free';
+  }
+
+  // PASS 1 FIX: Single function to sync state from canonical resolver
+  function syncTierFromAccess() {
+    // Resolve access from canonical source
+    const resolvedAccess = resolveAccess();
+
+    // Update state
+    state.access = resolvedAccess;
+    state.tier = (resolvedAccess === 'free') ? 'free' : 'paid';
+
+    console.log('[ENTITLEMENT] syncTierFromAccess:', {
+        access: state.access,
+        tier: state.tier,
+        subscribed: state.subscribed,
+        storyId: state.storyId,
+        hasPass: state.storyId ? hasStoryPass(state.storyId) : false
+    });
+
+    return resolvedAccess;
   }
 
   window.openPaywall = function(reason) {
@@ -470,7 +1060,11 @@ window.config = window.config || {
   };
 
   function currentStoryWordCount(){
-    const txt = (document.getElementById('storyText')?.innerText || '').trim();
+    // Get all content across all pages for accurate word count
+    const allContent = StoryPagination.getAllContent();
+    if (!allContent) return 0;
+    // Strip HTML tags and count words
+    const txt = allContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
     if(!txt) return 0;
     return txt.split(/\s+/).filter(Boolean).length;
   }
@@ -516,7 +1110,8 @@ window.config = window.config || {
           div.style.textAlign = 'center';
           div.style.border = '1px solid var(--gold)';
           div.innerHTML = `<p style="font-style:italic; color:var(--gold)">The moment hangs, unresolved.</p>`;
-          document.getElementById('storyText').appendChild(div);
+          // Append ending to current page
+          StoryPagination.appendToCurrentPage(div.outerHTML);
           return;
       }
 
@@ -636,55 +1231,264 @@ window.config = window.config || {
       applyVetoFromInput();
   }
 
-  // --- SUGGESTION PILLS ---
-  const VETO_SUGGESTIONS = [
-      "ban: moist", "no tattoos", "no scars", "no cheating", "no amnesia",
-      "rename: -> ", "more description", "keep pacing slower", "no second-person"
-  ];
-  const QUILL_SUGGESTIONS = [
-      "enemies to lovers", "only one bed", "bring them somewhere private",
-      "increase tension", "confession scene", "near-miss moment", "jealousy beat"
-  ];
+  // --- FATE HAND SYSTEM (Replaces pill system) ---
+  // Suggestion pools for rotating placeholders and fate draws
+  const FATE_SUGGESTIONS = {
+      ancestry: [
+          // Intermixed ~50% fantasy, ~50% real-world
+          "Fae", "Celtic", "Half-elf", "Nordic", "Starborn", "Andean",
+          "Clockwork", "Levantine", "Night Court", "Korean", "Shadow-born", "Persian",
+          "Mer-touched", "Japanese", "Dragon-blooded", "West African", "Storm-caller", "Greek",
+          "Dusk Walker", "Mediterranean", "Moon-kissed", "Slavic", "Fire-veined", "Indian",
+          "Void-touched", "Pacific Islander", "Iron-blooded", "Southeast Asian", "Sylvan", "Chinese",
+          "Dream-walker", "Afro-Caribbean", "Changeling", "Latin American", "Forgotten royal line", "Middle Eastern"
+      ],
+      veto: [
+          "No humiliation", "No betrayal", 'No "M\'Lady"', "No tattoos", "No scars",
+          "No cheating", "No amnesia", "No pregnancy", "No ghosts", "No death",
+          "No love triangles", "No supernatural", "No time skips", "No flowery language",
+          "No second person", "No violence", "No crying scenes", "No miscommunication trope"
+      ],
+      quill: [
+          "Public Bathhouse Setting", "Make it bigger", "Make it a Musical",
+          "More tension", "Confession scene", "Jealousy beat", "Stolen glance",
+          "Only one bed", "Enemies to lovers", "Forced proximity", "Vulnerability scene",
+          "Take them somewhere private", "Build tension slowly", "Unexpected interruption",
+          "Moonlit garden", "Charged silence", "Near miss moment", "Secret revealed"
+      ],
+      visualize: [
+          "more muscular", "more elegant", "brighter lighting", "darker mood",
+          "cuter", "softer facial features", "strong jawline", "hourglass figure",
+          "athletic build", "blonde hair", "dark hair", "natural expression",
+          "cinematic lighting", "high detail", "dreamlike", "painterly",
+          "leading-actor looks", "movie poster style", "anime style", "photo-realistic"
+      ]
+  };
 
-  function populatePills() {
-      const vetoPillsEl = document.getElementById('vetoPills');
-      const quillPillsEl = document.getElementById('quillPills');
-      if(!vetoPillsEl || !quillPillsEl) return;
+  let fateHandInitialized = false;
+  let placeholderAnimations = {};
 
-      vetoPillsEl.innerHTML = '';
-      quillPillsEl.innerHTML = '';
+  // Tease mode check
+  function isTeaseMode() {
+      return state.storyLength === 'voyeur' && state.access === 'free';
+  }
 
-      // Shuffle and pick 4 random veto suggestions
-      const shuffledVeto = [...VETO_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 4);
-      shuffledVeto.forEach(txt => {
-          const pill = document.createElement('span');
-          pill.className = 'pill veto-pill';
-          pill.textContent = txt;
-          pill.onclick = () => {
-              const input = document.getElementById('vetoInput');
-              if(input) {
-                  input.value = input.value ? input.value + '\n' + txt : txt;
-              }
-              pill.remove();
-          };
-          vetoPillsEl.appendChild(pill);
+  // Get random suggestion from pool
+  function getRandomSuggestion(type, exclude = []) {
+      const pool = FATE_SUGGESTIONS[type] || [];
+      const available = pool.filter(s => !exclude.includes(s));
+      if (available.length === 0) return pool[Math.floor(Math.random() * pool.length)];
+      return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // Initialize rotating placeholder for a field
+  function initRotatingPlaceholder(inputId, type) {
+      const input = document.getElementById(inputId);
+      const placeholder = document.querySelector(`.rotating-placeholder[data-for="${inputId}"]`);
+      if (!input || !placeholder) return;
+
+      const suggestions = FATE_SUGGESTIONS[type] || [];
+      if (suggestions.length === 0) return;
+
+      // Build scrolling content (duplicate for seamless loop)
+      const buildContent = () => {
+          let html = '<span class="rotating-placeholder-inner">';
+          // Double the suggestions for seamless scroll
+          const doubled = [...suggestions, ...suggestions];
+          doubled.forEach((s, i) => {
+              const glowClass = Math.random() < 0.1 ? ' glow' : '';
+              html += `<span class="suggestion${glowClass}">${s}</span>`;
+              if (i < doubled.length - 1) html += '<span class="separator">•</span>';
+          });
+          html += '</span>';
+          return html;
+      };
+
+      placeholder.innerHTML = buildContent();
+
+      // Show/hide placeholder based on input content
+      const updateVisibility = () => {
+          if (input.value.trim()) {
+              placeholder.classList.add('hidden');
+          } else {
+              placeholder.classList.remove('hidden');
+          }
+      };
+
+      // Pause animation on focus
+      input.addEventListener('focus', () => {
+          const inner = placeholder.querySelector('.rotating-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'paused';
+      });
+      input.addEventListener('blur', () => {
+          const inner = placeholder.querySelector('.rotating-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'running';
+          updateVisibility();
+      });
+      input.addEventListener('input', updateVisibility);
+
+      updateVisibility();
+
+      // Random glow effect
+      setInterval(() => {
+          const spans = placeholder.querySelectorAll('.suggestion');
+          spans.forEach(s => s.classList.remove('glow'));
+          if (spans.length > 0 && Math.random() < 0.3) {
+              const randomSpan = spans[Math.floor(Math.random() * spans.length)];
+              randomSpan.classList.add('glow');
+              setTimeout(() => randomSpan.classList.remove('glow'), 2000);
+          }
+      }, 4000);
+  }
+
+  // Handle fate hand click - reveal card and populate field
+  function handleFateHandClick(hand) {
+      const targetId = hand.dataset.target;
+      const type = hand.dataset.type;
+      const input = document.getElementById(targetId);
+      const treeCard = document.querySelector(`.fate-tree-card[data-target="${targetId}"]`);
+
+      if (!input || !treeCard) return;
+
+      // TEASE MODE: Quill fate hand triggers paywall
+      if (type === 'quill' && isTeaseMode()) {
+          if (window.openPaywall) window.openPaywall('unlock');
+          return;
+      }
+
+      // Get all cards in the hand
+      const cards = hand.querySelectorAll('.fate-hand-card');
+      const centerCard = cards[2]; // Middle card
+
+      // Flip center card
+      centerCard.classList.add('flipping');
+
+      // Fade out other cards
+      cards.forEach((card, i) => {
+          if (i !== 2) card.classList.add('fading');
       });
 
-      // Shuffle and pick 3 random quill suggestions
-      const shuffledQuill = [...QUILL_SUGGESTIONS].sort(() => 0.5 - Math.random()).slice(0, 3);
-      shuffledQuill.forEach(txt => {
-          const pill = document.createElement('span');
-          pill.className = 'pill quill-pill';
-          pill.textContent = txt;
-          pill.onclick = () => {
-              const input = document.getElementById('quillInput');
-              if(input) {
-                  input.value = input.value ? input.value + '\n' + txt : txt;
+      // After flip completes
+      setTimeout(() => {
+          // Hide the hand, show the tree card
+          hand.style.display = 'none';
+          treeCard.classList.remove('hidden');
+
+          // Populate the field
+          const suggestion = getRandomSuggestion(type);
+          if (input.tagName === 'TEXTAREA') {
+              input.value = input.value ? input.value + '\n' + suggestion : suggestion;
+          } else {
+              if (!input.value.trim()) {
+                  input.value = suggestion;
               }
-              pill.remove();
-          };
-          quillPillsEl.appendChild(pill);
+          }
+
+          // Hide placeholder
+          const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
+          if (placeholder) placeholder.classList.add('hidden');
+
+          // Initialize leaf state (static, no animation until clicked)
+          const leaf = treeCard.querySelector('.falling-leaf');
+          if (leaf) {
+              leaf.dataset.leafClicks = '0';
+          }
+      }, 450);
+  }
+
+  // Handle tree card click - invoke fate again (two-stage leaf animation)
+  function handleTreeCardClick(treeCard) {
+      const targetId = treeCard.dataset.target;
+      const hand = document.querySelector(`.fate-hand[data-target="${targetId}"]`);
+      const input = document.getElementById(targetId);
+      const leaf = treeCard.querySelector('.falling-leaf');
+
+      if (!input || !hand) return;
+
+      const type = hand.dataset.type;
+
+      // TEASE MODE: Quill tree card triggers paywall
+      if (type === 'quill' && isTeaseMode()) {
+          if (window.openPaywall) window.openPaywall('unlock');
+          return;
+      }
+
+      // Two-stage leaf animation state machine
+      if (leaf) {
+          const clicks = parseInt(leaf.dataset.leafClicks || '0', 10);
+
+          if (clicks === 0) {
+              // First click: animate from mid-air to ground
+              leaf.classList.add('leaf-fall-1');
+              leaf.dataset.leafClicks = '1';
+          } else if (clicks === 1) {
+              // Second click: reset to lower branch, then fall to mid-air stop
+              leaf.classList.remove('leaf-fall-1');
+              leaf.classList.add('leaf-reset-2');
+              void leaf.offsetWidth; // Force reflow
+
+              // Brief pause at reset position, then animate
+              setTimeout(() => {
+                  leaf.classList.remove('leaf-reset-2');
+                  leaf.classList.add('leaf-fall-2');
+                  leaf.dataset.leafClicks = '2';
+
+                  // After animation completes, set final resting state
+                  setTimeout(() => {
+                      leaf.classList.remove('leaf-fall-2');
+                      leaf.classList.add('leaf-final');
+                  }, 1000);
+              }, 50);
+          }
+          // clicks >= 2: ignore further clicks
+      }
+
+      // Populate with new suggestion
+      const suggestion = getRandomSuggestion(type, [input.value]);
+      if (input.tagName === 'TEXTAREA') {
+          input.value = input.value ? input.value + '\n' + suggestion : suggestion;
+      } else {
+          input.value = suggestion;
+      }
+  }
+
+  // Initialize the entire fate hand system
+  function initFateHandSystem() {
+      if (fateHandInitialized) return;
+      fateHandInitialized = true;
+
+      // Initialize rotating placeholders
+      initRotatingPlaceholder('ancestryInputPlayer', 'ancestry');
+      initRotatingPlaceholder('ancestryInputLI', 'ancestry');
+      initRotatingPlaceholder('vetoInput', 'veto');
+      initRotatingPlaceholder('quillInput', 'quill');
+      // Game modal rotating placeholders
+      initRotatingPlaceholder('gameVetoInput', 'veto');
+      initRotatingPlaceholder('gameQuillInput', 'quill');
+      // Visualize modifier suggestions
+      initRotatingPlaceholder('vizModifierInput', 'visualize');
+
+      // Bind fate hand clicks
+      document.querySelectorAll('.fate-hand').forEach(hand => {
+          hand.addEventListener('click', () => handleFateHandClick(hand));
       });
+
+      // Bind tree card clicks
+      document.querySelectorAll('.fate-tree-card').forEach(card => {
+          card.addEventListener('click', () => handleTreeCardClick(card));
+      });
+
+      // Update LI ancestry label based on gender
+      updateAncestryLILabel();
+  }
+
+  function updateAncestryLILabel() {
+      const label = document.getElementById('ancestryLabelLI');
+      if (!label) return;
+      const liGender = document.getElementById('loveInterestGender')?.value || 'Male';
+      if (liGender === 'Male') label.textContent = "Your Storybeau's";
+      else if (liGender === 'Female') label.textContent = "Your Storybelle's";
+      else label.textContent = "Your Storyboo's";
   }
 
   function updateQuillUI() {
@@ -713,19 +1517,39 @@ window.config = window.config || {
       const wc = currentStoryWordCount();
       const needed = state.quill.nextReadyAtWords;
 
-      if(ready) {
+      // Quill unlocks with: subscription, story pass, or god mode
+      const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+
+      if (!quillUnlocked) {
+          // Quill is paywalled
+          status.textContent = "Quill: Locked";
+          status.style.color = "var(--gold)";
+          if(quillBox) {
+              quillBox.classList.add('locked-input');
+              quillBox.onclick = () => window.showPaywall('unlock');
+          }
+          btn.disabled = true;
+          btn.style.opacity = "0.5";
+      } else if(ready) {
           status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
           status.style.color = "var(--pink)";
           btn.disabled = false;
           btn.style.opacity = "1";
           btn.style.borderColor = "var(--pink)";
           btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
-          if(quillBox) quillBox.classList.remove('locked-input');
+          if(quillBox) {
+              quillBox.classList.remove('locked-input');
+              quillBox.onclick = null;
+          }
       } else {
           const remain = Math.max(0, needed - wc);
           status.textContent = `Quill: Spent (${remain} words to recharge)`;
           status.style.color = "var(--gold)";
-          if(quillBox) quillBox.classList.add('locked-input');
+          // Don't lock for cooldown - just disable button
+          if(quillBox) {
+              quillBox.classList.remove('locked-input');
+              quillBox.onclick = null;
+          }
           btn.disabled = true;
           btn.style.opacity = "0.5";
           btn.style.borderColor = "transparent";
@@ -807,7 +1631,7 @@ window.config = window.config || {
           banner.innerHTML = `<strong>Payment Issue:</strong> You’re in a grace period.`;
           banner.style.display = 'block';
       } else if (state.billingStatus === 'past_due' || state.billingStatus === 'canceled') {
-          banner.innerHTML = `Subscription inactive. <button onclick="window.showPaywall('sub')" style="margin-left:10px; background:var(--pink); color:black;">Resume the Affair</button>`;
+          banner.innerHTML = `Subscription inactive. <button onclick="window.showPaywall('sub_only')" style="margin-left:10px; background:var(--pink); color:black;">Resume the Affair</button>`;
           banner.style.display = 'block';
       } else {
           banner.style.display = 'none';
@@ -816,15 +1640,38 @@ window.config = window.config || {
 
   // --- VISUAL HELPERS ---
   async function ensureVisualBible(textContext) {
-      if(!state.visual) state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
+      // Guard against null/undefined - initialize safe defaults
+      if (!state.visual) {
+          state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
+      }
+      if (!state.visual.bible) {
+          state.visual.bible = { style: "", setting: "", characters: {} };
+      }
+      if (!state.visual.bible.characters || typeof state.visual.bible.characters !== 'object') {
+          state.visual.bible.characters = {};
+      }
+      // Check if bible is already populated
       if (state.visual.bible.style && Object.keys(state.visual.bible.characters).length > 0) return;
       
       const genre = Array.isArray(state?.picks?.genre) ? state.picks.genre.join(', ') : "";
-      const sys = `You are a Visual Director. Extract consistent visual anchors into STRICT JSON.`;
+      const sys = `You are a Visual Director. Extract consistent visual anchors into STRICT JSON with this structure:
+{
+  "style": "visual style description",
+  "setting": "location/environment description",
+  "characters": {
+    "CharacterName": {
+      "face": "detailed facial features (eyes, skin tone, expression style)",
+      "hair": "color, length, style",
+      "clothing": "current outfit description",
+      "build": "body type/physique"
+    }
+  }
+}
+Extract details for ALL named characters. Be specific about face, hair, clothing, and build.`;
 
       try {
           const raw = await Promise.race([
-              callChat([{role:'system', content: sys}, {role:'user', content: `Context: ${genre}. Text: ${textContext.slice(-2000)}`}]),
+              callChat([{role:'system', content: sys}, {role:'user', content: `Genre: ${genre}. Extract visual anchors from: ${textContext.slice(-2000)}`}]),
               new Promise((_, reject) => setTimeout(() => reject(new Error("Bible timeout")), 15000))
           ]);
           const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -834,9 +1681,25 @@ window.config = window.config || {
 
   function buildVisualAnchorsText() {
       const b = state.visual.bible;
-      if (!b || !b.style) return ""; 
+      if (!b || !b.style) return "";
       let txt = `VISUAL CONTINUITY: STYLE: ${b.style} SETTING: ${b.setting} `;
-      if (state.visual.locked && state.visual.lastImageUrl) txt += "MATCH LAST RENDER EXACTLY.";
+
+      // If locked, include specific character details for face/hair/clothing persistence
+      if (state.visual.locked) {
+          txt += "CHARACTER LOCK ACTIVE - MAINTAIN EXACT APPEARANCE: ";
+          if (b.characters && typeof b.characters === 'object') {
+              Object.entries(b.characters).forEach(([name, details]) => {
+                  if (details && typeof details === 'object') {
+                      txt += `${name}: `;
+                      if (details.face) txt += `FACE: ${details.face}; `;
+                      if (details.hair) txt += `HAIR: ${details.hair}; `;
+                      if (details.clothing) txt += `CLOTHING: ${details.clothing}; `;
+                      if (details.build) txt += `BUILD: ${details.build}; `;
+                  }
+              });
+          }
+          txt += "DO NOT CHANGE CHARACTER APPEARANCE. ";
+      }
       return txt;
   }
 
@@ -861,7 +1724,8 @@ window.config = window.config || {
       });
   }
 
-  function setPaywallClickGuard(el, enabled){
+  // FIX: Added paywallMode parameter to support sub_only for Dirty intensity
+  function setPaywallClickGuard(el, enabled, paywallMode = 'unlock'){
     if(!el) return;
     if (!el.dataset.paywallBound) {
         el.dataset.paywallBound = "true";
@@ -870,11 +1734,14 @@ window.config = window.config || {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                window.showPaywall('unlock');
+                // Use element's stored paywall mode (defaults to 'unlock')
+                const mode = el.dataset.paywallMode || 'unlock';
+                window.showPaywall(mode);
             }
         }, { capture: true });
     }
     el.dataset.paywallActive = enabled ? "true" : "false";
+    el.dataset.paywallMode = paywallMode;
   }
 
   function applyTierUI(){
@@ -932,15 +1799,20 @@ window.config = window.config || {
           }
       }
 
-      ['saveBtn', 'gameControlsBtn'].forEach(id => {
-          const btn = document.getElementById(id);
-          if(btn) {
-              if(couple || paid) btn.classList.remove('locked-style');
-              else btn.classList.add('locked-style');
-              
-              setPaywallClickGuard(btn, !(couple || paid));
-          }
-      });
+      // Save button follows paywall rules
+      const saveBtn = document.getElementById('saveBtn');
+      if(saveBtn) {
+          if(couple || paid) saveBtn.classList.remove('locked-style');
+          else saveBtn.classList.add('locked-style');
+          setPaywallClickGuard(saveBtn, !(couple || paid));
+      }
+
+      // Quill & Veto button is ALWAYS unlocked (even in Tease)
+      const controlsBtn = document.getElementById('gameControlsBtn');
+      if(controlsBtn) {
+          controlsBtn.classList.remove('locked-style');
+          setPaywallClickGuard(controlsBtn, false);
+      }
 
       if (!couple) {
           applyLengthLocks();
@@ -951,28 +1823,83 @@ window.config = window.config || {
 
   function applyAccessLocks(){ applyTierUI(); }
 
+  // FIX #4: Expose for post-render tier rehydration
+  window.applyAccessLocks = applyAccessLocks;
+  window.applyTierUI = applyTierUI;
+
+  // PASS 1 FIX: Length locks with strict enforcement
   function applyLengthLocks(){
+    // Always resolve access first
     syncTierFromAccess();
+
     const section = document.getElementById('lengthSection');
     if(section) section.classList.toggle('hidden', state.turnCount > 0);
 
     const cards = document.querySelectorAll('#lengthGrid .card[data-grp="length"]');
+
+    console.log('[ENTITLEMENT] applyLengthLocks:', {
+        access: state.access,
+        currentStoryLength: state.storyLength,
+        cardsFound: cards.length
+    });
+
     cards.forEach(card => {
       const val = card.dataset.val;
-      let locked = true; 
+      let locked = true;  // Default: locked
       let hidden = false;
 
-      if (state.access === 'free' && val === 'voyeur') locked = false;
-      else if (state.access === 'pass' && val === 'fling') locked = false;
-      else if (state.access === 'sub' && ['fling', 'affair', 'soulmates'].includes(val)) locked = false;
-      
-      if(state.access !== 'free' && val === 'voyeur') { locked = true; hidden = true; }
+      // ENTITLEMENT RULES (LOCKED):
+      // - free: only voyeur unlocked
+      // - pass ($3): only fling unlocked (NOT affair, NOT soulmates)
+      // - sub: fling, affair, soulmates unlocked
 
+      if (state.access === 'free' && val === 'voyeur') {
+          locked = false;
+      } else if (state.access === 'pass') {
+          // CRITICAL: Pass ONLY unlocks Fling
+          if (val === 'fling') locked = false;
+          // affair and soulmates stay locked = true
+      } else if (state.access === 'sub') {
+          // Sub unlocks fling, affair, soulmates
+          if (['fling', 'affair', 'soulmates'].includes(val)) locked = false;
+      }
+
+      // Hide voyeur for paid users
+      if (state.access !== 'free' && val === 'voyeur') {
+          locked = true;
+          hidden = true;
+      }
+
+      // Apply classes
       card.classList.toggle('locked', locked);
       card.style.display = hidden ? 'none' : '';
-      setPaywallClickGuard(card, locked);
+
+      // CRITICAL FIX: Remove data-locked attribute when unlocked (CSS targets [data-locked])
+      if (locked) {
+          // Keep or set data-locked attribute for CSS styling
+          if (!card.dataset.locked) {
+              card.dataset.locked = (val === 'fling') ? 'pass' : 'sub';
+          }
+      } else {
+          // Remove attribute so CSS [data-locked] selector doesn't apply
+          card.removeAttribute('data-locked');
+      }
+
+      // Set paywall mode: affair/soulmates require sub_only
+      const paywallMode = ['affair', 'soulmates'].includes(val) ? 'sub_only' : 'unlock';
+      setPaywallClickGuard(card, locked, paywallMode);
+
+      // Selection state
       card.classList.toggle('selected', val === state.storyLength);
+
+      console.log('[ENTITLEMENT] Card:', val, 'locked:', locked, 'hidden:', hidden);
     });
+
+    // ENFORCEMENT: If pass user somehow has affair/soulmates selected, downgrade
+    if (state.access === 'pass' && ['affair', 'soulmates'].includes(state.storyLength)) {
+        console.log('[ENTITLEMENT] Downgrading story length from', state.storyLength, 'to fling');
+        state.storyLength = 'fling';
+    }
 
     // Auto-select fling if pass tier and current selection is voyeur (now hidden)
     if (state.access === 'pass' && state.storyLength === 'voyeur') {
@@ -1005,10 +1932,16 @@ window.config = window.config || {
           let locked = false;
           if (access === 'free' && ['Erotic', 'Dirty'].includes(level)) locked = true;
           if (access === 'pass' && level === 'Dirty') locked = true;
-          
+
           btn.classList.toggle('locked', locked);
+          // CRITICAL FIX: Remove preset locked-tease/locked-pass classes when unlocked
+          if (!locked) {
+              btn.classList.remove('locked-tease', 'locked-pass');
+          }
           if(locked) btn.classList.remove('active');
-          setPaywallClickGuard(btn, locked);
+          // FIX: Dirty always requires subscription - use sub_only mode
+          const paywallMode = (level === 'Dirty') ? 'sub_only' : 'unlock';
+          setPaywallClickGuard(btn, locked, paywallMode);
       };
 
       setupBtns.forEach(b => updateLock(b, b.dataset.val));
@@ -1029,6 +1962,12 @@ window.config = window.config || {
           const v = raw.toLowerCase().trim();
           let locked = !paid && v !== 'breathless';
           card.classList.toggle('locked', locked);
+          // CRITICAL FIX: Remove data-locked attribute when unlocked
+          if (locked) {
+              if (!card.dataset.locked) card.dataset.locked = 'true';
+          } else {
+              card.removeAttribute('data-locked');
+          }
           setPaywallClickGuard(card, locked);
       });
   }
@@ -1045,7 +1984,7 @@ window.config = window.config || {
   function wireIntensityHandlers(){
       const handler = (level, e) => {
           e.stopPropagation();
-          if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub'); return; }
+          if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub_only'); return; }
           if(level === 'Erotic' && state.access === 'free'){ window.openEroticPreview(); return; }
           state.intensity = level;
           updateIntensityUI();
@@ -1079,44 +2018,120 @@ window.config = window.config || {
         if(sp) sp.classList.remove('hidden');
     }
     const hasPassNow = state.storyId && hasStoryPass(state.storyId);
-    const hideUnlock = (mode === 'sub') || state.subscribed || hasPassNow;
+    // LOGIC FIX: Show $3 Story Pass alongside $6 Subscribe for most paywall triggers
+    // Hide unlock ONLY if: user already has pass, is subscribed, or mode is 'sub_only' (true sub-required features)
+    const hideUnlock = (mode === 'sub_only') || state.subscribed || hasPassNow;
     const optUnlock = document.getElementById('optUnlock');
     if(optUnlock) optUnlock.classList.toggle('hidden', !!hideUnlock);
+
     pm.classList.remove('hidden');
   };
 
+  // PASS 1 FIX: Refactored completePurchase with canonical access resolution
   function completePurchase() {
+      // Clear any stuck toasts first
+      clearToasts();
+
       const pm = document.getElementById('payModal');
-      if(pm) pm.classList.add('hidden');
-      
-      if(state.pendingUpgradeToAffair || state.lastPurchaseType === 'sub') {
+      if (pm) pm.classList.add('hidden');
+
+      const purchaseType = state.lastPurchaseType;
+      const previousAccess = state.access;
+
+      console.log('[ENTITLEMENT] completePurchase START:', {
+          purchaseType,
+          previousAccess,
+          storyLength: state.storyLength,
+          storyId: state.storyId
+      });
+
+      // Persist subscription if this was a subscription purchase
+      if (state.pendingUpgradeToAffair || purchaseType === 'sub') {
           state.subscribed = true;
-          localStorage.setItem('sb_subscribed', '1'); 
+          localStorage.setItem('sb_subscribed', '1');
+          console.log('[ENTITLEMENT] Subscription persisted to localStorage');
       }
-      
-      syncTierFromAccess();
-      
+
+      // Resolve access from canonical source (reads from localStorage)
+      const newAccess = syncTierFromAccess();
+
+      console.log('[ENTITLEMENT] Access resolved:', {
+          previousAccess,
+          newAccess,
+          tier: state.tier
+      });
+
+      // Determine story length upgrades based on purchase type
       let upgraded = false;
-      if (state.lastPurchaseType === 'pass' && state.storyLength === 'voyeur') {
-          state.storyLength = 'fling';
-          upgraded = true;
-          showToast("Story expanded to Fling.");
-      }
-      if (state.lastPurchaseType === 'sub' && ['fling', 'voyeur'].includes(state.storyLength)) {
-          state.storyLength = 'affair';
-          upgraded = true;
-          showToast("Story upgraded to Affair.");
+      let toastMessage = null;
+
+      // RULE: Storypass $3 upgrades ONLY to Fling (never Affair/Soulmates)
+      if (purchaseType === 'pass' && newAccess === 'pass') {
+          if (state.storyLength === 'voyeur') {
+              state.storyLength = 'fling';
+              upgraded = true;
+              toastMessage = "Story expanded to Fling.";
+          }
+          // Pass users CANNOT access Affair or Soulmates - enforce this
+          if (['affair', 'soulmates'].includes(state.storyLength)) {
+              state.storyLength = 'fling';
+              console.log('[ENTITLEMENT] Downgraded story length to Fling (pass cannot access affair/soulmates)');
+          }
       }
 
-      if (upgraded) state.storyEnded = false;
+      // RULE: Subscription can upgrade to Affair
+      if (purchaseType === 'sub' && newAccess === 'sub') {
+          if (['fling', 'voyeur'].includes(state.storyLength)) {
+              state.storyLength = 'affair';
+              upgraded = true;
+              toastMessage = "Story upgraded to Affair.";
+          }
+      }
 
-      state.lastPurchaseType = null; 
+      if (upgraded) {
+          state.storyEnded = false;
+      }
+
+      // Clear purchase state
+      state.lastPurchaseType = null;
       state.pendingUpgradeToAffair = false;
 
-      applyAccessLocks(); 
-      if(window.initCards) window.initCards(); 
+      // CRITICAL: Apply all lock states AFTER access is resolved
+      console.log('[ENTITLEMENT] Applying UI locks with access:', state.access);
+
+      // Apply locks to all systems
+      if (typeof applyLengthLocks === 'function') applyLengthLocks();
+      if (typeof applyIntensityLocks === 'function') applyIntensityLocks();
+      if (typeof applyStyleLocks === 'function') applyStyleLocks();
+      if (typeof applyTierUI === 'function') applyTierUI();
+
+      // CRITICAL FIX: Update Quill UI on both setup and game screens
+      if (typeof updateQuillUI === 'function') updateQuillUI();
+      if (typeof updateGameQuillUI === 'function') updateGameQuillUI();
+
+      // Reinitialize cards if function exists
+      if (window.initCards) window.initCards();
+
+      // Save state
       saveStorySnapshot();
-      if (state.purchaseContext === 'tierGate') window.showScreen('modeSelect');
+
+      // Only show toast if access actually changed
+      if (toastMessage && newAccess !== previousAccess) {
+          showToast(toastMessage);
+      } else if (newAccess !== 'free' && previousAccess === 'free') {
+          showToast("Content unlocked.");
+      }
+
+      // Navigate based on context
+      if (state.purchaseContext === 'tierGate') {
+          window.showScreen('modeSelect');
+      }
+
+      console.log('[ENTITLEMENT] completePurchase END:', {
+          access: state.access,
+          storyLength: state.storyLength,
+          upgraded
+      });
   }
 
   function renderFlingEnd() {
@@ -1125,7 +2140,8 @@ window.config = window.config || {
       div.style.textAlign = 'center';
       div.style.border = '1px solid var(--pink)';
       div.innerHTML = `<h3 style="color:var(--pink)">Not finished.</h3><p>A Fling burns hot and leaves a mark. But an Affair lingers.</p><button onclick="window.upgradeFlingToAffair()" style="background:var(--pink); color:black; font-weight:bold; margin-top:10px;">Make it an Affair</button>`;
-      document.getElementById('storyText')?.appendChild(div);
+      // Append fling ending to current page
+      StoryPagination.appendToCurrentPage(div.outerHTML);
   }
 
   window.upgradeFlingToAffair = function() {
@@ -1134,7 +2150,7 @@ window.config = window.config || {
       if(state.access === 'sub') {
           completePurchase(); // Already subbed, just process upgrade
       } else {
-          window.showPaywall('sub');
+          window.showPaywall('sub_only'); // Affair requires subscription
       }
   };
 
@@ -1169,7 +2185,69 @@ window.config = window.config || {
   function hasStoryPass(storyId){ return localStorage.getItem(getStoryPassKey(storyId)) === '1'; }
   function grantStoryPass(storyId){ if(storyId) localStorage.setItem(getStoryPassKey(storyId), '1'); }
   function clearCurrentStoryId(){ localStorage.removeItem('sb_current_story_id'); }
-  function hasSavedStory(){ return !!localStorage.getItem('sb_saved_story'); }
+  // CORRECTIVE: IndexedDB for large story data when localStorage fails
+  const STORY_DB_NAME = 'StoryBoundDB';
+  const STORY_DB_VERSION = 1;
+  const STORY_STORE_NAME = 'stories';
+
+  function openStoryDB() {
+      return new Promise((resolve, reject) => {
+          if (!window.indexedDB) {
+              reject(new Error('IndexedDB not supported'));
+              return;
+          }
+          const request = indexedDB.open(STORY_DB_NAME, STORY_DB_VERSION);
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => resolve(request.result);
+          request.onupgradeneeded = (event) => {
+              const db = event.target.result;
+              if (!db.objectStoreNames.contains(STORY_STORE_NAME)) {
+                  db.createObjectStore(STORY_STORE_NAME, { keyPath: 'id' });
+              }
+          };
+      });
+  }
+
+  async function saveToIndexedDB(snapshot) {
+      try {
+          const db = await openStoryDB();
+          const tx = db.transaction(STORY_STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORY_STORE_NAME);
+          await new Promise((resolve, reject) => {
+              const req = store.put({ id: 'current_story', ...snapshot });
+              req.onsuccess = resolve;
+              req.onerror = () => reject(req.error);
+          });
+          db.close();
+          localStorage.setItem('sb_story_in_idb', '1');
+          return true;
+      } catch (e) {
+          console.error('IndexedDB save failed', e);
+          return false;
+      }
+  }
+
+  async function loadFromIndexedDB() {
+      try {
+          const db = await openStoryDB();
+          const tx = db.transaction(STORY_STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORY_STORE_NAME);
+          const data = await new Promise((resolve, reject) => {
+              const req = store.get('current_story');
+              req.onsuccess = () => resolve(req.result);
+              req.onerror = () => reject(req.error);
+          });
+          db.close();
+          return data;
+      } catch (e) {
+          console.error('IndexedDB load failed', e);
+          return null;
+      }
+  }
+
+  function hasSavedStory() {
+      return !!localStorage.getItem('sb_saved_story') || localStorage.getItem('sb_story_in_idb') === '1';
+  }
 
   function saveStorySnapshot(){
     const el = document.getElementById('storyText');
@@ -1177,9 +2255,24 @@ window.config = window.config || {
     const currentWc = currentStoryWordCount();
     if (currentWc > state.lastSavedWordCount) {
         const globalWc = Number(localStorage.getItem('sb_global_word_count') || 0);
-        localStorage.setItem('sb_global_word_count', globalWc + (currentWc - state.lastSavedWordCount));
+        try {
+            localStorage.setItem('sb_global_word_count', globalWc + (currentWc - state.lastSavedWordCount));
+        } catch(e) { console.warn('Word count save failed', e); }
         state.lastSavedWordCount = currentWc;
     }
+    // Create clean state snapshot without heavy data
+    const cleanState = { ...state };
+    // Prevent storing large visual bible data that causes QuotaExceededError
+    if (cleanState.visual) {
+        cleanState.visual = {
+            ...cleanState.visual,
+            lastImageUrl: '', // Don't persist images
+            bible: { style: cleanState.visual.bible?.style || '', setting: cleanState.visual.bible?.setting || '', characters: {} }
+        };
+    }
+    // CORRECTIVE: Remove sysPrompt from state snapshot (it's stored separately)
+    delete cleanState.sysPrompt;
+
     const snapshot = {
       storyId: state.storyId,
       subscribed: !!state.subscribed,
@@ -1187,17 +2280,63 @@ window.config = window.config || {
       sysPrompt: state.sysPrompt,
       title: document.getElementById('storyTitle')?.textContent || '',
       synopsis: document.getElementById('storySynopsis')?.textContent || '',
-      storyHTML: el.innerHTML,
-      stateSnapshot: state
+      storyHTML: StoryPagination.getAllContent(),  // Full content for fallback
+      storyPages: StoryPagination.getPages(),       // Individual pages for pagination
+      stateSnapshot: cleanState
     };
-    localStorage.setItem('sb_saved_story', JSON.stringify(snapshot));
+
+    // CORRECTIVE: Try localStorage first, fall back to IndexedDB on quota error
+    try {
+        // Remove old data first to free space
+        localStorage.removeItem('sb_saved_story');
+        localStorage.removeItem('sb_story_in_idb');
+        localStorage.setItem('sb_saved_story', JSON.stringify(snapshot));
+    } catch(e) {
+        // QuotaExceededError - try IndexedDB
+        console.warn('localStorage quota exceeded, trying IndexedDB...', e);
+        try {
+            localStorage.removeItem(SB_ANALYTICS_KEY); // Free space
+            localStorage.removeItem('sb_saved_story');
+        } catch(e2) { /* ignore */ }
+
+        // Save to IndexedDB asynchronously
+        saveToIndexedDB(snapshot).then(success => {
+            if (success) {
+                console.log('Story saved to IndexedDB');
+            } else {
+                showToast('Save failed. Storage full.');
+            }
+        });
+    }
     updateContinueButtons();
   }
 
-  window.continueStory = function(){
-    const raw = localStorage.getItem('sb_saved_story');
-    if(!raw) return;
-    const data = JSON.parse(raw);
+  // CORRECTIVE: Load story data from localStorage or IndexedDB
+  async function loadStoryData() {
+      // Try localStorage first
+      const raw = localStorage.getItem('sb_saved_story');
+      if (raw) {
+          try {
+              return JSON.parse(raw);
+          } catch (e) {
+              console.warn('Failed to parse localStorage story', e);
+          }
+      }
+      // Try IndexedDB if localStorage failed
+      if (localStorage.getItem('sb_story_in_idb') === '1') {
+          const idbData = await loadFromIndexedDB();
+          if (idbData) return idbData;
+      }
+      return null;
+  }
+
+  window.continueStory = async function(){
+    const data = await loadStoryData();
+    if (!data) {
+        showToast('No saved story found.');
+        return;
+    }
+
     state.storyId = data.storyId || makeStoryId();
     localStorage.setItem('sb_current_story_id', state.storyId);
 
@@ -1205,14 +2344,23 @@ window.config = window.config || {
     state.sysPrompt = data.sysPrompt || state.sysPrompt;
     state.subscribed = !!data.subscribed;
     state.authorChairActive = checkAuthorChairUnlock();
-    
+
     updateBatedBreathState();
     applyAccessLocks();
 
     document.getElementById('storyTitle').textContent = data.title || '';
     document.getElementById('storySynopsis').textContent = data.synopsis || '';
-    document.getElementById('storyText').innerHTML = data.storyHTML || '';
-    state.lastSavedWordCount = currentStoryWordCount(); 
+
+    // Load story into pagination system
+    StoryPagination.clear();
+    if (data.storyPages && Array.isArray(data.storyPages) && data.storyPages.length > 0) {
+        // Load saved pages
+        StoryPagination.setPages(data.storyPages);
+    } else if (data.storyHTML) {
+        // Fallback: load as single page
+        StoryPagination.addPage(data.storyHTML, true);
+    }
+    state.lastSavedWordCount = currentStoryWordCount();
 
     const img = document.getElementById('settingShotImg');
     if(img && (!img.src || img.style.display === 'none')) generateSettingShot(data.synopsis || "Fantasy Landscape"); 
@@ -1244,7 +2392,12 @@ window.config = window.config || {
     state.turnCount = 0;
     state.storyLength = 'voyeur';
     state.storyEnded = false;
-    document.getElementById('storyText').innerHTML = '';
+    state.archetype = { primary: null, modifier: null };
+    // Clear pagination system
+    StoryPagination.clear();
+    // Re-render archetype pills to clear selection
+    if (typeof renderArchetypePills === 'function') renderArchetypePills();
+    if (typeof updateArchetypePreview === 'function') updateArchetypePreview();
     
     updateContinueButtons();
     window.showScreen('setup');
@@ -1266,6 +2419,157 @@ window.config = window.config || {
       showToast("Story saved.");
   });
 
+  // Story Controls button - toggle Quill & Veto modal (always opens, Quill locked in Tease)
+  $('gameControlsBtn')?.addEventListener('click', (e) => {
+      // Clear inputs for new entries (committed entries are shown separately)
+      const quillInput = document.getElementById('gameQuillInput');
+      const vetoInput = document.getElementById('gameVetoInput');
+      if (quillInput) quillInput.value = '';
+      if (vetoInput) vetoInput.value = '';
+
+      // CORRECTIVE: Render committed veto phrases in game modal
+      const gameVetoCommitted = document.getElementById('gameVetoCommitted');
+      if (gameVetoCommitted && state.committedVeto) {
+          gameVetoCommitted.innerHTML = '';
+          state.committedVeto.forEach((text, i) => {
+              const phrase = document.createElement('div');
+              phrase.className = 'committed-phrase veto-phrase';
+              phrase.style.cssText = 'background:rgba(255,100,100,0.15); border:1px solid rgba(255,100,100,0.3); padding:4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em;';
+              phrase.innerHTML = `<span style="color:var(--pink);">${text}</span>`;
+              gameVetoCommitted.appendChild(phrase);
+          });
+      }
+
+      updateGameQuillUI();
+      document.getElementById('gameQuillVetoModal')?.classList.remove('hidden');
+  });
+
+  // Game Quill commit button
+  $('btnGameCommitQuill')?.addEventListener('click', (e) => {
+      e.preventDefault(); // Prevent scroll to top
+      e.stopPropagation();
+
+      // Save scroll position before any DOM changes
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+
+      if (!getQuillReady()) return;
+      const quillEl = document.getElementById('gameQuillInput');
+      if (!quillEl) return;
+      const quillText = quillEl.value.trim();
+      if (!quillText) { showToast("No Quill edit to commit."); return; }
+
+      // Also apply any pending veto constraints from game modal
+      applyGameVetoFromInput();
+
+      window.state.quillIntent = quillText;
+      if (quillText) {
+          const quillHtml = `<div class="quill-intervention" style="color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;">${formatStory(quillText)}</div>`;
+          StoryPagination.appendToCurrentPage(quillHtml);
+      }
+      window.state.quillCommittedThisTurn = true;
+      window.state.quill.uses++;
+      window.state.quill.nextReadyAtWords = currentStoryWordCount() + computeNextCooldownWords();
+      quillEl.value = '';
+      updateQuillUI();
+      updateGameQuillUI();
+      document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
+      showToast("Quill committed.");
+
+      // Restore scroll position after all DOM changes
+      requestAnimationFrame(() => {
+          window.scrollTo(scrollX, scrollY);
+      });
+  });
+
+  // Game Veto commit button
+  $('btnGameCommitVeto')?.addEventListener('click', () => {
+      const vetoEl = document.getElementById('gameVetoInput');
+      if (!vetoEl) return;
+      const vetoText = vetoEl.value.trim();
+      if (!vetoText) { showToast("No Veto rules to commit."); return; }
+
+      applyGameVetoFromInput();
+      vetoEl.value = '';
+      document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
+      showToast("Veto committed. Boundaries updated.");
+  });
+
+  function updateGameQuillUI() {
+      const btn = document.getElementById('btnGameCommitQuill');
+      const status = document.getElementById('gameQuillStatus');
+      const quillBox = document.getElementById('gameQuillBox');
+      const quillSection = quillBox?.closest('.qv-section');
+      if (!btn || !status) return;
+
+      // TEASE MODE: Lock entire Quill section
+      if (isTeaseMode()) {
+          status.textContent = "Quill: Locked (Upgrade to unlock)";
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+          btn.textContent = "Commit Quill";
+          if (quillBox) quillBox.classList.add('locked-input');
+          if (quillSection) quillSection.style.opacity = '0.5';
+          // Add click handler for paywall on quill section
+          if (quillBox && !quillBox.dataset.paywallBound) {
+              quillBox.dataset.paywallBound = '1';
+              quillBox.addEventListener('click', () => {
+                  if (isTeaseMode() && window.openPaywall) window.openPaywall('unlock');
+              });
+          }
+          return;
+      }
+
+      // Paid users: normal Quill logic
+      if (quillSection) quillSection.style.opacity = '1';
+      // CRITICAL FIX: Ensure paywall click guard is disabled for paid users
+      if (quillBox) {
+          quillBox.dataset.paywallActive = 'false';
+      }
+
+      const ready = getQuillReady();
+      const needed = state.quill.nextReadyAtWords;
+      const wc = currentStoryWordCount();
+      const remain = Math.max(0, needed - wc);
+
+      if (ready || state.godModeActive) {
+          status.textContent = state.authorChairActive ? "Quill: Poised" : "Quill: Poised";
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
+          if (quillBox) quillBox.classList.remove('locked-input');
+      } else {
+          status.textContent = `Quill: Spent (${remain} words to recharge)`;
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+          if (quillBox) quillBox.classList.add('locked-input');
+      }
+  }
+
+  function applyGameVetoFromInput() {
+      const vetoEl = document.getElementById('gameVetoInput');
+      if (!vetoEl) return;
+      const txt = vetoEl.value.trim();
+      if (!txt) return;
+      // Parse and add to veto state (same as setup veto)
+      txt.split('\n').forEach(line => {
+          line = line.trim();
+          if (!line) return;
+          if (line.toLowerCase().startsWith('ban:')) {
+              const word = line.slice(4).trim();
+              if (word && !state.veto.bannedWords.includes(word)) state.veto.bannedWords.push(word);
+          } else if (line.toLowerCase().startsWith('rename:')) {
+              const parts = line.slice(7).split('->').map(s => s.trim());
+              if (parts.length === 2 && parts[0] && parts[1]) {
+                  state.veto.corrections.push({ from: parts[0], to: parts[1] });
+              }
+          } else {
+              if (!state.veto.excluded.includes(line)) state.veto.excluded.push(line);
+          }
+      });
+      vetoEl.value = '';
+  }
+
   $('burgerBtn')?.addEventListener('click', () => document.getElementById('menuOverlay').classList.remove('hidden'));
   $('ageYes')?.addEventListener('click', () => window.showScreen('tosGate'));
   $('tosCheck')?.addEventListener('change', (e) => $('tosBtn').disabled = !e.target.checked);
@@ -1279,7 +2583,7 @@ window.config = window.config || {
     if(window.initCards) window.initCards();
   });
 
-  $('btnIndulge')?.addEventListener('click', () => window.showPaywall('sub'));
+  $('btnIndulge')?.addEventListener('click', () => window.showPaywall('sub_only'));
 
   document.querySelectorAll('.preview-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -1291,7 +2595,12 @@ window.config = window.config || {
 
   function initSelectionHandlers(){
     state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"] };
-    
+
+    // Initialize default dynamics (Power Imbalance)
+    if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
+        state.picks.dynamic = ['Power'];
+    }
+
     // Bind Visual Auto-Lock
     const chkLock = document.getElementById('chkAutoLockVisual');
     if(chkLock && chkLock.dataset.bound !== '1') {
@@ -1299,13 +2608,30 @@ window.config = window.config || {
         chkLock.addEventListener('change', (e) => { state.visual.autoLock = e.target.checked; saveStorySnapshot(); });
     }
 
+    // Bind boundary chips (non-locked ones)
+    document.querySelectorAll('.boundary-chips .chip[data-boundary]').forEach(chip => {
+        if (chip.dataset.bound === '1') return;
+        chip.dataset.bound = '1';
+        chip.addEventListener('click', () => {
+            chip.classList.toggle('active');
+            const boundary = chip.textContent.trim();
+            if (chip.classList.contains('active')) {
+                if (!state.safety.boundaries.includes(boundary)) {
+                    state.safety.boundaries.push(boundary);
+                }
+            } else {
+                state.safety.boundaries = state.safety.boundaries.filter(b => b !== boundary);
+            }
+        });
+    });
+
     bindLengthHandlers();
 
     document.querySelectorAll('.card[data-grp]').forEach(card => {
       if(card.dataset.bound === '1') return;
       card.dataset.bound = '1';
       card.addEventListener('click', (e) => {
-        if(e.target.classList.contains('preview-btn')) return;
+        if(e.target.closest('.preview-btn')) return;
         const grp = card.dataset.grp;
         const val = card.dataset.val;
         if(!grp || !val || grp === 'length') return; 
@@ -1326,28 +2652,317 @@ window.config = window.config || {
         else { if(arr.length >= 3) return alert("Select up to 3 only."); arr.push(val); card.classList.add('selected'); }
       });
     });
+
+    // Initialize Archetype System
+    initArchetypeUI();
+  }
+
+  // =========================
+  // ARCHETYPE UI HANDLERS
+  // =========================
+  function initArchetypeUI() {
+      renderArchetypePills();
+      bindArchetypeHandlers();
+      bindLoveInterestGenderWatcher();
+      updateArchetypeSectionTitle();
+  }
+
+  function renderArchetypePills() {
+      const primaryContainer = document.getElementById('primaryArchetypePills');
+      const modifierContainer = document.getElementById('modifierArchetypePills');
+      if (!primaryContainer || !modifierContainer) return;
+
+      primaryContainer.innerHTML = '';
+      modifierContainer.innerHTML = '';
+
+      ARCHETYPE_ORDER.forEach(id => {
+          const arch = ARCHETYPES[id];
+          if (!arch) return;
+
+          // Primary pill
+          const primaryPill = document.createElement('button');
+          primaryPill.className = 'archetype-pill' + (arch.primaryOnly ? ' primary-only' : '');
+          primaryPill.dataset.archetype = id;
+          primaryPill.dataset.role = 'primary';
+          primaryPill.textContent = arch.name;
+          primaryPill.type = 'button';
+          if (state.archetype.primary === id) primaryPill.classList.add('selected');
+          primaryContainer.appendChild(primaryPill);
+
+          // Modifier pill (only for non-primary-only archetypes)
+          if (!arch.primaryOnly) {
+              const modPill = document.createElement('button');
+              modPill.className = 'archetype-pill';
+              modPill.dataset.archetype = id;
+              modPill.dataset.role = 'modifier';
+              modPill.textContent = arch.name;
+              modPill.type = 'button';
+              if (state.archetype.modifier === id) modPill.classList.add('selected');
+              if (state.archetype.primary === id) modPill.classList.add('disabled');
+              modifierContainer.appendChild(modPill);
+          }
+      });
+  }
+
+  function bindArchetypeHandlers() {
+      document.querySelectorAll('.archetype-pill').forEach(pill => {
+          if (pill.dataset.bound === '1') return;
+          pill.dataset.bound = '1';
+          pill.addEventListener('click', handleArchetypePillClick);
+      });
+  }
+
+  function handleArchetypePillClick(e) {
+      const pill = e.currentTarget;
+      const id = pill.dataset.archetype;
+      const role = pill.dataset.role;
+
+      if (pill.classList.contains('disabled')) return;
+
+      if (role === 'primary') {
+          if (state.archetype.primary === id) {
+              // Deselect
+              state.archetype.primary = null;
+          } else {
+              // Select new primary
+              state.archetype.primary = id;
+              // If modifier is same as new primary, clear modifier
+              if (state.archetype.modifier === id) {
+                  state.archetype.modifier = null;
+              }
+          }
+      } else if (role === 'modifier') {
+          const arch = ARCHETYPES[id];
+          if (arch && arch.primaryOnly) {
+              showToast(`${arch.name} may only be chosen as a Primary.`);
+              return;
+          }
+          if (state.archetype.primary === id) {
+              showToast('Modifier cannot be the same as Primary.');
+              return;
+          }
+          if (state.archetype.modifier === id) {
+              // Deselect
+              state.archetype.modifier = null;
+          } else {
+              // Select new modifier
+              state.archetype.modifier = id;
+          }
+      }
+
+      updateArchetypePillStates();
+      updateArchetypePreview();
+  }
+
+  function updateArchetypePillStates() {
+      // Update primary pills
+      document.querySelectorAll('.archetype-pill[data-role="primary"]').forEach(pill => {
+          const id = pill.dataset.archetype;
+          pill.classList.toggle('selected', state.archetype.primary === id);
+      });
+
+      // Update modifier pills
+      document.querySelectorAll('.archetype-pill[data-role="modifier"]').forEach(pill => {
+          const id = pill.dataset.archetype;
+          pill.classList.toggle('selected', state.archetype.modifier === id);
+          pill.classList.toggle('disabled', state.archetype.primary === id);
+      });
+  }
+
+  function updateArchetypePreview() {
+      const previewEl = document.getElementById('archetypePreview');
+      const contentEl = document.getElementById('archetypePreviewContent');
+      if (!previewEl || !contentEl) return;
+
+      if (!state.archetype.primary) {
+          previewEl.classList.add('hidden');
+          return;
+      }
+
+      const primary = ARCHETYPES[state.archetype.primary];
+      if (!primary) {
+          previewEl.classList.add('hidden');
+          return;
+      }
+
+      let html = `
+          <h4 class="archetype-preview-name">${primary.name}</h4>
+          <p class="archetype-preview-summary">${primary.summary}</p>
+      `;
+
+      if (state.archetype.modifier) {
+          const modifier = ARCHETYPES[state.archetype.modifier];
+          if (modifier) {
+              html += `
+                  <div class="archetype-preview-modifier">
+                      <p class="archetype-preview-modifier-label">Modifier: ${modifier.name}</p>
+                      <p class="archetype-preview-modifier-style">Expression Style: ${modifier.desireStyle}</p>
+                  </div>
+              `;
+          }
+      }
+
+      contentEl.innerHTML = html;
+      previewEl.classList.remove('hidden');
+  }
+
+  function updateArchetypeSectionTitle() {
+      const titleEl = document.getElementById('archetypeSectionTitle');
+      if (!titleEl) return;
+      const genderSelect = document.getElementById('loveInterestGender');
+      const customInput = document.getElementById('customLoveInterest');
+      let loveGender = 'Male';
+      if (genderSelect) {
+          if (genderSelect.value === 'Custom' && customInput && customInput.value.trim()) {
+              loveGender = customInput.value.trim();
+          } else {
+              loveGender = genderSelect.value;
+          }
+      }
+      titleEl.textContent = getArchetypeSectionTitle(loveGender);
+  }
+
+  function bindLoveInterestGenderWatcher() {
+      const genderSelect = document.getElementById('loveInterestGender');
+      const customInput = document.getElementById('customLoveInterest');
+
+      function onGenderChange() {
+          updateArchetypeSectionTitle();
+          updateAncestryLILabel();
+      }
+
+      if (genderSelect && genderSelect.dataset.archetypeBound !== '1') {
+          genderSelect.dataset.archetypeBound = '1';
+          genderSelect.addEventListener('change', onGenderChange);
+      }
+
+      if (customInput && customInput.dataset.archetypeBound !== '1') {
+          customInput.dataset.archetypeBound = '1';
+          customInput.addEventListener('input', onGenderChange);
+      }
   }
 
   // --- LOADING OVERLAY ---
   let _loadingTimer = null;
   let _loadingActive = false;
+  let _loadingMsgTimer = null;
+  let _loadingCancelled = false;
+  let _loadingCancelCallback = null;
+  let _lastSettingShotDesc = '';
 
-  function startLoading(msg){
+  const STORY_LOADING_MESSAGES = [
+      // Required phrases
+      "Crafting each individual snowflake...",
+      "Setting traps...",
+      "Naming the animals...",
+      "Manifesting drama...",
+      "Cleaning up double entendres...",
+      "Darkening the past...",
+      "Amping the feels...",
+      // Additional playful, literary, worldbuilding phrases
+      "Weaving backstories...",
+      "Polishing the silver tongues...",
+      "Hiding secrets in the walls...",
+      "Brewing chemistry...",
+      "Sharpening the wit...",
+      "Planting red herrings...",
+      "Tuning the heartstrings...",
+      "Scheduling the rain...",
+      "Lighting the candles...",
+      "Rehearsing the longing glances...",
+      "Aging the whiskey...",
+      "Pressing the silk sheets...",
+      "Whispering rumors...",
+      "Composing the tension...",
+      "Perfecting the timing...",
+      "Casting shadows...",
+      "Stoking the slow burn...",
+      "Arranging the flowers...",
+      "Calibrating the chemistry..."
+  ];
+
+  const VISUALIZE_LOADING_MESSAGES = [
+      "Painting the scene...",
+      "Saying it with his eyes...",
+      "Letting the silence linger...",
+      "Adding longing...",
+      "Shaping the moment...",
+      "Tracing the tension...",
+      "Capturing the unspoken...",
+      "Finding the perfect light...",
+      "Catching the glance...",
+      "Softening the shadows...",
+      "Framing the desire...",
+      "Holding the gaze...",
+      "Rendering the warmth...",
+      "Sculpting the posture...",
+      "Brushing the highlights...",
+      "Etching the atmosphere...",
+      "Composing the stillness...",
+      "Illuminating the moment..."
+  ];
+
+  function startLoading(msg, messageList = null, cancellable = false, onCancel = null){
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
-    document.getElementById('loadingText').textContent = msg || "Loading...";
-    
+    const textEl = document.getElementById('loadingText');
+    const percentEl = document.getElementById('loadingPercent');
+    const cancelBtn = document.getElementById('loadingCancelBtn');
+
+    if (textEl) textEl.textContent = msg || "Loading...";
+    if (percentEl) percentEl.textContent = '0%';
+
     _loadingActive = true;
+    _loadingCancelled = false;
+    _loadingCancelCallback = onCancel;
+
     if(fill) fill.style.width = '0%';
     if(overlay) overlay.classList.remove('hidden');
 
+    // Show/hide cancel button based on cancellable flag
+    if (cancelBtn) {
+        if (cancellable) {
+            cancelBtn.classList.add('visible');
+        } else {
+            cancelBtn.classList.remove('visible');
+        }
+    }
+
     if(_loadingTimer) clearInterval(_loadingTimer);
+    if(_loadingMsgTimer) clearInterval(_loadingMsgTimer);
+
     let p = 0;
     _loadingTimer = setInterval(() => {
-      if(!_loadingActive) return;
+      if(!_loadingActive || _loadingCancelled) return;
       p = Math.min(91, p + Math.random() * 6);
       if(fill) fill.style.width = p.toFixed(0) + '%';
+      if(percentEl) percentEl.textContent = p.toFixed(0) + '%';
     }, 250);
+
+    // Rotate messages if a message list is provided
+    if (messageList && Array.isArray(messageList) && messageList.length > 0 && textEl) {
+        // Shuffle the list for random order, no repeats until cycle completes
+        const shuffled = [...messageList].sort(() => Math.random() - 0.5);
+        let msgIdx = 0;
+        _loadingMsgTimer = setInterval(() => {
+            if (!_loadingActive || _loadingCancelled) return;
+            msgIdx = (msgIdx + 1) % shuffled.length;
+            textEl.textContent = shuffled[msgIdx];
+        }, 1200); // 1.2s cadence (1-1.5s range)
+    }
+  }
+
+  function cancelLoading() {
+    _loadingCancelled = true;
+    if (_loadingCancelCallback) {
+        _loadingCancelCallback();
+        _loadingCancelCallback = null;
+    }
+    stopLoading();
+  }
+
+  function isLoadingCancelled() {
+    return _loadingCancelled;
   }
 
   function stopLoading(){
@@ -1355,25 +2970,61 @@ window.config = window.config || {
     _loadingActive = false;
     const overlay = document.getElementById('loadingOverlay');
     const fill = document.getElementById('loadingOverlayFill');
+    const percentEl = document.getElementById('loadingPercent');
+    const cancelBtn = document.getElementById('loadingCancelBtn');
+
     if(_loadingTimer) { clearInterval(_loadingTimer); _loadingTimer = null; }
+    if(_loadingMsgTimer) { clearInterval(_loadingMsgTimer); _loadingMsgTimer = null; }
     if(fill) fill.style.width = '100%';
+    if(percentEl) percentEl.textContent = '100%';
+    if(cancelBtn) cancelBtn.classList.remove('visible');
+
     setTimeout(() => {
       if(overlay) overlay.classList.add('hidden');
       if(fill) fill.style.width = '0%';
+      if(percentEl) percentEl.textContent = '0%';
     }, 120);
   }
 
+  // Bind cancel button
+  document.getElementById('loadingCancelBtn')?.addEventListener('click', cancelLoading);
+
+  // PASS 1 FIX: Storypass purchase - grants Fling tier ONLY
   $('payOneTime')?.addEventListener('click', () => {
+    console.log('[ENTITLEMENT] Storypass $3 purchase initiated');
+
+    // Ensure we have a story ID
     state.storyId = state.storyId || makeStoryId();
-    state.lastPurchaseType = 'pass'; 
+
+    // Mark purchase type BEFORE granting pass
+    state.lastPurchaseType = 'pass';
+
+    // Grant the story pass (stores in localStorage)
     grantStoryPass(state.storyId);
+
+    console.log('[ENTITLEMENT] Story pass granted:', {
+        storyId: state.storyId,
+        hasPass: hasStoryPass(state.storyId)
+    });
+
+    // Complete purchase - will resolve access from localStorage
     completePurchase();
   });
 
+  // PASS 1 FIX: Subscription purchase - grants full access
   $('paySub')?.addEventListener('click', () => {
-    state.subscribed = true;
+    console.log('[ENTITLEMENT] Subscribe purchase initiated');
+
+    // Mark purchase type
     state.lastPurchaseType = 'sub';
+
+    // Persist subscription to localStorage (source of truth)
+    state.subscribed = true;
     localStorage.setItem('sb_subscribed', '1');
+
+    console.log('[ENTITLEMENT] Subscription stored in localStorage');
+
+    // Complete purchase - will resolve access from localStorage
     completePurchase();
   });
 
@@ -1385,7 +3036,72 @@ window.config = window.config || {
       }
   });
 
-  $('btnCommitQuill')?.addEventListener('click', () => {
+  // Track committed phrases in state
+  if (!state.committedQuill) state.committedQuill = [];
+  if (!state.committedVeto) state.committedVeto = [];
+
+  // Add a committed phrase to the UI
+  function addCommittedPhrase(container, text, type, index) {
+      const phrase = document.createElement('div');
+      phrase.className = `committed-phrase ${type}-phrase`;
+      phrase.dataset.index = index;
+      phrase.innerHTML = `
+          <button class="committed-phrase-remove" title="Remove">&times;</button>
+          <span class="committed-phrase-text">${text}</span>
+      `;
+      // Insert at top (new commits above old)
+      container.insertBefore(phrase, container.firstChild);
+
+      // Bind remove button
+      phrase.querySelector('.committed-phrase-remove').addEventListener('click', () => {
+          removeCommittedPhrase(type, index);
+      });
+  }
+
+  // Remove a committed phrase
+  function removeCommittedPhrase(type, index) {
+      const arr = type === 'quill' ? state.committedQuill : state.committedVeto;
+      arr.splice(index, 1);
+      renderCommittedPhrases(type);
+      // Update veto state if needed
+      if (type === 'veto') rebuildVetoFromCommitted();
+      saveStorySnapshot();
+  }
+
+  // Render all committed phrases for a type
+  function renderCommittedPhrases(type) {
+      const container = document.getElementById(type === 'quill' ? 'quillCommitted' : 'vetoCommitted');
+      const arr = type === 'quill' ? state.committedQuill : state.committedVeto;
+      if (!container) return;
+      container.innerHTML = '';
+      arr.forEach((text, i) => addCommittedPhrase(container, text, type, i));
+  }
+
+  // Rebuild veto state from committed phrases
+  function rebuildVetoFromCommitted() {
+      state.veto = state.veto || { bannedWords: [], tone: [] };
+      state.veto.bannedWords = [];
+      state.veto.tone = [];
+      state.committedVeto.forEach(line => {
+          const l = line.trim().toLowerCase();
+          if (l.startsWith('ban:')) {
+              state.veto.bannedWords.push(l.replace('ban:', '').trim());
+          } else if (l.startsWith('no ') || l.startsWith('avoid ')) {
+              state.veto.tone.push(line.trim());
+          } else {
+              state.veto.tone.push(line.trim());
+          }
+      });
+  }
+
+  $('btnCommitQuill')?.addEventListener('click', (e) => {
+      e.preventDefault(); // Prevent scroll to top
+      e.stopPropagation();
+
+      // Save scroll position before any DOM changes
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+
       if (!getQuillReady()) return;
       const quillEl = document.getElementById('quillInput');
       if (!quillEl) return;
@@ -1398,13 +3114,13 @@ window.config = window.config || {
       // Store quill intent in state for prompt injection
       window.state.quillIntent = quillText;
 
-      const storyEl = document.getElementById('storyText');
-      if (storyEl && quillText) {
-          const div = document.createElement('div');
-          div.className = 'quill-intervention';
-          div.style.cssText = 'font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;';
-          div.innerHTML = formatStory(quillText);
-          storyEl.appendChild(div);
+      // Add to committed phrases
+      state.committedQuill.push(quillText);
+      renderCommittedPhrases('quill');
+
+      if (quillText) {
+          const quillHtml = `<div class="quill-intervention" style="font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;">${formatStory(quillText, true)}</div>`;
+          StoryPagination.appendToCurrentPage(quillHtml);
       }
 
       window.state.quillCommittedThisTurn = true;
@@ -1414,6 +3130,33 @@ window.config = window.config || {
       updateQuillUI();
       saveStorySnapshot();
       showToast("Quill committed.");
+
+      // Restore scroll position after all DOM changes
+      requestAnimationFrame(() => {
+          window.scrollTo(scrollX, scrollY);
+      });
+  });
+
+  // Commit Veto Button Handler
+  $('btnCommitVeto')?.addEventListener('click', () => {
+      const vetoEl = document.getElementById('vetoInput');
+      if (!vetoEl) return;
+      const vetoText = vetoEl.value.trim();
+      if (!vetoText) { showToast("No veto to commit."); return; }
+
+      // Add each line as separate committed phrase
+      const lines = vetoText.split('\n').filter(l => l.trim());
+      lines.forEach(line => {
+          if (!state.committedVeto.includes(line.trim())) {
+              state.committedVeto.push(line.trim());
+          }
+      });
+      renderCommittedPhrases('veto');
+
+      applyVetoFromInput();
+      vetoEl.value = '';
+      saveStorySnapshot();
+      showToast("Veto committed. Boundaries updated.");
   });
 
   // --- META SYSTEM (RESTORED) ---
@@ -1432,8 +3175,43 @@ window.config = window.config || {
       if(btn) btn.classList.add('active');
   };
 
+  // --- BEGIN STORY VALIDATION GUARDRAIL ---
+  function validateBeginStory() {
+      const errors = [];
+
+      // Check archetype selection
+      const archetypeValidation = validateArchetypeSelection(state.archetype.primary, state.archetype.modifier);
+      if (!archetypeValidation.valid) {
+          errors.push(archetypeValidation.errors[0] || 'Please select a Primary Archetype.');
+      }
+
+      // Check for at least one genre selected
+      if (!state.picks.genre || state.picks.genre.length === 0) {
+          errors.push('Please select at least one Genre.');
+      }
+
+      // Check for at least one dynamic selected
+      if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
+          errors.push('Please select at least one Dynamic.');
+      }
+
+      // Check for at least one style selected
+      if (!state.picks.style || state.picks.style.length === 0) {
+          errors.push('Please select at least one Story Style.');
+      }
+
+      return errors;
+  }
+
   // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
+    // Comprehensive validation before proceeding
+    const validationErrors = validateBeginStory();
+    if (validationErrors.length > 0) {
+        showToast(validationErrors[0]);
+        return;
+    }
+
     const pName = $('playerNameInput').value.trim() || "The Protagonist";
     const lName = $('partnerNameInput').value.trim() || "The Love Interest";
     const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
@@ -1563,15 +3341,41 @@ Never fully resolve the central tension unless explicitly instructed.
 
 ────────────────────────────────────
 
+DIALOGUE BALANCE RULES (LONG-ARC):
+
+Before writing dialogue, internally assess:
+- Who is physically present in the scene
+- Who is emotionally engaged or affected
+- Who has reason to speak, react, or withhold
+
+Single-Voice Prevention:
+- Dialogue must not come exclusively from the player character across multiple pages.
+- If another character is present and engaged, they must eventually speak—unless silence is narratively intentional.
+- Intentional silence is valid only when: (1) explicitly described as meaningful (refusal, distance, threat, awe), and (2) temporary, not sustained across multiple pages.
+
+Natural Turn-Taking:
+- Avoid 3+ consecutive dialogue beats from the same speaker when others are present.
+- Encourage response, interruption, deflection, or reaction from other characters.
+- Dialogue should feel exchanged, not monologic.
+
+Long-Arc Presence Awareness:
+- Track whether each present character has spoken recently over multiple pages.
+- If a character has been silent too long without narrative justification, bias toward giving them a voice.
+- This is guidance, not a rigid quota—let silence breathe when it serves the story.
+
+────────────────────────────────────
+
 You are writing a story in the "${state.picks.genre.join(', ')}" genre.
 Style: ${state.picks.style.join(', ')}.
 POV: ${state.picks.pov}.
 Dynamics: ${state.picks.dynamic.join(', ')}.
 
-    
+
     Protagonist: ${pName} (${pGen}, ${pPro}).
     Love Interest: ${lName} (${lGen}, ${lPro}).
-    
+
+    ${buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen)}
+
     ${safetyStr}
 
     Current Intensity: ${state.intensity}
@@ -1586,8 +3390,10 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
     7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
     ${state.povMode === 'author5th' ? `
-    5TH PERSON (AUTHOR) DIRECTIVES:
-    - You are the Author, a visible conductor of the narrative.
+    5TH PERSON (AUTHOR) DIRECTIVES - CRITICAL:
+    - Write as if The Author is a visible conductor of the narrative, referred to in THIRD PERSON only.
+    - NEVER use first person ("I", "me", "my", "myself"). Always use "The Author" as the subject.
+    - Example: "The Author watched with quiet satisfaction" NOT "I watched with quiet satisfaction".
     - Presence: ${state.authorPresence}. Cadence: ~${state.authorCadenceWords} words between Author references.
     - Fate card voice: ${state.fateCardVoice}.
     - Author awareness: ${state.allowAuthorAwareness ? 'enabled' : 'disabled'}, chance ${state.authorAwarenessChance}, window ${state.authorAwarenessWindowWords}w, max ${state.authorAwarenessMaxDurationWords}w.
@@ -1599,29 +3405,211 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     
     window.showScreen('game');
     
-    startLoading("Conjuring the world...");
+    startLoading("Conjuring the world...", STORY_LOADING_MESSAGES);
     
+    // Pacing rules based on intensity
+    const pacingRules = {
+        'Clean': 'Focus only on atmosphere, world-building, and hints of the protagonist\'s past. No tension, no longing—just setting and mystery.',
+        'Naughty': 'Focus on atmosphere and world-building. Light emotional undertones allowed, but no romantic tension yet.',
+        'Erotic': 'Build atmosphere first. Romantic tension may simmer beneath the surface, but keep the focus on setting.',
+        'Dirty': 'Atmosphere first, but charged undercurrents are allowed. The heat can be present from the start.'
+    };
+    const pacingRule = pacingRules[state.intensity] || pacingRules['Naughty'];
+    const liAppears = state.intensity === 'Dirty' || Math.random() < 0.25;
+
+    const authorOpeningDirective = state.povMode === 'author5th' ? `
+AUTHOR PRESENCE (5TH PERSON) - CRITICAL FOR OPENING:
+- The Author must be PALPABLY present from the first paragraph.
+- Comment on the world as it forms around the protagonist—as if arranging set pieces.
+- Reflect knowingly on the protagonist's ignorance of what The Author has planned for them.
+- Express quiet intention, anticipation, and subtle manipulation.
+- CRITICAL: NEVER use first person ("I", "me", "my"). Always refer to "The Author" in third person.
+- Use phrases like: "The Author placed...", "The Author watched...", "They didn't yet know what The Author had planned...", "The Author had been waiting..."
+- The Author is a visible hand, orchestrating with relish—but always referred to as "The Author", never "I".
+` : '';
+
     const introPrompt = `Write the opening scene (approx 200 words).
-    Setting: A place full of tension and atmosphere fitting the genre.
-    Situation: The Protagonist and Love Interest are thrown together.
-    Establish the dynamic immediately.
-    End with a hook or a moment of tension.`;
-    
+${authorOpeningDirective}
+FIRST SECTION RULES:
+- ${pacingRule}
+- Focus on: World setup, hints at overall arc, the protagonist's past or situation.
+${liAppears ? '- The love interest may appear briefly or be hinted at.' : '- The love interest should NOT appear yet. Build anticipation.'}
+- End with a hook, a question, or atmospheric tension—NOT a romantic moment.
+
+Setting: A place full of atmosphere and sensory detail fitting the genre.
+Situation: The Protagonist is alone with their thoughts, or engaged in something unrelated to romance.`;
+
+    // FATE STUMBLED DIAGNOSTIC - Structured payload logging
+    const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
+    const ancestryLI = $('ancestryInputLI')?.value.trim() || '';
+    const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
+
+    // Determine unlock tier
+    const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+    let tier = 'free';
+    if (state.subscribed) tier = 'subscribed';
+    else if (quillUnlocked) tier = 'quill_unlocked';
+    else if (state.storyId && hasStoryPass(state.storyId)) tier = 'story_unlocked';
+
+    // Build structured payload for diagnostic
+    const diagnosticPayload = {
+        mode: state.mode || 'solo',
+        tier: tier,
+        genre: state.picks.genre || [],
+        archetype: {
+            primary: state.archetype.primary || null,
+            modifier: state.archetype.modifier || null,
+            directives: archetypeDirectives || '(none built)'
+        },
+        ancestry: {
+            yours: ancestryPlayer || '(empty)',
+            storybeau: ancestryLI || '(empty)'
+        },
+        quill: {
+            unlocked: quillUnlocked,
+            directives: quillUnlocked ? (state.quillIntent || '(none this turn)') : '(LOCKED - not injected)'
+        },
+        veto: {
+            bannedWords: state.veto?.bannedWords || [],
+            tone: state.veto?.tone || []
+        },
+        intensity: state.intensity || 'Naughty',
+        pov: state.picks.pov || 'Third Person Limited',
+        style: state.picks.style || [],
+        dynamic: state.picks.dynamic || [],
+        storyLength: state.storyLength || 'novella',
+        systemPromptLength: state.sysPrompt?.length || 0
+    };
+
+    // Log the full payload
+    console.group('STORYBOUND FINAL PROMPT PAYLOAD');
+    console.log(diagnosticPayload);
+    console.groupEnd();
+
+    // VALIDATION GUARD - Check all required fields before model call
+    function validatePayload(payload) {
+        const errors = [];
+
+        // Required field checks
+        if (!payload.mode) errors.push('Mode is undefined');
+        if (!payload.genre || payload.genre.length === 0) errors.push('Genre is missing or empty');
+        if (!payload.style || payload.style.length === 0) errors.push('Style is missing or empty');
+        if (!payload.archetype.primary) errors.push('Primary Archetype not selected (default: Beautiful Ruin)');
+        if (!payload.intensity) errors.push('Intensity is undefined');
+        if (!payload.pov) errors.push('POV is undefined');
+        if (payload.systemPromptLength === 0) errors.push('System prompt is empty (critical failure)');
+
+        // Check for null/undefined in directive arrays
+        if (payload.veto.bannedWords.some(w => w === null || w === undefined)) {
+            errors.push('Veto bannedWords array contains null/undefined');
+        }
+        if (payload.veto.tone.some(t => t === null || t === undefined)) {
+            errors.push('Veto tone array contains null/undefined');
+        }
+
+        // Check archetype directives actually built
+        if (payload.archetype.directives === '(none built)' || !payload.archetype.directives) {
+            errors.push('Archetype directives failed to build');
+        }
+
+        return errors;
+    }
+
+    const payloadErrors = validatePayload(diagnosticPayload);
+
+    if (payloadErrors.length > 0) {
+        console.group('STORYBOUND VALIDATION FAILED');
+        console.error('Errors:', payloadErrors);
+        console.log('Payload at failure:', diagnosticPayload);
+        console.groupEnd();
+
+        stopLoading();
+        const errorMessage = `Story setup incomplete: ${payloadErrors[0]}`;
+        showToast(errorMessage);
+        console.error('FATE STUMBLED PREVENTED:', errorMessage);
+        window.showScreen('setup');
+        return;
+    }
+
+    console.log('STORYBOUND VALIDATION PASSED - Proceeding to model call');
+
     try {
         const text = await callChat([
             {role:'system', content: state.sysPrompt},
             {role:'user', content: introPrompt}
         ]);
-        
-        const title = await callChat([{role:'user', content:`Based on this opening, give me a 3-word title:\n${text}`}]);
-        const synopsis = await callChat([{role:'user', content:`Summarize the setting in one sentence:\n${text}`}]);
-        
-        document.getElementById('storyTitle').textContent = title.replace(/"/g,'');
-        document.getElementById('storySynopsis').textContent = synopsis;
-        document.getElementById('storyText').innerHTML = formatStory(text);
-        
+
+        const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
+
+PROCESS: First, internally identify the story's emotional promise or arc (longing, danger, desire, destiny, transformation). Then craft a title that hints at that promise.
+
+QUALITY RULES:
+- The title must feel like a promise of experience, not a mood collage
+- Avoid abstract noun clusters ("Veiled Whispers of the Dark")
+- Prefer titles that imply stakes, longing, or transformation
+- Good examples: "What the Sky Took", "The Wanting", "Before You Burned"
+
+Return ONLY the title, no quotes or explanation:\n${text}`}]);
+
+        // SYNOPSIS GENERATION RULE (AUTHORITATIVE)
+        const synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
+
+MANDATORY REQUIREMENTS — All three must be present:
+1. A SPECIFIC CHARACTER with agency (e.g., "a hedge-witch on the brink of exile" — not just "one woman")
+2. A DESIRE or TEMPTATION — something they want, fear wanting, or are being pulled toward
+3. A LOOMING CONFLICT or CONSEQUENCE — a force, choice, or cost that threatens to change them
+
+QUALITY CHECK — Before writing, answer internally:
+- Who wants something?
+- What do they want (or are tempted by)?
+- What stands in the way, or what will it cost?
+
+FORBIDDEN PATTERNS:
+- Abstract noun collisions ("grit aches against ambition")
+- Redundant metaphor stacking ("veiled shadows," "shrouded ambitions" together)
+- Emotion verbs without bodies ("aches," "burns" without physical anchor)
+- Mood collage without narrative motion
+
+ALLOWED:
+- Poetic language ONLY when attached to concrete agents or actions
+- One central metaphor family maximum
+- Present tense preferred
+
+The reader should think: "I want to see what happens when this desire meets resistance."
+NOT: "This sounds pretty."
+
+Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
+
+        // CORRECTIVE: Set title and synopsis first
+        const titleEl = document.getElementById('storyTitle');
+        const synopsisEl = document.getElementById('storySynopsis');
+        const storyTextEl = document.getElementById('storyText');
+
+        // Hide story text until fully rendered
+        if (storyTextEl) storyTextEl.style.opacity = '0';
+
+        titleEl.textContent = title.replace(/"/g,'');
+        synopsisEl.textContent = synopsis;
+
+        // Use pagination system for story display
+        StoryPagination.clear();
+        StoryPagination.addPage(formatStory(text), true);
+
         generateSettingShot(synopsis);
-        
+
+        // CORRECTIVE: Scroll to very top (title) after render
+        if (titleEl) {
+            setTimeout(() => {
+                titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                window.scrollTo(0, 0);
+            }, 100);
+        }
+
+        // Reveal story text after brief delay
+        setTimeout(() => {
+            if (storyTextEl) storyTextEl.style.opacity = '1';
+        }, 500);
+
         // Initial Snapshot
         saveStorySnapshot();
         
@@ -1630,11 +3618,21 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
         }
 
     } catch(e) {
-        alert("Fate stumbled. Please try again.");
+        console.group('STORYBOUND FATE STUMBLED - API ERROR');
+        console.error('Error object:', e);
+        console.error('Error message:', e?.message || '(no message)');
+        console.error('Error stack:', e?.stack || '(no stack)');
+        console.log('System prompt length at failure:', state.sysPrompt?.length || 0);
+        console.log('Intro prompt length at failure:', introPrompt?.length || 0);
+        console.groupEnd();
+
+        alert("Fate stumbled. Please try again. (Check console for diagnostics)");
         window.showScreen('setup');
     } finally {
         stopLoading();
-        if(window.initCards) window.initCards();
+        // Deal fresh fate cards for first turn
+        if(window.dealFateCards) window.dealFateCards();
+        else if(window.initCards) window.initCards();
         updateQuillUI();
         updateBatedBreathState();
     }
@@ -1644,58 +3642,276 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
   async function callChat(messages, temp=0.7) {
     const payload = {
        messages: messages,
-       model: STORY_MODEL, 
+       model: STORY_MODEL,
        temperature: temp,
        max_tokens: 1000
     };
-    
+
     try {
         const res = await fetch(PROXY_URL, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify(payload)
         });
-        if(!res.ok) throw new Error("API Error");
+        if(!res.ok) {
+            const errorText = await res.text().catch(() => '(could not read response body)');
+            console.group('STORYBOUND API ERROR');
+            console.error('HTTP Status:', res.status, res.statusText);
+            console.error('Response body:', errorText);
+            console.error('Request payload size:', JSON.stringify(payload).length, 'bytes');
+            console.error('System message length:', messages[0]?.content?.length || 0);
+            console.groupEnd();
+            throw new Error(`API Error: ${res.status} ${res.statusText}`);
+        }
         const data = await res.json();
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            console.group('STORYBOUND API MALFORMED RESPONSE');
+            console.error('Response data:', data);
+            console.groupEnd();
+            throw new Error('API returned malformed response (no choices)');
+        }
         return data.choices[0].message.content;
     } catch(e){
-        console.error(e);
+        console.error('callChat error:', e);
         throw e;
     }
   }
 
   async function generateSettingShot(desc) {
+     _lastSettingShotDesc = desc; // Store for retry
      const img = document.getElementById('settingShotImg');
+     const errDiv = document.getElementById('settingError');
      if(!img) return;
      const wrap = document.getElementById('settingShotWrap');
      if(wrap) wrap.style.display = 'flex';
+     img.onload = null; img.onerror = null;
      img.style.display = 'none';
-     
-     try {
-         const res = await fetch(IMAGE_PROXY_URL, {
-             method:'POST',
-             headers:{'Content-Type':'application/json'},
-             body: JSON.stringify({ 
-                 prompt: `Cinematic establishing shot, atmospheric, fantasy art style. No text. ${desc}`,
-                 provider: 'xai', 
-                 size: "1024x1024",
-                 n: 1
-             })
-         });
-         const data = await res.json();
-         if(data.url || data.image || data.b64_json) {
-             let url = data.url || data.image || data.b64_json;
-             if(!url.startsWith('http') && !url.startsWith('data:')) url = `data:image/png;base64,${url}`;
-             img.src = url;
-             img.onload = () => { img.style.display = 'block'; };
+     if(errDiv) {
+         errDiv.textContent = 'Conjuring the scene...';
+         errDiv.classList.remove('hidden');
+         errDiv.style.color = 'var(--gold)';
+     }
+
+     // CORRECTIVE: 16:9 landscape orientation for cinematic establishing shot
+     const prompt = `Cinematic wide landscape establishing shot, atmospheric, fantasy art style, 16:9 aspect ratio, panoramic view. No text, no words. ${desc}`;
+
+     // Fallback chain: try multiple providers (matches Visualize)
+     const attempts = [
+         { provider: 'xai', name: 'Grok' },
+         { provider: 'openai', model: 'gpt-image-1', name: 'OpenAI' }
+     ];
+
+     let rawUrl = null;
+     let lastErr = null;
+
+     for(const attempt of attempts) {
+         try {
+             // Add timeout to fetch to prevent infinite hanging (matches Visualize)
+             const controller = new AbortController();
+             const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+             const res = await fetch(IMAGE_PROXY_URL, {
+                 method:'POST',
+                 headers:{'Content-Type':'application/json'},
+                 body: JSON.stringify({
+                     prompt: prompt,
+                     provider: attempt.provider,
+                     model: attempt.model || '',
+                     size: "1792x1024",  // CORRECTIVE: 16:9 landscape
+                     n: 1
+                 }),
+                 signal: controller.signal
+             });
+
+             clearTimeout(timeoutId);
+
+             let data;
+             try { data = await res.json(); } catch(e) { data = null; }
+
+             // Handle 404 and other HTTP errors - continue to fallback
+             if(!res.ok) {
+                 console.warn(`Setting shot: ${attempt.name} failed (${res.status}), trying fallback...`);
+                 throw new Error(`HTTP ${res.status}`);
+             }
+
+             rawUrl = data.url || data.image || data.b64_json;
+             if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
+                 rawUrl = data.data[0].url || data.data[0].b64_json;
+             }
+
+             if(rawUrl) break;
+         } catch(e) {
+             lastErr = e;
+             console.warn(`Setting shot failed with ${attempt.name}`, e);
+             // Continue to next fallback provider
          }
-     } catch(e) { console.warn("Setting shot failed", e); }
+     }
+
+     if(rawUrl) {
+         let imageUrl = rawUrl;
+         if(!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
+             imageUrl = `data:image/png;base64,${rawUrl}`;
+         }
+         img.src = imageUrl;
+
+         // Add timeout for image load (matches Visualize)
+         const loadTimeout = setTimeout(() => {
+             img.style.display = 'none';
+             if(errDiv) {
+                 errDiv.innerHTML = 'The scene resists capture... <button onclick="window.retrySettingShot()" style="margin-left:10px; background:var(--gold); color:black; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Retry</button>';
+                 errDiv.style.color = '#ff6b6b';
+                 errDiv.classList.remove('hidden');
+             }
+         }, 30000);
+
+         img.onload = () => {
+             clearTimeout(loadTimeout);
+             img.style.display = 'block';
+             if(errDiv) errDiv.classList.add('hidden');
+         };
+         img.onerror = () => {
+             clearTimeout(loadTimeout);
+             img.style.display = 'none';
+             if(errDiv) {
+                 errDiv.innerHTML = 'The scene resists capture... <button onclick="window.retrySettingShot()" style="margin-left:10px; background:var(--gold); color:black; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Retry</button>';
+                 errDiv.style.color = '#ff6b6b';
+                 errDiv.classList.remove('hidden');
+             }
+         };
+     } else {
+         // All providers failed: non-blocking placeholder, story continues
+         if(errDiv) {
+             errDiv.innerHTML = 'The scene resists capture... <button onclick="window.retrySettingShot()" style="margin-left:10px; background:var(--gold); color:black; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Retry</button>';
+             errDiv.style.color = '#ff6b6b';
+             errDiv.classList.remove('hidden');
+         }
+         // Story continues normally - no toast, no blocking
+     }
   }
 
+  window.retrySettingShot = function() {
+      if (_lastSettingShotDesc) {
+          generateSettingShot(_lastSettingShotDesc);
+      }
+  };
+
   // --- VISUALIZE (STABILIZED) ---
+  let _vizCancelled = false;
+
+  // Visualize intensity bias based on player's selected eroticism level
+  function getVisualizeIntensityBias() {
+      const intensity = state.intensity || 'Naughty';
+      switch(intensity) {
+          case 'Clean':
+              return 'Clean, non-sexual imagery. Romantic but modest. No nudity or explicit content.';
+          case 'Naughty':
+              return 'Suggestive, flirtatious imagery. Sensual tension without explicit nudity. Tasteful allure.';
+          case 'Erotic':
+              return 'Explicit, sensual imagery. Passionate and intimate. Artistic nudity permitted.';
+          case 'Dirty':
+              return 'As explicit as community standards allow. Intensely passionate and provocative.';
+          default:
+              return 'Suggestive, flirtatious imagery. Sensual tension.';
+      }
+  }
+
+  // Default visual quality biases for attractive characters
+  const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
+
+  // Sanitize image prompts for Grok safety - removes/softens sensual adjectives
+  function sanitizeImagePrompt(prompt) {
+      // Words that trigger Grok safety filters
+      const sensualWords = [
+          'sensual', 'erotic', 'seductive', 'sexual', 'intimate', 'naked', 'nude',
+          'provocative', 'suggestive', 'lustful', 'passionate', 'steamy', 'hot',
+          'sexy', 'aroused', 'arousing', 'undressed', 'revealing', 'exposed',
+          'busty', 'voluptuous', 'curvy', 'bedroom', 'lingerie', 'underwear',
+          'explicit', 'raw', 'unfiltered', 'dirty', 'naughty', 'forbidden',
+          // CORRECTIVE: Additional flagged words that trigger moderation
+          'sultry', 'alluring'
+      ];
+
+      // CORRECTIVE: Phrases that trigger moderation (multi-word)
+      const sensualPhrases = [
+          'parted lips', 'suggestive posture', 'alluring curves',
+          'bedroom eyes', 'come hither', 'inviting gaze'
+      ];
+
+      let sanitized = prompt;
+
+      // Remove "The Author" references (meta-character should never be in images)
+      sanitized = sanitized.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
+
+      // CORRECTIVE: Remove flagged phrases first (before single words)
+      sensualPhrases.forEach(phrase => {
+          const regex = new RegExp(phrase, 'gi');
+          sanitized = sanitized.replace(regex, '');
+      });
+
+      // Remove sensual words entirely rather than replacing
+      sensualWords.forEach(word => {
+          const regex = new RegExp('\\b' + word + '\\b', 'gi');
+          sanitized = sanitized.replace(regex, '');
+      });
+
+      // Clean up double spaces and punctuation issues
+      sanitized = sanitized.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').replace(/\s+,/g, ',').trim();
+
+      return sanitized;
+  }
+
+  // Filter "The Author" from any image prompt
+  function filterAuthorFromPrompt(prompt) {
+      return prompt.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '').replace(/\s+/g, ' ').trim();
+  }
+
+  // Initialize Visualize modifier interaction (scrolling suggestions)
+  function initVizModifierPills() {
+      const modifierInput = document.getElementById('vizModifierInput');
+      const promptInput = document.getElementById('vizPromptInput');
+
+      if (!modifierInput || !promptInput) return;
+
+      // When user submits modifier (Enter key), append to prompt
+      modifierInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+              const mod = modifierInput.value.trim();
+              if (mod) {
+                  const current = promptInput.value.trim();
+                  if (current) {
+                      promptInput.value = current + ', ' + mod;
+                  } else {
+                      promptInput.value = mod;
+                  }
+                  modifierInput.value = '';
+                  // Re-show scrolling suggestions
+                  const placeholder = document.querySelector('.rotating-placeholder[data-for="vizModifierInput"]');
+                  if (placeholder) placeholder.classList.remove('hidden');
+              }
+          }
+      });
+  }
+
+  // Reset modifier UI when modal opens
+  function resetVizModifierUI() {
+      const modifierInput = document.getElementById('vizModifierInput');
+      const placeholder = document.querySelector('.rotating-placeholder[data-for="vizModifierInput"]');
+      if (modifierInput) modifierInput.value = '';
+      if (placeholder) placeholder.classList.remove('hidden');
+  }
+
+  // Initialize modifier pills on DOMContentLoaded
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initVizModifierPills);
+  } else {
+      initVizModifierPills();
+  }
+
   window.visualize = async function(isRe){
       if (_vizInFlight) return;
       _vizInFlight = true;
+      _vizCancelled = false;
 
       const modal = document.getElementById('vizModal');
       const retryBtn = document.getElementById('vizRetryBtn');
@@ -1706,13 +3922,28 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
       if (!img) { _vizInFlight = false; return; }
 
+      // Reset modifier UI when opening modal
+      resetVizModifierUI();
+
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
 
-      startLoading();
-      
-      const lastText = storyText ? storyText.textContent.slice(-600) : "";
-      await ensureVisualBible(storyText ? storyText.textContent : "");
+      // Start cancellable loading with cancel callback
+      startLoading("Painting the scene...", VISUALIZE_LOADING_MESSAGES, true, () => {
+          _vizCancelled = true;
+      });
+
+      const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+      const lastText = allStoryContent.slice(-600) || "";
+      await ensureVisualBible(allStoryContent);
+
+      // Check if cancelled during bible build
+      if (_vizCancelled) {
+          _vizInFlight = false;
+          if(retryBtn) retryBtn.disabled = false;
+          return;
+      }
+
       const anchorText = buildVisualAnchorsText();
 
       img.onload = null; img.onerror = null;
@@ -1722,89 +3953,187 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
       try {
           let promptMsg = document.getElementById('vizPromptInput').value;
+          // Get intensity bias for prompt generation
+          const intensityBias = getVisualizeIntensityBias();
+
           if(!isRe || !promptMsg) {
               try {
                   promptMsg = await Promise.race([
                       callChat([{
-                          role:'user', 
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire. Return only the prompt: ${lastText}`
+                          role:'user',
+                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
               } catch (e) {
-                  promptMsg = "Fantasy scene, detailed, atmospheric."; 
+                  promptMsg = "Fantasy scene, detailed, atmospheric.";
               }
               document.getElementById('vizPromptInput').value = promptMsg;
+          }
+
+          // Check if cancelled during prompt generation
+          if (_vizCancelled) {
+              _vizInFlight = false;
+              if(retryBtn) retryBtn.disabled = false;
+              return;
           }
 
           const modelEl = document.getElementById('vizModel');
           const userModel = modelEl ? modelEl.value : "";
           const um = (userModel || "").toLowerCase();
-          
+
           const isOpenAI = um.includes("gpt") || um.includes("openai");
           const isGemini = um.includes("gemini");
 
+          // Build base prompt with intensity bias, quality defaults, and veto exclusions (filter "The Author")
+          const modifierInput = document.getElementById('vizModifierInput');
+          const userModifiers = modifierInput ? modifierInput.value.trim() : '';
+
+          // Include veto exclusions in visual prompt (e.g., "no blondes" should affect hair color)
+          const vetoExclusions = state.veto?.excluded?.length > 0
+              ? "\n\nVISUAL EXCLUSIONS (DO NOT INCLUDE): " + state.veto.excluded.join(', ')
+              : "";
+
+          let basePrompt = filterAuthorFromPrompt(anchorText) +
+              "\n\nINTENSITY: " + filterAuthorFromPrompt(intensityBias) +
+              "\n\nQUALITY: " + VISUAL_QUALITY_DEFAULTS +
+              vetoExclusions +
+              "\n\nSCENE:\n" + filterAuthorFromPrompt(promptMsg) +
+              (userModifiers ? ", " + filterAuthorFromPrompt(userModifiers) : "") +
+              "\n\nArt style: cinematic, painterly, tasteful. (Generate art without any text/lettering.)";
+
+          // Provider fallback order - will try each until one succeeds
           const attempts = [];
-          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel });
-          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1' });
-          attempts.push({ provider: 'gemini', model: isGemini ? userModel : 'gemini-2.5-flash-image' });
+          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel, name: 'Grok', isSanitizeRetry: false });
+          attempts.push({ provider: 'xai', model: '', name: 'Grok (sanitized)', isSanitizeRetry: true });
+          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1', name: 'OpenAI', isSanitizeRetry: false });
 
           let rawUrl = null;
           let lastErr = null;
+          let attemptCount = 0;
+          let grokSafetyFailed = false;
 
           for(const attempt of attempts){
+             // Check if cancelled before each attempt
+             if (_vizCancelled) {
+                 _vizInFlight = false;
+                 if(retryBtn) retryBtn.disabled = false;
+                 return;
+             }
+
+             // Skip sanitize retry if Grok didn't fail with safety error
+             if (attempt.isSanitizeRetry && !grokSafetyFailed) continue;
+
+             attemptCount++;
              try {
+                // Add timeout to fetch to prevent infinite hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
+                // Use sanitized prompt for retry attempts
+                const fullPrompt = attempt.isSanitizeRetry ? sanitizeImagePrompt(basePrompt) : basePrompt;
+
                 const res = await fetch(IMAGE_PROXY_URL, {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ 
-                        prompt: anchorText + "\n\nSCENE:\n" + promptMsg + (state.intensity === 'Dirty' || state.intensity === 'Erotic' ? " Artistic, suggestive, safe-for-work." : "") + "\n\n(Generate art without any text/lettering.)",
+                    body: JSON.stringify({
+                        prompt: fullPrompt,
                         provider: attempt.provider,
                         model: attempt.model,
                         size: "1024x1024",
                         n: 1
-                    })
+                    }),
+                    signal: controller.signal
                 });
-                
-                let data;
-                try { data = await res.json(); } catch(e){}
 
-                if(!res.ok) throw new Error(data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`));
-                
+                clearTimeout(timeoutId);
+
+                let data;
+                try { data = await res.json(); } catch(e){ data = null; }
+
+                // Handle 502 and other errors - continue to fallback
+                if(!res.ok) {
+                    const errMsg = data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`);
+                    console.warn(`Visualize: ${attempt.name} failed (${res.status}), trying fallback...`);
+
+                    // Detect Grok safety rejection - trigger sanitized retry
+                    const errLower = errMsg.toLowerCase();
+                    if (attempt.provider === 'xai' && !attempt.isSanitizeRetry &&
+                        (errLower.includes('safety') || errLower.includes('content policy') ||
+                         errLower.includes('inappropriate') || errLower.includes('violat') ||
+                         res.status === 400 || res.status === 422)) {
+                        grokSafetyFailed = true;
+                        console.log('Grok safety rejection detected, will retry with sanitized prompt...');
+                    }
+
+                    throw new Error(errMsg);
+                }
+
                 rawUrl = data.url || data.image || data.b64_json;
                 if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
                     rawUrl = data.data[0].url || data.data[0].b64_json;
                 }
 
-                if(rawUrl) break; 
+                if(rawUrl) break;
              } catch(e) {
                  lastErr = e;
+                 // Don't throw - continue to next fallback provider
              }
           }
 
+          // Check if cancelled after all attempts
+          if (_vizCancelled) {
+              _vizInFlight = false;
+              if(retryBtn) retryBtn.disabled = false;
+              return;
+          }
+
           if (!rawUrl) throw lastErr || new Error("All image providers failed.");
-          
+
           let imageUrl = rawUrl;
           if (!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
               imageUrl = `data:image/png;base64,${rawUrl}`;
           }
-          
+
           img.src = imageUrl;
-          
+
           await new Promise((resolve, reject) => {
+              // Add timeout for image load
+              const loadTimeout = setTimeout(() => {
+                  reject(new Error("Image load timeout"));
+              }, 30000);
+
               img.onload = () => {
-                  img.style.display = 'block'; 
+                  clearTimeout(loadTimeout);
+                  img.style.display = 'block';
                   if(ph) ph.style.display = 'none';
-                  state.visual.lastImageUrl = img.src;
+                  // Don't store base64 images to avoid QuotaExceededError
+                  // Only store external URLs (not data: or blob:)
+                  if (img.src && !img.src.startsWith('data:') && !img.src.startsWith('blob:')) {
+                      state.visual.lastImageUrl = img.src;
+                  } else {
+                      state.visual.lastImageUrl = ''; // Clear to prevent storage overflow
+                  }
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
                   saveStorySnapshot();
                   resolve();
               };
-              img.onerror = () => reject(new Error("Image failed to render"));
+              img.onerror = () => {
+                  clearTimeout(loadTimeout);
+                  reject(new Error("Image failed to render"));
+              };
           });
 
       } catch(e) {
-          if(errDiv) { errDiv.innerText = "Visualization failed. Fate is cloudy."; errDiv.classList.remove('hidden'); }
+          // Don't show error if cancelled
+          if (!_vizCancelled) {
+              console.error("Visualize error:", e);
+              if(errDiv) {
+                  errDiv.innerText = "Visualization failed. Fate is cloudy.";
+                  errDiv.classList.remove('hidden');
+              }
+              if(ph) ph.style.display = 'none';
+          }
       } finally {
           stopLoading();
           _vizInFlight = false;
@@ -1822,15 +4151,14 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
   window.insertImage = function(){
       const img = document.getElementById('vizPreviewImg');
       if(!img.src) return;
-      const newImg = document.createElement('img');
-      newImg.src = img.src;
-      newImg.className = 'story-image';
-      document.getElementById('storyText').appendChild(newImg);
+      // Append visualized image to current page
+      const imgHtml = `<img src="${img.src}" class="story-image" alt="Visualized scene">`;
+      StoryPagination.appendToCurrentPage(imgHtml);
       window.closeViz();
       saveStorySnapshot();
   };
 
-  // --- GAME LOOP (RESTORED) ---
+  // --- GAME LOOP ---
   $('submitBtn')?.addEventListener('click', async () => {
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
       if (billingLock) { window.showPaywall('unlock'); return; }
@@ -1838,6 +4166,12 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       const act = $('actionInput').value.trim();
       const dia = $('dialogueInput').value.trim();
       if(!act && !dia) return alert("Input required.");
+
+      // Get selected Fate Card title for separator
+      let selectedFateCard = null;
+      if (state.fateOptions && typeof state.fateSelectedIndex === 'number' && state.fateSelectedIndex >= 0) {
+          selectedFateCard = state.fateOptions[state.fateSelectedIndex];
+      }
       
       const { safeAction, safeDialogue, flags } = sanitizeUserIntent(act, dia);
       if (flags.includes("redirect_nonconsent")) {
@@ -1847,9 +4181,11 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
           return; 
       }
 
-      startLoading("Fate is weaving...");
-      
-      const context = document.getElementById('storyText').innerText.slice(-3000);
+      startLoading("Fate is weaving...", STORY_LOADING_MESSAGES);
+
+      // Get story context from all pages
+      const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+      const context = allContent.slice(-3000);
       
       let intensityGuard = "";
       if (state.godModeActive) {
@@ -1896,7 +4232,23 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
         : "";
       
       const metaMsg = buildMetaDirective();
-      const squashDirective = "Do not repeat the user's input verbatim. Weave it into the narrative flow.";
+
+      // Build stronger squash directive, especially if Fate Card was used
+      const fateCardUsed = selectedFateCard && selectedFateCard.title;
+      const squashDirective = `CRITICAL REINTERPRETATION RULE:
+- NEVER repeat the player's action or dialogue verbatim in your response.
+- ALWAYS reinterpret their intent into the story's voice, tone, and character.
+- Transform their words into the narrative style of this story.
+- If they write "I kiss him", describe a kiss in your literary voice.
+- If they write clunky dialogue, render it as the character would actually speak.
+- The player provides intent. You provide craft.${fateCardUsed ? `
+
+FATE CARD ADAPTATION (CRITICAL):
+- The player used a Fate Card "${selectedFateCard.title}" - their input reflects that card's suggestion.
+- You MUST transform the Fate Card text completely into your own prose.
+- DO NOT echo phrases like "${(act || '').slice(0, 30)}..." verbatim.
+- The Fate Card is a prompt, not a script. Capture the ESSENCE, never the exact words.
+- Write as if YOU conceived this beat, not as if you're following a template.` : ''}`;
       
       const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
       
@@ -1922,34 +4274,56 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       
       Write the next beat (150-250 words).`;
 
-      try {
-          // USER TURN RENDER
-          const uDiv = document.createElement('div');
-          uDiv.className = 'dialogue-block p1-dia';
-          uDiv.innerHTML = `<strong>You:</strong> ${act} <br> "${dia}"`;
-          document.getElementById('storyText').appendChild(uDiv);
+      // Flag to track if story was successfully displayed (prevents false positive errors)
+      let storyDisplayed = false;
 
+      try {
+          // Generate AI response first
           const raw = await callChat([
               {role:'system', content: fullSys},
               {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
           ]);
-          
+
+          // Validate response shape before marking as success
+          if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {
+              throw new Error('Invalid response: empty or malformed story text');
+          }
+
           state.turnCount++;
-          
-          const sep = document.createElement('hr');
-          sep.style.borderColor = 'var(--pink)';
-          sep.style.opacity = '0.3';
-          document.getElementById('storyText').appendChild(sep);
 
-          const newDiv = document.createElement('div');
-          newDiv.innerHTML = formatStory(raw);
-          document.getElementById('storyText').appendChild(newDiv);
-          
-          sep.scrollIntoView({behavior:'smooth', block:'start'});
+          // Build new page content
+          let pageContent = '';
 
-          resetTurnSnapshotFlag(); 
-          
-          maybeFlipConsummation(raw); 
+          // FIX #1: Fate Card separator shows ONLY title icon, no descriptive text
+          if (selectedFateCard && selectedFateCard.title) {
+              pageContent += `<div class="fate-card-separator"><div class="fate-mini"><h4>${escapeHTML(selectedFateCard.title)}</h4></div></div>`;
+          }
+
+          // FIX #2: Removed user dialogue block - AI alone narrates the action
+          // User input is passed to AI but not rendered as prose to avoid duplication
+
+          // Add AI response only
+          pageContent += formatStory(raw);
+
+          // Add new page with animation
+          StoryPagination.addPage(pageContent, true);
+
+          // CRITICAL: Mark story as displayed AFTER successful DOM insertion
+          storyDisplayed = true;
+
+          // Scroll to Fate Card header so player can pick next card
+          try {
+              const fateHeader = document.getElementById('fateCardHeader');
+              if (fateHeader) {
+                  fateHeader.scrollIntoView({behavior:'smooth', block:'start'});
+              }
+          } catch(scrollErr) {
+              console.warn('Scroll failed (non-critical):', scrollErr);
+          }
+
+          resetTurnSnapshotFlag();
+
+          maybeFlipConsummation(raw);
 
           // Manage Fling Latch
           if (state.storyStage === 'post-consummation') {
@@ -1970,14 +4344,17 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
           if(wc > getSexAllowedAtWordCount()) state.sexPushCount = 0;
 
-          // Fate Card Deal (Solo)
-          if (state.mode === 'solo' && Math.random() < 0.45) {
-               if (window.dealFateCards) {
-                   window.dealFateCards();
-                   if (state.batedBreathActive && state.fateOptions) {
-                       state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
-                   }
-               }
+          // Fate Card Deal - deal fresh cards each turn for interaction
+          // Wrapped to prevent false positive errors
+          try {
+              if (window.dealFateCards) {
+                  window.dealFateCards();
+                  if (state.batedBreathActive && state.fateOptions) {
+                      state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
+                  }
+              }
+          } catch(fateErr) {
+              console.warn('Fate card deal failed (non-critical):', fateErr);
           }
 
           saveStorySnapshot();
@@ -1985,24 +4362,40 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
 
           $('actionInput').value = '';
           $('dialogueInput').value = '';
-          
+
           if(state.mode === 'couple') {
               broadcastTurn(raw);
           }
 
       } catch(e) {
-          console.error(e);
-          alert("Fate was silent. Try again.");
+          console.error('Turn submission error:', e);
+          // Only show error alert if story was NOT successfully displayed
+          if (!storyDisplayed) {
+              alert("Fate was silent. Try again.");
+          }
       } finally {
           stopLoading();
       }
   });
 
-  function formatStory(text){
+  function formatStory(text, shouldEscape = false){
+      const process = shouldEscape ? escapeHTML : (s => s);
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
-          if(p.trim().startsWith('"')) return `<p style="color:var(--p2-color); font-weight:500;">${p}</p>`;
-          return `<p>${p}</p>`;
+          const safe = process(p);
+
+          // CORRECTIVE: Fix dialogue colorization leak
+          // Only style the quoted text itself, not the dialogue tag that follows
+          // Pattern: match "quoted text" and style only the quote
+          const formatted = safe.replace(/"([^"]*)"/g, (match, quote) => {
+              return `<span class="story-dialogue">"${quote}"</span>`;
+          });
+
+          // If the line is entirely dialogue, use dialogue class on the paragraph
+          if(p.trim().startsWith('"') && p.trim().endsWith('"')) {
+              return `<p class="story-dialogue">${safe}</p>`;
+          }
+          return `<p>${formatted}</p>`;
       }).join('');
   }
 
@@ -2113,7 +4506,70 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
       }
   });
 
+  // Invitation send handlers
+  const INVITATION_TEXTS = [
+      "A private chamber awaits. The mask is optional. The curiosity is not.",
+      "Behind this door, two become one story. Enter if you dare.",
+      "The candles are lit. The words are waiting. Only you are missing.",
+      "Some invitations cannot be declined. This is one of them."
+  ];
+
+  function getInvitationMessage() {
+      const text = INVITATION_TEXTS[Math.floor(Math.random() * INVITATION_TEXTS.length)];
+      const code = window.state.roomCode || '------';
+      return `${text}\n\nYour chamber code: ${code}\n\nJoin at: ${window.location.origin}`;
+  }
+
+  function markInvitationSent() {
+      const status = document.getElementById('inviteSentStatus');
+      const enterBtn = document.getElementById('btnEnterCoupleGame');
+      const soloBtn = document.getElementById('btnPlaySoloWaiting');
+
+      if (status) status.classList.remove('hidden');
+      if (enterBtn) {
+          enterBtn.classList.remove('hidden');
+          enterBtn.disabled = false;
+      }
+      if (soloBtn) soloBtn.classList.remove('hidden');
+
+      window.state.invitationSent = true;
+  }
+
+  $('btnSendEmail')?.addEventListener('click', () => {
+      const subject = encodeURIComponent("You're invited to a Private Chamber");
+      const body = encodeURIComponent(getInvitationMessage());
+      // Use location.href for proper mailto handling with default email client
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      markInvitationSent();
+      showToast("Email client opened.");
+  });
+
+  $('btnSendSMS')?.addEventListener('click', () => {
+      const body = encodeURIComponent(getInvitationMessage());
+      window.location.href = `sms:?body=${body}`;
+      markInvitationSent();
+      showToast("SMS opened.");
+  });
+
+  $('btnSendBoth')?.addEventListener('click', () => {
+      const subject = encodeURIComponent("You're invited to a Private Chamber");
+      const body = encodeURIComponent(getInvitationMessage());
+      // Open email first via location.href
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      markInvitationSent();
+      showToast("Email client opened. Use SMS button for text.");
+  });
+
+  $('btnPlaySoloWaiting')?.addEventListener('click', () => {
+      window.state.batedBreathActive = true;
+      window.showScreen('setup');
+  });
+
   $('btnEnterCoupleGame')?.addEventListener('click', () => {
+      if (!window.state.invitationSent) {
+          showToast("Please send an invitation first.");
+          return;
+      }
       window.showScreen('setup');
   });
 
