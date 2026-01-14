@@ -143,18 +143,43 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 }
 
 /* LOCKS & CURSOR */
-.locked-input textarea, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked { 
-    opacity:0.6; filter:grayscale(0.9); 
-    cursor: var(--cursor-url), pointer !important; 
-    pointer-events: auto !important; 
+.locked,
+.locked-input,
+.locked-input textarea,
+.locked-style,
+.locked-tease,
+.locked-pass,
+[data-locked],
+.card.locked,
+.fate-card.locked,
+.intensity-btn.locked {
+    opacity:0.6; filter:grayscale(0.9);
+    cursor: var(--cursor-url), pointer !important;
+    pointer-events: auto !important;
 }
-.locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked {
+.locked,
+.locked-input,
+.locked-style,
+.locked-tease,
+.locked-pass,
+[data-locked],
+.card.locked,
+.fate-card.locked,
+.intensity-btn.locked {
     position: relative;
 }
 .locked-style { display: inline-block; }
 
 /* HANDCUFF OVERLAY - SVG */
-.locked-input::after, .locked-style::after, .card.locked::after, .fate-card.locked::after, .intensity-btn.locked::after { 
+.locked::after,
+.locked-input::after,
+.locked-style::after,
+.locked-tease::after,
+.locked-pass::after,
+[data-locked]::after,
+.card.locked::after,
+.fate-card.locked::after,
+.intensity-btn.locked::after { 
     content:""; position:absolute; 
     top:5px; right:5px; 
     width:24px; height:24px; 
