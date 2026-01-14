@@ -2447,6 +2447,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // Game Quill commit button
   $('btnGameCommitQuill')?.addEventListener('click', (e) => {
       e.preventDefault(); // Prevent scroll to top
+      e.stopPropagation();
+
+      // Save scroll position before any DOM changes
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+
       if (!getQuillReady()) return;
       const quillEl = document.getElementById('gameQuillInput');
       if (!quillEl) return;
@@ -2469,6 +2475,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       updateGameQuillUI();
       document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
       showToast("Quill committed.");
+
+      // Restore scroll position after all DOM changes
+      requestAnimationFrame(() => {
+          window.scrollTo(scrollX, scrollY);
+      });
   });
 
   // Game Veto commit button
@@ -3085,6 +3096,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   $('btnCommitQuill')?.addEventListener('click', (e) => {
       e.preventDefault(); // Prevent scroll to top
+      e.stopPropagation();
+
+      // Save scroll position before any DOM changes
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+
       if (!getQuillReady()) return;
       const quillEl = document.getElementById('quillInput');
       if (!quillEl) return;
@@ -3113,6 +3130,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       updateQuillUI();
       saveStorySnapshot();
       showToast("Quill committed.");
+
+      // Restore scroll position after all DOM changes
+      requestAnimationFrame(() => {
+          window.scrollTo(scrollX, scrollY);
+      });
   });
 
   // Commit Veto Button Handler
