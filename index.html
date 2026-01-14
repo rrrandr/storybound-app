@@ -81,33 +81,10 @@
     <h3>Visualization</h3>
     <textarea id="vizPromptInput" placeholder="Prompt will appear here..."></textarea>
 
-    <!-- Modifier section: suggestion pills + free text input -->
-    <div id="vizModifierSection">
-        <div id="vizModifierPills" class="viz-modifier-pills">
-            <span class="viz-pill" data-mod="more muscular">More muscular</span>
-            <span class="viz-pill" data-mod="more elegant">More elegant</span>
-            <span class="viz-pill" data-mod="brighter lighting">Brighter lighting</span>
-            <span class="viz-pill" data-mod="darker mood">Darker mood</span>
-            <span class="viz-pill" data-mod="hotter, sexier">Hotter / sexier</span>
-            <span class="viz-pill" data-mod="cuter">Cuter</span>
-            <span class="viz-pill" data-mod="funnier">Funnier</span>
-            <span class="viz-pill" data-mod="scarier">Scarier</span>
-            <span class="viz-pill" data-mod="softer facial features">Softer facial features</span>
-            <span class="viz-pill" data-mod="strong jawline">Strong jawline</span>
-            <span class="viz-pill" data-mod="hourglass figure">Hourglass figure</span>
-            <span class="viz-pill" data-mod="athletic gymnast build">Athletic gymnast build</span>
-            <span class="viz-pill" data-mod="blonde hair">Blonde hair</span>
-            <span class="viz-pill" data-mod="dark hair">Dark hair</span>
-            <span class="viz-pill" data-mod="no porn face, natural expression">No porn face</span>
-            <span class="viz-pill" data-mod="cinematic lighting">Cinematic lighting</span>
-            <span class="viz-pill" data-mod="high detail, realistic">High detail / realistic</span>
-            <span class="viz-pill" data-mod="dreamlike, painterly">Dreamlike / painterly</span>
-            <span class="viz-pill" data-mod="leading-actor looks">Leading-actor looks</span>
-            <span class="viz-pill" data-mod="movie poster style">Movie poster style</span>
-            <span class="viz-pill" data-mod="anime style">Anime style</span>
-            <span class="viz-pill" data-mod="photo-realistic">Photo-realistic</span>
-        </div>
-        <input type="text" id="vizModifierInput" placeholder="Type custom modifiers or click pills above...">
+    <!-- Modifier section: scrolling suggestions + text input -->
+    <div id="vizModifierSection" class="fate-input-wrapper" style="margin-top:10px;">
+        <input type="text" id="vizModifierInput" class="fate-field" placeholder="">
+        <div class="rotating-placeholder" data-for="vizModifierInput"></div>
     </div>
 
     <div id="vizPlaceholder">Generating...</div>
@@ -119,8 +96,8 @@
 
     <div class="viz-controls">
         <select id="vizModel">
+            <option value="grok-2-image-1212" selected>Grok 2</option>
             <option value="auto">Auto (Best Available)</option>
-            <option value="grok-2-image-1212">Grok 2</option>
             <option value="openai">OpenAI (DALL-E 3)</option>
             <option value="gemini">Gemini (Fantasy)</option>
         </select>
@@ -128,9 +105,10 @@
         <button onclick="window.insertImage()">Insert</button>
         <button class="small-btn" style="background:#555" onclick="window.closeViz()">Cancel</button>
     </div>
-    <label style="font-size:0.8em; color:var(--gold); opacity:0.8; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; cursor:pointer;">
+    <label class="sb-checkbox" style="font-size:0.8em; justify-content:center; margin-top:12px;">
         <input type="checkbox" id="chkAutoLockVisual" checked>
-        Lock character look after first Visualize
+        <span class="sb-checkbox-visual"></span>
+        <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Lock character look after this Visualize</span>
     </label>
   </div>
 </div>
@@ -141,7 +119,7 @@
     <p style="opacity:0.8; font-size:0.9em;">Explicit content enabled. Sample:</p>
     <div id="eroticPreviewText"></div>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-        <button onclick="window.showPaywall('unlock');">Unlock Erotic ($3)</button>
+        <button onclick="window.showPaywall('unlock');">Storypass $3</button>
         <button onclick="document.getElementById('eroticPreviewModal').classList.add('hidden')" style="background:#444">Not Now</button>
     </div>
   </div>
@@ -282,7 +260,7 @@
             <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:220px; text-align:left;">
                 <h4 style="color:var(--pink); margin-top:0;">Unlock This Story</h4>
                 <p style="font-size:0.85em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, Quill access.<br><strong>$3 Story Pass.</strong></p>
-                <button id="payOneTime" style="width:100%; margin-top:15px;">Unlock ($3)</button>
+                <button id="payOneTime" style="width:100%; margin-top:15px;">Storypass $3</button>
             </div>
 
             <div id="optSub" style="background:linear-gradient(145deg, #400020, #200010); padding:15px; border-radius:10px; border:1px solid gold; width:220px; text-align:left;">
@@ -457,10 +435,22 @@
     </div>
 
     <div class="section-title">Safety & Boundaries</div>
-    <div class="consent-controls horizontal">
-        <label><input type="checkbox" id="chkDark" checked> Dark Themes</label>
-        <label><input type="checkbox" id="chkNonCon"> Implied Non-consent</label>
-        <label><input type="checkbox" id="chkViolence" checked> Violence / Peril</label>
+    <div class="sb-checkbox-group">
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkDark" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Dark Themes</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkNonCon">
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Implied Non-consent</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkViolence" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Violence / Peril</span>
+        </label>
     </div>
     <div class="boundary-chips" id="boundaryChips">
         <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
@@ -651,6 +641,7 @@
     <div id="billingBanner" style="display:none;"></div>
 
     <h2 id="storyTitle"></h2>
+    <div id="sceneNumber" style="font-size:2.5em; color:var(--gold); font-weight:bold; text-align:center; margin:-5px 0 15px;">Scene 1</div>
     <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:20px;"></p>
     
     <div id="batedBreathIndicator" class="hidden" style="text-align:center; font-size:0.8em; color:var(--gold); font-style:italic; margin-bottom:10px; opacity:0.8;">
@@ -692,7 +683,10 @@
 
     <div id="fateCardHeader" class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
 
-    <div id="cardMount" class="fate-grid"></div>
+    <div style="display:flex; align-items:flex-start; gap:20px; justify-content:center;">
+        <div id="yourChoiceLabel" class="hidden" style="font-size:1.1em; color:var(--gold); font-style:italic; padding-top:20px; white-space:nowrap;">Your choice:</div>
+        <div id="cardMount" class="fate-grid"></div>
+    </div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
       <div class="input-wrapper" id="actionWrapper">
@@ -734,7 +728,7 @@
             <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Block elements you never want to appear.</p>
             <div class="fate-input-row" style="margin-bottom:10px;">
                 <div class="input-wrapper fate-input-wrapper" style="flex:1;">
-                    <textarea id="gameVetoInput" rows="3" class="fate-field" data-fate-type="veto" placeholder="ban: word&#10;rename: Old -> New"></textarea>
+                    <textarea id="gameVetoInput" rows="3" class="fate-field" data-fate-type="veto" placeholder=""></textarea>
                     <div class="rotating-placeholder" data-for="gameVetoInput"></div>
                 </div>
             </div>
@@ -748,7 +742,7 @@
             <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Steer tone, boundaries, or direction.</p>
             <div class="fate-input-row" style="margin-bottom:10px;">
                 <div id="gameQuillBox" class="input-wrapper fate-input-wrapper" style="flex:1;">
-                    <textarea id="gameQuillInput" rows="3" class="fate-field" data-fate-type="quill" placeholder="Bring them to a moonlit garden..."></textarea>
+                    <textarea id="gameQuillInput" rows="3" class="fate-field" data-fate-type="quill" placeholder=""></textarea>
                     <div class="rotating-placeholder" data-for="gameQuillInput"></div>
                 </div>
             </div>

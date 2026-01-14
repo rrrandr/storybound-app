@@ -197,6 +197,12 @@ window.config = window.config || {
           const titleEl = document.getElementById('storyTitle');
           const synopsisEl = document.getElementById('storySynopsis');
           const settingShotWrap = document.getElementById('settingShotWrap');
+          const sceneNumberEl = document.getElementById('sceneNumber');
+
+          // Update scene number based on current page
+          if (sceneNumberEl) {
+              sceneNumberEl.textContent = 'Scene ' + (currentPageIndex + 1);
+          }
 
           if (currentPageIndex === 0) {
               // Page 1: Full display
@@ -1191,6 +1197,13 @@ ANTI-HERO ENFORCEMENT:
           "Only one bed", "Enemies to lovers", "Forced proximity", "Vulnerability scene",
           "Take them somewhere private", "Build tension slowly", "Unexpected interruption",
           "Moonlit garden", "Charged silence", "Near miss moment", "Secret revealed"
+      ],
+      visualize: [
+          "more muscular", "more elegant", "brighter lighting", "darker mood",
+          "cuter", "softer facial features", "strong jawline", "hourglass figure",
+          "athletic build", "blonde hair", "dark hair", "natural expression",
+          "cinematic lighting", "high detail", "dreamlike", "painterly",
+          "leading-actor looks", "movie poster style", "anime style", "photo-realistic"
       ]
   };
 
@@ -1394,6 +1407,8 @@ ANTI-HERO ENFORCEMENT:
       // Game modal rotating placeholders
       initRotatingPlaceholder('gameVetoInput', 'veto');
       initRotatingPlaceholder('gameQuillInput', 'quill');
+      // Visualize modifier suggestions
+      initRotatingPlaceholder('vizModifierInput', 'visualize');
 
       // Bind fate hand clicks
       document.querySelectorAll('.fate-hand').forEach(hand => {
@@ -1581,11 +1596,24 @@ ANTI-HERO ENFORCEMENT:
       if (state.visual.bible.style && Object.keys(state.visual.bible.characters).length > 0) return;
       
       const genre = Array.isArray(state?.picks?.genre) ? state.picks.genre.join(', ') : "";
-      const sys = `You are a Visual Director. Extract consistent visual anchors into STRICT JSON.`;
+      const sys = `You are a Visual Director. Extract consistent visual anchors into STRICT JSON with this structure:
+{
+  "style": "visual style description",
+  "setting": "location/environment description",
+  "characters": {
+    "CharacterName": {
+      "face": "detailed facial features (eyes, skin tone, expression style)",
+      "hair": "color, length, style",
+      "clothing": "current outfit description",
+      "build": "body type/physique"
+    }
+  }
+}
+Extract details for ALL named characters. Be specific about face, hair, clothing, and build.`;
 
       try {
           const raw = await Promise.race([
-              callChat([{role:'system', content: sys}, {role:'user', content: `Context: ${genre}. Text: ${textContext.slice(-2000)}`}]),
+              callChat([{role:'system', content: sys}, {role:'user', content: `Genre: ${genre}. Extract visual anchors from: ${textContext.slice(-2000)}`}]),
               new Promise((_, reject) => setTimeout(() => reject(new Error("Bible timeout")), 15000))
           ]);
           const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -1595,9 +1623,25 @@ ANTI-HERO ENFORCEMENT:
 
   function buildVisualAnchorsText() {
       const b = state.visual.bible;
-      if (!b || !b.style) return ""; 
+      if (!b || !b.style) return "";
       let txt = `VISUAL CONTINUITY: STYLE: ${b.style} SETTING: ${b.setting} `;
-      if (state.visual.locked && state.visual.lastImageUrl) txt += "MATCH LAST RENDER EXACTLY.";
+
+      // If locked, include specific character details for face/hair/clothing persistence
+      if (state.visual.locked) {
+          txt += "CHARACTER LOCK ACTIVE - MAINTAIN EXACT APPEARANCE: ";
+          if (b.characters && typeof b.characters === 'object') {
+              Object.entries(b.characters).forEach(([name, details]) => {
+                  if (details && typeof details === 'object') {
+                      txt += `${name}: `;
+                      if (details.face) txt += `FACE: ${details.face}; `;
+                      if (details.hair) txt += `HAIR: ${details.hair}; `;
+                      if (details.clothing) txt += `CLOTHING: ${details.clothing}; `;
+                      if (details.build) txt += `BUILD: ${details.build}; `;
+                  }
+              });
+          }
+          txt += "DO NOT CHANGE CHARACTER APPEARANCE. ";
+      }
       return txt;
   }
 
@@ -3381,42 +3425,45 @@ Return ONLY the sentence:\n${text}`}]);
   // Default visual quality biases for attractive characters
   const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
 
-  // Initialize Visualize modifier pills interaction
+  // Sanitize image prompts for Grok safety - removes/softens sensual adjectives
+  function sanitizeImagePrompt(prompt) {
+      // Words that trigger Grok safety filters
+      const sensualWords = [
+          'sensual', 'erotic', 'seductive', 'sexual', 'intimate', 'naked', 'nude',
+          'provocative', 'suggestive', 'lustful', 'passionate', 'steamy', 'hot',
+          'sexy', 'aroused', 'arousing', 'undressed', 'revealing', 'exposed',
+          'busty', 'voluptuous', 'curvy', 'bedroom', 'lingerie', 'underwear',
+          'explicit', 'raw', 'unfiltered', 'dirty', 'naughty', 'forbidden'
+      ];
+
+      let sanitized = prompt;
+
+      // Remove "The Author" references (meta-character should never be in images)
+      sanitized = sanitized.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
+
+      // Remove sensual words entirely rather than replacing
+      sensualWords.forEach(word => {
+          const regex = new RegExp('\\b' + word + '\\b', 'gi');
+          sanitized = sanitized.replace(regex, '');
+      });
+
+      // Clean up double spaces and punctuation issues
+      sanitized = sanitized.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').replace(/\s+,/g, ',').trim();
+
+      return sanitized;
+  }
+
+  // Filter "The Author" from any image prompt
+  function filterAuthorFromPrompt(prompt) {
+      return prompt.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '').replace(/\s+/g, ' ').trim();
+  }
+
+  // Initialize Visualize modifier interaction (scrolling suggestions)
   function initVizModifierPills() {
-      const pills = document.querySelectorAll('.viz-pill');
-      const pillsContainer = document.getElementById('vizModifierPills');
       const modifierInput = document.getElementById('vizModifierInput');
       const promptInput = document.getElementById('vizPromptInput');
 
-      if (!pillsContainer || !modifierInput || !promptInput) return;
-
-      // Pill click: append modifier to prompt
-      pills.forEach(pill => {
-          pill.addEventListener('click', () => {
-              const mod = pill.dataset.mod;
-              if (!mod) return;
-              const current = promptInput.value.trim();
-              if (current) {
-                  promptInput.value = current + ', ' + mod;
-              } else {
-                  promptInput.value = mod;
-              }
-          });
-      });
-
-      // Typing in modifier input hides pills
-      modifierInput.addEventListener('focus', () => {
-          pillsContainer.classList.add('hidden');
-      });
-
-      // When modifier input loses focus and is empty, show pills again
-      modifierInput.addEventListener('blur', () => {
-          setTimeout(() => {
-              if (!modifierInput.value.trim()) {
-                  pillsContainer.classList.remove('hidden');
-              }
-          }, 150);
-      });
+      if (!modifierInput || !promptInput) return;
 
       // When user submits modifier (Enter key), append to prompt
       modifierInput.addEventListener('keydown', (e) => {
@@ -3431,6 +3478,9 @@ Return ONLY the sentence:\n${text}`}]);
                       promptInput.value = mod;
                   }
                   modifierInput.value = '';
+                  // Re-show scrolling suggestions
+                  const placeholder = document.querySelector('.rotating-placeholder[data-for="vizModifierInput"]');
+                  if (placeholder) placeholder.classList.remove('hidden');
               }
           }
       });
@@ -3438,10 +3488,10 @@ Return ONLY the sentence:\n${text}`}]);
 
   // Reset modifier UI when modal opens
   function resetVizModifierUI() {
-      const pillsContainer = document.getElementById('vizModifierPills');
       const modifierInput = document.getElementById('vizModifierInput');
-      if (pillsContainer) pillsContainer.classList.remove('hidden');
+      const placeholder = document.querySelector('.rotating-placeholder[data-for="vizModifierInput"]');
       if (modifierInput) modifierInput.value = '';
+      if (placeholder) placeholder.classList.remove('hidden');
   }
 
   // Initialize modifier pills on DOMContentLoaded
@@ -3528,15 +3578,33 @@ Return ONLY the sentence:\n${text}`}]);
           const isOpenAI = um.includes("gpt") || um.includes("openai");
           const isGemini = um.includes("gemini");
 
+          // Build base prompt with intensity bias, quality defaults, and veto exclusions (filter "The Author")
+          const modifierInput = document.getElementById('vizModifierInput');
+          const userModifiers = modifierInput ? modifierInput.value.trim() : '';
+
+          // Include veto exclusions in visual prompt (e.g., "no blondes" should affect hair color)
+          const vetoExclusions = state.veto?.excluded?.length > 0
+              ? "\n\nVISUAL EXCLUSIONS (DO NOT INCLUDE): " + state.veto.excluded.join(', ')
+              : "";
+
+          let basePrompt = filterAuthorFromPrompt(anchorText) +
+              "\n\nINTENSITY: " + filterAuthorFromPrompt(intensityBias) +
+              "\n\nQUALITY: " + VISUAL_QUALITY_DEFAULTS +
+              vetoExclusions +
+              "\n\nSCENE:\n" + filterAuthorFromPrompt(promptMsg) +
+              (userModifiers ? ", " + filterAuthorFromPrompt(userModifiers) : "") +
+              "\n\nArt style: cinematic, painterly, tasteful. (Generate art without any text/lettering.)";
+
           // Provider fallback order - will try each until one succeeds
-          // Supported models: gpt-image-1, dall-e-3, chatgpt-image-latest (no gemini-2.5-flash-image)
           const attempts = [];
-          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel, name: 'Grok' });
-          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1', name: 'OpenAI' });
+          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel, name: 'Grok', isSanitizeRetry: false });
+          attempts.push({ provider: 'xai', model: '', name: 'Grok (sanitized)', isSanitizeRetry: true });
+          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1', name: 'OpenAI', isSanitizeRetry: false });
 
           let rawUrl = null;
           let lastErr = null;
           let attemptCount = 0;
+          let grokSafetyFailed = false;
 
           for(const attempt of attempts){
              // Check if cancelled before each attempt
@@ -3546,21 +3614,17 @@ Return ONLY the sentence:\n${text}`}]);
                  return;
              }
 
+             // Skip sanitize retry if Grok didn't fail with safety error
+             if (attempt.isSanitizeRetry && !grokSafetyFailed) continue;
+
              attemptCount++;
              try {
                 // Add timeout to fetch to prevent infinite hanging
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-                // Build final prompt with intensity bias and quality defaults
-                const modifierInput = document.getElementById('vizModifierInput');
-                const userModifiers = modifierInput ? modifierInput.value.trim() : '';
-                const fullPrompt = anchorText +
-                    "\n\nINTENSITY: " + intensityBias +
-                    "\n\nQUALITY: " + VISUAL_QUALITY_DEFAULTS +
-                    "\n\nSCENE:\n" + promptMsg +
-                    (userModifiers ? ", " + userModifiers : "") +
-                    "\n\nArt style: cinematic, painterly, tasteful. (Generate art without any text/lettering.)";
+                // Use sanitized prompt for retry attempts
+                const fullPrompt = attempt.isSanitizeRetry ? sanitizeImagePrompt(basePrompt) : basePrompt;
 
                 const res = await fetch(IMAGE_PROXY_URL, {
                     method:'POST',
@@ -3584,6 +3648,17 @@ Return ONLY the sentence:\n${text}`}]);
                 if(!res.ok) {
                     const errMsg = data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`);
                     console.warn(`Visualize: ${attempt.name} failed (${res.status}), trying fallback...`);
+
+                    // Detect Grok safety rejection - trigger sanitized retry
+                    const errLower = errMsg.toLowerCase();
+                    if (attempt.provider === 'xai' && !attempt.isSanitizeRetry &&
+                        (errLower.includes('safety') || errLower.includes('content policy') ||
+                         errLower.includes('inappropriate') || errLower.includes('violat') ||
+                         res.status === 400 || res.status === 422)) {
+                        grokSafetyFailed = true;
+                        console.log('Grok safety rejection detected, will retry with sanitized prompt...');
+                    }
+
                     throw new Error(errMsg);
                 }
 

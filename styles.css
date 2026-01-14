@@ -372,7 +372,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     filter: drop-shadow(0 0 2px black);
 }
 .locked-input::after { top: 40px; right: 10px; }
-.intensity-btn.locked-tease::after, .intensity-btn.locked-pass::after { top: 50%; right: 50%; transform: translate(50%, -50%); width: 18px; height: 18px; } 
+.intensity-btn.locked-tease::after, .intensity-btn.locked-pass::after { top: 2px; right: 2px; transform: none; width: 16px; height: 16px; } 
 
 /* STYLE CARDS */
 .style-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:15px 0; }
@@ -651,16 +651,19 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .pill.fading { opacity: 0.4; }
 
 /* PAYWALLED ELEMENTS - CURSOR AND VISIBILITY */
-.locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked-tease, .intensity-btn.locked-pass {
-    cursor: var(--cursor-url), pointer !important;
+.locked-input, .locked-style, .card.locked, .fate-card.locked,
+.intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
+    cursor: url('cursor-dollar-plane-64.png') 2 2, pointer !important;
 }
-.card.locked:hover, .fate-card.locked:hover, .intensity-btn.locked-tease:hover, .intensity-btn.locked-pass:hover {
-    cursor: var(--cursor-url), pointer !important;
+.card.locked:hover, .fate-card.locked:hover,
+.intensity-btn.locked-tease:hover, .intensity-btn.locked-pass:hover,
+[data-locked]:hover {
+    cursor: url('cursor-dollar-plane-64.png') 2 2, pointer !important;
 }
-.card.locked *, .fate-card.locked *, .intensity-btn.locked * {
+.card.locked *, .fate-card.locked *, .intensity-btn.locked *, [data-locked] * {
     pointer-events: none;
 }
-.card.locked .preview-btn {
+.card.locked .preview-btn, [data-locked] .preview-btn {
     pointer-events: auto !important;
     cursor: pointer !important;
 }
@@ -812,20 +815,21 @@ textarea.fate-field {
 
 /* Fate Tree Card (revealed oracle) - uses image_62.png */
 .fate-tree-card {
-    width: 32px;
-    height: 46px; /* 5:7 tarot proportion */
+    width: 64px;
+    height: 92px; /* 5:7 tarot proportion, 2× size */
     background: url('image_62.png') center/contain no-repeat;
     border: none;
-    border-radius: 3px;
+    border-radius: 0;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     cursor: pointer;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(255,215,0,0.3);
-    transition: box-shadow 0.3s ease;
+    box-shadow: none;
+    transition: transform 0.3s ease;
 }
 .fate-tree-card:hover {
-    box-shadow: 0 0 12px rgba(255,215,0,0.5);
+    transform: scale(1.05);
+    box-shadow: none;
 }
 .fate-tree-card.hidden { display: none; }
 
@@ -834,20 +838,9 @@ textarea.fate-field {
     display: none;
 }
 
-/* Falling leaf - two-stage click-driven animation */
+/* Falling leaf - REMOVED for now, using static PNG only */
 .falling-leaf {
-    position: absolute;
-    width: 8px;
-    height: 9px;
-    right: 8px;
-    top: 23px; /* Initial: mid-air, halfway down fall path */
-    transform: rotate(35deg);
-    pointer-events: none;
-}
-.falling-leaf svg {
-    width: 100%;
-    height: 100%;
-    display: block;
+    display: none;
 }
 
 /* Stage 1: Fall from mid-air to ground */
@@ -1041,4 +1034,84 @@ textarea.fate-field {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STORYBOUND CUSTOM CHECKBOXES — Gold X imagery (same as radios)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Container label - makes entire row clickable */
+.sb-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    position: relative;
+    padding: 4px 0;
+    user-select: none;
+}
+
+/* Hide native checkbox visually but keep it focusable/accessible */
+.sb-checkbox input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+/* Custom visual - default (unchecked) state */
+.sb-checkbox-visual {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    background-image: url('Square%20Radio%20Button-no-x-200x200.jpg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 3px;
+    transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Checked state - swap to X image */
+.sb-checkbox input[type="checkbox"]:checked + .sb-checkbox-visual {
+    background-image: url('Square%20Radio%20Button-x-200x200.jpg');
+}
+
+/* Hover state - subtle gold brighten */
+.sb-checkbox:hover .sb-checkbox-visual {
+    filter: brightness(1.15);
+}
+
+/* Focus-visible state - thin gold outline for keyboard users */
+.sb-checkbox input[type="checkbox"]:focus-visible + .sb-checkbox-visual {
+    box-shadow: 0 0 0 2px var(--gold);
+    outline: none;
+}
+
+/* Disabled state - visually muted */
+.sb-checkbox input[type="checkbox"]:disabled + .sb-checkbox-visual {
+    filter: grayscale(0.7) brightness(0.6);
+    cursor: not-allowed;
+}
+.sb-checkbox:has(input[type="checkbox"]:disabled) {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Label text styling */
+.sb-checkbox-label {
+    color: var(--ink);
+    font-size: 0.95em;
+    line-height: 1.3;
+}
+
+/* Checkbox group container */
+.sb-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
 }
