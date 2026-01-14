@@ -3677,6 +3677,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
     }
   }
 
+  // Setting shot uses unified IMAGE PROVIDER ROUTER with landscape shape
   async function generateSettingShot(desc) {
      _lastSettingShotDesc = desc; // Store for retry
      const img = document.getElementById('settingShotImg');
@@ -3692,47 +3693,23 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
          errDiv.style.color = 'var(--gold)';
      }
 
-     // CORRECTIVE: 16:9 landscape orientation for cinematic establishing shot
+     // 16:9 landscape orientation for cinematic establishing shot
      const prompt = `Cinematic wide landscape establishing shot, atmospheric, fantasy art style, 16:9 aspect ratio, panoramic view. No text, no words. ${desc}`;
 
-     // OPENAI IMAGE GEN: Direct call to OpenAI for setting shots
      let rawUrl = null;
-     let lastErr = null;
 
+     // Use unified IMAGE PROVIDER ROUTER with FALLBACK CHAIN
+     // Setting shots always use Clean tier (sanitized) with landscape shape
      try {
-         const controller = new AbortController();
-         const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-         const res = await fetch(IMAGE_PROXY_URL, {
-             method:'POST',
-             headers:{'Content-Type':'application/json'},
-             body: JSON.stringify({
-                 prompt: prompt,
-                 provider: 'openai',
-                 model: 'gpt-image-1',
-                 size: "1792x1024",  // 16:9 landscape
-                 n: 1
-             }),
-             signal: controller.signal
+         rawUrl = await generateImageWithFallback({
+             prompt: prompt,
+             tier: 'Clean',
+             shape: 'landscape',
+             context: 'setting-shot'
          });
-
-         clearTimeout(timeoutId);
-
-         let data;
-         try { data = await res.json(); } catch(e) { data = null; }
-
-         if(!res.ok) {
-             console.warn(`Setting shot: OpenAI failed (${res.status})`);
-             throw new Error(`HTTP ${res.status}`);
-         }
-
-         rawUrl = data.url || data.image || data.b64_json;
-         if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
-             rawUrl = data.data[0].url || data.data[0].b64_json;
-         }
      } catch(e) {
-         lastErr = e;
-         console.warn('Setting shot failed with OpenAI', e);
+         // All providers failed - logged by generateImageWithFallback
+         console.warn('Setting shot: all providers exhausted', e.message);
      }
 
      if(rawUrl) {
@@ -3742,7 +3719,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
          }
          img.src = imageUrl;
 
-         // Add timeout for image load (matches Visualize)
+         // Add timeout for image load
          const loadTimeout = setTimeout(() => {
              img.style.display = 'none';
              if(errDiv) {
@@ -3883,144 +3860,212 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       return enhanced;
   }
 
+  // ============================================================
+  // IMAGE PROVIDER ROUTER - Unified image generation system
+  // ============================================================
+
   // PERCHANCE PROMPT HARD CONSTRAINTS (MANDATORY)
   const PERCHANCE_PROMPT_PREFIX = 'default Art Style is oil painting 70s pulp, cinematic lighting, realistic proportions, oil-painting style, non-anime.';
   const PERCHANCE_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. One head, two arms, two legs. No extra limbs. No extra people.';
 
-  // PERCHANCE PRIMARY: Call Perchance AI image generation service
-  async function callPerchanceImageGen(prompt, timeout = 60000) {
+  // DEV-ONLY: Logging helper for image generation debugging
+  function logImageAttempt(provider, context, prompt, status, error = null) {
+      const promptPreview = prompt.substring(0, 120) + (prompt.length > 120 ? '...' : '');
+      const logData = {
+          provider,
+          context,
+          promptLength: prompt.length,
+          promptPreview,
+          status,
+          timestamp: new Date().toISOString()
+      };
+      if (error) logData.error = error;
+      console.warn('[IMAGE-GEN]', JSON.stringify(logData));
+  }
+
+  // OPENAI PROVIDER: Call OpenAI image generation
+  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      try {
-          // Perchance endpoint - server-side microservice or internal HTTP endpoint
-          const perchanceUrl = (typeof PERCHANCE_PROXY_URL !== 'undefined' && PERCHANCE_PROXY_URL)
-              ? PERCHANCE_PROXY_URL
-              : IMAGE_PROXY_URL;
+      const res = await fetch(IMAGE_PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: prompt,
+              provider: 'openai',
+              model: 'gpt-image-1',
+              size: size,
+              n: 1
+          }),
+          signal: controller.signal
+      });
 
-          // Apply mandatory prefix and suffix constraints
-          const constrainedPrompt = `${PERCHANCE_PROMPT_PREFIX} ${prompt} ${PERCHANCE_PROMPT_SUFFIX}`;
+      clearTimeout(timeoutId);
 
-          const res = await fetch(perchanceUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  prompt: constrainedPrompt,
-                  provider: 'perchance',
-                  size: '1024x1024',
-                  n: 1
-              }),
-              signal: controller.signal
-          });
-
-          clearTimeout(timeoutId);
-
-          if (!res.ok) {
-              throw new Error(`Perchance HTTP ${res.status}`);
-          }
-
-          let data;
-          try { data = await res.json(); } catch (e) { data = null; }
-
-          const imageUrl = data?.url || data?.image || data?.b64_json ||
-              (Array.isArray(data?.data) && data.data[0]?.url) ||
-              (Array.isArray(data?.data) && data.data[0]?.b64_json);
-
-          if (!imageUrl) {
-              throw new Error('Perchance returned no image');
-          }
-
-          return { success: true, image: imageUrl };
-      } catch (e) {
-          clearTimeout(timeoutId);
-          // Silent failure - do not expose Perchance errors to user
-          console.warn('Perchance image gen failed silently:', e.message);
-          return { success: false, error: e.message };
+      if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `OpenAI HTTP ${res.status}`);
       }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('OpenAI invalid response'); }
+
+      const imageUrl = data?.url || data?.image || data?.b64_json ||
+          (Array.isArray(data?.data) && data.data[0]?.url) ||
+          (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+      if (!imageUrl) {
+          throw new Error('OpenAI returned no image');
+      }
+
+      return imageUrl;
   }
 
-  // OPENAI IMAGE GEN: Call OpenAI image generation
-  async function callOpenAIImageGen(prompt, model = 'gpt-image-1', timeout = 60000) {
+  // PERCHANCE PROVIDER: Call Perchance AI image generation service
+  async function callPerchanceImageGen(prompt, size = '1024x1024', timeout = 60000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      try {
-          const res = await fetch(IMAGE_PROXY_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  prompt: prompt,
-                  provider: 'openai',
-                  model: model,
-                  size: '1024x1024',
-                  n: 1
-              }),
-              signal: controller.signal
-          });
+      // Perchance endpoint - server-side microservice or internal HTTP endpoint
+      const perchanceUrl = (typeof PERCHANCE_PROXY_URL !== 'undefined' && PERCHANCE_PROXY_URL)
+          ? PERCHANCE_PROXY_URL
+          : IMAGE_PROXY_URL;
 
-          clearTimeout(timeoutId);
+      // Apply mandatory prefix and suffix constraints
+      const constrainedPrompt = `${PERCHANCE_PROMPT_PREFIX} ${prompt} ${PERCHANCE_PROMPT_SUFFIX}`;
 
-          if (!res.ok) {
-              const errData = await res.json().catch(() => null);
-              throw new Error(errData?.error || `OpenAI HTTP ${res.status}`);
-          }
+      const res = await fetch(perchanceUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: constrainedPrompt,
+              provider: 'perchance',
+              size: size,
+              n: 1
+          }),
+          signal: controller.signal
+      });
 
-          let data;
-          try { data = await res.json(); } catch (e) { data = null; }
+      clearTimeout(timeoutId);
 
-          const imageUrl = data?.url || data?.image || data?.b64_json ||
-              (Array.isArray(data?.data) && data.data[0]?.url) ||
-              (Array.isArray(data?.data) && data.data[0]?.b64_json);
-
-          if (!imageUrl) {
-              throw new Error('OpenAI returned no image');
-          }
-
-          return { success: true, image: imageUrl };
-      } catch (e) {
-          clearTimeout(timeoutId);
-          console.error('OpenAI image gen failed:', e.message);
-          return { success: false, error: e.message };
+      if (!res.ok) {
+          throw new Error(`Perchance HTTP ${res.status}`);
       }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('Perchance invalid response'); }
+
+      const imageUrl = data?.url || data?.image || data?.b64_json ||
+          (Array.isArray(data?.data) && data.data[0]?.url) ||
+          (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+      if (!imageUrl) {
+          throw new Error('Perchance returned no image');
+      }
+
+      return imageUrl;
   }
 
-  // TIER-BASED IMAGE ENGINE ROUTING
-  // Clean/Naughty → OpenAI (sanitized prompt)
-  // Erotic/Dirty → Perchance (restored prompt) with OpenAI fallback
-  async function generateTieredImage(basePrompt, tier) {
+  // GEMINI PROVIDER: Call Gemini image generation
+  async function callGeminiImageGen(prompt, size = '1024x1024', timeout = 60000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      const res = await fetch(IMAGE_PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: prompt,
+              provider: 'gemini',
+              model: 'imagen-3.0-generate-002',
+              size: size,
+              n: 1
+          }),
+          signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Gemini HTTP ${res.status}`);
+      }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('Gemini invalid response'); }
+
+      const imageUrl = data?.url || data?.image || data?.b64_json ||
+          (Array.isArray(data?.data) && data.data[0]?.url) ||
+          (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+      if (!imageUrl) {
+          throw new Error('Gemini returned no image');
+      }
+
+      return imageUrl;
+  }
+
+  // FALLBACK CHAIN: Unified image generation with provider fallbacks
+  // All image generation MUST route through this function
+  async function generateImageWithFallback({ prompt, tier, shape = 'portrait', context = 'visualize' }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
 
+      // Determine size based on shape
+      const size = shape === 'landscape' ? '1792x1024' : '1024x1024';
+
+      // FALLBACK CHAIN: Define provider order based on tier
+      // CLEAN/NAUGHTY: OpenAI → Gemini
+      // EROTIC/DIRTY: Perchance → OpenAI → Gemini
+      let providerChain;
+      let preparedPrompt;
+
       if (isExplicitTier) {
-          // EROTIC/DIRTY: Perchance primary, OpenAI fallback
-          const eroticPrompt = restoreEroticLanguage(basePrompt);
-
-          // PERCHANCE PRIMARY
-          const perchanceResult = await callPerchanceImageGen(eroticPrompt);
-          if (perchanceResult.success) {
-              return perchanceResult.image;
-          }
-
-          // FALLBACK IMAGE GEN: OpenAI with sanitized prompt
-          console.log('Perchance failed, falling back to OpenAI...');
-          const sanitizedPrompt = sanitizeImagePrompt(basePrompt);
-          const openaiResult = await callOpenAIImageGen(sanitizedPrompt);
-          if (openaiResult.success) {
-              return openaiResult.image;
-          }
-
-          throw new Error('All image providers failed');
+          // Erotic/Dirty: restore erotic language, try Perchance first
+          preparedPrompt = restoreEroticLanguage(prompt);
+          providerChain = [
+              { name: 'Perchance', fn: callPerchanceImageGen, prompt: preparedPrompt },
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizeImagePrompt(prompt) },
+              { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizeImagePrompt(prompt) }
+          ];
       } else {
-          // CLEAN/NAUGHTY: OpenAI only with sanitized prompt
-          // OPENAI IMAGE GEN
-          const sanitizedPrompt = sanitizeImagePrompt(basePrompt);
-          const openaiResult = await callOpenAIImageGen(sanitizedPrompt);
-          if (openaiResult.success) {
-              return openaiResult.image;
-          }
-
-          throw new Error('OpenAI image generation failed');
+          // Clean/Naughty: sanitized prompt, OpenAI first
+          preparedPrompt = sanitizeImagePrompt(prompt);
+          providerChain = [
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: preparedPrompt },
+              { name: 'Gemini', fn: callGeminiImageGen, prompt: preparedPrompt }
+          ];
       }
+
+      let lastError = null;
+
+      // FALLBACK CHAIN: Try each provider in order
+      for (const provider of providerChain) {
+          try {
+              logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
+              const imageUrl = await provider.fn(provider.prompt, size);
+              logImageAttempt(provider.name, context, provider.prompt, 'SUCCESS');
+              return imageUrl;
+          } catch (e) {
+              lastError = e;
+              logImageAttempt(provider.name, context, provider.prompt, 'FAILED', e.message);
+              // Continue to next provider in chain
+          }
+      }
+
+      // All providers failed
+      throw lastError || new Error('All image providers failed');
+  }
+
+  // Legacy wrapper for backward compatibility
+  async function generateTieredImage(basePrompt, tier) {
+      return generateImageWithFallback({
+          prompt: basePrompt,
+          tier: tier,
+          shape: 'portrait',
+          context: 'visualize'
+      });
   }
 
   // Filter "The Author" from any image prompt
