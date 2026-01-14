@@ -3695,56 +3695,44 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
      // CORRECTIVE: 16:9 landscape orientation for cinematic establishing shot
      const prompt = `Cinematic wide landscape establishing shot, atmospheric, fantasy art style, 16:9 aspect ratio, panoramic view. No text, no words. ${desc}`;
 
-     // Fallback chain: try multiple providers (matches Visualize)
-     const attempts = [
-         { provider: 'xai', name: 'Grok' },
-         { provider: 'openai', model: 'gpt-image-1', name: 'OpenAI' }
-     ];
-
+     // OPENAI IMAGE GEN: Direct call to OpenAI for setting shots
      let rawUrl = null;
      let lastErr = null;
 
-     for(const attempt of attempts) {
-         try {
-             // Add timeout to fetch to prevent infinite hanging (matches Visualize)
-             const controller = new AbortController();
-             const timeoutId = setTimeout(() => controller.abort(), 60000);
+     try {
+         const controller = new AbortController();
+         const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-             const res = await fetch(IMAGE_PROXY_URL, {
-                 method:'POST',
-                 headers:{'Content-Type':'application/json'},
-                 body: JSON.stringify({
-                     prompt: prompt,
-                     provider: attempt.provider,
-                     model: attempt.model || '',
-                     size: "1792x1024",  // CORRECTIVE: 16:9 landscape
-                     n: 1
-                 }),
-                 signal: controller.signal
-             });
+         const res = await fetch(IMAGE_PROXY_URL, {
+             method:'POST',
+             headers:{'Content-Type':'application/json'},
+             body: JSON.stringify({
+                 prompt: prompt,
+                 provider: 'openai',
+                 model: 'gpt-image-1',
+                 size: "1792x1024",  // 16:9 landscape
+                 n: 1
+             }),
+             signal: controller.signal
+         });
 
-             clearTimeout(timeoutId);
+         clearTimeout(timeoutId);
 
-             let data;
-             try { data = await res.json(); } catch(e) { data = null; }
+         let data;
+         try { data = await res.json(); } catch(e) { data = null; }
 
-             // Handle 404 and other HTTP errors - continue to fallback
-             if(!res.ok) {
-                 console.warn(`Setting shot: ${attempt.name} failed (${res.status}), trying fallback...`);
-                 throw new Error(`HTTP ${res.status}`);
-             }
-
-             rawUrl = data.url || data.image || data.b64_json;
-             if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
-                 rawUrl = data.data[0].url || data.data[0].b64_json;
-             }
-
-             if(rawUrl) break;
-         } catch(e) {
-             lastErr = e;
-             console.warn(`Setting shot failed with ${attempt.name}`, e);
-             // Continue to next fallback provider
+         if(!res.ok) {
+             console.warn(`Setting shot: OpenAI failed (${res.status})`);
+             throw new Error(`HTTP ${res.status}`);
          }
+
+         rawUrl = data.url || data.image || data.b64_json;
+         if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
+             rawUrl = data.data[0].url || data.data[0].b64_json;
+         }
+     } catch(e) {
+         lastErr = e;
+         console.warn('Setting shot failed with OpenAI', e);
      }
 
      if(rawUrl) {
@@ -3818,20 +3806,19 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   // Default visual quality biases for attractive characters
   const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
 
-  // Sanitize image prompts for Grok safety - removes/softens sensual adjectives
+  // Sanitize image prompts - removes sensual adjectives for Clean/Naughty tiers
   function sanitizeImagePrompt(prompt) {
-      // Words that trigger Grok safety filters
+      // Words that trigger safety filters on mainstream providers
       const sensualWords = [
           'sensual', 'erotic', 'seductive', 'sexual', 'intimate', 'naked', 'nude',
           'provocative', 'suggestive', 'lustful', 'passionate', 'steamy', 'hot',
           'sexy', 'aroused', 'arousing', 'undressed', 'revealing', 'exposed',
           'busty', 'voluptuous', 'curvy', 'bedroom', 'lingerie', 'underwear',
           'explicit', 'raw', 'unfiltered', 'dirty', 'naughty', 'forbidden',
-          // CORRECTIVE: Additional flagged words that trigger moderation
-          'sultry', 'alluring'
+          'sultry', 'alluring', 'nudity'
       ];
 
-      // CORRECTIVE: Phrases that trigger moderation (multi-word)
+      // Phrases that trigger moderation (multi-word)
       const sensualPhrases = [
           'parted lips', 'suggestive posture', 'alluring curves',
           'bedroom eyes', 'come hither', 'inviting gaze'
@@ -3842,7 +3829,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Remove "The Author" references (meta-character should never be in images)
       sanitized = sanitized.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
 
-      // CORRECTIVE: Remove flagged phrases first (before single words)
+      // Remove flagged phrases first (before single words)
       sensualPhrases.forEach(phrase => {
           const regex = new RegExp(phrase, 'gi');
           sanitized = sanitized.replace(regex, '');
@@ -3858,6 +3845,175 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       sanitized = sanitized.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').replace(/\s+,/g, ',').trim();
 
       return sanitized;
+  }
+
+  // EROTIC/DIRTY TIER: Restore erotic language to prompts for Perchance rendering
+  // This reverses sanitization for tiers that permit explicit imagery
+  function restoreEroticLanguage(prompt) {
+      // Keywords to restore/enhance for erotic tiers
+      const eroticEnhancements = [
+          'sensual', 'erotic', 'nudity', 'nude', 'explicit'
+      ];
+
+      let enhanced = prompt;
+
+      // Remove "The Author" references (meta-character should NEVER be in images)
+      enhanced = enhanced.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
+
+      // If prompt lacks erotic descriptors, inject tier-appropriate language
+      const hasEroticTerms = eroticEnhancements.some(term =>
+          enhanced.toLowerCase().includes(term)
+      );
+
+      if (!hasEroticTerms) {
+          // Inject erotic context based on intensity guidance already in prompt
+          if (enhanced.toLowerCase().includes('artistic nudity permitted') ||
+              enhanced.toLowerCase().includes('explicit') ||
+              enhanced.toLowerCase().includes('passionate')) {
+              enhanced = enhanced.replace(
+                  /Art style:/i,
+                  'Sensual, erotic imagery permitted. Art style:'
+              );
+          }
+      }
+
+      // Clean up spacing
+      enhanced = enhanced.replace(/\s+/g, ' ').trim();
+
+      return enhanced;
+  }
+
+  // PERCHANCE PRIMARY: Call Perchance AI image generation service
+  async function callPerchanceImageGen(prompt, timeout = 60000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+          // Perchance endpoint - server-side microservice or internal HTTP endpoint
+          const perchanceUrl = (typeof PERCHANCE_PROXY_URL !== 'undefined' && PERCHANCE_PROXY_URL)
+              ? PERCHANCE_PROXY_URL
+              : IMAGE_PROXY_URL;
+
+          const res = await fetch(perchanceUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  prompt: prompt,
+                  provider: 'perchance',
+                  size: '1024x1024',
+                  n: 1
+              }),
+              signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!res.ok) {
+              throw new Error(`Perchance HTTP ${res.status}`);
+          }
+
+          let data;
+          try { data = await res.json(); } catch (e) { data = null; }
+
+          const imageUrl = data?.url || data?.image || data?.b64_json ||
+              (Array.isArray(data?.data) && data.data[0]?.url) ||
+              (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+          if (!imageUrl) {
+              throw new Error('Perchance returned no image');
+          }
+
+          return { success: true, image: imageUrl };
+      } catch (e) {
+          clearTimeout(timeoutId);
+          // Silent failure - do not expose Perchance errors to user
+          console.warn('Perchance image gen failed silently:', e.message);
+          return { success: false, error: e.message };
+      }
+  }
+
+  // OPENAI IMAGE GEN: Call OpenAI image generation
+  async function callOpenAIImageGen(prompt, model = 'gpt-image-1', timeout = 60000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+          const res = await fetch(IMAGE_PROXY_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  prompt: prompt,
+                  provider: 'openai',
+                  model: model,
+                  size: '1024x1024',
+                  n: 1
+              }),
+              signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!res.ok) {
+              const errData = await res.json().catch(() => null);
+              throw new Error(errData?.error || `OpenAI HTTP ${res.status}`);
+          }
+
+          let data;
+          try { data = await res.json(); } catch (e) { data = null; }
+
+          const imageUrl = data?.url || data?.image || data?.b64_json ||
+              (Array.isArray(data?.data) && data.data[0]?.url) ||
+              (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+          if (!imageUrl) {
+              throw new Error('OpenAI returned no image');
+          }
+
+          return { success: true, image: imageUrl };
+      } catch (e) {
+          clearTimeout(timeoutId);
+          console.error('OpenAI image gen failed:', e.message);
+          return { success: false, error: e.message };
+      }
+  }
+
+  // TIER-BASED IMAGE ENGINE ROUTING
+  // Clean/Naughty → OpenAI (sanitized prompt)
+  // Erotic/Dirty → Perchance (restored prompt) with OpenAI fallback
+  async function generateTieredImage(basePrompt, tier) {
+      const normalizedTier = (tier || 'Naughty').toLowerCase();
+      const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
+
+      if (isExplicitTier) {
+          // EROTIC/DIRTY: Perchance primary, OpenAI fallback
+          const eroticPrompt = restoreEroticLanguage(basePrompt);
+
+          // PERCHANCE PRIMARY
+          const perchanceResult = await callPerchanceImageGen(eroticPrompt);
+          if (perchanceResult.success) {
+              return perchanceResult.image;
+          }
+
+          // FALLBACK IMAGE GEN: OpenAI with sanitized prompt
+          console.log('Perchance failed, falling back to OpenAI...');
+          const sanitizedPrompt = sanitizeImagePrompt(basePrompt);
+          const openaiResult = await callOpenAIImageGen(sanitizedPrompt);
+          if (openaiResult.success) {
+              return openaiResult.image;
+          }
+
+          throw new Error('All image providers failed');
+      } else {
+          // CLEAN/NAUGHTY: OpenAI only with sanitized prompt
+          // OPENAI IMAGE GEN
+          const sanitizedPrompt = sanitizeImagePrompt(basePrompt);
+          const openaiResult = await callOpenAIImageGen(sanitizedPrompt);
+          if (openaiResult.success) {
+              return openaiResult.image;
+          }
+
+          throw new Error('OpenAI image generation failed');
+      }
   }
 
   // Filter "The Author" from any image prompt
@@ -3978,13 +4134,6 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               return;
           }
 
-          const modelEl = document.getElementById('vizModel');
-          const userModel = modelEl ? modelEl.value : "";
-          const um = (userModel || "").toLowerCase();
-
-          const isOpenAI = um.includes("gpt") || um.includes("openai");
-          const isGemini = um.includes("gemini");
-
           // Build base prompt with intensity bias, quality defaults, and veto exclusions (filter "The Author")
           const modifierInput = document.getElementById('vizModifierInput');
           const userModifiers = modifierInput ? modifierInput.value.trim() : '';
@@ -4002,93 +4151,27 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               (userModifiers ? ", " + filterAuthorFromPrompt(userModifiers) : "") +
               "\n\nArt style: cinematic, painterly, tasteful. (Generate art without any text/lettering.)";
 
-          // Provider fallback order - will try each until one succeeds
-          const attempts = [];
-          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel, name: 'Grok', isSanitizeRetry: false });
-          attempts.push({ provider: 'xai', model: '', name: 'Grok (sanitized)', isSanitizeRetry: true });
-          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1', name: 'OpenAI', isSanitizeRetry: false });
-
-          let rawUrl = null;
-          let lastErr = null;
-          let attemptCount = 0;
-          let grokSafetyFailed = false;
-
-          for(const attempt of attempts){
-             // Check if cancelled before each attempt
-             if (_vizCancelled) {
-                 _vizInFlight = false;
-                 if(retryBtn) retryBtn.disabled = false;
-                 return;
-             }
-
-             // Skip sanitize retry if Grok didn't fail with safety error
-             if (attempt.isSanitizeRetry && !grokSafetyFailed) continue;
-
-             attemptCount++;
-             try {
-                // Add timeout to fetch to prevent infinite hanging
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
-
-                // Use sanitized prompt for retry attempts
-                const fullPrompt = attempt.isSanitizeRetry ? sanitizeImagePrompt(basePrompt) : basePrompt;
-
-                const res = await fetch(IMAGE_PROXY_URL, {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({
-                        prompt: fullPrompt,
-                        provider: attempt.provider,
-                        model: attempt.model,
-                        size: "1024x1024",
-                        n: 1
-                    }),
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                let data;
-                try { data = await res.json(); } catch(e){ data = null; }
-
-                // Handle 502 and other errors - continue to fallback
-                if(!res.ok) {
-                    const errMsg = data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`);
-                    console.warn(`Visualize: ${attempt.name} failed (${res.status}), trying fallback...`);
-
-                    // Detect Grok safety rejection - trigger sanitized retry
-                    const errLower = errMsg.toLowerCase();
-                    if (attempt.provider === 'xai' && !attempt.isSanitizeRetry &&
-                        (errLower.includes('safety') || errLower.includes('content policy') ||
-                         errLower.includes('inappropriate') || errLower.includes('violat') ||
-                         res.status === 400 || res.status === 422)) {
-                        grokSafetyFailed = true;
-                        console.log('Grok safety rejection detected, will retry with sanitized prompt...');
-                    }
-
-                    throw new Error(errMsg);
-                }
-
-                rawUrl = data.url || data.image || data.b64_json;
-                if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
-                    rawUrl = data.data[0].url || data.data[0].b64_json;
-                }
-
-                if(rawUrl) break;
-             } catch(e) {
-                 lastErr = e;
-                 // Don't throw - continue to next fallback provider
-             }
-          }
-
-          // Check if cancelled after all attempts
+          // Check if cancelled before image generation
           if (_vizCancelled) {
               _vizInFlight = false;
               if(retryBtn) retryBtn.disabled = false;
               return;
           }
 
-          if (!rawUrl) throw lastErr || new Error("All image providers failed.");
+          // TIER-BASED IMAGE ENGINE ROUTING
+          // Clean/Naughty → OpenAI (sanitized prompt)
+          // Erotic/Dirty → Perchance (restored prompt) with OpenAI fallback
+          const currentTier = state.intensity || 'Naughty';
+          const rawUrl = await generateTieredImage(basePrompt, currentTier);
+
+          // Check if cancelled after image generation
+          if (_vizCancelled) {
+              _vizInFlight = false;
+              if(retryBtn) retryBtn.disabled = false;
+              return;
+          }
+
+          if (!rawUrl) throw new Error("Image generation failed.");
 
           let imageUrl = rawUrl;
           if (!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {

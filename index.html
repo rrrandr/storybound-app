@@ -107,10 +107,8 @@
 
     <div class="viz-controls">
         <select id="vizModel">
-            <option value="grok-2-image-1212" selected>Grok 2</option>
-            <option value="auto">Auto (Best Available)</option>
-            <option value="openai">OpenAI (DALL-E 3)</option>
-            <option value="gemini">Gemini (Fantasy)</option>
+            <option value="auto" selected>Auto (Tier-Based)</option>
+            <option value="gpt-image-1">OpenAI (GPT Image)</option>
         </select>
         <button class="small-btn" id="vizRetryBtn" onclick="window.visualize(true)">Re-Visualize</button>
         <button onclick="window.insertImage()">Insert</button>
