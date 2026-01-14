@@ -3894,7 +3894,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           body: JSON.stringify({
               prompt: prompt,
               provider: 'openai',
-              model: 'gpt-image-1',
+              model: 'gpt-image-1.5',
               size: size,
               n: 1
           }),
