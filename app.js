@@ -3883,6 +3883,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       return enhanced;
   }
 
+  // PERCHANCE PROMPT HARD CONSTRAINTS (MANDATORY)
+  const PERCHANCE_PROMPT_PREFIX = 'default Art Style is oil painting 70s pulp, cinematic lighting, realistic proportions, oil-painting style, non-anime.';
+  const PERCHANCE_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. One head, two arms, two legs. No extra limbs. No extra people.';
+
   // PERCHANCE PRIMARY: Call Perchance AI image generation service
   async function callPerchanceImageGen(prompt, timeout = 60000) {
       const controller = new AbortController();
@@ -3894,11 +3898,14 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               ? PERCHANCE_PROXY_URL
               : IMAGE_PROXY_URL;
 
+          // Apply mandatory prefix and suffix constraints
+          const constrainedPrompt = `${PERCHANCE_PROMPT_PREFIX} ${prompt} ${PERCHANCE_PROMPT_SUFFIX}`;
+
           const res = await fetch(perchanceUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                  prompt: prompt,
+                  prompt: constrainedPrompt,
                   provider: 'perchance',
                   size: '1024x1024',
                   n: 1
