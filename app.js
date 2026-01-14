@@ -190,11 +190,13 @@ window.config = window.config || {
       fateSelectedIndex: -1,
       fateCommitted: false,
       selectedFatePayload: null,
+      fateHistory: {}, // Per-turn fate tracking: { turnNumber: { cardIndex, cardData, sayText, doText } }
       _snapshotThisTurn: false,
       sexPushCount: 0,
       lastSexPushAt: null,
       veto: { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] },
-      quill: { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600 },
+      vetoEntries: [], // Canonical list of veto entries with IDs for removal
+      quill: { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600, locked: false },
       quillCommittedThisTurn: false,
       quillIntent: '',
       storyStage: 'pre-intimacy',
@@ -355,6 +357,7 @@ window.config = window.config || {
       // Populate suggestion pills when entering setup screen
       if(id === 'setup') {
           populatePills();
+          renderVetoEntries(); // Restore committed veto entries from state
       }
   };
 
@@ -618,6 +621,132 @@ window.config = window.config || {
       state.veto.ambientMods = parsed.ambientMods;
   }
 
+  // --- VETO ENTRY MANAGEMENT (Canonical State) ---
+  let _vetoEntryId = 0;
+
+  function commitVetoEntries() {
+      const el = document.getElementById('vetoInput');
+      if (!el) return;
+
+      const text = el.value.trim();
+      if (!text) {
+          showVetoToast("No veto entries to commit.");
+          return;
+      }
+
+      const parsed = parseVetoInput(text);
+
+      // Show rejection toast if any lines were rejected
+      if (parsed.rejected.length > 0) {
+          showVetoToast("Some entries were rejected. Veto can't direct events.");
+          return;
+      }
+
+      // Add new entries to canonical vetoEntries array
+      if (!state.vetoEntries) state.vetoEntries = [];
+
+      const lines = text.split('\n').filter(l => l.trim());
+      lines.forEach(line => {
+          const trimmed = line.trim();
+          if (trimmed && !state.vetoEntries.some(e => e.text === trimmed)) {
+              state.vetoEntries.push({
+                  id: ++_vetoEntryId,
+                  text: trimmed,
+                  addedAt: Date.now()
+              });
+          }
+      });
+
+      // Apply to state.veto
+      rebuildVetoFromEntries();
+
+      // Clear input and render committed entries
+      el.value = '';
+      renderVetoEntries();
+
+      showVetoToast("Veto committed.");
+  }
+
+  function removeVetoEntry(entryId) {
+      if (!state.vetoEntries) return;
+      state.vetoEntries = state.vetoEntries.filter(e => e.id !== entryId);
+      rebuildVetoFromEntries();
+      renderVetoEntries();
+  }
+
+  function rebuildVetoFromEntries() {
+      // Rebuild state.veto from canonical vetoEntries
+      const allText = (state.vetoEntries || []).map(e => e.text).join('\n');
+      const parsed = parseVetoInput(allText);
+
+      state.veto.bannedWords = parsed.exclusions;
+      state.veto.excluded = parsed.exclusions;
+      state.veto.corrections = parsed.corrections;
+      state.veto.ambientMods = parsed.ambientMods;
+  }
+
+  function renderVetoEntries() {
+      const container = document.getElementById('vetoEntriesContainer');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      if (!state.vetoEntries || state.vetoEntries.length === 0) {
+          container.style.display = 'none';
+          return;
+      }
+
+      container.style.display = 'flex';
+
+      state.vetoEntries.forEach(entry => {
+          const pill = document.createElement('span');
+          pill.className = 'pill veto-entry-pill';
+          pill.style.cssText = 'display:inline-flex; align-items:center; gap:5px; background:rgba(255,69,69,0.15); border-color:rgba(255,69,69,0.4);';
+
+          const text = document.createElement('span');
+          text.textContent = entry.text;
+
+          const removeBtn = document.createElement('span');
+          removeBtn.textContent = '×';
+          removeBtn.style.cssText = 'cursor:pointer; font-weight:bold; color:#ff6b6b; padding:0 2px;';
+          removeBtn.onclick = (e) => {
+              e.stopPropagation();
+              removeVetoEntry(entry.id);
+          };
+
+          pill.appendChild(text);
+          pill.appendChild(removeBtn);
+          container.appendChild(pill);
+      });
+  }
+
+  function showVetoToast(msg) {
+      // Show toast between Quill and Veto panels (positioned toast)
+      const existingToast = document.querySelector('.qv-toast');
+      if (existingToast) existingToast.remove();
+
+      const toast = document.createElement('div');
+      toast.className = 'qv-toast';
+      toast.textContent = msg;
+      toast.style.cssText = 'position:absolute; left:50%; transform:translateX(-50%); background:#333; border:1px solid var(--gold); color:var(--gold); padding:8px 16px; border-radius:20px; font-size:0.85em; z-index:100; white-space:nowrap;';
+
+      const container = document.querySelector('.quill-veto-container');
+      if (container) {
+          container.style.position = 'relative';
+          container.appendChild(toast);
+
+          // Auto-dismiss after 2.5s
+          setTimeout(() => {
+              toast.style.opacity = '0';
+              toast.style.transition = 'opacity 0.3s';
+              setTimeout(() => toast.remove(), 300);
+          }, 2500);
+      } else {
+          // Fallback to regular toast
+          showToast(msg);
+      }
+  }
+
   // Legacy compatibility wrapper
   function parseStoryControls(rawText) {
       const vetoResult = parseVetoInput(rawText);
@@ -709,11 +838,25 @@ window.config = window.config || {
           if(godToggle) godToggle.classList.add('hidden');
       }
 
+      // Check if Quill is LOCKED due to access tier (not paid)
+      const isLocked = (state.access === 'free' && state.mode !== 'couple');
+
+      // Check if Quill is SPENT (on cooldown)
       const ready = getQuillReady();
       const wc = currentStoryWordCount();
       const needed = state.quill.nextReadyAtWords;
 
-      if(ready) {
+      if (isLocked) {
+          // Quill is LOCKED - show locked state, not spent
+          status.textContent = "Quill: Locked";
+          status.style.color = "#888";
+          if(quillBox) quillBox.classList.add('locked-input');
+          btn.disabled = true;
+          btn.style.opacity = "0.5";
+          btn.style.borderColor = "transparent";
+          btn.textContent = "Commit Quill";
+      } else if(ready) {
+          // Quill is READY to use
           status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
           status.style.color = "var(--pink)";
           btn.disabled = false;
@@ -722,6 +865,7 @@ window.config = window.config || {
           btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
           if(quillBox) quillBox.classList.remove('locked-input');
       } else {
+          // Quill is SPENT (on cooldown)
           const remain = Math.max(0, needed - wc);
           status.textContent = `Quill: Spent (${remain} words to recharge)`;
           status.style.color = "var(--gold)";
@@ -729,6 +873,7 @@ window.config = window.config || {
           btn.disabled = true;
           btn.style.opacity = "0.5";
           btn.style.borderColor = "transparent";
+          btn.textContent = "Commit Quill";
       }
   }
   
@@ -1501,7 +1646,13 @@ window.config = window.config || {
       quillEl.value = '';
       updateQuillUI();
       saveStorySnapshot();
-      showToast("Quill committed.");
+      showVetoToast("Quill committed.");
+  });
+
+  // Commit Veto button handler
+  $('btnCommitVeto')?.addEventListener('click', () => {
+      commitVetoEntries();
+      saveStorySnapshot();
   });
 
   // --- META SYSTEM (RESTORED) ---

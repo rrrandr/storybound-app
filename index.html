@@ -467,8 +467,10 @@
         <div class="qv-section">
             <label class="qv-label">Veto</label>
             <p class="qv-hint-above">Block elements you never want to appear. Vetoes are immediate and permanent.</p>
+            <div id="vetoEntriesContainer" class="pill-tray" style="display:none; margin-bottom:8px; flex-wrap:wrap;"></div>
             <div id="vetoPills" class="pill-tray"></div>
             <textarea id="vetoInput" rows="2" placeholder="ban: word&#10;rename: Old Name -> New Name&#10;no tattoos"></textarea>
+            <button id="btnCommitVeto" class="small-btn" style="margin-top:8px; padding:4px 10px; font-size:0.85em; width:100%;">Commit Veto</button>
             <p class="qv-hint-below">Vetoes remove content from consideration. They cannot start scenes or direct the story.</p>
         </div>
 
@@ -479,18 +481,16 @@
             <div id="quillBox" class="input-wrapper locked-input" onclick="window.showPaywall('unlock')">
                 <textarea id="quillInput" rows="2" placeholder="Bring them to a moonlit garden..."></textarea>
             </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                <span id="quillStatus" style="font-size:0.8em; color:var(--gold);">Quill: Poised</span>
+                <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
+            </div>
             <p class="qv-hint-below">Quill edits shape what follows and may persist. Each use exhausts the Quill, requiring time and words before it can be wielded again.</p>
         </div>
     </div>
 
-    <div class="quill-ui">
-        <div style="display:flex; width:100%; justify-content:space-between; margin-bottom:5px;">
-            <span id="quillStatus">Quill: Poised</span>
-            <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
-        </div>
-        <div id="godModeToggle" class="hidden">
-            <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> Enable God Mode (Sandbox)</label>
-        </div>
+    <div id="godModeToggle" class="hidden" style="text-align:center; margin:10px 0;">
+        <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> Enable God Mode (Sandbox)</label>
     </div>
 
     <br>
