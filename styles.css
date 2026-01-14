@@ -343,10 +343,10 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 }
 
 /* LOCKS & CURSOR */
-.locked-input textarea, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
+.locked-input, .locked-input textarea, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
 .intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
     opacity:0.6; filter:grayscale(0.9);
-    cursor: var(--cursor-url) 2 2, pointer !important;
+    cursor: url('cursor-dollar-plane-64.png') 2 2, pointer !important;
     pointer-events: auto !important;
 }
 .locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
@@ -653,11 +653,11 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .pill.fading { opacity: 0.4; }
 
 /* PAYWALLED ELEMENTS - CURSOR AND VISIBILITY */
-.locked-input, .locked-style, .card.locked, .fate-card.locked,
+.locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
 .intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
     cursor: url('cursor-dollar-plane-64.png') 2 2, pointer !important;
 }
-.card.locked:hover, .fate-card.locked:hover,
+.card.locked:hover, .fate-card.locked:hover, .intensity-btn.locked:hover,
 .intensity-btn.locked-tease:hover, .intensity-btn.locked-pass:hover,
 [data-locked]:hover {
     cursor: url('cursor-dollar-plane-64.png') 2 2, pointer !important;
