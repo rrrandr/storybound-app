@@ -69,17 +69,37 @@
 
 <div id="loadingOverlay" class="overlay hidden" style="z-index:9000;">
   <div id="loadingOverlayInner">
+    <button id="loadingCancelBtn" class="loading-cancel-btn" title="Cancel">&times;</button>
     <div id="loadingText">Stoking the embers...</div>
     <div id="loadingOverlayBar"><div id="loadingOverlayFill"></div></div>
+    <div id="loadingPercent">0%</div>
   </div>
 </div>
 
 <div id="vizModal" class="overlay hidden">
   <div class="box viz-modal-content">
     <h3>Visualization</h3>
+    <!-- CORRECTIVE: Explanatory copy for visualization -->
+    <p style="font-size:0.85em; color:var(--gold); margin-bottom:10px; font-style:italic;">
+        You may freely edit the prompt below. Images are limited to Naughty-level eroticism.
+        Prompts are automatically scaled down to avoid artist refusal.
+    </p>
     <textarea id="vizPromptInput" placeholder="Prompt will appear here..."></textarea>
+
+    <!-- CORRECTIVE: Quick Prompt Modifier heading -->
+    <h4 style="font-size:1.1em; color:var(--pink); margin:15px 0 5px; font-weight:bold;">Quick Prompt Modifier</h4>
+    <!-- Modifier section: scrolling suggestions + text input -->
+    <div id="vizModifierSection" class="fate-input-wrapper" style="margin-top:5px;">
+        <input type="text" id="vizModifierInput" class="fate-field" placeholder="">
+        <div class="rotating-placeholder" data-for="vizModifierInput"></div>
+    </div>
+    <!-- CORRECTIVE: Instructions for modifiers -->
+    <p style="font-size:0.8em; color:#888; margin-top:5px; font-style:italic;">
+        Type or select a modifier to adjust the image. Modifiers are appended to your prompt.
+    </p>
+
     <div id="vizPlaceholder">Generating...</div>
-    
+
     <div id="vizImgContainer">
         <img id="vizPreviewImg" alt="Scene" style="display:none">
         <div id="vizError" class="img-error-msg hidden"></div>
@@ -87,8 +107,8 @@
 
     <div class="viz-controls">
         <select id="vizModel">
+            <option value="grok-2-image-1212" selected>Grok 2</option>
             <option value="auto">Auto (Best Available)</option>
-            <option value="grok-2-image-1212">Grok 2</option>
             <option value="openai">OpenAI (DALL-E 3)</option>
             <option value="gemini">Gemini (Fantasy)</option>
         </select>
@@ -96,6 +116,11 @@
         <button onclick="window.insertImage()">Insert</button>
         <button class="small-btn" style="background:#555" onclick="window.closeViz()">Cancel</button>
     </div>
+    <label class="sb-checkbox" style="font-size:0.8em; justify-content:center; margin-top:12px;">
+        <input type="checkbox" id="chkAutoLockVisual" checked>
+        <span class="sb-checkbox-visual"></span>
+        <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Lock character look after this Visualize</span>
+    </label>
   </div>
 </div>
 
@@ -105,7 +130,7 @@
     <p style="opacity:0.8; font-size:0.9em;">Explicit content enabled. Sample:</p>
     <div id="eroticPreviewText"></div>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-        <button onclick="window.showPaywall('unlock');">Unlock Erotic ($1)</button>
+        <button onclick="window.showPaywall('unlock');">Storypass $3</button>
         <button onclick="document.getElementById('eroticPreviewModal').classList.add('hidden')" style="background:#444">Not Now</button>
     </div>
   </div>
@@ -122,7 +147,7 @@
     </div>
 
     <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
-      <button id="btnCreateRoom">Create Room</button>
+      <button id="btnCreateRoom">New Invitation</button>
       <button id="btnJoinRoom" style="background:#444">Join Room</button>
     </div>
 
@@ -132,17 +157,30 @@
     </div>
 
     <div id="roomCodeWrap" class="hidden" style="margin-bottom:15px;">
-      <p style="margin:0 0 5px; font-size:0.9em; opacity:0.8;">Share this code with your partner:</p>
-      <div id="coupleRoomCodeWrap">
-         <div id="roomCodeBig">—</div>
-         <button id="btnCopyCode" title="Copy Code">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-         </button>
+      <div class="invitation-card" style="background: rgba(255,105,180,0.08); border: 1px solid rgba(255,105,180,0.3); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+        <p id="invitationText" style="font-style: italic; color: var(--ink); margin: 0 0 15px; line-height: 1.5;">
+          "A private chamber awaits. The mask is optional. The curiosity is not."
+        </p>
+        <div id="coupleRoomCodeWrap">
+           <div id="roomCodeBig">—</div>
+           <button id="btnCopyCode" title="Copy Code">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+           </button>
+        </div>
       </div>
+
+      <p style="margin:0 0 10px; font-size:0.85em; color:var(--gold);">Send invitation via:</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
+        <button id="btnSendEmail" class="invite-send-btn" style="background:#444; font-size:0.85em; padding:8px 16px;">Email</button>
+        <button id="btnSendSMS" class="invite-send-btn" style="background:#444; font-size:0.85em; padding:8px 16px;">SMS</button>
+        <button id="btnSendBoth" class="invite-send-btn" style="background:#444; font-size:0.85em; padding:8px 16px;">Both</button>
+      </div>
+      <p id="inviteSentStatus" class="hidden" style="color:var(--gold); font-size:0.85em; margin:10px 0;">Invitation sent. Awaiting your paramour...</p>
     </div>
 
     <div>
-      <button id="btnEnterCoupleGame" class="hidden" style="width:100%; margin-bottom:10px;">Enter Together</button>
+      <button id="btnEnterCoupleGame" class="hidden" style="width:100%; margin-bottom:10px;" disabled>Enter Chamber Together</button>
+      <button id="btnPlaySoloWaiting" class="hidden" style="width:100%; margin-bottom:10px; background:#333; border:1px solid var(--gold);">Play Solo Until Your Paramour Joins</button>
       <button onclick="window.coupleCleanup(); window.showScreen('modeSelect')" style="background:transparent; border:1px solid #444; font-size:0.9em;">Back</button>
     </div>
   </div>
@@ -232,19 +270,19 @@
         <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
             <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:220px; text-align:left;">
                 <h4 style="color:var(--pink); margin-top:0;">Unlock This Story</h4>
-                <p style="font-size:0.9em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, and control.<br><strong>$3 Story Pass.</strong></p>
-                <button id="payOneTime" style="width:100%; margin-top:15px;">Unlock ($3)</button>
+                <p style="font-size:0.85em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, Quill access.<br><strong>$3 Story Pass.</strong></p>
+                <button id="payOneTime" style="width:100%; margin-top:15px;">Storypass $3</button>
             </div>
 
             <div id="optSub" style="background:linear-gradient(145deg, #400020, #200010); padding:15px; border-radius:10px; border:1px solid gold; width:220px; text-align:left;">
                 <h4 style="color:var(--gold); margin-top:0;">Indulge Limits</h4>
-                <ul style="font-size:0.85em; padding-left:15px; opacity:0.9; line-height:1.4; list-style-type: '⚜ ';">
+                <ul style="font-size:0.8em; padding-left:15px; opacity:0.9; line-height:1.4; list-style-type: '⚜ ';">
                     <li>Dirty intensity</li>
-                    <li>Long-form stories (Affair/Soulmates)</li>
-                    <li>Save & return anytime</li>
-                    <li>Cancel anytime</li>
+                    <li>Long-form stories</li>
+                    <li>Unlimited Quill</li>
+                    <li>Save anytime</li>
                 </ul>
-                <div style="text-align:center; font-size:0.9em; margin:15px 0; color:var(--gold);">$6/month</div>
+                <div style="text-align:center; font-size:0.9em; margin:10px 0; color:var(--gold);">$6/month</div>
                 <button id="paySub" style="width:100%; background:linear-gradient(145deg, gold, #b8860b); color:black; font-weight:bold;">Subscribe</button>
             </div>
         </div>
@@ -254,7 +292,7 @@
   </div>
 </div>
 
-<div id="previewModal" class="overlay hidden" style="z-index:5000;">
+<div id="previewModal" class="overlay hidden" style="z-index:10010;">
   <div class="box">
     <p id="previewText" style="font-size:1.3em; font-style:italic; line-height:1.6"></p>
     <button onclick="document.getElementById('previewModal').classList.add('hidden')">Close</button>
@@ -338,18 +376,99 @@
         </div>
     </div>
 
+    <div class="section-title">Ancestry / Culture</div>
+    <p class="ancestry-subtext">Optional: ground the characters in a cultural or ancestral context.</p>
+
+    <div class="ancestry-container">
+        <div class="ancestry-subsection">
+            <div class="ancestry-label">Yours</div>
+            <div class="fate-input-row">
+                <div class="input-wrapper fate-input-wrapper">
+                    <input id="ancestryInputPlayer" type="text" class="fate-field" data-fate-type="ancestry">
+                    <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
+                </div>
+                <div class="fate-hand" data-target="ancestryInputPlayer" data-type="ancestry">
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                </div>
+                <div class="fate-tree-card hidden" data-target="ancestryInputPlayer">
+                    <div class="tree-silhouette"></div>
+                    <div class="falling-leaf"><svg viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg"><path d="M6 14C6 14 0 8 0 5C0 2.5 2 0 6 0C10 0 12 2.5 12 5C12 8 6 14 6 14Z" fill="#c9a227" stroke="#8b7355" stroke-width="0.5"/><path d="M6 2V11" stroke="#a08030" stroke-width="0.6" stroke-linecap="round"/></svg></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ancestry-subsection">
+            <div class="ancestry-label" id="ancestryLabelLI">Your Storybeau's</div>
+            <div class="fate-input-row">
+                <div class="input-wrapper fate-input-wrapper">
+                    <input id="ancestryInputLI" type="text" class="fate-field" data-fate-type="ancestry">
+                    <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
+                </div>
+                <div class="fate-hand" data-target="ancestryInputLI" data-type="ancestry">
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                </div>
+                <div class="fate-tree-card hidden" data-target="ancestryInputLI">
+                    <div class="tree-silhouette"></div>
+                    <div class="falling-leaf"><svg viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg"><path d="M6 14C6 14 0 8 0 5C0 2.5 2 0 6 0C10 0 12 2.5 12 5C12 8 6 14 6 14Z" fill="#c9a227" stroke="#8b7355" stroke-width="0.5"/><path d="M6 2V11" stroke="#a08030" stroke-width="0.6" stroke-linecap="round"/></svg></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title" id="archetypeSectionTitle">Shape Your Storybeau</div>
+    <p class="archetype-header-text">Choose a core desire style for this character.</p>
+    <p class="archetype-subtext">Select one Primary archetype. You may optionally add one Modifier to refine how it shows up.</p>
+
+    <div class="archetype-selection">
+        <div class="archetype-group">
+            <label class="archetype-group-label">Primary Archetype — Defines the emotional core and relationship arc.</label>
+            <div class="archetype-pills" id="primaryArchetypePills"></div>
+        </div>
+
+        <div class="archetype-group">
+            <label class="archetype-group-label">Optional Modifier — Refines expression without changing the core.</label>
+            <div class="archetype-pills" id="modifierArchetypePills"></div>
+        </div>
+
+        <p class="archetype-constraint-text">Only one Primary archetype may be selected. The Beautiful Ruin and The Anti-Hero may only be chosen as a Primary.</p>
+    </div>
+
+    <div id="archetypePreview" class="archetype-preview hidden">
+        <div id="archetypePreviewContent"></div>
+    </div>
+
     <div class="section-title">Safety & Boundaries</div>
-    <div class="consent-controls">
-        <label><input type="checkbox" id="chkDark" checked> Dark Themes Allowed</label>
-        <label><input type="checkbox" id="chkNonCon"> Non-consent themes (IMPLIED ONLY)</label>
-        <label><input type="checkbox" id="chkViolence" checked> Violence / Peril</label>
+    <div class="sb-checkbox-group">
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkDark" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Dark Themes</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkNonCon">
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Implied Non-consent</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkViolence" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Violence / Peril</span>
+        </label>
     </div>
     <div class="boundary-chips" id="boundaryChips">
         <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
-        <div class="chip">No coercion</div>
-        <div class="chip">No degradation language</div>
-        <div class="chip">No captivity</div>
-        <div class="chip">No blackmail</div>
+        <div class="chip" data-boundary="coercion">No coercion</div>
+        <div class="chip" data-boundary="degradation">No degradation language</div>
+        <div class="chip" data-boundary="captivity">No captivity</div>
+        <div class="chip" data-boundary="blackmail">No blackmail</div>
     </div>
 
     <div class="section-title">Intensity <span class="instruction-text">(Rendering Ceiling)</span></div>
@@ -362,11 +481,6 @@
     <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px; min-height:40px;">
         (Naughty) Suggestive tension; no explicit anatomy.
     </p>
-    
-    <label style="font-size:0.85em; color:var(--gold); opacity:0.8; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:5px; cursor:pointer;">
-        <input type="checkbox" id="chkAutoLockVisual" checked> 
-        Lock character look after first Visualize
-    </label>
 
     <div id="lengthSection">
         <div class="section-title">Story Length</div>
@@ -397,7 +511,7 @@
 
     <div class="section-title">Genres <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="genreGrid">
-      <div class="card" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and intense romantic stakes.</p></div>
+      <div class="card selected" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and intense romantic stakes.</p></div>
       <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary Romance</h3><p>Modern settings and present-day relationships.</p></div>
       <div class="card" data-grp="genre" data-val="Historical"><h3>Historical Romance</h3><p>Period romance and forbidden rules.</p></div>
       <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal Modern Romance</h3><p>Vampires, shifters, witches in today’s world.</p></div>
@@ -421,23 +535,23 @@
     <div class="style-cards" id="dynamicGrid">
       <div class="card" data-grp="dynamic" data-val="Enemies"><h3>Enemies → Lovers</h3><p>Rivals whose friction turns to heat.</p></div>
       <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Desire under rules and taboo.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Player defines boundaries and limits.</p></div>
+      <div class="card selected" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Unequal footing, charged tension, control as currency.</p></div>
       <div class="card" data-grp="dynamic" data-val="SlowBurn"><h3>Slow Burn</h3><p>High restraint, earned payoff.</p></div>
       <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends → Lovers</h3><p>Safety tipping into heat.</p></div>
       <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Close quarters, rising tension.</p></div>
       <div class="card" data-grp="dynamic" data-val="Secret"><h3>Secret Identity</h3><p>Truths revealed at the worst time.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Intense focus, player sets bounds.</p></div>
+      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Intense focus, consuming attention.</p></div>
       <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated Mates / Soulbond</h3><p>Destined bond, fast intensity.</p></div>
       <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker / Wounded One</h3><p>Vulnerability and steady support.</p></div>
     </div>
 
     <div class="section-title">Story POV</div>
     <div class="style-cards" id="povGrid">
-      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>Intimate, confessional, inside your pulse.</p><button class="preview-btn" data-txt="I held my breath as the door clicked shut behind him.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>Immediate, immersive, hands-on tension.</p><button class="preview-btn" data-txt="You feel the room shift the moment he looks at you.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>Wider lens, cinematic, controlled heat.</p><button class="preview-btn" data-txt="He kept his voice calm, but the way his gaze lingered betrayed the hunger.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>Choral, conspiratorial, shared gaze.</p><button class="preview-btn" data-txt="We watched them circle each other—two storms pretending to be weather.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>Playful narrator with a hand on the page.</p><button class="preview-btn" data-txt="The Author hesitated—then smiled—and offered them a door.">Preview</button></div>
+      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>I wanted something intimate, confessional—a voice inside my own pulse.</p><button class="preview-btn" data-txt="I held my breath as the door clicked shut behind him.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>You wanted to feel it directly—every glance, every silence, happening to you.</p><button class="preview-btn" data-txt="You feel the room shift the moment he looks at you.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>She preferred a wider lens—close enough to feel, distant enough to see.</p><button class="preview-btn" data-txt="He kept his voice calm, but the way his gaze lingered betrayed the hunger.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>We gather here, witnesses to the inevitable—watching what they cannot yet see.</p><button class="preview-btn" data-txt="We watched them circle each other—two storms pretending to be weather.">Preview</button></div>
+      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>The Author hoped you were adventurous enough to let her hold the pen.</p><button class="preview-btn" data-txt="The Author hesitated—then smiled—and offered them a door.">Preview</button></div>
     </div>
 
     <div class="section-title">Story Style <span class="instruction-text">(Select up to 3)</span></div>
@@ -467,26 +581,62 @@
         <div class="qv-section">
             <label class="qv-label">Veto</label>
             <p class="qv-hint-above">Block elements you never want to appear. Vetoes are immediate and permanent.</p>
-            <div id="vetoPills" class="pill-tray"></div>
-            <textarea id="vetoInput" rows="2" placeholder="ban: word&#10;rename: Old Name -> New Name&#10;no tattoos"></textarea>
+            <div id="vetoCommitted" class="committed-phrases"></div>
+            <div class="fate-input-row">
+                <div class="input-wrapper fate-input-wrapper fate-textarea-wrapper">
+                    <textarea id="vetoInput" rows="2" class="fate-field" data-fate-type="veto"></textarea>
+                    <div class="rotating-placeholder textarea-placeholder" data-for="vetoInput"></div>
+                </div>
+                <div class="fate-hand" data-target="vetoInput" data-type="veto">
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                </div>
+                <div class="fate-tree-card hidden" data-target="vetoInput">
+                    <div class="tree-silhouette"></div>
+                    <div class="falling-leaf"><svg viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg"><path d="M6 14C6 14 0 8 0 5C0 2.5 2 0 6 0C10 0 12 2.5 12 5C12 8 6 14 6 14Z" fill="#c9a227" stroke="#8b7355" stroke-width="0.5"/><path d="M6 2V11" stroke="#a08030" stroke-width="0.6" stroke-linecap="round"/></svg></div>
+                </div>
+            </div>
             <p class="qv-hint-below">Vetoes remove content from consideration. They cannot start scenes or direct the story.</p>
         </div>
 
         <div class="qv-section">
             <label class="qv-label">Quill</label>
             <p class="qv-hint-above">Use the Quill to gently steer tone, boundaries, or direction without rewriting what's already happened.</p>
-            <div id="quillPills" class="pill-tray"></div>
-            <div id="quillBox" class="input-wrapper locked-input" onclick="window.showPaywall('unlock')">
-                <textarea id="quillInput" rows="2" placeholder="Bring them to a moonlit garden..."></textarea>
+            <div id="quillCommitted" class="committed-phrases"></div>
+            <div class="fate-input-row">
+                <div id="quillBox" class="input-wrapper fate-input-wrapper fate-textarea-wrapper locked-input" onclick="window.showPaywall('unlock')">
+                    <textarea id="quillInput" rows="2" class="fate-field" data-fate-type="quill"></textarea>
+                    <div class="rotating-placeholder textarea-placeholder" data-for="quillInput"></div>
+                </div>
+                <div class="fate-hand" data-target="quillInput" data-type="quill">
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                    <div class="fate-hand-card"></div>
+                </div>
+                <div class="fate-tree-card hidden" data-target="quillInput">
+                    <div class="tree-silhouette"></div>
+                    <div class="falling-leaf"><svg viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg"><path d="M6 14C6 14 0 8 0 5C0 2.5 2 0 6 0C10 0 12 2.5 12 5C12 8 6 14 6 14Z" fill="#c9a227" stroke="#8b7355" stroke-width="0.5"/><path d="M6 2V11" stroke="#a08030" stroke-width="0.6" stroke-linecap="round"/></svg></div>
+                </div>
             </div>
             <p class="qv-hint-below">Quill edits shape what follows and may persist. Each use exhausts the Quill, requiring time and words before it can be wielded again.</p>
         </div>
     </div>
 
-    <div class="quill-ui">
-        <div style="display:flex; width:100%; justify-content:space-between; margin-bottom:5px;">
-            <span id="quillStatus">Quill: Poised</span>
-            <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
+    <div class="quill-veto-ui">
+        <div style="display:flex; width:100%; justify-content:space-between; align-items:center; margin-bottom:5px; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="vetoStatus" style="font-size:0.85em; color:var(--pink);">Veto: Ready</span>
+                <button id="btnCommitVeto" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit Veto</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="quillStatus">Quill: Poised</span>
+                <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
+            </div>
         </div>
         <div id="godModeToggle" class="hidden">
             <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> Enable God Mode (Sandbox)</label>
@@ -501,8 +651,10 @@
     
     <div id="billingBanner" style="display:none;"></div>
 
-    <h2 id="storyTitle"></h2>
-    <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:20px;"></p>
+    <!-- CORRECTIVE: Story start - title double size, Scene under synopsis -->
+    <h2 id="storyTitle" style="font-size:3em; text-align:center; margin-bottom:10px;"></h2>
+    <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:10px; text-align:center;"></p>
+    <div id="sceneNumber" style="font-size:2em; color:var(--gold); font-weight:bold; text-align:center; margin:0 0 20px;">Scene 1</div>
     
     <div id="batedBreathIndicator" class="hidden" style="text-align:center; font-size:0.8em; color:var(--gold); font-style:italic; margin-bottom:10px; opacity:0.8;">
         Waiting for partner... 
@@ -514,7 +666,19 @@
         <img id="settingShotImg" src="" alt="Setting" style="display:none; width:100%;">
     </div>
 
-    <div id="storyText" class="box"></div>
+    <div id="storyText" class="box">
+        <div class="story-pages-container" id="storyPagesContainer"></div>
+    </div>
+
+    <div class="page-nav-controls" id="pageNavControls">
+        <button class="page-nav-btn" id="prevPageBtn" disabled>
+            <span>←</span> Previous
+        </button>
+        <span class="page-indicator" id="pageIndicator">Page 1 of 1</span>
+        <button class="page-nav-btn" id="nextPageBtn" disabled>
+            Next <span>→</span>
+        </button>
+    </div>
 
     <div style="text-align:center; margin-bottom:10px;">
         <button onclick="window.visualize()" style="font-size:0.9em; background:#444;">✨ Visualize This Scene</button>
@@ -529,9 +693,13 @@
       </div>
     </div>
 
-    <div class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
-    
-    <div id="cardMount" class="fate-grid"></div>
+    <div id="fateCardHeader" class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
+
+    <div style="display:flex; align-items:flex-start; gap:20px; justify-content:center;">
+        <!-- CORRECTIVE: Restored "Your Chosen Fate:" text -->
+        <div id="yourChoiceLabel" class="hidden" style="font-size:1.1em; color:var(--gold); font-style:italic; padding-top:20px; white-space:nowrap;">Your Chosen Fate:</div>
+        <div id="cardMount" class="fate-grid"></div>
+    </div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
       <div class="input-wrapper" id="actionWrapper">
@@ -557,13 +725,54 @@
     </div>
     
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-       <button id="gameControlsBtn" class="small-btn locked-style">Story Controls</button>
+       <button id="gameControlsBtn" class="small-btn">Quill & Veto</button>
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
     </div>
 
   </div>
   
   <div id="toast" class="toast hidden">Boundaries redirected the scene.</div>
+
+<div id="gameQuillVetoModal" class="overlay hidden" style="z-index:10004;">
+  <div class="box" style="max-width:90vw; width:700px; text-align:left;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div class="qv-section">
+            <label class="qv-label" style="display:block; margin-bottom:8px;">Veto</label>
+            <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Block elements you never want to appear.</p>
+            <!-- CORRECTIVE: Show committed veto entries in game modal -->
+            <div id="gameVetoCommitted" class="committed-phrases" style="margin-bottom:10px;"></div>
+            <div class="fate-input-row" style="margin-bottom:10px;">
+                <div class="input-wrapper fate-input-wrapper" style="flex:1;">
+                    <textarea id="gameVetoInput" rows="3" class="fate-field" data-fate-type="veto" placeholder=""></textarea>
+                    <div class="rotating-placeholder" data-for="gameVetoInput"></div>
+                </div>
+            </div>
+            <div class="veto-ui" style="display:flex; align-items:center; justify-content:flex-end;">
+                <button id="btnGameCommitVeto" class="small-btn" style="padding:6px 12px; font-size:0.85em;">Commit Veto</button>
+            </div>
+        </div>
+
+        <div class="qv-section">
+            <label class="qv-label" style="display:block; margin-bottom:8px;">Quill</label>
+            <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Steer tone, boundaries, or direction.</p>
+            <div class="fate-input-row" style="margin-bottom:10px;">
+                <div id="gameQuillBox" class="input-wrapper fate-input-wrapper" style="flex:1;">
+                    <textarea id="gameQuillInput" rows="3" class="fate-field" data-fate-type="quill" placeholder=""></textarea>
+                    <div class="rotating-placeholder" data-for="gameQuillInput"></div>
+                </div>
+            </div>
+            <div class="quill-ui" style="display:flex; align-items:center; justify-content:space-between;">
+                <span id="gameQuillStatus" style="font-size:0.9em;">Quill: Poised</span>
+                <button id="btnGameCommitQuill" class="small-btn" style="padding:6px 12px; font-size:0.85em;">Commit Quill</button>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align:center; margin-top:20px;">
+        <button onclick="document.getElementById('gameQuillVetoModal').classList.add('hidden')" style="background:#444;">Close</button>
+    </div>
+  </div>
+</div>
 
 <div id="edgeCovenantModal" class="overlay hidden" style="z-index:10005;">
   <div class="box" style="max-width:500px; text-align:center;">
