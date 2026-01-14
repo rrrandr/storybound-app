@@ -3822,25 +3822,28 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   function sanitizeImagePrompt(prompt) {
       // Words that trigger Grok safety filters
       const sensualWords = [
-          'sensual', 'erotic', 'seductive', 'sexual', 'intimate', 'naked', 'nude',
+          'sensual', 'erotic', 'seductive', 'sexual', 'intimate', 'naked', 'nude', 'nudity',
           'provocative', 'suggestive', 'lustful', 'passionate', 'steamy', 'hot',
           'sexy', 'aroused', 'arousing', 'undressed', 'revealing', 'exposed',
           'busty', 'voluptuous', 'curvy', 'bedroom', 'lingerie', 'underwear',
           'explicit', 'raw', 'unfiltered', 'dirty', 'naughty', 'forbidden',
           // CORRECTIVE: Additional flagged words that trigger moderation
-          'sultry', 'alluring'
+          'sultry', 'alluring', 'teasing', 'flirtatious', 'sensuality'
       ];
 
       // CORRECTIVE: Phrases that trigger moderation (multi-word)
       const sensualPhrases = [
           'parted lips', 'suggestive posture', 'alluring curves',
-          'bedroom eyes', 'come hither', 'inviting gaze'
+          'bedroom eyes', 'come hither', 'inviting gaze', 'raw desire'
       ];
 
       let sanitized = prompt;
 
       // Remove "The Author" references (meta-character should never be in images)
       sanitized = sanitized.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
+
+      // CORRECTIVE: Remove negated phrases (e.g., "no nudity" still triggers moderation)
+      sanitized = sanitized.replace(/\b(no|without|avoid|excluding|never)\s+\w*\s*(nudity|nude|naked|explicit|sexual)\b/gi, '');
 
       // CORRECTIVE: Remove flagged phrases first (before single words)
       sensualPhrases.forEach(phrase => {
