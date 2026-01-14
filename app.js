@@ -1317,15 +1317,15 @@ ANTI-HERO ENFORCEMENT:
           const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
           if (placeholder) placeholder.classList.add('hidden');
 
-          // Trigger leaf fall animation
+          // Initialize leaf state (static, no animation until clicked)
           const leaf = treeCard.querySelector('.falling-leaf');
           if (leaf) {
-              leaf.classList.add('falling');
+              leaf.dataset.leafClicks = '0';
           }
       }, 450);
   }
 
-  // Handle tree card click - invoke fate again
+  // Handle tree card click - invoke fate again (two-stage leaf animation)
   function handleTreeCardClick(treeCard) {
       const targetId = treeCard.dataset.target;
       const hand = document.querySelector(`.fate-hand[data-target="${targetId}"]`);
@@ -1342,18 +1342,34 @@ ANTI-HERO ENFORCEMENT:
           return;
       }
 
-      // Animate leaf fall then reset
+      // Two-stage leaf animation state machine
       if (leaf) {
-          leaf.classList.remove('falling', 'reset');
-          void leaf.offsetWidth; // Force reflow
-          leaf.classList.add('falling');
+          const clicks = parseInt(leaf.dataset.leafClicks || '0', 10);
 
-          setTimeout(() => {
-              // Reset leaf
-              leaf.classList.remove('falling');
-              leaf.classList.add('reset');
-              setTimeout(() => leaf.classList.remove('reset'), 300);
-          }, 1000);
+          if (clicks === 0) {
+              // First click: animate from mid-air to ground
+              leaf.classList.add('leaf-fall-1');
+              leaf.dataset.leafClicks = '1';
+          } else if (clicks === 1) {
+              // Second click: reset to lower branch, then fall to mid-air stop
+              leaf.classList.remove('leaf-fall-1');
+              leaf.classList.add('leaf-reset-2');
+              void leaf.offsetWidth; // Force reflow
+
+              // Brief pause at reset position, then animate
+              setTimeout(() => {
+                  leaf.classList.remove('leaf-reset-2');
+                  leaf.classList.add('leaf-fall-2');
+                  leaf.dataset.leafClicks = '2';
+
+                  // After animation completes, set final resting state
+                  setTimeout(() => {
+                      leaf.classList.remove('leaf-fall-2');
+                      leaf.classList.add('leaf-final');
+                  }, 1000);
+              }, 50);
+          }
+          // clicks >= 2: ignore further clicks
       }
 
       // Populate with new suggestion

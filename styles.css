@@ -840,34 +840,61 @@ textarea.fate-field {
     opacity: 0.85;
 }
 
-/* Falling leaf - starts from right side branch */
+/* Falling leaf - two-stage click-driven animation */
 .falling-leaf {
     position: absolute;
-    width: 5px;
-    height: 5px;
-    background: #000;
-    border-radius: 50% 0 50% 50%;
-    transform: rotate(45deg);
-    top: 10px;
-    right: 6px;
-    left: auto;
-    opacity: 0.9;
+    width: 6px;
+    height: 8px;
+    right: 7px;
+    top: 23px; /* Initial: mid-air, halfway down fall path */
+    transform: rotate(35deg);
+    pointer-events: none;
 }
-.falling-leaf.falling {
-    animation: leafFall 1s ease-in forwards;
+.falling-leaf svg {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
-@keyframes leafFall {
-    0% { top: 10px; right: 6px; opacity: 0.9; transform: rotate(45deg); }
-    25% { right: 8px; transform: rotate(70deg); }
-    50% { right: 5px; transform: rotate(20deg); }
-    75% { right: 10px; transform: rotate(55deg); }
-    100% { top: 36px; right: 12px; opacity: 0.7; transform: rotate(40deg); }
+
+/* Stage 1: Fall from mid-air to ground */
+.falling-leaf.leaf-fall-1 {
+    animation: leafFallStage1 1.2s ease-in forwards;
 }
-.falling-leaf.reset {
-    animation: leafReset 0.3s ease forwards;
+@keyframes leafFallStage1 {
+    0%   { top: 23px; right: 7px; transform: rotate(35deg); }
+    20%  { right: 9px; transform: rotate(50deg); }
+    40%  { right: 5px; transform: rotate(20deg); }
+    60%  { right: 10px; transform: rotate(45deg); }
+    80%  { right: 6px; transform: rotate(30deg); }
+    100% { top: 38px; right: 11px; transform: rotate(40deg); }
 }
-@keyframes leafReset {
-    to { top: 10px; right: 6px; opacity: 0.9; }
+
+/* Instant reset to lower branch position */
+.falling-leaf.leaf-reset-2 {
+    top: 16px;
+    right: 5px;
+    transform: rotate(25deg);
+    animation: none;
+}
+
+/* Stage 2: Fall from lower branch to mid-air stop */
+.falling-leaf.leaf-fall-2 {
+    animation: leafFallStage2 1s ease-in forwards;
+}
+@keyframes leafFallStage2 {
+    0%   { top: 16px; right: 5px; transform: rotate(25deg); }
+    25%  { right: 8px; transform: rotate(45deg); }
+    50%  { right: 4px; transform: rotate(15deg); }
+    75%  { right: 9px; transform: rotate(40deg); }
+    100% { top: 27px; right: 7px; transform: rotate(32deg); }
+}
+
+/* Final resting state after stage 2 */
+.falling-leaf.leaf-final {
+    top: 27px;
+    right: 7px;
+    transform: rotate(32deg);
+    animation: none;
 }
 
 /* Quill-Veto container adjustments */
