@@ -3339,12 +3339,36 @@ QUALITY RULES:
 - Good examples: "What the Sky Took", "The Wanting", "Before You Burned"
 
 Return ONLY the title, no quotes or explanation:\n${text}`}]);
-        const synopsis = await callChat([{role:'user', content:`Write back-cover copy for this story in ONE sentence. It should:
-- Tease themes and mood, not plot
-- Imply conflict without revealing it
-- Sound like a published novel blurb
-Return ONLY the sentence:\n${text}`}]);
-        
+
+        // SYNOPSIS GENERATION RULE (AUTHORITATIVE)
+        const synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
+
+MANDATORY REQUIREMENTS — All three must be present:
+1. A SPECIFIC CHARACTER with agency (e.g., "a hedge-witch on the brink of exile" — not just "one woman")
+2. A DESIRE or TEMPTATION — something they want, fear wanting, or are being pulled toward
+3. A LOOMING CONFLICT or CONSEQUENCE — a force, choice, or cost that threatens to change them
+
+QUALITY CHECK — Before writing, answer internally:
+- Who wants something?
+- What do they want (or are tempted by)?
+- What stands in the way, or what will it cost?
+
+FORBIDDEN PATTERNS:
+- Abstract noun collisions ("grit aches against ambition")
+- Redundant metaphor stacking ("veiled shadows," "shrouded ambitions" together)
+- Emotion verbs without bodies ("aches," "burns" without physical anchor)
+- Mood collage without narrative motion
+
+ALLOWED:
+- Poetic language ONLY when attached to concrete agents or actions
+- One central metaphor family maximum
+- Present tense preferred
+
+The reader should think: "I want to see what happens when this desire meets resistance."
+NOT: "This sounds pretty."
+
+Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
+
         // CORRECTIVE: Set title and synopsis first
         const titleEl = document.getElementById('storyTitle');
         const synopsisEl = document.getElementById('storySynopsis');
