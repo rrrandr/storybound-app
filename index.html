@@ -79,13 +79,24 @@
 <div id="vizModal" class="overlay hidden">
   <div class="box viz-modal-content">
     <h3>Visualization</h3>
+    <!-- CORRECTIVE: Explanatory copy for visualization -->
+    <p style="font-size:0.85em; color:var(--gold); margin-bottom:10px; font-style:italic;">
+        You may freely edit the prompt below. Images are limited to Naughty-level eroticism.
+        Prompts are automatically scaled down to avoid artist refusal.
+    </p>
     <textarea id="vizPromptInput" placeholder="Prompt will appear here..."></textarea>
 
+    <!-- CORRECTIVE: Quick Prompt Modifier heading -->
+    <h4 style="font-size:1.1em; color:var(--pink); margin:15px 0 5px; font-weight:bold;">Quick Prompt Modifier</h4>
     <!-- Modifier section: scrolling suggestions + text input -->
-    <div id="vizModifierSection" class="fate-input-wrapper" style="margin-top:10px;">
+    <div id="vizModifierSection" class="fate-input-wrapper" style="margin-top:5px;">
         <input type="text" id="vizModifierInput" class="fate-field" placeholder="">
         <div class="rotating-placeholder" data-for="vizModifierInput"></div>
     </div>
+    <!-- CORRECTIVE: Instructions for modifiers -->
+    <p style="font-size:0.8em; color:#888; margin-top:5px; font-style:italic;">
+        Type or select a modifier to adjust the image. Modifiers are appended to your prompt.
+    </p>
 
     <div id="vizPlaceholder">Generating...</div>
 
@@ -640,9 +651,10 @@
     
     <div id="billingBanner" style="display:none;"></div>
 
-    <h2 id="storyTitle"></h2>
-    <div id="sceneNumber" style="font-size:2.5em; color:var(--gold); font-weight:bold; text-align:center; margin:-5px 0 15px;">Scene 1</div>
-    <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:20px;"></p>
+    <!-- CORRECTIVE: Story start - title double size, Scene under synopsis -->
+    <h2 id="storyTitle" style="font-size:3em; text-align:center; margin-bottom:10px;"></h2>
+    <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:10px; text-align:center;"></p>
+    <div id="sceneNumber" style="font-size:2em; color:var(--gold); font-weight:bold; text-align:center; margin:0 0 20px;">Scene 1</div>
     
     <div id="batedBreathIndicator" class="hidden" style="text-align:center; font-size:0.8em; color:var(--gold); font-style:italic; margin-bottom:10px; opacity:0.8;">
         Waiting for partner... 
@@ -684,7 +696,8 @@
     <div id="fateCardHeader" class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
 
     <div style="display:flex; align-items:flex-start; gap:20px; justify-content:center;">
-        <div id="yourChoiceLabel" class="hidden" style="font-size:1.1em; color:var(--gold); font-style:italic; padding-top:20px; white-space:nowrap;">Your choice:</div>
+        <!-- CORRECTIVE: Restored "Your Chosen Fate:" text -->
+        <div id="yourChoiceLabel" class="hidden" style="font-size:1.1em; color:var(--gold); font-style:italic; padding-top:20px; white-space:nowrap;">Your Chosen Fate:</div>
         <div id="cardMount" class="fate-grid"></div>
     </div>
 
@@ -726,6 +739,8 @@
         <div class="qv-section">
             <label class="qv-label" style="display:block; margin-bottom:8px;">Veto</label>
             <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Block elements you never want to appear.</p>
+            <!-- CORRECTIVE: Show committed veto entries in game modal -->
+            <div id="gameVetoCommitted" class="committed-phrases" style="margin-bottom:10px;"></div>
             <div class="fate-input-row" style="margin-bottom:10px;">
                 <div class="input-wrapper fate-input-wrapper" style="flex:1;">
                     <textarea id="gameVetoInput" rows="3" class="fate-field" data-fate-type="veto" placeholder=""></textarea>

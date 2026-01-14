@@ -385,8 +385,9 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .preview-btn:hover { background:rgba(255,255,255,0.2); }
 
 /* FATE CARDS */
-.fate-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:20px auto; max-width:500px; perspective:1000px; }
-.fate-card { width:100%; aspect-ratio:5/7; position:relative; cursor:pointer; background:none; border:none; padding:0; transform-style:preserve-3d; transition:transform 0.6s; }
+/* FIXED: Increased max-width to restore proper card sizing */
+.fate-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin:20px auto; max-width:650px; perspective:1000px; }
+.fate-card { width:100%; aspect-ratio:5/7; position:relative; cursor:pointer; background:none; border:none; padding:0; transform-style:preserve-3d; transition:transform 0.6s; min-width:90px; }
 .fate-card .inner { position:absolute; inset:0; border-radius:8px; transform-style:preserve-3d; transition:transform 0.6s; box-shadow:0 5px 15px rgba(0,0,0,0.5); }
 .fate-card.flipped .inner { transform:rotateY(180deg); }
 .fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); flex-direction: column; padding: 5px; box-sizing: border-box; }
@@ -402,7 +403,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 @keyframes smokePoof { 0%{ opacity:1; transform:scale(1); } 100%{ opacity:0; transform:scale(0.5); } }
 .fate-card.selected .inner { border: 2px solid var(--gold); box-shadow: 0 0 15px var(--gold); }
 .fate-card.chosen .inner { border: 2px solid var(--pink); }
-@media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
+@media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); max-width:400px; } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
 
 /* GOLDEN FLOW - continuous gentle stream from Fate Card to inputs */
 .golden-flow-container {
@@ -444,8 +445,9 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .chip.active { background: var(--pink); border-color: var(--hot); color: black; opacity: 1; font-weight: bold; }
 .chip.locked-chip { cursor: not-allowed; opacity: 0.8; border-color: var(--gold); color: var(--gold); }
 .chip.locked-chip:hover { border-color: var(--gold); }
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; border: 1px solid var(--gold); color: var(--gold); padding: 10px 20px; border-radius: 30px; z-index: 10002; animation: fadeInOut 3s forwards; }
-@keyframes fadeInOut { 0%{opacity:0; transform:translate(-50%, 20px);} 10%{opacity:1; transform:translate(-50%, 0);} 90%{opacity:1;} 100%{opacity:0;} }
+/* CORRECTIVE: Toast positioned between Veto/Quill panels, not overlapping Begin Story */
+.toast { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); background: #333; border: 1px solid var(--gold); color: var(--gold); padding: 12px 24px; border-radius: 30px; z-index: 10006; animation: toastFadeInOut 3s forwards; font-size: 1em; }
+@keyframes toastFadeInOut { 0%{opacity:0; transform:translate(-50%, calc(-50% + 20px));} 10%{opacity:1; transform:translate(-50%, -50%);} 90%{opacity:1;} 100%{opacity:0;} }
 
 /* EROTIC PREVIEW TEXT */
 #eroticPreviewText { 
@@ -814,9 +816,10 @@ textarea.fate-field {
 }
 
 /* Fate Tree Card (revealed oracle) - uses image_62.png */
+/* 3× original size (original: 32x46), using transform for responsiveness */
 .fate-tree-card {
-    width: 64px;
-    height: 92px; /* 5:7 tarot proportion, 2× size */
+    width: 96px;
+    height: 138px; /* 5:7 tarot proportion, 3× original */
     background: url('image_62.png') center/contain no-repeat;
     border: none;
     border-radius: 0;
@@ -826,9 +829,10 @@ textarea.fate-field {
     flex-shrink: 0;
     box-shadow: none;
     transition: transform 0.3s ease;
+    transform-origin: center center;
 }
 .fate-tree-card:hover {
-    transform: scale(1.05);
+    transform: scale(1.08);
     box-shadow: none;
 }
 .fate-tree-card.hidden { display: none; }
@@ -968,23 +972,24 @@ textarea.fate-field {
 .sb-radio input[type="radio"] {
     position: absolute;
     opacity: 0;
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
     margin: 0;
     cursor: pointer;
     z-index: 1;
 }
 
 /* Custom visual - default (unselected) state */
+/* DOUBLED SIZE: 24px → 48px for better visibility */
 .sb-radio-visual {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
     flex-shrink: 0;
     background-image: url('Square%20Radio%20Button-no-x-200x200.jpg');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    border-radius: 3px;
+    border-radius: 4px;
     transition: filter 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -1014,10 +1019,10 @@ textarea.fate-field {
     opacity: 0.6;
 }
 
-/* Label text styling */
+/* Label text styling - DOUBLED SIZE */
 .sb-radio-label {
     color: var(--ink);
-    font-size: 0.95em;
+    font-size: 1.4em;
     line-height: 1.3;
 }
 
@@ -1055,23 +1060,24 @@ textarea.fate-field {
 .sb-checkbox input[type="checkbox"] {
     position: absolute;
     opacity: 0;
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
     margin: 0;
     cursor: pointer;
     z-index: 1;
 }
 
 /* Custom visual - default (unchecked) state */
+/* DOUBLED SIZE: 24px → 48px for better visibility */
 .sb-checkbox-visual {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
     flex-shrink: 0;
     background-image: url('Square%20Radio%20Button-no-x-200x200.jpg');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    border-radius: 3px;
+    border-radius: 4px;
     transition: filter 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -1101,10 +1107,10 @@ textarea.fate-field {
     opacity: 0.6;
 }
 
-/* Label text styling */
+/* Label text styling - DOUBLED SIZE */
 .sb-checkbox-label {
     color: var(--ink);
-    font-size: 0.95em;
+    font-size: 1.4em;
     line-height: 1.3;
 }
 

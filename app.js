@@ -217,11 +217,14 @@ window.config = window.config || {
           }
       }
 
-      // FIX: Scroll to story text container (not Fate Cards)
+      // CORRECTIVE: Scroll to very top (title) on scene transitions
       function scrollToStoryTop() {
-          const storyText = document.getElementById('storyText');
-          if (storyText) {
-              storyText.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const titleEl = document.getElementById('storyTitle');
+          if (titleEl) {
+              // Scroll to title to ensure Scene # is visible
+              titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              // Also scroll window to absolute top
+              window.scrollTo({ top: 0, behavior: 'smooth' });
           }
       }
 
@@ -1923,11 +1926,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       syncTierFromAccess();
 
       let upgraded = false;
+      // CORRECTIVE: Story pass only upgrades to Fling, NOT Affair/Soulmates
       if (state.lastPurchaseType === 'pass' && state.storyLength === 'voyeur') {
           state.storyLength = 'fling';
           upgraded = true;
           showToast("Story expanded to Fling.");
       }
+      // CORRECTIVE: Subscription can upgrade to Affair (but not via $3 pass)
       if (state.lastPurchaseType === 'sub' && ['fling', 'voyeur'].includes(state.storyLength)) {
           state.storyLength = 'affair';
           upgraded = true;
@@ -1939,10 +1944,29 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       state.lastPurchaseType = null;
       state.pendingUpgradeToAffair = false;
 
-      // FIX: Force full UI unlock propagation
+      // FIX: Force full UI unlock propagation with explicit lock updates
       syncTierFromAccess();
+
+      // CORRECTIVE: Explicitly update all lock states immediately
+      applyLengthLocks();
+      applyIntensityLocks();
+      applyStyleLocks();
       applyTierUI();
-      applyAccessLocks();
+
+      // Force DOM update to ensure classes are applied
+      document.querySelectorAll('.locked').forEach(el => {
+          if (state.access !== 'free') {
+              // Check if this element should be unlocked based on access level
+              const val = el.dataset.val;
+              const grp = el.dataset.grp;
+              if (grp === 'length' && val === 'fling' && state.access === 'pass') {
+                  el.classList.remove('locked');
+              }
+              if (grp === 'style' && state.access !== 'free') {
+                  el.classList.remove('locked');
+              }
+          }
+      });
 
       if(window.initCards) window.initCards();
       saveStorySnapshot();
@@ -2000,7 +2024,69 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function hasStoryPass(storyId){ return localStorage.getItem(getStoryPassKey(storyId)) === '1'; }
   function grantStoryPass(storyId){ if(storyId) localStorage.setItem(getStoryPassKey(storyId), '1'); }
   function clearCurrentStoryId(){ localStorage.removeItem('sb_current_story_id'); }
-  function hasSavedStory(){ return !!localStorage.getItem('sb_saved_story'); }
+  // CORRECTIVE: IndexedDB for large story data when localStorage fails
+  const STORY_DB_NAME = 'StoryBoundDB';
+  const STORY_DB_VERSION = 1;
+  const STORY_STORE_NAME = 'stories';
+
+  function openStoryDB() {
+      return new Promise((resolve, reject) => {
+          if (!window.indexedDB) {
+              reject(new Error('IndexedDB not supported'));
+              return;
+          }
+          const request = indexedDB.open(STORY_DB_NAME, STORY_DB_VERSION);
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => resolve(request.result);
+          request.onupgradeneeded = (event) => {
+              const db = event.target.result;
+              if (!db.objectStoreNames.contains(STORY_STORE_NAME)) {
+                  db.createObjectStore(STORY_STORE_NAME, { keyPath: 'id' });
+              }
+          };
+      });
+  }
+
+  async function saveToIndexedDB(snapshot) {
+      try {
+          const db = await openStoryDB();
+          const tx = db.transaction(STORY_STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORY_STORE_NAME);
+          await new Promise((resolve, reject) => {
+              const req = store.put({ id: 'current_story', ...snapshot });
+              req.onsuccess = resolve;
+              req.onerror = () => reject(req.error);
+          });
+          db.close();
+          localStorage.setItem('sb_story_in_idb', '1');
+          return true;
+      } catch (e) {
+          console.error('IndexedDB save failed', e);
+          return false;
+      }
+  }
+
+  async function loadFromIndexedDB() {
+      try {
+          const db = await openStoryDB();
+          const tx = db.transaction(STORY_STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORY_STORE_NAME);
+          const data = await new Promise((resolve, reject) => {
+              const req = store.get('current_story');
+              req.onsuccess = () => resolve(req.result);
+              req.onerror = () => reject(req.error);
+          });
+          db.close();
+          return data;
+      } catch (e) {
+          console.error('IndexedDB load failed', e);
+          return null;
+      }
+  }
+
+  function hasSavedStory() {
+      return !!localStorage.getItem('sb_saved_story') || localStorage.getItem('sb_story_in_idb') === '1';
+  }
 
   function saveStorySnapshot(){
     const el = document.getElementById('storyText');
@@ -2023,6 +2109,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
             bible: { style: cleanState.visual.bible?.style || '', setting: cleanState.visual.bible?.setting || '', characters: {} }
         };
     }
+    // CORRECTIVE: Remove sysPrompt from state snapshot (it's stored separately)
+    delete cleanState.sysPrompt;
+
     const snapshot = {
       storyId: state.storyId,
       subscribed: !!state.subscribed,
@@ -2034,25 +2123,59 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       storyPages: StoryPagination.getPages(),       // Individual pages for pagination
       stateSnapshot: cleanState
     };
+
+    // CORRECTIVE: Try localStorage first, fall back to IndexedDB on quota error
     try {
+        // Remove old data first to free space
+        localStorage.removeItem('sb_saved_story');
+        localStorage.removeItem('sb_story_in_idb');
         localStorage.setItem('sb_saved_story', JSON.stringify(snapshot));
     } catch(e) {
-        // QuotaExceededError - try to free space
-        console.warn('Storage quota exceeded, cleaning up...', e);
+        // QuotaExceededError - try IndexedDB
+        console.warn('localStorage quota exceeded, trying IndexedDB...', e);
         try {
-            localStorage.removeItem(SB_ANALYTICS_KEY); // Remove analytics data
-            localStorage.setItem('sb_saved_story', JSON.stringify(snapshot));
-        } catch(e2) {
-            console.error('Storage save failed after cleanup', e2);
-        }
+            localStorage.removeItem(SB_ANALYTICS_KEY); // Free space
+            localStorage.removeItem('sb_saved_story');
+        } catch(e2) { /* ignore */ }
+
+        // Save to IndexedDB asynchronously
+        saveToIndexedDB(snapshot).then(success => {
+            if (success) {
+                console.log('Story saved to IndexedDB');
+            } else {
+                showToast('Save failed. Storage full.');
+            }
+        });
     }
     updateContinueButtons();
   }
 
-  window.continueStory = function(){
-    const raw = localStorage.getItem('sb_saved_story');
-    if(!raw) return;
-    const data = JSON.parse(raw);
+  // CORRECTIVE: Load story data from localStorage or IndexedDB
+  async function loadStoryData() {
+      // Try localStorage first
+      const raw = localStorage.getItem('sb_saved_story');
+      if (raw) {
+          try {
+              return JSON.parse(raw);
+          } catch (e) {
+              console.warn('Failed to parse localStorage story', e);
+          }
+      }
+      // Try IndexedDB if localStorage failed
+      if (localStorage.getItem('sb_story_in_idb') === '1') {
+          const idbData = await loadFromIndexedDB();
+          if (idbData) return idbData;
+      }
+      return null;
+  }
+
+  window.continueStory = async function(){
+    const data = await loadStoryData();
+    if (!data) {
+        showToast('No saved story found.');
+        return;
+    }
+
     state.storyId = data.storyId || makeStoryId();
     localStorage.setItem('sb_current_story_id', state.storyId);
 
@@ -2060,7 +2183,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.sysPrompt = data.sysPrompt || state.sysPrompt;
     state.subscribed = !!data.subscribed;
     state.authorChairActive = checkAuthorChairUnlock();
-    
+
     updateBatedBreathState();
     applyAccessLocks();
 
@@ -2076,7 +2199,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // Fallback: load as single page
         StoryPagination.addPage(data.storyHTML, true);
     }
-    state.lastSavedWordCount = currentStoryWordCount(); 
+    state.lastSavedWordCount = currentStoryWordCount();
 
     const img = document.getElementById('settingShotImg');
     if(img && (!img.src || img.style.display === 'none')) generateSettingShot(data.synopsis || "Fantasy Landscape"); 
@@ -2137,11 +2260,24 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // Story Controls button - toggle Quill & Veto modal (always opens, Quill locked in Tease)
   $('gameControlsBtn')?.addEventListener('click', (e) => {
-      // FIX #3: Clear inputs on modal open to prevent ghost text
+      // Clear inputs for new entries (committed entries are shown separately)
       const quillInput = document.getElementById('gameQuillInput');
       const vetoInput = document.getElementById('gameVetoInput');
       if (quillInput) quillInput.value = '';
       if (vetoInput) vetoInput.value = '';
+
+      // CORRECTIVE: Render committed veto phrases in game modal
+      const gameVetoCommitted = document.getElementById('gameVetoCommitted');
+      if (gameVetoCommitted && state.committedVeto) {
+          gameVetoCommitted.innerHTML = '';
+          state.committedVeto.forEach((text, i) => {
+              const phrase = document.createElement('div');
+              phrase.className = 'committed-phrase veto-phrase';
+              phrase.style.cssText = 'background:rgba(255,100,100,0.15); border:1px solid rgba(255,100,100,0.3); padding:4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em;';
+              phrase.innerHTML = `<span style="color:var(--pink);">${text}</span>`;
+              gameVetoCommitted.appendChild(phrase);
+          });
+      }
 
       updateGameQuillUI();
       document.getElementById('gameQuillVetoModal')?.classList.remove('hidden');
@@ -3209,14 +3345,35 @@ Return ONLY the title, no quotes or explanation:\n${text}`}]);
 - Sound like a published novel blurb
 Return ONLY the sentence:\n${text}`}]);
         
-        document.getElementById('storyTitle').textContent = title.replace(/"/g,'');
-        document.getElementById('storySynopsis').textContent = synopsis;
+        // CORRECTIVE: Set title and synopsis first
+        const titleEl = document.getElementById('storyTitle');
+        const synopsisEl = document.getElementById('storySynopsis');
+        const storyTextEl = document.getElementById('storyText');
+
+        // Hide story text until fully rendered
+        if (storyTextEl) storyTextEl.style.opacity = '0';
+
+        titleEl.textContent = title.replace(/"/g,'');
+        synopsisEl.textContent = synopsis;
 
         // Use pagination system for story display
         StoryPagination.clear();
         StoryPagination.addPage(formatStory(text), true);
 
         generateSettingShot(synopsis);
+
+        // CORRECTIVE: Scroll to very top (title) after render
+        if (titleEl) {
+            setTimeout(() => {
+                titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                window.scrollTo(0, 0);
+            }, 100);
+        }
+
+        // Reveal story text after brief delay
+        setTimeout(() => {
+            if (storyTextEl) storyTextEl.style.opacity = '1';
+        }, 500);
 
         // Initial Snapshot
         saveStorySnapshot();
@@ -3300,7 +3457,8 @@ Return ONLY the sentence:\n${text}`}]);
          errDiv.style.color = 'var(--gold)';
      }
 
-     const prompt = `Cinematic establishing shot, atmospheric, fantasy art style. No text, no words. ${desc}`;
+     // CORRECTIVE: 16:9 landscape orientation for cinematic establishing shot
+     const prompt = `Cinematic wide landscape establishing shot, atmospheric, fantasy art style, 16:9 aspect ratio, panoramic view. No text, no words. ${desc}`;
 
      // Fallback chain: try multiple providers (matches Visualize)
      const attempts = [
@@ -3324,7 +3482,7 @@ Return ONLY the sentence:\n${text}`}]);
                      prompt: prompt,
                      provider: attempt.provider,
                      model: attempt.model || '',
-                     size: "1024x1024",
+                     size: "1792x1024",  // CORRECTIVE: 16:9 landscape
                      n: 1
                  }),
                  signal: controller.signal
@@ -3433,13 +3591,27 @@ Return ONLY the sentence:\n${text}`}]);
           'provocative', 'suggestive', 'lustful', 'passionate', 'steamy', 'hot',
           'sexy', 'aroused', 'arousing', 'undressed', 'revealing', 'exposed',
           'busty', 'voluptuous', 'curvy', 'bedroom', 'lingerie', 'underwear',
-          'explicit', 'raw', 'unfiltered', 'dirty', 'naughty', 'forbidden'
+          'explicit', 'raw', 'unfiltered', 'dirty', 'naughty', 'forbidden',
+          // CORRECTIVE: Additional flagged words that trigger moderation
+          'sultry', 'alluring'
+      ];
+
+      // CORRECTIVE: Phrases that trigger moderation (multi-word)
+      const sensualPhrases = [
+          'parted lips', 'suggestive posture', 'alluring curves',
+          'bedroom eyes', 'come hither', 'inviting gaze'
       ];
 
       let sanitized = prompt;
 
       // Remove "The Author" references (meta-character should never be in images)
       sanitized = sanitized.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
+
+      // CORRECTIVE: Remove flagged phrases first (before single words)
+      sensualPhrases.forEach(phrase => {
+          const regex = new RegExp(phrase, 'gi');
+          sanitized = sanitized.replace(regex, '');
+      });
 
       // Remove sensual words entirely rather than replacing
       sensualWords.forEach(word => {
@@ -3976,12 +4148,14 @@ FATE CARD ADAPTATION (CRITICAL):
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
           const safe = process(p);
-          // Format dialogue with special styling - handle all dialogue inline without breaking
-          // Replace all quoted dialogue segments with styled spans
-          const formatted = safe.replace(/"([^"]*)"([^"]*?)(?="|$)/g, (match, quote, after) => {
-              // Include the quote and any dialogue tag (he said, she whispered, etc.) up to next sentence
-              return `<span class="story-dialogue">"${quote}"${after.match(/^[^.!?]*[.!?]?/)?.[0] || ''}</span>${after.replace(/^[^.!?]*[.!?]?/, '')}`;
+
+          // CORRECTIVE: Fix dialogue colorization leak
+          // Only style the quoted text itself, not the dialogue tag that follows
+          // Pattern: match "quoted text" and style only the quote
+          const formatted = safe.replace(/"([^"]*)"/g, (match, quote) => {
+              return `<span class="story-dialogue">"${quote}"</span>`;
           });
+
           // If the line is entirely dialogue, use dialogue class on the paragraph
           if(p.trim().startsWith('"') && p.trim().endsWith('"')) {
               return `<p class="story-dialogue">${safe}</p>`;
