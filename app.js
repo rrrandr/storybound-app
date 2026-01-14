@@ -843,7 +843,9 @@ ANTI-HERO ENFORCEMENT:
 
   window.showScreen = function(id, isBack = false){
       closeAllOverlays();
-      
+      // PASS 1 FIX: Clear any stuck toasts on screen change
+      if (typeof clearToasts === 'function') clearToasts();
+
       if(id === 'modeSelect') {
           _navHistory = []; 
       } else if (!isBack && _currentScreenId && _currentScreenId !== id) {
@@ -931,14 +933,46 @@ ANTI-HERO ENFORCEMENT:
   }
 
   // --- SAFETY & CONSENT ---
+  // PASS 1 FIX: Toast system with proper auto-dismiss and anti-stacking
+  let _toastTimer = null;
+
   function showToast(msg) {
       const t = document.getElementById('toast');
-      if(t) {
-          t.textContent = msg;
-          t.classList.remove('hidden');
+      if (!t) return;
+
+      // Clear any existing toast timer to prevent stacking
+      if (_toastTimer) {
+          clearTimeout(_toastTimer);
+          _toastTimer = null;
+      }
+
+      // Set content and show
+      t.textContent = msg;
+      t.classList.remove('hidden');
+
+      // Reset animation by forcing reflow
+      t.style.animation = 'none';
+      void t.offsetWidth;
+      t.style.animation = 'toastFadeInOut 3s forwards';
+
+      // Explicit hide after animation completes (failsafe)
+      _toastTimer = setTimeout(() => {
+          t.classList.add('hidden');
           t.style.animation = 'none';
-          void t.offsetWidth;
-          t.style.animation = 'fadeInOut 3s forwards';
+          _toastTimer = null;
+      }, 3100);
+  }
+
+  // Clear any stuck toasts (call on state changes)
+  function clearToasts() {
+      const t = document.getElementById('toast');
+      if (t) {
+          t.classList.add('hidden');
+          t.style.animation = 'none';
+      }
+      if (_toastTimer) {
+          clearTimeout(_toastTimer);
+          _toastTimer = null;
       }
   }
 
@@ -971,31 +1005,52 @@ ANTI-HERO ENFORCEMENT:
   }
 
   // --- ACCESS HELPERS ---
-  function resolveAccess(){
-    if (state.mode === 'couple') {
-        const roomAcc = state.roomAccess || 'free';
-        return (state.subscribed) ? 'sub' : roomAcc; 
+  // PASS 1 FIX: Canonical access resolver - ALL access checks must use this
+  function resolveAccess() {
+    // Read subscribed status from localStorage (source of truth)
+    if (localStorage.getItem('sb_subscribed') === '1') {
+        state.subscribed = true;
     }
-    if (state.subscribed) return 'sub';
-    if (state.storyId && hasStoryPass(state.storyId)) return 'pass';
-    return 'free';
-  }
 
-  function syncTierFromAccess(){
-    if(localStorage.getItem('sb_subscribed') === '1') state.subscribed = true;
-
+    // Check billing validity
     const inGrace = (state.billingStatus === 'grace' && Date.now() < state.billingGraceUntil);
     const invalidSub = state.billingStatus === 'canceled' || (state.billingStatus === 'past_due' && !inGrace);
 
+    // Determine access tier (priority order: sub > pass > free)
     if (state.subscribed && !invalidSub) {
-        state.access = 'sub';
-    } else if (state.storyId && hasStoryPass(state.storyId)) {
-        state.access = 'pass';
-    } else {
-        state.access = (state.mode === 'couple' ? (state.roomAccess || 'free') : 'free');
+        return 'sub';
     }
-    
-    state.tier = (state.access === 'free') ? 'free' : 'paid';
+
+    if (state.mode === 'couple') {
+        const roomAcc = state.roomAccess || 'free';
+        return roomAcc;
+    }
+
+    if (state.storyId && hasStoryPass(state.storyId)) {
+        return 'pass';
+    }
+
+    return 'free';
+  }
+
+  // PASS 1 FIX: Single function to sync state from canonical resolver
+  function syncTierFromAccess() {
+    // Resolve access from canonical source
+    const resolvedAccess = resolveAccess();
+
+    // Update state
+    state.access = resolvedAccess;
+    state.tier = (resolvedAccess === 'free') ? 'free' : 'paid';
+
+    console.log('[ENTITLEMENT] syncTierFromAccess:', {
+        access: state.access,
+        tier: state.tier,
+        subscribed: state.subscribed,
+        storyId: state.storyId,
+        hasPass: state.storyId ? hasStoryPass(state.storyId) : false
+    });
+
+    return resolvedAccess;
   }
 
   window.openPaywall = function(reason) {
@@ -1772,30 +1827,68 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   window.applyAccessLocks = applyAccessLocks;
   window.applyTierUI = applyTierUI;
 
+  // PASS 1 FIX: Length locks with strict enforcement
   function applyLengthLocks(){
+    // Always resolve access first
     syncTierFromAccess();
+
     const section = document.getElementById('lengthSection');
     if(section) section.classList.toggle('hidden', state.turnCount > 0);
 
     const cards = document.querySelectorAll('#lengthGrid .card[data-grp="length"]');
+
+    console.log('[ENTITLEMENT] applyLengthLocks:', {
+        access: state.access,
+        currentStoryLength: state.storyLength,
+        cardsFound: cards.length
+    });
+
     cards.forEach(card => {
       const val = card.dataset.val;
-      let locked = true;
+      let locked = true;  // Default: locked
       let hidden = false;
 
-      if (state.access === 'free' && val === 'voyeur') locked = false;
-      else if (state.access === 'pass' && val === 'fling') locked = false;
-      else if (state.access === 'sub' && ['fling', 'affair', 'soulmates'].includes(val)) locked = false;
+      // ENTITLEMENT RULES (LOCKED):
+      // - free: only voyeur unlocked
+      // - pass ($3): only fling unlocked (NOT affair, NOT soulmates)
+      // - sub: fling, affair, soulmates unlocked
 
-      if(state.access !== 'free' && val === 'voyeur') { locked = true; hidden = true; }
+      if (state.access === 'free' && val === 'voyeur') {
+          locked = false;
+      } else if (state.access === 'pass') {
+          // CRITICAL: Pass ONLY unlocks Fling
+          if (val === 'fling') locked = false;
+          // affair and soulmates stay locked = true
+      } else if (state.access === 'sub') {
+          // Sub unlocks fling, affair, soulmates
+          if (['fling', 'affair', 'soulmates'].includes(val)) locked = false;
+      }
 
+      // Hide voyeur for paid users
+      if (state.access !== 'free' && val === 'voyeur') {
+          locked = true;
+          hidden = true;
+      }
+
+      // Apply classes
       card.classList.toggle('locked', locked);
       card.style.display = hidden ? 'none' : '';
-      // FIX: Affair and Soulmates require subscription - use sub_only mode
+
+      // Set paywall mode: affair/soulmates require sub_only
       const paywallMode = ['affair', 'soulmates'].includes(val) ? 'sub_only' : 'unlock';
       setPaywallClickGuard(card, locked, paywallMode);
+
+      // Selection state
       card.classList.toggle('selected', val === state.storyLength);
+
+      console.log('[ENTITLEMENT] Card:', val, 'locked:', locked, 'hidden:', hidden);
     });
+
+    // ENFORCEMENT: If pass user somehow has affair/soulmates selected, downgrade
+    if (state.access === 'pass' && ['affair', 'soulmates'].includes(state.storyLength)) {
+        console.log('[ENTITLEMENT] Downgrading story length from', state.storyLength, 'to fling');
+        state.storyLength = 'fling';
+    }
 
     // Auto-select fling if pass tier and current selection is voyeur (now hidden)
     if (state.access === 'pass' && state.storyLength === 'voyeur') {
@@ -1913,64 +2006,107 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     pm.classList.remove('hidden');
   };
 
+  // PASS 1 FIX: Refactored completePurchase with canonical access resolution
   function completePurchase() {
-      const pm = document.getElementById('payModal');
-      if(pm) pm.classList.add('hidden');
+      // Clear any stuck toasts first
+      clearToasts();
 
-      if(state.pendingUpgradeToAffair || state.lastPurchaseType === 'sub') {
+      const pm = document.getElementById('payModal');
+      if (pm) pm.classList.add('hidden');
+
+      const purchaseType = state.lastPurchaseType;
+      const previousAccess = state.access;
+
+      console.log('[ENTITLEMENT] completePurchase START:', {
+          purchaseType,
+          previousAccess,
+          storyLength: state.storyLength,
+          storyId: state.storyId
+      });
+
+      // Persist subscription if this was a subscription purchase
+      if (state.pendingUpgradeToAffair || purchaseType === 'sub') {
           state.subscribed = true;
           localStorage.setItem('sb_subscribed', '1');
+          console.log('[ENTITLEMENT] Subscription persisted to localStorage');
       }
 
-      // FIX: Force access resolution first
-      syncTierFromAccess();
+      // Resolve access from canonical source (reads from localStorage)
+      const newAccess = syncTierFromAccess();
 
+      console.log('[ENTITLEMENT] Access resolved:', {
+          previousAccess,
+          newAccess,
+          tier: state.tier
+      });
+
+      // Determine story length upgrades based on purchase type
       let upgraded = false;
-      // CORRECTIVE: Story pass only upgrades to Fling, NOT Affair/Soulmates
-      if (state.lastPurchaseType === 'pass' && state.storyLength === 'voyeur') {
-          state.storyLength = 'fling';
-          upgraded = true;
-          showToast("Story expanded to Fling.");
-      }
-      // CORRECTIVE: Subscription can upgrade to Affair (but not via $3 pass)
-      if (state.lastPurchaseType === 'sub' && ['fling', 'voyeur'].includes(state.storyLength)) {
-          state.storyLength = 'affair';
-          upgraded = true;
-          showToast("Story upgraded to Affair.");
+      let toastMessage = null;
+
+      // RULE: Storypass $3 upgrades ONLY to Fling (never Affair/Soulmates)
+      if (purchaseType === 'pass' && newAccess === 'pass') {
+          if (state.storyLength === 'voyeur') {
+              state.storyLength = 'fling';
+              upgraded = true;
+              toastMessage = "Story expanded to Fling.";
+          }
+          // Pass users CANNOT access Affair or Soulmates - enforce this
+          if (['affair', 'soulmates'].includes(state.storyLength)) {
+              state.storyLength = 'fling';
+              console.log('[ENTITLEMENT] Downgraded story length to Fling (pass cannot access affair/soulmates)');
+          }
       }
 
-      if (upgraded) state.storyEnded = false;
+      // RULE: Subscription can upgrade to Affair
+      if (purchaseType === 'sub' && newAccess === 'sub') {
+          if (['fling', 'voyeur'].includes(state.storyLength)) {
+              state.storyLength = 'affair';
+              upgraded = true;
+              toastMessage = "Story upgraded to Affair.";
+          }
+      }
 
+      if (upgraded) {
+          state.storyEnded = false;
+      }
+
+      // Clear purchase state
       state.lastPurchaseType = null;
       state.pendingUpgradeToAffair = false;
 
-      // FIX: Force full UI unlock propagation with explicit lock updates
-      syncTierFromAccess();
+      // CRITICAL: Apply all lock states AFTER access is resolved
+      console.log('[ENTITLEMENT] Applying UI locks with access:', state.access);
 
-      // CORRECTIVE: Explicitly update all lock states immediately
-      applyLengthLocks();
-      applyIntensityLocks();
-      applyStyleLocks();
-      applyTierUI();
+      // Apply locks to all systems
+      if (typeof applyLengthLocks === 'function') applyLengthLocks();
+      if (typeof applyIntensityLocks === 'function') applyIntensityLocks();
+      if (typeof applyStyleLocks === 'function') applyStyleLocks();
+      if (typeof applyTierUI === 'function') applyTierUI();
 
-      // Force DOM update to ensure classes are applied
-      document.querySelectorAll('.locked').forEach(el => {
-          if (state.access !== 'free') {
-              // Check if this element should be unlocked based on access level
-              const val = el.dataset.val;
-              const grp = el.dataset.grp;
-              if (grp === 'length' && val === 'fling' && state.access === 'pass') {
-                  el.classList.remove('locked');
-              }
-              if (grp === 'style' && state.access !== 'free') {
-                  el.classList.remove('locked');
-              }
-          }
-      });
+      // Reinitialize cards if function exists
+      if (window.initCards) window.initCards();
 
-      if(window.initCards) window.initCards();
+      // Save state
       saveStorySnapshot();
-      if (state.purchaseContext === 'tierGate') window.showScreen('modeSelect');
+
+      // Only show toast if access actually changed
+      if (toastMessage && newAccess !== previousAccess) {
+          showToast(toastMessage);
+      } else if (newAccess !== 'free' && previousAccess === 'free') {
+          showToast("Content unlocked.");
+      }
+
+      // Navigate based on context
+      if (state.purchaseContext === 'tierGate') {
+          window.showScreen('modeSelect');
+      }
+
+      console.log('[ENTITLEMENT] completePurchase END:', {
+          access: state.access,
+          storyLength: state.storyLength,
+          upgraded
+      });
   }
 
   function renderFlingEnd() {
@@ -2812,20 +2948,42 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // Bind cancel button
   document.getElementById('loadingCancelBtn')?.addEventListener('click', cancelLoading);
 
+  // PASS 1 FIX: Storypass purchase - grants Fling tier ONLY
   $('payOneTime')?.addEventListener('click', () => {
+    console.log('[ENTITLEMENT] Storypass $3 purchase initiated');
+
+    // Ensure we have a story ID
     state.storyId = state.storyId || makeStoryId();
+
+    // Mark purchase type BEFORE granting pass
     state.lastPurchaseType = 'pass';
+
+    // Grant the story pass (stores in localStorage)
     grantStoryPass(state.storyId);
-    // FIX: Immediately set access state before completePurchase
-    state.access = 'pass';
-    state.tier = 'paid';
+
+    console.log('[ENTITLEMENT] Story pass granted:', {
+        storyId: state.storyId,
+        hasPass: hasStoryPass(state.storyId)
+    });
+
+    // Complete purchase - will resolve access from localStorage
     completePurchase();
   });
 
+  // PASS 1 FIX: Subscription purchase - grants full access
   $('paySub')?.addEventListener('click', () => {
-    state.subscribed = true;
+    console.log('[ENTITLEMENT] Subscribe purchase initiated');
+
+    // Mark purchase type
     state.lastPurchaseType = 'sub';
+
+    // Persist subscription to localStorage (source of truth)
+    state.subscribed = true;
     localStorage.setItem('sb_subscribed', '1');
+
+    console.log('[ENTITLEMENT] Subscription stored in localStorage');
+
+    // Complete purchase - will resolve access from localStorage
     completePurchase();
   });
 
