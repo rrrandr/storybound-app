@@ -834,10 +834,98 @@ window.config = window.config || {
 
   function buildVisualAnchorsText() {
       const b = state.visual.bible;
-      if (!b || !b.style) return ""; 
+      if (!b || !b.style) return "";
       let txt = `VISUAL CONTINUITY: STYLE: ${b.style} SETTING: ${b.setting} `;
       if (state.visual.locked && state.visual.lastImageUrl) txt += "MATCH LAST RENDER EXACTLY.";
       return txt;
+  }
+
+  // --- IMAGE PROMPT SANITIZATION (Naughty ceiling enforced) ---
+  const IMAGE_BANNED_WORDS = [
+      'sultry', 'sensual', 'sensuality', 'flirtatious', 'alluring',
+      'parted lips', 'teasing', 'raw desire', 'erotic', 'eroticism',
+      'nudity', 'nude', 'naked', 'explicit', 'pornographic',
+      'breasts', 'nipples', 'genitals', 'groin', 'buttocks',
+      'orgasm', 'climax', 'arousal', 'aroused', 'seductive',
+      'provocative', 'intimate parts', 'private parts', 'undressing',
+      'the author'
+  ];
+
+  const IMAGE_WORD_REPLACEMENTS = {
+      'sultry': 'warm',
+      'sensual': 'elegant',
+      'sensuality': 'elegance',
+      'flirtatious': 'playful',
+      'alluring': 'captivating',
+      'seductive': 'charming',
+      'provocative': 'striking',
+      'aroused': 'alert',
+      'intimate': 'close',
+      'passionate': 'intense'
+  };
+
+  function sanitizeImagePrompt(prompt, aggressive = false) {
+      if (!prompt) return "Fantasy scene, detailed, atmospheric.";
+
+      let sanitized = prompt;
+
+      // Remove "The Author" (case insensitive)
+      sanitized = sanitized.replace(/\bthe\s+author\b/gi, 'the protagonist');
+
+      // Apply word replacements first
+      for (const [banned, replacement] of Object.entries(IMAGE_WORD_REPLACEMENTS)) {
+          const regex = new RegExp(`\\b${banned}\\b`, 'gi');
+          sanitized = sanitized.replace(regex, replacement);
+      }
+
+      // Remove remaining banned words entirely
+      for (const word of IMAGE_BANNED_WORDS) {
+          const regex = new RegExp(`\\b${word}\\b`, 'gi');
+          sanitized = sanitized.replace(regex, '');
+      }
+
+      // Remove phrases that negate banned words (e.g., "no nudity", "without nudity")
+      sanitized = sanitized.replace(/\b(no|without|avoid|excluding)\s+\w*\s*(nudity|nude|naked|explicit)\b/gi, '');
+
+      // Clean up double spaces and trim
+      sanitized = sanitized.replace(/\s{2,}/g, ' ').trim();
+
+      // Aggressive mode: further reduce length and complexity
+      if (aggressive) {
+          // Shorten to ~300 chars max, preserving sentences
+          if (sanitized.length > 300) {
+              const sentences = sanitized.split(/[.!?]+/).filter(s => s.trim());
+              let shortened = '';
+              for (const s of sentences) {
+                  if ((shortened + s).length < 280) {
+                      shortened += s.trim() + '. ';
+                  } else break;
+              }
+              sanitized = shortened.trim() || sanitized.slice(0, 300);
+          }
+
+          // Remove excessive adjectives (keep one per noun phrase)
+          sanitized = sanitized.replace(/(\b\w+ly\b\s+){2,}/g, '$1');
+      }
+
+      // Enforce Naughty ceiling: add safe-for-work instruction
+      if (!sanitized.toLowerCase().includes('safe-for-work') && !sanitized.toLowerCase().includes('sfw')) {
+          sanitized += ' Artistic, tasteful, safe-for-work.';
+      }
+
+      return sanitized || "Fantasy scene, detailed, atmospheric.";
+  }
+
+  function isImageModerationError(error) {
+      if (!error) return false;
+      const msg = (error.message || error.toString() || '').toLowerCase();
+      return msg.includes('moderation') ||
+             msg.includes('safety') ||
+             msg.includes('content policy') ||
+             msg.includes('inappropriate') ||
+             msg.includes('blocked') ||
+             msg.includes('rejected') ||
+             msg.includes('flagged');
   }
 
   let _inputGuardsBound = false;
@@ -1670,26 +1758,74 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
      const wrap = document.getElementById('settingShotWrap');
      if(wrap) wrap.style.display = 'flex';
      img.style.display = 'none';
-     
-     try {
-         const res = await fetch(IMAGE_PROXY_URL, {
-             method:'POST',
-             headers:{'Content-Type':'application/json'},
-             body: JSON.stringify({ 
-                 prompt: `Cinematic establishing shot, atmospheric, fantasy art style. No text. ${desc}`,
-                 provider: 'xai', 
-                 size: "1024x1024",
-                 n: 1
-             })
-         });
-         const data = await res.json();
-         if(data.url || data.image || data.b64_json) {
-             let url = data.url || data.image || data.b64_json;
-             if(!url.startsWith('http') && !url.startsWith('data:')) url = `data:image/png;base64,${url}`;
-             img.src = url;
-             img.onload = () => { img.style.display = 'block'; };
+
+     // Sanitize the description for image safety
+     const sanitizedDesc = sanitizeImagePrompt(desc || '', false);
+     const basePrompt = `Cinematic establishing shot, atmospheric, fantasy art style. No text. ${sanitizedDesc}`;
+
+     const MAX_RETRIES = 2;
+     let retryCount = 0;
+     let lastError = null;
+
+     while (retryCount < MAX_RETRIES) {
+         try {
+             const res = await fetch(IMAGE_PROXY_URL, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({
+                     prompt: basePrompt,
+                     provider: 'xai',
+                     size: "1024x1024",
+                     n: 1
+                 })
+             });
+
+             // Detect 502 errors specifically
+             if (res.status === 502) {
+                 retryCount++;
+                 console.warn(`[SettingShot] 502 error, attempt ${retryCount}/${MAX_RETRIES}`);
+                 if (retryCount < MAX_RETRIES) {
+                     await new Promise(r => setTimeout(r, 1000 * retryCount)); // backoff
+                     continue;
+                 }
+                 throw new Error('502 Bad Gateway - server unavailable');
+             }
+
+             const data = await res.json();
+
+             // Check for moderation error
+             if (!res.ok) {
+                 const errMsg = data?.error || `HTTP ${res.status}`;
+                 if (isImageModerationError({ message: errMsg }) && retryCount === 0) {
+                     // Try once more with aggressive sanitization
+                     retryCount++;
+                     continue;
+                 }
+                 throw new Error(errMsg);
+             }
+
+             if (data.url || data.image || data.b64_json) {
+                 let url = data.url || data.image || data.b64_json;
+                 if (!url.startsWith('http') && !url.startsWith('data:')) url = `data:image/png;base64,${url}`;
+                 img.src = url;
+                 img.onload = () => { img.style.display = 'block'; };
+                 return; // success
+             }
+             break; // no URL but no error, exit loop
+         } catch (e) {
+             lastError = e;
+             retryCount++;
+             console.warn(`[SettingShot] Attempt ${retryCount} failed:`, e.message);
+             if (retryCount < MAX_RETRIES) {
+                 await new Promise(r => setTimeout(r, 1000 * retryCount));
+             }
          }
-     } catch(e) { console.warn("Setting shot failed", e); }
+     }
+
+     // Graceful failure: log and continue without blocking story
+     console.warn("[SettingShot] All retries exhausted, continuing without image.", lastError?.message);
+     // Optionally hide the wrapper if no image loaded
+     if (wrap) wrap.style.display = 'none';
   }
 
   // --- VISUALIZE (STABILIZED) ---
@@ -1726,60 +1862,89 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
               try {
                   promptMsg = await Promise.race([
                       callChat([{
-                          role:'user', 
+                          role:'user',
                           content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire. Return only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
               } catch (e) {
-                  promptMsg = "Fantasy scene, detailed, atmospheric."; 
+                  promptMsg = "Fantasy scene, detailed, atmospheric.";
               }
               document.getElementById('vizPromptInput').value = promptMsg;
           }
 
+          // ALWAYS sanitize prompt (enforces Naughty ceiling, removes banned words)
+          promptMsg = sanitizeImagePrompt(promptMsg, false);
+          document.getElementById('vizPromptInput').value = promptMsg;
+
           const modelEl = document.getElementById('vizModel');
           const userModel = modelEl ? modelEl.value : "";
           const um = (userModel || "").toLowerCase();
-          
+
           const isOpenAI = um.includes("gpt") || um.includes("openai");
           const isGemini = um.includes("gemini");
 
-          const attempts = [];
-          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel });
-          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1' });
-          attempts.push({ provider: 'gemini', model: isGemini ? userModel : 'gemini-2.5-flash-image' });
+          // Engine priority: xai (Grok) first, then fallbacks
+          const engines = [
+              { provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel },
+              { provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1' },
+              { provider: 'gemini', model: isGemini ? userModel : 'gemini-2.5-flash-image' }
+          ];
 
           let rawUrl = null;
           let lastErr = null;
+          let currentPrompt = promptMsg;
 
-          for(const attempt of attempts){
-             try {
-                const res = await fetch(IMAGE_PROXY_URL, {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ 
-                        prompt: anchorText + "\n\nSCENE:\n" + promptMsg + (state.intensity === 'Dirty' || state.intensity === 'Erotic' ? " Artistic, suggestive, safe-for-work." : "") + "\n\n(Generate art without any text/lettering.)",
-                        provider: attempt.provider,
-                        model: attempt.model,
-                        size: "1024x1024",
-                        n: 1
-                    })
-                });
-                
-                let data;
-                try { data = await res.json(); } catch(e){}
+          // CLOSED-LOOP RETRY: For each engine, try once, if moderation error sanitize and retry once
+          for (const engine of engines) {
+              let retriedWithSanitization = false;
 
-                if(!res.ok) throw new Error(data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`));
-                
-                rawUrl = data.url || data.image || data.b64_json;
-                if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
-                    rawUrl = data.data[0].url || data.data[0].b64_json;
-                }
+              for (let attempt = 0; attempt < 2; attempt++) {
+                  try {
+                      const finalPrompt = anchorText + "\n\nSCENE:\n" + currentPrompt + "\n\n(Generate art without any text/lettering.)";
 
-                if(rawUrl) break; 
-             } catch(e) {
-                 lastErr = e;
-             }
+                      const res = await fetch(IMAGE_PROXY_URL, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                              prompt: finalPrompt,
+                              provider: engine.provider,
+                              model: engine.model,
+                              size: "1024x1024",
+                              n: 1
+                          })
+                      });
+
+                      let data;
+                      try { data = await res.json(); } catch (e) {}
+
+                      if (!res.ok) {
+                          const errMsg = data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`);
+                          throw new Error(errMsg);
+                      }
+
+                      rawUrl = data.url || data.image || data.b64_json;
+                      if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
+                          rawUrl = data.data[0].url || data.data[0].b64_json;
+                      }
+
+                      if (rawUrl) break;
+                  } catch (e) {
+                      lastErr = e;
+
+                      // On moderation error, sanitize aggressively and retry SAME engine once
+                      if (!retriedWithSanitization && isImageModerationError(e)) {
+                          console.warn(`[Visualize] Moderation error on ${engine.provider}, sanitizing prompt...`);
+                          currentPrompt = sanitizeImagePrompt(currentPrompt, true); // aggressive mode
+                          document.getElementById('vizPromptInput').value = currentPrompt;
+                          retriedWithSanitization = true;
+                          continue; // retry same engine
+                      }
+                      break; // non-moderation error or already retried, move to next engine
+                  }
+              }
+
+              if (rawUrl) break; // success, exit engine loop
           }
 
           if (!rawUrl) throw lastErr || new Error("All image providers failed.");
