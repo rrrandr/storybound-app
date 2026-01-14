@@ -346,7 +346,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .locked-input, .locked-input textarea, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
 .intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
     opacity:0.6; filter:grayscale(0.9);
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M4 18 L16 4 L16 12 L28 12 L16 28 L16 20 L4 18 Z' fill='%2385bb65' stroke='%23236b23' stroke-width='1.5'/%3E%3Ctext x='14' y='20' font-size='10' font-weight='bold' fill='%23236b23' font-family='Arial'%3E$%3C/text%3E%3C/svg%3E") 2 2, pointer !important;
+    cursor: url('cursor-money-plane.svg') 2 2, pointer !important;
     pointer-events: auto !important;
 }
 .locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
@@ -655,12 +655,12 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 /* PAYWALLED ELEMENTS - CURSOR AND VISIBILITY */
 .locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
 .intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M4 18 L16 4 L16 12 L28 12 L16 28 L16 20 L4 18 Z' fill='%2385bb65' stroke='%23236b23' stroke-width='1.5'/%3E%3Ctext x='14' y='20' font-size='10' font-weight='bold' fill='%23236b23' font-family='Arial'%3E$%3C/text%3E%3C/svg%3E") 2 2, pointer !important;
+    cursor: url('cursor-money-plane.svg') 2 2, pointer !important;
 }
 .card.locked:hover, .fate-card.locked:hover, .intensity-btn.locked:hover,
 .intensity-btn.locked-tease:hover, .intensity-btn.locked-pass:hover,
 [data-locked]:hover {
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M4 18 L16 4 L16 12 L28 12 L16 28 L16 20 L4 18 Z' fill='%2385bb65' stroke='%23236b23' stroke-width='1.5'/%3E%3Ctext x='14' y='20' font-size='10' font-weight='bold' fill='%23236b23' font-family='Arial'%3E$%3C/text%3E%3C/svg%3E") 2 2, pointer !important;
+    cursor: url('cursor-money-plane.svg') 2 2, pointer !important;
 }
 .card.locked *, .fate-card.locked *, .intensity-btn.locked *, [data-locked] * {
     pointer-events: none;
