@@ -810,13 +810,13 @@ textarea.fate-field {
     to { opacity: 0; transform: scale(0.8); }
 }
 
-/* Fate Tree Card (revealed oracle) */
+/* Fate Tree Card (revealed oracle) - uses image_62.png */
 .fate-tree-card {
     width: 32px;
-    height: 44px;
-    background: linear-gradient(145deg, #d4af37, #b8860b);
-    border: 1px solid #ffd700;
-    border-radius: 4px;
+    height: 46px; /* 5:7 tarot proportion */
+    background: url('image_62.png') center/contain no-repeat;
+    border: none;
+    border-radius: 3px;
     position: relative;
     overflow: hidden;
     cursor: pointer;
@@ -829,31 +829,21 @@ textarea.fate-field {
 }
 .fate-tree-card.hidden { display: none; }
 
-/* Tree silhouette - leafless with clear side branches */
+/* Tree silhouette - hidden when using image_62.png */
 .tree-silhouette {
-    position: absolute;
-    inset: 4px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpath d='M12 30 L12 10 M12 10 L6 4 M12 10 L18 4 M12 13 L5 8 M12 13 L19 8 M12 16 L7 12 M12 16 L17 12 M12 19 L8 15 M12 19 L16 15 M12 22 L9 19 M12 22 L15 19 M6 4 L4 2 M6 4 L7 2 M18 4 L20 2 M18 4 L17 2 M5 8 L3 6 M19 8 L21 6' stroke='%23000' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    opacity: 0.85;
+    display: none;
 }
 
 /* Falling leaf - two-stage click-driven animation */
 .falling-leaf {
     position: absolute;
-    width: 6px;
+    width: 8px;
     height: 8px;
-    right: 7px;
+    right: 8px;
     top: 23px; /* Initial: mid-air, halfway down fall path */
     transform: rotate(35deg);
     pointer-events: none;
-}
-.falling-leaf svg {
-    width: 100%;
-    height: 100%;
-    display: block;
+    background: url('image_61.png') center/contain no-repeat;
 }
 
 /* Stage 1: Fall from mid-air to ground */
