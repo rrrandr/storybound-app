@@ -6,3 +6,5 @@ api/config
 
 # Local backups
 index.html.backup
+.vercel
+.env*.local
