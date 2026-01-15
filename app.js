@@ -23,7 +23,8 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   const SUPABASE_URL = config.supabaseUrl || ""; 
   const SUPABASE_ANON_KEY = config.supabaseAnonKey || "";
   const PROXY_URL = config.proxyUrl || 'https://storybound-proxy.vercel.app/api/proxy';
-  var IMAGE_PROXY_URL = config.imageProxyUrl || 'https://storybound-proxy.vercel.app/api/image';
+  // PASS 2E: Use local /api/image endpoint (falls back to external proxy if configured)
+  var IMAGE_PROXY_URL = config.imageProxyUrl || '/api/image';
   const STORY_MODEL = 'grok-4-1-fast-reasoning'; 
   
   // Singleton Supabase Client
@@ -669,7 +670,9 @@ ANTI-HERO ENFORCEMENT:
           autoLock: true,
           locked: false,
           lastImageUrl: "",
-          bible: { style: "", setting: "", characters: {} }
+          bible: { style: "", setting: "", characters: {} },
+          // Per-scene visualization budget: sceneBudgets[sceneKey] = { remaining: 2, finalized: false }
+          sceneBudgets: {}
       },
 
       lastPurchaseType: null,
@@ -2944,11 +2947,26 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // Shuffle the list for random order, no repeats until cycle completes
         const shuffled = [...messageList].sort(() => Math.random() - 0.5);
         let msgIdx = 0;
+
+        // PART C: Crossfade transition for loading phrases
+        // Fade duration: 300ms out + 300ms in
+        const fadeDuration = 300;
+        textEl.style.transition = `opacity ${fadeDuration}ms ease-in-out`;
+
         _loadingMsgTimer = setInterval(() => {
             if (!_loadingActive || _loadingCancelled) return;
             msgIdx = (msgIdx + 1) % shuffled.length;
-            textEl.textContent = shuffled[msgIdx];
-        }, 1200); // 1.2s cadence (1-1.5s range)
+
+            // Fade out
+            textEl.style.opacity = '0';
+
+            // Swap text at opacity 0, then fade in
+            setTimeout(() => {
+                if (!_loadingActive || _loadingCancelled) return;
+                textEl.textContent = shuffled[msgIdx];
+                textEl.style.opacity = '1';
+            }, fadeDuration);
+        }, 3200); // 3.2s cadence for slower, more readable rotation
     }
   }
 
@@ -2972,12 +2990,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const fill = document.getElementById('loadingOverlayFill');
     const percentEl = document.getElementById('loadingPercent');
     const cancelBtn = document.getElementById('loadingCancelBtn');
+    const textEl = document.getElementById('loadingText');
 
     if(_loadingTimer) { clearInterval(_loadingTimer); _loadingTimer = null; }
     if(_loadingMsgTimer) { clearInterval(_loadingMsgTimer); _loadingMsgTimer = null; }
     if(fill) fill.style.width = '100%';
     if(percentEl) percentEl.textContent = '100%';
     if(cancelBtn) cancelBtn.classList.remove('visible');
+
+    // Reset text opacity for next loading cycle
+    if(textEl) {
+        textEl.style.transition = 'none';
+        textEl.style.opacity = '1';
+    }
 
     setTimeout(() => {
       if(overlay) overlay.classList.add('hidden');
@@ -3677,6 +3702,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
     }
   }
 
+  // Setting shot uses unified IMAGE PROVIDER ROUTER with landscape shape
   async function generateSettingShot(desc) {
      _lastSettingShotDesc = desc; // Store for retry
      const img = document.getElementById('settingShotImg');
@@ -3692,59 +3718,23 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
          errDiv.style.color = 'var(--gold)';
      }
 
-     // CORRECTIVE: 16:9 landscape orientation for cinematic establishing shot
+     // 16:9 landscape orientation for cinematic establishing shot
      const prompt = `Cinematic wide landscape establishing shot, atmospheric, fantasy art style, 16:9 aspect ratio, panoramic view. No text, no words. ${desc}`;
 
-     // Fallback chain: try multiple providers (matches Visualize)
-     const attempts = [
-         { provider: 'xai', name: 'Grok' },
-         { provider: 'openai', model: 'gpt-image-1', name: 'OpenAI' }
-     ];
-
      let rawUrl = null;
-     let lastErr = null;
 
-     for(const attempt of attempts) {
-         try {
-             // Add timeout to fetch to prevent infinite hanging (matches Visualize)
-             const controller = new AbortController();
-             const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-             const res = await fetch(IMAGE_PROXY_URL, {
-                 method:'POST',
-                 headers:{'Content-Type':'application/json'},
-                 body: JSON.stringify({
-                     prompt: prompt,
-                     provider: attempt.provider,
-                     model: attempt.model || '',
-                     size: "1792x1024",  // CORRECTIVE: 16:9 landscape
-                     n: 1
-                 }),
-                 signal: controller.signal
-             });
-
-             clearTimeout(timeoutId);
-
-             let data;
-             try { data = await res.json(); } catch(e) { data = null; }
-
-             // Handle 404 and other HTTP errors - continue to fallback
-             if(!res.ok) {
-                 console.warn(`Setting shot: ${attempt.name} failed (${res.status}), trying fallback...`);
-                 throw new Error(`HTTP ${res.status}`);
-             }
-
-             rawUrl = data.url || data.image || data.b64_json;
-             if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
-                 rawUrl = data.data[0].url || data.data[0].b64_json;
-             }
-
-             if(rawUrl) break;
-         } catch(e) {
-             lastErr = e;
-             console.warn(`Setting shot failed with ${attempt.name}`, e);
-             // Continue to next fallback provider
-         }
+     // Use unified IMAGE PROVIDER ROUTER with FALLBACK CHAIN
+     // Setting shots always use Clean tier (sanitized) with landscape shape
+     try {
+         rawUrl = await generateImageWithFallback({
+             prompt: prompt,
+             tier: 'Clean',
+             shape: 'landscape',
+             context: 'setting-shot'
+         });
+     } catch(e) {
+         // All providers failed - logged by generateImageWithFallback
+         console.warn('Setting shot: all providers exhausted', e.message);
      }
 
      if(rawUrl) {
@@ -3754,7 +3744,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
          }
          img.src = imageUrl;
 
-         // Add timeout for image load (matches Visualize)
+         // Add timeout for image load
          const loadTimeout = setTimeout(() => {
              img.style.display = 'none';
              if(errDiv) {
@@ -3818,20 +3808,19 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   // Default visual quality biases for attractive characters
   const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
 
-  // Sanitize image prompts for Grok safety - removes/softens sensual adjectives
+  // Sanitize image prompts - removes sensual adjectives for Clean/Naughty tiers
   function sanitizeImagePrompt(prompt) {
-      // Words that trigger Grok safety filters
+      // Words that trigger safety filters on mainstream providers
       const sensualWords = [
           'sensual', 'erotic', 'seductive', 'sexual', 'intimate', 'naked', 'nude',
           'provocative', 'suggestive', 'lustful', 'passionate', 'steamy', 'hot',
           'sexy', 'aroused', 'arousing', 'undressed', 'revealing', 'exposed',
           'busty', 'voluptuous', 'curvy', 'bedroom', 'lingerie', 'underwear',
           'explicit', 'raw', 'unfiltered', 'dirty', 'naughty', 'forbidden',
-          // CORRECTIVE: Additional flagged words that trigger moderation
-          'sultry', 'alluring'
+          'sultry', 'alluring', 'nudity'
       ];
 
-      // CORRECTIVE: Phrases that trigger moderation (multi-word)
+      // Phrases that trigger moderation (multi-word)
       const sensualPhrases = [
           'parted lips', 'suggestive posture', 'alluring curves',
           'bedroom eyes', 'come hither', 'inviting gaze'
@@ -3842,7 +3831,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Remove "The Author" references (meta-character should never be in images)
       sanitized = sanitized.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
 
-      // CORRECTIVE: Remove flagged phrases first (before single words)
+      // Remove flagged phrases first (before single words)
       sensualPhrases.forEach(phrase => {
           const regex = new RegExp(phrase, 'gi');
           sanitized = sanitized.replace(regex, '');
@@ -3858,6 +3847,367 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       sanitized = sanitized.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').replace(/\s+,/g, ',').trim();
 
       return sanitized;
+  }
+
+  // EROTIC/DIRTY TIER: Restore erotic language to prompts for Perchance rendering
+  // This reverses sanitization for tiers that permit explicit imagery
+  function restoreEroticLanguage(prompt) {
+      // Keywords to restore/enhance for erotic tiers
+      const eroticEnhancements = [
+          'sensual', 'erotic', 'nudity', 'nude', 'explicit'
+      ];
+
+      let enhanced = prompt;
+
+      // Remove "The Author" references (meta-character should NEVER be in images)
+      enhanced = enhanced.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
+
+      // If prompt lacks erotic descriptors, inject tier-appropriate language
+      const hasEroticTerms = eroticEnhancements.some(term =>
+          enhanced.toLowerCase().includes(term)
+      );
+
+      if (!hasEroticTerms) {
+          // Inject erotic context based on intensity guidance already in prompt
+          if (enhanced.toLowerCase().includes('artistic nudity permitted') ||
+              enhanced.toLowerCase().includes('explicit') ||
+              enhanced.toLowerCase().includes('passionate')) {
+              enhanced = enhanced.replace(
+                  /Art style:/i,
+                  'Sensual, erotic imagery permitted. Art style:'
+              );
+          }
+      }
+
+      // Clean up spacing
+      enhanced = enhanced.replace(/\s+/g, ' ').trim();
+
+      return enhanced;
+  }
+
+  // ============================================================
+  // IMAGE PROVIDER ROUTER - Unified image generation system
+  // ============================================================
+
+  // PASS 2E: PROMPT LENGTH CLAMP (MAX 700 CHARACTERS)
+  const MAX_IMAGE_PROMPT_LENGTH = 700;
+
+  function clampPromptLength(prompt) {
+      if (prompt.length > MAX_IMAGE_PROMPT_LENGTH) {
+          console.warn(`[IMAGE-GEN] Prompt truncated: ${prompt.length} -> ${MAX_IMAGE_PROMPT_LENGTH}`);
+          return prompt.substring(0, MAX_IMAGE_PROMPT_LENGTH);
+      }
+      return prompt;
+  }
+
+  // FLUX PROMPT HARD CONSTRAINTS (MANDATORY)
+  const FLUX_PROMPT_PREFIX = 'Painterly cinematic realism, oil-painting style, realistic anatomy, natural proportions, non-anime.';
+  const FLUX_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. No extra limbs. No extra people.';
+
+  // PERCHANCE PROMPT HARD CONSTRAINTS (MANDATORY)
+  const PERCHANCE_PROMPT_PREFIX = 'default Art Style is oil painting 70s pulp, cinematic lighting, realistic proportions, oil-painting style, non-anime.';
+  const PERCHANCE_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. One head, two arms, two legs. No extra limbs. No extra people.';
+
+  // DEV-ONLY: Logging helper for image generation debugging
+  function logImageAttempt(provider, context, prompt, status, error = null) {
+      const promptPreview = prompt.substring(0, 120) + (prompt.length > 120 ? '...' : '');
+      const logData = {
+          provider,
+          context,
+          promptLength: prompt.length,
+          promptPreview,
+          status,
+          timestamp: new Date().toISOString()
+      };
+      if (error) logData.error = error;
+      console.warn('[IMAGE-GEN]', JSON.stringify(logData));
+  }
+
+  // FLUX PRIMARY: Call Flux Uncensored image generation (via Replicate or self-hosted)
+  // PASS 2E: Extended timeout for Replicate inference (up to 120s)
+  // Default to 16:9 landscape for cinematic presentation
+  async function callFluxImageGen(prompt, size = '1792x1024', timeout = 125000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      // Flux endpoint - Replicate API or self-hosted inference server
+      const fluxUrl = (typeof FLUX_PROXY_URL !== 'undefined' && FLUX_PROXY_URL)
+          ? FLUX_PROXY_URL
+          : IMAGE_PROXY_URL;
+
+      // Apply mandatory prefix and suffix constraints
+      const constrainedPrompt = `${FLUX_PROMPT_PREFIX} ${prompt} ${FLUX_PROMPT_SUFFIX}`;
+
+      // PASS 2E: Include context for server-side logging
+      const res = await fetch(fluxUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: constrainedPrompt,
+              provider: 'flux',
+              model: 'flux-uncensored',
+              size: size,
+              context: 'flux-primary',
+              n: 1
+          }),
+          signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Flux HTTP ${res.status}`);
+      }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('Flux invalid response'); }
+
+      const imageUrl = data?.url || data?.image || data?.b64_json ||
+          (Array.isArray(data?.data) && data.data[0]?.url) ||
+          (Array.isArray(data?.data) && data.data[0]?.b64_json) ||
+          (Array.isArray(data?.output) && data.output[0]);
+
+      if (!imageUrl) {
+          throw new Error('Flux returned no image');
+      }
+
+      return imageUrl;
+  }
+
+  // OPENAI LAST RESORT: Call OpenAI image generation
+  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      const res = await fetch(IMAGE_PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: prompt,
+              provider: 'openai',
+              model: 'gpt-image-1.5',
+              size: size,
+              n: 1
+          }),
+          signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `OpenAI HTTP ${res.status}`);
+      }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('OpenAI invalid response'); }
+
+      const imageUrl = data?.url || data?.image || data?.b64_json ||
+          (Array.isArray(data?.data) && data.data[0]?.url) ||
+          (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+      if (!imageUrl) {
+          throw new Error('OpenAI returned no image');
+      }
+
+      return imageUrl;
+  }
+
+  // PERCHANCE PROVIDER: Call Perchance AI image generation service
+  // Default to 16:9 landscape for cinematic presentation
+  async function callPerchanceImageGen(prompt, size = '1792x1024', timeout = 60000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      // Perchance endpoint - server-side microservice or internal HTTP endpoint
+      const perchanceUrl = (typeof PERCHANCE_PROXY_URL !== 'undefined' && PERCHANCE_PROXY_URL)
+          ? PERCHANCE_PROXY_URL
+          : IMAGE_PROXY_URL;
+
+      // Apply mandatory prefix and suffix constraints
+      const constrainedPrompt = `${PERCHANCE_PROMPT_PREFIX} ${prompt} ${PERCHANCE_PROMPT_SUFFIX}`;
+
+      const res = await fetch(perchanceUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: constrainedPrompt,
+              provider: 'perchance',
+              size: size,
+              n: 1
+          }),
+          signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+          throw new Error(`Perchance HTTP ${res.status}`);
+      }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('Perchance invalid response'); }
+
+      const imageUrl = data?.url || data?.image || data?.b64_json ||
+          (Array.isArray(data?.data) && data.data[0]?.url) ||
+          (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+      if (!imageUrl) {
+          throw new Error('Perchance returned no image');
+      }
+
+      return imageUrl;
+  }
+
+  // GEMINI PROVIDER: Call Gemini image generation
+  async function callGeminiImageGen(prompt, size = '1024x1024', timeout = 60000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      const res = await fetch(IMAGE_PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: prompt,
+              provider: 'gemini',
+              model: 'imagen-3.0-generate-002',
+              size: size,
+              n: 1
+          }),
+          signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Gemini HTTP ${res.status}`);
+      }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('Gemini invalid response'); }
+
+      const imageUrl = data?.url || data?.image || data?.b64_json ||
+          (Array.isArray(data?.data) && data.data[0]?.url) ||
+          (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+      if (!imageUrl) {
+          throw new Error('Gemini returned no image');
+      }
+
+      return imageUrl;
+  }
+
+  // REPLICATE FLUX SCHNELL: Direct call to /api/visualize-flux endpoint
+  async function callReplicateFluxSchnell(prompt, size = '1792x1024', timeout = 125000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      // Default to 16:9 landscape for cinematic presentation
+      // Only use 1:1 if explicitly requested via size parameter
+      const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
+
+      const res = await fetch('/api/visualize-flux', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: prompt,
+              input: {
+                  aspect_ratio: aspectRatio,
+                  go_fast: true,
+                  num_outputs: 1,
+                  output_format: 'webp',
+                  output_quality: 80
+              }
+          }),
+          signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Replicate HTTP ${res.status}`);
+      }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('Replicate invalid response'); }
+
+      const imageUrl = data?.image || data?.url ||
+          (Array.isArray(data?.output) && data.output[0]);
+
+      if (!imageUrl) {
+          throw new Error('Replicate returned no image');
+      }
+
+      return imageUrl;
+  }
+
+  // FALLBACK CHAIN: Unified image generation with provider fallbacks
+  // All image generation MUST route through this function
+  // Provider order: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
+  // Default to 16:9 landscape for cinematic presentation
+  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize' }) {
+      const normalizedTier = (tier || 'Naughty').toLowerCase();
+      const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
+
+      // Determine size based on shape (default landscape 16:9)
+      const size = shape === 'portrait' ? '1024x1024' : '1792x1024';
+
+      // PASS 2E: Clamp prompt length BEFORE any processing
+      const clampedPrompt = clampPromptLength(prompt);
+
+      // Prepare prompts for different provider requirements
+      const eroticPrompt = clampPromptLength(restoreEroticLanguage(clampedPrompt));
+      const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt));
+
+      // Use erotic prompt for explicit tiers, sanitized for others
+      // Erotic/Dirty tiers pass through UNCENSORED to Replicate/Flux/Perchance
+      const basePrompt = isExplicitTier ? eroticPrompt : clampedPrompt;
+
+      // FALLBACK CHAIN: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
+      const providerChain = [
+          // REPLICATE FLUX SCHNELL PRIMARY - uncensored, explicit allowed
+          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: basePrompt },
+          // FLUX FALLBACK - via IMAGE_PROXY_URL
+          { name: 'Flux', fn: callFluxImageGen, prompt: basePrompt },
+          // PERCHANCE FALLBACK
+          { name: 'Perchance', fn: callPerchanceImageGen, prompt: basePrompt },
+          // GEMINI FALLBACK
+          { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
+          // OPENAI LAST RESORT
+          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt }
+      ];
+
+      let lastError = null;
+
+      // FALLBACK CHAIN: Try each provider in order
+      for (const provider of providerChain) {
+          try {
+              logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
+              const imageUrl = await provider.fn(provider.prompt, size);
+              logImageAttempt(provider.name, context, provider.prompt, 'SUCCESS');
+              return imageUrl;
+          } catch (e) {
+              lastError = e;
+              logImageAttempt(provider.name, context, provider.prompt, 'FAILED', e.message);
+              // Continue to next provider in chain
+          }
+      }
+
+      // All providers failed
+      throw lastError || new Error('All image providers failed');
+  }
+
+  // Legacy wrapper for backward compatibility
+  async function generateTieredImage(basePrompt, tier) {
+      return generateImageWithFallback({
+          prompt: basePrompt,
+          tier: tier,
+          shape: 'portrait',
+          context: 'visualize'
+      });
   }
 
   // Filter "The Author" from any image prompt
@@ -3908,10 +4258,78 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       initVizModifierPills();
   }
 
+  // ============================================================
+  // SCENE VISUALIZATION BUDGET SYSTEM
+  // Limits re-visualizations to 2 per scene, finalizes on insert
+  // Scene key = turnCount (stable identifier for narrative moments)
+  // ============================================================
+
+  function getSceneKey() {
+      // Use turnCount as scene identifier - increments with each player action
+      return 'turn_' + (state.turnCount || 0);
+  }
+
+  function getSceneBudget(sceneKey) {
+      if (!state.visual.sceneBudgets) state.visual.sceneBudgets = {};
+      if (!state.visual.sceneBudgets[sceneKey]) {
+          state.visual.sceneBudgets[sceneKey] = { remaining: 2, finalized: false };
+      }
+      return state.visual.sceneBudgets[sceneKey];
+  }
+
+  function decrementSceneBudget(sceneKey) {
+      const budget = getSceneBudget(sceneKey);
+      if (budget.remaining > 0) {
+          budget.remaining--;
+          saveStorySnapshot();
+      }
+      return budget.remaining;
+  }
+
+  function finalizeScene(sceneKey) {
+      const budget = getSceneBudget(sceneKey);
+      budget.finalized = true;
+      saveStorySnapshot();
+  }
+
+  function updateVizButtonStates() {
+      const sceneKey = getSceneKey();
+      const budget = getSceneBudget(sceneKey);
+
+      const vizBtn = document.getElementById('vizSceneBtn');
+      const retryBtn = document.getElementById('vizRetryBtn');
+      const errDiv = document.getElementById('vizError');
+
+      if (vizBtn) {
+          if (budget.finalized) {
+              vizBtn.textContent = '🔒 Finalized';
+              vizBtn.disabled = true;
+              vizBtn.style.opacity = '0.5';
+              vizBtn.style.cursor = 'not-allowed';
+          } else {
+              vizBtn.textContent = '✨ Visualize This Scene';
+              vizBtn.disabled = false;
+              vizBtn.style.opacity = '1';
+              vizBtn.style.cursor = 'pointer';
+          }
+      }
+
+      if (retryBtn) {
+          if (budget.finalized) {
+              retryBtn.textContent = 'Finalized';
+              retryBtn.disabled = true;
+          } else if (budget.remaining <= 0) {
+              retryBtn.textContent = 'Re-Visualize (0)';
+              retryBtn.disabled = true;
+          } else {
+              retryBtn.textContent = `Re-Visualize (${budget.remaining})`;
+              retryBtn.disabled = false;
+          }
+      }
+  }
+
   window.visualize = async function(isRe){
       if (_vizInFlight) return;
-      _vizInFlight = true;
-      _vizCancelled = false;
 
       const modal = document.getElementById('vizModal');
       const retryBtn = document.getElementById('vizRetryBtn');
@@ -3920,6 +4338,35 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const errDiv = document.getElementById('vizError');
       const storyText = document.getElementById('storyText');
 
+      // Check scene budget before proceeding
+      const sceneKey = getSceneKey();
+      const budget = getSceneBudget(sceneKey);
+
+      // Block if scene is finalized
+      if (budget.finalized) {
+          if(modal) modal.classList.remove('hidden');
+          if(errDiv) {
+              errDiv.textContent = 'Scene finalized. Image already inserted.';
+              errDiv.classList.remove('hidden');
+          }
+          updateVizButtonStates();
+          return;
+      }
+
+      // Block re-visualize if budget exhausted
+      if (isRe && budget.remaining <= 0) {
+          if(modal) modal.classList.remove('hidden');
+          if(errDiv) {
+              errDiv.textContent = 'No re-visualizations remaining for this scene.';
+              errDiv.classList.remove('hidden');
+          }
+          updateVizButtonStates();
+          return;
+      }
+
+      _vizInFlight = true;
+      _vizCancelled = false;
+
       if (!img) { _vizInFlight = false; return; }
 
       // Reset modifier UI when opening modal
@@ -3927,6 +4374,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
+
+      // Update button states to reflect current budget
+      updateVizButtonStates();
 
       // Start cancellable loading with cancel callback
       startLoading("Painting the scene...", VISUALIZE_LOADING_MESSAGES, true, () => {
@@ -3978,13 +4428,6 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               return;
           }
 
-          const modelEl = document.getElementById('vizModel');
-          const userModel = modelEl ? modelEl.value : "";
-          const um = (userModel || "").toLowerCase();
-
-          const isOpenAI = um.includes("gpt") || um.includes("openai");
-          const isGemini = um.includes("gemini");
-
           // Build base prompt with intensity bias, quality defaults, and veto exclusions (filter "The Author")
           const modifierInput = document.getElementById('vizModifierInput');
           const userModifiers = modifierInput ? modifierInput.value.trim() : '';
@@ -4002,93 +4445,27 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               (userModifiers ? ", " + filterAuthorFromPrompt(userModifiers) : "") +
               "\n\nArt style: cinematic, painterly, tasteful. (Generate art without any text/lettering.)";
 
-          // Provider fallback order - will try each until one succeeds
-          const attempts = [];
-          attempts.push({ provider: 'xai', model: (isOpenAI || isGemini) ? '' : userModel, name: 'Grok', isSanitizeRetry: false });
-          attempts.push({ provider: 'xai', model: '', name: 'Grok (sanitized)', isSanitizeRetry: true });
-          attempts.push({ provider: 'openai', model: isOpenAI ? userModel : 'gpt-image-1', name: 'OpenAI', isSanitizeRetry: false });
-
-          let rawUrl = null;
-          let lastErr = null;
-          let attemptCount = 0;
-          let grokSafetyFailed = false;
-
-          for(const attempt of attempts){
-             // Check if cancelled before each attempt
-             if (_vizCancelled) {
-                 _vizInFlight = false;
-                 if(retryBtn) retryBtn.disabled = false;
-                 return;
-             }
-
-             // Skip sanitize retry if Grok didn't fail with safety error
-             if (attempt.isSanitizeRetry && !grokSafetyFailed) continue;
-
-             attemptCount++;
-             try {
-                // Add timeout to fetch to prevent infinite hanging
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
-
-                // Use sanitized prompt for retry attempts
-                const fullPrompt = attempt.isSanitizeRetry ? sanitizeImagePrompt(basePrompt) : basePrompt;
-
-                const res = await fetch(IMAGE_PROXY_URL, {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({
-                        prompt: fullPrompt,
-                        provider: attempt.provider,
-                        model: attempt.model,
-                        size: "1024x1024",
-                        n: 1
-                    }),
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                let data;
-                try { data = await res.json(); } catch(e){ data = null; }
-
-                // Handle 502 and other errors - continue to fallback
-                if(!res.ok) {
-                    const errMsg = data?.details ? JSON.stringify(data.details) : (data?.error || `HTTP ${res.status}`);
-                    console.warn(`Visualize: ${attempt.name} failed (${res.status}), trying fallback...`);
-
-                    // Detect Grok safety rejection - trigger sanitized retry
-                    const errLower = errMsg.toLowerCase();
-                    if (attempt.provider === 'xai' && !attempt.isSanitizeRetry &&
-                        (errLower.includes('safety') || errLower.includes('content policy') ||
-                         errLower.includes('inappropriate') || errLower.includes('violat') ||
-                         res.status === 400 || res.status === 422)) {
-                        grokSafetyFailed = true;
-                        console.log('Grok safety rejection detected, will retry with sanitized prompt...');
-                    }
-
-                    throw new Error(errMsg);
-                }
-
-                rawUrl = data.url || data.image || data.b64_json;
-                if (!rawUrl && Array.isArray(data.data) && data.data.length > 0) {
-                    rawUrl = data.data[0].url || data.data[0].b64_json;
-                }
-
-                if(rawUrl) break;
-             } catch(e) {
-                 lastErr = e;
-                 // Don't throw - continue to next fallback provider
-             }
-          }
-
-          // Check if cancelled after all attempts
+          // Check if cancelled before image generation
           if (_vizCancelled) {
               _vizInFlight = false;
               if(retryBtn) retryBtn.disabled = false;
               return;
           }
 
-          if (!rawUrl) throw lastErr || new Error("All image providers failed.");
+          // TIER-BASED IMAGE ENGINE ROUTING
+          // Clean/Naughty → OpenAI (sanitized prompt)
+          // Erotic/Dirty → Perchance (restored prompt) with OpenAI fallback
+          const currentTier = state.intensity || 'Naughty';
+          const rawUrl = await generateTieredImage(basePrompt, currentTier);
+
+          // Check if cancelled after image generation
+          if (_vizCancelled) {
+              _vizInFlight = false;
+              if(retryBtn) retryBtn.disabled = false;
+              return;
+          }
+
+          if (!rawUrl) throw new Error("Image generation failed.");
 
           let imageUrl = rawUrl;
           if (!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
@@ -4115,6 +4492,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                       state.visual.lastImageUrl = ''; // Clear to prevent storage overflow
                   }
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
+
+                  // Decrement budget on successful re-visualize
+                  if (isRe) {
+                      decrementSceneBudget(sceneKey);
+                  }
+                  updateVizButtonStates();
+
                   saveStorySnapshot();
                   resolve();
               };
@@ -4151,9 +4535,18 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   window.insertImage = function(){
       const img = document.getElementById('vizPreviewImg');
       if(!img.src) return;
+
+      // Finalize scene on insert - no more visualizations allowed
+      const sceneKey = getSceneKey();
+      finalizeScene(sceneKey);
+
       // Append visualized image to current page
       const imgHtml = `<img src="${img.src}" class="story-image" alt="Visualized scene">`;
       StoryPagination.appendToCurrentPage(imgHtml);
+
+      // Update button states to reflect finalized status
+      updateVizButtonStates();
+
       window.closeViz();
       saveStorySnapshot();
   };
@@ -4290,6 +4683,9 @@ FATE CARD ADAPTATION (CRITICAL):
           }
 
           state.turnCount++;
+
+          // Update visualization button states for new scene
+          updateVizButtonStates();
 
           // Build new page content
           let pageContent = '';

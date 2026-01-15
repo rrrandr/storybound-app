@@ -107,10 +107,8 @@
 
     <div class="viz-controls">
         <select id="vizModel">
-            <option value="grok-2-image-1212" selected>Grok 2</option>
-            <option value="auto">Auto (Best Available)</option>
-            <option value="openai">OpenAI (DALL-E 3)</option>
-            <option value="gemini">Gemini (Fantasy)</option>
+            <option value="auto" selected>Auto (Tier-Based)</option>
+            <option value="gpt-image-1.5">OpenAI (GPT Image 1.5)</option>
         </select>
         <button class="small-btn" id="vizRetryBtn" onclick="window.visualize(true)">Re-Visualize</button>
         <button onclick="window.insertImage()">Insert</button>
@@ -681,7 +679,7 @@
     </div>
 
     <div style="text-align:center; margin-bottom:10px;">
-        <button onclick="window.visualize()" style="font-size:0.9em; background:#444;">✨ Visualize This Scene</button>
+        <button id="vizSceneBtn" onclick="window.visualize()" style="font-size:0.9em; background:#444;">✨ Visualize This Scene</button>
     </div>
     
     <div id="metaControls" class="hidden" style="margin: 10px auto; padding: 10px; border: 1px dashed var(--gold); border-radius: 8px; max-width: 600px;">
