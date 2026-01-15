@@ -4309,18 +4309,29 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   function getSceneBudget(sceneKey) {
       if (!state.visual.sceneBudgets) state.visual.sceneBudgets = {};
       if (!state.visual.sceneBudgets[sceneKey]) {
-          state.visual.sceneBudgets[sceneKey] = { remaining: 2, finalized: false };
+          // Track attempts (incremented at START of visualize, not on success)
+          // Max 2 attempts allowed (attempt 1 = first try, attempt 2 = last chance)
+          state.visual.sceneBudgets[sceneKey] = { attempts: 0, finalized: false };
       }
-      return state.visual.sceneBudgets[sceneKey];
+      // Migration: convert old 'remaining' format to new 'attempts' format
+      const budget = state.visual.sceneBudgets[sceneKey];
+      if (budget.remaining !== undefined && budget.attempts === undefined) {
+          budget.attempts = 2 - budget.remaining;
+          delete budget.remaining;
+      }
+      return budget;
   }
 
-  function decrementSceneBudget(sceneKey) {
+  function incrementSceneAttempts(sceneKey) {
       const budget = getSceneBudget(sceneKey);
-      if (budget.remaining > 0) {
-          budget.remaining--;
-          saveStorySnapshot();
-      }
-      return budget.remaining;
+      budget.attempts = (budget.attempts || 0) + 1;
+      saveStorySnapshot();
+      return budget.attempts;
+  }
+
+  function getAttemptsRemaining(sceneKey) {
+      const budget = getSceneBudget(sceneKey);
+      return Math.max(0, 2 - (budget.attempts || 0));
   }
 
   function finalizeScene(sceneKey) {
@@ -4332,10 +4343,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   function updateVizButtonStates() {
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
+      const remaining = getAttemptsRemaining(sceneKey);
 
       const vizBtn = document.getElementById('vizSceneBtn');
       const retryBtn = document.getElementById('vizRetryBtn');
-      const errDiv = document.getElementById('vizError');
 
       if (vizBtn) {
           if (budget.finalized) {
@@ -4343,8 +4354,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               vizBtn.disabled = true;
               vizBtn.style.opacity = '0.5';
               vizBtn.style.cursor = 'not-allowed';
+          } else if (remaining <= 0) {
+              vizBtn.textContent = '✨ Visualize (0)';
+              vizBtn.disabled = true;
+              vizBtn.style.opacity = '0.5';
+              vizBtn.style.cursor = 'not-allowed';
           } else {
-              vizBtn.textContent = '✨ Visualize This Scene';
+              vizBtn.textContent = `✨ Visualize (${remaining})`;
               vizBtn.disabled = false;
               vizBtn.style.opacity = '1';
               vizBtn.style.cursor = 'pointer';
@@ -4355,11 +4371,11 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           if (budget.finalized) {
               retryBtn.textContent = 'Finalized';
               retryBtn.disabled = true;
-          } else if (budget.remaining <= 0) {
+          } else if (remaining <= 0) {
               retryBtn.textContent = 'Re-Visualize (0)';
               retryBtn.disabled = true;
           } else {
-              retryBtn.textContent = `Re-Visualize (${budget.remaining})`;
+              retryBtn.textContent = `Re-Visualize (${remaining})`;
               retryBtn.disabled = false;
           }
       }
@@ -4378,6 +4394,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Check scene budget before proceeding
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
+      const remaining = getAttemptsRemaining(sceneKey);
 
       // Block if scene is finalized
       if (budget.finalized) {
@@ -4390,16 +4407,20 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           return;
       }
 
-      // Block re-visualize if budget exhausted
-      if (isRe && budget.remaining <= 0) {
+      // Block if all attempts exhausted (attempts >= 2)
+      if (remaining <= 0) {
           if(modal) modal.classList.remove('hidden');
           if(errDiv) {
-              errDiv.textContent = 'No re-visualizations remaining for this scene.';
+              errDiv.textContent = "You've used all visualize attempts for this scene.";
               errDiv.classList.remove('hidden');
           }
           updateVizButtonStates();
           return;
       }
+
+      // INCREMENT ATTEMPTS NOW (before generation starts - closes Cancel loophole)
+      const currentAttempt = incrementSceneAttempts(sceneKey);
+      const isLastAttempt = currentAttempt >= 2;
 
       _vizInFlight = true;
       _vizCancelled = false;
@@ -4411,6 +4432,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
+
+      // Show last-chance warning if this is attempt 2
+      if (isLastAttempt && errDiv) {
+          errDiv.textContent = '⚠️ This is your last chance to visualize this scene.';
+          errDiv.style.color = 'var(--gold)';
+          errDiv.classList.remove('hidden');
+      }
 
       // Update button states to reflect current budget
       updateVizButtonStates();
@@ -4543,10 +4571,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   }
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
 
-                  // Decrement budget on successful re-visualize
-                  if (isRe) {
-                      decrementSceneBudget(sceneKey);
-                  }
+                  // Attempts already incremented at start - just update UI
                   updateVizButtonStates();
 
                   saveStorySnapshot();
