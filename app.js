@@ -3980,6 +3980,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+      // Determine aspect ratio from size (match Replicate logic)
+      const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
+
       const res = await fetch(IMAGE_PROXY_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -3988,6 +3991,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               provider: 'openai',
               model: 'gpt-image-1.5',
               size: size,
+              aspect_ratio: aspectRatio,
               n: 1
           }),
           signal: controller.signal
@@ -4028,6 +4032,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Apply mandatory prefix and suffix constraints
       const constrainedPrompt = `${PERCHANCE_PROMPT_PREFIX} ${prompt} ${PERCHANCE_PROMPT_SUFFIX}`;
 
+      // Determine aspect ratio from size (match Replicate logic)
+      const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
+
       const res = await fetch(perchanceUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -4035,6 +4042,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               prompt: constrainedPrompt,
               provider: 'perchance',
               size: size,
+              aspect_ratio: aspectRatio,
               n: 1
           }),
           signal: controller.signal
@@ -4065,6 +4073,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+      // Determine aspect ratio from size (match Replicate logic)
+      const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
+
       const res = await fetch(IMAGE_PROXY_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -4073,6 +4084,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               provider: 'gemini',
               model: 'imagen-3.0-generate-002',
               size: size,
+              aspect_ratio: aspectRatio,
               n: 1
           }),
           signal: controller.signal
