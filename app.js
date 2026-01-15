@@ -4277,20 +4277,19 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const eroticPrompt = clampPromptLength(restoreEroticLanguage(clampedPrompt));
       const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt));
 
-      // Use erotic prompt for explicit tiers, sanitized for others
-      // Erotic/Dirty tiers pass through UNCENSORED to Replicate/Flux/Perchance
-      const basePrompt = isExplicitTier ? eroticPrompt : clampedPrompt;
+      // All providers now use sanitized prompts for stability
+      // Explicit content belongs in prose, not images
+      const basePrompt = sanitizedPrompt;
 
-      // FALLBACK CHAIN: Perchance → Replicate (Flux) → Gemini → OpenAI
+      // STABLE PROVIDER CHAIN: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
+      // Perchance removed for stability. Replicate failures fail silently.
       const providerChain = [
-          // PERCHANCE PRIMARY - uncensored, explicit allowed
-          { name: 'Perchance', fn: callPerchanceImageGen, prompt: basePrompt },
-          // REPLICATE FLUX SCHNELL FALLBACK - uncensored, explicit allowed
-          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: basePrompt },
-          // GEMINI FALLBACK
+          // GEMINI PRIMARY - reliable, sanitized prompts
           { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
-          // OPENAI LAST RESORT
-          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt }
+          // OPENAI FALLBACK - reliable, sanitized prompts
+          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt },
+          // REPLICATE LAST RESORT - allowed to fail silently
+          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt }
       ];
 
       let lastError = null;
@@ -4316,8 +4315,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           }
       }
 
-      // All providers failed
-      throw lastError || new Error('All image providers failed');
+      // All providers failed - fail silently, story continues
+      console.warn('[Image] All providers failed:', lastError?.message || 'unknown');
+      return null;
   }
 
   // Legacy wrapper for backward compatibility
