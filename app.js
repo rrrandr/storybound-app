@@ -4461,16 +4461,29 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
           // Include veto exclusions in visual prompt (e.g., "no blondes" should affect hair color)
           const vetoExclusions = state.veto?.excluded?.length > 0
-              ? "\n\nVISUAL EXCLUSIONS (DO NOT INCLUDE): " + state.veto.excluded.join(', ')
+              ? " Exclude: " + state.veto.excluded.slice(0, 3).join(', ') + "."
               : "";
 
-          let basePrompt = filterAuthorFromPrompt(anchorText) +
-              "\n\nINTENSITY: " + filterAuthorFromPrompt(intensityBias) +
-              "\n\nQUALITY: " + VISUAL_QUALITY_DEFAULTS +
+          // SCENE-FIRST PROMPT CONSTRUCTION
+          // Hard cap scene description to 256 characters (no ellipses, no rephrasing)
+          const sceneDesc = filterAuthorFromPrompt(promptMsg).slice(0, 256);
+          const modifiers = userModifiers ? " " + filterAuthorFromPrompt(userModifiers) : "";
+
+          // Brief anchors from visual bible (characters only, 100 char max)
+          const briefAnchors = filterAuthorFromPrompt(anchorText).slice(0, 100);
+
+          // Shortened quality/intensity (clarity over verbosity)
+          const shortQuality = "Attractive, elegant features, natural expressions.";
+          const shortIntensity = intensityBias.split('.')[0] + "."; // First sentence only
+
+          // SCENE FIRST, then anchors/style
+          let basePrompt = sceneDesc + modifiers +
+              "\n---\n" +
+              "Style: cinematic, painterly, no text. " +
+              shortQuality + " " +
+              shortIntensity +
               vetoExclusions +
-              "\n\nSCENE:\n" + filterAuthorFromPrompt(promptMsg) +
-              (userModifiers ? ", " + filterAuthorFromPrompt(userModifiers) : "") +
-              "\n\nArt style: cinematic, painterly, tasteful. (Generate art without any text/lettering.)";
+              (briefAnchors ? " " + briefAnchors : "");
 
           // Check if cancelled before image generation
           if (_vizCancelled) {
