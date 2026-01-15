@@ -4135,16 +4135,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt));
 
       // Use erotic prompt for explicit tiers, sanitized for others
+      // Erotic/Dirty tiers pass through UNCENSORED to Replicate/Flux/Perchance
       const basePrompt = isExplicitTier ? eroticPrompt : clampedPrompt;
-
-      // Add intensity suffix for erotic/dirty tiers
-      const intensitySuffix = isExplicitTier ? ' Artistic, suggestive, safe-for-work.' : '';
-      const replicatePrompt = basePrompt + intensitySuffix;
 
       // FALLBACK CHAIN: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
       const providerChain = [
-          // REPLICATE FLUX SCHNELL PRIMARY - fast, via /api/visualize-flux
-          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: replicatePrompt },
+          // REPLICATE FLUX SCHNELL PRIMARY - uncensored, explicit allowed
+          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: basePrompt },
           // FLUX FALLBACK - via IMAGE_PROXY_URL
           { name: 'Flux', fn: callFluxImageGen, prompt: basePrompt },
           // PERCHANCE FALLBACK
