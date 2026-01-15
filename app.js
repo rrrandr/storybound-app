@@ -670,7 +670,9 @@ ANTI-HERO ENFORCEMENT:
           autoLock: true,
           locked: false,
           lastImageUrl: "",
-          bible: { style: "", setting: "", characters: {} }
+          bible: { style: "", setting: "", characters: {} },
+          // Per-scene visualization budget: sceneBudgets[sceneKey] = { remaining: 2, finalized: false }
+          sceneBudgets: {}
       },
 
       lastPurchaseType: null,
@@ -4256,10 +4258,78 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       initVizModifierPills();
   }
 
+  // ============================================================
+  // SCENE VISUALIZATION BUDGET SYSTEM
+  // Limits re-visualizations to 2 per scene, finalizes on insert
+  // Scene key = turnCount (stable identifier for narrative moments)
+  // ============================================================
+
+  function getSceneKey() {
+      // Use turnCount as scene identifier - increments with each player action
+      return 'turn_' + (state.turnCount || 0);
+  }
+
+  function getSceneBudget(sceneKey) {
+      if (!state.visual.sceneBudgets) state.visual.sceneBudgets = {};
+      if (!state.visual.sceneBudgets[sceneKey]) {
+          state.visual.sceneBudgets[sceneKey] = { remaining: 2, finalized: false };
+      }
+      return state.visual.sceneBudgets[sceneKey];
+  }
+
+  function decrementSceneBudget(sceneKey) {
+      const budget = getSceneBudget(sceneKey);
+      if (budget.remaining > 0) {
+          budget.remaining--;
+          saveStorySnapshot();
+      }
+      return budget.remaining;
+  }
+
+  function finalizeScene(sceneKey) {
+      const budget = getSceneBudget(sceneKey);
+      budget.finalized = true;
+      saveStorySnapshot();
+  }
+
+  function updateVizButtonStates() {
+      const sceneKey = getSceneKey();
+      const budget = getSceneBudget(sceneKey);
+
+      const vizBtn = document.getElementById('vizSceneBtn');
+      const retryBtn = document.getElementById('vizRetryBtn');
+      const errDiv = document.getElementById('vizError');
+
+      if (vizBtn) {
+          if (budget.finalized) {
+              vizBtn.textContent = '🔒 Finalized';
+              vizBtn.disabled = true;
+              vizBtn.style.opacity = '0.5';
+              vizBtn.style.cursor = 'not-allowed';
+          } else {
+              vizBtn.textContent = '✨ Visualize This Scene';
+              vizBtn.disabled = false;
+              vizBtn.style.opacity = '1';
+              vizBtn.style.cursor = 'pointer';
+          }
+      }
+
+      if (retryBtn) {
+          if (budget.finalized) {
+              retryBtn.textContent = 'Finalized';
+              retryBtn.disabled = true;
+          } else if (budget.remaining <= 0) {
+              retryBtn.textContent = 'Re-Visualize (0)';
+              retryBtn.disabled = true;
+          } else {
+              retryBtn.textContent = `Re-Visualize (${budget.remaining})`;
+              retryBtn.disabled = false;
+          }
+      }
+  }
+
   window.visualize = async function(isRe){
       if (_vizInFlight) return;
-      _vizInFlight = true;
-      _vizCancelled = false;
 
       const modal = document.getElementById('vizModal');
       const retryBtn = document.getElementById('vizRetryBtn');
@@ -4268,6 +4338,35 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const errDiv = document.getElementById('vizError');
       const storyText = document.getElementById('storyText');
 
+      // Check scene budget before proceeding
+      const sceneKey = getSceneKey();
+      const budget = getSceneBudget(sceneKey);
+
+      // Block if scene is finalized
+      if (budget.finalized) {
+          if(modal) modal.classList.remove('hidden');
+          if(errDiv) {
+              errDiv.textContent = 'Scene finalized. Image already inserted.';
+              errDiv.classList.remove('hidden');
+          }
+          updateVizButtonStates();
+          return;
+      }
+
+      // Block re-visualize if budget exhausted
+      if (isRe && budget.remaining <= 0) {
+          if(modal) modal.classList.remove('hidden');
+          if(errDiv) {
+              errDiv.textContent = 'No re-visualizations remaining for this scene.';
+              errDiv.classList.remove('hidden');
+          }
+          updateVizButtonStates();
+          return;
+      }
+
+      _vizInFlight = true;
+      _vizCancelled = false;
+
       if (!img) { _vizInFlight = false; return; }
 
       // Reset modifier UI when opening modal
@@ -4275,6 +4374,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
+
+      // Update button states to reflect current budget
+      updateVizButtonStates();
 
       // Start cancellable loading with cancel callback
       startLoading("Painting the scene...", VISUALIZE_LOADING_MESSAGES, true, () => {
@@ -4390,6 +4492,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                       state.visual.lastImageUrl = ''; // Clear to prevent storage overflow
                   }
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
+
+                  // Decrement budget on successful re-visualize
+                  if (isRe) {
+                      decrementSceneBudget(sceneKey);
+                  }
+                  updateVizButtonStates();
+
                   saveStorySnapshot();
                   resolve();
               };
@@ -4426,9 +4535,18 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   window.insertImage = function(){
       const img = document.getElementById('vizPreviewImg');
       if(!img.src) return;
+
+      // Finalize scene on insert - no more visualizations allowed
+      const sceneKey = getSceneKey();
+      finalizeScene(sceneKey);
+
       // Append visualized image to current page
       const imgHtml = `<img src="${img.src}" class="story-image" alt="Visualized scene">`;
       StoryPagination.appendToCurrentPage(imgHtml);
+
+      // Update button states to reflect finalized status
+      updateVizButtonStates();
+
       window.closeViz();
       saveStorySnapshot();
   };
@@ -4565,6 +4683,9 @@ FATE CARD ADAPTATION (CRITICAL):
           }
 
           state.turnCount++;
+
+          // Update visualization button states for new scene
+          updateVizButtonStates();
 
           // Build new page content
           let pageContent = '';
