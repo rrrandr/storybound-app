@@ -23,7 +23,8 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   const SUPABASE_URL = config.supabaseUrl || ""; 
   const SUPABASE_ANON_KEY = config.supabaseAnonKey || "";
   const PROXY_URL = config.proxyUrl || 'https://storybound-proxy.vercel.app/api/proxy';
-  var IMAGE_PROXY_URL = config.imageProxyUrl || 'https://storybound-proxy.vercel.app/api/image';
+  // PASS 2E: Use local /api/image endpoint (falls back to external proxy if configured)
+  var IMAGE_PROXY_URL = config.imageProxyUrl || '/api/image';
   const STORY_MODEL = 'grok-4-1-fast-reasoning'; 
   
   // Singleton Supabase Client
@@ -3864,6 +3865,17 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   // IMAGE PROVIDER ROUTER - Unified image generation system
   // ============================================================
 
+  // PASS 2E: PROMPT LENGTH CLAMP (MAX 700 CHARACTERS)
+  const MAX_IMAGE_PROMPT_LENGTH = 700;
+
+  function clampPromptLength(prompt) {
+      if (prompt.length > MAX_IMAGE_PROMPT_LENGTH) {
+          console.warn(`[IMAGE-GEN] Prompt truncated: ${prompt.length} -> ${MAX_IMAGE_PROMPT_LENGTH}`);
+          return prompt.substring(0, MAX_IMAGE_PROMPT_LENGTH);
+      }
+      return prompt;
+  }
+
   // FLUX PROMPT HARD CONSTRAINTS (MANDATORY)
   const FLUX_PROMPT_PREFIX = 'Painterly cinematic realism, oil-painting style, realistic anatomy, natural proportions, non-anime.';
   const FLUX_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. No extra limbs. No extra people.';
@@ -3888,7 +3900,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // FLUX PRIMARY: Call Flux Uncensored image generation (via Replicate or self-hosted)
-  async function callFluxImageGen(prompt, size = '1024x1024', timeout = 60000) {
+  // PASS 2E: Extended timeout for Replicate inference (up to 120s)
+  async function callFluxImageGen(prompt, size = '1024x1024', timeout = 125000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -3900,6 +3913,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Apply mandatory prefix and suffix constraints
       const constrainedPrompt = `${FLUX_PROMPT_PREFIX} ${prompt} ${FLUX_PROMPT_SUFFIX}`;
 
+      // PASS 2E: Include context for server-side logging
       const res = await fetch(fluxUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -3908,6 +3922,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               provider: 'flux',
               model: 'flux-uncensored',
               size: size,
+              context: 'flux-primary',
               n: 1
           }),
           signal: controller.signal
@@ -4068,12 +4083,15 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Determine size based on shape
       const size = shape === 'landscape' ? '1792x1024' : '1024x1024';
 
+      // PASS 2E: Clamp prompt length BEFORE any processing
+      const clampedPrompt = clampPromptLength(prompt);
+
       // Prepare prompts for different provider requirements
-      const eroticPrompt = restoreEroticLanguage(prompt);
-      const sanitizedPrompt = sanitizeImagePrompt(prompt);
+      const eroticPrompt = clampPromptLength(restoreEroticLanguage(clampedPrompt));
+      const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt));
 
       // Use erotic prompt for explicit tiers, sanitized for others
-      const basePrompt = isExplicitTier ? eroticPrompt : prompt;
+      const basePrompt = isExplicitTier ? eroticPrompt : clampedPrompt;
 
       // FALLBACK CHAIN: Flux → Perchance → Gemini → OpenAI (same for ALL tiers)
       const providerChain = [
