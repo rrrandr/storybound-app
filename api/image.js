@@ -7,7 +7,10 @@ export const config = {
 // ============================================================
 // SIZE MAPPING - Normalize to OpenAI-supported dimensions
 // ============================================================
-function mapToOpenAISize(size) {
+function mapToOpenAISize(size, imageIntent) {
+  // Book covers are always square for best typography composition
+  if (imageIntent === 'book_cover') return '1024x1024';
+
   // OpenAI supports: 1024x1024, 1024x1536, 1536x1024, auto
   const [w, h] = (size || '1024x1024').split('x').map(Number);
   if (w > h) return '1536x1024';      // Landscape
@@ -20,30 +23,37 @@ function mapToOpenAISize(size) {
 // Backend enforces model choice - frontend cannot override
 // ============================================================
 function getOpenAIModel(imageIntent) {
-  // book_cover: Higher quality, supports typography
-  // scene_visualize: Fast, cheap, no text focus
+  // book_cover: Higher quality, supports typography (gpt-image-1.5)
+  // scene_visualize: Fast, cheap, no text focus (gpt-image-1)
   if (imageIntent === 'book_cover') return 'gpt-image-1.5';
-  return 'gpt-image-1';  // Default for scene_visualize and all other intents
+  return 'gpt-image-1';
 }
 
 // ============================================================
 // PROMPT TEMPLATES - Intent-specific framing
 // ============================================================
-function wrapBookCoverPrompt(basePrompt, title) {
-  // Book cover: Emphasize typography, cinematic composition, no gibberish
-  return `Design a professional book cover illustration. ${basePrompt}
+function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine) {
+  // Book cover: Render typography INTO the image
+  return `Create a professional book cover design.
 
-IMPORTANT REQUIREMENTS:
-- Elegant, readable title typography${title ? `: "${title}"` : ''}
-- Clear title placement at top or center
-- Cinematic, epic composition suitable for a novel cover
+SCENE/MOOD: ${basePrompt}
+
+TYPOGRAPHY TO RENDER (must appear in image):
+${modeLine ? `- Small mode line at top: "${modeLine}"` : ''}
+- Large dominant title in center: "${title || 'Untitled'}"
+- Author credit at bottom: "by ${authorName || 'Anonymous'}"
+
+STYLE REQUIREMENTS:
+- Elegant, highly readable typography integrated into the composition
+- Cinematic, epic illustration suitable for a published novel
 - Rich atmospheric lighting and color palette
-- NO watermarks, NO extra captions, NO gibberish text
-- Single cohesive book cover design`;
+- Professional book cover layout and composition
+- NO watermarks, NO extra text, NO gibberish letters
+- Single cohesive design that could appear in a bookstore`;
 }
 
 function wrapScenePrompt(basePrompt) {
-  // Scene visualization: Atmosphere, characters, environment - no text
+  // Scene visualization: Atmosphere, characters, environment - NO text
   return `${basePrompt}
 
 Style: Cinematic illustration, atmospheric lighting, painterly.
@@ -67,8 +77,16 @@ export default async function handler(req, res) {
   }
 
   // imageIntent: 'book_cover' | 'scene_visualize' (default)
-  // title: Optional, used for book cover typography
-  const { prompt, provider, size = '1024x1024', imageIntent, title } = req.body;
+  // title, authorName, modeLine: Used for book cover typography
+  const {
+    prompt,
+    provider,
+    size = '1024x1024',
+    imageIntent,
+    title,
+    authorName,
+    modeLine
+  } = req.body;
 
   if (!prompt) {
     return res.status(400).json({ error: 'Prompt required' });
@@ -77,7 +95,7 @@ export default async function handler(req, res) {
   // Apply intent-specific prompt wrapping
   const isBookCover = imageIntent === 'book_cover';
   const finalPrompt = isBookCover
-    ? wrapBookCoverPrompt(prompt, title)
+    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine)
     : wrapScenePrompt(prompt);
 
   console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);
@@ -96,7 +114,7 @@ export default async function handler(req, res) {
             instances: [{ prompt: finalPrompt }],
             parameters: {
               sampleCount: 1,
-              aspectRatio: '16:9'
+              aspectRatio: isBookCover ? '1:1' : '16:9'
             }
           })
         }
@@ -118,11 +136,11 @@ export default async function handler(req, res) {
 
         if (base64) {
           console.log('[IMAGE] Gemini success (base64)');
-          return res.json({ url: `data:image/png;base64,${base64}`, provider: 'Gemini' });
+          return res.json({ url: `data:image/png;base64,${base64}`, provider: 'Gemini', intent: imageIntent });
         }
         if (uri) {
           console.log('[IMAGE] Gemini success (uri)');
-          return res.json({ url: uri, provider: 'Gemini' });
+          return res.json({ url: uri, provider: 'Gemini', intent: imageIntent });
         }
       }
       console.log('[IMAGE] Gemini failed:', data?.error?.message || 'no image');
@@ -133,9 +151,9 @@ export default async function handler(req, res) {
 
   // ---- OPENAI FALLBACK ----
   try {
-    // Intent-based model selection (backend enforced)
+    // Intent-based model and size selection (backend enforced)
     const openaiModel = getOpenAIModel(imageIntent);
-    const openaiSize = mapToOpenAISize(size);
+    const openaiSize = mapToOpenAISize(size, imageIntent);
 
     console.log(`[IMAGE] Trying OpenAI ${openaiModel} at ${openaiSize}...`);
 
@@ -146,9 +164,9 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: openaiModel,  // Backend-enforced based on intent
+        model: openaiModel,   // Backend-enforced based on intent
         prompt: finalPrompt,
-        size: openaiSize,    // Mapped to valid OpenAI size
+        size: openaiSize,     // Mapped to valid OpenAI size
         n: 1
       })
     });
@@ -169,11 +187,11 @@ export default async function handler(req, res) {
 
       if (url) {
         console.log(`[IMAGE] OpenAI success (url) via ${openaiModel}`);
-        return res.json({ url, provider: 'OpenAI', model: openaiModel });
+        return res.json({ url, provider: 'OpenAI', model: openaiModel, intent: imageIntent });
       }
       if (b64) {
         console.log(`[IMAGE] OpenAI success (b64) via ${openaiModel}`);
-        return res.json({ url: `data:image/png;base64,${b64}`, provider: 'OpenAI', model: openaiModel });
+        return res.json({ url: `data:image/png;base64,${b64}`, provider: 'OpenAI', model: openaiModel, intent: imageIntent });
       }
     }
     console.log('[IMAGE] OpenAI failed:', data?.error?.message || 'no image');

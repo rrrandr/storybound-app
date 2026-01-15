@@ -645,7 +645,32 @@
   </div>
 
   <div id="game" class="screen hidden" style="max-width:900px; margin:0 auto; padding-bottom:60px;">
-    
+
+    <!-- ============================================================ -->
+    <!-- BOOK COVER PAGE - Appears before story content               -->
+    <!-- ============================================================ -->
+    <div id="bookCoverPage" class="book-cover-page">
+      <div id="coverLoadingState" class="cover-loading">
+        <div class="cover-progress-bar">
+          <div id="coverProgressFill" class="cover-progress-fill"></div>
+        </div>
+        <p id="coverStatusText" class="cover-status-text">Building your book cover...</p>
+      </div>
+      <div id="coverRevealState" class="cover-reveal hidden">
+        <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
+        <button id="openBookBtn" class="open-book-btn">Open Your Story</button>
+      </div>
+    </div>
+
+    <!-- Page-turn animation overlay -->
+    <div id="pageTurnOverlay" class="page-turn-overlay hidden">
+      <div class="page-turn-left"></div>
+      <div class="page-turn-right"></div>
+    </div>
+
+    <!-- Main story content (hidden during cover) -->
+    <div id="storyContent" class="story-content hidden">
+
     <div id="billingBanner" style="display:none;"></div>
 
     <!-- CORRECTIVE: Story start - title double size, Scene under synopsis -->
@@ -727,7 +752,9 @@
     </div>
 
   </div>
-  
+
+    </div><!-- END storyContent -->
+
   <div id="toast" class="toast hidden">Boundaries redirected the scene.</div>
 
 <div id="gameQuillVetoModal" class="overlay hidden" style="z-index:10004;">

@@ -3427,9 +3427,16 @@ Dynamics: ${state.picks.dynamic.join(', ')}.
     
     state.sysPrompt = sys;
     state.storyId = state.storyId || makeStoryId();
-    
+
     window.showScreen('game');
-    
+
+    // Initialize book cover page - show cover, hide story content
+    const bookCoverPage = document.getElementById('bookCoverPage');
+    const storyContentEl = document.getElementById('storyContent');
+    if (bookCoverPage) bookCoverPage.classList.remove('hidden');
+    if (storyContentEl) storyContentEl.classList.add('hidden');
+    startCoverLoading();
+
     startLoading("Conjuring the world...", STORY_LOADING_MESSAGES);
     
     // Pacing rules based on intensity
@@ -3631,27 +3638,35 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // Hide story text until fully rendered
         if (storyTextEl) storyTextEl.style.opacity = '0';
 
-        titleEl.textContent = title.replace(/"/g,'');
+        const cleanTitle = title.replace(/"/g,'');
+        titleEl.textContent = cleanTitle;
         synopsisEl.textContent = synopsis;
 
         // Use pagination system for story display
         StoryPagination.clear();
         StoryPagination.addPage(formatStory(text), true);
 
+        // Generate book cover with intent-based routing (async, non-blocking)
+        // Uses gpt-image-1.5 for typography rendering
+        const authorDisplayName = state.authorGender === 'Non-Binary'
+            ? 'The Author'
+            : (state.authorGender === 'Female' ? 'A. Romance' : 'A. Novelist');
+
+        generateBookCover(synopsis, cleanTitle, authorDisplayName).then(coverUrl => {
+            if (coverUrl) {
+                stopCoverLoading(coverUrl);
+            } else {
+                // Cover generation failed - skip to story content
+                console.warn('[BookCover] Failed to generate, skipping cover page');
+                skipCoverPage();
+            }
+        });
+
+        // Also generate setting shot for story content (in parallel)
         generateSettingShot(synopsis);
 
-        // CORRECTIVE: Scroll to very top (title) after render
-        if (titleEl) {
-            setTimeout(() => {
-                titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                window.scrollTo(0, 0);
-            }, 100);
-        }
-
-        // Reveal story text after brief delay
-        setTimeout(() => {
-            if (storyTextEl) storyTextEl.style.opacity = '1';
-        }, 500);
+        // Story text reveal is handled by cover page flow
+        // (user clicks "Open Your Story" to see content)
 
         // Initial Snapshot
         saveStorySnapshot();
@@ -3668,6 +3683,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         console.log('System prompt length at failure:', state.sysPrompt?.length || 0);
         console.log('Intro prompt length at failure:', introPrompt?.length || 0);
         console.groupEnd();
+
+        // Clean up cover page state on error
+        skipCoverPage();
 
         alert("Fate stumbled. Please try again. (Check console for diagnostics)");
         window.showScreen('setup');
@@ -3828,6 +3846,178 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           generateSettingShot(_lastSettingShotDesc);
       }
   };
+
+  // ============================================================
+  // BOOK COVER PAGE SYSTEM
+  // Staged loading → Cover generation → Page-turn reveal
+  // ============================================================
+
+  const COVER_CRAFT_PHRASES = [
+      "Building your book cover...",
+      "Selecting an artist...",
+      "Composing the scene...",
+      "Choosing the typography...",
+      "Applying finishing touches...",
+      "Binding the pages..."
+  ];
+
+  let _coverPhraseIndex = 0;
+  let _coverPhraseInterval = null;
+  let _coverProgressInterval = null;
+
+  // Start cover loading UI with staged phrases
+  function startCoverLoading() {
+      const loadingState = document.getElementById('coverLoadingState');
+      const revealState = document.getElementById('coverRevealState');
+      const statusText = document.getElementById('coverStatusText');
+      const progressFill = document.getElementById('coverProgressFill');
+
+      if (loadingState) loadingState.classList.remove('hidden');
+      if (revealState) revealState.classList.add('hidden');
+
+      _coverPhraseIndex = 0;
+      if (statusText) statusText.textContent = COVER_CRAFT_PHRASES[0];
+
+      // Rotate through phrases every 3 seconds
+      _coverPhraseInterval = setInterval(() => {
+          _coverPhraseIndex = (_coverPhraseIndex + 1) % COVER_CRAFT_PHRASES.length;
+          if (statusText) statusText.textContent = COVER_CRAFT_PHRASES[_coverPhraseIndex];
+      }, 3000);
+
+      // Progress bar animation (fake progress up to 90%)
+      let progress = 0;
+      if (progressFill) progressFill.style.width = '0%';
+      _coverProgressInterval = setInterval(() => {
+          progress += Math.random() * 8;
+          if (progress > 90) progress = 90;
+          if (progressFill) progressFill.style.width = progress + '%';
+      }, 500);
+  }
+
+  // Stop cover loading and show reveal state
+  function stopCoverLoading(coverUrl) {
+      if (_coverPhraseInterval) clearInterval(_coverPhraseInterval);
+      if (_coverProgressInterval) clearInterval(_coverProgressInterval);
+
+      const loadingState = document.getElementById('coverLoadingState');
+      const revealState = document.getElementById('coverRevealState');
+      const coverImg = document.getElementById('bookCoverImg');
+      const progressFill = document.getElementById('coverProgressFill');
+
+      // Complete progress bar
+      if (progressFill) progressFill.style.width = '100%';
+
+      setTimeout(() => {
+          if (loadingState) loadingState.classList.add('hidden');
+          if (revealState) revealState.classList.remove('hidden');
+          if (coverImg && coverUrl) {
+              coverImg.src = coverUrl;
+          }
+      }, 500);
+  }
+
+  // Generate book cover with intent-based routing
+  async function generateBookCover(synopsis, title, authorName) {
+      const modeLine = state.picks?.genre?.join(' / ') || 'A Novel';
+
+      try {
+          const res = await fetch(IMAGE_PROXY_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  prompt: synopsis || 'A dramatic scene from a romantic novel',
+                  imageIntent: 'book_cover',
+                  title: title || 'Untitled',
+                  authorName: authorName || 'Anonymous',
+                  modeLine: modeLine,
+                  size: '1024x1024'
+              })
+          });
+
+          if (!res.ok) {
+              console.warn('[BookCover] HTTP error:', res.status);
+              return null;
+          }
+
+          const data = await res.json();
+          return data?.url || null;
+      } catch (err) {
+          console.error('[BookCover] Generation failed:', err.message);
+          return null;
+      }
+  }
+
+  // Trigger page-turn animation and reveal story content
+  function triggerPageTurnAnimation(onComplete) {
+      const bookCoverPage = document.getElementById('bookCoverPage');
+      const pageTurnOverlay = document.getElementById('pageTurnOverlay');
+      const storyContent = document.getElementById('storyContent');
+      const storyTextEl = document.getElementById('storyText');
+
+      // Show page-turn overlay
+      if (pageTurnOverlay) {
+          pageTurnOverlay.classList.remove('hidden');
+          pageTurnOverlay.classList.add('active', 'turning');
+      }
+
+      // After animation starts, hide cover and show story
+      setTimeout(() => {
+          if (bookCoverPage) bookCoverPage.classList.add('hidden');
+          if (storyContent) {
+              storyContent.classList.remove('hidden');
+              storyContent.classList.add('fade-in');
+          }
+          // Reveal story text
+          if (storyTextEl) storyTextEl.style.opacity = '1';
+      }, 600);
+
+      // Clean up animation overlay
+      setTimeout(() => {
+          if (pageTurnOverlay) {
+              pageTurnOverlay.classList.add('hidden');
+              pageTurnOverlay.classList.remove('active', 'turning');
+          }
+          if (onComplete) onComplete();
+      }, 1400);
+  }
+
+  // Initialize cover page event listeners
+  function initCoverPageListeners() {
+      const openBookBtn = document.getElementById('openBookBtn');
+      if (openBookBtn) {
+          openBookBtn.addEventListener('click', () => {
+              triggerPageTurnAnimation(() => {
+                  // Scroll to title after reveal
+                  const titleEl = document.getElementById('storyTitle');
+                  if (titleEl) {
+                      titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+              });
+          });
+      }
+  }
+
+  // Initialize on DOM ready
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCoverPageListeners);
+  } else {
+      initCoverPageListeners();
+  }
+
+  // Hide cover page and show story content directly (fallback if cover fails)
+  function skipCoverPage() {
+      const bookCoverPage = document.getElementById('bookCoverPage');
+      const storyContent = document.getElementById('storyContent');
+      const storyTextEl = document.getElementById('storyText');
+
+      // Stop any running cover loading intervals
+      if (_coverPhraseInterval) clearInterval(_coverPhraseInterval);
+      if (_coverProgressInterval) clearInterval(_coverProgressInterval);
+
+      if (bookCoverPage) bookCoverPage.classList.add('hidden');
+      if (storyContent) storyContent.classList.remove('hidden');
+      if (storyTextEl) storyTextEl.style.opacity = '1';
+  }
 
   // --- VISUALIZE (STABILIZED) ---
   let _vizCancelled = false;
