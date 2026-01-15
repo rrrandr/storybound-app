@@ -3901,7 +3901,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // FLUX PRIMARY: Call Flux Uncensored image generation (via Replicate or self-hosted)
   // PASS 2E: Extended timeout for Replicate inference (up to 120s)
-  async function callFluxImageGen(prompt, size = '1024x1024', timeout = 125000) {
+  // Default to 16:9 landscape for cinematic presentation
+  async function callFluxImageGen(prompt, size = '1792x1024', timeout = 125000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -3990,7 +3991,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // PERCHANCE PROVIDER: Call Perchance AI image generation service
-  async function callPerchanceImageGen(prompt, size = '1024x1024', timeout = 60000) {
+  // Default to 16:9 landscape for cinematic presentation
+  async function callPerchanceImageGen(prompt, size = '1792x1024', timeout = 60000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -4074,12 +4076,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // REPLICATE FLUX SCHNELL: Direct call to /api/visualize-flux endpoint
-  async function callReplicateFluxSchnell(prompt, size = '1024x1024', timeout = 125000) {
+  async function callReplicateFluxSchnell(prompt, size = '1792x1024', timeout = 125000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      // Determine aspect ratio from size
-      const aspectRatio = size === '1792x1024' ? '16:9' : '1:1';
+      // Default to 16:9 landscape for cinematic presentation
+      // Only use 1:1 if explicitly requested via size parameter
+      const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
 
       const res = await fetch('/api/visualize-flux', {
           method: 'POST',
@@ -4120,12 +4123,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
   // All image generation MUST route through this function
   // Provider order: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
-  async function generateImageWithFallback({ prompt, tier, shape = 'portrait', context = 'visualize' }) {
+  // Default to 16:9 landscape for cinematic presentation
+  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize' }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
 
-      // Determine size based on shape
-      const size = shape === 'landscape' ? '1792x1024' : '1024x1024';
+      // Determine size based on shape (default landscape 16:9)
+      const size = shape === 'portrait' ? '1024x1024' : '1792x1024';
 
       // PASS 2E: Clamp prompt length BEFORE any processing
       const clampedPrompt = clampPromptLength(prompt);
