@@ -3975,47 +3975,56 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       return imageUrl;
   }
 
-  // OPENAI LAST RESORT: Call OpenAI image generation
+  // OPENAI LAST RESORT: Call OpenAI image generation (SAFE - never throws)
   async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      // Determine aspect ratio from size (match Replicate logic)
-      const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
+          // Determine aspect ratio from size (match Replicate logic)
+          const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
 
-      const res = await fetch(IMAGE_PROXY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              prompt: prompt,
-              provider: 'openai',
-              model: 'gpt-image-1.5',
-              size: size,
-              aspect_ratio: aspectRatio,
-              n: 1
-          }),
-          signal: controller.signal
-      });
+          const res = await fetch(IMAGE_PROXY_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  prompt: prompt,
+                  provider: 'openai',
+                  model: 'gpt-image-1.5',
+                  size: size,
+                  aspect_ratio: aspectRatio,
+                  n: 1
+              }),
+              signal: controller.signal
+          });
 
-      clearTimeout(timeoutId);
+          clearTimeout(timeoutId);
 
-      if (!res.ok) {
-          const errData = await res.json().catch(() => null);
-          throw new Error(errData?.error || `OpenAI HTTP ${res.status}`);
+          if (!res.ok) {
+              console.warn('[OpenAI] HTTP error:', res.status);
+              return null; // Safe fallback - don't throw
+          }
+
+          let data;
+          try { data = await res.json(); } catch (e) {
+              console.warn('[OpenAI] Invalid response');
+              return null;
+          }
+
+          const imageUrl = data?.url || data?.image || data?.b64_json ||
+              (Array.isArray(data?.data) && data.data[0]?.url) ||
+              (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+          if (!imageUrl) {
+              console.warn('[OpenAI] No image returned');
+              return null;
+          }
+
+          return imageUrl;
+      } catch (err) {
+          console.warn('[OpenAI] Caught error:', err.message);
+          return null; // Safe fallback - never crash pipeline
       }
-
-      let data;
-      try { data = await res.json(); } catch (e) { throw new Error('OpenAI invalid response'); }
-
-      const imageUrl = data?.url || data?.image || data?.b64_json ||
-          (Array.isArray(data?.data) && data.data[0]?.url) ||
-          (Array.isArray(data?.data) && data.data[0]?.b64_json);
-
-      if (!imageUrl) {
-          throw new Error('OpenAI returned no image');
-      }
-
-      return imageUrl;
   }
 
   // PERCHANCE PROVIDER: Call Perchance AI image generation service
@@ -4068,47 +4077,56 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       return imageUrl;
   }
 
-  // GEMINI PROVIDER: Call Gemini image generation
+  // GEMINI PROVIDER: Call Gemini image generation (SAFE - never throws)
   async function callGeminiImageGen(prompt, size = '1024x1024', timeout = 60000) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      // Determine aspect ratio from size (match Replicate logic)
-      const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
+          // Determine aspect ratio from size (match Replicate logic)
+          const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
 
-      const res = await fetch(IMAGE_PROXY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              prompt: prompt,
-              provider: 'gemini',
-              model: 'imagen-3.0-generate-002',
-              size: size,
-              aspect_ratio: aspectRatio,
-              n: 1
-          }),
-          signal: controller.signal
-      });
+          const res = await fetch(IMAGE_PROXY_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  prompt: prompt,
+                  provider: 'gemini',
+                  model: 'imagen-3.0-generate-002',
+                  size: size,
+                  aspect_ratio: aspectRatio,
+                  n: 1
+              }),
+              signal: controller.signal
+          });
 
-      clearTimeout(timeoutId);
+          clearTimeout(timeoutId);
 
-      if (!res.ok) {
-          const errData = await res.json().catch(() => null);
-          throw new Error(errData?.error || `Gemini HTTP ${res.status}`);
+          if (!res.ok) {
+              console.warn('[Gemini] HTTP error:', res.status);
+              return null; // Safe fallback - don't throw
+          }
+
+          let data;
+          try { data = await res.json(); } catch (e) {
+              console.warn('[Gemini] Invalid response');
+              return null;
+          }
+
+          const imageUrl = data?.url || data?.image || data?.b64_json ||
+              (Array.isArray(data?.data) && data.data[0]?.url) ||
+              (Array.isArray(data?.data) && data.data[0]?.b64_json);
+
+          if (!imageUrl) {
+              console.warn('[Gemini] No image returned');
+              return null;
+          }
+
+          return imageUrl;
+      } catch (err) {
+          console.warn('[Gemini] Caught error:', err.message);
+          return null; // Safe fallback - never crash pipeline
       }
-
-      let data;
-      try { data = await res.json(); } catch (e) { throw new Error('Gemini invalid response'); }
-
-      const imageUrl = data?.url || data?.image || data?.b64_json ||
-          (Array.isArray(data?.data) && data.data[0]?.url) ||
-          (Array.isArray(data?.data) && data.data[0]?.b64_json);
-
-      if (!imageUrl) {
-          throw new Error('Gemini returned no image');
-      }
-
-      return imageUrl;
   }
 
   // REPLICATE FLUX SCHNELL: Direct call to /api/visualize-flux endpoint
@@ -4224,6 +4242,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           try {
               logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
               const imageUrl = await provider.fn(provider.prompt, size);
+
+              // Handle null returns from safe providers (Gemini/OpenAI)
+              if (!imageUrl) {
+                  logImageAttempt(provider.name, context, provider.prompt, 'FAILED', 'returned null');
+                  continue; // Try next provider
+              }
+
               logImageAttempt(provider.name, context, provider.prompt, 'SUCCESS');
               return imageUrl;
           } catch (e) {
