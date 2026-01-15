@@ -4101,14 +4101,12 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // REPLICATE FLUX SCHNELL: Direct call to /api/visualize-flux endpoint
   async function callReplicateFluxSchnell(prompt, size = '1792x1024', timeout = 125000) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-
       // Default to 16:9 landscape for cinematic presentation
       // Only use 1:1 if explicitly requested via size parameter
       const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
 
-      const res = await fetch('/api/visualize-flux', {
+      // Step 1: Create prediction (POST)
+      const createRes = await fetch('/api/visualize-flux', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4120,28 +4118,57 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   output_format: 'webp',
                   output_quality: 80
               }
-          }),
-          signal: controller.signal
+          })
       });
 
-      clearTimeout(timeoutId);
-
-      if (!res.ok) {
-          const errData = await res.json().catch(() => null);
-          throw new Error(errData?.error || `Replicate HTTP ${res.status}`);
+      if (!createRes.ok) {
+          const errData = await createRes.json().catch(() => null);
+          throw new Error(errData?.error || `Replicate HTTP ${createRes.status}`);
       }
 
-      let data;
-      try { data = await res.json(); } catch (e) { throw new Error('Replicate invalid response'); }
+      let createData;
+      try { createData = await createRes.json(); } catch (e) { throw new Error('Replicate invalid response'); }
 
-      const imageUrl = data?.image || data?.url ||
-          (Array.isArray(data?.output) && data.output[0]);
-
-      if (!imageUrl) {
-          throw new Error('Replicate returned no image');
+      const predictionId = createData?.id;
+      if (!predictionId) {
+          throw new Error('Replicate returned no prediction ID');
       }
 
-      return imageUrl;
+      // Step 2: Poll for completion (GET)
+      const maxAttempts = 20;
+      const pollInterval = 1500;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          await new Promise(r => setTimeout(r, pollInterval));
+
+          const pollRes = await fetch(`/api/visualize-flux?id=${encodeURIComponent(predictionId)}`);
+
+          if (!pollRes.ok) {
+              const errData = await pollRes.json().catch(() => null);
+              throw new Error(errData?.error || `Replicate poll HTTP ${pollRes.status}`);
+          }
+
+          let pollData;
+          try { pollData = await pollRes.json(); } catch (e) { continue; }
+
+          if (pollData.status === 'succeeded') {
+              const imageUrl = pollData?.image || pollData?.url ||
+                  (Array.isArray(pollData?.output) && pollData.output[0]);
+
+              if (!imageUrl) {
+                  throw new Error('Replicate returned no image');
+              }
+              return imageUrl;
+          }
+
+          if (pollData.status === 'failed') {
+              throw new Error(pollData?.error || 'Replicate prediction failed');
+          }
+
+          // Continue polling for 'starting', 'processing', etc.
+      }
+
+      throw new Error('Replicate prediction timed out after 20 attempts');
   }
 
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
