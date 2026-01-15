@@ -4193,14 +4193,12 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Erotic/Dirty tiers pass through UNCENSORED to Replicate/Flux/Perchance
       const basePrompt = isExplicitTier ? eroticPrompt : clampedPrompt;
 
-      // FALLBACK CHAIN: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
+      // FALLBACK CHAIN: Perchance → Replicate (Flux) → Gemini → OpenAI
       const providerChain = [
-          // REPLICATE FLUX SCHNELL PRIMARY - uncensored, explicit allowed
-          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: basePrompt },
-          // FLUX FALLBACK - via IMAGE_PROXY_URL
-          { name: 'Flux', fn: callFluxImageGen, prompt: basePrompt },
-          // PERCHANCE FALLBACK
+          // PERCHANCE PRIMARY - uncensored, explicit allowed
           { name: 'Perchance', fn: callPerchanceImageGen, prompt: basePrompt },
+          // REPLICATE FLUX SCHNELL FALLBACK - uncensored, explicit allowed
+          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: basePrompt },
           // GEMINI FALLBACK
           { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
           // OPENAI LAST RESORT
