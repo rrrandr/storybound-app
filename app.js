@@ -3703,6 +3703,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // Setting shot uses unified IMAGE PROVIDER ROUTER with landscape shape
+  // Book cover / world-establishing illustration (NOT scene illustration)
   async function generateSettingShot(desc) {
      _lastSettingShotDesc = desc; // Store for retry
      const img = document.getElementById('settingShotImg');
@@ -3718,8 +3719,33 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
          errDiv.style.color = 'var(--gold)';
      }
 
-     // 16:9 landscape orientation for cinematic establishing shot
-     const prompt = `Cinematic wide landscape establishing shot, atmospheric, fantasy art style, 16:9 aspect ratio, panoramic view. No text, no words. ${desc}`;
+     // WORLD-FIRST PROMPT: Environment description, NOT characters/actions
+     // Strip any intensity/quality/erotic language (PG-13/R mood only)
+     const sanitizeForCover = (text) => {
+         return text
+             .replace(/\bINTENSITY:.*?(?=\n|$)/gi, '')
+             .replace(/\bQUALITY:.*?(?=\n|$)/gi, '')
+             .replace(/\b(sensual|erotic|nude|naked|explicit|sexual|intimate|seductive|provocative|lustful|aroused|passionate)\b/gi, '')
+             .replace(/\s+/g, ' ')
+             .trim();
+     };
+
+     // Cap at 256 chars without cutting mid-sentence
+     const capWorldDesc = (text, maxLen = 256) => {
+         const clean = sanitizeForCover(text);
+         if (clean.length <= maxLen) return clean;
+         const truncated = clean.substring(0, maxLen);
+         const lastPeriod = truncated.lastIndexOf('.');
+         const lastComma = truncated.lastIndexOf(',');
+         const cutPoint = Math.max(lastPeriod, lastComma);
+         return cutPoint > maxLen * 0.5 ? truncated.substring(0, cutPoint + 1).trim() : truncated.trim();
+     };
+
+     const worldDesc = capWorldDesc(desc);
+     const styleSuffix = 'Wide cinematic environment, atmospheric lighting, painterly illustration, epic scale, 16:9 aspect ratio, no text, no watermark.';
+
+     // WORLD FIRST, then style suffix
+     const prompt = `${worldDesc} ${styleSuffix}`;
 
      let rawUrl = null;
 
