@@ -3911,12 +3911,26 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   // DEV-ONLY: Logging helper for image generation debugging
   function logImageAttempt(provider, context, prompt, status, error = null) {
       const promptPreview = prompt.substring(0, 120) + (prompt.length > 120 ? '...' : '');
+
+      // Categorize blocker type from error message
+      const getBlocker = (err) => {
+          if (!err) return 'None';
+          const e = err.toLowerCase();
+          if (e.includes('cors') || e.includes('access-control') || e.includes('preflight')) return 'CORS';
+          if (e.includes('nsfw') || e.includes('safety') || e.includes('content policy') || e.includes('rejected')) return 'NSFW';
+          if (e.includes('network') || e.includes('fetch') || e.includes('timeout') || e.includes('abort') || e.includes('econnrefused')) return 'Network';
+          if (e.includes('null') || e.includes('no image')) return 'NoOutput';
+          return 'Other';
+      };
+
       const logData = {
           provider,
           context,
+          reached: status === 'ATTEMPTING' || status === 'SUCCESS',
+          blockedBy: status === 'FAILED' ? getBlocker(error) : 'None',
+          status,
           promptLength: prompt.length,
           promptPreview,
-          status,
           timestamp: new Date().toISOString()
       };
       if (error) logData.error = error;
