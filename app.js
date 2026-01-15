@@ -2945,11 +2945,26 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // Shuffle the list for random order, no repeats until cycle completes
         const shuffled = [...messageList].sort(() => Math.random() - 0.5);
         let msgIdx = 0;
+
+        // PART C: Crossfade transition for loading phrases
+        // Fade duration: 300ms out + 300ms in
+        const fadeDuration = 300;
+        textEl.style.transition = `opacity ${fadeDuration}ms ease-in-out`;
+
         _loadingMsgTimer = setInterval(() => {
             if (!_loadingActive || _loadingCancelled) return;
             msgIdx = (msgIdx + 1) % shuffled.length;
-            textEl.textContent = shuffled[msgIdx];
-        }, 1200); // 1.2s cadence (1-1.5s range)
+
+            // Fade out
+            textEl.style.opacity = '0';
+
+            // Swap text at opacity 0, then fade in
+            setTimeout(() => {
+                if (!_loadingActive || _loadingCancelled) return;
+                textEl.textContent = shuffled[msgIdx];
+                textEl.style.opacity = '1';
+            }, fadeDuration);
+        }, 3200); // 3.2s cadence for slower, more readable rotation
     }
   }
 
@@ -2973,12 +2988,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const fill = document.getElementById('loadingOverlayFill');
     const percentEl = document.getElementById('loadingPercent');
     const cancelBtn = document.getElementById('loadingCancelBtn');
+    const textEl = document.getElementById('loadingText');
 
     if(_loadingTimer) { clearInterval(_loadingTimer); _loadingTimer = null; }
     if(_loadingMsgTimer) { clearInterval(_loadingMsgTimer); _loadingMsgTimer = null; }
     if(fill) fill.style.width = '100%';
     if(percentEl) percentEl.textContent = '100%';
     if(cancelBtn) cancelBtn.classList.remove('visible');
+
+    // Reset text opacity for next loading cycle
+    if(textEl) {
+        textEl.style.transition = 'none';
+        textEl.style.opacity = '1';
+    }
 
     setTimeout(() => {
       if(overlay) overlay.classList.add('hidden');
