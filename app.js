@@ -4073,9 +4073,53 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       return imageUrl;
   }
 
+  // REPLICATE FLUX SCHNELL: Direct call to /api/visualize-flux endpoint
+  async function callReplicateFluxSchnell(prompt, size = '1024x1024', timeout = 125000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      // Determine aspect ratio from size
+      const aspectRatio = size === '1792x1024' ? '16:9' : '1:1';
+
+      const res = await fetch('/api/visualize-flux', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              prompt: prompt,
+              input: {
+                  aspect_ratio: aspectRatio,
+                  go_fast: true,
+                  num_outputs: 1,
+                  output_format: 'webp',
+                  output_quality: 80
+              }
+          }),
+          signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Replicate HTTP ${res.status}`);
+      }
+
+      let data;
+      try { data = await res.json(); } catch (e) { throw new Error('Replicate invalid response'); }
+
+      const imageUrl = data?.image || data?.url ||
+          (Array.isArray(data?.output) && data.output[0]);
+
+      if (!imageUrl) {
+          throw new Error('Replicate returned no image');
+      }
+
+      return imageUrl;
+  }
+
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
   // All image generation MUST route through this function
-  // Provider order: Flux → Perchance → Gemini → OpenAI
+  // Provider order: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
   async function generateImageWithFallback({ prompt, tier, shape = 'portrait', context = 'visualize' }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
@@ -4093,9 +4137,15 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Use erotic prompt for explicit tiers, sanitized for others
       const basePrompt = isExplicitTier ? eroticPrompt : clampedPrompt;
 
-      // FALLBACK CHAIN: Flux → Perchance → Gemini → OpenAI (same for ALL tiers)
+      // Add intensity suffix for erotic/dirty tiers
+      const intensitySuffix = isExplicitTier ? ' Artistic, suggestive, safe-for-work.' : '';
+      const replicatePrompt = basePrompt + intensitySuffix;
+
+      // FALLBACK CHAIN: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
       const providerChain = [
-          // FLUX PRIMARY - accepts full prompts, no extra censorship
+          // REPLICATE FLUX SCHNELL PRIMARY - fast, via /api/visualize-flux
+          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: replicatePrompt },
+          // FLUX FALLBACK - via IMAGE_PROXY_URL
           { name: 'Flux', fn: callFluxImageGen, prompt: basePrompt },
           // PERCHANCE FALLBACK
           { name: 'Perchance', fn: callPerchanceImageGen, prompt: basePrompt },
