@@ -23,29 +23,58 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Prompt required' });
   }
 
-  try {
-    // ---- GEMINI PRIMARY ----
-    if (!provider || provider === 'gemini') {
+  // ---- GEMINI PRIMARY ----
+  if (!provider || provider === 'gemini') {
+    try {
+      console.log('[IMAGE] Trying Gemini...');
       const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/${model || 'imagen-3.0-generate-002'}:generateImages?key=${process.env.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model || 'imagen-3.0-generate-002'}:predict?key=${process.env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            prompt,
-            number_of_images: 1,
-            aspect_ratio: '16:9'
+            instances: [{ prompt }],
+            parameters: {
+              sampleCount: 1,
+              aspectRatio: '16:9'
+            }
           })
         }
       );
 
-      const data = await geminiRes.json();
-      if (geminiRes.ok && data?.generated_images?.[0]?.image_uri) {
-        return res.json({ url: data.generated_images[0].image_uri, provider: 'Gemini' });
+      // Safe JSON parse
+      const text = await geminiRes.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('[IMAGE] Gemini returned non-JSON:', text.slice(0, 200));
+        data = null;
       }
-    }
 
-    // ---- OPENAI FALLBACK ----
+      if (geminiRes.ok && data) {
+        // Handle multiple response shapes
+        const base64 = data.predictions?.[0]?.bytesBase64Encoded;
+        const uri = data.predictions?.[0]?.image_uri || data.generated_images?.[0]?.image_uri;
+
+        if (base64) {
+          console.log('[IMAGE] Gemini success (base64)');
+          return res.json({ url: `data:image/png;base64,${base64}`, provider: 'Gemini' });
+        }
+        if (uri) {
+          console.log('[IMAGE] Gemini success (uri)');
+          return res.json({ url: uri, provider: 'Gemini' });
+        }
+      }
+      console.log('[IMAGE] Gemini failed:', data?.error?.message || 'no image in response');
+    } catch (err) {
+      console.error('[IMAGE] Gemini error:', err.message);
+    }
+  }
+
+  // ---- OPENAI FALLBACK ----
+  try {
+    console.log('[IMAGE] Trying OpenAI...');
     const openaiRes = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -60,15 +89,36 @@ export default async function handler(req, res) {
       })
     });
 
-    const data = await openaiRes.json();
-    if (openaiRes.ok && data?.data?.[0]?.url) {
-      return res.json({ url: data.data[0].url, provider: 'OpenAI' });
+    // Safe JSON parse
+    const text = await openaiRes.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error('[IMAGE] OpenAI returned non-JSON:', text.slice(0, 200));
+      data = null;
     }
 
-    throw new Error('No image returned');
+    if (openaiRes.ok && data) {
+      // Handle both url and b64_json response shapes
+      const url = data.data?.[0]?.url;
+      const b64 = data.data?.[0]?.b64_json;
 
+      if (url) {
+        console.log('[IMAGE] OpenAI success (url)');
+        return res.json({ url, provider: 'OpenAI' });
+      }
+      if (b64) {
+        console.log('[IMAGE] OpenAI success (base64)');
+        return res.json({ url: `data:image/png;base64,${b64}`, provider: 'OpenAI' });
+      }
+    }
+    console.log('[IMAGE] OpenAI failed:', data?.error?.message || 'no image in response');
   } catch (err) {
-    console.error('[IMAGE] Fatal error:', err);
-    return res.status(502).json({ error: 'Image generation failed' });
+    console.error('[IMAGE] OpenAI error:', err.message);
   }
+
+  // All providers failed
+  console.error('[IMAGE] All providers failed');
+  return res.status(502).json({ error: 'Image generation failed' });
 }
