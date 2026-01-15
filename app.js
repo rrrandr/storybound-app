@@ -23,8 +23,8 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   const SUPABASE_URL = config.supabaseUrl || ""; 
   const SUPABASE_ANON_KEY = config.supabaseAnonKey || "";
   const PROXY_URL = config.proxyUrl || 'https://storybound-proxy.vercel.app/api/proxy';
-  // PASS 2E: Use local /api/image endpoint (falls back to external proxy if configured)
-  var IMAGE_PROXY_URL = config.imageProxyUrl || '/api/image';
+  // Image requests always use local /api/image endpoint (never proxy)
+  var IMAGE_PROXY_URL = '/api/image';
   const STORY_MODEL = 'grok-4-1-fast-reasoning'; 
   
   // Singleton Supabase Client
