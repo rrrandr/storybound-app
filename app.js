@@ -3453,16 +3453,34 @@ AUTHOR PRESENCE (5TH PERSON) - CRITICAL FOR OPENING:
 - The Author is a visible hand, orchestrating with relish—but always referred to as "The Author", never "I".
 ` : '';
 
+    // OPENING SCENE VARIATION - avoid repetitive patterns
+    const openingModes = [
+        { mode: 'Motion-first', directive: 'Open mid-action: transit, pursuit, labor, ritual, or urgent movement. The protagonist is DOING something when we meet them.' },
+        { mode: 'World-first', directive: 'Open with environment or system acting before any character is named. Weather, architecture, or social machinery dominates the first beat.' },
+        { mode: 'Social-first', directive: 'Open in a crowd, market, court, boardroom, dock, tavern, or gathering. Other people surround the protagonist.' },
+        { mode: 'Aftermath-first', directive: 'Open in the wake of something significant. Consequences linger—a letter, a departure, a broken object, a changed landscape.' },
+        { mode: 'Disruption-first', directive: 'Open with instability. Something is already wrong, charged, or off-kilter. Tension from the first sentence.' }
+    ];
+    const selectedOpening = openingModes[Math.floor(Math.random() * openingModes.length)];
+
     const introPrompt = `Write the opening scene (approx 200 words).
 ${authorOpeningDirective}
+OPENING MODE: ${selectedOpening.mode}
+${selectedOpening.directive}
+
 FIRST SECTION RULES:
 - ${pacingRule}
 - Focus on: World setup, hints at overall arc, the protagonist's past or situation.
 ${liAppears ? '- The love interest may appear briefly or be hinted at.' : '- The love interest should NOT appear yet. Build anticipation.'}
 - End with a hook, a question, or atmospheric tension—NOT a romantic moment.
 
-Setting: A place full of atmosphere and sensory detail fitting the genre.
-Situation: The Protagonist is alone with their thoughts, or engaged in something unrelated to romance.`;
+AVOID these clichéd openings:
+- Lone woman in solitude staring out a window
+- Rain-lashed windows or fog-wreathed shops
+- Characters passively observing weather, mist, or shadow
+- Quiet interiors awaiting intrusion
+
+The opening must feel intentional and specific, not archetypal or templated.`;
 
     // FATE STUMBLED DIAGNOSTIC - Structured payload logging
     const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
