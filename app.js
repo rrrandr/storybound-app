@@ -47,14 +47,14 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   //   - NEVER receives raw user intent for plot decisions
   //
   // PINNED MODEL ALLOWLIST (NO AUTO-UPGRADES):
+  // Only confirmed-working models - no preview/beta/speculative names
   const RENDERER_MODEL_ALLOWLIST = [
-      'grok-4-1-fast-reasoning',
-      'grok-3-mini-fast-beta'
+      'grok-2-latest'
   ];
 
   // Active model assignments
-  const AUTHOR_MODEL = 'grok-4-1-fast-reasoning';  // TODO: Switch to ChatGPT when available
-  const RENDERER_MODEL = 'grok-4-1-fast-reasoning';
+  const AUTHOR_MODEL = 'grok-2-latest';  // TODO: Switch to ChatGPT when available
+  const RENDERER_MODEL = 'grok-2-latest';
 
   // Legacy alias (deprecated - use role-specific calls)
   const STORY_MODEL = RENDERER_MODEL;
