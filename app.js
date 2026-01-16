@@ -5637,3 +5637,30 @@ FATE CARD ADAPTATION (CRITICAL):
   updateContinueButtons();
 
 })();
+
+// === DSP Scroll Visibility (runtime wiring) ===
+function initSynopsisPanelScrollBehavior() {
+  const panel = document.getElementById('synopsisPanel');
+  const worldSection = document.getElementById('worldGrid');
+  const dynamicSection = document.getElementById('dynamicGrid');
+
+  if (!panel || !worldSection || !dynamicSection) return;
+
+  function updateVisibility() {
+    const worldRect = worldSection.getBoundingClientRect();
+    const dynamicRect = dynamicSection.getBoundingClientRect();
+
+    const inRange =
+      worldRect.top < window.innerHeight * 0.6 &&
+      dynamicRect.bottom > window.innerHeight * 0.4;
+
+    panel.classList.toggle('visible', inRange);
+  }
+
+  window.addEventListener('scroll', updateVisibility);
+  updateVisibility();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initSynopsisPanelScrollBehavior();
+});
