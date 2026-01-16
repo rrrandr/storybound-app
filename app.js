@@ -20,12 +20,50 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       console.warn("Config load failed (using defaults)", e); 
   }
 
-  const SUPABASE_URL = config.supabaseUrl || ""; 
+  const SUPABASE_URL = config.supabaseUrl || "";
   const SUPABASE_ANON_KEY = config.supabaseAnonKey || "";
   const PROXY_URL = config.proxyUrl || 'https://storybound-proxy.vercel.app/api/proxy';
   // Image requests always use local /api/image endpoint (never proxy)
   var IMAGE_PROXY_URL = '/api/image';
-  const STORY_MODEL = 'grok-4-1-fast-reasoning'; 
+
+  // ==========================================================================
+  // AI ORCHESTRATION — AUTHORITATIVE MODEL ASSIGNMENTS
+  // ==========================================================================
+  //
+  // AUTHOR MODEL (ChatGPT) — SOLE AUTHORITY FOR:
+  //   - Plot decisions
+  //   - Story outcomes
+  //   - Monetization gate enforcement
+  //   - Erotic Scene Directives (ESD) generation
+  //   - Consequence integration
+  //   - Structural elements (title, synopsis/DSP, opening)
+  //
+  // SPECIALIST/RENDERER MODEL (Grok) — RESTRICTED TO:
+  //   - Embodied prose rendering
+  //   - Receiving ESD input only
+  //   - Visual prompt generation
+  //   - Metadata extraction (visual bible)
+  //   - NEVER decides completion or escalation
+  //   - NEVER receives raw user intent for plot decisions
+  //
+  // PINNED MODEL ALLOWLIST (NO AUTO-UPGRADES):
+  const RENDERER_MODEL_ALLOWLIST = [
+      'grok-4-1-fast-reasoning',
+      'grok-3-mini-fast-beta'
+  ];
+
+  // Active model assignments
+  const AUTHOR_MODEL = 'grok-4-1-fast-reasoning';  // TODO: Switch to ChatGPT when available
+  const RENDERER_MODEL = 'grok-4-1-fast-reasoning';
+
+  // Legacy alias (deprecated - use role-specific calls)
+  const STORY_MODEL = RENDERER_MODEL;
+
+  // Validate renderer model is in allowlist
+  if (!RENDERER_MODEL_ALLOWLIST.includes(RENDERER_MODEL)) {
+      console.error('ORCHESTRATION VIOLATION: Renderer model not in allowlist:', RENDERER_MODEL);
+  }
+  // ========================================================================== 
   
   // Singleton Supabase Client
   let sb = null;
@@ -1822,8 +1860,8 @@ ANTI-HERO ENFORCEMENT:
           storybeau: storybeau || 'Beautiful Ruin'
       }, null, 2);
 
-      // Call with DSP system prompt and structured input
-      const result = await callChat([
+      // AUTHOR PASS: DSP is structural (story synopsis/promise)
+      const result = await callAuthor([
           { role: 'system', content: DSP_SYSTEM_PROMPT },
           { role: 'user', content: structuredInput }
       ]);
@@ -1940,8 +1978,9 @@ ANTI-HERO ENFORCEMENT:
 Extract details for ALL named characters. Be specific about face, hair, clothing, and build.`;
 
       try {
+          // RENDERER PASS: Metadata extraction (no plot decisions)
           const raw = await Promise.race([
-              callChat([{role:'system', content: sys}, {role:'user', content: `Genre: ${genre}. Extract visual anchors from: ${textContext.slice(-2000)}`}]),
+              callRenderer([{role:'system', content: sys}, {role:'user', content: `Genre: ${genre}. Extract visual anchors from: ${textContext.slice(-2000)}`}]),
               new Promise((_, reject) => setTimeout(() => reject(new Error("Bible timeout")), 15000))
           ]);
           const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -3844,12 +3883,14 @@ The opening must feel intentional and specific, not archetypal or templated.`;
     console.log('STORYBOUND VALIDATION PASSED - Proceeding to model call');
 
     try {
-        const text = await callChat([
+        // AUTHOR PASS: Story opening establishes plot/structure
+        const text = await callAuthor([
             {role:'system', content: state.sysPrompt},
             {role:'user', content: introPrompt}
         ]);
 
-        const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
+        // AUTHOR PASS: Title is structural element
+        const title = await callAuthor([{role:'user', content:`Based on this opening, generate a 2-4 word title.
 
 PROCESS: First, internally identify the story's emotional promise or arc (longing, danger, desire, destiny, transformation). Then craft a title that hints at that promise.
 
@@ -3934,13 +3975,29 @@ Return ONLY the title, no quotes or explanation:\n${text}`}]);
     }
   });
 
-  // --- API CALLS ---
-  async function callChat(messages, temp=0.7) {
+  // ==========================================================================
+  // API CALLS — ROLE-BASED MODEL ROUTING
+  // ==========================================================================
+  //
+  // CALL ROUTING:
+  //   callAuthor()   → AUTHOR_MODEL   - Plot, structure, ESD, outcomes
+  //   callRenderer() → RENDERER_MODEL - Prose rendering, visual prompts
+  //   callChat()     → STORY_MODEL    - Legacy (deprecated, use specific calls)
+  //
+  // ENFORCEMENT:
+  //   - Renderer model validated against RENDERER_MODEL_ALLOWLIST
+  //   - Author calls for structural decisions (DSP, title, opening)
+  //   - Renderer calls for embodied prose only
+  //
+  // ==========================================================================
+
+  // Core API call function (internal)
+  async function _callModel(messages, model, temp = 0.7, maxTokens = 1000) {
     const payload = {
        messages: messages,
-       model: STORY_MODEL,
+       model: model,
        temperature: temp,
-       max_tokens: 1000
+       max_tokens: maxTokens
     };
 
     try {
@@ -3953,6 +4010,7 @@ Return ONLY the title, no quotes or explanation:\n${text}`}]);
             const errorText = await res.text().catch(() => '(could not read response body)');
             console.group('STORYBOUND API ERROR');
             console.error('HTTP Status:', res.status, res.statusText);
+            console.error('Model:', model);
             console.error('Response body:', errorText);
             console.error('Request payload size:', JSON.stringify(payload).length, 'bytes');
             console.error('System message length:', messages[0]?.content?.length || 0);
@@ -3968,9 +4026,40 @@ Return ONLY the title, no quotes or explanation:\n${text}`}]);
         }
         return data.choices[0].message.content;
     } catch(e){
-        console.error('callChat error:', e);
+        console.error('_callModel error:', e);
         throw e;
     }
+  }
+
+  /**
+   * AUTHOR PASS — For plot decisions, structure, ESD generation
+   * Use for: DSP, title, story opening, outcome decisions
+   */
+  async function callAuthor(messages, temp = 0.7) {
+      return _callModel(messages, AUTHOR_MODEL, temp, 1000);
+  }
+
+  /**
+   * RENDERER PASS — For embodied prose rendering only
+   * Use for: Turn responses (with ESD), visual prompts, metadata extraction
+   * MUST NOT be used for plot decisions or escalation choices
+   */
+  async function callRenderer(messages, temp = 0.7, maxTokens = 1000) {
+      // Enforce allowlist
+      if (!RENDERER_MODEL_ALLOWLIST.includes(RENDERER_MODEL)) {
+          console.error('ORCHESTRATION VIOLATION: Renderer model not in allowlist');
+          throw new Error('Renderer model not in allowlist');
+      }
+      return _callModel(messages, RENDERER_MODEL, temp, maxTokens);
+  }
+
+  /**
+   * LEGACY CALL — Deprecated, use callAuthor() or callRenderer()
+   * Currently routes to STORY_MODEL for backwards compatibility
+   */
+  async function callChat(messages, temp = 0.7) {
+      console.warn('callChat() is deprecated - use callAuthor() or callRenderer()');
+      return _callModel(messages, STORY_MODEL, temp, 1000);
   }
 
   // Setting shot uses unified IMAGE PROVIDER ROUTER with landscape shape
@@ -4809,8 +4898,9 @@ Return ONLY the title, no quotes or explanation:\n${text}`}]);
 
           if(!isRe || !promptMsg) {
               try {
+                  // RENDERER PASS: Visual prompt generation (rendering support)
                   promptMsg = await Promise.race([
-                      callChat([{
+                      callRenderer([{
                           role:'user',
                           content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
                       }]),
@@ -5082,8 +5172,11 @@ FATE CARD ADAPTATION (CRITICAL):
       let storyDisplayed = false;
 
       try {
-          // Generate AI response first
-          const raw = await callChat([
+          // AUTHOR PASS: Turn response includes plot decisions (pacing, outcomes)
+          // System prompt contains constraints that determine what happens next.
+          // NOTE: For full ESD split, Author would generate directives, Renderer
+          // would write prose. Current architecture combines both in Author pass.
+          const raw = await callAuthor([
               {role:'system', content: fullSys},
               {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
           ]);
