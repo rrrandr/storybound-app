@@ -2851,6 +2851,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     checkSynopsisVisibility();
   }
 
+  // Expose globally for DevTools verification
+  window.initSynopsisPanelScrollBehavior = initSynopsisPanelScrollBehavior;
+
   // Initialize on DOMContentLoaded
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSynopsisPanelScrollBehavior);
