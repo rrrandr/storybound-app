@@ -557,7 +557,14 @@
       <div class="card" data-grp="tone" data-val="Poetic"><h3>Poetic</h3><p>Lyrical prose, sensory immersion.</p></div>
     </div>
 
-    <!-- AXIS 3: GENRE / FLAVOR (Required, Third) -->
+    <!-- ═══════════════════════════════════════════════════════════════════
+         AXIS 3: GENRE / FLAVOR (Required, Third)
+
+         LOCKED DESIGN RULE:
+         Genres must describe narrative action or fantasy, not setting or life stage.
+         Settings like "Sports", "College", "Small Town" belong in World modifiers,
+         not Genre. Genre implies what the characters DO, not where they ARE.
+         ═══════════════════════════════════════════════════════════════════ -->
     <div class="section-title">Genre <span class="instruction-text">(Narrative flavor)</span></div>
     <div class="style-cards" id="genreGrid">
       <div class="card" data-grp="genre" data-val="CrimeSyndicate"><h3>Crime Syndicate</h3><p>Organized crime, loyalty, blood oaths.</p></div>
@@ -566,25 +573,47 @@
       <div class="card" data-grp="genre" data-val="Heist"><h3>Heist</h3><p>Elaborate plans, trust and betrayal.</p></div>
       <div class="card" data-grp="genre" data-val="Espionage"><h3>Espionage</h3><p>Spies, double lives, dangerous information.</p></div>
       <div class="card" data-grp="genre" data-val="Political"><h3>Political Intrigue</h3><p>Power structures, alliances, betrayal.</p></div>
-      <div class="card" data-grp="genre" data-val="Sports"><h3>Sports</h3><p>Competition, discipline, physical mastery.</p></div>
-      <div class="card" data-grp="genre" data-val="College"><h3>College / Early Career</h3><p>Coming of age, ambition, first stakes.</p></div>
-      <div class="card" data-grp="genre" data-val="SmallTown"><h3>Small Town</h3><p>Community, secrets, everyone knows everyone.</p></div>
     </div>
 
-    <!-- AXIS 4: RELATIONSHIP DYNAMIC (Required, Last) -->
+    <!-- ═══════════════════════════════════════════════════════════════════
+         AXIS 4: RELATIONSHIP DYNAMIC (Required, Last)
+
+         LOCKED DESIGN RULE:
+         Relationship Dynamics are single-select and represent emotional structure,
+         not identity. They describe how characters relate, not who they are.
+         Groupings are for cognitive organization only—selection remains flat.
+         ═══════════════════════════════════════════════════════════════════ -->
     <div class="section-title">Relationship Dynamic <span class="instruction-text">(Required)</span></div>
-    <div class="style-cards" id="dynamicGrid">
-      <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Rules, taboo, desire against judgment.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Dangerous"><h3>Dangerous</h3><p>Risk in proximity, threat as aphrodisiac.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated</h3><p>Destined bond, cosmic inevitability.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Partners"><h3>Partners in Crime</h3><p>Complicity, shared secrets, us vs them.</p></div>
-      <div class="card selected" data-grp="dynamic" data-val="Enemies"><h3>Enemies to Lovers</h3><p>Friction that becomes fire.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends to Lovers</h3><p>Safety tipping into something more.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Circumstance throws them together.</p></div>
-      <div class="card" data-grp="dynamic" data-val="SecretIdentity"><h3>Secret Identity</h3><p>Hidden truths, masks, revelations.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Consuming focus, intensity as love language.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker / Wounded</h3><p>Vulnerability and steady presence.</p></div>
-      <div class="card" data-grp="dynamic" data-val="SecondChance"><h3>2nd Chance</h3><p>Past lovers, unfinished business.</p></div>
+    <div class="dynamic-grouped" id="dynamicGrid">
+      <!-- Circumstance-Based -->
+      <div class="dynamic-group">
+        <div class="dynamic-group-label">Circumstance-Based</div>
+        <div class="style-cards">
+          <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Circumstance throws them together.</p></div>
+          <div class="card" data-grp="dynamic" data-val="SecretIdentity"><h3>Secret Identity</h3><p>Hidden truths, masks, revelations.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker / Wounded</h3><p>Vulnerability and steady presence.</p></div>
+        </div>
+      </div>
+      <!-- Emotional Arc -->
+      <div class="dynamic-group">
+        <div class="dynamic-group-label">Emotional Arc</div>
+        <div class="style-cards">
+          <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends to Lovers</h3><p>Safety tipping into something more.</p></div>
+          <div class="card selected" data-grp="dynamic" data-val="Enemies"><h3>Enemies to Lovers</h3><p>Friction that becomes fire.</p></div>
+          <div class="card" data-grp="dynamic" data-val="SecondChance"><h3>2nd Chance</h3><p>Past lovers, unfinished business.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Rules, taboo, desire against judgment.</p></div>
+        </div>
+      </div>
+      <!-- Intensity / Attachment -->
+      <div class="dynamic-group">
+        <div class="dynamic-group-label">Intensity / Attachment</div>
+        <div class="style-cards">
+          <div class="card" data-grp="dynamic" data-val="Dangerous"><h3>Dangerous</h3><p>Risk in proximity, threat as aphrodisiac.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Consuming focus, intensity as love language.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated</h3><p>Destined bond, cosmic inevitability.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Partners"><h3>Partners in Crime</h3><p>Complicity, shared secrets, us vs them.</p></div>
+        </div>
+      </div>
     </div>
 
     <!-- STORY POV (Retained, no preview buttons) -->

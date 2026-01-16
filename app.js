@@ -2702,6 +2702,23 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // ═══════════════════════════════════════════════════════════════════
   // SYNOPSIS PANEL - Live-updating story preview based on 4-axis selections
   // ═══════════════════════════════════════════════════════════════════
+  //
+  // ╔═══════════════════════════════════════════════════════════════════╗
+  // ║                    LOCKED DESIGN RULES                            ║
+  // ║                                                                   ║
+  // ║ 1. The floating synopsis panel must remain visually restrained   ║
+  // ║    and literary. No glassmorphism, glow effects, or color-coded  ║
+  // ║    highlighting. It should feel like an authorial whisper.       ║
+  // ║                                                                   ║
+  // ║ 2. Genres must describe narrative action or fantasy, not setting ║
+  // ║    or life stage. "Sports", "College", "Small Town" are not      ║
+  // ║    genres—they are world modifiers.                              ║
+  // ║                                                                   ║
+  // ║ 3. Relationship Dynamics are single-select and represent         ║
+  // ║    emotional structure, not identity. They describe how          ║
+  // ║    characters relate, not who they are.                          ║
+  // ╚═══════════════════════════════════════════════════════════════════╝
+  //
   const SYNOPSIS_PHRASES = {
     world: {
       Modern: 'where ambition and secrets intertwine',
@@ -2724,16 +2741,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       Surreal: 'trust nothing you see',
       Poetic: 'feel every word like a wound'
     },
+    // LOCKED: Genres describe narrative action, not setting or life stage
     genre: {
       CrimeSyndicate: 'navigate blood oaths and betrayal',
       Billionaire: 'play games only the powerful understand',
       Noir: 'walk through shadows with no clean hands',
       Heist: 'trust the plan—and no one else',
       Espionage: 'keep secrets that could kill',
-      Political: 'maneuver through a web of alliances',
-      Sports: 'push past every limit',
-      College: 'risk everything on a single chance',
-      SmallTown: 'hide nothing from those who know you best'
+      Political: 'maneuver through a web of alliances'
     },
     dynamic: {
       Forbidden: 'desire what you cannot have',
