@@ -663,7 +663,175 @@
         }
     }
 
-    // Golden flow animation from card to inputs - continuous gentle stream
+    // ==========================================================================
+    // GOLDEN RIVER — SVG-based persistent connector from Fate Card to inputs
+    // ==========================================================================
+    // Creates a flowing golden bezier curve connecting the selected card to
+    // the action and dialogue input fields. Persists while card is selected.
+    // Destroyed on deselect or commit.
+    // ==========================================================================
+
+    let _goldenRiverSvg = null;
+    let _goldenRiverUpdateFrame = null;
+
+    /**
+     * Creates the Golden River SVG connector from a card to input fields
+     * @param {HTMLElement} cardEl - The selected fate card element
+     */
+    function createGoldenRiver(cardEl) {
+        // Remove any existing river first
+        destroyGoldenRiver();
+
+        const actInput = document.getElementById('actionInput');
+        const diaInput = document.getElementById('dialogueInput');
+        if (!cardEl || (!actInput && !diaInput)) return;
+
+        // Create SVG element
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'golden-river-svg entering');
+        svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+        // Create gradient definition
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+        gradient.setAttribute('id', 'goldenRiverGradient');
+        gradient.setAttribute('gradientUnits', 'userSpaceOnUse');
+
+        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop1.setAttribute('offset', '0%');
+        stop1.setAttribute('stop-color', '#ffd700');
+        stop1.setAttribute('stop-opacity', '0.9');
+
+        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop2.setAttribute('offset', '50%');
+        stop2.setAttribute('stop-color', '#ffec8b');
+        stop2.setAttribute('stop-opacity', '1');
+
+        const stop3 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop3.setAttribute('offset', '100%');
+        stop3.setAttribute('stop-color', '#ffd700');
+        stop3.setAttribute('stop-opacity', '0.9');
+
+        gradient.appendChild(stop1);
+        gradient.appendChild(stop2);
+        gradient.appendChild(stop3);
+        defs.appendChild(gradient);
+        svg.appendChild(defs);
+
+        // Create glow paths (behind main paths)
+        const glowPath1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        glowPath1.setAttribute('class', 'golden-river-path-glow');
+        glowPath1.setAttribute('id', 'riverGlow1');
+        svg.appendChild(glowPath1);
+
+        const glowPath2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        glowPath2.setAttribute('class', 'golden-river-path-glow');
+        glowPath2.setAttribute('id', 'riverGlow2');
+        svg.appendChild(glowPath2);
+
+        // Create main paths
+        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path1.setAttribute('class', 'golden-river-path');
+        path1.setAttribute('id', 'riverPath1');
+        svg.appendChild(path1);
+
+        const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path2.setAttribute('class', 'golden-river-path');
+        path2.setAttribute('id', 'riverPath2');
+        svg.appendChild(path2);
+
+        document.body.appendChild(svg);
+        _goldenRiverSvg = svg;
+
+        // Update paths immediately and on scroll/resize
+        function updatePaths() {
+            const cardRect = cardEl.getBoundingClientRect();
+            const startX = cardRect.left + cardRect.width / 2;
+            const startY = cardRect.bottom;
+
+            // Path to action input
+            if (actInput) {
+                const actRect = actInput.getBoundingClientRect();
+                const endX1 = actRect.left + 20;
+                const endY1 = actRect.top + actRect.height / 2;
+
+                // Bezier curve with natural flow
+                const ctrl1X = startX;
+                const ctrl1Y = startY + (endY1 - startY) * 0.4;
+                const ctrl2X = endX1 - 40;
+                const ctrl2Y = endY1;
+
+                const d1 = `M ${startX} ${startY} C ${ctrl1X} ${ctrl1Y}, ${ctrl2X} ${ctrl2Y}, ${endX1} ${endY1}`;
+                path1.setAttribute('d', d1);
+                glowPath1.setAttribute('d', d1);
+
+                // Update gradient direction
+                gradient.setAttribute('x1', startX);
+                gradient.setAttribute('y1', startY);
+                gradient.setAttribute('x2', endX1);
+                gradient.setAttribute('y2', endY1);
+            }
+
+            // Path to dialogue input (branches from midpoint)
+            if (diaInput) {
+                const diaRect = diaInput.getBoundingClientRect();
+                const endX2 = diaRect.left + 20;
+                const endY2 = diaRect.top + diaRect.height / 2;
+
+                // Branch point
+                const branchY = startY + (endY2 - startY) * 0.3;
+
+                const ctrl1X = startX + 20;
+                const ctrl1Y = branchY + (endY2 - branchY) * 0.5;
+                const ctrl2X = endX2 - 40;
+                const ctrl2Y = endY2;
+
+                const d2 = `M ${startX} ${branchY} C ${ctrl1X} ${ctrl1Y}, ${ctrl2X} ${ctrl2Y}, ${endX2} ${endY2}`;
+                path2.setAttribute('d', d2);
+                glowPath2.setAttribute('d', d2);
+            }
+
+            // Continue updating if still visible
+            if (_goldenRiverSvg) {
+                _goldenRiverUpdateFrame = requestAnimationFrame(updatePaths);
+            }
+        }
+
+        // Start path updates
+        updatePaths();
+
+        // Remove 'entering' class after animation completes
+        setTimeout(() => {
+            if (_goldenRiverSvg) {
+                _goldenRiverSvg.classList.remove('entering');
+            }
+        }, 400);
+    }
+
+    /**
+     * Destroys the Golden River connector with fade-out animation
+     */
+    function destroyGoldenRiver() {
+        if (_goldenRiverUpdateFrame) {
+            cancelAnimationFrame(_goldenRiverUpdateFrame);
+            _goldenRiverUpdateFrame = null;
+        }
+
+        if (_goldenRiverSvg) {
+            _goldenRiverSvg.classList.add('exiting');
+            const svgToRemove = _goldenRiverSvg;
+            _goldenRiverSvg = null;
+
+            // Remove after exit animation
+            setTimeout(() => {
+                if (svgToRemove.parentNode) {
+                    svgToRemove.remove();
+                }
+            }, 300);
+        }
+    }
+
+    // Legacy particle animation (kept for initial selection burst effect)
     function triggerGoldenFlow(fromEl, toEl) {
         if (!fromEl || !toEl) return;
 
@@ -679,11 +847,10 @@
         container.className = 'golden-flow-container';
         document.body.appendChild(container);
 
-        const particleCount = 12;
-        const streamDuration = 800;
-        const particleDuration = 600;
+        const particleCount = 8;
+        const streamDuration = 500;
+        const particleDuration = 400;
 
-        // Create particles with staggered starts for continuous flow effect
         for (let i = 0; i < particleCount; i++) {
             const particle = document.createElement('div');
             particle.className = 'golden-flow-particle';
@@ -698,13 +865,11 @@
                     const elapsed = currentTime - pStartTime;
                     const progress = Math.min(elapsed / particleDuration, 1);
 
-                    // Gentle ease-in-out
                     const eased = progress < 0.5
                         ? 2 * progress * progress
                         : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-                    // Slight wave for organic feel
-                    const wave = Math.sin(progress * Math.PI * 2) * 8;
+                    const wave = Math.sin(progress * Math.PI * 2) * 6;
 
                     const currentX = startX + (endX - startX) * eased;
                     const currentY = startY + (endY - startY) * eased + wave;
@@ -712,13 +877,12 @@
                     particle.style.left = currentX + 'px';
                     particle.style.top = currentY + 'px';
 
-                    // Fade in/out for continuous stream look
                     if (progress < 0.2) {
-                        particle.style.opacity = progress / 0.2 * 0.7;
+                        particle.style.opacity = progress / 0.2 * 0.6;
                     } else if (progress > 0.8) {
-                        particle.style.opacity = (1 - progress) / 0.2 * 0.7;
+                        particle.style.opacity = (1 - progress) / 0.2 * 0.6;
                     } else {
-                        particle.style.opacity = 0.7;
+                        particle.style.opacity = 0.6;
                     }
 
                     if (progress < 1) {
@@ -732,14 +896,22 @@
             }, delay);
         }
 
-        // Remove container after all particles done
         setTimeout(() => container.remove(), streamDuration + particleDuration + 100);
     }
 
     function setSelectedState(mount, selectedCardEl){
         const cards = mount.querySelectorAll('.fate-card');
         cards.forEach(c => c.classList.remove('selected'));
-        if (selectedCardEl) selectedCardEl.classList.add('selected');
+
+        // Manage Golden River connector
+        if (selectedCardEl) {
+            selectedCardEl.classList.add('selected');
+            // Create persistent Golden River connector
+            createGoldenRiver(selectedCardEl);
+        } else {
+            // Destroy Golden River when deselected
+            destroyGoldenRiver();
+        }
 
         // Show "Your choice:" label when a card is selected
         const yourChoiceLabel = document.getElementById('yourChoiceLabel');
@@ -767,6 +939,9 @@
         if (selectedIdx < 0) return; // nothing selected -> nothing to commit
 
         window.state.fateCommitted = true;
+
+        // Destroy Golden River connector on commit
+        destroyGoldenRiver();
 
         const cards = mount.querySelectorAll('.fate-card');
         cards.forEach((cardEl) => {
@@ -889,6 +1064,9 @@
         // Reset per-hand runtime flags
         _allFlipped = false;
         clearPendingTimer();
+
+        // Destroy any existing Golden River connector
+        destroyGoldenRiver();
 
         const unlockCount = resolveUnlockCount();
 
