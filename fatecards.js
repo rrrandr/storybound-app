@@ -1,5 +1,38 @@
 (function(window){
-    // Card Definitions - Base templates
+    // ==========================================================================
+    // FATE CARD SYSTEM — AUTHORITATIVE ARCHITECTURE
+    // ==========================================================================
+    //
+    // GPT-5.1 LAYER (STRUCTURE — FROZEN, DO NOT MODIFY):
+    //   - Card type (id)
+    //   - Card title
+    //   - Card description
+    //   - Action seed (actionTemplate)
+    //   - Dialogue seed (dialogueTemplate)
+    //
+    // These are defined in `fateDeckBase` below. This is the sole authority for
+    // Fate Card structure and intent. No AI calls or runtime logic may alter
+    // these fundamental definitions.
+    //
+    // CONTEXTUAL VARIATIONS (RULE-BASED, NOT AI-ELEVATED):
+    //   - `generateContextualCard()` produces scene-aware phrase variations
+    //   - Uses deterministic template selection based on scene context
+    //   - Falls back to `SOFT_FALLBACKS` for low-confidence scenes
+    //   - NO AI/GPT calls are made during card generation
+    //
+    // GPT-5.2 LAYER (POETIC ELEVATION — NOT IMPLEMENTED):
+    //   - If poetic elevation is ever added, it MUST:
+    //     1. Only elevate phrasing AFTER structure is frozen
+    //     2. Be optional and discardable
+    //     3. Be non-regenerative at runtime
+    //     4. Never add outcomes, imply intention, speak as Fate/Author,
+    //        or modify mechanical effect
+    //   - Current system has NO AI elevation layer
+    //
+    // ==========================================================================
+
+    // GPT-5.1 AUTHORITATIVE STRUCTURE — DO NOT MODIFY
+    // Card Definitions - Base templates (frozen structure)
     const fateDeckBase = [
         { id: 'temptation', title: 'Temptation', desc: 'A sudden, overwhelming urge.', actionTemplate: 'You feel drawn to something you know you shouldn\'t want.', dialogueTemplate: '"I shouldn\'t want this..."' },
         { id: 'confession', title: 'Confession', desc: 'A secret spills out.', actionTemplate: 'The truth rises to your lips.', dialogueTemplate: '"There\'s something I need to tell you."' },
@@ -155,6 +188,20 @@
 
     // Confidence threshold for using full contextual options
     const CONFIDENCE_THRESHOLD = 0.35;
+
+    // ==========================================================================
+    // CONTEXTUAL VARIATIONS (RULE-BASED — NOT AI ELEVATION)
+    // ==========================================================================
+    // This section produces scene-aware phrase variations using deterministic
+    // template selection. It does NOT modify card structure (id, title, desc).
+    // It only selects appropriate action/dialogue phrasing based on:
+    //   - Scene emotional beat
+    //   - Character presence
+    //   - Location/objects
+    //   - Unresolved tension
+    //
+    // This is NOT GPT-5.2 elevation. No AI calls are made.
+    // ==========================================================================
 
     // Contextual card generation with full scene awareness
     function generateContextualCard(baseCard, sceneContext, usedInThisDraw) {
@@ -536,6 +583,20 @@
             altDialogue: '(Neither of you speaks. Neither looks away.)'
         };
     }
+
+    // ==========================================================================
+    // DECK BUILDER — OUTPUTS FROZEN STRUCTURE WITH CONTEXTUAL PHRASING
+    // ==========================================================================
+    // Output cards preserve:
+    //   - id (frozen from fateDeckBase)
+    //   - title (frozen from fateDeckBase)
+    //   - desc (frozen from fateDeckBase)
+    //   - action (contextual phrasing — rule-selected, not AI-generated)
+    //   - dialogue (contextual phrasing — rule-selected, not AI-generated)
+    //
+    // The structure (id, title, desc) is NEVER modified by this function.
+    // Only action/dialogue text varies based on scene context.
+    // ==========================================================================
 
     // Generate the deck with contextual awareness
     function buildFateDeck() {

@@ -1739,6 +1739,11 @@ ANTI-HERO ENFORCEMENT:
       return `\nBATED BREATH STATE ACTIVE: The true love is absent. Tone: Longing, fidelity, bittersweet desire.`;
   }
   
+  // NARRATIVE STATE FILTER (NOT GPT-5.2 ELEVATION)
+  // This filter applies fixed text substitutions for "Bated Breath" state
+  // (partner absent). It does NOT use AI and does NOT modify card structure
+  // (id, title, desc). It replaces action/dialogue for specific card types
+  // that would be narratively inappropriate when the love interest is absent.
   function filterFateCardsForBatedBreath(cards) {
       if (!state.batedBreathActive) return cards;
       return cards.map(c => {
