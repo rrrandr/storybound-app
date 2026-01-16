@@ -3757,12 +3757,7 @@ AVOID these clichéd openings:
 The opening must feel intentional and specific, not archetypal or templated.`;
 
     // FATE STUMBLED DIAGNOSTIC - Structured payload logging
-    const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
-    const ancestryLI = $('ancestryInputLI')?.value.trim() || '';
-    const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
-
-    // Determine unlock tier
-    const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+    // (ancestryPlayer, ancestryLI, archetypeDirectives, quillUnlocked already declared above)
     let tier = 'free';
     if (state.subscribed) tier = 'subscribed';
     else if (quillUnlocked) tier = 'quill_unlocked';
