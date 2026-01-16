@@ -3894,25 +3894,34 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       }, 500);
   }
 
-  // Stop cover loading and show reveal state
+  // Stop cover loading and show physical book object
   function stopCoverLoading(coverUrl) {
       if (_coverPhraseInterval) clearInterval(_coverPhraseInterval);
       if (_coverProgressInterval) clearInterval(_coverProgressInterval);
 
       const loadingState = document.getElementById('coverLoadingState');
-      const revealState = document.getElementById('coverRevealState');
+      const bookObject = document.getElementById('bookObject');
       const coverImg = document.getElementById('bookCoverImg');
       const progressFill = document.getElementById('coverProgressFill');
+      const bookmarkRibbon = document.getElementById('bookmarkRibbon');
 
       // Complete progress bar
       if (progressFill) progressFill.style.width = '100%';
 
       setTimeout(() => {
           if (loadingState) loadingState.classList.add('hidden');
-          if (revealState) revealState.classList.remove('hidden');
+          if (bookObject) bookObject.classList.remove('hidden');
           if (coverImg && coverUrl) {
               coverImg.src = coverUrl;
           }
+
+          // Show bookmark if returning reader
+          if (bookmarkRibbon && state.turnCount > 0) {
+              bookmarkRibbon.classList.remove('hidden');
+          }
+
+          // Start courtesy hinge timer (one-time only)
+          scheduleCourtesyHinge();
       }, 500);
   }
 
@@ -3955,52 +3964,109 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       }
   }
 
-  // Trigger page-turn animation and reveal story content
-  function triggerPageTurnAnimation(onComplete) {
+  // ============================================================
+  // PHYSICAL BOOK INTERACTION SYSTEM
+  // Hinge-based open, courtesy peek, no buttons
+  // ============================================================
+
+  const COURTESY_HINGE_KEY = 'storybound_courtesy_hinge_shown';
+  let _courtesyHingeTimeout = null;
+  let _bookOpened = false;
+
+  // Check if courtesy hinge has already been shown (one-time ever)
+  function hasSeenCourtesyHinge() {
+      try {
+          return localStorage.getItem(COURTESY_HINGE_KEY) === 'true';
+      } catch (e) {
+          return false;
+      }
+  }
+
+  // Mark courtesy hinge as shown
+  function markCourtesyHingeShown() {
+      try {
+          localStorage.setItem(COURTESY_HINGE_KEY, 'true');
+      } catch (e) {
+          // localStorage unavailable
+      }
+  }
+
+  // Schedule courtesy hinge (2-3 seconds after cover shows)
+  function scheduleCourtesyHinge() {
+      if (hasSeenCourtesyHinge() || _bookOpened) return;
+
+      _courtesyHingeTimeout = setTimeout(() => {
+          if (_bookOpened) return; // User already opened
+
+          const bookCover = document.getElementById('bookCover');
+          if (bookCover) {
+              bookCover.classList.add('courtesy-peek');
+              markCourtesyHingeShown();
+
+              // Remove class after animation completes
+              setTimeout(() => {
+                  bookCover.classList.remove('courtesy-peek');
+              }, 2100);
+          }
+      }, 2500);
+  }
+
+  // Cancel courtesy hinge if user clicks
+  function cancelCourtesyHinge() {
+      if (_courtesyHingeTimeout) {
+          clearTimeout(_courtesyHingeTimeout);
+          _courtesyHingeTimeout = null;
+      }
+  }
+
+  // Open book via hinge animation (triggered by clicking anywhere on book)
+  function openBook() {
+      if (_bookOpened) return;
+      _bookOpened = true;
+      cancelCourtesyHinge();
+
+      const bookCover = document.getElementById('bookCover');
       const bookCoverPage = document.getElementById('bookCoverPage');
-      const pageTurnOverlay = document.getElementById('pageTurnOverlay');
       const storyContent = document.getElementById('storyContent');
       const storyTextEl = document.getElementById('storyText');
 
-      // Show page-turn overlay
-      if (pageTurnOverlay) {
-          pageTurnOverlay.classList.remove('hidden');
-          pageTurnOverlay.classList.add('active', 'turning');
+      // Remove any courtesy peek class
+      if (bookCover) {
+          bookCover.classList.remove('courtesy-peek');
+          bookCover.classList.add('hinge-open');
       }
 
-      // After animation starts, hide cover and show story
+      // After hinge animation, transition to story
       setTimeout(() => {
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
           if (storyContent) {
               storyContent.classList.remove('hidden');
               storyContent.classList.add('fade-in');
           }
-          // Reveal story text
           if (storyTextEl) storyTextEl.style.opacity = '1';
-      }, 600);
 
-      // Clean up animation overlay
-      setTimeout(() => {
-          if (pageTurnOverlay) {
-              pageTurnOverlay.classList.add('hidden');
-              pageTurnOverlay.classList.remove('active', 'turning');
+          // Scroll to title
+          const titleEl = document.getElementById('storyTitle');
+          if (titleEl) {
+              titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-          if (onComplete) onComplete();
-      }, 1400);
+      }, 800);
   }
 
-  // Initialize cover page event listeners
+  // Initialize physical book event listeners
   function initCoverPageListeners() {
-      const openBookBtn = document.getElementById('openBookBtn');
-      if (openBookBtn) {
-          openBookBtn.addEventListener('click', () => {
-              triggerPageTurnAnimation(() => {
-                  // Scroll to title after reveal
-                  const titleEl = document.getElementById('storyTitle');
-                  if (titleEl) {
-                      titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }
-              });
+      // Click anywhere on book object to open
+      const bookObject = document.getElementById('bookObject');
+      if (bookObject) {
+          bookObject.addEventListener('click', openBook);
+      }
+
+      // Also allow clicking on cover directly (redundant safety)
+      const bookCover = document.getElementById('bookCover');
+      if (bookCover) {
+          bookCover.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openBook();
           });
       }
   }
@@ -4012,6 +4078,16 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       initCoverPageListeners();
   }
 
+  // Reset book state for new story
+  function resetBookState() {
+      _bookOpened = false;
+      cancelCourtesyHinge();
+      const bookCover = document.getElementById('bookCover');
+      if (bookCover) {
+          bookCover.classList.remove('hinge-open', 'courtesy-peek');
+      }
+  }
+
   // Hide cover page and show story content directly (fallback if cover fails)
   function skipCoverPage() {
       const bookCoverPage = document.getElementById('bookCoverPage');
@@ -4021,10 +4097,12 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Stop any running cover loading intervals
       if (_coverPhraseInterval) clearInterval(_coverPhraseInterval);
       if (_coverProgressInterval) clearInterval(_coverProgressInterval);
+      cancelCourtesyHinge();
 
       if (bookCoverPage) bookCoverPage.classList.add('hidden');
       if (storyContent) storyContent.classList.remove('hidden');
       if (storyTextEl) storyTextEl.style.opacity = '1';
+      _bookOpened = true;
   }
 
   // --- VISUALIZE (STABILIZED) ---

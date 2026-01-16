@@ -11,7 +11,66 @@
     --cursor-url: url('cursor-dollar-plane-64.png');
 }
 
-/* THEMES */
+/* ═══════════════════════════════════════════════════════════════════
+   READING STYLES - SCOPED TO BOOK INTERIOR ONLY
+   App UI, cover, and environment are NEVER affected by reading style
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Book Interior Variables (default: Print/Easy - light page) */
+:root {
+    --page-bg: #faf8f3;
+    --page-text: #1a1a1a;
+    --page-accent: #444;
+}
+
+/* Paper Style: Print (default) - clean white page */
+.story-content.paper-print,
+.story-content {
+    --page-bg: #faf8f3;
+    --page-text: #1a1a1a;
+    --page-accent: #333;
+}
+
+/* Paper Style: Cream - warm easy reading */
+.story-content.paper-cream {
+    --page-bg: #fffdd0;
+    --page-text: #1a1a1a;
+    --page-accent: #555;
+}
+
+/* Paper Style: Sepia - vintage book feel */
+.story-content.paper-sepia {
+    --page-bg: #f5e6c8;
+    --page-text: #3d2817;
+    --page-accent: #5c4033;
+}
+
+/* Paper Style: Warm Paper (Night Mode safe) */
+.story-content.paper-warm {
+    --page-bg: #2c2418;
+    --page-text: #d4c8b0;
+    --page-accent: #a08060;
+}
+
+/* Paper Style: Dark Page (Night Mode safe) */
+.story-content.paper-dark {
+    --page-bg: #1e1e1e;
+    --page-text: #e0e0e0;
+    --page-accent: #888;
+}
+
+/* Apply paper styles to story text container */
+#storyText, .story-pages-container {
+    background: var(--page-bg);
+    color: var(--page-text);
+    border-radius: 4px;
+    padding: 20px 30px;
+    margin: 10px 0;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* LEGACY THEME SUPPORT (for gradual migration) */
+/* These still work but are discouraged - prefer paper-* classes */
 body.theme-sepia { --bg1:#2c2218; --bg2:#3e2f22; --pink:#d2b48c; --hot:#8b4513; --gold:#ffa500; --ink:#f5deb3; --panel:rgba(40,30,20,0.8); --btn-bg:#5c4033; --btn-txt:#f5deb3; }
 body.theme-midnight { --bg1:#000000; --bg2:#111111; --pink:#444; --hot:#666; --gold:#888; --ink:#ccc; --panel:rgba(20,20,20,0.9); --btn-bg:#333; --btn-txt:#aaa; }
 body.theme-print { --bg1:#e0e0e0; --bg2:#f0f0f0; --pink:#333; --hot:#000; --gold:#444; --ink:#111; --panel:rgba(255,255,255,0.95); --btn-bg:#ccc; --btn-txt:#000; }
@@ -23,6 +82,44 @@ body.theme-print .section-title, body.theme-easy .section-title { text-shadow: n
 
 html, body { margin:0; padding:0; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--ink); font-family:var(--font-main); overflow-x:hidden; min-height:100vh; }
 body { text-align:center; padding:10px; transition: background 0.3s, color 0.3s; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   NIGHT MODE - Dims app environment only
+   Book cover and book object remain unchanged
+   ═══════════════════════════════════════════════════════════════════ */
+
+body.night-mode {
+    --bg1: #151515;
+    --bg2: #1a1a1a;
+    --pink: #8a5a6a;
+    --hot: #7a4a5a;
+    --gold: #a08050;
+    --ink: #b0a090;
+    --panel: rgba(20, 20, 20, 0.9);
+}
+
+/* Night Mode: Subdued UI controls */
+body.night-mode button:not(.story-content button) {
+    filter: brightness(0.8);
+}
+
+body.night-mode .nav-btn,
+body.night-mode .settings-btn {
+    opacity: 0.7;
+}
+
+/* Night Mode: Book object remains untouched */
+body.night-mode .book-object,
+body.night-mode .book-cover,
+body.night-mode .book-cover-image {
+    filter: none !important;
+}
+
+/* Night Mode: Story content uses selected paper style (unchanged) */
+body.night-mode #storyText,
+body.night-mode .story-pages-container {
+    /* Paper style is controlled by paper-* class, not night mode */
+}
 
 /* UTILITY CLASSES */
 .hidden { display:none !important; }
@@ -1123,7 +1220,7 @@ textarea.fate-field {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   BOOK COVER PAGE - Standalone intro before story
+   BOOK COVER PAGE - Physical book object in app environment
    ═══════════════════════════════════════════════════════════════════ */
 
 .book-cover-page {
@@ -1137,10 +1234,16 @@ textarea.fate-field {
     justify-content: center;
     padding: 20px;
     box-sizing: border-box;
+    perspective: 1500px;
 }
 
 .book-cover-page.hidden {
     display: none;
+}
+
+/* Night Mode - dims environment only, not book */
+.book-cover-page.night-mode {
+    background: linear-gradient(135deg, #151515, #1a1a1a);
 }
 
 /* Loading State */
@@ -1181,54 +1284,172 @@ textarea.fate-field {
     50% { opacity: 1; }
 }
 
-/* Reveal State */
-.cover-reveal {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 30px;
-    animation: coverFadeIn 1s ease forwards;
+/* ═══════════════════════════════════════════════════════════════════
+   PHYSICAL BOOK OBJECT - 3D book with hinge, thickness, shadows
+   ═══════════════════════════════════════════════════════════════════ */
+
+.book-object {
+    position: relative;
+    width: 320px;
+    height: 480px;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    animation: bookAppear 0.8s ease forwards;
 }
 
-.cover-reveal.hidden {
+.book-object.hidden {
     display: none;
 }
 
-@keyframes coverFadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+@keyframes bookAppear {
+    from { opacity: 0; transform: scale(0.9) rotateY(-5deg); }
+    to { opacity: 1; transform: scale(1) rotateY(0deg); }
+}
+
+/* Book cover - the front face that hinges open */
+.book-cover {
+    position: absolute;
+    inset: 0;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 10;
+    border-radius: 2px 8px 8px 2px;
+    overflow: hidden;
+    /* Right and bottom edge shadows for depth */
+    box-shadow:
+        4px 4px 8px rgba(0, 0, 0, 0.4),
+        8px 8px 20px rgba(0, 0, 0, 0.3),
+        inset -3px 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.book-cover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(to left, rgba(0,0,0,0.15), transparent);
+    pointer-events: none;
+    border-radius: 0 8px 8px 0;
 }
 
 .book-cover-image {
-    max-width: 400px;
-    max-height: 60vh;
     width: 100%;
-    height: auto;
-    border-radius: 8px;
-    border: 3px solid var(--gold);
-    box-shadow:
-        0 0 30px rgba(255, 215, 0, 0.3),
-        0 20px 60px rgba(0, 0, 0, 0.5);
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 2px 8px 8px 2px;
+    display: block;
 }
 
-.open-book-btn {
-    font-family: 'lust-script-display', serif;
-    font-size: 1.5em;
-    padding: 15px 50px;
-    background: linear-gradient(145deg, #8b008b, var(--hot));
-    color: var(--gold);
-    border: 2px solid var(--gold);
-    border-radius: 30px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+/* Hinge states */
+.book-cover.hinge-peek {
+    transform: rotateY(-15deg);
 }
 
-.open-book-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
-    filter: brightness(1.1);
+.book-cover.hinge-open {
+    transform: rotateY(-160deg);
+    pointer-events: none;
+}
+
+/* Book spine - left edge thickness */
+.book-spine {
+    position: absolute;
+    left: -12px;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    background: linear-gradient(to right, #2a1a10, #3d2817);
+    transform: rotateY(-90deg) translateX(-6px);
+    transform-origin: right center;
+    border-radius: 2px 0 0 2px;
+}
+
+/* Book thickness - bottom/side depth */
+.book-thickness {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -8px;
+    height: 8px;
+    background: linear-gradient(to bottom, #f5f0e6, #e8e0d0);
+    transform: rotateX(90deg) translateY(4px);
+    transform-origin: top center;
+    border-radius: 0 0 2px 2px;
+}
+
+/* Page edges visible from the side */
+.book-pages-preview {
+    position: absolute;
+    inset: 4px;
+    right: 4px;
+    background: linear-gradient(to right, #f8f4eb, #f0ebe0);
+    border-radius: 0 6px 6px 0;
+    z-index: 5;
+    overflow: hidden;
+}
+
+.page-edge-stack {
+    position: absolute;
+    right: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 8px;
+    background: repeating-linear-gradient(
+        to bottom,
+        #f5f0e6 0px,
+        #f5f0e6 1px,
+        #e0d8c8 1px,
+        #e0d8c8 2px
+    );
+    border-radius: 0 4px 4px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOKMARK RIBBON - Visual indicator for returning readers
+   ═══════════════════════════════════════════════════════════════════ */
+
+.bookmark-ribbon {
+    position: absolute;
+    top: -8px;
+    right: 30px;
+    width: 20px;
+    height: 60px;
+    background: linear-gradient(135deg, #8b0000, #a01010);
+    z-index: 20;
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s ease;
+}
+
+.bookmark-ribbon.hidden {
+    display: none;
+}
+
+.bookmark-ribbon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   COURTESY HINGE ANIMATION - One-time learning cue
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes courtesyHingePeek {
+    0% { transform: rotateY(0deg); }
+    40% { transform: rotateY(-18deg); }
+    60% { transform: rotateY(-18deg); }
+    100% { transform: rotateY(0deg); }
+}
+
+.book-cover.courtesy-peek {
+    animation: courtesyHingePeek 2s ease-in-out forwards;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1328,14 +1549,31 @@ textarea.fate-field {
         animation: none;
     }
 
-    .cover-reveal {
+    .book-object {
         animation: none;
         opacity: 1;
         transform: scale(1);
     }
 
+    .book-cover {
+        transition-duration: 0.2s;
+    }
+
+    .book-cover.courtesy-peek {
+        animation: none;
+    }
+
+    .book-cover.hinge-open {
+        transition-duration: 0.3s;
+    }
+
     .page-turn-overlay.turning .page-turn-left,
     .page-turn-overlay.turning .page-turn-right {
         animation-duration: 0.3s;
+    }
+
+    .story-content.fade-in {
+        animation: none;
+        opacity: 1;
     }
 }

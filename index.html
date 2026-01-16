@@ -647,7 +647,7 @@
   <div id="game" class="screen hidden" style="max-width:900px; margin:0 auto; padding-bottom:60px;">
 
     <!-- ============================================================ -->
-    <!-- BOOK COVER PAGE - Appears before story content               -->
+    <!-- BOOK COVER PAGE - Physical book object, clickable anywhere   -->
     <!-- ============================================================ -->
     <div id="bookCoverPage" class="book-cover-page">
       <div id="coverLoadingState" class="cover-loading">
@@ -656,13 +656,29 @@
         </div>
         <p id="coverStatusText" class="cover-status-text">Building your book cover...</p>
       </div>
-      <div id="coverRevealState" class="cover-reveal hidden">
-        <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
-        <button id="openBookBtn" class="open-book-btn">Open Your Story</button>
+
+      <!-- Physical book object - no buttons, click anywhere to open -->
+      <div id="bookObject" class="book-object hidden">
+        <!-- Bookmark ribbon (visible for returning readers) -->
+        <div id="bookmarkRibbon" class="bookmark-ribbon hidden"></div>
+
+        <!-- Book cover with hinge -->
+        <div id="bookCover" class="book-cover">
+          <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
+        </div>
+
+        <!-- Book pages underneath (visible during courtesy hinge) -->
+        <div id="bookPagesPreview" class="book-pages-preview">
+          <div class="page-edge-stack"></div>
+        </div>
+
+        <!-- Book spine/thickness -->
+        <div class="book-spine"></div>
+        <div class="book-thickness"></div>
       </div>
     </div>
 
-    <!-- Page-turn animation overlay -->
+    <!-- Page-turn animation overlay (deprecated - using hinge now) -->
     <div id="pageTurnOverlay" class="page-turn-overlay hidden">
       <div class="page-turn-left"></div>
       <div class="page-turn-right"></div>
