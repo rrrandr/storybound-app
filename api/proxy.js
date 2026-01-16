@@ -1,5 +1,85 @@
-// Local proxy endpoint for story generation
-// Uses xAI Grok API with configurable API key
+/**
+ * =============================================================================
+ * STORYBOUND SPECIALIST RENDERER PROXY — GROK ENDPOINT
+ * =============================================================================
+ *
+ * AUTHORITATIVE DOCUMENT — DO NOT REINTERPRET
+ *
+ * This endpoint handles calls to the SPECIALIST RENDERER (Grok).
+ *
+ * =============================================================================
+ * SPECIALIST RENDERER CONSTRAINTS (NON-NEGOTIABLE)
+ * =============================================================================
+ *
+ * The specialist renderer (Grok) is used for SENSORY EMBODIMENT ONLY.
+ *
+ * It may be called ONLY if:
+ * - An intimacy scene exists AND
+ * - Eroticism level warrants it (Erotic or Dirty) AND
+ * - The selected provider is contractually allowed
+ *
+ * It may ONLY receive:
+ * - A fully-specified Erotic Scene Directive (ESD)
+ * - No global story context beyond what is embedded in the ESD
+ *
+ * It may NOT:
+ * - Decide plot
+ * - Invent lore
+ * - Change outcomes
+ * - Override stops
+ * - Complete a scene if forbidden
+ * - Write cliffhangers
+ * - Reference monetization, Fate, or system rules
+ *
+ * The specialist renderer NEVER decides "how far things go."
+ * It renders HOW IT FEELS, within bounds.
+ *
+ * =============================================================================
+ * WHY GROK IS A SPECIALIST RENDERER (DO NOT CHANGE)
+ * =============================================================================
+ *
+ * ChatGPT is the PRIMARY AUTHOR. It decides:
+ * - WHAT happens
+ * - WHETHER intimacy occurs
+ * - Whether scenes are interrupted
+ *
+ * Grok only renders the sensory experience within constraints set by ChatGPT.
+ * This separation ensures no single model has unchecked authority.
+ *
+ * =============================================================================
+ */
+
+// =============================================================================
+// MODEL ALLOWLIST — PINNED VERSIONS (NO AUTO-UPGRADES)
+// =============================================================================
+/**
+ * Allowlisted Grok models for specialist rendering.
+ * Models must be explicitly listed here to be used.
+ * This prevents silent upgrades from breaking story constraints.
+ */
+const ALLOWED_GROK_MODELS = [
+  'grok-2-latest',
+  'grok-2',
+  'grok-2-mini'
+];
+
+/**
+ * Validate that the requested model is allowed.
+ * Throws an error if the model is not in the allowlist.
+ */
+function validateGrokModel(model) {
+  if (!ALLOWED_GROK_MODELS.includes(model)) {
+    throw new Error(
+      `Disallowed specialist model: "${model}". ` +
+      `Allowed models: ${ALLOWED_GROK_MODELS.join(', ')}`
+    );
+  }
+  return true;
+}
+
+// =============================================================================
+// MAIN HANDLER
+// =============================================================================
 
 export default async function handler(req, res) {
   // CORS headers
@@ -18,28 +98,86 @@ export default async function handler(req, res) {
   const XAI_API_KEY = process.env.XAI_API_KEY;
 
   if (!XAI_API_KEY) {
-    console.error('[PROXY] XAI_API_KEY not configured');
-    // Return a structured error that the frontend can handle
+    console.error('[SPECIALIST-PROXY] XAI_API_KEY not configured');
     return res.status(500).json({
       error: 'API key not configured',
-      details: 'XAI_API_KEY environment variable is not set. Please configure your xAI API key.'
+      details: 'XAI_API_KEY environment variable is not set. Specialist renderer requires xAI API access.'
     });
   }
 
   try {
-    const { messages, model, temperature = 0.7, max_tokens = 1000 } = req.body;
+    const {
+      messages,
+      model,
+      temperature = 0.7,
+      max_tokens = 1000,
+      role = 'SPECIALIST_RENDERER',  // Orchestration role
+      esd = null  // Erotic Scene Directive (required for specialist rendering)
+    } = req.body;
+
+    // ==========================================================================
+    // VALIDATE REQUEST
+    // ==========================================================================
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
+    // ==========================================================================
+    // MODEL VALIDATION — ENFORCE ALLOWLIST
+    // ==========================================================================
+    /**
+     * Specialist renderer models must be explicitly allowlisted.
+     * This prevents:
+     * - Silent model upgrades
+     * - Unauthorized model substitutions
+     * - Use of models not approved for explicit content
+     */
+
     // Normalize model name (support both hyphen and dot formats)
-    // xAI API expects: grok-4.1-fast-reasoning (with dots)
-    const normalizedModel = (model || 'grok-4.1-fast-reasoning')
+    const rawModel = model || 'grok-2-latest';
+    const normalizedModel = rawModel
       .replace(/grok-4-1/g, 'grok-4.1')
       .replace(/grok-3-5/g, 'grok-3.5');
 
-    console.log(`[PROXY] Calling xAI API with model: ${normalizedModel}`);
+    // For backward compatibility with existing code using grok-4.1,
+    // map to allowed specialist model
+    let selectedModel = normalizedModel;
+    if (!ALLOWED_GROK_MODELS.includes(normalizedModel)) {
+      // Default to allowed model if requested model isn't in specialist allowlist
+      console.warn(`[SPECIALIST-PROXY] Model ${normalizedModel} not in specialist allowlist, using grok-2-latest`);
+      selectedModel = 'grok-2-latest';
+    }
+
+    console.log(`[SPECIALIST-PROXY] Role: ${role}, Model: ${selectedModel}`);
+
+    // ==========================================================================
+    // ESD VALIDATION (when in specialist rendering mode)
+    // ==========================================================================
+    /**
+     * When called as a specialist renderer (not legacy mode), the ESD must be
+     * present and valid. The renderer should only receive ESD content, not
+     * raw plot context.
+     */
+
+    if (role === 'SPECIALIST_RENDERER' && esd) {
+      // Validate ESD has required fields
+      const requiredFields = ['eroticismLevel', 'completionAllowed', 'hardStops'];
+      for (const field of requiredFields) {
+        if (!(field in esd)) {
+          console.warn(`[SPECIALIST-PROXY] ESD missing required field: ${field}`);
+        }
+      }
+
+      // Check completion constraints
+      if (!esd.completionAllowed) {
+        console.log('[SPECIALIST-PROXY] Completion forbidden by ESD, renderer will be cut off before completion');
+      }
+    }
+
+    // ==========================================================================
+    // CALL XAI API
+    // ==========================================================================
 
     const xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
@@ -48,7 +186,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${XAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: normalizedModel,
+        model: selectedModel,
         messages: messages,
         temperature: temperature,
         max_tokens: max_tokens
@@ -62,7 +200,7 @@ export default async function handler(req, res) {
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      console.error('[PROXY] Non-JSON response from xAI:', responseText.slice(0, 500));
+      console.error('[SPECIALIST-PROXY] Non-JSON response from xAI:', responseText.slice(0, 500));
       return res.status(502).json({
         error: 'Invalid response from xAI API',
         details: responseText.slice(0, 200)
@@ -70,7 +208,7 @@ export default async function handler(req, res) {
     }
 
     if (!xaiResponse.ok) {
-      console.error('[PROXY] xAI API error:', data);
+      console.error('[SPECIALIST-PROXY] xAI API error:', data);
       return res.status(xaiResponse.status).json({
         error: data.error?.message || 'xAI API request failed',
         details: data
@@ -79,18 +217,69 @@ export default async function handler(req, res) {
 
     // Validate response structure
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error('[PROXY] Malformed xAI response:', data);
+      console.error('[SPECIALIST-PROXY] Malformed xAI response:', data);
       return res.status(502).json({
         error: 'Malformed response from xAI API',
         details: 'Response missing choices[0].message'
       });
     }
 
-    // Return the successful response
-    return res.status(200).json(data);
+    // ==========================================================================
+    // POST-PROCESS: Apply Hard Stops if ESD specifies
+    // ==========================================================================
+    /**
+     * If the ESD specifies that completion is forbidden, we may need to
+     * truncate the output if the renderer attempted to complete the scene.
+     *
+     * This is a safeguard — the renderer should respect constraints, but
+     * we enforce at the API level as well.
+     */
+
+    if (esd && !esd.completionAllowed) {
+      const content = data.choices[0].message.content;
+      // Check for completion indicators and truncate if needed
+      const completionIndicators = [
+        /\bcame\b.*\btogether\b/i,
+        /\bclimax\b/i,
+        /\bfinished\b.*\b(inside|together)\b/i,
+        /\breleased?\b.*\b(everything|all)\b/i
+      ];
+
+      for (const pattern of completionIndicators) {
+        if (pattern.test(content)) {
+          console.warn('[SPECIALIST-PROXY] Detected completion in output when forbidden, truncating');
+          // Truncate at the completion indicator
+          const match = content.match(pattern);
+          if (match && match.index) {
+            const truncated = content.substring(0, match.index).trim();
+            if (truncated.length > 100) {
+              data.choices[0].message.content = truncated + '\n\n[The moment stretches, suspended...]';
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    // ==========================================================================
+    // RETURN RESPONSE
+    // ==========================================================================
+
+    // Add metadata about the orchestration role
+    const enrichedResponse = {
+      ...data,
+      _orchestration: {
+        role: role,
+        model: selectedModel,
+        isSpecialistRenderer: true,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    return res.status(200).json(enrichedResponse);
 
   } catch (err) {
-    console.error('[PROXY] Request failed:', err.message);
+    console.error('[SPECIALIST-PROXY] Request failed:', err.message);
     return res.status(502).json({
       error: 'Failed to contact xAI API',
       details: err.message

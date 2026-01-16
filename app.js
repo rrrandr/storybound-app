@@ -27,6 +27,49 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   const PROXY_URL = config.proxyUrl || '/api/proxy';
   // Image requests always use local /api/image endpoint (never proxy)
   var IMAGE_PROXY_URL = '/api/image';
+
+  // =============================================================================
+  // AI ORCHESTRATION CONFIGURATION
+  // =============================================================================
+  /**
+   * AUTHORITATIVE — DO NOT REINTERPRET
+   *
+   * Storybound uses MULTIPLE AI models with STRICT SEPARATION OF AUTHORITY:
+   *
+   * 1. ChatGPT (PRIMARY AUTHOR — ALWAYS CALLED)
+   *    - ONLY model allowed to author plot progression
+   *    - ONLY model allowed to determine if intimacy occurs
+   *    - ONLY model allowed to enforce monetization gates
+   *    - ONLY model allowed to generate Erotic Scene Directives (ESD)
+   *    - Runs BEFORE any specialist renderer
+   *    - Runs AFTER any specialist renderer (integration pass)
+   *    - FINAL AUTHORITY on story state
+   *
+   * 2. Specialist Renderer (Grok) — CONDITIONAL
+   *    - Purpose: Sensory embodiment ONLY
+   *    - May ONLY receive a fully-specified ESD
+   *    - May NEVER decide plot, invent lore, or change outcomes
+   *    - NEVER decides "how far things go"
+   *    - Renders HOW IT FEELS, within bounds
+   *
+   * 3. Fate Cards — Dual-Model Split
+   *    - GPT-5.1: Structural authority (REQUIRED)
+   *    - GPT-5.2: Linguistic elevation (OPTIONAL, discardable)
+   *
+   * DO NOT MERGE THESE RESPONSIBILITIES. The separation is intentional.
+   *
+   * ORCHESTRATION ORDER (NON-NEGOTIABLE):
+   * 1. ChatGPT — Author Pass (plot, psychology, ESD generation)
+   * 2. Specialist Renderer — OPTIONAL (sensory embodiment only)
+   * 3. ChatGPT — Integration Pass (consequences, state, cliffhangers)
+   */
+
+  // Enable/disable orchestrated multi-model flow
+  // When true: ChatGPT → optional Grok → ChatGPT
+  // When false: Legacy single-model flow (Grok only)
+  const ENABLE_ORCHESTRATION = true;
+
+  // Legacy model (used when orchestration disabled or ChatGPT unavailable)
   const STORY_MODEL = 'grok-4.1-fast-reasoning'; 
   
   // Singleton Supabase Client
@@ -3195,6 +3238,23 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     return _loadingCancelled;
   }
 
+  /**
+   * Update the loading message during an active loading state.
+   * Used by orchestration to show phase-specific messages.
+   */
+  function updateLoadingMessage(msg) {
+    if (!_loadingActive) return;
+    const textEl = document.getElementById('loadingText');
+    if (textEl) {
+      // Fade transition
+      textEl.style.opacity = '0';
+      setTimeout(() => {
+        textEl.textContent = msg;
+        textEl.style.opacity = '1';
+      }, 200);
+    }
+  }
+
   function stopLoading(){
     if(!_loadingActive) return;
     _loadingActive = false;
@@ -3972,12 +4032,49 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   });
 
   // --- API CALLS ---
-  async function callChat(messages, temp=0.7) {
+  /**
+   * ==========================================================================
+   * STORY GENERATION API CALL
+   * ==========================================================================
+   *
+   * This function routes story generation through the appropriate AI model(s).
+   *
+   * When ENABLE_ORCHESTRATION is true:
+   * - Uses the orchestration client (ChatGPT primary author + optional Grok renderer)
+   * - Enforces the canonical call order: ChatGPT → Grok → ChatGPT
+   *
+   * When ENABLE_ORCHESTRATION is false:
+   * - Uses legacy single-model flow (Grok only)
+   * - Provided for fallback/compatibility only
+   *
+   * ==========================================================================
+   */
+  async function callChat(messages, temp=0.7, options = {}) {
+    // Check if orchestration client is available and enabled
+    const useOrchestration = ENABLE_ORCHESTRATION &&
+                             window.StoryboundOrchestration &&
+                             !options.bypassOrchestration;
+
+    if (useOrchestration) {
+      // Route through orchestration client (ChatGPT primary author)
+      try {
+        return await window.StoryboundOrchestration.callChatGPT(
+          messages,
+          'PRIMARY_AUTHOR',
+          { temperature: temp, max_tokens: options.max_tokens || 1000 }
+        );
+      } catch (orchestrationError) {
+        console.warn('[ORCHESTRATION] ChatGPT failed, falling back to legacy:', orchestrationError.message);
+        // Fall through to legacy Grok call
+      }
+    }
+
+    // Legacy single-model flow (Grok via specialist proxy)
     const payload = {
        messages: messages,
        model: STORY_MODEL,
        temperature: temp,
-       max_tokens: 1000
+       max_tokens: options.max_tokens || 1000
     };
 
     try {
@@ -4008,6 +4105,94 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         console.error('callChat error:', e);
         throw e;
     }
+  }
+
+  /**
+   * ==========================================================================
+   * ORCHESTRATED TURN GENERATION
+   * ==========================================================================
+   *
+   * Executes the full 3-phase orchestration flow for story generation:
+   *
+   * PHASE 1: ChatGPT Author Pass (ALWAYS RUNS)
+   *   - Plot beats, character psychology, dialogue intent
+   *   - Determines if intimacy occurs
+   *   - Generates Erotic Scene Directive (ESD) if needed
+   *   - Enforces monetization gates
+   *
+   * PHASE 2: Specialist Renderer (CONDITIONAL)
+   *   - Called ONLY if ESD warrants it (Erotic/Dirty level)
+   *   - Receives ONLY the ESD, no plot context
+   *   - Renders sensory embodiment within bounds
+   *   - NEVER decides outcomes
+   *
+   * PHASE 3: ChatGPT Integration Pass (ALWAYS RUNS)
+   *   - Absorbs rendered scene
+   *   - Applies consequences
+   *   - Enforces cliffhanger or completion per tier
+   *   - FINAL AUTHORITY on story state
+   *
+   * FAILURE HANDLING:
+   *   - Renderer failure does NOT corrupt story state
+   *   - ChatGPT regains control on failure
+   *   - Fate Stumbled may be triggered
+   *
+   * ==========================================================================
+   */
+  async function generateOrchestatedTurn(params) {
+    const {
+      systemPrompt,
+      storyContext,
+      playerAction,
+      playerDialogue,
+      fateCard,
+      onPhaseChange
+    } = params;
+
+    // Check if orchestration is available
+    if (!window.StoryboundOrchestration) {
+      console.warn('[ORCHESTRATION] Client not available, using legacy flow');
+      // Fall back to legacy single-model call
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Action: ${playerAction}\nDialogue: "${playerDialogue}"` }
+      ];
+      return await callChat(messages, 0.7, { bypassOrchestration: true });
+    }
+
+    // Execute full orchestration flow
+    const result = await window.StoryboundOrchestration.orchestrateStoryGeneration({
+      accessTier: state.access || 'free',
+      requestedEroticism: state.intensity || 'Clean',
+      storyContext: storyContext,
+      playerAction: playerAction,
+      playerDialogue: playerDialogue,
+      fateCard: fateCard,
+      systemPrompt: systemPrompt,
+      onPhaseChange: onPhaseChange
+    });
+
+    // Log orchestration details
+    console.log('[ORCHESTRATION] Turn complete:', {
+      success: result.success,
+      rendererUsed: result.rendererUsed,
+      fateStumbled: result.fateStumbled,
+      gateEnforcement: result.gateEnforcement,
+      timing: result.timing,
+      errors: result.errors
+    });
+
+    // Handle Fate Stumbled
+    if (result.fateStumbled) {
+      console.warn('[ORCHESTRATION] Fate Stumbled - specialist renderer failed');
+      // Story continues with author output only
+    }
+
+    if (!result.success && result.errors.length > 0) {
+      console.error('[ORCHESTRATION] Errors:', result.errors);
+    }
+
+    return result.finalOutput;
   }
 
   // Setting shot uses unified IMAGE PROVIDER ROUTER with landscape shape
@@ -5383,11 +5568,56 @@ FATE CARD ADAPTATION (CRITICAL):
       let storyDisplayed = false;
 
       try {
-          // Generate AI response first
-          const raw = await callChat([
-              {role:'system', content: fullSys},
-              {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
-          ]);
+          /**
+           * =================================================================
+           * AI MODEL ORCHESTRATION — TURN GENERATION
+           * =================================================================
+           *
+           * For Erotic/Dirty intensity levels with ENABLE_ORCHESTRATION:
+           *   Uses full 3-phase flow (ChatGPT → optional Grok → ChatGPT)
+           *
+           * For Clean/Naughty or when orchestration disabled:
+           *   Uses single-model flow (ChatGPT as primary author)
+           *
+           * The orchestration flow ensures:
+           * - ChatGPT ALWAYS decides plot and outcomes
+           * - Specialist renderer (if used) only handles sensory embodiment
+           * - Monetization gates are enforced pre-render
+           * - Renderer failure does NOT corrupt story state
+           * =================================================================
+           */
+          const useFullOrchestration = ENABLE_ORCHESTRATION &&
+                                       window.StoryboundOrchestration &&
+                                       ['Erotic', 'Dirty'].includes(state.intensity);
+
+          let raw;
+
+          if (useFullOrchestration) {
+              // Full 3-phase orchestration: ChatGPT → optional Grok → ChatGPT
+              raw = await generateOrchestatedTurn({
+                  systemPrompt: fullSys,
+                  storyContext: context,
+                  playerAction: act,
+                  playerDialogue: dia,
+                  fateCard: selectedFateCard,
+                  onPhaseChange: (phase, data) => {
+                      // Update loading message based on phase
+                      if (phase === 'AUTHOR_PASS') {
+                          updateLoadingMessage('Fate is weaving the plot...');
+                      } else if (phase === 'RENDER_PASS') {
+                          updateLoadingMessage('Fate is embodying the moment...');
+                      } else if (phase === 'INTEGRATION_PASS') {
+                          updateLoadingMessage('Fate is sealing the consequences...');
+                      }
+                  }
+              });
+          } else {
+              // Single-model flow (ChatGPT as primary author)
+              raw = await callChat([
+                  {role:'system', content: fullSys},
+                  {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
+              ]);
+          }
 
           // Validate response shape before marking as success
           if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {
