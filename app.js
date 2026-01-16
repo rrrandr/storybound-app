@@ -3917,8 +3917,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // Generate book cover with intent-based routing
+  // Uses authoritative prestige cover template with symbolic objects
   async function generateBookCover(synopsis, title, authorName) {
+      // Extract story context for symbolic object selection
       const modeLine = state.picks?.genre?.join(' / ') || 'A Novel';
+      const dynamic = state.picks?.dynamic?.join(', ') || 'Romantic tension';
+      const storyStyle = state.picks?.style?.join(', ') || 'Dark Romance';
+      const genre = state.picks?.genre?.[0] || 'Contemporary';
 
       try {
           const res = await fetch(IMAGE_PROXY_URL, {
@@ -3928,8 +3933,11 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   prompt: synopsis || 'A dramatic scene from a romantic novel',
                   imageIntent: 'book_cover',
                   title: title || 'Untitled',
-                  authorName: authorName || 'Anonymous',
+                  authorName: authorName || 'ANONYMOUS',
                   modeLine: modeLine,
+                  dynamic: dynamic,
+                  storyStyle: storyStyle,
+                  genre: genre,
                   size: '1024x1024'
               })
           });

@@ -32,24 +32,121 @@ function getOpenAIModel(imageIntent) {
 // ============================================================
 // PROMPT TEMPLATES - Intent-specific framing
 // ============================================================
-function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine) {
-  // Book cover: Render typography INTO the image
-  return `Create a professional book cover design.
+function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre) {
+  // AUTHORITATIVE BOOK COVER PROMPT TEMPLATE
+  // Creates prestige book covers with symbolic objects and custom typography
+  return `You are creating a **prestige book cover** for a Storybound story.
 
-SCENE/MOOD: ${basePrompt}
+This is not a scene illustration.
+This is not a poster.
+This is a **designed book cover** that must feel intentional, authored, and contemporary.
 
-TYPOGRAPHY TO RENDER (must appear in image):
-${modeLine ? `- Small mode line at top: "${modeLine}"` : ''}
-- Large dominant title in center: "${title || 'Untitled'}"
-- Author credit at bottom: "by ${authorName || 'Anonymous'}"
+---
 
-STYLE REQUIREMENTS:
-- Elegant, highly readable typography integrated into the composition
-- Cinematic, epic illustration suitable for a published novel
-- Rich atmospheric lighting and color palette
-- Professional book cover layout and composition
-- NO watermarks, NO extra text, NO gibberish letters
-- Single cohesive design that could appear in a bookstore`;
+## CORE CONCEPT
+
+Create a **square (1:1) book cover** built around **one evocative symbolic object** that implies the emotional core of the story without depicting characters or explicit action.
+
+The cover must rely on **implication, symbolism, and restraint**, not literal depiction.
+
+---
+
+## STORY CONTEXT
+
+* **Relationship Dynamic:** ${dynamic || 'Romantic tension'}
+* **Story Style:** ${storyStyle || 'Dark Romance'}
+* **Genre / Setting:** ${genre || 'Contemporary'}
+* **Story Mood:** ${basePrompt}
+* **Title:** ${title || 'Untitled'}
+* **Author Name:** ${authorName || 'ANONYMOUS'}
+* **Series Line:** Storybound Book I – ${modeLine || 'A Novel'}
+
+---
+
+## SYMBOLIC OBJECT RULE (CRITICAL)
+
+Select **one primary object** that:
+* Belongs naturally to the story's **world and setting**
+* Reflects the **relationship dynamic**
+* Matches the **tone of the story style**
+
+Examples by genre:
+* Contemporary → fabric, letters, glass, flowers, personal items
+* Sci-Fi / Dystopia → machinery, spacecraft, visors, holograms, debris
+* Medieval / Fantasy → tapestry, blade, ring, heraldic symbol, scroll
+
+⚠️ Do NOT use objects that clash tonally.
+
+---
+
+## COMPOSITION & AESTHETIC
+
+* Minimalist, high negative space
+* Controlled lighting with depth and shadow
+* Prestige, bookstore-ready visual language
+* **NO characters, faces, or bodies**
+* No clutter, no collage effect
+
+---
+
+## TYPOGRAPHY RULES (EXTREMELY IMPORTANT)
+
+### TITLE LETTERING
+* The title must appear as **bespoke, custom-designed lettering**
+* Never described as a "font"
+* Letterforms may be slightly irregular, subtly asymmetrical
+* Ornamented with **purposeful flourishes**
+* Typography should **evoke the story's emotional dynamic**
+
+### DIMENSIONAL INTERACTION (MANDATORY)
+The symbolic object must **physically interact with the title lettering** by at least one of:
+* Passing in front of or behind letters
+* Casting realistic shadows onto letterforms
+* Threading through a character or stroke
+* Aligning with or echoing letter shapes
+
+❌ Forbidden: title floating cleanly above the image with no interaction
+
+---
+
+## SERIES / MODE LINE
+
+Text: **Storybound Book I – ${modeLine || 'A Novel'}**
+* Very small, quiet, restrained
+* Secondary to the title
+* Placed either at the very top OR just beneath the title
+* Uses a **different but compatible style** from the title
+
+---
+
+## AUTHOR NAME TREATMENT
+
+* Display: **${(authorName || 'ANONYMOUS').toUpperCase()}**
+* NO "by" prefix
+* ALL CAPS
+* Bold, modern sans-serif
+* Clean, grounded, stable
+* Placed across the bottom of the cover
+* Acts as a visual anchor
+
+---
+
+## COLOR & MOOD
+
+Color palette, materials, and lighting must align with the story's genre, style seriousness, and emotional temperature.
+
+Avoid: garish saturation, cheesy glow effects, stock-photo lighting.
+
+---
+
+## FINAL OUTPUT
+
+Create a single, cohesive book cover that:
+* Would look at home on a modern romance / literary shelf
+* Has unified object, typography, and world feel
+* Title feels **designed for this story**, not reusable
+* Suggests intimacy, tension, or consequence **without showing it**
+* Contains NO gibberish text, watermarks, or extra elements`;
 }
 
 function wrapScenePrompt(basePrompt) {
@@ -78,6 +175,7 @@ export default async function handler(req, res) {
 
   // imageIntent: 'book_cover' | 'scene_visualize' (default)
   // title, authorName, modeLine: Used for book cover typography
+  // dynamic, storyStyle, genre: Story context for symbolic object selection
   const {
     prompt,
     provider,
@@ -85,7 +183,10 @@ export default async function handler(req, res) {
     imageIntent,
     title,
     authorName,
-    modeLine
+    modeLine,
+    dynamic,
+    storyStyle,
+    genre
   } = req.body;
 
   if (!prompt) {
@@ -95,7 +196,7 @@ export default async function handler(req, res) {
   // Apply intent-specific prompt wrapping
   const isBookCover = imageIntent === 'book_cover';
   const finalPrompt = isBookCover
-    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine)
+    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre)
     : wrapScenePrompt(prompt);
 
   console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);
