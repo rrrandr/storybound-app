@@ -886,6 +886,11 @@ ANTI-HERO ENFORCEMENT:
       _currentScreenId = id;
       updateNavUI();
 
+      // Update DSP visibility based on screen (state-based, not scroll-based)
+      if (typeof updateDSPVisibility === 'function') {
+          updateDSPVisibility(id);
+      }
+
       // Initialize fate hand system when entering setup screen
       if(id === 'setup') {
           initFateHandSystem();
@@ -2726,59 +2731,87 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // ║    characters relate, not who they are.                          ║
   // ╚═══════════════════════════════════════════════════════════════════╝
   //
-  const SYNOPSIS_PHRASES = {
-    world: {
-      Modern: 'where ambition and secrets intertwine',
-      Historical: 'bound by the rules of another age',
-      Dystopia: 'where survival demands sacrifice',
-      PostApocalyptic: 'where hope is as scarce as mercy',
-      Fantasy: 'where magic breathes in every shadow',
-      SciFi: 'where the stars hold both promise and peril',
-      Supernatural: 'where the veil between worlds is thin',
-      Superheroic: 'where power demands impossible choices'
-    },
-    tone: {
-      Earnest: 'face what you\'ve buried',
-      WryConfession: 'confess what you\'ve never admitted',
-      Satirical: 'see the absurdity for what it is',
-      Dark: 'embrace what frightens you',
-      Horror: 'confront what should not exist',
-      Mythic: 'answer the call of destiny',
-      Comedic: 'laugh at the chaos',
-      Surreal: 'trust nothing you see',
-      Poetic: 'feel every word like a wound'
-    },
-    // LOCKED: Genres describe narrative action, not setting or life stage
-    genre: {
-      CrimeSyndicate: 'navigate blood oaths and betrayal',
-      Billionaire: 'play games only the powerful understand',
-      Noir: 'walk through shadows with no clean hands',
-      Heist: 'trust the plan—and no one else',
-      Espionage: 'keep secrets that could kill',
-      Political: 'maneuver through a web of alliances'
-    },
-    dynamic: {
-      Forbidden: 'desire what you cannot have',
-      Dangerous: 'want the one who could destroy you',
-      Fated: 'fight what was always meant to be',
-      Partners: 'trust only each other',
-      Enemies: 'the one you need most becomes your enemy',
-      Friends: 'cross a line you can\'t uncross',
-      Proximity: 'share space with the one you can\'t escape',
-      SecretIdentity: 'fall for who they pretend to be',
-      Obsessive: 'be the center of someone\'s world',
-      Caretaker: 'let someone see your wounds',
-      SecondChance: 'reopen a door you thought was closed'
-    }
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP TONE-BASED GENERATORS (TONE SUPREMACY)
+  // Tone controls the entire sentence voice, not just one fragment.
+  // When tone changes, the entire DSP sentence rewrites in that voice.
+  // ═══════════════════════════════════════════════════════════════════
+  const DSP_WORLD_SETTINGS = {
+    Modern: 'a world of ambition and buried secrets',
+    Historical: 'an age bound by unforgiving rules',
+    Dystopia: 'a broken world that demands sacrifice',
+    PostApocalyptic: 'the ashes of what came before',
+    Fantasy: 'a realm where magic breathes in shadow',
+    SciFi: 'a frontier where stars hold both promise and peril',
+    Supernatural: 'a place where the veil between worlds runs thin',
+    Superheroic: 'a world where power demands impossible choices'
   };
 
-  function updateSynopsisPanel() {
-    const synWorld = document.getElementById('synWorld');
-    const synTone = document.getElementById('synTone');
-    const synGenre = document.getElementById('synGenre');
-    const synDynamic = document.getElementById('synDynamic');
+  const DSP_GENRE_CONFLICTS = {
+    CrimeSyndicate: 'blood oaths and betrayal',
+    Billionaire: 'games only the powerful understand',
+    Noir: 'shadows where no one walks clean',
+    Heist: 'a plan you must trust completely',
+    Espionage: 'secrets that could kill',
+    Political: 'a web of dangerous alliances'
+  };
 
-    if (!synWorld || !synTone || !synGenre || !synDynamic) return;
+  const DSP_DYNAMIC_ENGINES = {
+    Forbidden: 'desire what you cannot have',
+    Dangerous: 'want the one who could destroy you',
+    Fated: 'fight what was always meant to be',
+    Partners: 'trust only each other',
+    Enemies: 'need the one who stands against you',
+    Friends: 'cross a line you cannot uncross',
+    Proximity: 'share space with the one you cannot escape',
+    SecretIdentity: 'fall for who they pretend to be',
+    Obsessive: 'become the center of someone\'s world',
+    Caretaker: 'let someone see your wounds',
+    SecondChance: 'reopen a door you thought was closed'
+  };
+
+  // TONE GENERATORS: Each produces a complete sentence in that tone's voice
+  const DSP_TONE_GENERATORS = {
+    Earnest: ({ world, genre, dynamic }) =>
+      `In ${world}, you are drawn into ${genre}—and you will ${dynamic}.`,
+
+    WryConfession: ({ world, genre, dynamic }) =>
+      `So here you are, in ${world}, tangled up in ${genre}. And somehow, against all judgment, you ${dynamic}.`,
+
+    Satirical: ({ world, genre, dynamic }) =>
+      `Welcome to ${world}, where ${genre} is already a mess—and you've agreed to make it worse by deciding to ${dynamic}.`,
+
+    Dark: ({ world, genre, dynamic }) =>
+      `In ${world}, ${genre} waits in every shadow. You will ${dynamic}, no matter what it costs.`,
+
+    Horror: ({ world, genre, dynamic }) =>
+      `Something waits in ${world}. It wears the face of ${genre}. And it knows you will ${dynamic}.`,
+
+    Mythic: ({ world, genre, dynamic }) =>
+      `Fate calls you to ${world}, where ${genre} shapes the path of heroes—and you must ${dynamic}.`,
+
+    Comedic: ({ world, genre, dynamic }) =>
+      `Look, ${world} seemed like a good idea at the time. Now there's ${genre}, and apparently you're going to ${dynamic}. Good luck with that.`,
+
+    Surreal: ({ world, genre, dynamic }) =>
+      `${world} bends at the edges. ${genre} tastes like something half-remembered. You ${dynamic}, or perhaps you always have.`,
+
+    Poetic: ({ world, genre, dynamic }) =>
+      `Beneath the long shadow of ${world}, your fate drifts toward ${genre}—and love, the need to ${dynamic}, moves like a quiet inevitability.`
+  };
+
+  function generateDSPSentence(world, tone, genre, dynamic) {
+    const worldText = DSP_WORLD_SETTINGS[world] || DSP_WORLD_SETTINGS.Modern;
+    const genreText = DSP_GENRE_CONFLICTS[genre] || DSP_GENRE_CONFLICTS.Billionaire;
+    const dynamicText = DSP_DYNAMIC_ENGINES[dynamic] || DSP_DYNAMIC_ENGINES.Enemies;
+
+    const generator = DSP_TONE_GENERATORS[tone] || DSP_TONE_GENERATORS.Earnest;
+    return generator({ world: worldText, genre: genreText, dynamic: dynamicText });
+  }
+
+  function updateSynopsisPanel() {
+    const synopsisText = document.getElementById('synopsisText');
+    if (!synopsisText) return;
 
     // Get current selections
     const world = state.picks.world || 'Modern';
@@ -2786,80 +2819,58 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const genre = state.picks.genre || 'Billionaire';
     const dynamic = state.picks.dynamic || 'Enemies';
 
-    // Update each clause with animation
-    updateSynopsisClause(synWorld, SYNOPSIS_PHRASES.world[world] || SYNOPSIS_PHRASES.world.Modern);
-    updateSynopsisClause(synTone, SYNOPSIS_PHRASES.tone[tone] || SYNOPSIS_PHRASES.tone.Earnest);
-    updateSynopsisClause(synGenre, SYNOPSIS_PHRASES.genre[genre] || SYNOPSIS_PHRASES.genre.Billionaire);
-    updateSynopsisClause(synDynamic, SYNOPSIS_PHRASES.dynamic[dynamic] || SYNOPSIS_PHRASES.dynamic.Enemies);
-  }
+    // Generate holistic sentence based on tone
+    const newSentence = generateDSPSentence(world, tone, genre, dynamic);
 
-  function updateSynopsisClause(element, newText) {
-    if (!element || element.textContent === newText) return;
-
-    element.textContent = newText;
-    element.classList.add('updating');
-    setTimeout(() => element.classList.remove('updating'), 500);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // SYNOPSIS PANEL SCROLL VISIBILITY (CORRECTIVE PASS)
-  // Panel appears when Story World enters viewport, disappears after
-  // Relationship Dynamic section. Feels like an accompanying object.
-  // ═══════════════════════════════════════════════════════════════════
-  function initSynopsisPanelScrollBehavior() {
-    const synopsisPanel = document.getElementById('synopsisPanel');
-    const worldGrid = document.getElementById('worldGrid');
-    const dynamicGrid = document.getElementById('dynamicGrid');
-
-    if (!synopsisPanel || !worldGrid || !dynamicGrid) return;
-
-    // Only apply scroll behavior on desktop (wide screens)
-    function checkSynopsisVisibility() {
-      // On mobile, always visible via CSS
-      if (window.innerWidth <= 1100) {
-        synopsisPanel.classList.remove('visible');
-        return;
-      }
-
-      const worldRect = worldGrid.getBoundingClientRect();
-      const dynamicRect = dynamicGrid.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-
-      // Show when Story World is partially in view and until Dynamic is past
-      const worldInView = worldRect.top < viewportHeight && worldRect.bottom > 0;
-      const dynamicPastBottom = dynamicRect.bottom < 0;
-      const worldAboveView = worldRect.bottom < -100;
-
-      if ((worldInView || (worldRect.top < 0 && !worldAboveView)) && !dynamicPastBottom) {
-        synopsisPanel.classList.add('visible');
-      } else {
-        synopsisPanel.classList.remove('visible');
-      }
+    // Update with animation if content changed
+    if (synopsisText.textContent !== newSentence) {
+      synopsisText.classList.add('updating');
+      synopsisText.textContent = newSentence;
+      setTimeout(() => synopsisText.classList.remove('updating'), 500);
     }
-
-    // Debounced scroll handler
-    let scrollTimeout;
-    window.addEventListener('scroll', () => {
-      if (scrollTimeout) cancelAnimationFrame(scrollTimeout);
-      scrollTimeout = requestAnimationFrame(checkSynopsisVisibility);
-    }, { passive: true });
-
-    // Also check on resize
-    window.addEventListener('resize', checkSynopsisVisibility, { passive: true });
-
-    // Initial check
-    checkSynopsisVisibility();
   }
 
-  // Expose globally for DevTools verification
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP VISIBILITY LIFECYCLE (STATE-BASED)
+  // DSP is visible throughout the four-axis configuration (World → Tone
+  // → Genre → Dynamic). It disappears only after Begin Story is clicked.
+  // Visibility is tied to screen state, not scroll position.
+  // ═══════════════════════════════════════════════════════════════════
+  function showDSP() {
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    if (synopsisPanel && window.innerWidth > 1100) {
+      synopsisPanel.classList.add('visible');
+    }
+  }
+
+  function hideDSP() {
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    if (synopsisPanel) {
+      synopsisPanel.classList.remove('visible');
+    }
+  }
+
+  // DSP shows when user is configuring story (setup screen)
+  function updateDSPVisibility(screenId) {
+    if (screenId === 'setup') {
+      showDSP();
+    } else {
+      hideDSP();
+    }
+  }
+
+  // Expose for external calls
+  window.showDSP = showDSP;
+  window.hideDSP = hideDSP;
+  window.updateDSPVisibility = updateDSPVisibility;
+
+  // Legacy function name for compatibility
+  function initSynopsisPanelScrollBehavior() {
+    // Now state-based, not scroll-based
+    // DSP visibility controlled by updateDSPVisibility(screenId)
+    updateDSPVisibility(_currentScreenId);
+  }
   window.initSynopsisPanelScrollBehavior = initSynopsisPanelScrollBehavior;
-
-  // Initialize on DOMContentLoaded
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSynopsisPanelScrollBehavior);
-  } else {
-    initSynopsisPanelScrollBehavior();
-  }
 
   // =========================
   // ARCHETYPE UI HANDLERS
@@ -3479,6 +3490,52 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     syncPovDerivedFlags();
     const safetyStr = buildConsentDirectives();
 
+    // === EARLY VALIDATION (before screen transition) ===
+    // Build diagnostic payload and validate BEFORE showing game screen
+    const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
+    const ancestryLI = $('ancestryInputLI')?.value.trim() || '';
+    const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
+    const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+
+    const earlyPayload = {
+        mode: state.mode || 'solo',
+        fourAxis: {
+            world: state.picks.world || 'Modern',
+            tone: state.picks.tone || 'Earnest',
+            genre: state.picks.genre || 'Billionaire',
+            dynamic: state.picks.dynamic || 'Enemies'
+        },
+        archetype: {
+            primary: state.archetype.primary || null,
+            directives: archetypeDirectives || '(none built)'
+        },
+        veto: {
+            bannedWords: state.veto?.bannedWords || [],
+            tone: state.veto?.tone || []
+        },
+        intensity: state.intensity || 'Naughty',
+        pov: state.picks.pov || 'First',
+        systemPromptLength: 1 // Will be set after sys prompt built
+    };
+
+    // Validate four-axis before proceeding
+    const { world, tone, genre, dynamic } = earlyPayload.fourAxis;
+    const earlyErrors = [];
+    if (!earlyPayload.mode) earlyErrors.push('Mode is undefined');
+    if (!world) earlyErrors.push('World is missing or empty');
+    if (!tone) earlyErrors.push('Tone is missing or empty');
+    if (!genre) earlyErrors.push('Genre is missing or empty');
+    if (!dynamic) earlyErrors.push('Relationship Dynamic is missing or empty');
+    if (!earlyPayload.archetype.primary) earlyErrors.push('Primary Archetype not selected');
+    if (earlyPayload.archetype.directives === '(none built)') earlyErrors.push('Archetype directives failed to build');
+
+    if (earlyErrors.length > 0) {
+        console.error('STORYBOUND EARLY VALIDATION FAILED:', earlyErrors);
+        showToast(`Story setup incomplete: ${earlyErrors[0]}`);
+        return;
+    }
+    // === END EARLY VALIDATION ===
+
     const coupleArcRules = `
 COUPLE MODE ARC RULES (CRITICAL):
 
@@ -3756,8 +3813,14 @@ The opening must feel intentional and specific, not archetypal or templated.`;
 
         // Required field checks
         if (!payload.mode) errors.push('Mode is undefined');
-        if (!payload.genre || payload.genre.length === 0) errors.push('Genre is missing or empty');
-        if (!payload.style || payload.style.length === 0) errors.push('Style is missing or empty');
+
+        // Four-axis validation (world, tone, genre, dynamic)
+        const { world, tone, genre, dynamic } = payload.fourAxis || {};
+        if (!world) errors.push('World is missing or empty');
+        if (!tone) errors.push('Tone is missing or empty');
+        if (!genre) errors.push('Genre is missing or empty');
+        if (!dynamic) errors.push('Relationship Dynamic is missing or empty');
+
         if (!payload.archetype.primary) errors.push('Primary Archetype not selected (default: Beautiful Ruin)');
         if (!payload.intensity) errors.push('Intensity is undefined');
         if (!payload.pov) errors.push('POV is undefined');
@@ -5637,30 +5700,3 @@ FATE CARD ADAPTATION (CRITICAL):
   updateContinueButtons();
 
 })();
-
-// === DSP Scroll Visibility (runtime wiring) ===
-function initSynopsisPanelScrollBehavior() {
-  const panel = document.getElementById('synopsisPanel');
-  const worldSection = document.getElementById('worldGrid');
-  const dynamicSection = document.getElementById('dynamicGrid');
-
-  if (!panel || !worldSection || !dynamicSection) return;
-
-  function updateVisibility() {
-    const worldRect = worldSection.getBoundingClientRect();
-    const dynamicRect = dynamicSection.getBoundingClientRect();
-
-    const inRange =
-      worldRect.top < window.innerHeight * 0.6 &&
-      dynamicRect.bottom > window.innerHeight * 0.4;
-
-    panel.classList.toggle('visible', inRange);
-  }
-
-  window.addEventListener('scroll', updateVisibility);
-  updateVisibility();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  initSynopsisPanelScrollBehavior();
-});
