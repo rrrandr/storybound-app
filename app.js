@@ -70,7 +70,8 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   const ENABLE_ORCHESTRATION = true;
 
   // Legacy model (used when orchestration disabled or ChatGPT unavailable)
-  const STORY_MODEL = 'grok-4.1-fast-reasoning'; 
+  // NOTE: Must be in ALLOWED_GROK_MODELS allowlist in api/proxy.js
+  const STORY_MODEL = 'grok-2-latest'; 
   
   // Singleton Supabase Client
   let sb = null;

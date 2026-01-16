@@ -134,18 +134,14 @@ export default async function handler(req, res) {
      * - Use of models not approved for explicit content
      */
 
-    // Normalize model name (support both hyphen and dot formats)
-    const rawModel = model || 'grok-2-latest';
-    const normalizedModel = rawModel
-      .replace(/grok-4-1/g, 'grok-4.1')
-      .replace(/grok-3-5/g, 'grok-3.5');
+    // Validate and select model from allowlist
+    const requestedModel = model || 'grok-2-latest';
 
-    // For backward compatibility with existing code using grok-4.1,
-    // map to allowed specialist model
-    let selectedModel = normalizedModel;
-    if (!ALLOWED_GROK_MODELS.includes(normalizedModel)) {
-      // Default to allowed model if requested model isn't in specialist allowlist
-      console.warn(`[SPECIALIST-PROXY] Model ${normalizedModel} not in specialist allowlist, using grok-2-latest`);
+    // Enforce model allowlist - reject any model not explicitly allowed
+    let selectedModel = requestedModel;
+    if (!ALLOWED_GROK_MODELS.includes(requestedModel)) {
+      // Reject disallowed models, fall back to default
+      console.error(`[SPECIALIST-PROXY] REJECTED: Model "${requestedModel}" not in allowlist. Using grok-2-latest.`);
       selectedModel = 'grok-2-latest';
     }
 
