@@ -57,6 +57,175 @@ window.config = window.config || {
   enableAdvancedUI: true
 };
 
+  // =========================
+  // DSP PROMPT (AUTHORITATIVE - DO NOT MODIFY)
+  // =========================
+  const DSP_SYSTEM_PROMPT = `🔒 STORYBOUND — DSP SENTENCE GENERATION PROMPT
+AUTHORITATIVE / DO NOT REINTERPRET
+
+You are writing exactly one sentence of narrative jacket-copy for Storybound's floating DSP ("Your Story Tease").
+
+This sentence must remain grammatically correct, emotionally coherent, and readable even when visually truncated.
+
+---
+
+## INPUT (STRUCTURED — DO NOT ECHO)
+
+You will be given structured inputs such as:
+
+\`\`\`json
+{
+  "p1": {
+    "name": "Elara",
+    "gender": "female"
+  },
+  "world": "Dystopia",
+  "tone": "Poetic",
+  "genre": "Political Intrigue",
+  "dynamics": ["Forbidden Love", "Obsessive Devotion"],
+  "storybeau": "Beautiful Ruin"
+}
+\`\`\`
+
+---
+
+## OUTPUT REQUIREMENTS (NON-NEGOTIABLE)
+
+You must output:
+
+* Exactly one sentence
+* Grammatically complete
+* No line breaks
+* No lists
+* No explanation
+* No quotation marks
+* No emojis
+* No titles or labels
+
+The sentence must end with a period.
+
+---
+
+## AUTHORIAL RULES (LOCKED)
+
+### 1. Holistic Authorship
+
+Write the sentence from scratch as a whole.
+
+DO NOT:
+
+* splice clauses
+* substitute fragments
+* reuse templates
+* enumerate inputs
+
+This is authored prose, not assembled text.
+
+---
+
+### 2. Tone Supremacy
+
+The selected Tone controls the *entire voice* of the sentence.
+
+If the tone changes (with all other inputs unchanged), the sentence should feel entirely rewritten, not "the same sentence with different seasoning."
+
+---
+
+### 3. Relationship Dynamics Blending
+
+If multiple dynamics are provided:
+
+* One should implicitly define the emotional spine
+* Additional dynamics should subtly modulate tension or gravity
+* Never list or name the dynamics
+* Never stack adjectives mechanically
+
+The result should feel singular, not compounded.
+
+---
+
+### 4. Storybeau Influence (Implicit Only)
+
+The Storybeau shapes emotional posture (e.g., restraint, longing, self-effacement) but must never be referenced or explained.
+
+Beautiful Ruin specifically implies:
+
+* yearning
+* restraint
+* ache
+* inevitability without resolution
+
+---
+
+### 5. No CTA, No Promises
+
+You must NOT:
+
+* invite the reader to continue
+* promise outcomes
+* imply completion
+* reference unlocking, paying, or choice
+* reference systems, fate, or design
+
+This sentence applies pressure by naming tension, not by directing action.
+
+---
+
+### 6. Truncation Safety (CRITICAL)
+
+Assume the sentence may be visually truncated on narrow screens.
+
+Therefore:
+
+* The core meaning must be established in the first ~70%
+* The ending may trail, but must not carry essential grammar
+* Avoid constructions that break if cut mid-phrase
+
+Bad:
+
+> "…because she knows that choosing—"
+
+Good:
+
+> "…drawn toward a closeness she knows she shouldn't want."
+
+---
+
+### 7. Names & Pronouns
+
+You may include:
+
+* P1 name
+* Gender-appropriate pronouns
+
+But:
+
+* Do not restructure the sentence around them
+* Do not introduce agreement errors
+* Do not overuse the name
+
+---
+
+## FAILURE CONDITIONS (AUTO-REJECT)
+
+Your output is invalid if it:
+
+* Contains more than one sentence
+* Sounds like instruction, prophecy, or narration
+* Explains the situation instead of evoking it
+* Feels generic, list-like, or mechanically assembled
+* Loses grammatical cohesion when modifiers are applied
+
+If unsure, choose simplicity over cleverness.
+
+---
+
+## FINAL INSTRUCTION
+
+Write one grammatically sound, emotionally cohesive sentence that reflects the inputs and would feel at home on the back of a beautifully written book.
+
+Begin now.`;
+
   // Presence Constants
   const PRESENCE_HEARTBEAT_MS = 15000;
   
@@ -1578,6 +1747,99 @@ ANTI-HERO ENFORCEMENT:
           }
           return c;
       });
+  }
+
+  // --- DSP GENERATION ---
+  // Maps genre to world setting for DSP input
+  const GENRE_TO_WORLD = {
+      'Romantasy': 'High Fantasy',
+      'Contemporary': 'Modern Day',
+      'Historical': 'Historical Period',
+      'Paranormal': 'Paranormal Modern',
+      'Dark': 'Dark Contemporary',
+      'Suspense': 'Thriller Setting',
+      'Sports': 'Athletic World',
+      'Crime': 'Criminal Underworld',
+      'Billionaire': 'Ultra-Wealthy Elite',
+      'Gothic': 'Gothic Estate',
+      'LGBTQ': 'Inclusive Contemporary',
+      'SecondChance': 'Familiar Places',
+      'SmallTown': 'Small Town',
+      'Romcom': 'Romantic Comedy Setting'
+  };
+
+  // Maps dynamic codes to full names for DSP
+  const DYNAMIC_TO_NAME = {
+      'Enemies': 'Enemies to Lovers',
+      'Forbidden': 'Forbidden Love',
+      'Power': 'Power Imbalance',
+      'SlowBurn': 'Slow Burn',
+      'Friends': 'Friends to Lovers',
+      'Proximity': 'Forced Proximity',
+      'Secret': 'Secret Identity',
+      'Obsessive': 'Obsessive Devotion',
+      'Fated': 'Fated Mates',
+      'Caretaker': 'Caretaker Romance'
+  };
+
+  /**
+   * Generates a DSP (Dynamic Story Preview) sentence using the authoritative prompt.
+   * @param {Object} inputs - Structured inputs for DSP generation
+   * @param {string} inputs.p1Name - Protagonist name
+   * @param {string} inputs.p1Gender - Protagonist gender
+   * @param {string} inputs.genre - Primary genre
+   * @param {string} inputs.tone - Writing tone/style
+   * @param {Array<string>} inputs.dynamics - Relationship dynamics
+   * @param {string} inputs.storybeau - Love interest archetype
+   * @param {number} [retryCount=0] - Internal retry counter
+   * @returns {Promise<string>} The generated DSP sentence
+   */
+  async function generateDSP(inputs, retryCount = 0) {
+      const MAX_RETRIES = 3;
+      const { p1Name, p1Gender, genre, tone, dynamics, storybeau } = inputs;
+
+      // Build world from genre
+      const world = GENRE_TO_WORLD[genre] || genre || 'Fantasy';
+
+      // Map dynamics to full names
+      const mappedDynamics = (dynamics || []).map(d => DYNAMIC_TO_NAME[d] || d);
+
+      // Build structured input JSON
+      const structuredInput = JSON.stringify({
+          p1: {
+              name: p1Name || 'The Protagonist',
+              gender: (p1Gender || 'female').toLowerCase()
+          },
+          world: world,
+          tone: tone || 'Breathless',
+          genre: genre || 'Romantasy',
+          dynamics: mappedDynamics.length > 0 ? mappedDynamics : ['Forbidden Love'],
+          storybeau: storybeau || 'Beautiful Ruin'
+      }, null, 2);
+
+      // Call with DSP system prompt and structured input
+      const result = await callChat([
+          { role: 'system', content: DSP_SYSTEM_PROMPT },
+          { role: 'user', content: structuredInput }
+      ]);
+
+      // Validate: must be exactly one sentence ending with period
+      const trimmed = (result || '').trim();
+      const sentences = trimmed.split(/(?<=[.!?])\s+/);
+
+      if (sentences.length !== 1 || !trimmed.endsWith('.')) {
+          // Grammar failure: regenerate (no fallback repair)
+          console.warn('DSP validation failed, regenerating...', { result: trimmed, sentences: sentences.length, attempt: retryCount + 1 });
+          if (retryCount < MAX_RETRIES) {
+              return generateDSP(inputs, retryCount + 1);
+          }
+          // After max retries, return best effort (first sentence + period)
+          console.error('DSP max retries exceeded, using best effort');
+          const firstSentence = sentences[0] || trimmed;
+          return firstSentence.endsWith('.') ? firstSentence : firstSentence + '.';
+      }
+
+      return trimmed;
   }
 
   // --- BILLING HELPERS ---
@@ -3594,34 +3856,20 @@ QUALITY RULES:
 
 Return ONLY the title, no quotes or explanation:\n${text}`}]);
 
-        // SYNOPSIS GENERATION RULE (AUTHORITATIVE)
-        const synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
+        // DSP GENERATION (AUTHORITATIVE PROMPT - DO NOT MODIFY)
+        // Get archetype name for storybeau
+        const storybeauArchetype = state.archetype.primary
+            ? (ARCHETYPES[state.archetype.primary]?.name || state.archetype.primary)
+            : 'Beautiful Ruin';
 
-MANDATORY REQUIREMENTS — All three must be present:
-1. A SPECIFIC CHARACTER with agency (e.g., "a hedge-witch on the brink of exile" — not just "one woman")
-2. A DESIRE or TEMPTATION — something they want, fear wanting, or are being pulled toward
-3. A LOOMING CONFLICT or CONSEQUENCE — a force, choice, or cost that threatens to change them
-
-QUALITY CHECK — Before writing, answer internally:
-- Who wants something?
-- What do they want (or are tempted by)?
-- What stands in the way, or what will it cost?
-
-FORBIDDEN PATTERNS:
-- Abstract noun collisions ("grit aches against ambition")
-- Redundant metaphor stacking ("veiled shadows," "shrouded ambitions" together)
-- Emotion verbs without bodies ("aches," "burns" without physical anchor)
-- Mood collage without narrative motion
-
-ALLOWED:
-- Poetic language ONLY when attached to concrete agents or actions
-- One central metaphor family maximum
-- Present tense preferred
-
-The reader should think: "I want to see what happens when this desire meets resistance."
-NOT: "This sounds pretty."
-
-Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
+        const synopsis = await generateDSP({
+            p1Name: pName,
+            p1Gender: pGen,
+            genre: state.picks.genre?.[0] || 'Romantasy',
+            tone: state.picks.style?.[0] || 'Breathless',
+            dynamics: state.picks.dynamic || [],
+            storybeau: storybeauArchetype
+        });
 
         // CORRECTIVE: Set title and synopsis first
         const titleEl = document.getElementById('storyTitle');
