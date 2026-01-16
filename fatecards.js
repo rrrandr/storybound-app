@@ -664,15 +664,72 @@
     }
 
     // ==========================================================================
-    // GOLDEN RIVER — SVG-based persistent connector from Fate Card to inputs
+    // GOLDEN RIVER — SVG-based connector from Fate Card to Say/Do inputs
     // ==========================================================================
-    // Creates a flowing golden bezier curve connecting the selected card to
-    // the action and dialogue input fields. Persists while card is selected.
-    // Destroyed on deselect or commit.
+    // Canon behavior: momentary pressure event, not continuous animation.
+    // - Brief flow animation (400ms) on card selection
+    // - Settles to low-opacity static connector
+    // - Geometry updates only on: selection, deselection, window resize
+    // - Single path to Say/Do container center (no branching)
     // ==========================================================================
 
     let _goldenRiverSvg = null;
-    let _goldenRiverUpdateFrame = null;
+    let _goldenRiverResizeHandler = null;
+    let _goldenRiverCardEl = null;
+
+    /**
+     * Updates Golden River path geometry (event-driven, not continuous)
+     */
+    function _updateGoldenRiverGeometry() {
+        if (!_goldenRiverSvg || !_goldenRiverCardEl) return;
+
+        const cardRect = _goldenRiverCardEl.getBoundingClientRect();
+        const startX = cardRect.left + cardRect.width / 2;
+        const startY = cardRect.bottom;
+
+        // Target: center of Say/Do container (between action and dialogue inputs)
+        const actWrapper = document.getElementById('actionWrapper');
+        const diaWrapper = document.getElementById('dialogueWrapper');
+        if (!actWrapper && !diaWrapper) return;
+
+        // Calculate center of the input area
+        const actRect = actWrapper ? actWrapper.getBoundingClientRect() : null;
+        const diaRect = diaWrapper ? diaWrapper.getBoundingClientRect() : null;
+
+        let endX, endY;
+        if (actRect && diaRect) {
+            // Center between both wrappers
+            endX = (actRect.left + diaRect.right) / 2;
+            endY = (actRect.top + actRect.bottom) / 2;
+        } else if (actRect) {
+            endX = actRect.left + actRect.width / 2;
+            endY = actRect.top + actRect.height / 2;
+        } else {
+            endX = diaRect.left + diaRect.width / 2;
+            endY = diaRect.top + diaRect.height / 2;
+        }
+
+        // Single bezier curve with natural downward flow
+        const ctrl1X = startX;
+        const ctrl1Y = startY + (endY - startY) * 0.5;
+        const ctrl2X = endX;
+        const ctrl2Y = endY - (endY - startY) * 0.2;
+
+        const pathD = `M ${startX} ${startY} C ${ctrl1X} ${ctrl1Y}, ${ctrl2X} ${ctrl2Y}, ${endX} ${endY}`;
+
+        const mainPath = _goldenRiverSvg.querySelector('#riverPath1');
+        const glowPath = _goldenRiverSvg.querySelector('#riverGlow1');
+        const gradient = _goldenRiverSvg.querySelector('#goldenRiverGradient');
+
+        if (mainPath) mainPath.setAttribute('d', pathD);
+        if (glowPath) glowPath.setAttribute('d', pathD);
+        if (gradient) {
+            gradient.setAttribute('x1', startX);
+            gradient.setAttribute('y1', startY);
+            gradient.setAttribute('x2', endX);
+            gradient.setAttribute('y2', endY);
+        }
+    }
 
     /**
      * Creates the Golden River SVG connector from a card to input fields
@@ -682,9 +739,11 @@
         // Remove any existing river first
         destroyGoldenRiver();
 
-        const actInput = document.getElementById('actionInput');
-        const diaInput = document.getElementById('dialogueInput');
-        if (!cardEl || (!actInput && !diaInput)) return;
+        const actWrapper = document.getElementById('actionWrapper');
+        const diaWrapper = document.getElementById('dialogueWrapper');
+        if (!cardEl || (!actWrapper && !diaWrapper)) return;
+
+        _goldenRiverCardEl = cardEl;
 
         // Create SVG element
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -718,92 +777,33 @@
         defs.appendChild(gradient);
         svg.appendChild(defs);
 
-        // Create glow paths (behind main paths)
-        const glowPath1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        glowPath1.setAttribute('class', 'golden-river-path-glow');
-        glowPath1.setAttribute('id', 'riverGlow1');
-        svg.appendChild(glowPath1);
+        // Create single glow path (behind main path)
+        const glowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        glowPath.setAttribute('class', 'golden-river-path-glow');
+        glowPath.setAttribute('id', 'riverGlow1');
+        svg.appendChild(glowPath);
 
-        const glowPath2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        glowPath2.setAttribute('class', 'golden-river-path-glow');
-        glowPath2.setAttribute('id', 'riverGlow2');
-        svg.appendChild(glowPath2);
-
-        // Create main paths
-        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path1.setAttribute('class', 'golden-river-path');
-        path1.setAttribute('id', 'riverPath1');
-        svg.appendChild(path1);
-
-        const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path2.setAttribute('class', 'golden-river-path');
-        path2.setAttribute('id', 'riverPath2');
-        svg.appendChild(path2);
+        // Create single main path
+        const mainPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        mainPath.setAttribute('class', 'golden-river-path');
+        mainPath.setAttribute('id', 'riverPath1');
+        svg.appendChild(mainPath);
 
         document.body.appendChild(svg);
         _goldenRiverSvg = svg;
 
-        // Update paths immediately and on scroll/resize
-        function updatePaths() {
-            const cardRect = cardEl.getBoundingClientRect();
-            const startX = cardRect.left + cardRect.width / 2;
-            const startY = cardRect.bottom;
+        // Calculate initial geometry
+        _updateGoldenRiverGeometry();
 
-            // Path to action input
-            if (actInput) {
-                const actRect = actInput.getBoundingClientRect();
-                const endX1 = actRect.left + 20;
-                const endY1 = actRect.top + actRect.height / 2;
+        // Event-driven resize handler (not continuous RAF)
+        _goldenRiverResizeHandler = () => _updateGoldenRiverGeometry();
+        window.addEventListener('resize', _goldenRiverResizeHandler);
 
-                // Bezier curve with natural flow
-                const ctrl1X = startX;
-                const ctrl1Y = startY + (endY1 - startY) * 0.4;
-                const ctrl2X = endX1 - 40;
-                const ctrl2Y = endY1;
-
-                const d1 = `M ${startX} ${startY} C ${ctrl1X} ${ctrl1Y}, ${ctrl2X} ${ctrl2Y}, ${endX1} ${endY1}`;
-                path1.setAttribute('d', d1);
-                glowPath1.setAttribute('d', d1);
-
-                // Update gradient direction
-                gradient.setAttribute('x1', startX);
-                gradient.setAttribute('y1', startY);
-                gradient.setAttribute('x2', endX1);
-                gradient.setAttribute('y2', endY1);
-            }
-
-            // Path to dialogue input (branches from midpoint)
-            if (diaInput) {
-                const diaRect = diaInput.getBoundingClientRect();
-                const endX2 = diaRect.left + 20;
-                const endY2 = diaRect.top + diaRect.height / 2;
-
-                // Branch point
-                const branchY = startY + (endY2 - startY) * 0.3;
-
-                const ctrl1X = startX + 20;
-                const ctrl1Y = branchY + (endY2 - branchY) * 0.5;
-                const ctrl2X = endX2 - 40;
-                const ctrl2Y = endY2;
-
-                const d2 = `M ${startX} ${branchY} C ${ctrl1X} ${ctrl1Y}, ${ctrl2X} ${ctrl2Y}, ${endX2} ${endY2}`;
-                path2.setAttribute('d', d2);
-                glowPath2.setAttribute('d', d2);
-            }
-
-            // Continue updating if still visible
-            if (_goldenRiverSvg) {
-                _goldenRiverUpdateFrame = requestAnimationFrame(updatePaths);
-            }
-        }
-
-        // Start path updates
-        updatePaths();
-
-        // Remove 'entering' class after animation completes
+        // Transition: entering -> settled after animation completes
         setTimeout(() => {
             if (_goldenRiverSvg) {
                 _goldenRiverSvg.classList.remove('entering');
+                _goldenRiverSvg.classList.add('settled');
             }
         }, 400);
     }
@@ -812,10 +812,13 @@
      * Destroys the Golden River connector with fade-out animation
      */
     function destroyGoldenRiver() {
-        if (_goldenRiverUpdateFrame) {
-            cancelAnimationFrame(_goldenRiverUpdateFrame);
-            _goldenRiverUpdateFrame = null;
+        // Remove resize listener
+        if (_goldenRiverResizeHandler) {
+            window.removeEventListener('resize', _goldenRiverResizeHandler);
+            _goldenRiverResizeHandler = null;
         }
+
+        _goldenRiverCardEl = null;
 
         if (_goldenRiverSvg) {
             _goldenRiverSvg.classList.add('exiting');

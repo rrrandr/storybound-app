@@ -421,7 +421,8 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     opacity: 0;
 }
 
-/* GOLDEN RIVER - persistent SVG connector from Fate Card to inputs */
+/* GOLDEN RIVER - momentary pressure event from Fate Card to inputs */
+/* Canon: brief flow + settle, no continuous animation */
 .golden-river-svg {
     position: fixed;
     top: 0;
@@ -438,39 +439,56 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     stroke: url(#goldenRiverGradient);
     stroke-width: 2;
     stroke-linecap: round;
-    opacity: 0.8;
+    opacity: 0;
     filter: drop-shadow(0 0 4px var(--gold)) drop-shadow(0 0 8px rgba(255,215,0,0.4));
 }
 
 .golden-river-path-glow {
     fill: none;
     stroke: var(--gold);
-    stroke-width: 6;
+    stroke-width: 4;
     stroke-linecap: round;
-    opacity: 0.15;
-    filter: blur(3px);
+    opacity: 0;
+    filter: blur(2px);
 }
 
-/* Flowing animation along the path */
-.golden-river-path {
-    stroke-dasharray: 8 4;
-    animation: goldenRiverFlow 1.5s linear infinite;
+/* One-time draw animation on enter - stroke draws in then settles */
+.golden-river-svg.entering .golden-river-path {
+    animation: goldenRiverDraw 0.4s ease-out forwards;
 }
 
-@keyframes goldenRiverFlow {
-    0% { stroke-dashoffset: 0; }
-    100% { stroke-dashoffset: -24; }
-}
-
-/* Fade in animation */
-.golden-river-svg.entering .golden-river-path,
 .golden-river-svg.entering .golden-river-path-glow {
-    animation: goldenRiverEnter 0.4s ease-out forwards, goldenRiverFlow 1.5s linear infinite 0.4s;
+    animation: goldenRiverGlowPulse 0.5s ease-out forwards;
 }
 
-@keyframes goldenRiverEnter {
-    0% { opacity: 0; stroke-dashoffset: 100; }
-    100% { opacity: 0.8; stroke-dashoffset: 0; }
+@keyframes goldenRiverDraw {
+    0% {
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+        opacity: 0.9;
+    }
+    100% {
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 0;
+        opacity: 0.25;
+    }
+}
+
+@keyframes goldenRiverGlowPulse {
+    0% { opacity: 0; }
+    30% { opacity: 0.3; }
+    100% { opacity: 0.08; }
+}
+
+/* Settled state after animation - static, low opacity */
+.golden-river-svg.settled .golden-river-path {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    opacity: 0.25;
+}
+
+.golden-river-svg.settled .golden-river-path-glow {
+    opacity: 0.08;
 }
 
 /* Fade out animation */
@@ -480,7 +498,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 }
 
 @keyframes goldenRiverExit {
-    0% { opacity: 0.8; }
+    0% { opacity: 0.25; }
     100% { opacity: 0; }
 }
 
