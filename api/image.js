@@ -32,121 +32,68 @@ function getOpenAIModel(imageIntent) {
 // ============================================================
 // PROMPT TEMPLATES - Intent-specific framing
 // ============================================================
+
+// Symbolic object selection based on genre/style/dynamic
+function selectSymbolicObject(genre, storyStyle, dynamic) {
+  const genreLower = (genre || '').toLowerCase();
+  const styleLower = (storyStyle || '').toLowerCase();
+  const dynamicLower = (dynamic || '').toLowerCase();
+
+  // Genre-based object pools
+  const objects = {
+    contemporary: ['a silk ribbon', 'an unsealed envelope', 'a shattered wine glass', 'a wilting rose', 'a hotel key card', 'a lipstick mark on glass'],
+    fantasy: ['a golden crown with a missing jewel', 'a thorned vine wrapped around a blade', 'an ancient ring on velvet', 'a cracked crystal orb', 'a burning scroll'],
+    romantasy: ['a crown of thorns and flowers', 'a dagger wreathed in smoke', 'a glowing rune-etched ring', 'a chalice tipped on its side'],
+    historical: ['a wax-sealed letter', 'a pearl necklace on dark velvet', 'opera gloves draped over a chair', 'a pocket watch frozen at midnight'],
+    paranormal: ['a crescent moon pendant', 'a broken mirror reflecting darkness', 'a single black feather', 'a vial of crimson liquid'],
+    dark: ['shattered handcuffs', 'a bloodied rose', 'a mask on black silk', 'a blade catching candlelight'],
+    scifi: ['a cracked helmet visor', 'a holographic pendant flickering', 'a single bullet casing', 'circuitry intertwined with organic matter'],
+    gothic: ['a wilting flower in a cracked vase', 'an ornate key on a grave', 'a candle guttering in darkness', 'a raven feather on lace'],
+    suspense: ['a broken phone screen', 'a gun beside a wedding ring', 'a photograph torn in half', 'bloodstained fabric'],
+    crime: ['a signet ring on black leather', 'stacked cash and a single bullet', 'a knife on white linen', 'a burning photograph']
+  };
+
+  // Find matching genre
+  let pool = objects.contemporary; // default
+  for (const [key, items] of Object.entries(objects)) {
+    if (genreLower.includes(key) || styleLower.includes(key)) {
+      pool = items;
+      break;
+    }
+  }
+
+  // Select based on dynamic mood
+  if (dynamicLower.includes('forbidden') || dynamicLower.includes('enemy')) {
+    return pool[Math.floor(Math.random() * 2)]; // First two tend to be more intense
+  }
+  if (dynamicLower.includes('slow') || dynamicLower.includes('friend')) {
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre) {
-  // AUTHORITATIVE BOOK COVER PROMPT TEMPLATE
-  // Creates prestige book covers with symbolic objects and custom typography
-  return `You are creating a **prestige book cover** for a Storybound story.
+  // Select symbolic object based on context
+  const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic);
+  const cleanTitle = (title || 'Untitled').trim();
+  const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
+  const cleanMode = modeLine || 'A Novel';
 
-This is not a scene illustration.
-This is not a poster.
-This is a **designed book cover** that must feel intentional, authored, and contemporary.
+  // Build direct image prompt - no meta-instructions
+  return `A prestige book cover design, square format, minimalist composition with high negative space.
 
----
+Central focus: ${symbolicObject}, rendered with controlled dramatic lighting, depth, and shadow. The object occupies the visual center, elegant and evocative.
 
-## CORE CONCEPT
+Title typography: "${cleanTitle}" in bespoke custom-designed lettering with subtle asymmetry and purposeful flourishes. The letterforms have dimensional presence. The symbolic object physically interacts with the title - either passing behind certain letters, casting realistic shadows onto the text, or threading through the letterforms. The title and object share the same physical space.
 
-Create a **square (1:1) book cover** built around **one evocative symbolic object** that implies the emotional core of the story without depicting characters or explicit action.
+Series line: "Storybound Book I – ${cleanMode}" in very small, quiet type near the top or just beneath the title. Secondary and restrained.
 
-The cover must rely on **implication, symbolism, and restraint**, not literal depiction.
+Author credit: ${cleanAuthor} in bold modern sans-serif, ALL CAPS, placed across the bottom of the cover as a visual anchor. Clean and grounded.
 
----
+Mood: ${storyStyle || 'Dark Romance'}, ${dynamic || 'romantic tension'}. Color palette and lighting evoke ${genre || 'contemporary'} atmosphere.
 
-## STORY CONTEXT
-
-* **Relationship Dynamic:** ${dynamic || 'Romantic tension'}
-* **Story Style:** ${storyStyle || 'Dark Romance'}
-* **Genre / Setting:** ${genre || 'Contemporary'}
-* **Story Mood:** ${basePrompt}
-* **Title:** ${title || 'Untitled'}
-* **Author Name:** ${authorName || 'ANONYMOUS'}
-* **Series Line:** Storybound Book I – ${modeLine || 'A Novel'}
-
----
-
-## SYMBOLIC OBJECT RULE (CRITICAL)
-
-Select **one primary object** that:
-* Belongs naturally to the story's **world and setting**
-* Reflects the **relationship dynamic**
-* Matches the **tone of the story style**
-
-Examples by genre:
-* Contemporary → fabric, letters, glass, flowers, personal items
-* Sci-Fi / Dystopia → machinery, spacecraft, visors, holograms, debris
-* Medieval / Fantasy → tapestry, blade, ring, heraldic symbol, scroll
-
-⚠️ Do NOT use objects that clash tonally.
-
----
-
-## COMPOSITION & AESTHETIC
-
-* Minimalist, high negative space
-* Controlled lighting with depth and shadow
-* Prestige, bookstore-ready visual language
-* **NO characters, faces, or bodies**
-* No clutter, no collage effect
-
----
-
-## TYPOGRAPHY RULES (EXTREMELY IMPORTANT)
-
-### TITLE LETTERING
-* The title must appear as **bespoke, custom-designed lettering**
-* Never described as a "font"
-* Letterforms may be slightly irregular, subtly asymmetrical
-* Ornamented with **purposeful flourishes**
-* Typography should **evoke the story's emotional dynamic**
-
-### DIMENSIONAL INTERACTION (MANDATORY)
-The symbolic object must **physically interact with the title lettering** by at least one of:
-* Passing in front of or behind letters
-* Casting realistic shadows onto letterforms
-* Threading through a character or stroke
-* Aligning with or echoing letter shapes
-
-❌ Forbidden: title floating cleanly above the image with no interaction
-
----
-
-## SERIES / MODE LINE
-
-Text: **Storybound Book I – ${modeLine || 'A Novel'}**
-* Very small, quiet, restrained
-* Secondary to the title
-* Placed either at the very top OR just beneath the title
-* Uses a **different but compatible style** from the title
-
----
-
-## AUTHOR NAME TREATMENT
-
-* Display: **${(authorName || 'ANONYMOUS').toUpperCase()}**
-* NO "by" prefix
-* ALL CAPS
-* Bold, modern sans-serif
-* Clean, grounded, stable
-* Placed across the bottom of the cover
-* Acts as a visual anchor
-
----
-
-## COLOR & MOOD
-
-Color palette, materials, and lighting must align with the story's genre, style seriousness, and emotional temperature.
-
-Avoid: garish saturation, cheesy glow effects, stock-photo lighting.
-
----
-
-## FINAL OUTPUT
-
-Create a single, cohesive book cover that:
-* Would look at home on a modern romance / literary shelf
-* Has unified object, typography, and world feel
-* Title feels **designed for this story**, not reusable
-* Suggests intimacy, tension, or consequence **without showing it**
-* Contains NO gibberish text, watermarks, or extra elements`;
+No characters, no faces, no bodies, no clutter. Single cohesive composition suitable for a modern literary bookshelf. No gibberish text, no watermarks.`;
 }
 
 function wrapScenePrompt(basePrompt) {
