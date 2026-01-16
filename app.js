@@ -5119,6 +5119,12 @@ FATE CARD ADAPTATION (CRITICAL):
       window.showScreen('setup');
   });
 
+  $('btnAbandonCouple')?.addEventListener('click', () => {
+      state.inviteRevoked = true;
+      updateBatedBreathState();
+      showToast("Invite revoked. Playing solo.");
+  });
+
   $('btnEnterCoupleGame')?.addEventListener('click', () => {
       if (!window.state.invitationSent) {
           showToast("Please send an invitation first.");
