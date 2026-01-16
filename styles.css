@@ -1586,27 +1586,47 @@ textarea.fate-field {
    The floating synopsis panel must remain visually restrained and literary.
    It should feel like an authorial whisper, not a system notification.
    No glassmorphism, glow effects, or color-coded highlighting.
+
+   CORRECTIVE PASS: Converted to side-mounted floating card (5x7 book jacket)
+   - Positioned to the right of main content on desktop
+   - Sticky within the 4-axis selection range only
+   - Feels like a quiet accompanying object, not page chrome
    ═══════════════════════════════════════════════════════════════════ */
 
 .synopsis-panel {
-    position: sticky;
-    top: 10px;
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 100;
-    background: rgba(18, 8, 22, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
-    padding: 20px 28px;
-    margin: 20px auto 30px;
-    max-width: 680px;
+    background: rgba(18, 8, 22, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 24px 20px;
+    /* 5:7 aspect ratio like book jacket card - width ~180px, height ~252px */
+    width: 180px;
+    min-height: 220px;
+    max-height: 280px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    /* Hidden by default - JS controls visibility based on scroll position */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Visible state - controlled by JS when within 4-axis range */
+.synopsis-panel.visible {
+    opacity: 1;
+    visibility: visible;
 }
 
 .synopsis-text {
     font-family: 'Lora', 'Georgia', serif;
-    font-size: 1.05em;
-    line-height: 1.7;
+    font-size: 0.85em;
+    line-height: 1.65;
     color: rgba(255, 255, 255, 0.75);
     margin: 0;
-    text-align: center;
+    text-align: left;
     font-style: italic;
     letter-spacing: 0.01em;
 }
@@ -1616,12 +1636,42 @@ textarea.fate-field {
     transition: opacity 0.4s ease;
     color: inherit;
     font-weight: inherit;
+    display: block;
+    margin-bottom: 8px;
 }
 
 /* Subtle emphasis when clause updates - slight opacity pulse only */
 .synopsis-text span.updating {
     opacity: 1;
     color: rgba(255, 255, 255, 0.95);
+}
+
+/* Mobile: Hide side panel, show inline fallback */
+@media (max-width: 1100px) {
+    .synopsis-panel {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        width: auto;
+        max-width: 680px;
+        min-height: auto;
+        max-height: none;
+        margin: 20px auto 30px;
+        padding: 20px 28px;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .synopsis-text {
+        font-size: 1.05em;
+        text-align: center;
+    }
+
+    .synopsis-text span {
+        display: inline;
+        margin-bottom: 0;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

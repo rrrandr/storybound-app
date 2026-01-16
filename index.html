@@ -442,32 +442,6 @@
         <div id="archetypePreviewContent"></div>
     </div>
 
-    <div class="section-title">Safety & Boundaries</div>
-    <div class="sb-checkbox-group">
-        <label class="sb-checkbox">
-            <input type="checkbox" id="chkDark" checked>
-            <span class="sb-checkbox-visual"></span>
-            <span class="sb-checkbox-label">Dark Themes</span>
-        </label>
-        <label class="sb-checkbox">
-            <input type="checkbox" id="chkNonCon">
-            <span class="sb-checkbox-visual"></span>
-            <span class="sb-checkbox-label">Implied Non-consent</span>
-        </label>
-        <label class="sb-checkbox">
-            <input type="checkbox" id="chkViolence" checked>
-            <span class="sb-checkbox-visual"></span>
-            <span class="sb-checkbox-label">Violence / Peril</span>
-        </label>
-    </div>
-    <div class="boundary-chips" id="boundaryChips">
-        <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
-        <div class="chip" data-boundary="coercion">No coercion</div>
-        <div class="chip" data-boundary="degradation">No degradation language</div>
-        <div class="chip" data-boundary="captivity">No captivity</div>
-        <div class="chip" data-boundary="blackmail">No blackmail</div>
-    </div>
-
     <div class="section-title">Intensity <span class="instruction-text">(Rendering Ceiling)</span></div>
     <div id="intensityBtns" class="intensity-wrap">
       <button data-val="Clean" class="intensity-btn" data-desc="Romantic, non-explicit.">Clean</button>
@@ -506,14 +480,56 @@
         </div>
     </div>
 
+    <!-- STORY POV (Repositioned: POV → Safety → World) -->
+    <div class="section-title">Story POV</div>
+    <div class="style-cards" id="povGrid">
+      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>Intimate, confessional, inside my own pulse.</p></div>
+      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>Every glance, every silence, happening to you.</p></div>
+      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>Close enough to feel, distant enough to see.</p></div>
+      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>Witnesses to the inevitable.</p></div>
+      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>"The Author has big plans for you…"</p></div>
+    </div>
+
+    <!-- SAFETY & BOUNDARIES (Repositioned: after POV, before World) -->
+    <div class="section-title">Safety & Boundaries</div>
+    <div class="sb-checkbox-group">
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkDark" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Dark Themes</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkNonCon">
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Implied Non-consent</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkViolence" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Violence / Peril</span>
+        </label>
+    </div>
+    <div class="boundary-chips" id="boundaryChips">
+        <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
+        <div class="chip" data-boundary="coercion">No coercion</div>
+        <div class="chip" data-boundary="degradation">No degradation language</div>
+        <div class="chip" data-boundary="captivity">No captivity</div>
+        <div class="chip" data-boundary="blackmail">No blackmail</div>
+    </div>
+
     <!-- ═══════════════════════════════════════════════════════════════════
          FOUR-AXIS STORY SELECTION SYSTEM (AUTHORITATIVE)
          Order: World → Tone → Genre → Dynamic
          ═══════════════════════════════════════════════════════════════════ -->
 
-    <!-- FLOATING SYNOPSIS PANEL -->
+    <!-- FLOATING SYNOPSIS PANEL (Side-mounted book jacket card) -->
     <div id="synopsisPanel" class="synopsis-panel">
-      <p id="synopsisText" class="synopsis-text">In a world <span id="synWorld">where shadows hold secrets</span>, can you <span id="synTone">face what you've buried</span>, <span id="synGenre">navigate dangerous alliances</span>, while <span id="synDynamic">the one you need most becomes your enemy</span>?</p>
+      <p id="synopsisText" class="synopsis-text">
+        <span id="synWorld">Where shadows hold secrets</span>
+        <span id="synTone">Face what you've buried</span>
+        <span id="synGenre">Navigate dangerous alliances</span>
+        <span id="synDynamic">The one you need most becomes your enemy</span>
+      </p>
     </div>
 
     <!-- AXIS 1: STORY WORLD (Required, First) -->
@@ -614,16 +630,6 @@
           <div class="card" data-grp="dynamic" data-val="Partners"><h3>Partners in Crime</h3><p>Complicity, shared secrets, us vs them.</p></div>
         </div>
       </div>
-    </div>
-
-    <!-- STORY POV (Retained, no preview buttons) -->
-    <div class="section-title">Story POV</div>
-    <div class="style-cards" id="povGrid">
-      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>Intimate, confessional, inside my own pulse.</p></div>
-      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>Every glance, every silence, happening to you.</p></div>
-      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>Close enough to feel, distant enough to see.</p></div>
-      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>Witnesses to the inevitable.</p></div>
-      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>The Author holds the pen.</p></div>
     </div>
 
     <div class="section-title">Quill & Veto</div>

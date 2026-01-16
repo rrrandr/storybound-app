@@ -874,8 +874,13 @@ ANTI-HERO ENFORCEMENT:
           if (app.contains(target)) app.classList.remove('hidden');
           else app.classList.add('hidden');
       }
-      
-      window.scrollTo(0,0);
+
+      // CORRECTIVE PASS FIX 4: Do NOT scroll when entering game screen
+      // The game screen uses a fixed book cover page overlay that handles its own viewport.
+      // Scrolling to top during the loading transition causes a jarring jump.
+      if (id !== 'game') {
+          window.scrollTo(0,0);
+      }
       _currentScreenId = id;
       updateNavUI();
 
@@ -2792,6 +2797,63 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     element.textContent = newText;
     element.classList.add('updating');
     setTimeout(() => element.classList.remove('updating'), 500);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SYNOPSIS PANEL SCROLL VISIBILITY (CORRECTIVE PASS)
+  // Panel appears when Story World enters viewport, disappears after
+  // Relationship Dynamic section. Feels like an accompanying object.
+  // ═══════════════════════════════════════════════════════════════════
+  function initSynopsisPanelScrollBehavior() {
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    const worldGrid = document.getElementById('worldGrid');
+    const dynamicGrid = document.getElementById('dynamicGrid');
+
+    if (!synopsisPanel || !worldGrid || !dynamicGrid) return;
+
+    // Only apply scroll behavior on desktop (wide screens)
+    function checkSynopsisVisibility() {
+      // On mobile, always visible via CSS
+      if (window.innerWidth <= 1100) {
+        synopsisPanel.classList.remove('visible');
+        return;
+      }
+
+      const worldRect = worldGrid.getBoundingClientRect();
+      const dynamicRect = dynamicGrid.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+
+      // Show when Story World is partially in view and until Dynamic is past
+      const worldInView = worldRect.top < viewportHeight && worldRect.bottom > 0;
+      const dynamicPastBottom = dynamicRect.bottom < 0;
+      const worldAboveView = worldRect.bottom < -100;
+
+      if ((worldInView || (worldRect.top < 0 && !worldAboveView)) && !dynamicPastBottom) {
+        synopsisPanel.classList.add('visible');
+      } else {
+        synopsisPanel.classList.remove('visible');
+      }
+    }
+
+    // Debounced scroll handler
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+      if (scrollTimeout) cancelAnimationFrame(scrollTimeout);
+      scrollTimeout = requestAnimationFrame(checkSynopsisVisibility);
+    }, { passive: true });
+
+    // Also check on resize
+    window.addEventListener('resize', checkSynopsisVisibility, { passive: true });
+
+    // Initial check
+    checkSynopsisVisibility();
+  }
+
+  // Initialize on DOMContentLoaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSynopsisPanelScrollBehavior);
+  } else {
+    initSynopsisPanelScrollBehavior();
   }
 
   // =========================
