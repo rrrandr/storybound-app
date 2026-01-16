@@ -636,7 +636,14 @@ ANTI-HERO ENFORCEMENT:
   // --- GLOBAL STATE INITIALIZATION ---
   window.state = {
       tier:'free',
-      picks:{ genre:['Romantasy'], dynamic:[], pov:'First', style:['Breathless'] },
+      picks:{
+        world: 'Modern',      // 4-axis: Story World (single-select)
+        tone: 'Earnest',      // 4-axis: Story Tone (single-select)
+        genre: 'Billionaire', // 4-axis: Genre/Flavor (single-select)
+        dynamic: 'Enemies',   // 4-axis: Relationship Dynamic (single-select)
+        era: 'Medieval',      // Historical Era sub-selection (when world=Historical)
+        pov: 'First'
+      },
       gender:'Female',
       loveInterest:'Male',
       archetype: { primary: null, modifier: null }, 
@@ -1656,7 +1663,7 @@ ANTI-HERO ENFORCEMENT:
       // Check if bible is already populated
       if (state.visual.bible.style && Object.keys(state.visual.bible.characters).length > 0) return;
       
-      const genre = Array.isArray(state?.picks?.genre) ? state.picks.genre.join(', ') : "";
+      const genre = state?.picks?.genre || 'Billionaire';
       const sys = `You are a Visual Director. Extract consistent visual anchors into STRICT JSON with this structure:
 {
   "style": "visual style description",
@@ -2599,9 +2606,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function initSelectionHandlers(){
     state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"] };
 
-    // Initialize default dynamics (Power Imbalance)
-    if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
-        state.picks.dynamic = ['Power'];
+    // Initialize default dynamic (single-select in 4-axis system)
+    if (!state.picks.dynamic) {
+        state.picks.dynamic = 'Enemies';
     }
 
     // Bind Visual Auto-Lock
@@ -2630,6 +2637,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     bindLengthHandlers();
 
+    // Single-select axes for 4-axis system
+    const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov'];
+
     document.querySelectorAll('.card[data-grp]').forEach(card => {
       if(card.dataset.bound === '1') return;
       card.dataset.bound = '1';
@@ -2637,17 +2647,27 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if(e.target.closest('.preview-btn')) return;
         const grp = card.dataset.grp;
         const val = card.dataset.val;
-        if(!grp || !val || grp === 'length') return; 
+        if(!grp || !val || grp === 'length') return;
 
         if(card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
 
-        if(grp === 'pov'){
-          state.picks.pov = val;
-          document.querySelectorAll('.card[data-grp="pov"]').forEach(c => c.classList.remove('selected'));
+        // 4-axis system: world, tone, genre, dynamic, era, pov are all single-select
+        if (SINGLE_SELECT_AXES.includes(grp)) {
+          state.picks[grp] = val;
+          document.querySelectorAll(`.card[data-grp="${grp}"]`).forEach(c => c.classList.remove('selected'));
           card.classList.add('selected');
+
+          // Special handling: show/hide Era sub-selection when World changes
+          if (grp === 'world') {
+            updateEraVisibility(val);
+          }
+
+          // Update floating synopsis panel
+          updateSynopsisPanel();
           return;
         }
 
+        // Legacy multi-select handling (if any remain)
         if(!state.picks[grp]) state.picks[grp] = [];
         const arr = state.picks[grp];
         const idx = arr.indexOf(val);
@@ -2656,8 +2676,107 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
     });
 
+    // Initialize Era visibility based on initial world selection
+    updateEraVisibility(state.picks.world);
+    // Initialize synopsis panel
+    updateSynopsisPanel();
+
     // Initialize Archetype System
     initArchetypeUI();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ERA VISIBILITY - Show/hide Historical Era selection
+  // ═══════════════════════════════════════════════════════════════════
+  function updateEraVisibility(worldValue) {
+    const eraSection = document.getElementById('eraSelection');
+    if (!eraSection) return;
+
+    if (worldValue === 'Historical') {
+      eraSection.classList.remove('hidden');
+    } else {
+      eraSection.classList.add('hidden');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SYNOPSIS PANEL - Live-updating story preview based on 4-axis selections
+  // ═══════════════════════════════════════════════════════════════════
+  const SYNOPSIS_PHRASES = {
+    world: {
+      Modern: 'where ambition and secrets intertwine',
+      Historical: 'bound by the rules of another age',
+      Dystopia: 'where survival demands sacrifice',
+      PostApocalyptic: 'where hope is as scarce as mercy',
+      Fantasy: 'where magic breathes in every shadow',
+      SciFi: 'where the stars hold both promise and peril',
+      Supernatural: 'where the veil between worlds is thin',
+      Superheroic: 'where power demands impossible choices'
+    },
+    tone: {
+      Earnest: 'face what you\'ve buried',
+      WryConfession: 'confess what you\'ve never admitted',
+      Satirical: 'see the absurdity for what it is',
+      Dark: 'embrace what frightens you',
+      Horror: 'confront what should not exist',
+      Mythic: 'answer the call of destiny',
+      Comedic: 'laugh at the chaos',
+      Surreal: 'trust nothing you see',
+      Poetic: 'feel every word like a wound'
+    },
+    genre: {
+      CrimeSyndicate: 'navigate blood oaths and betrayal',
+      Billionaire: 'play games only the powerful understand',
+      Noir: 'walk through shadows with no clean hands',
+      Heist: 'trust the plan—and no one else',
+      Espionage: 'keep secrets that could kill',
+      Political: 'maneuver through a web of alliances',
+      Sports: 'push past every limit',
+      College: 'risk everything on a single chance',
+      SmallTown: 'hide nothing from those who know you best'
+    },
+    dynamic: {
+      Forbidden: 'desire what you cannot have',
+      Dangerous: 'want the one who could destroy you',
+      Fated: 'fight what was always meant to be',
+      Partners: 'trust only each other',
+      Enemies: 'the one you need most becomes your enemy',
+      Friends: 'cross a line you can\'t uncross',
+      Proximity: 'share space with the one you can\'t escape',
+      SecretIdentity: 'fall for who they pretend to be',
+      Obsessive: 'be the center of someone\'s world',
+      Caretaker: 'let someone see your wounds',
+      SecondChance: 'reopen a door you thought was closed'
+    }
+  };
+
+  function updateSynopsisPanel() {
+    const synWorld = document.getElementById('synWorld');
+    const synTone = document.getElementById('synTone');
+    const synGenre = document.getElementById('synGenre');
+    const synDynamic = document.getElementById('synDynamic');
+
+    if (!synWorld || !synTone || !synGenre || !synDynamic) return;
+
+    // Get current selections
+    const world = state.picks.world || 'Modern';
+    const tone = state.picks.tone || 'Earnest';
+    const genre = state.picks.genre || 'Billionaire';
+    const dynamic = state.picks.dynamic || 'Enemies';
+
+    // Update each clause with animation
+    updateSynopsisClause(synWorld, SYNOPSIS_PHRASES.world[world] || SYNOPSIS_PHRASES.world.Modern);
+    updateSynopsisClause(synTone, SYNOPSIS_PHRASES.tone[tone] || SYNOPSIS_PHRASES.tone.Earnest);
+    updateSynopsisClause(synGenre, SYNOPSIS_PHRASES.genre[genre] || SYNOPSIS_PHRASES.genre.Billionaire);
+    updateSynopsisClause(synDynamic, SYNOPSIS_PHRASES.dynamic[dynamic] || SYNOPSIS_PHRASES.dynamic.Enemies);
+  }
+
+  function updateSynopsisClause(element, newText) {
+    if (!element || element.textContent === newText) return;
+
+    element.textContent = newText;
+    element.classList.add('updating');
+    setTimeout(() => element.classList.remove('updating'), 500);
   }
 
   // =========================
@@ -3210,19 +3329,26 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           errors.push(archetypeValidation.errors[0] || 'Please select a Primary Archetype.');
       }
 
-      // Check for at least one genre selected
-      if (!state.picks.genre || state.picks.genre.length === 0) {
-          errors.push('Please select at least one Genre.');
+      // 4-axis validation: world, tone, genre, dynamic are required (single-select)
+      if (!state.picks.world) {
+          errors.push('Please select a Story World.');
       }
 
-      // Check for at least one dynamic selected
-      if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
-          errors.push('Please select at least one Dynamic.');
+      if (!state.picks.tone) {
+          errors.push('Please select a Story Tone.');
       }
 
-      // Check for at least one style selected
-      if (!state.picks.style || state.picks.style.length === 0) {
-          errors.push('Please select at least one Story Style.');
+      if (!state.picks.genre) {
+          errors.push('Please select a Genre.');
+      }
+
+      if (!state.picks.dynamic) {
+          errors.push('Please select a Relationship Dynamic.');
+      }
+
+      // Historical world requires era selection
+      if (state.picks.world === 'Historical' && !state.picks.era) {
+          errors.push('Please select a Historical Era.');
       }
 
       return errors;
@@ -3390,10 +3516,12 @@ Long-Arc Presence Awareness:
 
 ────────────────────────────────────
 
-You are writing a story in the "${state.picks.genre.join(', ')}" genre.
-Style: ${state.picks.style.join(', ')}.
-POV: ${state.picks.pov}.
-Dynamics: ${state.picks.dynamic.join(', ')}.
+You are writing a story with the following 4-axis configuration:
+- World: ${state.picks.world || 'Modern'}${state.picks.world === 'Historical' && state.picks.era ? ` (${state.picks.era} Era)` : ''}
+- Tone: ${state.picks.tone || 'Earnest'}
+- Genre: ${state.picks.genre || 'Billionaire'}
+- Dynamic: ${state.picks.dynamic || 'Enemies'}
+- POV: ${state.picks.pov || 'First'}
 
 
     Protagonist: ${pName} (${pGen}, ${pPro}).
@@ -3501,11 +3629,17 @@ The opening must feel intentional and specific, not archetypal or templated.`;
     else if (quillUnlocked) tier = 'quill_unlocked';
     else if (state.storyId && hasStoryPass(state.storyId)) tier = 'story_unlocked';
 
-    // Build structured payload for diagnostic
+    // Build structured payload for diagnostic (4-axis system)
     const diagnosticPayload = {
         mode: state.mode || 'solo',
         tier: tier,
-        genre: state.picks.genre || [],
+        fourAxis: {
+            world: state.picks.world || 'Modern',
+            era: state.picks.world === 'Historical' ? (state.picks.era || 'Medieval') : null,
+            tone: state.picks.tone || 'Earnest',
+            genre: state.picks.genre || 'Billionaire',
+            dynamic: state.picks.dynamic || 'Enemies'
+        },
         archetype: {
             primary: state.archetype.primary || null,
             modifier: state.archetype.modifier || null,
@@ -3524,10 +3658,8 @@ The opening must feel intentional and specific, not archetypal or templated.`;
             tone: state.veto?.tone || []
         },
         intensity: state.intensity || 'Naughty',
-        pov: state.picks.pov || 'Third Person Limited',
-        style: state.picks.style || [],
-        dynamic: state.picks.dynamic || [],
-        storyLength: state.storyLength || 'novella',
+        pov: state.picks.pov || 'First',
+        storyLength: state.storyLength || 'voyeur',
         systemPromptLength: state.sysPrompt?.length || 0
     };
 
@@ -3928,11 +4060,17 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   // Generate book cover with intent-based routing
   // Uses authoritative prestige cover template with symbolic objects
   async function generateBookCover(synopsis, title, authorName) {
-      // Extract story context for symbolic object selection
-      const modeLine = state.picks?.genre?.join(' / ') || 'A Novel';
-      const dynamic = state.picks?.dynamic?.join(', ') || 'Romantic tension';
-      const storyStyle = state.picks?.style?.join(', ') || 'Dark Romance';
-      const genre = state.picks?.genre?.[0] || 'Contemporary';
+      // Extract story context for symbolic object selection (4-axis system)
+      const world = state.picks?.world || 'Modern';
+      const tone = state.picks?.tone || 'Earnest';
+      const genre = state.picks?.genre || 'Billionaire';
+      const dynamic = state.picks?.dynamic || 'Enemies';
+      const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
+
+      // Build mode line from world + tone
+      const modeLine = era ? `${era} ${world}` : `${world} ${tone}`;
+      // Build story style description
+      const storyStyle = `${tone} ${genre}`;
 
       try {
           const res = await fetch(IMAGE_PROXY_URL, {

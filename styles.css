@@ -1577,3 +1577,117 @@ textarea.fate-field {
         opacity: 1;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   FLOATING SYNOPSIS PANEL - Live-updating story preview
+   ═══════════════════════════════════════════════════════════════════ */
+
+.synopsis-panel {
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+    background: linear-gradient(135deg, rgba(40, 0, 50, 0.95), rgba(20, 0, 30, 0.95));
+    border: 1px solid rgba(255, 105, 180, 0.4);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin: 20px auto 30px;
+    max-width: 700px;
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(255, 105, 180, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+}
+
+.synopsis-text {
+    font-family: 'lust-script-display', 'Lora', serif;
+    font-size: 1.15em;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 0;
+    text-align: center;
+    font-style: italic;
+}
+
+.synopsis-text span {
+    transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+
+/* World clause - pink accent */
+#synWorld {
+    color: var(--pink);
+    font-weight: 600;
+}
+
+/* Tone clause - gold accent */
+#synTone {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+/* Genre clause - subtle hot pink */
+#synGenre {
+    color: #ff8dc7;
+    font-weight: 500;
+}
+
+/* Dynamic clause - emphasized pink */
+#synDynamic {
+    color: var(--hot);
+    font-weight: 600;
+}
+
+/* Glow effect when clause updates */
+.synopsis-text span.updating {
+    text-shadow: 0 0 12px currentColor;
+    animation: synopsisGlow 0.5s ease-out;
+}
+
+@keyframes synopsisGlow {
+    0% { text-shadow: 0 0 20px currentColor; }
+    100% { text-shadow: 0 0 0 transparent; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HISTORICAL ERA SUB-SELECTION
+   ═══════════════════════════════════════════════════════════════════ */
+
+.era-selection {
+    margin-top: -10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255, 105, 180, 0.05);
+    border: 1px solid rgba(255, 105, 180, 0.2);
+    border-radius: 10px;
+    transition: opacity 0.3s ease, max-height 0.4s ease;
+}
+
+.era-selection.hidden {
+    display: none;
+}
+
+.era-selection .sub-title {
+    font-size: 1.4em;
+    margin: 0 0 10px;
+    border-top: none;
+    padding-top: 0;
+}
+
+/* Smaller cards for era selection */
+.era-selection .style-cards {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.era-selection .card {
+    padding: 10px 12px;
+}
+
+.era-selection .card h3 {
+    font-size: 0.95em;
+    margin-bottom: 3px;
+}
+
+.era-selection .card p {
+    font-size: 0.8em;
+}
