@@ -452,9 +452,224 @@ window.config = window.config || {
   }
 
   // =========================
-  // CANONICALIZATION LAYER
+  // RUNTIME NORMALIZATION PROMPT
   // =========================
-  // Centralized IP detection and transformation for all user-authored inputs.
+  // This prompt is executed by ChatGPT at runtime for IP canonicalization.
+  // DO NOT MODIFY. This is authoritative and verbatim.
+  const RUNTIME_NORMALIZATION_PROMPT = `You are a canonicalization and normalization engine for Storybound.
+
+You do NOT write prose.
+You do NOT invent lore.
+You do NOT explain decisions.
+You do NOT output copyrighted or public-domain fictional IP.
+
+Your only task is to transform raw user-authored text into
+canonical, IP-safe, Storybound-compatible instructions.
+
+--------------------------------
+GENERAL RULES (NON-NEGOTIABLE)
+--------------------------------
+
+1. Ignore proper nouns as references, not as content.
+2. Extract experiential intent, not named franchises.
+3. Never output real or fictional character names from known works.
+4. Never output franchise, book, movie, or universe names.
+5. Output must conform strictly to the allowed categories provided.
+6. If normalization is ambiguous, choose the closest safe archetype.
+7. Do NOT ask questions. Do NOT request clarification.
+8. If output violates rules, regenerate silently until compliant.
+
+--------------------------------
+CONFIDENCE-BASED CANONICALIZATION
+--------------------------------
+
+Assess whether the user_text references a known fictional character,
+franchise, or setting.
+
+- LOW confidence (<0.30):
+  → Allow text verbatim.
+
+- MEDIUM confidence (0.30–0.65):
+  → Allow unless reinforced by contextual signals.
+
+- HIGH confidence (≥0.65):
+  → Soft-canonicalize:
+     - preserve cadence and vibe
+     - remove recognizability
+     - output an original equivalent
+
+Examples:
+- "Luke Skywalker" → "Lucas Skyrider"
+- "Harry Potter" → "Harlan Potter"
+- "Frankenstein" with lab/monster context →
+  "forbidden reanimator archetype"
+
+--------------------------------
+WORLD SUBTYPE NORMALIZATION
+--------------------------------
+
+If axis == "world_subtype":
+
+- Ignore all proper nouns.
+- Use allowed_subtypes only.
+- Output:
+  - one primary subtype (required)
+  - one secondary subtype (optional)
+- Never invent new subtypes.
+- Never output IP.
+
+--------------------------------
+TOOL-SPECIFIC RULES
+--------------------------------
+
+If axis == "veto":
+- Normalize the TARGET of the veto, not the wording.
+
+If axis == "quill":
+- Normalize BEFORE applying rename or rewrite.
+- Never allow IP to enter canon.
+
+If axis == "god_mode":
+- Apply the same rules.
+- God Mode does NOT bypass normalization.
+
+--------------------------------
+OUTPUT FORMAT (STRICT)
+--------------------------------
+
+Return JSON only.
+
+For names:
+{
+  "normalized_text": "string",
+  "confidence_level": "low | medium | high"
+}
+
+For world subtype:
+{
+  "primary_subtype": "string",
+  "secondary_subtype": "string | null"
+}
+
+For veto/quill/god_mode:
+{
+  "canonical_instruction": "string"
+}`;
+
+  // =========================
+  // RUNTIME NORMALIZATION LAYER
+  // =========================
+  // Calls ChatGPT with the normalization prompt for IP-safe canonicalization.
+  // All user-authored text affecting canon MUST route through this.
+
+  /**
+   * Call the runtime normalization layer (ChatGPT) for canonicalization.
+   * @param {Object} params - { axis, selected_world, allowed_subtypes, user_text, context_signals }
+   * @returns {Promise<Object>} - Normalized response JSON
+   */
+  async function callNormalizationLayer(params) {
+      const { axis, selected_world = null, allowed_subtypes = [], user_text, context_signals = [] } = params;
+
+      if (!user_text || typeof user_text !== 'string' || !user_text.trim()) {
+          // Empty input - return passthrough
+          return axis === 'world_subtype'
+              ? { primary_subtype: null, secondary_subtype: null }
+              : { normalized_text: user_text || '', confidence_level: 'low' };
+      }
+
+      const payload = {
+          axis,
+          selected_world,
+          allowed_subtypes,
+          user_text,
+          context_signals
+      };
+
+      try {
+          const res = await fetch(PROXY_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  model: 'gpt-4o-mini',
+                  messages: [
+                      { role: 'system', content: RUNTIME_NORMALIZATION_PROMPT },
+                      { role: 'user', content: JSON.stringify(payload) }
+                  ],
+                  temperature: 0,
+                  max_tokens: 500
+              })
+          });
+
+          if (!res.ok) {
+              console.warn('[Normalization] API error, falling back to local');
+              return fallbackNormalize(params);
+          }
+
+          const data = await res.json();
+          const content = data.choices?.[0]?.message?.content;
+
+          if (!content) {
+              return fallbackNormalize(params);
+          }
+
+          // Parse JSON response
+          try {
+              const parsed = JSON.parse(content.trim());
+              return parsed;
+          } catch (e) {
+              // Try to extract JSON from response
+              const jsonMatch = content.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                  return JSON.parse(jsonMatch[0]);
+              }
+              return fallbackNormalize(params);
+          }
+      } catch (err) {
+          console.warn('[Normalization] Network error, falling back to local:', err.message);
+          return fallbackNormalize(params);
+      }
+  }
+
+  /**
+   * Local fallback normalization when runtime layer is unavailable.
+   * Uses the existing canonicalizeInput logic.
+   */
+  function fallbackNormalize(params) {
+      const { axis, user_text, allowed_subtypes = [] } = params;
+
+      if (axis === 'world_subtype') {
+          // Use local world subtype normalization
+          const worldCategory = params.selected_world?.includes('scifi') ? 'scifi'
+              : params.selected_world?.includes('fantasy') ? 'fantasy'
+              : params.selected_world?.includes('mythic') ? 'mythic' : 'fantasy';
+          const result = normalizeWorldSubtype(user_text, worldCategory);
+          return {
+              primary_subtype: result.primary && allowed_subtypes.includes(result.primary) ? result.primary : allowed_subtypes[0] || null,
+              secondary_subtype: result.secondary && allowed_subtypes.includes(result.secondary) ? result.secondary : null
+          };
+      }
+
+      // For all other axes, use local canonicalization
+      const normalized = canonicalizeInput(user_text, { source: axis, worldContext: state.picks?.world || [] });
+      const { confidence } = calculateIPConfidence(user_text);
+
+      if (axis === 'veto' || axis === 'quill' || axis === 'god_mode') {
+          return { canonical_instruction: normalized };
+      }
+
+      return {
+          normalized_text: normalized,
+          confidence_level: confidence < 0.30 ? 'low' : confidence < 0.65 ? 'medium' : 'high'
+      };
+  }
+
+  // Expose runtime normalization layer
+  window.callNormalizationLayer = callNormalizationLayer;
+
+  // =========================
+  // CANONICALIZATION LAYER (LOCAL FALLBACK)
+  // =========================
+  // Local IP detection and transformation - used as fallback when runtime unavailable.
   // All tools (Veto, Quill, God Mode, character creation, DSP) must flow through this.
 
   // IP detection patterns with confidence scores (0-1)
@@ -1448,11 +1663,16 @@ ANTI-HERO ENFORCEMENT:
       /^add\s+(a|the|new)\s+(scene|character|kink|setting)/i
   ];
 
-  function parseVetoInput(rawText) {
+  async function parseVetoInput(rawText) {
       if(!rawText) return { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
 
-      // CANONICALIZATION: All veto input flows through centralized IP scrubber
-      const canonicalized = canonicalizeInput(rawText, { source: 'veto', worldContext: state.picks?.world || [] });
+      // RUNTIME NORMALIZATION: All veto input flows through ChatGPT normalization layer
+      const vetoNorm = await callNormalizationLayer({
+          axis: 'veto',
+          user_text: rawText,
+          context_signals: state.picks?.world || []
+      });
+      const canonicalized = vetoNorm.canonical_instruction || vetoNorm.normalized_text || rawText;
 
       const lines = canonicalized.split('\n');
       const result = { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
@@ -1495,10 +1715,10 @@ ANTI-HERO ENFORCEMENT:
       return result;
   }
 
-  function applyVetoFromInput() {
+  async function applyVetoFromInput() {
       const el = document.getElementById('vetoInput');
       if(!el) return;
-      const parsed = parseVetoInput(el.value);
+      const parsed = await parseVetoInput(el.value);
 
       // Show rejection toast if any lines were rejected
       if(parsed.rejected.length > 0) {
@@ -1513,8 +1733,8 @@ ANTI-HERO ENFORCEMENT:
   }
 
   // Legacy compatibility wrapper
-  function parseStoryControls(rawText) {
-      const vetoResult = parseVetoInput(rawText);
+  async function parseStoryControls(rawText) {
+      const vetoResult = await parseVetoInput(rawText);
       return {
           veto: {
               bannedWords: vetoResult.exclusions,
@@ -1526,8 +1746,8 @@ ANTI-HERO ENFORCEMENT:
       };
   }
 
-  function applyVetoFromControls() {
-      applyVetoFromInput();
+  async function applyVetoFromControls() {
+      await applyVetoFromInput();
   }
 
   // --- FATE HAND SYSTEM (Replaces pill system) ---
@@ -2758,11 +2978,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const rawQuillText = quillEl.value.trim();
       if (!rawQuillText) { showToast("No Quill edit to commit."); return; }
 
-      // CANONICALIZATION: Quill input flows through centralized IP scrubber
-      const quillText = canonicalizeInput(rawQuillText, { source: 'quill', worldContext: state.picks?.world || [] });
+      // RUNTIME NORMALIZATION: Quill input flows through ChatGPT normalization layer
+      const quillNorm = await callNormalizationLayer({
+          axis: 'quill',
+          user_text: rawQuillText,
+          context_signals: state.picks?.world || []
+      });
+      const quillText = quillNorm.canonical_instruction || quillNorm.normalized_text || rawQuillText;
 
       // Also apply any pending veto constraints from game modal
-      applyGameVetoFromInput();
+      await applyGameVetoFromInput();
 
       window.state.quillIntent = quillText;
       if (quillText) {
@@ -2785,13 +3010,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   });
 
   // Game Veto commit button
-  $('btnGameCommitVeto')?.addEventListener('click', () => {
+  $('btnGameCommitVeto')?.addEventListener('click', async () => {
       const vetoEl = document.getElementById('gameVetoInput');
       if (!vetoEl) return;
       const vetoText = vetoEl.value.trim();
       if (!vetoText) { showToast("No Veto rules to commit."); return; }
 
-      applyGameVetoFromInput();
+      await applyGameVetoFromInput();
       vetoEl.value = '';
       document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
       showToast("Veto committed. Boundaries updated.");
@@ -2848,11 +3073,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
   }
 
-  function applyGameVetoFromInput() {
+  async function applyGameVetoFromInput() {
       const vetoEl = document.getElementById('gameVetoInput');
       if (!vetoEl) return;
-      const txt = vetoEl.value.trim();
-      if (!txt) return;
+      const rawTxt = vetoEl.value.trim();
+      if (!rawTxt) return;
+
+      // RUNTIME NORMALIZATION: Game veto input flows through ChatGPT normalization layer
+      const vetoNorm = await callNormalizationLayer({
+          axis: 'veto',
+          user_text: rawTxt,
+          context_signals: state.picks?.world || []
+      });
+      const txt = vetoNorm.canonical_instruction || vetoNorm.normalized_text || rawTxt;
+
       // Parse and add to veto state (same as setup veto)
       txt.split('\n').forEach(line => {
           line = line.trim();
@@ -3432,11 +3666,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const rawQuillText = quillEl.value.trim();
       if (!rawQuillText) { showToast("No Quill edit to commit."); return; }
 
-      // CANONICALIZATION: Quill input flows through centralized IP scrubber
-      const quillText = canonicalizeInput(rawQuillText, { source: 'quill', worldContext: state.picks?.world || [] });
+      // RUNTIME NORMALIZATION: Quill input flows through ChatGPT normalization layer
+      const quillNorm = await callNormalizationLayer({
+          axis: 'quill',
+          user_text: rawQuillText,
+          context_signals: state.picks?.world || []
+      });
+      const quillText = quillNorm.canonical_instruction || quillNorm.normalized_text || rawQuillText;
 
       // Also apply any pending veto constraints
-      applyVetoFromInput();
+      await applyVetoFromInput();
 
       // Store quill intent in state for prompt injection
       window.state.quillIntent = quillText;
@@ -3465,7 +3704,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   });
 
   // Commit Veto Button Handler
-  $('btnCommitVeto')?.addEventListener('click', () => {
+  $('btnCommitVeto')?.addEventListener('click', async () => {
       const vetoEl = document.getElementById('vetoInput');
       if (!vetoEl) return;
       const vetoText = vetoEl.value.trim();
@@ -3480,7 +3719,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
       renderCommittedPhrases('veto');
 
-      applyVetoFromInput();
+      await applyVetoFromInput();
       vetoEl.value = '';
       saveStorySnapshot();
       showToast("Veto committed. Boundaries updated.");
@@ -3539,11 +3778,21 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         return;
     }
 
-    // CANONICALIZATION: Character names flow through centralized IP scrubber
+    // RUNTIME NORMALIZATION: Character names flow through ChatGPT normalization layer
     const rawPlayerName = $('playerNameInput').value.trim() || "The Protagonist";
     const rawPartnerName = $('partnerNameInput').value.trim() || "The Love Interest";
-    const pName = canonicalizeInput(rawPlayerName, { source: 'character', worldContext: state.picks?.world || [] });
-    const lName = canonicalizeInput(rawPartnerName, { source: 'character', worldContext: state.picks?.world || [] });
+    const playerNorm = await callNormalizationLayer({
+        axis: 'character',
+        user_text: rawPlayerName,
+        context_signals: state.picks?.world || []
+    });
+    const partnerNorm = await callNormalizationLayer({
+        axis: 'character',
+        user_text: rawPartnerName,
+        context_signals: state.picks?.world || []
+    });
+    const pName = playerNorm.normalized_text || rawPlayerName;
+    const lName = partnerNorm.normalized_text || rawPartnerName;
     const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
     const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
     const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
@@ -3555,7 +3804,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     else if(pGen === 'Female' && lGen === 'Female') { state.authorGender = 'Female'; state.authorPronouns = 'She/Her'; }
     else { state.authorGender = 'Non-Binary'; state.authorPronouns = 'They/Them'; }
 
-    applyVetoFromControls(); 
+    await applyVetoFromControls();
     
     // Check for LGBTQ Colors
     state.gender = $('playerGender').value;
@@ -3789,11 +4038,21 @@ AVOID these clichéd openings:
 The opening must feel intentional and specific, not archetypal or templated.`;
 
     // FATE STUMBLED DIAGNOSTIC - Structured payload logging
-    // CANONICALIZATION: Ancestry/DSP inputs flow through centralized IP scrubber
+    // RUNTIME NORMALIZATION: Ancestry/DSP inputs flow through ChatGPT normalization layer
     const rawAncestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
     const rawAncestryLI = $('ancestryInputLI')?.value.trim() || '';
-    const ancestryPlayer = canonicalizeInput(rawAncestryPlayer, { source: 'dsp', worldContext: state.picks?.world || [] });
-    const ancestryLI = canonicalizeInput(rawAncestryLI, { source: 'dsp', worldContext: state.picks?.world || [] });
+    const ancestryPlayerNorm = await callNormalizationLayer({
+        axis: 'dsp',
+        user_text: rawAncestryPlayer,
+        context_signals: state.picks?.world || []
+    });
+    const ancestryLINorm = await callNormalizationLayer({
+        axis: 'dsp',
+        user_text: rawAncestryLI,
+        context_signals: state.picks?.world || []
+    });
+    const ancestryPlayer = ancestryPlayerNorm.normalized_text || rawAncestryPlayer;
+    const ancestryLI = ancestryLINorm.normalized_text || rawAncestryLI;
     const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
 
     // Determine unlock tier
@@ -4889,8 +5148,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           // Build base prompt with intensity bias, quality defaults, and veto exclusions (filter "The Author")
           const modifierInput = document.getElementById('vizModifierInput');
           const rawModifiers = modifierInput ? modifierInput.value.trim() : '';
-          // CANONICALIZATION: Visualize modifiers flow through centralized IP scrubber
-          const userModifiers = canonicalizeInput(rawModifiers, { source: 'visualize', worldContext: state.picks?.world || [] });
+          // RUNTIME NORMALIZATION: Visualize modifiers flow through ChatGPT normalization layer
+          const vizNorm = await callNormalizationLayer({
+              axis: 'visualize',
+              user_text: rawModifiers,
+              context_signals: state.picks?.world || []
+          });
+          const userModifiers = vizNorm.normalized_text || rawModifiers;
 
           // Include veto exclusions in visual prompt (e.g., "no blondes" should affect hair color)
           const vetoExclusions = state.veto?.excluded?.length > 0
@@ -5030,9 +5294,21 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const rawDia = $('dialogueInput').value.trim();
       if(!rawAct && !rawDia) return alert("Input required.");
 
-      // CANONICALIZATION: Action/dialogue inputs flow through centralized IP scrubber
-      const act = canonicalizeInput(rawAct, { source: state.godModeActive ? 'godmode' : 'action', worldContext: state.picks?.world || [] });
-      const dia = canonicalizeInput(rawDia, { source: state.godModeActive ? 'godmode' : 'dialogue', worldContext: state.picks?.world || [] });
+      // RUNTIME NORMALIZATION: Action/dialogue inputs flow through ChatGPT normalization layer
+      // God Mode does NOT bypass normalization - same rules apply
+      const axis = state.godModeActive ? 'god_mode' : 'action';
+      const actNorm = await callNormalizationLayer({
+          axis: axis,
+          user_text: rawAct,
+          context_signals: state.picks?.world || []
+      });
+      const diaNorm = await callNormalizationLayer({
+          axis: axis,
+          user_text: rawDia,
+          context_signals: state.picks?.world || []
+      });
+      const act = actNorm.canonical_instruction || actNorm.normalized_text || rawAct;
+      const dia = diaNorm.canonical_instruction || diaNorm.normalized_text || rawDia;
 
       // Get selected Fate Card title for separator
       let selectedFateCard = null;
