@@ -3027,7 +3027,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   });
 
   // Game Quill commit button
-  $('btnGameCommitQuill')?.addEventListener('click', (e) => {
+  $('btnGameCommitQuill')?.addEventListener('click', async (e) => {
       e.preventDefault(); // Prevent scroll to top
       e.stopPropagation();
 
@@ -3925,7 +3925,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
   }
 
-  $('btnCommitQuill')?.addEventListener('click', (e) => {
+  $('btnCommitQuill')?.addEventListener('click', async (e) => {
       e.preventDefault(); // Prevent scroll to top
       e.stopPropagation();
 
