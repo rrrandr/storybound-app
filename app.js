@@ -426,6 +426,7 @@ window.config = window.config || {
   // =========================
   // Maps internal world codes to human-first labels
   // Fantasy worlds represent invented magical worlds only (not real-world mythology)
+  // Mythic Antiquity represents real-world myth-history (Greek, Norse, Egyptian, Biblical)
   const WORLD_LABELS = {
       // Sci-Fi Worlds
       space_opera: 'Star-Spanning Civilizations',
@@ -438,7 +439,12 @@ window.config = window.config || {
       // Fantasy Worlds (invented magical worlds, not mythology)
       high_fantasy: 'Enchanted Realms',
       low_fantasy: 'Hidden Magic',
-      dark_fantasy: 'Cursed & Corrupt Worlds'
+      dark_fantasy: 'Cursed & Corrupt Worlds',
+      // Mythic Antiquity (real-world myth-history, gods, prophecy, divine law)
+      greek_myth: 'Heroes & Olympus',
+      norse_myth: 'Frost & Ragnarok',
+      egyptian_myth: 'Gods of the Nile',
+      biblical_myth: 'Covenant & Prophecy'
   };
 
   function getWorldLabel(worldCode) {
