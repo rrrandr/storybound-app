@@ -637,94 +637,70 @@ For veto/quill/god_mode:
           : axis === 'dsp' ? 'DSP_NORMALIZATION'
           : 'NORMALIZATION';
 
+      // CRITICAL: Use ChatGPT proxy, NOT Grok proxy
+      // NO FALLBACKS - errors must fail loudly
+      const res = await fetch('/api/chatgpt-proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              role: normalizationRole,
+              model: 'gpt-4o-mini',
+              messages: [
+                  { role: 'system', content: RUNTIME_NORMALIZATION_PROMPT },
+                  { role: 'user', content: JSON.stringify(payload) }
+              ],
+              temperature: 0,
+              max_tokens: 500
+          })
+      });
+
+      if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          const errorMsg = `[NORMALIZATION FAILED] HTTP ${res.status}: ${errorData.error || errorData.details || 'Unknown error'}`;
+          console.error(errorMsg);
+          throw new Error(errorMsg);
+      }
+
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+          const errorMsg = '[NORMALIZATION FAILED] No content in API response';
+          console.error(errorMsg);
+          throw new Error(errorMsg);
+      }
+
+      // Parse JSON response
       try {
-          // CRITICAL: Use ChatGPT proxy, NOT Grok proxy
-          const res = await fetch('/api/chatgpt-proxy', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  role: normalizationRole,
-                  model: 'gpt-4o-mini',
-                  messages: [
-                      { role: 'system', content: RUNTIME_NORMALIZATION_PROMPT },
-                      { role: 'user', content: JSON.stringify(payload) }
-                  ],
-                  temperature: 0,
-                  max_tokens: 500
-              })
-          });
-
-          if (!res.ok) {
-              console.warn('[Normalization] API error, falling back to local');
-              return fallbackNormalize(params);
+          const parsed = JSON.parse(content.trim());
+          return parsed;
+      } catch (e) {
+          // Try to extract JSON from response
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+              return JSON.parse(jsonMatch[0]);
           }
-
-          const data = await res.json();
-          const content = data.choices?.[0]?.message?.content;
-
-          if (!content) {
-              return fallbackNormalize(params);
-          }
-
-          // Parse JSON response
-          try {
-              const parsed = JSON.parse(content.trim());
-              return parsed;
-          } catch (e) {
-              // Try to extract JSON from response
-              const jsonMatch = content.match(/\{[\s\S]*\}/);
-              if (jsonMatch) {
-                  return JSON.parse(jsonMatch[0]);
-              }
-              return fallbackNormalize(params);
-          }
-      } catch (err) {
-          console.warn('[Normalization] Network error, falling back to local:', err.message);
-          return fallbackNormalize(params);
+          const errorMsg = `[NORMALIZATION FAILED] Invalid JSON response: ${content.slice(0, 100)}`;
+          console.error(errorMsg);
+          throw new Error(errorMsg);
       }
   }
 
-  /**
-   * Local fallback normalization when runtime layer is unavailable.
-   * Uses the existing canonicalizeInput logic.
-   */
-  function fallbackNormalize(params) {
-      const { axis, user_text, allowed_subtypes = [] } = params;
-
-      if (axis === 'world_subtype') {
-          // Use local world subtype normalization
-          const worldCategory = params.selected_world?.includes('scifi') ? 'scifi'
-              : params.selected_world?.includes('fantasy') ? 'fantasy'
-              : params.selected_world?.includes('mythic') ? 'mythic' : 'fantasy';
-          const result = normalizeWorldSubtype(user_text, worldCategory);
-          return {
-              primary_subtype: result.primary && allowed_subtypes.includes(result.primary) ? result.primary : allowed_subtypes[0] || null,
-              secondary_subtype: result.secondary && allowed_subtypes.includes(result.secondary) ? result.secondary : null
-          };
-      }
-
-      // For all other axes, use local canonicalization
-      const normalized = canonicalizeInput(user_text, { source: axis, worldContext: state.picks?.world || [] });
-      const { confidence } = calculateIPConfidence(user_text);
-
-      if (axis === 'veto' || axis === 'quill' || axis === 'god_mode') {
-          return { canonical_instruction: normalized };
-      }
-
-      return {
-          normalized_text: normalized,
-          confidence_level: confidence < 0.30 ? 'low' : confidence < 0.65 ? 'medium' : 'high'
-      };
-  }
+  // ==========================================================================
+  // FALLBACK NORMALIZATION REMOVED — DISABLED PER AUTHORITATIVE DIRECTIVE
+  // ==========================================================================
+  // All normalization MUST go through /api/chatgpt-proxy.
+  // Silent pass-through is forbidden.
+  // If normalization fails, the action is blocked.
 
   // Expose runtime normalization layer
   window.callNormalizationLayer = callNormalizationLayer;
 
   // =========================
-  // CANONICALIZATION LAYER (LOCAL FALLBACK)
+  // IP DETECTION PATTERNS (FOR REFERENCE ONLY)
   // =========================
-  // Local IP detection and transformation - used as fallback when runtime unavailable.
-  // All tools (Veto, Quill, God Mode, character creation, DSP) must flow through this.
+  // These patterns are used by the runtime normalization layer.
+  // Local canonicalization is DISABLED - all requests go to OpenAI.
 
   // IP detection patterns with confidence scores (0-1)
   // Higher confidence = more likely to be protected IP
@@ -3426,36 +3402,60 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   };
 
   // TONE GENERATORS: Each produces a complete sentence in that tone's voice
-  // DSP TONE GENERATORS: Each produces a complete sentence in that tone's voice
-  // REQUIRED: playerName must be included in every DSP sentence
-  // REQUIRED: worldSubtype should be incorporated when present
+  // ==========================================================================
+  // DSP TEMPLATE ASSEMBLY — NOT AUTHORED PROSE
+  // ==========================================================================
+  // DSP is a fixed English sentence template with slot-filled normalized values.
+  // The model may return labels or short phrases only — NOT full sentences.
+  //
+  // RULES:
+  // - DSP defaults to second person ("You")
+  // - Player name may appear only as an appositive
+  // - Pronouns must remain grammatically consistent
+  //
+  // Template pattern:
+  // You—{{player_name_optional}}—step into a {{world_descriptor}}, where
+  // {{tone_clause}}, and find yourself drawn into {{dynamic_clause}}.
+  // ==========================================================================
+
+  /**
+   * Format player name as appositive (parenthetical).
+   * Returns empty string if no custom name provided.
+   */
+  function formatPlayerAppositive(playerName) {
+    if (!playerName || playerName === 'The Protagonist' || playerName === 'You') {
+      return '';
+    }
+    return `—${playerName}—`;
+  }
+
   const DSP_TONE_GENERATORS = {
     Earnest: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `${playerName} steps into ${worldSubtype ? worldSubtype + ' ' : ''}${world}, drawn into ${genre}—and will ${dynamic}.`,
+      `You${formatPlayerAppositive(playerName)} step into ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} awaits, and find yourself drawn to ${dynamic}.`,
 
     WryConfession: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `So here ${playerName} is, in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, tangled up in ${genre}, and somehow, against all judgment, will ${dynamic}.`,
+      `So here you are${formatPlayerAppositive(playerName)}, in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, tangled up in ${genre}, and somehow you find yourself compelled to ${dynamic}.`,
 
     Satirical: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Welcome ${playerName} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} is already a mess—and ${playerName.split(' ')[0]} has agreed to make it worse by deciding to ${dynamic}.`,
+      `Welcome${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} is already a mess, and you have agreed to ${dynamic}.`,
 
     Dark: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `In ${worldSubtype ? worldSubtype + ' ' : ''}${world}, ${genre} waits in every shadow, and ${playerName} will ${dynamic}, no matter what it costs.`,
+      `In ${worldSubtype ? worldSubtype + ' ' : ''}${world}, ${genre} waits in every shadow, and you${formatPlayerAppositive(playerName)} will ${dynamic}, no matter the cost.`,
 
     Horror: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Something waits in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, wearing the face of ${genre}, and it knows ${playerName} will ${dynamic}.`,
+      `Something waits in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, wearing the face of ${genre}, and it knows you${formatPlayerAppositive(playerName)} will ${dynamic}.`,
 
     Mythic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Fate calls ${playerName} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} shapes the path of heroes—and ${playerName.split(' ')[0]} must ${dynamic}.`,
+      `Fate calls you${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} shapes the path of heroes, and you must ${dynamic}.`,
 
     Comedic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Look, ${worldSubtype ? worldSubtype + ' ' : ''}${world} seemed like a good idea to ${playerName} at the time, but now there's ${genre}, and apparently ${playerName.split(' ')[0]} is going to ${dynamic}.`,
+      `Look, ${worldSubtype ? worldSubtype + ' ' : ''}${world} seemed like a good idea at the time${formatPlayerAppositive(playerName)}, but now there is ${genre}, and apparently you are going to ${dynamic}.`,
 
     Surreal: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `${worldSubtype ? worldSubtype + ' ' : ''}${world} bends at the edges for ${playerName}, where ${genre} tastes like something half-remembered, and ${playerName.split(' ')[0]} ${dynamic}s, or perhaps always has.`,
+      `${worldSubtype ? worldSubtype.charAt(0).toUpperCase() + worldSubtype.slice(1) + ' ' : ''}${world} bends at the edges${formatPlayerAppositive(playerName)}, where ${genre} tastes like something half-remembered, and you ${dynamic}.`,
 
     Poetic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Beneath the long shadow of ${worldSubtype ? worldSubtype + ' ' : ''}${world}, ${playerName}'s fate drifts toward ${genre}—and love, the need to ${dynamic}, moves like a quiet inevitability.`
+      `Beneath the long shadow of ${worldSubtype ? worldSubtype + ' ' : ''}${world}, your fate${formatPlayerAppositive(playerName)} drifts toward ${genre}, and the need to ${dynamic} moves like a quiet inevitability.`
   };
 
   /**
