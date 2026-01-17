@@ -57,6 +57,19 @@ const ALLOWED_MODELS = {
     'gpt-4'
   ],
 
+  // Normalization roles - ALWAYS use OpenAI, NEVER Grok
+  NORMALIZATION: [
+    'gpt-4o-mini'
+  ],
+
+  VETO_NORMALIZATION: [
+    'gpt-4o-mini'
+  ],
+
+  DSP_NORMALIZATION: [
+    'gpt-4o-mini'
+  ],
+
   // Renderer model for visual bible extraction and visualization prompts ONLY
   RENDERER: [
     'grok-4-fast-non-reasoning'
@@ -84,6 +97,9 @@ const ALLOWED_MODELS = {
 // Default models for each role
 const DEFAULT_MODELS = {
   PRIMARY_AUTHOR: 'gpt-4o-mini',
+  NORMALIZATION: 'gpt-4o-mini',
+  VETO_NORMALIZATION: 'gpt-4o-mini',
+  DSP_NORMALIZATION: 'gpt-4o-mini',
   RENDERER: 'grok-4-fast-non-reasoning',        // Visual bible, visualization prompts ONLY
   SEX_RENDERER: 'grok-4-fast-reasoning',        // Explicit scenes (ESD-gated)
   FATE_STRUCTURAL: 'gpt-4o-mini',

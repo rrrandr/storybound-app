@@ -135,7 +135,21 @@ export default async function handler(req, res) {
      * HARD RULE: Grok must NEVER be called for DSP, normalization, veto, or story logic.
      */
 
-    // Role-based model selection
+    // AUTHOR-equivalent roles must NEVER hit Grok proxy - reject immediately
+    const AUTHOR_ROLES = [
+      'AUTHOR', 'PRIMARY_AUTHOR', 'FATE_STRUCTURAL', 'FATE_ELEVATION',
+      'NORMALIZATION', 'VETO_NORMALIZATION', 'DSP_NORMALIZATION'
+    ];
+
+    if (AUTHOR_ROLES.includes(role)) {
+      console.error(`[SPECIALIST-PROXY] REJECTED: Role "${role}" is AUTHOR-equivalent and must use /api/chatgpt-proxy, not Grok.`);
+      return res.status(400).json({
+        error: 'WRONG_ENDPOINT',
+        detail: `Role "${role}" is an AUTHOR role and must use /api/chatgpt-proxy. Grok proxy is for RENDERER and SEX_RENDERER only.`
+      });
+    }
+
+    // Role-based model selection for Grok-allowed roles
     let selectedModel;
     if (role === 'RENDERER') {
       selectedModel = 'grok-4-fast-non-reasoning';
@@ -144,7 +158,8 @@ export default async function handler(req, res) {
     } else {
       // Reject unknown roles
       return res.status(400).json({
-        error: `Unknown renderer role: "${role}". Valid roles: RENDERER, SEX_RENDERER`
+        error: 'INVALID_ROLE',
+        detail: `Unknown role: "${role}". Valid Grok roles: RENDERER, SEX_RENDERER. AUTHOR roles use /api/chatgpt-proxy.`
       });
     }
 

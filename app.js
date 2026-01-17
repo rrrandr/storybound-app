@@ -610,6 +610,7 @@ For veto/quill/god_mode:
 
   /**
    * Call the runtime normalization layer (ChatGPT) for canonicalization.
+   * ROUTES TO OPENAI via /api/chatgpt-proxy - NEVER uses Grok.
    * @param {Object} params - { axis, selected_world, allowed_subtypes, user_text, context_signals }
    * @returns {Promise<Object>} - Normalized response JSON
    */
@@ -631,11 +632,18 @@ For veto/quill/god_mode:
           context_signals
       };
 
+      // Determine normalization role based on axis
+      const normalizationRole = axis === 'veto' ? 'VETO_NORMALIZATION'
+          : axis === 'dsp' ? 'DSP_NORMALIZATION'
+          : 'NORMALIZATION';
+
       try {
-          const res = await fetch(PROXY_URL, {
+          // CRITICAL: Use ChatGPT proxy, NOT Grok proxy
+          const res = await fetch('/api/chatgpt-proxy', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
+                  role: normalizationRole,
                   model: 'gpt-4o-mini',
                   messages: [
                       { role: 'system', content: RUNTIME_NORMALIZATION_PROMPT },
@@ -3226,8 +3234,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     bindLengthHandlers();
 
-    // Single-select axes for 4-axis system
-    const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov'];
+    // Single-select axes for 4-axis system (worldSubtype is optional sub-selection)
+    const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov', 'worldSubtype'];
 
     document.querySelectorAll('.card[data-grp]').forEach(card => {
       if(card.dataset.bound === '1') return;
@@ -3249,6 +3257,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           // Special handling: show/hide Era sub-selection when World changes
           if (grp === 'world') {
             updateEraVisibility(val);
+            updateWorldSubtypeVisibility(val, state.picks.tone);
+          }
+
+          // Special handling: show/hide Horror subtypes when Tone changes
+          if (grp === 'tone') {
+            updateWorldSubtypeVisibility(state.picks.world, val);
           }
 
           // Update floating synopsis panel
@@ -3267,11 +3281,30 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // Initialize Era visibility based on initial world selection
     updateEraVisibility(state.picks.world);
+    // Initialize World Subtype visibility based on initial selections
+    updateWorldSubtypeVisibility(state.picks.world, state.picks.tone);
     // Initialize synopsis panel
     updateSynopsisPanel();
 
+    // Update DSP when player name changes (DSP MUST include player name)
+    const playerNameInput = $('playerNameInput');
+    if (playerNameInput) {
+      playerNameInput.addEventListener('input', debounce(() => {
+        updateSynopsisPanel();
+      }, 300));
+    }
+
     // Initialize Archetype System
     initArchetypeUI();
+  }
+
+  // Debounce utility for input handlers
+  function debounce(fn, delay) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => fn.apply(this, args), delay);
+    };
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -3285,6 +3318,51 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       eraSection.classList.remove('hidden');
     } else {
       eraSection.classList.add('hidden');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // WORLD SUBTYPE VISIBILITY - Show/hide subtype selections per world
+  // ═══════════════════════════════════════════════════════════════════
+  /**
+   * Maps world values to their subtype selection container IDs.
+   * Only these worlds have subtype options:
+   * - SciFi, Fantasy, Horror (tone-based), Dystopia, PostApocalyptic
+   */
+  const WORLD_SUBTYPE_MAP = {
+    SciFi: 'scifiSubtypeSelection',
+    Fantasy: 'fantasySubtypeSelection',
+    Dystopia: 'dystopiaSubtypeSelection',
+    PostApocalyptic: 'apocalypseSubtypeSelection'
+  };
+
+  // Horror subtypes are shown when Horror TONE is selected with certain worlds
+  const HORROR_ELIGIBLE_WORLDS = ['Fantasy', 'Supernatural', 'Modern'];
+
+  function updateWorldSubtypeVisibility(worldValue, toneValue) {
+    // Hide all subtype sections first
+    Object.values(WORLD_SUBTYPE_MAP).forEach(id => {
+      const section = document.getElementById(id);
+      if (section) section.classList.add('hidden');
+    });
+    const horrorSection = document.getElementById('horrorSubtypeSelection');
+    if (horrorSection) horrorSection.classList.add('hidden');
+
+    // Clear worldSubtype from state when world changes
+    if (state.picks.worldSubtype) {
+      delete state.picks.worldSubtype;
+    }
+
+    // Show relevant subtype section based on world
+    const subtypeSectionId = WORLD_SUBTYPE_MAP[worldValue];
+    if (subtypeSectionId) {
+      const section = document.getElementById(subtypeSectionId);
+      if (section) section.classList.remove('hidden');
+    }
+
+    // Show horror subtypes if Horror tone is selected with eligible world
+    if (toneValue === 'Horror' && HORROR_ELIGIBLE_WORLDS.includes(worldValue)) {
+      if (horrorSection) horrorSection.classList.remove('hidden');
     }
   }
 
@@ -3348,42 +3426,103 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   };
 
   // TONE GENERATORS: Each produces a complete sentence in that tone's voice
+  // DSP TONE GENERATORS: Each produces a complete sentence in that tone's voice
+  // REQUIRED: playerName must be included in every DSP sentence
+  // REQUIRED: worldSubtype should be incorporated when present
   const DSP_TONE_GENERATORS = {
-    Earnest: ({ world, genre, dynamic }) =>
-      `In ${world}, you are drawn into ${genre}—and you will ${dynamic}.`,
+    Earnest: ({ playerName, world, worldSubtype, genre, dynamic }) =>
+      `${playerName} steps into ${worldSubtype ? worldSubtype + ' ' : ''}${world}, drawn into ${genre}—and will ${dynamic}.`,
 
-    WryConfession: ({ world, genre, dynamic }) =>
-      `So here you are, in ${world}, tangled up in ${genre}. And somehow, against all judgment, you ${dynamic}.`,
+    WryConfession: ({ playerName, world, worldSubtype, genre, dynamic }) =>
+      `So here ${playerName} is, in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, tangled up in ${genre}, and somehow, against all judgment, will ${dynamic}.`,
 
-    Satirical: ({ world, genre, dynamic }) =>
-      `Welcome to ${world}, where ${genre} is already a mess—and you've agreed to make it worse by deciding to ${dynamic}.`,
+    Satirical: ({ playerName, world, worldSubtype, genre, dynamic }) =>
+      `Welcome ${playerName} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} is already a mess—and ${playerName.split(' ')[0]} has agreed to make it worse by deciding to ${dynamic}.`,
 
-    Dark: ({ world, genre, dynamic }) =>
-      `In ${world}, ${genre} waits in every shadow. You will ${dynamic}, no matter what it costs.`,
+    Dark: ({ playerName, world, worldSubtype, genre, dynamic }) =>
+      `In ${worldSubtype ? worldSubtype + ' ' : ''}${world}, ${genre} waits in every shadow, and ${playerName} will ${dynamic}, no matter what it costs.`,
 
-    Horror: ({ world, genre, dynamic }) =>
-      `Something waits in ${world}. It wears the face of ${genre}. And it knows you will ${dynamic}.`,
+    Horror: ({ playerName, world, worldSubtype, genre, dynamic }) =>
+      `Something waits in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, wearing the face of ${genre}, and it knows ${playerName} will ${dynamic}.`,
 
-    Mythic: ({ world, genre, dynamic }) =>
-      `Fate calls you to ${world}, where ${genre} shapes the path of heroes—and you must ${dynamic}.`,
+    Mythic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
+      `Fate calls ${playerName} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} shapes the path of heroes—and ${playerName.split(' ')[0]} must ${dynamic}.`,
 
-    Comedic: ({ world, genre, dynamic }) =>
-      `Look, ${world} seemed like a good idea at the time. Now there's ${genre}, and apparently you're going to ${dynamic}. Good luck with that.`,
+    Comedic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
+      `Look, ${worldSubtype ? worldSubtype + ' ' : ''}${world} seemed like a good idea to ${playerName} at the time, but now there's ${genre}, and apparently ${playerName.split(' ')[0]} is going to ${dynamic}.`,
 
-    Surreal: ({ world, genre, dynamic }) =>
-      `${world} bends at the edges. ${genre} tastes like something half-remembered. You ${dynamic}, or perhaps you always have.`,
+    Surreal: ({ playerName, world, worldSubtype, genre, dynamic }) =>
+      `${worldSubtype ? worldSubtype + ' ' : ''}${world} bends at the edges for ${playerName}, where ${genre} tastes like something half-remembered, and ${playerName.split(' ')[0]} ${dynamic}s, or perhaps always has.`,
 
-    Poetic: ({ world, genre, dynamic }) =>
-      `Beneath the long shadow of ${world}, your fate drifts toward ${genre}—and love, the need to ${dynamic}, moves like a quiet inevitability.`
+    Poetic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
+      `Beneath the long shadow of ${worldSubtype ? worldSubtype + ' ' : ''}${world}, ${playerName}'s fate drifts toward ${genre}—and love, the need to ${dynamic}, moves like a quiet inevitability.`
   };
 
-  function generateDSPSentence(world, tone, genre, dynamic) {
+  /**
+   * Generate a single DSP sentence that:
+   * - Is exactly one sentence
+   * - Is grammatically closed (no fragments)
+   * - Is written in present tense
+   * - Addresses Player 1 by name (REQUIRED)
+   * - Reflects: World, World Subtype (if any), Tone, Dynamic, Style
+   */
+  function generateDSPSentence(world, tone, genre, dynamic, playerName, worldSubtype) {
     const worldText = DSP_WORLD_SETTINGS[world] || DSP_WORLD_SETTINGS.Modern;
     const genreText = DSP_GENRE_CONFLICTS[genre] || DSP_GENRE_CONFLICTS.Billionaire;
     const dynamicText = DSP_DYNAMIC_ENGINES[dynamic] || DSP_DYNAMIC_ENGINES.Enemies;
 
+    // Player name is REQUIRED for DSP generation
+    const name = playerName || $('playerNameInput')?.value?.trim() || 'The Protagonist';
+
+    // World subtype provides additional context (optional)
+    const subtypeText = worldSubtype ? formatWorldSubtype(worldSubtype) : null;
+
     const generator = DSP_TONE_GENERATORS[tone] || DSP_TONE_GENERATORS.Earnest;
-    return generator({ world: worldText, genre: genreText, dynamic: dynamicText });
+    return generator({
+      playerName: name,
+      world: worldText,
+      worldSubtype: subtypeText,
+      genre: genreText,
+      dynamic: dynamicText
+    });
+  }
+
+  /**
+   * Format world subtype for display in DSP
+   * Converts internal subtype keys to readable phrases
+   */
+  function formatWorldSubtype(subtype) {
+    const SUBTYPE_DISPLAY = {
+      // Sci-Fi subtypes
+      space_opera: 'a galactic',
+      hard_scifi: 'a scientifically rigorous',
+      cyberpunk: 'a neon-lit cyberpunk',
+      post_human: 'a transcendent',
+      alien_contact: 'an alien-touched',
+      military_scifi: 'a military',
+      post_scarcity: 'a post-scarcity',
+      // Fantasy subtypes
+      high_fantasy: 'a magical',
+      low_fantasy: 'a subtle-magic',
+      dark_fantasy: 'a grim',
+      // Horror subtypes
+      cosmic_horror: 'a cosmic',
+      psychological_horror: 'a psychological',
+      gothic_horror: 'a gothic',
+      body_horror: 'a visceral',
+      folk_horror: 'a folk-terror',
+      // Dystopia subtypes
+      authoritarian: 'an authoritarian',
+      surveillance: 'a surveillance',
+      corporate: 'a corporate-ruled',
+      environmental: 'an ecologically collapsed',
+      // Post-Apocalyptic subtypes
+      nuclear: 'a nuclear-scarred',
+      pandemic: 'a plague-ravaged',
+      climate: 'a climate-devastated',
+      technological: 'a tech-fallen'
+    };
+    return SUBTYPE_DISPLAY[subtype] || null;
   }
 
   function updateSynopsisPanel() {
@@ -3396,8 +3535,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const genre = state.picks.genre || 'Billionaire';
     const dynamic = state.picks.dynamic || 'Enemies';
 
-    // Generate holistic sentence based on tone
-    const newSentence = generateDSPSentence(world, tone, genre, dynamic);
+    // Get player name for DSP (REQUIRED)
+    const playerName = $('playerNameInput')?.value?.trim() || 'The Protagonist';
+
+    // Get world subtype if one is selected (optional)
+    const worldSubtype = state.picks.worldSubtype || getSelectedWorldSubtype(world);
+
+    // Generate holistic sentence based on tone with player name and subtype
+    const newSentence = generateDSPSentence(world, tone, genre, dynamic, playerName, worldSubtype);
 
     // Update with animation if content changed
     if (synopsisText.textContent !== newSentence) {
@@ -3405,6 +3550,30 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       synopsisText.textContent = newSentence;
       setTimeout(() => synopsisText.classList.remove('updating'), 500);
     }
+  }
+
+  /**
+   * Get selected world subtype from the subtype selection UI
+   * Returns null if no subtype is selected
+   */
+  function getSelectedWorldSubtype(world) {
+    // Map world to subtype container ID
+    const subtypeContainerMap = {
+      SciFi: 'scifiSubtypeGrid',
+      Fantasy: 'fantasySubtypeGrid',
+      Horror: 'horrorSubtypeGrid',
+      Dystopia: 'dystopiaSubtypeGrid',
+      PostApocalyptic: 'apocalypseSubtypeGrid'
+    };
+
+    const containerId = subtypeContainerMap[world];
+    if (!containerId) return null;
+
+    const container = document.getElementById(containerId);
+    if (!container) return null;
+
+    const selected = container.querySelector('.card.selected');
+    return selected?.dataset?.val || null;
   }
 
   // ═══════════════════════════════════════════════════════════════════
