@@ -1,3 +1,63 @@
+/**
+ * =============================================================================
+ * STORYBOUND FATE CARD SYSTEM
+ * =============================================================================
+ *
+ * AUTHORITATIVE DOCUMENT — DO NOT REINTERPRET
+ *
+ * =============================================================================
+ * FATE CARD DUAL-MODEL SPLIT (LOCKED)
+ * =============================================================================
+ *
+ * Fate Cards use a dual-model architecture with strict separation:
+ *
+ * GPT-5.1 — Structural Authority (REQUIRED)
+ * -----------------------------------------
+ * GPT-5.1 is the ONLY authority allowed to:
+ * - Define Fate Card identity
+ * - Define card scope and effect
+ * - Define action seed
+ * - Define dialogue seed
+ * - Enforce consent, safety, and intensity ceilings
+ *
+ * This output is CANONICAL and FROZEN.
+ *
+ * GPT-5.2 — Linguistic Elevation (OPTIONAL)
+ * -----------------------------------------
+ * GPT-5.2 may be used ONLY AFTER GPT-5.1 output is locked.
+ *
+ * GPT-5.2 may:
+ * - Elevate phrasing
+ * - Increase emotional gravity
+ * - Enhance inevitability and tension
+ *
+ * GPT-5.2 may NOT:
+ * - Explain
+ * - Command
+ * - Imply control
+ * - Speak as Fate, Author, or system
+ * - Add outcomes or awareness
+ *
+ * If GPT-5.2 violates Fate Card laws, its output is DISCARDED
+ * and GPT-5.1 text is used.
+ *
+ * There is NO live improvisation.
+ *
+ * =============================================================================
+ * INTEGRATION WITH ORCHESTRATION
+ * =============================================================================
+ *
+ * Fate Cards are processed through the orchestration client when available:
+ * - window.StoryboundOrchestration.processFateCard(card, storyContext)
+ *
+ * This ensures:
+ * - GPT-5.1 structural pass runs first
+ * - GPT-5.2 elevation is optional and validated
+ * - Elevation violations result in fallback to GPT-5.1 output
+ *
+ * =============================================================================
+ */
+
 (function(window){
     // Card Definitions - Base templates
     const fateDeckBase = [

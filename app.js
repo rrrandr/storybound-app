@@ -22,10 +22,56 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   const SUPABASE_URL = config.supabaseUrl || ""; 
   const SUPABASE_ANON_KEY = config.supabaseAnonKey || "";
-  const PROXY_URL = config.proxyUrl || 'https://storybound-proxy.vercel.app/api/proxy';
+  // Use local proxy by default (requires XAI_API_KEY env var)
+  // Falls back to external proxy if explicitly configured
+  const PROXY_URL = config.proxyUrl || '/api/proxy';
   // Image requests always use local /api/image endpoint (never proxy)
   var IMAGE_PROXY_URL = '/api/image';
-  const STORY_MODEL = 'grok-4-1-fast-reasoning'; 
+
+  // =============================================================================
+  // AI ORCHESTRATION CONFIGURATION
+  // =============================================================================
+  /**
+   * AUTHORITATIVE — DO NOT REINTERPRET
+   *
+   * Storybound uses MULTIPLE AI models with STRICT SEPARATION OF AUTHORITY:
+   *
+   * 1. ChatGPT (PRIMARY AUTHOR — ALWAYS CALLED)
+   *    - ONLY model allowed to author plot progression
+   *    - ONLY model allowed to determine if intimacy occurs
+   *    - ONLY model allowed to enforce monetization gates
+   *    - ONLY model allowed to generate Erotic Scene Directives (ESD)
+   *    - Runs BEFORE any specialist renderer
+   *    - Runs AFTER any specialist renderer (integration pass)
+   *    - FINAL AUTHORITY on story state
+   *
+   * 2. Specialist Renderer (Grok) — CONDITIONAL
+   *    - Purpose: Sensory embodiment ONLY
+   *    - May ONLY receive a fully-specified ESD
+   *    - May NEVER decide plot, invent lore, or change outcomes
+   *    - NEVER decides "how far things go"
+   *    - Renders HOW IT FEELS, within bounds
+   *
+   * 3. Fate Cards — Dual-Model Split
+   *    - GPT-5.1: Structural authority (REQUIRED)
+   *    - GPT-5.2: Linguistic elevation (OPTIONAL, discardable)
+   *
+   * DO NOT MERGE THESE RESPONSIBILITIES. The separation is intentional.
+   *
+   * ORCHESTRATION ORDER (NON-NEGOTIABLE):
+   * 1. ChatGPT — Author Pass (plot, psychology, ESD generation)
+   * 2. Specialist Renderer — OPTIONAL (sensory embodiment only)
+   * 3. ChatGPT — Integration Pass (consequences, state, cliffhangers)
+   */
+
+  // Enable/disable orchestrated multi-model flow
+  // When true: ChatGPT → optional Grok → ChatGPT
+  // When false: Legacy single-model flow (Grok only)
+  const ENABLE_ORCHESTRATION = true;
+
+  // Legacy model (used when orchestration disabled or ChatGPT unavailable)
+  // NOTE: Must be in ALLOWED_GROK_MODELS allowlist in api/proxy.js
+  const STORY_MODEL = 'grok-2-latest'; 
   
   // Singleton Supabase Client
   let sb = null;
@@ -1143,7 +1189,14 @@ ANTI-HERO ENFORCEMENT:
   // --- GLOBAL STATE INITIALIZATION ---
   window.state = {
       tier:'free',
-      picks:{ genre:['Romantasy'], dynamic:[], pov:'First', style:['Breathless'], world:[] },
+      picks:{
+        world: 'Modern',      // 4-axis: Story World (single-select)
+        tone: 'Earnest',      // 4-axis: Story Tone (single-select)
+        genre: 'Billionaire', // 4-axis: Genre/Flavor (single-select)
+        dynamic: 'Enemies',   // 4-axis: Relationship Dynamic (single-select)
+        era: 'Medieval',      // Historical Era sub-selection (when world=Historical)
+        pov: 'First'
+      },
       gender:'Female',
       loveInterest:'Male',
       archetype: { primary: null, modifier: null }, 
@@ -1374,10 +1427,20 @@ ANTI-HERO ENFORCEMENT:
           if (app.contains(target)) app.classList.remove('hidden');
           else app.classList.add('hidden');
       }
-      
-      window.scrollTo(0,0);
+
+      // CORRECTIVE PASS FIX 4: Do NOT scroll when entering game screen
+      // The game screen uses a fixed book cover page overlay that handles its own viewport.
+      // Scrolling to top during the loading transition causes a jarring jump.
+      if (id !== 'game') {
+          window.scrollTo(0,0);
+      }
       _currentScreenId = id;
       updateNavUI();
+
+      // Update DSP visibility based on screen (state-based, not scroll-based)
+      if (typeof updateDSPVisibility === 'function') {
+          updateDSPVisibility(id);
+      }
 
       // Initialize fate hand system when entering setup screen
       if(id === 'setup') {
@@ -2172,7 +2235,7 @@ ANTI-HERO ENFORCEMENT:
       // Check if bible is already populated
       if (state.visual.bible.style && Object.keys(state.visual.bible.characters).length > 0) return;
       
-      const genre = Array.isArray(state?.picks?.genre) ? state.picks.genre.join(', ') : "";
+      const genre = state?.picks?.genre || 'Billionaire';
       const sys = `You are a Visual Director. Extract consistent visual anchors into STRICT JSON with this structure:
 {
   "style": "visual style description",
@@ -3132,9 +3195,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function initSelectionHandlers(){
     state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"] };
 
-    // Initialize default dynamics (Power Imbalance)
-    if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
-        state.picks.dynamic = ['Power'];
+    // Initialize default dynamic (single-select in 4-axis system)
+    if (!state.picks.dynamic) {
+        state.picks.dynamic = 'Enemies';
     }
 
     // Bind Visual Auto-Lock
@@ -3163,6 +3226,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     bindLengthHandlers();
 
+    // Single-select axes for 4-axis system
+    const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov'];
+
     document.querySelectorAll('.card[data-grp]').forEach(card => {
       if(card.dataset.bound === '1') return;
       card.dataset.bound = '1';
@@ -3170,17 +3236,27 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if(e.target.closest('.preview-btn')) return;
         const grp = card.dataset.grp;
         const val = card.dataset.val;
-        if(!grp || !val || grp === 'length') return; 
+        if(!grp || !val || grp === 'length') return;
 
         if(card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
 
-        if(grp === 'pov'){
-          state.picks.pov = val;
-          document.querySelectorAll('.card[data-grp="pov"]').forEach(c => c.classList.remove('selected'));
+        // 4-axis system: world, tone, genre, dynamic, era, pov are all single-select
+        if (SINGLE_SELECT_AXES.includes(grp)) {
+          state.picks[grp] = val;
+          document.querySelectorAll(`.card[data-grp="${grp}"]`).forEach(c => c.classList.remove('selected'));
           card.classList.add('selected');
+
+          // Special handling: show/hide Era sub-selection when World changes
+          if (grp === 'world') {
+            updateEraVisibility(val);
+          }
+
+          // Update floating synopsis panel
+          updateSynopsisPanel();
           return;
         }
 
+        // Legacy multi-select handling (if any remain)
         if(!state.picks[grp]) state.picks[grp] = [];
         const arr = state.picks[grp];
         const idx = arr.indexOf(val);
@@ -3189,9 +3265,189 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
     });
 
+    // Initialize Era visibility based on initial world selection
+    updateEraVisibility(state.picks.world);
+    // Initialize synopsis panel
+    updateSynopsisPanel();
+
     // Initialize Archetype System
     initArchetypeUI();
   }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ERA VISIBILITY - Show/hide Historical Era selection
+  // ═══════════════════════════════════════════════════════════════════
+  function updateEraVisibility(worldValue) {
+    const eraSection = document.getElementById('eraSelection');
+    if (!eraSection) return;
+
+    if (worldValue === 'Historical') {
+      eraSection.classList.remove('hidden');
+    } else {
+      eraSection.classList.add('hidden');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SYNOPSIS PANEL - Live-updating story preview based on 4-axis selections
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // ╔═══════════════════════════════════════════════════════════════════╗
+  // ║                    LOCKED DESIGN RULES                            ║
+  // ║                                                                   ║
+  // ║ 1. The floating synopsis panel must remain visually restrained   ║
+  // ║    and literary. No glassmorphism, glow effects, or color-coded  ║
+  // ║    highlighting. It should feel like an authorial whisper.       ║
+  // ║                                                                   ║
+  // ║ 2. Genres must describe narrative action or fantasy, not setting ║
+  // ║    or life stage. "Sports", "College", "Small Town" are not      ║
+  // ║    genres—they are world modifiers.                              ║
+  // ║                                                                   ║
+  // ║ 3. Relationship Dynamics are single-select and represent         ║
+  // ║    emotional structure, not identity. They describe how          ║
+  // ║    characters relate, not who they are.                          ║
+  // ╚═══════════════════════════════════════════════════════════════════╝
+  //
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP TONE-BASED GENERATORS (TONE SUPREMACY)
+  // Tone controls the entire sentence voice, not just one fragment.
+  // When tone changes, the entire DSP sentence rewrites in that voice.
+  // ═══════════════════════════════════════════════════════════════════
+  const DSP_WORLD_SETTINGS = {
+    Modern: 'a world of ambition and buried secrets',
+    Historical: 'an age bound by unforgiving rules',
+    Dystopia: 'a broken world that demands sacrifice',
+    PostApocalyptic: 'the ashes of what came before',
+    Fantasy: 'a realm where magic breathes in shadow',
+    SciFi: 'a frontier where stars hold both promise and peril',
+    Supernatural: 'a place where the veil between worlds runs thin',
+    Superheroic: 'a world where power demands impossible choices'
+  };
+
+  const DSP_GENRE_CONFLICTS = {
+    CrimeSyndicate: 'blood oaths and betrayal',
+    Billionaire: 'games only the powerful understand',
+    Noir: 'shadows where no one walks clean',
+    Heist: 'a plan you must trust completely',
+    Espionage: 'secrets that could kill',
+    Political: 'a web of dangerous alliances'
+  };
+
+  const DSP_DYNAMIC_ENGINES = {
+    Forbidden: 'desire what you cannot have',
+    Dangerous: 'want the one who could destroy you',
+    Fated: 'fight what was always meant to be',
+    Partners: 'trust only each other',
+    Enemies: 'need the one who stands against you',
+    Friends: 'cross a line you cannot uncross',
+    Proximity: 'share space with the one you cannot escape',
+    SecretIdentity: 'fall for who they pretend to be',
+    Obsessive: 'become the center of someone\'s world',
+    Caretaker: 'let someone see your wounds',
+    SecondChance: 'reopen a door you thought was closed'
+  };
+
+  // TONE GENERATORS: Each produces a complete sentence in that tone's voice
+  const DSP_TONE_GENERATORS = {
+    Earnest: ({ world, genre, dynamic }) =>
+      `In ${world}, you are drawn into ${genre}—and you will ${dynamic}.`,
+
+    WryConfession: ({ world, genre, dynamic }) =>
+      `So here you are, in ${world}, tangled up in ${genre}. And somehow, against all judgment, you ${dynamic}.`,
+
+    Satirical: ({ world, genre, dynamic }) =>
+      `Welcome to ${world}, where ${genre} is already a mess—and you've agreed to make it worse by deciding to ${dynamic}.`,
+
+    Dark: ({ world, genre, dynamic }) =>
+      `In ${world}, ${genre} waits in every shadow. You will ${dynamic}, no matter what it costs.`,
+
+    Horror: ({ world, genre, dynamic }) =>
+      `Something waits in ${world}. It wears the face of ${genre}. And it knows you will ${dynamic}.`,
+
+    Mythic: ({ world, genre, dynamic }) =>
+      `Fate calls you to ${world}, where ${genre} shapes the path of heroes—and you must ${dynamic}.`,
+
+    Comedic: ({ world, genre, dynamic }) =>
+      `Look, ${world} seemed like a good idea at the time. Now there's ${genre}, and apparently you're going to ${dynamic}. Good luck with that.`,
+
+    Surreal: ({ world, genre, dynamic }) =>
+      `${world} bends at the edges. ${genre} tastes like something half-remembered. You ${dynamic}, or perhaps you always have.`,
+
+    Poetic: ({ world, genre, dynamic }) =>
+      `Beneath the long shadow of ${world}, your fate drifts toward ${genre}—and love, the need to ${dynamic}, moves like a quiet inevitability.`
+  };
+
+  function generateDSPSentence(world, tone, genre, dynamic) {
+    const worldText = DSP_WORLD_SETTINGS[world] || DSP_WORLD_SETTINGS.Modern;
+    const genreText = DSP_GENRE_CONFLICTS[genre] || DSP_GENRE_CONFLICTS.Billionaire;
+    const dynamicText = DSP_DYNAMIC_ENGINES[dynamic] || DSP_DYNAMIC_ENGINES.Enemies;
+
+    const generator = DSP_TONE_GENERATORS[tone] || DSP_TONE_GENERATORS.Earnest;
+    return generator({ world: worldText, genre: genreText, dynamic: dynamicText });
+  }
+
+  function updateSynopsisPanel() {
+    const synopsisText = document.getElementById('synopsisText');
+    if (!synopsisText) return;
+
+    // Get current selections
+    const world = state.picks.world || 'Modern';
+    const tone = state.picks.tone || 'Earnest';
+    const genre = state.picks.genre || 'Billionaire';
+    const dynamic = state.picks.dynamic || 'Enemies';
+
+    // Generate holistic sentence based on tone
+    const newSentence = generateDSPSentence(world, tone, genre, dynamic);
+
+    // Update with animation if content changed
+    if (synopsisText.textContent !== newSentence) {
+      synopsisText.classList.add('updating');
+      synopsisText.textContent = newSentence;
+      setTimeout(() => synopsisText.classList.remove('updating'), 500);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP VISIBILITY LIFECYCLE (STATE-BASED)
+  // DSP is visible throughout the four-axis configuration (World → Tone
+  // → Genre → Dynamic). It disappears only after Begin Story is clicked.
+  // Visibility is tied to screen state, not scroll position.
+  // ═══════════════════════════════════════════════════════════════════
+  function showDSP() {
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    if (synopsisPanel && window.innerWidth > 1100) {
+      synopsisPanel.classList.add('visible');
+    }
+  }
+
+  function hideDSP() {
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    if (synopsisPanel) {
+      synopsisPanel.classList.remove('visible');
+    }
+  }
+
+  // DSP shows when user is configuring story (setup screen)
+  function updateDSPVisibility(screenId) {
+    if (screenId === 'setup') {
+      showDSP();
+    } else {
+      hideDSP();
+    }
+  }
+
+  // Expose for external calls
+  window.showDSP = showDSP;
+  window.hideDSP = hideDSP;
+  window.updateDSPVisibility = updateDSPVisibility;
+
+  // Legacy function name for compatibility
+  function initSynopsisPanelScrollBehavior() {
+    // Now state-based, not scroll-based
+    // DSP visibility controlled by updateDSPVisibility(screenId)
+    updateDSPVisibility(_currentScreenId);
+  }
+  window.initSynopsisPanelScrollBehavior = initSynopsisPanelScrollBehavior;
 
   // =========================
   // ARCHETYPE UI HANDLERS
@@ -3516,6 +3772,23 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     return _loadingCancelled;
   }
 
+  /**
+   * Update the loading message during an active loading state.
+   * Used by orchestration to show phase-specific messages.
+   */
+  function updateLoadingMessage(msg) {
+    if (!_loadingActive) return;
+    const textEl = document.getElementById('loadingText');
+    if (textEl) {
+      // Fade transition
+      textEl.style.opacity = '0';
+      setTimeout(() => {
+        textEl.textContent = msg;
+        textEl.style.opacity = '1';
+      }, 200);
+    }
+  }
+
   function stopLoading(){
     if(!_loadingActive) return;
     _loadingActive = false;
@@ -3751,19 +4024,26 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           errors.push(archetypeValidation.errors[0] || 'Please select a Primary Archetype.');
       }
 
-      // Check for at least one genre selected
-      if (!state.picks.genre || state.picks.genre.length === 0) {
-          errors.push('Please select at least one Genre.');
+      // 4-axis validation: world, tone, genre, dynamic are required (single-select)
+      if (!state.picks.world) {
+          errors.push('Please select a Story World.');
       }
 
-      // Check for at least one dynamic selected
-      if (!state.picks.dynamic || state.picks.dynamic.length === 0) {
-          errors.push('Please select at least one Dynamic.');
+      if (!state.picks.tone) {
+          errors.push('Please select a Story Tone.');
       }
 
-      // Check for at least one style selected
-      if (!state.picks.style || state.picks.style.length === 0) {
-          errors.push('Please select at least one Story Style.');
+      if (!state.picks.genre) {
+          errors.push('Please select a Genre.');
+      }
+
+      if (!state.picks.dynamic) {
+          errors.push('Please select a Relationship Dynamic.');
+      }
+
+      // Historical world requires era selection
+      if (state.picks.world === 'Historical' && !state.picks.era) {
+          errors.push('Please select a Historical Era.');
       }
 
       return errors;
@@ -3824,6 +4104,52 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     syncPovDerivedFlags();
     const safetyStr = buildConsentDirectives();
+
+    // === EARLY VALIDATION (before screen transition) ===
+    // Build diagnostic payload and validate BEFORE showing game screen
+    const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
+    const ancestryLI = $('ancestryInputLI')?.value.trim() || '';
+    const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
+    const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+
+    const earlyPayload = {
+        mode: state.mode || 'solo',
+        fourAxis: {
+            world: state.picks.world || 'Modern',
+            tone: state.picks.tone || 'Earnest',
+            genre: state.picks.genre || 'Billionaire',
+            dynamic: state.picks.dynamic || 'Enemies'
+        },
+        archetype: {
+            primary: state.archetype.primary || null,
+            directives: archetypeDirectives || '(none built)'
+        },
+        veto: {
+            bannedWords: state.veto?.bannedWords || [],
+            tone: state.veto?.tone || []
+        },
+        intensity: state.intensity || 'Naughty',
+        pov: state.picks.pov || 'First',
+        systemPromptLength: 1 // Will be set after sys prompt built
+    };
+
+    // Validate four-axis before proceeding
+    const { world, tone, genre, dynamic } = earlyPayload.fourAxis;
+    const earlyErrors = [];
+    if (!earlyPayload.mode) earlyErrors.push('Mode is undefined');
+    if (!world) earlyErrors.push('World is missing or empty');
+    if (!tone) earlyErrors.push('Tone is missing or empty');
+    if (!genre) earlyErrors.push('Genre is missing or empty');
+    if (!dynamic) earlyErrors.push('Relationship Dynamic is missing or empty');
+    if (!earlyPayload.archetype.primary) earlyErrors.push('Primary Archetype not selected');
+    if (earlyPayload.archetype.directives === '(none built)') earlyErrors.push('Archetype directives failed to build');
+
+    if (earlyErrors.length > 0) {
+        console.error('STORYBOUND EARLY VALIDATION FAILED:', earlyErrors);
+        showToast(`Story setup incomplete: ${earlyErrors[0]}`);
+        return;
+    }
+    // === END EARLY VALIDATION ===
 
     const coupleArcRules = `
 COUPLE MODE ARC RULES (CRITICAL):
@@ -3944,11 +4270,12 @@ Long-Arc Presence Awareness:
 
 ────────────────────────────────────
 
-You are writing a story in the "${state.picks.genre.join(', ')}" genre.
-Style: ${state.picks.style.join(', ')}.
-POV: ${state.picks.pov}.
-Dynamics: ${state.picks.dynamic.join(', ')}.
-${state.picks.world && state.picks.world.length > 0 ? `Story World: ${state.picks.world.map(w => getWorldLabel(w)).join(', ')}.` : ''}
+You are writing a story with the following 4-axis configuration:
+- World: ${state.picks.world || 'Modern'}${state.picks.world === 'Historical' && state.picks.era ? ` (${state.picks.era} Era)` : ''}
+- Tone: ${state.picks.tone || 'Earnest'}
+- Genre: ${state.picks.genre || 'Billionaire'}
+- Dynamic: ${state.picks.dynamic || 'Enemies'}
+- POV: ${state.picks.pov || 'First'}
 
 
     Protagonist: ${pName} (${pGen}, ${pPro}).
@@ -3982,9 +4309,16 @@ ${state.picks.world && state.picks.world.length > 0 ? `Story World: ${state.pick
     
     state.sysPrompt = sys;
     state.storyId = state.storyId || makeStoryId();
-    
+
     window.showScreen('game');
-    
+
+    // Initialize book cover page - show cover, hide story content
+    const bookCoverPage = document.getElementById('bookCoverPage');
+    const storyContentEl = document.getElementById('storyContent');
+    if (bookCoverPage) bookCoverPage.classList.remove('hidden');
+    if (storyContentEl) storyContentEl.classList.add('hidden');
+    startCoverLoading();
+
     startLoading("Conjuring the world...", STORY_LOADING_MESSAGES);
     
     // Pacing rules based on intensity
@@ -4041,15 +4375,16 @@ The opening must feel intentional and specific, not archetypal or templated.`;
     // RUNTIME NORMALIZATION: Ancestry/DSP inputs flow through ChatGPT normalization layer
     const rawAncestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
     const rawAncestryLI = $('ancestryInputLI')?.value.trim() || '';
+    const worldContext = state.picks?.world ? [state.picks.world] : [];
     const ancestryPlayerNorm = await callNormalizationLayer({
         axis: 'dsp',
         user_text: rawAncestryPlayer,
-        context_signals: state.picks?.world || []
+        context_signals: worldContext
     });
     const ancestryLINorm = await callNormalizationLayer({
         axis: 'dsp',
         user_text: rawAncestryLI,
-        context_signals: state.picks?.world || []
+        context_signals: worldContext
     });
     const ancestryPlayer = ancestryPlayerNorm.normalized_text || rawAncestryPlayer;
     const ancestryLI = ancestryLINorm.normalized_text || rawAncestryLI;
@@ -4062,11 +4397,17 @@ The opening must feel intentional and specific, not archetypal or templated.`;
     else if (quillUnlocked) tier = 'quill_unlocked';
     else if (state.storyId && hasStoryPass(state.storyId)) tier = 'story_unlocked';
 
-    // Build structured payload for diagnostic
+    // Build structured payload for diagnostic (4-axis system)
     const diagnosticPayload = {
         mode: state.mode || 'solo',
         tier: tier,
-        genre: state.picks.genre || [],
+        fourAxis: {
+            world: state.picks.world || 'Modern',
+            era: state.picks.world === 'Historical' ? (state.picks.era || 'Medieval') : null,
+            tone: state.picks.tone || 'Earnest',
+            genre: state.picks.genre || 'Billionaire',
+            dynamic: state.picks.dynamic || 'Enemies'
+        },
         archetype: {
             primary: state.archetype.primary || null,
             modifier: state.archetype.modifier || null,
@@ -4085,11 +4426,8 @@ The opening must feel intentional and specific, not archetypal or templated.`;
             tone: state.veto?.tone || []
         },
         intensity: state.intensity || 'Naughty',
-        pov: state.picks.pov || 'Third Person Limited',
-        style: state.picks.style || [],
-        dynamic: state.picks.dynamic || [],
-        world: state.picks.world || [],
-        storyLength: state.storyLength || 'novella',
+        pov: state.picks.pov || 'First',
+        storyLength: state.storyLength || 'voyeur',
         systemPromptLength: state.sysPrompt?.length || 0
     };
 
@@ -4104,8 +4442,14 @@ The opening must feel intentional and specific, not archetypal or templated.`;
 
         // Required field checks
         if (!payload.mode) errors.push('Mode is undefined');
-        if (!payload.genre || payload.genre.length === 0) errors.push('Genre is missing or empty');
-        if (!payload.style || payload.style.length === 0) errors.push('Style is missing or empty');
+
+        // Four-axis validation (world, tone, genre, dynamic)
+        const { world, tone, genre, dynamic } = payload.fourAxis || {};
+        if (!world) errors.push('World is missing or empty');
+        if (!tone) errors.push('Tone is missing or empty');
+        if (!genre) errors.push('Genre is missing or empty');
+        if (!dynamic) errors.push('Relationship Dynamic is missing or empty');
+
         if (!payload.archetype.primary) errors.push('Primary Archetype not selected (default: Beautiful Ruin)');
         if (!payload.intensity) errors.push('Intensity is undefined');
         if (!payload.pov) errors.push('POV is undefined');
@@ -4200,27 +4544,35 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // Hide story text until fully rendered
         if (storyTextEl) storyTextEl.style.opacity = '0';
 
-        titleEl.textContent = title.replace(/"/g,'');
+        const cleanTitle = title.replace(/"/g,'');
+        titleEl.textContent = cleanTitle;
         synopsisEl.textContent = synopsis;
 
         // Use pagination system for story display
         StoryPagination.clear();
         StoryPagination.addPage(formatStory(text), true);
 
+        // Generate book cover with intent-based routing (async, non-blocking)
+        // Uses gpt-image-1.5 for typography rendering
+        const authorDisplayName = state.authorGender === 'Non-Binary'
+            ? 'The Author'
+            : (state.authorGender === 'Female' ? 'A. Romance' : 'A. Novelist');
+
+        generateBookCover(synopsis, cleanTitle, authorDisplayName).then(coverUrl => {
+            if (coverUrl) {
+                stopCoverLoading(coverUrl);
+            } else {
+                // Cover generation failed - skip to story content
+                console.warn('[BookCover] Failed to generate, skipping cover page');
+                skipCoverPage();
+            }
+        });
+
+        // Also generate setting shot for story content (in parallel)
         generateSettingShot(synopsis);
 
-        // CORRECTIVE: Scroll to very top (title) after render
-        if (titleEl) {
-            setTimeout(() => {
-                titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                window.scrollTo(0, 0);
-            }, 100);
-        }
-
-        // Reveal story text after brief delay
-        setTimeout(() => {
-            if (storyTextEl) storyTextEl.style.opacity = '1';
-        }, 500);
+        // Story text reveal is handled by cover page flow
+        // (user clicks "Open Your Story" to see content)
 
         // Initial Snapshot
         saveStorySnapshot();
@@ -4238,6 +4590,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         console.log('Intro prompt length at failure:', introPrompt?.length || 0);
         console.groupEnd();
 
+        // Clean up cover page state on error
+        skipCoverPage();
+
         alert("Fate stumbled. Please try again. (Check console for diagnostics)");
         window.showScreen('setup');
     } finally {
@@ -4251,12 +4606,49 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   });
 
   // --- API CALLS ---
-  async function callChat(messages, temp=0.7) {
+  /**
+   * ==========================================================================
+   * STORY GENERATION API CALL
+   * ==========================================================================
+   *
+   * This function routes story generation through the appropriate AI model(s).
+   *
+   * When ENABLE_ORCHESTRATION is true:
+   * - Uses the orchestration client (ChatGPT primary author + optional Grok renderer)
+   * - Enforces the canonical call order: ChatGPT → Grok → ChatGPT
+   *
+   * When ENABLE_ORCHESTRATION is false:
+   * - Uses legacy single-model flow (Grok only)
+   * - Provided for fallback/compatibility only
+   *
+   * ==========================================================================
+   */
+  async function callChat(messages, temp=0.7, options = {}) {
+    // Check if orchestration client is available and enabled
+    const useOrchestration = ENABLE_ORCHESTRATION &&
+                             window.StoryboundOrchestration &&
+                             !options.bypassOrchestration;
+
+    if (useOrchestration) {
+      // Route through orchestration client (ChatGPT primary author)
+      try {
+        return await window.StoryboundOrchestration.callChatGPT(
+          messages,
+          'PRIMARY_AUTHOR',
+          { temperature: temp, max_tokens: options.max_tokens || 1000 }
+        );
+      } catch (orchestrationError) {
+        console.warn('[ORCHESTRATION] ChatGPT failed, falling back to legacy:', orchestrationError.message);
+        // Fall through to legacy Grok call
+      }
+    }
+
+    // Legacy single-model flow (Grok via specialist proxy)
     const payload = {
        messages: messages,
        model: STORY_MODEL,
        temperature: temp,
-       max_tokens: 1000
+       max_tokens: options.max_tokens || 1000
     };
 
     try {
@@ -4287,6 +4679,94 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         console.error('callChat error:', e);
         throw e;
     }
+  }
+
+  /**
+   * ==========================================================================
+   * ORCHESTRATED TURN GENERATION
+   * ==========================================================================
+   *
+   * Executes the full 3-phase orchestration flow for story generation:
+   *
+   * PHASE 1: ChatGPT Author Pass (ALWAYS RUNS)
+   *   - Plot beats, character psychology, dialogue intent
+   *   - Determines if intimacy occurs
+   *   - Generates Erotic Scene Directive (ESD) if needed
+   *   - Enforces monetization gates
+   *
+   * PHASE 2: Specialist Renderer (CONDITIONAL)
+   *   - Called ONLY if ESD warrants it (Erotic/Dirty level)
+   *   - Receives ONLY the ESD, no plot context
+   *   - Renders sensory embodiment within bounds
+   *   - NEVER decides outcomes
+   *
+   * PHASE 3: ChatGPT Integration Pass (ALWAYS RUNS)
+   *   - Absorbs rendered scene
+   *   - Applies consequences
+   *   - Enforces cliffhanger or completion per tier
+   *   - FINAL AUTHORITY on story state
+   *
+   * FAILURE HANDLING:
+   *   - Renderer failure does NOT corrupt story state
+   *   - ChatGPT regains control on failure
+   *   - Fate Stumbled may be triggered
+   *
+   * ==========================================================================
+   */
+  async function generateOrchestatedTurn(params) {
+    const {
+      systemPrompt,
+      storyContext,
+      playerAction,
+      playerDialogue,
+      fateCard,
+      onPhaseChange
+    } = params;
+
+    // Check if orchestration is available
+    if (!window.StoryboundOrchestration) {
+      console.warn('[ORCHESTRATION] Client not available, using legacy flow');
+      // Fall back to legacy single-model call
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Action: ${playerAction}\nDialogue: "${playerDialogue}"` }
+      ];
+      return await callChat(messages, 0.7, { bypassOrchestration: true });
+    }
+
+    // Execute full orchestration flow
+    const result = await window.StoryboundOrchestration.orchestrateStoryGeneration({
+      accessTier: state.access || 'free',
+      requestedEroticism: state.intensity || 'Clean',
+      storyContext: storyContext,
+      playerAction: playerAction,
+      playerDialogue: playerDialogue,
+      fateCard: fateCard,
+      systemPrompt: systemPrompt,
+      onPhaseChange: onPhaseChange
+    });
+
+    // Log orchestration details
+    console.log('[ORCHESTRATION] Turn complete:', {
+      success: result.success,
+      rendererUsed: result.rendererUsed,
+      fateStumbled: result.fateStumbled,
+      gateEnforcement: result.gateEnforcement,
+      timing: result.timing,
+      errors: result.errors
+    });
+
+    // Handle Fate Stumbled
+    if (result.fateStumbled) {
+      console.warn('[ORCHESTRATION] Fate Stumbled - specialist renderer failed');
+      // Story continues with author output only
+    }
+
+    if (!result.success && result.errors.length > 0) {
+      console.error('[ORCHESTRATION] Errors:', result.errors);
+    }
+
+    return result.finalOutput;
   }
 
   // Setting shot uses unified IMAGE PROVIDER ROUTER with landscape shape
@@ -4397,6 +4877,270 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           generateSettingShot(_lastSettingShotDesc);
       }
   };
+
+  // ============================================================
+  // BOOK COVER PAGE SYSTEM
+  // Staged loading → Cover generation → Page-turn reveal
+  // ============================================================
+
+  const COVER_CRAFT_PHRASES = [
+      "Building your book cover...",
+      "Selecting an artist...",
+      "Composing the scene...",
+      "Choosing the typography...",
+      "Applying finishing touches...",
+      "Binding the pages..."
+  ];
+
+  let _coverPhraseIndex = 0;
+  let _coverPhraseInterval = null;
+  let _coverProgressInterval = null;
+
+  // Start cover loading UI with staged phrases
+  function startCoverLoading() {
+      const loadingState = document.getElementById('coverLoadingState');
+      const revealState = document.getElementById('coverRevealState');
+      const statusText = document.getElementById('coverStatusText');
+      const progressFill = document.getElementById('coverProgressFill');
+
+      if (loadingState) loadingState.classList.remove('hidden');
+      if (revealState) revealState.classList.add('hidden');
+
+      _coverPhraseIndex = 0;
+      if (statusText) statusText.textContent = COVER_CRAFT_PHRASES[0];
+
+      // Rotate through phrases every 3 seconds
+      _coverPhraseInterval = setInterval(() => {
+          _coverPhraseIndex = (_coverPhraseIndex + 1) % COVER_CRAFT_PHRASES.length;
+          if (statusText) statusText.textContent = COVER_CRAFT_PHRASES[_coverPhraseIndex];
+      }, 3000);
+
+      // Progress bar animation (fake progress up to 90%)
+      let progress = 0;
+      if (progressFill) progressFill.style.width = '0%';
+      _coverProgressInterval = setInterval(() => {
+          progress += Math.random() * 8;
+          if (progress > 90) progress = 90;
+          if (progressFill) progressFill.style.width = progress + '%';
+      }, 500);
+  }
+
+  // Stop cover loading and show physical book object
+  function stopCoverLoading(coverUrl) {
+      if (_coverPhraseInterval) clearInterval(_coverPhraseInterval);
+      if (_coverProgressInterval) clearInterval(_coverProgressInterval);
+
+      const loadingState = document.getElementById('coverLoadingState');
+      const bookObject = document.getElementById('bookObject');
+      const coverImg = document.getElementById('bookCoverImg');
+      const progressFill = document.getElementById('coverProgressFill');
+      const bookmarkRibbon = document.getElementById('bookmarkRibbon');
+
+      // Complete progress bar
+      if (progressFill) progressFill.style.width = '100%';
+
+      setTimeout(() => {
+          if (loadingState) loadingState.classList.add('hidden');
+          if (bookObject) bookObject.classList.remove('hidden');
+          if (coverImg && coverUrl) {
+              coverImg.src = coverUrl;
+          }
+
+          // Show bookmark if returning reader
+          if (bookmarkRibbon && state.turnCount > 0) {
+              bookmarkRibbon.classList.remove('hidden');
+          }
+
+          // Start courtesy hinge timer (one-time only)
+          scheduleCourtesyHinge();
+      }, 500);
+  }
+
+  // Generate book cover with intent-based routing
+  // Uses authoritative prestige cover template with symbolic objects
+  async function generateBookCover(synopsis, title, authorName) {
+      // Extract story context for symbolic object selection (4-axis system)
+      const world = state.picks?.world || 'Modern';
+      const tone = state.picks?.tone || 'Earnest';
+      const genre = state.picks?.genre || 'Billionaire';
+      const dynamic = state.picks?.dynamic || 'Enemies';
+      const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
+
+      // Build mode line from world + tone
+      const modeLine = era ? `${era} ${world}` : `${world} ${tone}`;
+      // Build story style description
+      const storyStyle = `${tone} ${genre}`;
+
+      try {
+          const res = await fetch(IMAGE_PROXY_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  prompt: synopsis || 'A dramatic scene from a romantic novel',
+                  imageIntent: 'book_cover',
+                  title: title || 'Untitled',
+                  authorName: authorName || 'ANONYMOUS',
+                  modeLine: modeLine,
+                  dynamic: dynamic,
+                  storyStyle: storyStyle,
+                  genre: genre,
+                  size: '1024x1024'
+              })
+          });
+
+          if (!res.ok) {
+              console.warn('[BookCover] HTTP error:', res.status);
+              return null;
+          }
+
+          const data = await res.json();
+          return data?.url || null;
+      } catch (err) {
+          console.error('[BookCover] Generation failed:', err.message);
+          return null;
+      }
+  }
+
+  // ============================================================
+  // PHYSICAL BOOK INTERACTION SYSTEM
+  // Hinge-based open, courtesy peek, no buttons
+  // ============================================================
+
+  const COURTESY_HINGE_KEY = 'storybound_courtesy_hinge_shown';
+  let _courtesyHingeTimeout = null;
+  let _bookOpened = false;
+
+  // Check if courtesy hinge has already been shown (one-time ever)
+  function hasSeenCourtesyHinge() {
+      try {
+          return localStorage.getItem(COURTESY_HINGE_KEY) === 'true';
+      } catch (e) {
+          return false;
+      }
+  }
+
+  // Mark courtesy hinge as shown
+  function markCourtesyHingeShown() {
+      try {
+          localStorage.setItem(COURTESY_HINGE_KEY, 'true');
+      } catch (e) {
+          // localStorage unavailable
+      }
+  }
+
+  // Schedule courtesy hinge (2-3 seconds after cover shows)
+  function scheduleCourtesyHinge() {
+      if (hasSeenCourtesyHinge() || _bookOpened) return;
+
+      _courtesyHingeTimeout = setTimeout(() => {
+          if (_bookOpened) return; // User already opened
+
+          const bookCover = document.getElementById('bookCover');
+          if (bookCover) {
+              bookCover.classList.add('courtesy-peek');
+              markCourtesyHingeShown();
+
+              // Remove class after animation completes
+              setTimeout(() => {
+                  bookCover.classList.remove('courtesy-peek');
+              }, 2100);
+          }
+      }, 2500);
+  }
+
+  // Cancel courtesy hinge if user clicks
+  function cancelCourtesyHinge() {
+      if (_courtesyHingeTimeout) {
+          clearTimeout(_courtesyHingeTimeout);
+          _courtesyHingeTimeout = null;
+      }
+  }
+
+  // Open book via hinge animation (triggered by clicking anywhere on book)
+  function openBook() {
+      if (_bookOpened) return;
+      _bookOpened = true;
+      cancelCourtesyHinge();
+
+      const bookCover = document.getElementById('bookCover');
+      const bookCoverPage = document.getElementById('bookCoverPage');
+      const storyContent = document.getElementById('storyContent');
+      const storyTextEl = document.getElementById('storyText');
+
+      // Remove any courtesy peek class
+      if (bookCover) {
+          bookCover.classList.remove('courtesy-peek');
+          bookCover.classList.add('hinge-open');
+      }
+
+      // After hinge animation, transition to story
+      setTimeout(() => {
+          if (bookCoverPage) bookCoverPage.classList.add('hidden');
+          if (storyContent) {
+              storyContent.classList.remove('hidden');
+              storyContent.classList.add('fade-in');
+          }
+          if (storyTextEl) storyTextEl.style.opacity = '1';
+
+          // Scroll to title
+          const titleEl = document.getElementById('storyTitle');
+          if (titleEl) {
+              titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+      }, 800);
+  }
+
+  // Initialize physical book event listeners
+  function initCoverPageListeners() {
+      // Click anywhere on book object to open
+      const bookObject = document.getElementById('bookObject');
+      if (bookObject) {
+          bookObject.addEventListener('click', openBook);
+      }
+
+      // Also allow clicking on cover directly (redundant safety)
+      const bookCover = document.getElementById('bookCover');
+      if (bookCover) {
+          bookCover.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openBook();
+          });
+      }
+  }
+
+  // Initialize on DOM ready
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCoverPageListeners);
+  } else {
+      initCoverPageListeners();
+  }
+
+  // Reset book state for new story
+  function resetBookState() {
+      _bookOpened = false;
+      cancelCourtesyHinge();
+      const bookCover = document.getElementById('bookCover');
+      if (bookCover) {
+          bookCover.classList.remove('hinge-open', 'courtesy-peek');
+      }
+  }
+
+  // Hide cover page and show story content directly (fallback if cover fails)
+  function skipCoverPage() {
+      const bookCoverPage = document.getElementById('bookCoverPage');
+      const storyContent = document.getElementById('storyContent');
+      const storyTextEl = document.getElementById('storyText');
+
+      // Stop any running cover loading intervals
+      if (_coverPhraseInterval) clearInterval(_coverPhraseInterval);
+      if (_coverProgressInterval) clearInterval(_coverProgressInterval);
+      cancelCourtesyHinge();
+
+      if (bookCoverPage) bookCoverPage.classList.add('hidden');
+      if (storyContent) storyContent.classList.remove('hidden');
+      if (storyTextEl) storyTextEl.style.opacity = '1';
+      _bookOpened = true;
+  }
 
   // --- VISUALIZE (STABILIZED) ---
   let _vizCancelled = false;
@@ -5421,11 +6165,56 @@ FATE CARD ADAPTATION (CRITICAL):
       let storyDisplayed = false;
 
       try {
-          // Generate AI response first
-          const raw = await callChat([
-              {role:'system', content: fullSys},
-              {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
-          ]);
+          /**
+           * =================================================================
+           * AI MODEL ORCHESTRATION — TURN GENERATION
+           * =================================================================
+           *
+           * For Erotic/Dirty intensity levels with ENABLE_ORCHESTRATION:
+           *   Uses full 3-phase flow (ChatGPT → optional Grok → ChatGPT)
+           *
+           * For Clean/Naughty or when orchestration disabled:
+           *   Uses single-model flow (ChatGPT as primary author)
+           *
+           * The orchestration flow ensures:
+           * - ChatGPT ALWAYS decides plot and outcomes
+           * - Specialist renderer (if used) only handles sensory embodiment
+           * - Monetization gates are enforced pre-render
+           * - Renderer failure does NOT corrupt story state
+           * =================================================================
+           */
+          const useFullOrchestration = ENABLE_ORCHESTRATION &&
+                                       window.StoryboundOrchestration &&
+                                       ['Erotic', 'Dirty'].includes(state.intensity);
+
+          let raw;
+
+          if (useFullOrchestration) {
+              // Full 3-phase orchestration: ChatGPT → optional Grok → ChatGPT
+              raw = await generateOrchestatedTurn({
+                  systemPrompt: fullSys,
+                  storyContext: context,
+                  playerAction: act,
+                  playerDialogue: dia,
+                  fateCard: selectedFateCard,
+                  onPhaseChange: (phase, data) => {
+                      // Update loading message based on phase
+                      if (phase === 'AUTHOR_PASS') {
+                          updateLoadingMessage('Fate is weaving the plot...');
+                      } else if (phase === 'RENDER_PASS') {
+                          updateLoadingMessage('Fate is embodying the moment...');
+                      } else if (phase === 'INTEGRATION_PASS') {
+                          updateLoadingMessage('Fate is sealing the consequences...');
+                      }
+                  }
+              });
+          } else {
+              // Single-model flow (ChatGPT as primary author)
+              raw = await callChat([
+                  {role:'system', content: fullSys},
+                  {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
+              ]);
+          }
 
           // Validate response shape before marking as success
           if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {

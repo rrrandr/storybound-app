@@ -442,32 +442,6 @@
         <div id="archetypePreviewContent"></div>
     </div>
 
-    <div class="section-title">Safety & Boundaries</div>
-    <div class="sb-checkbox-group">
-        <label class="sb-checkbox">
-            <input type="checkbox" id="chkDark" checked>
-            <span class="sb-checkbox-visual"></span>
-            <span class="sb-checkbox-label">Dark Themes</span>
-        </label>
-        <label class="sb-checkbox">
-            <input type="checkbox" id="chkNonCon">
-            <span class="sb-checkbox-visual"></span>
-            <span class="sb-checkbox-label">Implied Non-consent</span>
-        </label>
-        <label class="sb-checkbox">
-            <input type="checkbox" id="chkViolence" checked>
-            <span class="sb-checkbox-visual"></span>
-            <span class="sb-checkbox-label">Violence / Peril</span>
-        </label>
-    </div>
-    <div class="boundary-chips" id="boundaryChips">
-        <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
-        <div class="chip" data-boundary="coercion">No coercion</div>
-        <div class="chip" data-boundary="degradation">No degradation language</div>
-        <div class="chip" data-boundary="captivity">No captivity</div>
-        <div class="chip" data-boundary="blackmail">No blackmail</div>
-    </div>
-
     <div class="section-title">Intensity <span class="instruction-text">(Rendering Ceiling)</span></div>
     <div id="intensityBtns" class="intensity-wrap">
       <button data-val="Clean" class="intensity-btn" data-desc="Romantic, non-explicit.">Clean</button>
@@ -506,102 +480,156 @@
         </div>
     </div>
 
-    <div class="section-title">Genres <span class="instruction-text">(Select up to 3)</span></div>
-    <div class="style-cards" id="genreGrid">
-      <div class="card selected" data-grp="genre" data-val="Romantasy"><h3>Romantasy</h3><p>High fantasy worlds, magic, and intense romantic stakes.</p></div>
-      <div class="card" data-grp="genre" data-val="Contemporary"><h3>Contemporary Romance</h3><p>Modern settings and present-day relationships.</p></div>
-      <div class="card" data-grp="genre" data-val="Historical"><h3>Historical Romance</h3><p>Period romance and forbidden rules.</p></div>
-      <div class="card" data-grp="genre" data-val="Paranormal"><h3>Paranormal Modern Romance</h3><p>Vampires, shifters, witches in today’s world.</p></div>
-      <div class="card" data-grp="genre" data-val="Dark"><h3>Dark Romance</h3><p>Morally gray heat; player defines boundaries.</p></div>
-      <div class="card" data-grp="genre" data-val="Suspense"><h3>Romantic Suspense</h3><p>Romance entangled with danger and mystery.</p></div>
-      <div class="card" data-grp="genre" data-val="Sports"><h3>Sports Romance</h3><p>Athletes and competitive tension.</p></div>
-      <div class="card" data-grp="genre" data-val="Crime"><h3>Organized Crime Romance</h3><p>Forbidden love in criminal worlds.</p></div>
-    </div>
-    
-    <button class="small-btn" onclick="document.getElementById('moreGenres').classList.toggle('hidden')">More Genres</button>
-    <div id="moreGenres" class="style-cards hidden">
-       <div class="card" data-grp="genre" data-val="Billionaire"><h3>Billionaire Romance</h3><p>Ultra-wealthy leads, power, polish.</p></div>
-       <div class="card" data-grp="genre" data-val="Gothic"><h3>Gothic Romance</h3><p>Moody, haunted settings.</p></div>
-       <div class="card" data-grp="genre" data-val="LGBTQ"><h3>Queer LGBTQ+</h3><p>Inclusive love stories.</p></div>
-       <div class="card" data-grp="genre" data-val="SecondChance"><h3>Second Chance</h3><p>Ex-lovers reunited with baggage.</p></div>
-       <div class="card" data-grp="genre" data-val="SmallTown"><h3>Small Town</h3><p>Cozy community vibes.</p></div>
-       <div class="card" data-grp="genre" data-val="Romcom"><h3>Romantic Comedy</h3><p>Bantery, light chaos.</p></div>
-    </div>
-
-    <div class="section-title">Story World <span class="instruction-text">(Optional)</span></div>
-    <p class="subtitle">Choose a speculative world to shape your story's setting.</p>
-
-    <div class="world-section">
-      <button class="small-btn world-toggle" onclick="document.getElementById('scifiSubtypes').classList.toggle('hidden'); this.classList.toggle('active')">Sci-Fi Worlds</button>
-      <div id="scifiSubtypes" class="style-cards hidden">
-        <div class="card" data-grp="world" data-val="space_opera"><h3>Star-Spanning Civilizations</h3><p>Galactic empires, interstellar conflict, epic scope.</p></div>
-        <div class="card" data-grp="world" data-val="hard_scifi"><h3>Future Built on Science</h3><p>Grounded speculation, plausible technology, rigorous worldbuilding.</p></div>
-        <div class="card" data-grp="world" data-val="cyberpunk"><h3>Neon Futures</h3><p>High tech, low life. Corporate dystopia, hackers, rain-slicked streets.</p></div>
-        <div class="card" data-grp="world" data-val="post_human"><h3>Post-Human Futures</h3><p>Transcendence, uploaded minds, evolved humanity.</p></div>
-        <div class="card" data-grp="world" data-val="alien_contact"><h3>First Contact</h3><p>Humanity meets the other. Communication, fear, wonder.</p></div>
-        <div class="card" data-grp="world" data-val="military_scifi"><h3>War Among the Stars</h3><p>Space marines, fleet battles, sacrifice and duty.</p></div>
-        <div class="card" data-grp="world" data-val="post_scarcity"><h3>Abundance or Collapse</h3><p>Utopia tested, or civilization's edge. What remains when scarcity ends—or returns.</p></div>
-      </div>
-    </div>
-
-    <div class="world-section">
-      <button class="small-btn world-toggle" onclick="document.getElementById('fantasySubtypes').classList.toggle('hidden'); this.classList.toggle('active')">Fantasy Worlds</button>
-      <div id="fantasySubtypes" class="style-cards hidden">
-        <div class="card" data-grp="world" data-val="high_fantasy"><h3>Enchanted Realms</h3><p>Magic-rich worlds, elves, epic quests, fairy-tale wonder.</p></div>
-        <div class="card" data-grp="world" data-val="low_fantasy"><h3>Hidden Magic</h3><p>Magic exists but is rare, secret, or dangerous. Grounded stakes.</p></div>
-        <div class="card" data-grp="world" data-val="dark_fantasy"><h3>Cursed & Corrupt Worlds</h3><p>Grim settings, moral ambiguity, magic with a cost.</p></div>
-      </div>
-    </div>
-
-    <div class="world-section">
-      <button class="small-btn world-toggle" onclick="document.getElementById('mythicSubtypes').classList.toggle('hidden'); this.classList.toggle('active')">Mythic Antiquity</button>
-      <div id="mythicSubtypes" class="style-cards hidden">
-        <div class="card" data-grp="world" data-val="greek_myth"><h3>Heroes & Olympus</h3><p>Greek gods, mortal heroes, fate, hubris, and divine whim.</p></div>
-        <div class="card" data-grp="world" data-val="norse_myth"><h3>Frost & Ragnarok</h3><p>Norse gods, warriors, runes, honor, and the shadow of doom.</p></div>
-        <div class="card" data-grp="world" data-val="egyptian_myth"><h3>Gods of the Nile</h3><p>Egyptian deities, pharaohs, the afterlife, and sacred order.</p></div>
-        <div class="card" data-grp="world" data-val="biblical_myth"><h3>Covenant & Prophecy</h3><p>Divine law, angels, prophets, and the weight of sacred history.</p></div>
-      </div>
-    </div>
-
-    <div class="section-title">Dynamics <span class="instruction-text">(Select up to 3)</span></div>
-    <div class="style-cards" id="dynamicGrid">
-      <div class="card" data-grp="dynamic" data-val="Enemies"><h3>Enemies → Lovers</h3><p>Rivals whose friction turns to heat.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Desire under rules and taboo.</p></div>
-      <div class="card selected" data-grp="dynamic" data-val="Power"><h3>Power Imbalance</h3><p>Unequal footing, charged tension, control as currency.</p></div>
-      <div class="card" data-grp="dynamic" data-val="SlowBurn"><h3>Slow Burn</h3><p>High restraint, earned payoff.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends → Lovers</h3><p>Safety tipping into heat.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Close quarters, rising tension.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Secret"><h3>Secret Identity</h3><p>Truths revealed at the worst time.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Intense focus, consuming attention.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated Mates / Soulbond</h3><p>Destined bond, fast intensity.</p></div>
-      <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker / Wounded One</h3><p>Vulnerability and steady support.</p></div>
-    </div>
-
+    <!-- STORY POV (Repositioned: POV → Safety → World) -->
     <div class="section-title">Story POV</div>
     <div class="style-cards" id="povGrid">
-      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>I wanted something intimate, confessional—a voice inside my own pulse.</p><button class="preview-btn" data-txt="I held my breath as the door clicked shut behind him.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>You wanted to feel it directly—every glance, every silence, happening to you.</p><button class="preview-btn" data-txt="You feel the room shift the moment he looks at you.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>She preferred a wider lens—close enough to feel, distant enough to see.</p><button class="preview-btn" data-txt="He kept his voice calm, but the way his gaze lingered betrayed the hunger.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>We gather here, witnesses to the inevitable—watching what they cannot yet see.</p><button class="preview-btn" data-txt="We watched them circle each other—two storms pretending to be weather.">Preview</button></div>
-      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>The Author hoped you were adventurous enough to let her hold the pen.</p><button class="preview-btn" data-txt="The Author hesitated—then smiled—and offered them a door.">Preview</button></div>
+      <div class="card selected" data-grp="pov" data-val="First"><h3>1st Person (I)</h3><p>Intimate, confessional, inside my own pulse.</p></div>
+      <div class="card" data-grp="pov" data-val="Second"><h3>2nd Person (You)</h3><p>Every glance, every silence, happening to you.</p></div>
+      <div class="card" data-grp="pov" data-val="Third"><h3>3rd Person (They)</h3><p>Close enough to feel, distant enough to see.</p></div>
+      <div class="card" data-grp="pov" data-val="Fourth"><h3>4th Person (We)</h3><p>Witnesses to the inevitable.</p></div>
+      <div class="card" data-grp="pov" data-val="Fifth"><h3>5th Person (Author)</h3><p>"The Author has big plans for you…"</p></div>
     </div>
 
-    <div class="section-title">Story Style <span class="instruction-text">(Select up to 3)</span></div>
-    <div class="style-cards" id="styleGrid">
-      <div class="card selected" data-grp="style" data-val="Breathless"><h3>Breathless Romance</h3><p>Fast tension, close POV, lush romantic heat.</p><button class="preview-btn" data-txt="His attention was a slow hand. It didn't touch her—yet she felt it everywhere.">Preview</button></div>
-      <div class="card locked" data-grp="style" data-val="Playful" data-locked="true"><h3>Playful Heat</h3><p>Flirty banter, teasing humor, spark-first chemistry.</p><button class="preview-btn" data-txt=""You're staring." "I'm appreciating."">Preview</button></div>
-      <div class="card locked" data-grp="style" data-val="Dark" data-locked="true"><h3>Dark Desire</h3><p>Moody, dangerous tension with boundaries respected.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button></div>
-      <div class="card locked" data-grp="style" data-val="Raw" data-locked="true"><h3>Raw Passion</h3><p>Direct emotion, embodied desire, grounded intensity.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button></div>
-      <div class="card locked" data-grp="style" data-val="Regency" data-locked="true"><h3>Regency Restraint</h3><p>Polite knives, forbidden longing, exquisite restraint.</p><button class="preview-btn" data-txt="“Your reputation is in danger,” she murmured.">Preview</button></div>
+    <!-- SAFETY & BOUNDARIES (Repositioned: after POV, before World) -->
+    <div class="section-title">Safety & Boundaries</div>
+    <div class="sb-checkbox-group">
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkDark" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Dark Themes</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkNonCon">
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Implied Non-consent</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkViolence" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Violence / Peril</span>
+        </label>
     </div>
-    
-    <button class="small-btn" onclick="document.getElementById('moreStyles').classList.toggle('hidden')">More Styles</button>
-    <div id="moreStyles" class="style-cards hidden">
-       <div class="card locked" data-grp="style" data-val="Wry" data-locked="true"><h3>Wry Confession</h3><p>Dry wit, sharp honesty, intimate tension.</p><button class="preview-btn" data-txt="She lied. He admired it.">Preview</button></div>
-       <div class="card locked" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic Intensity</h3><p>Calculated seduction, power games.</p><button class="preview-btn" data-txt="Silence did the flirting.">Preview</button></div>
-       <div class="card locked" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal Bloom</h3><p>Dreamlike imagery, symbolic heat.</p><button class="preview-btn" data-txt="The candles leaned in to listen.">Preview</button></div>
-       <div class="card locked" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal Edge</h3><p>Blunt honesty, razor tension.</p><button class="preview-btn" data-txt="No soft words. Just truth.">Preview</button></div>
-       <div class="card locked" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Elevated cadence, poetic desire.</p><button class="preview-btn" data-txt="Speak low, sweet peril.">Preview</button></div>
+    <div class="boundary-chips" id="boundaryChips">
+        <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
+        <div class="chip" data-boundary="coercion">No coercion</div>
+        <div class="chip" data-boundary="degradation">No degradation language</div>
+        <div class="chip" data-boundary="captivity">No captivity</div>
+        <div class="chip" data-boundary="blackmail">No blackmail</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         FOUR-AXIS STORY SELECTION SYSTEM (AUTHORITATIVE)
+         Order: World → Tone → Genre → Dynamic
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- FLOATING SYNOPSIS PANEL (Side-mounted book jacket card) -->
+    <div id="synopsisPanel" class="synopsis-panel">
+      <p id="synopsisText" class="synopsis-text">
+        <span id="synWorld">Where shadows hold secrets</span>
+        <span id="synTone">Face what you've buried</span>
+        <span id="synGenre">Navigate dangerous alliances</span>
+        <span id="synDynamic">The one you need most becomes your enemy</span>
+      </p>
+    </div>
+
+    <!-- AXIS 1: STORY WORLD (Required, First) -->
+    <div class="section-title">Story World <span class="instruction-text">(Required)</span></div>
+    <div class="style-cards" id="worldGrid">
+      <div class="card selected" data-grp="world" data-val="Modern"><h3>Modern / Contemporary</h3><p>Present-day cities, technology, social norms.</p></div>
+      <div class="card" data-grp="world" data-val="Historical"><h3>Historical</h3><p>A real past era with period constraints.</p></div>
+      <div class="card" data-grp="world" data-val="Dystopia"><h3>Dystopia</h3><p>Oppressive systems, controlled societies.</p></div>
+      <div class="card" data-grp="world" data-val="PostApocalyptic"><h3>Post-Apocalyptic</h3><p>Survival after collapse, scarce resources.</p></div>
+      <div class="card" data-grp="world" data-val="Fantasy"><h3>Fantasy</h3><p>Magic, mythical creatures, invented worlds.</p></div>
+      <div class="card" data-grp="world" data-val="SciFi"><h3>Sci-Fi</h3><p>Advanced technology, space, future societies.</p></div>
+      <div class="card" data-grp="world" data-val="Supernatural"><h3>Supernatural</h3><p>Vampires, shifters, witches in hidden worlds.</p></div>
+      <div class="card" data-grp="world" data-val="Superheroic"><h3>Superheroic</h3><p>Powers, masks, secret identities, cosmic stakes.</p></div>
+    </div>
+
+    <!-- Historical Era Sub-Selection (shown only when Historical selected) -->
+    <div id="eraSelection" class="era-selection hidden">
+      <div class="section-title sub-title">Historical Era <span class="instruction-text">(Required)</span></div>
+      <div class="style-cards" id="eraGrid">
+        <div class="card" data-grp="era" data-val="Ancient"><h3>Ancient / Tribal</h3><p>Before written empires.</p></div>
+        <div class="card" data-grp="era" data-val="Classical"><h3>Classical / Biblical</h3><p>Greece, Rome, early civilizations.</p></div>
+        <div class="card selected" data-grp="era" data-val="Medieval"><h3>Medieval</h3><p>Feudal lords, castles, crusades.</p></div>
+        <div class="card" data-grp="era" data-val="Renaissance"><h3>Renaissance / Early Modern</h3><p>Art, exploration, reformation.</p></div>
+        <div class="card" data-grp="era" data-val="Victorian"><h3>Industrial / Victorian</h3><p>Empire, industry, propriety.</p></div>
+        <div class="card" data-grp="era" data-val="Early20th"><h3>Early 20th Century</h3><p>Wars, jazz age, modernism.</p></div>
+        <div class="card" data-grp="era" data-val="Mid20th"><h3>Mid-20th Century</h3><p>Post-war, cold war, social change.</p></div>
+      </div>
+    </div>
+
+    <!-- AXIS 2: STORY TONE (Required, Second) -->
+    <div class="section-title">Story Tone <span class="instruction-text">(Required)</span></div>
+    <div class="style-cards" id="toneGrid">
+      <div class="card selected" data-grp="tone" data-val="Earnest"><h3>Earnest</h3><p>Sincere emotion, unironic stakes.</p></div>
+      <div class="card" data-grp="tone" data-val="WryConfession"><h3>Wry Confession</h3><p>Intimacy with irony, self-aware narrator.</p></div>
+      <div class="card" data-grp="tone" data-val="Satirical"><h3>Satirical</h3><p>Social critique, exaggeration, systems mocked.</p></div>
+      <div class="card" data-grp="tone" data-val="Dark"><h3>Dark</h3><p>Morally complex, shadowed desire.</p></div>
+      <div class="card" data-grp="tone" data-val="Horror"><h3>Horror</h3><p>Dread, the uncanny, fear as tension.</p></div>
+      <div class="card" data-grp="tone" data-val="Mythic"><h3>Mythic</h3><p>Archetypal weight, legendary scale.</p></div>
+      <div class="card" data-grp="tone" data-val="Comedic"><h3>Comedic</h3><p>Humor is primary, stakes are light.</p></div>
+      <div class="card" data-grp="tone" data-val="Surreal"><h3>Surreal</h3><p>Dreamlike, unstable, symbolic.</p></div>
+      <div class="card" data-grp="tone" data-val="Poetic"><h3>Poetic</h3><p>Lyrical prose, sensory immersion.</p></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         AXIS 3: GENRE / FLAVOR (Required, Third)
+
+         LOCKED DESIGN RULE:
+         Genres must describe narrative action or fantasy, not setting or life stage.
+         Settings like "Sports", "College", "Small Town" belong in World modifiers,
+         not Genre. Genre implies what the characters DO, not where they ARE.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section-title">Genre <span class="instruction-text">(Narrative flavor)</span></div>
+    <div class="style-cards" id="genreGrid">
+      <div class="card" data-grp="genre" data-val="CrimeSyndicate"><h3>Crime Syndicate</h3><p>Organized crime, loyalty, blood oaths.</p></div>
+      <div class="card selected" data-grp="genre" data-val="Billionaire"><h3>Billionaire</h3><p>Ultra-wealth, power plays, golden cages.</p></div>
+      <div class="card" data-grp="genre" data-val="Noir"><h3>Noir</h3><p>Shadows, moral compromise, fatalism.</p></div>
+      <div class="card" data-grp="genre" data-val="Heist"><h3>Heist</h3><p>Elaborate plans, trust and betrayal.</p></div>
+      <div class="card" data-grp="genre" data-val="Espionage"><h3>Espionage</h3><p>Spies, double lives, dangerous information.</p></div>
+      <div class="card" data-grp="genre" data-val="Political"><h3>Political Intrigue</h3><p>Power structures, alliances, betrayal.</p></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         AXIS 4: RELATIONSHIP DYNAMIC (Required, Last)
+
+         LOCKED DESIGN RULE:
+         Relationship Dynamics are single-select and represent emotional structure,
+         not identity. They describe how characters relate, not who they are.
+         Groupings are for cognitive organization only—selection remains flat.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section-title">Relationship Dynamic <span class="instruction-text">(Required)</span></div>
+    <div class="dynamic-grouped" id="dynamicGrid">
+      <!-- Circumstance-Based -->
+      <div class="dynamic-group">
+        <div class="dynamic-group-label">Circumstance-Based</div>
+        <div class="style-cards">
+          <div class="card" data-grp="dynamic" data-val="Proximity"><h3>Forced Proximity</h3><p>Circumstance throws them together.</p></div>
+          <div class="card" data-grp="dynamic" data-val="SecretIdentity"><h3>Secret Identity</h3><p>Hidden truths, masks, revelations.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Caretaker"><h3>Caretaker / Wounded</h3><p>Vulnerability and steady presence.</p></div>
+        </div>
+      </div>
+      <!-- Emotional Arc -->
+      <div class="dynamic-group">
+        <div class="dynamic-group-label">Emotional Arc</div>
+        <div class="style-cards">
+          <div class="card" data-grp="dynamic" data-val="Friends"><h3>Friends to Lovers</h3><p>Safety tipping into something more.</p></div>
+          <div class="card selected" data-grp="dynamic" data-val="Enemies"><h3>Enemies to Lovers</h3><p>Friction that becomes fire.</p></div>
+          <div class="card" data-grp="dynamic" data-val="SecondChance"><h3>2nd Chance</h3><p>Past lovers, unfinished business.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Forbidden"><h3>Forbidden Love</h3><p>Rules, taboo, desire against judgment.</p></div>
+        </div>
+      </div>
+      <!-- Intensity / Attachment -->
+      <div class="dynamic-group">
+        <div class="dynamic-group-label">Intensity / Attachment</div>
+        <div class="style-cards">
+          <div class="card" data-grp="dynamic" data-val="Dangerous"><h3>Dangerous</h3><p>Risk in proximity, threat as aphrodisiac.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Obsessive"><h3>Obsessive Devotion</h3><p>Consuming focus, intensity as love language.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Fated"><h3>Fated</h3><p>Destined bond, cosmic inevitability.</p></div>
+          <div class="card" data-grp="dynamic" data-val="Partners"><h3>Partners in Crime</h3><p>Complicity, shared secrets, us vs them.</p></div>
+        </div>
+      </div>
     </div>
 
     <div class="section-title">Quill & Veto</div>
@@ -677,7 +705,48 @@
   </div>
 
   <div id="game" class="screen hidden" style="max-width:900px; margin:0 auto; padding-bottom:60px;">
-    
+
+    <!-- ============================================================ -->
+    <!-- BOOK COVER PAGE - Physical book object, clickable anywhere   -->
+    <!-- ============================================================ -->
+    <div id="bookCoverPage" class="book-cover-page">
+      <div id="coverLoadingState" class="cover-loading">
+        <div class="cover-progress-bar">
+          <div id="coverProgressFill" class="cover-progress-fill"></div>
+        </div>
+        <p id="coverStatusText" class="cover-status-text">Building your book cover...</p>
+      </div>
+
+      <!-- Physical book object - no buttons, click anywhere to open -->
+      <div id="bookObject" class="book-object hidden">
+        <!-- Bookmark ribbon (visible for returning readers) -->
+        <div id="bookmarkRibbon" class="bookmark-ribbon hidden"></div>
+
+        <!-- Book cover with hinge -->
+        <div id="bookCover" class="book-cover">
+          <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
+        </div>
+
+        <!-- Book pages underneath (visible during courtesy hinge) -->
+        <div id="bookPagesPreview" class="book-pages-preview">
+          <div class="page-edge-stack"></div>
+        </div>
+
+        <!-- Book spine/thickness -->
+        <div class="book-spine"></div>
+        <div class="book-thickness"></div>
+      </div>
+    </div>
+
+    <!-- Page-turn animation overlay (deprecated - using hinge now) -->
+    <div id="pageTurnOverlay" class="page-turn-overlay hidden">
+      <div class="page-turn-left"></div>
+      <div class="page-turn-right"></div>
+    </div>
+
+    <!-- Main story content (hidden during cover) -->
+    <div id="storyContent" class="story-content hidden">
+
     <div id="billingBanner" style="display:none;"></div>
 
     <!-- CORRECTIVE: Story start - title double size, Scene under synopsis -->
@@ -759,7 +828,9 @@
     </div>
 
   </div>
-  
+
+    </div><!-- END storyContent -->
+
   <div id="toast" class="toast hidden">Boundaries redirected the scene.</div>
 
 <div id="gameQuillVetoModal" class="overlay hidden" style="z-index:10004;">
@@ -835,6 +906,7 @@
 </div>
 
 <script src="fatecards.js"></script>
+<script src="orchestration-client.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

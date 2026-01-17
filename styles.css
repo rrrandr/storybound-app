@@ -11,7 +11,66 @@
     --cursor-url: url('cursor-dollar-plane-64.png');
 }
 
-/* THEMES */
+/* ═══════════════════════════════════════════════════════════════════
+   READING STYLES - SCOPED TO BOOK INTERIOR ONLY
+   App UI, cover, and environment are NEVER affected by reading style
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Book Interior Variables (default: Print/Easy - light page) */
+:root {
+    --page-bg: #faf8f3;
+    --page-text: #1a1a1a;
+    --page-accent: #444;
+}
+
+/* Paper Style: Print (default) - clean white page */
+.story-content.paper-print,
+.story-content {
+    --page-bg: #faf8f3;
+    --page-text: #1a1a1a;
+    --page-accent: #333;
+}
+
+/* Paper Style: Cream - warm easy reading */
+.story-content.paper-cream {
+    --page-bg: #fffdd0;
+    --page-text: #1a1a1a;
+    --page-accent: #555;
+}
+
+/* Paper Style: Sepia - vintage book feel */
+.story-content.paper-sepia {
+    --page-bg: #f5e6c8;
+    --page-text: #3d2817;
+    --page-accent: #5c4033;
+}
+
+/* Paper Style: Warm Paper (Night Mode safe) */
+.story-content.paper-warm {
+    --page-bg: #2c2418;
+    --page-text: #d4c8b0;
+    --page-accent: #a08060;
+}
+
+/* Paper Style: Dark Page (Night Mode safe) */
+.story-content.paper-dark {
+    --page-bg: #1e1e1e;
+    --page-text: #e0e0e0;
+    --page-accent: #888;
+}
+
+/* Apply paper styles to story text container */
+#storyText, .story-pages-container {
+    background: var(--page-bg);
+    color: var(--page-text);
+    border-radius: 4px;
+    padding: 20px 30px;
+    margin: 10px 0;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* LEGACY THEME SUPPORT (for gradual migration) */
+/* These still work but are discouraged - prefer paper-* classes */
 body.theme-sepia { --bg1:#2c2218; --bg2:#3e2f22; --pink:#d2b48c; --hot:#8b4513; --gold:#ffa500; --ink:#f5deb3; --panel:rgba(40,30,20,0.8); --btn-bg:#5c4033; --btn-txt:#f5deb3; }
 body.theme-midnight { --bg1:#000000; --bg2:#111111; --pink:#444; --hot:#666; --gold:#888; --ink:#ccc; --panel:rgba(20,20,20,0.9); --btn-bg:#333; --btn-txt:#aaa; }
 body.theme-print { --bg1:#e0e0e0; --bg2:#f0f0f0; --pink:#333; --hot:#000; --gold:#444; --ink:#111; --panel:rgba(255,255,255,0.95); --btn-bg:#ccc; --btn-txt:#000; }
@@ -23,6 +82,44 @@ body.theme-print .section-title, body.theme-easy .section-title { text-shadow: n
 
 html, body { margin:0; padding:0; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--ink); font-family:var(--font-main); overflow-x:hidden; min-height:100vh; }
 body { text-align:center; padding:10px; transition: background 0.3s, color 0.3s; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   NIGHT MODE - Dims app environment only
+   Book cover and book object remain unchanged
+   ═══════════════════════════════════════════════════════════════════ */
+
+body.night-mode {
+    --bg1: #151515;
+    --bg2: #1a1a1a;
+    --pink: #8a5a6a;
+    --hot: #7a4a5a;
+    --gold: #a08050;
+    --ink: #b0a090;
+    --panel: rgba(20, 20, 20, 0.9);
+}
+
+/* Night Mode: Subdued UI controls */
+body.night-mode button:not(.story-content button) {
+    filter: brightness(0.8);
+}
+
+body.night-mode .nav-btn,
+body.night-mode .settings-btn {
+    opacity: 0.7;
+}
+
+/* Night Mode: Book object remains untouched */
+body.night-mode .book-object,
+body.night-mode .book-cover,
+body.night-mode .book-cover-image {
+    filter: none !important;
+}
+
+/* Night Mode: Story content uses selected paper style (unchanged) */
+body.night-mode #storyText,
+body.night-mode .story-pages-container {
+    /* Paper style is controlled by paper-* class, not night mode */
+}
 
 /* UTILITY CLASSES */
 .hidden { display:none !important; }
@@ -1125,4 +1222,537 @@ textarea.fate-field {
     flex-wrap: wrap;
     gap: 16px;
     justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOK COVER PAGE - Physical book object in app environment
+   ═══════════════════════════════════════════════════════════════════ */
+
+.book-cover-page {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    perspective: 1500px;
+}
+
+.book-cover-page.hidden {
+    display: none;
+}
+
+/* Night Mode - dims environment only, not book */
+.book-cover-page.night-mode {
+    background: linear-gradient(135deg, #151515, #1a1a1a);
+}
+
+/* Loading State */
+.cover-loading {
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+}
+
+.cover-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 105, 180, 0.3);
+}
+
+.cover-progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--pink), var(--hot));
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.cover-status-text {
+    font-family: 'lust-script-display', serif;
+    font-size: 1.3em;
+    color: var(--gold);
+    margin: 0;
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHYSICAL BOOK OBJECT - 3D book with hinge, thickness, shadows
+   ═══════════════════════════════════════════════════════════════════ */
+
+.book-object {
+    position: relative;
+    width: 320px;
+    height: 480px;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    animation: bookAppear 0.8s ease forwards;
+}
+
+.book-object.hidden {
+    display: none;
+}
+
+@keyframes bookAppear {
+    from { opacity: 0; transform: scale(0.9) rotateY(-5deg); }
+    to { opacity: 1; transform: scale(1) rotateY(0deg); }
+}
+
+/* Book cover - the front face that hinges open */
+.book-cover {
+    position: absolute;
+    inset: 0;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 10;
+    border-radius: 2px 8px 8px 2px;
+    overflow: hidden;
+    /* Right and bottom edge shadows for depth */
+    box-shadow:
+        4px 4px 8px rgba(0, 0, 0, 0.4),
+        8px 8px 20px rgba(0, 0, 0, 0.3),
+        inset -3px 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.book-cover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(to left, rgba(0,0,0,0.15), transparent);
+    pointer-events: none;
+    border-radius: 0 8px 8px 0;
+}
+
+.book-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 2px 8px 8px 2px;
+    display: block;
+}
+
+/* Hinge states */
+.book-cover.hinge-peek {
+    transform: rotateY(-15deg);
+}
+
+.book-cover.hinge-open {
+    transform: rotateY(-160deg);
+    pointer-events: none;
+}
+
+/* Book spine - left edge thickness */
+.book-spine {
+    position: absolute;
+    left: -12px;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    background: linear-gradient(to right, #2a1a10, #3d2817);
+    transform: rotateY(-90deg) translateX(-6px);
+    transform-origin: right center;
+    border-radius: 2px 0 0 2px;
+}
+
+/* Book thickness - bottom/side depth */
+.book-thickness {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -8px;
+    height: 8px;
+    background: linear-gradient(to bottom, #f5f0e6, #e8e0d0);
+    transform: rotateX(90deg) translateY(4px);
+    transform-origin: top center;
+    border-radius: 0 0 2px 2px;
+}
+
+/* Page edges visible from the side */
+.book-pages-preview {
+    position: absolute;
+    inset: 4px;
+    right: 4px;
+    background: linear-gradient(to right, #f8f4eb, #f0ebe0);
+    border-radius: 0 6px 6px 0;
+    z-index: 5;
+    overflow: hidden;
+}
+
+.page-edge-stack {
+    position: absolute;
+    right: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 8px;
+    background: repeating-linear-gradient(
+        to bottom,
+        #f5f0e6 0px,
+        #f5f0e6 1px,
+        #e0d8c8 1px,
+        #e0d8c8 2px
+    );
+    border-radius: 0 4px 4px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOKMARK RIBBON - Visual indicator for returning readers
+   ═══════════════════════════════════════════════════════════════════ */
+
+.bookmark-ribbon {
+    position: absolute;
+    top: -8px;
+    right: 30px;
+    width: 20px;
+    height: 60px;
+    background: linear-gradient(135deg, #8b0000, #a01010);
+    z-index: 20;
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s ease;
+}
+
+.bookmark-ribbon.hidden {
+    display: none;
+}
+
+.bookmark-ribbon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   COURTESY HINGE ANIMATION - One-time learning cue
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes courtesyHingePeek {
+    0% { transform: rotateY(0deg); }
+    40% { transform: rotateY(-18deg); }
+    60% { transform: rotateY(-18deg); }
+    100% { transform: rotateY(0deg); }
+}
+
+.book-cover.courtesy-peek {
+    animation: courtesyHingePeek 2s ease-in-out forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAGE-TURN ANIMATION OVERLAY
+   ═══════════════════════════════════════════════════════════════════ */
+
+.page-turn-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    pointer-events: none;
+    perspective: 2000px;
+}
+
+.page-turn-overlay.hidden {
+    display: none;
+}
+
+.page-turn-overlay.active {
+    pointer-events: auto;
+}
+
+.page-turn-left,
+.page-turn-right {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+    transform-origin: center;
+    backface-visibility: hidden;
+}
+
+.page-turn-left {
+    left: 0;
+    transform-origin: right center;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset -20px 0 40px rgba(0, 0, 0, 0.3);
+}
+
+.page-turn-right {
+    right: 0;
+    transform-origin: left center;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 20px 0 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Page Turn Animation Classes */
+.page-turn-overlay.turning .page-turn-left {
+    animation: pageTurnLeftOpen 1.2s ease-in-out forwards;
+}
+
+.page-turn-overlay.turning .page-turn-right {
+    animation: pageTurnRightOpen 1.2s ease-in-out forwards;
+}
+
+@keyframes pageTurnLeftOpen {
+    0% {
+        transform: rotateY(0deg);
+    }
+    100% {
+        transform: rotateY(-120deg);
+    }
+}
+
+@keyframes pageTurnRightOpen {
+    0% {
+        transform: rotateY(0deg);
+    }
+    100% {
+        transform: rotateY(120deg);
+    }
+}
+
+/* Story Content Container */
+.story-content {
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+.story-content.hidden {
+    display: none;
+}
+
+.story-content.fade-in {
+    animation: storyFadeIn 0.8s ease forwards;
+}
+
+@keyframes storyFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Reduced Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .cover-status-text {
+        animation: none;
+    }
+
+    .book-object {
+        animation: none;
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .book-cover {
+        transition-duration: 0.2s;
+    }
+
+    .book-cover.courtesy-peek {
+        animation: none;
+    }
+
+    .book-cover.hinge-open {
+        transition-duration: 0.3s;
+    }
+
+    .page-turn-overlay.turning .page-turn-left,
+    .page-turn-overlay.turning .page-turn-right {
+        animation-duration: 0.3s;
+    }
+
+    .story-content.fade-in {
+        animation: none;
+        opacity: 1;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FLOATING SYNOPSIS PANEL - Live-updating story preview
+   ═══════════════════════════════════════════════════════════════════
+
+   LOCKED DESIGN RULE:
+   The floating synopsis panel must remain visually restrained and literary.
+   It should feel like an authorial whisper, not a system notification.
+   No glassmorphism, glow effects, or color-coded highlighting.
+
+   CORRECTIVE PASS: Converted to side-mounted floating card (5x7 book jacket)
+   - Positioned to the right of main content on desktop
+   - Sticky within the 4-axis selection range only
+   - Feels like a quiet accompanying object, not page chrome
+   ═══════════════════════════════════════════════════════════════════ */
+
+.synopsis-panel {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    background: rgba(18, 8, 22, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 24px 20px;
+    /* 5:7 aspect ratio like book jacket card - width ~180px, height ~252px */
+    width: 180px;
+    min-height: 220px;
+    max-height: 280px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    /* Hidden by default - JS controls visibility based on scroll position */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Visible state - controlled by JS when within 4-axis range */
+.synopsis-panel.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.synopsis-text {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.85em;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.75);
+    margin: 0;
+    text-align: left;
+    font-style: italic;
+    letter-spacing: 0.01em;
+}
+
+/* All clause spans share the same restrained styling */
+.synopsis-text span {
+    transition: opacity 0.4s ease;
+    color: inherit;
+    font-weight: inherit;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Subtle emphasis when clause updates - slight opacity pulse only */
+.synopsis-text span.updating {
+    opacity: 1;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Mobile: Hide side panel, show inline fallback */
+@media (max-width: 1100px) {
+    .synopsis-panel {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        width: auto;
+        max-width: 680px;
+        min-height: auto;
+        max-height: none;
+        margin: 20px auto 30px;
+        padding: 20px 28px;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .synopsis-text {
+        font-size: 1.05em;
+        text-align: center;
+    }
+
+    .synopsis-text span {
+        display: inline;
+        margin-bottom: 0;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RELATIONSHIP DYNAMIC GROUPINGS
+   Visual organization only - selection logic remains flat/single-select
+   ═══════════════════════════════════════════════════════════════════ */
+
+.dynamic-grouped {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dynamic-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dynamic-group-label {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.85em;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding-left: 2px;
+    margin-bottom: 2px;
+}
+
+.dynamic-group .style-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HISTORICAL ERA SUB-SELECTION
+   ═══════════════════════════════════════════════════════════════════ */
+
+.era-selection {
+    margin-top: -10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255, 105, 180, 0.05);
+    border: 1px solid rgba(255, 105, 180, 0.2);
+    border-radius: 10px;
+    transition: opacity 0.3s ease, max-height 0.4s ease;
+}
+
+.era-selection.hidden {
+    display: none;
+}
+
+.era-selection .sub-title {
+    font-size: 1.4em;
+    margin: 0 0 10px;
+    border-top: none;
+    padding-top: 0;
+}
+
+/* Smaller cards for era selection */
+.era-selection .style-cards {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.era-selection .card {
+    padding: 10px 12px;
+}
+
+.era-selection .card h3 {
+    font-size: 0.95em;
+    margin-bottom: 3px;
+}
+
+.era-selection .card p {
+    font-size: 0.8em;
 }
