@@ -528,6 +528,31 @@
        <div class="card" data-grp="genre" data-val="Romcom"><h3>Romantic Comedy</h3><p>Bantery, light chaos.</p></div>
     </div>
 
+    <div class="section-title">Story World <span class="instruction-text">(Optional)</span></div>
+    <p class="subtitle">Choose a speculative world to shape your story's setting.</p>
+
+    <div class="world-section">
+      <button class="small-btn world-toggle" onclick="document.getElementById('scifiSubtypes').classList.toggle('hidden'); this.classList.toggle('active')">Sci-Fi Worlds</button>
+      <div id="scifiSubtypes" class="style-cards hidden">
+        <div class="card" data-grp="world" data-val="space_opera"><h3>Star-Spanning Civilizations</h3><p>Galactic empires, interstellar conflict, epic scope.</p></div>
+        <div class="card" data-grp="world" data-val="hard_scifi"><h3>Future Built on Science</h3><p>Grounded speculation, plausible technology, rigorous worldbuilding.</p></div>
+        <div class="card" data-grp="world" data-val="cyberpunk"><h3>Neon Futures</h3><p>High tech, low life. Corporate dystopia, hackers, rain-slicked streets.</p></div>
+        <div class="card" data-grp="world" data-val="post_human"><h3>Post-Human Futures</h3><p>Transcendence, uploaded minds, evolved humanity.</p></div>
+        <div class="card" data-grp="world" data-val="alien_contact"><h3>First Contact</h3><p>Humanity meets the other. Communication, fear, wonder.</p></div>
+        <div class="card" data-grp="world" data-val="military_scifi"><h3>War Among the Stars</h3><p>Space marines, fleet battles, sacrifice and duty.</p></div>
+        <div class="card" data-grp="world" data-val="post_scarcity"><h3>Abundance or Collapse</h3><p>Utopia tested, or civilization's edge. What remains when scarcity ends—or returns.</p></div>
+      </div>
+    </div>
+
+    <div class="world-section">
+      <button class="small-btn world-toggle" onclick="document.getElementById('fantasySubtypes').classList.toggle('hidden'); this.classList.toggle('active')">Fantasy Worlds</button>
+      <div id="fantasySubtypes" class="style-cards hidden">
+        <div class="card" data-grp="world" data-val="high_fantasy"><h3>Enchanted Realms</h3><p>Magic-rich worlds, elves, epic quests, fairy-tale wonder.</p></div>
+        <div class="card" data-grp="world" data-val="low_fantasy"><h3>Hidden Magic</h3><p>Magic exists but is rare, secret, or dangerous. Grounded stakes.</p></div>
+        <div class="card" data-grp="world" data-val="dark_fantasy"><h3>Cursed & Corrupt Worlds</h3><p>Grim settings, moral ambiguity, magic with a cost.</p></div>
+      </div>
+    </div>
+
     <div class="section-title">Dynamics <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="dynamicGrid">
       <div class="card" data-grp="dynamic" data-val="Enemies"><h3>Enemies → Lovers</h3><p>Rivals whose friction turns to heat.</p></div>
@@ -553,9 +578,8 @@
 
     <div class="section-title">Story Style <span class="instruction-text">(Select up to 3)</span></div>
     <div class="style-cards" id="styleGrid">
-      <div class="card selected" data-grp="style" data-val="Breathless"><h3>Breathless Romance</h3><p>Fast tension, close POV, lush romantic heat.</p><button class="preview-btn" data-txt="His attention was a slow hand. It didn’t touch her—yet she felt it everywhere.">Preview</button></div>
-      <div class="card locked" data-grp="style" data-val="Epic" data-locked="true"><h3>Epic Fantasy</h3><p>Grand stakes, wonder, danger, sweeping romance.</p><button class="preview-btn" data-txt="The city burned like a crown—and someone inside it was waiting to claim her.">Preview</button></div>
-      <div class="card locked" data-grp="style" data-val="Playful" data-locked="true"><h3>Playful Heat</h3><p>Flirty banter, teasing humor, spark-first chemistry.</p><button class="preview-btn" data-txt="“You’re staring.” “I’m appreciating.”">Preview</button></div>
+      <div class="card selected" data-grp="style" data-val="Breathless"><h3>Breathless Romance</h3><p>Fast tension, close POV, lush romantic heat.</p><button class="preview-btn" data-txt="His attention was a slow hand. It didn't touch her—yet she felt it everywhere.">Preview</button></div>
+      <div class="card locked" data-grp="style" data-val="Playful" data-locked="true"><h3>Playful Heat</h3><p>Flirty banter, teasing humor, spark-first chemistry.</p><button class="preview-btn" data-txt=""You're staring." "I'm appreciating."">Preview</button></div>
       <div class="card locked" data-grp="style" data-val="Dark" data-locked="true"><h3>Dark Desire</h3><p>Moody, dangerous tension with boundaries respected.</p><button class="preview-btn" data-txt="He smiled like a promise with teeth.">Preview</button></div>
       <div class="card locked" data-grp="style" data-val="Raw" data-locked="true"><h3>Raw Passion</h3><p>Direct emotion, embodied desire, grounded intensity.</p><button class="preview-btn" data-txt="He didn't ask twice.">Preview</button></div>
       <div class="card locked" data-grp="style" data-val="Regency" data-locked="true"><h3>Regency Restraint</h3><p>Polite knives, forbidden longing, exquisite restraint.</p><button class="preview-btn" data-txt="“Your reputation is in danger,” she murmured.">Preview</button></div>
@@ -567,9 +591,7 @@
        <div class="card locked" data-grp="style" data-val="Strategic" data-locked="true"><h3>Strategic Intensity</h3><p>Calculated seduction, power games.</p><button class="preview-btn" data-txt="Silence did the flirting.">Preview</button></div>
        <div class="card locked" data-grp="style" data-val="Surreal" data-locked="true"><h3>Surreal Bloom</h3><p>Dreamlike imagery, symbolic heat.</p><button class="preview-btn" data-txt="The candles leaned in to listen.">Preview</button></div>
        <div class="card locked" data-grp="style" data-val="Brutal" data-locked="true"><h3>Brutal Edge</h3><p>Blunt honesty, razor tension.</p><button class="preview-btn" data-txt="No soft words. Just truth.">Preview</button></div>
-       <div class="card locked" data-grp="style" data-val="Satirical" data-locked="true"><h3>Satirical Fantasy</h3><p>Witty fantasy, playful stakes.</p><button class="preview-btn" data-txt="The prophecy was inconvenient.">Preview</button></div>
        <div class="card locked" data-grp="style" data-val="Shakespearean" data-locked="true"><h3>Shakespearean</h3><p>Elevated cadence, poetic desire.</p><button class="preview-btn" data-txt="Speak low, sweet peril.">Preview</button></div>
-       <div class="card locked" data-grp="style" data-val="SciFi" data-locked="true"><h3>SciFi Opera</h3><p>Grand futuristic worlds, high stakes.</p><button class="preview-btn" data-txt="Stars like spilled ink.">Preview</button></div>
     </div>
 
     <div class="section-title">Quill & Veto</div>

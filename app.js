@@ -422,6 +422,30 @@ window.config = window.config || {
   window.StoryPagination = StoryPagination;
 
   // =========================
+  // STORY WORLD TAXONOMY
+  // =========================
+  // Maps internal world codes to human-first labels
+  // Fantasy worlds represent invented magical worlds only (not real-world mythology)
+  const WORLD_LABELS = {
+      // Sci-Fi Worlds
+      space_opera: 'Star-Spanning Civilizations',
+      hard_scifi: 'Future Built on Science',
+      cyberpunk: 'Neon Futures',
+      post_human: 'Post-Human Futures',
+      alien_contact: 'First Contact',
+      military_scifi: 'War Among the Stars',
+      post_scarcity: 'Abundance or Collapse',
+      // Fantasy Worlds (invented magical worlds, not mythology)
+      high_fantasy: 'Enchanted Realms',
+      low_fantasy: 'Hidden Magic',
+      dark_fantasy: 'Cursed & Corrupt Worlds'
+  };
+
+  function getWorldLabel(worldCode) {
+      return WORLD_LABELS[worldCode] || worldCode;
+  }
+
+  // =========================
   // GROK PREVIEW GENERATOR
   // =========================
   const EROTIC_PREVIEW_TEXT = "The air in the room grew heavy, charged with a raw, undeniable hunger. His hands didn't hesitate, sliding up her thighs with possessive intent, fingers digging into soft flesh. She gasped, arching into the touch, her breath hitching as he leaned in to bite gently at the sensitive cord of her neck. There was no room for coy games now; the heat radiating between them demanded friction, skin against skin. He guided her hips, aligning them with a rough urgency that made her knees weak. As they connected, the world narrowed down to the rhythm of their bodies and the sharp, exquisite friction of movement. It was unpolished, desperate, and entirely consuming.";
@@ -636,7 +660,7 @@ ANTI-HERO ENFORCEMENT:
   // --- GLOBAL STATE INITIALIZATION ---
   window.state = {
       tier:'free',
-      picks:{ genre:['Romantasy'], dynamic:[], pov:'First', style:['Breathless'] },
+      picks:{ genre:['Romantasy'], dynamic:[], pov:'First', style:['Breathless'], world:[] },
       gender:'Female',
       loveInterest:'Male',
       archetype: { primary: null, modifier: null }, 
@@ -3394,6 +3418,7 @@ You are writing a story in the "${state.picks.genre.join(', ')}" genre.
 Style: ${state.picks.style.join(', ')}.
 POV: ${state.picks.pov}.
 Dynamics: ${state.picks.dynamic.join(', ')}.
+${state.picks.world && state.picks.world.length > 0 ? `Story World: ${state.picks.world.map(w => getWorldLabel(w)).join(', ')}.` : ''}
 
 
     Protagonist: ${pName} (${pGen}, ${pPro}).
@@ -3520,6 +3545,7 @@ The opening must feel intentional and specific, not archetypal or templated.`;
         pov: state.picks.pov || 'Third Person Limited',
         style: state.picks.style || [],
         dynamic: state.picks.dynamic || [],
+        world: state.picks.world || [],
         storyLength: state.storyLength || 'novella',
         systemPromptLength: state.sysPrompt?.length || 0
     };
