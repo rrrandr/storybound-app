@@ -49,7 +49,7 @@
  * This prevents silent upgrades from breaking story constraints.
  */
 const ALLOWED_MODELS = {
-  // ChatGPT models for primary authoring
+  // ChatGPT models for primary authoring (DSP, normalization, veto, story logic, ESD)
   PRIMARY_AUTHOR: [
     'gpt-4o',
     'gpt-4o-mini',
@@ -57,11 +57,14 @@ const ALLOWED_MODELS = {
     'gpt-4'
   ],
 
-  // Specialist renderer models for explicit content (Grok)
-  SPECIALIST_RENDERER: [
-    'grok-2-latest',
-    'grok-2',
-    'grok-2-mini'
+  // Renderer model for visual bible extraction and visualization prompts ONLY
+  RENDERER: [
+    'grok-4-fast-non-reasoning'
+  ],
+
+  // Sex renderer model for explicit scenes (ESD-gated, entitlement-checked)
+  SEX_RENDERER: [
+    'grok-4-fast-reasoning'
   ],
 
   // Fate Card structural authority
@@ -81,7 +84,8 @@ const ALLOWED_MODELS = {
 // Default models for each role
 const DEFAULT_MODELS = {
   PRIMARY_AUTHOR: 'gpt-4o-mini',
-  SPECIALIST_RENDERER: 'grok-2-latest',
+  RENDERER: 'grok-4-fast-non-reasoning',        // Visual bible, visualization prompts ONLY
+  SEX_RENDERER: 'grok-4-fast-reasoning',        // Explicit scenes (ESD-gated)
   FATE_STRUCTURAL: 'gpt-4o-mini',
   FATE_ELEVATION: 'gpt-4o-mini'
 };
@@ -312,7 +316,7 @@ function enforceMonetizationGates(accessTier, requestedEroticism) {
  * - Eroticism level warrants it (Erotic or Dirty) AND
  * - The selected provider is contractually allowed
  */
-function shouldCallSpecialistRenderer(esd, gateEnforcement) {
+function shouldCallSexRenderer(esd, gateEnforcement) {
   // No ESD means no intimacy scene
   if (!esd || !esd.sceneId) {
     return { shouldCall: false, reason: 'No intimacy scene defined' };
@@ -578,7 +582,7 @@ async function orchestrateStoryGeneration({
    * - Renders sensory embodiment within bounds
    * - NEVER decides outcomes or plot
    */
-  const renderDecision = shouldCallSpecialistRenderer(state.esd, state.gateEnforcement);
+  const renderDecision = shouldCallSexRenderer(state.esd, state.gateEnforcement);
 
   if (renderDecision.shouldCall) {
     state.phase = 'RENDER_PASS';
@@ -597,7 +601,7 @@ async function orchestrateStoryGeneration({
           state.esd.hardStops.push('monetization_gate_completion_forbidden');
         }
 
-        state.rendererOutput = await callSpecialist(state.esd, 'SPECIALIST_RENDERER');
+        state.rendererOutput = await callSpecialist(state.esd, 'SEX_RENDERER');
         state.rendererCalled = true;
 
       } catch (err) {
@@ -795,7 +799,7 @@ module.exports = {
 
   // Monetization gates
   enforceMonetizationGates,
-  shouldCallSpecialistRenderer,
+  shouldCallSexRenderer,
   MONETIZATION_GATES,
 
   // Fate Cards

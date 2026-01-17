@@ -69,9 +69,9 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   // When false: Legacy single-model flow (Grok only)
   const ENABLE_ORCHESTRATION = true;
 
-  // Legacy model (used when orchestration disabled or ChatGPT unavailable)
-  // NOTE: Must be in ALLOWED_GROK_MODELS allowlist in api/proxy.js
-  const STORY_MODEL = 'grok-2-latest'; 
+  // AUTHOR MODEL: ChatGPT is the ONLY model for story authoring
+  // Grok must NEVER be used for DSP, normalization, veto, or story logic
+  // Legacy STORY_MODEL removed - all story logic routes through ChatGPT orchestration 
   
   // Singleton Supabase Client
   let sb = null;
@@ -4619,67 +4619,27 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
    * - Uses the orchestration client (ChatGPT primary author + optional Grok renderer)
    * - Enforces the canonical call order: ChatGPT → Grok → ChatGPT
    *
-   * When ENABLE_ORCHESTRATION is false:
-   * - Uses legacy single-model flow (Grok only)
-   * - Provided for fallback/compatibility only
+   * HARD RULE: Story authoring ONLY uses ChatGPT (PRIMARY_AUTHOR).
+   * Grok must NEVER be called for DSP, normalization, veto, or story logic.
    *
    * ==========================================================================
    */
   async function callChat(messages, temp=0.7, options = {}) {
-    // Check if orchestration client is available and enabled
-    const useOrchestration = ENABLE_ORCHESTRATION &&
-                             window.StoryboundOrchestration &&
-                             !options.bypassOrchestration;
-
-    if (useOrchestration) {
-      // Route through orchestration client (ChatGPT primary author)
-      try {
-        return await window.StoryboundOrchestration.callChatGPT(
-          messages,
-          'PRIMARY_AUTHOR',
-          { temperature: temp, max_tokens: options.max_tokens || 1000 }
-        );
-      } catch (orchestrationError) {
-        console.warn('[ORCHESTRATION] ChatGPT failed, falling back to legacy:', orchestrationError.message);
-        // Fall through to legacy Grok call
-      }
+    // LOCKED: Story authoring routes through ChatGPT orchestration ONLY
+    if (!window.StoryboundOrchestration) {
+      throw new Error('[MODEL WIRING] Orchestration client not loaded. ChatGPT required for story authoring.');
     }
 
-    // Legacy single-model flow (Grok via specialist proxy)
-    const payload = {
-       messages: messages,
-       model: STORY_MODEL,
-       temperature: temp,
-       max_tokens: options.max_tokens || 1000
-    };
-
     try {
-        const res = await fetch(PROXY_URL, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(payload)
-        });
-        if(!res.ok) {
-            const errorText = await res.text().catch(() => '(could not read response body)');
-            console.group('STORYBOUND API ERROR');
-            console.error('HTTP Status:', res.status, res.statusText);
-            console.error('Response body:', errorText);
-            console.error('Request payload size:', JSON.stringify(payload).length, 'bytes');
-            console.error('System message length:', messages[0]?.content?.length || 0);
-            console.groupEnd();
-            throw new Error(`API Error: ${res.status} ${res.statusText}`);
-        }
-        const data = await res.json();
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-            console.group('STORYBOUND API MALFORMED RESPONSE');
-            console.error('Response data:', data);
-            console.groupEnd();
-            throw new Error('API returned malformed response (no choices)');
-        }
-        return data.choices[0].message.content;
-    } catch(e){
-        console.error('callChat error:', e);
-        throw e;
+      return await window.StoryboundOrchestration.callChatGPT(
+        messages,
+        'PRIMARY_AUTHOR',
+        { temperature: temp, max_tokens: options.max_tokens || 1000 }
+      );
+    } catch (orchestrationError) {
+      // NO GROK FALLBACK - Story authoring must use ChatGPT
+      console.error('[MODEL WIRING] ChatGPT failed. No Grok fallback for story logic:', orchestrationError.message);
+      throw new Error(`Story generation failed: ${orchestrationError.message}. Grok cannot be used for story authoring.`);
     }
   }
 

@@ -47,14 +47,16 @@
     SPECIALIST_PROXY: '/api/proxy',
 
     // Default models
-    PRIMARY_AUTHOR_MODEL: 'gpt-4o-mini',
-    SPECIALIST_MODEL: 'grok-2-latest',
+    PRIMARY_AUTHOR_MODEL: 'gpt-4o-mini',           // ChatGPT: DSP, normalization, veto, story logic, ESD
+    RENDERER_MODEL: 'grok-4-fast-non-reasoning',   // Grok: Visual bible, visualization prompts ONLY
+    SEX_RENDERER_MODEL: 'grok-4-fast-reasoning',   // Grok: Explicit scenes (ESD-gated, entitlement-checked)
     FATE_STRUCTURAL_MODEL: 'gpt-4o-mini',
     FATE_ELEVATION_MODEL: 'gpt-4o-mini',
 
     // Model allowlists (must match server-side)
     ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4'],
-    ALLOWED_SPECIALIST_MODELS: ['grok-2-latest', 'grok-2', 'grok-2-mini'],
+    ALLOWED_RENDERER_MODELS: ['grok-4-fast-non-reasoning'],
+    ALLOWED_SEX_RENDERER_MODELS: ['grok-4-fast-reasoning'],
 
     // Feature flags
     ENABLE_SPECIALIST_RENDERER: true,
@@ -252,15 +254,87 @@
   }
 
   /**
-   * Call Specialist Renderer (Grok).
-   * The renderer is ONLY for sensory embodiment within ESD constraints.
-   * It NEVER decides plot, outcomes, or whether intimacy occurs.
+   * Call Renderer (Grok grok-4-fast-non-reasoning).
+   * ONLY for: visual bible extraction, visualization prompts.
+   * NEVER for: DSP, normalization, veto, story logic.
    */
-  async function callSpecialistRenderer(messages, esd, options = {}) {
+  async function callRenderer(messages, options = {}) {
     const payload = {
       messages,
-      role: 'SPECIALIST_RENDERER',
-      model: options.model || CONFIG.SPECIALIST_MODEL,
+      role: 'RENDERER',
+      model: CONFIG.RENDERER_MODEL,
+      temperature: options.temperature || 0.3,  // Low temp for literal extraction
+      max_tokens: options.max_tokens || 500
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(CONFIG.SPECIALIST_PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => '(could not read response body)');
+        throw new Error(`Renderer API Error: ${res.status} - ${errorText}`);
+      }
+
+      const data = await res.json();
+
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        throw new Error('Renderer returned malformed response');
+      }
+
+      return data.choices[0].message.content;
+
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('Renderer request timed out');
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Call Sex Renderer (Grok grok-4-fast-reasoning).
+   * ONLY called when:
+   * 1. ESD is present AND valid
+   * 2. ESD.eroticismLevel >= 'Erotic'
+   * 3. User's entitlement allows it
+   *
+   * HARD GUARD: This function MUST NOT be called without ESD evaluation.
+   */
+  async function callSexRenderer(messages, esd, accessTier, options = {}) {
+    // GUARD: ESD must be present
+    if (!esd) {
+      throw new Error('[SEX_RENDERER BLOCKED] No ESD provided. Renderer cannot be called without ESD evaluation.');
+    }
+
+    // GUARD: ESD must have valid eroticism level
+    const eroticismLevel = esd.eroticismLevel || 'Clean';
+    if (!['Erotic', 'Dirty'].includes(eroticismLevel)) {
+      throw new Error(`[SEX_RENDERER BLOCKED] ESD eroticism level "${eroticismLevel}" does not require sex renderer.`);
+    }
+
+    // GUARD: Check user entitlement
+    const gate = MONETIZATION_GATES[accessTier] || MONETIZATION_GATES.free;
+    if (!gate.allowedEroticism.includes(eroticismLevel)) {
+      throw new Error(`[SEX_RENDERER BLOCKED] User tier "${accessTier}" not entitled to "${eroticismLevel}" content.`);
+    }
+
+    console.log(`[SEX_RENDERER] ESD validated. Level: ${eroticismLevel}, Tier: ${accessTier}`);
+
+    const payload = {
+      messages,
+      role: 'SEX_RENDERER',
+      model: CONFIG.SEX_RENDERER_MODEL,
       temperature: options.temperature || 0.8,
       max_tokens: options.max_tokens || 1000,
       esd: esd  // Pass ESD for server-side validation
@@ -281,13 +355,13 @@
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => '(could not read response body)');
-        throw new Error(`Specialist Renderer API Error: ${res.status} - ${errorText}`);
+        throw new Error(`Sex Renderer API Error: ${res.status} - ${errorText}`);
       }
 
       const data = await res.json();
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('Specialist Renderer returned malformed response');
+        throw new Error('Sex Renderer returned malformed response');
       }
 
       return data.choices[0].message.content;
@@ -295,10 +369,16 @@
     } catch (err) {
       clearTimeout(timeoutId);
       if (err.name === 'AbortError') {
-        throw new Error('Specialist Renderer request timed out');
+        throw new Error('Sex Renderer request timed out');
       }
       throw err;
     }
+  }
+
+  // Legacy alias for backward compatibility (routes to callSexRenderer with guards)
+  async function callSpecialistRenderer(messages, esd, options = {}) {
+    const accessTier = options.accessTier || 'free';
+    return callSexRenderer(messages, esd, accessTier, options);
   }
 
   // ===========================================================================

@@ -54,13 +54,14 @@
 // =============================================================================
 /**
  * Allowlisted Grok models for specialist rendering.
- * Models must be explicitly listed here to be used.
- * This prevents silent upgrades from breaking story constraints.
+ * RENDERER: grok-4-fast-non-reasoning (visual bible, visualization prompts ONLY)
+ * SEX_RENDERER: grok-4-fast-reasoning (explicit scenes, ESD-gated)
+ *
+ * HARD RULE: Grok must NEVER be called for DSP, normalization, veto, or story logic.
  */
 const ALLOWED_GROK_MODELS = [
-  'grok-2-latest',
-  'grok-2',
-  'grok-2-mini'
+  'grok-4-fast-non-reasoning',  // RENDERER: Visual extraction only
+  'grok-4-fast-reasoning'       // SEX_RENDERER: Explicit scenes (ESD required)
 ];
 
 /**
@@ -127,36 +128,43 @@ export default async function handler(req, res) {
     // MODEL VALIDATION — ENFORCE ALLOWLIST
     // ==========================================================================
     /**
-     * Specialist renderer models must be explicitly allowlisted.
-     * This prevents:
-     * - Silent model upgrades
-     * - Unauthorized model substitutions
-     * - Use of models not approved for explicit content
+     * Model selection based on role:
+     * - RENDERER: grok-4-fast-non-reasoning (visual bible, visualization ONLY)
+     * - SEX_RENDERER: grok-4-fast-reasoning (explicit scenes, ESD required)
+     *
+     * HARD RULE: Grok must NEVER be called for DSP, normalization, veto, or story logic.
      */
 
-    // Validate and select model from allowlist
-    const requestedModel = model || 'grok-2-latest';
+    // Role-based model selection
+    let selectedModel;
+    if (role === 'RENDERER') {
+      selectedModel = 'grok-4-fast-non-reasoning';
+    } else if (role === 'SEX_RENDERER' || role === 'SPECIALIST_RENDERER') {
+      selectedModel = 'grok-4-fast-reasoning';
+    } else {
+      // Reject unknown roles
+      return res.status(400).json({
+        error: `Unknown renderer role: "${role}". Valid roles: RENDERER, SEX_RENDERER`
+      });
+    }
 
-    // Enforce model allowlist - reject any model not explicitly allowed
-    let selectedModel = requestedModel;
-    if (!ALLOWED_GROK_MODELS.includes(requestedModel)) {
-      // Reject disallowed models, fall back to default
-      console.error(`[SPECIALIST-PROXY] REJECTED: Model "${requestedModel}" not in allowlist. Using grok-2-latest.`);
-      selectedModel = 'grok-2-latest';
+    // Enforce model allowlist
+    if (!ALLOWED_GROK_MODELS.includes(selectedModel)) {
+      console.error(`[SPECIALIST-PROXY] Model "${selectedModel}" not in allowlist.`);
+      return res.status(400).json({ error: `Model "${selectedModel}" not allowed` });
     }
 
     console.log(`[SPECIALIST-PROXY] Role: ${role}, Model: ${selectedModel}`);
 
     // ==========================================================================
-    // ESD VALIDATION (when in specialist rendering mode)
+    // ESD VALIDATION (required for SEX_RENDERER)
     // ==========================================================================
     /**
-     * When called as a specialist renderer (not legacy mode), the ESD must be
-     * present and valid. The renderer should only receive ESD content, not
-     * raw plot context.
+     * SEX_RENDERER requires valid ESD. The renderer should only receive ESD content,
+     * not raw plot context. RENDERER (visual extraction) does not require ESD.
      */
 
-    if (role === 'SPECIALIST_RENDERER' && esd) {
+    if ((role === 'SEX_RENDERER' || role === 'SPECIALIST_RENDERER') && esd) {
       // Validate ESD has required fields
       const requiredFields = ['eroticismLevel', 'completionAllowed', 'hardStops'];
       for (const field of requiredFields) {
