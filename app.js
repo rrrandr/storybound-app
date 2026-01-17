@@ -452,6 +452,268 @@ window.config = window.config || {
   }
 
   // =========================
+  // CANONICALIZATION LAYER
+  // =========================
+  // Centralized IP detection and transformation for all user-authored inputs.
+  // All tools (Veto, Quill, God Mode, character creation, DSP) must flow through this.
+
+  // IP detection patterns with confidence scores (0-1)
+  // Higher confidence = more likely to be protected IP
+  const IP_PATTERNS = [
+      // High confidence (≥0.65) - Iconic characters
+      { pattern: /\b(luke\s*skywalker|darth\s*vader|princess\s*leia|han\s*solo|obi.?wan|yoda|anakin|padme|chewbacca)\b/i, confidence: 0.85, franchise: 'starwars' },
+      { pattern: /\b(harry\s*potter|hermione|ron\s*weasley|dumbledore|voldemort|snape|hagrid|draco\s*malfoy)\b/i, confidence: 0.85, franchise: 'harrypotter' },
+      { pattern: /\b(frodo|gandalf|aragorn|legolas|gimli|sauron|gollum|bilbo|samwise)\b/i, confidence: 0.80, franchise: 'lotr' },
+      { pattern: /\b(katniss|peeta|gale|haymitch|effie|snow|finnick)\b/i, confidence: 0.75, franchise: 'hungergames' },
+      { pattern: /\b(batman|superman|wonder\s*woman|spider.?man|iron\s*man|captain\s*america|thor|hulk|wolverine)\b/i, confidence: 0.80, franchise: 'comics' },
+      { pattern: /\b(james\s*bond|007)\b/i, confidence: 0.75, franchise: 'bond' },
+      { pattern: /\b(sherlock\s*holmes|watson|moriarty)\b/i, confidence: 0.50, franchise: 'sherlock' },
+      { pattern: /\b(dracula|frankenstein|jekyll|hyde)\b/i, confidence: 0.35, franchise: 'classic' },
+      // Medium confidence (0.30-0.65) - Character names that could be common
+      { pattern: /\b(daenerys|tyrion|cersei|jon\s*snow|arya\s*stark|jaime\s*lannister)\b/i, confidence: 0.70, franchise: 'got' },
+      { pattern: /\b(bella\s*swan|edward\s*cullen|jacob\s*black)\b/i, confidence: 0.70, franchise: 'twilight' },
+      { pattern: /\b(neo|morpheus|trinity)\b/i, confidence: 0.55, franchise: 'matrix' },
+      { pattern: /\b(ripley|xenomorph)\b/i, confidence: 0.60, franchise: 'alien' },
+      // Franchise/world markers (boost confidence when combined with names)
+      { pattern: /\b(hogwarts|gryffindor|slytherin|hufflepuff|ravenclaw|quidditch)\b/i, confidence: 0.70, franchise: 'harrypotter', isContext: true },
+      { pattern: /\b(jedi|sith|lightsaber|force\s*user|death\s*star|millennium\s*falcon)\b/i, confidence: 0.65, franchise: 'starwars', isContext: true },
+      { pattern: /\b(middle.?earth|mordor|shire|rivendell|gondor|rohan)\b/i, confidence: 0.65, franchise: 'lotr', isContext: true },
+      { pattern: /\b(gotham|metropolis|krypton|wakanda|asgard)\b/i, confidence: 0.60, franchise: 'comics', isContext: true },
+      { pattern: /\b(westeros|kings.?landing|winterfell|iron\s*throne)\b/i, confidence: 0.65, franchise: 'got', isContext: true }
+  ];
+
+  // Name transformation rules - preserve cadence while removing recognizability
+  const NAME_TRANSFORMS = {
+      // First name transforms (phonetic similarity)
+      'luke': ['Lucas', 'Lucan', 'Lucien'],
+      'harry': ['Harlan', 'Harold', 'Harris'],
+      'hermione': ['Harmonia', 'Helena', 'Helaine'],
+      'frodo': ['Froderic', 'Florin', 'Faron'],
+      'gandalf': ['Galdric', 'Galden', 'Greyward'],
+      'aragorn': ['Arathorn', 'Aldric', 'Aradan'],
+      'daenerys': ['Daenara', 'Daelia', 'Daena'],
+      'katniss': ['Katara', 'Katrin', 'Kestrel'],
+      'bella': ['Bellamy', 'Belinda', 'Bela'],
+      'edward': ['Edwin', 'Edric', 'Edmund'],
+      'neo': ['Nero', 'Neon', 'Nico'],
+      'sherlock': ['Sheldon', 'Sherman', 'Sherwin'],
+      // Surname transforms
+      'skywalker': ['Skyrider', 'Starstrider', 'Skyborne'],
+      'potter': ['Porter', 'Proctor', 'Pottinger'],
+      'granger': ['Grantham', 'Granger-Hill', 'Graves'],
+      'weasley': ['Wesley', 'Westley', 'Weatherby'],
+      'baggins': ['Baggley', 'Bagwell', 'Baxter'],
+      'targaryen': ['Tarandel', 'Taragorn', 'Taravyn'],
+      'stark': ['Starke', 'Sterling', 'Stormborn'],
+      'lannister': ['Lancaster', 'Landry', 'Lanford'],
+      'swan': ['Swann', 'Swanley', 'Swanford'],
+      'cullen': ['Callahan', 'Colton', 'Culver']
+  };
+
+  // Archetype transforms for concepts
+  const ARCHETYPE_TRANSFORMS = {
+      'frankenstein': { replacement: 'forbidden reanimator', contextPatterns: [/\b(lab|monster|creature|creation|doctor|science)\b/i] },
+      'dracula': { replacement: 'ancient vampire lord', contextPatterns: [/\b(vampire|blood|castle|transylvania|undead)\b/i] },
+      'jekyll': { replacement: 'dual-natured scientist', contextPatterns: [/\b(hyde|potion|transformation|split)\b/i] }
+  };
+
+  /**
+   * Calculate IP confidence for a piece of text
+   * @param {string} text - Input text to analyze
+   * @returns {{ confidence: number, matches: Array, contextSignals: Array }}
+   */
+  function calculateIPConfidence(text) {
+      if (!text || typeof text !== 'string') return { confidence: 0, matches: [], contextSignals: [] };
+
+      const matches = [];
+      const contextSignals = [];
+      let maxConfidence = 0;
+      let franchiseContext = new Set();
+
+      IP_PATTERNS.forEach(({ pattern, confidence, franchise, isContext }) => {
+          const match = text.match(pattern);
+          if (match) {
+              if (isContext) {
+                  contextSignals.push({ match: match[0], franchise, confidence });
+                  franchiseContext.add(franchise);
+              } else {
+                  matches.push({ match: match[0], franchise, confidence });
+                  maxConfidence = Math.max(maxConfidence, confidence);
+              }
+          }
+      });
+
+      // Boost confidence if context signals reinforce character matches
+      matches.forEach(m => {
+          if (franchiseContext.has(m.franchise)) {
+              m.confidence = Math.min(1, m.confidence + 0.15);
+              maxConfidence = Math.max(maxConfidence, m.confidence);
+          }
+      });
+
+      return { confidence: maxConfidence, matches, contextSignals };
+  }
+
+  /**
+   * Transform a name while preserving cadence
+   * @param {string} name - Original name
+   * @returns {string} - Canonicalized name
+   */
+  function transformName(name) {
+      if (!name) return name;
+
+      const words = name.split(/\s+/);
+      const transformed = words.map(word => {
+          const lower = word.toLowerCase();
+          const transforms = NAME_TRANSFORMS[lower];
+          if (transforms && transforms.length > 0) {
+              // Pick consistently based on hash to maintain stability
+              const hash = lower.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+              return transforms[hash % transforms.length];
+          }
+          return word;
+      });
+
+      return transformed.join(' ');
+  }
+
+  /**
+   * Transform archetype concepts
+   * @param {string} text - Input text
+   * @returns {string} - Transformed text
+   */
+  function transformArchetypes(text) {
+      let result = text;
+
+      Object.entries(ARCHETYPE_TRANSFORMS).forEach(([key, { replacement, contextPatterns }]) => {
+          const keyPattern = new RegExp(`\\b${key}\\b`, 'gi');
+          if (keyPattern.test(result)) {
+              // Check if context patterns are present
+              const hasContext = contextPatterns.some(cp => cp.test(result));
+              if (hasContext) {
+                  result = result.replace(keyPattern, replacement);
+              }
+          }
+      });
+
+      return result;
+  }
+
+  /**
+   * MAIN CANONICALIZATION FUNCTION
+   * All user-authored inputs MUST flow through this before committing to canon.
+   *
+   * @param {string} text - Raw user input
+   * @param {Object} options - { source: 'veto'|'quill'|'godmode'|'character'|'dsp', worldContext: string[] }
+   * @returns {string} - Canonicalized text safe for storage and prompts
+   */
+  function canonicalizeInput(text, options = {}) {
+      if (!text || typeof text !== 'string') return text || '';
+
+      const { source = 'unknown', worldContext = [] } = options;
+      const { confidence, matches } = calculateIPConfidence(text);
+
+      // LEVEL 0: confidence < 0.30 - Allow verbatim
+      if (confidence < 0.30) {
+          return text;
+      }
+
+      // LEVEL 1: confidence 0.30-0.65 - Allow unless contextual signals reinforce
+      if (confidence < 0.65) {
+          // Check for reinforcing context
+          const hasWorldReinforcement = matches.some(m =>
+              worldContext.some(w => w.toLowerCase().includes(m.franchise))
+          );
+          const isPrivilegedSource = source === 'quill' || source === 'godmode';
+
+          // If no reinforcement and not from privileged source, allow
+          if (!hasWorldReinforcement && !isPrivilegedSource) {
+              return text;
+          }
+      }
+
+      // LEVEL 2: confidence ≥ 0.65 - Soft-canonicalize
+      let result = text;
+
+      // Transform matched IP names
+      matches.forEach(({ match }) => {
+          const transformed = transformName(match);
+          if (transformed !== match) {
+              result = result.replace(new RegExp(escapeRegex(match), 'gi'), transformed);
+          }
+      });
+
+      // Transform archetype concepts
+      result = transformArchetypes(result);
+
+      return result;
+  }
+
+  /**
+   * Normalize free-form world description to canonical subtypes
+   * @param {string} description - User's free-form world description
+   * @param {string} worldCategory - 'scifi' | 'fantasy' | 'mythic'
+   * @returns {{ primary: string, secondary: string|null }}
+   */
+  function normalizeWorldSubtype(description, worldCategory) {
+      if (!description) return { primary: null, secondary: null };
+
+      // First, strip any IP references
+      const cleaned = canonicalizeInput(description, { source: 'world' });
+      const lower = cleaned.toLowerCase();
+
+      const SUBTYPE_SIGNALS = {
+          scifi: {
+              space_opera: ['empire', 'galactic', 'starship', 'fleet', 'interstellar', 'space battle', 'federation'],
+              hard_scifi: ['physics', 'realistic', 'science', 'engineering', 'plausible', 'technical'],
+              cyberpunk: ['neon', 'corporate', 'hacker', 'dystopia', 'augment', 'cyber', 'rain', 'noir'],
+              post_human: ['transcend', 'upload', 'singularity', 'evolved', 'posthuman', 'ai consciousness'],
+              alien_contact: ['alien', 'first contact', 'extraterrestrial', 'xeno', 'encounter'],
+              military_scifi: ['military', 'marine', 'soldier', 'war', 'combat', 'fleet battle', 'duty'],
+              post_scarcity: ['utopia', 'abundance', 'collapse', 'post-scarcity', 'automated', 'end of work']
+          },
+          fantasy: {
+              high_fantasy: ['magic', 'elf', 'elves', 'quest', 'enchant', 'fairy', 'mystical', 'wizard', 'kingdom'],
+              low_fantasy: ['hidden magic', 'rare magic', 'grounded', 'subtle', 'secret power', 'dangerous magic'],
+              dark_fantasy: ['grim', 'corrupt', 'curse', 'dark', 'horror', 'decay', 'cost', 'forbidden']
+          },
+          mythic: {
+              greek_myth: ['greek', 'olymp', 'zeus', 'athena', 'hero', 'fate', 'hubris', 'oracle', 'titan'],
+              norse_myth: ['norse', 'viking', 'odin', 'thor', 'ragnarok', 'rune', 'valhalla', 'frost'],
+              egyptian_myth: ['egypt', 'pharaoh', 'nile', 'pyramid', 'afterlife', 'anubis', 'ra', 'isis'],
+              biblical_myth: ['biblical', 'angel', 'prophet', 'covenant', 'divine law', 'heaven', 'apocalypse']
+          }
+      };
+
+      const signals = SUBTYPE_SIGNALS[worldCategory] || {};
+      const scores = {};
+
+      Object.entries(signals).forEach(([subtype, keywords]) => {
+          scores[subtype] = keywords.filter(kw => lower.includes(kw)).length;
+      });
+
+      // Sort by score
+      const sorted = Object.entries(scores)
+          .filter(([, score]) => score > 0)
+          .sort((a, b) => b[1] - a[1]);
+
+      return {
+          primary: sorted[0] ? sorted[0][0] : null,
+          secondary: sorted[1] && sorted[1][1] > 0 ? sorted[1][0] : null
+      };
+  }
+
+  // Helper: Escape regex special characters
+  function escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // Expose for use across tools
+  window.canonicalizeInput = canonicalizeInput;
+  window.normalizeWorldSubtype = normalizeWorldSubtype;
+  window.calculateIPConfidence = calculateIPConfidence;
+
+  // =========================
   // GROK PREVIEW GENERATOR
   // =========================
   const EROTIC_PREVIEW_TEXT = "The air in the room grew heavy, charged with a raw, undeniable hunger. His hands didn't hesitate, sliding up her thighs with possessive intent, fingers digging into soft flesh. She gasped, arching into the touch, her breath hitching as he leaned in to bite gently at the sensitive cord of her neck. There was no room for coy games now; the heat radiating between them demanded friction, skin against skin. He guided her hips, aligning them with a rough urgency that made her knees weak. As they connected, the world narrowed down to the rhythm of their bodies and the sharp, exquisite friction of movement. It was unpolished, desperate, and entirely consuming.";
@@ -1188,7 +1450,11 @@ ANTI-HERO ENFORCEMENT:
 
   function parseVetoInput(rawText) {
       if(!rawText) return { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
-      const lines = rawText.split('\n');
+
+      // CANONICALIZATION: All veto input flows through centralized IP scrubber
+      const canonicalized = canonicalizeInput(rawText, { source: 'veto', worldContext: state.picks?.world || [] });
+
+      const lines = canonicalized.split('\n');
       const result = { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
 
       lines.forEach(line => {
@@ -2489,8 +2755,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (!getQuillReady()) return;
       const quillEl = document.getElementById('gameQuillInput');
       if (!quillEl) return;
-      const quillText = quillEl.value.trim();
-      if (!quillText) { showToast("No Quill edit to commit."); return; }
+      const rawQuillText = quillEl.value.trim();
+      if (!rawQuillText) { showToast("No Quill edit to commit."); return; }
+
+      // CANONICALIZATION: Quill input flows through centralized IP scrubber
+      const quillText = canonicalizeInput(rawQuillText, { source: 'quill', worldContext: state.picks?.world || [] });
 
       // Also apply any pending veto constraints from game modal
       applyGameVetoFromInput();
@@ -3160,8 +3429,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (!getQuillReady()) return;
       const quillEl = document.getElementById('quillInput');
       if (!quillEl) return;
-      const quillText = quillEl.value.trim();
-      if (!quillText) { showToast("No Quill edit to commit."); return; }
+      const rawQuillText = quillEl.value.trim();
+      if (!rawQuillText) { showToast("No Quill edit to commit."); return; }
+
+      // CANONICALIZATION: Quill input flows through centralized IP scrubber
+      const quillText = canonicalizeInput(rawQuillText, { source: 'quill', worldContext: state.picks?.world || [] });
 
       // Also apply any pending veto constraints
       applyVetoFromInput();
@@ -3267,8 +3539,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         return;
     }
 
-    const pName = $('playerNameInput').value.trim() || "The Protagonist";
-    const lName = $('partnerNameInput').value.trim() || "The Love Interest";
+    // CANONICALIZATION: Character names flow through centralized IP scrubber
+    const rawPlayerName = $('playerNameInput').value.trim() || "The Protagonist";
+    const rawPartnerName = $('partnerNameInput').value.trim() || "The Love Interest";
+    const pName = canonicalizeInput(rawPlayerName, { source: 'character', worldContext: state.picks?.world || [] });
+    const lName = canonicalizeInput(rawPartnerName, { source: 'character', worldContext: state.picks?.world || [] });
     const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
     const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
     const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
@@ -3514,8 +3789,11 @@ AVOID these clichéd openings:
 The opening must feel intentional and specific, not archetypal or templated.`;
 
     // FATE STUMBLED DIAGNOSTIC - Structured payload logging
-    const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
-    const ancestryLI = $('ancestryInputLI')?.value.trim() || '';
+    // CANONICALIZATION: Ancestry/DSP inputs flow through centralized IP scrubber
+    const rawAncestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
+    const rawAncestryLI = $('ancestryInputLI')?.value.trim() || '';
+    const ancestryPlayer = canonicalizeInput(rawAncestryPlayer, { source: 'dsp', worldContext: state.picks?.world || [] });
+    const ancestryLI = canonicalizeInput(rawAncestryLI, { source: 'dsp', worldContext: state.picks?.world || [] });
     const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
 
     // Determine unlock tier
@@ -4610,7 +4888,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
           // Build base prompt with intensity bias, quality defaults, and veto exclusions (filter "The Author")
           const modifierInput = document.getElementById('vizModifierInput');
-          const userModifiers = modifierInput ? modifierInput.value.trim() : '';
+          const rawModifiers = modifierInput ? modifierInput.value.trim() : '';
+          // CANONICALIZATION: Visualize modifiers flow through centralized IP scrubber
+          const userModifiers = canonicalizeInput(rawModifiers, { source: 'visualize', worldContext: state.picks?.world || [] });
 
           // Include veto exclusions in visual prompt (e.g., "no blondes" should affect hair color)
           const vetoExclusions = state.veto?.excluded?.length > 0
@@ -4746,16 +5026,20 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
       if (billingLock) { window.showPaywall('unlock'); return; }
 
-      const act = $('actionInput').value.trim();
-      const dia = $('dialogueInput').value.trim();
-      if(!act && !dia) return alert("Input required.");
+      const rawAct = $('actionInput').value.trim();
+      const rawDia = $('dialogueInput').value.trim();
+      if(!rawAct && !rawDia) return alert("Input required.");
+
+      // CANONICALIZATION: Action/dialogue inputs flow through centralized IP scrubber
+      const act = canonicalizeInput(rawAct, { source: state.godModeActive ? 'godmode' : 'action', worldContext: state.picks?.world || [] });
+      const dia = canonicalizeInput(rawDia, { source: state.godModeActive ? 'godmode' : 'dialogue', worldContext: state.picks?.world || [] });
 
       // Get selected Fate Card title for separator
       let selectedFateCard = null;
       if (state.fateOptions && typeof state.fateSelectedIndex === 'number' && state.fateSelectedIndex >= 0) {
           selectedFateCard = state.fateOptions[state.fateSelectedIndex];
       }
-      
+
       const { safeAction, safeDialogue, flags } = sanitizeUserIntent(act, dia);
       if (flags.includes("redirect_nonconsent")) {
           showToast("Boundary Redirect Active");
