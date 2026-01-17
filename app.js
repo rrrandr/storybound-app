@@ -4107,10 +4107,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // === EARLY VALIDATION (before screen transition) ===
     // Build diagnostic payload and validate BEFORE showing game screen
-    const ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
-    const ancestryLI = $('ancestryInputLI')?.value.trim() || '';
-    const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
-    const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+    // Note: These use raw values; normalization happens later before actual prompt building
+    let ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
+    let ancestryLI = $('ancestryInputLI')?.value.trim() || '';
+    let archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
+    let quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
 
     const earlyPayload = {
         mode: state.mode || 'solo',
@@ -4386,12 +4387,13 @@ The opening must feel intentional and specific, not archetypal or templated.`;
         user_text: rawAncestryLI,
         context_signals: worldContext
     });
-    const ancestryPlayer = ancestryPlayerNorm.normalized_text || rawAncestryPlayer;
-    const ancestryLI = ancestryLINorm.normalized_text || rawAncestryLI;
-    const archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
+    // Reassign with normalized values (variables declared earlier with let)
+    ancestryPlayer = ancestryPlayerNorm.normalized_text || rawAncestryPlayer;
+    ancestryLI = ancestryLINorm.normalized_text || rawAncestryLI;
+    archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
 
-    // Determine unlock tier
-    const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+    // Determine unlock tier (reassign)
+    quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
     let tier = 'free';
     if (state.subscribed) tier = 'subscribed';
     else if (quillUnlocked) tier = 'quill_unlocked';
