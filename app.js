@@ -5201,10 +5201,29 @@ FATE CARD ADAPTATION (CRITICAL):
       let storyDisplayed = false;
 
       try {
-          // AUTHOR PASS: Turn response includes plot decisions (pacing, outcomes)
-          // System prompt contains constraints that determine what happens next.
-          // NOTE: For full ESD split, Author would generate directives, Renderer
-          // would write prose. Current architecture combines both in Author pass.
+          // NOTE: Erotic Scene Directive (ESD v1) is NOT implemented.
+          //
+          // ESD v1 = the system that splits intimacy handling into:
+          //   - Author model (ChatGPT): decides *what happens*
+          //     (scene intent, limits, completion rules, cliffhangers)
+          //   - Renderer model: renders *sensory embodiment only*
+          //     (physical detail) inside those strict limits.
+          //
+          // Because ESD v1 does NOT exist yet:
+          //   - All intimacy is authored monolithically
+          //   - Sex scenes may feel restrained, under-embodied,
+          //     oddly paced, or conceptually right but physically flat
+          //
+          // THIS IS EXPECTED AND BY DESIGN.
+          //
+          // If sex/intimacy feels "weird":
+          //   - Do NOT adjust Fate mechanics
+          //   - Do NOT adjust DSP or tone systems
+          //   - Do NOT assume a prose regression
+          //   - First confirm whether ESD v1 has been implemented
+          //
+          // Do NOT attempt to "fix" sex scenes until ESD v1 exists
+          // as a discrete, intentional system.
           const raw = await callAuthor([
               {role:'system', content: fullSys},
               {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
