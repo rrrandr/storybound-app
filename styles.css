@@ -1202,3 +1202,112 @@ textarea.fate-field {
     gap: 16px;
     justify-content: center;
 }
+
+/* ==========================================================================
+   STORY TASTE — DSP Tarot Card UI
+   ==========================================================================
+   Locked design: tarot-first, literary, non-gamey
+   - Card as background image container for DSP text
+   - "Story Taste" label at bottom inside card
+   - Sticky behavior on narrow viewports with fade mask
+   - One-shot shimmer on text update
+   ========================================================================== */
+
+#storyTasteCard {
+    position: relative;
+    width: 320px;
+    max-width: 90vw;
+    aspect-ratio: 5 / 9;
+    background-image: url('/Gold-Tarot-Card-DSP.png');
+    background-size: cover;
+    background-position: center bottom;
+    border-radius: 14px;
+    margin: 0 auto 1rem;
+}
+
+.storyTaste-content {
+    position: absolute;
+    top: 12%;
+    left: 10%;
+    right: 10%;
+    bottom: 18%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    letter-spacing: 0.015em;
+    color: rgba(0,0,0,0.85);
+    pointer-events: none;
+}
+
+.storyTaste-label {
+    position: absolute;
+    bottom: 6%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #000;
+}
+
+/* Narrow viewport behavior - card sticks to top, bottom half visible */
+@media (max-height: 700px) {
+    #storyTasteCard {
+        position: sticky;
+        top: 0;
+        height: 50vh;
+        aspect-ratio: unset;
+        background-position: center bottom;
+        z-index: 10;
+    }
+}
+
+/* Fade mask - activated when card is cropped */
+#storyTasteCard::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        to top,
+        rgba(255,255,255,0) 70%,
+        rgba(255,255,255,0.85) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 14px;
+}
+
+@media (max-height: 700px) {
+    #storyTasteCard::after {
+        opacity: 1;
+    }
+}
+
+/* Shimmer animation - one-shot gold effect on DSP update */
+@keyframes goldShimmer {
+    0% { background-position: -150% center; }
+    100% { background-position: 150% center; }
+}
+
+.storyTaste-content.shimmer {
+    background: linear-gradient(
+        120deg,
+        rgba(0,0,0,0.85) 40%,
+        rgba(212,175,55,0.9) 50%,
+        rgba(0,0,0,0.85) 60%
+    );
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: goldShimmer 1.6s ease-out 1;
+}

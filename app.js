@@ -399,11 +399,11 @@ Begin now.`;
       }
 
       // FIX: Update story header display based on current page
-      // Page 1: Large title, synopsis, intro image
-      // Page 2+: Smaller title only, no synopsis or intro image
+      // Page 1: Large title, Story Taste card, intro image
+      // Page 2+: Smaller title only, no Story Taste or intro image
       function updateStoryHeaderDisplay() {
           const titleEl = document.getElementById('storyTitle');
-          const synopsisEl = document.getElementById('storySynopsis');
+          const storyTasteCard = document.getElementById('storyTasteCard');
           const settingShotWrap = document.getElementById('settingShotWrap');
           const sceneNumberEl = document.getElementById('sceneNumber');
 
@@ -415,12 +415,12 @@ Begin now.`;
           if (currentPageIndex === 0) {
               // Page 1: Full display
               if (titleEl) titleEl.style.fontSize = '';
-              if (synopsisEl) synopsisEl.style.display = '';
+              if (storyTasteCard) storyTasteCard.style.display = '';
               if (settingShotWrap) settingShotWrap.style.display = '';
           } else {
               // Page 2+: Compact display
               if (titleEl) titleEl.style.fontSize = '1.2em';
-              if (synopsisEl) synopsisEl.style.display = 'none';
+              if (storyTasteCard) storyTasteCard.style.display = 'none';
               if (settingShotWrap) settingShotWrap.style.display = 'none';
           }
       }
@@ -435,6 +435,34 @@ Begin now.`;
               window.scrollTo({ top: 0, behavior: 'smooth' });
           }
       }
+
+      /**
+       * Updates the Story Taste DSP card with text and triggers shimmer animation.
+       * @param {string} text - The DSP text to display
+       */
+      function updateStoryTaste(text) {
+          const el = document.getElementById('storyTasteText');
+          const synopsisEl = document.getElementById('storySynopsis');
+
+          if (!el) return;
+
+          // Remove shimmer class to reset animation
+          el.classList.remove('shimmer');
+          // Force reflow to restart animation
+          void el.offsetWidth;
+          // Set text content
+          el.textContent = text;
+          // Trigger shimmer animation
+          el.classList.add('shimmer');
+
+          // Also update hidden synopsis for backwards compatibility (save/load)
+          if (synopsisEl) {
+              synopsisEl.textContent = text;
+          }
+      }
+
+      // Expose updateStoryTaste globally for external use
+      window.updateStoryTaste = updateStoryTaste;
 
       function renderCurrentPage(animate = false, direction = 'forward') {
           // REPAIR: Always try to get container before rendering
@@ -2658,7 +2686,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     applyAccessLocks();
 
     document.getElementById('storyTitle').textContent = data.title || '';
-    document.getElementById('storySynopsis').textContent = data.synopsis || '';
+    // Update Story Taste card with saved DSP (triggers shimmer animation)
+    updateStoryTaste(data.synopsis || '');
 
     // Load story into pagination system
     StoryPagination.clear();
@@ -3919,14 +3948,14 @@ Return ONLY the title, no quotes or explanation:\n${text}`}]);
 
         // CORRECTIVE: Set title and synopsis first
         const titleEl = document.getElementById('storyTitle');
-        const synopsisEl = document.getElementById('storySynopsis');
         const storyTextEl = document.getElementById('storyText');
 
         // Hide story text until fully rendered
         if (storyTextEl) storyTextEl.style.opacity = '0';
 
         titleEl.textContent = title.replace(/"/g,'');
-        synopsisEl.textContent = synopsis;
+        // Update Story Taste card with DSP (triggers shimmer animation)
+        updateStoryTaste(synopsis);
 
         // Use pagination system for story display
         StoryPagination.clear();

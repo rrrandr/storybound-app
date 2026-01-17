@@ -9,7 +9,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400&family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Allura&family=Glass+Antiqua&family=Eagle+Lake&family=Smooch+Sans:wght@300;500&family=Pinyon+Script&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
@@ -648,9 +648,17 @@
     
     <div id="billingBanner" style="display:none;"></div>
 
-    <!-- CORRECTIVE: Story start - title double size, Scene under synopsis -->
+    <!-- CORRECTIVE: Story start - title double size, Scene under Story Taste -->
     <h2 id="storyTitle" style="font-size:3em; text-align:center; margin-bottom:10px;"></h2>
-    <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:10px; text-align:center;"></p>
+
+    <!-- Story Taste DSP Tarot Card -->
+    <div id="storyTasteCard">
+      <div class="storyTaste-content" id="storyTasteText"></div>
+      <div class="storyTaste-label">Story Taste</div>
+    </div>
+    <!-- Hidden element for backwards compatibility with save/load -->
+    <p id="storySynopsis" style="display:none;"></p>
+
     <div id="sceneNumber" style="font-size:2em; color:var(--gold); font-weight:bold; text-align:center; margin:0 0 20px;">Scene 1</div>
     
     <div id="batedBreathIndicator" class="hidden" style="text-align:center; font-size:0.8em; color:var(--gold); font-style:italic; margin-bottom:10px; opacity:0.8;">
