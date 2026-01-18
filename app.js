@@ -6504,63 +6504,85 @@ FATE CARD ADAPTATION (CRITICAL):
 
   /**
    * Check if user can read a library book based on tier and eroticism level.
-   * @param {Object} book - Book object with eroticismLevel property
+   * RULE: Visibility ≠ Access. All books are VISIBLE. Access controls OPENING.
+   * @param {Object} story - Story object with eroticism_level property
    * @returns {Object} - { allowed: boolean, reason: string }
    */
-  function checkLibraryAccess(book) {
-    if (!book || !book.eroticismLevel) {
+  function checkLibraryAccess(story) {
+    if (!story || !story.eroticism_level) {
       return { allowed: false, reason: 'Invalid book' };
     }
 
-    const level = book.eroticismLevel;
+    const level = story.eroticism_level;
+    const userEntitlement = getUserEntitlementLevel();
 
-    // Free tier: Clean and Naughty only
-    if (state.access === 'free' && !state.subscribed) {
-      if (level === 'Clean' || level === 'Naughty') {
-        return { allowed: true, reason: 'Free access' };
-      }
-      return { allowed: false, reason: 'Requires Library Pass or Subscription' };
+    // Compare entitlement levels
+    if (userEntitlement >= getEroticismNumericLevel(level)) {
+      return { allowed: true, reason: 'Entitlement sufficient' };
     }
 
-    // Subscribed: All access
-    if (state.subscribed) {
-      return { allowed: true, reason: 'Subscriber access' };
-    }
+    return { allowed: false, reason: 'Requires Library Pass or Subscription' };
+  }
 
-    // Library Pass: Erotic (up to 3) or Dirty (1) — uses existing pass pattern
-    if (state.access === 'pass' || (state.storyId && hasStoryPass(state.storyId))) {
-      if (level === 'Clean' || level === 'Naughty' || level === 'Erotic' || level === 'Dirty') {
-        return { allowed: true, reason: 'Pass access' };
-      }
-    }
+  /**
+   * Get user's entitlement level as numeric value.
+   * 0 = Free (Clean, Naughty)
+   * 1 = Pass (Erotic)
+   * 2 = Subscriber (Dirty)
+   */
+  function getUserEntitlementLevel() {
+    if (state.subscribed) return 2;
+    if (state.access === 'pass' || (state.storyId && hasStoryPass(state.storyId))) return 1;
+    return 0;
+  }
 
-    return { allowed: false, reason: 'Access denied' };
+  /**
+   * Get numeric level for eroticism rating.
+   */
+  function getEroticismNumericLevel(level) {
+    const levels = { 'Clean': 0, 'Naughty': 0, 'Erotic': 1, 'Dirty': 2 };
+    return levels[level] ?? 0;
+  }
+
+  /**
+   * Check if user can open a specific book.
+   * CANONICAL RULE: user.entitlement >= story.eroticism_level
+   * @param {Object} story - Story object
+   * @returns {boolean}
+   */
+  function canUserOpenBook(story) {
+    if (!story || !story.eroticism_level) return false;
+    return getUserEntitlementLevel() >= getEroticismNumericLevel(story.eroticism_level);
   }
 
   /**
    * Open a library book for reading.
-   * BLOCKER: Requires book data source (not yet specified).
-   * @param {Object} book - Book object with content, cover, metadata
+   * CANONICAL: Access checked here. If denied, paywall shown.
+   * @param {Object} story - Story object with content, cover_url, metadata
    */
-  window.openLibraryBook = function(book) {
-    if (!book) return;
+  window.openLibraryBook = function(story) {
+    if (!story) return;
 
-    const access = checkLibraryAccess(book);
-    if (!access.allowed) {
-      showToast(access.reason);
+    // CANONICAL RULE: Access controls OPENING, not visibility
+    if (!canUserOpenBook(story)) {
+      trackEvent('library_open_denied', {
+        story_id: story.id,
+        eroticism_level: story.eroticism_level
+      });
+      showToast('Requires Library Pass or Subscription');
       window.showPaywall('unlock');
       return;
     }
 
     state.libraryMode = true;
-    state.currentLibraryBook = book;
+    state.currentLibraryBook = story;
 
     // Track view event (passive signal recording)
     trackEvent('library_book_opened', {
-      bookId: book.id,
-      eroticismLevel: book.eroticismLevel,
-      sceneCount: book.sceneCount,
-      isCompleted: book.isCompleted
+      story_id: story.id,
+      eroticism_level: story.eroticism_level,
+      scene_count: story.scene_count,
+      status: story.status
     });
 
     // Apply read-only gating
@@ -6569,9 +6591,39 @@ FATE CARD ADAPTATION (CRITICAL):
     // Route to existing game screen with book content
     window.showScreen('game');
 
-    // BLOCKER: Cannot populate content without book data source
-    // Content loading would occur here when data source is resolved
+    // Load story content into reader
+    loadLibraryBookContent(story);
   };
+
+  /**
+   * Load library book content into the reader.
+   * Stories are read-only. No continuation allowed.
+   * @param {Object} story - Story object
+   */
+  function loadLibraryBookContent(story) {
+    if (!story) return;
+
+    // Set title
+    const titleEl = document.getElementById('storyTitle');
+    if (titleEl) titleEl.textContent = story.title || 'Untitled';
+
+    // Set synopsis
+    const synopsisEl = document.getElementById('storySynopsis');
+    if (synopsisEl) synopsisEl.textContent = story.synopsis || '';
+
+    // Load cover image
+    const coverImg = document.getElementById('settingShotImg');
+    if (coverImg && story.cover_url) {
+      coverImg.src = story.cover_url;
+      coverImg.style.display = 'block';
+    }
+
+    // Load story content (if content field exists)
+    const storyTextEl = document.getElementById('storyText');
+    if (storyTextEl && story.content) {
+      storyTextEl.innerHTML = story.content;
+    }
+  }
 
   /**
    * Apply read-only mode gating for library reading.
@@ -6611,15 +6663,16 @@ FATE CARD ADAPTATION (CRITICAL):
 
   /**
    * Exit library mode and restore normal UI.
+   * CANONICAL: Back button returns to shelf, not regeneration.
    */
   window.exitLibraryMode = function() {
     if (!state.libraryMode) return;
 
-    // Track drop-off if book not completed
+    // Track drop-off if book not completed (passive analytics)
     if (state.currentLibraryBook && !state.currentLibraryBook._completed) {
       trackEvent('library_book_dropoff', {
-        bookId: state.currentLibraryBook.id,
-        eroticismLevel: state.currentLibraryBook.eroticismLevel
+        story_id: state.currentLibraryBook.id,
+        eroticism_level: state.currentLibraryBook.eroticism_level
       });
     }
 
@@ -6648,97 +6701,157 @@ FATE CARD ADAPTATION (CRITICAL):
 
   /**
    * Track library book completion (passive signal).
+   * ANALYTICS: passive only, no prompts or nudges.
    */
   function trackLibraryCompletion() {
     if (!state.libraryMode || !state.currentLibraryBook) return;
 
     state.currentLibraryBook._completed = true;
     trackEvent('library_book_completed', {
-      bookId: state.currentLibraryBook.id,
-      eroticismLevel: state.currentLibraryBook.eroticismLevel
+      story_id: state.currentLibraryBook.id,
+      eroticism_level: state.currentLibraryBook.eroticism_level
     });
   }
 
+  // Expose for external use
+  window.trackLibraryCompletion = trackLibraryCompletion;
+
   /**
-   * Check if book is eligible for library (50+ scenes).
-   * @param {Object} book - Book object with sceneCount property
+   * Check if story is eligible for The Forbidden Library.
+   * CANONICAL RULE (DO NOT DEVIATE):
+   * A story is eligible if:
+   *   - library_opt_in !== false AND
+   *   - visibility !== 'private' AND
+   *   - (status === 'completed' OR scene_count >= 50)
+   *
+   * @param {Object} story - Story object
    * @returns {boolean}
    */
-  function isLibraryEligible(book) {
-    return book && typeof book.sceneCount === 'number' && book.sceneCount >= 50;
+  function isLibraryEligible(story) {
+    if (!story) return false;
+    return (
+      story.library_opt_in !== false &&
+      story.visibility !== 'private' &&
+      (
+        story.status === 'completed' ||
+        (typeof story.scene_count === 'number' && story.scene_count >= 50)
+      )
+    );
   }
 
   /**
    * Render a library book cover with attribution treatment.
-   * @param {Object} book - Book object
+   * CANONICAL RULES:
+   * - ALL books are VISIBLE (visibility ≠ access)
+   * - Locked books: desaturated/greyed, lock icon, click → paywall
+   * - Title: ALWAYS visible (never blurred)
+   * - Cover art: uses story.cover_url (canonical location)
+   *
+   * @param {Object} story - Story object
    * @returns {HTMLElement} - Cover element
    */
-  function renderLibraryBookCover(book) {
+  function renderLibraryBookCover(story) {
     const cover = document.createElement('div');
     cover.className = 'library-book-cover';
 
-    // In-progress marker if 50+ scenes but not completed
-    if (isLibraryEligible(book) && !book.isCompleted) {
+    // Check if user can open this book
+    const userCanOpen = canUserOpenBook(story);
+
+    // Apply locked styling if user cannot open
+    if (!userCanOpen) {
+      cover.classList.add('library-locked');
+    }
+
+    // In-progress marker: scene_count >= 50 AND status !== 'completed'
+    if (story.scene_count >= 50 && story.status !== 'completed') {
       cover.classList.add('in-progress');
     }
 
-    // Cover image (BLOCKER: requires cover art storage location)
-    if (book.coverArt) {
+    // Cover image (CANONICAL: uses story.cover_url)
+    if (story.cover_url) {
       const img = document.createElement('img');
-      img.src = book.coverArt;
-      img.alt = book.title || 'Book Cover';
+      img.src = story.cover_url;
+      img.alt = story.title || 'Book Cover';
+      img.loading = 'lazy';
       cover.appendChild(img);
     }
 
-    // Title (always visible)
+    // Lock icon overlay for locked books
+    if (!userCanOpen) {
+      const lockOverlay = document.createElement('div');
+      lockOverlay.className = 'library-lock-overlay';
+      lockOverlay.innerHTML = '🔒';
+      cover.appendChild(lockOverlay);
+    }
+
+    // Title (ALWAYS visible - never blurred or hidden)
     const title = document.createElement('div');
     title.className = 'book-title';
-    title.textContent = book.title || 'Untitled';
+    title.textContent = story.title || 'Untitled';
     cover.appendChild(title);
 
     // Author attribution
     const author = document.createElement('div');
-    if (book.authorOptIn && book.authorName) {
+    if (story.author_opt_in && story.author_name) {
       author.className = 'author-visible';
-      author.textContent = `by ${book.authorName}`;
+      author.textContent = `by ${story.author_name}`;
     } else {
-      // Non-opt-in: black rectangle + "by Anonymous"
+      // Non-opt-in: black rectangle + "Anonymous Author"
       author.className = 'author-obscured';
-      author.textContent = 'by Anonymous';
+      author.textContent = 'by Anonymous Author';
     }
     cover.appendChild(author);
 
-    // Click to open
-    cover.addEventListener('click', () => window.openLibraryBook(book));
+    // Click behavior: paywall for locked, open for accessible
+    cover.addEventListener('click', () => {
+      if (!userCanOpen) {
+        // Track locked click (passive analytics)
+        trackEvent('library_locked_click', {
+          story_id: story.id,
+          eroticism_level: story.eroticism_level
+        });
+        // Trigger paywall
+        window.showPaywall('unlock');
+      } else {
+        window.openLibraryBook(story);
+      }
+    });
 
     return cover;
   }
 
   /**
    * Populate library shelf with books.
-   * BLOCKER: Requires authoritative book data source.
-   * @param {Array} books - Array of book objects
+   * CANONICAL RULE: Receives ONLY eligible stories (pre-filtered by data source).
+   * Renders ALL of them regardless of entitlement.
+   * Locked styling applied conditionally per user entitlement.
+   *
+   * @param {Array} stories - Array of eligible story objects
    */
-  function populateLibraryShelf(books) {
+  function populateLibraryShelf(stories) {
     const shelf = document.getElementById('libraryShelfContent');
     if (!shelf) return;
 
     shelf.innerHTML = '';
 
-    if (!books || books.length === 0) {
+    if (!stories || stories.length === 0) {
       shelf.innerHTML = '<p style="color:#888; padding:20px;">Library books loading...</p>';
       return;
     }
 
-    books.filter(isLibraryEligible).forEach(book => {
-      shelf.appendChild(renderLibraryBookCover(book));
+    // Render ALL stories - do NOT client-filter eligibility
+    // Visibility ≠ Access: all books visible, locked ones styled differently
+    stories.forEach(story => {
+      shelf.appendChild(renderLibraryBookCover(story));
     });
   }
 
   // Expose for external data source integration
   window.populateLibraryShelf = populateLibraryShelf;
   window.checkLibraryAccess = checkLibraryAccess;
+  window.canUserOpenBook = canUserOpenBook;
   window.isLibraryEligible = isLibraryEligible;
+  window.getUserEntitlementLevel = getUserEntitlementLevel;
 
   // --- EDGE COVENANT ---
   window.openEdgeCovenantModal = function(){

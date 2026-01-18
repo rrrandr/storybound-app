@@ -1869,3 +1869,44 @@ textarea.fate-field {
     display: inline-block;
     margin-bottom: 10px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOCKED BOOK STYLING — VISIBILITY ≠ ACCESS
+   Books above user entitlement are visible but locked
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Locked book cover: desaturated/greyed with subtle blur on image */
+.library-book-cover.library-locked {
+    cursor: not-allowed;
+}
+
+.library-book-cover.library-locked img {
+    filter: grayscale(70%) brightness(0.7);
+}
+
+/* Lock icon overlay */
+.library-lock-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5em;
+    z-index: 5;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    pointer-events: none;
+}
+
+/* Title on locked books: ALWAYS visible (never blurred) */
+.library-book-cover.library-locked .book-title {
+    z-index: 10;
+    /* Title explicitly NOT blurred or hidden */
+}
+
+/* Locked book hover state */
+.library-book-cover.library-locked:hover {
+    transform: scale(1.02);
+}
+
+.library-book-cover.library-locked:hover img {
+    filter: grayscale(60%) brightness(0.75);
+}
