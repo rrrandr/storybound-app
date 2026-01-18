@@ -1910,3 +1910,17 @@ textarea.fate-field {
 .library-book-cover.library-locked:hover img {
     filter: grayscale(60%) brightness(0.75);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   BURGER MENU STRUCTURE
+   ═══════════════════════════════════════════════════════════════════ */
+
+.menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.menu-section button {
+    width: 100%;
+}

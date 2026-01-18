@@ -29,14 +29,48 @@
 <button id="burgerBtn">☰</button>
 <button id="globalBackBtn" class="hidden" style="position:fixed; top:15px; left:15px; z-index:5000; background:none; border:none; font-size:1.5em; cursor:pointer;">←</button>
 
+<!-- BURGER MENU — TOP LEVEL -->
 <div id="menuOverlay" class="overlay hidden" style="z-index:4999;">
   <div class="box">
     <h3>Menu</h3>
-    <button onclick="window.restart()">Restart Story</button>
-    <button onclick="window.changeTier()">Change Tier</button>
-    <button id="continueStoryBtn" class="hidden" onclick="window.continueStory()">Continue Saved Story</button>
+
+    <!-- Story/Session Controls -->
+    <div class="menu-section">
+      <button onclick="window.restart()">Restart Story</button>
+      <button id="continueStoryBtn" class="hidden" onclick="window.continueStory()">Continue Saved Story</button>
+    </div>
+
     <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
-    
+
+    <!-- Account-Level Navigation -->
+    <div class="menu-section">
+      <button onclick="window.changeTier()">Change Tier</button>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
+
+    <!-- The Forbidden Library -->
+    <div class="menu-section">
+      <button onclick="document.getElementById('menuOverlay').classList.add('hidden'); window.openForbiddenLibrary();">The Forbidden Library</button>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
+
+    <!-- Reading Settings Entry Point -->
+    <div class="menu-section">
+      <button onclick="document.getElementById('menuOverlay').classList.add('hidden'); document.getElementById('readingSettingsOverlay').classList.remove('hidden');">Reading Settings</button>
+    </div>
+
+    <br>
+    <button onclick="document.getElementById('menuOverlay').classList.add('hidden')" style="background:#444">Close</button>
+  </div>
+</div>
+
+<!-- READING SETTINGS SUBMENU -->
+<div id="readingSettingsOverlay" class="overlay hidden" style="z-index:5000;">
+  <div class="box">
+    <h3>Reading Settings</h3>
+
     <label class="setting-label">Theme</label>
     <div style="display:flex; gap:5px; justify-content:center; flex-wrap:wrap; margin-bottom:15px;">
         <button class="small-btn" onclick="setTheme('default')">Default</button>
@@ -63,7 +97,7 @@
     <input type="range" min="16" max="72" value="18" oninput="setFontSize(this.value)">
 
     <br><br>
-    <button onclick="document.getElementById('menuOverlay').classList.add('hidden')" style="background:#444">Close</button>
+    <button onclick="document.getElementById('readingSettingsOverlay').classList.add('hidden')" style="background:#444">Back</button>
   </div>
 </div>
 
