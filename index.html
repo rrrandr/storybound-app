@@ -247,6 +247,7 @@
         </div>
       </div>
       <button id="continueFromTierBtn" class="choice hidden" style="margin-top:20px; width:80%; max-width:300px;" onclick="window.continueStory()">Continue Saved Story</button>
+      <button id="btnForbiddenLibrary" class="choice" style="margin-top:20px; width:80%; max-width:300px;" onclick="window.openForbiddenLibrary()">The Forbidden Library</button>
   </div>
 </div>
 
@@ -313,6 +314,14 @@
       <div style="text-align:center">
           <button class="choice" onclick="window.setMode('stranger')">Stranger</button>
           <p class="choice-desc">Tempt fate with a random encounter.</p>
+      </div>
+    </div>
+
+    <!-- The Forbidden Library Shelf -->
+    <div id="forbiddenLibraryShelf" class="library-shelf" style="margin-top:40px; overflow-x:auto; white-space:nowrap; padding:20px 0;">
+      <div class="section-title" style="white-space:normal; margin-bottom:15px;">The Forbidden Library</div>
+      <div id="libraryShelfContent" class="shelf-scroll" style="display:flex; gap:15px; overflow-x:auto; padding-bottom:10px;">
+        <!-- Book covers populated by app.js when data source is available -->
       </div>
     </div>
   </div>

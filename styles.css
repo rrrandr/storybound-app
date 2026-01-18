@@ -1756,3 +1756,116 @@ textarea.fate-field {
 .era-selection .card p {
     font-size: 0.8em;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   THE FORBIDDEN LIBRARY — READ-ONLY BOOK DISPLAY
+   ═══════════════════════════════════════════════════════════════════ */
+
+.library-shelf {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.shelf-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold) transparent;
+}
+
+.shelf-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.shelf-scroll::-webkit-scrollbar-thumb {
+    background: var(--gold);
+    border-radius: 3px;
+}
+
+/* Book cover container */
+.library-book-cover {
+    position: relative;
+    flex-shrink: 0;
+    width: 140px;
+    height: 200px;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.library-book-cover:hover {
+    transform: scale(1.05);
+}
+
+.library-book-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Anonymous author treatment: black rectangle + overlay text */
+.library-book-cover .author-obscured {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #000;
+    color: #888;
+    font-size: 0.7em;
+    padding: 6px 8px;
+    text-align: center;
+}
+
+/* Visible author (opted-in) */
+.library-book-cover .author-visible {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.8);
+    color: var(--text);
+    font-size: 0.7em;
+    padding: 6px 8px;
+    text-align: center;
+}
+
+/* In-progress marker (passive, no interaction) */
+.library-book-cover.in-progress::after {
+    content: "In Progress";
+    position: absolute;
+    top: 8px;
+    right: -20px;
+    background: var(--gold);
+    color: #000;
+    font-size: 0.6em;
+    font-weight: bold;
+    padding: 2px 25px;
+    transform: rotate(45deg);
+}
+
+/* Book title on cover */
+.library-book-cover .book-title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 0.85em;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    padding: 5px;
+    max-width: 90%;
+}
+
+/* Read-only indicator for library mode */
+.library-mode-indicator {
+    background: var(--gold);
+    color: #000;
+    font-size: 0.75em;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 10px;
+}

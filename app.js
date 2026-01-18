@@ -580,6 +580,11 @@ NEVER explain. NEVER describe. ONLY substitute.`;
    * @returns {Promise<Object>} - Normalized response JSON
    */
   async function callNormalizationLayer(params) {
+      // CONTEXTUAL GUARD: Block normalization in library mode (read-only)
+      if (state.libraryMode) {
+          throw new Error('[FORBIDDEN LIBRARY] Normalization blocked. Library mode is read-only.');
+      }
+
       const { axis, selected_world = null, allowed_subtypes = [], user_text, context_signals = [] } = params;
 
       if (!user_text || typeof user_text !== 'string' || !user_text.trim()) {
@@ -1190,6 +1195,11 @@ ANTI-HERO ENFORCEMENT:
       unlockedFateIdx: [0, 1],
       lastFate: null,
       mode: 'solo',
+
+      // The Forbidden Library — read-only mode state
+      libraryMode: false,
+      currentLibraryBook: null,
+
       roomId: null,
       roomCode: null,
       roomTurn: 1,
@@ -1344,6 +1354,18 @@ ANTI-HERO ENFORCEMENT:
   }
 
   function goBack() {
+      // FORBIDDEN LIBRARY: Back button exits library mode and returns to shelf
+      if (state.libraryMode) {
+          window.exitLibraryMode();
+          window.showScreen('modeSelect');
+          // Scroll to library shelf
+          setTimeout(() => {
+              const shelf = document.getElementById('forbiddenLibraryShelf');
+              if (shelf) shelf.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+          return;
+      }
+
       if (_navHistory.length === 0) {
           if(typeof coupleCleanup === 'function' && state.mode === 'couple') coupleCleanup();
           window.showScreen('modeSelect');
@@ -4759,6 +4781,11 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
    * ==========================================================================
    */
   async function callChat(messages, temp=0.7, options = {}) {
+    // CONTEXTUAL GUARD: Block generation in library mode (read-only)
+    if (state.libraryMode) {
+      throw new Error('[FORBIDDEN LIBRARY] Generation blocked. Library mode is read-only.');
+    }
+
     // LOCKED: Story authoring routes through ChatGPT orchestration ONLY
     if (!window.StoryboundOrchestration) {
       throw new Error('[MODEL WIRING] Orchestration client not loaded. ChatGPT required for story authoring.');
@@ -6453,6 +6480,265 @@ FATE CARD ADAPTATION (CRITICAL):
      if(m === 'couple') window.showScreen('coupleInvite');
      if(m === 'stranger') window.showScreen('strangerModal');
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // THE FORBIDDEN LIBRARY — READ-ONLY BOOK READING
+  // ═══════════════════════════════════════════════════════════════════════════
+  // This feature is READ-ONLY. No generation, no continuation, no branching.
+  // Generation calls are blocked ONLY when state.libraryMode === true.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Open The Forbidden Library.
+   * Sets libraryMode = true and routes to library shelf view.
+   */
+  window.openForbiddenLibrary = function() {
+    state.libraryMode = true;
+    state.currentLibraryBook = null;
+    trackEvent('library_opened', { access: state.access });
+    window.showScreen('modeSelect');
+    // Scroll to library shelf
+    const shelf = document.getElementById('forbiddenLibraryShelf');
+    if (shelf) shelf.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  /**
+   * Check if user can read a library book based on tier and eroticism level.
+   * @param {Object} book - Book object with eroticismLevel property
+   * @returns {Object} - { allowed: boolean, reason: string }
+   */
+  function checkLibraryAccess(book) {
+    if (!book || !book.eroticismLevel) {
+      return { allowed: false, reason: 'Invalid book' };
+    }
+
+    const level = book.eroticismLevel;
+
+    // Free tier: Clean and Naughty only
+    if (state.access === 'free' && !state.subscribed) {
+      if (level === 'Clean' || level === 'Naughty') {
+        return { allowed: true, reason: 'Free access' };
+      }
+      return { allowed: false, reason: 'Requires Library Pass or Subscription' };
+    }
+
+    // Subscribed: All access
+    if (state.subscribed) {
+      return { allowed: true, reason: 'Subscriber access' };
+    }
+
+    // Library Pass: Erotic (up to 3) or Dirty (1) — uses existing pass pattern
+    if (state.access === 'pass' || (state.storyId && hasStoryPass(state.storyId))) {
+      if (level === 'Clean' || level === 'Naughty' || level === 'Erotic' || level === 'Dirty') {
+        return { allowed: true, reason: 'Pass access' };
+      }
+    }
+
+    return { allowed: false, reason: 'Access denied' };
+  }
+
+  /**
+   * Open a library book for reading.
+   * BLOCKER: Requires book data source (not yet specified).
+   * @param {Object} book - Book object with content, cover, metadata
+   */
+  window.openLibraryBook = function(book) {
+    if (!book) return;
+
+    const access = checkLibraryAccess(book);
+    if (!access.allowed) {
+      showToast(access.reason);
+      window.showPaywall('unlock');
+      return;
+    }
+
+    state.libraryMode = true;
+    state.currentLibraryBook = book;
+
+    // Track view event (passive signal recording)
+    trackEvent('library_book_opened', {
+      bookId: book.id,
+      eroticismLevel: book.eroticismLevel,
+      sceneCount: book.sceneCount,
+      isCompleted: book.isCompleted
+    });
+
+    // Apply read-only gating
+    applyLibraryReadOnlyMode();
+
+    // Route to existing game screen with book content
+    window.showScreen('game');
+
+    // BLOCKER: Cannot populate content without book data source
+    // Content loading would occur here when data source is resolved
+  };
+
+  /**
+   * Apply read-only mode gating for library reading.
+   * Hides all generation and interaction controls.
+   */
+  function applyLibraryReadOnlyMode() {
+    if (!state.libraryMode) return;
+
+    // Elements to hide in library mode
+    const hideElements = [
+      'fateHand',           // Fate Card UI
+      'quillBox',           // Quill input
+      'vetoBox',            // Veto input
+      'actionWrapper',      // Action input
+      'dialogueWrapper',    // Dialogue input
+      'submitBtn',          // Submit button
+      'gameControlsBtn',    // Story controls button
+      'dspPanel',           // DSP panel
+      'storyControlsBtnGroup' // Control buttons group
+    ];
+
+    hideElements.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
+
+    // Add read-only indicator
+    const storyArea = document.getElementById('storyArea');
+    if (storyArea && !document.getElementById('libraryModeIndicator')) {
+      const indicator = document.createElement('div');
+      indicator.id = 'libraryModeIndicator';
+      indicator.className = 'library-mode-indicator';
+      indicator.textContent = 'The Forbidden Library — Read Only';
+      storyArea.insertBefore(indicator, storyArea.firstChild);
+    }
+  }
+
+  /**
+   * Exit library mode and restore normal UI.
+   */
+  window.exitLibraryMode = function() {
+    if (!state.libraryMode) return;
+
+    // Track drop-off if book not completed
+    if (state.currentLibraryBook && !state.currentLibraryBook._completed) {
+      trackEvent('library_book_dropoff', {
+        bookId: state.currentLibraryBook.id,
+        eroticismLevel: state.currentLibraryBook.eroticismLevel
+      });
+    }
+
+    state.libraryMode = false;
+    state.currentLibraryBook = null;
+
+    // Remove read-only indicator
+    const indicator = document.getElementById('libraryModeIndicator');
+    if (indicator) indicator.remove();
+
+    // Restore hidden elements
+    const restoreElements = [
+      'fateHand', 'quillBox', 'vetoBox', 'actionWrapper',
+      'dialogueWrapper', 'submitBtn', 'gameControlsBtn',
+      'dspPanel', 'storyControlsBtnGroup'
+    ];
+
+    restoreElements.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+    });
+
+    // Apply normal access locks
+    applyAccessLocks();
+  };
+
+  /**
+   * Track library book completion (passive signal).
+   */
+  function trackLibraryCompletion() {
+    if (!state.libraryMode || !state.currentLibraryBook) return;
+
+    state.currentLibraryBook._completed = true;
+    trackEvent('library_book_completed', {
+      bookId: state.currentLibraryBook.id,
+      eroticismLevel: state.currentLibraryBook.eroticismLevel
+    });
+  }
+
+  /**
+   * Check if book is eligible for library (50+ scenes).
+   * @param {Object} book - Book object with sceneCount property
+   * @returns {boolean}
+   */
+  function isLibraryEligible(book) {
+    return book && typeof book.sceneCount === 'number' && book.sceneCount >= 50;
+  }
+
+  /**
+   * Render a library book cover with attribution treatment.
+   * @param {Object} book - Book object
+   * @returns {HTMLElement} - Cover element
+   */
+  function renderLibraryBookCover(book) {
+    const cover = document.createElement('div');
+    cover.className = 'library-book-cover';
+
+    // In-progress marker if 50+ scenes but not completed
+    if (isLibraryEligible(book) && !book.isCompleted) {
+      cover.classList.add('in-progress');
+    }
+
+    // Cover image (BLOCKER: requires cover art storage location)
+    if (book.coverArt) {
+      const img = document.createElement('img');
+      img.src = book.coverArt;
+      img.alt = book.title || 'Book Cover';
+      cover.appendChild(img);
+    }
+
+    // Title (always visible)
+    const title = document.createElement('div');
+    title.className = 'book-title';
+    title.textContent = book.title || 'Untitled';
+    cover.appendChild(title);
+
+    // Author attribution
+    const author = document.createElement('div');
+    if (book.authorOptIn && book.authorName) {
+      author.className = 'author-visible';
+      author.textContent = `by ${book.authorName}`;
+    } else {
+      // Non-opt-in: black rectangle + "by Anonymous"
+      author.className = 'author-obscured';
+      author.textContent = 'by Anonymous';
+    }
+    cover.appendChild(author);
+
+    // Click to open
+    cover.addEventListener('click', () => window.openLibraryBook(book));
+
+    return cover;
+  }
+
+  /**
+   * Populate library shelf with books.
+   * BLOCKER: Requires authoritative book data source.
+   * @param {Array} books - Array of book objects
+   */
+  function populateLibraryShelf(books) {
+    const shelf = document.getElementById('libraryShelfContent');
+    if (!shelf) return;
+
+    shelf.innerHTML = '';
+
+    if (!books || books.length === 0) {
+      shelf.innerHTML = '<p style="color:#888; padding:20px;">Library books loading...</p>';
+      return;
+    }
+
+    books.filter(isLibraryEligible).forEach(book => {
+      shelf.appendChild(renderLibraryBookCover(book));
+    });
+  }
+
+  // Expose for external data source integration
+  window.populateLibraryShelf = populateLibraryShelf;
+  window.checkLibraryAccess = checkLibraryAccess;
+  window.isLibraryEligible = isLibraryEligible;
 
   // --- EDGE COVENANT ---
   window.openEdgeCovenantModal = function(){
