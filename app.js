@@ -16,9 +16,14 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   try {
       const res = await fetch('/api/config', { cache: 'no-store' });
       if (res.ok) config = await res.json();
-  } catch (e) { 
-      console.warn("Config load failed (using defaults)", e); 
+  } catch (e) {
+      console.warn("Config load failed (using defaults)", e);
   }
+
+  // Set environment (defaults to production for safety)
+  window.STORYBOUND_ENV = config.env || 'production';
+  // Admin status initialized to false, updated after auth
+  window.IS_ADMIN = false;
 
   const SUPABASE_URL = config.supabaseUrl || ""; 
   const SUPABASE_ANON_KEY = config.supabaseAnonKey || "";
@@ -2736,13 +2741,35 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       alert("God Mode Active.");
   }
 
+  // ADMIN TEST STORIES — Track stories created by admin in this session (not persisted)
+  // Used only for Forbidden Library eligibility bypass in dev environments
+  const _adminTestStoryIds = new Set();
+
   function makeStoryId(){
     const existing = localStorage.getItem('sb_current_story_id');
     if(existing) return existing;
     const id = 'sb_' + Date.now().toString(36);
     localStorage.setItem('sb_current_story_id', id);
+
+    // Tag as admin test story if created by admin in non-production
+    if (window.IS_ADMIN === true && window.STORYBOUND_ENV !== 'production') {
+      _adminTestStoryIds.add(id);
+    }
+
     return id;
   }
+
+  /**
+   * Check if a story ID was created by admin in this session.
+   * @param {string} storyId - Story ID to check
+   * @returns {boolean}
+   */
+  function isAdminTestStory(storyId) {
+    return _adminTestStoryIds.has(storyId);
+  }
+
+  // Expose for external data source integration
+  window.isAdminTestStory = isAdminTestStory;
 
   function getStoryPassKey(storyId){ return `sb_storypass_${storyId}`; }
   function hasStoryPass(storyId){ return localStorage.getItem(getStoryPassKey(storyId)) === '1'; }
@@ -6589,14 +6616,42 @@ FATE CARD ADAPTATION (CRITICAL):
    */
   let _cachedIsAuthenticated = false;
 
+  /**
+   * Check admin status for a user ID via server.
+   * Server compares against ADMIN_USER_ID (never exposed to client).
+   * @param {string} userId - Authenticated user's ID
+   */
+  async function checkAdminStatus(userId) {
+    if (!userId) {
+      window.IS_ADMIN = false;
+      return;
+    }
+    try {
+      const res = await fetch(`/api/config?user_id=${encodeURIComponent(userId)}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        window.IS_ADMIN = data.isAdmin === true;
+      } else {
+        window.IS_ADMIN = false;
+      }
+    } catch (e) {
+      console.warn('[ADMIN CHECK] Failed:', e);
+      window.IS_ADMIN = false;
+    }
+  }
+
   // Listen for auth state changes to keep cache updated
   if (sb) {
     sb.auth.onAuthStateChange((event, session) => {
       _cachedIsAuthenticated = session?.user && session.user.is_anonymous !== true;
+      // Check admin status on auth change
+      checkAdminStatus(session?.user?.id);
     });
     // Initialize cache
     sb.auth.getSession().then(({ data: { session } }) => {
       _cachedIsAuthenticated = session?.user && session.user.is_anonymous !== true;
+      // Check admin status on initial load
+      checkAdminStatus(session?.user?.id);
     });
   }
 
@@ -6914,11 +6969,28 @@ FATE CARD ADAPTATION (CRITICAL):
    *   - visibility !== 'private' AND
    *   - (status === 'completed' OR scene_count >= 50)
    *
+   * ADMIN TEST OVERRIDE (dev-only):
+   *   - In non-production environments
+   *   - When user is admin (window.IS_ADMIN === true)
+   *   - Story has _admin_test_story === true
+   *   - Scene count requirement is bypassed
+   *
    * @param {Object} story - Story object
    * @returns {boolean}
    */
   function isLibraryEligible(story) {
     if (!story) return false;
+
+    // DEV-ONLY ADMIN TEST OVERRIDE
+    // Bypasses scene count requirement for admin test stories
+    if (window.IS_ADMIN === true &&
+        window.STORYBOUND_ENV !== 'production' &&
+        story._admin_test_story === true) {
+      return story.library_opt_in !== false &&
+             story.visibility !== 'private';
+    }
+
+    // NORMAL ELIGIBILITY
     return (
       story.library_opt_in !== false &&
       story.visibility !== 'private' &&
@@ -7016,6 +7088,9 @@ FATE CARD ADAPTATION (CRITICAL):
    * Renders ALL of them regardless of entitlement.
    * Locked styling applied conditionally per user entitlement.
    *
+   * ADMIN TEST OVERRIDE (dev-only):
+   * Stories created by admin in this session are tagged with _admin_test_story = true
+   *
    * @param {Array} stories - Array of eligible story objects
    */
   function populateLibraryShelf(stories) {
@@ -7027,6 +7102,15 @@ FATE CARD ADAPTATION (CRITICAL):
     if (!stories || stories.length === 0) {
       shelf.innerHTML = '<p style="color:#888; padding:20px;">Library books loading...</p>';
       return;
+    }
+
+    // Tag admin test stories (dev-only, in-memory only)
+    if (window.IS_ADMIN === true && window.STORYBOUND_ENV !== 'production') {
+      stories.forEach(story => {
+        if (story.id && isAdminTestStory(story.id)) {
+          story._admin_test_story = true;
+        }
+      });
     }
 
     // Render ALL stories - do NOT client-filter eligibility
