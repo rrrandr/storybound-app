@@ -2741,9 +2741,45 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       alert("God Mode Active.");
   }
 
-  // ADMIN TEST STORIES — Track stories created by admin in this session (not persisted)
+  // ADMIN TEST STORIES — Track stories created by admin (dev-only, persisted to localStorage)
   // Used only for Forbidden Library eligibility bypass in dev environments
-  const _adminTestStoryIds = new Set();
+  // CONSTRAINTS:
+  // - Admin-only (window.IS_ADMIN === true)
+  // - Dev-only (window.STORYBOUND_ENV !== 'production')
+  // - Never exported or sent to production backends
+  const ADMIN_TEST_STORAGE_KEY = 'sb_admin_test_stories';
+
+  /**
+   * Load admin test story IDs from localStorage.
+   * Returns empty Set if in production.
+   */
+  function loadAdminTestStoryIds() {
+    if (window.STORYBOUND_ENV === 'production') return new Set();
+    try {
+      const stored = localStorage.getItem(ADMIN_TEST_STORAGE_KEY);
+      if (stored) return new Set(JSON.parse(stored));
+    } catch (e) {
+      console.warn('[ADMIN TEST] Failed to load:', e);
+    }
+    return new Set();
+  }
+
+  /**
+   * Save admin test story IDs to localStorage.
+   * Only persists in dev mode for admin.
+   */
+  function saveAdminTestStoryIds(ids) {
+    if (window.STORYBOUND_ENV === 'production') return;
+    if (window.IS_ADMIN !== true) return;
+    try {
+      localStorage.setItem(ADMIN_TEST_STORAGE_KEY, JSON.stringify([...ids]));
+    } catch (e) {
+      console.warn('[ADMIN TEST] Failed to save:', e);
+    }
+  }
+
+  // Initialize from localStorage (will be empty in production)
+  let _adminTestStoryIds = loadAdminTestStoryIds();
 
   function makeStoryId(){
     const existing = localStorage.getItem('sb_current_story_id');
@@ -2751,20 +2787,24 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const id = 'sb_' + Date.now().toString(36);
     localStorage.setItem('sb_current_story_id', id);
 
-    // Tag as admin test story if created by admin in non-production
+    // Tag as admin test story at creation time (dev/admin only, persisted)
     if (window.IS_ADMIN === true && window.STORYBOUND_ENV !== 'production') {
       _adminTestStoryIds.add(id);
+      saveAdminTestStoryIds(_adminTestStoryIds);
     }
 
     return id;
   }
 
   /**
-   * Check if a story ID was created by admin in this session.
+   * Check if a story ID is an admin test story.
+   * Returns false in production or for non-admin users.
    * @param {string} storyId - Story ID to check
    * @returns {boolean}
    */
   function isAdminTestStory(storyId) {
+    if (window.STORYBOUND_ENV === 'production') return false;
+    if (window.IS_ADMIN !== true) return false;
     return _adminTestStoryIds.has(storyId);
   }
 
@@ -6972,7 +7012,7 @@ FATE CARD ADAPTATION (CRITICAL):
    * ADMIN TEST OVERRIDE (dev-only):
    *   - In non-production environments
    *   - When user is admin (window.IS_ADMIN === true)
-   *   - Story has _admin_test_story === true
+   *   - Story ID is in admin test story list (tagged at creation time)
    *   - Scene count requirement is bypassed
    *
    * @param {Object} story - Story object
@@ -6983,9 +7023,8 @@ FATE CARD ADAPTATION (CRITICAL):
 
     // DEV-ONLY ADMIN TEST OVERRIDE
     // Bypasses scene count requirement for admin test stories
-    if (window.IS_ADMIN === true &&
-        window.STORYBOUND_ENV !== 'production' &&
-        story._admin_test_story === true) {
+    // Uses isAdminTestStory(story.id) - checked at creation time, not rendering
+    if (isAdminTestStory(story.id)) {
       return story.library_opt_in !== false &&
              story.visibility !== 'private';
     }
@@ -7088,8 +7127,8 @@ FATE CARD ADAPTATION (CRITICAL):
    * Renders ALL of them regardless of entitlement.
    * Locked styling applied conditionally per user entitlement.
    *
-   * ADMIN TEST OVERRIDE (dev-only):
-   * Stories created by admin in this session are tagged with _admin_test_story = true
+   * NOTE: This function is pure - no story mutation.
+   * Admin test story eligibility is checked via isAdminTestStory(story.id).
    *
    * @param {Array} stories - Array of eligible story objects
    */
@@ -7102,15 +7141,6 @@ FATE CARD ADAPTATION (CRITICAL):
     if (!stories || stories.length === 0) {
       shelf.innerHTML = '<p style="color:#888; padding:20px;">Library books loading...</p>';
       return;
-    }
-
-    // Tag admin test stories (dev-only, in-memory only)
-    if (window.IS_ADMIN === true && window.STORYBOUND_ENV !== 'production') {
-      stories.forEach(story => {
-        if (story.id && isAdminTestStory(story.id)) {
-          story._admin_test_story = true;
-        }
-      });
     }
 
     // Render ALL stories - do NOT client-filter eligibility
