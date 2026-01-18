@@ -1924,3 +1924,99 @@ textarea.fate-field {
 .menu-section button {
     width: 100%;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIBRARY AUTH GATE — PREVIEW GATING
+   ═══════════════════════════════════════════════════════════════════
+   Calm continuation prompt for anonymous users who hit the preview limit.
+   No social/gamified language. Simple, clear messaging.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.library-auth-gate {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.library-auth-gate.visible {
+    display: flex;
+}
+
+.library-auth-gate-content {
+    background: var(--surface);
+    padding: 2.5rem;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    border: 1px solid var(--gold);
+}
+
+.library-auth-gate-content h2 {
+    color: var(--gold);
+    margin-bottom: 1rem;
+    font-size: 1.4em;
+}
+
+.library-auth-gate-content p {
+    color: var(--text);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.library-auth-gate-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.library-auth-gate-buttons .btn-primary {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.library-auth-gate-buttons .btn-primary:hover {
+    opacity: 0.9;
+}
+
+.library-auth-gate-buttons .btn-secondary {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.library-auth-gate-buttons .btn-secondary:hover {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.library-auth-gate-content .btn-text {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 0.9em;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.library-auth-gate-content .btn-text:hover {
+    color: var(--text);
+}

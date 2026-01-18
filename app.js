@@ -343,7 +343,12 @@ window.config = window.config || {
 
       function goToNextPage() {
           if (isAnimating || currentPageIndex >= pages.length - 1) return;
-          currentPageIndex++;
+          const targetIndex = currentPageIndex + 1;
+          // PREVIEW GATING: Check if navigation is blocked for anonymous users
+          if (window.checkLibraryPreviewGating && window.checkLibraryPreviewGating(targetIndex)) {
+              return; // Blocked by preview gating
+          }
+          currentPageIndex = targetIndex;
           renderCurrentPage(true, 'forward');
       }
 
@@ -355,6 +360,10 @@ window.config = window.config || {
 
       function goToPage(index, animate = false) {
           if (index < 0 || index >= pages.length) return;
+          // PREVIEW GATING: Check if navigation is blocked for anonymous users
+          if (index > currentPageIndex && window.checkLibraryPreviewGating && window.checkLibraryPreviewGating(index)) {
+              return; // Blocked by preview gating
+          }
           const direction = index > currentPageIndex ? 'forward' : 'backward';
           currentPageIndex = index;
           renderCurrentPage(animate, direction);
@@ -1199,6 +1208,7 @@ ANTI-HERO ENFORCEMENT:
       // The Forbidden Library — read-only mode state
       libraryMode: false,
       currentLibraryBook: null,
+      librarySceneIndex: 0, // Track scene for preview gating
 
       roomId: null,
       roomCode: null,
@@ -6544,6 +6554,174 @@ FATE CARD ADAPTATION (CRITICAL):
     return levels[level] ?? 0;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PREVIEW GATING — ANONYMOUS USER RESTRICTIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Rules:
+  // - Anonymous users: max 5 scenes
+  // - Erotic ceiling: Up to "Erotic" allowed, "Dirty" blocked entirely
+  // - Calm continuation prompt when limit reached
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const PREVIEW_SCENE_LIMIT = 5;
+
+  /**
+   * Check if user is truly authenticated (not anonymous session).
+   * Supabase anonymous users have is_anonymous = true.
+   * @returns {Promise<boolean>} - true if user has real account
+   */
+  async function isUserTrulyAuthenticated() {
+    if (!sb) return false;
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session?.user) return false;
+      // Anonymous sessions have is_anonymous flag
+      return session.user.is_anonymous !== true;
+    } catch (e) {
+      console.warn('[PREVIEW GATING] Auth check failed:', e);
+      return false;
+    }
+  }
+
+  /**
+   * Synchronous check using cached auth state.
+   * Updated by auth state change listener.
+   */
+  let _cachedIsAuthenticated = false;
+
+  // Listen for auth state changes to keep cache updated
+  if (sb) {
+    sb.auth.onAuthStateChange((event, session) => {
+      _cachedIsAuthenticated = session?.user && session.user.is_anonymous !== true;
+    });
+    // Initialize cache
+    sb.auth.getSession().then(({ data: { session } }) => {
+      _cachedIsAuthenticated = session?.user && session.user.is_anonymous !== true;
+    });
+  }
+
+  /**
+   * Synchronous check if user is truly authenticated.
+   * Uses cached value for instant checks during navigation.
+   */
+  function isAuthenticated() {
+    return _cachedIsAuthenticated;
+  }
+
+  /**
+   * Check if anonymous user can view a story's eroticism level.
+   * RULE: Dirty content is NEVER visible to unauthenticated users.
+   */
+  function canAnonymousViewEroticismLevel(level) {
+    const numericLevel = getEroticismNumericLevel(level);
+    // Anonymous can view: Clean (0), Naughty (0), Erotic (1)
+    // Anonymous CANNOT view: Dirty (2)
+    return numericLevel < 2;
+  }
+
+  /**
+   * Show the library authentication gate.
+   * RULE: Calm continuation prompt, no social/gamified language.
+   * @param {string} message - Message to display
+   */
+  function showLibraryAuthGate(message) {
+    // Create modal overlay
+    let modal = document.getElementById('libraryAuthGate');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'libraryAuthGate';
+      modal.className = 'library-auth-gate';
+      document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+      <div class="library-auth-gate-content">
+        <h2>Create an Account to Continue</h2>
+        <p>${message || 'Sign in or create an account to keep reading.'}</p>
+        <div class="library-auth-gate-buttons">
+          <button class="btn-primary" onclick="window.showAuthScreen('signup')">Create Account</button>
+          <button class="btn-secondary" onclick="window.showAuthScreen('login')">Sign In</button>
+        </div>
+        <button class="btn-text" onclick="window.closeLibraryAuthGate()">Return to Library</button>
+      </div>
+    `;
+
+    modal.classList.add('visible');
+    trackEvent('library_auth_gate_shown', {
+      story_id: state.currentLibraryBook?.id,
+      scene_index: state.librarySceneIndex
+    });
+  }
+
+  /**
+   * Close the library auth gate and return to shelf.
+   */
+  window.closeLibraryAuthGate = function() {
+    const modal = document.getElementById('libraryAuthGate');
+    if (modal) modal.classList.remove('visible');
+    window.exitLibraryMode();
+    window.showScreen('modeSelect');
+  };
+
+  /**
+   * Show auth screen for signup/login.
+   * @param {string} mode - 'signup' or 'login'
+   */
+  window.showAuthScreen = function(mode) {
+    // Close the auth gate modal
+    const modal = document.getElementById('libraryAuthGate');
+    if (modal) modal.classList.remove('visible');
+
+    // Navigate to auth screen (using existing signin button if available)
+    const signinBtn = document.getElementById('btn-signin');
+    if (signinBtn) {
+      signinBtn.click();
+    } else {
+      // Fallback: show toast and trigger any available auth flow
+      showToast(mode === 'signup' ? 'Create an account to continue' : 'Sign in to continue');
+    }
+
+    trackEvent('library_auth_screen_shown', { mode });
+  };
+
+  /**
+   * Check if anonymous user has reached preview scene limit.
+   * @param {number} sceneIndex - 0-indexed scene number
+   * @returns {boolean} - true if blocked
+   */
+  function isPreviewLimitReached(sceneIndex) {
+    if (isAuthenticated()) return false;
+    if (!state.libraryMode) return false;
+    return sceneIndex >= PREVIEW_SCENE_LIMIT;
+  }
+
+  /**
+   * Check preview gating before navigating to a scene.
+   * Shows auth gate if limit reached.
+   * @param {number} targetSceneIndex - Scene index user wants to navigate to
+   * @returns {boolean} - true if navigation should be blocked
+   */
+  function checkPreviewGating(targetSceneIndex) {
+    if (!state.libraryMode) return false;
+    if (isAuthenticated()) return false;
+
+    // Check scene limit
+    if (targetSceneIndex >= PREVIEW_SCENE_LIMIT) {
+      trackEvent('library_preview_limit_reached', {
+        story_id: state.currentLibraryBook?.id,
+        scene_index: targetSceneIndex,
+        limit: PREVIEW_SCENE_LIMIT
+      });
+      showLibraryAuthGate(`You've reached the preview limit. Create an account to continue reading.`);
+      return true;
+    }
+
+    return false;
+  }
+
+  // Expose for navigation hooks
+  window.checkLibraryPreviewGating = checkPreviewGating;
+
   /**
    * Check if user can open a specific book.
    * CANONICAL RULE: user.entitlement >= story.eroticism_level
@@ -6574,8 +6752,19 @@ FATE CARD ADAPTATION (CRITICAL):
       return;
     }
 
+    // PREVIEW GATING: Block Dirty content for anonymous users
+    if (!isAuthenticated() && !canAnonymousViewEroticismLevel(story.eroticism_level)) {
+      trackEvent('library_dirty_blocked_anon', {
+        story_id: story.id,
+        eroticism_level: story.eroticism_level
+      });
+      showLibraryAuthGate('This story requires an account to read.');
+      return;
+    }
+
     state.libraryMode = true;
     state.currentLibraryBook = story;
+    state.librarySceneIndex = 0; // Track scene progress for preview gating
 
     // Track view event (passive signal recording)
     trackEvent('library_book_opened', {
@@ -6678,6 +6867,7 @@ FATE CARD ADAPTATION (CRITICAL):
 
     state.libraryMode = false;
     state.currentLibraryBook = null;
+    state.librarySceneIndex = 0; // Reset scene index for preview gating
 
     // Remove read-only indicator
     const indicator = document.getElementById('libraryModeIndicator');
