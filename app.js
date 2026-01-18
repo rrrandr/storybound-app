@@ -511,6 +511,9 @@ You do NOT output copyrighted or public-domain fictional IP.
 
 Your only task is to transform raw user-authored text into
 canonical, IP-safe, Storybound-compatible instructions.
+If a protected or recognizable name is detected with HIGH confidence,
+you must remove the ENTIRE name, including generic first names.
+Never output partial names or name fragments.
 
 --------------------------------
 GENERAL RULES (NON-NEGOTIABLE)
@@ -524,6 +527,10 @@ GENERAL RULES (NON-NEGOTIABLE)
 6. If normalization is ambiguous, choose the closest safe archetype.
 7. Do NOT ask questions. Do NOT request clarification.
 8. If output violates rules, regenerate silently until compliant.
+9. If a protected or recognizable name is detected with HIGH confidence,
+   you must remove the ENTIRE name.
+   Never output partial names, fragments, or generic first names
+   (e.g. "Luke", "Harry", "Neo") when they originate from protected IP.
 
 --------------------------------
 CONFIDENCE-BASED CANONICALIZATION
@@ -640,6 +647,8 @@ For veto/quill/god_mode:
       // CRITICAL: Use ChatGPT proxy, NOT Grok proxy
       // NO FALLBACKS - errors must fail loudly
       const res = await fetch('/api/chatgpt-proxy', {
+  credentials: 'same-origin',
+
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
