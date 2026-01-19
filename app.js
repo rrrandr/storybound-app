@@ -3313,6 +3313,187 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     bindLengthHandlers();
 
+    // ==========================================================================
+    // CANONICAL ORDER: World → Flavor → Tone → Genre → Dynamic
+    // ==========================================================================
+
+    // Layer prerequisites - which selections must exist for a layer to be active
+    const LAYER_PREREQUISITES = {
+      world: [],           // Always active
+      worldSubtype: ['world'],  // Requires World
+      tone: ['world'],     // Requires World
+      genre: ['world', 'tone'], // Requires World + Tone
+      dynamic: ['world', 'tone', 'genre'], // Requires World + Tone + Genre
+      era: ['world'],      // Requires World (Historical)
+      pov: []              // Always active
+    };
+
+    // Tone × Genre compatibility - null means all compatible
+    // Format: { tone: [incompatible genres] }
+    const TONE_GENRE_INCOMPATIBLE = {
+      Comedic: ['Noir'],  // Comedic tone doesn't fit noir fatalism
+      Horror: [],         // Horror works with most genres
+      Satirical: [],      // Satirical can work with anything
+      Mythic: [],         // Mythic is flexible
+      Surreal: [],        // Surreal works widely
+      Poetic: [],         // Poetic is flexible
+      Earnest: [],        // Earnest works with everything
+      WryConfession: [],  // Wry works broadly
+      Dark: []            // Dark fits everything
+    };
+
+    // Genre × Dynamic compatibility - null means all compatible
+    // Format: { genre: [incompatible dynamics] }
+    const GENRE_DYNAMIC_INCOMPATIBLE = {
+      Noir: ['Comedic'],  // Noir fatalism clashes with pure comedy dynamics (if any existed)
+      Heist: [],
+      CrimeSyndicate: [],
+      Billionaire: [],
+      Espionage: [],
+      Political: []
+    };
+
+    // Check if a genre is compatible with the current tone
+    function isGenreCompatible(genre, tone) {
+      if (!tone) return true;
+      const incompatible = TONE_GENRE_INCOMPATIBLE[tone] || [];
+      return !incompatible.includes(genre);
+    }
+
+    // Check if a dynamic is compatible with the current genre and tone
+    function isDynamicCompatible(dynamic, genre, tone) {
+      if (!genre) return true;
+      const incompatible = GENRE_DYNAMIC_INCOMPATIBLE[genre] || [];
+      return !incompatible.includes(dynamic);
+    }
+
+    // Check if a layer has its prerequisites met
+    function isLayerUnlocked(grp) {
+      const prereqs = LAYER_PREREQUISITES[grp] || [];
+      return prereqs.every(p => !!state.picks[p]);
+    }
+
+    // Update layer visual state (inert/active)
+    function updateLayerStates() {
+      const layers = ['world', 'worldSubtype', 'tone', 'genre', 'dynamic'];
+
+      layers.forEach(layer => {
+        const cards = document.querySelectorAll(`.card[data-grp="${layer}"]`);
+        const unlocked = isLayerUnlocked(layer);
+
+        cards.forEach(card => {
+          if (!unlocked) {
+            card.classList.add('layer-locked');
+          } else {
+            card.classList.remove('layer-locked');
+
+            // Additional compatibility check for genre and dynamic
+            const val = card.dataset.val;
+            if (layer === 'genre') {
+              const compatible = isGenreCompatible(val, state.picks.tone);
+              card.classList.toggle('incompatible', !compatible);
+            } else if (layer === 'dynamic') {
+              const compatible = isDynamicCompatible(val, state.picks.genre, state.picks.tone);
+              card.classList.toggle('incompatible', !compatible);
+            }
+          }
+        });
+
+        // Update helper text for locked layers
+        updateLayerHelperText(layer, unlocked);
+      });
+    }
+
+    // Show/hide helper text for locked layers
+    function updateLayerHelperText(layer, unlocked) {
+      const helperTexts = {
+        tone: 'Choose a World to continue',
+        genre: 'Choose a Tone to continue',
+        dynamic: 'Choose a Genre to continue'
+      };
+
+      const sectionTitles = {
+        tone: 'Tone',
+        genre: 'Genre',
+        dynamic: 'Dynamic'
+      };
+
+      // Find section title element
+      const sections = document.querySelectorAll('.section-title');
+      sections.forEach(section => {
+        if (section.textContent.includes(sectionTitles[layer])) {
+          let helper = section.querySelector('.layer-helper');
+          if (!unlocked && helperTexts[layer]) {
+            if (!helper) {
+              helper = document.createElement('span');
+              helper.className = 'layer-helper';
+              section.appendChild(helper);
+            }
+            helper.textContent = ` — ${helperTexts[layer]}`;
+            helper.style.display = 'inline';
+          } else if (helper) {
+            helper.style.display = 'none';
+          }
+        }
+      });
+    }
+
+    // Re-evaluate downstream selections and clear only incompatible ones
+    function evaluateDownstreamSelections(changedLayer) {
+      const order = ['world', 'worldSubtype', 'tone', 'genre', 'dynamic'];
+      const changedIdx = order.indexOf(changedLayer);
+
+      // Check each downstream layer
+      for (let i = changedIdx + 1; i < order.length; i++) {
+        const layer = order[i];
+        const currentVal = state.picks[layer];
+
+        if (!currentVal) continue;
+
+        let compatible = true;
+
+        // Check genre compatibility with tone
+        if (layer === 'genre' && state.picks.tone) {
+          compatible = isGenreCompatible(currentVal, state.picks.tone);
+        }
+
+        // Check dynamic compatibility with genre
+        if (layer === 'dynamic' && state.picks.genre) {
+          compatible = isDynamicCompatible(currentVal, state.picks.genre, state.picks.tone);
+        }
+
+        // Auto-clear only if incompatible
+        if (!compatible) {
+          autoClearSelection(layer, currentVal);
+        }
+      }
+
+      updateLayerStates();
+    }
+
+    // Auto-clear a selection with subtle feedback
+    function autoClearSelection(layer, clearedVal) {
+      // Clear from state
+      state.picks[layer] = null;
+
+      // Update UI
+      const card = document.querySelector(`.card[data-grp="${layer}"][data-val="${clearedVal}"]`);
+      if (card) {
+        card.classList.remove('selected');
+        card.classList.add('auto-cleared');
+
+        // Remove feedback after brief moment
+        setTimeout(() => {
+          card.classList.remove('auto-cleared');
+        }, 1500);
+      }
+
+      // Dev-only warning
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn(`[State Repair] Auto-cleared incompatible ${layer}: ${clearedVal}`);
+      }
+    }
+
     // Single-select axes for 4-axis system (worldSubtype is optional sub-selection)
     const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov', 'worldSubtype'];
 
@@ -3326,6 +3507,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if(!grp || !val || grp === 'length') return;
 
         if(card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
+
+        // Check if layer is unlocked (prerequisites met)
+        if (!isLayerUnlocked(grp)) {
+          // Layer is inert - do nothing
+          return;
+        }
+
+        // Check if card is incompatible
+        if (card.classList.contains('incompatible')) {
+          // Incompatible selection - do nothing
+          return;
+        }
 
         // 4-axis system: world, tone, genre, dynamic, era, pov are all single-select
         if (SINGLE_SELECT_AXES.includes(grp)) {
@@ -3343,6 +3536,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if (grp === 'tone') {
             updateWorldSubtypeVisibility(state.picks.world, val);
           }
+
+          // Evaluate downstream selections for compatibility
+          evaluateDownstreamSelections(grp);
 
           // Update floating synopsis panel
           updateSynopsisPanel();
@@ -3364,6 +3560,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     updateWorldSubtypeVisibility(state.picks.world, state.picks.tone);
     // Initialize synopsis panel
     updateSynopsisPanel();
+    // Initialize layer states (gating, compatibility)
+    updateLayerStates();
 
     // Name refining indicator helpers
     function showNameRefiningIndicator(inputEl) {
