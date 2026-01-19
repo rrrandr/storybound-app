@@ -323,55 +323,63 @@
     
     <div class="section-title">Shape Your Story</div>
     
-    <div class="input-wrapper">
-        <label>Your Character's Name</label>
-        <input id="playerNameInput" type="text" placeholder="e.g. Elara Vance">
-    </div>
-
-    <div class="input-wrapper">
-        <label>Your Love Interest's Name</label>
-        <input id="partnerNameInput" type="text" placeholder="e.g. Lord Blackwood">
-    </div>
-    
-    <div class="grid-2-col">
-        <div>
-            <label>Your Gender</label>
-            <select id="playerGender" onchange="checkCustom(this, 'customPlayerGender')">
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-                <option value="Non-Binary">Non-Binary</option>
-                <option value="Custom">Custom</option>
-            </select>
-            <input id="customPlayerGender" type="text" placeholder="Enter gender..." class="hidden" style="margin-top:5px;">
-            
-            <label style="margin-top:10px;">Pronouns</label>
-            <select id="playerPronouns" onchange="checkCustom(this, 'customPlayerPronouns')">
-                <option value="She/Her">She/Her</option>
-                <option value="He/Him">He/Him</option>
-                <option value="They/Them">They/Them</option>
-                <option value="Custom">Custom</option>
-            </select>
-            <input id="customPlayerPronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
+    <!-- Player Character Block -->
+    <div class="character-block">
+        <div class="input-wrapper">
+            <label>Your Character's Name</label>
+            <input id="playerNameInput" type="text" placeholder="e.g. Elara Vance">
         </div>
+        <div class="grid-2-col">
+            <div>
+                <label>Your Gender</label>
+                <select id="playerGender" onchange="checkCustom(this, 'customPlayerGender')">
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Non-Binary">Non-Binary</option>
+                    <option value="Custom">Custom</option>
+                </select>
+                <input id="customPlayerGender" type="text" placeholder="Enter gender..." class="hidden" style="margin-top:5px;">
+            </div>
+            <div>
+                <label>Pronouns</label>
+                <select id="playerPronouns" onchange="checkCustom(this, 'customPlayerPronouns')">
+                    <option value="She/Her">She/Her</option>
+                    <option value="He/Him">He/Him</option>
+                    <option value="They/Them">They/Them</option>
+                    <option value="Custom">Custom</option>
+                </select>
+                <input id="customPlayerPronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
+            </div>
+        </div>
+    </div>
 
-        <div>
-            <label>Love Interest Gender</label>
-            <select id="loveInterestGender" onchange="checkCustom(this, 'customLoveInterest')">
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Non-Binary">Non-Binary</option>
-                <option value="Custom">Custom</option>
-            </select>
-            <input id="customLoveInterest" type="text" placeholder="Enter gender..." class="hidden" style="margin-top:5px;">
-            
-            <label style="margin-top:10px;">Pronouns</label>
-            <select id="lovePronouns" onchange="checkCustom(this, 'customLovePronouns')">
-                <option value="He/Him">He/Him</option>
-                <option value="She/Her">She/Her</option>
-                <option value="They/Them">They/Them</option>
-                <option value="Custom">Custom</option>
-            </select>
-            <input id="customLovePronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
+    <!-- Love Interest Block -->
+    <div class="character-block" style="margin-top: 20px;">
+        <div class="input-wrapper">
+            <label>Your Love Interest's Name</label>
+            <input id="partnerNameInput" type="text" placeholder="e.g. Lord Blackwood">
+        </div>
+        <div class="grid-2-col">
+            <div>
+                <label>Love Interest Gender</label>
+                <select id="loveInterestGender" onchange="checkCustom(this, 'customLoveInterest')">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-Binary">Non-Binary</option>
+                    <option value="Custom">Custom</option>
+                </select>
+                <input id="customLoveInterest" type="text" placeholder="Enter gender..." class="hidden" style="margin-top:5px;">
+            </div>
+            <div>
+                <label>Pronouns</label>
+                <select id="lovePronouns" onchange="checkCustom(this, 'customLovePronouns')">
+                    <option value="He/Him">He/Him</option>
+                    <option value="She/Her">She/Her</option>
+                    <option value="They/Them">They/Them</option>
+                    <option value="Custom">Custom</option>
+                </select>
+                <input id="customLovePronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
+            </div>
         </div>
     </div>
 
@@ -386,16 +394,13 @@
                     <input id="ancestryInputPlayer" type="text" class="fate-field" data-fate-type="ancestry">
                     <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
                 </div>
-                <div class="fate-hand" data-target="ancestryInputPlayer" data-type="ancestry">
-                    <div class="fate-hand-card"></div>
-                    <div class="fate-hand-card"></div>
-                    <div class="fate-hand-card"></div>
-                    <div class="fate-hand-card"></div>
-                    <div class="fate-hand-card"></div>
-                </div>
-                <div class="fate-tree-card hidden" data-target="ancestryInputPlayer">
-                    <div class="tree-silhouette"></div>
-                    <div class="falling-leaf"><svg viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg"><path d="M6 14C6 14 0 8 0 5C0 2.5 2 0 6 0C10 0 12 2.5 12 5C12 8 6 14 6 14Z" fill="#c9a227" stroke="#8b7355" stroke-width="0.5"/><path d="M6 2V11" stroke="#a08030" stroke-width="0.6" stroke-linecap="round"/></svg></div>
+                <div class="ancestry-flip-card" data-target="ancestryInputPlayer" data-type="ancestry">
+                    <div class="ancestry-card-inner">
+                        <div class="ancestry-card-back"></div>
+                        <div class="ancestry-card-front">
+                            <div class="ancestry-options"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -407,16 +412,13 @@
                     <input id="ancestryInputLI" type="text" class="fate-field" data-fate-type="ancestry">
                     <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
                 </div>
-                <div class="fate-hand" data-target="ancestryInputLI" data-type="ancestry">
-                    <div class="fate-hand-card"></div>
-                    <div class="fate-hand-card"></div>
-                    <div class="fate-hand-card"></div>
-                    <div class="fate-hand-card"></div>
-                    <div class="fate-hand-card"></div>
-                </div>
-                <div class="fate-tree-card hidden" data-target="ancestryInputLI">
-                    <div class="tree-silhouette"></div>
-                    <div class="falling-leaf"><svg viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg"><path d="M6 14C6 14 0 8 0 5C0 2.5 2 0 6 0C10 0 12 2.5 12 5C12 8 6 14 6 14Z" fill="#c9a227" stroke="#8b7355" stroke-width="0.5"/><path d="M6 2V11" stroke="#a08030" stroke-width="0.6" stroke-linecap="round"/></svg></div>
+                <div class="ancestry-flip-card" data-target="ancestryInputLI" data-type="ancestry">
+                    <div class="ancestry-card-inner">
+                        <div class="ancestry-card-back"></div>
+                        <div class="ancestry-card-front">
+                            <div class="ancestry-options"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -426,22 +428,31 @@
     <p class="archetype-header-text">Choose a core desire style for this character.</p>
     <p class="archetype-subtext">Select one Primary archetype. You may optionally add one Modifier to refine how it shows up.</p>
 
-    <div class="archetype-selection">
-        <div class="archetype-group">
-            <label class="archetype-group-label">Primary Archetype — Defines the emotional core and relationship arc.</label>
-            <div class="archetype-pills" id="primaryArchetypePills"></div>
-        </div>
-
-        <div class="archetype-group">
-            <label class="archetype-group-label">Optional Modifier — Refines expression without changing the core.</label>
-            <div class="archetype-pills" id="modifierArchetypePills"></div>
-        </div>
-
-        <p class="archetype-constraint-text">Only one Primary archetype may be selected. The Beautiful Ruin and The Anti-Hero may only be chosen as a Primary.</p>
+    <div class="archetype-card-grid" id="archetypeCardGrid">
+        <!-- Cards dynamically generated by JS -->
     </div>
 
-    <div id="archetypePreview" class="archetype-preview hidden">
-        <div id="archetypePreviewContent"></div>
+    <!-- Overlay for zoomed card -->
+    <div class="archetype-card-overlay hidden" id="archetypeCardOverlay">
+        <div class="archetype-card-zoomed" id="archetypeCardZoomed">
+            <div class="archetype-zoomed-content">
+                <h3 class="archetype-zoomed-name"></h3>
+                <p class="archetype-zoomed-desc"></p>
+                <div class="archetype-zoomed-modifiers">
+                    <h4>Compatible Modifiers</h4>
+                    <div class="modifier-list"></div>
+                </div>
+                <div class="archetype-zoomed-actions">
+                    <button class="btn-select-primary">Select as Primary</button>
+                    <button class="btn-close-card">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="archetype-selection-summary" id="archetypeSelectionSummary">
+        <p class="selected-primary">Primary: <span id="selectedPrimaryName">None</span></p>
+        <p class="selected-modifier">Modifier: <span id="selectedModifierName">None</span></p>
     </div>
 
     <div class="section-title">Intensity <span class="instruction-text">(Rendering Ceiling)</span></div>
@@ -729,6 +740,10 @@
                     <div class="falling-leaf"><svg viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg"><path d="M6 14C6 14 0 8 0 5C0 2.5 2 0 6 0C10 0 12 2.5 12 5C12 8 6 14 6 14Z" fill="#c9a227" stroke="#8b7355" stroke-width="0.5"/><path d="M6 2V11" stroke="#a08030" stroke-width="0.6" stroke-linecap="round"/></svg></div>
                 </div>
             </div>
+            <div class="qv-commit-row">
+                <span id="vetoStatus" style="font-size:0.85em; color:var(--pink);">Veto: Ready</span>
+                <button id="btnCommitVeto" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit Veto</button>
+            </div>
             <p class="qv-hint-below">Vetoes remove content from consideration. They cannot start scenes or direct the story.</p>
         </div>
 
@@ -753,21 +768,15 @@
                     <div class="falling-leaf"><svg viewBox="0 0 12 14" xmlns="http://www.w3.org/2000/svg"><path d="M6 14C6 14 0 8 0 5C0 2.5 2 0 6 0C10 0 12 2.5 12 5C12 8 6 14 6 14Z" fill="#c9a227" stroke="#8b7355" stroke-width="0.5"/><path d="M6 2V11" stroke="#a08030" stroke-width="0.6" stroke-linecap="round"/></svg></div>
                 </div>
             </div>
+            <div class="qv-commit-row qv-commit-center">
+                <span id="quillStatus">Quill: Poised</span>
+                <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
+            </div>
             <p class="qv-hint-below">Quill edits shape what follows and may persist. Each use exhausts the Quill, requiring time and words before it can be wielded again.</p>
         </div>
     </div>
 
     <div class="quill-veto-ui">
-        <div style="display:flex; width:100%; justify-content:space-between; align-items:center; margin-bottom:5px; gap:10px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span id="vetoStatus" style="font-size:0.85em; color:var(--pink);">Veto: Ready</span>
-                <button id="btnCommitVeto" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit Veto</button>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span id="quillStatus">Quill: Poised</span>
-                <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
-            </div>
-        </div>
         <div id="godModeToggle" class="hidden">
             <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> Enable God Mode (Sandbox)</label>
         </div>

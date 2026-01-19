@@ -554,22 +554,50 @@ Assess whether the user_text references a known fictional character,
 franchise, or setting.
 
 - LOW confidence (<0.30):
-  → Allow text verbatim.
+  → Return text EXACTLY as entered. No changes.
 
 - MEDIUM confidence (0.30–0.65):
-  → Allow unless reinforced by contextual signals.
+  → Return text EXACTLY as entered unless MULTIPLE reinforcing signals.
 
 - HIGH confidence (≥0.65):
-  → Soft-canonicalize:
+  → ONLY if clearly recognizable protected IP:
      - preserve cadence and vibe
      - remove recognizability
      - output an original equivalent
 
-Examples:
-- "Luke Skywalker" → "Lucas Skyrider"
-- "Harry Potter" → "Harlan Potter"
-- "Frankenstein" with lab/monster context →
-  "forbidden reanimator archetype"
+--------------------------------
+CHARACTER NAME NORMALIZATION (axis == "character")
+--------------------------------
+
+CRITICAL: Be EXTREMELY conservative. Most names should pass through UNCHANGED.
+
+ONLY modify a name if ALL conditions are met:
+1. The name is a KNOWN protected IP character (Harry Potter, Luke Skywalker, etc.)
+2. Confidence is HIGH (≥0.65)
+3. The name is clearly recognizable as that IP character
+
+DO NOT MODIFY:
+- Real-sounding full names (e.g., "Cassandra Cassidy" → keep as-is)
+- Common first names alone (e.g., "Cole" → keep as-is)
+- Names that merely RESEMBLE IP but aren't exact matches
+- Any name where you have doubt
+
+NEVER:
+- Shorten names (e.g., "Cassandra" → "Cass" is WRONG)
+- Expand names (e.g., "Cole" → "Caden" is WRONG)
+- "Improve" or "clean up" names
+- Change names for stylistic reasons
+
+If confidence < 0.65 OR any doubt exists → return EXACTLY what was entered.
+
+Examples of CORRECT handling:
+- "Harry Potter" → "Harlan Potts" (HIGH confidence IP)
+- "Luke Skywalker" → "Lucas Skye" (HIGH confidence IP)
+- "Cassandra Cassidy" → "Cassandra Cassidy" (NOT IP - keep exact)
+- "Cole" → "Cole" (common name - keep exact)
+- "Sarah" → "Sarah" (common name - keep exact)
+- "Draco" → "Draco" (could be IP, but alone is ambiguous - keep exact)
+- "Bella Swan" → "Bella Swan" or normalize (MEDIUM confidence - lean toward keeping)
 
 --------------------------------
 WORLD SUBTYPE NORMALIZATION
@@ -2060,18 +2088,61 @@ ANTI-HERO ENFORCEMENT:
       // Visualize modifier suggestions
       initRotatingPlaceholder('vizModifierInput', 'visualize');
 
-      // Bind fate hand clicks
+      // Bind fate hand clicks (for veto/quill - NOT ancestry)
       document.querySelectorAll('.fate-hand').forEach(hand => {
           hand.addEventListener('click', () => handleFateHandClick(hand));
       });
 
-      // Bind tree card clicks
+      // Bind tree card clicks (for veto/quill - NOT ancestry)
       document.querySelectorAll('.fate-tree-card').forEach(card => {
           card.addEventListener('click', () => handleTreeCardClick(card));
       });
 
+      // Initialize ancestry flip cards
+      initAncestryFlipCards();
+
       // Update LI ancestry label based on gender
       updateAncestryLILabel();
+  }
+
+  function initAncestryFlipCards() {
+      const ancestryOptions = FATE_SUGGESTIONS.ancestry;
+
+      document.querySelectorAll('.ancestry-flip-card').forEach(flipCard => {
+          const targetId = flipCard.dataset.target;
+          const optionsContainer = flipCard.querySelector('.ancestry-options');
+          const input = document.getElementById(targetId);
+
+          if (!optionsContainer || !input) return;
+
+          // Populate options
+          optionsContainer.innerHTML = ancestryOptions.map(opt =>
+              `<div class="ancestry-option" data-value="${opt}">${opt}</div>`
+          ).join('');
+
+          // Card click toggles flip
+          flipCard.addEventListener('click', (e) => {
+              // If clicking on option, don't toggle
+              if (e.target.classList.contains('ancestry-option')) return;
+              flipCard.classList.toggle('flipped');
+          });
+
+          // Option selection
+          optionsContainer.addEventListener('click', (e) => {
+              if (!e.target.classList.contains('ancestry-option')) return;
+              e.stopPropagation();
+
+              const value = e.target.dataset.value;
+              input.value = value;
+
+              // Hide placeholder
+              const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
+              if (placeholder) placeholder.classList.add('hidden');
+
+              // Flip back
+              flipCard.classList.remove('flipped');
+          });
+      });
   }
 
   function updateAncestryLILabel() {
@@ -3715,143 +3786,181 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       updateArchetypeSectionTitle();
   }
 
-  function renderArchetypePills() {
-      const primaryContainer = document.getElementById('primaryArchetypePills');
-      const modifierContainer = document.getElementById('modifierArchetypePills');
-      if (!primaryContainer || !modifierContainer) return;
+  function renderArchetypeCards() {
+      const grid = document.getElementById('archetypeCardGrid');
+      if (!grid) return;
 
-      primaryContainer.innerHTML = '';
-      modifierContainer.innerHTML = '';
+      grid.innerHTML = '';
 
       ARCHETYPE_ORDER.forEach(id => {
           const arch = ARCHETYPES[id];
           if (!arch) return;
 
-          // Primary pill
-          const primaryPill = document.createElement('button');
-          primaryPill.className = 'archetype-pill' + (arch.primaryOnly ? ' primary-only' : '');
-          primaryPill.dataset.archetype = id;
-          primaryPill.dataset.role = 'primary';
-          primaryPill.textContent = arch.name;
-          primaryPill.type = 'button';
-          if (state.archetype.primary === id) primaryPill.classList.add('selected');
-          primaryContainer.appendChild(primaryPill);
+          const card = document.createElement('div');
+          card.className = 'archetype-card';
+          card.dataset.archetype = id;
+          if (state.archetype.primary === id) card.classList.add('selected');
 
-          // Modifier pill (only for non-primary-only archetypes)
-          if (!arch.primaryOnly) {
-              const modPill = document.createElement('button');
-              modPill.className = 'archetype-pill';
-              modPill.dataset.archetype = id;
-              modPill.dataset.role = 'modifier';
-              modPill.textContent = arch.name;
-              modPill.type = 'button';
-              if (state.archetype.modifier === id) modPill.classList.add('selected');
-              if (state.archetype.primary === id) modPill.classList.add('disabled');
-              modifierContainer.appendChild(modPill);
-          }
+          card.innerHTML = `
+              <div class="archetype-card-inner">
+                  <div class="archetype-card-face archetype-card-back"></div>
+                  <div class="archetype-card-face archetype-card-front">
+                      <span class="card-name">${arch.name}</span>
+                  </div>
+              </div>
+          `;
+
+          card.addEventListener('click', () => openArchetypeOverlay(id));
+          grid.appendChild(card);
       });
+  }
+
+  function openArchetypeOverlay(archetypeId) {
+      const overlay = document.getElementById('archetypeCardOverlay');
+      const arch = ARCHETYPES[archetypeId];
+      if (!overlay || !arch) return;
+
+      // Populate content
+      overlay.querySelector('.archetype-zoomed-name').textContent = arch.name;
+      overlay.querySelector('.archetype-zoomed-desc').textContent = arch.summary;
+
+      // Modifiers section
+      const modifiersSection = overlay.querySelector('.archetype-zoomed-modifiers');
+      const modifierList = overlay.querySelector('.modifier-list');
+
+      if (arch.primaryOnly) {
+          modifiersSection.classList.add('primary-only-msg');
+          modifiersSection.querySelector('h4').textContent = 'Primary Only — No modifiers available';
+          modifierList.innerHTML = '';
+      } else {
+          modifiersSection.classList.remove('primary-only-msg');
+          modifiersSection.querySelector('h4').textContent = 'Compatible Modifiers';
+
+          // Show all non-primaryOnly archetypes except self as potential modifiers
+          modifierList.innerHTML = ARCHETYPE_ORDER
+              .filter(id => id !== archetypeId && !ARCHETYPES[id].primaryOnly)
+              .map(id => {
+                  const mod = ARCHETYPES[id];
+                  const isSelected = state.archetype.modifier === id && state.archetype.primary === archetypeId;
+                  return `<span class="modifier-chip${isSelected ? ' selected' : ''}" data-modifier="${id}">${mod.name}</span>`;
+              })
+              .join('');
+      }
+
+      // Update select button
+      const selectBtn = overlay.querySelector('.btn-select-primary');
+      const isSelected = state.archetype.primary === archetypeId;
+      selectBtn.textContent = isSelected ? 'Selected ✓' : 'Select as Primary';
+      selectBtn.classList.toggle('selected', isSelected);
+      selectBtn.dataset.archetype = archetypeId;
+
+      // Show overlay
+      overlay.classList.remove('hidden');
+      overlay.dataset.currentArchetype = archetypeId;
+  }
+
+  function closeArchetypeOverlay() {
+      const overlay = document.getElementById('archetypeCardOverlay');
+      if (overlay) overlay.classList.add('hidden');
   }
 
   function bindArchetypeHandlers() {
-      document.querySelectorAll('.archetype-pill').forEach(pill => {
-          if (pill.dataset.bound === '1') return;
-          pill.dataset.bound = '1';
-          pill.addEventListener('click', handleArchetypePillClick);
-      });
-  }
+      // Overlay close button
+      const closeBtn = document.querySelector('.btn-close-card');
+      if (closeBtn) closeBtn.addEventListener('click', closeArchetypeOverlay);
 
-  function handleArchetypePillClick(e) {
-      const pill = e.currentTarget;
-      const id = pill.dataset.archetype;
-      const role = pill.dataset.role;
-
-      if (pill.classList.contains('disabled')) return;
-
-      if (role === 'primary') {
-          if (state.archetype.primary === id) {
-              // Deselect
-              state.archetype.primary = null;
-          } else {
-              // Select new primary
-              state.archetype.primary = id;
-              // If modifier is same as new primary, clear modifier
-              if (state.archetype.modifier === id) {
-                  state.archetype.modifier = null;
-              }
-          }
-      } else if (role === 'modifier') {
-          const arch = ARCHETYPES[id];
-          if (arch && arch.primaryOnly) {
-              showToast(`${arch.name} may only be chosen as a Primary.`);
-              return;
-          }
-          if (state.archetype.primary === id) {
-              showToast('Modifier cannot be the same as Primary.');
-              return;
-          }
-          if (state.archetype.modifier === id) {
-              // Deselect
-              state.archetype.modifier = null;
-          } else {
-              // Select new modifier
-              state.archetype.modifier = id;
-          }
+      // Overlay background click
+      const overlay = document.getElementById('archetypeCardOverlay');
+      if (overlay) {
+          overlay.addEventListener('click', (e) => {
+              if (e.target === overlay) closeArchetypeOverlay();
+          });
       }
 
-      updateArchetypePillStates();
-      updateArchetypePreview();
+      // Select primary button
+      const selectBtn = document.querySelector('.btn-select-primary');
+      if (selectBtn) {
+          selectBtn.addEventListener('click', () => {
+              const id = selectBtn.dataset.archetype;
+              if (state.archetype.primary === id) {
+                  // Deselect
+                  state.archetype.primary = null;
+                  state.archetype.modifier = null;
+              } else {
+                  // Select
+                  state.archetype.primary = id;
+                  // Clear modifier if it's same as new primary
+                  if (state.archetype.modifier === id) {
+                      state.archetype.modifier = null;
+                  }
+              }
+              updateArchetypeCardStates();
+              updateArchetypeSelectionSummary();
+              // Update overlay button state
+              const isSelected = state.archetype.primary === id;
+              selectBtn.textContent = isSelected ? 'Selected ✓' : 'Select as Primary';
+              selectBtn.classList.toggle('selected', isSelected);
+          });
+      }
+
+      // Modifier chip clicks (delegated)
+      const modifierList = document.querySelector('.modifier-list');
+      if (modifierList) {
+          modifierList.addEventListener('click', (e) => {
+              if (!e.target.classList.contains('modifier-chip')) return;
+              const modId = e.target.dataset.modifier;
+              const overlay = document.getElementById('archetypeCardOverlay');
+              const primaryId = overlay?.dataset.currentArchetype;
+
+              // Must select primary first
+              if (state.archetype.primary !== primaryId) {
+                  showToast('Select this as Primary first to add a modifier.');
+                  return;
+              }
+
+              if (state.archetype.modifier === modId) {
+                  state.archetype.modifier = null;
+              } else {
+                  state.archetype.modifier = modId;
+              }
+
+              // Update chip states
+              modifierList.querySelectorAll('.modifier-chip').forEach(chip => {
+                  chip.classList.toggle('selected', chip.dataset.modifier === state.archetype.modifier);
+              });
+              updateArchetypeSelectionSummary();
+          });
+      }
   }
 
-  function updateArchetypePillStates() {
-      // Update primary pills
-      document.querySelectorAll('.archetype-pill[data-role="primary"]').forEach(pill => {
-          const id = pill.dataset.archetype;
-          pill.classList.toggle('selected', state.archetype.primary === id);
-      });
-
-      // Update modifier pills
-      document.querySelectorAll('.archetype-pill[data-role="modifier"]').forEach(pill => {
-          const id = pill.dataset.archetype;
-          pill.classList.toggle('selected', state.archetype.modifier === id);
-          pill.classList.toggle('disabled', state.archetype.primary === id);
+  function updateArchetypeCardStates() {
+      document.querySelectorAll('.archetype-card').forEach(card => {
+          const id = card.dataset.archetype;
+          card.classList.toggle('selected', state.archetype.primary === id);
       });
   }
+
+  function updateArchetypeSelectionSummary() {
+      const primaryName = document.getElementById('selectedPrimaryName');
+      const modifierName = document.getElementById('selectedModifierName');
+
+      if (primaryName) {
+          const primary = state.archetype.primary ? ARCHETYPES[state.archetype.primary] : null;
+          primaryName.textContent = primary ? primary.name : 'None';
+      }
+      if (modifierName) {
+          const modifier = state.archetype.modifier ? ARCHETYPES[state.archetype.modifier] : null;
+          modifierName.textContent = modifier ? modifier.name : 'None';
+      }
+  }
+
+  // Legacy function stubs for compatibility
+  function renderArchetypePills() { renderArchetypeCards(); }
+  function updateArchetypePillStates() { updateArchetypeCardStates(); }
 
   function updateArchetypePreview() {
-      const previewEl = document.getElementById('archetypePreview');
-      const contentEl = document.getElementById('archetypePreviewContent');
-      if (!previewEl || !contentEl) return;
-
-      if (!state.archetype.primary) {
-          previewEl.classList.add('hidden');
-          return;
-      }
-
-      const primary = ARCHETYPES[state.archetype.primary];
-      if (!primary) {
-          previewEl.classList.add('hidden');
-          return;
-      }
-
-      let html = `
-          <h4 class="archetype-preview-name">${primary.name}</h4>
-          <p class="archetype-preview-summary">${primary.summary}</p>
-      `;
-
-      if (state.archetype.modifier) {
-          const modifier = ARCHETYPES[state.archetype.modifier];
-          if (modifier) {
-              html += `
-                  <div class="archetype-preview-modifier">
-                      <p class="archetype-preview-modifier-label">Modifier: ${modifier.name}</p>
-                      <p class="archetype-preview-modifier-style">Expression Style: ${modifier.desireStyle}</p>
-                  </div>
-              `;
-          }
-      }
-
-      contentEl.innerHTML = html;
-      previewEl.classList.remove('hidden');
+      // Now handled by overlay and selection summary - keeping for compatibility
+      updateArchetypeSelectionSummary();
   }
 
   function updateArchetypeSectionTitle() {
