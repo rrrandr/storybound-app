@@ -2211,31 +2211,46 @@ textarea.fate-field {
     color: rgba(255, 255, 255, 0.95);
 }
 
-/* Mobile: Hide side panel, show inline fallback */
+/* Mobile: DSP pins to top of viewport, floats above content */
 @media (max-width: 1100px) {
     .synopsis-panel {
-        position: relative;
-        right: auto;
-        top: auto;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: auto;
         transform: none;
-        width: auto;
-        max-width: 680px;
+        width: 100%;
+        max-width: none;
         min-height: auto;
         max-height: none;
-        margin: 20px auto 30px;
-        padding: 20px 28px;
+        margin: 0;
+        padding: 12px 20px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
         opacity: 1;
         visibility: visible;
+        z-index: 500; /* Above content, below modals */
+        background: rgba(18, 8, 22, 0.97);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
     }
 
     .synopsis-text {
-        font-size: 1.05em;
+        font-size: 0.9em;
         text-align: center;
+        line-height: 1.5;
     }
 
     .synopsis-text span {
         display: inline;
         margin-bottom: 0;
+    }
+
+    /* Add top padding to setup screen when DSP is floating */
+    #setup {
+        padding-top: 90px !important;
     }
 }
 
