@@ -4354,9 +4354,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
           card.innerHTML = `
               <div class="archetype-card-inner">
-                  <div class="archetype-card-face archetype-card-back"></div>
-                  <div class="archetype-card-face archetype-card-front">
+                  <div class="archetype-card-face archetype-card-back">
                       <span class="card-name">${arch.name}</span>
+                  </div>
+                  <div class="archetype-card-face archetype-card-front">
+                      <span class="card-symbol">✦</span>
                   </div>
               </div>
           `;
