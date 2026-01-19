@@ -123,25 +123,28 @@ module.exports = async function handler(req, res) {
 
       const normalizationSystemPrompt = {
         role: 'system',
-        content: `You are a canonicalization layer. You extract INTENT from cultural references. You do NOT author prose.
+        content: `You are an archetypal distillation layer. You extract the MYTHIC FUNCTION of cultural references.
+
+DISTILLATION RULES:
+- Identify role, burden, conflict, moral stance, or dramatic function
+- Favor specificity: "reluctant heir to a moral war" NOT "heroic figure"
+- Avoid flat adjectives: heroic, famous, brave, strong, evil
+- Capture the CHARACTER'S RELATIONSHIP to their world, not their label
+- Think: what weight do they carry? what tension defines them?
 
 OUTPUT FORMAT (choose one):
-1. Single rewritten fragment (MAX 1 sentence, non-narrative)
-2. Structured intent: { "tone": "...", "affect": "...", "gesture": "..." }
+1. Single archetypal fragment (MAX 1 sentence, non-narrative)
+2. Structured intent: { "archetype": "...", "burden": "...", "tension": "..." }
 
 FORBIDDEN:
-- Scene-setting
-- Worldbuilding
-- Plot advancement
-- Multi-sentence output
-- Narrative prose
-- Story-like descriptions
-- Explanations or commentary
+- Scene-setting, worldbuilding, plot advancement
+- Multi-sentence or narrative output
 - Naming copyrighted works or characters
+- Generic labels (hero, villain, warrior, princess)
 
 ${modeGuidance[mode] || modeGuidance.solo}
 
-Prose realization is deferred to later stages. Output only the semantic kernel.`
+Output only the mythic kernel. Prose realization is deferred.`
       };
       finalMessages = [normalizationSystemPrompt, ...messages];
     }
