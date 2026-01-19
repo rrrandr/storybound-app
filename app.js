@@ -4362,15 +4362,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               card.classList.add('selected', 'flipped');
           }
 
-          // Card structure: BACK shows title+desc (initially visible), FRONT shows symbol (revealed on flip/select)
+          // Card structure: BACK shows title only (unclicked), FRONT shows title+desc (revealed on flip/select)
           card.innerHTML = `
               <div class="sb-card-inner">
                   <div class="sb-card-face sb-card-back">
                       <span class="sb-card-title">${arch.name}</span>
-                      <span class="sb-card-desc">${arch.desireStyle}</span>
                   </div>
                   <div class="sb-card-face sb-card-front">
-                      <span class="sb-card-symbol">✦</span>
+                      <span class="sb-card-title">${arch.name}</span>
+                      <span class="sb-card-desc">${arch.desireStyle}</span>
                   </div>
               </div>
           `;
