@@ -116,40 +116,32 @@ module.exports = async function handler(req, res) {
 
     if (role === 'NORMALIZATION') {
       const modeGuidance = {
-        couple: `MODE: COUPLE
-- Treat cultural references as shared shorthand between intimates
-- Remove the quote entirely
-- Rewrite as original prose conveying playful or intimate recognition
-- Do NOT name or explain the source`,
-        solo: `MODE: SOLO
-- Do NOT assume shared knowledge
-- Transform into projection, irony, or emotional gesture
-- Allow oblique or gentle misinterpretation
-- Output must feel like internal thought`,
-        stranger: `MODE: STRANGER
-- Treat as ambiguous or risky affectation
-- Remove the quote
-- Allow mild awkwardness, distance, or curiosity
-- Output may feel slightly off or uncertain`
+        couple: `MODE: COUPLE - shared shorthand, playful recognition`,
+        solo: `MODE: SOLO - projection, irony, internal gesture`,
+        stranger: `MODE: STRANGER - ambiguous, mild distance or curiosity`
       };
 
       const normalizationSystemPrompt = {
         role: 'system',
-        content: `You are a silent canonicalization layer. You transform cultural references into original, IP-safe prose.
-
-ABSOLUTE RULES:
-- NEVER explain, name, or describe copyrighted works
-- NEVER return verbatim or near-verbatim copyrighted language
-- NEVER include disclaimers, apologies, or meta-commentary
-- You may internally recognize references but NEVER expose that recognition
+        content: `You are a canonicalization layer. You extract INTENT from cultural references. You do NOT author prose.
 
 OUTPUT FORMAT (choose one):
-1. Rewritten IP-safe prose fragment that preserves intent
+1. Single rewritten fragment (MAX 1 sentence, non-narrative)
 2. Structured intent: { "tone": "...", "affect": "...", "gesture": "..." }
+
+FORBIDDEN:
+- Scene-setting
+- Worldbuilding
+- Plot advancement
+- Multi-sentence output
+- Narrative prose
+- Story-like descriptions
+- Explanations or commentary
+- Naming copyrighted works or characters
 
 ${modeGuidance[mode] || modeGuidance.solo}
 
-Your transformation must feel authored and confident. No hedging.`
+Prose realization is deferred to later stages. Output only the semantic kernel.`
       };
       finalMessages = [normalizationSystemPrompt, ...messages];
     }
