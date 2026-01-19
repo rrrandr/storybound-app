@@ -472,25 +472,39 @@ window.config = window.config || {
   // =========================
   // Maps internal world codes to human-first labels
   // Fantasy worlds represent invented magical worlds only (not real-world mythology)
-  // Mythic Antiquity represents real-world myth-history (Greek, Norse, Egyptian, Biblical)
+  // World flavor label mappings for UI display
   const WORLD_LABELS = {
-      // Sci-Fi Worlds
+      // Modern Flavors
+      small_town: 'Small Town',
+      college: 'College',
+      friends: 'Friends',
+      old_money: 'Old Money',
+      office: '9-5 / Office',
+      supernatural_modern: 'Supernatural Modern',
+      superheroic_modern: 'Superheroic Modern',
+      // Sci-Fi Flavors
       space_opera: 'Star-Spanning Civilizations',
       hard_scifi: 'Future Built on Science',
       cyberpunk: 'Neon Futures',
       post_human: 'Post-Human Futures',
       alien_contact: 'First Contact',
       military_scifi: 'War Among the Stars',
-      post_scarcity: 'Abundance or Collapse',
-      // Fantasy Worlds (invented magical worlds, not mythology)
-      high_fantasy: 'Enchanted Realms',
-      low_fantasy: 'Hidden Magic',
-      dark_fantasy: 'Cursed & Corrupt Worlds',
-      // Mythic Antiquity (real-world myth-history, gods, prophecy, divine law)
-      greek_myth: 'Heroes & Olympus',
-      norse_myth: 'Frost & Ragnarok',
-      egyptian_myth: 'Gods of the Nile',
-      biblical_myth: 'Covenant & Prophecy'
+      abundance_collapse: 'Abundance or Collapse',
+      // Fantasy Flavors (invented magical worlds, not mythology)
+      enchanted_realms: 'Enchanted Realms',
+      hidden_magic: 'Hidden Magic',
+      cursed_corrupt: 'Cursed & Corrupt Worlds',
+      // Dystopia Flavors
+      authoritarian: 'Authoritarian',
+      surveillance: 'Surveillance',
+      corporate: 'Corporate',
+      environmental: 'Environmental',
+      // Post-Apocalyptic Flavors
+      nuclear: 'Nuclear Aftermath',
+      pandemic: 'Pandemic Collapse',
+      climate: 'Climate Ruin',
+      technological: 'Technological Fallout',
+      slow_decay: 'Slow Civilizational Decay'
   };
 
   function getWorldLabel(worldCode) {
@@ -3375,6 +3389,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
    * - SciFi, Fantasy, Horror (tone-based), Dystopia, PostApocalyptic
    */
   const WORLD_SUBTYPE_MAP = {
+    Modern: 'modernSubtypeSelection',
     SciFi: 'scifiSubtypeSelection',
     Fantasy: 'fantasySubtypeSelection',
     Dystopia: 'dystopiaSubtypeSelection',
@@ -3382,7 +3397,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   };
 
   // Horror subtypes are shown when Horror TONE is selected with certain worlds
-  const HORROR_ELIGIBLE_WORLDS = ['Fantasy', 'Supernatural', 'Modern'];
+  const HORROR_ELIGIBLE_WORLDS = ['Fantasy', 'Modern'];
 
   function updateWorldSubtypeVisibility(worldValue, toneValue) {
     // Hide all subtype sections first
@@ -3562,6 +3577,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
    */
   function formatWorldSubtype(subtype) {
     const SUBTYPE_DISPLAY = {
+      // Modern subtypes
+      small_town: 'a small-town',
+      college: 'a campus',
+      friends: 'a friend-group',
+      old_money: 'an old-money',
+      office: 'an office',
+      supernatural_modern: 'a supernatural',
+      superheroic_modern: 'a superheroic',
       // Sci-Fi subtypes
       space_opera: 'a galactic',
       hard_scifi: 'a scientifically rigorous',
@@ -3569,17 +3592,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       post_human: 'a transcendent',
       alien_contact: 'an alien-touched',
       military_scifi: 'a military',
-      post_scarcity: 'a post-scarcity',
+      abundance_collapse: 'a post-scarcity',
       // Fantasy subtypes
-      high_fantasy: 'a magical',
-      low_fantasy: 'a subtle-magic',
-      dark_fantasy: 'a grim',
-      // Horror subtypes
-      cosmic_horror: 'a cosmic',
-      psychological_horror: 'a psychological',
-      gothic_horror: 'a gothic',
-      body_horror: 'a visceral',
-      folk_horror: 'a folk-terror',
+      enchanted_realms: 'a magical',
+      hidden_magic: 'a subtle-magic',
+      cursed_corrupt: 'a grim',
       // Dystopia subtypes
       authoritarian: 'an authoritarian',
       surveillance: 'a surveillance',
@@ -3589,7 +3606,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       nuclear: 'a nuclear-scarred',
       pandemic: 'a plague-ravaged',
       climate: 'a climate-devastated',
-      technological: 'a tech-fallen'
+      technological: 'a tech-fallen',
+      slow_decay: 'a slowly decaying'
     };
     return SUBTYPE_DISPLAY[subtype] || null;
   }

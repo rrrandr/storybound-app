@@ -537,14 +537,26 @@
     <!-- AXIS 1: STORY WORLD (Required, First) -->
     <div class="section-title">Story World <span class="instruction-text">(Required)</span></div>
     <div class="style-cards" id="worldGrid">
-      <div class="card selected" data-grp="world" data-val="Modern"><h3>Modern / Contemporary</h3><p>Present-day cities, technology, social norms.</p></div>
+      <div class="card selected" data-grp="world" data-val="Modern"><h3>Modern</h3><p>Present-day settings, familiar social norms.</p></div>
       <div class="card" data-grp="world" data-val="Historical"><h3>Historical</h3><p>A real past era with period constraints.</p></div>
+      <div class="card" data-grp="world" data-val="Fantasy"><h3>Fantasy</h3><p>Magic, invented worlds, enchanted realms.</p></div>
+      <div class="card" data-grp="world" data-val="SciFi"><h3>Sci-Fi</h3><p>Advanced technology, space, future societies.</p></div>
       <div class="card" data-grp="world" data-val="Dystopia"><h3>Dystopia</h3><p>Oppressive systems, controlled societies.</p></div>
       <div class="card" data-grp="world" data-val="PostApocalyptic"><h3>Post-Apocalyptic</h3><p>Survival after collapse, scarce resources.</p></div>
-      <div class="card" data-grp="world" data-val="Fantasy"><h3>Fantasy</h3><p>Magic, mythical creatures, invented worlds.</p></div>
-      <div class="card" data-grp="world" data-val="SciFi"><h3>Sci-Fi</h3><p>Advanced technology, space, future societies.</p></div>
-      <div class="card" data-grp="world" data-val="Supernatural"><h3>Supernatural</h3><p>Vampires, shifters, witches in hidden worlds.</p></div>
-      <div class="card" data-grp="world" data-val="Superheroic"><h3>Superheroic</h3><p>Powers, masks, secret identities, cosmic stakes.</p></div>
+    </div>
+
+    <!-- Modern Subtype Sub-Selection (shown only when Modern selected) -->
+    <div id="modernSubtypeSelection" class="world-subtype-selection hidden">
+      <div class="section-title sub-title">Modern Flavor <span class="instruction-text">(Optional)</span></div>
+      <div class="style-cards" id="modernSubtypeGrid">
+        <div class="card" data-grp="worldSubtype" data-val="small_town"><h3>Small Town</h3><p>Close communities, local secrets, familiar faces.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="college"><h3>College</h3><p>Campus life, coming of age, academic settings.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="friends"><h3>Friends</h3><p>Friend groups, shared spaces, everyday drama.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="old_money"><h3>Old Money</h3><p>Inherited wealth, elite circles, social expectations.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="office"><h3>9-5 / Office</h3><p>Workplace dynamics, corporate settings, professional life.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="supernatural_modern"><h3>Supernatural Modern</h3><p>Vampires, shifters, witches in hidden worlds.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="superheroic_modern"><h3>Superheroic Modern</h3><p>Powers, masks, secret identities, cosmic stakes.</p></div>
+      </div>
     </div>
 
     <!-- Historical Era Sub-Selection (shown only when Historical selected) -->
@@ -565,12 +577,13 @@
     <div id="scifiSubtypeSelection" class="world-subtype-selection hidden">
       <div class="section-title sub-title">Sci-Fi Flavor <span class="instruction-text">(Optional)</span></div>
       <div class="style-cards" id="scifiSubtypeGrid">
-        <div class="card" data-grp="worldSubtype" data-val="space_opera"><h3>Space Opera</h3><p>Galactic empires, starship battles, interstellar politics.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="hard_scifi"><h3>Hard Sci-Fi</h3><p>Scientific accuracy, plausible technology, realistic physics.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="cyberpunk"><h3>Cyberpunk</h3><p>Neon cities, corporate dystopia, hackers and augmentation.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="post_human"><h3>Post-Human</h3><p>Transcendence, uploaded minds, evolved consciousness.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="alien_contact"><h3>Alien Contact</h3><p>First contact, xenobiology, interspecies encounters.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="military_scifi"><h3>Military Sci-Fi</h3><p>Space marines, fleet combat, duty and sacrifice.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="space_opera"><h3>Star-Spanning Civilizations</h3><p>Galactic empires, starship voyages, interstellar politics.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="hard_scifi"><h3>Future Built on Science</h3><p>Scientific accuracy, plausible technology, realistic physics.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="cyberpunk"><h3>Neon Futures</h3><p>Neon cities, corporate shadows, hackers and augmentation.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="post_human"><h3>Post-Human Futures</h3><p>Transcendence, uploaded minds, evolved consciousness.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="alien_contact"><h3>First Contact</h3><p>Alien encounters, xenobiology, interspecies discovery.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="military_scifi"><h3>War Among the Stars</h3><p>Fleet combat, duty and sacrifice, battles across space.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="abundance_collapse"><h3>Abundance or Collapse</h3><p>Post-scarcity utopia or civilizational decline.</p></div>
       </div>
     </div>
 
@@ -578,9 +591,9 @@
     <div id="fantasySubtypeSelection" class="world-subtype-selection hidden">
       <div class="section-title sub-title">Fantasy Flavor <span class="instruction-text">(Optional)</span></div>
       <div class="style-cards" id="fantasySubtypeGrid">
-        <div class="card" data-grp="worldSubtype" data-val="high_fantasy"><h3>High Fantasy</h3><p>Epic quests, powerful magic, mythical creatures.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="low_fantasy"><h3>Low Fantasy</h3><p>Subtle magic, grounded stakes, rare supernatural.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="dark_fantasy"><h3>Dark Fantasy</h3><p>Grim worlds, dangerous magic, moral corruption.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="enchanted_realms"><h3>Enchanted Realms</h3><p>Epic quests, powerful magic, wondrous creatures.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="hidden_magic"><h3>Hidden Magic</h3><p>Subtle magic, grounded stakes, rare supernatural.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="cursed_corrupt"><h3>Cursed & Corrupt Worlds</h3><p>Grim worlds, dangerous magic, moral corruption.</p></div>
       </div>
     </div>
 
@@ -611,10 +624,11 @@
     <div id="apocalypseSubtypeSelection" class="world-subtype-selection hidden">
       <div class="section-title sub-title">Apocalypse Type <span class="instruction-text">(Optional)</span></div>
       <div class="style-cards" id="apocalypseSubtypeGrid">
-        <div class="card" data-grp="worldSubtype" data-val="nuclear"><h3>Nuclear</h3><p>Atomic devastation, radiation, mutants.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="pandemic"><h3>Pandemic</h3><p>Plague survivors, immune vs infected, quarantine.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="climate"><h3>Climate</h3><p>Environmental collapse, extreme weather, survival.</p></div>
-        <div class="card" data-grp="worldSubtype" data-val="technological"><h3>Technological</h3><p>AI uprising, tech failure, machines vs humans.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="nuclear"><h3>Nuclear Aftermath</h3><p>Atomic devastation, radiation, scarred landscapes.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="pandemic"><h3>Pandemic Collapse</h3><p>Plague survivors, immune vs infected, quarantine.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="climate"><h3>Climate Ruin</h3><p>Environmental collapse, extreme weather, survival.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="technological"><h3>Technological Fallout</h3><p>AI uprising, tech failure, machines vs humans.</p></div>
+        <div class="card" data-grp="worldSubtype" data-val="slow_decay"><h3>Slow Civilizational Decay</h3><p>Gradual decline, fading infrastructure, quiet endings.</p></div>
       </div>
     </div>
 
