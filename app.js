@@ -3815,6 +3815,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       document.querySelectorAll('.card.dimmed').forEach(c => {
         c.classList.remove('dimmed');
       });
+      document.querySelectorAll('.sb-card.dimmed').forEach(c => {
+        c.classList.remove('dimmed');
+      });
 
       // Hide overlay
       cardZoomOverlay.classList.remove('active');
@@ -3823,6 +3826,110 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Re-apply layer states
       updateSelectionCardStates();
+    }
+
+    // STATE 3: Open zoomed view for .sb-card elements
+    function openSbCardZoom(card, grp, val) {
+      // Close any currently open card
+      if (currentOpenCard) {
+        closeSelectionCard();
+      }
+
+      currentOpenCard = card;
+
+      // Dim all cards
+      document.querySelectorAll('.sb-card[data-grp]').forEach(c => {
+        if (c !== card) c.classList.add('dimmed');
+      });
+
+      // Get card data from the DOM
+      const titleEl = card.querySelector('.sb-card-front .sb-card-title');
+      const descEl = card.querySelector('.sb-card-front .sb-card-desc');
+      const title = titleEl ? titleEl.textContent : val;
+      const desc = descEl ? descEl.textContent : '';
+
+      // Populate zoomed card content
+      const zoomedContent = document.getElementById('zoomedCardContent');
+
+      // Get flavors (sub-options) for World cards only
+      const subOptions = grp === 'world' ? (WORLD_SUB_OPTIONS[val] || []) : [];
+
+      // Determine if this world type needs a custom text field
+      const worldsWithCustomField = ['Historical', 'Fantasy', 'SciFi', 'Dystopia', 'PostApocalyptic'];
+      const needsCustomField = grp === 'world' && worldsWithCustomField.includes(val);
+
+      let subOptionsHtml = '';
+      if (subOptions.length > 0) {
+        subOptionsHtml = `
+          <div class="zoom-flavors">
+            <div class="flavor-label">Flavors:</div>
+            <div class="flavor-pills">
+              ${subOptions.map(opt => `
+                <span class="flavor-pill${state.picks.worldSubtype === opt.val ? ' selected' : ''}"
+                      data-subval="${opt.val}">${opt.label}</span>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      let customFieldHtml = '';
+      if (needsCustomField) {
+        const currentCustom = state.picks.worldCustom || '';
+        customFieldHtml = `
+          <div class="zoom-custom-field">
+            <label>Custom Details:</label>
+            <textarea id="zoomWorldCustom" placeholder="Add specific world details...">${currentCustom}</textarea>
+          </div>
+        `;
+      }
+
+      zoomedContent.innerHTML = `
+        <h3 class="zoom-title">${title}</h3>
+        <p class="zoom-desc">${desc}</p>
+        ${subOptionsHtml}
+        ${customFieldHtml}
+        <button class="zoom-close-btn">Close</button>
+      `;
+
+      // Bind close button
+      const closeBtn = zoomedContent.querySelector('.zoom-close-btn');
+      closeBtn.addEventListener('click', () => {
+        closeSelectionCard();
+      });
+
+      // Bind flavor pills if present
+      zoomedContent.querySelectorAll('.flavor-pill').forEach(pill => {
+        pill.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const subVal = pill.dataset.subval;
+
+          // Toggle selection
+          if (state.picks.worldSubtype === subVal) {
+            state.picks.worldSubtype = null;
+          } else {
+            state.picks.worldSubtype = subVal;
+          }
+
+          // Update UI
+          zoomedContent.querySelectorAll('.flavor-pill').forEach(p => {
+            p.classList.toggle('selected', p.dataset.subval === state.picks.worldSubtype);
+          });
+
+          updateSynopsisPanel();
+        });
+      });
+
+      // Bind custom field if present
+      const customField = zoomedContent.querySelector('#zoomWorldCustom');
+      if (customField) {
+        customField.addEventListener('input', (e) => {
+          state.picks.worldCustom = e.target.value;
+        });
+      }
+
+      // Show overlay
+      cardZoomOverlay.classList.add('active');
     }
 
     function updateSelectionCardStates() {
@@ -3885,16 +3992,41 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           return;
         }
 
-        // 4-axis system: world, tone, genre, dynamic, era, pov are all single-select
+        // THREE-STATE CARD INTERACTION MODEL:
+        // STATE 1 (face-down) → STATE 2 (face-up/selected): First click on unselected card
+        // STATE 2 (face-up) → STATE 3 (zoomed): Second click on already-selected card
+
+        const isAlreadySelected = card.classList.contains('selected') && card.classList.contains('flipped');
+
+        if (isAlreadySelected) {
+          // STATE 2 → STATE 3: Open zoom view
+          openSbCardZoom(card, grp, val);
+          return;
+        }
+
+        // STATE 1 → STATE 2: Select this card, deselect others in same group
         if (SINGLE_SELECT_AXES.includes(grp)) {
           state.picks[grp] = val;
           document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
             c.classList.remove('selected', 'flipped');
+            // Remove any flavor count indicators
+            const oldFlavorCount = c.querySelector('.sb-card-flavor-count');
+            if (oldFlavorCount) oldFlavorCount.remove();
           });
           card.classList.add('selected', 'flipped');
 
-          // Special handling: show/hide Era sub-selection when World changes
+          // Add flavor count indicator for World cards
           if (grp === 'world') {
+            const flavors = WORLD_SUB_OPTIONS[val] || [];
+            if (flavors.length > 0) {
+              const frontFace = card.querySelector('.sb-card-front');
+              if (frontFace && !frontFace.querySelector('.sb-card-flavor-count')) {
+                const flavorCount = document.createElement('span');
+                flavorCount.className = 'sb-card-flavor-count';
+                flavorCount.textContent = `${flavors.length} flavors`;
+                frontFace.appendChild(flavorCount);
+              }
+            }
             updateEraVisibility(val);
             updateWorldSubtypeVisibility(val, state.picks.tone);
           }
