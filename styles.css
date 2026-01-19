@@ -1038,7 +1038,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .archetype-card-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 18px;
     width: 95%;
     margin: 20px auto;
     justify-content: center;
@@ -1046,10 +1046,10 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 
 /* Responsive */
 @media (max-width: 700px) {
-    .archetype-card-grid { gap: 12px; }
+    .archetype-card-grid { gap: 14px; }
 }
 @media (max-width: 500px) {
-    .archetype-card-grid { gap: 10px; }
+    .archetype-card-grid { gap: 12px; }
 }
 
 .archetype-card {
@@ -1101,9 +1101,16 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 }
 .archetype-card-front .card-name {
     font-family: 'lust-script-display', serif;
-    font-size: 10px;
+    font-size: 9px;
     color: var(--pink);
     line-height: 1.2;
+    margin-bottom: 4px;
+}
+.archetype-card-front .card-desc {
+    font-size: 7px;
+    color: var(--ink);
+    line-height: 1.2;
+    opacity: 0.8;
 }
 
 /* Card Overlay (zoomed view) */

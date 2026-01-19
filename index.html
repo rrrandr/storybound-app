@@ -452,15 +452,12 @@
     </div>
 
     <div class="section-title">Intensity <span class="instruction-text">(Rendering Ceiling)</span></div>
-    <div id="intensityBtns" class="intensity-wrap">
-      <button data-val="Clean" class="intensity-btn" data-desc="Romantic, non-explicit.">Clean</button>
-      <button data-val="Naughty" class="intensity-btn active" data-desc="Suggestive tension; no explicit anatomy.">Naughty</button>
-      <button data-val="Erotic" class="intensity-btn locked-tease" data-desc="Explicit sex; adult consensual.">Erotic</button>
-      <button data-val="Dirty" class="intensity-btn locked-pass" data-desc="Very explicit; highest intensity.">Dirty</button>
+    <div class="style-cards" id="intensityGrid">
+      <div class="card" data-grp="intensity" data-val="Clean"><h3>Clean</h3><p>Romantic, non-explicit.</p></div>
+      <div class="card selected" data-grp="intensity" data-val="Naughty"><h3>Naughty</h3><p>Suggestive tension; no explicit anatomy.</p></div>
+      <div class="card locked" data-grp="intensity" data-val="Erotic" data-locked="tease"><h3>Erotic</h3><p>Explicit sex; adult consensual.</p></div>
+      <div class="card locked" data-grp="intensity" data-val="Dirty" data-locked="pass"><h3>Dirty</h3><p>Very explicit; highest intensity.</p></div>
     </div>
-    <p id="intensityDesc" style="color:var(--gold); font-style:italic; margin-top:10px; min-height:40px;">
-        (Naughty) Suggestive tension; no explicit anatomy.
-    </p>
 
     <div id="lengthSection">
         <div class="section-title">Story Length</div>

@@ -2099,16 +2099,29 @@ ANTI-HERO ENFORCEMENT:
   }
 
   function initAncestryFlipCards() {
-      // Ancestry flip cards - symbolic only, just flip in place
+      // Ancestry flip cards - flip in place + insert random suggestion
       document.querySelectorAll('.ancestry-flip-card').forEach(flipCard => {
           flipCard.addEventListener('click', () => {
+              const targetId = flipCard.dataset.target;
+              const input = document.getElementById(targetId);
+
+              // Flip the card
               flipCard.classList.toggle('flipped');
+
+              // Insert random suggestion from ancestry pool
+              if (input) {
+                  const suggestion = getRandomSuggestion('ancestry');
+                  input.value = suggestion;
+                  // Hide placeholder
+                  const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
+                  if (placeholder) placeholder.classList.add('hidden');
+              }
           });
       });
   }
 
   function initDestinyFlipCards() {
-      // Destiny flip cards (Quill/Veto) - symbolic only, flip in place + trigger randomization
+      // Destiny flip cards (Quill/Veto) - flip in place + insert random suggestion
       document.querySelectorAll('.destiny-flip-card').forEach(flipCard => {
           flipCard.addEventListener('click', () => {
               const targetId = flipCard.dataset.target;
@@ -2118,12 +2131,14 @@ ANTI-HERO ENFORCEMENT:
               // Flip the card
               flipCard.classList.toggle('flipped');
 
-              // If flipping to front (tree revealed), generate a suggestion
-              if (flipCard.classList.contains('flipped') && input && type) {
+              // Insert random suggestion from the appropriate pool
+              if (input && type) {
                   const suggestion = getRandomSuggestion(type);
                   if (input.tagName === 'TEXTAREA') {
+                      // For textareas (Quill/Veto), append on new line
                       input.value = input.value ? input.value + '\n' + suggestion : suggestion;
                   } else {
+                      // For inputs, replace
                       input.value = suggestion;
                   }
                   // Hide placeholder
@@ -2576,28 +2591,28 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   function applyIntensityLocks(){
       syncTierFromAccess();
-      const access = state.access; 
-      const setupBtns = document.querySelectorAll('#intensityBtns .intensity-btn');
+      const access = state.access;
+      const setupCards = document.querySelectorAll('#intensityGrid .card');
       const gameBtns = document.querySelectorAll('#gameIntensity button');
-      
-      const updateLock = (btn, level) => {
+
+      const updateLock = (el, level, isCard) => {
           let locked = false;
           if (access === 'free' && ['Erotic', 'Dirty'].includes(level)) locked = true;
           if (access === 'pass' && level === 'Dirty') locked = true;
 
-          btn.classList.toggle('locked', locked);
+          el.classList.toggle('locked', locked);
           // CRITICAL FIX: Remove preset locked-tease/locked-pass classes when unlocked
           if (!locked) {
-              btn.classList.remove('locked-tease', 'locked-pass');
+              el.classList.remove('locked-tease', 'locked-pass');
           }
-          if(locked) btn.classList.remove('active');
+          if(locked) el.classList.remove(isCard ? 'selected' : 'active');
           // FIX: Dirty always requires subscription - use sub_only mode
           const paywallMode = (level === 'Dirty') ? 'sub_only' : 'unlock';
-          setPaywallClickGuard(btn, locked, paywallMode);
+          setPaywallClickGuard(el, locked, paywallMode);
       };
 
-      setupBtns.forEach(b => updateLock(b, b.dataset.val));
-      gameBtns.forEach(b => updateLock(b, b.innerText.trim()));
+      setupCards.forEach(c => updateLock(c, c.dataset.val, true));
+      gameBtns.forEach(b => updateLock(b, b.innerText.trim(), false));
 
       // Fallback
       if(state.intensity === 'Dirty' && access !== 'sub') state.intensity = (access === 'free') ? 'Naughty' : 'Erotic';
@@ -2625,12 +2640,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function updateIntensityUI(){
-      const setStart = (b) => b.classList.toggle('active', b.dataset.val === state.intensity);
+      const setCard = (c) => c.classList.toggle('selected', c.dataset.val === state.intensity);
       const setGame = (b) => b.classList.toggle('active', b.innerText.trim() === state.intensity);
-      document.querySelectorAll('#intensityBtns .intensity-btn').forEach(setStart);
+      document.querySelectorAll('#intensityGrid .card').forEach(setCard);
       document.querySelectorAll('#gameIntensity button').forEach(setGame);
-      const activeBtn = document.querySelector(`#intensityBtns .intensity-btn[data-val="${state.intensity}"]`);
-      if(activeBtn && $('intensityDesc')) $('intensityDesc').innerText = `(${state.intensity}) ${activeBtn.dataset.desc}`;
   }
 
   function wireIntensityHandlers(){
@@ -2639,9 +2652,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub_only'); return; }
           if(level === 'Erotic' && state.access === 'free'){ window.openEroticPreview(); return; }
           state.intensity = level;
+          state.picks.intensity = level; // Also update picks for card system
           updateIntensityUI();
       };
-      document.querySelectorAll('#intensityBtns .intensity-btn').forEach(btn => btn.onclick = (e) => handler(btn.dataset.val, e));
+      document.querySelectorAll('#intensityGrid .card').forEach(card => card.onclick = (e) => handler(card.dataset.val, e));
       document.querySelectorAll('#gameIntensity button').forEach(btn => btn.onclick = (e) => handler(btn.innerText.trim(), e));
   }
 
@@ -4353,6 +4367,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
                   </div>
                   <div class="archetype-card-face archetype-card-front">
                       <span class="card-name">${arch.name}</span>
+                      <span class="card-desc">${arch.desireStyle}</span>
                   </div>
               </div>
           `;
