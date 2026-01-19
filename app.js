@@ -1723,12 +1723,15 @@ ANTI-HERO ENFORCEMENT:
       if(!rawText) return { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
 
       // RUNTIME NORMALIZATION: All veto input flows through ChatGPT normalization layer
+      // CRITICAL: Never store raw text - always use normalized kernel
       const vetoNorm = await callNormalizationLayer({
           axis: 'veto',
           user_text: rawText,
           context_signals: state.picks?.world || []
       });
-      const canonicalized = vetoNorm.canonical_instruction || vetoNorm.normalized_text || rawText;
+      // Extract kernel - prefer archetype/burden format, then normalized_text, NEVER raw
+      const kernel = vetoNorm.archetype || vetoNorm.burden || vetoNorm.normalized_text || vetoNorm.canonical_instruction;
+      const canonicalized = kernel || 'excluded element';
 
       const lines = canonicalized.split('\n');
       const result = { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
@@ -3136,12 +3139,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (!rawTxt) return;
 
       // RUNTIME NORMALIZATION: Game veto input flows through ChatGPT normalization layer
+      // CRITICAL: Never store raw text - always use normalized kernel
       const vetoNorm = await callNormalizationLayer({
           axis: 'veto',
           user_text: rawTxt,
           context_signals: state.picks?.world || []
       });
-      const txt = vetoNorm.canonical_instruction || vetoNorm.normalized_text || rawTxt;
+      // Extract kernel - prefer archetype/burden format, then normalized_text, NEVER raw
+      const kernel = vetoNorm.archetype || vetoNorm.burden || vetoNorm.normalized_text || vetoNorm.canonical_instruction;
+      const txt = kernel || 'excluded element';
 
       // Parse and add to veto state (same as setup veto)
       txt.split('\n').forEach(line => {
