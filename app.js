@@ -2556,8 +2556,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const paywallMode = ['affair', 'soulmates'].includes(val) ? 'sub_only' : 'unlock';
       setPaywallClickGuard(card, locked, paywallMode);
 
-      // Selection state
-      card.classList.toggle('selected', val === state.storyLength);
+      // Selection state - toggle both selected and flipped
+      const isSelected = val === state.storyLength;
+      card.classList.toggle('selected', isSelected);
+      card.classList.toggle('flipped', isSelected);
 
       console.log('[ENTITLEMENT] Card:', val, 'locked:', locked, 'hidden:', hidden);
     });
@@ -2640,7 +2642,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function updateIntensityUI(){
-      const setCard = (c) => c.classList.toggle('selected', c.dataset.val === state.intensity);
+      const setCard = (c) => {
+          const isSelected = c.dataset.val === state.intensity;
+          c.classList.toggle('selected', isSelected);
+          c.classList.toggle('flipped', isSelected);
+      };
       const setGame = (b) => b.classList.toggle('active', b.innerText.trim() === state.intensity);
       document.querySelectorAll('#intensityGrid .sb-card').forEach(setCard);
       document.querySelectorAll('#gameIntensity button').forEach(setGame);
@@ -3756,12 +3762,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Update card selection states
       document.querySelectorAll(`.selection-card[data-grp="${grp}"]`).forEach(c => {
-        c.classList.toggle('selected', c.dataset.val === val);
+        const isSelected = c.dataset.val === val;
+        c.classList.toggle('selected', isSelected);
+        c.classList.toggle('flipped', isSelected);
       });
 
       // Also update old-style cards if any remain
       document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
-        c.classList.toggle('selected', c.dataset.val === val);
+        const isSelected = c.dataset.val === val;
+        c.classList.toggle('selected', isSelected);
+        c.classList.toggle('flipped', isSelected);
       });
 
       // Handle World-specific updates
@@ -3842,8 +3852,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
             }
           }
 
-          // Selection state
-          card.classList.toggle('selected', state.picks[layer] === val);
+          // Selection state - toggle both selected and flipped
+          const isSelected = state.picks[layer] === val;
+          card.classList.toggle('selected', isSelected);
+          card.classList.toggle('flipped', isSelected);
         });
       });
     }
@@ -3877,8 +3889,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // 4-axis system: world, tone, genre, dynamic, era, pov are all single-select
         if (SINGLE_SELECT_AXES.includes(grp)) {
           state.picks[grp] = val;
-          document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
+          document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
+            c.classList.remove('selected', 'flipped');
+          });
+          card.classList.add('selected', 'flipped');
 
           // Special handling: show/hide Era sub-selection when World changes
           if (grp === 'world') {
@@ -3903,8 +3917,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if(!state.picks[grp]) state.picks[grp] = [];
         const arr = state.picks[grp];
         const idx = arr.indexOf(val);
-        if(idx >= 0) { arr.splice(idx, 1); card.classList.remove('selected'); }
-        else { if(arr.length >= 3) return alert("Select up to 3 only."); arr.push(val); card.classList.add('selected'); }
+        if(idx >= 0) { arr.splice(idx, 1); card.classList.remove('selected', 'flipped'); }
+        else { if(arr.length >= 3) return alert("Select up to 3 only."); arr.push(val); card.classList.add('selected', 'flipped'); }
       });
     });
 
