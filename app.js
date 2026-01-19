@@ -3511,6 +3511,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     let cardZoomOverlay = null;
 
     // Sub-options data for each World type
+    // Modern: NO custom field | All others: HAS custom field
     const WORLD_SUB_OPTIONS = {
       Modern: [
         { val: 'small_town', label: 'Small Town' },
@@ -3521,19 +3522,27 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         { val: 'supernatural_modern', label: 'Supernatural' },
         { val: 'superheroic_modern', label: 'Superheroic' }
       ],
-      SciFi: [
-        { val: 'space_opera', label: 'Star-Spanning' },
-        { val: 'hard_scifi', label: 'Hard Sci-Fi' },
-        { val: 'cyberpunk', label: 'Neon Futures' },
-        { val: 'post_human', label: 'Post-Human' },
-        { val: 'alien_contact', label: 'First Contact' },
-        { val: 'military_scifi', label: 'War Among Stars' },
-        { val: 'abundance_collapse', label: 'Abundance/Collapse' }
+      Historical: [
+        { val: 'prehistoric', label: 'Prehistoric' },
+        { val: 'classical', label: 'Classical' },
+        { val: 'medieval', label: 'Medieval' },
+        { val: 'renaissance', label: 'Renaissance' },
+        { val: 'victorian', label: 'Victorian' },
+        { val: '20th_century', label: '20th Century' }
       ],
       Fantasy: [
         { val: 'enchanted_realms', label: 'Enchanted Realms' },
         { val: 'hidden_magic', label: 'Hidden Magic' },
-        { val: 'cursed_corrupt', label: 'Cursed & Corrupt' }
+        { val: 'cursed_worlds', label: 'Cursed Worlds' }
+      ],
+      SciFi: [
+        { val: 'galactic_civilizations', label: 'Galactic Civilizations' },
+        { val: 'future_of_science', label: 'Future of Science' },
+        { val: 'cyberpunk', label: 'Cyberpunk' },
+        { val: 'post_human_futures', label: 'Post-Human Futures' },
+        { val: 'first_contact', label: 'First Contact' },
+        { val: 'war_among_stars', label: 'War Among the Stars' },
+        { val: 'simulation', label: 'Simulation' }
       ],
       Dystopia: [
         { val: 'authoritarian', label: 'Authoritarian' },
@@ -3542,14 +3551,66 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         { val: 'environmental', label: 'Environmental' }
       ],
       PostApocalyptic: [
-        { val: 'nuclear', label: 'Nuclear' },
+        { val: 'nuclear_aftermath', label: 'Nuclear Aftermath' },
         { val: 'pandemic', label: 'Pandemic' },
-        { val: 'climate', label: 'Climate' },
-        { val: 'technological', label: 'Tech Fallout' },
+        { val: 'climate_ruin', label: 'Climate Ruin' },
+        { val: 'tech_fallout', label: 'Tech Fallout' },
         { val: 'slow_decay', label: 'Slow Decay' }
-      ],
-      Historical: [] // Era selection handled separately
+      ]
     };
+
+    // Worlds that have custom text fields (all except Modern)
+    const WORLDS_WITH_CUSTOM_FIELD = ['Historical', 'Fantasy', 'SciFi', 'Dystopia', 'PostApocalyptic'];
+
+    // Historical era remapping (legacy values → new values)
+    const HISTORICAL_ERA_REMAP = {
+      'Ancient': 'prehistoric',
+      'ancient': 'prehistoric',
+      'Classical': 'classical',
+      'Biblical': 'classical',
+      'Medieval': 'medieval',
+      'Renaissance': 'renaissance',
+      'Early Modern': 'renaissance',
+      'Victorian': 'victorian',
+      'Industrial': 'victorian',
+      'Early20th': '20th_century',
+      'Mid20th': '20th_century',
+      'Early 20th': '20th_century',
+      'Mid-20th': '20th_century',
+      '20th Century': '20th_century'
+    };
+
+    // Normalize custom field input (IP-safe transformation)
+    // Accepts any input, returns normalized kernel
+    function normalizeWorldCustom(input) {
+      if (!input || typeof input !== 'string') return '';
+
+      // Trim and clean whitespace
+      let normalized = input.trim().replace(/\s+/g, ' ');
+
+      // Cap length to prevent abuse
+      if (normalized.length > 500) {
+        normalized = normalized.substring(0, 500);
+      }
+
+      return normalized;
+    }
+
+    // Apply Historical era remapping (legacy → new values)
+    function applyHistoricalEraRemap() {
+      // Check if we have a legacy era value that needs remapping
+      if (state.picks.era && !state.picks.worldSubtype) {
+        const remapped = HISTORICAL_ERA_REMAP[state.picks.era];
+        if (remapped) {
+          state.picks.worldSubtype = remapped;
+        }
+      }
+
+      // Also check worldSubtype itself for legacy values
+      if (state.picks.worldSubtype && HISTORICAL_ERA_REMAP[state.picks.worldSubtype]) {
+        state.picks.worldSubtype = HISTORICAL_ERA_REMAP[state.picks.worldSubtype];
+      }
+    }
 
     function initSelectionCardSystem() {
       // Create zoom overlay
@@ -3855,8 +3916,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const subOptions = grp === 'world' ? (WORLD_SUB_OPTIONS[val] || []) : [];
 
       // Determine if this world type needs a custom text field
-      const worldsWithCustomField = ['Historical', 'Fantasy', 'SciFi', 'Dystopia', 'PostApocalyptic'];
-      const needsCustomField = grp === 'world' && worldsWithCustomField.includes(val);
+      // Modern: NO custom field | All others: HAS custom field
+      const needsCustomField = grp === 'world' && WORLDS_WITH_CUSTOM_FIELD.includes(val);
 
       let subOptionsHtml = '';
       if (subOptions.length > 0) {
@@ -3923,8 +3984,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Bind custom field if present
       const customField = zoomedContent.querySelector('#zoomWorldCustom');
       if (customField) {
+        // Save raw value on input for responsive UI
         customField.addEventListener('input', (e) => {
           state.picks.worldCustom = e.target.value;
+        });
+        // Normalize on blur (when user finishes editing)
+        customField.addEventListener('blur', (e) => {
+          const normalized = normalizeWorldCustom(e.target.value);
+          state.picks.worldCustom = normalized;
+          e.target.value = normalized;
         });
       }
 
@@ -4063,6 +4131,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     updateLayerStates();
     // Initialize selection card system
     initSelectionCardSystem();
+    // Apply any legacy Historical era remapping
+    applyHistoricalEraRemap();
 
     // Name refining indicator helpers
     function showNameRefiningIndicator(inputEl) {
