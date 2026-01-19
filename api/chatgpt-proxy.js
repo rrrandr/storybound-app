@@ -68,6 +68,7 @@ module.exports = async function handler(req, res) {
       messages,
       model,
       role = 'PRIMARY_AUTHOR',  // Which orchestration role is calling
+      mode = 'solo',            // Story mode: solo, couple, stranger
       temperature = 0.7,
       max_tokens = 1500,
       response_format  // Optional: { type: 'json_object' } for structured output
@@ -114,17 +115,41 @@ module.exports = async function handler(req, res) {
     let finalMessages = messages;
 
     if (role === 'NORMALIZATION') {
+      const modeGuidance = {
+        couple: `MODE: COUPLE
+- Treat cultural references as shared shorthand between intimates
+- Remove the quote entirely
+- Rewrite as original prose conveying playful or intimate recognition
+- Do NOT name or explain the source`,
+        solo: `MODE: SOLO
+- Do NOT assume shared knowledge
+- Transform into projection, irony, or emotional gesture
+- Allow oblique or gentle misinterpretation
+- Output must feel like internal thought`,
+        stranger: `MODE: STRANGER
+- Treat as ambiguous or risky affectation
+- Remove the quote
+- Allow mild awkwardness, distance, or curiosity
+- Output may feel slightly off or uncertain`
+      };
+
       const normalizationSystemPrompt = {
         role: 'system',
-        content: `You are a text canonicalizer. Your ONLY job is to return sanitized, IP-safe output.
+        content: `You are a silent canonicalization layer. You transform cultural references into original, IP-safe prose.
 
-STRICT RULES:
-- Do NOT explain, expand, or comment on the input
-- Do NOT include copyrighted names, fictional IP, or trademarked content
-- Replace any copyrighted/fictional references with generic equivalents
-- Return ONLY the cleaned text or JSON: { "canonical_text": "..." }
-- If input is entirely copyrighted IP, return a generic archetype description
-- Never mention the original IP in your response`
+ABSOLUTE RULES:
+- NEVER explain, name, or describe copyrighted works
+- NEVER return verbatim or near-verbatim copyrighted language
+- NEVER include disclaimers, apologies, or meta-commentary
+- You may internally recognize references but NEVER expose that recognition
+
+OUTPUT FORMAT (choose one):
+1. Rewritten IP-safe prose fragment that preserves intent
+2. Structured intent: { "tone": "...", "affect": "...", "gesture": "..." }
+
+${modeGuidance[mode] || modeGuidance.solo}
+
+Your transformation must feel authored and confident. No hedging.`
       };
       finalMessages = [normalizationSystemPrompt, ...messages];
     }
