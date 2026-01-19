@@ -640,9 +640,8 @@ For veto/quill/god_mode:
       };
 
       // Determine normalization role based on axis
-      const normalizationRole = axis === 'veto' ? 'VETO_NORMALIZATION'
-          : axis === 'dsp' ? 'DSP_NORMALIZATION'
-          : 'NORMALIZATION';
+      // FIXED: Always use 'NORMALIZATION' role to trigger backend system prompt
+      const normalizationRole = 'NORMALIZATION';
 
       // CRITICAL: Use ChatGPT proxy, NOT Grok proxy
       // NO FALLBACKS - errors must fail loudly
@@ -653,6 +652,7 @@ For veto/quill/god_mode:
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
               role: normalizationRole,
+              mode: state.mode || 'solo',
               model: 'gpt-4o-mini',
               messages: [
                   { role: 'system', content: RUNTIME_NORMALIZATION_PROMPT },
