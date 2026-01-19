@@ -108,12 +108,34 @@ module.exports = async function handler(req, res) {
     console.log(`[CHATGPT-PROXY] Role: ${role}, Model: ${requestedModel}`);
 
     // ==========================================================================
+    // ROLE-SPECIFIC SYSTEM PROMPTS
+    // ==========================================================================
+
+    let finalMessages = messages;
+
+    if (role === 'NORMALIZATION') {
+      const normalizationSystemPrompt = {
+        role: 'system',
+        content: `You are a text canonicalizer. Your ONLY job is to return sanitized, IP-safe output.
+
+STRICT RULES:
+- Do NOT explain, expand, or comment on the input
+- Do NOT include copyrighted names, fictional IP, or trademarked content
+- Replace any copyrighted/fictional references with generic equivalents
+- Return ONLY the cleaned text or JSON: { "canonical_text": "..." }
+- If input is entirely copyrighted IP, return a generic archetype description
+- Never mention the original IP in your response`
+      };
+      finalMessages = [normalizationSystemPrompt, ...messages];
+    }
+
+    // ==========================================================================
     // CALL OPENAI API
     // ==========================================================================
 
     const requestBody = {
       model: requestedModel,
-      messages: messages,
+      messages: finalMessages,
       temperature: temperature,
       max_tokens: max_tokens
     };
