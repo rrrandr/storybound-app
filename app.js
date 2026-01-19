@@ -4375,9 +4375,32 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               </div>
           `;
 
-          card.addEventListener('click', () => openArchetypeOverlay(id));
+          // Click to select/flip in place - NO popup
+          card.addEventListener('click', () => selectArchetypeCard(id));
           grid.appendChild(card);
       });
+  }
+
+  // Select archetype - flip card in place, no popup
+  function selectArchetypeCard(archetypeId) {
+      const wasSelected = state.archetype.primary === archetypeId;
+
+      if (wasSelected) {
+          // Deselect
+          state.archetype.primary = null;
+          state.archetype.modifier = null;
+      } else {
+          // Select new
+          state.archetype.primary = archetypeId;
+          // Clear modifier if it was same as new primary
+          if (state.archetype.modifier === archetypeId) {
+              state.archetype.modifier = null;
+          }
+      }
+
+      // Update all card states - only selected card stays flipped
+      updateArchetypeCardStates();
+      updateArchetypeSelectionSummary();
   }
 
   function openArchetypeOverlay(archetypeId) {
