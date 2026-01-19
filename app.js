@@ -2502,7 +2502,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const section = document.getElementById('lengthSection');
     if(section) section.classList.toggle('hidden', state.turnCount > 0);
 
-    const cards = document.querySelectorAll('#lengthGrid .card[data-grp="length"]');
+    const cards = document.querySelectorAll('#lengthGrid .sb-card[data-grp="length"]');
 
     console.log('[ENTITLEMENT] applyLengthLocks:', {
         access: state.access,
@@ -2577,7 +2577,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function bindLengthHandlers(){
-      document.querySelectorAll('#lengthGrid .card[data-grp="length"]').forEach(card => {
+      document.querySelectorAll('#lengthGrid .sb-card[data-grp="length"]').forEach(card => {
           if(card.dataset.bound === 'true') return;
           card.dataset.bound = 'true';
           card.addEventListener('click', () => {
@@ -2592,7 +2592,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function applyIntensityLocks(){
       syncTierFromAccess();
       const access = state.access;
-      const setupCards = document.querySelectorAll('#intensityGrid .card');
+      const setupCards = document.querySelectorAll('#intensityGrid .sb-card');
       const gameBtns = document.querySelectorAll('#gameIntensity button');
 
       const updateLock = (el, level, isCard) => {
@@ -2623,7 +2623,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function applyStyleLocks() {
       if (state.mode === 'couple') return;
       const paid = (state.tier === 'paid');
-      const cards = document.querySelectorAll('.card[data-grp="style"]');
+      const cards = document.querySelectorAll('.sb-card[data-grp="style"]');
       cards.forEach(card => {
           const raw = card.dataset.val || '';
           const v = raw.toLowerCase().trim();
@@ -2642,7 +2642,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function updateIntensityUI(){
       const setCard = (c) => c.classList.toggle('selected', c.dataset.val === state.intensity);
       const setGame = (b) => b.classList.toggle('active', b.innerText.trim() === state.intensity);
-      document.querySelectorAll('#intensityGrid .card').forEach(setCard);
+      document.querySelectorAll('#intensityGrid .sb-card').forEach(setCard);
       document.querySelectorAll('#gameIntensity button').forEach(setGame);
   }
 
@@ -2655,7 +2655,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           state.picks.intensity = level; // Also update picks for card system
           updateIntensityUI();
       };
-      document.querySelectorAll('#intensityGrid .card').forEach(card => card.onclick = (e) => handler(card.dataset.val, e));
+      document.querySelectorAll('#intensityGrid .sb-card').forEach(card => card.onclick = (e) => handler(card.dataset.val, e));
       document.querySelectorAll('#gameIntensity button').forEach(btn => btn.onclick = (e) => handler(btn.innerText.trim(), e));
   }
 
@@ -3381,7 +3381,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const layers = ['world', 'worldSubtype', 'tone', 'genre', 'dynamic'];
 
       layers.forEach(layer => {
-        const cards = document.querySelectorAll(`.card[data-grp="${layer}"]`);
+        const cards = document.querySelectorAll(`.sb-card[data-grp="${layer}"]`);
         const unlocked = isLayerUnlocked(layer);
 
         cards.forEach(card => {
@@ -3480,7 +3480,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       state.picks[layer] = null;
 
       // Update UI
-      const card = document.querySelector(`.card[data-grp="${layer}"][data-val="${clearedVal}"]`);
+      const card = document.querySelector(`.sb-card[data-grp="${layer}"][data-val="${clearedVal}"]`);
       if (card) {
         card.classList.remove('selected');
         card.classList.add('auto-cleared');
@@ -3588,7 +3588,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if (!grid) return;
 
         // Get existing cards
-        const oldCards = grid.querySelectorAll('.card[data-grp]');
+        const oldCards = grid.querySelectorAll('.sb-card[data-grp]');
         const cardData = [];
 
         oldCards.forEach(card => {
@@ -3614,7 +3614,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Handle dynamic cards (grouped structure)
       const dynamicGrid = document.getElementById('dynamicGrid');
       if (dynamicGrid) {
-        const allDynamicCards = dynamicGrid.querySelectorAll('.card[data-grp="dynamic"]');
+        const allDynamicCards = dynamicGrid.querySelectorAll('.sb-card[data-grp="dynamic"]');
         const cardData = [];
 
         allDynamicCards.forEach(card => {
@@ -3685,7 +3685,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
 
       // Also dim old-style cards if any remain
-      document.querySelectorAll('.card[data-grp]').forEach(c => {
+      document.querySelectorAll('.sb-card[data-grp]').forEach(c => {
         c.classList.add('dimmed');
       });
 
@@ -3760,7 +3760,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
 
       // Also update old-style cards if any remain
-      document.querySelectorAll(`.card[data-grp="${grp}"]`).forEach(c => {
+      document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
         c.classList.toggle('selected', c.dataset.val === val);
       });
 
@@ -3851,7 +3851,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Single-select axes for 4-axis system (worldSubtype is optional sub-selection)
     const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov', 'worldSubtype'];
 
-    document.querySelectorAll('.card[data-grp]').forEach(card => {
+    document.querySelectorAll('.sb-card[data-grp]').forEach(card => {
       if(card.dataset.bound === '1') return;
       card.dataset.bound = '1';
       card.addEventListener('click', (e) => {
@@ -3877,7 +3877,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // 4-axis system: world, tone, genre, dynamic, era, pov are all single-select
         if (SINGLE_SELECT_AXES.includes(grp)) {
           state.picks[grp] = val;
-          document.querySelectorAll(`.card[data-grp="${grp}"]`).forEach(c => c.classList.remove('selected'));
+          document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => c.classList.remove('selected'));
           card.classList.add('selected');
 
           // Special handling: show/hide Era sub-selection when World changes
@@ -4356,18 +4356,21 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if (!arch) return;
 
           const card = document.createElement('div');
-          card.className = 'archetype-card';
+          card.className = 'sb-card';
           card.dataset.archetype = id;
-          if (state.archetype.primary === id) card.classList.add('selected');
+          if (state.archetype.primary === id) {
+              card.classList.add('selected', 'flipped');
+          }
 
+          // Card structure: BACK shows title+desc (initially visible), FRONT shows symbol (revealed on flip/select)
           card.innerHTML = `
-              <div class="archetype-card-inner">
-                  <div class="archetype-card-face archetype-card-back">
-                      <span class="card-symbol">✦</span>
+              <div class="sb-card-inner">
+                  <div class="sb-card-face sb-card-back">
+                      <span class="sb-card-title">${arch.name}</span>
+                      <span class="sb-card-desc">${arch.desireStyle}</span>
                   </div>
-                  <div class="archetype-card-face archetype-card-front">
-                      <span class="card-name">${arch.name}</span>
-                      <span class="card-desc">${arch.desireStyle}</span>
+                  <div class="sb-card-face sb-card-front">
+                      <span class="sb-card-symbol">✦</span>
                   </div>
               </div>
           `;
@@ -4382,9 +4385,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const arch = ARCHETYPES[archetypeId];
       if (!overlay || !arch) return;
 
-      // Populate content
-      overlay.querySelector('.archetype-zoomed-name').textContent = arch.name;
-      overlay.querySelector('.archetype-zoomed-desc').textContent = arch.summary;
+      // Populate content using new class names
+      const titleEl = overlay.querySelector('.sb-card-zoomed-title');
+      const descEl = overlay.querySelector('.sb-card-zoomed-desc');
+      if (titleEl) titleEl.textContent = arch.name;
+      if (descEl) descEl.textContent = arch.summary;
 
       // Modifiers section
       const modifiersSection = overlay.querySelector('.archetype-zoomed-modifiers');
@@ -4416,14 +4421,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       selectBtn.classList.toggle('selected', isSelected);
       selectBtn.dataset.archetype = archetypeId;
 
-      // Show overlay
-      overlay.classList.remove('hidden');
+      // Show overlay (use 'active' class for new system)
+      overlay.classList.add('active');
       overlay.dataset.currentArchetype = archetypeId;
   }
 
   function closeArchetypeOverlay() {
       const overlay = document.getElementById('archetypeCardOverlay');
-      if (overlay) overlay.classList.add('hidden');
+      if (overlay) overlay.classList.remove('active');
   }
 
   function bindArchetypeHandlers() {
@@ -4496,9 +4501,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function updateArchetypeCardStates() {
-      document.querySelectorAll('.archetype-card').forEach(card => {
+      document.querySelectorAll('#archetypeCardGrid .sb-card').forEach(card => {
           const id = card.dataset.archetype;
-          card.classList.toggle('selected', state.archetype.primary === id);
+          const isSelected = state.archetype.primary === id;
+          card.classList.toggle('selected', isSelected);
+          card.classList.toggle('flipped', isSelected); // Selected cards stay flipped
       });
   }
 
