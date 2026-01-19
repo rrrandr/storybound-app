@@ -1289,6 +1289,24 @@ textarea.fate-field {
     50% { opacity: 1; }
 }
 
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+.name-refining-indicator {
+    display: inline;
+    margin-left: 8px;
+    font-size: 0.85em;
+    color: #888;
+    font-style: italic;
+}
+
+.name-refining-indicator .refining-dot {
+    animation: pulse 1s infinite;
+    margin-right: 4px;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    PHYSICAL BOOK OBJECT - 3D book with hinge, thickness, shadows
    ═══════════════════════════════════════════════════════════════════ */
