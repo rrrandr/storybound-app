@@ -481,6 +481,36 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .card { background:#252525; border-radius:12px; padding:15px; cursor:pointer; text-align:left; border:2px solid transparent; position:relative; transition:.2s; }
 .card:hover { transform:translateY(-3px); border-color:#ff6b6b; }
 .card.selected { border-color:#ff69b4; background:#333; box-shadow:0 0 15px rgba(255,105,180,0.3); }
+
+/* Layer gating states */
+.card.layer-locked {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+    filter: grayscale(0.5);
+}
+.card.incompatible {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: rgba(100, 100, 100, 0.3);
+}
+.card.auto-cleared {
+    animation: autoClearFade 1.5s ease-out forwards;
+}
+@keyframes autoClearFade {
+    0% { opacity: 1; border-color: #ff6b6b; }
+    30% { opacity: 0.6; border-color: #666; }
+    100% { opacity: 1; border-color: var(--gold); }
+}
+.layer-helper {
+    font-size: 0.7em;
+    color: var(--ink);
+    opacity: 0.6;
+    font-style: italic;
+    font-family: var(--font-main);
+}
+
 .card h3 { margin:0 0 5px; color:#ff6b6b; font-size:1.1em; font-family:'lust-script-display',serif; }
 .card p { font-size:0.9em; opacity:0.9; margin:0; font-family:var(--font-main); }
 .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:15; position:relative; pointer-events: auto !important; cursor: pointer !important;}
