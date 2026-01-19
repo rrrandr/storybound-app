@@ -3494,6 +3494,357 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
     }
 
+    // ==========================================================================
+    // SELECTION CARD SYSTEM (5×7 Flip Cards)
+    // ==========================================================================
+
+    let currentOpenCard = null;
+    let cardZoomOverlay = null;
+
+    // Sub-options data for each World type
+    const WORLD_SUB_OPTIONS = {
+      Modern: [
+        { val: 'small_town', label: 'Small Town' },
+        { val: 'college', label: 'College' },
+        { val: 'friends', label: 'Friends' },
+        { val: 'old_money', label: 'Old Money' },
+        { val: 'office', label: '9-5 / Office' },
+        { val: 'supernatural_modern', label: 'Supernatural' },
+        { val: 'superheroic_modern', label: 'Superheroic' }
+      ],
+      SciFi: [
+        { val: 'space_opera', label: 'Star-Spanning' },
+        { val: 'hard_scifi', label: 'Hard Sci-Fi' },
+        { val: 'cyberpunk', label: 'Neon Futures' },
+        { val: 'post_human', label: 'Post-Human' },
+        { val: 'alien_contact', label: 'First Contact' },
+        { val: 'military_scifi', label: 'War Among Stars' },
+        { val: 'abundance_collapse', label: 'Abundance/Collapse' }
+      ],
+      Fantasy: [
+        { val: 'enchanted_realms', label: 'Enchanted Realms' },
+        { val: 'hidden_magic', label: 'Hidden Magic' },
+        { val: 'cursed_corrupt', label: 'Cursed & Corrupt' }
+      ],
+      Dystopia: [
+        { val: 'authoritarian', label: 'Authoritarian' },
+        { val: 'surveillance', label: 'Surveillance' },
+        { val: 'corporate', label: 'Corporate' },
+        { val: 'environmental', label: 'Environmental' }
+      ],
+      PostApocalyptic: [
+        { val: 'nuclear', label: 'Nuclear' },
+        { val: 'pandemic', label: 'Pandemic' },
+        { val: 'climate', label: 'Climate' },
+        { val: 'technological', label: 'Tech Fallout' },
+        { val: 'slow_decay', label: 'Slow Decay' }
+      ],
+      Historical: [] // Era selection handled separately
+    };
+
+    function initSelectionCardSystem() {
+      // Create zoom overlay
+      if (!document.getElementById('cardZoomOverlay')) {
+        cardZoomOverlay = document.createElement('div');
+        cardZoomOverlay.id = 'cardZoomOverlay';
+        cardZoomOverlay.className = 'card-zoom-overlay';
+        cardZoomOverlay.innerHTML = '<div class="zoomed-card" id="zoomedCardContent"></div>';
+        document.body.appendChild(cardZoomOverlay);
+
+        // Close on overlay click
+        cardZoomOverlay.addEventListener('click', (e) => {
+          if (e.target === cardZoomOverlay) {
+            closeSelectionCard();
+          }
+        });
+      } else {
+        cardZoomOverlay = document.getElementById('cardZoomOverlay');
+      }
+
+      // Keyboard handler for Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && currentOpenCard) {
+          closeSelectionCard();
+        }
+      });
+
+      // Convert existing cards to selection cards
+      convertCardsToSelectionCards();
+    }
+
+    function convertCardsToSelectionCards() {
+      // Process each layer's card grid
+      const grids = [
+        { id: 'worldGrid', grp: 'world' },
+        { id: 'toneGrid', grp: 'tone' },
+        { id: 'genreGrid', grp: 'genre' }
+      ];
+
+      grids.forEach(({ id, grp }) => {
+        const grid = document.getElementById(id);
+        if (!grid) return;
+
+        // Get existing cards
+        const oldCards = grid.querySelectorAll('.card[data-grp]');
+        const cardData = [];
+
+        oldCards.forEach(card => {
+          cardData.push({
+            val: card.dataset.val,
+            title: card.querySelector('h3')?.textContent || '',
+            desc: card.querySelector('p')?.textContent || '',
+            selected: card.classList.contains('selected')
+          });
+        });
+
+        // Clear and convert to selection grid
+        grid.classList.remove('style-cards');
+        grid.classList.add('selection-grid');
+        grid.innerHTML = '';
+
+        cardData.forEach(data => {
+          const selCard = createSelectionCard(grp, data);
+          grid.appendChild(selCard);
+        });
+      });
+
+      // Handle dynamic cards (grouped structure)
+      const dynamicGrid = document.getElementById('dynamicGrid');
+      if (dynamicGrid) {
+        const allDynamicCards = dynamicGrid.querySelectorAll('.card[data-grp="dynamic"]');
+        const cardData = [];
+
+        allDynamicCards.forEach(card => {
+          cardData.push({
+            val: card.dataset.val,
+            title: card.querySelector('h3')?.textContent || '',
+            desc: card.querySelector('p')?.textContent || '',
+            selected: card.classList.contains('selected')
+          });
+        });
+
+        // Replace with flat selection grid
+        dynamicGrid.innerHTML = '';
+        dynamicGrid.classList.add('selection-grid');
+        dynamicGrid.classList.remove('dynamic-grouped');
+
+        cardData.forEach(data => {
+          const selCard = createSelectionCard('dynamic', data);
+          dynamicGrid.appendChild(selCard);
+        });
+      }
+
+      // Update layer states for new cards
+      updateSelectionCardStates();
+    }
+
+    function createSelectionCard(grp, data) {
+      const card = document.createElement('div');
+      card.className = 'selection-card';
+      card.dataset.grp = grp;
+      card.dataset.val = data.val;
+      if (data.selected) card.classList.add('selected');
+
+      card.innerHTML = `
+        <div class="selection-card-inner">
+          <div class="selection-card-face selection-card-front">
+            <span class="card-title">${data.title}</span>
+          </div>
+          <div class="selection-card-face selection-card-back">
+            <h4 class="card-title">${data.title}</h4>
+            <p class="card-desc">${data.desc}</p>
+          </div>
+        </div>
+      `;
+
+      card.addEventListener('click', () => openSelectionCard(card, grp, data));
+
+      return card;
+    }
+
+    function openSelectionCard(card, grp, data) {
+      // Check if layer is unlocked
+      if (!isLayerUnlocked(grp)) return;
+
+      // Check if card is incompatible
+      if (card.classList.contains('incompatible')) return;
+
+      // Close any currently open card
+      if (currentOpenCard) {
+        closeSelectionCard();
+      }
+
+      currentOpenCard = card;
+
+      // Dim all other cards
+      document.querySelectorAll('.selection-card').forEach(c => {
+        if (c !== card) c.classList.add('dimmed');
+      });
+
+      // Also dim old-style cards if any remain
+      document.querySelectorAll('.card[data-grp]').forEach(c => {
+        c.classList.add('dimmed');
+      });
+
+      // Populate zoomed card content
+      const zoomedContent = document.getElementById('zoomedCardContent');
+      const isSelected = state.picks[grp] === data.val;
+      const subOptions = grp === 'world' ? (WORLD_SUB_OPTIONS[data.val] || []) : [];
+
+      let subOptionsHtml = '';
+      if (subOptions.length > 0) {
+        subOptionsHtml = `
+          <div class="sub-options">
+            ${subOptions.map(opt => `
+              <span class="sub-option${state.picks.worldSubtype === opt.val ? ' selected' : ''}"
+                    data-subval="${opt.val}">${opt.label}</span>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      zoomedContent.innerHTML = `
+        <h3 class="card-title">${data.title}</h3>
+        <p class="card-desc">${data.desc}</p>
+        ${subOptionsHtml}
+        <button class="select-btn${isSelected ? ' is-selected' : ''}" data-grp="${grp}" data-val="${data.val}">
+          ${isSelected ? 'Selected ✓' : 'Select'}
+        </button>
+      `;
+
+      // Bind select button
+      const selectBtn = zoomedContent.querySelector('.select-btn');
+      selectBtn.addEventListener('click', () => {
+        selectFromZoomedCard(grp, data.val);
+      });
+
+      // Bind sub-options if present
+      zoomedContent.querySelectorAll('.sub-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const subVal = opt.dataset.subval;
+
+          // Toggle selection
+          if (state.picks.worldSubtype === subVal) {
+            state.picks.worldSubtype = null;
+          } else {
+            state.picks.worldSubtype = subVal;
+          }
+
+          // Update UI
+          zoomedContent.querySelectorAll('.sub-option').forEach(o => {
+            o.classList.toggle('selected', o.dataset.subval === state.picks.worldSubtype);
+          });
+
+          updateSynopsisPanel();
+        });
+      });
+
+      // Show overlay
+      cardZoomOverlay.classList.add('active');
+
+      // Focus management
+      selectBtn.focus();
+    }
+
+    function selectFromZoomedCard(grp, val) {
+      // Update state
+      state.picks[grp] = val;
+
+      // Update card selection states
+      document.querySelectorAll(`.selection-card[data-grp="${grp}"]`).forEach(c => {
+        c.classList.toggle('selected', c.dataset.val === val);
+      });
+
+      // Also update old-style cards if any remain
+      document.querySelectorAll(`.card[data-grp="${grp}"]`).forEach(c => {
+        c.classList.toggle('selected', c.dataset.val === val);
+      });
+
+      // Handle World-specific updates
+      if (grp === 'world') {
+        updateEraVisibility(val);
+        updateWorldSubtypeVisibility(val, state.picks.tone);
+        // Clear subtype if world changed
+        if (state.picks.worldSubtype && !WORLD_SUB_OPTIONS[val]?.some(o => o.val === state.picks.worldSubtype)) {
+          state.picks.worldSubtype = null;
+        }
+      }
+
+      // Handle Tone-specific updates
+      if (grp === 'tone') {
+        updateWorldSubtypeVisibility(state.picks.world, val);
+      }
+
+      // Evaluate downstream selections
+      evaluateDownstreamSelections(grp);
+
+      // Update synopsis
+      updateSynopsisPanel();
+
+      // Update button text
+      const selectBtn = document.querySelector('.zoomed-card .select-btn');
+      if (selectBtn) {
+        selectBtn.textContent = 'Selected ✓';
+        selectBtn.classList.add('is-selected');
+      }
+
+      // Close after brief delay
+      setTimeout(() => closeSelectionCard(), 300);
+    }
+
+    function closeSelectionCard() {
+      if (!currentOpenCard) return;
+
+      // Remove dimming from all cards
+      document.querySelectorAll('.selection-card.dimmed').forEach(c => {
+        c.classList.remove('dimmed');
+      });
+      document.querySelectorAll('.card.dimmed').forEach(c => {
+        c.classList.remove('dimmed');
+      });
+
+      // Hide overlay
+      cardZoomOverlay.classList.remove('active');
+
+      currentOpenCard = null;
+
+      // Re-apply layer states
+      updateSelectionCardStates();
+    }
+
+    function updateSelectionCardStates() {
+      const layers = ['world', 'tone', 'genre', 'dynamic'];
+
+      layers.forEach(layer => {
+        const cards = document.querySelectorAll(`.selection-card[data-grp="${layer}"]`);
+        const unlocked = isLayerUnlocked(layer);
+
+        cards.forEach(card => {
+          const val = card.dataset.val;
+
+          // Layer locking
+          card.classList.toggle('layer-locked', !unlocked);
+
+          // Compatibility check for genre/dynamic
+          if (unlocked) {
+            if (layer === 'genre') {
+              const compatible = isGenreCompatible(val, state.picks.tone);
+              card.classList.toggle('incompatible', !compatible);
+            } else if (layer === 'dynamic') {
+              const compatible = isDynamicCompatible(val, state.picks.genre, state.picks.tone);
+              card.classList.toggle('incompatible', !compatible);
+            } else {
+              card.classList.remove('incompatible');
+            }
+          }
+
+          // Selection state
+          card.classList.toggle('selected', state.picks[layer] === val);
+        });
+      });
+    }
+
     // Single-select axes for 4-axis system (worldSubtype is optional sub-selection)
     const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov', 'worldSubtype'];
 
@@ -3562,6 +3913,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     updateSynopsisPanel();
     // Initialize layer states (gating, compatibility)
     updateLayerStates();
+    // Initialize selection card system
+    initSelectionCardSystem();
 
     // Name refining indicator helpers
     function showNameRefiningIndicator(inputEl) {
