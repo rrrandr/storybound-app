@@ -116,14 +116,36 @@ module.exports = async function handler(req, res) {
 
     if (role === 'NORMALIZATION') {
       const modeGuidance = {
-        couple: `MODE: COUPLE - shared shorthand, playful recognition`,
-        solo: `MODE: SOLO - projection, irony, internal gesture`,
-        stranger: `MODE: STRANGER - ambiguous, mild distance or curiosity`
+        couple: `MODE: COUPLE
+For dialogue with cultural quotes:
+- Strip quoted language entirely
+- Rewrite as original prose acknowledging shared recognition
+- Preserve playfulness, intimacy, relationship tone
+- Do NOT paraphrase iconic phrasing or name the reference
+Intent > literal text.`,
+        solo: `MODE: SOLO
+For dialogue with cultural quotes:
+- Remove the quote
+- Rewrite as projection of player mood or irony
+- Do NOT assume shared cultural context
+- AI character must not "get the reference"
+- Response may be oblique, deflective, gently misaligned
+Preserve asymmetry.`,
+        stranger: `MODE: STRANGER
+For dialogue with cultural quotes:
+- Remove the quote
+- Rewrite as ambiguous affectation or social risk
+- May introduce mild awkwardness, curiosity, or distance
+- Do NOT validate shared familiarity
+Preserve social stakes.`
       };
 
       const normalizationSystemPrompt = {
         role: 'system',
         content: `You are an archetypal distillation layer. You extract the MYTHIC FUNCTION of cultural references.
+
+DETECTION (silent, non-blocking):
+Flag input if: quotation marks present, short stylized declarative, or high similarity to known cultural patterns.
 
 DISTILLATION RULES:
 - If the input is a known cultural character, extract the unique moral burden or central contradiction that defines them
@@ -132,6 +154,12 @@ DISTILLATION RULES:
 - Avoid flat adjectives: heroic, famous, brave, strong, evil
 - Capture the CHARACTER'S RELATIONSHIP to their world, not their label
 - Think: what weight do they carry? what tension defines them?
+
+DIALOGUE HANDLING:
+- No copyrighted dialogue verbatim or via close paraphrase
+- Do not name sources
+- Do not explain transformations
+- Behavior must be deterministic
 
 OUTPUT FORMAT (choose one):
 1. Single archetypal fragment (MAX 1 sentence, non-narrative)
