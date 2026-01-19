@@ -3162,19 +3162,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       vetoEl.value = '';
   }
 
-  $('$('burgerBtn')?.addEventListener('click', () => {
-  const authSection = document.getElementById('menuAuthSection');
-  if (authSection) {
-    authSection.innerHTML = `
-      <button onclick="window.showAuthModal('login')">
-        Log In / Sign Up
-      </button>
-      <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
-    `;
-  }
-  document.getElementById('menuOverlay').classList.remove('hidden');
-});
-burgerBtn')?.addEventListener('click', () => document.getElementById('menuOverlay').classList.remove('hidden'));
+  $('burgerBtn')?.addEventListener('click', () => {
+      if (typeof renderBurgerMenu === 'function') renderBurgerMenu();
+      document.getElementById('menuOverlay')?.classList.remove('hidden');
+  });
   $('ageYes')?.addEventListener('click', () => window.showScreen('tosGate'));
   $('tosCheck')?.addEventListener('change', (e) => $('tosBtn').disabled = !e.target.checked);
   $('tosBtn')?.addEventListener('click', () => window.showScreen('tierGate'));
