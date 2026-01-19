@@ -39,7 +39,7 @@
 
 const { validateModelForRole, getDefaultModel, ALLOWED_MODELS } = require('./orchestrator');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
