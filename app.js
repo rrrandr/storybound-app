@@ -2088,15 +2088,8 @@ ANTI-HERO ENFORCEMENT:
       // Visualize modifier suggestions
       initRotatingPlaceholder('vizModifierInput', 'visualize');
 
-      // Bind fate hand clicks (for veto/quill - NOT ancestry)
-      document.querySelectorAll('.fate-hand').forEach(hand => {
-          hand.addEventListener('click', () => handleFateHandClick(hand));
-      });
-
-      // Bind tree card clicks (for veto/quill - NOT ancestry)
-      document.querySelectorAll('.fate-tree-card').forEach(card => {
-          card.addEventListener('click', () => handleTreeCardClick(card));
-      });
+      // Initialize destiny flip cards (Quill/Veto)
+      initDestinyFlipCards();
 
       // Initialize ancestry flip cards
       initAncestryFlipCards();
@@ -2106,41 +2099,37 @@ ANTI-HERO ENFORCEMENT:
   }
 
   function initAncestryFlipCards() {
-      const ancestryOptions = FATE_SUGGESTIONS.ancestry;
-
+      // Ancestry flip cards - symbolic only, just flip in place
       document.querySelectorAll('.ancestry-flip-card').forEach(flipCard => {
-          const targetId = flipCard.dataset.target;
-          const optionsContainer = flipCard.querySelector('.ancestry-options');
-          const input = document.getElementById(targetId);
-
-          if (!optionsContainer || !input) return;
-
-          // Populate options
-          optionsContainer.innerHTML = ancestryOptions.map(opt =>
-              `<div class="ancestry-option" data-value="${opt}">${opt}</div>`
-          ).join('');
-
-          // Card click toggles flip
-          flipCard.addEventListener('click', (e) => {
-              // If clicking on option, don't toggle
-              if (e.target.classList.contains('ancestry-option')) return;
+          flipCard.addEventListener('click', () => {
               flipCard.classList.toggle('flipped');
           });
+      });
+  }
 
-          // Option selection
-          optionsContainer.addEventListener('click', (e) => {
-              if (!e.target.classList.contains('ancestry-option')) return;
-              e.stopPropagation();
+  function initDestinyFlipCards() {
+      // Destiny flip cards (Quill/Veto) - symbolic only, flip in place + trigger randomization
+      document.querySelectorAll('.destiny-flip-card').forEach(flipCard => {
+          flipCard.addEventListener('click', () => {
+              const targetId = flipCard.dataset.target;
+              const type = flipCard.dataset.type;
+              const input = document.getElementById(targetId);
 
-              const value = e.target.dataset.value;
-              input.value = value;
+              // Flip the card
+              flipCard.classList.toggle('flipped');
 
-              // Hide placeholder
-              const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
-              if (placeholder) placeholder.classList.add('hidden');
-
-              // Flip back
-              flipCard.classList.remove('flipped');
+              // If flipping to front (tree revealed), generate a suggestion
+              if (flipCard.classList.contains('flipped') && input && type) {
+                  const suggestion = getRandomSuggestion(type);
+                  if (input.tagName === 'TEXTAREA') {
+                      input.value = input.value ? input.value + '\n' + suggestion : suggestion;
+                  } else {
+                      input.value = suggestion;
+                  }
+                  // Hide placeholder
+                  const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
+                  if (placeholder) placeholder.classList.add('hidden');
+              }
           });
       });
   }
@@ -4022,7 +4011,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   const HORROR_ELIGIBLE_WORLDS = ['Fantasy', 'Modern'];
 
   function updateWorldSubtypeVisibility(worldValue, toneValue) {
-    // Hide all subtype sections first
+    // CORRECTIVE: World flavors now appear ONLY in the zoomed card popup
+    // Hide all below-card subtype sections permanently
     Object.values(WORLD_SUBTYPE_MAP).forEach(id => {
       const section = document.getElementById(id);
       if (section) section.classList.add('hidden');
@@ -4034,6 +4024,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (state.picks.worldSubtype) {
       delete state.picks.worldSubtype;
     }
+
+    // DISABLED: Below-card sections are no longer shown
+    // Flavors now only appear in the zoomed world card popup
+    return;
 
     // Show relevant subtype section based on world
     const subtypeSectionId = WORLD_SUBTYPE_MAP[worldValue];
@@ -4355,10 +4349,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           card.innerHTML = `
               <div class="archetype-card-inner">
                   <div class="archetype-card-face archetype-card-back">
-                      <span class="card-name">${arch.name}</span>
+                      <span class="card-symbol">✦</span>
                   </div>
                   <div class="archetype-card-face archetype-card-front">
-                      <span class="card-symbol">✦</span>
+                      <span class="card-name">${arch.name}</span>
                   </div>
               </div>
           `;
