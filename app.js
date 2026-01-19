@@ -3547,8 +3547,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const genre = state.picks.genre || 'Billionaire';
     const dynamic = state.picks.dynamic || 'Enemies';
 
-    // Get player name for DSP (REQUIRED)
-    const playerName = $('playerNameInput')?.value?.trim() || 'The Protagonist';
+    // Get player name for DSP (REQUIRED) - prefer normalized state over raw input
+    const playerName = state.normalizedPlayerName || $('playerNameInput')?.value?.trim() || 'The Protagonist';
 
     // Get world subtype if one is selected (optional)
     const worldSubtype = state.picks.worldSubtype || getSelectedWorldSubtype(world);
@@ -4254,6 +4254,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
     const pName = playerNorm.normalized_text || rawPlayerName;
     const lName = partnerNorm.normalized_text || rawPartnerName;
+
+    // CRITICAL: Store normalized names in state and overwrite raw display
+    state.normalizedPlayerName = pName;
+    state.normalizedPartnerName = lName;
+    if ($('playerNameInput')) $('playerNameInput').value = pName;
+    if ($('partnerNameInput')) $('partnerNameInput').value = lName;
+
     const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
     const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
     const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
