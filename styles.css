@@ -476,20 +476,14 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .locked-input::after { top: 40px; right: 10px; }
 .intensity-btn.locked-tease::after, .intensity-btn.locked-pass::after { top: 2px; right: 2px; transform: none; width: 16px; height: 16px; } 
 
-/* STYLE CARDS - Geometric spread layout */
+/* STYLE CARDS - Grid layout with centered rows */
 .style-cards {
     display: flex;
     flex-wrap: wrap;
-    gap: 18px 20px;
-    margin: 20px auto;
+    gap: 15px;
+    margin: 15px 0;
     justify-content: center;
-    align-items: flex-start;
-    padding: 10px 5px 15px;
 }
-/* Staggered vertical rhythm */
-.style-cards > .card:nth-child(odd) { transform: translateY(6px); }
-.style-cards > .card:nth-child(3n+2) { transform: translateY(-6px); }
-.style-cards > .card:nth-child(5n+3) { transform: translateY(10px); }
 
 .card {
     background: #252525;
@@ -506,38 +500,13 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .card:hover { transform: translateY(-3px); border-color: #ff6b6b; }
 .card.selected { border-color: #ff69b4; background: #333; box-shadow: 0 0 15px rgba(255,105,180,0.3); }
 
-/* Restore hover transform offset for staggered cards */
-.style-cards > .card:nth-child(odd):hover { transform: translateY(3px); }
-.style-cards > .card:nth-child(3n+2):hover { transform: translateY(-9px); }
-.style-cards > .card:nth-child(5n+3):hover { transform: translateY(7px); }
-
-/* Responsive: tighter spread on tablet */
+/* Responsive */
 @media (max-width: 700px) {
-    .style-cards {
-        gap: 14px 16px;
-    }
-    .style-cards > .card {
-        width: 180px;
-    }
-    .style-cards > .card:nth-child(n) { transform: translateY(0); }
-    .style-cards > .card:nth-child(odd) { transform: translateY(5px); }
-    .style-cards > .card:nth-child(3n+2) { transform: translateY(-4px); }
-    .style-cards > .card:nth-child(odd):hover { transform: translateY(2px); }
-    .style-cards > .card:nth-child(3n+2):hover { transform: translateY(-7px); }
+    .style-cards { gap: 12px; }
+    .card { width: 180px; }
 }
-/* Responsive: column layout on mobile */
 @media (max-width: 500px) {
-    .style-cards {
-        gap: 12px;
-        flex-direction: column;
-        align-items: center;
-    }
-    .style-cards > .card {
-        width: 90%;
-        max-width: 280px;
-    }
-    .style-cards > .card:nth-child(n) { transform: translateY(0); }
-    .style-cards > .card:hover { transform: translateY(-3px); }
+    .card { width: 90%; max-width: 280px; }
 }
 
 /* Layer gating states */
@@ -571,54 +540,20 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 
 /* =================================
    5×7 SELECTION FLIP CARDS
-   Geometric tarot-spread layout
+   Grid layout with centered rows
    ================================= */
 .selection-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px 20px;
+    gap: 12px;
     justify-content: center;
-    align-items: flex-start;
-    margin: 20px auto;
-    padding: 15px 10px 25px;
+    margin: 15px 0;
     position: relative;
-    max-width: 600px;
 }
 
-/* Staggered vertical rhythm - creates gentle wave pattern */
-.selection-grid .selection-card:nth-child(odd) {
-    transform: translateY(8px);
-}
-.selection-grid .selection-card:nth-child(3n+2) {
-    transform: translateY(-4px);
-}
-/* Center emphasis for middle cards */
-.selection-grid .selection-card:nth-child(3) {
-    transform: translateY(-10px);
-}
-.selection-grid .selection-card:nth-child(4) {
-    transform: translateY(12px);
-}
-
-/* Responsive: tighter spread on tablet */
-@media (max-width: 700px) {
-    .selection-grid {
-        gap: 12px 14px;
-        max-width: 450px;
-        padding: 10px 5px 20px;
-    }
-    .selection-grid .selection-card:nth-child(n) { transform: translateY(0); }
-    .selection-grid .selection-card:nth-child(odd) { transform: translateY(5px); }
-    .selection-grid .selection-card:nth-child(3n+2) { transform: translateY(-3px); }
-}
-/* Responsive: minimal stagger on mobile */
+/* Responsive */
 @media (max-width: 500px) {
-    .selection-grid {
-        gap: 10px 12px;
-        max-width: 300px;
-    }
-    .selection-grid .selection-card:nth-child(n) { transform: translateY(0); }
-    .selection-grid .selection-card:nth-child(odd) { transform: translateY(3px); }
+    .selection-grid { gap: 10px; }
 }
 
 .selection-card {
@@ -862,24 +797,16 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:15; position:relative; pointer-events: auto !important; cursor: pointer !important;}
 .preview-btn:hover { background:rgba(255,255,255,0.2); }
 
-/* FATE CARDS - Geometric tarot spread */
+/* FATE CARDS - Grid layout with centered rows */
 .fate-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px 20px;
-    margin: 25px auto;
-    max-width: 600px;
+    gap: 12px;
+    margin: 20px auto;
+    max-width: 650px;
     justify-content: center;
-    align-items: flex-start;
-    padding: 15px 10px 25px;
     perspective: 1000px;
 }
-/* Staggered arc pattern for 5 cards */
-.fate-grid .fate-card:nth-child(1) { transform: translateY(8px) rotate(-2deg); }
-.fate-grid .fate-card:nth-child(2) { transform: translateY(-6px) rotate(-1deg); }
-.fate-grid .fate-card:nth-child(3) { transform: translateY(-12px); }
-.fate-grid .fate-card:nth-child(4) { transform: translateY(-6px) rotate(1deg); }
-.fate-grid .fate-card:nth-child(5) { transform: translateY(8px) rotate(2deg); }
 
 .fate-card {
     width: 100px;
@@ -891,7 +818,6 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     padding: 0;
     transform-style: preserve-3d;
     transition: transform 0.6s;
-    flex-shrink: 0;
 }
 .fate-card .inner { position:absolute; inset:0; border-radius:8px; transform-style:preserve-3d; transition:transform 0.6s; box-shadow:0 5px 15px rgba(0,0,0,0.5); }
 .fate-card.flipped .inner { transform:rotateY(180deg); }
@@ -909,26 +835,14 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .fate-card.selected .inner { border: 2px solid var(--gold); box-shadow: 0 0 15px var(--gold); }
 .fate-card.chosen .inner { border: 2px solid var(--pink); }
 
-/* Responsive: tighter spread on tablet */
+/* Responsive */
 @media (max-width: 700px) {
-    .fate-grid {
-        gap: 12px 14px;
-        max-width: 400px;
-    }
+    .fate-grid { gap: 10px; max-width: 400px; }
     .fate-card { width: 85px; }
-    .fate-grid .fate-card:nth-child(n) { transform: translateY(0) rotate(0); }
-    .fate-grid .fate-card:nth-child(odd) { transform: translateY(6px); }
-    .fate-grid .fate-card:nth-child(3) { transform: translateY(-6px); }
 }
-/* Responsive: minimal stagger on mobile */
 @media (max-width: 500px) {
-    .fate-grid {
-        gap: 10px 12px;
-        max-width: 320px;
-    }
+    .fate-grid { gap: 8px; max-width: 320px; }
     .fate-card { width: 75px; }
-    .fate-grid .fate-card:nth-child(n) { transform: translateY(0); }
-    .fate-grid .fate-card:nth-child(odd) { transform: translateY(4px); }
 }
 
 /* GOLDEN FLOW - continuous gentle stream from Fate Card to inputs */
@@ -1119,61 +1033,23 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 
 /* =================================
    ARCHETYPE CARD GRID SYSTEM
-   Geometric spread layout (pyramid/diamond)
+   Grid layout with centered rows
    ================================= */
 .archetype-card-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 18px 22px;
+    gap: 15px;
     width: 95%;
-    max-width: 500px;
-    margin: 25px auto;
+    margin: 20px auto;
     justify-content: center;
-    align-items: flex-start;
-    padding: 10px 0 20px;
 }
 
-/* Geometric stagger pattern for 8 cards: creates layered spread */
-/* Row 1: cards 1-3 with slight arc */
-.archetype-card-grid .archetype-card:nth-child(1) { transform: translateY(6px); }
-.archetype-card-grid .archetype-card:nth-child(2) { transform: translateY(-8px); }
-.archetype-card-grid .archetype-card:nth-child(3) { transform: translateY(6px); }
-/* Row 2: cards 4-5 centered lower, pulled inward */
-.archetype-card-grid .archetype-card:nth-child(4) { transform: translateY(4px) translateX(12px); }
-.archetype-card-grid .archetype-card:nth-child(5) { transform: translateY(4px) translateX(-12px); }
-/* Row 3: cards 6-8 with inverted arc */
-.archetype-card-grid .archetype-card:nth-child(6) { transform: translateY(-4px); }
-.archetype-card-grid .archetype-card:nth-child(7) { transform: translateY(10px); }
-.archetype-card-grid .archetype-card:nth-child(8) { transform: translateY(-4px); }
-
-/* Responsive: tighter on tablet */
+/* Responsive */
 @media (max-width: 700px) {
-    .archetype-card-grid {
-        gap: 14px 16px;
-        max-width: 380px;
-    }
-    .archetype-card-grid .archetype-card:nth-child(n) {
-        transform: translateY(0);
-    }
-    .archetype-card-grid .archetype-card:nth-child(odd) {
-        transform: translateY(6px);
-    }
-    .archetype-card-grid .archetype-card:nth-child(3n+2) {
-        transform: translateY(-4px);
-    }
+    .archetype-card-grid { gap: 12px; }
 }
-/* Responsive: minimal stagger on mobile */
 @media (max-width: 500px) {
-    .archetype-card-grid {
-        gap: 12px 14px;
-        max-width: 280px;
-    }
-    .archetype-card-grid .archetype-card:nth-child(n) {
-        transform: translateY(0);
-    }
-    .archetype-card-grid .archetype-card:nth-child(odd) {
-        transform: translateY(4px);
-    }
+    .archetype-card-grid { gap: 10px; }
 }
 
 .archetype-card {
@@ -1206,28 +1082,28 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     justify-content: center;
 }
 .archetype-card-back {
+    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 1px solid var(--gold);
+    z-index: 2;
+}
+.archetype-card-back .card-symbol {
+    color: var(--gold);
+    font-size: 24px;
+    opacity: 0.6;
+}
+.archetype-card-front {
     background: linear-gradient(145deg, #2a1a2a 0%, #1a0a1a 100%);
     border: 1px solid var(--pink);
-    z-index: 2;
+    transform: rotateY(180deg);
     padding: 6px;
     flex-direction: column;
     text-align: center;
 }
-.archetype-card-back .card-name {
+.archetype-card-front .card-name {
     font-family: 'lust-script-display', serif;
     font-size: 10px;
     color: var(--pink);
     line-height: 1.2;
-}
-.archetype-card-front {
-    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
-    border: 1px solid var(--gold);
-    transform: rotateY(180deg);
-}
-.archetype-card-front .card-symbol {
-    color: var(--gold);
-    font-size: 24px;
-    opacity: 0.6;
 }
 
 /* Card Overlay (zoomed view) */
@@ -1534,24 +1410,56 @@ textarea.fate-field {
     100% { transform: translateX(-50%); }
 }
 
-/* Destiny card randomizer (replaces fanned cards) */
-.fate-hand {
-    width: 48px;
-    height: 69px; /* 5:7 ratio */
-    background: url('image_62.png') center/contain no-repeat;
-    border-radius: 4px;
+/* =================================
+   DESTINY FLIP CARD (Quill/Veto)
+   Same style as Ancestry card
+   ================================= */
+.destiny-flip-card {
+    width: 96px;
+    height: 138px;
+    perspective: 1000px;
     cursor: pointer;
     flex-shrink: 0;
-    transition: all 0.3s ease;
+}
+.destiny-card-inner {
+    width: 100%;
+    height: 100%;
     position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
 }
-.fate-hand:hover {
-    filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));
-    transform: scale(1.05);
+.destiny-flip-card.flipped .destiny-card-inner {
+    transform: rotateY(180deg);
 }
-/* Hide legacy fanned cards */
-.fate-hand-card {
-    display: none;
+.destiny-card-back,
+.destiny-card-front {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 6px;
+}
+.destiny-card-back {
+    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 1px solid var(--gold);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+}
+.destiny-card-back::after {
+    content: "Destiny's Choice";
+    font-family: 'lust-script-display', serif;
+    font-size: 12px;
+    color: var(--gold);
+    text-align: center;
+    line-height: 1.3;
+}
+.destiny-card-front {
+    background: url('image_62.png') center/contain no-repeat, #0d0d0d;
+    border: 1px solid var(--gold);
+    transform: rotateY(180deg);
 }
 
 /* Card flip state */
@@ -1690,33 +1598,9 @@ textarea.fate-field {
     line-height: 1.3;
 }
 .ancestry-card-front {
-    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+    background: url('image_62.png') center/contain no-repeat, #0d0d0d;
     border: 1px solid var(--gold);
     transform: rotateY(180deg);
-    overflow-y: auto;
-    padding: 8px 4px;
-}
-.ancestry-options {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.ancestry-option {
-    padding: 5px 6px;
-    font-size: 10px;
-    color: var(--text-muted);
-    background: rgba(201, 162, 39, 0.1);
-    border: 1px solid transparent;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-    line-height: 1.2;
-}
-.ancestry-option:hover {
-    color: var(--gold);
-    border-color: var(--gold);
-    background: rgba(201, 162, 39, 0.2);
 }
 
 /* Quill-Veto container adjustments */
