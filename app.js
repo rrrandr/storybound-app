@@ -3280,6 +3280,23 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Initialize synopsis panel
     updateSynopsisPanel();
 
+    // Name refining indicator helpers
+    function showNameRefiningIndicator(inputEl) {
+      let indicator = inputEl.parentElement?.querySelector('.name-refining-indicator');
+      if (!indicator) {
+        indicator = document.createElement('span');
+        indicator.className = 'name-refining-indicator';
+        indicator.innerHTML = '<span class="refining-dot">●</span> Refining name…';
+        inputEl.parentElement?.appendChild(indicator);
+      }
+      indicator.style.display = 'inline';
+    }
+
+    function hideNameRefiningIndicator(inputEl) {
+      const indicator = inputEl.parentElement?.querySelector('.name-refining-indicator');
+      if (indicator) indicator.style.display = 'none';
+    }
+
     // Update DSP when player name changes (DSP MUST include player name)
     // CRITICAL: Normalize on blur, not on every keystroke
     const playerNameInput = $('playerNameInput');
@@ -3287,11 +3304,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       playerNameInput.addEventListener('blur', async () => {
         const raw = playerNameInput.value.trim();
         if (!raw) return;
+        showNameRefiningIndicator(playerNameInput);
         const norm = await callNormalizationLayer({
           axis: 'character',
           user_text: raw,
           context_signals: state.picks?.world || []
         });
+        hideNameRefiningIndicator(playerNameInput);
         const kernel = norm.normalized_text || norm.archetype || 'the one who carries the story';
         state.normalizedPlayerKernel = kernel;
         state.rawPlayerName = raw;
@@ -3306,11 +3325,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       partnerNameInput.addEventListener('blur', async () => {
         const raw = partnerNameInput.value.trim();
         if (!raw) return;
+        showNameRefiningIndicator(partnerNameInput);
         const norm = await callNormalizationLayer({
           axis: 'character',
           user_text: raw,
           context_signals: state.picks?.world || []
         });
+        hideNameRefiningIndicator(partnerNameInput);
         const kernel = norm.normalized_text || norm.archetype || 'the one who draws them forward';
         state.normalizedPartnerKernel = kernel;
         state.rawPartnerName = raw;
