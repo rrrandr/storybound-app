@@ -3577,8 +3577,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         }
       });
 
-      // Convert existing cards to selection cards
-      convertCardsToSelectionCards();
+      // REMOVED: convertCardsToSelectionCards() - World, Tone, Genre, Dynamic now use .sb-card system
     }
 
     function convertCardsToSelectionCards() {
