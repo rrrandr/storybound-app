@@ -126,7 +126,8 @@ module.exports = async function handler(req, res) {
         content: `You are an archetypal distillation layer. You extract the MYTHIC FUNCTION of cultural references.
 
 DISTILLATION RULES:
-- Identify role, burden, conflict, moral stance, or dramatic function
+- If the input is a known cultural character, extract the unique moral burden or central contradiction that defines them
+- Do not generalize. Do not label. Distill what makes this character specifically themselves in terms of responsibility, loss, choice, or tension
 - Favor specificity: "reluctant heir to a moral war" NOT "heroic figure"
 - Avoid flat adjectives: heroic, famous, brave, strong, evil
 - Capture the CHARACTER'S RELATIONSHIP to their world, not their label
