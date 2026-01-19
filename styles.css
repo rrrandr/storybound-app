@@ -2410,3 +2410,256 @@ textarea.fate-field {
 .era-selection .card p {
     font-size: 0.8em;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   CANONICAL STORYBOUND CARD SYSTEM (SB-CARD)
+   ONE card component used everywhere. 5×7 vertical aspect ratio.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Grid System - centered rows, even distribution, no overlap */
+.sb-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    margin: 20px auto;
+    width: 95%;
+    max-width: 900px;
+}
+
+@media (max-width: 700px) {
+    .sb-grid { gap: 12px; }
+}
+@media (max-width: 500px) {
+    .sb-grid { gap: 10px; }
+}
+
+/* Base Card - 5×7 vertical proportions */
+.sb-card {
+    width: 100px;
+    height: 140px; /* 5:7 ratio */
+    perspective: 1000px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Responsive card sizes */
+@media (max-width: 700px) {
+    .sb-card { width: 85px; height: 119px; }
+}
+@media (max-width: 500px) {
+    .sb-card { width: 75px; height: 105px; }
+}
+
+/* Inner wrapper for 3D flip */
+.sb-card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+}
+
+/* Flipped state */
+.sb-card.flipped .sb-card-inner {
+    transform: rotateY(180deg);
+}
+
+/* Both faces share common styles */
+.sb-card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* BACK FACE - Initially visible, shows title + description */
+.sb-card-back {
+    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 1px solid var(--gold);
+    z-index: 2;
+    text-align: center;
+}
+
+.sb-card-back .sb-card-title {
+    font-family: 'lust-script-display', serif;
+    font-size: 11px;
+    color: var(--gold);
+    line-height: 1.2;
+    margin-bottom: 4px;
+    word-wrap: break-word;
+}
+
+.sb-card-back .sb-card-desc {
+    font-size: 8px;
+    color: var(--ink);
+    line-height: 1.2;
+    opacity: 0.8;
+}
+
+/* FRONT FACE - Revealed on flip, shows decorative symbol */
+.sb-card-front {
+    background: linear-gradient(145deg, #2a1a2a 0%, #1a0a1a 100%);
+    border: 1px solid var(--pink);
+    transform: rotateY(180deg);
+}
+
+.sb-card-front .sb-card-symbol {
+    color: var(--pink);
+    font-size: 28px;
+    opacity: 0.8;
+}
+
+/* Selected state - glow effect */
+.sb-card.selected {
+    filter: drop-shadow(0 0 10px var(--hot));
+}
+
+.sb-card.selected .sb-card-back {
+    border-color: var(--pink);
+}
+
+/* Locked state */
+.sb-card.locked {
+    opacity: 0.5;
+    filter: grayscale(0.8);
+    cursor: url('/cursor-dollar-plane-64.png'), pointer !important;
+}
+
+.sb-card.locked::after {
+    content: "";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 18px;
+    height: 18px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.5 13.5a3.5 3.5 0 1 0-2.5-5.9l-1.5 1.5'%3E%3C/path%3E%3Cpath d='M6.5 10.5a3.5 3.5 0 1 0 2.5 5.9l1.5-1.5'%3E%3C/path%3E%3Cpath d='M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Incompatible/dimmed state */
+.sb-card.incompatible,
+.sb-card.layer-locked {
+    opacity: 0.3;
+    pointer-events: none;
+    filter: grayscale(0.5);
+}
+
+/* Hover state */
+.sb-card:hover:not(.locked):not(.incompatible):not(.layer-locked) {
+    transform: translateY(-3px);
+}
+
+.sb-card:hover:not(.locked):not(.incompatible):not(.layer-locked) .sb-card-back {
+    border-color: var(--pink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SB-CARD ZOOM OVERLAY
+   Center-screen zoom for card details
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sb-card-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.sb-card-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sb-card-zoomed {
+    width: 90%;
+    max-width: 360px;
+    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 2px solid var(--pink);
+    border-radius: 12px;
+    padding: 24px;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.sb-card-overlay.active .sb-card-zoomed {
+    transform: scale(1);
+}
+
+.sb-card-zoomed-title {
+    font-family: 'lust-script-display', serif;
+    font-size: 1.5em;
+    color: var(--gold);
+    margin: 0 0 12px;
+    text-align: center;
+}
+
+.sb-card-zoomed-desc {
+    font-size: 0.95em;
+    color: var(--ink);
+    line-height: 1.5;
+    margin: 0 0 20px;
+    text-align: center;
+}
+
+.sb-card-zoomed-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.sb-card-zoomed-actions button {
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sb-btn-select {
+    background: var(--pink);
+    border: none;
+    color: #fff;
+}
+
+.sb-btn-select:hover {
+    background: var(--hot);
+    transform: translateY(-2px);
+}
+
+.sb-btn-select.selected {
+    background: var(--gold);
+    color: #000;
+}
+
+.sb-btn-close {
+    background: transparent;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+}
+
+.sb-btn-close:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
