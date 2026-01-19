@@ -3275,11 +3275,39 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     updateSynopsisPanel();
 
     // Update DSP when player name changes (DSP MUST include player name)
+    // CRITICAL: Normalize on blur, not on every keystroke
     const playerNameInput = $('playerNameInput');
     if (playerNameInput) {
-      playerNameInput.addEventListener('input', debounce(() => {
+      playerNameInput.addEventListener('blur', async () => {
+        const raw = playerNameInput.value.trim();
+        if (!raw) return;
+        const norm = await callNormalizationLayer({
+          axis: 'character',
+          user_text: raw,
+          context_signals: state.picks?.world || []
+        });
+        const normalized = norm.normalized_text || raw;
+        state.normalizedPlayerName = normalized;
+        playerNameInput.value = normalized;
         updateSynopsisPanel();
-      }, 300));
+      });
+    }
+
+    // Normalize partner name on blur
+    const partnerNameInput = $('partnerNameInput');
+    if (partnerNameInput) {
+      partnerNameInput.addEventListener('blur', async () => {
+        const raw = partnerNameInput.value.trim();
+        if (!raw) return;
+        const norm = await callNormalizationLayer({
+          axis: 'character',
+          user_text: raw,
+          context_signals: state.picks?.world || []
+        });
+        const normalized = norm.normalized_text || raw;
+        state.normalizedPartnerName = normalized;
+        partnerNameInput.value = normalized;
+      });
     }
 
     // Initialize Archetype System
@@ -3547,8 +3575,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const genre = state.picks.genre || 'Billionaire';
     const dynamic = state.picks.dynamic || 'Enemies';
 
-    // Get player name for DSP (REQUIRED) - prefer normalized state over raw input
-    const playerName = state.normalizedPlayerName || $('playerNameInput')?.value?.trim() || 'The Protagonist';
+    // Get player name for DSP (REQUIRED) - ONLY use normalized state, never raw input
+    const playerName = state.normalizedPlayerName || 'The Protagonist';
 
     // Get world subtype if one is selected (optional)
     const worldSubtype = state.picks.worldSubtype || getSelectedWorldSubtype(world);
