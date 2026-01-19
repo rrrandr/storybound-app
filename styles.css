@@ -476,11 +476,69 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .locked-input::after { top: 40px; right: 10px; }
 .intensity-btn.locked-tease::after, .intensity-btn.locked-pass::after { top: 2px; right: 2px; transform: none; width: 16px; height: 16px; } 
 
-/* STYLE CARDS */
-.style-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:15px 0; }
-.card { background:#252525; border-radius:12px; padding:15px; cursor:pointer; text-align:left; border:2px solid transparent; position:relative; transition:.2s; }
-.card:hover { transform:translateY(-3px); border-color:#ff6b6b; }
-.card.selected { border-color:#ff69b4; background:#333; box-shadow:0 0 15px rgba(255,105,180,0.3); }
+/* STYLE CARDS - Geometric spread layout */
+.style-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px 20px;
+    margin: 20px auto;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 10px 5px 15px;
+}
+/* Staggered vertical rhythm */
+.style-cards > .card:nth-child(odd) { transform: translateY(6px); }
+.style-cards > .card:nth-child(3n+2) { transform: translateY(-6px); }
+.style-cards > .card:nth-child(5n+3) { transform: translateY(10px); }
+
+.card {
+    background: #252525;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    text-align: left;
+    border: 2px solid transparent;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    width: 200px;
+    flex-shrink: 0;
+}
+.card:hover { transform: translateY(-3px); border-color: #ff6b6b; }
+.card.selected { border-color: #ff69b4; background: #333; box-shadow: 0 0 15px rgba(255,105,180,0.3); }
+
+/* Restore hover transform offset for staggered cards */
+.style-cards > .card:nth-child(odd):hover { transform: translateY(3px); }
+.style-cards > .card:nth-child(3n+2):hover { transform: translateY(-9px); }
+.style-cards > .card:nth-child(5n+3):hover { transform: translateY(7px); }
+
+/* Responsive: tighter spread on tablet */
+@media (max-width: 700px) {
+    .style-cards {
+        gap: 14px 16px;
+    }
+    .style-cards > .card {
+        width: 180px;
+    }
+    .style-cards > .card:nth-child(n) { transform: translateY(0); }
+    .style-cards > .card:nth-child(odd) { transform: translateY(5px); }
+    .style-cards > .card:nth-child(3n+2) { transform: translateY(-4px); }
+    .style-cards > .card:nth-child(odd):hover { transform: translateY(2px); }
+    .style-cards > .card:nth-child(3n+2):hover { transform: translateY(-7px); }
+}
+/* Responsive: column layout on mobile */
+@media (max-width: 500px) {
+    .style-cards {
+        gap: 12px;
+        flex-direction: column;
+        align-items: center;
+    }
+    .style-cards > .card {
+        width: 90%;
+        max-width: 280px;
+    }
+    .style-cards > .card:nth-child(n) { transform: translateY(0); }
+    .style-cards > .card:hover { transform: translateY(-3px); }
+}
 
 /* Layer gating states */
 .card.layer-locked {
@@ -513,14 +571,54 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 
 /* =================================
    5×7 SELECTION FLIP CARDS
+   Geometric tarot-spread layout
    ================================= */
 .selection-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 16px 20px;
     justify-content: center;
-    margin: 15px 0;
+    align-items: flex-start;
+    margin: 20px auto;
+    padding: 15px 10px 25px;
     position: relative;
+    max-width: 600px;
+}
+
+/* Staggered vertical rhythm - creates gentle wave pattern */
+.selection-grid .selection-card:nth-child(odd) {
+    transform: translateY(8px);
+}
+.selection-grid .selection-card:nth-child(3n+2) {
+    transform: translateY(-4px);
+}
+/* Center emphasis for middle cards */
+.selection-grid .selection-card:nth-child(3) {
+    transform: translateY(-10px);
+}
+.selection-grid .selection-card:nth-child(4) {
+    transform: translateY(12px);
+}
+
+/* Responsive: tighter spread on tablet */
+@media (max-width: 700px) {
+    .selection-grid {
+        gap: 12px 14px;
+        max-width: 450px;
+        padding: 10px 5px 20px;
+    }
+    .selection-grid .selection-card:nth-child(n) { transform: translateY(0); }
+    .selection-grid .selection-card:nth-child(odd) { transform: translateY(5px); }
+    .selection-grid .selection-card:nth-child(3n+2) { transform: translateY(-3px); }
+}
+/* Responsive: minimal stagger on mobile */
+@media (max-width: 500px) {
+    .selection-grid {
+        gap: 10px 12px;
+        max-width: 300px;
+    }
+    .selection-grid .selection-card:nth-child(n) { transform: translateY(0); }
+    .selection-grid .selection-card:nth-child(odd) { transform: translateY(3px); }
 }
 
 .selection-card {
@@ -764,10 +862,37 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .preview-btn { margin-top:10px; font-size:0.75em; padding:4px 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); box-shadow:none; z-index:15; position:relative; pointer-events: auto !important; cursor: pointer !important;}
 .preview-btn:hover { background:rgba(255,255,255,0.2); }
 
-/* FATE CARDS */
-/* FIXED: Increased max-width to restore proper card sizing */
-.fate-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin:20px auto; max-width:650px; perspective:1000px; }
-.fate-card { width:100%; aspect-ratio:5/7; position:relative; cursor:pointer; background:none; border:none; padding:0; transform-style:preserve-3d; transition:transform 0.6s; min-width:90px; }
+/* FATE CARDS - Geometric tarot spread */
+.fate-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 20px;
+    margin: 25px auto;
+    max-width: 600px;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 15px 10px 25px;
+    perspective: 1000px;
+}
+/* Staggered arc pattern for 5 cards */
+.fate-grid .fate-card:nth-child(1) { transform: translateY(8px) rotate(-2deg); }
+.fate-grid .fate-card:nth-child(2) { transform: translateY(-6px) rotate(-1deg); }
+.fate-grid .fate-card:nth-child(3) { transform: translateY(-12px); }
+.fate-grid .fate-card:nth-child(4) { transform: translateY(-6px) rotate(1deg); }
+.fate-grid .fate-card:nth-child(5) { transform: translateY(8px) rotate(2deg); }
+
+.fate-card {
+    width: 100px;
+    aspect-ratio: 5/7;
+    position: relative;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+    flex-shrink: 0;
+}
 .fate-card .inner { position:absolute; inset:0; border-radius:8px; transform-style:preserve-3d; transition:transform 0.6s; box-shadow:0 5px 15px rgba(0,0,0,0.5); }
 .fate-card.flipped .inner { transform:rotateY(180deg); }
 .fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); flex-direction: column; padding: 5px; box-sizing: border-box; }
@@ -775,7 +900,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     background: url('destiny-tree.png') center/cover no-repeat, #111;
     z-index:2;
 }
-.fate-card .front h3 { display: none; } /* Hide text, image has DESTINY label */ 
+.fate-card .front h3 { display: none; } /* Hide text, image has DESTINY label */
 .fate-card .back { background:#2a0033; transform:rotateY(180deg); z-index:1; }
 .fate-card h3 { font-size: 0.8em; margin-bottom: 5px; text-transform: uppercase; color: var(--gold); }
 .fate-card p { font-size: 0.6em; line-height: 1.2; opacity: 0.9; }
@@ -783,7 +908,28 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 @keyframes smokePoof { 0%{ opacity:1; transform:scale(1); } 100%{ opacity:0; transform:scale(0.5); } }
 .fate-card.selected .inner { border: 2px solid var(--gold); box-shadow: 0 0 15px var(--gold); }
 .fate-card.chosen .inner { border: 2px solid var(--pink); }
-@media (max-width:700px) { .fate-grid { grid-template-columns:repeat(3,1fr); max-width:400px; } .fate-card:nth-child(4), .fate-card:nth-child(5) { grid-column:span 1; } }
+
+/* Responsive: tighter spread on tablet */
+@media (max-width: 700px) {
+    .fate-grid {
+        gap: 12px 14px;
+        max-width: 400px;
+    }
+    .fate-card { width: 85px; }
+    .fate-grid .fate-card:nth-child(n) { transform: translateY(0) rotate(0); }
+    .fate-grid .fate-card:nth-child(odd) { transform: translateY(6px); }
+    .fate-grid .fate-card:nth-child(3) { transform: translateY(-6px); }
+}
+/* Responsive: minimal stagger on mobile */
+@media (max-width: 500px) {
+    .fate-grid {
+        gap: 10px 12px;
+        max-width: 320px;
+    }
+    .fate-card { width: 75px; }
+    .fate-grid .fate-card:nth-child(n) { transform: translateY(0); }
+    .fate-grid .fate-card:nth-child(odd) { transform: translateY(4px); }
+}
 
 /* GOLDEN FLOW - continuous gentle stream from Fate Card to inputs */
 .golden-flow-container {
@@ -973,20 +1119,61 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 
 /* =================================
    ARCHETYPE CARD GRID SYSTEM
+   Geometric spread layout (pyramid/diamond)
    ================================= */
 .archetype-card-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px 22px;
     width: 95%;
-    margin: 20px auto;
-    justify-items: center;
+    max-width: 500px;
+    margin: 25px auto;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 10px 0 20px;
 }
+
+/* Geometric stagger pattern for 8 cards: creates layered spread */
+/* Row 1: cards 1-3 with slight arc */
+.archetype-card-grid .archetype-card:nth-child(1) { transform: translateY(6px); }
+.archetype-card-grid .archetype-card:nth-child(2) { transform: translateY(-8px); }
+.archetype-card-grid .archetype-card:nth-child(3) { transform: translateY(6px); }
+/* Row 2: cards 4-5 centered lower, pulled inward */
+.archetype-card-grid .archetype-card:nth-child(4) { transform: translateY(4px) translateX(12px); }
+.archetype-card-grid .archetype-card:nth-child(5) { transform: translateY(4px) translateX(-12px); }
+/* Row 3: cards 6-8 with inverted arc */
+.archetype-card-grid .archetype-card:nth-child(6) { transform: translateY(-4px); }
+.archetype-card-grid .archetype-card:nth-child(7) { transform: translateY(10px); }
+.archetype-card-grid .archetype-card:nth-child(8) { transform: translateY(-4px); }
+
+/* Responsive: tighter on tablet */
 @media (max-width: 700px) {
-    .archetype-card-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .archetype-card-grid {
+        gap: 14px 16px;
+        max-width: 380px;
+    }
+    .archetype-card-grid .archetype-card:nth-child(n) {
+        transform: translateY(0);
+    }
+    .archetype-card-grid .archetype-card:nth-child(odd) {
+        transform: translateY(6px);
+    }
+    .archetype-card-grid .archetype-card:nth-child(3n+2) {
+        transform: translateY(-4px);
+    }
 }
+/* Responsive: minimal stagger on mobile */
 @media (max-width: 500px) {
-    .archetype-card-grid { grid-template-columns: repeat(2, 1fr); }
+    .archetype-card-grid {
+        gap: 12px 14px;
+        max-width: 280px;
+    }
+    .archetype-card-grid .archetype-card:nth-child(n) {
+        transform: translateY(0);
+    }
+    .archetype-card-grid .archetype-card:nth-child(odd) {
+        transform: translateY(4px);
+    }
 }
 
 .archetype-card {
@@ -2282,10 +2469,9 @@ textarea.fate-field {
     margin-bottom: 2px;
 }
 
+/* Dynamic group inherits flex spread from .style-cards */
 .dynamic-group .style-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
+    gap: 14px 16px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -2313,10 +2499,12 @@ textarea.fate-field {
     padding-top: 0;
 }
 
-/* Smaller cards for era selection */
+/* Smaller cards for era selection - tighter spread */
 .era-selection .style-cards {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
+    gap: 12px 14px;
+}
+.era-selection .style-cards .card {
+    width: 150px;
 }
 
 .era-selection .card {
