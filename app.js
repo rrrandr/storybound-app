@@ -4221,13 +4221,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const vetoText = vetoEl.value.trim();
       if (!vetoText) { showToast("No veto to commit."); return; }
 
-      // Add each line as separate committed phrase
+      // CRITICAL: Normalize FIRST, then add to committed state
+      // Never store raw input in committedVeto
       const lines = vetoText.split('\n').filter(l => l.trim());
-      lines.forEach(line => {
-          if (!state.committedVeto.includes(line.trim())) {
-              state.committedVeto.push(line.trim());
+      for (const line of lines) {
+          const norm = await callNormalizationLayer({
+              axis: 'veto',
+              user_text: line.trim(),
+              context_signals: state.picks?.world || []
+          });
+          const kernel = norm.archetype || norm.burden || norm.normalized_text || 'excluded element';
+          if (!state.committedVeto.includes(kernel)) {
+              state.committedVeto.push(kernel);
           }
-      });
+      }
       renderCommittedPhrases('veto');
 
       await applyVetoFromInput();
