@@ -3286,9 +3286,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           user_text: raw,
           context_signals: state.picks?.world || []
         });
-        const normalized = norm.normalized_text || raw;
-        state.normalizedPlayerName = normalized;
-        playerNameInput.value = normalized;
+        const kernel = norm.normalized_text || norm.archetype || 'the one who carries the story';
+        state.normalizedPlayerKernel = kernel;
+        state.rawPlayerName = raw;
+        playerNameInput.value = kernel;
         updateSynopsisPanel();
       });
     }
@@ -3304,9 +3305,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           user_text: raw,
           context_signals: state.picks?.world || []
         });
-        const normalized = norm.normalized_text || raw;
-        state.normalizedPartnerName = normalized;
-        partnerNameInput.value = normalized;
+        const kernel = norm.normalized_text || norm.archetype || 'the one who draws them forward';
+        state.normalizedPartnerKernel = kernel;
+        state.rawPartnerName = raw;
+        partnerNameInput.value = kernel;
       });
     }
 
@@ -3575,14 +3577,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const genre = state.picks.genre || 'Billionaire';
     const dynamic = state.picks.dynamic || 'Enemies';
 
-    // Get player name for DSP (REQUIRED) - ONLY use normalized state, never raw input
-    const playerName = state.normalizedPlayerName || 'The Protagonist';
+    // Get player kernel for DSP (REQUIRED) - ONLY use normalized kernel, never raw input
+    const playerKernel = state.normalizedPlayerKernel || 'the one who carries the story';
 
     // Get world subtype if one is selected (optional)
     const worldSubtype = state.picks.worldSubtype || getSelectedWorldSubtype(world);
 
-    // Generate holistic sentence based on tone with player name and subtype
-    const newSentence = generateDSPSentence(world, tone, genre, dynamic, playerName, worldSubtype);
+    // Generate holistic sentence based on tone with player kernel and subtype
+    const newSentence = generateDSPSentence(world, tone, genre, dynamic, playerKernel, worldSubtype);
 
     // Update with animation if content changed
     if (synopsisText.textContent !== newSentence) {
@@ -4280,14 +4282,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         user_text: rawPartnerName,
         context_signals: state.picks?.world || []
     });
-    const pName = playerNorm.normalized_text || rawPlayerName;
-    const lName = partnerNorm.normalized_text || rawPartnerName;
+    const pKernel = playerNorm.normalized_text || playerNorm.archetype || 'the one who carries the story';
+    const lKernel = partnerNorm.normalized_text || partnerNorm.archetype || 'the one who draws them forward';
 
-    // CRITICAL: Store normalized names in state and overwrite raw display
-    state.normalizedPlayerName = pName;
-    state.normalizedPartnerName = lName;
-    if ($('playerNameInput')) $('playerNameInput').value = pName;
-    if ($('partnerNameInput')) $('partnerNameInput').value = lName;
+    // CRITICAL: Store normalized kernels in state and overwrite raw display
+    state.normalizedPlayerKernel = pKernel;
+    state.normalizedPartnerKernel = lKernel;
+    state.rawPlayerName = rawPlayerName;
+    state.rawPartnerName = rawPartnerName;
+    if ($('playerNameInput')) $('playerNameInput').value = pKernel;
+    if ($('partnerNameInput')) $('partnerNameInput').value = lKernel;
 
     const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
     const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
@@ -4311,7 +4315,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     
     // Persist Nickname for Couple Mode
     if(state.mode === 'couple' && !state.myNick) {
-       state.myNick = pName.split(' ')[0];
+       state.myNick = pKernel.split(' ')[0];
        localStorage.setItem("sb_nickname", state.myNick);
     }
     
@@ -4495,8 +4499,8 @@ You are writing a story with the following 4-axis configuration:
 - POV: ${state.picks.pov || 'First'}
 
 
-    Protagonist: ${pName} (${pGen}, ${pPro}).
-    Love Interest: ${lName} (${lGen}, ${lPro}).
+    Protagonist: ${pKernel} (${pGen}, ${pPro}).
+    Love Interest: ${lKernel} (${lGen}, ${lPro}).
 
     ${buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen)}
 
