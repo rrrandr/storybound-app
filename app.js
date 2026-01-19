@@ -5197,6 +5197,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function validateBeginStory() {
       const errors = [];
 
+      // Skip validation if Fate triggered (all values are pre-set correctly)
+      if (state._fateTriggered) {
+          return errors;
+      }
+
       // Check archetype selection
       const archetypeValidation = validateArchetypeSelection(state.archetype.primary, state.archetype.modifier);
       if (!archetypeValidation.valid) {
@@ -5228,10 +5233,224 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       return errors;
   }
 
+  // ========================================
+  // LET FATE DECIDE - Auto-selection System
+  // ========================================
+
+  // Weighted random selection helper
+  function weightedSelect(options, weights) {
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let random = Math.random() * totalWeight;
+    for (let i = 0; i < options.length; i++) {
+      random -= weights[i];
+      if (random <= 0) return options[i];
+    }
+    return options[options.length - 1];
+  }
+
+  // Name lists for fate-generated names (IP-safe, non-famous)
+  const FATE_FEMALE_NAMES = [
+    'Elara Vance', 'Cassandra Wells', 'Mira Thornwood', 'Vivian Blake', 'Cordelia Hart',
+    'Aurelia Stone', 'Seraphina Cole', 'Isadora Crane', 'Helena Frost', 'Rosalind Grey',
+    'Celestine Moore', 'Evangeline Price', 'Lydia Sterling', 'Ophelia Dane', 'Tatiana West'
+  ];
+
+  const FATE_MALE_NAMES = [
+    'Sebastian Blackwood', 'Julian Ashford', 'Marcus Thorne', 'Alexander Crane', 'Dominic Vale',
+    'Lucian Grey', 'Theodore Sterling', 'Maximilian Drake', 'Gabriel Frost', 'Benedict Hale',
+    'Damien Cross', 'Vincent Ashmore', 'Nathaniel Wolfe', 'Adrian Sinclair', 'Dorian Vance'
+  ];
+
+  // Get entitlement-aware intensity selection
+  function getFateIntensity() {
+    // Prefer Erotic if entitled, else Naughty. Never Dirty.
+    if (state.access === 'sub' || state.access === 'pass') {
+      return 'Erotic';
+    }
+    return 'Naughty';
+  }
+
+  // Get entitlement-aware story length selection
+  function getFateStoryLength() {
+    // Prefer Affair/Soulmates if sub, else Fling if pass, else Voyeur
+    if (state.access === 'sub') {
+      // Weighted: prefer Affair (50%), Soulmates (50%)
+      return Math.random() < 0.5 ? 'affair' : 'soulmates';
+    } else if (state.access === 'pass') {
+      return 'fling';
+    }
+    return 'voyeur';
+  }
+
+  // Get weighted world selection
+  function getFateWorld() {
+    // Prefer Modern > Historical > Fantasy > Sci-Fi
+    const worlds = ['Modern', 'Historical', 'Fantasy', 'SciFi'];
+    const weights = [40, 30, 20, 10]; // Heavy preference for Modern
+    return weightedSelect(worlds, weights);
+  }
+
+  // Get weighted flavor for selected world
+  function getFateFlavor(world) {
+    const flavors = WORLD_SUB_OPTIONS[world];
+    if (!flavors || flavors.length === 0) return null;
+    // Bias toward first (broader) options
+    const weights = flavors.map((_, i) => Math.max(10 - i * 2, 1));
+    const selected = weightedSelect(flavors, weights);
+    return selected.val;
+  }
+
+  // Get weighted tone selection
+  function getFateTone() {
+    // Prefer Earnest, WryConfession, Poetic
+    const tones = ['Earnest', 'WryConfession', 'Poetic', 'Mythic', 'Comedic'];
+    const weights = [40, 30, 20, 5, 5];
+    return weightedSelect(tones, weights);
+  }
+
+  // Get weighted genre selection (context-aware for Modern)
+  function getFateGenre(world) {
+    if (world === 'Modern') {
+      // Prefer Billionaire, SmallTown, FamousNotorious, CollegeEarlyCareer for Modern
+      // Note: Some of these may be World flavors, using available genres
+      const genres = ['Billionaire', 'Noir', 'Political', 'Heist'];
+      const weights = [50, 20, 15, 15];
+      return weightedSelect(genres, weights);
+    }
+    // Default genres for other worlds
+    const genres = ['Billionaire', 'CrimeSyndicate', 'Espionage', 'Political'];
+    const weights = [40, 25, 20, 15];
+    return weightedSelect(genres, weights);
+  }
+
+  // Get weighted dynamic selection
+  function getFateDynamic() {
+    // Prefer Friends to Lovers, Forbidden Love, Fated
+    const dynamics = ['Friends', 'Forbidden', 'Fated', 'Enemies', 'SecondChance'];
+    const weights = [35, 30, 25, 5, 5];
+    return weightedSelect(dynamics, weights);
+  }
+
+  // Get POV selection (prefer 1st person)
+  function getFatePOV() {
+    // Prefer First (1st person "I"), fall back if needed
+    return 'First';
+  }
+
+  // Get weighted archetype selection
+  function getFateArchetype() {
+    // Prefer romantic archetypes for the default romance experience
+    const archetypes = ['ROMANTIC', 'DEVOTED', 'ENCHANTING', 'GUARDIAN', 'CLOISTERED'];
+    const weights = [35, 25, 20, 15, 5];
+    return weightedSelect(archetypes, weights);
+  }
+
+  // Populate all UI selections from fate choices
+  function populateFateSelections(fateChoices) {
+    // Set player character
+    $('playerGender').value = 'Female';
+    $('playerPronouns').value = 'She/Her';
+    $('playerNameInput').value = fateChoices.playerName;
+
+    // Set love interest
+    $('loveInterestGender').value = 'Male';
+    $('lovePronouns').value = 'He/Him';
+    $('partnerNameInput').value = fateChoices.partnerName;
+
+    // Update state directly
+    state.gender = 'Female';
+    state.loveInterest = 'Male';
+    state.picks.world = fateChoices.world;
+    state.picks.worldSubtype = fateChoices.worldFlavor;
+    state.picks.tone = fateChoices.tone;
+    state.picks.genre = fateChoices.genre;
+    state.picks.dynamic = fateChoices.dynamic;
+    state.picks.pov = fateChoices.pov;
+    state.intensity = fateChoices.intensity;
+    state.storyLength = fateChoices.storyLength;
+
+    // Set archetype (required for story generation)
+    state.archetype = { primary: fateChoices.archetype, modifier: null };
+
+    // Handle Historical era if needed
+    if (fateChoices.world === 'Historical' && fateChoices.worldFlavor) {
+      state.picks.era = fateChoices.worldFlavor;
+    }
+
+    // Clear veto/quill (defaults only)
+    state.veto = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
+    state.quillIntent = '';
+
+    // Update UI cards to reflect selections
+    updateAllCardSelections();
+  }
+
+  // Update all card UI to reflect state
+  function updateAllCardSelections() {
+    const axes = ['world', 'tone', 'genre', 'dynamic', 'intensity', 'length', 'pov'];
+    axes.forEach(grp => {
+      const value = grp === 'intensity' ? state.intensity :
+                    grp === 'length' ? state.storyLength :
+                    state.picks[grp];
+      if (!value) return;
+
+      document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(card => {
+        const isSelected = card.dataset.val === value;
+        card.classList.toggle('selected', isSelected);
+        card.classList.toggle('flipped', isSelected);
+      });
+    });
+  }
+
+  // Initialize Fate Destiny Card click handler
+  $('fateDestinyCard')?.addEventListener('click', async () => {
+    const fateCard = $('fateDestinyCard');
+    if (!fateCard || fateCard.classList.contains('flipped')) return;
+
+    // 1. Flip the card immediately
+    fateCard.classList.add('flipped');
+
+    // 2. Show loading screen immediately
+    startLoading("Destiny unfolds...", STORY_LOADING_MESSAGES);
+
+    // Small delay for card flip animation
+    await new Promise(r => setTimeout(r, 400));
+
+    // 3. Generate fate choices
+    const fateChoices = {
+      playerName: FATE_FEMALE_NAMES[Math.floor(Math.random() * FATE_FEMALE_NAMES.length)],
+      partnerName: FATE_MALE_NAMES[Math.floor(Math.random() * FATE_MALE_NAMES.length)],
+      world: getFateWorld(),
+      tone: getFateTone(),
+      dynamic: getFateDynamic(),
+      pov: getFatePOV(),
+      intensity: getFateIntensity(),
+      storyLength: getFateStoryLength(),
+      archetype: getFateArchetype()
+    };
+
+    // Add world-dependent selections
+    fateChoices.worldFlavor = getFateFlavor(fateChoices.world);
+    fateChoices.genre = getFateGenre(fateChoices.world);
+
+    // 4. Populate all selections
+    populateFateSelections(fateChoices);
+
+    // 5. Trigger story begin (reusing the normal flow)
+    // First set a flag so beginBtn knows it's from Fate
+    state._fateTriggered = true;
+
+    // Trigger the begin button click handler
+    $('beginBtn')?.click();
+  });
+
   // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
     // Comprehensive validation before proceeding
     const validationErrors = validateBeginStory();
+    const wasFateTriggered = state._fateTriggered;
+    state._fateTriggered = false; // Clear flag after validation
+
     if (validationErrors.length > 0) {
         showToast(validationErrors[0]);
         return;
