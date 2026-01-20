@@ -3590,7 +3590,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // ==========================================================================
 
     let currentOpenCard = null;
-    let cardZoomOverlay = null;
 
     // Sub-options data for each World type
     // Modern: NO custom field | All others: HAS custom field
@@ -3694,29 +3693,29 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
     }
 
-    function initSelectionCardSystem() {
-      // Create zoom overlay
-      if (!document.getElementById('cardZoomOverlay')) {
-        cardZoomOverlay = document.createElement('div');
-        cardZoomOverlay.id = 'cardZoomOverlay';
-        cardZoomOverlay.className = 'card-zoom-overlay';
-        cardZoomOverlay.innerHTML = '<div class="zoomed-card" id="zoomedCardContent"></div>';
-        document.body.appendChild(cardZoomOverlay);
+    // Zoom backdrop element (created once)
+    let zoomBackdrop = null;
 
-        // Close on overlay click
-        cardZoomOverlay.addEventListener('click', (e) => {
-          if (e.target === cardZoomOverlay) {
-            closeSelectionCard();
-          }
+    function initSelectionCardSystem() {
+      // Create zoom backdrop (dims background when card is zoomed)
+      if (!document.getElementById('sbZoomBackdrop')) {
+        zoomBackdrop = document.createElement('div');
+        zoomBackdrop.id = 'sbZoomBackdrop';
+        zoomBackdrop.className = 'sb-zoom-backdrop';
+        document.body.appendChild(zoomBackdrop);
+
+        // Close zoom on backdrop click
+        zoomBackdrop.addEventListener('click', () => {
+          closeZoomedCard();
         });
       } else {
-        cardZoomOverlay = document.getElementById('cardZoomOverlay');
+        zoomBackdrop = document.getElementById('sbZoomBackdrop');
       }
 
       // Keyboard handler for Escape
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && currentOpenCard) {
-          closeSelectionCard();
+          closeZoomedCard();
         }
       });
 
@@ -3813,6 +3812,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       return card;
     }
 
+    // Legacy openSelectionCard - now uses in-place zoom for .selection-card elements
+    // NOTE: .selection-card system is deprecated - .sb-card is the canonical system
     function openSelectionCard(card, grp, data) {
       // Check if layer is unlocked
       if (!isLayerUnlocked(grp)) return;
@@ -3822,7 +3823,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Close any currently open card
       if (currentOpenCard) {
-        closeSelectionCard();
+        closeZoomedCard();
       }
 
       currentOpenCard = card;
@@ -3832,70 +3833,28 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if (c !== card) c.classList.add('dimmed');
       });
 
-      // Also dim old-style cards if any remain
-      document.querySelectorAll('.sb-card[data-grp]').forEach(c => {
-        c.classList.add('dimmed');
-      });
+      // Calculate transform to center the card
+      const rect = card.getBoundingClientRect();
+      const cardCenterX = rect.left + rect.width / 2;
+      const cardCenterY = rect.top + rect.height / 2;
+      const viewportCenterX = window.innerWidth / 2;
+      const viewportCenterY = window.innerHeight / 2;
 
-      // Populate zoomed card content
-      const zoomedContent = document.getElementById('zoomedCardContent');
-      const isSelected = state.picks[grp] === data.val;
-      const subOptions = grp === 'world' ? (WORLD_SUB_OPTIONS[data.val] || []) : [];
+      // Calculate translation needed to center the card
+      const translateX = viewportCenterX - cardCenterX;
+      const translateY = viewportCenterY - cardCenterY;
 
-      let subOptionsHtml = '';
-      if (subOptions.length > 0) {
-        subOptionsHtml = `
-          <div class="sub-options">
-            ${subOptions.map(opt => `
-              <span class="sub-option${state.picks.worldSubtype === opt.val ? ' selected' : ''}"
-                    data-subval="${opt.val}">${opt.label}</span>
-            `).join('')}
-          </div>
-        `;
+      // Scale factor
+      const scale = 2.5;
+
+      // Apply zoom transform to the SAME card element
+      card.classList.add('zoomed');
+      card.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+      // Show backdrop
+      if (zoomBackdrop) {
+        zoomBackdrop.classList.add('active');
       }
-
-      zoomedContent.innerHTML = `
-        <h3 class="card-title">${data.title}</h3>
-        <p class="card-desc">${data.desc}</p>
-        ${subOptionsHtml}
-        <button class="select-btn${isSelected ? ' is-selected' : ''}" data-grp="${grp}" data-val="${data.val}">
-          ${isSelected ? 'Selected ✓' : 'Select'}
-        </button>
-      `;
-
-      // Bind select button
-      const selectBtn = zoomedContent.querySelector('.select-btn');
-      selectBtn.addEventListener('click', () => {
-        selectFromZoomedCard(grp, data.val);
-      });
-
-      // Bind sub-options if present
-      zoomedContent.querySelectorAll('.sub-option').forEach(opt => {
-        opt.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const subVal = opt.dataset.subval;
-
-          // Toggle selection
-          if (state.picks.worldSubtype === subVal) {
-            state.picks.worldSubtype = null;
-          } else {
-            state.picks.worldSubtype = subVal;
-          }
-
-          // Update UI
-          zoomedContent.querySelectorAll('.sub-option').forEach(o => {
-            o.classList.toggle('selected', o.dataset.subval === state.picks.worldSubtype);
-          });
-
-          updateSynopsisPanel();
-        });
-      });
-
-      // Show overlay
-      cardZoomOverlay.classList.add('active');
-
-      // Focus management
-      selectBtn.focus();
     }
 
     function selectFromZoomedCard(grp, val) {
@@ -3948,22 +3907,23 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       setTimeout(() => closeSelectionCard(), 300);
     }
 
-    function closeSelectionCard() {
+    // Close zoomed card - returns to STATE 2 (face-up in grid)
+    function closeZoomedCard() {
       if (!currentOpenCard) return;
 
-      // Remove dimming from all cards
-      document.querySelectorAll('.selection-card.dimmed').forEach(c => {
-        c.classList.remove('dimmed');
-      });
-      document.querySelectorAll('.card.dimmed').forEach(c => {
-        c.classList.remove('dimmed');
-      });
-      document.querySelectorAll('.sb-card.dimmed').forEach(c => {
+      // Remove zoom transform from the card
+      currentOpenCard.classList.remove('zoomed');
+      currentOpenCard.style.transform = '';
+
+      // Remove dimming from all cards (both .sb-card and .selection-card)
+      document.querySelectorAll('.sb-card.dimmed, .selection-card.dimmed').forEach(c => {
         c.classList.remove('dimmed');
       });
 
-      // Hide overlay
-      cardZoomOverlay.classList.remove('active');
+      // Hide backdrop
+      if (zoomBackdrop) {
+        zoomBackdrop.classList.remove('active');
+      }
 
       currentOpenCard = null;
 
@@ -3971,115 +3931,49 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       updateSelectionCardStates();
     }
 
+    // Legacy alias for compatibility
+    function closeSelectionCard() {
+      closeZoomedCard();
+    }
+
     // STATE 3: Open zoomed view for .sb-card elements
+    // The SAME card element scales and translates to viewport center
+    // NO modal, NO popup, NO duplicate DOM
     function openSbCardZoom(card, grp, val) {
       // Close any currently open card
       if (currentOpenCard) {
-        closeSelectionCard();
+        closeZoomedCard();
       }
 
       currentOpenCard = card;
 
-      // Dim all cards
+      // Dim all other cards
       document.querySelectorAll('.sb-card[data-grp]').forEach(c => {
         if (c !== card) c.classList.add('dimmed');
       });
 
-      // Get card data from the DOM
-      const titleEl = card.querySelector('.sb-card-front .sb-card-title');
-      const descEl = card.querySelector('.sb-card-front .sb-card-desc');
-      const title = titleEl ? titleEl.textContent : val;
-      const desc = descEl ? descEl.textContent : '';
+      // Calculate transform to center the card
+      const rect = card.getBoundingClientRect();
+      const cardCenterX = rect.left + rect.width / 2;
+      const cardCenterY = rect.top + rect.height / 2;
+      const viewportCenterX = window.innerWidth / 2;
+      const viewportCenterY = window.innerHeight / 2;
 
-      // Populate zoomed card content
-      const zoomedContent = document.getElementById('zoomedCardContent');
+      // Calculate translation needed to center the card
+      const translateX = viewportCenterX - cardCenterX;
+      const translateY = viewportCenterY - cardCenterY;
 
-      // Get flavors (sub-options) for World cards only
-      const subOptions = grp === 'world' ? (WORLD_SUB_OPTIONS[val] || []) : [];
+      // Scale factor (2.5x gives good readability)
+      const scale = 2.5;
 
-      // Determine if this world type needs a custom text field
-      // Modern: NO custom field | All others: HAS custom field
-      const needsCustomField = grp === 'world' && WORLDS_WITH_CUSTOM_FIELD.includes(val);
+      // Apply zoom transform to the SAME card element
+      card.classList.add('zoomed');
+      card.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
 
-      let subOptionsHtml = '';
-      if (subOptions.length > 0) {
-        subOptionsHtml = `
-          <div class="zoom-flavors">
-            <div class="flavor-label">Flavors:</div>
-            <div class="flavor-pills">
-              ${subOptions.map(opt => `
-                <span class="flavor-pill${state.picks.worldSubtype === opt.val ? ' selected' : ''}"
-                      data-subval="${opt.val}">${opt.label}</span>
-              `).join('')}
-            </div>
-          </div>
-        `;
+      // Show backdrop
+      if (zoomBackdrop) {
+        zoomBackdrop.classList.add('active');
       }
-
-      let customFieldHtml = '';
-      if (needsCustomField) {
-        const currentCustom = state.picks.worldCustom || '';
-        customFieldHtml = `
-          <div class="zoom-custom-field">
-            <label>Custom Details:</label>
-            <textarea id="zoomWorldCustom" placeholder="Add specific world details...">${currentCustom}</textarea>
-          </div>
-        `;
-      }
-
-      zoomedContent.innerHTML = `
-        <h3 class="zoom-title">${title}</h3>
-        <p class="zoom-desc">${desc}</p>
-        ${subOptionsHtml}
-        ${customFieldHtml}
-        <button class="zoom-close-btn">Close</button>
-      `;
-
-      // Bind close button
-      const closeBtn = zoomedContent.querySelector('.zoom-close-btn');
-      closeBtn.addEventListener('click', () => {
-        closeSelectionCard();
-      });
-
-      // Bind flavor pills if present
-      zoomedContent.querySelectorAll('.flavor-pill').forEach(pill => {
-        pill.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const subVal = pill.dataset.subval;
-
-          // Toggle selection
-          if (state.picks.worldSubtype === subVal) {
-            state.picks.worldSubtype = null;
-          } else {
-            state.picks.worldSubtype = subVal;
-          }
-
-          // Update UI
-          zoomedContent.querySelectorAll('.flavor-pill').forEach(p => {
-            p.classList.toggle('selected', p.dataset.subval === state.picks.worldSubtype);
-          });
-
-          updateSynopsisPanel();
-        });
-      });
-
-      // Bind custom field if present
-      const customField = zoomedContent.querySelector('#zoomWorldCustom');
-      if (customField) {
-        // Save raw value on input for responsive UI
-        customField.addEventListener('input', (e) => {
-          state.picks.worldCustom = e.target.value;
-        });
-        // Normalize on blur (when user finishes editing)
-        customField.addEventListener('blur', (e) => {
-          const normalized = normalizeWorldCustom(e.target.value);
-          state.picks.worldCustom = normalized;
-          e.target.value = normalized;
-        });
-      }
-
-      // Show overlay
-      cardZoomOverlay.classList.add('active');
     }
 
     function updateSelectionCardStates() {
@@ -4714,120 +4608,58 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       updateArchetypeSelectionSummary();
   }
 
+  // STATE 3: Open zoomed view for archetype cards
+  // The SAME card element scales and translates to viewport center
+  // NO modal, NO popup, NO duplicate DOM
   function openArchetypeOverlay(archetypeId) {
-      const overlay = document.getElementById('archetypeCardOverlay');
+      const card = document.querySelector(`#archetypeCardGrid .sb-card[data-archetype="${archetypeId}"]`);
       const arch = ARCHETYPES[archetypeId];
-      if (!overlay || !arch) return;
+      if (!card || !arch) return;
 
-      // Populate content using new class names
-      const titleEl = overlay.querySelector('.sb-card-zoomed-title');
-      const descEl = overlay.querySelector('.sb-card-zoomed-desc');
-      if (titleEl) titleEl.textContent = arch.name;
-      if (descEl) descEl.textContent = arch.summary;
-
-      // Modifiers section
-      const modifiersSection = overlay.querySelector('.archetype-zoomed-modifiers');
-      const modifierList = overlay.querySelector('.modifier-list');
-
-      if (arch.primaryOnly) {
-          modifiersSection.classList.add('primary-only-msg');
-          modifiersSection.querySelector('h4').textContent = 'Primary Only — No modifiers available';
-          modifierList.innerHTML = '';
-      } else {
-          modifiersSection.classList.remove('primary-only-msg');
-          modifiersSection.querySelector('h4').textContent = 'Compatible Modifiers';
-
-          // Show all non-primaryOnly archetypes except self as potential modifiers
-          modifierList.innerHTML = ARCHETYPE_ORDER
-              .filter(id => id !== archetypeId && !ARCHETYPES[id].primaryOnly)
-              .map(id => {
-                  const mod = ARCHETYPES[id];
-                  const isSelected = state.archetype.modifier === id && state.archetype.primary === archetypeId;
-                  return `<span class="modifier-chip${isSelected ? ' selected' : ''}" data-modifier="${id}">${mod.name}</span>`;
-              })
-              .join('');
+      // Close any currently zoomed card
+      if (currentOpenCard) {
+          closeZoomedCard();
       }
 
-      // Update select button
-      const selectBtn = overlay.querySelector('.btn-select-primary');
-      const isSelected = state.archetype.primary === archetypeId;
-      selectBtn.textContent = isSelected ? 'Selected ✓' : 'Select as Primary';
-      selectBtn.classList.toggle('selected', isSelected);
-      selectBtn.dataset.archetype = archetypeId;
+      currentOpenCard = card;
 
-      // Show overlay (use 'active' class for new system)
-      overlay.classList.add('active');
-      overlay.dataset.currentArchetype = archetypeId;
+      // Dim all other archetype cards
+      document.querySelectorAll('#archetypeCardGrid .sb-card').forEach(c => {
+          if (c !== card) c.classList.add('dimmed');
+      });
+
+      // Calculate transform to center the card
+      const rect = card.getBoundingClientRect();
+      const cardCenterX = rect.left + rect.width / 2;
+      const cardCenterY = rect.top + rect.height / 2;
+      const viewportCenterX = window.innerWidth / 2;
+      const viewportCenterY = window.innerHeight / 2;
+
+      // Calculate translation needed to center the card
+      const translateX = viewportCenterX - cardCenterX;
+      const translateY = viewportCenterY - cardCenterY;
+
+      // Scale factor (2.5x gives good readability)
+      const scale = 2.5;
+
+      // Apply zoom transform to the SAME card element
+      card.classList.add('zoomed');
+      card.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+      // Show backdrop
+      if (zoomBackdrop) {
+          zoomBackdrop.classList.add('active');
+      }
   }
 
+  // Close archetype zoom - returns to STATE 2 (face-up in grid)
   function closeArchetypeOverlay() {
-      const overlay = document.getElementById('archetypeCardOverlay');
-      if (overlay) overlay.classList.remove('active');
+      closeZoomedCard();
   }
 
   function bindArchetypeHandlers() {
-      // Overlay close button
-      const closeBtn = document.querySelector('.btn-close-card');
-      if (closeBtn) closeBtn.addEventListener('click', closeArchetypeOverlay);
-
-      // Overlay background click
-      const overlay = document.getElementById('archetypeCardOverlay');
-      if (overlay) {
-          overlay.addEventListener('click', (e) => {
-              if (e.target === overlay) closeArchetypeOverlay();
-          });
-      }
-
-      // Select primary button - THREE-STATE MODEL: clicking never deselects
-      // Card is already selected when overlay is open (STATE 3), so button confirms selection
-      const selectBtn = document.querySelector('.btn-select-primary');
-      if (selectBtn) {
-          selectBtn.addEventListener('click', () => {
-              const id = selectBtn.dataset.archetype;
-              // Always select (never deselect) - cards only deselect when another card is chosen
-              if (state.archetype.primary !== id) {
-                  state.archetype.primary = id;
-                  // Clear modifier if it's same as new primary
-                  if (state.archetype.modifier === id) {
-                      state.archetype.modifier = null;
-                  }
-                  updateArchetypeCardStates();
-                  updateArchetypeSelectionSummary();
-              }
-              // Update overlay button state (always selected now)
-              selectBtn.textContent = 'Selected ✓';
-              selectBtn.classList.add('selected');
-          });
-      }
-
-      // Modifier chip clicks (delegated)
-      const modifierList = document.querySelector('.modifier-list');
-      if (modifierList) {
-          modifierList.addEventListener('click', (e) => {
-              if (!e.target.classList.contains('modifier-chip')) return;
-              const modId = e.target.dataset.modifier;
-              const overlay = document.getElementById('archetypeCardOverlay');
-              const primaryId = overlay?.dataset.currentArchetype;
-
-              // Must select primary first
-              if (state.archetype.primary !== primaryId) {
-                  showToast('Select this as Primary first to add a modifier.');
-                  return;
-              }
-
-              if (state.archetype.modifier === modId) {
-                  state.archetype.modifier = null;
-              } else {
-                  state.archetype.modifier = modId;
-              }
-
-              // Update chip states
-              modifierList.querySelectorAll('.modifier-chip').forEach(chip => {
-                  chip.classList.toggle('selected', chip.dataset.modifier === state.archetype.modifier);
-              });
-              updateArchetypeSelectionSummary();
-          });
-      }
+      // No longer needed - archetype zoom uses the unified zoom system
+      // Backdrop click is handled by the global backdrop listener
   }
 
   function updateArchetypeCardStates() {

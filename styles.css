@@ -685,7 +685,21 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     pointer-events: none;
 }
 
-/* Zoomed card overlay */
+/* Selection card in-place zoom state */
+.selection-card.zoomed {
+    position: relative;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+}
+
+.selection-card.zoomed .selection-card-front {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
+                0 0 30px rgba(255, 105, 180, 0.3);
+}
+
+/* DEPRECATED: Modal overlay - kept for backwards compatibility, not used */
 .card-zoom-overlay {
     position: fixed;
     inset: 0;
@@ -2695,7 +2709,51 @@ textarea.fate-field {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   ZOOM OVERLAY CONTENT STYLING
+   IN-PLACE CARD ZOOM (THREE-STATE MODEL)
+   Card scales and translates from grid position to viewport center
+   NO separate modal or popup elements
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Zoom backdrop - dims background when card is zoomed */
+.sb-zoom-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.sb-zoom-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Zoomed card state - transforms the SAME card element */
+.sb-card.zoomed {
+    position: relative;
+    z-index: 1000;
+    /* Transform is set dynamically via JS to center the card */
+    transition: transform 0.3s ease;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* When zoomed, the inner card should not flip back */
+.sb-card.zoomed .sb-card-inner {
+    transform: rotateY(180deg); /* Keep showing front face */
+}
+
+/* Zoomed card visual enhancement */
+.sb-card.zoomed .sb-card-front {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
+                0 0 30px rgba(255, 105, 180, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ZOOM OVERLAY CONTENT STYLING (LEGACY - kept for flavor pills in zoom)
    ═══════════════════════════════════════════════════════════════════ */
 
 .zoomed-card .zoom-title {
