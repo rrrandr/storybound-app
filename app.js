@@ -1192,7 +1192,7 @@ ANTI-HERO ENFORCEMENT:
       },
       gender:'Female',
       loveInterest:'Male',
-      archetype: { primary: null, modifier: null }, 
+      archetype: { primary: 'BEAUTIFUL_RUIN', modifier: null },
       intensity:'Naughty', 
       turnCount:0,
       sysPrompt: "",
@@ -2967,10 +2967,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.turnCount = 0;
     state.storyLength = 'voyeur';
     state.storyEnded = false;
-    state.archetype = { primary: null, modifier: null };
+    state.archetype = { primary: 'BEAUTIFUL_RUIN', modifier: null };
     // Clear pagination system
     StoryPagination.clear();
-    // Re-render archetype pills to clear selection
+    // Re-render archetype pills to reflect default selection
     if (typeof renderArchetypePills === 'function') renderArchetypePills();
     if (typeof updateArchetypePreview === 'function') updateArchetypePreview();
     
@@ -4229,6 +4229,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       return errors;
   }
+
+  // --- GLOBAL DESTINY CARD - ALIAS FOR BEGIN STORY ---
+  // Top Destiny card must directly call the same Begin Story handler
+  // No tree art, no separate state, no population logic
+  $('globalDestinyCard')?.addEventListener('click', () => {
+    const beginBtn = $('beginBtn');
+    if (beginBtn) beginBtn.click();
+  });
 
   // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
