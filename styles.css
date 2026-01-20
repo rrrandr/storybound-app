@@ -2098,45 +2098,43 @@ textarea.fate-field {
    Each ROW is visually centered because the grid container itself is centered.
    No forced layouts (3+2, 3+3, etc.) - grid flows naturally.
 
+   DISCRETE COLUMN STEPS: 6 → 3 → 2 (NO fluid rebalancing)
+   Cards stay 100px until 2-column mode.
+
    Column math (card=100px, gap=16px):
-   - 6 cols: 680px, 5 cols: 564px, 4 cols: 448px, 3 cols: 332px, 2 cols: 216px
+   - 6 cols: 680px, 3 cols: 332px, 2 cols: 216px
+   - At 2 cols, cards shrink to 70px with 8px gap = 148px
+
+   This prevents forbidden layouts like 5,1 or 4,2.
 */
 .sb-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 100px);
+    grid-template-columns: repeat(auto-fit, 100px);
     gap: 16px;
     justify-content: center;
     align-content: start;
     width: max-content;
-    max-width: min(95vw, 680px); /* 6 cols max on desktop */
+    max-width: min(95vw, 680px); /* 6 cols max on wide */
     margin-inline: auto;
     margin-block: 20px;
 }
 
-/* Medium screens: smaller cards, max 5 cols */
+/* Medium screens: DISCRETE step to max 3 columns (prevents 5,1 and 4,2) */
 @media (max-width: 700px) {
     .sb-grid {
-        grid-template-columns: repeat(auto-fill, 85px);
-        gap: 12px;
-        max-width: min(95vw, 473px); /* 5 cols at 85px */
+        /* Cards stay 100px - no shrink yet */
+        grid-template-columns: repeat(auto-fit, 100px);
+        gap: 16px;
+        max-width: min(95vw, 332px); /* Forces max 3 cols */
     }
 }
 
-/* Narrow screens: smaller cards, max 4 cols */
-@media (max-width: 500px) {
+/* Narrow screens: DISCRETE step to max 2 columns, cards shrink here */
+@media (max-width: 400px) {
     .sb-grid {
-        grid-template-columns: repeat(auto-fill, 75px);
-        gap: 10px;
-        max-width: min(95vw, 330px); /* 4 cols at 75px */
-    }
-}
-
-/* Very narrow screens: 2 cols max */
-@media (max-width: 350px) {
-    .sb-grid {
-        grid-template-columns: repeat(auto-fill, 70px);
+        grid-template-columns: repeat(auto-fit, 70px);
         gap: 8px;
-        max-width: min(95vw, 148px); /* 2 cols at 70px */
+        max-width: min(95vw, 148px); /* Forces max 2 cols */
     }
 }
 
@@ -2148,14 +2146,10 @@ textarea.fate-field {
     cursor: pointer;
 }
 
-/* Responsive card sizes - must match grid-template-columns */
-@media (max-width: 700px) {
-    .sb-card { width: 85px; height: 119px; }
-}
-@media (max-width: 500px) {
-    .sb-card { width: 75px; height: 105px; }
-}
-@media (max-width: 350px) {
+/* Responsive card sizes - must match discrete grid column steps */
+/* Cards stay 100px at wide and medium (6 cols, 3 cols) */
+/* Cards shrink to 70px only at narrow (2 cols) */
+@media (max-width: 400px) {
     .sb-card { width: 70px; height: 98px; }
 }
 
@@ -2483,6 +2477,16 @@ textarea.fate-field {
 .sb-zoom-custom-input::placeholder {
     color: rgba(200, 200, 200, 0.4);
     font-style: italic;
+}
+
+/* Storybeau (archetype) zoom - NO pills, only custom field with scrolling modifiers */
+.sb-zoom-content-storybeau {
+    justify-content: center;
+    flex: 1;
+}
+
+.sb-zoom-content-storybeau .sb-zoom-custom {
+    margin-top: 0;
 }
 
 /* Incompatible/dimmed state */

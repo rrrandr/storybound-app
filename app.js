@@ -4811,7 +4811,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       updateArchetypeSelectionSummary();
   }
 
-  // Populate archetype card zoom view with modifier custom field
+  // Populate archetype card zoom view with modifier custom field only (NO pills)
   function populateArchetypeZoomContent(card, archetypeId) {
       const frontFace = card.querySelector('.sb-card-front');
       if (!frontFace) return;
@@ -4825,45 +4825,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Create zoom content container
       const zoomContent = document.createElement('div');
-      zoomContent.className = 'sb-zoom-content';
+      zoomContent.className = 'sb-zoom-content sb-zoom-content-storybeau';
 
-      // Add modifier buttons
-      const modifierGrid = document.createElement('div');
-      modifierGrid.className = 'sb-zoom-flavors';
-
-      validModifiers.forEach(modId => {
-          const mod = ARCHETYPES[modId];
-          if (!mod) return;
-
-          const btn = document.createElement('button');
-          btn.className = 'sb-flavor-btn';
-          btn.textContent = mod.name.replace('The ', '');
-          btn.dataset.modifier = modId;
-
-          // Check if this modifier is currently selected
-          if (state.archetype.modifier === modId) {
-              btn.classList.add('selected');
-          }
-
-          btn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              // Toggle selection
-              if (state.archetype.modifier === modId) {
-                  state.archetype.modifier = null;
-                  btn.classList.remove('selected');
-              } else {
-                  // Deselect others
-                  modifierGrid.querySelectorAll('.sb-flavor-btn').forEach(b => b.classList.remove('selected'));
-                  state.archetype.modifier = modId;
-                  btn.classList.add('selected');
-              }
-              updateArchetypeSelectionSummary();
-          });
-
-          modifierGrid.appendChild(btn);
-      });
-
-      zoomContent.appendChild(modifierGrid);
+      // NO modifier pills - only custom text field with scrolling examples
 
       // Add custom text field with rotating placeholder
       const customWrapper = document.createElement('div');
@@ -4871,7 +4835,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       const customLabel = document.createElement('label');
       customLabel.className = 'sb-zoom-custom-label';
-      customLabel.textContent = 'Custom Modifier:';
+      customLabel.textContent = 'Modifier:';
 
       // Create input wrapper for rotating placeholder
       const inputWrapper = document.createElement('div');
@@ -4886,18 +4850,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const rotatingPlaceholder = document.createElement('div');
       rotatingPlaceholder.className = 'sb-zoom-rotating-placeholder';
 
-      // Build scrolling suggestion content
-      const suggestions = FATE_SUGGESTIONS.archetypeModifier || [];
-      if (suggestions.length > 0) {
-          // Filter out current primary and already selected modifier
-          const filteredSuggestions = suggestions.filter(s => {
-              const archName = ARCHETYPES[archetypeId]?.name.replace('The ', '');
-              return s.toLowerCase() !== archName?.toLowerCase();
-          });
-          const doubled = [...filteredSuggestions, ...filteredSuggestions];
+      // Build scrolling suggestion content from valid modifier names
+      const modifierNames = validModifiers.map(modId => {
+          const mod = ARCHETYPES[modId];
+          return mod ? mod.name.replace('The ', '') : null;
+      }).filter(Boolean);
+
+      if (modifierNames.length > 0) {
+          // Double the list for seamless scrolling
+          const doubled = [...modifierNames, ...modifierNames];
           let html = '<span class="sb-zoom-placeholder-inner">';
-          doubled.forEach((s, i) => {
-              html += `<span class="suggestion">${s}</span>`;
+          doubled.forEach((name, i) => {
+              html += `<span class="suggestion">${name}</span>`;
               if (i < doubled.length - 1) html += '<span class="separator">•</span>';
           });
           html += '</span>';
@@ -4925,10 +4889,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               if (matchedModifier) {
                   // Update state
                   state.archetype.modifier = matchedModifier;
-                  // Update button states
-                  modifierGrid.querySelectorAll('.sb-flavor-btn').forEach(b => {
-                      b.classList.toggle('selected', b.dataset.modifier === matchedModifier);
-                  });
                   updateArchetypeSelectionSummary();
               }
               // Clear input (do not persist raw text)
