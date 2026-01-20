@@ -2578,32 +2578,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     bindLengthHandlers();
   }
 
+  // REMOVED: Separate length click handlers - now using unified handler
+  // Length cards are handled by the single unified card handler in initSelectionCardSystem()
   function bindLengthHandlers(){
-      // THREE-STATE MODEL for length cards:
-      // STATE 1 (face-down) → STATE 2 (face-up): Click unselected card
-      // STATE 2 (face-up) → STATE 3 (zoomed): Click already-selected card
-      // Cards only return to face-down when another card is selected
-      document.querySelectorAll('#lengthGrid .sb-card[data-grp="length"]').forEach(card => {
-          if(card.dataset.bound === 'true') return;
-          card.dataset.bound = 'true';
-          card.addEventListener('click', () => {
-              if (state.turnCount > 0) return;
-              if (card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
-
-              const val = card.dataset.val;
-              const isAlreadySelected = card.classList.contains('selected') && card.classList.contains('flipped');
-
-              if (isAlreadySelected) {
-                  // STATE 2 → STATE 3: Open zoom view (never deselect by clicking)
-                  openSbCardZoom(card, 'length', val);
-                  return;
-              }
-
-              // STATE 1 → STATE 2: Select this card, deselect others
-              state.storyLength = val;
-              applyLengthLocks();
-          });
-      });
+      // No-op: click handling moved to unified handler
   }
 
   function applyIntensityLocks(){
@@ -2667,31 +2645,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       document.querySelectorAll('#gameIntensity button').forEach(setGame);
   }
 
+  // REMOVED: Separate intensity card handlers - now using unified handler
+  // Intensity cards are handled by the single unified card handler in initSelectionCardSystem()
   function wireIntensityHandlers(){
-      // THREE-STATE MODEL for intensity cards:
-      // STATE 1 (face-down) → STATE 2 (face-up): Click unselected card
-      // STATE 2 (face-up) → STATE 3 (zoomed): Click already-selected card
-      // Cards only return to face-down when another card is selected
-      const handler = (card, level, e) => {
-          e.stopPropagation();
-          if(card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
-          if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub_only'); return; }
-          if(level === 'Erotic' && state.access === 'free'){ window.openEroticPreview(); return; }
-
-          const isAlreadySelected = card.classList.contains('selected') && card.classList.contains('flipped');
-          if (isAlreadySelected) {
-              // STATE 2 → STATE 3: Open zoom view (never deselect by clicking)
-              openSbCardZoom(card, 'intensity', level);
-              return;
-          }
-
-          // STATE 1 → STATE 2: Select this card, deselect others
-          state.intensity = level;
-          state.picks.intensity = level;
-          updateIntensityUI();
-      };
-      document.querySelectorAll('#intensityGrid .sb-card').forEach(card => card.onclick = (e) => handler(card, card.dataset.val, e));
-      // Game buttons don't have zoom capability - simple selection only
+      // Game buttons still need handlers (they are not .sb-card elements)
       document.querySelectorAll('#gameIntensity button').forEach(btn => btn.onclick = (e) => {
           const level = btn.innerText.trim();
           if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub_only'); return; }
@@ -4071,8 +4028,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
     }
 
-    // Single-select axes for 4-axis system (worldSubtype is optional sub-selection)
-    const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov', 'worldSubtype'];
+    // UNIFIED SINGLE-SELECT: ALL card groups use this handler - NO separate handlers
+    const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov', 'worldSubtype', 'intensity', 'length'];
 
     document.querySelectorAll('.sb-card[data-grp]').forEach(card => {
       if(card.dataset.bound === '1') return;
@@ -4081,7 +4038,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if(e.target.closest('.preview-btn')) return;
         const grp = card.dataset.grp;
         const val = card.dataset.val;
-        if(!grp || !val || grp === 'length') return;
+        if(!grp || !val) return;
+
+        // Length cards locked after game starts
+        if (grp === 'length' && state.turnCount > 0) return;
+
+        // Intensity-specific paywall checks (before generic locked check)
+        if (grp === 'intensity') {
+          if (val === 'Dirty' && state.access !== 'sub') { window.showPaywall('sub_only'); return; }
+          if (val === 'Erotic' && state.access === 'free') { window.openEroticPreview(); return; }
+        }
 
         if(card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
 
@@ -4100,62 +4066,62 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // THREE-STATE CARD INTERACTION MODEL:
         // STATE 1 (face-down) → STATE 2 (face-up/selected): First click on unselected card
         // STATE 2 (face-up) → STATE 3 (zoomed): Second click on already-selected card
+        // NEVER deselect by clicking same card - only another card in group can deselect
 
         const isAlreadySelected = card.classList.contains('selected') && card.classList.contains('flipped');
 
         if (isAlreadySelected) {
-          // STATE 2 → STATE 3: Open zoom view
+          // STATE 2 → STATE 3: Open zoom view (NEVER deselect)
           openSbCardZoom(card, grp, val);
           return;
         }
 
         // STATE 1 → STATE 2: Select this card, deselect others in same group
-        if (SINGLE_SELECT_AXES.includes(grp)) {
+        // Update state based on card group
+        if (grp === 'intensity') {
+          state.intensity = val;
+          state.picks.intensity = val;
+        } else if (grp === 'length') {
+          state.storyLength = val;
+          applyLengthLocks(); // Re-apply locks after selection
+        } else {
           state.picks[grp] = val;
-          document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
-            c.classList.remove('selected', 'flipped');
-            // Remove any flavor count indicators
-            const oldFlavorCount = c.querySelector('.sb-card-flavor-count');
-            if (oldFlavorCount) oldFlavorCount.remove();
-          });
-          card.classList.add('selected', 'flipped');
-
-          // Add flavor count indicator for World cards
-          if (grp === 'world') {
-            const flavors = WORLD_SUB_OPTIONS[val] || [];
-            if (flavors.length > 0) {
-              const frontFace = card.querySelector('.sb-card-front');
-              if (frontFace && !frontFace.querySelector('.sb-card-flavor-count')) {
-                const flavorCount = document.createElement('span');
-                flavorCount.className = 'sb-card-flavor-count';
-                flavorCount.textContent = `${flavors.length} flavors`;
-                frontFace.appendChild(flavorCount);
-              }
-            }
-            updateEraVisibility(val);
-            updateWorldSubtypeVisibility(val, state.picks.tone);
-          }
-
-          // Special handling: show/hide Horror subtypes when Tone changes
-          if (grp === 'tone') {
-            updateWorldSubtypeVisibility(state.picks.world, val);
-          }
-
-          // Evaluate downstream selections for compatibility
-          evaluateDownstreamSelections(grp);
-
-          // Update floating synopsis panel
-          updateSynopsisPanel();
-          return;
         }
 
-        // All card groups should use single-select - no legacy multi-select
-        // If grp isn't in SINGLE_SELECT_AXES, treat it as single-select anyway
-        state.picks[grp] = val;
+        // Deselect all other cards in this group, select this one
         document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
           c.classList.remove('selected', 'flipped');
+          // Remove any flavor count indicators
+          const oldFlavorCount = c.querySelector('.sb-card-flavor-count');
+          if (oldFlavorCount) oldFlavorCount.remove();
         });
         card.classList.add('selected', 'flipped');
+
+        // Add flavor count indicator for World cards
+        if (grp === 'world') {
+          const flavors = WORLD_SUB_OPTIONS[val] || [];
+          if (flavors.length > 0) {
+            const frontFace = card.querySelector('.sb-card-front');
+            if (frontFace && !frontFace.querySelector('.sb-card-flavor-count')) {
+              const flavorCount = document.createElement('span');
+              flavorCount.className = 'sb-card-flavor-count';
+              flavorCount.textContent = `${flavors.length} flavors`;
+              frontFace.appendChild(flavorCount);
+            }
+          }
+          updateEraVisibility(val);
+          updateWorldSubtypeVisibility(val, state.picks.tone);
+        }
+
+        // Special handling: show/hide Horror subtypes when Tone changes
+        if (grp === 'tone') {
+          updateWorldSubtypeVisibility(state.picks.world, val);
+        }
+
+        // Evaluate downstream selections for compatibility
+        evaluateDownstreamSelections(grp);
+
+        // Update floating synopsis panel
         updateSynopsisPanel();
       });
     });
