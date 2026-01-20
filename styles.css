@@ -1414,14 +1414,21 @@ textarea.fate-field {
     gap: 12px;
 }
 
+/* PASS 9F: Unified horizontal container rule for all sections */
+.sb-section-container {
+    width: 95%;
+    margin-inline: auto;
+    box-sizing: border-box;
+}
+
 .character-block-horizontal {
     display: flex;
     align-items: stretch;
     gap: 12px;
-    width: 100%;
+    width: 95%;
     max-width: none;
     margin: 0 auto 15px;
-    padding: 0 8px;
+    padding: 0;
     box-sizing: border-box;
 }
 
@@ -1532,8 +1539,14 @@ textarea.fate-field {
 
 .character-field input,
 .character-field select {
-    padding: 10px 12px;
+    padding: 6px 8px;
     font-size: 0.95em;
+}
+
+/* PASS 9F: Ensure ancestry text is never clipped */
+.character-field-ancestry input {
+    overflow: visible;
+    text-overflow: clip;
 }
 
 .character-field-name {
@@ -1627,12 +1640,8 @@ textarea.fate-field {
     }
 }
 
-/* Quill-Veto container adjustments */
-.quill-veto-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
+/* PASS 9F: Quill-Veto container - unified margins with other sections */
+/* Primary grid definition is at line ~897 */
 .qv-section {
     width: 100%;
 }
@@ -2354,13 +2363,16 @@ textarea.fate-field {
    Visual organization only - selection logic remains flat/single-select
    ═══════════════════════════════════════════════════════════════════ */
 
+/* PASS 9F: Relationship Dynamics - unified margins with other sections */
 .dynamic-grouped {
     display: flex;
     flex-direction: column;
     gap: 20px;
     align-items: center;
     width: 95%;
-    margin-inline: auto;
+    margin: 20px auto;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .dynamic-group {

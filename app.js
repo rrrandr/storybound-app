@@ -2136,6 +2136,16 @@ ANTI-HERO ENFORCEMENT:
       });
       input.addEventListener('input', updateVisibility);
 
+      // PASS 9F: Enter commits text, not clears it
+      // Scrolling examples do NOT overwrite user-entered text on Enter
+      input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+              // Just blur to commit - do NOT clear the value
+              input.blur();
+          }
+      });
+
       updateVisibility();
 
       // Random glow effect
@@ -2285,26 +2295,30 @@ ANTI-HERO ENFORCEMENT:
   }
 
   function initCharacterDestinyCards() {
-      // Character destiny cards - fill name + ancestry for each character
+      // PASS 9F: Character destiny cards - fill name + ancestry for each character
+      // On click: populate fields, update canonical state, trigger Begin Story
       document.querySelectorAll('.character-destiny-card').forEach(card => {
           card.addEventListener('click', () => {
               const character = card.dataset.character; // 'player' or 'loveInterest'
 
-              // Flip the card
-              card.classList.toggle('flipped');
+              // Flip the card (visual only - NEVER toggles back)
+              if (!card.classList.contains('flipped')) {
+                  card.classList.add('flipped');
+              }
 
+              // PASS 9F: Populate fields based on character type
               if (character === 'player') {
                   // Get player gender to select appropriate name list
                   const playerGender = document.getElementById('playerGender')?.value || 'Female';
                   const nameList = getNameListForGender(playerGender);
                   const randomName = nameList[Math.floor(Math.random() * nameList.length)];
                   const randomAncestry = getRandomSuggestion('ancestry');
+                  const randomAge = Math.floor(Math.random() * 15) + 22; // 22-36
 
                   // Fill name
                   const nameInput = document.getElementById('playerNameInput');
                   if (nameInput) {
                       nameInput.value = randomName;
-                      // PASS 9B FIX: Trigger blur to run normalization and update DSP
                       nameInput.dispatchEvent(new Event('blur', { bubbles: true }));
                   }
 
@@ -2312,9 +2326,14 @@ ANTI-HERO ENFORCEMENT:
                   const ancestryInput = document.getElementById('ancestryInputPlayer');
                   if (ancestryInput) {
                       ancestryInput.value = randomAncestry;
-                      // Hide placeholder
                       const placeholder = document.querySelector('.rotating-placeholder[data-for="ancestryInputPlayer"]');
                       if (placeholder) placeholder.classList.add('hidden');
+                  }
+
+                  // Fill age
+                  const ageInput = document.getElementById('playerAgeInput');
+                  if (ageInput) {
+                      ageInput.value = randomAge;
                   }
               } else if (character === 'loveInterest') {
                   // Get love interest gender to select appropriate name list
@@ -2322,12 +2341,12 @@ ANTI-HERO ENFORCEMENT:
                   const nameList = getNameListForGender(liGender);
                   const randomName = nameList[Math.floor(Math.random() * nameList.length)];
                   const randomAncestry = getRandomSuggestion('ancestry');
+                  const randomAge = Math.floor(Math.random() * 15) + 25; // 25-39
 
                   // Fill name
                   const nameInput = document.getElementById('partnerNameInput');
                   if (nameInput) {
                       nameInput.value = randomName;
-                      // PASS 9B FIX: Trigger blur to run normalization and update DSP
                       nameInput.dispatchEvent(new Event('blur', { bubbles: true }));
                   }
 
@@ -2335,11 +2354,28 @@ ANTI-HERO ENFORCEMENT:
                   const ancestryInput = document.getElementById('ancestryInputLI');
                   if (ancestryInput) {
                       ancestryInput.value = randomAncestry;
-                      // Hide placeholder
                       const placeholder = document.querySelector('.rotating-placeholder[data-for="ancestryInputLI"]');
                       if (placeholder) placeholder.classList.add('hidden');
                   }
+
+                  // Fill age
+                  const ageInput = document.getElementById('partnerAgeInput');
+                  if (ageInput) {
+                      ageInput.value = randomAge;
+                  }
               }
+
+              // PASS 9F: Update canonical state and trigger Begin Story
+              // Uses the SAME handler as the Begin Story button
+              updateSynopsisPanel && updateSynopsisPanel();
+
+              // Trigger Begin Story after a brief delay for visual feedback
+              setTimeout(() => {
+                  const beginBtn = document.getElementById('beginBtn');
+                  if (beginBtn) {
+                      beginBtn.click();
+                  }
+              }, 400);
           });
       });
   }
@@ -3809,7 +3845,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     };
 
     // Worlds that have custom text fields (all except Modern)
-    const WORLDS_WITH_CUSTOM_FIELD = ['Historical', 'Fantasy', 'SciFi', 'Dystopia', 'PostApocalyptic'];
+    // PASS 9F: Added Modern to enable custom modifier text field
+    const WORLDS_WITH_CUSTOM_FIELD = ['Modern', 'Historical', 'Fantasy', 'SciFi', 'Dystopia', 'PostApocalyptic'];
 
     // Historical era remapping (legacy values → new values)
     const HISTORICAL_ERA_REMAP = {
@@ -4960,20 +4997,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           const inner = rotatingPlaceholder.querySelector('.sb-zoom-placeholder-inner');
           if (inner) inner.style.animationPlayState = 'running';
 
-          // Normalize input and select matching modifier
+          // PASS 9F: Normalize input and select matching modifier
+          // Keep user-entered text visible - never discard modifier input
           const inputVal = customInput.value.trim();
           if (inputVal) {
               const matchedModifier = normalizeArchetypeModifierInput(inputVal, archetypeId);
               if (matchedModifier) {
-                  // Update state
+                  // Update state with matched archetype
                   state.archetype.modifier = matchedModifier;
                   updateArchetypeSelectionSummary();
+              } else {
+                  // Even if no match, accept as free text modifier
+                  // Store the raw text as modifier
+                  state.archetype.modifierText = inputVal;
+                  updateArchetypeSelectionSummary();
               }
-              // Clear input (do not persist raw text)
-              customInput.value = '';
+              // PASS 9F: KEEP the user-entered text visible - do not clear
           }
 
-          // Show placeholder again if input is empty
+          // Show placeholder only if input is truly empty
           if (!customInput.value.trim()) {
               rotatingPlaceholder.classList.remove('hidden');
           }
