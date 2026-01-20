@@ -938,88 +938,6 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .archetype-preview-modifier-label { font-size: 0.8em; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 5px; }
 .archetype-preview-modifier-style { font-size: 0.9em; color: var(--ink); opacity: 0.9; margin: 0; }
 
-/* =================================
-   ARCHETYPE CARD GRID SYSTEM
-   Grid layout with centered rows
-   ================================= */
-.archetype-card-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    width: 95%;
-    margin: 20px auto;
-    justify-content: center;
-}
-
-/* Responsive */
-@media (max-width: 700px) {
-    .archetype-card-grid { gap: 14px; }
-}
-@media (max-width: 500px) {
-    .archetype-card-grid { gap: 12px; }
-}
-
-.archetype-card {
-    width: 80px;
-    height: 112px; /* 5:7 ratio */
-    perspective: 1000px;
-    cursor: pointer;
-}
-.archetype-card-inner {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.5s ease;
-}
-.archetype-card.flipped .archetype-card-inner {
-    transform: rotateY(180deg);
-}
-.archetype-card.selected {
-    filter: drop-shadow(0 0 8px var(--hot));
-}
-.archetype-card-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.archetype-card-back {
-    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
-    border: 1px solid var(--gold);
-    z-index: 2;
-}
-.archetype-card-back .card-symbol {
-    color: var(--gold);
-    font-size: 24px;
-    opacity: 0.6;
-}
-.archetype-card-front {
-    background: linear-gradient(145deg, #2a1a2a 0%, #1a0a1a 100%);
-    border: 1px solid var(--pink);
-    transform: rotateY(180deg);
-    padding: 6px;
-    flex-direction: column;
-    text-align: center;
-}
-.archetype-card-front .card-name {
-    font-family: 'lust-script-display', serif;
-    font-size: 9px;
-    color: var(--pink);
-    line-height: 1.2;
-    margin-bottom: 4px;
-}
-.archetype-card-front .card-desc {
-    font-size: 7px;
-    color: var(--ink);
-    line-height: 1.2;
-    opacity: 0.8;
-}
-
 /* Selection summary */
 .archetype-selection-summary {
     width: 95%;
@@ -2176,8 +2094,9 @@ textarea.fate-field {
    - Rows always centered
    - Cards never overlap in grid state
 
-   Strategy: Use CSS Grid with auto-fill and constrained max-width
-   to control max columns. Use :has() for card-count-aware layouts.
+   Strategy: Grid sizes to max-content width and centers via margin-inline: auto.
+   Each ROW is visually centered because the grid container itself is centered.
+   No forced layouts (3+2, 3+3, etc.) - grid flows naturally.
 
    Column math (card=100px, gap=16px):
    - 6 cols: 680px, 5 cols: 564px, 4 cols: 448px, 3 cols: 332px, 2 cols: 216px
@@ -2188,94 +2107,27 @@ textarea.fate-field {
     gap: 16px;
     justify-content: center;
     align-content: start;
-    margin: 20px auto;
-    width: fit-content;
-    max-width: min(95vw, 448px); /* Default: 4 cols - works for 11(4+4+3), 7(4+3), 4, 3 */
+    width: max-content;
+    max-width: min(95vw, 680px); /* 6 cols max on desktop */
+    margin-inline: auto;
+    margin-block: 20px;
 }
 
-/* Large card counts (8+): allow 6 columns for balanced rows */
-/* 11 cards: 6+5 ✓, 10 cards: 6+4 ✓, 9 cards: 5+4 ✓, 8 cards: 4+4 ✓ */
-.sb-grid:has(.sb-card:nth-child(8)) {
-    max-width: min(95vw, 680px); /* 6 cols */
-}
-
-/* Exactly 5-6 cards: use 3 columns for balanced rows */
-/* 6 cards: 3+3 ✓, 5 cards: 3+2 ✓ */
-.sb-grid:has(.sb-card:nth-child(5)):not(:has(.sb-card:nth-child(7))) {
-    max-width: min(95vw, 332px); /* 3 cols */
-}
-
-/* Exactly 4 cards: allow all 4 in one row on wide screens */
-.sb-grid:has(.sb-card:nth-child(4)):not(:has(.sb-card:nth-child(5))) {
-    max-width: min(95vw, 448px); /* 4 cols */
-}
-
-/* Exactly 3 cards: allow all 3 in one row */
-.sb-grid:has(.sb-card:nth-child(3)):not(:has(.sb-card:nth-child(4))) {
-    max-width: min(95vw, 332px); /* 3 cols */
-}
-
-/* Medium screens: reduce columns earlier to prevent orphans */
+/* Medium screens: smaller cards, max 5 cols */
 @media (max-width: 700px) {
     .sb-grid {
         grid-template-columns: repeat(auto-fill, 85px);
         gap: 12px;
-        /* 4 cols at 85px: 4×85 + 3×12 = 376px */
-        max-width: min(95vw, 376px);
-    }
-
-    /* Large counts: allow 5 cols */
-    .sb-grid:has(.sb-card:nth-child(8)) {
-        /* 5 cols at 85px: 5×85 + 4×12 = 473px */
-        max-width: min(95vw, 473px);
-    }
-
-    /* 5-6 cards: 3 cols */
-    .sb-grid:has(.sb-card:nth-child(5)):not(:has(.sb-card:nth-child(7))) {
-        /* 3 cols at 85px: 3×85 + 2×12 = 279px */
-        max-width: min(95vw, 279px);
-    }
-
-    /* 4 cards: 4 cols or 2+2 */
-    .sb-grid:has(.sb-card:nth-child(4)):not(:has(.sb-card:nth-child(5))) {
-        max-width: min(95vw, 376px);
-    }
-
-    /* 3 cards: 3 cols */
-    .sb-grid:has(.sb-card:nth-child(3)):not(:has(.sb-card:nth-child(4))) {
-        max-width: min(95vw, 279px);
+        max-width: min(95vw, 473px); /* 5 cols at 85px */
     }
 }
 
-/* Narrow screens: further reduce for mobile */
+/* Narrow screens: smaller cards, max 4 cols */
 @media (max-width: 500px) {
     .sb-grid {
         grid-template-columns: repeat(auto-fill, 75px);
         gap: 10px;
-        /* 3 cols at 75px: 3×75 + 2×10 = 245px */
-        max-width: min(95vw, 245px);
-    }
-
-    /* Large counts: 4 cols max */
-    .sb-grid:has(.sb-card:nth-child(8)) {
-        /* 4 cols at 75px: 4×75 + 3×10 = 330px */
-        max-width: min(95vw, 330px);
-    }
-
-    /* 5-7 cards: 3 cols works well */
-    .sb-grid:has(.sb-card:nth-child(5)):not(:has(.sb-card:nth-child(8))) {
-        max-width: min(95vw, 245px);
-    }
-
-    /* 4 cards: 2+2 on very narrow */
-    .sb-grid:has(.sb-card:nth-child(4)):not(:has(.sb-card:nth-child(5))) {
-        /* 2 cols at 75px: 2×75 + 1×10 = 160px */
-        max-width: min(95vw, 245px);
-    }
-
-    /* 3 cards: 3 cols or 2+1 */
-    .sb-grid:has(.sb-card:nth-child(3)):not(:has(.sb-card:nth-child(4))) {
-        max-width: min(95vw, 245px);
+        max-width: min(95vw, 330px); /* 4 cols at 75px */
     }
 }
 
@@ -2284,13 +2136,7 @@ textarea.fate-field {
     .sb-grid {
         grid-template-columns: repeat(auto-fill, 70px);
         gap: 8px;
-        /* 2 cols at 70px: 2×70 + 1×8 = 148px */
-        max-width: min(95vw, 148px);
-    }
-
-    /* Override all card-count rules for very narrow */
-    .sb-grid:has(.sb-card) {
-        max-width: min(95vw, 148px);
+        max-width: min(95vw, 148px); /* 2 cols at 70px */
     }
 }
 

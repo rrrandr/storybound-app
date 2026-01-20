@@ -1219,6 +1219,85 @@ ANTI-HERO ENFORCEMENT:
       return directive;
   }
 
+  // Get valid modifier archetypes (excludes primaryOnly)
+  function getValidModifierArchetypes() {
+      return ARCHETYPE_ORDER.filter(id => {
+          const arch = ARCHETYPES[id];
+          return arch && !arch.primaryOnly;
+      });
+  }
+
+  // Normalize user input to best matching modifier archetype
+  // Maps free text to closest modifier (IP-safe transformation)
+  function normalizeArchetypeModifierInput(input, currentPrimary) {
+      if (!input || typeof input !== 'string') return null;
+
+      const normalized = input.trim().toLowerCase();
+      if (!normalized) return null;
+
+      // Get valid modifiers (excluding primaryOnly archetypes)
+      const validModifiers = getValidModifierArchetypes();
+
+      // Direct match by name
+      for (const id of validModifiers) {
+          const arch = ARCHETYPES[id];
+          if (arch.name.toLowerCase().includes(normalized) ||
+              normalized.includes(arch.name.toLowerCase().replace('the ', ''))) {
+              // Can't use same as primary
+              if (id === currentPrimary) continue;
+              return id;
+          }
+      }
+
+      // Keyword matching based on desireStyle
+      const keywordMap = {
+          'romantic': 'ROMANTIC',
+          'expressive': 'ROMANTIC',
+          'devoted': 'DEVOTED',
+          'poetic': 'ROMANTIC',
+          'cloistered': 'CLOISTERED',
+          'sheltered': 'CLOISTERED',
+          'innocent': 'CLOISTERED',
+          'awakening': 'CLOISTERED',
+          'rogue': 'ROGUE',
+          'playful': 'ROGUE',
+          'charm': 'ROGUE',
+          'irreverent': 'ROGUE',
+          'dangerous': 'DANGEROUS',
+          'menace': 'DANGEROUS',
+          'restrained': 'DANGEROUS',
+          'power': 'DANGEROUS',
+          'guardian': 'GUARDIAN',
+          'protective': 'GUARDIAN',
+          'steady': 'GUARDIAN',
+          'safe': 'GUARDIAN',
+          'sovereign': 'SOVEREIGN',
+          'authority': 'SOVEREIGN',
+          'composed': 'SOVEREIGN',
+          'royal': 'SOVEREIGN',
+          'enchanting': 'ENCHANTING',
+          'allure': 'ENCHANTING',
+          'magnetic': 'ENCHANTING',
+          'seductive': 'ENCHANTING',
+          'loyal': 'DEVOTED',
+          'focused': 'DEVOTED',
+          'exclusive': 'DEVOTED',
+          'attention': 'DEVOTED',
+          'strategist': 'STRATEGIST',
+          'intelligent': 'STRATEGIST',
+          'anticipation': 'STRATEGIST',
+          'clever': 'STRATEGIST'
+      };
+
+      for (const [keyword, archId] of Object.entries(keywordMap)) {
+          if (normalized.includes(keyword) && validModifiers.includes(archId) && archId !== currentPrimary) {
+              return archId;
+          }
+      }
+
+      return null;
+  }
+
   // --- GLOBAL STATE INITIALIZATION ---
   window.state = {
       tier:'free',
@@ -1954,6 +2033,10 @@ ANTI-HERO ENFORCEMENT:
           "athletic build", "blonde hair", "dark hair", "natural expression",
           "cinematic lighting", "high detail", "dreamlike", "painterly",
           "leading-actor looks", "movie poster style", "anime style", "photo-realistic"
+      ],
+      archetypeModifier: [
+          "Romantic", "Cloistered", "Rogue", "Dangerous", "Guardian",
+          "Sovereign", "Enchanting", "Devoted", "Strategist"
       ]
   };
 
@@ -3970,8 +4053,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const translateX = viewportCenterX - cardCenterX;
       const translateY = viewportCenterY - cardCenterY;
 
-      // Scale factor (2.5x gives good readability)
-      const scale = 2.5;
+      // Scale factor (~25% larger than before: 2.5 * 1.25 = 3.125)
+      const scale = 3.125;
 
       // Apply zoom transform to the SAME card element
       card.classList.add('zoomed');
@@ -4728,6 +4811,153 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       updateArchetypeSelectionSummary();
   }
 
+  // Populate archetype card zoom view with modifier custom field
+  function populateArchetypeZoomContent(card, archetypeId) {
+      const frontFace = card.querySelector('.sb-card-front');
+      if (!frontFace) return;
+
+      // Remove any existing zoom content
+      const existing = frontFace.querySelector('.sb-zoom-content');
+      if (existing) existing.remove();
+
+      // Get valid modifiers (excluding current primary and primaryOnly archetypes)
+      const validModifiers = getValidModifierArchetypes().filter(id => id !== archetypeId);
+
+      // Create zoom content container
+      const zoomContent = document.createElement('div');
+      zoomContent.className = 'sb-zoom-content';
+
+      // Add modifier buttons
+      const modifierGrid = document.createElement('div');
+      modifierGrid.className = 'sb-zoom-flavors';
+
+      validModifiers.forEach(modId => {
+          const mod = ARCHETYPES[modId];
+          if (!mod) return;
+
+          const btn = document.createElement('button');
+          btn.className = 'sb-flavor-btn';
+          btn.textContent = mod.name.replace('The ', '');
+          btn.dataset.modifier = modId;
+
+          // Check if this modifier is currently selected
+          if (state.archetype.modifier === modId) {
+              btn.classList.add('selected');
+          }
+
+          btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              // Toggle selection
+              if (state.archetype.modifier === modId) {
+                  state.archetype.modifier = null;
+                  btn.classList.remove('selected');
+              } else {
+                  // Deselect others
+                  modifierGrid.querySelectorAll('.sb-flavor-btn').forEach(b => b.classList.remove('selected'));
+                  state.archetype.modifier = modId;
+                  btn.classList.add('selected');
+              }
+              updateArchetypeSelectionSummary();
+          });
+
+          modifierGrid.appendChild(btn);
+      });
+
+      zoomContent.appendChild(modifierGrid);
+
+      // Add custom text field with rotating placeholder
+      const customWrapper = document.createElement('div');
+      customWrapper.className = 'sb-zoom-custom';
+
+      const customLabel = document.createElement('label');
+      customLabel.className = 'sb-zoom-custom-label';
+      customLabel.textContent = 'Custom Modifier:';
+
+      // Create input wrapper for rotating placeholder
+      const inputWrapper = document.createElement('div');
+      inputWrapper.className = 'sb-zoom-custom-wrapper';
+
+      const customInput = document.createElement('textarea');
+      customInput.className = 'sb-zoom-custom-input';
+      customInput.id = 'archetypeModifierInput-' + Date.now();
+      customInput.rows = 1;
+
+      // Create rotating placeholder
+      const rotatingPlaceholder = document.createElement('div');
+      rotatingPlaceholder.className = 'sb-zoom-rotating-placeholder';
+
+      // Build scrolling suggestion content
+      const suggestions = FATE_SUGGESTIONS.archetypeModifier || [];
+      if (suggestions.length > 0) {
+          // Filter out current primary and already selected modifier
+          const filteredSuggestions = suggestions.filter(s => {
+              const archName = ARCHETYPES[archetypeId]?.name.replace('The ', '');
+              return s.toLowerCase() !== archName?.toLowerCase();
+          });
+          const doubled = [...filteredSuggestions, ...filteredSuggestions];
+          let html = '<span class="sb-zoom-placeholder-inner">';
+          doubled.forEach((s, i) => {
+              html += `<span class="suggestion">${s}</span>`;
+              if (i < doubled.length - 1) html += '<span class="separator">•</span>';
+          });
+          html += '</span>';
+          rotatingPlaceholder.innerHTML = html;
+      }
+
+      customInput.addEventListener('click', (e) => {
+          e.stopPropagation();
+      });
+
+      customInput.addEventListener('focus', () => {
+          const inner = rotatingPlaceholder.querySelector('.sb-zoom-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'paused';
+          rotatingPlaceholder.classList.add('hidden');
+      });
+
+      customInput.addEventListener('blur', () => {
+          const inner = rotatingPlaceholder.querySelector('.sb-zoom-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'running';
+
+          // Normalize input and select matching modifier
+          const inputVal = customInput.value.trim();
+          if (inputVal) {
+              const matchedModifier = normalizeArchetypeModifierInput(inputVal, archetypeId);
+              if (matchedModifier) {
+                  // Update state
+                  state.archetype.modifier = matchedModifier;
+                  // Update button states
+                  modifierGrid.querySelectorAll('.sb-flavor-btn').forEach(b => {
+                      b.classList.toggle('selected', b.dataset.modifier === matchedModifier);
+                  });
+                  updateArchetypeSelectionSummary();
+              }
+              // Clear input (do not persist raw text)
+              customInput.value = '';
+          }
+
+          // Show placeholder again if input is empty
+          if (!customInput.value.trim()) {
+              rotatingPlaceholder.classList.remove('hidden');
+          }
+      });
+
+      // Handle Enter key as submit
+      customInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+              customInput.blur();
+          }
+      });
+
+      inputWrapper.appendChild(customInput);
+      inputWrapper.appendChild(rotatingPlaceholder);
+      customWrapper.appendChild(customLabel);
+      customWrapper.appendChild(inputWrapper);
+      zoomContent.appendChild(customWrapper);
+
+      frontFace.appendChild(zoomContent);
+  }
+
   // STATE 3: Open zoomed view for archetype cards
   // The SAME card element scales and translates to viewport center
   // NO modal, NO popup, NO duplicate DOM
@@ -4748,6 +4978,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if (c !== card) c.classList.add('dimmed');
       });
 
+      // Populate modifier selection content
+      populateArchetypeZoomContent(card, archetypeId);
+
       // Calculate transform to center the card
       const rect = card.getBoundingClientRect();
       const cardCenterX = rect.left + rect.width / 2;
@@ -4759,8 +4992,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const translateX = viewportCenterX - cardCenterX;
       const translateY = viewportCenterY - cardCenterY;
 
-      // Scale factor (2.5x gives good readability)
-      const scale = 2.5;
+      // Scale factor (~25% larger than before: 2.5 * 1.25 = 3.125)
+      const scale = 3.125;
 
       // Apply zoom transform to the SAME card element
       card.classList.add('zoomed');
