@@ -1037,84 +1037,84 @@ For veto/quill/god_mode:
       ROMANTIC: {
           id: 'ROMANTIC',
           name: 'The Romantic',
-          desireStyle: 'Expressive, devoted, emotionally fluent',
-          summary: 'The Romantic — expressive and devoted, offering love openly and poetically, binding through attention, longing, and emotional presence.',
+          desireStyle: 'His voice softened when he spoke her name, as if the syllables themselves were precious',
+          summary: 'He pressed the wildflower into her palm, his thumb lingering against her wrist. "I wrote you something," he said, and his voice caught on the word—raw, unguarded, as if the poem had cost him something to create.',
           primaryOnly: false
       },
       CLOISTERED: {
           id: 'CLOISTERED',
           name: 'The Cloistered',
-          desireStyle: 'Sheltered curiosity, restrained longing, awakening',
-          summary: 'The Cloistered — sheltered and restrained, approaching desire as discovery, awakening slowly through trust, patience, and chosen intimacy.',
+          desireStyle: 'A flush crept up his neck when their fingers brushed—the first touch in years',
+          summary: 'He stood frozen at the library threshold, watching her turn pages by candlelight. When she looked up, he forgot how to breathe. "I never—" he started, then closed his mouth, cheeks burning, as if desire itself were a language he was only beginning to learn.',
           primaryOnly: false
       },
       ROGUE: {
           id: 'ROGUE',
           name: 'The Rogue',
-          desireStyle: 'Playful danger, charm, irreverent confidence',
-          summary: 'The Rogue — playful and irreverent, using charm and danger to seduce, testing connection through flirtation, risk, and rule-bending confidence.',
+          desireStyle: 'That crooked smile promised trouble—and made her want every bit of it',
+          summary: 'He leaned against the doorframe, twirling her stolen hairpin between his fingers. "Looking for this?" His grin was wicked, his eyes dancing with mischief. "Come get it." And somehow the dare felt like an invitation to something far more dangerous than a chase.',
           primaryOnly: false
       },
       DANGEROUS: {
           id: 'DANGEROUS',
           name: 'The Dangerous',
-          desireStyle: 'Controlled menace, restraint, implied power',
-          summary: 'The Dangerous — controlled and restrained, radiating implied power and menace, creating heat through what is held back rather than revealed.',
+          desireStyle: 'The room went quiet when he entered—not from fear, but from the weight of his restraint',
+          summary: 'His stillness was unnerving. She watched his jaw flex, the controlled breath, the way his hands stayed perfectly flat on the table even as his eyes tracked her every movement. Whatever lived beneath that composure, he kept it caged—and she found herself wondering what it would take to set it free.',
           primaryOnly: false
       },
       GUARDIAN: {
           id: 'GUARDIAN',
           name: 'The Guardian',
-          desireStyle: 'Protection, steadiness, containment',
-          summary: 'The Guardian — steady and protective, offering safety as intimacy, building desire through reliability, containment, and earned trust.',
+          desireStyle: 'He positioned himself between her and the door without thinking—it was instinct',
+          summary: 'The storm rattled the windows, but his arm around her shoulders was steady. "I\'ve got you," he murmured against her hair, and she realized she had never felt so safe—or so aware of how warm his chest was against her back, how his heartbeat seemed to slow when she leaned into him.',
           primaryOnly: false
       },
       SOVEREIGN: {
           id: 'SOVEREIGN',
           name: 'The Sovereign',
-          desireStyle: 'Authority, composure, invitation rather than pursuit',
-          summary: 'The Sovereign — composed and authoritative, inviting rather than pursuing, framing desire as permission granted, not attention sought.',
+          desireStyle: 'He did not pursue—he simply waited, knowing she would come to him',
+          summary: 'He sat on the throne as if he\'d been born to it, watching her approach with an expression of patient amusement. "You came," he said—not a question, not surprise. Just acknowledgment. As if her presence had been inevitable, as if he had simply been waiting for her to realize it too.',
           primaryOnly: false
       },
       ENCHANTING: {
           id: 'ENCHANTING',
           name: 'The Enchanting',
-          desireStyle: 'Allure, knowing control, magnetic presence',
-          summary: 'The Enchanting — magnetic and intentional, wielding allure with knowing control, choosing rather than chasing, shaping desire through presence alone.',
+          desireStyle: 'Every glance felt deliberate, every smile a secret only she could unlock',
+          summary: 'The way he held her gaze across the ballroom made her forget there were other people in the room. He lifted his glass—not to her, exactly, but somehow the gesture was only for her. When he finally smiled, slow and knowing, she felt it like a hook beneath her ribs.',
           primaryOnly: false
       },
       DEVOTED: {
           id: 'DEVOTED',
           name: 'The Devoted',
-          desireStyle: 'Focused attention, affection, emotional exclusivity',
-          summary: 'The Devoted — focused and emotionally exclusive, expressing intensity through presence, loyalty, and the act of choosing again and again.',
+          desireStyle: 'He remembered the coffee order she\'d mentioned once, three months ago, in passing',
+          summary: 'She found the book on her desk—the one she\'d admired in a shop window weeks ago and never mentioned. No note. But when she looked up, he was watching from across the room, and the quiet intensity in his eyes said everything: I see you. I notice. I remember.',
           primaryOnly: false
       },
       STRATEGIST: {
           id: 'STRATEGIST',
           name: 'The Strategist',
-          desireStyle: 'Anticipation, intelligence, teasing foresight',
-          summary: 'The Strategist — intelligent and anticipatory, seducing through foresight and teasing precision, turning desire into a game you want to lose.',
+          desireStyle: 'He was always three moves ahead—and somehow that made surrendering feel like winning',
+          summary: 'He slid the chess piece forward without looking at the board. "You\'ll refuse me at first," he said, his voice low, amused. "Then you\'ll reconsider. And by the time you say yes—" He met her eyes. "—you\'ll convince yourself it was your idea." The worst part was, she already wanted to prove him wrong.',
           primaryOnly: false
       },
       BEAUTIFUL_RUIN: {
           id: 'BEAUTIFUL_RUIN',
           name: 'The Beautiful Ruin',
-          desireStyle: 'Desire corrupted by distrust; love fractured, tested, and re-bound through choice',
-          summary: 'The Beautiful Ruin — desired yet disillusioned, shaped by wounds that make love feel suspect, testing and fracturing bonds until someone chooses them with clear eyes and stays.',
+          desireStyle: 'His jaw clenched, a storm behind his perfect eyes—pain or shame, she couldn\'t tell',
+          summary: 'She saw his jaw clench, the storm behind his perfect eyes pulling him inward, as if he were locking himself inside a prison of shame—or was it pain? "You should go," he whispered, but his hand caught her wrist, gentle and desperate. "Everyone leaves. You will too." But he hadn\'t let go.',
           primaryOnly: true,
           genderedExpression: {
-              male: 'Power + unworthiness → possessive devotion → fear of being chosen',
-              female: 'Desire + disillusionment → testing and withdrawal → fear of being falsely loved'
+              male: 'He loved fiercely, possessively, as if tenderness itself might betray him',
+              female: 'She pushed away first, always, before the disappointment could reach her'
           }
       },
       ANTI_HERO: {
           id: 'ANTI_HERO',
           name: 'The Anti-Hero',
-          desireStyle: 'Restrained longing shaped by duty, guilt, or a consuming moral code',
-          summary: 'The Anti-Hero — burdened by duty, guilt, or a consuming code, suppressing desire to prevent collateral harm, resisting love even as it draws them closer.',
+          desireStyle: 'He wanted her—she could see it in the way he never touched her, never came too close',
+          summary: 'He stopped at the threshold, one hand braced against the doorframe as if holding himself back. "I can\'t," he said, though she hadn\'t asked. His voice was rough. "Not because I don\'t want to." The muscle in his jaw tightened. "Because if I let myself have this—have you—someone gets hurt. And it won\'t be me."',
           primaryOnly: true,
-          coreFantasy: 'They want love, but refuse it because intimacy would endanger others, compromise their mission, or violate their personal code. They are not afraid of love. They are afraid of what love would cost.'
+          coreFantasy: 'He kept her at arm\'s length not from indifference but from certainty: the closer she got, the more she became a target. He would burn the world before he let it touch her—but he couldn\'t burn himself.'
       }
   };
 
