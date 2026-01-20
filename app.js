@@ -2268,7 +2268,11 @@ ANTI-HERO ENFORCEMENT:
 
                   // Fill name
                   const nameInput = document.getElementById('playerNameInput');
-                  if (nameInput) nameInput.value = randomName;
+                  if (nameInput) {
+                      nameInput.value = randomName;
+                      // PASS 9B FIX: Trigger blur to run normalization and update DSP
+                      nameInput.dispatchEvent(new Event('blur', { bubbles: true }));
+                  }
 
                   // Fill ancestry
                   const ancestryInput = document.getElementById('ancestryInputPlayer');
@@ -2287,7 +2291,11 @@ ANTI-HERO ENFORCEMENT:
 
                   // Fill name
                   const nameInput = document.getElementById('partnerNameInput');
-                  if (nameInput) nameInput.value = randomName;
+                  if (nameInput) {
+                      nameInput.value = randomName;
+                      // PASS 9B FIX: Trigger blur to run normalization and update DSP
+                      nameInput.dispatchEvent(new Event('blur', { bubbles: true }));
+                  }
 
                   // Fill ancestry
                   const ancestryInput = document.getElementById('ancestryInputLI');
@@ -5783,22 +5791,32 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // ========================================
     // PHASE 3: DEFER ASYNC WORK (next tick)
     // Ensures loader renders before any await
+    // PASS 9B FIX: Wrap normalization in try/catch to prevent hang
     // ========================================
     await new Promise(resolve => setTimeout(resolve, 0));
 
     // RUNTIME NORMALIZATION: Character names flow through ChatGPT normalization layer
-    const playerNorm = await callNormalizationLayer({
-        axis: 'character',
-        user_text: rawPlayerName,
-        context_signals: state.picks?.world || []
-    });
-    const partnerNorm = await callNormalizationLayer({
-        axis: 'character',
-        user_text: rawPartnerName,
-        context_signals: state.picks?.world || []
-    });
-    const pKernel = playerNorm.normalized_text || playerNorm.archetype || 'the one who carries the story';
-    const lKernel = partnerNorm.normalized_text || partnerNorm.archetype || 'the one who draws them forward';
+    // PASS 9B FIX: Handle normalization errors gracefully to prevent loader hang
+    let playerNorm, partnerNorm, pKernel, lKernel;
+    try {
+        playerNorm = await callNormalizationLayer({
+            axis: 'character',
+            user_text: rawPlayerName,
+            context_signals: state.picks?.world || []
+        });
+        partnerNorm = await callNormalizationLayer({
+            axis: 'character',
+            user_text: rawPartnerName,
+            context_signals: state.picks?.world || []
+        });
+        pKernel = playerNorm.normalized_text || playerNorm.archetype || 'the one who carries the story';
+        lKernel = partnerNorm.normalized_text || partnerNorm.archetype || 'the one who draws them forward';
+    } catch (normError) {
+        console.error('[NORMALIZATION ERROR]', normError);
+        // Fallback: Use raw names if normalization fails
+        pKernel = rawPlayerName || 'the one who carries the story';
+        lKernel = rawPartnerName || 'the one who draws them forward';
+    }
 
     // CRITICAL: Store normalized kernels in state and overwrite raw display
     state.normalizedPlayerKernel = pKernel;
@@ -5814,7 +5832,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     else if(pGen === 'Female' && lGen === 'Female') { state.authorGender = 'Female'; state.authorPronouns = 'She/Her'; }
     else { state.authorGender = 'Non-Binary'; state.authorPronouns = 'They/Them'; }
 
-    await applyVetoFromControls();
+    // PASS 9B FIX: Wrap veto in try/catch to prevent hang
+    try {
+        await applyVetoFromControls();
+    } catch (vetoError) {
+        console.error('[VETO ERROR]', vetoError);
+        // Continue without veto if it fails
+    }
 
     // Check for LGBTQ Colors
     state.gender = $('playerGender').value;

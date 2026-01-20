@@ -322,7 +322,7 @@
   <div id="setup" class="screen hidden" style="max-width:800px; margin:0 auto; padding-bottom:50px;">
     
     <div class="section-title">Shape Your Story</div>
-    <div class="fate-shortcut-row">
+    <div class="fate-shortcut-row fate-shortcut-vertical">
       <span class="fate-shortcut-text">or Let Fate Decide</span>
       <div class="fate-destiny-card" id="fateDestinyCard">
         <div class="fate-destiny-inner">
@@ -336,96 +336,104 @@
       </div>
     </div>
 
-    <!-- Player Character Block: "You" -->
-    <div class="character-block">
-        <div class="character-section-header">
-            <span class="character-section-title">You</span>
-            <div class="character-destiny-card" id="playerDestinyCard" data-character="player">
+    <!-- Player Character Block: "Your Character" -->
+    <div class="character-block character-block-horizontal">
+        <div class="character-destiny-side">
+            <div class="character-destiny-card character-destiny-card-tall" id="playerDestinyCard" data-character="player">
                 <div class="character-destiny-inner">
                     <div class="character-destiny-face character-destiny-back"></div>
                     <div class="character-destiny-face character-destiny-front"></div>
                 </div>
             </div>
         </div>
-        <div class="input-wrapper">
-            <label>Your Character's Name</label>
-            <input id="playerNameInput" type="text" placeholder="e.g. Elara Vance">
-        </div>
-        <div class="grid-2-col">
-            <div>
-                <label>Your Gender</label>
-                <select id="playerGender" onchange="checkCustom(this, 'customPlayerGender')">
-                    <option value="Female">Female</option>
-                    <option value="Male">Male</option>
-                    <option value="Non-Binary">Non-Binary</option>
-                    <option value="Custom">Custom</option>
-                </select>
-                <input id="customPlayerGender" type="text" placeholder="Enter gender..." class="hidden" style="margin-top:5px;">
+        <div class="character-fields-side">
+            <div class="character-section-header">
+                <span class="character-section-title">Your Character</span>
             </div>
-            <div>
-                <label>Pronouns</label>
-                <select id="playerPronouns" onchange="checkCustom(this, 'customPlayerPronouns')">
-                    <option value="She/Her">She/Her</option>
-                    <option value="He/Him">He/Him</option>
-                    <option value="They/Them">They/Them</option>
-                    <option value="Custom">Custom</option>
-                </select>
-                <input id="customPlayerPronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
+            <div class="character-fields-row">
+                <div class="character-field character-field-name">
+                    <label>Name</label>
+                    <input id="playerNameInput" type="text" placeholder="e.g. Elara Vance">
+                </div>
+                <div class="character-field character-field-gender">
+                    <label>Gender</label>
+                    <select id="playerGender" onchange="checkCustom(this, 'customPlayerGender')">
+                        <option value="Female">Female</option>
+                        <option value="Male">Male</option>
+                        <option value="Non-Binary">Non-Binary</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                    <input id="customPlayerGender" type="text" placeholder="Custom..." class="hidden custom-gender-input">
+                </div>
+                <div class="character-field character-field-pronouns">
+                    <label>Pronouns</label>
+                    <select id="playerPronouns" onchange="checkCustom(this, 'customPlayerPronouns')">
+                        <option value="She/Her">She/Her</option>
+                        <option value="He/Him">He/Him</option>
+                        <option value="They/Them">They/Them</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                    <input id="customPlayerPronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input">
+                </div>
+                <div class="character-field character-field-ancestry fate-input-wrapper">
+                    <label>Ancestry</label>
+                    <input id="ancestryInputPlayer" type="text" class="fate-field ancestry-field" data-fate-type="ancestry">
+                    <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
+                </div>
             </div>
-        </div>
-        <div class="input-wrapper fate-input-wrapper" style="margin-top: 10px;">
-            <label>Ancestry</label>
-            <input id="ancestryInputPlayer" type="text" class="fate-field" data-fate-type="ancestry">
-            <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
         </div>
     </div>
 
     <!-- Love Interest Block: "Your Love Interest" -->
-    <div class="character-block" style="margin-top: 20px;">
-        <div class="character-section-header">
-            <span class="character-section-title">Your Love Interest</span>
-            <div class="character-destiny-card" id="loveInterestDestinyCard" data-character="loveInterest">
+    <div class="character-block character-block-horizontal" style="margin-top: 20px;">
+        <div class="character-destiny-side">
+            <div class="character-destiny-card character-destiny-card-tall" id="loveInterestDestinyCard" data-character="loveInterest">
                 <div class="character-destiny-inner">
                     <div class="character-destiny-face character-destiny-back"></div>
                     <div class="character-destiny-face character-destiny-front"></div>
                 </div>
             </div>
         </div>
-        <div class="input-wrapper">
-            <label>Your Love Interest's Name</label>
-            <input id="partnerNameInput" type="text" placeholder="e.g. Lord Blackwood">
-        </div>
-        <div class="grid-2-col">
-            <div>
-                <label>Love Interest Gender</label>
-                <select id="loveInterestGender" onchange="checkCustom(this, 'customLoveInterest')">
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Non-Binary">Non-Binary</option>
-                    <option value="Custom">Custom</option>
-                </select>
-                <input id="customLoveInterest" type="text" placeholder="Enter gender..." class="hidden" style="margin-top:5px;">
+        <div class="character-fields-side">
+            <div class="character-section-header">
+                <span class="character-section-title">Your Love Interest</span>
             </div>
-            <div>
-                <label>Pronouns</label>
-                <select id="lovePronouns" onchange="checkCustom(this, 'customLovePronouns')">
-                    <option value="He/Him">He/Him</option>
-                    <option value="She/Her">She/Her</option>
-                    <option value="They/Them">They/Them</option>
-                    <option value="Custom">Custom</option>
-                </select>
-                <input id="customLovePronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
+            <div class="character-fields-row">
+                <div class="character-field character-field-name">
+                    <label>Name</label>
+                    <input id="partnerNameInput" type="text" placeholder="e.g. Lord Blackwood">
+                </div>
+                <div class="character-field character-field-gender">
+                    <label>Gender</label>
+                    <select id="loveInterestGender" onchange="checkCustom(this, 'customLoveInterest')">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-Binary">Non-Binary</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                    <input id="customLoveInterest" type="text" placeholder="Custom..." class="hidden custom-gender-input">
+                </div>
+                <div class="character-field character-field-pronouns">
+                    <label>Pronouns</label>
+                    <select id="lovePronouns" onchange="checkCustom(this, 'customLovePronouns')">
+                        <option value="He/Him">He/Him</option>
+                        <option value="She/Her">She/Her</option>
+                        <option value="They/Them">They/Them</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                    <input id="customLovePronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input">
+                </div>
+                <div class="character-field character-field-ancestry fate-input-wrapper">
+                    <label>Ancestry</label>
+                    <input id="ancestryInputLI" type="text" class="fate-field ancestry-field" data-fate-type="ancestry">
+                    <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
+                </div>
             </div>
-        </div>
-        <div class="input-wrapper fate-input-wrapper" style="margin-top: 10px;">
-            <label>Ancestry</label>
-            <input id="ancestryInputLI" type="text" class="fate-field" data-fate-type="ancestry">
-            <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
         </div>
     </div>
 
     <div class="section-title" id="archetypeSectionTitle">Archetype Storybeau</div>
-    <p class="archetype-header-text">Choose a core desire style for this character.</p>
+    <p class="archetype-header-text">Choose a core personality for your Love Interest.</p>
     <p class="archetype-subtext">Select one Primary archetype. You may optionally add one Modifier to refine how it shows up.</p>
 
     <div class="sb-grid" id="archetypeCardGrid">
