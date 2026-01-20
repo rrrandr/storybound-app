@@ -693,6 +693,12 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .archetype-preview-shadow { font-size: 0.85em; color: var(--gold); opacity: 0.9; font-style: italic; margin: 0; padding-left: 10px; border-left: 2px solid var(--gold); }
 .archetype-preview-modifier { margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,105,180,0.2); }
 .archetype-preview-modifier-label { font-size: 0.8em; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 5px; }
+
+/* Custom Modifier Text Input */
+.archetype-custom-modifier { margin-top: 10px; }
+.archetype-modifier-field { width: 100%; max-width: 300px; padding: 8px 12px; font-size: 0.9em; background: rgba(40,20,40,0.6); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff; }
+.archetype-modifier-field:focus { outline: none; border-color: var(--pink); box-shadow: 0 0 10px rgba(255,105,180,0.3); }
+.archetype-modifier-field::placeholder { color: rgba(255,255,255,0.4); }
 .archetype-preview-modifier-style { font-size: 0.9em; color: var(--ink); opacity: 0.9; margin: 0; }
 
 @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
@@ -839,15 +845,22 @@ textarea.fate-field {
     pointer-events: none;
     overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
     color: rgba(255,255,255,0.4);
     font-size: 0.9em;
     font-style: italic;
+    line-height: 1.4;
+    max-height: 1.6em;
 }
 .rotating-placeholder.textarea-placeholder {
     top: 14px;
     transform: none;
 }
 .rotating-placeholder.hidden { display: none; }
+
+/* ANCESTRY INPUT FIX - prevent vertical text clipping */
+.fate-input-wrapper { position: relative; overflow: visible; }
+#ancestryInputPlayer, #ancestryInputLI { padding: 12px 14px; line-height: 1.4; }
 
 .rotating-placeholder-inner {
     display: inline-block;

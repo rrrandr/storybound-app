@@ -3634,10 +3634,137 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // ARCHETYPE UI HANDLERS
   // =========================
   function initArchetypeUI() {
+      // CANONICAL STATE: Set Beautiful Ruin as default primary if empty/null
+      if (!state.archetype.primary) {
+          state.archetype.primary = 'BEAUTIFUL_RUIN';
+          console.log('[ARCHETYPE] Default primary set to BEAUTIFUL_RUIN');
+      }
+      if (state.archetype.modifier === undefined) {
+          state.archetype.modifier = null;
+      }
+
       renderArchetypePills();
       bindArchetypeHandlers();
+      bindArchetypeModifierInput();
       bindLoveInterestGenderWatcher();
       updateArchetypeSectionTitle();
+      updateArchetypePreview();
+      updateSynopsisPanel();
+  }
+
+  // MODIFIER MAPPING: Map custom text to nearest archetype ID
+  const MODIFIER_TEXT_MAP = {
+      'pirate': 'ROGUE',
+      'vampire': 'DANGEROUS',
+      'rebel': 'ROGUE',
+      'knight': 'GUARDIAN',
+      'prince': 'SOVEREIGN',
+      'princess': 'SOVEREIGN',
+      'witch': 'ENCHANTING',
+      'wizard': 'STRATEGIST',
+      'healer': 'DEVOTED',
+      'warrior': 'GUARDIAN',
+      'assassin': 'DANGEROUS',
+      'thief': 'ROGUE',
+      'king': 'SOVEREIGN',
+      'queen': 'SOVEREIGN',
+      'demon': 'DANGEROUS',
+      'angel': 'DEVOTED',
+      'wolf': 'DANGEROUS',
+      'fox': 'ROGUE',
+      'siren': 'ENCHANTING',
+      'beast': 'DANGEROUS',
+      'beast': 'DANGEROUS',
+      'protector': 'GUARDIAN',
+      'scholar': 'STRATEGIST',
+      'artist': 'ROMANTIC',
+      'poet': 'ROMANTIC',
+      'dark': 'DANGEROUS',
+      'light': 'DEVOTED',
+      'mysterious': 'ROGUE',
+      'charming': 'ENCHANTING',
+      'loyal': 'DEVOTED',
+      'cunning': 'STRATEGIST',
+      'noble': 'SOVEREIGN',
+      'brooding': 'BEAUTIFUL_RUIN',
+      'wounded': 'BEAUTIFUL_RUIN',
+      'broken': 'BEAUTIFUL_RUIN'
+  };
+
+  function mapModifierTextToArchetype(text) {
+      if (!text || !text.trim()) return null;
+      const lower = text.toLowerCase().trim();
+
+      // Direct match
+      if (MODIFIER_TEXT_MAP[lower]) {
+          return MODIFIER_TEXT_MAP[lower];
+      }
+
+      // Partial match - check if any keyword is contained in the text
+      for (const [keyword, archId] of Object.entries(MODIFIER_TEXT_MAP)) {
+          if (lower.includes(keyword)) {
+              return archId;
+          }
+      }
+
+      // Default fallback to ROGUE (safe fallback)
+      console.log(`[ARCHETYPE] No mapping found for "${text}", defaulting to ROGUE`);
+      return 'ROGUE';
+  }
+
+  function bindArchetypeModifierInput() {
+      const modifierInput = document.getElementById('archetypeModifierInput');
+      if (!modifierInput) {
+          console.error('[ARCHETYPE] archetypeModifierInput element not found in DOM');
+          return;
+      }
+      if (modifierInput.dataset.bound === '1') return;
+      modifierInput.dataset.bound = '1';
+
+      // Store the custom modifier text separately from the mapped ID
+      state.archetype.customModifierText = state.archetype.customModifierText || '';
+
+      function handleModifierInput() {
+          const rawText = modifierInput.value.trim();
+          state.archetype.customModifierText = rawText;
+
+          if (rawText) {
+              // Map to archetype ID
+              const mappedId = mapModifierTextToArchetype(rawText);
+              state.archetype.modifier = mappedId;
+              console.log(`[ARCHETYPE] Custom modifier "${rawText}" -> ${mappedId}`);
+
+              // Deselect any selected pill modifier (custom text overrides)
+              document.querySelectorAll('.archetype-pill[data-role="modifier"].selected').forEach(p => {
+                  p.classList.remove('selected');
+              });
+          } else {
+              // Clear modifier if text is empty
+              state.archetype.modifier = null;
+          }
+
+          updateArchetypePreview();
+          updateSynopsisPanel();
+      }
+
+      // On Enter key
+      modifierInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+              handleModifierInput();
+          }
+      });
+
+      // On blur (focus loss)
+      modifierInput.addEventListener('blur', handleModifierInput);
+
+      // Also clear custom text when a pill is clicked
+      document.querySelectorAll('.archetype-pill[data-role="modifier"]').forEach(pill => {
+          pill.addEventListener('click', () => {
+              modifierInput.value = '';
+              state.archetype.customModifierText = '';
+          });
+      });
   }
 
   function renderArchetypePills() {
@@ -3766,9 +3893,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (state.archetype.modifier) {
           const modifier = ARCHETYPES[state.archetype.modifier];
           if (modifier) {
+              // Show custom text if provided, otherwise just the archetype name
+              const customText = state.archetype.customModifierText;
+              const modifierLabel = customText
+                  ? `Modifier: "${customText}" (${modifier.name})`
+                  : `Modifier: ${modifier.name}`;
               html += `
                   <div class="archetype-preview-modifier">
-                      <p class="archetype-preview-modifier-label">Modifier: ${modifier.name}</p>
+                      <p class="archetype-preview-modifier-label">${modifierLabel}</p>
                       <p class="archetype-preview-modifier-style">Expression Style: ${modifier.desireStyle}</p>
                   </div>
               `;
@@ -4230,16 +4362,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       return errors;
   }
 
-  // --- GLOBAL DESTINY CARD - ALIAS FOR BEGIN STORY ---
-  // Top Destiny card must directly call the same Begin Story handler
-  // No tree art, no separate state, no population logic
-  $('globalDestinyCard')?.addEventListener('click', () => {
-    const beginBtn = $('beginBtn');
-    if (beginBtn) beginBtn.click();
-  });
-
-  // --- BEGIN STORY (RESTORED) ---
-  $('beginBtn')?.addEventListener('click', async () => {
+  // --- BEGIN STORY FROM UI (UNIFIED ENTRY POINT) ---
+  // Both Begin Story button and Top Destiny card call this SAME function.
+  // source param: 'beginBtn' | 'destinyTop' - for logging/analytics only
+  async function beginStoryFromUI(source = 'beginBtn') {
+    console.log(`[DESTINY] beginStoryFromUI called from: ${source}`);
+    if (source === 'destinyTop') {
+      console.log('[DESTINY] top clicked -> beginStoryFromUI');
+    }
     // Comprehensive validation before proceeding
     const validationErrors = validateBeginStory();
     if (validationErrors.length > 0) {
@@ -4516,8 +4646,13 @@ You are writing a story with the following 4-axis configuration:
     if (storyContentEl) storyContentEl.classList.add('hidden');
     startCoverLoading();
 
-    startLoading("Conjuring the world...", STORY_LOADING_MESSAGES);
-    
+    // Start loading with cancel button enabled
+    startLoading("Conjuring the world...", STORY_LOADING_MESSAGES, true, () => {
+        console.log('[LOADER] Generation cancelled, returning to setup');
+        skipCoverPage();
+        window.showScreen('setup');
+    });
+
     // Pacing rules based on intensity
     const pacingRules = {
         'Clean': 'Focus only on atmosphere, world-building, and hints of the protagonist\'s past. No tension, no longing—just setting and mystery.',
@@ -4801,7 +4936,30 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         updateQuillUI();
         updateBatedBreathState();
     }
-  });
+  }
+
+  // --- DESTINY TOP CARD - WIRED TO beginStoryFromUI ---
+  const destinyTopEl = document.getElementById('destinyTopCard');
+  if (destinyTopEl) {
+    destinyTopEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      beginStoryFromUI('destinyTop');
+    });
+  } else {
+    console.error('[DESTINY] destinyTopCard element not found in DOM');
+  }
+
+  // --- BEGIN STORY BUTTON - WIRED TO beginStoryFromUI ---
+  const beginBtnEl = $('beginBtn');
+  if (beginBtnEl) {
+    beginBtnEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      beginStoryFromUI('beginBtn');
+    });
+  } else {
+    console.error('[BEGIN] beginBtn element not found in DOM');
+  }
 
   // --- API CALLS ---
   /**
@@ -6226,7 +6384,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           return; 
       }
 
-      startLoading("Fate is weaving...", STORY_LOADING_MESSAGES);
+      // Start loading with cancel button enabled for turn generation
+      startLoading("Fate is weaving...", STORY_LOADING_MESSAGES, true, () => {
+          console.log('[LOADER] Turn generation cancelled');
+      });
 
       // Get story context from all pages
       const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
