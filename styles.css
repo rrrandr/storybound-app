@@ -2086,55 +2086,68 @@ textarea.fate-field {
    ONE card component used everywhere. 5×7 vertical aspect ratio.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Grid System - balanced rows, centered, no orphans
+/* Grid System - FLEXBOX for TRUE ROW-LEVEL CENTERING (PASS 8M)
+
+   CRITICAL FIX: Using flexbox instead of CSS Grid.
+   With flexbox + justify-content: center, EACH WRAPPED ROW is centered.
+   Example: 9 cards → 5+4 layout, both rows centered independently.
 
    RULES:
    - Row lengths must differ by AT MOST 1
-   - Never allow layouts like 5+5+1, 6+1, 4+2, 8+3
-   - Rows always centered
-   - Cards never overlap in grid state
+   - Never allow layouts like 5+5+1, 6+1, 4+2, 8+3, 3+1
+   - EACH ROW is visually centered (not just the container)
+   - Cards never shrink before 2-column mode
 
-   Strategy: Grid sizes to max-content width and centers via margin-inline: auto.
-   Each ROW is visually centered because the grid container itself is centered.
-   No forced layouts (3+2, 3+3, etc.) - grid flows naturally.
-
-   DISCRETE COLUMN STEPS: 6 → 3 → 2 (NO fluid rebalancing)
-   Cards stay 100px until 2-column mode.
+   SIZE-SPECIFIC CLASSES (apply to grids):
+   - .sb-grid-4: 4 cards → Wide: 4, Medium: 2,2, Narrow: 2,2
+   - .sb-grid-5: 5 cards → Wide: 5, Medium: 3,2, Narrow: 2,2,1
+   - .sb-grid-6: 6 cards → Wide: 6, Medium: 3,3, Narrow: 2,2,2
+   - .sb-grid-9: 9 cards → Wide: 5,4, Medium: 3,3,3, Narrow: 2,2,2,2,1
 
    Column math (card=100px, gap=16px):
-   - 6 cols: 680px, 3 cols: 332px, 2 cols: 216px
-   - At 2 cols, cards shrink to 70px with 8px gap = 148px
-
-   This prevents forbidden layouts like 5,1 or 4,2.
+   - 6 cols: 680px, 5 cols: 564px, 4 cols: 448px
+   - 3 cols: 332px, 2 cols: 216px
+   - At narrow: cards=70px, gap=8px, 2 cols: 148px
 */
 .sb-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, 100px);
+    display: flex;
+    flex-wrap: wrap;
     gap: 16px;
-    justify-content: center;
+    justify-content: center; /* CENTER EACH ROW */
     align-content: start;
-    width: max-content;
-    max-width: min(95vw, 680px); /* 6 cols max on wide */
+    max-width: min(95vw, 680px); /* Default: 6 cols max */
     margin-inline: auto;
     margin-block: 20px;
 }
 
-/* Medium screens: DISCRETE step to max 3 columns (prevents 5,1 and 4,2) */
+/* Size-specific grids - explicit column counts via max-width */
+.sb-grid-4 { max-width: min(95vw, 448px); } /* 4 cols: 4*100 + 3*16 = 448px */
+.sb-grid-5 { max-width: min(95vw, 564px); } /* 5 cols: 5*100 + 4*16 = 564px */
+.sb-grid-6 { max-width: min(95vw, 680px); } /* 6 cols: 6*100 + 5*16 = 680px */
+.sb-grid-9 { max-width: min(95vw, 564px); } /* 5 cols wide for 9 cards (5+4) */
+
+/* Medium screens: DISCRETE step to max 3 columns (or 2 for small grids) */
 @media (max-width: 700px) {
     .sb-grid {
-        /* Cards stay 100px - no shrink yet */
-        grid-template-columns: repeat(auto-fit, 100px);
-        gap: 16px;
-        max-width: min(95vw, 332px); /* Forces max 3 cols */
+        max-width: min(95vw, 332px); /* 3 cols: 3*100 + 2*16 = 332px */
     }
+    /* 4-card grids go to 2 cols at medium */
+    .sb-grid-4 { max-width: min(95vw, 216px); } /* 2 cols: 2*100 + 1*16 = 216px */
+    /* 5, 6, 9 card grids stay at 3 cols */
+    .sb-grid-5,
+    .sb-grid-6,
+    .sb-grid-9 { max-width: min(95vw, 332px); }
 }
 
 /* Narrow screens: DISCRETE step to max 2 columns, cards shrink here */
 @media (max-width: 400px) {
-    .sb-grid {
-        grid-template-columns: repeat(auto-fit, 70px);
+    .sb-grid,
+    .sb-grid-4,
+    .sb-grid-5,
+    .sb-grid-6,
+    .sb-grid-9 {
+        max-width: min(95vw, 148px); /* 2 cols: 2*70 + 1*8 = 148px */
         gap: 8px;
-        max-width: min(95vw, 148px); /* Forces max 2 cols */
     }
 }
 
@@ -2277,6 +2290,19 @@ textarea.fate-field {
     opacity: 0.9;
     pointer-events: none;
     z-index: 10;
+}
+
+/* PASS 8M: Locked card hover preview - flips to show description while staying locked
+   Card remains greyed/locked, but user can preview description on hover.
+   Click still triggers paywall modal (no selection occurs). */
+.sb-card.locked:hover .sb-card-inner {
+    transform: rotateY(180deg);
+}
+
+/* Keep locked styling during hover-flip preview */
+.sb-card.locked:hover {
+    opacity: 0.6; /* Slightly brighter on hover but still dimmed */
+    filter: grayscale(0.6);
 }
 
 /* Dimmed state during zoom */
