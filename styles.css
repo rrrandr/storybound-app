@@ -2137,12 +2137,14 @@ textarea.fate-field {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    align-items: center;
 }
 
 .dynamic-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    align-items: center;
 }
 
 .dynamic-group-label {
@@ -2152,7 +2154,7 @@ textarea.fate-field {
     color: rgba(255, 255, 255, 0.45);
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    padding-left: 2px;
+    text-align: center;
     margin-bottom: 2px;
 }
 
@@ -2502,6 +2504,11 @@ textarea.fate-field {
     border: 1px solid rgba(201, 162, 39, 0.4);
 }
 
+/* Hide flavor count when card is zoomed - flavor pills are visible instead */
+.sb-card.zoomed .sb-card-flavor-count {
+    display: none;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    WORLD ZOOM CONTENT - Flavor buttons and custom field inside zoomed card
    ═══════════════════════════════════════════════════════════════════ */
@@ -2564,6 +2571,11 @@ textarea.fate-field {
     text-align: left;
 }
 
+.sb-zoom-custom-wrapper {
+    position: relative;
+    width: 100%;
+}
+
 .sb-zoom-custom-input {
     font-size: 5px;
     padding: 3px;
@@ -2575,6 +2587,45 @@ textarea.fate-field {
     font-family: 'Crimson Text', serif;
     width: 100%;
     box-sizing: border-box;
+}
+
+/* Rotating placeholder for custom field */
+.sb-zoom-rotating-placeholder {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    overflow: hidden;
+    pointer-events: none;
+    font-size: 5px;
+    color: var(--ink);
+    opacity: 0.5;
+    font-style: italic;
+    white-space: nowrap;
+}
+
+.sb-zoom-rotating-placeholder.hidden {
+    display: none;
+}
+
+.sb-zoom-placeholder-inner {
+    display: inline-block;
+    animation: scrollPlaceholderZoom 25s linear infinite;
+}
+
+.sb-zoom-placeholder-inner .suggestion {
+    display: inline;
+}
+
+.sb-zoom-placeholder-inner .separator {
+    display: inline;
+    margin: 0 4px;
+    opacity: 0.5;
+}
+
+@keyframes scrollPlaceholderZoom {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
 
 .sb-zoom-custom-input:focus {
