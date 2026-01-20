@@ -2579,14 +2579,29 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function bindLengthHandlers(){
+      // THREE-STATE MODEL for length cards:
+      // STATE 1 (face-down) → STATE 2 (face-up): Click unselected card
+      // STATE 2 (face-up) → STATE 3 (zoomed): Click already-selected card
+      // Cards only return to face-down when another card is selected
       document.querySelectorAll('#lengthGrid .sb-card[data-grp="length"]').forEach(card => {
           if(card.dataset.bound === 'true') return;
           card.dataset.bound = 'true';
           card.addEventListener('click', () => {
               if (state.turnCount > 0) return;
-              if (card.classList.contains('locked')) return; 
-              state.storyLength = card.dataset.val;
-              applyLengthLocks(); 
+              if (card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
+
+              const val = card.dataset.val;
+              const isAlreadySelected = card.classList.contains('selected') && card.classList.contains('flipped');
+
+              if (isAlreadySelected) {
+                  // STATE 2 → STATE 3: Open zoom view (never deselect by clicking)
+                  openSbCardZoom(card, 'length', val);
+                  return;
+              }
+
+              // STATE 1 → STATE 2: Select this card, deselect others
+              state.storyLength = val;
+              applyLengthLocks();
           });
       });
   }
@@ -2653,16 +2668,38 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function wireIntensityHandlers(){
-      const handler = (level, e) => {
+      // THREE-STATE MODEL for intensity cards:
+      // STATE 1 (face-down) → STATE 2 (face-up): Click unselected card
+      // STATE 2 (face-up) → STATE 3 (zoomed): Click already-selected card
+      // Cards only return to face-down when another card is selected
+      const handler = (card, level, e) => {
           e.stopPropagation();
+          if(card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
+          if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub_only'); return; }
+          if(level === 'Erotic' && state.access === 'free'){ window.openEroticPreview(); return; }
+
+          const isAlreadySelected = card.classList.contains('selected') && card.classList.contains('flipped');
+          if (isAlreadySelected) {
+              // STATE 2 → STATE 3: Open zoom view (never deselect by clicking)
+              openSbCardZoom(card, 'intensity', level);
+              return;
+          }
+
+          // STATE 1 → STATE 2: Select this card, deselect others
+          state.intensity = level;
+          state.picks.intensity = level;
+          updateIntensityUI();
+      };
+      document.querySelectorAll('#intensityGrid .sb-card').forEach(card => card.onclick = (e) => handler(card, card.dataset.val, e));
+      // Game buttons don't have zoom capability - simple selection only
+      document.querySelectorAll('#gameIntensity button').forEach(btn => btn.onclick = (e) => {
+          const level = btn.innerText.trim();
           if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub_only'); return; }
           if(level === 'Erotic' && state.access === 'free'){ window.openEroticPreview(); return; }
           state.intensity = level;
-          state.picks.intensity = level; // Also update picks for card system
+          state.picks.intensity = level;
           updateIntensityUI();
-      };
-      document.querySelectorAll('#intensityGrid .sb-card').forEach(card => card.onclick = (e) => handler(card.dataset.val, e));
-      document.querySelectorAll('#gameIntensity button').forEach(btn => btn.onclick = (e) => handler(btn.innerText.trim(), e));
+      });
   }
 
   window.openEroticPreview = function(){
@@ -4112,12 +4149,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           return;
         }
 
-        // Legacy multi-select handling (if any remain)
-        if(!state.picks[grp]) state.picks[grp] = [];
-        const arr = state.picks[grp];
-        const idx = arr.indexOf(val);
-        if(idx >= 0) { arr.splice(idx, 1); card.classList.remove('selected', 'flipped'); }
-        else { if(arr.length >= 3) return alert("Select up to 3 only."); arr.push(val); card.classList.add('selected', 'flipped'); }
+        // All card groups should use single-select - no legacy multi-select
+        // If grp isn't in SINGLE_SELECT_AXES, treat it as single-select anyway
+        state.picks[grp] = val;
+        document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
+          c.classList.remove('selected', 'flipped');
+        });
+        card.classList.add('selected', 'flipped');
+        updateSynopsisPanel();
       });
     });
 
@@ -4596,21 +4635,24 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
   }
 
-  // Select archetype - flip card in place, no popup
+  // THREE-STATE ARCHETYPE CARD MODEL:
+  // STATE 1 (face-down) → STATE 2 (face-up/selected): Click unselected card
+  // STATE 2 (face-up) → STATE 3 (zoomed): Click already-selected card
+  // Cards only return to face-down when another card is selected
   function selectArchetypeCard(archetypeId) {
-      const wasSelected = state.archetype.primary === archetypeId;
+      const isAlreadySelected = state.archetype.primary === archetypeId;
 
-      if (wasSelected) {
-          // Deselect
-          state.archetype.primary = null;
+      if (isAlreadySelected) {
+          // STATE 2 → STATE 3: Open zoomed overlay (never deselect)
+          openArchetypeOverlay(archetypeId);
+          return;
+      }
+
+      // STATE 1 → STATE 2: Select this card, previous selection returns to face-down
+      state.archetype.primary = archetypeId;
+      // Clear modifier if it was same as new primary
+      if (state.archetype.modifier === archetypeId) {
           state.archetype.modifier = null;
-      } else {
-          // Select new
-          state.archetype.primary = archetypeId;
-          // Clear modifier if it was same as new primary
-          if (state.archetype.modifier === archetypeId) {
-              state.archetype.modifier = null;
-          }
       }
 
       // Update all card states - only selected card stays flipped
@@ -4682,29 +4724,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           });
       }
 
-      // Select primary button
+      // Select primary button - THREE-STATE MODEL: clicking never deselects
+      // Card is already selected when overlay is open (STATE 3), so button confirms selection
       const selectBtn = document.querySelector('.btn-select-primary');
       if (selectBtn) {
           selectBtn.addEventListener('click', () => {
               const id = selectBtn.dataset.archetype;
-              if (state.archetype.primary === id) {
-                  // Deselect
-                  state.archetype.primary = null;
-                  state.archetype.modifier = null;
-              } else {
-                  // Select
+              // Always select (never deselect) - cards only deselect when another card is chosen
+              if (state.archetype.primary !== id) {
                   state.archetype.primary = id;
                   // Clear modifier if it's same as new primary
                   if (state.archetype.modifier === id) {
                       state.archetype.modifier = null;
                   }
+                  updateArchetypeCardStates();
+                  updateArchetypeSelectionSummary();
               }
-              updateArchetypeCardStates();
-              updateArchetypeSelectionSummary();
-              // Update overlay button state
-              const isSelected = state.archetype.primary === id;
-              selectBtn.textContent = isSelected ? 'Selected ✓' : 'Select as Primary';
-              selectBtn.classList.toggle('selected', isSelected);
+              // Update overlay button state (always selected now)
+              selectBtn.textContent = 'Selected ✓';
+              selectBtn.classList.add('selected');
           });
       }
 
