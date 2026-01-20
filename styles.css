@@ -1403,6 +1403,192 @@ textarea.fate-field {
     text-shadow: 0 0 6px rgba(218, 165, 32, 0.5);
 }
 
+/* =================================
+   PASS 9B: HORIZONTAL CHARACTER BLOCKS
+   Destiny card LEFT, fields in responsive row
+   ================================= */
+.fate-shortcut-vertical {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.character-block-horizontal {
+    display: flex;
+    align-items: stretch;
+    gap: 15px;
+    width: 95%;
+    margin: 0 auto 15px;
+}
+
+.character-destiny-side {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.character-destiny-card-tall {
+    width: 50px;
+    height: 140px;
+    perspective: 800px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.character-destiny-card-tall:hover {
+    transform: scale(1.05);
+}
+
+.character-destiny-card-tall .character-destiny-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+}
+
+.character-destiny-card-tall.flipped .character-destiny-inner {
+    transform: rotateY(180deg);
+}
+
+.character-destiny-card-tall .character-destiny-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.character-destiny-card-tall .character-destiny-back {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border: 1px solid var(--gold);
+}
+
+.character-destiny-card-tall .character-destiny-back::after {
+    content: "⚜";
+    font-size: 20px;
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(218, 165, 32, 0.5);
+}
+
+.character-destiny-card-tall .character-destiny-front {
+    background: linear-gradient(135deg, #2d1810 0%, #4a2c17 50%, #6b3a1f 100%);
+    border: 1px solid var(--gold);
+    transform: rotateY(180deg);
+}
+
+.character-destiny-card-tall .character-destiny-front::after {
+    content: "✦";
+    font-size: 18px;
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(218, 165, 32, 0.5);
+}
+
+.character-fields-side {
+    flex: 1;
+    min-width: 0;
+}
+
+.character-fields-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.character-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.character-field label {
+    display: block;
+    text-align: left;
+    color: var(--gold);
+    margin-bottom: 4px;
+    font-size: 0.8em;
+    font-family: var(--font-main);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.character-field input,
+.character-field select {
+    padding: 10px 12px;
+    font-size: 0.95em;
+}
+
+.character-field-name {
+    flex: 1.5;
+    min-width: 140px;
+}
+
+.character-field-gender {
+    flex: 1;
+    min-width: 100px;
+}
+
+.character-field-pronouns {
+    flex: 1;
+    min-width: 100px;
+}
+
+.character-field-ancestry {
+    flex: 1.2;
+    min-width: 120px;
+    position: relative;
+}
+
+.custom-gender-input {
+    margin-top: 5px;
+    padding: 8px 10px !important;
+    font-size: 0.9em !important;
+}
+
+/* Ancestry field WHITE text (not yellow) */
+.ancestry-field {
+    color: #fff !important;
+}
+
+/* Responsive: Stack fields on narrow screens */
+@media (max-width: 600px) {
+    .character-block-horizontal {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .character-destiny-side {
+        margin-bottom: 10px;
+    }
+
+    .character-destiny-card-tall {
+        width: 60px;
+        height: 84px;
+    }
+
+    .character-fields-row {
+        flex-direction: column;
+    }
+
+    .character-field {
+        width: 100%;
+    }
+
+    .character-field-name,
+    .character-field-gender,
+    .character-field-pronouns,
+    .character-field-ancestry {
+        flex: none;
+        min-width: auto;
+    }
+}
+
 /* Quill-Veto container adjustments */
 .quill-veto-container {
     display: flex;
