@@ -73,6 +73,62 @@ function selectSymbolicObject(genre, storyStyle, dynamic) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+// ============================================================
+// TONE-AWARE COVER STYLE MAPPING (LOCKED)
+// ============================================================
+// Covers MUST include decorative texture/pattern and Art Deco/Nouveau linework
+// Tone determines visual weight, typography, and mood
+
+function getToneCoverStyle(tone) {
+  const toneLower = (tone || '').toLowerCase();
+
+  // SATIRICAL / COMEDIC: Lighter, playful, NOT erotic/breathless
+  if (toneLower.includes('satirical') || toneLower.includes('comedic') || toneLower.includes('wry')) {
+    return {
+      visualWeight: 'lighter visual weight, airy composition',
+      mood: 'playful and whimsical tone, clever and witty',
+      typography: 'clean sans-serif or simple hand-lettered typography with personality',
+      elements: 'illustrative elements allowed (stylized motifs, caricature touches, cave-drawing simplicity)',
+      texture: 'subtle Art Nouveau inspired organic curves and decorative borders',
+      forbidden: 'Must NOT feel breathless, erotic, or overly romantic. No heavy shadows.'
+    };
+  }
+
+  // EARNEST / POETIC / MYTHIC: Elegant, decorative, romantic but restrained
+  if (toneLower.includes('earnest') || toneLower.includes('poetic') || toneLower.includes('mythic')) {
+    return {
+      visualWeight: 'balanced composition with elegant negative space',
+      mood: 'romantic but restrained, timeless elegance',
+      typography: 'elegant serif or Art Deco inspired display typography with dimensional presence',
+      elements: 'decorative linework, flourishes, and ornamental details',
+      texture: 'Art Deco geometric patterns or Art Nouveau organic linework as background texture',
+      forbidden: 'Never flat or blank. Decorative elements must enhance, not overwhelm.'
+    };
+  }
+
+  // DARK / HORROR: Heavy contrast, ominous, no playfulness
+  if (toneLower.includes('dark') || toneLower.includes('horror')) {
+    return {
+      visualWeight: 'heavier contrast, dramatic chiaroscuro lighting',
+      mood: 'ominous atmosphere, foreboding tension',
+      typography: 'bold dramatic serif or gothic-inspired letterforms with weight and presence',
+      elements: 'ominous patterning, sharp geometric Art Deco motifs, heavy shadows',
+      texture: 'intricate dark Art Deco patterns or thorned Art Nouveau linework',
+      forbidden: 'No playful elements, no whimsy, no lightness. Must feel serious and weighted.'
+    };
+  }
+
+  // Default (Earnest-like)
+  return {
+    visualWeight: 'balanced composition with elegant negative space',
+    mood: 'evocative atmosphere, literary presence',
+    typography: 'elegant display typography with dimensional presence',
+    elements: 'decorative linework and ornamental flourishes',
+    texture: 'Art Deco inspired geometric patterns or Art Nouveau organic curves',
+    forbidden: 'Never flat white or blank. Must have visual texture.'
+  };
+}
+
 function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre) {
   // Select symbolic object based on context
   const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic);
@@ -80,18 +136,28 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
   const cleanMode = modeLine || 'A Novel';
 
-  // Build direct image prompt - no meta-instructions
-  return `A prestige book cover design, square format, minimalist composition with high negative space.
+  // Extract tone from storyStyle (format: "Tone Genre")
+  const tone = (storyStyle || '').split(' ')[0] || 'Earnest';
+  const toneStyle = getToneCoverStyle(tone);
+
+  // Build tone-aware prestige book cover prompt
+  return `A prestige book cover design, square format, ${toneStyle.visualWeight}.
+
+MANDATORY: The cover MUST include decorative texture or pattern - never flat white or blank backgrounds.
+Style inspiration: Art Deco geometric precision OR Art Nouveau organic linework (choose one, commit fully).
+Background treatment: ${toneStyle.texture}
 
 Central focus: ${symbolicObject}, rendered with controlled dramatic lighting, depth, and shadow. The object occupies the visual center, elegant and evocative.
 
-Title typography: "${cleanTitle}" in bespoke custom-designed lettering with subtle asymmetry and purposeful flourishes. The letterforms have dimensional presence. The symbolic object physically interacts with the title - either passing behind certain letters, casting realistic shadows onto the text, or threading through the letterforms. The title and object share the same physical space.
+Title typography: "${cleanTitle}" using ${toneStyle.typography}. The letterforms have dimensional presence. The symbolic object physically interacts with the title - either passing behind certain letters, casting realistic shadows onto the text, or threading through the letterforms. The title and object share the same physical space.
 
 Series line: "Storybound Book I – ${cleanMode}" in very small, quiet type near the top or just beneath the title. Secondary and restrained.
 
 Author credit: ${cleanAuthor} in bold modern sans-serif, ALL CAPS, placed across the bottom of the cover as a visual anchor. Clean and grounded.
 
-Mood: ${storyStyle || 'Dark Romance'}, ${dynamic || 'romantic tension'}. Color palette and lighting evoke ${genre || 'contemporary'} atmosphere.
+Cover mood: ${toneStyle.mood}. ${toneStyle.elements}. Color palette and lighting evoke ${genre || 'contemporary'} ${dynamic || 'romantic tension'} atmosphere.
+
+${toneStyle.forbidden}
 
 No characters, no faces, no bodies, no clutter. Single cohesive composition suitable for a modern literary bookshelf. No gibberish text, no watermarks.`;
 }

@@ -6066,9 +6066,12 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
         // Generate book cover with intent-based routing (async, non-blocking)
         // Uses gpt-image-1.5 for typography rendering
-        const authorDisplayName = state.authorGender === 'Non-Binary'
-            ? 'The Author'
-            : (state.authorGender === 'Female' ? 'A. Romance' : 'A. Novelist');
+        // TESTING MODE: Force "Anonymous" for all books when not logged in
+        const authorDisplayName = !state.isLoggedIn
+            ? 'Anonymous'
+            : (state.authorGender === 'Non-Binary'
+                ? 'The Author'
+                : (state.authorGender === 'Female' ? 'A. Romance' : 'A. Novelist'));
 
         generateBookCover(synopsis, cleanTitle, authorDisplayName).then(coverUrl => {
             if (coverUrl) {
@@ -6281,10 +6284,19 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
      };
 
      const worldDesc = capWorldDesc(desc);
+
+     // VISTA-ONLY ENFORCEMENT (LOCKED)
+     // Setup scene MUST be a world vista - NO faces, portraits, or character close-ups
+     const vistaEnforcement = `CRITICAL COMPOSITION RULES:
+- This MUST be a WORLD VISTA image: landscape, cityscape, skyline, planet view, castle on cliff, street scene, or grand environment.
+- If ANY human figure appears, they MUST be facing AWAY from viewer, looking out over the vista (silhouette only).
+- ABSOLUTELY FORBIDDEN: Portraits, faces, characters looking at the viewer, romantic poses, character close-ups, intimate scenes.
+- Camera position: Wide establishing shot, epic scale, environment is the subject.`;
+
      const styleSuffix = 'Wide cinematic environment, atmospheric lighting, painterly illustration, epic scale, 16:9 aspect ratio, no text, no watermark.';
 
-     // WORLD FIRST, then style suffix
-     const prompt = `${worldDesc} ${styleSuffix}`;
+     // WORLD FIRST, vista enforcement, then style suffix
+     const prompt = `${worldDesc}\n\n${vistaEnforcement}\n\n${styleSuffix}`;
 
      let rawUrl = null;
 

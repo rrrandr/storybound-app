@@ -881,17 +881,19 @@
     <div id="sceneNumber" style="font-size:2em; color:var(--gold); font-weight:bold; text-align:center; margin:0 0 20px;">Scene 1</div>
     
     <div id="batedBreathIndicator" class="hidden" style="text-align:center; font-size:0.8em; color:var(--gold); font-style:italic; margin-bottom:10px; opacity:0.8;">
-        Waiting for partner... 
+        Waiting for partner...
         <button id="btnAbandonCouple" style="background:none; border:none; text-decoration:underline; color:var(--pink); cursor:pointer; padding:0; font-size:inherit; margin-left:5px;">Play Solo (Revoke Invite)</button>
     </div>
 
+    <!-- TEXT-FIRST LAYOUT: Story text begins immediately after Scene 1 -->
+    <div id="storyText" class="box">
+        <div class="story-pages-container" id="storyPagesContainer"></div>
+    </div>
+
+    <!-- Setting shot appears as landscape element AFTER text (does not replace text) -->
     <div id="settingShotWrap">
         <div id="settingError" class="img-error-msg hidden"></div>
         <img id="settingShotImg" src="" alt="Setting" style="display:none; width:100%;">
-    </div>
-
-    <div id="storyText" class="box">
-        <div class="story-pages-container" id="storyPagesContainer"></div>
     </div>
 
     <div class="page-nav-controls" id="pageNavControls">
