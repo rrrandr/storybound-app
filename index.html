@@ -336,8 +336,17 @@
       </div>
     </div>
 
-    <!-- Player Character Block -->
+    <!-- Player Character Block: "You" -->
     <div class="character-block">
+        <div class="character-section-header">
+            <span class="character-section-title">You</span>
+            <div class="character-destiny-card" id="playerDestinyCard" data-character="player">
+                <div class="character-destiny-inner">
+                    <div class="character-destiny-face character-destiny-back"></div>
+                    <div class="character-destiny-face character-destiny-front"></div>
+                </div>
+            </div>
+        </div>
         <div class="input-wrapper">
             <label>Your Character's Name</label>
             <input id="playerNameInput" type="text" placeholder="e.g. Elara Vance">
@@ -364,10 +373,24 @@
                 <input id="customPlayerPronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
             </div>
         </div>
+        <div class="input-wrapper fate-input-wrapper" style="margin-top: 10px;">
+            <label>Ancestry</label>
+            <input id="ancestryInputPlayer" type="text" class="fate-field" data-fate-type="ancestry">
+            <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
+        </div>
     </div>
 
-    <!-- Love Interest Block -->
+    <!-- Love Interest Block: "Your Love Interest" -->
     <div class="character-block" style="margin-top: 20px;">
+        <div class="character-section-header">
+            <span class="character-section-title">Your Love Interest</span>
+            <div class="character-destiny-card" id="loveInterestDestinyCard" data-character="loveInterest">
+                <div class="character-destiny-inner">
+                    <div class="character-destiny-face character-destiny-back"></div>
+                    <div class="character-destiny-face character-destiny-front"></div>
+                </div>
+            </div>
+        </div>
         <div class="input-wrapper">
             <label>Your Love Interest's Name</label>
             <input id="partnerNameInput" type="text" placeholder="e.g. Lord Blackwood">
@@ -394,46 +417,14 @@
                 <input id="customLovePronouns" type="text" placeholder="Enter pronouns..." class="hidden" style="margin-top:5px;">
             </div>
         </div>
-    </div>
-
-    <div class="section-title">Ancestry / Culture</div>
-    <p class="ancestry-subtext">Optional: ground the characters in a cultural or ancestral context.</p>
-
-    <div class="ancestry-container">
-        <div class="ancestry-subsection">
-            <div class="ancestry-label">Yours</div>
-            <div class="fate-input-row">
-                <div class="input-wrapper fate-input-wrapper">
-                    <input id="ancestryInputPlayer" type="text" class="fate-field" data-fate-type="ancestry">
-                    <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
-                </div>
-                <div class="ancestry-flip-card" data-target="ancestryInputPlayer" data-type="ancestry">
-                    <div class="ancestry-card-inner">
-                        <div class="ancestry-card-back"></div>
-                        <div class="ancestry-card-front"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="ancestry-subsection">
-            <div class="ancestry-label" id="ancestryLabelLI">Your Storybeau's</div>
-            <div class="fate-input-row">
-                <div class="input-wrapper fate-input-wrapper">
-                    <input id="ancestryInputLI" type="text" class="fate-field" data-fate-type="ancestry">
-                    <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
-                </div>
-                <div class="ancestry-flip-card" data-target="ancestryInputLI" data-type="ancestry">
-                    <div class="ancestry-card-inner">
-                        <div class="ancestry-card-back"></div>
-                        <div class="ancestry-card-front"></div>
-                    </div>
-                </div>
-            </div>
+        <div class="input-wrapper fate-input-wrapper" style="margin-top: 10px;">
+            <label>Ancestry</label>
+            <input id="ancestryInputLI" type="text" class="fate-field" data-fate-type="ancestry">
+            <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
         </div>
     </div>
 
-    <div class="section-title" id="archetypeSectionTitle">Shape Your Storybeau</div>
+    <div class="section-title" id="archetypeSectionTitle">Archetype Storybeau</div>
     <p class="archetype-header-text">Choose a core desire style for this character.</p>
     <p class="archetype-subtext">Select one Primary archetype. You may optionally add one Modifier to refine how it shows up.</p>
 
@@ -448,7 +439,7 @@
         <p class="selected-modifier">Modifier: <span id="selectedModifierName">None</span></p>
     </div>
 
-    <div class="section-title">Intensity <span class="instruction-text">(Rendering Ceiling)</span></div>
+    <div class="section-title">Arousal Intensity</div>
     <div class="sb-grid sb-grid-4" id="intensityGrid">
       <div class="sb-card" data-grp="intensity" data-val="Clean">
         <div class="sb-card-inner">
@@ -541,33 +532,6 @@
           <div class="sb-card-face sb-card-front"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The Author has big plans for you…"</span></div>
         </div>
       </div>
-    </div>
-
-    <!-- SAFETY & BOUNDARIES (Repositioned: after POV, before World) -->
-    <div class="section-title">Safety & Boundaries</div>
-    <div class="sb-checkbox-group">
-        <label class="sb-checkbox">
-            <input type="checkbox" id="chkDark" checked>
-            <span class="sb-checkbox-visual"></span>
-            <span class="sb-checkbox-label">Dark Themes</span>
-        </label>
-        <label class="sb-checkbox">
-            <input type="checkbox" id="chkNonCon">
-            <span class="sb-checkbox-visual"></span>
-            <span class="sb-checkbox-label">Implied Non-consent</span>
-        </label>
-        <label class="sb-checkbox">
-            <input type="checkbox" id="chkViolence" checked>
-            <span class="sb-checkbox-visual"></span>
-            <span class="sb-checkbox-label">Violence / Peril</span>
-        </label>
-    </div>
-    <div class="boundary-chips" id="boundaryChips">
-        <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
-        <div class="chip" data-boundary="coercion">No coercion</div>
-        <div class="chip" data-boundary="degradation">No degradation language</div>
-        <div class="chip" data-boundary="captivity">No captivity</div>
-        <div class="chip" data-boundary="blackmail">No blackmail</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
@@ -739,6 +703,33 @@
           <div class="sb-card" data-grp="dynamic" data-val="Partners"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Partners in Crime</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Partners in Crime</span><span class="sb-card-desc">Complicity, shared secrets, us vs them.</span></div></div></div>
         </div>
       </div>
+    </div>
+
+    <!-- SAFETY & BOUNDARIES (Repositioned: above Quill & Veto) -->
+    <div class="section-title">Safety & Boundaries</div>
+    <div class="sb-checkbox-group">
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkDark" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Dark Themes</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkNonCon">
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Implied Non-consent</span>
+        </label>
+        <label class="sb-checkbox">
+            <input type="checkbox" id="chkViolence" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label">Violence / Peril</span>
+        </label>
+    </div>
+    <div class="boundary-chips" id="boundaryChips">
+        <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
+        <div class="chip" data-boundary="coercion">No coercion</div>
+        <div class="chip" data-boundary="degradation">No degradation language</div>
+        <div class="chip" data-boundary="captivity">No captivity</div>
+        <div class="chip" data-boundary="blackmail">No blackmail</div>
     </div>
 
     <div class="section-title">Quill & Veto</div>

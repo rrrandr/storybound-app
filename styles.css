@@ -1324,6 +1324,85 @@ textarea.fate-field {
     transform: rotateY(180deg);
 }
 
+/* =================================
+   CHARACTER SECTION HEADER & DESTINY CARDS
+   ================================= */
+.character-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.character-section-title {
+    font-family: 'lust-script-display', 'lust-script', serif;
+    font-size: 1.3em;
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(218, 165, 32, 0.3);
+}
+
+.character-destiny-card {
+    width: 40px;
+    height: 56px;
+    perspective: 800px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.character-destiny-card:hover {
+    transform: scale(1.1);
+}
+
+.character-destiny-card.flipped .character-destiny-inner {
+    transform: rotateY(180deg);
+}
+
+.character-destiny-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+}
+
+.character-destiny-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.character-destiny-back {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border: 1px solid var(--gold);
+}
+
+.character-destiny-back::after {
+    content: "⚜";
+    font-size: 16px;
+    color: var(--gold);
+    text-shadow: 0 0 6px rgba(218, 165, 32, 0.5);
+}
+
+.character-destiny-front {
+    background: linear-gradient(135deg, #2d1810 0%, #4a2c17 50%, #6b3a1f 100%);
+    border: 1px solid var(--gold);
+    transform: rotateY(180deg);
+}
+
+.character-destiny-front::after {
+    content: "✦";
+    font-size: 14px;
+    color: var(--gold);
+    text-shadow: 0 0 6px rgba(218, 165, 32, 0.5);
+}
+
 /* Quill-Veto container adjustments */
 .quill-veto-container {
     display: flex;
