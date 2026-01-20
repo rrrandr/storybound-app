@@ -5543,7 +5543,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
-    // Comprehensive validation before proceeding
+    // ========================================
+    // PHASE 1: SYNC VALIDATION (no async!)
+    // ========================================
     const validationErrors = validateBeginStory();
     const wasFateTriggered = state._fateTriggered;
     state._fateTriggered = false; // Clear flag after validation
@@ -5553,9 +5555,67 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         return;
     }
 
-    // RUNTIME NORMALIZATION: Character names flow through ChatGPT normalization layer
+    // Capture raw form values synchronously (needed for early validation)
     const rawPlayerName = $('playerNameInput').value.trim() || "The Protagonist";
     const rawPartnerName = $('partnerNameInput').value.trim() || "The Love Interest";
+    const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
+    const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
+    const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
+    const lPro = $('customLovePronouns')?.value.trim() || $('lovePronouns').value;
+
+    // Early validation with pre-normalization values
+    const earlyArchetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
+    const earlyPayload = {
+        mode: state.mode || 'solo',
+        fourAxis: {
+            world: state.picks.world || 'Modern',
+            tone: state.picks.tone || 'Earnest',
+            genre: state.picks.genre || 'Billionaire',
+            dynamic: state.picks.dynamic || 'Enemies'
+        },
+        archetype: {
+            primary: state.archetype.primary || null,
+            directives: earlyArchetypeDirectives || '(none built)'
+        },
+        intensity: state.intensity || 'Naughty',
+        pov: state.picks.pov || 'First'
+    };
+
+    // Validate four-axis before proceeding (sync check)
+    const { world, tone, genre, dynamic } = earlyPayload.fourAxis;
+    const earlyErrors = [];
+    if (!earlyPayload.mode) earlyErrors.push('Mode is undefined');
+    if (!world) earlyErrors.push('World is missing or empty');
+    if (!tone) earlyErrors.push('Tone is missing or empty');
+    if (!genre) earlyErrors.push('Genre is missing or empty');
+    if (!dynamic) earlyErrors.push('Relationship Dynamic is missing or empty');
+    if (!earlyPayload.archetype.primary) earlyErrors.push('Primary Archetype not selected');
+    if (earlyPayload.archetype.directives === '(none built)') earlyErrors.push('Archetype directives failed to build');
+
+    if (earlyErrors.length > 0) {
+        console.error('STORYBOUND EARLY VALIDATION FAILED:', earlyErrors);
+        showToast(`Story setup incomplete: ${earlyErrors[0]}`);
+        return;
+    }
+
+    // ========================================
+    // PHASE 2: SHOW LOADER IMMEDIATELY (sync)
+    // ========================================
+    window.showScreen('game');
+    const bookCoverPage = document.getElementById('bookCoverPage');
+    const storyContentEl = document.getElementById('storyContent');
+    if (bookCoverPage) bookCoverPage.classList.remove('hidden');
+    if (storyContentEl) storyContentEl.classList.add('hidden');
+    startCoverLoading();
+    startLoading("Conjuring the world...", STORY_LOADING_MESSAGES);
+
+    // ========================================
+    // PHASE 3: DEFER ASYNC WORK (next tick)
+    // Ensures loader renders before any await
+    // ========================================
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // RUNTIME NORMALIZATION: Character names flow through ChatGPT normalization layer
     const playerNorm = await callNormalizationLayer({
         axis: 'character',
         user_text: rawPlayerName,
@@ -5577,11 +5637,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if ($('playerNameInput')) $('playerNameInput').value = pKernel;
     if ($('partnerNameInput')) $('partnerNameInput').value = lKernel;
 
-    const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
-    const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
-    const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
-    const lPro = $('customLovePronouns')?.value.trim() || $('lovePronouns').value;
-    
     // Determine Author Identity based on selections
     if(pGen === 'Male' && lGen === 'Female') { state.authorGender = 'Female'; state.authorPronouns = 'She/Her'; }
     else if(pGen === 'Male' && lGen === 'Male') { state.authorGender = 'Male'; state.authorPronouns = 'He/Him'; }
@@ -5589,72 +5644,31 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     else { state.authorGender = 'Non-Binary'; state.authorPronouns = 'They/Them'; }
 
     await applyVetoFromControls();
-    
+
     // Check for LGBTQ Colors
     state.gender = $('playerGender').value;
     state.loveInterest = $('loveInterestGender').value;
     const isQueer = (state.gender === state.loveInterest) || state.gender === 'Non-Binary' || state.loveInterest === 'Non-Binary';
     if(isQueer) document.body.classList.add('lgbtq-mode');
     else document.body.classList.remove('lgbtq-mode');
-    
+
     // Persist Nickname for Couple Mode
     if(state.mode === 'couple' && !state.myNick) {
        state.myNick = pKernel.split(' ')[0];
        localStorage.setItem("sb_nickname", state.myNick);
     }
-    
+
     state.gender = pGen;
     state.loveInterest = lGen;
 
     syncPovDerivedFlags();
     const safetyStr = buildConsentDirectives();
 
-    // === EARLY VALIDATION (before screen transition) ===
-    // Build diagnostic payload and validate BEFORE showing game screen
-    // Note: These use raw values; normalization happens later before actual prompt building
+    // Variables for later use (ancestry normalization happens later)
     let ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
     let ancestryLI = $('ancestryInputLI')?.value.trim() || '';
     let archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
     let quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
-
-    const earlyPayload = {
-        mode: state.mode || 'solo',
-        fourAxis: {
-            world: state.picks.world || 'Modern',
-            tone: state.picks.tone || 'Earnest',
-            genre: state.picks.genre || 'Billionaire',
-            dynamic: state.picks.dynamic || 'Enemies'
-        },
-        archetype: {
-            primary: state.archetype.primary || null,
-            directives: archetypeDirectives || '(none built)'
-        },
-        veto: {
-            bannedWords: state.veto?.bannedWords || [],
-            tone: state.veto?.tone || []
-        },
-        intensity: state.intensity || 'Naughty',
-        pov: state.picks.pov || 'First',
-        systemPromptLength: 1 // Will be set after sys prompt built
-    };
-
-    // Validate four-axis before proceeding
-    const { world, tone, genre, dynamic } = earlyPayload.fourAxis;
-    const earlyErrors = [];
-    if (!earlyPayload.mode) earlyErrors.push('Mode is undefined');
-    if (!world) earlyErrors.push('World is missing or empty');
-    if (!tone) earlyErrors.push('Tone is missing or empty');
-    if (!genre) earlyErrors.push('Genre is missing or empty');
-    if (!dynamic) earlyErrors.push('Relationship Dynamic is missing or empty');
-    if (!earlyPayload.archetype.primary) earlyErrors.push('Primary Archetype not selected');
-    if (earlyPayload.archetype.directives === '(none built)') earlyErrors.push('Archetype directives failed to build');
-
-    if (earlyErrors.length > 0) {
-        console.error('STORYBOUND EARLY VALIDATION FAILED:', earlyErrors);
-        showToast(`Story setup incomplete: ${earlyErrors[0]}`);
-        return;
-    }
-    // === END EARLY VALIDATION ===
 
     const coupleArcRules = `
 COUPLE MODE ARC RULES (CRITICAL):
@@ -5815,17 +5829,9 @@ You are writing a story with the following 4-axis configuration:
     state.sysPrompt = sys;
     state.storyId = state.storyId || makeStoryId();
 
-    window.showScreen('game');
+    // NOTE: Loader already shown in Phase 2 (before async work)
+    // Screen transition, cover page, and loading already active
 
-    // Initialize book cover page - show cover, hide story content
-    const bookCoverPage = document.getElementById('bookCoverPage');
-    const storyContentEl = document.getElementById('storyContent');
-    if (bookCoverPage) bookCoverPage.classList.remove('hidden');
-    if (storyContentEl) storyContentEl.classList.add('hidden');
-    startCoverLoading();
-
-    startLoading("Conjuring the world...", STORY_LOADING_MESSAGES);
-    
     // Pacing rules based on intensity
     const pacingRules = {
         'Clean': 'Focus only on atmosphere, world-building, and hints of the protagonist\'s past. No tension, no longing—just setting and mystery.',
