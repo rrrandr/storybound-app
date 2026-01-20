@@ -1248,6 +1248,7 @@ ANTI-HERO ENFORCEMENT:
       storyId: null,
       access: 'free',
       subscribed: false,
+      isLoggedIn: false,  // AUTH GATE: persistence only allowed when logged in
       authorGender: 'Female',
       authorPronouns: 'She/Her',
       
@@ -1398,6 +1399,71 @@ ANTI-HERO ENFORCEMENT:
           window.state.povMode = 'normal';
           window.state.authorPresence = 'normal';
           window.state.fateCardVoice = 'neutral';
+      }
+  }
+
+  // =========================
+  // AUTH GATING FOR PERSISTENCE
+  // =========================
+  // Persistence is ONLY allowed when logged in.
+  // Without login, app behaves stateless (no story/purchase restoration on reload).
+
+  function isLoggedIn() {
+      return !!state.isLoggedIn;
+  }
+
+  // Login function - sets persistence gate
+  window.login = function() {
+      state.isLoggedIn = true;
+      localStorage.setItem('sb_logged_in', '1');
+      renderBurgerMenu();
+      updateContinueButtons();
+  };
+
+  // Logout function - clears persistence gate and all persisted state
+  window.logout = function() {
+      state.isLoggedIn = false;
+      localStorage.removeItem('sb_logged_in');
+      // Clear all persisted story/purchase state
+      clearAnonymousState();
+      renderBurgerMenu();
+      updateContinueButtons();
+  };
+
+  // Clear all persisted state for anonymous/testing mode
+  function clearAnonymousState() {
+      localStorage.removeItem('sb_saved_story');
+      localStorage.removeItem('sb_story_in_idb');
+      localStorage.removeItem('sb_current_story_id');
+      localStorage.removeItem('sb_subscribed');
+      localStorage.removeItem('sb_billing_status');
+      localStorage.removeItem('sb_god_mode_owned');
+      // Clear all story pass keys
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sb_storypass_')) {
+              keysToRemove.push(key);
+          }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      // Clear IndexedDB story data
+      if (window.indexedDB) {
+          try {
+              const request = indexedDB.deleteDatabase(STORY_DB_NAME);
+              request.onerror = () => console.warn('Failed to clear IndexedDB');
+          } catch (e) { /* ignore */ }
+      }
+  }
+
+  // Render burger menu auth section
+  function renderBurgerMenu() {
+      const section = document.getElementById('menuAuthSection');
+      if (!section) return;
+      if (isLoggedIn()) {
+          section.innerHTML = '<button onclick="window.logout()">Logout</button>';
+      } else {
+          section.innerHTML = '<button onclick="window.login()">Login</button>';
       }
   }
 
@@ -2251,12 +2317,13 @@ ANTI-HERO ENFORCEMENT:
               state.billingStatus = 'active';
               state.billingGraceUntil = 0;
               state.billingLastError = '';
-              localStorage.setItem('sb_billing_status', 'active');
+              // AUTH GATE: Only persist to storage when logged in
+              if (isLoggedIn()) localStorage.setItem('sb_billing_status', 'active');
           }
           return;
       }
       if (state.billingStatus === 'grace' && Date.now() > state.billingGraceUntil) {
-          endBillingGrace(); 
+          endBillingGrace();
       }
   }
 
@@ -2264,14 +2331,18 @@ ANTI-HERO ENFORCEMENT:
       state.billingStatus = 'grace';
       state.billingGraceUntil = Date.now() + (hours * 3600 * 1000);
       state.billingLastError = msg;
-      localStorage.setItem('sb_billing_status', state.billingStatus);
-      localStorage.setItem('sb_billing_grace_until', state.billingGraceUntil);
+      // AUTH GATE: Only persist to storage when logged in
+      if (isLoggedIn()) {
+          localStorage.setItem('sb_billing_status', state.billingStatus);
+          localStorage.setItem('sb_billing_grace_until', state.billingGraceUntil);
+      }
       if(typeof applyAccessLocks === 'function') applyAccessLocks();
   }
 
   function endBillingGrace() {
       state.billingStatus = 'past_due';
-      localStorage.setItem('sb_billing_status', 'past_due');
+      // AUTH GATE: Only persist to storage when logged in
+      if (isLoggedIn()) localStorage.setItem('sb_billing_status', 'past_due');
       if(typeof applyAccessLocks === 'function') applyAccessLocks();
   }
 
@@ -2714,8 +2785,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Persist subscription if this was a subscription purchase
       if (state.pendingUpgradeToAffair || purchaseType === 'sub') {
           state.subscribed = true;
-          localStorage.setItem('sb_subscribed', '1');
-          console.log('[ENTITLEMENT] Subscription persisted to localStorage');
+          // AUTH GATE: Only persist to storage when logged in
+          if (isLoggedIn()) {
+              localStorage.setItem('sb_subscribed', '1');
+              console.log('[ENTITLEMENT] Subscription persisted to localStorage');
+          }
       }
 
       // Resolve access from canonical source (reads from localStorage)
@@ -2840,16 +2914,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function makeStoryId(){
-    const existing = localStorage.getItem('sb_current_story_id');
-    if(existing) return existing;
+    // AUTH GATE: Only read/persist story ID when logged in
+    if (isLoggedIn()) {
+        const existing = localStorage.getItem('sb_current_story_id');
+        if(existing) return existing;
+    }
     const id = 'sb_' + Date.now().toString(36);
-    localStorage.setItem('sb_current_story_id', id);
+    if (isLoggedIn()) localStorage.setItem('sb_current_story_id', id);
     return id;
   }
 
   function getStoryPassKey(storyId){ return `sb_storypass_${storyId}`; }
   function hasStoryPass(storyId){ return localStorage.getItem(getStoryPassKey(storyId)) === '1'; }
-  function grantStoryPass(storyId){ if(storyId) localStorage.setItem(getStoryPassKey(storyId), '1'); }
+  // AUTH GATE: Only persist story pass when logged in
+  function grantStoryPass(storyId){ if(storyId && isLoggedIn()) localStorage.setItem(getStoryPassKey(storyId), '1'); }
   function clearCurrentStoryId(){ localStorage.removeItem('sb_current_story_id'); }
   // CORRECTIVE: IndexedDB for large story data when localStorage fails
   const STORY_DB_NAME = 'StoryBoundDB';
@@ -2912,10 +2990,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function hasSavedStory() {
+      // AUTH GATE: No saved story visible unless logged in
+      if (!isLoggedIn()) return false;
       return !!localStorage.getItem('sb_saved_story') || localStorage.getItem('sb_story_in_idb') === '1';
   }
 
   function saveStorySnapshot(){
+    // AUTH GATE: Persistence only allowed when logged in
+    if (!isLoggedIn()) return;
     const el = document.getElementById('storyText');
     if(!el) return;
     const currentWc = currentStoryWordCount();
@@ -2997,6 +3079,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   window.continueStory = async function(){
+    // AUTH GATE: Continue Story only available when logged in
+    if (!isLoggedIn()) {
+        showToast('Please login to continue a saved story.');
+        return;
+    }
     const data = await loadStoryData();
     if (!data) {
         showToast('No saved story found.');
@@ -3004,7 +3091,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
 
     state.storyId = data.storyId || makeStoryId();
-    localStorage.setItem('sb_current_story_id', state.storyId);
+    // AUTH GATE: Only persist when logged in (redundant but safe)
+    if (isLoggedIn()) localStorage.setItem('sb_current_story_id', state.storyId);
 
     if(data.stateSnapshot) Object.assign(state, data.stateSnapshot);
     state.sysPrompt = data.sysPrompt || state.sysPrompt;
@@ -5027,16 +5115,21 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // Persist subscription to localStorage (source of truth)
     state.subscribed = true;
-    localStorage.setItem('sb_subscribed', '1');
-
-    console.log('[ENTITLEMENT] Subscription stored in localStorage');
+    // AUTH GATE: Only persist to storage when logged in
+    if (isLoggedIn()) {
+        localStorage.setItem('sb_subscribed', '1');
+        console.log('[ENTITLEMENT] Subscription stored in localStorage');
+    }
 
     // Complete purchase - will resolve access from localStorage
     completePurchase();
   });
 
   $('payGodMode')?.addEventListener('click', () => {
-      localStorage.setItem('sb_god_mode_owned', '1');
+      // AUTH GATE: Only persist to storage when logged in
+      if (isLoggedIn()) {
+          localStorage.setItem('sb_god_mode_owned', '1');
+      }
       document.getElementById('payModal')?.classList.add('hidden');
       if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
           activateGodMode();
@@ -7885,13 +7978,26 @@ FATE CARD ADAPTATION (CRITICAL):
   initSelectionHandlers();
   initNavBindings();
   wireIntensityHandlers();
-  
-  // Initial Load
-  state.storyId = localStorage.getItem('sb_current_story_id');
-  state.subscribed = localStorage.getItem('sb_subscribed') === '1';
-  state.billingStatus = localStorage.getItem('sb_billing_status') || 'active';
-  
+
+  // AUTH GATE: Check login status and handle persistence accordingly
+  state.isLoggedIn = localStorage.getItem('sb_logged_in') === '1';
+
+  if (!state.isLoggedIn) {
+      // STATELESS MODE: Clear all persisted state when not logged in
+      // This ensures testing reloads do not retain stories, purchases, or progress
+      clearAnonymousState();
+      state.storyId = null;
+      state.subscribed = false;
+      state.billingStatus = 'active';
+  } else {
+      // LOGGED IN: Restore persisted state normally
+      state.storyId = localStorage.getItem('sb_current_story_id');
+      state.subscribed = localStorage.getItem('sb_subscribed') === '1';
+      state.billingStatus = localStorage.getItem('sb_billing_status') || 'active';
+  }
+
   syncTierFromAccess();
   updateContinueButtons();
+  renderBurgerMenu();
 
 })();
