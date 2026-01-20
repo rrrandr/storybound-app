@@ -2162,52 +2162,6 @@ textarea.fate-field {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   HISTORICAL ERA SUB-SELECTION
-   ═══════════════════════════════════════════════════════════════════ */
-
-.era-selection {
-    margin-top: -10px;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: rgba(255, 105, 180, 0.05);
-    border: 1px solid rgba(255, 105, 180, 0.2);
-    border-radius: 10px;
-    transition: opacity 0.3s ease, max-height 0.4s ease;
-}
-
-.era-selection.hidden {
-    display: none;
-}
-
-.era-selection .sub-title {
-    font-size: 1.4em;
-    margin: 0 0 10px;
-    border-top: none;
-    padding-top: 0;
-}
-
-/* Smaller cards for era selection - tighter spread */
-.era-selection .style-cards {
-    gap: 12px 14px;
-}
-.era-selection .style-cards .card {
-    width: 150px;
-}
-
-.era-selection .card {
-    padding: 10px 12px;
-}
-
-.era-selection .card h3 {
-    font-size: 0.95em;
-    margin-bottom: 3px;
-}
-
-.era-selection .card p {
-    font-size: 0.8em;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
    CANONICAL STORYBOUND CARD SYSTEM (SB-CARD)
    ONE card component used everywhere. 5×7 vertical aspect ratio.
    ═══════════════════════════════════════════════════════════════════ */
@@ -2546,6 +2500,92 @@ textarea.fate-field {
     padding: 2px 6px;
     border-radius: 8px;
     border: 1px solid rgba(201, 162, 39, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   WORLD ZOOM CONTENT - Flavor buttons and custom field inside zoomed card
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Container for zoom content inside card front */
+.sb-zoom-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+    width: 100%;
+    padding: 0 3px;
+    box-sizing: border-box;
+}
+
+/* Flavor buttons grid */
+.sb-zoom-flavors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    justify-content: center;
+}
+
+/* Individual flavor button */
+.sb-flavor-btn {
+    font-size: 5px;
+    padding: 2px 4px;
+    background: rgba(255, 105, 180, 0.15);
+    border: 1px solid rgba(255, 105, 180, 0.4);
+    border-radius: 3px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Crimson Text', serif;
+}
+
+.sb-flavor-btn:hover {
+    background: rgba(255, 105, 180, 0.3);
+    border-color: var(--pink);
+}
+
+.sb-flavor-btn.selected {
+    background: rgba(255, 105, 180, 0.5);
+    border-color: var(--hot);
+    color: white;
+    box-shadow: 0 0 4px rgba(255, 20, 147, 0.5);
+}
+
+/* Custom setting wrapper */
+.sb-zoom-custom {
+    margin-top: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sb-zoom-custom-label {
+    font-size: 5px;
+    color: var(--gold);
+    text-align: left;
+}
+
+.sb-zoom-custom-input {
+    font-size: 5px;
+    padding: 3px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 105, 180, 0.3);
+    border-radius: 3px;
+    color: var(--ink);
+    resize: none;
+    font-family: 'Crimson Text', serif;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.sb-zoom-custom-input:focus {
+    outline: none;
+    border-color: var(--pink);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.sb-zoom-custom-input::placeholder {
+    color: rgba(200, 200, 200, 0.4);
+    font-style: italic;
 }
 
 /* Incompatible/dimmed state */

@@ -3370,6 +3370,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
   });
 
+  // MODULE-SCOPE: Zoom state variables (accessible to all card systems)
+  let currentOpenCard = null;
+  let zoomBackdrop = null;
+
   function initSelectionHandlers(){
     state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"] };
 
@@ -3589,8 +3593,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // SELECTION CARD SYSTEM (5×7 Flip Cards)
     // ==========================================================================
 
-    let currentOpenCard = null;
-
     // Sub-options data for each World type
     // Modern: NO custom field | All others: HAS custom field
     const WORLD_SUB_OPTIONS = {
@@ -3692,9 +3694,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         state.picks.worldSubtype = HISTORICAL_ERA_REMAP[state.picks.worldSubtype];
       }
     }
-
-    // Zoom backdrop element (created once)
-    let zoomBackdrop = null;
 
     function initSelectionCardSystem() {
       // Create zoom backdrop (dims background when card is zoomed)
@@ -3877,7 +3876,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Handle World-specific updates
       if (grp === 'world') {
-        updateEraVisibility(val);
         updateWorldSubtypeVisibility(val, state.picks.tone);
         // Clear subtype if world changed
         if (state.picks.worldSubtype && !WORLD_SUB_OPTIONS[val]?.some(o => o.val === state.picks.worldSubtype)) {
@@ -3903,6 +3901,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Close zoomed card - returns to STATE 2 (face-up in grid)
     function closeZoomedCard() {
       if (!currentOpenCard) return;
+
+      // Remove any dynamically added zoom content
+      const zoomContent = currentOpenCard.querySelector('.sb-zoom-content');
+      if (zoomContent) {
+        zoomContent.remove();
+      }
 
       // Remove zoom transform from the card
       currentOpenCard.classList.remove('zoomed');
@@ -3945,6 +3949,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if (c !== card) c.classList.add('dimmed');
       });
 
+      // For World cards, add flavor content to the front face
+      if (grp === 'world') {
+        populateWorldZoomContent(card, val);
+      }
+
       // Calculate transform to center the card
       const rect = card.getBoundingClientRect();
       const cardCenterX = rect.left + rect.width / 2;
@@ -3967,6 +3976,90 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (zoomBackdrop) {
         zoomBackdrop.classList.add('active');
       }
+    }
+
+    // Populate World card zoom view with flavor buttons and optional custom field
+    function populateWorldZoomContent(card, worldVal) {
+      const frontFace = card.querySelector('.sb-card-front');
+      if (!frontFace) return;
+
+      // Remove any existing zoom content
+      const existing = frontFace.querySelector('.sb-zoom-content');
+      if (existing) existing.remove();
+
+      const flavors = WORLD_SUB_OPTIONS[worldVal] || [];
+      const hasCustomField = WORLDS_WITH_CUSTOM_FIELD.includes(worldVal);
+
+      // Create zoom content container
+      const zoomContent = document.createElement('div');
+      zoomContent.className = 'sb-zoom-content';
+
+      // Add flavor buttons if any
+      if (flavors.length > 0) {
+        const flavorGrid = document.createElement('div');
+        flavorGrid.className = 'sb-zoom-flavors';
+
+        flavors.forEach(flavor => {
+          const btn = document.createElement('button');
+          btn.className = 'sb-flavor-btn';
+          btn.textContent = flavor.label;
+          btn.dataset.val = flavor.val;
+
+          // Check if this flavor is currently selected
+          if (state.picks.worldSubtype === flavor.val) {
+            btn.classList.add('selected');
+          }
+
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Toggle selection
+            if (state.picks.worldSubtype === flavor.val) {
+              state.picks.worldSubtype = null;
+              btn.classList.remove('selected');
+            } else {
+              // Deselect others
+              flavorGrid.querySelectorAll('.sb-flavor-btn').forEach(b => b.classList.remove('selected'));
+              state.picks.worldSubtype = flavor.val;
+              btn.classList.add('selected');
+            }
+            updateSynopsisPanel();
+          });
+
+          flavorGrid.appendChild(btn);
+        });
+
+        zoomContent.appendChild(flavorGrid);
+      }
+
+      // Add custom text field if this world supports it
+      if (hasCustomField) {
+        const customWrapper = document.createElement('div');
+        customWrapper.className = 'sb-zoom-custom';
+
+        const customLabel = document.createElement('label');
+        customLabel.className = 'sb-zoom-custom-label';
+        customLabel.textContent = 'Custom Setting:';
+
+        const customInput = document.createElement('textarea');
+        customInput.className = 'sb-zoom-custom-input';
+        customInput.placeholder = 'Describe your custom world details...';
+        customInput.value = state.worldCustomText || '';
+        customInput.rows = 2;
+
+        customInput.addEventListener('input', (e) => {
+          state.worldCustomText = normalizeWorldCustom(e.target.value);
+        });
+
+        customInput.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+
+        customWrapper.appendChild(customLabel);
+        customWrapper.appendChild(customInput);
+        zoomContent.appendChild(customWrapper);
+      }
+
+      frontFace.appendChild(zoomContent);
     }
 
     function updateSelectionCardStates() {
@@ -4084,7 +4177,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               frontFace.appendChild(flavorCount);
             }
           }
-          updateEraVisibility(val);
           updateWorldSubtypeVisibility(val, state.picks.tone);
         }
 
@@ -4101,8 +4193,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
     });
 
-    // Initialize Era visibility based on initial world selection
-    updateEraVisibility(state.picks.world);
     // Initialize World Subtype visibility based on initial selections
     updateWorldSubtypeVisibility(state.picks.world, state.picks.tone);
     // Initialize synopsis panel
@@ -4184,20 +4274,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       clearTimeout(timeout);
       timeout = setTimeout(() => fn.apply(this, args), delay);
     };
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // ERA VISIBILITY - Show/hide Historical Era selection
-  // ═══════════════════════════════════════════════════════════════════
-  function updateEraVisibility(worldValue) {
-    const eraSection = document.getElementById('eraSelection');
-    if (!eraSection) return;
-
-    if (worldValue === 'Historical') {
-      eraSection.classList.remove('hidden');
-    } else {
-      eraSection.classList.add('hidden');
-    }
   }
 
   // ═══════════════════════════════════════════════════════════════════
