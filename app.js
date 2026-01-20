@@ -2007,7 +2007,7 @@ ANTI-HERO ENFORCEMENT:
           "Dream-walker", "Afro-Caribbean", "Changeling", "Latin American", "Forgotten royal line", "Middle Eastern"
       ],
       world: [
-          // Kernel-only hints for custom world setting
+          // Generic fallback (kept for compatibility)
           "Ancient empire ruins", "Clockwork city", "Floating islands", "Underground kingdom",
           "Endless library", "Frozen wasteland", "Desert oasis", "Living forest",
           "Crystal caverns", "Storm-wracked coast", "Sunken civilization", "Sky citadel",
@@ -2037,6 +2037,40 @@ ANTI-HERO ENFORCEMENT:
       archetypeModifier: [
           "Romantic", "Cloistered", "Rogue", "Dangerous", "Guardian",
           "Sovereign", "Enchanting", "Devoted", "Strategist"
+      ]
+  };
+
+  // PASS 9D: World-specific custom setting suggestions
+  const WORLD_CUSTOM_SUGGESTIONS = {
+      Modern: [
+          "Manhattan penthouse", "Small coastal town", "College campus", "Underground club scene",
+          "Tech startup hub", "Old Hollywood glamour", "Fashion district", "Hidden supernatural society",
+          "Political dynasty estate", "Art gallery scene", "Beach resort town", "Urban rooftop gardens"
+      ],
+      Historical: [
+          "Regency England ballroom", "Victorian London fog", "Renaissance Florence court", "Ancient Rome villa",
+          "Medieval castle keep", "Roaring Twenties speakeasy", "Gilded Age mansion", "Tudor court intrigue",
+          "Ming Dynasty palace", "French Revolution Paris", "Viking settlement", "Ottoman Empire harem"
+      ],
+      Fantasy: [
+          "Enchanted forest glade", "Floating sky citadel", "Dragon-ruled kingdom", "Fae court realm",
+          "Underwater mer-kingdom", "Crystal cave sanctuary", "Witch's hidden academy", "Cursed castle ruins",
+          "Living forest heart", "Elemental nexus", "Shadow realm border", "Phoenix empire capital"
+      ],
+      SciFi: [
+          "Space station colony", "Terraformed Mars city", "Generation ship deck", "Cyberpunk megacity",
+          "Alien embassy quarter", "Virtual reality nexus", "Clone facility lab", "Time loop station",
+          "Quantum research hub", "First contact zone", "Post-singularity haven", "Asteroid mining outpost"
+      ],
+      Dystopia: [
+          "Surveillance state tower", "Underground resistance base", "Corporate zone boundary", "Memory wipe facility",
+          "Rationing district", "Propaganda broadcast center", "Elite compound walls", "Rebel safe house",
+          "Black market tunnels", "Re-education center", "Border checkpoint", "Forbidden archive"
+      ],
+      PostApocalyptic: [
+          "Ruined city overgrowth", "Survivor settlement", "Irradiated wasteland edge", "Flooded coastal ruins",
+          "Bunker community", "Reclaimed factory", "Nomad caravan camp", "Plague quarantine zone",
+          "Fallen skyscraper shelter", "Clean water spring", "Tech scavenger den", "Nature-reclaimed highway"
       ]
   };
 
@@ -4177,8 +4211,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         const rotatingPlaceholder = document.createElement('div');
         rotatingPlaceholder.className = 'sb-zoom-rotating-placeholder';
 
-        // Build scrolling suggestion content
-        const suggestions = FATE_SUGGESTIONS.world || [];
+        // PASS 9D: Build scrolling suggestion content scoped to selected world
+        const suggestions = WORLD_CUSTOM_SUGGESTIONS[worldVal] || FATE_SUGGESTIONS.world || [];
         if (suggestions.length > 0) {
           const doubled = [...suggestions, ...suggestions];
           let html = '<span class="sb-zoom-placeholder-inner">';
@@ -5621,6 +5655,28 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     return weightedSelect(archetypes, weights);
   }
 
+  // PASS 9D: Generate fate ages with 95% within ±10 years, 5% edge cases
+  function getFateAges() {
+    // Base age for player character (22-35 typical range)
+    const playerAge = 22 + Math.floor(Math.random() * 14); // 22-35
+
+    // 95% of the time: partner age within ±10 years
+    // 5% of the time: allow larger gaps (edge cases)
+    const isEdgeCase = Math.random() < 0.05;
+
+    let partnerAge;
+    if (isEdgeCase) {
+      // Edge case: wider range (18-60)
+      partnerAge = 18 + Math.floor(Math.random() * 43);
+    } else {
+      // Normal case: within ±10 years of player, clamped to 18-60
+      const offset = Math.floor(Math.random() * 21) - 10; // -10 to +10
+      partnerAge = Math.max(18, Math.min(60, playerAge + offset));
+    }
+
+    return { playerAge, partnerAge };
+  }
+
   // Populate all UI selections from fate choices
   function populateFateSelections(fateChoices) {
     // Set player character
@@ -5628,10 +5684,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     $('playerPronouns').value = 'She/Her';
     $('playerNameInput').value = fateChoices.playerName;
 
+    // PASS 9D: Set ages if provided
+    if (fateChoices.playerAge && $('playerAgeInput')) {
+      $('playerAgeInput').value = fateChoices.playerAge;
+    }
+
     // Set love interest
     $('loveInterestGender').value = 'Male';
     $('lovePronouns').value = 'He/Him';
     $('partnerNameInput').value = fateChoices.partnerName;
+
+    // PASS 9D: Set partner age if provided
+    if (fateChoices.partnerAge && $('partnerAgeInput')) {
+      $('partnerAgeInput').value = fateChoices.partnerAge;
+    }
 
     // Update state directly
     state.gender = 'Female';
@@ -5678,7 +5744,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
   }
 
-  // Initialize Fate Destiny Card click handler
+  // PASS 9D: Fate Destiny Card click handler
+  // FIX: Fate must NOT create a parallel generation path.
+  // It must populate selections then call the SAME Begin Story handler.
   $('fateDestinyCard')?.addEventListener('click', async () => {
     const fateCard = $('fateDestinyCard');
     if (!fateCard || fateCard.classList.contains('flipped')) return;
@@ -5686,16 +5754,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // 1. Flip the card immediately
     fateCard.classList.add('flipped');
 
-    // 2. Show loading screen immediately
-    startLoading("Destiny unfolds...", STORY_LOADING_MESSAGES);
-
-    // Small delay for card flip animation
+    // 2. Small delay for card flip animation (no startLoading here - beginBtn will handle it)
     await new Promise(r => setTimeout(r, 400));
 
-    // 3. Generate fate choices
+    // 3. Generate fate choices including ages
+    const ages = getFateAges();
     const fateChoices = {
       playerName: FATE_FEMALE_NAMES[Math.floor(Math.random() * FATE_FEMALE_NAMES.length)],
       partnerName: FATE_MALE_NAMES[Math.floor(Math.random() * FATE_MALE_NAMES.length)],
+      playerAge: ages.playerAge,
+      partnerAge: ages.partnerAge,
       world: getFateWorld(),
       tone: getFateTone(),
       dynamic: getFateDynamic(),
@@ -5709,14 +5777,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     fateChoices.worldFlavor = getFateFlavor(fateChoices.world);
     fateChoices.genre = getFateGenre(fateChoices.world);
 
-    // 4. Populate all selections
+    // 4. Populate all selections synchronously
     populateFateSelections(fateChoices);
 
-    // 5. Trigger story begin (reusing the normal flow)
-    // First set a flag so beginBtn knows it's from Fate
+    // 5. Set fate flag then trigger the SAME Begin Story handler
+    // No duplicate async chains - all generation goes through beginBtn
     state._fateTriggered = true;
 
-    // Trigger the begin button click handler
+    // Trigger the begin button click handler (the ONLY generation path)
     $('beginBtn')?.click();
   });
 
@@ -5741,6 +5809,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
     const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
     const lPro = $('customLovePronouns')?.value.trim() || $('lovePronouns').value;
+    // PASS 9D: Capture ages from form fields
+    const pAge = $('playerAgeInput')?.value.trim() || '';
+    const lAge = $('partnerAgeInput')?.value.trim() || '';
 
     // Early validation with pre-normalization values
     const earlyArchetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
@@ -5992,8 +6063,8 @@ You are writing a story with the following 4-axis configuration:
 - POV: ${state.picks.pov || 'First'}
 
 
-    Protagonist: ${pKernel} (${pGen}, ${pPro}).
-    Love Interest: ${lKernel} (${lGen}, ${lPro}).
+    Protagonist: ${pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
+    Love Interest: ${lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
 
     ${buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen)}
 
@@ -6079,22 +6150,30 @@ The opening must feel intentional and specific, not archetypal or templated.`;
 
     // FATE STUMBLED DIAGNOSTIC - Structured payload logging
     // RUNTIME NORMALIZATION: Ancestry/DSP inputs flow through ChatGPT normalization layer
+    // PASS 9D FIX: Wrap ancestry normalization in try/catch to prevent hang
     const rawAncestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
     const rawAncestryLI = $('ancestryInputLI')?.value.trim() || '';
     const worldContext = state.picks?.world ? [state.picks.world] : [];
-    const ancestryPlayerNorm = await callNormalizationLayer({
-        axis: 'dsp',
-        user_text: rawAncestryPlayer,
-        context_signals: worldContext
-    });
-    const ancestryLINorm = await callNormalizationLayer({
-        axis: 'dsp',
-        user_text: rawAncestryLI,
-        context_signals: worldContext
-    });
-    // Reassign with normalized values (variables declared earlier with let)
-    ancestryPlayer = ancestryPlayerNorm.normalized_text || rawAncestryPlayer;
-    ancestryLI = ancestryLINorm.normalized_text || rawAncestryLI;
+    try {
+        const ancestryPlayerNorm = await callNormalizationLayer({
+            axis: 'dsp',
+            user_text: rawAncestryPlayer,
+            context_signals: worldContext
+        });
+        const ancestryLINorm = await callNormalizationLayer({
+            axis: 'dsp',
+            user_text: rawAncestryLI,
+            context_signals: worldContext
+        });
+        // Reassign with normalized values (variables declared earlier with let)
+        ancestryPlayer = ancestryPlayerNorm.normalized_text || rawAncestryPlayer;
+        ancestryLI = ancestryLINorm.normalized_text || rawAncestryLI;
+    } catch (ancestryNormError) {
+        console.error('[ANCESTRY NORMALIZATION ERROR]', ancestryNormError);
+        // Fallback: Use raw ancestry values if normalization fails
+        ancestryPlayer = rawAncestryPlayer;
+        ancestryLI = rawAncestryLI;
+    }
     archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
 
     // Determine unlock tier (reassign)

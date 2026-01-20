@@ -355,6 +355,10 @@
                     <label>Name</label>
                     <input id="playerNameInput" type="text" placeholder="e.g. Elara Vance">
                 </div>
+                <div class="character-field character-field-age">
+                    <label>Age</label>
+                    <input id="playerAgeInput" type="number" min="18" max="99" placeholder="25">
+                </div>
                 <div class="character-field character-field-gender">
                     <label>Gender</label>
                     <select id="playerGender" onchange="checkCustom(this, 'customPlayerGender')">
@@ -402,6 +406,10 @@
                 <div class="character-field character-field-name">
                     <label>Name</label>
                     <input id="partnerNameInput" type="text" placeholder="e.g. Lord Blackwood">
+                </div>
+                <div class="character-field character-field-age">
+                    <label>Age</label>
+                    <input id="partnerAgeInput" type="number" min="18" max="99" placeholder="28">
                 </div>
                 <div class="character-field character-field-gender">
                     <label>Gender</label>
@@ -513,31 +521,31 @@
       <div class="sb-card selected flipped" data-grp="pov" data-val="First">
         <div class="sb-card-inner">
           <div class="sb-card-face sb-card-back"><span class="sb-card-title">1st Person (I)</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">1st Person (I)</span><span class="sb-card-desc">Intimate, confessional, inside my own pulse.</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">1st Person (I)</span><span class="sb-card-desc">"I shouldn't have gone back—but my hand was already on the door."</span></div>
         </div>
       </div>
       <div class="sb-card" data-grp="pov" data-val="Second">
         <div class="sb-card-inner">
           <div class="sb-card-face sb-card-back"><span class="sb-card-title">2nd Person (You)</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">2nd Person (You)</span><span class="sb-card-desc">Every glance, every silence, happening to you.</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">2nd Person (You)</span><span class="sb-card-desc">"You hesitate, knowing once you knock, nothing will be the same."</span></div>
         </div>
       </div>
       <div class="sb-card" data-grp="pov" data-val="Third">
         <div class="sb-card-inner">
           <div class="sb-card-face sb-card-back"><span class="sb-card-title">3rd Person (They)</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">3rd Person (They)</span><span class="sb-card-desc">Close enough to feel, distant enough to see.</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">3rd Person (They)</span><span class="sb-card-desc">"We watch her falter at the threshold, pride warring with need."</span></div>
         </div>
       </div>
       <div class="sb-card" data-grp="pov" data-val="Fourth">
         <div class="sb-card-inner">
           <div class="sb-card-face sb-card-back"><span class="sb-card-title">4th Person (We)</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">4th Person (We)</span><span class="sb-card-desc">Witnesses to the inevitable.</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">4th Person (We)</span><span class="sb-card-desc">"We feel the moment tighten, as if the room itself is holding its breath."</span></div>
         </div>
       </div>
       <div class="sb-card" data-grp="pov" data-val="Fifth">
         <div class="sb-card-inner">
           <div class="sb-card-face sb-card-back"><span class="sb-card-title">5th Person (Author)</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The Author has big plans for you…"</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The Author has big plans for you, starting with a knock on the door..."</span></div>
         </div>
       </div>
     </div>
