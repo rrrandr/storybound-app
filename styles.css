@@ -1,14 +1,28 @@
 /* GLOBAL VARS */
-:root { 
-    --bg1: #0a001f; --bg2: #2a0033; --pink: #ff69b4; --hot: #ff1493; --gold: #ffd700; --ink: #f0e6ff; --panel: rgba(20,0,40,.6); 
+:root {
+    --bg1: #0a001f; --bg2: #2a0033; --pink: #ff69b4; --hot: #ff1493; --gold: #ffd700; --ink: #f0e6ff; --panel: rgba(20,0,40,.6);
     --btn-bg: linear-gradient(145deg, #8b008b, var(--hot)); --btn-txt: var(--gold);
     --p1-color: #B0E0E6; --p2-color: #FFB6C1;
-    --font-main: 'Lora', serif; 
+    --font-main: 'Lora', serif;
     --font-story: 'Lora', serif;
     --story-size: 1.15em;
-    --line-height: 1.8; 
+    --line-height: 1.8;
     --letter-spacing: 0.02em;
     --cursor-url: url('cursor-dollar-plane-64.png');
+    /* CARD GRID CANONICAL VARIABLES */
+    --card-gap: 12px;
+    --card-width: 200px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CARD GRID - SINGLE CANONICAL RULE
+   All card grids use this one rule. No duplicates. No overrides.
+   ═══════════════════════════════════════════════════════════════════ */
+.sb-grid {
+    display: grid;
+    gap: var(--card-gap);
+    justify-content: center;
+    grid-template-columns: repeat(auto-fit, minmax(var(--card-width), max-content));
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1705,6 +1719,8 @@ textarea.fate-field {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    width: 95%;
+    margin: 0 auto;
 }
 
 .dynamic-group {
@@ -1816,22 +1832,3 @@ textarea.fate-field {
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   RELATIONSHIP DYNAMICS - WRAPPER PURGE FIX
-   Inner .style-cards grids must flow without constraining wrappers
-   Do NOT modify grid-template, breakpoints, or column rules
-   ═══════════════════════════════════════════════════════════════════ */
-
-.dynamic-grouped {
-    width: 95%;
-    margin: 0 auto;
-}
-
-.dynamic-group {
-    width: 100%;
-}
-
-.dynamic-grouped .dynamic-group .style-cards {
-    width: 100%;
-    margin: 0;
-}

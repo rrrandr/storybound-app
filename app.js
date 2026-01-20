@@ -4362,13 +4362,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       return errors;
   }
 
-  // --- BEGIN STORY FROM UI (UNIFIED ENTRY POINT) ---
+  // --- BEGIN STORY FROM DESTINY (UNIFIED ENTRY POINT) ---
   // Both Begin Story button and Top Destiny card call this SAME function.
   // source param: 'beginBtn' | 'destinyTop' - for logging/analytics only
-  async function beginStoryFromUI(source = 'beginBtn') {
-    console.log(`[DESTINY] beginStoryFromUI called from: ${source}`);
+  async function beginStoryFromDestiny(source = 'beginBtn') {
+    console.log(`[DESTINY] beginStoryFromDestiny called from: ${source}`);
     if (source === 'destinyTop') {
-      console.log('[DESTINY] top clicked -> beginStoryFromUI');
+      console.log('[DESTINY] top clicked -> beginStoryFromDestiny');
     }
     // Comprehensive validation before proceeding
     const validationErrors = validateBeginStory();
@@ -4938,24 +4938,24 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
     }
   }
 
-  // --- DESTINY TOP CARD - WIRED TO beginStoryFromUI ---
+  // --- DESTINY TOP CARD - WIRED TO beginStoryFromDestiny ---
   const destinyTopEl = document.getElementById('destinyTopCard');
   if (destinyTopEl) {
     destinyTopEl.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      beginStoryFromUI('destinyTop');
+      beginStoryFromDestiny('destinyTop');
     });
   } else {
     console.error('[DESTINY] destinyTopCard element not found in DOM');
   }
 
-  // --- BEGIN STORY BUTTON - WIRED TO beginStoryFromUI ---
+  // --- BEGIN STORY BUTTON - WIRED TO beginStoryFromDestiny ---
   const beginBtnEl = $('beginBtn');
   if (beginBtnEl) {
     beginBtnEl.addEventListener('click', (e) => {
       e.preventDefault();
-      beginStoryFromUI('beginBtn');
+      beginStoryFromDestiny('beginBtn');
     });
   } else {
     console.error('[BEGIN] beginBtn element not found in DOM');
