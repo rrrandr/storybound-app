@@ -1557,6 +1557,24 @@ textarea.fate-field {
     position: relative;
 }
 
+/* PASS 9D: Age field - compact numeric input */
+.character-field-age {
+    flex: 0 0 60px;
+    min-width: 50px;
+    max-width: 70px;
+}
+
+.character-field-age input {
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.character-field-age input::-webkit-outer-spin-button,
+.character-field-age input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 .custom-gender-input {
     margin-top: 5px;
     padding: 8px 10px !important;
@@ -1595,9 +1613,15 @@ textarea.fate-field {
     .character-field-name,
     .character-field-gender,
     .character-field-pronouns,
-    .character-field-ancestry {
+    .character-field-ancestry,
+    .character-field-age {
         flex: none;
         min-width: auto;
+    }
+
+    .character-field-age {
+        max-width: none;
+        width: 100%;
     }
 }
 
@@ -2386,44 +2410,46 @@ textarea.fate-field {
    - 3 cols: 332px, 2 cols: 216px
    - At narrow: cards=70px, gap=8px, 2 cols: 148px
 */
+/* PASS 9D: Widened grids to match Veto/Quill horizontal bounds */
 .sb-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
     justify-content: center; /* CENTER EACH ROW */
     align-content: start;
-    max-width: min(95vw, 680px); /* Default: 6 cols max */
+    width: 95%;
+    max-width: none; /* Remove constraint - match Veto/Quill bounds */
     margin-inline: auto;
     margin-block: 20px;
 }
 
-/* Size-specific grids - explicit column counts via max-width */
-.sb-grid-4 { max-width: min(95vw, 448px); } /* 4 cols: 4*100 + 3*16 = 448px */
-.sb-grid-5 { max-width: min(95vw, 564px); } /* 5 cols: 5*100 + 4*16 = 564px */
-.sb-grid-6 { max-width: min(95vw, 680px); } /* 6 cols: 6*100 + 5*16 = 680px */
-.sb-grid-9 { max-width: min(95vw, 564px); } /* 5 cols wide for 9 cards (5+4) */
-
-/* Medium screens: DISCRETE step to max 3 columns (or 2 for small grids) */
-@media (max-width: 700px) {
-    .sb-grid {
-        max-width: min(95vw, 332px); /* 3 cols: 3*100 + 2*16 = 332px */
-    }
-    /* 4-card grids go to 2 cols at medium */
-    .sb-grid-4 { max-width: min(95vw, 216px); } /* 2 cols: 2*100 + 1*16 = 216px */
-    /* 5, 6, 9 card grids stay at 3 cols */
-    .sb-grid-5,
-    .sb-grid-6,
-    .sb-grid-9 { max-width: min(95vw, 332px); }
+/* Size-specific grids - no longer constrained by fixed max-width */
+.sb-grid-4, .sb-grid-5, .sb-grid-6, .sb-grid-9 {
+    width: 95%;
+    max-width: none;
 }
 
-/* Narrow screens: DISCRETE step to max 2 columns, cards shrink here */
+/* Medium screens: cards stay 100px, grid stays full width */
+@media (max-width: 700px) {
+    .sb-grid,
+    .sb-grid-4,
+    .sb-grid-5,
+    .sb-grid-6,
+    .sb-grid-9 {
+        width: 95%;
+        max-width: none;
+    }
+}
+
+/* Narrow screens: cards shrink to 70px */
 @media (max-width: 400px) {
     .sb-grid,
     .sb-grid-4,
     .sb-grid-5,
     .sb-grid-6,
     .sb-grid-9 {
-        max-width: min(95vw, 148px); /* 2 cols: 2*70 + 1*8 = 148px */
+        width: 95%;
+        max-width: none;
         gap: 8px;
     }
 }
