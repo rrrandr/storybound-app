@@ -872,9 +872,15 @@ textarea.fate-field {
 }
 .rotating-placeholder.hidden { display: none; }
 
-/* ANCESTRY INPUT FIX - prevent vertical text clipping */
+/* ANCESTRY INPUT FIX - prevent vertical text clipping and right-side overflow */
 .fate-input-wrapper { position: relative; overflow: visible; }
 #ancestryInputPlayer, #ancestryInputLI { padding: 12px 14px; line-height: 1.4; }
+
+/* Ancestry placeholder alignment - overlay width matches input width */
+.fate-input-wrapper .rotating-placeholder[data-for="ancestryInputPlayer"],
+.fate-input-wrapper .rotating-placeholder[data-for="ancestryInputLI"] {
+    right: 14px; /* Match input padding, no reserved button space */
+}
 
 .rotating-placeholder-inner {
     display: inline-block;
@@ -1719,8 +1725,6 @@ textarea.fate-field {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    width: 95%;
-    margin: 0 auto;
 }
 
 .dynamic-group {

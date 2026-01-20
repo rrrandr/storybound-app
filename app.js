@@ -4380,16 +4380,28 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // RUNTIME NORMALIZATION: Character names flow through ChatGPT normalization layer
     const rawPlayerName = $('playerNameInput').value.trim() || "The Protagonist";
     const rawPartnerName = $('partnerNameInput').value.trim() || "The Love Interest";
+
+    // Check for cancel before name normalization
+    if (isLoadingCancelled()) return;
+
     const playerNorm = await callNormalizationLayer({
         axis: 'character',
         user_text: rawPlayerName,
         context_signals: state.picks?.world || []
     });
+
+    // Check for cancel after player name normalization
+    if (isLoadingCancelled()) return;
+
     const partnerNorm = await callNormalizationLayer({
         axis: 'character',
         user_text: rawPartnerName,
         context_signals: state.picks?.world || []
     });
+
+    // Check for cancel after partner name normalization
+    if (isLoadingCancelled()) return;
+
     const pName = playerNorm.normalized_text || rawPlayerName;
     const lName = partnerNorm.normalized_text || rawPartnerName;
 
@@ -4708,16 +4720,28 @@ The opening must feel intentional and specific, not archetypal or templated.`;
     const rawAncestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
     const rawAncestryLI = $('ancestryInputLI')?.value.trim() || '';
     const worldContext = state.picks?.world ? [state.picks.world] : [];
+
+    // Check for cancel before normalization
+    if (isLoadingCancelled()) return;
+
     const ancestryPlayerNorm = await callNormalizationLayer({
         axis: 'dsp',
         user_text: rawAncestryPlayer,
         context_signals: worldContext
     });
+
+    // Check for cancel after first normalization
+    if (isLoadingCancelled()) return;
+
     const ancestryLINorm = await callNormalizationLayer({
         axis: 'dsp',
         user_text: rawAncestryLI,
         context_signals: worldContext
     });
+
+    // Check for cancel after second normalization
+    if (isLoadingCancelled()) return;
+
     // Reassign with normalized values (variables declared earlier with let)
     ancestryPlayer = ancestryPlayerNorm.normalized_text || rawAncestryPlayer;
     ancestryLI = ancestryLINorm.normalized_text || rawAncestryLI;
@@ -4823,10 +4847,16 @@ The opening must feel intentional and specific, not archetypal or templated.`;
     console.log('STORYBOUND VALIDATION PASSED - Proceeding to model call');
 
     try {
+        // Check for cancel before API call
+        if (isLoadingCancelled()) return;
+
         const text = await callChat([
             {role:'system', content: state.sysPrompt},
             {role:'user', content: introPrompt}
         ]);
+
+        // Check for cancel after API call
+        if (isLoadingCancelled()) return;
 
         const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
 
@@ -4839,6 +4869,9 @@ QUALITY RULES:
 - Good examples: "What the Sky Took", "The Wanting", "Before You Burned"
 
 Return ONLY the title, no quotes or explanation:\n${text}`}]);
+
+        // Check for cancel after title generation
+        if (isLoadingCancelled()) return;
 
         // SYNOPSIS GENERATION RULE (AUTHORITATIVE)
         const synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
@@ -4868,6 +4901,9 @@ The reader should think: "I want to see what happens when this desire meets resi
 NOT: "This sounds pretty."
 
 Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
+
+        // Check for cancel after synopsis generation
+        if (isLoadingCancelled()) return;
 
         // CORRECTIVE: Set title and synopsis first
         const titleEl = document.getElementById('storyTitle');
