@@ -783,7 +783,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .intensity-btn { position: relative; transition: all 0.3s; }
 
 /* SAFETY & CONSENT UI */
-.consent-controls { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin: 15px auto; width: 95%; max-width: 600px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-sizing: border-box; }
+.consent-controls { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin: 15px auto; width: 95%; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-sizing: border-box; }
 .consent-controls.horizontal { flex-direction: row; justify-content: center; align-items: center; flex-wrap: wrap; }
 .consent-controls label { display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--ink); font-size: 0.9em; }
 .boundary-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; width: 95%; justify-content: center; }
@@ -1537,23 +1537,25 @@ textarea.fate-field {
 }
 
 .character-field-name {
-    flex: 1.5;
+    flex: 3;
     min-width: 140px;
 }
 
 .character-field-gender {
-    flex: 1;
-    min-width: 100px;
+    flex: 0 0 90px;
+    min-width: 80px;
+    max-width: 100px;
 }
 
 .character-field-pronouns {
-    flex: 1;
-    min-width: 100px;
+    flex: 0 0 90px;
+    min-width: 80px;
+    max-width: 100px;
 }
 
 .character-field-ancestry {
-    flex: 1.2;
-    min-width: 120px;
+    flex: 2;
+    min-width: 140px;
     position: relative;
 }
 
@@ -2357,6 +2359,8 @@ textarea.fate-field {
     flex-direction: column;
     gap: 20px;
     align-items: center;
+    width: 95%;
+    margin-inline: auto;
 }
 
 .dynamic-group {
