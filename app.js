@@ -1125,9 +1125,9 @@ For veto/quill/god_mode:
 
   function getArchetypeSectionTitle(loveInterestGender) {
       const g = (loveInterestGender || '').toLowerCase();
-      if (g === 'male') return 'Shape Your Storybeau';
-      if (g === 'female') return 'Shape Your Storybelle';
-      return 'Shape Your Storyboo';
+      if (g === 'male') return 'Archetype Storybeau';
+      if (g === 'female') return 'Archetype Storybelle';
+      return 'Archetype Storyboo';
   }
 
   function validateArchetypeSelection(primaryId, modifierId) {
@@ -2246,33 +2246,69 @@ ANTI-HERO ENFORCEMENT:
       // Initialize destiny flip cards (Quill/Veto)
       initDestinyFlipCards();
 
-      // Initialize ancestry flip cards
-      initAncestryFlipCards();
-
-      // Update LI ancestry label based on gender
-      updateAncestryLILabel();
+      // Initialize character destiny cards (name + ancestry per character)
+      initCharacterDestinyCards();
   }
 
-  function initAncestryFlipCards() {
-      // Ancestry flip cards - flip in place + insert random suggestion
-      document.querySelectorAll('.ancestry-flip-card').forEach(flipCard => {
-          flipCard.addEventListener('click', () => {
-              const targetId = flipCard.dataset.target;
-              const input = document.getElementById(targetId);
+  function initCharacterDestinyCards() {
+      // Character destiny cards - fill name + ancestry for each character
+      document.querySelectorAll('.character-destiny-card').forEach(card => {
+          card.addEventListener('click', () => {
+              const character = card.dataset.character; // 'player' or 'loveInterest'
 
               // Flip the card
-              flipCard.classList.toggle('flipped');
+              card.classList.toggle('flipped');
 
-              // Insert random suggestion from ancestry pool
-              if (input) {
-                  const suggestion = getRandomSuggestion('ancestry');
-                  input.value = suggestion;
-                  // Hide placeholder
-                  const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
-                  if (placeholder) placeholder.classList.add('hidden');
+              if (character === 'player') {
+                  // Get player gender to select appropriate name list
+                  const playerGender = document.getElementById('playerGender')?.value || 'Female';
+                  const nameList = getNameListForGender(playerGender);
+                  const randomName = nameList[Math.floor(Math.random() * nameList.length)];
+                  const randomAncestry = getRandomSuggestion('ancestry');
+
+                  // Fill name
+                  const nameInput = document.getElementById('playerNameInput');
+                  if (nameInput) nameInput.value = randomName;
+
+                  // Fill ancestry
+                  const ancestryInput = document.getElementById('ancestryInputPlayer');
+                  if (ancestryInput) {
+                      ancestryInput.value = randomAncestry;
+                      // Hide placeholder
+                      const placeholder = document.querySelector('.rotating-placeholder[data-for="ancestryInputPlayer"]');
+                      if (placeholder) placeholder.classList.add('hidden');
+                  }
+              } else if (character === 'loveInterest') {
+                  // Get love interest gender to select appropriate name list
+                  const liGender = document.getElementById('loveInterestGender')?.value || 'Male';
+                  const nameList = getNameListForGender(liGender);
+                  const randomName = nameList[Math.floor(Math.random() * nameList.length)];
+                  const randomAncestry = getRandomSuggestion('ancestry');
+
+                  // Fill name
+                  const nameInput = document.getElementById('partnerNameInput');
+                  if (nameInput) nameInput.value = randomName;
+
+                  // Fill ancestry
+                  const ancestryInput = document.getElementById('ancestryInputLI');
+                  if (ancestryInput) {
+                      ancestryInput.value = randomAncestry;
+                      // Hide placeholder
+                      const placeholder = document.querySelector('.rotating-placeholder[data-for="ancestryInputLI"]');
+                      if (placeholder) placeholder.classList.add('hidden');
+                  }
               }
           });
       });
+  }
+
+  // Helper to get appropriate name list based on gender
+  function getNameListForGender(gender) {
+      const g = (gender || '').toLowerCase();
+      if (g === 'female') return FATE_FEMALE_NAMES;
+      if (g === 'male') return FATE_MALE_NAMES;
+      // Non-Binary or Custom: randomly pick from either list
+      return Math.random() < 0.5 ? FATE_FEMALE_NAMES : FATE_MALE_NAMES;
   }
 
   function initDestinyFlipCards() {
@@ -2302,15 +2338,6 @@ ANTI-HERO ENFORCEMENT:
               }
           });
       });
-  }
-
-  function updateAncestryLILabel() {
-      const label = document.getElementById('ancestryLabelLI');
-      if (!label) return;
-      const liGender = document.getElementById('loveInterestGender')?.value || 'Male';
-      if (liGender === 'Male') label.textContent = "Your Storybeau's";
-      else if (liGender === 'Female') label.textContent = "Your Storybelle's";
-      else label.textContent = "Your Storyboo's";
   }
 
   function updateQuillUI() {
@@ -5029,7 +5056,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       function onGenderChange() {
           updateArchetypeSectionTitle();
-          updateAncestryLILabel();
       }
 
       if (genderSelect && genderSelect.dataset.archetypeBound !== '1') {
