@@ -3896,13 +3896,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Update synopsis
       updateSynopsisPanel();
 
-      // Update button text
-      const selectBtn = document.querySelector('.zoomed-card .select-btn');
-      if (selectBtn) {
-        selectBtn.textContent = 'Selected ✓';
-        selectBtn.classList.add('is-selected');
-      }
-
       // Close after brief delay
       setTimeout(() => closeSelectionCard(), 300);
     }
