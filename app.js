@@ -486,9 +486,8 @@ window.config = window.config || {
       space_opera: 'Star-Spanning Civilizations',
       hard_scifi: 'Future Built on Science',
       cyberpunk: 'Neon Futures',
-      post_human: 'Post-Human Futures',
+      post_human: 'Post-Human',
       alien_contact: 'First Contact',
-      military_scifi: 'War Among the Stars',
       abundance_collapse: 'Abundance or Collapse',
       // Fantasy Flavors (invented magical worlds, not mythology)
       enchanted_realms: 'Enchanted Realms',
@@ -965,8 +964,7 @@ For veto/quill/god_mode:
               cyberpunk: ['neon', 'corporate', 'hacker', 'dystopia', 'augment', 'cyber', 'rain', 'noir'],
               post_human: ['transcend', 'upload', 'singularity', 'evolved', 'posthuman', 'ai consciousness'],
               alien_contact: ['alien', 'first contact', 'extraterrestrial', 'xeno', 'encounter'],
-              military_scifi: ['military', 'marine', 'soldier', 'war', 'combat', 'fleet battle', 'duty'],
-              post_scarcity: ['utopia', 'abundance', 'collapse', 'post-scarcity', 'automated', 'end of work']
+              abundance_collapse: ['utopia', 'abundance', 'collapse', 'post-scarcity', 'automated', 'end of work']
           },
           fantasy: {
               high_fantasy: ['magic', 'elf', 'elves', 'quest', 'enchant', 'fairy', 'mystical', 'wizard', 'kingdom'],
@@ -1928,6 +1926,14 @@ ANTI-HERO ENFORCEMENT:
           "Dusk Walker", "Mediterranean", "Moon-kissed", "Slavic", "Fire-veined", "Indian",
           "Void-touched", "Pacific Islander", "Iron-blooded", "Southeast Asian", "Sylvan", "Chinese",
           "Dream-walker", "Afro-Caribbean", "Changeling", "Latin American", "Forgotten royal line", "Middle Eastern"
+      ],
+      world: [
+          // Kernel-only hints for custom world setting
+          "Ancient empire ruins", "Clockwork city", "Floating islands", "Underground kingdom",
+          "Endless library", "Frozen wasteland", "Desert oasis", "Living forest",
+          "Crystal caverns", "Storm-wracked coast", "Sunken civilization", "Sky citadel",
+          "Volcanic archipelago", "Haunted frontier", "Merchant crossroads", "Border fortress",
+          "Hidden valley", "Plague quarantine", "Orbital station", "Dream realm"
       ],
       veto: [
           "No humiliation", "No betrayal", 'No "M\'Lady"', "No tattoos", "No scars",
@@ -3622,9 +3628,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         { val: 'galactic_civilizations', label: 'Galactic Civilizations' },
         { val: 'future_of_science', label: 'Future of Science' },
         { val: 'cyberpunk', label: 'Cyberpunk' },
-        { val: 'post_human_futures', label: 'Post-Human Futures' },
+        { val: 'post_human', label: 'Post-Human' },
         { val: 'first_contact', label: 'First Contact' },
-        { val: 'war_among_stars', label: 'War Among the Stars' },
         { val: 'simulation', label: 'Simulation' }
       ],
       Dystopia: [
@@ -4040,23 +4045,70 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         customLabel.className = 'sb-zoom-custom-label';
         customLabel.textContent = 'Custom Setting:';
 
+        // Create input wrapper for rotating placeholder
+        const inputWrapper = document.createElement('div');
+        inputWrapper.className = 'sb-zoom-custom-wrapper';
+
         const customInput = document.createElement('textarea');
         customInput.className = 'sb-zoom-custom-input';
-        customInput.placeholder = 'Describe your custom world details...';
+        customInput.id = 'worldCustomInput-' + Date.now(); // Unique ID
         customInput.value = state.worldCustomText || '';
         customInput.rows = 2;
 
+        // Create rotating placeholder
+        const rotatingPlaceholder = document.createElement('div');
+        rotatingPlaceholder.className = 'sb-zoom-rotating-placeholder';
+
+        // Build scrolling suggestion content
+        const suggestions = FATE_SUGGESTIONS.world || [];
+        if (suggestions.length > 0) {
+          const doubled = [...suggestions, ...suggestions];
+          let html = '<span class="sb-zoom-placeholder-inner">';
+          doubled.forEach((s, i) => {
+            html += `<span class="suggestion">${s}</span>`;
+            if (i < doubled.length - 1) html += '<span class="separator">•</span>';
+          });
+          html += '</span>';
+          rotatingPlaceholder.innerHTML = html;
+        }
+
+        // Show/hide placeholder based on input content
+        const updatePlaceholderVisibility = () => {
+          if (customInput.value.trim().length > 0) {
+            rotatingPlaceholder.classList.add('hidden');
+          } else {
+            rotatingPlaceholder.classList.remove('hidden');
+          }
+        };
+
         customInput.addEventListener('input', (e) => {
           state.worldCustomText = normalizeWorldCustom(e.target.value);
+          updatePlaceholderVisibility();
         });
 
         customInput.addEventListener('click', (e) => {
           e.stopPropagation();
         });
 
+        customInput.addEventListener('focus', () => {
+          const inner = rotatingPlaceholder.querySelector('.sb-zoom-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'paused';
+        });
+
+        customInput.addEventListener('blur', () => {
+          const inner = rotatingPlaceholder.querySelector('.sb-zoom-placeholder-inner');
+          if (inner) inner.style.animationPlayState = 'running';
+          updatePlaceholderVisibility();
+        });
+
+        inputWrapper.appendChild(customInput);
+        inputWrapper.appendChild(rotatingPlaceholder);
         customWrapper.appendChild(customLabel);
-        customWrapper.appendChild(customInput);
+        customWrapper.appendChild(inputWrapper);
         zoomContent.appendChild(customWrapper);
+
+        // Initialize visibility
+        updatePlaceholderVisibility();
       }
 
       frontFace.appendChild(zoomContent);
@@ -4492,7 +4544,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       cyberpunk: 'a neon-lit cyberpunk',
       post_human: 'a transcendent',
       alien_contact: 'an alien-touched',
-      military_scifi: 'a military',
       abundance_collapse: 'a post-scarcity',
       // Fantasy subtypes
       enchanted_realms: 'a magical',
