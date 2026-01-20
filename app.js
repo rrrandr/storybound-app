@@ -1311,7 +1311,7 @@ ANTI-HERO ENFORCEMENT:
       },
       gender:'Female',
       loveInterest:'Male',
-      archetype: { primary: null, modifier: null }, 
+      archetype: { primary: 'BEAUTIFUL_RUIN', modifier: null }, 
       intensity:'Naughty', 
       turnCount:0,
       sysPrompt: "",
@@ -3304,13 +3304,22 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.turnCount = 0;
     state.storyLength = 'voyeur';
     state.storyEnded = false;
-    state.archetype = { primary: null, modifier: null };
+    state.archetype = { primary: 'BEAUTIFUL_RUIN', modifier: null };
     // Clear pagination system
     StoryPagination.clear();
-    // Re-render archetype pills to clear selection
-    if (typeof renderArchetypePills === 'function') renderArchetypePills();
-    if (typeof updateArchetypePreview === 'function') updateArchetypePreview();
-    
+    // Re-render archetype cards to show default selection
+    if (typeof renderArchetypeCards === 'function') renderArchetypeCards();
+    if (typeof updateArchetypeSelectionSummary === 'function') updateArchetypeSelectionSummary();
+
+    // PASS 9E: Reset fate card state
+    const fateCard = $('fateDestinyCard');
+    if (fateCard) {
+        fateCard.dataset.fateUsed = 'false';
+        fateCard.style.opacity = '1';
+        fateCard.style.pointerEvents = 'auto';
+        fateCard.classList.remove('flipped');
+    }
+
     updateContinueButtons();
     window.showScreen('setup');
     applyAccessLocks(); 
@@ -5744,20 +5753,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
   }
 
-  // PASS 9D: Fate Destiny Card click handler
-  // FIX: Fate must NOT create a parallel generation path.
-  // It must populate selections then call the SAME Begin Story handler.
+  // PASS 9E: Fate Destiny Card click handler - RESTORED BEHAVIOR
+  // FIX: Card NEVER flips to tree. On click: populate, show loader, begin.
   $('fateDestinyCard')?.addEventListener('click', async () => {
     const fateCard = $('fateDestinyCard');
-    if (!fateCard || fateCard.classList.contains('flipped')) return;
+    if (!fateCard || fateCard.dataset.fateUsed === 'true') return;
 
-    // 1. Flip the card immediately
-    fateCard.classList.add('flipped');
+    // 1. Mark as used to prevent double-click (NO FLIP to tree)
+    fateCard.dataset.fateUsed = 'true';
+    fateCard.style.opacity = '0.6';
+    fateCard.style.pointerEvents = 'none';
 
-    // 2. Small delay for card flip animation (no startLoading here - beginBtn will handle it)
-    await new Promise(r => setTimeout(r, 400));
-
-    // 3. Generate fate choices including ages
+    // 2. Generate fate choices including ages
     const ages = getFateAges();
     const fateChoices = {
       playerName: FATE_FEMALE_NAMES[Math.floor(Math.random() * FATE_FEMALE_NAMES.length)],
@@ -5777,14 +5784,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     fateChoices.worldFlavor = getFateFlavor(fateChoices.world);
     fateChoices.genre = getFateGenre(fateChoices.world);
 
-    // 4. Populate all selections synchronously
+    // 3. Populate all selections synchronously
     populateFateSelections(fateChoices);
 
-    // 5. Set fate flag then trigger the SAME Begin Story handler
+    // 4. Set fate flag then trigger the SAME Begin Story handler
     // No duplicate async chains - all generation goes through beginBtn
     state._fateTriggered = true;
 
-    // Trigger the begin button click handler (the ONLY generation path)
+    // 5. Trigger the begin button click handler (the ONLY generation path)
+    // The beginBtn handler will show the loader immediately
     $('beginBtn')?.click();
   });
 
