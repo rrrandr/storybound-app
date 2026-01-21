@@ -1113,7 +1113,7 @@ textarea.fate-field {
 .rotating-placeholder-inner {
     display: block;
     line-height: 1.2;
-    padding: 12px;
+    padding: 20px 12px;
     animation: scrollPlaceholder 30s linear infinite;
 }
 .rotating-placeholder-inner .suggestion {
