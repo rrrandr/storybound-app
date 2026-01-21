@@ -2447,10 +2447,10 @@ textarea.fate-field {
     margin-block: 20px;
 }
 
-/* Base Card - 5×7 vertical proportions, fluid width from grid */
+/* Base Card - 5×7 vertical proportions */
 .sb-card {
-    width: clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max));
-    aspect-ratio: 5 / 7;
+    width: 100px;
+    height: 140px; /* 5:7 ratio */
     perspective: 1000px;
     cursor: pointer;
 }
