@@ -138,7 +138,8 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* Setup container - neutralize global centering, remove width constraints */
 #setup {
     max-width: none !important;
-    width: 95%;
+    width: 100%;
+    margin: 0 !important;
     text-align: left;
 }
 
@@ -1433,9 +1434,9 @@ textarea.fate-field {
     flex-direction: row; /* LOCKED: Never column, even on mobile */
     align-items: stretch;
     gap: 12px;
-    width: 95%;
+    width: 100%;
     max-width: none;
-    margin: 0 auto 15px;
+    margin: 0 0 15px 0;
     padding: 10px;
     box-sizing: border-box;
     border: 1px solid rgba(255, 215, 0, 0.3); /* Thin outline binding card + fields */
@@ -2347,8 +2348,8 @@ textarea.fate-field {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    width: 95%;
-    margin: 20px auto;
+    width: 100%;
+    margin: 20px 0;
     padding: 0;
     box-sizing: border-box;
 }
@@ -2411,26 +2412,14 @@ textarea.fate-field {
     gap: 16px;
     justify-content: center;
     align-content: start;
-    width: 95%;
+    width: 100%;
     max-width: 814px; /* 5 cards max: 5×150 + 4×16 */
-    margin-inline: auto;
-    margin-block: 20px;
+    margin: 20px 0;
 }
 
 /* Size-specific grids inherit max-width cap */
 .sb-grid-4, .sb-grid-5, .sb-grid-6, .sb-grid-9 {
-    width: 95%;
-}
-
-/* Medium screens */
-@media (max-width: 700px) {
-    .sb-grid,
-    .sb-grid-4,
-    .sb-grid-5,
-    .sb-grid-6,
-    .sb-grid-9 {
-        width: 95%;
-    }
+    width: 100%;
 }
 
 /* Narrow screens: tighter gap */
@@ -2440,7 +2429,7 @@ textarea.fate-field {
     .sb-grid-5,
     .sb-grid-6,
     .sb-grid-9 {
-        width: 95%;
+        width: 100%;
         gap: 8px;
     }
 }
