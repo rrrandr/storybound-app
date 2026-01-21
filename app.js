@@ -1837,8 +1837,68 @@ ANTI-HERO ENFORCEMENT:
           "athletic build", "blonde hair", "dark hair", "natural expression",
           "cinematic lighting", "high detail", "dreamlike", "painterly",
           "leading-actor looks", "movie poster style", "anime style", "photo-realistic"
+      ],
+      // Character names for destiny fill
+      playerNames: [
+          "Elara Vance", "Ivy Blackwood", "Seraphina Cole", "Margot Sinclair", "Astrid Thorne",
+          "Lysandra Grey", "Celeste Fairfax", "Vivienne Hart", "Aurora Nightingale", "Freya Ashworth",
+          "Iris Delacroix", "Evelyn Crane", "Rosalind Pierce", "Ophelia Storm", "Cordelia Frost",
+          "Jasper Hawke", "Dorian Grey", "Felix Ashford", "Rowan Blackwell", "Theo Marchetti",
+          "Cyrus Vane", "Emory Quinn", "Soren Whitmore", "Cassian Drake", "Ezra Thornwood"
+      ],
+      loveInterestNames: [
+          "Lord Blackwood", "Dante Valerio", "Sebastian Cross", "Adrian Nightshade", "Marcus Ravencroft",
+          "Viktor Draven", "Lucian Ashford", "Damien Wolfe", "Killian Frost", "Xavier Thorne",
+          "Lady Ashworth", "Vivienne Delacroix", "Isolde Ravenna", "Evangeline Hart", "Valentina Storm",
+          "Seraphina Nightingale", "Morgana Blackwell", "Arabella Sinclair", "Lilith Vane", "Catalina Grey"
       ]
   };
+
+  // --- APPLY DESTINY TO CHARACTER (fills name + ancestry only) ---
+  // target: 'player' | 'loveInterest'
+  // NO loader, NO story start, NO archetype/world changes
+  function applyDestinyToCharacter(target) {
+      const isPlayer = target === 'player';
+
+      // Get elements by ID (DOM search)
+      const nameInput = document.getElementById(isPlayer ? 'playerNameInput' : 'partnerNameInput');
+      const ancestryInput = document.getElementById(isPlayer ? 'ancestryInputPlayer' : 'ancestryInputLI');
+      const namePool = isPlayer ? FATE_SUGGESTIONS.playerNames : FATE_SUGGESTIONS.loveInterestNames;
+
+      if (!nameInput || !ancestryInput) {
+          console.error(`[DESTINY] Missing input elements for ${target}`);
+          return;
+      }
+
+      // Pick random values
+      const name = namePool[Math.floor(Math.random() * namePool.length)];
+      const ancestry = getRandomSuggestion('ancestry');
+
+      // Fill DOM inputs
+      nameInput.value = name;
+      ancestryInput.value = ancestry;
+
+      // Sync to state
+      if (isPlayer) {
+          state.normalizedPlayerName = name;
+      } else {
+          state.normalizedPartnerName = name;
+      }
+
+      // Trigger input events for any listeners
+      nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      ancestryInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Update synopsis panel to reflect changes
+      if (typeof updateSynopsisPanel === 'function') {
+          updateSynopsisPanel();
+      }
+
+      console.log(`[DESTINY] Applied to ${target}: name="${name}", ancestry="${ancestry}"`);
+  }
+
+  // Expose to window for button handlers
+  window.applyDestinyToCharacter = applyDestinyToCharacter;
 
   let fateHandInitialized = false;
   let placeholderAnimations = {};
