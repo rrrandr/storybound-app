@@ -1448,7 +1448,7 @@ textarea.fate-field {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    flex-shrink: 0;
+    flex: 0 0 auto;
     min-width: 55px;
 }
 
@@ -1564,31 +1564,31 @@ textarea.fate-field {
 /* Field widths per locked spec (ch units) */
 .character-field-name {
     width: clamp(15ch, 20ch, 30ch);
-    flex-shrink: 0;
+    flex: 0 0 auto;
 }
 
 .character-field-age {
     width: 3ch;
     min-width: 2ch;
-    flex-shrink: 0;
+    flex: 0 0 auto;
 }
 
 .character-field-gender {
     width: 6ch;
     min-width: 4ch;
-    flex-shrink: 0;
+    flex: 0 0 auto;
 }
 
 .character-field-pronouns {
     width: 6ch;
     min-width: 4ch;
-    flex-shrink: 0;
+    flex: 0 0 auto;
 }
 
 .character-field-ancestry {
     width: clamp(15ch, 20ch, 30ch);
     position: relative;
-    flex-shrink: 0;
+    flex: 0 0 auto;
 }
 
 .character-field-ancestry .rotating-placeholder {
