@@ -1447,7 +1447,7 @@ textarea.fate-field {
 .character-destiny-side {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     flex-shrink: 0;
     min-width: 55px;
 }
@@ -1561,37 +1561,31 @@ textarea.fate-field {
     text-overflow: clip;
 }
 
-/* Field widths per locked spec (ch units) */
+/* Field widths - flex to use available space */
 .character-field-name {
-    width: 20ch;
+    flex: 1 1 15ch;
     min-width: 15ch;
-    max-width: 30ch;
-    flex-shrink: 0;
 }
 
 .character-field-age {
-    width: 3ch;
-    min-width: 2ch;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    width: 4ch;
 }
 
 .character-field-gender {
-    width: 6ch;
-    min-width: 4ch;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    min-width: 6ch;
 }
 
 .character-field-pronouns {
-    width: 6ch;
-    min-width: 4ch;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    min-width: 6ch;
 }
 
 .character-field-ancestry {
-    width: 20ch;
+    flex: 1 1 15ch;
     min-width: 15ch;
     position: relative;
-    flex-shrink: 0;
 }
 
 .character-field-ancestry .rotating-placeholder {
