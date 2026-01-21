@@ -145,7 +145,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 .story-shape-row {
     display: flex;
     gap: 24px;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: flex-start;
     flex-wrap: wrap;
 }
@@ -157,9 +157,6 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     align-items: flex-start;
     gap: 16px;
     overflow-x: auto;
-    padding: 10px;
-    border: 1px solid rgba(255, 215, 0, 0.3);
-    border-radius: 8px;
 }
 
 .story-shape-character .destiny-card {

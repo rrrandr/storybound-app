@@ -2295,10 +2295,13 @@ ANTI-HERO ENFORCEMENT:
   }
 
   function initCharacterDestinyCards() {
-      // PASS 9F: Character destiny cards - fill name + ancestry for each character
-      // On click: populate fields, update canonical state, trigger Begin Story
+      // Character destiny cards - fill name + ancestry for each character
+      // ISOLATED: Never triggers story start, loading, or global fate state
       document.querySelectorAll('.character-destiny-card').forEach(card => {
-          card.addEventListener('click', () => {
+          card.addEventListener('click', (e) => {
+              // CRITICAL: Stop propagation to prevent any parent/global handlers
+              e.stopPropagation();
+
               const character = card.dataset.character; // 'player' or 'loveInterest'
 
               // Flip the card (visual only - NEVER toggles back)
