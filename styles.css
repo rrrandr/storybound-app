@@ -141,6 +141,51 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     width: 95%;
 }
 
+/* Story Shape Character Layout */
+.story-shape-character {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+    overflow-x: auto;
+}
+
+.story-shape-character .destiny-card {
+    flex: 0 0 auto;
+}
+
+.story-shape-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.story-shape-character .character-field-name {
+    width: clamp(15ch, 20ch, 30ch);
+    flex: 0 0 auto;
+}
+
+.story-shape-character .character-field-age {
+    width: 3ch;
+    flex: 0 0 auto;
+}
+
+.story-shape-character .character-field-gender {
+    width: 6ch;
+    flex: 0 0 auto;
+}
+
+.story-shape-character .character-field-pronouns {
+    width: 6ch;
+    flex: 0 0 auto;
+}
+
+.story-shape-character .character-field-ancestry {
+    width: clamp(15ch, 20ch, 30ch);
+    flex: 0 0 auto;
+}
+
 /* STORY READING EXPERIENCE */
 #storyText {
     text-align: left;
