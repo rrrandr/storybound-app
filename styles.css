@@ -2433,26 +2433,25 @@ textarea.fate-field {
    - 3 cols: 332px, 2 cols: 216px
    - At narrow: cards=70px, gap=8px, 2 cols: 148px
 */
-/* PASS 9D: Widened grids to match Veto/Quill horizontal bounds */
+/* Card grid - 5 cards max per row, centered with margin on ultra-wide */
 .sb-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
-    justify-content: center; /* CENTER EACH ROW */
+    justify-content: center;
     align-content: start;
     width: 95%;
-    max-width: none; /* Remove constraint - match Veto/Quill bounds */
+    max-width: 814px; /* 5 cards max: 5×150 + 4×16 */
     margin-inline: auto;
     margin-block: 20px;
 }
 
-/* Size-specific grids - no longer constrained by fixed max-width */
+/* Size-specific grids inherit max-width cap */
 .sb-grid-4, .sb-grid-5, .sb-grid-6, .sb-grid-9 {
     width: 95%;
-    max-width: none;
 }
 
-/* Medium screens: cards stay 100px, grid stays full width */
+/* Medium screens */
 @media (max-width: 700px) {
     .sb-grid,
     .sb-grid-4,
@@ -2460,11 +2459,10 @@ textarea.fate-field {
     .sb-grid-6,
     .sb-grid-9 {
         width: 95%;
-        max-width: none;
     }
 }
 
-/* Narrow screens: cards shrink to 70px */
+/* Narrow screens: tighter gap */
 @media (max-width: 400px) {
     .sb-grid,
     .sb-grid-4,
@@ -2472,24 +2470,21 @@ textarea.fate-field {
     .sb-grid-6,
     .sb-grid-9 {
         width: 95%;
-        max-width: none;
         gap: 8px;
     }
 }
 
-/* Base Card - 5×7 vertical proportions */
+/* Base Card - 5×7 vertical proportions, ~50% larger for readability */
 .sb-card {
-    width: 100px;
-    height: 140px; /* 5:7 ratio */
+    width: 150px;
+    height: 210px; /* 5:7 ratio */
     perspective: 1000px;
     cursor: pointer;
 }
 
-/* Responsive card sizes - must match discrete grid column steps */
-/* Cards stay 100px at wide and medium (6 cols, 3 cols) */
-/* Cards shrink to 70px only at narrow (2 cols) */
+/* Responsive card sizes */
 @media (max-width: 400px) {
-    .sb-card { width: 70px; height: 98px; }
+    .sb-card { width: 105px; height: 147px; }
 }
 
 /* Inner wrapper for 3D flip */
