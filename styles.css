@@ -1571,6 +1571,10 @@ textarea.fate-field {
     position: relative;
 }
 
+.character-field-ancestry .rotating-placeholder {
+    top: 14px;
+}
+
 /* PASS 9D: Age field - compact numeric input */
 .character-field-age {
     flex: 0 0 60px;
