@@ -150,7 +150,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     flex-wrap: wrap;
 }
 
-/* Story Shape Character Layout */
+/* Story Shape Character - internal layout only, width owned by parent */
 .story-shape-character {
     display: flex;
     flex-direction: row;
@@ -160,15 +160,10 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     padding: 10px;
     border: 1px solid rgba(255, 215, 0, 0.3);
     border-radius: 8px;
-    width: max-content;
-    max-width: 100%;
-    flex: 0 0 auto;
 }
 
 .story-shape-character .destiny-card {
     flex: 0 0 auto;
-    align-items: flex-start;
-    justify-content: flex-start;
 }
 
 .story-shape-fields {
@@ -209,10 +204,10 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 }
 
 /* Neutralize legacy overrides within story-shape-character */
-.story-shape-character.character-block-horizontal {
-    align-items: flex-start;
-    width: max-content;
+.story-shape-row > .story-shape-character {
+    width: auto;
     margin: 0;
+    flex: 0 0 auto;
 }
 
 .story-shape-character .character-fields-side {
@@ -231,21 +226,9 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 
 /* Neutralize media query overrides within story-shape-character */
 @media (max-width: 600px) {
-    .story-shape-character.character-block-horizontal {
+    .story-shape-row > .story-shape-character {
         flex-direction: row;
-        align-items: flex-start;
-    }
-
-    .story-shape-character .character-fields-row {
-        flex-direction: row;
-    }
-
-    .story-shape-character .character-field {
         width: auto;
-    }
-
-    .story-shape-character .character-field-age {
-        width: 3ch;
     }
 }
 
