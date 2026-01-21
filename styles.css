@@ -214,7 +214,8 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 .story-shape-character .character-fields-row {
     flex-direction: row;
     flex-wrap: wrap;
-    max-width: 35ch;
+    /* Match Row 1 (Name + Age + gap) exactly to constrain intrinsic width */
+    max-width: calc(20ch + 3ch + 10px);
 }
 
 .story-shape-character .character-field {
@@ -231,6 +232,16 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 
     .story-shape-character .character-destiny-side {
         margin-bottom: 0;
+    }
+
+    /* Prevent legacy rules from forcing column layout on fields */
+    .story-shape-character .character-fields-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .story-shape-character .character-field {
+        width: auto;
     }
 }
 
