@@ -1415,8 +1415,6 @@ textarea.fate-field {
    Destiny card LEFT, fields in responsive row
    ================================= */
 .fate-shortcut-vertical {
-    flex-direction: column;
-    align-items: center;
     gap: 12px;
 }
 
@@ -2378,7 +2376,6 @@ textarea.fate-field {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    align-items: center;
     width: 95%;
     margin: 20px auto;
     padding: 0;
@@ -2389,7 +2386,7 @@ textarea.fate-field {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    align-items: center;
+    width: 100%;
 }
 
 .dynamic-group-label {
