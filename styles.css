@@ -1091,10 +1091,10 @@ textarea.fate-field {
 /* Rotating placeholder */
 .rotating-placeholder {
     position: absolute;
-    top: 50%;
+    top: 0;
     left: 0;
-    right: 60px;
-    transform: translateY(-50%);
+    right: 0;
+    bottom: 0;
     pointer-events: none;
     overflow: hidden;
     overflow-y: auto;
@@ -1103,6 +1103,8 @@ textarea.fate-field {
     color: rgba(255,255,255,0.4);
     font-size: 0.9em;
     font-style: italic;
+    display: flex;
+    align-items: center;
 }
 .rotating-placeholder.textarea-placeholder {
     top: 14px;
@@ -1112,7 +1114,7 @@ textarea.fate-field {
 
 .rotating-placeholder-inner {
     display: inline-block;
-    padding-left: 12px;
+    padding: 0 60px 0 12px;
     animation: scrollPlaceholder 30s linear infinite;
 }
 .rotating-placeholder-inner .suggestion {
