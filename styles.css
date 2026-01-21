@@ -1,14 +1,18 @@
 /* GLOBAL VARS */
-:root { 
-    --bg1: #0a001f; --bg2: #2a0033; --pink: #ff69b4; --hot: #ff1493; --gold: #ffd700; --ink: #f0e6ff; --panel: rgba(20,0,40,.6); 
+:root {
+    --bg1: #0a001f; --bg2: #2a0033; --pink: #ff69b4; --hot: #ff1493; --gold: #ffd700; --ink: #f0e6ff; --panel: rgba(20,0,40,.6);
     --btn-bg: linear-gradient(145deg, #8b008b, var(--hot)); --btn-txt: var(--gold);
     --p1-color: #B0E0E6; --p2-color: #FFB6C1;
-    --font-main: 'Lora', serif; 
+    --font-main: 'Lora', serif;
     --font-story: 'Lora', serif;
     --story-size: 1.15em;
-    --line-height: 1.8; 
+    --line-height: 1.8;
     --letter-spacing: 0.02em;
     --cursor-url: url('cursor-dollar-plane-64.png');
+    /* Card grid sizing */
+    --sb-card-min: 220px;
+    --sb-card-ideal: 18vw;
+    --sb-card-max: 340px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -2430,63 +2434,25 @@ textarea.fate-field {
    - 3 cols: 332px, 2 cols: 216px
    - At narrow: cards=70px, gap=8px, 2 cols: 148px
 */
-/* PASS 9D: Widened grids to match Veto/Quill horizontal bounds */
+/* Unified responsive card grid - auto-fit with clamp for fluid sizing */
 .sb-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center; /* CENTER EACH ROW */
-    align-content: start;
-    width: 95%;
-    max-width: none; /* Remove constraint - match Veto/Quill bounds */
-    margin-inline: auto;
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max)), 1fr)
+    );
+    gap: clamp(16px, 3vw, 40px);
+    padding-inline: clamp(12px, 4vw, 80px);
+    justify-items: center;
     margin-block: 20px;
 }
 
-/* Size-specific grids - no longer constrained by fixed max-width */
-.sb-grid-4, .sb-grid-5, .sb-grid-6, .sb-grid-9 {
-    width: 95%;
-    max-width: none;
-}
-
-/* Medium screens: cards stay 100px, grid stays full width */
-@media (max-width: 700px) {
-    .sb-grid,
-    .sb-grid-4,
-    .sb-grid-5,
-    .sb-grid-6,
-    .sb-grid-9 {
-        width: 95%;
-        max-width: none;
-    }
-}
-
-/* Narrow screens: cards shrink to 70px */
-@media (max-width: 400px) {
-    .sb-grid,
-    .sb-grid-4,
-    .sb-grid-5,
-    .sb-grid-6,
-    .sb-grid-9 {
-        width: 95%;
-        max-width: none;
-        gap: 8px;
-    }
-}
-
-/* Base Card - 5×7 vertical proportions */
+/* Base Card - 5×7 vertical proportions, fluid width from grid */
 .sb-card {
-    width: 100px;
-    height: 140px; /* 5:7 ratio */
+    width: clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max));
+    aspect-ratio: 5 / 7;
     perspective: 1000px;
     cursor: pointer;
-}
-
-/* Responsive card sizes - must match discrete grid column steps */
-/* Cards stay 100px at wide and medium (6 cols, 3 cols) */
-/* Cards shrink to 70px only at narrow (2 cols) */
-@media (max-width: 400px) {
-    .sb-card { width: 70px; height: 98px; }
 }
 
 /* Inner wrapper for 3D flip */
