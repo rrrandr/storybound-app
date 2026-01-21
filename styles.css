@@ -1429,13 +1429,17 @@ textarea.fate-field {
 
 .character-block-horizontal {
     display: flex;
+    flex-direction: row; /* LOCKED: Never column, even on mobile */
     align-items: stretch;
     gap: 12px;
     width: 95%;
     max-width: none;
     margin: 0 auto 15px;
-    padding: 0;
+    padding: 10px;
     box-sizing: border-box;
+    border: 1px solid rgba(255, 215, 0, 0.3); /* Thin outline binding card + fields */
+    border-radius: 8px;
+    overflow-x: auto; /* Horizontal scroll on very narrow screens */
 }
 
 .character-destiny-side {
@@ -1555,38 +1559,41 @@ textarea.fate-field {
     text-overflow: clip;
 }
 
+/* Field widths per locked spec (ch units) */
 .character-field-name {
-    flex: 3;
-    min-width: 140px;
+    width: 20ch;
+    min-width: 15ch;
+    max-width: 30ch;
+    flex-shrink: 0;
+}
+
+.character-field-age {
+    width: 3ch;
+    min-width: 2ch;
+    flex-shrink: 0;
 }
 
 .character-field-gender {
-    flex: 0 0 90px;
-    min-width: 80px;
-    max-width: 100px;
+    width: 6ch;
+    min-width: 4ch;
+    flex-shrink: 0;
 }
 
 .character-field-pronouns {
-    flex: 0 0 90px;
-    min-width: 80px;
-    max-width: 100px;
+    width: 6ch;
+    min-width: 4ch;
+    flex-shrink: 0;
 }
 
 .character-field-ancestry {
-    flex: 2;
-    min-width: 140px;
+    width: 20ch;
+    min-width: 15ch;
     position: relative;
+    flex-shrink: 0;
 }
 
 .character-field-ancestry .rotating-placeholder {
     top: 14px;
-}
-
-/* PASS 9D: Age field - compact numeric input */
-.character-field-age {
-    flex: 0 0 60px;
-    min-width: 50px;
-    max-width: 70px;
 }
 
 .character-field-age input {
@@ -1609,45 +1616,6 @@ textarea.fate-field {
 /* Ancestry field WHITE text (not yellow) */
 .ancestry-field {
     color: #fff !important;
-}
-
-/* Responsive: Stack fields on narrow screens */
-@media (max-width: 600px) {
-    .character-block-horizontal {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .character-destiny-side {
-        margin-bottom: 10px;
-    }
-
-    .character-destiny-card-tall {
-        width: 60px;
-        height: 84px;
-    }
-
-    .character-fields-row {
-        flex-direction: column;
-    }
-
-    .character-field {
-        width: 100%;
-    }
-
-    .character-field-name,
-    .character-field-gender,
-    .character-field-pronouns,
-    .character-field-ancestry,
-    .character-field-age {
-        flex: none;
-        min-width: auto;
-    }
-
-    .character-field-age {
-        max-width: none;
-        width: 100%;
-    }
 }
 
 /* PASS 9F: Quill-Veto container - unified margins with other sections */
