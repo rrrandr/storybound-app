@@ -1569,6 +1569,7 @@ textarea.fate-field {
     flex: 2;
     min-width: 140px;
     position: relative;
+    justify-content: flex-start;
 }
 
 /* Ancestry scroll uses normal flow, not absolute positioning */
