@@ -3313,8 +3313,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
     state.lastSavedWordCount = currentStoryWordCount();
 
-    const img = document.getElementById('settingShotImg');
-    if(img && (!img.src || img.style.display === 'none')) generateSettingShot(data.synopsis || "Fantasy Landscape"); 
+    // Setting shot removed from auto-load - requires explicit user action
 
     window.showScreen('game');
     if (state.fateOptions && state.fateOptions.length) state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
@@ -6410,8 +6409,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
             }
         });
 
-        // Also generate setting shot for story content (in parallel)
-        generateSettingShot(synopsis);
+        // Setting shot removed - image generation requires explicit user action
+        // (Visualize button or cover request only)
 
         // Story text reveal is handled by cover page flow
         // (user clicks "Open Your Story" to see content)
