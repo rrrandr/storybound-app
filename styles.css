@@ -1569,15 +1569,6 @@ textarea.fate-field {
     flex: 2;
     min-width: 140px;
     position: relative;
-    justify-content: flex-start;
-}
-
-/* Ancestry scroll uses normal flow, not absolute positioning */
-.character-field-ancestry .rotating-placeholder {
-    position: static;
-    top: auto;
-    left: auto;
-    right: auto;
 }
 
 /* PASS 9D: Age field - compact numeric input */
