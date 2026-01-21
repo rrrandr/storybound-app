@@ -1103,8 +1103,6 @@ textarea.fate-field {
     color: rgba(255,255,255,0.4);
     font-size: 0.9em;
     font-style: italic;
-    display: flex;
-    align-items: center;
 }
 .rotating-placeholder.textarea-placeholder {
     top: 14px;
