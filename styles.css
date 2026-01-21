@@ -2430,15 +2430,17 @@ textarea.fate-field {
    - 3 cols: 332px, 2 cols: 216px
    - At narrow: cards=70px, gap=8px, 2 cols: 148px
 */
-/* PASS 9D: Widened grids to match Veto/Quill horizontal bounds */
+/* Unified card grid - Flexbox for row rebalancing
+   CSS Grid fills greedily (6,1). Flexbox + center rebalances rows (4,3).
+   Cards have fixed width; container width determines cards-per-row. */
 .sb-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
-    justify-content: center; /* CENTER EACH ROW */
+    justify-content: center;
     align-content: start;
     width: 95%;
-    max-width: none; /* Remove constraint - match Veto/Quill bounds */
+    max-width: none;
     margin-inline: auto;
     margin-block: 20px;
 }
