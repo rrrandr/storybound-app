@@ -9,6 +9,10 @@
     --line-height: 1.8; 
     --letter-spacing: 0.02em;
     --cursor-url: url('cursor-dollar-plane-64.png');
+    /* Card grid responsive sizing */
+    --sb-card-min: 220px;
+    --sb-card-ideal: 18vw;
+    --sb-card-max: 340px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -477,7 +481,13 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .intensity-btn.locked-tease::after, .intensity-btn.locked-pass::after { top: 2px; right: 2px; transform: none; width: 16px; height: 16px; } 
 
 /* STYLE CARDS */
-.style-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:15px 0; }
+.style-cards,
+.sb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max)), 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
 .card { background:#252525; border-radius:12px; padding:15px; cursor:pointer; text-align:left; border:2px solid transparent; position:relative; transition:.2s; }
 .card:hover { transform:translateY(-3px); border-color:#ff6b6b; }
 .card.selected { border-color:#ff69b4; background:#333; box-shadow:0 0 15px rgba(255,105,180,0.3); }
@@ -1694,6 +1704,7 @@ textarea.fate-field {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
 }
 
 .dynamic-group-label {
@@ -1709,7 +1720,7 @@ textarea.fate-field {
 
 .dynamic-group .style-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max)), 1fr));
     gap: 12px;
 }
 
