@@ -148,10 +148,15 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     align-items: flex-start;
     gap: 16px;
     overflow-x: auto;
+    padding: 10px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
 }
 
 .story-shape-character .destiny-card {
     flex: 0 0 auto;
+    align-items: flex-start;
+    justify-content: flex-start;
 }
 
 .story-shape-fields {
@@ -164,26 +169,70 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 .story-shape-character .character-field-name {
     width: clamp(15ch, 20ch, 30ch);
     flex: 0 0 auto;
+    min-width: auto;
 }
 
 .story-shape-character .character-field-age {
     width: 3ch;
+    min-width: 2ch;
     flex: 0 0 auto;
 }
 
 .story-shape-character .character-field-gender {
     width: 6ch;
+    min-width: 4ch;
     flex: 0 0 auto;
 }
 
 .story-shape-character .character-field-pronouns {
     width: 6ch;
+    min-width: 4ch;
     flex: 0 0 auto;
 }
 
 .story-shape-character .character-field-ancestry {
     width: clamp(15ch, 20ch, 30ch);
     flex: 0 0 auto;
+    min-width: auto;
+}
+
+/* Neutralize legacy overrides within story-shape-character */
+.story-shape-character.character-block-horizontal {
+    align-items: flex-start;
+}
+
+.story-shape-character .character-fields-side {
+    flex: 0 0 auto;
+}
+
+.story-shape-character .character-fields-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-width: 35ch;
+}
+
+.story-shape-character .character-field {
+    width: auto;
+}
+
+/* Neutralize media query overrides within story-shape-character */
+@media (max-width: 600px) {
+    .story-shape-character.character-block-horizontal {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .story-shape-character .character-fields-row {
+        flex-direction: row;
+    }
+
+    .story-shape-character .character-field {
+        width: auto;
+    }
+
+    .story-shape-character .character-field-age {
+        width: 3ch;
+    }
 }
 
 /* STORY READING EXPERIENCE */
