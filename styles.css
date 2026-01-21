@@ -1522,20 +1522,19 @@ textarea.fate-field {
 }
 
 .character-fields-side {
-    flex: 1;
-    min-width: 0;
+    flex: 0 0 auto;
 }
 
 .character-fields-row {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    justify-content: flex-start;
 }
 
 .character-field {
     display: flex;
     flex-direction: column;
-    min-width: 0;
 }
 
 .character-field label {
