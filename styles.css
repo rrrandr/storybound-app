@@ -169,7 +169,6 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     flex: 0 0 auto;
     align-items: flex-start;
     justify-content: flex-start;
-    pointer-events: none;
 }
 
 .story-shape-fields {
@@ -212,6 +211,8 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* Neutralize legacy overrides within story-shape-character */
 .story-shape-character.character-block-horizontal {
     align-items: flex-start;
+    width: max-content;
+    margin: 0;
 }
 
 .story-shape-character .character-fields-side {
