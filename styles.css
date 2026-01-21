@@ -9,6 +9,10 @@
     --line-height: 1.8; 
     --letter-spacing: 0.02em;
     --cursor-url: url('cursor-dollar-plane-64.png');
+    /* Card grid responsive sizing */
+    --sb-card-min: 180px;
+    --sb-card-ideal: 18vw;
+    --sb-card-max: 340px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -2430,15 +2434,14 @@ textarea.fate-field {
    - 3 cols: 332px, 2 cols: 216px
    - At narrow: cards=70px, gap=8px, 2 cols: 148px
 */
-/* PASS 9D: Widened grids to match Veto/Quill horizontal bounds */
+/* PASS 9D: Unified intrinsic grid - columns size to content, no stretching */
 .sb-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max)), max-content));
     gap: 16px;
-    justify-content: center; /* CENTER EACH ROW */
-    align-content: start;
+    justify-content: center;
     width: 95%;
-    max-width: none; /* Remove constraint - match Veto/Quill bounds */
+    max-width: none;
     margin-inline: auto;
     margin-block: 20px;
 }
