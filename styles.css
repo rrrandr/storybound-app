@@ -1088,21 +1088,18 @@ textarea.fate-field {
     min-height: 50px;
 }
 
-/* Rotating placeholder */
+/* Rotating placeholder - matches sb-zoom-rotating-placeholder structure */
 .rotating-placeholder {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
+    top: 3px;
+    left: 3px;
+    right: 3px;
     overflow: hidden;
-    overflow-y: auto;
-    padding: 0;
-    white-space: nowrap;
+    pointer-events: none;
     color: rgba(255,255,255,0.4);
     font-size: 0.9em;
     font-style: italic;
+    white-space: nowrap;
 }
 .rotating-placeholder.textarea-placeholder {
     top: 14px;
@@ -1111,9 +1108,7 @@ textarea.fate-field {
 .rotating-placeholder.hidden { display: none; }
 
 .rotating-placeholder-inner {
-    display: block;
-    line-height: 1.2;
-    padding: 20px 12px;
+    display: inline-block;
     animation: scrollPlaceholder 30s linear infinite;
 }
 .rotating-placeholder-inner .suggestion {
