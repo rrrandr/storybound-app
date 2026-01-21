@@ -484,7 +484,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .style-cards,
 .sb-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max)), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max)), max-content));
     gap: 15px;
     margin: 15px 0;
 }
@@ -1704,7 +1704,6 @@ textarea.fate-field {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    width: 100%;
 }
 
 .dynamic-group-label {
@@ -1719,8 +1718,6 @@ textarea.fate-field {
 }
 
 .dynamic-group .style-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max)), 1fr));
     gap: 12px;
 }
 
