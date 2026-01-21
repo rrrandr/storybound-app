@@ -9,6 +9,10 @@
     --line-height: 1.8; 
     --letter-spacing: 0.02em;
     --cursor-url: url('cursor-dollar-plane-64.png');
+    /* Card grid responsive sizing */
+    --sb-card-min: 180px;
+    --sb-card-ideal: 18vw;
+    --sb-card-max: 340px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -476,13 +480,12 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .locked-input::after { top: 40px; right: 10px; }
 .intensity-btn.locked-tease::after, .intensity-btn.locked-pass::after { top: 2px; right: 2px; transform: none; width: 16px; height: 16px; } 
 
-/* STYLE CARDS - Grid layout with centered rows */
+/* STYLE CARDS - Grid layout with intrinsic column widths */
 .style-cards {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(var(--sb-card-min), var(--sb-card-ideal), var(--sb-card-max)), max-content));
     gap: 15px;
     margin: 15px 0;
-    justify-content: center;
 }
 
 .card {
