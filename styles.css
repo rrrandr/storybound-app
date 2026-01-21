@@ -135,6 +135,12 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 95%; margin: 20px auto 0; }
 @media (max-width: 600px) { .grid-2-col { grid-template-columns: 1fr; } }
 
+/* Setup container - override inline max-width to match Quill/Veto horizontal span */
+#setup {
+    max-width: none !important;
+    width: 95%;
+}
+
 /* STORY READING EXPERIENCE */
 #storyText {
     text-align: left;
