@@ -1111,7 +1111,8 @@ textarea.fate-field {
 .rotating-placeholder.hidden { display: none; }
 
 .rotating-placeholder-inner {
-    display: inline-block;
+    display: block;
+    line-height: 1.2;
     padding: 12px;
     animation: scrollPlaceholder 30s linear infinite;
 }
