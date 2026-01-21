@@ -195,7 +195,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 }
 
 .story-shape-character .character-field-ancestry {
-    width: clamp(15ch, 20ch, 30ch);
+    width: calc(20ch + 3ch + 10px);
     flex: 0 0 auto;
     min-width: auto;
 }
@@ -227,6 +227,10 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
         flex-direction: row;
         align-items: flex-start;
         width: auto;
+    }
+
+    .story-shape-character .character-destiny-side {
+        margin-bottom: 0;
     }
 }
 
