@@ -141,6 +141,15 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     width: 95%;
 }
 
+/* Story Shape Row - layout owner for both character blocks */
+.story-shape-row {
+    display: flex;
+    gap: 24px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
 /* Story Shape Character Layout */
 .story-shape-character {
     display: flex;
@@ -151,12 +160,16 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     padding: 10px;
     border: 1px solid rgba(255, 215, 0, 0.3);
     border-radius: 8px;
+    width: max-content;
+    max-width: 100%;
+    flex: 0 0 auto;
 }
 
 .story-shape-character .destiny-card {
     flex: 0 0 auto;
     align-items: flex-start;
     justify-content: flex-start;
+    pointer-events: none;
 }
 
 .story-shape-fields {
