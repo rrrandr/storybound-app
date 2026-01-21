@@ -1561,31 +1561,34 @@ textarea.fate-field {
     text-overflow: clip;
 }
 
-/* Field widths - flex to use available space */
+/* Field widths per locked spec (ch units) */
 .character-field-name {
-    flex: 1 1 15ch;
-    min-width: 15ch;
+    width: clamp(15ch, 20ch, 30ch);
+    flex-shrink: 0;
 }
 
 .character-field-age {
-    flex: 0 0 auto;
-    width: 4ch;
+    width: 3ch;
+    min-width: 2ch;
+    flex-shrink: 0;
 }
 
 .character-field-gender {
-    flex: 0 0 auto;
-    min-width: 6ch;
+    width: 6ch;
+    min-width: 4ch;
+    flex-shrink: 0;
 }
 
 .character-field-pronouns {
-    flex: 0 0 auto;
-    min-width: 6ch;
+    width: 6ch;
+    min-width: 4ch;
+    flex-shrink: 0;
 }
 
 .character-field-ancestry {
-    flex: 1 1 15ch;
-    min-width: 15ch;
+    width: clamp(15ch, 20ch, 30ch);
     position: relative;
+    flex-shrink: 0;
 }
 
 .character-field-ancestry .rotating-placeholder {
