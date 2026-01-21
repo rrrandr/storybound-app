@@ -201,7 +201,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 }
 
 /* Neutralize legacy overrides within story-shape-character */
-.story-shape-row > .story-shape-character {
+.story-shape-row > .character-block-horizontal.story-shape-character {
     width: auto;
     margin: 0;
     flex: 0 0 auto;
@@ -223,8 +223,9 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 
 /* Neutralize media query overrides within story-shape-character */
 @media (max-width: 600px) {
-    .story-shape-row > .story-shape-character {
+    .story-shape-row > .character-block-horizontal.story-shape-character {
         flex-direction: row;
+        align-items: flex-start;
         width: auto;
     }
 }
