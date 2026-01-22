@@ -7433,6 +7433,83 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       return 'neutral'; // Default
   }
 
+  // ISSUE 2 FIX: Abstraction ladder for true object substitution on repetition
+  // object → trace → environment → absence (NEVER reuse same object class)
+  const ABSTRACTION_LADDER = {
+      communication: [
+          'torn paper fragments scattered in gutter',
+          'wax seal imprint on empty desk',
+          'indentation in wood where something once lay',
+          'negative space shaped like absence'
+      ],
+      jewelry: [
+          'velvet impression where ring once sat',
+          'empty jewelry box with worn hinge',
+          'faint mark on skin where band was worn',
+          'dusty display case, bare'
+      ],
+      weapons: [
+          'blade-shaped shadow on wall',
+          'notch in doorframe from impact',
+          'empty sheath, leather cracked',
+          'rust stain in shape of what was'
+      ],
+      keys: [
+          'worn keyhole, brass darkened',
+          'ring of dust where keys hung',
+          'lock mechanism exposed, no key',
+          'chain with empty clasp'
+      ],
+      timepieces: [
+          'sundial with no shadow',
+          'clock face with missing hands',
+          'hourglass with sand frozen',
+          'empty pocket, fob chain dangling'
+      ],
+      containers: [
+          'lid without its vessel',
+          'rim impression in dust',
+          'empty shelf with object outline',
+          'spilled contents, vessel gone'
+      ],
+      flora: [
+          'pressed flower stain on page',
+          'empty vase with dried water ring',
+          'petal impression in wax',
+          'barren stem, bloom fallen'
+      ],
+      light_sources: [
+          'smoke trail where flame was',
+          'wax pool, wick drowned',
+          'soot pattern on ceiling',
+          'match head, spent and dark'
+      ],
+      documents: [
+          'ink blot bleeding through blank page',
+          'creased paper, text faded to nothing',
+          'fountain pen dry on empty desk',
+          'typewriter ribbon exhausted'
+      ]
+  };
+
+  // Get abstraction substitution for repeated object class
+  function getAbstractionSubstitute(objectClass, usedSubstitutes = []) {
+      const ladder = ABSTRACTION_LADDER[objectClass];
+      if (!ladder) {
+          // No predefined ladder - use generic absence
+          return 'empty space where something meaningful once was';
+      }
+
+      // Find unused substitution
+      const available = ladder.filter(s => !usedSubstitutes.includes(s));
+      if (available.length > 0) {
+          return available[Math.floor(Math.random() * available.length)];
+      }
+
+      // All used - return highest abstraction (absence)
+      return ladder[ladder.length - 1];
+  }
+
   // Load motif history from localStorage
   function loadMotifHistory() {
       try {
@@ -7646,10 +7723,16 @@ Return ONLY valid JSON:
       const objectClass = getObjectClass(focalObject);
       const repetitionCheck = wouldRepeatMotif(objectClass, null, null);
 
-      // If object class repeats, use shadow/silhouette variant
+      // ISSUE 2 FIX: If object class repeats, force TRUE substitution via abstraction ladder
+      // NEVER reuse same object in any form (literal, shadow, silhouette, fragment)
       let finalObject = focalObject;
       if (repetitionCheck.details?.object) {
-          finalObject = `${focalObject} (as shadow or partial silhouette)`;
+          // Get recently used substitutes to avoid those too
+          const usedSubs = history
+              .filter(m => m.objectClass === objectClass)
+              .map(m => m.substitution)
+              .filter(Boolean);
+          finalObject = getAbstractionSubstitute(objectClass, usedSubs);
       }
 
       // Derive background from domain (theme-derived, not decorative)
@@ -7685,12 +7768,14 @@ Return ONLY valid JSON:
           figureText = 'Only hands or partial body, no face.';
       }
 
-      // Save motif to history
+      // Save motif to history (include substitution if used for future avoidance)
+      const wasSubstituted = repetitionCheck.details?.object;
       const newMotif = {
-          objectClass: getObjectClass(finalObject),
+          objectClass: objectClass, // Original class, not substituted
           colorFamily: palette.family,
           backgroundStyle: finalBackground,
           emotion: emotion,
+          substitution: wasSubstituted ? finalObject : null, // Track what we substituted to
           timestamp: Date.now()
       };
       saveMotifToHistory(newMotif);
@@ -8511,6 +8596,67 @@ Return ONLY the image prompt. Under 250 characters.`;
       return prompt.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '').replace(/\s+/g, ' ').trim();
   }
 
+  // ISSUE 1 FIX: Emotion-first scene condensation (replaces blind truncation)
+  // Extracts emotional gravity + concrete visuals, stays within character limit
+  async function condenseSceneWithEmotion(rawPrompt, maxLength = 200) {
+      const cleaned = filterAuthorFromPrompt(rawPrompt);
+
+      // If already short enough, return as-is
+      if (cleaned.length <= maxLength) {
+          return cleaned;
+      }
+
+      // Extract emotional gravity and key visuals via LLM
+      try {
+          const condensed = await Promise.race([
+              callChat([
+                  { role: 'system', content: 'You condense scene descriptions for image generation. Preserve emotional gravity FIRST, then concrete visuals. Output ONLY the condensed description.' },
+                  { role: 'user', content: `Condense this scene to under ${maxLength} characters. Keep the EMOTIONAL TONE (tension, dread, yearning, etc) and 1-2 KEY VISUALS. Remove exposition.\n\nScene: "${cleaned}"\n\nCondensed (under ${maxLength} chars):` }
+              ]),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+          ]);
+
+          const result = condensed.trim();
+          // Ensure we stay within limit
+          if (result.length <= maxLength) {
+              return result;
+          }
+          // LLM exceeded limit, fall back to smart truncation
+          return smartTruncateWithEmotion(cleaned, maxLength);
+      } catch (e) {
+          // Fallback: smart truncation that preserves ending
+          return smartTruncateWithEmotion(cleaned, maxLength);
+      }
+  }
+
+  // Smart truncation fallback: preserves emotional ending over bland beginning
+  function smartTruncateWithEmotion(text, maxLength) {
+      if (text.length <= maxLength) return text;
+
+      // Emotional words often at end - take last portion if it contains emotion markers
+      const emotionMarkers = /\b(tense|dark|heavy|oppressive|foreboding|yearning|desperate|cold|sharp|hollow|aching|burning|trembling|frozen|shattered|haunted|looming|suffocating)\b/i;
+
+      const lastPortion = text.slice(-maxLength);
+      const firstPortion = text.slice(0, maxLength);
+
+      // Prefer the portion with more emotional weight
+      const lastHasEmotion = emotionMarkers.test(lastPortion);
+      const firstHasEmotion = emotionMarkers.test(firstPortion);
+
+      if (lastHasEmotion && !firstHasEmotion) {
+          // Last portion has emotion, first doesn't - use last
+          return '...' + lastPortion.slice(3).trim();
+      }
+
+      // Default: blend beginning context with ending payoff
+      const contextLength = Math.floor(maxLength * 0.4);
+      const payoffLength = maxLength - contextLength - 4; // 4 for " ... "
+      const context = text.slice(0, contextLength).trim();
+      const payoff = text.slice(-payoffLength).trim();
+
+      return context + ' ... ' + payoff;
+  }
+
   // Initialize Visualize modifier interaction (scrolling suggestions)
   function initVizModifierPills() {
       const modifierInput = document.getElementById('vizModifierInput');
@@ -8786,8 +8932,8 @@ Return ONLY the image prompt. Under 250 characters.`;
               : "";
 
           // SCENE-FIRST PROMPT CONSTRUCTION (AUTHORITATIVE)
-          // Hard cap scene description to 200 characters (shorter = better for scene viz)
-          const sceneDesc = filterAuthorFromPrompt(promptMsg).slice(0, 200);
+          // ISSUE 1 FIX: Emotion-first condensation (preserves payoff, not blind truncation)
+          const sceneDesc = await condenseSceneWithEmotion(promptMsg, 200);
           const modifiers = userModifiers ? " " + filterAuthorFromPrompt(userModifiers) : "";
 
           // Brief anchors from visual bible (characters only, 80 char max)
