@@ -1695,6 +1695,29 @@ Return the rewritten text only, no explanation.`
   }
 
   function goBack() {
+      // Task B: If on game screen with book open, close book first (show cover)
+      if (_currentScreenId === 'game') {
+          const bookCover = document.getElementById('bookCover');
+          const bookCoverPage = document.getElementById('bookCoverPage');
+          const storyContent = document.getElementById('storyContent');
+          const isBookOpen = bookCover?.classList.contains('hinge-open') || _bookOpened;
+
+          if (isBookOpen) {
+              // Close the book - show cover page instead of navigating away
+              if (bookCover) {
+                  bookCover.classList.remove('hinge-open', 'courtesy-peek');
+              }
+              if (bookCoverPage) {
+                  bookCoverPage.classList.remove('hidden');
+              }
+              if (storyContent) {
+                  storyContent.classList.add('hidden');
+              }
+              _bookOpened = false;
+              return; // Don't navigate away yet
+          }
+      }
+
       if (_navHistory.length === 0) {
           if(typeof coupleCleanup === 'function' && state.mode === 'couple') coupleCleanup();
           window.showScreen('modeSelect');
@@ -8441,6 +8464,7 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
 
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
+      ensureLockButtonExists(); // Ensure lock button is present and updated
 
       // Show last-chance warning if this is attempt 2
       if (isLastAttempt && errDiv) {
@@ -8622,6 +8646,70 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
       const retryBtn = document.getElementById('vizRetryBtn');
       if(retryBtn) retryBtn.disabled = false;
   };
+
+  // Lock Character Look - manual immediate lock
+  window.lockCharacterLook = function() {
+      if (!state.visual) {
+          state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
+      }
+      state.visual.locked = true;
+
+      // Update UI feedback
+      const btn = document.getElementById('btnLockLook');
+      const status = document.getElementById('lockLookStatus');
+      if (btn) {
+          btn.textContent = '🔒 Locked';
+          btn.disabled = true;
+          btn.style.opacity = '0.6';
+      }
+      if (status) {
+          status.style.display = 'inline';
+      }
+
+      showToast('Character look locked. Appearance will persist.');
+      saveStorySnapshot();
+  };
+
+  // Update lock button state when vizModal opens
+  function updateLockButtonState() {
+      const btn = document.getElementById('btnLockLook');
+      const status = document.getElementById('lockLookStatus');
+      if (!btn) return;
+
+      if (state.visual?.locked) {
+          btn.textContent = '🔒 Locked';
+          btn.disabled = true;
+          btn.style.opacity = '0.6';
+          if (status) status.style.display = 'inline';
+      } else {
+          btn.textContent = '🔒 Lock This Look';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          if (status) status.style.display = 'none';
+      }
+  }
+
+  // Fallback: Ensure lock button exists when vizModal opens
+  function ensureLockButtonExists() {
+      const container = document.getElementById('lockLookContainer');
+      if (container) {
+          updateLockButtonState();
+          return;
+      }
+      // Fallback injection if container missing
+      const vizModal = document.querySelector('#vizModal .viz-modal-content');
+      if (vizModal && !document.getElementById('lockLookContainer')) {
+          const fallbackDiv = document.createElement('div');
+          fallbackDiv.id = 'lockLookContainer';
+          fallbackDiv.style.cssText = 'margin-top:10px; text-align:center;';
+          fallbackDiv.innerHTML = `
+              <button id="btnLockLook" class="small-btn" style="background:#444; font-size:0.85em;" onclick="window.lockCharacterLook()">🔒 Lock This Look</button>
+              <span id="lockLookStatus" style="display:none; margin-left:8px; color:var(--gold); font-size:0.8em;">✓ Locked</span>
+          `;
+          vizModal.appendChild(fallbackDiv);
+          updateLockButtonState();
+      }
+  }
 
   // TASK D: Basic Visualize - always uses OpenAI, bypasses provider UI
   // Fallback when enhanced visualization fails
