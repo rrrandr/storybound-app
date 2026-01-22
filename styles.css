@@ -3066,3 +3066,36 @@ textarea.fate-field {
     from { filter: drop-shadow(0 0 5px var(--gold)); opacity: 0.9; }
     to { filter: drop-shadow(0 0 15px var(--gold)); opacity: 1; }
 }
+
+/* =================================
+   TASK F: Submit Turn Feedback
+   Immediate visual feedback on click
+   ================================= */
+#submitBtn.submitting {
+    animation: submit-pulse 1.2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes submit-pulse {
+    0%, 100% {
+        box-shadow: 0 0 8px var(--pink), 0 0 16px var(--pink);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 20px var(--pink), 0 0 40px var(--pink), 0 0 60px rgba(255, 20, 147, 0.4);
+        transform: scale(1.02);
+    }
+}
+
+/* Basic Visualize fallback button styling */
+#basicVizBtn {
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+#basicVizBtn:hover:not(:disabled) {
+    opacity: 1;
+}
+#basicVizBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}

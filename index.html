@@ -108,12 +108,18 @@
     </div>
 
     <div class="viz-controls">
-        <select id="vizModel" disabled style="opacity:0.6;">
-            <option value="perchance" selected>Perchance</option>
+        <select id="vizModel">
+            <option value="gemini" selected>Gemini (Primary)</option>
+            <option value="openai">OpenAI (Fallback)</option>
+            <option value="replicate">Replicate FLUX</option>
         </select>
-        <button class="small-btn" id="vizRetryBtn" onclick="window.visualize(true)">Re-Visualize</button>
+        <button class="small-btn" id="vizRetryBtn" onclick="window.visualize(true)">Re-Visualize (2)</button>
         <button onclick="window.insertImage()">Insert</button>
         <button class="small-btn" style="background:#555" onclick="window.closeViz()">Cancel</button>
+    </div>
+    <!-- TASK D: Basic Visualize fallback button -->
+    <div style="margin-top:8px; text-align:center;">
+        <button id="basicVizBtn" class="small-btn" style="background:#333; font-size:0.8em;" onclick="window.basicVisualize()">🔧 Basic Visualize (OpenAI only)</button>
     </div>
     <label class="sb-checkbox" style="font-size:0.8em; justify-content:center; margin-top:12px;">
         <input type="checkbox" id="chkAutoLockVisual" checked>

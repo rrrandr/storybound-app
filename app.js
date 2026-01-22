@@ -8050,7 +8050,10 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
 
       const vizBtn = document.getElementById('vizSceneBtn');
       const retryBtn = document.getElementById('vizRetryBtn');
+      const basicVizBtn = document.getElementById('basicVizBtn');
 
+      // TASK E: Visualize button shows NO credit count
+      // TASK C: Initial Visualize = 1 credit, Re-Visualize = 2 credits
       if (vizBtn) {
           if (budget.finalized) {
               vizBtn.textContent = '🔒 Finalized';
@@ -8058,18 +8061,20 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
               vizBtn.style.opacity = '0.5';
               vizBtn.style.cursor = 'not-allowed';
           } else if (remaining <= 0) {
-              vizBtn.textContent = '✨ Visualize (0)';
+              vizBtn.textContent = '✨ Visualize';
               vizBtn.disabled = true;
               vizBtn.style.opacity = '0.5';
               vizBtn.style.cursor = 'not-allowed';
           } else {
-              vizBtn.textContent = `✨ Visualize (${remaining})`;
+              // TASK E: No credit number on initial Visualize button
+              vizBtn.textContent = '✨ Visualize';
               vizBtn.disabled = false;
               vizBtn.style.opacity = '1';
               vizBtn.style.cursor = 'pointer';
           }
       }
 
+      // TASK C & E: Re-Visualize shows credit cost (always 2), never shows 1
       if (retryBtn) {
           if (budget.finalized) {
               retryBtn.textContent = 'Finalized';
@@ -8077,10 +8082,22 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
           } else if (remaining <= 0) {
               retryBtn.textContent = 'Re-Visualize (0)';
               retryBtn.disabled = true;
+          } else if (remaining === 1) {
+              // Only 1 attempt left - this IS the re-visualize, costs 2 but only 1 remains
+              retryBtn.textContent = 'Re-Visualize (1)';
+              retryBtn.disabled = false;
           } else {
-              retryBtn.textContent = `Re-Visualize (${remaining})`;
+              // TASK C: Re-Visualize costs 2 credits
+              retryBtn.textContent = 'Re-Visualize (2)';
               retryBtn.disabled = false;
           }
+      }
+
+      // TASK D: Basic Visualize fallback button - show when main viz might fail
+      if (basicVizBtn) {
+          // Always enabled as ultimate fallback
+          basicVizBtn.disabled = budget.finalized || remaining <= 0;
+          basicVizBtn.style.display = budget.finalized ? 'none' : 'inline-block';
       }
   }
 
@@ -8316,7 +8333,112 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
       const retryBtn = document.getElementById('vizRetryBtn');
       if(retryBtn) retryBtn.disabled = false;
   };
-  
+
+  // TASK D: Basic Visualize - always uses OpenAI, bypasses provider UI
+  // Fallback when enhanced visualization fails
+  window.basicVisualize = async function() {
+      if (_vizInFlight) return;
+
+      const sceneKey = getSceneKey();
+      const budget = getSceneBudget(sceneKey);
+      const remaining = getAttemptsRemaining(sceneKey);
+
+      if (budget.finalized || remaining <= 0) {
+          showToast('No visualization attempts remaining for this scene.');
+          return;
+      }
+
+      // Increment attempts
+      incrementSceneAttempts(sceneKey);
+      updateVizButtonStates();
+
+      _vizInFlight = true;
+      startLoading("Basic visualization...", VISUALIZE_LOADING_MESSAGES);
+
+      try {
+          const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+          const lastText = allStoryContent.slice(-400) || "A romantic scene";
+
+          // Simple prompt - no modifiers, no provider selection
+          const basePrompt = filterAuthorFromPrompt(lastText).slice(0, 256) +
+              "\n---\nStyle: cinematic, painterly, romantic. Attractive, elegant features.";
+
+          // TASK A: Force OpenAI directly - guaranteed fallback
+          const imageUrl = await callOpenAIImageGen(basePrompt, '1792x1024');
+
+          if (!imageUrl) {
+              throw new Error('OpenAI image generation returned null');
+          }
+
+          // Show result in modal
+          const modal = document.getElementById('vizModal');
+          const img = document.getElementById('vizPreviewImg');
+          const ph = document.getElementById('vizPlaceholder');
+          const errDiv = document.getElementById('vizError');
+
+          if (modal) modal.classList.remove('hidden');
+          if (ph) ph.style.display = 'none';
+          if (errDiv) errDiv.classList.add('hidden');
+
+          if (img) {
+              img.src = imageUrl.startsWith('http') ? imageUrl : `data:image/png;base64,${imageUrl}`;
+              img.style.display = 'block';
+              if (!img.src.startsWith('data:') && !img.src.startsWith('blob:')) {
+                  state.visual.lastImageUrl = img.src;
+              }
+          }
+
+          showToast('Basic visualization complete');
+      } catch (e) {
+          console.error('[BasicViz] Error:', e);
+          showToast('Visualization failed. Please try again.');
+      } finally {
+          stopLoading();
+          _vizInFlight = false;
+      }
+  };
+
+  // TASK B: Initialize provider dropdown with available providers
+  function initVizProviderDropdown() {
+      const dropdown = document.getElementById('vizModel');
+      if (!dropdown) return;
+
+      // Clear existing options
+      dropdown.innerHTML = '';
+
+      // Available providers
+      const providers = [
+          { value: 'gemini', label: 'Gemini (Primary)' },
+          { value: 'openai', label: 'OpenAI (Fallback)' },
+          { value: 'replicate', label: 'Replicate FLUX' }
+      ];
+
+      // Add options
+      providers.forEach((p, i) => {
+          const opt = document.createElement('option');
+          opt.value = p.value;
+          opt.textContent = p.label;
+          if (i === 0) opt.selected = true;
+          dropdown.appendChild(opt);
+      });
+
+      // TASK B: Enable dropdown - it was disabled
+      dropdown.disabled = false;
+      dropdown.style.opacity = '1';
+
+      // Store selection in state
+      dropdown.addEventListener('change', (e) => {
+          state.visual.preferredProvider = e.target.value;
+      });
+  }
+
+  // Initialize provider dropdown on DOMContentLoaded
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initVizProviderDropdown);
+  } else {
+      initVizProviderDropdown();
+  }
+
   window.insertImage = function(){
       const img = document.getElementById('vizPreviewImg');
       if(!img.src) return;
@@ -8338,12 +8460,28 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
 
   // --- GAME LOOP ---
   $('submitBtn')?.addEventListener('click', async () => {
+      // TASK F: Immediate visual feedback on click
+      const submitBtn = $('submitBtn');
+      if (submitBtn) {
+          submitBtn.classList.add('submitting');
+      }
+
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
-      if (billingLock) { window.showPaywall('unlock'); return; }
+      if (billingLock) {
+          if (submitBtn) submitBtn.classList.remove('submitting');
+          window.showPaywall('unlock');
+          return;
+      }
 
       const rawAct = $('actionInput').value.trim();
       const rawDia = $('dialogueInput').value.trim();
-      if(!rawAct && !rawDia) return alert("Input required.");
+      if(!rawAct && !rawDia) {
+          if (submitBtn) submitBtn.classList.remove('submitting');
+          return alert("Input required.");
+      }
+
+      // TASK F: Start loading IMMEDIATELY after validation (before normalization)
+      startLoading("Fate is weaving...", STORY_LOADING_MESSAGES);
 
       // RUNTIME NORMALIZATION: Action/dialogue inputs flow through ChatGPT normalization layer
       // God Mode does NOT bypass normalization - same rules apply
@@ -8369,13 +8507,13 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
 
       const { safeAction, safeDialogue, flags } = sanitizeUserIntent(act, dia);
       if (flags.includes("redirect_nonconsent")) {
+          stopLoading();
+          if (submitBtn) submitBtn.classList.remove('submitting');
           showToast("Boundary Redirect Active");
           if(safeAction) $('actionInput').value = safeAction;
           if(safeDialogue) $('dialogueInput').value = safeDialogue;
-          return; 
+          return;
       }
-
-      startLoading("Fate is weaving...", STORY_LOADING_MESSAGES);
 
       // Get story context from all pages
       const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
@@ -8622,6 +8760,9 @@ FATE CARD ADAPTATION (CRITICAL):
           }
       } finally {
           stopLoading();
+          // TASK F: Remove submitting state
+          const submitBtn = $('submitBtn');
+          if (submitBtn) submitBtn.classList.remove('submitting');
       }
   });
 
