@@ -7770,7 +7770,7 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
               body: JSON.stringify({
                   prompt: prompt,
                   provider: 'gemini',
-                  model: 'imagen-3.0-generate-002',
+                  model: 'gemini-2.5-flash',
                   size: size,
                   aspect_ratio: aspectRatio,
                   n: 1
