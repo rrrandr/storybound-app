@@ -208,17 +208,24 @@ export default async function handler(req, res) {
 
   // Apply intent-specific prompt wrapping
   const isBookCover = imageIntent === 'book_cover';
+  const isSetting = imageIntent === 'setting';
   const finalPrompt = isBookCover
     ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre)
     : wrapScenePrompt(prompt);
 
-  console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);
+  console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}, isSetting: ${isSetting}`);
 
-  // ---- GEMINI PRIMARY ----
+  // ---- INTENT-BASED PROVIDER ROUTING (AUTHORITATIVE) ----
+  // setting: Gemini primary → OpenAI fallback
+  // scene/cover: OpenAI ONLY (skip Gemini entirely)
+  // Gemini may ONLY be used for intent === 'setting'
+
+  // ---- GEMINI PRIMARY (SETTING ONLY) ----
   // Using generateContent API (not predict) for Gemini 2.5 Flash image generation
-  if (!provider || provider === 'gemini') {
+  // CRITICAL: Gemini is ONLY allowed for setting images
+  if (isSetting && (!provider || provider === 'gemini')) {
     try {
-      console.log('[IMAGE] Trying Gemini 2.5 Flash via generateContent...');
+      console.log('[IMAGE] Trying Gemini 2.5 Flash via generateContent (setting intent)...');
       const geminiRes = await fetch(
         // Hardcoded model - do not allow frontend override
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -234,7 +241,7 @@ export default async function handler(req, res) {
               }
             ],
             generationConfig: {
-              responseModalities: ['image', 'text'],
+              responseModalities: ['image'],
               responseMimeType: 'image/png'
             }
           })
@@ -278,9 +285,11 @@ export default async function handler(req, res) {
           return res.json({ url: uri, provider: 'Gemini', intent: imageIntent });
         }
       }
-      console.log('[IMAGE] Gemini failed:', data?.error?.message || 'no image in response');
+      // Gemini failed - fall through to OpenAI (no retries, no user-visible error)
+      console.log('[IMAGE] Gemini failed, falling back to OpenAI:', data?.error?.message || 'no image in response');
     } catch (err) {
-      console.error('[IMAGE] Gemini error:', err.message);
+      // Gemini error - fall through to OpenAI silently
+      console.error('[IMAGE] Gemini error, falling back to OpenAI:', err.message);
     }
   }
 

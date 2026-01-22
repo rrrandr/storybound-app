@@ -7380,13 +7380,14 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
      let rawUrl = null;
 
      // Use unified IMAGE PROVIDER ROUTER with FALLBACK CHAIN
-     // Setting shots always use Clean tier (sanitized) with landscape shape
+     // Setting shots use intent='setting' for Gemini primary → OpenAI fallback
      try {
          rawUrl = await generateImageWithFallback({
              prompt: prompt,
              tier: 'Clean',
              shape: 'landscape',
-             context: 'setting-shot'
+             context: 'setting-shot',
+             intent: 'setting'
          });
      } catch(e) {
          // All providers failed - logged by generateImageWithFallback
@@ -8783,9 +8784,12 @@ No brown/cream parchment defaults. No centered-object-on-cream unless layout exp
 
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
   // All image generation MUST route through this function
-  // Provider order: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
+  // INTENT-BASED ROUTING (MANDATORY):
+  //   setting → Gemini (primary) → OpenAI (fallback) — NO Replicate
+  //   scene   → OpenAI (primary) → Replicate (fallback) — NO Gemini
+  //   cover   → OpenAI (primary) → Replicate (fallback) — NO Gemini
   // Default to 16:9 landscape for cinematic presentation
-  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize' }) {
+  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', intent = 'scene' }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
 
@@ -8803,16 +8807,23 @@ No brown/cream parchment defaults. No centered-object-on-cream unless layout exp
       // Explicit content belongs in prose, not images
       const basePrompt = sanitizedPrompt;
 
-      // STABLE PROVIDER CHAIN: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
-      // Perchance removed for stability. Replicate failures fail silently.
-      const providerChain = [
-          // GEMINI PRIMARY - reliable, sanitized prompts
-          { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
-          // OPENAI FALLBACK - reliable, sanitized prompts
-          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt },
-          // REPLICATE LAST RESORT - allowed to fail silently
-          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt }
-      ];
+      // INTENT-BASED PROVIDER CHAIN (AUTHORITATIVE)
+      // setting: Gemini → OpenAI (NO Replicate)
+      // scene/cover: OpenAI → Replicate (NO Gemini)
+      let providerChain;
+      if (intent === 'setting') {
+          // Setting images: Gemini primary, OpenAI fallback, NO Replicate
+          providerChain = [
+              { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt }
+          ];
+      } else {
+          // Scene/Cover images: OpenAI primary, Replicate fallback, NO Gemini
+          providerChain = [
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt },
+              { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt }
+          ];
+      }
 
       let lastError = null;
 
@@ -8843,12 +8854,14 @@ No brown/cream parchment defaults. No centered-object-on-cream unless layout exp
   }
 
   // Legacy wrapper for backward compatibility
+  // Scene visualization: OpenAI primary → Replicate fallback (NO Gemini)
   async function generateTieredImage(basePrompt, tier) {
       return generateImageWithFallback({
           prompt: basePrompt,
           tier: tier,
           shape: 'portrait',
-          context: 'visualize'
+          context: 'visualize',
+          intent: 'scene'
       });
   }
 
@@ -9426,6 +9439,8 @@ No brown/cream parchment defaults. No centered-object-on-cream unless layout exp
   };
 
   // TASK B: Initialize provider dropdown with available providers
+  // INTENT-BASED: Scene visualization uses OpenAI/Replicate only (NO Gemini)
+  // Gemini is ONLY available for Setting images (handled separately)
   function initVizProviderDropdown() {
       const dropdown = document.getElementById('vizModel');
       if (!dropdown) return;
@@ -9433,11 +9448,11 @@ No brown/cream parchment defaults. No centered-object-on-cream unless layout exp
       // Clear existing options
       dropdown.innerHTML = '';
 
-      // Available providers
+      // Scene visualization providers ONLY (Gemini not allowed for scenes)
+      // Per TASK C: scene → OpenAI (primary) → Replicate (fallback)
       const providers = [
-          { value: 'gemini', label: 'Gemini (Primary)' },
-          { value: 'openai', label: 'OpenAI (Fallback)' },
-          { value: 'replicate', label: 'Replicate FLUX' }
+          { value: 'openai', label: 'OpenAI (Primary)' },
+          { value: 'replicate', label: 'Replicate FLUX (Fallback)' }
       ];
 
       // Add options
