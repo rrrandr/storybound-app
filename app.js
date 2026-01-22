@@ -1271,6 +1271,8 @@ ANTI-HERO ENFORCEMENT:
           'protective': 'GUARDIAN',
           'steady': 'GUARDIAN',
           'safe': 'GUARDIAN',
+          'paladin': 'GUARDIAN',
+          'knight': 'GUARDIAN',
           'sovereign': 'SOVEREIGN',
           'authority': 'SOVEREIGN',
           'composed': 'SOVEREIGN',
@@ -4990,22 +4992,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           const inner = rotatingPlaceholder.querySelector('.sb-zoom-placeholder-inner');
           if (inner) inner.style.animationPlayState = 'running';
 
-          // PASS 9F: Normalize input and select matching modifier
-          // Keep user-entered text visible - never discard modifier input
+          // Normalize input and select matching modifier
           const inputVal = customInput.value.trim();
           if (inputVal) {
               const matchedModifier = normalizeArchetypeModifierInput(inputVal, archetypeId);
               if (matchedModifier) {
                   // Update state with matched archetype
                   state.archetype.modifier = matchedModifier;
+                  state.archetype.modifierText = null;
+                  // Update input field to show canonical name
+                  const canonicalName = ARCHETYPES[matchedModifier]?.name || matchedModifier;
+                  customInput.value = canonicalName;
                   updateArchetypeSelectionSummary();
               } else {
-                  // Even if no match, accept as free text modifier
-                  // Store the raw text as modifier
-                  state.archetype.modifierText = inputVal;
+                  // No match - clear input and reject
+                  customInput.value = '';
+                  state.archetype.modifier = null;
+                  state.archetype.modifierText = null;
                   updateArchetypeSelectionSummary();
               }
-              // PASS 9F: KEEP the user-entered text visible - do not clear
           }
 
           // Show placeholder only if input is truly empty
