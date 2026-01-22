@@ -1416,7 +1416,127 @@ ANTI-HERO ENFORCEMENT:
       authorAwarenessWindowWords: window.state?.authorAwarenessWindowWords || 1300,
       authorAwarenessMaxDurationWords: window.state?.authorAwarenessMaxDurationWords || 2500
   };
-  
+
+  // ============================================================
+  // 5TH PERSON AUTHOR CONDUCTOR SYSTEM
+  // The Author is causal/agentic, not a voyeur
+  // ============================================================
+
+  // BANNED VOYEUR VERBS - The Author never merely observes
+  const AUTHOR_BANNED_VERBS = [
+      'watched', 'observed', 'saw', 'looked on', 'gazed at', 'witnessed',
+      'noticed', 'perceived', 'beheld', 'eyed', 'surveyed', 'regarded',
+      'looked at', 'stared at', 'peered at', 'glimpsed'
+  ];
+
+  // BANNED VOYEUR PATTERNS - Passive observation phrases
+  const AUTHOR_BANNED_PATTERNS = [
+      /the author (watched|observed|saw|looked on)/gi,
+      /as (she|he|they) [\w\s]+, the author/gi,
+      /watched as (she|he|they)/gi,
+      /the author.{0,20}(with satisfaction|with interest|with amusement) as/gi
+  ];
+
+  // ALLOWED AGENTIC VERBS - The Author causes, arranges, orchestrates
+  const AUTHOR_AGENTIC_VERBS = [
+      'tilted', 'threaded', 'arranged', 'set', 'sent', 'unlatched',
+      'steered', 'coaxed', 'provoked', 'seeded', 'tightened', 'loosened',
+      'staged', 'placed', 'positioned', 'orchestrated', 'wove', 'spun',
+      'nudged', 'pressed', 'released', 'ignited', 'extinguished', 'delayed',
+      'accelerated', 'redirected', 'planted', 'uprooted', 'summoned', 'banished'
+  ];
+
+  // Validate that 5th person opener starts with "The Author"
+  function validate5thPersonOpener(text) {
+      if (!text || typeof text !== 'string') return false;
+      const trimmed = text.trim();
+      // Must start with "The Author" (case-insensitive first match)
+      return /^the author/i.test(trimmed);
+  }
+
+  // Rewrite opener to start with "The Author" if needed
+  async function enforce5thPersonOpener(text) {
+      if (validate5thPersonOpener(text)) return text;
+
+      // Force rewrite of first paragraph
+      try {
+          const rewritten = await callChat([{
+              role: 'user',
+              content: `REWRITE REQUIRED: The following story opening MUST start with "The Author" as the grammatical subject of the first sentence.
+
+CURRENT TEXT:
+${text.slice(0, 500)}
+
+RULES:
+1. The very first word must be "The" and second word "Author"
+2. The Author must be DOING something (causal), not watching
+3. Use verbs like: ${AUTHOR_AGENTIC_VERBS.slice(0, 8).join(', ')}
+4. NEVER use voyeur verbs: ${AUTHOR_BANNED_VERBS.slice(0, 6).join(', ')}
+5. Preserve the rest of the content as much as possible
+
+Return the rewritten text only, no explanation.`
+          }]);
+          return rewritten || text;
+      } catch (e) {
+          console.warn('[5thPerson] Opener enforcement failed:', e.message);
+          // Fallback: prepend a conductor sentence
+          return `The Author set the stage with quiet precision. ${text}`;
+      }
+  }
+
+  // Check if an Author sentence contains voyeur verbs
+  function hasVoyeurVerbs(sentence) {
+      const lower = sentence.toLowerCase();
+      // Only check sentences that mention "the author"
+      if (!lower.includes('the author')) return false;
+      return AUTHOR_BANNED_VERBS.some(verb => lower.includes(verb)) ||
+             AUTHOR_BANNED_PATTERNS.some(pattern => pattern.test(sentence));
+  }
+
+  // Rewrite a single voyeur sentence to agentic causation
+  function rewriteVoyeurSentence(sentence) {
+      let result = sentence;
+      // Replace common voyeur patterns with agentic alternatives
+      const replacements = [
+          [/The Author watched (as )?/gi, 'The Author arranged for '],
+          [/The Author observed (that )?/gi, 'The Author ensured that '],
+          [/The Author saw (that )?/gi, 'The Author had orchestrated that '],
+          [/The Author looked on (as )?/gi, 'The Author steered events so that '],
+          [/watched as (she|he|they)/gi, 'set in motion what made $1'],
+          [/The Author.{0,10}with (quiet )?satisfaction/gi, 'The Author, having arranged this'],
+          [/The Author noticed/gi, 'The Author had ensured'],
+          [/The Author perceived/gi, 'The Author had woven']
+      ];
+      for (const [pattern, replacement] of replacements) {
+          result = result.replace(pattern, replacement);
+      }
+      return result;
+  }
+
+  // Enforce Author-as-conductor throughout text (not just opener)
+  function enforceAuthorConductor(text) {
+      if (!text || typeof text !== 'string') return text;
+      if (window.state?.povMode !== 'author5th') return text;
+
+      // Split into sentences and check each
+      const sentences = text.split(/(?<=[.!?])\s+/);
+      let modified = false;
+
+      const corrected = sentences.map(sentence => {
+          if (hasVoyeurVerbs(sentence)) {
+              modified = true;
+              return rewriteVoyeurSentence(sentence);
+          }
+          return sentence;
+      });
+
+      if (modified) {
+          console.log('[5thPerson] Corrected voyeur verbs to agentic causation');
+      }
+
+      return corrected.join(' ');
+  }
+
   var state = window.state;
 
   // LATCH for Visualize Re-entrancy
@@ -6158,13 +6278,16 @@ You are writing a story with the following 4-axis configuration:
     6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
     7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
     ${state.povMode === 'author5th' ? `
-    5TH PERSON (AUTHOR) DIRECTIVES - CRITICAL:
-    - Write as if The Author is a visible conductor of the narrative, referred to in THIRD PERSON only.
-    - NEVER use first person ("I", "me", "my", "myself"). Always use "The Author" as the subject.
-    - Example: "The Author watched with quiet satisfaction" NOT "I watched with quiet satisfaction".
+    5TH PERSON (AUTHOR AS CONDUCTOR) - CRITICAL:
+    - The Author is CAUSAL and AGENTIC, not a voyeur. The Author initiates, arranges, and sets events in motion.
+    - The Author is the wind, the timing, the coincidence, the pressure. The Author thinks: "What shall I make happen next?"
+    - NEVER use first person ("I", "me", "my"). Always refer to "The Author" in third person.
+    - BANNED VOYEUR VERBS (never use with "The Author"): watched, observed, saw, looked on, gazed at, witnessed, noticed, perceived, stared.
+    - REQUIRED AGENTIC VERBS: tilted, threaded, arranged, set, sent, unlatched, steered, coaxed, provoked, seeded, tightened, loosened, staged, orchestrated, wove.
+    - Author's inner thoughts must be about CRAFTING/ENGINEERING outcomes, not spectating.
+    - BAD: "The Author watched as she crossed the room." GOOD: "The Author tilted the light so she would notice the letter."
     - Presence: ${state.authorPresence}. Cadence: ~${state.authorCadenceWords} words between Author references.
     - Fate card voice: ${state.fateCardVoice}.
-    - Author awareness: ${state.allowAuthorAwareness ? 'enabled' : 'disabled'}, chance ${state.authorAwarenessChance}, window ${state.authorAwarenessWindowWords}w, max ${state.authorAwarenessMaxDurationWords}w.
     ` : ''}
     `;
     
@@ -6185,14 +6308,16 @@ You are writing a story with the following 4-axis configuration:
     const liAppears = state.intensity === 'Dirty' || Math.random() < 0.25;
 
     const authorOpeningDirective = state.povMode === 'author5th' ? `
-AUTHOR PRESENCE (5TH PERSON) - CRITICAL FOR OPENING:
-- The Author must be PALPABLY present from the first paragraph.
-- Comment on the world as it forms around the protagonist—as if arranging set pieces.
-- Reflect knowingly on the protagonist's ignorance of what The Author has planned for them.
-- Express quiet intention, anticipation, and subtle manipulation.
-- CRITICAL: NEVER use first person ("I", "me", "my"). Always refer to "The Author" in third person.
-- Use phrases like: "The Author placed...", "The Author watched...", "They didn't yet know what The Author had planned...", "The Author had been waiting..."
-- The Author is a visible hand, orchestrating with relish—but always referred to as "The Author", never "I".
+AUTHOR AS CONDUCTOR (5TH PERSON) - MANDATORY OPENER:
+- CRITICAL: The VERY FIRST SENTENCE must begin with exactly "The Author" as subject.
+- The Author is CAUSAL from word one. The Author CAUSES the opening situation, not observes it.
+- The Author arranges, sets, seeds, tilts, threads—never watches, observes, or looks on.
+- Author's thoughts are about engineering outcomes: "The Author had placed the letter where she would find it."
+- BANNED OPENER VERBS: watched, observed, saw, looked on, gazed, witnessed, noticed, perceived.
+- REQUIRED OPENER VERBS: tilted, threaded, arranged, set, sent, unlatched, steered, coaxed, provoked, seeded, staged.
+- CORRECT: "The Author tilted the morning light through the window..."
+- WRONG: "The Author watched as she entered the room..."
+- The Author is the invisible hand making things happen, referred to in third person, never "I".
 ` : '';
 
     // OPENING SCENE VARIATION - avoid repetitive patterns
@@ -6352,10 +6477,20 @@ The opening must feel intentional and specific, not archetypal or templated.`;
     console.log('STORYBOUND VALIDATION PASSED - Proceeding to model call');
 
     try {
-        const text = await callChat([
+        let text = await callChat([
             {role:'system', content: state.sysPrompt},
             {role:'user', content: introPrompt}
         ]);
+
+        // 5TH PERSON OPENER ENFORCEMENT: Must start with "The Author"
+        if (state.povMode === 'author5th') {
+            if (!validate5thPersonOpener(text)) {
+                console.log('[5thPerson] Opener does not start with "The Author" - enforcing rewrite');
+                text = await enforce5thPersonOpener(text);
+            }
+            // Also enforce conductor (no voyeur verbs) throughout
+            text = enforceAuthorConductor(text);
+        }
 
         const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
 
@@ -8391,6 +8526,11 @@ FATE CARD ADAPTATION (CRITICAL):
           // Validate response shape before marking as success
           if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {
               throw new Error('Invalid response: empty or malformed story text');
+          }
+
+          // 5TH PERSON CONDUCTOR ENFORCEMENT: Apply to all Author beats, not just opener
+          if (state.povMode === 'author5th') {
+              raw = enforceAuthorConductor(raw);
           }
 
           state.turnCount++;
