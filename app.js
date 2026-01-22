@@ -6790,8 +6790,319 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       }, 500);
   }
 
+  // ============================================================
+  // COVER INTELLIGENCE SYSTEM
+  // Focal object extraction, anti-repetition, domain backgrounds, palette
+  // ============================================================
+
+  const COVER_MOTIF_STORAGE_KEY = 'storybound_cover_motifs';
+  const MAX_MOTIF_HISTORY = 5;
+
+  // Object class groupings for anti-repetition (same class = repetition)
+  const OBJECT_CLASSES = {
+      jewelry: ['ring', 'necklace', 'bracelet', 'pendant', 'locket', 'brooch', 'crown', 'tiara'],
+      keys: ['key', 'keyring', 'skeleton key', 'antique key', 'golden key'],
+      letters: ['letter', 'envelope', 'note', 'scroll', 'document', 'contract', 'deed'],
+      flowers: ['rose', 'flower', 'bouquet', 'petal', 'lily', 'orchid', 'wildflower'],
+      weapons: ['dagger', 'sword', 'knife', 'gun', 'pistol', 'blade'],
+      vessels: ['wine glass', 'goblet', 'cup', 'bottle', 'vial', 'chalice'],
+      timepieces: ['watch', 'clock', 'hourglass', 'pocket watch', 'sundial'],
+      books: ['book', 'diary', 'journal', 'tome', 'manuscript', 'ledger'],
+      masks: ['mask', 'masquerade mask', 'venetian mask', 'domino mask'],
+      doors: ['door', 'gate', 'portal', 'archway', 'threshold']
+  };
+
+  // Color families for anti-repetition
+  const COLOR_FAMILIES = {
+      warm: ['red', 'orange', 'gold', 'amber', 'copper', 'bronze', 'rust', 'burgundy', 'crimson'],
+      cool: ['blue', 'teal', 'cyan', 'navy', 'sapphire', 'cobalt', 'azure', 'indigo'],
+      earth: ['brown', 'tan', 'sienna', 'umber', 'chocolate', 'mahogany', 'sepia'],
+      jewel: ['emerald', 'purple', 'violet', 'amethyst', 'ruby', 'jade'],
+      neutral: ['black', 'white', 'grey', 'gray', 'silver', 'charcoal', 'ivory'],
+      nature: ['green', 'forest', 'olive', 'moss', 'sage', 'hunter']
+  };
+
+  // Background patterns by domain
+  const DOMAIN_BACKGROUNDS = {
+      // World-based
+      Modern: ['geometric glass patterns', 'city skyline silhouette', 'neon reflections on wet pavement', 'modernist architecture lines'],
+      Historical: ['aged parchment texture', 'heraldic filigree', 'candlelit stone walls', 'tapestry weave pattern'],
+      Fantasy: ['magical runes glowing', 'starfield with constellations', 'enchanted forest mist', 'crystalline formations'],
+      SciFi: ['holographic grid', 'star map', 'circuit board traces', 'nebula swirls', 'spacecraft hull panels'],
+      // Genre-based
+      CrimeSyndicate: ['smoke wisps', 'playing cards scattered', 'city noir shadows', 'venetian blind slats'],
+      Billionaire: ['marble texture', 'champagne bubbles', 'stock ticker lines', 'crystal chandelier reflections'],
+      Noir: ['rain-streaked window', 'venetian blind shadows', 'cigarette smoke trails', 'foggy streetlamp halos'],
+      Heist: ['vault door mechanism', 'blueprint lines', 'laser grid', 'scattered diamonds'],
+      Espionage: ['redacted document', 'surveillance static', 'crosshairs overlay', 'encrypted text streams'],
+      Political: ['marble columns', 'seal embossing', 'flag fabric folds', 'courtroom wood grain'],
+      Escape: ['broken chains', 'open road horizon', 'shattered glass', 'fading footprints'],
+      Redemption: ['sunrise gradient', 'phoenix feathers', 'cracked mirror healing', 'emerging from shadow'],
+      BuildingBridges: ['interlocking hands silhouette', 'bridge architecture', 'puzzle pieces', 'woven threads'],
+      Purgatory: ['fog layers', 'liminal doorways', 'clock faces overlapping', 'fading photographs'],
+      RelentlessPast: ['cracked photographs', 'faded newspaper', 'chains and shadows', 'footsteps in dust']
+  };
+
+  // Palette by tone + common material affinities
+  const TONE_PALETTES = {
+      Earnest: { primary: 'warm gold', secondary: 'deep burgundy', accent: 'ivory' },
+      Angsty: { primary: 'stormy blue', secondary: 'bruised purple', accent: 'lightning silver' },
+      Campy: { primary: 'hot pink', secondary: 'electric blue', accent: 'gold glitter' },
+      Gritty: { primary: 'charcoal', secondary: 'rust', accent: 'dried blood red' },
+      Tender: { primary: 'blush pink', secondary: 'soft lavender', accent: 'pearl white' },
+      Steamy: { primary: 'deep red', secondary: 'black velvet', accent: 'gold shimmer' },
+      Brooding: { primary: 'midnight blue', secondary: 'storm grey', accent: 'moonlight silver' },
+      Playful: { primary: 'coral', secondary: 'turquoise', accent: 'sunshine yellow' }
+  };
+
+  // Material-based palette adjustments
+  const MATERIAL_PALETTES = {
+      metal: { shift: 'silver/steel highlights' },
+      gold: { shift: 'warm gold, amber glow' },
+      glass: { shift: 'cool reflections, prismatic edges' },
+      paper: { shift: 'cream, sepia, aged yellow' },
+      fabric: { shift: 'rich textile colors, soft shadows' },
+      stone: { shift: 'grey, moss green, weathered' },
+      wood: { shift: 'warm brown, grain patterns' },
+      crystal: { shift: 'prismatic, ice blue, diamond sparkle' }
+  };
+
+  // Get object class for anti-repetition check
+  function getObjectClass(object) {
+      const lower = object.toLowerCase();
+      for (const [cls, items] of Object.entries(OBJECT_CLASSES)) {
+          if (items.some(item => lower.includes(item))) return cls;
+      }
+      return lower; // Use object itself as unique class
+  }
+
+  // Get color family for anti-repetition check
+  function getColorFamily(color) {
+      const lower = color.toLowerCase();
+      for (const [family, colors] of Object.entries(COLOR_FAMILIES)) {
+          if (colors.some(c => lower.includes(c))) return family;
+      }
+      return 'neutral'; // Default
+  }
+
+  // Load motif history from localStorage
+  function loadMotifHistory() {
+      try {
+          const stored = localStorage.getItem(COVER_MOTIF_STORAGE_KEY);
+          return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+          return [];
+      }
+  }
+
+  // Save motif to history
+  function saveMotifToHistory(motif) {
+      try {
+          const history = loadMotifHistory();
+          history.unshift(motif);
+          if (history.length > MAX_MOTIF_HISTORY) history.pop();
+          localStorage.setItem(COVER_MOTIF_STORAGE_KEY, JSON.stringify(history));
+      } catch (e) {
+          // localStorage unavailable
+      }
+  }
+
+  // Check if motif would repeat recent covers
+  function wouldRepeatMotif(objectClass, colorFamily, backgroundStyle) {
+      const history = loadMotifHistory();
+      if (history.length === 0) return { repeats: false };
+
+      const lastMotif = history[0];
+      const repeats = {
+          object: history.some(m => m.objectClass === objectClass),
+          color: history.some(m => m.colorFamily === colorFamily),
+          background: history.some(m => m.backgroundStyle === backgroundStyle),
+          artDeco: backgroundStyle === 'art-deco' && lastMotif.backgroundStyle === 'art-deco'
+      };
+
+      return {
+          repeats: repeats.object || repeats.color || repeats.artDeco,
+          details: repeats
+      };
+  }
+
+  // Extract focal object from synopsis using AI
+  async function extractFocalObject(synopsis, genre, world) {
+      if (!synopsis || synopsis.length < 20) {
+          return { object: 'sealed envelope', material: 'paper', reason: 'default' };
+      }
+
+      try {
+          const extraction = await callChat([{
+              role: 'user',
+              content: `Extract the single most salient CONCRETE OBJECT or SYMBOL from this story synopsis.
+This object will be the central focus of a book cover illustration.
+
+RULES:
+1. Choose a PHYSICAL object mentioned or strongly implied (not abstract concepts)
+2. Prefer objects with symbolic weight (letters, keys, rings, weapons, flowers)
+3. If no object is explicit, infer one from the setting/conflict
+4. Return the object and its likely material
+
+Synopsis: "${synopsis}"
+Genre: ${genre}
+World: ${world}
+
+Return ONLY valid JSON:
+{"object": "the object", "material": "metal|paper|glass|fabric|stone|wood|crystal|gold", "reason": "why this object"}
+
+If truly no object can be extracted, return:
+{"object": null, "material": null, "reason": "no salient object"}`
+          }]);
+
+          const parsed = JSON.parse(extraction.trim());
+          if (parsed.object) {
+              return parsed;
+          }
+      } catch (e) {
+          console.warn('[CoverIntel] Focal object extraction failed:', e.message);
+      }
+
+      // Fallback: genre-based default objects
+      const GENRE_DEFAULTS = {
+          CrimeSyndicate: { object: 'bloodstained playing card', material: 'paper' },
+          Billionaire: { object: 'crystal champagne flute', material: 'crystal' },
+          Noir: { object: 'smoldering cigarette', material: 'paper' },
+          Heist: { object: 'diamond in spotlight', material: 'crystal' },
+          Espionage: { object: 'passport with torn page', material: 'paper' },
+          Political: { object: 'broken seal', material: 'metal' },
+          Escape: { object: 'shattered chain link', material: 'metal' },
+          Redemption: { object: 'phoenix feather', material: 'gold' },
+          BuildingBridges: { object: 'two hands almost touching', material: 'fabric' },
+          Purgatory: { object: 'stopped clock', material: 'metal' },
+          RelentlessPast: { object: 'cracked photograph', material: 'paper' }
+      };
+
+      return GENRE_DEFAULTS[genre] || { object: 'sealed envelope', material: 'paper', reason: 'fallback' };
+  }
+
+  // Derive background pattern from domain (genre + world)
+  function deriveBackgroundPattern(genre, world, history) {
+      // Collect candidates from both genre and world
+      const genrePatterns = DOMAIN_BACKGROUNDS[genre] || [];
+      const worldPatterns = DOMAIN_BACKGROUNDS[world] || [];
+      const allPatterns = [...new Set([...genrePatterns, ...worldPatterns])];
+
+      if (allPatterns.length === 0) {
+          // Art-deco is fallback only
+          return 'subtle gradient with abstract shapes';
+      }
+
+      // Filter out recently used patterns
+      const recentBackgrounds = history.map(m => m.backgroundStyle);
+      const available = allPatterns.filter(p => !recentBackgrounds.includes(p));
+
+      // If all patterns used recently, reset but avoid art-deco twice in a row
+      if (available.length === 0) {
+          const lastBg = history[0]?.backgroundStyle;
+          return allPatterns.find(p => p !== lastBg) || allPatterns[0];
+      }
+
+      // Random selection from available
+      return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // Derive palette from tone + object material
+  function derivePalette(tone, material, history) {
+      const basePalette = TONE_PALETTES[tone] || TONE_PALETTES.Earnest;
+      const materialShift = MATERIAL_PALETTES[material]?.shift || '';
+
+      // Check if palette would repeat
+      const colorFamily = getColorFamily(basePalette.primary);
+      const recentFamilies = history.map(m => m.colorFamily);
+
+      // If color family repeats, shift to complementary
+      let finalPalette = { ...basePalette };
+      if (recentFamilies.includes(colorFamily)) {
+          const SHIFTS = {
+              warm: { primary: 'cool sapphire', secondary: 'deep teal' },
+              cool: { primary: 'warm amber', secondary: 'burgundy' },
+              earth: { primary: 'jewel emerald', secondary: 'amethyst' },
+              jewel: { primary: 'neutral silver', secondary: 'charcoal' },
+              neutral: { primary: 'jewel ruby', secondary: 'gold' },
+              nature: { primary: 'warm copper', secondary: 'rust' }
+          };
+          const shift = SHIFTS[colorFamily] || {};
+          finalPalette = { ...basePalette, ...shift };
+      }
+
+      // Brown is NEVER default - must be justified by material
+      if (finalPalette.primary.includes('brown') && material !== 'wood') {
+          finalPalette.primary = basePalette.secondary || 'deep burgundy';
+      }
+
+      return {
+          ...finalPalette,
+          materialNote: materialShift,
+          family: getColorFamily(finalPalette.primary)
+      };
+  }
+
+  // Build intelligent cover prompt with all guardrails
+  async function buildCoverPrompt(synopsis, genre, world, tone, dynamic) {
+      const history = loadMotifHistory();
+
+      // TASK A: Extract focal object from synopsis
+      const focalResult = await extractFocalObject(synopsis, genre, world);
+      const focalObject = focalResult.object;
+      const material = focalResult.material || 'metal';
+
+      // TASK B: Check for repetition
+      const objectClass = getObjectClass(focalObject);
+      const repetitionCheck = wouldRepeatMotif(objectClass, null, null);
+
+      // If object class repeats, request alternative
+      let finalObject = focalObject;
+      if (repetitionCheck.details?.object) {
+          // Try to get alternative from synopsis context
+          finalObject = `${focalObject} (alternative angle or shadow/silhouette form)`;
+      }
+
+      // TASK C: Derive background from domain
+      const backgroundPattern = deriveBackgroundPattern(genre, world, history);
+
+      // TASK D: Derive palette from tone + material
+      const palette = derivePalette(tone, material, history);
+
+      // Final anti-repetition check for art-deco
+      let finalBackground = backgroundPattern;
+      if (backgroundPattern.includes('art-deco') || backgroundPattern.includes('geometric')) {
+          const lastBg = history[0]?.backgroundStyle || '';
+          if (lastBg.includes('art-deco') || lastBg.includes('geometric')) {
+              finalBackground = DOMAIN_BACKGROUNDS[world]?.[0] || 'atmospheric gradient with subtle texture';
+          }
+      }
+
+      // Save this motif to history
+      const newMotif = {
+          objectClass: getObjectClass(finalObject),
+          colorFamily: palette.family,
+          backgroundStyle: finalBackground,
+          timestamp: Date.now()
+      };
+      saveMotifToHistory(newMotif);
+
+      // Build the prompt
+      return {
+          focalObject: finalObject,
+          material: material,
+          background: finalBackground,
+          palette: palette,
+          promptText: `FOCAL OBJECT (must be central): ${finalObject} rendered in ${material}.
+BACKGROUND: ${finalBackground} (domain-derived, not generic).
+COLOR PALETTE: Primary ${palette.primary}, secondary ${palette.secondary}, accent ${palette.accent}. ${palette.materialNote}
+COMPOSITION: The ${finalObject} must dominate the center. If synopsis mentions it, it MUST appear.
+STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
+      };
+  }
+
   // Generate book cover with intent-based routing
-  // Uses authoritative prestige cover template with symbolic objects
+  // Uses COVER INTELLIGENCE SYSTEM for focal object, anti-repetition, domain backgrounds, palette
   async function generateBookCover(synopsis, title, authorName) {
       // Extract story context for symbolic object selection (4-axis system)
       const world = state.picks?.world || 'Modern';
@@ -6805,12 +7116,28 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Build story style description
       const storyStyle = `${tone} ${genre}`;
 
+      // COVER INTELLIGENCE: Build intelligent prompt with focal object, anti-repetition, domain background, palette
+      let coverIntel = null;
+      try {
+          coverIntel = await buildCoverPrompt(synopsis, genre, world, tone, dynamic);
+          console.log('[CoverIntel] Focal object:', coverIntel.focalObject);
+          console.log('[CoverIntel] Background:', coverIntel.background);
+          console.log('[CoverIntel] Palette:', coverIntel.palette.primary, '/', coverIntel.palette.secondary);
+      } catch (intelErr) {
+          console.warn('[CoverIntel] Intelligence extraction failed, using fallback:', intelErr.message);
+      }
+
+      // Build enhanced prompt with cover intelligence
+      const enhancedPrompt = coverIntel
+          ? `${coverIntel.promptText}\n\nSTORY CONTEXT: ${synopsis || 'A dramatic romantic encounter'}`
+          : (synopsis || 'A dramatic scene from a romantic novel');
+
       try {
           const res = await fetch(IMAGE_PROXY_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                  prompt: synopsis || 'A dramatic scene from a romantic novel',
+                  prompt: enhancedPrompt,
                   imageIntent: 'book_cover',
                   title: title || 'Untitled',
                   authorName: authorName || 'ANONYMOUS',
@@ -6818,7 +7145,18 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   dynamic: dynamic,
                   storyStyle: storyStyle,
                   genre: genre,
-                  size: '1024x1024'
+                  size: '1024x1024',
+                  // Pass cover intelligence metadata for server-side use
+                  coverIntel: coverIntel ? {
+                      focalObject: coverIntel.focalObject,
+                      material: coverIntel.material,
+                      background: coverIntel.background,
+                      palette: {
+                          primary: coverIntel.palette.primary,
+                          secondary: coverIntel.palette.secondary,
+                          accent: coverIntel.palette.accent
+                      }
+                  } : null
               })
           });
 
