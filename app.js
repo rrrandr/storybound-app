@@ -5924,7 +5924,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Clear all fate highlights immediately
       document.querySelectorAll('.fate-active').forEach(el => el.classList.remove('fate-active'));
       document.querySelectorAll('.fate-typing').forEach(el => el.classList.remove('fate-typing'));
-      showToast('You take control from Fate.');
+      document.querySelectorAll('.fate-ceremony').forEach(el => el.classList.remove('fate-ceremony'));
+
+      // Fade the golden vignette
+      const vignette = document.getElementById('fateVignette');
+      if (vignette) {
+        vignette.classList.remove('active');
+        vignette.classList.add('fading');
+      }
+
+      showToast('You take the reins from Fate.');
     }
   }
 
@@ -6013,10 +6022,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   // Helper: Atomic section reveal for card grids
-  async function revealCardSection(gridSelector, value, sectionTitleEl) {
+  // gridOrSelector can be a CSS selector string OR an element reference
+  async function revealCardSection(gridOrSelector, value, sectionTitleEl) {
     if (_fateOverridden) return false;
 
-    const grid = document.querySelector(gridSelector);
+    const grid = typeof gridOrSelector === 'string'
+      ? document.querySelector(gridOrSelector)
+      : gridOrSelector;
     if (!grid || !value) return false;
 
     // STEP 1: Clear previous highlights (one section at a time)
@@ -6148,6 +6160,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   // Main Guided Fate Choreography Engine
+  // AUTHORITATIVE: DOM visual order, opening ceremony, downward-only
   async function runGuidedFateFill(fateChoices) {
     // Initialize override state
     _fateOverridden = false;
@@ -6187,100 +6200,136 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       $('partnerAgeInput').value = fateChoices.partnerAge;
     }
 
-    // ===============================
-    // REVEAL ORDER (STRICT - NO SKIPPING, NO REARRANGING)
-    // ===============================
+    // ===============================================
+    // PART B: OPENING CEREMONY
+    // Golden vignette + character names first (5+ seconds, NO SCROLL)
+    // ===============================================
 
-    // 1. Story World
-    if (_fateOverridden) { _fateRunning = false; return; }
-    const worldTitle = document.querySelector('#worldGrid')?.previousElementSibling;
-    await revealCardSection('#worldGrid', fateChoices.world, worldTitle);
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
-
-    // 2. Genre
-    if (_fateOverridden) { _fateRunning = false; return; }
-    const genreTitle = document.querySelector('#genreGrid')?.previousElementSibling;
-    await revealCardSection('#genreGrid', fateChoices.genre, genreTitle);
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
-
-    // 3. Archetype
-    if (_fateOverridden) { _fateRunning = false; return; }
-    await revealArchetypeSection(fateChoices.archetype);
-    const archName = ARCHETYPES[fateChoices.archetype]?.name || fateChoices.archetype;
-    const primaryNameEl = $('selectedPrimaryName');
-    if (primaryNameEl) primaryNameEl.textContent = archName;
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
-
-    // 4. Modifier (if applicable - currently fate doesn't pick modifiers)
-
-    // 5. Character Name
-    if (_fateOverridden) { _fateRunning = false; return; }
-    await revealNameSection('playerNameInput', fateChoices.playerName);
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
-
-    // 6. Love Interest Name
-    if (_fateOverridden) { _fateRunning = false; return; }
-    await revealNameSection('partnerNameInput', fateChoices.partnerName);
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
-
-    // 7. Remaining setup fields (Tone → Dynamic → POV → Intensity → Length)
-
-    // Tone
-    if (_fateOverridden) { _fateRunning = false; return; }
-    const toneTitle = document.querySelector('#toneGrid')?.previousElementSibling;
-    await revealCardSection('#toneGrid', fateChoices.tone, toneTitle);
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
-
-    // Dynamic (special nested grid)
-    if (_fateOverridden) { _fateRunning = false; return; }
-    const dynamicGrid = document.querySelector('#dynamicGrid');
-    if (dynamicGrid && fateChoices.dynamic) {
-      clearAllFateHighlights();
-      const dynamicTitle = dynamicGrid.previousElementSibling;
-      if (dynamicTitle?.classList.contains('section-title')) {
-        dynamicTitle.classList.add('fate-active');
-      }
-      scrollToSectionDownward(dynamicTitle || dynamicGrid);
-      await new Promise(r => setTimeout(r, FATE_TIMING.SCROLL_SETTLE));
-
-      if (!_fateOverridden) {
-        dynamicGrid.querySelectorAll('.sb-card.selected').forEach(c => {
-          c.classList.remove('selected', 'flipped');
-        });
-        const dynamicCard = dynamicGrid.querySelector(`.sb-card[data-val="${fateChoices.dynamic}"]`);
-        if (dynamicCard) {
-          await flipCardForFate(dynamicCard);
-        }
-        await new Promise(r => setTimeout(r, FATE_TIMING.HIGHLIGHT_SETTLE));
-        if (dynamicTitle?.classList.contains('section-title')) {
-          dynamicTitle.classList.remove('fate-active');
-        }
-      }
+    // Activate golden vignette
+    const vignette = document.getElementById('fateVignette');
+    const fateCard = document.getElementById('fateDestinyCard');
+    if (vignette) {
+      vignette.classList.add('active');
     }
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
+    if (fateCard) {
+      fateCard.classList.add('fate-activating');
+    }
 
-    // POV
+    // Highlight both character blocks during ceremony
+    const mcBlock = document.querySelector('#playerNameInput')?.closest('.character-block');
+    const liBlock = document.querySelector('#partnerNameInput')?.closest('.character-block');
+    if (mcBlock) mcBlock.classList.add('fate-ceremony');
+    if (liBlock) liBlock.classList.add('fate-ceremony');
+
+    // NO SCROLL during opening ceremony - names fill in place
+    await new Promise(r => setTimeout(r, 800)); // Let vignette settle
     if (_fateOverridden) { _fateRunning = false; return; }
-    const povTitle = document.querySelector('#povGrid')?.previousElementSibling;
-    await revealCardSection('#povGrid', fateChoices.pov, povTitle);
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
-    // Intensity
+    // Fill MC name (letter-by-letter with gold glow)
+    const mcInput = $('playerNameInput');
+    if (mcInput && fateChoices.playerName && !_fateOverridden) {
+      mcInput.value = '';
+      mcInput.classList.add('fate-typing');
+      for (let i = 0; i < fateChoices.playerName.length; i++) {
+        if (_fateOverridden) break;
+        mcInput.value += fateChoices.playerName[i];
+        await new Promise(r => setTimeout(r, 100)); // Slower for ceremony
+      }
+      mcInput.classList.remove('fate-typing');
+      mcInput.classList.add('fate-typed');
+      setTimeout(() => mcInput.classList.remove('fate-typed'), 800);
+    }
+
+    await new Promise(r => setTimeout(r, 600)); // Pause between names
     if (_fateOverridden) { _fateRunning = false; return; }
-    const intensityTitle = document.querySelector('#intensityGrid')?.previousElementSibling;
-    await revealCardSection('#intensityGrid', fateChoices.intensity, intensityTitle);
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
-    // Length
+    // Fill LI name (letter-by-letter with gold glow)
+    const liInput = $('partnerNameInput');
+    if (liInput && fateChoices.partnerName && !_fateOverridden) {
+      liInput.value = '';
+      liInput.classList.add('fate-typing');
+      for (let i = 0; i < fateChoices.partnerName.length; i++) {
+        if (_fateOverridden) break;
+        liInput.value += fateChoices.partnerName[i];
+        await new Promise(r => setTimeout(r, 100)); // Slower for ceremony
+      }
+      liInput.classList.remove('fate-typing');
+      liInput.classList.add('fate-typed');
+      setTimeout(() => liInput.classList.remove('fate-typed'), 800);
+    }
+
+    // Ceremony hold - let names breathe (total opening ceremony ~5+ seconds)
+    await new Promise(r => setTimeout(r, 1200));
     if (_fateOverridden) { _fateRunning = false; return; }
-    const lengthTitle = document.querySelector('#lengthGrid')?.previousElementSibling;
-    await revealCardSection('#lengthGrid', fateChoices.storyLength, lengthTitle);
-    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
-    // ===============================
+    // Remove ceremony highlights from character blocks
+    if (mcBlock) mcBlock.classList.remove('fate-ceremony');
+    if (liBlock) liBlock.classList.remove('fate-ceremony');
+
+    // Fade vignette slightly after ceremony (keep subtle glow)
+    if (vignette && !_fateOverridden) {
+      vignette.style.opacity = '0.6';
+    }
+
+    // ===============================================
+    // PART A/C: BUILD SECTION LIST BY DOM POSITION
+    // Execute sections in strict visual order (top → bottom)
+    // ===============================================
+
+    // Define all Fate-relevant sections with their grid selectors and data keys
+    const sectionConfigs = [
+      { id: 'archetype', grid: '#archetypeCardGrid', titleId: 'archetypeSectionTitle', value: fateChoices.archetype, type: 'archetype' },
+      { id: 'intensity', grid: '#intensityGrid', value: fateChoices.intensity, type: 'card' },
+      { id: 'length', grid: '#lengthGrid', value: fateChoices.storyLength, type: 'card' },
+      { id: 'pov', grid: '#povGrid', value: fateChoices.pov, type: 'card' },
+      { id: 'world', grid: '#worldGrid', value: fateChoices.world, type: 'card' },
+      { id: 'tone', grid: '#toneGrid', value: fateChoices.tone, type: 'card' },
+      { id: 'genre', grid: '#genreGrid', value: fateChoices.genre, type: 'card' },
+      { id: 'dynamic', grid: '#dynamicGrid', value: fateChoices.dynamic, type: 'card' }
+    ];
+
+    // Build section list sorted by DOM visual position
+    const sectionsWithPositions = sectionConfigs
+      .map(cfg => {
+        const grid = document.querySelector(cfg.grid);
+        if (!grid) return null;
+        const rect = grid.getBoundingClientRect();
+        const visualY = rect.top + window.scrollY;
+        return { ...cfg, grid, visualY };
+      })
+      .filter(s => s !== null)
+      .sort((a, b) => a.visualY - b.visualY);
+
+    // Execute sections in visual order (downward only)
+    for (const section of sectionsWithPositions) {
+      if (_fateOverridden) { _fateRunning = false; return; }
+
+      if (section.type === 'archetype') {
+        // Archetype has special handling
+        await revealArchetypeSection(section.value);
+        const archName = ARCHETYPES[section.value]?.name || section.value;
+        const primaryNameEl = $('selectedPrimaryName');
+        if (primaryNameEl) primaryNameEl.textContent = archName;
+      } else {
+        // Standard card section
+        const sectionTitle = section.grid.previousElementSibling;
+        await revealCardSection(section.grid, section.value, sectionTitle);
+      }
+
+      await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
+    }
+
+    // ===============================================
     // END STATE: Highlight Begin Story
-    // ===============================
+    // ===============================================
     if (_fateOverridden) { _fateRunning = false; return; }
+
+    // Fully fade vignette at end
+    if (vignette) {
+      vignette.classList.remove('active');
+      vignette.classList.add('fading');
+    }
+
     highlightBeginButton();
     showToast('Fate has spoken. Click Begin Story when ready.');
 
