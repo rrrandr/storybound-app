@@ -7891,8 +7891,16 @@ Return ONLY valid JSON:
   }
 
   // Build intelligent cover prompt with all guardrails (AUTHORITATIVE)
+  // PROMPT STRUCTURE ORDER: Layout → Emotion → Focal → Background → Palette → Exclusions
   async function buildCoverPrompt(synopsis, genre, world, tone, dynamic) {
       const history = loadMotifHistory();
+
+      // ==========================================
+      // STEP 1: LAYOUT ROULETTE (MANDATORY)
+      // Select structurally distinct composition
+      // ==========================================
+      const selectedLayout = selectCoverLayout(history);
+      console.log('[CoverIntel] Layout selected:', selectedLayout.id);
 
       // Extract focal anchor with emotional gravity and human figure decision
       const focalResult = await extractFocalObject(synopsis, genre, world, tone);
@@ -7921,24 +7929,33 @@ Return ONLY valid JSON:
       const backgroundPattern = deriveBackgroundPattern(genre, world, history);
 
       // Derive palette from tone + material
+      // HARD RULE: No brown/cream unless explicitly required by layout
       const palette = derivePalette(tone, material, history);
 
-      // Anti-repetition: avoid art-deco twice in a row
+      // Anti-repetition: avoid art-deco twice in a row AND block cream backgrounds
       let finalBackground = backgroundPattern;
+      const recentBgs = history.slice(0, 2).map(m => m.backgroundStyle?.toLowerCase() || '');
       if (backgroundPattern.includes('art-deco') || backgroundPattern.includes('geometric')) {
-          const lastBg = history[0]?.backgroundStyle || '';
-          if (lastBg.includes('art-deco') || lastBg.includes('geometric')) {
+          if (recentBgs.some(bg => bg.includes('art-deco') || bg.includes('geometric'))) {
               finalBackground = DOMAIN_BACKGROUNDS[world]?.[0] || 'atmospheric gradient with depth';
           }
       }
+      // Block cream/parchment unless center_object layout
+      if (selectedLayout.id !== 'center_object') {
+          if (finalBackground.includes('cream') || finalBackground.includes('parchment')) {
+              finalBackground = 'deep atmospheric gradient';
+          }
+      }
 
-      // Visual restraint rules
-      const restraintRules = [
-          'Limited palette (2-3 tones)',
-          'Soft focus or shallow depth',
-          'Asymmetric composition'
-      ];
-      const restraintText = restraintRules.slice(0, 2).join('. ') + '.';
+      // Visual restraint rules (layout-aware)
+      let restraintText = 'Limited palette (2-3 tones). Soft focus or shallow depth.';
+      if (selectedLayout.id === 'negative_space_dominant') {
+          restraintText = 'Minimal elements. 70%+ empty space. Single small anchor.';
+      } else if (selectedLayout.id === 'fragmented_object') {
+          restraintText = 'Object cropped or broken. Tension through incompleteness.';
+      } else if (selectedLayout.id === 'off_center_focus') {
+          restraintText = 'Strong asymmetry. Directional tension. Off-center weight.';
+      }
 
       // Human figure handling
       let figureText = '';
@@ -7950,31 +7967,35 @@ Return ONLY valid JSON:
           figureText = 'Only hands or partial body, no face.';
       }
 
-      // Save motif to history (include substitution if used for future avoidance)
+      // Save motif to history (include layout for repetition tracking)
       const wasSubstituted = repetitionCheck.details?.object;
       const newMotif = {
-          objectClass: objectClass, // Original class, not substituted
+          layoutId: selectedLayout.id,           // Track layout for roulette
+          objectClass: objectClass,              // Original class, not substituted
           colorFamily: palette.family,
           backgroundStyle: finalBackground,
           emotion: emotion,
-          substitution: wasSubstituted ? finalObject : null, // Track what we substituted to
+          substitution: wasSubstituted ? finalObject : null,
           timestamp: Date.now()
       };
       saveMotifToHistory(newMotif);
 
-      // Build the authoritative prompt
+      // Build the authoritative prompt (ORDER MATTERS)
+      // Layout → Emotion → Focal → Background → Palette → Restraint → Exclusions
       return {
+          layoutId: selectedLayout.id,
           focalObject: finalObject,
           material: material,
           emotion: emotion,
           humanFigure: humanFigure,
           background: finalBackground,
           palette: palette,
-          promptText: `EMOTIONAL GRAVITY: ${emotion} (guides all visual decisions).
-FOCAL ANCHOR: ${finalObject} rendered in ${material}.
-BACKGROUND: ${finalBackground}.
-PALETTE: ${palette.primary}, ${palette.secondary}, accent ${palette.accent}. ${palette.materialNote}
-VISUAL RESTRAINT: ${restraintText}
+          promptText: `LAYOUT: ${selectedLayout.description}
+EMOTIONAL GRAVITY: ${emotion} (guides all visual decisions).
+FOCAL ANCHOR: ${finalObject} rendered in ${material}, composed per layout.
+BACKGROUND: ${finalBackground}. (Support emotion, not decoration.)
+PALETTE: ${palette.primary}, ${palette.secondary}. Max 3 tones. ${palette.materialNote}
+COMPOSITION: ${restraintText}
 ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       };
   }
@@ -8386,7 +8407,11 @@ NO art-deco default. NO ornamental patterns unless justified.
 Return ONLY the image prompt. Under 250 characters.`;
 
   // Cover prompt exclusions (always appended)
-  const COVER_EXCLUSIONS = 'No audience-facing characters. No literal scene recreation. No generic beauty shots. No brown-by-default palette.';
+  // HARD EXCLUSIONS - violations are bugs
+  const COVER_EXCLUSIONS = `No audience-facing characters. No literal scene recreation. No generic beauty shots.
+No envelopes. No roses. No wine glasses (unless explicitly central to story).
+No ornamental curls or art-deco filigree unless narratively justified.
+No brown/cream parchment defaults. No centered-object-on-cream unless layout explicitly requires it.`;
 
   // Emotional gravity options for cover generation
   const EMOTIONAL_GRAVITY_OPTIONS = [
@@ -8394,6 +8419,60 @@ Return ONLY the image prompt. Under 250 characters.`;
     'inevitability', 'longing', 'tension', 'mystery', 'isolation',
     'devotion', 'betrayal', 'transformation', 'pursuit'
   ];
+
+  // =================================================================
+  // COVER LAYOUT ARCHETYPES (AUTHORITATIVE)
+  // Structurally distinct compositions to prevent visual convergence
+  // =================================================================
+  const COVER_LAYOUT_ARCHETYPES = [
+    {
+      id: 'center_object',
+      description: 'Single symbolic object centered, minimal background, strong negative space'
+    },
+    {
+      id: 'off_center_focus',
+      description: 'Primary object off-center, asymmetrical composition, directional tension'
+    },
+    {
+      id: 'fragmented_object',
+      description: 'Object partially broken, cropped, or fragmented across the frame'
+    },
+    {
+      id: 'environment_only',
+      description: 'No central object; environment or setting carries meaning (empty room, horizon, pathway)'
+    },
+    {
+      id: 'symbol_in_shadow',
+      description: 'Object implied through shadow, reflection, or silhouette on surface'
+    },
+    {
+      id: 'typography_integrated',
+      description: 'Symbol interacts with title lettering space or is partially obscured by text area'
+    },
+    {
+      id: 'negative_space_dominant',
+      description: 'Large empty space (70%+) with small but potent visual anchor at edge or corner'
+    }
+  ];
+
+  // Layout roulette: Select layout avoiding recent repetition
+  function selectCoverLayout(history) {
+    const recentLayouts = history.slice(0, 3).map(m => m.layoutId).filter(Boolean);
+
+    // Shuffle archetypes for randomness
+    const shuffled = [...COVER_LAYOUT_ARCHETYPES].sort(() => Math.random() - 0.5);
+
+    // Try up to 3 times to find non-repeating layout
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const candidate = shuffled[attempt % shuffled.length];
+      if (!recentLayouts.includes(candidate.id)) {
+        return candidate;
+      }
+    }
+
+    // Fallback: force negative_space_dominant (safest, most distinct)
+    return COVER_LAYOUT_ARCHETYPES.find(l => l.id === 'negative_space_dominant') || shuffled[0];
+  }
 
   // DEV-ONLY: Logging helper for image generation debugging
   function logImageAttempt(provider, context, prompt, status, error = null) {
