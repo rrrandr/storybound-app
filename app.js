@@ -5899,93 +5899,246 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   // =================================================================
-  // GUIDED FATE FILL ENGINE
-  // Reveals selections step-by-step with animations
-  // Order: World → Genre → Archetype → Modifier → Names → Remaining
+  // GUIDED FATE CHOREOGRAPHY ENGINE (AUTHORITATIVE)
+  // Controls tempo, direction, and order of Fate's reveal.
+  // ONE DIRECTION (down), ONE SECTION AT A TIME, HUMAN PACE
   // =================================================================
 
-  // Helper: Type text letter-by-letter with gold glow effect
-  async function typeTextWithGlow(inputEl, text, delayPerChar = 35) {
-    if (!inputEl || !text) return;
+  // Fate override flag - when true, all automated motion stops
+  let _fateOverridden = false;
+  let _fateRunning = false;
+
+  // Timing constants (HUMAN PACE - deliberate, not efficient)
+  const FATE_TIMING = {
+    SCROLL_SETTLE: 500,      // 400-600ms after scroll
+    CARD_FLIP: 350,          // 300-400ms card flip animation
+    TYPING_PER_CHAR: 65,     // 50-80ms per character
+    SECTION_PAUSE: 700,      // 500-800ms between sections
+    HIGHLIGHT_SETTLE: 400    // Time before clearing highlight
+  };
+
+  // Override handler - user takes control from Fate
+  function handleFateOverride(event) {
+    if (_fateRunning && !_fateOverridden) {
+      _fateOverridden = true;
+      // Clear all fate highlights immediately
+      document.querySelectorAll('.fate-active').forEach(el => el.classList.remove('fate-active'));
+      document.querySelectorAll('.fate-typing').forEach(el => el.classList.remove('fate-typing'));
+      showToast('You take control from Fate.');
+    }
+  }
+
+  // Setup override listeners
+  function setupFateOverrideListeners() {
+    const setupArea = document.getElementById('setup');
+    if (!setupArea) return;
+
+    // Listen for user interaction that indicates override
+    const overrideEvents = ['click', 'keydown', 'input'];
+    overrideEvents.forEach(evt => {
+      setupArea.addEventListener(evt, handleFateOverride, { capture: true, passive: true });
+    });
+
+    // Scroll override (manual scroll detection)
+    let lastScrollTop = window.scrollY;
+    const scrollHandler = () => {
+      if (_fateRunning && !_fateOverridden) {
+        const currentScroll = window.scrollY;
+        // If user scrolled up (against fate direction), override
+        if (currentScroll < lastScrollTop - 50) {
+          handleFateOverride();
+        }
+        lastScrollTop = currentScroll;
+      }
+    };
+    window.addEventListener('scroll', scrollHandler, { passive: true });
+  }
+
+  // Clear all fate highlights (ensure clean state before next section)
+  function clearAllFateHighlights() {
+    document.querySelectorAll('.fate-active').forEach(el => el.classList.remove('fate-active'));
+  }
+
+  // Helper: Scroll element into view (DOWNWARD ONLY)
+  function scrollToSectionDownward(el) {
+    if (!el || _fateOverridden) return;
+
+    const rect = el.getBoundingClientRect();
+    const currentScroll = window.scrollY;
+    const targetScroll = currentScroll + rect.top - 120; // 120px from top
+
+    // Only scroll if target is below current position (downward only)
+    if (targetScroll > currentScroll) {
+      window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+    }
+  }
+
+  // Helper: Type text letter-by-letter with gold glow effect (SLOWED)
+  async function typeTextWithGlow(inputEl, text, delayPerChar = FATE_TIMING.TYPING_PER_CHAR) {
+    if (!inputEl || !text || _fateOverridden) return;
 
     inputEl.value = '';
     inputEl.classList.add('fate-typing');
     inputEl.classList.remove('fate-typed');
 
     for (let i = 0; i < text.length; i++) {
+      if (_fateOverridden) break; // Check override each character
       inputEl.value += text[i];
       await new Promise(r => setTimeout(r, delayPerChar));
     }
 
     // Settle the glow
     inputEl.classList.remove('fate-typing');
-    inputEl.classList.add('fate-typed');
-
-    // Clean up class after animation
-    setTimeout(() => inputEl.classList.remove('fate-typed'), 800);
+    if (!_fateOverridden) {
+      inputEl.classList.add('fate-typed');
+      setTimeout(() => inputEl.classList.remove('fate-typed'), 800);
+    }
   }
 
-  // Helper: Flip a card with reveal animation
+  // Helper: Flip a card with reveal animation (SLOWED)
   async function flipCardForFate(cardEl) {
-    if (!cardEl) return;
+    if (!cardEl || _fateOverridden) return;
 
     cardEl.classList.add('fate-revealing');
 
-    // Small delay then flip
-    await new Promise(r => setTimeout(r, 100));
+    // Card flip animation
+    await new Promise(r => setTimeout(r, FATE_TIMING.CARD_FLIP));
+    if (_fateOverridden) return;
+
     cardEl.classList.add('selected', 'flipped');
 
-    // Remove reveal class after animation
-    await new Promise(r => setTimeout(r, 400));
+    // Settle after flip
+    await new Promise(r => setTimeout(r, FATE_TIMING.CARD_FLIP));
     cardEl.classList.remove('fate-revealing');
   }
 
-  // Helper: Scroll element into view smoothly
-  function scrollToSection(el) {
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  // Helper: Atomic section reveal for card grids
+  async function revealCardSection(gridSelector, value, sectionTitleEl) {
+    if (_fateOverridden) return false;
 
-  // Helper: Find and flip a card in a grid by value
-  async function selectCardInGrid(gridSelector, value, statePath) {
     const grid = document.querySelector(gridSelector);
     if (!grid || !value) return false;
 
-    // Deselect existing cards in this group
+    // STEP 1: Clear previous highlights (one section at a time)
+    clearAllFateHighlights();
+
+    // STEP 2: Highlight this section
+    if (sectionTitleEl) {
+      sectionTitleEl.classList.add('fate-active');
+    }
+
+    // STEP 3: Scroll into view (downward only)
+    scrollToSectionDownward(sectionTitleEl || grid);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SCROLL_SETTLE));
+    if (_fateOverridden) return false;
+
+    // STEP 4: Deselect existing cards
     grid.querySelectorAll('.sb-card.selected').forEach(c => {
       c.classList.remove('selected', 'flipped');
     });
 
-    // Find target card
+    // STEP 5: Find and flip target card
     const targetCard = grid.querySelector(`.sb-card[data-val="${value}"]`);
-    if (!targetCard) return false;
-
-    // Scroll to section
-    const sectionTitle = grid.previousElementSibling;
-    if (sectionTitle?.classList.contains('section-title')) {
-      sectionTitle.classList.add('fate-active');
-      scrollToSection(sectionTitle);
+    if (targetCard) {
+      await flipCardForFate(targetCard);
     }
 
-    await new Promise(r => setTimeout(r, 200));
-    await flipCardForFate(targetCard);
-
-    // Clear section highlight
-    if (sectionTitle?.classList.contains('section-title')) {
-      setTimeout(() => sectionTitle.classList.remove('fate-active'), 600);
+    // STEP 6: Settle, then clear highlight
+    await new Promise(r => setTimeout(r, FATE_TIMING.HIGHLIGHT_SETTLE));
+    if (sectionTitleEl) {
+      sectionTitleEl.classList.remove('fate-active');
     }
 
-    return true;
+    return !!targetCard;
   }
 
-  // Helper: Highlight Begin Story button
+  // Helper: Atomic section reveal for archetype cards
+  async function revealArchetypeSection(archetypeId) {
+    if (_fateOverridden) return false;
+
+    const grid = $('archetypeCardGrid');
+    if (!grid || !archetypeId) return false;
+
+    const sectionTitle = $('archetypeSectionTitle');
+
+    // STEP 1: Clear previous highlights
+    clearAllFateHighlights();
+
+    // STEP 2: Highlight this section
+    if (sectionTitle) {
+      sectionTitle.classList.add('fate-active');
+    }
+
+    // STEP 3: Scroll into view (downward only)
+    scrollToSectionDownward(sectionTitle || grid);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SCROLL_SETTLE));
+    if (_fateOverridden) return false;
+
+    // STEP 4: Deselect existing
+    grid.querySelectorAll('.sb-card.selected').forEach(c => {
+      c.classList.remove('selected', 'flipped');
+    });
+
+    // STEP 5: Find and flip target card
+    const targetCard = grid.querySelector(`.sb-card[data-archetype="${archetypeId}"]`);
+    if (targetCard) {
+      await flipCardForFate(targetCard);
+    }
+
+    // STEP 6: Settle, then clear highlight
+    await new Promise(r => setTimeout(r, FATE_TIMING.HIGHLIGHT_SETTLE));
+    if (sectionTitle) {
+      sectionTitle.classList.remove('fate-active');
+    }
+
+    return !!targetCard;
+  }
+
+  // Helper: Atomic section reveal for name fields
+  async function revealNameSection(inputId, name, charBlockSelector) {
+    if (_fateOverridden || !name) return;
+
+    const inputEl = $(inputId);
+    if (!inputEl) return;
+
+    const charBlock = inputEl.closest('.character-block');
+    const fieldContainer = inputEl.closest('.character-field');
+
+    // STEP 1: Clear previous highlights
+    clearAllFateHighlights();
+
+    // STEP 2: Highlight this field
+    if (fieldContainer) {
+      fieldContainer.classList.add('fate-active');
+    }
+
+    // STEP 3: Scroll into view (downward only)
+    scrollToSectionDownward(charBlock || fieldContainer);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SCROLL_SETTLE));
+    if (_fateOverridden) return;
+
+    // STEP 4: Type the name
+    await typeTextWithGlow(inputEl, name);
+
+    // STEP 5: Settle, then clear highlight
+    await new Promise(r => setTimeout(r, FATE_TIMING.HIGHLIGHT_SETTLE));
+    if (fieldContainer) {
+      fieldContainer.classList.remove('fate-active');
+    }
+  }
+
+  // Helper: Highlight Begin Story button (END STATE)
   function highlightBeginButton() {
+    if (_fateOverridden) return;
+
+    clearAllFateHighlights();
+
     const beginBtn = $('beginBtn');
     if (beginBtn) {
       beginBtn.classList.add('fate-ready');
-      scrollToSection(beginBtn);
+      scrollToSectionDownward(beginBtn);
 
-      // Add click handler to remove highlight
+      // Remove highlight on click
       const removeHighlight = () => {
         beginBtn.classList.remove('fate-ready');
         beginBtn.removeEventListener('click', removeHighlight);
@@ -5994,73 +6147,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
   }
 
-  // Helper: Reveal a character name field with typing animation
-  async function revealNameField(inputId, name, labelText) {
-    const inputEl = $(inputId);
-    if (!inputEl || !name) return;
-
-    // Find parent field container
-    const fieldContainer = inputEl.closest('.character-field');
-    if (fieldContainer) {
-      fieldContainer.classList.add('fate-active');
-    }
-
-    // Scroll to the character block
-    const charBlock = inputEl.closest('.character-block');
-    if (charBlock) {
-      scrollToSection(charBlock);
-    }
-
-    await new Promise(r => setTimeout(r, 150));
-    await typeTextWithGlow(inputEl, name);
-
-    // Clear highlight
-    if (fieldContainer) {
-      setTimeout(() => fieldContainer.classList.remove('fate-active'), 500);
-    }
-  }
-
-  // Helper: Find archetype card and select it
-  async function selectArchetypeCard(archetypeId) {
-    const grid = $('archetypeCardGrid');
-    if (!grid || !archetypeId) return false;
-
-    // Find section title
-    const sectionTitle = $('archetypeSectionTitle');
-    if (sectionTitle) {
-      sectionTitle.classList.add('fate-active');
-      scrollToSection(sectionTitle);
-    }
-
-    await new Promise(r => setTimeout(r, 200));
-
-    // Deselect existing
-    grid.querySelectorAll('.sb-card.selected').forEach(c => {
-      c.classList.remove('selected', 'flipped');
-    });
-
-    // Find target archetype card
-    const targetCard = grid.querySelector(`.sb-card[data-archetype="${archetypeId}"]`);
-    if (targetCard) {
-      targetCard.classList.add('fate-revealing');
-      await new Promise(r => setTimeout(r, 100));
-      targetCard.classList.add('selected', 'flipped');
-      await new Promise(r => setTimeout(r, 400));
-      targetCard.classList.remove('fate-revealing');
-    }
-
-    if (sectionTitle) {
-      setTimeout(() => sectionTitle.classList.remove('fate-active'), 600);
-    }
-
-    return !!targetCard;
-  }
-
-  // Main Guided Fate Fill orchestrator
+  // Main Guided Fate Choreography Engine
   async function runGuidedFateFill(fateChoices) {
-    const REVEAL_PAUSE = 450; // ms between reveals
+    // Initialize override state
+    _fateOverridden = false;
+    _fateRunning = true;
+    setupFateOverrideListeners();
 
-    // Pre-set state values (no UI yet)
+    // Pre-set state values (silent, no UI)
     state.gender = 'Female';
     state.loveInterest = 'Male';
     state.picks.world = fateChoices.world;
@@ -6073,12 +6167,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.storyLength = fateChoices.storyLength;
     state.archetype = { primary: fateChoices.archetype, modifier: null };
 
-    // Handle Historical era
     if (fateChoices.world === 'Historical' && fateChoices.worldFlavor) {
       state.picks.era = fateChoices.worldFlavor;
     }
 
-    // Clear veto/quill
     state.veto = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
     state.quillIntent = '';
 
@@ -6088,7 +6180,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     $('loveInterestGender').value = 'Male';
     $('lovePronouns').value = 'He/Him';
 
-    // Set ages silently
     if (fateChoices.playerAge && $('playerAgeInput')) {
       $('playerAgeInput').value = fateChoices.playerAge;
     }
@@ -6097,94 +6188,103 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
 
     // ===============================
-    // STEP 1: Story World
+    // REVEAL ORDER (STRICT - NO SKIPPING, NO REARRANGING)
     // ===============================
-    await selectCardInGrid('#worldGrid', fateChoices.world);
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE));
 
-    // ===============================
-    // STEP 2: Genre
-    // ===============================
-    await selectCardInGrid('#genreGrid', fateChoices.genre);
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE));
+    // 1. Story World
+    if (_fateOverridden) { _fateRunning = false; return; }
+    const worldTitle = document.querySelector('#worldGrid')?.previousElementSibling;
+    await revealCardSection('#worldGrid', fateChoices.world, worldTitle);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
-    // ===============================
-    // STEP 3: Archetype
-    // ===============================
-    await selectArchetypeCard(fateChoices.archetype);
-    // Update the archetype summary
+    // 2. Genre
+    if (_fateOverridden) { _fateRunning = false; return; }
+    const genreTitle = document.querySelector('#genreGrid')?.previousElementSibling;
+    await revealCardSection('#genreGrid', fateChoices.genre, genreTitle);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
+
+    // 3. Archetype
+    if (_fateOverridden) { _fateRunning = false; return; }
+    await revealArchetypeSection(fateChoices.archetype);
     const archName = ARCHETYPES[fateChoices.archetype]?.name || fateChoices.archetype;
     const primaryNameEl = $('selectedPrimaryName');
     if (primaryNameEl) primaryNameEl.textContent = archName;
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE));
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
-    // ===============================
-    // STEP 4: Modifier (if applicable)
-    // (For now, fate doesn't pick modifiers, so skip)
-    // ===============================
+    // 4. Modifier (if applicable - currently fate doesn't pick modifiers)
 
-    // ===============================
-    // STEP 5: Character Name
-    // ===============================
-    await revealNameField('playerNameInput', fateChoices.playerName);
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE));
+    // 5. Character Name
+    if (_fateOverridden) { _fateRunning = false; return; }
+    await revealNameSection('playerNameInput', fateChoices.playerName);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
-    // ===============================
-    // STEP 6: Love Interest Name
-    // ===============================
-    await revealNameField('partnerNameInput', fateChoices.partnerName);
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE));
+    // 6. Love Interest Name
+    if (_fateOverridden) { _fateRunning = false; return; }
+    await revealNameSection('partnerNameInput', fateChoices.partnerName);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
-    // ===============================
-    // STEP 7: Remaining fields (Tone, Dynamic, POV, Intensity, Length)
-    // ===============================
+    // 7. Remaining setup fields (Tone → Dynamic → POV → Intensity → Length)
 
     // Tone
-    await selectCardInGrid('#toneGrid', fateChoices.tone);
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE * 0.6));
+    if (_fateOverridden) { _fateRunning = false; return; }
+    const toneTitle = document.querySelector('#toneGrid')?.previousElementSibling;
+    await revealCardSection('#toneGrid', fateChoices.tone, toneTitle);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
-    // Dynamic
+    // Dynamic (special nested grid)
+    if (_fateOverridden) { _fateRunning = false; return; }
     const dynamicGrid = document.querySelector('#dynamicGrid');
     if (dynamicGrid && fateChoices.dynamic) {
-      // Dynamic grid is special - cards are in nested groups
-      dynamicGrid.querySelectorAll('.sb-card.selected').forEach(c => {
-        c.classList.remove('selected', 'flipped');
-      });
-      const dynamicCard = dynamicGrid.querySelector(`.sb-card[data-val="${fateChoices.dynamic}"]`);
-      if (dynamicCard) {
-        const sectionTitle = document.querySelector('#dynamicGrid')?.closest('div')?.previousElementSibling;
-        if (sectionTitle?.classList.contains('section-title')) {
-          sectionTitle.classList.add('fate-active');
-          scrollToSection(sectionTitle);
+      clearAllFateHighlights();
+      const dynamicTitle = dynamicGrid.previousElementSibling;
+      if (dynamicTitle?.classList.contains('section-title')) {
+        dynamicTitle.classList.add('fate-active');
+      }
+      scrollToSectionDownward(dynamicTitle || dynamicGrid);
+      await new Promise(r => setTimeout(r, FATE_TIMING.SCROLL_SETTLE));
+
+      if (!_fateOverridden) {
+        dynamicGrid.querySelectorAll('.sb-card.selected').forEach(c => {
+          c.classList.remove('selected', 'flipped');
+        });
+        const dynamicCard = dynamicGrid.querySelector(`.sb-card[data-val="${fateChoices.dynamic}"]`);
+        if (dynamicCard) {
+          await flipCardForFate(dynamicCard);
         }
-        await new Promise(r => setTimeout(r, 200));
-        await flipCardForFate(dynamicCard);
-        if (sectionTitle?.classList.contains('section-title')) {
-          setTimeout(() => sectionTitle.classList.remove('fate-active'), 600);
+        await new Promise(r => setTimeout(r, FATE_TIMING.HIGHLIGHT_SETTLE));
+        if (dynamicTitle?.classList.contains('section-title')) {
+          dynamicTitle.classList.remove('fate-active');
         }
       }
     }
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE * 0.6));
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
     // POV
-    await selectCardInGrid('#povGrid', fateChoices.pov);
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE * 0.6));
+    if (_fateOverridden) { _fateRunning = false; return; }
+    const povTitle = document.querySelector('#povGrid')?.previousElementSibling;
+    await revealCardSection('#povGrid', fateChoices.pov, povTitle);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
     // Intensity
-    await selectCardInGrid('#intensityGrid', fateChoices.intensity);
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE * 0.6));
+    if (_fateOverridden) { _fateRunning = false; return; }
+    const intensityTitle = document.querySelector('#intensityGrid')?.previousElementSibling;
+    await revealCardSection('#intensityGrid', fateChoices.intensity, intensityTitle);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
     // Length
-    await selectCardInGrid('#lengthGrid', fateChoices.storyLength);
-    await new Promise(r => setTimeout(r, REVEAL_PAUSE));
+    if (_fateOverridden) { _fateRunning = false; return; }
+    const lengthTitle = document.querySelector('#lengthGrid')?.previousElementSibling;
+    await revealCardSection('#lengthGrid', fateChoices.storyLength, lengthTitle);
+    await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
 
     // ===============================
-    // FINAL: Highlight Begin Story
+    // END STATE: Highlight Begin Story
     // ===============================
+    if (_fateOverridden) { _fateRunning = false; return; }
     highlightBeginButton();
-
-    // Show a toast to guide the user
     showToast('Fate has spoken. Click Begin Story when ready.');
+
+    _fateRunning = false;
   }
 
   // Populate all UI selections from fate choices
