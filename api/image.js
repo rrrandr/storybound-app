@@ -8,8 +8,10 @@ export const config = {
 // SIZE MAPPING - Normalize to OpenAI-supported dimensions
 // ============================================================
 function mapToOpenAISize(size, imageIntent) {
-  // Book covers are always square for best typography composition
-  if (imageIntent === 'book_cover') return '1024x1024';
+  // Covers are always square for best typography composition
+  if (imageIntent === 'cover') return '1024x1024';
+  // Settings are always landscape (16:9 cinematic)
+  if (imageIntent === 'setting') return '1536x1024';
 
   // OpenAI supports: 1024x1024, 1024x1536, 1536x1024, auto
   const [w, h] = (size || '1024x1024').split('x').map(Number);
@@ -23,9 +25,9 @@ function mapToOpenAISize(size, imageIntent) {
 // Backend enforces model choice - frontend cannot override
 // ============================================================
 function getOpenAIModel(imageIntent) {
-  // book_cover: Higher quality, supports typography (gpt-image-1.5)
-  // scene_visualize: Fast, cheap, no text focus (gpt-image-1)
-  if (imageIntent === 'book_cover') return 'gpt-image-1.5';
+  // cover: Higher quality, supports typography (gpt-image-1.5)
+  // setting/scene: Fast, cheap, no text focus (gpt-image-1)
+  if (imageIntent === 'cover') return 'gpt-image-1.5';
   return 'gpt-image-1';
 }
 
@@ -186,14 +188,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // imageIntent: 'book_cover' | 'scene_visualize' (default)
+  // imageIntent: 'setting' | 'scene' | 'cover' (normalized from legacy values)
   // title, authorName, modeLine: Used for book cover typography
   // dynamic, storyStyle, genre: Story context for symbolic object selection
   const {
     prompt,
     provider,
     size = '1024x1024',
-    imageIntent,
+    imageIntent: rawIntent,
     title,
     authorName,
     modeLine,
@@ -206,16 +208,39 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Prompt required' });
   }
 
+  // Normalize intent to strict enum: 'setting' | 'scene' | 'cover'
+  // Legacy mapping: 'book_cover' -> 'cover', 'scene_visualize' -> 'scene'
+  let imageIntent = rawIntent;
+  if (rawIntent === 'book_cover') imageIntent = 'cover';
+  if (rawIntent === 'scene_visualize' || !rawIntent) imageIntent = 'scene';
+
+  // Validate intent is one of the allowed values
+  const VALID_INTENTS = ['setting', 'scene', 'cover'];
+  if (!VALID_INTENTS.includes(imageIntent)) {
+    console.warn(`[IMAGE] Invalid intent "${imageIntent}", defaulting to "scene"`);
+    imageIntent = 'scene';
+  }
+
   // Apply intent-specific prompt wrapping
-  const isBookCover = imageIntent === 'book_cover';
-  const finalPrompt = isBookCover
+  const isCover = imageIntent === 'cover';
+  const finalPrompt = isCover
     ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre)
     : wrapScenePrompt(prompt);
 
-  console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);
+  console.log(`[IMAGE] Intent: ${imageIntent}, provider requested: ${provider || 'auto'}`);
 
-  // ---- GEMINI PRIMARY ----
-  if (!provider || provider === 'gemini') {
+  // ============================================================
+  // PROVIDER ROUTING TABLE (MANDATORY)
+  // ============================================================
+  // Intent    | Gemini  | OpenAI   | Replicate
+  // ----------|---------|----------|----------
+  // setting   | PRIMARY | FALLBACK | ❌
+  // scene     | ❌      | PRIMARY  | FALLBACK
+  // cover     | ❌      | PRIMARY  | FALLBACK
+  // ============================================================
+
+  // ---- GEMINI: ONLY for setting intent ----
+  if (imageIntent === 'setting' && (!provider || provider === 'gemini')) {
     try {
       console.log('[IMAGE] Trying Gemini Imagen 3...');
       const geminiRes = await fetch(
@@ -228,7 +253,7 @@ export default async function handler(req, res) {
             instances: [{ prompt: finalPrompt }],
             parameters: {
               sampleCount: 1,
-              aspectRatio: isBookCover ? '1:1' : '16:9'
+              aspectRatio: '16:9'  // Setting images are always landscape
             }
           })
         }
@@ -263,7 +288,9 @@ export default async function handler(req, res) {
     }
   }
 
-  // ---- OPENAI FALLBACK ----
+  // ---- OPENAI: PRIMARY for scene/cover, FALLBACK for setting ----
+  // If we reach here for setting intent, Gemini failed - this is the fallback
+  // For scene/cover intents, this is the primary provider
   try {
     // Intent-based model and size selection (backend enforced)
     const openaiModel = getOpenAIModel(imageIntent);

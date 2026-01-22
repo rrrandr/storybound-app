@@ -6625,13 +6625,14 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
      let rawUrl = null;
 
      // Use unified IMAGE PROVIDER ROUTER with FALLBACK CHAIN
-     // Setting shots always use Clean tier (sanitized) with landscape shape
+     // Setting shots: Gemini (primary) → OpenAI (fallback), NO Replicate
      try {
          rawUrl = await generateImageWithFallback({
              prompt: prompt,
              tier: 'Clean',
              shape: 'landscape',
-             context: 'setting-shot'
+             context: 'setting-shot',
+             intent: 'setting'  // MANDATORY: Routes through Gemini primary
          });
      } catch(e) {
          // All providers failed - logged by generateImageWithFallback
@@ -7154,8 +7155,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       return imageUrl;
   }
 
-  // OPENAI LAST RESORT: Call OpenAI image generation (SAFE - never throws)
-  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000) {
+  // OPENAI PROVIDER: Call OpenAI image generation (SAFE - never throws)
+  // ROUTING: Primary for scene/cover intents, fallback for setting intent
+  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000, imageIntent = 'scene') {
       try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -7169,7 +7171,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               body: JSON.stringify({
                   prompt: prompt,
                   provider: 'openai',
-                  model: 'gpt-image-1.5',
+                  imageIntent: imageIntent,  // Pass intent for backend routing
                   size: size,
                   aspect_ratio: aspectRatio,
                   n: 1
@@ -7257,13 +7259,14 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // GEMINI PROVIDER: Call Gemini image generation (SAFE - never throws)
+  // ROUTING: Only called for intent === 'setting' (enforced by generateImageWithFallback)
   async function callGeminiImageGen(prompt, size = '1024x1024', timeout = 60000) {
       try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-          // Determine aspect ratio from size (match Replicate logic)
-          const aspectRatio = size === '1024x1024' ? '1:1' : '16:9';
+          // Setting images are always landscape 16:9
+          const aspectRatio = '16:9';
 
           const res = await fetch(IMAGE_PROXY_URL, {
               method: 'POST',
@@ -7271,7 +7274,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               body: JSON.stringify({
                   prompt: prompt,
                   provider: 'gemini',
-                  model: 'imagen-3.0-generate-002',
+                  imageIntent: 'setting',  // Gemini only handles setting intent
                   size: size,
                   aspect_ratio: aspectRatio,
                   n: 1
@@ -7380,13 +7383,24 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       throw new Error('Replicate prediction timed out after 20 attempts');
   }
 
+  // ============================================================
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
   // All image generation MUST route through this function
-  // Provider order: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
-  // Default to 16:9 landscape for cinematic presentation
-  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize' }) {
+  // ============================================================
+  // PROVIDER ROUTING TABLE (MANDATORY):
+  // Intent   | Gemini  | OpenAI   | Replicate
+  // ---------|---------|----------|----------
+  // setting  | PRIMARY | FALLBACK | ❌
+  // scene    | ❌      | PRIMARY  | FALLBACK
+  // cover    | ❌      | PRIMARY  | FALLBACK
+  // ============================================================
+  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', intent = 'scene' }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
+
+      // Normalize intent to strict enum
+      const validIntents = ['setting', 'scene', 'cover'];
+      const normalizedIntent = validIntents.includes(intent) ? intent : 'scene';
 
       // Determine size based on shape (default landscape 16:9)
       const size = shape === 'portrait' ? '1024x1024' : '1792x1024';
@@ -7402,16 +7416,22 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Explicit content belongs in prose, not images
       const basePrompt = sanitizedPrompt;
 
-      // STABLE PROVIDER CHAIN: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
-      // Perchance removed for stability. Replicate failures fail silently.
-      const providerChain = [
-          // GEMINI PRIMARY - reliable, sanitized prompts
-          { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
-          // OPENAI FALLBACK - reliable, sanitized prompts
-          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt },
-          // REPLICATE LAST RESORT - allowed to fail silently
-          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt }
-      ];
+      // Build provider chain based on intent (MANDATORY ROUTING)
+      let providerChain;
+
+      if (normalizedIntent === 'setting') {
+          // SETTING: Gemini (primary) → OpenAI (fallback) → NO Replicate
+          providerChain = [
+              { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt, intent: 'setting' },
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt, intent: 'setting' }
+          ];
+      } else {
+          // SCENE/COVER: OpenAI (primary) → Replicate (fallback) → NO Gemini
+          providerChain = [
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt, intent: normalizedIntent },
+              { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt, intent: normalizedIntent }
+          ];
+      }
 
       let lastError = null;
 
@@ -7419,7 +7439,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       for (const provider of providerChain) {
           try {
               logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
-              const imageUrl = await provider.fn(provider.prompt, size);
+              // Pass intent to OpenAI (4th param), Gemini ignores extra params
+              const imageUrl = await provider.fn(provider.prompt, size, 60000, provider.intent);
 
               // Handle null returns from safe providers (Gemini/OpenAI)
               if (!imageUrl) {
