@@ -215,20 +215,27 @@ export default async function handler(req, res) {
   console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);
 
   // ---- GEMINI PRIMARY ----
+  // Using generateContent API (not predict) for Gemini 2.5 Flash image generation
   if (!provider || provider === 'gemini') {
     try {
-      console.log('[IMAGE] Trying Gemini 2.5 Flash...');
+      console.log('[IMAGE] Trying Gemini 2.5 Flash via generateContent...');
       const geminiRes = await fetch(
         // Hardcoded model - do not allow frontend override
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:predict?key=${process.env.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            instances: [{ prompt: finalPrompt }],
-            parameters: {
-              sampleCount: 1,
-              aspectRatio: isBookCover ? '1:1' : '16:9'
+            contents: [
+              {
+                parts: [
+                  { text: `Generate an image: ${finalPrompt}` }
+                ]
+              }
+            ],
+            generationConfig: {
+              responseModalities: ['image', 'text'],
+              responseMimeType: 'image/png'
             }
           })
         }
@@ -245,19 +252,33 @@ export default async function handler(req, res) {
       }
 
       if (geminiRes.ok && data) {
-        const base64 = data.predictions?.[0]?.bytesBase64Encoded;
+        // generateContent response format: candidates[0].content.parts[0].inlineData.data
+        const candidate = data.candidates?.[0];
+        const parts = candidate?.content?.parts || [];
+
+        // Find image part (inlineData with base64)
+        const imagePart = parts.find(p => p.inlineData?.data);
+        const base64 = imagePart?.inlineData?.data;
+
+        // Legacy format support
+        const legacyBase64 = data.predictions?.[0]?.bytesBase64Encoded;
         const uri = data.predictions?.[0]?.image_uri || data.generated_images?.[0]?.image_uri;
 
         if (base64) {
-          console.log('[IMAGE] Gemini success (base64)');
-          return res.json({ url: `data:image/png;base64,${base64}`, provider: 'Gemini', intent: imageIntent });
+          console.log('[IMAGE] Gemini success (generateContent base64)');
+          const mimeType = imagePart?.inlineData?.mimeType || 'image/png';
+          return res.json({ url: `data:${mimeType};base64,${base64}`, provider: 'Gemini', intent: imageIntent });
+        }
+        if (legacyBase64) {
+          console.log('[IMAGE] Gemini success (legacy base64)');
+          return res.json({ url: `data:image/png;base64,${legacyBase64}`, provider: 'Gemini', intent: imageIntent });
         }
         if (uri) {
           console.log('[IMAGE] Gemini success (uri)');
           return res.json({ url: uri, provider: 'Gemini', intent: imageIntent });
         }
       }
-      console.log('[IMAGE] Gemini failed:', data?.error?.message || 'no image');
+      console.log('[IMAGE] Gemini failed:', data?.error?.message || 'no image in response');
     } catch (err) {
       console.error('[IMAGE] Gemini error:', err.message);
     }
