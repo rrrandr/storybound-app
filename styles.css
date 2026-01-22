@@ -157,6 +157,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     align-items: flex-start;
     gap: 16px;
     overflow-x: auto;
+    padding-left: 4px;
 }
 
 .story-shape-character .destiny-card {
@@ -1444,7 +1445,7 @@ textarea.fate-field {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
 }
 
 .character-section-title {
@@ -1524,6 +1525,7 @@ textarea.fate-field {
     flex-direction: column;
     align-items: center;
     gap: 12px;
+    margin-bottom: 24px;
 }
 
 /* PASS 9F: Unified horizontal container rule for all sections */
