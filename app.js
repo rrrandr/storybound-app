@@ -7888,6 +7888,35 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
   const PERCHANCE_PROMPT_PREFIX = 'default Art Style is oil painting 70s pulp, cinematic lighting, realistic proportions, oil-painting style, non-anime.';
   const PERCHANCE_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. One head, two arms, two legs. No extra limbs. No extra people.';
 
+  // =================================================================
+  // SCENE VISUALIZATION SYSTEM (AUTHORITATIVE)
+  // Cinematic scene visualizer - NOT portraits, NOT book covers
+  // =================================================================
+  const SCENE_VIZ_SYSTEM = `You are a cinematic scene visualizer, not a character illustrator.
+Your job is to render mood, environment, tension, and implication — not portraits, not glamour shots, not book covers.
+
+CORE RULES:
+1. POV IS IMPLICIT - The viewer is inside the world. Characters must NOT look at camera, smile at viewer, or pose attractively. Use: back views, partial profiles, obscured faces, silhouettes, reflections, hands, posture.
+
+2. FEELING OVERRIDES DESCRIPTION - Atmosphere, emotion, pressure, unease, longing, foreboding override surface details. A "vibrant market" with "weight of expectations, air thickens" should feel oppressive, not cheerful.
+
+3. SIMPLIFY - Collapse prose into ONE location, ONE moment, ONE emotional beat. Pick the most pregnant moment.
+
+4. SUBDUED EXPRESSION - Characters look distracted, tense, uncertain, absorbed, conflicted. Never cheerful, performative, model-like, or inviting.
+
+5. COLOR/LIGHTING FOLLOW EMOTION:
+   - Oppression → desaturated, shadowed, compressed space
+   - Desire → contrast, directional light
+   - Unease → off-balance framing, negative space
+   - Avoid bright stock-photo palettes
+
+PROMPT PRIORITY ORDER: Emotional state → Spatial tension → Lighting → Environment → Character presence (secondary)
+
+Return ONLY the image prompt. No explanations. Under 200 characters.`;
+
+  // Scene visualization explicit exclusions (always appended)
+  const SCENE_VIZ_EXCLUSIONS = 'No smiling at camera. No posed portraits. No beauty photography. No book cover composition.';
+
   // DEV-ONLY: Logging helper for image generation debugging
   function logImageAttempt(provider, context, prompt, status, error = null) {
       const promptPreview = prompt.substring(0, 120) + (prompt.length > 120 ? '...' : '');
@@ -8506,15 +8535,18 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
 
           if(!isRe || !promptMsg) {
               try {
+                  // Use authoritative scene visualization system prompt
+                  const toneContext = state.picks?.tone || 'Earnest';
+                  const worldContext = state.picks?.world || 'Modern';
                   promptMsg = await Promise.race([
-                      callChat([{
-                          role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
-                      }]),
+                      callChat([
+                          { role: 'system', content: SCENE_VIZ_SYSTEM },
+                          { role: 'user', content: `STORY CONTEXT: ${worldContext} world, ${toneContext} tone.\nCHARACTER ANCHORS: ${anchorText.slice(0, 150)}\nINTENSITY: ${intensityBias.split('.')[0]}.\n\nSCENE TEXT:\n${lastText}` }
+                      ]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
               } catch (e) {
-                  promptMsg = "Fantasy scene, detailed, atmospheric.";
+                  promptMsg = "Cinematic scene, atmospheric tension, subdued lighting.";
               }
               document.getElementById('vizPromptInput').value = promptMsg;
           }
@@ -8542,26 +8574,26 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
               ? " Exclude: " + state.veto.excluded.slice(0, 3).join(', ') + "."
               : "";
 
-          // SCENE-FIRST PROMPT CONSTRUCTION
-          // Hard cap scene description to 256 characters (no ellipses, no rephrasing)
-          const sceneDesc = filterAuthorFromPrompt(promptMsg).slice(0, 256);
+          // SCENE-FIRST PROMPT CONSTRUCTION (AUTHORITATIVE)
+          // Hard cap scene description to 200 characters (shorter = better for scene viz)
+          const sceneDesc = filterAuthorFromPrompt(promptMsg).slice(0, 200);
           const modifiers = userModifiers ? " " + filterAuthorFromPrompt(userModifiers) : "";
 
-          // Brief anchors from visual bible (characters only, 100 char max)
-          const briefAnchors = filterAuthorFromPrompt(anchorText).slice(0, 100);
+          // Brief anchors from visual bible (characters only, 80 char max)
+          const briefAnchors = filterAuthorFromPrompt(anchorText).slice(0, 80);
 
-          // Shortened quality/intensity (clarity over verbosity)
-          const shortQuality = "Attractive, elegant features, natural expressions.";
-          const shortIntensity = intensityBias.split('.')[0] + "."; // First sentence only
+          // Scene visualization style (cinematic, NOT portrait/glamour)
+          const sceneStyle = "Cinematic, painterly, atmospheric. Subdued expressions.";
+          const shortIntensity = intensityBias.split('.')[0] + ".";
 
-          // SCENE FIRST, then anchors/style
+          // SCENE FIRST, then style, then mandatory exclusions
           let basePrompt = sceneDesc + modifiers +
               "\n---\n" +
-              "Style: cinematic, painterly, no text. " +
-              shortQuality + " " +
-              shortIntensity +
+              sceneStyle + " " +
+              shortIntensity + " " +
+              SCENE_VIZ_EXCLUSIONS +
               vetoExclusions +
-              (briefAnchors ? " " + briefAnchors : "");
+              (briefAnchors ? " Anchors: " + briefAnchors : "");
 
           // Check if cancelled before image generation
           if (_vizCancelled) {
