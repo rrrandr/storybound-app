@@ -7474,62 +7474,99 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       };
   }
 
-  // Extract focal object from synopsis using AI
-  async function extractFocalObject(synopsis, genre, world) {
-      // TASK F: No envelope default - require story justification
+  // Extract focal anchor and emotional gravity from synopsis (AUTHORITATIVE)
+  async function extractFocalObject(synopsis, genre, world, tone) {
+      // Default fallback for minimal synopsis
       if (!synopsis || synopsis.length < 20) {
-          return { object: 'antique key', material: 'metal', reason: 'default' };
+          return {
+              object: 'antique key',
+              material: 'metal',
+              emotion: 'mystery',
+              humanFigure: 'none',
+              reason: 'default'
+          };
       }
+
+      // Derive emotional gravity from tone if not extracted
+      const TONE_TO_EMOTION = {
+          Earnest: 'yearning',
+          WryConfession: 'tension',
+          Satirical: 'rebellion',
+          Dark: 'foreboding',
+          Horror: 'foreboding',
+          Mythic: 'inevitability',
+          Comedic: 'mystery',
+          Surreal: 'mystery',
+          Poetic: 'longing'
+      };
 
       try {
           const extraction = await callChat([{
               role: 'user',
-              content: `Extract the single most salient CONCRETE OBJECT or SYMBOL from this story synopsis.
-This object will be the central focus of a book cover illustration.
+              content: `Extract cover elements for a SYMBOLIC book cover (not scene illustration).
 
-RULES:
-1. Choose a PHYSICAL object mentioned or strongly implied (not abstract concepts)
-2. Prefer objects with symbolic weight (letters, keys, rings, weapons, flowers)
-3. If no object is explicit, infer one from the setting/conflict
-4. Return the object and its likely material
+SYNOPSIS: "${synopsis}"
+GENRE: ${genre}
+WORLD: ${world}
 
-Synopsis: "${synopsis}"
-Genre: ${genre}
-World: ${world}
+DECISIONS NEEDED:
+
+1. EMOTIONAL GRAVITY (choose ONE): foreboding, yearning, pressure, secrecy, rebellion, inevitability, longing, tension, mystery, isolation, devotion, betrayal
+
+2. FOCAL ANCHOR (choose ONE physical object or symbol mentioned/implied):
+   - Must be CONCRETE, not abstract
+   - NEVER: envelope, generic rose, book, candle, heart shape
+   - Prefer objects with story-specific meaning
+
+3. HUMAN FIGURE decision:
+   - "none" - object/environment carries meaning
+   - "silhouette" - figure as shadow/shape only
+   - "turned_away" - figure facing away, no face visible
+   - "partial" - hands, shoulders, or fragment only
 
 Return ONLY valid JSON:
-{"object": "the object", "material": "metal|paper|glass|fabric|stone|wood|crystal|gold", "reason": "why this object"}
-
-If truly no object can be extracted, return:
-{"object": null, "material": null, "reason": "no salient object"}`
+{
+  "object": "the focal object/symbol",
+  "material": "metal|paper|glass|fabric|stone|wood|crystal|gold",
+  "emotion": "the dominant emotional gravity",
+  "humanFigure": "none|silhouette|turned_away|partial",
+  "reason": "brief justification"
+}`
           }]);
 
           const parsed = JSON.parse(extraction.trim());
-          if (parsed.object) {
+          if (parsed.object && parsed.emotion) {
               return parsed;
           }
       } catch (e) {
-          console.warn('[CoverIntel] Focal object extraction failed:', e.message);
+          console.warn('[CoverIntel] Focal extraction failed:', e.message);
       }
 
-      // Fallback: genre-based default objects
+      // Fallback: genre-based default objects with emotion
       const GENRE_DEFAULTS = {
-          CrimeSyndicate: { object: 'bloodstained playing card', material: 'paper' },
-          Billionaire: { object: 'crystal champagne flute', material: 'crystal' },
-          Noir: { object: 'smoldering cigarette', material: 'paper' },
-          Heist: { object: 'diamond in spotlight', material: 'crystal' },
-          Espionage: { object: 'passport with torn page', material: 'paper' },
-          Political: { object: 'broken seal', material: 'metal' },
-          Escape: { object: 'shattered chain link', material: 'metal' },
-          Redemption: { object: 'phoenix feather', material: 'gold' },
-          BuildingBridges: { object: 'two hands almost touching', material: 'fabric' },
-          Purgatory: { object: 'stopped clock', material: 'metal' },
-          RelentlessPast: { object: 'cracked photograph', material: 'paper' },
-          Sports: { object: 'championship trophy', material: 'gold' }
+          CrimeSyndicate: { object: 'bloodstained playing card', material: 'paper', emotion: 'foreboding' },
+          Billionaire: { object: 'crystal champagne flute', material: 'crystal', emotion: 'pressure' },
+          Noir: { object: 'smoldering cigarette trailing smoke', material: 'paper', emotion: 'tension' },
+          Heist: { object: 'diamond catching spotlight', material: 'crystal', emotion: 'tension' },
+          Espionage: { object: 'torn passport page', material: 'paper', emotion: 'secrecy' },
+          Political: { object: 'broken wax seal', material: 'metal', emotion: 'betrayal' },
+          Escape: { object: 'shattered chain link', material: 'metal', emotion: 'rebellion' },
+          Redemption: { object: 'phoenix feather in ash', material: 'gold', emotion: 'transformation' },
+          BuildingBridges: { object: 'two hands almost touching', material: 'fabric', emotion: 'yearning' },
+          Purgatory: { object: 'stopped clock face', material: 'metal', emotion: 'isolation' },
+          RelentlessPast: { object: 'cracked photograph edge', material: 'paper', emotion: 'foreboding' },
+          Sports: { object: 'trophy silhouette in spotlight', material: 'gold', emotion: 'pressure' }
       };
 
-      // TASK F: No envelope fallback - use antique key instead
-      return GENRE_DEFAULTS[genre] || { object: 'antique key', material: 'metal', reason: 'fallback' };
+      const fallback = GENRE_DEFAULTS[genre] || {
+          object: 'antique key',
+          material: 'metal',
+          emotion: TONE_TO_EMOTION[tone] || 'mystery'
+      };
+      fallback.humanFigure = 'none';
+      fallback.reason = 'fallback';
+
+      return fallback;
   }
 
   // Derive background pattern from domain (genre + world)
@@ -7594,61 +7631,84 @@ If truly no object can be extracted, return:
       };
   }
 
-  // Build intelligent cover prompt with all guardrails
+  // Build intelligent cover prompt with all guardrails (AUTHORITATIVE)
   async function buildCoverPrompt(synopsis, genre, world, tone, dynamic) {
       const history = loadMotifHistory();
 
-      // TASK A: Extract focal object from synopsis
-      const focalResult = await extractFocalObject(synopsis, genre, world);
+      // Extract focal anchor with emotional gravity and human figure decision
+      const focalResult = await extractFocalObject(synopsis, genre, world, tone);
       const focalObject = focalResult.object;
       const material = focalResult.material || 'metal';
+      const emotion = focalResult.emotion || 'mystery';
+      const humanFigure = focalResult.humanFigure || 'none';
 
-      // TASK B: Check for repetition
+      // Check for repetition
       const objectClass = getObjectClass(focalObject);
       const repetitionCheck = wouldRepeatMotif(objectClass, null, null);
 
-      // If object class repeats, request alternative
+      // If object class repeats, use shadow/silhouette variant
       let finalObject = focalObject;
       if (repetitionCheck.details?.object) {
-          // Try to get alternative from synopsis context
-          finalObject = `${focalObject} (alternative angle or shadow/silhouette form)`;
+          finalObject = `${focalObject} (as shadow or partial silhouette)`;
       }
 
-      // TASK C: Derive background from domain
+      // Derive background from domain (theme-derived, not decorative)
       const backgroundPattern = deriveBackgroundPattern(genre, world, history);
 
-      // TASK D: Derive palette from tone + material
+      // Derive palette from tone + material
       const palette = derivePalette(tone, material, history);
 
-      // Final anti-repetition check for art-deco
+      // Anti-repetition: avoid art-deco twice in a row
       let finalBackground = backgroundPattern;
       if (backgroundPattern.includes('art-deco') || backgroundPattern.includes('geometric')) {
           const lastBg = history[0]?.backgroundStyle || '';
           if (lastBg.includes('art-deco') || lastBg.includes('geometric')) {
-              finalBackground = DOMAIN_BACKGROUNDS[world]?.[0] || 'atmospheric gradient with subtle texture';
+              finalBackground = DOMAIN_BACKGROUNDS[world]?.[0] || 'atmospheric gradient with depth';
           }
       }
 
-      // Save this motif to history
+      // Visual restraint rules
+      const restraintRules = [
+          'Limited palette (2-3 tones)',
+          'Soft focus or shallow depth',
+          'Asymmetric composition'
+      ];
+      const restraintText = restraintRules.slice(0, 2).join('. ') + '.';
+
+      // Human figure handling
+      let figureText = '';
+      if (humanFigure === 'silhouette') {
+          figureText = 'Human figure as shadow/silhouette only, no face visible.';
+      } else if (humanFigure === 'turned_away') {
+          figureText = 'Figure facing away, back to viewer.';
+      } else if (humanFigure === 'partial') {
+          figureText = 'Only hands or partial body, no face.';
+      }
+
+      // Save motif to history
       const newMotif = {
           objectClass: getObjectClass(finalObject),
           colorFamily: palette.family,
           backgroundStyle: finalBackground,
+          emotion: emotion,
           timestamp: Date.now()
       };
       saveMotifToHistory(newMotif);
 
-      // Build the prompt
+      // Build the authoritative prompt
       return {
           focalObject: finalObject,
           material: material,
+          emotion: emotion,
+          humanFigure: humanFigure,
           background: finalBackground,
           palette: palette,
-          promptText: `FOCAL OBJECT (must be central): ${finalObject} rendered in ${material}.
-BACKGROUND: ${finalBackground} (domain-derived, not generic).
-COLOR PALETTE: Primary ${palette.primary}, secondary ${palette.secondary}, accent ${palette.accent}. ${palette.materialNote}
-COMPOSITION: The ${finalObject} must dominate the center. If synopsis mentions it, it MUST appear.
-STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
+          promptText: `EMOTIONAL GRAVITY: ${emotion} (guides all visual decisions).
+FOCAL ANCHOR: ${finalObject} rendered in ${material}.
+BACKGROUND: ${finalBackground}.
+PALETTE: ${palette.primary}, ${palette.secondary}, accent ${palette.accent}. ${palette.materialNote}
+VISUAL RESTRAINT: ${restraintText}
+${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       };
   }
 
@@ -8016,6 +8076,57 @@ Return ONLY the image prompt. No explanations. Under 200 characters.`;
 
   // Scene visualization explicit exclusions (always appended)
   const SCENE_VIZ_EXCLUSIONS = 'No smiling at camera. No posed portraits. No beauty photography. No book cover composition.';
+
+  // =================================================================
+  // COVER GENERATION SYSTEM (AUTHORITATIVE)
+  // Symbolic book cover - NOT scene illustration
+  // Emotion > Description > Detail
+  // =================================================================
+  const COVER_GENERATION_SYSTEM = `You are generating a SYMBOLIC BOOK COVER for Storybound.
+This is NOT an illustration. It evokes the emotional core and narrative arc.
+
+MANDATORY DECISION ORDER:
+
+1. EMOTIONAL GRAVITY (one only)
+Choose ONE: foreboding, yearning, pressure, secrecy, rebellion, inevitability, longing, tension, mystery.
+This emotion guides ALL visual decisions.
+
+2. FOCAL ANCHOR (one only)
+Choose ONE of:
+- Meaningful object from the story
+- Partial symbol (fragment, shadow, silhouette)
+- Negative space (deliberate absence)
+NEVER: envelopes, generic roses, books, candles.
+
+3. HUMAN FIGURE (optional)
+If used: turned away, obscured, cropped, or silhouette ONLY.
+NO eye contact. NO posed portraits. NO smiles.
+If not needed: use environment, object, or light.
+
+4. VISUAL RESTRAINT (apply 2+)
+- Limited palette (2-3 dominant tones)
+- Soft focus or shallow depth
+- Partial occlusion (fog, shadow, framing)
+- Asymmetry or off-center composition
+AVOID: decorative clutter, literal symbolism.
+
+5. BACKGROUND (theme-derived)
+Technology → circuit abstraction, signal noise
+Oceanic → wave interference, light refraction
+Memory → fractured geometry, layered translucence
+NO art-deco default. NO ornamental patterns unless justified.
+
+Return ONLY the image prompt. Under 250 characters.`;
+
+  // Cover prompt exclusions (always appended)
+  const COVER_EXCLUSIONS = 'No audience-facing characters. No literal scene recreation. No generic beauty shots. No brown-by-default palette.';
+
+  // Emotional gravity options for cover generation
+  const EMOTIONAL_GRAVITY_OPTIONS = [
+    'foreboding', 'yearning', 'pressure', 'secrecy', 'rebellion',
+    'inevitability', 'longing', 'tension', 'mystery', 'isolation',
+    'devotion', 'betrayal', 'transformation', 'pursuit'
+  ];
 
   // DEV-ONLY: Logging helper for image generation debugging
   function logImageAttempt(provider, context, prompt, status, error = null) {
