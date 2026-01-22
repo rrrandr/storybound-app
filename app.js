@@ -2368,17 +2368,8 @@ ANTI-HERO ENFORCEMENT:
                   }
               }
 
-              // PASS 9F: Update canonical state and trigger Begin Story
-              // Uses the SAME handler as the Begin Story button
-              updateSynopsisPanel && updateSynopsisPanel();
-
-              // Trigger Begin Story after a brief delay for visual feedback
-              setTimeout(() => {
-                  const beginBtn = document.getElementById('beginBtn');
-                  if (beginBtn) {
-                      beginBtn.click();
-                  }
-              }, 400);
+              // Character destiny cards ONLY populate fields
+              // They NEVER trigger story start, loading, or navigation
           });
       });
   }
@@ -5624,6 +5615,24 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     'Damien Cross', 'Vincent Ashmore', 'Nathaniel Wolfe', 'Adrian Sinclair', 'Dorian Vance'
   ];
 
+  // Module-level world flavors for fate selection (mirrors WORLD_SUB_OPTIONS structure)
+  const FATE_WORLD_FLAVORS = {
+    Modern: [
+      { val: 'small_town' }, { val: 'college' }, { val: 'friends' },
+      { val: 'old_money' }, { val: 'office' }
+    ],
+    Historical: [
+      { val: 'medieval' }, { val: 'victorian' }, { val: 'renaissance' },
+      { val: 'classical' }, { val: '20th_century' }
+    ],
+    Fantasy: [
+      { val: 'enchanted_realms' }, { val: 'hidden_magic' }, { val: 'cursed_worlds' }
+    ],
+    SciFi: [
+      { val: 'galactic_civilizations' }, { val: 'cyberpunk' }, { val: 'future_of_science' }
+    ]
+  };
+
   // Get entitlement-aware intensity selection
   function getFateIntensity() {
     // Prefer Erotic if entitled, else Naughty. Never Dirty.
@@ -5655,7 +5664,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // Get weighted flavor for selected world
   function getFateFlavor(world) {
-    const flavors = WORLD_SUB_OPTIONS[world];
+    const flavors = FATE_WORLD_FLAVORS[world];
     if (!flavors || flavors.length === 0) return null;
     // Bias toward first (broader) options
     const weights = flavors.map((_, i) => Math.max(10 - i * 2, 1));

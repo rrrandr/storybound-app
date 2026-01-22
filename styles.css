@@ -203,6 +203,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* Neutralize legacy overrides within story-shape-character */
 .story-shape-row > .character-block-horizontal.story-shape-character {
     width: auto;
+    max-width: max-content;
     margin: 0;
     flex: 0 0 auto;
 }
@@ -228,6 +229,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
         flex-direction: row;
         align-items: flex-start;
         width: auto;
+        max-width: max-content;
     }
 
     .story-shape-character .character-destiny-side {
