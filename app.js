@@ -5103,6 +5103,34 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           rotatingPlaceholder.innerHTML = html;
       }
 
+      // TASK A: Single commitModifier function for ALL exit paths
+      function commitModifier() {
+          const inputVal = customInput.value.trim();
+          if (!inputVal) {
+              // Empty input - show placeholder but don't clear state
+              rotatingPlaceholder.classList.remove('hidden');
+              return;
+          }
+
+          // Try to normalize and match
+          const matchedModifier = normalizeArchetypeModifierInput(inputVal, archetypeId);
+          if (matchedModifier) {
+              // Matched archetype - update state and show canonical name
+              state.archetype.modifier = matchedModifier;
+              state.archetype.modifierText = null;
+              const canonicalName = ARCHETYPES[matchedModifier]?.name || matchedModifier;
+              customInput.value = canonicalName;
+          } else {
+              // No match - keep the text as custom modifier text
+              // DO NOT clear the input - user's text stays visible
+              state.archetype.modifier = null;
+              state.archetype.modifierText = inputVal; // Store raw text
+          }
+          updateArchetypeSelectionSummary();
+          // Keep placeholder hidden since input has value
+          rotatingPlaceholder.classList.add('hidden');
+      }
+
       customInput.addEventListener('click', (e) => {
           e.stopPropagation();
       });
@@ -5113,41 +5141,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           rotatingPlaceholder.classList.add('hidden');
       });
 
+      // TASK A & C: blur routes through commitModifier
       customInput.addEventListener('blur', () => {
           const inner = rotatingPlaceholder.querySelector('.sb-zoom-placeholder-inner');
           if (inner) inner.style.animationPlayState = 'running';
-
-          // Normalize input and select matching modifier
-          const inputVal = customInput.value.trim();
-          if (inputVal) {
-              const matchedModifier = normalizeArchetypeModifierInput(inputVal, archetypeId);
-              if (matchedModifier) {
-                  // Update state with matched archetype
-                  state.archetype.modifier = matchedModifier;
-                  state.archetype.modifierText = null;
-                  // Update input field to show canonical name
-                  const canonicalName = ARCHETYPES[matchedModifier]?.name || matchedModifier;
-                  customInput.value = canonicalName;
-                  updateArchetypeSelectionSummary();
-              } else {
-                  // No match - clear input and reject
-                  customInput.value = '';
-                  state.archetype.modifier = null;
-                  state.archetype.modifierText = null;
-                  updateArchetypeSelectionSummary();
-              }
-          }
-
-          // Show placeholder only if input is truly empty
-          if (!customInput.value.trim()) {
-              rotatingPlaceholder.classList.remove('hidden');
-          }
+          commitModifier();
       });
 
-      // Handle Enter key as submit
+      // TASK C: Enter key commits without clearing
       customInput.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
               e.preventDefault();
+              commitModifier();
               customInput.blur();
           }
       });
@@ -5638,24 +5643,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   });
 
   // Commit Veto Button Handler
+  // TASK E: Store EXACT phrase, not normalized kernel
   $('btnCommitVeto')?.addEventListener('click', async () => {
       const vetoEl = document.getElementById('vetoInput');
       if (!vetoEl) return;
       const vetoText = vetoEl.value.trim();
       if (!vetoText) { showToast("No veto to commit."); return; }
 
-      // CRITICAL: Normalize FIRST, then add to committed state
-      // Never store raw input in committedVeto
+      // TASK E: Store exact user phrase for display, normalize internally for rules
       const lines = vetoText.split('\n').filter(l => l.trim());
       for (const line of lines) {
-          const norm = await callNormalizationLayer({
-              axis: 'veto',
-              user_text: line.trim(),
-              context_signals: state.picks?.world || []
-          });
-          const kernel = norm.archetype || norm.burden || norm.normalized_text || 'excluded element';
-          if (!state.committedVeto.includes(kernel)) {
-              state.committedVeto.push(kernel);
+          const rawPhrase = line.trim();
+          // Store the EXACT phrase user entered (not normalized)
+          if (!state.committedVeto.includes(rawPhrase)) {
+              state.committedVeto.push(rawPhrase);
           }
       }
       renderCommittedPhrases('veto');
@@ -6731,11 +6732,16 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // Setting shot uses unified IMAGE PROVIDER ROUTER with landscape shape
   // Book cover / world-establishing illustration (NOT scene illustration)
+  // TASK G: Ensure setting shot always reaches image generation
   async function generateSettingShot(desc) {
      _lastSettingShotDesc = desc; // Store for retry
      const img = document.getElementById('settingShotImg');
      const errDiv = document.getElementById('settingError');
-     if(!img) return;
+     // TASK G: Log if DOM element missing (not silent gate)
+     if(!img) {
+         console.warn('[SettingShot] settingShotImg element not found - cannot render');
+         return;
+     }
      const wrap = document.getElementById('settingShotWrap');
      if(wrap) wrap.style.display = 'flex';
      img.onload = null; img.onerror = null;
@@ -6975,7 +6981,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       Redemption: ['sunrise gradient', 'phoenix feathers', 'cracked mirror healing', 'emerging from shadow'],
       BuildingBridges: ['interlocking hands silhouette', 'bridge architecture', 'puzzle pieces', 'woven threads'],
       Purgatory: ['fog layers', 'liminal doorways', 'clock faces overlapping', 'fading photographs'],
-      RelentlessPast: ['cracked photographs', 'faded newspaper', 'chains and shadows', 'footsteps in dust']
+      RelentlessPast: ['cracked photographs', 'faded newspaper', 'chains and shadows', 'footsteps in dust'],
+      Sports: ['stadium lights', 'scoreboard glow', 'trophy shelf', 'field markings', 'crowd silhouettes']
   };
 
   // Palette by tone + common material affinities
@@ -7063,8 +7070,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // Extract focal object from synopsis using AI
   async function extractFocalObject(synopsis, genre, world) {
+      // TASK F: No envelope default - require story justification
       if (!synopsis || synopsis.length < 20) {
-          return { object: 'sealed envelope', material: 'paper', reason: 'default' };
+          return { object: 'antique key', material: 'metal', reason: 'default' };
       }
 
       try {
@@ -7110,10 +7118,12 @@ If truly no object can be extracted, return:
           Redemption: { object: 'phoenix feather', material: 'gold' },
           BuildingBridges: { object: 'two hands almost touching', material: 'fabric' },
           Purgatory: { object: 'stopped clock', material: 'metal' },
-          RelentlessPast: { object: 'cracked photograph', material: 'paper' }
+          RelentlessPast: { object: 'cracked photograph', material: 'paper' },
+          Sports: { object: 'championship trophy', material: 'gold' }
       };
 
-      return GENRE_DEFAULTS[genre] || { object: 'sealed envelope', material: 'paper', reason: 'fallback' };
+      // TASK F: No envelope fallback - use antique key instead
+      return GENRE_DEFAULTS[genre] || { object: 'antique key', material: 'metal', reason: 'fallback' };
   }
 
   // Derive background pattern from domain (genre + world)
@@ -8074,7 +8084,7 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
           }
       }
 
-      // TASK C & E: Re-Visualize shows credit cost (always 2), never shows 1
+      // TASK H: Re-Visualize ALWAYS shows cost of 2, never 1
       if (retryBtn) {
           if (budget.finalized) {
               retryBtn.textContent = 'Finalized';
@@ -8082,12 +8092,8 @@ STYLE: Prestige book cover, dramatic lighting, symbolic weight.`
           } else if (remaining <= 0) {
               retryBtn.textContent = 'Re-Visualize (0)';
               retryBtn.disabled = true;
-          } else if (remaining === 1) {
-              // Only 1 attempt left - this IS the re-visualize, costs 2 but only 1 remains
-              retryBtn.textContent = 'Re-Visualize (1)';
-              retryBtn.disabled = false;
           } else {
-              // TASK C: Re-Visualize costs 2 credits
+              // TASK H: Re-Visualize ALWAYS costs 2 - never show 1
               retryBtn.textContent = 'Re-Visualize (2)';
               retryBtn.disabled = false;
           }

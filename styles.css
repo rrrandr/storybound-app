@@ -2675,9 +2675,25 @@ textarea.fate-field {
     align-items: center;
 }
 
+/* TASK B: Arousal card example - visually separated from description */
+.sb-card-front .sb-card-example {
+    display: block;
+    font-size: 10px;
+    font-style: italic;
+    color: var(--gold);
+    opacity: 0.85;
+    margin-top: 4px;
+    line-height: 1.3;
+    text-align: center;
+}
+
 /* Reduce example text in zoomed cards */
 .sb-card.zoomed .sb-card-front .sb-card-desc {
     font-size: 6px;
+}
+
+.sb-card.zoomed .sb-card-front .sb-card-example {
+    font-size: 5px;
 }
 
 .sb-card-front .sb-card-flavors {
