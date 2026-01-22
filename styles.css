@@ -2675,6 +2675,11 @@ textarea.fate-field {
     align-items: center;
 }
 
+/* Reduce example text in zoomed cards */
+.sb-card.zoomed .sb-card-front .sb-card-desc {
+    font-size: 6px;
+}
+
 .sb-card-front .sb-card-flavors {
     display: flex;
     flex-wrap: wrap;

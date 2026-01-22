@@ -3452,7 +3452,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       await applyGameVetoFromInput();
       vetoEl.value = '';
       document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
-      showToast("Veto committed. Boundaries updated.");
+      showToast(`Excluded: "${vetoText}"`);
   });
 
   function updateGameQuillUI() {
@@ -4041,8 +4041,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const translateX = viewportCenterX - cardCenterX;
       const translateY = viewportCenterY - cardCenterY;
 
-      // Scale factor
-      const scale = 2.5;
+      // Scale factor (reduced ~20%)
+      const scale = 2.0;
 
       // Apply zoom transform to the SAME card element
       card.classList.add('zoomed');
@@ -4163,8 +4163,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const translateX = viewportCenterX - cardCenterX;
       const translateY = viewportCenterY - cardCenterY;
 
-      // Scale factor (~25% larger than before: 2.5 * 1.25 = 3.125)
-      const scale = 3.125;
+      // Scale factor (reduced ~20%)
+      const scale = 2.5;
 
       // Apply zoom transform to the SAME card element
       card.classList.add('zoomed');
@@ -5080,8 +5080,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const translateX = viewportCenterX - cardCenterX;
       const translateY = viewportCenterY - cardCenterY;
 
-      // Scale factor (~25% larger than before: 2.5 * 1.25 = 3.125)
-      const scale = 3.125;
+      // Scale factor (reduced ~20%)
+      const scale = 2.5;
 
       // Apply zoom transform to the SAME card element
       card.classList.add('zoomed');
@@ -5543,7 +5543,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       await applyVetoFromInput();
       vetoEl.value = '';
       saveStorySnapshot();
-      showToast("Veto committed. Boundaries updated.");
+      showToast(`Excluded: "${vetoText}"`);
   });
 
   // --- META SYSTEM (RESTORED) ---
