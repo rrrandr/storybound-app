@@ -5921,6 +5921,102 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     MIN_INTENSITY_REVEAL: 4000  // Intensity section must be ≥4 seconds
   };
 
+  // =================================================================
+  // FAIRY DUST PARTICLE SYSTEM
+  // Sparse, ethereal gold specks during Guided Fate ceremony
+  // =================================================================
+
+  let _dustInterval = null;
+  const DUST_CONFIG = {
+    MAX_PARTICLES: 15,        // Maximum visible at once
+    SPAWN_INTERVAL: 350,      // ms between spawns
+    MIN_SIZE: 3,              // px
+    MAX_SIZE: 7,              // px
+    MIN_DURATION: 3000,       // ms
+    MAX_DURATION: 5000,       // ms
+    MIN_OPACITY: 0.3,
+    MAX_OPACITY: 0.7
+  };
+
+  function spawnDustParticle() {
+    if (_fateOverridden || !_fateRunning) return;
+
+    // Limit particle count
+    const existing = document.querySelectorAll('.fate-dust-particle');
+    if (existing.length >= DUST_CONFIG.MAX_PARTICLES) return;
+
+    const particle = document.createElement('div');
+    particle.className = 'fate-dust-particle';
+
+    // Randomize position (weighted toward edges for vignette feel)
+    const edge = Math.random();
+    let x, y;
+    if (edge < 0.4) {
+      // Left/right edges
+      x = Math.random() < 0.5 ? Math.random() * 20 : 80 + Math.random() * 20;
+      y = 20 + Math.random() * 60;
+    } else if (edge < 0.7) {
+      // Bottom edge
+      x = 10 + Math.random() * 80;
+      y = 70 + Math.random() * 25;
+    } else {
+      // Scattered center (sparse)
+      x = 20 + Math.random() * 60;
+      y = 30 + Math.random() * 40;
+    }
+
+    // Randomize properties
+    const size = DUST_CONFIG.MIN_SIZE + Math.random() * (DUST_CONFIG.MAX_SIZE - DUST_CONFIG.MIN_SIZE);
+    const duration = DUST_CONFIG.MIN_DURATION + Math.random() * (DUST_CONFIG.MAX_DURATION - DUST_CONFIG.MIN_DURATION);
+    const opacity = DUST_CONFIG.MIN_OPACITY + Math.random() * (DUST_CONFIG.MAX_OPACITY - DUST_CONFIG.MIN_OPACITY);
+
+    // Drift direction (upward with slight horizontal variance)
+    const dx = -20 + Math.random() * 40;  // -20 to +20px horizontal
+    const dy = -40 - Math.random() * 40;  // -40 to -80px upward
+
+    particle.style.cssText = `
+      left: ${x}vw;
+      top: ${y}vh;
+      width: ${size}px;
+      height: ${size}px;
+      --dust-duration: ${duration}ms;
+      --dust-opacity: ${opacity};
+      --dust-dx: ${dx}px;
+      --dust-dy: ${dy}px;
+    `;
+
+    document.body.appendChild(particle);
+
+    // Self-cleanup after animation
+    setTimeout(() => {
+      if (particle.parentNode) {
+        particle.remove();
+      }
+    }, duration + 100);
+  }
+
+  function startFairyDust() {
+    stopFairyDust(); // Clear any existing
+    _dustInterval = setInterval(spawnDustParticle, DUST_CONFIG.SPAWN_INTERVAL);
+    // Spawn a few immediately for instant atmosphere
+    for (let i = 0; i < 5; i++) {
+      setTimeout(spawnDustParticle, i * 80);
+    }
+  }
+
+  function stopFairyDust() {
+    if (_dustInterval) {
+      clearInterval(_dustInterval);
+      _dustInterval = null;
+    }
+    // Fade out existing particles gracefully
+    document.querySelectorAll('.fate-dust-particle').forEach(p => {
+      p.style.opacity = '0';
+      p.style.transition = 'opacity 0.4s ease-out';
+      setTimeout(() => p.remove(), 500);
+    });
+  }
+
   // Override handler - user takes control from Fate
   function handleFateOverride(event) {
     if (_fateRunning && !_fateOverridden) {
@@ -5930,7 +6026,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       document.querySelectorAll('.fate-typing').forEach(el => el.classList.remove('fate-typing'));
       document.querySelectorAll('.fate-ceremony').forEach(el => el.classList.remove('fate-ceremony'));
 
-      // Fade the golden vignette
+      // Stop fairy dust particles
+      stopFairyDust();
+
+      // Fade the golden vignette (pulse stops via CSS animation: none)
       const vignette = document.getElementById('fateVignette');
       if (vignette) {
         vignette.classList.remove('active');
@@ -6214,7 +6313,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     const ceremonyStartTime = Date.now();
 
-    // Activate golden vignette
+    // Activate golden vignette + fairy dust
     const vignette = document.getElementById('fateVignette');
     const fateCard = document.getElementById('fateDestinyCard');
     if (vignette) {
@@ -6223,6 +6322,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (fateCard) {
       fateCard.classList.add('fate-activating');
     }
+    startFairyDust();
 
     // Highlight both character blocks during ceremony
     const mcBlock = document.querySelector('#playerNameInput')?.closest('.character-block');
@@ -6356,7 +6456,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // ===============================================
     if (_fateOverridden) { _fateRunning = false; return; }
 
-    // Fully fade vignette at end
+    // Stop fairy dust and fade vignette
+    stopFairyDust();
     if (vignette) {
       vignette.classList.remove('active');
       vignette.classList.add('fading');

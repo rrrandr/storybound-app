@@ -3235,11 +3235,73 @@ textarea.fate-field {
 
 #fateVignette.active {
     opacity: 1;
+    animation: fate-vignette-pulse 4s ease-in-out infinite,
+               fate-vignette-breathe 7s ease-in-out infinite;
 }
 
 #fateVignette.fading {
     opacity: 0;
-    transition: opacity 1.2s ease-out;
+    transition: opacity 0.4s ease-out;
+    animation: none;
+}
+
+/* Sinusoidal pulse - soft brightness oscillation */
+@keyframes fate-vignette-pulse {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.15);
+    }
+}
+
+/* Subtle radial breathing - barely perceptible scale drift */
+@keyframes fate-vignette-breathe {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+/* =================================
+   FAIRY DUST PARTICLES
+   Sparse, ethereal gold specks
+   ================================= */
+
+.fate-dust-particle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 4001;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 223, 100, 0.9) 0%,
+        rgba(255, 200, 50, 0.5) 40%,
+        transparent 70%
+    );
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: fate-dust-drift var(--dust-duration, 4s) ease-out forwards;
+}
+
+@keyframes fate-dust-drift {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5);
+    }
+    15% {
+        opacity: var(--dust-opacity, 0.6);
+        transform: translate(calc(var(--dust-dx, 10px) * 0.15), calc(var(--dust-dy, -30px) * 0.15)) scale(1);
+    }
+    85% {
+        opacity: var(--dust-opacity, 0.6);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--dust-dx, 10px), var(--dust-dy, -60px)) scale(0.3);
+    }
 }
 
 /* Golden glow radiating from fate card */
