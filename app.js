@@ -5914,7 +5914,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     CARD_FLIP: 350,          // 300-400ms card flip animation
     TYPING_PER_CHAR: 65,     // 50-80ms per character
     SECTION_PAUSE: 700,      // 500-800ms between sections
-    HIGHLIGHT_SETTLE: 400    // Time before clearing highlight
+    HIGHLIGHT_SETTLE: 400,   // Time before clearing highlight
+    // MINIMUM TIMING GUARANTEES (authoritative)
+    MIN_NAMES_CEREMONY: 5000,   // Names ceremony must be ≥5 seconds
+    MIN_ARCHETYPE_REVEAL: 4000, // Archetype section must be ≥4 seconds
+    MIN_INTENSITY_REVEAL: 4000  // Intensity section must be ≥4 seconds
   };
 
   // Override handler - user takes control from Fate
@@ -5968,7 +5972,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     document.querySelectorAll('.fate-active').forEach(el => el.classList.remove('fate-active'));
   }
 
-  // Helper: Scroll element into view (DOWNWARD ONLY)
+  // Helper: Scroll element into view (DOWNWARD ONLY - NEVER UPWARD)
+  // AUTHORITATIVE: This constraint is absolute. No upward scrolling can occur.
+  // Combined with visual Y-position sorting, guarantees strict top→bottom flow.
   function scrollToSectionDownward(el) {
     if (!el || _fateOverridden) return;
 
@@ -5976,7 +5982,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const currentScroll = window.scrollY;
     const targetScroll = currentScroll + rect.top - 120; // 120px from top
 
-    // Only scroll if target is below current position (downward only)
+    // ABSOLUTE CONSTRAINT: Only scroll if target is BELOW current position
+    // If targetScroll <= currentScroll, NO SCROLL OCCURS (element already visible or above)
     if (targetScroll > currentScroll) {
       window.scrollTo({ top: targetScroll, behavior: 'smooth' });
     }
@@ -6202,8 +6209,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // ===============================================
     // PART B: OPENING CEREMONY
-    // Golden vignette + character names first (5+ seconds, NO SCROLL)
+    // Golden vignette + character names first (MINIMUM 5 seconds, NO SCROLL)
     // ===============================================
+
+    const ceremonyStartTime = Date.now();
 
     // Activate golden vignette
     const vignette = document.getElementById('fateVignette');
@@ -6225,7 +6234,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     await new Promise(r => setTimeout(r, 800)); // Let vignette settle
     if (_fateOverridden) { _fateRunning = false; return; }
 
-    // Fill MC name (letter-by-letter with gold glow)
+    // Fill MC name (letter-by-letter with gold glow, 120ms per char for gravitas)
     const mcInput = $('playerNameInput');
     if (mcInput && fateChoices.playerName && !_fateOverridden) {
       mcInput.value = '';
@@ -6233,17 +6242,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       for (let i = 0; i < fateChoices.playerName.length; i++) {
         if (_fateOverridden) break;
         mcInput.value += fateChoices.playerName[i];
-        await new Promise(r => setTimeout(r, 100)); // Slower for ceremony
+        await new Promise(r => setTimeout(r, 120)); // Deliberate pace
       }
       mcInput.classList.remove('fate-typing');
       mcInput.classList.add('fate-typed');
       setTimeout(() => mcInput.classList.remove('fate-typed'), 800);
     }
 
-    await new Promise(r => setTimeout(r, 600)); // Pause between names
+    await new Promise(r => setTimeout(r, 800)); // Pause between names
     if (_fateOverridden) { _fateRunning = false; return; }
 
-    // Fill LI name (letter-by-letter with gold glow)
+    // Fill LI name (letter-by-letter with gold glow, 120ms per char for gravitas)
     const liInput = $('partnerNameInput');
     if (liInput && fateChoices.partnerName && !_fateOverridden) {
       liInput.value = '';
@@ -6251,15 +6260,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       for (let i = 0; i < fateChoices.partnerName.length; i++) {
         if (_fateOverridden) break;
         liInput.value += fateChoices.partnerName[i];
-        await new Promise(r => setTimeout(r, 100)); // Slower for ceremony
+        await new Promise(r => setTimeout(r, 120)); // Deliberate pace
       }
       liInput.classList.remove('fate-typing');
       liInput.classList.add('fate-typed');
       setTimeout(() => liInput.classList.remove('fate-typed'), 800);
     }
 
-    // Ceremony hold - let names breathe (total opening ceremony ~5+ seconds)
-    await new Promise(r => setTimeout(r, 1200));
+    // ENFORCE MINIMUM CEREMONY DURATION (≥5 seconds)
+    const ceremonyElapsed = Date.now() - ceremonyStartTime;
+    const ceremonyRemaining = FATE_TIMING.MIN_NAMES_CEREMONY - ceremonyElapsed;
+    if (ceremonyRemaining > 0 && !_fateOverridden) {
+      await new Promise(r => setTimeout(r, ceremonyRemaining));
+    }
     if (_fateOverridden) { _fateRunning = false; return; }
 
     // Remove ceremony highlights from character blocks
@@ -6301,8 +6314,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       .sort((a, b) => a.visualY - b.visualY);
 
     // Execute sections in visual order (downward only)
+    // ENFORCES: Archetype ≥4s, Intensity ≥4s minimum timing
     for (const section of sectionsWithPositions) {
       if (_fateOverridden) { _fateRunning = false; return; }
+
+      const sectionStartTime = Date.now();
 
       if (section.type === 'archetype') {
         // Archetype has special handling
@@ -6310,10 +6326,26 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         const archName = ARCHETYPES[section.value]?.name || section.value;
         const primaryNameEl = $('selectedPrimaryName');
         if (primaryNameEl) primaryNameEl.textContent = archName;
+
+        // ENFORCE MINIMUM ARCHETYPE DURATION (≥4 seconds)
+        const archetypeElapsed = Date.now() - sectionStartTime;
+        const archetypeRemaining = FATE_TIMING.MIN_ARCHETYPE_REVEAL - archetypeElapsed;
+        if (archetypeRemaining > 0 && !_fateOverridden) {
+          await new Promise(r => setTimeout(r, archetypeRemaining));
+        }
       } else {
         // Standard card section
         const sectionTitle = section.grid.previousElementSibling;
         await revealCardSection(section.grid, section.value, sectionTitle);
+
+        // ENFORCE MINIMUM INTENSITY DURATION (≥4 seconds)
+        if (section.id === 'intensity') {
+          const intensityElapsed = Date.now() - sectionStartTime;
+          const intensityRemaining = FATE_TIMING.MIN_INTENSITY_REVEAL - intensityElapsed;
+          if (intensityRemaining > 0 && !_fateOverridden) {
+            await new Promise(r => setTimeout(r, intensityRemaining));
+          }
+        }
       }
 
       await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
