@@ -157,7 +157,6 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     align-items: flex-start;
     gap: 16px;
     overflow-x: auto;
-    padding-left: 8px;
 }
 
 .story-shape-character .destiny-card {
@@ -1552,6 +1551,7 @@ textarea.fate-field {
     justify-content: center;
     flex-shrink: 0;
     min-width: 55px;
+    padding-left: 4px;
 }
 
 .character-destiny-card-tall {

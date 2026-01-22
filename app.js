@@ -4956,6 +4956,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       customInput.id = 'archetypeModifierInput-' + Date.now();
       customInput.rows = 1;
 
+      // Restore modifier value from state if previously set
+      if (state.archetype.modifier && ARCHETYPES[state.archetype.modifier]) {
+          customInput.value = ARCHETYPES[state.archetype.modifier].name;
+      }
+
       // Create rotating placeholder
       const rotatingPlaceholder = document.createElement('div');
       rotatingPlaceholder.className = 'sb-zoom-rotating-placeholder';
@@ -5032,6 +5037,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       customWrapper.appendChild(customLabel);
       customWrapper.appendChild(inputWrapper);
       zoomContent.appendChild(customWrapper);
+
+      // Hide placeholder if input already has value (restored from state)
+      if (customInput.value.trim()) {
+          rotatingPlaceholder.classList.add('hidden');
+      }
 
       frontFace.appendChild(zoomContent);
   }
