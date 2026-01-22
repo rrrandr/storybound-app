@@ -3115,3 +3115,98 @@ textarea.fate-field {
     opacity: 0.3;
     cursor: not-allowed;
 }
+
+/* =================================
+   GUIDED FATE FILL ENGINE
+   Step-by-step reveal animations
+   ================================= */
+
+/* Gold glow effect for text inputs during fate fill */
+.fate-typing {
+    color: var(--gold) !important;
+    text-shadow: 0 0 8px var(--gold), 0 0 16px rgba(255, 215, 0, 0.6);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+/* After typing completes, fade to normal */
+.fate-typed {
+    animation: fate-glow-settle 0.8s ease-out forwards;
+}
+
+@keyframes fate-glow-settle {
+    0% {
+        color: var(--gold);
+        text-shadow: 0 0 8px var(--gold), 0 0 16px rgba(255, 215, 0, 0.6);
+    }
+    100% {
+        color: inherit;
+        text-shadow: none;
+    }
+}
+
+/* Card reveal animation for guided fate */
+.sb-card.fate-revealing {
+    animation: fate-card-reveal 0.4s ease-out forwards;
+    z-index: 50;
+}
+
+@keyframes fate-card-reveal {
+    0% {
+        transform: scale(1) rotateY(0deg);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    30% {
+        transform: scale(1.05) rotateY(0deg);
+        box-shadow: 0 0 20px var(--gold), 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Begin Story button highlighting after fate fill completes */
+#beginBtn.fate-ready {
+    animation: fate-begin-pulse 1.5s ease-in-out infinite;
+    position: relative;
+}
+
+#beginBtn.fate-ready::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    background: linear-gradient(45deg, var(--gold), var(--pink), var(--gold));
+    z-index: -1;
+    animation: fate-border-spin 3s linear infinite;
+    opacity: 0.8;
+}
+
+@keyframes fate-begin-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px var(--gold), 0 0 40px rgba(255, 215, 0, 0.4);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 30px var(--gold), 0 0 60px rgba(255, 215, 0, 0.6), 0 0 80px rgba(255, 215, 0, 0.3);
+        transform: scale(1.03);
+    }
+}
+
+@keyframes fate-border-spin {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+/* Section highlight during reveal */
+.section-title.fate-active {
+    color: var(--gold);
+    text-shadow: 0 0 10px var(--gold);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+/* Character field highlight during reveal */
+.character-field.fate-active input {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 8px var(--gold);
+}
