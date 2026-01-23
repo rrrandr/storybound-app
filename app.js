@@ -6920,33 +6920,79 @@ AUTHOR AS CONDUCTOR (5TH PERSON) - MANDATORY OPENER:
 ` : '';
 
     // OPENING SCENE VARIATION - avoid repetitive patterns
+    // UPDATED: Removed Social-first (market/tavern default), added world-seeding modes
     const openingModes = [
-        { mode: 'Motion-first', directive: 'Open mid-action: transit, pursuit, labor, ritual, or urgent movement. The protagonist is DOING something when we meet them.' },
-        { mode: 'World-first', directive: 'Open with environment or system acting before any character is named. Weather, architecture, or social machinery dominates the first beat.' },
-        { mode: 'Social-first', directive: 'Open in a crowd, market, court, boardroom, dock, tavern, or gathering. Other people surround the protagonist.' },
-        { mode: 'Aftermath-first', directive: 'Open in the wake of something significant. Consequences linger—a letter, a departure, a broken object, a changed landscape.' },
-        { mode: 'Disruption-first', directive: 'Open with instability. Something is already wrong, charged, or off-kilter. Tension from the first sentence.' }
+        { mode: 'Motion-first', directive: 'Open mid-action: transit, pursuit, labor, ritual, or urgent movement. The protagonist is DOING something when we meet them. The action reveals the world.' },
+        { mode: 'System-first', directive: 'Open with a governing system, faction, or power structure making itself felt. A decree, a toll, a checkpoint, a ritual of compliance. The protagonist navigates or resists.' },
+        { mode: 'Aftermath-first', directive: 'Open in the wake of something significant. Consequences linger—a departure, a broken object, a changed landscape. Someone is already gone.' },
+        { mode: 'Disruption-first', directive: 'Open with instability. Something is already wrong, charged, or off-kilter. Tension from the first sentence. The ordinary has cracked.' },
+        { mode: 'Object-first', directive: 'Open with a world-specific object, material, or custom that does not exist on Earth. Do not explain it. Let it anchor the scene and reveal the world through use.' }
     ];
     const selectedOpening = openingModes[Math.floor(Math.random() * openingModes.length)];
 
-    const introPrompt = `Write the opening scene (approx 200 words).
+    const introPrompt = `Write the opening scene (approx 400-500 words). This is 2-3 pages of a book. Take your time.
 ${authorOpeningDirective}
 OPENING MODE: ${selectedOpening.mode}
 ${selectedOpening.directive}
 
-FIRST SECTION RULES:
-- ${pacingRule}
-- Focus on: World setup, hints at overall arc, the protagonist's past or situation.
-${liAppears ? '- The love interest may appear briefly or be hinted at.' : '- The love interest should NOT appear yet. Build anticipation.'}
-- End with a hook, a question, or atmospheric tension—NOT a romantic moment.
+═══════════════════════════════════════════════════════
+WORLD-SEEDING REQUIREMENTS (MANDATORY)
+The opening must plant the seeds of a specific world. Within these first pages:
+═══════════════════════════════════════════════════════
 
-AVOID these clichéd openings:
+1. UNEXPLAINED SLANG OR IDIOM
+   Introduce at least one piece of vernacular that belongs to this world only.
+   Do NOT explain it. Let context carry meaning.
+   Example: "She'd been marked riven since the Quiet Year" — never define "riven" or "Quiet Year."
+
+2. POWER STRUCTURES HINTED
+   Reference a governing system, faction, hierarchy, or social force WITHOUT exposition.
+   A tax collector, a curfew, a forbidden district, a title that carries weight, a uniform that means something.
+   Show through behavior, not explanation.
+
+3. NON-EARTH NOUNS
+   Replace at least one ordinary noun with something world-specific.
+   Do NOT use: pomegranate, wine, bread, candle, horse, forest (these are too generic).
+   DO use invented or specific substitutes: "sun-bloom traded offworld," "a cut of thornbeast," "the candlewick burned blue as all wicks did near the threshold."
+   The world should feel like it has its own materials, foods, plants, animals.
+
+4. TEXTURE OVER SUMMARY
+   No narrator voice summarizing the protagonist's life or situation.
+   Enter mid-scene. The reader should feel dropped into an ongoing life.
+
+═══════════════════════════════════════════════════════
+FIRST SECTION RULES
+═══════════════════════════════════════════════════════
+- ${pacingRule}
+- Focus on: World texture, protagonist in motion or decision, atmospheric specificity.
+${liAppears ? '- The love interest may appear briefly or be hinted at — but not as the focus.' : '- The love interest should NOT appear yet. Build anticipation through absence.'}
+- End with a hook, a question, or atmospheric tension — NOT a romantic moment, NOT a cliffhanger about romance.
+
+═══════════════════════════════════════════════════════
+HARD-BANNED OPENINGS (DO NOT USE)
+═══════════════════════════════════════════════════════
+- Bustling marketplace with vendors calling out
+- Tavern or inn with a fire crackling
+- Any crowd scene as default "liveliness"
 - Lone woman in solitude staring out a window
-- Rain-lashed windows or fog-wreathed shops
+- Rain-lashed windows or fog-wreathed atmospherics
 - Characters passively observing weather, mist, or shadow
 - Quiet interiors awaiting intrusion
+- Waking up, getting dressed, looking in a mirror
+- Flashback or memory before the present scene is established
 
-The opening must feel intentional and specific, not archetypal or templated.`;
+═══════════════════════════════════════════════════════
+POV REMINDER
+═══════════════════════════════════════════════════════
+${state.povMode === 'author5th' ?
+`5TH PERSON (THE AUTHOR):
+The Author CAUSES events. The Author does NOT observe passively.
+BANNED verbs with "The Author": watched, saw, observed, noticed, gazed, witnessed, perceived, looked on.
+REQUIRED verbs: tilted, threaded, arranged, set, sent, unlatched, steered, coaxed, provoked, seeded, staged, loosened, tightened.
+The Author is the invisible hand — the wind, the timing, the coincidence.`
+: 'Use the selected POV consistently throughout.'}
+
+The opening must feel intentional, textured, and strange. Not archetypal. Not templated. Specific to THIS world.`;
 
     // FATE STUMBLED DIAGNOSTIC - Structured payload logging
     // RUNTIME NORMALIZATION: Ancestry/DSP inputs flow through ChatGPT normalization layer
@@ -8886,8 +8932,8 @@ No brown/cream parchment defaults. No centered-object-on-cream unless layout exp
       return prompt.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '').replace(/\s+/g, ' ').trim();
   }
 
-  // ISSUE 1 FIX: Emotion-first scene condensation (replaces blind truncation)
-  // Extracts emotional gravity + concrete visuals, stays within character limit
+  // MOOD-FIRST scene condensation for image generation
+  // Extracts atmosphere + posture + environment, not surface description
   async function condenseSceneWithEmotion(rawPrompt, maxLength = 200) {
       const cleaned = filterAuthorFromPrompt(rawPrompt);
 
@@ -8896,12 +8942,27 @@ No brown/cream parchment defaults. No centered-object-on-cream unless layout exp
           return cleaned;
       }
 
-      // Extract emotional gravity and key visuals via LLM
+      // Extract mood-first elements via LLM
       try {
           const condensed = await Promise.race([
               callChat([
-                  { role: 'system', content: 'You condense scene descriptions for image generation. Preserve emotional gravity FIRST, then concrete visuals. Output ONLY the condensed description.' },
-                  { role: 'user', content: `Condense this scene to under ${maxLength} characters. Keep the EMOTIONAL TONE (tension, dread, yearning, etc) and 1-2 KEY VISUALS. Remove exposition.\n\nScene: "${cleaned}"\n\nCondensed (under ${maxLength} chars):` }
+                  { role: 'system', content: `You condense prose into image prompts. Priority order:
+1. ATMOSPHERE (emotional weight, tension, dread, pressure)
+2. ENVIRONMENT (light quality, space, weather, architecture)
+3. POSTURE (body language, position — NOT faces or expressions)
+4. ONE concrete object with symbolic weight
+
+NEVER include: character names, dialogue, exposition, or narrator voice.
+NEVER frame for portrait or glamour shot.
+Output ONLY the condensed visual description.` },
+                  { role: 'user', content: `Condense to under ${maxLength} characters. Capture the MOOD and SPACE, not the plot.
+
+If the scene has mixed emotions (joy + dread), lean toward the darker.
+Focus on environment pressing in, posture under pressure, or charged stillness.
+
+Scene: "${cleaned}"
+
+Condensed (under ${maxLength} chars):` }
               ]),
               new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
           ]);

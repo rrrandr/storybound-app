@@ -34,363 +34,388 @@ function getOpenAIModel(imageIntent) {
 // ============================================================
 
 // ============================================================
-// COVER DIVERSITY ENFORCEMENT (CRITICAL)
-// Prevents visual convergence on dead roses, brown palettes, art deco
+// COVER GENERATION SYSTEM (REVISED)
+// Mandatory decision sequence to prevent visual convergence
 // ============================================================
 
-// BANNED focal objects - never use these as fallbacks
-const BANNED_FOCAL_OBJECTS = [
-  'rose', 'roses', 'envelope', 'envelopes', 'letter', 'letters',
-  'book', 'books', 'glassware', 'wine glass', 'champagne', 'goblet',
-  'chalice', 'dead flower', 'wilting flower', 'dried flower'
+// ============================================================
+// STEP 1: EMOTIONAL GRAVITY (choose ONE)
+// The single dominant emotional force driving the cover
+// ============================================================
+const EMOTIONAL_GRAVITY_OPTIONS = [
+  'foreboding',
+  'pressure',
+  'yearning',
+  'secrecy',
+  'inevitability',
+  'rebellion',
+  'loss',
+  'obsession'
 ];
 
-// ABSENCE-BASED FALLBACKS - when no strong object exists
-// Prefer shadow, absence, silhouette, fracture over cliché objects
-const ABSENCE_FALLBACKS = [
-  'a human silhouette dissolving into mist at the edges',
-  'an empty chair with a single shaft of light across it',
-  'a fractured mirror reflecting nothing but void',
-  'the shadow of an absent figure across a threshold',
-  'a doorway leading into pure darkness',
-  'torn fabric floating in empty space',
-  'a hand-shaped impression in disturbed dust',
-  'the negative space where something was removed',
-  'a crack running through marble, revealing darkness beneath',
-  'smoke frozen mid-dissipation, no source visible'
-];
-
-// Normalize object text for comparison
-function normalizeObjectText(text) {
-  return (text || '').toLowerCase().replace(/[^a-z\s]/g, '').trim();
-}
-
-// Check if object is banned
-function isBannedObject(objectText) {
-  const normalized = normalizeObjectText(objectText);
-  return BANNED_FOCAL_OBJECTS.some(banned => normalized.includes(banned));
-}
-
-// Symbolic object selection with diversity enforcement
-function selectSymbolicObject(genre, storyStyle, dynamic, recentObjects = []) {
-  const genreLower = (genre || '').toLowerCase();
-  const styleLower = (storyStyle || '').toLowerCase();
+function selectEmotionalGravity(tone, dynamic, genre) {
+  const toneLower = (tone || '').toLowerCase();
   const dynamicLower = (dynamic || '').toLowerCase();
+  const genreLower = (genre || '').toLowerCase();
 
-  // Genre-based object pools - REFRESHED to avoid clichés
-  const objects = {
-    contemporary: ['a silk blindfold knotted loosely', 'a cracked smartphone screen showing unread messages', 'car keys on marble', 'a designer heel with a broken strap', 'a smudged lipstick tube', 'a hotel keycard beside scattered pills'],
-    fantasy: ['a crown half-buried in ash', 'a blade with a serpent hilt', 'an ancient coin bearing an unknown face', 'a crystalline tear frozen mid-fall', 'chains made of solidified starlight'],
-    romantasy: ['a crown pierced by thorns', 'a dagger dripping with honey', 'a rune-marked apple bitten once', 'wings folded around an empty throne'],
-    historical: ['opera gloves with torn fingertips', 'a pocket watch stopped at an intimate hour', 'a dance card with one name scratched out', 'a mourning brooch containing hair'],
-    paranormal: ['a crescent moon reflected in spilled ink', 'a fang embedded in velvet', 'a spirit flame hovering above an open palm', 'bones arranged in a love pattern'],
-    dark: ['shattered handcuffs on concrete', 'a leather mask cast aside', 'a blade still warm from use', 'a collar with a broken chain'],
-    scifi: ['a cracked visor reflecting stars', 'a neural implant trailing wires', 'two pilots' dog tags tangled together', 'a stasis pod with frost-traced handprints'],
-    gothic: ['an iron key bleeding rust', 'a raven skull on white lace', 'a candle flame burning black', 'a mourning veil caught on thorns'],
-    suspense: ['a burner phone with one unread text', 'a gun beside a wedding ring', 'a bloody thumbprint on glass', 'a briefcase left open and empty'],
-    crime: ['a signet ring in a pool of blood', 'scattered diamonds on leather', 'a knife clean on one side only', 'a passport with a corner torn off']
-  };
+  // Map story signals to emotional gravity
+  if (toneLower.includes('dark') || toneLower.includes('horror')) {
+    return Math.random() < 0.5 ? 'foreboding' : 'obsession';
+  }
+  if (dynamicLower.includes('forbidden') || dynamicLower.includes('secret')) {
+    return Math.random() < 0.5 ? 'secrecy' : 'yearning';
+  }
+  if (dynamicLower.includes('enemy') || dynamicLower.includes('rival')) {
+    return Math.random() < 0.5 ? 'pressure' : 'rebellion';
+  }
+  if (genreLower.includes('gothic') || genreLower.includes('paranormal')) {
+    return Math.random() < 0.5 ? 'inevitability' : 'loss';
+  }
+  if (toneLower.includes('earnest') || toneLower.includes('poetic')) {
+    return Math.random() < 0.5 ? 'yearning' : 'inevitability';
+  }
 
-  // Find matching genre
-  let pool = objects.contemporary; // default
-  for (const [key, items] of Object.entries(objects)) {
-    if (genreLower.includes(key) || styleLower.includes(key)) {
+  // Random selection for unmatched cases
+  return EMOTIONAL_GRAVITY_OPTIONS[Math.floor(Math.random() * EMOTIONAL_GRAVITY_OPTIONS.length)];
+}
+
+// ============================================================
+// STEP 2: FOCAL ANCHOR (choose ONE)
+// Concrete object, shadow/fragment, or deliberate negative space
+// ============================================================
+
+// HARD BANNED - never use these
+const BANNED_ANCHORS = [
+  'envelope', 'envelopes', 'letter', 'letters',
+  'rose', 'roses', 'flower', 'flowers', 'petals', 'bloom', 'blossom',
+  'mystery object', 'mysterious object', 'unknown object',
+  'art deco', 'art-deco', 'geometric pattern', 'deco ornament'
+];
+
+function isBannedAnchor(anchor) {
+  const normalized = (anchor || '').toLowerCase();
+  return BANNED_ANCHORS.some(banned => normalized.includes(banned));
+}
+
+// Genre-specific focal anchors (concrete objects or their shadows/fragments)
+const FOCAL_ANCHORS = {
+  contemporary: [
+    'a cracked phone screen, face-down',
+    'car keys abandoned on cold marble',
+    'a stiletto heel, strap broken',
+    'prescription bottle tipped on its side',
+    'the silhouette of a hand pressing glass'
+  ],
+  fantasy: [
+    'a crown half-consumed by ash',
+    'a blade with frost creeping up the steel',
+    'chains dissolving into starlight',
+    'the shadow of wings across stone',
+    'a throne shown only by the space it occupies'
+  ],
+  romantasy: [
+    'a dagger wound through silk',
+    'a bitten fruit with dark juice running',
+    'antlers tangled with torn fabric',
+    'the negative space of an absent crown',
+    'a shattered mirror showing only fragments'
+  ],
+  historical: [
+    'opera gloves with bloodied fingertips',
+    'a pocket watch stopped mid-swing',
+    'a dance card torn in half',
+    'the shadow of a corset lacework',
+    'empty space where a portrait was removed'
+  ],
+  paranormal: [
+    'a fang impression in velvet',
+    'smoke that almost forms a face',
+    'bones arranged in an unfinished pattern',
+    'the silhouette of something not quite human',
+    'a doorway showing only void'
+  ],
+  dark: [
+    'shattered handcuffs, one cuff still locked',
+    'a leather collar with broken chain',
+    'a blade edge catching the only light',
+    'restraints reduced to shadow',
+    'the negative space of a body recently present'
+  ],
+  scifi: [
+    'a cracked visor reflecting dead stars',
+    'neural cables severed and sparking',
+    'dog tags fused together by heat',
+    'the silhouette of a ship against void',
+    'frost-traced handprints on glass'
+  ],
+  gothic: [
+    'an iron key rusted mid-turn',
+    'a raven skull on white lace',
+    'a candle flame frozen, burning black',
+    'the shadow of a manor spire',
+    'an empty frame where something watched'
+  ],
+  suspense: [
+    'a burner phone with one unread message',
+    'a wedding ring beside a weapon',
+    'a bloody thumbprint on glass',
+    'the negative space of erased evidence',
+    'a keyhole showing only darkness'
+  ],
+  crime: [
+    'a signet ring in pooling liquid',
+    'a blade clean on one side only',
+    'scattered currency, denominations hidden',
+    'the shadow of a figure in a doorway',
+    'a briefcase, contents unseen, lid ajar'
+  ]
+};
+
+// Deliberate negative space fallbacks
+const NEGATIVE_SPACE_ANCHORS = [
+  'the negative space where a figure stood',
+  'an empty threshold leading to darkness',
+  'the outline of something removed',
+  'shadow without source across bare ground',
+  'a doorway showing only void',
+  'the impression left in disturbed ash',
+  'fractured glass revealing nothing behind',
+  'the space between two hands that do not touch'
+];
+
+function selectFocalAnchor(genre, recentAnchors = []) {
+  const genreLower = (genre || '').toLowerCase();
+
+  // Find matching genre pool
+  let pool = FOCAL_ANCHORS.contemporary;
+  for (const [key, items] of Object.entries(FOCAL_ANCHORS)) {
+    if (genreLower.includes(key)) {
       pool = items;
       break;
     }
   }
 
-  // Normalize recent objects for comparison
-  const recentNormalized = recentObjects.map(normalizeObjectText);
-
-  // Filter pool to exclude recently used objects (last 5)
-  const availablePool = pool.filter(obj => {
-    const objNormalized = normalizeObjectText(obj);
-    // Exclude if similar to any recent object
+  // Filter out recently used anchors
+  const recentNormalized = recentAnchors.map(a => (a || '').toLowerCase());
+  const available = pool.filter(anchor => {
+    const anchorLower = anchor.toLowerCase();
+    // Exclude if keywords overlap with recent
     return !recentNormalized.some(recent => {
-      // Check for keyword overlap
-      const recentWords = recent.split(/\s+/);
-      const objWords = objNormalized.split(/\s+/);
-      return recentWords.some(word => word.length > 3 && objWords.includes(word));
+      const recentWords = recent.split(/\s+/).filter(w => w.length > 3);
+      return recentWords.some(word => anchorLower.includes(word));
     });
   });
 
-  // If pool is exhausted, use absence fallbacks
-  if (availablePool.length === 0) {
-    return ABSENCE_FALLBACKS[Math.floor(Math.random() * ABSENCE_FALLBACKS.length)];
+  // If pool exhausted or anchor is banned, use negative space
+  if (available.length === 0) {
+    return NEGATIVE_SPACE_ANCHORS[Math.floor(Math.random() * NEGATIVE_SPACE_ANCHORS.length)];
   }
 
-  // Select from available pool
-  let selectedObject;
-  if (dynamicLower.includes('forbidden') || dynamicLower.includes('enemy')) {
-    selectedObject = availablePool[Math.floor(Math.random() * Math.min(2, availablePool.length))];
-  } else {
-    selectedObject = availablePool[Math.floor(Math.random() * availablePool.length)];
+  const selected = available[Math.floor(Math.random() * available.length)];
+
+  // Final safety check
+  if (isBannedAnchor(selected)) {
+    return NEGATIVE_SPACE_ANCHORS[Math.floor(Math.random() * NEGATIVE_SPACE_ANCHORS.length)];
   }
 
-  // Final safety check - if somehow banned, use absence
-  if (isBannedObject(selectedObject)) {
-    return ABSENCE_FALLBACKS[Math.floor(Math.random() * ABSENCE_FALLBACKS.length)];
-  }
-
-  return selectedObject;
+  return selected;
 }
 
 // ============================================================
-// TONE-AWARE COVER STYLE MAPPING (UPDATED)
+// STEP 3: HUMAN PRESENCE (optional)
+// If present: obscured, turned away, cropped, or silhouetted
 // ============================================================
-// Art Deco is now RESTRICTED - only allowed for specific genres
-// Brown/sepia palettes are OPT-IN only, not default
-
-// Genres that justify Art Deco backgrounds
-const ART_DECO_JUSTIFIED_GENRES = ['historical', 'gatsby', '1920s', '1930s', 'noir', 'crime', 'jazz age'];
-
-// Check if Art Deco is justified by genre
-function isArtDecoJustified(genre) {
-  const genreLower = (genre || '').toLowerCase();
-  return ART_DECO_JUSTIFIED_GENRES.some(g => genreLower.includes(g));
+function getHumanPresenceDirective() {
+  const options = [
+    'If any human form appears: face must be turned away, cropped at jawline, or lost in shadow. No eye contact.',
+    'Human presence allowed only as silhouette, partial limb, or back-turned figure. No posed portrait energy.',
+    'Any figure must be obscured—by darkness, by frame edge, by their own posture. Never facing the viewer.',
+    'No human figures. Only the traces they leave: a handprint, a shadow, an absence.'
+  ];
+  return options[Math.floor(Math.random() * options.length)];
 }
 
-// Get alternative background styles (non-Art Deco)
-function getAlternativeTexture(tone) {
-  const toneLower = (tone || '').toLowerCase();
+// ============================================================
+// STEP 4: VISUAL RESTRAINT
+// Apply at least two: limited palette, asymmetry, occlusion, shallow depth
+// ============================================================
+function getVisualRestraintDirectives(emotionalGravity) {
+  const restraints = [];
 
-  if (toneLower.includes('satirical') || toneLower.includes('comedic')) {
-    return 'bold color blocking, pop art influences, or clean minimalist gradients';
-  }
-  if (toneLower.includes('dark') || toneLower.includes('horror')) {
-    return 'deep atmospheric gradients, smoke textures, or fractured marble patterns';
-  }
-  if (toneLower.includes('mythic') || toneLower.includes('fantasy')) {
-    return 'celestial gradients, constellation patterns, or otherworldly luminescence';
-  }
-  // Default: elegant but not Art Deco
-  return 'subtle texture gradients, soft fabric-like patterns, or watercolor washes';
-}
-
-function getToneCoverStyle(tone, genre) {
-  const toneLower = (tone || '').toLowerCase();
-  const artDecoAllowed = isArtDecoJustified(genre);
-
-  // SATIRICAL / COMEDIC: Lighter, playful, NOT erotic/breathless
-  if (toneLower.includes('satirical') || toneLower.includes('comedic') || toneLower.includes('wry')) {
-    return {
-      visualWeight: 'lighter visual weight, airy composition',
-      mood: 'playful and whimsical tone, clever and witty',
-      typography: 'clean sans-serif or simple hand-lettered typography with personality',
-      elements: 'illustrative elements allowed (stylized motifs, caricature touches, bold shapes)',
-      texture: artDecoAllowed
-        ? 'subtle Art Nouveau inspired organic curves and decorative borders'
-        : getAlternativeTexture(tone),
-      colorDirective: 'Vibrant, saturated colors. NO brown, sepia, or muted earth tones.',
-      forbidden: 'Must NOT feel breathless, erotic, or overly romantic. No heavy shadows. NO brown/sepia palettes.'
-    };
-  }
-
-  // EARNEST / POETIC / MYTHIC: Elegant, decorative, romantic but restrained
-  if (toneLower.includes('earnest') || toneLower.includes('poetic') || toneLower.includes('mythic')) {
-    return {
-      visualWeight: 'balanced composition with elegant negative space',
-      mood: 'romantic but restrained, timeless elegance',
-      typography: 'elegant serif with dimensional presence',
-      elements: 'decorative linework, flourishes, and ornamental details',
-      texture: artDecoAllowed
-        ? 'Art Deco geometric patterns or Art Nouveau organic linework'
-        : getAlternativeTexture(tone),
-      colorDirective: 'Rich jewel tones, deep blues, emeralds, or silver/gold metallics. Avoid defaulting to brown.',
-      forbidden: 'Never flat or blank. NO default brown/sepia - only if explicitly warranted by era.'
-    };
-  }
-
-  // DARK / HORROR: Heavy contrast, ominous, no playfulness
-  if (toneLower.includes('dark') || toneLower.includes('horror')) {
-    return {
-      visualWeight: 'heavier contrast, dramatic chiaroscuro lighting',
-      mood: 'ominous atmosphere, foreboding tension',
-      typography: 'bold dramatic serif or gothic-inspired letterforms with weight and presence',
-      elements: 'ominous patterning, heavy shadows, sharp edges',
-      texture: artDecoAllowed
-        ? 'intricate dark Art Deco patterns or thorned Art Nouveau linework'
-        : 'deep blacks, crimson accents, fractured textures, or smoke gradients',
-      colorDirective: 'Deep blacks, blood reds, midnight blues. Silver over gold. NO warm brown tones.',
-      forbidden: 'No playful elements, no whimsy, no lightness. NO sepia or nostalgic warmth.'
-    };
-  }
-
-  // Default (Earnest-like)
-  return {
-    visualWeight: 'balanced composition with elegant negative space',
-    mood: 'evocative atmosphere, literary presence',
-    typography: 'elegant display typography with dimensional presence',
-    elements: 'decorative linework and ornamental flourishes',
-    texture: artDecoAllowed
-      ? 'Art Deco inspired geometric patterns or Art Nouveau organic curves'
-      : getAlternativeTexture(tone),
-    colorDirective: 'Cool or jewel tones preferred. Brown/sepia only if historical 1920s-1940s.',
-    forbidden: 'Never flat white or blank. Must have visual texture. NO default to brown palettes.'
+  // Palette restraint (always applied - brown is never default)
+  const palettes = {
+    foreboding: 'Palette: deep slate, bone white, and one accent of arterial red. NO brown.',
+    pressure: 'Palette: cold steel grey, stark white, single point of heated amber. NO brown.',
+    yearning: 'Palette: midnight blue, silver, muted gold. NO brown or sepia.',
+    secrecy: 'Palette: shadow black, smoke grey, one thread of crimson. NO brown.',
+    inevitability: 'Palette: storm purple, ash white, cold gold. NO brown.',
+    rebellion: 'Palette: charcoal, blood orange, electric blue accent. NO brown.',
+    loss: 'Palette: desaturated teal, bone white, faded rose. NO brown or warm tones.',
+    obsession: 'Palette: deep burgundy, black, silver edge. NO brown.'
   };
+  restraints.push(palettes[emotionalGravity] || 'Palette: 2-3 tones only, cool or jewel. Brown is NEVER the default.');
+
+  // Composition restraints (randomly select 2)
+  const compositionOptions = [
+    'Composition: asymmetric balance. The focal point is off-center, weighted by negative space.',
+    'Partial occlusion: the anchor object is partially hidden—by shadow, by frame, by another element.',
+    'Shallow depth of field: background dissolves into soft abstraction, focus razor-sharp on anchor.',
+    'Deliberate cropping: elements extend beyond frame edge, implying continuation.',
+    'Textural restraint: one dominant texture only (smoke, silk, stone, glass). No visual clutter.'
+  ];
+
+  // Shuffle and take 2
+  const shuffled = compositionOptions.sort(() => Math.random() - 0.5);
+  restraints.push(shuffled[0]);
+  restraints.push(shuffled[1]);
+
+  return restraints.join('\n');
 }
 
 // ============================================================
-// POETIC SUBTITLE GENERATOR (PART C)
-// Converts genre + tone into evocative phrases, not labels
+// POETIC SUBTITLE GENERATOR
+// Evocative phrases, not genre labels
 // ============================================================
-
-function generatePoeticSubtitle(genre, tone) {
+function generatePoeticSubtitle(genre, emotionalGravity) {
   const genreLower = (genre || '').toLowerCase();
-  const toneLower = (tone || '').toLowerCase();
 
-  // Poetic templates organized by genre family
-  const subtitleTemplates = {
-    scifi: [
-      'A Voyage Beyond the Known',
-      'Where Stars Dare Not Follow',
-      'An Odyssey in the Void',
-      'A Tale Etched in Starlight',
-      'Beyond the Edge of Forever'
+  const subtitlesByEmotion = {
+    foreboding: [
+      'Where Shadows Keep Their Counsel',
+      'A Reckoning Long Deferred',
+      'What the Dark Remembers'
     ],
-    fantasy: [
-      'A Tale of Crowns and Shadows',
-      'Where Magic Bleeds True',
-      'An Enchantment Unbound',
-      'A Legend Reawakened',
-      'Where Ancient Powers Stir'
+    pressure: [
+      'A Knot That Will Not Yield',
+      'Where Walls Have Weight',
+      'The Silence Before Breaking'
     ],
-    romantasy: [
-      'A Love Forged in Firelight',
-      'Where Hearts and Kingdoms Collide',
-      'A Passion Woven in Myth',
-      'An Enchantment of the Heart',
-      'Where Desire Meets Destiny'
+    yearning: [
+      'A Distance That Aches',
+      'Where Wanting Takes Root',
+      'The Space Between Almost'
     ],
-    contemporary: [
-      'A Modern Entanglement',
-      'Where Desire Finds Its Edge',
-      'An Affair of Consequence',
-      'A Dance of Wanting',
-      'Where Boundaries Dissolve'
+    secrecy: [
+      'What the Locked Room Holds',
+      'A Truth Kept in Amber',
+      'Where Whispers Are Currency'
     ],
-    historical: [
-      'A Scandal of the Age',
-      'Where Propriety Meets Passion',
-      'An Arrangement Most Dangerous',
-      'A Secret of the Season',
-      'Where Honor Bends to Heart'
+    inevitability: [
+      'What Was Always Coming',
+      'A Fate Already Written',
+      'Where All Roads Converge'
     ],
-    paranormal: [
-      'A Darkness That Yearns',
-      'Where Shadows Take Form',
-      'An Immortal Reckoning',
-      'A Haunting of the Heart',
-      'Where the Veil Grows Thin'
+    rebellion: [
+      'A Fire That Refuses',
+      'Where Compliance Ends',
+      'The First Act of Defiance'
     ],
-    dark: [
-      'A Descent into Wanting',
-      'Where Pain Becomes Pleasure',
-      'An Obsession Unspoken',
-      'A Corruption of the Soul',
-      'Where Mercy Finds No Purchase'
+    loss: [
+      'What Remains After',
+      'A Hollow Where Something Lived',
+      'The Weight of What Was'
     ],
-    gothic: [
-      'A Manor of Secrets',
-      'Where Beauty Hides the Blade',
-      'An Inheritance of Shadows',
-      'A Whisper from the Crypt',
-      'Where the Dead Still Long'
-    ],
-    suspense: [
-      'A Game of Dangerous Wants',
-      'Where Trust Becomes Weapon',
-      'An Alibi for Desire',
-      'A Betrayal in Waiting',
-      'Where Every Kiss Is Calculated'
-    ],
-    crime: [
-      'A Deal Sealed in Blood',
-      'Where Power Takes What It Wants',
-      'An Empire of Desire',
-      'A Debt That Cannot Be Paid',
-      'Where Loyalty Is Currency'
-    ],
-    mythic: [
-      'A Myth Woven in Flesh',
-      'Where Gods Once Loved',
-      'An Echo of Divine Flame',
-      'A Legend in the Making',
-      'Where Fate Writes in Fire'
+    obsession: [
+      'A Fixation Without Remedy',
+      'Where Devotion Becomes Hunger',
+      'The Only Thought Left'
     ]
   };
 
-  // Find matching genre pool
-  let pool = subtitleTemplates.contemporary; // default
-  for (const [key, templates] of Object.entries(subtitleTemplates)) {
-    if (genreLower.includes(key)) {
-      pool = templates;
-      break;
-    }
-  }
-
-  // Tone-influenced selection (darker tones get later/edgier entries)
-  let index = Math.floor(Math.random() * pool.length);
-  if (toneLower.includes('dark') || toneLower.includes('horror')) {
-    index = Math.min(pool.length - 1, Math.floor(Math.random() * 2) + 3); // Prefer edgier
-  } else if (toneLower.includes('satirical') || toneLower.includes('comedic')) {
-    index = Math.floor(Math.random() * 2); // Prefer lighter
-  }
-
-  return pool[index];
+  const pool = subtitlesByEmotion[emotionalGravity] || subtitlesByEmotion.yearning;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentObjects = []) {
-  // Select symbolic object with diversity enforcement
-  const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic, recentObjects);
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
 
   // Extract tone from storyStyle (format: "Tone Genre")
   const tone = (storyStyle || '').split(' ')[0] || 'Earnest';
 
-  // Generate poetic subtitle instead of label
-  const poeticSubtitle = generatePoeticSubtitle(genre, tone);
+  // STEP 1: Select emotional gravity (ONE only)
+  const emotionalGravity = selectEmotionalGravity(tone, dynamic, genre);
 
-  // Get tone style with genre awareness for Art Deco restrictions
-  const toneStyle = getToneCoverStyle(tone, genre);
+  // STEP 2: Select focal anchor (ONE only, no banned items)
+  const focalAnchor = selectFocalAnchor(genre, recentObjects);
 
-  // Determine background style directive
-  const artDecoAllowed = isArtDecoJustified(genre);
-  const backgroundDirective = artDecoAllowed
-    ? 'Style inspiration: Art Deco geometric precision OR Art Nouveau organic linework (choose one, commit fully).'
-    : 'Style inspiration: Modern literary aesthetic. NO Art Deco patterns unless explicitly warranted by 1920s-1940s setting.';
+  // STEP 3: Human presence directive
+  const humanPresence = getHumanPresenceDirective();
 
-  // Build tone-aware prestige book cover prompt
-  return `A prestige book cover design, square format, ${toneStyle.visualWeight}.
+  // STEP 4: Visual restraint (palette + 2 composition rules)
+  const visualRestraint = getVisualRestraintDirectives(emotionalGravity);
 
-MANDATORY: The cover MUST include decorative texture or pattern - never flat white or blank backgrounds.
-${backgroundDirective}
-Background treatment: ${toneStyle.texture}
-${toneStyle.colorDirective}
+  // Generate poetic subtitle based on emotional gravity
+  const poeticSubtitle = generatePoeticSubtitle(genre, emotionalGravity);
 
-Central focus: ${symbolicObject}, rendered with controlled dramatic lighting, depth, and shadow. The object occupies the visual center, elegant and evocative.
+  // Build cover prompt with mandatory decision sequence
+  return `A prestige literary book cover. Square format.
 
-Title typography: "${cleanTitle}" using ${toneStyle.typography}. The letterforms have dimensional presence. The symbolic object physically interacts with the title - either passing behind certain letters, casting realistic shadows onto the text, or threading through the letterforms. The title and object share the same physical space.
+EMOTIONAL GRAVITY: ${emotionalGravity}
+This single emotion must permeate every visual choice. The cover should feel like this word made visible.
 
-Series line: "Storybound Book I: ${poeticSubtitle}" in very small, quiet type near the top or just beneath the title. Secondary and restrained.
+FOCAL ANCHOR (one object only):
+${focalAnchor}
+Render with deliberate lighting—shadow as important as illumination. The anchor occupies compositional weight but not necessarily center. It is the only concrete element.
 
-Author credit: ${cleanAuthor} in bold modern sans-serif, ALL CAPS, placed across the bottom of the cover as a visual anchor. Clean and grounded.
+${humanPresence}
 
-Cover mood: ${toneStyle.mood}. ${toneStyle.elements}. Color palette and lighting evoke ${genre || 'contemporary'} ${dynamic || 'romantic tension'} atmosphere.
+VISUAL RESTRAINT (mandatory):
+${visualRestraint}
 
-${toneStyle.forbidden}
+TYPOGRAPHY:
+Title: "${cleanTitle}" — typeset with weight and presence. The focal anchor may interact with letterforms: casting shadow onto them, threading behind them, or bleeding into their edges. Typography and object share physical space.
+Series: "Storybound Book I: ${poeticSubtitle}" — very small, quiet, subordinate. Near title or upper edge.
+Author: ${cleanAuthor} — bold sans-serif, ALL CAPS, anchoring the bottom edge.
 
-No characters, no faces, no bodies, no clutter. Single cohesive composition suitable for a modern literary bookshelf. No gibberish text, no watermarks.`;
+HARD BANS:
+- NO roses, flowers, petals, or botanical clichés
+- NO envelopes, letters, or correspondence
+- NO Art Deco patterns (unless 1920s-1940s setting explicitly stated)
+- NO brown as dominant or default (brown must be justified, never assumed)
+- NO centered symmetry unless emotionally warranted
+- NO faces looking at viewer, no posed portrait energy
+- NO visual clutter, multiple objects, or busy compositions
+
+The cover must feel quiet, strange, and inevitable. If uncertain between two choices, choose the more restrained option.
+
+No gibberish text. No watermarks.`;
 }
 
 function wrapScenePrompt(basePrompt) {
-  // Scene visualization: Atmosphere, characters, environment - NO text
-  return `${basePrompt}
+  // Scene visualization: MOOD-FIRST, atmosphere over description
+  // Single moment, tension prioritized, no portrait framing
+  return `SCENE VISUALIZATION — MOOD-FIRST
 
-Style: Cinematic illustration, atmospheric lighting, painterly.
-DO NOT include any visible text, captions, titles, logos, or watermarks.`;
+Depict ONE MOMENT from this scene:
+${basePrompt}
+
+MANDATORY PRIORITIES (in order):
+1. ATMOSPHERE — The emotional weight of the space. Light quality, air pressure, tension.
+2. ENVIRONMENT — Architecture, weather, texture of the world pressing in.
+3. POSTURE — If figures present, their body language and position in space. NOT faces.
+4. DETAIL — One or two concrete objects that carry symbolic weight.
+
+COMPOSITION RULES:
+- Frame as if the camera is part of the scene, not observing from outside
+- Figures should be mid-action, caught, or turned away — never posed
+- NO direct eye contact with viewer. Faces optional; backs, silhouettes, partial views preferred.
+- The environment should feel like a character: oppressive, indifferent, or watchful
+- Depth of field should emphasize the emotionally weighted element
+
+HARD BANS:
+- NO smiling, no glamour, no beauty-shot framing
+- NO camera-facing subjects, no "looking into camera"
+- NO neutral or cheerful lighting that contradicts tension
+- NO portrait orientation with centered face as subject
+
+TONE CALIBRATION:
+If the prose contains joy mixed with dread → lean toward dread.
+If uncertainty exists between dramatic and quiet → choose quiet.
+If multiple figures → focus on the space between them, not their faces.
+
+Style: Cinematic, atmospheric, painterly. Color palette should match emotional register.
+NO visible text, captions, titles, logos, or watermarks.`;
 }
 
 // ============================================================
