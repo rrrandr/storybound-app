@@ -768,10 +768,13 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     position: absolute;
     width: 4px;
     height: 4px;
-    background: var(--gold);
+    background: radial-gradient(circle, #fff 0%, var(--gold) 40%, rgba(255,215,0,0) 70%);
     border-radius: 50%;
-    box-shadow: 0 0 6px var(--gold), 0 0 10px rgba(255,215,0,0.5);
+    box-shadow: 0 0 6px var(--gold), 0 0 12px rgba(255,215,0,0.6), 0 0 20px rgba(255,215,0,0.3);
     opacity: 0;
+    pointer-events: none;
+    /* Hardware acceleration for smooth animation */
+    will-change: transform, opacity;
 }
 
 /* FATE CARD SEPARATOR IN STORY */
@@ -1993,8 +1996,15 @@ textarea.fate-field {
     transform-style: preserve-3d;
     transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     z-index: 10;
+}
+
+/* Front cover face */
+.book-cover-front {
+    position: absolute;
+    inset: 0;
     border-radius: 2px 8px 8px 2px;
     overflow: hidden;
+    backface-visibility: hidden;
     /* Right and bottom edge shadows for depth */
     box-shadow:
         4px 4px 8px rgba(0, 0, 0, 0.4),
@@ -2002,7 +2012,7 @@ textarea.fate-field {
         inset -3px 0 8px rgba(0, 0, 0, 0.2);
 }
 
-.book-cover::after {
+.book-cover-front::after {
     content: '';
     position: absolute;
     top: 0;
@@ -2012,6 +2022,58 @@ textarea.fate-field {
     background: linear-gradient(to left, rgba(0,0,0,0.15), transparent);
     pointer-events: none;
     border-radius: 0 8px 8px 0;
+}
+
+/* Inside cover face - visible when book is open */
+.book-cover-inside {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px 2px 2px 8px;
+    backface-visibility: hidden;
+    transform: rotateY(180deg);
+    /* Inside cover is a different texture - marbled endpaper */
+    background: linear-gradient(135deg,
+        #f5e6d3 0%,
+        #e8d4c0 20%,
+        #f0e2cf 40%,
+        #d4c4b0 60%,
+        #ebe0d0 80%,
+        #f5e6d3 100%
+    );
+    box-shadow:
+        inset 4px 0 8px rgba(0, 0, 0, 0.2),
+        inset 0 0 20px rgba(139, 69, 19, 0.1);
+}
+
+.inside-cover-texture {
+    position: absolute;
+    inset: 0;
+    /* Subtle marbled paper texture */
+    background-image:
+        radial-gradient(ellipse at 20% 30%, rgba(139, 69, 19, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(139, 69, 19, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(212, 175, 55, 0.03) 0%, transparent 70%);
+    opacity: 0.8;
+}
+
+.inside-cover-content {
+    position: absolute;
+    inset: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Art deco border frame */
+    border: 2px solid rgba(139, 69, 19, 0.2);
+    box-shadow: inset 0 0 0 4px rgba(139, 69, 19, 0.05);
+}
+
+.inside-cover-emblem {
+    width: 60px;
+    height: 60px;
+    /* Simple decorative emblem */
+    border: 2px solid rgba(139, 69, 19, 0.3);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
 }
 
 .book-cover-image {
@@ -2278,19 +2340,45 @@ textarea.fate-field {
     top: 50%;
     transform: translateY(-50%);
     z-index: 100;
-    background: rgba(18, 8, 22, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 6px;
+    /* Reflective gold gradient background */
+    background: linear-gradient(
+        135deg,
+        #d4af37 0%,
+        #f4e4ba 15%,
+        #d4af37 30%,
+        #c9a227 50%,
+        #d4af37 70%,
+        #f4e4ba 85%,
+        #d4af37 100%
+    );
+    background-size: 200% 200%;
+    animation: dspShimmer 8s ease-in-out infinite;
+    /* Art Deco double border */
+    border: 3px solid #8b6914;
+    border-radius: 4px;
     padding: 24px 20px;
     /* 5:7 aspect ratio like book jacket card - width ~180px, height ~252px */
     width: 180px;
     min-height: 220px;
     max-height: 280px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    /* Art Deco corner accents via box-shadow - doubled vignette intensity */
+    box-shadow:
+        inset 0 0 0 2px #f4e4ba,
+        inset 0 0 0 4px #8b6914,
+        inset 0 0 30px rgba(139, 105, 20, 0.4),
+        inset 0 0 60px rgba(139, 105, 20, 0.2),
+        0 4px 20px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(212, 175, 55, 0.3),
+        0 0 80px rgba(212, 175, 55, 0.15);
     /* Hidden by default - JS controls visibility based on scroll position */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+@keyframes dspShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 /* Visible state - controlled by JS when within 4-axis range */
@@ -2303,11 +2391,13 @@ textarea.fate-field {
     font-family: 'Lora', 'Georgia', serif;
     font-size: 0.85em;
     line-height: 1.65;
-    color: rgba(255, 255, 255, 0.75);
+    /* Black text on gold background */
+    color: #1a1a1a;
     margin: 0;
     text-align: left;
     font-style: italic;
     letter-spacing: 0.01em;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
 /* All clause spans share the same restrained styling */
@@ -2322,7 +2412,8 @@ textarea.fate-field {
 /* Subtle emphasis when clause updates - slight opacity pulse only */
 .synopsis-text span.updating {
     opacity: 1;
-    color: rgba(255, 255, 255, 0.95);
+    color: #000;
+    font-weight: 600;
 }
 
 /* Mobile: DSP pins to top of viewport, floats above content */
@@ -2347,14 +2438,29 @@ textarea.fate-field {
         opacity: 1;
         visibility: visible;
         z-index: 500; /* Above content, below modals */
-        background: rgba(18, 8, 22, 0.97);
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+        /* Reflective gold gradient for mobile */
+        background: linear-gradient(
+            90deg,
+            #d4af37 0%,
+            #f4e4ba 25%,
+            #d4af37 50%,
+            #f4e4ba 75%,
+            #d4af37 100%
+        );
+        background-size: 200% 100%;
+        animation: dspShimmer 8s ease-in-out infinite;
+        border-bottom: 3px solid #8b6914;
+        box-shadow:
+            inset 0 0 20px rgba(139, 105, 20, 0.3),
+            inset 0 0 40px rgba(139, 105, 20, 0.15),
+            0 2px 12px rgba(0, 0, 0, 0.5);
     }
 
     .synopsis-text {
         font-size: 0.9em;
         text-align: center;
         line-height: 1.5;
+        color: #1a1a1a;
     }
 
     .synopsis-text span {

@@ -6695,25 +6695,70 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
      // Build world context prefix
      const worldContext = worldSubtype ? `${worldSubtype} ${world}` : world;
 
-     // Tone-based atmosphere mapping
+     // Tone-based atmosphere mapping (with lighting source)
      const toneAtmosphere = {
-         'Earnest': 'warm golden hour lighting, hopeful atmosphere',
-         'Dark': 'moody shadows, dramatic chiaroscuro, ominous atmosphere',
-         'Satirical': 'bright and crisp, slightly exaggerated perspective',
-         'Poetic': 'soft diffused light, dreamy atmosphere, romantic haze',
-         'Mythic': 'epic grandeur, godray lighting, timeless quality',
-         'Horror': 'unsettling shadows, cold blue undertones, foreboding'
+         'Earnest': { lighting: 'warm golden hour sunlight streaming through', atmosphere: 'hopeful, inviting atmosphere' },
+         'Dark': { lighting: 'dramatic chiaroscuro from single harsh light source', atmosphere: 'ominous, foreboding atmosphere' },
+         'Satirical': { lighting: 'bright, crisp daylight with slight overexposure', atmosphere: 'slightly exaggerated, theatrical atmosphere' },
+         'Poetic': { lighting: 'soft diffused light filtering through mist or curtains', atmosphere: 'dreamy, romantic haze' },
+         'Mythic': { lighting: 'epic godray lighting breaking through clouds', atmosphere: 'timeless, legendary grandeur' },
+         'Horror': { lighting: 'cold blue moonlight with harsh shadows', atmosphere: 'unsettling, dread-filled atmosphere' }
      };
-     const atmosphere = toneAtmosphere[tone] || toneAtmosphere['Earnest'];
+     const toneStyle = toneAtmosphere[tone] || toneAtmosphere['Earnest'];
 
      // Intensity-based warmth (affects color temperature only, not content)
      const intensityWarmth = {
-         'Clean': 'neutral color temperature',
-         'Naughty': 'slightly warm color palette',
-         'Erotic': 'warm amber undertones',
-         'Dirty': 'rich saturated warm tones'
+         'Clean': 'neutral color temperature, desaturated palette',
+         'Naughty': 'slightly warm color palette, controlled saturation',
+         'Erotic': 'warm amber undertones, rich saturation',
+         'Dirty': 'deep saturated warm tones, bold contrast'
      };
      const warmth = intensityWarmth[intensity] || intensityWarmth['Naughty'];
+
+     // Era-based architecture and materials
+     const worldLower = (world || '').toLowerCase();
+     const subtypeLower = (worldSubtype || '').toLowerCase();
+     const isHistorical = worldLower === 'historical' || subtypeLower.includes('medieval') || subtypeLower.includes('victorian') || subtypeLower.includes('regency');
+     const isOccult = worldLower === 'paranormal' || worldLower === 'occult';
+     const isFantasy = worldLower === 'fantasy' || worldLower === 'romantasy';
+
+     let eraDetails = {
+         architecture: 'contemporary buildings and structures',
+         materials: 'mixed modern and traditional materials',
+         lightingSource: 'natural and artificial light sources'
+     };
+
+     if (subtypeLower.includes('medieval')) {
+         eraDetails = {
+             architecture: 'medieval castles, stone fortresses, thatched villages, Gothic cathedrals',
+             materials: 'rough-hewn stone, weathered wood, iron, thatch, tapestries',
+             lightingSource: 'candlelight, torchlight, firelight, oil lamps'
+         };
+     } else if (subtypeLower.includes('victorian')) {
+         eraDetails = {
+             architecture: 'Victorian mansions, gas-lit streets, ornate iron railings, brick townhouses',
+             materials: 'polished wood, velvet, brass, wrought iron, stained glass',
+             lightingSource: 'gas lamps, candlelight, oil lanterns, firelight'
+         };
+     } else if (subtypeLower.includes('regency')) {
+         eraDetails = {
+             architecture: 'Georgian townhouses, elegant ballrooms, manicured estates',
+             materials: 'marble, silk, gold leaf, crystal chandeliers, mahogany',
+             lightingSource: 'candlelight, chandeliers, natural window light'
+         };
+     } else if (isOccult) {
+         eraDetails = {
+             architecture: 'mysterious manor houses, ancient temples, hidden sanctuaries',
+             materials: 'aged stone, dark wood, iron, parchment, candle wax, ritual objects',
+             lightingSource: 'candlelight, moonlight, ethereal glows, firelight'
+         };
+     } else if (isFantasy) {
+         eraDetails = {
+             architecture: 'enchanted towers, mystical forests, ancient ruins, magical citadels',
+             materials: 'crystalline structures, ancient stone, enchanted metals, organic growth',
+             lightingSource: 'magical luminescence, starlight, bioluminescence, mystical flames'
+         };
+     }
 
      // WORLD-FIRST PROMPT: Environment description, NOT characters/actions
      // Strip any intensity/quality/erotic language (PG-13/R mood only)
@@ -6739,19 +6784,44 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
      const worldDesc = capWorldDesc(desc);
 
-     // VISTA-ONLY ENFORCEMENT (LOCKED)
-     // Setup scene MUST be a world vista - NO faces, portraits, or character close-ups
-     const vistaEnforcement = `CRITICAL COMPOSITION RULES:
+     // STRUCTURED SETTING PROMPT with Era, Architecture, Materials, Lighting, Atmosphere
+     const structuredPrompt = `SETTING VISUALIZATION: ${worldContext}
+
+SCENE DESCRIPTION:
+${worldDesc}
+
+ERA & ARCHITECTURE:
+${eraDetails.architecture}
+
+MATERIALS & TEXTURES:
+${eraDetails.materials}
+
+LIGHTING:
+${toneStyle.lighting}. ${eraDetails.lightingSource}. ${warmth}.
+
+ATMOSPHERE:
+${toneStyle.atmosphere}
+
+COMPOSITION RULES:
 - This MUST be a WORLD VISTA image: landscape, cityscape, skyline, planet view, castle on cliff, street scene, or grand environment.
 - If ANY human figure appears, they MUST be facing AWAY from viewer, looking out over the vista (silhouette only).
 - ABSOLUTELY FORBIDDEN: Portraits, faces, characters looking at the viewer, romantic poses, character close-ups, intimate scenes.
-- Camera position: Wide establishing shot, epic scale, environment is the subject.`;
+- Camera position: Wide establishing shot, epic scale, environment is the subject.
 
-     // Story-shape-aware style suffix
-     const styleSuffix = `${worldContext} setting. ${atmosphere}. ${warmth}. Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect ratio, no text, no watermark.`;
+EXPLICIT MODERN BANS (CRITICAL):
+- NO phones, smartphones, tablets, laptops, computers, screens, monitors
+- NO glass skyscrapers, modern architecture, steel/glass buildings
+- NO cars, motorcycles, modern vehicles, airplanes
+- NO neon signs, LED lights, digital displays, electric lighting (unless world is Modern)
+- NO modern clothing: t-shirts, jeans, sneakers, hoodies
+- NO plastic, chrome, or synthetic materials
+- NO contemporary street furniture, modern signage
 
-     // WORLD FIRST, vista enforcement, then style suffix
-     const prompt = `${worldDesc}\n\n${vistaEnforcement}\n\n${styleSuffix}`;
+STYLE:
+Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect ratio, no text, no watermark.`;
+
+     // Use structured prompt
+     const prompt = structuredPrompt;
 
      // DEV ASSERTION: Validate worldSubtype is present for worlds that require it
      assertSettingWorldSubtype(world, worldSubtype);
@@ -7536,6 +7606,12 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize' }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
+
+      // Intent routing: setting shots have specific requirements
+      const isSetting = context === 'setting-shot';
+      const intent = isSetting ? 'setting' : 'visualize';
+
+      console.log(`[IMAGE] generateImageWithFallback: context=${context}, isSetting=${isSetting}, intent=${intent}`);
 
       // Determine size based on shape (default landscape 16:9)
       const size = shape === 'portrait' ? '1024x1024' : '1792x1024';

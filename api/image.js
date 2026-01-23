@@ -152,14 +152,37 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
   const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic);
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
-  const cleanMode = modeLine || 'A Novel';
 
-  // Extract tone from storyStyle (format: "Tone Genre")
+  // Extract tone and world from modeLine/storyStyle for series line
   const tone = (storyStyle || '').split(' ')[0] || 'Earnest';
   const toneStyle = getToneCoverStyle(tone, intensity);
 
+  // Extract world from modeLine (format: "Era World" or "World Tone")
+  const modeLineParts = (modeLine || 'Modern').split(' ');
+  const world = modeLineParts[modeLineParts.length - 1] || 'Modern';
+
+  // Build grammatical series line: "A [Tone] [Genre] from the world of [World]"
+  const seriesLine = `A ${tone} ${genre || 'Romance'} from the world of ${worldSubtype ? worldSubtype + ' ' : ''}${world}`;
+
   // Build world context from worldSubtype if present
   const worldContext = worldSubtype ? `${worldSubtype} ` : '';
+
+  // Era-appropriate material constraints based on world
+  const worldLower = (world || '').toLowerCase();
+  const subtypeLower = (worldSubtype || '').toLowerCase();
+  const isHistorical = worldLower === 'historical' || subtypeLower.includes('medieval') || subtypeLower.includes('victorian') || subtypeLower.includes('regency') || subtypeLower.includes('roaring');
+  const isOccult = worldLower === 'paranormal' || worldLower === 'occult' || (genre || '').toLowerCase().includes('paranormal');
+  const isFantasy = worldLower === 'fantasy' || worldLower === 'romantasy';
+
+  // Era-appropriate materials
+  let eraConstraints = '';
+  if (isHistorical || isOccult) {
+    eraConstraints = `
+ERA-APPROPRIATE MATERIALS ONLY: candlelight, wood, stone, fabric, iron, parchment, leather, velvet, lace, brass, copper, wax seals, quills, inkwells.`;
+  } else if (isFantasy) {
+    eraConstraints = `
+ERA-APPROPRIATE MATERIALS ONLY: ancient metals, crystalline elements, organic materials, stone, wood, enchanted objects, mythical textures.`;
+  }
 
   // Build tone-aware prestige book cover prompt with intensity-driven heat
   return `A prestige book cover design, square format, ${toneStyle.visualWeight}.
@@ -172,11 +195,19 @@ Central focus: ${symbolicObject}, rendered with controlled dramatic lighting, de
 
 Title typography: "${cleanTitle}" using ${toneStyle.typography}. The letterforms have dimensional presence. The symbolic object physically interacts with the title - either passing behind certain letters, casting realistic shadows onto the text, or threading through the letterforms. The title and object share the same physical space.
 
-Series line: "Storybound Book I – ${cleanMode}" in very small, quiet type near the top or just beneath the title. Secondary and restrained.
+Series line: "${seriesLine}" in very small, quiet type near the top or just beneath the title. Secondary and restrained.
 
 Author credit: ${cleanAuthor} in bold modern sans-serif, ALL CAPS, placed across the bottom of the cover as a visual anchor. Clean and grounded.
 
 Cover mood: ${toneStyle.mood}. ${toneStyle.elements}. Color palette: ${toneStyle.heat.palette}. Atmosphere: ${toneStyle.heat.warmth}. Lighting and composition evoke ${worldContext}${genre || 'contemporary'} ${dynamic || 'romantic tension'} atmosphere.
+${eraConstraints}
+
+ABSOLUTELY FORBIDDEN - HARD BANS:
+- NO modern objects: phones, smartphones, screens, tablets, laptops, computers, glass displays, LED lights, neon signage, digital devices, electronics, modern vehicles, cars, motorcycles
+- NO modern clothing: t-shirts, jeans, sneakers, modern suits, hoodies, contemporary fashion
+- NO contemporary architecture: skyscrapers, glass buildings, modern interiors
+- NO plastic, chrome, or synthetic materials
+- NO modern typography or sans-serif fonts in the scene itself
 
 ${toneStyle.forbidden}
 

@@ -678,7 +678,8 @@
         container.className = 'golden-flow-container';
         document.body.appendChild(container);
 
-        const particleCount = 12;
+        // DOUBLED sparkle count for enhanced effect
+        const particleCount = 24;
         const streamDuration = 800;
         const particleDuration = 600;
 
@@ -686,12 +687,26 @@
         for (let i = 0; i < particleCount; i++) {
             const particle = document.createElement('div');
             particle.className = 'golden-flow-particle';
+
+            // Brightness variance - some particles are sharp glints
+            const isGlint = Math.random() < 0.3; // 30% chance of sharp glint
+            const baseSize = isGlint ? 6 : 4;
+            const glowIntensity = isGlint ? 2 : 1;
+
+            particle.style.width = baseSize + 'px';
+            particle.style.height = baseSize + 'px';
+            if (isGlint) {
+                particle.style.boxShadow = `0 0 ${8 * glowIntensity}px var(--gold), 0 0 ${16 * glowIntensity}px rgba(255,215,0,0.8), 0 0 ${24 * glowIntensity}px rgba(255,255,255,0.4)`;
+            }
+
             container.appendChild(particle);
 
             const delay = (i / particleCount) * streamDuration;
 
             setTimeout(() => {
                 const pStartTime = performance.now();
+                // Individual brightness variance per particle
+                const maxOpacity = isGlint ? 1.0 : (0.5 + Math.random() * 0.4);
 
                 function animateParticle(currentTime) {
                     const elapsed = currentTime - pStartTime;
@@ -702,8 +717,9 @@
                         ? 2 * progress * progress
                         : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-                    // Slight wave for organic feel
-                    const wave = Math.sin(progress * Math.PI * 2) * 8;
+                    // Slight wave for organic feel - varied per particle
+                    const waveAmplitude = 6 + Math.random() * 6;
+                    const wave = Math.sin(progress * Math.PI * 2) * waveAmplitude;
 
                     const currentX = startX + (endX - startX) * eased;
                     const currentY = startY + (endY - startY) * eased + wave;
@@ -711,13 +727,15 @@
                     particle.style.left = currentX + 'px';
                     particle.style.top = currentY + 'px';
 
-                    // Fade in/out for continuous stream look
+                    // Fade in/out with brightness variance
                     if (progress < 0.2) {
-                        particle.style.opacity = progress / 0.2 * 0.7;
+                        particle.style.opacity = progress / 0.2 * maxOpacity;
                     } else if (progress > 0.8) {
-                        particle.style.opacity = (1 - progress) / 0.2 * 0.7;
+                        particle.style.opacity = (1 - progress) / 0.2 * maxOpacity;
                     } else {
-                        particle.style.opacity = 0.7;
+                        // Flicker effect for glints
+                        const flicker = isGlint ? (0.8 + Math.random() * 0.2) : 1;
+                        particle.style.opacity = maxOpacity * flicker;
                     }
 
                     if (progress < 1) {

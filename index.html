@@ -826,9 +826,19 @@
         <!-- Bookmark ribbon (visible for returning readers) -->
         <div id="bookmarkRibbon" class="bookmark-ribbon hidden"></div>
 
-        <!-- Book cover with hinge -->
+        <!-- Book cover with hinge - separate front and inside faces -->
         <div id="bookCover" class="book-cover">
-          <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
+          <!-- Front cover face -->
+          <div class="book-cover-front">
+            <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
+          </div>
+          <!-- Inside cover face (visible when flipped) -->
+          <div class="book-cover-inside">
+            <div class="inside-cover-texture"></div>
+            <div class="inside-cover-content">
+              <div class="inside-cover-emblem"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Book pages underneath (visible during courtesy hinge) -->
