@@ -6626,12 +6626,14 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
      // Use unified IMAGE PROVIDER ROUTER with FALLBACK CHAIN
      // Setting shots always use Clean tier (sanitized) with landscape shape
+     // DEDICATED setting_visualize intent for proper API routing
      try {
          rawUrl = await generateImageWithFallback({
              prompt: prompt,
              tier: 'Clean',
              shape: 'landscape',
-             context: 'setting-shot'
+             context: 'setting-shot',
+             imageIntent: 'setting_visualize'
          });
      } catch(e) {
          // All providers failed - logged by generateImageWithFallback
@@ -7312,6 +7314,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // OPENAI LAST RESORT: Call OpenAI image generation (SAFE - never throws)
   // WORLD-AWARE: Accepts context params for server-side prompt enhancement
+  // INTENT-AWARE: Passes imageIntent for proper server-side routing
   async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000, ctx = {}) {
       try {
           const controller = new AbortController();
@@ -7329,6 +7332,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   model: 'gpt-image-1.5',
                   size: size,
                   aspect_ratio: aspectRatio,
+                  imageIntent: ctx.imageIntent,
                   world: ctx.world,
                   tone: ctx.tone,
                   intensity: ctx.intensity,
@@ -7418,6 +7422,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // GEMINI PROVIDER: Call Gemini image generation (SAFE - never throws)
   // WORLD-AWARE: Accepts context params for server-side prompt enhancement
+  // INTENT-AWARE: Passes imageIntent for proper server-side routing
   async function callGeminiImageGen(prompt, size = '1024x1024', timeout = 60000, ctx = {}) {
       try {
           const controller = new AbortController();
@@ -7435,6 +7440,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   model: 'imagen-3.0-generate-002',
                   size: size,
                   aspect_ratio: aspectRatio,
+                  imageIntent: ctx.imageIntent,
                   world: ctx.world,
                   tone: ctx.tone,
                   intensity: ctx.intensity,
@@ -7549,12 +7555,15 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   // Provider order: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
   // Default to 16:9 landscape for cinematic presentation
   // WORLD-AWARE: Accepts world/tone/intensity for server-side prompt enhancement
-  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', world, tone, intensity }) {
+  // INTENT-AWARE: Accepts imageIntent for proper API routing (setting_visualize, scene_visualize, book_cover)
+  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', world, tone, intensity, imageIntent }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       // Get world context from state if not provided
       const actualWorld = world || state.picks?.world || 'Modern';
       const actualTone = tone || state.picks?.tone || 'Earnest';
       const actualIntensity = intensity || state.intensity || 'Naughty';
+      // Determine imageIntent - defaults to scene_visualize for backwards compatibility
+      const actualIntent = imageIntent || 'scene_visualize';
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
 
       // Determine size based on shape (default landscape 16:9)
@@ -7574,7 +7583,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // STABLE PROVIDER CHAIN: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
       // Perchance removed for stability. Replicate failures fail silently.
       // WORLD-AWARE: Pass world/tone/intensity for server-side prompt enhancement
-      const contextParams = { world: actualWorld, tone: actualTone, intensity: actualIntensity };
+      // INTENT-AWARE: Pass imageIntent for proper server-side routing
+      const contextParams = { world: actualWorld, tone: actualTone, intensity: actualIntensity, imageIntent: actualIntent };
       const providerChain = [
           // GEMINI PRIMARY - reliable, sanitized prompts
           { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt, ctx: contextParams },

@@ -358,6 +358,67 @@ DO NOT default to dark, foggy, or oppressive unless the tone specifically calls 
 }
 
 // ============================================================
+// SETTING VISUALIZE PROMPTER (LOCKED)
+// ============================================================
+// Setting images are STANDALONE WORLD VISTAS above story text
+// NO faces, NO character close-ups - environment is the subject
+// Must fall back to OpenAI if Gemini fails
+
+function wrapSettingPrompt(basePrompt, world, tone) {
+  const worldLower = (world || 'modern').toLowerCase();
+  const toneLower = (tone || 'earnest').toLowerCase();
+
+  // WORLD-SPECIFIC ENVIRONMENTAL VISTA CUES
+  const worldVistas = {
+    fantasy: 'enchanted castle on cliff, mystical forest clearing, ancient ruins with magical glow, dragon-lit mountain range',
+    scifi: 'gleaming cityscape, orbital station view, alien landscape, neon-lit megacity streets',
+    historical: 'grand ballroom interior, medieval castle courtyard, Victorian street scene, ancient temple',
+    modern: 'sophisticated penthouse view, urban skyline at dusk, beach resort panorama, art gallery interior',
+    mythic: 'Mount Olympus vista, divine temple garden, celestial throne room, ocean realm depths'
+  };
+
+  let vistaStyle = worldVistas.modern;
+  for (const [key, style] of Object.entries(worldVistas)) {
+    if (worldLower.includes(key)) {
+      vistaStyle = style;
+      break;
+    }
+  }
+
+  // MOOD for setting image - derived from tone
+  const moodMapping = {
+    earnest: 'warm golden hour lighting, welcoming atmosphere',
+    poetic: 'soft diffused light, romantic mist, dreamy quality',
+    mythic: 'dramatic divine rays, epic grandeur, legendary scale',
+    comedic: 'bright cheerful daylight, vibrant colors',
+    wryconfession: 'intimate twilight, introspective mood',
+    dark: 'dramatic shadows, moody atmosphere'
+  };
+
+  let moodStyle = moodMapping.earnest;
+  for (const [key, m] of Object.entries(moodMapping)) {
+    if (toneLower.includes(key)) {
+      moodStyle = m;
+      break;
+    }
+  }
+
+  return `${basePrompt}
+
+CRITICAL COMPOSITION RULES (MANDATORY):
+- This MUST be a WORLD VISTA image: ${vistaStyle}
+- Wide establishing shot, epic scale, environment is the subject
+- If ANY human figure appears, they MUST be facing AWAY from viewer (silhouette only)
+- ABSOLUTELY FORBIDDEN: Portraits, faces, characters looking at viewer, romantic poses, character close-ups
+
+WORLD: ${world || 'Modern'} setting.
+MOOD: ${moodStyle}
+
+Style: Wide cinematic environment, atmospheric lighting, painterly illustration, 16:9 aspect ratio.
+DO NOT include any visible text, captions, titles, logos, or watermarks.`;
+}
+
+// ============================================================
 // MAIN HANDLER
 // ============================================================
 export default async function handler(req, res) {
@@ -373,7 +434,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // imageIntent: 'book_cover' | 'scene_visualize' (default)
+  // imageIntent: 'book_cover' | 'setting_visualize' | 'scene_visualize' (default)
   // title, authorName, modeLine: Used for book cover typography
   // dynamic, storyStyle, genre, world, tone, intensity: Story context
   const {
@@ -398,11 +459,18 @@ export default async function handler(req, res) {
 
   // Apply intent-specific prompt wrapping
   const isBookCover = imageIntent === 'book_cover';
-  const finalPrompt = isBookCover
-    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, world)
-    : wrapScenePrompt(prompt, world, tone, intensity);
+  const isSetting = imageIntent === 'setting_visualize';
 
-  console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);
+  let finalPrompt;
+  if (isBookCover) {
+    finalPrompt = wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, world);
+  } else if (isSetting) {
+    finalPrompt = wrapSettingPrompt(prompt, world, tone);
+  } else {
+    finalPrompt = wrapScenePrompt(prompt, world, tone, intensity);
+  }
+
+  console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}, isSetting: ${isSetting}`);
 
   // ---- GEMINI PRIMARY (WITH AUTOMATIC FALLBACK) ----
   // If Gemini returns unsupported MIME or fails, automatically fall back to OpenAI
@@ -420,6 +488,7 @@ export default async function handler(req, res) {
             instances: [{ prompt: finalPrompt }],
             parameters: {
               sampleCount: 1,
+              // Setting images use 16:9 landscape, book covers use 1:1 square
               aspectRatio: isBookCover ? '1:1' : '16:9'
             }
           })
