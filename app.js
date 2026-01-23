@@ -6918,35 +6918,36 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       }
 
       if (_bookOpenPhase === 1) {
-          // Phase 1 → 2: Show first page with setting image
-          showFirstPage();
+          // Phase 1 → 2: Show setting image page (full-page, no text)
+          showSettingImagePage();
       } else if (_bookOpenPhase === 2) {
           // Phase 2 → 3: Start the story
           startStoryScene();
       }
   }
 
-  // Show first page with setting image and title
-  function showFirstPage() {
+  // Show setting image page (full-page, no text)
+  // SETTING IMAGE PAGE SPECIFICATION:
+  // - First right-hand page after inside cover opens
+  // - Full-page setting image ONLY (no text, no title)
+  // - Generated with intent: setting_visualize, isSetting: true
+  // - Falls back to OpenAI automatically if Gemini fails
+  // - Pauses 10 seconds, then auto-turns to Scene 1 unless user clicks
+  function showSettingImagePage() {
       _bookOpenPhase = 2;
 
       const insideCover = document.getElementById('insideCover');
-      const firstPage = document.getElementById('firstPage');
-      const firstPageTitle = document.getElementById('firstPageTitle');
-      const firstPageSettingImg = document.getElementById('firstPageSettingImg');
-      const firstPageSettingLoading = document.getElementById('firstPageSettingLoading');
-      const title = state.title || 'Untitled';
+      const settingImagePage = document.getElementById('settingImagePage');
 
-      // Hide inside cover, show first page
+      // Hide inside cover, show setting image page
       if (insideCover) insideCover.classList.add('hidden');
-      if (firstPageTitle) firstPageTitle.textContent = title;
-      if (firstPage) {
-          firstPage.classList.remove('hidden');
-          firstPage.classList.add('visible');
+      if (settingImagePage) {
+          settingImagePage.classList.remove('hidden');
+          settingImagePage.classList.add('visible');
       }
 
-      // Generate setting image for first page
-      generateFirstPageSettingImage();
+      // Generate setting image for the dedicated page
+      generateSettingPageImage();
 
       // Auto-advance after 10 seconds if no interaction
       _autoPageTurnTimeout = setTimeout(() => {
@@ -6956,20 +6957,31 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       }, 10000);
   }
 
-  // Generate setting image specifically for the first page
-  async function generateFirstPageSettingImage() {
-      const firstPageSettingImg = document.getElementById('firstPageSettingImg');
-      const firstPageSettingLoading = document.getElementById('firstPageSettingLoading');
+  // Generate setting image specifically for the dedicated setting page
+  // Uses intent: setting_visualize, isSetting: true
+  // Falls back to OpenAI automatically if Gemini fails
+  async function generateSettingPageImage() {
+      const settingPageImg = document.getElementById('settingPageImg');
+      const settingPageLoading = document.getElementById('settingPageLoading');
+      const settingPageError = document.getElementById('settingPageError');
       const synopsis = state.synopsis || 'A romantic landscape';
+      const world = state.world || 'Modern';
+      const tone = state.tone || 'Earnest';
 
-      if (!firstPageSettingImg) return;
+      if (!settingPageImg) return;
+
+      // Hide error, show loading
+      if (settingPageError) settingPageError.classList.add('hidden');
+      if (settingPageLoading) settingPageLoading.classList.remove('hidden');
 
       try {
+          // CRITICAL: Use imageIntent: 'setting_visualize' for world vista prompt
           const rawUrl = await generateImageWithFallback({
               prompt: synopsis,
               tier: 'Clean',
               shape: 'landscape',
-              context: 'first-page-setting'
+              context: 'setting-page',
+              imageIntent: 'setting_visualize'
           });
 
           if (rawUrl) {
@@ -6977,19 +6989,30 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               if (!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
                   imageUrl = `data:image/png;base64,${rawUrl}`;
               }
-              firstPageSettingImg.src = imageUrl;
-              firstPageSettingImg.onload = () => {
-                  firstPageSettingImg.classList.add('loaded');
-                  if (firstPageSettingLoading) firstPageSettingLoading.classList.add('hidden');
+              settingPageImg.src = imageUrl;
+              settingPageImg.onload = () => {
+                  settingPageImg.classList.add('loaded');
+                  if (settingPageLoading) settingPageLoading.classList.add('hidden');
+              };
+              settingPageImg.onerror = () => {
+                  if (settingPageLoading) settingPageLoading.classList.add('hidden');
+                  if (settingPageError) settingPageError.classList.remove('hidden');
               };
           } else {
-              if (firstPageSettingLoading) firstPageSettingLoading.textContent = 'The scene awaits...';
+              if (settingPageLoading) settingPageLoading.classList.add('hidden');
+              if (settingPageError) settingPageError.classList.remove('hidden');
           }
       } catch (e) {
-          console.warn('First page setting image failed:', e.message);
-          if (firstPageSettingLoading) firstPageSettingLoading.textContent = 'The scene awaits...';
+          console.warn('Setting page image failed:', e.message);
+          if (settingPageLoading) settingPageLoading.classList.add('hidden');
+          if (settingPageError) settingPageError.classList.remove('hidden');
       }
   }
+
+  // Retry function for setting page image (called from HTML button)
+  window.retrySettingPageImage = function() {
+      generateSettingPageImage();
+  };
 
   // Start the story scene
   function startStoryScene() {
@@ -7047,10 +7070,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           });
       }
 
-      // First page click advances to story
-      const firstPage = document.getElementById('firstPage');
-      if (firstPage) {
-          firstPage.addEventListener('click', (e) => {
+      // Setting image page click advances to story
+      const settingImagePage = document.getElementById('settingImagePage');
+      if (settingImagePage) {
+          settingImagePage.addEventListener('click', (e) => {
               e.stopPropagation();
               advanceBookPhase();
           });
@@ -7075,7 +7098,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
       const bookCover = document.getElementById('bookCover');
       const insideCover = document.getElementById('insideCover');
-      const firstPage = document.getElementById('firstPage');
+      const settingImagePage = document.getElementById('settingImagePage');
+      const settingPageImg = document.getElementById('settingPageImg');
 
       if (bookCover) {
           bookCover.classList.remove('hinge-open', 'courtesy-peek');
@@ -7084,9 +7108,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           insideCover.classList.add('hidden');
           insideCover.classList.remove('visible');
       }
-      if (firstPage) {
-          firstPage.classList.add('hidden');
-          firstPage.classList.remove('visible');
+      if (settingImagePage) {
+          settingImagePage.classList.add('hidden');
+          settingImagePage.classList.remove('visible');
+      }
+      if (settingPageImg) {
+          settingPageImg.src = '';
+          settingPageImg.classList.remove('loaded');
       }
   }
 

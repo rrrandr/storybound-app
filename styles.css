@@ -2160,89 +2160,127 @@ textarea.fate-field {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   FIRST PAGE - Setting image + title
-   Shows after page turn from inside cover
+   SETTING IMAGE PAGE - Full-page setting image ONLY (no text)
+   First right-hand page after inside cover
+   Generated with intent: setting_visualize, isSetting: true
+   Falls back to OpenAI automatically if Gemini fails
    Auto-advances after 10 seconds or on click
    ═══════════════════════════════════════════════════════════════════ */
 
-.first-page {
+.setting-image-page {
     position: absolute;
     inset: 0;
-    background: #f8f5f0; /* Paper white */
+    background: #1a1512; /* Dark background for cinematic feel */
     border-radius: 2px 8px 8px 2px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    padding: 30px 20px;
-    box-sizing: border-box;
+    justify-content: center;
     z-index: 4;
     cursor: pointer;
-    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
 }
 
-.first-page.hidden {
+.setting-image-page.hidden {
     display: none;
 }
 
-.first-page.visible {
+.setting-image-page.visible {
     display: flex;
-    animation: fadeInPage 0.6s ease forwards;
+    animation: settingPageFadeIn 0.8s ease forwards;
 }
 
-@keyframes fadeInPage {
+@keyframes settingPageFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
-.first-page-title {
-    font-family: 'Lora', 'Georgia', serif;
-    font-size: 1.6em;
-    color: #2a2420;
-    margin: 0 0 20px 0;
-    text-align: center;
-    font-weight: 600;
-}
-
-.first-page-setting-wrap {
-    flex: 1;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #e8e0d0;
-    min-height: 200px;
-}
-
-.first-page-setting-img {
+/* Full-page setting image - fills entire page */
+.setting-page-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: none;
+    opacity: 0;
+    transition: opacity 1s ease;
 }
 
-.first-page-setting-img.loaded {
+.setting-page-img.loaded {
     display: block;
+    opacity: 1;
 }
 
-.first-page-setting-loading {
+/* Loading state for setting image */
+.setting-page-loading {
     position: absolute;
-    color: #8a8070;
-    font-style: italic;
-    font-size: 0.95em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
 }
 
-.first-page-setting-loading.hidden {
+.setting-page-loading.hidden {
     display: none;
 }
 
-.first-page-hint {
-    margin-top: 15px;
-    font-size: 0.85em;
-    color: #8a8070;
+.setting-page-loading-text {
+    color: #d4c8b8;
+    font-family: 'Lora', 'Georgia', serif;
     font-style: italic;
+    font-size: 1.1em;
+    animation: settingLoadingPulse 2s ease-in-out infinite;
+}
+
+@keyframes settingLoadingPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* Error state for setting image */
+.setting-page-error {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #a09080;
+    font-style: italic;
+}
+
+.setting-page-error.hidden {
+    display: none;
+}
+
+.setting-page-error button {
+    background: rgba(255, 215, 0, 0.2);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    color: #d4c8b8;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Lora', 'Georgia', serif;
+    transition: all 0.3s ease;
+}
+
+.setting-page-error button:hover {
+    background: rgba(255, 215, 0, 0.35);
+    border-color: rgba(255, 215, 0, 0.6);
+}
+
+/* Auto-advance progress indicator (subtle golden bar at bottom) */
+.setting-page-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.6), transparent);
+    width: 0%;
+    transition: width 10s linear;
+}
+
+.setting-page-progress.running {
+    width: 100%;
 }
 
 /* Book spine - left edge thickness */

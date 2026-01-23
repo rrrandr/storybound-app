@@ -832,19 +832,23 @@
           <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
         </div>
 
-        <!-- INSIDE COVER - Paper white with large synopsis (shown after cover opens) -->
+        <!-- INSIDE COVER - Paper white with large synopsis ONLY (shown after cover opens) -->
         <div id="insideCover" class="inside-cover hidden">
           <p id="insideSynopsis" class="inside-synopsis"></p>
         </div>
 
-        <!-- FIRST PAGE - Setting image + title (shown after page turn) -->
-        <div id="firstPage" class="first-page hidden">
-          <h3 id="firstPageTitle" class="first-page-title"></h3>
-          <div id="firstPageSettingWrap" class="first-page-setting-wrap">
-            <img id="firstPageSettingImg" src="" alt="Setting" class="first-page-setting-img">
-            <div id="firstPageSettingLoading" class="first-page-setting-loading">Conjuring the scene...</div>
+        <!-- FIRST RIGHT-HAND PAGE - Setting Image ONLY (full-page, no text) -->
+        <!-- Generated with intent: setting_visualize, isSetting: true -->
+        <!-- Falls back to OpenAI automatically if Gemini fails -->
+        <div id="settingImagePage" class="setting-image-page hidden">
+          <img id="settingPageImg" src="" alt="Setting" class="setting-page-img">
+          <div id="settingPageLoading" class="setting-page-loading">
+            <span class="setting-page-loading-text">Conjuring the world...</span>
           </div>
-          <p class="first-page-hint">Click anywhere to continue...</p>
+          <div id="settingPageError" class="setting-page-error hidden">
+            <span>The scene awaits...</span>
+            <button onclick="window.retrySettingPageImage()">Retry</button>
+          </div>
         </div>
 
         <!-- Book pages underneath (visible during courtesy hinge) -->
@@ -879,13 +883,7 @@
         <button id="btnAbandonCouple" style="background:none; border:none; text-decoration:underline; color:var(--pink); cursor:pointer; padding:0; font-size:inherit; margin-left:5px;">Play Solo (Revoke Invite)</button>
     </div>
 
-    <!-- SETTING IMAGE: Standalone ABOVE story text (world vista, no faces) -->
-    <div id="settingShotWrap">
-        <div id="settingError" class="img-error-msg hidden"></div>
-        <img id="settingShotImg" src="" alt="Setting" style="display:none; width:100%;">
-    </div>
-
-    <!-- Story text begins AFTER setting image -->
+    <!-- Story text begins immediately (Setting Image is shown as book page, not inline) -->
     <div id="storyText" class="box">
         <div class="story-pages-container" id="storyPagesContainer"></div>
     </div>
