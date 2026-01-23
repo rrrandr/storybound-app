@@ -5,6 +5,17 @@ export const config = {
 };
 
 // ============================================================
+// EROTIC INTENSITY SYSTEM IMPORT
+// ============================================================
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const {
+  buildImageIntensityDirective,
+  selectTierForScene,
+  getMaxTierForIntensity
+} = require('./erotic-intensity.js');
+
+// ============================================================
 // SIZE MAPPING - Normalize to OpenAI-supported dimensions
 // ============================================================
 function mapToOpenAISize(size, imageIntent) {
@@ -271,7 +282,10 @@ No characters, no faces, no bodies, no clutter. Single cohesive composition suit
 // Scene images MUST avoid: glamour poses, beauty photography, generic stock
 // smiles, audience-facing posing.
 
-function wrapScenePrompt(basePrompt) {
+function wrapScenePrompt(basePrompt, intensitySetting = 'Naughty', narrativePhase = 'early') {
+  // Get the erotic intensity directive for images
+  const intensityDirective = buildImageIntensityDirective(intensitySetting, narrativePhase);
+
   return `SCENE ILLUSTRATION (NOT A BOOK COVER):
 This is a narrative scene from inside the story world. Illustrate the moment as if capturing a film still.
 
@@ -283,6 +297,8 @@ SCENE RULES:
 - Costumes and environment must match the story world (fantasy = fantasy attire, etc.)
 - Emotional intent and character dynamics should be clear
 - Composition should feel cinematic and immersive
+
+${intensityDirective}
 
 AVOID:
 - Glamour/beauty photography poses
@@ -313,6 +329,7 @@ export default async function handler(req, res) {
   // imageIntent: 'book_cover' | 'scene_visualize' (default)
   // title, authorName, modeLine: Used for book cover typography
   // dynamic, storyStyle, genre: Story context for symbolic object selection
+  // intensitySetting, narrativePhase: Erotic intensity system parameters
   const {
     prompt,
     provider,
@@ -323,7 +340,9 @@ export default async function handler(req, res) {
     modeLine,
     dynamic,
     storyStyle,
-    genre
+    genre,
+    intensitySetting = 'Naughty',
+    narrativePhase = 'early'
   } = req.body;
 
   if (!prompt) {
@@ -334,7 +353,7 @@ export default async function handler(req, res) {
   const isBookCover = imageIntent === 'book_cover';
   const finalPrompt = isBookCover
     ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre)
-    : wrapScenePrompt(prompt);
+    : wrapScenePrompt(prompt, intensitySetting, narrativePhase);
 
   console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);
 

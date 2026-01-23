@@ -7366,8 +7366,26 @@ Return ONLY the synopsis sentence:\n${text}`}]);
   let _vizCancelled = false;
 
   // Visualize intensity bias based on player's selected eroticism level
+  // Uses the Erotic Intensity System for tier-based composition guidance
   function getVisualizeIntensityBias() {
       const intensity = state.intensity || 'Naughty';
+
+      // Determine narrative phase based on story progression
+      // Early = first quarter, Rising = middle half, Climactic = final quarter
+      const wordCount = currentStoryWordCount();
+      const targetWords = state.storyTargetWords || 8000;
+      const progress = wordCount / targetWords;
+
+      let narrativePhase = 'early';
+      if (progress > 0.65) narrativePhase = 'climactic';
+      else if (progress > 0.25) narrativePhase = 'rising';
+
+      // Use the Erotic Intensity System if available
+      if (window.StoryboundOrchestration?.buildImageIntensityDirective) {
+          return window.StoryboundOrchestration.buildImageIntensityDirective(intensity, narrativePhase);
+      }
+
+      // Fallback to basic descriptors if orchestration not loaded
       switch(intensity) {
           case 'Clean':
               return 'Clean, non-sexual imagery. Romantic but modest. No nudity or explicit content.';

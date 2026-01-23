@@ -63,6 +63,17 @@ const {
 } = require('./romance-engine');
 
 // =============================================================================
+// EROTIC INTENSITY SYSTEM IMPORT
+// =============================================================================
+
+const {
+  buildProseIntensityDirective,
+  selectTierForScene,
+  getMaxTierForIntensity,
+  INTENSITY_TIERS
+} = require('./erotic-intensity');
+
+// =============================================================================
 // MODEL ALLOWLISTS — PINNED VERSIONS (NO AUTO-UPGRADES)
 // =============================================================================
 
@@ -752,7 +763,8 @@ function buildAuthorPrompt({
   fateCard,
   gateEnforcement,
   romanceState = null,
-  isOpeningScene = false
+  isOpeningScene = false,
+  narrativePhase = 'early' // 'early' | 'rising' | 'climactic'
 }) {
   // Build Romance Engine directive
   const romanceDirective = romanceState
@@ -761,6 +773,12 @@ function buildAuthorPrompt({
         eroticismLevel: gateEnforcement.effectiveEroticism,
         isOpening: isOpeningScene
       });
+
+  // Build Erotic Intensity directive for prose (tier-aware)
+  const eroticIntensityDirective = buildProseIntensityDirective(
+    gateEnforcement.effectiveEroticism,
+    narrativePhase
+  );
 
   return {
     systemPrompt: `You are the PRIMARY AUTHOR for Storybound.
@@ -780,6 +798,8 @@ MONETIZATION CONSTRAINTS (NON-NEGOTIABLE):
 - Cliffhanger Required: ${gateEnforcement.cliffhangerRequired}
 
 ${romanceDirective}
+
+${eroticIntensityDirective}
 
 If an intimacy scene occurs at Erotic or Dirty level, you MUST generate an Erotic Scene Directive (ESD) in your response. The ESD will be passed to a specialist renderer.
 
@@ -899,5 +919,11 @@ module.exports = {
   buildRomanceEngineDirective,
   createRomanceState,
   mapIntensityToRomanceMode,
-  ROMANCE_MODES
+  ROMANCE_MODES,
+
+  // Erotic Intensity System (re-exported for convenience)
+  buildProseIntensityDirective,
+  selectTierForScene,
+  getMaxTierForIntensity,
+  INTENSITY_TIERS
 };

@@ -412,6 +412,94 @@ Apply this system fully and silently.
   }
 
   // ===========================================================================
+  // EROTIC INTENSITY SYSTEM (CLIENT-SIDE MIRROR)
+  // ===========================================================================
+  // Mirror of /api/erotic-intensity.js for frontend use
+  // Eroticism is conveyed through sensation, implication, emotional tension, restraint
+  // NEVER through explicit acts, genital focus, or pornographic mechanics
+
+  const INTENSITY_TIERS = {
+    TEASE: {
+      name: 'Tease',
+      emotionalState: 'Awareness, curiosity, the first flicker of want.',
+      composition: 'Distance and awareness. Eyes meeting across space. The charged gap between bodies.',
+      allowedFocus: ['Eye contact', 'Accidental touch', 'Voice changes', 'Awareness of being watched'],
+      disallowed: ['Direct arousal statements', 'Descriptions below collarbone', 'Undressing']
+    },
+    CHARGED: {
+      name: 'Charged',
+      emotionalState: 'Acknowledged want. The pretense has cracked.',
+      composition: 'Proximity and tension. Faces close, breath-distance apart. Hands at wrist, jaw, shoulder.',
+      allowedFocus: ['Space between mouths', 'Hands that hover', 'Pulse points', 'Heat through fabric'],
+      disallowed: ['Explicit arousal states', 'Hands below waist', 'Clothing removal beyond outer layer']
+    },
+    BRINK_OF_SEX: {
+      name: 'Brink-of-Sex',
+      emotionalState: 'The edge. One breath from crossing. Inevitable but not yet.',
+      composition: 'Contact and threshold. Bodies pressed. Hands in hair, gripping fabric. The surrender.',
+      allowedFocus: ['Surrender of control', 'Hands in hair/face/small of back', 'Mouths meeting', 'Fabric twisted/pushed aside'],
+      disallowed: ['Explicit sexual acts', 'Genital focus', 'Full undressing', 'Pornographic framing']
+    }
+  };
+
+  /**
+   * Map player intensity setting to maximum allowed erotic tier.
+   */
+  function getMaxTierForIntensity(intensitySetting) {
+    const mapping = {
+      'Clean': null,           // No erotic tiers
+      'Naughty': 'TEASE',      // Awareness and flirtation
+      'Erotic': 'CHARGED',     // Acknowledged desire
+      'Dirty': 'BRINK_OF_SEX'  // The edge
+    };
+    return mapping[intensitySetting] || 'TEASE';
+  }
+
+  /**
+   * Get the appropriate tier for current scene context.
+   */
+  function selectTierForScene(intensitySetting, narrativePhase) {
+    const maxTier = getMaxTierForIntensity(intensitySetting);
+    if (!maxTier) return null;
+
+    const tierOrder = ['TEASE', 'CHARGED', 'BRINK_OF_SEX'];
+    const maxIndex = tierOrder.indexOf(maxTier);
+
+    const phaseMapping = {
+      'early': 0,        // TEASE
+      'rising': 1,       // CHARGED (if allowed)
+      'climactic': 2     // BRINK_OF_SEX (if allowed)
+    };
+
+    const phaseIndex = phaseMapping[narrativePhase] || 0;
+    const selectedIndex = Math.min(phaseIndex, maxIndex);
+
+    return tierOrder[selectedIndex];
+  }
+
+  /**
+   * Build the erotic intensity directive for image visualization.
+   * Returns composition guidance based on tier.
+   */
+  function buildImageIntensityDirective(intensitySetting, narrativePhase = 'early') {
+    const tier = selectTierForScene(intensitySetting, narrativePhase);
+
+    if (!tier) {
+      return 'EROTIC INTENSITY: NONE. No erotic content. Characters may appear together without romantic/erotic tension.';
+    }
+
+    const tierConfig = INTENSITY_TIERS[tier];
+    return `EROTIC INTENSITY: ${tierConfig.name.toUpperCase()}
+${tierConfig.emotionalState}
+
+COMPOSITION: ${tierConfig.composition}
+ALLOWED: ${tierConfig.allowedFocus.join(', ')}
+FORBIDDEN: ${tierConfig.disallowed.join(', ')}
+
+Eroticism through posture, proximity, and restraint. NEVER through explicit display.`;
+  }
+
+  // ===========================================================================
   // ORCHESTRATION STATE
   // ===========================================================================
 
@@ -1287,6 +1375,12 @@ dialogue: <elevated dialogue>`;
     mapIntensityToRomanceMode,
     generateModeDirectives,
     ROMANCE_MODES: Object.freeze({ ...ROMANCE_MODES }),
+
+    // Erotic Intensity System
+    buildImageIntensityDirective,
+    selectTierForScene,
+    getMaxTierForIntensity,
+    INTENSITY_TIERS: Object.freeze({ ...INTENSITY_TIERS }),
 
     // Configuration (read-only)
     CONFIG: Object.freeze({ ...CONFIG }),
