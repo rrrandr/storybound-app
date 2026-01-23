@@ -2140,41 +2140,105 @@ textarea.fate-field {
     pointer-events: none;
 }
 
-/* Book spine - left edge thickness */
+/* Book spine - enhanced hardcover feel with visible thickness */
 .book-spine {
     position: absolute;
-    left: -12px;
+    left: -22px;
     top: 0;
     bottom: 0;
-    width: 12px;
-    background: linear-gradient(to right, #2a1a10, #3d2817);
-    transform: rotateY(-90deg) translateX(-6px);
+    width: 22px;
+    background: linear-gradient(to right, #1a0f08, #2a1a10, #3d2817);
+    transform: rotateY(-90deg) translateX(-11px);
     transform-origin: right center;
-    border-radius: 2px 0 0 2px;
+    border-radius: 3px 0 0 3px;
+    box-shadow: inset -2px 0 4px rgba(0,0,0,0.3);
 }
 
-/* Book thickness - bottom/side depth */
+/* Book spine text band */
+.book-spine::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    bottom: 20%;
+    left: 4px;
+    right: 4px;
+    background: linear-gradient(to bottom, rgba(200,170,120,0.2), rgba(200,170,120,0.1));
+    border-radius: 1px;
+}
+
+/* Book thickness - enhanced bottom/side depth for hardcover */
 .book-thickness {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: -8px;
-    height: 8px;
-    background: linear-gradient(to bottom, #f5f0e6, #e8e0d0);
-    transform: rotateX(90deg) translateY(4px);
+    bottom: -14px;
+    height: 14px;
+    background: linear-gradient(to bottom,
+        #ffffff 0%,
+        #fafafa 20%,
+        #f5f5f5 80%,
+        #e8e8e8 100%
+    );
+    transform: rotateX(90deg) translateY(7px);
     transform-origin: top center;
     border-radius: 0 0 2px 2px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Page edges visible from the side */
+/* Page edges visible from the side - PAPER WHITE, not tinted */
 .book-pages-preview {
     position: absolute;
     inset: 4px;
     right: 4px;
-    background: linear-gradient(to right, #f8f4eb, #f0ebe0);
+    background: #ffffff;
     border-radius: 0 6px 6px 0;
     z-index: 5;
     overflow: hidden;
+    box-shadow: inset -2px 0 8px rgba(0,0,0,0.05);
+}
+
+/* Inside cover surface - PURE PAPER WHITE */
+.book-inside-cover {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    border-radius: 0 6px 6px 0;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 30px;
+    text-align: center;
+    color: #333;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.book-object:hover .book-inside-cover,
+.book-cover.hinge-peek + .book-pages-preview .book-inside-cover,
+.book-cover.courtesy-peek + .book-pages-preview .book-inside-cover {
+    opacity: 1;
+}
+
+/* Inside cover synopsis styling */
+.inside-cover-synopsis {
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 1.1em;
+    line-height: 1.7;
+    color: #2a2a2a;
+    max-width: 85%;
+    margin: 0 auto;
+    font-style: italic;
+    letter-spacing: 0.02em;
+}
+
+/* Inside cover decorative rule */
+.inside-cover-rule {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #999, transparent);
+    margin: 20px auto;
 }
 
 .page-edge-stack {
@@ -2182,15 +2246,16 @@ textarea.fate-field {
     right: 0;
     top: 10px;
     bottom: 10px;
-    width: 8px;
+    width: 12px;
     background: repeating-linear-gradient(
         to bottom,
-        #f5f0e6 0px,
-        #f5f0e6 1px,
-        #e0d8c8 1px,
-        #e0d8c8 2px
+        #ffffff 0px,
+        #ffffff 1px,
+        #f0f0f0 1px,
+        #f0f0f0 2px
     );
     border-radius: 0 4px 4px 0;
+    box-shadow: inset -1px 0 2px rgba(0,0,0,0.05);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -3277,30 +3342,60 @@ textarea.fate-field {
     border-radius: 50%;
     background: radial-gradient(
         circle at center,
-        rgba(255, 223, 100, 0.9) 0%,
-        rgba(255, 200, 50, 0.5) 40%,
-        transparent 70%
+        rgba(255, 235, 150, 0.95) 0%,
+        rgba(255, 215, 80, 0.6) 35%,
+        rgba(255, 200, 50, 0.3) 55%,
+        transparent 75%
     );
     opacity: 0;
     will-change: transform, opacity;
-    animation: fate-dust-drift var(--dust-duration, 4s) ease-out forwards;
+    animation: fate-dust-drift var(--dust-duration, 6s) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    /* Add sparkle glow */
+    box-shadow: 0 0 4px rgba(255, 220, 100, 0.5), 0 0 8px rgba(255, 200, 50, 0.3);
+}
+
+/* Starfield sparkle variation */
+.fate-dust-particle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50%;
+    height: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, transparent 60%);
+    border-radius: 50%;
+    animation: fate-dust-twinkle 1.5s ease-in-out infinite;
+}
+
+@keyframes fate-dust-twinkle {
+    0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.2); }
 }
 
 @keyframes fate-dust-drift {
     0% {
         opacity: 0;
-        transform: translate(0, 0) scale(0.5);
+        transform: translate(0, 0) scale(0.3);
     }
-    15% {
-        opacity: var(--dust-opacity, 0.6);
-        transform: translate(calc(var(--dust-dx, 10px) * 0.15), calc(var(--dust-dy, -30px) * 0.15)) scale(1);
+    10% {
+        opacity: calc(var(--dust-opacity, 0.5) * 0.5);
+        transform: translate(calc(var(--dust-dx, 10px) * 0.08), calc(var(--dust-dy, -30px) * 0.08)) scale(0.7);
     }
-    85% {
-        opacity: var(--dust-opacity, 0.6);
+    25% {
+        opacity: var(--dust-opacity, 0.5);
+        transform: translate(calc(var(--dust-dx, 10px) * 0.2), calc(var(--dust-dy, -30px) * 0.2)) scale(1);
+    }
+    70% {
+        opacity: calc(var(--dust-opacity, 0.5) * 0.8);
+        transform: translate(calc(var(--dust-dx, 10px) * 0.75), calc(var(--dust-dy, -60px) * 0.75)) scale(0.9);
+    }
+    90% {
+        opacity: calc(var(--dust-opacity, 0.5) * 0.3);
     }
     100% {
         opacity: 0;
-        transform: translate(var(--dust-dx, 10px), var(--dust-dy, -60px)) scale(0.3);
+        transform: translate(var(--dust-dx, 10px), var(--dust-dy, -60px)) scale(0.2);
     }
 }
 

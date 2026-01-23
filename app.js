@@ -5928,14 +5928,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   let _dustInterval = null;
   const DUST_CONFIG = {
-    MAX_PARTICLES: 15,        // Maximum visible at once
-    SPAWN_INTERVAL: 350,      // ms between spawns
-    MIN_SIZE: 3,              // px
-    MAX_SIZE: 7,              // px
-    MIN_DURATION: 3000,       // ms
-    MAX_DURATION: 5000,       // ms
-    MIN_OPACITY: 0.3,
-    MAX_OPACITY: 0.7
+    MAX_PARTICLES: 40,        // Significantly increased for magical density
+    SPAWN_INTERVAL: 150,      // ms between spawns (faster for more particles)
+    MIN_SIZE: 5,              // px - 1.5x larger
+    MAX_SIZE: 12,             // px - ~2x larger
+    MIN_DURATION: 5000,       // ms - slower drift
+    MAX_DURATION: 8000,       // ms - extended for gentle motion
+    MIN_OPACITY: 0.25,        // Softer fade-in
+    MAX_OPACITY: 0.65         // Slightly reduced max for ethereal feel
   };
 
   function spawnDustParticle() {
@@ -5948,31 +5948,41 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const particle = document.createElement('div');
     particle.className = 'fate-dust-particle';
 
-    // Randomize position (weighted toward edges for vignette feel)
+    // Randomize position (heavily weighted toward vignette edges for magical border effect)
     const edge = Math.random();
     let x, y;
-    if (edge < 0.4) {
-      // Left/right edges
-      x = Math.random() < 0.5 ? Math.random() * 20 : 80 + Math.random() * 20;
-      y = 20 + Math.random() * 60;
-    } else if (edge < 0.7) {
-      // Bottom edge
+    if (edge < 0.35) {
+      // Left edge - dense particle column
+      x = Math.random() * 15;
+      y = 5 + Math.random() * 90;
+    } else if (edge < 0.65) {
+      // Right edge - dense particle column
+      x = 85 + Math.random() * 15;
+      y = 5 + Math.random() * 90;
+    } else if (edge < 0.80) {
+      // Bottom edge - horizon of sparkles
+      x = 5 + Math.random() * 90;
+      y = 80 + Math.random() * 18;
+    } else if (edge < 0.90) {
+      // Top edge - subtle crown
       x = 10 + Math.random() * 80;
-      y = 70 + Math.random() * 25;
+      y = Math.random() * 15;
     } else {
-      // Scattered center (sparse)
-      x = 20 + Math.random() * 60;
-      y = 30 + Math.random() * 40;
+      // Scattered center (very sparse, mystical depth)
+      x = 25 + Math.random() * 50;
+      y = 25 + Math.random() * 50;
     }
 
-    // Randomize properties
+    // Randomize properties - larger variance for visual interest
     const size = DUST_CONFIG.MIN_SIZE + Math.random() * (DUST_CONFIG.MAX_SIZE - DUST_CONFIG.MIN_SIZE);
     const duration = DUST_CONFIG.MIN_DURATION + Math.random() * (DUST_CONFIG.MAX_DURATION - DUST_CONFIG.MIN_DURATION);
     const opacity = DUST_CONFIG.MIN_OPACITY + Math.random() * (DUST_CONFIG.MAX_OPACITY - DUST_CONFIG.MIN_OPACITY);
 
-    // Drift direction (upward with slight horizontal variance)
-    const dx = -20 + Math.random() * 40;  // -20 to +20px horizontal
-    const dy = -40 - Math.random() * 40;  // -40 to -80px upward
+    // Slow, gentle drift with slight swirl effect
+    const baseAngle = Math.random() * Math.PI * 2;  // Random direction
+    const driftDistance = 20 + Math.random() * 40;  // How far to drift
+    const dx = Math.cos(baseAngle) * driftDistance; // Horizontal with swirl
+    const dy = -30 - Math.random() * 50;            // Primarily upward float
 
     particle.style.cssText = `
       left: ${x}vw;
@@ -5998,9 +6008,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function startFairyDust() {
     stopFairyDust(); // Clear any existing
     _dustInterval = setInterval(spawnDustParticle, DUST_CONFIG.SPAWN_INTERVAL);
-    // Spawn a few immediately for instant atmosphere
-    for (let i = 0; i < 5; i++) {
-      setTimeout(spawnDustParticle, i * 80);
+    // Burst of particles immediately for magical entrance
+    for (let i = 0; i < 15; i++) {
+      setTimeout(spawnDustParticle, i * 50);
     }
   }
 
@@ -7133,6 +7143,12 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         const cleanTitle = title.replace(/"/g,'');
         titleEl.textContent = cleanTitle;
         synopsisEl.textContent = synopsis;
+
+        // Populate inside cover synopsis (centered, book-like)
+        const insideCoverSynopsis = document.getElementById('insideCoverSynopsis');
+        if (insideCoverSynopsis) {
+            insideCoverSynopsis.textContent = synopsis;
+        }
 
         // Use pagination system for story display
         StoryPagination.clear();
