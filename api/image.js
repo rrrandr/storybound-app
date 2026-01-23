@@ -79,8 +79,22 @@ function selectSymbolicObject(genre, storyStyle, dynamic) {
 // Covers MUST include decorative texture/pattern and Art Deco/Nouveau linework
 // Tone determines visual weight, typography, and mood
 
-function getToneCoverStyle(tone) {
+function getToneCoverStyle(tone, intensity) {
   const toneLower = (tone || '').toLowerCase();
+  const intensityLower = (intensity || 'naughty').toLowerCase();
+
+  // Intensity-based heat modifier
+  // Clean: fully restrained, no suggestion
+  // Naughty: subtle tension, implied warmth
+  // Erotic: warmer palette, heightened mood
+  // Dirty: intense atmosphere, dramatic contrast
+  const heatModifier = {
+    clean: { warmth: 'cool and restrained', tension: 'none', palette: 'muted, desaturated' },
+    naughty: { warmth: 'subtle warmth', tension: 'implied tension', palette: 'rich but controlled' },
+    erotic: { warmth: 'warm and inviting', tension: 'palpable tension', palette: 'deep saturated tones' },
+    dirty: { warmth: 'intense heat', tension: 'charged atmosphere', palette: 'bold contrast, deep shadows' }
+  };
+  const heat = heatModifier[intensityLower] || heatModifier.naughty;
 
   // SATIRICAL / COMEDIC: Lighter, playful, NOT erotic/breathless
   if (toneLower.includes('satirical') || toneLower.includes('comedic') || toneLower.includes('wry')) {
@@ -90,7 +104,8 @@ function getToneCoverStyle(tone) {
       typography: 'clean sans-serif or simple hand-lettered typography with personality',
       elements: 'illustrative elements allowed (stylized motifs, caricature touches, cave-drawing simplicity)',
       texture: 'subtle Art Nouveau inspired organic curves and decorative borders',
-      forbidden: 'Must NOT feel breathless, erotic, or overly romantic. No heavy shadows.'
+      forbidden: 'Must NOT feel breathless, erotic, or overly romantic. No heavy shadows.',
+      heat: heat
     };
   }
 
@@ -98,11 +113,12 @@ function getToneCoverStyle(tone) {
   if (toneLower.includes('earnest') || toneLower.includes('poetic') || toneLower.includes('mythic')) {
     return {
       visualWeight: 'balanced composition with elegant negative space',
-      mood: 'romantic but restrained, timeless elegance',
+      mood: `romantic with ${heat.tension}, timeless elegance`,
       typography: 'elegant serif or Art Deco inspired display typography with dimensional presence',
       elements: 'decorative linework, flourishes, and ornamental details',
       texture: 'Art Deco geometric patterns or Art Nouveau organic linework as background texture',
-      forbidden: 'Never flat or blank. Decorative elements must enhance, not overwhelm.'
+      forbidden: 'Never flat or blank. Decorative elements must enhance, not overwhelm.',
+      heat: heat
     };
   }
 
@@ -110,26 +126,28 @@ function getToneCoverStyle(tone) {
   if (toneLower.includes('dark') || toneLower.includes('horror')) {
     return {
       visualWeight: 'heavier contrast, dramatic chiaroscuro lighting',
-      mood: 'ominous atmosphere, foreboding tension',
+      mood: `ominous atmosphere, ${heat.tension}, foreboding`,
       typography: 'bold dramatic serif or gothic-inspired letterforms with weight and presence',
       elements: 'ominous patterning, sharp geometric Art Deco motifs, heavy shadows',
       texture: 'intricate dark Art Deco patterns or thorned Art Nouveau linework',
-      forbidden: 'No playful elements, no whimsy, no lightness. Must feel serious and weighted.'
+      forbidden: 'No playful elements, no whimsy, no lightness. Must feel serious and weighted.',
+      heat: heat
     };
   }
 
   // Default (Earnest-like)
   return {
     visualWeight: 'balanced composition with elegant negative space',
-    mood: 'evocative atmosphere, literary presence',
+    mood: `evocative atmosphere with ${heat.tension}, literary presence`,
     typography: 'elegant display typography with dimensional presence',
     elements: 'decorative linework and ornamental flourishes',
     texture: 'Art Deco inspired geometric patterns or Art Nouveau organic curves',
-    forbidden: 'Never flat white or blank. Must have visual texture.'
+    forbidden: 'Never flat white or blank. Must have visual texture.',
+    heat: heat
   };
 }
 
-function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre) {
+function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre, intensity, worldSubtype) {
   // Select symbolic object based on context
   const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic);
   const cleanTitle = (title || 'Untitled').trim();
@@ -138,9 +156,12 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
 
   // Extract tone from storyStyle (format: "Tone Genre")
   const tone = (storyStyle || '').split(' ')[0] || 'Earnest';
-  const toneStyle = getToneCoverStyle(tone);
+  const toneStyle = getToneCoverStyle(tone, intensity);
 
-  // Build tone-aware prestige book cover prompt
+  // Build world context from worldSubtype if present
+  const worldContext = worldSubtype ? `${worldSubtype} ` : '';
+
+  // Build tone-aware prestige book cover prompt with intensity-driven heat
   return `A prestige book cover design, square format, ${toneStyle.visualWeight}.
 
 MANDATORY: The cover MUST include decorative texture or pattern - never flat white or blank backgrounds.
@@ -155,7 +176,7 @@ Series line: "Storybound Book I – ${cleanMode}" in very small, quiet type near
 
 Author credit: ${cleanAuthor} in bold modern sans-serif, ALL CAPS, placed across the bottom of the cover as a visual anchor. Clean and grounded.
 
-Cover mood: ${toneStyle.mood}. ${toneStyle.elements}. Color palette and lighting evoke ${genre || 'contemporary'} ${dynamic || 'romantic tension'} atmosphere.
+Cover mood: ${toneStyle.mood}. ${toneStyle.elements}. Color palette: ${toneStyle.heat.palette}. Atmosphere: ${toneStyle.heat.warmth}. Lighting and composition evoke ${worldContext}${genre || 'contemporary'} ${dynamic || 'romantic tension'} atmosphere.
 
 ${toneStyle.forbidden}
 
@@ -189,6 +210,8 @@ export default async function handler(req, res) {
   // imageIntent: 'book_cover' | 'scene_visualize' (default)
   // title, authorName, modeLine: Used for book cover typography
   // dynamic, storyStyle, genre: Story context for symbolic object selection
+  // intensity: Arousal level (Clean, Naughty, Erotic, Dirty) for cover restraint
+  // worldSubtype: World flavor detail (e.g., Medieval, Victorian) for visual styling
   const {
     prompt,
     provider,
@@ -199,7 +222,9 @@ export default async function handler(req, res) {
     modeLine,
     dynamic,
     storyStyle,
-    genre
+    genre,
+    intensity,
+    worldSubtype
   } = req.body;
 
   if (!prompt) {
@@ -209,7 +234,7 @@ export default async function handler(req, res) {
   // Apply intent-specific prompt wrapping
   const isBookCover = imageIntent === 'book_cover';
   const finalPrompt = isBookCover
-    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre)
+    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, intensity, worldSubtype)
     : wrapScenePrompt(prompt);
 
   console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);

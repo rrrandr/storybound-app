@@ -6585,6 +6585,35 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
          errDiv.style.color = 'var(--gold)';
      }
 
+     // Extract story shape data for world-aware styling
+     const world = state.picks?.world || 'Modern';
+     const worldSubtype = state.picks?.worldSubtype || null;
+     const tone = state.picks?.tone || 'Earnest';
+     const intensity = state.intensity || 'Naughty';
+
+     // Build world context prefix
+     const worldContext = worldSubtype ? `${worldSubtype} ${world}` : world;
+
+     // Tone-based atmosphere mapping
+     const toneAtmosphere = {
+         'Earnest': 'warm golden hour lighting, hopeful atmosphere',
+         'Dark': 'moody shadows, dramatic chiaroscuro, ominous atmosphere',
+         'Satirical': 'bright and crisp, slightly exaggerated perspective',
+         'Poetic': 'soft diffused light, dreamy atmosphere, romantic haze',
+         'Mythic': 'epic grandeur, godray lighting, timeless quality',
+         'Horror': 'unsettling shadows, cold blue undertones, foreboding'
+     };
+     const atmosphere = toneAtmosphere[tone] || toneAtmosphere['Earnest'];
+
+     // Intensity-based warmth (affects color temperature only, not content)
+     const intensityWarmth = {
+         'Clean': 'neutral color temperature',
+         'Naughty': 'slightly warm color palette',
+         'Erotic': 'warm amber undertones',
+         'Dirty': 'rich saturated warm tones'
+     };
+     const warmth = intensityWarmth[intensity] || intensityWarmth['Naughty'];
+
      // WORLD-FIRST PROMPT: Environment description, NOT characters/actions
      // Strip any intensity/quality/erotic language (PG-13/R mood only)
      const sanitizeForCover = (text) => {
@@ -6617,7 +6646,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 - ABSOLUTELY FORBIDDEN: Portraits, faces, characters looking at the viewer, romantic poses, character close-ups, intimate scenes.
 - Camera position: Wide establishing shot, epic scale, environment is the subject.`;
 
-     const styleSuffix = 'Wide cinematic environment, atmospheric lighting, painterly illustration, epic scale, 16:9 aspect ratio, no text, no watermark.';
+     // Story-shape-aware style suffix
+     const styleSuffix = `${worldContext} setting. ${atmosphere}. ${warmth}. Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect ratio, no text, no watermark.`;
 
      // WORLD FIRST, vista enforcement, then style suffix
      const prompt = `${worldDesc}\n\n${vistaEnforcement}\n\n${styleSuffix}`;
@@ -6773,9 +6803,12 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const genre = state.picks?.genre || 'Billionaire';
       const dynamic = state.picks?.dynamic || 'Enemies';
       const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
+      // Extract intensity (arousal level) and worldSubtype for cover styling
+      const intensity = state.intensity || 'Naughty';
+      const worldSubtype = state.picks?.worldSubtype || null;
 
-      // Build mode line from world + tone
-      const modeLine = era ? `${era} ${world}` : `${world} ${tone}`;
+      // Build mode line from world + era/subtype
+      const modeLine = era ? `${era} ${world}` : (worldSubtype ? `${worldSubtype} ${world}` : `${world} ${tone}`);
       // Build story style description
       const storyStyle = `${tone} ${genre}`;
 
@@ -6792,6 +6825,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   dynamic: dynamic,
                   storyStyle: storyStyle,
                   genre: genre,
+                  intensity: intensity,
+                  worldSubtype: worldSubtype,
                   size: '1024x1024'
               })
           });
