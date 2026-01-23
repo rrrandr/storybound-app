@@ -1315,6 +1315,7 @@ ANTI-HERO ENFORCEMENT:
 
       // CHARACTER DRIVE LENSES (Guided Fate - never user-visible)
       // Lenses are structural forces that bias pacing, reveals, and resistance
+      // Lens history is persisted via localStorage (see LensSystem.loadLensHistory)
       protagonistLens: {
         lenses: [],           // Array of lens IDs (max 2)
         lensMeta: {}          // Per-lens metadata: { [lensId]: { resistanceValue, revealScheduled, etc. } }
@@ -1323,8 +1324,8 @@ ANTI-HERO ENFORCEMENT:
         lenses: [],
         lensMeta: {}
       },
-      lensHistory: [],        // Recent archetype+lens combinations for anti-repetition
       storyProgress: 0,       // 0-1 scale for lens timing calculations
+      _lensAssignmentParams: null,  // Stored for fallback reassignment
 
       intensity:'Naughty', 
       turnCount:0,
@@ -5925,42 +5926,65 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
                 'soulmates': 10
             }[state.storyLength] || 1;
 
-            // Assign lenses deterministically
-            const lensAssignment = window.LensSystem.assignLenses({
+            // Assignment parameters (stored for fallback use)
+            const lensAssignmentParams = {
                 protagonistArchetype: state.archetype.primary,
                 loveInterestArchetype: state.archetype.primary,  // Uses same archetype system
                 genre: state.picks.genre,
                 tone: state.picks.tone,
                 storyLength: storyLengthChapters,
-                recentHistory: state.lensHistory || [],
                 narrativeComplexityFlag: storyLengthChapters >= 5,
                 overrides: {}
-            });
+            };
+
+            // Store params in state for pre-generation validation fallback
+            state._lensAssignmentParams = lensAssignmentParams;
+
+            // Assign lenses deterministically (uses persistent history internally)
+            const lensAssignment = window.LensSystem.assignLenses(lensAssignmentParams);
+
+            // Validate assignment (triggers fallback on REJECT)
+            const lensValidation = window.LensSystem.validateAssignment(lensAssignment, lensAssignmentParams);
+
+            // Use validated assignment (may be fallback result)
+            const finalAssignment = lensValidation.assignment || lensAssignment;
+
+            // CRITICAL: Verify we have lenses - empty arrays are NOT allowed
+            if (finalAssignment.protagonist.lenses.length === 0 || finalAssignment.loveInterest.lenses.length === 0) {
+                throw new Error('Lens assignment produced empty arrays - cannot proceed');
+            }
 
             // Store lens assignments in state (never user-visible)
-            state.protagonistLens = lensAssignment.protagonist;
-            state.loveInterestLens = lensAssignment.loveInterest;
+            state.protagonistLens = finalAssignment.protagonist;
+            state.loveInterestLens = finalAssignment.loveInterest;
             state.storyProgress = 0;
 
-            // Validate assignment
-            const lensValidation = window.LensSystem.validateAssignment(lensAssignment);
-            if (!lensValidation.valid) {
-                console.warn('[LENS SYSTEM] Assignment validation warnings:', lensValidation.errors);
+            // Record combos to PERSISTENT history for anti-repetition
+            const pCombo = `${state.archetype.primary}:${state.protagonistLens.lenses[0]}`;
+            const lCombo = `${state.archetype.primary}:${state.loveInterestLens.lenses[0]}`;
+            window.LensSystem.recordLensCombo(pCombo);
+            window.LensSystem.recordLensCombo(lCombo);
+
+            // Log warnings if any
+            if (lensValidation.warnings?.length > 0) {
+                console.log('[LENS SYSTEM] Validation warnings:', lensValidation.warnings);
             }
-            if (lensAssignment.validation.warnings.length > 0) {
-                console.log('[LENS SYSTEM] Assignment warnings:', lensAssignment.validation.warnings);
+            if (finalAssignment.validation?.warnings?.length > 0) {
+                console.log('[LENS SYSTEM] Assignment warnings:', finalAssignment.validation.warnings);
             }
 
             // Log assignment for debugging (never shown to user)
             console.log('[LENS SYSTEM] Assigned:', {
                 protagonist: state.protagonistLens.lenses,
-                loveInterest: state.loveInterestLens.lenses
+                loveInterest: state.loveInterestLens.lenses,
+                fallbackUsed: finalAssignment.validation?.fallbackUsed || false
             });
         } catch (lensError) {
-            console.error('[LENS SYSTEM ERROR]', lensError);
-            // Continue without lenses if assignment fails
-            state.protagonistLens = { lenses: [], lensMeta: {} };
-            state.loveInterestLens = { lenses: [], lensMeta: {} };
+            // CRITICAL ERROR: Cannot proceed without lenses
+            console.error('[LENS SYSTEM][CRITICAL]', lensError);
+            showToast('Story initialization failed. Please try again.');
+            window.showScreen('setup');
+            return;  // Block generation
         }
     }
 
@@ -6603,7 +6627,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
     const lensBias = {
       protagonist: state.protagonistLens || { lenses: [], lensMeta: {} },
       loveInterest: state.loveInterestLens || { lenses: [], lensMeta: {} },
-      loveInterestArchetype: state.archetype?.primary || null
+      loveInterestArchetype: state.archetype?.primary || null,
+      _assignmentParams: state._lensAssignmentParams || null  // For fallback
     };
 
     // Execute full orchestration flow
@@ -8106,26 +8131,13 @@ FATE CARD ADAPTATION (CRITICAL):
 
           state.turnCount++;
 
-          // Update story progress and lens state (Guided Fate - never user-visible)
+          // Update story progress (Guided Fate - never user-visible)
+          // Lens history is now persisted at assignment time via localStorage
           if (window.LensSystem) {
               // Calculate story progress based on word count vs target
               const currentWords = currentStoryWordCount();
               const targetWords = state.storyTargetWords || 10000;
               state.storyProgress = Math.min(1, currentWords / targetWords);
-
-              // Update lens history for anti-repetition (stored but never displayed)
-              if (state.turnCount === 1) {
-                  // Record this story's lens combinations in history
-                  if (state.protagonistLens?.lenses?.length > 0) {
-                      const combo = `${state.archetype?.primary}:${state.protagonistLens.lenses[0]}`;
-                      state.lensHistory = state.lensHistory || [];
-                      if (!state.lensHistory.includes(combo)) {
-                          state.lensHistory.push(combo);
-                          // Keep only last 5 stories
-                          if (state.lensHistory.length > 5) state.lensHistory.shift();
-                      }
-                  }
-              }
           }
 
           // Update visualization button states for new scene

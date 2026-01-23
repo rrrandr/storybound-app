@@ -532,16 +532,27 @@ These are mechanical gates, not personality guidance.
     let lensBiasDirectives = '';
     if (lensBias && window.LensSystem) {
       // Validate lens state before generation
+      // Get assignment params from state for fallback (if available)
+      const assignmentParams = lensBias._assignmentParams || null;
+
       const lensValidation = window.LensSystem.validateBeforeGeneration({
         protagonist: lensBias.protagonist,
         loveInterest: lensBias.loveInterest,
         storyProgress: storyProgress || 0,
         storyLength: 3  // Assume minimum for validation
-      });
+      }, assignmentParams);
 
+      // CRITICAL: Generation is BLOCKED if validation fails and fallback fails
       if (!lensValidation.canGenerate) {
-        console.error('[LENS SYSTEM] Generation blocked:', lensValidation.errors);
-        // Continue without lenses rather than blocking
+        console.error('[LENS SYSTEM][CRITICAL] Generation blocked:', lensValidation.errors);
+        throw new Error('Lens validation failed: ' + lensValidation.errors.map(e => e.message).join('; '));
+      }
+
+      // Apply updated state if fallback was used
+      if (lensValidation.state && lensValidation.state.protagonist) {
+        lensBias.protagonist = lensValidation.state.protagonist;
+        lensBias.loveInterest = lensValidation.state.loveInterest;
+        console.log('[LENS SYSTEM][FALLBACK] Updated lens state applied');
       }
 
       if (lensValidation.warnings.length > 0) {

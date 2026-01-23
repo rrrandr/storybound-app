@@ -265,8 +265,72 @@
     // Anti-repetition
     recentStoryWindow: 5,
     blockIdenticalCombinationInWindow: true,
-    pacingVariationOnForcedRepetition: 0.15
+    pacingVariationOnForcedRepetition: 0.15,
+
+    // Persistence
+    localStorageKey: 'storybound_lens_history',
+    maxHistoryEntries: 10  // 2x window for safety margin
   };
+
+  // ===========================================================================
+  // PERSISTENT LENS HISTORY (ANTI-REPETITION)
+  // ===========================================================================
+
+  /**
+   * Load lens history from localStorage.
+   * Returns array of archetype+lens combo strings.
+   */
+  function loadLensHistory() {
+    try {
+      const stored = localStorage.getItem(ASSIGNMENT_RULES.localStorageKey);
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return [];
+      // Validate entries are strings
+      return parsed.filter(entry => typeof entry === 'string');
+    } catch (e) {
+      console.warn('[LENS SYSTEM] Failed to load lens history:', e);
+      return [];
+    }
+  }
+
+  /**
+   * Save lens history to localStorage with FIFO eviction.
+   */
+  function saveLensHistory(history) {
+    try {
+      // Enforce max entries (FIFO eviction)
+      const trimmed = history.slice(-ASSIGNMENT_RULES.maxHistoryEntries);
+      localStorage.setItem(ASSIGNMENT_RULES.localStorageKey, JSON.stringify(trimmed));
+    } catch (e) {
+      console.warn('[LENS SYSTEM] Failed to save lens history:', e);
+    }
+  }
+
+  /**
+   * Record a new archetype+lens combination in persistent history.
+   */
+  function recordLensCombo(archetypeLensPair) {
+    const history = loadLensHistory();
+    history.push(archetypeLensPair);
+    saveLensHistory(history);
+  }
+
+  /**
+   * Get recent combos within the anti-repetition window.
+   */
+  function getRecentCombos() {
+    const history = loadLensHistory();
+    return history.slice(-ASSIGNMENT_RULES.recentStoryWindow);
+  }
+
+  /**
+   * Check if a combo is blocked by anti-repetition.
+   */
+  function isComboBlocked(archetypeLensPair) {
+    const recent = getRecentCombos();
+    return recent.includes(archetypeLensPair);
+  }
 
   // ===========================================================================
   // DETERMINISTIC ASSIGNMENT LOGIC
@@ -332,6 +396,7 @@
 
   /**
    * Assign lenses deterministically based on story parameters.
+   * GUARANTEES at least one lens per character. Empty arrays are NOT allowed.
    *
    * @param {Object} params
    * @param {string} params.protagonistArchetype - Storybound archetype ID
@@ -339,9 +404,9 @@
    * @param {string} params.genre - Story genre
    * @param {string} params.tone - Story tone
    * @param {number} params.storyLength - Expected chapters
-   * @param {Array} params.recentHistory - Recent archetype+lens combinations
    * @param {boolean} params.narrativeComplexityFlag - Allow second lens
    * @param {Object} params.overrides - Explicit override flags for FORBIDDEN
+   * @param {boolean} params._isFallback - Internal: true if this is a fallback call
    *
    * @returns {Object} { protagonist: { lenses: [], meta: {} }, loveInterest: { lenses: [], meta: {} }, validation: {} }
    */
@@ -352,35 +417,85 @@
       genre,
       tone,
       storyLength = 1,
-      recentHistory = [],
       narrativeComplexityFlag = false,
-      overrides = {}
+      overrides = {},
+      _isFallback = false
     } = params;
 
     const result = {
       protagonist: { lenses: [], lensMeta: {} },
       loveInterest: { lenses: [], lensMeta: {} },
-      validation: { errors: [], warnings: [] }
+      validation: { errors: [], warnings: [], fallbackUsed: _isFallback }
     };
 
+    // Load persistent history for anti-repetition
+    const recentCombos = getRecentCombos();
+
     // Get available lenses for each character
-    const protagonistAvailable = getAvailableLenses(protagonistArchetype);
-    const loveInterestAvailable = getAvailableLenses(loveInterestArchetype);
+    let protagonistAvailable = getAvailableLenses(protagonistArchetype);
+    let loveInterestAvailable = getAvailableLenses(loveInterestArchetype);
 
     // Get natural lenses (preferred)
-    const protagonistNatural = getNaturalLenses(protagonistArchetype);
-    const loveInterestNatural = getNaturalLenses(loveInterestArchetype);
+    let protagonistNatural = getNaturalLenses(protagonistArchetype);
+    let loveInterestNatural = getNaturalLenses(loveInterestArchetype);
+
+    // ANTI-REPETITION: Filter out blocked combos BEFORE selection
+    if (!_isFallback && recentCombos.length > 0) {
+      // Filter protagonist pools
+      const filterBlocked = (pool, archetype) => {
+        return pool.filter(lens => !recentCombos.includes(`${archetype}:${lens}`));
+      };
+
+      const filteredProtagNatural = filterBlocked(protagonistNatural, protagonistArchetype);
+      const filteredProtagAvailable = filterBlocked(protagonistAvailable, protagonistArchetype);
+
+      // Use filtered pools if they have options, otherwise keep original
+      if (filteredProtagNatural.length > 0) {
+        protagonistNatural = filteredProtagNatural;
+      } else if (filteredProtagAvailable.length > 0) {
+        protagonistAvailable = filteredProtagAvailable;
+        protagonistNatural = []; // Force use of available pool
+      }
+      // If all are blocked, keep original pool (forced repetition with variation)
+
+      const filteredLINatural = filterBlocked(loveInterestNatural, loveInterestArchetype);
+      const filteredLIAvailable = filterBlocked(loveInterestAvailable, loveInterestArchetype);
+
+      if (filteredLINatural.length > 0) {
+        loveInterestNatural = filteredLINatural;
+      } else if (filteredLIAvailable.length > 0) {
+        loveInterestAvailable = filteredLIAvailable;
+        loveInterestNatural = [];
+      }
+    }
 
     // Generate deterministic selection
-    const hash = hashForAssignment(protagonistArchetype, genre, tone, recentHistory);
+    const hash = hashForAssignment(protagonistArchetype, genre, tone, recentCombos);
 
     // Select protagonist lens (prefer natural)
-    const protagonistPool = protagonistNatural.length > 0 ? protagonistNatural : protagonistAvailable;
-    if (protagonistPool.length > 0) {
-      const pLensIndex = hash % protagonistPool.length;
-      const pLens = protagonistPool[pLensIndex];
-      result.protagonist.lenses.push(pLens);
-      result.protagonist.lensMeta[pLens] = createLensMeta(pLens, protagonistArchetype, 0);
+    let protagonistPool = protagonistNatural.length > 0 ? protagonistNatural : protagonistAvailable;
+
+    // GUARANTEE: Protagonist MUST have a lens
+    if (protagonistPool.length === 0) {
+      // Fallback: use ALL lenses (ignore FORBIDDEN for this character)
+      protagonistPool = Object.keys(LENS_DEFINITIONS);
+      console.warn('[LENS SYSTEM][FALLBACK] Protagonist pool empty, using all lenses');
+    }
+
+    const pLensIndex = hash % protagonistPool.length;
+    const pLens = protagonistPool[pLensIndex];
+    result.protagonist.lenses.push(pLens);
+    result.protagonist.lensMeta[pLens] = createLensMeta(pLens, protagonistArchetype, 0);
+
+    // Check if protagonist combo was forced (all options blocked)
+    const pCombo = `${protagonistArchetype}:${pLens}`;
+    if (recentCombos.includes(pCombo)) {
+      result.validation.warnings.push({
+        code: 'FORCED_REPETITION',
+        character: 'protagonist',
+        message: 'All non-blocked options exhausted; pacing variation applied'
+      });
+      result.protagonist.lensMeta[pLens].pacingVariation = ASSIGNMENT_RULES.pacingVariationOnForcedRepetition;
     }
 
     // Select love interest lens (prefer natural, avoid sharing)
@@ -399,12 +514,30 @@
       loveInterestPool = loveInterestPool.filter(l => l !== 'VOLATILE_MIRROR');
     }
 
+    // GUARANTEE: Love interest MUST have a lens (if story length warrants)
+    if (loveInterestPool.length === 0) {
+      // Fallback: use ALL lenses except protagonist's
+      loveInterestPool = Object.keys(LENS_DEFINITIONS).filter(l => l !== protagonistLens);
+      console.warn('[LENS SYSTEM][FALLBACK] Love interest pool empty, using fallback pool');
+    }
+
     // Select love interest lens
-    if (loveInterestPool.length > 0 && storyLength >= ASSIGNMENT_RULES.minChaptersForLensRequirement) {
+    if (loveInterestPool.length > 0) {
       const lLensIndex = (hash >> 4) % loveInterestPool.length;
       const lLens = loveInterestPool[lLensIndex];
       result.loveInterest.lenses.push(lLens);
       result.loveInterest.lensMeta[lLens] = createLensMeta(lLens, loveInterestArchetype, 0);
+
+      // Check if LI combo was forced
+      const lCombo = `${loveInterestArchetype}:${lLens}`;
+      if (recentCombos.includes(lCombo)) {
+        result.validation.warnings.push({
+          code: 'FORCED_REPETITION',
+          character: 'love_interest',
+          message: 'All non-blocked options exhausted; pacing variation applied'
+        });
+        result.loveInterest.lensMeta[lLens].pacingVariation = ASSIGNMENT_RULES.pacingVariationOnForcedRepetition;
+      }
     }
 
     // Check for conditional requirements
@@ -433,43 +566,25 @@
       }
     }
 
-    // Anti-repetition check
-    if (recentHistory.length > 0) {
-      const pCombo = `${protagonistArchetype}:${result.protagonist.lenses[0]}`;
-      const lCombo = `${loveInterestArchetype}:${result.loveInterest.lenses[0]}`;
-
-      const recentCombos = recentHistory.slice(-ASSIGNMENT_RULES.recentStoryWindow);
-
-      if (recentCombos.includes(pCombo)) {
-        result.validation.warnings.push({
-          code: 'RECENT_REPETITION',
-          character: 'protagonist',
-          message: `Archetype+lens combination used in last ${ASSIGNMENT_RULES.recentStoryWindow} stories`,
-          adjustment: 'pacing_variation_applied'
-        });
-        // Apply pacing variation
-        for (const lens of result.protagonist.lenses) {
-          if (result.protagonist.lensMeta[lens]) {
-            result.protagonist.lensMeta[lens].pacingVariation = ASSIGNMENT_RULES.pacingVariationOnForcedRepetition;
-          }
-        }
-      }
-
-      if (recentCombos.includes(lCombo)) {
-        result.validation.warnings.push({
-          code: 'RECENT_REPETITION',
-          character: 'love_interest',
-          message: `Archetype+lens combination used in last ${ASSIGNMENT_RULES.recentStoryWindow} stories`
-        });
-        for (const lens of result.loveInterest.lenses) {
-          if (result.loveInterest.lensMeta[lens]) {
-            result.loveInterest.lensMeta[lens].pacingVariation = ASSIGNMENT_RULES.pacingVariationOnForcedRepetition;
-          }
-        }
-      }
+    // FINAL GUARANTEE: Both characters must have lenses
+    if (result.protagonist.lenses.length === 0 || result.loveInterest.lenses.length === 0) {
+      console.error('[LENS SYSTEM][CRITICAL] Assignment produced empty lens array - this should never happen');
+      result.validation.errors.push({
+        code: 'EMPTY_LENS_ARRAY',
+        message: 'Critical: lens assignment failed to produce valid lenses'
+      });
     }
 
     return result;
+  }
+
+  /**
+   * Fallback assignment with relaxed constraints.
+   * Called when primary assignment fails validation.
+   */
+  function assignLensesFallback(params) {
+    console.log('[LENS SYSTEM][FALLBACK] Triggering fallback assignment');
+    return assignLenses({ ...params, _isFallback: true });
   }
 
   /**
@@ -626,16 +741,31 @@
 
   /**
    * Validate lens assignment against rules.
-   * Returns { valid: boolean, errors: [], warnings: [] }
+   * On REJECT, triggers fallback reassignment.
+   * Returns { valid: boolean, errors: [], warnings: [], assignment: Object }
    */
-  function validateAssignment(assignment) {
-    const result = { valid: true, errors: [], warnings: [] };
+  function validateAssignment(assignment, originalParams) {
+    const result = { valid: true, errors: [], warnings: [], assignment: assignment };
 
     const pLenses = assignment.protagonist?.lenses || [];
     const lLenses = assignment.loveInterest?.lenses || [];
 
-    // REJECT: Both characters have zero lenses in longer stories
-    // (Handled by caller based on story length)
+    // REJECT: Empty lens arrays are NEVER allowed
+    if (pLenses.length === 0) {
+      result.valid = false;
+      result.errors.push({
+        code: 'EMPTY_PROTAGONIST_LENS',
+        message: 'Protagonist must have at least one lens'
+      });
+    }
+
+    if (lLenses.length === 0) {
+      result.valid = false;
+      result.errors.push({
+        code: 'EMPTY_LOVE_INTEREST_LENS',
+        message: 'Love interest must have at least one lens'
+      });
+    }
 
     // REJECT: Protagonist and love interest share a lens
     for (const lens of pLenses) {
@@ -648,11 +778,30 @@
       }
     }
 
-    // REJECT: FORBIDDEN lens without override
-    // (Handled during assignment)
+    // On REJECT: Trigger fallback reassignment
+    if (!result.valid && originalParams) {
+      console.warn('[LENS SYSTEM][FALLBACK] Validation failed, triggering fallback:', result.errors);
+      const fallbackResult = assignLensesFallback(originalParams);
 
-    // REJECT: Two CONDITIONAL lenses without justification
-    // (Check meta for conditionalRequirement)
+      // Validate fallback result (non-recursive - no originalParams)
+      const fallbackValidation = validateAssignment(fallbackResult, null);
+
+      if (fallbackValidation.valid) {
+        result.valid = true;
+        result.assignment = fallbackResult;
+        result.warnings.push({
+          code: 'FALLBACK_USED',
+          message: 'Primary assignment failed; fallback assignment applied'
+        });
+      } else {
+        // Fallback also failed - this is a critical error
+        console.error('[LENS SYSTEM][CRITICAL] Fallback assignment also failed');
+        result.errors.push({
+          code: 'FALLBACK_FAILED',
+          message: 'Both primary and fallback assignment failed'
+        });
+      }
+    }
 
     return result;
   }
@@ -714,39 +863,90 @@
 
   /**
    * Full validation check before generation.
-   * Returns { canGenerate: boolean, errors: [], warnings: [], fallbackRequired: boolean }
+   * On REJECT: Triggers fallback reassignment. Generation NEVER proceeds without valid lenses.
+   * Returns { canGenerate: boolean, errors: [], warnings: [], state: Object }
    */
-  function validateBeforeGeneration(state) {
+  function validateBeforeGeneration(state, assignmentParams) {
     const result = {
       canGenerate: true,
       errors: [],
       warnings: [],
-      fallbackRequired: false
+      state: state  // May be modified by fallback
     };
 
-    const pLenses = state.protagonist?.lenses || [];
-    const lLenses = state.loveInterest?.lenses || [];
+    let pLenses = state.protagonist?.lenses || [];
+    let lLenses = state.loveInterest?.lenses || [];
     const storyProgress = state.storyProgress || 0;
 
-    // Check if both have zero lenses in longer story
-    if (pLenses.length === 0 && lLenses.length === 0 && state.storyLength >= 3) {
+    // REJECT: Empty lens arrays are NEVER allowed
+    let needsFallback = false;
+
+    if (pLenses.length === 0) {
       result.errors.push({
-        code: 'NO_LENSES',
-        message: 'Both characters have zero lenses in story with 3+ chapters'
+        code: 'EMPTY_PROTAGONIST_LENS',
+        message: 'Protagonist has no lenses'
       });
-      result.canGenerate = false;
-      result.fallbackRequired = true;
+      needsFallback = true;
     }
 
-    // Validate each lens state
+    if (lLenses.length === 0) {
+      result.errors.push({
+        code: 'EMPTY_LOVE_INTEREST_LENS',
+        message: 'Love interest has no lenses'
+      });
+      needsFallback = true;
+    }
+
+    // On REJECT: Trigger fallback reassignment
+    if (needsFallback && assignmentParams) {
+      console.warn('[LENS SYSTEM][FALLBACK] Pre-generation validation failed, triggering fallback');
+      const fallbackResult = assignLensesFallback(assignmentParams);
+
+      // Apply fallback to state
+      if (fallbackResult.protagonist.lenses.length > 0 && fallbackResult.loveInterest.lenses.length > 0) {
+        result.state = {
+          ...state,
+          protagonist: fallbackResult.protagonist,
+          loveInterest: fallbackResult.loveInterest
+        };
+        pLenses = fallbackResult.protagonist.lenses;
+        lLenses = fallbackResult.loveInterest.lenses;
+
+        result.warnings.push({
+          code: 'FALLBACK_APPLIED',
+          message: 'Empty lenses detected; fallback assignment applied'
+        });
+        result.errors = [];  // Clear errors since fallback succeeded
+      } else {
+        // Fallback also produced empty arrays - critical failure
+        result.canGenerate = false;
+        result.errors.push({
+          code: 'CRITICAL_LENS_FAILURE',
+          message: 'Fallback assignment failed; generation blocked'
+        });
+        console.error('[LENS SYSTEM][CRITICAL] Cannot proceed without lenses');
+        return result;
+      }
+    } else if (needsFallback && !assignmentParams) {
+      // No params to retry with - block generation
+      result.canGenerate = false;
+      result.errors.push({
+        code: 'NO_FALLBACK_PARAMS',
+        message: 'Lenses missing and no fallback parameters available'
+      });
+      console.error('[LENS SYSTEM][CRITICAL] Cannot proceed without lenses and no fallback available');
+      return result;
+    }
+
+    // Validate each lens state (warnings only - do not block)
     for (const lens of pLenses) {
-      const meta = state.protagonist?.lensMeta?.[lens];
+      const meta = result.state.protagonist?.lensMeta?.[lens];
       const warnings = validateLensState(lens, meta, storyProgress);
       result.warnings.push(...warnings);
     }
 
     for (const lens of lLenses) {
-      const meta = state.loveInterest?.lensMeta?.[lens];
+      const meta = result.state.loveInterest?.lensMeta?.[lens];
       const warnings = validateLensState(lens, meta, storyProgress);
       result.warnings.push(...warnings);
     }
@@ -826,10 +1026,18 @@
 
     // Assignment
     assignLenses,
+    assignLensesFallback,
     checkCompatibility,
     getAvailableLenses,
     getNaturalLenses,
     getLensArchetype,
+
+    // Persistent anti-repetition
+    loadLensHistory,
+    saveLensHistory,
+    recordLensCombo,
+    getRecentCombos,
+    isComboBlocked,
 
     // Behavioral bias
     calculateResistance,
