@@ -140,6 +140,98 @@ const MONETIZATION_GATES = {
 };
 
 // =============================================================================
+// SERVER-AUTHORITATIVE FLAGS (SOURCE OF TRUTH)
+// =============================================================================
+
+/**
+ * Authoritative generation flags.
+ * The server is the ONLY source of truth for these values.
+ * The client may mirror and react, but may NOT override.
+ */
+const AUTHORITATIVE_FLAGS = {
+  // Lens enforcement toggle - when false, lens system is bypassed
+  LENS_ENFORCEMENT_ENABLED: {
+    key: 'lensEnforcementEnabled',
+    default: true,
+    description: 'Controls whether Character Drive Lenses affect generation'
+  }
+};
+
+/**
+ * Server-side flag state.
+ * This is the canonical source - client state must sync from this.
+ */
+const _serverFlagState = {
+  lensEnforcementEnabled: true
+};
+
+/**
+ * Get the authoritative value of a flag.
+ * This is the ONLY valid way to read flag state for generation decisions.
+ */
+function getAuthoritativeFlag(flagKey) {
+  const flagDef = Object.values(AUTHORITATIVE_FLAGS).find(f => f.key === flagKey);
+  if (!flagDef) {
+    console.warn(`[FLAGS] Unknown flag requested: ${flagKey}`);
+    return false;
+  }
+  return _serverFlagState[flagKey] ?? flagDef.default;
+}
+
+/**
+ * Set a flag value (server-side only).
+ * This should ONLY be called by server logic, never from client requests.
+ */
+function setAuthoritativeFlag(flagKey, value) {
+  const flagDef = Object.values(AUTHORITATIVE_FLAGS).find(f => f.key === flagKey);
+  if (!flagDef) {
+    console.error(`[FLAGS] Attempted to set unknown flag: ${flagKey}`);
+    return false;
+  }
+  const oldValue = _serverFlagState[flagKey];
+  _serverFlagState[flagKey] = Boolean(value);
+  console.log(`[FLAGS] ${flagKey}: ${oldValue} → ${_serverFlagState[flagKey]}`);
+  return true;
+}
+
+/**
+ * Validate client-provided flag intent against server authority.
+ * Client may express intent, but server decides.
+ * Returns { valid: boolean, serverValue: any, clientAttemptedOverride: boolean }
+ */
+function validateFlagIntent(flagKey, clientIntent) {
+  const serverValue = getAuthoritativeFlag(flagKey);
+
+  // Client attempting to override server authority
+  if (clientIntent !== undefined && clientIntent !== serverValue) {
+    console.warn(`[FLAGS] Client attempted to override ${flagKey}: client=${clientIntent}, server=${serverValue}. Server wins.`);
+    return {
+      valid: false,
+      serverValue,
+      clientAttemptedOverride: true
+    };
+  }
+
+  return {
+    valid: true,
+    serverValue,
+    clientAttemptedOverride: false
+  };
+}
+
+/**
+ * Get all authoritative flag values for client sync.
+ * This is how the client receives the current server state.
+ */
+function getAuthoritativeFlagsSnapshot() {
+  const snapshot = {};
+  for (const flagDef of Object.values(AUTHORITATIVE_FLAGS)) {
+    snapshot[flagDef.key] = _serverFlagState[flagDef.key] ?? flagDef.default;
+  }
+  return Object.freeze(snapshot);
+}
+
+// =============================================================================
 // CHARACTER DRIVE LENS BEHAVIORAL BIAS
 // =============================================================================
 
@@ -717,11 +809,30 @@ async function orchestrateStoryGeneration({
   fateCard,
   lensBias,           // Character Drive Lens bias data (optional)
   storyProgress,      // Current story progress 0-1 (optional)
+  clientFlagIntent,   // Client's understanding of flags (for validation)
   callChatGPT,        // Function to call ChatGPT
   callSpecialist,     // Function to call specialist renderer
   onPhaseChange       // Callback for UI updates
 }) {
   const state = createOrchestrationState();
+
+  // ==========================================================================
+  // PRE-FLIGHT: Validate Authoritative Flags (SERVER IS SOURCE OF TRUTH)
+  // ==========================================================================
+  const lensEnforcementFlag = validateFlagIntent(
+    'lensEnforcementEnabled',
+    clientFlagIntent?.lensEnforcementEnabled
+  );
+
+  // Store authoritative flag values in state for response
+  state.authoritativeFlags = getAuthoritativeFlagsSnapshot();
+
+  if (lensEnforcementFlag.clientAttemptedOverride) {
+    state.errors.push({
+      code: 'FLAG_OVERRIDE_DENIED',
+      message: 'Client attempted to override lensEnforcementEnabled; server authority applied'
+    });
+  }
 
   // ==========================================================================
   // PRE-FLIGHT: Enforce Monetization Gates
@@ -733,14 +844,20 @@ async function orchestrateStoryGeneration({
   }
 
   // ==========================================================================
-  // PRE-FLIGHT: Validate Lens State
+  // PRE-FLIGHT: Validate Lens State (ONLY IF FLAG ENABLED)
   // ==========================================================================
-  if (lensBias) {
+  // Server flag determines whether lens enforcement runs
+  const lensEnforcementEnabled = lensEnforcementFlag.serverValue;
+
+  if (lensEnforcementEnabled && lensBias) {
     const lensValidation = validateLensState(lensBias, storyProgress || 0);
     if (lensValidation.warnings.length > 0) {
       console.warn('[LENS SYSTEM] Generation warnings:', lensValidation.warnings);
       state.lensWarnings = lensValidation.warnings;
     }
+  } else if (!lensEnforcementEnabled) {
+    console.log('[FLAGS] Lens enforcement DISABLED by server authority');
+    state.lensEnforcementSkipped = true;
   }
 
   // ==========================================================================
@@ -767,8 +884,9 @@ async function orchestrateStoryGeneration({
       playerDialogue,
       fateCard,
       gateEnforcement: state.gateEnforcement,
-      lensBias,
-      storyProgress: storyProgress || 0
+      lensBias: lensEnforcementEnabled ? lensBias : null,  // Server flag gates lens inclusion
+      storyProgress: storyProgress || 0,
+      lensEnforcementEnabled  // Pass flag for logging/debugging
     });
 
     const authorResult = await callChatGPT(authorPrompt, 'PRIMARY_AUTHOR');
@@ -880,7 +998,10 @@ async function orchestrateStoryGeneration({
     gateEnforcement: state.gateEnforcement,
     rendererUsed: state.rendererCalled && !state.rendererFailed,
     fateStumbled: state.fateStumbled,
-    errors: state.errors
+    errors: state.errors,
+    // SERVER-AUTHORITATIVE FLAGS: Client must sync from this
+    authoritativeFlags: state.authoritativeFlags,
+    lensEnforcementSkipped: state.lensEnforcementSkipped || false
   };
 }
 
@@ -1003,6 +1124,13 @@ module.exports = {
   // Core orchestration
   orchestrateStoryGeneration,
   createOrchestrationState,
+
+  // Server-authoritative flags
+  AUTHORITATIVE_FLAGS,
+  getAuthoritativeFlag,
+  setAuthoritativeFlag,
+  validateFlagIntent,
+  getAuthoritativeFlagsSnapshot,
 
   // Model validation
   validateModelForRole,

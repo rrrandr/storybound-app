@@ -1327,6 +1327,13 @@ ANTI-HERO ENFORCEMENT:
       storyProgress: 0,       // 0-1 scale for lens timing calculations
       _lensAssignmentParams: null,  // Stored for fallback reassignment
 
+      // SERVER-AUTHORITATIVE FLAGS (mirror only - server is source of truth)
+      // Client reads these to gate UI, but cannot override server decisions
+      _serverFlagsMirror: {
+        lensEnforcementEnabled: true,  // Default until synced from server
+        _lastSyncTime: 0
+      },
+
       intensity:'Naughty', 
       turnCount:0,
       sysPrompt: "",
@@ -6654,6 +6661,20 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       timing: result.timing,
       errors: result.errors
     });
+
+    // SYNC SERVER-AUTHORITATIVE FLAGS (server is source of truth)
+    // Client updates its mirror from server response
+    if (result.clientFlagMirror) {
+      const oldMirror = { ...state._serverFlagsMirror };
+      state._serverFlagsMirror = {
+        ...result.clientFlagMirror,
+        _lastSyncTime: Date.now()
+      };
+      // Log if flag changed (server override)
+      if (oldMirror.lensEnforcementEnabled !== state._serverFlagsMirror.lensEnforcementEnabled) {
+        console.log('[FLAGS] Server sync: lensEnforcementEnabled:', state._serverFlagsMirror.lensEnforcementEnabled);
+      }
+    }
 
     // Handle Fate Stumbled
     if (result.fateStumbled) {

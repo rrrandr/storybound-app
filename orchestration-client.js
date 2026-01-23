@@ -100,6 +100,60 @@
   };
 
   // ===========================================================================
+  // CLIENT FLAG MIRROR (SERVER IS SOURCE OF TRUTH)
+  // ===========================================================================
+
+  /**
+   * Client-side mirror of server-authoritative flags.
+   * The client may read and react to these, but may NOT override.
+   * Values are synced from server response after every generation.
+   */
+  const _clientFlagMirror = {
+    lensEnforcementEnabled: true,  // Default until synced
+    _lastSyncTime: 0
+  };
+
+  /**
+   * Get client's current understanding of a flag (mirror only).
+   * This is NOT authoritative - server decides.
+   */
+  function getClientFlagMirror(flagKey) {
+    return _clientFlagMirror[flagKey];
+  }
+
+  /**
+   * Sync client mirror from server response.
+   * This is the ONLY valid way to update client flag state.
+   */
+  function syncFlagsFromServer(authoritativeFlags) {
+    if (!authoritativeFlags) return;
+
+    for (const [key, value] of Object.entries(authoritativeFlags)) {
+      const oldValue = _clientFlagMirror[key];
+      _clientFlagMirror[key] = value;
+
+      if (oldValue !== value) {
+        console.log(`[FLAGS][CLIENT] Synced ${key}: ${oldValue} → ${value}`);
+        // Dispatch event for UI to react
+        window.dispatchEvent(new CustomEvent('storybound:flagSync', {
+          detail: { key, oldValue, newValue: value }
+        }));
+      }
+    }
+    _clientFlagMirror._lastSyncTime = Date.now();
+  }
+
+  /**
+   * Get client's flag intent for validation.
+   * This is sent to server for validation, NOT as authority.
+   */
+  function getClientFlagIntent() {
+    return {
+      lensEnforcementEnabled: _clientFlagMirror.lensEnforcementEnabled
+    };
+  }
+
+  // ===========================================================================
   // ORCHESTRATION STATE
   // ===========================================================================
 
@@ -522,15 +576,25 @@ These are mechanical gates, not personality guidance.
     const state = createOrchestrationState();
 
     // =========================================================================
+    // PRE-FLIGHT: Check Client Flag Mirror (SERVER IS AUTHORITATIVE)
+    // =========================================================================
+    // Client checks its mirror to gate behavior, but server ultimately decides
+    const clientLensEnforcementEnabled = getClientFlagMirror('lensEnforcementEnabled');
+    state.clientFlagIntent = getClientFlagIntent();
+
+    // =========================================================================
     // PRE-FLIGHT: Enforce Monetization Gates
     // =========================================================================
     state.gateEnforcement = enforceMonetizationGates(accessTier, requestedEroticism);
 
     // =========================================================================
-    // PRE-FLIGHT: Build Lens Bias Directives
+    // PRE-FLIGHT: Build Lens Bias Directives (GATED BY FLAG)
     // =========================================================================
     let lensBiasDirectives = '';
-    if (lensBias && window.LensSystem) {
+
+    // Only apply lens logic if client mirror shows enforcement enabled
+    // NOTE: Server will re-validate and may override this decision
+    if (clientLensEnforcementEnabled && lensBias && window.LensSystem) {
       // Validate lens state before generation
       // Get assignment params from state for fallback (if available)
       const assignmentParams = lensBias._assignmentParams || null;
@@ -561,6 +625,8 @@ These are mechanical gates, not personality guidance.
 
       // Build pacing directives for each active lens
       lensBiasDirectives = buildLensBiasDirectivesClient(lensBias, storyProgress || 0);
+    } else if (!clientLensEnforcementEnabled) {
+      console.log('[FLAGS][CLIENT] Lens enforcement disabled in client mirror');
     }
 
     if (state.gateEnforcement.wasDowngraded) {
@@ -784,6 +850,16 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     }
 
     // =========================================================================
+    // SYNC FLAGS FROM SERVER (SERVER IS SOURCE OF TRUTH)
+    // =========================================================================
+    // In a full client-server architecture, this would sync from server response.
+    // Here we simulate by storing the authoritative state.
+    // The server-side orchestrator returns authoritativeFlags in its response.
+    if (state.authoritativeFlags) {
+      syncFlagsFromServer(state.authoritativeFlags);
+    }
+
+    // =========================================================================
     // RETURN FINAL RESULT
     // =========================================================================
 
@@ -798,7 +874,9 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       rendererUsed: state.rendererCalled && !state.rendererFailed,
       fateStumbled: state.fateStumbled,
       errors: state.errors,
-      timing: state.timing
+      timing: state.timing,
+      // Include flag state for caller awareness (mirror only)
+      clientFlagMirror: { ...getClientFlagIntent() }
     };
   }
 
@@ -1090,6 +1168,11 @@ dialogue: <elevated dialogue>`;
   window.StoryboundOrchestration = {
     // Main orchestration
     orchestrateStoryGeneration,
+
+    // Client flag mirror (server is source of truth)
+    getClientFlagMirror,
+    getClientFlagIntent,
+    syncFlagsFromServer,
 
     // Legacy compatibility
     callChat: callChatLegacy,
