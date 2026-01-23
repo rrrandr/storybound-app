@@ -811,7 +811,8 @@
   <div id="game" class="screen hidden" style="max-width:900px; margin:0 auto; padding-bottom:60px;">
 
     <!-- ============================================================ -->
-    <!-- BOOK COVER PAGE - Physical book object, clickable anywhere   -->
+    <!-- BOOK COVER PAGE - Physical book with exact opening sequence  -->
+    <!-- SEQUENCE: Closed → Open Cover (synopsis) → Page Turn (setting) → Story -->
     <!-- ============================================================ -->
     <div id="bookCoverPage" class="book-cover-page">
       <div id="coverLoadingState" class="cover-loading">
@@ -829,6 +830,21 @@
         <!-- Book cover with hinge -->
         <div id="bookCover" class="book-cover">
           <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
+        </div>
+
+        <!-- INSIDE COVER - Paper white with large synopsis (shown after cover opens) -->
+        <div id="insideCover" class="inside-cover hidden">
+          <p id="insideSynopsis" class="inside-synopsis"></p>
+        </div>
+
+        <!-- FIRST PAGE - Setting image + title (shown after page turn) -->
+        <div id="firstPage" class="first-page hidden">
+          <h3 id="firstPageTitle" class="first-page-title"></h3>
+          <div id="firstPageSettingWrap" class="first-page-setting-wrap">
+            <img id="firstPageSettingImg" src="" alt="Setting" class="first-page-setting-img">
+            <div id="firstPageSettingLoading" class="first-page-setting-loading">Conjuring the scene...</div>
+          </div>
+          <p class="first-page-hint">Click anywhere to continue...</p>
         </div>
 
         <!-- Book pages underneath (visible during courtesy hinge) -->

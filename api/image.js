@@ -33,44 +33,98 @@ function getOpenAIModel(imageIntent) {
 // PROMPT TEMPLATES - Intent-specific framing
 // ============================================================
 
-// Symbolic object selection based on genre/style/dynamic
-function selectSymbolicObject(genre, storyStyle, dynamic) {
+// ============================================================
+// WORLD-AWARE SYMBOLIC OBJECT SELECTION (LOCKED)
+// ============================================================
+// Objects MUST belong to the story world. No modern items in fantasy.
+// Track recent covers to avoid repetition.
+
+let recentCoverObjects = [];
+const MAX_RECENT_OBJECTS = 5;
+
+function selectSymbolicObject(genre, storyStyle, dynamic, world) {
   const genreLower = (genre || '').toLowerCase();
   const styleLower = (storyStyle || '').toLowerCase();
   const dynamicLower = (dynamic || '').toLowerCase();
+  const worldLower = (world || 'modern').toLowerCase();
 
-  // Genre-based object pools
-  const objects = {
-    contemporary: ['a silk ribbon', 'an unsealed envelope', 'a shattered wine glass', 'a wilting rose', 'a hotel key card', 'a lipstick mark on glass'],
-    fantasy: ['a golden crown with a missing jewel', 'a thorned vine wrapped around a blade', 'an ancient ring on velvet', 'a cracked crystal orb', 'a burning scroll'],
-    romantasy: ['a crown of thorns and flowers', 'a dagger wreathed in smoke', 'a glowing rune-etched ring', 'a chalice tipped on its side'],
-    historical: ['a wax-sealed letter', 'a pearl necklace on dark velvet', 'opera gloves draped over a chair', 'a pocket watch frozen at midnight'],
-    paranormal: ['a crescent moon pendant', 'a broken mirror reflecting darkness', 'a single black feather', 'a vial of crimson liquid'],
-    dark: ['shattered handcuffs', 'a bloodied rose', 'a mask on black silk', 'a blade catching candlelight'],
-    scifi: ['a cracked helmet visor', 'a holographic pendant flickering', 'a single bullet casing', 'circuitry intertwined with organic matter'],
-    gothic: ['a wilting flower in a cracked vase', 'an ornate key on a grave', 'a candle guttering in darkness', 'a raven feather on lace'],
-    suspense: ['a broken phone screen', 'a gun beside a wedding ring', 'a photograph torn in half', 'bloodstained fabric'],
-    crime: ['a signet ring on black leather', 'stacked cash and a single bullet', 'a knife on white linen', 'a burning photograph']
+  // WORLD-FIRST object pools - objects MUST belong to the world
+  const worldObjects = {
+    fantasy: [
+      'a golden crown with a missing jewel', 'a thorned vine wrapped around a blade',
+      'an ancient ring on velvet', 'a cracked crystal orb', 'a burning scroll',
+      'a dragon scale pendant', 'a enchanted feather quill', 'a runic amulet',
+      'a shattered magical mirror', 'an elven dagger on moonlit silk'
+    ],
+    scifi: [
+      'a cracked helmet visor', 'a holographic pendant flickering',
+      'circuitry intertwined with organic matter', 'a plasma-scorched insignia',
+      'a data crystal pulsing with light', 'a mechanical heart exposed',
+      'a star map etched in metal', 'a neural interface crown'
+    ],
+    historical: [
+      'a wax-sealed letter', 'a pearl necklace on dark velvet',
+      'opera gloves draped over a chair', 'a pocket watch frozen at midnight',
+      'a cameo brooch on aged lace', 'a cavalry sword hilt',
+      'a brass compass on parchment', 'a quill pen and inkwell'
+    ],
+    modern: [
+      'a silk ribbon', 'an unsealed envelope', 'a shattered wine glass',
+      'a wilting rose', 'a hotel key card', 'a lipstick mark on glass',
+      'a broken phone screen', 'a gun beside a wedding ring',
+      'a photograph torn in half', 'a signet ring on black leather'
+    ],
+    mythic: [
+      'a golden apple on marble', 'a laurel wreath with thorns',
+      'a thunderbolt frozen in crystal', 'a trident emerging from waves',
+      'an olive branch wrapped in silk', 'a lyre with broken strings'
+    ],
+    paranormal: [
+      'a crescent moon pendant', 'a broken mirror reflecting darkness',
+      'a single black feather', 'a vial of crimson liquid',
+      'a raven feather on lace', 'a candle guttering in darkness'
+    ]
   };
 
-  // Find matching genre
-  let pool = objects.contemporary; // default
-  for (const [key, items] of Object.entries(objects)) {
-    if (genreLower.includes(key) || styleLower.includes(key)) {
+  // Select pool based on world FIRST, then genre
+  let pool = worldObjects.modern; // default
+
+  // World takes priority
+  for (const [key, items] of Object.entries(worldObjects)) {
+    if (worldLower.includes(key)) {
       pool = items;
       break;
     }
   }
 
-  // Select based on dynamic mood
-  if (dynamicLower.includes('forbidden') || dynamicLower.includes('enemy')) {
-    return pool[Math.floor(Math.random() * 2)]; // First two tend to be more intense
-  }
-  if (dynamicLower.includes('slow') || dynamicLower.includes('friend')) {
-    return pool[Math.floor(Math.random() * pool.length)];
+  // Fantasy/SciFi override if detected in genre/style
+  if (genreLower.includes('fantasy') || styleLower.includes('fantasy') || genreLower.includes('romantasy')) {
+    pool = worldObjects.fantasy;
+  } else if (genreLower.includes('scifi') || genreLower.includes('sci-fi') || styleLower.includes('scifi')) {
+    pool = worldObjects.scifi;
+  } else if (genreLower.includes('paranormal') || styleLower.includes('paranormal')) {
+    pool = worldObjects.paranormal;
   }
 
-  return pool[Math.floor(Math.random() * pool.length)];
+  // Filter out recently used objects
+  const availablePool = pool.filter(obj => !recentCoverObjects.includes(obj));
+  const finalPool = availablePool.length > 0 ? availablePool : pool;
+
+  // Select based on dynamic mood
+  let selected;
+  if (dynamicLower.includes('forbidden') || dynamicLower.includes('enemy')) {
+    selected = finalPool[Math.floor(Math.random() * Math.min(3, finalPool.length))];
+  } else {
+    selected = finalPool[Math.floor(Math.random() * finalPool.length)];
+  }
+
+  // Track for non-repetition
+  recentCoverObjects.push(selected);
+  if (recentCoverObjects.length > MAX_RECENT_OBJECTS) {
+    recentCoverObjects.shift();
+  }
+
+  return selected;
 }
 
 // ============================================================
@@ -129,9 +183,9 @@ function getToneCoverStyle(tone) {
   };
 }
 
-function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre) {
-  // Select symbolic object based on context
-  const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic);
+function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre, world) {
+  // Select symbolic object based on context - world-aware
+  const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic, world);
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
   const cleanMode = modeLine || 'A Novel';
@@ -139,6 +193,26 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
   // Extract tone from storyStyle (format: "Tone Genre")
   const tone = (storyStyle || '').split(' ')[0] || 'Earnest';
   const toneStyle = getToneCoverStyle(tone);
+  const worldLower = (world || 'modern').toLowerCase();
+
+  // WORLD-AWARE COLOR PALETTE - varies per world
+  const worldPalettes = {
+    fantasy: 'deep purples, burnished gold, forest greens, mystical blues',
+    scifi: 'electric blues, chrome silver, neon accents, void black',
+    historical: 'sepia tones, aged cream, burgundy, antique gold',
+    modern: 'sophisticated blacks, clean whites, accent reds, urban grays',
+    mythic: 'celestial golds, divine whites, deep ocean blues, marble textures'
+  };
+  let colorPalette = worldPalettes.modern;
+  for (const [key, palette] of Object.entries(worldPalettes)) {
+    if (worldLower.includes(key)) {
+      colorPalette = palette;
+      break;
+    }
+  }
+
+  // HARD CONSTRAINTS for world-appropriate covers
+  const worldConstraints = getWorldCoverConstraints(world);
 
   // Build tone-aware prestige book cover prompt
   return `A prestige book cover design, square format, ${toneStyle.visualWeight}.
@@ -147,7 +221,12 @@ MANDATORY: The cover MUST include decorative texture or pattern - never flat whi
 Style inspiration: Art Deco geometric precision OR Art Nouveau organic linework (choose one, commit fully).
 Background treatment: ${toneStyle.texture}
 
+WORLD: ${world || 'Modern'} setting.
+${worldConstraints}
+
 Central focus: ${symbolicObject}, rendered with controlled dramatic lighting, depth, and shadow. The object occupies the visual center, elegant and evocative.
+
+Color palette: ${colorPalette}. Must feel distinct from other covers.
 
 Title typography: "${cleanTitle}" using ${toneStyle.typography}. The letterforms have dimensional presence. The symbolic object physically interacts with the title - either passing behind certain letters, casting realistic shadows onto the text, or threading through the letterforms. The title and object share the same physical space.
 
@@ -155,19 +234,127 @@ Series line: "Storybound Book I – ${cleanMode}" in very small, quiet type near
 
 Author credit: ${cleanAuthor} in bold modern sans-serif, ALL CAPS, placed across the bottom of the cover as a visual anchor. Clean and grounded.
 
-Cover mood: ${toneStyle.mood}. ${toneStyle.elements}. Color palette and lighting evoke ${genre || 'contemporary'} ${dynamic || 'romantic tension'} atmosphere.
+Cover mood: ${toneStyle.mood}. ${toneStyle.elements}.
 
 ${toneStyle.forbidden}
 
 No characters, no faces, no bodies, no clutter. Single cohesive composition suitable for a modern literary bookshelf. No gibberish text, no watermarks.`;
 }
 
-function wrapScenePrompt(basePrompt) {
-  // Scene visualization: Atmosphere, characters, environment - NO text
+// WORLD-SPECIFIC COVER CONSTRAINTS (LOCKED)
+function getWorldCoverConstraints(world) {
+  const worldLower = (world || 'modern').toLowerCase();
+
+  if (worldLower.includes('fantasy') || worldLower.includes('romantasy')) {
+    return `FORBIDDEN in Fantasy: smartphones, modern cars, contemporary clothing, skyscrapers, electricity, plastic, digital screens.
+REQUIRED: Medieval or magical aesthetics only. Objects must feel handcrafted or enchanted.`;
+  }
+
+  if (worldLower.includes('scifi') || worldLower.includes('sci-fi')) {
+    return `FORBIDDEN in Sci-Fi: dead roses, wax-sealed letters, medieval weapons, horses, candles, quill pens.
+REQUIRED: Futuristic or technological aesthetics. Objects should feel advanced, synthetic, or alien.`;
+  }
+
+  if (worldLower.includes('historical')) {
+    return `FORBIDDEN in Historical: smartphones, modern technology, plastic, neon lights, contemporary fashion.
+REQUIRED: Period-appropriate objects only. Craftsmanship and materials of the era.`;
+  }
+
+  if (worldLower.includes('mythic')) {
+    return `FORBIDDEN in Mythic: modern mundane objects, technology, contemporary items.
+REQUIRED: Classical or divine aesthetics. Objects should feel timeless, symbolic, legendary.`;
+  }
+
+  // Modern - no special constraints but avoid fantasy/historical objects
+  return `REQUIRED: Contemporary aesthetics. Objects should feel current, urban, or sophisticated.
+AVOID: Medieval weapons, magical items, ancient artifacts unless story-justified.`;
+}
+
+// ============================================================
+// WORLD-AWARE SCENE PROMPTER (LOCKED)
+// ============================================================
+// Scenes MUST reflect the story world, not generic noir realism.
+// Faces ARE allowed unless intensity forbids.
+// Mood follows world + tone, NOT defaulting to dark/dreary.
+
+function wrapScenePrompt(basePrompt, world, tone, intensity) {
+  const worldLower = (world || 'modern').toLowerCase();
+  const toneLower = (tone || 'earnest').toLowerCase();
+  const intensityLower = (intensity || 'naughty').toLowerCase();
+
+  // WORLD-SPECIFIC ENVIRONMENTAL CUES
+  const worldEnvironments = {
+    fantasy: 'medieval architecture, enchanted forests, castle halls, magical lighting, handcrafted clothing, leather and linen fabrics',
+    scifi: 'sleek corridors, holographic displays, synthetic materials, neon accents, futuristic fashion, chrome and glass',
+    historical: 'period-accurate interiors, candlelit rooms, ornate furnishings, era-appropriate clothing, natural materials',
+    modern: 'contemporary settings, urban environments, modern fashion, clean lines, natural or artificial lighting',
+    mythic: 'classical architecture, divine light, marble and gold, flowing robes, timeless elegance'
+  };
+
+  let envCues = worldEnvironments.modern;
+  for (const [key, cues] of Object.entries(worldEnvironments)) {
+    if (worldLower.includes(key)) {
+      envCues = cues;
+      break;
+    }
+  }
+
+  // MOOD DERIVATION from tone - NOT defaulting to dark
+  const moodMapping = {
+    earnest: 'warm natural lighting, sincere atmosphere, emotional depth',
+    poetic: 'soft diffused light, romantic atmosphere, lyrical beauty',
+    mythic: 'dramatic divine lighting, epic grandeur, legendary presence',
+    comedic: 'bright cheerful lighting, playful atmosphere, light-hearted',
+    wryconfession: 'intimate soft lighting, confessional mood, honest vulnerability',
+    dark: 'dramatic shadows, tension, ominous undertones',
+    satirical: 'clear bright lighting, slightly exaggerated, witty tone'
+  };
+
+  let mood = moodMapping.earnest;
+  for (const [key, m] of Object.entries(moodMapping)) {
+    if (toneLower.includes(key)) {
+      mood = m;
+      break;
+    }
+  }
+
+  // CHARACTER VISIBILITY RULES
+  // Faces ARE allowed by default
+  // Only restrict if intensity is "Brink-of-Sex" or explicit concealment needed
+  let faceRules = 'Faces may be visible. Expressions should reflect emotion naturally, not glamour posing. Eye contact is allowed.';
+  if (intensityLower === 'dirty' || intensityLower === 'brink-of-sex') {
+    faceRules = 'Faces may be partially obscured or in soft focus. Emphasis on body language over facial detail.';
+  }
+
+  // WORLD-SPECIFIC CLOTHING RULES
+  const clothingRules = {
+    fantasy: 'Characters wear medieval-inspired or fantastical attire: tunics, cloaks, leather armor, flowing gowns. NO modern dresses, suits, or contemporary fashion.',
+    scifi: 'Characters wear futuristic attire: jumpsuits, synthetic fabrics, tech-integrated clothing. NO medieval or historical clothing.',
+    historical: 'Characters wear period-accurate clothing for the era. NO modern items whatsoever.',
+    modern: 'Characters wear contemporary fashion appropriate to the scene.',
+    mythic: 'Characters wear classical robes, draped fabrics, divine attire. NO modern clothing.'
+  };
+
+  let clothing = clothingRules.modern;
+  for (const [key, c] of Object.entries(clothingRules)) {
+    if (worldLower.includes(key)) {
+      clothing = c;
+      break;
+    }
+  }
+
   return `${basePrompt}
 
+WORLD: ${world || 'Modern'} setting.
+ENVIRONMENT: ${envCues}
+CLOTHING: ${clothing}
+MOOD: ${mood}
+
+${faceRules}
+
 Style: Cinematic illustration, atmospheric lighting, painterly.
-DO NOT include any visible text, captions, titles, logos, or watermarks.`;
+DO NOT include any visible text, captions, titles, logos, or watermarks.
+DO NOT default to dark, foggy, or oppressive unless the tone specifically calls for it.`;
 }
 
 // ============================================================
@@ -188,7 +375,7 @@ export default async function handler(req, res) {
 
   // imageIntent: 'book_cover' | 'scene_visualize' (default)
   // title, authorName, modeLine: Used for book cover typography
-  // dynamic, storyStyle, genre: Story context for symbolic object selection
+  // dynamic, storyStyle, genre, world, tone, intensity: Story context
   const {
     prompt,
     provider,
@@ -199,7 +386,10 @@ export default async function handler(req, res) {
     modeLine,
     dynamic,
     storyStyle,
-    genre
+    genre,
+    world,
+    tone,
+    intensity
   } = req.body;
 
   if (!prompt) {
@@ -209,12 +399,14 @@ export default async function handler(req, res) {
   // Apply intent-specific prompt wrapping
   const isBookCover = imageIntent === 'book_cover';
   const finalPrompt = isBookCover
-    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre)
-    : wrapScenePrompt(prompt);
+    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, world)
+    : wrapScenePrompt(prompt, world, tone, intensity);
 
   console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);
 
-  // ---- GEMINI PRIMARY ----
+  // ---- GEMINI PRIMARY (WITH AUTOMATIC FALLBACK) ----
+  // If Gemini returns unsupported MIME or fails, automatically fall back to OpenAI
+  let geminiSucceeded = false;
   if (!provider || provider === 'gemini') {
     try {
       console.log('[IMAGE] Trying Gemini Imagen 3...');
@@ -246,22 +438,36 @@ export default async function handler(req, res) {
 
       if (geminiRes.ok && data) {
         const base64 = data.predictions?.[0]?.bytesBase64Encoded;
+        const mimeType = data.predictions?.[0]?.mimeType || 'image/png';
         const uri = data.predictions?.[0]?.image_uri || data.generated_images?.[0]?.image_uri;
 
-        if (base64) {
-          console.log('[IMAGE] Gemini success (base64)');
-          return res.json({ url: `data:image/png;base64,${base64}`, provider: 'Gemini', intent: imageIntent });
+        // VALIDATE MIME TYPE - only accept standard image formats
+        const supportedMimes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+        const mimeSupported = supportedMimes.some(m => mimeType.toLowerCase().includes(m.split('/')[1]));
+
+        if (base64 && mimeSupported) {
+          console.log('[IMAGE] Gemini success (base64, MIME:', mimeType, ')');
+          geminiSucceeded = true;
+          return res.json({ url: `data:${mimeType};base64,${base64}`, provider: 'Gemini', intent: imageIntent });
         }
         if (uri) {
           console.log('[IMAGE] Gemini success (uri)');
+          geminiSucceeded = true;
           return res.json({ url: uri, provider: 'Gemini', intent: imageIntent });
         }
+
+        // Gemini returned data but MIME unsupported - log and fallback
+        if (base64 && !mimeSupported) {
+          console.warn('[IMAGE] Gemini returned unsupported MIME:', mimeType, '- falling back to OpenAI');
+        }
       }
-      console.log('[IMAGE] Gemini failed:', data?.error?.message || 'no image');
+      console.log('[IMAGE] Gemini failed:', data?.error?.message || 'no image or unsupported format');
     } catch (err) {
-      console.error('[IMAGE] Gemini error:', err.message);
+      console.error('[IMAGE] Gemini error:', err.message, '- falling back to OpenAI');
     }
   }
+
+  // DO NOT block rendering if Gemini partially succeeds - always try OpenAI fallback
 
   // ---- OPENAI FALLBACK ----
   try {

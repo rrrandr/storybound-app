@@ -6792,6 +6792,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   dynamic: dynamic,
                   storyStyle: storyStyle,
                   genre: genre,
+                  world: world,
+                  tone: tone,
                   size: '1024x1024'
               })
           });
@@ -6816,7 +6818,6 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   const COURTESY_HINGE_KEY = 'storybound_courtesy_hinge_shown';
   let _courtesyHingeTimeout = null;
-  let _bookOpened = false;
 
   // Check if courtesy hinge has already been shown (one-time ever)
   function hasSeenCourtesyHinge() {
@@ -6838,10 +6839,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // Schedule courtesy hinge (2-3 seconds after cover shows)
   function scheduleCourtesyHinge() {
-      if (hasSeenCourtesyHinge() || _bookOpened) return;
+      if (hasSeenCourtesyHinge() || _bookOpenPhase > 0) return;
 
       _courtesyHingeTimeout = setTimeout(() => {
-          if (_bookOpened) return; // User already opened
+          if (_bookOpenPhase > 0) return; // User already opened
 
           const bookCover = document.getElementById('bookCover');
           if (bookCover) {
@@ -6864,43 +6865,163 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       }
   }
 
-  // Open book via hinge animation (triggered by clicking anywhere on book)
+  // ============================================================
+  // BOOK OPENING SEQUENCE (LOCKED - EXACT IMPLEMENTATION)
+  // 1. CLOSED BOOK
+  // 2. OPEN COVER → INSIDE COVER = PAPER WHITE, LARGE SYNOPSIS
+  // 3. PAGE TURN → FIRST PAGE = SETTING IMAGE + TITLE, 10s PAUSE
+  // 4. PAGE TURN → STORY SCENE 1 BEGINS
+  // ============================================================
+
+  let _bookOpenPhase = 0; // 0=closed, 1=inside cover, 2=first page, 3=story
+  let _autoPageTurnTimeout = null;
+
+  // Open book - Step 1: Open cover to reveal inside cover with synopsis
   function openBook() {
-      if (_bookOpened) return;
-      _bookOpened = true;
+      if (_bookOpenPhase > 0) {
+          // Already opening - advance to next phase
+          advanceBookPhase();
+          return;
+      }
+
+      _bookOpenPhase = 1;
       cancelCourtesyHinge();
 
       const bookCover = document.getElementById('bookCover');
-      const bookCoverPage = document.getElementById('bookCoverPage');
-      const storyContent = document.getElementById('storyContent');
-      const storyTextEl = document.getElementById('storyText');
+      const insideCover = document.getElementById('insideCover');
+      const insideSynopsis = document.getElementById('insideSynopsis');
+      const synopsis = state.synopsis || 'A tale of fate and desire...';
 
-      // Remove any courtesy peek class
+      // Remove any courtesy peek class and open the cover
       if (bookCover) {
           bookCover.classList.remove('courtesy-peek');
           bookCover.classList.add('hinge-open');
       }
 
-      // After hinge animation, transition to story
+      // Show inside cover with large synopsis after cover opens
       setTimeout(() => {
-          if (bookCoverPage) bookCoverPage.classList.add('hidden');
-          if (storyContent) {
-              storyContent.classList.remove('hidden');
-              storyContent.classList.add('fade-in');
+          if (insideSynopsis) insideSynopsis.textContent = synopsis;
+          if (insideCover) {
+              insideCover.classList.remove('hidden');
+              insideCover.classList.add('visible');
           }
-          if (storyTextEl) storyTextEl.style.opacity = '1';
+      }, 600);
+  }
 
-          // Scroll to title
-          const titleEl = document.getElementById('storyTitle');
-          if (titleEl) {
-              titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Advance to next phase of book opening
+  function advanceBookPhase() {
+      if (_autoPageTurnTimeout) {
+          clearTimeout(_autoPageTurnTimeout);
+          _autoPageTurnTimeout = null;
+      }
+
+      if (_bookOpenPhase === 1) {
+          // Phase 1 → 2: Show first page with setting image
+          showFirstPage();
+      } else if (_bookOpenPhase === 2) {
+          // Phase 2 → 3: Start the story
+          startStoryScene();
+      }
+  }
+
+  // Show first page with setting image and title
+  function showFirstPage() {
+      _bookOpenPhase = 2;
+
+      const insideCover = document.getElementById('insideCover');
+      const firstPage = document.getElementById('firstPage');
+      const firstPageTitle = document.getElementById('firstPageTitle');
+      const firstPageSettingImg = document.getElementById('firstPageSettingImg');
+      const firstPageSettingLoading = document.getElementById('firstPageSettingLoading');
+      const title = state.title || 'Untitled';
+
+      // Hide inside cover, show first page
+      if (insideCover) insideCover.classList.add('hidden');
+      if (firstPageTitle) firstPageTitle.textContent = title;
+      if (firstPage) {
+          firstPage.classList.remove('hidden');
+          firstPage.classList.add('visible');
+      }
+
+      // Generate setting image for first page
+      generateFirstPageSettingImage();
+
+      // Auto-advance after 10 seconds if no interaction
+      _autoPageTurnTimeout = setTimeout(() => {
+          if (_bookOpenPhase === 2) {
+              advanceBookPhase();
           }
-      }, 800);
+      }, 10000);
+  }
+
+  // Generate setting image specifically for the first page
+  async function generateFirstPageSettingImage() {
+      const firstPageSettingImg = document.getElementById('firstPageSettingImg');
+      const firstPageSettingLoading = document.getElementById('firstPageSettingLoading');
+      const synopsis = state.synopsis || 'A romantic landscape';
+
+      if (!firstPageSettingImg) return;
+
+      try {
+          const rawUrl = await generateImageWithFallback({
+              prompt: synopsis,
+              tier: 'Clean',
+              shape: 'landscape',
+              context: 'first-page-setting'
+          });
+
+          if (rawUrl) {
+              let imageUrl = rawUrl;
+              if (!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
+                  imageUrl = `data:image/png;base64,${rawUrl}`;
+              }
+              firstPageSettingImg.src = imageUrl;
+              firstPageSettingImg.onload = () => {
+                  firstPageSettingImg.classList.add('loaded');
+                  if (firstPageSettingLoading) firstPageSettingLoading.classList.add('hidden');
+              };
+          } else {
+              if (firstPageSettingLoading) firstPageSettingLoading.textContent = 'The scene awaits...';
+          }
+      } catch (e) {
+          console.warn('First page setting image failed:', e.message);
+          if (firstPageSettingLoading) firstPageSettingLoading.textContent = 'The scene awaits...';
+      }
+  }
+
+  // Start the story scene
+  function startStoryScene() {
+      _bookOpenPhase = 3;
+
+      const bookCoverPage = document.getElementById('bookCoverPage');
+      const storyContent = document.getElementById('storyContent');
+      const storyTextEl = document.getElementById('storyText');
+
+      // Hide the entire book cover page
+      if (bookCoverPage) bookCoverPage.classList.add('hidden');
+
+      // Show story content
+      if (storyContent) {
+          storyContent.classList.remove('hidden');
+          storyContent.classList.add('fade-in');
+      }
+      if (storyTextEl) storyTextEl.style.opacity = '1';
+
+      // Scroll to title
+      const titleEl = document.getElementById('storyTitle');
+      if (titleEl) {
+          titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+  }
+
+  // Legacy wrapper for backward compatibility
+  function openBookLegacy() {
+      openBook();
   }
 
   // Initialize physical book event listeners
   function initCoverPageListeners() {
-      // Click anywhere on book object to open
+      // Click anywhere on book object to open/advance
       const bookObject = document.getElementById('bookObject');
       if (bookObject) {
           bookObject.addEventListener('click', openBook);
@@ -6914,6 +7035,24 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               openBook();
           });
       }
+
+      // Inside cover click advances to first page
+      const insideCover = document.getElementById('insideCover');
+      if (insideCover) {
+          insideCover.addEventListener('click', (e) => {
+              e.stopPropagation();
+              advanceBookPhase();
+          });
+      }
+
+      // First page click advances to story
+      const firstPage = document.getElementById('firstPage');
+      if (firstPage) {
+          firstPage.addEventListener('click', (e) => {
+              e.stopPropagation();
+              advanceBookPhase();
+          });
+      }
   }
 
   // Initialize on DOM ready
@@ -6925,11 +7064,27 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // Reset book state for new story
   function resetBookState() {
-      _bookOpened = false;
+      _bookOpenPhase = 0;
+      if (_autoPageTurnTimeout) {
+          clearTimeout(_autoPageTurnTimeout);
+          _autoPageTurnTimeout = null;
+      }
       cancelCourtesyHinge();
+
       const bookCover = document.getElementById('bookCover');
+      const insideCover = document.getElementById('insideCover');
+      const firstPage = document.getElementById('firstPage');
+
       if (bookCover) {
           bookCover.classList.remove('hinge-open', 'courtesy-peek');
+      }
+      if (insideCover) {
+          insideCover.classList.add('hidden');
+          insideCover.classList.remove('visible');
+      }
+      if (firstPage) {
+          firstPage.classList.add('hidden');
+          firstPage.classList.remove('visible');
       }
   }
 
@@ -6942,12 +7097,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Stop any running cover loading intervals
       if (_coverPhraseInterval) clearInterval(_coverPhraseInterval);
       if (_coverProgressInterval) clearInterval(_coverProgressInterval);
+      if (_autoPageTurnTimeout) clearTimeout(_autoPageTurnTimeout);
       cancelCourtesyHinge();
 
       if (bookCoverPage) bookCoverPage.classList.add('hidden');
       if (storyContent) storyContent.classList.remove('hidden');
       if (storyTextEl) storyTextEl.style.opacity = '1';
-      _bookOpened = true;
+      _bookOpenPhase = 3; // Mark as fully opened
   }
 
   // --- VISUALIZE (STABILIZED) ---
@@ -7155,7 +7311,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // OPENAI LAST RESORT: Call OpenAI image generation (SAFE - never throws)
-  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000) {
+  // WORLD-AWARE: Accepts context params for server-side prompt enhancement
+  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000, ctx = {}) {
       try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -7172,6 +7329,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   model: 'gpt-image-1.5',
                   size: size,
                   aspect_ratio: aspectRatio,
+                  world: ctx.world,
+                  tone: ctx.tone,
+                  intensity: ctx.intensity,
                   n: 1
               }),
               signal: controller.signal
@@ -7257,7 +7417,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // GEMINI PROVIDER: Call Gemini image generation (SAFE - never throws)
-  async function callGeminiImageGen(prompt, size = '1024x1024', timeout = 60000) {
+  // WORLD-AWARE: Accepts context params for server-side prompt enhancement
+  async function callGeminiImageGen(prompt, size = '1024x1024', timeout = 60000, ctx = {}) {
       try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -7274,6 +7435,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   model: 'imagen-3.0-generate-002',
                   size: size,
                   aspect_ratio: aspectRatio,
+                  world: ctx.world,
+                  tone: ctx.tone,
+                  intensity: ctx.intensity,
                   n: 1
               }),
               signal: controller.signal
@@ -7384,8 +7548,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   // All image generation MUST route through this function
   // Provider order: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
   // Default to 16:9 landscape for cinematic presentation
-  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize' }) {
+  // WORLD-AWARE: Accepts world/tone/intensity for server-side prompt enhancement
+  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', world, tone, intensity }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
+      // Get world context from state if not provided
+      const actualWorld = world || state.picks?.world || 'Modern';
+      const actualTone = tone || state.picks?.tone || 'Earnest';
+      const actualIntensity = intensity || state.intensity || 'Naughty';
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
 
       // Determine size based on shape (default landscape 16:9)
@@ -7404,13 +7573,15 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
       // STABLE PROVIDER CHAIN: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
       // Perchance removed for stability. Replicate failures fail silently.
+      // WORLD-AWARE: Pass world/tone/intensity for server-side prompt enhancement
+      const contextParams = { world: actualWorld, tone: actualTone, intensity: actualIntensity };
       const providerChain = [
           // GEMINI PRIMARY - reliable, sanitized prompts
-          { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
+          { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt, ctx: contextParams },
           // OPENAI FALLBACK - reliable, sanitized prompts
-          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt },
+          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt, ctx: contextParams },
           // REPLICATE LAST RESORT - allowed to fail silently
-          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt }
+          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt, ctx: contextParams }
       ];
 
       let lastError = null;
@@ -7419,7 +7590,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       for (const provider of providerChain) {
           try {
               logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
-              const imageUrl = await provider.fn(provider.prompt, size);
+              const imageUrl = await provider.fn(provider.prompt, size, 60000, provider.ctx);
 
               // Handle null returns from safe providers (Gemini/OpenAI)
               if (!imageUrl) {
@@ -7500,10 +7671,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // ============================================================
-  // SCENE VISUALIZATION BUDGET SYSTEM
-  // Limits re-visualizations to 2 per scene, finalizes on insert
+  // SCENE VISUALIZATION CREDIT SYSTEM (LOCKED)
+  // Initial Visualize = 0 credits (free)
+  // Re-Visualize = 2 credits (must decrement correctly)
   // Scene key = turnCount (stable identifier for narrative moments)
   // ============================================================
+
+  const REVISUALIZE_CREDIT_COST = 2;
 
   function getSceneKey() {
       // Use turnCount as scene identifier - increments with each player action
@@ -7513,29 +7687,70 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   function getSceneBudget(sceneKey) {
       if (!state.visual.sceneBudgets) state.visual.sceneBudgets = {};
       if (!state.visual.sceneBudgets[sceneKey]) {
-          // Track attempts (incremented at START of visualize, not on success)
-          // Max 2 attempts allowed (attempt 1 = first try, attempt 2 = last chance)
-          state.visual.sceneBudgets[sceneKey] = { attempts: 0, finalized: false };
+          // Track: hasInitialVisualize (free), reVisualizeCreditsUsed
+          state.visual.sceneBudgets[sceneKey] = {
+              hasInitialVisualize: false,
+              reVisualizeCreditsUsed: 0,
+              finalized: false
+          };
       }
-      // Migration: convert old 'remaining' format to new 'attempts' format
+      // Migration: convert old format to new credit-based format
       const budget = state.visual.sceneBudgets[sceneKey];
-      if (budget.remaining !== undefined && budget.attempts === undefined) {
-          budget.attempts = 2 - budget.remaining;
+      if (budget.attempts !== undefined) {
+          budget.hasInitialVisualize = budget.attempts >= 1;
+          budget.reVisualizeCreditsUsed = budget.attempts >= 2 ? REVISUALIZE_CREDIT_COST : 0;
+          delete budget.attempts;
+      }
+      if (budget.remaining !== undefined) {
+          budget.hasInitialVisualize = budget.remaining < 2;
+          budget.reVisualizeCreditsUsed = budget.remaining <= 0 ? REVISUALIZE_CREDIT_COST : 0;
           delete budget.remaining;
       }
       return budget;
   }
 
-  function incrementSceneAttempts(sceneKey) {
+  function canVisualize(sceneKey) {
       const budget = getSceneBudget(sceneKey);
-      budget.attempts = (budget.attempts || 0) + 1;
-      saveStorySnapshot();
-      return budget.attempts;
+      if (budget.finalized) return { allowed: false, cost: 0, reason: 'finalized' };
+
+      // First visualize is free
+      if (!budget.hasInitialVisualize) {
+          return { allowed: true, cost: 0, reason: 'initial_free' };
+      }
+
+      // Re-visualize costs 2 credits, only allowed once
+      if (budget.reVisualizeCreditsUsed < REVISUALIZE_CREDIT_COST) {
+          return { allowed: true, cost: REVISUALIZE_CREDIT_COST, reason: 're-visualize' };
+      }
+
+      return { allowed: false, cost: 0, reason: 'exhausted' };
   }
 
-  function getAttemptsRemaining(sceneKey) {
+  function consumeVisualizeCredit(sceneKey) {
       const budget = getSceneBudget(sceneKey);
-      return Math.max(0, 2 - (budget.attempts || 0));
+      const check = canVisualize(sceneKey);
+
+      if (!check.allowed) return { success: false, cost: 0 };
+
+      if (!budget.hasInitialVisualize) {
+          // First visualize - free
+          budget.hasInitialVisualize = true;
+          saveStorySnapshot();
+          return { success: true, cost: 0 };
+      } else {
+          // Re-visualize - costs 2 credits
+          budget.reVisualizeCreditsUsed = REVISUALIZE_CREDIT_COST;
+          saveStorySnapshot();
+          return { success: true, cost: REVISUALIZE_CREDIT_COST };
+      }
+  }
+
+  function getVisualizeCreditsRemaining(sceneKey) {
+      const budget = getSceneBudget(sceneKey);
+      if (budget.finalized) return 0;
+      if (!budget.hasInitialVisualize) return REVISUALIZE_CREDIT_COST; // Show "2" for initial
+      if (budget.reVisualizeCreditsUsed < REVISUALIZE_CREDIT_COST) return REVISUALIZE_CREDIT_COST - budget.reVisualizeCreditsUsed;
+      return 0;
   }
 
   function finalizeScene(sceneKey) {
@@ -7547,7 +7762,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   function updateVizButtonStates() {
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
-      const remaining = getAttemptsRemaining(sceneKey);
+      const check = canVisualize(sceneKey);
+      const creditsRemaining = getVisualizeCreditsRemaining(sceneKey);
 
       const vizBtn = document.getElementById('vizSceneBtn');
       const retryBtn = document.getElementById('vizRetryBtn');
@@ -7558,13 +7774,19 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
               vizBtn.disabled = true;
               vizBtn.style.opacity = '0.5';
               vizBtn.style.cursor = 'not-allowed';
-          } else if (remaining <= 0) {
+          } else if (!check.allowed) {
               vizBtn.textContent = '✨ Visualize (0)';
               vizBtn.disabled = true;
               vizBtn.style.opacity = '0.5';
               vizBtn.style.cursor = 'not-allowed';
+          } else if (!budget.hasInitialVisualize) {
+              // First visualize is free
+              vizBtn.textContent = '✨ Visualize (Free)';
+              vizBtn.disabled = false;
+              vizBtn.style.opacity = '1';
+              vizBtn.style.cursor = 'pointer';
           } else {
-              vizBtn.textContent = `✨ Visualize (${remaining})`;
+              vizBtn.textContent = `✨ Visualize (${creditsRemaining})`;
               vizBtn.disabled = false;
               vizBtn.style.opacity = '1';
               vizBtn.style.cursor = 'pointer';
@@ -7575,11 +7797,15 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           if (budget.finalized) {
               retryBtn.textContent = 'Finalized';
               retryBtn.disabled = true;
-          } else if (remaining <= 0) {
+          } else if (!budget.hasInitialVisualize) {
+              // First visualize - show free
+              retryBtn.textContent = 'Visualize (Free)';
+              retryBtn.disabled = false;
+          } else if (budget.reVisualizeCreditsUsed >= REVISUALIZE_CREDIT_COST) {
               retryBtn.textContent = 'Re-Visualize (0)';
               retryBtn.disabled = true;
           } else {
-              retryBtn.textContent = `Re-Visualize (${remaining})`;
+              retryBtn.textContent = `Re-Visualize (${creditsRemaining} credits)`;
               retryBtn.disabled = false;
           }
       }
@@ -7595,10 +7821,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const errDiv = document.getElementById('vizError');
       const storyText = document.getElementById('storyText');
 
-      // Check scene budget before proceeding
+      // Check scene credit budget before proceeding
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
-      const remaining = getAttemptsRemaining(sceneKey);
+      const vizCheck = canVisualize(sceneKey);
 
       // Block if scene is finalized
       if (budget.finalized) {
@@ -7611,20 +7837,22 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           return;
       }
 
-      // Block if all attempts exhausted (attempts >= 2)
-      if (remaining <= 0) {
+      // Block if no visualizations allowed
+      if (!vizCheck.allowed) {
           if(modal) modal.classList.remove('hidden');
           if(errDiv) {
-              errDiv.textContent = "You've used all visualize attempts for this scene.";
+              errDiv.textContent = "You've used all visualize credits for this scene.";
               errDiv.classList.remove('hidden');
           }
           updateVizButtonStates();
           return;
       }
 
-      // INCREMENT ATTEMPTS NOW (before generation starts - closes Cancel loophole)
-      const currentAttempt = incrementSceneAttempts(sceneKey);
-      const isLastAttempt = currentAttempt >= 2;
+      // CONSUME CREDITS NOW (before generation starts - closes Cancel loophole)
+      // Initial Visualize = 0 credits, Re-Visualize = 2 credits
+      const consumption = consumeVisualizeCredit(sceneKey);
+      const isReVisualize = vizCheck.reason === 're-visualize';
+      const creditCost = consumption.cost;
 
       _vizInFlight = true;
       _vizCancelled = false;
@@ -7637,11 +7865,17 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
 
-      // Show last-chance warning if this is attempt 2
-      if (isLastAttempt && errDiv) {
-          errDiv.textContent = '⚠️ This is your last chance to visualize this scene.';
-          errDiv.style.color = 'var(--gold)';
-          errDiv.classList.remove('hidden');
+      // Show cost/last-chance info
+      if (errDiv) {
+          if (isReVisualize) {
+              errDiv.textContent = `⚠️ Re-Visualize costs ${creditCost} credits. This is your last chance.`;
+              errDiv.style.color = 'var(--gold)';
+              errDiv.classList.remove('hidden');
+          } else {
+              errDiv.textContent = 'First visualization is free!';
+              errDiv.style.color = 'var(--gold)';
+              errDiv.classList.remove('hidden');
+          }
       }
 
       // Update button states to reflect current budget
@@ -7675,17 +7909,61 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           // Get intensity bias for prompt generation
           const intensityBias = getVisualizeIntensityBias();
 
+          // WORLD-AWARE SCENE PROMPTING (LOCKED)
+          // Scenes MUST reflect the story world, not generic noir realism
+          const currentWorld = state.picks?.world || 'Modern';
+          const currentTone = state.picks?.tone || 'Earnest';
+          const currentIntensity = state.intensity || 'Naughty';
+
+          // WORLD-SPECIFIC PROMPT GUIDANCE
+          const worldPromptGuidance = {
+              'Fantasy': 'medieval architecture, enchanted environments, magical lighting, cloaks and tunics, NO modern clothing or technology',
+              'SciFi': 'futuristic setting, sleek corridors, holographic displays, synthetic materials, neon accents, NO medieval items',
+              'Historical': 'period-accurate setting and clothing, candlelit rooms, ornate furnishings, NO modern items',
+              'Modern': 'contemporary setting, modern fashion, urban or suburban environments',
+              'Mythic': 'classical architecture, divine lighting, flowing robes, marble and gold aesthetics'
+          };
+          const worldGuide = worldPromptGuidance[currentWorld] || worldPromptGuidance['Modern'];
+
+          // MOOD GUIDANCE based on tone (NOT defaulting to dark/foggy)
+          const toneGuidance = {
+              'Earnest': 'warm natural lighting, sincere emotional atmosphere',
+              'Poetic': 'soft diffused light, romantic and lyrical mood',
+              'Mythic': 'dramatic divine lighting, epic grandeur',
+              'Comedic': 'bright cheerful lighting, playful atmosphere',
+              'WryConfession': 'intimate soft lighting, confessional mood',
+              'Dark': 'dramatic shadows and tension'
+          };
+          const moodGuide = toneGuidance[currentTone] || toneGuidance['Earnest'];
+
+          // CHARACTER VISIBILITY RULES
+          // Faces ARE allowed unless intensity is Dirty/Brink-of-Sex
+          const faceRule = currentIntensity === 'Dirty'
+              ? 'Faces may be partially obscured'
+              : 'Faces MAY be visible, natural expressions, eye contact allowed';
+
           if(!isRe || !promptMsg) {
               try {
                   promptMsg = await Promise.race([
                       callChat([{
                           role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
+                          content:`${anchorText}\n\nYou are writing an image prompt for a ${currentWorld} world with ${currentTone} tone.
+
+WORLD RULES: ${worldGuide}
+MOOD: ${moodGuide}
+FACES: ${faceRule}
+INTENSITY: ${intensityBias}
+
+Follow continuity anchors. Describe this scene for an image generator.
+DO NOT default to dark, foggy, or noir unless explicitly called for.
+Mood should match the world and tone, not generic darkness.
+
+Return only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
               } catch (e) {
-                  promptMsg = "Fantasy scene, detailed, atmospheric.";
+                  promptMsg = `${currentWorld} scene, ${moodGuide}, detailed, atmospheric.`;
               }
               document.getElementById('vizPromptInput').value = promptMsg;
           }

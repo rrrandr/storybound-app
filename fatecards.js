@@ -662,7 +662,18 @@
         }
     }
 
-    // Golden flow animation from card to inputs - continuous gentle stream
+    // ============================================================
+    // GUIDED FATE SPARKLE SYSTEM (LOCKED)
+    // ============================================================
+    // Golden sparkles MUST be numerous, visible, flow from Fate cards to inputs
+    // Sparkles should pulse, drift, fade, and reappear
+    // Sparkles fade immediately on user override
+
+    let _activeSparkleContainer = null;
+    let _sparkleAnimationId = null;
+    let _persistentSparkles = [];
+
+    // Golden flow animation from card to inputs - ENHANCED with numerous sparkles
     function triggerGoldenFlow(fromEl, toEl) {
         if (!fromEl || !toEl) return;
 
@@ -675,20 +686,28 @@
         const endY = toRect.top + toRect.height / 2;
 
         const container = document.createElement('div');
-        container.className = 'golden-flow-container';
+        container.className = 'golden-flow-container golden-sparkle-active';
         document.body.appendChild(container);
+        _activeSparkleContainer = container;
 
-        const particleCount = 12;
-        const streamDuration = 800;
-        const particleDuration = 600;
+        // NUMEROUS sparkles - increased from 12 to 30 for visibility
+        const particleCount = 30;
+        const streamDuration = 1200;
+        const particleDuration = 900;
 
         // Create particles with staggered starts for continuous flow effect
         for (let i = 0; i < particleCount; i++) {
             const particle = document.createElement('div');
-            particle.className = 'golden-flow-particle';
+            // Vary particle sizes for depth
+            const sizeClass = i % 3 === 0 ? 'golden-flow-particle-large' :
+                              i % 3 === 1 ? 'golden-flow-particle' : 'golden-flow-particle-small';
+            particle.className = sizeClass;
             container.appendChild(particle);
 
             const delay = (i / particleCount) * streamDuration;
+            // Random offset for organic feel
+            const xOffset = (Math.random() - 0.5) * 20;
+            const yOffset = (Math.random() - 0.5) * 15;
 
             setTimeout(() => {
                 const pStartTime = performance.now();
@@ -702,23 +721,29 @@
                         ? 2 * progress * progress
                         : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-                    // Slight wave for organic feel
-                    const wave = Math.sin(progress * Math.PI * 2) * 8;
+                    // Enhanced wave for organic drift
+                    const wave = Math.sin(progress * Math.PI * 3 + i) * 12;
+                    const drift = Math.cos(progress * Math.PI * 2 + i * 0.5) * 8;
 
-                    const currentX = startX + (endX - startX) * eased;
-                    const currentY = startY + (endY - startY) * eased + wave;
+                    const currentX = startX + (endX - startX) * eased + wave + xOffset;
+                    const currentY = startY + (endY - startY) * eased + drift + yOffset;
 
                     particle.style.left = currentX + 'px';
                     particle.style.top = currentY + 'px';
 
-                    // Fade in/out for continuous stream look
-                    if (progress < 0.2) {
-                        particle.style.opacity = progress / 0.2 * 0.7;
-                    } else if (progress > 0.8) {
-                        particle.style.opacity = (1 - progress) / 0.2 * 0.7;
+                    // Pulsing opacity for sparkle effect
+                    const pulse = 0.5 + 0.5 * Math.sin(progress * Math.PI * 4 + i);
+                    if (progress < 0.15) {
+                        particle.style.opacity = (progress / 0.15) * pulse;
+                    } else if (progress > 0.85) {
+                        particle.style.opacity = ((1 - progress) / 0.15) * pulse;
                     } else {
-                        particle.style.opacity = 0.7;
+                        particle.style.opacity = 0.7 + 0.3 * pulse;
                     }
+
+                    // Scale pulsing
+                    const scalePulse = 0.8 + 0.4 * Math.sin(progress * Math.PI * 3);
+                    particle.style.transform = `scale(${scalePulse})`;
 
                     if (progress < 1) {
                         requestAnimationFrame(animateParticle);
@@ -732,8 +757,107 @@
         }
 
         // Remove container after all particles done
-        setTimeout(() => container.remove(), streamDuration + particleDuration + 100);
+        setTimeout(() => {
+            container.remove();
+            if (_activeSparkleContainer === container) {
+                _activeSparkleContainer = null;
+            }
+        }, streamDuration + particleDuration + 200);
     }
+
+    // Start persistent sparkle effect around inputs during Guided Fate
+    function startPersistentSparkles(targetEl) {
+        if (!targetEl) return;
+        stopPersistentSparkles(); // Clear any existing
+
+        const container = document.createElement('div');
+        container.className = 'golden-sparkle-persistent-container';
+        document.body.appendChild(container);
+        _activeSparkleContainer = container;
+
+        const rect = targetEl.getBoundingClientRect();
+
+        function createSparkle() {
+            if (!_activeSparkleContainer) return;
+
+            const sparkle = document.createElement('div');
+            sparkle.className = 'golden-sparkle-ambient';
+            container.appendChild(sparkle);
+            _persistentSparkles.push(sparkle);
+
+            // Position around the target element
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 30 + Math.random() * 50;
+            const x = rect.left + rect.width / 2 + Math.cos(angle) * distance;
+            const y = rect.top + rect.height / 2 + Math.sin(angle) * distance;
+
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+
+            // Animate fade and drift
+            let opacity = 0;
+            let life = 0;
+            const maxLife = 60 + Math.random() * 40;
+            const driftX = (Math.random() - 0.5) * 2;
+            const driftY = -1 - Math.random();
+
+            function animateSparkle() {
+                life++;
+                const progress = life / maxLife;
+
+                // Fade in, pulse, fade out
+                if (progress < 0.2) {
+                    opacity = progress / 0.2;
+                } else if (progress > 0.7) {
+                    opacity = (1 - progress) / 0.3;
+                } else {
+                    opacity = 0.6 + 0.4 * Math.sin(life * 0.2);
+                }
+
+                sparkle.style.opacity = opacity;
+                sparkle.style.left = (parseFloat(sparkle.style.left) + driftX) + 'px';
+                sparkle.style.top = (parseFloat(sparkle.style.top) + driftY) + 'px';
+
+                if (life < maxLife && _activeSparkleContainer) {
+                    requestAnimationFrame(animateSparkle);
+                } else {
+                    sparkle.remove();
+                    const idx = _persistentSparkles.indexOf(sparkle);
+                    if (idx > -1) _persistentSparkles.splice(idx, 1);
+                }
+            }
+
+            requestAnimationFrame(animateSparkle);
+        }
+
+        // Create sparkles periodically
+        _sparkleAnimationId = setInterval(() => {
+            if (_persistentSparkles.length < 15) {
+                createSparkle();
+            }
+        }, 100);
+    }
+
+    // Stop persistent sparkles immediately (on user override)
+    function stopPersistentSparkles() {
+        if (_sparkleAnimationId) {
+            clearInterval(_sparkleAnimationId);
+            _sparkleAnimationId = null;
+        }
+        _persistentSparkles.forEach(s => s.remove());
+        _persistentSparkles = [];
+        if (_activeSparkleContainer) {
+            _activeSparkleContainer.remove();
+            _activeSparkleContainer = null;
+        }
+    }
+
+    // Export for use by golden vignette and loading bar
+    window.StoryboundSparkles = {
+        triggerGoldenFlow,
+        startPersistentSparkles,
+        stopPersistentSparkles
+    };
 
     function setSelectedState(mount, selectedCardEl){
         const cards = mount.querySelectorAll('.fate-card');
@@ -829,6 +953,8 @@
             // Only commit if a card has been selected
             if (typeof window.state.fateSelectedIndex !== 'number') return;
             commitFateSelection(mount);
+            // Stop persistent sparkles on user override (editing input)
+            stopPersistentSparkles();
         };
 
         // "Once the player clicks into the populated text boxes…"
@@ -947,6 +1073,12 @@
                 setTimeout(() => {
                     if (diaInput) triggerGoldenFlow(card, diaInput);
                 }, 150); // Slight stagger for elegance
+
+                // Start persistent sparkles around the input wrappers during Guided Fate
+                const actionWrapper = document.getElementById('actionWrapper');
+                if (actionWrapper) {
+                    setTimeout(() => startPersistentSparkles(actionWrapper), 400);
+                }
 
                 // Apply content to inputs after animation delay (match existing 600ms timing)
                 _pendingApplyTimer = setTimeout(() => {
