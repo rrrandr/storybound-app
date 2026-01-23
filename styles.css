@@ -3122,3 +3122,200 @@ textarea.fate-field {
         font-size: 0.8em;
     }
 }
+
+/* ========================================
+   C. LOCK CHARACTER LOOK - TOGGLEABLE
+   ======================================== */
+
+.viz-lock-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.viz-lock-indicator {
+    font-size: 0.8em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.viz-lock-indicator.unlocked {
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.viz-lock-indicator.locked {
+    color: var(--gold);
+    background: rgba(218, 165, 32, 0.15);
+    border: 1px solid rgba(218, 165, 32, 0.3);
+    text-shadow: 0 0 8px rgba(218, 165, 32, 0.3);
+}
+
+.viz-toggle-lock {
+    transition: all 0.2s ease;
+}
+
+/* ========================================
+   F. LOADING BAR - VISUAL ENERGY (PULSE/GLOW)
+   ======================================== */
+
+#loadingOverlayFill {
+    position: relative;
+    overflow: hidden;
+}
+
+#loadingOverlayFill::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(218, 165, 32, 0.3),
+        rgba(255, 105, 180, 0.4),
+        rgba(218, 165, 32, 0.3),
+        transparent
+    );
+    animation: loading-energy-flow 2s ease-in-out infinite;
+}
+
+@keyframes loading-energy-flow {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(50%); }
+}
+
+#loadingOverlay {
+    position: relative;
+}
+
+#loadingOverlay::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 300px;
+    height: 300px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+        circle,
+        rgba(218, 165, 32, 0.15) 0%,
+        rgba(255, 105, 180, 0.1) 30%,
+        transparent 70%
+    );
+    border-radius: 50%;
+    animation: loading-pulse-glow 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes loading-pulse-glow {
+    0%, 100% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+}
+
+/* Loading sparkles */
+#loadingOverlayInner {
+    position: relative;
+}
+
+#loadingOverlayInner::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow:
+        -30px 10px 0 0 rgba(218, 165, 32, 0.6),
+        30px 15px 0 0 rgba(255, 105, 180, 0.5),
+        -15px -10px 0 0 rgba(218, 165, 32, 0.4),
+        45px -5px 0 0 rgba(255, 105, 180, 0.6),
+        -50px 5px 0 0 rgba(218, 165, 32, 0.5),
+        20px 25px 0 0 rgba(255, 105, 180, 0.4);
+    animation: sparkle-float 4s ease-in-out infinite;
+}
+
+@keyframes sparkle-float {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+        opacity: 0.8;
+    }
+    25% {
+        transform: translateY(-5px) scale(1.2);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(3px) scale(0.9);
+        opacity: 0.6;
+    }
+    75% {
+        transform: translateY(-3px) scale(1.1);
+        opacity: 0.9;
+    }
+}
+
+/* ========================================
+   G. GUIDED FATE - PARTICLE FLOW
+   Golden sparkles flow from Fate to UI
+   ======================================== */
+
+@keyframes fateParticleFlow {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5);
+    }
+    20% {
+        opacity: 0.9;
+        transform: translate(calc(var(--endX) * 0.2), calc(var(--endY) * 0.2)) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--endX), var(--endY)) scale(0.3);
+    }
+}
+
+.fate-particle {
+    transition: none;
+}
+
+/* Highlight effect when Fate fills a field */
+.fate-highlight {
+    animation: fateTargetGlow 0.6s ease-out;
+}
+
+@keyframes fateTargetGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(218, 165, 32, 0);
+    }
+    30% {
+        box-shadow: 0 0 15px 3px rgba(218, 165, 32, 0.5);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(218, 165, 32, 0);
+    }
+}
+
+/* Fate card glow when active */
+.fate-destiny-card.active {
+    animation: fateCardPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes fateCardPulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 5px var(--gold));
+    }
+    50% {
+        filter: drop-shadow(0 0 20px var(--gold)) drop-shadow(0 0 30px rgba(255, 105, 180, 0.3));
+    }
+}

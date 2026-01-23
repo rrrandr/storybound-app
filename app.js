@@ -3651,16 +3651,30 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (quillInput) quillInput.value = '';
       if (vetoInput) vetoInput.value = '';
 
-      // CORRECTIVE: Render committed veto phrases in game modal
+      // E. IN-STORY VETO - REMOVAL PARITY
+      // Render committed veto phrases with remove buttons (same as setup screen)
       const gameVetoCommitted = document.getElementById('gameVetoCommitted');
       if (gameVetoCommitted && state.committedVeto) {
           gameVetoCommitted.innerHTML = '';
           state.committedVeto.forEach((text, i) => {
               const phrase = document.createElement('div');
               phrase.className = 'committed-phrase veto-phrase';
-              phrase.style.cssText = 'background:rgba(255,100,100,0.15); border:1px solid rgba(255,100,100,0.3); padding:4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em;';
-              phrase.innerHTML = `<span style="color:var(--pink);">${text}</span>`;
+              phrase.dataset.index = i;
+              phrase.style.cssText = 'background:rgba(255,100,100,0.15); border:1px solid rgba(255,100,100,0.3); padding:4px 10px 4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em; display:flex; align-items:center; justify-content:space-between;';
+              phrase.innerHTML = `
+                  <span style="color:var(--pink);">${text}</span>
+                  <button class="game-veto-remove" data-index="${i}" title="Remove veto" style="background:transparent; border:none; color:rgba(255,100,100,0.7); font-size:1.1em; cursor:pointer; padding:0 0 0 8px; line-height:1;">&times;</button>
+              `;
               gameVetoCommitted.appendChild(phrase);
+          });
+
+          // Bind remove buttons for in-game veto removal
+          gameVetoCommitted.querySelectorAll('.game-veto-remove').forEach(btn => {
+              btn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  const index = parseInt(btn.dataset.index);
+                  removeGameVeto(index);
+              });
           });
       }
 
@@ -5699,6 +5713,46 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       saveStorySnapshot();
   }
 
+  // E. IN-STORY VETO REMOVAL - Sync both setup and game displays
+  function removeGameVeto(index) {
+      if (!state.committedVeto || index < 0 || index >= state.committedVeto.length) return;
+
+      // Remove from state
+      state.committedVeto.splice(index, 1);
+
+      // Rebuild veto constraints
+      rebuildVetoFromCommitted();
+
+      // Re-render in-game display
+      const gameVetoCommitted = document.getElementById('gameVetoCommitted');
+      if (gameVetoCommitted) {
+          gameVetoCommitted.innerHTML = '';
+          state.committedVeto.forEach((text, i) => {
+              const phrase = document.createElement('div');
+              phrase.className = 'committed-phrase veto-phrase';
+              phrase.dataset.index = i;
+              phrase.style.cssText = 'background:rgba(255,100,100,0.15); border:1px solid rgba(255,100,100,0.3); padding:4px 10px 4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em; display:flex; align-items:center; justify-content:space-between;';
+              phrase.innerHTML = `
+                  <span style="color:var(--pink);">${text}</span>
+                  <button class="game-veto-remove" data-index="${i}" title="Remove veto" style="background:transparent; border:none; color:rgba(255,100,100,0.7); font-size:1.1em; cursor:pointer; padding:0 0 0 8px; line-height:1;">&times;</button>
+              `;
+              gameVetoCommitted.appendChild(phrase);
+
+              // Re-bind remove button
+              phrase.querySelector('.game-veto-remove').addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  removeGameVeto(i);
+              });
+          });
+      }
+
+      // Also sync setup display if it exists
+      renderCommittedPhrases('veto');
+
+      saveStorySnapshot();
+      showToast("Veto removed.");
+  }
+
   // Render all committed phrases for a type
   function renderCommittedPhrases(type) {
       const container = document.getElementById(type === 'quill' ? 'quillCommitted' : 'vetoCommitted');
@@ -5997,6 +6051,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // Populate all UI selections from fate choices
   function populateFateSelections(fateChoices) {
+    // G. GUIDED FATE - Emit particles to affected fields
+    // Particle flow shows Fate physically connecting to what it changes
+    const particleTargets = [
+        'playerNameInput', 'partnerNameInput',
+        'playerAgeInput', 'partnerAgeInput'
+    ];
+    emitFateToTargets(particleTargets, 80);
+
     // Set player character
     $('playerGender').value = 'Female';
     $('playerPronouns').value = 'She/Her';
@@ -6060,6 +6122,79 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         card.classList.toggle('flipped', isSelected);
       });
     });
+  }
+
+  // ============================================================
+  // G. GUIDED FATE - PARTICLE FLOW SYSTEM
+  // ============================================================
+  // Golden sparkles flow from Fate card to affected UI elements
+  // Same particle style as vignette, higher density, lower opacity
+
+  function createFateParticle(startX, startY, endX, endY, delay = 0) {
+      const particle = document.createElement('div');
+      particle.className = 'fate-particle';
+
+      // Random offset for natural scatter
+      const offsetX = (Math.random() - 0.5) * 20;
+      const offsetY = (Math.random() - 0.5) * 20;
+
+      particle.style.cssText = `
+          position: fixed;
+          left: ${startX}px;
+          top: ${startY}px;
+          width: ${3 + Math.random() * 4}px;
+          height: ${3 + Math.random() * 4}px;
+          background: ${Math.random() > 0.3 ? 'var(--gold)' : 'var(--pink)'};
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 10000;
+          opacity: 0;
+          box-shadow: 0 0 ${4 + Math.random() * 6}px currentColor;
+          animation: fateParticleFlow 0.8s ease-out ${delay}s forwards;
+          --endX: ${endX + offsetX - startX}px;
+          --endY: ${endY + offsetY - startY}px;
+      `;
+
+      document.body.appendChild(particle);
+
+      // Remove after animation
+      setTimeout(() => particle.remove(), 1000 + delay * 1000);
+  }
+
+  function emitFateParticles(targetElement, particleCount = 8) {
+      const fateCard = document.getElementById('fateDestinyCard');
+      if (!fateCard || !targetElement) return;
+
+      const fateRect = fateCard.getBoundingClientRect();
+      const targetRect = targetElement.getBoundingClientRect();
+
+      // Start from center of fate card
+      const startX = fateRect.left + fateRect.width / 2;
+      const startY = fateRect.top + fateRect.height / 2;
+
+      // End at center of target element
+      const endX = targetRect.left + targetRect.width / 2;
+      const endY = targetRect.top + targetRect.height / 2;
+
+      // Emit particles with staggered delays
+      for (let i = 0; i < particleCount; i++) {
+          createFateParticle(startX, startY, endX, endY, i * 0.05);
+      }
+  }
+
+  // Emit particles to multiple targets with highlight effect
+  function emitFateToTargets(targetIds, delayBetween = 100) {
+      targetIds.forEach((id, index) => {
+          setTimeout(() => {
+              const el = document.getElementById(id);
+              if (el) {
+                  emitFateParticles(el, 6);
+                  // Add brief highlight to target
+                  el.classList.add('fate-highlight');
+                  setTimeout(() => el.classList.remove('fate-highlight'), 600);
+              }
+          }, index * delayBetween);
+      });
   }
 
   // PASS 9E: Fate Destiny Card click handler - RESTORED BEHAVIOR
@@ -6628,34 +6763,26 @@ QUALITY RULES:
 
 Return ONLY the title, no quotes or explanation:\n${text}`}]);
 
-        // SYNOPSIS GENERATION RULE (AUTHORITATIVE)
-        const synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
+        // D. SYNOPSIS GENERATION (HALF LENGTH, NO SCENE RECAP)
+        // Reads like the back of a novel, not a plot outline
+        const synopsis = await callChat([{role:'user', content:`Write a ONE sentence synopsis for this story opening. Maximum 25 words.
 
-MANDATORY REQUIREMENTS — All three must be present:
-1. A SPECIFIC CHARACTER with agency (e.g., "a hedge-witch on the brink of exile" — not just "one woman")
-2. A DESIRE or TEMPTATION — something they want, fear wanting, or are being pulled toward
-3. A LOOMING CONFLICT or CONSEQUENCE — a force, choice, or cost that threatens to change them
+FOCUS ON:
+- The protagonist's nature (who they are, not what they do in scene 1)
+- Their core struggle or forbidden desire
+- The world's unique pressure on them
 
-QUALITY CHECK — Before writing, answer internally:
-- Who wants something?
-- What do they want (or are tempted by)?
-- What stands in the way, or what will it cost?
+FORMAT: "[Protagonist type] [faces/wrestles with/is drawn to] [central tension] in [world essence]."
 
-FORBIDDEN PATTERNS:
-- Abstract noun collisions ("grit aches against ambition")
-- Redundant metaphor stacking ("veiled shadows," "shrouded ambitions" together)
-- Emotion verbs without bodies ("aches," "burns" without physical anchor)
-- Mood collage without narrative motion
+FORBIDDEN:
+- Scene-by-scene recap ("When X happens, then Y...")
+- Secondary character listings
+- Plot summary
+- Abstract metaphor stacking
 
-ALLOWED:
-- Poetic language ONLY when attached to concrete agents or actions
-- One central metaphor family maximum
-- Present tense preferred
+This is a book jacket hook, not a summary.
 
-The reader should think: "I want to see what happens when this desire meets resistance."
-NOT: "This sounds pretty."
-
-Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
+Return ONLY the synopsis sentence:\n${text}`}]);
 
         // CORRECTIVE: Set title and synopsis first
         const titleEl = document.getElementById('storyTitle');
@@ -7253,6 +7380,119 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           default:
               return 'Suggestive, flirtatious imagery. Sensual tension.';
       }
+  }
+
+  // ============================================================
+  // WORLD STYLE CONSTRAINT SYSTEM (A. VISUALIZE FIX)
+  // ============================================================
+  // Prevents modern fashion leakage in non-modern worlds
+  // Anchors clothing, materials, and aesthetics to world setting
+
+  function getWorldStyleConstraint() {
+      const world = state.picks?.world || 'Modern';
+      const tone = state.picks?.tone || 'Earnest';
+      const genre = state.picks?.genre || '';
+      const era = state.picks?.era || '';
+      const worldSubtype = state.picks?.worldSubtype || '';
+
+      // World-specific material and fashion constraints
+      const worldConstraints = {
+          Fantasy: {
+              materials: 'natural fabrics (linen, wool, leather, silk, velvet), armor (plate, chain, leather)',
+              forbidden: 'NO modern clothing (t-shirts, jeans, sneakers, hoodies, spaghetti straps, tank tops, modern underwear). NO zippers, elastic, synthetic fabrics.',
+              aesthetic: 'medieval/mythic/pre-industrial aesthetic. Flowing robes, tunics, cloaks, corsets, armor pieces.',
+              hair: 'Natural styles appropriate to fantasy setting. Braids, loose waves, ornate pins.'
+          },
+          Historical: {
+              materials: 'period-appropriate fabrics and construction',
+              forbidden: 'NO anachronistic modern elements. NO contemporary fashion, modern hairstyles, or 20th/21st century items.',
+              aesthetic: era ? `${era} era fashion and silhouettes strictly enforced.` : 'Historical period fashion. Research-accurate garments.',
+              hair: 'Period-appropriate hairstyles and accessories only.'
+          },
+          SciFi: {
+              materials: 'functional fabrics, technical materials, speculative textiles',
+              forbidden: 'NO purely contemporary casual wear unless justified. Avoid generic modern fashion.',
+              aesthetic: 'futuristic, functional, speculative silhouettes. Uniforms, tech-wear, utilitarian or sleek designs.',
+              hair: 'Can be contemporary or futuristic. Unconventional colors/styles acceptable.'
+          },
+          Dystopia: {
+              materials: 'utilitarian fabrics, worn/patched clothing, functional gear',
+              forbidden: 'NO luxury fashion or pristine contemporary clothing unless showing elite class.',
+              aesthetic: 'worn, practical, survival-focused clothing. Muted colors, layered pieces.',
+              hair: 'Practical, often unkempt or roughly maintained.'
+          },
+          PostApocalyptic: {
+              materials: 'scavenged, repurposed, layered survival gear',
+              forbidden: 'NO pristine modern fashion. NO clean, unworn contemporary clothing.',
+              aesthetic: 'cobbled-together, weathered, practical survival wear. Armor from found objects.',
+              hair: 'Practical for survival. Often covered, tied back, or roughly cut.'
+          },
+          Modern: {
+              materials: 'contemporary fabrics and fashion',
+              forbidden: null, // Modern allows modern clothing
+              aesthetic: worldSubtype ? getModernSubtypeAesthetic(worldSubtype) : 'contemporary fashion appropriate to setting.',
+              hair: 'Any contemporary style.'
+          }
+      };
+
+      const constraint = worldConstraints[world] || worldConstraints.Modern;
+
+      // Build constraint block
+      let block = `
+WORLD STYLE CONSTRAINT (${world.toUpperCase()}):
+- Materials: ${constraint.materials}
+- Aesthetic: ${constraint.aesthetic}
+- Hair/Grooming: ${constraint.hair}`;
+
+      if (constraint.forbidden) {
+          block += `
+- FORBIDDEN: ${constraint.forbidden}`;
+      }
+
+      // Add tone-specific modifiers
+      if (tone === 'Dark' || tone === 'Horror') {
+          block += `
+- Tone modifier: Darker palette, worn edges, ominous details. Gothic elements welcome.`;
+      } else if (tone === 'Mythic') {
+          block += `
+- Tone modifier: Elevated, ceremonial, legendary quality. Ornate details.`;
+      } else if (tone === 'Comedic' || tone === 'Satirical') {
+          block += `
+- Tone modifier: May exaggerate period elements for effect, but still world-appropriate.`;
+      }
+
+      return block;
+  }
+
+  // Modern subtype aesthetic helpers
+  function getModernSubtypeAesthetic(subtype) {
+      const subtypeAesthetics = {
+          small_town: 'casual, practical small-town fashion. Denim, flannel, comfortable layers.',
+          college: 'university campus fashion. Casual, youthful, mix of athleisure and academic.',
+          friends: 'everyday casual fashion. Relaxed, comfortable, personality-driven.',
+          old_money: 'refined, classic wealth aesthetic. Tailored pieces, quality fabrics, understated luxury.',
+          office: 'professional business attire. Suits, blouses, polished appearance.',
+          supernatural_modern: 'modern fashion with subtle gothic or mysterious undertones.',
+          superheroic_modern: 'contemporary with potential for hidden costume elements or athletic wear.'
+      };
+      return subtypeAesthetics[subtype] || 'contemporary fashion.';
+  }
+
+  // Abbreviated world constraint for image prompt (keeps prompt concise)
+  function getWorldStyleConstraintAbbrev() {
+      const world = state.picks?.world || 'Modern';
+      const era = state.picks?.era || '';
+
+      const abbrevConstraints = {
+          Fantasy: 'SETTING: Medieval fantasy. Tunics, robes, leather, armor. NO modern clothing.',
+          Historical: era ? `SETTING: ${era} historical. Period-accurate dress only.` : 'SETTING: Historical. Period-appropriate attire.',
+          SciFi: 'SETTING: Sci-fi. Futuristic/functional attire. No casual modern wear.',
+          Dystopia: 'SETTING: Dystopian. Utilitarian, worn, survival clothing.',
+          PostApocalyptic: 'SETTING: Post-apocalyptic. Scavenged, weathered, practical gear.',
+          Modern: '' // No constraint needed for modern
+      };
+
+      return abbrevConstraints[world] || '';
   }
 
   // Default visual quality biases for attractive characters
@@ -7918,6 +8158,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
       // Reset modifier UI when opening modal
       resetVizModifierUI();
+      // Sync character lock UI state
+      syncCharacterLockUI();
 
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
@@ -7960,12 +8202,23 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           // Get intensity bias for prompt generation
           const intensityBias = getVisualizeIntensityBias();
 
+          // Get world style constraints for proper setting anchoring
+          const worldStyleConstraint = getWorldStyleConstraint();
+
           if(!isRe || !promptMsg) {
               try {
                   promptMsg = await Promise.race([
                       callChat([{
                           role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
+                          content:`${anchorText}\n\nYou are writing an image prompt for a ${state.picks?.world || 'Modern'} setting. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and world-appropriate attire.
+
+${worldStyleConstraint}
+
+INTENSITY GUIDANCE: ${intensityBias}
+
+CRITICAL: All clothing, materials, and aesthetics MUST match the world setting. A fantasy character wears medieval/mythic attire, NOT modern clothing.
+
+Return only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
@@ -8010,9 +8263,13 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           const shortQuality = "Attractive, elegant features, natural expressions.";
           const shortIntensity = intensityBias.split('.')[0] + "."; // First sentence only
 
-          // SCENE FIRST, then anchors/style
+          // Get world constraint for image generator (abbreviated for prompt length)
+          const worldAbbrev = getWorldStyleConstraintAbbrev();
+
+          // SCENE FIRST, then world constraint, then anchors/style
           let basePrompt = sceneDesc + modifiers +
               "\n---\n" +
+              worldAbbrev + " " +
               "Style: cinematic, painterly, no text. " +
               shortQuality + " " +
               shortIntensity +
@@ -8065,7 +8322,11 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                   } else {
                       state.visual.lastImageUrl = ''; // Clear to prevent storage overflow
                   }
-                  if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
+                  // Auto-lock if enabled (can still be manually unlocked later)
+                  if (state.visual.autoLock && !state.visual.locked) {
+                      state.visual.locked = true;
+                      updateCharacterLockUI();
+                  }
 
                   // Attempts already incremented at start - just update UI
                   updateVizButtonStates();
@@ -8121,6 +8382,47 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       window.closeViz();
       saveStorySnapshot();
   };
+
+  // ============================================================
+  // C. LOCK CHARACTER LOOK - TOGGLEABLE (NOT ONE-WAY)
+  // ============================================================
+  // Lock can be toggled on/off at any time
+  // User can: Lock, Unlock, Re-visualize, Re-lock
+
+  window.toggleCharacterLock = function() {
+      state.visual.locked = !state.visual.locked;
+      updateCharacterLockUI();
+      saveStorySnapshot();
+      console.log('[VISUAL LOCK]', state.visual.locked ? 'Locked' : 'Unlocked');
+  };
+
+  function updateCharacterLockUI() {
+      const indicator = document.getElementById('vizLockIndicator');
+      const toggleBtn = document.getElementById('vizToggleLockBtn');
+
+      if (!indicator || !toggleBtn) return;
+
+      if (state.visual.locked) {
+          indicator.textContent = '🔒 Locked';
+          indicator.classList.remove('unlocked');
+          indicator.classList.add('locked');
+          toggleBtn.textContent = 'Unlock';
+          toggleBtn.style.background = 'var(--gold)';
+          toggleBtn.style.color = 'black';
+      } else {
+          indicator.textContent = '🔓 Unlocked';
+          indicator.classList.remove('locked');
+          indicator.classList.add('unlocked');
+          toggleBtn.textContent = 'Lock Now';
+          toggleBtn.style.background = '';
+          toggleBtn.style.color = '';
+      }
+  }
+
+  // Call on modal open to sync UI state
+  function syncCharacterLockUI() {
+      updateCharacterLockUI();
+  }
 
   // --- GAME LOOP ---
   $('submitBtn')?.addEventListener('click', async () => {

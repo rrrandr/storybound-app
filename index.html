@@ -115,11 +115,18 @@
         <button onclick="window.insertImage()">Insert</button>
         <button class="small-btn" style="background:#555" onclick="window.closeViz()">Cancel</button>
     </div>
-    <label class="sb-checkbox" style="font-size:0.8em; justify-content:center; margin-top:12px;">
-        <input type="checkbox" id="chkAutoLockVisual" checked>
-        <span class="sb-checkbox-visual"></span>
-        <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Lock character look after this Visualize</span>
-    </label>
+    <!-- C. LOCK CHARACTER LOOK - TOGGLEABLE -->
+    <div class="viz-lock-controls" style="display:flex; align-items:center; justify-content:center; gap:15px; margin-top:12px; flex-wrap:wrap;">
+        <label class="sb-checkbox" style="font-size:0.8em;">
+            <input type="checkbox" id="chkAutoLockVisual" checked>
+            <span class="sb-checkbox-visual"></span>
+            <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Auto-lock after Visualize</span>
+        </label>
+        <div id="vizLockStatus" class="viz-lock-status">
+            <span id="vizLockIndicator" class="viz-lock-indicator unlocked">🔓 Unlocked</span>
+            <button id="vizToggleLockBtn" class="small-btn viz-toggle-lock" onclick="window.toggleCharacterLock()" style="font-size:0.75em; padding:4px 8px;">Lock Now</button>
+        </div>
+    </div>
   </div>
 </div>
 

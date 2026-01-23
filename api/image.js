@@ -33,41 +33,124 @@ function getOpenAIModel(imageIntent) {
 // PROMPT TEMPLATES - Intent-specific framing
 // ============================================================
 
-// Symbolic object selection based on genre/style/dynamic
-function selectSymbolicObject(genre, storyStyle, dynamic) {
+// ============================================================
+// WORLD-AWARE SYMBOLIC OBJECT SELECTION (B. COVER FIX)
+// ============================================================
+// Objects must be plausible in the story world
+// Modern objects forbidden in non-modern worlds
+
+function selectSymbolicObject(genre, storyStyle, dynamic, modeLine) {
   const genreLower = (genre || '').toLowerCase();
   const styleLower = (storyStyle || '').toLowerCase();
   const dynamicLower = (dynamic || '').toLowerCase();
+  const worldLower = (modeLine || '').toLowerCase();
 
-  // Genre-based object pools
-  const objects = {
-    contemporary: ['a silk ribbon', 'an unsealed envelope', 'a shattered wine glass', 'a wilting rose', 'a hotel key card', 'a lipstick mark on glass'],
-    fantasy: ['a golden crown with a missing jewel', 'a thorned vine wrapped around a blade', 'an ancient ring on velvet', 'a cracked crystal orb', 'a burning scroll'],
-    romantasy: ['a crown of thorns and flowers', 'a dagger wreathed in smoke', 'a glowing rune-etched ring', 'a chalice tipped on its side'],
-    historical: ['a wax-sealed letter', 'a pearl necklace on dark velvet', 'opera gloves draped over a chair', 'a pocket watch frozen at midnight'],
-    paranormal: ['a crescent moon pendant', 'a broken mirror reflecting darkness', 'a single black feather', 'a vial of crimson liquid'],
-    dark: ['shattered handcuffs', 'a bloodied rose', 'a mask on black silk', 'a blade catching candlelight'],
-    scifi: ['a cracked helmet visor', 'a holographic pendant flickering', 'a single bullet casing', 'circuitry intertwined with organic matter'],
-    gothic: ['a wilting flower in a cracked vase', 'an ornate key on a grave', 'a candle guttering in darkness', 'a raven feather on lace'],
-    suspense: ['a broken phone screen', 'a gun beside a wedding ring', 'a photograph torn in half', 'bloodstained fabric'],
-    crime: ['a signet ring on black leather', 'stacked cash and a single bullet', 'a knife on white linen', 'a burning photograph']
+  // Determine world type from modeLine
+  const isFantasy = worldLower.includes('fantasy') || styleLower.includes('fantasy') || styleLower.includes('romantasy');
+  const isHistorical = worldLower.includes('historical') || worldLower.includes('medieval') || worldLower.includes('regency') || worldLower.includes('victorian');
+  const isSciFi = worldLower.includes('sci-fi') || worldLower.includes('scifi') || worldLower.includes('space');
+  const isDystopia = worldLower.includes('dystopia');
+  const isPostApoc = worldLower.includes('apocalyptic') || worldLower.includes('post-apocalyptic');
+  const isModern = !isFantasy && !isHistorical && !isSciFi && !isDystopia && !isPostApoc;
+
+  // World-appropriate object pools (NO WORLD LEAKAGE)
+  const worldObjects = {
+    fantasy: [
+      'a golden crown with a missing jewel',
+      'a thorned vine wrapped around a blade',
+      'an ancient ring on velvet',
+      'a cracked crystal orb',
+      'a burning scroll with arcane text',
+      'a chalice tipped on its side, wine spilling',
+      'a dagger wreathed in smoke',
+      'a glowing rune-etched pendant',
+      'a crown of thorns and flowers intertwined',
+      'an ancient key of ornate iron'
+    ],
+    historical: [
+      'a wax-sealed letter',
+      'a pearl necklace on dark velvet',
+      'opera gloves draped over a chair',
+      'a pocket watch frozen at midnight',
+      'a quill beside spilled ink',
+      'a cameo brooch on lace',
+      'a pressed flower in a leather journal',
+      'a candle guttering beside love letters',
+      'a fan half-opened on silk',
+      'a signet ring pressed into wax'
+    ],
+    scifi: [
+      'a cracked helmet visor reflecting stars',
+      'a holographic pendant flickering',
+      'circuitry intertwined with organic matter',
+      'a data chip catching light',
+      'a pilot\'s insignia on scorched fabric',
+      'a vial of glowing liquid',
+      'a broken navigation display',
+      'a single spent energy cell'
+    ],
+    dystopia: [
+      'a resistance token',
+      'a cracked surveillance lens',
+      'a forbidden book with torn pages',
+      'shattered identity chip',
+      'a wilting flower in concrete crack',
+      'handwritten note on recycled paper',
+      'a mask discarded on grey fabric'
+    ],
+    postapoc: [
+      'a weathered photograph of before',
+      'a hand-forged blade',
+      'a gas mask with cracked lens',
+      'wildflowers growing through ruins',
+      'a faded map marked with routes',
+      'a salvaged compass',
+      'two bullets and a ring'
+    ],
+    modern: [
+      'a silk ribbon',
+      'an unsealed envelope',
+      'a shattered wine glass',
+      'a wilting rose',
+      'a hotel key card',
+      'a lipstick mark on glass',
+      'a broken phone screen',
+      'a photograph torn in half',
+      'car keys on a bar counter',
+      'a wedding ring beside divorce papers'
+    ]
   };
 
-  // Find matching genre
-  let pool = objects.contemporary; // default
-  for (const [key, items] of Object.entries(objects)) {
-    if (genreLower.includes(key) || styleLower.includes(key)) {
-      pool = items;
-      break;
+  // Tone-modified pools for dark/gothic
+  const darkObjects = {
+    fantasy: ['a bloodied crown', 'a blade catching candlelight', 'a cracked dark mirror', 'a raven feather on black velvet'],
+    historical: ['a mourning locket', 'bloodstained gloves', 'a poisoned chalice', 'a black veil on a grave'],
+    modern: ['shattered handcuffs', 'a bloodied rose', 'a mask on black silk', 'a gun beside a wedding ring']
+  };
+
+  // Select base pool by world
+  let pool;
+  if (isFantasy) pool = worldObjects.fantasy;
+  else if (isHistorical) pool = worldObjects.historical;
+  else if (isSciFi) pool = worldObjects.scifi;
+  else if (isDystopia) pool = worldObjects.dystopia;
+  else if (isPostApoc) pool = worldObjects.postapoc;
+  else pool = worldObjects.modern;
+
+  // Apply dark/gothic tone modifier
+  const isDark = styleLower.includes('dark') || styleLower.includes('horror') || styleLower.includes('gothic');
+  if (isDark) {
+    const darkPool = isFantasy ? darkObjects.fantasy :
+                     isHistorical ? darkObjects.historical :
+                     isModern ? darkObjects.modern : null;
+    if (darkPool && Math.random() < 0.6) {
+      pool = darkPool;
     }
   }
 
-  // Select based on dynamic mood
-  if (dynamicLower.includes('forbidden') || dynamicLower.includes('enemy')) {
-    return pool[Math.floor(Math.random() * 2)]; // First two tend to be more intense
-  }
-  if (dynamicLower.includes('slow') || dynamicLower.includes('friend')) {
-    return pool[Math.floor(Math.random() * pool.length)];
+  // Select based on dynamic mood (first items tend to be more dramatic)
+  if (dynamicLower.includes('forbidden') || dynamicLower.includes('enemy') || dynamicLower.includes('dangerous')) {
+    return pool[Math.floor(Math.random() * Math.min(3, pool.length))];
   }
 
   return pool[Math.floor(Math.random() * pool.length)];
@@ -130,8 +213,8 @@ function getToneCoverStyle(tone) {
 }
 
 function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre) {
-  // Select symbolic object based on context
-  const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic);
+  // Select symbolic object based on context (world-aware to prevent modern leakage)
+  const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic, modeLine);
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
   const cleanMode = modeLine || 'A Novel';
@@ -140,12 +223,29 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
   const tone = (storyStyle || '').split(' ')[0] || 'Earnest';
   const toneStyle = getToneCoverStyle(tone);
 
+  // Determine world constraint for cover
+  const worldLower = (modeLine || '').toLowerCase();
+  const isFantasy = worldLower.includes('fantasy');
+  const isHistorical = worldLower.includes('historical') || worldLower.includes('medieval') || worldLower.includes('regency') || worldLower.includes('victorian');
+  const isSciFi = worldLower.includes('sci-fi') || worldLower.includes('scifi');
+
+  let worldConstraint = '';
+  if (isFantasy) {
+    worldConstraint = 'WORLD CONSTRAINT: Fantasy setting. NO modern objects (phones, cars, contemporary items). Materials: metal, leather, silk, stone, crystal, flame.';
+  } else if (isHistorical) {
+    worldConstraint = 'WORLD CONSTRAINT: Historical setting. NO anachronistic objects. Period-appropriate materials only: wax, parchment, silk, velvet, pearl, brass.';
+  } else if (isSciFi) {
+    worldConstraint = 'WORLD CONSTRAINT: Sci-fi setting. Futuristic materials: holographics, circuitry, sleek metals, glowing elements.';
+  }
+
   // Build tone-aware prestige book cover prompt
   return `A prestige book cover design, square format, ${toneStyle.visualWeight}.
 
 MANDATORY: The cover MUST include decorative texture or pattern - never flat white or blank backgrounds.
 Style inspiration: Art Deco geometric precision OR Art Nouveau organic linework (choose one, commit fully).
 Background treatment: ${toneStyle.texture}
+
+${worldConstraint}
 
 Central focus: ${symbolicObject}, rendered with controlled dramatic lighting, depth, and shadow. The object occupies the visual center, elegant and evocative.
 
