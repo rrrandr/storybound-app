@@ -140,6 +140,188 @@ const MONETIZATION_GATES = {
 };
 
 // =============================================================================
+// CHARACTER DRIVE LENS BEHAVIORAL BIAS
+// =============================================================================
+
+/**
+ * Lens definitions for server-side behavioral bias enforcement.
+ * These are structural forces, not prose instructions.
+ */
+const LENS_BIAS_RULES = {
+  WITHHELD_CORE: {
+    pacingDirective: 'DELAY_MAJOR_REVELATION',
+    minRevealProgress: 0.60,
+    maxRevealProgress: 0.80,
+    hintAllowed: true,
+    structuralNote: 'Character conceals critical truth; create anticipation through incompleteness'
+  },
+  MORAL_FRICTION_ENGINE: {
+    pacingDirective: 'ENFORCE_COST_AFTER_VICTORY',
+    maxCostFreeBeats: 2,
+    structuralNote: 'Every significant choice carries ethical weight; no clean victories'
+  },
+  UNEXPECTED_COMPETENCE: {
+    pacingDirective: 'GATE_COMPETENCE_REVEAL',
+    requireSetupFailure: true,
+    earlyDeploymentForbidden: true,
+    minProgressForReveal: 0.20,
+    structuralNote: 'Competence must be preceded by underestimation or failure in that domain'
+  },
+  VOLATILE_MIRROR: {
+    pacingDirective: 'SYNC_EMOTIONAL_BEATS',
+    maxSyncDelay: 1,
+    mustHaveBaseline: true,
+    invertForRogue: true,
+    structuralNote: 'Emotional state reflects/inverts protagonist; requires independent baseline'
+  }
+};
+
+/**
+ * Build lens bias directives for the author prompt.
+ * Returns structural pacing instructions, NOT prose guidance.
+ *
+ * @param {Object} lensBias - Lens bias data from client
+ * @param {number} storyProgress - Current story progress (0-1)
+ * @returns {string} Structural directives for the author
+ */
+function buildLensBiasDirectives(lensBias, storyProgress) {
+  if (!lensBias || (!lensBias.protagonist?.lenses?.length && !lensBias.loveInterest?.lenses?.length)) {
+    return '';
+  }
+
+  const directives = [];
+
+  // Process protagonist lenses
+  if (lensBias.protagonist?.lenses?.length > 0) {
+    for (const lensId of lensBias.protagonist.lenses) {
+      const rule = LENS_BIAS_RULES[lensId];
+      if (!rule) continue;
+
+      const meta = lensBias.protagonist.lensMeta?.[lensId] || {};
+
+      switch (rule.pacingDirective) {
+        case 'DELAY_MAJOR_REVELATION':
+          if (storyProgress < rule.minRevealProgress) {
+            directives.push(`PROTAGONIST PACING: Major character revelation is GATED until ${Math.round(rule.minRevealProgress * 100)}% progress. Minor hints only.`);
+          } else if (storyProgress >= rule.minRevealProgress && !meta.revealCompleted) {
+            directives.push(`PROTAGONIST PACING: Character revelation window OPEN (${Math.round(rule.minRevealProgress * 100)}-${Math.round(rule.maxRevealProgress * 100)}%).`);
+          }
+          break;
+
+        case 'ENFORCE_COST_AFTER_VICTORY':
+          if ((meta.costFreeStreak || 0) >= rule.maxCostFreeBeats) {
+            directives.push(`PROTAGONIST PACING: Character has had ${meta.costFreeStreak}+ cost-free beats. Next significant action MUST carry ethical cost or compromise.`);
+          }
+          break;
+
+        case 'GATE_COMPETENCE_REVEAL':
+          if (!meta.competenceRevealed) {
+            if (storyProgress < rule.minProgressForReveal) {
+              directives.push(`PROTAGONIST PACING: Unexpected capability reveal FORBIDDEN before ${Math.round(rule.minProgressForReveal * 100)}% progress.`);
+            } else if ((meta.setupBeatsCompleted || 0) < 1) {
+              directives.push(`PROTAGONIST PACING: Character must experience failure or underestimation BEFORE competence reveal.`);
+            }
+          }
+          break;
+      }
+    }
+  }
+
+  // Process love interest lenses
+  if (lensBias.loveInterest?.lenses?.length > 0) {
+    for (const lensId of lensBias.loveInterest.lenses) {
+      const rule = LENS_BIAS_RULES[lensId];
+      if (!rule) continue;
+
+      const meta = lensBias.loveInterest.lensMeta?.[lensId] || {};
+      const archetype = lensBias.loveInterestArchetype;
+      const isRogue = archetype === 'ROGUE' || archetype === 'ENCHANTING';
+
+      switch (rule.pacingDirective) {
+        case 'DELAY_MAJOR_REVELATION':
+          if (storyProgress < rule.minRevealProgress) {
+            directives.push(`LOVE INTEREST PACING: Major revelation is GATED. Create anticipation through gaps and incompleteness.`);
+          }
+          break;
+
+        case 'SYNC_EMOTIONAL_BEATS':
+          if (isRogue && rule.invertForRogue) {
+            directives.push(`LOVE INTEREST PACING: Emotional response must INVERT protagonist state (tease vs retreat, advance vs withdrawal).`);
+          } else {
+            directives.push(`LOVE INTEREST PACING: Emotional beats sync within 1 beat of protagonist state change.`);
+          }
+          if (!meta.baselineEstablished) {
+            directives.push(`LOVE INTEREST PACING: Establish independent motivation baseline before reactive mirroring.`);
+          }
+          break;
+
+        case 'ENFORCE_COST_AFTER_VICTORY':
+          if ((meta.costFreeStreak || 0) >= rule.maxCostFreeBeats) {
+            directives.push(`LOVE INTEREST PACING: Character needs ethical friction. Next choice must carry weight.`);
+          }
+          break;
+
+        case 'GATE_COMPETENCE_REVEAL':
+          if (!meta.competenceRevealed && storyProgress < rule.minProgressForReveal) {
+            directives.push(`LOVE INTEREST PACING: Hidden capability must remain hidden until setup complete.`);
+          }
+          break;
+      }
+    }
+  }
+
+  if (directives.length === 0) {
+    return '';
+  }
+
+  return `
+CHARACTER DRIVE LENS PACING (STRUCTURAL - NOT PROSE GUIDANCE):
+${directives.join('\n')}
+These are mechanical constraints, not personality descriptions.
+`;
+}
+
+/**
+ * Validate lens state before generation.
+ * Returns { canGenerate: boolean, warnings: string[] }
+ */
+function validateLensState(lensBias, storyProgress) {
+  const result = { canGenerate: true, warnings: [] };
+
+  if (!lensBias) return result;
+
+  // Check for WITHHELD_CORE without scheduled reveal near deadline
+  if (lensBias.protagonist?.lenses?.includes('WITHHELD_CORE')) {
+    const meta = lensBias.protagonist.lensMeta?.WITHHELD_CORE || {};
+    if (storyProgress >= 0.85 && !meta.revealScheduled && !meta.revealCompleted) {
+      result.warnings.push('WITHHELD_CORE: No revelation scheduled by 85% progress');
+    }
+  }
+
+  // Check for VOLATILE_MIRROR without baseline
+  if (lensBias.loveInterest?.lenses?.includes('VOLATILE_MIRROR')) {
+    const meta = lensBias.loveInterest.lensMeta?.VOLATILE_MIRROR || {};
+    if (!meta.baselineEstablished) {
+      result.warnings.push('VOLATILE_MIRROR: No independent baseline motivation established');
+    }
+  }
+
+  // Check for MORAL_FRICTION_ENGINE cost-free streak
+  const checkFriction = (character, label) => {
+    if (lensBias[character]?.lenses?.includes('MORAL_FRICTION_ENGINE')) {
+      const meta = lensBias[character].lensMeta?.MORAL_FRICTION_ENGINE || {};
+      if ((meta.costFreeStreak || 0) >= 3) {
+        result.warnings.push(`MORAL_FRICTION_ENGINE (${label}): ${meta.costFreeStreak}+ consecutive cost-free actions`);
+      }
+    }
+  };
+  checkFriction('protagonist', 'protagonist');
+  checkFriction('loveInterest', 'love interest');
+
+  return result;
+}
+
+// =============================================================================
 // EROTIC SCENE DIRECTIVE (ESD) SCHEMA
 // =============================================================================
 
@@ -533,6 +715,8 @@ async function orchestrateStoryGeneration({
   playerAction,
   playerDialogue,
   fateCard,
+  lensBias,           // Character Drive Lens bias data (optional)
+  storyProgress,      // Current story progress 0-1 (optional)
   callChatGPT,        // Function to call ChatGPT
   callSpecialist,     // Function to call specialist renderer
   onPhaseChange       // Callback for UI updates
@@ -546,6 +730,17 @@ async function orchestrateStoryGeneration({
 
   if (onPhaseChange) {
     onPhaseChange('GATE_CHECK', state.gateEnforcement);
+  }
+
+  // ==========================================================================
+  // PRE-FLIGHT: Validate Lens State
+  // ==========================================================================
+  if (lensBias) {
+    const lensValidation = validateLensState(lensBias, storyProgress || 0);
+    if (lensValidation.warnings.length > 0) {
+      console.warn('[LENS SYSTEM] Generation warnings:', lensValidation.warnings);
+      state.lensWarnings = lensValidation.warnings;
+    }
   }
 
   // ==========================================================================
@@ -571,7 +766,9 @@ async function orchestrateStoryGeneration({
       playerAction,
       playerDialogue,
       fateCard,
-      gateEnforcement: state.gateEnforcement
+      gateEnforcement: state.gateEnforcement,
+      lensBias,
+      storyProgress: storyProgress || 0
     });
 
     const authorResult = await callChatGPT(authorPrompt, 'PRIMARY_AUTHOR');
@@ -700,8 +897,13 @@ function buildAuthorPrompt({
   playerAction,
   playerDialogue,
   fateCard,
-  gateEnforcement
+  gateEnforcement,
+  lensBias,
+  storyProgress
 }) {
+  // Build lens bias directives (structural, not prose)
+  const lensBiasDirectives = buildLensBiasDirectives(lensBias, storyProgress || 0);
+
   return {
     systemPrompt: `You are the PRIMARY AUTHOR for Storybound.
 
@@ -718,7 +920,7 @@ MONETIZATION CONSTRAINTS (NON-NEGOTIABLE):
 - Allowed Eroticism: ${gateEnforcement.effectiveEroticism}
 - Completion Allowed: ${gateEnforcement.completionAllowed}
 - Cliffhanger Required: ${gateEnforcement.cliffhangerRequired}
-
+${lensBiasDirectives}
 If an intimacy scene occurs at Erotic or Dirty level, you MUST generate an Erotic Scene Directive (ESD) in your response. The ESD will be passed to a specialist renderer.
 
 OUTPUT FORMAT:
@@ -817,6 +1019,11 @@ module.exports = {
   enforceMonetizationGates,
   shouldCallSexRenderer,
   MONETIZATION_GATES,
+
+  // Character Drive Lens bias
+  LENS_BIAS_RULES,
+  buildLensBiasDirectives,
+  validateLensState,
 
   // Fate Cards
   processFateCard,

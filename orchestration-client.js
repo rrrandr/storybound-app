@@ -196,6 +196,106 @@
   }
 
   // ===========================================================================
+  // CHARACTER DRIVE LENS BIAS (CLIENT-SIDE)
+  // ===========================================================================
+
+  /**
+   * Lens pacing rules for client-side directive building.
+   * Mirrors server-side LENS_BIAS_RULES for consistency.
+   */
+  const LENS_PACING_RULES = {
+    WITHHELD_CORE: {
+      minRevealProgress: 0.60,
+      maxRevealProgress: 0.80
+    },
+    MORAL_FRICTION_ENGINE: {
+      maxCostFreeBeats: 2
+    },
+    UNEXPECTED_COMPETENCE: {
+      minProgressForReveal: 0.20,
+      minSetupBeats: 1
+    },
+    VOLATILE_MIRROR: {
+      maxSyncDelay: 1
+    }
+  };
+
+  /**
+   * Build lens bias directives for the author prompt (client-side).
+   * Returns structural pacing instructions, NOT prose guidance.
+   */
+  function buildLensBiasDirectivesClient(lensBias, storyProgress) {
+    if (!lensBias) return '';
+
+    const directives = [];
+    const progress = storyProgress || 0;
+
+    // Process protagonist lenses
+    if (lensBias.protagonist?.lenses?.length > 0) {
+      for (const lensId of lensBias.protagonist.lenses) {
+        const rule = LENS_PACING_RULES[lensId];
+        if (!rule) continue;
+
+        const meta = lensBias.protagonist.lensMeta?.[lensId] || {};
+
+        if (lensId === 'WITHHELD_CORE' && progress < rule.minRevealProgress) {
+          directives.push(`PROTAGONIST: Major revelation GATED until ${Math.round(rule.minRevealProgress * 100)}% progress.`);
+        }
+
+        if (lensId === 'MORAL_FRICTION_ENGINE' && (meta.costFreeStreak || 0) >= rule.maxCostFreeBeats) {
+          directives.push(`PROTAGONIST: Character needs ethical friction. Next choice must carry cost.`);
+        }
+
+        if (lensId === 'UNEXPECTED_COMPETENCE' && !meta.competenceRevealed) {
+          if (progress < rule.minProgressForReveal || (meta.setupBeatsCompleted || 0) < rule.minSetupBeats) {
+            directives.push(`PROTAGONIST: Hidden capability must remain hidden until setup complete.`);
+          }
+        }
+      }
+    }
+
+    // Process love interest lenses
+    if (lensBias.loveInterest?.lenses?.length > 0) {
+      const archetype = lensBias.loveInterestArchetype;
+      const isRogue = archetype === 'ROGUE' || archetype === 'ENCHANTING';
+
+      for (const lensId of lensBias.loveInterest.lenses) {
+        const rule = LENS_PACING_RULES[lensId];
+        if (!rule) continue;
+
+        const meta = lensBias.loveInterest.lensMeta?.[lensId] || {};
+
+        if (lensId === 'WITHHELD_CORE' && progress < (rule.minRevealProgress || 0.6)) {
+          directives.push(`LOVE INTEREST: Major revelation GATED. Create anticipation.`);
+        }
+
+        if (lensId === 'VOLATILE_MIRROR') {
+          if (isRogue) {
+            directives.push(`LOVE INTEREST: Emotional response must INVERT protagonist state.`);
+          } else {
+            directives.push(`LOVE INTEREST: Emotional beats sync with protagonist state.`);
+          }
+          if (!meta.baselineEstablished) {
+            directives.push(`LOVE INTEREST: Establish independent motivation before reactive mirroring.`);
+          }
+        }
+
+        if (lensId === 'MORAL_FRICTION_ENGINE' && (meta.costFreeStreak || 0) >= (rule.maxCostFreeBeats || 2)) {
+          directives.push(`LOVE INTEREST: Character needs ethical friction.`);
+        }
+      }
+    }
+
+    if (directives.length === 0) return '';
+
+    return `
+=== CHARACTER PACING CONSTRAINTS (STRUCTURAL) ===
+${directives.join('\n')}
+These are mechanical gates, not personality guidance.
+`;
+  }
+
+  // ===========================================================================
   // API CALLERS
   // ===========================================================================
 
@@ -413,6 +513,8 @@
       playerAction,
       playerDialogue,
       fateCard,
+      lensBias,           // Character Drive Lens bias data (optional)
+      storyProgress,      // Current story progress 0-1 (optional)
       systemPrompt,
       onPhaseChange
     } = params;
@@ -423,6 +525,32 @@
     // PRE-FLIGHT: Enforce Monetization Gates
     // =========================================================================
     state.gateEnforcement = enforceMonetizationGates(accessTier, requestedEroticism);
+
+    // =========================================================================
+    // PRE-FLIGHT: Build Lens Bias Directives
+    // =========================================================================
+    let lensBiasDirectives = '';
+    if (lensBias && window.LensSystem) {
+      // Validate lens state before generation
+      const lensValidation = window.LensSystem.validateBeforeGeneration({
+        protagonist: lensBias.protagonist,
+        loveInterest: lensBias.loveInterest,
+        storyProgress: storyProgress || 0,
+        storyLength: 3  // Assume minimum for validation
+      });
+
+      if (!lensValidation.canGenerate) {
+        console.error('[LENS SYSTEM] Generation blocked:', lensValidation.errors);
+        // Continue without lenses rather than blocking
+      }
+
+      if (lensValidation.warnings.length > 0) {
+        console.warn('[LENS SYSTEM] Warnings:', lensValidation.warnings);
+      }
+
+      // Build pacing directives for each active lens
+      lensBiasDirectives = buildLensBiasDirectivesClient(lensBias, storyProgress || 0);
+    }
 
     if (state.gateEnforcement.wasDowngraded) {
       console.log(`[ORCHESTRATION] Eroticism downgraded: ${requestedEroticism} → ${state.gateEnforcement.effectiveEroticism}`);
@@ -467,7 +595,7 @@ MONETIZATION CONSTRAINTS (NON-NEGOTIABLE):
 - Effective Eroticism Level: ${state.gateEnforcement.effectiveEroticism}
 - Completion Allowed: ${state.gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Cliffhanger Required: ${state.gateEnforcement.cliffhangerRequired ? 'YES' : 'NO'}
-
+${lensBiasDirectives}
 ${state.gateEnforcement.effectiveEroticism === 'Erotic' || state.gateEnforcement.effectiveEroticism === 'Dirty' ? `
 INTIMACY SCENE PROTOCOL:
 If this beat includes intimate content at Erotic or Dirty level, you MUST include
