@@ -69,6 +69,107 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   // When false: Legacy single-model flow (Grok only)
   const ENABLE_ORCHESTRATION = true;
 
+  // =============================================================================
+  // DEV-MODE ASSERTIONS — COVER & SETTING PIPELINE ENFORCEMENT
+  // =============================================================================
+
+  const IS_DEV_MODE = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production' ||
+                      window.location.hostname === 'localhost' ||
+                      window.location.hostname === '127.0.0.1';
+
+  // Track pipeline badge (once per session)
+  let _coverPipelineBadgeShown = false;
+
+  /**
+   * Dev-only assertion for cover/setting pipeline enforcement.
+   * Throws in dev mode, no-op in production.
+   */
+  function devAssertPipeline(condition, assertName, message) {
+    if (!IS_DEV_MODE) return;
+    if (!condition) {
+      throw new Error(`[DEV ASSERT: ${assertName}] ${message}`);
+    }
+  }
+
+  /**
+   * COVER_ASSERT: Validate intensity matches heat styling expectations.
+   * - Clean/Tease intensity should NOT have high heat styling
+   * - Erotic/Dirty intensity should NOT have restrained styling
+   */
+  function assertCoverIntensityMatch(intensity, tone) {
+    if (!IS_DEV_MODE) return;
+
+    const intensityLower = (intensity || '').toLowerCase();
+    const toneLower = (tone || '').toLowerCase();
+
+    // Heat tiers
+    const lowHeatIntensities = ['clean'];
+    const highHeatIntensities = ['erotic', 'dirty'];
+
+    // Satirical/Comedic tones must NOT be combined with high heat
+    const lowHeatTones = ['satirical', 'comedic', 'wry'];
+    const isLowHeatTone = lowHeatTones.some(t => toneLower.includes(t));
+
+    // Assert: Clean intensity with Satirical tone is fine, but check for mismatches
+    if (highHeatIntensities.includes(intensityLower) && isLowHeatTone) {
+      devAssertPipeline(
+        false,
+        'COVER_INTENSITY_MISMATCH',
+        `High heat intensity "${intensity}" conflicts with low-heat tone "${tone}". ` +
+        `Satirical/Comedic covers must not feel erotic/breathless.`
+      );
+    }
+
+    // Assert: Ensure intensity is a valid value
+    const validIntensities = ['clean', 'naughty', 'erotic', 'dirty'];
+    devAssertPipeline(
+      validIntensities.includes(intensityLower),
+      'COVER_INVALID_INTENSITY',
+      `Invalid intensity value "${intensity}". Expected: ${validIntensities.join(', ')}`
+    );
+  }
+
+  /**
+   * SETTING_ASSERT: Validate worldSubtype is present for worlds that support it.
+   * Historical worlds MUST have a subtype (Medieval, Victorian, etc.)
+   */
+  function assertSettingWorldSubtype(world, worldSubtype) {
+    if (!IS_DEV_MODE) return;
+
+    const worldLower = (world || '').toLowerCase();
+
+    // Worlds that require subtypes
+    const worldsRequiringSubtype = ['historical'];
+
+    if (worldsRequiringSubtype.includes(worldLower)) {
+      devAssertPipeline(
+        worldSubtype && worldSubtype.trim() !== '',
+        'SETTING_MISSING_WORLDSUBTYPE',
+        `World "${world}" requires worldSubtype but it is missing or empty. ` +
+        `Historical settings must specify era (Medieval, Victorian, etc.)`
+      );
+    }
+  }
+
+  /**
+   * DEV CONSOLE BADGE: Print once per session when cover pipeline completes successfully.
+   */
+  function showCoverPipelineBadge(world, genre, tone, intensity) {
+    if (!IS_DEV_MODE) return;
+    if (_coverPipelineBadgeShown) return;
+
+    // Validate all required fields are present
+    const requiredFields = { world, genre, tone, intensity };
+    const missingFields = Object.entries(requiredFields)
+      .filter(([_, v]) => !v || v.trim() === '')
+      .map(([k]) => k);
+
+    if (missingFields.length === 0) {
+      console.log('[COVER PIPELINE: OK]');
+      _coverPipelineBadgeShown = true;
+    }
+  }
+
   // AUTHOR MODEL: ChatGPT is the ONLY model for story authoring
   // Grok must NEVER be used for DSP, normalization, veto, or story logic
   // Legacy STORY_MODEL removed - all story logic routes through ChatGPT orchestration 
@@ -6652,6 +6753,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
      // WORLD FIRST, vista enforcement, then style suffix
      const prompt = `${worldDesc}\n\n${vistaEnforcement}\n\n${styleSuffix}`;
 
+     // DEV ASSERTION: Validate worldSubtype is present for worlds that require it
+     assertSettingWorldSubtype(world, worldSubtype);
+
      let rawUrl = null;
 
      // Use unified IMAGE PROVIDER ROUTER with FALLBACK CHAIN
@@ -6812,6 +6916,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       // Build story style description
       const storyStyle = `${tone} ${genre}`;
 
+      // DEV ASSERTION: Validate intensity matches tone expectations
+      assertCoverIntensityMatch(intensity, tone);
+
       try {
           const res = await fetch(IMAGE_PROXY_URL, {
               method: 'POST',
@@ -6837,7 +6944,14 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           }
 
           const data = await res.json();
-          return data?.url || null;
+          const coverUrl = data?.url || null;
+
+          // DEV BADGE: Show pipeline OK when cover completes with all required fields
+          if (coverUrl) {
+              showCoverPipelineBadge(world, genre, tone, intensity);
+          }
+
+          return coverUrl;
       } catch (err) {
           console.error('[BookCover] Generation failed:', err.message);
           return null;
