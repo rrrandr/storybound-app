@@ -6936,29 +6936,64 @@ OPENING MODE: ${selectedOpening.mode}
 ${selectedOpening.directive}
 
 ═══════════════════════════════════════════════════════
-WORLD-SEEDING REQUIREMENTS (MANDATORY)
-The opening must plant the seeds of a specific world. Within these first pages:
+UNIVERSAL WORLD-SEEDING (MANDATORY — ALL STORIES)
 ═══════════════════════════════════════════════════════
+The opening scene must feel IMPOSSIBLE to relocate to another world without breaking immersion.
+This applies to ALL genres, ALL tones, ALL settings.
 
-1. UNEXPLAINED SLANG OR IDIOM
-   Introduce at least one piece of vernacular that belongs to this world only.
-   Do NOT explain it. Let context carry meaning.
+CORE REQUIREMENT:
+Include AT LEAST 6 world-specific elements, drawn from AT LEAST 3 different categories below.
+Introduce them CASUALLY, WITHOUT explanation — they are ordinary facts of life to the characters.
+
+CATEGORIES (choose 3+ per opening):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+A. SLANG, IDIOMS, OR SHORTHAND unique to this world
    Example: "She'd been marked riven since the Quiet Year" — never define "riven" or "Quiet Year."
 
-2. POWER STRUCTURES HINTED
-   Reference a governing system, faction, hierarchy, or social force WITHOUT exposition.
+B. INSTITUTIONS, AUTHORITIES, FACTIONS, OR POWER STRUCTURES
    A tax collector, a curfew, a forbidden district, a title that carries weight, a uniform that means something.
    Show through behavior, not explanation.
 
-3. NON-EARTH NOUNS
-   Replace at least one ordinary noun with something world-specific.
-   Do NOT use: pomegranate, wine, bread, candle, horse, forest (these are too generic).
-   DO use invented or specific substitutes: "sun-bloom traded offworld," "a cut of thornbeast," "the candlewick burned blue as all wicks did near the threshold."
-   The world should feel like it has its own materials, foods, plants, animals.
+C. OBJECTS, TOOLS, MATERIALS, OR RESOURCES characteristic of the setting
+   Not "a knife" but "a veinglass blade." Not "lantern" but "a caged spark-moth."
 
-4. TEXTURE OVER SUMMARY
-   No narrator voice summarizing the protagonist's life or situation.
-   Enter mid-scene. The reader should feel dropped into an ongoing life.
+D. LOCATIONS OR PLACE-NAMES implying a larger system
+   Not "the city" but "the Lower Tithe." Not "downtown" but "the Ash Quarter."
+
+E. PROFESSIONS, ROLES, OR SOCIAL FUNCTIONS specific to this society
+   Not "guard" but "a Thread-warden." Not "doctor" but "a marrow-knitter."
+
+F. CUSTOMS, RITUALS, OR UNSPOKEN RULES
+   Behaviors characters perform without explaining why — greetings, gestures, taboos.
+
+G. ECONOMIC, CLASS, OR POWER DYNAMICS taken for granted
+   Debts owed to specific entities, trade goods unique to this world, labor systems implied.
+
+NON-NEGOTIABLE RULES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✗ Do NOT explain or define these elements
+✗ Do NOT italicize or spotlight them
+✗ Do NOT pause the narrative to clarify meaning
+✓ Treat them as ordinary facts of life to the characters
+✓ Let meaning be inferred through context alone
+
+SUBSTITUTION RULE (CRITICAL):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Whenever a GENERIC or EARTH-NEUTRAL noun appears (food, money, street, job, authority, weapon, transport, fruit, drink, law, crowd):
+→ REPLACE it with a world-specific equivalent unless realism explicitly requires otherwise.
+✗ "pomegranate" → ✓ "a heat-veined emberfruit from the Collective orchards"
+✗ "money" → ✓ "a handful of bone-chips" or "three unmarked debts"
+✗ "the police" → ✓ "the Silence" or "a Warden-cadre"
+
+QUALITY GATE (FAILURE CONDITION):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+If this opening scene could be relocated to modern Earth with only name changes, it has FAILED.
+If failure detected: REWRITE the opening scene entirely. Do NOT proceed. Do NOT ask for clarification.
+
+TEXTURE OVER SUMMARY:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+No narrator voice summarizing the protagonist's life or situation.
+Enter mid-scene. The reader should feel dropped into an ongoing life that existed before page one.
 
 ═══════════════════════════════════════════════════════
 FIRST SECTION RULES
@@ -6971,9 +7006,13 @@ ${liAppears ? '- The love interest may appear briefly or be hinted at — but no
 ═══════════════════════════════════════════════════════
 HARD-BANNED OPENINGS (DO NOT USE)
 ═══════════════════════════════════════════════════════
+These settings are BANNED as default openings UNLESS the world's power structure explicitly requires them:
 - Bustling marketplace with vendors calling out
 - Tavern or inn with a fire crackling
-- Any crowd scene as default "liveliness"
+- Neutral public squares as default "liveliness"
+- Any crowd scene used merely for atmosphere
+
+These are ALWAYS banned regardless of world:
 - Lone woman in solitude staring out a window
 - Rain-lashed windows or fog-wreathed atmospherics
 - Characters passively observing weather, mist, or shadow
