@@ -1377,6 +1377,9 @@ ANTI-HERO ENFORCEMENT:
       sexPushCount: 0,
       lastSexPushAt: null,
       veto: { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] },
+
+      // Romance Engine state for memory tracking across scenes
+      romanceState: null, // Initialized when story starts via StoryboundOrchestration.createRomanceState()
       quill: { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600 },
       quillCommittedThisTurn: false,
       quillIntent: '',
@@ -6122,7 +6125,9 @@ You are writing a story with the following 4-axis configuration:
 
     Current Intensity: ${state.intensity}
     (Clean: Romance only. Naughty: Tension/Heat. Erotic: Explicit. Dirty: Raw/Unfiltered).
-    
+
+    ${window.StoryboundOrchestration ? window.StoryboundOrchestration.buildRomanceEngineDirective({ eroticismLevel: state.intensity, isOpening: false }) : ''}
+
     RULES:
     1. Write in the selected POV.
     2. Respond to the player's actions naturally.
@@ -6144,6 +6149,12 @@ You are writing a story with the following 4-axis configuration:
     
     state.sysPrompt = sys;
     state.storyId = state.storyId || makeStoryId();
+
+    // Initialize Romance Engine state for this story
+    if (window.StoryboundOrchestration && window.StoryboundOrchestration.createRomanceState) {
+        state.romanceState = window.StoryboundOrchestration.createRomanceState(state.intensity);
+        console.log('[ROMANCE ENGINE] Initialized with mode:', state.romanceState.mode);
+    }
 
     // NOTE: Loader already shown in Phase 2 (before async work)
     // Screen transition, cover page, and loading already active
@@ -6179,10 +6190,20 @@ AUTHOR PRESENCE (5TH PERSON) - CRITICAL FOR OPENING:
     ];
     const selectedOpening = openingModes[Math.floor(Math.random() * openingModes.length)];
 
+    // Build Romance Engine directive for opening scene (includes diegetic world seeding)
+    const romanceEngineOpeningDirective = window.StoryboundOrchestration
+        ? window.StoryboundOrchestration.buildRomanceEngineDirective({
+            eroticismLevel: state.intensity,
+            isOpening: true
+          })
+        : '';
+
     const introPrompt = `Write the opening scene (approx 200 words).
 ${authorOpeningDirective}
 OPENING MODE: ${selectedOpening.mode}
 ${selectedOpening.directive}
+
+${romanceEngineOpeningDirective}
 
 FIRST SECTION RULES:
 - ${pacingRule}

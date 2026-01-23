@@ -9,6 +9,18 @@
  * Storybound's multi-model AI architecture.
  *
  * =============================================================================
+ * ROMANCE ENGINE INTEGRATION
+ * =============================================================================
+ *
+ * The Romance Engine is integrated into the orchestration flow to ensure:
+ * - Mode-appropriate pacing (CASUAL, STANDARD, HIGH-INTENSITY)
+ * - Core romance rules enforcement (asymmetrical want, power dynamics, etc.)
+ * - Private language and memory gravity tracking
+ * - Self-validation before output
+ *
+ * See /api/romance-engine.js for full specification.
+ *
+ * =============================================================================
  * WHY THIS ARCHITECTURE EXISTS (DO NOT COLLAPSE)
  * =============================================================================
  *
@@ -38,6 +50,17 @@
  *
  * =============================================================================
  */
+
+// =============================================================================
+// ROMANCE ENGINE IMPORT
+// =============================================================================
+
+const {
+  buildRomanceEngineDirective,
+  createRomanceState,
+  mapIntensityToRomanceMode,
+  ROMANCE_MODES
+} = require('./romance-engine');
 
 // =============================================================================
 // MODEL ALLOWLISTS — PINNED VERSIONS (NO AUTO-UPGRADES)
@@ -365,8 +388,9 @@ function shouldCallSexRenderer(esd, gateEnforcement) {
 /**
  * Orchestration state for a single story generation cycle.
  * Tracks the three-phase flow: Author → Renderer → Integration
+ * Includes Romance Engine state for pacing and memory tracking.
  */
-function createOrchestrationState() {
+function createOrchestrationState(eroticismLevel = 'Naughty') {
   return {
     phase: 'AUTHOR_PASS',  // AUTHOR_PASS | RENDER_PASS | INTEGRATION_PASS
     authorOutput: null,     // ChatGPT's initial output
@@ -377,7 +401,12 @@ function createOrchestrationState() {
     rendererCalled: false,  // Whether specialist was invoked
     rendererFailed: false,  // Whether specialist failed
     fateStumbled: false,    // Whether Fate Stumbled was triggered
-    errors: []              // Accumulated errors
+    errors: [],             // Accumulated errors
+
+    // Romance Engine state
+    romanceMode: mapIntensityToRomanceMode(eroticismLevel),
+    romanceState: createRomanceState(eroticismLevel),
+    isOpeningScene: false   // Set to true for first scene
   };
 }
 
@@ -535,9 +564,18 @@ async function orchestrateStoryGeneration({
   fateCard,
   callChatGPT,        // Function to call ChatGPT
   callSpecialist,     // Function to call specialist renderer
-  onPhaseChange       // Callback for UI updates
+  onPhaseChange,      // Callback for UI updates
+  isOpeningScene = false, // Romance Engine: is this the opening scene?
+  romanceState = null     // Romance Engine: persistent state across scenes
 }) {
-  const state = createOrchestrationState();
+  const state = createOrchestrationState(requestedEroticism);
+  state.isOpeningScene = isOpeningScene;
+
+  // Use provided romance state or the freshly created one
+  if (romanceState) {
+    state.romanceState = romanceState;
+    state.romanceMode = romanceState.mode;
+  }
 
   // ==========================================================================
   // PRE-FLIGHT: Enforce Monetization Gates
@@ -571,13 +609,20 @@ async function orchestrateStoryGeneration({
       playerAction,
       playerDialogue,
       fateCard,
-      gateEnforcement: state.gateEnforcement
+      gateEnforcement: state.gateEnforcement,
+      romanceState: state.romanceState,
+      isOpeningScene: state.isOpeningScene
     });
 
     const authorResult = await callChatGPT(authorPrompt, 'PRIMARY_AUTHOR');
 
     state.authorOutput = authorResult.storyText;
     state.esd = authorResult.esd || null;
+
+    // Record romance metadata if present (for memory gravity tracking)
+    if (authorResult.romanceMetadata && state.romanceState) {
+      state.romanceState.recordScene(authorResult.romanceMetadata);
+    }
 
   } catch (err) {
     state.errors.push(`Author Pass failed: ${err.message}`);
@@ -683,7 +728,11 @@ async function orchestrateStoryGeneration({
     gateEnforcement: state.gateEnforcement,
     rendererUsed: state.rendererCalled && !state.rendererFailed,
     fateStumbled: state.fateStumbled,
-    errors: state.errors
+    errors: state.errors,
+
+    // Romance Engine state for persistence across scenes
+    romanceState: state.romanceState,
+    romanceMode: state.romanceMode
   };
 }
 
@@ -694,14 +743,25 @@ async function orchestrateStoryGeneration({
 /**
  * Build the prompt for ChatGPT's Author Pass.
  * This prompt instructs ChatGPT on its exclusive responsibilities.
+ * Includes Romance Engine directives for proper pacing and tension.
  */
 function buildAuthorPrompt({
   storyContext,
   playerAction,
   playerDialogue,
   fateCard,
-  gateEnforcement
+  gateEnforcement,
+  romanceState = null,
+  isOpeningScene = false
 }) {
+  // Build Romance Engine directive
+  const romanceDirective = romanceState
+    ? romanceState.getDirective(isOpeningScene)
+    : buildRomanceEngineDirective({
+        eroticismLevel: gateEnforcement.effectiveEroticism,
+        isOpening: isOpeningScene
+      });
+
   return {
     systemPrompt: `You are the PRIMARY AUTHOR for Storybound.
 
@@ -719,6 +779,8 @@ MONETIZATION CONSTRAINTS (NON-NEGOTIABLE):
 - Completion Allowed: ${gateEnforcement.completionAllowed}
 - Cliffhanger Required: ${gateEnforcement.cliffhangerRequired}
 
+${romanceDirective}
+
 If an intimacy scene occurs at Erotic or Dirty level, you MUST generate an Erotic Scene Directive (ESD) in your response. The ESD will be passed to a specialist renderer.
 
 OUTPUT FORMAT:
@@ -726,7 +788,13 @@ Return a JSON object with:
 {
   "storyText": "The narrative text for this beat",
   "intimacyOccurs": boolean,
-  "esd": { ... } or null
+  "esd": { ... } or null,
+  "romanceMetadata": {
+    "newPhrase": null or "shared phrase introduced",
+    "tensionMoment": null or "description of key tension",
+    "unspoken": null or "thing left unsaid",
+    "powerShift": null or { "from": "character", "to": "character", "trigger": "what caused it" }
+  }
 }`,
     userPrompt: `Story Context: ${storyContext}
 Player Action: ${playerAction}
@@ -825,5 +893,11 @@ module.exports = {
 
   // Prompt builders
   buildAuthorPrompt,
-  buildIntegrationPrompt
+  buildIntegrationPrompt,
+
+  // Romance Engine (re-exported for convenience)
+  buildRomanceEngineDirective,
+  createRomanceState,
+  mapIntensityToRomanceMode,
+  ROMANCE_MODES
 };

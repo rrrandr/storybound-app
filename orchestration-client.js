@@ -100,13 +100,325 @@
   };
 
   // ===========================================================================
+  // ROMANCE ENGINE (FRONTEND MIRROR)
+  // ===========================================================================
+  /**
+   * The Romance Engine ensures emotionally specific, world-bound, non-generic
+   * romantic narratives with proper pacing based on intensity.
+   *
+   * See /api/romance-engine.js for the authoritative server-side implementation.
+   */
+
+  const ROMANCE_MODES = {
+    CASUAL: {
+      name: 'Casual',
+      description: 'Light, playful, restrained',
+      intensityMapping: ['Clean'],
+      constraints: {
+        touch: 'light',
+        flirtation: 'over fixation',
+        sceneLength: 'shorter',
+        humor: 'encouraged',
+        physicality: 'implied, not lingered on',
+        tension: 'minimal',
+        payoff: 'quick resolution allowed'
+      }
+    },
+    STANDARD: {
+      name: 'Standard',
+      description: 'Slow-burn, tension-forward',
+      intensityMapping: ['Naughty', 'Erotic'],
+      constraints: {
+        touch: 'sustained tension',
+        flirtation: 'denial and restraint',
+        sceneLength: 'standard',
+        humor: 'permitted as deflection',
+        physicality: 'gradual escalation',
+        tension: 'foregrounded',
+        payoff: 'delayed, earned'
+      }
+    },
+    HIGH_INTENSITY: {
+      name: 'High-Intensity',
+      description: 'Charged, visceral, erotic-leaning',
+      intensityMapping: ['Dirty'],
+      constraints: {
+        touch: 'body awareness before thought',
+        flirtation: 'heat and proximity',
+        sceneLength: 'extended when warranted',
+        humor: 'rare, tension-breaking only',
+        physicality: 'explicit but purposeful',
+        tension: 'desire creates conflict, not release',
+        payoff: 'power shifts are sharper and more dangerous'
+      }
+    }
+  };
+
+  /**
+   * Map eroticism level to romance mode.
+   */
+  function mapIntensityToRomanceMode(eroticismLevel) {
+    for (const [modeKey, mode] of Object.entries(ROMANCE_MODES)) {
+      if (mode.intensityMapping.includes(eroticismLevel)) {
+        return modeKey;
+      }
+    }
+    return 'STANDARD';
+  }
+
+  /**
+   * Generate mode-specific behavior directives.
+   */
+  function generateModeDirectives(mode) {
+    const directives = {
+      CASUAL: `
+CASUAL MODE ACTIVE:
+- Light touch in all interactions
+- Flirtation over fixation
+- Shorter scenes, quicker beats
+- Humor and ease are welcome
+- Physicality implied, not lingered on
+- Romantic tension is a whisper, not a shout`,
+
+      STANDARD: `
+STANDARD MODE ACTIVE:
+- Slow burn pacing required
+- Sustained tension across scenes
+- Denial and restraint drive the narrative
+- Gradual escalation only
+- Emotional stakes must be foregrounded
+- Payoff is earned, not given`,
+
+      HIGH_INTENSITY: `
+HIGH-INTENSITY MODE ACTIVE:
+- Body awareness precedes thought
+- Heat, proximity, involuntary reactions dominate
+- Language may be explicit but must be purposeful
+- Desire creates conflict, not release
+- Power shifts are sharper and more dangerous
+- Visceral, charged, erotic-leaning without being gratuitous`
+    };
+
+    return directives[mode] || directives.STANDARD;
+  }
+
+  /**
+   * Build the complete Romance Engine directive for injection into prompts.
+   */
+  function buildRomanceEngineDirective({
+    eroticismLevel,
+    isOpening = false,
+    privateLanguage = null,
+    memoryContext = null
+  }) {
+    const romanceMode = mapIntensityToRomanceMode(eroticismLevel);
+    const modeConfig = ROMANCE_MODES[romanceMode];
+
+    let directive = `
+================================================================================
+ROMANCE ENGINE ACTIVE — MODE: ${modeConfig.name.toUpperCase()}
+================================================================================
+
+${generateModeDirectives(romanceMode)}
+
+--------------------------------------------------------------------------------
+CORE ROMANCE RULES (NON-NEGOTIABLE):
+--------------------------------------------------------------------------------
+
+1. EMOTIONAL POV FILTER
+   All description must be filtered through: desire, resistance, longing, or unease.
+   Neutral description is forbidden.
+
+2. ASYMMETRICAL WANT
+   The romantic leads must:
+   - Want different things
+   - Fear different losses
+   - Misread the same moment differently
+   Harmony kills romance. Misalignment creates it.
+
+3. POWER MICRO-DYNAMICS
+   Every interaction must contain a subtle power question:
+   - Who risks more?
+   - Who withholds?
+   - Who controls timing or knowledge?
+   Power should shift, often mid-scene.
+
+4. SUBTEXT OVER DECLARATION
+   Romantic meaning should appear through:
+   silence, deflection, irritation, humor, timing, physical proximity.
+   Declarations are rare and destabilizing.
+`;
+
+    // Opening-specific rules
+    if (isOpening) {
+      directive += `
+--------------------------------------------------------------------------------
+DIEGETIC WORLD SEEDING (OPENING SCENE):
+--------------------------------------------------------------------------------
+
+The opening MUST include:
+- At least 6 world-specific details
+- From at least 3 of these categories:
+  * Slang or idioms
+  * Institutions or power structures
+  * Customs, taboos, or rules
+  * Objects or materials unique to the world
+  * Professions or social roles
+  * Place-names implying a larger system
+
+Rules:
+- Do NOT explain these details
+- Do NOT spotlight them
+- Treat them as ordinary life
+- If the opening could be moved to another world with only name changes, REWRITE IT
+
+`;
+    }
+
+    // Private language context
+    if (privateLanguage && privateLanguage.length > 0) {
+      directive += `
+--------------------------------------------------------------------------------
+PRIVATE LANGUAGE (ACTIVE):
+--------------------------------------------------------------------------------
+
+Shared phrases in this story: ${privateLanguage.join(', ')}
+
+Rules:
+- Reference these naturally when appropriate
+- Allow meaning to deepen with each use
+- NEVER explain why they matter
+- This language is a seal, not a signal
+
+`;
+    }
+
+    // Memory gravity context
+    if (memoryContext) {
+      directive += `
+--------------------------------------------------------------------------------
+MEMORY AS GRAVITY (ACTIVE THREADS):
+--------------------------------------------------------------------------------
+
+${memoryContext.unspoken ? `Unspoken things: ${memoryContext.unspoken.join('; ')}` : ''}
+${memoryContext.debts ? `Emotional debts: ${memoryContext.debts.join('; ')}` : ''}
+
+Rules:
+- Echo these forward without explicit recap
+- Let them influence choices and reactions
+- Romance deepens through remembered tension
+
+`;
+    }
+
+    // Self-validation directive
+    directive += `
+--------------------------------------------------------------------------------
+SELF-VALIDATION (MANDATORY, SILENT):
+--------------------------------------------------------------------------------
+
+Before finalizing output, internally verify:
+${isOpening ? '- Does the opening seed a distinct world without exposition?' : ''}
+- Is the romance driven by misalignment, not agreement?
+- Is desire shown through action, not explanation?
+- Does the pacing match the selected mode?
+- Would this feel interchangeable with another story? (answer should be NO)
+If any verification fails, revise before output.
+Do not mention this validation in the output.
+`;
+
+    // Prohibitions
+    directive += `
+--------------------------------------------------------------------------------
+PROHIBITIONS:
+--------------------------------------------------------------------------------
+
+${isOpening ? `- No generic openings (markets, taverns, neutral spaces) unless world-required
+- No transplantable scenes` : ''}
+- No neutral narration
+- No technique explanations
+- No instant emotional payoff
+- Never explain process to reader
+- Never spotlight world-building details
+- Never use generic romantic tropes without subversion
+
+--------------------------------------------------------------------------------
+FINAL DIRECTIVE:
+--------------------------------------------------------------------------------
+
+Generate romance that feels:
+- Inevitable
+- Specific
+- Charged
+- Impossible to relocate
+
+Apply this system fully and silently.
+================================================================================
+`;
+
+    return directive;
+  }
+
+  /**
+   * Create a romance state tracker for persistent memory across scenes.
+   */
+  function createRomanceState(initialEroticismLevel) {
+    return {
+      mode: mapIntensityToRomanceMode(initialEroticismLevel),
+      eroticismLevel: initialEroticismLevel,
+      sceneCount: 0,
+      privateLanguage: [],
+      memoryContext: {
+        unspoken: [],
+        debts: [],
+        tensionMoments: [],
+        powerShifts: []
+      },
+
+      updateEroticismLevel(newLevel) {
+        this.eroticismLevel = newLevel;
+        this.mode = mapIntensityToRomanceMode(newLevel);
+      },
+
+      recordScene(sceneData) {
+        this.sceneCount++;
+        if (sceneData.newPhrase) {
+          this.privateLanguage.push(sceneData.newPhrase);
+        }
+        if (sceneData.unspoken) {
+          this.memoryContext.unspoken.push(sceneData.unspoken);
+        }
+        if (sceneData.emotionalDebt) {
+          this.memoryContext.debts.push(sceneData.emotionalDebt);
+        }
+        if (sceneData.tensionMoment) {
+          this.memoryContext.tensionMoments.push(sceneData.tensionMoment);
+        }
+        if (sceneData.powerShift) {
+          this.memoryContext.powerShifts.push(sceneData.powerShift);
+        }
+      },
+
+      getDirective(isOpening = false) {
+        return buildRomanceEngineDirective({
+          eroticismLevel: this.eroticismLevel,
+          isOpening,
+          privateLanguage: this.privateLanguage.length > 0 ? this.privateLanguage : null,
+          memoryContext: (this.memoryContext.unspoken.length > 0 || this.memoryContext.debts.length > 0)
+            ? this.memoryContext : null
+        });
+      }
+    };
+  }
+
+  // ===========================================================================
   // ORCHESTRATION STATE
   // ===========================================================================
 
   /**
    * Create a fresh orchestration state for a story generation cycle.
    */
-  function createOrchestrationState() {
+  function createOrchestrationState(eroticismLevel = 'Naughty') {
     return {
       phase: 'INIT',
       authorOutput: null,
@@ -123,7 +435,11 @@
         authorPassMs: 0,
         renderPassMs: 0,
         integrationPassMs: 0
-      }
+      },
+      // Romance Engine state
+      romanceMode: mapIntensityToRomanceMode(eroticismLevel),
+      romanceState: createRomanceState(eroticismLevel),
+      isOpeningScene: false
     };
   }
 
@@ -964,6 +1280,13 @@ dialogue: <elevated dialogue>`;
     enforceMonetizationGates,
     validateESD,
     createOrchestrationState,
+
+    // Romance Engine
+    buildRomanceEngineDirective,
+    createRomanceState,
+    mapIntensityToRomanceMode,
+    generateModeDirectives,
+    ROMANCE_MODES: Object.freeze({ ...ROMANCE_MODES }),
 
     // Configuration (read-only)
     CONFIG: Object.freeze({ ...CONFIG }),
