@@ -151,6 +151,261 @@ window.config = window.config || {
   window.sbDumpAnalytics = () => JSON.parse(localStorage.getItem(SB_ANALYTICS_KEY) || "[]");
 
   // =========================
+  // EXIT INTENT FEEDBACK SYSTEM
+  // =========================
+  const ExitIntentFeedback = (function() {
+    const SESSION_KEY = 'sb_exit_intent_shown';
+    const FEEDBACK_KEY = 'sb_exit_feedback_v1';
+
+    let hasShown = false;
+    let isStoryActive = false;
+    let lastScrollY = 0;
+    let scrollUpCount = 0;
+    let cursorExitVelocity = 0;
+    let lastMouseY = 0;
+    let lastMouseTime = 0;
+
+    // Check if already shown this session
+    function wasShownThisSession() {
+      return sessionStorage.getItem(SESSION_KEY) === 'true' || hasShown;
+    }
+
+    function markAsShown() {
+      hasShown = true;
+      sessionStorage.setItem(SESSION_KEY, 'true');
+    }
+
+    // Show the prompt
+    function show() {
+      if (wasShownThisSession() || !isStoryActive) return;
+
+      const prompt = document.getElementById('exitIntentPrompt');
+      if (!prompt) return;
+
+      markAsShown();
+      prompt.classList.remove('hidden');
+
+      console.log('[EXIT INTENT] Feedback prompt shown');
+    }
+
+    // Hide the prompt
+    function hide() {
+      const prompt = document.getElementById('exitIntentPrompt');
+      if (prompt) {
+        prompt.classList.add('hidden');
+      }
+    }
+
+    // Log feedback with story context
+    function logFeedback(reason, freeText) {
+      try {
+        const raw = localStorage.getItem(FEEDBACK_KEY);
+        const data = raw ? JSON.parse(raw) : [];
+
+        const feedback = {
+          reason,
+          freeText: freeText || null,
+          ts: Date.now(),
+          iso: new Date().toISOString(),
+          context: {
+            storyId: state?.storyId || null,
+            world: state?.picks?.world || null,
+            genre: state?.picks?.genre || null,
+            intensity: state?.intensity || null,
+            pov: state?.picks?.pov || null,
+            tone: state?.picks?.tone || null,
+            dynamic: state?.picks?.dynamic || null,
+            turnCount: state?.turnCount || 0,
+            sceneNumber: parseInt(document.getElementById('sceneNumber')?.textContent?.match(/\d+/)?.[0] || '1')
+          }
+        };
+
+        data.push(feedback);
+
+        // Keep last 100 feedback entries
+        if (data.length > 100) data.shift();
+
+        localStorage.setItem(FEEDBACK_KEY, JSON.stringify(data));
+        sbLog('exit_intent_feedback', { reason, hasComment: !!freeText });
+
+        console.log('[EXIT INTENT] Feedback logged:', feedback);
+      } catch (e) {
+        console.warn('[EXIT INTENT] Failed to log feedback:', e);
+      }
+    }
+
+    // Show acknowledgment and allow navigation
+    function showAck() {
+      const content = document.querySelector('.exit-intent-content');
+      const ack = document.getElementById('exitIntentAck');
+
+      if (content) content.style.display = 'none';
+      if (ack) ack.classList.remove('hidden');
+
+      // Auto-hide after brief acknowledgment
+      setTimeout(() => hide(), 1500);
+    }
+
+    // Handle option selection
+    function handleSelection() {
+      const selected = document.querySelector('input[name="exitReason"]:checked');
+      if (!selected) return;
+
+      const freeText = document.getElementById('exitIntentFreeText')?.value?.trim() || '';
+
+      logFeedback(selected.value, freeText);
+      showAck();
+    }
+
+    // Detection: Rapid cursor movement toward top
+    function handleMouseMove(e) {
+      if (wasShownThisSession() || !isStoryActive) return;
+
+      const now = Date.now();
+      const deltaY = lastMouseY - e.clientY;
+      const deltaTime = now - lastMouseTime;
+
+      if (deltaTime > 0 && deltaTime < 100) {
+        cursorExitVelocity = deltaY / deltaTime;
+
+        // Rapid upward movement toward top of viewport
+        if (cursorExitVelocity > 2 && e.clientY < 100) {
+          show();
+        }
+      }
+
+      lastMouseY = e.clientY;
+      lastMouseTime = now;
+    }
+
+    // Detection: Scroll-up spike after reading
+    function handleScroll() {
+      if (wasShownThisSession() || !isStoryActive) return;
+
+      const currentScrollY = window.scrollY;
+      const deltaY = lastScrollY - currentScrollY;
+
+      // Significant upward scroll (> 200px in one go)
+      if (deltaY > 200) {
+        scrollUpCount++;
+
+        // Multiple rapid scroll-ups suggest leaving
+        if (scrollUpCount >= 2) {
+          show();
+        }
+      } else if (deltaY < -50) {
+        // Reset count on significant downward scroll
+        scrollUpCount = 0;
+      }
+
+      lastScrollY = currentScrollY;
+    }
+
+    // Detection: Tab blur during reading
+    function handleVisibilityChange() {
+      if (wasShownThisSession() || !isStoryActive) return;
+
+      if (document.hidden) {
+        // Only show on blur if story has progressed
+        if (state?.turnCount >= 2) {
+          show();
+        }
+      }
+    }
+
+    // Detection: Back navigation intent (beforeunload)
+    function handleBeforeUnload(e) {
+      if (wasShownThisSession() || !isStoryActive) return;
+
+      // Note: Modern browsers limit what we can do here
+      // The prompt should already be visible if other triggers fired
+      show();
+    }
+
+    // Initialize event listeners
+    function init() {
+      // Dismiss button
+      const dismissBtn = document.getElementById('exitIntentDismiss');
+      if (dismissBtn) {
+        dismissBtn.addEventListener('click', hide);
+      }
+
+      // Option selection (immediate submit on selection)
+      const options = document.getElementById('exitIntentOptions');
+      if (options) {
+        options.addEventListener('change', (e) => {
+          if (e.target.type === 'radio') {
+            // Small delay to allow optional free text
+            setTimeout(handleSelection, 300);
+          }
+        });
+      }
+
+      // Free text submission on Enter
+      const freeText = document.getElementById('exitIntentFreeText');
+      if (freeText) {
+        freeText.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSelection();
+          }
+        });
+      }
+
+      // Detection listeners
+      document.addEventListener('mousemove', handleMouseMove, { passive: true });
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
+      console.log('[EXIT INTENT] System initialized');
+    }
+
+    // Activate when story screen is shown
+    function activateForStory() {
+      isStoryActive = true;
+      scrollUpCount = 0;
+      lastScrollY = window.scrollY;
+      console.log('[EXIT INTENT] Activated for story');
+    }
+
+    // Deactivate when leaving story screen
+    function deactivate() {
+      isStoryActive = false;
+      hide();
+    }
+
+    // Reset for new story
+    function reset() {
+      hasShown = false;
+      sessionStorage.removeItem(SESSION_KEY);
+      scrollUpCount = 0;
+      cursorExitVelocity = 0;
+    }
+
+    return {
+      init,
+      show,
+      hide,
+      activateForStory,
+      deactivate,
+      reset,
+      wasShownThisSession,
+      getFeedback: () => JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]')
+    };
+  })();
+
+  // Initialize exit intent on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ExitIntentFeedback.init);
+  } else {
+    ExitIntentFeedback.init();
+  }
+
+  // Expose for debugging
+  window.sbExitIntentFeedback = ExitIntentFeedback.getFeedback;
+
+  // =========================
   // STORY PAGINATION SYSTEM
   // =========================
   const StoryPagination = (function() {
@@ -1626,6 +1881,13 @@ ANTI-HERO ENFORCEMENT:
       // Initialize fate hand system when entering setup screen
       if(id === 'setup') {
           initFateHandSystem();
+      }
+
+      // Exit Intent Feedback: activate when entering game, deactivate otherwise
+      if (id === 'game') {
+          ExitIntentFeedback.activateForStory();
+      } else {
+          ExitIntentFeedback.deactivate();
       }
   };
 
@@ -3346,6 +3608,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.archetype = { primary: 'BEAUTIFUL_RUIN', modifier: null };
     // Clear pagination system
     StoryPagination.clear();
+    // Reset exit intent feedback for new story
+    ExitIntentFeedback.reset();
     // Re-render archetype cards to show default selection
     if (typeof renderArchetypeCards === 'function') renderArchetypeCards();
     if (typeof updateArchetypeSelectionSummary === 'function') updateArchetypeSelectionSummary();

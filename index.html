@@ -1011,6 +1011,53 @@
 
 </div>
 
+<!-- EXIT INTENT FEEDBACK PROMPT (Non-blocking, once per session) -->
+<div id="exitIntentPrompt" class="exit-intent-prompt hidden">
+  <button id="exitIntentDismiss" class="exit-intent-dismiss" title="Dismiss">&times;</button>
+  <div class="exit-intent-content">
+    <h4 class="exit-intent-title">Before you go — quick check?</h4>
+    <p class="exit-intent-question">What made you want to leave this story?</p>
+    <div class="exit-intent-options" id="exitIntentOptions">
+      <label class="exit-intent-option">
+        <input type="radio" name="exitReason" value="too_slow">
+        <span>Too slow / boring</span>
+      </label>
+      <label class="exit-intent-option">
+        <input type="radio" name="exitReason" value="repetitive">
+        <span>Felt repetitive</span>
+      </label>
+      <label class="exit-intent-option">
+        <input type="radio" name="exitReason" value="confusing">
+        <span>Didn't make sense</span>
+      </label>
+      <label class="exit-intent-option">
+        <input type="radio" name="exitReason" value="wrong_tone">
+        <span>Tone wasn't what I expected</span>
+      </label>
+      <label class="exit-intent-option">
+        <input type="radio" name="exitReason" value="not_intense">
+        <span>Not intense enough</span>
+      </label>
+      <label class="exit-intent-option">
+        <input type="radio" name="exitReason" value="too_intense">
+        <span>Too intense / uncomfortable</span>
+      </label>
+      <label class="exit-intent-option">
+        <input type="radio" name="exitReason" value="generic">
+        <span>Felt generic</span>
+      </label>
+      <label class="exit-intent-option">
+        <input type="radio" name="exitReason" value="liked_it">
+        <span>I liked it — just leaving</span>
+      </label>
+    </div>
+    <textarea id="exitIntentFreeText" class="exit-intent-freetext" placeholder="Anything else? (optional)"></textarea>
+  </div>
+  <div id="exitIntentAck" class="exit-intent-ack hidden">
+    <p>Got it. That helps.</p>
+  </div>
+</div>
+
 <script src="fatecards.js"></script>
 <script src="orchestration-client.js"></script>
 <script src="app.js"></script>
