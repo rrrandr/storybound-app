@@ -262,11 +262,35 @@ ${toneStyle.forbidden}
 No characters, no faces, no bodies, no clutter. Single cohesive composition suitable for a modern literary bookshelf. No gibberish text, no watermarks.`;
 }
 
-function wrapScenePrompt(basePrompt) {
-  // Scene visualization: Atmosphere, characters, environment - NO text
-  return `${basePrompt}
+// ============================================================
+// SCENE_VISUALIZE_SYSTEM (A. HARD SEPARATION FROM COVER)
+// ============================================================
+// This is a scene illustration INSIDE the story world, NOT a book cover.
+// Scene images ARE allowed: visible faces, partial/full bodies, eye contact,
+// world-appropriate costumes, clear genre signaling.
+// Scene images MUST avoid: glamour poses, beauty photography, generic stock
+// smiles, audience-facing posing.
 
-Style: Cinematic illustration, atmospheric lighting, painterly.
+function wrapScenePrompt(basePrompt) {
+  return `SCENE ILLUSTRATION (NOT A BOOK COVER):
+This is a narrative scene from inside the story world. Illustrate the moment as if capturing a film still.
+
+${basePrompt}
+
+SCENE RULES:
+- Characters MAY have visible faces, expressions, and eye contact when narratively appropriate
+- Bodies may be partially or fully visible as the scene requires
+- Costumes and environment must match the story world (fantasy = fantasy attire, etc.)
+- Emotional intent and character dynamics should be clear
+- Composition should feel cinematic and immersive
+
+AVOID:
+- Glamour/beauty photography poses
+- Generic stock-photo smiles
+- Direct audience-facing poses (unless character is addressing someone)
+- Modern fashion in non-modern worlds
+
+Style: Cinematic illustration, atmospheric lighting, painterly, narrative moment.
 DO NOT include any visible text, captions, titles, logos, or watermarks.`;
 }
 

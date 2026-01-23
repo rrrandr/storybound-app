@@ -8136,8 +8136,8 @@ WORLD STYLE CONSTRAINT (${world.toUpperCase()}):
           return;
       }
 
-      // Block if all attempts exhausted (attempts >= 2)
-      if (remaining <= 0) {
+      // Block if all attempts exhausted (attempts >= 2) - only for re-visualize
+      if (isRe && remaining <= 0) {
           if(modal) modal.classList.remove('hidden');
           if(errDiv) {
               errDiv.textContent = "You've used all visualize attempts for this scene.";
@@ -8147,9 +8147,13 @@ WORLD STYLE CONSTRAINT (${world.toUpperCase()}):
           return;
       }
 
-      // INCREMENT ATTEMPTS NOW (before generation starts - closes Cancel loophole)
-      const currentAttempt = incrementSceneAttempts(sceneKey);
-      const isLastAttempt = currentAttempt >= 2;
+      // B. FIX: Only increment attempts on RE-VISUALIZE, not initial visualize
+      // Initial visualize is free; re-visualize costs from the 2-credit budget
+      let currentAttempt = budget.attempts || 0;
+      if (isRe) {
+          currentAttempt = incrementSceneAttempts(sceneKey);
+      }
+      const isLastAttempt = isRe && currentAttempt >= 2;
 
       _vizInFlight = true;
       _vizCancelled = false;
@@ -8164,9 +8168,9 @@ WORLD STYLE CONSTRAINT (${world.toUpperCase()}):
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
 
-      // Show last-chance warning if this is attempt 2
-      if (isLastAttempt && errDiv) {
-          errDiv.textContent = '⚠️ This is your last chance to visualize this scene.';
+      // Show last-chance warning if this is the last re-visualize attempt
+      if (isRe && isLastAttempt && errDiv) {
+          errDiv.textContent = '⚠️ This is your last chance to re-visualize this scene.';
           errDiv.style.color = 'var(--gold)';
           errDiv.classList.remove('hidden');
       }
