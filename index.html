@@ -108,8 +108,10 @@
     </div>
 
     <div class="viz-controls">
-        <select id="vizModel" disabled style="opacity:0.6;">
-            <option value="perchance" selected>Perchance</option>
+        <select id="vizModel">
+            <option value="gemini" selected>Gemini (Primary)</option>
+            <option value="openai">OpenAI</option>
+            <option value="replicate">Replicate</option>
         </select>
         <button class="small-btn" id="vizRetryBtn" onclick="window.visualize(true)">Re-Visualize</button>
         <button onclick="window.insertImage()">Insert</button>

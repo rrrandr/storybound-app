@@ -29,6 +29,60 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   var IMAGE_PROXY_URL = '/api/image';
 
   // =============================================================================
+  // IMAGE PROVIDER STATUS MODEL — NON-DESTRUCTIVE FAILURE HANDLING
+  // =============================================================================
+  /**
+   * Provider status tracks temporary failures without permanent degradation.
+   * - AVAILABLE: Provider can be used
+   * - TEMP_UNAVAILABLE: Provider failed recently but will retry on next request
+   *
+   * CRITICAL: A single failure does NOT remove provider from chain.
+   * TEMP_UNAVAILABLE auto-resets when generateImageWithFallback is called.
+   */
+  const PROVIDER_STATUS = {
+    AVAILABLE: 'AVAILABLE',
+    TEMP_UNAVAILABLE: 'TEMP_UNAVAILABLE'
+  };
+
+  // Provider state (resets each request - non-destructive)
+  const imageProviderState = {
+    gemini: { status: PROVIDER_STATUS.AVAILABLE, lastError: null },
+    openai: { status: PROVIDER_STATUS.AVAILABLE, lastError: null },
+    replicate: { status: PROVIDER_STATUS.AVAILABLE, lastError: null }
+  };
+
+  /**
+   * Reset all providers to AVAILABLE status.
+   * Called at start of each generateImageWithFallback request.
+   */
+  function resetProviderStatus() {
+    for (const provider in imageProviderState) {
+      imageProviderState[provider].status = PROVIDER_STATUS.AVAILABLE;
+      // Keep lastError for debugging, but mark as available
+    }
+  }
+
+  /**
+   * Mark provider as temporarily unavailable (this request only).
+   * Does NOT permanently disable the provider.
+   */
+  function markProviderTempUnavailable(providerName, error) {
+    const key = providerName.toLowerCase();
+    if (imageProviderState[key]) {
+      imageProviderState[key].status = PROVIDER_STATUS.TEMP_UNAVAILABLE;
+      imageProviderState[key].lastError = error?.message || 'Unknown error';
+    }
+  }
+
+  /**
+   * Get current provider status (for UI/debugging).
+   */
+  function getProviderStatus(providerName) {
+    const key = providerName.toLowerCase();
+    return imageProviderState[key] || { status: PROVIDER_STATUS.AVAILABLE, lastError: null };
+  }
+
+  // =============================================================================
   // AI ORCHESTRATION CONFIGURATION
   // =============================================================================
   /**
@@ -7601,9 +7655,18 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
 
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
   // All image generation MUST route through this function
-  // Provider order: Replicate FLUX Schnell → Flux → Perchance → Gemini → OpenAI
+  // Provider order: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
   // Default to 16:9 landscape for cinematic presentation
+  //
+  // NON-DESTRUCTIVE FAILURE HANDLING:
+  // - A single provider failure does NOT remove it from future requests
+  // - TEMP_UNAVAILABLE status resets automatically on each request
+  // - All providers remain in UI dropdown regardless of failures
   async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize' }) {
+      // NON-DESTRUCTIVE: Reset all provider statuses at start of each request
+      // This ensures a single failure never permanently disables a provider
+      resetProviderStatus();
+
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
 
@@ -7628,7 +7691,7 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
       const basePrompt = sanitizedPrompt;
 
       // STABLE PROVIDER CHAIN: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
-      // Perchance removed for stability. Replicate failures fail silently.
+      // All providers remain available regardless of individual failures
       const providerChain = [
           // GEMINI PRIMARY - reliable, sanitized prompts
           { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
@@ -7641,14 +7704,24 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
       let lastError = null;
 
       // FALLBACK CHAIN: Try each provider in order
-      for (const provider of providerChain) {
+      for (let i = 0; i < providerChain.length; i++) {
+          const provider = providerChain[i];
+          const isLastProvider = i === providerChain.length - 1;
+
           try {
               logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
               const imageUrl = await provider.fn(provider.prompt, size);
 
               // Handle null returns from safe providers (Gemini/OpenAI)
               if (!imageUrl) {
+                  // Mark as temp unavailable (non-destructive - resets next request)
+                  markProviderTempUnavailable(provider.name, new Error('returned null'));
                   logImageAttempt(provider.name, context, provider.prompt, 'FAILED', 'returned null');
+
+                  // DEV-ONLY: Log fallback with non-destructive notice
+                  if (IS_DEV_MODE && !isLastProvider) {
+                      console.log(`[IMAGE PROVIDER FALLBACK] ${provider.name} failed, falling back (non-destructive)`);
+                  }
                   continue; // Try next provider
               }
 
@@ -7656,7 +7729,14 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
               return imageUrl;
           } catch (e) {
               lastError = e;
+              // Mark as temp unavailable (non-destructive - resets next request)
+              markProviderTempUnavailable(provider.name, e);
               logImageAttempt(provider.name, context, provider.prompt, 'FAILED', e.message);
+
+              // DEV-ONLY: Log fallback with non-destructive notice
+              if (IS_DEV_MODE && !isLastProvider) {
+                  console.log(`[IMAGE PROVIDER FALLBACK] ${provider.name} failed, falling back (non-destructive)`);
+              }
               // Continue to next provider in chain
           }
       }
