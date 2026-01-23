@@ -164,6 +164,63 @@ const MONETIZATION_GATES = {
 };
 
 // =============================================================================
+// AUTHORITATIVE FEATURE FLAGS — SERVER-CONTROLLED (NON-NEGOTIABLE)
+// =============================================================================
+
+/**
+ * Server-authoritative feature flags.
+ * These flags control critical system behavior and MUST be validated server-side.
+ * Client may receive read-only copies but CANNOT override.
+ *
+ * All gated behaviors MUST check these flags before execution.
+ */
+const AUTHORITATIVE_FLAGS = {
+  // Orchestration flow control
+  ENABLE_ORCHESTRATION: true,         // Full 3-phase orchestration (Author → Renderer → Integration)
+  ENABLE_SPECIALIST_RENDERER: true,   // Allow specialist (Grok) renderer calls
+  ENABLE_FATE_ELEVATION: true,        // Allow GPT-5.2 linguistic elevation pass
+
+  // Provider chain configuration (ordered priority)
+  IMAGE_PROVIDER_CHAIN: ['gemini', 'openai', 'replicate'],
+
+  // Timeout configuration (milliseconds)
+  API_TIMEOUT_MS: 60000,              // Default API timeout
+  RENDERER_TIMEOUT_MS: 60000,         // Specialist renderer timeout
+  IMAGE_TIMEOUT_MS: 60000,            // Image generation timeout
+  REPLICATE_TIMEOUT_MS: 125000,       // Replicate inference (longer)
+
+  // Safety constraints
+  REQUIRE_ESD_FOR_EXPLICIT: true,     // Require valid ESD for Erotic/Dirty content
+  ENFORCE_COMPLETION_GATES: true,     // Enforce tier-based completion restrictions
+  VALIDATE_MODEL_ALLOWLISTS: true     // Enforce model allowlists per role
+};
+
+/**
+ * Validate that a feature flag allows the gated behavior.
+ * Throws in dev mode if flag is disabled but behavior is attempted.
+ */
+function validateFeatureFlag(flagName, context = '') {
+  const flagValue = AUTHORITATIVE_FLAGS[flagName];
+  if (flagValue === undefined) {
+    throw new Error(`Unknown authoritative flag: ${flagName}`);
+  }
+  if (!flagValue) {
+    const message = `Feature "${flagName}" is disabled. ${context}`;
+    // Always throw for disabled flags - this is enforcement, not assertion
+    throw new Error(message);
+  }
+  return true;
+}
+
+/**
+ * Get current authoritative flag configuration.
+ * Returns read-only snapshot for client synchronization.
+ */
+function getAuthoritativeFlags() {
+  return { ...AUTHORITATIVE_FLAGS };
+}
+
+// =============================================================================
 // EROTIC SCENE DIRECTIVE (ESD) SCHEMA
 // =============================================================================
 
@@ -510,7 +567,8 @@ async function processFateCard(card, callGPT51, callGPT52 = null) {
   };
 
   // Phase 2: GPT-5.2 Linguistic Elevation (OPTIONAL)
-  if (callGPT52) {
+  // Only attempt if flag is enabled AND callback is provided
+  if (callGPT52 && AUTHORITATIVE_FLAGS.ENABLE_FATE_ELEVATION) {
     try {
       const elevatedOutput = await callGPT52(structuralOutput);
 
@@ -562,6 +620,14 @@ async function orchestrateStoryGeneration({
   onPhaseChange       // Callback for UI updates
 }) {
   const state = createOrchestrationState();
+
+  // ==========================================================================
+  // PRE-FLIGHT: Validate Authoritative Feature Flags
+  // ==========================================================================
+  validateFeatureFlag('ENABLE_ORCHESTRATION', 'Full orchestration flow is disabled');
+  if (AUTHORITATIVE_FLAGS.VALIDATE_MODEL_ALLOWLISTS) {
+    // Model validation will occur at each callChatGPT/callSpecialist invocation
+  }
 
   // ==========================================================================
   // PRE-FLIGHT: Enforce Monetization Gates
@@ -625,6 +691,9 @@ async function orchestrateStoryGeneration({
   const renderDecision = shouldCallSexRenderer(state.esd, state.gateEnforcement);
 
   if (renderDecision.shouldCall) {
+    // Validate authoritative flag before specialist renderer execution
+    validateFeatureFlag('ENABLE_SPECIALIST_RENDERER', 'Specialist renderer is disabled by server configuration');
+
     state.phase = 'RENDER_PASS';
     if (onPhaseChange) onPhaseChange('RENDER_PASS');
 
@@ -844,6 +913,11 @@ module.exports = {
   // Core orchestration
   orchestrateStoryGeneration,
   createOrchestrationState,
+
+  // Authoritative feature flags (server-controlled)
+  AUTHORITATIVE_FLAGS,
+  validateFeatureFlag,
+  getAuthoritativeFlags,
 
   // Model validation
   validateModelForRole,

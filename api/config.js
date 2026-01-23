@@ -1,3 +1,6 @@
+// Import authoritative flags from orchestrator
+const { getAuthoritativeFlags, MONETIZATION_GATES } = require('./orchestrator.js');
+
 export default function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -7,6 +10,9 @@ export default function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
+
+  // Get server-authoritative flags (read-only for client)
+  const authoritativeFlags = getAuthoritativeFlags();
 
   res.setHeader("Content-Type", "application/json");
   res.status(200).json({
@@ -20,5 +26,9 @@ export default function handler(req, res) {
     has_PROXY_URL: !!process.env.PROXY_URL,
     has_IMAGE_PROXY_URL: !!process.env.IMAGE_PROXY_URL,
     has_XAI_API_KEY: !!process.env.XAI_API_KEY,
+    // Server-authoritative flags (client receives read-only)
+    authoritativeFlags: authoritativeFlags,
+    // Monetization tier configuration (client receives read-only)
+    monetizationGates: MONETIZATION_GATES
   });
 }

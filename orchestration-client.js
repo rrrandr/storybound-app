@@ -38,33 +38,100 @@
   'use strict';
 
   // ===========================================================================
-  // CONFIGURATION
+  // CONFIGURATION (READ-ONLY MIRRORS — SERVER IS AUTHORITATIVE)
   // ===========================================================================
 
+  /**
+   * Client configuration mirrors.
+   * These values are synced from server on initialization.
+   * Client CANNOT override server-authoritative flags.
+   */
   const CONFIG = {
     // API endpoints
     CHATGPT_PROXY: '/api/chatgpt-proxy',
     SPECIALIST_PROXY: '/api/proxy',
 
-    // Default models
+    // Default models (mirrors server — read-only)
     PRIMARY_AUTHOR_MODEL: 'gpt-4o-mini',           // ChatGPT: DSP, normalization, veto, story logic, ESD
     RENDERER_MODEL: 'grok-4-fast-non-reasoning',   // Grok: Visual bible, visualization prompts ONLY
     SEX_RENDERER_MODEL: 'grok-4-fast-reasoning',   // Grok: Explicit scenes (ESD-gated, entitlement-checked)
     FATE_STRUCTURAL_MODEL: 'gpt-4o-mini',
     FATE_ELEVATION_MODEL: 'gpt-4o-mini',
 
-    // Model allowlists (must match server-side)
+    // Model allowlists (mirrors server — read-only, validated server-side)
     ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4'],
     ALLOWED_RENDERER_MODELS: ['grok-4-fast-non-reasoning'],
     ALLOWED_SEX_RENDERER_MODELS: ['grok-4-fast-reasoning'],
 
-    // Feature flags
+    // Feature flags (mirrors server — read-only, enforced server-side)
     ENABLE_SPECIALIST_RENDERER: true,
     ENABLE_FATE_ELEVATION: true,
 
-    // Timeouts
-    API_TIMEOUT_MS: 60000
+    // Timeouts (mirrors server — read-only)
+    API_TIMEOUT_MS: 60000,
+
+    // Sync state
+    _serverSynced: false,
+    _serverAuthoritativeFlags: null
   };
+
+  // ===========================================================================
+  // SERVER SYNC — AUTHORITATIVE FLAG SYNCHRONIZATION
+  // ===========================================================================
+
+  /**
+   * Sync client configuration from server-authoritative flags.
+   * Called during initialization to ensure client mirrors server state.
+   * Server is the source of truth — client values are read-only mirrors.
+   */
+  async function syncFromServer() {
+    try {
+      const res = await fetch('/api/config');
+      if (!res.ok) {
+        console.warn('[ORCHESTRATION] Failed to sync from server, using defaults');
+        return false;
+      }
+      const serverConfig = await res.json();
+
+      if (serverConfig.authoritativeFlags) {
+        // Store server-authoritative flags
+        CONFIG._serverAuthoritativeFlags = serverConfig.authoritativeFlags;
+
+        // Sync feature flags from server
+        if (serverConfig.authoritativeFlags.ENABLE_SPECIALIST_RENDERER !== undefined) {
+          CONFIG.ENABLE_SPECIALIST_RENDERER = serverConfig.authoritativeFlags.ENABLE_SPECIALIST_RENDERER;
+        }
+        if (serverConfig.authoritativeFlags.ENABLE_FATE_ELEVATION !== undefined) {
+          CONFIG.ENABLE_FATE_ELEVATION = serverConfig.authoritativeFlags.ENABLE_FATE_ELEVATION;
+        }
+        if (serverConfig.authoritativeFlags.API_TIMEOUT_MS !== undefined) {
+          CONFIG.API_TIMEOUT_MS = serverConfig.authoritativeFlags.API_TIMEOUT_MS;
+        }
+
+        CONFIG._serverSynced = true;
+        console.log('[ORCHESTRATION] Synced authoritative flags from server');
+      }
+
+      return true;
+    } catch (err) {
+      console.warn('[ORCHESTRATION] Server sync failed:', err.message);
+      return false;
+    }
+  }
+
+  /**
+   * Validate that a feature flag allows the gated behavior.
+   * Checks both client mirror and server-authoritative value.
+   * Returns false if flag is disabled (does not throw — client is advisory).
+   */
+  function isFeatureEnabled(flagName) {
+    // Check server-authoritative value if synced
+    if (CONFIG._serverAuthoritativeFlags && CONFIG._serverAuthoritativeFlags[flagName] !== undefined) {
+      return CONFIG._serverAuthoritativeFlags[flagName];
+    }
+    // Fall back to client mirror
+    return CONFIG[flagName] ?? false;
+  }
 
   // ===========================================================================
   // MONETIZATION GATES (MUST MATCH SERVER-SIDE)
@@ -532,7 +599,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
      */
 
     const shouldCallRenderer = (
-      CONFIG.ENABLE_SPECIALIST_RENDERER &&
+      isFeatureEnabled('ENABLE_SPECIALIST_RENDERER') &&
       state.esd &&
       ['Erotic', 'Dirty'].includes(state.esd.eroticismLevel) &&
       !state.gateEnforcement.wasDowngraded
@@ -574,7 +641,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       }
     } else {
       console.log('[ORCHESTRATION] Specialist renderer not called:',
-        !CONFIG.ENABLE_SPECIALIST_RENDERER ? 'disabled' :
+        !isFeatureEnabled('ENABLE_SPECIALIST_RENDERER') ? 'disabled' :
         !state.esd ? 'no ESD' :
         state.gateEnforcement.wasDowngraded ? 'tier downgrade' :
         'eroticism level'
@@ -842,8 +909,8 @@ Enforce consent and safety. Respect intensity ceilings.`;
       elevationUsed: false
     };
 
-    // Phase 2: GPT-5.2 Elevation Pass (OPTIONAL)
-    if (CONFIG.ENABLE_FATE_ELEVATION) {
+    // Phase 2: GPT-5.2 Elevation Pass (OPTIONAL — server-controlled)
+    if (isFeatureEnabled('ENABLE_FATE_ELEVATION')) {
       try {
         const elevationPrompt = `Elevate this Fate Card text with more evocative, literary language.
 
@@ -965,11 +1032,22 @@ dialogue: <elevated dialogue>`;
     validateESD,
     createOrchestrationState,
 
-    // Configuration (read-only)
+    // Server sync (call on initialization)
+    syncFromServer,
+    isFeatureEnabled,
+
+    // Configuration (read-only mirrors — server is authoritative)
     CONFIG: Object.freeze({ ...CONFIG }),
     MONETIZATION_GATES: Object.freeze({ ...MONETIZATION_GATES })
   };
 
-  console.log('[ORCHESTRATION] Storybound AI Orchestration Client initialized');
+  // Auto-sync from server on load
+  syncFromServer().then(synced => {
+    if (synced) {
+      console.log('[ORCHESTRATION] Storybound AI Orchestration Client initialized (server-synced)');
+    } else {
+      console.log('[ORCHESTRATION] Storybound AI Orchestration Client initialized (using defaults)');
+    }
+  });
 
 })(window);
