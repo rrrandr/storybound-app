@@ -40,6 +40,30 @@
  */
 
 // =============================================================================
+// DEV-MODE ASSERTION — HARD ENFORCEMENT RAIL
+// =============================================================================
+
+/**
+ * Dev-mode assertion for authoritative flag enforcement.
+ * Throws immediately in development if a gated behavior would execute
+ * while the authoritative flag disallows it.
+ *
+ * Production: No-op (silent)
+ * Development: Hard throw on violation
+ */
+function devAssertGate(condition, flagName, attemptedBehavior) {
+  const isDev = process.env.NODE_ENV !== 'production';
+  if (isDev && !condition) {
+    throw new Error(
+      `[DEV ASSERTION FAILED] Authoritative flag violation.\n` +
+      `Flag: ${flagName}\n` +
+      `Attempted: ${attemptedBehavior}\n` +
+      `This behavior is gated and the flag disallows it.`
+    );
+  }
+}
+
+// =============================================================================
 // MODEL ALLOWLISTS — PINNED VERSIONS (NO AUTO-UPGRADES)
 // =============================================================================
 
@@ -604,6 +628,18 @@ async function orchestrateStoryGeneration({
     state.phase = 'RENDER_PASS';
     if (onPhaseChange) onPhaseChange('RENDER_PASS');
 
+    // DEV ASSERTION: Verify all gate conditions are satisfied before renderer call
+    devAssertGate(
+      !state.gateEnforcement.wasDowngraded,
+      'gateEnforcement.wasDowngraded',
+      `Calling specialist renderer after eroticism was downgraded from "${state.gateEnforcement.requestedEroticism}" to "${state.gateEnforcement.effectiveEroticism}"`
+    );
+    devAssertGate(
+      ['Erotic', 'Dirty'].includes(state.esd?.eroticismLevel),
+      'ESD.eroticismLevel',
+      `Calling specialist renderer for non-qualifying eroticism level "${state.esd?.eroticismLevel}"`
+    );
+
     // Validate ESD before sending to renderer
     const esdValidation = validateESD(state.esd);
     if (!esdValidation.valid) {
@@ -616,6 +652,13 @@ async function orchestrateStoryGeneration({
           state.esd.completionAllowed = false;
           state.esd.hardStops.push('monetization_gate_completion_forbidden');
         }
+
+        // DEV ASSERTION: Final check before actual renderer invocation
+        devAssertGate(
+          state.gateEnforcement.completionAllowed || !state.esd.completionAllowed,
+          'completionAllowed gate',
+          `Renderer ESD has completionAllowed=true but gate forbids completion`
+        );
 
         state.rendererOutput = await callSpecialist(state.esd, 'SEX_RENDERER');
         state.rendererCalled = true;

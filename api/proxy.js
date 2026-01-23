@@ -79,6 +79,30 @@ function validateGrokModel(model) {
 }
 
 // =============================================================================
+// DEV-MODE ASSERTION — HARD ENFORCEMENT RAIL
+// =============================================================================
+
+/**
+ * Dev-mode assertion for authoritative flag enforcement.
+ * Throws immediately in development if a gated behavior would execute
+ * while the authoritative flag disallows it.
+ *
+ * Production: No-op (silent)
+ * Development: Hard throw on violation
+ */
+function devAssertGate(condition, flagName, attemptedBehavior) {
+  const isDev = process.env.NODE_ENV !== 'production';
+  if (isDev && !condition) {
+    throw new Error(
+      `[DEV ASSERTION FAILED] Authoritative flag violation.\n` +
+      `Flag: ${flagName}\n` +
+      `Attempted: ${attemptedBehavior}\n` +
+      `This behavior is gated and the flag disallows it.`
+    );
+  }
+}
+
+// =============================================================================
 // MAIN HANDLER
 // =============================================================================
 
@@ -197,6 +221,30 @@ export default async function handler(req, res) {
     // ==========================================================================
     // CALL XAI API
     // ==========================================================================
+
+    // DEV ASSERTION: Verify all gate conditions before specialist renderer execution
+    devAssertGate(
+      ALLOWED_GROK_MODELS.includes(selectedModel),
+      'ALLOWED_GROK_MODELS',
+      `Calling xAI with disallowed model "${selectedModel}"`
+    );
+    devAssertGate(
+      !AUTHOR_ROLES.includes(role),
+      'AUTHOR_ROLES exclusion',
+      `Calling Grok specialist endpoint with author role "${role}"`
+    );
+    if (role === 'SEX_RENDERER' || role === 'SPECIALIST_RENDERER') {
+      devAssertGate(
+        esd && esd.eroticismLevel,
+        'ESD.eroticismLevel',
+        `Calling SEX_RENDERER without valid ESD eroticismLevel`
+      );
+      devAssertGate(
+        ['Erotic', 'Dirty'].includes(esd?.eroticismLevel),
+        'ESD.eroticismLevel qualifier',
+        `Calling SEX_RENDERER for non-qualifying eroticism "${esd?.eroticismLevel}"`
+      );
+    }
 
     const xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
