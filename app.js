@@ -133,6 +133,388 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
                       new URLSearchParams(window.location.search).get('dev') === '1';
 
   // =============================================================================
+  // NOVELTY TRACKING SYSTEM — GENRE-SPECIFIC REPETITION GUARDS
+  // =============================================================================
+  // Session-scoped memory of recent story anchors (general + genre-specific)
+  // Computes novelty score and injects negative constraints for new stories
+  // =============================================================================
+
+  // Genre-specific forbidden repetition patterns
+  const GENRE_FORBIDDEN_PATTERNS = {
+    // Billionaire / Modern Romance
+    Billionaire: {
+      archetypes: [
+        'aloof billionaire', 'cold billionaire', 'distant billionaire',
+        'shadowy CEO', 'ruthless CEO', 'mysterious CEO',
+        'controlling board', 'hostile council', 'corporate elite'
+      ],
+      settings: [
+        'glass tower', 'penthouse', 'corporate headquarters', 'corner office',
+        'executive suite', 'rooftop bar', 'luxury apartment', 'private jet',
+        'charity gala', 'board room', 'manhattan skyline'
+      ],
+      dynamics: [
+        'contract relationship', 'contract marriage', 'fake engagement',
+        'hostile takeover romance', 'merger romance', 'corporate rivalry',
+        'inheritance power struggle', 'will contest', 'family fortune'
+      ]
+    },
+    // Fantasy / Witch / Folklore
+    Fantasy: {
+      archetypes: [
+        'hedge witch', 'village witch', 'forest witch',
+        'ruling council', 'elder coven', 'witch council',
+        'wardens', 'enforcers', 'guardians of the veil'
+      ],
+      settings: [
+        'enchanted grove', 'mystical glade', 'sacred clearing',
+        'witch quarter', 'magical district', 'hidden market',
+        'ancient tower', 'crumbling castle', 'haunted manor'
+      ],
+      dynamics: [
+        'forbidden magic', 'dark pact', 'blood oath',
+        'coven politics', 'magical inheritance', 'curse breaking',
+        'prophecy fulfillment', 'chosen one', 'destined mate'
+      ]
+    },
+    // Historical Romance
+    Historical: {
+      archetypes: [
+        'rakish duke', 'brooding earl', 'mysterious viscount',
+        'governess', 'lady\'s companion', 'wallflower heiress',
+        'scandal-touched widow', 'reformed rake'
+      ],
+      settings: [
+        'grand ballroom', 'country estate', 'london season',
+        'assembly room', 'morning room', 'hyde park'
+      ],
+      dynamics: [
+        'marriage of convenience', 'ton scandal', 'ruination',
+        'betrothal escape', 'inheritance clause', 'wager romance'
+      ]
+    },
+    // SciFi Romance
+    SciFi: {
+      archetypes: [
+        'stoic captain', 'rebel commander', 'AI consciousness',
+        'alien diplomat', 'smuggler with a heart', 'bounty hunter'
+      ],
+      settings: [
+        'space station', 'colony ship', 'alien planet',
+        'smuggler\'s den', 'command bridge', 'cryobay'
+      ],
+      dynamics: [
+        'forbidden species romance', 'mission complication',
+        'stowaway discovery', 'diplomatic incident', 'rescue mission'
+      ]
+    },
+    // Dystopia Romance
+    Dystopia: {
+      archetypes: [
+        'resistance leader', 'regime defector', 'underground operative',
+        'surveillance agent', 'propaganda minister', 'rebel medic'
+      ],
+      settings: [
+        'underground bunker', 'surveillance tower', 'black market',
+        'ration queue', 'propaganda center', 'restricted zone'
+      ],
+      dynamics: [
+        'forbidden love across factions', 'double agent romance',
+        'escape plot', 'revolutionary alliance', 'identity concealment'
+      ]
+    }
+  };
+
+  // Session-scoped story memory (max 3 stories)
+  const _storyNoveltyMemory = {
+    recentStories: [], // Array of { genre, world, anchors: { locations, factions, dynamics, genreSpecific } }
+    maxStories: 3
+  };
+
+  // Expose for dev inspection
+  window._storyNoveltyMemory = _storyNoveltyMemory;
+
+  // Live novelty state for HUD
+  const _noveltyState = {
+    score: 100,
+    warnings: [],
+    lastComputed: null
+  };
+  window._noveltyState = _noveltyState;
+
+  /**
+   * Extract anchors from story content for novelty tracking.
+   * Called when a story is being completed/restarted.
+   */
+  function extractStoryAnchors(storyContent, picks) {
+    const content = (storyContent || '').toLowerCase();
+    const genre = picks?.genre || 'Unknown';
+    const world = picks?.world || 'Modern';
+
+    // Extract location names (capitalized multi-word phrases)
+    const locationPatterns = [
+      /(?:in|at|to|from|near|within)\s+(?:the\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})/g,
+      /(?:district|quarter|grove|village|city|tower|manor|estate|station)\s+(?:of\s+)?([A-Z][a-z]+)/gi
+    ];
+    const locations = new Set();
+    locationPatterns.forEach(pattern => {
+      const matches = storyContent?.matchAll(pattern) || [];
+      for (const match of matches) {
+        if (match[1] && match[1].length > 3) locations.add(match[1].toLowerCase());
+      }
+    });
+
+    // Extract faction/institution names
+    const factionPatterns = [
+      /(?:the\s+)?(council|coven|board|order|guild|syndicate|house|family|clan)\s+(?:of\s+)?([A-Z][a-z]+)?/gi,
+      /([A-Z][a-z]+)\s+(?:corporation|industries|enterprises|foundation)/gi
+    ];
+    const factions = new Set();
+    factionPatterns.forEach(pattern => {
+      const matches = storyContent?.matchAll(pattern) || [];
+      for (const match of matches) {
+        const name = (match[2] || match[1] || '').toLowerCase();
+        if (name && name.length > 2) factions.add(name);
+      }
+    });
+
+    // Extract power dynamics from content
+    const dynamicKeywords = [
+      'contract', 'merger', 'takeover', 'inheritance', 'prophecy', 'curse',
+      'pact', 'oath', 'rebellion', 'resistance', 'surveillance', 'forbidden'
+    ];
+    const dynamics = new Set();
+    dynamicKeywords.forEach(keyword => {
+      if (content.includes(keyword)) dynamics.add(keyword);
+    });
+
+    // Extract genre-specific anchors
+    const genreSpecific = new Set();
+    const forbidden = GENRE_FORBIDDEN_PATTERNS[genre] || GENRE_FORBIDDEN_PATTERNS[world] || {};
+
+    // Check for archetype usage
+    (forbidden.archetypes || []).forEach(arch => {
+      if (content.includes(arch.toLowerCase())) genreSpecific.add(arch);
+    });
+
+    // Check for setting usage
+    (forbidden.settings || []).forEach(setting => {
+      if (content.includes(setting.toLowerCase())) genreSpecific.add(setting);
+    });
+
+    // Check for dynamic usage
+    (forbidden.dynamics || []).forEach(dyn => {
+      if (content.includes(dyn.toLowerCase())) genreSpecific.add(dyn);
+    });
+
+    return {
+      genre,
+      world,
+      worldSubtype: picks?.worldSubtype || null,
+      tone: picks?.tone || null,
+      dynamic: picks?.dynamic || null,
+      anchors: {
+        locations: Array.from(locations),
+        factions: Array.from(factions),
+        dynamics: Array.from(dynamics),
+        genreSpecific: Array.from(genreSpecific)
+      }
+    };
+  }
+
+  /**
+   * Record completed story anchors to novelty memory.
+   * Called before starting a new story.
+   */
+  function recordStoryToNoveltyMemory(storyData) {
+    if (!storyData || !storyData.anchors) return;
+
+    _storyNoveltyMemory.recentStories.unshift(storyData);
+
+    // Keep only last N stories
+    if (_storyNoveltyMemory.recentStories.length > _storyNoveltyMemory.maxStories) {
+      _storyNoveltyMemory.recentStories.pop();
+    }
+
+    console.log('[NOVELTY] Recorded story anchors:', storyData.genre,
+      'Locations:', storyData.anchors.locations.length,
+      'Factions:', storyData.anchors.factions.length,
+      'Genre-specific:', storyData.anchors.genreSpecific.length);
+  }
+
+  /**
+   * Compute novelty score for current story against recent stories.
+   * Returns 0-100 score and list of warnings.
+   */
+  function computeNoveltyScore(currentPicks) {
+    const warnings = [];
+    let score = 100;
+
+    if (_storyNoveltyMemory.recentStories.length === 0) {
+      // First story - always novel
+      _noveltyState.score = 100;
+      _noveltyState.warnings = [];
+      _noveltyState.lastComputed = new Date().toISOString();
+      return { score: 100, warnings: [] };
+    }
+
+    const currentGenre = currentPicks?.genre || 'Unknown';
+    const currentWorld = currentPicks?.world || 'Modern';
+    const currentSubtype = currentPicks?.worldSubtype || null;
+    const currentDynamic = currentPicks?.dynamic || null;
+
+    // Check against each recent story (weighted by recency)
+    _storyNoveltyMemory.recentStories.forEach((story, index) => {
+      const weight = 1 - (index * 0.2); // Most recent = 1.0, older = 0.8, 0.6
+
+      // Same genre penalty (-15 per occurrence)
+      if (story.genre === currentGenre) {
+        score -= Math.round(15 * weight);
+        warnings.push(`Same genre as story ${index + 1} ago: ${currentGenre}`);
+      }
+
+      // Same world penalty (-10)
+      if (story.world === currentWorld) {
+        score -= Math.round(10 * weight);
+      }
+
+      // Same subtype penalty (-15) - very repetitive
+      if (currentSubtype && story.worldSubtype === currentSubtype) {
+        score -= Math.round(15 * weight);
+        warnings.push(`Same world subtype: ${currentSubtype}`);
+      }
+
+      // Same dynamic penalty (-10)
+      if (currentDynamic && story.dynamic === currentDynamic) {
+        score -= Math.round(10 * weight);
+        warnings.push(`Same relationship dynamic: ${currentDynamic}`);
+      }
+    });
+
+    // Check genre-specific trope reuse
+    const forbidden = GENRE_FORBIDDEN_PATTERNS[currentGenre] || GENRE_FORBIDDEN_PATTERNS[currentWorld] || {};
+    const recentGenreAnchors = new Set();
+
+    _storyNoveltyMemory.recentStories.forEach(story => {
+      if (story.genre === currentGenre || story.world === currentWorld) {
+        story.anchors.genreSpecific.forEach(anchor => recentGenreAnchors.add(anchor));
+      }
+    });
+
+    // Each reused genre trope is a -5 penalty
+    if (recentGenreAnchors.size > 0) {
+      const tropePenalty = Math.min(recentGenreAnchors.size * 5, 20);
+      score -= tropePenalty;
+      if (recentGenreAnchors.size > 2) {
+        warnings.push(`${recentGenreAnchors.size} genre tropes reused from recent stories`);
+      }
+    }
+
+    // Structural similarity check (same world + same genre + same dynamic)
+    const structuralMatches = _storyNoveltyMemory.recentStories.filter(story =>
+      story.world === currentWorld &&
+      story.genre === currentGenre &&
+      story.dynamic === currentDynamic
+    );
+
+    if (structuralMatches.length > 0) {
+      score -= 20;
+      warnings.push('Structural match: same world + genre + dynamic as recent story');
+    }
+
+    // Clamp score
+    score = Math.max(0, Math.min(100, score));
+
+    // Update global state
+    _noveltyState.score = score;
+    _noveltyState.warnings = warnings;
+    _noveltyState.lastComputed = new Date().toISOString();
+
+    return { score, warnings };
+  }
+
+  /**
+   * Build negative constraints for story generation based on novelty memory.
+   * Returns string to inject into system prompt.
+   */
+  function buildNoveltyNegativeConstraints(currentPicks) {
+    if (_storyNoveltyMemory.recentStories.length === 0) {
+      return ''; // No constraints for first story
+    }
+
+    const constraints = [];
+    const currentGenre = currentPicks?.genre || 'Unknown';
+    const currentWorld = currentPicks?.world || 'Modern';
+
+    // Collect all recent anchors to avoid
+    const avoidLocations = new Set();
+    const avoidFactions = new Set();
+    const avoidDynamics = new Set();
+    const avoidGenreTropes = new Set();
+
+    _storyNoveltyMemory.recentStories.forEach(story => {
+      story.anchors.locations.forEach(loc => avoidLocations.add(loc));
+      story.anchors.factions.forEach(fac => avoidFactions.add(fac));
+      story.anchors.dynamics.forEach(dyn => avoidDynamics.add(dyn));
+
+      // Only avoid genre tropes from same genre/world
+      if (story.genre === currentGenre || story.world === currentWorld) {
+        story.anchors.genreSpecific.forEach(trope => avoidGenreTropes.add(trope));
+      }
+    });
+
+    if (avoidLocations.size > 0) {
+      constraints.push(`AVOID these location names from recent stories: ${Array.from(avoidLocations).slice(0, 10).join(', ')}`);
+    }
+
+    if (avoidFactions.size > 0) {
+      constraints.push(`AVOID these faction/institution names: ${Array.from(avoidFactions).slice(0, 8).join(', ')}`);
+    }
+
+    if (avoidGenreTropes.size > 0) {
+      constraints.push(`AVOID these overused tropes: ${Array.from(avoidGenreTropes).slice(0, 10).join(', ')}`);
+    }
+
+    // Add genre-specific guidance
+    const forbidden = GENRE_FORBIDDEN_PATTERNS[currentGenre] || GENRE_FORBIDDEN_PATTERNS[currentWorld];
+    if (forbidden) {
+      // Pick random alternatives to suggest freshness
+      const freshArchetypes = (forbidden.archetypes || []).filter(a => !avoidGenreTropes.has(a)).slice(0, 3);
+      const freshSettings = (forbidden.settings || []).filter(s => !avoidGenreTropes.has(s)).slice(0, 3);
+
+      if (freshArchetypes.length > 0 || freshSettings.length > 0) {
+        constraints.push(`For FRESH ${currentGenre} story, consider unexplored archetypes and settings instead of defaults.`);
+      }
+    }
+
+    if (constraints.length === 0) return '';
+
+    return `\n\n[NOVELTY GUARD - Avoid repetition from recent stories]\n${constraints.join('\n')}\n`;
+  }
+
+  /**
+   * DEV ASSERTION: Throws if novelty score is critically low.
+   * Only runs in dev mode.
+   */
+  function assertNoveltyScore(currentPicks) {
+    if (!IS_DEV_MODE) return;
+
+    const { score, warnings } = computeNoveltyScore(currentPicks);
+
+    if (score < 50) {
+      const errorMsg = `[NOVELTY ASSERTION FAILED] Score ${score}/100 is critically low!\nWarnings:\n- ${warnings.join('\n- ')}`;
+      console.error(errorMsg);
+      // Throw in dev to fail loudly
+      throw new Error(errorMsg);
+    }
+
+    if (score < 70 && warnings.length > 0) {
+      console.warn(`[NOVELTY WARNING] Score ${score}/100 - ${warnings.length} issues detected`);
+      warnings.forEach(w => console.warn(`  - ${w}`));
+    }
+  }
+
+  // =============================================================================
   // DEV HUD - FLOATING STATE INSPECTOR (DEV ONLY)
   // =============================================================================
   // Toggleable floating panel showing live Storybound state
@@ -264,6 +646,10 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           <div class="devHudLabel">Image / Visual Debug</div>
           <div id="devHudImage"></div>
         </div>
+        <div class="devHudSection">
+          <div class="devHudLabel">Novelty Guard</div>
+          <div id="devHudNovelty"></div>
+        </div>
       `;
       document.body.appendChild(hud);
 
@@ -347,6 +733,37 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           <div class="devHudRow"><span class="devHudKey">Provider:</span><span class="devHudValue">${imgState.lastProvider || '-'}</span></div>
           <div class="devHudRow"><span class="devHudKey">Fallback:</span><span class="devHudValue ${fallbackClass}">${imgState.fallbackOccurred ? 'YES' : 'No'}</span></div>
           <div class="devHudRow"><span class="devHudKey">Last Error:</span><span class="devHudValue ${errorClass}">${imgState.lastError ? imgState.lastError.substring(0, 30) : '-'}</span></div>
+        `;
+      }
+
+      // Novelty Guard
+      const noveltyEl = document.getElementById('devHudNovelty');
+      if (noveltyEl) {
+        const noveltyState = window._noveltyState || { score: 100, warnings: [] };
+        const memoryState = window._storyNoveltyMemory || { recentStories: [] };
+
+        // Recompute score if picks exist
+        if (state.picks && state.picks.world) {
+          computeNoveltyScore(state.picks);
+        }
+
+        // Determine score class
+        const score = noveltyState.score;
+        let scoreClass = 'success';
+        if (score < 70) scoreClass = 'error';
+        else if (score < 90) scoreClass = 'warn';
+
+        // Build warnings HTML
+        const warningsHtml = noveltyState.warnings.length > 0
+          ? noveltyState.warnings.slice(0, 3).map(w =>
+              `<div class="devHudRow"><span class="devHudKey" style="color:#f00;">⚠</span><span class="devHudValue error" style="font-size:9px;">${w.substring(0, 40)}</span></div>`
+            ).join('')
+          : '';
+
+        noveltyEl.innerHTML = `
+          <div class="devHudRow"><span class="devHudKey">NOVELTY SCORE:</span><span class="devHudValue ${scoreClass}" style="font-weight:bold;font-size:12px;">${score}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Stories in Memory:</span><span class="devHudValue">${memoryState.recentStories.length}/${memoryState.maxStories || 3}</span></div>
+          ${warningsHtml}
         `;
       }
     }
@@ -3852,6 +4269,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   window.restart = function(){
+    // NOVELTY GUARD: Record current story anchors before clearing
+    if (state.turnCount > 0 && state.picks && typeof StoryPagination !== 'undefined') {
+      const storyContent = StoryPagination.getAllContent();
+      if (storyContent && storyContent.length > 100) {
+        const anchors = extractStoryAnchors(storyContent, state.picks);
+        recordStoryToNoveltyMemory(anchors);
+      }
+    }
+
     if(state.mode === 'couple') window.coupleCleanup();
     state.mode = 'solo';
     clearCurrentStoryId();
@@ -6696,6 +7122,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
 
     // ========================================
+    // NOVELTY ASSERTION (DEV ONLY)
+    // Fails loudly if novelty score < 50
+    // ========================================
+    try {
+        assertNoveltyScore(state.picks);
+    } catch (noveltyError) {
+        // In dev mode, this throws - allow continuation after warning
+        console.error('[NOVELTY] Assertion failed but continuing:', noveltyError.message);
+        // Don't block story generation - just warn loudly
+    }
+
+    // ========================================
     // PHASE 2: SHOW LOADER IMMEDIATELY (sync)
     // ========================================
     window.showScreen('game');
@@ -6976,11 +7414,14 @@ AUTHOR PRESENCE (5TH PERSON) - CRITICAL FOR OPENING:
     ];
     const selectedOpening = openingModes[Math.floor(Math.random() * openingModes.length)];
 
+    // Build novelty negative constraints for opening
+    const openingNoveltyGuard = buildNoveltyNegativeConstraints(state.picks);
+
     const introPrompt = `Write the opening scene (approx 200 words).
 ${authorOpeningDirective}
 OPENING MODE: ${selectedOpening.mode}
 ${selectedOpening.directive}
-
+${openingNoveltyGuard}
 FIRST SECTION RULES:
 - ${pacingRule}
 - Focus on: World setup, hints at overall arc, the protagonist's past or situation.
@@ -9361,7 +9802,10 @@ FATE CARD ADAPTATION (CRITICAL):
           quillDirective = `NOTE: The user just committed a Quill edit. Honor the authorial intent.`;
       }
 
-      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n\nTURN INSTRUCTIONS: 
+      // Build NOVELTY directive (avoid repetition from recent stories)
+      const noveltyDirective = buildNoveltyNegativeConstraints(state.picks);
+
+      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${noveltyDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n\nTURN INSTRUCTIONS: 
       Story So Far: ...${context}
       Player Action: ${act}. 
       Player Dialogue: ${dia}. 
