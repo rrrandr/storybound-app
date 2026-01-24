@@ -57,6 +57,37 @@
  *
  * =============================================================================
  */
+// ======================================================
+// CONTINUOUS SPARKLE EMITTER — GLOBAL DEFINITIONS
+// ======================================================
+
+let _sparkleEmitterActive = false;
+let _continuousSparkleInterval = null;
+
+function startContinuousSparkles() {
+    if (_sparkleEmitterActive) return;
+    _sparkleEmitterActive = true;
+
+    _continuousSparkleInterval = setInterval(() => {
+        const mount = document.getElementById('cardMount');
+        const actInput = document.getElementById('actionInput');
+        if (!mount || !actInput) return;
+
+        // reuse existing golden flow if present
+        const selected = mount.querySelector('.fate-card.selected');
+        if (selected) {
+            triggerGoldenFlow(selected, actInput);
+        }
+    }, 600);
+}
+
+function stopContinuousSparkles() {
+    _sparkleEmitterActive = false;
+    if (_continuousSparkleInterval) {
+        clearInterval(_continuousSparkleInterval);
+        _continuousSparkleInterval = null;
+    }
+}
 
 (function(window){
     // Card Definitions - Base templates
