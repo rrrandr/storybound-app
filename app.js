@@ -129,7 +129,266 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   const IS_DEV_MODE = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production' ||
                       window.location.hostname === 'localhost' ||
-                      window.location.hostname === '127.0.0.1';
+                      window.location.hostname === '127.0.0.1' ||
+                      new URLSearchParams(window.location.search).get('dev') === '1';
+
+  // =============================================================================
+  // DEV HUD - FLOATING STATE INSPECTOR (DEV ONLY)
+  // =============================================================================
+  // Toggleable floating panel showing live Storybound state
+  // NEVER rendered in production - no side effects, read-only
+  // =============================================================================
+
+  // Image debug state (populated by image pipeline)
+  const _devImageState = {
+    lastIntent: null,
+    lastWorld: null,
+    lastEra: null,
+    lastProvider: null,
+    fallbackOccurred: false,
+    lastError: null
+  };
+
+  // Expose for image pipeline to update
+  window._devImageState = _devImageState;
+
+  // DEV HUD initialization (only in dev mode)
+  if (IS_DEV_MODE) {
+    let _devHudVisible = false;
+    let _devHudInterval = null;
+
+    function createDevHud() {
+      // Don't create if already exists
+      if (document.getElementById('devHud')) return;
+
+      // Create HUD container
+      const hud = document.createElement('div');
+      hud.id = 'devHud';
+      hud.innerHTML = `
+        <style>
+          #devHud {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 99999;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 10px;
+            line-height: 1.4;
+            color: #0f0;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 0;
+            max-width: 320px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            display: none;
+            user-select: text;
+          }
+          #devHud.visible { display: block; }
+          #devHudToggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 99998;
+            width: 24px;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          #devHudToggle:hover { background: rgba(0, 100, 0, 0.7); }
+          .devHudHeader {
+            background: #1a1a1a;
+            padding: 6px 10px;
+            border-bottom: 1px solid #333;
+            font-weight: bold;
+            color: #0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .devHudClose {
+            cursor: pointer;
+            color: #f00;
+            font-size: 14px;
+          }
+          .devHudSection {
+            padding: 8px 10px;
+            border-bottom: 1px solid #222;
+          }
+          .devHudSection:last-child { border-bottom: none; }
+          .devHudLabel {
+            color: #888;
+            font-size: 9px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+          }
+          .devHudRow {
+            display: flex;
+            justify-content: space-between;
+            margin: 2px 0;
+          }
+          .devHudKey { color: #aaa; }
+          .devHudValue { color: #0f0; text-align: right; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+          .devHudValue.warn { color: #ff0; }
+          .devHudValue.error { color: #f00; }
+          .devHudValue.success { color: #0f0; }
+        </style>
+        <div class="devHudHeader">
+          <span>DEV HUD</span>
+          <span class="devHudClose" onclick="window.toggleDevHud()">×</span>
+        </div>
+        <div class="devHudSection">
+          <div class="devHudLabel">Story Shape</div>
+          <div id="devHudStoryShape"></div>
+        </div>
+        <div class="devHudSection">
+          <div class="devHudLabel">Narrative State</div>
+          <div id="devHudNarrative"></div>
+        </div>
+        <div class="devHudSection">
+          <div class="devHudLabel">System Signals</div>
+          <div id="devHudSystem"></div>
+        </div>
+        <div class="devHudSection">
+          <div class="devHudLabel">Image / Visual Debug</div>
+          <div id="devHudImage"></div>
+        </div>
+      `;
+      document.body.appendChild(hud);
+
+      // Create toggle button
+      const toggle = document.createElement('div');
+      toggle.id = 'devHudToggle';
+      toggle.textContent = 'D';
+      toggle.title = 'Dev HUD (Ctrl+Shift+D)';
+      toggle.onclick = () => window.toggleDevHud();
+      document.body.appendChild(toggle);
+    }
+
+    function updateDevHud() {
+      if (!_devHudVisible) return;
+      if (typeof state === 'undefined') return;
+
+      // Story Shape
+      const storyShapeEl = document.getElementById('devHudStoryShape');
+      if (storyShapeEl) {
+        const picks = state.picks || {};
+        storyShapeEl.innerHTML = `
+          <div class="devHudRow"><span class="devHudKey">World:</span><span class="devHudValue">${picks.world || '-'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Subtype:</span><span class="devHudValue">${picks.worldSubtype || '-'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Genre:</span><span class="devHudValue">${picks.genre || '-'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Tone:</span><span class="devHudValue">${picks.tone || '-'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Intensity:</span><span class="devHudValue">${state.intensity || '-'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Dynamic:</span><span class="devHudValue">${picks.dynamic || '-'}</span></div>
+        `;
+      }
+
+      // Narrative State
+      const narrativeEl = document.getElementById('devHudNarrative');
+      if (narrativeEl) {
+        const allContent = typeof StoryPagination !== 'undefined' ? StoryPagination.getAllContent() : '';
+        const wordCount = allContent.replace(/<[^>]*>/g, ' ').split(/\s+/).filter(w => w.length > 0).length;
+        const targetWords = state.storyTargetWords || 10000;
+        const wordsRemaining = Math.max(0, targetWords - wordCount);
+        const arousalCeiling = state.intensity || 'Naughty';
+
+        narrativeEl.innerHTML = `
+          <div class="devHudRow"><span class="devHudKey">Word Count:</span><span class="devHudValue">${wordCount.toLocaleString()}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Target:</span><span class="devHudValue">${targetWords.toLocaleString()}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Remaining:</span><span class="devHudValue">${wordsRemaining.toLocaleString()}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Story Length:</span><span class="devHudValue">${state.storyLength || '-'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Arousal Ceiling:</span><span class="devHudValue">${arousalCeiling}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Turn Count:</span><span class="devHudValue">${state.turnCount || 0}</span></div>
+        `;
+      }
+
+      // System Signals
+      const systemEl = document.getElementById('devHudSystem');
+      if (systemEl) {
+        const archetype = state.archetype || {};
+        const activeLenses = [];
+        if (archetype.primary) activeLenses.push(archetype.primary);
+        if (archetype.modifier) activeLenses.push(archetype.modifier);
+
+        const guidedActive = typeof _guidedDestinyActive !== 'undefined' ? _guidedDestinyActive : false;
+        const dspUsingState = state.picks?.world ? 'Yes' : 'No';
+
+        systemEl.innerHTML = `
+          <div class="devHudRow"><span class="devHudKey">Mode:</span><span class="devHudValue">${state.mode || 'solo'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Character Lenses:</span><span class="devHudValue">${activeLenses.join(', ') || '-'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Guided Destiny:</span><span class="devHudValue ${guidedActive ? 'success' : ''}">${guidedActive ? 'ACTIVE' : 'Inactive'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">DSP Using State:</span><span class="devHudValue">${dspUsingState}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Access:</span><span class="devHudValue">${state.access || 'free'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Tier:</span><span class="devHudValue">${state.tier || 'free'}</span></div>
+        `;
+      }
+
+      // Image / Visual Debug
+      const imageEl = document.getElementById('devHudImage');
+      if (imageEl) {
+        const imgState = _devImageState || {};
+        const fallbackClass = imgState.fallbackOccurred ? 'warn' : '';
+        const errorClass = imgState.lastError ? 'error' : '';
+
+        imageEl.innerHTML = `
+          <div class="devHudRow"><span class="devHudKey">Last Intent:</span><span class="devHudValue">${imgState.lastIntent || '-'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">World+Era:</span><span class="devHudValue">${imgState.lastWorld || '-'}${imgState.lastEra ? ' / ' + imgState.lastEra : ''}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Provider:</span><span class="devHudValue">${imgState.lastProvider || '-'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Fallback:</span><span class="devHudValue ${fallbackClass}">${imgState.fallbackOccurred ? 'YES' : 'No'}</span></div>
+          <div class="devHudRow"><span class="devHudKey">Last Error:</span><span class="devHudValue ${errorClass}">${imgState.lastError ? imgState.lastError.substring(0, 30) : '-'}</span></div>
+        `;
+      }
+    }
+
+    window.toggleDevHud = function() {
+      const hud = document.getElementById('devHud');
+      if (!hud) {
+        createDevHud();
+        _devHudVisible = true;
+        document.getElementById('devHud').classList.add('visible');
+        _devHudInterval = setInterval(updateDevHud, 500);
+        updateDevHud();
+      } else {
+        _devHudVisible = !_devHudVisible;
+        hud.classList.toggle('visible', _devHudVisible);
+        if (_devHudVisible) {
+          _devHudInterval = setInterval(updateDevHud, 500);
+          updateDevHud();
+        } else if (_devHudInterval) {
+          clearInterval(_devHudInterval);
+          _devHudInterval = null;
+        }
+      }
+    };
+
+    // Hotkey: Ctrl+Shift+D
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        window.toggleDevHud();
+      }
+    });
+
+    // Create HUD on DOM ready (hidden by default)
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', createDevHud);
+    } else {
+      createDevHud();
+    }
+  }
+
+  // =============================================================================
 
   // Track pipeline badge (once per session)
   let _coverPipelineBadgeShown = false;
@@ -7426,6 +7685,15 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
       // DEV ASSERTION: Validate intensity matches tone expectations
       assertCoverIntensityMatch(intensity, tone);
 
+      // DEV HUD: Update image debug state for book cover
+      if (IS_DEV_MODE && window._devImageState) {
+          window._devImageState.lastIntent = 'book_cover';
+          window._devImageState.lastWorld = world;
+          window._devImageState.lastEra = era || worldSubtype || '-';
+          window._devImageState.fallbackOccurred = false;
+          window._devImageState.lastError = null;
+      }
+
       try {
           const res = await fetch(IMAGE_PROXY_URL, {
               method: 'POST',
@@ -8333,6 +8601,17 @@ WORLD CONSTRAINTS (MANDATORY):
 
       console.log(`[IMAGE] World guardrail: world=${world}, subtype=${worldSubtype}, isNonUrban=${isNonUrbanWorld(world, worldSubtype)}`);
 
+      // DEV HUD: Update image debug state
+      if (IS_DEV_MODE && window._devImageState) {
+          const eraInfo = getDefaultEraFromWorld(world, worldSubtype);
+          window._devImageState.lastIntent = isSetting ? 'setting' : 'visualize';
+          window._devImageState.lastWorld = world;
+          window._devImageState.lastEra = eraInfo.era;
+          window._devImageState.fallbackOccurred = false;
+          window._devImageState.lastError = null;
+          window._devImageState.lastProvider = null;
+      }
+
       // All providers now use world-constrained sanitized prompts for stability
       // Explicit content belongs in prose, not images
       const basePrompt = constrainedPrompt;
@@ -8378,6 +8657,12 @@ WORLD CONSTRAINTS (MANDATORY):
               }
 
               logImageAttempt(provider.name, context, provider.prompt, 'SUCCESS');
+
+              // DEV HUD: Record successful provider
+              if (IS_DEV_MODE && window._devImageState) {
+                  window._devImageState.lastProvider = provider.name;
+              }
+
               return imageUrl;
           } catch (e) {
               lastError = e;
@@ -8388,6 +8673,11 @@ WORLD CONSTRAINTS (MANDATORY):
               // DEV-ONLY: Log fallback with non-destructive notice
               if (IS_DEV_MODE && !isLastProvider) {
                   console.log(`[IMAGE PROVIDER FALLBACK] ${provider.name} failed, falling back (non-destructive)`);
+                  // DEV HUD: Record fallback occurred
+                  if (window._devImageState) {
+                      window._devImageState.fallbackOccurred = true;
+                      window._devImageState.lastError = e.message;
+                  }
               }
               // Continue to next provider in chain
           }
