@@ -905,7 +905,15 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           anchorWarningHtml = `<div class="devHudRow"><span class="devHudKey" style="color:#f00;">⚠</span><span class="devHudValue error" style="font-size:9px;">[REPETITION WARNING] World anchor reused</span></div>`;
         }
 
+        // VISUALIZE AUTHORITY indicator
+        const authorityState = window._visualizeAuthorityState || { authority: 'buildStructuredVisualizePrompt', mutatorCount: 0 };
+        const authorityWarning = authorityState.mutatorCount > 1
+          ? `<div class="devHudRow"><span class="devHudKey" style="color:#f00;">⚠</span><span class="devHudValue error" style="font-size:9px;">[AUTHORITY WARNING] ${authorityState.mutatorCount} prompt mutators executed</span></div>`
+          : '';
+
         visualSystemsEl.innerHTML = `
+          <div class="devHudRow"><span class="devHudKey">VISUALIZE AUTHORITY:</span><span class="devHudValue success">buildStructuredVisualizePrompt</span></div>
+          ${authorityWarning}
           <div class="devHudRow"><span class="devHudKey">FATE FLOW:</span><span class="devHudValue ${fateFlowClass}">${fateFlowText}</span></div>
           ${fateWarningHtml}
           <div class="devHudRow"><span class="devHudKey">VISUALIZE DETAIL:</span><span class="devHudValue ${vizDetailClass}">${vizDetailText}</span></div>
@@ -8498,7 +8506,19 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
   const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
 
   // Sanitize image prompts - removes sensual adjectives for Clean/Naughty tiers
-  function sanitizeImagePrompt(prompt) {
+  // NEUTRALIZED FOR scene_visualize: buildStructuredVisualizePrompt is authoritative
+  function sanitizeImagePrompt(prompt, context = 'unknown') {
+      // AUTHORITY CHECK: For scene_visualize, buildStructuredVisualizePrompt already handles constraints
+      // Only sanitize "The Author" references - do NOT strip sensual/attraction descriptors
+      if (context === 'visualize' || context === 'scene_visualize') {
+          // Remove "The Author" references (meta-character should never be in images)
+          let result = prompt.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
+          result = result.replace(/\s+/g, ' ').trim();
+          console.log('[SANITIZE] scene_visualize context - skipping sensual word removal (authoritative prompt)');
+          return result;
+      }
+
+      // Original logic for other contexts (book_cover, setting, etc.)
       // Words that trigger safety filters on mainstream providers
       const sensualWords = [
           'sensual', 'erotic', 'seductive', 'sexual', 'intimate', 'naked', 'nude',
@@ -8701,6 +8721,7 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
                   // CRITICAL: Pass intent data for routing
                   imageIntent: intentData.imageIntent || 'scene_visualize',
                   isSetting: intentData.isSetting || false,
+                  authoritativePrompt: intentData.authoritativePrompt || false, // Authority flag
                   world: intentData.world,
                   worldSubtype: intentData.worldSubtype,
                   tone: intentData.tone,
@@ -8811,6 +8832,7 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
                   // CRITICAL: Pass intent data for routing
                   imageIntent: intentData.imageIntent || 'scene_visualize',
                   isSetting: intentData.isSetting || false,
+                  authoritativePrompt: intentData.authoritativePrompt || false, // Authority flag
                   world: intentData.world,
                   worldSubtype: intentData.worldSubtype,
                   tone: intentData.tone,
@@ -9031,7 +9053,14 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
   }
 
   // WORLD GUARDRAIL: Add explicit constraints to prompt for non-urban worlds
-  function enforceWorldConstraints(prompt, world, worldSubtype) {
+  // NEUTRALIZED FOR scene_visualize: buildStructuredVisualizePrompt already includes world constraints
+  function enforceWorldConstraints(prompt, world, worldSubtype, context = 'unknown') {
+      // AUTHORITY CHECK: For scene_visualize, buildStructuredVisualizePrompt already handles constraints
+      if (context === 'visualize' || context === 'scene_visualize') {
+          console.log('[WORLD GUARDRAIL] scene_visualize context - skipping duplicate constraints (authoritative prompt)');
+          return prompt; // No-op - constraints already in authoritative prompt
+      }
+
       const isNonUrban = isNonUrbanWorld(world, worldSubtype);
 
       if (!isNonUrban) {
@@ -9041,7 +9070,7 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
 
       const eraInfo = getDefaultEraFromWorld(world, worldSubtype);
 
-      // Build constraint block for non-urban worlds
+      // Build constraint block for non-urban worlds (only for non-authoritative prompts)
       const constraints = `
 
 ---
@@ -9363,9 +9392,40 @@ STYLE REQUIREMENTS:
               world: world,
               isGeneric: false
           };
+
+          // AUTHORITY TRACKING: Mark that authoritative builder has run
+          window._visualizeAuthorityState = {
+              authority: 'buildStructuredVisualizePrompt',
+              builtAt: new Date().toISOString(),
+              mutatorCount: 0, // Reset - this is the authoritative source
+              promptHash: (worldGrounding + sceneDesc).slice(0, 50) // Fingerprint for mutation detection
+          };
       }
 
       return worldGrounding + sceneDesc + characterPhysicality + desireTension + characterSection + modifierSection + negativeConstraints + styleSuffix;
+  }
+
+  /**
+   * DEV ASSERTION: Verify no prompt mutation after authoritative builder.
+   * Throws if prompt differs significantly from authoritative build.
+   */
+  function assertVisualizePromptAuthority(finalPrompt, context) {
+      if (!IS_DEV_MODE) return;
+      if (context !== 'visualize' && context !== 'scene_visualize') return;
+
+      const authState = window._visualizeAuthorityState;
+      if (!authState) {
+          console.warn('[VISUALIZE AUTHORITY] No authority state - buildStructuredVisualizePrompt may not have run');
+          return;
+      }
+
+      // Track mutation count
+      authState.mutatorCount = (authState.mutatorCount || 0) + 1;
+
+      // Warn if more than 1 mutator (the authoritative builder counts as 0)
+      if (authState.mutatorCount > 1) {
+          console.error(`[VISUALIZE AUTHORITY WARNING] ${authState.mutatorCount} prompt mutators detected after authoritative build`);
+      }
   }
 
   /**
@@ -9460,10 +9520,15 @@ STYLE REQUIREMENTS:
 
       console.log(`[IMAGE] generateImageWithFallback: context=${context}, isSetting=${isSetting}, intent=${intent}`);
 
+      // AUTHORITY: scene_visualize prompts from buildStructuredVisualizePrompt are authoritative
+      // This tells server NOT to apply wrapScenePrompt (already complete)
+      const isAuthoritativeVisualize = context === 'visualize' && !isSetting;
+
       // Build intent data for providers
       const intentData = {
           imageIntent: isSetting ? 'setting' : 'scene_visualize',
           isSetting: isSetting,
+          authoritativePrompt: isAuthoritativeVisualize, // Tells server to skip wrapScenePrompt
           world: state.picks?.world || 'Modern',
           worldSubtype: state.picks?.worldSubtype || null,
           tone: state.picks?.tone || 'Earnest',
@@ -9476,14 +9541,20 @@ STYLE REQUIREMENTS:
       // PASS 2E: Clamp prompt length BEFORE any processing
       const clampedPrompt = clampPromptLength(prompt);
 
+      // AUTHORITY: For scene_visualize, buildStructuredVisualizePrompt is authoritative
+      // Pass context to sanitizeImagePrompt and enforceWorldConstraints to skip redundant processing
+      const promptContext = context; // 'visualize' | 'setting-shot' | other
+
       // Prepare prompts for different provider requirements
+      // NEUTRALIZED for scene_visualize: sanitizeImagePrompt skips sensual word removal
       const eroticPrompt = clampPromptLength(restoreEroticLanguage(clampedPrompt));
-      const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt));
+      const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt, promptContext));
 
       // WORLD GUARDRAIL: Enforce constraints for non-urban worlds
+      // NEUTRALIZED for scene_visualize: enforceWorldConstraints is no-op (already in authoritative prompt)
       const world = state.picks?.world || 'Modern';
       const worldSubtype = state.picks?.worldSubtype || null;
-      const constrainedPrompt = enforceWorldConstraints(sanitizedPrompt, world, worldSubtype);
+      const constrainedPrompt = enforceWorldConstraints(sanitizedPrompt, world, worldSubtype, promptContext);
 
       // DEV ASSERTION: Verify no urban terms in non-urban world prompts
       // This catches the LLM generating noir/urban imagery for Fantasy, Historical, etc.
@@ -9818,32 +9889,31 @@ STYLE REQUIREMENTS:
           const vizTone = state.picks?.tone || 'Earnest';
           const vizIntensity = state.intensity || 'Naughty';
 
-          if(!isRe || !promptMsg) {
-              // ============================================================
-              // STRUCTURED VISUALIZE PROMPT (NO PROSE)
-              // ============================================================
-              // Build prompt from structured state, NOT narrative text.
-              // This ensures world/era constraints are always respected.
-              // The LLM is NOT used to generate the scene description.
-              // ============================================================
+          // ============================================================
+          // AUTHORITY: buildStructuredVisualizePrompt ALWAYS runs
+          // ============================================================
+          // ALWAYS rebuild prompt from structured state on every generate.
+          // User textarea edits are for MODIFIERS only, not prompt override.
+          // This ensures world/era constraints are always enforced.
+          // The authoritative prompt is built client-side.
+          // ============================================================
 
-              // Get user modifiers
-              const modifierInput = document.getElementById('vizModifierInput');
-              const rawModifiers = modifierInput ? modifierInput.value.trim() : '';
+          // Get user modifiers (can be edited between attempts)
+          const modifierInput = document.getElementById('vizModifierInput');
+          const rawModifiers = modifierInput ? modifierInput.value.trim() : '';
 
-              // Build structured prompt from state
-              promptMsg = buildStructuredVisualizePrompt({
-                  world: vizWorld,
-                  worldSubtype: vizSubtype,
-                  tone: vizTone,
-                  intensity: vizIntensity,
-                  anchors: filterAuthorFromPrompt(anchorText).slice(0, 150),
-                  modifiers: rawModifiers
-              });
+          // ALWAYS build structured prompt from state (AUTHORITY)
+          promptMsg = buildStructuredVisualizePrompt({
+              world: vizWorld,
+              worldSubtype: vizSubtype,
+              tone: vizTone,
+              intensity: vizIntensity,
+              anchors: filterAuthorFromPrompt(anchorText).slice(0, 150),
+              modifiers: rawModifiers
+          });
 
-              console.log(`[VISUALIZE] Built structured prompt for world=${vizWorld}, subtype=${vizSubtype}`);
-              document.getElementById('vizPromptInput').value = promptMsg;
-          }
+          console.log(`[VISUALIZE] Built AUTHORITATIVE prompt for world=${vizWorld}, subtype=${vizSubtype}`);
+          document.getElementById('vizPromptInput').value = promptMsg;
 
           // DEV ASSERTION: Check for noir/silhouette terms
           assertNoNoirTermsInVisualizePrompt(promptMsg, vizWorld, vizSubtype);

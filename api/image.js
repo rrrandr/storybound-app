@@ -388,9 +388,17 @@ function generateAtmosphericSeriesLine(world, genre, tone, worldSubtype) {
   return patterns[patternSeed];
 }
 
-function wrapScenePrompt(basePrompt) {
+function wrapScenePrompt(basePrompt, isAuthoritative = false) {
+  // AUTHORITY CHECK: If prompt comes from buildStructuredVisualizePrompt, it's already complete
+  // NEUTRALIZED for authoritative prompts - pass through without modification
+  if (isAuthoritative) {
+    console.log('[IMAGE] Authoritative scene_visualize prompt - skipping server-side wrapper');
+    return basePrompt; // No-op - prompt already complete from client authority
+  }
+
   // Scene visualization: Atmosphere, characters, environment - NO text
   // CRITICAL: Avoid silhouettes and noir imagery unless explicitly modern/urban
+  // This only applies to NON-authoritative prompts (legacy or manual)
   return `${basePrompt}
 
 Style: Cinematic illustration, atmospheric lighting, painterly.
@@ -417,6 +425,7 @@ export default async function handler(req, res) {
 
   // imageIntent: 'book_cover' | 'setting' | 'scene_visualize' (default)
   // isSetting: explicit boolean for setting image routing
+  // authoritativePrompt: if true, prompt came from buildStructuredVisualizePrompt (client authority)
   // title, authorName, modeLine: Used for book cover typography
   // dynamic, storyStyle, genre: Story context for symbolic object selection
   // intensity: Arousal level (Clean, Naughty, Erotic, Dirty) for cover restraint
@@ -428,6 +437,7 @@ export default async function handler(req, res) {
     size = '1024x1024',
     imageIntent,
     isSetting,
+    authoritativePrompt,
     title,
     authorName,
     modeLine,
@@ -460,6 +470,7 @@ export default async function handler(req, res) {
   const isBookCover = !isSettingImage && imageIntent === 'book_cover';
 
   // Apply intent-specific prompt wrapping
+  // AUTHORITY: authoritativePrompt=true means prompt came from buildStructuredVisualizePrompt (client authority)
   let finalPrompt;
   if (isSettingImage) {
     // Setting images: use prompt as-is (already structured in client)
@@ -468,7 +479,8 @@ export default async function handler(req, res) {
   } else if (isBookCover) {
     finalPrompt = wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, intensity, worldSubtype);
   } else {
-    finalPrompt = wrapScenePrompt(prompt);
+    // scene_visualize: pass authoritativePrompt flag to skip server-side wrapping
+    finalPrompt = wrapScenePrompt(prompt, authoritativePrompt === true);
   }
 
   console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isSetting: ${isSetting}, isSettingImage: ${isSettingImage}, isBookCover: ${isBookCover}`);
