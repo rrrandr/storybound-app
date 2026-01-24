@@ -76,8 +76,9 @@ function startContinuousSparkles() {
         // reuse existing golden flow if present
         const selected = mount.querySelector('.fate-card.selected');
         if (selected) {
-            triggerGoldenFlow(selected, actInput);
-        }
+          if (typeof triggerGoldenFlow === 'function') {
+    triggerGoldenFlow(selected, actInput);
+}
     }, 600);
 }
 
