@@ -7976,6 +7976,223 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
       throw new Error('Replicate prediction timed out after 20 attempts');
   }
 
+  // ============================================================
+  // VISUALIZE WORLD GUARDRAILS
+  // Prevents urban noir imagery bleeding into non-urban worlds
+  // ============================================================
+
+  // WORLD CLASSIFICATION: Non-urban worlds that must NEVER show modern urban imagery
+  const NON_URBAN_WORLDS = new Set([
+      'fantasy', 'historical', 'postapocalyptic'
+  ]);
+
+  // World subtypes that are explicitly non-urban (even within urban-capable worlds)
+  const NON_URBAN_SUBTYPES = new Set([
+      // Fantasy subtypes (all non-urban)
+      'enchanted_realms', 'hidden_magic', 'cursed_worlds',
+      // Historical subtypes (all pre-modern except 20th_century)
+      'prehistoric', 'classical', 'medieval', 'renaissance', 'victorian',
+      // Modern subtypes that are rural/non-urban
+      'small_town', 'supernatural_modern'
+  ]);
+
+  // Urban subtypes that explicitly allow modern urban imagery
+  const URBAN_SUBTYPES = new Set([
+      'cyberpunk', 'office', 'old_money', 'college', 'friends',
+      '20th_century', 'superheroic_modern'
+  ]);
+
+  // FORBIDDEN TERMS: These must NEVER appear in prompts for non-urban worlds
+  const URBAN_FORBIDDEN_TERMS = [
+      'street', 'city', 'building', 'skyscraper', 'neon',
+      'rain-soaked', 'urban', 'metropolis', 'downtown', 'alley',
+      'concrete', 'asphalt', 'traffic', 'sidewalk', 'highrise',
+      'apartment', 'office tower', 'cityscape', 'skyline'
+  ];
+
+  // WORLD ERA DEFAULTS: Infer era from world when not explicitly specified
+  function getDefaultEraFromWorld(world, worldSubtype) {
+      const w = (world || '').toLowerCase();
+      const ws = (worldSubtype || '').toLowerCase();
+
+      // Fantasy worlds → pre-industrial / folkloric
+      if (w === 'fantasy') {
+          return { era: 'pre-industrial', setting: 'rural', lighting: 'natural' };
+      }
+
+      // Historical worlds → era-specific
+      if (w === 'historical') {
+          if (['prehistoric', 'classical', 'medieval', 'renaissance'].includes(ws)) {
+              return { era: 'ancient', setting: 'rural', lighting: 'natural' };
+          }
+          if (ws === 'victorian') {
+              return { era: 'victorian', setting: 'mixed', lighting: 'gaslight' };
+          }
+          if (ws === '20th_century') {
+              return { era: 'modern', setting: 'urban', lighting: 'electric' };
+          }
+          // Default historical to medieval
+          return { era: 'medieval', setting: 'rural', lighting: 'natural' };
+      }
+
+      // Post-apocalyptic → ruined / nature reclaimed
+      if (w === 'postapocalyptic') {
+          return { era: 'post-collapse', setting: 'wasteland', lighting: 'natural' };
+      }
+
+      // SciFi with cyberpunk → urban allowed
+      if (w === 'scifi' && ws === 'cyberpunk') {
+          return { era: 'future', setting: 'urban', lighting: 'neon' };
+      }
+
+      // SciFi other → space/tech, not necessarily urban
+      if (w === 'scifi') {
+          return { era: 'future', setting: 'varied', lighting: 'artificial' };
+      }
+
+      // Dystopia → varies by subtype
+      if (w === 'dystopia') {
+          return { era: 'near-future', setting: 'controlled', lighting: 'harsh' };
+      }
+
+      // Modern → urban allowed
+      if (w === 'modern') {
+          if (ws === 'small_town') {
+              return { era: 'contemporary', setting: 'rural', lighting: 'natural' };
+          }
+          return { era: 'contemporary', setting: 'urban', lighting: 'electric' };
+      }
+
+      // Fallback: prefer rural/timeless (NEVER default to modern urban)
+      return { era: 'timeless', setting: 'rural', lighting: 'natural' };
+  }
+
+  // Check if world is non-urban (should never show cities, skyscrapers, etc.)
+  function isNonUrbanWorld(world, worldSubtype) {
+      const w = (world || '').toLowerCase();
+      const ws = (worldSubtype || '').toLowerCase();
+
+      // Explicit urban subtypes override world classification
+      if (URBAN_SUBTYPES.has(ws)) {
+          return false;
+      }
+
+      // Explicit non-urban subtypes
+      if (NON_URBAN_SUBTYPES.has(ws)) {
+          return true;
+      }
+
+      // World-level classification
+      return NON_URBAN_WORLDS.has(w);
+  }
+
+  // WORLD GUARDRAIL: Add explicit constraints to prompt for non-urban worlds
+  function enforceWorldConstraints(prompt, world, worldSubtype) {
+      const isNonUrban = isNonUrbanWorld(world, worldSubtype);
+
+      if (!isNonUrban) {
+          // Urban world - no constraints needed
+          return prompt;
+      }
+
+      const eraInfo = getDefaultEraFromWorld(world, worldSubtype);
+
+      // Build constraint block for non-urban worlds
+      const constraints = `
+
+---
+WORLD CONSTRAINTS (MANDATORY):
+- Era: ${eraInfo.era}, ${eraInfo.setting} setting
+- Lighting: ${eraInfo.lighting} light sources only
+- EXPLICITLY FORBIDDEN: cities, skyscrapers, streets, modern buildings, urban lighting, neon, concrete, asphalt, glass towers, modern vehicles, contemporary clothing
+- REQUIRED: natural environments (fields, woods, cottages, paths, wilderness), organic materials (wood, stone, cloth, leather), period-appropriate structures
+- Light sources: candle, fire, moon, sun, torches, lanterns (NO electric lighting)
+---`;
+
+      return prompt + constraints;
+  }
+
+  // DEV ASSERTION: Detect urban terms in non-urban world prompts
+  function assertNoUrbanTermsInNonUrbanWorld(prompt, world, worldSubtype) {
+      if (!IS_DEV_MODE) return;
+
+      const isNonUrban = isNonUrbanWorld(world, worldSubtype);
+      if (!isNonUrban) return; // Urban world - no check needed
+
+      const promptLower = prompt.toLowerCase();
+      const foundTerms = URBAN_FORBIDDEN_TERMS.filter(term => promptLower.includes(term));
+
+      if (foundTerms.length > 0) {
+          throw new Error(
+              `[DEV ASSERT: WORLD_GUARDRAIL] Urban terms found in non-urban world prompt!\n` +
+              `World: ${world}, Subtype: ${worldSubtype}\n` +
+              `Forbidden terms found: ${foundTerms.join(', ')}\n` +
+              `Prompt excerpt: ${prompt.slice(0, 200)}...`
+          );
+      }
+  }
+
+  // WORLD-AWARE FALLBACK PROMPTS: Used when LLM prompt generation times out
+  // NEVER defaults to urban noir - always uses world-appropriate imagery
+  function getWorldAppropriateFallbackPrompt(world, worldSubtype) {
+      const w = (world || '').toLowerCase();
+      const ws = (worldSubtype || '').toLowerCase();
+
+      // Fantasy worlds → mystical natural settings
+      if (w === 'fantasy') {
+          const fantasyFallbacks = {
+              'enchanted_realms': 'Enchanted forest glade with ancient trees, soft magical light filtering through leaves, moss-covered stones, ethereal atmosphere.',
+              'hidden_magic': 'Cozy cottage interior with herbs drying from rafters, candlelight, worn spellbooks, cat on windowsill, twilight garden visible through window.',
+              'cursed_worlds': 'Misty moorland at dusk, gnarled trees silhouetted against pale sky, ancient standing stones, atmospheric and mysterious.'
+          };
+          return fantasyFallbacks[ws] || 'Mystical forest clearing at golden hour, ancient oak trees, wildflowers, soft natural light, atmospheric and serene.';
+      }
+
+      // Historical worlds → period-appropriate settings
+      if (w === 'historical') {
+          const historicalFallbacks = {
+              'prehistoric': 'Dramatic cliff overlooking vast wilderness, prehistoric landscape, golden sunset, primal and untamed nature.',
+              'classical': 'Marble colonnade overlooking the sea at sunset, Mediterranean garden, olive trees, warm ancient atmosphere.',
+              'medieval': 'Castle courtyard at dusk, stone walls covered in ivy, torchlight, medieval garden, atmospheric and timeless.',
+              'renaissance': 'Sunlit palazzo garden with fountain, cypress trees, classical statues, warm Italian light.',
+              'victorian': 'Candlelit parlor with velvet furnishings, gaslight casting warm shadows, rain on windows, cozy and intimate.',
+              '20th_century': 'Art deco interior with warm lighting, elegant furnishings, sophisticated atmosphere.'
+          };
+          return historicalFallbacks[ws] || 'Medieval village at twilight, cobblestone paths, thatched cottages, warm firelight in windows, atmospheric.';
+      }
+
+      // Post-apocalyptic → nature reclaiming
+      if (w === 'postapocalyptic') {
+          return 'Overgrown ruins at golden hour, nature reclaiming abandoned structures, wildflowers among rubble, bittersweet beauty.';
+      }
+
+      // SciFi → varies by subtype
+      if (w === 'scifi') {
+          if (ws === 'cyberpunk') {
+              return 'Rain-slicked neon streets at night, holographic advertisements, moody cyberpunk atmosphere.';
+          }
+          return 'Sleek starship observation deck, vast nebula visible through viewport, soft ambient lighting, awe-inspiring vista.';
+      }
+
+      // Dystopia → controlled environments
+      if (w === 'dystopia') {
+          return 'Stark institutional corridor with harsh lighting, propaganda posters, oppressive architecture, tension in the air.';
+      }
+
+      // Modern → default to atmospheric interior
+      if (w === 'modern') {
+          if (ws === 'small_town') {
+              return 'Quiet small town main street at twilight, local shops with warm lights, autumn leaves, nostalgic atmosphere.';
+          }
+          return 'Warm interior with soft natural light, comfortable furnishings, intimate and inviting atmosphere.';
+      }
+
+      // Ultimate fallback: timeless natural setting (NEVER urban)
+      return 'Serene natural landscape at golden hour, rolling hills, ancient trees, soft light, peaceful atmosphere.';
+  }
+
+  // ============================================================
+
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
   // All image generation MUST route through this function
   // Provider order: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
@@ -8029,20 +8246,32 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
       const eroticPrompt = clampPromptLength(restoreEroticLanguage(clampedPrompt));
       const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt));
 
-      // All providers now use sanitized prompts for stability
+      // WORLD GUARDRAIL: Enforce constraints for non-urban worlds
+      const world = state.picks?.world || 'Modern';
+      const worldSubtype = state.picks?.worldSubtype || null;
+      const constrainedPrompt = enforceWorldConstraints(sanitizedPrompt, world, worldSubtype);
+
+      // DEV ASSERTION: Verify no urban terms in non-urban world prompts
+      // This catches the LLM generating noir/urban imagery for Fantasy, Historical, etc.
+      assertNoUrbanTermsInNonUrbanWorld(clampedPrompt, world, worldSubtype);
+
+      console.log(`[IMAGE] World guardrail: world=${world}, subtype=${worldSubtype}, isNonUrban=${isNonUrbanWorld(world, worldSubtype)}`);
+
+      // All providers now use world-constrained sanitized prompts for stability
       // Explicit content belongs in prose, not images
-      const basePrompt = sanitizedPrompt;
+      const basePrompt = constrainedPrompt;
 
       // STABLE PROVIDER CHAIN: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
       // All providers remain available regardless of individual failures
       // CRITICAL: intentData passed to all providers for correct routing
+      // CRITICAL: Use constrainedPrompt (has world guardrails) for all providers
       const providerChain = [
-          // GEMINI PRIMARY - reliable, sanitized prompts
-          { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt, passIntent: true },
-          // OPENAI FALLBACK - reliable, sanitized prompts
-          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt, passIntent: true },
+          // GEMINI PRIMARY - reliable, world-constrained prompts
+          { name: 'Gemini', fn: callGeminiImageGen, prompt: constrainedPrompt, passIntent: true },
+          // OPENAI FALLBACK - reliable, world-constrained prompts
+          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: constrainedPrompt, passIntent: true },
           // REPLICATE LAST RESORT - allowed to fail silently (uses different endpoint)
-          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt, passIntent: false }
+          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: constrainedPrompt, passIntent: false }
       ];
 
       let lastError = null;
@@ -8328,16 +8557,50 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
           const intensityBias = getVisualizeIntensityBias();
 
           if(!isRe || !promptMsg) {
+              // Build world constraint guidance for LLM prompt generation
+              const vizWorld = state.picks?.world || 'Modern';
+              const vizSubtype = state.picks?.worldSubtype || '';
+              const vizIsNonUrban = isNonUrbanWorld(vizWorld, vizSubtype);
+              const vizEraInfo = getDefaultEraFromWorld(vizWorld, vizSubtype);
+
+              // WORLD GUARDRAIL: Add explicit constraints for non-urban worlds
+              let worldConstraintGuidance = '';
+              if (vizIsNonUrban) {
+                  worldConstraintGuidance = `\n\nWORLD CONSTRAINTS (CRITICAL - OBEY STRICTLY):
+World: ${vizWorld}${vizSubtype ? ` (${vizSubtype})` : ''}
+Era: ${vizEraInfo.era}
+Setting: ${vizEraInfo.setting}
+Lighting: ${vizEraInfo.lighting}
+
+EXPLICITLY FORBIDDEN - DO NOT INCLUDE ANY OF THESE:
+- Cities, streets, urban environments, skyscrapers, modern buildings
+- Neon lights, electric lighting, streetlamps, traffic lights
+- Rain-soaked noir imagery, dark alleys, urban night scenes
+- Modern clothing (jeans, t-shirts, hoodies, sneakers)
+- Contemporary objects (phones, cars, screens, glass buildings)
+
+REQUIRED SETTING ELEMENTS:
+- Natural environments: forests, fields, cottages, paths, wilderness, gardens
+- Period-appropriate architecture: castles, cottages, taverns, manor houses
+- Organic materials: wood, stone, cloth, leather, thatch, brick
+- Pre-electric light sources: candles, torches, firelight, moonlight, sunlight
+
+The scene MUST feel ${vizEraInfo.era} and ${vizEraInfo.setting}. DO NOT default to urban noir.`;
+              }
+
               try {
                   promptMsg = await Promise.race([
                       callChat([{
                           role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
+                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}${worldConstraintGuidance}\n\nReturn only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
               } catch (e) {
-                  promptMsg = "Fantasy scene, detailed, atmospheric.";
+                  // WORLD-AWARE FALLBACK: Generate appropriate fallback based on world
+                  const fallbackWorld = state.picks?.world || 'Fantasy';
+                  const fallbackSubtype = state.picks?.worldSubtype || '';
+                  promptMsg = getWorldAppropriateFallbackPrompt(fallbackWorld, fallbackSubtype);
               }
               document.getElementById('vizPromptInput').value = promptMsg;
           }
