@@ -7735,7 +7735,8 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
   }
 
   // OPENAI LAST RESORT: Call OpenAI image generation (SAFE - never throws)
-  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000) {
+  // intentData: { imageIntent, isSetting, world, worldSubtype, tone, intensity }
+  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000, intentData = {}) {
       try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -7752,7 +7753,14 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
                   model: 'gpt-image-1.5',
                   size: size,
                   aspect_ratio: aspectRatio,
-                  n: 1
+                  n: 1,
+                  // CRITICAL: Pass intent data for routing
+                  imageIntent: intentData.imageIntent || 'scene_visualize',
+                  isSetting: intentData.isSetting || false,
+                  world: intentData.world,
+                  worldSubtype: intentData.worldSubtype,
+                  tone: intentData.tone,
+                  intensity: intentData.intensity
               }),
               signal: controller.signal
           });
@@ -7837,7 +7845,8 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
   }
 
   // GEMINI PROVIDER: Call Gemini image generation (SAFE - never throws)
-  async function callGeminiImageGen(prompt, size = '1024x1024', timeout = 60000) {
+  // intentData: { imageIntent, isSetting, world, worldSubtype, tone, intensity }
+  async function callGeminiImageGen(prompt, size = '1024x1024', timeout = 60000, intentData = {}) {
       try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -7854,7 +7863,14 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
                   model: 'imagen-3.0-generate-002',
                   size: size,
                   aspect_ratio: aspectRatio,
-                  n: 1
+                  n: 1,
+                  // CRITICAL: Pass intent data for routing
+                  imageIntent: intentData.imageIntent || 'scene_visualize',
+                  isSetting: intentData.isSetting || false,
+                  world: intentData.world,
+                  worldSubtype: intentData.worldSubtype,
+                  tone: intentData.tone,
+                  intensity: intentData.intensity
               }),
               signal: controller.signal
           });
@@ -7981,7 +7997,27 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
       const isSetting = context === 'setting-shot';
       const intent = isSetting ? 'setting' : 'visualize';
 
+      // DEV ASSERTION: Verify intent/isSetting consistency
+      if (IS_DEV_MODE) {
+          if (intent === 'setting' && !isSetting) {
+              throw new Error('[DEV ASSERT: IMAGE_ROUTING] intent=setting but isSetting=false - routing mismatch!');
+          }
+          if (isSetting && intent !== 'setting') {
+              throw new Error('[DEV ASSERT: IMAGE_ROUTING] isSetting=true but intent!="setting" - routing mismatch!');
+          }
+      }
+
       console.log(`[IMAGE] generateImageWithFallback: context=${context}, isSetting=${isSetting}, intent=${intent}`);
+
+      // Build intent data for providers
+      const intentData = {
+          imageIntent: isSetting ? 'setting' : 'scene_visualize',
+          isSetting: isSetting,
+          world: state.picks?.world || 'Modern',
+          worldSubtype: state.picks?.worldSubtype || null,
+          tone: state.picks?.tone || 'Earnest',
+          intensity: state.intensity || 'Naughty'
+      };
 
       // Determine size based on shape (default landscape 16:9)
       const size = shape === 'portrait' ? '1024x1024' : '1792x1024';
@@ -7999,13 +8035,14 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
 
       // STABLE PROVIDER CHAIN: Gemini (primary) → OpenAI (fallback) → Replicate (last resort)
       // All providers remain available regardless of individual failures
+      // CRITICAL: intentData passed to all providers for correct routing
       const providerChain = [
           // GEMINI PRIMARY - reliable, sanitized prompts
-          { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
+          { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt, passIntent: true },
           // OPENAI FALLBACK - reliable, sanitized prompts
-          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt },
-          // REPLICATE LAST RESORT - allowed to fail silently
-          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt }
+          { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt, passIntent: true },
+          // REPLICATE LAST RESORT - allowed to fail silently (uses different endpoint)
+          { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt, passIntent: false }
       ];
 
       let lastError = null;
@@ -8017,7 +8054,10 @@ Wide cinematic environment, painterly illustration, epic scale, 16:9 aspect rati
 
           try {
               logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
-              const imageUrl = await provider.fn(provider.prompt, size);
+              // CRITICAL: Pass intentData to providers that support it
+              const imageUrl = provider.passIntent
+                  ? await provider.fn(provider.prompt, size, 60000, intentData)
+                  : await provider.fn(provider.prompt, size);
 
               // Handle null returns from safe providers (Gemini/OpenAI)
               if (!imageUrl) {

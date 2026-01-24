@@ -319,16 +319,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // imageIntent: 'book_cover' | 'scene_visualize' (default)
+  // imageIntent: 'book_cover' | 'setting' | 'scene_visualize' (default)
+  // isSetting: explicit boolean for setting image routing
   // title, authorName, modeLine: Used for book cover typography
   // dynamic, storyStyle, genre: Story context for symbolic object selection
   // intensity: Arousal level (Clean, Naughty, Erotic, Dirty) for cover restraint
-  // worldSubtype: World flavor detail (e.g., Medieval, Victorian) for visual styling
+  // world, worldSubtype: World flavor detail (e.g., Medieval, Victorian) for visual styling
+  // tone: Story tone for atmosphere
   const {
     prompt,
     provider,
     size = '1024x1024',
     imageIntent,
+    isSetting,
     title,
     authorName,
     modeLine,
@@ -336,20 +339,43 @@ export default async function handler(req, res) {
     storyStyle,
     genre,
     intensity,
-    worldSubtype
+    world,
+    worldSubtype,
+    tone
   } = req.body;
 
   if (!prompt) {
     return res.status(400).json({ error: 'Prompt required' });
   }
 
-  // Apply intent-specific prompt wrapping
-  const isBookCover = imageIntent === 'book_cover';
-  const finalPrompt = isBookCover
-    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, intensity, worldSubtype)
-    : wrapScenePrompt(prompt);
+  // DEV ASSERTION: Verify intent/isSetting consistency
+  if (process.env.NODE_ENV !== 'production') {
+    if (imageIntent === 'setting' && isSetting !== true) {
+      console.error('[DEV ASSERT: IMAGE_ROUTING] Server received intent=setting but isSetting!=true');
+    }
+    if (isSetting === true && imageIntent !== 'setting') {
+      console.error('[DEV ASSERT: IMAGE_ROUTING] Server received isSetting=true but intent!=setting');
+    }
+  }
 
-  console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}`);
+  // ROUTING PRIORITY: isSetting FIRST, then book_cover, then default
+  // Setting images bypass book cover logic entirely
+  const isSettingImage = isSetting === true || imageIntent === 'setting';
+  const isBookCover = !isSettingImage && imageIntent === 'book_cover';
+
+  // Apply intent-specific prompt wrapping
+  let finalPrompt;
+  if (isSettingImage) {
+    // Setting images: use prompt as-is (already structured in client)
+    finalPrompt = prompt;
+    console.log(`[IMAGE] SETTING IMAGE - bypassing book cover logic`);
+  } else if (isBookCover) {
+    finalPrompt = wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, intensity, worldSubtype);
+  } else {
+    finalPrompt = wrapScenePrompt(prompt);
+  }
+
+  console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isSetting: ${isSetting}, isSettingImage: ${isSettingImage}, isBookCover: ${isBookCover}`);
 
   // ---- GEMINI PRIMARY ----
   if (!provider || provider === 'gemini') {
