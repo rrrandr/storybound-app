@@ -785,10 +785,21 @@
             sparkleContainer = document.createElement('div');
             sparkleContainer.id = 'fateSparkleContainer';
             sparkleContainer.className = 'fate-sparkle-container';
+            // Force highest z-index and visibility with inline styles
+            sparkleContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                pointer-events: none;
+                z-index: 99999;
+                overflow: visible;
+            `;
             document.body.appendChild(sparkleContainer);
         }
 
-        // DOUBLED particle emission rate - emit 2 particles every 80ms
+        // HIGH-RATE emission: 3 particles every 60ms = ~50 particles/second
         _continuousSparkleInterval = setInterval(() => {
             if (!_sparkleEmitterActive) {
                 stopContinuousSparkles();
@@ -801,22 +812,22 @@
                 return; // Mount not visible, skip this tick
             }
 
-            // Emit 2 sparkles per tick (doubled count)
-            for (let i = 0; i < 2; i++) {
+            // Emit 3 sparkles per tick for dense particle field
+            for (let i = 0; i < 3; i++) {
                 createContinuousSparkle(sparkleContainer, mount, actionWrapper, dialogueWrapper);
             }
-        }, 80);
+        }, 60);
 
-        // Initial burst of sparkles
-        for (let i = 0; i < 12; i++) {
+        // Large initial burst - 20 particles for immediate visual impact
+        for (let i = 0; i < 20; i++) {
             setTimeout(() => {
                 if (_sparkleEmitterActive) {
                     createContinuousSparkle(sparkleContainer, mount, actionWrapper, dialogueWrapper);
                 }
-            }, i * 30);
+            }, i * 25);
         }
 
-        console.log('[SPARKLE] Continuous emitter started');
+        console.log('[SPARKLE EMITTER ACTIVE]', new Date().toISOString());
     }
 
     /**
@@ -839,7 +850,7 @@
             }
         }, 1500);
 
-        console.log('[SPARKLE] Continuous emitter stopped');
+        console.log('[SPARKLE EMITTER STOPPED]', new Date().toISOString());
     }
 
     /**
@@ -872,40 +883,49 @@
         const sparkle = document.createElement('div');
         sparkle.className = 'fate-continuous-sparkle';
 
-        // INCREASED brightness variance - 40% are sharp glints
-        const isGlint = Math.random() < 0.4;
-        const baseSize = isGlint ? (5 + Math.random() * 3) : (2 + Math.random() * 2);
+        // 50% are sharp glints for maximum visibility
+        const isGlint = Math.random() < 0.5;
+        // LARGER sizes for visibility: glints 8-14px, regular 4-8px
+        const baseSize = isGlint ? (8 + Math.random() * 6) : (4 + Math.random() * 4);
 
+        // Force all positioning inline for reliability
+        sparkle.style.position = 'absolute';
         sparkle.style.width = baseSize + 'px';
         sparkle.style.height = baseSize + 'px';
         sparkle.style.left = startX + 'px';
         sparkle.style.top = startY + 'px';
+        sparkle.style.borderRadius = '50%';
+        sparkle.style.pointerEvents = 'none';
+        sparkle.style.opacity = '0'; // Start at 0, animation will control
 
-        // Warm gold colors only (no white, no silver)
+        // BRIGHT warm gold colors - maximum visibility
         if (isGlint) {
             sparkle.classList.add('glint');
-            // Sharp glint with intense gold glow
-            sparkle.style.background = 'radial-gradient(circle, #ffe066 0%, #ffd700 50%, transparent 70%)';
+            // INTENSE glint with bright white-gold core and large glow
+            sparkle.style.background = 'radial-gradient(circle, #fff 0%, #ffe066 30%, #ffd700 60%, transparent 80%)';
             sparkle.style.boxShadow = `
-                0 0 ${6 + Math.random() * 6}px #ffd700,
-                0 0 ${12 + Math.random() * 8}px rgba(255, 200, 0, 0.8),
-                0 0 ${20 + Math.random() * 10}px rgba(255, 180, 0, 0.5)
+                0 0 ${10 + Math.random() * 8}px #ffd700,
+                0 0 ${18 + Math.random() * 12}px rgba(255, 200, 0, 0.9),
+                0 0 ${28 + Math.random() * 14}px rgba(255, 180, 0, 0.6),
+                0 0 ${40 + Math.random() * 10}px rgba(255, 160, 0, 0.3)
             `;
         } else {
-            // Standard warm gold particle
-            sparkle.style.background = 'radial-gradient(circle, #ffd700 0%, #daa520 60%, transparent 70%)';
+            // Standard warm gold particle with visible glow
+            sparkle.style.background = 'radial-gradient(circle, #ffe066 0%, #ffd700 50%, transparent 75%)';
             sparkle.style.boxShadow = `
-                0 0 4px #ffd700,
-                0 0 8px rgba(255, 215, 0, 0.6)
+                0 0 6px #ffd700,
+                0 0 12px rgba(255, 215, 0, 0.7),
+                0 0 20px rgba(255, 200, 0, 0.4)
             `;
         }
 
         container.appendChild(sparkle);
 
         // Animate the sparkle
-        const duration = 1200 + Math.random() * 800; // 1.2-2s
+        const duration = 1400 + Math.random() * 600; // 1.4-2s for better visibility
         const pStartTime = performance.now();
-        const maxOpacity = isGlint ? 1.0 : (0.6 + Math.random() * 0.3);
+        // HIGH opacity for visibility: glints 1.0, regular 0.8-1.0
+        const maxOpacity = isGlint ? 1.0 : (0.8 + Math.random() * 0.2);
 
         // Slight drift offset for organic feel
         const driftX = (Math.random() - 0.5) * 40;
