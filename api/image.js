@@ -33,25 +33,95 @@ function getOpenAIModel(imageIntent) {
 // PROMPT TEMPLATES - Intent-specific framing
 // ============================================================
 
+// ============================================================
+// COVER MOTIF MEMORY - Prevents repetition across covers
+// ============================================================
+// Lightweight in-memory tracking of last 3 cover concept keywords
+// Resets on server restart (intentional - no persistence needed)
+const _recentCoverMotifs = [];
+const MAX_RECENT_MOTIFS = 3;
+
+function trackCoverMotif(motif) {
+  // Extract key concept from motif string
+  const concept = motif.replace(/^(a|an|the)\s+/i, '').split(/\s+/)[0].toLowerCase();
+  _recentCoverMotifs.unshift(concept);
+  if (_recentCoverMotifs.length > MAX_RECENT_MOTIFS) {
+    _recentCoverMotifs.pop();
+  }
+}
+
+function getRecentMotifsNegativeBlock() {
+  if (_recentCoverMotifs.length === 0) return '';
+  return `\nDO NOT REUSE THESE RECENT CONCEPTS: ${_recentCoverMotifs.join(', ')}.`;
+}
+
+// ============================================================
+// COVER NEGATIVE CONCEPT BLOCK (CRITICAL)
+// ============================================================
+// Hard constraints against device-centric and single-object symbolism
+const COVER_NEGATIVE_CONCEPTS = `
+NEGATIVE CONCEPT CONSTRAINTS (MANDATORY FOR COVERS):
+- NO phones, smartphones, screens, tablets, or digital devices as central objects
+- NO shattered glass or broken screens as symbolic elements
+- NO single-object symbolism that reads as literal rather than evocative
+- NO isolated modern devices floating in negative space
+- PREFER atmospheric environments over isolated props
+- PREFER human presence (silhouettes, hands, partial figures) over cold objects
+- PREFER environmental mood (lighting, shadow, texture) over single focal items`;
+
+// ============================================================
+// MODERN WORLD COVER CONSTRAINTS
+// ============================================================
+// Modern covers emphasize atmosphere and human presence, NOT devices
+const MODERN_COVER_CONSTRAINTS = `
+MODERN WORLD VISUAL EMPHASIS:
+- Emphasize atmosphere, mood, and environmental tension
+- Human presence preferred: silhouettes against city lights, hands reaching, figures in shadow
+- Environmental storytelling: luxurious interiors, dramatic lighting, weather effects
+- Emotional texture over literal props
+- If objects appear, they should be personal (jewelry, keys, letters) not technological`;
+
 // Symbolic object selection based on genre/style/dynamic
-function selectSymbolicObject(genre, storyStyle, dynamic) {
+// UPDATED: Removed device-centric items, tracks recent motifs
+function selectSymbolicObject(genre, storyStyle, dynamic, isModernWorld = false) {
   const genreLower = (genre || '').toLowerCase();
   const styleLower = (storyStyle || '').toLowerCase();
   const dynamicLower = (dynamic || '').toLowerCase();
 
-  // Genre-based object pools
+  // Genre-based object pools - DEVICE-FREE versions
+  // Removed: broken phone screen, screens, tablets, glass displays
+  // Added: atmospheric and personal alternatives
   const objects = {
-    contemporary: ['a silk ribbon', 'an unsealed envelope', 'a shattered wine glass', 'a wilting rose', 'a hotel key card', 'a lipstick mark on glass'],
+    contemporary: ['a silk ribbon', 'an unsealed envelope', 'a wilting rose', 'a vintage key on velvet', 'a lipstick mark on glass', 'a champagne flute catching light'],
     fantasy: ['a golden crown with a missing jewel', 'a thorned vine wrapped around a blade', 'an ancient ring on velvet', 'a cracked crystal orb', 'a burning scroll'],
     romantasy: ['a crown of thorns and flowers', 'a dagger wreathed in smoke', 'a glowing rune-etched ring', 'a chalice tipped on its side'],
     historical: ['a wax-sealed letter', 'a pearl necklace on dark velvet', 'opera gloves draped over a chair', 'a pocket watch frozen at midnight'],
-    paranormal: ['a crescent moon pendant', 'a broken mirror reflecting darkness', 'a single black feather', 'a vial of crimson liquid'],
-    dark: ['shattered handcuffs', 'a bloodied rose', 'a mask on black silk', 'a blade catching candlelight'],
-    scifi: ['a cracked helmet visor', 'a holographic pendant flickering', 'a single bullet casing', 'circuitry intertwined with organic matter'],
+    paranormal: ['a crescent moon pendant', 'a mirror reflecting candlelight', 'a single black feather', 'a vial of crimson liquid'],
+    dark: ['a thorn-wrapped rose', 'a bloodied petal', 'a mask on black silk', 'a blade catching candlelight'],
+    scifi: ['a cracked helmet visor', 'a holographic pendant flickering', 'a star map on parchment', 'alien flora in crystalline case'],
     gothic: ['a wilting flower in a cracked vase', 'an ornate key on a grave', 'a candle guttering in darkness', 'a raven feather on lace'],
-    suspense: ['a broken phone screen', 'a gun beside a wedding ring', 'a photograph torn in half', 'bloodstained fabric'],
-    crime: ['a signet ring on black leather', 'stacked cash and a single bullet', 'a knife on white linen', 'a burning photograph']
+    suspense: ['a torn photograph', 'a wedding ring on black velvet', 'a bloodstained letter', 'a key in shadow'],
+    crime: ['a signet ring on black leather', 'scattered playing cards and a bullet', 'a knife on white linen', 'a burning photograph'],
+    billionaire: ['a diamond bracelet on dark marble', 'a champagne cork mid-flight', 'a handwritten note on luxury stationery', 'a silk tie draped over crystal'],
+    modern: ['city lights reflected in rain', 'hands reaching across shadow', 'a silhouette against floor-to-ceiling windows', 'ambient luxury and tension']
   };
+
+  // For modern worlds, prefer atmospheric/human presence options
+  if (isModernWorld) {
+    // If billionaire or modern genre, use modern pool
+    if (genreLower.includes('billionaire') || genreLower.includes('contemporary')) {
+      const modernPool = [...objects.modern, ...objects.billionaire];
+      // Filter out recently used motifs
+      const filtered = modernPool.filter(obj => {
+        const concept = obj.replace(/^(a|an|the)\s+/i, '').split(/\s+/)[0].toLowerCase();
+        return !_recentCoverMotifs.includes(concept);
+      });
+      const pool = filtered.length > 0 ? filtered : modernPool;
+      const selected = pool[Math.floor(Math.random() * pool.length)];
+      trackCoverMotif(selected);
+      return selected;
+    }
+  }
 
   // Find matching genre
   let pool = objects.contemporary; // default
@@ -62,15 +132,26 @@ function selectSymbolicObject(genre, storyStyle, dynamic) {
     }
   }
 
+  // Filter out recently used motifs
+  const filteredPool = pool.filter(obj => {
+    const concept = obj.replace(/^(a|an|the)\s+/i, '').split(/\s+/)[0].toLowerCase();
+    return !_recentCoverMotifs.includes(concept);
+  });
+  const finalPool = filteredPool.length > 0 ? filteredPool : pool;
+
   // Select based on dynamic mood
+  let selected;
   if (dynamicLower.includes('forbidden') || dynamicLower.includes('enemy')) {
-    return pool[Math.floor(Math.random() * 2)]; // First two tend to be more intense
-  }
-  if (dynamicLower.includes('slow') || dynamicLower.includes('friend')) {
-    return pool[Math.floor(Math.random() * pool.length)];
+    selected = finalPool[Math.floor(Math.random() * Math.min(2, finalPool.length))];
+  } else if (dynamicLower.includes('slow') || dynamicLower.includes('friend')) {
+    selected = finalPool[Math.floor(Math.random() * finalPool.length)];
+  } else {
+    selected = finalPool[Math.floor(Math.random() * finalPool.length)];
   }
 
-  return pool[Math.floor(Math.random() * pool.length)];
+  // Track selected motif
+  trackCoverMotif(selected);
+  return selected;
 }
 
 // ============================================================
@@ -148,8 +229,6 @@ function getToneCoverStyle(tone, intensity) {
 }
 
 function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre, intensity, worldSubtype) {
-  // Select symbolic object based on context
-  const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic);
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
 
@@ -161,6 +240,15 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
   const modeLineParts = (modeLine || 'Modern').split(' ');
   const world = modeLineParts[modeLineParts.length - 1] || 'Modern';
 
+  // Detect modern world (affects cover emphasis)
+  const worldLower = (world || '').toLowerCase();
+  const subtypeLower = (worldSubtype || '').toLowerCase();
+  const genreLower = (genre || '').toLowerCase();
+  const isModernWorld = worldLower === 'modern' || genreLower.includes('billionaire') || subtypeLower.includes('contemporary');
+
+  // Select symbolic object based on context (passes isModernWorld for atmosphere emphasis)
+  const symbolicObject = selectSymbolicObject(genre, storyStyle, dynamic, isModernWorld);
+
   // Generate elegant atmospheric series line (replaces "Storybound Book: N")
   const seriesLine = generateAtmosphericSeriesLine(world, genre, tone, worldSubtype);
 
@@ -168,10 +256,8 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
   const worldContext = worldSubtype ? `${worldSubtype} ` : '';
 
   // Era-appropriate material constraints based on world
-  const worldLower = (world || '').toLowerCase();
-  const subtypeLower = (worldSubtype || '').toLowerCase();
   const isHistorical = worldLower === 'historical' || subtypeLower.includes('medieval') || subtypeLower.includes('victorian') || subtypeLower.includes('regency') || subtypeLower.includes('roaring');
-  const isOccult = worldLower === 'paranormal' || worldLower === 'occult' || (genre || '').toLowerCase().includes('paranormal');
+  const isOccult = worldLower === 'paranormal' || worldLower === 'occult' || genreLower.includes('paranormal');
   const isFantasy = worldLower === 'fantasy' || worldLower === 'romantasy';
 
   // Era-appropriate materials
@@ -183,6 +269,12 @@ ERA-APPROPRIATE MATERIALS ONLY: candlelight, wood, stone, fabric, iron, parchmen
     eraConstraints = `
 ERA-APPROPRIATE MATERIALS ONLY: ancient metals, crystalline elements, organic materials, stone, wood, enchanted objects, mythical textures.`;
   }
+
+  // Modern world emphasis: atmosphere over devices
+  const modernConstraints = isModernWorld ? MODERN_COVER_CONSTRAINTS : '';
+
+  // Get recent motifs negative block
+  const recentMotifsBlock = getRecentMotifsNegativeBlock();
 
   // Build tone-aware prestige book cover prompt with intensity-driven heat
   return `A prestige book cover design, square format, ${toneStyle.visualWeight}.
@@ -216,6 +308,7 @@ ABSOLUTELY FORBIDDEN - HARD BANS:
 - NO text touching or near edges - all typography MUST respect the 10% safe zone
 
 ${toneStyle.forbidden}
+${COVER_NEGATIVE_CONCEPTS}${modernConstraints}${recentMotifsBlock}
 
 No characters, no faces, no bodies, no clutter. Single cohesive composition suitable for a modern literary bookshelf. No gibberish text, no watermarks.`;
 }
