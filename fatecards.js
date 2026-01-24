@@ -91,6 +91,9 @@ function stopContinuousSparkles() {
 }
 
 (function(window){
+    if (window.__FATECARDS_LOADED__) return;
+    window.__FATECARDS_LOADED__ = true;
+
     // Card Definitions - Base templates
     const fateDeckBase = [
         { id: 'temptation', title: 'Temptation', desc: 'A sudden, overwhelming urge.', actionTemplate: 'You feel drawn to something you know you shouldn\'t want.', dialogueTemplate: '"I shouldn\'t want this..."' },
