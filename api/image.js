@@ -161,8 +161,8 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
   const modeLineParts = (modeLine || 'Modern').split(' ');
   const world = modeLineParts[modeLineParts.length - 1] || 'Modern';
 
-  // Build grammatical series line: "A [Tone] [Genre] from the world of [World]"
-  const seriesLine = `A ${tone} ${genre || 'Romance'} from the world of ${worldSubtype ? worldSubtype + ' ' : ''}${world}`;
+  // Generate elegant atmospheric series line (replaces "Storybound Book: N")
+  const seriesLine = generateAtmosphericSeriesLine(world, genre, tone, worldSubtype);
 
   // Build world context from worldSubtype if present
   const worldContext = worldSubtype ? `${worldSubtype} ` : '';
@@ -187,17 +187,22 @@ ERA-APPROPRIATE MATERIALS ONLY: ancient metals, crystalline elements, organic ma
   // Build tone-aware prestige book cover prompt with intensity-driven heat
   return `A prestige book cover design, square format, ${toneStyle.visualWeight}.
 
+TYPOGRAPHY SAFE ZONE (MANDATORY):
+All text elements (title, series line, author name) MUST be placed within the inner 80% of the cover.
+Enforce a 10% margin on ALL sides - no text may touch or approach the edges.
+The image may extend edge-to-edge, but typography stays safely inset.
+
 MANDATORY: The cover MUST include decorative texture or pattern - never flat white or blank backgrounds.
 Style inspiration: Art Deco geometric precision OR Art Nouveau organic linework (choose one, commit fully).
 Background treatment: ${toneStyle.texture}
 
 Central focus: ${symbolicObject}, rendered with controlled dramatic lighting, depth, and shadow. The object occupies the visual center, elegant and evocative.
 
-Title typography: "${cleanTitle}" using ${toneStyle.typography}. The letterforms have dimensional presence. The symbolic object physically interacts with the title - either passing behind certain letters, casting realistic shadows onto the text, or threading through the letterforms. The title and object share the same physical space.
+Title typography: "${cleanTitle}" using ${toneStyle.typography}. The letterforms have dimensional presence. The symbolic object physically interacts with the title - either passing behind certain letters, casting realistic shadows onto the text, or threading through the letterforms. The title and object share the same physical space. MUST be placed within the safe zone.
 
-Series line: "${seriesLine}" in very small, quiet type near the top or just beneath the title. Secondary and restrained.
+Series line: "${seriesLine}" in very small, quiet type near the top or just beneath the title. Secondary and restrained. MUST be within the safe zone.
 
-Author credit: ${cleanAuthor} in bold modern sans-serif, ALL CAPS, placed across the bottom of the cover as a visual anchor. Clean and grounded.
+Author credit: ${cleanAuthor} in bold modern sans-serif, ALL CAPS, placed across the bottom of the cover as a visual anchor. Clean and grounded. MUST be within the safe zone - do not crowd the bottom edge.
 
 Cover mood: ${toneStyle.mood}. ${toneStyle.elements}. Color palette: ${toneStyle.heat.palette}. Atmosphere: ${toneStyle.heat.warmth}. Lighting and composition evoke ${worldContext}${genre || 'contemporary'} ${dynamic || 'romantic tension'} atmosphere.
 ${eraConstraints}
@@ -208,10 +213,86 @@ ABSOLUTELY FORBIDDEN - HARD BANS:
 - NO contemporary architecture: skyscrapers, glass buildings, modern interiors
 - NO plastic, chrome, or synthetic materials
 - NO modern typography or sans-serif fonts in the scene itself
+- NO text touching or near edges - all typography MUST respect the 10% safe zone
 
 ${toneStyle.forbidden}
 
 No characters, no faces, no bodies, no clutter. Single cohesive composition suitable for a modern literary bookshelf. No gibberish text, no watermarks.`;
+}
+
+/**
+ * Generate an elegant atmospheric series line from story context.
+ * Replaces "Storybound Book: N" with a publication-ready sentence.
+ *
+ * @param {string} world - Story world (e.g., Modern, Fantasy, Historical)
+ * @param {string} genre - Story genre (e.g., Billionaire, Noir, Heist)
+ * @param {string} tone - Story tone (e.g., Earnest, Dark, Satirical)
+ * @param {string} worldSubtype - Optional world flavor (e.g., Victorian, Cyberpunk)
+ * @returns {string} - A single elegant atmospheric sentence
+ */
+function generateAtmosphericSeriesLine(world, genre, tone, worldSubtype) {
+  // Normalize inputs
+  const w = (world || 'Modern').toLowerCase();
+  const g = (genre || 'Romance').toLowerCase();
+  const t = (tone || 'Earnest').toLowerCase();
+  const sub = (worldSubtype || '').toLowerCase();
+
+  // World essence phrases
+  const worldEssence = {
+    modern: 'ambition and hidden truths',
+    historical: 'tradition and forbidden desire',
+    fantasy: 'magic and impossible choices',
+    scifi: 'starlight and uncharted futures',
+    dystopia: 'rebellion and desperate hope',
+    postapocalyptic: 'survival and redemption',
+    paranormal: 'shadow and supernatural longing',
+    supernatural: 'the veil between worlds'
+  };
+
+  // Genre implication phrases
+  const genreImplication = {
+    billionaire: 'power and obsession',
+    crimesyndicate: 'loyalty and blood',
+    noir: 'secrets and moral ruin',
+    heist: 'trust and betrayal',
+    espionage: 'deception and impossible stakes',
+    political: 'ambition and dangerous alliances',
+    romance: 'passion and surrender'
+  };
+
+  // Tone descriptors
+  const toneDescriptor = {
+    earnest: 'yearning',
+    wryconfession: 'bittersweet',
+    satirical: 'wickedly sharp',
+    dark: 'shadowed',
+    horror: 'haunting',
+    mythic: 'fated',
+    comedic: 'irresistible',
+    surreal: 'dreamlike',
+    poetic: 'achingly beautiful'
+  };
+
+  // Get values with fallbacks
+  const essence = worldEssence[w] || 'passion and consequence';
+  const implication = genreImplication[g] || 'desire and destiny';
+  const descriptor = toneDescriptor[t] || 'compelling';
+
+  // Subtype modifier (if present)
+  const subtypePhrase = sub ? `${sub.charAt(0).toUpperCase() + sub.slice(1)} ` : '';
+
+  // Deterministic pattern selection based on inputs
+  const patternSeed = (w.length + g.length + t.length) % 5;
+
+  const patterns = [
+    `A Storybound tale of ${descriptor} ${implication}`,
+    `A Storybound story where ${essence} shapes everything`,
+    `A Storybound novel of ${subtypePhrase}${essence}`,
+    `A Storybound journey through ${descriptor} ${essence}`,
+    `A Storybound tale set in a world of ${implication}`
+  ];
+
+  return patterns[patternSeed];
 }
 
 function wrapScenePrompt(basePrompt) {
