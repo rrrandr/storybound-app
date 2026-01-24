@@ -4753,168 +4753,230 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // ╚═══════════════════════════════════════════════════════════════════╝
   //
   // ═══════════════════════════════════════════════════════════════════
-  // DSP TONE-BASED GENERATORS (TONE SUPREMACY)
-  // Tone controls the entire sentence voice, not just one fragment.
-  // When tone changes, the entire DSP sentence rewrites in that voice.
   // ═══════════════════════════════════════════════════════════════════
-  const DSP_WORLD_SETTINGS = {
-    Modern: 'a world of ambition and buried secrets',
-    Historical: 'an age bound by unforgiving rules',
-    Dystopia: 'a broken world that demands sacrifice',
-    PostApocalyptic: 'the ashes of what came before',
-    Fantasy: 'a realm where magic breathes in shadow',
-    SciFi: 'a frontier where stars hold both promise and peril',
-    Supernatural: 'a place where the veil between worlds runs thin',
-    Superheroic: 'a world where power demands impossible choices'
+  // DSP GRAMMAR-AWARE PROSE GENERATION
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP generates ONE coherent sentence by SYNTHESIZING inputs, not splicing.
+  // Each input (world, subtype, tone, genre, dynamic) is a semantic signal,
+  // not a string to concatenate.
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * SETTING DESCRIPTORS - Complete phrases for each world type
+   * These are self-contained descriptions, not fragments to concatenate
+   */
+  const DSP_SETTING_BASE = {
+    Modern: { noun: 'world', quality: 'shaped by ambition and buried secrets' },
+    Historical: { noun: 'age', quality: 'bound by unforgiving rules' },
+    Dystopia: { noun: 'world', quality: 'demanding sacrifice from all who remain' },
+    PostApocalyptic: { noun: 'wasteland', quality: 'built on the ashes of what came before' },
+    Fantasy: { noun: 'realm', quality: 'where magic breathes in shadow' },
+    SciFi: { noun: 'frontier', quality: 'where stars hold both promise and peril' },
+    Supernatural: { noun: 'place', quality: 'where the veil between worlds runs thin' },
+    Superheroic: { noun: 'world', quality: 'where power demands impossible choices' }
   };
 
-  const DSP_GENRE_CONFLICTS = {
-    CrimeSyndicate: 'blood oaths and betrayal',
-    Billionaire: 'games only the powerful understand',
-    Noir: 'shadows where no one walks clean',
-    Heist: 'a plan you must trust completely',
-    Espionage: 'secrets that could kill',
-    Political: 'a web of dangerous alliances'
+  /**
+   * SUBTYPE MODIFIERS - Adjectives/descriptors that modify the setting
+   * These replace the base setting noun with a more specific one
+   */
+  const DSP_SUBTYPE_SETTINGS = {
+    // Modern subtypes - each provides noun + quality override
+    small_town: { noun: 'small town', quality: 'where everyone knows your secrets' },
+    college: { noun: 'campus', quality: 'shaped by ambition and buried secrets' },
+    friends: { noun: 'circle', quality: 'where loyalties are about to be tested' },
+    old_money: { noun: 'dynasty', quality: 'where legacy weighs heavier than love' },
+    office: { noun: 'workplace', quality: 'where ambition masks darker games' },
+    supernatural_modern: { noun: 'city', quality: 'where the supernatural hides in plain sight' },
+    superheroic_modern: { noun: 'city', quality: 'where power wears a mask' },
+    // Sci-Fi subtypes
+    space_opera: { noun: 'galaxy', quality: 'where empires rise and fall on starship decks' },
+    hard_scifi: { noun: 'frontier', quality: 'where science is the only law' },
+    cyberpunk: { noun: 'sprawl', quality: 'lit by neon and ruled by corporations' },
+    post_human: { noun: 'future', quality: 'where humanity has become something else' },
+    alien_contact: { noun: 'universe', quality: 'no longer yours alone' },
+    abundance_collapse: { noun: 'civilization', quality: 'teetering between utopia and ruin' },
+    // Fantasy subtypes
+    enchanted_realms: { noun: 'kingdom', quality: 'alive with ancient magic' },
+    hidden_magic: { noun: 'world', quality: 'where magic hides just beneath the surface' },
+    cursed_corrupt: { noun: 'land', quality: 'rotting under a terrible curse' },
+    // Dystopia subtypes
+    authoritarian: { noun: 'state', quality: 'where obedience is survival' },
+    surveillance: { noun: 'society', quality: 'where every moment is watched' },
+    corporate: { noun: 'world', quality: 'owned by those who never show their faces' },
+    environmental: { noun: 'earth', quality: 'choking on its own wounds' },
+    // Post-Apocalyptic subtypes
+    nuclear: { noun: 'wasteland', quality: 'scarred by fire that ended everything' },
+    pandemic: { noun: 'world', quality: 'emptied by plague' },
+    climate: { noun: 'land', quality: 'transformed by nature\'s revenge' },
+    technological: { noun: 'ruins', quality: 'haunted by machines that outlived their makers' },
+    slow_decay: { noun: 'world', quality: 'fading into quiet entropy' }
   };
 
-  const DSP_DYNAMIC_ENGINES = {
-    Forbidden: 'desire what you cannot have',
-    Dangerous: 'want the one who could destroy you',
-    Fated: 'fight what was always meant to be',
-    Partners: 'trust only each other',
-    Enemies: 'need the one who stands against you',
-    Friends: 'cross a line you cannot uncross',
-    Proximity: 'share space with the one you cannot escape',
-    SecretIdentity: 'fall for who they pretend to be',
-    Obsessive: 'become the center of someone\'s world',
-    Caretaker: 'let someone see your wounds',
-    SecondChance: 'reopen a door you thought was closed'
+  /**
+   * GENRE CONFLICT PHRASES - Complete conflict descriptions
+   */
+  const DSP_GENRE_PHRASES = {
+    CrimeSyndicate: 'dangerous alliances quietly form',
+    Billionaire: 'power plays unfold behind closed doors',
+    Noir: 'no one walks away clean',
+    Heist: 'a dangerous plan takes shape',
+    Espionage: 'secrets could get you killed',
+    Political: 'alliances shift like sand'
   };
 
-  // TONE GENERATORS: Each produces a complete sentence in that tone's voice
-  // ==========================================================================
-  // DSP TEMPLATE ASSEMBLY — NOT AUTHORED PROSE
-  // ==========================================================================
-  // DSP is a fixed English sentence template with slot-filled normalized values.
-  // The model may return labels or short phrases only — NOT full sentences.
-  //
-  // RULES:
-  // - DSP defaults to second person ("You")
-  // - Player name may appear only as an appositive
-  // - Pronouns must remain grammatically consistent
-  //
-  // Template pattern:
-  // You—{{player_name_optional}}—step into a {{world_descriptor}}, where
-  // {{tone_clause}}, and find yourself drawn into {{dynamic_clause}}.
-  // ==========================================================================
+  /**
+   * DYNAMIC ORBIT PHRASES - How the relationship dynamic manifests
+   */
+  const DSP_DYNAMIC_PHRASES = {
+    Forbidden: 'someone you shouldn\'t want begins to orbit you',
+    Dangerous: 'someone who could destroy you draws closer',
+    Fated: 'fate keeps pushing you toward someone inevitable',
+    Partners: 'you find yourself bound to the only one you can trust',
+    Enemies: 'your adversary becomes impossible to ignore',
+    Friends: 'a friendship edges toward something more',
+    Proximity: 'someone you can\'t escape starts to matter',
+    SecretIdentity: 'someone wearing a mask captures your attention',
+    Obsessive: 'someone makes you the center of their world',
+    Caretaker: 'someone sees behind your defenses',
+    SecondChance: 'someone from your past returns'
+  };
 
   /**
    * Format player name as appositive (parenthetical).
    * Returns empty string if no custom name provided.
    */
   function formatPlayerAppositive(playerName) {
-    if (!playerName || playerName === 'The Protagonist' || playerName === 'You') {
+    if (!playerName || playerName === 'The Protagonist' || playerName === 'You' || playerName === 'the one who carries the story') {
       return '';
     }
     return `—${playerName}—`;
   }
 
+  /**
+   * DSP NORMALIZER: Cleans up generated prose
+   * - Removes duplicate articles (a a, an an, the the)
+   * - Collapses repeated nouns (world world, place place)
+   * - Ensures proper spacing
+   */
+  function normalizeDSPProse(text) {
+    return text
+      // Remove duplicate articles
+      .replace(/\ba\s+a\b/gi, 'a')
+      .replace(/\ban\s+an\b/gi, 'an')
+      .replace(/\bthe\s+the\b/gi, 'the')
+      // Remove duplicate common nouns
+      .replace(/\bworld\s+world\b/gi, 'world')
+      .replace(/\bplace\s+place\b/gi, 'place')
+      .replace(/\brealm\s+realm\b/gi, 'realm')
+      // Clean up extra spaces
+      .replace(/\s+/g, ' ')
+      // Clean up space before punctuation
+      .replace(/\s+([,.])/g, '$1')
+      .trim();
+  }
+
+  /**
+   * Build the setting phrase by synthesizing world + subtype
+   * Returns a grammatically complete setting description
+   */
+  function buildSettingPhrase(world, worldSubtype) {
+    // If subtype exists, use its complete description
+    if (worldSubtype && DSP_SUBTYPE_SETTINGS[worldSubtype]) {
+      const sub = DSP_SUBTYPE_SETTINGS[worldSubtype];
+      return { noun: sub.noun, quality: sub.quality };
+    }
+    // Otherwise use base world setting
+    const base = DSP_SETTING_BASE[world] || DSP_SETTING_BASE.Modern;
+    return { noun: base.noun, quality: base.quality };
+  }
+
+  /**
+   * TONE-SPECIFIC SENTENCE GENERATORS
+   * Each produces ONE coherent, grammatically complete sentence
+   * Inputs are semantic signals, not strings to splice
+   */
   const DSP_TONE_GENERATORS = {
-    Earnest: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `You${formatPlayerAppositive(playerName)} step into ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} awaits, and find yourself drawn to ${dynamic}.`,
+    Earnest: ({ playerName, setting, genre, dynamic }) => {
+      const appositive = formatPlayerAppositive(playerName);
+      return `You${appositive} enter a ${setting.noun} ${setting.quality}, where ${genre}, and ${dynamic}.`;
+    },
 
-    WryConfession: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `So here you are${formatPlayerAppositive(playerName)}, in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, tangled up in ${genre}, and somehow you find yourself compelled to ${dynamic}.`,
+    WryConfession: ({ playerName, setting, genre, dynamic }) => {
+      const appositive = formatPlayerAppositive(playerName);
+      return `So here you are${appositive}, in a ${setting.noun} ${setting.quality}—${genre}, and somehow ${dynamic}.`;
+    },
 
-    Satirical: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Welcome${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} is already a mess, and you have agreed to ${dynamic}.`,
+    Satirical: ({ playerName, setting, genre, dynamic }) => {
+      const appositive = formatPlayerAppositive(playerName);
+      return `Welcome${appositive} to a ${setting.noun} ${setting.quality}, where ${genre}, and ${dynamic}.`;
+    },
 
-    Dark: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `In ${worldSubtype ? worldSubtype + ' ' : ''}${world}, ${genre} waits in every shadow, and you${formatPlayerAppositive(playerName)} will ${dynamic}, no matter the cost.`,
+    Dark: ({ playerName, setting, genre, dynamic }) => {
+      const appositive = formatPlayerAppositive(playerName);
+      return `In this ${setting.noun} ${setting.quality}, ${genre}, and you${appositive} sense that ${dynamic}.`;
+    },
 
-    Horror: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Something waits in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, wearing the face of ${genre}, and it knows you${formatPlayerAppositive(playerName)} will ${dynamic}.`,
+    Horror: ({ playerName, setting, genre, dynamic }) => {
+      const appositive = formatPlayerAppositive(playerName);
+      return `Something waits in this ${setting.noun} ${setting.quality}—${genre}, and ${dynamic}.`;
+    },
 
-    Mythic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Fate calls you${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} shapes the path of heroes, and you must ${dynamic}.`,
+    Mythic: ({ playerName, setting, genre, dynamic }) => {
+      const appositive = formatPlayerAppositive(playerName);
+      return `Fate calls you${appositive} to a ${setting.noun} ${setting.quality}, where ${genre}, and ${dynamic}.`;
+    },
 
-    Comedic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Look, ${worldSubtype ? worldSubtype + ' ' : ''}${world} seemed like a good idea at the time${formatPlayerAppositive(playerName)}, but now there is ${genre}, and apparently you are going to ${dynamic}.`,
+    Comedic: ({ playerName, setting, genre, dynamic }) => {
+      const appositive = formatPlayerAppositive(playerName);
+      return `Look${appositive}, this ${setting.noun} ${setting.quality} seemed fine until ${genre}—and now ${dynamic}.`;
+    },
 
-    Surreal: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `${worldSubtype ? worldSubtype.charAt(0).toUpperCase() + worldSubtype.slice(1) + ' ' : ''}${world} bends at the edges${formatPlayerAppositive(playerName)}, where ${genre} tastes like something half-remembered, and you ${dynamic}.`,
+    Surreal: ({ playerName, setting, genre, dynamic }) => {
+      const appositive = formatPlayerAppositive(playerName);
+      return `The ${setting.noun} ${setting.quality} bends at the edges${appositive}, ${genre}, and ${dynamic}.`;
+    },
 
-    Poetic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Beneath the long shadow of ${worldSubtype ? worldSubtype + ' ' : ''}${world}, your fate${formatPlayerAppositive(playerName)} drifts toward ${genre}, and the need to ${dynamic} moves like a quiet inevitability.`
+    Poetic: ({ playerName, setting, genre, dynamic }) => {
+      const appositive = formatPlayerAppositive(playerName);
+      return `Beneath the long shadow of a ${setting.noun} ${setting.quality}, ${genre}${appositive}, and ${dynamic}.`;
+    }
   };
 
   /**
    * Generate a single DSP sentence that:
-   * - Is exactly one sentence
-   * - Is grammatically closed (no fragments)
+   * - Is exactly one coherent sentence
+   * - Is grammatically complete (no fragments, no Mad Libs)
    * - Is written in present tense
    * - Addresses Player 1 by name (REQUIRED)
-   * - Reflects: World, World Subtype (if any), Tone, Dynamic, Style
+   * - SYNTHESIZES inputs into prose (does not splice strings)
    */
   function generateDSPSentence(world, tone, genre, dynamic, playerName, worldSubtype) {
-    const worldText = DSP_WORLD_SETTINGS[world] || DSP_WORLD_SETTINGS.Modern;
-    const genreText = DSP_GENRE_CONFLICTS[genre] || DSP_GENRE_CONFLICTS.Billionaire;
-    const dynamicText = DSP_DYNAMIC_ENGINES[dynamic] || DSP_DYNAMIC_ENGINES.Enemies;
+    // Build setting phrase by synthesizing world + subtype
+    const setting = buildSettingPhrase(world, worldSubtype);
+
+    // Get genre conflict phrase
+    const genrePhrase = DSP_GENRE_PHRASES[genre] || DSP_GENRE_PHRASES.Billionaire;
+
+    // Get dynamic orbit phrase
+    const dynamicPhrase = DSP_DYNAMIC_PHRASES[dynamic] || DSP_DYNAMIC_PHRASES.Enemies;
 
     // Player name is REQUIRED for DSP generation
     const name = playerName || $('playerNameInput')?.value?.trim() || 'The Protagonist';
 
-    // World subtype provides additional context (optional)
-    const subtypeText = worldSubtype ? formatWorldSubtype(worldSubtype) : null;
-
+    // Select tone generator
     const generator = DSP_TONE_GENERATORS[tone] || DSP_TONE_GENERATORS.Earnest;
-    return generator({
-      playerName: name,
-      world: worldText,
-      worldSubtype: subtypeText,
-      genre: genreText,
-      dynamic: dynamicText
-    });
-  }
 
-  /**
-   * Format world subtype for display in DSP
-   * Converts internal subtype keys to readable phrases
-   */
-  function formatWorldSubtype(subtype) {
-    const SUBTYPE_DISPLAY = {
-      // Modern subtypes
-      small_town: 'a small-town',
-      college: 'a campus',
-      friends: 'a friend-group',
-      old_money: 'an old-money',
-      office: 'an office',
-      supernatural_modern: 'a supernatural',
-      superheroic_modern: 'a superheroic',
-      // Sci-Fi subtypes
-      space_opera: 'a galactic',
-      hard_scifi: 'a scientifically rigorous',
-      cyberpunk: 'a neon-lit cyberpunk',
-      post_human: 'a transcendent',
-      alien_contact: 'an alien-touched',
-      abundance_collapse: 'a post-scarcity',
-      // Fantasy subtypes
-      enchanted_realms: 'a magical',
-      hidden_magic: 'a subtle-magic',
-      cursed_corrupt: 'a grim',
-      // Dystopia subtypes
-      authoritarian: 'an authoritarian',
-      surveillance: 'a surveillance',
-      corporate: 'a corporate-ruled',
-      environmental: 'an ecologically collapsed',
-      // Post-Apocalyptic subtypes
-      nuclear: 'a nuclear-scarred',
-      pandemic: 'a plague-ravaged',
-      climate: 'a climate-devastated',
-      technological: 'a tech-fallen',
-      slow_decay: 'a slowly decaying'
-    };
-    return SUBTYPE_DISPLAY[subtype] || null;
+    // Generate raw sentence
+    const rawSentence = generator({
+      playerName: name,
+      setting: setting,
+      genre: genrePhrase,
+      dynamic: dynamicPhrase
+    });
+
+    // Apply DSP normalizer to clean up any grammatical issues
+    return normalizeDSPProse(rawSentence);
   }
 
   function updateSynopsisPanel() {
@@ -4974,10 +5036,125 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // → Genre → Dynamic). It disappears only after Begin Story is clicked.
   // Visibility is tied to screen state, not scroll position.
   // ═══════════════════════════════════════════════════════════════════
+
+  // GUIDED DESTINY STATE - tracks when user is actively selecting story shape
+  let _guidedDestinyActive = false;
+  let _dspSparkleInterval = null;
+
+  /**
+   * Activate Guided Destiny visual state on DSP
+   * - Adds gold vignette (doubled intensity)
+   * - Starts sparkle animation
+   */
+  function activateGuidedDestiny() {
+    if (_guidedDestinyActive) return;
+    _guidedDestinyActive = true;
+
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    if (synopsisPanel) {
+      synopsisPanel.classList.add('guided-destiny-active');
+      startDSPSparkles(synopsisPanel);
+    }
+  }
+
+  /**
+   * Deactivate Guided Destiny visual state on DSP
+   * - Removes gold vignette completely
+   * - Stops sparkle animation
+   * - Resets to default DSP appearance
+   */
+  function deactivateGuidedDestiny() {
+    if (!_guidedDestinyActive) return;
+    _guidedDestinyActive = false;
+
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    if (synopsisPanel) {
+      synopsisPanel.classList.remove('guided-destiny-active');
+      stopDSPSparkles();
+    }
+  }
+
+  /**
+   * Start sparkle particles within DSP panel
+   * - Confined to DSP bounds
+   * - Brightness variance (30% sharp glints)
+   */
+  function startDSPSparkles(container) {
+    stopDSPSparkles(); // Clear any existing
+
+    // Ensure sparkle container exists
+    let sparkleContainer = container.querySelector('.dsp-sparkle-container');
+    if (!sparkleContainer) {
+      sparkleContainer = document.createElement('div');
+      sparkleContainer.className = 'dsp-sparkle-container';
+      container.appendChild(sparkleContainer);
+    }
+
+    // Create sparkles at interval
+    _dspSparkleInterval = setInterval(() => {
+      if (!_guidedDestinyActive) {
+        stopDSPSparkles();
+        return;
+      }
+      createDSPSparkle(sparkleContainer);
+    }, 150); // New sparkle every 150ms
+
+    // Initial burst
+    for (let i = 0; i < 8; i++) {
+      setTimeout(() => createDSPSparkle(sparkleContainer), i * 50);
+    }
+  }
+
+  /**
+   * Create a single sparkle particle
+   */
+  function createDSPSparkle(container) {
+    const sparkle = document.createElement('div');
+    sparkle.className = 'dsp-sparkle';
+
+    // Random position within container
+    const x = Math.random() * 100;
+    const y = Math.random() * 100;
+    sparkle.style.left = x + '%';
+    sparkle.style.top = y + '%';
+
+    // Brightness variance - 30% are sharp glints
+    const isGlint = Math.random() < 0.3;
+    const size = isGlint ? 6 : 3;
+    sparkle.style.width = size + 'px';
+    sparkle.style.height = size + 'px';
+
+    if (isGlint) {
+      sparkle.classList.add('glint');
+    }
+
+    container.appendChild(sparkle);
+
+    // Remove after animation completes
+    setTimeout(() => sparkle.remove(), 1500);
+  }
+
+  /**
+   * Stop and clean up DSP sparkles
+   */
+  function stopDSPSparkles() {
+    if (_dspSparkleInterval) {
+      clearInterval(_dspSparkleInterval);
+      _dspSparkleInterval = null;
+    }
+
+    const sparkleContainer = document.querySelector('.dsp-sparkle-container');
+    if (sparkleContainer) {
+      sparkleContainer.innerHTML = '';
+    }
+  }
+
   function showDSP() {
     const synopsisPanel = document.getElementById('synopsisPanel');
     if (synopsisPanel && window.innerWidth > 1100) {
       synopsisPanel.classList.add('visible');
+      // Activate Guided Destiny effects when DSP becomes visible
+      activateGuidedDestiny();
     }
   }
 
@@ -4985,6 +5162,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const synopsisPanel = document.getElementById('synopsisPanel');
     if (synopsisPanel) {
       synopsisPanel.classList.remove('visible');
+      // CRITICAL: Deactivate Guided Destiny effects when DSP hides
+      deactivateGuidedDestiny();
     }
   }
 
@@ -4994,6 +5173,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       showDSP();
     } else {
       hideDSP();
+      // CRITICAL: Always deactivate on screen change away from setup
+      deactivateGuidedDestiny();
     }
   }
 
@@ -5001,6 +5182,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   window.showDSP = showDSP;
   window.hideDSP = hideDSP;
   window.updateDSPVisibility = updateDSPVisibility;
+  window.activateGuidedDestiny = activateGuidedDestiny;
+  window.deactivateGuidedDestiny = deactivateGuidedDestiny;
 
   // Legacy function name for compatibility
   function initSynopsisPanelScrollBehavior() {
