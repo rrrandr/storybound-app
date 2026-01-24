@@ -5000,6 +5000,63 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       .trim();
   }
 
+  // RAW LABELS that should NEVER appear in DSP prose (they indicate concatenation leakage)
+  const DSP_RAW_LABEL_PATTERNS = [
+    /\bworld:\s/i,
+    /\btone:\s/i,
+    /\bgenre:\s/i,
+    /\bdynamic:\s/i,
+    /\bsubtype:\s/i,
+    /\bthe world\b.*\bthe world\b/i, // repeated "the world"
+    /\ba campus a\b/i,              // article collision
+    /\ba world a\b/i                // article collision
+  ];
+
+  /**
+   * DEV ASSERTION: Validate DSP prose quality
+   * Throws if DSP text contains duplicate articles or raw labels
+   * This catches Mad-Libs style concatenation leakage
+   */
+  function assertDSPProseQuality(text) {
+    if (!IS_DEV_MODE) return;
+
+    // Check for duplicate articles
+    const duplicateArticlePatterns = [
+      /\ba\s+a\b/i,
+      /\ban\s+an\b/i,
+      /\bthe\s+the\b/i
+    ];
+
+    for (const pattern of duplicateArticlePatterns) {
+      if (pattern.test(text)) {
+        throw new Error(
+          `[DEV ASSERT: DSP_PROSE] Duplicate articles detected in DSP text!\n` +
+          `Pattern: ${pattern}\n` +
+          `Text: "${text}"`
+        );
+      }
+    }
+
+    // Check for raw labels (indicates concatenation leakage)
+    for (const pattern of DSP_RAW_LABEL_PATTERNS) {
+      if (pattern.test(text)) {
+        throw new Error(
+          `[DEV ASSERT: DSP_PROSE] Raw label or concatenation leak in DSP text!\n` +
+          `Pattern: ${pattern}\n` +
+          `Text: "${text}"`
+        );
+      }
+    }
+
+    // Check for empty or placeholder text
+    if (!text || text.length < 20) {
+      throw new Error(
+        `[DEV ASSERT: DSP_PROSE] DSP text too short or empty!\n` +
+        `Text: "${text}"`
+      );
+    }
+  }
+
   /**
    * Build the setting phrase by synthesizing world + subtype
    * Returns a grammatically complete setting description
@@ -5100,26 +5157,45 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
 
     // Apply DSP normalizer to clean up any grammatical issues
-    return normalizeDSPProse(rawSentence);
+    const normalizedSentence = normalizeDSPProse(rawSentence);
+
+    // DEV ASSERTION: Validate prose quality (fails loudly if Mad-Libs detected)
+    assertDSPProseQuality(normalizedSentence);
+
+    return normalizedSentence;
   }
 
   function updateSynopsisPanel() {
     const synopsisText = document.getElementById('synopsisText');
     if (!synopsisText) return;
 
-    // Get current selections
+    // ═══════════════════════════════════════════════════════════════════
+    // DSP STATE SOURCE OF TRUTH: Read ONLY from state.picks
+    // This is the SAME state object used by Guided Destiny finalization
+    // NO fallbacks, NO placeholders, NO parallel logic
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Read directly from state.picks (Guided Destiny's authoritative state)
     const world = state.picks.world || 'Modern';
     const tone = state.picks.tone || 'Earnest';
     const genre = state.picks.genre || 'Billionaire';
     const dynamic = state.picks.dynamic || 'Enemies';
 
-    // Get player kernel for DSP (REQUIRED) - ONLY use normalized kernel, never raw input
-    const playerKernel = state.normalizedPlayerKernel || 'the one who carries the story';
-
-    // Get world subtype if one is selected (optional)
+    // World subtype from state.picks FIRST, UI fallback only if missing
     const worldSubtype = state.picks.worldSubtype || getSelectedWorldSubtype(world);
 
-    // Generate holistic sentence based on tone with player kernel and subtype
+    // Player kernel: use normalized kernel from state, NOT raw input
+    const playerKernel = state.normalizedPlayerKernel || 'the one who carries the story';
+
+    // DEV LOG: Track state source for debugging
+    if (IS_DEV_MODE) {
+      console.log('[DSP] Reading from state.picks:', {
+        world, tone, genre, dynamic, worldSubtype,
+        playerKernel: playerKernel.slice(0, 20) + '...'
+      });
+    }
+
+    // Generate synthesized sentence (NOT concatenated fragments)
     const newSentence = generateDSPSentence(world, tone, genre, dynamic, playerKernel, worldSubtype);
 
     // Update with animation if content changed

@@ -2421,12 +2421,13 @@ textarea.fate-field {
     font-family: 'Lora', 'Georgia', serif;
     font-size: 0.85em;
     line-height: 1.65;
-    /* Black text on gold background */
-    color: #1a1a1a;
+    /* LOCKED: Black text on gold art-deco background - enforced at component level */
+    color: #1a1a1a !important;
     margin: 0;
     text-align: left;
     font-style: italic;
     letter-spacing: 0.01em;
+    /* Subtle emboss effect for readability on gold */
     text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
@@ -2490,7 +2491,8 @@ textarea.fate-field {
         font-size: 0.9em;
         text-align: center;
         line-height: 1.5;
-        color: #1a1a1a;
+        /* LOCKED: Black text enforced at component level */
+        color: #1a1a1a !important;
     }
 
     .synopsis-text span {
