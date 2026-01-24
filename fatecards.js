@@ -632,6 +632,8 @@
     let _inputsBound = false;
     let _allFlipped = false;
     let _pendingApplyTimer = null;
+    let _continuousSparkleInterval = null;
+    let _sparkleEmitterActive = false;
 
     function resolveUnlockCount(){
         // Highest priority: explicit override if app.js sets it
@@ -752,6 +754,212 @@
         // Remove container after all particles done
         setTimeout(() => container.remove(), streamDuration + particleDuration + 100);
     }
+
+    // =========================================================================
+    // CONTINUOUS SPARKLE EMITTER - Fate Cards to Say/Do Panel
+    // =========================================================================
+    // Emits a steady stream of gold sparkles while Fate Cards are active.
+    // Sparkles drift upward and forward from cardMount toward input panels.
+    // =========================================================================
+
+    /**
+     * Start the continuous sparkle emitter.
+     * Runs while Guided Destiny is active and Fate Cards are visible.
+     */
+    function startContinuousSparkles() {
+        if (_sparkleEmitterActive) return;
+        _sparkleEmitterActive = true;
+
+        const mount = document.getElementById('cardMount');
+        const actionWrapper = document.getElementById('actionWrapper');
+        const dialogueWrapper = document.getElementById('dialogueWrapper');
+
+        if (!mount) {
+            _sparkleEmitterActive = false;
+            return;
+        }
+
+        // Create persistent container for continuous sparkles
+        let sparkleContainer = document.getElementById('fateSparkleContainer');
+        if (!sparkleContainer) {
+            sparkleContainer = document.createElement('div');
+            sparkleContainer.id = 'fateSparkleContainer';
+            sparkleContainer.className = 'fate-sparkle-container';
+            document.body.appendChild(sparkleContainer);
+        }
+
+        // DOUBLED particle emission rate - emit 2 particles every 80ms
+        _continuousSparkleInterval = setInterval(() => {
+            if (!_sparkleEmitterActive) {
+                stopContinuousSparkles();
+                return;
+            }
+
+            // Check if mount is still visible
+            const mountRect = mount.getBoundingClientRect();
+            if (mountRect.width === 0 || mountRect.height === 0) {
+                return; // Mount not visible, skip this tick
+            }
+
+            // Emit 2 sparkles per tick (doubled count)
+            for (let i = 0; i < 2; i++) {
+                createContinuousSparkle(sparkleContainer, mount, actionWrapper, dialogueWrapper);
+            }
+        }, 80);
+
+        // Initial burst of sparkles
+        for (let i = 0; i < 12; i++) {
+            setTimeout(() => {
+                if (_sparkleEmitterActive) {
+                    createContinuousSparkle(sparkleContainer, mount, actionWrapper, dialogueWrapper);
+                }
+            }, i * 30);
+        }
+
+        console.log('[SPARKLE] Continuous emitter started');
+    }
+
+    /**
+     * Stop the continuous sparkle emitter.
+     * Called when Guided Destiny ends or user navigates away.
+     */
+    function stopContinuousSparkles() {
+        _sparkleEmitterActive = false;
+
+        if (_continuousSparkleInterval) {
+            clearInterval(_continuousSparkleInterval);
+            _continuousSparkleInterval = null;
+        }
+
+        // Clean up container after a delay (let remaining particles finish)
+        setTimeout(() => {
+            const sparkleContainer = document.getElementById('fateSparkleContainer');
+            if (sparkleContainer) {
+                sparkleContainer.remove();
+            }
+        }, 1500);
+
+        console.log('[SPARKLE] Continuous emitter stopped');
+    }
+
+    /**
+     * Create a single sparkle particle that drifts from Fate Cards toward Say/Do.
+     */
+    function createContinuousSparkle(container, mount, actionWrapper, dialogueWrapper) {
+        if (!container || !mount) return;
+
+        const mountRect = mount.getBoundingClientRect();
+
+        // Random start position within the cardMount area
+        const startX = mountRect.left + Math.random() * mountRect.width;
+        const startY = mountRect.top + Math.random() * mountRect.height;
+
+        // Target: randomly choose action or dialogue wrapper
+        const targetWrapper = Math.random() < 0.5 ? actionWrapper : dialogueWrapper;
+        let endX, endY;
+
+        if (targetWrapper) {
+            const targetRect = targetWrapper.getBoundingClientRect();
+            endX = targetRect.left + targetRect.width * 0.5;
+            endY = targetRect.top + targetRect.height * 0.3;
+        } else {
+            // Fallback: drift downward and slightly forward
+            endX = startX + (Math.random() - 0.5) * 100;
+            endY = startY + 150;
+        }
+
+        // Create particle element
+        const sparkle = document.createElement('div');
+        sparkle.className = 'fate-continuous-sparkle';
+
+        // INCREASED brightness variance - 40% are sharp glints
+        const isGlint = Math.random() < 0.4;
+        const baseSize = isGlint ? (5 + Math.random() * 3) : (2 + Math.random() * 2);
+
+        sparkle.style.width = baseSize + 'px';
+        sparkle.style.height = baseSize + 'px';
+        sparkle.style.left = startX + 'px';
+        sparkle.style.top = startY + 'px';
+
+        // Warm gold colors only (no white, no silver)
+        if (isGlint) {
+            sparkle.classList.add('glint');
+            // Sharp glint with intense gold glow
+            sparkle.style.background = 'radial-gradient(circle, #ffe066 0%, #ffd700 50%, transparent 70%)';
+            sparkle.style.boxShadow = `
+                0 0 ${6 + Math.random() * 6}px #ffd700,
+                0 0 ${12 + Math.random() * 8}px rgba(255, 200, 0, 0.8),
+                0 0 ${20 + Math.random() * 10}px rgba(255, 180, 0, 0.5)
+            `;
+        } else {
+            // Standard warm gold particle
+            sparkle.style.background = 'radial-gradient(circle, #ffd700 0%, #daa520 60%, transparent 70%)';
+            sparkle.style.boxShadow = `
+                0 0 4px #ffd700,
+                0 0 8px rgba(255, 215, 0, 0.6)
+            `;
+        }
+
+        container.appendChild(sparkle);
+
+        // Animate the sparkle
+        const duration = 1200 + Math.random() * 800; // 1.2-2s
+        const pStartTime = performance.now();
+        const maxOpacity = isGlint ? 1.0 : (0.6 + Math.random() * 0.3);
+
+        // Slight drift offset for organic feel
+        const driftX = (Math.random() - 0.5) * 40;
+        const waveFrequency = 2 + Math.random() * 2;
+
+        function animateSparkle(currentTime) {
+            const elapsed = currentTime - pStartTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Ease-out for natural deceleration
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            // Wave motion for organic float
+            const wave = Math.sin(progress * Math.PI * waveFrequency) * 8;
+
+            // Upward drift component (sparkles float up slightly before heading to target)
+            const upwardDrift = Math.sin(progress * Math.PI) * -20;
+
+            const currentX = startX + (endX - startX) * eased + driftX * eased + wave;
+            const currentY = startY + (endY - startY) * eased + upwardDrift;
+
+            sparkle.style.left = currentX + 'px';
+            sparkle.style.top = currentY + 'px';
+
+            // Fade in quickly, hold, fade out near end
+            if (progress < 0.15) {
+                sparkle.style.opacity = (progress / 0.15) * maxOpacity;
+            } else if (progress > 0.75) {
+                sparkle.style.opacity = ((1 - progress) / 0.25) * maxOpacity;
+            } else {
+                // Flicker effect for glints
+                const flicker = isGlint ? (0.85 + Math.random() * 0.15) : 1;
+                sparkle.style.opacity = maxOpacity * flicker;
+            }
+
+            // Scale down as it fades
+            if (progress > 0.6) {
+                const scale = 1 - (progress - 0.6) * 1.5;
+                sparkle.style.transform = `scale(${Math.max(0.3, scale)})`;
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(animateSparkle);
+            } else {
+                sparkle.remove();
+            }
+        }
+
+        requestAnimationFrame(animateSparkle);
+    }
+
+    // Expose sparkle controls globally
+    window.startFateSparkles = startContinuousSparkles;
+    window.stopFateSparkles = stopContinuousSparkles;
 
     function setSelectedState(mount, selectedCardEl){
         const cards = mount.querySelectorAll('.fate-card');
@@ -979,6 +1187,17 @@
         // Bind commitment triggers once (safe no-op if elements missing)
         bindCommitHooks(mount);
         bindInputCommit(mount);
+
+        // START CONTINUOUS SPARKLES when Fate Cards are dealt
+        startContinuousSparkles();
+    };
+
+    // Stop sparkles when committing selection (Guided Destiny ends)
+    const originalCommitFateSelection = commitFateSelection;
+    commitFateSelection = function(mount) {
+        // Stop sparkles when user commits their choice
+        stopContinuousSparkles();
+        return originalCommitFateSelection(mount);
     };
 
 })(window);
