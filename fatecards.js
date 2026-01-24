@@ -735,27 +735,40 @@
         setTimeout(() => container.remove(), streamDuration + particleDuration + 100);
     }
 
-    function setSelectedState(mount, selectedCardEl){
-        const cards = mount.querySelectorAll('.fate-card');
-        cards.forEach(c => c.classList.remove('selected'));
-        if (selectedCardEl) selectedCardEl.classList.add('selected');
+function setSelectedState(mount, selectedCardEl){
+    const cards = mount.querySelectorAll('.fate-card');
+    cards.forEach(c => c.classList.remove('selected'));
+    if (selectedCardEl) selectedCardEl.classList.add('selected');
 
-        // Show "Your choice:" label when a card is selected
-        const yourChoiceLabel = document.getElementById('yourChoiceLabel');
-        if (yourChoiceLabel) {
-            if (selectedCardEl) {
-                yourChoiceLabel.classList.remove('hidden');
-            } else {
-                yourChoiceLabel.classList.add('hidden');
-            }
-        }
-
-        // Track selection in state without changing shape elsewhere
-        if (window.state) {
-            const idx = Number(selectedCardEl && selectedCardEl.dataset && selectedCardEl.dataset.cardIndex);
-            if (!Number.isNaN(idx)) window.state.fateSelectedIndex = idx;
+    // Show "Your choice:" label when a card is selected
+    const yourChoiceLabel = document.getElementById('yourChoiceLabel');
+    if (yourChoiceLabel) {
+        if (selectedCardEl) {
+            yourChoiceLabel.classList.remove('hidden');
+        } else {
+            yourChoiceLabel.classList.add('hidden');
         }
     }
+
+    // Track selection in state without changing shape elsewhere
+    if (window.state) {
+        const idx = Number(
+            selectedCardEl &&
+            selectedCardEl.dataset &&
+            selectedCardEl.dataset.cardIndex
+        );
+        if (!Number.isNaN(idx)) {
+            window.state.fateSelectedIndex = idx;
+        }
+    }
+
+    // 🔑 SPARKLE WIRING (THE FIX)
+    if (selectedCardEl) {
+        startContinuousSparkles();
+    } else {
+        stopContinuousSparkles();
+    }
+}
 
     function commitFateSelection(mount){
         // Commit means: lock choice, poof unchosen 4, disable further selection
