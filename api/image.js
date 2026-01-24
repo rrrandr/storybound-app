@@ -390,9 +390,12 @@ function generateAtmosphericSeriesLine(world, genre, tone, worldSubtype) {
 
 function wrapScenePrompt(basePrompt) {
   // Scene visualization: Atmosphere, characters, environment - NO text
+  // CRITICAL: Avoid silhouettes and noir imagery unless explicitly modern/urban
   return `${basePrompt}
 
 Style: Cinematic illustration, atmospheric lighting, painterly.
+MANDATORY: Show visible faces and identifiable figures - NO anonymous silhouettes.
+FORBIDDEN: Shadowy figures, backlit anonymity, noir aesthetics (unless prompt explicitly requests urban/modern).
 DO NOT include any visible text, captions, titles, logos, or watermarks.`;
 }
 

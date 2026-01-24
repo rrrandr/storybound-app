@@ -8536,6 +8536,165 @@ WORLD CONSTRAINTS (MANDATORY):
   }
 
   // ============================================================
+  // STRUCTURED VISUALIZE PROMPT BUILDER
+  // ============================================================
+  // Builds image prompts from STRUCTURED STATE, not narrative prose.
+  // This ensures world/era constraints are always respected.
+  // ============================================================
+
+  // NOIR FORBIDDEN TERMS: These indicate inappropriate urban noir imagery
+  const NOIR_FORBIDDEN_TERMS = [
+      'silhouette', 'silhouetted', 'shadowy figure', 'dark figure',
+      'dimly lit', 'dark room', 'noir', 'rain-soaked', 'rain slicked',
+      'urban', 'street corner', 'back alley', 'fire escape'
+  ];
+
+  // DEV ASSERTION: Detect noir/silhouette terms in visualize prompts
+  function assertNoNoirTermsInVisualizePrompt(prompt, world, worldSubtype) {
+      if (!IS_DEV_MODE) return;
+
+      const isNonUrban = isNonUrbanWorld(world, worldSubtype);
+      if (!isNonUrban) return; // Urban world - noir might be appropriate
+
+      const promptLower = prompt.toLowerCase();
+      const foundTerms = NOIR_FORBIDDEN_TERMS.filter(term => promptLower.includes(term));
+
+      if (foundTerms.length > 0) {
+          throw new Error(
+              `[DEV ASSERT: VISUALIZE_NOIR] Noir/silhouette terms found in non-urban visualize prompt!\n` +
+              `World: ${world}, Subtype: ${worldSubtype}\n` +
+              `Forbidden terms found: ${foundTerms.join(', ')}\n` +
+              `Prompt excerpt: ${prompt.slice(0, 200)}...`
+          );
+      }
+  }
+
+  // ENVIRONMENT DESCRIPTORS: Based on world and subtype
+  const VISUALIZE_ENVIRONMENTS = {
+      fantasy: {
+          enchanted_realms: { type: 'exterior', setting: 'enchanted forest glade', lighting: 'magical golden light filtering through ancient canopy', materials: 'moss-covered stones, ancient trees, wildflowers' },
+          hidden_magic: { type: 'interior', setting: 'cozy cottage with magical artifacts', lighting: 'warm candlelight, fire glow', materials: 'wooden beams, dried herbs, worn books, copper pots' },
+          cursed_worlds: { type: 'exterior', setting: 'misty moorland with standing stones', lighting: 'pale twilight, mist diffusing light', materials: 'weathered stone, gnarled roots, dark earth' },
+          default: { type: 'exterior', setting: 'mystical woodland clearing', lighting: 'soft ethereal light through leaves', materials: 'ancient trees, moss, ferns, wildflowers' }
+      },
+      historical: {
+          prehistoric: { type: 'exterior', setting: 'vast wilderness, cliff overlook', lighting: 'dramatic sunset glow', materials: 'raw stone, animal furs, primal landscape' },
+          classical: { type: 'exterior', setting: 'marble colonnade, Mediterranean garden', lighting: 'warm afternoon sun', materials: 'marble columns, olive trees, terracotta' },
+          medieval: { type: 'interior', setting: 'castle great hall or village square', lighting: 'torchlight and firelight', materials: 'stone walls, wooden beams, tapestries, iron' },
+          renaissance: { type: 'interior', setting: 'palazzo with frescoed walls', lighting: 'warm sunlight through tall windows', materials: 'marble floors, velvet drapes, gilt frames' },
+          victorian: { type: 'interior', setting: 'parlor with ornate furnishings', lighting: 'gaslight and candlelight', materials: 'dark wood, velvet, lace, brass fixtures' },
+          default: { type: 'interior', setting: 'period manor house', lighting: 'candlelight and firelight', materials: 'wood paneling, tapestries, stone floors' }
+      },
+      postapocalyptic: {
+          default: { type: 'exterior', setting: 'overgrown ruins, nature reclaiming', lighting: 'golden hour through broken structures', materials: 'crumbling concrete, rust, wildflowers, vines' }
+      },
+      scifi: {
+          cyberpunk: { type: 'exterior', setting: 'neon-lit street in sprawling megacity', lighting: 'neon glow, rain reflections', materials: 'holographic displays, chrome, wet asphalt' },
+          galactic_civilizations: { type: 'interior', setting: 'starship bridge or observation deck', lighting: 'soft ambient glow, starlight', materials: 'sleek consoles, viewport to nebula, minimal surfaces' },
+          default: { type: 'interior', setting: 'futuristic space station', lighting: 'cool ambient lighting', materials: 'clean surfaces, holographic interfaces, viewport' }
+      },
+      dystopia: {
+          default: { type: 'interior', setting: 'stark institutional space', lighting: 'harsh overhead fluorescents', materials: 'concrete, metal, propaganda posters' }
+      },
+      modern: {
+          small_town: { type: 'exterior', setting: 'quiet main street at twilight', lighting: 'warm shop lights, streetlamps', materials: 'brick storefronts, autumn leaves, vintage signage' },
+          college: { type: 'exterior', setting: 'ivy-covered campus quad', lighting: 'dappled sunlight through trees', materials: 'brick buildings, green lawn, stone paths' },
+          office: { type: 'interior', setting: 'sleek corporate interior', lighting: 'floor-to-ceiling windows, city view', materials: 'glass, steel, designer furniture' },
+          old_money: { type: 'interior', setting: 'luxurious penthouse or estate', lighting: 'dramatic evening light', materials: 'marble, silk, crystal, antiques' },
+          default: { type: 'interior', setting: 'atmospheric contemporary space', lighting: 'warm ambient lighting', materials: 'comfortable furnishings, personal touches' }
+      }
+  };
+
+  /**
+   * Build a structured Visualize prompt from state (NOT prose).
+   * This replaces the LLM-based prompt generation for scene_visualize.
+   *
+   * @param {Object} options - Structured scene data
+   * @param {string} options.world - Story world
+   * @param {string} options.worldSubtype - World subtype
+   * @param {string} options.tone - Story tone
+   * @param {string} options.intensity - Intensity level
+   * @param {string} options.anchors - Character anchors from visual bible
+   * @param {string} options.modifiers - User-specified modifiers
+   * @returns {string} - Complete structured image prompt
+   */
+  function buildStructuredVisualizePrompt({ world, worldSubtype, tone, intensity, anchors, modifiers }) {
+      const w = (world || 'Modern').toLowerCase();
+      const ws = (worldSubtype || '').toLowerCase();
+      const t = (tone || 'Earnest').toLowerCase();
+
+      // Get environment descriptor for world/subtype
+      const worldEnvs = VISUALIZE_ENVIRONMENTS[w] || VISUALIZE_ENVIRONMENTS.modern;
+      const env = worldEnvs[ws] || worldEnvs.default;
+
+      // Get era info for constraints
+      const eraInfo = getDefaultEraFromWorld(world, worldSubtype);
+      const isNonUrban = isNonUrbanWorld(world, worldSubtype);
+
+      // Build scene description from structured data
+      let sceneDesc = `A ${env.type === 'interior' ? 'interior scene in' : 'scene set in'} ${env.setting}. `;
+      sceneDesc += `Lighting: ${env.lighting}. `;
+      sceneDesc += `Materials and textures: ${env.materials}. `;
+
+      // Tone-specific atmosphere
+      const toneAtmosphere = {
+          earnest: 'Warm, inviting atmosphere with soft natural tones.',
+          dark: 'Moody atmosphere with dramatic contrast and deep shadows.',
+          horror: 'Unsettling atmosphere with tension in every shadow.',
+          wryconfession: 'Subtle ironic edge, knowing atmosphere.',
+          satirical: 'Stylized, slightly exaggerated atmosphere.',
+          mythic: 'Epic, larger-than-life atmosphere with grand scale.',
+          comedic: 'Light, playful atmosphere with warmth.',
+          surreal: 'Dreamlike, slightly off-kilter atmosphere.',
+          poetic: 'Soft, lyrical atmosphere with romantic light.'
+      };
+      sceneDesc += toneAtmosphere[t] || toneAtmosphere.earnest;
+
+      // Add character anchors if present
+      if (anchors && anchors.trim()) {
+          sceneDesc += ` Characters: ${anchors.slice(0, 150)}.`;
+      }
+
+      // Add user modifiers if present
+      if (modifiers && modifiers.trim()) {
+          sceneDesc += ` ${modifiers}.`;
+      }
+
+      // HARD CONSTRAINTS for non-urban worlds
+      let hardConstraints = '';
+      if (isNonUrban) {
+          hardConstraints = `
+
+---
+VISUALIZE CONSTRAINTS (MANDATORY):
+- Era: ${eraInfo.era}, ${eraInfo.setting} setting
+- Lighting: ${eraInfo.lighting} sources ONLY
+- EXPLICITLY FORBIDDEN:
+  * Silhouettes or shadowy figures (show visible faces and bodies)
+  * Modern buildings, streets, skyscrapers, urban environments
+  * Noir lighting, rain-soaked streets, dark alleys
+  * Electric lighting, neon, streetlamps
+  * Contemporary clothing or objects
+- REQUIRED:
+  * Visible human faces and expressions (no anonymous figures)
+  * Natural or period-appropriate environments
+  * Organic materials appropriate to ${world}
+  * Era-appropriate light sources
+---`;
+      }
+
+      // Style suffix
+      const styleSuffix = `
+
+Style: Cinematic, painterly, no text overlays.
+Attractive, elegant features, natural expressions.
+Visible faces and identifiable figures (NO silhouettes).
+Full scene composition with depth and atmosphere.`;
+
+      return sceneDesc + hardConstraints + styleSuffix;
+  }
+
+  // ============================================================
 
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
   // All image generation MUST route through this function
@@ -8922,54 +9081,41 @@ WORLD CONSTRAINTS (MANDATORY):
           // Get intensity bias for prompt generation
           const intensityBias = getVisualizeIntensityBias();
 
+          // Get world context for structured prompt building
+          const vizWorld = state.picks?.world || 'Modern';
+          const vizSubtype = state.picks?.worldSubtype || '';
+          const vizTone = state.picks?.tone || 'Earnest';
+          const vizIntensity = state.intensity || 'Naughty';
+
           if(!isRe || !promptMsg) {
-              // Build world constraint guidance for LLM prompt generation
-              const vizWorld = state.picks?.world || 'Modern';
-              const vizSubtype = state.picks?.worldSubtype || '';
-              const vizIsNonUrban = isNonUrbanWorld(vizWorld, vizSubtype);
-              const vizEraInfo = getDefaultEraFromWorld(vizWorld, vizSubtype);
+              // ============================================================
+              // STRUCTURED VISUALIZE PROMPT (NO PROSE)
+              // ============================================================
+              // Build prompt from structured state, NOT narrative text.
+              // This ensures world/era constraints are always respected.
+              // The LLM is NOT used to generate the scene description.
+              // ============================================================
 
-              // WORLD GUARDRAIL: Add explicit constraints for non-urban worlds
-              let worldConstraintGuidance = '';
-              if (vizIsNonUrban) {
-                  worldConstraintGuidance = `\n\nWORLD CONSTRAINTS (CRITICAL - OBEY STRICTLY):
-World: ${vizWorld}${vizSubtype ? ` (${vizSubtype})` : ''}
-Era: ${vizEraInfo.era}
-Setting: ${vizEraInfo.setting}
-Lighting: ${vizEraInfo.lighting}
+              // Get user modifiers
+              const modifierInput = document.getElementById('vizModifierInput');
+              const rawModifiers = modifierInput ? modifierInput.value.trim() : '';
 
-EXPLICITLY FORBIDDEN - DO NOT INCLUDE ANY OF THESE:
-- Cities, streets, urban environments, skyscrapers, modern buildings
-- Neon lights, electric lighting, streetlamps, traffic lights
-- Rain-soaked noir imagery, dark alleys, urban night scenes
-- Modern clothing (jeans, t-shirts, hoodies, sneakers)
-- Contemporary objects (phones, cars, screens, glass buildings)
+              // Build structured prompt from state
+              promptMsg = buildStructuredVisualizePrompt({
+                  world: vizWorld,
+                  worldSubtype: vizSubtype,
+                  tone: vizTone,
+                  intensity: vizIntensity,
+                  anchors: filterAuthorFromPrompt(anchorText).slice(0, 150),
+                  modifiers: rawModifiers
+              });
 
-REQUIRED SETTING ELEMENTS:
-- Natural environments: forests, fields, cottages, paths, wilderness, gardens
-- Period-appropriate architecture: castles, cottages, taverns, manor houses
-- Organic materials: wood, stone, cloth, leather, thatch, brick
-- Pre-electric light sources: candles, torches, firelight, moonlight, sunlight
-
-The scene MUST feel ${vizEraInfo.era} and ${vizEraInfo.setting}. DO NOT default to urban noir.`;
-              }
-
-              try {
-                  promptMsg = await Promise.race([
-                      callChat([{
-                          role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}${worldConstraintGuidance}\n\nReturn only the prompt: ${lastText}`
-                      }]),
-                      new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
-                  ]);
-              } catch (e) {
-                  // WORLD-AWARE FALLBACK: Generate appropriate fallback based on world
-                  const fallbackWorld = state.picks?.world || 'Fantasy';
-                  const fallbackSubtype = state.picks?.worldSubtype || '';
-                  promptMsg = getWorldAppropriateFallbackPrompt(fallbackWorld, fallbackSubtype);
-              }
+              console.log(`[VISUALIZE] Built structured prompt for world=${vizWorld}, subtype=${vizSubtype}`);
               document.getElementById('vizPromptInput').value = promptMsg;
           }
+
+          // DEV ASSERTION: Check for noir/silhouette terms
+          assertNoNoirTermsInVisualizePrompt(promptMsg, vizWorld, vizSubtype);
 
           // Check if cancelled during prompt generation
           if (_vizCancelled) {
@@ -8978,42 +9124,15 @@ The scene MUST feel ${vizEraInfo.era} and ${vizEraInfo.setting}. DO NOT default 
               return;
           }
 
-          // Build base prompt with intensity bias, quality defaults, and veto exclusions (filter "The Author")
-          const modifierInput = document.getElementById('vizModifierInput');
-          const rawModifiers = modifierInput ? modifierInput.value.trim() : '';
-          // RUNTIME NORMALIZATION: Visualize modifiers flow through ChatGPT normalization layer
-          const vizNorm = await callNormalizationLayer({
-              axis: 'visualize',
-              user_text: rawModifiers,
-              context_signals: state.picks?.world || []
-          });
-          const userModifiers = vizNorm.normalized_text || rawModifiers;
-
           // Include veto exclusions in visual prompt (e.g., "no blondes" should affect hair color)
           const vetoExclusions = state.veto?.excluded?.length > 0
               ? " Exclude: " + state.veto.excluded.slice(0, 3).join(', ') + "."
               : "";
 
-          // SCENE-FIRST PROMPT CONSTRUCTION
-          // Hard cap scene description to 256 characters (no ellipses, no rephrasing)
-          const sceneDesc = filterAuthorFromPrompt(promptMsg).slice(0, 256);
-          const modifiers = userModifiers ? " " + filterAuthorFromPrompt(userModifiers) : "";
-
-          // Brief anchors from visual bible (characters only, 100 char max)
-          const briefAnchors = filterAuthorFromPrompt(anchorText).slice(0, 100);
-
-          // Shortened quality/intensity (clarity over verbosity)
-          const shortQuality = "Attractive, elegant features, natural expressions.";
+          // STRUCTURED PROMPT already includes scene, constraints, style, and modifiers
+          // Just add veto exclusions and intensity bias
           const shortIntensity = intensityBias.split('.')[0] + "."; // First sentence only
-
-          // SCENE FIRST, then anchors/style
-          let basePrompt = sceneDesc + modifiers +
-              "\n---\n" +
-              "Style: cinematic, painterly, no text. " +
-              shortQuality + " " +
-              shortIntensity +
-              vetoExclusions +
-              (briefAnchors ? " " + briefAnchors : "");
+          let basePrompt = filterAuthorFromPrompt(promptMsg) + vetoExclusions + " " + shortIntensity;
 
           // Check if cancelled before image generation
           if (_vizCancelled) {
