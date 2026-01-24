@@ -1016,3 +1016,8 @@ function setSelectedState(mount, selectedCardEl){
     };
 
 })(window);
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof window.initCards === 'function') {
+        window.initCards();
+    }
+});
