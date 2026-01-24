@@ -1605,9 +1605,16 @@ ANTI-HERO ENFORCEMENT:
   };
 
   window.setGameIntensity = function(level) {
-      // honour access tiers: dirty requires subscription, erotic requires non-free
-      if (level === 'Dirty' && window.state.access !== 'sub') { window.showPaywall('sub_only'); return; }
-      if (level === 'Erotic' && window.state.access === 'free') { window.openEroticPreview(); return; }
+      // USE SINGLE SOURCE OF TRUTH for entitlement check
+      if (!isContentUnlocked('intensity', level)) {
+          const paywallMode = getPaywallMode('intensity', level);
+          if (paywallMode === 'sub_only') {
+              window.showPaywall('sub_only');
+          } else {
+              window.openEroticPreview();
+          }
+          return;
+      }
       window.state.intensity = level;
       updateIntensityUI();
   };
@@ -1938,6 +1945,109 @@ ANTI-HERO ENFORCEMENT:
 
     return 'free';
   }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ENTITLEMENT SOURCE OF TRUTH (SINGLE FUNCTION)
+  // ═══════════════════════════════════════════════════════════════════
+  // ALL content unlock checks MUST use this function.
+  // DO NOT check access/tier directly - use isContentUnlocked().
+  //
+  // STORYPASS ($3) UNLOCKS:
+  //   - Fling (story length)
+  //   - Erotic (intensity)
+  //
+  // SUBSCRIBE UNLOCKS:
+  //   - Fling, Affair, Soulmates (story lengths)
+  //   - Erotic, Dirty (intensities)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Single source of truth for content unlock checks.
+   * @param {string} contentType - 'length' or 'intensity'
+   * @param {string} contentValue - e.g. 'fling', 'affair', 'Erotic', 'Dirty'
+   * @returns {boolean} - true if unlocked, false if locked
+   */
+  function isContentUnlocked(contentType, contentValue) {
+    const access = resolveAccess();
+
+    // STORY LENGTH ENTITLEMENTS
+    if (contentType === 'length') {
+      const val = contentValue.toLowerCase();
+
+      // Free: only voyeur unlocked
+      if (access === 'free') {
+        return val === 'voyeur';
+      }
+
+      // StoryPass ($3): Fling unlocked
+      if (access === 'pass') {
+        return val === 'fling';
+      }
+
+      // Subscribe: Fling, Affair, Soulmates ALL unlocked
+      if (access === 'sub') {
+        return ['fling', 'affair', 'soulmates'].includes(val);
+      }
+
+      return false;
+    }
+
+    // INTENSITY ENTITLEMENTS
+    if (contentType === 'intensity') {
+      const level = contentValue; // Keep original case: Clean, Naughty, Erotic, Dirty
+
+      // Free: Clean and Naughty only
+      if (access === 'free') {
+        return ['Clean', 'Naughty'].includes(level);
+      }
+
+      // StoryPass ($3): Clean, Naughty, AND Erotic unlocked
+      if (access === 'pass') {
+        return ['Clean', 'Naughty', 'Erotic'].includes(level);
+      }
+
+      // Subscribe: ALL intensities unlocked (Clean, Naughty, Erotic, Dirty)
+      if (access === 'sub') {
+        return ['Clean', 'Naughty', 'Erotic', 'Dirty'].includes(level);
+      }
+
+      return false;
+    }
+
+    // Unknown content type - default to locked
+    console.warn('[ENTITLEMENT] Unknown content type:', contentType);
+    return false;
+  }
+
+  /**
+   * Get the paywall mode for locked content.
+   * @param {string} contentType - 'length' or 'intensity'
+   * @param {string} contentValue - the content value
+   * @returns {string} - 'unlock' for pass-purchasable, 'sub_only' for sub-only
+   */
+  function getPaywallMode(contentType, contentValue) {
+    if (contentType === 'length') {
+      // Affair and Soulmates require subscription
+      if (['affair', 'soulmates'].includes(contentValue.toLowerCase())) {
+        return 'sub_only';
+      }
+      return 'unlock'; // Fling can be unlocked with pass
+    }
+
+    if (contentType === 'intensity') {
+      // Dirty requires subscription
+      if (contentValue === 'Dirty') {
+        return 'sub_only';
+      }
+      return 'unlock'; // Erotic can be unlocked with pass
+    }
+
+    return 'unlock';
+  }
+
+  // Expose for external use
+  window.isContentUnlocked = isContentUnlocked;
+  window.getPaywallMode = getPaywallMode;
 
   // PASS 1 FIX: Single function to sync state from canonical resolver
   function syncTierFromAccess() {
@@ -2914,7 +3024,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   window.applyAccessLocks = applyAccessLocks;
   window.applyTierUI = applyTierUI;
 
-  // PASS 1 FIX: Length locks with strict enforcement
+  // PASS 1 FIX: Length locks using single source of truth
   function applyLengthLocks(){
     // Always resolve access first
     syncTierFromAccess();
@@ -2932,37 +3042,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     cards.forEach(card => {
       const val = card.dataset.val;
-      let locked = true;  // Default: locked
-      let hidden = false;
 
-      // ENTITLEMENT RULES (LOCKED):
-      // - free: only voyeur unlocked
-      // - pass ($3): only fling unlocked (NOT affair, NOT soulmates)
-      // - sub: fling, affair, soulmates unlocked
-
-      if (state.access === 'free' && val === 'voyeur') {
-          locked = false;
-      } else if (state.access === 'pass') {
-          // CRITICAL: Pass ONLY unlocks Fling
-          if (val === 'fling') locked = false;
-          // affair and soulmates stay locked = true
-      } else if (state.access === 'sub') {
-          // Sub unlocks fling, affair, soulmates
-          if (['fling', 'affair', 'soulmates'].includes(val)) locked = false;
-      }
+      // USE SINGLE SOURCE OF TRUTH for unlock check
+      const unlocked = isContentUnlocked('length', val);
+      const locked = !unlocked;
 
       // Hide voyeur for paid users
-      if (state.access !== 'free' && val === 'voyeur') {
-          locked = true;
-          hidden = true;
-      }
+      const hidden = (state.access !== 'free' && val === 'voyeur');
 
       // Apply classes
-      card.classList.toggle('locked', locked);
+      card.classList.toggle('locked', locked || hidden);
       card.style.display = hidden ? 'none' : '';
 
       // CRITICAL FIX: Remove data-locked attribute when unlocked (CSS targets [data-locked])
-      if (locked) {
+      if (locked && !hidden) {
           // Keep or set data-locked attribute for CSS styling
           if (!card.dataset.locked) {
               card.dataset.locked = (val === 'fling') ? 'pass' : 'sub';
@@ -2972,8 +3065,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           card.removeAttribute('data-locked');
       }
 
-      // Set paywall mode: affair/soulmates require sub_only
-      const paywallMode = ['affair', 'soulmates'].includes(val) ? 'sub_only' : 'unlock';
+      // USE SINGLE SOURCE OF TRUTH for paywall mode
+      const paywallMode = getPaywallMode('length', val);
       setPaywallClickGuard(card, locked, paywallMode);
 
       // Selection state - toggle both selected and flipped
@@ -3011,9 +3104,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const gameBtns = document.querySelectorAll('#gameIntensity button');
 
       const updateLock = (el, level, isCard) => {
-          let locked = false;
-          if (access === 'free' && ['Erotic', 'Dirty'].includes(level)) locked = true;
-          if (access === 'pass' && level === 'Dirty') locked = true;
+          // USE SINGLE SOURCE OF TRUTH for unlock check
+          const unlocked = isContentUnlocked('intensity', level);
+          const locked = !unlocked;
 
           el.classList.toggle('locked', locked);
           // CRITICAL FIX: Remove preset locked-tease/locked-pass classes when unlocked
@@ -3021,17 +3114,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               el.classList.remove('locked-tease', 'locked-pass');
           }
           if(locked) el.classList.remove(isCard ? 'selected' : 'active');
-          // FIX: Dirty always requires subscription - use sub_only mode
-          const paywallMode = (level === 'Dirty') ? 'sub_only' : 'unlock';
+          // USE SINGLE SOURCE OF TRUTH for paywall mode
+          const paywallMode = getPaywallMode('intensity', level);
           setPaywallClickGuard(el, locked, paywallMode);
       };
 
       setupCards.forEach(c => updateLock(c, c.dataset.val, true));
       gameBtns.forEach(b => updateLock(b, b.innerText.trim(), false));
 
-      // Fallback
-      if(state.intensity === 'Dirty' && access !== 'sub') state.intensity = (access === 'free') ? 'Naughty' : 'Erotic';
-      if(state.intensity === 'Erotic' && access === 'free') state.intensity = 'Naughty';
+      // Fallback: downgrade intensity if current selection is now locked
+      if (!isContentUnlocked('intensity', state.intensity)) {
+          // Find highest unlocked intensity
+          const intensities = ['Dirty', 'Erotic', 'Naughty', 'Clean'];
+          for (const level of intensities) {
+              if (isContentUnlocked('intensity', level)) {
+                  state.intensity = level;
+                  break;
+              }
+          }
+      }
       updateIntensityUI();
   }
 
@@ -3071,8 +3172,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Game buttons still need handlers (they are not .sb-card elements)
       document.querySelectorAll('#gameIntensity button').forEach(btn => btn.onclick = (e) => {
           const level = btn.innerText.trim();
-          if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub_only'); return; }
-          if(level === 'Erotic' && state.access === 'free'){ window.openEroticPreview(); return; }
+          // USE SINGLE SOURCE OF TRUTH for entitlement check
+          if (!isContentUnlocked('intensity', level)) {
+              const paywallMode = getPaywallMode('intensity', level);
+              if (paywallMode === 'sub_only') {
+                  window.showPaywall('sub_only');
+              } else {
+                  window.openEroticPreview();
+              }
+              return;
+          }
           state.intensity = level;
           state.picks.intensity = level;
           updateIntensityUI();
@@ -4516,10 +4625,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // Length cards locked after game starts
         if (grp === 'length' && state.turnCount > 0) return;
 
-        // Intensity-specific paywall checks (before generic locked check)
+        // USE SINGLE SOURCE OF TRUTH for entitlement checks
         if (grp === 'intensity') {
-          if (val === 'Dirty' && state.access !== 'sub') { window.showPaywall('sub_only'); return; }
-          if (val === 'Erotic' && state.access === 'free') { window.openEroticPreview(); return; }
+          if (!isContentUnlocked('intensity', val)) {
+            const paywallMode = getPaywallMode('intensity', val);
+            if (paywallMode === 'sub_only') {
+              window.showPaywall('sub_only');
+            } else {
+              window.openEroticPreview();
+            }
+            return;
+          }
+        }
+
+        if (grp === 'length') {
+          if (!isContentUnlocked('length', val)) {
+            const paywallMode = getPaywallMode('length', val);
+            window.showPaywall(paywallMode);
+            return;
+          }
         }
 
         if(card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
