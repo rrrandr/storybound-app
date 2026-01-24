@@ -244,10 +244,12 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   /**
    * Extract anchors from story content for novelty tracking.
+   * ENHANCED: Now extracts named districts, councils, warden cadres, power structures.
    * Called when a story is being completed/restarted.
    */
   function extractStoryAnchors(storyContent, picks) {
     const content = (storyContent || '').toLowerCase();
+    const rawContent = storyContent || '';
     const genre = picks?.genre || 'Unknown';
     const world = picks?.world || 'Modern';
 
@@ -258,11 +260,22 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     ];
     const locations = new Set();
     locationPatterns.forEach(pattern => {
-      const matches = storyContent?.matchAll(pattern) || [];
+      const matches = rawContent?.matchAll(pattern) || [];
       for (const match of matches) {
         if (match[1] && match[1].length > 3) locations.add(match[1].toLowerCase());
       }
     });
+
+    // ENHANCED: Extract NAMED DISTRICTS specifically (e.g., "Ash Quarter", "Ember District")
+    const namedDistricts = new Set();
+    const districtPattern = /([A-Z][a-z]+)\s+(Quarter|District|Ward|Borough|Precinct|Sector)/gi;
+    const districtMatches = rawContent?.matchAll(districtPattern) || [];
+    for (const match of districtMatches) {
+      if (match[1]) {
+        namedDistricts.add(`${match[1].toLowerCase()} ${match[2].toLowerCase()}`);
+        locations.add(`${match[1].toLowerCase()} ${match[2].toLowerCase()}`);
+      }
+    }
 
     // Extract faction/institution names
     const factionPatterns = [
@@ -271,11 +284,44 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     ];
     const factions = new Set();
     factionPatterns.forEach(pattern => {
-      const matches = storyContent?.matchAll(pattern) || [];
+      const matches = rawContent?.matchAll(pattern) || [];
       for (const match of matches) {
         const name = (match[2] || match[1] || '').toLowerCase();
         if (name && name.length > 2) factions.add(name);
       }
+    });
+
+    // ENHANCED: Extract COUNCILS and WARDEN CADRES specifically
+    const councils = new Set();
+    const councilPattern = /(?:the\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(Council|Coven|Circle|Assembly|Tribunal)/gi;
+    const councilMatches = rawContent?.matchAll(councilPattern) || [];
+    for (const match of councilMatches) {
+      if (match[1]) {
+        councils.add(`${match[1].toLowerCase()} ${match[2].toLowerCase()}`);
+        factions.add(`${match[1].toLowerCase()} ${match[2].toLowerCase()}`);
+      }
+    }
+
+    // ENHANCED: Extract WARDEN/ENFORCER cadres
+    const wardenCadres = new Set();
+    const wardenPattern = /(?:the\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(Wardens?|Enforcers?|Guardians?|Sentinels?|Keepers?)/gi;
+    const wardenMatches = rawContent?.matchAll(wardenPattern) || [];
+    for (const match of wardenMatches) {
+      if (match[1]) {
+        wardenCadres.add(`${match[1].toLowerCase()} ${match[2].toLowerCase()}`);
+        factions.add(`${match[1].toLowerCase()} ${match[2].toLowerCase()}`);
+      }
+    }
+
+    // ENHANCED: Extract POWER STRUCTURES (ruling bodies, hierarchies)
+    const powerStructures = new Set();
+    const powerKeywords = [
+      'ruling council', 'elder council', 'high council', 'inner circle',
+      'board of directors', 'executive committee', 'shadow council',
+      'warden cadre', 'enforcer corps', 'guardian order'
+    ];
+    powerKeywords.forEach(keyword => {
+      if (content.includes(keyword)) powerStructures.add(keyword);
     });
 
     // Extract power dynamics from content
@@ -315,11 +361,65 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       dynamic: picks?.dynamic || null,
       anchors: {
         locations: Array.from(locations),
+        namedDistricts: Array.from(namedDistricts),
         factions: Array.from(factions),
+        councils: Array.from(councils),
+        wardenCadres: Array.from(wardenCadres),
+        powerStructures: Array.from(powerStructures),
         dynamics: Array.from(dynamics),
         genreSpecific: Array.from(genreSpecific)
       }
     };
+  }
+
+  /**
+   * Check for world anchor reuse and return warnings.
+   * Called before story generation.
+   */
+  function checkWorldAnchorReuse(currentPicks) {
+    const warnings = [];
+
+    if (_storyNoveltyMemory.recentStories.length === 0) {
+      return { hasReuse: false, warnings: [] };
+    }
+
+    // Collect all recent named anchors
+    const recentDistricts = new Set();
+    const recentCouncils = new Set();
+    const recentWardens = new Set();
+    const recentPowerStructures = new Set();
+
+    _storyNoveltyMemory.recentStories.forEach(story => {
+      (story.anchors?.namedDistricts || []).forEach(d => recentDistricts.add(d));
+      (story.anchors?.councils || []).forEach(c => recentCouncils.add(c));
+      (story.anchors?.wardenCadres || []).forEach(w => recentWardens.add(w));
+      (story.anchors?.powerStructures || []).forEach(p => recentPowerStructures.add(p));
+    });
+
+    // Check if any would be reused (flag for prompt injection)
+    if (recentDistricts.size > 0) {
+      warnings.push(`Named districts from recent stories: ${Array.from(recentDistricts).slice(0, 3).join(', ')}`);
+    }
+    if (recentCouncils.size > 0) {
+      warnings.push(`Councils from recent stories: ${Array.from(recentCouncils).slice(0, 3).join(', ')}`);
+    }
+    if (recentWardens.size > 0) {
+      warnings.push(`Warden cadres from recent stories: ${Array.from(recentWardens).slice(0, 3).join(', ')}`);
+    }
+
+    // Update DEV state
+    if (typeof window !== 'undefined') {
+      window._worldAnchorReuseState = {
+        recentDistricts: Array.from(recentDistricts),
+        recentCouncils: Array.from(recentCouncils),
+        recentWardens: Array.from(recentWardens),
+        recentPowerStructures: Array.from(recentPowerStructures),
+        hasReuse: warnings.length > 0,
+        warnings: warnings
+      };
+    }
+
+    return { hasReuse: warnings.length > 0, warnings };
   }
 
   /**
@@ -650,6 +750,10 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           <div class="devHudLabel">Novelty Guard</div>
           <div id="devHudNovelty"></div>
         </div>
+        <div class="devHudSection">
+          <div class="devHudLabel">Visual Systems</div>
+          <div id="devHudVisualSystems"></div>
+        </div>
       `;
       document.body.appendChild(hud);
 
@@ -764,6 +868,49 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
           <div class="devHudRow"><span class="devHudKey">NOVELTY SCORE:</span><span class="devHudValue ${scoreClass}" style="font-weight:bold;font-size:12px;">${score}</span></div>
           <div class="devHudRow"><span class="devHudKey">Stories in Memory:</span><span class="devHudValue">${memoryState.recentStories.length}/${memoryState.maxStories || 3}</span></div>
           ${warningsHtml}
+        `;
+      }
+
+      // Visual Systems (FATE FLOW, VISUALIZE DETAIL, ATTRACTION SIGNAL)
+      const visualSystemsEl = document.getElementById('devHudVisualSystems');
+      if (visualSystemsEl) {
+        // FATE FLOW status
+        const fateState = window._fateSparkleState || { emitterActive: false, sparkleCount: 0, fateInfluenceActive: false };
+        const fateFlowActive = fateState.emitterActive && fateState.sparkleCount > 0;
+        const fateFlowClass = fateState.fateInfluenceActive ? (fateFlowActive ? 'success' : 'error') : '';
+        const fateFlowText = fateState.fateInfluenceActive ? (fateFlowActive ? 'ACTIVE' : 'INACTIVE') : 'N/A';
+
+        // DEV WARNING: Fate active but no sparkles
+        let fateWarningHtml = '';
+        if (fateState.fateInfluenceActive && !fateFlowActive) {
+          fateWarningHtml = `<div class="devHudRow"><span class="devHudKey" style="color:#f00;">⚠</span><span class="devHudValue error" style="font-size:9px;">[FATE FLOW ERROR] No sparkles detected during active Fate</span></div>`;
+          console.warn('[FATE FLOW ERROR] No sparkles detected during active Fate');
+        }
+
+        // VISUALIZE DETAIL status
+        const vizState = window._visualizePromptState || { hasCharacterPhysicality: false, hasDesireTension: false, isGeneric: true };
+        const vizDetailOk = vizState.hasCharacterPhysicality && vizState.hasDesireTension && !vizState.isGeneric;
+        const vizDetailClass = vizDetailOk ? 'success' : 'warn';
+        const vizDetailText = vizDetailOk ? 'OK' : 'GENERIC';
+
+        // ATTRACTION SIGNAL status
+        const attractionPresent = vizState.hasDesireTension && vizState.hasCharacterPhysicality;
+        const attractionClass = attractionPresent ? 'success' : 'error';
+        const attractionText = attractionPresent ? 'PRESENT' : 'MISSING';
+
+        // World anchor reuse warning
+        const anchorState = window._worldAnchorReuseState || { hasReuse: false, warnings: [] };
+        let anchorWarningHtml = '';
+        if (anchorState.hasReuse) {
+          anchorWarningHtml = `<div class="devHudRow"><span class="devHudKey" style="color:#f00;">⚠</span><span class="devHudValue error" style="font-size:9px;">[REPETITION WARNING] World anchor reused</span></div>`;
+        }
+
+        visualSystemsEl.innerHTML = `
+          <div class="devHudRow"><span class="devHudKey">FATE FLOW:</span><span class="devHudValue ${fateFlowClass}">${fateFlowText}</span></div>
+          ${fateWarningHtml}
+          <div class="devHudRow"><span class="devHudKey">VISUALIZE DETAIL:</span><span class="devHudValue ${vizDetailClass}">${vizDetailText}</span></div>
+          <div class="devHudRow"><span class="devHudKey">ATTRACTION SIGNAL:</span><span class="devHudValue ${attractionClass}">${attractionText}</span></div>
+          ${anchorWarningHtml}
         `;
       }
     }
@@ -7134,6 +7281,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
 
     // ========================================
+    // WORLD ANCHOR REUSE CHECK (DEV ONLY)
+    // Warns if named districts/councils/wardens reused
+    // ========================================
+    if (IS_DEV_MODE) {
+        const anchorCheck = checkWorldAnchorReuse(state.picks);
+        if (anchorCheck.hasReuse) {
+            console.warn('[REPETITION WARNING] World anchor reused:');
+            anchorCheck.warnings.forEach(w => console.warn(`  - ${w}`));
+        }
+    }
+
+    // ========================================
     // PHASE 2: SHOW LOADER IMMEDIATELY (sync)
     // ========================================
     window.showScreen('game');
@@ -9048,7 +9207,7 @@ WORLD CONSTRAINTS (MANDATORY):
 
   /**
    * Build a structured Visualize prompt from state (NOT prose).
-   * This replaces the LLM-based prompt generation for scene_visualize.
+   * ENHANCED: Now includes character physicality, desire/tension, and strict constraints.
    *
    * @param {Object} options - Structured scene data
    * @param {string} options.world - Story world
@@ -9063,6 +9222,7 @@ WORLD CONSTRAINTS (MANDATORY):
       const w = (world || 'Modern').toLowerCase();
       const ws = (worldSubtype || '').toLowerCase();
       const t = (tone || 'Earnest').toLowerCase();
+      const intLower = (intensity || 'Naughty').toLowerCase();
 
       // Get environment descriptor for world/subtype
       const worldEnvs = VISUALIZE_ENVIRONMENTS[w] || VISUALIZE_ENVIRONMENTS.modern;
@@ -9071,8 +9231,32 @@ WORLD CONSTRAINTS (MANDATORY):
       // Get era info for constraints
       const eraInfo = getDefaultEraFromWorld(world, worldSubtype);
       const isNonUrban = isNonUrbanWorld(world, worldSubtype);
+      const isNonModern = w !== 'modern' && w !== 'scifi' && w !== 'cyberpunk';
 
-      // Build scene description from structured data
+      // =========================================
+      // WORLD GROUNDING (CRITICAL)
+      // =========================================
+      let worldGrounding = '';
+      if (w === 'fantasy' || w === 'historical') {
+          worldGrounding = `
+WORLD SETTING: ${world} - ${worldSubtype || 'classic'} era.
+- NO modern technology, phones, screens, or contemporary items
+- NO urban skylines, skyscrapers, or city streets
+- NO contemporary clothing (jeans, t-shirts, sneakers)
+- Environment MUST feel authentically ${eraInfo.era || 'period-appropriate'}
+- Light sources: ${eraInfo.lighting || 'natural/fire/candle only'}
+`;
+      } else if (isNonUrban) {
+          worldGrounding = `
+WORLD SETTING: ${world} - rural/natural environment.
+- NO urban elements unless explicitly part of this world
+- Era-appropriate technology only: ${eraInfo.era || 'contextual'}
+`;
+      }
+
+      // =========================================
+      // SCENE DESCRIPTION
+      // =========================================
       let sceneDesc = `A ${env.type === 'interior' ? 'interior scene in' : 'scene set in'} ${env.setting}. `;
       sceneDesc += `Lighting: ${env.lighting}. `;
       sceneDesc += `Materials and textures: ${env.materials}. `;
@@ -9080,8 +9264,8 @@ WORLD CONSTRAINTS (MANDATORY):
       // Tone-specific atmosphere
       const toneAtmosphere = {
           earnest: 'Warm, inviting atmosphere with soft natural tones.',
-          dark: 'Moody atmosphere with dramatic contrast and deep shadows.',
-          horror: 'Unsettling atmosphere with tension in every shadow.',
+          dark: 'Moody atmosphere with dramatic contrast and identifiable light sources.',
+          horror: 'Unsettling atmosphere with tension, clear light sources illuminating faces.',
           wryconfession: 'Subtle ironic edge, knowing atmosphere.',
           satirical: 'Stylized, slightly exaggerated atmosphere.',
           mythic: 'Epic, larger-than-life atmosphere with grand scale.',
@@ -9091,48 +9275,154 @@ WORLD CONSTRAINTS (MANDATORY):
       };
       sceneDesc += toneAtmosphere[t] || toneAtmosphere.earnest;
 
+      // =========================================
+      // CHARACTER PHYSICALITY (CRITICAL)
+      // =========================================
+      const characterPhysicality = `
+
+CHARACTERS (MANDATORY - NO SILHOUETTES):
+- Protagonist: Physically attractive, clearly visible face and body
+  * Natural, elegant features with expressive eyes
+  * Confident posture, comfortable in their environment
+  * Clothing appropriate to ${world} setting
+- Love Interest (if present): Strikingly attractive, clearly visible
+  * Strong presence, magnetic quality
+  * Face and body fully rendered (NOT in shadow)
+  * Era-appropriate attire that emphasizes physique`;
+
+      // =========================================
+      // DESIRE & TENSION (CRITICAL)
+      // =========================================
+      const tensionLevels = {
+          clean: 'Subtle awareness, polite distance, stolen glances.',
+          naughty: 'Charged atmosphere, bodies angled toward each other, lingering eye contact.',
+          erotic: 'Palpable tension, close proximity, visible desire in expressions.',
+          dirty: 'Electric tension, near-touching distance, undeniable hunger in eyes.'
+      };
+      const tensionDesc = tensionLevels[intLower] || tensionLevels.naughty;
+
+      const desireTension = `
+
+DESIRE & TENSION:
+- Body orientation: Characters angled toward each other (magnetic pull)
+- Distance: ${intLower === 'clean' ? 'respectful but aware' : 'intimate proximity, almost touching'}
+- Eye contact: ${intLower === 'clean' ? 'Stolen glances, deliberate avoidance' : 'Intense, loaded gazes or deliberate avoidance that speaks volumes'}
+- Emotional charge: ${tensionDesc}`;
+
       // Add character anchors if present
+      let characterSection = '';
       if (anchors && anchors.trim()) {
-          sceneDesc += ` Characters: ${anchors.slice(0, 150)}.`;
+          characterSection = `
+
+CHARACTER SPECIFICS: ${anchors.slice(0, 200)}.`;
       }
 
       // Add user modifiers if present
+      let modifierSection = '';
       if (modifiers && modifiers.trim()) {
-          sceneDesc += ` ${modifiers}.`;
+          modifierSection = ` ${modifiers}.`;
       }
 
-      // HARD CONSTRAINTS for non-urban worlds
-      let hardConstraints = '';
-      if (isNonUrban) {
-          hardConstraints = `
+      // =========================================
+      // NEGATIVE CONSTRAINTS (MANDATORY for non-modern)
+      // =========================================
+      let negativeConstraints = '';
+      if (isNonModern) {
+          negativeConstraints = `
 
 ---
-VISUALIZE CONSTRAINTS (MANDATORY):
-- Era: ${eraInfo.era}, ${eraInfo.setting} setting
-- Lighting: ${eraInfo.lighting} sources ONLY
-- EXPLICITLY FORBIDDEN:
-  * Silhouettes or shadowy figures (show visible faces and bodies)
-  * Modern buildings, streets, skyscrapers, urban environments
-  * Noir lighting, rain-soaked streets, dark alleys
-  * Electric lighting, neon, streetlamps
-  * Contemporary clothing or objects
-- REQUIRED:
-  * Visible human faces and expressions (no anonymous figures)
-  * Natural or period-appropriate environments
-  * Organic materials appropriate to ${world}
-  * Era-appropriate light sources
+ABSOLUTELY FORBIDDEN (HARD FAIL):
+- "silhouette" - NO shadowy anonymous figures
+- "dimly lit" without a CONCRETE light source (must specify: candle, fire, window, lamp)
+- Modern technology: phones, screens, cars, electric lights
+- Urban modern: skyscrapers, city streets, neon signs, contemporary architecture
+- Contemporary clothing: jeans, t-shirts, hoodies, sneakers, business suits
+- Generic/featureless figures - every person MUST have visible face and expression
 ---`;
       }
 
-      // Style suffix
+      // =========================================
+      // STYLE SUFFIX (ENHANCED)
+      // =========================================
       const styleSuffix = `
 
-Style: Cinematic, painterly, no text overlays.
-Attractive, elegant features, natural expressions.
-Visible faces and identifiable figures (NO silhouettes).
-Full scene composition with depth and atmosphere.`;
+STYLE REQUIREMENTS:
+- Cinematic composition, painterly quality, NO text overlays
+- Attractive, elegant features with natural expressions
+- Visible faces and identifiable figures (NEVER silhouettes)
+- Full scene composition with depth, atmosphere, and clear light sources
+- Characters must be BEAUTIFUL and PRESENT (not anonymous shadows)
+- Romantic tension visible in body language and proximity`;
 
-      return sceneDesc + hardConstraints + styleSuffix;
+      // Update dev state for HUD
+      if (typeof window !== 'undefined') {
+          window._visualizePromptState = {
+              hasCharacterPhysicality: true,
+              hasDesireTension: true,
+              hasNegativeConstraints: isNonModern,
+              world: world,
+              isGeneric: false
+          };
+      }
+
+      return worldGrounding + sceneDesc + characterPhysicality + desireTension + characterSection + modifierSection + negativeConstraints + styleSuffix;
+  }
+
+  /**
+   * DEV ASSERTION: Validate Visualize prompt quality.
+   * Throws if prompt contains forbidden patterns.
+   */
+  function assertVisualizePromptQuality(prompt, world) {
+      if (!IS_DEV_MODE) return { valid: true, issues: [] };
+
+      const issues = [];
+      const promptLower = (prompt || '').toLowerCase();
+      const isNonModern = !['modern', 'scifi', 'cyberpunk'].includes((world || '').toLowerCase());
+
+      // Check for silhouette
+      if (promptLower.includes('silhouette')) {
+          issues.push('Contains "silhouette" - figures must be visible');
+      }
+
+      // Check for "dimly lit" without concrete light source
+      if (promptLower.includes('dimly lit')) {
+          const hasConcreteLight = /candle|fire|torch|lamp|window|moon|sun|glow/.test(promptLower);
+          if (!hasConcreteLight) {
+              issues.push('Contains "dimly lit" without concrete light source');
+          }
+      }
+
+      // Check for modern artifacts in non-modern worlds
+      if (isNonModern) {
+          const modernPatterns = [
+              /\bphone\b/, /\bsmartphone\b/, /\bcell\b/, /\bscreen\b/,
+              /\bcomputer\b/, /\blaptop\b/, /\bneon\b/, /\bskyscraper\b/,
+              /\bcity street\b/, /\burban\b/, /\bcar\b/, /\bvehicle\b/
+          ];
+          modernPatterns.forEach(pattern => {
+              if (pattern.test(promptLower)) {
+                  issues.push(`Modern artifact "${pattern.source}" in non-modern world (${world})`);
+              }
+          });
+      }
+
+      // Update dev state
+      if (typeof window !== 'undefined') {
+          window._visualizePromptState = window._visualizePromptState || {};
+          window._visualizePromptState.lastValidation = {
+              valid: issues.length === 0,
+              issues: issues,
+              timestamp: new Date().toISOString()
+          };
+      }
+
+      if (issues.length > 0) {
+          const errorMsg = `[VISUALIZE PROMPT QUALITY FAIL]\n${issues.join('\n')}`;
+          console.error(errorMsg);
+          throw new Error(errorMsg);
+      }
+
+      return { valid: true, issues: [] };
   }
 
   // ============================================================
@@ -9557,6 +9847,9 @@ Full scene composition with depth and atmosphere.`;
 
           // DEV ASSERTION: Check for noir/silhouette terms
           assertNoNoirTermsInVisualizePrompt(promptMsg, vizWorld, vizSubtype);
+
+          // DEV ASSERTION: Validate prompt quality (silhouette, dimly lit, modern artifacts)
+          assertVisualizePromptQuality(promptMsg, vizWorld);
 
           // Check if cancelled during prompt generation
           if (_vizCancelled) {

@@ -634,6 +634,16 @@
     let _pendingApplyTimer = null;
     let _continuousSparkleInterval = null;
     let _sparkleEmitterActive = false;
+    let _selectedFateCard = null; // Track currently selected card for sparkle origin
+    let _sparkleCount = 0; // Track live sparkle count for DEV HUD
+
+    // Expose sparkle flow state for DEV HUD
+    window._fateSparkleState = {
+        emitterActive: false,
+        selectedCard: null,
+        sparkleCount: 0,
+        fateInfluenceActive: false
+    };
 
     function resolveUnlockCount(){
         // Highest priority: explicit override if app.js sets it
@@ -764,18 +774,27 @@
 
     /**
      * Start the continuous sparkle emitter.
-     * Runs while Guided Destiny is active and Fate Cards are visible.
+     * FIXED: Runs when a Fate Card is SELECTED (not just dealt).
+     * Origin: selected Fate card → Destination: Say/Do panel
      */
-    function startContinuousSparkles() {
+    function startContinuousSparkles(selectedCardEl) {
         if (_sparkleEmitterActive) return;
         _sparkleEmitterActive = true;
+        _selectedFateCard = selectedCardEl || null;
+        _sparkleCount = 0;
+
+        // Update DEV state
+        window._fateSparkleState.emitterActive = true;
+        window._fateSparkleState.selectedCard = _selectedFateCard;
+        window._fateSparkleState.fateInfluenceActive = true;
 
         const mount = document.getElementById('cardMount');
         const actionWrapper = document.getElementById('actionWrapper');
         const dialogueWrapper = document.getElementById('dialogueWrapper');
 
-        if (!mount) {
+        if (!mount && !_selectedFateCard) {
             _sparkleEmitterActive = false;
+            window._fateSparkleState.emitterActive = false;
             return;
         }
 
@@ -813,42 +832,63 @@
             }
 
             // Emit 3 sparkles per tick for dense particle field
+            // FIXED: Use selected card as origin if available
+            const sparkleOrigin = _selectedFateCard || mount;
             for (let i = 0; i < 3; i++) {
-                createContinuousSparkle(sparkleContainer, mount, actionWrapper, dialogueWrapper);
+                createContinuousSparkle(sparkleContainer, sparkleOrigin, actionWrapper, dialogueWrapper);
+                _sparkleCount++;
             }
+            // Update DEV state
+            window._fateSparkleState.sparkleCount = _sparkleCount;
         }, 60);
 
         // Large initial burst - 20 particles for immediate visual impact
         for (let i = 0; i < 20; i++) {
             setTimeout(() => {
                 if (_sparkleEmitterActive) {
-                    createContinuousSparkle(sparkleContainer, mount, actionWrapper, dialogueWrapper);
+                    const sparkleOrigin = _selectedFateCard || mount;
+                    createContinuousSparkle(sparkleContainer, sparkleOrigin, actionWrapper, dialogueWrapper);
+                    _sparkleCount++;
+                    window._fateSparkleState.sparkleCount = _sparkleCount;
                 }
             }, i * 25);
         }
 
-        console.log('[SPARKLE EMITTER ACTIVE]', new Date().toISOString());
+        console.log('[SPARKLE EMITTER ACTIVE]', new Date().toISOString(), 'Origin:', _selectedFateCard ? 'selected card' : 'cardMount');
     }
 
     /**
      * Stop the continuous sparkle emitter.
-     * Called when Guided Destiny ends or user navigates away.
+     * FIXED: Fully clears all sparkle state when Fate influence ends.
      */
     function stopContinuousSparkles() {
         _sparkleEmitterActive = false;
+        _selectedFateCard = null;
+        _sparkleCount = 0;
+
+        // Update DEV state - full cleanup
+        window._fateSparkleState.emitterActive = false;
+        window._fateSparkleState.selectedCard = null;
+        window._fateSparkleState.sparkleCount = 0;
+        window._fateSparkleState.fateInfluenceActive = false;
 
         if (_continuousSparkleInterval) {
             clearInterval(_continuousSparkleInterval);
             _continuousSparkleInterval = null;
         }
 
-        // Clean up container after a delay (let remaining particles finish)
-        setTimeout(() => {
-            const sparkleContainer = document.getElementById('fateSparkleContainer');
-            if (sparkleContainer) {
-                sparkleContainer.remove();
-            }
-        }, 1500);
+        // Clean up container IMMEDIATELY (no lingering)
+        const sparkleContainer = document.getElementById('fateSparkleContainer');
+        if (sparkleContainer) {
+            // Fade out then remove
+            sparkleContainer.style.transition = 'opacity 0.3s ease';
+            sparkleContainer.style.opacity = '0';
+            setTimeout(() => {
+                if (sparkleContainer.parentNode) {
+                    sparkleContainer.remove();
+                }
+            }, 300);
+        }
 
         console.log('[SPARKLE EMITTER STOPPED]', new Date().toISOString());
     }
@@ -1186,6 +1226,10 @@
 
                 clearPendingTimer();
 
+                // FIXED: Start continuous sparkles when card is SELECTED
+                // Origin: this selected card → Destination: Say/Do panel
+                startContinuousSparkles(card);
+
                 // Trigger golden flow animations to inputs
                 const actInput = document.getElementById('actionInput');
                 const diaInput = document.getElementById('dialogueInput');
@@ -1208,8 +1252,8 @@
         bindCommitHooks(mount);
         bindInputCommit(mount);
 
-        // START CONTINUOUS SPARKLES when Fate Cards are dealt
-        startContinuousSparkles();
+        // Mark Fate influence as active (sparkles start when card is SELECTED)
+        window._fateSparkleState.fateInfluenceActive = true;
     };
 
     // Stop sparkles when committing selection (Guided Destiny ends)
