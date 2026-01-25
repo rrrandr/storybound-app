@@ -359,7 +359,7 @@ function generatePoeticSubtitle(genre, emotionalGravity) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentObjects = [], world = null, era = null) {
+function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentObjects = [], world = null, era = null, arousal = null) {
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
 
@@ -417,8 +417,11 @@ No gibberish text. No watermarks.`;
   // Phase 3C: Apply World Grammar (visual bias layer)
   const withWorldGrammar = applyWorldGrammar(coverPrompt, world, era);
 
+  // Phase 3D: Apply Erotic Motif layer (gated by arousal)
+  const withEroticMotif = applyEroticMotifLayer(withWorldGrammar, arousal, null, world);
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(withWorldGrammar);
+  return appendStoryboundBorder(withEroticMotif);
 }
 
 function wrapScenePrompt(basePrompt) {
@@ -584,6 +587,69 @@ World Grammar shapes visual atmosphere. It does NOT override focal anchor, emble
   return basePrompt + worldGrammarBlock;
 }
 
+// ============================================================
+// PHASE 3D — EROTIC MOTIF LAYER (GATED)
+// Symbolic erotic charge only. NO bodies, faces, or explicit acts.
+// Activates ONLY when arousal === 'Erotic' || arousal === 'Dirty'
+// Sits BELOW World Grammar, INSIDE the border.
+// One-line rollback: return prompt unchanged in applyEroticMotifLayer()
+// ============================================================
+
+const EROTIC_MOTIF_REGISTRY = {
+  DEFAULT: [
+    'delicate restraints',
+    'ornamental handcuffs',
+    'silk bindings',
+    'ribbon-like constraints',
+    'polished metal fastenings'
+  ],
+  MASKS: [
+    'porcelain mask with eyes painted shut',
+    'lacquered ceremonial mask',
+    'gilded blindfold mask'
+  ],
+  HARDWARE: [
+    'world-appropriate handcuffs',
+    'fine chain links',
+    'engraved locking mechanism'
+  ]
+};
+
+// Apply erotic motif layer — symbolic erotic adjacency only
+// Returns prompt unchanged if arousal is not Erotic/Dirty
+// ROLLBACK: Uncomment the next line to disable erotic motif layer entirely
+// function applyEroticMotifLayer(prompt, arousal, archetype, world) { return prompt; }
+function applyEroticMotifLayer(prompt, arousal, archetype, world) {
+  // Gate: Only activate for Erotic or Dirty arousal levels
+  if (arousal !== 'Erotic' && arousal !== 'Dirty') {
+    return prompt;
+  }
+
+  // Select motif category based on context
+  let motifPool;
+  if (archetype === 'EMBLEM') {
+    // Emblems favor hardware motifs (symbolic, centered)
+    motifPool = EROTIC_MOTIF_REGISTRY.HARDWARE;
+  } else if (Math.random() < 0.3) {
+    // 30% chance of mask motif for variety
+    motifPool = EROTIC_MOTIF_REGISTRY.MASKS;
+  } else {
+    motifPool = EROTIC_MOTIF_REGISTRY.DEFAULT;
+  }
+
+  const selectedMotif = motifPool[Math.floor(Math.random() * motifPool.length)];
+
+  // Build restrained erotic motif clause
+  const eroticMotifBlock = `
+
+EROTIC MOTIF (symbolic only):
+Integrate ${selectedMotif} as a subtle, restrained visual element.
+This motif suggests secrecy and surrender without depicting bodies, faces, or explicit acts.
+The motif harmonizes with the composition — it does NOT dominate or override the focal anchor/emblem.`;
+
+  return prompt + eroticMotifBlock;
+}
+
 // Forbidden Library — blocklist validation
 // Phase 2b: Empty placeholder, not yet populated
 const FORBIDDEN_LIBRARY = {
@@ -667,7 +733,7 @@ function selectEmblemObject(emotionalGravity) {
 // Replaces focal anchor with emblem-specific object
 // Centered, stable composition — no human presence
 function buildEmblemCoverPrompt(params) {
-  const { title, authorName, dynamic, storyStyle, genre, world, era } = params;
+  const { title, authorName, dynamic, storyStyle, genre, world, era, arousal } = params;
 
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
@@ -724,8 +790,11 @@ No gibberish text. No watermarks.`;
   // Phase 3C: Apply World Grammar (visual bias layer)
   const withWorldGrammar = applyWorldGrammar(emblemPrompt, world, era);
 
+  // Phase 3D: Apply Erotic Motif layer (gated by arousal)
+  const withEroticMotif = applyEroticMotifLayer(withWorldGrammar, arousal, 'EMBLEM', world);
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(withWorldGrammar);
+  return appendStoryboundBorder(withEroticMotif);
 }
 
 // ============================================================
@@ -735,7 +804,7 @@ No gibberish text. No watermarks.`;
 // Other archetypes route to canonical wrapBookCoverPrompt().
 // ============================================================
 function dispatchCoverPrompt(archetype, params) {
-  const { prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects, world, era } = params;
+  const { prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects, world, era, arousal } = params;
 
   // ============================================================
   // PHASE 3A: EMBLEM ARCHETYPE (ACTIVATED)
@@ -752,8 +821,9 @@ function dispatchCoverPrompt(archetype, params) {
   // CANONICAL COVER SYSTEM — ACTIVE BY DESIGN
   // The canonical emotional gravity / focal anchor system is preserved.
   // Phase 3C: World and era passed for World Grammar layer
+  // Phase 3D: Arousal passed for Erotic Motif layer
   // ============================================================
-  return wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects, world, era);
+  return wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects, world, era, arousal);
 }
 
 // ============================================================

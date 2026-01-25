@@ -1732,6 +1732,11 @@ Return the rewritten text only, no explanation.`
       // PASS 1 FIX: Clear any stuck toasts on screen change
       if (typeof clearToasts === 'function') clearToasts();
 
+      // UX-2 FIX: Clean up fate visuals when leaving setup screen
+      if (_currentScreenId === 'setup' && id !== 'setup') {
+          if (typeof cleanupFateVisuals === 'function') cleanupFateVisuals();
+      }
+
       if(id === 'modeSelect') {
           _navHistory = []; 
       } else if (!isBack && _currentScreenId && _currentScreenId !== id) {
@@ -6027,6 +6032,34 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
   }
 
+  // UX-2 FIX: Cleanup all fate visual effects (vignette, particles, highlights)
+  // Called when navigating away from setup screen or when story begins
+  function cleanupFateVisuals() {
+    // Stop fate running state
+    _fateOverridden = true;
+    _fateRunning = false;
+
+    // Stop fairy dust
+    stopFairyDust();
+
+    // Remove golden vignette
+    const vignette = document.getElementById('fateVignette');
+    if (vignette) {
+      vignette.classList.remove('active');
+      vignette.classList.add('fading');
+      // Fully hide after fade animation completes
+      setTimeout(() => {
+        vignette.classList.remove('fading');
+        vignette.style.opacity = '';
+      }, 500);
+    }
+
+    // Clear all fate highlights
+    document.querySelectorAll('.fate-active').forEach(el => el.classList.remove('fate-active'));
+    document.querySelectorAll('.fate-typing').forEach(el => el.classList.remove('fate-typing'));
+    document.querySelectorAll('.fate-ceremony').forEach(el => el.classList.remove('fate-ceremony'));
+  }
+
   // Override handler - user takes control from Fate
   function handleFateOverride(event) {
     if (_fateRunning && !_fateOverridden) {
@@ -7560,9 +7593,27 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   let _coverPhraseIndex = 0;
   let _coverPhraseInterval = null;
   let _coverProgressInterval = null;
+  let _coverAbortController = null;
+
+  // Abort cover generation and skip to content
+  function abortCoverGeneration() {
+      if (_coverAbortController) {
+          _coverAbortController.abort();
+          _coverAbortController = null;
+      }
+      skipCoverPage();
+  }
 
   // Start cover loading UI with staged phrases
   function startCoverLoading() {
+      // Create new abort controller for this generation
+      _coverAbortController = new AbortController();
+
+      // Wire up abort button
+      const abortBtn = document.getElementById('coverAbortBtn');
+      if (abortBtn) {
+          abortBtn.onclick = abortCoverGeneration;
+      }
       const loadingState = document.getElementById('coverLoadingState');
       const revealState = document.getElementById('coverRevealState');
       const statusText = document.getElementById('coverStatusText');
@@ -8159,9 +8210,13 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           : (synopsis || 'A dramatic scene from a romantic novel');
 
       try {
+          // Use global abort controller for cancellation support
+          const signal = _coverAbortController?.signal;
+
           const res = await fetch(IMAGE_PROXY_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              signal: signal,
               body: JSON.stringify({
                   prompt: enhancedPrompt,
                   imageIntent: 'book_cover',
@@ -8199,6 +8254,11 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           const data = await res.json();
           return data?.url || null;
       } catch (err) {
+          // Handle abort gracefully (not an error)
+          if (err.name === 'AbortError') {
+              console.log('[BookCover] Generation aborted by user');
+              return null;
+          }
           console.error('[BookCover] Generation failed:', err.message);
           return null;
       }
