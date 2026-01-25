@@ -350,7 +350,7 @@ function generatePoeticSubtitle(genre, emotionalGravity) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentObjects = []) {
+function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentObjects = [], world = null, era = null) {
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
 
@@ -373,7 +373,7 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
   const poeticSubtitle = generatePoeticSubtitle(genre, emotionalGravity);
 
   // Build cover prompt with mandatory decision sequence
-  const basePrompt = `A prestige literary book cover. Square format.
+  const coverPrompt = `A prestige literary book cover. Square format.
 
 EMOTIONAL GRAVITY: ${emotionalGravity}
 This single emotion must permeate every visual choice. The cover should feel like this word made visible.
@@ -405,8 +405,11 @@ The cover must feel quiet, strange, and inevitable. If uncertain between two cho
 
 No gibberish text. No watermarks.`;
 
+  // Phase 3C: Apply World Grammar (visual bias layer)
+  const withWorldGrammar = applyWorldGrammar(coverPrompt, world, era);
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(basePrompt);
+  return appendStoryboundBorder(withWorldGrammar);
 }
 
 function wrapScenePrompt(basePrompt) {
@@ -464,11 +467,104 @@ const TONE_AROUSAL_MATRIX = {
   // Will contain: tone x arousal -> style modifiers mapping
 };
 
-// World Grammar Rules — world-specific visual constraints
-// Phase 2b: Empty placeholder, not yet populated
+// ============================================================
+// PHASE 3C: WORLD GRAMMAR RULES (ACTIVATED)
+// Visual bias layer — changes how covers FEEL, not what they depict
+// Applied after emotional gravity, before final emission
+// ============================================================
 const WORLD_GRAMMAR_RULES = {
-  // Will contain: world (+ era) -> palette, texture, period markers
+  modern: {
+    materials: 'glass, steel, concrete, neon, LCD glow, asphalt, chrome',
+    lighting: 'harsh fluorescent, LED strip, phone-screen glow, streetlamp sodium',
+    texture: 'smooth, reflective, industrial, synthetic',
+    aesthetic: 'Urban edge, digital age tension, clinical or gritty modernity'
+  },
+  historical: {
+    // Base historical (used when no era specified)
+    materials: 'parchment, wax, iron, velvet, candlelight, oil paint, aged wood',
+    lighting: 'candlelight, firelight, oil lamp, natural window light, chiaroscuro',
+    texture: 'rough, aged, handcrafted, organic',
+    aesthetic: 'Pre-industrial weight, tactile authenticity, time-worn elegance',
+    // Era-specific overrides
+    eras: {
+      medieval: {
+        materials: 'stone, iron, leather, parchment, tallow, rough-hewn wood',
+        lighting: 'torchlight, hearth fire, grey castle light',
+        aesthetic: 'Fortress weight, feudal austerity, religious iconography undertones'
+      },
+      renaissance: {
+        materials: 'oil paint, gilt frame, marble, silk, blown glass, illuminated manuscript',
+        lighting: 'Vermeer window light, golden hour, sfumato softness',
+        aesthetic: 'Humanist elegance, mathematical proportion, rich but restrained'
+      },
+      victorian: {
+        materials: 'gaslight, brass, mahogany, lace, daguerreotype, coal soot',
+        lighting: 'gaslight flicker, fog-diffused, parlor shadow',
+        aesthetic: 'Industrial Gothic, repressed tension, ornate decay'
+      },
+      regency: {
+        materials: 'candlelight, muslin, watercolor, bone china, polished silver',
+        lighting: 'soft morning light, ballroom chandelier, garden dapple',
+        aesthetic: 'Restrained elegance, social precision, romantic classicism'
+      }
+    }
+  },
+  fantasy: {
+    materials: 'enchanted metal, crystal, starlight, ancient stone, living wood, arcane ink',
+    lighting: 'bioluminescence, moonlight, magical glow, aurora shimmer, ember light',
+    texture: 'otherworldly, impossible, organic-crystalline hybrid',
+    aesthetic: 'Secondary world weight, mythic resonance, magic as physics'
+  },
+  scifi: {
+    materials: 'carbon fiber, hologram, plasma, zero-g liquid, neural mesh, void-black alloy',
+    lighting: 'starfield, engine glow, cryosleep blue, warning-red alert, solar flare',
+    texture: 'ultra-smooth, vacuum-sealed, radiation-scarred, nano-precise',
+    aesthetic: 'Post-terrestrial isolation, technological sublime, cosmic indifference'
+  }
 };
+
+// Apply World Grammar to a prompt — visual bias layer
+// Returns original prompt unchanged if world is undefined/null
+// For Historical world, era-specific overrides are merged if era is provided
+function applyWorldGrammar(basePrompt, world, era) {
+  // Backward compatibility: no modification when world is undefined/null
+  if (!world) return basePrompt;
+
+  const worldLower = world.toLowerCase();
+  const grammar = WORLD_GRAMMAR_RULES[worldLower];
+
+  // Unknown world: return unchanged
+  if (!grammar) return basePrompt;
+
+  // Build the grammar block
+  let materials = grammar.materials;
+  let lighting = grammar.lighting;
+  let texture = grammar.texture;
+  let aesthetic = grammar.aesthetic;
+
+  // Historical era-specific overrides
+  if (worldLower === 'historical' && era && grammar.eras) {
+    const eraLower = era.toLowerCase();
+    const eraGrammar = grammar.eras[eraLower];
+    if (eraGrammar) {
+      materials = eraGrammar.materials || materials;
+      lighting = eraGrammar.lighting || lighting;
+      texture = eraGrammar.texture || texture;
+      aesthetic = eraGrammar.aesthetic || aesthetic;
+    }
+  }
+
+  // Construct World Grammar block
+  const worldGrammarBlock = `
+WORLD GRAMMAR (${world.toUpperCase()}${era ? ' — ' + era.toUpperCase() : ''}):
+- MATERIALS: Favor ${materials}
+- LIGHTING: ${lighting}
+- TEXTURE: ${texture}
+- AESTHETIC: ${aesthetic}
+World Grammar shapes visual atmosphere. It does NOT override focal anchor, emblem, or emotional gravity.`;
+
+  return basePrompt + worldGrammarBlock;
+}
 
 // Forbidden Library — blocklist validation
 // Phase 2b: Empty placeholder, not yet populated
@@ -553,7 +649,7 @@ function selectEmblemObject(emotionalGravity) {
 // Replaces focal anchor with emblem-specific object
 // Centered, stable composition — no human presence
 function buildEmblemCoverPrompt(params) {
-  const { title, authorName, dynamic, storyStyle, genre } = params;
+  const { title, authorName, dynamic, storyStyle, genre, world, era } = params;
 
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
@@ -574,7 +670,7 @@ function buildEmblemCoverPrompt(params) {
   const poeticSubtitle = generatePoeticSubtitle(genre, emotionalGravity);
 
   // Build EMBLEM cover prompt — centered, stable, no human presence
-  const basePrompt = `A prestige literary book cover. Square format. EMBLEM ARCHETYPE.
+  const emblemPrompt = `A prestige literary book cover. Square format. EMBLEM ARCHETYPE.
 
 EMOTIONAL GRAVITY: ${emotionalGravity}
 This single emotion must permeate every visual choice. The cover should feel like this word made visible.
@@ -607,8 +703,11 @@ The cover must feel iconic, weighted with meaning, and utterly still. The emblem
 
 No gibberish text. No watermarks.`;
 
+  // Phase 3C: Apply World Grammar (visual bias layer)
+  const withWorldGrammar = applyWorldGrammar(emblemPrompt, world, era);
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(basePrompt);
+  return appendStoryboundBorder(withWorldGrammar);
 }
 
 // ============================================================
@@ -618,7 +717,7 @@ No gibberish text. No watermarks.`;
 // Other archetypes route to canonical wrapBookCoverPrompt().
 // ============================================================
 function dispatchCoverPrompt(archetype, params) {
-  const { prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects } = params;
+  const { prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects, world, era } = params;
 
   // ============================================================
   // PHASE 3A: EMBLEM ARCHETYPE (ACTIVATED)
@@ -634,8 +733,9 @@ function dispatchCoverPrompt(archetype, params) {
   // If archetype is null, undefined, or unrecognized, use canonical prompt builder
   // CANONICAL COVER SYSTEM — ACTIVE BY DESIGN
   // The canonical emotional gravity / focal anchor system is preserved.
+  // Phase 3C: World and era passed for World Grammar layer
   // ============================================================
-  return wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects);
+  return wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects, world, era);
 }
 
 // ============================================================
