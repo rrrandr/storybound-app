@@ -8103,16 +8103,21 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   }
 
   // ============================================================
-  // PHASE 2b: ARCHETYPE SELECTOR STUB (INERT)
-  // This function exists for structural scaffolding only.
-  // It does NOT select a real archetype in Phase 2b.
-  // Always returns null to ensure canonical behavior is preserved.
-  // Will be implemented in Phase 3.
+  // PHASE 3A: ARCHETYPE SELECTOR
+  // Returns archetype ONLY when explicitly requested via state.coverArchetype
+  // Default behavior returns null (canonical cover system)
+  // No auto-inference — explicit request only
   // ============================================================
   function selectCoverArchetype(genre, dynamic, tone, world, synopsis) {
-      // Phase 2b: Structural stub only — always returns null
-      // When null, system uses canonical cover generation path
-      // DO NOT return a real archetype until Phase 3
+      // Phase 3A: Check for explicit archetype request
+      // To request EMBLEM: set state.coverArchetype = 'EMBLEM' before cover generation
+      // To disable: set state.coverArchetype = null or undefined
+      if (state.coverArchetype === 'EMBLEM') {
+          return 'EMBLEM';
+      }
+
+      // Default: return null (canonical cover system)
+      // No auto-inference yet — explicit request required
       return null;
   }
 
