@@ -43,6 +43,15 @@ function getOpenAIModel(imageIntent) {
 // ============================================================
 
 // ============================================================
+// PHASE 3B — STORYBOUND UNIVERSAL BORDER (FROZEN)
+// This layer establishes global shelf identity.
+// Do NOT modify, restyle, animate, or extend.
+// Do NOT couple to archetypes, world grammar, or arousal.
+// All future visual variation must occur BELOW this layer.
+// Unfreeze only with explicit phase authorization.
+// ============================================================
+
+// ============================================================
 // PHASE 3B: UNIVERSAL STORYBOUND BORDER & KEY ICON
 // Applied to ALL cover types (legacy and archetype-specific)
 // Toggle: Set to false to disable border/icon entirely
@@ -466,6 +475,15 @@ const CANONICAL_IMPLEMENT_REGISTRY = {
 const TONE_AROUSAL_MATRIX = {
   // Will contain: tone x arousal -> style modifiers mapping
 };
+
+// ============================================================
+// PHASE 3C — WORLD GRAMMAR (FROZEN)
+// Visual bias layer only (materials, lighting, texture, aesthetic).
+// Do NOT add objects, archetypes, erotic content, or logic gates.
+// Do NOT override tone or archetype behavior.
+// All future variation must occur ABOVE (archetype)
+// or BELOW (arousal / erotic motif layer).
+// ============================================================
 
 // ============================================================
 // PHASE 3C: WORLD GRAMMAR RULES (ACTIVATED)
