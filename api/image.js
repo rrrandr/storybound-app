@@ -43,6 +43,26 @@ function getOpenAIModel(imageIntent) {
 // ============================================================
 
 // ============================================================
+// PHASE 3B: UNIVERSAL STORYBOUND BORDER & KEY ICON
+// Applied to ALL cover types (legacy and archetype-specific)
+// Toggle: Set to false to disable border/icon entirely
+// ============================================================
+const STORYBOUND_BORDER_ENABLED = true;
+
+// Border and key icon prompt augmentation
+// Appended to all cover prompts when enabled
+const STORYBOUND_BORDER_PROMPT = `
+STORYBOUND BRAND ELEMENTS (mandatory):
+- BORDER: A thin, subtle border line running INSIDE the canvas edge on all four sides. The border should be uniform, visually quiet, and non-ornamental. Color should harmonize with the cover's palette — typically a muted tone that complements without competing. The border frames the composition but never dominates.
+- KEY ICON: A small, quiet key or keyhole icon in the TOP-RIGHT corner. Scale: small and secondary. The icon should be restrained, almost a whisper — no glow, no sparkle, no animation. It marks this as a Storybound book without demanding attention.`;
+
+// Helper to append border prompt when enabled
+function appendStoryboundBorder(basePrompt) {
+  if (!STORYBOUND_BORDER_ENABLED) return basePrompt;
+  return basePrompt + STORYBOUND_BORDER_PROMPT;
+}
+
+// ============================================================
 // STEP 1: EMOTIONAL GRAVITY (choose ONE)
 // The single dominant emotional force driving the cover
 // ============================================================
@@ -353,7 +373,7 @@ function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, s
   const poeticSubtitle = generatePoeticSubtitle(genre, emotionalGravity);
 
   // Build cover prompt with mandatory decision sequence
-  return `A prestige literary book cover. Square format.
+  const basePrompt = `A prestige literary book cover. Square format.
 
 EMOTIONAL GRAVITY: ${emotionalGravity}
 This single emotion must permeate every visual choice. The cover should feel like this word made visible.
@@ -384,6 +404,9 @@ HARD BANS:
 The cover must feel quiet, strange, and inevitable. If uncertain between two choices, choose the more restrained option.
 
 No gibberish text. No watermarks.`;
+
+  // Phase 3B: Apply universal Storybound border
+  return appendStoryboundBorder(basePrompt);
 }
 
 function wrapScenePrompt(basePrompt) {
@@ -551,7 +574,7 @@ function buildEmblemCoverPrompt(params) {
   const poeticSubtitle = generatePoeticSubtitle(genre, emotionalGravity);
 
   // Build EMBLEM cover prompt — centered, stable, no human presence
-  return `A prestige literary book cover. Square format. EMBLEM ARCHETYPE.
+  const basePrompt = `A prestige literary book cover. Square format. EMBLEM ARCHETYPE.
 
 EMOTIONAL GRAVITY: ${emotionalGravity}
 This single emotion must permeate every visual choice. The cover should feel like this word made visible.
@@ -583,6 +606,9 @@ HARD BANS:
 The cover must feel iconic, weighted with meaning, and utterly still. The emblem is fate made visible.
 
 No gibberish text. No watermarks.`;
+
+  // Phase 3B: Apply universal Storybound border
+  return appendStoryboundBorder(basePrompt);
 }
 
 // ============================================================
