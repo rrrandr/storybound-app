@@ -37,6 +37,10 @@ function getOpenAIModel(imageIntent) {
 // COVER GENERATION SYSTEM (REVISED)
 // Mandatory decision sequence to prevent visual convergence
 // ============================================================
+// LEGACY STATUS: ACTIVE BY DESIGN (Phase 2b)
+// This system remains the authoritative cover generation path.
+// Phase 2b adds structural scaffolding only — no behavior change.
+// ============================================================
 
 // ============================================================
 // STEP 1: EMOTIONAL GRAVITY (choose ONE)
@@ -419,6 +423,67 @@ NO visible text, captions, titles, logos, or watermarks.`;
 }
 
 // ============================================================
+// PHASE 2b: CANONICAL REGISTRIES (INERT PLACEHOLDERS)
+// These structures exist for structural scaffolding only.
+// They are NOT populated and NOT referenced by runtime logic.
+// Will be populated and activated in Phase 3.
+// ============================================================
+
+// Canonical Implement Registry — closed vocabulary of valid objects per archetype
+// Phase 2b: Empty placeholder, not yet populated
+const CANONICAL_IMPLEMENT_REGISTRY = {
+  // Will contain: archetype -> permitted implements mapping
+};
+
+// Tone/Arousal Matrix — combined bias lookup
+// Phase 2b: Empty placeholder, not yet populated
+const TONE_AROUSAL_MATRIX = {
+  // Will contain: tone x arousal -> style modifiers mapping
+};
+
+// World Grammar Rules — world-specific visual constraints
+// Phase 2b: Empty placeholder, not yet populated
+const WORLD_GRAMMAR_RULES = {
+  // Will contain: world (+ era) -> palette, texture, period markers
+};
+
+// Forbidden Library — blocklist validation
+// Phase 2b: Empty placeholder, not yet populated
+const FORBIDDEN_LIBRARY = {
+  // Will contain: Set of forbidden objects/phrases
+};
+
+// Forbidden Library Validator — runtime validation function
+// Phase 2b: Stub only, always passes
+function validateAgainstForbiddenLibrary(object, promptFragments) {
+  // Phase 2b: Structural stub — always returns valid
+  // Will perform actual validation in Phase 3
+  return { valid: true, reason: null };
+}
+
+// ============================================================
+// PHASE 2b: ARCHETYPE DISPATCH (ROUTES TO CANONICAL SYSTEM)
+// Routes prompt assembly based on archetype value.
+// In Phase 2b, always routes to canonical wrapBookCoverPrompt().
+// Archetype-specific templates will be added in Phase 3.
+// ============================================================
+function dispatchCoverPrompt(archetype, params) {
+  const { prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects } = params;
+  // Phase 2b: archetype, arousal, world, era are accepted but NOT used
+
+  // Phase 2b: CANONICAL PATH ONLY
+  // If archetype is null, undefined, or any value, use canonical prompt builder
+  // This is the ONLY active path in Phase 2b — NO BEHAVIOR CHANGE
+  // ============================================================
+  // CANONICAL COVER SYSTEM — ACTIVE BY DESIGN (Phase 2b)
+  // This path uses the existing wrapBookCoverPrompt() function.
+  // The canonical emotional gravity / focal anchor system is preserved.
+  // NO FUNCTIONAL CHANGE OCCURS IN PHASE 2b.
+  // ============================================================
+  return wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects);
+}
+
+// ============================================================
 // MAIN HANDLER
 // ============================================================
 export default async function handler(req, res) {
@@ -438,6 +503,7 @@ export default async function handler(req, res) {
   // title, authorName, modeLine: Used for book cover typography
   // dynamic, storyStyle, genre: Story context for symbolic object selection
   // recentFocalObjects: Array of recently used focal objects (for diversity)
+  // Phase 2b: archetype, arousal, world, era — structural scaffolding (not yet used)
   const {
     prompt,
     provider,
@@ -449,7 +515,12 @@ export default async function handler(req, res) {
     dynamic,
     storyStyle,
     genre,
-    recentFocalObjects = []
+    recentFocalObjects = [],
+    // Phase 2b: New params (plumbing only, not yet affecting behavior)
+    archetype,
+    arousal,
+    world,
+    era
   } = req.body;
 
   if (!prompt) {
@@ -457,13 +528,14 @@ export default async function handler(req, res) {
   }
 
   // Apply intent-specific prompt wrapping
+  // Phase 2b: Book covers route through dispatchCoverPrompt (canonical path preserved)
   const isBookCover = imageIntent === 'book_cover';
   const isSetting = imageIntent === 'setting';
   const finalPrompt = isBookCover
-    ? wrapBookCoverPrompt(prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects)
+    ? dispatchCoverPrompt(archetype, { prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects, arousal, world, era })
     : wrapScenePrompt(prompt);
 
-  console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}, isSetting: ${isSetting}`);
+  console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}, isSetting: ${isSetting}, archetype: ${archetype || 'null (canonical)'}`);
 
   // ---- INTENT-BASED PROVIDER ROUTING (AUTHORITATIVE) ----
   // setting: Gemini primary → OpenAI fallback

@@ -8102,6 +8102,20 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       };
   }
 
+  // ============================================================
+  // PHASE 2b: ARCHETYPE SELECTOR STUB (INERT)
+  // This function exists for structural scaffolding only.
+  // It does NOT select a real archetype in Phase 2b.
+  // Always returns null to ensure canonical behavior is preserved.
+  // Will be implemented in Phase 3.
+  // ============================================================
+  function selectCoverArchetype(genre, dynamic, tone, world, synopsis) {
+      // Phase 2b: Structural stub only — always returns null
+      // When null, system uses canonical cover generation path
+      // DO NOT return a real archetype until Phase 3
+      return null;
+  }
+
   // Generate book cover with intent-based routing
   // Uses COVER INTELLIGENCE SYSTEM for focal object, anti-repetition, domain backgrounds, palette
   async function generateBookCover(synopsis, title, authorName) {
@@ -8111,6 +8125,12 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const genre = state.picks?.genre || 'Billionaire';
       const dynamic = state.picks?.dynamic || 'Enemies';
       const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
+      // Phase 2b: Extract arousal/intensity (plumbing only, not yet used)
+      const arousal = state.intensity || null;
+
+      // Phase 2b: Archetype selection stub (always returns null in Phase 2b)
+      // This call site is structural scaffolding only — no behavior change
+      const archetype = selectCoverArchetype(genre, dynamic, tone, world, synopsis);
 
       // Build mode line from world + tone
       const modeLine = era ? `${era} ${world}` : `${world} ${tone}`;
@@ -8157,7 +8177,12 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
                           secondary: coverIntel.palette.secondary,
                           accent: coverIntel.palette.accent
                       }
-                  } : null
+                  } : null,
+                  // Phase 2b: New params (plumbing only, not yet used by API)
+                  archetype: archetype,
+                  arousal: arousal,
+                  world: world,
+                  era: era
               })
           });
 
