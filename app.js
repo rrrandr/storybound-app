@@ -7228,6 +7228,17 @@ TITLE CONSTRAINTS:
           : 'Render visuals that accurately reflect the current story. Do not add or remove mood.';
   }
 
+  // Scene-aware visual signal extractor — regex only, no interpretation
+  function getSceneVisualSignals(text) {
+      const signals = [];
+      if (/crowd|arena|stadium|spectators/i.test(text)) signals.push('crowded environment');
+      if (/alone|isolated|private|quiet/i.test(text)) signals.push('intimate or secluded space');
+      if (/touch|hand|grip|press|pull|close/i.test(text)) signals.push('close physical proximity');
+      if (/weapon|blade|gun|armor|uniform/i.test(text)) signals.push('martial or guarded elements');
+      if (/look|stare|watch|observe|eyes/i.test(text)) signals.push('focused eye contact');
+      return signals;
+  }
+
   // Default visual quality biases for attractive characters
   const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
 
@@ -7934,12 +7945,15 @@ TITLE CONSTRAINTS:
           const intensityBias = getVisualizeIntensityBias();
           const worldToneBias = getVisualizeWorldToneBias();
 
+          const sceneSignals = getSceneVisualSignals(lastText);
+          const sceneCtx = sceneSignals.length ? '- ' + sceneSignals.join('\n- ') : '- No additional scene constraints';
+
           if(!isRe || !promptMsg) {
               try {
                   promptMsg = await Promise.race([
                       callChat([{
                           role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
+                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent events, symbolism, or mood.\n\nReturn only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
