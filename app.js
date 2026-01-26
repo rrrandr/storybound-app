@@ -3008,6 +3008,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           // CRITICAL FIX: Remove preset locked-tease/locked-pass classes when unlocked
           if (!locked) {
               el.classList.remove('locked-tease', 'locked-pass');
+              // BUGFIX: Remove data-locked attribute so CSS [data-locked] selector
+              // and global click handler no longer treat this as locked
+              el.removeAttribute('data-locked');
+          } else {
+              // Ensure data-locked is set for CSS styling when locked
+              if (!el.dataset.locked) {
+                  el.dataset.locked = (level === 'Dirty') ? 'sub' : 'tease';
+              }
           }
           if(locked) el.classList.remove(isCard ? 'selected' : 'active');
           // FIX: Dirty always requires subscription - use sub_only mode
@@ -6045,12 +6053,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Remove golden vignette
     const vignette = document.getElementById('fateVignette');
     if (vignette) {
+      vignette.style.opacity = ''; // BUGFIX: Clear inline opacity set during ceremony BEFORE fading
       vignette.classList.remove('active');
       vignette.classList.add('fading');
       // Fully hide after fade animation completes
       setTimeout(() => {
         vignette.classList.remove('fading');
-        vignette.style.opacity = '';
       }, 500);
     }
 
@@ -6075,6 +6083,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Fade the golden vignette (pulse stops via CSS animation: none)
       const vignette = document.getElementById('fateVignette');
       if (vignette) {
+        vignette.style.opacity = ''; // BUGFIX: Clear inline opacity set during ceremony
         vignette.classList.remove('active');
         vignette.classList.add('fading');
       }
@@ -6502,6 +6511,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Stop fairy dust and fade vignette
     stopFairyDust();
     if (vignette) {
+      vignette.style.opacity = ''; // BUGFIX: Clear inline opacity set during ceremony
       vignette.classList.remove('active');
       vignette.classList.add('fading');
     }
