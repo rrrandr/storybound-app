@@ -6427,6 +6427,7 @@ QUALITY RULES:
 - Prefer titles that imply stakes, longing, or transformation
 - Good examples: "What the Sky Took", "The Wanting", "Before You Burned"
 
+${buildTitleConstraint()}
 Return ONLY the title, no quotes or explanation:\n${text}`}]);
 
         // SYNOPSIS GENERATION RULE (AUTHORITATIVE)
@@ -6848,6 +6849,23 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           // Start courtesy hinge timer (one-time only)
           scheduleCourtesyHinge();
       }, 500);
+  }
+
+  // Anti-generic title constraint — ensures titles reflect story shape
+  function buildTitleConstraint() {
+      const { world, genre, dynamic } = state.picks || {};
+
+      return `
+TITLE CONSTRAINTS:
+- Avoid generic romance phrases unless romance is the primary genre.
+- The title must reflect at least ONE of:
+  • the World (${world})
+  • the Genre (${genre})
+  • the Dynamic (${dynamic})
+- Favor specificity over abstraction.
+- Do not use stock phrases like "Desire", "Longing", "Temptation", or "Passion"
+  unless they are clearly transformed by the world or genre.
+`;
   }
 
   // Generate book cover with intent-based routing
