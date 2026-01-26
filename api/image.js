@@ -151,7 +151,7 @@ Central focus: ${symbolicObject}, rendered with controlled dramatic lighting, de
 
 Title typography: "${cleanTitle}" using ${toneStyle.typography}. The letterforms have dimensional presence. The symbolic object physically interacts with the title - either passing behind certain letters, casting realistic shadows onto the text, or threading through the letterforms. The title and object share the same physical space.
 
-Series line: "Storybound Book I – ${cleanMode}" in very small, quiet type near the top or just beneath the title. Secondary and restrained.
+Series line: "${cleanMode}" in very small, quiet type near the top or just beneath the title. Secondary and restrained.
 
 Author credit: ${cleanAuthor} in bold modern sans-serif, ALL CAPS, placed across the bottom of the cover as a visual anchor. Clean and grounded.
 

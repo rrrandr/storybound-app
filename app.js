@@ -6852,16 +6852,61 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
   // Generate book cover with intent-based routing
   // Uses authoritative prestige cover template with symbolic objects
+  // DSP-lite cover subtitle — deterministic premise sentence from story shape
+  function generateCoverSubtitle() {
+      const genre = state.picks?.genre || 'Billionaire';
+      const dynamic = state.picks?.dynamic || 'Enemies';
+      const world = state.picks?.world || 'Modern';
+      const intensity = state.intensity || 'Naughty';
+
+      const GENRE_PHRASE = {
+          CrimeSyndicate: 'blood and loyalty',
+          Billionaire: 'power and possession',
+          Noir: 'shadow and compromise',
+          Heist: 'trust and deception',
+          Espionage: 'secrets and lies',
+          Political: 'alliances and betrayal'
+      };
+      const DYNAMIC_PHRASE = {
+          Forbidden: 'wanting defies every rule',
+          Dangerous: 'desire carries a price',
+          Fated: 'inevitability draws close',
+          Partners: 'trust is the only weapon',
+          Enemies: 'friction becomes fire',
+          Friends: 'safety gives way to longing',
+          Proximity: 'distance is no longer possible',
+          SecretIdentity: 'truth hides behind every touch',
+          Obsessive: 'devotion consumes everything',
+          Caretaker: 'vulnerability becomes the way in',
+          SecondChance: 'the past refuses to stay buried'
+      };
+      const WORLD_SHADE = {
+          Modern: 'in plain sight',
+          Historical: 'under the weight of tradition',
+          Fantasy: 'where unseen forces stir',
+          SciFi: 'at the edge of the unknown',
+          Dystopia: 'beneath a fractured sky',
+          PostApocalyptic: 'among what remains',
+          Supernatural: 'beyond the veil',
+          Superheroic: 'where power reshapes everything'
+      };
+
+      const storyNoun = (intensity === 'Erotic' || intensity === 'Dirty') ? 'story' : 'tale';
+      const gp = GENRE_PHRASE[genre] || GENRE_PHRASE.Billionaire;
+      const dp = DYNAMIC_PHRASE[dynamic] || DYNAMIC_PHRASE.Enemies;
+      const wp = WORLD_SHADE[world] || WORLD_SHADE.Modern;
+      return 'A Storybound ' + storyNoun + ' of ' + gp + ' where ' + dp + ' ' + wp + '.';
+  }
+
   async function generateBookCover(synopsis, title, authorName) {
       // Extract story context for symbolic object selection (4-axis system)
       const world = state.picks?.world || 'Modern';
       const tone = state.picks?.tone || 'Earnest';
       const genre = state.picks?.genre || 'Billionaire';
       const dynamic = state.picks?.dynamic || 'Enemies';
-      const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
 
-      // Build mode line from world + tone
-      const modeLine = era ? `${era} ${world}` : `${world} ${tone}`;
+      // DSP-lite subtitle replaces old "World Tone" mode line
+      const modeLine = generateCoverSubtitle();
       // Build story style description
       const storyStyle = `${tone} ${genre}`;
 
