@@ -7137,23 +7137,17 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       }
   }
 
-  // Visualize world/tone bias — aligns image generation with selected world
+  // Visualize story shape — emits declared story attributes only, no interpretive bias
   function getVisualizeWorldToneBias() {
-      const world = state.picks?.world || 'Fantasy';
-      const tone = state.picks?.tone || 'Earnest';
-      let bias = 'World: ' + world + '. Tone: ' + tone + '.';
-      bias += ' Match visuals to the story world. Not post-apocalyptic, not industrial dystopia, not sci-fi ruins unless the world is Sci-Fi.';
-      const wl = world.toLowerCase();
-      if (wl === 'fantasy' || wl === 'romantasy') {
-          bias += ' Favor: arcane atmosphere, enchanted stone, sigil-lit surfaces, ritual markings, mythic architecture, ornate banners, cursed arenas. Corruption and enchantment, not desolation.';
-      } else if (wl === 'historical') {
-          bias += ' Favor: period architecture, natural materials, candlelight, rich textiles, historical dress.';
-      } else if (wl === 'modern') {
-          bias += ' Favor: contemporary spaces, natural lighting, modern interiors, urban detail.';
-      } else if (wl === 'sci-fi' || wl === 'scifi') {
-          bias += ' Favor: advanced technology, sleek surfaces, ambient lighting, futuristic architecture.';
-      }
-      return bias;
+      const parts = [];
+      if (state.picks?.world) parts.push('World: ' + state.picks.world);
+      if (state.picks?.tone) parts.push('Tone: ' + state.picks.tone);
+      if (state.picks?.genre) parts.push('Genre: ' + state.picks.genre);
+      if (state.picks?.dynamic) parts.push('Dynamic: ' + state.picks.dynamic);
+      if (state.intensity) parts.push('Intensity: ' + state.intensity);
+      return parts.length
+          ? parts.join('. ') + '. Render visuals that accurately reflect the story\'s declared world, tone, genre, dynamic, and intensity. Do not add or remove mood.'
+          : 'Render visuals that accurately reflect the current story. Do not add or remove mood.';
   }
 
   // Default visual quality biases for attractive characters
