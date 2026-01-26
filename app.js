@@ -1393,6 +1393,31 @@ ANTI-HERO ENFORCEMENT:
       edgeCovenant: { active:false, level:1, acceptedAtTurn:0, offeredBy:"" },
       pendingEdgeOffer: null,
       edgeCovenantOfferedThisTurn: false,
+
+      // COUPLE PLAY INTENSITY & CONSENT (session-scoped, never persisted)
+      coupleIntensity: {
+          ceiling: 'Naughty',             // Current couple-mode intensity ceiling
+          eroticUnlocked: false,           // Whether Erotic has been silently unlocked
+          eroticUnlockScore: 0,            // Pacing score tracking toward Erotic unlock
+          // Directional Dirty consent (A→B and B→A tracked independently)
+          // From THIS client's perspective:
+          //   inbound  = content flowing FROM partner TO self
+          //   outbound = content flowing FROM self TO partner (tracked on partner's client)
+          inboundDirtyConsent: null,       // null=not yet asked, true=accepted, false=declined
+          inboundDirtyPrompted: false,     // Has the inbound consent prompt been shown this session
+          outboundDirtyConsent: null,      // null=not yet asked (partner decides; local mirror for re-open logic)
+          outboundDirtyPrompted: false,
+          // Escalation
+          selfEscalatedDirty: false,       // Has THIS player pushed toward Dirty content
+          // Conditional re-open
+          reopenOffered: false,            // Has the one-time re-open prompt been shown
+          reopenAccepted: false,           // Did the player accept re-open
+          // De-escalation
+          deescalationActive: false,       // Is de-escalation mode in effect
+          deescalationCap: null,           // Tier cap after de-escalation (e.g. 'Erotic' or 'Naughty')
+          pendingHoldMessage: null,        // Held message awaiting de-escalation confirmation
+          pendingHoldRaw: null             // Raw AI output for held message
+      },
       nonConPushCount: 0,
       lastNonConPushAt: 0,
       lastSafewordAt: 0,
@@ -1546,7 +1571,7 @@ ANTI-HERO ENFORCEMENT:
 
   // NAV HELPER
   function closeAllOverlays() {
-      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'gameQuillVetoModal'].forEach(id => {
+      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'gameQuillVetoModal', 'dirtyConsentModal', 'dirtyReopenModal', 'deescalationModal'].forEach(id => {
           const el = document.getElementById(id);
           if(el) el.classList.add('hidden');
       });
@@ -3330,6 +3355,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   window.restart = function(){
     if(state.mode === 'couple') window.coupleCleanup();
+    // Always reset couple intensity on restart (even if currently solo)
+    if (typeof resetCoupleIntensity === 'function') resetCoupleIntensity();
     state.mode = 'solo';
     clearCurrentStoryId();
     state.storyId = null;
@@ -6536,7 +6563,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
     // Execute full orchestration flow
     const result = await window.StoryboundOrchestration.orchestrateStoryGeneration({
       accessTier: state.access || 'free',
-      requestedEroticism: state.intensity || 'Clean',
+      requestedEroticism: (state.mode === 'couple' ? getCoupleEffectiveCeiling() : state.intensity) || 'Clean',
       storyContext: storyContext,
       playerAction: playerAction,
       playerDialogue: playerDialogue,
@@ -7873,7 +7900,27 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           showToast("Boundary Redirect Active");
           if(safeAction) $('actionInput').value = safeAction;
           if(safeDialogue) $('dialogueInput').value = safeDialogue;
-          return; 
+          return;
+      }
+
+      // COUPLE PLAY: De-escalation signal detection (before submission)
+      if (state.mode === 'couple') {
+          // Skip de-escalation check if this is a re-triggered submission after confirmation
+          if (!state.coupleIntensity._deescalationBypassed) {
+              const deescSignal = detectDeescalationSignal(act, dia);
+              if (deescSignal.isHardStop) {
+                  // Hold submission and confirm intent
+                  state.coupleIntensity._pendingAction = act;
+                  state.coupleIntensity._pendingDialogue = dia;
+                  holdForDeescalation(null, null);
+                  return; // Stop submission; resumed after confirmation via _handleDeescalation
+              }
+          } else {
+              state.coupleIntensity._deescalationBypassed = false;
+          }
+
+          // COUPLE PLAY: Self-escalation detection
+          detectSelfEscalation(act, dia);
       }
 
       startLoading("Fate is weaving...", STORY_LOADING_MESSAGES);
@@ -7882,14 +7929,20 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
       const context = allContent.slice(-3000);
       
+      // Determine effective intensity level
+      // In couple mode, the couple ceiling overrides the player's intensity setting
+      const effectiveIntensity = (state.mode === 'couple' && !state.godModeActive)
+          ? getCoupleEffectiveCeiling()
+          : state.intensity;
+
       let intensityGuard = "";
       if (state.godModeActive) {
           intensityGuard = "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED.";
-      } else if (state.intensity === "Naughty") {
+      } else if (effectiveIntensity === "Naughty") {
           intensityGuard = "INTENSITY RULE: Naughty. Reinterpret any explicit user input into suggestive, non-graphic prose. Do NOT echo graphic terms. Focus on tension.";
-      } else if (state.intensity === "Erotic") {
+      } else if (effectiveIntensity === "Erotic") {
           intensityGuard = "INTENSITY RULE: Erotic. Explicit intimacy allowed. If input is extreme, soften it while preserving the act. Maintain literary tone.";
-      } else if (state.intensity === "Dirty") {
+      } else if (effectiveIntensity === "Dirty") {
           intensityGuard = "INTENSITY RULE: Dirty. Depict entered actions/words. Apply the selected Style voice (e.g. Shakespearean/Breathless). Dirty isn't always raw; respect the Voice.";
       } else {
           intensityGuard = "INTENSITY RULE: Clean. Romance and chemistry only. Fade to black if necessary.";
@@ -7993,7 +8046,7 @@ FATE CARD ADAPTATION (CRITICAL):
            */
           const useFullOrchestration = ENABLE_ORCHESTRATION &&
                                        window.StoryboundOrchestration &&
-                                       ['Erotic', 'Dirty'].includes(state.intensity);
+                                       ['Erotic', 'Dirty'].includes(effectiveIntensity);
 
           let raw;
 
@@ -8045,8 +8098,18 @@ FATE CARD ADAPTATION (CRITICAL):
           // FIX #2: Removed user dialogue block - AI alone narrates the action
           // User input is passed to AI but not rendered as prose to avoid duplication
 
-          // Add AI response only
-          pageContent += formatStory(raw);
+          // Add AI response — process through couple intensity pipeline if in couple mode
+          let formattedStory = formatStory(raw);
+          if (state.mode === 'couple') {
+              const coupleResult = processCoupleContent(raw, formattedStory, false);
+              formattedStory = coupleResult.content;
+              if (coupleResult.held) {
+                  // Message held for de-escalation confirmation; skip display
+                  stopLoading();
+                  return;
+              }
+          }
+          pageContent += formattedStory;
 
           // Add new page with animation
           StoryPagination.addPage(pageContent, true);
@@ -8143,11 +8206,18 @@ FATE CARD ADAPTATION (CRITICAL):
   }
 
   // --- COUPLE MODE LOGIC ---
-  window.coupleCleanup = function(){ if(sb) sb.removeAllChannels(); };
+  window.coupleCleanup = function(){
+      if(sb) sb.removeAllChannels();
+      // Clear all couple intensity permissions on session cleanup
+      if (typeof resetCoupleIntensity === 'function') resetCoupleIntensity();
+  };
 
   function broadcastTurn(text, isInit = false) {
       if (!sb || window.state.mode !== 'couple' || !window.state.roomId) return;
       // Stub implementation; real Supabase broadcast can be added later
+      // TODO: When implementing real broadcast, incoming content from partner
+      // must be processed through processIncomingCoupleContent(rawText) before display.
+      // This applies Dirty detection, masking, consent prompts, and rewriting.
       console.log("broadcastTurn stub:", { isInit, textLength: text?.length });
   }
 
@@ -8161,6 +8231,8 @@ FATE CARD ADAPTATION (CRITICAL):
      }
      state.mode = m;
      if (!state.storyOrigin) state.storyOrigin = m;
+     // Initialize couple intensity session on every couple mode entry
+     if (m === 'couple') initCoupleIntensitySession();
      if(m === 'solo') window.showScreen('setup');
      if(m === 'couple') window.showScreen('coupleInvite');
      if(m === 'stranger') window.showScreen('strangerModal');
@@ -8197,6 +8269,707 @@ FATE CARD ADAPTATION (CRITICAL):
       document.getElementById('edgeCovenantModal').classList.add('hidden');
       document.getElementById('edgeActions').classList.remove('hidden');
       document.getElementById('edgeAcceptance').classList.add('hidden');
+  };
+
+  // ==========================================================================
+  // COUPLE PLAY INTENSITY & CONSENT SYSTEM
+  // ==========================================================================
+  //
+  // AUTHORITATIVE — DO NOT REINTERPRET
+  //
+  // This module manages intensity progression and directional consent
+  // for Couple Play sessions. It does NOT modify Solo Play or Stranger Play.
+  //
+  // Tier progression: Naughty → Erotic (silent unlock) → Dirty (consent-gated)
+  // Consent is directional (A→B, B→A), session-scoped, never persisted.
+  //
+  // ==========================================================================
+
+  const COUPLE_INTENSITY_TIERS = ['Clean', 'Naughty', 'Erotic', 'Dirty'];
+
+  /**
+   * Initialize (or reset) couple intensity state for a new session.
+   * Called when entering couple mode. Ignores prior session state.
+   */
+  function initCoupleIntensitySession() {
+      state.coupleIntensity = {
+          ceiling: 'Naughty',
+          eroticUnlocked: false,
+          eroticUnlockScore: 0,
+          inboundDirtyConsent: null,
+          inboundDirtyPrompted: false,
+          outboundDirtyConsent: null,
+          outboundDirtyPrompted: false,
+          selfEscalatedDirty: false,
+          reopenOffered: false,
+          reopenAccepted: false,
+          deescalationActive: false,
+          deescalationCap: null,
+          pendingHoldMessage: null,
+          pendingHoldRaw: null
+      };
+      console.log('[COUPLE-INTENSITY] Session initialized at Naughty ceiling');
+  }
+
+  /**
+   * Get the effective intensity ceiling for content generation in couple mode.
+   * Returns the tier name that should be used as the intensity guard.
+   */
+  function getCoupleEffectiveCeiling() {
+      if (state.mode !== 'couple') return state.intensity;
+
+      const ci = state.coupleIntensity;
+
+      // De-escalation cap overrides everything
+      if (ci.deescalationActive && ci.deescalationCap) {
+          return ci.deescalationCap;
+      }
+
+      return ci.ceiling;
+  }
+
+  /**
+   * Evaluate whether Erotic should be silently unlocked.
+   * Called after each turn. Uses pacing signals:
+   *   - Turn count (minimum turns before unlock)
+   *   - Dialogue intensity (suggestive language detection)
+   *   - Story stage progression
+   *
+   * Does NOT announce unlock. No UI prompt.
+   */
+  function evaluateEroticUnlock() {
+      if (state.mode !== 'couple') return;
+      const ci = state.coupleIntensity;
+      if (ci.eroticUnlocked) return; // Already unlocked
+
+      // De-escalation blocks further escalation
+      if (ci.deescalationActive) return;
+
+      // Pacing signals that contribute to Erotic unlock score
+      let score = ci.eroticUnlockScore;
+
+      // Turn count: each turn in couple mode contributes
+      score += 1;
+
+      // Dialogue intensity: suggestive language adds to score
+      const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').toLowerCase();
+      const recentContent = allContent.slice(-2000);
+
+      const suggestivePatterns = [
+          /\b(kiss|kissed|kissing)\b/,
+          /\b(touch|touched|touching|caress)\b/,
+          /\b(desire|longing|ache|hunger)\b/,
+          /\b(lips|breath|whisper|moan)\b/,
+          /\b(closer|pressed|against)\b/,
+          /\b(pulse|shiver|tremble)\b/,
+          /\b(undress|unbutton|bare|skin)\b/
+      ];
+
+      const matchCount = suggestivePatterns.filter(rx => rx.test(recentContent)).length;
+      score += Math.min(matchCount, 4); // Cap contribution from dialogue signals
+
+      // Story stage: post-setup adds to readiness
+      if (state.storyStage !== 'pre-intimacy') {
+          score += 2;
+      }
+
+      ci.eroticUnlockScore = score;
+
+      // Unlock threshold: requires meaningful narrative progression
+      // ~3-4 turns with some suggestive content, or ~6 turns without
+      const EROTIC_UNLOCK_THRESHOLD = 8;
+
+      if (score >= EROTIC_UNLOCK_THRESHOLD) {
+          ci.eroticUnlocked = true;
+          ci.ceiling = 'Erotic';
+          console.log('[COUPLE-INTENSITY] Erotic unlocked silently (score:', score, ')');
+      }
+  }
+
+  // -----------------------------------------------------------------------
+  // DIRTY CONTENT DETECTION
+  // -----------------------------------------------------------------------
+
+  /**
+   * Heuristic detection of Dirty-tier content in AI output.
+   * Returns { isDirty: boolean, segments: Array<{start, end}> }
+   *
+   * Detection is conservative — only flags clearly explicit content
+   * that exceeds Erotic-tier boundaries.
+   */
+  const DIRTY_DETECTION_PATTERNS = [
+      /\b(cock|dick|cunt|pussy|ass(?:hole)?|tits|fuck(?:ed|ing|s)?)\b/i,
+      /\b(thrust(?:ed|ing|s)?|pound(?:ed|ing|s)?|slammed?|rammed?)\b/i,
+      /\b(cum(?:ming|s)?|orgasm(?:ed|ing|s)?|climax(?:ed|ing)?)\b/i,
+      /\b(wet(?:ness)?|dripping|soaked|throbbing)\b/i,
+      /\b(spread|straddl(?:ed|ing)|mount(?:ed|ing)?|rode|riding)\b/i,
+      /\b(suck(?:ed|ing|s)?|lick(?:ed|ing|s)?|swallow(?:ed|ing)?)\b/i,
+      /\b(naked|nude|erect(?:ion)?|hard(?:ness)?|stiff(?:ened)?)\b/i
+  ];
+
+  function detectDirtyContent(text) {
+      if (!text) return { isDirty: false, segments: [] };
+
+      const segments = [];
+      const sentences = text.split(/(?<=[.!?…])\s+/);
+      let offset = 0;
+
+      for (const sentence of sentences) {
+          const matchCount = DIRTY_DETECTION_PATTERNS.filter(rx => rx.test(sentence)).length;
+          // Require multiple signals to flag as Dirty (avoid false positives)
+          if (matchCount >= 2) {
+              const start = text.indexOf(sentence, offset);
+              if (start !== -1) {
+                  segments.push({ start, end: start + sentence.length, text: sentence });
+              }
+          }
+          offset = text.indexOf(sentence, offset) + sentence.length;
+      }
+
+      return {
+          isDirty: segments.length > 0,
+          segments
+      };
+  }
+
+  /**
+   * Apply inline [dirty] mask overlays to explicit segments.
+   * Wraps detected segments in a clickable mask element.
+   * Does NOT interrupt flow — mask is subtle and inline.
+   */
+  function maskDirtySegments(htmlContent, segments) {
+      if (!segments || segments.length === 0) return htmlContent;
+
+      // Work on the raw text within the HTML
+      // We apply masks by wrapping matched text in span elements
+      let result = htmlContent;
+
+      // Process segments in reverse order to preserve offsets
+      const sortedSegments = [...segments].sort((a, b) => b.start - a.start);
+
+      for (const seg of sortedSegments) {
+          const escapedText = escapeHTML(seg.text);
+          // Find the escaped version in the formatted HTML
+          // Use a fuzzy match since HTML formatting may have modified whitespace
+          const searchText = seg.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const rx = new RegExp(searchText.replace(/\s+/g, '\\s*'), 'i');
+
+          result = result.replace(rx, (match) => {
+              return `<span class="dirty-mask" data-dirty-original="${encodeURIComponent(match)}" onclick="window._revealDirtySegment(this)" title="Tap to reveal">${match}</span>`;
+          });
+      }
+
+      return result;
+  }
+
+  /**
+   * Reveal a single masked dirty segment on click.
+   * Only works if the player has accepted Dirty consent.
+   */
+  window._revealDirtySegment = function(el) {
+      if (!el) return;
+      const ci = state.coupleIntensity;
+
+      if (ci.inboundDirtyConsent === true) {
+          // Consent given — reveal
+          el.classList.remove('dirty-mask');
+          el.classList.add('dirty-revealed');
+      } else if (ci.inboundDirtyConsent === null && !ci.inboundDirtyPrompted) {
+          // Not yet asked — trigger consent prompt
+          showDirtyConsentPrompt('inbound');
+      }
+      // If declined, clicking does nothing (content stays masked/rewritten)
+  };
+
+  // -----------------------------------------------------------------------
+  // DIRECTIONAL DIRTY CONSENT
+  // -----------------------------------------------------------------------
+
+  /**
+   * Show the Dirty consent prompt for a specific direction.
+   * Called once per direction per session. Never repeated.
+   * The sender is NEVER informed of the decision.
+   *
+   * @param {'inbound'|'outbound'} direction
+   *   'inbound'  = partner's content → this player (most common trigger)
+   *   'outbound' = this player's content → partner (triggered on partner's client)
+   */
+  function showDirtyConsentPrompt(direction) {
+      const ci = state.coupleIntensity;
+
+      if (direction === 'inbound') {
+          if (ci.inboundDirtyPrompted) return; // Already shown this session
+          ci.inboundDirtyPrompted = true;
+      } else if (direction === 'outbound') {
+          if (ci.outboundDirtyPrompted) return;
+          ci.outboundDirtyPrompted = true;
+      }
+
+      const modal = document.getElementById('dirtyConsentModal');
+      if (!modal) return;
+
+      // Store which direction this prompt is for
+      modal.dataset.consentDirection = direction;
+      modal.classList.remove('hidden');
+
+      console.log(`[COUPLE-INTENSITY] Dirty consent prompt shown for ${direction} direction`);
+  }
+
+  /**
+   * Handle the player's response to the Dirty consent prompt.
+   * @param {boolean} accepted
+   */
+  window._handleDirtyConsent = function(accepted) {
+      const modal = document.getElementById('dirtyConsentModal');
+      if (!modal) return;
+
+      const direction = modal.dataset.consentDirection || 'inbound';
+      const ci = state.coupleIntensity;
+
+      if (direction === 'inbound') {
+          ci.inboundDirtyConsent = accepted;
+      } else {
+          ci.outboundDirtyConsent = accepted;
+      }
+
+      modal.classList.add('hidden');
+
+      console.log(`[COUPLE-INTENSITY] Dirty consent ${accepted ? 'accepted' : 'declined'} for ${direction}`);
+
+      if (accepted) {
+          // Reveal all currently masked segments
+          document.querySelectorAll('.dirty-mask').forEach(el => {
+              el.classList.remove('dirty-mask');
+              el.classList.add('dirty-revealed');
+          });
+      } else {
+          // Rewrite masked segments to accepted tier
+          rewriteMaskedSegments();
+      }
+
+      // Check conditional re-open
+      checkConditionalReopen();
+  };
+
+  /**
+   * Rewrite all masked dirty segments to the accepted tier.
+   * Preserves intent, pacing, and rhythm. Does not visibly censor or truncate.
+   * Replaces explicit text with Erotic-tier equivalent phrasing.
+   */
+  function rewriteMaskedSegments() {
+      const maskedEls = document.querySelectorAll('.dirty-mask');
+      if (maskedEls.length === 0) return;
+
+      maskedEls.forEach(el => {
+          const originalText = decodeURIComponent(el.dataset.dirtyOriginal || '');
+          if (!originalText) return;
+
+          const rewritten = rewriteToEroticTier(originalText);
+          el.textContent = rewritten;
+          el.classList.remove('dirty-mask');
+          el.classList.add('dirty-rewritten');
+          // Remove click handler
+          el.removeAttribute('onclick');
+          el.removeAttribute('title');
+      });
+
+      console.log('[COUPLE-INTENSITY] Masked segments rewritten to Erotic tier');
+  }
+
+  /**
+   * Rewrite explicit (Dirty-tier) text to Erotic-tier equivalent.
+   * Preserves intent and pacing. Uses pattern-based substitution.
+   * This is a local fallback — ideally the AI would rewrite, but
+   * for instant responsiveness we use deterministic rewriting.
+   */
+  function rewriteToEroticTier(text) {
+      if (!text) return text;
+
+      // Pattern-based substitution: explicit → sensual
+      const substitutions = [
+          [/\bfuck(?:ed|ing|s)?\b/gi, (m) => m.endsWith('ing') ? 'moving inside' : m.endsWith('ed') ? 'claimed' : 'take'],
+          [/\bcock\b/gi, 'length'],
+          [/\bdick\b/gi, 'hardness'],
+          [/\bcunt\b/gi, 'heat'],
+          [/\bpussy\b/gi, 'warmth'],
+          [/\btits\b/gi, 'breasts'],
+          [/\basshole\b/gi, 'body'],
+          [/\bass\b/gi, 'curves'],
+          [/\bcum(?:ming|s)?\b/gi, (m) => /ming/i.test(m) ? 'unraveling' : 'release'],
+          [/\borgasm(?:ed|ing|s)?\b/gi, (m) => /ing/i.test(m) ? 'breaking apart' : 'peak'],
+          [/\bthrust(?:ed|ing|s)?\b/gi, (m) => /ing/i.test(m) ? 'moving' : 'pressed'],
+          [/\bpound(?:ed|ing|s)?\b/gi, (m) => /ing/i.test(m) ? 'driving' : 'drove'],
+          [/\bslammed?\b/gi, 'surged'],
+          [/\brammed?\b/gi, 'pressed deeper'],
+          [/\bsuck(?:ed|ing|s)?\b/gi, (m) => /ing/i.test(m) ? 'tasting' : 'tasted'],
+          [/\blick(?:ed|ing|s)?\b/gi, (m) => /ing/i.test(m) ? 'tracing' : 'traced'],
+          [/\bnaked\b/gi, 'bare'],
+          [/\bnude\b/gi, 'exposed'],
+          [/\berect(?:ion)?\b/gi, 'arousal'],
+          [/\bwet(?:ness)?\b/gi, 'slick'],
+          [/\bdripping\b/gi, 'glistening'],
+          [/\bsoaked\b/gi, 'damp'],
+          [/\bthrobbing\b/gi, 'pulsing'],
+          [/\bspread\b/gi, 'opened'],
+          [/\bstraddl(?:ed|ing)\b/gi, (m) => /ing/i.test(m) ? 'settling over' : 'settled over'],
+          [/\bmount(?:ed|ing)?\b/gi, (m) => /ing/i.test(m) ? 'moving atop' : 'above'],
+          [/\brode\b/gi, 'moved with'],
+          [/\briding\b/gi, 'moving against']
+      ];
+
+      let result = text;
+      for (const [pattern, replacement] of substitutions) {
+          result = result.replace(pattern, replacement);
+      }
+
+      return result;
+  }
+
+  // -----------------------------------------------------------------------
+  // INDEPENDENT ESCALATION & CONDITIONAL RE-OPEN
+  // -----------------------------------------------------------------------
+
+  /**
+   * Detect whether the local player's input signals Dirty escalation intent.
+   * Called before AI generation to determine if the player is pushing
+   * toward explicit content.
+   */
+  function detectSelfEscalation(actionText, dialogueText) {
+      if (state.mode !== 'couple') return false;
+
+      const combined = ((actionText || '') + ' ' + (dialogueText || '')).toLowerCase();
+
+      const escalationPatterns = [
+          /\bfuck\b/i, /\bsuck\b/i, /\blick\b/i,
+          /\bstrip\b/i, /\bundress\b/i, /\btake off\b/i,
+          /\binside\b/i, /\bpenetrat/i, /\bon (my|your) knees\b/i,
+          /\bbend (over|down)\b/i, /\bspread\b/i,
+          /\bharder\b/i, /\bdeeper\b/i, /\bfaster\b/i
+      ];
+
+      const matchCount = escalationPatterns.filter(rx => rx.test(combined)).length;
+
+      if (matchCount >= 1) {
+          state.coupleIntensity.selfEscalatedDirty = true;
+          console.log('[COUPLE-INTENSITY] Self-escalation to Dirty detected');
+          return true;
+      }
+
+      return false;
+  }
+
+  /**
+   * Check if the conditional re-open should be offered.
+   * Condition: Player previously declined inbound Dirty, then escalated
+   * (pushed Dirty content themselves). Offered once per session.
+   */
+  function checkConditionalReopen() {
+      const ci = state.coupleIntensity;
+
+      // Only relevant if:
+      // 1. Player declined inbound Dirty
+      // 2. Player has escalated (pushed Dirty themselves)
+      // 3. Re-open not already offered
+      if (ci.inboundDirtyConsent !== false) return;
+      if (!ci.selfEscalatedDirty) return;
+      if (ci.reopenOffered) return;
+
+      ci.reopenOffered = true;
+
+      // Show re-open prompt
+      const modal = document.getElementById('dirtyReopenModal');
+      if (modal) {
+          modal.classList.remove('hidden');
+      }
+
+      console.log('[COUPLE-INTENSITY] Conditional re-open offered');
+  }
+
+  /**
+   * Handle the player's response to the conditional re-open prompt.
+   */
+  window._handleDirtyReopen = function(accepted) {
+      const modal = document.getElementById('dirtyReopenModal');
+      if (modal) modal.classList.add('hidden');
+
+      const ci = state.coupleIntensity;
+      ci.reopenAccepted = accepted;
+
+      if (accepted) {
+          ci.inboundDirtyConsent = true;
+          // Reveal any currently masked segments
+          document.querySelectorAll('.dirty-mask').forEach(el => {
+              el.classList.remove('dirty-mask');
+              el.classList.add('dirty-revealed');
+          });
+          console.log('[COUPLE-INTENSITY] Re-open accepted — inbound Dirty now allowed');
+      } else {
+          console.log('[COUPLE-INTENSITY] Re-open declined — inbound Dirty remains blocked');
+      }
+  };
+
+  // -----------------------------------------------------------------------
+  // DE-ESCALATION SIGNAL DETECTION
+  // -----------------------------------------------------------------------
+
+  /**
+   * Hard-stop phrase detection. Conservative — only triggers on clear signals.
+   * Returns { isHardStop: boolean, phrase: string|null }
+   */
+  const DEESCALATION_PHRASES = [
+      /\b(stop|safeword|red\s*light|pause|hold on|wait|too (?:much|far)|slow down|ease up|back off|enough)\b/i,
+      /\b(i (?:can'?t|don'?t want|need (?:to |a )?stop))\b/i,
+      /\b(no more|cut it|end this|that'?s enough)\b/i
+  ];
+
+  function detectDeescalationSignal(actionText, dialogueText) {
+      if (state.mode !== 'couple') return { isHardStop: false, phrase: null };
+
+      const combined = ((actionText || '') + ' ' + (dialogueText || '')).toLowerCase();
+
+      for (const rx of DEESCALATION_PHRASES) {
+          const match = combined.match(rx);
+          if (match) {
+              return { isHardStop: true, phrase: match[0] };
+          }
+      }
+
+      return { isHardStop: false, phrase: null };
+  }
+
+  /**
+   * Hold a message and show the de-escalation confirmation modal.
+   * The message is not sent until intent is confirmed.
+   */
+  function holdForDeescalation(rawContent, formattedContent) {
+      const ci = state.coupleIntensity;
+      ci.pendingHoldMessage = formattedContent;
+      ci.pendingHoldRaw = rawContent;
+
+      const modal = document.getElementById('deescalationModal');
+      if (modal) modal.classList.remove('hidden');
+
+      console.log('[COUPLE-INTENSITY] Message held for de-escalation confirmation');
+  }
+
+  /**
+   * Handle de-escalation confirmation.
+   * @param {boolean} confirmed - true = yes, slow down; false = false alarm, continue
+   */
+  window._handleDeescalation = function(confirmed) {
+      const modal = document.getElementById('deescalationModal');
+      if (modal) modal.classList.add('hidden');
+
+      const ci = state.coupleIntensity;
+
+      if (confirmed) {
+          // Cap future content at Erotic (or lower)
+          ci.deescalationActive = true;
+          ci.deescalationCap = ci.eroticUnlocked ? 'Erotic' : 'Naughty';
+
+          console.log('[COUPLE-INTENSITY] De-escalation confirmed, capping at:', ci.deescalationCap);
+
+          // Normalize recent explicit content in the displayed story
+          normalizeRecentExplicitContent();
+      } else {
+          console.log('[COUPLE-INTENSITY] De-escalation declined (false alarm)');
+      }
+
+      // Re-trigger the held submission (with updated intensity ceiling if confirmed)
+      ci.pendingHoldMessage = null;
+      ci.pendingHoldRaw = null;
+
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn && ci._pendingAction !== undefined) {
+          // Restore pending inputs and re-click
+          const actionInput = document.getElementById('actionInput');
+          const dialogueInput = document.getElementById('dialogueInput');
+          if (actionInput) actionInput.value = ci._pendingAction || '';
+          if (dialogueInput) dialogueInput.value = ci._pendingDialogue || '';
+          ci._pendingAction = undefined;
+          ci._pendingDialogue = undefined;
+          // Set bypass flag so de-escalation detection is skipped on re-submission
+          ci._deescalationBypassed = true;
+          // Use a short defer to avoid re-entrancy
+          setTimeout(() => submitBtn.click(), 50);
+      }
+  };
+
+  /**
+   * Normalize recent explicit content in the displayed story.
+   * Softens the last few paragraphs to match the de-escalation cap.
+   */
+  function normalizeRecentExplicitContent() {
+      const pages = StoryPagination.getPages();
+      if (!pages || pages.length === 0) return;
+
+      // Normalize the last page only (most recent content)
+      const lastIdx = pages.length - 1;
+      let lastPage = pages[lastIdx];
+
+      // Apply Erotic-tier rewriting to the displayed HTML
+      // Extract text nodes, rewrite, and replace
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = lastPage;
+
+      const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null, false);
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+      for (const node of textNodes) {
+          const original = node.textContent;
+          const rewritten = rewriteToEroticTier(original);
+          if (rewritten !== original) {
+              node.textContent = rewritten;
+          }
+      }
+
+      // Update the page
+      const updatedPages = [...pages];
+      updatedPages[lastIdx] = tempDiv.innerHTML;
+      StoryPagination.setPages(updatedPages);
+      // Re-render current page if it's the last one
+      if (StoryPagination.getCurrentPageIndex() === lastIdx) {
+          StoryPagination.goToPage(lastIdx);
+      }
+
+      console.log('[COUPLE-INTENSITY] Recent explicit content normalized');
+  }
+
+  // -----------------------------------------------------------------------
+  // COUPLE CONTENT PROCESSING PIPELINE
+  // -----------------------------------------------------------------------
+
+  /**
+   * Process AI-generated content through the couple intensity pipeline.
+   * Called after content is generated, before display.
+   *
+   * This is the main integration point for couple intensity enforcement.
+   *
+   * @param {string} rawContent - Raw AI output text
+   * @param {string} formattedContent - HTML-formatted content ready for display
+   * @param {boolean} isInbound - true if content is from partner, false if local
+   * @returns {{ content: string, held: boolean }}
+   *   content: the (possibly modified) formatted HTML
+   *   held: true if the message was held for de-escalation
+   */
+  function processCoupleContent(rawContent, formattedContent, isInbound) {
+      if (state.mode !== 'couple') {
+          return { content: formattedContent, held: false };
+      }
+
+      const ci = state.coupleIntensity;
+
+      // 1. Evaluate Erotic unlock (every turn)
+      evaluateEroticUnlock();
+
+      // 2. Detect Dirty content
+      const detection = detectDirtyContent(rawContent);
+
+      if (!detection.isDirty) {
+          return { content: formattedContent, held: false };
+      }
+
+      // Content has Dirty segments
+      console.log('[COUPLE-INTENSITY] Dirty content detected, segments:', detection.segments.length);
+
+      if (isInbound) {
+          // Partner's content — apply masking for this player
+          const direction = 'inbound';
+
+          if (ci.inboundDirtyConsent === true) {
+              // Already consented — show as-is
+              return { content: formattedContent, held: false };
+          }
+
+          if (ci.inboundDirtyConsent === false) {
+              // Declined — rewrite to Erotic tier
+              const rewritten = rewriteToEroticTier(rawContent);
+              return { content: formatStory(rewritten), held: false };
+          }
+
+          // Not yet asked — mask and prompt
+          const masked = maskDirtySegments(formattedContent, detection.segments);
+          if (!ci.inboundDirtyPrompted) {
+              // Defer prompt slightly to let content render first
+              setTimeout(() => showDirtyConsentPrompt(direction), 500);
+          }
+          return { content: masked, held: false };
+
+      } else {
+          // Local player's own generated content
+          // The local player sees their own content unmasked
+          // (masking only applies to the receiver's view)
+          return { content: formattedContent, held: false };
+      }
+  }
+
+  /**
+   * Process incoming partner content through the couple intensity pipeline.
+   * Called by the broadcast receiver when partner's turn content arrives.
+   * TODO: Wire into Supabase broadcast receiver when implemented.
+   *
+   * @param {string} rawContent - Raw text from partner's turn
+   * @returns {string} Processed HTML content ready for display
+   */
+  function processIncomingCoupleContent(rawContent) {
+      const formatted = formatStory(rawContent);
+      const result = processCoupleContent(rawContent, formatted, true);
+      return result.content;
+  }
+
+  // -----------------------------------------------------------------------
+  // SESSION RESET
+  // -----------------------------------------------------------------------
+
+  /**
+   * Clear all couple intensity permissions at session end.
+   * Does NOT persist to next session. Called on restart, cleanup, and mode change.
+   */
+  function resetCoupleIntensity() {
+      state.coupleIntensity = {
+          ceiling: 'Naughty',
+          eroticUnlocked: false,
+          eroticUnlockScore: 0,
+          inboundDirtyConsent: null,
+          inboundDirtyPrompted: false,
+          outboundDirtyConsent: null,
+          outboundDirtyPrompted: false,
+          selfEscalatedDirty: false,
+          reopenOffered: false,
+          reopenAccepted: false,
+          deescalationActive: false,
+          deescalationCap: null,
+          pendingHoldMessage: null,
+          pendingHoldRaw: null
+      };
+
+      // Remove any lingering mask elements from DOM
+      document.querySelectorAll('.dirty-mask, .dirty-revealed, .dirty-rewritten').forEach(el => {
+          el.classList.remove('dirty-mask', 'dirty-revealed', 'dirty-rewritten');
+          el.removeAttribute('onclick');
+          el.removeAttribute('title');
+      });
+
+      // Hide any open consent/de-escalation modals
+      ['dirtyConsentModal', 'dirtyReopenModal', 'deescalationModal'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add('hidden');
+      });
+
+      console.log('[COUPLE-INTENSITY] Session reset — all permissions cleared');
+  }
+
+  // Expose for use by broadcast system and external hooks
+  window._coupleIntensity = {
+      init: initCoupleIntensitySession,
+      reset: resetCoupleIntensity,
+      getCeiling: getCoupleEffectiveCeiling,
+      processContent: processCoupleContent,
+      processIncoming: processIncomingCoupleContent,
+      detectEscalation: detectSelfEscalation,
+      detectDeescalation: detectDeescalationSignal,
+      holdForDeescalation: holdForDeescalation
   };
 
   // --- COUPLE MODE BUTTON HANDLERS ---

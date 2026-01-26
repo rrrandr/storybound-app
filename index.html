@@ -201,6 +201,60 @@
   </div>
 </div>
 
+<!-- COUPLE PLAY: Dirty Consent Modal (directional, session-scoped) -->
+<div id="dirtyConsentModal" class="overlay hidden" style="z-index:10002;">
+  <div class="box" style="max-width:420px; text-align:center;">
+    <h3 style="color:var(--hot);">A Threshold</h3>
+    <p style="font-size:0.92em; line-height:1.6; color:var(--ink); margin:15px 0;">
+        The story is reaching for something more explicit.
+        Would you like to follow where it leads?
+    </p>
+    <p style="font-size:0.8em; color:#888; font-style:italic; margin-bottom:20px;">
+        Your choice is private and will not be shared with your partner.
+    </p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+        <button onclick="window._handleDirtyConsent(true)" style="background:var(--hot);">Follow</button>
+        <button onclick="window._handleDirtyConsent(false)" style="background:#444;">Stay Here</button>
+    </div>
+  </div>
+</div>
+
+<!-- COUPLE PLAY: Conditional Re-open Modal (one-time, session-scoped) -->
+<div id="dirtyReopenModal" class="overlay hidden" style="z-index:10003;">
+  <div class="box" style="max-width:420px; text-align:center;">
+    <h3 style="color:var(--gold);">A Door Reopens</h3>
+    <p style="font-size:0.92em; line-height:1.6; color:var(--ink); margin:15px 0;">
+        You've pushed the story further yourself.
+        Would you also like to see where your partner takes things?
+    </p>
+    <p style="font-size:0.8em; color:#888; font-style:italic; margin-bottom:20px;">
+        This is a one-time offer. Your choice remains private.
+    </p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+        <button onclick="window._handleDirtyReopen(true)" style="background:var(--gold); color:#000;">Open Both Ways</button>
+        <button onclick="window._handleDirtyReopen(false)" style="background:#444;">Keep One-Way</button>
+    </div>
+  </div>
+</div>
+
+<!-- COUPLE PLAY: De-escalation Confirmation Modal -->
+<div id="deescalationModal" class="overlay hidden" style="z-index:10004;">
+  <div class="box" style="max-width:420px; text-align:center;">
+    <h3 style="color:var(--gold);">Pause</h3>
+    <p style="font-size:0.92em; line-height:1.6; color:var(--ink); margin:15px 0;">
+        It sounds like you'd like to ease the intensity.
+        Would you like the story to slow down?
+    </p>
+    <p style="font-size:0.8em; color:#888; font-style:italic; margin-bottom:20px;">
+        Future content will stay within gentler boundaries.
+    </p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+        <button onclick="window._handleDeescalation(true)" style="background:var(--gold); color:#000;">Yes, Slow Down</button>
+        <button onclick="window._handleDeescalation(false)" style="background:#444;">No, Continue</button>
+    </div>
+  </div>
+</div>
+
 <div id="strangerModal" class="overlay hidden">
   <div class="box">
     <h3>How Daring...</h3>

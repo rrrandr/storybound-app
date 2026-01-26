@@ -2953,3 +2953,60 @@ textarea.fate-field {
     from { filter: drop-shadow(0 0 5px var(--gold)); opacity: 0.9; }
     to { filter: drop-shadow(0 0 15px var(--gold)); opacity: 1; }
 }
+
+/* ==========================================================================
+   COUPLE PLAY: Dirty Content Mask Overlays
+   ========================================================================== */
+
+.dirty-mask {
+    position: relative;
+    cursor: pointer;
+    color: transparent;
+    background: linear-gradient(135deg, rgba(255,20,147,0.12) 0%, rgba(255,105,180,0.08) 100%);
+    border-radius: 3px;
+    padding: 0 2px;
+    transition: background 0.3s ease, color 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.dirty-mask::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        120deg,
+        transparent,
+        transparent 3px,
+        rgba(255,20,147,0.06) 3px,
+        rgba(255,20,147,0.06) 6px
+    );
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+/* Subtle shimmer on hover to hint interactivity */
+.dirty-mask:hover {
+    background: linear-gradient(135deg, rgba(255,20,147,0.2) 0%, rgba(255,105,180,0.14) 100%);
+}
+
+/* Revealed state after consent accepted */
+.dirty-revealed {
+    color: inherit;
+    background: none;
+    cursor: default;
+    transition: color 0.5s ease, background 0.5s ease;
+}
+
+.dirty-revealed::after {
+    display: none;
+}
+
+/* Rewritten state after consent declined */
+.dirty-rewritten {
+    color: inherit;
+    background: none;
+    cursor: default;
+    font-style: inherit;
+}
+}
