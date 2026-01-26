@@ -423,8 +423,11 @@ No gibberish text. No watermarks.`;
   // Phase 4A: Composition Safety + Title Balance
   const withSafety = appendCompositionSafety(withEroticMotif, null);
 
+  // Phase 4B: Material-Integrated Floating Typography
+  const withTypography = applyTypographyInteractionLayer(withSafety, world, null);
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(withSafety);
+  return appendStoryboundBorder(withTypography);
 }
 
 function wrapScenePrompt(basePrompt) {
@@ -688,6 +691,110 @@ TITLE BALANCE:
   return prompt + safetyBlock + titleBalance;
 }
 
+// ============================================================
+// PHASE 4B — MATERIAL-INTEGRATED FLOATING TYPOGRAPHY
+// Expands typographic treatment beyond diegetic inscription.
+// Typography interacts with world materials, motifs, and props.
+// NOT a replacement for diegetic typography — an expansion.
+// Inserted AFTER Composition Safety, BEFORE Border.
+// No changes to archetype selection, world grammar, or erotic layers.
+// ============================================================
+
+// World-specific material palettes for typography construction
+const TYPOGRAPHY_MATERIAL_GUIDANCE = {
+  prehistoric: {
+    materials: ['bone', 'flint', 'sinew', 'charcoal', 'sticks', 'ochre', 'ash'],
+    descriptor: 'primordial, hand-formed, elemental'
+  },
+  historical: {
+    materials: ['ink', 'vellum', 'carved stone dust', 'wax', 'cloth', 'thread'],
+    descriptor: 'crafted, hand-lettered, tactile'
+  },
+  fantasy: {
+    materials: ['runic light', 'enchanted metal', 'crystal', 'shadow', 'mist'],
+    descriptor: 'arcane, luminous, otherworldly'
+  },
+  modern: {
+    materials: ['neon', 'glass', 'steel', 'paper', 'smoke', 'rain'],
+    descriptor: 'industrial, ambient, urban'
+  },
+  scifi: {
+    materials: ['holographic light', 'plasma residue', 'carbon alloy', 'void-static', 'neural filament'],
+    descriptor: 'post-terrestrial, synthetic, signal-born'
+  }
+};
+
+// Physical interactions between typography and scene elements
+const TYPOGRAPHY_INTERACTIONS = [
+  'pierced by a scene object passing through a letterform',
+  'woven with visible threads or filaments connecting strokes',
+  'interrupted by cracks that fracture across letters and surface alike',
+  'partially obscured by drifting fog, ash, or atmospheric haze',
+  'tangled with cloth, ribbon, or fabric that drapes across strokes',
+  'threaded through by a narrow object (arrow, thorn, wire, needle)',
+  'dusted with particles settling on horizontal strokes',
+  'casting material shadow onto the scene below',
+  'emerging from the surface material as if pressed upward from within',
+  'bound by fine lines (thread, chain, sinew, vine) that lash letters together'
+];
+
+// Liminal interactions specific to THRESHOLD archetype
+const THRESHOLD_LIMINAL_INTERACTIONS = [
+  'interrupted by a veil drifting across the letterforms',
+  'split by doorway light that bleaches through the strokes',
+  'disturbed by wind that scatters particles from letter edges',
+  'fractured along a crack that runs through both threshold and title',
+  'partially hidden behind a curtain that overlaps the text',
+  'dusted with ash that settles unevenly across the letters',
+  'caught in the liminal light — half the title illuminated, half in shadow',
+  'threaded through the boundary surface, letters on both sides of the crossing'
+];
+
+// Apply Material-Integrated Floating Typography interaction layer
+// Returns prompt unchanged if world is null/undefined (backward compatible)
+function applyTypographyInteractionLayer(prompt, world, archetype) {
+  // Backward compatibility: no modification when world is undefined/null
+  if (!world) return prompt;
+
+  const worldLower = world.toLowerCase();
+
+  // Resolve material palette (fall back to modern if world unrecognized)
+  const guidance = TYPOGRAPHY_MATERIAL_GUIDANCE[worldLower]
+    || TYPOGRAPHY_MATERIAL_GUIDANCE.modern;
+
+  // Select random material subset (2-3 materials)
+  const shuffledMaterials = guidance.materials
+    .slice()
+    .sort(() => Math.random() - 0.5);
+  const selectedMaterials = shuffledMaterials.slice(0, 2 + Math.floor(Math.random() * 2));
+
+  // Select interaction type — THRESHOLD requires liminal interaction
+  let interaction;
+  if (archetype === 'THRESHOLD') {
+    interaction = THRESHOLD_LIMINAL_INTERACTIONS[
+      Math.floor(Math.random() * THRESHOLD_LIMINAL_INTERACTIONS.length)
+    ];
+  } else {
+    interaction = TYPOGRAPHY_INTERACTIONS[
+      Math.floor(Math.random() * TYPOGRAPHY_INTERACTIONS.length)
+    ];
+  }
+
+  // Build the typography interaction block
+  const typographyBlock = `
+
+MATERIAL-INTEGRATED FLOATING TYPOGRAPHY:
+- Letters may be composed of or evoke: ${selectedMaterials.join(', ')}
+- Material quality: ${guidance.descriptor}
+- Physical interaction: Typography is ${interaction}
+- Typography floats within the scene — it is NOT a clean font overlay and NOT pasted flat onto the image plane
+- Letters must respect composition margins (top/bottom fully visible)
+- No partial cropping or extension beyond the glyph envelope
+- Small physical interactions between scene elements and letterforms are encouraged`;
+
+  return prompt + typographyBlock;
+}
+
 // Forbidden Library — blocklist validation
 // Phase 2b: Empty placeholder, not yet populated
 const FORBIDDEN_LIBRARY = {
@@ -834,8 +941,11 @@ No gibberish text. No watermarks.`;
   // Phase 4A: Composition Safety + Title Balance
   const withSafety = appendCompositionSafety(withEroticMotif, 'EMBLEM');
 
+  // Phase 4B: Material-Integrated Floating Typography
+  const withTypography = applyTypographyInteractionLayer(withSafety, world, 'EMBLEM');
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(withSafety);
+  return appendStoryboundBorder(withTypography);
 }
 
 // ============================================================
@@ -996,8 +1106,11 @@ No gibberish text. No watermarks.`;
   // Phase 4A: Composition Safety + Title Balance (preserves diegetic rules)
   const withSafety = appendCompositionSafety(withEroticMotif, 'THRESHOLD');
 
+  // Phase 4B: Material-Integrated Floating Typography (liminal interaction required for THRESHOLD)
+  const withTypography = applyTypographyInteractionLayer(withSafety, world, 'THRESHOLD');
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(withSafety);
+  return appendStoryboundBorder(withTypography);
 }
 
 // ============================================================
