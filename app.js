@@ -7137,6 +7137,25 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       }
   }
 
+  // Visualize world/tone bias — aligns image generation with selected world
+  function getVisualizeWorldToneBias() {
+      const world = state.picks?.world || 'Fantasy';
+      const tone = state.picks?.tone || 'Earnest';
+      let bias = 'World: ' + world + '. Tone: ' + tone + '.';
+      bias += ' Match visuals to the story world. Not post-apocalyptic, not industrial dystopia, not sci-fi ruins unless the world is Sci-Fi.';
+      const wl = world.toLowerCase();
+      if (wl === 'fantasy' || wl === 'romantasy') {
+          bias += ' Favor: arcane atmosphere, enchanted stone, sigil-lit surfaces, ritual markings, mythic architecture, ornate banners, cursed arenas. Corruption and enchantment, not desolation.';
+      } else if (wl === 'historical') {
+          bias += ' Favor: period architecture, natural materials, candlelight, rich textiles, historical dress.';
+      } else if (wl === 'modern') {
+          bias += ' Favor: contemporary spaces, natural lighting, modern interiors, urban detail.';
+      } else if (wl === 'sci-fi' || wl === 'scifi') {
+          bias += ' Favor: advanced technology, sleek surfaces, ambient lighting, futuristic architecture.';
+      }
+      return bias;
+  }
+
   // Default visual quality biases for attractive characters
   const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
 
@@ -7839,15 +7858,16 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
       try {
           let promptMsg = document.getElementById('vizPromptInput').value;
-          // Get intensity bias for prompt generation
+          // Get intensity bias and world/tone bias for prompt generation
           const intensityBias = getVisualizeIntensityBias();
+          const worldToneBias = getVisualizeWorldToneBias();
 
           if(!isRe || !promptMsg) {
               try {
                   promptMsg = await Promise.race([
                       callChat([{
                           role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
+                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nReturn only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
@@ -7891,11 +7911,14 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           // Shortened quality/intensity (clarity over verbosity)
           const shortQuality = "Attractive, elegant features, natural expressions.";
           const shortIntensity = intensityBias.split('.')[0] + "."; // First sentence only
+          // Concise world/tone for image generator (first two sentences)
+          const shortWorldTone = worldToneBias.split('.').slice(0, 3).join('.') + '.';
 
           // SCENE FIRST, then anchors/style
           let basePrompt = sceneDesc + modifiers +
               "\n---\n" +
               "Style: cinematic, painterly, no text. " +
+              shortWorldTone + " " +
               shortQuality + " " +
               shortIntensity +
               vetoExclusions +
