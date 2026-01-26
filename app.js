@@ -2999,6 +2999,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function applyIntensityLocks(){
       syncTierFromAccess();
       const access = state.access;
+      // DEV LOGGING: arousal gating decision
+      console.log('[DEV:IntensityGate] access:', access, '| intensity:', state.intensity, '| subscribed:', state.subscribed);
       const setupCards = document.querySelectorAll('#intensityGrid .sb-card');
       const gameBtns = document.querySelectorAll('#gameIntensity button');
 
@@ -3495,6 +3497,45 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.storyLength = 'voyeur';
     state.storyEnded = false;
     state.archetype = { primary: 'BEAUTIFUL_RUIN', modifier: null };
+
+    // FIX: Full 4-axis + world state reset (prevents Ash Quarter / Warden-Cadre leak)
+    state.picks = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', era: 'Medieval', pov: 'First' };
+    state.intensity = 'Naughty';
+    state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {} };
+    state.coverArchetype = null;
+    state.normalizedPlayerKernel = null;
+    state.normalizedPartnerKernel = null;
+    state.rawPlayerName = null;
+    state.rawPartnerName = null;
+
+    // FIX: Cover regeneration reset — allow new cover without hard refresh
+    if (_coverAbortController) { _coverAbortController.abort(); _coverAbortController = null; }
+    resetBookState();
+    const coverImg = document.getElementById('bookCoverImg');
+    if (coverImg) coverImg.src = '';
+    const coverLoading = document.getElementById('coverLoadingState');
+    if (coverLoading) coverLoading.classList.add('hidden');
+    const bookObj = document.getElementById('bookObject');
+    if (bookObj) bookObj.classList.add('hidden');
+    if (_coverPhraseInterval) { clearInterval(_coverPhraseInterval); _coverPhraseInterval = null; }
+    if (_coverProgressInterval) { clearInterval(_coverProgressInterval); _coverProgressInterval = null; }
+
+    // Reset card UI to match default state
+    const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Naughty', length: 'voyeur', pov: 'First' };
+    Object.entries(cardDefaults).forEach(([grp, val]) => {
+        document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
+            c.classList.remove('selected', 'flipped');
+        });
+        const def = document.querySelector(`.sb-card[data-grp="${grp}"][data-val="${val}"]`);
+        if (def) def.classList.add('selected', 'flipped');
+    });
+
+    // Reset name inputs
+    const pInput = $('playerNameInput');
+    if (pInput) pInput.value = '';
+    const lInput = $('partnerNameInput');
+    if (lInput) lInput.value = '';
+
     // Clear pagination system
     StoryPagination.clear();
     // Re-render archetype cards to show default selection
@@ -3512,7 +3553,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     updateContinueButtons();
     window.showScreen('setup');
-    applyAccessLocks(); 
+    // FIX: Explicit lock re-application ensures intensity cards reflect current access tier
+    applyAccessLocks();
+    applyIntensityLocks();
     updateQuillUI();
     updateBatedBreathState();
   };
@@ -6847,6 +6890,9 @@ No accidental betrayal. No silent exits.
     const storyEra = state.picks.world === 'Historical' ? (state.picks.era || 'Medieval') : null;
     const storyPowerRole = resolvePowerRole(storyWorld, storyEra, state.picks.genre || 'Billionaire');
 
+    // DEV LOGGING: story generation state snapshot
+    console.log('[DEV:StoryGen] world:', storyWorld, '| tone:', state.picks.tone, '| genre:', state.picks.genre, '→ powerRole:', storyPowerRole, '| intensity:', state.intensity);
+
     const sys = `You are a bestselling erotica author (Voice: ${state.authorGender}, ${state.authorPronouns}).
 
 ${state.storyOrigin === "couple" && !state.player2Joined && !state.inviteRevoked ? batedBreathRules : ""}
@@ -8231,6 +8277,9 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       // Phase 2b: Archetype selection stub (always returns null in Phase 2b)
       // This call site is structural scaffolding only — no behavior change
       const archetype = selectCoverArchetype(genre, dynamic, tone, world, synopsis);
+
+      // DEV LOGGING: generation-time state snapshot
+      console.log('[DEV:CoverGen] world:', world, '| tone:', tone, '| genre:', genre, '→ powerRole:', powerRole, '| archetype:', archetype, '| arousal:', arousal);
 
       // Build mode line from world + tone
       const modeLine = era ? `${era} ${world}` : `${world} ${tone}`;
