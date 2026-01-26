@@ -6949,7 +6949,12 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           bookCover.classList.add('hinge-open');
       }
 
-      // After hinge animation, transition to story
+      // BOOK OPEN DWELL: After hinge animation (800ms), hold the open book
+      // for 10 seconds showing inside cover before transitioning to Scene 1.
+      // Total delay: 800ms hinge + 10000ms dwell = 10800ms.
+      const HINGE_DURATION = 800;
+      const DWELL_DURATION = 10000;
+
       setTimeout(() => {
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
           if (storyContent) {
@@ -6963,7 +6968,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           if (titleEl) {
               titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-      }, 800);
+      }, HINGE_DURATION + DWELL_DURATION);
   }
 
   // Initialize physical book event listeners
