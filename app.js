@@ -252,10 +252,10 @@ window.config = window.config || {
           }
 
           if (currentPageIndex === 0) {
-              // Page 1: Full display
+              // Page 1: Full display (no setting image in Scene 1)
               if (titleEl) titleEl.style.fontSize = '';
               if (synopsisEl) synopsisEl.style.display = '';
-              if (settingShotWrap) settingShotWrap.style.display = '';
+              if (settingShotWrap) settingShotWrap.style.display = 'none';
           } else {
               // Page 2+: Compact display
               if (titleEl) titleEl.style.fontSize = '1.2em';
@@ -6478,8 +6478,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
             }
         });
 
-        // Also generate setting shot for story content (in parallel)
-        generateSettingShot(synopsis);
+        // Setting shot removed from Scene 1 — no placeholder space.
+        // generateSettingShot retained for future scenes / saved-story loading.
 
         // Story text reveal is handled by cover page flow
         // (user clicks "Open Your Story" to see content)
