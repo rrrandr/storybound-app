@@ -1300,6 +1300,103 @@ ANTI-HERO ENFORCEMENT:
       return null;
   }
 
+  // =========================
+  // LENS SYSTEM
+  // Lenses are narrative constraint layers applied to characters.
+  // Two-lens maximum enforced. Withheld Core does not count toward limit.
+  // =========================
+  const LENS_REGISTRY = {
+      WITHHELD_CORE: {
+          id: 'WITHHELD_CORE',
+          name: 'Withheld Core',
+          countsTowardLimit: false,
+          maxVariants: 1,
+          variants: {
+              CLOISTERED: {
+                  id: 'CLOISTERED',
+                  trigger: 'innocence, isolation, or lack of experience',
+                  pacingBias: 'firstness and threshold tension',
+                  blocks: ['UNEXPECTED_COMPETENCE'],
+                  restricts: ['VOLATILE_MIRROR'],
+                  resolution: 'partial awakening by midpoint',
+                  directive: `WITHHELD CORE — CLOISTERED VARIANT (LOCKED):
+Withholding is driven by innocence, isolation, or lack of experience.
+- Bias pacing toward firstness and threshold tension.
+- Block Unexpected Competence: the character must NOT display sudden mastery of intimacy or social fluency they have no basis for.
+- Restrict Volatile Mirror: avoid reflecting the partner's intensity back prematurely.
+- This lens MUST resolve through partial awakening by the story's midpoint. Full awakening may follow, but the first crack must appear by midpoint.`
+              },
+              UNWORTHINESS: {
+                  id: 'UNWORTHINESS',
+                  trigger: 'guilt, self-disqualification, or fear of harming others',
+                  pacingBias: 'Moral Friction',
+                  frames: ['control as protective', 'distance as protective', 'sacrifice as protective'],
+                  resolution: 'acceptance or explicit refusal by midpoint or shortly after',
+                  directive: `WITHHELD CORE — UNWORTHINESS VARIANT (LOCKED):
+Withholding is driven by guilt, self-disqualification, or fear of harming others.
+- Bias pacing toward Moral Friction.
+- Frame control, distance, or sacrifice as protective behavior — not coldness.
+- The character believes closeness will cause harm, and acts accordingly.
+- This lens MUST resolve through acceptance or explicit refusal by midpoint or shortly after. The character must either allow themselves to be loved, or consciously refuse it — silence is not resolution.`
+              }
+          }
+      }
+  };
+
+  const MAX_LENS_COUNT = 2;
+
+  function validateLensSelection(lenses, withheldCoreVariant) {
+      const errors = [];
+      const countable = lenses.filter(id => {
+          const reg = LENS_REGISTRY[id];
+          return !reg || reg.countsTowardLimit !== false;
+      });
+      if (countable.length > MAX_LENS_COUNT) {
+          errors.push('Maximum two lenses allowed.');
+      }
+      if (withheldCoreVariant && !LENS_REGISTRY.WITHHELD_CORE.variants[withheldCoreVariant]) {
+          errors.push('Invalid Withheld Core variant.');
+      }
+      return { valid: errors.length === 0, errors };
+  }
+
+  function buildLensDirectives(withheldCoreVariant, turnCount, storyLength) {
+      if (!withheldCoreVariant) return '';
+      const variant = LENS_REGISTRY.WITHHELD_CORE.variants[withheldCoreVariant];
+      if (!variant) return '';
+
+      // Determine midpoint range based on story length
+      const midpointTurns = { voyeur: 3, fling: 6, affair: 12, soulmates: 20 };
+      const midpoint = midpointTurns[storyLength] || 6;
+      const atOrPastMidpoint = turnCount >= midpoint;
+      const approachingMidpoint = turnCount >= (midpoint - 2);
+
+      let directive = '\n' + variant.directive + '\n';
+
+      // Midpoint enforcement
+      if (atOrPastMidpoint) {
+          directive += `\nMIDPOINT ENFORCEMENT: We are at or past the story midpoint (turn ${turnCount}). The Withheld Core lens (${withheldCoreVariant}) MUST begin resolving NOW. ${
+              withheldCoreVariant === 'CLOISTERED'
+                  ? 'Show at least partial awakening — the character must demonstrate that their innocence has cracked, even if full awakening follows later.'
+                  : 'The character must either accept being loved or explicitly refuse it. Continued silence or passive avoidance is no longer valid.'
+          }\n`;
+      } else if (approachingMidpoint) {
+          directive += `\nMIDPOINT APPROACHING: The story approaches midpoint (turn ${turnCount} of ~${midpoint * 2}). Begin seeding conditions for the Withheld Core lens to resolve. Do not force it yet.\n`;
+      }
+
+      return directive;
+  }
+
+  // Guided Fate: assign Withheld Core variant based on archetype signals
+  function getFateWithheldCoreVariant(archetype, dynamic) {
+      // CLOISTERED: avoidance driven by inexperience or unformed desire
+      if (archetype === 'CLOISTERED') return 'CLOISTERED';
+      // UNWORTHINESS: avoidance driven by guilt, shame, or belief of being undeserving
+      if (archetype === 'BEAUTIFUL_RUIN' || archetype === 'ANTI_HERO') return 'UNWORTHINESS';
+      // No variant if neither condition is met
+      return null;
+  }
+
   // --- GLOBAL STATE INITIALIZATION ---
   window.state = {
       tier:'free',
@@ -1313,8 +1410,10 @@ ANTI-HERO ENFORCEMENT:
       },
       gender:'Female',
       loveInterest:'Male',
-      archetype: { primary: 'BEAUTIFUL_RUIN', modifier: null }, 
-      intensity:'Naughty', 
+      archetype: { primary: 'BEAUTIFUL_RUIN', modifier: null },
+      lenses: [],                    // Active lens IDs (two-lens max, Withheld Core exempt)
+      withheldCoreVariant: null,     // 'CLOISTERED' | 'UNWORTHINESS' | null
+      intensity:'Naughty',
       turnCount:0,
       sysPrompt: "",
       fateOptions: [],
@@ -3503,6 +3602,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.intensity = 'Naughty';
     state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {} };
     state.coverArchetype = null;
+    state.lenses = [];
+    state.withheldCoreVariant = null;
     state.normalizedPlayerKernel = null;
     state.normalizedPartnerKernel = null;
     state.rawPlayerName = null;
@@ -6605,6 +6706,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Set archetype (required for story generation)
     state.archetype = { primary: fateChoices.archetype, modifier: null };
 
+    // Set Withheld Core lens variant (if assigned by fate)
+    state.withheldCoreVariant = fateChoices.withheldCoreVariant || null;
+
     // Handle Historical era if needed
     if (fateChoices.world === 'Historical' && fateChoices.worldFlavor) {
       state.picks.era = fateChoices.worldFlavor;
@@ -6667,6 +6771,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     fateChoices.worldFlavor = getFateFlavor(fateChoices.world);
     fateChoices.genre = getFateGenre(fateChoices.world);
 
+    // Lens: assign Withheld Core variant based on archetype/dynamic signals
+    fateChoices.withheldCoreVariant = getFateWithheldCoreVariant(fateChoices.archetype, fateChoices.dynamic);
+
     // 3. Run guided fate fill - reveals step-by-step with animations
     // This does NOT auto-click Begin Story - user chooses when to start
     await runGuidedFateFill(fateChoices);
@@ -6696,6 +6803,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // PASS 9D: Capture ages from form fields
     const pAge = $('playerAgeInput')?.value.trim() || '';
     const lAge = $('partnerAgeInput')?.value.trim() || '';
+
+    // Lens: infer Withheld Core variant from archetype if not already set by Fate
+    if (!state.withheldCoreVariant && state.archetype.primary) {
+        state.withheldCoreVariant = getFateWithheldCoreVariant(state.archetype.primary, state.picks.dynamic);
+    }
 
     // Early validation with pre-normalization values
     const earlyArchetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
@@ -6959,7 +7071,7 @@ You are writing a story with the following 4-axis configuration:
     Love Interest: ${lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
 
     ${buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen)}
-
+    ${buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength)}
     ${safetyStr}
 
     Current Intensity: ${state.intensity}
@@ -9939,7 +10051,10 @@ FATE CARD ADAPTATION (CRITICAL):
           quillDirective = `NOTE: The user just committed a Quill edit. Honor the authorial intent.`;
       }
 
-      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n\nTURN INSTRUCTIONS: 
+      // Lens: dynamic midpoint enforcement (evaluated per-turn)
+      const lensEnforcement = buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength);
+
+      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}. 
       Player Dialogue: ${dia}. 
