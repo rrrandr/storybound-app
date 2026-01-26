@@ -2020,6 +2020,19 @@ textarea.fate-field {
     object-fit: cover;
     border-radius: 2px 8px 8px 2px;
     display: block;
+    backface-visibility: hidden;
+}
+
+/* Inside cover face — neutral parchment surface visible when cover hinges open */
+.book-cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #f5f0e6 0%, #ebe5d6 40%, #e8e0d0 100%);
+    border-radius: 2px 8px 8px 2px;
+    transform: rotateY(180deg);
+    backface-visibility: hidden;
+    z-index: 0;
 }
 
 /* Hinge states */
