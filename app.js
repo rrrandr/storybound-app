@@ -6696,42 +6696,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
      const worldDesc = capWorldDesc(desc);
 
-     // CANONICAL SETTING VISUALIZE PROMPT — environment only, no characters
-     const sWorld = (state.picks && state.picks.world) || 'Unknown';
-     const sTone = (state.picks && state.picks.tone) || 'Unknown';
-     const sGenre = (state.picks && state.picks.genre) || 'Unknown';
-     const sDynamic = (state.picks && state.picks.dynamic) || 'Unknown';
-     const sIntensity = state.intensity || 'Unknown';
-
-     const prompt = `SETTING VISUAL — ESTABLISHING ENVIRONMENT ONLY
-
-WORLD: ${sWorld}
-TONE: ${sTone}
-GENRE: ${sGenre}
-DYNAMIC: ${sDynamic}
-INTENSITY: ${sIntensity}
-
-COMPOSITION:
-- Wide or architectural establishing view
-- Environment-focused, not character-focused
-- Spatial layout clearly readable
-
-LIGHTING:
-- Appropriate to the declared world and tone
-- Natural or ambient sources only
-
-CONTENT RULES:
-- Do not depict people, faces, bodies, or interactions
-- Do not imply an event, action, or narrative moment
-- Do not introduce symbolism or mood beyond what the setting itself conveys
-- Objects may be present only as part of the environment, at rest
-
-Render the setting as a neutral, grounded place that could host a story,
-but does not depict the story itself.
-
-Return only the visual description.
-
-${worldDesc}`;
+     // Route through canonical setting visualize prompt
+     const visualizeMode = 'setting';
+     const settingPromptBase = buildVisualizePrompt({ mode: visualizeMode, lastText: '' });
+     const prompt = settingPromptBase + '\n\n' + worldDesc;
 
      let rawUrl = null;
 
@@ -7338,6 +7306,65 @@ TITLE CONSTRAINTS:
       }
 
       return density;
+  }
+
+  // ── Visualize Prompt Builders (routing targets) ──
+
+  function buildSettingVisualizePrompt() {
+      const sWorld = (state.picks && state.picks.world) || 'Unknown';
+      const sTone = (state.picks && state.picks.tone) || 'Unknown';
+      const sGenre = (state.picks && state.picks.genre) || 'Unknown';
+      const sDynamic = (state.picks && state.picks.dynamic) || 'Unknown';
+      const sIntensity = state.intensity || 'Unknown';
+
+      return `SETTING VISUAL — ESTABLISHING ENVIRONMENT ONLY
+
+WORLD: ${sWorld}
+TONE: ${sTone}
+GENRE: ${sGenre}
+DYNAMIC: ${sDynamic}
+INTENSITY: ${sIntensity}
+
+COMPOSITION:
+- Wide or architectural establishing view
+- Environment-focused, not character-focused
+- Spatial layout clearly readable
+
+LIGHTING:
+- Appropriate to the declared world and tone
+- Natural or ambient sources only
+
+CONTENT RULES:
+- Do not depict people, faces, bodies, or interactions
+- Do not imply an event, action, or narrative moment
+- Do not introduce symbolism or mood beyond what the setting itself conveys
+- Objects may be present only as part of the environment, at rest
+
+Render the setting as a neutral, grounded place that could host a story,
+but does not depict the story itself.
+
+Return only the visual description.`;
+  }
+
+  function buildSceneVisualizePrompt(lastText, anchorText) {
+      const intensityBias = getVisualizeIntensityBias();
+      const worldToneBias = getVisualizeWorldToneBias();
+      const sceneSignals = getSceneVisualSignals(lastText);
+      const sceneCtx = sceneSignals.length ? '- ' + sceneSignals.join('\n- ') : '- No additional scene constraints';
+      const focusDirective = resolveVisualFocus(lastText);
+      const cameraDistance = resolveCameraDistance(lastText);
+      const lightingCondition = resolveLightingCondition(lastText);
+      const compositionDensity = resolveCompositionDensity(lastText);
+
+      return `${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nCAMERA DISTANCE:\n- ${cameraDistance}\n\nLIGHTING:\n- ${lightingCondition}\n\nCOMPOSITION:\n- ${compositionDensity}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`;
+  }
+
+  function buildVisualizePrompt({ mode, lastText, anchorText }) {
+      if (mode === 'setting') {
+          return buildSettingVisualizePrompt();
+      }
+      // Default: scene visualize
+      return buildSceneVisualizePrompt(lastText, anchorText);
   }
 
   // Default visual quality biases for attractive characters
@@ -8042,23 +8069,15 @@ TITLE CONSTRAINTS:
 
       try {
           let promptMsg = document.getElementById('vizPromptInput').value;
-          // Get intensity bias and world/tone bias for prompt generation
-          const intensityBias = getVisualizeIntensityBias();
-          const worldToneBias = getVisualizeWorldToneBias();
-
-          const sceneSignals = getSceneVisualSignals(lastText);
-          const sceneCtx = sceneSignals.length ? '- ' + sceneSignals.join('\n- ') : '- No additional scene constraints';
-          const focusDirective = resolveVisualFocus(lastText);
-          const cameraDistance = resolveCameraDistance(lastText);
-          const lightingCondition = resolveLightingCondition(lastText);
-          const compositionDensity = resolveCompositionDensity(lastText);
+          const visualizeMode = 'scene';
+          const visualizePrompt = buildVisualizePrompt({ mode: visualizeMode, lastText, anchorText });
 
           if(!isRe || !promptMsg) {
               try {
                   promptMsg = await Promise.race([
                       callChat([{
                           role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nCAMERA DISTANCE:\n- ${cameraDistance}\n\nLIGHTING:\n- ${lightingCondition}\n\nCOMPOSITION:\n- ${compositionDensity}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`
+                          content: visualizePrompt
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
