@@ -4687,6 +4687,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     SecondChance: 'reopen a door you thought was closed'
   };
 
+  // Intensity coda — subtle second sentence reflecting arousal band
+  const DSP_INTENSITY_CODA = {
+    Clean: 'Some things are better left unsaid.',
+    Naughty: 'Something unspoken pulls at the edges.',
+    Erotic: 'The pull between you burns close to the surface.',
+    Dirty: 'Nothing between you stays hidden for long.'
+  };
+
   // TONE GENERATORS: Each produces a complete sentence in that tone's voice
   // ==========================================================================
   // DSP TEMPLATE ASSEMBLY — NOT AUTHORED PROSE
@@ -4732,7 +4740,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       `Something waits in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, wearing the face of ${genre}, and it knows you${formatPlayerAppositive(playerName)} will ${dynamic}.`,
 
     Mythic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Fate calls you${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} shapes the path of heroes, and you must ${dynamic}.`,
+      `Something ancient calls you${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} shapes the path of heroes, and you must ${dynamic}.`,
 
     Comedic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
       `Look, ${worldSubtype ? worldSubtype + ' ' : ''}${world} seemed like a good idea at the time${formatPlayerAppositive(playerName)}, but now there is ${genre}, and apparently you are going to ${dynamic}.`,
@@ -4745,14 +4753,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   };
 
   /**
-   * Generate a single DSP sentence that:
-   * - Is exactly one sentence
+   * Generate a DSP paragraph (2 sentences) that:
    * - Is grammatically closed (no fragments)
    * - Is written in present tense
    * - Addresses Player 1 by name (REQUIRED)
-   * - Reflects: World, World Subtype (if any), Tone, Dynamic, Style
+   * - Reflects: World, World Subtype (if any), Tone, Genre, Dynamic, Intensity
    */
-  function generateDSPSentence(world, tone, genre, dynamic, playerName, worldSubtype) {
+  function generateDSPSentence(world, tone, genre, dynamic, playerName, worldSubtype, intensity) {
     const worldText = DSP_WORLD_SETTINGS[world] || DSP_WORLD_SETTINGS.Modern;
     const genreText = DSP_GENRE_CONFLICTS[genre] || DSP_GENRE_CONFLICTS.Billionaire;
     const dynamicText = DSP_DYNAMIC_ENGINES[dynamic] || DSP_DYNAMIC_ENGINES.Enemies;
@@ -4764,13 +4771,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const subtypeText = worldSubtype ? formatWorldSubtype(worldSubtype) : null;
 
     const generator = DSP_TONE_GENERATORS[tone] || DSP_TONE_GENERATORS.Earnest;
-    return generator({
+    const premise = generator({
       playerName: name,
       world: worldText,
       worldSubtype: subtypeText,
       genre: genreText,
       dynamic: dynamicText
     });
+
+    // Intensity coda — subtle second sentence reflecting arousal band
+    const coda = DSP_INTENSITY_CODA[intensity] || DSP_INTENSITY_CODA.Naughty;
+    return premise + ' ' + coda;
   }
 
   /**
@@ -4822,6 +4833,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const tone = state.picks.tone || 'Earnest';
     const genre = state.picks.genre || 'Billionaire';
     const dynamic = state.picks.dynamic || 'Enemies';
+    const intensity = state.intensity || 'Naughty';
 
     // Get player kernel for DSP (REQUIRED) - ONLY use normalized kernel, never raw input
     const playerKernel = state.normalizedPlayerKernel || 'the one who carries the story';
@@ -4829,8 +4841,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Get world subtype if one is selected (optional)
     const worldSubtype = state.picks.worldSubtype || getSelectedWorldSubtype(world);
 
-    // Generate holistic sentence based on tone with player kernel and subtype
-    const newSentence = generateDSPSentence(world, tone, genre, dynamic, playerKernel, worldSubtype);
+    // Generate DSP paragraph from all declared story axes
+    const newSentence = generateDSPSentence(world, tone, genre, dynamic, playerKernel, worldSubtype, intensity);
 
     // Update with animation if content changed
     if (synopsisText.textContent !== newSentence) {
@@ -5832,6 +5844,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // Update UI cards to reflect selections
     updateAllCardSelections();
+
+    // Wire DSP to Guided Fate — ensure premise reflects populated selections
+    updateSynopsisPanel();
   }
 
   // Update all card UI to reflect state
