@@ -798,9 +798,169 @@ No gibberish text. No watermarks.`;
 }
 
 // ============================================================
-// PHASE 2b/3A: ARCHETYPE DISPATCH
+// PHASE 3E-A: THRESHOLD ARCHETYPE (ACTIVATED)
+// Typography as world — title is physically part of the scene
+// Boundary imagery: doors, gates, curtains, cracks, passages
+// Light crossing darkness, partial revelation, liminal space
+// ============================================================
+
+// Threshold-specific boundary surfaces by emotional gravity
+const THRESHOLD_BOUNDARIES = {
+  foreboding: [
+    'a massive iron door, slightly ajar, darkness beyond',
+    'a crack in ancient stone wall, light bleeding through',
+    'heavy velvet curtains parted just enough to glimpse what waits',
+    'a gate of twisted metal, rust weeping down its bars'
+  ],
+  pressure: [
+    'a doorway too narrow, walls pressing in on either side',
+    'a passage where ceiling meets floor in forced perspective',
+    'a threshold worn smooth by countless crossings',
+    'a gate straining against its hinges'
+  ],
+  yearning: [
+    'a door left open to moonlight, invitation or trap',
+    'a curtain stirring in unseen wind, almost revealing',
+    'a window frame without glass, sky visible beyond',
+    'a garden gate overgrown but still passable'
+  ],
+  secrecy: [
+    'a hidden door, its outline barely visible in the wall',
+    'a curtain that should not be there, covering nothing official',
+    'a crack in the world, thin as a whisper',
+    'a passage that maps do not show'
+  ],
+  inevitability: [
+    'a door that has always been there, waiting',
+    'a threshold marked by centuries of crossing',
+    'a gate that opens only inward',
+    'a passage with no return visible'
+  ],
+  rebellion: [
+    'a door kicked open, splinters still falling',
+    'a curtain torn aside, rings scattered',
+    'a gate with its lock shattered',
+    'a wall with a new opening, edges raw'
+  ],
+  loss: [
+    'an empty doorframe, the door itself gone',
+    'a threshold to a room that no longer exists',
+    'a gate standing alone in an empty field',
+    'a curtain faded to transparency'
+  ],
+  obsession: [
+    'a door with scratches around the handle, desperate marks',
+    'a threshold crossed so often the stone is grooved',
+    'a gate whose bars have been gripped until polished',
+    'a curtain pulled aside then released, again and again'
+  ]
+};
+
+// Diegetic typography treatments — title is PART of the world
+const DIEGETIC_TYPOGRAPHY = [
+  'carved deeply into ancient stone, weathered but legible',
+  'etched into wood like a ward or binding mark',
+  'formed by cracks in the surface, as if the name broke through',
+  'woven from spider silk or thread stretched across the threshold',
+  'emerging from shadow, letterforms made of absence',
+  'burned into the material, edges still darkened',
+  'scratched into metal with desperate precision',
+  'written in dust or ash, fragile but present',
+  'formed by light falling through gaps, shadow-letters',
+  'growing from the surface like lichen or frost-writing'
+];
+
+// Select threshold boundary based on emotional gravity
+function selectThresholdBoundary(emotionalGravity) {
+  const pool = THRESHOLD_BOUNDARIES[emotionalGravity] || THRESHOLD_BOUNDARIES.yearning;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Select diegetic typography treatment
+function selectDiegeticTypography() {
+  return DIEGETIC_TYPOGRAPHY[Math.floor(Math.random() * DIEGETIC_TYPOGRAPHY.length)];
+}
+
+// Build THRESHOLD archetype cover prompt
+// Typography is a physical, diegetic element — NOT a font overlay
+// Boundary imagery, liminal space, crossing/secrecy themes
+function buildThresholdCoverPrompt(params) {
+  const { title, authorName, dynamic, storyStyle, genre, world, era, arousal } = params;
+
+  const cleanTitle = (title || 'Untitled').trim();
+  const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
+
+  // Extract tone from storyStyle (format: "Tone Genre")
+  const tone = (storyStyle || '').split(' ')[0] || 'Earnest';
+
+  // REUSE: Select emotional gravity (canonical system)
+  const emotionalGravity = selectEmotionalGravity(tone, dynamic, genre);
+
+  // THRESHOLD-SPECIFIC: Select boundary surface
+  const boundaryElement = selectThresholdBoundary(emotionalGravity);
+
+  // THRESHOLD-SPECIFIC: Select diegetic typography treatment
+  const typographyTreatment = selectDiegeticTypography();
+
+  // REUSE: Visual restraint (palette + 2 composition rules)
+  const visualRestraint = getVisualRestraintDirectives(emotionalGravity);
+
+  // REUSE: Poetic subtitle
+  const poeticSubtitle = generatePoeticSubtitle(genre, emotionalGravity);
+
+  // Build THRESHOLD cover prompt — liminal, typography as world
+  const thresholdPrompt = `A prestige literary book cover. Square format. THRESHOLD ARCHETYPE.
+
+EMOTIONAL GRAVITY: ${emotionalGravity}
+This single emotion must permeate every visual choice. The cover should feel like this word made visible.
+
+THRESHOLD (boundary/passage as focal element):
+${boundaryElement}
+Light and shadow divide the composition — one side revealed, one side hidden. The threshold itself is the subject. Something waits beyond, but we see only the boundary.
+
+COMPOSITION: Liminal tension. The viewer stands at the edge of crossing. Partial revelation is mandatory — we glimpse, we do not see fully. The boundary dominates but does not close.
+
+DIEGETIC TYPOGRAPHY (MANDATORY — THIS IS THE POINT):
+The title "${cleanTitle}" must be ${typographyTreatment}.
+The title is NOT a font overlay. It is a physical object or manifestation within the scene.
+The letters participate in the world — they are carved, etched, formed, or grown from material.
+Typography and environment share the same reality.
+
+Series: "Storybound Book I: ${poeticSubtitle}" — very small, scratched or faded into a surface nearby.
+Author: ${cleanAuthor} — small, subordinate, can be etched or carved in a secondary surface.
+
+NO HUMAN PRESENCE: No figures, no silhouettes, no hands, no faces. Only the threshold and what it divides.
+
+VISUAL RESTRAINT (mandatory):
+${visualRestraint}
+
+HARD BANS:
+- NO roses, flowers, petals, or botanical clichés
+- NO envelopes, letters, or correspondence
+- NO faces, bodies, silhouettes, or human traces
+- NO flat overlay text, clean typographic labels, or floating captions
+- NO neutral font treatment — title must be diegetic
+- NO brown as dominant or default
+
+The cover must feel liminal, charged with the tension of crossing. The title is not decoration — it is inscription, manifestation, or material fact.
+
+No gibberish text. No watermarks.`;
+
+  // Phase 3C: Apply World Grammar (visual bias layer)
+  const withWorldGrammar = applyWorldGrammar(thresholdPrompt, world, era);
+
+  // Phase 3D: Apply Erotic Motif layer (gated by arousal)
+  const withEroticMotif = applyEroticMotifLayer(withWorldGrammar, arousal, 'THRESHOLD', world);
+
+  // Phase 3B: Apply universal Storybound border
+  return appendStoryboundBorder(withEroticMotif);
+}
+
+// ============================================================
+// PHASE 2b/3A/3E-A: ARCHETYPE DISPATCH
 // Routes prompt assembly based on archetype value.
 // Phase 3A: EMBLEM archetype activated.
+// Phase 3E-A: THRESHOLD archetype activated.
 // Other archetypes route to canonical wrapBookCoverPrompt().
 // ============================================================
 function dispatchCoverPrompt(archetype, params) {
@@ -813,6 +973,15 @@ function dispatchCoverPrompt(archetype, params) {
   // ============================================================
   if (archetype === 'EMBLEM') {
     return buildEmblemCoverPrompt(params);
+  }
+
+  // ============================================================
+  // PHASE 3E-A: THRESHOLD ARCHETYPE (ACTIVATED)
+  // Route to threshold-specific prompt builder (diegetic typography)
+  // To disable: comment out this block
+  // ============================================================
+  if (archetype === 'THRESHOLD') {
+    return buildThresholdCoverPrompt(params);
   }
 
   // ============================================================
