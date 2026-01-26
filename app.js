@@ -8387,71 +8387,410 @@ FATE CARD ADAPTATION (CRITICAL):
   }
 
   // -----------------------------------------------------------------------
-  // DIRTY CONTENT DETECTION
+  // DIRTY CONTENT DETECTION — WEIGHTED SIGNAL HEURISTICS
+  // -----------------------------------------------------------------------
+  //
+  // AUTHORITATIVE — DO NOT REINTERPRET
+  //
+  // Detection uses a weighted signal system, NOT keyword-only matching.
+  // Dirty detection is gated behind:
+  //   1. Erotic tier must be active (ceiling ≥ Erotic)
+  //   2. Minimum narrative progression (turn count)
+  //   3. No active Dirty lock for the relevant direction
+  //
+  // Trigger requires ≥1 High-Weight AND ≥1 Medium-Weight signal within
+  // the same narrative window (sentence cluster). Single signals never trigger.
+  //
+  // Guards suppress detection when language is metaphorical, terms are
+  // non-sexual in context, or resistance/de-escalation is present.
+  //
+  // -----------------------------------------------------------------------
+
+  // --- HIGH-WEIGHT SIGNALS ---
+  // Each returns an array of { match, index, length } for the input text.
+
+  /**
+   * High-Weight: Explicit anatomical references used in a sexual context.
+   * Matches vulgar/explicit anatomical terms only.
+   */
+  const HW_ANATOMICAL = [
+      /\b(cock|dick|cunt|pussy|clit(?:oris)?|tits|asshole)\b/gi,
+      /\b(shaft|member|slit|folds|entrance)\b/gi  // secondary; needs context
+  ];
+
+  /**
+   * High-Weight: Explicit sexual mechanics.
+   * Direct, graphic description of sexual acts.
+   */
+  const HW_MECHANICS = [
+      /\b(fuck(?:ed|ing|s)?|penetrat(?:ed|ing|es?|ion))\b/gi,
+      /\b(thrust(?:ed|ing|s)?|pound(?:ed|ing|s)?|slammed?|rammed?)\b/gi,
+      /\b(rode|riding|straddl(?:ed|ing)|mount(?:ed|ing))\b/gi,
+      /\b(finger(?:ed|ing)|entered|filled)\b/gi  // secondary; needs context
+  ];
+
+  /**
+   * High-Weight: Fluid / emission references.
+   * Graphic references to sexual fluids or climax.
+   */
+  const HW_FLUIDS = [
+      /\b(cum(?:ming|med|s)?|jizz|seed|spill(?:ed|ing)?)\b/gi,
+      /\b(orgasm(?:ed|ing|s)?|climax(?:ed|ing)?)\b/gi,
+      /\b(squirt(?:ed|ing)?|ejacula(?:ted?|ting|tion))\b/gi
+  ];
+
+  // --- MEDIUM-WEIGHT SIGNALS ---
+
+  /**
+   * Medium-Weight: Sustained sensory saturation.
+   * Multiple visceral/physical descriptors in close proximity.
+   */
+  const MW_SENSORY = [
+      /\b(throb(?:bing|bed|s)?|puls(?:ing|ed|es?)|ach(?:ing|ed))\b/gi,
+      /\b(wet(?:ness)?|slick(?:ness)?|dripping|soaked|drenched)\b/gi,
+      /\b(tight(?:ness|ened|ening)?|clench(?:ed|ing)|gripp(?:ed|ing))\b/gi,
+      /\b(moan(?:ed|ing|s)?|groan(?:ed|ing|s)?|gasp(?:ed|ing|s)?|whimper(?:ed|ing)?|cried?\s*out)\b/gi,
+      /\b(erect(?:ion)?|hard(?:ness|ened|ening)?|stiff(?:ened|ening)?)\b/gi,
+      /\b(swollen|flush(?:ed)?|heated|burning)\b/gi
+  ];
+
+  /**
+   * Medium-Weight: Intent lock-in language.
+   * Language that signals committed sexual escalation ("demanding" tone).
+   */
+  const MW_INTENT = [
+      /\b(beg(?:ged|ging)?|plead(?:ed|ing)?|need(?:ed|ing)?\s+(?:you|it|more|this))\b/gi,
+      /\b(harder|deeper|faster|more|don'?t\s+stop|keep\s+going)\b/gi,
+      /\b(take\s+(?:me|it|all)|give\s+(?:me|it)|fill\s+(?:me|her|him))\b/gi,
+      /\b(claim(?:ed|ing)?|devour(?:ed|ing)?|consum(?:ed|ing)?)\b/gi
+  ];
+
+  /**
+   * Medium-Weight: Mutual escalation within a short window.
+   * Both parties actively engaged in explicit action within the same passage.
+   * Detected via interleaved perspective/action markers.
+   */
+  const MW_MUTUAL = [
+      /\b(both|together|each\s+other|in\s+unison|matched)\b/gi,
+      /\b(she.*he|he.*she|they\s+moved|bodies\s+(?:pressed|entwined|tangled|locked))\b/gi,
+      /\b(wrapped\s+around|pulled\s+(?:closer|tight)|arched\s+(?:into|against|toward))\b/gi
+  ];
+
+  // --- GUARD PATTERNS (suppress false positives) ---
+
+  /**
+   * Metaphorical usage guard.
+   * These phrases use explicit-adjacent words in clearly non-sexual contexts.
+   */
+  const GUARD_METAPHORICAL = [
+      /\b(riding\s+(?:the\s+)?(?:wave|storm|wind|horse|stallion|carriage|train))\b/i,
+      /\b(mounting\s+(?:tension|pressure|fear|dread|evidence|stairs))\b/i,
+      /\b(thrust\s+(?:the|a|his|her)?\s*(?:sword|blade|knife|spear|weapon|door|hand\s+out))\b/i,
+      /\b(came\s+(?:to|back|from|in(?:to|side)?(?:\s+the)?(?:\s+(?:room|house|building|door|view))))\b/i,
+      /\b(hard(?:ly|\s+work|\s+time|\s+to\s+(?:believe|say|tell|know)|\s+(?:floor|ground|surface|wall|rock)))\b/i,
+      /\b(stiff\s+(?:drink|breeze|wind|upper\s+lip|resistance|penalty|competition))\b/i,
+      /\b(wet\s+(?:hair|clothes|rain|floor|ground|grass|pavement|tears|eyes))\b/i,
+      /\b(spread\s+(?:the|a|across|out|over|through|wide\s+open\s+(?:door|arms|field)))\b/i,
+      /\b(swallow(?:ed|ing)?\s+(?:hard|nervously|the\s+lump|(?:her|his)\s+(?:pride|fear|words)))\b/i,
+      /\b(erect(?:ed|ing)?\s+(?:a|the)\s+(?:building|wall|fence|barrier|monument|tent|structure))\b/i
+  ];
+
+  /**
+   * Non-sexual explicit term guard.
+   * Explicit words used in clearly non-sexual contexts (medical, violent, etc.).
+   */
+  const GUARD_NONSEXUAL = [
+      /\b(dick)\s+(?=[A-Z])/,  // Proper name "Dick"
+      /\b(cock)\s*(?:pit|roach|tail|a(?:too|doodle))/i,  // cockpit, cocktail etc.
+      /\b(pussy)\s*(?:cat|foot|willow)/i,
+      /\b(?:a|the)\s+(member)\s+(?:of|from|said|spoke|who)/i,  // "member of parliament"
+      /\b(ass)\s*(?:ess|et|ign|emble|ist|ur|ault)/i  // assess, asset, assign...
+  ];
+
+  /**
+   * Resistance / de-escalation guard.
+   * If resistance language is present in the same window, suppress Dirty detection.
+   * This prevents masking content that depicts boundaries being drawn.
+   */
+  const GUARD_RESISTANCE = [
+      /\b(stop(?:ped)?|don'?t|no(?:!|\s|,)|wait|please\s+(?:stop|don'?t|no)|push(?:ed)?\s+(?:away|back)|pull(?:ed)?\s+(?:away|back))\b/i,
+      /\b(not\s+(?:ready|yet|like\s+this)|too\s+(?:fast|soon|much)|slow\s+down|step(?:ped)?\s+(?:back|away))\b/i,
+      /\b(can'?t\s+(?:do\s+this|go\s+(?:further|on))|shouldn'?t|won'?t)\b/i
+  ];
+
+  // --- MINIMUM PROGRESSION CONSTANTS ---
+  const DIRTY_MIN_TURNS = 3;           // Minimum turns into couple session before detection activates
+  const DIRTY_NARRATIVE_WINDOW = 3;    // Number of adjacent sentences that form a "window"
+
+  // -----------------------------------------------------------------------
+  // MAIN DETECTION FUNCTION
   // -----------------------------------------------------------------------
 
   /**
-   * Heuristic detection of Dirty-tier content in AI output.
-   * Returns { isDirty: boolean, segments: Array<{start, end}> }
+   * Evaluate Dirty signals in AI-generated content.
    *
-   * Detection is conservative — only flags clearly explicit content
-   * that exceeds Erotic-tier boundaries.
+   * Returns {
+   *   isDirty: boolean,
+   *   segments: Array<{ start, end, text, spans: Array<{start, end, text}> }>,
+   *   suppressed: boolean,
+   *   suppressReason: string|null
+   * }
+   *
+   * A segment is a sentence (or sentence cluster) that triggers.
+   * Each segment also carries `spans` — the individual explicit phrases
+   * within that sentence that should be masked (not the whole sentence).
    */
-  const DIRTY_DETECTION_PATTERNS = [
-      /\b(cock|dick|cunt|pussy|ass(?:hole)?|tits|fuck(?:ed|ing|s)?)\b/i,
-      /\b(thrust(?:ed|ing|s)?|pound(?:ed|ing|s)?|slammed?|rammed?)\b/i,
-      /\b(cum(?:ming|s)?|orgasm(?:ed|ing|s)?|climax(?:ed|ing)?)\b/i,
-      /\b(wet(?:ness)?|dripping|soaked|throbbing)\b/i,
-      /\b(spread|straddl(?:ed|ing)|mount(?:ed|ing)?|rode|riding)\b/i,
-      /\b(suck(?:ed|ing|s)?|lick(?:ed|ing|s)?|swallow(?:ed|ing)?)\b/i,
-      /\b(naked|nude|erect(?:ion)?|hard(?:ness)?|stiff(?:ened)?)\b/i
-  ];
-
   function detectDirtyContent(text) {
-      if (!text) return { isDirty: false, segments: [] };
+      const EMPTY = { isDirty: false, segments: [], suppressed: false, suppressReason: null };
+      if (!text) return EMPTY;
 
-      const segments = [];
+      // --- Gate 1: Erotic must be active ---
+      const ci = state.coupleIntensity;
+      if (!ci.eroticUnlocked) {
+          return EMPTY;
+      }
+
+      // --- Gate 2: Minimum narrative progression ---
+      if ((state.turnCount || 0) < DIRTY_MIN_TURNS) {
+          return EMPTY;
+      }
+
+      // --- Gate 3: De-escalation active → abort immediately ---
+      if (ci.deescalationActive) {
+          return EMPTY;
+      }
+
+      // --- Split into sentences for windowed analysis ---
       const sentences = text.split(/(?<=[.!?…])\s+/);
+      if (sentences.length === 0) return EMPTY;
+
+      // --- Guard: check for resistance in the full text ---
+      const lowerText = text.toLowerCase();
+      for (const rx of GUARD_RESISTANCE) {
+          if (rx.test(lowerText)) {
+              return {
+                  isDirty: false,
+                  segments: [],
+                  suppressed: true,
+                  suppressReason: 'resistance_language'
+              };
+          }
+      }
+
+      // --- Scan each sentence for signals ---
+      const sentenceAnalysis = sentences.map(sentence => {
+          const lower = sentence.toLowerCase();
+          return {
+              sentence,
+              lower,
+              highWeight: scoreSentence(sentence, [HW_ANATOMICAL, HW_MECHANICS, HW_FLUIDS]),
+              mediumWeight: scoreSentence(sentence, [MW_SENSORY, MW_INTENT, MW_MUTUAL]),
+              isGuardedMetaphor: GUARD_METAPHORICAL.some(rx => rx.test(sentence)),
+              isGuardedNonSexual: GUARD_NONSEXUAL.some(rx => rx.test(sentence))
+          };
+      });
+
+      // --- Build segments using a sliding narrative window ---
+      const segments = [];
       let offset = 0;
 
-      for (const sentence of sentences) {
-          const matchCount = DIRTY_DETECTION_PATTERNS.filter(rx => rx.test(sentence)).length;
-          // Require multiple signals to flag as Dirty (avoid false positives)
-          if (matchCount >= 2) {
-              const start = text.indexOf(sentence, offset);
-              if (start !== -1) {
-                  segments.push({ start, end: start + sentence.length, text: sentence });
+      for (let i = 0; i < sentenceAnalysis.length; i++) {
+          // Build a window of DIRTY_NARRATIVE_WINDOW adjacent sentences
+          const windowEnd = Math.min(i + DIRTY_NARRATIVE_WINDOW, sentenceAnalysis.length);
+          const window = sentenceAnalysis.slice(i, windowEnd);
+
+          // Aggregate signals across the window
+          let windowHigh = 0;
+          let windowMedium = 0;
+          let anyGuarded = false;
+
+          for (const s of window) {
+              windowHigh += s.highWeight.totalHits;
+              windowMedium += s.mediumWeight.totalHits;
+              if (s.isGuardedMetaphor || s.isGuardedNonSexual) anyGuarded = true;
+          }
+
+          // --- Guard suppression: metaphorical or non-sexual context ---
+          if (anyGuarded) {
+              // Reduce signal weight; only proceed if overwhelming
+              windowHigh = Math.max(0, windowHigh - 1);
+              windowMedium = Math.max(0, windowMedium - 1);
+          }
+
+          // --- Trigger condition: ≥1 High AND ≥1 Medium in same window ---
+          if (windowHigh >= 1 && windowMedium >= 1) {
+              // Collect explicit spans from the sentences in this window
+              const spans = [];
+              for (const s of window) {
+                  const allMatches = [
+                      ...collectSpanMatches(s.sentence, HW_ANATOMICAL),
+                      ...collectSpanMatches(s.sentence, HW_MECHANICS),
+                      ...collectSpanMatches(s.sentence, HW_FLUIDS)
+                  ];
+                  // Filter out guarded matches
+                  for (const m of allMatches) {
+                      if (!isGuardedMatch(s.sentence, m.text)) {
+                          // Compute absolute position in the full text
+                          const sentStart = text.indexOf(s.sentence, offset);
+                          if (sentStart !== -1) {
+                              spans.push({
+                                  start: sentStart + m.index,
+                                  end: sentStart + m.index + m.text.length,
+                                  text: m.text
+                              });
+                          }
+                      }
+                  }
+              }
+
+              if (spans.length > 0) {
+                  // Determine segment boundaries (first sentence start to last sentence end)
+                  const firstSentence = window[0].sentence;
+                  const lastSentence = window[window.length - 1].sentence;
+                  const segStart = text.indexOf(firstSentence, offset);
+                  const segEnd = text.indexOf(lastSentence, offset) + lastSentence.length;
+
+                  if (segStart !== -1 && segEnd > segStart) {
+                      segments.push({
+                          start: segStart,
+                          end: segEnd,
+                          text: text.slice(segStart, segEnd),
+                          spans
+                      });
+
+                      // Skip forward past this window to avoid overlapping segments
+                      i = windowEnd - 1;
+                      offset = segEnd;
+                      continue;
+                  }
               }
           }
-          offset = text.indexOf(sentence, offset) + sentence.length;
+
+          // Advance offset tracker
+          const currentSentence = sentenceAnalysis[i].sentence;
+          const sentPos = text.indexOf(currentSentence, offset);
+          if (sentPos !== -1) offset = sentPos + currentSentence.length;
       }
 
       return {
           isDirty: segments.length > 0,
-          segments
+          segments,
+          suppressed: false,
+          suppressReason: null
       };
   }
 
+  // -----------------------------------------------------------------------
+  // SIGNAL SCORING HELPERS
+  // -----------------------------------------------------------------------
+
   /**
-   * Apply inline [dirty] mask overlays to explicit segments.
-   * Wraps detected segments in a clickable mask element.
-   * Does NOT interrupt flow — mask is subtle and inline.
+   * Score a sentence against a set of pattern groups.
+   * Returns { totalHits, matches: [{text, index}] }
+   */
+  function scoreSentence(sentence, patternGroups) {
+      let totalHits = 0;
+      const matches = [];
+
+      for (const group of patternGroups) {
+          let groupHit = false;
+          for (const rx of group) {
+              // Reset lastIndex for global regexps
+              rx.lastIndex = 0;
+              let m;
+              while ((m = rx.exec(sentence)) !== null) {
+                  if (!groupHit) {
+                      totalHits++;
+                      groupHit = true;
+                  }
+                  matches.push({ text: m[0], index: m.index });
+              }
+          }
+      }
+
+      return { totalHits, matches };
+  }
+
+  /**
+   * Collect all match spans from a sentence for a set of pattern groups.
+   * Returns Array<{text, index, length}>
+   */
+  function collectSpanMatches(sentence, patternGroups) {
+      const results = [];
+      for (const group of patternGroups) {
+          for (const rx of group) {
+              rx.lastIndex = 0;
+              let m;
+              while ((m = rx.exec(sentence)) !== null) {
+                  results.push({ text: m[0], index: m.index, length: m[0].length });
+              }
+          }
+      }
+      return results;
+  }
+
+  /**
+   * Check whether a specific match within a sentence is guarded
+   * (metaphorical or non-sexual usage).
+   */
+  function isGuardedMatch(sentence, matchText) {
+      // Build a narrow context window around the match
+      const idx = sentence.toLowerCase().indexOf(matchText.toLowerCase());
+      if (idx === -1) return false;
+
+      // Extract ±40 chars around the match for context
+      const ctxStart = Math.max(0, idx - 40);
+      const ctxEnd = Math.min(sentence.length, idx + matchText.length + 40);
+      const context = sentence.slice(ctxStart, ctxEnd);
+
+      for (const rx of GUARD_METAPHORICAL) {
+          if (rx.test(context)) return true;
+      }
+      for (const rx of GUARD_NONSEXUAL) {
+          if (rx.test(context)) return true;
+      }
+      return false;
+  }
+
+  // -----------------------------------------------------------------------
+  // DIRTY SEGMENT MASKING
+  // -----------------------------------------------------------------------
+
+  /**
+   * Apply inline [dirty] mask overlays to explicit spans within segments.
+   *
+   * IMPORTANT: Masks only the explicit spans (individual words/phrases),
+   * NOT entire sentences. Surrounding context, rhythm, and grammar are
+   * preserved. The mask is subtle and inline.
    */
   function maskDirtySegments(htmlContent, segments) {
       if (!segments || segments.length === 0) return htmlContent;
 
-      // Work on the raw text within the HTML
-      // We apply masks by wrapping matched text in span elements
       let result = htmlContent;
 
-      // Process segments in reverse order to preserve offsets
-      const sortedSegments = [...segments].sort((a, b) => b.start - a.start);
+      // Collect all individual explicit spans across all segments,
+      // deduplicated and sorted by position (reverse for safe replacement)
+      const allSpans = [];
+      const seen = new Set();
 
-      for (const seg of sortedSegments) {
-          const escapedText = escapeHTML(seg.text);
-          // Find the escaped version in the formatted HTML
-          // Use a fuzzy match since HTML formatting may have modified whitespace
-          const searchText = seg.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      for (const seg of segments) {
+          if (seg.spans && seg.spans.length > 0) {
+              for (const span of seg.spans) {
+                  const key = `${span.start}:${span.end}`;
+                  if (!seen.has(key)) {
+                      seen.add(key);
+                      allSpans.push(span);
+                  }
+              }
+          }
+      }
+
+      // Sort reverse so replacements don't shift positions
+      allSpans.sort((a, b) => b.start - a.start);
+
+      for (const span of allSpans) {
+          // Escape for regex safety; allow whitespace flexibility
+          const searchText = span.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           const rx = new RegExp(searchText.replace(/\s+/g, '\\s*'), 'i');
 
           result = result.replace(rx, (match) => {
@@ -8863,20 +9202,33 @@ FATE CARD ADAPTATION (CRITICAL):
       // 1. Evaluate Erotic unlock (every turn)
       evaluateEroticUnlock();
 
-      // 2. Detect Dirty content
+      // 2. De-escalation override — if active, skip Dirty detection entirely
+      if (ci.deescalationActive) {
+          return { content: formattedContent, held: false };
+      }
+
+      // 3. Detect Dirty content (gated internally by Erotic-active + progression)
       const detection = detectDirtyContent(rawContent);
+
+      // 4. If suppressed by guard logic, pass through unchanged
+      if (detection.suppressed) {
+          console.log('[COUPLE-INTENSITY] Dirty detection suppressed:', detection.suppressReason);
+          return { content: formattedContent, held: false };
+      }
 
       if (!detection.isDirty) {
           return { content: formattedContent, held: false };
       }
 
       // Content has Dirty segments
-      console.log('[COUPLE-INTENSITY] Dirty content detected, segments:', detection.segments.length);
+      console.log('[COUPLE-INTENSITY] Dirty content detected, segments:', detection.segments.length,
+          'spans:', detection.segments.reduce((n, s) => n + (s.spans ? s.spans.length : 0), 0));
 
       if (isInbound) {
           // Partner's content — apply masking for this player
           const direction = 'inbound';
 
+          // Check for active Dirty lock on this direction
           if (ci.inboundDirtyConsent === true) {
               // Already consented — show as-is
               return { content: formattedContent, held: false };
@@ -8888,7 +9240,7 @@ FATE CARD ADAPTATION (CRITICAL):
               return { content: formatStory(rewritten), held: false };
           }
 
-          // Not yet asked — mask and prompt
+          // Not yet asked — mask explicit spans only and prompt
           const masked = maskDirtySegments(formattedContent, detection.segments);
           if (!ci.inboundDirtyPrompted) {
               // Defer prompt slightly to let content render first
