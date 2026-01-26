@@ -1429,6 +1429,13 @@ ANTI-HERO ENFORCEMENT:
           mode: 'balanced'
       },
 
+      // FRESHNESS MEMORY — per-user cross-run anti-repeat system (session + localStorage)
+      freshnessMemory: {
+          bannedPhrases: {},   // { [phraseLower]: lastUsedTimestamp }
+          bannedTokens: {},    // { [tokenLower]: lastUsedTimestamp }
+          lastStoryFingerprint: null
+      },
+
       // 5TH PERSON POV (AUTHOR) CONTROL
       povMode: window.state?.povMode || 'normal',                // 'normal' | 'author5th'
       authorPresence: window.state?.authorPresence || 'normal',  // 'normal' | 'frequent'
@@ -6170,6 +6177,13 @@ You are writing a story with the following 4-axis configuration:
     `;
     
     state.sysPrompt = sys;
+
+    // FRESHNESS: Append freshness + taxonomy leak directives to opener prompt
+    const freshnessDir = buildFreshnessDirective('');
+    const taxonomyDir = buildTaxonomyLeakDirective();
+    if (freshnessDir) state.sysPrompt += freshnessDir;
+    if (taxonomyDir) state.sysPrompt += taxonomyDir;
+
     state.storyId = state.storyId || makeStoryId();
 
     // NOTE: Loader already shown in Phase 2 (before async work)
@@ -6353,10 +6367,14 @@ The opening must feel intentional and specific, not archetypal or templated.`;
     console.log('STORYBOUND VALIDATION PASSED - Proceeding to model call');
 
     try {
-        const text = await callChat([
+        let text = await callChat([
             {role:'system', content: state.sysPrompt},
             {role:'user', content: introPrompt}
         ]);
+
+        // FRESHNESS: Update memory with opener text + scrub taxonomy leaks
+        updateFreshnessMemory(text);
+        text = scrubTaxonomyLeaks(text);
 
         const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
 
@@ -7865,6 +7883,260 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   };
 
   // =========================================================================
+  // FRESHNESS / ANTI-REPEAT SYSTEM
+  // =========================================================================
+  //
+  // Per-user, cross-run cooldown system. Phrases used in recent stories are
+  // blocked from reuse for 72 hours. World-appropriate phrases are allowed
+  // on first use but enter cooldown afterward. User-typed phrases bypass.
+  //
+  // =========================================================================
+
+  const FRESHNESS_COOLDOWN_MS = 72 * 60 * 60 * 1000; // 72 hours
+
+  // Curated seed list of known repeat offenders.
+  // These are NOT globally forbidden — they are subject to cooldown.
+  const FRESHNESS_SEED_PHRASES = [
+      'ash quarter',
+      'warden-cadre',
+      'wardens',
+      'guild of threads',
+      'emberfruit',
+      'veinglass',
+      'marrow-knitter',
+      'the crucible',
+      'iron vow',
+      'ember ward',
+      'shade market',
+      'bone tithe',
+      'velvet court',
+      'obsidian syndicate',
+      'gilded chain'
+  ];
+
+  // Structural patterns that detect novel instances of repeated tropes
+  // (e.g. "the ___ Quarter", "___ District", "Guild of ___")
+  const FRESHNESS_TROPE_PATTERNS = [
+      /the\s+\w+\s+quarter\b/gi,
+      /\w+\s+district\b/gi,
+      /\w+\s+wardens?\b/gi,
+      /\w+[\s-]+cadre\b/gi,
+      /guild\s+of\s+\w+/gi,
+      /\w+\s+syndicate\b/gi,
+      /\w+\s+court\b/gi,
+      /\w+\s+ward\b/gi
+  ];
+
+  // Internal taxonomy labels that must never leak into prose
+  const TAXONOMY_LEAK_LABELS = [
+      'Heart Warden', 'Shadow Warden', 'Blood Warden',
+      'Open Vein', 'Spellbinder', 'Armored Fox',
+      'Dark Vice', 'Beautiful Ruin', 'Eternal Flame',
+      'Threshold', 'Emblem'
+  ];
+
+  /**
+   * Load freshnessMemory from localStorage if available.
+   */
+  function loadFreshnessMemory() {
+      try {
+          const stored = localStorage.getItem('sb_freshness_memory');
+          if (stored) {
+              const parsed = JSON.parse(stored);
+              if (parsed && typeof parsed === 'object') {
+                  state.freshnessMemory = {
+                      bannedPhrases: parsed.bannedPhrases || {},
+                      bannedTokens: parsed.bannedTokens || {},
+                      lastStoryFingerprint: parsed.lastStoryFingerprint || null
+                  };
+              }
+          }
+      } catch (e) {
+          console.warn('[FRESHNESS] Failed to load from localStorage:', e.message);
+      }
+  }
+
+  /**
+   * Persist freshnessMemory to localStorage.
+   */
+  function saveFreshnessMemory() {
+      try {
+          localStorage.setItem('sb_freshness_memory', JSON.stringify(state.freshnessMemory));
+      } catch (e) {
+          console.warn('[FRESHNESS] Failed to save to localStorage:', e.message);
+      }
+  }
+
+  /**
+   * Get the list of phrases currently on cooldown for this user.
+   * Prunes expired entries as a side effect.
+   *
+   * @param {string|null} userText - If provided, phrases the user explicitly
+   *   typed are excluded from the cooldown list (user bypass).
+   * @returns {string[]} Array of lowercase phrases on cooldown
+   */
+  function getCooldownBlockedPhrases(userText) {
+      const fm = state.freshnessMemory;
+      const now = Date.now();
+      const blocked = [];
+      const userLower = (userText || '').toLowerCase();
+
+      // Check bannedPhrases (seed list + previously detected)
+      for (const [phrase, ts] of Object.entries(fm.bannedPhrases)) {
+          if (now - ts < FRESHNESS_COOLDOWN_MS) {
+              // User bypass: if user explicitly typed this phrase, skip
+              if (userLower.includes(phrase)) continue;
+              blocked.push(phrase);
+          } else {
+              // Expired — prune
+              delete fm.bannedPhrases[phrase];
+          }
+      }
+
+      // Check bannedTokens (structural patterns detected in previous stories)
+      for (const [token, ts] of Object.entries(fm.bannedTokens)) {
+          if (now - ts < FRESHNESS_COOLDOWN_MS) {
+              if (userLower.includes(token)) continue;
+              blocked.push(token);
+          } else {
+              delete fm.bannedTokens[token];
+          }
+      }
+
+      return blocked;
+  }
+
+  /**
+   * Build the FRESHNESS DIRECTIVE block to append to the system prompt.
+   * Returns empty string if no phrases are on cooldown.
+   *
+   * @param {string|null} userText - combined user action + dialogue text
+   * @returns {string}
+   */
+  function buildFreshnessDirective(userText) {
+      const blocked = getCooldownBlockedPhrases(userText);
+
+      console.log(`[FRESHNESS] Cooldown list size before generation: ${blocked.length}`);
+
+      if (blocked.length === 0) return '';
+
+      const phraseList = blocked.map(p => `"${p}"`).join(', ');
+
+      return `\nFRESHNESS DIRECTIVE:
+The following phrases have appeared in recent stories and must NOT be reused in this story:
+${phraseList}
+Generate new, world-consistent equivalents instead — new district names, new faction names, new materials, new foods. Preserve the chosen World and Tone but ensure this story feels distinct from previous ones. Do not explain the substitution; simply use the new terms as if they always existed in this world.\n`;
+  }
+
+  /**
+   * Build the taxonomy leak prevention directive.
+   * Appended to the system prompt.
+   */
+  function buildTaxonomyLeakDirective() {
+      return `\nINTERNAL LABEL BAN:
+Never mention card names, archetype names, internal selection labels (e.g. "Heart Warden", "Beautiful Ruin", "Open Vein", "Spellbinder"), or system roles in prose, dialogue, or description. Translate them into prose traits instead. These labels are invisible to characters and readers.\n`;
+  }
+
+  /**
+   * Scan generated text for freshness-relevant phrases and update memory.
+   * Called after story text is received from the AI.
+   *
+   * @param {string} text - generated story text
+   */
+  function updateFreshnessMemory(text) {
+      if (!text) return;
+      const lower = text.toLowerCase();
+      const now = Date.now();
+      const fm = state.freshnessMemory;
+      const detected = [];
+
+      // 1. Check seed phrases
+      for (const phrase of FRESHNESS_SEED_PHRASES) {
+          if (lower.includes(phrase)) {
+              fm.bannedPhrases[phrase] = now;
+              detected.push(phrase);
+          }
+      }
+
+      // 2. Check structural trope patterns
+      for (const rx of FRESHNESS_TROPE_PATTERNS) {
+          rx.lastIndex = 0;
+          let m;
+          while ((m = rx.exec(lower)) !== null) {
+              const token = m[0].trim();
+              if (token.length > 3) {
+                  fm.bannedTokens[token] = now;
+                  detected.push(token);
+              }
+          }
+      }
+
+      // 3. Update fingerprint (simple hash of first 200 chars)
+      fm.lastStoryFingerprint = text.slice(0, 200).replace(/\s+/g, ' ').trim();
+
+      if (detected.length > 0) {
+          console.log('[FRESHNESS] Phrases detected in generated text and added to memory:', detected);
+      }
+
+      saveFreshnessMemory();
+  }
+
+  /**
+   * Lightweight taxonomy leak post-check.
+   * If generated text contains exact archetype label strings currently in use,
+   * replace them with a generic paraphrase BEFORE rendering.
+   *
+   * @param {string} text - generated story text
+   * @returns {string} cleaned text
+   */
+  function scrubTaxonomyLeaks(text) {
+      if (!text) return text;
+
+      let result = text;
+      const currentArchetype = state.archetype?.primary;
+
+      for (const label of TAXONOMY_LEAK_LABELS) {
+          // Case-sensitive exact match (these are proper-noun-style labels)
+          if (result.includes(label)) {
+              console.warn(`[TAXONOMY-LEAK] DEV WARNING: "${label}" found in generated prose — replacing`);
+              const paraphrase = taxonomyLeakReplacement(label);
+              result = result.split(label).join(paraphrase);
+          }
+      }
+
+      // Also check for the raw archetype ID (e.g. "BEAUTIFUL_RUIN") in prose
+      if (currentArchetype && result.includes(currentArchetype)) {
+          console.warn(`[TAXONOMY-LEAK] DEV WARNING: Raw archetype ID "${currentArchetype}" found in prose — replacing`);
+          result = result.split(currentArchetype).join('a figure of quiet intensity');
+      }
+
+      return result;
+  }
+
+  /**
+   * Map taxonomy label to a safe prose paraphrase.
+   */
+  function taxonomyLeakReplacement(label) {
+      const map = {
+          'Heart Warden':    'a devoted guardian',
+          'Shadow Warden':   'a silent protector',
+          'Blood Warden':    'a fierce sentinel',
+          'Open Vein':       'someone who felt everything too deeply',
+          'Spellbinder':     'someone who commanded attention effortlessly',
+          'Armored Fox':     'someone who deflected with charm',
+          'Dark Vice':       'someone dangerous and magnetic',
+          'Beautiful Ruin':  'someone who destroyed what they loved',
+          'Eternal Flame':   'someone whose devotion never wavered',
+          'Threshold':       'a moment of transformation',
+          'Emblem':          'a defining symbol'
+      };
+      return map[label] || 'a distinctive presence';
+  }
+
+  // FRESHNESS: Load persisted memory from localStorage at startup
+  loadFreshnessMemory();
+
+  // =========================================================================
   // NARRATIVE VOCABULARY ENFORCEMENT
   // =========================================================================
   //
@@ -8210,12 +8482,16 @@ FATE CARD ADAPTATION (CRITICAL):
           quillDirective = `NOTE: The user just committed a Quill edit. Honor the authorial intent.`;
       }
 
-      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n\nTURN INSTRUCTIONS: 
+      // FRESHNESS: Turn-level freshness + taxonomy directives
+      const turnFreshness = buildFreshnessDirective(act + ' ' + dia);
+      const turnTaxonomy = buildTaxonomyLeakDirective();
+
+      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${turnFreshness}\n${turnTaxonomy}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
-      Player Action: ${act}. 
-      Player Dialogue: ${dia}. 
+      Player Action: ${act}.
+      Player Dialogue: ${dia}.
       ${metaMsg}
-      
+
       Write the next beat (150-250 words).`;
 
       // Flag to track if story was successfully displayed (prevents false positive errors)
@@ -8298,6 +8574,10 @@ FATE CARD ADAPTATION (CRITICAL):
 
               raw = vocabResult.text;
           }
+
+          // FRESHNESS: Update memory with turn text + scrub taxonomy leaks
+          updateFreshnessMemory(raw);
+          raw = scrubTaxonomyLeaks(raw);
 
           state.turnCount++;
 
