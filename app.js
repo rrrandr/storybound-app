@@ -1418,6 +1418,19 @@ ANTI-HERO ENFORCEMENT:
           pendingHoldMessage: null,        // Held message awaiting de-escalation confirmation
           pendingHoldRaw: null             // Raw AI output for held message
       },
+
+      // COUPLE PLAY MASK PRESENTATION (session-scoped, never persisted)
+      // Masks are the player-facing presentation of archetypes in Couple Play only.
+      // The underlying archetype system is unchanged — masks are a UI layer.
+      coupleMask: {
+          mySelectedMask: null,              // Archetype ID this player chose for themselves
+          mySuggestedMaskForPartner: null,   // Archetype ID this player suggests for their partner
+          partnerSuggestedMask: null,        // Archetype ID the partner suggested for this player (received)
+          resolvedMask: null,                // Final resolved archetype ID for this player
+          maskResolved: false,               // Whether resolution flow is complete
+          partnerMaskResolved: false         // Whether partner has resolved (for flow gating)
+      },
+
       nonConPushCount: 0,
       lastNonConPushAt: 0,
       lastSafewordAt: 0,
@@ -1578,7 +1591,7 @@ ANTI-HERO ENFORCEMENT:
 
   // NAV HELPER
   function closeAllOverlays() {
-      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'gameQuillVetoModal', 'dirtyConsentModal', 'dirtyReopenModal', 'deescalationModal'].forEach(id => {
+      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'gameQuillVetoModal', 'dirtyConsentModal', 'dirtyReopenModal', 'deescalationModal', 'maskAcceptanceModal'].forEach(id => {
           const el = document.getElementById(id);
           if(el) el.classList.add('hidden');
       });
@@ -1655,6 +1668,10 @@ ANTI-HERO ENFORCEMENT:
       // Initialize fate hand system when entering setup screen
       if(id === 'setup') {
           initFateHandSystem();
+          // COUPLE MASK: Swap archetype → mask UI when entering setup in couple mode
+          if (state.mode === 'couple' && typeof initCoupleMaskPresentation === 'function') {
+              initCoupleMaskPresentation();
+          }
       }
   };
 
@@ -4958,6 +4975,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Update all card states - only selected card stays flipped
       updateArchetypeCardStates();
       updateArchetypeSelectionSummary();
+
+      // COUPLE MASK: Track own mask selection in couple mode
+      if (typeof onCoupleMaskSelected === 'function') {
+          onCoupleMaskSelected(archetypeId);
+      }
   }
 
   // Populate archetype card zoom view with modifier custom field only (NO pills)
@@ -6151,6 +6173,7 @@ You are writing a story with the following 4-axis configuration:
     Love Interest: ${lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
 
     ${buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen)}
+    ${typeof buildMaskFateDirective === 'function' ? buildMaskFateDirective() : ''}
 
     ${safetyStr}
 
@@ -8707,6 +8730,8 @@ FATE CARD ADAPTATION (CRITICAL):
       if(sb) sb.removeAllChannels();
       // Clear all couple intensity permissions on session cleanup
       if (typeof resetCoupleIntensity === 'function') resetCoupleIntensity();
+      // Clear mask presentation state on session cleanup
+      if (typeof resetCoupleMask === 'function') resetCoupleMask();
   };
 
   function broadcastTurn(text, isInit = false) {
@@ -9819,6 +9844,283 @@ FATE CARD ADAPTATION (CRITICAL):
       detectEscalation: detectSelfEscalation,
       detectDeescalation: detectDeescalationSignal,
       holdForDeescalation: holdForDeescalation
+  };
+
+  // =========================================================================
+  // COUPLE PLAY: MASK PRESENTATION LAYER
+  // =========================================================================
+  //
+  // In Couple Play, archetypes are presented as "Masks" — the same 7+ canonical
+  // archetype cards, but with player-facing mask language. The underlying
+  // archetype system (ARCHETYPES, buildArchetypeDirectives, state.archetype)
+  // is NEVER modified. This is purely a UI/copy layer.
+  //
+  // Flow:
+  //   1. Setup screen swaps "Archetype Storybeau" → "Your Masks"
+  //   2. Player selects their own mask + optionally suggests one for partner
+  //   3. On receiving a suggestion, private acceptance modal appears
+  //   4. Resolution sets state.archetype.primary (same field, no new schema)
+  //   5. Fate directives reference "mask" language in couple mode
+  //
+  // =========================================================================
+
+  /**
+   * Initialize the mask presentation layer for Couple Play.
+   * Called when entering the setup screen in couple mode.
+   * Swaps archetype section labels to mask language.
+   */
+  function initCoupleMaskPresentation() {
+      if (state.mode !== 'couple') return;
+
+      // Swap section title
+      const sectionTitle = document.getElementById('archetypeSectionTitle');
+      if (sectionTitle) {
+          sectionTitle.textContent = 'Your Masks';
+      }
+
+      // Swap header text
+      const headerText = document.querySelector('.archetype-header-text');
+      if (headerText) {
+          headerText.textContent = 'Who do you want to be tonight?';
+      }
+
+      // Swap subtext — replace archetype instructions with mask language
+      const subtext = document.querySelector('.archetype-subtext');
+      if (subtext) {
+          subtext.textContent = 'Select a mask for yourself. You may also suggest one for your partner.';
+      }
+
+      // Swap selection summary labels
+      const primaryLabel = document.querySelector('.selected-primary');
+      if (primaryLabel) {
+          const span = primaryLabel.querySelector('#selectedPrimaryName');
+          primaryLabel.innerHTML = '';
+          primaryLabel.textContent = 'Your Mask: ';
+          if (span) primaryLabel.appendChild(span);
+      }
+
+      // Hide modifier row in couple mode (masks don't have modifiers)
+      const modifierLabel = document.querySelector('.selected-modifier');
+      if (modifierLabel) {
+          modifierLabel.style.display = 'none';
+      }
+
+      // Render the partner suggestion row if not already present
+      renderMaskSuggestionRow();
+
+      console.log('[COUPLE-MASK] Mask presentation layer initialized');
+  }
+
+  /**
+   * Restore archetype presentation when leaving couple mode.
+   * Called during couple cleanup.
+   */
+  function restoreArchetypePresentation() {
+      const sectionTitle = document.getElementById('archetypeSectionTitle');
+      if (sectionTitle) sectionTitle.textContent = 'Archetype Storybeau';
+
+      const headerText = document.querySelector('.archetype-header-text');
+      if (headerText) headerText.textContent = 'Choose a core personality for your Love Interest.';
+
+      const subtext = document.querySelector('.archetype-subtext');
+      if (subtext) subtext.textContent = 'Select one Primary archetype. You may optionally add one Modifier to refine how it shows up.';
+
+      const primaryLabel = document.querySelector('.selected-primary');
+      if (primaryLabel) {
+          const span = primaryLabel.querySelector('#selectedPrimaryName');
+          primaryLabel.innerHTML = '';
+          primaryLabel.textContent = 'Primary: ';
+          if (span) primaryLabel.appendChild(span);
+      }
+
+      const modifierLabel = document.querySelector('.selected-modifier');
+      if (modifierLabel) modifierLabel.style.display = '';
+
+      // Remove partner suggestion row
+      const suggestionRow = document.getElementById('maskSuggestionRow');
+      if (suggestionRow) suggestionRow.remove();
+
+      console.log('[COUPLE-MASK] Archetype presentation restored');
+  }
+
+  /**
+   * Render the "Suggest a Mask for Your Partner" dropdown row.
+   * Inserted below the archetype card grid in couple mode.
+   */
+  function renderMaskSuggestionRow() {
+      // Don't duplicate
+      if (document.getElementById('maskSuggestionRow')) return;
+
+      const grid = document.getElementById('archetypeCardGrid');
+      if (!grid) return;
+
+      const row = document.createElement('div');
+      row.id = 'maskSuggestionRow';
+      row.className = 'mask-suggestion-row';
+
+      const label = document.createElement('p');
+      label.className = 'mask-suggestion-label';
+      label.textContent = 'Who do you want them to be?';
+
+      const select = document.createElement('select');
+      select.id = 'maskSuggestionSelect';
+      select.className = 'mask-suggestion-select';
+
+      // Default option
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = '— No suggestion —';
+      select.appendChild(defaultOpt);
+
+      // Populate with all archetypes
+      ARCHETYPE_ORDER.forEach(id => {
+          const arch = ARCHETYPES[id];
+          if (!arch) return;
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = arch.name;
+          select.appendChild(opt);
+      });
+
+      select.addEventListener('change', () => {
+          state.coupleMask.mySuggestedMaskForPartner = select.value || null;
+          console.log('[COUPLE-MASK] Partner suggestion set:', select.value || 'none');
+      });
+
+      const note = document.createElement('p');
+      note.className = 'mask-suggestion-note';
+      note.textContent = 'This suggestion is optional. Your partner will choose privately.';
+
+      row.appendChild(label);
+      row.appendChild(select);
+      row.appendChild(note);
+
+      // Insert after the grid
+      grid.parentNode.insertBefore(row, grid.nextSibling);
+  }
+
+  /**
+   * Show the private mask acceptance modal when a suggestion is received.
+   * @param {string} suggestedArchetypeId - The archetype ID suggested by partner
+   */
+  function showMaskAcceptanceModal(suggestedArchetypeId) {
+      const arch = ARCHETYPES[suggestedArchetypeId];
+      if (!arch) return;
+
+      state.coupleMask.partnerSuggestedMask = suggestedArchetypeId;
+
+      const nameEl = document.getElementById('maskSuggestedName');
+      if (nameEl) nameEl.textContent = arch.name;
+
+      const modal = document.getElementById('maskAcceptanceModal');
+      if (modal) modal.classList.remove('hidden');
+  }
+
+  /**
+   * Handle accepting the suggested mask.
+   */
+  function acceptSuggestedMask() {
+      const suggested = state.coupleMask.partnerSuggestedMask;
+      if (!suggested) return;
+
+      state.coupleMask.resolvedMask = suggested;
+      state.coupleMask.maskResolved = true;
+      // Write through to the canonical archetype state (presentation only)
+      state.archetype.primary = suggested;
+
+      // Update the UI card selection to reflect the resolved mask
+      updateArchetypeCardStates();
+      updateArchetypeSelectionSummary();
+
+      const modal = document.getElementById('maskAcceptanceModal');
+      if (modal) modal.classList.add('hidden');
+
+      console.log('[COUPLE-MASK] Accepted partner suggestion:', suggested);
+  }
+
+  /**
+   * Handle choosing a different mask (rejecting the suggestion).
+   * The player keeps their own selection. Partner is never informed.
+   */
+  function chooseDifferentMask() {
+      state.coupleMask.resolvedMask = state.coupleMask.mySelectedMask || state.archetype.primary;
+      state.coupleMask.maskResolved = true;
+      // archetype.primary remains whatever the player had selected — no change needed
+
+      const modal = document.getElementById('maskAcceptanceModal');
+      if (modal) modal.classList.add('hidden');
+
+      console.log('[COUPLE-MASK] Rejected partner suggestion — keeping own mask');
+  }
+
+  // Wire acceptance modal buttons
+  document.getElementById('btnAcceptMask')?.addEventListener('click', acceptSuggestedMask);
+  document.getElementById('btnChooseDifferentMask')?.addEventListener('click', chooseDifferentMask);
+
+  /**
+   * Track the player's own mask selection in couple mode.
+   * Called when a player selects an archetype card while in couple mode.
+   * @param {string} archetypeId - Selected archetype ID
+   */
+  function onCoupleMaskSelected(archetypeId) {
+      if (state.mode !== 'couple') return;
+      state.coupleMask.mySelectedMask = archetypeId;
+      console.log('[COUPLE-MASK] Own mask selected:', archetypeId);
+  }
+
+  /**
+   * Build mask-aware Fate directive for couple mode system prompt.
+   * Returns additional directive text that tells Fate to reference "mask"
+   * language instead of archetype language in couple play.
+   *
+   * @returns {string} Directive string (empty if not couple mode)
+   */
+  function buildMaskFateDirective() {
+      if (state.mode !== 'couple') return '';
+
+      const mask = state.coupleMask.resolvedMask || state.archetype.primary;
+      const arch = ARCHETYPES[mask];
+      if (!arch) return '';
+
+      return `
+MASK FRAMING (COUPLE PLAY):
+The Love Interest's personality is shaped by a mask: ${arch.name}.
+Treat the mask as something the character inhabits — an energy, a role, a way of being.
+Never use the word "archetype" in prose or dialogue. Use "mask" only if it fits narratively (e.g., "behind the mask," "the mask slipped"). Otherwise, simply embody the qualities directly.
+Fate speaks to the mask, not the person wearing it.`;
+  }
+
+  /**
+   * Reset mask state for a new session.
+   */
+  function resetCoupleMask() {
+      state.coupleMask = {
+          mySelectedMask: null,
+          mySuggestedMaskForPartner: null,
+          partnerSuggestedMask: null,
+          resolvedMask: null,
+          maskResolved: false,
+          partnerMaskResolved: false
+      };
+
+      // Restore archetype language in UI
+      restoreArchetypePresentation();
+
+      // Hide acceptance modal if open
+      const modal = document.getElementById('maskAcceptanceModal');
+      if (modal) modal.classList.add('hidden');
+
+      console.log('[COUPLE-MASK] Mask state reset');
+  }
+
+  // Expose for broadcast system and external hooks
+  window._coupleMask = {
+      init: initCoupleMaskPresentation,
+      reset: resetCoupleMask,
+      showAcceptance: showMaskAcceptanceModal,
+      onSelected: onCoupleMaskSelected,
+      buildDirective: buildMaskFateDirective,
+      getSuggestion: () => state.coupleMask.mySuggestedMaskForPartner
   };
 
   // --- COUPLE MODE BUTTON HANDLERS ---

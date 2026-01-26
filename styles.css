@@ -3010,3 +3010,51 @@ textarea.fate-field {
     font-style: inherit;
 }
 }
+
+/* =========================================================================
+   COUPLE PLAY: MASK PRESENTATION LAYER
+   ========================================================================= */
+
+.mask-suggestion-row {
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.mask-suggestion-label {
+    font-size: 0.95em;
+    color: var(--gold);
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+.mask-suggestion-select {
+    width: 100%;
+    max-width: 280px;
+    padding: 8px 12px;
+    background: #1a1a1a;
+    color: var(--ink);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 6px;
+    font-size: 0.9em;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    text-align: center;
+}
+
+.mask-suggestion-select:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.15);
+}
+
+.mask-suggestion-note {
+    font-size: 0.78em;
+    color: #888;
+    font-style: italic;
+    margin-top: 8px;
+}
