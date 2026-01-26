@@ -2730,6 +2730,9 @@ Return the rewritten text only, no explanation.`
       if (state.visual.bible.style && Object.keys(state.visual.bible.characters).length > 0) return;
       
       const genre = state?.picks?.genre || 'Billionaire';
+      const vbWorld = state?.picks?.world || 'Modern';
+      const vbEra = state?.picks?.world === 'Historical' ? (state?.picks?.era || 'Medieval') : null;
+      const visualPowerRole = resolvePowerRole(vbWorld, vbEra, genre);
       const sys = `You are a Visual Director. Extract consistent visual anchors into STRICT JSON with this structure:
 {
   "style": "visual style description",
@@ -2747,7 +2750,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       try {
           const raw = await Promise.race([
-              callChat([{role:'system', content: sys}, {role:'user', content: `Genre: ${genre}. Extract visual anchors from: ${textContext.slice(-2000)}`}]),
+              callChat([{role:'system', content: sys}, {role:'user', content: `Genre: ${visualPowerRole}. Extract visual anchors from: ${textContext.slice(-2000)}`}]),
               new Promise((_, reject) => setTimeout(() => reject(new Error("Bible timeout")), 15000))
           ]);
           const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -6839,6 +6842,11 @@ Exit conditions (must be explicit, never silent):
 No accidental betrayal. No silent exits.
 `;
 
+    // Power Role: resolve genre into world-appropriate label for story prompts
+    const storyWorld = state.picks.world || 'Modern';
+    const storyEra = state.picks.world === 'Historical' ? (state.picks.era || 'Medieval') : null;
+    const storyPowerRole = resolvePowerRole(storyWorld, storyEra, state.picks.genre || 'Billionaire');
+
     const sys = `You are a bestselling erotica author (Voice: ${state.authorGender}, ${state.authorPronouns}).
 
 ${state.storyOrigin === "couple" && !state.player2Joined && !state.inviteRevoked ? batedBreathRules : ""}
@@ -6896,7 +6904,7 @@ Long-Arc Presence Awareness:
 You are writing a story with the following 4-axis configuration:
 - World: ${state.picks.world || 'Modern'}${state.picks.world === 'Historical' && state.picks.era ? ` (${state.picks.era} Era)` : ''}
 - Tone: ${state.picks.tone || 'Earnest'}
-- Genre: ${state.picks.genre || 'Billionaire'}
+- Genre: ${storyPowerRole}
 - Dynamic: ${state.picks.dynamic || 'Enemies'}
 - POV: ${state.picks.pov || 'First'}
 
@@ -7714,6 +7722,26 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       nature: ['green', 'forest', 'olive', 'moss', 'sage', 'hunter']
   };
 
+  // ============================================================
+  // POWER ROLE TRANSMUTATION
+  // Resolves genre labels into world-appropriate power roles.
+  // Prevents anachronistic concepts from propagating to prompts.
+  // Rollback: replace all resolvePowerRole() calls with raw genre
+  // ============================================================
+  function resolvePowerRole(world, era, genre) {
+      if (genre !== 'Billionaire') return genre;
+      if (world === 'Modern') return 'Capital Magnate';
+      if (world === 'Historical') {
+          if (era === 'Renaissance') return 'Merchant Prince';
+          if (era === 'Roman') return 'Imperium Holder';
+          return 'Sovereign'; // Medieval and default Historical
+      }
+      if (world === 'Prehistoric') return 'Clan Alpha';
+      if (world === 'Fantasy') return 'Arcane Sovereign';
+      if (world === 'SciFi') return 'Technocratic Hegemon';
+      return genre; // unknown world fallback
+  }
+
   // Background patterns by domain
   const DOMAIN_BACKGROUNDS = {
       // World-based
@@ -8055,8 +8083,9 @@ Return ONLY valid JSON:
 
   // Build intelligent cover prompt with all guardrails (AUTHORITATIVE)
   // PROMPT STRUCTURE ORDER: Layout → Emotion → Focal → Background → Palette → Exclusions
-  async function buildCoverPrompt(synopsis, genre, world, tone, dynamic) {
+  async function buildCoverPrompt(synopsis, genre, world, tone, dynamic, era) {
       const history = loadMotifHistory();
+      const powerRole = resolvePowerRole(world, era, genre);
 
       // ==========================================
       // STEP 1: LAYOUT ROULETTE (MANDATORY)
@@ -8066,7 +8095,7 @@ Return ONLY valid JSON:
       console.log('[CoverIntel] Layout selected:', selectedLayout.id);
 
       // Extract focal anchor with emotional gravity and human figure decision
-      const focalResult = await extractFocalObject(synopsis, genre, world, tone);
+      const focalResult = await extractFocalObject(synopsis, powerRole, world, tone);
       const focalObject = focalResult.object;
       const material = focalResult.material || 'metal';
       const emotion = focalResult.emotion || 'mystery';
@@ -8089,7 +8118,10 @@ Return ONLY valid JSON:
       }
 
       // Derive background from domain (theme-derived, not decorative)
-      const backgroundPattern = deriveBackgroundPattern(genre, world, history);
+      // Power Role: Modern keeps raw genre for Billionaire-specific patterns;
+      // non-Modern uses powerRole (no match → falls back to world patterns only)
+      const bgGenre = world === 'Modern' ? genre : powerRole;
+      const backgroundPattern = deriveBackgroundPattern(bgGenre, world, history);
 
       // Derive palette from tone + material
       // HARD RULE: No brown/cream unless explicitly required by layout
@@ -8191,6 +8223,8 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const genre = state.picks?.genre || 'Billionaire';
       const dynamic = state.picks?.dynamic || 'Enemies';
       const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
+      // Power Role: resolve genre into world-appropriate label
+      const powerRole = resolvePowerRole(world, era, genre);
       // Phase 2b: Extract arousal/intensity (plumbing only, not yet used)
       const arousal = state.intensity || null;
 
@@ -8201,12 +8235,12 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       // Build mode line from world + tone
       const modeLine = era ? `${era} ${world}` : `${world} ${tone}`;
       // Build story style description
-      const storyStyle = `${tone} ${genre}`;
+      const storyStyle = `${tone} ${powerRole}`;
 
       // COVER INTELLIGENCE: Build intelligent prompt with focal object, anti-repetition, domain background, palette
       let coverIntel = null;
       try {
-          coverIntel = await buildCoverPrompt(synopsis, genre, world, tone, dynamic);
+          coverIntel = await buildCoverPrompt(synopsis, genre, world, tone, dynamic, era);
           console.log('[CoverIntel] Focal object:', coverIntel.focalObject);
           console.log('[CoverIntel] Background:', coverIntel.background);
           console.log('[CoverIntel] Palette:', coverIntel.palette.primary, '/', coverIntel.palette.secondary);
@@ -8235,7 +8269,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
                   modeLine: modeLine,
                   dynamic: dynamic,
                   storyStyle: storyStyle,
-                  genre: genre,
+                  genre: powerRole,
                   size: '1024x1024',
                   // Pass cover intelligence metadata for server-side use
                   coverIntel: coverIntel ? {
