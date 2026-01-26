@@ -1697,6 +1697,121 @@ Return the rewritten text only, no explanation.`
       return corrected.join(' ');
   }
 
+  // ============================================================
+  // NARRATIVE VOCABULARY BANS — POST-GENERATION ENFORCEMENT
+  // ============================================================
+  // System-internal terms that must NEVER appear in reader-facing text.
+  // "The Author" is exempt ONLY in 5th-person (Fate POV) prose.
+  // Archetype names influence structure/pacing/framing but are invisible
+  // to readers — they must never surface in prose, dialogue, or synopsis.
+  // ============================================================
+
+  const VOCAB_BAN_PATTERNS = [
+      // "The Author" — banned except in Fate POV meta blocks
+      { id: 'AUTHOR_LEAK',          rx: /The Author\b/g,                                           fatePOVExempt: true },
+      // Any X Warden compound (Heart Warden, Shadow Warden, Blood Warden, etc.)
+      { id: 'WARDEN_COMPOUND',      rx: /(?:Heart|Shadow|Blood|\w+)\s+Warden\b/gi,                 fatePOVExempt: false },
+      // Cover-composition archetype names leaked into prose
+      { id: 'ARCHETYPE_THRESHOLD',  rx: /\bThreshold\b/g,                                          fatePOVExempt: false },
+      { id: 'ARCHETYPE_EMBLEM',     rx: /\bEmblem\b/g,                                             fatePOVExempt: false },
+      // Canonical 7-archetype display names
+      { id: 'ARCHETYPE_OPEN_VEIN',  rx: /\bOpen Vein\b/gi,                                         fatePOVExempt: false },
+      { id: 'ARCHETYPE_SPELLBINDER',rx: /\bSpellbinder\b/gi,                                       fatePOVExempt: false },
+      { id: 'ARCHETYPE_ARMORED_FOX',rx: /\bArmored Fox\b/gi,                                       fatePOVExempt: false },
+      { id: 'ARCHETYPE_DARK_VICE',  rx: /\bDark Vice\b/gi,                                         fatePOVExempt: false },
+      { id: 'ARCHETYPE_BEAUTIFUL_RUIN', rx: /\bBeautiful Ruin\b/gi,                                fatePOVExempt: false },
+      { id: 'ARCHETYPE_ETERNAL_FLAME',  rx: /\bEternal Flame\b/gi,                                 fatePOVExempt: false }
+  ];
+
+  // Human-readable ban description per pattern (for negative-constraint injection)
+  const VOCAB_BAN_LABELS = {
+      AUTHOR_LEAK:            '"The Author" — meta-narrator term forbidden outside Fate POV',
+      WARDEN_COMPOUND:        'X Warden compound — system-internal archetype name',
+      ARCHETYPE_THRESHOLD:    '"Threshold" — internal cover-composition archetype',
+      ARCHETYPE_EMBLEM:       '"Emblem" — internal cover-composition archetype',
+      ARCHETYPE_OPEN_VEIN:    '"Open Vein" — internal character archetype',
+      ARCHETYPE_SPELLBINDER:  '"Spellbinder" — internal character archetype',
+      ARCHETYPE_ARMORED_FOX:  '"Armored Fox" — internal character archetype',
+      ARCHETYPE_DARK_VICE:    '"Dark Vice" — internal character archetype',
+      ARCHETYPE_BEAUTIFUL_RUIN: '"Beautiful Ruin" — internal character archetype',
+      ARCHETYPE_ETERNAL_FLAME:  '"Eternal Flame" — internal character archetype'
+  };
+
+  /**
+   * Scan text for vocabulary ban violations.
+   * @param {string} text          - The generated text to check
+   * @param {object} context       - { type: 'prose'|'synopsis'|'title'|'cover', isFatePOV: boolean }
+   * @returns {{ clean: boolean, violations: Array<{id:string, matches:string[]}> }}
+   */
+  function scrubNarrativeVocabulary(text, context) {
+      if (!text || typeof text !== 'string') return { clean: true, violations: [] };
+
+      const violations = [];
+      const isFatePOV = context.isFatePOV && context.type === 'prose';
+
+      for (const ban of VOCAB_BAN_PATTERNS) {
+          // "The Author" is allowed in Fate POV prose (5th-person mode)
+          if (ban.fatePOVExempt && isFatePOV) continue;
+
+          // Reset regex lastIndex (global flag)
+          ban.rx.lastIndex = 0;
+          const matches = text.match(ban.rx);
+          if (matches && matches.length > 0) {
+              violations.push({ id: ban.id, matches });
+          }
+      }
+
+      return { clean: violations.length === 0, violations };
+  }
+
+  /**
+   * Build a negative-constraint instruction string from violations.
+   * Injected into the system prompt on regeneration.
+   */
+  function buildVocabBanConstraint(violations) {
+      const lines = violations.map(v =>
+          `- NEVER use ${VOCAB_BAN_LABELS[v.id] || v.id}. Found: "${v.matches.join('", "')}" — remove or rephrase.`
+      );
+      return `\n\nCRITICAL VOCABULARY BAN — the following terms are system-internal and MUST NOT appear in your output:\n${lines.join('\n')}\nRewrite any sentence that would contain these terms. They are invisible to the reader and must never surface in prose, dialogue, synopsis, or titles.\n`;
+  }
+
+  /**
+   * Enforce vocabulary bans with one-shot regeneration.
+   *
+   * @param {string}   text          - generated text to check
+   * @param {object}   context       - { type, isFatePOV }
+   * @param {function} regenerateFn  - async (negativeConstraint: string) => string
+   *                                   Called once on violation. Receives the negative-constraint
+   *                                   string to append to the system prompt. Must return new text.
+   * @returns {string} clean (or best-effort) text
+   */
+  async function enforceVocabularyBans(text, context, regenerateFn) {
+      const result = scrubNarrativeVocabulary(text, context);
+      if (result.clean) return text;
+
+      console.warn('[VOCAB_BAN] Violations in ' + context.type + ':', result.violations);
+
+      if (!regenerateFn) {
+          console.error('[VOCAB_BAN] No regeneration function provided — returning dirty text');
+          return text;
+      }
+
+      // Regenerate once with explicit negative constraint
+      const constraint = buildVocabBanConstraint(result.violations);
+      console.log('[VOCAB_BAN] Regenerating with negative constraint');
+      const regenerated = await regenerateFn(constraint);
+
+      // Re-check — if still dirty, log hard warning but return anyway
+      const recheck = scrubNarrativeVocabulary(regenerated, context);
+      if (!recheck.clean) {
+          console.error('[VOCAB_BAN] Regeneration STILL violates bans:', recheck.violations.map(v => v.id));
+      } else {
+          console.log('[VOCAB_BAN] Regeneration passed vocabulary check');
+      }
+
+      return regenerated;
+  }
+
   var state = window.state;
 
   // LATCH for Visualize Re-entrancy
@@ -7463,7 +7578,19 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
             text = enforceAuthorConductor(text);
         }
 
-        const title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
+        // VOCABULARY BAN ENFORCEMENT — story opener prose
+        text = await enforceVocabularyBans(
+            text,
+            { type: 'prose', isFatePOV: state.povMode === 'author5th' },
+            async (negConstraint) => {
+                return await callChat([
+                    { role: 'system', content: state.sysPrompt + negConstraint },
+                    { role: 'user', content: introPrompt }
+                ]);
+            }
+        );
+
+        let title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
 
 PROCESS: First, internally identify the story's emotional promise or arc (longing, danger, desire, destiny, transformation). Then craft a title that hints at that promise.
 
@@ -7475,8 +7602,24 @@ QUALITY RULES:
 
 Return ONLY the title, no quotes or explanation:\n${text}`}]);
 
+        // VOCABULARY BAN ENFORCEMENT — title
+        title = await enforceVocabularyBans(
+            title,
+            { type: 'title', isFatePOV: false },
+            async (negConstraint) => {
+                return await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
+
+QUALITY RULES:
+- The title must feel like a promise of experience, not a mood collage
+- Avoid abstract noun clusters
+- Prefer titles that imply stakes, longing, or transformation
+${negConstraint}
+Return ONLY the title, no quotes or explanation:\n${text}`}]);
+            }
+        );
+
         // SYNOPSIS GENERATION RULE (AUTHORITATIVE)
-        const synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
+        let synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
 
 MANDATORY REQUIREMENTS — All three must be present:
 1. A SPECIFIC CHARACTER with agency (e.g., "a hedge-witch on the brink of exile" — not just "one woman")
@@ -7503,6 +7646,19 @@ The reader should think: "I want to see what happens when this desire meets resi
 NOT: "This sounds pretty."
 
 Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
+
+        // VOCABULARY BAN ENFORCEMENT — synopsis
+        synopsis = await enforceVocabularyBans(
+            synopsis,
+            { type: 'synopsis', isFatePOV: false },
+            async (negConstraint) => {
+                return await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
+
+MANDATORY: A specific character + a desire + a looming conflict.
+${negConstraint}
+Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
+            }
+        );
 
         // CORRECTIVE: Set title and synopsis first
         const titleEl = document.getElementById('storyTitle');
@@ -10296,6 +10452,30 @@ FATE CARD ADAPTATION (CRITICAL):
           if (state.povMode === 'author5th') {
               raw = enforceAuthorConductor(raw);
           }
+
+          // VOCABULARY BAN ENFORCEMENT — turn prose
+          raw = await enforceVocabularyBans(
+              raw,
+              { type: 'prose', isFatePOV: state.povMode === 'author5th' },
+              async (negConstraint) => {
+                  // Regenerate via the same path that produced the original
+                  if (useFullOrchestration) {
+                      return await generateOrchestatedTurn({
+                          systemPrompt: fullSys + negConstraint,
+                          storyContext: context,
+                          playerAction: act,
+                          playerDialogue: dia,
+                          fateCard: selectedFateCard,
+                          onPhaseChange: () => {}
+                      });
+                  } else {
+                      return await callChat([
+                          { role: 'system', content: fullSys + negConstraint },
+                          { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                      ]);
+                  }
+              }
+          );
 
           state.turnCount++;
 
