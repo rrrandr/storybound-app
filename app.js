@@ -6696,18 +6696,42 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
      const worldDesc = capWorldDesc(desc);
 
-     // VISTA-ONLY ENFORCEMENT (LOCKED)
-     // Setup scene MUST be a world vista - NO faces, portraits, or character close-ups
-     const vistaEnforcement = `CRITICAL COMPOSITION RULES:
-- This MUST be a WORLD VISTA image: landscape, cityscape, skyline, planet view, castle on cliff, street scene, or grand environment.
-- If ANY human figure appears, they MUST be facing AWAY from viewer, looking out over the vista (silhouette only).
-- ABSOLUTELY FORBIDDEN: Portraits, faces, characters looking at the viewer, romantic poses, character close-ups, intimate scenes.
-- Camera position: Wide establishing shot, epic scale, environment is the subject.`;
+     // CANONICAL SETTING VISUALIZE PROMPT — environment only, no characters
+     const sWorld = (state.picks && state.picks.world) || 'Unknown';
+     const sTone = (state.picks && state.picks.tone) || 'Unknown';
+     const sGenre = (state.picks && state.picks.genre) || 'Unknown';
+     const sDynamic = (state.picks && state.picks.dynamic) || 'Unknown';
+     const sIntensity = state.intensity || 'Unknown';
 
-     const styleSuffix = 'Wide cinematic environment, atmospheric lighting, painterly illustration, epic scale, 16:9 aspect ratio, no text, no watermark.';
+     const prompt = `SETTING VISUAL — ESTABLISHING ENVIRONMENT ONLY
 
-     // WORLD FIRST, vista enforcement, then style suffix
-     const prompt = `${worldDesc}\n\n${vistaEnforcement}\n\n${styleSuffix}`;
+WORLD: ${sWorld}
+TONE: ${sTone}
+GENRE: ${sGenre}
+DYNAMIC: ${sDynamic}
+INTENSITY: ${sIntensity}
+
+COMPOSITION:
+- Wide or architectural establishing view
+- Environment-focused, not character-focused
+- Spatial layout clearly readable
+
+LIGHTING:
+- Appropriate to the declared world and tone
+- Natural or ambient sources only
+
+CONTENT RULES:
+- Do not depict people, faces, bodies, or interactions
+- Do not imply an event, action, or narrative moment
+- Do not introduce symbolism or mood beyond what the setting itself conveys
+- Objects may be present only as part of the environment, at rest
+
+Render the setting as a neutral, grounded place that could host a story,
+but does not depict the story itself.
+
+Return only the visual description.
+
+${worldDesc}`;
 
      let rawUrl = null;
 
