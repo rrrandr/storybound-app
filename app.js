@@ -1031,96 +1031,77 @@ For veto/quill/god_mode:
   };
 
   // =========================
-  // ARCHETYPE SYSTEM (LOCKED)
+  // ARCHETYPE SYSTEM (CANONICAL — 7 ARCHETYPES)
+  // Replaces legacy 11-archetype system.
+  // Each character: 1 Primary + optional 1 Secondary.
+  // Legacy mapping by relational function (not surface traits):
+  //   GUARDIAN, SOVEREIGN → HEART_WARDEN
+  //   ROMANTIC, CLOISTERED → OPEN_VEIN
+  //   ENCHANTING, STRATEGIST → SPELLBINDER
+  //   ROGUE → ARMORED_FOX
+  //   DANGEROUS, ANTI_HERO → DARK_VICE
+  //   BEAUTIFUL_RUIN → BEAUTIFUL_RUIN
+  //   DEVOTED → ETERNAL_FLAME
   // =========================
   const ARCHETYPES = {
-      ROMANTIC: {
-          id: 'ROMANTIC',
-          name: 'The Romantic',
-          desireStyle: 'His voice softened when he spoke her name, as if the syllables themselves were precious',
-          summary: 'He pressed the wildflower into her palm, his thumb lingering against her wrist. "I wrote you something," he said, and his voice caught on the word—raw, unguarded, as if the poem had cost him something to create.',
-          primaryOnly: false
+      HEART_WARDEN: {
+          id: 'HEART_WARDEN',
+          name: 'The Heart Warden',
+          desireStyle: 'He positioned himself between her and the door without thinking — not from fear, but from certainty that nothing would reach her while he stood',
+          summary: 'Protection is not a gesture but a gravitational constant. The Heart Warden builds walls around the people they love and calls it devotion. Safety is their language, control is their shadow, and tenderness arrives armored.',
+          stressFailure: 'over-control, authoritarian protection'
       },
-      CLOISTERED: {
-          id: 'CLOISTERED',
-          name: 'The Cloistered',
-          desireStyle: 'A flush crept up his neck when their fingers brushed—the first touch in years',
-          summary: 'He stood frozen at the library threshold, watching her turn pages by candlelight. When she looked up, he forgot how to breathe. "I never—" he started, then closed his mouth, cheeks burning, as if desire itself were a language he was only beginning to learn.',
-          primaryOnly: false
+      OPEN_VEIN: {
+          id: 'OPEN_VEIN',
+          name: 'The Open Vein',
+          desireStyle: 'Every emotion lived on the surface, unguarded — tenderness offered without condition, vulnerability worn like a second skin',
+          summary: 'The Open Vein gives everything before it is asked. Love is not cautious here — it is hemorrhage, offering, surrender before the first wound. They feel too much, too soon, too visibly.',
+          stressFailure: 'self-erasure, overexposure'
       },
-      ROGUE: {
-          id: 'ROGUE',
-          name: 'The Rogue',
-          desireStyle: 'That crooked smile promised trouble—and made her want every bit of it',
-          summary: 'He leaned against the doorframe, twirling her stolen hairpin between his fingers. "Looking for this?" His grin was wicked, his eyes dancing with mischief. "Come get it." And somehow the dare felt like an invitation to something far more dangerous than a chase.',
-          primaryOnly: false
+      SPELLBINDER: {
+          id: 'SPELLBINDER',
+          name: 'The Spellbinder',
+          desireStyle: 'Every glance felt deliberate, every silence a trap — the room bent toward them without knowing why',
+          summary: 'The Spellbinder commands attention through presence alone. Charm is currency, and they spend it selectively — never by accident. Three moves ahead, they make surrender feel like your idea.',
+          stressFailure: 'asymmetric attachment, selective honesty'
       },
-      DANGEROUS: {
-          id: 'DANGEROUS',
-          name: 'The Dangerous',
-          desireStyle: 'The room went quiet when he entered—not from fear, but from the weight of his restraint',
-          summary: 'His stillness was unnerving. She watched his jaw flex, the controlled breath, the way his hands stayed perfectly flat on the table even as his eyes tracked her every movement. Whatever lived beneath that composure, he kept it caged—and she found herself wondering what it would take to set it free.',
-          primaryOnly: false
+      ARMORED_FOX: {
+          id: 'ARMORED_FOX',
+          name: 'The Armored Fox',
+          desireStyle: 'That crooked smile promised trouble, and trouble was the only honest thing about him',
+          summary: 'The Armored Fox survives by never being where you expect. Deflection is art, evasion is affection, and nothing sticks — until it does. The armor is charm; the fox is the wound underneath.',
+          stressFailure: 'permanent deflection, irresponsible freedom'
       },
-      GUARDIAN: {
-          id: 'GUARDIAN',
-          name: 'The Guardian',
-          desireStyle: 'He positioned himself between her and the door without thinking—it was instinct',
-          summary: 'The storm rattled the windows, but his arm around her shoulders was steady. "I\'ve got you," he murmured against her hair, and she realized she had never felt so safe—or so aware of how warm his chest was against her back, how his heartbeat seemed to slow when she leaned into him.',
-          primaryOnly: false
-      },
-      SOVEREIGN: {
-          id: 'SOVEREIGN',
-          name: 'The Sovereign',
-          desireStyle: 'He did not pursue—he simply waited, knowing she would come to him',
-          summary: 'He sat on the throne as if he\'d been born to it, watching her approach with an expression of patient amusement. "You came," he said—not a question, not surprise. Just acknowledgment. As if her presence had been inevitable, as if he had simply been waiting for her to realize it too.',
-          primaryOnly: false
-      },
-      ENCHANTING: {
-          id: 'ENCHANTING',
-          name: 'The Enchanting',
-          desireStyle: 'Every glance felt deliberate, every smile a secret only she could unlock',
-          summary: 'The way he held her gaze across the ballroom made her forget there were other people in the room. He lifted his glass—not to her, exactly, but somehow the gesture was only for her. When he finally smiled, slow and knowing, she felt it like a hook beneath her ribs.',
-          primaryOnly: false
-      },
-      DEVOTED: {
-          id: 'DEVOTED',
-          name: 'The Devoted',
-          desireStyle: 'He remembered the coffee order she\'d mentioned once, three months ago, in passing',
-          summary: 'She found the book on her desk—the one she\'d admired in a shop window weeks ago and never mentioned. No note. But when she looked up, he was watching from across the room, and the quiet intensity in his eyes said everything: I see you. I notice. I remember.',
-          primaryOnly: false
-      },
-      STRATEGIST: {
-          id: 'STRATEGIST',
-          name: 'The Strategist',
-          desireStyle: 'He was always three moves ahead—and somehow that made surrendering feel like winning',
-          summary: 'He slid the chess piece forward without looking at the board. "You\'ll refuse me at first," he said, his voice low, amused. "Then you\'ll reconsider. And by the time you say yes—" He met her eyes. "—you\'ll convince yourself it was your idea." The worst part was, she already wanted to prove him wrong.',
-          primaryOnly: false
+      DARK_VICE: {
+          id: 'DARK_VICE',
+          name: 'The Dark Vice',
+          desireStyle: 'The room went quiet when he entered — not from fear, but from the gravity of something that should not be desired',
+          summary: 'The Dark Vice is the thing you reach for knowing it will cost you. Power, danger, and want fused into a single presence that justifies its own harm. Restraint is performance; beneath it, something hungers.',
+          stressFailure: 'escalation, rationalized harm'
       },
       BEAUTIFUL_RUIN: {
           id: 'BEAUTIFUL_RUIN',
           name: 'The Beautiful Ruin',
-          desireStyle: 'His jaw clenched, a storm behind his perfect eyes—pain or shame, she couldn\'t tell',
-          summary: 'She saw his jaw clench, the storm behind his perfect eyes pulling him inward, as if he were locking himself inside a prison of shame—or was it pain? "You should go," he whispered, but his hand caught her wrist, gentle and desperate. "Everyone leaves. You will too." But he hadn\'t let go.',
-          primaryOnly: true,
+          desireStyle: 'His jaw clenched, a storm behind his perfect eyes — pain or shame, she couldn\'t tell',
+          summary: 'The Beautiful Ruin destroys what it loves before love can disappoint. Self-sabotage as preemptive strike, beauty as wreckage, tenderness laced with goodbye. "Everyone leaves" is prophecy and weapon both.',
+          stressFailure: 'preemptive destruction, mutual sabotage',
           genderedExpression: {
               male: 'He loved fiercely, possessively, as if tenderness itself might betray him',
               female: 'She pushed away first, always, before the disappointment could reach her'
           }
       },
-      ANTI_HERO: {
-          id: 'ANTI_HERO',
-          name: 'The Anti-Hero',
-          desireStyle: 'He wanted her—she could see it in the way he never touched her, never came too close',
-          summary: 'He stopped at the threshold, one hand braced against the doorframe as if holding himself back. "I can\'t," he said, though she hadn\'t asked. His voice was rough. "Not because I don\'t want to." The muscle in his jaw tightened. "Because if I let myself have this—have you—someone gets hurt. And it won\'t be me."',
-          primaryOnly: true,
-          coreFantasy: 'He kept her at arm\'s length not from indifference but from certainty: the closer she got, the more she became a target. He would burn the world before he let it touch her—but he couldn\'t burn himself.'
+      ETERNAL_FLAME: {
+          id: 'ETERNAL_FLAME',
+          name: 'The Eternal Flame',
+          desireStyle: 'He remembered the coffee order she\'d mentioned once, three months ago, in passing — devotion expressed in accumulated attention',
+          summary: 'The Eternal Flame endures. Love is not a feeling but a practice — patient, unwavering, burning steady when everything else has gone dark. They will wait. They will notice. They will still be there.',
+          stressFailure: 'self-neglect, moral endurance'
       }
   };
 
   const ARCHETYPE_ORDER = [
-      'ROMANTIC', 'CLOISTERED', 'ROGUE', 'DANGEROUS', 'GUARDIAN',
-      'SOVEREIGN', 'ENCHANTING', 'DEVOTED', 'STRATEGIST', 'BEAUTIFUL_RUIN', 'ANTI_HERO'
+      'HEART_WARDEN', 'OPEN_VEIN', 'SPELLBINDER', 'ARMORED_FOX',
+      'DARK_VICE', 'BEAUTIFUL_RUIN', 'ETERNAL_FLAME'
   ];
 
   function getArchetypeSectionTitle(loveInterestGender) {
@@ -1129,6 +1110,50 @@ For veto/quill/god_mode:
       if (g === 'female') return 'Archetype Storybelle';
       return 'Archetype Storyboo';
   }
+
+  // =========================
+  // SECONDARY ARCHETYPE PAIRING RULES
+  // allowed: always valid
+  // conditional: valid but carries narrative tension
+  // forbidden: invalid — must flag clearly, never auto-correct
+  // =========================
+  const ARCHETYPE_PAIRING_RULES = {
+      HEART_WARDEN: {
+          allowed: ['ETERNAL_FLAME'],
+          conditional: ['DARK_VICE', 'SPELLBINDER'],
+          forbidden: ['ARMORED_FOX', 'OPEN_VEIN']
+      },
+      OPEN_VEIN: {
+          allowed: ['ETERNAL_FLAME'],
+          conditional: ['BEAUTIFUL_RUIN', 'SPELLBINDER'],
+          forbidden: ['HEART_WARDEN', 'ARMORED_FOX']
+      },
+      SPELLBINDER: {
+          allowed: ['DARK_VICE'],
+          conditional: ['HEART_WARDEN', 'BEAUTIFUL_RUIN'],
+          forbidden: ['ETERNAL_FLAME']
+      },
+      ARMORED_FOX: {
+          allowed: ['DARK_VICE'],
+          conditional: ['BEAUTIFUL_RUIN', 'SPELLBINDER'],
+          forbidden: ['HEART_WARDEN', 'ETERNAL_FLAME']
+      },
+      DARK_VICE: {
+          allowed: ['SPELLBINDER', 'ARMORED_FOX'],
+          conditional: ['BEAUTIFUL_RUIN'],
+          forbidden: ['ETERNAL_FLAME']
+      },
+      BEAUTIFUL_RUIN: {
+          allowed: [],
+          conditional: ['OPEN_VEIN', 'ARMORED_FOX'],
+          forbidden: ['ETERNAL_FLAME', 'HEART_WARDEN']
+      },
+      ETERNAL_FLAME: {
+          allowed: ['HEART_WARDEN'],
+          conditional: ['OPEN_VEIN'],
+          forbidden: ['DARK_VICE', 'SPELLBINDER', 'ARMORED_FOX']
+      }
+  };
 
   function validateArchetypeSelection(primaryId, modifierId) {
       const errors = [];
@@ -1144,15 +1169,17 @@ For veto/quill/god_mode:
       if (modifierId) {
           const modifier = ARCHETYPES[modifierId];
           if (!modifier) {
-              errors.push('Invalid Modifier Archetype selected.');
-              return { valid: false, errors };
-          }
-          if (modifier.primaryOnly) {
-              errors.push(`${modifier.name} may only be chosen as a Primary Archetype.`);
+              errors.push('Invalid Secondary Archetype selected.');
               return { valid: false, errors };
           }
           if (primaryId === modifierId) {
-              errors.push('Primary and Modifier cannot be the same archetype.');
+              errors.push('Primary and Secondary cannot be the same archetype.');
+              return { valid: false, errors };
+          }
+          // Enforce pairing rules — forbidden combinations must be flagged
+          const rules = ARCHETYPE_PAIRING_RULES[primaryId];
+          if (rules && rules.forbidden.includes(modifierId)) {
+              errors.push(`${primary.name} + ${modifier.name} is a forbidden pairing.`);
               return { valid: false, errors };
           }
       }
@@ -1180,119 +1207,145 @@ ${primary.summary}
           }
       }
 
-      if (primary.id === 'ANTI_HERO' && primary.coreFantasy) {
-          directive += `\nCore Fantasy: ${primary.coreFantasy}\n`;
-      }
-
       if (modifierId) {
           const modifier = ARCHETYPES[modifierId];
           if (modifier) {
               directive += `
-Modifier Archetype: ${modifier.name}
-The Modifier colors expression style only. It does not override the Primary's emotional arc or shadow.
-Modifier Desire Style: ${modifier.desireStyle}
+Secondary Archetype: ${modifier.name}
+The Secondary colors expression style only. It does not override the Primary's emotional arc or shadow.
+Secondary Desire Style: ${modifier.desireStyle}
 `;
           }
       }
 
+      // Stress & Failure Pattern (shadow clause) — always included
       directive += `
+STRESS & FAILURE PATTERN (SHADOW CLAUSE):
+When under pressure, emotional threat, or lens-driven withholding (Withheld Core / Moral Friction):
+- ${primary.name} fails toward: ${primary.stressFailure}
+`;
+      if (modifierId) {
+          const modifier = ARCHETYPES[modifierId];
+          if (modifier && modifier.stressFailure) {
+              directive += `- Secondary stress echo (${modifier.name}): ${modifier.stressFailure}\n`;
+          }
+      }
+
+      directive += `
+Stress must never:
+- Remove agency from the other party
+- Excuse harm as romance
+- Stall without escalation or change
+
 STORYTELLER ENFORCEMENT:
 - Treat the Primary Archetype as dominant.
-- Use the Shadow Clause as the main source of relational tension.
+- Use the Stress & Failure Pattern as the main source of relational tension.
 - Allow fracture and repair without erasing the shadow.
 - Never "heal away" the archetype.
 `;
 
-      if (primary.id === 'ANTI_HERO') {
-          directive += `
-ANTI-HERO ENFORCEMENT:
-- Treat self-restraint as the dominant tension driver.
-- Surface conflict through refusal, withdrawal, sacrifice, delayed or denied intimacy.
-- Allow love to progress only through breach of code, not casual erosion.
-- Do not trivialize the code or duty.
-- Do not turn restraint into coyness.
-- Do not resolve the arc by removing responsibility.
-- Anti-Hero arcs hinge on choice under cost, not healing-through-love.
-`;
-      }
-
       return directive;
   }
 
-  // Get valid modifier archetypes (excludes primaryOnly)
-  function getValidModifierArchetypes() {
+  // Get valid secondary archetypes for a given primary (respects pairing rules)
+  function getValidModifierArchetypes(primaryId) {
+      if (!primaryId) return ARCHETYPE_ORDER.slice();
+      const rules = ARCHETYPE_PAIRING_RULES[primaryId];
       return ARCHETYPE_ORDER.filter(id => {
-          const arch = ARCHETYPES[id];
-          return arch && !arch.primaryOnly;
+          if (id === primaryId) return false;
+          if (rules && rules.forbidden.includes(id)) return false;
+          return true;
       });
   }
 
-  // Normalize user input to best matching modifier archetype
-  // Maps free text to closest modifier (IP-safe transformation)
+  // Normalize user input to best matching secondary archetype
+  // Maps free text to closest secondary (IP-safe transformation)
   function normalizeArchetypeModifierInput(input, currentPrimary) {
       if (!input || typeof input !== 'string') return null;
 
       const normalized = input.trim().toLowerCase();
       if (!normalized) return null;
 
-      // Get valid modifiers (excluding primaryOnly archetypes)
-      const validModifiers = getValidModifierArchetypes();
+      // Get valid secondaries (respects pairing rules)
+      const validModifiers = getValidModifierArchetypes(currentPrimary);
 
       // Direct match by name
       for (const id of validModifiers) {
           const arch = ARCHETYPES[id];
           if (arch.name.toLowerCase().includes(normalized) ||
               normalized.includes(arch.name.toLowerCase().replace('the ', ''))) {
-              // Can't use same as primary
-              if (id === currentPrimary) continue;
               return id;
           }
       }
 
-      // Keyword matching based on desireStyle
+      // Keyword matching — maps legacy and descriptive terms to canonical archetypes
       const keywordMap = {
-          'romantic': 'ROMANTIC',
-          'expressive': 'ROMANTIC',
-          'devoted': 'DEVOTED',
-          'poetic': 'ROMANTIC',
-          'cloistered': 'CLOISTERED',
-          'sheltered': 'CLOISTERED',
-          'innocent': 'CLOISTERED',
-          'awakening': 'CLOISTERED',
-          'rogue': 'ROGUE',
-          'playful': 'ROGUE',
-          'charm': 'ROGUE',
-          'irreverent': 'ROGUE',
-          'dangerous': 'DANGEROUS',
-          'menace': 'DANGEROUS',
-          'restrained': 'DANGEROUS',
-          'power': 'DANGEROUS',
-          'guardian': 'GUARDIAN',
-          'protective': 'GUARDIAN',
-          'steady': 'GUARDIAN',
-          'safe': 'GUARDIAN',
-          'paladin': 'GUARDIAN',
-          'knight': 'GUARDIAN',
-          'sovereign': 'SOVEREIGN',
-          'authority': 'SOVEREIGN',
-          'composed': 'SOVEREIGN',
-          'royal': 'SOVEREIGN',
-          'enchanting': 'ENCHANTING',
-          'allure': 'ENCHANTING',
-          'magnetic': 'ENCHANTING',
-          'seductive': 'ENCHANTING',
-          'loyal': 'DEVOTED',
-          'focused': 'DEVOTED',
-          'exclusive': 'DEVOTED',
-          'attention': 'DEVOTED',
-          'strategist': 'STRATEGIST',
-          'intelligent': 'STRATEGIST',
-          'anticipation': 'STRATEGIST',
-          'clever': 'STRATEGIST'
+          // Heart Warden (absorbs Guardian, Sovereign)
+          'warden': 'HEART_WARDEN',
+          'protective': 'HEART_WARDEN',
+          'guardian': 'HEART_WARDEN',
+          'safe': 'HEART_WARDEN',
+          'shield': 'HEART_WARDEN',
+          'authority': 'HEART_WARDEN',
+          'sovereign': 'HEART_WARDEN',
+          'paladin': 'HEART_WARDEN',
+          'knight': 'HEART_WARDEN',
+          'steady': 'HEART_WARDEN',
+          // Open Vein (absorbs Romantic, Cloistered)
+          'vein': 'OPEN_VEIN',
+          'vulnerable': 'OPEN_VEIN',
+          'romantic': 'OPEN_VEIN',
+          'tender': 'OPEN_VEIN',
+          'expressive': 'OPEN_VEIN',
+          'poetic': 'OPEN_VEIN',
+          'cloistered': 'OPEN_VEIN',
+          'sheltered': 'OPEN_VEIN',
+          'innocent': 'OPEN_VEIN',
+          'awakening': 'OPEN_VEIN',
+          // Spellbinder (absorbs Enchanting, Strategist)
+          'spellbinder': 'SPELLBINDER',
+          'charm': 'SPELLBINDER',
+          'magnetic': 'SPELLBINDER',
+          'allure': 'SPELLBINDER',
+          'enchanting': 'SPELLBINDER',
+          'seductive': 'SPELLBINDER',
+          'strategist': 'SPELLBINDER',
+          'intelligent': 'SPELLBINDER',
+          'clever': 'SPELLBINDER',
+          'anticipation': 'SPELLBINDER',
+          // Armored Fox (absorbs Rogue)
+          'fox': 'ARMORED_FOX',
+          'rogue': 'ARMORED_FOX',
+          'playful': 'ARMORED_FOX',
+          'irreverent': 'ARMORED_FOX',
+          'evasive': 'ARMORED_FOX',
+          'deflect': 'ARMORED_FOX',
+          // Dark Vice (absorbs Dangerous, Anti-Hero)
+          'vice': 'DARK_VICE',
+          'dangerous': 'DARK_VICE',
+          'menace': 'DARK_VICE',
+          'dark': 'DARK_VICE',
+          'restrained': 'DARK_VICE',
+          'power': 'DARK_VICE',
+          'anti-hero': 'DARK_VICE',
+          // Beautiful Ruin
+          'ruin': 'BEAUTIFUL_RUIN',
+          'destruction': 'BEAUTIFUL_RUIN',
+          'sabotage': 'BEAUTIFUL_RUIN',
+          'wreckage': 'BEAUTIFUL_RUIN',
+          // Eternal Flame (absorbs Devoted)
+          'flame': 'ETERNAL_FLAME',
+          'devoted': 'ETERNAL_FLAME',
+          'loyal': 'ETERNAL_FLAME',
+          'endure': 'ETERNAL_FLAME',
+          'unwavering': 'ETERNAL_FLAME',
+          'focused': 'ETERNAL_FLAME',
+          'attention': 'ETERNAL_FLAME',
+          'exclusive': 'ETERNAL_FLAME'
       };
 
       for (const [keyword, archId] of Object.entries(keywordMap)) {
-          if (normalized.includes(keyword) && validModifiers.includes(archId) && archId !== currentPrimary) {
+          if (normalized.includes(keyword) && validModifiers.includes(archId)) {
               return archId;
           }
       }
@@ -1388,11 +1441,19 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
   }
 
   // Guided Fate: assign Withheld Core variant based on archetype signals
+  // Canonical mapping after legacy migration:
+  //   OPEN_VEIN (absorbed CLOISTERED) → CLOISTERED variant
+  //   BEAUTIFUL_RUIN → UNWORTHINESS variant
+  //   DARK_VICE (absorbed ANTI_HERO) → UNWORTHINESS variant
+  // TODO: OPEN_VEIN also absorbed ROMANTIC which had no variant.
+  //   Current behavior: all OPEN_VEIN selections trigger CLOISTERED.
+  //   May over-apply for players who intend Romantic rather than Cloistered.
+  //   Refine with dynamic-based signal if needed.
   function getFateWithheldCoreVariant(archetype, dynamic) {
       // CLOISTERED: avoidance driven by inexperience or unformed desire
-      if (archetype === 'CLOISTERED') return 'CLOISTERED';
+      if (archetype === 'OPEN_VEIN') return 'CLOISTERED';
       // UNWORTHINESS: avoidance driven by guilt, shame, or belief of being undeserving
-      if (archetype === 'BEAUTIFUL_RUIN' || archetype === 'ANTI_HERO') return 'UNWORTHINESS';
+      if (archetype === 'BEAUTIFUL_RUIN' || archetype === 'DARK_VICE') return 'UNWORTHINESS';
       // No variant if neither condition is met
       return null;
   }
@@ -5233,8 +5294,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const existing = frontFace.querySelector('.sb-zoom-content');
       if (existing) existing.remove();
 
-      // Get valid modifiers (excluding current primary and primaryOnly archetypes)
-      const validModifiers = getValidModifierArchetypes().filter(id => id !== archetypeId);
+      // Get valid secondaries (respects pairing rules, excludes current primary)
+      const validModifiers = getValidModifierArchetypes(archetypeId);
 
       // Create zoom content container
       const zoomContent = document.createElement('div');
@@ -5248,7 +5309,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       const customLabel = document.createElement('label');
       customLabel.className = 'sb-zoom-custom-label';
-      customLabel.textContent = 'Modifier:';
+      customLabel.textContent = 'Secondary:';
 
       // Create input wrapper for rotating placeholder
       const inputWrapper = document.createElement('div');
@@ -6028,11 +6089,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     return 'First';
   }
 
-  // Get weighted archetype selection
+  // Get weighted archetype selection (canonical 7)
   function getFateArchetype() {
-    // Prefer romantic archetypes for the default romance experience
-    const archetypes = ['ROMANTIC', 'DEVOTED', 'ENCHANTING', 'GUARDIAN', 'CLOISTERED'];
-    const weights = [35, 25, 20, 15, 5];
+    // Weighted toward emotionally accessible archetypes for default romance experience
+    // Legacy mapping: ROMANTIC→OPEN_VEIN, DEVOTED→ETERNAL_FLAME,
+    //   ENCHANTING→SPELLBINDER, GUARDIAN→HEART_WARDEN
+    const archetypes = ['OPEN_VEIN', 'ETERNAL_FLAME', 'SPELLBINDER', 'HEART_WARDEN', 'ARMORED_FOX'];
+    const weights = [30, 25, 20, 15, 10];
     return weightedSelect(archetypes, weights);
   }
 
