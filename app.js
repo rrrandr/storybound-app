@@ -7257,6 +7257,21 @@ TITLE CONSTRAINTS:
       return focus;
   }
 
+  // Camera distance resolver — derives framing from interaction density
+  function resolveCameraDistance(text) {
+      let distance = 'medium framing';
+      if (/(touch|hand|grip|press|pull|whisper|breath|close|against)\b/i.test(text)) {
+          distance = 'close framing';
+      }
+      if (/(approach|step|turn|face|block|stand before)\b/i.test(text)) {
+          distance = 'medium framing';
+      }
+      if (/(arena|crowd|stadium|hall|city|vast|sprawling|towering)\b/i.test(text)) {
+          distance = 'wide framing';
+      }
+      return distance;
+  }
+
   // Default visual quality biases for attractive characters
   const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
 
@@ -7966,13 +7981,14 @@ TITLE CONSTRAINTS:
           const sceneSignals = getSceneVisualSignals(lastText);
           const sceneCtx = sceneSignals.length ? '- ' + sceneSignals.join('\n- ') : '- No additional scene constraints';
           const focusDirective = resolveVisualFocus(lastText);
+          const cameraDistance = resolveCameraDistance(lastText);
 
           if(!isRe || !promptMsg) {
               try {
                   promptMsg = await Promise.race([
                       callChat([{
                           role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`
+                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nCAMERA DISTANCE:\n- ${cameraDistance}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
