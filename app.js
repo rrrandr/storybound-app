@@ -7000,10 +7000,24 @@ No accidental betrayal. No silent exits.
     // Power Role: resolve genre into world-appropriate label for story prompts
     const storyWorld = state.picks.world || 'Modern';
     const storyEra = state.picks.world === 'Historical' ? (state.picks.era || 'Medieval') : null;
-    const storyPowerRole = resolvePowerRole(storyWorld, storyEra, state.picks.genre || 'Billionaire');
+    const storyGenre = state.picks.genre || 'Billionaire';
+    const storyPowerRole = resolvePowerRole(storyWorld, storyEra, storyGenre);
+    const storyPowerFrame = resolvePowerFrame(storyWorld, storyGenre);
 
-    // DEV LOGGING: story generation state snapshot
-    console.log('[DEV:StoryGen] world:', storyWorld, '| tone:', state.picks.tone, '| genre:', state.picks.genre, '→ powerRole:', storyPowerRole, '| intensity:', state.intensity);
+    // Prehistoric hard forbid — prevent anachronistic vocabulary leak
+    const prehistoricForbid = storyWorld === 'Prehistoric' ? `
+PREHISTORIC WORLD — HARD FORBIDS:
+The following concepts DO NOT EXIST in this world. Never reference them:
+- "Ash Quarter" or any named district / quarter
+- "Warden-cadre" or any institutional guard force
+- Guilds, markets, syndicates, courts, or councils
+- Currency, trade routes, written law, formal ranks
+- Feudal / medieval hierarchy (lords, knights, castles)
+Use instead: tribal structures, clan hierarchy, natural landmarks, oral tradition, primal authority, territory, hunting grounds.` : '';
+
+    // DEV LOGGING: story generation + world resolve snapshot
+    console.log('[DEV:StoryGen] world:', storyWorld, '| tone:', state.picks.tone, '| genre:', storyGenre, '→ powerRole:', storyPowerRole, '| powerFrame:', storyPowerFrame, '| intensity:', state.intensity);
+    console.log('[DEV:WorldResolve] world:', storyWorld, '| genre:', storyGenre, '→ powerFrame:', storyPowerFrame, '| prehistoricForbid:', storyWorld === 'Prehistoric');
 
     const sys = `You are a bestselling erotica author (Voice: ${state.authorGender}, ${state.authorPronouns}).
 
@@ -7063,9 +7077,10 @@ You are writing a story with the following 4-axis configuration:
 - World: ${state.picks.world || 'Modern'}${state.picks.world === 'Historical' && state.picks.era ? ` (${state.picks.era} Era)` : ''}
 - Tone: ${state.picks.tone || 'Earnest'}
 - Genre: ${storyPowerRole}
+- Power Frame: ${storyPowerFrame}
 - Dynamic: ${state.picks.dynamic || 'Enemies'}
 - POV: ${state.picks.pov || 'First'}
-
+${prehistoricForbid}
 
     Protagonist: ${pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
     Love Interest: ${lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
@@ -7900,6 +7915,30 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       return genre; // unknown world fallback
   }
 
+  // ============================================================
+  // POWER FRAME RESOLUTION
+  // Maps genre labels to world-appropriate narrative frames.
+  // Broader than resolvePowerRole (which handles Billionaire only).
+  // Modern worlds pass through unchanged.
+  // Rollback: remove resolvePowerFrame() calls, use raw genre
+  // ============================================================
+  function resolvePowerFrame(world, genre) {
+      if (world === 'Modern') return genre;
+
+      // Non-Modern generic frame transmutation
+      if (genre === 'Billionaire') return 'Ruler';
+      if (genre === 'Crime Syndicate') return 'Faction';
+      if (genre === 'Sports') return 'Ritual Contest';
+
+      // Prehistoric-specific transmutations
+      if (world === 'Prehistoric') {
+          if (genre === 'Mafia') return 'Tribal Enforcer';
+          if (genre === 'Military') return 'War Leader';
+      }
+
+      return genre; // default pass-through
+  }
+
   // Background patterns by domain
   const DOMAIN_BACKGROUNDS = {
       // World-based
@@ -8355,21 +8394,22 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
 
   // ============================================================
   // PHASE 3A: ARCHETYPE SELECTOR
-  // Returns archetype ONLY when explicitly requested via state.coverArchetype
-  // Default behavior returns null (canonical cover system)
-  // No auto-inference — explicit request only
+  // Deterministic world-based archetype — NEVER returns null.
+  // Explicit state.coverArchetype overrides world default.
+  // Prehistoric / Historical / Fantasy → THRESHOLD
+  // SciFi / Modern / Dystopian → EMBLEM
   // ============================================================
   function selectCoverArchetype(genre, dynamic, tone, world, synopsis) {
-      // Phase 3A: Check for explicit archetype request
-      // To request EMBLEM: set state.coverArchetype = 'EMBLEM' before cover generation
-      // To disable: set state.coverArchetype = null or undefined
-      if (state.coverArchetype === 'EMBLEM') {
-          return 'EMBLEM';
-      }
+      // Explicit archetype override (UI or Guided-Fate driven)
+      if (state.coverArchetype === 'EMBLEM') return 'EMBLEM';
+      if (state.coverArchetype === 'THRESHOLD') return 'THRESHOLD';
 
-      // Default: return null (canonical cover system)
-      // No auto-inference yet — explicit request required
-      return null;
+      // World-based deterministic default
+      if (world === 'Prehistoric' || world === 'Historical' || world === 'Fantasy') {
+          return 'THRESHOLD';
+      }
+      // SciFi, Modern, Dystopian, unknown → EMBLEM
+      return 'EMBLEM';
   }
 
   // Generate book cover with intent-based routing
@@ -8381,17 +8421,18 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const genre = state.picks?.genre || 'Billionaire';
       const dynamic = state.picks?.dynamic || 'Enemies';
       const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
-      // Power Role: resolve genre into world-appropriate label
+      // Power Role + Power Frame: resolve genre into world-appropriate labels
       const powerRole = resolvePowerRole(world, era, genre);
-      // Phase 2b: Extract arousal/intensity (plumbing only, not yet used)
+      const powerFrame = resolvePowerFrame(world, genre);
+      // Extract arousal/intensity
       const arousal = state.intensity || null;
 
-      // Phase 2b: Archetype selection stub (always returns null in Phase 2b)
-      // This call site is structural scaffolding only — no behavior change
+      // Archetype selection — deterministic, world-based, never null
       const archetype = selectCoverArchetype(genre, dynamic, tone, world, synopsis);
 
       // DEV LOGGING: generation-time state snapshot
       console.log('[DEV:CoverGen] world:', world, '| tone:', tone, '| genre:', genre, '→ powerRole:', powerRole, '| archetype:', archetype, '| arousal:', arousal);
+      console.log('[DEV:WorldResolve] world:', world, '| genre:', genre, '→ archetype:', archetype, '| powerFrame:', powerFrame);
 
       // Build mode line from world + tone
       const modeLine = era ? `${era} ${world}` : `${world} ${tone}`;
