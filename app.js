@@ -7864,6 +7864,202 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       saveStorySnapshot();
   };
 
+  // =========================================================================
+  // NARRATIVE VOCABULARY ENFORCEMENT
+  // =========================================================================
+  //
+  // Post-generation enforcement layer for vocabulary bans and structural
+  // narrator constraints. Operates on raw AI output BEFORE formatting.
+  //
+  // This extends the existing veto/bannedWords system (which injects bans
+  // into the system prompt) with a code-level validation + single-retry
+  // regeneration path.
+  //
+  // Includes: Author Density Validation for 5th Person (Author) POV.
+  //
+  // =========================================================================
+
+  /**
+   * Scrub generated text for vocabulary violations.
+   *
+   * Checks:
+   * 1. Banned words from state.veto.bannedWords
+   * 2. Author Density (positive constraint) when 5th Person POV is active
+   *
+   * @param {string} text - Raw AI-generated prose
+   * @param {object} context
+   *   context.type       'prose' | 'title' | 'synopsis'
+   *   context.isFatePOV  boolean — true when 5th Person (Author) POV is active
+   *   context.sceneIndex number — 1-based scene/page index
+   * @returns {{ clean: boolean, violations: Array<{type, message, detail}> }}
+   */
+  function scrubNarrativeVocabulary(text, context) {
+      const violations = [];
+
+      if (!text || typeof text !== 'string') {
+          return { clean: true, violations };
+      }
+
+      // --- 1. Banned-word scan ---
+      const banned = state.veto?.bannedWords || [];
+      for (const word of banned) {
+          if (!word) continue;
+          const rx = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+          const hits = (text.match(rx) || []).length;
+          if (hits > 0) {
+              violations.push({
+                  type: 'banned_word',
+                  message: `Banned word "${word}" found ${hits} time(s)`,
+                  detail: { word, count: hits }
+              });
+          }
+      }
+
+      // --- 2. Author Density Validation (5th Person POV only) ---
+      // Applies ONLY to prose — never to titles or synopsis
+      if (
+          context.type === 'prose' &&
+          context.isFatePOV === true &&
+          state.povMode === 'author5th'
+      ) {
+          const authorRx = /The Author\b/g;
+          const count = (text.match(authorRx) || []).length;
+
+          let minRequired, maxAllowed;
+          if (context.sceneIndex === 1) {
+              minRequired = 5;
+              maxAllowed = 10;
+          } else {
+              minRequired = 3;
+              maxAllowed = 6;
+          }
+
+          if (count < minRequired) {
+              violations.push({
+                  type: 'author_density_underflow',
+                  message: `"The Author" appears ${count} time(s), minimum is ${minRequired} for scene ${context.sceneIndex}`,
+                  detail: { count, minRequired, maxAllowed, sceneIndex: context.sceneIndex }
+              });
+          } else if (count > maxAllowed) {
+              violations.push({
+                  type: 'author_density_overflow',
+                  message: `"The Author" appears ${count} time(s), maximum is ${maxAllowed} for scene ${context.sceneIndex}`,
+                  detail: { count, minRequired, maxAllowed, sceneIndex: context.sceneIndex }
+              });
+          }
+      }
+
+      return {
+          clean: violations.length === 0,
+          violations
+      };
+  }
+
+  /**
+   * Build constraint string(s) from violations to append to system prompt
+   * on a regeneration pass.
+   *
+   * @param {Array<{type, message, detail}>} violations
+   * @returns {string} Constraint text to append to the system prompt
+   */
+  function buildVocabBanConstraint(violations) {
+      const parts = [];
+
+      for (const v of violations) {
+          switch (v.type) {
+              case 'banned_word':
+                  parts.push(
+                      `VOCABULARY BAN VIOLATION: The word "${v.detail.word}" is BANNED. ` +
+                      `Do NOT use it. Replace with a contextually appropriate alternative.`
+                  );
+                  break;
+
+              case 'author_density_underflow':
+                  parts.push(
+                      `AUTHOR DENSITY CONSTRAINT: Ensure "The Author" appears at least ` +
+                      `${v.detail.minRequired} times in the prose as an on-page Fate presence. ` +
+                      `Current count: ${v.detail.count}. Scene ${v.detail.sceneIndex} requires ` +
+                      `${v.detail.minRequired}–${v.detail.maxAllowed} mentions.`
+                  );
+                  break;
+
+              case 'author_density_overflow':
+                  parts.push(
+                      `AUTHOR DENSITY CONSTRAINT: Reduce repetitions of "The Author" to ` +
+                      `no more than ${v.detail.maxAllowed} mentions. Current count: ${v.detail.count}. ` +
+                      `Scene ${v.detail.sceneIndex} allows ${v.detail.minRequired}–${v.detail.maxAllowed}.`
+                  );
+                  break;
+
+              default:
+                  // TODO: Unknown violation type — log and skip
+                  console.warn('[VOCAB-ENFORCE] Unknown violation type:', v.type);
+                  break;
+          }
+      }
+
+      return parts.join('\n');
+  }
+
+  /**
+   * Enforce vocabulary bans and structural narrator constraints on AI output.
+   *
+   * Flow:
+   *   1. Scrub text for violations
+   *   2. If violations found → build constraint → regenerate ONCE
+   *   3. Re-scrub after regeneration
+   *   4. If still violated → log hard warning, return best-effort
+   *   5. NEVER loops more than once
+   *
+   * @param {string} text - Raw AI-generated prose
+   * @param {object} context - Same context object as scrubNarrativeVocabulary
+   * @param {function} regenerateFn - async (constraintString) => string
+   *        Called with the constraint to append to the system prompt.
+   *        Returns the regenerated raw text.
+   * @returns {Promise<{ text: string, enforced: boolean, violations: Array }>}
+   */
+  async function enforceVocabularyBans(text, context, regenerateFn) {
+      // --- First pass ---
+      const firstCheck = scrubNarrativeVocabulary(text, context);
+
+      if (firstCheck.clean) {
+          return { text, enforced: false, violations: [] };
+      }
+
+      console.log('[VOCAB-ENFORCE] Violations detected on first pass:',
+          firstCheck.violations.map(v => v.message));
+
+      // --- Build constraint and regenerate ONCE ---
+      const constraint = buildVocabBanConstraint(firstCheck.violations);
+
+      let regenerated;
+      try {
+          regenerated = await regenerateFn(constraint);
+      } catch (err) {
+          console.error('[VOCAB-ENFORCE] Regeneration failed:', err.message);
+          // Return original text as best-effort
+          return { text, enforced: false, violations: firstCheck.violations };
+      }
+
+      if (!regenerated || typeof regenerated !== 'string' || regenerated.trim().length === 0) {
+          console.warn('[VOCAB-ENFORCE] Regeneration returned empty; using original');
+          return { text, enforced: false, violations: firstCheck.violations };
+      }
+
+      // --- Second pass (re-check) ---
+      const secondCheck = scrubNarrativeVocabulary(regenerated, context);
+
+      if (secondCheck.clean) {
+          console.log('[VOCAB-ENFORCE] Enforcement succeeded after regeneration');
+          return { text: regenerated, enforced: true, violations: [] };
+      }
+
+      // Still violated — log hard warning, return best-effort (regenerated version)
+      console.warn('[VOCAB-ENFORCE] HARD WARNING: Violations persist after regeneration:',
+          secondCheck.violations.map(v => v.message));
+      return { text: regenerated, enforced: true, violations: secondCheck.violations };
+  }
+
   // --- GAME LOOP ---
   $('submitBtn')?.addEventListener('click', async () => {
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
@@ -8080,6 +8276,27 @@ FATE CARD ADAPTATION (CRITICAL):
           // Validate response shape before marking as success
           if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {
               throw new Error('Invalid response: empty or malformed story text');
+          }
+
+          // --- NARRATIVE VOCABULARY ENFORCEMENT ---
+          // Enforce banned words and Author density (5th Person POV) on prose.
+          // Uses single-retry regeneration via the same callChat path.
+          {
+              const vocabContext = {
+                  type: 'prose',
+                  isFatePOV: state.povMode === 'author5th',
+                  sceneIndex: StoryPagination.getPageCount() + 1  // 1-based; next page
+              };
+
+              const vocabResult = await enforceVocabularyBans(raw, vocabContext, async (constraint) => {
+                  // Regenerate with the constraint appended to the system prompt
+                  return await callChat([
+                      { role: 'system', content: fullSys + '\n\n' + constraint },
+                      { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                  ]);
+              });
+
+              raw = vocabResult.text;
           }
 
           state.turnCount++;
