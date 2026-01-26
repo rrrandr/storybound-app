@@ -7272,6 +7272,28 @@ TITLE CONSTRAINTS:
       return distance;
   }
 
+  function resolveLightingCondition(text) {
+      // Default lighting
+      let lighting = 'neutral ambient lighting';
+
+      // Low-light cues
+      if (/(dark|dim|shadow|night|torch|candle|lantern|flicker|low light)\b/i.test(text)) {
+          lighting = 'low-light conditions with limited illumination';
+      }
+
+      // Directional / high-contrast cues
+      if (/(spotlight|beam|shaft of light|backlit|rim light|glow from|lit by)\b/i.test(text)) {
+          lighting = 'directional lighting with strong highlights and shadow contrast';
+      }
+
+      // Broad visibility / daylight cues
+      if (/(sunlight|daylight|bright|open sky|well-lit|flooded with light)\b/i.test(text)) {
+          lighting = 'even, well-lit conditions with broad visibility';
+      }
+
+      return lighting;
+  }
+
   // Default visual quality biases for attractive characters
   const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
 
@@ -7982,13 +8004,14 @@ TITLE CONSTRAINTS:
           const sceneCtx = sceneSignals.length ? '- ' + sceneSignals.join('\n- ') : '- No additional scene constraints';
           const focusDirective = resolveVisualFocus(lastText);
           const cameraDistance = resolveCameraDistance(lastText);
+          const lightingCondition = resolveLightingCondition(lastText);
 
           if(!isRe || !promptMsg) {
               try {
                   promptMsg = await Promise.race([
                       callChat([{
                           role:'user',
-                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nCAMERA DISTANCE:\n- ${cameraDistance}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`
+                          content:`${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nCAMERA DISTANCE:\n- ${cameraDistance}\n\nLIGHTING:\n- ${lightingCondition}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`
                       }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
