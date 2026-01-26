@@ -420,8 +420,11 @@ No gibberish text. No watermarks.`;
   // Phase 3D: Apply Erotic Motif layer (gated by arousal)
   const withEroticMotif = applyEroticMotifLayer(withWorldGrammar, arousal, null, world);
 
+  // Phase 4A: Composition Safety + Title Balance
+  const withSafety = appendCompositionSafety(withEroticMotif, null);
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(withEroticMotif);
+  return appendStoryboundBorder(withSafety);
 }
 
 function wrapScenePrompt(basePrompt) {
@@ -650,6 +653,41 @@ The motif harmonizes with the composition — it does NOT dominate or override t
   return prompt + eroticMotifBlock;
 }
 
+// ============================================================
+// PHASE 4A — COMPOSITION SAFETY + TITLE BALANCE
+// Enforces safe margins and typography-object harmony
+// No archetype or behavior changes
+// Inserted after World Grammar + Erotic Motif, before Border
+// ============================================================
+function appendCompositionSafety(prompt, archetype) {
+  const safetyBlock = `
+
+COMPOSITION SAFETY:
+- Maintain a clear top margin for series and title text
+- Maintain a clear bottom margin for author name
+- No critical visual elements within the top 8% or bottom 10% of the frame
+- All text must be fully visible and legible within image boundaries
+- Avoid edge-cropping of letters, words, or decorative borders`;
+
+  const titleBalance = archetype === 'THRESHOLD'
+    ? `
+
+TITLE BALANCE:
+- Title must be prominent but not oversized relative to the threshold boundary
+- The boundary element must remain clearly visible and meaningful
+- Diegetic typography must integrate with the physical environment — carved, etched, or formed from material
+- Avoid oversized text that overwhelms the composition or breaks diegetic immersion`
+    : `
+
+TITLE BALANCE:
+- Title must be prominent but not oversized relative to the central object
+- The symbolic object must remain clearly visible and meaningful
+- Typography should integrate with lighting, texture, and surface
+- Avoid oversized text that overwhelms the composition`;
+
+  return prompt + safetyBlock + titleBalance;
+}
+
 // Forbidden Library — blocklist validation
 // Phase 2b: Empty placeholder, not yet populated
 const FORBIDDEN_LIBRARY = {
@@ -793,8 +831,11 @@ No gibberish text. No watermarks.`;
   // Phase 3D: Apply Erotic Motif layer (gated by arousal)
   const withEroticMotif = applyEroticMotifLayer(withWorldGrammar, arousal, 'EMBLEM', world);
 
+  // Phase 4A: Composition Safety + Title Balance
+  const withSafety = appendCompositionSafety(withEroticMotif, 'EMBLEM');
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(withEroticMotif);
+  return appendStoryboundBorder(withSafety);
 }
 
 // ============================================================
@@ -952,8 +993,11 @@ No gibberish text. No watermarks.`;
   // Phase 3D: Apply Erotic Motif layer (gated by arousal)
   const withEroticMotif = applyEroticMotifLayer(withWorldGrammar, arousal, 'THRESHOLD', world);
 
+  // Phase 4A: Composition Safety + Title Balance (preserves diegetic rules)
+  const withSafety = appendCompositionSafety(withEroticMotif, 'THRESHOLD');
+
   // Phase 3B: Apply universal Storybound border
-  return appendStoryboundBorder(withEroticMotif);
+  return appendStoryboundBorder(withSafety);
 }
 
 // ============================================================
