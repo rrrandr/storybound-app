@@ -2222,24 +2222,64 @@ textarea.fate-field {
     z-index: 5;
     overflow: hidden;
     box-shadow: inset -2px 0 8px rgba(0,0,0,0.05);
+    /* Two-page spread layout */
+    display: flex;
+    flex-direction: row;
 }
 
-/* Inside cover surface - PURE PAPER WHITE */
+/* Inside cover surface — LEFT PAGE (synopsis on white) */
 .book-inside-cover {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    flex: 1 1 50%;
     background: #ffffff;
-    border-radius: 0 6px 6px 0;
+    border-radius: 0;
     z-index: 6;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 30px;
+    padding: 24px 14px;
     text-align: center;
     color: #333;
     opacity: 0;
     transition: opacity 0.3s ease;
+    border-right: 1px solid #e0e0e0;
+    box-sizing: border-box;
+}
+
+/* Inside scene surface — RIGHT PAGE (setting art only) */
+.book-inside-scene {
+    position: relative;
+    flex: 1 1 50%;
+    background: #f5f0e8;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    box-sizing: border-box;
+}
+
+.book-scene-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.book-scene-loading {
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 0.75em;
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 10px;
+}
+
+.book-scene-image[src]:not([src=""]) ~ .book-scene-loading {
+    display: none;
 }
 
 .book-object:hover .book-inside-cover,
@@ -2249,13 +2289,20 @@ textarea.fate-field {
     opacity: 1;
 }
 
+.book-object:hover .book-inside-scene,
+.book-cover.hinge-peek + .book-pages-preview .book-inside-scene,
+.book-cover.courtesy-peek + .book-pages-preview .book-inside-scene,
+.book-cover.hinge-open + .book-pages-preview .book-inside-scene {
+    opacity: 1;
+}
+
 /* Inside cover synopsis styling */
 .inside-cover-synopsis {
     font-family: var(--font-story, Georgia, serif);
-    font-size: 1.1em;
-    line-height: 1.7;
+    font-size: 0.85em;
+    line-height: 1.5;
     color: #2a2a2a;
-    max-width: 85%;
+    max-width: 92%;
     margin: 0 auto;
     font-style: italic;
     letter-spacing: 0.02em;
@@ -2263,10 +2310,10 @@ textarea.fate-field {
 
 /* Inside cover decorative rule */
 .inside-cover-rule {
-    width: 60px;
+    width: 40px;
     height: 1px;
     background: linear-gradient(to right, transparent, #999, transparent);
-    margin: 20px auto;
+    margin: 12px auto;
 }
 
 .page-edge-stack {
@@ -2284,6 +2331,7 @@ textarea.fate-field {
     );
     border-radius: 0 4px 4px 0;
     box-shadow: inset -1px 0 2px rgba(0,0,0,0.05);
+    z-index: 7;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

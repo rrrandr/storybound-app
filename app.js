@@ -7528,12 +7528,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
         // Generate book cover with intent-based routing (async, non-blocking)
         // Uses gpt-image-1.5 for typography rendering
-        // TESTING MODE: Force "Anonymous" for all books when not logged in
-        const authorDisplayName = !state.isLoggedIn
-            ? 'Anonymous'
-            : (state.authorGender === 'Non-Binary'
-                ? 'The Author'
-                : (state.authorGender === 'Female' ? 'A. Romance' : 'A. Novelist'));
+        // Author credit: always from state.coverAuthor (never narrator state)
+        const authorDisplayName = state.coverAuthor || 'Anonymous';
 
         generateBookCover(synopsis, cleanTitle, authorDisplayName).then(coverUrl => {
             if (coverUrl) {
@@ -7545,8 +7541,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
             }
         });
 
-        // Setting shot removed - image generation requires explicit user action
-        // (Visualize button or cover request only)
+        // Generate setting art for book right page (distinct asset, never reuses cover)
+        // Runs in parallel with cover generation — populates bookInsideScene
+        generateBookSceneArt(synopsis);
 
         // Story text reveal is handled by cover page flow
         // (user clicks "Open Your Story" to see content)
@@ -7829,6 +7826,70 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           generateSettingShot(_lastSettingShotDesc);
       }
   };
+
+  // ============================================================
+  // BOOK SCENE ART — Right page of opened book
+  // Distinct asset from cover. Uses imageIntent='setting'.
+  // Populates #bookSceneImg inside #bookInsideScene.
+  // Scene 1 narrative image is NOT rendered here — only on first beat.
+  // ============================================================
+  async function generateBookSceneArt(synopsis) {
+      const sceneImg = document.getElementById('bookSceneImg');
+      const loadingEl = document.getElementById('bookSceneLoading');
+      if (!sceneImg) {
+          console.warn('[BookScene] bookSceneImg element not found');
+          return;
+      }
+
+      const world = state.picks?.world || 'Modern';
+      const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
+      const worldLabel = era ? `${era} ${world}` : world;
+
+      // Build a concise world-establishing description from synopsis
+      const desc = `${worldLabel} world. ${(synopsis || 'A dramatic setting').substring(0, 200)}`;
+
+      const vistaPrompt = `${desc}
+
+CRITICAL COMPOSITION RULES:
+- This MUST be a WORLD VISTA image: landscape, environment, establishing shot.
+- If ANY human figure appears, they MUST be facing AWAY, silhouette only.
+- ABSOLUTELY FORBIDDEN: Portraits, faces, character close-ups, romantic poses.
+- Camera position: Wide establishing shot, epic scale, environment is the subject.
+
+Wide cinematic environment, atmospheric lighting, painterly illustration, no text, no watermark.`;
+
+      try {
+          const rawUrl = await generateImageWithFallback({
+              prompt: vistaPrompt,
+              tier: 'Clean',
+              shape: 'landscape',
+              context: 'book-scene-art',
+              intent: 'setting'
+          });
+
+          if (rawUrl) {
+              let imageUrl = rawUrl;
+              if (!rawUrl.startsWith('http') && !rawUrl.startsWith('data:') && !rawUrl.startsWith('blob:')) {
+                  imageUrl = `data:image/png;base64,${rawUrl}`;
+              }
+              sceneImg.src = imageUrl;
+              sceneImg.onload = () => {
+                  sceneImg.style.display = 'block';
+                  if (loadingEl) loadingEl.style.display = 'none';
+              };
+              sceneImg.onerror = () => {
+                  console.warn('[BookScene] Image failed to load');
+                  if (loadingEl) loadingEl.textContent = '';
+              };
+          } else {
+              // Generation failed — hide loading text silently
+              if (loadingEl) loadingEl.textContent = '';
+          }
+      } catch (err) {
+          console.warn('[BookScene] Generation failed:', err.message);
+          if (loadingEl) loadingEl.textContent = '';
+      }
+  }
 
   // ============================================================
   // BOOK COVER PAGE SYSTEM
@@ -8695,6 +8756,11 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       if (bookCover) {
           bookCover.classList.remove('hinge-open', 'courtesy-peek');
       }
+      // Reset right-page scene art
+      const sceneImg = document.getElementById('bookSceneImg');
+      const sceneLoading = document.getElementById('bookSceneLoading');
+      if (sceneImg) { sceneImg.src = ''; sceneImg.style.display = 'none'; }
+      if (sceneLoading) { sceneLoading.style.display = ''; sceneLoading.textContent = 'Conjuring the world\u2026'; }
   }
 
   // Hide cover page and show story content directly (fallback if cover fails)

@@ -856,11 +856,16 @@
         <!-- Book pages underneath (visible during courtesy hinge) -->
         <div id="bookPagesPreview" class="book-pages-preview">
           <div class="page-edge-stack"></div>
-          <!-- Inside cover - paper white with centered synopsis -->
+          <!-- Left page: Inside cover — synopsis on white/parchment -->
           <div id="bookInsideCover" class="book-inside-cover">
             <div class="inside-cover-rule"></div>
             <p id="insideCoverSynopsis" class="inside-cover-synopsis"></p>
             <div class="inside-cover-rule"></div>
+          </div>
+          <!-- Right page: Setting art (distinct asset, never reuses cover) -->
+          <div id="bookInsideScene" class="book-inside-scene">
+            <img id="bookSceneImg" src="" alt="" class="book-scene-image">
+            <div id="bookSceneLoading" class="book-scene-loading">Conjuring the world…</div>
           </div>
         </div>
 
@@ -868,12 +873,6 @@
         <div class="book-spine"></div>
         <div class="book-thickness"></div>
       </div>
-    </div>
-
-    <!-- Page-turn animation overlay (deprecated - using hinge now) -->
-    <div id="pageTurnOverlay" class="page-turn-overlay hidden">
-      <div class="page-turn-left"></div>
-      <div class="page-turn-right"></div>
     </div>
 
     <!-- Main story content (hidden during cover) -->
