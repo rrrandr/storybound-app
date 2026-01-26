@@ -5862,6 +5862,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     fateCard.style.opacity = '0.6';
     fateCard.style.pointerEvents = 'none';
 
+    // 1b. Activate golden vignette + edge sparkles for Guided Fate ceremony
+    activateGuidedFateVisuals();
+
     // 2. Generate fate choices including ages
     const ages = getFateAges();
     const fateChoices = {
@@ -6878,6 +6881,92 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   }
 
   // ============================================================
+  // GUIDED FATE — Golden Vignette & Edge Sparkle Ceremony
+  // Persists from Destiny's Choice click through book open dwell.
+  // ============================================================
+
+  let _guidedFateActive = false;
+  let _fateSparkleInterval = null;
+  const SPARKLE_MAX = 25;
+  const SPARKLE_SPAWN_MS = 180;
+
+  function activateGuidedFateVisuals() {
+      _guidedFateActive = true;
+      const vignette = document.getElementById('fateVignette');
+      if (vignette) {
+          vignette.classList.remove('fading');
+          vignette.classList.add('active');
+      }
+      startFateEdgeSparkles();
+  }
+
+  function deactivateGuidedFateVisuals() {
+      if (!_guidedFateActive) return;
+      _guidedFateActive = false;
+      const vignette = document.getElementById('fateVignette');
+      if (vignette) {
+          vignette.classList.remove('active');
+          vignette.classList.add('fading');
+          setTimeout(() => vignette.classList.remove('fading'), 1600);
+      }
+      stopFateEdgeSparkles();
+  }
+
+  function startFateEdgeSparkles() {
+      if (_fateSparkleInterval) return;
+      _fateSparkleInterval = setInterval(() => {
+          if (!_guidedFateActive) return;
+          spawnEdgeSparkle();
+      }, SPARKLE_SPAWN_MS);
+  }
+
+  function stopFateEdgeSparkles() {
+      if (_fateSparkleInterval) {
+          clearInterval(_fateSparkleInterval);
+          _fateSparkleInterval = null;
+      }
+      document.querySelectorAll('.fate-edge-sparkle').forEach(p => {
+          p.style.opacity = '0';
+          p.style.transition = 'opacity 0.5s ease-out';
+          setTimeout(() => { if (p.parentNode) p.remove(); }, 600);
+      });
+  }
+
+  function spawnEdgeSparkle() {
+      if (document.querySelectorAll('.fate-edge-sparkle').length >= SPARKLE_MAX) return;
+
+      const sparkle = document.createElement('div');
+      sparkle.className = 'fate-edge-sparkle';
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      let x, y;
+
+      // 30% corners (emphasis), 35% left/right edges, 35% top/bottom edges
+      const zone = Math.random();
+      if (zone < 0.3) {
+          const corner = Math.floor(Math.random() * 4);
+          x = (corner % 2 === 0) ? Math.random() * vw * 0.13 : vw - Math.random() * vw * 0.13;
+          y = (corner < 2) ? Math.random() * vh * 0.13 : vh - Math.random() * vh * 0.13;
+      } else if (zone < 0.65) {
+          x = Math.random() < 0.5 ? Math.random() * vw * 0.08 : vw - Math.random() * vw * 0.08;
+          y = vh * 0.12 + Math.random() * vh * 0.76;
+      } else {
+          x = vw * 0.12 + Math.random() * vw * 0.76;
+          y = Math.random() < 0.5 ? Math.random() * vh * 0.08 : vh - Math.random() * vh * 0.08;
+      }
+
+      const size = 3 + Math.random() * 5;
+      const duration = 1400 + Math.random() * 2200;
+      const peak = 0.6 + Math.random() * 0.35;
+
+      sparkle.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + size + 'px;height:' + size + 'px;--sparkle-duration:' + duration + 'ms;--sparkle-peak:' + peak + ';';
+      document.body.appendChild(sparkle);
+
+      setTimeout(() => { if (sparkle.parentNode) sparkle.remove(); }, duration + 100);
+  }
+
+  // ============================================================
   // PHYSICAL BOOK INTERACTION SYSTEM
   // Hinge-based open, courtesy peek, no buttons
   // ============================================================
@@ -6968,6 +7057,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
           if (titleEl) {
               titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
+
+          // Guided Fate ceremony complete — fade vignette + stop sparkles
+          deactivateGuidedFateVisuals();
       }, HINGE_DURATION + DWELL_DURATION);
   }
 
@@ -7000,6 +7092,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   function resetBookState() {
       _bookOpened = false;
       cancelCourtesyHinge();
+      deactivateGuidedFateVisuals();
       const bookCover = document.getElementById('bookCover');
       if (bookCover) {
           bookCover.classList.remove('hinge-open', 'courtesy-peek');
@@ -7021,6 +7114,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       if (storyContent) storyContent.classList.remove('hidden');
       if (storyTextEl) storyTextEl.style.opacity = '1';
       _bookOpened = true;
+      deactivateGuidedFateVisuals();
   }
 
   // --- VISUALIZE (STABILIZED) ---

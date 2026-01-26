@@ -3071,3 +3071,74 @@ textarea.fate-field {
     font-style: italic;
     margin-top: 8px;
 }
+
+/* ============================================================
+   GOLDEN VIGNETTE OVERLAY — Guided Fate ceremony
+   ============================================================ */
+#fateVignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4000;
+    opacity: 0;
+    transition: opacity 0.8s ease-in;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 35%,
+        rgba(255, 215, 0, 0.07) 55%,
+        rgba(255, 215, 0, 0.14) 75%,
+        rgba(255, 215, 0, 0.24) 100%
+    );
+}
+
+#fateVignette.active {
+    opacity: 1;
+    animation: fate-vignette-pulse 4s ease-in-out infinite;
+}
+
+#fateVignette.fading {
+    opacity: 0;
+    transition: opacity 1.5s ease-out;
+    animation: none;
+}
+
+@keyframes fate-vignette-pulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.12); }
+}
+
+/* EDGE SPARKLE PARTICLES — golden twinkles along screen edges */
+.fate-edge-sparkle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 4001;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 223, 100, 0.95) 0%,
+        rgba(255, 200, 50, 0.5) 40%,
+        transparent 70%
+    );
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: fate-sparkle-twinkle var(--sparkle-duration, 2s) ease-in-out forwards;
+}
+
+@keyframes fate-sparkle-twinkle {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    20% {
+        opacity: var(--sparkle-peak, 0.8);
+        transform: scale(1);
+    }
+    70% {
+        opacity: var(--sparkle-peak, 0.8);
+        transform: scale(0.85);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.2);
+    }
+}
