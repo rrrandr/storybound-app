@@ -1619,7 +1619,7 @@ ANTI-HERO ENFORCEMENT:
 
   function goBack() {
       if (_navHistory.length === 0) {
-          if(typeof coupleCleanup === 'function' && state.mode === 'couple') coupleCleanup();
+          if(typeof coupleCleanup === 'function' && isSharedPlayMode()) coupleCleanup();
           window.showScreen('modeSelect');
           return;
       }
@@ -1668,8 +1668,8 @@ ANTI-HERO ENFORCEMENT:
       // Initialize fate hand system when entering setup screen
       if(id === 'setup') {
           initFateHandSystem();
-          // COUPLE MASK: Swap archetype → mask UI when entering setup in couple mode
-          if (state.mode === 'couple' && typeof initCoupleMaskPresentation === 'function') {
+          // MASK: Swap archetype → mask UI when entering setup in shared play mode
+          if (typeof isSharedPlayMode === 'function' && isSharedPlayMode() && typeof initCoupleMaskPresentation === 'function') {
               initCoupleMaskPresentation();
           }
       }
@@ -3378,8 +3378,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   window.restart = function(){
-    if(state.mode === 'couple') window.coupleCleanup();
-    // Always reset couple intensity on restart (even if currently solo)
+    if(isSharedPlayMode()) window.coupleCleanup();
+    // Always reset shared-play intensity on restart (even if currently solo)
     if (typeof resetCoupleIntensity === 'function') resetCoupleIntensity();
     state.mode = 'solo';
     clearCurrentStoryId();
@@ -6604,7 +6604,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
     // Execute full orchestration flow
     const result = await window.StoryboundOrchestration.orchestrateStoryGeneration({
       accessTier: state.access || 'free',
-      requestedEroticism: (state.mode === 'couple' ? getCoupleEffectiveCeiling() : state.intensity) || 'Clean',
+      requestedEroticism: (isSharedPlayMode() ? getCoupleEffectiveCeiling() : state.intensity) || 'Clean',
       storyContext: storyContext,
       playerAction: playerAction,
       playerDialogue: playerDialogue,
@@ -8394,8 +8394,8 @@ Never mention card names, archetype names, internal selection labels (e.g. "Hear
           return;
       }
 
-      // COUPLE PLAY: De-escalation signal detection (before submission)
-      if (state.mode === 'couple') {
+      // SHARED PLAY: De-escalation signal detection (before submission)
+      if (isSharedPlayMode()) {
           // Skip de-escalation check if this is a re-triggered submission after confirmation
           if (!state.coupleIntensity._deescalationBypassed) {
               const deescSignal = detectDeescalationSignal(act, dia);
@@ -8410,7 +8410,7 @@ Never mention card names, archetype names, internal selection labels (e.g. "Hear
               state.coupleIntensity._deescalationBypassed = false;
           }
 
-          // COUPLE PLAY: Self-escalation detection
+          // SHARED PLAY: Self-escalation detection
           detectSelfEscalation(act, dia);
       }
 
@@ -8421,8 +8421,8 @@ Never mention card names, archetype names, internal selection labels (e.g. "Hear
       const context = allContent.slice(-3000);
       
       // Determine effective intensity level
-      // In couple mode, the couple ceiling overrides the player's intensity setting
-      const effectiveIntensity = (state.mode === 'couple' && !state.godModeActive)
+      // In shared play modes, the managed ceiling overrides the player's intensity setting
+      const effectiveIntensity = (isSharedPlayMode() && !state.godModeActive)
           ? getCoupleEffectiveCeiling()
           : state.intensity;
 
@@ -8618,9 +8618,9 @@ FATE CARD ADAPTATION (CRITICAL):
           // FIX #2: Removed user dialogue block - AI alone narrates the action
           // User input is passed to AI but not rendered as prose to avoid duplication
 
-          // Add AI response — process through couple intensity pipeline if in couple mode
+          // Add AI response — process through intensity pipeline if in shared play mode
           let formattedStory = formatStory(raw);
-          if (state.mode === 'couple') {
+          if (isSharedPlayMode()) {
               const coupleResult = processCoupleContent(raw, formattedStory, false);
               formattedStory = coupleResult.content;
               if (coupleResult.held) {
@@ -8753,11 +8753,12 @@ FATE CARD ADAPTATION (CRITICAL):
      }
      state.mode = m;
      if (!state.storyOrigin) state.storyOrigin = m;
-     // Initialize couple intensity session on every couple mode entry
-     if (m === 'couple') initCoupleIntensitySession();
+     // Initialize shared-play intensity session
+     if (m === 'couple') initCoupleIntensitySession('Naughty');
+     if (m === 'stranger') initCoupleIntensitySession('Clean');
      if(m === 'solo') window.showScreen('setup');
      if(m === 'couple') window.showScreen('coupleInvite');
-     if(m === 'stranger') window.showScreen('strangerModal');
+     if(m === 'stranger') window.showScreen('setup');
   };
 
   // --- EDGE COVENANT ---
@@ -8794,15 +8795,34 @@ FATE CARD ADAPTATION (CRITICAL):
   };
 
   // ==========================================================================
-  // COUPLE PLAY INTENSITY & CONSENT SYSTEM
+  // SHARED PLAY MODE HELPER
+  // ==========================================================================
+  //
+  // Couple and Stranger modes share intensity progression (9.x), mask
+  // presentation, and Fate framing. This helper avoids duplicating mode
+  // checks across all guard sites.
+  //
+  // ==========================================================================
+
+  /**
+   * Returns true when the active mode uses the shared intensity + mask systems.
+   * Currently: 'couple' and 'stranger'.
+   */
+  function isSharedPlayMode() {
+      return state.mode === 'couple' || state.mode === 'stranger';
+  }
+
+  // ==========================================================================
+  // COUPLE / STRANGER PLAY INTENSITY & CONSENT SYSTEM
   // ==========================================================================
   //
   // AUTHORITATIVE — DO NOT REINTERPRET
   //
   // This module manages intensity progression and directional consent
-  // for Couple Play sessions. It does NOT modify Solo Play or Stranger Play.
+  // for Couple and Stranger Play sessions. It does NOT modify Solo Play.
   //
   // Tier progression: Naughty → Erotic (silent unlock) → Dirty (consent-gated)
+  // Stranger starts at Clean, Couple starts at Naughty.
   // Consent is directional (A→B, B→A), session-scoped, never persisted.
   //
   // ==========================================================================
@@ -8810,12 +8830,14 @@ FATE CARD ADAPTATION (CRITICAL):
   const COUPLE_INTENSITY_TIERS = ['Clean', 'Naughty', 'Erotic', 'Dirty'];
 
   /**
-   * Initialize (or reset) couple intensity state for a new session.
-   * Called when entering couple mode. Ignores prior session state.
+   * Initialize (or reset) intensity state for a new shared-play session.
+   * Called when entering couple or stranger mode. Ignores prior session state.
+   * @param {string} [startCeiling='Naughty'] - Initial ceiling tier.
+   *        Couple defaults to 'Naughty'; Stranger defaults to 'Clean'.
    */
-  function initCoupleIntensitySession() {
+  function initCoupleIntensitySession(startCeiling = 'Naughty') {
       state.coupleIntensity = {
-          ceiling: 'Naughty',
+          ceiling: startCeiling,
           eroticUnlocked: false,
           eroticUnlockScore: 0,
           inboundDirtyConsent: null,
@@ -8838,7 +8860,7 @@ FATE CARD ADAPTATION (CRITICAL):
    * Returns the tier name that should be used as the intensity guard.
    */
   function getCoupleEffectiveCeiling() {
-      if (state.mode !== 'couple') return state.intensity;
+      if (!isSharedPlayMode()) return state.intensity;
 
       const ci = state.coupleIntensity;
 
@@ -8860,7 +8882,7 @@ FATE CARD ADAPTATION (CRITICAL):
    * Does NOT announce unlock. No UI prompt.
    */
   function evaluateEroticUnlock() {
-      if (state.mode !== 'couple') return;
+      if (!isSharedPlayMode()) return;
       const ci = state.coupleIntensity;
       if (ci.eroticUnlocked) return; // Already unlocked
 
@@ -9496,7 +9518,7 @@ FATE CARD ADAPTATION (CRITICAL):
    * toward explicit content.
    */
   function detectSelfEscalation(actionText, dialogueText) {
-      if (state.mode !== 'couple') return false;
+      if (!isSharedPlayMode()) return false;
 
       const combined = ((actionText || '') + ' ' + (dialogueText || '')).toLowerCase();
 
@@ -9584,7 +9606,7 @@ FATE CARD ADAPTATION (CRITICAL):
   ];
 
   function detectDeescalationSignal(actionText, dialogueText) {
-      if (state.mode !== 'couple') return { isHardStop: false, phrase: null };
+      if (!isSharedPlayMode()) return { isHardStop: false, phrase: null };
 
       const combined = ((actionText || '') + ' ' + (dialogueText || '')).toLowerCase();
 
@@ -9715,7 +9737,7 @@ FATE CARD ADAPTATION (CRITICAL):
    *   held: true if the message was held for de-escalation
    */
   function processCoupleContent(rawContent, formattedContent, isInbound) {
-      if (state.mode !== 'couple') {
+      if (!isSharedPlayMode()) {
           return { content: formattedContent, held: false };
       }
 
@@ -9870,7 +9892,7 @@ FATE CARD ADAPTATION (CRITICAL):
    * Swaps archetype section labels to mask language.
    */
   function initCoupleMaskPresentation() {
-      if (state.mode !== 'couple') return;
+      if (!isSharedPlayMode()) return;
 
       // Swap section title
       const sectionTitle = document.getElementById('archetypeSectionTitle');
@@ -9887,7 +9909,9 @@ FATE CARD ADAPTATION (CRITICAL):
       // Swap subtext — replace archetype instructions with mask language
       const subtext = document.querySelector('.archetype-subtext');
       if (subtext) {
-          subtext.textContent = 'Select a mask for yourself. You may also suggest one for your partner.';
+          subtext.textContent = state.mode === 'couple'
+              ? 'Select a mask for yourself. You may also suggest one for your partner.'
+              : 'Select a mask. This shapes how Fate sees your Love Interest.';
       }
 
       // Swap selection summary labels
@@ -9905,8 +9929,10 @@ FATE CARD ADAPTATION (CRITICAL):
           modifierLabel.style.display = 'none';
       }
 
-      // Render the partner suggestion row if not already present
-      renderMaskSuggestionRow();
+      // Render the partner suggestion row if not already present (couple only — stranger has no partner)
+      if (state.mode === 'couple') {
+          renderMaskSuggestionRow();
+      }
 
       console.log('[COUPLE-MASK] Mask presentation layer initialized');
   }
@@ -10063,7 +10089,7 @@ FATE CARD ADAPTATION (CRITICAL):
    * @param {string} archetypeId - Selected archetype ID
    */
   function onCoupleMaskSelected(archetypeId) {
-      if (state.mode !== 'couple') return;
+      if (!isSharedPlayMode()) return;
       state.coupleMask.mySelectedMask = archetypeId;
       console.log('[COUPLE-MASK] Own mask selected:', archetypeId);
   }
@@ -10076,7 +10102,7 @@ FATE CARD ADAPTATION (CRITICAL):
    * @returns {string} Directive string (empty if not couple mode)
    */
   function buildMaskFateDirective() {
-      if (state.mode !== 'couple') return '';
+      if (!isSharedPlayMode()) return '';
 
       const mask = state.coupleMask.resolvedMask || state.archetype.primary;
       const arch = ARCHETYPES[mask];
