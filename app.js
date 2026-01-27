@@ -3074,6 +3074,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               el.addEventListener('beforeinput', blockIfFree, { passive: false });
               el.addEventListener('paste', blockIfFree, { passive: false });
               el.addEventListener('drop', blockIfFree, { passive: false });
+              // Selection aura on focus
+              el.addEventListener('focus', () => {
+                  if (typeof applySelectionAura === 'function') applySelectionAura(el);
+              });
+              el.addEventListener('blur', () => {
+                  if (typeof removeSelectionAura === 'function') removeSelectionAura(el);
+              });
           }
       });
   }
@@ -6296,35 +6303,48 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function spawnDustParticle() {
     if (!_guidedFateVisualsActive) return;
 
-    const fateCard = document.getElementById('fateDestinyCard');
-    if (!fateCard) return;
-
-    // Limit particle count
-    const existing = document.querySelectorAll('.fate-dust-particle');
+    // Limit particle count (vignette particles only — tag 'vignette')
+    const existing = document.querySelectorAll('.fate-dust-particle[data-sparkle-tag="vignette"]');
     if (existing.length >= DUST_CONFIG.MAX_PARTICLES) return;
 
     const particle = document.createElement('div');
     particle.className = 'fate-dust-particle';
+    particle.dataset.sparkleTag = 'vignette';
 
-    // Spawn from Guided Fate card bounding box
-    const rect = fateCard.getBoundingClientRect();
-    const x = rect.left + Math.random() * rect.width;
-    const y = rect.top + Math.random() * rect.height;
+    // Viewport-based positioning weighted toward vignette edges
+    const edge = Math.random();
+    let x, y;
+    if (edge < 0.35) {
+      x = Math.random() * 15;
+      y = 5 + Math.random() * 90;
+    } else if (edge < 0.65) {
+      x = 85 + Math.random() * 15;
+      y = 5 + Math.random() * 90;
+    } else if (edge < 0.80) {
+      x = 5 + Math.random() * 90;
+      y = 80 + Math.random() * 18;
+    } else if (edge < 0.90) {
+      x = 10 + Math.random() * 80;
+      y = Math.random() * 15;
+    } else {
+      x = 25 + Math.random() * 50;
+      y = 25 + Math.random() * 50;
+    }
 
     // Randomize properties
     const size = DUST_CONFIG.MIN_SIZE + Math.random() * (DUST_CONFIG.MAX_SIZE - DUST_CONFIG.MIN_SIZE);
     const duration = DUST_CONFIG.MIN_DURATION + Math.random() * (DUST_CONFIG.MAX_DURATION - DUST_CONFIG.MIN_DURATION);
     const opacity = DUST_CONFIG.MIN_OPACITY + Math.random() * (DUST_CONFIG.MAX_OPACITY - DUST_CONFIG.MIN_OPACITY);
 
-    // Slow, gentle upward drift from card
+    // Slow, gentle drift with slight swirl
     const baseAngle = Math.random() * Math.PI * 2;
-    const driftDistance = 15 + Math.random() * 30;
+    const driftDistance = 20 + Math.random() * 40;
     const dx = Math.cos(baseAngle) * driftDistance;
-    const dy = -20 - Math.random() * 40;
+    const dy = -30 - Math.random() * 50;
 
     particle.style.cssText = `
-      left: ${x}px;
-      top: ${y}px;
+      left: ${x}vw;
+      top: ${y}vh;
       width: ${size}px;
       height: ${size}px;
       --dust-duration: ${duration}ms;
@@ -6395,17 +6415,41 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       particle.className = 'fate-dust-particle';
       particle.dataset.sparkleTag = tag;
 
-      const x = rect.left + Math.random() * rect.width;
-      const y = rect.top + Math.random() * rect.height;
+      // Spawn on outer perimeter — offset ±12-20px outside element edges
+      const OFFSET_MIN = 12;
+      const OFFSET_MAX = 20;
+      const perimeterSide = Math.random();
+      let x, y;
+      const offset = OFFSET_MIN + Math.random() * (OFFSET_MAX - OFFSET_MIN);
+      if (perimeterSide < 0.25) {
+        // Top edge
+        x = rect.left + Math.random() * rect.width;
+        y = rect.top - offset;
+      } else if (perimeterSide < 0.5) {
+        // Bottom edge
+        x = rect.left + Math.random() * rect.width;
+        y = rect.bottom + offset;
+      } else if (perimeterSide < 0.75) {
+        // Left edge
+        x = rect.left - offset;
+        y = rect.top + Math.random() * rect.height;
+      } else {
+        // Right edge
+        x = rect.right + offset;
+        y = rect.top + Math.random() * rect.height;
+      }
 
       const size = DUST_CONFIG.MIN_SIZE + Math.random() * (DUST_CONFIG.MAX_SIZE - DUST_CONFIG.MIN_SIZE);
       const duration = DUST_CONFIG.MIN_DURATION + Math.random() * (DUST_CONFIG.MAX_DURATION - DUST_CONFIG.MIN_DURATION);
       const opacity = DUST_CONFIG.MIN_OPACITY + Math.random() * (DUST_CONFIG.MAX_OPACITY - DUST_CONFIG.MIN_OPACITY);
 
-      const baseAngle = Math.random() * Math.PI * 2;
+      // Drift outward from element center
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const outAngle = Math.atan2(y - cy, x - cx);
       const driftDistance = 15 + Math.random() * 30;
-      const dx = Math.cos(baseAngle) * driftDistance;
-      const dy = -20 - Math.random() * 40;
+      const dx = Math.cos(outAngle) * driftDistance;
+      const dy = Math.sin(outAngle) * driftDistance - 15;
 
       particle.style.cssText = `
         left: ${x}px;
@@ -6441,10 +6485,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const vignette = document.getElementById('fateVignette');
       if (vignette) vignette.classList.add('active');
 
+      // Global vignette sparkles (viewport-based, coexist with anchored)
+      startFairyDust();
+
       // Card glow
       fateCardElement.classList.add('fate-activating');
 
-      // Sparkles from Guided Fate card bounding box
+      // Anchored sparkles from Guided Fate card outer perimeter
       const anchorRect = fateCardElement.getBoundingClientRect();
       if (anchorRect.width === 0 || anchorRect.height === 0) {
           console.warn('[DEV] Guided Fate card has zero rect — sparkles aborted');
@@ -6488,6 +6535,80 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Remove golden echo from downstream inputs
       document.querySelectorAll('.guided-fate-glow').forEach(el => el.classList.remove('guided-fate-glow'));
   }
+
+  // In-story selection aura — reusable golden glow + low-density sparkles
+  let _auraSparkleIntervals = [];
+
+  function applySelectionAura(el) {
+      if (!el) return;
+      el.classList.add('selection-aura');
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
+      // Low-density sparkles from element perimeter
+      const OFFSET_MIN = 8;
+      const OFFSET_MAX = 14;
+      function spawnAuraSparkle() {
+          const existing = document.querySelectorAll('.fate-dust-particle[data-sparkle-tag="aura"]');
+          if (existing.length >= 4) return;
+
+          const r = el.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0) return;
+
+          const particle = document.createElement('div');
+          particle.className = 'fate-dust-particle';
+          particle.dataset.sparkleTag = 'aura';
+
+          const side = Math.random();
+          const offset = OFFSET_MIN + Math.random() * (OFFSET_MAX - OFFSET_MIN);
+          let x, y;
+          if (side < 0.25) { x = r.left + Math.random() * r.width; y = r.top - offset; }
+          else if (side < 0.5) { x = r.left + Math.random() * r.width; y = r.bottom + offset; }
+          else if (side < 0.75) { x = r.left - offset; y = r.top + Math.random() * r.height; }
+          else { x = r.right + offset; y = r.top + Math.random() * r.height; }
+
+          const size = 2 + Math.random() * 4;
+          const duration = 3000 + Math.random() * 3000;
+          const opacity = 0.15 + Math.random() * 0.3;
+          const angle = Math.atan2(y - (r.top + r.height / 2), x - (r.left + r.width / 2));
+          const dx = Math.cos(angle) * (10 + Math.random() * 15);
+          const dy = Math.sin(angle) * (10 + Math.random() * 15) - 10;
+
+          particle.style.cssText = `
+            left: ${x}px; top: ${y}px;
+            width: ${size}px; height: ${size}px;
+            --dust-duration: ${duration}ms;
+            --dust-opacity: ${opacity};
+            --dust-dx: ${dx}px; --dust-dy: ${dy}px;
+          `;
+          document.body.appendChild(particle);
+          setTimeout(() => { if (particle.parentNode) particle.remove(); }, duration + 100);
+      }
+
+      const intervalId = setInterval(spawnAuraSparkle, 900);
+      _auraSparkleIntervals.push(intervalId);
+      spawnAuraSparkle(); // immediate first particle
+  }
+
+  function removeSelectionAura(el) {
+      if (el) el.classList.remove('selection-aura');
+  }
+
+  function removeAllSelectionAuras() {
+      document.querySelectorAll('.selection-aura').forEach(el => el.classList.remove('selection-aura'));
+      _auraSparkleIntervals.forEach(id => clearInterval(id));
+      _auraSparkleIntervals = [];
+      document.querySelectorAll('.fate-dust-particle[data-sparkle-tag="aura"]').forEach(p => {
+          p.style.opacity = '0';
+          p.style.transition = 'opacity 0.3s ease-out';
+          setTimeout(() => p.remove(), 400);
+      });
+  }
+
+  // Expose for fatecards.js
+  window.applySelectionAura = applySelectionAura;
+  window.removeSelectionAura = removeSelectionAura;
+  window.removeAllSelectionAuras = removeAllSelectionAuras;
 
   function cleanupFateVisuals() {
     // Stop fate running state
@@ -6812,6 +6933,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (fateChoices.partnerAge && $('partnerAgeInput')) {
       $('partnerAgeInput').value = fateChoices.partnerAge;
     }
+
+    // Force DSP recompute immediately after state population (before ceremony)
+    // Ensures DSP reflects Guided Fate even if ceremony is overridden mid-flow
+    updateSynopsisPanel();
 
     // ===============================================
     // PART B: OPENING CEREMONY
