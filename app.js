@@ -6173,6 +6173,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // Get weighted flavor for selected world
   function getFateFlavor(world) {
+    if (typeof FATE_WORLD_FLAVORS === 'undefined' || !FATE_WORLD_FLAVORS) return null;
     const flavors = FATE_WORLD_FLAVORS[world];
     if (!flavors || flavors.length === 0) return null;
     // Bias toward first (broader) options
