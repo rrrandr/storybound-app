@@ -6260,6 +6260,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // Fate override flag - when true, all automated motion stops
   let _fateOverridden = false;
   let _fateRunning = false;
+  let _guidedFateVisualsActive = false;
 
   // Timing constants (HUMAN PACE - deliberate, not efficient)
   const FATE_TIMING = {
@@ -6281,18 +6282,21 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   let _dustInterval = null;
   const DUST_CONFIG = {
-    MAX_PARTICLES: 40,        // Significantly increased for magical density
-    SPAWN_INTERVAL: 150,      // ms between spawns (faster for more particles)
-    MIN_SIZE: 5,              // px - 1.5x larger
-    MAX_SIZE: 12,             // px - ~2x larger
-    MIN_DURATION: 5000,       // ms - slower drift
-    MAX_DURATION: 8000,       // ms - extended for gentle motion
-    MIN_OPACITY: 0.25,        // Softer fade-in
-    MAX_OPACITY: 0.65         // Slightly reduced max for ethereal feel
+    MAX_PARTICLES: 12,        // Subtle density — card-scoped, not viewport-wide
+    SPAWN_INTERVAL: 400,      // Slow ritual pace
+    MIN_SIZE: 3,              // Small, delicate
+    MAX_SIZE: 7,
+    MIN_DURATION: 4000,       // Gentle drift
+    MAX_DURATION: 7000,
+    MIN_OPACITY: 0.2,         // Faint
+    MAX_OPACITY: 0.5
   };
 
   function spawnDustParticle() {
-    if (_fateOverridden || !_fateRunning) return;
+    if (!_guidedFateVisualsActive) return;
+
+    const fateCard = document.getElementById('fateDestinyCard');
+    if (!fateCard) return;
 
     // Limit particle count
     const existing = document.querySelectorAll('.fate-dust-particle');
@@ -6301,45 +6305,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const particle = document.createElement('div');
     particle.className = 'fate-dust-particle';
 
-    // Randomize position (heavily weighted toward vignette edges for magical border effect)
-    const edge = Math.random();
-    let x, y;
-    if (edge < 0.35) {
-      // Left edge - dense particle column
-      x = Math.random() * 15;
-      y = 5 + Math.random() * 90;
-    } else if (edge < 0.65) {
-      // Right edge - dense particle column
-      x = 85 + Math.random() * 15;
-      y = 5 + Math.random() * 90;
-    } else if (edge < 0.80) {
-      // Bottom edge - horizon of sparkles
-      x = 5 + Math.random() * 90;
-      y = 80 + Math.random() * 18;
-    } else if (edge < 0.90) {
-      // Top edge - subtle crown
-      x = 10 + Math.random() * 80;
-      y = Math.random() * 15;
-    } else {
-      // Scattered center (very sparse, mystical depth)
-      x = 25 + Math.random() * 50;
-      y = 25 + Math.random() * 50;
-    }
+    // Spawn from Guided Fate card bounding box
+    const rect = fateCard.getBoundingClientRect();
+    const x = rect.left + Math.random() * rect.width;
+    const y = rect.top + Math.random() * rect.height;
 
-    // Randomize properties - larger variance for visual interest
+    // Randomize properties
     const size = DUST_CONFIG.MIN_SIZE + Math.random() * (DUST_CONFIG.MAX_SIZE - DUST_CONFIG.MIN_SIZE);
     const duration = DUST_CONFIG.MIN_DURATION + Math.random() * (DUST_CONFIG.MAX_DURATION - DUST_CONFIG.MIN_DURATION);
     const opacity = DUST_CONFIG.MIN_OPACITY + Math.random() * (DUST_CONFIG.MAX_OPACITY - DUST_CONFIG.MIN_OPACITY);
 
-    // Slow, gentle drift with slight swirl effect
-    const baseAngle = Math.random() * Math.PI * 2;  // Random direction
-    const driftDistance = 20 + Math.random() * 40;  // How far to drift
-    const dx = Math.cos(baseAngle) * driftDistance; // Horizontal with swirl
-    const dy = -30 - Math.random() * 50;            // Primarily upward float
+    // Slow, gentle upward drift from card
+    const baseAngle = Math.random() * Math.PI * 2;
+    const driftDistance = 15 + Math.random() * 30;
+    const dx = Math.cos(baseAngle) * driftDistance;
+    const dy = -20 - Math.random() * 40;
 
     particle.style.cssText = `
-      left: ${x}vw;
-      top: ${y}vh;
+      left: ${x}px;
+      top: ${y}px;
       width: ${size}px;
       height: ${size}px;
       --dust-duration: ${duration}ms;
@@ -6361,8 +6345,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function startFairyDust() {
     stopFairyDust(); // Clear any existing
     _dustInterval = setInterval(spawnDustParticle, DUST_CONFIG.SPAWN_INTERVAL);
-    // Burst of particles immediately for magical entrance
-    for (let i = 0; i < 15; i++) {
+    // Gentle initial burst
+    for (let i = 0; i < 5; i++) {
       setTimeout(spawnDustParticle, i * 50);
     }
   }
@@ -6380,10 +6364,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
   }
 
-  // UX-2 FIX: Cleanup all fate visual effects (vignette, particles, highlights)
-  // Called when navigating away from setup screen or when story begins
-  // Deactivate Guided Fate visuals — called when book dwell completes
+  // Activate Guided Fate visuals — called only on Guided Fate card click
+  function activateGuidedFateVisuals() {
+      _guidedFateVisualsActive = true;
+      const vignette = document.getElementById('fateVignette');
+      if (vignette) vignette.classList.add('active');
+      const fateCard = document.getElementById('fateDestinyCard');
+      if (fateCard) fateCard.classList.add('fate-activating');
+      startFairyDust();
+      // Golden echo glow on downstream text inputs
+      const playerInput = document.getElementById('playerNameInput');
+      const partnerInput = document.getElementById('partnerNameInput');
+      if (playerInput) playerInput.classList.add('guided-fate-glow');
+      if (partnerInput) partnerInput.classList.add('guided-fate-glow');
+  }
+
+  // Deactivate Guided Fate visuals — called on any user interaction or as safety fallback
   function deactivateGuidedFateVisuals() {
+      if (!_guidedFateVisualsActive) return;
+      _guidedFateVisualsActive = false;
       stopFairyDust();
       const vignette = document.getElementById('fateVignette');
       if (vignette) {
@@ -6392,6 +6391,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           vignette.classList.add('fading');
           setTimeout(() => vignette.classList.remove('fading'), 1600);
       }
+      // Remove glow from Guided Fate card
+      const fateCard = document.getElementById('fateDestinyCard');
+      if (fateCard) fateCard.classList.remove('fate-activating');
+      // Remove golden echo from downstream inputs
+      document.querySelectorAll('.guided-fate-glow').forEach(el => el.classList.remove('guided-fate-glow'));
   }
 
   function cleanupFateVisuals() {
@@ -6421,7 +6425,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   // Override handler - user takes control from Fate
+  // Also deactivates Guided Fate visuals on any user interaction
   function handleFateOverride(event) {
+    // Deactivate Guided Fate visuals on any user interaction
+    if (_guidedFateVisualsActive) {
+      deactivateGuidedFateVisuals();
+    }
     if (_fateRunning && !_fateOverridden) {
       _fateOverridden = true;
       // Clear all fate highlights immediately
@@ -6717,16 +6726,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     const ceremonyStartTime = Date.now();
 
-    // Activate golden vignette + fairy dust
-    const vignette = document.getElementById('fateVignette');
-    const fateCard = document.getElementById('fateDestinyCard');
-    if (vignette) {
-      vignette.classList.add('active');
-    }
-    if (fateCard) {
-      fateCard.classList.add('fate-activating');
-    }
-    startFairyDust();
+    // Activate golden vignette + fairy dust + input echo
+    activateGuidedFateVisuals();
 
     // Highlight both character blocks during ceremony
     const mcBlock = document.querySelector('#playerNameInput')?.closest('.character-block');

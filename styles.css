@@ -3367,6 +3367,13 @@ textarea.fate-field {
     box-shadow: 0 0 8px var(--gold);
 }
 
+/* Golden echo on downstream inputs while Guided Fate visuals are active */
+.guided-fate-glow {
+    border-color: rgba(255, 215, 0, 0.4) !important;
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.25), 0 0 12px rgba(255, 215, 0, 0.1);
+    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
 /* =================================
    GUIDED FATE OPENING CEREMONY
    Golden vignette + visual effects
