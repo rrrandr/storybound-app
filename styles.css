@@ -3369,9 +3369,17 @@ textarea.fate-field {
 
 /* Golden echo on downstream inputs while Guided Fate visuals are active */
 .guided-fate-glow {
-    border-color: rgba(255, 215, 0, 0.4) !important;
-    box-shadow: 0 0 6px rgba(255, 215, 0, 0.25), 0 0 12px rgba(255, 215, 0, 0.1);
-    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+    position: relative;
+    box-shadow:
+        0 0 14px rgba(255, 200, 90, 0.45),
+        0 0 28px rgba(255, 180, 60, 0.25);
+    border-radius: 12px;
+}
+
+/* Sparkle particles render above cards and inputs */
+.fate-edge-sparkle {
+    z-index: 5000;
+    pointer-events: none;
 }
 
 /* =================================
