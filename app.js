@@ -6367,6 +6367,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // UX-2 FIX: Cleanup all fate visual effects (vignette, particles, highlights)
   // Called when navigating away from setup screen or when story begins
+  // Deactivate Guided Fate visuals — called when book dwell completes
+  function deactivateGuidedFateVisuals() {
+      stopFairyDust();
+      const vignette = document.getElementById('fateVignette');
+      if (vignette) {
+          vignette.style.opacity = '';
+          vignette.classList.remove('active');
+          vignette.classList.add('fading');
+          setTimeout(() => vignette.classList.remove('fading'), 1600);
+      }
+  }
+
   function cleanupFateVisuals() {
     // Stop fate running state
     _fateOverridden = true;
@@ -6756,10 +6768,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (mcBlock) mcBlock.classList.remove('fate-ceremony');
     if (liBlock) liBlock.classList.remove('fate-ceremony');
 
-    // Fade vignette slightly after ceremony (keep subtle glow)
-    if (vignette && !_fateOverridden) {
-      vignette.style.opacity = '0.6';
-    }
+    // Vignette stays at full intensity through Guided Fate → book dwell
 
     // ===============================================
     // PART A/C: BUILD SECTION LIST BY DOM POSITION
@@ -6833,13 +6842,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // ===============================================
     if (_fateOverridden) { _fateRunning = false; return; }
 
-    // Stop fairy dust and fade vignette
-    stopFairyDust();
-    if (vignette) {
-      vignette.style.opacity = ''; // BUGFIX: Clear inline opacity set during ceremony
-      vignette.classList.remove('active');
-      vignette.classList.add('fading');
-    }
+    // Vignette + fairy dust persist through Begin Story → book dwell
+    // deactivateGuidedFateVisuals() is called when dwell completes in openBook()
 
     highlightBeginButton();
     showToast('Fate has spoken. Click Begin Story when ready.');
