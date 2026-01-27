@@ -6518,6 +6518,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // Override handler - user takes control from Fate
   // Always deactivates Guided Fate visuals on any user interaction
   function handleFateOverride(event) {
+    // Guard: do not self-cancel when the interaction originates from the Guided Fate card
+    const fateCard = document.getElementById('fateDestinyCard');
+    if (fateCard && fateCard.contains(event.target)) return;
+
     // Unconditional visual shutdown on any user action
     deactivateGuidedFateVisuals();
 
