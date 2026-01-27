@@ -4953,16 +4953,22 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       applyDSPClauseStates();
 
       // Flash the changed clause (if this was triggered by an explicit user action)
-      if (changedAxis) {
-        if (changedAxis === 'name') {
-          flashDSPNameInject();
-        } else if (changedAxis === 'tone') {
+      // Name is handled unconditionally below, outside this guard.
+      if (changedAxis && changedAxis !== 'name') {
+        if (changedAxis === 'tone') {
           // Tone rewrites the entire sentence structure - flash all structural spans
           flashDSPClause('tone');
         } else {
           flashDSPClause(changedAxis);
         }
       }
+    }
+
+    // Name resolution: always resolve and animate regardless of whether
+    // the sentence text changed. This ensures the name clause transitions
+    // out of pending state even when the DSP was already rendered.
+    if (changedAxis === 'name') {
+      flashDSPNameInject();
     }
   }
 
