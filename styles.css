@@ -1427,17 +1427,24 @@ textarea.fate-field {
     box-sizing: border-box;
 }
 
-/* Story Shape Row - layout owner for both character blocks */
+/* Story Shape Row - layout owner for both character columns */
 .story-shape-row {
     display: flex;
     gap: 24px;
     align-items: flex-start;
-    justify-content: flex-start;
+}
+
+.story-shape-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
+    flex: 0 0 auto;
 }
 
 .story-shape-character {
-    width: max-content;
-    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
 }
 
 .character-block-horizontal {
