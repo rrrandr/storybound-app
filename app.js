@@ -2048,6 +2048,10 @@ Return the rewritten text only, no explanation.`
       // Initialize fate hand system when entering setup screen
       if(id === 'setup') {
           initFateHandSystem();
+          // Start ambient sparkles around the Guided Fate card
+          if (typeof startAmbientCardSparkles === 'function') startAmbientCardSparkles();
+      } else {
+          if (typeof stopAmbientCardSparkles === 'function') stopAmbientCardSparkles();
       }
   };
 
@@ -4953,9 +4957,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
 
     // Update DSP when player name changes (DSP MUST include player name)
-    // CRITICAL: Normalize on blur, not on every keystroke
+    // Immediate DSP recompute on keystroke (uses raw name); normalize on blur
     const playerNameInput = $('playerNameInput');
     if (playerNameInput) {
+      playerNameInput.addEventListener('input', () => {
+        state.normalizedPlayerKernel = playerNameInput.value.trim() || 'the one who carries the story';
+        updateSynopsisPanel();
+      });
       playerNameInput.addEventListener('blur', async () => {
         const raw = playerNameInput.value.trim();
         if (!raw) return;
@@ -4977,6 +4985,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Normalize partner name on blur
     const partnerNameInput = $('partnerNameInput');
     if (partnerNameInput) {
+      partnerNameInput.addEventListener('input', () => {
+        updateSynopsisPanel();
+      });
       partnerNameInput.addEventListener('blur', async () => {
         const raw = partnerNameInput.value.trim();
         if (!raw) return;
@@ -5147,31 +5158,31 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   const DSP_TONE_GENERATORS = {
     Earnest: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `You${formatPlayerAppositive(playerName)} step into ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} awaits, and find yourself drawn to ${dynamic}.`,
+      `You${formatPlayerAppositive(playerName)} arrive in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} has already begun, and something inside you aches to ${dynamic}.`,
 
     WryConfession: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `So here you are${formatPlayerAppositive(playerName)}, in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, tangled up in ${genre}, and somehow you find yourself compelled to ${dynamic}.`,
+      `So here you are${formatPlayerAppositive(playerName)}, in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, neck-deep in ${genre}, and the worst part is you want to ${dynamic}.`,
 
     Satirical: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Welcome${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} is already a mess, and you have agreed to ${dynamic}.`,
+      `Welcome${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} is already unraveling, and you have somehow agreed to ${dynamic}.`,
 
     Dark: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `In ${worldSubtype ? worldSubtype + ' ' : ''}${world}, ${genre} waits in every shadow, and you${formatPlayerAppositive(playerName)} will ${dynamic}, no matter the cost.`,
+      `In ${worldSubtype ? worldSubtype + ' ' : ''}${world}, ${genre} bleeds through every wall, and you${formatPlayerAppositive(playerName)} will ${dynamic}, no matter what it costs.`,
 
     Horror: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Something waits in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, wearing the face of ${genre}, and it knows you${formatPlayerAppositive(playerName)} will ${dynamic}.`,
+      `Something patient waits in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, wearing the shape of ${genre}, and it already knows you${formatPlayerAppositive(playerName)} will ${dynamic}.`,
 
     Mythic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Something ancient calls you${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} shapes the path of heroes, and you must ${dynamic}.`,
+      `Something ancient stirs for you${formatPlayerAppositive(playerName)} in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} bends the arc of fate, and you must ${dynamic}.`,
 
     Comedic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Look, ${worldSubtype ? worldSubtype + ' ' : ''}${world} seemed like a good idea at the time${formatPlayerAppositive(playerName)}, but now there is ${genre}, and apparently you are going to ${dynamic}.`,
+      `Look, ${worldSubtype ? worldSubtype + ' ' : ''}${world} sounded fine on paper${formatPlayerAppositive(playerName)}, but now there is ${genre}, and apparently you are going to ${dynamic}.`,
 
     Surreal: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `${worldSubtype ? worldSubtype.charAt(0).toUpperCase() + worldSubtype.slice(1) + ' ' : ''}${world} bends at the edges${formatPlayerAppositive(playerName)}, where ${genre} tastes like something half-remembered, and you ${dynamic}.`,
+      `${worldSubtype ? worldSubtype.charAt(0).toUpperCase() + worldSubtype.slice(1) + ' ' : ''}${world} ripples at the edges${formatPlayerAppositive(playerName)}, where ${genre} tastes like something half-remembered, and you ${dynamic}.`,
 
     Poetic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Beneath the long shadow of ${worldSubtype ? worldSubtype + ' ' : ''}${world}, your path${formatPlayerAppositive(playerName)} drifts toward ${genre}, and the need to ${dynamic} moves like a quiet inevitability.`
+      `Beneath the long hush of ${worldSubtype ? worldSubtype + ' ' : ''}${world}, your path${formatPlayerAppositive(playerName)} bends toward ${genre}, and the pull to ${dynamic} settles like a quiet inevitability.`
   };
 
   // Intensity-aware coda appended to DSP for quality floor
@@ -5317,6 +5328,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function showDSP() {
     const synopsisPanel = document.getElementById('synopsisPanel');
     if (synopsisPanel && window.innerWidth > 1100) {
+      // Inject "First Taste" header if not present
+      if (!synopsisPanel.querySelector('.synopsis-title')) {
+        const title = document.createElement('div');
+        title.className = 'synopsis-title';
+        title.textContent = 'First Taste';
+        synopsisPanel.insertBefore(title, synopsisPanel.firstChild);
+      }
       synopsisPanel.classList.add('visible');
     }
   }
@@ -6289,9 +6307,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   let _dustInterval = null;
   let _sparkleIntervals = [];
+  let _ambientCardInterval = null;
   const DUST_CONFIG = {
-    MAX_PARTICLES: 12,        // Subtle density — card-scoped, not viewport-wide
-    SPAWN_INTERVAL: 400,      // Slow ritual pace
+    MAX_PARTICLES: 120,       // Dense vignette sparkles (restored)
+    SPAWN_INTERVAL: 40,       // Fast spawn for density
     MIN_SIZE: 3,              // Small, delicate
     MAX_SIZE: 7,
     MIN_DURATION: 4000,       // Gentle drift
@@ -6382,6 +6401,74 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     _sparkleIntervals = [];
     // Fade out existing particles gracefully
     document.querySelectorAll('.fate-dust-particle').forEach(p => {
+      p.style.opacity = '0';
+      p.style.transition = 'opacity 0.4s ease-out';
+      setTimeout(() => p.remove(), 500);
+    });
+  }
+
+  // Ambient pre-click sparkle emitter for the Guided Fate card
+  function spawnAmbientCardSparkle() {
+    const fateCard = document.getElementById('fateDestinyCard');
+    if (!fateCard || fateCard.dataset.fateUsed === 'true') return;
+    if (!fateCard.offsetParent) return; // not visible
+
+    const existing = document.querySelectorAll('.fate-dust-particle[data-sparkle-tag="ambient"]');
+    if (existing.length >= 30) return;
+
+    const rect = fateCard.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const particle = document.createElement('div');
+    particle.className = 'fate-dust-particle';
+    particle.dataset.sparkleTag = 'ambient';
+
+    // Spawn on outer perimeter ±14-22px outside card edges
+    const side = Math.random();
+    const offset = 14 + Math.random() * 8;
+    let x, y;
+    if (side < 0.25) { x = rect.left + Math.random() * rect.width; y = rect.top - offset; }
+    else if (side < 0.5) { x = rect.left + Math.random() * rect.width; y = rect.bottom + offset; }
+    else if (side < 0.75) { x = rect.left - offset; y = rect.top + Math.random() * rect.height; }
+    else { x = rect.right + offset; y = rect.top + Math.random() * rect.height; }
+
+    const size = 2 + Math.random() * 5;
+    const duration = 3000 + Math.random() * 4000;
+    const opacity = 0.2 + Math.random() * 0.4;
+
+    // Slow orbit / drift outward
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const outAngle = Math.atan2(y - cy, x - cx);
+    const dx = Math.cos(outAngle) * (10 + Math.random() * 20);
+    const dy = Math.sin(outAngle) * (10 + Math.random() * 20) - 10;
+
+    particle.style.cssText = `
+      left: ${x}px; top: ${y}px;
+      width: ${size}px; height: ${size}px;
+      --dust-duration: ${duration}ms;
+      --dust-opacity: ${opacity};
+      --dust-dx: ${dx}px; --dust-dy: ${dy}px;
+    `;
+    document.body.appendChild(particle);
+    setTimeout(() => { if (particle.parentNode) particle.remove(); }, duration + 100);
+  }
+
+  function startAmbientCardSparkles() {
+    stopAmbientCardSparkles();
+    _ambientCardInterval = setInterval(spawnAmbientCardSparkle, 120);
+    // Immediate burst
+    for (let i = 0; i < 8; i++) {
+      setTimeout(spawnAmbientCardSparkle, i * 30);
+    }
+  }
+
+  function stopAmbientCardSparkles() {
+    if (_ambientCardInterval) {
+      clearInterval(_ambientCardInterval);
+      _ambientCardInterval = null;
+    }
+    document.querySelectorAll('.fate-dust-particle[data-sparkle-tag="ambient"]').forEach(p => {
       p.style.opacity = '0';
       p.style.transition = 'opacity 0.4s ease-out';
       setTimeout(() => p.remove(), 500);
@@ -6485,18 +6572,21 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const vignette = document.getElementById('fateVignette');
       if (vignette) vignette.classList.add('active');
 
+      // Stop ambient pre-click sparkles — replaced by activated sparkles
+      stopAmbientCardSparkles();
+
       // Global vignette sparkles (viewport-based, coexist with anchored)
       startFairyDust();
 
       // Card glow
       fateCardElement.classList.add('fate-activating');
 
-      // Anchored sparkles from Guided Fate card outer perimeter
+      // Anchored sparkles from Guided Fate card outer perimeter (intensified)
       const anchorRect = fateCardElement.getBoundingClientRect();
       if (anchorRect.width === 0 || anchorRect.height === 0) {
           console.warn('[DEV] Guided Fate card has zero rect — sparkles aborted');
       } else {
-          startFateEdgeSparkles({ anchorEl: fateCardElement, anchorRect: anchorRect, tag: 'card' });
+          startFateEdgeSparkles({ anchorEl: fateCardElement, anchorRect: anchorRect, maxParticles: 40, spawnInterval: 80, tag: 'card' });
       }
 
       // Say/Do input glow + secondary low-density sparkles (3 particles max shared)
