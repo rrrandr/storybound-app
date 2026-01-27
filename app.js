@@ -7909,18 +7909,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
      const worldDesc = capWorldDesc(desc);
 
-     // VISTA-ONLY ENFORCEMENT (LOCKED)
-     // Setup scene MUST be a world vista - NO faces, portraits, or character close-ups
-     const vistaEnforcement = `CRITICAL COMPOSITION RULES:
-- This MUST be a WORLD VISTA image: landscape, cityscape, skyline, planet view, castle on cliff, street scene, or grand environment.
-- If ANY human figure appears, they MUST be facing AWAY from viewer, looking out over the vista (silhouette only).
-- ABSOLUTELY FORBIDDEN: Portraits, faces, characters looking at the viewer, romantic poses, character close-ups, intimate scenes.
-- Camera position: Wide establishing shot, epic scale, environment is the subject.`;
-
-     const styleSuffix = 'Wide cinematic environment, atmospheric lighting, painterly illustration, epic scale, 16:9 aspect ratio, no text, no watermark.';
-
-     // WORLD FIRST, vista enforcement, then style suffix
-     const prompt = `${worldDesc}\n\n${vistaEnforcement}\n\n${styleSuffix}`;
+     // Route through canonical setting visualize prompt
+     const visualizeMode = 'setting';
+     const settingPromptBase = buildVisualizePrompt({ mode: visualizeMode, lastText: '' });
+     const prompt = settingPromptBase + '\n\n' + worldDesc;
 
      let rawUrl = null;
 
@@ -8970,6 +8962,121 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       }
   }
 
+  // ── Visualize Helpers (Pure Story Shape Reflection) ──
+
+  function getVisualizeWorldToneBias() {
+      const parts = [];
+      if (state.picks?.world) parts.push('World: ' + state.picks.world);
+      if (state.picks?.tone) parts.push('Tone: ' + state.picks.tone);
+      if (state.picks?.genre) parts.push('Genre: ' + state.picks.genre);
+      if (state.picks?.dynamic) parts.push('Dynamic: ' + state.picks.dynamic);
+      if (state.intensity) parts.push('Intensity: ' + state.intensity);
+      return parts.length
+          ? parts.join('. ') + '. Render visuals that accurately reflect the story\'s declared world, tone, genre, dynamic, and intensity. Do not add or remove mood.'
+          : 'Render visuals that accurately reflect the current story. Do not add or remove mood.';
+  }
+
+  function getSceneVisualSignals(text) {
+      const signals = [];
+      if (/(crowd|gather|audience|spectators|onlookers)\b/i.test(text)) signals.push('Crowd or audience present');
+      if (/(alone|solitary|by (her|him|them)self|isolated)\b/i.test(text)) signals.push('Character is alone');
+      if (/(touch|grip|press|hold|embrace|hand)\b/i.test(text)) signals.push('Physical contact occurring');
+      if (/(sword|blade|weapon|dagger|bow|gun|shield)\b/i.test(text)) signals.push('Weapon present');
+      if (/(glance|gaze|stare|watch|eye|look)\b/i.test(text)) signals.push('Directed gaze or eye contact');
+      return signals;
+  }
+
+  function resolveVisualFocus(text) {
+      let focus = 'balanced framing of all present characters';
+      if (/(I |my |me |myself)\b/i.test(text)) focus = 'POV-anchored composition favoring the narrator';
+      if (/(she step|he step|they step|she move|he move|she turn|he turn|she raise|he raise)\b/i.test(text)) focus = 'focus on the character initiating action';
+      if (/(watch|stare at|observe|gaze at|eye.*on)\b/i.test(text)) focus = 'focus on the character being observed';
+      if (/(close|breath|whisper|touch|press.*against)\b/i.test(text)) focus = 'intimate proximity framing';
+      return focus;
+  }
+
+  function resolveCameraDistance(text) {
+      let distance = 'medium framing';
+      if (/(touch|hand|grip|press|pull|whisper|breath|close|against)\b/i.test(text)) distance = 'close framing';
+      if (/(approach|step|turn|face|block|stand before)\b/i.test(text)) distance = 'medium framing';
+      if (/(arena|crowd|stadium|hall|city|vast|sprawling|towering)\b/i.test(text)) distance = 'wide framing';
+      return distance;
+  }
+
+  function resolveLightingCondition(text) {
+      let lighting = 'neutral ambient lighting';
+      if (/(dark|dim|shadow|night|torch|candle|lantern|flicker|low light)\b/i.test(text)) lighting = 'low-light conditions with limited illumination';
+      if (/(spotlight|beam|shaft of light|backlit|rim light|glow from|lit by)\b/i.test(text)) lighting = 'directional lighting with strong highlights and shadow contrast';
+      if (/(sunlight|daylight|bright|open sky|well-lit|flooded with light)\b/i.test(text)) lighting = 'even, well-lit conditions with broad visibility';
+      return lighting;
+  }
+
+  function resolveCompositionDensity(text) {
+      let density = 'balanced composition with primary subjects clearly separated from background';
+      if (/(alone|single|one of them|isolated|only one)\b/i.test(text)) density = 'sparse composition with a single primary subject';
+      if (/(two of them|both|pair|together|between them)\b/i.test(text)) density = 'focused composition centered on a small group';
+      if (/(crowd|spectators|many|dozens|packed|surrounding)\b/i.test(text)) density = 'dense composition with multiple figures sharing the frame';
+      return density;
+  }
+
+  // ── Visualize Prompt Builders (routing targets) ──
+
+  function buildSettingVisualizePrompt() {
+      const sWorld = (state.picks && state.picks.world) || 'Unknown';
+      const sTone = (state.picks && state.picks.tone) || 'Unknown';
+      const sGenre = (state.picks && state.picks.genre) || 'Unknown';
+      const sDynamic = (state.picks && state.picks.dynamic) || 'Unknown';
+      const sIntensity = state.intensity || 'Unknown';
+
+      return `SETTING VISUAL — ESTABLISHING ENVIRONMENT ONLY
+
+WORLD: ${sWorld}
+TONE: ${sTone}
+GENRE: ${sGenre}
+DYNAMIC: ${sDynamic}
+INTENSITY: ${sIntensity}
+
+COMPOSITION:
+- Wide or architectural establishing view
+- Environment-focused, not character-focused
+- Spatial layout clearly readable
+
+LIGHTING:
+- Appropriate to the declared world and tone
+- Natural or ambient sources only
+
+CONTENT RULES:
+- Do not depict people, faces, bodies, or interactions
+- Do not imply an event, action, or narrative moment
+- Do not introduce symbolism or mood beyond what the setting itself conveys
+- Objects may be present only as part of the environment, at rest
+
+Render the setting as a neutral, grounded place that could host a story,
+but does not depict the story itself.
+
+Return only the visual description.`;
+  }
+
+  function buildSceneVisualizePrompt(lastText, anchorText) {
+      const intensityBias = getVisualizeIntensityBias();
+      const worldToneBias = getVisualizeWorldToneBias();
+      const sceneSignals = getSceneVisualSignals(lastText);
+      const sceneCtx = sceneSignals.length ? '- ' + sceneSignals.join('\n- ') : '- No additional scene constraints';
+      const focusDirective = resolveVisualFocus(lastText);
+      const cameraDistance = resolveCameraDistance(lastText);
+      const lightingCondition = resolveLightingCondition(lastText);
+      const compositionDensity = resolveCompositionDensity(lastText);
+
+      return `${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nCAMERA DISTANCE:\n- ${cameraDistance}\n\nLIGHTING:\n- ${lightingCondition}\n\nCOMPOSITION:\n- ${compositionDensity}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`;
+  }
+
+  function buildVisualizePrompt({ mode, lastText, anchorText }) {
+      if (mode === 'setting') {
+          return buildSettingVisualizePrompt();
+      }
+      return buildSceneVisualizePrompt(lastText, anchorText);
+  }
+
   // Default visual quality biases for attractive characters
   const VISUAL_QUALITY_DEFAULTS = 'Characters depicted with striking beauty, elegant features, and healthy appearance. Women with beautiful hourglass figures. Men with athletic gymnast-like builds. Faces are attractive and expressive with natural expressions, avoiding exaggerated or artificial looks.';
 
@@ -9912,19 +10019,16 @@ Condensed (under ${maxLength} chars):` }
 
       try {
           let promptMsg = document.getElementById('vizPromptInput').value;
-          // Get intensity bias for prompt generation
-          const intensityBias = getVisualizeIntensityBias();
+          const visualizeMode = 'scene';
+          const visualizePrompt = buildVisualizePrompt({ mode: visualizeMode, lastText, anchorText });
 
           if(!isRe || !promptMsg) {
               try {
-                  // Use authoritative scene visualization system prompt
-                  const toneContext = state.picks?.tone || 'Earnest';
-                  const worldContext = state.picks?.world || 'Modern';
                   promptMsg = await Promise.race([
-                      callChat([
-                          { role: 'system', content: SCENE_VIZ_SYSTEM },
-                          { role: 'user', content: `STORY CONTEXT: ${worldContext} world, ${toneContext} tone.\nCHARACTER ANCHORS: ${anchorText.slice(0, 150)}\nINTENSITY: ${intensityBias.split('.')[0]}.\n\nSCENE TEXT:\n${lastText}` }
-                      ]),
+                      callChat([{
+                          role:'user',
+                          content: visualizePrompt
+                      }]),
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
               } catch (e) {
