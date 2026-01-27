@@ -2325,6 +2325,60 @@ textarea.fate-field {
     color: rgba(255, 255, 255, 0.95);
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   DSP CLAUSE STATES — Pending → Resolving → Resolved
+   Supports incremental resolution as setup cards are flipped.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Base clause span (inline flow, smooth transitions)
+   Specificity must beat .synopsis-text span (0-1-1) */
+.synopsis-text .dsp-clause {
+    display: inline;
+    margin-bottom: 0;
+    transition: color 0.6s ease, opacity 0.6s ease;
+}
+
+/* Pending: greyed, signals "not yet decided" */
+.dsp-clause.dsp-pending {
+    color: rgba(255, 255, 255, 0.28);
+}
+
+/* Resolving: gold flash, then settles to normal */
+@keyframes dsp-clause-resolve {
+    0%   { color: rgba(255, 255, 255, 0.28); }
+    30%  { color: var(--gold); }
+    100% { color: rgba(255, 255, 255, 0.75); }
+}
+.dsp-clause.dsp-resolving {
+    animation: dsp-clause-resolve 0.8s ease forwards;
+}
+
+/* Resolved: inherits normal DSP text color */
+.dsp-clause.dsp-resolved {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Name emphasis: brief gold pulse when name is first injected */
+@keyframes dsp-name-inject {
+    0%   { color: rgba(255, 255, 255, 0.28); }
+    20%  { color: var(--gold); text-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
+    60%  { color: var(--gold); text-shadow: none; }
+    100% { color: rgba(255, 255, 255, 0.75); }
+}
+.dsp-clause.dsp-name-inject {
+    animation: dsp-name-inject 1.0s ease forwards;
+}
+
+/* DSP panel subtle pulse when any clause resolves */
+@keyframes dsp-panel-pulse {
+    0%   { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
+    50%  { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 12px rgba(201, 162, 39, 0.25); }
+    100% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
+}
+.synopsis-panel.dsp-pulse {
+    animation: dsp-panel-pulse 0.6s ease;
+}
+
 /* Mobile: DSP pins to top of viewport, floats above content */
 @media (max-width: 1100px) {
     .synopsis-panel {
@@ -2482,6 +2536,7 @@ textarea.fate-field {
     height: 210px; /* 5:7 ratio */
     perspective: 1000px;
     cursor: pointer;
+    position: relative; /* Needed for sparkle/shimmer overlays */
 }
 
 /* Responsive card sizes */
@@ -2593,6 +2648,108 @@ textarea.fate-field {
 
 .sb-card.selected .sb-card-back {
     border-color: var(--pink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SETUP CARD SPARKLE & SHIMMER SYSTEM
+   Pre-click: ambient sparkle particles invite interaction
+   Post-selection: ongoing shimmer + intermittent sparkles
+   Causality: card pulses when it affects the DSP
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Pre-click ambient sparkle overlay on unselected cards */
+.sb-card:not(.selected):not(.locked):not(.dimmed) .sb-sparkle-container {
+    position: absolute;
+    inset: -6px;
+    pointer-events: none;
+    z-index: 3;
+    overflow: visible;
+}
+
+/* Individual sparkle particle */
+.sb-sparkle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: var(--gold);
+    border-radius: 50%;
+    opacity: 0;
+    box-shadow: 0 0 4px var(--gold), 0 0 8px rgba(255, 215, 0, 0.4);
+    animation: sb-sparkle-drift var(--sparkle-dur, 2.5s) var(--sparkle-delay, 0s) ease-in-out infinite;
+}
+
+@keyframes sb-sparkle-drift {
+    0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    25%  { opacity: 0.7; }
+    50%  { opacity: 0.9; transform: translate(var(--sparkle-dx, 3px), var(--sparkle-dy, -6px)) scale(1.1); }
+    75%  { opacity: 0.5; }
+    100% { opacity: 0; transform: translate(var(--sparkle-dx2, -2px), var(--sparkle-dy2, 4px)) scale(0.5); }
+}
+
+/* Post-selection: slow shimmer sweep across selected card */
+.sb-card.selected .sb-card-shimmer {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: linear-gradient(
+        105deg,
+        transparent 30%,
+        rgba(255, 215, 0, 0.08) 45%,
+        rgba(255, 215, 0, 0.15) 50%,
+        rgba(255, 215, 0, 0.08) 55%,
+        transparent 70%
+    );
+    background-size: 250% 100%;
+    animation: sb-shimmer-sweep 3.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 4;
+}
+
+@keyframes sb-shimmer-sweep {
+    0%   { background-position: 250% 0; }
+    100% { background-position: -150% 0; }
+}
+
+/* Post-selection: intermittent sparkle on selected cards */
+.sb-card.selected .sb-sparkle-active {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: var(--gold);
+    border-radius: 50%;
+    opacity: 0;
+    box-shadow: 0 0 5px var(--gold), 0 0 10px rgba(255, 215, 0, 0.5);
+    pointer-events: none;
+    z-index: 5;
+    animation: sb-sparkle-pop var(--pop-dur, 1.8s) var(--pop-delay, 0s) ease-in-out infinite;
+}
+
+@keyframes sb-sparkle-pop {
+    0%, 70%, 100% { opacity: 0; transform: scale(0.3); }
+    80%           { opacity: 0.85; transform: scale(1.2); }
+    90%           { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* Post-selection: subtle animated border glow */
+.sb-card.selected .sb-card-inner {
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.2);
+    animation: sb-border-breathe 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes sb-border-breathe {
+    0%   { box-shadow: 0 0 4px rgba(255, 215, 0, 0.15); }
+    100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.35); }
+}
+
+/* Causality flash: card pulses when it causes DSP update */
+@keyframes sb-causal-flash {
+    0%   { filter: drop-shadow(0 0 10px var(--hot)); }
+    30%  { filter: drop-shadow(0 0 20px var(--gold)) brightness(1.15); }
+    100% { filter: drop-shadow(0 0 10px var(--hot)); }
+}
+
+.sb-card.dsp-causal-flash {
+    animation: sb-causal-flash 0.7s ease;
 }
 
 /* Locked state */

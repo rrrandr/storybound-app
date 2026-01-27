@@ -4438,8 +4438,27 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // Evaluate downstream selections for compatibility
         evaluateDownstreamSelections(grp);
 
-        // Update floating synopsis panel
-        updateSynopsisPanel();
+        // Track explicit user choice for DSP incremental resolution
+        const dspAxes = ['world', 'tone', 'genre', 'dynamic', 'worldSubtype'];
+        if (dspAxes.includes(grp)) {
+          dspResolvedAxes.add(grp);
+        }
+
+        // Update floating synopsis panel (pass changed axis for clause flash)
+        updateSynopsisPanel(dspAxes.includes(grp) ? grp : null);
+
+        // Causality feedback: flash the card that caused DSP change
+        if (dspAxes.includes(grp)) {
+          card.classList.remove('dsp-causal-flash');
+          void card.offsetWidth; // force reflow for re-trigger
+          card.classList.add('dsp-causal-flash');
+          card.addEventListener('animationend', () => {
+            card.classList.remove('dsp-causal-flash');
+          }, { once: true });
+        }
+
+        // Add sparkle visuals to newly selected card
+        ensureCardSparkles(card);
       });
     });
 
@@ -4453,6 +4472,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     initSelectionCardSystem();
     // Apply any legacy Historical era remapping
     applyHistoricalEraRemap();
+    // Initialize sparkle particles on setup cards
+    initSetupCardSparkles();
 
     // Name refining indicator helpers
     function showNameRefiningIndicator(inputEl) {
@@ -4489,7 +4510,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         state.normalizedPlayerKernel = kernel;
         state.rawPlayerName = raw;
         playerNameInput.value = kernel;
-        updateSynopsisPanel();
+        // Mark name as resolved for DSP incremental resolution
+        dspResolvedAxes.add('name');
+        updateSynopsisPanel('name');
       });
     }
 
@@ -4762,7 +4785,137 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     return SUBTYPE_DISPLAY[subtype] || null;
   }
 
-  function updateSynopsisPanel() {
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP INCREMENTAL RESOLUTION STATE
+  // Tracks which axes the user has explicitly selected.
+  // Unresolved axes render as "pending" (greyed) in the DSP.
+  // ═══════════════════════════════════════════════════════════════════
+  const dspResolvedAxes = new Set();
+
+  /**
+   * Build DSP HTML with clause spans wrapping each slot value.
+   * Structural/connecting text is wrapped with data-axis="tone".
+   * Slot values are wrapped with their respective axis names.
+   */
+  function buildDSPHTML(sentence, worldText, genreText, dynamicText, playerAppositive, subtypeText) {
+    // Collect slot markers: {start, end, axis}
+    const markers = [];
+    const addSlot = (text, axis) => {
+      if (!text) return;
+      const idx = sentence.indexOf(text);
+      if (idx >= 0) markers.push({ start: idx, end: idx + text.length, axis });
+    };
+
+    // Name appositive
+    if (playerAppositive && playerAppositive !== '') {
+      addSlot(playerAppositive, 'name');
+    }
+    // World subtype (appears before world text; may be capitalized by Surreal generator)
+    if (subtypeText) {
+      const idx1 = sentence.indexOf(subtypeText);
+      const capitalized = subtypeText.charAt(0).toUpperCase() + subtypeText.slice(1);
+      const idx2 = sentence.indexOf(capitalized);
+      if (idx1 >= 0) {
+        markers.push({ start: idx1, end: idx1 + subtypeText.length, axis: 'worldSubtype' });
+      } else if (idx2 >= 0) {
+        markers.push({ start: idx2, end: idx2 + capitalized.length, axis: 'worldSubtype' });
+      }
+    }
+    // Core slot values
+    addSlot(worldText, 'world');
+    addSlot(genreText, 'genre');
+    addSlot(dynamicText, 'dynamic');
+
+    // Sort by position (forward order)
+    markers.sort((a, b) => a.start - b.start);
+
+    // Build HTML: structural text → slot span → structural text → ...
+    let html = '';
+    let pos = 0;
+    for (const m of markers) {
+      if (pos < m.start) {
+        html += `<span class="dsp-clause dsp-structural" data-axis="tone">${sentence.substring(pos, m.start)}</span>`;
+      }
+      html += `<span class="dsp-clause" data-axis="${m.axis}">${sentence.substring(m.start, m.end)}</span>`;
+      pos = m.end;
+    }
+    if (pos < sentence.length) {
+      html += `<span class="dsp-clause dsp-structural" data-axis="tone">${sentence.substring(pos)}</span>`;
+    }
+    return html;
+  }
+
+  /**
+   * Apply pending/resolved visual states to all DSP clause spans.
+   */
+  function applyDSPClauseStates() {
+    document.querySelectorAll('#synopsisText .dsp-clause').forEach(span => {
+      const axis = span.dataset.axis;
+      if (dspResolvedAxes.has(axis)) {
+        span.classList.remove('dsp-pending');
+        span.classList.add('dsp-resolved');
+      } else {
+        span.classList.add('dsp-pending');
+        span.classList.remove('dsp-resolved');
+      }
+    });
+  }
+
+  /**
+   * Flash a specific DSP clause with the resolving animation,
+   * and pulse the synopsis panel border.
+   */
+  function flashDSPClause(axis) {
+    // Flash all spans for this axis (structural text has multiple spans for tone)
+    document.querySelectorAll(`#synopsisText .dsp-clause[data-axis="${axis}"]`).forEach(span => {
+      span.classList.remove('dsp-pending', 'dsp-resolved');
+      span.classList.add('dsp-resolving');
+      span.addEventListener('animationend', () => {
+        span.classList.remove('dsp-resolving');
+        span.classList.add('dsp-resolved');
+      }, { once: true });
+    });
+
+    // Subtle pulse on the panel itself
+    const panel = document.getElementById('synopsisPanel');
+    if (panel) {
+      panel.classList.remove('dsp-pulse');
+      // Force reflow to restart animation
+      void panel.offsetWidth;
+      panel.classList.add('dsp-pulse');
+      panel.addEventListener('animationend', () => {
+        panel.classList.remove('dsp-pulse');
+      }, { once: true });
+    }
+  }
+
+  /**
+   * Flash the name clause with a distinct name-injection animation.
+   */
+  function flashDSPNameInject() {
+    document.querySelectorAll('#synopsisText .dsp-clause[data-axis="name"]').forEach(span => {
+      span.classList.remove('dsp-pending', 'dsp-resolved', 'dsp-resolving');
+      span.classList.add('dsp-name-inject');
+      span.addEventListener('animationend', () => {
+        span.classList.remove('dsp-name-inject');
+        span.classList.add('dsp-resolved');
+      }, { once: true });
+    });
+
+    // Panel pulse
+    const panel = document.getElementById('synopsisPanel');
+    if (panel) {
+      panel.classList.remove('dsp-pulse');
+      void panel.offsetWidth;
+      panel.classList.add('dsp-pulse');
+      panel.addEventListener('animationend', () => panel.classList.remove('dsp-pulse'), { once: true });
+    }
+  }
+
+  // Store last-generated raw sentence to detect changes
+  let _lastDSPSentence = '';
+
+  function updateSynopsisPanel(changedAxis) {
     const synopsisText = document.getElementById('synopsisText');
     if (!synopsisText) return;
 
@@ -4781,11 +4934,35 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Generate holistic sentence based on tone with player kernel and subtype
     const newSentence = generateDSPSentence(world, tone, genre, dynamic, playerKernel, worldSubtype);
 
-    // Update with animation if content changed
-    if (synopsisText.textContent !== newSentence) {
-      synopsisText.classList.add('updating');
-      synopsisText.textContent = newSentence;
-      setTimeout(() => synopsisText.classList.remove('updating'), 500);
+    // Only rebuild HTML if content changed
+    if (_lastDSPSentence !== newSentence) {
+      _lastDSPSentence = newSentence;
+
+      // Compute slot values for span wrapping
+      const worldText = DSP_WORLD_SETTINGS[world] || DSP_WORLD_SETTINGS.Modern;
+      const genreText = DSP_GENRE_CONFLICTS[genre] || DSP_GENRE_CONFLICTS.Billionaire;
+      const dynamicText = DSP_DYNAMIC_ENGINES[dynamic] || DSP_DYNAMIC_ENGINES.Enemies;
+      const subtypeText = worldSubtype ? formatWorldSubtype(worldSubtype) : null;
+      const playerAppositive = formatPlayerAppositive(playerKernel);
+
+      // Build clause-aware HTML
+      const html = buildDSPHTML(newSentence, worldText, genreText, dynamicText, playerAppositive, subtypeText);
+      synopsisText.innerHTML = html;
+
+      // Apply pending/resolved visual states
+      applyDSPClauseStates();
+
+      // Flash the changed clause (if this was triggered by an explicit user action)
+      if (changedAxis) {
+        if (changedAxis === 'name') {
+          flashDSPNameInject();
+        } else if (changedAxis === 'tone') {
+          // Tone rewrites the entire sentence structure - flash all structural spans
+          flashDSPClause('tone');
+        } else {
+          flashDSPClause(changedAxis);
+        }
+      }
     }
   }
 
@@ -4854,6 +5031,86 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     updateDSPVisibility(_currentScreenId);
   }
   window.initSynopsisPanelScrollBehavior = initSynopsisPanelScrollBehavior;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SETUP CARD SPARKLE SYSTEM
+  // Pre-click: ambient sparkle particles on unselected DSP-axis cards
+  // Post-selection: shimmer overlay + intermittent sparkle pops
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Create ambient sparkle particles inside a card's sparkle container.
+   * Unselected cards get floating drift sparkles; selected cards get pop sparkles.
+   */
+  function ensureCardSparkles(card) {
+    if (!card || card.classList.contains('locked') || card.classList.contains('dimmed')) return;
+
+    // Remove existing sparkle containers to avoid duplicates
+    card.querySelectorAll('.sb-sparkle-container, .sb-card-shimmer').forEach(el => el.remove());
+
+    if (card.classList.contains('selected')) {
+      // POST-SELECTION: shimmer overlay + intermittent sparkle pops
+      const shimmer = document.createElement('div');
+      shimmer.className = 'sb-card-shimmer';
+      card.appendChild(shimmer);
+
+      // Intermittent sparkle pops on selected card
+      const popContainer = document.createElement('div');
+      popContainer.className = 'sb-sparkle-container';
+      popContainer.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible;';
+      const popCount = 5;
+      for (let i = 0; i < popCount; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'sb-sparkle-active';
+        // Random positions around the card
+        spark.style.left = `${Math.random() * 100}%`;
+        spark.style.top = `${Math.random() * 100}%`;
+        spark.style.setProperty('--pop-dur', `${1.5 + Math.random() * 2}s`);
+        spark.style.setProperty('--pop-delay', `${Math.random() * 2.5}s`);
+        popContainer.appendChild(spark);
+      }
+      card.appendChild(popContainer);
+    } else {
+      // PRE-CLICK: ambient drift sparkles inviting interaction
+      const container = document.createElement('div');
+      container.className = 'sb-sparkle-container';
+      const sparkleCount = 6;
+      for (let i = 0; i < sparkleCount; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'sb-sparkle';
+        // Distribute around card edges
+        const side = Math.floor(Math.random() * 4);
+        if (side === 0) { spark.style.left = `${Math.random() * 100}%`; spark.style.top = '-3px'; }
+        else if (side === 1) { spark.style.left = `${Math.random() * 100}%`; spark.style.bottom = '-3px'; }
+        else if (side === 2) { spark.style.top = `${Math.random() * 100}%`; spark.style.left = '-3px'; }
+        else { spark.style.top = `${Math.random() * 100}%`; spark.style.right = '-3px'; }
+        // Randomize animation timing
+        spark.style.setProperty('--sparkle-dur', `${2 + Math.random() * 2}s`);
+        spark.style.setProperty('--sparkle-delay', `${Math.random() * 2}s`);
+        spark.style.setProperty('--sparkle-dx', `${(Math.random() - 0.5) * 10}px`);
+        spark.style.setProperty('--sparkle-dy', `${(Math.random() - 0.5) * 10}px`);
+        spark.style.setProperty('--sparkle-dx2', `${(Math.random() - 0.5) * 8}px`);
+        spark.style.setProperty('--sparkle-dy2', `${(Math.random() - 0.5) * 8}px`);
+        container.appendChild(spark);
+      }
+      card.appendChild(container);
+    }
+  }
+
+  /**
+   * Initialize sparkle particles on all DSP-axis setup cards.
+   * Called once on setup screen initialization.
+   */
+  function initSetupCardSparkles() {
+    const dspGroups = ['world', 'tone', 'genre', 'dynamic', 'worldSubtype'];
+    dspGroups.forEach(grp => {
+      document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(card => {
+        if (!card.classList.contains('locked') && !card.classList.contains('dimmed')) {
+          ensureCardSparkles(card);
+        }
+      });
+    });
+  }
 
   // =========================
   // ARCHETYPE UI HANDLERS

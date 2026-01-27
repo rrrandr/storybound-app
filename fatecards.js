@@ -740,16 +740,6 @@
         cards.forEach(c => c.classList.remove('selected'));
         if (selectedCardEl) selectedCardEl.classList.add('selected');
 
-        // Show "Your choice:" label when a card is selected
-        const yourChoiceLabel = document.getElementById('yourChoiceLabel');
-        if (yourChoiceLabel) {
-            if (selectedCardEl) {
-                yourChoiceLabel.classList.remove('hidden');
-            } else {
-                yourChoiceLabel.classList.add('hidden');
-            }
-        }
-
         // Track selection in state without changing shape elsewhere
         if (window.state) {
             const idx = Number(selectedCardEl && selectedCardEl.dataset && selectedCardEl.dataset.cardIndex);
