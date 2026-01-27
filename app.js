@@ -6281,6 +6281,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // =================================================================
 
   let _dustInterval = null;
+  let _sparkleIntervals = [];
   const DUST_CONFIG = {
     MAX_PARTICLES: 12,        // Subtle density — card-scoped, not viewport-wide
     SPAWN_INTERVAL: 400,      // Slow ritual pace
@@ -6356,6 +6357,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       clearInterval(_dustInterval);
       _dustInterval = null;
     }
+    // Clear all sparkle intervals
+    _sparkleIntervals.forEach(id => clearInterval(id));
+    _sparkleIntervals = [];
     // Fade out existing particles gracefully
     document.querySelectorAll('.fate-dust-particle').forEach(p => {
       p.style.opacity = '0';
@@ -6364,26 +6368,111 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
   }
 
-  // Activate Guided Fate visuals — called only on Guided Fate card click
-  function activateGuidedFateVisuals() {
-      _guidedFateVisualsActive = true;
-      const vignette = document.getElementById('fateVignette');
-      if (vignette) vignette.classList.add('active');
-      const fateCard = document.getElementById('fateDestinyCard');
-      if (fateCard) fateCard.classList.add('fate-activating');
-      startFairyDust();
-      // Golden echo glow on downstream text inputs
-      const playerInput = document.getElementById('playerNameInput');
-      const partnerInput = document.getElementById('partnerNameInput');
-      if (playerInput) playerInput.classList.add('guided-fate-glow');
-      if (partnerInput) partnerInput.classList.add('guided-fate-glow');
+  // Anchor-aware sparkle spawner — particles originate from a DOM element's bounding box
+  function startFateEdgeSparkles({ anchorEl, anchorRect, maxParticles, spawnInterval, tag }) {
+    if (!anchorEl) return;
+    maxParticles = maxParticles || DUST_CONFIG.MAX_PARTICLES;
+    spawnInterval = spawnInterval || DUST_CONFIG.SPAWN_INTERVAL;
+    tag = tag || 'card';
+
+    const checkRect = anchorRect || anchorEl.getBoundingClientRect();
+    if (checkRect.width === 0 || checkRect.height === 0) {
+      console.warn('[DEV] startFateEdgeSparkles: anchor has zero dimensions — aborting');
+      return;
+    }
+
+    function spawn() {
+      if (!_guidedFateVisualsActive) return;
+
+      const tagSelector = '.fate-dust-particle[data-sparkle-tag="' + tag + '"]';
+      const existing = document.querySelectorAll(tagSelector);
+      if (existing.length >= maxParticles) return;
+
+      const rect = anchorEl.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
+      const particle = document.createElement('div');
+      particle.className = 'fate-dust-particle';
+      particle.dataset.sparkleTag = tag;
+
+      const x = rect.left + Math.random() * rect.width;
+      const y = rect.top + Math.random() * rect.height;
+
+      const size = DUST_CONFIG.MIN_SIZE + Math.random() * (DUST_CONFIG.MAX_SIZE - DUST_CONFIG.MIN_SIZE);
+      const duration = DUST_CONFIG.MIN_DURATION + Math.random() * (DUST_CONFIG.MAX_DURATION - DUST_CONFIG.MIN_DURATION);
+      const opacity = DUST_CONFIG.MIN_OPACITY + Math.random() * (DUST_CONFIG.MAX_OPACITY - DUST_CONFIG.MIN_OPACITY);
+
+      const baseAngle = Math.random() * Math.PI * 2;
+      const driftDistance = 15 + Math.random() * 30;
+      const dx = Math.cos(baseAngle) * driftDistance;
+      const dy = -20 - Math.random() * 40;
+
+      particle.style.cssText = `
+        left: ${x}px;
+        top: ${y}px;
+        width: ${size}px;
+        height: ${size}px;
+        --dust-duration: ${duration}ms;
+        --dust-opacity: ${opacity};
+        --dust-dx: ${dx}px;
+        --dust-dy: ${dy}px;
+      `;
+
+      document.body.appendChild(particle);
+      setTimeout(() => { if (particle.parentNode) particle.remove(); }, duration + 100);
+    }
+
+    const intervalId = setInterval(spawn, spawnInterval);
+    _sparkleIntervals.push(intervalId);
+
+    // Gentle initial burst
+    const burstCount = Math.min(5, maxParticles);
+    for (let i = 0; i < burstCount; i++) {
+      setTimeout(spawn, i * 80);
+    }
   }
 
-  // Deactivate Guided Fate visuals — called on any user interaction or as safety fallback
+  // Activate Guided Fate visuals — requires actual Guided Fate card DOM node
+  function activateGuidedFateVisuals(fateCardElement) {
+      if (!fateCardElement) return;
+      _guidedFateVisualsActive = true;
+
+      // Vignette
+      const vignette = document.getElementById('fateVignette');
+      if (vignette) vignette.classList.add('active');
+
+      // Card glow
+      fateCardElement.classList.add('fate-activating');
+
+      // Sparkles from Guided Fate card bounding box
+      const anchorRect = fateCardElement.getBoundingClientRect();
+      if (anchorRect.width === 0 || anchorRect.height === 0) {
+          console.warn('[DEV] Guided Fate card has zero rect — sparkles aborted');
+      } else {
+          startFateEdgeSparkles({ anchorEl: fateCardElement, anchorRect: anchorRect, tag: 'card' });
+      }
+
+      // Say/Do input glow + secondary low-density sparkles (3 particles max shared)
+      const playerInput = document.getElementById('playerNameInput');
+      const partnerInput = document.getElementById('partnerNameInput');
+      if (playerInput) {
+          playerInput.classList.add('guided-fate-glow');
+          startFateEdgeSparkles({ anchorEl: playerInput, maxParticles: 3, spawnInterval: 800, tag: 'input' });
+      }
+      if (partnerInput) {
+          partnerInput.classList.add('guided-fate-glow');
+          startFateEdgeSparkles({ anchorEl: partnerInput, maxParticles: 3, spawnInterval: 800, tag: 'input' });
+      }
+  }
+
+  // Deactivate Guided Fate visuals — idempotent, no guards
   function deactivateGuidedFateVisuals() {
-      if (!_guidedFateVisualsActive) return;
       _guidedFateVisualsActive = false;
+
+      // Clear all sparkle intervals and DOM particles
       stopFairyDust();
+
+      // Shut off vignette
       const vignette = document.getElementById('fateVignette');
       if (vignette) {
           vignette.style.opacity = '';
@@ -6391,9 +6480,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           vignette.classList.add('fading');
           setTimeout(() => vignette.classList.remove('fading'), 1600);
       }
+
       // Remove glow from Guided Fate card
       const fateCard = document.getElementById('fateDestinyCard');
       if (fateCard) fateCard.classList.remove('fate-activating');
+
       // Remove golden echo from downstream inputs
       document.querySelectorAll('.guided-fate-glow').forEach(el => el.classList.remove('guided-fate-glow'));
   }
@@ -6425,12 +6516,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   // Override handler - user takes control from Fate
-  // Also deactivates Guided Fate visuals on any user interaction
+  // Always deactivates Guided Fate visuals on any user interaction
   function handleFateOverride(event) {
-    // Deactivate Guided Fate visuals on any user interaction
-    if (_guidedFateVisualsActive) {
-      deactivateGuidedFateVisuals();
-    }
+    // Unconditional visual shutdown on any user action
+    deactivateGuidedFateVisuals();
+
     if (_fateRunning && !_fateOverridden) {
       _fateOverridden = true;
       // Clear all fate highlights immediately
@@ -6459,7 +6549,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (!setupArea) return;
 
     // Listen for user interaction that indicates override
-    const overrideEvents = ['click', 'keydown', 'input'];
+    const overrideEvents = ['click', 'keydown', 'input', 'change'];
     overrideEvents.forEach(evt => {
       setupArea.addEventListener(evt, handleFateOverride, { capture: true, passive: true });
     });
@@ -6726,8 +6816,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     const ceremonyStartTime = Date.now();
 
-    // Activate golden vignette + fairy dust + input echo
-    activateGuidedFateVisuals();
+    // Activate golden vignette + sparkles + input echo
+    const fateCardElement = document.getElementById('fateDestinyCard');
+    activateGuidedFateVisuals(fateCardElement);
 
     // Highlight both character blocks during ceremony
     const mcBlock = document.querySelector('#playerNameInput')?.closest('.character-block');
@@ -6865,6 +6956,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     showToast('Fate has spoken. Click Begin Story when ready.');
 
     _fateRunning = false;
+
+    // Force DSP update to reflect Guided Fate selections immediately
+    updateSynopsisPanel();
   }
 
   // Populate all UI selections from fate choices
