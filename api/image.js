@@ -398,7 +398,7 @@ ${visualRestraint}
 
 TYPOGRAPHY:
 Title: "${cleanTitle}" — typeset with weight and presence. The focal anchor may interact with letterforms: casting shadow onto them, threading behind them, or bleeding into their edges. Typography and object share physical space.
-Series: "Storybound Book I: ${poeticSubtitle}" — very small, quiet, subordinate. Near title or upper edge.
+Series: "${modeLine}" — very small, quiet, subordinate. Near title or upper edge.
 Author: ${cleanAuthor} — bold sans-serif, ALL CAPS, anchoring the bottom edge.
 
 HARD BANS:
@@ -917,7 +917,7 @@ ${visualRestraint}
 
 TYPOGRAPHY:
 Title: "${cleanTitle}" — typeset with weight and presence. The emblem may cast shadow onto letterforms or sit behind them. Typography and emblem share physical space.
-Series: "Storybound Book I: ${poeticSubtitle}" — very small, quiet, subordinate. Near title or upper edge.
+Series: "${modeLine}" — very small, quiet, subordinate. Near title or upper edge.
 Author: ${cleanAuthor} — bold sans-serif, ALL CAPS, anchoring the bottom edge.
 
 HARD BANS:
@@ -1077,7 +1077,7 @@ The title is NOT a font overlay. It is a physical object or manifestation within
 The letters participate in the world — they are carved, etched, formed, or grown from material.
 Typography and environment share the same reality.
 
-Series: "Storybound Book I: ${poeticSubtitle}" — very small, scratched or faded into a surface nearby.
+Series: "${modeLine}" — very small, scratched or faded into a surface nearby.
 Author: ${cleanAuthor} — small, subordinate, can be etched or carved in a secondary surface.
 
 NO HUMAN PRESENCE: No figures, no silhouettes, no hands, no faces. Only the threshold and what it divides.

@@ -8707,6 +8707,53 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
 
   // Generate book cover with intent-based routing
   // Uses COVER INTELLIGENCE SYSTEM for focal object, anti-repetition, domain backgrounds, palette
+  // DSP-lite cover subtitle derived from story shape axes
+  function generateCoverSubtitle() {
+      const GENRE_PHRASE = {
+          Billionaire: 'wealth and want',
+          CrimeSyndicate: 'crime and collusion',
+          Espionage: 'secrets and espionage',
+          Political: 'power and politics',
+          Noir: 'shadow and suspicion',
+          Heist: 'schemes and daring'
+      };
+      const DYNAMIC_PHRASE = {
+          Enemies: 'rivals become something more',
+          Friends: 'friendship ignites',
+          Forbidden: 'the forbidden pulls closer',
+          Fated: 'destiny refuses to let go',
+          SecondChance: 'the past returns uninvited',
+          ForcedProximity: 'proximity rewrites the rules',
+          OnlyOneBed: 'closeness becomes unavoidable',
+          Fake: 'the lie begins to feel real',
+          Grumpy: 'opposites collide',
+          Boss: 'authority blurs every line',
+          Rivals: 'competition sparks something unexpected'
+      };
+      const WORLD_SHADE = {
+          Modern: 'under city lights',
+          Fantasy: 'in lands uncharted',
+          Romantasy: 'where magic meets desire',
+          SciFi: 'among the stars',
+          Historical: 'across the ages',
+          Dystopia: 'in a world undone',
+          PostApocalyptic: 'after the fall',
+          Horror: 'in the dark between worlds'
+      };
+
+      const genre = state.picks?.genre || 'Billionaire';
+      const dynamic = state.picks?.dynamic || 'Enemies';
+      const world = state.picks?.world || 'Modern';
+      const intensity = state.intensity || 'Naughty';
+
+      const gp = GENRE_PHRASE[genre] || 'intrigue';
+      const dp = DYNAMIC_PHRASE[dynamic] || 'two lives collide';
+      const wp = WORLD_SHADE[world] || '';
+      const storyNoun = (intensity === 'Erotic' || intensity === 'Dirty') ? 'story' : 'tale';
+
+      return 'A Storybound ' + storyNoun + ' of ' + gp + ' where ' + dp + ' ' + wp + '.';
+  }
+
   async function generateBookCover(synopsis, title, authorName) {
       // Extract story context for symbolic object selection (4-axis system)
       const world = state.picks?.world || 'Modern';
@@ -8727,8 +8774,8 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       console.log('[DEV:CoverGen] world:', world, '| tone:', tone, '| genre:', genre, '→ powerRole:', powerRole, '| archetype:', archetype, '| arousal:', arousal);
       console.log('[DEV:WorldResolve] world:', world, '| genre:', genre, '→ archetype:', archetype, '| powerFrame:', powerFrame);
 
-      // Build mode line from world + tone
-      const modeLine = era ? `${era} ${world}` : `${world} ${tone}`;
+      // DSP-lite subtitle replaces series label
+      const modeLine = generateCoverSubtitle();
       // Build story style description
       const storyStyle = `${tone} ${powerRole}`;
 
