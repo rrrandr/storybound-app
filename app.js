@@ -3087,6 +3087,32 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               });
           }
       });
+
+      // Fate Resolution Glow — brief visual pulse on every in-story Fate card click
+      document.addEventListener('click', function(e) {
+          const card = e.target.closest('.fate-card');
+          if (!card || !card.closest('#cardMount')) return;
+          if (card.classList.contains('locked')) return;
+          if (window.state && window.state.fateCommitted) return;
+
+          // Card pulse (replayable — remove + reflow + add)
+          card.classList.remove('fate-resolve-pulse');
+          void card.offsetWidth;
+          card.classList.add('fate-resolve-pulse');
+          setTimeout(() => card.classList.remove('fate-resolve-pulse'), 400);
+
+          // Input glow at text-injection time (~600ms matches fatecards.js apply delay)
+          setTimeout(() => {
+              ['actionInput', 'dialogueInput'].forEach(id => {
+                  const el = document.getElementById(id);
+                  if (!el) return;
+                  el.classList.remove('fate-resolve-glow');
+                  void el.offsetWidth;
+                  el.classList.add('fate-resolve-glow');
+                  setTimeout(() => el.classList.remove('fate-resolve-glow'), 400);
+              });
+          }, 600);
+      });
   }
 
   // FIX: Added paywallMode parameter to support sub_only for Dirty intensity
