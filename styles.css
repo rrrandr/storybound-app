@@ -1427,6 +1427,19 @@ textarea.fate-field {
     box-sizing: border-box;
 }
 
+/* Story Shape Row - layout owner for both character blocks */
+.story-shape-row {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.story-shape-character {
+    width: max-content;
+    flex: 0 0 auto;
+}
+
 .character-block-horizontal {
     display: flex;
     align-items: stretch;
