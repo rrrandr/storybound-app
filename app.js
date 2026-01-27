@@ -8846,6 +8846,8 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   }
 
   // Open book via hinge animation (triggered by clicking anywhere on book)
+  const BOOK_DWELL_MS = 10000; // Time book stays open before Scene 1 mounts
+
   function openBook() {
       if (_bookOpened) return;
       _bookOpened = true;
@@ -8862,20 +8864,28 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           bookCover.classList.add('hinge-open');
       }
 
-      // After hinge animation, transition to story
+      // After hinge animation completes, begin dwell period
       setTimeout(() => {
-          if (bookCoverPage) bookCoverPage.classList.add('hidden');
-          if (storyContent) {
-              storyContent.classList.remove('hidden');
-              storyContent.classList.add('fade-in');
-          }
-          if (storyTextEl) storyTextEl.style.opacity = '1';
+          // Dwell: book stays open showing inside cover before Scene 1 mounts
+          setTimeout(() => {
+              if (bookCoverPage) bookCoverPage.classList.add('hidden');
+              if (storyContent) {
+                  storyContent.classList.remove('hidden');
+                  storyContent.classList.add('fade-in');
+              }
+              if (storyTextEl) storyTextEl.style.opacity = '1';
 
-          // Scroll to title
-          const titleEl = document.getElementById('storyTitle');
-          if (titleEl) {
-              titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
+              // Scroll to title
+              const titleEl = document.getElementById('storyTitle');
+              if (titleEl) {
+                  titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+
+              // Deactivate Guided Fate visuals after dwell completes
+              if (typeof deactivateGuidedFateVisuals === 'function') {
+                  deactivateGuidedFateVisuals();
+              }
+          }, BOOK_DWELL_MS);
       }, 800);
   }
 
