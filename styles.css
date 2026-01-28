@@ -2550,6 +2550,7 @@ textarea.fate-field {
     width: 180px;
     min-height: 220px;
     max-height: 280px;
+    overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     /* Hidden by default - JS controls visibility based on scroll position */
     opacity: 0;
@@ -2589,14 +2590,36 @@ textarea.fate-field {
     transition: opacity 0.4s ease;
     color: inherit;
     font-weight: inherit;
-    display: block;
-    margin-bottom: 8px;
 }
 
 /* Subtle emphasis when clause updates - slight opacity pulse only */
 .synopsis-text span.updating {
     opacity: 1;
     color: rgba(255, 255, 255, 0.95);
+}
+
+/* DSP clause spans — inline flow, no layout impact */
+.dsp-clause {
+    display: inline;
+    transition: color 0.6s ease, opacity 0.6s ease;
+}
+
+/* Pending state — greyed, low-contrast, signals unresolved */
+.dsp-clause.dsp-pending {
+    color: rgba(255, 255, 255, 0.18);
+}
+
+/* Ceremonial rewrite dissolve / reveal */
+.synopsis-text.dsp-dissolving {
+    opacity: 0;
+    transition: opacity 0.45s ease-out;
+}
+.synopsis-text.dsp-revealing {
+    animation: dsp-reveal-fade 0.65s ease-in forwards;
+}
+@keyframes dsp-reveal-fade {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
 }
 
 /* Mobile: DSP pins to top of viewport, floats above content */
@@ -3434,9 +3457,9 @@ textarea.fate-field {
     background: radial-gradient(
         ellipse at center,
         transparent 40%,
-        rgba(255, 215, 0, 0.08) 60%,
-        rgba(255, 215, 0, 0.15) 80%,
-        rgba(255, 215, 0, 0.25) 100%
+        rgba(255, 215, 0, 0.14) 60%,
+        rgba(255, 215, 0, 0.25) 80%,
+        rgba(255, 215, 0, 0.39) 100%
     );
 }
 
@@ -3458,7 +3481,7 @@ textarea.fate-field {
         filter: brightness(1);
     }
     50% {
-        filter: brightness(1.15);
+        filter: brightness(1.25);
     }
 }
 
@@ -3493,7 +3516,7 @@ textarea.fate-field {
     will-change: transform, opacity;
     animation: fate-dust-drift var(--dust-duration, 6s) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
     /* Add sparkle glow */
-    box-shadow: 0 0 4px rgba(255, 220, 100, 0.5), 0 0 8px rgba(255, 200, 50, 0.3);
+    box-shadow: 0 0 6px rgba(255, 220, 100, 0.8), 0 0 12px rgba(255, 200, 50, 0.5);
 }
 
 /* Starfield sparkle variation */
@@ -3511,8 +3534,8 @@ textarea.fate-field {
 }
 
 @keyframes fate-dust-twinkle {
-    0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.2); }
+    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
 }
 
 @keyframes fate-dust-drift {
@@ -3570,4 +3593,19 @@ textarea.fate-field {
 .character-section-title.fate-ceremony {
     color: var(--gold);
     text-shadow: 0 0 8px var(--gold);
+}
+
+/* Fate firefly emanation — gentle drift animation */
+@keyframes fate-firefly {
+    0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    15%  { opacity: var(--ff-opacity, 0.3); transform: translate(calc(var(--ff-dx) * 0.1), calc(var(--ff-dy) * 0.1)) scale(1); }
+    70%  { opacity: var(--ff-opacity, 0.3); transform: translate(calc(var(--ff-dx) * 0.7), calc(var(--ff-dy) * 0.7)) scale(0.8); }
+    100% { opacity: 0; transform: translate(var(--ff-dx), var(--ff-dy)) scale(0.3); }
+}
+
+/* Fate card disintegration — radial burst on commit */
+@keyframes fate-disintegrate {
+    0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+    50%  { opacity: 0.85; transform: translate(calc(var(--dis-x) * 0.5), calc(var(--dis-y) * 0.5)) scale(0.7); }
+    100% { opacity: 0; transform: translate(var(--dis-x), var(--dis-y)) scale(0.2); }
 }

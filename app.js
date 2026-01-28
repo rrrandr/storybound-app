@@ -3402,6 +3402,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   window.showPaywall = function(mode){
     const pm = document.getElementById('payModal');
     if(!pm) return;
+
+    // Cancel any running Fate ceremony — paywall interrupts it completely
+    if (_fateRunning) {
+        _fateOverridden = true;
+        if (typeof cleanupFateVisuals === 'function') cleanupFateVisuals();
+        // Also stop fatecards emanations
+        if (window.stopAllEmanations) window.stopAllEmanations();
+        state._paywallCancelledCeremony = true;
+    }
+
     if(document.getElementById('tierGate') && !document.getElementById('tierGate').classList.contains('hidden')) state.purchaseContext = 'tierGate';
     else if(document.getElementById('setup') && !document.getElementById('setup').classList.contains('hidden')) state.purchaseContext = 'setup';
     else if(document.getElementById('game') && !document.getElementById('game').classList.contains('hidden')) state.purchaseContext = 'game';
@@ -3424,7 +3434,22 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const optUnlock = document.getElementById('optUnlock');
     if(optUnlock) optUnlock.classList.toggle('hidden', !!hideUnlock);
 
+    // Disable Say/Do inputs while paywall is visible
+    const _actInput = document.getElementById('actionInput');
+    const _diaInput = document.getElementById('dialogueInput');
+    if (_actInput) _actInput.disabled = true;
+    if (_diaInput) _diaInput.disabled = true;
+
     pm.classList.remove('hidden');
+  };
+
+  // Re-enable inputs when paywall is dismissed without purchase
+  window.onPaywallDismiss = function() {
+    const actInput = document.getElementById('actionInput');
+    const diaInput = document.getElementById('dialogueInput');
+    if (actInput) actInput.disabled = false;
+    if (diaInput) diaInput.disabled = false;
+    state._paywallCancelledCeremony = false;
   };
 
   // PASS 1 FIX: Refactored completePurchase with canonical access resolution
@@ -3512,8 +3537,33 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (typeof updateQuillUI === 'function') updateQuillUI();
       if (typeof updateGameQuillUI === 'function') updateGameQuillUI();
 
-      // Reinitialize cards if function exists
-      if (window.initCards) window.initCards();
+      // Reset Fate ceremony state — full restart after paywall
+      _fateRunning = false;
+      _fateOverridden = false;
+      _revealedDSPAxes = null;
+      state.fateCommitted = false;
+
+      // Clear DSP pending classes
+      const synopsisText = document.getElementById('synopsisText');
+      if (synopsisText) {
+          synopsisText.querySelectorAll('.dsp-pending').forEach(span => {
+              span.classList.remove('dsp-pending');
+          });
+          synopsisText.classList.remove('dsp-dissolving', 'dsp-revealing');
+      }
+
+      // Re-enable Say/Do inputs
+      const actInput = document.getElementById('actionInput');
+      const diaInput = document.getElementById('dialogueInput');
+      if (actInput) { actInput.disabled = false; actInput.value = ''; }
+      if (diaInput) { diaInput.disabled = false; diaInput.value = ''; }
+
+      // Full card re-deal (not just init) — gives clickable, flippable, unlocked cards
+      if (window.dealFateCards) window.dealFateCards();
+      else if (window.initCards) window.initCards();
+
+      // Clear the ceremony-cancelled flag
+      state._paywallCancelledCeremony = false;
 
       // Save state
       saveStorySnapshot();
@@ -3577,20 +3627,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function makeStoryId(){
-    // AUTH GATE: Only read/persist story ID when logged in
-    if (isLoggedIn()) {
-        const existing = localStorage.getItem('sb_current_story_id');
-        if(existing) return existing;
-    }
+    const existing = localStorage.getItem('sb_current_story_id');
+    if(existing) return existing;
     const id = 'sb_' + Date.now().toString(36);
-    if (isLoggedIn()) localStorage.setItem('sb_current_story_id', id);
+    localStorage.setItem('sb_current_story_id', id);
     return id;
   }
 
   function getStoryPassKey(storyId){ return `sb_storypass_${storyId}`; }
   function hasStoryPass(storyId){ return localStorage.getItem(getStoryPassKey(storyId)) === '1'; }
-  // AUTH GATE: Only persist story pass when logged in
-  function grantStoryPass(storyId){ if(storyId && isLoggedIn()) localStorage.setItem(getStoryPassKey(storyId), '1'); }
+  // Purchase is the authorization — pass must always be granted when paid
+  function grantStoryPass(storyId){ if(storyId) localStorage.setItem(getStoryPassKey(storyId), '1'); }
   function clearCurrentStoryId(){ localStorage.removeItem('sb_current_story_id'); }
   // CORRECTIVE: IndexedDB for large story data when localStorage fails
   const STORY_DB_NAME = 'StoryBoundDB';
@@ -5179,36 +5226,72 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (!playerName || playerName === 'The Protagonist' || playerName === 'You') {
       return '';
     }
-    return `—${playerName}—`;
+    return `, ${playerName},`;
+  }
+
+  /**
+   * Compose world subtype adjective with world text.
+   * World text starts with an article ("a world of...", "an age bound...").
+   * Subtype is a bare adjective ("small-town", "galactic").
+   * Result: "a small-town world of..." — subtype inserted after the article.
+   */
+  function composeWorldWithSubtype(worldText, subtypeAdj) {
+    if (!subtypeAdj) return worldText;
+    // Match leading article + optional space, insert subtype before the noun
+    const m = worldText.match(/^(a |an |the )/i);
+    if (m) {
+      return m[1] + subtypeAdj + ' ' + worldText.substring(m[1].length);
+    }
+    // No article (e.g. "the ashes of...") — prepend subtype with article
+    return 'a ' + subtypeAdj + ' ' + worldText;
   }
 
   const DSP_TONE_GENERATORS = {
-    Earnest: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `You${formatPlayerAppositive(playerName)} arrive in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} has already begun, and something inside you aches to ${dynamic}.`,
+    Earnest: ({ playerName, world, worldSubtype, genre, dynamic }) => {
+      const w = composeWorldWithSubtype(world, worldSubtype);
+      return `You${formatPlayerAppositive(playerName)} arrive in ${w}, where ${genre} has already begun, and something inside you aches to ${dynamic}.`;
+    },
 
-    WryConfession: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `So here you are${formatPlayerAppositive(playerName)}, in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, neck-deep in ${genre}, and the worst part is you want to ${dynamic}.`,
+    WryConfession: ({ playerName, world, worldSubtype, genre, dynamic }) => {
+      const w = composeWorldWithSubtype(world, worldSubtype);
+      return `So here you are${formatPlayerAppositive(playerName)}, in ${w}, neck-deep in ${genre}, and the worst part is you want to ${dynamic}.`;
+    },
 
-    Satirical: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Welcome${formatPlayerAppositive(playerName)} to ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} is already unraveling, and you have somehow agreed to ${dynamic}.`,
+    Satirical: ({ playerName, world, worldSubtype, genre, dynamic }) => {
+      const w = composeWorldWithSubtype(world, worldSubtype);
+      return `Welcome${formatPlayerAppositive(playerName)} to ${w}, where ${genre} is already unraveling, and you have somehow agreed to ${dynamic}.`;
+    },
 
-    Dark: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `In ${worldSubtype ? worldSubtype + ' ' : ''}${world}, ${genre} bleeds through every wall, and you${formatPlayerAppositive(playerName)} will ${dynamic}, no matter what it costs.`,
+    Dark: ({ playerName, world, worldSubtype, genre, dynamic }) => {
+      const w = composeWorldWithSubtype(world, worldSubtype);
+      return `In ${w}, ${genre} bleeds through every wall, and you${formatPlayerAppositive(playerName)} will ${dynamic}, no matter what it costs.`;
+    },
 
-    Horror: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Something patient waits in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, wearing the shape of ${genre}, and it already knows you${formatPlayerAppositive(playerName)} will ${dynamic}.`,
+    Horror: ({ playerName, world, worldSubtype, genre, dynamic }) => {
+      const w = composeWorldWithSubtype(world, worldSubtype);
+      return `Something patient waits in ${w}, wearing the shape of ${genre}, and it already knows you${formatPlayerAppositive(playerName)} will ${dynamic}.`;
+    },
 
-    Mythic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Something ancient stirs for you${formatPlayerAppositive(playerName)} in ${worldSubtype ? worldSubtype + ' ' : ''}${world}, where ${genre} bends the arc of fate, and you must ${dynamic}.`,
+    Mythic: ({ playerName, world, worldSubtype, genre, dynamic }) => {
+      const w = composeWorldWithSubtype(world, worldSubtype);
+      return `Something ancient stirs for you${formatPlayerAppositive(playerName)} in ${w}, where ${genre} bends the arc of fate, and you must ${dynamic}.`;
+    },
 
-    Comedic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Look, ${worldSubtype ? worldSubtype + ' ' : ''}${world} sounded fine on paper${formatPlayerAppositive(playerName)}, but now there is ${genre}, and apparently you are going to ${dynamic}.`,
+    Comedic: ({ playerName, world, worldSubtype, genre, dynamic }) => {
+      const w = composeWorldWithSubtype(world, worldSubtype);
+      return `Look, ${w} sounded fine on paper${formatPlayerAppositive(playerName)}, but now there is ${genre}, and apparently you are going to ${dynamic}.`;
+    },
 
-    Surreal: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `${worldSubtype ? worldSubtype.charAt(0).toUpperCase() + worldSubtype.slice(1) + ' ' : ''}${world} ripples at the edges${formatPlayerAppositive(playerName)}, where ${genre} tastes like something half-remembered, and you ${dynamic}.`,
+    Surreal: ({ playerName, world, worldSubtype, genre, dynamic }) => {
+      const w = composeWorldWithSubtype(world, worldSubtype);
+      const W = w.charAt(0).toUpperCase() + w.slice(1);
+      return `${W} ripples at the edges${formatPlayerAppositive(playerName)}, where ${genre} tastes like something half-remembered, and you ${dynamic}.`;
+    },
 
-    Poetic: ({ playerName, world, worldSubtype, genre, dynamic }) =>
-      `Beneath the long hush of ${worldSubtype ? worldSubtype + ' ' : ''}${world}, your path${formatPlayerAppositive(playerName)} bends toward ${genre}, and the pull to ${dynamic} settles like a quiet inevitability.`
+    Poetic: ({ playerName, world, worldSubtype, genre, dynamic }) => {
+      const w = composeWorldWithSubtype(world, worldSubtype);
+      return `Beneath the long hush of ${w}, your path${formatPlayerAppositive(playerName)} bends toward ${genre}, and the pull to ${dynamic} settles like a quiet inevitability.`;
+    }
   };
 
   // Intensity-aware coda appended to DSP for quality floor
@@ -5219,36 +5302,44 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       Dirty: 'Nothing between you stays hidden for long.'
   };
 
+  // DSP tone display names — noun-form labels for the authored template
+  const DSP_TONE_DISPLAY = {
+    Earnest: 'earnest longing',
+    WryConfession: 'wry confession',
+    Satirical: 'satire',
+    Dark: 'darkness',
+    Horror: 'horror',
+    Mythic: 'myth',
+    Comedic: 'comedy',
+    Surreal: 'the surreal',
+    Poetic: 'poetry'
+  };
+
   /**
-   * Generate a DSP paragraph (1–2 sentences) that:
-   * - Is grammatically closed (no fragments)
-   * - Is written in present tense
-   * - Addresses Player 1 by name (REQUIRED)
-   * - Reflects: World, World Subtype (if any), Tone, Dynamic, Style, Intensity
+   * Generate the DSP sentence — single authored template, no prose composition.
+   * Template: In {world}, shaped by {tone}, a question is already waiting:
+   *           Will {archetype}'s desire redeem this story — or ruin it?
+   * Slots are wrapped in dsp-clause spans for progressive reveal.
    */
-  function generateDSPSentence(world, tone, genre, dynamic, playerName, worldSubtype, intensity) {
+  function generateDSPSentence() {
+    const world = state.picks.world || 'Modern';
+    const tone = state.picks.tone || 'Earnest';
+    const archetypeId = (state.archetype && state.archetype.primary) || 'BEAUTIFUL_RUIN';
+
     const worldText = DSP_WORLD_SETTINGS[world] || DSP_WORLD_SETTINGS.Modern;
-    const genreText = DSP_GENRE_CONFLICTS[genre] || DSP_GENRE_CONFLICTS.Billionaire;
-    const dynamicText = DSP_DYNAMIC_ENGINES[dynamic] || DSP_DYNAMIC_ENGINES.Enemies;
-
-    // Player name is REQUIRED for DSP generation
-    const name = playerName || $('playerNameInput')?.value?.trim() || 'The Protagonist';
-
-    // World subtype provides additional context (optional)
+    const worldSubtype = state.picks.worldSubtype || getSelectedWorldSubtype(world);
     const subtypeText = worldSubtype ? formatWorldSubtype(worldSubtype) : null;
+    const fullWorld = composeWorldWithSubtype(worldText, subtypeText);
 
-    const generator = DSP_TONE_GENERATORS[tone] || DSP_TONE_GENERATORS.Earnest;
-    const baseSentence = generator({
-      playerName: name,
-      world: worldText,
-      worldSubtype: subtypeText,
-      genre: genreText,
-      dynamic: dynamicText
-    });
+    const toneText = DSP_TONE_DISPLAY[tone] || tone.toLowerCase();
+    const archetype = ARCHETYPES[archetypeId];
+    const archLower = archetype ? archetype.name.replace(/^The /, '').toLowerCase() : 'protagonist';
+    const archArticle = /^[aeiou]/.test(archLower) ? 'an' : 'a';
 
-    // Append intensity coda for quality floor
-    const coda = DSP_INTENSITY_CODA[intensity] || '';
-    return coda ? baseSentence + ' ' + coda : baseSentence;
+    return 'In <span class="dsp-clause" data-axis="world">' + fullWorld + '</span>' +
+      ', shaped by <span class="dsp-clause" data-axis="tone">' + toneText + '</span>' +
+      ', a question is already waiting: Will desire that&#8217;s like <span class="dsp-clause" data-axis="archetype">' + archArticle + ' ' + archLower + '</span>' +
+      " redeem this story&#8201;&#8212;&#8201;or ruin it?";
   }
 
   /**
@@ -5258,35 +5349,35 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function formatWorldSubtype(subtype) {
     const SUBTYPE_DISPLAY = {
       // Modern subtypes
-      small_town: 'a small-town',
-      college: 'a campus',
-      friends: 'a friend-group',
-      old_money: 'an old-money',
-      office: 'an office',
-      supernatural_modern: 'a supernatural',
-      superheroic_modern: 'a superheroic',
+      small_town: 'small-town',
+      college: 'campus',
+      friends: 'friend-group',
+      old_money: 'old-money',
+      office: 'office',
+      supernatural_modern: 'supernatural',
+      superheroic_modern: 'superheroic',
       // Sci-Fi subtypes
-      space_opera: 'a galactic',
-      hard_scifi: 'a scientifically rigorous',
-      cyberpunk: 'a neon-lit cyberpunk',
-      post_human: 'a transcendent',
-      alien_contact: 'an alien-touched',
-      abundance_collapse: 'a post-scarcity',
+      space_opera: 'galactic',
+      hard_scifi: 'scientifically rigorous',
+      cyberpunk: 'neon-lit cyberpunk',
+      post_human: 'transcendent',
+      alien_contact: 'alien-touched',
+      abundance_collapse: 'post-scarcity',
       // Fantasy subtypes
-      enchanted_realms: 'a magical',
-      hidden_magic: 'a subtle-magic',
-      cursed_corrupt: 'a grim',
+      enchanted_realms: 'magical',
+      hidden_magic: 'subtle-magic',
+      cursed_corrupt: 'grim',
       // Dystopia subtypes
-      authoritarian: 'an authoritarian',
-      surveillance: 'a surveillance',
-      corporate: 'a corporate-ruled',
-      environmental: 'an ecologically collapsed',
+      authoritarian: 'authoritarian',
+      surveillance: 'surveillance',
+      corporate: 'corporate-ruled',
+      environmental: 'ecologically collapsed',
       // Post-Apocalyptic subtypes
-      nuclear: 'a nuclear-scarred',
-      pandemic: 'a plague-ravaged',
-      climate: 'a climate-devastated',
-      technological: 'a tech-fallen',
-      slow_decay: 'a slowly decaying'
+      nuclear: 'nuclear-scarred',
+      pandemic: 'plague-ravaged',
+      climate: 'climate-devastated',
+      technological: 'tech-fallen',
+      slow_decay: 'slowly decaying'
     };
     return SUBTYPE_DISPLAY[subtype] || null;
   }
@@ -5295,30 +5386,75 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const synopsisText = document.getElementById('synopsisText');
     if (!synopsisText) return;
 
-    // Get current selections
-    const world = state.picks.world || 'Modern';
-    const tone = state.picks.tone || 'Earnest';
-    const genre = state.picks.genre || 'Billionaire';
-    const dynamic = state.picks.dynamic || 'Enemies';
-
-    // Get player kernel for DSP (REQUIRED) - ONLY use normalized kernel, never raw input
-    const playerKernel = state.normalizedPlayerKernel || 'the one who carries the story';
-
-    // Get world subtype if one is selected (optional)
-    const worldSubtype = state.picks.worldSubtype || getSelectedWorldSubtype(world);
-
-    // Intensity for coda
-    const intensity = state.intensity || 'Naughty';
-
-    // Generate holistic sentence based on tone with player kernel, subtype, and intensity
-    const newSentence = generateDSPSentence(world, tone, genre, dynamic, playerKernel, worldSubtype, intensity);
+    const newSentence = generateDSPSentence();
 
     // Update with animation if content changed
-    if (synopsisText.textContent !== newSentence) {
+    if (synopsisText._lastDSP !== newSentence) {
+      synopsisText._lastDSP = newSentence;
       synopsisText.classList.add('updating');
-      synopsisText.textContent = newSentence;
+      synopsisText.innerHTML = newSentence;
+
+      // During Guided Fate ceremony, all clauses start pending
+      if (_fateRunning && _revealedDSPAxes !== null) {
+        synopsisText.querySelectorAll('.dsp-clause').forEach(span => {
+          span.classList.add('dsp-pending');
+        });
+        // Restore any already-revealed axes
+        _revealedDSPAxes.forEach(axis => {
+          synopsisText.querySelectorAll('.dsp-clause[data-axis="' + axis + '"]').forEach(span => {
+            span.classList.remove('dsp-pending');
+          });
+        });
+      }
+
       setTimeout(() => synopsisText.classList.remove('updating'), 500);
     }
+  }
+
+  // Ceremonial DSP presentation swap — dissolve + re-render fully resolved
+  // No prose recomposition; same authored template, just remove pending state.
+  function performDSPCeremonialRewrite() {
+    const synopsisText = document.getElementById('synopsisText');
+    if (!synopsisText) return;
+
+    // Phase 1: dissolve current text
+    synopsisText.classList.add('dsp-dissolving');
+
+    // Spawn a few particles near DSP during dissolve
+    const panel = document.getElementById('synopsisPanel');
+    if (panel) {
+      const pr = panel.getBoundingClientRect();
+      for (let i = 0; i < 8; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'fate-dust-particle';
+        spark.dataset.sparkleTag = 'dsp-rewrite';
+        const sx = pr.left + Math.random() * pr.width;
+        const sy = pr.top + Math.random() * pr.height;
+        const sz = 2 + Math.random() * 3;
+        const sd = 2000 + Math.random() * 1500;
+        spark.style.cssText = `
+          left:${sx}px; top:${sy}px;
+          width:${sz}px; height:${sz}px;
+          --dust-duration:${sd}ms;
+          --dust-opacity:${0.5 + Math.random() * 0.3};
+          --dust-dx:${(Math.random() - 0.5) * 30}px;
+          --dust-dy:${-(10 + Math.random() * 20)}px;
+        `;
+        document.body.appendChild(spark);
+        setTimeout(() => { if (spark.parentNode) spark.remove(); }, sd + 100);
+      }
+    }
+
+    // Phase 2: re-render same sentence fully resolved (no pending classes)
+    setTimeout(() => {
+      const resolved = generateDSPSentence();
+      synopsisText.innerHTML = resolved;
+      synopsisText._lastDSP = resolved;
+      synopsisText.classList.remove('dsp-dissolving');
+      synopsisText.classList.add('dsp-revealing');
+
+      setTimeout(() => synopsisText.classList.remove('dsp-revealing'), 700);
+    }, 500);
   }
 
   /**
@@ -5463,6 +5599,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Update all card states - only selected card stays flipped
       updateArchetypeCardStates();
       updateArchetypeSelectionSummary();
+      updateSynopsisPanel();
   }
 
   // Populate archetype card zoom view with modifier custom field only (NO pills)
@@ -6313,6 +6450,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   let _fateRunning = false;
   let _guidedFateVisualsActive = false;
 
+  // DSP clause reveal tracking — non-null only during Guided Fate ceremony
+  let _revealedDSPAxes = null;
+
+  function revealDSPClause(axis) {
+    if (!_revealedDSPAxes) return;
+    _revealedDSPAxes.add(axis);
+    const synopsisText = document.getElementById('synopsisText');
+    if (!synopsisText) return;
+    synopsisText.querySelectorAll('.dsp-clause[data-axis="' + axis + '"]').forEach(span => {
+      span.classList.remove('dsp-pending');
+    });
+  }
+
   // Timing constants (HUMAN PACE - deliberate, not efficient)
   const FATE_TIMING = {
     SCROLL_SETTLE: 500,      // 400-600ms after scroll
@@ -6335,14 +6485,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   let _sparkleIntervals = [];
   let _ambientCardInterval = null;
   const DUST_CONFIG = {
-    MAX_PARTICLES: 120,       // Dense vignette sparkles (restored)
-    SPAWN_INTERVAL: 40,       // Fast spawn for density
+    MAX_PARTICLES: 350,       // Dense vignette sparkles (3× visibility)
+    SPAWN_INTERVAL: 15,       // Fast spawn for density
     MIN_SIZE: 3,              // Small, delicate
-    MAX_SIZE: 7,
-    MIN_DURATION: 4000,       // Gentle drift
-    MAX_DURATION: 7000,
-    MIN_OPACITY: 0.2,         // Faint
-    MAX_OPACITY: 0.5
+    MAX_SIZE: 9,
+    MIN_DURATION: 5000,       // Long gentle drift
+    MAX_DURATION: 10000,
+    MIN_OPACITY: 0.5,         // Clearly visible
+    MAX_OPACITY: 0.9
   };
 
   function spawnDustParticle() {
@@ -6412,8 +6562,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     stopFairyDust(); // Clear any existing
     _dustInterval = setInterval(spawnDustParticle, DUST_CONFIG.SPAWN_INTERVAL);
     // Gentle initial burst
-    for (let i = 0; i < 5; i++) {
-      setTimeout(spawnDustParticle, i * 50);
+    for (let i = 0; i < 15; i++) {
+      setTimeout(spawnDustParticle, i * 20);
     }
   }
 
@@ -6440,7 +6590,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (!fateCard.offsetParent) return; // not visible
 
     const existing = document.querySelectorAll('.fate-dust-particle[data-sparkle-tag="ambient"]');
-    if (existing.length >= 30) return;
+    if (existing.length >= 90) return;
 
     const rect = fateCard.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
@@ -6460,7 +6610,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     const size = 2 + Math.random() * 5;
     const duration = 3000 + Math.random() * 4000;
-    const opacity = 0.2 + Math.random() * 0.4;
+    const opacity = 0.5 + Math.random() * 0.4;
 
     // Slow orbit / drift outward
     const cx = rect.left + rect.width / 2;
@@ -6482,10 +6632,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   function startAmbientCardSparkles() {
     stopAmbientCardSparkles();
-    _ambientCardInterval = setInterval(spawnAmbientCardSparkle, 120);
+    _ambientCardInterval = setInterval(spawnAmbientCardSparkle, 40);
     // Immediate burst
-    for (let i = 0; i < 8; i++) {
-      setTimeout(spawnAmbientCardSparkle, i * 30);
+    for (let i = 0; i < 20; i++) {
+      setTimeout(spawnAmbientCardSparkle, i * 20);
     }
   }
 
@@ -6612,7 +6762,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (anchorRect.width === 0 || anchorRect.height === 0) {
           console.warn('[DEV] Guided Fate card has zero rect — sparkles aborted');
       } else {
-          startFateEdgeSparkles({ anchorEl: fateCardElement, anchorRect: anchorRect, maxParticles: 40, spawnInterval: 80, tag: 'card' });
+          startFateEdgeSparkles({ anchorEl: fateCardElement, anchorRect: anchorRect, maxParticles: 120, spawnInterval: 25, tag: 'card' });
       }
 
       // Say/Do input glow + secondary low-density sparkles (3 particles max shared)
@@ -6620,11 +6770,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const partnerInput = document.getElementById('partnerNameInput');
       if (playerInput) {
           playerInput.classList.add('guided-fate-glow');
-          startFateEdgeSparkles({ anchorEl: playerInput, maxParticles: 3, spawnInterval: 800, tag: 'input' });
+          startFateEdgeSparkles({ anchorEl: playerInput, maxParticles: 9, spawnInterval: 270, tag: 'input' });
       }
       if (partnerInput) {
           partnerInput.classList.add('guided-fate-glow');
-          startFateEdgeSparkles({ anchorEl: partnerInput, maxParticles: 3, spawnInterval: 800, tag: 'input' });
+          startFateEdgeSparkles({ anchorEl: partnerInput, maxParticles: 9, spawnInterval: 270, tag: 'input' });
       }
   }
 
@@ -6730,6 +6880,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Stop fate running state
     _fateOverridden = true;
     _fateRunning = false;
+
+    // Clear DSP pending state — reveal all clauses immediately on override
+    _revealedDSPAxes = null;
+    const synopsisText = document.getElementById('synopsisText');
+    if (synopsisText) {
+      synopsisText.querySelectorAll('.dsp-pending').forEach(span => {
+        span.classList.remove('dsp-pending');
+      });
+    }
 
     // Stop fairy dust
     stopFairyDust();
@@ -7050,6 +7209,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       $('partnerAgeInput').value = fateChoices.partnerAge;
     }
 
+    // Initialize DSP clause reveal tracking — all clauses start pending
+    _revealedDSPAxes = new Set();
+
     // Force DSP recompute immediately after state population (before ceremony)
     // Ensures DSP reflects Guided Fate even if ceremony is overridden mid-flow
     updateSynopsisPanel();
@@ -7088,6 +7250,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       mcInput.classList.remove('fate-typing');
       mcInput.classList.add('fate-typed');
       setTimeout(() => mcInput.classList.remove('fate-typed'), 800);
+
+      // Set character name kernel (no longer displayed in DSP)
+      state.normalizedPlayerKernel = fateChoices.playerName;
     }
 
     await new Promise(r => setTimeout(r, 800)); // Pause between names
@@ -7186,6 +7351,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         }
       }
 
+      // Reveal corresponding DSP clause after card is visually selected
+      if (['world', 'tone', 'archetype'].includes(section.id)) {
+        revealDSPClause(section.id);
+      }
+
       await new Promise(r => setTimeout(r, FATE_TIMING.SECTION_PAUSE));
     }
 
@@ -7201,9 +7371,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     showToast('Fate has spoken. Click Begin Story when ready.');
 
     _fateRunning = false;
+    _revealedDSPAxes = null;
 
-    // Force DSP update to reflect Guided Fate selections immediately
-    updateSynopsisPanel();
+    // Ceremonial DSP rewrite — dissolve current text and replace with refined version
+    performDSPCeremonialRewrite();
   }
 
   // Populate all UI selections from fate choices

@@ -703,6 +703,84 @@ function stopContinuousSparkles() {
         }
     }
 
+    // Firefly emanation — gentle particles drifting from an element
+    var _activeEmanations = [];
+
+    function stopAllEmanations() {
+        _activeEmanations.forEach(function (e) {
+            clearInterval(e.interval);
+            clearTimeout(e.stopTimer);
+            clearTimeout(e.cleanupTimer);
+            if (e.overlay.parentNode) e.overlay.remove();
+        });
+        _activeEmanations = [];
+    }
+
+    function startFireflyEmanation(anchorEl) {
+        var rect = anchorEl.getBoundingClientRect();
+
+        var overlay = document.createElement('div');
+        overlay.style.cssText =
+            'position:fixed;' +
+            'left:' + rect.left + 'px;' +
+            'top:' + rect.top + 'px;' +
+            'width:' + rect.width + 'px;' +
+            'height:' + rect.height + 'px;' +
+            'pointer-events:none;' +
+            'z-index:9999;' +
+            'overflow:visible;' +
+            '-webkit-mask-image:radial-gradient(ellipse at center,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.25) 50%,rgba(0,0,0,1) 80%);' +
+            'mask-image:radial-gradient(ellipse at center,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.25) 50%,rgba(0,0,0,1) 80%);';
+        document.body.appendChild(overlay);
+
+        var particleLife = 5500;
+        var emanDuration = 7000;
+
+        var eman = { overlay: overlay, interval: null, stopTimer: null, cleanupTimer: null };
+        _activeEmanations.push(eman);
+
+        eman.interval = setInterval(function () {
+            var ct = 3 + Math.floor(Math.random() * 3);
+            for (var j = 0; j < ct; j++) {
+                var size = 3 + Math.random() * 4;
+                var dur = 4000 + Math.random() * 2500;
+                var dx = (Math.random() - 0.5) * 50;
+                var dy = -(20 + Math.random() * 45);
+                var startX = Math.random() * 100;
+                var startY = Math.random() * 100;
+                var opacity = 0.5 + Math.random() * 0.4;
+                var p = document.createElement('div');
+                p.style.cssText =
+                    'position:absolute;' +
+                    'left:' + startX + '%;' +
+                    'top:' + startY + '%;' +
+                    'width:' + size + 'px;' +
+                    'height:' + size + 'px;' +
+                    'border-radius:50%;' +
+                    'background:radial-gradient(circle,rgba(255,235,150,0.95),rgba(255,215,0,0.6));' +
+                    'box-shadow:0 0 8px rgba(255,215,0,0.7);' +
+                    'opacity:0;' +
+                    'animation:fate-firefly ' + dur + 'ms ease-in-out forwards;' +
+                    '--ff-dx:' + dx + 'px;' +
+                    '--ff-dy:' + dy + 'px;' +
+                    '--ff-opacity:' + opacity + ';';
+                overlay.appendChild(p);
+                (function (el, life) {
+                    setTimeout(function () { if (el.parentNode) el.remove(); }, life);
+                })(p, dur + 100);
+            }
+        }, 120);
+
+        eman.stopTimer = setTimeout(function () {
+            clearInterval(eman.interval);
+            eman.cleanupTimer = setTimeout(function () {
+                if (eman.overlay.parentNode) eman.overlay.remove();
+                var idx = _activeEmanations.indexOf(eman);
+                if (idx !== -1) _activeEmanations.splice(idx, 1);
+            }, particleLife + 400);
+        }, emanDuration);
+    }
+
     // Golden flow animation from card to inputs - continuous gentle stream
     function triggerGoldenFlow(fromEl, toEl) {
         if (!fromEl || !toEl) return;
@@ -781,16 +859,6 @@ function setSelectedState(mount, selectedCardEl){
     cards.forEach(c => c.classList.remove('selected'));
     if (selectedCardEl) selectedCardEl.classList.add('selected');
 
-    // Show "Your choice:" label when a card is selected
-    const yourChoiceLabel = document.getElementById('yourChoiceLabel');
-    if (yourChoiceLabel) {
-        if (selectedCardEl) {
-            yourChoiceLabel.classList.remove('hidden');
-        } else {
-            yourChoiceLabel.classList.add('hidden');
-        }
-    }
-
     // Track selection in state without changing shape elsewhere
     if (window.state) {
         const idx = Number(
@@ -811,8 +879,51 @@ function setSelectedState(mount, selectedCardEl){
     }
 }
 
+    // Sparkle disintegration for a card — overlay-based, no card CSS animation
+    function disintegrateCard(cardEl) {
+        var rect = cardEl.getBoundingClientRect();
+        cardEl.style.visibility = 'hidden';
+
+        var overlay = document.createElement('div');
+        overlay.style.cssText =
+            'position:fixed;' +
+            'left:' + rect.left + 'px;' +
+            'top:' + rect.top + 'px;' +
+            'width:' + rect.width + 'px;' +
+            'height:' + rect.height + 'px;' +
+            'pointer-events:none;' +
+            'z-index:9999;' +
+            'overflow:visible;';
+        document.body.appendChild(overlay);
+
+        var count = 18;
+        for (var i = 0; i < count; i++) {
+            var angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+            var dist = 20 + Math.random() * 35;
+            var size = 2 + Math.random() * 3;
+            var dur = 560 + Math.random() * 350;
+            var p = document.createElement('div');
+            p.style.cssText =
+                'position:absolute;' +
+                'left:' + (Math.random() * 100) + '%;' +
+                'top:' + (Math.random() * 100) + '%;' +
+                'width:' + size + 'px;' +
+                'height:' + size + 'px;' +
+                'border-radius:50%;' +
+                'background:radial-gradient(circle,rgba(255,235,150,0.9),rgba(255,215,0,0.5));' +
+                'box-shadow:0 0 6px rgba(255,215,0,0.6);' +
+                'opacity:1;' +
+                'animation:fate-disintegrate ' + dur + 'ms ease-in-out forwards;' +
+                '--dis-x:' + (Math.cos(angle) * dist) + 'px;' +
+                '--dis-y:' + (Math.sin(angle) * dist) + 'px;';
+            overlay.appendChild(p);
+        }
+
+        setTimeout(function () { overlay.remove(); }, 1000);
+    }
+
     function commitFateSelection(mount){
-        // Commit means: lock choice, poof unchosen 4, disable further selection
+        // Commit means: lock choice, disintegrate unchosen, disable further selection
         if (!window.state) return;
         if (window.state.fateCommitted) return;
 
@@ -825,11 +936,8 @@ function setSelectedState(mount, selectedCardEl){
         cards.forEach((cardEl) => {
             const idx = Number(cardEl.dataset && cardEl.dataset.cardIndex);
             if (idx !== selectedIdx) {
-                cardEl.classList.add('poof');
-                // Cleanup visual after poof finishes
-                setTimeout(() => {
-                    cardEl.style.visibility = 'hidden';
-                }, 600);
+                // Sparkle disintegration instead of poof
+                disintegrateCard(cardEl);
             } else {
                 // Keep chosen visible; disable further clicking
                 cardEl.classList.add('chosen');
@@ -919,6 +1027,8 @@ function setSelectedState(mount, selectedCardEl){
         }
     };
 
+    window.stopAllEmanations = stopAllEmanations;
+
     window.dealFateCards = function() {
         const mount = document.getElementById('cardMount');
         if(!mount) return;
@@ -980,6 +1090,10 @@ function setSelectedState(mount, selectedCardEl){
                 // If already committed, ignore all clicks
                 if (window.state && window.state.fateCommitted) return;
 
+                // Block clicks while paywall is visible
+                const payModal = document.getElementById('payModal');
+                if (payModal && !payModal.classList.contains('hidden')) return;
+
                 // First interaction flips all 5 at once
                 flipAllCards(mount);
 
@@ -994,9 +1108,17 @@ function setSelectedState(mount, selectedCardEl){
 
                 clearPendingTimer();
 
+                // Cancel any prior emanation, then start new set
+                stopAllEmanations();
+
                 // Trigger golden flow animations to inputs
                 const actInput = document.getElementById('actionInput');
                 const diaInput = document.getElementById('dialogueInput');
+
+                // Firefly emanation on card + inputs
+                startFireflyEmanation(card);
+                if (actInput) startFireflyEmanation(actInput);
+                if (diaInput) startFireflyEmanation(diaInput);
                 if (actInput) triggerGoldenFlow(card, actInput);
                 setTimeout(() => {
                     if (diaInput) triggerGoldenFlow(card, diaInput);

@@ -298,7 +298,7 @@
         </div>
     </div>
     
-    <button onclick="document.getElementById('payModal').classList.add('hidden')" style="background:#444; margin-top:15px;">Cancel</button>
+    <button onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="background:#444; margin-top:15px;">Cancel</button>
   </div>
 </div>
 
@@ -926,9 +926,7 @@
 
     <div id="fateCardHeader" class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
 
-    <div style="display:flex; align-items:flex-start; gap:20px; justify-content:center;">
-        <!-- CORRECTIVE: Restored "Your Chosen Fate:" text -->
-        <div id="yourChoiceLabel" class="hidden" style="font-size:1.1em; color:var(--gold); font-style:italic; padding-top:20px; white-space:nowrap;">Your Chosen Fate:</div>
+    <div style="display:flex; align-items:flex-start; justify-content:center;">
         <div id="cardMount" class="fate-grid"></div>
     </div>
 
