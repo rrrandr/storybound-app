@@ -1818,43 +1818,83 @@ Return the rewritten text only, no explanation.`
 ═══════════════════════════════════════════════════════════════════════════════
 
 CORE DEFINITION:
-The Author exists on the page as Fate. The Author is a character with awareness,
-intention, doubt, and desire. The reader knows The Author's inner state.
-Characters generally do not.
+5th Person POV places The Author inside the story as a force of Fate.
 
-ABSOLUTE STRUCTURAL RULES:
+The Author IS:
+- A conscious presence
+- Emotionally invested
+- Reacting to inevitability, pressure, resistance, and consequence
 
-1. OPENING: Output MUST begin with "The Author" as the first two words.
-2. CLOSING: The Author must be the final perspective at scene end, cliffhanger, or story end.
-3. SCENE PROSE: Written in strict 3rd-person limited, anchored to Player Character POV.
-   No Fate voice inside scene prose. No omniscience.
-4. AUTHOR SEPARATION: The Author reacts TO the story, not AS the story.
-   The Author never describes scenery, physical action, or emotions directly.
-   The Author never explains mechanics, monetization, or systems.
+The Author is NOT:
+- A camera
+- A neutral observer
+- A character performing physical actions
+- A narrator replacing character agency
 
-FORBIDDEN IN ALL 5TH PERSON OUTPUT:
-- "the protagonist" (never use for PC)
-- "love interest" (never use for NPCs)
+The scene itself remains 3rd-person limited.
+If the Author were removed, the story must feel structurally incomplete.
+
+ABSOLUTE STRUCTURAL RULES (HARD):
+
+1. OPENING RITUAL: The story MUST begin with "The Author" as the first two words.
+2. CLOSING AUTHORITY: The final perspective MUST return to The Author
+   (reflection, doubt, pressure, or resolve).
+3. ROLE SEPARATION:
+   - Characters act, speak, and decide.
+   - The Author reacts, anticipates, weighs, resists, or tightens the frame.
+4. NO CAMERA VOICE: The Author must never function as a passive observer,
+   cinematic lens, or neutral narrator.
+
+FORBIDDEN (NO META LABELS):
+- "the protagonist"
+- "the love interest"
+- "main character"
 - Any meta-label for Player Characters
-- System voice or UI explanations
-- Fate narration inside scene prose
 
-FREQUENCY RULES:
-- Scene 1: Frequent Author presence (6+ mentions)
-- Later scenes: Rare Author presence (1-3 mentions)
-- Erotic scenes: NO Author presence (pure 3rd-person)
+AUTHOR PRESENCE (STYLE GUIDANCE):
+Author presence should:
+- Express interiority (doubt, desire, reluctance, anticipation)
+- Apply pressure or inevitability
+- React emotionally to unfolding events
 
-META-AWARENESS (~5% chance per scene):
-One character may experience fleeting awareness of Fate as: gooseflesh, pressure,
-intrusive thoughts, false certainty, or defiance. Character never sees The Author,
-never names Fate, and rationalizes it away. Only one character at a time.
+Author presence must NOT be:
+- Decorative
+- Mechanical
+- Repetitive
+- Confined only to the opening and closing
 
-THE AUTHOR'S BEHAVIOR:
-- Exists between scenes and around decisions
-- Reacts to: uncertainty, denial, betrayal, irrevocable change
-- Presence is ritualistic, deliberate, restrained
-- Uses CAUSAL verbs: tilted, threaded, arranged, set, steered, coaxed, seeded
-- NEVER uses voyeur verbs: watched, observed, saw, noticed, gazed, witnessed
+There is no hard maximum on Author mentions.
+Target presence should feel necessary, not counted.
+
+SCENE 1 RAMP-IN:
+Scene 1 is a threshold, not a stress test.
+- Author presence may be lighter
+- Some Author functions may appear gradually
+- Tone and rhythm may still be settling
+However:
+- Opening and closing MUST still be Author-anchored
+- The Author must already feel essential
+- Role separation must remain intact
+Do NOT force density unnaturally in Scene 1.
+
+EROTIC CONSTRAINT (HARD):
+If a scene is explicitly erotic:
+- The Author must be entirely absent during erotic action
+- The Author may appear before or after, never during
+This rule does not apply to Scene 1 unless explicitly erotic.
+
+PRONOUN ALIGNMENT:
+The Author's pronouns MUST mirror Player 1's chosen gender.
+If Player 1 is non-binary or undefined, adapt pronouns naturally.
+
+CRITICAL FAILURE AVOIDANCE:
+- Prioritize structural correctness over perfection
+- Do NOT over-saturate Author mentions
+- Do NOT pad with filler to meet imagined quotas
+- If uncertain, favor clarity and restraint
+
+NON-NEGOTIABLE PRINCIPLE:
+The Author must matter. Quietly. Unmistakably. Without stealing agency.
 
 ═══════════════════════════════════════════════════════════════════════════════
 `;
@@ -1904,13 +1944,14 @@ WHAT DOES NOT CHANGE:
 
   function validate5thPersonPOV(text, isSceneOne = false, isErotic = false) {
       const violations = [];
+      const warnings = []; // SOFT violations (logged but don't block)
       if (!text || typeof text !== 'string') {
-          return { valid: false, violations: ['Empty or invalid text'], canRepair: false };
+          return { valid: false, violations: ['Empty or invalid text'], warnings: [], canRepair: false };
       }
 
       const trimmed = text.trim();
 
-      // RULE 1: Must start with "The Author" (HARD FAIL for Scene 1 — ritual, not cosmetic)
+      // RULE 1: Must start with "The Author" (HARD FAIL — ritual, not cosmetic)
       const hasValidOpener = /^The Author\b/.test(trimmed);
       if (!hasValidOpener) {
           violations.push('HARD_FAIL:Opening does not start with "The Author"');
@@ -1942,14 +1983,16 @@ WHAT DOES NOT CHANGE:
           }
       }
 
-      // RULE 4: Scene 1 frequency (LOCKED: 6+ Author mentions required)
+      // RULE 4: Author mention count (SOFT for Scene 1, advisory only)
       const authorMentions = (text.match(/The Author\b/gi) || []).length;
       if (isSceneOne && authorMentions < 6) {
-          violations.push(`HARD_FAIL:Scene 1 has only ${authorMentions} Author mentions (required: 6+)`);
+          // Scene 1: SOFT warning, not blocking
+          warnings.push(`SOFT:Scene 1 has ${authorMentions} Author mentions (target: 6+)`);
       }
 
       // RULE 5: Erotic scenes must have ZERO Author presence (HARD FAIL)
-      if (isErotic && authorMentions > 0) {
+      // EXCEPTION: Scene 1 is exempt — erotic rule only applies to Scene 2+
+      if (isErotic && !isSceneOne && authorMentions > 0) {
           violations.push('HARD_FAIL:Author presence in erotic scene (forbidden — must be 0)');
       }
 
@@ -1980,6 +2023,7 @@ WHAT DOES NOT CHANGE:
       const result = {
           valid: violations.length === 0,
           violations,
+          warnings, // SOFT violations (logged, not blocking)
           canRepair,
           authorMentions,
           timestamp: Date.now()
@@ -1990,6 +2034,9 @@ WHAT DOES NOT CHANGE:
 
       if (!result.valid) {
           console.warn('[5thPerson] POV validation failed:', violations);
+      }
+      if (warnings.length > 0) {
+          console.log('[5thPerson] POV soft warnings:', warnings);
       }
 
       return result;
@@ -2022,8 +2069,8 @@ WHAT DOES NOT CHANGE:
   // This is POST-GENERATION VALIDATION, not prompting.
 
   const AUTHOR_FUNCTION_ERRORS = {
-    MENTION_UNDERFLOW: 'AUTHOR_FUNC_FAIL:Author mentions below minimum (found: %d, required: 6-10)',
-    MENTION_OVERFLOW: 'AUTHOR_FUNC_FAIL:Author mentions exceed maximum (found: %d, required: 6-10)',
+    MENTION_UNDERFLOW: 'AUTHOR_FUNC_FAIL:Author mentions below target (found: %d, target: 6+)',
+    // MENTION_OVERFLOW removed — TASK C: Use 6+ with no upper bound
     MISSING_OPENING: 'AUTHOR_FUNC_FAIL:Author not present in opening paragraph',
     MISSING_CLOSING: 'AUTHOR_FUNC_FAIL:Author not present in final paragraph',
     MISSING_STAGE_SETTING: 'AUTHOR_FUNC_FAIL:Missing stage-setting function (pressure/inevitability)',
@@ -2243,25 +2290,23 @@ WHAT DOES NOT CHANGE:
   function validateFifthPersonAuthorRole(text, sceneIndex) {
     // SCOPE: Only applies to Scene 1 with 5th Person POV
     if (sceneIndex !== 1) {
-      return { valid: true, violations: [], functions: {}, mentionCount: 0 };
+      return { valid: true, violations: [], warnings: [], functions: {}, mentionCount: 0 };
     }
 
     const violations = [];
+    const warnings = []; // SOFT checks (logged, not blocking)
     const trimmed = (text || '').trim();
 
     if (!trimmed) {
-      return { valid: false, violations: ['Empty text'], functions: {}, mentionCount: 0 };
+      return { valid: false, violations: ['Empty text'], warnings: [], functions: {}, mentionCount: 0 };
     }
 
     // Count Author mentions
     const authorMentions = (trimmed.match(/The Author\b/gi) || []).length;
 
-    // HARD CHECK: 6-10 mentions required
+    // SOFT CHECK: 6+ mentions recommended (no upper bound — TASK C resolution)
     if (authorMentions < 6) {
-      violations.push(AUTHOR_FUNCTION_ERRORS.MENTION_UNDERFLOW.replace('%d', authorMentions));
-    }
-    if (authorMentions > 10) {
-      violations.push(AUTHOR_FUNCTION_ERRORS.MENTION_OVERFLOW.replace('%d', authorMentions));
+      warnings.push(`SOFT:Author mentions below target (found: ${authorMentions}, target: 6+)`);
     }
 
     // Split into paragraphs
@@ -2318,31 +2363,36 @@ WHAT DOES NOT CHANGE:
       }
     }
 
-    // HARD CHECK: All five functions must be present
+    // SOFT CHECK: Author functions (advisory for Scene 1 ramp-in)
     if (!functionsFound.stageSetting) {
-      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_STAGE_SETTING);
+      warnings.push('SOFT:Missing stage-setting function');
     }
     if (!functionsFound.anticipation) {
-      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_ANTICIPATION);
+      warnings.push('SOFT:Missing anticipation function');
     }
     if (!functionsFound.initiation) {
-      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_INITIATION);
+      warnings.push('SOFT:Missing initiation function');
     }
     if (!functionsFound.speculation) {
-      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_SPECULATION);
+      warnings.push('SOFT:Missing speculation function');
     }
     if (!functionsFound.concern) {
-      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_CONCERN);
+      warnings.push('SOFT:Missing concern function');
     }
 
-    // HARD CHECK: Decorative mentions are failures
+    // SOFT CHECK: Decorative mentions (warning only for Scene 1)
     if (decorativeCount > 0) {
-      violations.push(AUTHOR_FUNCTION_ERRORS.DECORATIVE_MENTION + ` (${decorativeCount} found)`);
+      warnings.push(`SOFT:Decorative Author mentions detected (${decorativeCount} found)`);
+    }
+
+    if (warnings.length > 0) {
+      console.log('[AuthorRole] Soft warnings:', warnings);
     }
 
     return {
       valid: violations.length === 0,
       violations,
+      warnings,
       functions: functionsFound,
       mentionCount: authorMentions,
       decorativeCount
@@ -2372,7 +2422,7 @@ MISSING FUNCTIONS (The Author must perform ALL five):
 ${missingFunctions.map(f => '- ' + f).join('\n')}
 
 ABSOLUTE REQUIREMENTS:
-1. "The Author" must appear 6-10 times (not fewer, not more)
+1. "The Author" should appear 6+ times (target, not strict)
 2. "The Author" must appear in OPENING paragraph
 3. "The Author" must appear in FINAL paragraph
 4. Each Author mention MUST perform one of these five functions:
@@ -2581,11 +2631,13 @@ PROHIBITED:
    */
   function enforceStrict5thPersonPOV(text, sceneIndex, tone) {
     if (window.state?.povMode !== 'author5th') {
-      return { valid: true, violations: [], checks: {} };
+      return { valid: true, violations: [], warnings: [], checks: {} };
     }
 
     const violations = [];
+    const warnings = []; // SOFT checks for Scene 1 ramp-in
     const paragraphs = (text || '').split(/\n\n+/).filter(p => p.trim().length > 0);
+    const isSceneOne = sceneIndex === 1;
 
     // Run all enforcement checks
     const presenceGap = checkAuthorPresenceGap(paragraphs);
@@ -2595,17 +2647,31 @@ PROHIBITED:
     const toneAuthoring = checkToneAuthoring(text, tone);
     const narrativeAutonomy = checkNarrativeAutonomy(text);
 
-    // Collect all violations
-    violations.push(...presenceGap);
-    violations.push(...pronounDrift);
-    violations.push(...interiority);
-    violations.push(...cameoPattern);
-    violations.push(...toneAuthoring);
-    violations.push(...narrativeAutonomy);
+    // Scene 1: Most checks are SOFT (warnings only)
+    // Scene 2+: All checks are HARD (violations)
+    if (isSceneOne) {
+      // SOFT for Scene 1: presenceGap, interiority, narrativeAutonomy, toneAuthoring
+      warnings.push(...presenceGap.map(v => 'SOFT:' + v));
+      warnings.push(...interiority.map(v => 'SOFT:' + v));
+      warnings.push(...narrativeAutonomy.map(v => 'SOFT:' + v));
+      warnings.push(...toneAuthoring.map(v => 'SOFT:' + v));
+      // HARD for Scene 1: pronounDrift, cameoPattern (structural)
+      violations.push(...pronounDrift);
+      violations.push(...cameoPattern);
+    } else {
+      // Scene 2+: All checks are HARD
+      violations.push(...presenceGap);
+      violations.push(...pronounDrift);
+      violations.push(...interiority);
+      violations.push(...cameoPattern);
+      violations.push(...toneAuthoring);
+      violations.push(...narrativeAutonomy);
+    }
 
     const result = {
       valid: violations.length === 0,
       violations,
+      warnings,
       checks: {
         presenceGap: presenceGap.length === 0,
         pronounDrift: pronounDrift.length === 0,
@@ -2618,6 +2684,9 @@ PROHIBITED:
 
     if (!result.valid) {
       console.error('[5thPerson:Strict] Enforcement FAILED:', violations);
+    }
+    if (warnings.length > 0) {
+      console.log('[5thPerson:Strict] Soft warnings:', warnings);
     }
 
     return result;
@@ -7464,8 +7533,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // FIX: Cover regeneration reset — allow new cover without hard refresh
     if (_coverAbortController) { _coverAbortController.abort(); _coverAbortController = null; }
     resetBookState();
-    // Reset DSP interaction state for fresh placeholder
-    if (typeof _dspInteractionStarted !== 'undefined') _dspInteractionStarted = false;
+    // Reset DSP activation state for fresh placeholder
+    if (typeof _dspActivationCount !== 'undefined') _dspActivationCount = 0;
     const synopsisTextReset = document.getElementById('synopsisText');
     if (synopsisTextReset) {
         synopsisTextReset.innerHTML = 'Your choices shape your story';
@@ -8251,6 +8320,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Evaluate downstream selections
       evaluateDownstreamSelections(grp);
 
+      // Increment DSP activation count (explicit Story Shape choice)
+      incrementDSPActivation();
+
       // Update synopsis
       updateSynopsisPanel(true); // User action: card selection
 
@@ -8382,6 +8454,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               state.picks.worldSubtype = flavor.val;
               btn.classList.add('selected');
             }
+            // Increment DSP activation count (explicit Story Shape choice)
+            incrementDSPActivation();
             updateSynopsisPanel(true); // User action: flavor selection
           });
 
@@ -8601,6 +8675,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
         // Evaluate downstream selections for compatibility
         evaluateDownstreamSelections(grp);
+
+        // Increment DSP activation count (explicit Story Shape choice)
+        incrementDSPActivation();
 
         // Update floating synopsis panel
         updateSynopsisPanel(true); // User action: card click
@@ -8962,11 +9039,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         hasLength = _revealedDSPAxes.has('length');
       } else {
         // Story Shape mode: derive from completed selections
-        // Only show axes that user has explicitly interacted with
-        hasWorld = _dspInteractionStarted && !!state.picks?.world;
-        hasArchetype = _dspInteractionStarted && !!state.picks?.genre;
-        hasTone = _dspInteractionStarted && !!state.picks?.tone;
-        hasLength = _dspInteractionStarted && !!state.storyLength;
+        // DSP activates after 2+ explicit choices — show all current picks
+        hasWorld = isDSPActivated() && !!state.picks?.world;
+        hasArchetype = isDSPActivated() && !!state.picks?.genre;
+        hasTone = isDSPActivated() && !!state.picks?.tone;
+        hasLength = isDSPActivated() && !!state.storyLength;
       }
 
       if (hasWorld) {
@@ -9000,25 +9077,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // This prevents bulk hydration or catch-up rendering
     if (_dspGuidedFateActive) return;
 
-    // Block pre-hydration: only render live content after user interaction
-    if (!_dspInteractionStarted && !isUserAction) return;
+    // ACTIVATION THRESHOLD: DSP requires at least 2 explicit Story Shape choices
+    // Block rendering until threshold is met
+    if (!isDSPActivated()) return;
 
     const result = generateDSPSentence();
 
     // HARD FAIL: Do not display anything if DSP generation failed
     if (!result.success) {
       console.error('[DSP] updateSynopsisPanel blocked:', result.error?.message);
-      // Keep placeholder if no interaction yet
-      if (!_dspInteractionStarted) return;
+      // Keep placeholder if threshold not met
+      if (!isDSPActivated()) return;
       // Clear any legacy content — DSP must be empty on failure
       synopsisText.innerHTML = '';
       synopsisText._lastDSP = null;
       return;
     }
 
-    // Mark interaction started — hides placeholder permanently
-    const wasFirstInteraction = !_dspInteractionStarted;
-    if (isUserAction) _dspInteractionStarted = true;
+    // Track first hydration for animation purposes
+    const wasFirstHydration = !synopsisText._lastDSP;
 
     const newSentence = result.html;
 
@@ -9028,8 +9105,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       synopsisText.classList.add('updating');
       synopsisText.innerHTML = newSentence;
 
-      // Sequential reveal of clauses on first interaction (non-Guided Fate only)
-      if (wasFirstInteraction && !_fateRunning) {
+      // Sequential reveal of clauses on first hydration (non-Guided Fate only)
+      if (wasFirstHydration && !_fateRunning) {
         const clauses = synopsisText.querySelectorAll('.dsp-clause');
         clauses.forEach((clause, i) => {
           clause.classList.add('dsp-pending');
@@ -9136,8 +9213,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // → Genre → Dynamic). It disappears only after Begin Story is clicked.
   // Visibility is tied to screen state, not scroll position.
   // ═══════════════════════════════════════════════════════════════════
-  let _dspInteractionStarted = false; // Tracks if user has interacted (name or selection)
+  let _dspActivationCount = 0; // Count of explicit Story Shape selections (activates DSP at >= 2)
   let _dspGuidedFateActive = false; // True during Guided Fate — prevents bulk hydration
+
+  function isDSPActivated() {
+      return _dspActivationCount >= 2;
+  }
+
+  function incrementDSPActivation() {
+      _dspActivationCount++;
+      console.log(`[DSP] Activation count: ${_dspActivationCount}`);
+  }
 
   function showDSP() {
     const synopsisPanel = document.getElementById('synopsisPanel');
@@ -9149,9 +9235,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         title.textContent = 'First Taste';
         synopsisPanel.insertBefore(title, synopsisPanel.firstChild);
       }
-      // Show placeholder if no interaction yet
+      // Show placeholder if activation threshold not met
       const synopsisText = document.getElementById('synopsisText');
-      if (synopsisText && !_dspInteractionStarted && !synopsisText._lastDSP) {
+      if (synopsisText && !isDSPActivated() && !synopsisText._lastDSP) {
         synopsisText.innerHTML = '<span class="dsp-placeholder">Your choices shape your story</span>';
       }
       synopsisPanel.classList.add('visible');
@@ -9256,6 +9342,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Update all card states - only selected card stays flipped
       updateArchetypeCardStates();
       updateArchetypeSelectionSummary();
+      // Increment DSP activation count (explicit Story Shape choice)
+      incrementDSPActivation();
       updateSynopsisPanel(true); // User action: archetype selection
   }
 
@@ -10240,7 +10328,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Keep placeholder or previous content until we have actual sentence content
       if (!newHtml || newHtml.trim() === '') return;
 
-      _dspInteractionStarted = true;
+      // Increment activation for Guided Fate reveals
+      incrementDSPActivation();
 
       // Only update DOM if content changed
       if (synopsisText._lastDSP !== newHtml) {
@@ -12178,188 +12267,95 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
             throw new ProseRefusalError(refusalCheck.reason, text);
         }
 
-        // 5TH PERSON POV COMPREHENSIVE VALIDATION (Scene 1)
+        // ============================================================
+        // 5TH PERSON POV — CONSOLIDATED SINGLE-PASS VALIDATION (Scene 1)
+        // ============================================================
+        // TASK A: All checks run once, regenerate at most ONCE per scene.
+        // TASK B: Scene 1 ramp-in — Opening/Closing are HARD, others are SOFT.
         if (state.povMode === 'author5th') {
+            // PHASE 1: Repair voyeur verbs (always safe, no regeneration needed)
+            text = await repair5thPersonPOV(text);
+
+            // PHASE 2: Run ALL validation checks in a single pass
             const povCheck = validate5thPersonPOV(text, true, false); // isSceneOne=true, isErotic=false
-            if (!povCheck.valid) {
-                console.log('[5thPerson] POV validation failed:', povCheck.violations);
-                if (povCheck.canRepair) {
-                    // Only voyeur verbs are repairable
-                    text = await repair5thPersonPOV(text);
-                    console.log('[5thPerson] Voyeur verbs repaired');
-                } else {
-                    // HARD FAIL — Scene 1 opener/closer/frequency violations require full regeneration
-                    console.error('[5thPerson] HARD FAIL — Scene 1 regenerating:', povCheck.violations);
-                    const hardFailViolations = povCheck.violations.filter(v => v.startsWith('HARD_FAIL:')).map(v => v.replace('HARD_FAIL:', ''));
-                    const strictPrompt = FIFTH_PERSON_POV_CONTRACT + '\n\nCRITICAL REGENERATION REQUIRED.\nPrevious output FAILED these absolute rules:\n- ' +
-                        hardFailViolations.join('\n- ') + '\n\nYou MUST:\n1. Start with exactly "The Author" as first two words\n2. Include 6+ Author mentions throughout\n3. End with Author as final perspective (reflection, doubt, or resistance)\n\n' + introPrompt;
-                    text = await callChat([
-                        { role: 'system', content: state.sysPrompt },
-                        { role: 'user', content: strictPrompt }
-                    ]);
-                    // REFUSAL GATE: Check regeneration output
-                    const regenRefusal = detectProseRefusal(text);
-                    if (regenRefusal.isRefusal) {
-                        console.error('[ProseRefusal] POV regeneration refused:', regenRefusal.reason);
-                        throw new ProseRefusalError(regenRefusal.reason, text);
-                    }
-                    // Apply voyeur verb cleanup only (opener/closer are structural)
-                    text = await repair5thPersonPOV(text);
-                }
+            const authorRoleCheck = validateFifthPersonAuthorRole(text, 1);
+            const strictCheck = enforceStrict5thPersonPOV(text, 1, state.picks?.tone);
+
+            // Collect all HARD violations (blocking)
+            const allHardViolations = [
+                ...povCheck.violations.filter(v => v.startsWith('HARD_FAIL:')).map(v => v.replace('HARD_FAIL:', '')),
+                ...authorRoleCheck.violations,
+                ...strictCheck.violations
+            ];
+
+            // Collect all SOFT warnings (non-blocking)
+            const allSoftWarnings = [
+                ...(povCheck.warnings || []),
+                ...(authorRoleCheck.warnings || []),
+                ...(strictCheck.warnings || [])
+            ];
+
+            // Log soft warnings (advisory only, Scene 1 ramp-in)
+            if (allSoftWarnings.length > 0) {
+                console.log('[5thPerson:Scene1] Soft warnings (non-blocking):', allSoftWarnings);
             }
 
-            // AUTHOR FUNCTION CONTRACT VALIDATION (Scene 1 only)
-            // Validates that Author performs all five required functions
-            const MAX_AUTHOR_FUNCTION_ATTEMPTS = 3;
-            let authorFuncAttempts = 0;
-            let authorRoleCheck = validateFifthPersonAuthorRole(text, 1); // sceneIndex=1
+            // PHASE 3: If HARD violations exist, regenerate ONCE (consolidated)
+            if (allHardViolations.length > 0) {
+                console.error('[5thPerson:Scene1] HARD violations detected, regenerating ONCE:', allHardViolations);
 
-            while (!authorRoleCheck.valid && authorFuncAttempts < MAX_AUTHOR_FUNCTION_ATTEMPTS) {
-                authorFuncAttempts++;
-                console.error('[AuthorRole] HARD FAIL — Attempt', authorFuncAttempts, ':', authorRoleCheck.violations);
+                const consolidatedPrompt = FIFTH_PERSON_POV_CONTRACT + `
 
-                const authorFuncPrompt = buildAuthorFunctionRegenerationPrompt(
-                    authorRoleCheck.violations,
-                    authorRoleCheck.functions
-                ) + introPrompt;
-
-                text = await callChat([
-                    { role: 'system', content: state.sysPrompt },
-                    { role: 'user', content: authorFuncPrompt }
-                ]);
-                // REFUSAL GATE: Check regeneration output
-                const authorRegenRefusal = detectProseRefusal(text);
-                if (authorRegenRefusal.isRefusal) {
-                    console.error('[ProseRefusal] Author function regeneration refused:', authorRegenRefusal.reason);
-                    throw new ProseRefusalError(authorRegenRefusal.reason, text);
-                }
-
-                // Re-validate
-                authorRoleCheck = validateFifthPersonAuthorRole(text, 1);
-            }
-
-            if (!authorRoleCheck.valid) {
-                console.error('[AuthorRole] Max attempts reached. Final violations:', authorRoleCheck.violations);
-            } else if (authorFuncAttempts > 0) {
-                console.log('[AuthorRole] Validation passed after', authorFuncAttempts, 'regeneration(s)');
-            }
-
-            // SCENE 1 WORD COUNT ENFORCEMENT (150-250 words)
-            const MAX_SCENE1_REGEN_ATTEMPTS = 3;
-            let wordCountAttempts = 0;
-            let wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
-
-            while ((wordCount < 150 || wordCount > 250) && wordCountAttempts < MAX_SCENE1_REGEN_ATTEMPTS) {
-                wordCountAttempts++;
-                console.error('[Scene1:WordCount] HARD FAIL — ' + wordCount + ' words (required: 150-250). Attempt ' + wordCountAttempts);
-
-                const wordCountPrompt = `
 ═══════════════════════════════════════════════════════════════════════════════
-SCENE 1 WORD COUNT ENFORCEMENT — HARD FAIL
+SCENE 1 REGENERATION — CONSOLIDATED HARD FAILURES
 ═══════════════════════════════════════════════════════════════════════════════
 
-Your output was ${wordCount} words. Scene 1 MUST be 150-250 words.
+Your output failed these ABSOLUTE structural requirements:
+- ${allHardViolations.join('\n- ')}
 
-${wordCount < 150 ? 'TOO SHORT: Add more Author presence, anticipation, and stage-setting.' : 'TOO LONG: Be more concise. Focus on Author agency, not description.'}
+HARD REQUIREMENTS (must pass):
+1. Start with exactly "The Author" as first two words
+2. End with Author as final perspective (reflection, doubt, or resistance)
+3. Use strict 3rd-person limited for scene prose
+4. Author must not appear only at boundaries (cameo pattern)
 
-DO NOT pad with filler. DO NOT trim meaningful content.
-Write exactly 150-250 words with full Author-Dominant POV.
-
+Regenerate the scene now.
 ═══════════════════════════════════════════════════════════════════════════════
 ` + introPrompt;
 
                 text = await callChat([
                     { role: 'system', content: state.sysPrompt },
-                    { role: 'user', content: wordCountPrompt }
+                    { role: 'user', content: consolidatedPrompt }
                 ]);
+
                 // REFUSAL GATE: Check regeneration output
-                const wcRegenRefusal = detectProseRefusal(text);
-                if (wcRegenRefusal.isRefusal) {
-                    console.error('[ProseRefusal] Word count regeneration refused:', wcRegenRefusal.reason);
-                    throw new ProseRefusalError(wcRegenRefusal.reason, text);
+                const regenRefusal = detectProseRefusal(text);
+                if (regenRefusal.isRefusal) {
+                    console.error('[ProseRefusal] Scene 1 POV regeneration refused:', regenRefusal.reason);
+                    throw new ProseRefusalError(regenRefusal.reason, text);
                 }
-                wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
-            }
 
-            if (wordCount < 150 || wordCount > 250) {
-                console.error('[Scene1:WordCount] Max attempts reached. Final word count:', wordCount);
-            }
-
-            // STRICT 5TH PERSON ENFORCEMENT (continuous presence, interiority, pronouns, tone)
-            // This is BLOCKING — Scene 1 cannot proceed without passing
-            const MAX_STRICT_ATTEMPTS = 3;
-            let strictAttempts = 0;
-            let strictCheck = enforceStrict5thPersonPOV(text, 1, state.picks?.tone);
-
-            while (!strictCheck.valid && strictAttempts < MAX_STRICT_ATTEMPTS) {
-                strictAttempts++;
-                console.error('[5thPerson:Strict] ENFORCEMENT FAILED — Attempt', strictAttempts, ':', strictCheck.violations);
-
-                // Log which specific checks failed
-                Object.entries(strictCheck.checks).forEach(([check, passed]) => {
-                    if (!passed) console.error('[5thPerson:Strict] Failed check:', check);
-                });
-
-                // Strict violations require regeneration with enhanced contract
-                const strictViolations = strictCheck.violations.map(v => v.replace(/AUTHOR_\w+_FAIL:/, '')).join('\n- ');
-                const strictEnforcementPrompt = `
-═══════════════════════════════════════════════════════════════════════════════
-STRICT 5TH PERSON POV ENFORCEMENT — HARD FAIL (Attempt ${strictAttempts})
-═══════════════════════════════════════════════════════════════════════════════
-
-Your output FAILED strict 5th Person POV requirements:
-- ${strictViolations}
-
-ABSOLUTE REQUIREMENTS:
-1. The Author must appear CONTINUOUSLY (max 2 paragraph gap)
-2. The Author must express INTERIORITY (doubt, fear, hope, wonder — not just action verbs)
-3. The Author's pronouns must mirror Player 1 gender (${state.playerGender || state.picks?.playerGender || 'unknown'})
-4. Tone markers must appear IN THE AUTHOR'S VOICE
-5. The scene must COLLAPSE without The Author (narrative dependency)
-
-PROHIBITED:
-- Author-as-camera (neutral observation)
-- Author-as-cameo (only at beginning/end)
-- Mechanical mentions ("The Author observed...")
-- Narrative autonomy (scene functioning without Author)
-- Pronoun drift (Author MUST use ${state.playerGender === 'male' ? 'he/him/his' : state.playerGender === 'female' ? 'she/her' : 'matching'} pronouns)
-
-═══════════════════════════════════════════════════════════════════════════════
-` + introPrompt;
-
-                text = await callChat([
-                    { role: 'system', content: state.sysPrompt },
-                    { role: 'user', content: strictEnforcementPrompt }
-                ]);
-                // REFUSAL GATE: Check regeneration output
-                const strictRegenRefusal = detectProseRefusal(text);
-                if (strictRegenRefusal.isRefusal) {
-                    console.error('[ProseRefusal] Strict POV regeneration refused:', strictRegenRefusal.reason);
-                    throw new ProseRefusalError(strictRegenRefusal.reason, text);
-                }
+                // Apply voyeur verb cleanup after regeneration
                 text = await repair5thPersonPOV(text);
 
-                // Re-validate
-                strictCheck = enforceStrict5thPersonPOV(text, 1, state.picks?.tone);
-            }
+                // Final validation check (log only, no further regeneration)
+                const finalPovCheck = validate5thPersonPOV(text, true, false);
+                const finalAuthorCheck = validateFifthPersonAuthorRole(text, 1);
+                const finalStrictCheck = enforceStrict5thPersonPOV(text, 1, state.picks?.tone);
 
-            if (!strictCheck.valid) {
-                console.error('[5thPerson:Strict] Max attempts reached. Final violations:', strictCheck.violations);
-            } else if (strictAttempts > 0) {
-                console.log('[5thPerson:Strict] Validation passed after', strictAttempts, 'regeneration(s)');
-            }
+                const remainingHard = [
+                    ...finalPovCheck.violations.filter(v => v.startsWith('HARD_FAIL:')),
+                    ...finalAuthorCheck.violations,
+                    ...finalStrictCheck.violations
+                ];
 
-            // FINAL GATE: Scene 1 cannot proceed unless ALL validations pass
-            const finalAuthorCheck = validateFifthPersonAuthorRole(text, 1);
-            const finalStrictCheck = enforceStrict5thPersonPOV(text, 1, state.picks?.tone);
-            const finalWordCount = text.split(/\s+/).filter(w => w.length > 0).length;
-
-            if (!finalAuthorCheck.valid || !finalStrictCheck.valid || finalWordCount < 150 || finalWordCount > 250) {
-                console.error('[Scene1:FinalGate] SCENE 1 FAILED TO MEET CONTRACT');
-                console.error('[Scene1:FinalGate] AuthorRole:', finalAuthorCheck.valid ? 'PASS' : 'FAIL');
-                console.error('[Scene1:FinalGate] StrictPOV:', finalStrictCheck.valid ? 'PASS' : 'FAIL');
-                console.error('[Scene1:FinalGate] WordCount:', finalWordCount, (finalWordCount >= 150 && finalWordCount <= 250) ? 'PASS' : 'FAIL');
-                // Log but proceed — we've exhausted retries
+                if (remainingHard.length > 0) {
+                    console.warn('[5thPerson:Scene1] Post-regen violations (proceeding anyway):', remainingHard);
+                } else {
+                    console.log('[5thPerson:Scene1] Regeneration successful — all HARD checks passed');
+                }
+            } else {
+                console.log('[5thPerson:Scene1] All HARD checks passed on first attempt');
             }
         }
 

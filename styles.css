@@ -610,7 +610,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     flex-shrink: 0;
 }
 .card:hover { transform: translateY(-3px); border-color: #ff6b6b; }
-.card.selected { border-color: #ff69b4; background: #333; box-shadow: 0 0 15px rgba(255,105,180,0.3); }
+.card.selected { border-color: var(--gold); background: #333; box-shadow: 0 0 15px rgba(255,215,0,0.3); }
 
 /* Responsive */
 @media (max-width: 700px) {
@@ -766,19 +766,19 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 }
 
 .selection-card-back .sub-option.selected {
-    color: var(--pink);
-    border-color: var(--pink);
-    background: rgba(255, 105, 180, 0.15);
+    color: var(--gold);
+    border-color: var(--gold);
+    background: rgba(255, 215, 0, 0.15);
 }
 
 /* Card states */
 .selection-card.selected .selection-card-front {
-    border-color: var(--pink);
-    box-shadow: 0 0 10px rgba(255, 105, 180, 0.4);
+    border-color: var(--gold);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
 }
 
 .selection-card.selected .selection-card-front .card-title {
-    color: var(--pink);
+    color: var(--gold);
 }
 
 .selection-card.dimmed {
@@ -1080,7 +1080,7 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 .archetype-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .archetype-pill { padding: 8px 16px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,105,180,0.3); border-radius: 25px; font-size: 0.9em; cursor: pointer; transition: all 0.2s; color: var(--ink); font-family: var(--font-main); }
 .archetype-pill:hover { background: rgba(255,105,180,0.15); border-color: var(--pink); transform: translateY(-2px); }
-.archetype-pill.selected { background: rgba(255,105,180,0.25); border-color: var(--hot); box-shadow: 0 0 12px rgba(255,20,147,0.4); color: var(--gold); font-weight: 600; }
+.archetype-pill.selected { background: rgba(255,215,0,0.25); border-color: var(--gold); box-shadow: 0 0 12px rgba(255,215,0,0.4); color: var(--gold); font-weight: 600; }
 .archetype-pill.primary-only { border-style: dashed; }
 .archetype-pill.primary-only::after { content: " ★"; font-size: 0.7em; opacity: 0.7; }
 .archetype-pill.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
@@ -3491,11 +3491,11 @@ textarea.fate-field {
 
 /* Selected state - glow effect */
 .sb-card.selected {
-    filter: drop-shadow(0 0 10px var(--hot));
+    filter: drop-shadow(0 0 10px var(--gold));
 }
 
 .sb-card.selected .sb-card-back {
-    border-color: var(--pink);
+    border-color: var(--gold);
 }
 
 /* Locked state */
@@ -3645,10 +3645,10 @@ textarea.fate-field {
 }
 
 .sb-flavor-btn.selected {
-    background: rgba(255, 105, 180, 0.5);
-    border-color: var(--hot);
+    background: rgba(255, 215, 0, 0.5);
+    border-color: var(--gold);
     color: white;
-    box-shadow: 0 0 4px rgba(255, 20, 147, 0.5);
+    box-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
 }
 
 /* Custom setting wrapper */
