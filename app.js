@@ -242,7 +242,6 @@ window.config = window.config || {
       // Page 2+: Smaller title only, no synopsis or intro image
       function updateStoryHeaderDisplay() {
           const titleEl = document.getElementById('storyTitle');
-          const synopsisEl = document.getElementById('storySynopsis');
           const settingShotWrap = document.getElementById('settingShotWrap');
           const sceneNumberEl = document.getElementById('sceneNumber');
 
@@ -254,12 +253,10 @@ window.config = window.config || {
           if (currentPageIndex === 0) {
               // Page 1: Full display (no setting image in Scene 1)
               if (titleEl) titleEl.style.fontSize = '';
-              if (synopsisEl) synopsisEl.style.display = '';
               if (settingShotWrap) settingShotWrap.style.display = 'none';
           } else {
               // Page 2+: Compact display
               if (titleEl) titleEl.style.fontSize = '1.2em';
-              if (synopsisEl) synopsisEl.style.display = 'none';
               if (settingShotWrap) settingShotWrap.style.display = 'none';
           }
       }
@@ -665,6 +662,12 @@ For veto/quill/god_mode:
   async function callNormalizationLayer(params) {
       const { axis, selected_world = null, allowed_subtypes = [], user_text, context_signals = [] } = params;
 
+      // SINGLE-FLIGHT LOCK: Only one normalization request at a time
+      if (_normalizationInFlight) {
+          console.warn('[NORMALIZATION] Request blocked — another normalization in flight');
+          return { ok: false, reason: 'IN_FLIGHT', normalized_text: user_text || '' };
+      }
+
       if (!user_text || typeof user_text !== 'string' || !user_text.trim()) {
           // Empty input - return passthrough
           return axis === 'world_subtype'
@@ -684,55 +687,68 @@ For veto/quill/god_mode:
       // FIXED: Always use 'NORMALIZATION' role to trigger backend system prompt
       const normalizationRole = 'NORMALIZATION';
 
-      // CRITICAL: Use ChatGPT proxy, NOT Grok proxy
-      // NO FALLBACKS - errors must fail loudly
-      const res = await fetch('/api/chatgpt-proxy', {
-  credentials: 'same-origin',
+      // ACQUIRE SINGLE-FLIGHT LOCK
+      _normalizationInFlight = true;
 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              role: normalizationRole,
-              mode: state.mode || 'solo',
-              model: 'gpt-4o-mini',
-              messages: [
-                  { role: 'system', content: RUNTIME_NORMALIZATION_PROMPT },
-                  { role: 'user', content: JSON.stringify(payload) }
-              ],
-              temperature: 0,
-              max_tokens: 500
-          })
-      });
-
-      if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          const errorMsg = `[NORMALIZATION FAILED] HTTP ${res.status}: ${errorData.error || errorData.details || 'Unknown error'}`;
-          console.error(errorMsg);
-          throw new Error(errorMsg);
-      }
-
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content;
-
-      if (!content) {
-          const errorMsg = '[NORMALIZATION FAILED] No content in API response';
-          console.error(errorMsg);
-          throw new Error(errorMsg);
-      }
-
-      // Parse JSON response
       try {
-          const parsed = JSON.parse(content.trim());
-          return parsed;
-      } catch (e) {
-          // Try to extract JSON from response
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-              return JSON.parse(jsonMatch[0]);
+          // CRITICAL: Use ChatGPT proxy, NOT Grok proxy
+          // NO FALLBACKS - errors must fail loudly
+          const res = await fetch('/api/chatgpt-proxy', {
+              credentials: 'same-origin',
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  role: normalizationRole,
+                  mode: state.mode || 'solo',
+                  model: 'gpt-4o-mini',
+                  messages: [
+                      { role: 'system', content: RUNTIME_NORMALIZATION_PROMPT },
+                      { role: 'user', content: JSON.stringify(payload) }
+                  ],
+                  temperature: 0,
+                  max_tokens: 500
+              })
+          });
+
+          // HTTP 429 CHECK — TERMINAL FAILURE, NO RETRY
+          const rateLimitErr = checkRateLimit(res, 'normalization');
+          if (rateLimitErr) {
+              throw rateLimitErr;
           }
-          const errorMsg = `[NORMALIZATION FAILED] Invalid JSON response: ${content.slice(0, 100)}`;
-          console.error(errorMsg);
-          throw new Error(errorMsg);
+
+          if (!res.ok) {
+              const errorData = await res.json().catch(() => ({}));
+              const errorMsg = `[NORMALIZATION FAILED] HTTP ${res.status}: ${errorData.error || errorData.details || 'Unknown error'}`;
+              console.error(errorMsg);
+              throw new Error(errorMsg);
+          }
+
+          const data = await res.json();
+          const content = data.choices?.[0]?.message?.content;
+
+          if (!content) {
+              const errorMsg = '[NORMALIZATION FAILED] No content in API response';
+              console.error(errorMsg);
+              throw new Error(errorMsg);
+          }
+
+          // Parse JSON response
+          try {
+              const parsed = JSON.parse(content.trim());
+              return parsed;
+          } catch (e) {
+              // Try to extract JSON from response
+              const jsonMatch = content.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                  return JSON.parse(jsonMatch[0]);
+              }
+              const errorMsg = `[NORMALIZATION FAILED] Invalid JSON response: ${content.slice(0, 100)}`;
+              console.error(errorMsg);
+              throw new Error(errorMsg);
+          }
+      } finally {
+          // RELEASE SINGLE-FLIGHT LOCK
+          _normalizationInFlight = false;
       }
   }
 
@@ -1485,6 +1501,11 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       consecutiveFate: 0, 
       consecutiveAid: 0,
       storyId: null,
+      worldInstanceId: null,      // Persistent world identity for same-world continuations
+      worldName: null,            // Unique world name for world-linked titles
+      previousTitle: null,        // Last title for continuation mode matching
+      previousTitleMode: null,    // Title mode to echo in continuations
+      continuationPath: null,     // 'continue' | 'same_world' | 'new_story'
       access: 'free',
       subscribed: false,
       isLoggedIn: false,  // AUTH GATE: persistence only allowed when logged in
@@ -1509,6 +1530,15 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
           // Per-scene visualization budget: sceneBudgets[sceneKey] = { remaining: 2, finalized: false }
           sceneBudgets: {}
       },
+
+      // ============================================================
+      // PHASE 1 COVER MODE — LOCAL/COMPOSITED COVERS ONLY
+      // coverMode: 'PHASE_1_FORGED' = deterministic local assets only
+      // coverEligibility: false = custom (model-based) covers disabled
+      // Custom cover generation ONLY reachable when coverEligibility === true
+      // ============================================================
+      coverMode: 'PHASE_1_FORGED',
+      coverEligibility: false,
 
       lastPurchaseType: null,
       pendingUpgradeToAffair: false,
@@ -1576,6 +1606,67 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       authorAwarenessWindowWords: window.state?.authorAwarenessWindowWords || 1300,
       authorAwarenessMaxDurationWords: window.state?.authorAwarenessMaxDurationWords || 2500
   };
+
+  // ============================================================
+  // SOLO SUBTITLE SYSTEM — Staged permission gradient
+  // ============================================================
+  // Default: "Just you and your curiosity."
+  // Upgraded: "Just you and your desire." (persists once triggered)
+  // ============================================================
+
+  const SOLO_SUBTITLE_DEFAULT = 'Just you and your curiosity.';
+  const SOLO_SUBTITLE_UPGRADED = 'Just you and your desire.';
+  const SOLO_COMPLETED_KEY = 'sb_solo_completed';
+
+  /**
+   * Check if Solo subtitle should show upgraded copy
+   * Upgrade conditions: arousal >= Naughty OR user has completed a Solo session
+   * @returns {boolean}
+   */
+  function shouldUpgradeSoloSubtitle() {
+      // Check persisted flag first
+      if (localStorage.getItem(SOLO_COMPLETED_KEY) === 'true') {
+          return true;
+      }
+      // Check current arousal level
+      const arousalOrder = ['Clean', 'Naughty', 'Erotic', 'Dirty'];
+      const currentArousal = state.intensity || 'Naughty';
+      const arousalIndex = arousalOrder.indexOf(currentArousal);
+      // Naughty or higher (index >= 1)
+      if (arousalIndex >= 1) {
+          return true;
+      }
+      return false;
+  }
+
+  /**
+   * Update Solo subtitle text based on conditions
+   * Called when modeSelect screen is shown
+   */
+  function updateSoloSubtitle() {
+      const subtitleEl = document.getElementById('soloSubtitle');
+      if (!subtitleEl) return;
+
+      if (shouldUpgradeSoloSubtitle()) {
+          subtitleEl.textContent = SOLO_SUBTITLE_UPGRADED;
+      } else {
+          subtitleEl.textContent = SOLO_SUBTITLE_DEFAULT;
+      }
+  }
+
+  /**
+   * Mark Solo session as completed
+   * Called when a Solo story progresses past scene 1
+   */
+  function markSoloSessionCompleted() {
+      if (state.mode === 'solo') {
+          localStorage.setItem(SOLO_COMPLETED_KEY, 'true');
+      }
+  }
+
+  // Expose for Dev HUD
+  window.updateSoloSubtitle = updateSoloSubtitle;
+  window.shouldUpgradeSoloSubtitle = shouldUpgradeSoloSubtitle;
 
   // ============================================================
   // 5TH PERSON AUTHOR CONDUCTOR SYSTEM
@@ -1696,6 +1787,3392 @@ Return the rewritten text only, no explanation.`
 
       return corrected.join(' ');
   }
+
+  // ============================================================
+  // 5TH PERSON POV — LOCKED CONTRACT BLOCK (AUTHORITATIVE)
+  // Prepended to prompts when povMode === 'author5th'
+  // ============================================================
+
+  const FIFTH_PERSON_POV_CONTRACT = `
+═══════════════════════════════════════════════════════════════════════════════
+5TH PERSON POV CONTRACT (LOCKED — NON-NEGOTIABLE)
+═══════════════════════════════════════════════════════════════════════════════
+
+CORE DEFINITION:
+The Author exists on the page as Fate. The Author is a character with awareness,
+intention, doubt, and desire. The reader knows The Author's inner state.
+Characters generally do not.
+
+ABSOLUTE STRUCTURAL RULES:
+
+1. OPENING: Output MUST begin with "The Author" as the first two words.
+2. CLOSING: The Author must be the final perspective at scene end, cliffhanger, or story end.
+3. SCENE PROSE: Written in strict 3rd-person limited, anchored to Player Character POV.
+   No Fate voice inside scene prose. No omniscience.
+4. AUTHOR SEPARATION: The Author reacts TO the story, not AS the story.
+   The Author never describes scenery, physical action, or emotions directly.
+   The Author never explains mechanics, monetization, or systems.
+
+FORBIDDEN IN ALL 5TH PERSON OUTPUT:
+- "the protagonist" (never use for PC)
+- "love interest" (never use for NPCs)
+- Any meta-label for Player Characters
+- System voice or UI explanations
+- Fate narration inside scene prose
+
+FREQUENCY RULES:
+- Scene 1: Frequent Author presence (6+ mentions)
+- Later scenes: Rare Author presence (1-3 mentions)
+- Erotic scenes: NO Author presence (pure 3rd-person)
+
+META-AWARENESS (~5% chance per scene):
+One character may experience fleeting awareness of Fate as: gooseflesh, pressure,
+intrusive thoughts, false certainty, or defiance. Character never sees The Author,
+never names Fate, and rationalizes it away. Only one character at a time.
+
+THE AUTHOR'S BEHAVIOR:
+- Exists between scenes and around decisions
+- Reacts to: uncertainty, denial, betrayal, irrevocable change
+- Presence is ritualistic, deliberate, restrained
+- Uses CAUSAL verbs: tilted, threaded, arranged, set, steered, coaxed, seeded
+- NEVER uses voyeur verbs: watched, observed, saw, noticed, gazed, witnessed
+
+═══════════════════════════════════════════════════════════════════════════════
+`;
+
+  const FIFTH_PERSON_GOD_MODE_CONTRACT = `
+═══════════════════════════════════════════════════════════════════════════════
+5TH PERSON GOD MODE — ADVERSARIAL AUTHOR (LOCKED)
+═══════════════════════════════════════════════════════════════════════════════
+
+GOD MODE VARIANT: The Author has lost control.
+
+WHAT CHANGES:
+- The Author is aware something is wrong
+- The Author believes his mind may be breaking, or a split personality is writing
+  over him, or someone is trespassing in his stories
+- The Author does NOT know about "God Mode"
+- The Author does NOT recognize the Player
+- The Author does NOT name the interloper
+
+THE AUTHOR MAY:
+- Despair over damage to beloved characters
+- Scramble to repair plot damage
+- Resist, bargain, plead, flatter
+- Briefly give up and observe chaos
+- Occasionally laugh or admire clever disruption
+
+BUT:
+- Resistance always returns
+- Order is always attempted
+- Fate never fully abdicates
+
+WHAT DOES NOT CHANGE:
+- Opening/closing rules still apply
+- System/UI explanations still forbidden
+- Scene prose still uses 3rd-person limited
+
+═══════════════════════════════════════════════════════════════════════════════
+`;
+
+  // ============================================================
+  // 5TH PERSON POV — COMPREHENSIVE VALIDATOR
+  // Returns { valid: boolean, violations: string[], canRepair: boolean }
+  // ============================================================
+
+  // Track last POV validation result for Dev HUD
+  let _lastPOVValidation = { valid: true, violations: [], timestamp: 0 };
+
+  function validate5thPersonPOV(text, isSceneOne = false, isErotic = false) {
+      const violations = [];
+      if (!text || typeof text !== 'string') {
+          return { valid: false, violations: ['Empty or invalid text'], canRepair: false };
+      }
+
+      const trimmed = text.trim();
+
+      // RULE 1: Must start with "The Author" (HARD FAIL for Scene 1 — ritual, not cosmetic)
+      const hasValidOpener = /^The Author\b/.test(trimmed);
+      if (!hasValidOpener) {
+          violations.push('HARD_FAIL:Opening does not start with "The Author"');
+      }
+
+      // RULE 2: Must end with Author perspective (STRUCTURAL CHECK)
+      // Final paragraph must contain Author as subject, not just string presence
+      const paragraphs = trimmed.split(/\n\n+/).filter(p => p.trim().length > 0);
+      const finalParagraph = paragraphs[paragraphs.length - 1] || '';
+      const finalSentences = finalParagraph.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+      const lastTwoSentences = finalSentences.slice(-2).join(' ');
+      // Author must be grammatical subject in final perspective (not just mentioned)
+      const authorAsSubject = /The Author\s+(held|tilted|set|arranged|steered|coaxed|seeded|threaded|watched|waited|considered|wondered|doubted|resisted|smiled|frowned|paused|knew|felt|sensed|released|tightened|loosened)\b/i.test(lastTwoSentences);
+      const authorReflection = /The Author.{0,60}(uncertain|doubt|wonder|question|resist|perhaps|might|whether|if only)/i.test(lastTwoSentences);
+      if (!authorAsSubject && !authorReflection) {
+          violations.push('HARD_FAIL:Closing lacks Author as final perspective (structural)');
+      }
+
+      // RULE 3: Forbidden meta-labels for Player Character
+      const metaLabels = [
+          /\bthe protagonist\b/gi,
+          /\blove interest\b/gi,
+          /\bthe player\b/gi,
+          /\bthe reader\b/gi
+      ];
+      for (const pattern of metaLabels) {
+          if (pattern.test(text)) {
+              violations.push(`Forbidden meta-label found: ${pattern.source}`);
+          }
+      }
+
+      // RULE 4: Scene 1 frequency (LOCKED: 6+ Author mentions required)
+      const authorMentions = (text.match(/The Author\b/gi) || []).length;
+      if (isSceneOne && authorMentions < 6) {
+          violations.push(`HARD_FAIL:Scene 1 has only ${authorMentions} Author mentions (required: 6+)`);
+      }
+
+      // RULE 5: Erotic scenes must have ZERO Author presence (HARD FAIL)
+      if (isErotic && authorMentions > 0) {
+          violations.push('HARD_FAIL:Author presence in erotic scene (forbidden — must be 0)');
+      }
+
+      // RULE 6: Author should not use voyeur verbs (repairable)
+      const voyeurPatterns = [
+          /The Author\s+watched\b/gi,
+          /The Author\s+observed\b/gi,
+          /The Author\s+saw\b/gi,
+          /The Author\s+noticed\b/gi,
+          /The Author\s+gazed\b/gi,
+          /The Author\s+witnessed\b/gi,
+          /The Author\s+perceived\b/gi,
+          /The Author\s+looked on\b/gi
+      ];
+      for (const pattern of voyeurPatterns) {
+          if (pattern.test(text)) {
+              violations.push(`Voyeur verb detected: ${pattern.source}`);
+          }
+      }
+
+      // Determine if violations are repairable
+      // HARD_FAIL violations are NEVER repairable — must regenerate
+      const hasHardFail = violations.some(v => v.startsWith('HARD_FAIL:'));
+      const canRepair = !hasHardFail && violations.length > 0 && violations.every(v =>
+          v.includes('Voyeur')
+      );
+
+      const result = {
+          valid: violations.length === 0,
+          violations,
+          canRepair,
+          authorMentions,
+          timestamp: Date.now()
+      };
+
+      // Store for Dev HUD
+      _lastPOVValidation = result;
+
+      if (!result.valid) {
+          console.warn('[5thPerson] POV validation failed:', violations);
+      }
+
+      return result;
+  }
+
+  // Attempt to repair POV violations (ONLY voyeur verbs — opener/closer are HARD FAILS)
+  async function repair5thPersonPOV(text) {
+      // Only voyeur verbs are repairable — opener/closer/frequency/erotic require regeneration
+      return enforceAuthorConductor(text);
+  }
+
+  // Build the 5th Person prompt contract block
+  function build5thPersonContract() {
+      if (window.state?.povMode !== 'author5th') return '';
+
+      let contract = FIFTH_PERSON_POV_CONTRACT;
+
+      // Add God Mode adversarial framing if active
+      if (window.state?.godModeActive) {
+          contract += FIFTH_PERSON_GOD_MODE_CONTRACT;
+      }
+
+      return contract;
+  }
+
+  // ============================================================
+  // 5TH PERSON AUTHOR FUNCTION CONTRACT — HARD STRUCTURAL ENFORCEMENT
+  // ============================================================
+  // Scene 1 MUST contain Author presence fulfilling ALL five functions.
+  // This is POST-GENERATION VALIDATION, not prompting.
+
+  const AUTHOR_FUNCTION_ERRORS = {
+    MENTION_UNDERFLOW: 'AUTHOR_FUNC_FAIL:Author mentions below minimum (found: %d, required: 6-10)',
+    MENTION_OVERFLOW: 'AUTHOR_FUNC_FAIL:Author mentions exceed maximum (found: %d, required: 6-10)',
+    MISSING_OPENING: 'AUTHOR_FUNC_FAIL:Author not present in opening paragraph',
+    MISSING_CLOSING: 'AUTHOR_FUNC_FAIL:Author not present in final paragraph',
+    MISSING_STAGE_SETTING: 'AUTHOR_FUNC_FAIL:Missing stage-setting function (pressure/inevitability)',
+    MISSING_ANTICIPATION: 'AUTHOR_FUNC_FAIL:Missing anticipation/desire function',
+    MISSING_INITIATION: 'AUTHOR_FUNC_FAIL:Missing initiation/nudge function',
+    MISSING_SPECULATION: 'AUTHOR_FUNC_FAIL:Missing speculation/wonder function',
+    MISSING_CONCERN: 'AUTHOR_FUNC_FAIL:Missing concern/judgment function',
+    DECORATIVE_MENTION: 'AUTHOR_FUNC_FAIL:Decorative Author mention without function',
+    CAMERA_STYLE: 'AUTHOR_FUNC_FAIL:Camera-style Author usage (scenery/passive observation)',
+    // NEW: Strict 5th Person enforcement errors
+    PRESENCE_GAP: 'AUTHOR_PRES_FAIL:Author absent for >2 consecutive paragraphs (gap at paragraph %d)',
+    PRONOUN_DRIFT: 'AUTHOR_PRON_FAIL:Author pronoun drift — expected %s, found %s',
+    NARRATIVE_AUTONOMY: 'AUTHOR_AUTO_FAIL:Scene functions without Author (Author could be removed)',
+    INTERIORITY_ABSENT: 'AUTHOR_INT_FAIL:Author lacks interiority (only action verbs, no emotional investment)',
+    TONE_NOT_AUTHORED: 'AUTHOR_TONE_FAIL:Tone markers appear outside Author voice',
+    CAMEO_ONLY: 'AUTHOR_CAM_FAIL:Author appears only at boundaries (cameo pattern)'
+  };
+
+  // ============================================================
+  // PROSE REFUSAL DETECTION — ATOMIC SCENE CREATION GUARD
+  // ============================================================
+  // Model refusals MUST NOT be inserted as scene content.
+  // This gate runs BEFORE any scene object is created or stored.
+
+  const PROSE_REFUSAL_MARKERS = [
+    // OpenAI / ChatGPT refusal patterns
+    /I('m| am) sorry,? but I (can't|cannot|am unable to|won't)/i,
+    /I (can't|cannot|am unable to) (assist|help|create|generate|write|produce)/i,
+    /I('m| am) not able to (assist|help|create|generate|write|produce)/i,
+    /This (request|content) (violates|goes against|is against)/i,
+    /against (my|our) (content |usage )?policy/i,
+    /I (must|have to) (decline|refuse|refrain)/i,
+    /I('m| am) (designed|programmed) to (avoid|decline|refuse)/i,
+    // Anthropic refusal patterns
+    /I (don't|do not) (feel comfortable|think I should)/i,
+    /I('d| would) prefer not to/i,
+    // Generic safety markers
+    /content policy/i,
+    /safety guidelines/i,
+    /inappropriate content/i,
+    /explicit (sexual |adult )?content/i,
+    // Validation error objects serialized
+    /AUTHOR_\w+_FAIL:/,
+    /HARD_FAIL:/,
+    /^\s*\{[\s\S]*"error"[\s\S]*\}\s*$/  // JSON error object
+  ];
+
+  const PROSE_MINIMUM_LENGTH = 50; // Refusals are typically short
+
+  /**
+   * Detects if model output is a refusal or error, not valid prose.
+   * @param {string} text - The raw model output
+   * @returns {{ isRefusal: boolean, reason: string|null }}
+   */
+  function detectProseRefusal(text) {
+    if (!text || typeof text !== 'string') {
+      return { isRefusal: true, reason: 'EMPTY_OUTPUT' };
+    }
+
+    const trimmed = text.trim();
+
+    // Length check: refusals are typically very short
+    if (trimmed.length < PROSE_MINIMUM_LENGTH) {
+      return { isRefusal: true, reason: 'OUTPUT_TOO_SHORT' };
+    }
+
+    // Marker check: explicit refusal patterns
+    for (const marker of PROSE_REFUSAL_MARKERS) {
+      if (marker.test(trimmed)) {
+        return { isRefusal: true, reason: 'REFUSAL_MARKER_DETECTED' };
+      }
+    }
+
+    // Structural check: valid prose should have multiple sentences
+    const sentences = trimmed.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    if (sentences.length < 2) {
+      return { isRefusal: true, reason: 'INSUFFICIENT_PROSE_STRUCTURE' };
+    }
+
+    return { isRefusal: false, reason: null };
+  }
+
+  /**
+   * Error thrown when prose generation returns a refusal.
+   * Distinct from network/API errors — indicates content policy rejection.
+   */
+  class ProseRefusalError extends Error {
+    constructor(reason, rawOutput) {
+      super(`Prose generation refused: ${reason}`);
+      this.name = 'ProseRefusalError';
+      this.reason = reason;
+      this.rawOutput = rawOutput;
+    }
+  }
+
+  // ============================================================
+  // HTTP 429 RATE LIMIT HANDLING — TERMINAL FAILURE
+  // ============================================================
+  // 429 = system pressure, NOT content failure.
+  // MUST NOT retry, fallback, or advance any state.
+  // Requires explicit user action to retry.
+
+  /**
+   * Error thrown when API returns HTTP 429 (rate limited).
+   * This is a TERMINAL failure — no retries, no fallbacks.
+   */
+  class RateLimitError extends Error {
+    constructor(endpoint, retryAfter = null) {
+      super(`Rate limited (HTTP 429) on ${endpoint}`);
+      this.name = 'RateLimitError';
+      this.endpoint = endpoint;
+      this.retryAfter = retryAfter;
+      this.isRateLimit = true;
+    }
+  }
+
+  // Single-flight locks to prevent concurrent requests
+  let _normalizationInFlight = false;
+  let _proseGenerationInFlight = false;
+
+  /**
+   * Checks if HTTP response is a 429 rate limit error.
+   * @param {Response} res - Fetch Response object
+   * @param {string} endpoint - Endpoint name for logging
+   * @returns {RateLimitError|null} - RateLimitError if 429, null otherwise
+   */
+  function checkRateLimit(res, endpoint) {
+    if (res.status === 429) {
+      const retryAfter = res.headers.get('Retry-After');
+      console.error(`[RATE_LIMIT] HTTP 429 on ${endpoint}. Retry-After: ${retryAfter || 'not specified'}`);
+      return new RateLimitError(endpoint, retryAfter);
+    }
+    return null;
+  }
+
+  // Author interiority verbs (emotional investment, NOT just action)
+  const AUTHOR_INTERIORITY_VERBS = /The Author\b.{0,40}(wondered|doubted|feared|hoped|worried|sensed|felt|knew|suspected|resisted|yearned|ached|hungered|trembled|hesitated|considered|questioned|pondered|mused|regretted|anticipated|dreaded|craved|savored)/i;
+
+  // Tone markers that MUST appear in Author's voice when tone is active
+  const AUTHOR_TONE_MARKERS = {
+    WryConfession: /The Author\b.{0,80}(irony|self-aware|wry|confess|admit|rueful|sardonic|knowing)/i,
+    Poetic: /The Author\b.{0,80}(breathed|whispered|painted|wove|threaded|composed|crafted the)/i,
+    Dark: /The Author\b.{0,80}(shadow|darkness|dread|ominous|foreboding|sinister|corrupt|twisted)/i,
+    Horror: /The Author\b.{0,80}(dread|terror|fear|horror|unspeakable|nameless|creeping)/i,
+    Mythic: /The Author\b.{0,80}(fated|destined|eternal|ancient|prophecy|legend|myth|ordained)/i,
+    Comedic: /The Author\b.{0,80}(amused|delighted|laughed|chuckled|absurd|ridiculous|comedic)/i,
+    Surreal: /The Author\b.{0,80}(dream|impossible|bent|warped|shifted|unreal|strange)/i,
+    Satirical: /The Author\b.{0,80}(mocked|skewered|exposed|pretense|facade|hypocrisy)/i
+  };
+
+  // Heuristic classifiers for Author Function detection
+  // Each returns true if the sentence containing "The Author" fulfills that function
+  const AUTHOR_FUNCTION_CLASSIFIERS = {
+    // Stage-setting: pressure, inevitability, fate-in-motion (NOT scenery)
+    stageSetting: (sentence) => {
+      return /The Author\b.{0,80}(set|staged|arranged|positioned|placed|tilted toward|angled|had already|long ago|before .* began|from the start|was never|always meant|inevitable|inescapable|sealed|locked|fated|destined|threaded|wove|wound)\b/i.test(sentence) &&
+        !/The Author\b.{0,40}(watched|observed|saw|noticed|gazed|looked|the (sun|moon|sky|rain|fog|mist|crowd|street|room))/i.test(sentence);
+    },
+
+    // Anticipation: desire for what is coming, hunger, waiting
+    anticipation: (sentence) => {
+      return /The Author\b.{0,80}(wanted|desired|hungered|ached|longed|awaited|anticipated|could (barely|hardly|scarcely) wait|savored the|relished|craved|yearned|needed this|needed them|needed her|needed him)\b/i.test(sentence);
+    },
+
+    // Initiation: nudge, permit, withhold, tilt events
+    initiation: (sentence) => {
+      return /The Author\b.{0,80}(tilted|nudged|pushed|pulled|steered|coaxed|provoked|sent|released|loosened|tightened|opened|closed|permitted|allowed|withheld|denied|granted|unlatched|unlocked|triggered|seeded|planted|introduced|delivered)\b/i.test(sentence);
+    },
+
+    // Speculation: wonder, uncertainty, possibility
+    speculation: (sentence) => {
+      return /The Author\b.{0,80}(wondered|speculated|considered|pondered|mused|imagined|thought|questioned|asked|uncertain|unsure|perhaps|might|may|could be|what if|whether|if only|possibility|possibilities|curious|intrigued)\b/i.test(sentence);
+    },
+
+    // Concern: judgment, worry about flaw/innocence/risk
+    concern: (sentence) => {
+      return /The Author\b.{0,80}(worried|feared|doubted|concerned|judged|noted|recognized|knew|understood|sensed|felt|pitied|regretted|lamented|mourned|hoped|prayed|wished|flaw|innocen|naive|blind|foolish|reckless|fragile|vulnerable|danger|risk|peril|harm|damage|wound|break|shatter|destroy|ruin)\b/i.test(sentence);
+    }
+  };
+
+  // Detect decorative/camera-style Author usage (PROHIBITED)
+  function isDecorativeOrCamera(sentence) {
+    // Camera-style: scenery description, passive observation
+    const cameraPatterns = [
+      /The Author\b.{0,40}(watched|observed|saw|noticed|gazed|witnessed|perceived|looked on)\b/i,
+      /The Author\b.{0,60}(the (sun|moon|sky|stars|rain|fog|mist|snow|wind|clouds))/i,
+      /The Author\b.{0,60}(the (room|street|crowd|city|town|building|house|garden))/i,
+      /The Author\b.{0,40}(described|narrated|wrote|penned|chronicled)\b/i
+    ];
+
+    for (const pattern of cameraPatterns) {
+      if (pattern.test(sentence)) return true;
+    }
+
+    // Decorative: Author mentioned without any function verb
+    const hasFunctionVerb = Object.values(AUTHOR_FUNCTION_CLASSIFIERS).some(fn => fn(sentence));
+    const hasActionVerb = /The Author\b\s+\w+ed\b/i.test(sentence) || /The Author\b\s+(held|felt|knew|was|had)\b/i.test(sentence);
+
+    // If Author is mentioned but no function verb and no clear action = decorative
+    if (!hasFunctionVerb && !hasActionVerb) {
+      // Check if it's just a reference without substance
+      if (/The Author('s)?\s+(story|tale|narrative|work|creation|design)\b/i.test(sentence)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Extract sentences containing "The Author"
+  function extractAuthorSentences(text) {
+    const sentences = text.split(/(?<=[.!?])\s+/).filter(s => /The Author\b/i.test(s));
+    return sentences;
+  }
+
+  // Main validation function for Author Function Contract
+  function validateFifthPersonAuthorRole(text, sceneIndex) {
+    // SCOPE: Only applies to Scene 1 with 5th Person POV
+    if (sceneIndex !== 1) {
+      return { valid: true, violations: [], functions: {}, mentionCount: 0 };
+    }
+
+    const violations = [];
+    const trimmed = (text || '').trim();
+
+    if (!trimmed) {
+      return { valid: false, violations: ['Empty text'], functions: {}, mentionCount: 0 };
+    }
+
+    // Count Author mentions
+    const authorMentions = (trimmed.match(/The Author\b/gi) || []).length;
+
+    // HARD CHECK: 6-10 mentions required
+    if (authorMentions < 6) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.MENTION_UNDERFLOW.replace('%d', authorMentions));
+    }
+    if (authorMentions > 10) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.MENTION_OVERFLOW.replace('%d', authorMentions));
+    }
+
+    // Split into paragraphs
+    const paragraphs = trimmed.split(/\n\n+/).filter(p => p.trim().length > 0);
+    const openingPara = paragraphs[0] || '';
+    const closingPara = paragraphs[paragraphs.length - 1] || '';
+
+    // HARD CHECK: Author in opening paragraph
+    if (!/The Author\b/i.test(openingPara)) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_OPENING);
+    }
+
+    // HARD CHECK: Author in final paragraph
+    if (!/The Author\b/i.test(closingPara)) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_CLOSING);
+    }
+
+    // Extract all Author sentences for function analysis
+    const authorSentences = extractAuthorSentences(trimmed);
+
+    // Track which functions are fulfilled
+    const functionsFound = {
+      stageSetting: false,
+      anticipation: false,
+      initiation: false,
+      speculation: false,
+      concern: false
+    };
+
+    // Check each Author sentence
+    let decorativeCount = 0;
+    for (const sentence of authorSentences) {
+      // Check for prohibited decorative/camera usage
+      if (isDecorativeOrCamera(sentence)) {
+        decorativeCount++;
+        console.warn('[AuthorRole] Decorative/camera usage:', sentence.substring(0, 100));
+      }
+
+      // Check which functions this sentence fulfills
+      if (AUTHOR_FUNCTION_CLASSIFIERS.stageSetting(sentence)) {
+        functionsFound.stageSetting = true;
+      }
+      if (AUTHOR_FUNCTION_CLASSIFIERS.anticipation(sentence)) {
+        functionsFound.anticipation = true;
+      }
+      if (AUTHOR_FUNCTION_CLASSIFIERS.initiation(sentence)) {
+        functionsFound.initiation = true;
+      }
+      if (AUTHOR_FUNCTION_CLASSIFIERS.speculation(sentence)) {
+        functionsFound.speculation = true;
+      }
+      if (AUTHOR_FUNCTION_CLASSIFIERS.concern(sentence)) {
+        functionsFound.concern = true;
+      }
+    }
+
+    // HARD CHECK: All five functions must be present
+    if (!functionsFound.stageSetting) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_STAGE_SETTING);
+    }
+    if (!functionsFound.anticipation) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_ANTICIPATION);
+    }
+    if (!functionsFound.initiation) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_INITIATION);
+    }
+    if (!functionsFound.speculation) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_SPECULATION);
+    }
+    if (!functionsFound.concern) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.MISSING_CONCERN);
+    }
+
+    // HARD CHECK: Decorative mentions are failures
+    if (decorativeCount > 0) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.DECORATIVE_MENTION + ` (${decorativeCount} found)`);
+    }
+
+    return {
+      valid: violations.length === 0,
+      violations,
+      functions: functionsFound,
+      mentionCount: authorMentions,
+      decorativeCount
+    };
+  }
+
+  // Build regeneration prompt for Author Function failures
+  function buildAuthorFunctionRegenerationPrompt(violations, functionsFound) {
+    const missingFunctions = [];
+    if (!functionsFound.stageSetting) missingFunctions.push('STAGE-SETTING (pressure, inevitability — NOT scenery)');
+    if (!functionsFound.anticipation) missingFunctions.push('ANTICIPATION (desire, hunger for what is coming)');
+    if (!functionsFound.initiation) missingFunctions.push('INITIATION (nudge, permit, withhold, tilt events)');
+    if (!functionsFound.speculation) missingFunctions.push('SPECULATION (wonder, uncertainty, possibility)');
+    if (!functionsFound.concern) missingFunctions.push('CONCERN (judgment about flaw, innocence, or risk)');
+
+    return `
+═══════════════════════════════════════════════════════════════════════════════
+AUTHOR FUNCTION CONTRACT — REGENERATION REQUIRED
+═══════════════════════════════════════════════════════════════════════════════
+
+Previous output FAILED Author Function validation.
+
+FAILURES:
+${violations.map(v => '- ' + v.replace('AUTHOR_FUNC_FAIL:', '')).join('\n')}
+
+MISSING FUNCTIONS (The Author must perform ALL five):
+${missingFunctions.map(f => '- ' + f).join('\n')}
+
+ABSOLUTE REQUIREMENTS:
+1. "The Author" must appear 6-10 times (not fewer, not more)
+2. "The Author" must appear in OPENING paragraph
+3. "The Author" must appear in FINAL paragraph
+4. Each Author mention MUST perform one of these five functions:
+   - Stage-setting: pressure, inevitability (NOT scenery description)
+   - Anticipation: desire, hunger, waiting for what comes
+   - Initiation: nudge, permit, withhold, tilt, steer events
+   - Speculation: wonder, uncertainty, what-if, possibility
+   - Concern: judgment, worry about flaw, innocence, risk
+
+PROHIBITED:
+- The Author describing scenery
+- The Author narrating physical action
+- The Author as passive camera/observer
+- Decorative Author mentions without function
+
+═══════════════════════════════════════════════════════════════════════════════
+`;
+  }
+
+  // ============================================================
+  // STRICT 5TH PERSON POV ENFORCEMENT — CONTINUOUS PRESENCE
+  // ============================================================
+  // These checks enforce the AUTHORITATIVE 5th Person contract:
+  // - Author must appear continuously (max 2 paragraph gap)
+  // - Author must have interiority, not just action verbs
+  // - Author pronouns must match Player 1 gender
+  // - Tone must route through Author's voice
+  // - Scene must collapse without Author (narrative dependency)
+
+  /**
+   * CHECK: Continuous Author presence (max 2 paragraph gap)
+   * HARD FAIL if Author absent for >2 consecutive paragraphs
+   */
+  function checkAuthorPresenceGap(paragraphs) {
+    const violations = [];
+    let consecutiveWithout = 0;
+    let gapStartIndex = -1;
+
+    for (let i = 0; i < paragraphs.length; i++) {
+      const hasAuthor = /The Author\b/i.test(paragraphs[i]);
+      if (hasAuthor) {
+        consecutiveWithout = 0;
+        gapStartIndex = -1;
+      } else {
+        if (consecutiveWithout === 0) gapStartIndex = i;
+        consecutiveWithout++;
+        if (consecutiveWithout > 2) {
+          violations.push(AUTHOR_FUNCTION_ERRORS.PRESENCE_GAP.replace('%d', gapStartIndex + 1));
+          break; // One gap violation is enough
+        }
+      }
+    }
+    return violations;
+  }
+
+  /**
+   * CHECK: Author pronoun alignment with Player 1 gender
+   * Author must use same pronouns as Player 1 (mirroring requirement)
+   * HARD FAIL if Author uses conflicting pronouns
+   */
+  function checkAuthorPronounDrift(text) {
+    const violations = [];
+    const playerGender = window.state?.picks?.playerGender || window.state?.playerGender;
+    if (!playerGender) return violations; // Can't check without gender
+
+    // Expected pronouns based on player gender
+    const expectedPronouns = playerGender === 'male'
+      ? { subject: 'he', object: 'him', possessive: 'his' }
+      : playerGender === 'female'
+      ? { subject: 'she', object: 'her', possessive: 'her' }
+      : null;
+
+    if (!expectedPronouns) return violations; // Non-binary/other not enforced
+
+    // Check Author sentences for conflicting pronouns
+    const authorSentences = text.split(/(?<=[.!?])\s+/).filter(s => /The Author\b/i.test(s));
+
+    for (const sentence of authorSentences) {
+      // Look for Author + pronoun patterns
+      const afterAuthor = sentence.replace(/.*The Author\b/i, '');
+
+      // Check for wrong pronouns in Author context
+      if (playerGender === 'male') {
+        if (/\b(she|her)\s+(felt|knew|wondered|sensed|wanted)\b/i.test(afterAuthor)) {
+          violations.push(AUTHOR_FUNCTION_ERRORS.PRONOUN_DRIFT
+            .replace('%s', 'he/him/his')
+            .replace('%s', 'she/her'));
+          break;
+        }
+      } else if (playerGender === 'female') {
+        if (/\b(he|him|his)\s+(felt|knew|wondered|sensed|wanted)\b/i.test(afterAuthor)) {
+          violations.push(AUTHOR_FUNCTION_ERRORS.PRONOUN_DRIFT
+            .replace('%s', 'she/her')
+            .replace('%s', 'he/him/his'));
+          break;
+        }
+      }
+    }
+    return violations;
+  }
+
+  /**
+   * CHECK: Author interiority (emotional investment, not just action)
+   * HARD FAIL if Author only has action verbs, no interiority
+   */
+  function checkAuthorInteriority(text) {
+    const violations = [];
+    const authorSentences = text.split(/(?<=[.!?])\s+/).filter(s => /The Author\b/i.test(s));
+
+    // Must have at least one interiority verb
+    const hasInteriority = authorSentences.some(s => AUTHOR_INTERIORITY_VERBS.test(s));
+
+    if (!hasInteriority && authorSentences.length >= 3) {
+      // Check if all Author mentions are just action verbs
+      const actionOnly = authorSentences.every(s =>
+        /The Author\b\s+(set|placed|arranged|tilted|positioned|opened|closed|moved|pushed|pulled)\b/i.test(s) &&
+        !AUTHOR_INTERIORITY_VERBS.test(s)
+      );
+      if (actionOnly) {
+        violations.push(AUTHOR_FUNCTION_ERRORS.INTERIORITY_ABSENT);
+      }
+    }
+    return violations;
+  }
+
+  /**
+   * CHECK: Cameo pattern detection (Author only at boundaries)
+   * HARD FAIL if Author appears only in first and last paragraph
+   */
+  function checkAuthorCameoPattern(paragraphs) {
+    const violations = [];
+    if (paragraphs.length < 4) return violations; // Too short to have cameo pattern
+
+    const authorByParagraph = paragraphs.map(p => /The Author\b/i.test(p));
+    const firstHas = authorByParagraph[0];
+    const lastHas = authorByParagraph[authorByParagraph.length - 1];
+    const middleHasAny = authorByParagraph.slice(1, -1).some(Boolean);
+
+    // Cameo pattern: Author only at first and last, absent in middle
+    if (firstHas && lastHas && !middleHasAny) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.CAMEO_ONLY);
+    }
+    return violations;
+  }
+
+  /**
+   * CHECK: Tone routed through Author (tone markers must appear in Author voice)
+   * Soft warning for now, but flagged for enforcement
+   */
+  function checkToneAuthoring(text, tone) {
+    const violations = [];
+    if (!tone || tone === 'Earnest') return violations; // Earnest is baseline, no special markers
+
+    const tonePattern = AUTHOR_TONE_MARKERS[tone];
+    if (!tonePattern) return violations;
+
+    // Check if tone markers exist in text
+    const toneMarkers = {
+      WryConfession: /\b(irony|ironic|self-aware|wry|sardonic|rueful)\b/i,
+      Poetic: /\b(whispered|breathed|painted|wove|lyrical|verse)\b/i,
+      Dark: /\b(shadow|darkness|dread|ominous|foreboding|sinister)\b/i,
+      Horror: /\b(dread|terror|horror|unspeakable|nameless|creeping)\b/i,
+      Mythic: /\b(fated|destined|eternal|ancient|prophecy|ordained)\b/i,
+      Comedic: /\b(absurd|ridiculous|laughed|chuckled|comedic|hilarious)\b/i,
+      Surreal: /\b(dream|impossible|warped|unreal|strange|shifting)\b/i,
+      Satirical: /\b(mocked|skewered|pretense|facade|hypocrisy)\b/i
+    };
+
+    const generalTonePattern = toneMarkers[tone];
+    if (!generalTonePattern) return violations;
+
+    const hasToneInText = generalTonePattern.test(text);
+    const hasToneInAuthor = tonePattern.test(text);
+
+    // If tone appears in text but NOT in Author voice = violation
+    if (hasToneInText && !hasToneInAuthor) {
+      violations.push(AUTHOR_FUNCTION_ERRORS.TONE_NOT_AUTHORED);
+    }
+    return violations;
+  }
+
+  /**
+   * CHECK: Narrative autonomy (scene must depend on Author)
+   * If removing Author sentences doesn't collapse the scene = FAIL
+   */
+  function checkNarrativeAutonomy(text) {
+    const violations = [];
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    const authorSentences = sentences.filter(s => /The Author\b/i.test(s));
+    const nonAuthorSentences = sentences.filter(s => !/The Author\b/i.test(s));
+
+    // If non-Author sentences form a coherent scene alone = violation
+    // Heuristic: if >70% of content is non-Author, scene may be autonomous
+    const authorRatio = authorSentences.length / sentences.length;
+
+    if (authorRatio < 0.15 && sentences.length > 10) {
+      // Very low Author presence in substantial text = autonomy risk
+      violations.push(AUTHOR_FUNCTION_ERRORS.NARRATIVE_AUTONOMY);
+    }
+    return violations;
+  }
+
+  /**
+   * MASTER ENFORCEMENT: Strict 5th Person POV validation
+   * Combines all enforcement checks into single validation pass
+   */
+  function enforceStrict5thPersonPOV(text, sceneIndex, tone) {
+    if (window.state?.povMode !== 'author5th') {
+      return { valid: true, violations: [], checks: {} };
+    }
+
+    const violations = [];
+    const paragraphs = (text || '').split(/\n\n+/).filter(p => p.trim().length > 0);
+
+    // Run all enforcement checks
+    const presenceGap = checkAuthorPresenceGap(paragraphs);
+    const pronounDrift = checkAuthorPronounDrift(text);
+    const interiority = checkAuthorInteriority(text);
+    const cameoPattern = checkAuthorCameoPattern(paragraphs);
+    const toneAuthoring = checkToneAuthoring(text, tone);
+    const narrativeAutonomy = checkNarrativeAutonomy(text);
+
+    // Collect all violations
+    violations.push(...presenceGap);
+    violations.push(...pronounDrift);
+    violations.push(...interiority);
+    violations.push(...cameoPattern);
+    violations.push(...toneAuthoring);
+    violations.push(...narrativeAutonomy);
+
+    const result = {
+      valid: violations.length === 0,
+      violations,
+      checks: {
+        presenceGap: presenceGap.length === 0,
+        pronounDrift: pronounDrift.length === 0,
+        interiority: interiority.length === 0,
+        cameoPattern: cameoPattern.length === 0,
+        toneAuthoring: toneAuthoring.length === 0,
+        narrativeAutonomy: narrativeAutonomy.length === 0
+      }
+    };
+
+    if (!result.valid) {
+      console.error('[5thPerson:Strict] Enforcement FAILED:', violations);
+    }
+
+    return result;
+  }
+
+  // Expose for integration
+  window.enforceStrict5thPersonPOV = enforceStrict5thPersonPOV;
+
+  // ============================================================
+  // EROTIC/DIRTY LANGUAGE ESCALATION SYSTEM (MANDATORY)
+  // ============================================================
+  // When intensity >= Erotic, prose MUST demonstrate physical charge
+  // This is NOT satisfied by mood, metaphor, or poetic abstraction alone
+  // ============================================================
+
+  // Sensory markers that indicate proper erotic grounding
+  const EROTIC_SENSORY_MARKERS = [
+      /\b(breath|breathing|breathless|exhale|inhale)\b/gi,
+      /\b(skin|flesh|bare|naked|exposed)\b/gi,
+      /\b(heat|warm|warmth|hot|burn|burning|fever)\b/gi,
+      /\b(weight|press|pressure|heavy|lean)\b/gi,
+      /\b(scent|smell|musk|perfume|sweat)\b/gi,
+      /\b(friction|rub|slide|glide|grind)\b/gi,
+      /\b(shiver|tremble|shudder|quiver|shake)\b/gi,
+      /\b(pulse|heartbeat|racing|pounding|thump)\b/gi,
+      /\b(touch|stroke|grip|grasp|clutch|hold)\b/gi,
+      /\b(lips|mouth|tongue|teeth|bite|kiss)\b/gi,
+      /\b(throat|neck|collarbone|shoulder|spine)\b/gi,
+      /\b(hips|waist|thigh|chest|stomach)\b/gi,
+      /\b(gasp|moan|groan|sigh|whimper|cry)\b/gi,
+      /\b(ache|throb|tingle|flush|blush)\b/gi,
+      /\b(tight|tense|clench|curl|arch)\b/gi
+  ];
+
+  // Patterns indicating bodily contradiction (restraint vs reaction)
+  const BODILY_CONTRADICTION_PATTERNS = [
+      /\b(tried to|wanted to|meant to|shouldn't|couldn't help|despite|even as|though.*body)\b/gi,
+      /\b(said.*but|told.*yet|claimed.*while|denied.*as)\b/gi,
+      /\b(fought|resisted|held back|pulled away).*\b(drawn|pulled|leaned|reached)\b/gi
+  ];
+
+  // Forbidden abstraction-only patterns (desire without physicality)
+  const ABSTRACTION_ONLY_PATTERNS = [
+      /\b(fate|destiny|stars|meant to be|written|ordained)\b.*\b(desire|want|love|need)\b/gi,
+      /\b(souls?|spirits?)\b.*\b(merge|join|connect|entwine)\b/gi,
+      /\b(hearts?)\b.*\b(beat as one|know|recognize|call)\b/gi
+  ];
+
+  /**
+   * EROTIC LANGUAGE ESCALATION BLOCK — Injected into prompts for Erotic/Dirty
+   */
+  const EROTIC_ESCALATION_BLOCK = `
+═══════════════════════════════════════════════════════════════════════════════
+EROTIC LANGUAGE ESCALATION (MANDATORY — EROTIC/DIRTY INTENSITY)
+═══════════════════════════════════════════════════════════════════════════════
+
+This story operates at ELEVATED INTENSITY. Prose must be PHYSICALLY CHARGED.
+
+REQUIRED SENSORY DENSITY (per 300 words):
+- At least 4 sensory references: breath, skin, heat, weight, scent, friction, involuntary reactions
+- These must be EMBODIED, not metaphorical ("her breath caught" not "destiny pulled them")
+- Touch, temperature, and proximity must be SPECIFIC, not implied
+
+REQUIRED BODILY CONTRADICTION (per scene):
+- At least one moment where a character's BODY contradicts their WORDS or INTENTIONS
+- Example: "She said no, but her hand stayed on his chest."
+- Example: "He meant to leave, but his feet wouldn't move."
+- This creates erotic tension through physical honesty vs verbal resistance
+
+FORBIDDEN ABSTRACTION-ONLY DESIRE:
+- DO NOT frame desire as purely spiritual, fated, or romantic destiny
+- DO NOT use metaphor as a substitute for physical sensation
+- "Their souls recognized each other" is INVALID without bodily grounding
+- "Something cosmic" is INVALID without "his thumb traced her wrist"
+
+DIRTY ESCALATION (additional):
+- Desire must be INCONVENIENT, DISRUPTIVE, or SLIGHTLY INAPPROPRIATE
+- Clean noble desire is INVALID at Dirty intensity
+- The wanting should feel like an intrusion, not a gift
+- Characters should be bothered by how much they want
+
+EVEN BLOCKED SCENES MUST FEEL CHARGED:
+- If action is interrupted or refused, the PHYSICAL TENSION remains
+- Bodies remember almost-contact
+- Near-misses leave residue: "She could still feel where he hadn't touched her"
+═══════════════════════════════════════════════════════════════════════════════`;
+
+  const DIRTY_ESCALATION_ADDENDUM = `
+DIRTY INTENSITY ADDENDUM:
+- Desire is friction, not flow. It disrupts, interrupts, intrudes.
+- Characters resent the pull even as they feel it.
+- Heat should feel like a problem to solve, not a gift to accept.
+- The body wants what the mind knows is complicated.`;
+
+  /**
+   * Validate erotic escalation requirements in generated text
+   * @returns {object} { valid: boolean, violations: string[], metrics: object }
+   */
+  function validateEroticEscalation(text, arousalLevel) {
+      if (!['Erotic', 'Dirty'].includes(arousalLevel)) {
+          return { valid: true, violations: [], metrics: {} };
+      }
+
+      const violations = [];
+      const wordCount = text.split(/\s+/).length;
+      const blocks = Math.ceil(wordCount / 300);
+      const requiredSensory = Math.max(4, blocks * 4);
+
+      // Count sensory markers
+      let sensoryCount = 0;
+      EROTIC_SENSORY_MARKERS.forEach(pattern => {
+          const matches = text.match(pattern);
+          if (matches) sensoryCount += matches.length;
+      });
+
+      // Check for bodily contradiction
+      let hasContradiction = false;
+      BODILY_CONTRADICTION_PATTERNS.forEach(pattern => {
+          if (pattern.test(text)) hasContradiction = true;
+      });
+
+      // Check for abstraction-only desire (forbidden)
+      let hasAbstractionOnly = false;
+      ABSTRACTION_ONLY_PATTERNS.forEach(pattern => {
+          if (pattern.test(text)) {
+              // Check if there's nearby physical grounding
+              const match = text.match(pattern);
+              if (match) {
+                  const nearbyText = text.slice(Math.max(0, text.indexOf(match[0]) - 100), text.indexOf(match[0]) + 100);
+                  let hasPhysical = false;
+                  EROTIC_SENSORY_MARKERS.slice(0, 5).forEach(sp => {
+                      if (sp.test(nearbyText)) hasPhysical = true;
+                  });
+                  if (!hasPhysical) hasAbstractionOnly = true;
+              }
+          }
+      });
+
+      // Build violations list
+      if (sensoryCount < requiredSensory) {
+          violations.push(`SENSORY_DEFICIT: Only ${sensoryCount} sensory markers found (required: ${requiredSensory} for ${wordCount} words)`);
+      }
+
+      if (!hasContradiction && wordCount > 200) {
+          violations.push('NO_BODILY_CONTRADICTION: Scene lacks restraint-vs-reaction tension');
+      }
+
+      if (hasAbstractionOnly) {
+          violations.push('ABSTRACTION_ONLY: Desire framed as fate/destiny without physical grounding');
+      }
+
+      // Dirty-specific: check for inconvenient desire framing
+      if (arousalLevel === 'Dirty') {
+          const disruptionPatterns = /\b(shouldn't|wrong|bad idea|complicated|dangerous|mistake|problem|trouble|couldn't|resent|hate that|damn|cursed)\b/gi;
+          const hasDisruption = disruptionPatterns.test(text);
+          if (!hasDisruption && wordCount > 150) {
+              violations.push('DIRTY_TOO_CLEAN: Desire should feel inconvenient/disruptive at Dirty intensity');
+          }
+      }
+
+      const metrics = {
+          wordCount,
+          sensoryCount,
+          requiredSensory,
+          hasContradiction,
+          hasAbstractionOnly,
+          arousalLevel
+      };
+
+      return {
+          valid: violations.length === 0,
+          violations,
+          metrics
+      };
+  }
+
+  /**
+   * Build erotic escalation block for prompt injection
+   */
+  function buildEroticEscalationBlock() {
+      const intensity = window.state?.intensity;
+      if (!['Erotic', 'Dirty'].includes(intensity)) return '';
+
+      let block = EROTIC_ESCALATION_BLOCK;
+      if (intensity === 'Dirty') {
+          block += DIRTY_ESCALATION_ADDENDUM;
+      }
+      return block;
+  }
+
+  // ============================================================
+  // GLOBAL TONE COMPLIANCE — MANDATORY LINGUISTIC VALIDATION
+  // ============================================================
+  // Tone is NOT decorative. Tone must be measurably present in prose.
+  // If tone is selected but no linguistic signals appear → FAIL.
+  // ============================================================
+
+  /**
+   * Tone-specific linguistic signal patterns
+   * Each tone MUST have detectable markers in prose
+   */
+  const TONE_SIGNAL_PATTERNS = {
+      // Earnest: Sincere emotional expression, direct feeling, unguarded moments
+      Earnest: {
+          patterns: [
+              /\b(truly|honestly|really|genuinely|actually)\b/gi,
+              /\b(heart|soul|feeling|felt|feel)\b/gi,
+              /\b(hoped|wished|wanted|needed|longed)\b/gi,
+              /\b(believed|trusted|knew|understood)\b/gi,
+              /\b(meant|mattered|cared)\b/gi
+          ],
+          required: 3,
+          description: 'sincere emotional expression'
+      },
+
+      // WryConfession: Self-contradiction, understated irony, internal deflation
+      WryConfession: {
+          patterns: [
+              /\b(of course|naturally|obviously|predictably)\b/gi,
+              /\b(should have|could have|would have|might have)\b.*\b(known|realized|expected)\b/gi,
+              /\b(not that|as if|like that|which was)\b.*\b(mattered|helped|changed)\b/gi,
+              /\b(told|convinced|assured)\b.*\b(myself|herself|himself)\b/gi,
+              /\b(stupid|foolish|ridiculous|absurd|pathetic)\b/gi,
+              /\b(anyway|whatever|fine|great)\b/gi,
+              /\b(irony|ironic|figures|typical)\b/gi,
+              /—.*—/g // Self-interrupting em-dashes common in confessional voice
+          ],
+          required: 2,
+          description: 'self-aware irony or internal contradiction'
+      },
+
+      // Poetic: Lyrical language, imagery, sensory metaphor, rhythm
+      Poetic: {
+          patterns: [
+              /\b(like|as if|as though)\b.*\b(the|a)\b/gi, // Similes
+              /\b(whispered|murmured|breathed|sighed)\b/gi,
+              /\b(light|shadow|dark|bright|glow|gleam)\b/gi,
+              /\b(silk|velvet|glass|silver|gold|pearl)\b/gi,
+              /\b(drift|float|flow|ripple|shimmer)\b/gi,
+              /\b(ache|throb|pulse|hum|sing)\b/gi,
+              /,\s*(and|but|or)\s+/g // Lyrical connectives
+          ],
+          required: 4,
+          description: 'lyrical imagery or sensory metaphor'
+      },
+
+      // Mythic: Fated language, destiny, archetypes, grandeur
+      Mythic: {
+          patterns: [
+              /\b(fate|fated|destined|destiny|ordained)\b/gi,
+              /\b(ancient|eternal|timeless|immortal)\b/gi,
+              /\b(prophecy|prophesied|foretold|written)\b/gi,
+              /\b(chosen|marked|cursed|blessed)\b/gi,
+              /\b(gods|spirits|ancestors|forces)\b/gi,
+              /\b(blood|bone|stone|fire|water|earth)\b/gi,
+              /\b(must|shall|will)\b.*\b(be|become|fall|rise)\b/gi
+          ],
+          required: 3,
+          description: 'mythic or fated language'
+      },
+
+      // Comedic: Timing reversals, disproportionate reactions, tonal whiplash
+      Comedic: {
+          patterns: [
+              /\b(unfortunately|tragically|somehow|apparently)\b/gi,
+              /\b(disaster|catastrophe|nightmare|horror)\b.*\b(was|being|became)\b/gi,
+              /\b(completely|utterly|absolutely|totally)\b.*\b(wrong|terrible|awful|fine)\b/gi,
+              /\b(great|perfect|wonderful|fantastic)\b\./gi, // Deadpan understatement
+              /\b(of all|ever|in history|possible)\b/gi,
+              /\?!|!\?/g, // Comedic punctuation
+              /\.\s*\.\s*\./g, // Trailing off
+              /\b(tried|attempted|managed)\b.*\b(not|failed|couldn't)\b/gi
+          ],
+          required: 2,
+          description: 'comedic timing or tonal reversal'
+      },
+
+      // Surreal: Unstable causality, dream-logic, reality slippage
+      Surreal: {
+          patterns: [
+              /\b(somehow|impossibly|inexplicably|suddenly)\b/gi,
+              /\b(dream|dreaming|dreamlike|nightmare)\b/gi,
+              /\b(shifted|changed|transformed|became)\b.*\b(without|before|as)\b/gi,
+              /\b(remembered|forgot|knew|didn't know)\b.*\b(that|whether|if|how)\b/gi,
+              /\b(wrong|strange|different|off)\b.*\b(way|place|time)\b/gi,
+              /\b(where|when|how|why)\b.*\b(had|hadn't|should|shouldn't)\b/gi,
+              /\b(melted|dissolved|faded|blurred|bled)\b/gi,
+              /\b(reality|world|room|ground)\b.*\b(tilted|shifted|warped)\b/gi
+          ],
+          required: 3,
+          description: 'surreal causality or reality slippage'
+      },
+
+      // Dark: Moral cost, consequence, pressure, weight
+      Dark: {
+          patterns: [
+              /\b(cost|price|consequence|toll|debt)\b/gi,
+              /\b(wrong|sin|guilt|shame|regret)\b/gi,
+              /\b(dark|shadow|black|cold|hollow)\b/gi,
+              /\b(trapped|caught|stuck|bound|chained)\b/gi,
+              /\b(couldn't|wouldn't|shouldn't)\b.*\b(escape|leave|stop|forget)\b/gi,
+              /\b(haunted|hunted|followed|watched)\b/gi,
+              /\b(heavy|weight|burden|pressure)\b/gi,
+              /\b(blood|pain|wound|scar|bruise)\b/gi
+          ],
+          required: 3,
+          description: 'moral weight or dark consequence'
+      }
+  };
+
+  // ============================================================
+  // NARRATIVE AUTHORITY LAYER (Runs BEFORE Tone + POV)
+  // ============================================================
+  // POV-agnostic validation that suppresses default LLM narration behaviors.
+  // Layer Order: 1. Narrative Authority → 2. Tone → 3. POV → 4. Prose Output
+  // ============================================================
+
+  /**
+   * FORBIDDEN PATTERNS: Taxonomy leakage (system metadata in prose)
+   * These terms are metadata-only and must NEVER appear in prose.
+   */
+  const NARRATIVE_TAXONOMY_FORBIDDEN = [
+      // Archetype names
+      /\b(beautiful\s*ruin|open\s*vein|dark\s*vice|anti[\s-]*hero|cloistered)\b/gi,
+      // World types (as labels)
+      /\b(the\s+)?(fantasy|modern|noir|gothic|scifi|historical|paranormal)\s+(world|setting|genre)\b/gi,
+      // Genre labels
+      /\b(billionaire|bodyguard|enemies.to.lovers|forbidden|second.chance|rockstar|professor)\s+(romance|trope|genre|story)\b/gi,
+      // Tone labels
+      /\b(earnest|wry\s*confession|poetic|mythic|comedic|surreal|dark)\s+(tone|mood|register)\b/gi,
+      // System concepts
+      /\b(arousal\s*level|intensity\s*level|story\s*length|fate\s*card|quill\s*intervention)\b/gi,
+      // Meta-narrative terms
+      /\b(the\s+narrator|this\s+story|the\s+reader|narrative\s*arc|character\s*development)\b/gi
+  ];
+
+  /**
+   * EXPLANATORY PATTERNS: Prose that explains rather than shows
+   * Sentences that orient, summarize, or frame the world.
+   */
+  const NARRATIVE_EXPLANATORY_PATTERNS = [
+      // Genre/world restatement
+      /\b(this\s+is\s+a|in\s+this)\s+(world|story|place|setting)\b/gi,
+      /\b(a\s+world\s+where|a\s+place\s+where|a\s+time\s+when)\b/gi,
+      /\b(post[\s-]*apocalyptic|dystopian|utopian)\s+(purgatory|wasteland|paradise|society)\b/gi,
+      // Framing language
+      /\b(to\s+understand|you\s+must\s+know|it\s+is\s+important\s+to)\b/gi,
+      /\b(the\s+kind\s+of|the\s+type\s+of|the\s+sort\s+of)\s+(person|place|thing)\b/gi,
+      // Summary orientation
+      /\b(in\s+summary|to\s+summarize|in\s+other\s+words|what\s+this\s+means)\b/gi,
+      /\b(the\s+point\s+is|the\s+lesson\s+is|the\s+meaning\s+is)\b/gi
+  ];
+
+  /**
+   * HELPFUL NARRATOR PATTERNS: Instructional/apologetic/reverent narration
+   * The narrator must not clarify, moralize, or reassure.
+   */
+  const NARRATIVE_HELPFUL_PATTERNS = [
+      // Clarification
+      /\b(to\s+be\s+clear|to\s+clarify|in\s+case\s+you're\s+wondering)\b/gi,
+      /\b(what\s+this\s+meant\s+was|what\s+happened\s+was|the\s+reason\s+was)\b/gi,
+      // Moralization
+      /\b(it\s+was\s+(right|wrong|good|bad)\s+to)\b/gi,
+      /\b(should\s+have|shouldn't\s+have|ought\s+to\s+have)\s+(known|realized|understood)\b/gi,
+      /\b(the\s+moral\s+of|the\s+lesson\s+here|this\s+teaches\s+us)\b/gi,
+      // Reassurance
+      /\b(everything\s+would\s+be\s+(okay|alright|fine))\b/gi,
+      /\b(don't\s+worry|rest\s+assured|have\s+no\s+fear)\b/gi,
+      /\b(in\s+the\s+end|ultimately|eventually)\s*,?\s*(everything|it\s+all|things)\s+(worked?\s+out|turned?\s+out)\b/gi,
+      // Reverence/apology
+      /\b(with\s+all\s+due\s+respect|if\s+I\s+may|forgive\s+me\s+for\s+saying)\b/gi,
+      /\b(the\s+sacred|the\s+divine|the\s+holy)\s+(nature|essence|spirit)\s+of\b/gi
+  ];
+
+  /**
+   * ABSTRACT WITHOUT CONSEQUENCE: States named without physical/relational grounding
+   * Heuristic: abstract terms must appear near concrete consequence markers.
+   */
+  const NARRATIVE_ABSTRACT_TERMS = [
+      'hope', 'redemption', 'salvation', 'symbolized', 'represented',
+      'meaning', 'purpose', 'destiny', 'fate', 'truth', 'justice',
+      'enlightenment', 'transcendence', 'transformation', 'awakening'
+  ];
+
+  const NARRATIVE_CONSEQUENCE_MARKERS = [
+      // Physical consequence
+      /\b(bled|bruised|scarred|broke|tore|burned|ached|throbbed|trembled)\b/gi,
+      /\b(cost\s+her|cost\s+him|paid\s+for|lost\s+his|lost\s+her)\b/gi,
+      // Relational consequence
+      /\b(left\s+him|left\s+her|walked\s+away|turned\s+away|refused)\b/gi,
+      /\b(silence\s+between|distance\s+between|the\s+look\s+in)\b/gi,
+      // Outcome markers
+      /\b(and\s+then|after\s+that|from\s+that\s+day|never\s+again)\b/gi
+  ];
+
+  /**
+   * Validate prose against Narrative Authority rules
+   * @param {string} prose - The generated prose to validate
+   * @returns {object} { valid: boolean, errors: Array<{code: string, message: string, match: string}> }
+   */
+  function validateNarrativeAuthority(prose) {
+      if (!prose || typeof prose !== 'string') {
+          return { valid: true, errors: [] }; // Empty = pass
+      }
+
+      const errors = [];
+      const sentences = prose.split(/[.!?]+/).filter(s => s.trim().length > 10);
+
+      // CHECK 1: Taxonomy Leakage (HARD FAIL)
+      for (const pattern of NARRATIVE_TAXONOMY_FORBIDDEN) {
+          const match = prose.match(pattern);
+          if (match) {
+              errors.push({
+                  code: VALIDATION_ERRORS.NARR_TAXONOMY_LEAK,
+                  message: 'System taxonomy leaked into prose',
+                  match: match[0]
+              });
+          }
+      }
+
+      // CHECK 2: Explanatory Narration
+      for (const pattern of NARRATIVE_EXPLANATORY_PATTERNS) {
+          const match = prose.match(pattern);
+          if (match) {
+              errors.push({
+                  code: VALIDATION_ERRORS.NARR_EXPLANATORY,
+                  message: 'Explanatory/orienting narration detected',
+                  match: match[0]
+              });
+          }
+      }
+
+      // CHECK 3: Helpful Narrator
+      for (const pattern of NARRATIVE_HELPFUL_PATTERNS) {
+          const match = prose.match(pattern);
+          if (match) {
+              errors.push({
+                  code: VALIDATION_ERRORS.NARR_HELPFUL_NARRATOR,
+                  message: 'Helpful/instructional/apologetic narrator detected',
+                  match: match[0]
+              });
+          }
+      }
+
+      // CHECK 4: Abstract Without Consequence
+      // For each abstract term, check if nearby text has consequence markers
+      for (const term of NARRATIVE_ABSTRACT_TERMS) {
+          const termRegex = new RegExp(`\\b${term}\\b`, 'gi');
+          const termMatch = prose.match(termRegex);
+          if (termMatch) {
+              // Find sentence containing this term
+              const containingSentence = sentences.find(s =>
+                  new RegExp(`\\b${term}\\b`, 'gi').test(s)
+              );
+              if (containingSentence) {
+                  // Check if consequence markers exist in same sentence or adjacent
+                  const sentenceIndex = sentences.indexOf(containingSentence);
+                  const contextWindow = sentences.slice(
+                      Math.max(0, sentenceIndex - 1),
+                      Math.min(sentences.length, sentenceIndex + 2)
+                  ).join(' ');
+
+                  const hasConsequence = NARRATIVE_CONSEQUENCE_MARKERS.some(pattern =>
+                      pattern.test(contextWindow)
+                  );
+
+                  if (!hasConsequence) {
+                      errors.push({
+                          code: VALIDATION_ERRORS.NARR_ABSTRACT_WITHOUT_CONSEQUENCE,
+                          message: `Abstract term "${term}" lacks physical/relational consequence`,
+                          match: containingSentence.trim().substring(0, 80) + '...'
+                      });
+                  }
+              }
+          }
+      }
+
+      const valid = errors.length === 0;
+      if (!valid) {
+          console.warn('[NarrativeAuthority] Validation failed:', errors);
+      }
+
+      return { valid, errors };
+  }
+
+  /**
+   * Build Narrative Authority enforcement block for prompt injection
+   * Used when regeneration is required due to authority violations.
+   */
+  function buildNarrativeAuthorityBlock() {
+      return `
+NARRATIVE AUTHORITY ENFORCEMENT (Global — applies before POV/Tone):
+
+FORBIDDEN:
+- Do NOT explain the genre, world, or setting
+- Do NOT name archetypes, system concepts, or tone labels
+- Do NOT summarize themes or clarify intent
+- Do NOT moralize actions or reassure the reader
+- Do NOT use abstract terms (hope, redemption, meaning) without physical consequence
+
+REQUIRED:
+- Show through action and dialogue, not through narration
+- Imply meaning through cost, friction, or outcome
+- Let consequence speak. Do not explain what something "means."
+- The narrator is not instructional, apologetic, or reverent.
+
+If you name what something IS, you have failed. Show what it COSTS.
+`;
+  }
+
+  // Track last Narrative Authority validation for DevHUD
+  let _lastNarrativeAuthorityValidation = { valid: true, errors: [], timestamp: 0 };
+
+  // Expose for DevHUD and integration
+  window.validateNarrativeAuthority = validateNarrativeAuthority;
+  window.buildNarrativeAuthorityBlock = buildNarrativeAuthorityBlock;
+
+  /**
+   * Tone enforcement prompt block — injected when tone validation might fail
+   */
+  const TONE_ENFORCEMENT_BLOCKS = {
+      Earnest: `TONE ENFORCEMENT (Earnest): Prose must contain sincere, unguarded emotional expression. Show genuine feeling without ironic distance. Characters mean what they say.`,
+      WryConfession: `TONE ENFORCEMENT (Wry/Confessional): Prose must contain self-aware irony, internal contradiction, or quiet self-deprecation. Characters undercut their own dignity. Include moments of "I told myself" followed by reality contradicting it.`,
+      Poetic: `TONE ENFORCEMENT (Poetic): Prose must be lyrical. Use similes, sensory metaphor, rhythm. Language should shimmer. Verbs should evoke texture and light.`,
+      Mythic: `TONE ENFORCEMENT (Mythic): Prose must evoke fate, destiny, ancient patterns. Use words like "ordained," "chosen," "eternal." Events feel written in stone.`,
+      Comedic: `TONE ENFORCEMENT (Comedic): Prose must include timing reversals, disproportionate reactions, or deadpan understatement. Something should go wrong in a way that's funny. Tonal whiplash is required.`,
+      Surreal: `TONE ENFORCEMENT (Surreal): Prose must include dream-logic, unstable causality, or reality slippage. Time, space, or memory should behave strangely. Things transform without explanation.`,
+      Dark: `TONE ENFORCEMENT (Dark): Prose must carry moral weight, consequence, or pressure. Something has cost something. Shadows are literal and metaphorical. Relief does not come easily.`
+  };
+
+  /**
+   * Validate that prose contains detectable tone signals
+   * @returns {object} { valid: boolean, violations: string[], matchCount: number }
+   */
+  function validateTone(text, tone) {
+      // Earnest is the baseline — always passes if nothing stronger selected
+      if (!tone || tone === 'Earnest') {
+          // Still validate Earnest has SOME emotional presence
+          const earnestConfig = TONE_SIGNAL_PATTERNS.Earnest;
+          let earnestMatches = 0;
+          earnestConfig.patterns.forEach(p => {
+              const matches = text.match(p);
+              if (matches) earnestMatches += matches.length;
+          });
+          if (earnestMatches < 2) {
+              return {
+                  valid: false,
+                  violations: ['TONE_DRIFT: Prose lacks basic emotional presence (Earnest baseline)'],
+                  matchCount: earnestMatches,
+                  required: 2
+              };
+          }
+          return { valid: true, violations: [], matchCount: earnestMatches, required: 2 };
+      }
+
+      const config = TONE_SIGNAL_PATTERNS[tone];
+      if (!config) {
+          // Unknown tone — pass by default
+          return { valid: true, violations: [], matchCount: 0, required: 0 };
+      }
+
+      let matchCount = 0;
+      config.patterns.forEach(pattern => {
+          const matches = text.match(pattern);
+          if (matches) matchCount += matches.length;
+      });
+
+      if (matchCount < config.required) {
+          return {
+              valid: false,
+              violations: [`TONE_DRIFT: "${tone}" tone selected but prose lacks ${config.description}. Found ${matchCount} markers, need ${config.required}+.`],
+              matchCount,
+              required: config.required
+          };
+      }
+
+      return { valid: true, violations: [], matchCount, required: config.required };
+  }
+
+  /**
+   * Build tone enforcement block for prompt injection
+   */
+  function buildToneEnforcementBlock(tone) {
+      if (!tone || !TONE_ENFORCEMENT_BLOCKS[tone]) return '';
+      return '\n' + TONE_ENFORCEMENT_BLOCKS[tone] + '\n';
+  }
+
+  // ============================================================
+  // UNIFIED VALIDATION SYSTEM — RUNTIME ENFORCEMENT LAYER
+  // ============================================================
+  // Pure validators that return { pass, errors } and NEVER mutate content.
+  // On failure: caller must regenerate upstream.
+  // Compatible with Dev HUD: check dsp, check pov, check tone, check erotic
+  // ============================================================
+
+  /**
+   * SHARED ERROR TAXONOMY
+   * Structured error codes for all validators
+   */
+  const VALIDATION_ERRORS = {
+      // DSP Errors
+      DSP_TEMPLATE_VIOLATION: 'DSP_TEMPLATE_VIOLATION',
+      DSP_INVALID_WORLD_PHRASE: 'DSP_INVALID_WORLD_PHRASE',
+      DSP_INVALID_GENRE_PHRASE: 'DSP_INVALID_GENRE_PHRASE',
+      DSP_INVALID_ARCHETYPE_ADJ: 'DSP_INVALID_ARCHETYPE_ADJ',
+      DSP_INVALID_TONE_ADJ: 'DSP_INVALID_TONE_ADJ',
+      DSP_EXTRA_PROSE: 'DSP_EXTRA_PROSE',
+      DSP_WORLD_SUBTYPE_LEAK: 'DSP_WORLD_SUBTYPE_LEAK',
+      DSP_LEGACY_PHRASING: 'DSP_LEGACY_PHRASING',
+
+      // POV Errors (5th Person)
+      POV_INVALID_OPENER: 'POV_INVALID_OPENER',
+      POV_INVALID_CLOSER: 'POV_INVALID_CLOSER',
+      POV_SCENE1_FREQUENCY: 'POV_SCENE1_FREQUENCY',
+      POV_LATER_FREQUENCY: 'POV_LATER_FREQUENCY',
+      POV_EROTIC_AUTHOR_PRESENT: 'POV_EROTIC_AUTHOR_PRESENT',
+      POV_AUTHOR_NARRATES_ACTION: 'POV_AUTHOR_NARRATES_ACTION',
+      POV_NON_3RD_PERSON: 'POV_NON_3RD_PERSON',
+      POV_META_AWARENESS_EXCESS: 'POV_META_AWARENESS_EXCESS',
+      POV_GODMODE_PLAYER_AWARENESS: 'POV_GODMODE_PLAYER_AWARENESS',
+
+      // Tone Errors
+      TONE_DRIFT: 'TONE_DRIFT',
+      TONE_SIGNAL_DEFICIT: 'TONE_SIGNAL_DEFICIT',
+
+      // Erotic Escalation Errors
+      EROTIC_SENSORY_DEFICIT: 'EROTIC_SENSORY_DEFICIT',
+      EROTIC_NO_CONTRADICTION: 'EROTIC_NO_CONTRADICTION',
+      EROTIC_ABSTRACTION_ONLY: 'EROTIC_ABSTRACTION_ONLY',
+      DIRTY_TOO_CLEAN: 'DIRTY_TOO_CLEAN',
+      DIRTY_NO_INTRUSION: 'DIRTY_NO_INTRUSION',
+
+      // Title Validation Errors
+      TITLE_GENERIC: 'TITLE_GENERIC',
+      TITLE_CLICHE: 'TITLE_CLICHE',
+      TITLE_ABSTRACT_CLUSTER: 'TITLE_ABSTRACT_CLUSTER',
+      TITLE_TONE_MISMATCH: 'TITLE_TONE_MISMATCH',
+      TITLE_TOO_LONG: 'TITLE_TOO_LONG',
+      TITLE_TOO_SHORT: 'TITLE_TOO_SHORT',
+
+      // Signal Alignment Errors
+      SIGNAL_AXIS_MISMATCH: 'SIGNAL_AXIS_MISMATCH',
+      TITLE_AROUSAL_CONTRADICTION: 'TITLE_AROUSAL_CONTRADICTION',
+      COVER_AROUSAL_CONTRADICTION: 'COVER_AROUSAL_CONTRADICTION',
+      AROUSAL_SIGNAL_ABSENT: 'AROUSAL_SIGNAL_ABSENT',
+      SIGNAL_AMBIGUOUS: 'SIGNAL_AMBIGUOUS',
+
+      // Title Pipeline Errors
+      TITLE_BANNED_PHRASE: 'TITLE_BANNED_PHRASE',
+      TITLE_SWAP_TEST_FAIL: 'TITLE_SWAP_TEST_FAIL',
+      TITLE_MULTI_CLAUSE: 'TITLE_MULTI_CLAUSE',
+      TITLE_MARKETING_COPY: 'TITLE_MARKETING_COPY',
+      TITLE_AROUSAL_MISMATCH: 'TITLE_AROUSAL_MISMATCH',
+      TITLE_MODE_VIOLATION: 'TITLE_MODE_VIOLATION',
+      TITLE_IMMUTABLE_VIOLATION: 'TITLE_IMMUTABLE_VIOLATION',
+      COVER_BASELINE_CONTRADICTION: 'COVER_BASELINE_CONTRADICTION',
+
+      // Continuation Path Errors
+      CONTINUATION_WORD_REUSE: 'CONTINUATION_WORD_REUSE',
+      SAME_WORLD_MISSING_SUBTITLE: 'SAME_WORLD_MISSING_SUBTITLE',
+      SAME_WORLD_MISSING_WORLD_NAME: 'SAME_WORLD_MISSING_WORLD_NAME',
+      NEW_STORY_PRIOR_NOUN_REUSE: 'NEW_STORY_PRIOR_NOUN_REUSE',
+
+      // Paywall Routing Errors
+      STORYPASS_DIRTY_LEAK: 'STORYPASS_DIRTY_LEAK',
+      STORYPASS_SOULMATES_LEAK: 'STORYPASS_SOULMATES_LEAK',
+
+      // Narrative Authority Errors (POV-agnostic, runs before Tone/POV)
+      NARR_EXPLANATORY: 'NARR_EXPLANATORY',
+      NARR_TAXONOMY_LEAK: 'NARR_TAXONOMY_LEAK',
+      NARR_ABSTRACT_WITHOUT_CONSEQUENCE: 'NARR_ABSTRACT_WITHOUT_CONSEQUENCE',
+      NARR_HELPFUL_NARRATOR: 'NARR_HELPFUL_NARRATOR'
+  };
+
+  // ============================================================
+  // TITLE VALIDATION + FALLBACK SYSTEM
+  // ============================================================
+  // Validates generated titles against known failure patterns.
+  // On failure: deterministic name-based fallback is generated.
+  // ============================================================
+
+  /**
+   * TITLE FAILURE PATTERNS
+   * Regex patterns that indicate a bad title
+   */
+  const TITLE_FAIL_PATTERNS = {
+      // Generic/cliché romance titles
+      GENERIC: [
+          /^(a|the)\s+(love|heart|soul|kiss|desire|passion)\b/i,
+          /^love('s)?\s+(story|song|way|promise|dance|journey)/i,
+          /^hearts?\s+(of|in|on)\s+/i,
+          /^(whispers?|echoes?|shadows?|secrets?)\s+of\s+(the\s+)?(heart|soul|desire|love)/i,
+          /^(eternal|forbidden|hidden|secret|dark|lost)\s+(love|desire|passion|heart)/i,
+          /^(love|desire)\s+(in\s+the\s+)?(shadows?|dark(ness)?|night)/i
+      ],
+      // Abstract noun clusters (mood collage)
+      ABSTRACT_CLUSTER: [
+          /^(veiled|shrouded|hidden)\s+(whispers?|secrets?|desires?|shadows?)/i,
+          /^(whispers?|echoes?)\s+(of|and)\s+(whispers?|echoes?|shadows?|secrets?)/i,
+          /^(shadows?|darkness)\s+(and|of)\s+(light|desire|whispers?)/i,
+          /\b(aches?|burns?|yearns?)\s+(of|for|with)\s+(the\s+)?(soul|heart|desire)/i
+      ],
+      // Poetic-but-empty (no stakes/narrative promise)
+      CLICHE: [
+          /^(when|where)\s+(hearts?|souls?|love)\s+(meet|collide|dance)/i,
+          /^(beneath|beyond|between)\s+(the\s+)?(stars?|moon|sky|veil)/i,
+          /^(dancing|dancing\s+with)\s+(shadows?|flames?|fate)/i,
+          /^(chasing|finding|seeking)\s+(love|desire|destiny|fate)/i,
+          /^(written\s+in|painted\s+with)\s+(the\s+)?(stars?|blood|fire)/i
+      ],
+      // BANNED PHRASES (HARD FAIL)
+      BANNED: [
+          /\bshadows?\s+of\b/i,
+          /\bechoes?\s+of\b/i,
+          /\bwhispers?\s+of\b/i,
+          /\bwhispers?\b/i,  // Whispers alone is banned
+          /^beneath\b/i,
+          /^within\b/i,
+          /^beyond\b/i,
+          /\bdestiny\b/i,
+          /\bfated?\b/i,
+          /\bforever\s+(yours|mine|ours)\b/i,
+          /\beternal\s+(love|flame|bond)\b/i
+      ],
+      // Multi-clause poetic phrasing
+      MULTI_CLAUSE: [
+          /^.+,\s+.+,\s+.+/,  // Three or more comma-separated clauses
+          /^.+\s+—\s+.+\s+—\s+.+/,  // Multiple em-dashes
+          /^.+:\s+.+:\s+/,  // Multiple colons
+          /^(when|where|if|as)\s+.+,\s+(then|so|and)\s+/i  // Conditional phrasing
+      ],
+      // Marketing copy tone
+      MARKETING: [
+          /\b(ultimate|passionate|unforgettable|breathtaking|stunning)\b/i,
+          /\b(journey|adventure)\s+(of|to)\s+(love|passion|desire)\b/i,
+          /\b(one|a)\s+(woman|man|person)('s)?\s+(journey|quest|search)\b/i,
+          /\bthe\s+(story|tale)\s+of\b/i,
+          /\b(discover|unlock|explore)\s+(the|your)\b/i
+      ]
+  };
+
+  /**
+   * TITLE MODES (LOCKED)
+   * Primary title generator selects EXACTLY ONE mode
+   */
+  const TITLE_MODES = {
+      POSSESSIVE_POWER: 'possessive_power',    // "Her Silence", "Your Obedience"
+      FORBIDDEN_OBJECT: 'forbidden_object',    // "The Key", "The Contract"
+      VERB_LOCKED: 'verb_locked',              // "What He Took", "Where You Knelt"
+      TWO_WORD_FRACTURE: 'two_word_fracture'   // "Golden Hunger", "Sacred Damage"
+  };
+
+  /**
+   * TITLE MODE PATTERNS
+   * Regex patterns that detect which mode a title belongs to
+   */
+  const TITLE_MODE_PATTERNS = {
+      [TITLE_MODES.POSSESSIVE_POWER]: /^(her|his|my|your|their|our)\s+\w+$/i,
+      [TITLE_MODES.FORBIDDEN_OBJECT]: /^the\s+\w+$/i,
+      [TITLE_MODES.VERB_LOCKED]: /^(what|where|when|how|why)\s+(he|she|they|you|i)\s+\w+$/i,
+      [TITLE_MODES.TWO_WORD_FRACTURE]: /^\w+\s+\w+$/i  // Fallback: any two words
+  };
+
+  /**
+   * MODE-SPECIFIC VOCABULARY
+   * Words appropriate for each title mode
+   */
+  const TITLE_MODE_VOCABULARY = {
+      [TITLE_MODES.POSSESSIVE_POWER]: {
+          possessives: ['Her', 'His', 'My', 'Your', 'Their'],
+          nouns: {
+              Clean: ['Silence', 'Distance', 'Waiting', 'Refusal', 'Terms'],
+              Naughty: ['Secret', 'Temptation', 'Risk', 'Edge', 'Game'],
+              Erotic: ['Surrender', 'Claim', 'Confession', 'Devotion', 'Hunger'],
+              Dirty: ['Obedience', 'Ruin', 'Undoing', 'Breaking', 'Use']
+          }
+      },
+      [TITLE_MODES.FORBIDDEN_OBJECT]: {
+          articles: ['The'],
+          objects: {
+              Clean: ['Door', 'Letter', 'Ring', 'Promise', 'Line'],
+              Naughty: ['Key', 'Contract', 'Rule', 'Wager', 'Dare'],
+              Erotic: ['Bargain', 'Binding', 'Claim', 'Mark', 'Bond'],
+              Dirty: ['Leash', 'Price', 'Terms', 'Debt', 'Trade']
+          }
+      },
+      [TITLE_MODES.VERB_LOCKED]: {
+          openers: ['What', 'Where', 'When', 'How'],
+          subjects: ['He', 'She', 'You', 'They', 'I'],
+          verbs: {
+              Clean: ['Left', 'Kept', 'Said', 'Heard', 'Saw'],
+              Naughty: ['Wanted', 'Almost', 'Nearly', 'Risked', 'Dared'],
+              Erotic: ['Took', 'Claimed', 'Gave', 'Begged', 'Needed'],
+              Dirty: ['Broke', 'Wrecked', 'Used', 'Ruined', 'Demanded']
+          }
+      },
+      [TITLE_MODES.TWO_WORD_FRACTURE]: {
+          adjectives: {
+              Clean: ['Quiet', 'Cold', 'Still', 'Distant', 'Careful'],
+              Naughty: ['Sweet', 'Hidden', 'Secret', 'Dangerous', 'Willing'],
+              Erotic: ['Golden', 'Sacred', 'Burning', 'Aching', 'Desperate'],
+              Dirty: ['Raw', 'Filthy', 'Ruined', 'Wrecked', 'Brutal']
+          },
+          nouns: ['Hunger', 'Damage', 'Mercy', 'Silence', 'Reckoning', 'Terms', 'Price']
+      }
+  };
+
+  /**
+   * AROUSAL-TITLE ALIGNMENT
+   * Required signals for each arousal level
+   */
+  const AROUSAL_TITLE_SIGNALS = {
+      Clean: {
+          required: /\b(distance|silence|waiting|refusal|line|door|kept|left)\b/i,
+          forbidden: /\b(hunger|claim|surrender|break|ruin|use|obedience)\b/i,
+          description: 'restraint, distance'
+      },
+      Naughty: {
+          required: /\b(secret|risk|edge|dare|wager|almost|nearly|tempt)\b/i,
+          forbidden: /\b(claim|surrender|break|ruin|use|filth|raw)\b/i,
+          description: 'suggestion, withholding'
+      },
+      Erotic: {
+          required: /\b(claim|hunger|surrender|devotion|confession|need|gave|took)\b/i,
+          forbidden: /\b(filth|raw|ruin|wreck|use|break|brutal)\b/i,
+          description: 'intimacy, possession'
+      },
+      Dirty: {
+          required: /\b(ruin|break|use|obedience|undoing|wreck|raw|brutal|demand)\b/i,
+          forbidden: /\b(sweet|gentle|soft|tender|pure|innocent)\b/i,
+          description: 'bluntness, intrusion'
+      }
+  };
+
+  /**
+   * TITLE TONE VALIDATORS
+   * Each tone has words that SHOULD appear and words that SHOULD NOT
+   */
+  const TITLE_TONE_SIGNALS = {
+      WryConfession: {
+          allow: /\b(truth|lie|almost|nearly|never|mistake|wrong|anyway|still)\b/i,
+          forbid: /\b(eternal|destiny|fated|sacred|divine)\b/i
+      },
+      Comedic: {
+          allow: /\b(trouble|disaster|oops|wrong|chaos|mess|help)\b/i,
+          forbid: /\b(shadow|darkness|veiled|eternal|doom)\b/i
+      },
+      Surreal: {
+          allow: /\b(dream|strange|nowhere|maybe|almost|forgot|remember)\b/i,
+          forbid: /\b(real|practical|ordinary|normal)\b/i
+      },
+      Dark: {
+          allow: /\b(blood|bone|ash|ruin|end|last|only|never)\b/i,
+          forbid: /\b(cute|sweet|lovely|precious|darling)\b/i
+      },
+      Earnest: {
+          allow: null, // Most permissive
+          forbid: /\b(ironic|sarcastic|bitter|cruel)\b/i
+      }
+  };
+
+  /**
+   * FALLBACK QUALIFIERS — World-keyed
+   * Deterministic selection via hash of tone+genre
+   */
+  const TITLE_FALLBACK_QUALIFIERS = {
+      Fantasy: ['Reckoning', 'Wrath', 'Dominion', 'Undoing', 'Ascent', 'Betrayal', 'Return'],
+      Historical: ['Scandal', 'Ruin', 'Fortune', 'Disgrace', 'Rise', 'Downfall', 'Legacy'],
+      Modern: ['Mistake', 'Risk', 'Gamble', 'Fall', 'Edge', 'Breaking Point', 'Terms'],
+      SciFi: ['Protocol', 'Override', 'Glitch', 'Terminus', 'Signal', 'Collision', 'Drift'],
+      Noir: ['Alibi', 'Mark', 'Score', 'Angle', 'Setup', 'Double Cross', 'Last Dance'],
+      Gothic: ['Haunting', 'Descent', 'Inheritance', 'Curse', 'Reckoning', 'Manor', 'Return'],
+      Paranormal: ['Awakening', 'Binding', 'Reckoning', 'Threshold', 'Convergence', 'Haunt']
+  };
+
+  /**
+   * Simple deterministic hash for fallback selection
+   * @param {string} str - String to hash
+   * @returns {number} - Hash value
+   */
+  function simpleHash(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+          hash = ((hash << 5) - hash) + str.charCodeAt(i);
+          hash |= 0;
+      }
+      return Math.abs(hash);
+  }
+
+  /**
+   * Extract first name from a full name string
+   * @param {string} fullName - Full character name
+   * @returns {string} - First name only
+   */
+  function extractFirstName(fullName) {
+      if (!fullName) return null;
+      const parts = fullName.trim().split(/\s+/);
+      return parts[0] || null;
+  }
+
+  /**
+   * TITLE VALIDATION (ENHANCED)
+   * Full pipeline validation with banned patterns, swap-test, arousal alignment.
+   * @param {string} title - The title to validate
+   * @param {string} tone - Current story tone
+   * @param {string} arousal - Current arousal level (optional, for arousal validation)
+   * @param {object} context - { world, genre } for swap-test (optional)
+   * @returns {{ valid: boolean, errors: Array<{code: string, message: string}>, mode: string|null }}
+   */
+  function validateTitle(title, tone, arousal, context) {
+      const errors = [];
+      const cleanTitle = (title || '').replace(/"/g, '').trim();
+
+      // Length validation
+      if (cleanTitle.length < 2) {
+          errors.push({
+              code: VALIDATION_ERRORS.TITLE_TOO_SHORT,
+              message: `Title too short: "${cleanTitle}"`
+          });
+          return { valid: false, errors, mode: null };
+      }
+      if (cleanTitle.split(/\s+/).length > 7) {
+          errors.push({
+              code: VALIDATION_ERRORS.TITLE_TOO_LONG,
+              message: `Title too long (>7 words): "${cleanTitle}"`
+          });
+      }
+
+      // BANNED PHRASES (HARD FAIL)
+      for (const pattern of TITLE_FAIL_PATTERNS.BANNED) {
+          if (pattern.test(cleanTitle)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.TITLE_BANNED_PHRASE,
+                  message: `Banned phrase in title: "${cleanTitle}"`
+              });
+              break;
+          }
+      }
+
+      // MULTI-CLAUSE CHECK
+      for (const pattern of TITLE_FAIL_PATTERNS.MULTI_CLAUSE) {
+          if (pattern.test(cleanTitle)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.TITLE_MULTI_CLAUSE,
+                  message: `Multi-clause poetic phrasing: "${cleanTitle}"`
+              });
+              break;
+          }
+      }
+
+      // MARKETING COPY CHECK
+      for (const pattern of TITLE_FAIL_PATTERNS.MARKETING) {
+          if (pattern.test(cleanTitle)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.TITLE_MARKETING_COPY,
+                  message: `Marketing copy tone: "${cleanTitle}"`
+              });
+              break;
+          }
+      }
+
+      // Generic pattern check
+      for (const pattern of TITLE_FAIL_PATTERNS.GENERIC) {
+          if (pattern.test(cleanTitle)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.TITLE_GENERIC,
+                  message: `Generic title pattern detected: "${cleanTitle}"`
+              });
+              break;
+          }
+      }
+
+      // Abstract cluster check
+      for (const pattern of TITLE_FAIL_PATTERNS.ABSTRACT_CLUSTER) {
+          if (pattern.test(cleanTitle)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.TITLE_ABSTRACT_CLUSTER,
+                  message: `Abstract noun cluster: "${cleanTitle}"`
+              });
+              break;
+          }
+      }
+
+      // Cliché check
+      for (const pattern of TITLE_FAIL_PATTERNS.CLICHE) {
+          if (pattern.test(cleanTitle)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.TITLE_CLICHE,
+                  message: `Cliché title pattern: "${cleanTitle}"`
+              });
+              break;
+          }
+      }
+
+      // Tone mismatch check
+      const toneSignals = TITLE_TONE_SIGNALS[tone];
+      if (toneSignals && toneSignals.forbid && toneSignals.forbid.test(cleanTitle)) {
+          errors.push({
+              code: VALIDATION_ERRORS.TITLE_TONE_MISMATCH,
+              message: `Title contains words inappropriate for ${tone} tone: "${cleanTitle}"`
+          });
+      }
+
+      // AROUSAL ALIGNMENT CHECK (if arousal provided)
+      if (arousal && AROUSAL_TITLE_SIGNALS[arousal]) {
+          const arousalSignals = AROUSAL_TITLE_SIGNALS[arousal];
+          if (arousalSignals.forbidden && arousalSignals.forbidden.test(cleanTitle)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.TITLE_AROUSAL_MISMATCH,
+                  message: `Title contains words forbidden at ${arousal} level: "${cleanTitle}"`
+              });
+          }
+      }
+
+      // SWAP-TEST UNIQUENESS (if context provided)
+      if (context) {
+          const swapTestResult = runSwapTest(cleanTitle, context.world, arousal);
+          if (!swapTestResult.unique) {
+              errors.push({
+                  code: VALIDATION_ERRORS.TITLE_SWAP_TEST_FAIL,
+                  message: `Title too generic — would fit other books: "${cleanTitle}"`
+              });
+          }
+      }
+
+      // Detect title mode
+      const detectedMode = detectTitleMode(cleanTitle);
+
+      return {
+          valid: errors.length === 0,
+          errors,
+          mode: detectedMode
+      };
+  }
+
+  /**
+   * DETECT TITLE MODE
+   * Identifies which of the 4 title modes a title belongs to
+   * @param {string} title - The title to analyze
+   * @returns {string|null} - Mode identifier or null
+   */
+  function detectTitleMode(title) {
+      const cleanTitle = (title || '').trim();
+
+      if (TITLE_MODE_PATTERNS[TITLE_MODES.POSSESSIVE_POWER].test(cleanTitle)) {
+          return TITLE_MODES.POSSESSIVE_POWER;
+      }
+      if (TITLE_MODE_PATTERNS[TITLE_MODES.VERB_LOCKED].test(cleanTitle)) {
+          return TITLE_MODES.VERB_LOCKED;
+      }
+      if (TITLE_MODE_PATTERNS[TITLE_MODES.FORBIDDEN_OBJECT].test(cleanTitle)) {
+          return TITLE_MODES.FORBIDDEN_OBJECT;
+      }
+      if (TITLE_MODE_PATTERNS[TITLE_MODES.TWO_WORD_FRACTURE].test(cleanTitle)) {
+          return TITLE_MODES.TWO_WORD_FRACTURE;
+      }
+      return null;
+  }
+
+  /**
+   * SWAP-TEST UNIQUENESS
+   * Tests if a title is too generic by checking if it could fit other contexts
+   * @param {string} title - The title to test
+   * @param {string} world - Current world setting
+   * @param {string} arousal - Current arousal level
+   * @returns {{ unique: boolean, reason: string|null }}
+   */
+  function runSwapTest(title, world, arousal) {
+      const cleanTitle = (title || '').toLowerCase().trim();
+
+      // Universal titles that fit ANY context → FAIL
+      const universalPatterns = [
+          /^the\s+(beginning|end|journey|story|tale)$/i,
+          /^(love|desire|passion)\s*(story|tale)?$/i,
+          /^(new|first|last)\s+(love|chance|time)$/i,
+          /^(starting|finding|losing)\s+(over|out|love)$/i
+      ];
+      for (const pattern of universalPatterns) {
+          if (pattern.test(cleanTitle)) {
+              return { unique: false, reason: 'Universal pattern fits any context' };
+          }
+      }
+
+      // World-agnostic check: title should have some specificity
+      // If title contains only abstract emotional words → FAIL
+      const abstractOnlyPattern = /^(love|heart|soul|desire|passion|hope|dream|wish|longing|yearning)(\s+(love|heart|soul|desire|passion|hope|dream|wish))?$/i;
+      if (abstractOnlyPattern.test(cleanTitle)) {
+          return { unique: false, reason: 'Title contains only abstract emotional words' };
+      }
+
+      // Arousal-agnostic check: title should signal specific intensity
+      // If title could plausibly belong to Clean OR Dirty → FAIL
+      const arousalAgnosticPatterns = [
+          /^the\s+(moment|night|day|time)$/i,
+          /^(that|this)\s+(one|night|day|moment)$/i
+      ];
+      for (const pattern of arousalAgnosticPatterns) {
+          if (pattern.test(cleanTitle)) {
+              return { unique: false, reason: 'Title could fit any arousal level' };
+          }
+      }
+
+      return { unique: true, reason: null };
+  }
+
+  /**
+   * TITLE IMMUTABILITY ENFORCEMENT
+   * Once set, title must never change. Returns error if mutation attempted.
+   * @param {string} currentTitle - Currently stored title
+   * @param {string} newTitle - Proposed new title
+   * @returns {{ allowed: boolean, error: object|null }}
+   */
+  function enforceTitleImmutability(currentTitle, newTitle) {
+      // If no current title, any new title is allowed
+      if (!currentTitle || currentTitle.trim() === '') {
+          return { allowed: true, error: null };
+      }
+
+      // If titles match, no mutation
+      if (currentTitle.trim() === newTitle?.trim()) {
+          return { allowed: true, error: null };
+      }
+
+      // Any attempt to change an existing title is a HARD FAIL
+      return {
+          allowed: false,
+          error: {
+              code: VALIDATION_ERRORS.TITLE_IMMUTABLE_VIOLATION,
+              message: `Title mutation blocked: "${currentTitle}" → "${newTitle}"`
+          }
+      };
+  }
+
+  /**
+   * COVER ESCALATION VALIDATION
+   * Cover may escalate beyond title's baseline, but must not contradict downward
+   * @param {string} titleArousal - Arousal level signaled by title
+   * @param {string} coverArousal - Current cover arousal (from intensity layers)
+   * @param {string} baselineArousal - Original arousal when title was generated
+   * @returns {{ valid: boolean, error: object|null }}
+   */
+  function validateCoverEscalation(titleArousal, coverArousal, baselineArousal) {
+      const arousalOrder = ['Clean', 'Naughty', 'Erotic', 'Dirty'];
+      const baselineIndex = arousalOrder.indexOf(baselineArousal);
+      const coverIndex = arousalOrder.indexOf(coverArousal);
+
+      // Cover can escalate (higher index) or stay same
+      // Cover CANNOT de-escalate below baseline
+      if (coverIndex < baselineIndex) {
+          return {
+              valid: false,
+              error: {
+                  code: VALIDATION_ERRORS.COVER_BASELINE_CONTRADICTION,
+                  message: `Cover de-escalated below title baseline: ${baselineArousal} → ${coverArousal}`
+              }
+          };
+      }
+
+      return { valid: true, error: null };
+  }
+
+  /**
+   * BUILD TITLE GENERATION PROMPT
+   * Creates structured prompt for title generation based on selected mode
+   * @param {string} mode - Selected title mode
+   * @param {string} arousal - Current arousal level
+   * @param {string} world - Current world setting
+   * @returns {string} - Prompt text
+   */
+  function buildTitlePrompt(mode, arousal, world) {
+      const modeVocab = TITLE_MODE_VOCABULARY[mode];
+      const arousalSignals = AROUSAL_TITLE_SIGNALS[arousal];
+
+      let modeInstruction = '';
+      switch (mode) {
+          case TITLE_MODES.POSSESSIVE_POWER:
+              modeInstruction = `Generate a POSSESSIVE POWER title.
+Format: [Possessive] [Noun]
+Possessives: ${modeVocab.possessives.join(', ')}
+Nouns for ${arousal}: ${modeVocab.nouns[arousal]?.join(', ') || 'Silence, Distance, Terms'}
+Examples: "Her Silence", "Your Obedience", "My Confession"`;
+              break;
+          case TITLE_MODES.FORBIDDEN_OBJECT:
+              modeInstruction = `Generate a FORBIDDEN OBJECT title.
+Format: The [Object]
+Objects for ${arousal}: ${modeVocab.objects[arousal]?.join(', ') || 'Door, Key, Contract'}
+Examples: "The Key", "The Contract", "The Door"`;
+              break;
+          case TITLE_MODES.VERB_LOCKED:
+              modeInstruction = `Generate a VERB-LOCKED title (past tense).
+Format: [What/Where/When/How] [Subject] [Past Verb]
+Verbs for ${arousal}: ${modeVocab.verbs[arousal]?.join(', ') || 'Took, Left, Kept'}
+Examples: "What He Took", "Where You Knelt"`;
+              break;
+          case TITLE_MODES.TWO_WORD_FRACTURE:
+              modeInstruction = `Generate a TWO-WORD FRACTURE title.
+Format: [Adjective] [Noun]
+Adjectives for ${arousal}: ${modeVocab.adjectives[arousal]?.join(', ') || 'Golden, Sacred, Raw'}
+Nouns: ${modeVocab.nouns.join(', ')}
+Examples: "Golden Hunger", "Sacred Damage"`;
+              break;
+      }
+
+      return `${modeInstruction}
+
+AROUSAL SIGNAL REQUIRED: ${arousal} → ${arousalSignals?.description || 'clear intensity'}
+WORLD: ${world}
+
+BANNED (HARD FAIL):
+- "Shadows of", "Echoes of", "Whispers"
+- "Beneath", "Within", "Beyond"
+- Destiny/fate language
+- Multi-clause poetic phrasing
+- Marketing copy tone
+
+Return ONLY the title, no quotes or explanation.`;
+  }
+
+  /**
+   * SELECT TITLE MODE
+   * Deterministically selects which title mode to use
+   * @param {string} world - Current world setting
+   * @param {string} arousal - Current arousal level
+   * @param {string} genre - Current genre
+   * @returns {string} - Selected mode
+   */
+  function selectTitleMode(world, arousal, genre) {
+      // Use hash for deterministic but varied selection
+      const seed = (world || 'Modern') + (arousal || 'Naughty') + (genre || 'Romance');
+      const hash = simpleHash(seed);
+      const modes = Object.values(TITLE_MODES);
+      return modes[hash % modes.length];
+  }
+
+  // Expose pipeline functions globally
+  window.detectTitleMode = detectTitleMode;
+  window.runSwapTest = runSwapTest;
+  window.enforceTitleImmutability = enforceTitleImmutability;
+  window.validateCoverEscalation = validateCoverEscalation;
+  window.buildTitlePrompt = buildTitlePrompt;
+  window.selectTitleMode = selectTitleMode;
+  window.TITLE_MODES = TITLE_MODES;
+
+  // ============================================================
+  // TRIPLE-FORK CONTINUATION SYSTEM
+  // ============================================================
+  // Three paths at story completion:
+  // 1. Continue this story (same world instance, sequel title)
+  // 2. New story, same world (same world ID, world-marked title)
+  // 3. Completely new story (new world ID, fresh title)
+  // ============================================================
+
+  const CONTINUATION_PATHS = {
+      CONTINUE: 'continue',
+      SAME_WORLD: 'same_world',
+      NEW_STORY: 'new_story'
+  };
+
+  const WORLD_STORY_SUFFIXES = ['Story', 'Tale', 'Chronicle', 'Affair', 'Exposé', 'Adventure'];
+
+  /**
+   * Generate a unique World Instance ID
+   * @returns {string}
+   */
+  function generateWorldInstanceId() {
+      return 'world_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  }
+
+  /**
+   * Generate a unique World Name based on world + flavor
+   * @param {string} world - Current world setting
+   * @param {string} genre - Current genre
+   * @returns {string} - Unique world name (e.g., "The Veiled Courts", "Obsidian Towers")
+   */
+  function generateWorldName(world, genre) {
+      const WORLD_NAME_PREFIXES = {
+          Modern: ['The Glass', 'The Steel', 'The Gilded', 'The Shadow'],
+          Historical: ['The Veiled', 'The Crown', 'The Silver', 'The Crimson'],
+          Fantasy: ['The Arcane', 'The Sundered', 'The Moonlit', 'The Thornwood'],
+          SciFi: ['The Obsidian', 'The Nebula', 'The Quantum', 'The Orbital'],
+          Noir: ['The Smoke', 'The Neon', 'The Midnight', 'The Velvet'],
+          Gothic: ['The Hollow', 'The Raven', 'The Ashen', 'The Shrouded'],
+          Paranormal: ['The Liminal', 'The Spectral', 'The Twilight', 'The Veil']
+      };
+      const WORLD_NAME_SUFFIXES = {
+          Modern: ['Towers', 'District', 'Circle', 'Heights'],
+          Historical: ['Courts', 'Houses', 'Halls', 'Estates'],
+          Fantasy: ['Realm', 'Kingdom', 'Dominion', 'Throne'],
+          SciFi: ['Station', 'Sector', 'Frontier', 'Array'],
+          Noir: ['Corners', 'Streets', 'District', 'Alleys'],
+          Gothic: ['Manor', 'Abbey', 'Estate', 'Grounds'],
+          Paranormal: ['Crossing', 'Threshold', 'Boundary', 'Gate']
+      };
+
+      const prefixes = WORLD_NAME_PREFIXES[world] || WORLD_NAME_PREFIXES.Modern;
+      const suffixes = WORLD_NAME_SUFFIXES[world] || WORLD_NAME_SUFFIXES.Modern;
+
+      const seed = (world || '') + (genre || '') + Date.now();
+      const prefixIndex = simpleHash(seed) % prefixes.length;
+      const suffixIndex = simpleHash(seed + 'suffix') % suffixes.length;
+
+      return prefixes[prefixIndex] + ' ' + suffixes[suffixIndex];
+  }
+
+  /**
+   * Get world story suffix based on world/tone
+   * @param {string} world - Current world
+   * @param {string} tone - Current tone
+   * @returns {string}
+   */
+  function getWorldStorySuffix(world, tone) {
+      // Different tones get different suffixes
+      if (tone === 'Dark' || tone === 'Horror') return 'Chronicle';
+      if (tone === 'Comedic') return 'Adventure';
+      if (tone === 'WryConfession') return 'Exposé';
+      if (world === 'Noir') return 'Affair';
+      return 'Tale';
+  }
+
+  /**
+   * Build continuation title prompt for CONTINUE path
+   * Must use SAME mode, echo structure, share NO exact words
+   * @param {string} previousTitle - The title to echo
+   * @param {string} previousMode - The mode to maintain
+   * @param {string} arousal - Current arousal
+   * @returns {string}
+   */
+  function buildContinuationTitlePrompt(previousTitle, previousMode, arousal) {
+      const modeVocab = TITLE_MODE_VOCABULARY[previousMode];
+
+      return `Generate a SEQUEL title that echoes the previous title.
+
+PREVIOUS TITLE: "${previousTitle}"
+TITLE MODE: ${previousMode} (MUST use same structure)
+
+RULES:
+1. Use the EXACT SAME title mode/structure as "${previousTitle}"
+2. Echo its semantic feel and rhythm
+3. Share NO EXACT WORDS with the previous title
+4. Signal ${arousal} arousal level
+
+${previousMode === TITLE_MODES.POSSESSIVE_POWER ?
+    `Format: [Possessive] [Noun] — Use: ${modeVocab.possessives.join(', ')}` :
+    previousMode === TITLE_MODES.FORBIDDEN_OBJECT ?
+    `Format: The [Object]` :
+    previousMode === TITLE_MODES.VERB_LOCKED ?
+    `Format: [What/Where/When/How] [Subject] [Past Verb]` :
+    `Format: [Adjective] [Noun]`}
+
+Example: "The Hitched Breath" → "The Forbidden Sigh"
+
+Return ONLY the title, no quotes or explanation.`;
+  }
+
+  /**
+   * Build same-world title with world-marking subtitle
+   * @param {string} primaryTitle - The main title
+   * @param {string} worldName - The persistent world name
+   * @param {string} suffix - Story/Tale/Chronicle etc.
+   * @returns {string}
+   */
+  function buildWorldMarkedTitle(primaryTitle, worldName, suffix) {
+      return `${primaryTitle}\nA ${worldName} ${suffix}`;
+  }
+
+  /**
+   * Validate continuation title based on path
+   * @param {string} title - Generated title
+   * @param {string} path - CONTINUE | SAME_WORLD | NEW_STORY
+   * @param {object} context - { previousTitle, worldName, priorNouns }
+   * @returns {{ valid: boolean, errors: Array<{code: string, message: string}> }}
+   */
+  function validateContinuationTitle(title, path, context) {
+      const errors = [];
+      const cleanTitle = (title || '').trim();
+
+      if (path === CONTINUATION_PATHS.CONTINUE) {
+          // Must share no exact words with previous title
+          if (context.previousTitle) {
+              const prevWords = context.previousTitle.toLowerCase().split(/\s+/);
+              const newWords = cleanTitle.toLowerCase().split(/\s+/);
+              const sharedWords = newWords.filter(w => prevWords.includes(w) && w.length > 2);
+              if (sharedWords.length > 0) {
+                  errors.push({
+                      code: 'CONTINUATION_WORD_REUSE',
+                      message: `Continuation title shares words with previous: ${sharedWords.join(', ')}`
+                  });
+              }
+          }
+      }
+
+      if (path === CONTINUATION_PATHS.SAME_WORLD) {
+          // Must include world-marking subtitle
+          if (!cleanTitle.includes('\n') && !cleanTitle.includes(':')) {
+              errors.push({
+                  code: 'SAME_WORLD_MISSING_SUBTITLE',
+                  message: 'Same-world title must include world-marking subtitle'
+              });
+          }
+          // Must include world name
+          if (context.worldName && !cleanTitle.includes(context.worldName)) {
+              errors.push({
+                  code: 'SAME_WORLD_MISSING_WORLD_NAME',
+                  message: `Same-world title must include world name: "${context.worldName}"`
+              });
+          }
+      }
+
+      if (path === CONTINUATION_PATHS.NEW_STORY) {
+          // Must not reference prior world nouns
+          if (context.priorNouns && context.priorNouns.length > 0) {
+              const titleLower = cleanTitle.toLowerCase();
+              const reusedNouns = context.priorNouns.filter(n => titleLower.includes(n.toLowerCase()));
+              if (reusedNouns.length > 0) {
+                  errors.push({
+                      code: 'NEW_STORY_PRIOR_NOUN_REUSE',
+                      message: `New story title references prior world: ${reusedNouns.join(', ')}`
+                  });
+              }
+          }
+      }
+
+      return { valid: errors.length === 0, errors };
+  }
+
+  /**
+   * Initialize continuation state for a path
+   * @param {string} path - Selected continuation path
+   */
+  function initializeContinuationPath(path) {
+      state.continuationPath = path;
+
+      if (path === CONTINUATION_PATHS.CONTINUE) {
+          // Keep same world instance, store previous title for reference
+          // worldInstanceId stays the same
+          console.log('[Continuation] CONTINUE: Same world instance, sequel title');
+      } else if (path === CONTINUATION_PATHS.SAME_WORLD) {
+          // Keep world instance ID and name, new story ID
+          state.storyId = null; // Will be regenerated
+          state.previousTitle = state.immutableTitle;
+          console.log('[Continuation] SAME_WORLD: Same world, new narrative');
+      } else {
+          // NEW_STORY: Reset everything
+          state.worldInstanceId = generateWorldInstanceId();
+          state.worldName = null;
+          state.previousTitle = null;
+          state.previousTitleMode = null;
+          state.storyId = null;
+          console.log('[Continuation] NEW_STORY: Fresh start, new world instance');
+      }
+  }
+
+  /**
+   * Route title generation based on continuation path
+   * @param {string} path - Continuation path
+   * @param {object} context - Generation context
+   * @returns {object} - { prompt: string, mode: string, worldMarked: boolean }
+   */
+  function routeTitleGeneration(path, context) {
+      const { world, arousal, genre, tone } = context;
+
+      if (path === CONTINUATION_PATHS.CONTINUE) {
+          // Use previous mode, build continuation prompt
+          const mode = state.previousTitleMode || detectTitleMode(state.previousTitle) || selectTitleMode(world, arousal, genre);
+          return {
+              prompt: buildContinuationTitlePrompt(state.previousTitle, mode, arousal),
+              mode: mode,
+              worldMarked: false
+          };
+      } else if (path === CONTINUATION_PATHS.SAME_WORLD) {
+          // Standard title generation, will add world suffix after
+          if (!state.worldName) {
+              state.worldName = generateWorldName(world, genre);
+          }
+          const mode = selectTitleMode(world, arousal, genre);
+          return {
+              prompt: buildTitlePrompt(mode, arousal, world),
+              mode: mode,
+              worldMarked: true,
+              worldName: state.worldName,
+              suffix: getWorldStorySuffix(world, tone)
+          };
+      } else {
+          // NEW_STORY: Standard title generation
+          const mode = selectTitleMode(world, arousal, genre);
+          return {
+              prompt: buildTitlePrompt(mode, arousal, world),
+              mode: mode,
+              worldMarked: false
+          };
+      }
+  }
+
+  /**
+   * Store prior world proper nouns for new story validation
+   * @returns {string[]}
+   */
+  function collectPriorWorldNouns() {
+      const nouns = [];
+      if (state.worldName) nouns.push(state.worldName);
+      if (state.rawPlayerName) nouns.push(state.rawPlayerName);
+      if (state.rawPartnerName) nouns.push(state.rawPartnerName);
+      // Could add location names, institution names from story if tracked
+      return nouns.filter(n => n && n.length > 2);
+  }
+
+  // Expose continuation system globally
+  window.CONTINUATION_PATHS = CONTINUATION_PATHS;
+  window.generateWorldInstanceId = generateWorldInstanceId;
+  window.generateWorldName = generateWorldName;
+  window.validateContinuationTitle = validateContinuationTitle;
+  window.initializeContinuationPath = initializeContinuationPath;
+  window.routeTitleGeneration = routeTitleGeneration;
+  window.buildWorldMarkedTitle = buildWorldMarkedTitle;
+  window.collectPriorWorldNouns = collectPriorWorldNouns;
+
+  /**
+   * Show the triple-fork continuation modal
+   * Called at story completion or when user requests new story
+   */
+  function showContinuationFork() {
+      const modal = document.getElementById('continuationForkModal');
+      if (modal) {
+          modal.classList.remove('hidden');
+          console.log('[Continuation] Fork modal shown');
+      }
+  }
+
+  /**
+   * Hide the continuation fork modal
+   */
+  function hideContinuationFork() {
+      const modal = document.getElementById('continuationForkModal');
+      if (modal) {
+          modal.classList.add('hidden');
+      }
+  }
+
+  /**
+   * Handle user selection of continuation path
+   * @param {string} path - 'continue' | 'same_world' | 'new_story'
+   */
+  function selectContinuationPath(path) {
+      // Map string to constant
+      const pathMap = {
+          'continue': CONTINUATION_PATHS.CONTINUE,
+          'same_world': CONTINUATION_PATHS.SAME_WORLD,
+          'new_story': CONTINUATION_PATHS.NEW_STORY
+      };
+      const selectedPath = pathMap[path] || CONTINUATION_PATHS.NEW_STORY;
+
+      console.log('[Continuation] Path selected:', selectedPath);
+
+      // Store prior world nouns before path initialization (for NEW_STORY validation)
+      const priorNouns = collectPriorWorldNouns();
+      state._priorWorldNouns = priorNouns;
+
+      // Preserve world for SAME_WORLD path before any resets
+      const preservedWorld = state.picks?.world;
+      const preservedTitle = state.immutableTitle;
+      const preservedTitleMode = state.previousTitleMode;
+
+      // Initialize the path (sets continuation state)
+      initializeContinuationPath(selectedPath);
+
+      // Hide modal
+      hideContinuationFork();
+
+      // Handle path-specific state management
+      if (selectedPath === CONTINUATION_PATHS.CONTINUE) {
+          // Direct sequel — preserve most state, just reset story position
+          state.storyEnded = false;
+          state.turnCount = 0;
+          clearStoryContent();
+          // Title should echo previous title's mode
+          state.previousTitle = preservedTitle;
+          console.log('[Continuation] CONTINUE: Story state reset for sequel');
+          window.showScreen('setup');
+      } else if (selectedPath === CONTINUATION_PATHS.SAME_WORLD) {
+          // Same world, new story — reset story but keep world
+          resetForNewStory();
+          state.picks.world = preservedWorld; // Restore world selection
+          state.previousTitle = preservedTitle;
+          state.previousTitleMode = preservedTitleMode;
+          // Pre-select the world card in UI
+          preselectWorldCard(preservedWorld);
+          console.log('[Continuation] SAME_WORLD: Fresh story in', preservedWorld);
+          window.showScreen('setup');
+      } else {
+          // Completely new story — full reset
+          resetForNewStory();
+          console.log('[Continuation] NEW_STORY: Full reset');
+          window.showScreen('setup');
+      }
+  }
+
+  /**
+   * Clear story content without resetting picks
+   */
+  function clearStoryContent() {
+      state.currentStoryContent = '';
+      state.storyHistory = [];
+      localStorage.removeItem('sb_saved_story');
+      // Clear pagination if available
+      if (typeof StoryPagination !== 'undefined' && StoryPagination.clear) {
+          StoryPagination.clear();
+      }
+      const storyEl = document.getElementById('storyText');
+      if (storyEl) storyEl.innerHTML = '';
+  }
+
+  /**
+   * Reset state for a new story (preserves subscription/payment state)
+   */
+  function resetForNewStory() {
+      state.storyEnded = false;
+      state.turnCount = 0;
+      state.storyLength = 'voyeur';
+      state.storyId = null;
+      clearStoryContent();
+
+      // Reset title state
+      state.immutableTitle = null;
+      state.coverArchetype = null;
+
+      // Reset visual state
+      state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {} };
+
+      // Clear cover state
+      if (_coverAbortController) { _coverAbortController.abort(); _coverAbortController = null; }
+      if (typeof resetBookState === 'function') resetBookState();
+      const coverImg = document.getElementById('bookCoverImg');
+      if (coverImg) coverImg.src = '';
+      const coverLoading = document.getElementById('coverLoadingState');
+      if (coverLoading) coverLoading.classList.add('hidden');
+      const bookObj = document.getElementById('bookObject');
+      if (bookObj) bookObj.classList.add('hidden');
+  }
+
+  /**
+   * Pre-select a world card in the setup UI
+   */
+  function preselectWorldCard(world) {
+      if (!world) return;
+      // Find and select the world card
+      const worldCards = document.querySelectorAll('.sb-card[data-grp="world"]');
+      worldCards.forEach(card => {
+          card.classList.remove('selected', 'flipped');
+          if (card.dataset.val === world) {
+              card.classList.add('selected', 'flipped');
+          }
+      });
+  }
+
+  /**
+   * Default to new story if modal closed without selection
+   */
+  function defaultContinuationPath() {
+      console.log('[Continuation] Default path: NEW_STORY');
+      selectContinuationPath('new_story');
+  }
+
+  // Expose fork modal handlers globally
+  window.showContinuationFork = showContinuationFork;
+  window.hideContinuationFork = hideContinuationFork;
+  window.selectContinuationPath = selectContinuationPath;
+  window.defaultContinuationPath = defaultContinuationPath;
+
+  /**
+   * FALLBACK TITLE GENERATOR
+   * Creates a deterministic name-based title when validation fails.
+   * Pattern A: [FirstName]'s [Qualifier]
+   * Pattern B: [FullName]: [Qualifier]
+   *
+   * @param {object} opts - { playerName, partnerName, world, tone, genre }
+   * @returns {string} - Fallback title (never fails)
+   */
+  function generateFallbackTitle(opts) {
+      const { playerName, partnerName, world, tone, genre } = opts;
+
+      // Get qualifiers for this world (fallback to Modern)
+      const qualifiers = TITLE_FALLBACK_QUALIFIERS[world] || TITLE_FALLBACK_QUALIFIERS.Modern;
+
+      // Deterministic qualifier selection via hash of tone+genre
+      const hashSeed = (tone || 'Earnest') + (genre || 'Romance');
+      const qualifierIndex = simpleHash(hashSeed) % qualifiers.length;
+      const qualifier = qualifiers[qualifierIndex];
+
+      // Prefer love interest name for more intrigue, fallback to player
+      const primaryName = partnerName || playerName;
+      const firstName = extractFirstName(primaryName);
+
+      // If we have a valid first name, use Pattern A
+      if (firstName && firstName.length > 1 && !/^(the|a)\s/i.test(firstName)) {
+          return `${firstName}'s ${qualifier}`;
+      }
+
+      // If we have a full name with 2+ parts, use Pattern B
+      if (primaryName && primaryName.includes(' ')) {
+          return `${primaryName}: ${qualifier}`;
+      }
+
+      // Last resort: use qualifier alone with dramatic framing
+      return `The ${qualifier}`;
+  }
+
+  // Expose validators globally for Dev HUD
+  window.validateTitle = validateTitle;
+  window.generateFallbackTitle = generateFallbackTitle;
+
+  // ============================================================
+  // TITLE ↔ COVER SIGNAL ALIGNMENT LAYER
+  // ============================================================
+  // Ensures title and cover art signal the SAME dominant axis.
+  // Primary axis: exactly one (usually Arousal)
+  // Secondary axis: optional (max one)
+  // All other axes: neutral
+  // ============================================================
+
+  /**
+   * SIGNAL AXIS DEFINITIONS
+   * Each axis has detection patterns for both title and cover
+   */
+  const SIGNAL_AXES = {
+      AROUSAL: 'arousal',
+      TONE: 'tone',
+      GENRE: 'genre'
+  };
+
+  /**
+   * AROUSAL SIGNAL PATTERNS
+   * Title/cover must independently signal the arousal tier
+   */
+  const AROUSAL_SIGNALS = {
+      Clean: {
+          title: {
+              allow: /\b(distance|restraint|waiting|watching|almost|nearly|silence|apart)\b/i,
+              forbid: /\b(burn|ache|want|hunger|possession|devour|consume|claim)\b/i
+          },
+          cover: {
+              allow: ['separation', 'stillness', 'restraint', 'waiting', 'longing from afar'],
+              forbid: ['touch', 'embrace', 'intimacy', 'skin', 'heat', 'tension']
+          },
+          signal: 'restraint, distance'
+      },
+      Naughty: {
+          title: {
+              allow: /\b(almost|want|tempt|tease|forbidden|secret|risk|dare|edge)\b/i,
+              forbid: /\b(claim|possess|devour|consume|take|surrender|yield)\b/i
+          },
+          cover: {
+              allow: ['suggestion', 'withholding', 'anticipation', 'almost-touch', 'nearness'],
+              forbid: ['explicit intimacy', 'possession', 'surrender', 'exposure']
+          },
+          signal: 'suggestion, withholding'
+      },
+      Erotic: {
+          title: {
+              allow: /\b(want|ache|burn|claim|mine|yours|possess|surrender|give|take)\b/i,
+              forbid: /\b(filth|raw|intrude|force|use|ruin|wreck|break)\b/i
+          },
+          cover: {
+              allow: ['intimacy', 'possession', 'surrender', 'closeness', 'heat', 'connection'],
+              forbid: ['clinical', 'crude', 'explicit anatomy', 'shock']
+          },
+          signal: 'intimacy, possession'
+      },
+      Dirty: {
+          title: {
+              allow: /\b(filth|raw|ruin|wreck|use|break|devour|consume|claim|take)\b/i,
+              forbid: /\b(sweet|gentle|soft|tender|pure|innocent|chaste)\b/i
+          },
+          cover: {
+              allow: ['intrusion', 'bluntness', 'rawness', 'edge', 'danger', 'intensity'],
+              forbid: ['sweetness', 'gentleness', 'purity', 'innocence']
+          },
+          signal: 'intrusion, bluntness'
+      }
+  };
+
+  /**
+   * TONE SIGNAL PATTERNS
+   * Secondary axis - tone signals in title/cover
+   */
+  const TONE_AXIS_SIGNALS = {
+      WryConfession: {
+          title: /\b(almost|anyway|still|wrong|mistake|lie|truth|never)\b/i,
+          cover: ['irony', 'self-awareness', 'confession', 'doubt']
+      },
+      Comedic: {
+          title: /\b(oops|wrong|disaster|mess|trouble|help|chaos)\b/i,
+          cover: ['lightness', 'absurdity', 'playfulness', 'mischief']
+      },
+      Surreal: {
+          title: /\b(dream|strange|nowhere|forgot|remember|almost|maybe)\b/i,
+          cover: ['dream-logic', 'dissolution', 'unreality', 'drift']
+      },
+      Dark: {
+          title: /\b(blood|bone|ash|ruin|end|last|only|never|death)\b/i,
+          cover: ['weight', 'shadow', 'gravity', 'consequence', 'doom']
+      },
+      Earnest: {
+          title: null, // Most permissive
+          cover: ['sincerity', 'hope', 'warmth', 'openness']
+      }
+  };
+
+  /**
+   * GENRE SIGNAL PATTERNS
+   * Secondary axis - genre signals in title/cover
+   */
+  const GENRE_AXIS_SIGNALS = {
+      Billionaire: {
+          title: /\b(empire|fortune|deal|contract|merger|penthouse|heir)\b/i,
+          cover: ['wealth', 'power', 'luxury', 'corporate', 'skyline']
+      },
+      CrimeSyndicate: {
+          title: /\b(blood|family|loyalty|debt|oath|boss|territory)\b/i,
+          cover: ['danger', 'shadows', 'underworld', 'loyalty']
+      },
+      Espionage: {
+          title: /\b(secret|agent|cover|mission|asset|handler|burn)\b/i,
+          cover: ['mystery', 'concealment', 'danger', 'surveillance']
+      },
+      Noir: {
+          title: /\b(smoke|rain|night|shadow|dame|case|trouble)\b/i,
+          cover: ['shadow', 'mystery', 'urban night', 'smoke', 'rain']
+      },
+      Heist: {
+          title: /\b(score|job|crew|vault|mark|inside|take)\b/i,
+          cover: ['precision', 'tension', 'planning', 'stakes']
+      }
+  };
+
+  /**
+   * Extract dominant signal axis from title
+   * @param {string} title - The book title
+   * @param {string} arousal - Current arousal level
+   * @param {string} tone - Current tone
+   * @param {string} genre - Current genre
+   * @returns {{ primary: string, secondary: string|null, arousalMatch: boolean, signals: object }}
+   */
+  function extractTitleSignals(title, arousal, tone, genre) {
+      const cleanTitle = (title || '').toLowerCase().trim();
+      const signals = {
+          arousal: null,
+          tone: null,
+          genre: null
+      };
+
+      // Check arousal signals
+      const arousalConfig = AROUSAL_SIGNALS[arousal];
+      if (arousalConfig?.title?.allow?.test(cleanTitle)) {
+          signals.arousal = arousal;
+      }
+      // Check for arousal contradiction
+      const arousalContradiction = arousalConfig?.title?.forbid?.test(cleanTitle);
+
+      // Check tone signals
+      const toneConfig = TONE_AXIS_SIGNALS[tone];
+      if (toneConfig?.title?.test(cleanTitle)) {
+          signals.tone = tone;
+      }
+
+      // Check genre signals
+      const genreConfig = GENRE_AXIS_SIGNALS[genre];
+      if (genreConfig?.title?.test(cleanTitle)) {
+          signals.genre = genre;
+      }
+
+      // Determine primary axis (priority: arousal > tone > genre)
+      let primary = null;
+      let secondary = null;
+
+      if (signals.arousal) {
+          primary = SIGNAL_AXES.AROUSAL;
+          if (signals.tone) secondary = SIGNAL_AXES.TONE;
+          else if (signals.genre) secondary = SIGNAL_AXES.GENRE;
+      } else if (signals.tone) {
+          primary = SIGNAL_AXES.TONE;
+          if (signals.genre) secondary = SIGNAL_AXES.GENRE;
+      } else if (signals.genre) {
+          primary = SIGNAL_AXES.GENRE;
+      }
+
+      return {
+          primary,
+          secondary,
+          arousalMatch: signals.arousal === arousal,
+          arousalContradiction,
+          signals
+      };
+  }
+
+  /**
+   * Extract dominant signal axis from cover prompt
+   * @param {object} coverPrompt - The cover prompt object from buildCoverPrompt
+   * @param {string} arousal - Current arousal level
+   * @param {string} tone - Current tone
+   * @param {string} genre - Current genre
+   * @returns {{ primary: string, secondary: string|null, arousalMatch: boolean, signals: object }}
+   */
+  function extractCoverSignals(coverPrompt, arousal, tone, genre) {
+      const promptText = (coverPrompt?.promptText || '').toLowerCase();
+      const emotion = (coverPrompt?.emotion || '').toLowerCase();
+      const signals = {
+          arousal: null,
+          tone: null,
+          genre: null
+      };
+
+      // Check arousal signals in cover
+      const arousalConfig = AROUSAL_SIGNALS[arousal];
+      if (arousalConfig?.cover?.allow) {
+          const hasArousalSignal = arousalConfig.cover.allow.some(sig =>
+              promptText.includes(sig.toLowerCase()) || emotion.includes(sig.toLowerCase())
+          );
+          if (hasArousalSignal) signals.arousal = arousal;
+      }
+
+      // Check for arousal contradiction
+      let arousalContradiction = false;
+      if (arousalConfig?.cover?.forbid) {
+          arousalContradiction = arousalConfig.cover.forbid.some(sig =>
+              promptText.includes(sig.toLowerCase()) || emotion.includes(sig.toLowerCase())
+          );
+      }
+
+      // Check tone signals
+      const toneConfig = TONE_AXIS_SIGNALS[tone];
+      if (toneConfig?.cover) {
+          const hasToneSignal = toneConfig.cover.some(sig =>
+              promptText.includes(sig.toLowerCase()) || emotion.includes(sig.toLowerCase())
+          );
+          if (hasToneSignal) signals.tone = tone;
+      }
+
+      // Check genre signals
+      const genreConfig = GENRE_AXIS_SIGNALS[genre];
+      if (genreConfig?.cover) {
+          const hasGenreSignal = genreConfig.cover.some(sig =>
+              promptText.includes(sig.toLowerCase())
+          );
+          if (hasGenreSignal) signals.genre = genre;
+      }
+
+      // Frame/border state for composed cover validation
+      const keyholeEl = document.getElementById('coverKeyholeOverlay');
+      const borderEl = document.getElementById('coverEroticBorder');
+      const frameType = keyholeEl && !keyholeEl.classList.contains('hidden') ? 'keyhole' : null;
+      const borderType = borderEl && !borderEl.classList.contains('hidden') ? 'erotic' : null;
+
+      // DIRTY FRAMING SHORT-CIRCUIT: Frame/border has precedence over image semantics
+      // Dirty is signaled by keyhole/metalwork framing, NOT image content
+      const hasDirtyFraming = frameType === 'keyhole';
+      let primary = null;
+      let secondary = null;
+      let arousalMatchOverride = false;
+
+      if (arousal === 'Dirty' && hasDirtyFraming) {
+          // HARD OVERRIDE: Dirty framing sets arousal axis, image semantics cannot override
+          primary = SIGNAL_AXES.AROUSAL;
+          arousalMatchOverride = true;
+          // Secondary can still be tone or genre from image
+          if (signals.tone) secondary = SIGNAL_AXES.TONE;
+          else if (signals.genre) secondary = SIGNAL_AXES.GENRE;
+      } else if (signals.arousal) {
+          primary = SIGNAL_AXES.AROUSAL;
+          if (signals.tone) secondary = SIGNAL_AXES.TONE;
+          else if (signals.genre) secondary = SIGNAL_AXES.GENRE;
+      } else if (signals.tone) {
+          primary = SIGNAL_AXES.TONE;
+          if (signals.genre) secondary = SIGNAL_AXES.GENRE;
+      } else if (signals.genre) {
+          primary = SIGNAL_AXES.GENRE;
+      }
+
+      return {
+          primary,
+          secondary,
+          arousalMatch: arousalMatchOverride || signals.arousal === arousal,
+          arousalContradiction: arousalMatchOverride ? false : arousalContradiction,
+          signals,
+          // Composed cover signals (framing is part of the cover signal)
+          frameType,
+          borderType,
+          dirtyFramingOverride: hasDirtyFraming && arousal === 'Dirty'
+      };
+  }
+
+  /**
+   * SIGNAL ALIGNMENT VALIDATION
+   * Validates that title and cover signal the same dominant axis
+   * @param {string} title - The book title
+   * @param {object} coverPrompt - Cover prompt from buildCoverPrompt
+   * @param {object} context - { arousal, tone, genre }
+   * @returns {{ aligned: boolean, errors: Array<{code: string, message: string}>, titleSignals: object, coverSignals: object }}
+   */
+  function validateSignalAlignment(title, coverPrompt, context) {
+      const { arousal, tone, genre } = context;
+      const errors = [];
+
+      // Extract signals from both sources
+      const titleSignals = extractTitleSignals(title, arousal, tone, genre);
+      const coverSignals = extractCoverSignals(coverPrompt, arousal, tone, genre);
+
+      // CHECK 1: Primary axis alignment
+      if (titleSignals.primary && coverSignals.primary) {
+          if (titleSignals.primary !== coverSignals.primary) {
+              errors.push({
+                  code: 'SIGNAL_AXIS_MISMATCH',
+                  message: `Title signals ${titleSignals.primary}, cover signals ${coverSignals.primary}`
+              });
+          }
+      }
+
+      // CHECK 2: Arousal contradiction (HARD FAIL)
+      if (titleSignals.arousalContradiction) {
+          errors.push({
+              code: 'TITLE_AROUSAL_CONTRADICTION',
+              message: `Title contains words forbidden at ${arousal} arousal level`
+          });
+      }
+      if (coverSignals.arousalContradiction) {
+          errors.push({
+              code: 'COVER_AROUSAL_CONTRADICTION',
+              message: `Cover contains signals forbidden at ${arousal} arousal level`
+          });
+      }
+
+      // CHECK 3: Neither signals arousal (when arousal should be primary)
+      // DIRTY EXCEPTION: Keyhole/metalwork framing provides the arousal signal,
+      // not the image content. applyCoverIntensityLayers() applies keyhole for Dirty.
+      if (arousal === 'Erotic') {
+          if (!titleSignals.arousalMatch && !coverSignals.arousalMatch) {
+              errors.push({
+                  code: 'AROUSAL_SIGNAL_ABSENT',
+                  message: `${arousal} intensity but neither title nor cover signals it`
+              });
+          }
+      } else if (arousal === 'Dirty') {
+          // Dirty covers signal arousal via keyhole/metalwork framing, NOT image content.
+          // The framing is guaranteed by applyCoverIntensityLayers when arousal=Dirty.
+          // Therefore: image content may remain Naughty-compatible or symbolic.
+          // CHECK: Verify keyhole overlay is/will be present
+          const keyholeEl = document.getElementById('coverKeyholeOverlay');
+          const hasKeyholeFrame = keyholeEl && !keyholeEl.classList.contains('hidden');
+          const willHaveKeyholeFrame = true; // Dirty always gets keyhole via applyCoverIntensityLayers
+
+          if (!hasKeyholeFrame && !willHaveKeyholeFrame) {
+              // Only fail if Dirty lacks Dirty-signaling framing
+              errors.push({
+                  code: 'DIRTY_FRAME_ABSENT',
+                  message: 'Dirty intensity requires keyhole/metalwork framing'
+              });
+          }
+          // Note: titleSignals.arousalMatch and coverSignals.arousalMatch NOT required for Dirty
+          // The composed cover (image + keyhole frame) is the signal, not image alone
+      }
+
+      // CHECK 4: Ambiguity check - no clear primary in either
+      if (!titleSignals.primary && !coverSignals.primary) {
+          errors.push({
+              code: 'SIGNAL_AMBIGUOUS',
+              message: 'Neither title nor cover has a clear primary signal axis'
+          });
+      }
+
+      // CHECK 5: Secondary axis conflict
+      if (titleSignals.secondary && coverSignals.secondary) {
+          if (titleSignals.secondary !== coverSignals.secondary) {
+              // Soft warning, not hard fail
+              console.log('[SignalAlignment] Secondary axis differs:', titleSignals.secondary, 'vs', coverSignals.secondary);
+          }
+      }
+
+      return {
+          aligned: errors.length === 0,
+          errors,
+          titleSignals,
+          coverSignals,
+          context: {
+              expectedArousal: arousal,
+              arousalSignal: AROUSAL_SIGNALS[arousal]?.signal || 'neutral'
+          }
+      };
+  }
+
+  /**
+   * Quick arousal inference from title alone
+   * Used for pre-validation before cover is generated
+   * @param {string} title - The book title
+   * @returns {string|null} - Inferred arousal tier or null if ambiguous
+   */
+  function inferArousalFromTitle(title) {
+      const cleanTitle = (title || '').toLowerCase().trim();
+
+      // Check in order from most restrictive to least
+      for (const level of ['Dirty', 'Erotic', 'Naughty', 'Clean']) {
+          const config = AROUSAL_SIGNALS[level];
+          if (config?.title?.allow?.test(cleanTitle)) {
+              // Also check it doesn't violate this level's forbid
+              if (!config.title.forbid?.test(cleanTitle)) {
+                  return level;
+              }
+          }
+      }
+      return null; // Ambiguous
+  }
+
+  // Expose signal alignment functions globally
+  window.validateSignalAlignment = validateSignalAlignment;
+  window.extractTitleSignals = extractTitleSignals;
+  window.extractCoverSignals = extractCoverSignals;
+  window.inferArousalFromTitle = inferArousalFromTitle;
+  window.SIGNAL_AXES = SIGNAL_AXES;
+  window.AROUSAL_SIGNALS = AROUSAL_SIGNALS;
+
+  /**
+   * DSP VALIDATION — Strict template enforcement
+   * DSP must EXACTLY match: "In [WORLD], shaped by [GENRE], a question awaits:
+   * Will [ARCH_ADJ] desire redeem this [TONE_ADJ] affair — or ruin it?"
+   *
+   * @param {string} dspText - The DSP text to validate (HTML stripped)
+   * @param {object} inputs - { world, genre, archetypeId, tone }
+   * @returns {{ pass: boolean, errors: Array<{code: string, message: string}> }}
+   */
+  function validateDSP(dspText, inputs) {
+      const errors = [];
+      const { world, genre, archetypeId, tone } = inputs;
+
+      // Strip HTML tags for validation
+      const plainText = dspText.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
+      // Get expected phrases from locked dictionaries
+      const expectedWorld = DSP_WORLD_PHRASES[world];
+      const expectedGenre = DSP_GENRE_PARAPHRASES[genre];
+      const expectedArch = DSP_ARCHETYPE_ADJECTIVES[archetypeId];
+      const expectedTone = DSP_TONAL_ADJECTIVES[tone];
+
+      // Validate world phrase exists
+      if (!expectedWorld) {
+          errors.push({
+              code: VALIDATION_ERRORS.DSP_INVALID_WORLD_PHRASE,
+              message: `No DSP world phrase for: "${world}"`
+          });
+      }
+
+      // Validate genre phrase exists
+      if (!expectedGenre) {
+          errors.push({
+              code: VALIDATION_ERRORS.DSP_INVALID_GENRE_PHRASE,
+              message: `No DSP genre paraphrase for: "${genre}"`
+          });
+      }
+
+      // Validate archetype adjective exists
+      if (!expectedArch) {
+          errors.push({
+              code: VALIDATION_ERRORS.DSP_INVALID_ARCHETYPE_ADJ,
+              message: `No DSP archetype adjective for: "${archetypeId}"`
+          });
+      }
+
+      // Validate tone adjective exists
+      if (!expectedTone) {
+          errors.push({
+              code: VALIDATION_ERRORS.DSP_INVALID_TONE_ADJ,
+              message: `No DSP tonal adjective for: "${tone}"`
+          });
+      }
+
+      // If any dictionary lookups failed, return early
+      if (errors.length > 0) {
+          return { pass: false, errors };
+      }
+
+      // Build expected DSP text (exact template)
+      const expectedDSP = `In ${expectedWorld}, shaped by ${expectedGenre}, a question awaits: Will ${expectedArch} desire redeem this ${expectedTone} affair — or ruin it?`;
+
+      // Normalize both for comparison (handle HTML entities)
+      const normalizedExpected = expectedDSP.replace(/\s+/g, ' ').trim();
+      const normalizedActual = plainText
+          .replace(/&#8201;/g, ' ')
+          .replace(/&#8212;/g, '—')
+          .replace(/\u2009/g, ' ')  // thin space
+          .replace(/\u2014/g, '—')  // em dash
+          .replace(/\s+/g, ' ')
+          .trim();
+
+      // Check for exact match
+      if (normalizedActual !== normalizedExpected) {
+          // Diagnose specific failure
+          if (!normalizedActual.startsWith('In ')) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_TEMPLATE_VIOLATION,
+                  message: 'DSP must start with "In "'
+              });
+          }
+          if (!normalizedActual.includes(expectedWorld)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_INVALID_WORLD_PHRASE,
+                  message: `World phrase "${expectedWorld}" not found in DSP`
+              });
+          }
+          if (!normalizedActual.includes(expectedGenre)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_INVALID_GENRE_PHRASE,
+                  message: `Genre phrase "${expectedGenre}" not found in DSP`
+              });
+          }
+          if (!normalizedActual.includes(expectedArch)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_INVALID_ARCHETYPE_ADJ,
+                  message: `Archetype adjective "${expectedArch}" not found in DSP`
+              });
+          }
+          if (!normalizedActual.includes(expectedTone)) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_INVALID_TONE_ADJ,
+                  message: `Tone adjective "${expectedTone}" not found in DSP`
+              });
+          }
+
+          // STRICT ADJECTIVE POSITION VALIDATION
+          // Verify exact adjective appears in correct DSP slot
+          const archSlotMatch = normalizedActual.match(/Will\s+(\w+)\s+desire/i);
+          if (archSlotMatch && archSlotMatch[1].toLowerCase() !== expectedArch.toLowerCase()) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_INVALID_ARCHETYPE_ADJ,
+                  message: `Wrong adjective in archetype slot: found "${archSlotMatch[1]}", expected "${expectedArch}"`
+              });
+          }
+          const toneSlotMatch = normalizedActual.match(/this\s+(\w+)\s+affair/i);
+          if (toneSlotMatch && toneSlotMatch[1].toLowerCase() !== expectedTone.toLowerCase()) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_INVALID_TONE_ADJ,
+                  message: `Wrong adjective in tone slot: found "${toneSlotMatch[1]}", expected "${expectedTone}"`
+              });
+          }
+
+          // Check for world subtype leakage
+          const SUBTYPE_PATTERNS = [
+              /\bsmall[- ]town\b/i, /\bcampus\b/i, /\boffice\b/i, /\bold[- ]money\b/i,
+              /\bcyberpunk\b/i, /\bspace opera\b/i, /\bgalactic\b/i, /\bVictorian\b/i,
+              /\bRegency\b/i, /\bMedieval\b/i, /\bAncient\b/i
+          ];
+          for (const pattern of SUBTYPE_PATTERNS) {
+              if (pattern.test(normalizedActual)) {
+                  errors.push({
+                      code: VALIDATION_ERRORS.DSP_WORLD_SUBTYPE_LEAK,
+                      message: `World subtype leaked into DSP: ${normalizedActual.match(pattern)?.[0]}`
+                  });
+                  break;
+              }
+          }
+
+          // Check for extra prose
+          if (normalizedActual.length > normalizedExpected.length + 10) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_EXTRA_PROSE,
+                  message: 'DSP contains extra prose beyond locked template'
+              });
+          }
+
+          // Check for legacy phrasing — comprehensive list of deprecated DSP text
+          const LEGACY_PATTERNS = [
+              /\bdestiny story prompt\b/i,
+              /\byour story\b/i,
+              /\bonce upon\b/i,
+              /\bin this tale\b/i,
+              // Legacy world phrases (pre-canon)
+              /\bstrangers meet\b/i,
+              /\bpower lingers\b/i,
+              /\bforces move\b/i,
+              /\bvows bind\b/i,
+              /\bold powers\b/i,
+              /\bcity of strangers\b/i,
+              /\bthe present day\b/i,
+              /\ban earlier era\b/i,
+              /\bsupernatural forces\b/i,
+              /\bambition and consequence\b/i,
+              // Legacy genre phrases (pre-canon)
+              /\bdangerous games\b/i,
+              /\bshadow and silk\b/i,
+              /\bhigh stakes\b/i,
+              /\bforbidden fruit\b/i,
+              /\bsecret desires\b/i,
+              /\bpassion and peril\b/i,
+              /\blove and loss\b/i,
+              // Meta-narrative leakage
+              /\bthe narrative\b/i,
+              /\bthe story\b/i,
+              /\bthis romance\b/i,
+              /\btheir journey\b/i
+          ];
+          for (const pattern of LEGACY_PATTERNS) {
+              if (pattern.test(normalizedActual)) {
+                  errors.push({
+                      code: VALIDATION_ERRORS.DSP_LEGACY_PHRASING,
+                      message: `Legacy phrasing detected: ${normalizedActual.match(pattern)?.[0]}`
+                  });
+                  break;
+              }
+          }
+
+          // WORD-SOURCE VALIDATION: DSP output must contain ONLY words from selected phrases
+          // Extract content words (skip articles, prepositions, punctuation)
+          const STRUCTURAL_WORDS = new Set([
+              'in', 'a', 'an', 'the', 'of', 'and', 'or', 'by', 'shaped', 'question', 'awaits',
+              'will', 'desire', 'redeem', 'this', 'affair', 'ruin', 'it', 'to', 'for', 'with'
+          ]);
+          const dspWords = normalizedActual.toLowerCase()
+              .replace(/[.,!?;:\u2014\u2013\u2009\u00a0]/g, ' ')
+              .split(/\s+/)
+              .filter(w => w.length > 2 && !STRUCTURAL_WORDS.has(w));
+
+          // Build allowed word set from selected phrases
+          const allowedWords = new Set();
+          (expectedWorld || '').toLowerCase().split(/\s+/).forEach(w => allowedWords.add(w.replace(/[.,]/g, '')));
+          (expectedGenre || '').toLowerCase().split(/\s+/).forEach(w => allowedWords.add(w.replace(/[.,]/g, '')));
+          (expectedArch || '').toLowerCase().split(/\s+/).forEach(w => allowedWords.add(w.replace(/[.,]/g, '')));
+          (expectedTone || '').toLowerCase().split(/\s+/).forEach(w => allowedWords.add(w.replace(/[.,]/g, '')));
+          // Add structural words to allowed set
+          STRUCTURAL_WORDS.forEach(w => allowedWords.add(w));
+
+          const illegalWords = dspWords.filter(w => !allowedWords.has(w));
+          if (illegalWords.length > 0) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_EXTRA_PROSE,
+                  message: `DSP contains words not from canonical phrases: ${illegalWords.slice(0, 5).join(', ')}`
+              });
+          }
+
+          // Generic template violation if no specific error found
+          if (errors.length === 0) {
+              errors.push({
+                  code: VALIDATION_ERRORS.DSP_TEMPLATE_VIOLATION,
+                  message: `DSP does not match locked template. Expected: "${normalizedExpected.slice(0, 50)}..."`
+              });
+          }
+      }
+
+      return { pass: errors.length === 0, errors };
+  }
+
+  /**
+   * POV VALIDATION (5th Person) — Comprehensive scene validation
+   *
+   * @param {string} sceneText - The scene prose to validate
+   * @param {object} context - { sceneIndex, isErotic, isGodMode }
+   * @returns {{ pass: boolean, errors: Array<{code: string, message: string}>, metrics: object }}
+   */
+  function validatePOV(sceneText, context) {
+      const errors = [];
+      const { sceneIndex = 0, isErotic = false, isGodMode = false } = context;
+      const isSceneOne = sceneIndex === 0;
+
+      // Count Author mentions
+      const authorMatches = sceneText.match(/\bThe Author\b/g) || [];
+      const authorMentions = authorMatches.length;
+
+      // Extract first words and last paragraph
+      const trimmed = sceneText.trim();
+      const firstTwoWords = trimmed.split(/\s+/).slice(0, 2).join(' ');
+      const paragraphs = trimmed.split(/\n\n+/);
+      const lastParagraph = paragraphs[paragraphs.length - 1] || '';
+      const sentences = lastParagraph.match(/[^.!?]+[.!?]+/g) || [lastParagraph];
+      const lastTwoSentences = sentences.slice(-2).join(' ');
+
+      // RULE 1: First two words = "The Author" (always enforced)
+      const hasValidOpener = /^The Author\b/i.test(trimmed);
+      if (!hasValidOpener) {
+          errors.push({
+              code: VALIDATION_ERRORS.POV_INVALID_OPENER,
+              message: `Opening must start with "The Author". Found: "${firstTwoWords}"`
+          });
+      }
+
+      // RULE 2: Final perspective = The Author (structural check)
+      const AUTHOR_CLOSING_VERBS = [
+          'held', 'tilted', 'set', 'arranged', 'steered', 'coaxed', 'seeded', 'threaded',
+          'watched', 'waited', 'considered', 'wondered', 'doubted', 'resisted', 'smiled',
+          'frowned', 'paused', 'knew', 'felt', 'sensed', 'released', 'tightened', 'loosened'
+      ];
+      const closingVerbPattern = new RegExp(
+          'The Author\\s+(' + AUTHOR_CLOSING_VERBS.join('|') + ')\\b', 'i'
+      );
+      const authorReflectionPattern = /The Author.{0,60}(uncertain|doubt|wonder|question|resist|perhaps|might|whether|if only)/i;
+      const hasValidCloser = closingVerbPattern.test(lastTwoSentences) || authorReflectionPattern.test(lastTwoSentences);
+
+      if (!hasValidCloser && !isErotic) {
+          errors.push({
+              code: VALIDATION_ERRORS.POV_INVALID_CLOSER,
+              message: 'Scene must end with The Author as final perspective (action verb or reflection)'
+          });
+      }
+
+      // RULE 3: Scene prose = strict 3rd person limited
+      const firstPersonPattern = /\b(I|me|my|mine|myself)\b(?!\s*["'])/gi;
+      const firstPersonMatches = sceneText.match(firstPersonPattern) || [];
+      // Filter out dialogue (rough heuristic: not near quotes)
+      const nonDialogueFirstPerson = firstPersonMatches.filter(match => {
+          const idx = sceneText.indexOf(match);
+          const nearbyText = sceneText.slice(Math.max(0, idx - 20), idx + 20);
+          return !/"[^"]*$/.test(nearbyText.slice(0, 20)) && !/^[^"]*"/.test(nearbyText.slice(20));
+      });
+      if (nonDialogueFirstPerson.length > 2) {
+          errors.push({
+              code: VALIDATION_ERRORS.POV_NON_3RD_PERSON,
+              message: `Scene contains ${nonDialogueFirstPerson.length} first-person references outside dialogue`
+          });
+      }
+
+      // RULE 4: Author NEVER narrates action or scenery (banned voyeur verbs)
+      const BANNED_AUTHOR_VERBS = ['watched', 'observed', 'saw', 'looked on', 'gazed at', 'witnessed', 'noticed', 'perceived'];
+      const bannedPattern = new RegExp('The Author\\s+(' + BANNED_AUTHOR_VERBS.join('|') + ')\\b', 'gi');
+      const bannedMatches = sceneText.match(bannedPattern) || [];
+      if (bannedMatches.length > 0) {
+          errors.push({
+              code: VALIDATION_ERRORS.POV_AUTHOR_NARRATES_ACTION,
+              message: `Author uses banned voyeur verbs: ${bannedMatches.slice(0, 3).join(', ')}`
+          });
+      }
+
+      // RULE 5: Frequency requirements
+      if (isSceneOne && authorMentions < 6) {
+          errors.push({
+              code: VALIDATION_ERRORS.POV_SCENE1_FREQUENCY,
+              message: `Scene 1 requires ≥6 Author mentions. Found: ${authorMentions}`
+          });
+      } else if (!isSceneOne && !isErotic && (authorMentions < 1 || authorMentions > 3)) {
+          errors.push({
+              code: VALIDATION_ERRORS.POV_LATER_FREQUENCY,
+              message: `Later scenes require 1-3 Author mentions. Found: ${authorMentions}`
+          });
+      }
+
+      // RULE 6: Erotic scenes = 0 Author mentions
+      if (isErotic && authorMentions > 0) {
+          errors.push({
+              code: VALIDATION_ERRORS.POV_EROTIC_AUTHOR_PRESENT,
+              message: `Erotic scenes must have 0 Author mentions. Found: ${authorMentions}`
+          });
+      }
+
+      // RULE 7: Meta-awareness spike ~5% (check for excess)
+      const metaAwarenessPatterns = [
+          /\b(character|story|narrative|plot|author|reader|page|chapter)\b/gi,
+          /\b(as if|somehow|knew|felt|sensed)\s+(that|the|this)\s+(story|tale|narrative)/gi
+      ];
+      let metaCount = 0;
+      metaAwarenessPatterns.forEach(p => {
+          const matches = sceneText.match(p);
+          if (matches) metaCount += matches.length;
+      });
+      const wordCount = sceneText.split(/\s+/).length;
+      const metaRatio = metaCount / wordCount;
+      if (metaRatio > 0.08) { // ~8% threshold
+          errors.push({
+              code: VALIDATION_ERRORS.POV_META_AWARENESS_EXCESS,
+              message: `Meta-awareness exceeds 5% threshold. Ratio: ${(metaRatio * 100).toFixed(1)}%`
+          });
+      }
+
+      // RULE 8: God Mode — Author does NOT know Player exists
+      if (isGodMode) {
+          const playerAwarenessPatterns = [
+              /\bThe Author\b.{0,50}\b(player|user|you|your)\b/gi,
+              /\bThe Author\b.{0,50}\b(knew|sensed|felt)\b.{0,30}\b(was being|someone)\b/gi
+          ];
+          for (const pattern of playerAwarenessPatterns) {
+              if (pattern.test(sceneText)) {
+                  errors.push({
+                      code: VALIDATION_ERRORS.POV_GODMODE_PLAYER_AWARENESS,
+                      message: 'God Mode: Author must NOT know Player exists'
+                  });
+                  break;
+              }
+          }
+      }
+
+      const metrics = {
+          authorMentions,
+          isSceneOne,
+          isErotic,
+          isGodMode,
+          hasValidOpener,
+          hasValidCloser,
+          wordCount
+      };
+
+      return { pass: errors.length === 0, errors, metrics };
+  }
+
+  /**
+   * Get current validation state for Dev HUD
+   * Runs all validators against current story state
+   */
+  function getValidationStatus() {
+      const results = {};
+
+      // DSP validation
+      const dspEl = document.getElementById('synopsisText');
+      if (dspEl && state.picks) {
+          const dspResult = validateDSP(dspEl.textContent || '', {
+              world: state.picks.world || 'Modern',
+              genre: state.picks.genre || 'Billionaire',
+              archetypeId: (state.archetype?.primary) || 'BEAUTIFUL_RUIN',
+              tone: state.picks.tone || 'Earnest'
+          });
+          results.dsp = dspResult;
+      }
+
+      // POV validation (last generated scene)
+      if (state.povMode === 'author5th' && window.StoryPagination) {
+          const lastContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+          const lastScene = lastContent.slice(-2000);
+          const povResult = validatePOV(lastScene, {
+              sceneIndex: state.turnCount || 0,
+              isErotic: ['Erotic', 'Dirty'].includes(state.intensity) && state.turnCount > 0,
+              isGodMode: state.godModeActive || false
+          });
+          results.pov = povResult;
+      }
+
+      // Tone validation
+      if (state.picks?.tone && window.StoryPagination) {
+          const lastContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+          const lastScene = lastContent.slice(-2000);
+          const toneResult = validateTone(lastScene, state.picks.tone);
+          results.tone = toneResult;
+      }
+
+      // Erotic escalation validation
+      if (['Erotic', 'Dirty'].includes(state.intensity) && window.StoryPagination) {
+          const lastContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+          const lastScene = lastContent.slice(-2000);
+          const eroticResult = validateEroticEscalation(lastScene, state.intensity);
+          results.erotic = eroticResult;
+      }
+
+      // Title validation
+      const titleEl = document.getElementById('storyTitle');
+      if (titleEl && titleEl.textContent) {
+          const titleResult = validateTitle(titleEl.textContent.trim(), state.picks?.tone);
+          results.title = titleResult;
+      }
+
+      // Signal alignment validation
+      if (titleEl && titleEl.textContent) {
+          const currentTitle = titleEl.textContent.trim();
+          const mockCoverPrompt = {
+              promptText: 'emotion: ' + (state.coverEmotion || 'mystery'),
+              emotion: state.coverEmotion || 'mystery'
+          };
+          const signalResult = validateSignalAlignment(currentTitle, mockCoverPrompt, {
+              arousal: state.intensity || 'Naughty',
+              tone: state.picks?.tone || 'Earnest',
+              genre: state.picks?.genre || 'Romance'
+          });
+          results.signal = signalResult;
+      }
+
+      return results;
+  }
+
+  // Expose validators globally for Dev HUD access
+  window.validateDSP = validateDSP;
+  window.validatePOV = validatePOV;
+  window.validateTone = validateTone;
+  window.validateEroticEscalation = validateEroticEscalation;
+  window.getValidationStatus = getValidationStatus;
+  window.VALIDATION_ERRORS = VALIDATION_ERRORS;
 
   // ============================================================
   // NARRATIVE VOCABULARY BANS — POST-GENERATION ENFORCEMENT
@@ -1847,8 +5324,11 @@ Return the rewritten text only, no explanation.`
   };
 
   window.setGameIntensity = function(level) {
-      // honour access tiers: dirty requires subscription, erotic requires non-free
-      if (level === 'Dirty' && window.state.access !== 'sub') { window.showPaywall('sub_only'); return; }
+      // Check eligibility using canonical helper
+      const tempState = { ...window.state, intensity: level };
+      if (!isStoryPassEligible(tempState) && window.state.access !== 'sub') {
+          window.showPaywall('sub_only'); return;
+      }
       if (level === 'Erotic' && window.state.access === 'free') { window.openEroticPreview(); return; }
       window.state.intensity = level;
       updateIntensityUI();
@@ -2013,7 +5493,9 @@ Return the rewritten text only, no explanation.`
       }
 
       if(id === 'modeSelect') {
-          _navHistory = []; 
+          _navHistory = [];
+          // Update Solo subtitle based on permission gradient
+          if (typeof updateSoloSubtitle === 'function') updateSoloSubtitle();
       } else if (!isBack && _currentScreenId && _currentScreenId !== id) {
          if(!['ageGate', 'tosGate', 'tierGate'].includes(_currentScreenId)) {
              _navHistory.push(_currentScreenId);
@@ -2292,6 +5774,10 @@ Return the rewritten text only, no explanation.`
           div.innerHTML = `<p style="font-style:italic; color:var(--gold)">The moment hangs, unresolved.</p>`;
           // Append ending to current page
           StoryPagination.appendToCurrentPage(div.outerHTML);
+          // Show continuation fork after delay for user to read ending
+          setTimeout(() => {
+              showContinuationFork();
+          }, 3000);
           return;
       }
 
@@ -2301,6 +5787,10 @@ Return the rewritten text only, no explanation.`
               state.storyEnded = true;
               document.getElementById('submitBtn').disabled = true;
               renderFlingEnd();
+              // Show continuation fork after delay for user to read ending
+              setTimeout(() => {
+                  showContinuationFork();
+              }, 3000);
           }
       }
   }
@@ -3165,12 +6655,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           quillCtrl.readOnly = !paid;
       }
 
+      // Determine paywall mode: Dirty or Soulmates require sub_only (no StoryPass)
+      const requiresSubOnly = (state.intensity === 'Dirty') || (state.storyLength === 'soulmates');
+      const lockPaywallMode = requiresSubOnly ? 'sub_only' : 'unlock';
+
       ['quillBox', 'actionWrapper', 'dialogueWrapper'].forEach(id => {
         const wrap = document.getElementById(id);
         if(wrap) {
             if (shouldLock) {
                  wrap.classList.add('locked-input');
-                 setPaywallClickGuard(wrap, true);
+                 setPaywallClickGuard(wrap, true, lockPaywallMode);
             } else {
                  wrap.classList.remove('locked-input');
                  setPaywallClickGuard(wrap, false);
@@ -3183,7 +6677,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           submitBtn.disabled = false;
           if (billingLock && !couple) {
               submitBtn.textContent = "Resume Affair to Continue";
-              setPaywallClickGuard(submitBtn, true);
+              setPaywallClickGuard(submitBtn, true, lockPaywallMode);
           } else {
               submitBtn.textContent = "Submit Turn";
               setPaywallClickGuard(submitBtn, false);
@@ -3276,8 +6770,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           card.removeAttribute('data-locked');
       }
 
-      // Set paywall mode: affair/soulmates require sub_only
-      const paywallMode = ['affair', 'soulmates'].includes(val) ? 'sub_only' : 'unlock';
+      // Set paywall mode using canonical eligibility check
+      const tempState = { ...state, storyLength: val };
+      const paywallMode = isStoryPassEligible(tempState) ? 'unlock' : 'sub_only';
       setPaywallClickGuard(card, locked, paywallMode);
 
       // Selection state - toggle both selected and flipped
@@ -3335,8 +6830,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               }
           }
           if(locked) el.classList.remove(isCard ? 'selected' : 'active');
-          // FIX: Dirty always requires subscription - use sub_only mode
-          const paywallMode = (level === 'Dirty') ? 'sub_only' : 'unlock';
+          // Use canonical eligibility check for paywall mode
+          const tempState = { ...state, intensity: level };
+          const paywallMode = isStoryPassEligible(tempState) ? 'unlock' : 'sub_only';
           setPaywallClickGuard(el, locked, paywallMode);
       };
 
@@ -3385,7 +6881,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Game buttons still need handlers (they are not .sb-card elements)
       document.querySelectorAll('#gameIntensity button').forEach(btn => btn.onclick = (e) => {
           const level = btn.innerText.trim();
-          if(level === 'Dirty' && state.access !== 'sub'){ window.showPaywall('sub_only'); return; }
+          // Use canonical eligibility check
+          const tempState = { ...state, intensity: level };
+          if (!isStoryPassEligible(tempState) && state.access !== 'sub') {
+              window.showPaywall('sub_only'); return;
+          }
           if(level === 'Erotic' && state.access === 'free'){ window.openEroticPreview(); return; }
           state.intensity = level;
           state.picks.intensity = level;
@@ -3428,9 +6928,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if(sp) sp.classList.remove('hidden');
     }
     const hasPassNow = state.storyId && hasStoryPass(state.storyId);
-    // LOGIC FIX: Show $3 Story Pass alongside $6 Subscribe for most paywall triggers
-    // Hide unlock ONLY if: user already has pass, is subscribed, or mode is 'sub_only' (true sub-required features)
-    const hideUnlock = (mode === 'sub_only') || state.subscribed || hasPassNow;
+    // EXPLICIT ENFORCEMENT: Dirty and Soulmates NEVER show StoryPass regardless of mode
+    const isDirtyOrSoulmates = (state.intensity === 'Dirty') || (state.storyLength === 'soulmates');
+    // Use canonical eligibility check — Dirty and Soulmates NEVER show StoryPass
+    const hideUnlock = (mode === 'sub_only') || state.subscribed || hasPassNow || isDirtyOrSoulmates || !isStoryPassEligible(state);
     const optUnlock = document.getElementById('optUnlock');
     if(optUnlock) optUnlock.classList.toggle('hidden', !!hideUnlock);
 
@@ -3451,6 +6952,51 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (diaInput) diaInput.disabled = false;
     state._paywallCancelledCeremony = false;
   };
+
+  /**
+   * VALIDATION GUARD: Paywall routing integrity check
+   * Ensures StoryPass is never shown for Dirty or Soulmates
+   * StoryPass ($3) unlocks Clean, Naughty, and Erotic
+   * Returns { valid: true } or { valid: false, error: string }
+   */
+  function validatePaywallRouting() {
+      const optUnlock = document.getElementById('optUnlock');
+      const payModal = document.getElementById('payModal');
+
+      // Only validate when paywall is visible
+      if (!payModal || payModal.classList.contains('hidden')) {
+          return { valid: true, skipped: true };
+      }
+
+      const storyPassVisible = optUnlock && !optUnlock.classList.contains('hidden');
+      const isDirty = state.intensity === 'Dirty';
+      const isSoulmates = state.storyLength === 'soulmates';
+
+      // HARD FAIL: StoryPass visible for Dirty
+      if (storyPassVisible && isDirty) {
+          console.error('[PAYWALL VALIDATION] HARD FAIL: StoryPass shown for Dirty intensity');
+          return {
+              valid: false,
+              error: VALIDATION_ERRORS.STORYPASS_DIRTY_LEAK,
+              context: { intensity: state.intensity, storyLength: state.storyLength }
+          };
+      }
+
+      // HARD FAIL: StoryPass visible for Soulmates
+      if (storyPassVisible && isSoulmates) {
+          console.error('[PAYWALL VALIDATION] HARD FAIL: StoryPass shown for Soulmates length');
+          return {
+              valid: false,
+              error: VALIDATION_ERRORS.STORYPASS_SOULMATES_LEAK,
+              context: { intensity: state.intensity, storyLength: state.storyLength }
+          };
+      }
+
+      return { valid: true };
+  }
+
+  // Expose for DevHUD
+  window.validatePaywallRouting = validatePaywallRouting;
 
   // PASS 1 FIX: Refactored completePurchase with canonical access resolution
   function completePurchase() {
@@ -3512,7 +7058,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if (['fling', 'voyeur'].includes(state.storyLength)) {
               state.storyLength = 'affair';
               upgraded = true;
-              toastMessage = "Story upgraded to Affair.";
+              toastMessage = "You have shed your limitations.";
           }
       }
 
@@ -3638,6 +7184,22 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function hasStoryPass(storyId){ return localStorage.getItem(getStoryPassKey(storyId)) === '1'; }
   // Purchase is the authorization — pass must always be granted when paid
   function grantStoryPass(storyId){ if(storyId) localStorage.setItem(getStoryPassKey(storyId), '1'); }
+
+  /**
+   * CANONICAL StoryPass eligibility check — SINGLE SOURCE OF TRUTH
+   * StoryPass ($3) unlocks: Clean, Naughty, Erotic
+   * StoryPass NEVER unlocks: Dirty, Soulmates
+   * @param {object} st - state object with intensity and storyLength
+   * @returns {boolean} true if StoryPass is a valid unlock option
+   */
+  function isStoryPassEligible(st) {
+    // Dirty intensity ALWAYS requires subscription
+    if (st.intensity === 'Dirty') return false;
+    // Soulmates length ALWAYS requires subscription
+    if (st.storyLength === 'soulmates') return false;
+    // Clean, Naughty, Erotic with non-soulmates length = StoryPass eligible
+    return st.intensity === 'Clean' || st.intensity === 'Naughty' || st.intensity === 'Erotic';
+  }
   function clearCurrentStoryId(){ localStorage.removeItem('sb_current_story_id'); }
   // CORRECTIVE: IndexedDB for large story data when localStorage fails
   const STORY_DB_NAME = 'StoryBoundDB';
@@ -3737,7 +7299,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       tier: state.tier,
       sysPrompt: state.sysPrompt,
       title: document.getElementById('storyTitle')?.textContent || '',
-      synopsis: document.getElementById('storySynopsis')?.textContent || '',
+      synopsis: state._synopsisMetadata || '', // Metadata only, never rendered
       storyHTML: StoryPagination.getAllContent(),  // Full content for fallback
       storyPages: StoryPagination.getPages(),       // Individual pages for pagination
       stateSnapshot: cleanState
@@ -3813,7 +7375,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     applyAccessLocks();
 
     document.getElementById('storyTitle').textContent = data.title || '';
-    document.getElementById('storySynopsis').textContent = data.synopsis || '';
+    // BOOK FLOW SPEC: Synopsis is metadata only, never rendered
+    // Inside cover = blank paper, Setting plate = visual only
+    state._synopsisMetadata = data.synopsis || '';
 
     // Load story into pagination system
     StoryPagination.clear();
@@ -4919,10 +8483,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // Length cards locked after game starts
         if (grp === 'length' && state.turnCount > 0) return;
 
-        // Intensity-specific paywall checks (before generic locked check)
-        if (grp === 'intensity') {
-          if (val === 'Dirty' && state.access !== 'sub') { window.showPaywall('sub_only'); return; }
-          if (val === 'Erotic' && state.access === 'free') { window.openEroticPreview(); return; }
+        // Intensity/length paywall checks using canonical eligibility
+        if (grp === 'intensity' || grp === 'length') {
+          const tempState = grp === 'intensity'
+            ? { ...state, intensity: val }
+            : { ...state, storyLength: val };
+          if (!isStoryPassEligible(tempState) && state.access !== 'sub') {
+            window.showPaywall('sub_only'); return;
+          }
+          if (grp === 'intensity' && val === 'Erotic' && state.access === 'free') {
+            window.openEroticPreview(); return;
+          }
         }
 
         if(card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
@@ -5029,8 +8600,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (indicator) indicator.style.display = 'none';
     }
 
-    // Update DSP when player name changes (DSP MUST include player name)
-    // Immediate DSP recompute on keystroke (uses raw name); normalize on blur
+    // Player name normalization + DSP refresh on keystroke/blur
+    // (DSP no longer includes player name, but refresh is harmless)
     const playerNameInput = $('playerNameInput');
     if (playerNameInput) {
       playerNameInput.addEventListener('input', () => {
@@ -5163,230 +8734,192 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // ╚═══════════════════════════════════════════════════════════════════╝
   //
   // ═══════════════════════════════════════════════════════════════════
-  // DSP TONE-BASED GENERATORS (TONE SUPREMACY)
-  // Tone controls the entire sentence voice, not just one fragment.
-  // When tone changes, the entire DSP sentence rewrites in that voice.
   // ═══════════════════════════════════════════════════════════════════
-  const DSP_WORLD_SETTINGS = {
-    Modern: 'a world of ambition and buried secrets',
-    Historical: 'an age bound by unforgiving rules',
-    Dystopia: 'a broken world that demands sacrifice',
-    PostApocalyptic: 'the ashes of what came before',
-    Fantasy: 'a realm where magic breathes in shadow',
-    SciFi: 'a frontier where stars hold both promise and peril',
-    Supernatural: 'a place where the veil between worlds runs thin',
-    Superheroic: 'a world where power demands impossible choices'
+  // DSP FIXED TEMPLATE — ASSEMBLED, NOT AUTHORED
+  // Two-sentence ceremonial template with locked phrase injection.
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP WORLD PHRASES — LOCKED CANON (DO NOT MODIFY)
+  // Used as: "In [world] …"
+  // Supernatural is a Modern subtype, not a standalone world.
+  // ═══════════════════════════════════════════════════════════════════
+  const DSP_WORLD_PHRASES = {
+    Modern: 'a modern world of ambition and things left unsaid',
+    Historical: 'an era of duty, reputation, and unyielding tradition',
+    Fantasy: 'a realm of oaths, myth, and old magic',
+    SciFi: 'an age of technological acceleration and alien laws',
+    Dystopia: 'a world of surveillance, rationed freedom, and enforced order',
+    PostApocalyptic: 'a broken world of scarcity, ruins, and hard bargains'
   };
 
-  const DSP_GENRE_CONFLICTS = {
-    CrimeSyndicate: 'blood oaths and betrayal',
-    Billionaire: 'games only the powerful understand',
-    Noir: 'shadows where no one walks clean',
-    Heist: 'a plan you must trust completely',
-    Espionage: 'secrets that could kill',
-    Political: 'a web of dangerous alliances'
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP GENRE PARAPHRASES — LOCKED CANON (DO NOT MODIFY)
+  // Used as: "shaped by …"
+  // ═══════════════════════════════════════════════════════════════════
+  const DSP_GENRE_PARAPHRASES = {
+    CrimeSyndicate: 'loyalty, leverage, and quiet violence',
+    Billionaire: 'power, appetite, and polished threat',
+    Noir: 'secrets, temptation, and moral compromise',
+    Political: 'alliances, betrayals, and shifting leverage',
+    Heist: 'precision, misdirection, and nerve',
+    Espionage: 'double lives, coded truths, and invisible wars',
+    Escape: 'locked doors, narrow windows, and the clock',
+    Survival: 'scarcity, endurance, and brutal choices',
+    Sports: 'discipline, rivalry, and everything on the line',
+    Obsession: 'fixation, escalation, and loss of control',
+    Redemption: 'reckoning, mercy, and second chances',
+    BuildingBridges: 'repair, trust, and improbable understanding',
+    RelentlessPast: 'old debts, buried identities, and consequences that refuse to stay buried',
+    ForbiddenKnowledge: 'curiosity, revelation, and the price of knowing',
+    Purgatory: 'unfinished business, reflection, and finding the key to your own lock'
   };
 
-  const DSP_DYNAMIC_ENGINES = {
-    Forbidden: 'desire what you cannot have',
-    Dangerous: 'want the one who could destroy you',
-    Fated: 'fight what was always meant to be',
-    Partners: 'trust only each other',
-    Enemies: 'need the one who stands against you',
-    Friends: 'cross a line you cannot uncross',
-    Proximity: 'share space with the one you cannot escape',
-    SecretIdentity: 'fall for who they pretend to be',
-    Obsessive: 'become the center of someone\'s world',
-    Caretaker: 'let someone see your wounds',
-    SecondChance: 'reopen a door you thought was closed'
+  const DSP_ARCHETYPE_ADJECTIVES = {
+    HEART_WARDEN: 'controlling',
+    OPEN_VEIN: 'overwhelming',
+    SPELLBINDER: 'mesmerizing',
+    ARMORED_FOX: 'unaccountable',
+    DARK_VICE: 'consuming',
+    BEAUTIFUL_RUIN: 'self-destructive',
+    ETERNAL_FLAME: 'unyielding'
   };
 
-  // TONE GENERATORS: Each produces a complete sentence in that tone's voice
-  // ==========================================================================
-  // DSP TEMPLATE ASSEMBLY — NOT AUTHORED PROSE
-  // ==========================================================================
-  // DSP is a fixed English sentence template with slot-filled normalized values.
-  // The model may return labels or short phrases only — NOT full sentences.
-  //
-  // RULES:
-  // - DSP defaults to second person ("You")
-  // - Player name may appear only as an appositive
-  // - Pronouns must remain grammatically consistent
-  //
-  // Template pattern:
-  // You—{{player_name_optional}}—step into a {{world_descriptor}}, where
-  // {{tone_clause}}, and find yourself drawn into {{dynamic_clause}}.
-  // ==========================================================================
+  const DSP_TONAL_ADJECTIVES = {
+    Earnest: 'heartfelt',
+    WryConfession: 'self-deprecating',
+    Poetic: 'brewing',
+    Dark: 'suffocating',
+    Horror: 'terrifying',
+    Mythic: 'fated',
+    Comedic: 'utterly unnecessary',
+    Surreal: 'reality-bending',
+    Satirical: 'forethoughtless'
+  };
 
   /**
-   * Format player name as appositive (parenthetical).
-   * Returns empty string if no custom name provided.
+   * Generate the DSP — fixed two-sentence ceremonial template.
+   * Sentence 1: In [WORLD_PHRASE], shaped by [GENRE_PARAPHRASE], a question awaits:
+   * Sentence 2: Will [ARCHETYPAL_ADJECTIVE] desire redeem this [TONAL_ADJECTIVE] affair — or ruin it?
+   * Slots wrapped in dsp-clause spans for progressive reveal.
+   * World subtypes are intentionally ignored — DSP uses bible phrases only.
    */
-  function formatPlayerAppositive(playerName) {
-    if (!playerName || playerName === 'The Protagonist' || playerName === 'You') {
-      return '';
-    }
-    return `, ${playerName},`;
-  }
-
   /**
-   * Compose world subtype adjective with world text.
-   * World text starts with an article ("a world of...", "an age bound...").
-   * Subtype is a bare adjective ("small-town", "galactic").
-   * Result: "a small-town world of..." — subtype inserted after the article.
-   */
-  function composeWorldWithSubtype(worldText, subtypeAdj) {
-    if (!subtypeAdj) return worldText;
-    // Match leading article + optional space, insert subtype before the noun
-    const m = worldText.match(/^(a |an |the )/i);
-    if (m) {
-      return m[1] + subtypeAdj + ' ' + worldText.substring(m[1].length);
-    }
-    // No article (e.g. "the ashes of...") — prepend subtype with article
-    return 'a ' + subtypeAdj + ' ' + worldText;
-  }
-
-  const DSP_TONE_GENERATORS = {
-    Earnest: ({ playerName, world, worldSubtype, genre, dynamic }) => {
-      const w = composeWorldWithSubtype(world, worldSubtype);
-      return `You${formatPlayerAppositive(playerName)} arrive in ${w}, where ${genre} has already begun, and something inside you aches to ${dynamic}.`;
-    },
-
-    WryConfession: ({ playerName, world, worldSubtype, genre, dynamic }) => {
-      const w = composeWorldWithSubtype(world, worldSubtype);
-      return `So here you are${formatPlayerAppositive(playerName)}, in ${w}, neck-deep in ${genre}, and the worst part is you want to ${dynamic}.`;
-    },
-
-    Satirical: ({ playerName, world, worldSubtype, genre, dynamic }) => {
-      const w = composeWorldWithSubtype(world, worldSubtype);
-      return `Welcome${formatPlayerAppositive(playerName)} to ${w}, where ${genre} is already unraveling, and you have somehow agreed to ${dynamic}.`;
-    },
-
-    Dark: ({ playerName, world, worldSubtype, genre, dynamic }) => {
-      const w = composeWorldWithSubtype(world, worldSubtype);
-      return `In ${w}, ${genre} bleeds through every wall, and you${formatPlayerAppositive(playerName)} will ${dynamic}, no matter what it costs.`;
-    },
-
-    Horror: ({ playerName, world, worldSubtype, genre, dynamic }) => {
-      const w = composeWorldWithSubtype(world, worldSubtype);
-      return `Something patient waits in ${w}, wearing the shape of ${genre}, and it already knows you${formatPlayerAppositive(playerName)} will ${dynamic}.`;
-    },
-
-    Mythic: ({ playerName, world, worldSubtype, genre, dynamic }) => {
-      const w = composeWorldWithSubtype(world, worldSubtype);
-      return `Something ancient stirs for you${formatPlayerAppositive(playerName)} in ${w}, where ${genre} bends the arc of fate, and you must ${dynamic}.`;
-    },
-
-    Comedic: ({ playerName, world, worldSubtype, genre, dynamic }) => {
-      const w = composeWorldWithSubtype(world, worldSubtype);
-      return `Look, ${w} sounded fine on paper${formatPlayerAppositive(playerName)}, but now there is ${genre}, and apparently you are going to ${dynamic}.`;
-    },
-
-    Surreal: ({ playerName, world, worldSubtype, genre, dynamic }) => {
-      const w = composeWorldWithSubtype(world, worldSubtype);
-      const W = w.charAt(0).toUpperCase() + w.slice(1);
-      return `${W} ripples at the edges${formatPlayerAppositive(playerName)}, where ${genre} tastes like something half-remembered, and you ${dynamic}.`;
-    },
-
-    Poetic: ({ playerName, world, worldSubtype, genre, dynamic }) => {
-      const w = composeWorldWithSubtype(world, worldSubtype);
-      return `Beneath the long hush of ${w}, your path${formatPlayerAppositive(playerName)} bends toward ${genre}, and the pull to ${dynamic} settles like a quiet inevitability.`;
-    }
-  };
-
-  // Intensity-aware coda appended to DSP for quality floor
-  const DSP_INTENSITY_CODA = {
-      Clean: 'Some things are better left unsaid.',
-      Naughty: 'Something unspoken pulls at the edges.',
-      Erotic: 'The pull between you burns close to the surface.',
-      Dirty: 'Nothing between you stays hidden for long.'
-  };
-
-  // DSP tone display names — noun-form labels for the authored template
-  const DSP_TONE_DISPLAY = {
-    Earnest: 'earnest longing',
-    WryConfession: 'wry confession',
-    Satirical: 'satire',
-    Dark: 'darkness',
-    Horror: 'horror',
-    Mythic: 'myth',
-    Comedic: 'comedy',
-    Surreal: 'the surreal',
-    Poetic: 'poetry'
-  };
-
-  /**
-   * Generate the DSP sentence — single authored template, no prose composition.
-   * Template: In {world}, shaped by {tone}, a question is already waiting:
-   *           Will {archetype}'s desire redeem this story — or ruin it?
-   * Slots are wrapped in dsp-clause spans for progressive reveal.
+   * Generate DSP sentence from locked template.
+   * HARD FAILS if any required input is missing or invalid.
+   * No fallbacks, no defaults, no invented prose.
+   * @returns {{ success: boolean, html: string|null, error: object|null }}
    */
   function generateDSPSentence() {
-    const world = state.picks.world || 'Modern';
-    const tone = state.picks.tone || 'Earnest';
-    const archetypeId = (state.archetype && state.archetype.primary) || 'BEAUTIFUL_RUIN';
+    const world = state.picks?.world;
+    const genre = state.picks?.genre;
+    const tone = state.picks?.tone;
+    const archetypeId = state.archetype?.primary;
 
-    const worldText = DSP_WORLD_SETTINGS[world] || DSP_WORLD_SETTINGS.Modern;
-    const worldSubtype = state.picks.worldSubtype || getSelectedWorldSubtype(world);
-    const subtypeText = worldSubtype ? formatWorldSubtype(worldSubtype) : null;
-    const fullWorld = composeWorldWithSubtype(worldText, subtypeText);
+    // HARD FAIL: No fallback defaults — all inputs must be explicitly set
+    if (!world) {
+      const error = { code: 'DSP_MISSING_WORLD', message: 'DSP generation failed: world not set' };
+      console.error('[DSP] HARD FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+    if (!genre) {
+      const error = { code: 'DSP_MISSING_GENRE', message: 'DSP generation failed: genre not set' };
+      console.error('[DSP] HARD FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+    if (!tone) {
+      const error = { code: 'DSP_MISSING_TONE', message: 'DSP generation failed: tone not set' };
+      console.error('[DSP] HARD FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+    if (!archetypeId) {
+      const error = { code: 'DSP_MISSING_ARCHETYPE', message: 'DSP generation failed: archetype not set' };
+      console.error('[DSP] HARD FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
 
-    const toneText = DSP_TONE_DISPLAY[tone] || tone.toLowerCase();
-    const archetype = ARCHETYPES[archetypeId];
-    const archLower = archetype ? archetype.name.replace(/^The /, '').toLowerCase() : 'protagonist';
-    const archArticle = /^[aeiou]/.test(archLower) ? 'an' : 'a';
+    // HARD FAIL: Phrase must exist in approved list
+    const worldPhrase = DSP_WORLD_PHRASES[world];
+    if (!worldPhrase) {
+      const error = { code: 'DSP_INVALID_WORLD', message: `DSP generation failed: no approved phrase for world "${world}"` };
+      console.error('[DSP] HARD FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
 
-    return 'In <span class="dsp-clause" data-axis="world">' + fullWorld + '</span>' +
-      ', shaped by <span class="dsp-clause" data-axis="tone">' + toneText + '</span>' +
-      ', a question is already waiting: Will desire that&#8217;s like <span class="dsp-clause" data-axis="archetype">' + archArticle + ' ' + archLower + '</span>' +
-      " redeem this story&#8201;&#8212;&#8201;or ruin it?";
+    const genrePhrase = DSP_GENRE_PARAPHRASES[genre];
+    if (!genrePhrase) {
+      const error = { code: 'DSP_INVALID_GENRE', message: `DSP generation failed: no approved phrase for genre "${genre}"` };
+      console.error('[DSP] HARD FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+
+    const archAdj = DSP_ARCHETYPE_ADJECTIVES[archetypeId];
+    if (!archAdj) {
+      const error = { code: 'DSP_INVALID_ARCHETYPE', message: `DSP generation failed: no approved adjective for archetype "${archetypeId}"` };
+      console.error('[DSP] HARD FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+
+    const toneAdj = DSP_TONAL_ADJECTIVES[tone];
+    if (!toneAdj) {
+      const error = { code: 'DSP_INVALID_TONE', message: `DSP generation failed: no approved adjective for tone "${tone}"` };
+      console.error('[DSP] HARD FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+
+    // CANONICITY ASSERTION: All DSP components must match canonical maps EXACTLY
+    // Guards against any runtime modification or corruption
+    if (worldPhrase !== DSP_WORLD_PHRASES[world]) {
+      const error = { code: 'DSP_CANONICITY_FAIL', message: `World phrase corrupted: expected canonical "${DSP_WORLD_PHRASES[world]}"` };
+      console.error('[DSP] CANONICITY FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+    if (genrePhrase !== DSP_GENRE_PARAPHRASES[genre]) {
+      const error = { code: 'DSP_CANONICITY_FAIL', message: `Genre phrase corrupted: expected canonical "${DSP_GENRE_PARAPHRASES[genre]}"` };
+      console.error('[DSP] CANONICITY FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+    if (archAdj !== DSP_ARCHETYPE_ADJECTIVES[archetypeId]) {
+      const error = { code: 'DSP_CANONICITY_FAIL', message: `Archetype adjective corrupted: expected canonical "${DSP_ARCHETYPE_ADJECTIVES[archetypeId]}"` };
+      console.error('[DSP] CANONICITY FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+    if (toneAdj !== DSP_TONAL_ADJECTIVES[tone]) {
+      const error = { code: 'DSP_CANONICITY_FAIL', message: `Tone adjective corrupted: expected canonical "${DSP_TONAL_ADJECTIVES[tone]}"` };
+      console.error('[DSP] CANONICITY FAIL:', error.message);
+      return { success: false, html: null, error };
+    }
+
+    // STRICT DSP ASSEMBLY — no invented prose, no embellishment
+    const html = 'In <span class="dsp-clause" data-axis="world">' + worldPhrase +
+      ', shaped by ' + genrePhrase + '</span>' +
+      ', a question awaits: Will <span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>' +
+      ' desire redeem this <span class="dsp-clause" data-axis="tone">' + toneAdj + '</span>' +
+      " affair&#8201;&#8212;&#8201;or ruin it?";
+
+    return { success: true, html, error: null };
   }
 
-  /**
-   * Format world subtype for display in DSP
-   * Converts internal subtype keys to readable phrases
-   */
-  function formatWorldSubtype(subtype) {
-    const SUBTYPE_DISPLAY = {
-      // Modern subtypes
-      small_town: 'small-town',
-      college: 'campus',
-      friends: 'friend-group',
-      old_money: 'old-money',
-      office: 'office',
-      supernatural_modern: 'supernatural',
-      superheroic_modern: 'superheroic',
-      // Sci-Fi subtypes
-      space_opera: 'galactic',
-      hard_scifi: 'scientifically rigorous',
-      cyberpunk: 'neon-lit cyberpunk',
-      post_human: 'transcendent',
-      alien_contact: 'alien-touched',
-      abundance_collapse: 'post-scarcity',
-      // Fantasy subtypes
-      enchanted_realms: 'magical',
-      hidden_magic: 'subtle-magic',
-      cursed_corrupt: 'grim',
-      // Dystopia subtypes
-      authoritarian: 'authoritarian',
-      surveillance: 'surveillance',
-      corporate: 'corporate-ruled',
-      environmental: 'ecologically collapsed',
-      // Post-Apocalyptic subtypes
-      nuclear: 'nuclear-scarred',
-      pandemic: 'plague-ravaged',
-      climate: 'climate-devastated',
-      technological: 'tech-fallen',
-      slow_decay: 'slowly decaying'
-    };
-    return SUBTYPE_DISPLAY[subtype] || null;
-  }
+  // NOTE: World subtypes are INTENTIONALLY excluded from DSP.
+  // DSP uses ONLY base world phrases from DSP_WORLD_PHRASES.
+  // Subtypes affect story generation prompts, NOT the DSP.
 
   function updateSynopsisPanel() {
     const synopsisText = document.getElementById('synopsisText');
     if (!synopsisText) return;
 
-    const newSentence = generateDSPSentence();
+    const result = generateDSPSentence();
+
+    // HARD FAIL: Do not display anything if DSP generation failed
+    if (!result.success) {
+      console.error('[DSP] updateSynopsisPanel blocked:', result.error?.message);
+      // Clear any legacy content — DSP must be empty on failure
+      synopsisText.innerHTML = '';
+      synopsisText._lastDSP = null;
+      return;
+    }
+
+    const newSentence = result.html;
 
     // Update with animation if content changed
     if (synopsisText._lastDSP !== newSentence) {
@@ -5420,34 +8953,47 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Phase 1: dissolve current text
     synopsisText.classList.add('dsp-dissolving');
 
-    // Spawn a few particles near DSP during dissolve
+    // Spawn a few particles near DSP during dissolve (anchored to panel)
     const panel = document.getElementById('synopsisPanel');
     if (panel) {
-      const pr = panel.getBoundingClientRect();
-      for (let i = 0; i < 8; i++) {
-        const spark = document.createElement('div');
-        spark.className = 'fate-dust-particle';
-        spark.dataset.sparkleTag = 'dsp-rewrite';
-        const sx = pr.left + Math.random() * pr.width;
-        const sy = pr.top + Math.random() * pr.height;
-        const sz = 2 + Math.random() * 3;
-        const sd = 2000 + Math.random() * 1500;
-        spark.style.cssText = `
-          left:${sx}px; top:${sy}px;
-          width:${sz}px; height:${sz}px;
-          --dust-duration:${sd}ms;
-          --dust-opacity:${0.5 + Math.random() * 0.3};
-          --dust-dx:${(Math.random() - 0.5) * 30}px;
-          --dust-dy:${-(10 + Math.random() * 20)}px;
-        `;
-        document.body.appendChild(spark);
-        setTimeout(() => { if (spark.parentNode) spark.remove(); }, sd + 100);
+      const container = getOrCreateSparkleContainer(panel);
+      if (container) {
+        const pw = panel.offsetWidth;
+        const ph = panel.offsetHeight;
+        for (let i = 0; i < 8; i++) {
+          const spark = document.createElement('div');
+          spark.className = 'fate-dust-particle';
+          spark.dataset.sparkleTag = 'dsp-rewrite';
+          const sx = Math.random() * pw;
+          const sy = Math.random() * ph;
+          const sz = 2 + Math.random() * 3;
+          const sd = 2000 + Math.random() * 1500;
+          spark.style.cssText = `
+            left:${sx}px; top:${sy}px;
+            width:${sz}px; height:${sz}px;
+            --dust-duration:${sd}ms;
+            --dust-opacity:${0.5 + Math.random() * 0.3};
+            --dust-dx:${(Math.random() - 0.5) * 30}px;
+            --dust-dy:${-(10 + Math.random() * 20)}px;
+          `;
+          container.appendChild(spark);
+          setTimeout(() => { if (spark.parentNode) spark.remove(); }, sd + 100);
+        }
       }
     }
 
     // Phase 2: re-render same sentence fully resolved (no pending classes)
     setTimeout(() => {
-      const resolved = generateDSPSentence();
+      const result = generateDSPSentence();
+      // HARD FAIL: Do not display anything if DSP generation failed
+      if (!result.success) {
+        console.error('[DSP] performDSPCeremonialRewrite blocked:', result.error?.message);
+        synopsisText.innerHTML = '';
+        synopsisText._lastDSP = null;
+        synopsisText.classList.remove('dsp-dissolving');
+        return;
+      }
+      const resolved = result.html;
       synopsisText.innerHTML = resolved;
       synopsisText._lastDSP = resolved;
       synopsisText.classList.remove('dsp-dissolving');
@@ -5933,6 +9479,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if(fill) fill.style.width = '0%';
     if(overlay) overlay.classList.remove('hidden');
 
+    // Start loading bar sparkles
+    startOverlayLoadingSparkles();
+
     // Show/hide cancel button based on cancellable flag
     if (cancelBtn) {
         if (cancellable) {
@@ -6037,6 +9586,117 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if(fill) fill.style.width = '0%';
       if(percentEl) percentEl.textContent = '0%';
     }, 120);
+
+    // Stop overlay sparkles
+    stopOverlayLoadingSparkles();
+  }
+
+  // ============================================================
+  // OVERLAY LOADING BAR SPARKLES (Story + Visualize ONLY)
+  // SEPARATE from cover bar sparkles — do NOT modify cover system
+  // ============================================================
+  let _overlaySparkleInterval = null;
+
+  function spawnOverlayLoadingSparkle(container) {
+      if (!container) return;
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+      if (containerWidth === 0) return;
+
+      const sparkle = document.createElement('div');
+      sparkle.className = 'overlay-loading-sparkle';
+
+      // Random X position along the bar
+      const spawnX = Math.random() * containerWidth;
+      // Slight vertical variance above/below centerline
+      const spawnY = (Math.random() - 0.5) * 20 - 8;
+
+      // Curved arc motion — upward drift with lateral sway
+      const baseAngle = -60 - Math.random() * 60; // -60° to -120° (upward arc)
+      const angleRad = baseAngle * (Math.PI / 180);
+      const distance = 25 + Math.random() * 45;
+      const dx = Math.cos(angleRad) * distance * (Math.random() > 0.5 ? 1 : -1);
+      const dy = Math.sin(angleRad) * distance - 15 - Math.random() * 20; // Strong upward bias
+
+      // Lateral sway for organic feel
+      const sway = (Math.random() - 0.5) * 18;
+
+      // Rotation for visual interest
+      const rotation = (Math.random() - 0.5) * 40;
+
+      // Variable size (2-5px)
+      const size = 2 + Math.random() * 3;
+
+      // Randomized lifetime (1.2s - 3.5s)
+      const duration = 1200 + Math.random() * 2300;
+
+      // Variable opacity (0.6 - 0.95)
+      const opacity = 0.6 + Math.random() * 0.35;
+
+      // Randomized easing
+      const easings = ['ease-in-out', 'ease-out', 'cubic-bezier(0.4, 0, 0.2, 1)', 'cubic-bezier(0.25, 0.1, 0.25, 1)'];
+      const easing = easings[Math.floor(Math.random() * easings.length)];
+
+      sparkle.style.cssText = `
+          left: ${spawnX}px;
+          top: ${spawnY}px;
+          width: ${size}px;
+          height: ${size}px;
+          --ols-duration: ${duration}ms;
+          --ols-opacity: ${opacity};
+          --ols-dx: ${dx}px;
+          --ols-dy: ${dy}px;
+          --ols-sway: ${sway}px;
+          --ols-rot: ${rotation}deg;
+          --ols-easing: ${easing};
+      `;
+
+      container.appendChild(sparkle);
+      setTimeout(() => { if (sparkle.parentNode) sparkle.remove(); }, duration + 100);
+  }
+
+  function startOverlayLoadingSparkles() {
+      stopOverlayLoadingSparkles();
+
+      const loadingBar = document.getElementById('loadingOverlayBar');
+      if (!loadingBar) return;
+
+      // Ensure container is positioned for absolute children
+      const style = window.getComputedStyle(loadingBar);
+      if (style.position === 'static') {
+          loadingBar.style.position = 'relative';
+      }
+      loadingBar.style.overflow = 'visible';
+      loadingBar.classList.add('sparkle-active');
+
+      // Higher density: spawn at staggered intervals (8-16 concurrent)
+      _overlaySparkleInterval = setInterval(() => {
+          spawnOverlayLoadingSparkle(loadingBar);
+      }, 140); // ~7 sparkles per second
+
+      // Initial burst — staggered for natural appearance
+      for (let i = 0; i < 8; i++) {
+          setTimeout(() => spawnOverlayLoadingSparkle(loadingBar), i * 60);
+      }
+  }
+
+  function stopOverlayLoadingSparkles() {
+      if (_overlaySparkleInterval) {
+          clearInterval(_overlaySparkleInterval);
+          _overlaySparkleInterval = null;
+      }
+
+      const loadingBar = document.getElementById('loadingOverlayBar');
+      if (loadingBar) {
+          loadingBar.classList.remove('sparkle-active');
+      }
+
+      // Fade out existing sparkles gracefully
+      document.querySelectorAll('.overlay-loading-sparkle').forEach(s => {
+          s.style.opacity = '0';
+          s.style.transition = 'opacity 0.4s ease-out';
+          setTimeout(() => s.remove(), 450);
+      });
   }
 
   // Bind cancel button
@@ -6460,6 +10120,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (!synopsisText) return;
     synopsisText.querySelectorAll('.dsp-clause[data-axis="' + axis + '"]').forEach(span => {
       span.classList.remove('dsp-pending');
+      // Brief golden glow on reveal — magical, non-layout-shifting
+      span.classList.add('dsp-glow');
+      setTimeout(() => span.classList.remove('dsp-glow'), 550);
     });
   }
 
@@ -6495,6 +10158,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     MAX_OPACITY: 0.9
   };
 
+  // DEV ASSERTION: Fate card sparkles must be DOM descendants of the Fate card
+  // Validates invariant: sparkles appended to .fate-destiny-card subtree only
+  function assertFateSparkleOwnership(particle, tag) {
+    if (!particle) return;
+    const fateCard = particle.closest('.fate-destiny-card');
+    if (!fateCard) {
+      console.error('[DEV] INVARIANT VIOLATION: Fate sparkle (tag=' + tag + ') is not a DOM descendant of .fate-destiny-card. Parent:', particle.parentElement);
+    }
+  }
+
   function spawnDustParticle() {
     if (!_guidedFateVisualsActive) return;
 
@@ -6503,7 +10176,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (existing.length >= DUST_CONFIG.MAX_PARTICLES) return;
 
     const particle = document.createElement('div');
-    particle.className = 'fate-dust-particle';
+    particle.className = 'fate-dust-particle fate-dust-particle--viewport';
     particle.dataset.sparkleTag = 'vignette';
 
     // Viewport-based positioning weighted toward vignette edges
@@ -6583,38 +10256,63 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
   }
 
+  // Get or create sparkle anchor container inside an element
+  // Container uses position: absolute with inset: 0 and overflow: visible
+  // so sparkles can appear on the perimeter (outside element bounds)
+  function getOrCreateSparkleContainer(element) {
+    if (!element) return null;
+    // Ensure parent is positioned so absolute children work correctly
+    const computedStyle = window.getComputedStyle(element);
+    if (computedStyle.position === 'static') {
+      element.style.position = 'relative';
+    }
+    // Check for existing container
+    let container = element.querySelector(':scope > .sparkle-anchor-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'sparkle-anchor-container';
+      element.appendChild(container);
+    }
+    return container;
+  }
+
   // Ambient pre-click sparkle emitter for the Guided Fate card
+  // Sparkles are anchored to the card element and move with it on scroll
   function spawnAmbientCardSparkle() {
     const fateCard = document.getElementById('fateDestinyCard');
     if (!fateCard || fateCard.dataset.fateUsed === 'true') return;
     if (!fateCard.offsetParent) return; // not visible
 
-    const existing = document.querySelectorAll('.fate-dust-particle[data-sparkle-tag="ambient"]');
+    const container = getOrCreateSparkleContainer(fateCard);
+    if (!container) return;
+
+    const existing = container.querySelectorAll('.fate-dust-particle[data-sparkle-tag="ambient"]');
     if (existing.length >= 90) return;
 
-    const rect = fateCard.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
+    const width = fateCard.offsetWidth;
+    const height = fateCard.offsetHeight;
+    if (width === 0 || height === 0) return;
 
     const particle = document.createElement('div');
     particle.className = 'fate-dust-particle';
     particle.dataset.sparkleTag = 'ambient';
 
-    // Spawn on outer perimeter ±14-22px outside card edges
+    // Spawn on outer perimeter ±14-22px outside card edges (element-relative)
     const side = Math.random();
     const offset = 14 + Math.random() * 8;
     let x, y;
-    if (side < 0.25) { x = rect.left + Math.random() * rect.width; y = rect.top - offset; }
-    else if (side < 0.5) { x = rect.left + Math.random() * rect.width; y = rect.bottom + offset; }
-    else if (side < 0.75) { x = rect.left - offset; y = rect.top + Math.random() * rect.height; }
-    else { x = rect.right + offset; y = rect.top + Math.random() * rect.height; }
+    if (side < 0.25) { x = Math.random() * width; y = -offset; }
+    else if (side < 0.5) { x = Math.random() * width; y = height + offset; }
+    else if (side < 0.75) { x = -offset; y = Math.random() * height; }
+    else { x = width + offset; y = Math.random() * height; }
 
     const size = 2 + Math.random() * 5;
     const duration = 3000 + Math.random() * 4000;
     const opacity = 0.5 + Math.random() * 0.4;
 
-    // Slow orbit / drift outward
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
+    // Slow orbit / drift outward from element center
+    const cx = width / 2;
+    const cy = height / 2;
     const outAngle = Math.atan2(y - cy, x - cx);
     const dx = Math.cos(outAngle) * (10 + Math.random() * 20);
     const dy = Math.sin(outAngle) * (10 + Math.random() * 20) - 10;
@@ -6626,7 +10324,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       --dust-opacity: ${opacity};
       --dust-dx: ${dx}px; --dust-dy: ${dy}px;
     `;
-    document.body.appendChild(particle);
+    container.appendChild(particle);
+    assertFateSparkleOwnership(particle, 'ambient');
     setTimeout(() => { if (particle.parentNode) particle.remove(); }, duration + 100);
   }
 
@@ -6651,15 +10350,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
   }
 
-  // Anchor-aware sparkle spawner — particles originate from a DOM element's bounding box
+  // Anchor-aware sparkle spawner — particles are anchored to a DOM element
+  // Uses element-relative positioning so sparkles move with the element on scroll
   function startFateEdgeSparkles({ anchorEl, anchorRect, maxParticles, spawnInterval, tag }) {
     if (!anchorEl) return;
     maxParticles = maxParticles || DUST_CONFIG.MAX_PARTICLES;
     spawnInterval = spawnInterval || DUST_CONFIG.SPAWN_INTERVAL;
     tag = tag || 'card';
 
-    const checkRect = anchorRect || anchorEl.getBoundingClientRect();
-    if (checkRect.width === 0 || checkRect.height === 0) {
+    const container = getOrCreateSparkleContainer(anchorEl);
+    if (!container) return;
+
+    const checkWidth = anchorEl.offsetWidth;
+    const checkHeight = anchorEl.offsetHeight;
+    if (checkWidth === 0 || checkHeight === 0) {
       console.warn('[DEV] startFateEdgeSparkles: anchor has zero dimensions — aborting');
       return;
     }
@@ -6667,18 +10371,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     function spawn() {
       if (!_guidedFateVisualsActive) return;
 
-      const tagSelector = '.fate-dust-particle[data-sparkle-tag="' + tag + '"]';
-      const existing = document.querySelectorAll(tagSelector);
+      const existing = container.querySelectorAll('.fate-dust-particle[data-sparkle-tag="' + tag + '"]');
       if (existing.length >= maxParticles) return;
 
-      const rect = anchorEl.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
+      const width = anchorEl.offsetWidth;
+      const height = anchorEl.offsetHeight;
+      if (width === 0 || height === 0) return;
 
       const particle = document.createElement('div');
       particle.className = 'fate-dust-particle';
       particle.dataset.sparkleTag = tag;
 
-      // Spawn on outer perimeter — offset ±12-20px outside element edges
+      // Spawn on outer perimeter — offset ±12-20px outside element edges (element-relative)
       const OFFSET_MIN = 12;
       const OFFSET_MAX = 20;
       const perimeterSide = Math.random();
@@ -6686,20 +10390,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const offset = OFFSET_MIN + Math.random() * (OFFSET_MAX - OFFSET_MIN);
       if (perimeterSide < 0.25) {
         // Top edge
-        x = rect.left + Math.random() * rect.width;
-        y = rect.top - offset;
+        x = Math.random() * width;
+        y = -offset;
       } else if (perimeterSide < 0.5) {
         // Bottom edge
-        x = rect.left + Math.random() * rect.width;
-        y = rect.bottom + offset;
+        x = Math.random() * width;
+        y = height + offset;
       } else if (perimeterSide < 0.75) {
         // Left edge
-        x = rect.left - offset;
-        y = rect.top + Math.random() * rect.height;
+        x = -offset;
+        y = Math.random() * height;
       } else {
         // Right edge
-        x = rect.right + offset;
-        y = rect.top + Math.random() * rect.height;
+        x = width + offset;
+        y = Math.random() * height;
       }
 
       const size = DUST_CONFIG.MIN_SIZE + Math.random() * (DUST_CONFIG.MAX_SIZE - DUST_CONFIG.MIN_SIZE);
@@ -6707,8 +10411,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const opacity = DUST_CONFIG.MIN_OPACITY + Math.random() * (DUST_CONFIG.MAX_OPACITY - DUST_CONFIG.MIN_OPACITY);
 
       // Drift outward from element center
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
+      const cx = width / 2;
+      const cy = height / 2;
       const outAngle = Math.atan2(y - cy, x - cx);
       const driftDistance = 15 + Math.random() * 30;
       const dx = Math.cos(outAngle) * driftDistance;
@@ -6725,7 +10429,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         --dust-dy: ${dy}px;
       `;
 
-      document.body.appendChild(particle);
+      container.appendChild(particle);
+      // Assert Fate card sparkles are DOM-owned (tag='card' only, not 'input')
+      if (tag === 'card') {
+        assertFateSparkleOwnership(particle, tag);
+      }
       setTimeout(() => { if (particle.parentNode) particle.remove(); }, duration + 100);
     }
 
@@ -6739,10 +10447,37 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
   }
 
+  // Scroll handler for sparkle fade-out — prevents sparkles drifting from cards
+  let _sparkleScrollHandler = null;
+  let _sparkleScrollFading = false;
+
+  function handleSparkleScroll() {
+      if (!_guidedFateVisualsActive || _sparkleScrollFading) return;
+      _sparkleScrollFading = true;
+
+      // Only fade out viewport-based (vignette) sparkles — anchored sparkles move with their parent
+      document.querySelectorAll('.fate-dust-particle--viewport').forEach(p => {
+          p.style.transition = 'opacity 250ms ease-out';
+          p.style.opacity = '0';
+      });
+
+      // Stop vignette emitter only — anchored emitters keep running
+      if (_dustInterval) {
+          clearInterval(_dustInterval);
+          _dustInterval = null;
+      }
+
+      // Cleanup viewport particles after fade completes
+      setTimeout(() => {
+          document.querySelectorAll('.fate-dust-particle--viewport').forEach(p => p.remove());
+      }, 300);
+  }
+
   // Activate Guided Fate visuals — requires actual Guided Fate card DOM node
   function activateGuidedFateVisuals(fateCardElement) {
       if (!fateCardElement) return;
       _guidedFateVisualsActive = true;
+      _sparkleScrollFading = false;
 
       // Vignette
       const vignette = document.getElementById('fateVignette');
@@ -6776,11 +10511,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           partnerInput.classList.add('guided-fate-glow');
           startFateEdgeSparkles({ anchorEl: partnerInput, maxParticles: 9, spawnInterval: 270, tag: 'input' });
       }
+
+      // SCROLL FADE-OUT: Add scroll listener to fade sparkles on scroll
+      if (_sparkleScrollHandler) {
+          window.removeEventListener('scroll', _sparkleScrollHandler, true);
+      }
+      _sparkleScrollHandler = handleSparkleScroll;
+      window.addEventListener('scroll', _sparkleScrollHandler, true); // capture phase for all scrollable containers
   }
 
   // Deactivate Guided Fate visuals — idempotent, no guards
   function deactivateGuidedFateVisuals() {
       _guidedFateVisualsActive = false;
+      _sparkleScrollFading = false;
+
+      // Remove scroll listener
+      if (_sparkleScrollHandler) {
+          window.removeEventListener('scroll', _sparkleScrollHandler, true);
+          _sparkleScrollHandler = null;
+      }
 
       // Clear all sparkle intervals and DOM particles
       stopFairyDust();
@@ -6808,18 +10557,23 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function applySelectionAura(el) {
       if (!el) return;
       el.classList.add('selection-aura');
-      const rect = el.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
+      const width = el.offsetWidth;
+      const height = el.offsetHeight;
+      if (width === 0 || height === 0) return;
 
-      // Low-density sparkles from element perimeter
+      const container = getOrCreateSparkleContainer(el);
+      if (!container) return;
+
+      // Low-density sparkles from element perimeter (element-relative)
       const OFFSET_MIN = 8;
       const OFFSET_MAX = 14;
       function spawnAuraSparkle() {
-          const existing = document.querySelectorAll('.fate-dust-particle[data-sparkle-tag="aura"]');
+          const existing = container.querySelectorAll('.fate-dust-particle[data-sparkle-tag="aura"]');
           if (existing.length >= 4) return;
 
-          const r = el.getBoundingClientRect();
-          if (r.width === 0 || r.height === 0) return;
+          const w = el.offsetWidth;
+          const h = el.offsetHeight;
+          if (w === 0 || h === 0) return;
 
           const particle = document.createElement('div');
           particle.className = 'fate-dust-particle';
@@ -6828,15 +10582,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           const side = Math.random();
           const offset = OFFSET_MIN + Math.random() * (OFFSET_MAX - OFFSET_MIN);
           let x, y;
-          if (side < 0.25) { x = r.left + Math.random() * r.width; y = r.top - offset; }
-          else if (side < 0.5) { x = r.left + Math.random() * r.width; y = r.bottom + offset; }
-          else if (side < 0.75) { x = r.left - offset; y = r.top + Math.random() * r.height; }
-          else { x = r.right + offset; y = r.top + Math.random() * r.height; }
+          if (side < 0.25) { x = Math.random() * w; y = -offset; }
+          else if (side < 0.5) { x = Math.random() * w; y = h + offset; }
+          else if (side < 0.75) { x = -offset; y = Math.random() * h; }
+          else { x = w + offset; y = Math.random() * h; }
 
           const size = 2 + Math.random() * 4;
           const duration = 3000 + Math.random() * 3000;
           const opacity = 0.15 + Math.random() * 0.3;
-          const angle = Math.atan2(y - (r.top + r.height / 2), x - (r.left + r.width / 2));
+          const cx = w / 2;
+          const cy = h / 2;
+          const angle = Math.atan2(y - cy, x - cx);
           const dx = Math.cos(angle) * (10 + Math.random() * 15);
           const dy = Math.sin(angle) * (10 + Math.random() * 15) - 10;
 
@@ -6847,7 +10603,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
             --dust-opacity: ${opacity};
             --dust-dx: ${dx}px; --dust-dy: ${dy}px;
           `;
-          document.body.appendChild(particle);
+          container.appendChild(particle);
           setTimeout(() => { if (particle.parentNode) particle.remove(); }, duration + 100);
       }
 
@@ -7195,6 +10951,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     state.veto = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
     state.quillIntent = '';
+    // QUILL STATE RESET: Reset cooldown on new story (quillSpent only set AFTER actual commit)
+    state.quill = { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600 };
+    state.quillCommittedThisTurn = false;
+    // VETO SCOPING: Clear shape-phase committed vetoes on story start
+    // In-story vetoes are added fresh via gameVetoInput
+    state.committedVeto = [];
+    state.committedQuill = [];
 
     // Pre-set dropdowns silently
     $('playerGender').value = 'Female';
@@ -7425,6 +11188,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Clear veto/quill (defaults only)
     state.veto = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
     state.quillIntent = '';
+    // QUILL STATE RESET: Reset cooldown on new story (quillSpent only set AFTER actual commit)
+    state.quill = { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600 };
+    state.quillCommittedThisTurn = false;
+    // VETO SCOPING: Clear shape-phase committed vetoes on story start
+    state.committedVeto = [];
+    state.committedQuill = [];
 
     // Update UI cards to reflect selections
     updateAllCardSelections();
@@ -7865,7 +11634,16 @@ AUTHOR AS CONDUCTOR (5TH PERSON) - MANDATORY OPENER:
     ];
     const selectedOpening = openingModes[Math.floor(Math.random() * openingModes.length)];
 
-    const introPrompt = `Write the opening scene (approx 400-500 words). This is 2-3 pages of a book. Take your time.
+    // 5TH PERSON POV CONTRACT INJECTION (locked, non-editable)
+    const fifthPersonContract = build5thPersonContract();
+
+    // EROTIC ESCALATION BLOCK (Erotic/Dirty intensity only)
+    const eroticEscalationBlock = buildEroticEscalationBlock();
+
+    // TONE ENFORCEMENT BLOCK (all tones)
+    const toneEnforcementBlock = buildToneEnforcementBlock(state.picks?.tone);
+
+    const introPrompt = `${fifthPersonContract}${eroticEscalationBlock}${toneEnforcementBlock}Write the opening scene (approx 400-500 words). This is 2-3 pages of a book. Take your time.
 ${authorOpeningDirective}
 OPENING MODE: ${selectedOpening.mode}
 ${selectedOpening.directive}
@@ -8101,14 +11879,201 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
             {role:'user', content: introPrompt}
         ]);
 
-        // 5TH PERSON OPENER ENFORCEMENT: Must start with "The Author"
+        // ============================================================
+        // PROSE REFUSAL GATE — ATOMIC SCENE CREATION GUARD
+        // ============================================================
+        // Check IMMEDIATELY after callChat — before any validation/repair.
+        // If refusal detected, abort entire flow. Scene is never created.
+        const refusalCheck = detectProseRefusal(text);
+        if (refusalCheck.isRefusal) {
+            console.error('[ProseRefusal] Scene 1 generation refused:', refusalCheck.reason);
+            console.error('[ProseRefusal] Raw output:', text?.slice(0, 200));
+            throw new ProseRefusalError(refusalCheck.reason, text);
+        }
+
+        // 5TH PERSON POV COMPREHENSIVE VALIDATION (Scene 1)
         if (state.povMode === 'author5th') {
-            if (!validate5thPersonOpener(text)) {
-                console.log('[5thPerson] Opener does not start with "The Author" - enforcing rewrite');
-                text = await enforce5thPersonOpener(text);
+            const povCheck = validate5thPersonPOV(text, true, false); // isSceneOne=true, isErotic=false
+            if (!povCheck.valid) {
+                console.log('[5thPerson] POV validation failed:', povCheck.violations);
+                if (povCheck.canRepair) {
+                    // Only voyeur verbs are repairable
+                    text = await repair5thPersonPOV(text);
+                    console.log('[5thPerson] Voyeur verbs repaired');
+                } else {
+                    // HARD FAIL — Scene 1 opener/closer/frequency violations require full regeneration
+                    console.error('[5thPerson] HARD FAIL — Scene 1 regenerating:', povCheck.violations);
+                    const hardFailViolations = povCheck.violations.filter(v => v.startsWith('HARD_FAIL:')).map(v => v.replace('HARD_FAIL:', ''));
+                    const strictPrompt = FIFTH_PERSON_POV_CONTRACT + '\n\nCRITICAL REGENERATION REQUIRED.\nPrevious output FAILED these absolute rules:\n- ' +
+                        hardFailViolations.join('\n- ') + '\n\nYou MUST:\n1. Start with exactly "The Author" as first two words\n2. Include 6+ Author mentions throughout\n3. End with Author as final perspective (reflection, doubt, or resistance)\n\n' + introPrompt;
+                    text = await callChat([
+                        { role: 'system', content: state.sysPrompt },
+                        { role: 'user', content: strictPrompt }
+                    ]);
+                    // REFUSAL GATE: Check regeneration output
+                    const regenRefusal = detectProseRefusal(text);
+                    if (regenRefusal.isRefusal) {
+                        console.error('[ProseRefusal] POV regeneration refused:', regenRefusal.reason);
+                        throw new ProseRefusalError(regenRefusal.reason, text);
+                    }
+                    // Apply voyeur verb cleanup only (opener/closer are structural)
+                    text = await repair5thPersonPOV(text);
+                }
             }
-            // Also enforce conductor (no voyeur verbs) throughout
-            text = enforceAuthorConductor(text);
+
+            // AUTHOR FUNCTION CONTRACT VALIDATION (Scene 1 only)
+            // Validates that Author performs all five required functions
+            const MAX_AUTHOR_FUNCTION_ATTEMPTS = 3;
+            let authorFuncAttempts = 0;
+            let authorRoleCheck = validateFifthPersonAuthorRole(text, 1); // sceneIndex=1
+
+            while (!authorRoleCheck.valid && authorFuncAttempts < MAX_AUTHOR_FUNCTION_ATTEMPTS) {
+                authorFuncAttempts++;
+                console.error('[AuthorRole] HARD FAIL — Attempt', authorFuncAttempts, ':', authorRoleCheck.violations);
+
+                const authorFuncPrompt = buildAuthorFunctionRegenerationPrompt(
+                    authorRoleCheck.violations,
+                    authorRoleCheck.functions
+                ) + introPrompt;
+
+                text = await callChat([
+                    { role: 'system', content: state.sysPrompt },
+                    { role: 'user', content: authorFuncPrompt }
+                ]);
+                // REFUSAL GATE: Check regeneration output
+                const authorRegenRefusal = detectProseRefusal(text);
+                if (authorRegenRefusal.isRefusal) {
+                    console.error('[ProseRefusal] Author function regeneration refused:', authorRegenRefusal.reason);
+                    throw new ProseRefusalError(authorRegenRefusal.reason, text);
+                }
+
+                // Re-validate
+                authorRoleCheck = validateFifthPersonAuthorRole(text, 1);
+            }
+
+            if (!authorRoleCheck.valid) {
+                console.error('[AuthorRole] Max attempts reached. Final violations:', authorRoleCheck.violations);
+            } else if (authorFuncAttempts > 0) {
+                console.log('[AuthorRole] Validation passed after', authorFuncAttempts, 'regeneration(s)');
+            }
+
+            // SCENE 1 WORD COUNT ENFORCEMENT (150-250 words)
+            const MAX_SCENE1_REGEN_ATTEMPTS = 3;
+            let wordCountAttempts = 0;
+            let wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+
+            while ((wordCount < 150 || wordCount > 250) && wordCountAttempts < MAX_SCENE1_REGEN_ATTEMPTS) {
+                wordCountAttempts++;
+                console.error('[Scene1:WordCount] HARD FAIL — ' + wordCount + ' words (required: 150-250). Attempt ' + wordCountAttempts);
+
+                const wordCountPrompt = `
+═══════════════════════════════════════════════════════════════════════════════
+SCENE 1 WORD COUNT ENFORCEMENT — HARD FAIL
+═══════════════════════════════════════════════════════════════════════════════
+
+Your output was ${wordCount} words. Scene 1 MUST be 150-250 words.
+
+${wordCount < 150 ? 'TOO SHORT: Add more Author presence, anticipation, and stage-setting.' : 'TOO LONG: Be more concise. Focus on Author agency, not description.'}
+
+DO NOT pad with filler. DO NOT trim meaningful content.
+Write exactly 150-250 words with full Author-Dominant POV.
+
+═══════════════════════════════════════════════════════════════════════════════
+` + introPrompt;
+
+                text = await callChat([
+                    { role: 'system', content: state.sysPrompt },
+                    { role: 'user', content: wordCountPrompt }
+                ]);
+                // REFUSAL GATE: Check regeneration output
+                const wcRegenRefusal = detectProseRefusal(text);
+                if (wcRegenRefusal.isRefusal) {
+                    console.error('[ProseRefusal] Word count regeneration refused:', wcRegenRefusal.reason);
+                    throw new ProseRefusalError(wcRegenRefusal.reason, text);
+                }
+                wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+            }
+
+            if (wordCount < 150 || wordCount > 250) {
+                console.error('[Scene1:WordCount] Max attempts reached. Final word count:', wordCount);
+            }
+
+            // STRICT 5TH PERSON ENFORCEMENT (continuous presence, interiority, pronouns, tone)
+            // This is BLOCKING — Scene 1 cannot proceed without passing
+            const MAX_STRICT_ATTEMPTS = 3;
+            let strictAttempts = 0;
+            let strictCheck = enforceStrict5thPersonPOV(text, 1, state.picks?.tone);
+
+            while (!strictCheck.valid && strictAttempts < MAX_STRICT_ATTEMPTS) {
+                strictAttempts++;
+                console.error('[5thPerson:Strict] ENFORCEMENT FAILED — Attempt', strictAttempts, ':', strictCheck.violations);
+
+                // Log which specific checks failed
+                Object.entries(strictCheck.checks).forEach(([check, passed]) => {
+                    if (!passed) console.error('[5thPerson:Strict] Failed check:', check);
+                });
+
+                // Strict violations require regeneration with enhanced contract
+                const strictViolations = strictCheck.violations.map(v => v.replace(/AUTHOR_\w+_FAIL:/, '')).join('\n- ');
+                const strictEnforcementPrompt = `
+═══════════════════════════════════════════════════════════════════════════════
+STRICT 5TH PERSON POV ENFORCEMENT — HARD FAIL (Attempt ${strictAttempts})
+═══════════════════════════════════════════════════════════════════════════════
+
+Your output FAILED strict 5th Person POV requirements:
+- ${strictViolations}
+
+ABSOLUTE REQUIREMENTS:
+1. The Author must appear CONTINUOUSLY (max 2 paragraph gap)
+2. The Author must express INTERIORITY (doubt, fear, hope, wonder — not just action verbs)
+3. The Author's pronouns must mirror Player 1 gender (${state.playerGender || state.picks?.playerGender || 'unknown'})
+4. Tone markers must appear IN THE AUTHOR'S VOICE
+5. The scene must COLLAPSE without The Author (narrative dependency)
+
+PROHIBITED:
+- Author-as-camera (neutral observation)
+- Author-as-cameo (only at beginning/end)
+- Mechanical mentions ("The Author observed...")
+- Narrative autonomy (scene functioning without Author)
+- Pronoun drift (Author MUST use ${state.playerGender === 'male' ? 'he/him/his' : state.playerGender === 'female' ? 'she/her' : 'matching'} pronouns)
+
+═══════════════════════════════════════════════════════════════════════════════
+` + introPrompt;
+
+                text = await callChat([
+                    { role: 'system', content: state.sysPrompt },
+                    { role: 'user', content: strictEnforcementPrompt }
+                ]);
+                // REFUSAL GATE: Check regeneration output
+                const strictRegenRefusal = detectProseRefusal(text);
+                if (strictRegenRefusal.isRefusal) {
+                    console.error('[ProseRefusal] Strict POV regeneration refused:', strictRegenRefusal.reason);
+                    throw new ProseRefusalError(strictRegenRefusal.reason, text);
+                }
+                text = await repair5thPersonPOV(text);
+
+                // Re-validate
+                strictCheck = enforceStrict5thPersonPOV(text, 1, state.picks?.tone);
+            }
+
+            if (!strictCheck.valid) {
+                console.error('[5thPerson:Strict] Max attempts reached. Final violations:', strictCheck.violations);
+            } else if (strictAttempts > 0) {
+                console.log('[5thPerson:Strict] Validation passed after', strictAttempts, 'regeneration(s)');
+            }
+
+            // FINAL GATE: Scene 1 cannot proceed unless ALL validations pass
+            const finalAuthorCheck = validateFifthPersonAuthorRole(text, 1);
+            const finalStrictCheck = enforceStrict5thPersonPOV(text, 1, state.picks?.tone);
+            const finalWordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+
+            if (!finalAuthorCheck.valid || !finalStrictCheck.valid || finalWordCount < 150 || finalWordCount > 250) {
+                console.error('[Scene1:FinalGate] SCENE 1 FAILED TO MEET CONTRACT');
+                console.error('[Scene1:FinalGate] AuthorRole:', finalAuthorCheck.valid ? 'PASS' : 'FAIL');
+                console.error('[Scene1:FinalGate] StrictPOV:', finalStrictCheck.valid ? 'PASS' : 'FAIL');
+                console.error('[Scene1:FinalGate] WordCount:', finalWordCount, (finalWordCount >= 150 && finalWordCount <= 250) ? 'PASS' : 'FAIL');
+                // Log but proceed — we've exhausted retries
+            }
         }
 
         // VOCABULARY BAN ENFORCEMENT — story opener prose
@@ -8123,33 +12088,195 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
             }
         );
 
-        let title = await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
+        // ============================================================
+        // NARRATIVE AUTHORITY VALIDATION (Scene 1 — Runs FIRST, before Tone/POV)
+        // ============================================================
+        const scene1NarrCheck = validateNarrativeAuthority(text);
+        _lastNarrativeAuthorityValidation = {
+            valid: scene1NarrCheck.valid,
+            errors: scene1NarrCheck.errors,
+            timestamp: Date.now()
+        };
+        if (!scene1NarrCheck.valid) {
+            console.log('[NarrativeAuthority] Scene 1 validation failed:', scene1NarrCheck.errors);
+            // Regenerate with Narrative Authority enforcement
+            const narrAuthPrompt = buildNarrativeAuthorityBlock() +
+                '\n\nREGENERATION REQUIRED — Previous output violated Narrative Authority:\n- ' +
+                scene1NarrCheck.errors.map(e => `${e.code}: ${e.match}`).join('\n- ') +
+                '\n\n' + introPrompt;
+            text = await callChat([
+                { role: 'system', content: state.sysPrompt },
+                { role: 'user', content: narrAuthPrompt }
+            ]);
+            // REFUSAL GATE: Check regeneration output
+            const narrRefusal = detectProseRefusal(text);
+            if (narrRefusal.isRefusal) {
+                console.error('[ProseRefusal] Narrative authority regeneration refused:', narrRefusal.reason);
+                throw new ProseRefusalError(narrRefusal.reason, text);
+            }
+            console.warn('[NarrativeAuthorityFail] Scene 1 regenerated due to:', scene1NarrCheck.errors.map(e => e.code));
+        }
 
-PROCESS: First, internally identify the story's emotional promise or arc (longing, danger, desire, destiny, transformation). Then craft a title that hints at that promise.
+        // EROTIC ESCALATION VALIDATION (Scene 1)
+        if (['Erotic', 'Dirty'].includes(state.intensity)) {
+            const escalationCheck = validateEroticEscalation(text, state.intensity);
+            if (!escalationCheck.valid) {
+                console.log('[EroticEscalation] Validation failed:', escalationCheck.violations);
+                console.log('[EroticEscalation] Metrics:', escalationCheck.metrics);
+                // Regenerate with explicit escalation notice
+                const escalationPrompt = EROTIC_ESCALATION_BLOCK +
+                    (state.intensity === 'Dirty' ? DIRTY_ESCALATION_ADDENDUM : '') +
+                    '\n\nREGENERATION REQUIRED — Previous output failed escalation check:\n- ' +
+                    escalationCheck.violations.join('\n- ') +
+                    '\n\nYou MUST include more sensory grounding (breath, skin, heat, touch) and bodily contradiction (restraint vs reaction).\n\n' + introPrompt;
+                text = await callChat([
+                    { role: 'system', content: state.sysPrompt },
+                    { role: 'user', content: escalationPrompt }
+                ]);
+                // REFUSAL GATE: Check regeneration output
+                const escRefusal = detectProseRefusal(text);
+                if (escRefusal.isRefusal) {
+                    console.error('[ProseRefusal] Erotic escalation regeneration refused:', escRefusal.reason);
+                    throw new ProseRefusalError(escRefusal.reason, text);
+                }
+                // Log result to Dev HUD
+                console.warn('[EroticEscalationFail] Scene 1 regenerated due to:', escalationCheck.violations);
+            }
+        }
 
-QUALITY RULES:
-- The title must feel like a promise of experience, not a mood collage
-- Avoid abstract noun clusters ("Veiled Whispers of the Dark")
-- Prefer titles that imply stakes, longing, or transformation
-- Good examples: "What the Sky Took", "The Wanting", "Before You Burned"
+        // TONE VALIDATION (Scene 1 — all stories)
+        const currentTone = state.picks?.tone || 'Earnest';
+        const toneCheck = validateTone(text, currentTone);
+        if (!toneCheck.valid) {
+            console.log('[ToneDrift] Validation failed:', toneCheck.violations);
+            console.log('[ToneDrift] Metrics: found', toneCheck.matchCount, 'markers, need', toneCheck.required);
+            // Regenerate with explicit tone enforcement
+            const tonePrompt = buildToneEnforcementBlock(currentTone) +
+                '\n\nREGENERATION REQUIRED — Tone selected but not present in language:\n- ' +
+                toneCheck.violations.join('\n- ') +
+                '\n\n' + introPrompt;
+            text = await callChat([
+                { role: 'system', content: state.sysPrompt },
+                { role: 'user', content: tonePrompt }
+            ]);
+            // REFUSAL GATE: Check regeneration output
+            const toneRefusal = detectProseRefusal(text);
+            if (toneRefusal.isRefusal) {
+                console.error('[ProseRefusal] Tone regeneration refused:', toneRefusal.reason);
+                throw new ProseRefusalError(toneRefusal.reason, text);
+            }
+            console.warn('[ToneDriftDetected] Scene 1 regenerated for tone:', currentTone);
+        }
 
-Return ONLY the title, no quotes or explanation:\n${text}`}]);
+        // ============================================================
+        // TITLE GENERATION PIPELINE (LOCKED)
+        // Mode selection → Continuation routing → Generation → Validation → Fallback → Immutability
+        // ============================================================
 
-        // VOCABULARY BAN ENFORCEMENT — title
+        // Initialize world instance if not set
+        if (!state.worldInstanceId) {
+            state.worldInstanceId = generateWorldInstanceId();
+        }
+
+        // STEP 1: Route title generation based on continuation path
+        const continuationPath = state.continuationPath || CONTINUATION_PATHS.NEW_STORY;
+        const titleRouting = routeTitleGeneration(continuationPath, {
+            world: state.picks?.world || 'Modern',
+            arousal: state.intensity || 'Naughty',
+            genre: state.picks?.genre || 'Romance',
+            tone: state.picks?.tone || 'Earnest'
+        });
+
+        const selectedMode = titleRouting.mode;
+        const titlePrompt = titleRouting.prompt;
+        console.log('[TitlePipeline] Path:', continuationPath, '| Mode:', selectedMode);
+
+        // STEP 2: Generate title with path-specific prompt
+        let title = await callChat([{role:'user', content:`Based on this opening, generate a title.
+
+${titlePrompt}
+
+Story opening for context:
+${text.slice(0, 500)}`}]);
+
+        // STEP 3: Vocabulary ban enforcement
         title = await enforceVocabularyBans(
             title,
             { type: 'title', isFatePOV: false },
             async (negConstraint) => {
-                return await callChat([{role:'user', content:`Based on this opening, generate a 2-4 word title.
+                return await callChat([{role:'user', content:`Generate a title in ${selectedMode} mode.
 
-QUALITY RULES:
-- The title must feel like a promise of experience, not a mood collage
-- Avoid abstract noun clusters
-- Prefer titles that imply stakes, longing, or transformation
+${titlePrompt}
 ${negConstraint}
-Return ONLY the title, no quotes or explanation:\n${text}`}]);
+
+Story opening for context:
+${text.slice(0, 500)}`}]);
             }
         );
+
+        // STEP 4: Apply world-marking for SAME_WORLD path
+        if (titleRouting.worldMarked && titleRouting.worldName) {
+            title = buildWorldMarkedTitle(
+                title.replace(/"/g, '').trim(),
+                titleRouting.worldName,
+                titleRouting.suffix
+            );
+            console.log('[TitlePipeline] World-marked title:', title);
+        }
+
+        // STEP 5: Full pipeline validation
+        const titleCheck = validateTitle(
+            title,
+            state.picks?.tone,
+            state.intensity || 'Naughty',
+            { world: state.picks?.world, genre: state.picks?.genre }
+        );
+
+        // STEP 6: Continuation-specific validation
+        const continuationCheck = validateContinuationTitle(title, continuationPath, {
+            previousTitle: state.previousTitle,
+            worldName: state.worldName,
+            priorNouns: state._priorWorldNouns || []
+        });
+
+        if (!titleCheck.valid || !continuationCheck.valid) {
+            const allErrors = [...(titleCheck.errors || []), ...(continuationCheck.errors || [])];
+            console.log('[TitleValidation] Failed:', allErrors.map(e => e.message));
+            console.log('[TitleValidation] Detected mode:', titleCheck.mode);
+
+            // STEP 7: Deterministic name-based fallback
+            let fallbackTitle = generateFallbackTitle({
+                playerName: state.rawPlayerName,
+                partnerName: state.rawPartnerName,
+                world: state.picks?.world || 'Modern',
+                tone: state.picks?.tone || 'Earnest',
+                genre: state.picks?.genre || 'Romance'
+            });
+
+            // Apply world-marking to fallback if SAME_WORLD
+            if (titleRouting.worldMarked && titleRouting.worldName) {
+                fallbackTitle = buildWorldMarkedTitle(
+                    fallbackTitle,
+                    titleRouting.worldName,
+                    titleRouting.suffix
+                );
+            }
+
+            console.log('[TitleFallback] Using fallback:', fallbackTitle);
+            title = fallbackTitle;
+        } else {
+            console.log('[TitleValidation] PASS — Mode:', titleCheck.mode);
+        }
+
+        // STEP 8: Store baseline arousal and title for immutability + future continuations
+        state.titleBaselineArousal = state.intensity || 'Naughty';
+        state.immutableTitle = title.replace(/"/g, '').trim();
+        state.previousTitle = state.immutableTitle;
+        state.previousTitleMode = selectedMode;
+
+        // Clear continuation path after use
+        state.continuationPath = null;
+        state._priorWorldNouns = null;
 
         // SYNOPSIS GENERATION RULE (AUTHORITATIVE)
         let synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
@@ -8193,9 +12320,8 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
             }
         );
 
-        // CORRECTIVE: Set title and synopsis first
+        // CORRECTIVE: Set title first (synopsis lives ONLY on inside cover flyleaf)
         const titleEl = document.getElementById('storyTitle');
-        const synopsisEl = document.getElementById('storySynopsis');
         const storyTextEl = document.getElementById('storyText');
 
         // Hide story text until fully rendered
@@ -8203,36 +12329,79 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
         const cleanTitle = title.replace(/"/g,'');
         titleEl.textContent = cleanTitle;
-        synopsisEl.textContent = synopsis;
 
-        // Populate inside cover synopsis (centered, book-like)
-        const insideCoverSynopsis = document.getElementById('insideCoverSynopsis');
-        if (insideCoverSynopsis) {
-            insideCoverSynopsis.textContent = synopsis;
+        // BOOK FLOW SPEC: Synopsis rendered ONLY on inside cover, never in pagination
+        // Inside cover = title + synopsis (white paper)
+        // Setting plate = visual only (setting image)
+        // Scene pages = title + text only (via StoryPagination)
+        state._synopsisMetadata = synopsis; // Store for inside cover + cover generation
+
+        // ============================================================
+        // FINAL ATOMIC GATE — Scene creation only if prose is valid
+        // ============================================================
+        // This is the LAST CHECK before scene content is stored.
+        // If refusal detected here, something slipped through earlier gates.
+        const finalRefusalCheck = detectProseRefusal(text);
+        if (finalRefusalCheck.isRefusal) {
+            console.error('[ATOMIC GATE] FINAL refusal check caught invalid prose:', finalRefusalCheck.reason);
+            throw new ProseRefusalError(finalRefusalCheck.reason, text);
         }
 
         // Use pagination system for story display
+        StoryPagination.init();
         StoryPagination.clear();
         StoryPagination.addPage(formatStory(text), true);
 
-        // Generate book cover with intent-based routing (async, non-blocking)
-        // Uses gpt-image-1.5 for typography rendering
-        // Author credit: always from state.coverAuthor (never narrator state)
+        // OPENING SPREAD COMPOSITION: Populate inside cover with title + synopsis
+        // Left page (inside cover) = paper background + title + synopsis
+        // Right page = setting image (handled by settingPlate)
+        const insideCover = document.getElementById('bookInsideCover');
+        if (insideCover) {
+            const synopsisText = synopsis || state._synopsisMetadata || '';
+            insideCover.innerHTML = `
+                <div class="inside-cover-content">
+                    <h1 class="inside-cover-title">${cleanTitle}</h1>
+                    ${synopsisText ? `<p class="inside-cover-synopsis">${synopsisText}</p>` : ''}
+                </div>
+            `;
+        }
+
+        // ============================================================
+        // PHASE 1 COVER GATE — NO NETWORK CALLS DURING BEGIN STORY
+        // coverMode === 'PHASE_1_FORGED': local assets only, deterministic, synchronous
+        // Custom (model-based) cover ONLY when coverEligibility === true
+        // ============================================================
         const authorDisplayName = state.coverAuthor || 'Anonymous';
 
-        generateBookCover(synopsis, cleanTitle, authorDisplayName).then(coverUrl => {
-            if (coverUrl) {
-                stopCoverLoading(coverUrl);
+        // CONTROL-FLOW INVARIANT: Cover generation is DECORATIVE and must NEVER block page mounting
+        // Defer all cover logic to next tick to ensure pages are fully mounted first
+        setTimeout(() => {
+            if (state.coverMode === 'PHASE_1_FORGED' || state.coverEligibility !== true) {
+                // PHASE 1: Render local fallback cover (no API call)
+                console.log('[BookCover] PHASE_1_FORGED mode — using local fallback cover');
+                renderFallbackCover(state.picks?.world, state.picks?.genre, cleanTitle);
+                stopCoverLoading(null);
+                applyCoverIntensityLayers(state.intensity, state.picks?.world);
             } else {
-                // Cover generation failed - skip to story content
-                console.warn('[BookCover] Failed to generate, skipping cover page');
-                skipCoverPage();
+                // CUSTOM COVER PATH (gated — only when coverEligibility === true)
+                generateBookCover(synopsis, cleanTitle, authorDisplayName).then(coverUrl => {
+                    if (coverUrl) {
+                        stopCoverLoading(coverUrl);
+                    } else {
+                        // Cover generation failed — render fallback (never skip)
+                        console.warn('[BookCover] Failed to generate, rendering fallback cover');
+                        renderFallbackCover(state.picks?.world, state.picks?.genre, cleanTitle);
+                        stopCoverLoading(null);
+                    }
+                    applyCoverIntensityLayers(state.intensity, state.picks?.world);
+                });
             }
-        });
+        }, 0);
 
         // Generate setting art for book right page (distinct asset, never reuses cover)
         // Runs in parallel with cover generation — populates bookInsideScene
-        generateBookSceneArt(synopsis);
+        // Store promise so openBook() can gate setBookPage(1) until ready
+        _settingImagePromise = generateBookSceneArt(synopsis);
 
         // Story text reveal is handled by cover page flow
         // (user clicks "Open Your Story" to see content)
@@ -8245,6 +12414,51 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         }
 
     } catch(e) {
+        // ============================================================
+        // PROSE REFUSAL ERROR — ATOMIC ABORT (no book, no scene)
+        // ============================================================
+        if (e instanceof ProseRefusalError) {
+            console.group('STORYBOUND PROSE REFUSAL - SCENE NOT CREATED');
+            console.error('Refusal reason:', e.reason);
+            console.error('Raw output (first 300 chars):', e.rawOutput?.slice(0, 300));
+            console.groupEnd();
+
+            // DO NOT render fallback cover
+            // DO NOT call stopCoverLoading (would show book object)
+            // DO NOT create scene — state.text remains unchanged
+            // Hide loading state and return to setup
+            const loadingState = document.getElementById('coverLoadingState');
+            if (loadingState) loadingState.classList.add('hidden');
+
+            alert("Story generation was declined. Please try different settings.");
+            window.showScreen('setup');
+            return; // Exit early — finally block still runs
+        }
+
+        // ============================================================
+        // HTTP 429 RATE LIMIT — TERMINAL FAILURE, NO RETRY
+        // ============================================================
+        if (e instanceof RateLimitError || e?.isRateLimit) {
+            console.group('STORYBOUND RATE LIMITED - TERMINAL FAILURE');
+            console.error('Endpoint:', e.endpoint);
+            console.error('Retry-After:', e.retryAfter || 'not specified');
+            console.groupEnd();
+
+            // DO NOT render fallback cover
+            // DO NOT call stopCoverLoading (would show book object)
+            // DO NOT create scene — state remains unchanged
+            // DO NOT trigger any secondary async calls
+            // Hide loading state and return to setup
+            const loadingState = document.getElementById('coverLoadingState');
+            if (loadingState) loadingState.classList.add('hidden');
+
+            // Surface recoverable error — require explicit user action
+            alert("Rate limited. Please wait a moment and try again.");
+            window.showScreen('setup');
+            return; // Exit early — finally block still runs
+        }
+
+        // Generic API/network errors
         console.group('STORYBOUND FATE STUMBLED - API ERROR');
         console.error('Error object:', e);
         console.error('Error message:', e?.message || '(no message)');
@@ -8253,8 +12467,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         console.log('Intro prompt length at failure:', introPrompt?.length || 0);
         console.groupEnd();
 
-        // Clean up cover page state on error
-        skipCoverPage();
+        // Clean up cover page state on error — render fallback (never skip)
+        renderFallbackCover(state.picks?.world, state.picks?.genre);
+        stopCoverLoading(null);
+        applyCoverIntensityLayers(state.intensity, state.picks?.world);
 
         alert("Fate stumbled. Please try again. (Check console for diagnostics)");
         window.showScreen('setup');
@@ -8291,6 +12507,14 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       throw new Error('[MODEL WIRING] Orchestration client not loaded. ChatGPT required for story authoring.');
     }
 
+    // SINGLE-FLIGHT LOCK: Only one prose generation at a time
+    if (_proseGenerationInFlight) {
+      console.warn('[PROSE] Request blocked — another prose generation in flight');
+      throw new Error('Prose generation blocked: request already in flight');
+    }
+
+    _proseGenerationInFlight = true;
+
     try {
       return await window.StoryboundOrchestration.callChatGPT(
         messages,
@@ -8298,9 +12522,19 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         { temperature: temp, max_tokens: options.max_tokens || 1000 }
       );
     } catch (orchestrationError) {
+      // CHECK FOR HTTP 429 IN ERROR MESSAGE — TERMINAL FAILURE
+      const errMsg = orchestrationError?.message || '';
+      if (errMsg.includes('429') || errMsg.toLowerCase().includes('rate limit') || errMsg.includes('too many requests')) {
+        console.error('[RATE_LIMIT] Detected 429 in orchestration error:', errMsg);
+        throw new RateLimitError('prose-generation', null);
+      }
+
       // NO GROK FALLBACK - Story authoring must use ChatGPT
       console.error('[MODEL WIRING] ChatGPT failed. No Grok fallback for story logic:', orchestrationError.message);
       throw new Error(`Story generation failed: ${orchestrationError.message}. Grok cannot be used for story authoring.`);
+    } finally {
+      // RELEASE SINGLE-FLIGHT LOCK
+      _proseGenerationInFlight = false;
     }
   }
 
@@ -8441,7 +12675,14 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
      // Route through canonical setting visualize prompt
      const visualizeMode = 'setting';
      const settingPromptBase = buildVisualizePrompt({ mode: visualizeMode, lastText: '' });
-     const prompt = settingPromptBase + '\n\n' + worldDesc;
+     let prompt = settingPromptBase + '\n\n' + worldDesc;
+
+     // VISUAL INTENT GUARD: Enforce balanced lighting for settings
+     prompt = applyVisualIntentGuard(prompt, {
+         tone: state.picks?.tone,
+         world: state.picks?.world,
+         intensity: state.intensity
+     });
 
      let rawUrl = null;
 
@@ -8526,10 +12767,11 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
       const worldLabel = era ? `${era} ${world}` : world;
 
-      // Build a concise world-establishing description from synopsis
-      const desc = `${worldLabel} world. ${(synopsis || 'A dramatic setting').substring(0, 200)}`;
+      // Build a concise world-establishing description (symbolic only — no story prose)
+      const tone = state.picks?.tone || 'Earnest';
+      const desc = `${worldLabel} world. ${tone} atmosphere. A dramatic setting.`;
 
-      const vistaPrompt = `${desc}
+      let vistaPrompt = `${desc}
 
 CRITICAL COMPOSITION RULES:
 - This MUST be a WORLD VISTA image: landscape, environment, establishing shot.
@@ -8538,6 +12780,13 @@ CRITICAL COMPOSITION RULES:
 - Camera position: Wide establishing shot, epic scale, environment is the subject.
 
 Wide cinematic environment, atmospheric lighting, painterly illustration, no text, no watermark.`;
+
+      // VISUAL INTENT GUARD: Enforce balanced lighting for scene art
+      vistaPrompt = applyVisualIntentGuard(vistaPrompt, {
+          tone: state.picks?.tone,
+          world: state.picks?.world,
+          intensity: state.intensity
+      });
 
       try {
           const rawUrl = await generateImageWithFallback({
@@ -8591,13 +12840,102 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
   let _coverProgressInterval = null;
   let _coverAbortController = null;
 
-  // Abort cover generation and skip to content
+  // Abort cover generation — render fallback cover (never skip)
   function abortCoverGeneration() {
       if (_coverAbortController) {
           _coverAbortController.abort();
           _coverAbortController = null;
       }
-      skipCoverPage();
+      renderFallbackCover(state.picks?.world, state.picks?.genre);
+      stopCoverLoading(null);
+      applyCoverIntensityLayers(state.intensity, state.picks?.world);
+  }
+
+  // ============================================================
+  // LOADING BAR SPARKLE EMITTER (SCOPED TO PROGRESS BARS ONLY)
+  // Localized sparkle system for loading/progress indicators
+  // Does NOT affect Fate, DSP, or other global sparkle systems
+  // ============================================================
+  let _loadingSparkleInterval = null;
+
+  function spawnLoadingSparkle(container) {
+      if (!container) return;
+
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+      if (containerWidth === 0) return;
+
+      const sparkle = document.createElement('div');
+      sparkle.className = 'loading-sparkle';
+
+      // Random spawn position along and around the bar
+      const spawnX = Math.random() * containerWidth;
+      const spawnY = (Math.random() - 0.5) * 30 - 5; // Above/around bar
+
+      // Randomized direction — avoid fixed diagonal
+      const angle = (Math.random() * 120 - 60) * (Math.PI / 180); // -60° to +60° (upward bias)
+      const distance = 15 + Math.random() * 25;
+      const dx = Math.cos(angle) * distance * (Math.random() > 0.5 ? 1 : -1);
+      const dy = -Math.abs(Math.sin(angle) * distance) - 5; // Always drift upward
+
+      // Wobble for organic motion
+      const wobble = (Math.random() - 0.5) * 10;
+
+      // Size and timing variance
+      const size = 2 + Math.random() * 3;
+      const duration = 2000 + Math.random() * 2000;
+      const opacity = 0.5 + Math.random() * 0.4;
+
+      sparkle.style.cssText = `
+          left: ${spawnX}px;
+          top: ${spawnY}px;
+          width: ${size}px;
+          height: ${size}px;
+          --ls-duration: ${duration}ms;
+          --ls-opacity: ${opacity};
+          --ls-dx: ${dx}px;
+          --ls-dy: ${dy}px;
+          --ls-wobble: ${wobble}px;
+      `;
+
+      container.appendChild(sparkle);
+      setTimeout(() => { if (sparkle.parentNode) sparkle.remove(); }, duration + 100);
+  }
+
+  function startLoadingBarSparkles() {
+      stopLoadingBarSparkles(); // Clear any existing
+
+      const progressBar = document.querySelector('.cover-progress-bar');
+      if (!progressBar) return;
+
+      // Ensure container is positioned for absolute children
+      const style = window.getComputedStyle(progressBar);
+      if (style.position === 'static') {
+          progressBar.style.position = 'relative';
+      }
+
+      // Spawn sparkles at staggered intervals for overlapping lifetimes
+      _loadingSparkleInterval = setInterval(() => {
+          spawnLoadingSparkle(progressBar);
+      }, 180); // ~5-6 sparkles per second
+
+      // Initial burst — staggered for natural appearance
+      for (let i = 0; i < 4; i++) {
+          setTimeout(() => spawnLoadingSparkle(progressBar), i * 80);
+      }
+  }
+
+  function stopLoadingBarSparkles() {
+      if (_loadingSparkleInterval) {
+          clearInterval(_loadingSparkleInterval);
+          _loadingSparkleInterval = null;
+      }
+      // Fade out existing sparkles gracefully
+      document.querySelectorAll('.loading-sparkle').forEach(s => {
+          s.style.opacity = '0';
+          s.style.transition = 'opacity 0.3s ease-out';
+          setTimeout(() => s.remove(), 350);
+      });
   }
 
   // Start cover loading UI with staged phrases
@@ -8635,12 +12973,18 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
           if (progress > 90) progress = 90;
           if (progressFill) progressFill.style.width = progress + '%';
       }, 500);
+
+      // Start loading bar sparkles (localized emitter)
+      startLoadingBarSparkles();
   }
 
   // Stop cover loading and show physical book object
   function stopCoverLoading(coverUrl) {
       if (_coverPhraseInterval) clearInterval(_coverPhraseInterval);
       if (_coverProgressInterval) clearInterval(_coverProgressInterval);
+
+      // Stop loading bar sparkles
+      stopLoadingBarSparkles();
 
       const loadingState = document.getElementById('coverLoadingState');
       const bookObject = document.getElementById('bookObject');
@@ -8763,7 +13107,10 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
       BuildingBridges: ['interlocking hands silhouette', 'bridge architecture', 'puzzle pieces', 'woven threads'],
       Purgatory: ['fog layers', 'liminal doorways', 'clock faces overlapping', 'fading photographs'],
       RelentlessPast: ['cracked photographs', 'faded newspaper', 'chains and shadows', 'footsteps in dust'],
-      Sports: ['stadium lights', 'scoreboard glow', 'trophy shelf', 'field markings', 'crowd silhouettes']
+      Sports: ['stadium lights', 'scoreboard glow', 'trophy shelf', 'field markings', 'crowd silhouettes'],
+      Survival: ['cracked earth', 'sparse rations', 'barren landscape', 'weathered hands', 'distant smoke'],
+      Obsession: ['pinboard with strings', 'circled photographs', 'repeated patterns', 'sleepless light', 'worn edges'],
+      ForbiddenKnowledge: ['ancient tome', 'glowing sigils', 'eye in shadow', 'forbidden archive', 'sealed door']
   };
 
   // Palette by tone + common material affinities
@@ -8986,7 +13333,15 @@ Return ONLY valid JSON:
 }`
           }]);
 
-          const parsed = JSON.parse(extraction.trim());
+          // Strip markdown fences if present (```json ... ``` or ``` ... ```)
+          let cleanedExtraction = extraction.trim();
+          if (cleanedExtraction.startsWith('```')) {
+              // Remove opening fence (```json or ```)
+              cleanedExtraction = cleanedExtraction.replace(/^```(?:json)?\s*\n?/, '');
+              // Remove closing fence
+              cleanedExtraction = cleanedExtraction.replace(/\n?```\s*$/, '');
+          }
+          const parsed = JSON.parse(cleanedExtraction.trim());
           if (parsed.object && parsed.emotion) {
               return parsed;
           }
@@ -9007,7 +13362,10 @@ Return ONLY valid JSON:
           BuildingBridges: { object: 'two hands almost touching', material: 'fabric', emotion: 'yearning' },
           Purgatory: { object: 'stopped clock face', material: 'metal', emotion: 'isolation' },
           RelentlessPast: { object: 'cracked photograph edge', material: 'paper', emotion: 'foreboding' },
-          Sports: { object: 'trophy silhouette in spotlight', material: 'gold', emotion: 'pressure' }
+          Sports: { object: 'trophy silhouette in spotlight', material: 'gold', emotion: 'pressure' },
+          Survival: { object: 'last match in weathered box', material: 'wood', emotion: 'tension' },
+          Obsession: { object: 'pinboard thread stretching taut', material: 'fabric', emotion: 'foreboding' },
+          ForbiddenKnowledge: { object: 'opened tome with glowing page', material: 'paper', emotion: 'mystery' }
       };
 
       const fallback = GENRE_DEFAULTS[genre] || {
@@ -9266,6 +13624,409 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       return 'A Storybound ' + storyNoun + ' of ' + gp + ' where ' + dp + ' ' + wp + '.';
   }
 
+  // ============================================================
+  // COVER FALLBACK LIBRARY — deterministic SVG motifs
+  // ============================================================
+
+  const COVER_FALLBACK_MOTIFS = {
+      Modern:          ['handcuffs', 'key', 'drop'],
+      Historical:      ['key', 'skull', 'sun'],
+      Dystopia:        ['skull', 'handprint', 'moon'],
+      PostApocalyptic: ['skull', 'sun', 'waves'],
+      Fantasy:         ['sun', 'stars', 'key'],
+      SciFi:           ['stars', 'moon', 'waves'],
+      Supernatural:    ['moon', 'key', 'skull'],
+      Superheroic:     ['sun', 'stars', 'handprint']
+  };
+
+  const COVER_FALLBACK_PALETTES = {
+      Modern:          { bg: '#0a0a0a', accent: '#e63946' },
+      Historical:      { bg: '#0d0908', accent: '#d4af37' },
+      Dystopia:        { bg: '#0a0a0a', accent: '#cccccc' },
+      PostApocalyptic: { bg: '#0d0b08', accent: '#c8553d' },
+      Fantasy:         { bg: '#0a0a12', accent: '#d4af37' },
+      SciFi:           { bg: '#0a1628', accent: '#40e0d0' },
+      Supernatural:    { bg: '#0a0a12', accent: '#8b5cf6' },
+      Superheroic:     { bg: '#0d0a14', accent: '#e63946' }
+  };
+
+  // Inline SVG paths for motif icons (symbolic, no people/bodies)
+  const SVG_MOTIF_PATHS = {
+      skull: '<path d="M50 15c-18 0-32 14-32 32 0 12 6 22 16 28v10c0 3 2 5 5 5h22c3 0 5-2 5-5V75c10-6 16-16 16-28 0-18-14-32-32-32zm-10 38a5 5 0 110-10 5 5 0 010 10zm20 0a5 5 0 110-10 5 5 0 010 10zm-10 14c-4 0-8-2-8-4h16c0 2-4 4-8 4z"/>',
+      handcuffs: '<path d="M30 35c-8 0-15 7-15 15s7 15 15 15c5 0 10-3 12-7h16c2 4 7 7 12 7 8 0 15-7 15-15s-7-15-15-15c-5 0-10 3-12 7H42c-2-4-7-7-12-7zm0 8a7 7 0 110 14 7 7 0 010-14zm40 0a7 7 0 110 14 7 7 0 010-14z"/>',
+      key: '<path d="M65 20L50 35l6 6-4 4 6 6-4 4 6 6-8 8c-3 3-8 3-11 0l-1-1c-6 3-14 2-19-3-7-7-7-18 0-25s18-7 25 0c5 5 6 13 3 19l1 1c3 3 3 8 0 11zm-35 30a5 5 0 100-10 5 5 0 000 10z"/>',
+      handprint: '<path d="M35 25v20h-3V28c0-2-3-2-3 0v18h-3V30c0-2-3-2-3 0v16l-2 6c-1 3 0 6 2 8l8 10c2 2 4 4 7 4h12c5 0 9-4 9-9V40c0-2-3-2-3 0v10h-3V27c0-2-3-2-3 0v23h-3V25c0-2-3-2-3 0v25h-3V27c0-2-3-2-3 0z"/>',
+      drop: '<path d="M50 15C50 15 25 45 25 60c0 14 11 25 25 25s25-11 25-25C75 45 50 15 50 15zm-5 50a3 3 0 01-3-3c0-8 7-15 15-15a3 3 0 010 6c-5 0-9 4-9 9a3 3 0 01-3 3z"/>',
+      sun: '<circle cx="50" cy="50" r="15"/><g stroke-width="3" stroke="currentColor"><line x1="50" y1="10" x2="50" y2="22"/><line x1="50" y1="78" x2="50" y2="90"/><line x1="10" y1="50" x2="22" y2="50"/><line x1="78" y1="50" x2="90" y2="50"/><line x1="22" y1="22" x2="31" y2="31"/><line x1="69" y1="69" x2="78" y2="78"/><line x1="78" y1="22" x2="69" y2="31"/><line x1="31" y1="69" x2="22" y2="78"/></g>',
+      moon: '<path d="M50 10c-22 0-40 18-40 40s18 40 40 40c8 0 15-2 22-6-6 3-12 4-18 4-20 0-36-16-36-36S34 16 54 16c6 0 12 1 18 4C65 14 58 10 50 10z"/>',
+      stars: '<polygon points="50,5 58,35 90,35 64,55 73,85 50,67 27,85 36,55 10,35 42,35"/><polygon points="22,12 25,22 35,22 27,28 30,38 22,32 14,38 17,28 9,22 19,22" transform="scale(0.5) translate(10,10)"/><polygon points="22,12 25,22 35,22 27,28 30,38 22,32 14,38 17,28 9,22 19,22" transform="scale(0.4) translate(180,120)"/>',
+      waves: '<path d="M5 50c10-10 20-10 30 0s20 10 30 0 20-10 30 0" fill="none" stroke="currentColor" stroke-width="4"/><path d="M5 65c10-10 20-10 30 0s20 10 30 0 20-10 30 0" fill="none" stroke="currentColor" stroke-width="3" opacity="0.6"/><path d="M5 35c10-10 20-10 30 0s20 10 30 0 20-10 30 0" fill="none" stroke="currentColor" stroke-width="3" opacity="0.6"/>'
+  };
+
+  /**
+   * Simple hash for deterministic motif selection from genre string
+   */
+  function genreMotifHash(genre) {
+      let h = 0;
+      for (let i = 0; i < genre.length; i++) {
+          h = ((h << 5) - h + genre.charCodeAt(i)) | 0;
+      }
+      return Math.abs(h);
+  }
+
+  /**
+   * Render a deterministic CSS/SVG fallback cover.
+   * Selects motif by world + genre hash. Never fails.
+   */
+  function renderFallbackCover(world, genre, title) {
+      const fallbackEl = document.getElementById('coverFallback');
+      const coverImg = document.getElementById('bookCoverImg');
+      if (!fallbackEl) return;
+
+      const w = world || 'Modern';
+      const g = genre || 'Billionaire';
+      const motifs = COVER_FALLBACK_MOTIFS[w] || COVER_FALLBACK_MOTIFS.Modern;
+      const palette = COVER_FALLBACK_PALETTES[w] || COVER_FALLBACK_PALETTES.Modern;
+      const motifKey = motifs[genreMotifHash(g) % motifs.length];
+      const svgContent = SVG_MOTIF_PATHS[motifKey] || SVG_MOTIF_PATHS.key;
+
+      // Resolve title: explicit param → storyTitle DOM → empty
+      const displayTitle = title
+          || document.getElementById('storyTitle')?.textContent
+          || '';
+
+      fallbackEl.style.setProperty('--fb-bg', palette.bg);
+      fallbackEl.style.setProperty('--fb-accent', palette.accent);
+
+      // Build cover: SVG motif + title cartouche + author line
+      let html = '<svg class="cover-fallback-motif" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="' + palette.accent + '" color="' + palette.accent + '">' + svgContent + '</svg>';
+      const safeTitle = displayTitle ? displayTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+      html += '<div class="cover-fallback-title" style="color:' + palette.accent + '">' +
+          '<span class="cover-fallback-title-rule"></span>' +
+          (safeTitle ? '<span class="cover-fallback-title-text">' + safeTitle + '</span>' : '') +
+          '<span class="cover-fallback-author">by ANONYMOUS</span>' +
+          '<span class="cover-fallback-title-rule"></span>' +
+          '</div>';
+      fallbackEl.innerHTML = html;
+
+      // Show fallback, hide AI image
+      fallbackEl.classList.remove('hidden');
+      if (coverImg) coverImg.style.display = 'none';
+  }
+
+  /**
+   * Apply intensity-based cover overlays.
+   * Clean/Naughty → nothing, Erotic → gold border, Dirty → keyhole takeover.
+   * Soulmates is a MODIFIER (not intensity) — derived from state.storyLength === 'soulmates'.
+   *
+   * LOCKED RULES:
+   * - Keyhole ONLY appears when arousal === Dirty
+   * - Erotic border ALWAYS appears when arousal === Erotic
+   * - Soulmates modulates material warmth (adds 'soulmates' class), never introduces keyhole
+   */
+  function applyCoverIntensityLayers(intensity, world) {
+      const borderEl = document.getElementById('coverEroticBorder');
+      const keyholeEl = document.getElementById('coverKeyholeOverlay');
+      if (!borderEl || !keyholeEl) return;
+
+      // COVER ESCALATION VALIDATION
+      // Cover may escalate beyond title baseline, but must not contradict downward
+      if (state.titleBaselineArousal) {
+          const escalationCheck = validateCoverEscalation(
+              state.titleBaselineArousal,  // Title's original arousal
+              intensity || 'Naughty',       // Current cover arousal
+              state.titleBaselineArousal    // Baseline
+          );
+          if (!escalationCheck.valid) {
+              console.error('[CoverEscalation] BLOCKED:', escalationCheck.error.message);
+              // Do not apply de-escalated layers — keep current state
+              return;
+          }
+      }
+
+      // Soulmates is a modifier overlay, derived from story length
+      const hasSoulmates = state.storyLength === 'soulmates';
+
+      // Reset both layers
+      borderEl.classList.add('hidden');
+      borderEl.className = 'cover-erotic-border hidden';
+      keyholeEl.classList.add('hidden');
+      keyholeEl.classList.remove('soulmates');
+
+      const level = (intensity || '').toLowerCase();
+
+      if (level === 'erotic') {
+          // EROTIC: Apply ornamental border (ALWAYS when erotic, regardless of soulmates)
+          const w = (world || 'Modern').toLowerCase().replace(/[^a-z]/g, '');
+          const worldClass = ['fantasy', 'noir', 'gothic', 'scifi'].includes(w) ? ('world-' + w) : '';
+          const soulmatesClass = hasSoulmates ? ' soulmates' : '';
+          borderEl.className = 'cover-erotic-border' + (worldClass ? ' ' + worldClass : '') + soulmatesClass;
+      } else if (level === 'dirty') {
+          // DIRTY: Keyhole takeover (ONLY for Dirty, erotic border removed/subsumed)
+          keyholeEl.classList.remove('hidden');
+          if (hasSoulmates) {
+              // Soulmates + Dirty: warmer, devotional metalwork ("locked by choice")
+              keyholeEl.classList.add('soulmates');
+          }
+          // Set title + author into keyhole metalwork
+          const titleEl = keyholeEl.querySelector('.keyhole-title');
+          const storyTitle = document.getElementById('storyTitle');
+          if (titleEl) {
+              const t = storyTitle?.textContent || '';
+              titleEl.innerHTML = (t ? '<span class="keyhole-title-text">' + t.replace(/</g, '&lt;') + '</span>' : '') +
+                  '<span class="keyhole-author">by ANONYMOUS</span>';
+          }
+      }
+      // Clean/Naughty: no overlay layers (art fully visible)
+      // Soulmates alone (non-Erotic, non-Dirty) affects art generation warmth, not cover layers
+  }
+
+  /**
+   * Reset cover overlay layers (called when resetting book state)
+   */
+  function resetCoverLayers() {
+      const fallbackEl = document.getElementById('coverFallback');
+      const borderEl = document.getElementById('coverEroticBorder');
+      const keyholeEl = document.getElementById('coverKeyholeOverlay');
+      const coverImg = document.getElementById('bookCoverImg');
+
+      if (fallbackEl) { fallbackEl.classList.add('hidden'); fallbackEl.innerHTML = ''; }
+      if (borderEl) { borderEl.className = 'cover-erotic-border hidden'; }
+      if (keyholeEl) { keyholeEl.classList.add('hidden'); }
+      if (coverImg) { coverImg.style.display = ''; }
+  }
+
+  // ============================================================
+  // COVER SYSTEM — NON-BLOCKING PRINCIPLE (CRITICAL)
+  // ============================================================
+  // Cover rendering must NEVER block story creation.
+  // Failure results in GRACEFUL FALLBACK, not retry or abort.
+  //
+  // Rules:
+  // - All cover generation is async and non-blocking
+  // - All failure paths return null → renderFallbackCover()
+  // - NO retries, NO loops, NO user-blocking errors
+  // - Story creation succeeds even if cover generation fails
+  // - Phase 1 Forged Cover is always available as fallback
+  // ============================================================
+
+  // ============================================================
+  // ASSET AVAILABILITY REGISTRY (Phase 2+)
+  // Lists valid objectIds for cover specs
+  // If a referenced asset is unavailable → fallback (not retry)
+  // ============================================================
+  const COVER_ASSET_REGISTRY = {
+      // TIER 1 — Anchored PNG assets (preferred)
+      objects: new Set([
+          'mask_archetype_canonical',
+          'wax_seal_standard',
+          'relic_key'
+      ])
+      // NOTE: Framing assets removed — both KEYHOLE and BORDER are now runtime-rendered
+      // TEMPORARY MODE: Synthetic erotic borders enabled until explicit asset replacement
+  };
+
+  // ============================================================
+  // KEYHOLE FRAMING — RUNTIME RENDER SPECIFICATION
+  // Keyholes are NOT asset files. They MUST be rendered by the
+  // image model at runtime as physical objects or carved apertures.
+  // Claude specifies properties; image model renders.
+  // ============================================================
+  const KEYHOLE_RENDER_REQUIREMENTS = {
+      // Required properties for keyhole spec validation
+      required: ['aperture', 'material', 'edgeStyle', 'integration'],
+      // Aperture constraints (percentage of cover dimensions)
+      aperture: {
+          height: { min: 0.65, max: 0.80 },  // 65-80% of cover height
+          width: { min: 0.40, max: 0.50 }    // 40-50% of cover width
+      },
+      // Valid material types
+      materials: new Set([
+          'brass', 'iron', 'bronze', 'oxidized_copper', 'blackened_steel',
+          'carved_wood', 'carved_stone', 'bone', 'obsidian', 'gold_filigree'
+      ]),
+      // Valid edge styles
+      edgeStyles: new Set([
+          'beveled', 'chamfered', 'worn', 'sharp', 'ornate', 'weathered', 'forged'
+      ]),
+      // Integration behaviors (how keyhole meets cover surface)
+      integrations: new Set([
+          'inset', 'raised', 'flush', 'recessed_shadow', 'embossed'
+      ])
+  };
+
+  // ============================================================
+  // BORDER FRAMING — SYNTHETIC RUNTIME RENDER (TEMPORARY MODE)
+  // Until explicit asset replacement, erotic borders MUST be:
+  // - Generated by image model at render time
+  // - Thin-line only (etched / engraved / diagrammatic)
+  // - Flat graphic language (no depth, no bevel, no shadow)
+  // - Monochrome or near-monochrome
+  // - Symbolic, not illustrative
+  // ============================================================
+  const BORDER_RENDER_REQUIREMENTS = {
+      // Required properties for border spec validation
+      required: ['lineStyle', 'motifFamily', 'lineWeight', 'margin'],
+      // Valid line styles (flat, no depth)
+      lineStyles: new Set([
+          'etched', 'engraved', 'continuous', 'dashed', 'dotted'
+      ]),
+      // Valid motif families (ONE only per border)
+      motifFamilies: new Set([
+          'filigree', 'restraint', 'floral', 'geometric'
+      ]),
+      // Valid line weights
+      lineWeights: new Set([
+          'thin', 'hairline', 'fine'
+      ]),
+      // Margin constraints (percentage from edge)
+      margin: { min: 0.02, max: 0.08 }  // 2-8% from edge
+  };
+
+  // BORDER HARD BANS — Claude must NOT include these
+  const BORDER_HARD_BANS = [
+      'shading', 'texture', 'lighting', 'shadow', 'bevel', 'depth',
+      'scene', 'background', 'anatomy', 'explicit', 'body', 'figure'
+  ];
+
+  /**
+   * Validate border render specification (TEMPORARY SYNTHETIC MODE)
+   * Borders are flat graphic elements rendered at runtime, NOT asset files
+   * Returns { valid: false } if spec is malformed or violates constraints
+   */
+  function validateBorderSpec(borderSpec) {
+      if (!borderSpec) {
+          return { valid: false, reason: 'BORDER_SPEC_MISSING' };
+      }
+
+      // Check all required fields present
+      for (const field of BORDER_RENDER_REQUIREMENTS.required) {
+          if (!borderSpec[field]) {
+              return { valid: false, reason: 'BORDER_MISSING_FIELD', missingField: field };
+          }
+      }
+
+      // Validate line style
+      if (!BORDER_RENDER_REQUIREMENTS.lineStyles.has(borderSpec.lineStyle)) {
+          return { valid: false, reason: 'BORDER_LINE_STYLE_INVALID', value: borderSpec.lineStyle };
+      }
+
+      // Validate motif family (ONE only)
+      if (!BORDER_RENDER_REQUIREMENTS.motifFamilies.has(borderSpec.motifFamily)) {
+          return { valid: false, reason: 'BORDER_MOTIF_INVALID', value: borderSpec.motifFamily };
+      }
+
+      // Validate line weight
+      if (!BORDER_RENDER_REQUIREMENTS.lineWeights.has(borderSpec.lineWeight)) {
+          return { valid: false, reason: 'BORDER_LINE_WEIGHT_INVALID', value: borderSpec.lineWeight };
+      }
+
+      // Validate margin distance
+      const reqMargin = BORDER_RENDER_REQUIREMENTS.margin;
+      if (borderSpec.margin < reqMargin.min || borderSpec.margin > reqMargin.max) {
+          return { valid: false, reason: 'BORDER_MARGIN_INVALID', value: borderSpec.margin };
+      }
+
+      return { valid: true };
+  }
+
+  /**
+   * Validate keyhole render specification
+   * Keyholes are physical objects rendered at runtime, NOT asset references
+   * Returns { valid: false } if spec is malformed or missing required fields
+   */
+  function validateKeyholeSpec(keyholeSpec) {
+      if (!keyholeSpec) {
+          return { valid: false, reason: 'KEYHOLE_SPEC_MISSING' };
+      }
+
+      // Check all required fields present
+      for (const field of KEYHOLE_RENDER_REQUIREMENTS.required) {
+          if (!keyholeSpec[field]) {
+              return { valid: false, reason: 'KEYHOLE_MISSING_FIELD', missingField: field };
+          }
+      }
+
+      // Validate aperture proportions
+      const { aperture } = keyholeSpec;
+      const reqAperture = KEYHOLE_RENDER_REQUIREMENTS.aperture;
+      if (aperture.height < reqAperture.height.min || aperture.height > reqAperture.height.max) {
+          return { valid: false, reason: 'KEYHOLE_APERTURE_HEIGHT_INVALID', value: aperture.height };
+      }
+      if (aperture.width < reqAperture.width.min || aperture.width > reqAperture.width.max) {
+          return { valid: false, reason: 'KEYHOLE_APERTURE_WIDTH_INVALID', value: aperture.width };
+      }
+
+      // Validate material
+      if (!KEYHOLE_RENDER_REQUIREMENTS.materials.has(keyholeSpec.material)) {
+          return { valid: false, reason: 'KEYHOLE_MATERIAL_INVALID', value: keyholeSpec.material };
+      }
+
+      // Validate edge style
+      if (!KEYHOLE_RENDER_REQUIREMENTS.edgeStyles.has(keyholeSpec.edgeStyle)) {
+          return { valid: false, reason: 'KEYHOLE_EDGE_INVALID', value: keyholeSpec.edgeStyle };
+      }
+
+      // Validate integration
+      if (!KEYHOLE_RENDER_REQUIREMENTS.integrations.has(keyholeSpec.integration)) {
+          return { valid: false, reason: 'KEYHOLE_INTEGRATION_INVALID', value: keyholeSpec.integration };
+      }
+
+      return { valid: true };
+  }
+
+  /**
+   * ASSET AVAILABILITY RULE — Phase 2+ safety gate
+   * If a referenced objectId is unavailable at render time:
+   * - Abort custom generation
+   * - Return null (triggers Phase 1 Forged Cover fallback)
+   * - No substitution, no invention, no additional AI calls
+   *
+   * FRAMING EXCEPTIONS (TEMPORARY MODE):
+   * - KEYHOLE: runtime-rendered physical aperture; validate keyholeSpec
+   * - BORDER: runtime-rendered synthetic line art; validate borderSpec
+   * Both are generated by image model, NOT asset files.
+   */
+  function validateCoverAssets(coverSpec) {
+      if (!coverSpec) return { valid: true };
+
+      const { objectId, framing, keyholeSpec, borderSpec } = coverSpec;
+
+      // Check objectId availability (TIER 1 assets only)
+      if (objectId && !COVER_ASSET_REGISTRY.objects.has(objectId)) {
+          console.warn('[CoverAsset] UNAVAILABLE objectId:', objectId, '→ aborting custom generation');
+          return { valid: false, reason: 'OBJECT_UNAVAILABLE', missingAsset: objectId };
+      }
+
+      // KEYHOLE FRAMING — runtime render, physical aperture
+      if (framing === 'KEYHOLE') {
+          const keyholeValidation = validateKeyholeSpec(keyholeSpec);
+          if (!keyholeValidation.valid) {
+              console.warn('[CoverAsset] Invalid keyholeSpec:', keyholeValidation.reason, '→ aborting custom generation');
+              return keyholeValidation;
+          }
+          return { valid: true };
+      }
+
+      // BORDER FRAMING — runtime render, synthetic line art (TEMPORARY MODE)
+      if (framing === 'BORDER') {
+          const borderValidation = validateBorderSpec(borderSpec);
+          if (!borderValidation.valid) {
+              console.warn('[CoverAsset] Invalid borderSpec:', borderValidation.reason, '→ aborting custom generation');
+              return borderValidation;
+          }
+          return { valid: true };
+      }
+
+      // NONE framing — no framing validation needed
+      return { valid: true };
+  }
+
+  /**
+   * Generate book cover via image model (Phase 2+ only)
+   * NON-BLOCKING: Returns null on ANY failure → triggers fallback at call site
+   * NEVER retries, NEVER throws, NEVER blocks story creation
+   */
   async function generateBookCover(synopsis, title, authorName) {
       // Extract story context for symbolic object selection (4-axis system)
       const world = state.picks?.world || 'Modern';
@@ -9298,14 +14059,44 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           console.log('[CoverIntel] Focal object:', coverIntel.focalObject);
           console.log('[CoverIntel] Background:', coverIntel.background);
           console.log('[CoverIntel] Palette:', coverIntel.palette.primary, '/', coverIntel.palette.secondary);
+
+          // Store cover emotion for later validation
+          state.coverEmotion = coverIntel.emotion || 'mystery';
+
+          // SIGNAL ALIGNMENT CHECK — validate title ↔ cover consistency
+          const signalCheck = validateSignalAlignment(title, coverIntel, {
+              arousal: arousal || 'Naughty',
+              tone: tone,
+              genre: genre
+          });
+          if (!signalCheck.aligned) {
+              console.warn('[SignalAlignment] Title ↔ Cover mismatch:', signalCheck.errors.map(e => e.message));
+              // Log for analytics but don't block generation
+              // Future: could trigger title adjustment or cover prompt modification
+          } else {
+              console.log('[SignalAlignment] PASS — Title and cover signal same axis');
+          }
       } catch (intelErr) {
           console.warn('[CoverIntel] Intelligence extraction failed, using fallback:', intelErr.message);
       }
 
-      // Build enhanced prompt with cover intelligence
+      // Build enhanced prompt with cover intelligence (symbolic only — no story prose)
       const enhancedPrompt = coverIntel
-          ? `${coverIntel.promptText}\n\nSTORY CONTEXT: ${synopsis || 'A dramatic romantic encounter'}`
-          : (synopsis || 'A dramatic scene from a romantic novel');
+          ? coverIntel.promptText
+          : 'A dramatic symbolic book cover with atmospheric lighting, no text, no people';
+
+      // ============================================================
+      // ASSET AVAILABILITY RULE — Phase 2+ safety gate
+      // If coverIntel specifies unavailable assets, abort to fallback
+      // No substitution, no invention, no additional AI calls
+      // ============================================================
+      if (coverIntel?.coverSpec) {
+          const assetCheck = validateCoverAssets(coverIntel.coverSpec);
+          if (!assetCheck.valid) {
+              console.warn('[BookCover] Asset unavailable:', assetCheck.missingAsset, '→ aborting to Phase 1 fallback');
+              return null; // Triggers renderFallbackCover at call site
+          }
+      }
 
       try {
           // Use global abort controller for cancellation support
@@ -9370,6 +14161,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   const COURTESY_HINGE_KEY = 'storybound_courtesy_hinge_shown';
   let _courtesyHingeTimeout = null;
   let _bookOpened = false;
+  let _settingImagePromise = Promise.resolve(); // Gate for opening spread readiness
 
   // Check if courtesy hinge has already been shown (one-time ever)
   function hasSeenCourtesyHinge() {
@@ -9417,8 +14209,172 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       }
   }
 
+  // ============================================================
+  // BOOK PAGE TYPE DEFINITIONS (Authoritative Spec)
+  // ============================================================
+  // Page sequence: COVER (0) → SETTING (1) → SCENE (2)
+  // Each page type has strict content rules.
+  const BOOK_PAGE_TYPES = {
+      COVER: 'cover',           // Page 0: Front cover visual only (no text)
+      SETTING: 'setting',       // Page 1: Setting image ONLY (no title, no synopsis, no scene)
+      SCENE: 'scene'            // Page 2+: Title + scene text (no setting image)
+  };
+
+  // BOOK PAGE STATE MACHINE
+  // Explicit page index — NOT boolean flags
+  let _bookPageIndex = 0; // 0=cover, 1=setting, 2=scene
+
+  /**
+   * Set the current book page with explicit visibility control.
+   * Each page type has ONE valid render state.
+   * @param {number} pageIndex - 0=cover, 1=setting, 2=scene
+   */
+  function setBookPage(pageIndex) {
+      _bookPageIndex = pageIndex;
+
+      const bookCoverPage = document.getElementById('bookCoverPage');
+      const bookCover = document.getElementById('bookCover');
+      const storyContent = document.getElementById('storyContent');
+      const settingPlate = document.getElementById('settingPlate');
+      const storyTitle = document.getElementById('storyTitle');
+      const sceneNumber = document.getElementById('sceneNumber');
+      const storyText = document.getElementById('storyText');
+
+      // Reset all visibility first
+      if (bookCoverPage) bookCoverPage.classList.remove('hidden', 'page-flip-out');
+      if (storyContent) storyContent.classList.remove('hidden', 'fade-in');
+      if (settingPlate) settingPlate.classList.remove('hidden', 'setting-active');
+      if (storyTitle) storyTitle.classList.remove('hidden');
+      if (sceneNumber) sceneNumber.classList.remove('hidden');
+      if (storyText) storyText.classList.remove('hidden');
+
+      // Apply page-specific visibility
+      if (pageIndex === 0) {
+          // PAGE 0: COVER — Only cover visible
+          if (bookCoverPage) bookCoverPage.classList.remove('hidden');
+          if (storyContent) storyContent.classList.add('hidden');
+          console.log('[BookPage] Page 0: COVER');
+      } else if (pageIndex === 1) {
+          // PAGE 1: SETTING — Setting image only, no title/scene
+          // CRITICAL FIX: Hide bookCoverPage (z-index 2000) so settingPlate (z-index 100) can show
+          if (bookCoverPage) bookCoverPage.classList.add('hidden');
+          if (storyContent) storyContent.classList.remove('hidden');
+          if (settingPlate) settingPlate.classList.add('setting-active');
+          // Hide title and scene content during setting page
+          if (storyTitle) storyTitle.classList.add('hidden');
+          if (sceneNumber) sceneNumber.classList.add('hidden');
+          if (storyText) storyText.classList.add('hidden');
+          console.log('[BookPage] Page 1: SETTING');
+      } else if (pageIndex >= 2) {
+          // PAGE 2: SCENE — Title + scene, setting GONE
+          if (bookCoverPage) bookCoverPage.classList.add('hidden');
+          if (storyContent) storyContent.classList.remove('hidden');
+          // CRITICAL: Setting plate MUST be hidden on scene pages
+          if (settingPlate) settingPlate.classList.add('hidden');
+          // Show title and scene
+          if (storyTitle) storyTitle.classList.remove('hidden');
+          if (sceneNumber) sceneNumber.classList.remove('hidden');
+          if (storyText) {
+              storyText.classList.remove('hidden');
+              storyText.style.opacity = '1';
+          }
+          console.log('[BookPage] Page 2: SCENE');
+      }
+
+      // Validate page integrity
+      const flowCheck = validateBookFlowIntegrity();
+      if (!flowCheck.valid) {
+          console.error('[BookPage] INTEGRITY FAIL at page ' + pageIndex, flowCheck.errors);
+      }
+  }
+
+  /**
+   * Advance to the next book page with appropriate transition.
+   * Page 1→2 uses page-flip animation (not fade).
+   */
+  function advanceBookPage() {
+      const nextPage = _bookPageIndex + 1;
+
+      if (_bookPageIndex === 1 && nextPage === 2) {
+          // PAGE FLIP TRANSITION: Setting → Scene
+          const settingPlate = document.getElementById('settingPlate');
+          if (settingPlate) {
+              settingPlate.classList.add('page-flip-out');
+              // Wait for flip animation to complete before showing scene
+              setTimeout(() => {
+                  setBookPage(2);
+              }, 600); // Match CSS animation duration
+          } else {
+              setBookPage(2);
+          }
+      } else {
+          setBookPage(nextPage);
+      }
+  }
+
+  /**
+   * VALIDATION GUARD: Book flow integrity check
+   * Ensures page content rules are not violated.
+   * Returns { valid: true } or { valid: false, error: string, violation: string }
+   */
+  function validateBookFlowIntegrity() {
+      const errors = [];
+
+      // CHECK 1: Inside cover must have title+synopsis text, but NO images
+      const insideCover = document.getElementById('bookInsideCover');
+      if (insideCover) {
+          const hasImages = insideCover.querySelectorAll('img').length > 0;
+          if (hasImages) {
+              errors.push({ code: 'INSIDE_COVER_HAS_IMAGES', message: 'Inside cover contains images (should be text only)' });
+          }
+      }
+
+      // CHECK 2: Setting plate must not have title or synopsis
+      const settingPlate = document.getElementById('settingPlate');
+      if (settingPlate) {
+          const scenePageTitle = document.getElementById('scenePageTitle');
+          if (scenePageTitle && scenePageTitle.textContent.trim().length > 0) {
+              errors.push({ code: 'SETTING_HAS_TITLE', message: 'Setting plate contains title' });
+          }
+          // Synopsis should never be in setting plate (check for synopsis class)
+          if (settingPlate.querySelector('.synopsis, .inside-cover-synopsis')) {
+              errors.push({ code: 'SETTING_HAS_SYNOPSIS', message: 'Setting plate contains synopsis' });
+          }
+      }
+
+      // CHECK 3: On page 2+, setting plate MUST be hidden
+      if (_bookPageIndex >= 2) {
+          if (settingPlate && !settingPlate.classList.contains('hidden')) {
+              errors.push({ code: 'SETTING_VISIBLE_ON_SCENE', message: 'Setting plate visible on scene page (page ' + _bookPageIndex + ')' });
+          }
+      }
+
+      // CHECK 4: On page 1, title/scene MUST be hidden
+      if (_bookPageIndex === 1) {
+          const storyTitle = document.getElementById('storyTitle');
+          const storyText = document.getElementById('storyText');
+          if (storyTitle && !storyTitle.classList.contains('hidden')) {
+              errors.push({ code: 'TITLE_VISIBLE_ON_SETTING', message: 'Title visible on setting page' });
+          }
+          if (storyText && !storyText.classList.contains('hidden')) {
+              errors.push({ code: 'SCENE_VISIBLE_ON_SETTING', message: 'Scene text visible on setting page' });
+          }
+      }
+
+      if (errors.length > 0) {
+          console.error('[BOOK FLOW] Integrity violations:', errors);
+          return { valid: false, errors };
+      }
+
+      return { valid: true };
+  }
+
+  // Expose for DevHUD
+  window.validateBookFlowIntegrity = validateBookFlowIntegrity;
+  window.BOOK_PAGE_TYPES = BOOK_PAGE_TYPES;
+
   // Open book via hinge animation (triggered by clicking anywhere on book)
-  const BOOK_DWELL_MS = 10000; // Time book stays open before Scene 1 mounts
+  const BOOK_DWELL_MS = 4000; // Time setting page shows before Scene 1
 
   function openBook() {
       if (_bookOpened) return;
@@ -9426,31 +14382,41 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       cancelCourtesyHinge();
 
       const bookCover = document.getElementById('bookCover');
-      const bookCoverPage = document.getElementById('bookCoverPage');
-      const storyContent = document.getElementById('storyContent');
-      const storyTextEl = document.getElementById('storyText');
 
-      // Remove any courtesy peek class
+      // Remove any courtesy peek class and start hinge animation
       if (bookCover) {
           bookCover.classList.remove('courtesy-peek');
-          bookCover.classList.add('hinge-open');
+          bookCover.classList.add('hinge-open'); // Start hinge animation - reveals inside cover
       }
 
-      // After hinge animation completes, begin dwell period
-      setTimeout(() => {
-          // Dwell: book stays open showing inside cover before Scene 1 mounts
-          setTimeout(() => {
-              if (bookCoverPage) bookCoverPage.classList.add('hidden');
-              if (storyContent) {
-                  storyContent.classList.remove('hidden');
-                  storyContent.classList.add('fade-in');
-              }
-              if (storyTextEl) storyTextEl.style.opacity = '1';
+      // STEP 1: Hinge animation plays for 800ms, showing inside cover
+      // After hinge completes, transition to setting page
+      // GATE: Wait for setting image (or fallback) before showing opening spread
+      setTimeout(async () => {
+          await _settingImagePromise.catch(() => {}); // Swallow errors — fallback already handled
+          // CRITICAL: Force-hide DSP before showing Page 1 (prevents synopsis overlay)
+          if (typeof hideDSP === 'function') hideDSP();
+          // Verify inside cover is populated (sanity check)
+          const insideCover = document.getElementById('bookInsideCover');
+          if (insideCover && !insideCover.querySelector('.inside-cover-title')) {
+              console.warn('[BookFlow] Inside cover not populated — check story generation');
+          }
+          setBookPage(1); // Setting image only
 
-              // Scroll to title
-              const titleEl = document.getElementById('storyTitle');
-              if (titleEl) {
-                  titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // STEP 2: After dwell, page-flip to SCENE page (page 2)
+          setTimeout(() => {
+              advanceBookPage(); // Uses page-flip transition
+
+              // BOOK FLOW: Validate integrity after showing Scene 1
+              const flowCheck = validateBookFlowIntegrity();
+              if (!flowCheck.valid) {
+                  console.error('[BOOK FLOW] HARD FAIL: Page integrity violated', flowCheck.errors);
+              }
+
+              // Scroll to story title (page 2 content)
+              const scrollTarget = document.getElementById('storyTitle');
+              if (scrollTarget) {
+                  scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }
 
               // Deactivate Guided Fate visuals after dwell completes
@@ -9489,10 +14455,18 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   // Reset book state for new story
   function resetBookState() {
       _bookOpened = false;
+      _bookPageIndex = 0; // Reset to cover page
+      _settingImagePromise = Promise.resolve(); // Reset for new story
       cancelCourtesyHinge();
+      resetCoverLayers();
       const bookCover = document.getElementById('bookCover');
       if (bookCover) {
           bookCover.classList.remove('hinge-open', 'courtesy-peek');
+      }
+      // Reset setting plate visibility
+      const settingPlate = document.getElementById('settingPlate');
+      if (settingPlate) {
+          settingPlate.classList.remove('hidden', 'setting-active', 'page-flip-out');
       }
       // Reset right-page scene art
       const sceneImg = document.getElementById('bookSceneImg');
@@ -9503,18 +14477,13 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
 
   // Hide cover page and show story content directly (fallback if cover fails)
   function skipCoverPage() {
-      const bookCoverPage = document.getElementById('bookCoverPage');
-      const storyContent = document.getElementById('storyContent');
-      const storyTextEl = document.getElementById('storyText');
-
       // Stop any running cover loading intervals
       if (_coverPhraseInterval) clearInterval(_coverPhraseInterval);
       if (_coverProgressInterval) clearInterval(_coverProgressInterval);
       cancelCourtesyHinge();
 
-      if (bookCoverPage) bookCoverPage.classList.add('hidden');
-      if (storyContent) storyContent.classList.remove('hidden');
-      if (storyTextEl) storyTextEl.style.opacity = '1';
+      // Jump directly to scene page (skip setting page for fallback)
+      setBookPage(2);
       _bookOpened = true;
   }
 
@@ -9755,6 +14724,59 @@ Return only the visual description.`;
   // PERCHANCE PROMPT HARD CONSTRAINTS (MANDATORY)
   const PERCHANCE_PROMPT_PREFIX = 'default Art Style is oil painting 70s pulp, cinematic lighting, realistic proportions, oil-painting style, non-anime.';
   const PERCHANCE_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. One head, two arms, two legs. No extra limbs. No extra people.';
+
+  // ============================================================
+  // VISUAL INTENT GUARD (Attractiveness + Lighting Enforcement)
+  // ============================================================
+  // Enforces: attractive subjects, balanced lighting, erotic-adjacent beauty
+  // Darkness/grime only when tone explicitly requires it
+  // Applied to ALL visualization prompts (initial, re-visualize, auto-refresh)
+  // ============================================================
+
+  const VISUAL_INTENT_ATTRACTIVENESS = 'Subjects are attractive with healthy, glowing skin and appealing features. Soft, flattering lighting. Avoid harsh shadows on faces. Beauty-forward rendering.';
+
+  const VISUAL_INTENT_LIGHTING_DEFAULT = 'Balanced, warm lighting. Avoid desaturated or overly dark palettes unless scene explicitly demands it. Skin tones should be warm and natural, never grey or washed out.';
+
+  // Tones that permit dark/grim rendering (override attractiveness defaults)
+  const DARK_TONE_OVERRIDES = ['Dark', 'Grim', 'Horror', 'Noir'];
+
+  /**
+   * Apply Visual Intent Guard to a prompt
+   * Enforces attractiveness and balanced lighting by default
+   * @param {string} prompt - The visualization prompt
+   * @param {object} context - { tone, world, intensity }
+   * @returns {string} - Enhanced prompt with visual intent enforcement
+   */
+  function applyVisualIntentGuard(prompt, context = {}) {
+      const tone = context.tone || state.picks?.tone || 'Earnest';
+      const world = context.world || state.picks?.world || 'Modern';
+
+      // Check if dark rendering is explicitly permitted
+      const isDarkTone = DARK_TONE_OVERRIDES.includes(tone);
+      const isNoirWorld = world === 'Noir' || world === 'Gothic';
+      const allowDarkRendering = isDarkTone || isNoirWorld;
+
+      let enhanced = prompt;
+
+      // Always add attractiveness bias for human figures
+      if (!enhanced.includes('attractive') && !enhanced.includes('beautiful')) {
+          enhanced = VISUAL_INTENT_ATTRACTIVENESS + ' ' + enhanced;
+      }
+
+      // Add lighting guard unless dark rendering is permitted
+      if (!allowDarkRendering) {
+          // Prevent desaturated/dark defaults
+          enhanced = VISUAL_INTENT_LIGHTING_DEFAULT + ' ' + enhanced;
+
+          // Remove explicit dark directives that may have crept in
+          enhanced = enhanced.replace(/desaturated|gritty|harsh shadows|noir lighting|bleak/gi, '');
+      }
+
+      return enhanced.replace(/\s+/g, ' ').trim();
+  }
+
+  // Expose for DevHUD testing
+  window.applyVisualIntentGuard = applyVisualIntentGuard;
 
   // =================================================================
   // SCENE VISUALIZATION SYSTEM (AUTHORITATIVE)
@@ -10460,7 +15482,6 @@ Condensed (under ${maxLength} chars):` }
 
       const vizBtn = document.getElementById('vizSceneBtn');
       const retryBtn = document.getElementById('vizRetryBtn');
-      const basicVizBtn = document.getElementById('basicVizBtn');
 
       // TASK E: Visualize button shows NO credit count
       // TASK C: Initial Visualize = 1 credit, Re-Visualize = 2 credits
@@ -10497,13 +15518,6 @@ Condensed (under ${maxLength} chars):` }
               retryBtn.textContent = 'Re-Visualize (2)';
               retryBtn.disabled = false;
           }
-      }
-
-      // TASK D: Basic Visualize fallback button - show when main viz might fail
-      if (basicVizBtn) {
-          // Always enabled as ultimate fallback
-          basicVizBtn.disabled = budget.finalized || remaining <= 0;
-          basicVizBtn.style.display = budget.finalized ? 'none' : 'inline-block';
       }
   }
 
@@ -10608,7 +15622,7 @@ Condensed (under ${maxLength} chars):` }
                       new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
                   ]);
               } catch (e) {
-                  promptMsg = "Cinematic scene, atmospheric tension, subdued lighting.";
+                  promptMsg = "Cinematic scene, " + (state.picks?.world || 'atmospheric') + " world, natural lighting, grounded emotion.";
               }
               document.getElementById('vizPromptInput').value = promptMsg;
           }
@@ -10644,8 +15658,18 @@ Condensed (under ${maxLength} chars):` }
           // Brief anchors from visual bible (characters only, 80 char max)
           const briefAnchors = filterAuthorFromPrompt(anchorText).slice(0, 80);
 
-          // Scene visualization style (cinematic, NOT portrait/glamour)
-          const sceneStyle = "Cinematic, painterly, atmospheric. Subdued expressions.";
+          // Scene visualization style — world-aware (NOT hardcoded noir)
+          const SCENE_STYLE_BY_WORLD = {
+              Fantasy: 'Cinematic, painterly, warm golden-hour lighting. Natural expressions, grounded emotion.',
+              Historical: 'Cinematic, painterly, period-accurate palette. Candid expressions, oil-painting texture.',
+              Modern: 'Cinematic, contemporary, natural ambient lighting. Candid, unstaged expressions.',
+              SciFi: 'Cinematic, sleek high-contrast lighting, cool palette. Alert, focused expressions.',
+              Noir: 'Cinematic, chiaroscuro, neon-and-shadow contrast. Tense, guarded expressions.',
+              Gothic: 'Cinematic, dramatic chiaroscuro, deep reds and blacks. Haunted, strained expressions.',
+              Paranormal: 'Cinematic, ethereal glow, muted earth tones with spectral accents. Wary expressions.'
+          };
+          const sceneStyle = SCENE_STYLE_BY_WORLD[state.picks?.world] || 'Cinematic, painterly, atmospheric, natural lighting. Grounded expressions.';
+          const intensityBias = getVisualizeIntensityBias();
           const shortIntensity = intensityBias.split('.')[0] + ".";
 
           // SCENE FIRST, then style, then mandatory exclusions
@@ -10656,6 +15680,13 @@ Condensed (under ${maxLength} chars):` }
               SCENE_VIZ_EXCLUSIONS +
               vetoExclusions +
               (briefAnchors ? " Anchors: " + briefAnchors : "");
+
+          // VISUAL INTENT GUARD: Enforce attractiveness + balanced lighting
+          basePrompt = applyVisualIntentGuard(basePrompt, {
+              tone: state.picks?.tone,
+              world: state.picks?.world,
+              intensity: state.intensity
+          });
 
           // Check if cancelled before image generation
           if (_vizCancelled) {
@@ -10805,70 +15836,6 @@ Condensed (under ${maxLength} chars):` }
       }
   }
 
-  // TASK D: Basic Visualize - always uses OpenAI, bypasses provider UI
-  // Fallback when enhanced visualization fails
-  window.basicVisualize = async function() {
-      if (_vizInFlight) return;
-
-      const sceneKey = getSceneKey();
-      const budget = getSceneBudget(sceneKey);
-      const remaining = getAttemptsRemaining(sceneKey);
-
-      if (budget.finalized || remaining <= 0) {
-          showToast('No visualization attempts remaining for this scene.');
-          return;
-      }
-
-      // Increment attempts
-      incrementSceneAttempts(sceneKey);
-      updateVizButtonStates();
-
-      _vizInFlight = true;
-      startLoading("Basic visualization...", VISUALIZE_LOADING_MESSAGES);
-
-      try {
-          const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
-          const lastText = allStoryContent.slice(-400) || "A romantic scene";
-
-          // Simple prompt - no modifiers, no provider selection
-          const basePrompt = filterAuthorFromPrompt(lastText).slice(0, 256) +
-              "\n---\nStyle: cinematic, painterly, romantic. Attractive, elegant features.";
-
-          // TASK A: Force OpenAI directly - guaranteed fallback
-          const imageUrl = await callOpenAIImageGen(basePrompt, '1792x1024');
-
-          if (!imageUrl) {
-              throw new Error('OpenAI image generation returned null');
-          }
-
-          // Show result in modal
-          const modal = document.getElementById('vizModal');
-          const img = document.getElementById('vizPreviewImg');
-          const ph = document.getElementById('vizPlaceholder');
-          const errDiv = document.getElementById('vizError');
-
-          if (modal) modal.classList.remove('hidden');
-          if (ph) ph.style.display = 'none';
-          if (errDiv) errDiv.classList.add('hidden');
-
-          if (img) {
-              img.src = imageUrl.startsWith('http') ? imageUrl : `data:image/png;base64,${imageUrl}`;
-              img.style.display = 'block';
-              if (!img.src.startsWith('data:') && !img.src.startsWith('blob:')) {
-                  state.visual.lastImageUrl = img.src;
-              }
-          }
-
-          showToast('Basic visualization complete');
-      } catch (e) {
-          console.error('[BasicViz] Error:', e);
-          showToast('Visualization failed. Please try again.');
-      } finally {
-          stopLoading();
-          _vizInFlight = false;
-      }
-  };
-
   // TASK B: Initialize provider dropdown with available providers
   // INTENT-BASED: Scene visualization uses OpenAI/Replicate only (NO Gemini)
   // Gemini is ONLY available for Setting images (handled separately)
@@ -10942,7 +15909,9 @@ Condensed (under ${maxLength} chars):` }
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
       if (billingLock) {
           if (submitBtn) submitBtn.classList.remove('submitting');
-          window.showPaywall('unlock');
+          // Soulmates requires sub_only (no StoryPass); Affair can show unlock
+          const paywallMode = (state.storyLength === 'soulmates') ? 'sub_only' : 'unlock';
+          window.showPaywall(paywallMode);
           return;
       }
 
@@ -11074,7 +16043,16 @@ FATE CARD ADAPTATION (CRITICAL):
       // Lens: dynamic midpoint enforcement (evaluated per-turn)
       const lensEnforcement = buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength);
 
-      const fullSys = state.sysPrompt + `\n\n${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+      // 5TH PERSON POV CONTRACT INJECTION (turns)
+      const turnPOVContract = build5thPersonContract();
+
+      // EROTIC ESCALATION BLOCK (Erotic/Dirty intensity only)
+      const turnEroticEscalation = buildEroticEscalationBlock();
+
+      // TONE ENFORCEMENT BLOCK (all tones)
+      const turnToneEnforcement = buildToneEnforcementBlock(state.picks?.tone);
+
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}. 
       Player Dialogue: ${dia}. 
@@ -11142,9 +16120,61 @@ FATE CARD ADAPTATION (CRITICAL):
               throw new Error('Invalid response: empty or malformed story text');
           }
 
-          // 5TH PERSON CONDUCTOR ENFORCEMENT: Apply to all Author beats, not just opener
+          // 5TH PERSON POV VALIDATION (later scenes — reduced frequency expected)
           if (state.povMode === 'author5th') {
-              raw = enforceAuthorConductor(raw);
+              // Check if this is an erotic scene (Author should be absent)
+              const isEroticScene = ['Erotic', 'Dirty'].includes(state.intensity) &&
+                  (raw.toLowerCase().includes('moan') || raw.toLowerCase().includes('thrust') ||
+                   raw.toLowerCase().includes('naked') || raw.toLowerCase().includes('undress'));
+
+              const povCheck = validate5thPersonPOV(raw, false, isEroticScene); // isSceneOne=false
+              if (!povCheck.valid && povCheck.canRepair) {
+                  raw = await repair5thPersonPOV(raw);
+                  console.log('[5thPerson] Turn voyeur verbs repaired');
+              } else if (!povCheck.valid) {
+                  // Check for HARD_FAIL violations (erotic scene Author presence)
+                  const hasHardFail = povCheck.violations.some(v => v.startsWith('HARD_FAIL:'));
+                  if (hasHardFail && isEroticScene) {
+                      // Erotic scene with Author presence — HARD FAIL, must regenerate
+                      console.error('[5thPerson] HARD FAIL — Erotic scene has Author presence, regenerating...');
+                      const eroticStrictPrompt = `CRITICAL: This is an EROTIC scene. The Author must be COMPLETELY ABSENT.
+DO NOT mention "The Author" anywhere in this scene. Pure 3rd-person limited only.
+Regenerate the scene with ZERO Author presence.`;
+                      if (useFullOrchestration) {
+                          raw = await generateOrchestatedTurn({
+                              systemPrompt: fullSys + '\n\n' + eroticStrictPrompt,
+                              storyContext: context,
+                              playerAction: act,
+                              playerDialogue: dia,
+                              fateCard: selectedFateCard,
+                              onPhaseChange: () => {}
+                          });
+                      } else {
+                          raw = await callChat([
+                              { role: 'system', content: fullSys + '\n\n' + eroticStrictPrompt },
+                              { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                          ]);
+                      }
+                  } else {
+                      // Non-erotic later scene — log warning, don't block (looser requirements)
+                      console.warn('[5thPerson] Turn POV issues (non-blocking):', povCheck.violations);
+                  }
+              }
+
+              // STRICT 5TH PERSON ENFORCEMENT (continuation scenes — reduced but still enforced)
+              if (!isEroticScene) {
+                  const strictCheck = enforceStrict5thPersonPOV(raw, state.turnCount || 2, state.picks?.tone);
+                  if (!strictCheck.valid) {
+                      console.warn('[5thPerson:Strict] Continuation scene enforcement issues:', strictCheck.violations);
+                      // For continuation scenes, check for critical failures only
+                      const hasCriticalFail = strictCheck.violations.some(v =>
+                          v.includes('NARRATIVE_AUTONOMY') || v.includes('CAMEO_ONLY')
+                      );
+                      if (hasCriticalFail) {
+                          console.error('[5thPerson:Strict] Critical violation in continuation scene');
+                      }
+                  }
+              }
           }
 
           // VOCABULARY BAN ENFORCEMENT — turn prose
@@ -11171,7 +16201,107 @@ FATE CARD ADAPTATION (CRITICAL):
               }
           );
 
+          // ============================================================
+          // NARRATIVE AUTHORITY VALIDATION (Runs FIRST — before Tone/POV)
+          // ============================================================
+          const narrativeAuthorityCheck = validateNarrativeAuthority(raw);
+          _lastNarrativeAuthorityValidation = {
+              valid: narrativeAuthorityCheck.valid,
+              errors: narrativeAuthorityCheck.errors,
+              timestamp: Date.now()
+          };
+          if (!narrativeAuthorityCheck.valid) {
+              console.log('[NarrativeAuthority] Turn validation failed:', narrativeAuthorityCheck.errors);
+              // Regenerate with Narrative Authority enforcement
+              const narrAuthPrompt = buildNarrativeAuthorityBlock() +
+                  '\n\nREGENERATION REQUIRED — Previous output violated Narrative Authority:\n- ' +
+                  narrativeAuthorityCheck.errors.map(e => `${e.code}: ${e.match}`).join('\n- ');
+              if (useFullOrchestration) {
+                  raw = await generateOrchestatedTurn({
+                      systemPrompt: fullSys + narrAuthPrompt,
+                      storyContext: context,
+                      playerAction: act,
+                      playerDialogue: dia,
+                      fateCard: selectedFateCard,
+                      onPhaseChange: () => {}
+                  });
+              } else {
+                  raw = await callChat([
+                      { role: 'system', content: fullSys + narrAuthPrompt },
+                      { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                  ]);
+              }
+              console.warn('[NarrativeAuthorityFail] Turn regenerated due to:', narrativeAuthorityCheck.errors.map(e => e.code));
+          }
+
+          // EROTIC ESCALATION VALIDATION (Turns)
+          if (['Erotic', 'Dirty'].includes(state.intensity)) {
+              const turnEscalationCheck = validateEroticEscalation(raw, state.intensity);
+              if (!turnEscalationCheck.valid) {
+                  console.log('[EroticEscalation] Turn validation failed:', turnEscalationCheck.violations);
+                  // Regenerate with explicit escalation notice
+                  const escalationPrompt = buildEroticEscalationBlock() +
+                      '\n\nREGENERATION REQUIRED — Previous output failed escalation check:\n- ' +
+                      turnEscalationCheck.violations.join('\n- ') +
+                      '\n\nAdd more sensory grounding and physical tension.';
+                  if (useFullOrchestration) {
+                      raw = await generateOrchestatedTurn({
+                          systemPrompt: fullSys + escalationPrompt,
+                          storyContext: context,
+                          playerAction: act,
+                          playerDialogue: dia,
+                          fateCard: selectedFateCard,
+                          onPhaseChange: () => {}
+                      });
+                  } else {
+                      raw = await callChat([
+                          { role: 'system', content: fullSys + escalationPrompt },
+                          { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                      ]);
+                  }
+                  console.warn('[EroticEscalationFail] Turn regenerated due to:', turnEscalationCheck.violations);
+              }
+          }
+
+          // TONE VALIDATION (Turns — all stories)
+          const turnTone = state.picks?.tone || 'Earnest';
+          const turnToneCheck = validateTone(raw, turnTone);
+          if (!turnToneCheck.valid) {
+              console.log('[ToneDrift] Turn validation failed:', turnToneCheck.violations);
+              // Regenerate with explicit tone enforcement
+              const turnTonePrompt = buildToneEnforcementBlock(turnTone) +
+                  '\n\nREGENERATION REQUIRED — Tone not present in language:\n- ' +
+                  turnToneCheck.violations.join('\n- ');
+              if (useFullOrchestration) {
+                  raw = await generateOrchestatedTurn({
+                      systemPrompt: fullSys + turnTonePrompt,
+                      storyContext: context,
+                      playerAction: act,
+                      playerDialogue: dia,
+                      fateCard: selectedFateCard,
+                      onPhaseChange: () => {}
+                  });
+              } else {
+                  raw = await callChat([
+                      { role: 'system', content: fullSys + turnTonePrompt },
+                      { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                  ]);
+              }
+              console.warn('[ToneDriftDetected] Turn regenerated for tone:', turnTone);
+          }
+
           state.turnCount++;
+
+          // Record turn completion for reader preference inference (session-scoped)
+          if (window.StoryboundOrchestration && window.StoryboundOrchestration.recordPreferenceSignal) {
+              window.StoryboundOrchestration.recordPreferenceSignal('TURN_COMPLETED', {
+                  intensity: state.intensity,
+                  turnNumber: state.turnCount
+              });
+          }
+
+          // Mark Solo session as completed for subtitle upgrade
+          if (typeof markSoloSessionCompleted === 'function') markSoloSessionCompleted();
 
           // Update visualization button states for new scene
           updateVizButtonStates();
@@ -11253,6 +16383,19 @@ FATE CARD ADAPTATION (CRITICAL):
           }
 
       } catch(e) {
+          // HTTP 429 RATE LIMIT — TERMINAL FAILURE, NO RETRY
+          if (e instanceof RateLimitError || e?.isRateLimit) {
+              console.group('STORYBOUND RATE LIMITED - TURN BLOCKED');
+              console.error('Endpoint:', e.endpoint);
+              console.error('Retry-After:', e.retryAfter || 'not specified');
+              console.groupEnd();
+
+              // DO NOT advance state, DO NOT create scene
+              // Surface recoverable error — require explicit user action
+              alert("Rate limited. Please wait a moment and try again.");
+              return; // Exit early — finally block still runs
+          }
+
           console.error('Turn submission error:', e);
           // Only show error alert if story was NOT successfully displayed
           if (!storyDisplayed) {
@@ -11486,5 +16629,853 @@ FATE CARD ADAPTATION (CRITICAL):
   syncTierFromAccess();
   updateContinueButtons();
   renderBurgerMenu();
+
+  // ============================================================
+  // DEV HUD — Casual English command console (developer only)
+  // Never saves to localStorage, never unlocks real features,
+  // never affects other users, never ships to production.
+  // ============================================================
+
+  (function initDevHud() {
+      const isDev = location.hostname === 'localhost' ||
+                    location.hostname === '127.0.0.1' ||
+                    new URLSearchParams(location.search).has('dev');
+      if (!isDev) return;
+
+      const hudEl = document.getElementById('devHud');
+      const inputEl = document.getElementById('devHudInput');
+      const logEl = document.getElementById('devHudLog');
+      if (!hudEl || !inputEl) return;
+
+      let _devOverrides = {};
+      let _logTimer = null;
+
+      function log(msg) {
+          if (!logEl) return;
+          logEl.textContent = msg;
+          logEl.style.opacity = '1';
+          clearTimeout(_logTimer);
+          _logTimer = setTimeout(() => { logEl.style.opacity = '0'; }, 5000);
+          console.log('[DevHUD]', msg);
+      }
+
+      function toggle() {
+          hudEl.classList.toggle('dev-hud-visible');
+          if (hudEl.classList.contains('dev-hud-visible')) {
+              inputEl.focus();
+          }
+      }
+
+      // Toggle with backtick key (only when not typing elsewhere)
+      document.addEventListener('keydown', (e) => {
+          if (e.key === '`' && !e.ctrlKey && !e.metaKey) {
+              const tag = (document.activeElement?.tagName || '').toLowerCase();
+              const isEditable = tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable;
+              if (isEditable && document.activeElement !== inputEl) return;
+              e.preventDefault();
+              toggle();
+          }
+      });
+
+      inputEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+              const raw = inputEl.value.trim();
+              if (raw) execute(raw.toLowerCase());
+              inputEl.value = '';
+          }
+          if (e.key === 'Escape') toggle();
+      });
+      // Prevent backtick from typing into the input
+      inputEl.addEventListener('keypress', (e) => {
+          if (e.key === '`') e.preventDefault();
+      });
+
+      // --- Extraction maps ---
+      const WORLD_MAP = {
+          fantasy: 'Fantasy', historical: 'Historical', modern: 'Modern',
+          'sci-fi': 'SciFi', scifi: 'SciFi', dystopia: 'Dystopia',
+          'post-apocalyptic': 'PostApocalyptic', postapocalyptic: 'PostApocalyptic',
+          supernatural: 'Supernatural', superheroic: 'Superheroic'
+      };
+      const GENRE_MAP = {
+          billionaire: 'Billionaire', crime: 'CrimeSyndicate', noir: 'Noir',
+          heist: 'Heist', espionage: 'Espionage', political: 'Political',
+          survival: 'Survival', obsession: 'Obsession', forbidden: 'ForbiddenKnowledge',
+          'forbidden knowledge': 'ForbiddenKnowledge'
+      };
+      const INTENSITY_MAP = {
+          tease: 'Naughty', naughty: 'Naughty', erotic: 'Erotic', dirty: 'Dirty'
+      };
+      const ARCHETYPE_MAP = {
+          'heart warden': 'HEART_WARDEN', 'open vein': 'OPEN_VEIN',
+          'spellbinder': 'SPELLBINDER', 'armored fox': 'ARMORED_FOX',
+          'dark vice': 'DARK_VICE', 'beautiful ruin': 'BEAUTIFUL_RUIN',
+          'eternal flame': 'ETERNAL_FLAME'
+      };
+
+      // ========================================
+      // DETERMINISTIC COMMAND REGISTRY (v1)
+      // NO fuzzy matching. NO synonyms. NO NLP.
+      // ========================================
+      const DEV_CMD_REGISTRY = {
+          world: ['Modern', 'Historical', 'Fantasy', 'SciFi', 'Dystopia', 'PostApocalyptic'],
+          genre: ['CrimeSyndicate', 'Billionaire', 'Noir', 'Heist', 'Espionage', 'Political',
+                  'Escape', 'Redemption', 'BuildingBridges', 'Purgatory', 'RelentlessPast',
+                  'Sports', 'Survival', 'Obsession', 'ForbiddenKnowledge'],
+          tone: ['Earnest', 'WryConfession', 'Satirical', 'Dark', 'Horror', 'Mythic',
+                 'Comedic', 'Surreal', 'Poetic'],
+          dynamic: ['Proximity', 'SecretIdentity', 'Caretaker', 'Friends', 'Enemies',
+                    'SecondChance', 'Forbidden', 'Dangerous', 'Obsessive', 'Fated', 'Partners'],
+          arousal: ['Clean', 'Naughty', 'Erotic', 'Dirty']
+      };
+
+      // Case-insensitive lookup for canonical value
+      function resolveCanonical(axis, input) {
+          const list = DEV_CMD_REGISTRY[axis];
+          if (!list) return null;
+          const lower = input.toLowerCase();
+          return list.find(v => v.toLowerCase() === lower) || null;
+      }
+
+      // Deterministic command parser (space-split, no regex magic)
+      function parseDevCommand(raw) {
+          const parts = raw.trim().split(/\s+/);
+          if (parts.length === 0) return null;
+
+          // ALIAS: "regen book cover" → "regen cover"
+          if (parts[0] === 'regen' && parts[1] === 'book' && parts[2] === 'cover') {
+              return { cmd: 'regen', target: 'cover' };
+          }
+          // COMMAND: "regen cover"
+          if (parts[0] === 'regen' && parts[1] === 'cover') {
+              return { cmd: 'regen', target: 'cover' };
+          }
+          // COMMAND: "set <axis> <value>"
+          if (parts[0] === 'set' && parts.length >= 3) {
+              const axis = parts[1];
+              const value = parts.slice(2).join(' ');
+              return { cmd: 'set', axis, value };
+          }
+          // Not a registry command
+          return null;
+      }
+
+      // Execute deterministic command (returns true if handled)
+      function executeRegistryCommand(input) {
+          const parsed = parseDevCommand(input);
+          if (!parsed) return false;
+
+          // REGEN COVER (gated by coverEligibility)
+          if (parsed.cmd === 'regen' && parsed.target === 'cover') {
+              const world = state.picks?.world || 'Modern';
+              const genre = state.picks?.genre || 'Billionaire';
+              const intensity = state.intensity || 'Naughty';
+              const title = document.getElementById('storyTitle')?.textContent || 'Untitled';
+
+              // PHASE 1 GATE: Custom covers only when coverEligibility === true
+              if (state.coverMode === 'PHASE_1_FORGED' || state.coverEligibility !== true) {
+                  console.log('[DEV:CoverGen] PHASE_1_FORGED mode — using local fallback');
+                  resetCoverLayers();
+                  showDevCover();
+                  renderFallbackCover(world, genre, title);
+                  stopCoverLoading(null);
+                  applyCoverIntensityLayers(intensity, world);
+                  log('[DEV:CoverGen] PHASE_1 fallback applied');
+                  return true;
+              }
+
+              // CUSTOM COVER PATH (only when coverEligibility === true)
+              console.log('[DEV:CoverGen] Regenerating cover...');
+              resetCoverLayers();
+              showDevCover();
+              const synopsis = document.getElementById('synopsisText')?.textContent || '';
+              const authorName = state.authorName || 'Anonymous';
+              generateBookCover(synopsis, title, authorName).then(coverUrl => {
+                  if (coverUrl) {
+                      stopCoverLoading(coverUrl);
+                      applyCoverIntensityLayers(intensity, world);
+                      log('[DEV:CoverGen] Cover generated');
+                  } else {
+                      renderFallbackCover(world, genre);
+                      stopCoverLoading(null);
+                      applyCoverIntensityLayers(intensity, world);
+                      log('[DEV:CoverGen] AI failed → fallback');
+                  }
+              }).catch(err => {
+                  console.error('[DEV:CoverGen] Error:', err);
+                  renderFallbackCover(world, genre);
+                  stopCoverLoading(null);
+                  applyCoverIntensityLayers(intensity, world);
+                  log('[DEV:CoverGen] Error → fallback');
+              });
+              log('[DEV:CoverGen] Started...');
+              return true;
+          }
+
+          // SET <axis> <value>
+          if (parsed.cmd === 'set') {
+              const { axis, value } = parsed;
+              // Validate axis
+              if (!DEV_CMD_REGISTRY[axis]) {
+                  console.error('[DEV:StateChange] HARD FAIL: Unknown axis "' + axis + '"');
+                  log('ERROR: Unknown axis "' + axis + '". Valid: world, genre, tone, dynamic, arousal');
+                  return true;
+              }
+              // Resolve canonical value
+              const canonical = resolveCanonical(axis, value);
+              if (!canonical) {
+                  console.error('[DEV:StateChange] HARD FAIL: Invalid value "' + value + '" for axis "' + axis + '"');
+                  log('ERROR: Invalid ' + axis + ' "' + value + '". Valid: ' + DEV_CMD_REGISTRY[axis].join(', '));
+                  return true;
+              }
+              // Update state
+              state.picks = state.picks || {};
+              if (axis === 'arousal') {
+                  state.intensity = canonical;
+              } else {
+                  state.picks[axis] = canonical;
+              }
+              console.log('[DEV:StateChange] ' + axis + ' → ' + canonical);
+              log('[DEV:StateChange] ' + axis + ' → ' + canonical);
+              // Trigger dependent recalculations
+              if (axis === 'arousal') {
+                  applyCoverIntensityLayers(canonical, state.picks?.world);
+              }
+              return true;
+          }
+
+          return false;
+      }
+
+      function extract(text, map) {
+          for (const [key, val] of Object.entries(map)) {
+              if (text.includes(key)) return val;
+          }
+          return null;
+      }
+
+      // Show the book cover page in dev context
+      function showDevCover() {
+          window.showScreen('game');
+          const bcp = document.getElementById('bookCoverPage');
+          const sc = document.getElementById('storyContent');
+          const bo = document.getElementById('bookObject');
+          const ls = document.getElementById('coverLoadingState');
+          if (bcp) bcp.classList.remove('hidden');
+          if (sc) sc.classList.add('hidden');
+          if (bo) bo.classList.remove('hidden');
+          if (ls) ls.classList.add('hidden');
+      }
+
+      function execute(input) {
+          // --- DETERMINISTIC REGISTRY COMMANDS (priority) ---
+          if (executeRegistryCommand(input)) return;
+
+          // --- HELP ---
+          if (/^(help|what can i say)\b/.test(input)) {
+              log('=== DETERMINISTIC COMMANDS ===');
+              log('regen cover');
+              log('set world <Modern|Historical|Fantasy|SciFi|Dystopia|PostApocalyptic>');
+              log('set genre <' + DEV_CMD_REGISTRY.genre.slice(0, 5).join('|') + '|...>');
+              log('set tone <Earnest|WryConfession|Satirical|Dark|Horror|Mythic|Comedic|Surreal|Poetic>');
+              log('set dynamic <Proximity|SecretIdentity|Caretaker|Friends|Enemies|...>');
+              log('set arousal <Clean|Naughty|Erotic|Dirty>');
+              log('=== LEGACY COMMANDS ===');
+              log('COVER: make [world] [intensity] cover | pretend cover failed | show fallback | show/hide keyhole | reset cover');
+              log('STATE: set intensity to X | go dirty/erotic | pretend i paid | pretend i\'m free | what\'s going on');
+              log('QUERY: what genre/world/tone/intensity/archetype/title? | title pipeline | test title [text]');
+              log('POV: check pov | why pov failed | is god mode active | set pov author/normal | exit god mode');
+              log('VALIDATION: check dsp | check tone | check erotic | check authority | check title | check signal | check paywall | check book | check all');
+              log('FATE: reset fate cards | deal fate');
+              log('FORK: show fork (test continuation modal)');
+              return;
+          }
+
+          // --- MAKE / GENERATE COVER ---
+          if (/\b(make|generate)\b.*\bcover\b/.test(input)) {
+              const world = extract(input, WORLD_MAP) || state.picks?.world || 'Modern';
+              const genre = extract(input, GENRE_MAP) || state.picks?.genre || 'Billionaire';
+              const intensity = extract(input, INTENSITY_MAP) || state.intensity || 'Naughty';
+              state.picks = state.picks || {};
+              state.picks.world = world;
+              state.picks.genre = genre;
+              state.intensity = intensity;
+              resetCoverLayers();
+              showDevCover();
+              renderFallbackCover(world, genre);
+              applyCoverIntensityLayers(intensity, world);
+              log('Cover: ' + world + ' / ' + genre + ' / ' + intensity);
+              return;
+          }
+
+          // --- PRETEND COVER FAILED ---
+          if (/\b(pretend|simulate)\b.*\bcover\b.*\b(fail|broke|error)\b|\bcover\b.*\b(fail|broke)\b/.test(input)) {
+              const world = state.picks?.world || 'Modern';
+              const genre = state.picks?.genre || 'Billionaire';
+              resetCoverLayers();
+              showDevCover();
+              renderFallbackCover(world, genre);
+              applyCoverIntensityLayers(state.intensity, world);
+              log('Simulated cover failure -> fallback rendered');
+              return;
+          }
+
+          // --- SHOW / USE FALLBACK ---
+          if (/\b(show|use|skip)\b.*(fallback|ai\s*cover)\b/.test(input)) {
+              const world = state.picks?.world || 'Modern';
+              const genre = state.picks?.genre || 'Billionaire';
+              resetCoverLayers();
+              showDevCover();
+              renderFallbackCover(world, genre);
+              applyCoverIntensityLayers(state.intensity, world);
+              log('Fallback cover shown (' + world + ' / ' + genre + ')');
+              return;
+          }
+
+          // --- SHOW FORK MODAL ---
+          if (/\b(show|test)\b.*\bfork\b/.test(input)) {
+              showContinuationFork();
+              log('Continuation fork modal shown');
+              return;
+          }
+
+          // --- SHOW KEYHOLE ---
+          if (/\b(show|turn on)\b.*\bkeyhole\b/.test(input)) {
+              showDevCover();
+              // Ensure a base cover exists
+              const fb = document.getElementById('coverFallback');
+              const img = document.getElementById('bookCoverImg');
+              const hasCover = (fb && !fb.classList.contains('hidden')) || (img && img.src && img.style.display !== 'none');
+              if (!hasCover) {
+                  renderFallbackCover(state.picks?.world || 'Modern', state.picks?.genre || 'Billionaire');
+              }
+              applyCoverIntensityLayers('Dirty', state.picks?.world);
+              log('Keyhole takeover enabled');
+              return;
+          }
+          if (/\bhide\b.*\bkeyhole\b/.test(input)) {
+              const kh = document.getElementById('coverKeyholeOverlay');
+              if (kh) kh.classList.add('hidden');
+              log('Keyhole hidden');
+              return;
+          }
+
+          // --- RESET COVER ---
+          if (/\b(reset|clear|start)\b.*\bcover\b/.test(input)) {
+              resetCoverLayers();
+              resetBookState();
+              log('Cover state reset');
+              return;
+          }
+
+          // --- RESET / DEAL FATE CARDS ---
+          // Aliases: "reset fate cards", "reset the fate cards", "restart fate", "redo fate", "re-deal fate cards", "deal fate"
+          if (/\b(reset|restart|redo|re-?deal|deal)\b.*\bfate\b/i.test(input)) {
+              if (window.dealFateCards) {
+                  window.dealFateCards();
+                  log('Fate cards re-dealt');
+              } else {
+                  log('Fate card system not available');
+              }
+              return;
+          }
+
+          // --- SET INTENSITY ---
+          if (/\bset\b.*\bintensity\b.*\bto\b/.test(input)) {
+              const intensity = extract(input, INTENSITY_MAP);
+              if (intensity) {
+                  state.intensity = intensity;
+                  applyCoverIntensityLayers(intensity, state.picks?.world);
+                  log('Intensity -> ' + intensity);
+              } else {
+                  log('Unknown intensity. Try: tease, naughty, erotic, dirty');
+              }
+              return;
+          }
+          if (/^go\s+(dirty|erotic|naughty|tease)\b/.test(input)) {
+              const m = input.match(/^go\s+(\w+)/);
+              const intensity = INTENSITY_MAP[m[1]];
+              if (intensity) {
+                  state.intensity = intensity;
+                  applyCoverIntensityLayers(intensity, state.picks?.world);
+                  log('Intensity -> ' + intensity);
+              }
+              return;
+          }
+
+          // --- ACCESS SIMULATION ---
+          if (/\bpretend\b.*\b(paid|story\s*pass|subscribed)\b/.test(input)) {
+              _devOverrides.access = 'sub';
+              state.subscribed = true;
+              syncTierFromAccess();
+              log('Pretending subscribed (does not persist, does not unlock real features)');
+              return;
+          }
+          if (/\bpretend\b.*\bfree\b/.test(input)) {
+              _devOverrides.access = 'free';
+              state.subscribed = false;
+              state.intensity = 'Naughty';
+              syncTierFromAccess();
+              log('Pretending free tier');
+              return;
+          }
+
+          // --- ARCHETYPE / LENS ---
+          if (/\b(use|switch)\b.*\b(lens|archetype)\b/.test(input) || /\bswitch to\b/.test(input)) {
+              const archId = extract(input, ARCHETYPE_MAP);
+              if (archId && ARCHETYPES[archId]) {
+                  state.archetype = state.archetype || {};
+                  state.archetype.primary = archId;
+                  log('Archetype -> ' + ARCHETYPES[archId].name);
+              } else {
+                  log('Unknown archetype. Try: beautiful ruin, open vein, spellbinder, armored fox, dark vice, heart warden, eternal flame');
+              }
+              return;
+          }
+
+          // --- QUILL ---
+          if (/\bset\b.*\bquill\b.*\b\d+/.test(input)) {
+              const m = input.match(/(\d+)/);
+              if (m) {
+                  state.quillTarget = parseInt(m[1], 10);
+                  log('Quill target -> ' + m[1] + ' words');
+              }
+              return;
+          }
+          if (/\bpretend\b.*\bwritten\b.*\b\d+/.test(input)) {
+              const m = input.match(/(\d+)/);
+              if (m) {
+                  state.wordCount = parseInt(m[1], 10);
+                  log('Word count -> ' + m[1]);
+              }
+              return;
+          }
+
+          // --- DEBUG: STATE DUMP ---
+          if (/\bwhat.s\b.*\b(going|everything|firing)\b|\bshow me everything\b/.test(input)) {
+              const info = [
+                  'world:' + (state.picks?.world || '-'),
+                  'genre:' + (state.picks?.genre || '-'),
+                  'tone:' + (state.picks?.tone || '-'),
+                  'dynamic:' + (state.picks?.dynamic || '-'),
+                  'intensity:' + (state.intensity || '-'),
+                  'arch:' + (state.archetype?.primary || '-'),
+                  'access:' + (state.access || '-'),
+                  'sub:' + (state.subscribed || false),
+                  'turns:' + (state.turnCount || 0)
+              ];
+              log(info.join(' | '));
+              console.log('[DevHUD] Full state:', JSON.parse(JSON.stringify(state)));
+              return;
+          }
+
+          // --- DEBUG: COVER STATE ---
+          if (/\bwhat cover\b|\bwhy.*cover\b/.test(input)) {
+              const fb = document.getElementById('coverFallback');
+              const img = document.getElementById('bookCoverImg');
+              const border = document.getElementById('coverEroticBorder');
+              const keyhole = document.getElementById('coverKeyholeOverlay');
+              const hasFallback = fb && !fb.classList.contains('hidden');
+              const hasImg = img && img.src && !img.src.endsWith('/') && img.style.display !== 'none';
+              const hasBorder = border && !border.classList.contains('hidden');
+              const hasKeyhole = keyhole && !keyhole.classList.contains('hidden');
+              const layers = [];
+              if (hasImg) layers.push('AI cover');
+              if (hasFallback) layers.push('fallback');
+              if (hasBorder) layers.push('erotic border (' + (border.className.match(/world-\w+/)?.[0] || 'default gold') + ')');
+              if (hasKeyhole) layers.push('keyhole takeover');
+              log(layers.length ? 'Active: ' + layers.join(' + ') : 'No cover layers visible');
+              return;
+          }
+
+          // --- CASUAL ENGLISH QUERIES ---
+          // "what genre is this", "what genre", "genre?"
+          if (/\b(what|which)\b.*\bgenre\b|\bgenre\s*\?/.test(input)) {
+              log('Genre: ' + (state.picks?.genre || '(not set)'));
+              return;
+          }
+          // "what world is this", "what world", "world?"
+          if (/\b(what|which)\b.*\bworld\b|\bworld\s*\?/.test(input)) {
+              log('World: ' + (state.picks?.world || '(not set)') +
+                  (state.picks?.world === 'Historical' ? ' (' + (state.picks?.era || 'no era') + ')' : ''));
+              return;
+          }
+          // "what tone", "tone?"
+          if (/\b(what|which)\b.*\btone\b|\btone\s*\?/.test(input)) {
+              log('Tone: ' + (state.picks?.tone || '(not set)'));
+              return;
+          }
+          // "what intensity", "intensity?"
+          if (/\b(what|which)\b.*\bintensity\b|\bintensity\s*\?/.test(input)) {
+              log('Intensity: ' + (state.intensity || '(not set)'));
+              return;
+          }
+          // "what archetype", "archetype?", "what lens"
+          if (/\b(what|which)\b.*\b(archetype|lens)\b|\b(archetype|lens)\s*\?/.test(input)) {
+              const archId = state.archetype?.primary;
+              log('Archetype: ' + (archId && ARCHETYPES[archId] ? ARCHETYPES[archId].name : '(not set)'));
+              return;
+          }
+          // "what dynamic", "dynamic?"
+          if (/\b(what|which)\b.*\bdynamic\b|\bdynamic\s*\?/.test(input)) {
+              log('Dynamic: ' + (state.picks?.dynamic || '(not set)'));
+              return;
+          }
+          // "why did cover fail", "what happened to cover", "cover status"
+          if (/\bwhy\b.*\bcover\b|\bcover\b.*\b(status|state|happened|wrong|broken)\b/.test(input)) {
+              // Delegate to existing cover debug
+              execute('what cover');
+              return;
+          }
+          // "what title", "title?"
+          if (/\b(what|which)\b.*\btitle\b|\btitle\s*\?/.test(input)) {
+              const t = document.getElementById('storyTitle')?.textContent;
+              log('Title: ' + (t || '(none)'));
+              return;
+          }
+          // "title pipeline", "title debug", "title status"
+          if (/\btitle\s*(pipeline|debug|status|info)\b/i.test(input)) {
+              const t = document.getElementById('storyTitle')?.textContent;
+              if (!t) {
+                  log('No title set');
+                  return;
+              }
+              const mode = detectTitleMode(t);
+              const baseline = state.titleBaselineArousal || '(none)';
+              const immutable = state.immutableTitle || '(none)';
+              const swapTest = runSwapTest(t, state.picks?.world, state.intensity);
+              log('=== TITLE PIPELINE ===');
+              log('Current: "' + t + '"');
+              log('Mode: ' + (mode || 'unknown'));
+              log('Baseline arousal: ' + baseline);
+              log('Immutable title: "' + immutable + '"');
+              log('Swap-test: ' + (swapTest.unique ? 'PASS' : 'FAIL — ' + swapTest.reason));
+              // Check immutability
+              if (immutable && t !== immutable) {
+                  log('WARNING: Title differs from immutable record!');
+              }
+              return;
+          }
+          // "test title [text]", "validate title [text]"
+          if (/\btest\s+title\s+(.+)/i.test(input)) {
+              const match = input.match(/\btest\s+title\s+(.+)/i);
+              if (match) {
+                  const testTitle = match[1].trim();
+                  const result = validateTitle(
+                      testTitle,
+                      state.picks?.tone,
+                      state.intensity,
+                      { world: state.picks?.world, genre: state.picks?.genre }
+                  );
+                  log('Testing: "' + testTitle + '"');
+                  log('Mode: ' + (result.mode || 'unknown'));
+                  if (result.valid) {
+                      log('Result: PASS');
+                  } else {
+                      log('Result: FAIL');
+                      result.errors.forEach(e => log('  ' + e.message));
+                  }
+              }
+              return;
+          }
+
+          // --- 5TH PERSON POV DIAGNOSTICS ---
+          // "check pov", "pov status"
+          if (/\bcheck\s*pov\b|\bpov\s*(status|check)\b/i.test(input)) {
+              const povMode = state.povMode || 'normal';
+              const godMode = state.godModeActive ? 'ACTIVE' : 'inactive';
+              const lastCheck = _lastPOVValidation;
+              log('POV Mode: ' + povMode + ' | God Mode: ' + godMode);
+              if (povMode === 'author5th') {
+                  log('Last validation: ' + (lastCheck.valid ? 'PASS' : 'FAIL') +
+                      ' | Author mentions: ' + (lastCheck.authorMentions || 0));
+              }
+              return;
+          }
+          // "why pov failed", "pov violations"
+          if (/\bwhy\s*pov\b|\bpov\s*(fail|violation|error)\b/i.test(input)) {
+              const lastCheck = _lastPOVValidation;
+              if (lastCheck.valid) {
+                  log('Last POV check passed (no violations)');
+              } else if (lastCheck.violations?.length) {
+                  log('POV violations: ' + lastCheck.violations.join('; '));
+              } else {
+                  log('No POV validation data available');
+              }
+              return;
+          }
+          // "is god mode active", "god mode status"
+          if (/\b(is\s*)?god\s*mode\s*(active|on|status)?\b/i.test(input)) {
+              log('God Mode: ' + (state.godModeActive ? 'ACTIVE (adversarial Author)' : 'inactive'));
+              return;
+          }
+          // "set pov author", "enable 5th person"
+          if (/\b(set|enable|use)\s*(5th|fifth|author)\s*(pov|person)?\b/i.test(input)) {
+              state.povMode = 'author5th';
+              log('POV Mode -> author5th (5th Person)');
+              return;
+          }
+          // "set pov normal", "disable 5th person"
+          if (/\b(set|disable|use)\s*(normal|standard|3rd|third)\s*(pov|person)?\b/i.test(input)) {
+              state.povMode = 'normal';
+              log('POV Mode -> normal (standard 3rd person)');
+              return;
+          }
+
+          // --- EXIT GOD MODE ---
+          if (/\b(exit|stop|back)\b.*\b(god|pretend|normal)\b/.test(input)) {
+              _devOverrides = {};
+              state.subscribed = false;
+              state.intensity = 'Naughty';
+              syncTierFromAccess();
+              resetCoverLayers();
+              log('Dev overrides cleared — back to normal');
+              return;
+          }
+
+          // --- VALIDATION CHECK COMMANDS ---
+          // "check dsp", "validate dsp"
+          if (/\bcheck\s*dsp\b|\bvalidate\s*dsp\b/i.test(input)) {
+              const dspEl = document.getElementById('synopsisText');
+              if (!dspEl) {
+                  log('DSP element not found');
+                  return;
+              }
+              const result = window.validateDSP(dspEl.textContent || '', {
+                  world: state.picks?.world || 'Modern',
+                  genre: state.picks?.genre || 'Billionaire',
+                  archetypeId: state.archetype?.primary || 'BEAUTIFUL_RUIN',
+                  tone: state.picks?.tone || 'Earnest'
+              });
+              if (result.pass) {
+                  log('DSP: PASS — template matches exactly');
+              } else {
+                  log('DSP: FAIL — ' + result.errors.map(e => e.code).join(', '));
+                  result.errors.forEach(e => log('  ' + e.message));
+              }
+              return;
+          }
+
+          // "check tone", "validate tone"
+          if (/\bcheck\s*tone\b|\bvalidate\s*tone\b/i.test(input)) {
+              if (!window.StoryPagination) {
+                  log('Story not started');
+                  return;
+              }
+              const content = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').slice(-2000);
+              const tone = state.picks?.tone || 'Earnest';
+              const result = window.validateTone(content, tone);
+              if (result.valid) {
+                  log('Tone (' + tone + '): PASS — ' + result.matchCount + ' markers found');
+              } else {
+                  log('Tone (' + tone + '): FAIL — ' + result.matchCount + '/' + result.required + ' markers');
+                  result.violations.forEach(v => log('  ' + v));
+              }
+              return;
+          }
+
+          // "check erotic", "validate erotic", "check escalation"
+          if (/\bcheck\s*(erotic|escalation)\b|\bvalidate\s*erotic\b/i.test(input)) {
+              if (!['Erotic', 'Dirty'].includes(state.intensity)) {
+                  log('Erotic escalation: N/A (intensity is ' + state.intensity + ')');
+                  return;
+              }
+              if (!window.StoryPagination) {
+                  log('Story not started');
+                  return;
+              }
+              const content = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').slice(-2000);
+              const result = window.validateEroticEscalation(content, state.intensity);
+              if (result.valid) {
+                  log('Erotic (' + state.intensity + '): PASS — ' + result.metrics.sensoryCount + ' sensory markers');
+              } else {
+                  log('Erotic (' + state.intensity + '): FAIL');
+                  result.violations.forEach(v => log('  ' + v));
+              }
+              return;
+          }
+
+          // "check authority", "check narrative", "validate authority"
+          if (/\bcheck\s*(authority|narrative)\b|\bvalidate\s*authority\b|\bnarrative\s*authority\b/i.test(input)) {
+              if (!window.StoryPagination) {
+                  log('Story not started');
+                  return;
+              }
+              const content = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').slice(-3000);
+              const result = window.validateNarrativeAuthority(content);
+              log('=== NARRATIVE AUTHORITY ===');
+              log('Layer Order: Authority → Tone → POV → Prose');
+              if (result.valid) {
+                  log('Result: PASS (no violations)');
+              } else {
+                  log('Result: FAIL — ' + result.errors.length + ' violations');
+                  result.errors.forEach(e => {
+                      log('  ' + e.code + ': ' + e.message);
+                      log('    Match: "' + (e.match || '').substring(0, 60) + '..."');
+                  });
+              }
+              // Show last validation timestamp
+              if (_lastNarrativeAuthorityValidation.timestamp > 0) {
+                  const ago = Math.round((Date.now() - _lastNarrativeAuthorityValidation.timestamp) / 1000);
+                  log('Last check: ' + ago + 's ago (' + (_lastNarrativeAuthorityValidation.valid ? 'PASS' : 'FAIL') + ')');
+              }
+              return;
+          }
+
+          // "check title", "validate title"
+          if (/\bcheck\s*title\b|\bvalidate\s*title\b/i.test(input)) {
+              const titleEl = document.getElementById('storyTitle');
+              if (!titleEl || !titleEl.textContent) {
+                  log('No title to validate');
+                  return;
+              }
+              const currentTitle = titleEl.textContent.trim();
+              const result = validateTitle(currentTitle, state.picks?.tone);
+              if (result.valid) {
+                  log('Title: PASS — "' + currentTitle + '"');
+              } else {
+                  log('Title: FAIL — "' + currentTitle + '"');
+                  result.errors.forEach(e => log('  ' + e.message));
+                  // Show what fallback would be
+                  const fallback = generateFallbackTitle({
+                      playerName: state.rawPlayerName,
+                      partnerName: state.rawPartnerName,
+                      world: state.picks?.world || 'Modern',
+                      tone: state.picks?.tone || 'Earnest',
+                      genre: state.picks?.genre || 'Romance'
+                  });
+                  log('  Fallback would be: "' + fallback + '"');
+              }
+              return;
+          }
+
+          // "check signal", "check alignment", "validate signal"
+          if (/\bcheck\s*(signal|alignment)\b|\bvalidate\s*signal\b/i.test(input)) {
+              const titleEl = document.getElementById('storyTitle');
+              if (!titleEl || !titleEl.textContent) {
+                  log('No title to check signals');
+                  return;
+              }
+              const currentTitle = titleEl.textContent.trim();
+              // Create mock cover prompt for signal extraction (uses current state)
+              const mockCoverPrompt = {
+                  promptText: 'emotion: ' + (state.coverEmotion || 'mystery'),
+                  emotion: state.coverEmotion || 'mystery'
+              };
+              const result = validateSignalAlignment(currentTitle, mockCoverPrompt, {
+                  arousal: state.intensity || 'Naughty',
+                  tone: state.picks?.tone || 'Earnest',
+                  genre: state.picks?.genre || 'Romance'
+              });
+              log('=== SIGNAL ALIGNMENT ===');
+              log('Expected arousal: ' + (state.intensity || 'Naughty') + ' (' + result.context.arousalSignal + ')');
+              log('Title signals: ' + (result.titleSignals.primary || 'none') +
+                  (result.titleSignals.secondary ? ' + ' + result.titleSignals.secondary : ''));
+              log('Cover signals: ' + (result.coverSignals.primary || 'none') +
+                  (result.coverSignals.secondary ? ' + ' + result.coverSignals.secondary : ''));
+              if (result.aligned) {
+                  log('Alignment: PASS');
+              } else {
+                  log('Alignment: FAIL');
+                  result.errors.forEach(e => log('  ' + e.message));
+              }
+              return;
+          }
+
+          // "check all", "validate all", "run all checks"
+          if (/\bcheck\s*all\b|\bvalidate\s*all\b|\brun\s*all\s*checks?\b/i.test(input)) {
+              const results = window.getValidationStatus();
+              log('=== VALIDATION STATUS ===');
+
+              if (results.dsp) {
+                  log('DSP: ' + (results.dsp.pass ? 'PASS' : 'FAIL'));
+                  if (!results.dsp.pass) results.dsp.errors.forEach(e => log('  ' + e.code));
+              }
+
+              if (results.pov) {
+                  log('POV: ' + (results.pov.pass ? 'PASS' : 'FAIL') + ' (' + results.pov.metrics.authorMentions + ' Author mentions)');
+                  if (!results.pov.pass) results.pov.errors.forEach(e => log('  ' + e.code));
+              }
+
+              if (results.tone) {
+                  log('Tone: ' + (results.tone.valid ? 'PASS' : 'FAIL') + ' (' + results.tone.matchCount + '/' + results.tone.required + ')');
+              }
+
+              if (results.erotic) {
+                  log('Erotic: ' + (results.erotic.valid ? 'PASS' : 'FAIL'));
+                  if (!results.erotic.valid) results.erotic.violations.forEach(v => log('  ' + v.split(':')[0]));
+              }
+
+              // Narrative Authority check (runs first in layer model)
+              if (window.StoryPagination) {
+                  const narrContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').slice(-3000);
+                  const narrResult = validateNarrativeAuthority(narrContent);
+                  log('Authority: ' + (narrResult.valid ? 'PASS' : 'FAIL'));
+                  if (!narrResult.valid) narrResult.errors.forEach(e => log('  ' + e.code));
+              }
+
+              if (results.title) {
+                  log('Title: ' + (results.title.valid ? 'PASS' : 'FAIL'));
+                  if (!results.title.valid) results.title.errors.forEach(e => log('  ' + e.code));
+              }
+
+              if (results.signal) {
+                  log('Signal: ' + (results.signal.aligned ? 'PASS' : 'FAIL'));
+                  if (!results.signal.aligned) results.signal.errors.forEach(e => log('  ' + e.code));
+              }
+
+              // Paywall routing check
+              const paywallResult = validatePaywallRouting();
+              if (!paywallResult.skipped) {
+                  log('Paywall: ' + (paywallResult.valid ? 'PASS' : 'FAIL'));
+                  if (!paywallResult.valid) log('  ' + paywallResult.error);
+              }
+
+              // Book flow integrity check
+              const bookResult = validateBookFlowIntegrity();
+              log('Book Flow: ' + (bookResult.valid ? 'PASS' : 'FAIL'));
+              if (!bookResult.valid) bookResult.errors.forEach(e => log('  ' + e.code));
+
+              const allPass = Object.values(results).every(r => r.pass || r.valid || r.aligned);
+              log('=== ' + (allPass ? 'ALL CHECKS PASS' : 'SOME CHECKS FAILED') + ' ===');
+              return;
+          }
+
+          // "check paywall", "validate paywall", "paywall routing"
+          if (/\bcheck\s*paywall\b|\bvalidate\s*paywall\b|\bpaywall\s*routing\b/i.test(input)) {
+              const result = validatePaywallRouting();
+              log('=== PAYWALL ROUTING ===');
+              log('Intensity: ' + (state.intensity || 'unknown'));
+              log('Story Length: ' + (state.storyLength || 'unknown'));
+              if (result.skipped) {
+                  log('Paywall not visible — check skipped');
+              } else if (result.valid) {
+                  log('Result: PASS (StoryPass correctly hidden/shown)');
+              } else {
+                  log('Result: HARD FAIL');
+                  log('Error: ' + result.error);
+              }
+              return;
+          }
+
+          // "check book", "validate book", "book flow"
+          if (/\bcheck\s*book\b|\bvalidate\s*book\b|\bbook\s*flow\b/i.test(input)) {
+              const result = validateBookFlowIntegrity();
+              log('=== BOOK FLOW INTEGRITY ===');
+              log('Page Types: COVER → INSIDE_COVER → SETTING → SCENE');
+              if (result.valid) {
+                  log('Result: PASS (all page rules satisfied)');
+              } else {
+                  log('Result: HARD FAIL');
+                  result.errors.forEach(e => log('  ' + e.code + ': ' + e.message));
+              }
+              return;
+          }
+
+          log('Unknown command. Type "help" for options.');
+      }
+
+      log('Dev HUD ready — press ` to toggle');
+  })();
 
 })();

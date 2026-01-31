@@ -915,13 +915,56 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
     padding-left: 15px; margin: 20px 0; text-align: left;
 }
 
-/* LOADING BAR */
-#loadingOverlayInner { background: rgba(10, 0, 30, 0.95); padding: 18px 26px 14px 26px; border-radius: 14px; box-shadow: 0 0 35px rgba(255, 20, 147, 0.8); min-width: 280px; text-align: left; font-size: 0.95em; position: relative; }
+/* LOADING BAR — Golden ceremonial glow */
+#loadingOverlayInner {
+    background: rgba(10, 0, 30, 0.95);
+    padding: 18px 26px 14px 26px;
+    border-radius: 14px;
+    box-shadow: 0 0 35px rgba(212, 175, 55, 0.5), 0 0 60px rgba(184, 134, 11, 0.3);
+    min-width: 280px;
+    text-align: left;
+    font-size: 0.95em;
+    position: relative;
+    overflow: visible;
+}
+/* Firefly sparkles for loading overlay */
+#loadingOverlayInner::before,
+#loadingOverlayInner::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.9) 0%, rgba(212, 175, 55, 0.4) 50%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: loading-firefly 3s ease-in-out infinite;
+}
+#loadingOverlayInner::before {
+    top: -8px;
+    left: 20%;
+    animation-delay: 0s;
+    --lf-dx: 30px;
+    --lf-dy: -20px;
+}
+#loadingOverlayInner::after {
+    top: -6px;
+    right: 25%;
+    animation-delay: 1.5s;
+    --lf-dx: -25px;
+    --lf-dy: -25px;
+}
+@keyframes loading-firefly {
+    0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    15%  { opacity: 0.8; transform: translate(calc(var(--lf-dx) * 0.1), calc(var(--lf-dy) * 0.1)) scale(1); }
+    50%  { opacity: 0.6; transform: translate(calc(var(--lf-dx) * 0.5), calc(var(--lf-dy) * 0.5)) scale(0.9); }
+    70%  { opacity: 0.4; transform: translate(calc(var(--lf-dx) * 0.7), calc(var(--lf-dy) * 0.7)) scale(0.7); }
+    100% { opacity: 0; transform: translate(var(--lf-dx), var(--lf-dy)) scale(0.3); }
+}
 #loadingOverlayBar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; overflow: hidden; margin-top: 8px; }
-#loadingOverlayFill { width: 0%; height: 100%; background: var(--pink); transition: width 0.25s; }
+#loadingOverlayFill { width: 0%; height: 100%; background: linear-gradient(90deg, #b8860b, #d4af37, #ffd700); transition: width 0.25s; }
 #loadingPercent { font-size: 0.8em; color: rgba(255,255,255,0.7); margin-top: 4px; text-align: right; }
 .loading-cancel-btn { position: absolute; top: 5px; right: 8px; background: none; border: none; color: rgba(255,255,255,0.6); font-size: 1.4em; cursor: pointer; padding: 0; line-height: 1; display: none; }
-.loading-cancel-btn:hover { color: var(--pink); }
+.loading-cancel-btn:hover { color: var(--gold); }
 .loading-cancel-btn.visible { display: block; }
 
 /* BURGER */
@@ -2028,17 +2071,150 @@ textarea.fate-field {
     height: 8px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 999px;
-    overflow: hidden;
+    overflow: visible;
     margin-bottom: 20px;
-    border: 1px solid rgba(255, 105, 180, 0.3);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    position: relative;
+}
+/* Loading bar sparkles — JS-driven emitter replaces static pseudo-elements */
+.loading-sparkle {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 230, 140, 0.95) 0%,
+        rgba(255, 215, 0, 0.6) 40%,
+        rgba(212, 175, 55, 0.3) 60%,
+        transparent 80%
+    );
+    box-shadow: 0 0 4px rgba(255, 215, 0, 0.7);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: loading-sparkle-drift var(--ls-duration, 3s) ease-in-out forwards;
+}
+
+@keyframes loading-sparkle-drift {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.4);
+    }
+    15% {
+        opacity: var(--ls-opacity, 0.7);
+        transform: translate(
+            calc(var(--ls-dx, 0px) * 0.1),
+            calc(var(--ls-dy, 0px) * 0.1)
+        ) scale(1);
+    }
+    50% {
+        opacity: calc(var(--ls-opacity, 0.7) * 0.8);
+        transform: translate(
+            calc(var(--ls-dx, 0px) * 0.5 + var(--ls-wobble, 0px)),
+            calc(var(--ls-dy, 0px) * 0.5)
+        ) scale(0.9);
+    }
+    75% {
+        opacity: calc(var(--ls-opacity, 0.7) * 0.5);
+        transform: translate(
+            calc(var(--ls-dx, 0px) * 0.75 - var(--ls-wobble, 0px) * 0.5),
+            calc(var(--ls-dy, 0px) * 0.75)
+        ) scale(0.7);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--ls-dx, 0px), var(--ls-dy, 0px)) scale(0.3);
+    }
+}
+
+/* Story/Visualize overlay loading bar sparkles — SEPARATE from cover bar */
+.overlay-loading-sparkle {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 240, 180, 0.95) 0%,
+        rgba(255, 215, 0, 0.7) 35%,
+        rgba(212, 175, 55, 0.4) 55%,
+        transparent 75%
+    );
+    box-shadow:
+        0 0 6px rgba(255, 215, 0, 0.8),
+        0 0 12px rgba(255, 200, 100, 0.4);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: overlay-sparkle-arc var(--ols-duration, 2.5s) var(--ols-easing, ease-in-out) forwards;
+}
+
+@keyframes overlay-sparkle-arc {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.3) rotate(0deg);
+    }
+    12% {
+        opacity: var(--ols-opacity, 0.8);
+        transform: translate(
+            calc(var(--ols-dx, 0px) * 0.08),
+            calc(var(--ols-dy, 0px) * 0.12)
+        ) scale(1.1) rotate(calc(var(--ols-rot, 0deg) * 0.1));
+    }
+    35% {
+        opacity: var(--ols-opacity, 0.8);
+        transform: translate(
+            calc(var(--ols-dx, 0px) * 0.35 + var(--ols-sway, 0px)),
+            calc(var(--ols-dy, 0px) * 0.4)
+        ) scale(1) rotate(calc(var(--ols-rot, 0deg) * 0.4));
+    }
+    60% {
+        opacity: calc(var(--ols-opacity, 0.8) * 0.7);
+        transform: translate(
+            calc(var(--ols-dx, 0px) * 0.6 - var(--ols-sway, 0px) * 0.6),
+            calc(var(--ols-dy, 0px) * 0.65)
+        ) scale(0.85) rotate(calc(var(--ols-rot, 0deg) * 0.7));
+    }
+    85% {
+        opacity: calc(var(--ols-opacity, 0.8) * 0.35);
+        transform: translate(
+            calc(var(--ols-dx, 0px) * 0.85 + var(--ols-sway, 0px) * 0.3),
+            calc(var(--ols-dy, 0px) * 0.88)
+        ) scale(0.6) rotate(calc(var(--ols-rot, 0deg) * 0.9));
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--ols-dx, 0px), var(--ols-dy, 0px)) scale(0.25) rotate(var(--ols-rot, 0deg));
+    }
+}
+
+/* Glow pulse for story/visualize loading bar */
+#loadingOverlayBar.sparkle-active {
+    position: relative;
+    overflow: visible;
+    animation: overlay-bar-glow 4s ease-in-out infinite;
+}
+
+@keyframes overlay-bar-glow {
+    0%, 100% {
+        box-shadow:
+            0 0 4px rgba(212, 175, 55, 0.3),
+            0 0 8px rgba(255, 215, 0, 0.15);
+        filter: brightness(1);
+    }
+    50% {
+        box-shadow:
+            0 0 8px rgba(212, 175, 55, 0.5),
+            0 0 16px rgba(255, 215, 0, 0.3),
+            0 0 24px rgba(255, 200, 100, 0.15);
+        filter: brightness(1.08);
+    }
 }
 
 .cover-progress-fill {
     width: 0%;
     height: 100%;
-    background: linear-gradient(90deg, var(--pink), var(--hot));
+    background: linear-gradient(90deg, #b8860b, #d4af37, #ffd700);
     border-radius: 999px;
     transition: width 0.3s ease;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
 }
 
 .cover-status-text {
@@ -2172,6 +2348,307 @@ textarea.fate-field {
     z-index: 1;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   COVER ART LAYERS — fallback, erotic border, keyhole takeover
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* --- Layer 0: Fallback cover (deterministic SVG motif) --- */
+.cover-fallback {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px 8px 8px 2px;
+    background: var(--fb-bg, #0a0a0a);
+    overflow: hidden;
+    backface-visibility: hidden;
+}
+.cover-fallback.hidden { display: none; }
+
+.cover-fallback svg {
+    width: 45%;
+    height: auto;
+    opacity: 0.85;
+    filter: drop-shadow(0 0 18px var(--fb-accent, #d4af37));
+    margin-bottom: 18%;
+}
+
+/* Fallback cover title — engraved Art Deco cartouche */
+.cover-fallback-title {
+    position: absolute;
+    bottom: 10%;
+    left: 8%;
+    right: 8%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+}
+.cover-fallback-title-text {
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 0.85em;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.35;
+    text-shadow:
+        0 1px 0 rgba(0,0,0,0.8),
+        0 -1px 0 rgba(255,255,255,0.06),
+        0 0 12px currentColor;
+    opacity: 0.8;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.cover-fallback-author {
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 0.6em;
+    font-variant: small-caps;
+    letter-spacing: 0.22em;
+    text-align: center;
+    opacity: 0.5;
+    margin-top: 2px;
+}
+.cover-fallback-title-rule {
+    display: block;
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    opacity: 0.4;
+}
+
+/* Subtle texture overlay on fallback */
+.cover-fallback::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 80%, rgba(255,255,255,0.03) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* --- Layer 2: Erotic border (Art Deco SVG filigree + implements) --- */
+.cover-erotic-border {
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    pointer-events: none;
+    border-radius: 2px 8px 8px 2px;
+    overflow: hidden;
+    backface-visibility: hidden;
+    /* Default material: warm gold */
+    color: rgba(212, 175, 55, 0.8);
+}
+.cover-erotic-border.hidden { display: none; }
+
+/* SVG fills the frame */
+.cover-erotic-border .erotic-border-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Inner vignette shadow to frame the base image */
+.cover-erotic-border::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 2px 8px 8px 2px;
+    box-shadow:
+        inset 0 0 40px rgba(0, 0, 0, 0.5),
+        inset 0 0 80px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+}
+
+/* Subtle outer glow */
+.cover-erotic-border::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 4px 10px 10px 4px;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+    pointer-events: none;
+}
+
+/* World-variant material tints (color only, no geometry changes) */
+.cover-erotic-border.world-fantasy {
+    color: rgba(212, 175, 55, 0.85);
+}
+.cover-erotic-border.world-fantasy::before {
+    box-shadow: 0 0 14px rgba(212, 175, 55, 0.2);
+}
+.cover-erotic-border.world-noir {
+    color: rgba(185, 160, 100, 0.7);
+}
+.cover-erotic-border.world-noir::before {
+    box-shadow: 0 0 8px rgba(185, 160, 100, 0.1);
+}
+.cover-erotic-border.world-noir::after {
+    box-shadow:
+        inset 0 0 50px rgba(0, 0, 0, 0.65),
+        inset 0 0 90px rgba(0, 0, 0, 0.3);
+}
+.cover-erotic-border.world-gothic {
+    color: rgba(140, 115, 70, 0.75);
+}
+.cover-erotic-border.world-gothic::before {
+    box-shadow: 0 0 8px rgba(120, 100, 60, 0.1);
+}
+.cover-erotic-border.world-gothic::after {
+    box-shadow:
+        inset 0 0 55px rgba(0, 0, 0, 0.7),
+        inset 0 0 100px rgba(0, 0, 0, 0.3);
+}
+.cover-erotic-border.world-scifi {
+    color: rgba(64, 224, 208, 0.6);
+}
+.cover-erotic-border.world-scifi::before {
+    box-shadow: 0 0 14px rgba(64, 224, 208, 0.15);
+}
+.cover-erotic-border.world-scifi::after {
+    box-shadow:
+        inset 0 0 45px rgba(0, 10, 20, 0.6),
+        inset 0 0 80px rgba(0, 5, 10, 0.25);
+}
+
+/* Soulmates modifier: warmer, richer, more intricate, intentional/devotional */
+.cover-erotic-border.soulmates {
+    color: rgba(218, 165, 32, 0.9); /* goldenrod — richer, more saturated */
+}
+.cover-erotic-border.soulmates::before {
+    box-shadow: 0 0 18px rgba(218, 165, 32, 0.25);
+}
+.cover-erotic-border.soulmates::after {
+    box-shadow:
+        inset 0 0 35px rgba(0, 0, 0, 0.4),
+        inset 0 0 70px rgba(0, 0, 0, 0.15),
+        inset 0 0 6px rgba(218, 165, 32, 0.1); /* subtle warm inner glow */
+}
+
+/* --- Layer 3: Dirty keyhole takeover --- */
+.cover-keyhole-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 13;
+    border-radius: 2px 8px 8px 2px;
+    overflow: hidden;
+    backface-visibility: hidden;
+}
+.cover-keyhole-overlay.hidden { display: none; }
+
+.keyhole-plate {
+    position: absolute;
+    inset: 0;
+    /* Ornate metal surface */
+    background:
+        radial-gradient(ellipse at 50% 35%, rgba(60,50,40,1) 0%, rgba(30,25,20,1) 50%, rgba(15,12,10,1) 100%);
+    /* Keyhole mask: circle at top-center + rectangle slot below */
+    -webkit-mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 480'%3E%3Crect width='320' height='480' fill='white'/%3E%3Ccircle cx='160' cy='190' r='48' fill='black'/%3E%3Crect x='146' y='210' width='28' height='70' rx='4' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 480'%3E%3Crect width='320' height='480' fill='white'/%3E%3Ccircle cx='160' cy='190' r='48' fill='black'/%3E%3Crect x='146' y='210' width='28' height='70' rx='4' fill='black'/%3E%3C/svg%3E");
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+}
+
+/* Filigree texture on the plate */
+.keyhole-plate::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-conic-gradient(
+            from 0deg at 50% 35%,
+            rgba(180,150,100,0.04) 0deg,
+            transparent 3deg,
+            transparent 12deg
+        ),
+        radial-gradient(ellipse at 50% 35%, transparent 45px, rgba(180,150,100,0.08) 50px, rgba(180,150,100,0.03) 120px, transparent 200px);
+    pointer-events: none;
+}
+
+/* Keyhole rim glow */
+.keyhole-plate::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 480'%3E%3Ccircle cx='160' cy='190' r='52' fill='none' stroke='white' stroke-width='8'/%3E%3Crect x='142' y='206' width='36' height='78' rx='6' fill='none' stroke='white' stroke-width='8'/%3E%3C/svg%3E");
+    -webkit-mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 480'%3E%3Ccircle cx='160' cy='190' r='52' fill='none' stroke='white' stroke-width='8'/%3E%3Crect x='142' y='206' width='36' height='78' rx='6' fill='none' stroke='white' stroke-width='8'/%3E%3C/svg%3E");
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    background: radial-gradient(ellipse at 50% 40%, rgba(212,175,55,0.25) 0%, rgba(212,175,55,0.08) 60%, transparent 80%);
+    pointer-events: none;
+}
+
+/* Title + author engraved into metalwork */
+.keyhole-title {
+    position: absolute;
+    bottom: 32px;
+    left: 20px;
+    right: 20px;
+    text-align: center;
+    font-family: var(--font-story, Georgia, serif);
+    color: rgba(180, 150, 100, 0.6);
+    text-shadow:
+        0 1px 0 rgba(0,0,0,0.8),
+        0 -1px 0 rgba(255,255,255,0.05);
+    pointer-events: none;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.keyhole-title-text {
+    font-size: 0.95em;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+.keyhole-author {
+    font-size: 0.55em;
+    font-variant: small-caps;
+    letter-spacing: 0.22em;
+    opacity: 0.7;
+}
+
+/* Soulmates modifier for Dirty: warmer, devotional metalwork ("locked by choice") */
+.cover-keyhole-overlay.soulmates .keyhole-plate {
+    background:
+        radial-gradient(ellipse at 50% 35%, rgba(80,60,45,1) 0%, rgba(50,38,28,1) 50%, rgba(28,22,18,1) 100%);
+}
+.cover-keyhole-overlay.soulmates .keyhole-plate::before {
+    background:
+        repeating-conic-gradient(
+            from 0deg at 50% 35%,
+            rgba(218,165,32,0.06) 0deg,
+            transparent 3deg,
+            transparent 12deg
+        ),
+        radial-gradient(ellipse at 50% 35%, transparent 45px, rgba(218,165,32,0.12) 50px, rgba(218,165,32,0.05) 120px, transparent 200px);
+}
+.cover-keyhole-overlay.soulmates .keyhole-plate::after {
+    background: radial-gradient(ellipse at 50% 40%, rgba(218,165,32,0.35) 0%, rgba(218,165,32,0.12) 60%, transparent 80%);
+}
+.cover-keyhole-overlay.soulmates .keyhole-title {
+    color: rgba(218, 165, 32, 0.7); /* warmer gold engraving */
+}
+
 /* Hinge states */
 .book-cover.hinge-peek {
     transform: rotateY(-15deg);
@@ -2237,51 +2714,127 @@ textarea.fate-field {
     z-index: 5;
     overflow: hidden;
     box-shadow: inset -2px 0 8px rgba(0,0,0,0.05);
-    /* Two-page spread layout */
     display: flex;
     flex-direction: row;
 }
 
-/* Inside cover surface — LEFT PAGE (synopsis on white) */
+/* Inside cover: Title + Synopsis text on white paper (no images) */
 .book-inside-cover {
     position: relative;
-    flex: 1 1 50%;
-    background: #ffffff;
-    border-radius: 0;
+    flex: 1 1 100%;
+    background: #ffffff !important; /* Solid white - prevent any bleed-through */
+    background-image: none !important; /* Block inherited cover art */
+    border-radius: 0 6px 6px 0;
     z-index: 6;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 24px 14px;
+    padding: 28px 20px;
     text-align: center;
     color: #333;
     opacity: 0;
     transition: opacity 0.3s ease;
-    border-right: 1px solid #e0e0e0;
     box-sizing: border-box;
+    overflow: hidden; /* Contain content */
 }
 
-/* Inside scene surface — RIGHT PAGE (setting art only) */
-.book-inside-scene {
+/* Setting plate — full-width image container (first element in storyContent) */
+.setting-plate {
     position: relative;
-    flex: 1 1 50%;
-    background: #f5f0e8;
-    z-index: 6;
+    width: 100%;
+    min-height: 200px;
+    max-height: 50vh;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f0e8 0%, #e8e0d4 100%);
+    border-radius: 6px;
+    margin-bottom: 24px;
+}
+.setting-plate::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.08);
+    border-radius: 6px;
+}
+
+/* PAGE 1: Setting plate active state (full viewport, ceremonial) */
+.setting-plate.setting-active {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 100vh;
+    min-height: 100vh;
+    width: 100%;
+    z-index: 100;
+    margin: 0;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    box-sizing: border-box;
+    background: #1a1814;
 }
+.setting-plate.setting-active .book-scene-image {
+    max-height: 85vh;
+    max-width: 90vw;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+
+/* PAGE 1→2: Page flip transition (not fade) */
+.setting-plate.page-flip-out {
+    animation: pageFlipOut 600ms ease-in forwards;
+}
+@keyframes pageFlipOut {
+    0% {
+        transform: perspective(1000px) rotateY(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: perspective(1000px) rotateY(-90deg);
+        opacity: 0;
+    }
+}
+
+/* Setting plate hidden on scene pages */
+.setting-plate.hidden {
+    display: none !important;
+}
+
+/* Setting plate title — printed-book style, overlays scene art */
+.scene-page-title {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 2;
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 0.7em;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    color: rgba(60, 50, 40, 0.7);
+    text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+    line-height: 1.3;
+    pointer-events: none;
+    padding: 6px 4px;
+    background: linear-gradient(to bottom, rgba(245,240,232,0.85) 0%, rgba(245,240,232,0.4) 70%, transparent 100%);
+    border-radius: 0 0 4px 4px;
+}
+.scene-page-title:empty { display: none; }
 
 .book-scene-image {
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: 50vh;
     object-fit: cover;
     display: none;
+    border-radius: 6px;
 }
 
 .book-scene-loading {
@@ -2304,11 +2857,30 @@ textarea.fate-field {
     opacity: 1;
 }
 
-.book-object:hover .book-inside-scene,
-.book-cover.hinge-peek + .book-pages-preview .book-inside-scene,
-.book-cover.courtesy-peek + .book-pages-preview .book-inside-scene,
-.book-cover.hinge-open + .book-pages-preview .book-inside-scene {
-    opacity: 1;
+/* Inside cover title — small, restrained, printed-book feel */
+.inside-cover-title {
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 0.8em;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #555;
+    margin: 0 0 4px;
+    padding: 0;
+    line-height: 1.3;
+    max-width: 85%;
+}
+
+/* Inside cover author line — understated, printed-book style */
+.inside-cover-author {
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 0.65em;
+    font-weight: 400;
+    font-variant: small-caps;
+    letter-spacing: 0.22em;
+    color: #888;
+    margin: 0;
+    padding: 0;
 }
 
 /* Inside cover synopsis styling */
@@ -2609,6 +3181,16 @@ textarea.fate-field {
     color: rgba(255, 255, 255, 0.18);
 }
 
+/* Golden glow on DSP clause reveal — brief, magical, non-layout-shifting */
+.dsp-clause.dsp-glow {
+    animation: dsp-clause-glow 0.5s ease-out forwards;
+}
+@keyframes dsp-clause-glow {
+    0%   { text-shadow: 0 0 0 transparent; }
+    30%  { text-shadow: 0 0 8px rgba(212, 175, 55, 0.8), 0 0 16px rgba(212, 175, 55, 0.5); }
+    100% { text-shadow: 0 0 0 transparent; }
+}
+
 /* Ceremonial rewrite dissolve / reveal */
 .synopsis-text.dsp-dissolving {
     opacity: 0;
@@ -2641,8 +3223,7 @@ textarea.fate-field {
         border-left: none;
         border-right: none;
         border-top: none;
-        opacity: 1;
-        visibility: visible;
+        /* visibility controlled by JS via .visible class - do NOT hardcode here */
         z-index: 500; /* Above content, below modals */
         background: rgba(18, 8, 22, 0.97);
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
@@ -3292,19 +3873,6 @@ textarea.fate-field {
     }
 }
 
-/* Basic Visualize fallback button styling */
-#basicVizBtn {
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-#basicVizBtn:hover:not(:disabled) {
-    opacity: 1;
-}
-#basicVizBtn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
 /* =================================
    GUIDED FATE FILL ENGINE
    Step-by-step reveal animations
@@ -3500,8 +4068,17 @@ textarea.fate-field {
    Sparse, ethereal gold specks
    ================================= */
 
+/* Sparkle anchor container — inserted inside source elements, allows perimeter overflow */
+.sparkle-anchor-container {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 4001;
+}
+
 .fate-dust-particle {
-    position: fixed;
+    position: absolute;
     pointer-events: none;
     z-index: 4001;
     border-radius: 50%;
@@ -3517,6 +4094,11 @@ textarea.fate-field {
     animation: fate-dust-drift var(--dust-duration, 6s) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
     /* Add sparkle glow */
     box-shadow: 0 0 6px rgba(255, 220, 100, 0.8), 0 0 12px rgba(255, 200, 50, 0.5);
+}
+
+/* Viewport-based sparkles (vignette effect) — use fixed positioning */
+.fate-dust-particle--viewport {
+    position: fixed;
 }
 
 /* Starfield sparkle variation */
@@ -3608,4 +4190,77 @@ textarea.fate-field {
     0%   { opacity: 1; transform: translate(0, 0) scale(1); }
     50%  { opacity: 0.85; transform: translate(calc(var(--dis-x) * 0.5), calc(var(--dis-y) * 0.5)) scale(0.7); }
     100% { opacity: 0; transform: translate(var(--dis-x), var(--dis-y)) scale(0.2); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DEV HUD — Developer console (toggled with backtick key)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.dev-hud {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 99999;
+    transform: translateY(100%);
+    transition: transform 0.2s ease;
+    pointer-events: none;
+}
+
+.dev-hud.dev-hud-visible {
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.dev-hud-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.88);
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.dev-hud-label {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.65em;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: rgba(212, 175, 55, 0.7);
+    padding: 2px 6px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.dev-hud-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.8em;
+    padding: 4px 0;
+    caret-color: rgba(212, 175, 55, 0.7);
+}
+
+.dev-hud-bar input::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+    font-style: italic;
+}
+
+.dev-hud-log {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.7em;
+    color: rgba(64, 224, 208, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    flex-shrink: 0;
 }
