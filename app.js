@@ -12761,8 +12761,17 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   async function generateBookSceneArt(synopsis) {
       const sceneImg = document.getElementById('bookSceneImg');
       const loadingEl = document.getElementById('bookSceneLoading');
+      console.log('[BookScene:DEBUG] ENTRY', {
+          coverMode: state.coverMode,
+          PHASE_1_FORGED: state.coverMode === 'PHASE_1_FORGED',
+          sceneImgId: sceneImg?.id || null,
+          sceneImgSrc: sceneImg?.src || null,
+          sceneImgDisplay: sceneImg?.style?.display || null,
+          loadingElId: loadingEl?.id || null,
+          settingPlateId: document.getElementById('settingPlate')?.id || null
+      });
       if (!sceneImg) {
-          console.warn('[BookScene] bookSceneImg element not found');
+          console.warn('[BookScene:DEBUG] EARLY_RETURN: bookSceneImg element not found');
           return;
       }
 
@@ -12799,6 +12808,11 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
               context: 'book-scene-art',
               intent: 'setting'
           });
+          console.log('[BookScene:DEBUG] AFTER_generateImageWithFallback', {
+              rawUrl: rawUrl ? (rawUrl.substring(0, 50) + '...') : null,
+              rawUrlType: rawUrl ? (rawUrl.startsWith('http') ? 'http' : rawUrl.startsWith('data:') ? 'data' : rawUrl.startsWith('blob:') ? 'blob' : 'base64') : 'null',
+              failureReason: rawUrl ? null : 'generateImageWithFallback returned null'
+          });
 
           if (rawUrl) {
               let imageUrl = rawUrl;
@@ -12806,9 +12820,15 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
                   imageUrl = `data:image/png;base64,${rawUrl}`;
               }
               sceneImg.src = imageUrl;
+              console.log('[BookScene:DEBUG] DOM_APPLIED', {
+                  targetElement: 'bookSceneImg',
+                  srcSet: imageUrl.substring(0, 50) + '...',
+                  sceneImgId: sceneImg.id
+              });
               sceneImg.onload = () => {
                   sceneImg.style.display = 'block';
                   if (loadingEl) loadingEl.style.display = 'none';
+                  console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display });
               };
               sceneImg.onerror = () => {
                   console.warn('[BookScene] Image failed to load');
