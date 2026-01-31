@@ -5488,8 +5488,9 @@ Return ONLY the title, no quotes or explanation.`;
       if (typeof clearToasts === 'function') clearToasts();
 
       // UX-2 FIX: Clean up fate visuals when leaving setup screen
+      // GUARD: Skip cleanup if Guided Fate visuals are still active (will be torn down later)
       if (_currentScreenId === 'setup' && id !== 'setup') {
-          if (typeof cleanupFateVisuals === 'function') cleanupFateVisuals();
+          if (!_guidedFateVisualsActive && typeof cleanupFateVisuals === 'function') cleanupFateVisuals();
       }
 
       if(id === 'modeSelect') {
@@ -7436,6 +7437,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // FIX: Cover regeneration reset — allow new cover without hard refresh
     if (_coverAbortController) { _coverAbortController.abort(); _coverAbortController = null; }
     resetBookState();
+    // Reset DSP interaction state for fresh placeholder
+    if (typeof _dspInteractionStarted !== 'undefined') _dspInteractionStarted = false;
+    const synopsisTextReset = document.getElementById('synopsisText');
+    if (synopsisTextReset) { synopsisTextReset.innerHTML = ''; synopsisTextReset._lastDSP = null; }
     const coverImg = document.getElementById('bookCoverImg');
     if (coverImg) coverImg.src = '';
     const coverLoading = document.getElementById('coverLoadingState');
@@ -8217,7 +8222,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       evaluateDownstreamSelections(grp);
 
       // Update synopsis
-      updateSynopsisPanel();
+      updateSynopsisPanel(true); // User action: card selection
 
       // Close after brief delay
       setTimeout(() => closeSelectionCard(), 300);
@@ -8347,7 +8352,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               state.picks.worldSubtype = flavor.val;
               btn.classList.add('selected');
             }
-            updateSynopsisPanel();
+            updateSynopsisPanel(true); // User action: flavor selection
           });
 
           flavorGrid.appendChild(btn);
@@ -8568,13 +8573,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         evaluateDownstreamSelections(grp);
 
         // Update floating synopsis panel
-        updateSynopsisPanel();
+        updateSynopsisPanel(true); // User action: card click
       });
     });
 
     // Initialize World Subtype visibility based on initial selections
     updateWorldSubtypeVisibility(state.picks.world, state.picks.tone);
-    // Initialize synopsis panel
+    // Initialize synopsis panel (not a user action - keeps placeholder)
     updateSynopsisPanel();
     // Initialize layer states (gating, compatibility)
     updateLayerStates();
@@ -8606,7 +8611,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (playerNameInput) {
       playerNameInput.addEventListener('input', () => {
         state.normalizedPlayerKernel = playerNameInput.value.trim() || 'the one who carries the story';
-        updateSynopsisPanel();
+        updateSynopsisPanel(true); // User action: name input
       });
       playerNameInput.addEventListener('blur', async () => {
         const raw = playerNameInput.value.trim();
@@ -8622,7 +8627,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         state.normalizedPlayerKernel = kernel;
         state.rawPlayerName = raw;
         playerNameInput.value = kernel;
-        updateSynopsisPanel();
+        updateSynopsisPanel(true); // User action: name blur
       });
     }
 
@@ -8630,7 +8635,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const partnerNameInput = $('partnerNameInput');
     if (partnerNameInput) {
       partnerNameInput.addEventListener('input', () => {
-        updateSynopsisPanel();
+        updateSynopsisPanel(true); // User action: name input
       });
       partnerNameInput.addEventListener('blur', async () => {
         const raw = partnerNameInput.value.trim();
@@ -8904,20 +8909,29 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // DSP uses ONLY base world phrases from DSP_WORLD_PHRASES.
   // Subtypes affect story generation prompts, NOT the DSP.
 
-  function updateSynopsisPanel() {
+  function updateSynopsisPanel(isUserAction = false) {
     const synopsisText = document.getElementById('synopsisText');
     if (!synopsisText) return;
+
+    // Block pre-hydration: only render live content after user interaction
+    if (!_dspInteractionStarted && !isUserAction) return;
 
     const result = generateDSPSentence();
 
     // HARD FAIL: Do not display anything if DSP generation failed
     if (!result.success) {
       console.error('[DSP] updateSynopsisPanel blocked:', result.error?.message);
+      // Keep placeholder if no interaction yet
+      if (!_dspInteractionStarted) return;
       // Clear any legacy content — DSP must be empty on failure
       synopsisText.innerHTML = '';
       synopsisText._lastDSP = null;
       return;
     }
+
+    // Mark interaction started — hides placeholder permanently
+    const wasFirstInteraction = !_dspInteractionStarted;
+    if (isUserAction) _dspInteractionStarted = true;
 
     const newSentence = result.html;
 
@@ -8927,8 +8941,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       synopsisText.classList.add('updating');
       synopsisText.innerHTML = newSentence;
 
-      // During Guided Fate ceremony, all clauses start pending
-      if (_fateRunning && _revealedDSPAxes !== null) {
+      // Sequential reveal of clauses on first interaction
+      if (wasFirstInteraction) {
+        const clauses = synopsisText.querySelectorAll('.dsp-clause');
+        clauses.forEach((clause, i) => {
+          clause.classList.add('dsp-pending');
+          setTimeout(() => {
+            clause.classList.remove('dsp-pending');
+            clause.classList.add('dsp-glow');
+            setTimeout(() => clause.classList.remove('dsp-glow'), 500);
+          }, 300 + i * 400);
+        });
+      } else if (_fateRunning && _revealedDSPAxes !== null) {
+        // During Guided Fate ceremony, all clauses start pending
         synopsisText.querySelectorAll('.dsp-clause').forEach(span => {
           span.classList.add('dsp-pending');
         });
@@ -9033,15 +9058,22 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // → Genre → Dynamic). It disappears only after Begin Story is clicked.
   // Visibility is tied to screen state, not scroll position.
   // ═══════════════════════════════════════════════════════════════════
+  let _dspInteractionStarted = false; // Tracks if user has interacted (name or selection)
+
   function showDSP() {
     const synopsisPanel = document.getElementById('synopsisPanel');
-    if (synopsisPanel && window.innerWidth > 1100) {
+    if (synopsisPanel) {
       // Inject "First Taste" header if not present
       if (!synopsisPanel.querySelector('.synopsis-title')) {
         const title = document.createElement('div');
         title.className = 'synopsis-title';
         title.textContent = 'First Taste';
         synopsisPanel.insertBefore(title, synopsisPanel.firstChild);
+      }
+      // Show placeholder if no interaction yet
+      const synopsisText = document.getElementById('synopsisText');
+      if (synopsisText && !_dspInteractionStarted && !synopsisText._lastDSP) {
+        synopsisText.innerHTML = '<span class="dsp-placeholder">Your choices shape your story</span>';
       }
       synopsisPanel.classList.add('visible');
     }
@@ -9145,7 +9177,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Update all card states - only selected card stays flipped
       updateArchetypeCardStates();
       updateArchetypeSelectionSummary();
-      updateSynopsisPanel();
+      updateSynopsisPanel(true); // User action: archetype selection
   }
 
   // Populate archetype card zoom view with modifier custom field only (NO pills)
@@ -10118,6 +10150,21 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     _revealedDSPAxes.add(axis);
     const synopsisText = document.getElementById('synopsisText');
     if (!synopsisText) return;
+
+    // On first clause reveal, populate DSP with full sentence (all pending)
+    if (!synopsisText._lastDSP) {
+      const result = generateDSPSentence();
+      if (result.success) {
+        _dspInteractionStarted = true;
+        synopsisText._lastDSP = result.html;
+        synopsisText.innerHTML = result.html;
+        // Mark all clauses as pending
+        synopsisText.querySelectorAll('.dsp-clause').forEach(span => {
+          span.classList.add('dsp-pending');
+        });
+      }
+    }
+
     synopsisText.querySelectorAll('.dsp-clause[data-axis="' + axis + '"]').forEach(span => {
       span.classList.remove('dsp-pending');
       // Brief golden glow on reveal — magical, non-layout-shifting
@@ -10147,6 +10194,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   let _dustInterval = null;
   let _sparkleIntervals = [];
   let _ambientCardInterval = null;
+  let _anchoredParticles = []; // Track particles with owner elements for scroll sync
+  let _sparkleScrollListener = null;
+  let _sparkleInitialScrollY = 0;
   const DUST_CONFIG = {
     MAX_PARTICLES: 350,       // Dense vignette sparkles (3× visibility)
     SPAWN_INTERVAL: 15,       // Fast spawn for density
@@ -10157,6 +10207,61 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     MIN_OPACITY: 0.5,         // Clearly visible
     MAX_OPACITY: 0.9
   };
+
+  // Anchored particle position sync — scroll-offset tracking (no per-tick getBoundingClientRect)
+  function registerAnchoredParticle(particle, ownerEl, relX, relY, initialLeft, initialTop) {
+    // Store initial positions and scroll offset
+    const entry = {
+      particle,
+      ownerEl,
+      relX,
+      relY,
+      initialLeft,
+      initialTop,
+      initialScrollY: window.scrollY
+    };
+    _anchoredParticles.push(entry);
+    if (!_sparkleScrollListener) startSparkleScrollSync();
+  }
+
+  function startSparkleScrollSync() {
+    _sparkleInitialScrollY = window.scrollY;
+    _sparkleScrollListener = function() {
+      // Prune dead particles
+      _anchoredParticles = _anchoredParticles.filter(p => p.particle.parentNode && p.ownerEl.offsetParent);
+      if (_anchoredParticles.length === 0) {
+        stopSparkleScrollSync();
+        return;
+      }
+      // Update positions using scroll delta (no getBoundingClientRect)
+      for (const p of _anchoredParticles) {
+        const scrollDelta = window.scrollY - p.initialScrollY;
+        p.particle.style.top = (p.initialTop + p.relY - scrollDelta) + 'px';
+        // X remains unchanged (no horizontal scroll tracking needed)
+      }
+    };
+    window.addEventListener('scroll', _sparkleScrollListener, { passive: true });
+  }
+
+  function stopSparkleScrollSync() {
+    if (_sparkleScrollListener) {
+      window.removeEventListener('scroll', _sparkleScrollListener);
+      _sparkleScrollListener = null;
+    }
+    _anchoredParticles = [];
+  }
+
+  // Global overlay for anchored sparkles (fixed positioning, updated per-frame)
+  function getSparkleOverlay() {
+    let overlay = document.getElementById('sparkleAnchorOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'sparkleAnchorOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:4001;overflow:visible;';
+      document.body.appendChild(overlay);
+    }
+    return overlay;
+  }
 
   // DEV ASSERTION: Fate card sparkles must be DOM descendants of the Fate card
   // Validates invariant: sparkles appended to .fate-destiny-card subtree only
@@ -10248,6 +10353,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Clear all sparkle intervals
     _sparkleIntervals.forEach(id => clearInterval(id));
     _sparkleIntervals = [];
+    // Stop anchored particle tracking
+    stopSparkleScrollSync();
     // Fade out existing particles gracefully
     document.querySelectorAll('.fate-dust-particle').forEach(p => {
       p.style.opacity = '0';
@@ -10277,34 +10384,34 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   // Ambient pre-click sparkle emitter for the Guided Fate card
-  // Sparkles are anchored to the card element and move with it on scroll
+  // Uses getBoundingClientRect for true scroll-synced positioning
   function spawnAmbientCardSparkle() {
     const fateCard = document.getElementById('fateDestinyCard');
     if (!fateCard || fateCard.dataset.fateUsed === 'true') return;
     if (!fateCard.offsetParent) return; // not visible
 
-    const container = getOrCreateSparkleContainer(fateCard);
-    if (!container) return;
-
-    const existing = container.querySelectorAll('.fate-dust-particle[data-sparkle-tag="ambient"]');
+    const overlay = getSparkleOverlay();
+    const existing = overlay.querySelectorAll('.fate-dust-particle[data-sparkle-owner="ambient-fateCard"]');
     if (existing.length >= 90) return;
 
-    const width = fateCard.offsetWidth;
-    const height = fateCard.offsetHeight;
+    const rect = fateCard.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
     if (width === 0 || height === 0) return;
 
     const particle = document.createElement('div');
-    particle.className = 'fate-dust-particle';
+    particle.className = 'fate-dust-particle fate-dust-particle--anchored';
     particle.dataset.sparkleTag = 'ambient';
+    particle.dataset.sparkleOwner = 'ambient-fateCard';
 
     // Spawn on outer perimeter ±14-22px outside card edges (element-relative)
     const side = Math.random();
     const offset = 14 + Math.random() * 8;
-    let x, y;
-    if (side < 0.25) { x = Math.random() * width; y = -offset; }
-    else if (side < 0.5) { x = Math.random() * width; y = height + offset; }
-    else if (side < 0.75) { x = -offset; y = Math.random() * height; }
-    else { x = width + offset; y = Math.random() * height; }
+    let relX, relY;
+    if (side < 0.25) { relX = Math.random() * width; relY = -offset; }
+    else if (side < 0.5) { relX = Math.random() * width; relY = height + offset; }
+    else if (side < 0.75) { relX = -offset; relY = Math.random() * height; }
+    else { relX = width + offset; relY = Math.random() * height; }
 
     const size = 2 + Math.random() * 5;
     const duration = 3000 + Math.random() * 4000;
@@ -10313,19 +10420,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Slow orbit / drift outward from element center
     const cx = width / 2;
     const cy = height / 2;
-    const outAngle = Math.atan2(y - cy, x - cx);
+    const outAngle = Math.atan2(relY - cy, relX - cx);
     const dx = Math.cos(outAngle) * (10 + Math.random() * 20);
     const dy = Math.sin(outAngle) * (10 + Math.random() * 20) - 10;
 
     particle.style.cssText = `
-      left: ${x}px; top: ${y}px;
+      position: fixed;
+      left: ${rect.left + relX}px; top: ${rect.top + relY}px;
       width: ${size}px; height: ${size}px;
       --dust-duration: ${duration}ms;
       --dust-opacity: ${opacity};
       --dust-dx: ${dx}px; --dust-dy: ${dy}px;
     `;
-    container.appendChild(particle);
-    assertFateSparkleOwnership(particle, 'ambient');
+    overlay.appendChild(particle);
+    registerAnchoredParticle(particle, fateCard, relX, relY, rect.left, rect.top);
     setTimeout(() => { if (particle.parentNode) particle.remove(); }, duration + 100);
   }
 
@@ -10350,16 +10458,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
   }
 
-  // Anchor-aware sparkle spawner — particles are anchored to a DOM element
-  // Uses element-relative positioning so sparkles move with the element on scroll
+  // Anchor-aware sparkle spawner — particles track owner element via rAF
+  // Uses getBoundingClientRect for true scroll-synced positioning
   function startFateEdgeSparkles({ anchorEl, anchorRect, maxParticles, spawnInterval, tag }) {
     if (!anchorEl) return;
     maxParticles = maxParticles || DUST_CONFIG.MAX_PARTICLES;
     spawnInterval = spawnInterval || DUST_CONFIG.SPAWN_INTERVAL;
     tag = tag || 'card';
 
-    const container = getOrCreateSparkleContainer(anchorEl);
-    if (!container) return;
+    const overlay = getSparkleOverlay();
 
     const checkWidth = anchorEl.offsetWidth;
     const checkHeight = anchorEl.offsetHeight;
@@ -10370,40 +10477,43 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     function spawn() {
       if (!_guidedFateVisualsActive) return;
+      if (!anchorEl.offsetParent) return; // owner removed from DOM
 
-      const existing = container.querySelectorAll('.fate-dust-particle[data-sparkle-tag="' + tag + '"]');
+      const existing = overlay.querySelectorAll('.fate-dust-particle[data-sparkle-owner="' + tag + '-' + (anchorEl.id || 'anon') + '"]');
       if (existing.length >= maxParticles) return;
 
-      const width = anchorEl.offsetWidth;
-      const height = anchorEl.offsetHeight;
+      const rect = anchorEl.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
       if (width === 0 || height === 0) return;
 
       const particle = document.createElement('div');
-      particle.className = 'fate-dust-particle';
+      particle.className = 'fate-dust-particle fate-dust-particle--anchored';
       particle.dataset.sparkleTag = tag;
+      particle.dataset.sparkleOwner = tag + '-' + (anchorEl.id || 'anon');
 
       // Spawn on outer perimeter — offset ±12-20px outside element edges (element-relative)
       const OFFSET_MIN = 12;
       const OFFSET_MAX = 20;
       const perimeterSide = Math.random();
-      let x, y;
+      let relX, relY;
       const offset = OFFSET_MIN + Math.random() * (OFFSET_MAX - OFFSET_MIN);
       if (perimeterSide < 0.25) {
         // Top edge
-        x = Math.random() * width;
-        y = -offset;
+        relX = Math.random() * width;
+        relY = -offset;
       } else if (perimeterSide < 0.5) {
         // Bottom edge
-        x = Math.random() * width;
-        y = height + offset;
+        relX = Math.random() * width;
+        relY = height + offset;
       } else if (perimeterSide < 0.75) {
         // Left edge
-        x = -offset;
-        y = Math.random() * height;
+        relX = -offset;
+        relY = Math.random() * height;
       } else {
         // Right edge
-        x = width + offset;
-        y = Math.random() * height;
+        relX = width + offset;
+        relY = Math.random() * height;
       }
 
       const size = DUST_CONFIG.MIN_SIZE + Math.random() * (DUST_CONFIG.MAX_SIZE - DUST_CONFIG.MIN_SIZE);
@@ -10413,14 +10523,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Drift outward from element center
       const cx = width / 2;
       const cy = height / 2;
-      const outAngle = Math.atan2(y - cy, x - cx);
+      const outAngle = Math.atan2(relY - cy, relX - cx);
       const driftDistance = 15 + Math.random() * 30;
       const dx = Math.cos(outAngle) * driftDistance;
       const dy = Math.sin(outAngle) * driftDistance - 15;
 
       particle.style.cssText = `
-        left: ${x}px;
-        top: ${y}px;
+        position: fixed;
+        left: ${rect.left + relX}px;
+        top: ${rect.top + relY}px;
         width: ${size}px;
         height: ${size}px;
         --dust-duration: ${duration}ms;
@@ -10429,11 +10540,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         --dust-dy: ${dy}px;
       `;
 
-      container.appendChild(particle);
-      // Assert Fate card sparkles are DOM-owned (tag='card' only, not 'input')
-      if (tag === 'card') {
-        assertFateSparkleOwnership(particle, tag);
-      }
+      overlay.appendChild(particle);
+      registerAnchoredParticle(particle, anchorEl, relX, relY, rect.left, rect.top);
       setTimeout(() => { if (particle.parentNode) particle.remove(); }, duration + 100);
     }
 
@@ -10453,8 +10561,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   let _isAutoScrolling = false;
 
   function handleSparkleScroll() {
-      if (!_guidedFateVisualsActive || _sparkleScrollFading) return;
-      if (_isAutoScrolling) return; // Skip cleanup during programmatic scroll
+      // GUARD: Never teardown vignette during Guided Fate — ONLY on explicit exit
+      if (_guidedFateVisualsActive || _sparkleScrollFading) return;
       _sparkleScrollFading = true;
 
       // Only fade out viewport-based (vignette) sparkles — anchored sparkles move with their parent
@@ -10563,49 +10671,54 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const height = el.offsetHeight;
       if (width === 0 || height === 0) return;
 
-      const container = getOrCreateSparkleContainer(el);
-      if (!container) return;
+      const overlay = getSparkleOverlay();
+      const ownerId = 'aura-' + (el.id || Math.random().toString(36).slice(2, 8));
 
       // Low-density sparkles from element perimeter (element-relative)
       const OFFSET_MIN = 8;
       const OFFSET_MAX = 14;
       function spawnAuraSparkle() {
-          const existing = container.querySelectorAll('.fate-dust-particle[data-sparkle-tag="aura"]');
+          if (!el.offsetParent) return; // owner removed
+          const existing = overlay.querySelectorAll('.fate-dust-particle[data-sparkle-owner="' + ownerId + '"]');
           if (existing.length >= 4) return;
 
-          const w = el.offsetWidth;
-          const h = el.offsetHeight;
+          const rect = el.getBoundingClientRect();
+          const w = rect.width;
+          const h = rect.height;
           if (w === 0 || h === 0) return;
 
           const particle = document.createElement('div');
-          particle.className = 'fate-dust-particle';
+          particle.className = 'fate-dust-particle fate-dust-particle--anchored';
           particle.dataset.sparkleTag = 'aura';
+          particle.dataset.sparkleOwner = ownerId;
 
           const side = Math.random();
           const offset = OFFSET_MIN + Math.random() * (OFFSET_MAX - OFFSET_MIN);
-          let x, y;
-          if (side < 0.25) { x = Math.random() * w; y = -offset; }
-          else if (side < 0.5) { x = Math.random() * w; y = h + offset; }
-          else if (side < 0.75) { x = -offset; y = Math.random() * h; }
-          else { x = w + offset; y = Math.random() * h; }
+          let relX, relY;
+          if (side < 0.25) { relX = Math.random() * w; relY = -offset; }
+          else if (side < 0.5) { relX = Math.random() * w; relY = h + offset; }
+          else if (side < 0.75) { relX = -offset; relY = Math.random() * h; }
+          else { relX = w + offset; relY = Math.random() * h; }
 
           const size = 2 + Math.random() * 4;
           const duration = 3000 + Math.random() * 3000;
           const opacity = 0.15 + Math.random() * 0.3;
           const cx = w / 2;
           const cy = h / 2;
-          const angle = Math.atan2(y - cy, x - cx);
+          const angle = Math.atan2(relY - cy, relX - cx);
           const dx = Math.cos(angle) * (10 + Math.random() * 15);
           const dy = Math.sin(angle) * (10 + Math.random() * 15) - 10;
 
           particle.style.cssText = `
-            left: ${x}px; top: ${y}px;
+            position: fixed;
+            left: ${rect.left + relX}px; top: ${rect.top + relY}px;
             width: ${size}px; height: ${size}px;
             --dust-duration: ${duration}ms;
             --dust-opacity: ${opacity};
             --dust-dx: ${dx}px; --dust-dy: ${dy}px;
           `;
-          container.appendChild(particle);
+          overlay.appendChild(particle);
+          registerAnchoredParticle(particle, el, relX, relY, rect.left, rect.top);
           setTimeout(() => { if (particle.parentNode) particle.remove(); }, duration + 100);
       }
 
@@ -10979,9 +11092,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Initialize DSP clause reveal tracking — all clauses start pending
     _revealedDSPAxes = new Set();
 
-    // Force DSP recompute immediately after state population (before ceremony)
-    // Ensures DSP reflects Guided Fate even if ceremony is overridden mid-flow
-    updateSynopsisPanel();
+    // NOTE: DSP is NOT pre-populated here. It remains showing placeholder.
+    // DSP content is populated on-demand when revealDSPClause is first called.
 
     // ===============================================
     // PART B: OPENING CEREMONY
@@ -12365,6 +12477,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         const insideCover = document.getElementById('bookInsideCover');
         if (insideCover) {
             const synopsisText = synopsis || state._synopsisMetadata || '';
+            console.log('[DEBUG PAGE STATE] insideCover injection: _bookPageIndex=', _bookPageIndex, 'synopsisLen=', synopsisText.length);
             insideCover.innerHTML = `
                 <div class="inside-cover-content">
                     <h1 class="inside-cover-title">${cleanTitle}</h1>
@@ -12383,9 +12496,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // CONTROL-FLOW INVARIANT: Cover generation is DECORATIVE and must NEVER block page mounting
         // Defer all cover logic to next tick to ensure pages are fully mounted first
         setTimeout(() => {
-            // FENCE: PHASE_1_FORGED fallback applies ONLY to cover element
-            const coverTarget = document.getElementById('coverFallback');
-            if (!coverTarget) return;
+            // FENCE: PHASE_1_FORGED fallback applies ONLY when page type is COVER (index 0)
+            console.log('[DEBUG PAGE STATE] cover setTimeout: _bookPageIndex=', _bookPageIndex, 'coverMode=', state.coverMode);
+            if (_bookPageIndex !== 0) return;
 
             if (state.coverMode === 'PHASE_1_FORGED' || state.coverEligibility !== true) {
                 // PHASE 1: Render local fallback cover (no API call)
@@ -12769,6 +12882,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   async function generateBookSceneArt(synopsis) {
       const sceneImg = document.getElementById('bookSceneImg');
       const loadingEl = document.getElementById('bookSceneLoading');
+      console.log('[DEBUG PAGE STATE] generateBookSceneArt: _bookPageIndex=', _bookPageIndex);
       console.log('[BookScene:DEBUG] ENTRY', {
           coverMode: state.coverMode,
           PHASE_1_FORGED: state.coverMode === 'PHASE_1_FORGED',
@@ -12834,9 +12948,19 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
                   sceneImgId: sceneImg.id
               });
               sceneImg.onload = () => {
-                  sceneImg.style.display = 'block';
-                  if (loadingEl) loadingEl.style.display = 'none';
-                  console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display });
+                  // GUARD: Setting images must NEVER use cover/fullscreen mount path
+                  // Verify we're mounting to the correct container (settingPlate, not cover)
+                  const settingPlate = document.getElementById('settingPlate');
+                  if (settingPlate && sceneImg.closest('#settingPlate')) {
+                      // Correct mount path - setting image is inside settingPlate
+                      sceneImg.style.display = 'block';
+                      if (loadingEl) loadingEl.style.display = 'none';
+                      console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display, mountPath: 'settingPlate' });
+                  } else {
+                      // ABORT: Setting image mounted in wrong container
+                      console.error('[BookScene:GUARD] Setting image not in settingPlate - aborting display');
+                      sceneImg.style.display = 'none';
+                  }
               };
               sceneImg.onerror = () => {
                   console.warn('[BookScene] Image failed to load');
@@ -14261,7 +14385,9 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
    * @param {number} pageIndex - 0=cover, 1=setting, 2=scene
    */
   function setBookPage(pageIndex) {
+      const oldIndex = _bookPageIndex;
       _bookPageIndex = pageIndex;
+      console.log('[DEBUG PAGE STATE] setBookPage:', oldIndex, '→', pageIndex);
 
       const bookCoverPage = document.getElementById('bookCoverPage');
       const bookCover = document.getElementById('bookCover');
@@ -14325,6 +14451,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
    */
   function advanceBookPage() {
       const nextPage = _bookPageIndex + 1;
+      console.log('[DEBUG PAGE STATE] advanceBookPage: current=', _bookPageIndex, 'next=', nextPage);
 
       if (_bookPageIndex === 1 && nextPage === 2) {
           // PAGE FLIP TRANSITION: Setting → Scene
@@ -14350,11 +14477,13 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
    */
   function validateBookFlowIntegrity() {
       const errors = [];
+      console.log('[DEBUG PAGE STATE] validateBookFlowIntegrity: _bookPageIndex=', _bookPageIndex);
 
       // CHECK 1: Inside cover must have title+synopsis text, but NO images
       const insideCover = document.getElementById('bookInsideCover');
       if (insideCover) {
           const hasImages = insideCover.querySelectorAll('img').length > 0;
+          console.log('[DEBUG PAGE STATE] insideCover check: hasImages=', hasImages, 'innerHTML.length=', insideCover.innerHTML.length);
           if (hasImages) {
               errors.push({ code: 'INSIDE_COVER_HAS_IMAGES', message: 'Inside cover contains images (should be text only)' });
           }
@@ -14429,6 +14558,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           if (typeof hideDSP === 'function') hideDSP();
           // Verify inside cover is populated (sanity check)
           const insideCover = document.getElementById('bookInsideCover');
+          console.log('[DEBUG PAGE STATE] openBook gate: insideCover=', !!insideCover, 'hasTitle=', !!insideCover?.querySelector('.inside-cover-title'), '_bookPageIndex=', _bookPageIndex);
           if (insideCover && !insideCover.querySelector('.inside-cover-title')) {
               console.warn('[BookFlow] Inside cover not populated — check story generation');
           }
@@ -14485,8 +14615,10 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
 
   // Reset book state for new story
   function resetBookState() {
+      const oldIndex = _bookPageIndex;
       _bookOpened = false;
       _bookPageIndex = 0; // Reset to cover page
+      console.log('[DEBUG PAGE STATE] resetBookState:', oldIndex, '→', 0);
       _settingImagePromise = Promise.resolve(); // Reset for new story
       cancelCourtesyHinge();
       resetCoverLayers();
@@ -15940,8 +16072,8 @@ Condensed (under ${maxLength} chars):` }
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
       if (billingLock) {
           if (submitBtn) submitBtn.classList.remove('submitting');
-          // Soulmates requires sub_only (no StoryPass); Affair can show unlock
-          const paywallMode = (state.storyLength === 'soulmates') ? 'sub_only' : 'unlock';
+          // Use canonical eligibility: Dirty and Soulmates require sub_only (no StoryPass)
+          const paywallMode = isStoryPassEligible(state) ? 'unlock' : 'sub_only';
           window.showPaywall(paywallMode);
           return;
       }

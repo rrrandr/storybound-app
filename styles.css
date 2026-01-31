@@ -2759,27 +2759,23 @@ textarea.fate-field {
     border-radius: 6px;
 }
 
-/* PAGE 1: Setting plate active state (full viewport, ceremonial) */
+/* PAGE 1: Setting plate active state (contained, NOT full-bleed/cover-level) */
 .setting-plate.setting-active {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    max-height: 100vh;
-    min-height: 100vh;
+    position: relative;
+    max-height: 70vh;
+    min-height: 200px;
     width: 100%;
-    z-index: 100;
-    margin: 0;
-    border-radius: 0;
+    z-index: 10;
+    margin: 0 auto 24px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #1a1814;
 }
 .setting-plate.setting-active .book-scene-image {
-    max-height: 85vh;
-    max-width: 90vw;
+    max-height: 65vh;
+    max-width: 100%;
     object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 8px 40px rgba(0,0,0,0.5);
@@ -3168,6 +3164,14 @@ textarea.fate-field {
 .synopsis-text span.updating {
     opacity: 1;
     color: rgba(255, 255, 255, 0.95);
+}
+
+/* DSP placeholder — shown before any interaction */
+.dsp-placeholder {
+    display: block;
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    text-align: center;
 }
 
 /* DSP clause spans — inline flow, no layout impact */
@@ -4098,6 +4102,11 @@ textarea.fate-field {
 
 /* Viewport-based sparkles (vignette effect) — use fixed positioning */
 .fate-dust-particle--viewport {
+    position: fixed;
+}
+
+/* Anchored sparkles — fixed position updated by rAF to track owner element */
+.fate-dust-particle--anchored {
     position: fixed;
 }
 
