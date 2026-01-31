@@ -10450,9 +10450,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // Scroll handler for sparkle fade-out — prevents sparkles drifting from cards
   let _sparkleScrollHandler = null;
   let _sparkleScrollFading = false;
+  let _isAutoScrolling = false;
 
   function handleSparkleScroll() {
       if (!_guidedFateVisualsActive || _sparkleScrollFading) return;
+      if (_isAutoScrolling) return; // Skip cleanup during programmatic scroll
       _sparkleScrollFading = true;
 
       // Only fade out viewport-based (vignette) sparkles — anchored sparkles move with their parent
@@ -10743,7 +10745,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // ABSOLUTE CONSTRAINT: Only scroll if target is BELOW current position
     // If targetScroll <= currentScroll, NO SCROLL OCCURS (element already visible or above)
     if (targetScroll > currentScroll) {
+      _isAutoScrolling = true;
       window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      setTimeout(() => { _isAutoScrolling = false; }, 600);
     }
   }
 
@@ -12379,6 +12383,10 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // CONTROL-FLOW INVARIANT: Cover generation is DECORATIVE and must NEVER block page mounting
         // Defer all cover logic to next tick to ensure pages are fully mounted first
         setTimeout(() => {
+            // FENCE: PHASE_1_FORGED fallback applies ONLY to cover element
+            const coverTarget = document.getElementById('coverFallback');
+            if (!coverTarget) return;
+
             if (state.coverMode === 'PHASE_1_FORGED' || state.coverEligibility !== true) {
                 // PHASE 1: Render local fallback cover (no API call)
                 console.log('[BookCover] PHASE_1_FORGED mode — using local fallback cover');
