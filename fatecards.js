@@ -509,6 +509,16 @@ function stopContinuousSparkles() {
             };
         }
 
+        // GUARD: If liName unavailable, use generic fallback (no dangling preposition)
+        if (!liName) {
+            return {
+                action: 'Set the terms. What happens next is your call.',
+                dialogue: '"Before this goes further—"',
+                altAction: 'Draw the line. What happens next is your call.',
+                altDialogue: '"Is this what you want?"'
+            };
+        }
+
         return {
             action: `Set the terms with ${liName}. What happens next is your call.`,
             dialogue: '"Before this goes further—"',
@@ -931,6 +941,16 @@ function setSelectedState(mount, selectedCardEl){
         if (selectedIdx < 0) return; // nothing selected -> nothing to commit
 
         window.state.fateCommitted = true;
+
+        // Record preference signal for selected fate card (session-scoped, deterministic)
+        if (window.StoryboundOrchestration && window.StoryboundOrchestration.recordPreferenceSignal) {
+            const selectedCard = window.state.fateOptions && window.state.fateOptions[selectedIdx];
+            if (selectedCard && selectedCard.id) {
+                window.StoryboundOrchestration.recordPreferenceSignal('FATE_CARD_SELECTED', {
+                    cardId: selectedCard.id
+                });
+            }
+        }
 
         const cards = mount.querySelectorAll('.fate-card');
         cards.forEach((cardEl) => {

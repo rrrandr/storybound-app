@@ -878,7 +878,7 @@ function selectEmblemObject(emotionalGravity) {
 // Replaces focal anchor with emblem-specific object
 // Centered, stable composition — no human presence
 function buildEmblemCoverPrompt(params) {
-  const { title, authorName, dynamic, storyStyle, genre, world, era, arousal } = params;
+  const { title, authorName, modeLine, dynamic, storyStyle, genre, world, era, arousal } = params;
 
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
@@ -1036,7 +1036,7 @@ function selectDiegeticTypography() {
 // Typography is a physical, diegetic element — NOT a font overlay
 // Boundary imagery, liminal space, crossing/secrecy themes
 function buildThresholdCoverPrompt(params) {
-  const { title, authorName, dynamic, storyStyle, genre, world, era, arousal } = params;
+  const { title, authorName, modeLine, dynamic, storyStyle, genre, world, era, arousal } = params;
 
   const cleanTitle = (title || 'Untitled').trim();
   const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();

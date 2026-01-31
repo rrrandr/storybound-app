@@ -117,14 +117,10 @@
         <button onclick="window.insertImage()">Insert</button>
         <button class="small-btn" style="background:#555" onclick="window.closeViz()">Cancel</button>
     </div>
-    <!-- TASK D: Basic Visualize fallback button -->
-    <div style="margin-top:8px; text-align:center;">
-        <button id="basicVizBtn" class="small-btn" style="background:#333; font-size:0.8em;" onclick="window.basicVisualize()">🔧 Basic Visualize (OpenAI only)</button>
-    </div>
     <label class="sb-checkbox" style="font-size:0.8em; justify-content:center; margin-top:12px;">
         <input type="checkbox" id="chkAutoLockVisual" checked>
         <span class="sb-checkbox-visual"></span>
-        <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Lock character look after this Visualize</span>
+        <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Lock character look for more consistent portrayals next time.</span>
     </label>
     <!-- Lock Look Now button - manual immediate lock -->
     <div id="lockLookContainer" style="margin-top:10px; text-align:center;">
@@ -317,7 +313,7 @@
     <div class="choice-buttons">
       <div style="text-align:center">
           <button class="choice" onclick="window.setMode('solo')">Solo</button>
-          <p class="choice-desc">Your private laboratory—intentional, charged.</p>
+          <p class="choice-desc" id="soloSubtitle">Just you and your curiosity.</p>
       </div>
       <div style="text-align:center">
           <button class="choice" id="btnCoupleMode" onclick="window.setMode('couple')">Couple</button>
@@ -572,12 +568,7 @@
 
     <!-- FLOATING SYNOPSIS PANEL (Side-mounted book jacket card) -->
     <div id="synopsisPanel" class="synopsis-panel">
-      <p id="synopsisText" class="synopsis-text">
-        <span id="synWorld">Where shadows hold secrets</span>
-        <span id="synTone">Face what you've buried</span>
-        <span id="synGenre">Navigate dangerous alliances</span>
-        <span id="synDynamic">The one you need most becomes your enemy</span>
-      </p>
+      <p id="synopsisText" class="synopsis-text"></p>
     </div>
 
     <!-- AXIS 1: STORY WORLD (Required, First) -->
@@ -696,9 +687,12 @@
       <div class="sb-card" data-grp="genre" data-val="Escape"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape</span><span class="sb-card-desc">Running from the past, chasing freedom.</span></div></div></div>
       <div class="sb-card" data-grp="genre" data-val="Redemption"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Redemption</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Redemption</span><span class="sb-card-desc">Second chances, atonement, becoming worthy.</span></div></div></div>
       <div class="sb-card" data-grp="genre" data-val="BuildingBridges"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Building Bridges</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Building Bridges</span><span class="sb-card-desc">Healing rifts, unlikely alliances, found family.</span></div></div></div>
-      <div class="sb-card" data-grp="genre" data-val="Purgatory"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Purgatory</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Purgatory</span><span class="sb-card-desc">Limbo, waiting, suspended between worlds.</span></div></div></div>
-      <div class="sb-card" data-grp="genre" data-val="RelentlessPast"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Relentless Past</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Relentless Past</span><span class="sb-card-desc">Old sins, unfinished business, what follows you.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="Purgatory"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Purgatory</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Purgatory</span><span class="sb-card-desc">Cycles, stalled time, escape through understanding.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="RelentlessPast"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Relentless Past</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Relentless Past</span><span class="sb-card-desc">Identity erosion, old lives resurfacing, consequences arriving.</span></div></div></div>
       <div class="sb-card" data-grp="genre" data-val="Sports"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Sports</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Sports</span><span class="sb-card-desc">Competition, teamwork, glory and defeat.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">Scarcity, endurance, brutal choices.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="Obsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Obsession</span><span class="sb-card-desc">Fixation, escalation, loss of control.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="ForbiddenKnowledge"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Forbidden Knowledge</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Forbidden Knowledge</span><span class="sb-card-desc">Curiosity, revelation, the price of knowing.</span></div></div></div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
@@ -851,21 +845,139 @@
         <!-- Book cover with hinge -->
         <div id="bookCover" class="book-cover">
           <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
+          <!-- Fallback cover (shown when AI generation fails) -->
+          <div id="coverFallback" class="cover-fallback hidden"></div>
+          <!-- Layer 2: Erotic border overlay (Art Deco filigree + implements) -->
+          <div id="coverEroticBorder" class="cover-erotic-border hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 480" fill="none" class="erotic-border-svg">
+              <!-- OUTER FRAME RAILS -->
+              <rect x="5" y="5" width="310" height="470" rx="6" stroke="currentColor" stroke-width="2" opacity="0.65"/>
+              <rect x="13" y="13" width="294" height="454" rx="3" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+
+              <!-- TOP-LEFT CORNER: stepped bracket + ribbon curl -->
+              <g opacity="0.6">
+                <path d="M5,60 L5,5 L60,5" stroke="currentColor" stroke-width="2"/>
+                <path d="M13,50 L13,13 L50,13" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M21,42 L21,21 L42,21" stroke="currentColor" stroke-width="0.8"/>
+                <path d="M5,40 C14,38 18,30 15,24 C12,18 18,11 25,14 C32,17 34,10 40,5" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+                <line x1="5" y1="5" x2="32" y2="32" stroke="currentColor" stroke-width="0.5" opacity="0.25"/>
+              </g>
+              <!-- TOP-RIGHT CORNER (mirror) -->
+              <g transform="translate(320,0) scale(-1,1)" opacity="0.6">
+                <path d="M5,60 L5,5 L60,5" stroke="currentColor" stroke-width="2"/>
+                <path d="M13,50 L13,13 L50,13" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M21,42 L21,21 L42,21" stroke="currentColor" stroke-width="0.8"/>
+                <path d="M5,40 C14,38 18,30 15,24 C12,18 18,11 25,14 C32,17 34,10 40,5" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+                <line x1="5" y1="5" x2="32" y2="32" stroke="currentColor" stroke-width="0.5" opacity="0.25"/>
+              </g>
+              <!-- BOTTOM-LEFT CORNER (mirror) -->
+              <g transform="translate(0,480) scale(1,-1)" opacity="0.6">
+                <path d="M5,60 L5,5 L60,5" stroke="currentColor" stroke-width="2"/>
+                <path d="M13,50 L13,13 L50,13" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M21,42 L21,21 L42,21" stroke="currentColor" stroke-width="0.8"/>
+                <path d="M5,40 C14,38 18,30 15,24 C12,18 18,11 25,14 C32,17 34,10 40,5" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+                <line x1="5" y1="5" x2="32" y2="32" stroke="currentColor" stroke-width="0.5" opacity="0.25"/>
+              </g>
+              <!-- BOTTOM-RIGHT CORNER (mirror both) -->
+              <g transform="translate(320,480) scale(-1,-1)" opacity="0.6">
+                <path d="M5,60 L5,5 L60,5" stroke="currentColor" stroke-width="2"/>
+                <path d="M13,50 L13,13 L50,13" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M21,42 L21,21 L42,21" stroke="currentColor" stroke-width="0.8"/>
+                <path d="M5,40 C14,38 18,30 15,24 C12,18 18,11 25,14 C32,17 34,10 40,5" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+                <line x1="5" y1="5" x2="32" y2="32" stroke="currentColor" stroke-width="0.5" opacity="0.25"/>
+              </g>
+
+              <!-- TOP CENTER: KEY as Art Deco keystone arch -->
+              <g transform="translate(160,0)" opacity="0.6">
+                <!-- Sunburst fan rays (key bow abstracted) -->
+                <line x1="0" y1="30" x2="-28" y2="3" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="30" x2="-16" y2="2" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="28" x2="0" y2="1" stroke="currentColor" stroke-width="0.8"/>
+                <line x1="0" y1="30" x2="16" y2="2" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="30" x2="28" y2="3" stroke="currentColor" stroke-width="0.7"/>
+                <!-- Key ring (bow) -->
+                <circle cx="0" cy="23" r="6.5" stroke="currentColor" stroke-width="1.2"/>
+                <circle cx="0" cy="23" r="3" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
+                <!-- Key shaft -->
+                <line x1="0" y1="29.5" x2="0" y2="52" stroke="currentColor" stroke-width="1.2"/>
+                <!-- Ward cuts (teeth) -->
+                <line x1="0" y1="44" x2="4.5" y2="44" stroke="currentColor" stroke-width="0.9"/>
+                <line x1="0" y1="48" x2="3.5" y2="48" stroke="currentColor" stroke-width="0.9"/>
+                <!-- Flanking accent lines -->
+                <line x1="-50" y1="8" x2="-32" y2="8" stroke="currentColor" stroke-width="0.7" opacity="0.35"/>
+                <line x1="32" y1="8" x2="50" y2="8" stroke="currentColor" stroke-width="0.7" opacity="0.35"/>
+              </g>
+
+              <!-- BOTTOM CENTER: HANDCUFFS as linked Art Deco rings -->
+              <g transform="translate(160,480)" opacity="0.55">
+                <!-- Left cuff -->
+                <ellipse cx="-15" cy="-25" rx="10" ry="9" stroke="currentColor" stroke-width="1.2"/>
+                <!-- Right cuff -->
+                <ellipse cx="15" cy="-25" rx="10" ry="9" stroke="currentColor" stroke-width="1.2"/>
+                <!-- Chain links (interlocking circles) -->
+                <circle cx="-3" cy="-25" r="3" stroke="currentColor" stroke-width="0.8"/>
+                <circle cx="3" cy="-25" r="3" stroke="currentColor" stroke-width="0.8"/>
+                <!-- Keyhole accents on cuffs -->
+                <line x1="-15" y1="-28" x2="-15" y2="-22" stroke="currentColor" stroke-width="0.5" opacity="0.4"/>
+                <line x1="15" y1="-28" x2="15" y2="-22" stroke="currentColor" stroke-width="0.5" opacity="0.4"/>
+                <!-- Stepped deco base -->
+                <line x1="-45" y1="-9" x2="45" y2="-9" stroke="currentColor" stroke-width="0.7" opacity="0.3"/>
+                <line x1="-35" y1="-13" x2="35" y2="-13" stroke="currentColor" stroke-width="0.5" opacity="0.2"/>
+              </g>
+
+              <!-- LEFT RAIL: FEATHER as Art Deco leaf filigree -->
+              <g transform="translate(9,140)" opacity="0.4">
+                <!-- Quill shaft -->
+                <line x1="4" y1="0" x2="4" y2="200" stroke="currentColor" stroke-width="0.7"/>
+                <!-- Barb pairs — symmetric leaf shapes -->
+                <path d="M4,8 C-1,18 -1,30 4,40" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,8 C9,18 9,30 4,40" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,48 C-1,58 -1,70 4,80" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,48 C9,58 9,70 4,80" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,88 C-1,98 -1,110 4,120" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,88 C9,98 9,110 4,120" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,128 C-1,138 -1,150 4,160" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,128 C9,138 9,150 4,160" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,168 C-1,178 -1,190 4,200" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,168 C9,178 9,190 4,200" stroke="currentColor" stroke-width="0.5"/>
+              </g>
+
+              <!-- RIGHT RAIL: RIDING CROP as vertical accent -->
+              <g transform="translate(307,140)" opacity="0.4">
+                <!-- Shaft (slightly tapered) -->
+                <line x1="4" y1="12" x2="4" y2="188" stroke="currentColor" stroke-width="0.9"/>
+                <!-- Handle wrap (cross-lacing) -->
+                <line x1="2" y1="168" x2="6" y2="173" stroke="currentColor" stroke-width="0.4"/>
+                <line x1="2" y1="173" x2="6" y2="178" stroke="currentColor" stroke-width="0.4"/>
+                <line x1="2" y1="178" x2="6" y2="183" stroke="currentColor" stroke-width="0.4"/>
+                <line x1="2" y1="183" x2="6" y2="188" stroke="currentColor" stroke-width="0.4"/>
+                <!-- Keeper loop (wrist strap) -->
+                <path d="M4,188 C0,194 0,200 4,200 C8,200 8,194 4,188" stroke="currentColor" stroke-width="0.6"/>
+                <!-- Tongue/keeper flap at top -->
+                <ellipse cx="4" cy="6" rx="5" ry="4" stroke="currentColor" stroke-width="0.5" opacity="0.5"/>
+                <line x1="4" y1="10" x2="4" y2="12" stroke="currentColor" stroke-width="0.7"/>
+              </g>
+
+              <!-- SIDE ACCENT DASHES -->
+              <line x1="5" y1="80" x2="5" y2="115" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+              <line x1="5" y1="365" x2="5" y2="400" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+              <line x1="315" y1="80" x2="315" y2="115" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+              <line x1="315" y1="365" x2="315" y2="400" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+            </svg>
+          </div>
+          <!-- Layer 3: Dirty keyhole takeover -->
+          <div id="coverKeyholeOverlay" class="cover-keyhole-overlay hidden">
+            <div class="keyhole-plate"></div>
+            <div class="keyhole-title"></div>
+          </div>
         </div>
 
         <!-- Book pages underneath (visible during courtesy hinge) -->
         <div id="bookPagesPreview" class="book-pages-preview">
           <div class="page-edge-stack"></div>
-          <!-- Left page: Inside cover — synopsis on white/parchment -->
+          <!-- Inside cover: BLANK paper only (no text, no images per spec) -->
           <div id="bookInsideCover" class="book-inside-cover">
-            <div class="inside-cover-rule"></div>
-            <p id="insideCoverSynopsis" class="inside-cover-synopsis"></p>
-            <div class="inside-cover-rule"></div>
-          </div>
-          <!-- Right page: Setting art (distinct asset, never reuses cover) -->
-          <div id="bookInsideScene" class="book-inside-scene">
-            <img id="bookSceneImg" src="" alt="" class="book-scene-image">
-            <div id="bookSceneLoading" class="book-scene-loading">Conjuring the world…</div>
+            <!-- Intentionally empty: pure white/paper texture -->
           </div>
         </div>
 
@@ -880,9 +992,14 @@
 
     <div id="billingBanner" style="display:none;"></div>
 
+    <!-- Setting Plate: VISUAL ONLY (no title, no synopsis per spec) -->
+    <div id="settingPlate" class="setting-plate">
+      <img id="bookSceneImg" src="" alt="" class="book-scene-image">
+      <div id="bookSceneLoading" class="book-scene-loading hidden">Conjuring the world…</div>
+    </div>
+
     <!-- CORRECTIVE: Story start - title double size, Scene under synopsis -->
     <h2 id="storyTitle" style="font-size:3em; text-align:center; margin-bottom:10px;"></h2>
-    <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:10px; text-align:center;"></p>
     <div id="sceneNumber" style="font-size:2em; color:var(--gold); font-weight:bold; text-align:center; margin:0 0 20px;">Scene 1</div>
     
     <div id="batedBreathIndicator" class="hidden" style="text-align:center; font-size:0.8em; color:var(--gold); font-style:italic; margin-bottom:10px; opacity:0.8;">
@@ -1005,6 +1122,27 @@
   </div>
 </div>
 
+<!-- TRIPLE-FORK CONTINUATION MODAL -->
+<div id="continuationForkModal" class="overlay hidden" style="z-index:10006;" onclick="if(event.target===this) window.defaultContinuationPath();">
+  <div class="box" style="max-width:450px; text-align:center;">
+    <h3 style="color:var(--gold); margin-bottom:20px;">What comes next?</h3>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button id="btnContinueStory" onclick="window.selectContinuationPath('continue')" style="padding:15px;">
+        Continue this story
+      </button>
+      <button id="btnSameWorld" onclick="window.selectContinuationPath('same_world')" style="padding:15px;">
+        Start a new story in this world
+      </button>
+      <button id="btnNewStory" onclick="window.selectContinuationPath('new_story')" style="padding:15px;">
+        Start a completely new story
+      </button>
+    </div>
+    <p style="font-size:0.75em; opacity:0.5; margin-top:15px;">
+      Click outside to start a completely new story.
+    </p>
+  </div>
+</div>
+
 <div id="edgeCovenantModal" class="overlay hidden" style="z-index:10005;">
   <div class="box" style="max-width:500px; text-align:center;">
     <h3 style="color:var(--pink)">The Covenant</h3>
@@ -1073,6 +1211,14 @@
     <h3>My Library</h3>
     <div id="myLibraryContent"></div>
     <button onclick="window.closeMyLibraryModal()" style="background:#444; margin-top:15px;">Close</button>
+  </div>
+</div>
+<!-- Dev HUD (developer-only, toggled with backtick key) -->
+<div id="devHud" class="dev-hud">
+  <div class="dev-hud-bar">
+    <span class="dev-hud-label">DEV</span>
+    <input id="devHudInput" type="text" placeholder="what can i say..." autocomplete="off" spellcheck="false">
+    <div id="devHudLog" class="dev-hud-log"></div>
   </div>
 </div>
 </body>

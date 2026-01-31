@@ -11327,6 +11327,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // ========================================
     // PHASE 2: SHOW LOADER IMMEDIATELY (sync)
     // ========================================
+    // GUARD: If book is already opening/open, do not reset cover visibility
+    if (_bookOpened) return;
+
     window.showScreen('game');
     const bookCoverPage = document.getElementById('bookCoverPage');
     const storyContentEl = document.getElementById('storyContent');
