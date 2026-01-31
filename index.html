@@ -130,6 +130,23 @@
   </div>
 </div>
 
+<div id="payAsYouGoModal" class="overlay hidden" style="z-index:10002;">
+  <div class="box" style="max-width:420px; text-align:center;">
+    <h3 style="color:var(--gold);">Enable Re-Visualize</h3>
+    <p style="opacity:0.9; font-size:0.95em; margin-bottom:15px;">
+        Re-visualizing a scene costs <strong>$0.25</strong> per attempt.
+    </p>
+    <p style="opacity:0.7; font-size:0.85em; margin-bottom:20px;">
+        Initial visualizations are free (using earned credits).
+        Re-Visualize is pay-as-you-go for when you want a different take.
+    </p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+        <button onclick="window.confirmPayAsYouGo();" style="background:var(--gold); color:#1a1814;">Enable Pay-As-You-Go</button>
+        <button onclick="window.closePayAsYouGoModal();" style="background:#444">Not Now</button>
+    </div>
+  </div>
+</div>
+
 <div id="eroticPreviewModal" class="overlay hidden" style="z-index:10001;">
   <div class="box" style="max-width:500px;">
     <h3 style="color:var(--hot)">Erotic Intensity Preview</h3>

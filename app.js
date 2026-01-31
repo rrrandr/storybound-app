@@ -1528,7 +1528,26 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
           lastImageUrl: "",
           bible: { style: "", setting: "", characters: {} },
           // Per-scene visualization budget: sceneBudgets[sceneKey] = { remaining: 2, finalized: false }
-          sceneBudgets: {}
+          sceneBudgets: {},
+          // Per-scene visualization tracking: has this scene been visualized with a free credit?
+          visualizedScenes: {}
+      },
+
+      // ============================================================
+      // VISUALIZATION ECONOMY — Credits earned by scene completion
+      // ============================================================
+      vizEconomy: {
+          // Per-story credits (reset on new story)
+          storyCredits: 0,
+          // Global credits from Forbidden Library (persist across stories)
+          globalCredits: 0,
+          // Forbidden Library bonus cap tracking
+          forbiddenLibraryBonusThisMonth: 0,
+          forbiddenLibraryBonusMonthKey: null,
+          // Pay-As-You-Go opt-in (one-time, persists)
+          payAsYouGoEnabled: false,
+          // Last credited scene count (to avoid double-crediting)
+          lastCreditedSceneCount: 0
       },
 
       // ============================================================
@@ -4225,7 +4244,14 @@ Return ONLY the title, no quotes or explanation.`;
       state.coverArchetype = null;
 
       // Reset visual state
-      state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {} };
+      state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {}, visualizedScenes: {} };
+
+      // Reset per-story visualization credits (preserve globalCredits and payAsYouGoEnabled)
+      if (state.vizEconomy) {
+          state.vizEconomy.storyCredits = 0;
+          state.vizEconomy.lastCreditedSceneCount = 0;
+          state.vizEconomy.awardedMilestones = [];
+      }
 
       // Clear cover state
       if (_coverAbortController) { _coverAbortController.abort(); _coverAbortController = null; }
@@ -7088,6 +7114,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       _fateRunning = false;
       _fateOverridden = false;
       _revealedDSPAxes = null;
+      _dspGuidedFateActive = false;
       state.fateCommitted = false;
 
       // Clear DSP pending classes
@@ -7440,7 +7467,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Reset DSP interaction state for fresh placeholder
     if (typeof _dspInteractionStarted !== 'undefined') _dspInteractionStarted = false;
     const synopsisTextReset = document.getElementById('synopsisText');
-    if (synopsisTextReset) { synopsisTextReset.innerHTML = ''; synopsisTextReset._lastDSP = null; }
+    if (synopsisTextReset) {
+        synopsisTextReset.innerHTML = 'Your choices shape your story';
+        synopsisTextReset._lastDSP = null;
+    }
     const coverImg = document.getElementById('bookCoverImg');
     if (coverImg) coverImg.src = '';
     const coverLoading = document.getElementById('coverLoadingState');
@@ -8605,13 +8635,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (indicator) indicator.style.display = 'none';
     }
 
-    // Player name normalization + DSP refresh on keystroke/blur
-    // (DSP no longer includes player name, but refresh is harmless)
+    // Player name normalization (DSP no longer includes names — no DSP refresh needed)
     const playerNameInput = $('playerNameInput');
     if (playerNameInput) {
       playerNameInput.addEventListener('input', () => {
         state.normalizedPlayerKernel = playerNameInput.value.trim() || 'the one who carries the story';
-        updateSynopsisPanel(true); // User action: name input
+        // Name entry does NOT trigger DSP update — names are not in DSP
       });
       playerNameInput.addEventListener('blur', async () => {
         const raw = playerNameInput.value.trim();
@@ -8627,15 +8656,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         state.normalizedPlayerKernel = kernel;
         state.rawPlayerName = raw;
         playerNameInput.value = kernel;
-        updateSynopsisPanel(true); // User action: name blur
+        // Name entry does NOT trigger DSP update — names are not in DSP
       });
     }
 
-    // Normalize partner name on blur
+    // Normalize partner name on blur (DSP no longer includes names — no DSP refresh needed)
     const partnerNameInput = $('partnerNameInput');
     if (partnerNameInput) {
       partnerNameInput.addEventListener('input', () => {
-        updateSynopsisPanel(true); // User action: name input
+        // Name entry does NOT trigger DSP update — names are not in DSP
       });
       partnerNameInput.addEventListener('blur', async () => {
         const raw = partnerNameInput.value.trim();
@@ -8896,11 +8925,65 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
 
     // STRICT DSP ASSEMBLY — no invented prose, no embellishment
-    const html = 'In <span class="dsp-clause" data-axis="world">' + worldPhrase +
-      ', shaped by ' + genrePhrase + '</span>' +
-      ', a question awaits: Will <span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>' +
-      ' desire redeem this <span class="dsp-clause" data-axis="tone">' + toneAdj + '</span>' +
-      " affair&#8201;&#8212;&#8201;or ruin it?";
+    // Dynamic affair word based on storyLength
+    const AFFAIR_WORD_MAP = {
+      voyeur: 'tease',
+      fling: 'fling',
+      affair: 'affair',
+      soulmates: 'cosmic connection'
+    };
+
+    let html = '';
+
+    // FULL MODE: Only after story has begun (turnCount > 0)
+    // SPARSE MODE: During Story Shape and Guided Fate (progressive reveal)
+    const storyHasBegun = (state.turnCount || 0) > 0;
+
+    if (storyHasBegun) {
+      // FULL MODE: Render complete sentence (story in progress)
+      const affairWord = AFFAIR_WORD_MAP[state.storyLength] || 'affair';
+      html = 'In <span class="dsp-clause" data-axis="world">' + worldPhrase +
+        ', shaped by ' + genrePhrase + '</span>' +
+        ', a question awaits: Will <span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>' +
+        ' desire redeem this <span class="dsp-clause" data-axis="tone">' + toneAdj + '</span>' +
+        ' ' + affairWord + '&#8201;&#8212;&#8201;or ruin it?';
+    } else {
+      // SPARSE MODE: Build sentence incrementally based on completed selections
+      // During Guided Fate: use _revealedDSPAxes
+      // During Story Shape: derive from state.picks (user-initiated selections)
+      // NO greyed text, NO placeholders, NO future parts
+      let hasWorld, hasArchetype, hasTone, hasLength;
+
+      if (_revealedDSPAxes) {
+        // Guided Fate mode: use explicit reveal tracking
+        hasWorld = _revealedDSPAxes.has('world');
+        hasArchetype = _revealedDSPAxes.has('archetype');
+        hasTone = _revealedDSPAxes.has('tone');
+        hasLength = _revealedDSPAxes.has('length');
+      } else {
+        // Story Shape mode: derive from completed selections
+        // Only show axes that user has explicitly interacted with
+        hasWorld = _dspInteractionStarted && !!state.picks?.world;
+        hasArchetype = _dspInteractionStarted && !!state.picks?.genre;
+        hasTone = _dspInteractionStarted && !!state.picks?.tone;
+        hasLength = _dspInteractionStarted && !!state.storyLength;
+      }
+
+      if (hasWorld) {
+        html = 'In <span class="dsp-clause" data-axis="world">' + worldPhrase +
+          ', shaped by ' + genrePhrase + '</span>';
+      }
+      if (hasWorld && hasArchetype) {
+        html += ', a question awaits: Will <span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>';
+      }
+      if (hasWorld && hasArchetype && hasTone) {
+        html += ' desire redeem this <span class="dsp-clause" data-axis="tone">' + toneAdj + '</span>';
+      }
+      if (hasWorld && hasArchetype && hasTone && hasLength) {
+        const affairWord = AFFAIR_WORD_MAP[state.storyLength] || 'affair';
+        html += ' ' + affairWord + '&#8201;&#8212;&#8201;or ruin it?';
+      }
+    }
 
     return { success: true, html, error: null };
   }
@@ -8912,6 +8995,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function updateSynopsisPanel(isUserAction = false) {
     const synopsisText = document.getElementById('synopsisText');
     if (!synopsisText) return;
+
+    // GATE: During Guided Fate, DSP updates come ONLY from revealDSPClause
+    // This prevents bulk hydration or catch-up rendering
+    if (_dspGuidedFateActive) return;
 
     // Block pre-hydration: only render live content after user interaction
     if (!_dspInteractionStarted && !isUserAction) return;
@@ -8941,8 +9028,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       synopsisText.classList.add('updating');
       synopsisText.innerHTML = newSentence;
 
-      // Sequential reveal of clauses on first interaction
-      if (wasFirstInteraction) {
+      // Sequential reveal of clauses on first interaction (non-Guided Fate only)
+      if (wasFirstInteraction && !_fateRunning) {
         const clauses = synopsisText.querySelectorAll('.dsp-clause');
         clauses.forEach((clause, i) => {
           clause.classList.add('dsp-pending');
@@ -8952,18 +9039,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
             setTimeout(() => clause.classList.remove('dsp-glow'), 500);
           }, 300 + i * 400);
         });
-      } else if (_fateRunning && _revealedDSPAxes !== null) {
-        // During Guided Fate ceremony, all clauses start pending
-        synopsisText.querySelectorAll('.dsp-clause').forEach(span => {
-          span.classList.add('dsp-pending');
-        });
-        // Restore any already-revealed axes
-        _revealedDSPAxes.forEach(axis => {
-          synopsisText.querySelectorAll('.dsp-clause[data-axis="' + axis + '"]').forEach(span => {
-            span.classList.remove('dsp-pending');
-          });
-        });
       }
+      // SPARSE MODE: During Guided Fate, sentence is built incrementally
+      // by revealDSPClause — no pending classes needed here
 
       setTimeout(() => synopsisText.classList.remove('updating'), 500);
     }
@@ -9059,6 +9137,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // Visibility is tied to screen state, not scroll position.
   // ═══════════════════════════════════════════════════════════════════
   let _dspInteractionStarted = false; // Tracks if user has interacted (name or selection)
+  let _dspGuidedFateActive = false; // True during Guided Fate — prevents bulk hydration
 
   function showDSP() {
     const synopsisPanel = document.getElementById('synopsisPanel');
@@ -10151,26 +10230,30 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const synopsisText = document.getElementById('synopsisText');
     if (!synopsisText) return;
 
-    // On first clause reveal, populate DSP with full sentence (all pending)
-    if (!synopsisText._lastDSP) {
-      const result = generateDSPSentence();
-      if (result.success) {
-        _dspInteractionStarted = true;
-        synopsisText._lastDSP = result.html;
-        synopsisText.innerHTML = result.html;
-        // Mark all clauses as pending
-        synopsisText.querySelectorAll('.dsp-clause').forEach(span => {
-          span.classList.add('dsp-pending');
+    // SPARSE RENDERING: Regenerate sentence with only revealed axes
+    // NO pending clauses, NO greyed text — just the revealed portions
+    const result = generateDSPSentence();
+    if (result.success) {
+      const newHtml = result.html;
+
+      // GUARD: Do not clear DSP if result is empty (world not yet revealed)
+      // Keep placeholder or previous content until we have actual sentence content
+      if (!newHtml || newHtml.trim() === '') return;
+
+      _dspInteractionStarted = true;
+
+      // Only update DOM if content changed
+      if (synopsisText._lastDSP !== newHtml) {
+        synopsisText._lastDSP = newHtml;
+        synopsisText.innerHTML = newHtml;
+
+        // Brief golden glow on the newly revealed clause
+        synopsisText.querySelectorAll('.dsp-clause[data-axis="' + axis + '"]').forEach(span => {
+          span.classList.add('dsp-glow');
+          setTimeout(() => span.classList.remove('dsp-glow'), 550);
         });
       }
     }
-
-    synopsisText.querySelectorAll('.dsp-clause[data-axis="' + axis + '"]').forEach(span => {
-      span.classList.remove('dsp-pending');
-      // Brief golden glow on reveal — magical, non-layout-shifting
-      span.classList.add('dsp-glow');
-      setTimeout(() => span.classList.remove('dsp-glow'), 550);
-    });
   }
 
   // Timing constants (HUMAN PACE - deliberate, not efficient)
@@ -10560,6 +10643,71 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   let _sparkleScrollFading = false;
   let _isAutoScrolling = false;
 
+  // Debounce timer for card/input sparkle reappearance (3000ms)
+  let _sparkleReappearTimer = null;
+  const SPARKLE_REAPPEAR_DELAY = 3000;
+
+  // Dissipate card/input sparkles (NOT vignette) on scroll/resize
+  function dissipateAnchoredSparkles() {
+      // Stop all sparkle spawn intervals (prevents immediate respawn)
+      _sparkleIntervals.forEach(id => clearInterval(id));
+      _sparkleIntervals = [];
+      // Fade out anchored sparkles (card + input)
+      document.querySelectorAll('.fate-dust-particle--anchored').forEach(p => {
+          p.style.transition = 'opacity 200ms ease-out';
+          p.style.opacity = '0';
+      });
+      // Remove after fade
+      setTimeout(() => {
+          document.querySelectorAll('.fate-dust-particle--anchored').forEach(p => p.remove());
+      }, 250);
+      // Clear anchored particle tracking
+      _anchoredParticles = [];
+  }
+
+  // Recreate card/input sparkles at current element positions
+  // GUARD: Only called from debounce timer completion
+  function recreateAnchoredSparkles() {
+      if (!_guidedFateVisualsActive) return;
+
+      // Recreate Fate Card sparkles
+      const fateCard = document.getElementById('fateDestinyCard');
+      if (fateCard && fateCard.offsetParent) {
+          const cardRect = fateCard.getBoundingClientRect();
+          if (cardRect.width > 0 && cardRect.height > 0) {
+              startFateEdgeSparkles({ anchorEl: fateCard, anchorRect: cardRect, maxParticles: 120, spawnInterval: 25, tag: 'card' });
+          }
+      }
+
+      // Recreate input sparkles
+      const playerInput = document.getElementById('playerNameInput');
+      const partnerInput = document.getElementById('partnerNameInput');
+      if (playerInput && playerInput.offsetParent) {
+          startFateEdgeSparkles({ anchorEl: playerInput, maxParticles: 9, spawnInterval: 270, tag: 'input' });
+      }
+      if (partnerInput && partnerInput.offsetParent) {
+          startFateEdgeSparkles({ anchorEl: partnerInput, maxParticles: 9, spawnInterval: 270, tag: 'input' });
+      }
+  }
+
+  // Shared scroll/resize handler — dissipate and debounce reappear
+  function handleSparkleScrollResize() {
+      // GUARD: Only during Guided Fate
+      if (!_guidedFateVisualsActive) return;
+
+      // Immediately dissipate card/input sparkles
+      dissipateAnchoredSparkles();
+
+      // Clear existing timer and restart 3000ms debounce
+      if (_sparkleReappearTimer) {
+          clearTimeout(_sparkleReappearTimer);
+      }
+      _sparkleReappearTimer = setTimeout(() => {
+          _sparkleReappearTimer = null;
+          recreateAnchoredSparkles();
+      }, SPARKLE_REAPPEAR_DELAY);
+  }
+
   function handleSparkleScroll() {
       // GUARD: Never teardown vignette during Guided Fate — ONLY on explicit exit
       if (_guidedFateVisualsActive || _sparkleScrollFading) return;
@@ -10628,6 +10776,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
       _sparkleScrollHandler = handleSparkleScroll;
       window.addEventListener('scroll', _sparkleScrollHandler, true); // capture phase for all scrollable containers
+
+      // DISSIPATE-AND-REAPPEAR: Add listeners for card/input sparkle repositioning
+      window.addEventListener('scroll', handleSparkleScrollResize, { passive: true });
+      window.addEventListener('resize', handleSparkleScrollResize, { passive: true });
   }
 
   // Deactivate Guided Fate visuals — idempotent, no guards
@@ -10639,6 +10791,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (_sparkleScrollHandler) {
           window.removeEventListener('scroll', _sparkleScrollHandler, true);
           _sparkleScrollHandler = null;
+      }
+
+      // Remove dissipate-and-reappear listeners
+      window.removeEventListener('scroll', handleSparkleScrollResize);
+      window.removeEventListener('resize', handleSparkleScrollResize);
+      if (_sparkleReappearTimer) {
+          clearTimeout(_sparkleReappearTimer);
+          _sparkleReappearTimer = null;
       }
 
       // Clear all sparkle intervals and DOM particles
@@ -10751,6 +10911,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Stop fate running state
     _fateOverridden = true;
     _fateRunning = false;
+    _dspGuidedFateActive = false;
 
     // Clear DSP pending state — reveal all clauses immediately on override
     _revealedDSPAxes = null;
@@ -10859,6 +11020,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // If targetScroll <= currentScroll, NO SCROLL OCCURS (element already visible or above)
     if (targetScroll > currentScroll) {
       _isAutoScrolling = true;
+      // Explicitly trigger sparkle dissipate before programmatic scroll
+      if (typeof handleSparkleScrollResize === 'function') handleSparkleScrollResize();
       window.scrollTo({ top: targetScroll, behavior: 'smooth' });
       setTimeout(() => { _isAutoScrolling = false; }, 600);
     }
@@ -11091,6 +11254,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // Initialize DSP clause reveal tracking — all clauses start pending
     _revealedDSPAxes = new Set();
+    _dspGuidedFateActive = true; // Lock DSP to incremental mode
 
     // NOTE: DSP is NOT pre-populated here. It remains showing placeholder.
     // DSP content is populated on-demand when revealDSPClause is first called.
@@ -11231,7 +11395,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
 
       // Reveal corresponding DSP clause after card is visually selected
-      if (['world', 'tone', 'archetype'].includes(section.id)) {
+      if (['world', 'tone', 'archetype', 'length'].includes(section.id)) {
         revealDSPClause(section.id);
       }
 
@@ -11250,10 +11414,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     showToast('Fate has spoken. Click Begin Story when ready.');
 
     _fateRunning = false;
-    _revealedDSPAxes = null;
-
-    // Ceremonial DSP rewrite — dissolve current text and replace with refined version
-    performDSPCeremonialRewrite();
+    // Keep _revealedDSPAxes and _dspGuidedFateActive until story begins
+    // This prevents bulk hydration on any late updateSynopsisPanel calls
   }
 
   // Populate all UI selections from fate choices
@@ -11314,8 +11476,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Update UI cards to reflect selections
     updateAllCardSelections();
 
-    // Update DSP immediately after Guided Fate populates all axes
-    if (typeof updateSynopsisPanel === 'function') updateSynopsisPanel();
+    // GATE: Do NOT bulk-hydrate DSP during Guided Fate — incremental reveal only
+    // DSP updates are handled by revealDSPClause() per selection
   }
 
   // Update all card UI to reflect state
@@ -11446,9 +11608,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // GUARD: If book is already opening/open, do not reset cover visibility
     if (_bookOpened) return;
 
+    // Clear Guided Fate DSP lock — story has begun
+    _dspGuidedFateActive = false;
+    _revealedDSPAxes = null;
+
     window.showScreen('game');
+    console.log('[DEBUG PAGE MOUNT] enterReaderView: _bookPageIndex=', _bookPageIndex, 'pageType=cover');
     const bookCoverPage = document.getElementById('bookCoverPage');
     const storyContentEl = document.getElementById('storyContent');
+    console.log('[DEBUG PAGE MOUNT] containers: bookCoverPage=', bookCoverPage?.id, 'storyContent=', storyContentEl?.id);
     if (bookCoverPage) bookCoverPage.classList.remove('hidden');
     if (storyContentEl) storyContentEl.classList.add('hidden');
     startCoverLoading();
@@ -12471,17 +12639,16 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         StoryPagination.clear();
         StoryPagination.addPage(formatStory(text), true);
 
-        // OPENING SPREAD COMPOSITION: Populate inside cover with title + synopsis
-        // Left page (inside cover) = paper background + title + synopsis
+        // OPENING SPREAD COMPOSITION: Populate inside cover with title ONLY
+        // Left page (inside cover) = paper background + title (NO synopsis)
         // Right page = setting image (handled by settingPlate)
+        // GUARD: Synopsis renders ONLY on SCENE page (pageIndex 2), never on inside cover
         const insideCover = document.getElementById('bookInsideCover');
         if (insideCover) {
-            const synopsisText = synopsis || state._synopsisMetadata || '';
-            console.log('[DEBUG PAGE STATE] insideCover injection: _bookPageIndex=', _bookPageIndex, 'synopsisLen=', synopsisText.length);
+            console.log('[DEBUG PAGE MOUNT] insideCoverTitle: _bookPageIndex=', _bookPageIndex, 'pageType=insideCover', 'container=', insideCover.id);
             insideCover.innerHTML = `
                 <div class="inside-cover-content">
                     <h1 class="inside-cover-title">${cleanTitle}</h1>
-                    ${synopsisText ? `<p class="inside-cover-synopsis">${synopsisText}</p>` : ''}
                 </div>
             `;
         }
@@ -14408,11 +14575,13 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       // Apply page-specific visibility
       if (pageIndex === 0) {
           // PAGE 0: COVER — Only cover visible
+          console.log('[DEBUG PAGE CLASSIFY] decision=COVER, pageIndex=', pageIndex, 'inputs={ bookCoverPage:', !!bookCoverPage, 'storyContent:', !!storyContent, '}');
           if (bookCoverPage) bookCoverPage.classList.remove('hidden');
           if (storyContent) storyContent.classList.add('hidden');
           console.log('[BookPage] Page 0: COVER');
       } else if (pageIndex === 1) {
           // PAGE 1: SETTING — Setting image only, no title/scene
+          console.log('[DEBUG PAGE CLASSIFY] decision=SETTING, pageIndex=', pageIndex, 'inputs={ settingPlate:', !!settingPlate, 'storyContent:', !!storyContent, '}');
           // CRITICAL FIX: Hide bookCoverPage (z-index 2000) so settingPlate (z-index 100) can show
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
           if (storyContent) storyContent.classList.remove('hidden');
@@ -14424,6 +14593,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           console.log('[BookPage] Page 1: SETTING');
       } else if (pageIndex >= 2) {
           // PAGE 2: SCENE — Title + scene, setting GONE
+          console.log('[DEBUG PAGE CLASSIFY] decision=SCENE, pageIndex=', pageIndex, 'inputs={ storyText:', !!storyText, 'settingPlate:', !!settingPlate, '}');
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
           if (storyContent) storyContent.classList.remove('hidden');
           // CRITICAL: Setting plate MUST be hidden on scene pages
@@ -14451,7 +14621,9 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
    */
   function advanceBookPage() {
       const nextPage = _bookPageIndex + 1;
-      console.log('[DEBUG PAGE STATE] advanceBookPage: current=', _bookPageIndex, 'next=', nextPage);
+      const currentType = _bookPageIndex === 0 ? 'cover' : _bookPageIndex === 1 ? 'setting' : 'scene';
+      const nextType = nextPage === 0 ? 'cover' : nextPage === 1 ? 'setting' : 'scene';
+      console.log('[DEBUG PAGE MOUNT] advanceBookPage: current=', _bookPageIndex, '(' + currentType + ') → next=', nextPage, '(' + nextType + ')');
 
       if (_bookPageIndex === 1 && nextPage === 2) {
           // PAGE FLIP TRANSITION: Setting → Scene
@@ -14539,6 +14711,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   function openBook() {
       if (_bookOpened) return;
       _bookOpened = true;
+      console.log('[DEBUG PAGE MOUNT] openBook: _bookPageIndex=', _bookPageIndex, 'transitioning cover→setting→scene');
       cancelCourtesyHinge();
 
       const bookCover = document.getElementById('bookCover');
@@ -14618,7 +14791,8 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const oldIndex = _bookPageIndex;
       _bookOpened = false;
       _bookPageIndex = 0; // Reset to cover page
-      console.log('[DEBUG PAGE STATE] resetBookState:', oldIndex, '→', 0);
+      console.log('[DEBUG PAGE MOUNT] resetBookState: oldIndex=', oldIndex, '→ 0, pageType=cover (reset)');
+      console.log('[DEBUG PAGE MOUNT] containers at reset: bookCoverPage=', document.getElementById('bookCoverPage')?.id, 'settingPlate=', document.getElementById('settingPlate')?.id, 'storyContent=', document.getElementById('storyContent')?.id);
       _settingImagePromise = Promise.resolve(); // Reset for new story
       cancelCourtesyHinge();
       resetCoverLayers();
@@ -14869,15 +15043,58 @@ Return only the visual description.`;
   // IMAGE PROVIDER ROUTER - Unified image generation system
   // ============================================================
 
-  // PASS 2E: PROMPT LENGTH CLAMP (MAX 700 CHARACTERS)
-  const MAX_IMAGE_PROMPT_LENGTH = 700;
+  // ============================================================
+  // IMAGE PROMPT LENGTH — SAFETY FALLBACK (3000 chars)
+  // ============================================================
+  // This is a SAFETY FALLBACK, not an artistic constraint.
+  // Full prompts up to 3000 chars pass through intact for richer visuals.
+  // Truncation only occurs if prompt exceeds provider limits.
+  // CRITICAL: This function is for IMAGE/VISUALIZATION prompts ONLY.
+  // Story generation prompts must NEVER be truncated.
+  // ============================================================
+  const MAX_IMAGE_PROMPT_LENGTH = 3000;
 
-  function clampPromptLength(prompt) {
+  /**
+   * Clamp prompt length for image generation ONLY (safety fallback).
+   * Full prompts pass through up to 3000 chars for maximum visual richness.
+   * @param {string} prompt - The prompt to clamp
+   * @param {string} context - REQUIRED: 'image-gen' | 'visualization' | 'story-gen'
+   * @returns {string} - Clamped prompt (or original for story-gen)
+   */
+  function clampPromptLength(prompt, context) {
+      // GATE: Story prompts must NEVER be truncated
+      if (context === 'story-gen') {
+          console.error('[PROMPT-GUARD] FATAL: clampPromptLength called with story-gen context. Story prompts must NOT be truncated.');
+          throw new Error('PROMPT_TRUNCATION_BLOCKED: Story generation prompts cannot be truncated.');
+      }
+
+      // GATE: Only allow explicit image/visualization contexts
+      if (context !== 'image-gen' && context !== 'visualization') {
+          console.error(`[PROMPT-GUARD] FATAL: clampPromptLength called with unknown context: ${context}`);
+          throw new Error(`PROMPT_TRUNCATION_BLOCKED: Unknown context "${context}". Use 'image-gen' or 'visualization'.`);
+      }
+
+      // Safety fallback: truncate only if exceeding provider limits
       if (prompt.length > MAX_IMAGE_PROMPT_LENGTH) {
-          console.warn(`[IMAGE-GEN] Prompt truncated: ${prompt.length} -> ${MAX_IMAGE_PROMPT_LENGTH}`);
+          console.warn(`[IMAGE-GEN] Safety fallback: prompt truncated ${prompt.length} -> ${MAX_IMAGE_PROMPT_LENGTH}`);
           return prompt.substring(0, MAX_IMAGE_PROMPT_LENGTH);
       }
       return prompt;
+  }
+
+  // Soft threshold for story prompt size warning (does NOT truncate)
+  const STORY_PROMPT_SOFT_LIMIT = 50000;
+
+  /**
+   * Validate story prompt size (debug logging only, no truncation).
+   * @param {string} prompt - The full assembled story prompt
+   * @param {string} label - Descriptive label for logging
+   */
+  function validateStoryPromptSize(prompt, label = 'story-prompt') {
+      if (!prompt) return;
+      if (prompt.length > STORY_PROMPT_SOFT_LIMIT) {
+          console.warn(`[STORY-GEN-DEBUG] ${label} exceeds soft limit: ${prompt.length} chars (limit: ${STORY_PROMPT_SOFT_LIMIT})`);
+      }
   }
 
   // FLUX PROMPT HARD CONSTRAINTS (MANDATORY)
@@ -15400,12 +15617,12 @@ No brown/cream parchment defaults. No centered-object-on-cream unless layout exp
       // Determine size based on shape (default landscape 16:9)
       const size = shape === 'portrait' ? '1024x1024' : '1792x1024';
 
-      // PASS 2E: Clamp prompt length BEFORE any processing
-      const clampedPrompt = clampPromptLength(prompt);
+      // Safety fallback: clamp prompt length if exceeding provider limits (image-gen only)
+      const clampedPrompt = clampPromptLength(prompt, 'image-gen');
 
       // Prepare prompts for different provider requirements
-      const eroticPrompt = clampPromptLength(restoreEroticLanguage(clampedPrompt));
-      const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt));
+      const eroticPrompt = clampPromptLength(restoreEroticLanguage(clampedPrompt), 'image-gen');
+      const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt), 'image-gen');
 
       // All providers now use sanitized prompts for stability
       // Explicit content belongs in prose, not images
@@ -15594,6 +15811,122 @@ Condensed (under ${maxLength} chars):` }
   }
 
   // ============================================================
+  // VISUALIZATION ECONOMY — Credit Earning System
+  // Credits earned by scene completion milestones:
+  //   3 scenes  → +1 credit
+  //   5 scenes  → +1 credit
+  //   10 scenes → +2 credits
+  //   Every +10 after → +1 credit
+  // ============================================================
+
+  function updateVizEconomyCredits() {
+      if (!state.vizEconomy) return;
+
+      const sceneCount = state.turnCount || 0;
+
+      // Initialize awarded milestones Set if not present
+      if (!state.vizEconomy.awardedMilestones) {
+          state.vizEconomy.awardedMilestones = [];
+      }
+      const awarded = new Set(state.vizEconomy.awardedMilestones);
+
+      let creditsToAdd = 0;
+
+      // EXPLICIT MILESTONE CHECKS — each milestone awarded ONCE only
+      // Scene 3 → +1 credit
+      if (sceneCount >= 3 && !awarded.has(3)) {
+          creditsToAdd += 1;
+          awarded.add(3);
+      }
+      // Scene 5 → +1 credit
+      if (sceneCount >= 5 && !awarded.has(5)) {
+          creditsToAdd += 1;
+          awarded.add(5);
+      }
+      // Scene 10 → +2 credits
+      if (sceneCount >= 10 && !awarded.has(10)) {
+          creditsToAdd += 2;
+          awarded.add(10);
+      }
+      // After scene 10: every full +10 scenes → +1 credit
+      // Milestones: 20, 30, 40, 50, ...
+      for (let milestone = 20; milestone <= sceneCount; milestone += 10) {
+          if (!awarded.has(milestone)) {
+              creditsToAdd += 1;
+              awarded.add(milestone);
+          }
+      }
+
+      if (creditsToAdd > 0) {
+          state.vizEconomy.storyCredits += creditsToAdd;
+          state.vizEconomy.awardedMilestones = Array.from(awarded);
+          console.log(`[VizEconomy] +${creditsToAdd} credits at scene ${sceneCount}. Total: ${state.vizEconomy.storyCredits}`);
+          saveStorySnapshot();
+      }
+  }
+
+  function getAvailableVizCredits() {
+      if (!state.vizEconomy) return 0;
+      return (state.vizEconomy.storyCredits || 0) + (state.vizEconomy.globalCredits || 0);
+  }
+
+  function consumeVizCredit() {
+      if (!state.vizEconomy) return false;
+      // Consume story credits first, then global
+      if (state.vizEconomy.storyCredits > 0) {
+          state.vizEconomy.storyCredits--;
+          saveStorySnapshot();
+          return true;
+      } else if (state.vizEconomy.globalCredits > 0) {
+          state.vizEconomy.globalCredits--;
+          saveStorySnapshot();
+          return true;
+      }
+      return false;
+  }
+
+  function isPayAsYouGoEnabled() {
+      return state.vizEconomy && state.vizEconomy.payAsYouGoEnabled === true;
+  }
+
+  function enablePayAsYouGo() {
+      if (!state.vizEconomy) return;
+      state.vizEconomy.payAsYouGoEnabled = true;
+      saveStorySnapshot();
+      console.log('[VizEconomy] Pay-As-You-Go enabled');
+  }
+
+  /**
+   * Grant Forbidden Library bonus credit (+1 global, max 2/month)
+   * Call this when user completes Forbidden Library content.
+   * @returns {boolean} true if credit was granted, false if cap reached
+   */
+  function grantForbiddenLibraryBonus() {
+      if (!state.vizEconomy) return false;
+
+      // Check month cap (max 2 per month)
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
+
+      if (state.vizEconomy.forbiddenLibraryBonusMonthKey !== monthKey) {
+          // New month - reset counter
+          state.vizEconomy.forbiddenLibraryBonusThisMonth = 0;
+          state.vizEconomy.forbiddenLibraryBonusMonthKey = monthKey;
+      }
+
+      if (state.vizEconomy.forbiddenLibraryBonusThisMonth >= 2) {
+          console.log('[VizEconomy] Forbidden Library bonus cap reached (2/month)');
+          return false;
+      }
+
+      state.vizEconomy.globalCredits++;
+      state.vizEconomy.forbiddenLibraryBonusThisMonth++;
+      saveStorySnapshot();
+      console.log(`[VizEconomy] Forbidden Library bonus: +1 global credit (${state.vizEconomy.forbiddenLibraryBonusThisMonth}/2 this month)`);
+      return true;
+  }
+
+  // ============================================================
   // SCENE VISUALIZATION BUDGET SYSTEM
   // Limits re-visualizations to 2 per scene, finalizes on insert
   // Scene key = turnCount (stable identifier for narrative moments)
@@ -15641,26 +15974,35 @@ Condensed (under ${maxLength} chars):` }
   function updateVizButtonStates() {
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
-      const remaining = getAttemptsRemaining(sceneKey);
+      const credits = getAvailableVizCredits();
+      const sceneVisualized = state.visual.visualizedScenes && state.visual.visualizedScenes[sceneKey];
 
       const vizBtn = document.getElementById('vizSceneBtn');
       const retryBtn = document.getElementById('vizRetryBtn');
 
-      // TASK E: Visualize button shows NO credit count
-      // TASK C: Initial Visualize = 1 credit, Re-Visualize = 2 credits
+      // VISUALIZATION ECONOMY:
+      // - Initial Visualize: enabled if scene not yet visualized AND credits available
+      // - Re-Visualize: DISABLED unless Pay-As-You-Go opted in ($0.25/ea)
       if (vizBtn) {
           if (budget.finalized) {
               vizBtn.textContent = '🔒 Finalized';
               vizBtn.disabled = true;
               vizBtn.style.opacity = '0.5';
               vizBtn.style.cursor = 'not-allowed';
-          } else if (remaining <= 0) {
+          } else if (sceneVisualized) {
+              // Scene already visualized with free credit - can only re-visualize
               vizBtn.textContent = '✨ Visualize';
               vizBtn.disabled = true;
               vizBtn.style.opacity = '0.5';
               vizBtn.style.cursor = 'not-allowed';
+          } else if (credits <= 0) {
+              // No credits available
+              vizBtn.textContent = '✨ Visualize (0)';
+              vizBtn.disabled = true;
+              vizBtn.style.opacity = '0.5';
+              vizBtn.style.cursor = 'not-allowed';
           } else {
-              // TASK E: No credit number on initial Visualize button
+              // Credits available, scene not yet visualized
               vizBtn.textContent = '✨ Visualize';
               vizBtn.disabled = false;
               vizBtn.style.opacity = '1';
@@ -15668,18 +16010,21 @@ Condensed (under ${maxLength} chars):` }
           }
       }
 
-      // TASK H: Re-Visualize ALWAYS shows cost of 2, never 1
+      // Re-Visualize: DISABLED unless Pay-As-You-Go enabled
       if (retryBtn) {
           if (budget.finalized) {
               retryBtn.textContent = 'Finalized';
               retryBtn.disabled = true;
-          } else if (remaining <= 0) {
-              retryBtn.textContent = 'Re-Visualize (0)';
+          } else if (!isPayAsYouGoEnabled()) {
+              // Pay-As-You-Go not enabled - show upgrade prompt
+              retryBtn.textContent = 'Re-Visualize ($)';
               retryBtn.disabled = true;
+              retryBtn.title = 'Enable Pay-As-You-Go to re-visualize';
           } else {
-              // TASK H: Re-Visualize ALWAYS costs 2 - never show 1
-              retryBtn.textContent = 'Re-Visualize (2)';
+              // Pay-As-You-Go enabled - $0.25 per re-visualization
+              retryBtn.textContent = 'Re-Visualize ($0.25)';
               retryBtn.disabled = false;
+              retryBtn.title = '';
           }
       }
   }
@@ -15694,10 +16039,11 @@ Condensed (under ${maxLength} chars):` }
       const errDiv = document.getElementById('vizError');
       const storyText = document.getElementById('storyText');
 
-      // Check scene budget before proceeding
+      // Check scene budget and credits before proceeding
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
-      const remaining = getAttemptsRemaining(sceneKey);
+      const credits = getAvailableVizCredits();
+      const sceneVisualized = state.visual.visualizedScenes && state.visual.visualizedScenes[sceneKey];
 
       // Block if scene is finalized
       if (budget.finalized) {
@@ -15710,20 +16056,39 @@ Condensed (under ${maxLength} chars):` }
           return;
       }
 
-      // Block if all attempts exhausted (attempts >= 2)
-      if (remaining <= 0) {
-          if(modal) modal.classList.remove('hidden');
-          if(errDiv) {
-              errDiv.textContent = "You've used all visualize attempts for this scene.";
-              errDiv.classList.remove('hidden');
+      // VISUALIZATION ECONOMY GATES
+      if (isRe) {
+          // Re-Visualize requires Pay-As-You-Go opt-in
+          if (!isPayAsYouGoEnabled()) {
+              showPayAsYouGoModal();
+              return;
           }
-          updateVizButtonStates();
-          return;
+          // Pay-As-You-Go is enabled - proceed with re-visualize ($0.25)
+          console.log('[VizEconomy] Re-Visualize with Pay-As-You-Go');
+      } else {
+          // Initial Visualize requires credits AND scene not yet visualized
+          if (sceneVisualized) {
+              if(modal) modal.classList.remove('hidden');
+              if(errDiv) {
+                  errDiv.textContent = 'Scene already visualized. Use Re-Visualize to try again.';
+                  errDiv.classList.remove('hidden');
+              }
+              updateVizButtonStates();
+              return;
+          }
+          if (credits <= 0) {
+              if(modal) modal.classList.remove('hidden');
+              if(errDiv) {
+                  errDiv.textContent = 'No visualization credits available. Keep playing to earn more!';
+                  errDiv.classList.remove('hidden');
+              }
+              updateVizButtonStates();
+              return;
+          }
       }
 
-      // INCREMENT ATTEMPTS NOW (before generation starts - closes Cancel loophole)
-      const currentAttempt = incrementSceneAttempts(sceneKey);
-      const isLastAttempt = currentAttempt >= 2;
+      // Track whether this is a credit-consuming initial visualization
+      const consumesCreditOnSuccess = !isRe && !sceneVisualized;
 
       _vizInFlight = true;
       _vizCancelled = false;
@@ -15737,14 +16102,7 @@ Condensed (under ${maxLength} chars):` }
       if(retryBtn) retryBtn.disabled = true;
       ensureLockButtonExists(); // Ensure lock button is present and updated
 
-      // Show last-chance warning if this is attempt 2
-      if (isLastAttempt && errDiv) {
-          errDiv.textContent = '⚠️ This is your last chance to visualize this scene.';
-          errDiv.style.color = 'var(--gold)';
-          errDiv.classList.remove('hidden');
-      }
-
-      // Update button states to reflect current budget
+      // Update button states
       updateVizButtonStates();
 
       // Start cancellable loading with cancel callback
@@ -15899,7 +16257,14 @@ Condensed (under ${maxLength} chars):` }
                   }
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
 
-                  // Attempts already incremented at start - just update UI
+                  // VISUALIZATION ECONOMY: Consume credit and mark scene on SUCCESS only
+                  if (consumesCreditOnSuccess) {
+                      consumeVizCredit();
+                      if (!state.visual.visualizedScenes) state.visual.visualizedScenes = {};
+                      state.visual.visualizedScenes[sceneKey] = true;
+                      console.log(`[VizEconomy] Credit consumed, scene ${sceneKey} marked as visualized`);
+                  }
+
                   updateVizButtonStates();
 
                   saveStorySnapshot();
@@ -15933,6 +16298,29 @@ Condensed (under ${maxLength} chars):` }
       _vizInFlight = false;
       const retryBtn = document.getElementById('vizRetryBtn');
       if(retryBtn) retryBtn.disabled = false;
+  };
+
+  // ============================================================
+  // PAY-AS-YOU-GO CONSENT MODAL
+  // Required for Re-Visualize ($0.25 per use)
+  // ============================================================
+
+  function showPayAsYouGoModal() {
+      const modal = document.getElementById('payAsYouGoModal');
+      if (modal) modal.classList.remove('hidden');
+  }
+
+  window.closePayAsYouGoModal = function() {
+      const modal = document.getElementById('payAsYouGoModal');
+      if (modal) modal.classList.add('hidden');
+  };
+
+  window.confirmPayAsYouGo = function() {
+      // NOTE: Billing is a STUB — no payment processor wired yet
+      enablePayAsYouGo();
+      window.closePayAsYouGoModal();
+      updateVizButtonStates();
+      // User must click Re-Visualize explicitly — no auto-trigger
   };
 
   // Lock Character Look - manual immediate lock
@@ -16217,11 +16605,14 @@ FATE CARD ADAPTATION (CRITICAL):
 
       const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
-      Player Action: ${act}. 
-      Player Dialogue: ${dia}. 
+      Player Action: ${act}.
+      Player Dialogue: ${dia}.
       ${metaMsg}
-      
+
       Write the next beat (150-250 words).`;
+
+      // STORY PROMPT GUARD: Validate size (debug only, never truncate)
+      validateStoryPromptSize(fullSys, 'turn-generation-fullSys');
 
       // Flag to track if story was successfully displayed (prevents false positive errors)
       let storyDisplayed = false;
@@ -16454,6 +16845,9 @@ Regenerate the scene with ZERO Author presence.`;
           }
 
           state.turnCount++;
+
+          // Update visualization economy credits based on scene milestones
+          updateVizEconomyCredits();
 
           // Record turn completion for reader preference inference (session-scoped)
           if (window.StoryboundOrchestration && window.StoryboundOrchestration.recordPreferenceSignal) {
