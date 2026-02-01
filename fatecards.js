@@ -64,6 +64,55 @@
 let _sparkleEmitterActive = false;
 let _continuousSparkleInterval = null;
 
+// Sparkle cycle controller — 3s ON, 2s OFF pattern
+let _sparkleCycleTimer = null;
+let _sparkleActiveCardId = null;
+
+function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
+    // Clear any existing cycle
+    stopSparkleCycle();
+    _sparkleActiveCardId = cardId;
+
+    function runCycle() {
+        // Check if still the active card
+        if (_sparkleActiveCardId !== cardId) return;
+
+        // ON phase: start emanations
+        if (typeof stopAllEmanations === 'function') stopAllEmanations();
+        if (typeof startFireflyEmanation === 'function') {
+            startFireflyEmanation(cardEl);
+            if (actInput) startFireflyEmanation(actInput);
+            if (diaInput) startFireflyEmanation(diaInput);
+        }
+
+        // After 3s, stop emanations (OFF phase)
+        _sparkleCycleTimer = setTimeout(() => {
+            if (_sparkleActiveCardId !== cardId) return;
+            if (typeof stopAllEmanations === 'function') stopAllEmanations();
+
+            // After 2s OFF, repeat cycle
+            _sparkleCycleTimer = setTimeout(() => {
+                if (_sparkleActiveCardId !== cardId) return;
+                runCycle();
+            }, 2000);
+        }, 3000);
+    }
+
+    runCycle();
+}
+
+function stopSparkleCycle() {
+    if (_sparkleCycleTimer) {
+        clearTimeout(_sparkleCycleTimer);
+        _sparkleCycleTimer = null;
+    }
+    _sparkleActiveCardId = null;
+    if (typeof stopAllEmanations === 'function') stopAllEmanations();
+}
+
+// Expose for external stop calls
+window.stopSparkleCycle = stopSparkleCycle;
+
 function startContinuousSparkles() {
     if (_sparkleEmitterActive) return;
     _sparkleEmitterActive = true;
@@ -1118,8 +1167,15 @@ function setSelectedState(mount, selectedCardEl){
                 flipAllCards(mount);
 
                 // Locked cards trigger paywall and do not select
+                // Use canonical eligibility check for correct paywall mode
                 if(card.classList.contains('locked')) {
-                    if(window.showPaywall) window.showPaywall('unlock');
+                    if(window.showPaywall) {
+                        const st = window.state || {};
+                        const requiresSubOnly = (st.intensity === 'Dirty') ||
+                                                (st.storyLength === 'soulmates') ||
+                                                (st.storyLength === 'affair');
+                        window.showPaywall(requiresSubOnly ? 'sub_only' : 'unlock');
+                    }
                     return;
                 }
 
@@ -1128,17 +1184,15 @@ function setSelectedState(mount, selectedCardEl){
 
                 clearPendingTimer();
 
-                // Cancel any prior emanation, then start new set
-                stopAllEmanations();
+                // Cancel any prior sparkle cycle, then start new cycle
+                stopSparkleCycle();
 
                 // Trigger golden flow animations to inputs
                 const actInput = document.getElementById('actionInput');
                 const diaInput = document.getElementById('dialogueInput');
 
-                // Firefly emanation on card + inputs
-                startFireflyEmanation(card);
-                if (actInput) startFireflyEmanation(actInput);
-                if (diaInput) startFireflyEmanation(diaInput);
+                // Start sparkle cycle (3s ON, 2s OFF) on card + inputs
+                startSparkleCycle(data.id, card, actInput, diaInput);
                 if (actInput) triggerGoldenFlow(card, actInput);
                 setTimeout(() => {
                     if (diaInput) triggerGoldenFlow(card, diaInput);

@@ -2759,13 +2759,18 @@ textarea.fate-field {
     border-radius: 6px;
 }
 
-/* PAGE 1: Setting plate active state (contained, NOT full-bleed/cover-level) */
+/* DEPRECATED: setting-active was fullscreen mode, now use setting-inline */
 .setting-plate.setting-active {
+    display: none; /* Fullscreen mode disabled */
+}
+
+/* Scene 1: Setting plate inline mode (within scene content, not fullscreen) */
+.setting-plate.setting-inline {
     position: relative;
-    max-height: 70vh;
-    min-height: 200px;
+    max-height: 50vh;
+    min-height: 150px;
     width: 100%;
-    z-index: 10;
+    z-index: 1; /* Low z-index, inline with content */
     margin: 0 auto 24px;
     border-radius: 8px;
     display: flex;
@@ -2773,12 +2778,12 @@ textarea.fate-field {
     justify-content: center;
     background: #1a1814;
 }
-.setting-plate.setting-active .book-scene-image {
-    max-height: 65vh;
+.setting-plate.setting-inline .book-scene-image {
+    max-height: 45vh;
     max-width: 100%;
     object-fit: contain;
     border-radius: 8px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
 
 /* PAGE 1→2: Page flip transition (not fade) */
@@ -3110,16 +3115,25 @@ textarea.fate-field {
     top: 50%;
     transform: translateY(-50%);
     z-index: 100;
-    background: rgba(18, 8, 22, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 6px;
+    /* Gold gradient: warm champagne to muted parchment */
+    background: linear-gradient(165deg,
+        rgba(212, 175, 100, 0.92) 0%,
+        rgba(195, 160, 90, 0.88) 35%,
+        rgba(180, 150, 85, 0.85) 70%,
+        rgba(165, 140, 80, 0.82) 100%);
+    /* Art Deco border: thin, elegant, double-line effect */
+    border: 1px solid rgba(140, 110, 60, 0.6);
+    box-shadow:
+        inset 0 0 0 3px rgba(180, 145, 75, 0.3),
+        inset 0 0 0 4px rgba(120, 90, 50, 0.2),
+        0 4px 20px rgba(0, 0, 0, 0.35);
+    border-radius: 4px;
     padding: 24px 20px;
     /* 5:7 aspect ratio like book jacket card - width ~180px, height ~252px */
     width: 180px;
     min-height: 220px;
     max-height: 280px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     /* Hidden by default - JS controls visibility based on scroll position */
     opacity: 0;
     visibility: hidden;
@@ -3137,8 +3151,9 @@ textarea.fate-field {
     font-size: 0.7em;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: var(--gold);
-    opacity: 0.7;
+    /* Near-black with debossed effect */
+    color: rgba(45, 35, 25, 0.9);
+    text-shadow: 0 1px 0 rgba(255, 240, 200, 0.3);
     margin-bottom: 10px;
 }
 
@@ -3146,7 +3161,9 @@ textarea.fate-field {
     font-family: 'Lora', 'Georgia', serif;
     font-size: 0.85em;
     line-height: 1.65;
-    color: rgba(255, 255, 255, 0.75);
+    /* Near-black with subtle debossed effect */
+    color: rgba(40, 30, 20, 0.85);
+    text-shadow: 0 1px 0 rgba(255, 240, 200, 0.25);
     margin: 0;
     text-align: left;
     font-style: italic;
@@ -3193,6 +3210,44 @@ textarea.fate-field {
     0%   { text-shadow: 0 0 0 transparent; }
     30%  { text-shadow: 0 0 8px rgba(212, 175, 55, 0.8), 0 0 16px rgba(212, 175, 55, 0.5); }
     100% { text-shadow: 0 0 0 transparent; }
+}
+
+/* DSP Phase System — intro, placeholder, live, veto */
+.dsp-intro {
+    display: block;
+    /* Near-black debossed on gold */
+    color: rgba(50, 40, 30, 0.7);
+    text-shadow: 0 1px 0 rgba(255, 240, 200, 0.25);
+    text-align: center;
+    font-style: italic;
+}
+
+/* DSP segment spans — inline flow */
+.dsp-segment {
+    display: inline;
+    transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+
+/* Inactive (placeholder) state — muted, low contrast, no glow */
+.dsp-segment.dsp-inactive {
+    color: rgba(80, 65, 50, 0.5);
+    text-shadow: 0 1px 0 rgba(255, 240, 200, 0.15);
+}
+
+/* Active (selected) state — near-black with subtle warm glow */
+.dsp-segment.dsp-active {
+    color: rgba(35, 25, 15, 0.95);
+    text-shadow: 0 1px 0 rgba(255, 240, 200, 0.3), 0 0 6px rgba(180, 140, 60, 0.25);
+}
+
+/* Golden glow animation on segment activation */
+.dsp-segment.dsp-glow {
+    animation: dsp-segment-glow 0.5s ease-out forwards;
+}
+@keyframes dsp-segment-glow {
+    0%   { text-shadow: 0 1px 0 rgba(255, 240, 200, 0.3), 0 0 6px rgba(180, 140, 60, 0.25); }
+    30%  { text-shadow: 0 1px 0 rgba(255, 240, 200, 0.4), 0 0 12px rgba(180, 140, 60, 0.6), 0 0 20px rgba(160, 120, 40, 0.4); }
+    100% { text-shadow: 0 1px 0 rgba(255, 240, 200, 0.3), 0 0 6px rgba(180, 140, 60, 0.25); }
 }
 
 /* Ceremonial rewrite dissolve / reveal */

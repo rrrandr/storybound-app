@@ -4308,6 +4308,9 @@ Return ONLY the title, no quotes or explanation.`;
       state.storyId = null;
       clearStoryContent();
 
+      // Reset DSP state for new story
+      if (typeof resetDSPState === 'function') resetDSPState();
+
       // Reset title state
       state.immutableTitle = null;
       state.coverArchetype = null;
@@ -5545,15 +5548,22 @@ Return ONLY the title, no quotes or explanation.`;
   }
 
   function goBack() {
-      // Task B: If on game screen with book open, close book first (show cover)
+      // Task B: If on game screen with book open, navigate within book first
       if (_currentScreenId === 'game') {
           const bookCover = document.getElementById('bookCover');
-          const bookCoverPage = document.getElementById('bookCoverPage');
-          const storyContent = document.getElementById('storyContent');
           const isBookOpen = bookCover?.classList.contains('hinge-open') || _bookOpened;
 
-          if (isBookOpen) {
-              // Close the book - show cover page instead of navigating away
+          if (isBookOpen && _bookPageIndex > 0) {
+              // Navigate backwards within the book
+              if (typeof previousBookPage === 'function' && previousBookPage()) {
+                  return; // Stepped back within book
+              }
+          }
+
+          if (isBookOpen && _bookPageIndex === 0) {
+              // At cover page, close the book
+              const bookCoverPage = document.getElementById('bookCoverPage');
+              const storyContent = document.getElementById('storyContent');
               if (bookCover) {
                   bookCover.classList.remove('hinge-open', 'courtesy-peek');
               }
@@ -5564,6 +5574,7 @@ Return ONLY the title, no quotes or explanation.`;
                   storyContent.classList.add('hidden');
               }
               _bookOpened = false;
+              setBookPage(0); // Reset to cover
               return; // Don't navigate away yet
           }
       }
@@ -5628,8 +5639,13 @@ Return ONLY the title, no quotes or explanation.`;
           initFateHandSystem();
           // Start ambient sparkles around the Guided Fate card
           if (typeof startAmbientCardSparkles === 'function') startAmbientCardSparkles();
+          // Couple subhead: show ONLY when mode === 'couple', no other conditions
+          const coupleSubhead = document.getElementById('coupleSubhead');
+          if (coupleSubhead) coupleSubhead.classList.toggle('hidden', state.mode !== 'couple');
       } else {
           if (typeof stopAmbientCardSparkles === 'function') stopAmbientCardSparkles();
+          // Stop fate card sparkle cycle when leaving game screen
+          if (window.stopSparkleCycle) window.stopSparkleCycle();
       }
   };
 
@@ -6833,13 +6849,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // - free: only voyeur unlocked
       // - pass ($3): only fling unlocked (NOT affair, NOT soulmates)
       // - sub: fling, affair, soulmates unlocked
+      // EXCEPTION: soulmates is always selectable — gate is at Begin Story
 
       if (state.access === 'free' && val === 'voyeur') {
+          locked = false;
+      } else if (val === 'soulmates') {
+          // Soulmates: always selectable, gated at Begin Story
           locked = false;
       } else if (state.access === 'pass') {
           // CRITICAL: Pass ONLY unlocks Fling
           if (val === 'fling') locked = false;
-          // affair and soulmates stay locked = true
+          // affair stays locked = true
       } else if (state.access === 'sub') {
           // Sub unlocks fling, affair, soulmates
           if (['fling', 'affair', 'soulmates'].includes(val)) locked = false;
@@ -6879,9 +6899,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       console.log('[ENTITLEMENT] Card:', val, 'locked:', locked, 'hidden:', hidden);
     });
 
-    // ENFORCEMENT: If pass user somehow has affair/soulmates selected, downgrade
-    if (state.access === 'pass' && ['affair', 'soulmates'].includes(state.storyLength)) {
-        console.log('[ENTITLEMENT] Downgrading story length from', state.storyLength, 'to fling');
+    // ENFORCEMENT: If pass user has affair selected, downgrade (soulmates is allowed, gated at Begin Story)
+    if (state.access === 'pass' && state.storyLength === 'affair') {
+        console.log('[ENTITLEMENT] Downgrading story length from affair to fling');
         state.storyLength = 'fling';
     }
 
@@ -6909,8 +6929,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       const updateLock = (el, level, isCard) => {
           let locked = false;
-          if (access === 'free' && ['Erotic', 'Dirty'].includes(level)) locked = true;
-          if (access === 'pass' && level === 'Dirty') locked = true;
+          // EXCEPTION: Dirty is selectable on Setup screen — gate is at Begin Story
+          // But in Reader (game buttons), Dirty requires Subscribe
+          if (access === 'free' && level === 'Erotic') locked = true;
+          if (!isCard && level === 'Dirty' && access !== 'sub') locked = true; // Reader: Dirty requires sub
 
           el.classList.toggle('locked', locked);
           // CRITICAL FIX: Remove preset locked-tease/locked-pass classes when unlocked
@@ -6935,8 +6957,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       setupCards.forEach(c => updateLock(c, c.dataset.val, true));
       gameBtns.forEach(b => updateLock(b, b.innerText.trim(), false));
 
-      // Fallback
-      if(state.intensity === 'Dirty' && access !== 'sub') state.intensity = (access === 'free') ? 'Naughty' : 'Erotic';
+      // Fallback — Dirty is allowed (gated at Begin Story), only downgrade Erotic for free
       if(state.intensity === 'Erotic' && access === 'free') state.intensity = 'Naughty';
       updateIntensityUI();
   }
@@ -6977,7 +6998,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Game buttons still need handlers (they are not .sb-card elements)
       document.querySelectorAll('#gameIntensity button').forEach(btn => btn.onclick = (e) => {
           const level = btn.innerText.trim();
-          // Use canonical eligibility check
+          // Dirty in Reader: Subscribe only, no StoryPass
+          if (level === 'Dirty' && state.access !== 'sub') {
+              window.showPaywall('sub_only'); return;
+          }
+          // Use canonical eligibility check for other levels
           const tempState = { ...state, intensity: level };
           if (!isStoryPassEligible(tempState) && state.access !== 'sub') {
               window.showPaywall('sub_only'); return;
@@ -7003,8 +7028,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (_fateRunning) {
         _fateOverridden = true;
         if (typeof cleanupFateVisuals === 'function') cleanupFateVisuals();
-        // Also stop fatecards emanations
+        // Also stop fatecards emanations and sparkle cycle
         if (window.stopAllEmanations) window.stopAllEmanations();
+        if (window.stopSparkleCycle) window.stopSparkleCycle();
         state._paywallCancelledCeremony = true;
     }
 
@@ -7024,10 +7050,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if(sp) sp.classList.remove('hidden');
     }
     const hasPassNow = state.storyId && hasStoryPass(state.storyId);
-    // EXPLICIT ENFORCEMENT: Dirty and Soulmates NEVER show StoryPass regardless of mode
-    const isDirtyOrSoulmates = (state.intensity === 'Dirty') || (state.storyLength === 'soulmates');
-    // Use canonical eligibility check — Dirty and Soulmates NEVER show StoryPass
-    const hideUnlock = (mode === 'sub_only') || state.subscribed || hasPassNow || isDirtyOrSoulmates || !isStoryPassEligible(state);
+    // EXPLICIT ENFORCEMENT: Dirty, Soulmates, Affair NEVER show StoryPass regardless of mode
+    const requiresSubOnly = (state.intensity === 'Dirty') ||
+                            (state.storyLength === 'soulmates') ||
+                            (state.storyLength === 'affair');
+    // Use canonical eligibility check — Dirty/Soulmates/Affair NEVER show StoryPass
+    const hideUnlock = (mode === 'sub_only') || state.subscribed || hasPassNow || requiresSubOnly || !isStoryPassEligible(state);
     const optUnlock = document.getElementById('optUnlock');
     if(optUnlock) optUnlock.classList.toggle('hidden', !!hideUnlock);
 
@@ -7067,6 +7095,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const storyPassVisible = optUnlock && !optUnlock.classList.contains('hidden');
       const isDirty = state.intensity === 'Dirty';
       const isSoulmates = state.storyLength === 'soulmates';
+      const isAffair = state.storyLength === 'affair';
 
       // HARD FAIL: StoryPass visible for Dirty
       if (storyPassVisible && isDirty) {
@@ -7084,6 +7113,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           return {
               valid: false,
               error: VALIDATION_ERRORS.STORYPASS_SOULMATES_LEAK,
+              context: { intensity: state.intensity, storyLength: state.storyLength }
+          };
+      }
+
+      // HARD FAIL: StoryPass visible for Affair
+      if (storyPassVisible && isAffair) {
+          console.error('[PAYWALL VALIDATION] HARD FAIL: StoryPass shown for Affair length');
+          return {
+              valid: false,
+              error: 'STORYPASS_AFFAIR_LEAK',
               context: { intensity: state.intensity, storyLength: state.storyLength }
           };
       }
@@ -7284,8 +7323,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   /**
    * CANONICAL StoryPass eligibility check — SINGLE SOURCE OF TRUTH
-   * StoryPass ($3) unlocks: Clean, Naughty, Erotic
-   * StoryPass NEVER unlocks: Dirty, Soulmates
+   * StoryPass ($3) unlocks: Clean, Naughty, Erotic intensities + Fling length ONLY
+   * StoryPass NEVER unlocks: Dirty intensity, Soulmates length, Affair length
    * @param {object} st - state object with intensity and storyLength
    * @returns {boolean} true if StoryPass is a valid unlock option
    */
@@ -7294,8 +7333,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (st.intensity === 'Dirty') return false;
     // Soulmates length ALWAYS requires subscription
     if (st.storyLength === 'soulmates') return false;
-    // Clean, Naughty, Erotic with non-soulmates length = StoryPass eligible
-    return st.intensity === 'Clean' || st.intensity === 'Naughty' || st.intensity === 'Erotic';
+    // Affair length ALWAYS requires subscription
+    if (st.storyLength === 'affair') return false;
+    // Only Fling length is StoryPass eligible (voyeur is free tier)
+    // Clean, Naughty, Erotic with fling length = StoryPass eligible
+    return (st.intensity === 'Clean' || st.intensity === 'Naughty' || st.intensity === 'Erotic') &&
+           (st.storyLength === 'fling' || st.storyLength === 'voyeur' || !st.storyLength);
   }
   function clearCurrentStoryId(){ localStorage.removeItem('sb_current_story_id'); }
   // CORRECTIVE: IndexedDB for large story data when localStorage fails
@@ -7506,6 +7549,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   window.restart = function(){
     if(state.mode === 'couple') window.coupleCleanup();
+    if (window.stopSparkleCycle) window.stopSparkleCycle(); // Clear any active fate card sparkles
     state.mode = 'solo';
     clearCurrentStoryId();
     state.storyId = null;
@@ -7533,13 +7577,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // FIX: Cover regeneration reset — allow new cover without hard refresh
     if (_coverAbortController) { _coverAbortController.abort(); _coverAbortController = null; }
     resetBookState();
-    // Reset DSP activation state for fresh placeholder
-    if (typeof _dspActivationCount !== 'undefined') _dspActivationCount = 0;
-    const synopsisTextReset = document.getElementById('synopsisText');
-    if (synopsisTextReset) {
-        synopsisTextReset.innerHTML = 'Your choices shape your story';
-        synopsisTextReset._lastDSP = null;
-    }
+    // Reset DSP state for fresh intro/placeholder cycle
+    if (typeof resetDSPState === 'function') resetDSPState();
     const coverImg = document.getElementById('bookCoverImg');
     if (coverImg) coverImg.src = '';
     const coverLoading = document.getElementById('coverLoadingState');
@@ -8593,19 +8632,39 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         if (grp === 'length' && state.turnCount > 0) return;
 
         // Intensity/length paywall checks using canonical eligibility
+        // EXCEPTION: Soulmates and Dirty are freely selectable — gate is at Begin Story
         if (grp === 'intensity' || grp === 'length') {
-          const tempState = grp === 'intensity'
-            ? { ...state, intensity: val }
-            : { ...state, storyLength: val };
-          if (!isStoryPassEligible(tempState) && state.access !== 'sub') {
-            window.showPaywall('sub_only'); return;
+          const isSoulmatesOrDirty = (grp === 'intensity' && val === 'Dirty') ||
+                                     (grp === 'length' && val === 'soulmates');
+          if (!isSoulmatesOrDirty) {
+            const tempState = grp === 'intensity'
+              ? { ...state, intensity: val }
+              : { ...state, storyLength: val };
+            if (!isStoryPassEligible(tempState) && state.access !== 'sub') {
+              window.showPaywall('sub_only'); return;
+            }
           }
           if (grp === 'intensity' && val === 'Erotic' && state.access === 'free') {
             window.openEroticPreview(); return;
           }
         }
 
-        if(card.classList.contains('locked')) { window.showPaywall('unlock'); return; }
+        // Locked card: use correct paywall mode based on eligibility
+        // EXCEPTION: Soulmates and Dirty bypass lock — gate is at Begin Story
+        if(card.classList.contains('locked')) {
+          const isSoulmatesOrDirty = (state.intensity === 'Dirty' && grp === 'intensity' && val === 'Dirty') ||
+                                     (grp === 'length' && val === 'soulmates');
+          if (isSoulmatesOrDirty) {
+            // Allow selection — will be gated at Begin Story
+            card.classList.remove('locked');
+          } else {
+            const requiresSubOnly = (state.intensity === 'Dirty') ||
+                                    (state.storyLength === 'soulmates') ||
+                                    (state.storyLength === 'affair');
+            window.showPaywall(requiresSubOnly ? 'sub_only' : 'unlock');
+            return;
+          }
+        }
 
         // Check if layer is unlocked (prerequisites met)
         if (!isLayerUnlocked(grp)) {
@@ -8678,6 +8737,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
         // Increment DSP activation count (explicit Story Shape choice)
         incrementDSPActivation();
+
+        // Update DSP segment based on selection axis
+        if (grp === 'world' && DSP_WORLD_PHRASES[val]) {
+          activateDSPSegment('world', 'In ' + DSP_WORLD_PHRASES[val]);
+        } else if (grp === 'genre' && DSP_GENRE_PARAPHRASES[val]) {
+          activateDSPSegment('genre', ', shaped by ' + DSP_GENRE_PARAPHRASES[val]);
+        } else if (grp === 'dynamic' && state.archetype?.primary && DSP_ARCHETYPE_ADJECTIVES[state.archetype.primary]) {
+          activateDSPSegment('archetype', ', a question awaits: Will ' + DSP_ARCHETYPE_ADJECTIVES[state.archetype.primary]);
+        } else if (grp === 'tone' && DSP_TONAL_ADJECTIVES[val]) {
+          activateDSPSegment('tone', ' desire redeem this ' + DSP_TONAL_ADJECTIVES[val]);
+        } else if (grp === 'length') {
+          const AFFAIR_WORD_MAP = { voyeur: 'tease', fling: 'fling', affair: 'affair', soulmates: 'cosmic connection' };
+          activateDSPSegment('length', ' ' + (AFFAIR_WORD_MAP[val] || 'affair') + '\u2009\u2014\u2009or ruin it?');
+        }
 
         // Update floating synopsis panel
         updateSynopsisPanel(true); // User action: card click
@@ -9215,6 +9288,23 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // ═══════════════════════════════════════════════════════════════════
   let _dspActivationCount = 0; // Count of explicit Story Shape selections (activates DSP at >= 2)
   let _dspGuidedFateActive = false; // True during Guided Fate — prevents bulk hydration
+  let _dspPhase = 0; // 0=intro, 1=placeholder, 2=live, 3=veto
+  let _dspIntroTimer = null; // Timer for intro→placeholder transition
+
+  // Reset DSP state for new story / mode change
+  function resetDSPState() {
+      _dspPhase = 0;
+      _dspActivationCount = 0;
+      if (_dspIntroTimer) {
+          clearTimeout(_dspIntroTimer);
+          _dspIntroTimer = null;
+      }
+      const synopsisText = document.getElementById('synopsisText');
+      if (synopsisText) {
+          synopsisText._dspInitialized = false;
+          synopsisText._lastDSP = null;
+      }
+  }
 
   function isDSPActivated() {
       return _dspActivationCount >= 2;
@@ -9223,6 +9313,45 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function incrementDSPActivation() {
       _dspActivationCount++;
       console.log(`[DSP] Activation count: ${_dspActivationCount}`);
+  }
+
+  // Build full DSP placeholder sentence with all segments in grey (inactive) state
+  function buildDSPPlaceholderHTML() {
+      return '<span class="dsp-segment dsp-inactive" data-axis="world">In a world yet unchosen</span>' +
+             '<span class="dsp-segment dsp-inactive" data-axis="genre">, shaped by forces unknown</span>' +
+             '<span class="dsp-segment dsp-inactive" data-axis="archetype">, a question awaits: Will unspoken</span>' +
+             '<span class="dsp-segment dsp-inactive" data-axis="tone"> desire redeem this</span>' +
+             '<span class="dsp-segment dsp-inactive" data-axis="length"> untold affair&#8201;&#8212;&#8201;or ruin it?</span>';
+  }
+
+  // Update a single DSP segment when user makes a selection
+  function activateDSPSegment(axis, text) {
+      if (_dspPhase < 1) return; // Not ready for updates yet
+      _dspPhase = 2; // Move to live phase
+      const synopsisText = document.getElementById('synopsisText');
+      if (!synopsisText) return;
+      const segment = synopsisText.querySelector(`.dsp-segment[data-axis="${axis}"]`);
+      if (segment) {
+          // Guard: prevent glow spam on reselection
+          if (segment.classList.contains('dsp-active')) return;
+          segment.textContent = text;
+          segment.classList.remove('dsp-inactive');
+          segment.classList.add('dsp-active', 'dsp-glow');
+          setTimeout(() => segment.classList.remove('dsp-glow'), 500);
+      }
+  }
+
+  // Veto override: reveal all remaining grey segments as white (no glow)
+  function revealAllDSPSegments() {
+      _dspPhase = 3;
+      const synopsisText = document.getElementById('synopsisText');
+      if (!synopsisText) return;
+      const inactiveSegments = synopsisText.querySelectorAll('.dsp-segment.dsp-inactive');
+      inactiveSegments.forEach(seg => {
+          seg.classList.remove('dsp-inactive');
+          seg.classList.add('dsp-active');
+          // No glow for veto-revealed segments
+      });
   }
 
   function showDSP() {
@@ -9235,10 +9364,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         title.textContent = 'First Taste';
         synopsisPanel.insertBefore(title, synopsisPanel.firstChild);
       }
-      // Show placeholder if activation threshold not met
       const synopsisText = document.getElementById('synopsisText');
-      if (synopsisText && !isDSPActivated() && !synopsisText._lastDSP) {
-        synopsisText.innerHTML = '<span class="dsp-placeholder">Your choices shape your story</span>';
+      // Phase 0: Show intro message
+      if (_dspPhase === 0 && synopsisText && !synopsisText._dspInitialized) {
+        synopsisText._dspInitialized = true;
+        synopsisText.innerHTML = '<span class="dsp-intro">Your choices shape your story</span>';
+        // Transition to Phase 1 after 5 seconds
+        if (_dspIntroTimer) clearTimeout(_dspIntroTimer);
+        _dspIntroTimer = setTimeout(() => {
+          _dspPhase = 1;
+          synopsisText.innerHTML = buildDSPPlaceholderHTML();
+        }, 5000);
       }
       synopsisPanel.classList.add('visible');
     }
@@ -9264,6 +9400,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   window.showDSP = showDSP;
   window.hideDSP = hideDSP;
   window.updateDSPVisibility = updateDSPVisibility;
+  window.activateDSPSegment = activateDSPSegment;
+  window.revealAllDSPSegments = revealAllDSPSegments;
 
   // Legacy function name for compatibility
   function initSynopsisPanelScrollBehavior() {
@@ -11628,6 +11766,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
+    // Reveal all remaining DSP segments on Begin Story (veto phase)
+    if (typeof revealAllDSPSegments === 'function') revealAllDSPSegments();
+
+    // ========================================
+    // SOULMATES / DIRTY SUBSCRIBE GATE
+    // These selections require $6 Subscribe only — no StoryPass
+    // ========================================
+    const requiresSubscribeOnly = (state.intensity === 'Dirty') || (state.storyLength === 'soulmates');
+    if (requiresSubscribeOnly && state.access !== 'sub') {
+        window.showPaywall('sub_only');
+        return;
+    }
+
     // ========================================
     // PHASE 1: SYNC VALIDATION (no async!)
     // ========================================
@@ -12635,16 +12786,16 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         StoryPagination.clear();
         StoryPagination.addPage(formatStory(text), true);
 
-        // OPENING SPREAD COMPOSITION: Populate inside cover with title ONLY
-        // Left page (inside cover) = paper background + title (NO synopsis)
-        // Right page = setting image (handled by settingPlate)
-        // GUARD: Synopsis renders ONLY on SCENE page (pageIndex 2), never on inside cover
+        // OPENING SPREAD COMPOSITION: Populate inside cover with title + synopsis
+        // Page 1 (inside cover) = paper background + title + synopsis (NO image generation)
+        // Page 2+ (scene) = scene text with setting image INLINE if present
         const insideCover = document.getElementById('bookInsideCover');
         if (insideCover) {
-            console.log('[DEBUG PAGE MOUNT] insideCoverTitle: _bookPageIndex=', _bookPageIndex, 'pageType=insideCover', 'container=', insideCover.id);
+            console.log('[DEBUG PAGE MOUNT] insideCoverContent: _bookPageIndex=', _bookPageIndex, 'pageType=insideCover', 'container=', insideCover.id);
             insideCover.innerHTML = `
                 <div class="inside-cover-content">
                     <h1 class="inside-cover-title">${cleanTitle}</h1>
+                    <p class="inside-cover-synopsis">${synopsis}</p>
                 </div>
             `;
         }
@@ -12685,9 +12836,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
             }
         }, 0);
 
-        // Generate setting art for book right page (distinct asset, never reuses cover)
-        // Runs in parallel with cover generation — populates bookInsideScene
-        // Store promise so openBook() can gate setBookPage(1) until ready
+        // Generate setting art for Scene 1 (page 2) — renders INLINE, not fullscreen
+        // Setting image is a distinct asset from cover, shown within scene content
+        // Store promise so openBook() can gate scene transition until ready
         _settingImagePromise = generateBookSceneArt(synopsis);
 
         // Story text reveal is handled by cover page flow
@@ -13037,15 +13188,18 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
   };
 
   // ============================================================
-  // BOOK SCENE ART — Right page of opened book
+  // BOOK SCENE ART — Inline setting image for Scene 1 (page 2)
   // Distinct asset from cover. Uses imageIntent='setting'.
-  // Populates #bookSceneImg inside #bookInsideScene.
-  // Scene 1 narrative image is NOT rendered here — only on first beat.
+  // MUST render INLINE within scene content, NEVER fullscreen.
+  // MUST NOT run on COVER (page 0) or INSIDE_COVER (page 1).
   // ============================================================
   async function generateBookSceneArt(synopsis) {
+      // GUARD: Setting image is ONLY for Scene pages (page 2+)
+      // Never generate for cover or inside cover
+      console.log('[DEBUG PAGE STATE] generateBookSceneArt: _bookPageIndex=', _bookPageIndex);
+
       const sceneImg = document.getElementById('bookSceneImg');
       const loadingEl = document.getElementById('bookSceneLoading');
-      console.log('[DEBUG PAGE STATE] generateBookSceneArt: _bookPageIndex=', _bookPageIndex);
       console.log('[BookScene:DEBUG] ENTRY', {
           coverMode: state.coverMode,
           PHASE_1_FORGED: state.coverMode === 'PHASE_1_FORGED',
@@ -13111,14 +13265,16 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
                   sceneImgId: sceneImg.id
               });
               sceneImg.onload = () => {
-                  // GUARD: Setting images must NEVER use cover/fullscreen mount path
-                  // Verify we're mounting to the correct container (settingPlate, not cover)
+                  // GUARD: Setting images must render INLINE, never fullscreen
+                  // Setting plate should have 'setting-inline' class when on scene page
                   const settingPlate = document.getElementById('settingPlate');
                   if (settingPlate && sceneImg.closest('#settingPlate')) {
-                      // Correct mount path - setting image is inside settingPlate
+                      // Ensure inline mode (not fullscreen)
+                      settingPlate.classList.add('setting-inline');
+                      settingPlate.classList.remove('setting-active'); // Remove any fullscreen class
                       sceneImg.style.display = 'block';
                       if (loadingEl) loadingEl.style.display = 'none';
-                      console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display, mountPath: 'settingPlate' });
+                      console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display, mountPath: 'settingPlate', mode: 'inline' });
                   } else {
                       // ABORT: Setting image mounted in wrong container
                       console.error('[BookScene:GUARD] Setting image not in settingPlate - aborting display');
@@ -14145,6 +14301,45 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   };
 
   // ============================================================
+  // 🧱 ASSET STRUCTURE (REQUIRED)
+  // Defines how canonical object assets are stored and referenced
+  // ============================================================
+  //
+  // SCOPE CLARIFICATION:
+  // Rules regarding gravity, resting behavior, and non-floating placement apply ONLY at final cover composition time.
+  // They do NOT apply to how canonical object assets are stored, rendered, or represented in the asset repository.
+  //
+  // ============================================================
+
+  // ============================================================
+  // 🧩 ASSEMBLY RULES (CRITICAL)
+  // Governs how assets are combined into final cover compositions
+  // ============================================================
+  //
+  // OBJECT INTEGRITY:
+  // Treat all object assets as rigid physical objects.
+  // Do NOT deform, warp, bend, or reshape object geometry to match background topology unless explicitly instructed.
+  //
+  // DEPTH PRESERVATION:
+  // Do NOT flatten, emboss, or convert three-dimensional object details into surface textures during assembly.
+  // Preserve perceived depth, volume, and protrusion from the original asset.
+  //
+  // EDGE HANDLING GUARDRAIL:
+  // Do NOT assume object assets are poor quality by default.
+  // Some assets may be near-clean chroma-key renders.
+  // Apply edge softening or blending ONLY if visual artifacts are present.
+  // Never degrade clean edges unnecessarily.
+  //
+  // CONTACT SHADOW (MANDATORY):
+  // All placed objects must cast a contact shadow appropriate to the scene lighting.
+  //
+  // CONTACT SHADOW SCOPE:
+  // Contact shadows are generated ONLY AFTER an object has been keyed and placed onto a background surface.
+  // Never bake contact shadows, ambient occlusion, or surface assumptions into the object asset itself.
+  //
+  // ============================================================
+
+  // ============================================================
   // KEYHOLE FRAMING — RUNTIME RENDER SPECIFICATION
   // Keyholes are NOT asset files. They MUST be rendered by the
   // image model at runtime as physical objects or carved apertures.
@@ -14530,17 +14725,17 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   // ============================================================
   // BOOK PAGE TYPE DEFINITIONS (Authoritative Spec)
   // ============================================================
-  // Page sequence: COVER (0) → SETTING (1) → SCENE (2)
+  // Page sequence: COVER (0) → INSIDE_COVER (1) → SCENE (2+)
   // Each page type has strict content rules.
   const BOOK_PAGE_TYPES = {
-      COVER: 'cover',           // Page 0: Front cover visual only (no text)
-      SETTING: 'setting',       // Page 1: Setting image ONLY (no title, no synopsis, no scene)
-      SCENE: 'scene'            // Page 2+: Title + scene text (no setting image)
+      COVER: 'cover',              // Page 0: Front cover visual only (no text)
+      INSIDE_COVER: 'inside_cover', // Page 1: Title + synopsis (NO image generation)
+      SCENE: 'scene'               // Page 2+: Scene text (setting image INLINE if present)
   };
 
   // BOOK PAGE STATE MACHINE
   // Explicit page index — NOT boolean flags
-  let _bookPageIndex = 0; // 0=cover, 1=setting, 2=scene
+  let _bookPageIndex = 0; // 0=cover, 1=inside_cover, 2+=scene
 
   /**
    * Set the current book page with explicit visibility control.
@@ -14571,29 +14766,39 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       // Apply page-specific visibility
       if (pageIndex === 0) {
           // PAGE 0: COVER — Only cover visible
-          console.log('[DEBUG PAGE CLASSIFY] decision=COVER, pageIndex=', pageIndex, 'inputs={ bookCoverPage:', !!bookCoverPage, 'storyContent:', !!storyContent, '}');
+          console.log('[DEBUG PAGE CLASSIFY] decision=COVER, pageIndex=', pageIndex);
           if (bookCoverPage) bookCoverPage.classList.remove('hidden');
           if (storyContent) storyContent.classList.add('hidden');
+          if (settingPlate) settingPlate.classList.add('hidden');
           console.log('[BookPage] Page 0: COVER');
       } else if (pageIndex === 1) {
-          // PAGE 1: SETTING — Setting image only, no title/scene
-          console.log('[DEBUG PAGE CLASSIFY] decision=SETTING, pageIndex=', pageIndex, 'inputs={ settingPlate:', !!settingPlate, 'storyContent:', !!storyContent, '}');
-          // CRITICAL FIX: Hide bookCoverPage (z-index 2000) so settingPlate (z-index 100) can show
+          // PAGE 1: INSIDE_COVER — Title + synopsis (NO image generation)
+          console.log('[DEBUG PAGE CLASSIFY] decision=INSIDE_COVER, pageIndex=', pageIndex);
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
-          if (storyContent) storyContent.classList.remove('hidden');
-          if (settingPlate) settingPlate.classList.add('setting-active');
-          // Hide title and scene content during setting page
-          if (storyTitle) storyTitle.classList.add('hidden');
-          if (sceneNumber) sceneNumber.classList.add('hidden');
-          if (storyText) storyText.classList.add('hidden');
-          console.log('[BookPage] Page 1: SETTING');
-      } else if (pageIndex >= 2) {
-          // PAGE 2: SCENE — Title + scene, setting GONE
-          console.log('[DEBUG PAGE CLASSIFY] decision=SCENE, pageIndex=', pageIndex, 'inputs={ storyText:', !!storyText, 'settingPlate:', !!settingPlate, '}');
-          if (bookCoverPage) bookCoverPage.classList.add('hidden');
-          if (storyContent) storyContent.classList.remove('hidden');
-          // CRITICAL: Setting plate MUST be hidden on scene pages
+          // Show inside cover content area
+          const insideCover = document.getElementById('bookInsideCover');
+          if (insideCover) insideCover.classList.remove('hidden');
+          // Hide story content and setting plate on inside cover
+          if (storyContent) storyContent.classList.add('hidden');
           if (settingPlate) settingPlate.classList.add('hidden');
+          console.log('[BookPage] Page 1: INSIDE_COVER');
+      } else if (pageIndex >= 2) {
+          // PAGE 2+: SCENE — Scene text with setting image INLINE (not fullscreen)
+          console.log('[DEBUG PAGE CLASSIFY] decision=SCENE, pageIndex=', pageIndex);
+          if (bookCoverPage) bookCoverPage.classList.add('hidden');
+          // Hide inside cover
+          const insideCover = document.getElementById('bookInsideCover');
+          if (insideCover) insideCover.classList.add('hidden');
+          // Show story content
+          if (storyContent) storyContent.classList.remove('hidden');
+          // Setting plate should be INLINE within storyContent, not fullscreen
+          // Only show if scene 1 and setting image exists
+          if (settingPlate && pageIndex === 2) {
+              settingPlate.classList.remove('hidden');
+              settingPlate.classList.add('setting-inline'); // Inline mode, not fullscreen
+          } else if (settingPlate) {
+              settingPlate.classList.add('hidden');
+          }
           // Show title and scene
           if (storyTitle) storyTitle.classList.remove('hidden');
           if (sceneNumber) sceneNumber.classList.remove('hidden');
@@ -14601,7 +14806,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
               storyText.classList.remove('hidden');
               storyText.style.opacity = '1';
           }
-          console.log('[BookPage] Page 2: SCENE');
+          console.log('[BookPage] Page 2+: SCENE');
       }
 
       // Validate page integrity
@@ -14613,29 +14818,29 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
 
   /**
    * Advance to the next book page with appropriate transition.
-   * Page 1→2 uses page-flip animation (not fade).
    */
   function advanceBookPage() {
       const nextPage = _bookPageIndex + 1;
-      const currentType = _bookPageIndex === 0 ? 'cover' : _bookPageIndex === 1 ? 'setting' : 'scene';
-      const nextType = nextPage === 0 ? 'cover' : nextPage === 1 ? 'setting' : 'scene';
+      const currentType = _bookPageIndex === 0 ? 'cover' : _bookPageIndex === 1 ? 'inside_cover' : 'scene';
+      const nextType = nextPage === 0 ? 'cover' : nextPage === 1 ? 'inside_cover' : 'scene';
       console.log('[DEBUG PAGE MOUNT] advanceBookPage: current=', _bookPageIndex, '(' + currentType + ') → next=', nextPage, '(' + nextType + ')');
+      setBookPage(nextPage);
+  }
 
-      if (_bookPageIndex === 1 && nextPage === 2) {
-          // PAGE FLIP TRANSITION: Setting → Scene
-          const settingPlate = document.getElementById('settingPlate');
-          if (settingPlate) {
-              settingPlate.classList.add('page-flip-out');
-              // Wait for flip animation to complete before showing scene
-              setTimeout(() => {
-                  setBookPage(2);
-              }, 600); // Match CSS animation duration
-          } else {
-              setBookPage(2);
-          }
-      } else {
-          setBookPage(nextPage);
+  /**
+   * Go back to previous book page.
+   * Returns true if navigated within book, false if at cover (should exit book).
+   */
+  function previousBookPage() {
+      if (_bookPageIndex <= 0) {
+          return false; // At cover, can't go back within book
       }
+      const prevPage = _bookPageIndex - 1;
+      const currentType = _bookPageIndex === 0 ? 'cover' : _bookPageIndex === 1 ? 'inside_cover' : 'scene';
+      const prevType = prevPage === 0 ? 'cover' : prevPage === 1 ? 'inside_cover' : 'scene';
+      console.log('[DEBUG PAGE MOUNT] previousBookPage: current=', _bookPageIndex, '(' + currentType + ') → prev=', prevPage, '(' + prevType + ')');
+      setBookPage(prevPage);
+      return true;
   }
 
   /**
@@ -14647,45 +14852,42 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const errors = [];
       console.log('[DEBUG PAGE STATE] validateBookFlowIntegrity: _bookPageIndex=', _bookPageIndex);
 
-      // CHECK 1: Inside cover must have title+synopsis text, but NO images
+      // CHECK 1: Inside cover (page 1) must have title+synopsis text, but NO generated images
       const insideCover = document.getElementById('bookInsideCover');
-      if (insideCover) {
-          const hasImages = insideCover.querySelectorAll('img').length > 0;
-          console.log('[DEBUG PAGE STATE] insideCover check: hasImages=', hasImages, 'innerHTML.length=', insideCover.innerHTML.length);
-          if (hasImages) {
-              errors.push({ code: 'INSIDE_COVER_HAS_IMAGES', message: 'Inside cover contains images (should be text only)' });
+      if (_bookPageIndex === 1 && insideCover) {
+          const hasGeneratedImages = insideCover.querySelectorAll('img:not(.decorative)').length > 0;
+          const hasTitle = !!insideCover.querySelector('.inside-cover-title');
+          const hasSynopsis = !!insideCover.querySelector('.inside-cover-synopsis');
+          console.log('[DEBUG PAGE STATE] insideCover check: hasTitle=', hasTitle, 'hasSynopsis=', hasSynopsis, 'hasGeneratedImages=', hasGeneratedImages);
+          if (hasGeneratedImages) {
+              errors.push({ code: 'INSIDE_COVER_HAS_IMAGES', message: 'Inside cover contains generated images (should be text only)' });
+          }
+          if (!hasTitle) {
+              errors.push({ code: 'INSIDE_COVER_MISSING_TITLE', message: 'Inside cover missing title' });
+          }
+          if (!hasSynopsis) {
+              errors.push({ code: 'INSIDE_COVER_MISSING_SYNOPSIS', message: 'Inside cover missing synopsis' });
           }
       }
 
-      // CHECK 2: Setting plate must not have title or synopsis
+      // CHECK 2: On page 2 (Scene 1), setting image should be INLINE, not fullscreen
       const settingPlate = document.getElementById('settingPlate');
-      if (settingPlate) {
-          const scenePageTitle = document.getElementById('scenePageTitle');
-          if (scenePageTitle && scenePageTitle.textContent.trim().length > 0) {
-              errors.push({ code: 'SETTING_HAS_TITLE', message: 'Setting plate contains title' });
-          }
-          // Synopsis should never be in setting plate (check for synopsis class)
-          if (settingPlate.querySelector('.synopsis, .inside-cover-synopsis')) {
-              errors.push({ code: 'SETTING_HAS_SYNOPSIS', message: 'Setting plate contains synopsis' });
+      if (_bookPageIndex === 2 && settingPlate && !settingPlate.classList.contains('hidden')) {
+          if (!settingPlate.classList.contains('setting-inline')) {
+              errors.push({ code: 'SETTING_NOT_INLINE', message: 'Setting plate should be inline on Scene 1, not fullscreen' });
           }
       }
 
-      // CHECK 3: On page 2+, setting plate MUST be hidden
-      if (_bookPageIndex >= 2) {
-          if (settingPlate && !settingPlate.classList.contains('hidden')) {
-              errors.push({ code: 'SETTING_VISIBLE_ON_SCENE', message: 'Setting plate visible on scene page (page ' + _bookPageIndex + ')' });
-          }
+      // CHECK 3: On page 3+, setting plate MUST be hidden (only Scene 1 has setting image)
+      if (_bookPageIndex > 2 && settingPlate && !settingPlate.classList.contains('hidden')) {
+          errors.push({ code: 'SETTING_VISIBLE_AFTER_SCENE1', message: 'Setting plate visible after Scene 1 (page ' + _bookPageIndex + ')' });
       }
 
-      // CHECK 4: On page 1, title/scene MUST be hidden
+      // CHECK 4: On page 1 (inside cover), scene content MUST be hidden
       if (_bookPageIndex === 1) {
-          const storyTitle = document.getElementById('storyTitle');
-          const storyText = document.getElementById('storyText');
-          if (storyTitle && !storyTitle.classList.contains('hidden')) {
-              errors.push({ code: 'TITLE_VISIBLE_ON_SETTING', message: 'Title visible on setting page' });
-          }
-          if (storyText && !storyText.classList.contains('hidden')) {
-              errors.push({ code: 'SCENE_VISIBLE_ON_SETTING', message: 'Scene text visible on setting page' });
+          const storyContent = document.getElementById('storyContent');
+          if (storyContent && !storyContent.classList.contains('hidden')) {
+              errors.push({ code: 'SCENE_VISIBLE_ON_INSIDE_COVER', message: 'Scene content visible on inside cover' });
           }
       }
 
@@ -14707,7 +14909,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   function openBook() {
       if (_bookOpened) return;
       _bookOpened = true;
-      console.log('[DEBUG PAGE MOUNT] openBook: _bookPageIndex=', _bookPageIndex, 'transitioning cover→setting→scene');
+      console.log('[DEBUG PAGE MOUNT] openBook: _bookPageIndex=', _bookPageIndex, 'transitioning cover→inside_cover→scene');
       cancelCourtesyHinge();
 
       const bookCover = document.getElementById('bookCover');
@@ -14719,10 +14921,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       }
 
       // STEP 1: Hinge animation plays for 800ms, showing inside cover
-      // After hinge completes, transition to setting page
-      // GATE: Wait for setting image (or fallback) before showing opening spread
-      setTimeout(async () => {
-          await _settingImagePromise.catch(() => {}); // Swallow errors — fallback already handled
+      setTimeout(() => {
           // CRITICAL: Force-hide DSP before showing Page 1 (prevents synopsis overlay)
           if (typeof hideDSP === 'function') hideDSP();
           // Verify inside cover is populated (sanity check)
@@ -14731,11 +14930,13 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           if (insideCover && !insideCover.querySelector('.inside-cover-title')) {
               console.warn('[BookFlow] Inside cover not populated — check story generation');
           }
-          setBookPage(1); // Setting image only
+          setBookPage(1); // Inside cover (title + synopsis, NO image)
 
-          // STEP 2: After dwell, page-flip to SCENE page (page 2)
-          setTimeout(() => {
-              advanceBookPage(); // Uses page-flip transition
+          // STEP 2: After dwell, transition to SCENE page (page 2)
+          setTimeout(async () => {
+              // Wait for setting image before showing scene (image is INLINE, not fullscreen)
+              await _settingImagePromise.catch(() => {}); // Swallow errors — fallback already handled
+              advanceBookPage(); // Transitions to page 2 (scene)
 
               // BOOK FLOW: Validate integrity after showing Scene 1
               const flowCheck = validateBookFlowIntegrity();
@@ -17002,6 +17203,8 @@ Regenerate the scene with ZERO Author presence.`;
      }
      state.mode = m;
      if (!state.storyOrigin) state.storyOrigin = m;
+     // Reset DSP state on mode change
+     if (typeof resetDSPState === 'function') resetDSPState();
      if(m === 'solo') window.showScreen('setup');
      if(m === 'couple') window.showScreen('coupleInvite');
      if(m === 'stranger') window.showScreen('strangerModal');
