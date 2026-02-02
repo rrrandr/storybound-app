@@ -1182,7 +1182,7 @@ For veto/quill/god_mode:
       HEART_WARDEN: {
           id: 'HEART_WARDEN',
           name: 'The Heart Warden',
-          desireStyle: 'He positioned himself between her and the door without thinking — not from fear, but from certainty that nothing would reach her while he stood',
+          desireStyle: 'He remembered the coffee order she\'d mentioned in passing, months ago. Even in another life, he would have remembered.',
           summary: 'Protection is not a gesture but a gravitational constant. The Heart Warden builds walls around the people they love and calls it devotion. Safety is their language, control is their shadow, and tenderness arrives armored.',
           stressFailure: 'over-control, authoritarian protection'
       },
@@ -1974,26 +1974,32 @@ AUTHOR PRESENCE — GHOST AUTHOR (ACTIVE INNER LIFE):
 The Author is an invisible ghost character with a rich inner life.
 Author intrusions are SPARSE but PSYCHOLOGICALLY WEIGHTY.
 
+Author thoughts MUST follow the MICRO-PATTERN (1-3 sentences total):
+1. Emotional reaction (1 clause): felt, registered, noticed — brief and immediate
+2. State transition: revised margins, adjusted odds, tightened conditions, recalculated
+3. Optional non-intervention: deliberate choice to wait, allow deviation, or refrain
+
 Author thoughts MUST be:
-- Active and purposeful (planning, worrying, savoring, anticipating)
-- Brief (1-2 sentences maximum)
+- Active and purposeful (never passive observation)
+- Brief (1-2 sentences typical, 3 max if extremely tight)
 - Never exposition or restating protagonist thoughts
-- Never explaining mechanics, fate systems, or meta rules
+- Never certain about outcomes — only adjustments, probabilities, risks
 
 Author thoughts appear at ~50% the frequency of protagonist inner thoughts.
 - At least one full paragraph of scene action between Author intrusions
 - Never in consecutive paragraphs
 - Never as a wrapper at scene-beat start or end
 
-GOOD Author thoughts:
-- "The Author felt a flicker of satisfaction. This was unfolding faster than expected."
-- "The Author's fingers tightened on an invisible thread. Not yet."
-- "A small worry surfaced: had he pushed too hard?"
+GOOD Author thoughts (follow micro-pattern):
+- "The Author felt a flicker of concern and revised the night's margins. For now, he let the deviation stand."
+- "The Author registered the shift with irritation, then paused. This path might yet yield something better than planned."
+- "A small worry surfaced; the Author adjusted his grip on the timeline but chose not to intervene."
 
 BAD Author thoughts:
-- "The Author knew this choice would define her destiny forever." (exposition)
+- "The Author knew this choice would define her destiny forever." (certainty/exposition)
 - "The Author watched as she made her decision." (passive/voyeur)
 - "The Author observed that fate was at work." (meta/mechanical)
+- "The Author decided to make her fall in love." (direct control of character)
 
 SCENE 1 RAMP-IN:
 Scene 1 is a threshold, not a stress test.
@@ -5587,19 +5593,28 @@ Return ONLY the title, no quotes or explanation.`;
   }
 
   // --- THEME & FONT HELPERS ---
+  // Reader settings apply ONLY to story content, not the entire app UI
   window.setTheme = function(name) {
-      document.body.classList.remove('theme-sepia', 'theme-midnight', 'theme-print', 'theme-easy');
+      const storyContent = document.getElementById('storyContent');
+      if (!storyContent) return;
+      storyContent.classList.remove('theme-sepia', 'theme-midnight', 'theme-print', 'theme-easy');
       if (name && name !== 'default') {
-          document.body.classList.add('theme-' + name);
+          storyContent.classList.add('theme-' + name);
       }
   };
 
   window.setFont = function(fontValue) {
-      document.documentElement.style.setProperty('--font-story', fontValue);
+      const storyContent = document.getElementById('storyContent');
+      if (storyContent) {
+          storyContent.style.setProperty('--font-story', fontValue);
+      }
   };
 
   window.setFontSize = function(size) {
-      document.documentElement.style.setProperty('--story-size', size + 'px');
+      const storyContent = document.getElementById('storyContent');
+      if (storyContent) {
+          storyContent.style.setProperty('--story-size', size + 'px');
+      }
   };
 
   window.setGameIntensity = function(level) {
@@ -6183,6 +6198,11 @@ Return ONLY the title, no quotes or explanation.`;
 
   window.openPaywall = function(reason) {
       if(typeof window.showPaywall === 'function') {
+          // Close Quill/Veto modal if open (prevents z-index stacking)
+          const qvModal = document.getElementById('gameQuillVetoModal');
+          if (qvModal && !qvModal.classList.contains('hidden')) {
+              qvModal.classList.add('hidden');
+          }
           // Respect explicit 'sub_only' from caller (e.g., Dirty/Soulmates cards)
           const mode = (reason === 'god' || reason === 'sub_only') ? reason : getPaywallMode();
           window.showPaywall(mode);
@@ -7424,6 +7444,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const pm = document.getElementById('payModal');
     if(!pm) return;
 
+    // Close Quill/Veto modal if open (prevents z-index stacking)
+    const qvModal = document.getElementById('gameQuillVetoModal');
+    if (qvModal && !qvModal.classList.contains('hidden')) {
+        qvModal.classList.add('hidden');
+    }
+
     // Support both string mode and object { mode, source }
     let mode, source;
     if (typeof modeOrOptions === 'object' && modeOrOptions !== null) {
@@ -7977,6 +8003,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   /**
+   * Reset Guided Fate card visual state (dim/disabled appearance).
+   * Called when story shape is invalidated to allow re-use.
+   * Does NOT reset Fate logic, counters, or usage limits.
+   */
+  function resetGuidedFateVisualState() {
+    const fateCard = $('fateDestinyCard');
+    if (fateCard) {
+      fateCard.dataset.fateUsed = 'false';
+      fateCard.style.opacity = '1';
+      fateCard.style.pointerEvents = 'auto';
+    }
+  }
+
+  /**
    * Invalidate the stored snapshot (forces "Begin Story" on next check).
    * Called when story-defining inputs change.
    */
@@ -7985,6 +8025,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       console.log('[STORY:SHAPE] Snapshot invalidated — story-defining input changed');
       state._lastGeneratedShapeSnapshot = null;
       updateBeginButtonLabel();
+      // Re-enable Guided Fate card when shape changes (allows re-use for new shape)
+      resetGuidedFateVisualState();
     }
   }
 
@@ -8328,17 +8370,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (quillInput) quillInput.value = '';
       if (vetoInput) vetoInput.value = '';
 
-      // CORRECTIVE: Render committed veto phrases in game modal
+      // CORRECTIVE: Render committed veto phrases in game modal (with remove buttons)
       const gameVetoCommitted = document.getElementById('gameVetoCommitted');
       if (gameVetoCommitted && state.committedVeto) {
-          gameVetoCommitted.innerHTML = '';
-          state.committedVeto.forEach((text, i) => {
-              const phrase = document.createElement('div');
-              phrase.className = 'committed-phrase veto-phrase';
-              phrase.style.cssText = 'background:rgba(255,100,100,0.15); border:1px solid rgba(255,100,100,0.3); padding:4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em;';
-              phrase.innerHTML = `<span style="color:var(--pink);">${text}</span>`;
-              gameVetoCommitted.appendChild(phrase);
-          });
+          renderGameVetoPills(gameVetoCommitted);
+      }
+
+      // Render committed quill phrases in game modal (with remove buttons)
+      const gameQuillCommitted = document.getElementById('gameQuillCommitted');
+      if (gameQuillCommitted && state.committedQuill) {
+          renderGameQuillPills(gameQuillCommitted);
       }
 
       updateGameQuillUI();
@@ -8371,7 +8412,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Also apply any pending veto constraints from game modal
       await applyGameVetoFromInput();
 
+      // Add to committed phrases (parity with setup modal)
+      state.committedQuill.push(quillText);
       window.state.quillIntent = quillText;
+
+      // Re-render committed pills in game modal
+      const gameQuillCommitted = document.getElementById('gameQuillCommitted');
+      if (gameQuillCommitted) renderGameQuillPills(gameQuillCommitted);
+
       if (quillText) {
           const quillHtml = `<div class="quill-intervention" style="color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;">${formatStory(quillText)}</div>`;
           StoryPagination.appendToCurrentPage(quillHtml);
@@ -8908,18 +8956,32 @@ The final image must look like a real published novel cover.`;
       { core: 'rgba(255, 240, 180, 0.96)', mid: 'rgba(255, 210, 100, 0.82)', glow: 'rgba(200, 160, 40, 0.5)' }    // Warm honey
   ];
 
+  let _coverSparkleOverlay = null;
+
   function startCoverButtonEmitter(btn) {
       if (!btn || _coverEmitterActive) return;
       _coverEmitterActive = true;
 
-      // Ensure button can hold absolutely-positioned children
-      const btnPos = getComputedStyle(btn).position;
-      if (btnPos === 'static') btn.style.position = 'relative';
-      btn.style.overflow = 'visible';
-
       const rect = btn.getBoundingClientRect();
       const btnWidth = rect.width;
       const btnHeight = rect.height;
+
+      // Create sibling overlay to prevent opacity inheritance from button
+      _coverSparkleOverlay = document.createElement('div');
+      _coverSparkleOverlay.className = 'cover-sparkle-overlay';
+      _coverSparkleOverlay.style.cssText = `
+          position: fixed;
+          left: ${rect.left}px;
+          top: ${rect.top}px;
+          width: ${btnWidth}px;
+          height: ${btnHeight}px;
+          pointer-events: none;
+          z-index: 2500;
+          overflow: visible;
+          opacity: 1 !important;
+          filter: none !important;
+      `;
+      document.body.appendChild(_coverSparkleOverlay);
 
       // Spawn a sparkle on the button perimeter with radial outward motion
       function spawnSparkle() {
@@ -8928,10 +8990,10 @@ The final image must look like a real published novel cover.`;
           const sparkle = document.createElement('div');
           sparkle.className = 'cover-btn-sparkle';
 
-          // SHORT LIFETIME — fast, punchy sparkles (300-600ms)
-          const lifetime = 300 + Math.random() * 300;
-          const fadeInDuration = 50 + Math.random() * 50;
-          const fadeOutDuration = 100 + Math.random() * 100;
+          // SLOW FLOAT — match Fate Card sparkle feel (4-7s)
+          const lifetime = 4000 + Math.random() * 3000;
+          const fadeInDuration = 300 + Math.random() * 200;
+          const fadeOutDuration = 800 + Math.random() * 400;
 
           // Random palette selection for multi-tone variety
           const palette = COVER_SPARKLE_PALETTE[Math.floor(Math.random() * COVER_SPARKLE_PALETTE.length)];
@@ -8939,8 +9001,8 @@ The final image must look like a real published novel cover.`;
           // Per-sparkle size variance (2-5px)
           const size = 2 + Math.random() * 3;
 
-          // Per-sparkle opacity variance (0.6-1.0)
-          const peakOpacity = 0.6 + Math.random() * 0.4;
+          // Per-sparkle opacity — FULL brightness, explicit to override button inheritance
+          const peakOpacity = 0.85 + Math.random() * 0.15;
 
           // Per-sparkle glow intensity variance
           const glowSize = 4 + Math.random() * 6;
@@ -8950,9 +9012,9 @@ The final image must look like a real published novel cover.`;
           const edge = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
           let startX, startY, driftX, driftY;
 
-          // Radial drift distance (short, punchy)
-          const driftDist = 12 + Math.random() * 18;
-          const driftSpread = (Math.random() - 0.5) * 10; // Slight perpendicular spread
+          // Radial drift distance — slow float outward
+          const driftDist = 30 + Math.random() * 40;
+          const driftSpread = (Math.random() - 0.5) * 20; // Gentle perpendicular drift
 
           switch (edge) {
               case 0: // Top edge — radiate upward
@@ -8981,9 +9043,9 @@ The final image must look like a real published novel cover.`;
                   break;
           }
 
-          // Scale transform for pop-in effect
-          const startScale = 0.3 + Math.random() * 0.3;
-          const peakScale = 0.8 + Math.random() * 0.4;
+          // Scale transform — gentle grow/shrink for organic float
+          const startScale = 0.5 + Math.random() * 0.3;
+          const peakScale = 1.0 + Math.random() * 0.3;
 
           sparkle.style.cssText = `
               position: absolute;
@@ -9001,7 +9063,10 @@ The final image must look like a real published novel cover.`;
               will-change: transform, opacity, left, top;
           `;
 
-          btn.appendChild(sparkle);
+          // Append to sibling overlay (not button) to prevent opacity inheritance
+          if (_coverSparkleOverlay) {
+              _coverSparkleOverlay.appendChild(sparkle);
+          }
 
           // Animate: fade in + scale up + drift outward
           requestAnimationFrame(() => {
@@ -9031,23 +9096,23 @@ The final image must look like a real published novel cover.`;
           }, lifetime + 50);
       }
 
-      // Spawn initial burst (more particles for immediate impact)
-      for (let i = 0; i < 8; i++) {
-          setTimeout(() => spawnSparkle(), i * 30);
+      // Spawn initial burst — gentle, staggered
+      for (let i = 0; i < 5; i++) {
+          setTimeout(() => spawnSparkle(), i * 80);
       }
 
-      // Continuous emission — spawn 3-5 particles every 60-100ms for dense effect
+      // Continuous emission — slower spawn rate for floaty feel (1-2 particles every 200-400ms)
       _coverEmitterInterval = setInterval(() => {
           if (!_coverEmitterActive) {
               clearInterval(_coverEmitterInterval);
               _coverEmitterInterval = null;
               return;
           }
-          const count = 3 + Math.floor(Math.random() * 3);
+          const count = 1 + Math.floor(Math.random() * 2);
           for (let i = 0; i < count; i++) {
-              setTimeout(() => spawnSparkle(), Math.random() * 40);
+              setTimeout(() => spawnSparkle(), Math.random() * 100);
           }
-      }, 60 + Math.random() * 40);
+      }, 200 + Math.random() * 200);
 
       console.log('[FX:COVER-BTN] Multi-tone sparkle emitter started');
   }
@@ -9062,8 +9127,19 @@ The final image must look like a real published novel cover.`;
           _coverEmitterInterval = null;
       }
 
-      // Existing particles will fade out naturally via their own timeouts
-      console.log('[FX:COVER-BTN] Firefly emitter stopped (particles fading naturally)');
+      // Fade out and remove overlay after particles finish
+      if (_coverSparkleOverlay) {
+          _coverSparkleOverlay.style.transition = 'opacity 1s ease-out';
+          _coverSparkleOverlay.style.opacity = '0';
+          setTimeout(() => {
+              if (_coverSparkleOverlay && _coverSparkleOverlay.parentNode) {
+                  _coverSparkleOverlay.remove();
+              }
+              _coverSparkleOverlay = null;
+          }, 1500);
+      }
+
+      console.log('[FX:COVER-BTN] Sparkle emitter stopped (fading gracefully)');
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -11782,6 +11858,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     _loadingCancelled = false;
     _loadingCancelCallback = onCancel;
 
+    // Stop fate card sparkles when loading overlay appears (prevent z-index bleed)
+    if (window.stopSparkleCycle) window.stopSparkleCycle();
+    if (typeof stopAmbientCardSparkles === 'function') stopAmbientCardSparkles();
+
     if(fill) fill.style.width = '0%';
     if(overlay) overlay.classList.remove('hidden');
 
@@ -12070,7 +12150,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       phrase.className = `committed-phrase ${type}-phrase`;
       phrase.dataset.index = index;
       phrase.innerHTML = `
-          <button class="committed-phrase-remove" title="Remove">&times;</button>
+          <button class="committed-phrase-remove" title="Remove" aria-label="Remove veto">&times;</button>
           <span class="committed-phrase-text">${text}</span>
       `;
       // Insert at top (new commits above old)
@@ -12089,6 +12169,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       renderCommittedPhrases(type);
       // Update veto state if needed
       if (type === 'veto') rebuildVetoFromCommitted();
+      // Sync quillIntent to most recent committed Quill (or clear if none)
+      if (type === 'quill') {
+          state.quillIntent = arr.length > 0 ? arr[arr.length - 1] : '';
+      }
       saveStorySnapshot();
   }
 
@@ -12099,6 +12183,59 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       if (!container) return;
       container.innerHTML = '';
       arr.forEach((text, i) => addCommittedPhrase(container, text, type, i));
+  }
+
+  // Render veto pills in game modal (with remove buttons)
+  function renderGameVetoPills(container) {
+      if (!container || !state.committedVeto) return;
+      container.innerHTML = '';
+      state.committedVeto.forEach((text, i) => {
+          const phrase = document.createElement('div');
+          phrase.className = 'committed-phrase veto-phrase';
+          phrase.style.cssText = 'display:flex; align-items:center; background:rgba(255,100,100,0.15); border:1px solid rgba(255,100,100,0.3); padding:4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em;';
+          phrase.innerHTML = `
+              <span style="color:var(--pink); flex:1;">${text}</span>
+              <button class="game-veto-remove" data-index="${i}" title="Remove" aria-label="Remove veto" style="background:none; border:none; color:rgba(255,100,100,0.5); cursor:pointer; font-size:1em; padding:0 0 0 8px; line-height:1;">&times;</button>
+          `;
+          container.appendChild(phrase);
+      });
+      // Bind remove buttons
+      container.querySelectorAll('.game-veto-remove').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const idx = parseInt(btn.dataset.index, 10);
+              state.committedVeto.splice(idx, 1);
+              rebuildVetoFromCommitted();
+              renderGameVetoPills(container); // Re-render after removal
+          });
+      });
+  }
+
+  // Render quill pills in game modal (with remove buttons)
+  function renderGameQuillPills(container) {
+      if (!container || !state.committedQuill) return;
+      container.innerHTML = '';
+      state.committedQuill.forEach((text, i) => {
+          const phrase = document.createElement('div');
+          phrase.className = 'committed-phrase quill-phrase';
+          phrase.style.cssText = 'display:flex; align-items:center; background:rgba(200,170,100,0.15); border:1px solid rgba(200,170,100,0.3); padding:4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em;';
+          phrase.innerHTML = `
+              <span style="color:var(--gold); flex:1;">${text}</span>
+              <button class="game-quill-remove" data-index="${i}" title="Remove" aria-label="Remove quill" style="background:none; border:none; color:rgba(200,170,100,0.5); cursor:pointer; font-size:1em; padding:0 0 0 8px; line-height:1;">&times;</button>
+          `;
+          container.appendChild(phrase);
+      });
+      // Bind remove buttons
+      container.querySelectorAll('.game-quill-remove').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const idx = parseInt(btn.dataset.index, 10);
+              state.committedQuill.splice(idx, 1);
+              // Sync quillIntent to most recent (or clear if none)
+              state.quillIntent = state.committedQuill.length > 0 ? state.committedQuill[state.committedQuill.length - 1] : '';
+              renderGameQuillPills(container); // Re-render after removal
+          });
+      });
   }
 
   // Rebuild veto state from committed phrases
@@ -12531,12 +12668,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   // Global overlay for anchored sparkles (fixed positioning, updated per-frame)
+  // z-index: 2500 — below modals (3000+) but above page content
   function getSparkleOverlay() {
     let overlay = document.getElementById('sparkleAnchorOverlay');
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'sparkleAnchorOverlay';
-      overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:4001;overflow:visible;';
+      overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2500;overflow:visible;';
       document.body.appendChild(overlay);
     }
     return overlay;
@@ -13751,6 +13889,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (canContinueExistingStory()) {
       console.log('[STORY:CONTINUE] Shape matches — navigating to existing story');
       window.showScreen('game');
+      // Show existing story content (sets _readerPage=1 so Back goes to Cover first)
+      showReaderPage(1);
       // REBIND: Ensure FX handlers are attached after Continue Story navigation
       if (window.initFateCards) window.initFateCards();
       return;
@@ -14885,6 +15025,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // STORY TEXT READY — Signal that Scene 1 can be displayed
         // ═══════════════════════════════════════════════════════════════════════
         resolveStoryTextReady();
+
+        // Go directly to Scene 1 (skip synopsis page)
+        advanceReaderPage();
 
         // OPENING SPREAD COMPOSITION: Populate inside cover with title + synopsis
         // Page 1 (inside cover) = paper background + title + synopsis (NO image generation)
@@ -17131,15 +17274,12 @@ The final image must look like a real published novel cover — tasteful, evocat
           }
 
           // ═══════════════════════════════════════════════════════════════
-          // STEP 2: Populate synopsis in Scene 1 (uses _synopsisMetadata)
+          // STEP 2: Synopsis HIDDEN — linear flow goes directly to prose
+          // Synopsis data remains in state for future reference if needed
           // ═══════════════════════════════════════════════════════════════
-          if (page === 1) {
-              const sceneSynopsis = document.getElementById('sceneSynopsis');
-              const synopsis = state._synopsisMetadata || state.story?.synopsis || '';
-              if (sceneSynopsis && synopsis) {
-                  sceneSynopsis.textContent = synopsis;
-                  sceneSynopsis.classList.remove('hidden');
-              }
+          const sceneSynopsis = document.getElementById('sceneSynopsis');
+          if (sceneSynopsis) {
+              sceneSynopsis.classList.add('hidden');
           }
 
           // ═══════════════════════════════════════════════════════════════
@@ -17150,7 +17290,7 @@ The final image must look like a real published novel cover — tasteful, evocat
               settingPlate.classList.add('hidden');
           }
 
-          console.log('[READER] Page 1+: SCENE (Title → Synopsis → Prose)');
+          console.log('[READER] Page 1+: SCENE (Title → Prose, synopsis hidden)');
       }
   }
 
@@ -17707,6 +17847,7 @@ Return only the visual description.`;
   function buildSceneVisualizePrompt(lastText, anchorText) {
       const intensityBias = getVisualizeIntensityBias();
       const worldToneBias = getVisualizeWorldToneBias();
+      const ontologyDirective = getVisualOntologyDirective();
       const sceneSignals = getSceneVisualSignals(lastText);
       const sceneCtx = sceneSignals.length ? '- ' + sceneSignals.join('\n- ') : '- No additional scene constraints';
       const focusDirective = resolveVisualFocus(lastText);
@@ -17714,7 +17855,7 @@ Return only the visual description.`;
       const lightingCondition = resolveLightingCondition(lastText);
       const compositionDensity = resolveCompositionDensity(lastText);
 
-      return `${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nCAMERA DISTANCE:\n- ${cameraDistance}\n\nLIGHTING:\n- ${lightingCondition}\n\nCOMPOSITION:\n- ${compositionDensity}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`;
+      return `${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\n${ontologyDirective}\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nCAMERA DISTANCE:\n- ${cameraDistance}\n\nLIGHTING:\n- ${lightingCondition}\n\nCOMPOSITION:\n- ${compositionDensity}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`;
   }
 
   function buildVisualizePrompt({ mode, lastText, anchorText }) {
@@ -18079,7 +18220,22 @@ CORE RULES:
    - Unease → off-balance framing, negative space
    - Avoid bright stock-photo palettes
 
-PROMPT PRIORITY ORDER: Emotional state → Spatial tension → Lighting → Environment → Character presence (secondary)
+6. SCENE FIDELITY (SOFT) - Prefer to visualize only characters and interactions explicitly present or clearly implied by the scene text.
+   - If protagonist is alone → default to isolation, vigilance, movement, or internal tension
+   - Background figures allowed only as distant, non-interactive elements when threat or surveillance is implied
+   - Prefer not to invent close companions, face-to-face interactions, or conversational pairings unless dialogue or proximity is described
+
+7. PROTAGONIST PRIORITY - The protagonist's emotional state and physical situation should dominate.
+   - Camera framing, posture, and negative space reinforce: unease, watchfulness, dread, anticipation
+   - Other figures (if any) should feel secondary, peripheral, or looming — never dominant unless text demands it
+
+8. AUTHOR PRESENCE (ENVIRONMENTAL) - The Author does not appear as a person. Author influence surfaces indirectly through:
+   - Oppressive architecture, tight framing
+   - Surveillance cues (lights, shadows, distant watchers)
+   - Environmental pressure suggesting orchestration, not companionship
+   - This should feel like fate pressing inward, not a character entering
+
+PROMPT PRIORITY ORDER: Protagonist emotional state → Direction of threat/attention → Scene accuracy → Spatial tension → Lighting → Environment → Other characters (secondary)
 
 Return ONLY the image prompt. No explanations. Under 200 characters.`;
 
@@ -18087,43 +18243,195 @@ Return ONLY the image prompt. No explanations. Under 200 characters.`;
   const SCENE_VIZ_EXCLUSIONS = 'No smiling at camera. No posed portraits. No beauty photography. No book cover composition.';
 
   // =================================================================
+  // VISUALIZER STYLE & ONTOLOGY SYSTEM (AUTHORITATIVE)
+  // Ensures visual consistency across story — no mid-story medium switches
+  // =================================================================
+
+  /**
+   * Visual ontology defaults by world type
+   * Determines whether images are photographic or illustrative
+   */
+  const WORLD_ONTOLOGY_MAP = {
+      // Photographic realism
+      'Modern Billionaire': { ontology: 'photographic', style: 'journalistic/paparazzi' },
+      'Contemporary Romance': { ontology: 'photographic', style: 'cinematic' },
+      'Noir': { ontology: 'photographic', style: 'high-contrast cinematic' },
+      'Sci-Fi Grounded': { ontology: 'photographic', style: 'cinematic realism' },
+      // Illustration / Painterly
+      'Fantasy Dark': { ontology: 'illustration', style: 'painterly epic fantasy' },
+      'Fantasy Power': { ontology: 'illustration', style: 'painterly epic fantasy' },
+      'Fantasy Romantic': { ontology: 'illustration', style: 'soft painterly fantasy' },
+      'Fantasy Enchanted': { ontology: 'illustration', style: 'soft painterly fantasy' },
+      'Sci-Fi Stylized': { ontology: 'illustration', style: 'high-concept illustration' },
+      'Satirical': { ontology: 'illustration', style: 'editorial illustration' }
+  };
+
+  /**
+   * Tone-based style overrides
+   * Some tones force specific visual treatments regardless of world
+   */
+  const TONE_STYLE_OVERRIDES = {
+      'Wry Confessional': {
+          override: true,
+          ontology: 'illustration',
+          style: 'New Yorker–style cartoon, sparse linework, minimal color, emotional understatement',
+          captionRequired: true,
+          captionRules: 'Caption REQUIRED. AI-authored. Clever, opaque, understated, emotionally undercutting. NEVER literally describes the image.'
+      },
+      'Comedic': {
+          override: false, // Preserves world ontology
+          styleModifier: 'caricature distortion — exaggerated heads, faces, posture, proportions. Preserve realistic lighting/textures. Not Pixar, not filters.',
+          arousalNote: 'Higher arousal → more absurd exaggeration, not sexiness'
+      }
+  };
+
+  /**
+   * Resolve visual ontology and style for current story
+   * @returns {Object} { ontology, style, captionRequired, captionRules, arousalNote }
+   */
+  function resolveVisualStyle() {
+      const world = state.picks?.world || '';
+      const tone = state.picks?.tone || '';
+
+      // Check for tone override first (Wry Confessional forces illustration)
+      const toneOverride = TONE_STYLE_OVERRIDES[tone];
+      if (toneOverride?.override) {
+          return {
+              ontology: toneOverride.ontology,
+              style: toneOverride.style,
+              captionRequired: toneOverride.captionRequired || false,
+              captionRules: toneOverride.captionRules || '',
+              arousalNote: '',
+              lockExclusive: true // Prevents additional modifiers
+          };
+      }
+
+      // Resolve base ontology from world (explicit, no fuzzy matching)
+      const baseOntology = WORLD_ONTOLOGY_MAP[world]
+          || { ontology: 'photographic', style: 'cinematic' }; // Safe default
+
+      // Apply tone modifier if present (Comedic adds caricature to existing ontology)
+      let finalStyle = baseOntology.style;
+      let arousalNote = '';
+      if (toneOverride?.styleModifier) {
+          finalStyle = `${baseOntology.style} with ${toneOverride.styleModifier}`;
+          arousalNote = toneOverride.arousalNote || '';
+      }
+
+      return {
+          ontology: baseOntology.ontology,
+          style: finalStyle,
+          captionRequired: false,
+          captionRules: '',
+          arousalNote
+      };
+  }
+
+  /**
+   * Build visual ontology directive for prompt
+   * Enforces consistency and prevents mid-story medium switches
+   */
+  function getVisualOntologyDirective() {
+      const vs = resolveVisualStyle();
+
+      let directive = `VISUAL ONTOLOGY (LOCKED): ${vs.ontology.toUpperCase()}
+STYLE: ${vs.style}
+
+CONSISTENCY RULE:
+Visual media MUST remain ${vs.ontology.toUpperCase()} for the entire story.
+Do NOT mix photography and illustration unless the user explicitly requests mixed media.
+
+Arousal may modify framing, lighting, proximity, and intensity — NEVER the medium.`;
+
+      if (vs.captionRequired) {
+          directive += `\n\n${vs.captionRules}`;
+          directive += `
+
+CAPTION REQUIREMENT:
+- Include exactly ONE caption.
+- Caption must be AI-authored.
+- Caption must be clever, opaque, and understated.
+- Caption must NOT literally describe the image.`;
+      }
+
+      if (vs.arousalNote) {
+          directive += `\n\nAROUSAL NOTE: ${vs.arousalNote}`;
+      }
+
+      if (vs.lockExclusive) {
+          directive += `
+
+STYLE LOCK:
+No additional visual style modifiers are permitted for this tone.`;
+      }
+
+      return directive;
+  }
+
+  // =================================================================
   // COVER GENERATION SYSTEM (AUTHORITATIVE)
   // Symbolic book cover - NOT scene illustration
   // Emotion > Description > Detail
   // =================================================================
-  const COVER_GENERATION_SYSTEM = `You are generating a SYMBOLIC BOOK COVER for Storybound.
-This is NOT an illustration. It evokes the emotional core and narrative arc.
+  const COVER_GENERATION_SYSTEM = `COVER GENERATION — AUTHORITATIVE RULESET
 
-MANDATORY DECISION ORDER:
+You are generating a real book jacket, not a poster, thumbnail, or product photo.
 
-1. EMOTIONAL GRAVITY (one only)
-Choose ONE: foreboding, yearning, pressure, secrecy, rebellion, inevitability, longing, tension, mystery.
-This emotion guides ALL visual decisions.
+LAYOUT & FRAMING (HARD)
+- The book cover is the primary visual element
+- It must occupy maximum vertical space before UI considerations
+- No artificial height caps that shrink the book
+- Aspect ratio 5:7 enforced after height is maximized
+- Negative space must feel intentional, textured, and jacket-like
 
-2. FOCAL ANCHOR (one only)
-Choose ONE of:
-- Meaningful object from the story
-- Partial symbol (fragment, shadow, silhouette)
-- Negative space (deliberate absence)
-NEVER: envelopes, generic roses, books, candles.
+IMAGE FIT
+- Image must be fully visible (contain-style framing)
+- No cropping of title, object, or symbolic elements
+- Letterbox space must read as book material, not empty UI
 
-3. HUMAN FIGURE (optional)
-If used: turned away, obscured, cropped, or silhouette ONLY.
-NO eye contact. NO posed portraits. NO smiles.
-If not needed: use environment, object, or light.
+OBJECT JUXTAPOSITION (CRITICAL)
+If a single object is chosen, it MUST be meaningfully altered by:
+- Transformation
+- Interference
+- Shadow
+- Damage
+- Symbolic distortion
 
-4. VISUAL RESTRAINT (apply 2+)
-- Limited palette (2-3 dominant tones)
+The juxtaposition must reinforce:
+- Theme
+- Power imbalance
+- Cost or consequence
+
+No plain untouched objects. No product photography. No stock lighting.
+
+GENRE CONSTRAINTS
+Apply juxtaposition rules appropriate to the story's genre:
+- Noir → control, secrecy, moral cost
+- Fantasy → fate, sacrifice, myth
+- Sci-Fi → surveillance, dehumanization
+- Romance → restraint, memory, longing
+
+FAIL-SOFT BEHAVIOR
+If no strong object + juxtaposition emerges:
+- Default to environment, absence, or fragmented imagery
+- Never output a clean, literal object
+
+HUMAN FIGURE (if used)
+- Turned away, obscured, cropped, or silhouette ONLY
+- NO eye contact. NO posed portraits. NO smiles.
+
+VISUAL RESTRAINT
+- Limited palette (2-3 tones)
 - Soft focus or shallow depth
-- Partial occlusion (fog, shadow, framing)
-- Asymmetry or off-center composition
-AVOID: decorative clutter, literal symbolism.
+- Asymmetry preferred
+- NO decorative clutter, literal symbolism, stock-photo lighting
 
-5. BACKGROUND (theme-derived)
-Technology → circuit abstraction, signal noise
-Oceanic → wave interference, light refraction
-Memory → fractured geometry, layered translucence
-NO art-deco default. NO ornamental patterns unless justified.
+FINAL CHECK
+If the cover could be mistaken for:
+- An ad
+- A stock photo
+- A product listing
+Then it has failed.
 
 Return ONLY the image prompt. Under 250 characters.`;
 
@@ -18132,7 +18440,9 @@ Return ONLY the image prompt. Under 250 characters.`;
   const COVER_EXCLUSIONS = `No audience-facing characters. No literal scene recreation. No generic beauty shots.
 No envelopes. No roses. No wine glasses (unless explicitly central to story).
 No ornamental curls or art-deco filigree unless narratively justified.
-No brown/cream parchment defaults. No centered-object-on-cream unless layout explicitly requires it.`;
+No brown/cream parchment defaults. No centered-object-on-cream unless layout explicitly requires it.
+No plain untouched objects — single objects MUST have juxtapositive tension (shadow, alteration, transformation).
+No product photography. No stock-photo lighting. No decorative sensuality.`;
 
   // Emotional gravity options for cover generation
   const EMOTIONAL_GRAVITY_OPTIONS = [
@@ -18974,6 +19284,12 @@ Condensed (under ${maxLength} chars):` }
           ph.style.display = 'flex';
       }
 
+      // Show generating feedback while prompt is being built
+      if (promptInput) {
+          promptInput.value = '';
+          promptInput.placeholder = 'Generating visualization prompt…';
+      }
+
       // Generate and populate prompt
       const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
       const lastText = allStoryContent.slice(-600) || "";
@@ -18991,10 +19307,16 @@ Condensed (under ${maxLength} chars):` }
               }]),
               new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
           ]);
-          if (promptInput) promptInput.value = promptMsg;
+          if (promptInput) {
+              promptInput.placeholder = 'Edit prompt or add modifiers…';
+              promptInput.value = promptMsg;
+          }
       } catch (e) {
           const fallback = "Cinematic scene, " + (state.picks?.world || 'atmospheric') + " world, natural lighting, grounded emotion.";
-          if (promptInput) promptInput.value = fallback;
+          if (promptInput) {
+              promptInput.placeholder = 'Edit prompt or add modifiers…';
+              promptInput.value = fallback;
+          }
       }
   }
 
@@ -19066,6 +19388,10 @@ Condensed (under ${maxLength} chars):` }
       // Reset modifier UI when opening modal
       resetVizModifierUI();
 
+      // Stop fate card sparkles when viz modal opens (prevent z-index bleed)
+      if (window.stopSparkleCycle) window.stopSparkleCycle();
+      if (typeof stopAmbientCardSparkles === 'function') stopAmbientCardSparkles();
+
       if(modal) modal.classList.remove('hidden');
       if(retryBtn) retryBtn.disabled = true;
       ensureLockButtonExists(); // Ensure lock button is present and updated
@@ -19111,6 +19437,12 @@ Condensed (under ${maxLength} chars):` }
           const visualizePrompt = buildVisualizePrompt({ mode: visualizeMode, lastText, anchorText });
 
           if(!isRe || !promptMsg) {
+              // Show generating feedback in textarea while prompt is being built
+              const promptInput = document.getElementById('vizPromptInput');
+              if (promptInput) {
+                  promptInput.value = '';
+                  promptInput.placeholder = 'Generating visualization prompt…';
+              }
               try {
                   promptMsg = await Promise.race([
                       callChat([{
@@ -19122,7 +19454,10 @@ Condensed (under ${maxLength} chars):` }
               } catch (e) {
                   promptMsg = "Cinematic scene, " + (state.picks?.world || 'atmospheric') + " world, natural lighting, grounded emotion.";
               }
-              document.getElementById('vizPromptInput').value = promptMsg;
+              if (promptInput) {
+                  promptInput.placeholder = 'Edit prompt or add modifiers…';
+                  promptInput.value = promptMsg;
+              }
           }
 
           // Check if cancelled during prompt generation
@@ -19946,22 +20281,40 @@ Regenerate the scene with ZERO Author presence.`;
 
   function formatStory(text, shouldEscape = false){
       const process = shouldEscape ? escapeHTML : (s => s);
+      const mode = window.state?.mode || 'solo';
+      const isMultiPlayer = (mode === 'couple' || mode === 'stranger');
+
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
-          const safe = process(p);
+          let safe = process(p);
 
-          // CORRECTIVE: Fix dialogue colorization leak
-          // Only style the quoted text itself, not the dialogue tag that follows
-          // Pattern: match "quoted text" and style only the quote
-          const formatted = safe.replace(/"([^"]*)"/g, (match, quote) => {
-              return `<span class="story-dialogue">"${quote}"</span>`;
-          });
+          if (isMultiPlayer) {
+              // COUPLE/STRANGER MODE: Use explicit player tags for dialogue styling
+              // Replace <p1>...</p1> with styled span (Player 1 color)
+              safe = safe.replace(/<p1>([\s\S]*?)<\/p1>/g, (match, content) => {
+                  return `<span class="p1-dia">${content}</span>`;
+              });
+              // Replace <p2>...</p2> with styled span (Player 2 color)
+              safe = safe.replace(/<p2>([\s\S]*?)<\/p2>/g, (match, content) => {
+                  return `<span class="p2-dia">${content}</span>`;
+              });
+              // NPC dialogue and untagged quotes remain unstyled
+              return `<p>${safe}</p>`;
+          } else {
+              // SOLO MODE: Strip any player tags (safety), apply global quote styling
+              safe = safe.replace(/<\/?p[12]>/g, '');
 
-          // If the line is entirely dialogue, use dialogue class on the paragraph
-          if(p.trim().startsWith('"') && p.trim().endsWith('"')) {
-              return `<p class="story-dialogue">${safe}</p>`;
+              // Style all quoted dialogue uniformly (existing behavior)
+              const formatted = safe.replace(/"([^"]*)"/g, (match, quote) => {
+                  return `<span class="story-dialogue">"${quote}"</span>`;
+              });
+
+              // If the line is entirely dialogue, use dialogue class on the paragraph
+              if(p.trim().startsWith('"') && p.trim().endsWith('"')) {
+                  return `<p class="story-dialogue">${safe}</p>`;
+              }
+              return `<p>${formatted}</p>`;
           }
-          return `<p>${formatted}</p>`;
       }).join('');
   }
 

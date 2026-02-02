@@ -69,14 +69,25 @@
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* LEGACY THEME SUPPORT (for gradual migration) */
-/* These still work but are discouraged - prefer paper-* classes */
+/* ═══════════════════════════════════════════════════════════════════
+   READER THEMES — Scoped to story content ONLY (does not affect UI)
+   ═══════════════════════════════════════════════════════════════════ */
+#storyContent.theme-sepia { background: #f5e6c8; color: #3e2f22; }
+#storyContent.theme-sepia #storyText, #storyContent.theme-sepia .story-page { background: #f5e6c8; color: #3e2f22; }
+#storyContent.theme-midnight { background: #111; color: #ccc; }
+#storyContent.theme-midnight #storyText, #storyContent.theme-midnight .story-page { background: #111; color: #ccc; }
+#storyContent.theme-print { background: #f8f8f8; color: #111; }
+#storyContent.theme-print #storyText, #storyContent.theme-print .story-page { background: #f8f8f8; color: #111; }
+#storyContent.theme-easy { background: #fffdd0; color: #000; }
+#storyContent.theme-easy #storyText, #storyContent.theme-easy .story-page { background: #fffdd0; color: #000; }
+
+/* LEGACY: Keep body-level themes for backwards compatibility but they are no longer applied */
 body.theme-sepia { --bg1:#2c2218; --bg2:#3e2f22; --pink:#d2b48c; --hot:#8b4513; --gold:#ffa500; --ink:#f5deb3; --panel:rgba(40,30,20,0.8); --btn-bg:#5c4033; --btn-txt:#f5deb3; }
 body.theme-midnight { --bg1:#000000; --bg2:#111111; --pink:#444; --hot:#666; --gold:#888; --ink:#ccc; --panel:rgba(20,20,20,0.9); --btn-bg:#333; --btn-txt:#aaa; }
 body.theme-print { --bg1:#e0e0e0; --bg2:#f0f0f0; --pink:#333; --hot:#000; --gold:#444; --ink:#111; --panel:rgba(255,255,255,0.95); --btn-bg:#ccc; --btn-txt:#000; }
 body.theme-easy { --bg1:#fffdd0; --bg2:#fff8c0; --pink:#333; --hot:#000; --gold:#555; --ink:#000; --panel:rgba(255,255,240,0.95); --btn-bg:#000; --btn-txt:#fff; }
 
-/* Print Fixes */
+/* Print Fixes (legacy, no longer triggered) */
 body.theme-print .fate-card h3, body.theme-easy .fate-card h3 { color: #000 !important; text-shadow: none !important; font-weight: bold; }
 body.theme-print .section-title, body.theme-easy .section-title { text-shadow: none; color: var(--hot); }
 
@@ -2292,18 +2303,24 @@ textarea.fate-field {
 
 /* ═══════════════════════════════════════════════════════════════════
    FULL-HEIGHT BOOK OBJECT — 5:7 aspect ratio, height-first sizing
-   Fills maximum available vertical space, width derived from height
+   ═══════════════════════════════════════════════════════════════════
+   LAYOUT RULE: Book cover is the PRIMARY visual. It occupies maximum
+   vertical space first. UI elements adapt around the book.
+
+   ❌ Do NOT pre-reserve space for buttons
+   ❌ Do NOT center-shrink to fit UI
+   ❌ Do NOT let UI define the book's size
+
+   If the cover feels small, the layout is wrong — not the image.
    ═══════════════════════════════════════════════════════════════════ */
 .book-object {
     position: relative;
-    /* Height-first: fill vertical space minus padding */
-    height: calc(100vh - 160px);
-    height: calc(100dvh - 160px); /* Dynamic viewport for mobile */
-    max-height: 85vh;
+    /* Height-first: maximize vertical presence, minimal nav clearance only */
+    height: min(90vh, calc(100dvh - 60px));
     /* Width derived from height to maintain 5:7 aspect ratio */
     aspect-ratio: 5 / 7;
-    /* Constrain maximum width on very tall screens */
-    max-width: min(90vw, 500px);
+    /* Allow book to be large — constrain only on ultra-wide screens */
+    max-width: min(92vw, 560px);
     transform-style: preserve-3d;
     cursor: pointer;
     animation: bookAppear 0.8s ease forwards;
@@ -2338,22 +2355,35 @@ textarea.fate-field {
 .book-cover::after {
     content: '';
     position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 30px;
-    background: linear-gradient(to left, rgba(0,0,0,0.15), transparent);
+    inset: 0;
     pointer-events: none;
-    border-radius: 0 8px 8px 0;
+    border-radius: 2px 8px 8px 2px;
+    /* Book-jacket illusion: vignette + right-edge depth */
+    background: linear-gradient(to left, rgba(0,0,0,0.12) 0%, transparent 8%);
+    box-shadow:
+        inset 0 0 50px rgba(0, 0, 0, 0.12),
+        inset 0 0 100px rgba(0, 0, 0, 0.06);
 }
 
 .book-cover-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* Preserve full cover — no cropping */
+    object-position: center;
     border-radius: 2px 8px 8px 2px;
     display: block;
     backface-visibility: hidden;
+    /* Book-jacket illusion: subtle inner shadow for pressed-in feel */
+    filter: contrast(1.02) saturate(0.97);
+}
+
+/* Container provides jacket-like background when contain leaves letterbox space */
+.book-cover {
+    background:
+        /* Paper texture grain */
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
+        /* Subtle warm-black jacket backing */
+        linear-gradient(180deg, #1a1816 0%, #0f0e0c 100%);
 }
 
 /* Neutral parchment backface — shown when cover hinges open */
@@ -3203,10 +3233,7 @@ textarea.fate-field {
         rgba(195, 160, 90, 0.88) 35%,
         rgba(180, 150, 85, 0.85) 70%,
         rgba(165, 140, 80, 0.82) 100%);
-    /* Border removed — replaced by SVG Art Deco border */
-    border: none;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    border-radius: 4px;
     padding: 24px 20px;
     /* 5:7 aspect ratio like book jacket card - width ~180px, height ~252px */
     width: 180px;
@@ -3229,6 +3256,7 @@ textarea.fate-field {
    - No curves, no florals, pure Art Deco geometry
    ═══════════════════════════════════════════════════════════════════════════ */
 .dsp-art-deco-border {
+    display: none; /* Globally hidden — clean CSS-only decoration used at all widths */
     position: absolute;
     top: -2px;
     left: -2px;
@@ -3244,6 +3272,45 @@ textarea.fate-field {
 .synopsis-panel.visible {
     opacity: 1;
     visibility: visible;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DSP DECORATIONS — CSS-only double-line frame with corner marks
+   Applied at ALL screen widths (replaces removed SVG art-deco border)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Outer border of double-line frame */
+.synopsis-panel {
+    border: 2px solid rgba(90, 70, 30, 0.5);
+    border-radius: 0; /* Sharp corners for geometric look */
+}
+
+/* Inner border of double-line frame (pressed look) */
+.synopsis-panel::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(70, 50, 20, 0.4);
+    pointer-events: none;
+    box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.2);
+}
+
+/* Corner square marks */
+.synopsis-panel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        /* Top-left corner */
+        linear-gradient(135deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 0 0,
+        /* Top-right corner */
+        linear-gradient(225deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 100% 0,
+        /* Bottom-left corner */
+        linear-gradient(45deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 0 100%,
+        /* Bottom-right corner */
+        linear-gradient(315deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 100% 100%;
+    background-size: 12px 12px;
 }
 
 .synopsis-title {
@@ -3366,6 +3433,7 @@ textarea.fate-field {
 /* Mobile: DSP pins to top of viewport, floats above content */
 /* CONSTRAINED WIDTH: Avoids overlapping back arrow / burger menu */
 @media (max-width: 1100px) {
+    /* Narrow screens: reposition to top-center, adjust sizing */
     .synopsis-panel {
         position: fixed;
         top: 52px; /* DSP: clear back arrow + breathing room */
@@ -3379,9 +3447,6 @@ textarea.fate-field {
         max-height: none;
         margin: 0;
         padding: 14px 22px;
-        /* DSP: outer border of double-line frame */
-        border: 2px solid rgba(90, 70, 30, 0.5);
-        border-radius: 0; /* Sharp corners for geometric look */
         z-index: 500;
         /* DSP: gold background */
         background: linear-gradient(180deg, #d4b36a 0%, #b8954f 100%);
@@ -3392,39 +3457,9 @@ textarea.fate-field {
         overflow: visible;
     }
 
-    /* DSP: inner border of double-line frame (pressed look) */
+    /* Narrow: tighter inner border inset */
     .synopsis-panel::before {
-        content: "";
-        position: absolute;
         inset: 5px;
-        border: 1px solid rgba(70, 50, 20, 0.4);
-        pointer-events: none;
-        /* Inner highlight for pressed effect */
-        box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.2);
-    }
-
-    /* DSP: corner square marks */
-    .synopsis-panel::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        /* Corner squares via gradient stops */
-        background:
-            /* Top-left corner */
-            linear-gradient(135deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 0 0,
-            /* Top-right corner */
-            linear-gradient(225deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 100% 0,
-            /* Bottom-left corner */
-            linear-gradient(45deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 0 100%,
-            /* Bottom-right corner */
-            linear-gradient(315deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 100% 100%;
-        background-size: 12px 12px;
-    }
-
-    /* DSP: hide SVG Art Deco ornamentation (sunburst, diamonds) */
-    .dsp-art-deco-border {
-        display: none !important;
     }
 
     /* DSP narrow-screen fix: dark text for gold background */
@@ -4489,21 +4524,22 @@ textarea.fate-field {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 .cover-view-buttons {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: center;
     align-items: center;
     gap: 12px;
-    margin-top: 30px;
+    margin-top: 16px;
     padding: 0 20px;
 }
 
 .cover-view-btn {
-    width: 100%;
-    max-width: 280px;
-    padding: 14px 24px;
-    font-size: 1.1em;
-    border-radius: 8px;
+    width: auto;
+    padding: 10px 20px;
+    font-size: 0.95em;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .cover-view-btn.setting-btn {
