@@ -69,6 +69,21 @@ let _sparkleCycleTimer = null;
 let _sparkleActiveCardId = null;
 
 function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
+    // ═══════════════════════════════════════════════════════════════════
+    // FX DEBUG: Log visibility state of all FX elements
+    // ═══════════════════════════════════════════════════════════════════
+    console.log('[FX:DEBUG] startSparkleCycle triggered', {
+        cardId,
+        cardElExists: !!cardEl,
+        cardElVisible: cardEl ? !cardEl.classList.contains('hidden') && cardEl.offsetParent !== null : false,
+        actInputExists: !!actInput,
+        actInputVisible: actInput ? !actInput.classList.contains('hidden') && actInput.offsetParent !== null : false,
+        diaInputExists: !!diaInput,
+        diaInputVisible: diaInput ? !diaInput.classList.contains('hidden') && diaInput.offsetParent !== null : false,
+        startFireflyEmanationExists: typeof window.startFireflyEmanation === 'function',
+        stopAllEmanationsExists: typeof window.stopAllEmanations === 'function'
+    });
+
     // Clear any existing cycle
     stopSparkleCycle();
     _sparkleActiveCardId = cardId;
@@ -77,18 +92,28 @@ function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
         // Check if still the active card
         if (_sparkleActiveCardId !== cardId) return;
 
-        // ON phase: start emanations
-        if (typeof stopAllEmanations === 'function') stopAllEmanations();
-        if (typeof startFireflyEmanation === 'function') {
-            startFireflyEmanation(cardEl);
-            if (actInput) startFireflyEmanation(actInput);
-            if (diaInput) startFireflyEmanation(diaInput);
+        console.log('[FX:DEBUG] runCycle executing for card:', cardId);
+
+        // ON phase: start emanations (only for valid anchors)
+        if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
+        if (typeof window.startFireflyEmanation === 'function') {
+            // Validate anchors before emission — abort if stale/removed
+            const isValidAnchor = (el) => {
+                if (!el || typeof el.getBoundingClientRect !== 'function') return false;
+                const r = el.getBoundingClientRect();
+                return r && r.width > 0 && r.height > 0;
+            };
+            if (isValidAnchor(cardEl)) window.startFireflyEmanation(cardEl);
+            if (isValidAnchor(actInput)) window.startFireflyEmanation(actInput);
+            if (isValidAnchor(diaInput)) window.startFireflyEmanation(diaInput);
+        } else {
+            console.warn('[FX:DEBUG] startFireflyEmanation not found — FX will not render');
         }
 
         // After 3s, stop emanations (OFF phase)
         _sparkleCycleTimer = setTimeout(() => {
             if (_sparkleActiveCardId !== cardId) return;
-            if (typeof stopAllEmanations === 'function') stopAllEmanations();
+            if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
 
             // After 2s OFF, repeat cycle
             _sparkleCycleTimer = setTimeout(() => {
@@ -107,11 +132,16 @@ function stopSparkleCycle() {
         _sparkleCycleTimer = null;
     }
     _sparkleActiveCardId = null;
-    if (typeof stopAllEmanations === 'function') stopAllEmanations();
+    if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
 }
 
-// Expose for external stop calls
+// ═══════════════════════════════════════════════════════════════════════════
+// GLOBAL FX FUNCTION EXPOSURE — Required for rebind across navigation
+// ═══════════════════════════════════════════════════════════════════════════
 window.stopSparkleCycle = stopSparkleCycle;
+window.startSparkleCycle = startSparkleCycle;
+window.startContinuousSparkles = startContinuousSparkles;
+window.stopContinuousSparkles = stopContinuousSparkles;
 
 function startContinuousSparkles() {
     if (_sparkleEmitterActive) return;
@@ -122,18 +152,23 @@ function startContinuousSparkles() {
         const actInput = document.getElementById('actionInput');
         if (!mount || !actInput) return;
 
+        // Validate anchor has valid dimensions before emission
+        const actRect = actInput.getBoundingClientRect();
+        if (!actRect || actRect.width === 0 || actRect.height === 0) return;
+
         // reuse existing golden flow if present
         const selected = mount.querySelector('.fate-card.selected');
         if (selected) {
-if (typeof triggerGoldenFlow === 'function') {
-    triggerGoldenFlow(selected, actInput);
-} else {
-    selected.classList.add('fate-glow');
-    actInput.classList.add('fate-glow');
-}
+            // Validate selected card has valid dimensions
+            const selRect = selected.getBoundingClientRect();
+            if (!selRect || selRect.width === 0 || selRect.height === 0) return;
 
-}
-}, 600);
+            if (typeof window.triggerGoldenFlow === 'function') {
+                window.triggerGoldenFlow(selected, actInput);
+            }
+            // NOTE: Removed fate-glow fallback — was masking flip/sparkle layers
+        }
+    }, 600);
 }
 
 function stopContinuousSparkles() {
@@ -154,7 +189,7 @@ function stopContinuousSparkles() {
         { id: 'temptation', title: 'Temptation', desc: 'A sudden, overwhelming urge.', actionTemplate: 'You feel drawn to something you know you shouldn\'t want.', dialogueTemplate: '"I shouldn\'t want this..."' },
         { id: 'confession', title: 'Confession', desc: 'A secret spills out.', actionTemplate: 'The truth rises to your lips.', dialogueTemplate: '"There\'s something I need to tell you."' },
         { id: 'boundary', title: 'Boundary', desc: 'A line is drawn or crossed.', actionTemplate: 'You decide whether to stop or go further.', dialogueTemplate: '"Wait." / "Don\'t stop."' },
-        { id: 'power', title: 'Power Shift', desc: 'Control changes hands.', actionTemplate: 'You take control, or yield it willingly.', dialogueTemplate: '"Look at me."' },
+        { id: 'reversal', title: 'Reversal', desc: 'Control changes hands.', actionTemplate: 'You take control, or yield it willingly.', dialogueTemplate: '"Look at me."' },
         { id: 'silence', title: 'Silence', desc: 'Words fail. Actions speak.', actionTemplate: 'You let the moment breathe without words.', dialogueTemplate: '(Silence speaks louder)' }
     ];
 
@@ -389,8 +424,8 @@ function stopContinuousSparkles() {
                 return getConfessionOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
             case 'boundary':
                 return getBoundaryOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
-            case 'power':
-                return getPowerOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
+            case 'reversal':
+                return getReversalOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
             case 'silence':
                 return getSilenceOptions(ctx, locationPhrase, objectPhrase, tensionPhrase);
             default:
@@ -576,7 +611,7 @@ function stopContinuousSparkles() {
         };
     }
 
-    function getPowerOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+    function getReversalOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
         const { isSetup, liIntroduced, liName, lastEmotionalBeat, presentCharacters } = ctx;
 
         if (isSetup || !liIntroduced) {
@@ -728,10 +763,30 @@ function stopContinuousSparkles() {
     const fateDeck = fateDeckBase;
 
     // --- Surgical glue: minimal shared helpers / guards ---
+    // NOTE: These flags are now resettable via resetFateBindFlags() for rebind support
     let _commitHooksBound = false;
     let _inputsBound = false;
     let _allFlipped = false;
     let _pendingApplyTimer = null;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // REBIND SUPPORT: Reset bind flags to allow re-initialization
+    // ═══════════════════════════════════════════════════════════════════════════
+    function resetFateBindFlags() {
+        _commitHooksBound = false;
+        _inputsBound = false;
+        _allFlipped = false;
+        if (_pendingApplyTimer) {
+            clearTimeout(_pendingApplyTimer);
+            _pendingApplyTimer = null;
+        }
+        // SAFETY: Clear pending sparkle timers to prevent stale emissions after navigation
+        if (window.stopSparkleCycle) window.stopSparkleCycle();
+        if (window.stopContinuousSparkles) window.stopContinuousSparkles();
+        if (window.stopAllEmanations) window.stopAllEmanations();
+        console.log('[FATE] Bind flags reset — ready for rebind');
+    }
+    window.resetFateBindFlags = resetFateBindFlags;
 
     function resolveUnlockCount(){
         // Highest priority: explicit override if app.js sets it
@@ -776,76 +831,176 @@ function stopContinuousSparkles() {
     }
 
     function startFireflyEmanation(anchorEl) {
+        // ═══════════════════════════════════════════════════════════════════
+        // ANCHOR VALIDATION: Abort if anchor is missing or has no dimensions
+        // Prevents sparkles emitting from (0,0) when element is stale/removed
+        // ═══════════════════════════════════════════════════════════════════
+        if (!anchorEl || typeof anchorEl.getBoundingClientRect !== 'function') {
+            return; // No anchor — abort silently
+        }
         var rect = anchorEl.getBoundingClientRect();
+        if (!rect || rect.width === 0 || rect.height === 0) {
+            return; // Invalid dimensions — abort silently
+        }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // PERIMETER POSITIONING: Overlay extends 16px beyond element edges
+        // Sparkles spawn on the OUTSIDE border, not inside content
+        // ═══════════════════════════════════════════════════════════════════
+        var PERIMETER_OFFSET = 8;
         var overlay = document.createElement('div');
         overlay.style.cssText =
             'position:fixed;' +
-            'left:' + rect.left + 'px;' +
-            'top:' + rect.top + 'px;' +
-            'width:' + rect.width + 'px;' +
-            'height:' + rect.height + 'px;' +
+            'left:' + (rect.left - PERIMETER_OFFSET) + 'px;' +
+            'top:' + (rect.top - PERIMETER_OFFSET) + 'px;' +
+            'width:' + (rect.width + PERIMETER_OFFSET * 2) + 'px;' +
+            'height:' + (rect.height + PERIMETER_OFFSET * 2) + 'px;' +
             'pointer-events:none;' +
             'z-index:9999;' +
-            'overflow:visible;' +
-            '-webkit-mask-image:radial-gradient(ellipse at center,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.25) 50%,rgba(0,0,0,1) 80%);' +
-            'mask-image:radial-gradient(ellipse at center,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.25) 50%,rgba(0,0,0,1) 80%);';
+            'overflow:visible;';
         document.body.appendChild(overlay);
 
-        var particleLife = 5500;
+        var VISIBLE_DURATION = 3000;  // 3s visible
+        var FADE_DURATION = 2000;     // 2s fade-out (AUTHORITATIVE: no hard cut)
         var emanDuration = 7000;
 
         var eman = { overlay: overlay, interval: null, stopTimer: null, cleanupTimer: null };
         _activeEmanations.push(eman);
 
+        // Helper: Generate perimeter position (on border, not inside)
+        // Returns { x, y, edge } where edge indicates spawn location
+        function getPerimeterPosition(w, h) {
+            var edge = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
+            var x, y;
+            switch (edge) {
+                case 0: // Top edge
+                    x = Math.random() * w;
+                    y = -4 + Math.random() * 8;
+                    break;
+                case 1: // Right edge
+                    x = w - 4 + Math.random() * 8;
+                    y = Math.random() * h;
+                    break;
+                case 2: // Bottom edge
+                    x = Math.random() * w;
+                    y = h - 4 + Math.random() * 8;
+                    break;
+                case 3: // Left edge
+                    x = -4 + Math.random() * 8;
+                    y = Math.random() * h;
+                    break;
+            }
+            return { x: x, y: y, edge: edge };
+        }
+
+        // Helper: Calculate radially outward velocity based on spawn edge
+        // Particles burst gently away from element into surrounding space
+        function getOutwardVelocity(edge) {
+            var baseSpeed = 15 + Math.random() * 25; // Velocity magnitude with randomness
+            var spread = (Math.random() - 0.5) * 20; // Cross-axis spread for scattered feel
+            var dx, dy;
+            switch (edge) {
+                case 0: // Top edge → emit upward
+                    dx = spread;
+                    dy = -baseSpeed;
+                    break;
+                case 1: // Right edge → emit rightward
+                    dx = baseSpeed;
+                    dy = spread;
+                    break;
+                case 2: // Bottom edge → emit downward
+                    dx = spread;
+                    dy = baseSpeed;
+                    break;
+                case 3: // Left edge → emit leftward
+                    dx = -baseSpeed;
+                    dy = spread;
+                    break;
+            }
+            return { dx: dx, dy: dy };
+        }
+
         eman.interval = setInterval(function () {
             var ct = 3 + Math.floor(Math.random() * 3);
+            var overlayW = rect.width + PERIMETER_OFFSET * 2;
+            var overlayH = rect.height + PERIMETER_OFFSET * 2;
+
             for (var j = 0; j < ct; j++) {
                 var size = 3 + Math.random() * 4;
-                var dur = 4000 + Math.random() * 2500;
-                var dx = (Math.random() - 0.5) * 50;
-                var dy = -(20 + Math.random() * 45);
-                var startX = Math.random() * 100;
-                var startY = Math.random() * 100;
-                var opacity = 0.5 + Math.random() * 0.4;
+                var pos = getPerimeterPosition(overlayW, overlayH);
+                var vel = getOutwardVelocity(pos.edge); // Radially outward based on spawn edge
+                var dx = vel.dx;
+                var dy = vel.dy;
+                var peakOpacity = 0.5 + Math.random() * 0.4;
+
                 var p = document.createElement('div');
                 p.style.cssText =
                     'position:absolute;' +
-                    'left:' + startX + '%;' +
-                    'top:' + startY + '%;' +
+                    'left:' + pos.x + 'px;' +
+                    'top:' + pos.y + 'px;' +
                     'width:' + size + 'px;' +
                     'height:' + size + 'px;' +
                     'border-radius:50%;' +
                     'background:radial-gradient(circle,rgba(255,235,150,0.95),rgba(255,215,0,0.6));' +
                     'box-shadow:0 0 8px rgba(255,215,0,0.7);' +
                     'opacity:0;' +
-                    'animation:fate-firefly ' + dur + 'ms ease-in-out forwards;' +
+                    'transition:opacity ' + FADE_DURATION + 'ms ease-out;' +
+                    'animation:fate-firefly ' + VISIBLE_DURATION + 'ms ease-in-out forwards;' +
                     '--ff-dx:' + dx + 'px;' +
                     '--ff-dy:' + dy + 'px;' +
-                    '--ff-opacity:' + opacity + ';';
+                    '--ff-opacity:' + peakOpacity + ';';
                 overlay.appendChild(p);
-                (function (el, life) {
-                    setTimeout(function () { if (el.parentNode) el.remove(); }, life);
-                })(p, dur + 100);
+
+                // ═══════════════════════════════════════════════════════════════
+                // FADE-OUT: After 3s visible, fade to 0 over 2s, then remove
+                // Total particle lifetime: 5s (no hard cut)
+                // ═══════════════════════════════════════════════════════════════
+                (function (el) {
+                    // Start fade after visible duration
+                    setTimeout(function () {
+                        el.style.opacity = '0';
+                    }, VISIBLE_DURATION);
+                    // Remove after fade completes
+                    setTimeout(function () {
+                        if (el.parentNode) el.remove();
+                    }, VISIBLE_DURATION + FADE_DURATION + 100);
+                })(p);
             }
         }, 120);
 
         eman.stopTimer = setTimeout(function () {
             clearInterval(eman.interval);
+            // Allow remaining particles to fade out naturally
             eman.cleanupTimer = setTimeout(function () {
                 if (eman.overlay.parentNode) eman.overlay.remove();
                 var idx = _activeEmanations.indexOf(eman);
                 if (idx !== -1) _activeEmanations.splice(idx, 1);
-            }, particleLife + 400);
+            }, VISIBLE_DURATION + FADE_DURATION + 500);
         }, emanDuration);
     }
 
     // Golden flow animation from card to inputs - continuous gentle stream
     function triggerGoldenFlow(fromEl, toEl) {
+        console.log('[FX:DEBUG] triggerGoldenFlow called', {
+            fromElExists: !!fromEl,
+            toElExists: !!toEl,
+            fromElVisible: fromEl ? fromEl.offsetParent !== null : false,
+            toElVisible: toEl ? toEl.offsetParent !== null : false
+        });
+
         if (!fromEl || !toEl) return;
 
         const fromRect = fromEl.getBoundingClientRect();
         const toRect = toEl.getBoundingClientRect();
+
+        // ANCHOR VALIDATION: Abort if either element has no dimensions
+        if (!fromRect || fromRect.width === 0 || fromRect.height === 0) return;
+        if (!toRect || toRect.width === 0 || toRect.height === 0) return;
+
+        console.log('[FX:DEBUG] Golden flow coords', {
+            fromRect: { left: fromRect.left, top: fromRect.top, width: fromRect.width, height: fromRect.height },
+            toRect: { left: toRect.left, top: toRect.top, width: toRect.width, height: toRect.height }
+        });
 
         const startX = fromRect.left + fromRect.width / 2;
         const startY = fromRect.top + fromRect.height / 2;
@@ -1097,6 +1252,8 @@ function setSelectedState(mount, selectedCardEl){
     };
 
     window.stopAllEmanations = stopAllEmanations;
+    window.startFireflyEmanation = startFireflyEmanation;
+    window.triggerGoldenFlow = triggerGoldenFlow;
 
     window.dealFateCards = function() {
         const mount = document.getElementById('cardMount');
@@ -1167,14 +1324,20 @@ function setSelectedState(mount, selectedCardEl){
                 flipAllCards(mount);
 
                 // Locked cards trigger paywall and do not select
-                // Use canonical eligibility check for correct paywall mode
+                // NOTE: Subscribers should never hit this — entitlement system unlocks cards for them
+                // showPaywall has subscription guard as backup
                 if(card.classList.contains('locked')) {
+                    const st = window.state || {};
+                    // SUBSCRIPTION SHORT-CIRCUIT: Subscribers bypass paywall
+                    if (st.subscribed) {
+                        // Should not happen — card should be unlocked for subscribers
+                        console.warn('[FATECARDS] Locked card clicked by subscriber — entitlement issue');
+                        return;
+                    }
                     if(window.showPaywall) {
-                        const st = window.state || {};
-                        const requiresSubOnly = (st.intensity === 'Dirty') ||
-                                                (st.storyLength === 'soulmates') ||
-                                                (st.storyLength === 'affair');
-                        window.showPaywall(requiresSubOnly ? 'sub_only' : 'unlock');
+                        // CANONICAL: Use story metadata for paywall mode (persisted, immutable per-story)
+                        const mode = typeof window.getPaywallMode === 'function' ? window.getPaywallMode() : 'sub_only';
+                        window.showPaywall(mode);
                     }
                     return;
                 }
@@ -1211,10 +1374,142 @@ function setSelectedState(mount, selectedCardEl){
         // Bind commitment triggers once (safe no-op if elements missing)
         bindCommitHooks(mount);
         bindInputCommit(mount);
+
+        console.log('[FATE] dealFateCards complete — cards bound');
     };
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CENTRALIZED FATE CARD INITIALIZATION — IDEMPOTENT REBIND
+    // ═══════════════════════════════════════════════════════════════════════════
+    // This function MUST be called on every reader mount to ensure:
+    // - Click handlers are attached
+    // - Flip animations work
+    // - Sparkle/firefly/glow FX work
+    //
+    // Safe to call multiple times — resets bind flags before rebinding.
+    // ═══════════════════════════════════════════════════════════════════════════
+    window.initFateCards = function() {
+        console.log('[FATE] initFateCards called');
+
+        const mount = document.getElementById('cardMount');
+        if (!mount) {
+            console.log('[FATE] No cardMount found — skipping');
+            return;
+        }
+
+        // Check if cards already exist with handlers
+        const existingCards = mount.querySelectorAll('.fate-card');
+        const hasCards = existingCards.length > 0;
+
+        // Reset bind flags to ensure fresh bindings
+        resetFateBindFlags();
+
+        // Verify FX functions are globally accessible
+        const fxStatus = {
+            startSparkleCycle: typeof window.startSparkleCycle === 'function',
+            stopSparkleCycle: typeof window.stopSparkleCycle === 'function',
+            startFireflyEmanation: typeof window.startFireflyEmanation === 'function',
+            stopAllEmanations: typeof window.stopAllEmanations === 'function',
+            triggerGoldenFlow: typeof window.triggerGoldenFlow === 'function',
+            startContinuousSparkles: typeof window.startContinuousSparkles === 'function',
+            stopContinuousSparkles: typeof window.stopContinuousSparkles === 'function'
+        };
+        console.log('[FATE] FX functions status:', fxStatus);
+
+        // If cards exist, rebind handlers without clearing DOM
+        if (hasCards && window.state && window.state.fateOptions) {
+            console.log('[FATE] Rebinding existing cards');
+            rebindExistingFateCards(mount);
+        } else if (window.dealFateCards) {
+            // No cards or no state — deal fresh
+            console.log('[FATE] Dealing fresh cards');
+            window.dealFateCards();
+        }
+
+        console.log('[FATE] initFateCards bound');
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // REBIND EXISTING FATE CARDS — Attach handlers without recreating DOM
+    // ═══════════════════════════════════════════════════════════════════════════
+    function rebindExistingFateCards(mount) {
+        const cards = mount.querySelectorAll('.fate-card');
+        const fateOptions = window.state.fateOptions || [];
+
+        cards.forEach((card, i) => {
+            const data = fateOptions[i];
+            if (!data) return;
+
+            // Remove old handler and add new one
+            card.onclick = () => {
+                console.log('[FATE] card clicked:', data.id);
+
+                // If already committed, ignore all clicks
+                if (window.state && window.state.fateCommitted) return;
+
+                // Block clicks while paywall is visible
+                const payModal = document.getElementById('payModal');
+                if (payModal && !payModal.classList.contains('hidden')) return;
+
+                // First interaction flips all 5 at once
+                flipAllCards(mount);
+
+                // Locked cards trigger paywall and do not select
+                if (card.classList.contains('locked')) {
+                    const st = window.state || {};
+                    if (st.subscribed) {
+                        console.warn('[FATECARDS] Locked card clicked by subscriber — entitlement issue');
+                        return;
+                    }
+                    if (window.showPaywall) {
+                        // CANONICAL: Use story metadata for paywall mode (persisted, immutable per-story)
+                        const mode = typeof window.getPaywallMode === 'function' ? window.getPaywallMode() : 'sub_only';
+                        window.showPaywall(mode);
+                    }
+                    return;
+                }
+
+                // Selecting a different unlocked card wipes/replaces suggestions
+                setSelectedState(mount, card);
+                clearPendingTimer();
+
+                // Cancel any prior sparkle cycle, then start new cycle
+                if (window.stopSparkleCycle) window.stopSparkleCycle();
+
+                // Trigger golden flow animations to inputs
+                const actInput = document.getElementById('actionInput');
+                const diaInput = document.getElementById('dialogueInput');
+
+                // Start sparkle cycle (3s ON, 2s OFF) on card + inputs
+                console.log('[FATE] sparkle FX triggered');
+                if (window.startSparkleCycle) window.startSparkleCycle(data.id, card, actInput, diaInput);
+                if (actInput && window.triggerGoldenFlow) window.triggerGoldenFlow(card, actInput);
+                setTimeout(() => {
+                    if (diaInput && window.triggerGoldenFlow) window.triggerGoldenFlow(card, diaInput);
+                }, 150);
+
+                // Apply content to inputs after animation delay
+                _pendingApplyTimer = setTimeout(() => {
+                    if (actInput) actInput.value = data.action;
+                    if (diaInput) diaInput.value = data.dialogue;
+                }, 600);
+            };
+        });
+
+        // Rebind commit hooks
+        bindCommitHooks(mount);
+        bindInputCommit(mount);
+
+        console.log('[FATE] Existing cards rebound:', cards.length);
+    }
+
 })(window);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DOM READY INITIALIZATION
+// ═══════════════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[FATE] DOMContentLoaded — initializing');
     if (typeof window.initCards === 'function') {
         window.initCards();
     }

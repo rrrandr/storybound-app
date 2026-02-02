@@ -1189,12 +1189,135 @@ export default async function handler(req, res) {
     archetype,
     arousal,
     world,
-    era
+    era,
+    // Minimal Cover v1 quarantine flag
+    _minimalV1
   } = req.body;
 
   if (!prompt) {
     return res.status(400).json({ error: 'Prompt required' });
   }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 🔴 MINIMAL COVER v1 QUARANTINE — BACKEND BYPASS
+  // When _minimalV1 is true, skip ALL enhancement layers
+  // Pass prompt directly to OpenAI with no modifications
+  // ═══════════════════════════════════════════════════════════════════
+  if (_minimalV1) {
+    console.log('[IMAGE:v1] MINIMAL COVER v1 — ALL backend enhancement bypassed');
+    console.log('[IMAGE:v1] Raw prompt (first 100 chars):', prompt.substring(0, 100));
+
+    // Direct call to OpenAI — no enhancement, no wrapping, no layers
+    try {
+      const openaiSize = mapToOpenAISize(size, imageIntent);
+      const model = 'gpt-image-1'; // Use base model for minimal path
+
+      // DIAGNOSTIC: Confirm request reaches OpenAI
+      console.log('[IMAGE:v1] Sending request to OpenAI Images API');
+
+      const openaiRes = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model,
+          prompt: prompt, // RAW prompt — no modification
+          n: 1,
+          size: openaiSize
+        })
+      });
+
+      // DIAGNOSTIC: Confirm OpenAI responds
+      console.log('[IMAGE:v1] OpenAI response status:', openaiRes.status);
+
+      const openaiData = await openaiRes.json();
+
+      // DIAGNOSTIC: Confirm response shape
+      console.log('[IMAGE:v1] OpenAI response keys:', Object.keys(openaiData));
+      if (openaiData.error) {
+        console.log('[IMAGE:v1] OpenAI ERROR:', openaiData.error.message || openaiData.error);
+      }
+
+      if (!openaiRes.ok) {
+        console.error('[IMAGE:v1] OpenAI error:', openaiData.error?.message || openaiData);
+        return res.status(openaiRes.status).json({
+          error: openaiData.error?.message || 'OpenAI API error',
+          _minimalV1: true,
+          diagnostics: {
+            requestSent: true,
+            openaiStatus: openaiRes.status,
+            hasDataArray: Array.isArray(openaiData?.data),
+            hasImage: Boolean(openaiData?.data?.[0]),
+            hasUrl: Boolean(openaiData?.data?.[0]?.url),
+            hasBase64: Boolean(openaiData?.data?.[0]?.b64_json),
+            error: openaiData?.error?.message || null
+          }
+        });
+      }
+
+      let imageUrl = openaiData.data?.[0]?.url || null;
+
+      if (!imageUrl && openaiData.data?.[0]?.b64_json) {
+        imageUrl = `data:image/png;base64,${openaiData.data[0].b64_json}`;
+      }
+
+      if (!imageUrl) {
+        console.error('[IMAGE:v1] No image in response');
+        return res.status(500).json({
+          error: 'No image generated',
+          _minimalV1: true,
+          diagnostics: {
+            requestSent: true,
+            openaiStatus: openaiRes.status,
+            hasDataArray: Array.isArray(openaiData?.data),
+            hasImage: Boolean(openaiData?.data?.[0]),
+            hasUrl: Boolean(openaiData?.data?.[0]?.url),
+            hasBase64: Boolean(openaiData?.data?.[0]?.b64_json),
+            error: null
+          }
+        });
+      }
+
+      console.log('[IMAGE:v1] SUCCESS — Image generated');
+      return res.status(200).json({
+        url: imageUrl,
+        provider: 'OpenAI',
+        model,
+        intent: imageIntent,
+        _minimalV1: true,
+        diagnostics: {
+          requestSent: true,
+          openaiStatus: openaiRes.status,
+          hasDataArray: Array.isArray(openaiData?.data),
+          hasImage: Boolean(openaiData?.data?.[0]),
+          hasUrl: Boolean(openaiData?.data?.[0]?.url),
+          hasBase64: Boolean(openaiData?.data?.[0]?.b64_json),
+          error: null
+        }
+      });
+
+    } catch (err) {
+      console.error('[IMAGE:v1] Error:', err.message);
+      return res.status(500).json({
+        error: err.message,
+        _minimalV1: true,
+        diagnostics: {
+          requestSent: false,
+          openaiStatus: null,
+          hasDataArray: false,
+          hasImage: false,
+          hasUrl: false,
+          hasBase64: false,
+          error: err.message
+        }
+      });
+    }
+  }
+  // ═══════════════════════════════════════════════════════════════════
+  // LEGACY COVER SYSTEM BELOW — QUARANTINED (does not execute when v1)
+  // ═══════════════════════════════════════════════════════════════════
 
   // Apply intent-specific prompt wrapping
   // Phase 2b: Book covers route through dispatchCoverPrompt (canonical path preserved)

@@ -125,6 +125,20 @@ body.night-mode .story-pages-container {
 .hidden { display:none !important; }
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
 
+/* STORYPASS DISABLED STATE (Dirty intensity) */
+#optUnlock.storypass-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    cursor: not-allowed;
+    border-color: #555 !important;
+}
+#optUnlock.storypass-disabled h4 { color: #777 !important; }
+#optUnlock.storypass-disabled button {
+    background: #444 !important;
+    color: #777 !important;
+    cursor: not-allowed;
+}
+
 /* TYPOGRAPHY */
 h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !important; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
 .section-title { font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
@@ -971,7 +985,8 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 #burgerBtn { position:fixed; top:15px; right:15px; z-index:5000; font-size:1.8em; background:none; border:none; color:var(--pink); padding:0; cursor:pointer; text-shadow: 0 0 5px var(--hot); box-shadow:none; }
 #burgerBtn:hover { transform: scale(1.1); box-shadow:none; }
 
-/* VISUALIZE MODAL */
+/* VISUALIZE MODAL — z-index above sparkles (5000) */
+#vizModal { z-index: 6000; }
 .viz-modal-content { text-align: center; max-width: 650px; width: 95%; max-height:95vh; overflow-y:auto; }
 .viz-controls { display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap; }
 #vizPreviewImg { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 400px; object-fit: contain; background:#000; min-height:200px; display:none; }
@@ -2058,12 +2073,9 @@ textarea.fate-field {
     background: linear-gradient(135deg, #151515, #1a1a1a);
 }
 
-/* Loading State */
+/* Loading State — DECOMMISSIONED: No loading bar for covers */
 .cover-loading {
-    text-align: center;
-    max-width: 400px;
-    width: 100%;
-    position: relative;
+    display: none !important; /* Loading feedback is implicit (image appearance only) */
 }
 
 .cover-progress-bar {
@@ -2278,10 +2290,20 @@ textarea.fate-field {
    PHYSICAL BOOK OBJECT - 3D book with hinge, thickness, shadows
    ═══════════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════════
+   FULL-HEIGHT BOOK OBJECT — 5:7 aspect ratio, height-first sizing
+   Fills maximum available vertical space, width derived from height
+   ═══════════════════════════════════════════════════════════════════ */
 .book-object {
     position: relative;
-    width: 320px;
-    height: 480px;
+    /* Height-first: fill vertical space minus padding */
+    height: calc(100vh - 160px);
+    height: calc(100dvh - 160px); /* Dynamic viewport for mobile */
+    max-height: 85vh;
+    /* Width derived from height to maintain 5:7 aspect ratio */
+    aspect-ratio: 5 / 7;
+    /* Constrain maximum width on very tall screens */
+    max-width: min(90vw, 500px);
     transform-style: preserve-3d;
     cursor: pointer;
     animation: bookAppear 0.8s ease forwards;
@@ -2352,84 +2374,144 @@ textarea.fate-field {
    COVER ART LAYERS — fallback, erotic border, keyhole takeover
    ═══════════════════════════════════════════════════════════════════ */
 
-/* --- Layer 0: Fallback cover (deterministic SVG motif) --- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   FALLBACK COVER — Intentional Empty-State Design
+   ═══════════════════════════════════════════════════════════════════════════
+   Shown when cover image is null/loading/failed. NEVER blocks progression.
+   Design: Textured background, thin gold Art Deco border, title + author,
+   faint embossed symbolic watermark. No error messaging, no placeholders.
+   ═══════════════════════════════════════════════════════════════════════════ */
 .cover-fallback {
     position: absolute;
     inset: 0;
     z-index: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     border-radius: 2px 8px 8px 2px;
-    background: var(--fb-bg, #0a0a0a);
+    /* Rich textured background — dark with subtle warmth */
+    background:
+        /* Paper texture grain (inline SVG noise) */
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+        /* Warm vignette gradient */
+        radial-gradient(ellipse at center, rgba(30, 25, 20, 0.95) 0%, rgba(12, 10, 8, 1) 100%);
+    background-blend-mode: soft-light, normal;
     overflow: hidden;
     backface-visibility: hidden;
+    color: #b9995a;
 }
 .cover-fallback.hidden { display: none; }
 
-.cover-fallback svg {
-    width: 45%;
-    height: auto;
-    opacity: 0.85;
-    filter: drop-shadow(0 0 18px var(--fb-accent, #d4af37));
-    margin-bottom: 18%;
-}
-
-/* Fallback cover title — engraved Art Deco cartouche */
-.cover-fallback-title {
+/* Art Deco border frame */
+.cover-fallback .fallback-border {
     position: absolute;
-    bottom: 10%;
-    left: 8%;
-    right: 8%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    color: #b9995a;
+    opacity: 0.6;
     pointer-events: none;
 }
-.cover-fallback-title-text {
-    font-family: var(--font-story, Georgia, serif);
-    font-size: 0.85em;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    text-align: center;
-    line-height: 1.35;
-    text-shadow:
-        0 1px 0 rgba(0,0,0,0.8),
-        0 -1px 0 rgba(255,255,255,0.06),
-        0 0 12px currentColor;
-    opacity: 0.8;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+
+/* Embossed watermark — faint symbolic key */
+.cover-fallback .fallback-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    width: 28%;
+    max-width: 100px;
+    opacity: 0.06;
+    pointer-events: none;
 }
-.cover-fallback-author {
-    font-family: var(--font-story, Georgia, serif);
-    font-size: 0.6em;
-    font-variant: small-caps;
-    letter-spacing: 0.22em;
-    text-align: center;
-    opacity: 0.5;
-    margin-top: 2px;
-}
-.cover-fallback-title-rule {
-    display: block;
-    width: 60%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, currentColor, transparent);
-    opacity: 0.4;
+.cover-fallback .fallback-watermark svg {
+    width: 100%;
+    height: auto;
+    color: #d4af37;
+    filter: none;
 }
 
-/* Subtle texture overlay on fallback */
+/* Title text — elegant embossed gold, scales with full-height cover */
+.cover-fallback .fallback-title {
+    position: absolute;
+    /* Positioned to allow 2-line titles without clipping */
+    bottom: 18%;
+    left: 8%;
+    right: 8%;
+    /* Explicit height constraint to prevent overflow from parent's hidden */
+    max-height: 25%;
+    font-family: var(--font-story, Georgia, serif);
+    /* Responsive font size based on container height */
+    font-size: clamp(0.85em, 2.2cqh, 1.3em);
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.4;
+    color: #d4af37;
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.9),
+        0 -1px 0 rgba(255, 255, 255, 0.04);
+    /* Embossed metallic gradient */
+    background: linear-gradient(180deg, #e8d5a0 0%, #c4a860 40%, #9a7d35 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    /* Allow wrapping, prevent overflow */
+    overflow: hidden;
+    word-wrap: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Author line — subtle, elegant */
+.cover-fallback .fallback-author {
+    position: absolute;
+    bottom: 14%;
+    left: 14%;
+    right: 14%;
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 0.65em;
+    font-style: italic;
+    font-variant: small-caps;
+    letter-spacing: 0.18em;
+    text-align: center;
+    color: #8a7a5a;
+    opacity: 0.75;
+}
+
+/* Subtle inner glow and vignette overlay */
 .cover-fallback::after {
     content: '';
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.04) 0%, transparent 60%),
-        radial-gradient(ellipse at 70% 80%, rgba(255,255,255,0.03) 0%, transparent 50%);
+        /* Soft warm glow at center */
+        radial-gradient(ellipse at 50% 45%, rgba(212, 175, 55, 0.025) 0%, transparent 45%),
+        /* Darker vignette at edges */
+        radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.5) 100%);
     pointer-events: none;
+}
+
+/* Responsive adjustments for narrow screens */
+@media (max-width: 400px) {
+    .cover-fallback .fallback-title {
+        font-size: clamp(0.7em, 1.8cqh, 0.95em);
+        letter-spacing: 0.05em;
+        bottom: 16%;
+        left: 6%;
+        right: 6%;
+        max-height: 28%;
+    }
+    .cover-fallback .fallback-author {
+        font-size: 0.55em;
+        bottom: 12%;
+    }
+    .cover-fallback .fallback-watermark {
+        width: 24%;
+    }
 }
 
 /* --- Layer 2: Erotic border (Art Deco SVG filigree + implements) --- */
@@ -3121,23 +3203,41 @@ textarea.fate-field {
         rgba(195, 160, 90, 0.88) 35%,
         rgba(180, 150, 85, 0.85) 70%,
         rgba(165, 140, 80, 0.82) 100%);
-    /* Art Deco border: thin, elegant, double-line effect */
-    border: 1px solid rgba(140, 110, 60, 0.6);
-    box-shadow:
-        inset 0 0 0 3px rgba(180, 145, 75, 0.3),
-        inset 0 0 0 4px rgba(120, 90, 50, 0.2),
-        0 4px 20px rgba(0, 0, 0, 0.35);
+    /* Border removed — replaced by SVG Art Deco border */
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
     border-radius: 4px;
     padding: 24px 20px;
     /* 5:7 aspect ratio like book jacket card - width ~180px, height ~252px */
     width: 180px;
     min-height: 220px;
     max-height: 280px;
-    overflow: hidden;
+    overflow: visible; /* Allow border SVG to extend slightly */
     /* Hidden by default - JS controls visibility based on scroll position */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ART DECO DSP BORDER — SVG decorative frame
+   ═══════════════════════════════════════════════════════════════════════════
+   Design: Double gold line frame with corner sunbursts and center diamonds
+   - Double outer gold lines (brushed/plated finish)
+   - Top/bottom center: small diamond where lines resolve
+   - Corners: 4 stepped angular rays pointing inward
+   - No curves, no florals, pure Art Deco geometry
+   ═══════════════════════════════════════════════════════════════════════════ */
+.dsp-art-deco-border {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* Visible state - controlled by JS when within 4-axis range */
@@ -3264,34 +3364,81 @@ textarea.fate-field {
 }
 
 /* Mobile: DSP pins to top of viewport, floats above content */
+/* CONSTRAINED WIDTH: Avoids overlapping back arrow / burger menu */
 @media (max-width: 1100px) {
     .synopsis-panel {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
+        top: 52px; /* DSP: clear back arrow + breathing room */
+        left: 50%;
+        right: auto;
         bottom: auto;
-        transform: none;
-        width: 100%;
-        max-width: none;
+        transform: translateX(-50%);
+        width: calc(100% - 140px); /* 70px clearance each side */
+        max-width: 780px;
         min-height: auto;
         max-height: none;
         margin: 0;
-        padding: 12px 20px;
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
-        border-top: none;
-        /* visibility controlled by JS via .visible class - do NOT hardcode here */
-        z-index: 500; /* Above content, below modals */
-        background: rgba(18, 8, 22, 0.97);
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+        padding: 14px 22px;
+        /* DSP: outer border of double-line frame */
+        border: 2px solid rgba(90, 70, 30, 0.5);
+        border-radius: 0; /* Sharp corners for geometric look */
+        z-index: 500;
+        /* DSP: gold background */
+        background: linear-gradient(180deg, #d4b36a 0%, #b8954f 100%);
+        /* DSP: pressed/embossed effect - no glow */
+        box-shadow:
+            inset 0 1px 0 rgba(255, 236, 180, 0.25),
+            inset 0 -1px 0 rgba(80, 60, 20, 0.35);
+        overflow: visible;
     }
 
+    /* DSP: inner border of double-line frame (pressed look) */
+    .synopsis-panel::before {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border: 1px solid rgba(70, 50, 20, 0.4);
+        pointer-events: none;
+        /* Inner highlight for pressed effect */
+        box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.2);
+    }
+
+    /* DSP: corner square marks */
+    .synopsis-panel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        /* Corner squares via gradient stops */
+        background:
+            /* Top-left corner */
+            linear-gradient(135deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 0 0,
+            /* Top-right corner */
+            linear-gradient(225deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 100% 0,
+            /* Bottom-left corner */
+            linear-gradient(45deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 0 100%,
+            /* Bottom-right corner */
+            linear-gradient(315deg, rgba(70, 50, 20, 0.5) 4px, transparent 4px) no-repeat 100% 100%;
+        background-size: 12px 12px;
+    }
+
+    /* DSP: hide SVG Art Deco ornamentation (sunburst, diamonds) */
+    .dsp-art-deco-border {
+        display: none !important;
+    }
+
+    /* DSP narrow-screen fix: dark text for gold background */
     .synopsis-text {
         font-size: 0.9em;
         text-align: center;
         line-height: 1.5;
+        color: rgba(40, 30, 20, 0.9);
+        text-shadow: 0 1px 0 rgba(255, 240, 200, 0.3);
+    }
+
+    .synopsis-title {
+        color: rgba(45, 30, 15, 0.95);
+        text-shadow: 0 1px 0 rgba(255, 240, 200, 0.35);
     }
 
     .synopsis-text span {
@@ -3301,7 +3448,60 @@ textarea.fate-field {
 
     /* Add top padding to setup screen when DSP is floating */
     #setup {
-        padding-top: 90px !important;
+        padding-top: 120px !important; /* DSP: room for repositioned panel */
+    }
+}
+
+/* Extra narrow screens — tighter constraints */
+@media (max-width: 500px) {
+    .synopsis-panel {
+        top: 48px; /* DSP: still clear nav controls */
+        width: calc(100% - 100px); /* 50px clearance each side */
+        padding: 10px 14px;
+        font-size: 0.85em;
+    }
+
+    .synopsis-panel::before {
+        inset: 4px;
+    }
+
+    .synopsis-panel::after {
+        background-size: 10px 10px; /* Smaller corner marks */
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DSP CONTAINER & FRAME — Gold background, pressed double-line border
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Base gold gradient background */
+.dsp-container {
+    background: linear-gradient(180deg, #d4b36a 0%, #b8954f 100%);
+}
+
+/* Pressed double-line rectangle frame */
+.dsp-frame {
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 236, 180, 0.25),
+        inset 0 -1px 0 rgba(120, 90, 30, 0.35);
+}
+
+.dsp-frame::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+}
+
+/* Mobile: vertical breathing room + forced gold background */
+@media (max-width: 768px) {
+    .dsp-container {
+        margin-top: 16px;
+        padding-top: 12px;
+        background: linear-gradient(180deg, #d4b36a 0%, #b8954f 100%) !important;
     }
 }
 
@@ -4133,13 +4333,13 @@ textarea.fate-field {
     inset: 0;
     overflow: visible;
     pointer-events: none;
-    z-index: 4001;
+    z-index: 2500; /* Below modals (z-index: 3000) */
 }
 
 .fate-dust-particle {
     position: absolute;
     pointer-events: none;
-    z-index: 4001;
+    z-index: 2500; /* Below modals (z-index: 3000) */
     border-radius: 50%;
     background: radial-gradient(
         circle at center,
@@ -4246,7 +4446,8 @@ textarea.fate-field {
     0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
     15%  { opacity: var(--ff-opacity, 0.3); transform: translate(calc(var(--ff-dx) * 0.1), calc(var(--ff-dy) * 0.1)) scale(1); }
     70%  { opacity: var(--ff-opacity, 0.3); transform: translate(calc(var(--ff-dx) * 0.7), calc(var(--ff-dy) * 0.7)) scale(0.8); }
-    100% { opacity: 0; transform: translate(var(--ff-dx), var(--ff-dy)) scale(0.3); }
+    /* 100%: Keep opacity at peak — JS transition handles the 2s fade-out after animation ends */
+    100% { opacity: var(--ff-opacity, 0.3); transform: translate(var(--ff-dx), var(--ff-dy)) scale(0.3); }
 }
 
 /* Fate card disintegration — radial burst on commit */
@@ -4254,6 +4455,342 @@ textarea.fate-field {
     0%   { opacity: 1; transform: translate(0, 0) scale(1); }
     50%  { opacity: 0.85; transform: translate(calc(var(--dis-x) * 0.5), calc(var(--dis-y) * 0.5)) scale(0.7); }
     100% { opacity: 0; transform: translate(var(--dis-x), var(--dis-y)) scale(0.2); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUTTON SPARKLE FX — Cover generation button (one-shot burst)
+   NOT Fate card FX — scoped to button bounds only
+   ═══════════════════════════════════════════════════════════════════ */
+
+.cover-btn-sparkle {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: radial-gradient(circle, var(--gold) 0%, #ffaa00 50%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+    /* No animation — JS handles fade via transition */
+}
+
+/* Begin Story ready state — subtle glow */
+.begin-story-ready {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.2);
+    animation: begin-story-glow 2s ease-in-out infinite;
+}
+
+@keyframes begin-story-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.2); }
+    50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* COVER VIEW BUTTONS                                                          */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.cover-view-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 30px;
+    padding: 0 20px;
+}
+
+.cover-view-btn {
+    width: 100%;
+    max-width: 280px;
+    padding: 14px 24px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cover-view-btn.setting-btn {
+    background: linear-gradient(145deg, #400020, #200010);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+}
+
+.cover-view-btn.setting-btn:hover:not(:disabled) {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.cover-view-btn.setting-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-color: #555;
+    color: #777;
+}
+
+.setting-disabled-notice {
+    font-size: 0.75em;
+    color: #888;
+    margin-top: -8px;
+}
+
+/* Premium-locked: Button remains clickable but shows it's premium */
+.cover-view-btn.setting-btn.premium-locked {
+    /* Keep full opacity - not disabled, just premium */
+    opacity: 1;
+    cursor: pointer;
+    /* Subtle indicator: Add a shimmer or icon could go here */
+}
+
+.cover-view-btn.setting-btn.premium-locked::after {
+    content: ' ✨';
+    font-size: 0.85em;
+}
+
+.cover-view-btn.begin-btn {
+    background: linear-gradient(145deg, var(--gold), #b8860b);
+    border: none;
+    color: black;
+    font-weight: bold;
+}
+
+.cover-view-btn.begin-btn:hover {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    transform: scale(1.02);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* COVER$ CREDIT DISPLAY                                                        */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+#coverCreditDisplay {
+    transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+#coverCreditDisplay.god-mode {
+    color: #b8860b;
+    font-weight: bold;
+}
+
+#coverCreditDisplay.exhausted {
+    color: var(--pink);
+    font-weight: bold;
+}
+
+/* Cover$ Purchase Modal styles */
+#coverPurchaseModal .box {
+    background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
+    border: 1px solid var(--gold);
+}
+
+#coverPurchaseModal textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* SETTING VIEW                                                                 */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.setting-view {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.98);
+    z-index: 5000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.setting-view-loading {
+    text-align: center;
+    color: var(--gold);
+}
+
+.setting-view-loading p {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
+
+.setting-progress-bar {
+    width: 200px;
+    height: 4px;
+    background: rgba(255, 215, 0, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.setting-progress-fill {
+    width: 100%;
+    height: 100%;
+    background: var(--gold);
+    animation: settingProgressFill 2s ease-in-out infinite;
+}
+
+@keyframes settingProgressFill {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(0%); }
+    100% { transform: translateX(100%); }
+}
+
+.setting-view-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+}
+
+.setting-view-image {
+    max-width: 90vw;
+    max-height: 70vh;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.setting-view-hint {
+    color: var(--gold);
+    font-size: 0.9em;
+    opacity: 0.8;
+    animation: settingHintPulse 2s ease-in-out infinite;
+}
+
+@keyframes settingHintPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.setting-back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.setting-back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Setting View Fallback — Intentional design when image fails */
+.setting-view-fallback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 40px;
+}
+.setting-view-fallback.hidden { display: none; }
+
+.setting-fallback-inner {
+    text-align: center;
+    padding: 60px 40px;
+    background:
+        radial-gradient(ellipse at center, rgba(30, 25, 20, 0.95) 0%, rgba(12, 10, 8, 0.98) 100%);
+    border: 1px solid rgba(185, 153, 90, 0.4);
+    border-radius: 12px;
+    max-width: 400px;
+}
+
+.setting-fallback-text {
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 1.3em;
+    font-style: italic;
+    color: #b9995a;
+    letter-spacing: 0.1em;
+    margin-bottom: 30px;
+    opacity: 0.9;
+}
+
+.setting-begin-btn {
+    background: linear-gradient(180deg, #d4af37 0%, #9a7d35 100%);
+    border: none;
+    color: #1a1510;
+    padding: 14px 32px;
+    font-size: 1em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.setting-begin-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* BREADCRUMB INDICATOR — Non-clickable orientation display                    */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.story-breadcrumb {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    font-size: 0.75em;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    user-select: none;
+}
+
+.breadcrumb-step {
+    color: rgba(255, 255, 255, 0.25);
+    transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.breadcrumb-step.breadcrumb-origin {
+    color: rgba(255, 215, 0, 0.35);
+}
+
+.breadcrumb-dot {
+    color: rgba(255, 215, 0, 0.4);
+    font-size: 1.2em;
+}
+
+.breadcrumb-arrow {
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 0.9em;
+}
+
+/* State: Current location — highlighted */
+.breadcrumb-step.breadcrumb-current {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+/* State: Previous steps — dimmed but visible */
+.breadcrumb-step.breadcrumb-past {
+    color: rgba(255, 215, 0, 0.5);
+}
+
+/* State: Future steps — muted outline effect */
+.breadcrumb-step.breadcrumb-future {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* Arrows between past steps are slightly more visible */
+.breadcrumb-arrow.breadcrumb-past {
+    color: rgba(255, 215, 0, 0.3);
+}
+
+/* Cover generation loading bar — animated left→right fill */
+@keyframes coverGenBarFill {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(0%); }
+    100% { transform: translateX(100%); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
