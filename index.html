@@ -331,24 +331,34 @@
   <div class="box" style="max-width:700px; text-align:center; background:#1a1a1a;">
     <h3 style="color:var(--gold); margin-bottom:20px;">Cover Gallery</h3>
 
-    <!-- Stage thumbnails row -->
-    <div id="coverStageRow" style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap; margin-bottom:20px;"></div>
+    <!-- Carousel container with nav arrows -->
+    <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:20px;">
+      <button id="btnGalleryPrev" class="small-btn" style="background:#333; padding:8px 12px; font-size:1.2em;">←</button>
 
-    <!-- Selected cover preview -->
-    <div id="coverGalleryPreview" style="margin:20px auto; max-width:280px; min-height:200px;">
+      <!-- Stage thumbnails row -->
+      <div id="coverStageRow" style="display:flex; gap:15px; justify-content:center; flex-wrap:nowrap; overflow:hidden; max-width:400px;"></div>
+
+      <button id="btnGalleryNext" class="small-btn" style="background:#333; padding:8px 12px; font-size:1.2em;">→</button>
+    </div>
+
+    <!-- Selected cover preview (NEVER empty — always image or visual placeholder) -->
+    <div id="coverGalleryPreview" style="margin:20px auto; max-width:280px; min-height:320px; position:relative;">
       <img id="coverGalleryImg" src="" alt="Cover Preview" class="hidden" style="max-width:100%; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.5);">
-      <div id="coverGalleryPlaceholder" style="height:200px; display:flex; align-items:center; justify-content:center; color:#666; border:2px dashed #444; border-radius:8px;">
-        Select a stage to preview
+      <!-- Visual placeholder with mask (shown when no cover generated) -->
+      <div id="coverGalleryPlaceholder" style="width:220px; height:300px; margin:0 auto; background:linear-gradient(145deg, #2a2a2a, #1a1a1a); border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid #333;">
+        <span id="placeholderMask" style="font-size:4em; opacity:0.4;">🎭</span>
+        <span id="placeholderLabel" style="color:#666; font-size:0.85em; margin-top:10px;">Sketch</span>
+        <span id="placeholderStatus" style="color:#555; font-size:0.75em; margin-top:5px;"></span>
       </div>
     </div>
 
     <!-- Generation status -->
     <div id="coverGalleryStatus" class="hidden" style="color:var(--gold); margin:10px 0; font-size:0.9em;"></div>
 
-    <!-- Action buttons -->
+    <!-- Action buttons (stable bottom row) -->
     <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
-      <button id="btnGalleryGenerate" class="small-btn hidden" style="background:var(--gold); color:#000;">Generate Cover</button>
-      <button id="btnGalleryPrimary" class="small-btn hidden">Select as Primary</button>
+      <button id="btnGalleryPrimary" class="small-btn" style="display:none;">Select as Primary</button>
+      <button id="btnGalleryGenerate" class="small-btn" style="background:var(--gold); color:#000; display:none;">Generate Cover</button>
       <button id="btnGalleryClose" class="small-btn" style="background:#444;">Close</button>
     </div>
   </div>

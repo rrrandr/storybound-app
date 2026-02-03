@@ -1229,7 +1229,7 @@ For veto/quill/god_mode:
           id: 'ETERNAL_FLAME',
           name: 'The Eternal Flame',
           desireStyle: 'He remembered the coffee order she\'d mentioned once, three months ago, in passing — devotion expressed in accumulated attention',
-          summary: 'The Eternal Flame endures. Love is not a feeling but a practice — patient, unwavering, burning steady when everything else has gone dark. They will wait. They will notice. They will still be there.',
+          summary: 'The coffee order she'd mentioned in passing—three months ago—was still imprinted on his memory, three reincarnations later.',
           stressFailure: 'self-neglect, moral endurance'
       }
   };
@@ -3944,6 +3944,9 @@ If you name what something IS, you have failed. Show what it COSTS.
   // Primary cover stage (which one is displayed in reader)
   let _primaryCoverStage = null;
 
+  // All navigable stages (for carousel)
+  const GALLERY_STAGES = [COVER_STAGES.SKETCH, COVER_STAGES.THUMBNAIL, COVER_STAGES.ROUGH];
+
   /**
    * Get scenes remaining until a stage unlocks
    */
@@ -3954,6 +3957,32 @@ If you name what something IS, you have failed. Show what it COSTS.
       const threshold = rules[stage];
       if (threshold === null) return -1; // Never unlocks for this story length
       return Math.max(0, threshold - sceneCount);
+  }
+
+  /**
+   * Navigate gallery to previous stage
+   */
+  function galleryPrevStage() {
+      const currentIdx = GALLERY_STAGES.indexOf(_gallerySelectedStage);
+      if (currentIdx > 0) {
+          _gallerySelectedStage = GALLERY_STAGES[currentIdx - 1];
+          renderCoverStageRow();
+          renderGalleryPreview();
+          updateGalleryButtons();
+      }
+  }
+
+  /**
+   * Navigate gallery to next stage
+   */
+  function galleryNextStage() {
+      const currentIdx = GALLERY_STAGES.indexOf(_gallerySelectedStage);
+      if (currentIdx < GALLERY_STAGES.length - 1) {
+          _gallerySelectedStage = GALLERY_STAGES[currentIdx + 1];
+          renderCoverStageRow();
+          renderGalleryPreview();
+          updateGalleryButtons();
+      }
   }
 
   /**
@@ -3983,21 +4012,30 @@ If you name what something IS, you have failed. Show what it COSTS.
   }
 
   /**
-   * Render the horizontal stage thumbnails row
+   * Render the horizontal stage thumbnails row (carousel-style)
    */
   function renderCoverStageRow() {
       const row = document.getElementById('coverStageRow');
       if (!row) return;
 
-      const stages = [COVER_STAGES.SKETCH, COVER_STAGES.THUMBNAIL, COVER_STAGES.ROUGH];
       row.innerHTML = '';
 
-      stages.forEach(stage => {
+      GALLERY_STAGES.forEach(stage => {
           const isUnlocked = isCoverStageUnlocked(stage);
           const hasGenerated = !!_coversByStage[stage];
           const scenesLeft = getScenesUntilUnlock(stage);
           const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
           const isSelected = stage === _gallerySelectedStage;
+
+          // Human-readable unlock text
+          let unlockText = '';
+          if (scenesLeft === -1) {
+              unlockText = 'Not available';
+          } else if (scenesLeft === 1) {
+              unlockText = 'Unlocks after 1 scene';
+          } else if (scenesLeft > 1) {
+              unlockText = `Locked — ${scenesLeft} scenes to go`;
+          }
 
           const tile = document.createElement('div');
           tile.className = 'cover-stage-tile' + (isSelected ? ' selected' : '');
@@ -4005,7 +4043,8 @@ If you name what something IS, you have failed. Show what it COSTS.
               width:100px; text-align:center; padding:10px; border-radius:8px; cursor:pointer;
               border:2px solid ${isSelected ? 'var(--gold)' : '#444'};
               background:${isSelected ? 'rgba(212,175,55,0.1)' : '#222'};
-              opacity:${isUnlocked ? '1' : '0.5'};
+              opacity:${isUnlocked ? '1' : '0.6'};
+              transition: all 0.2s ease;
           `;
 
           if (hasGenerated) {
@@ -4015,32 +4054,36 @@ If you name what something IS, you have failed. Show what it COSTS.
                   <div style="font-size:0.75em; color:var(--gold); margin-top:5px;">${stageName}</div>
               `;
           } else if (isUnlocked) {
-              // Unlocked but not generated
+              // Unlocked but not generated — show + icon
               tile.innerHTML = `
                   <div style="width:80px; height:100px; background:#333; border-radius:4px; display:flex; align-items:center; justify-content:center; margin:0 auto;">
-                      <span style="color:#666; font-size:2em;">+</span>
+                      <span style="color:var(--gold); font-size:2em;">+</span>
                   </div>
                   <div style="font-size:0.75em; color:#888; margin-top:5px;">${stageName}</div>
               `;
           } else {
-              // Locked
+              // Locked — show mask with human-readable text
               tile.innerHTML = `
-                  <div style="width:80px; height:100px; background:#222; border-radius:4px; display:flex; align-items:center; justify-content:center; margin:0 auto; border:1px solid #333;">
-                      <span style="font-size:1.5em;">🎭</span>
+                  <div style="width:80px; height:100px; background:#1a1a1a; border-radius:4px; display:flex; align-items:center; justify-content:center; margin:0 auto; border:1px solid #333;">
+                      <span style="font-size:1.5em; opacity:0.5;">🎭</span>
                   </div>
                   <div style="font-size:0.7em; color:#666; margin-top:5px;">${stageName}</div>
-                  <div style="font-size:0.65em; color:#555;">${scenesLeft > 0 ? `${scenesLeft} scenes` : 'Locked'}</div>
+                  <div style="font-size:0.6em; color:#555; max-width:90px;">${unlockText}</div>
               `;
           }
 
-          if (isUnlocked) {
-              tile.onclick = () => {
-                  _gallerySelectedStage = stage;
-                  renderCoverStageRow();
-                  renderGalleryPreview();
-                  updateGalleryButtons();
-              };
-          }
+          // ALL stages are clickable for navigation
+          tile.onclick = async () => {
+              _gallerySelectedStage = stage;
+              renderCoverStageRow();
+              renderGalleryPreview();
+              updateGalleryButtons();
+
+              // AUTO-GENERATE: If unlocked and not generated, generate immediately
+              if (isUnlocked && !hasGenerated) {
+                  await generateCoverInGallery();
+              }
+          };
 
           row.appendChild(tile);
       });
@@ -4048,24 +4091,56 @@ If you name what something IS, you have failed. Show what it COSTS.
 
   /**
    * Render the main preview area based on selected stage
+   * NEVER empty — always shows image or visual placeholder with mask
    */
   function renderGalleryPreview() {
       const img = document.getElementById('coverGalleryImg');
       const placeholder = document.getElementById('coverGalleryPlaceholder');
+      const maskEl = document.getElementById('placeholderMask');
+      const labelEl = document.getElementById('placeholderLabel');
+      const statusEl = document.getElementById('placeholderStatus');
+
       if (!img || !placeholder) return;
 
       const coverUrl = _coversByStage[_gallerySelectedStage];
+      const stageName = _gallerySelectedStage.charAt(0).toUpperCase() + _gallerySelectedStage.slice(1);
+      const isUnlocked = isCoverStageUnlocked(_gallerySelectedStage);
+      const scenesLeft = getScenesUntilUnlock(_gallerySelectedStage);
+
       if (coverUrl) {
+          // Show generated cover
           img.src = coverUrl;
           img.classList.remove('hidden');
           placeholder.style.display = 'none';
       } else {
+          // Show visual placeholder (NEVER text-only)
           img.classList.add('hidden');
           placeholder.style.display = 'flex';
-          const isUnlocked = isCoverStageUnlocked(_gallerySelectedStage);
-          placeholder.textContent = isUnlocked
-              ? 'Click "Generate Cover" to create this cover'
-              : 'This stage is locked';
+
+          // Update placeholder content
+          if (maskEl) {
+              maskEl.style.opacity = isUnlocked ? '0.3' : '0.5';
+              maskEl.style.filter = isUnlocked ? 'grayscale(0)' : 'grayscale(1)';
+          }
+          if (labelEl) {
+              labelEl.textContent = stageName;
+              labelEl.style.color = isUnlocked ? 'var(--gold)' : '#666';
+          }
+          if (statusEl) {
+              if (isUnlocked) {
+                  statusEl.textContent = 'Click to generate';
+                  statusEl.style.color = 'var(--gold)';
+              } else if (scenesLeft === -1) {
+                  statusEl.textContent = 'Not available for this story';
+                  statusEl.style.color = '#555';
+              } else if (scenesLeft === 1) {
+                  statusEl.textContent = 'Unlocks after 1 scene';
+                  statusEl.style.color = '#555';
+              } else {
+                  statusEl.textContent = `Locked — ${scenesLeft} scenes to go`;
+                  statusEl.style.color = '#555';
+              }
+          }
       }
   }
 
@@ -4075,25 +4150,39 @@ If you name what something IS, you have failed. Show what it COSTS.
   function updateGalleryButtons() {
       const genBtn = document.getElementById('btnGalleryGenerate');
       const primaryBtn = document.getElementById('btnGalleryPrimary');
+      const prevBtn = document.getElementById('btnGalleryPrev');
+      const nextBtn = document.getElementById('btnGalleryNext');
+
       if (!genBtn || !primaryBtn) return;
 
       const isUnlocked = isCoverStageUnlocked(_gallerySelectedStage);
       const hasGenerated = !!_coversByStage[_gallerySelectedStage];
       const isPrimary = _primaryCoverStage === _gallerySelectedStage;
+      const currentIdx = GALLERY_STAGES.indexOf(_gallerySelectedStage);
 
-      // Generate button: show if unlocked (for generate or regenerate)
+      // Generate/Regenerate button: show if unlocked
       if (isUnlocked) {
-          genBtn.classList.remove('hidden');
+          genBtn.style.display = 'inline-block';
           genBtn.textContent = hasGenerated ? 'Regenerate Cover' : 'Generate Cover';
       } else {
-          genBtn.classList.add('hidden');
+          genBtn.style.display = 'none';
       }
 
       // Primary button: show only if generated and not already primary
       if (hasGenerated && !isPrimary) {
-          primaryBtn.classList.remove('hidden');
+          primaryBtn.style.display = 'inline-block';
       } else {
-          primaryBtn.classList.add('hidden');
+          primaryBtn.style.display = 'none';
+      }
+
+      // Nav buttons: disable at boundaries
+      if (prevBtn) {
+          prevBtn.disabled = currentIdx <= 0;
+          prevBtn.style.opacity = currentIdx <= 0 ? '0.4' : '1';
+      }
+      if (nextBtn) {
+          nextBtn.disabled = currentIdx >= GALLERY_STAGES.length - 1;
+          nextBtn.style.opacity = currentIdx >= GALLERY_STAGES.length - 1 ? '0.4' : '1';
       }
   }
 
@@ -4107,6 +4196,8 @@ If you name what something IS, you have failed. Show what it COSTS.
       const genBtn = document.getElementById('btnGalleryGenerate');
       const statusDiv = document.getElementById('coverGalleryStatus');
       const placeholder = document.getElementById('coverGalleryPlaceholder');
+      const statusEl = document.getElementById('placeholderStatus');
+      const maskEl = document.getElementById('placeholderMask');
 
       const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
 
@@ -4120,8 +4211,15 @@ If you name what something IS, you have failed. Show what it COSTS.
           statusDiv.textContent = `Generating ${stageName}...`;
           statusDiv.classList.remove('hidden');
       }
+      // Update placeholder to show loading state
+      if (statusEl) {
+          statusEl.textContent = 'Generating...';
+          statusEl.style.color = 'var(--gold)';
+      }
+      if (maskEl) {
+          maskEl.style.animation = 'pulse 1s infinite';
+      }
       if (placeholder) {
-          placeholder.textContent = 'Generating...';
           placeholder.classList.add('cover-loading');
       }
 
@@ -4145,6 +4243,7 @@ If you name what something IS, you have failed. Show what it COSTS.
 
           // Store cover for this stage
           _coversByStage[stage] = coverUrl;
+          console.log(`[COVER:GALLERY] Stored URL for ${stage}:`, coverUrl.substring(0, 50) + '...');
 
           // If no primary set, this becomes primary
           if (!_primaryCoverStage) {
@@ -4152,14 +4251,14 @@ If you name what something IS, you have failed. Show what it COSTS.
               updatePrimaryCoverDisplay(coverUrl);
           }
 
-          // Update modal display
+          // CRITICAL: Update modal display immediately
           renderCoverStageRow();
           renderGalleryPreview();
           updateGalleryButtons();
 
           if (statusDiv) statusDiv.classList.add('hidden');
           showToast(`Cover ${stageName} ready`);
-          console.log(`[COVER:GALLERY] ${stageName} generated successfully`);
+          console.log(`[COVER:GALLERY] ${stageName} generated and displayed`);
 
       } catch (err) {
           console.error('[COVER:GALLERY] Error:', err);
@@ -4167,15 +4266,18 @@ If you name what something IS, you have failed. Show what it COSTS.
           if (statusDiv) {
               statusDiv.textContent = 'Generation failed';
           }
-          if (placeholder) {
-              placeholder.textContent = 'Generation failed — try again';
-              placeholder.classList.remove('cover-loading');
+          if (statusEl) {
+              statusEl.textContent = 'Generation failed — try again';
+              statusEl.style.color = '#c44';
           }
       } finally {
           if (genBtn) {
               genBtn.disabled = false;
               genBtn.classList.remove('btn-loading');
               updateGalleryButtons();
+          }
+          if (maskEl) {
+              maskEl.style.animation = '';
           }
           if (placeholder) {
               placeholder.classList.remove('cover-loading');
@@ -9969,6 +10071,8 @@ The final image must look like a real published novel cover.`;
   $('btnGalleryClose')?.addEventListener('click', closeCoverGalleryModal);
   $('btnGalleryGenerate')?.addEventListener('click', generateCoverInGallery);
   $('btnGalleryPrimary')?.addEventListener('click', selectCoverAsPrimary);
+  $('btnGalleryPrev')?.addEventListener('click', galleryPrevStage);
+  $('btnGalleryNext')?.addEventListener('click', galleryNextStage);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BACKGROUND STORY GENERATION
