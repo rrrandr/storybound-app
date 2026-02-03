@@ -19982,36 +19982,51 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       let basePrompt = sanitizedPrompt;
 
       // ═══════════════════════════════════════════════════════════════════
-      // D. WRY CONFESSIONAL SCENE VISUALIZATION ENFORCEMENT
-      // Strip cinematic defaults and ensure ontology is present
+      // WRY CONFESSIONAL — FINAL ENFORCEMENT AT PROVIDER LEVEL
+      // Strip ALL cinematic/photorealistic tokens, ensure ontology prefix
       // ═══════════════════════════════════════════════════════════════════
       if (context === 'visualize' && state.picks?.tone === 'Wry Confessional') {
           // Remove cinematic/photorealistic tokens that may have leaked
-          const CINEMATIC_TOKENS = /\b(cinematic|painterly|photorealistic|photo-real|dramatic lighting|chiaroscuro|depth of field|bokeh|lens flare|hyper-realistic|oil painting)\b/gi;
+          const CINEMATIC_TOKENS = /\b(cinematic|painterly|photorealistic|photo-real|dramatic lighting|chiaroscuro|depth of field|bokeh|lens flare|hyper-realistic|oil painting|atmospheric|natural lighting|golden.hour|studio lighting|volumetric|HDR|8k|4k|ultra.realistic|professional photo)\b/gi;
           basePrompt = basePrompt.replace(CINEMATIC_TOKENS, '');
 
-          // Ensure ontology prefix is present
-          if (!basePrompt.includes('Editorial cartoon') && !basePrompt.includes('New Yorker')) {
-              basePrompt = `${WRY_CONFESSIONAL_VISUAL_ONTOLOGY} ${basePrompt}`;
+          // Remove intensity/attractiveness language
+          const INTENSITY_TOKENS = /\b(suggestive|flirtatious|sensual|seductive|allure|attractive|beautiful|striking beauty|elegant features|hourglass|athletic)\b/gi;
+          basePrompt = basePrompt.replace(INTENSITY_TOKENS, '');
+
+          // Ensure hard mode declaration is at start
+          if (!basePrompt.includes('editorial cartoon illustration')) {
+              basePrompt = `This image is an editorial cartoon illustration, NOT a photograph.\n\n${basePrompt}`;
           }
-          console.log('[VIZ:WRY] Enforced Wry Confessional visual style');
+
+          // Ensure ontology is present
+          if (!basePrompt.includes('Editorial cartoon') && !basePrompt.includes('New Yorker')) {
+              basePrompt = `${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\n${basePrompt}`;
+          }
+
+          // Clean up multiple newlines/spaces
+          basePrompt = basePrompt.replace(/\n{3,}/g, '\n\n').replace(/\s{2,}/g, ' ').trim();
+
+          console.log('[VIZ:WRY] Final enforcement — editorial cartoon prompt:', basePrompt.substring(0, 100) + '...');
       }
 
       // INTENT-BASED PROVIDER CHAIN (AUTHORITATIVE)
       // setting: Gemini → OpenAI (NO Replicate)
       // scene/cover: OpenAI → Replicate (NO Gemini)
+      // CRITICAL: Use basePrompt (enforced) not sanitizedPrompt (original)
+      const finalPrompt = basePrompt;
       let providerChain;
       if (intent === 'setting') {
           // Setting images: Gemini primary, OpenAI fallback, NO Replicate
           providerChain = [
-              { name: 'Gemini', fn: callGeminiImageGen, prompt: sanitizedPrompt },
-              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt }
+              { name: 'Gemini', fn: callGeminiImageGen, prompt: finalPrompt },
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt }
           ];
       } else {
           // Scene/Cover images: OpenAI primary, Replicate fallback, NO Gemini
           providerChain = [
-              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: sanitizedPrompt },
-              { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: sanitizedPrompt }
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt },
+              { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: finalPrompt }
           ];
       }
 
@@ -20716,62 +20731,82 @@ Condensed (under ${maxLength} chars):` }
               return;
           }
 
-          // Build base prompt with intensity bias, quality defaults, and veto exclusions (filter "The Author")
-          const modifierInput = document.getElementById('vizModifierInput');
-          const rawModifiers = modifierInput ? modifierInput.value.trim() : '';
-          // RUNTIME NORMALIZATION: Visualize modifiers flow through ChatGPT normalization layer
-          const vizNorm = await callNormalizationLayer({
-              axis: 'visualize',
-              user_text: rawModifiers,
-              context_signals: state.picks?.world || []
-          });
-          const userModifiers = vizNorm.normalized_text || rawModifiers;
+          // ═══════════════════════════════════════════════════════════════════
+          // WRY CONFESSIONAL — SHORT-CIRCUIT ALL STYLE INJECTORS
+          // Editorial cartoon ONLY — no cinematic, no lighting, no intensity bias
+          // ═══════════════════════════════════════════════════════════════════
+          let basePrompt;
 
-          // Include veto exclusions in visual prompt (e.g., "no blondes" should affect hair color)
-          const vetoExclusions = state.veto?.excluded?.length > 0
-              ? " Exclude: " + state.veto.excluded.slice(0, 3).join(', ') + "."
-              : "";
+          if (state.picks?.tone === 'Wry Confessional') {
+              // Extract pure scene content (strip any style that crept in)
+              const pureScene = promptMsg
+                  .replace(/Editorial cartoon[^.]*\./gi, '')
+                  .replace(/New Yorker[^.]*\./gi, '')
+                  .replace(/flat.*color[^.]*\./gi, '')
+                  .replace(/Scene:\s*/gi, '')
+                  .trim();
 
-          // SCENE-FIRST PROMPT CONSTRUCTION (AUTHORITATIVE)
-          // ISSUE 1 FIX: Emotion-first condensation (preserves payoff, not blind truncation)
-          const sceneDesc = await condenseSceneWithEmotion(promptMsg, 200);
-          const modifiers = userModifiers ? " " + filterAuthorFromPrompt(userModifiers) : "";
+              // HARD MODE DECLARATION + ONTOLOGY + SCENE ONLY
+              basePrompt = `This image is an editorial cartoon illustration, NOT a photograph.\n\n${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\nScene: ${pureScene}`;
 
-          // Brief anchors from visual bible (characters only, 80 char max)
-          const briefAnchors = filterAuthorFromPrompt(anchorText).slice(0, 80);
+              console.log('[VIZ:WRY] Short-circuited all style injectors — editorial cartoon only');
+          } else {
+              // STANDARD PATH: All style injectors apply
 
-          // Scene visualization style — world-aware (NOT hardcoded noir)
-          const SCENE_STYLE_BY_WORLD = {
-              Fantasy: 'Cinematic, painterly, warm golden-hour lighting. Natural expressions, grounded emotion.',
-              Historical: 'Cinematic, painterly, period-accurate palette. Candid expressions, oil-painting texture.',
-              Modern: 'Cinematic, contemporary, natural ambient lighting. Candid, unstaged expressions.',
-              SciFi: 'Cinematic, sleek high-contrast lighting, cool palette. Alert, focused expressions.',
-              Noir: 'Cinematic, chiaroscuro, neon-and-shadow contrast. Tense, guarded expressions.',
-              Gothic: 'Cinematic, dramatic chiaroscuro, deep reds and blacks. Haunted, strained expressions.',
-              Paranormal: 'Cinematic, ethereal glow, muted earth tones with spectral accents. Wary expressions.'
-          };
-          const sceneStyle = state.picks?.tone === 'Wry Confessional'
-              ? WRY_CONFESSIONAL_VISUAL_ONTOLOGY
-              : (SCENE_STYLE_BY_WORLD[state.picks?.world]
-                  || 'Cinematic, painterly, atmospheric, natural lighting. Grounded expressions.');
-          const intensityBias = getVisualizeIntensityBias();
-          const shortIntensity = intensityBias.split('.')[0] + ".";
+              // Build base prompt with intensity bias, quality defaults, and veto exclusions
+              const modifierInput = document.getElementById('vizModifierInput');
+              const rawModifiers = modifierInput ? modifierInput.value.trim() : '';
+              // RUNTIME NORMALIZATION: Visualize modifiers flow through ChatGPT normalization layer
+              const vizNorm = await callNormalizationLayer({
+                  axis: 'visualize',
+                  user_text: rawModifiers,
+                  context_signals: state.picks?.world || []
+              });
+              const userModifiers = vizNorm.normalized_text || rawModifiers;
 
-          // SCENE FIRST, then style, then mandatory exclusions
-          let basePrompt = sceneDesc + modifiers +
-              "\n---\n" +
-              sceneStyle + " " +
-              shortIntensity + " " +
-              SCENE_VIZ_EXCLUSIONS +
-              vetoExclusions +
-              (briefAnchors ? " Anchors: " + briefAnchors : "");
+              // Include veto exclusions in visual prompt
+              const vetoExclusions = state.veto?.excluded?.length > 0
+                  ? " Exclude: " + state.veto.excluded.slice(0, 3).join(', ') + "."
+                  : "";
 
-          // VISUAL INTENT GUARD: Enforce attractiveness + balanced lighting
-          basePrompt = applyVisualIntentGuard(basePrompt, {
-              tone: state.picks?.tone,
-              world: state.picks?.world,
-              intensity: state.intensity
-          });
+              // SCENE-FIRST PROMPT CONSTRUCTION
+              const sceneDesc = await condenseSceneWithEmotion(promptMsg, 200);
+              const modifiers = userModifiers ? " " + filterAuthorFromPrompt(userModifiers) : "";
+
+              // Brief anchors from visual bible (characters only, 80 char max)
+              const briefAnchors = filterAuthorFromPrompt(anchorText).slice(0, 80);
+
+              // Scene visualization style — world-aware
+              const SCENE_STYLE_BY_WORLD = {
+                  Fantasy: 'Cinematic, painterly, warm golden-hour lighting. Natural expressions, grounded emotion.',
+                  Historical: 'Cinematic, painterly, period-accurate palette. Candid expressions, oil-painting texture.',
+                  Modern: 'Cinematic, contemporary, natural ambient lighting. Candid, unstaged expressions.',
+                  SciFi: 'Cinematic, sleek high-contrast lighting, cool palette. Alert, focused expressions.',
+                  Noir: 'Cinematic, chiaroscuro, neon-and-shadow contrast. Tense, guarded expressions.',
+                  Gothic: 'Cinematic, dramatic chiaroscuro, deep reds and blacks. Haunted, strained expressions.',
+                  Paranormal: 'Cinematic, ethereal glow, muted earth tones with spectral accents. Wary expressions.'
+              };
+              const sceneStyle = SCENE_STYLE_BY_WORLD[state.picks?.world]
+                  || 'Cinematic, painterly, atmospheric, natural lighting. Grounded expressions.';
+              const intensityBias = getVisualizeIntensityBias();
+              const shortIntensity = intensityBias.split('.')[0] + ".";
+
+              // SCENE FIRST, then style, then mandatory exclusions
+              basePrompt = sceneDesc + modifiers +
+                  "\n---\n" +
+                  sceneStyle + " " +
+                  shortIntensity + " " +
+                  SCENE_VIZ_EXCLUSIONS +
+                  vetoExclusions +
+                  (briefAnchors ? " Anchors: " + briefAnchors : "");
+
+              // VISUAL INTENT GUARD: Enforce attractiveness + balanced lighting
+              basePrompt = applyVisualIntentGuard(basePrompt, {
+                  tone: state.picks?.tone,
+                  world: state.picks?.world,
+                  intensity: state.intensity
+              });
+          }
 
           // REGRESSION GUARD: Block cinematic drift for Wry Confessional
           assertWryConfessionalVisual(basePrompt, 'visualize:basePrompt');
