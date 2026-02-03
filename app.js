@@ -1229,7 +1229,7 @@ For veto/quill/god_mode:
           id: 'ETERNAL_FLAME',
           name: 'The Eternal Flame',
           desireStyle: 'He remembered the coffee order she\'d mentioned once, three months ago, in passing — devotion expressed in accumulated attention',
-          summary: 'The coffee order she'd mentioned in passing—three months ago—was still imprinted on his memory, three reincarnations later.',
+          summary: 'The coffee order she\'d mentioned in passing—three months ago—was still imprinted on his memory, three reincarnations later.',
           stressFailure: 'self-neglect, moral endurance'
       }
   };
