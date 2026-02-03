@@ -27,7 +27,7 @@
 </div>
 
 <button id="burgerBtn">☰</button>
-<button id="globalBackBtn" class="hidden" style="position:fixed; top:15px; left:15px; z-index:5000; background:none; border:none; font-size:1.5em; cursor:pointer;">←</button>
+<button id="globalBackBtn" class="hidden" style="position:fixed; top:15px; left:15px; z-index:5000; background:none; border:none; font-size:1.8em; cursor:pointer; padding:0; box-shadow:none; color:var(--pink); text-shadow:0 0 5px var(--hot);">←</button>
 
 <div id="menuOverlay" class="overlay hidden" style="z-index:4999;">
   <div class="box">
@@ -100,7 +100,14 @@
         Type or select a modifier to adjust the image. Modifiers are appended to your prompt.
     </p>
 
-    <div id="vizPlaceholder">Generating...</div>
+    <!-- Credit display (always visible, numeric) -->
+    <div id="vizCreditDisplay" style="font-size:0.85em; color:var(--gold); margin:10px 0; text-align:center;">
+        Visualization credits = <span id="vizCreditCount">0</span>
+    </div>
+
+    <div id="vizPlaceholder" style="display:flex; align-items:center; justify-content:center; min-height:200px; color:#888; font-style:italic; text-align:center; padding:20px;">
+        Earn 1 Visualization credit for every 3 Scenes you complete.
+    </div>
 
     <div id="vizImgContainer">
         <img id="vizPreviewImg" alt="Scene" style="display:none">
@@ -108,18 +115,42 @@
     </div>
 
     <div class="viz-controls">
-        <select id="vizModel" disabled style="opacity:0.6;">
-            <option value="perchance" selected>Perchance</option>
+        <select id="vizModel">
+            <option value="gemini" selected>Gemini (Primary)</option>
+            <option value="openai">OpenAI (Fallback)</option>
+            <option value="replicate">Replicate FLUX</option>
         </select>
-        <button class="small-btn" id="vizRetryBtn" onclick="window.visualize(true)">Re-Visualize</button>
-        <button onclick="window.insertImage()">Insert</button>
+        <button class="small-btn" id="vizRetryBtn" onclick="window.handleReVisualize()">Re-Visualize</button>
+        <button id="vizInsertBtn" onclick="window.insertImage()">Insert</button>
         <button class="small-btn" style="background:#555" onclick="window.closeViz()">Cancel</button>
     </div>
     <label class="sb-checkbox" style="font-size:0.8em; justify-content:center; margin-top:12px;">
         <input type="checkbox" id="chkAutoLockVisual" checked>
         <span class="sb-checkbox-visual"></span>
-        <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Lock character look after this Visualize</span>
+        <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Lock character look for more consistent portrayals next time.</span>
     </label>
+    <!-- Lock Look Now button - manual immediate lock -->
+    <div id="lockLookContainer" style="margin-top:10px; text-align:center;">
+        <button id="btnLockLook" class="small-btn" style="background:#444; font-size:0.85em;" onclick="window.lockCharacterLook()">🔒 Lock This Look</button>
+        <span id="lockLookStatus" style="display:none; margin-left:8px; color:var(--gold); font-size:0.8em;">✓ Locked</span>
+    </div>
+  </div>
+</div>
+
+<div id="payAsYouGoModal" class="overlay hidden" style="z-index:10002;">
+  <div class="box" style="max-width:420px; text-align:center;">
+    <h3 style="color:var(--gold);">Enable Re-Visualize</h3>
+    <p style="opacity:0.9; font-size:0.95em; margin-bottom:15px;">
+        Re-visualizing a scene costs <strong>$0.25</strong> per attempt.
+    </p>
+    <p style="opacity:0.7; font-size:0.85em; margin-bottom:20px;">
+        Initial visualizations are free (using earned credits).
+        Re-Visualize is pay-as-you-go for when you want a different take.
+    </p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+        <button onclick="window.confirmPayAsYouGo();" style="background:var(--gold); color:#1a1814;">Enable Pay-As-You-Go</button>
+        <button onclick="window.closePayAsYouGoModal();" style="background:#444">Not Now</button>
+    </div>
   </div>
 </div>
 
@@ -129,7 +160,8 @@
     <p style="opacity:0.8; font-size:0.9em;">Explicit content enabled. Sample:</p>
     <div id="eroticPreviewText"></div>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-        <button onclick="window.showPaywall('unlock');">Storypass $3</button>
+        <button id="eroticPreviewStorypassBtn" onclick="window.showPaywall('unlock');">Storypass $3</button>
+        <button id="eroticPreviewSubBtn" class="hidden" onclick="window.showPaywall('sub_only');">Subscribe $6</button>
         <button onclick="document.getElementById('eroticPreviewModal').classList.add('hidden')" style="background:#444">Not Now</button>
     </div>
   </div>
@@ -267,10 +299,11 @@
 
     <div id="standardPay">
         <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
-            <div id="optUnlock" class="hidden" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:220px; text-align:left;">
+            <div id="optUnlock" style="background:#222; padding:15px; border-radius:10px; border:1px solid #ff69b4; width:220px; text-align:left;">
                 <h4 style="color:var(--pink); margin-top:0;">Unlock This Story</h4>
                 <p style="font-size:0.85em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, Quill access.<br><strong>$3 Story Pass.</strong></p>
                 <button id="payOneTime" style="width:100%; margin-top:15px;">Storypass $3</button>
+                <div id="storypassDisabledNotice" class="hidden" style="margin-top:10px; font-size:0.75em; color:#888; text-align:center;">Unavailable for Dirty intensity</div>
             </div>
 
             <div id="optSub" style="background:linear-gradient(145deg, #400020, #200010); padding:15px; border-radius:10px; border:1px solid gold; width:220px; text-align:left;">
@@ -287,7 +320,55 @@
         </div>
     </div>
     
-    <button onclick="document.getElementById('payModal').classList.add('hidden')" style="background:#444; margin-top:15px;">Cancel</button>
+    <button onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="background:#444; margin-top:15px;">Cancel</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- COVER$ PURCHASE MODAL — Paid cover generation with prompt editing        -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="coverPurchaseModal" class="overlay hidden" style="z-index:10020;">
+  <div class="box" style="max-width:500px; text-align:left;">
+    <h3 style="color:var(--gold); margin-bottom:15px; text-align:center;">✨ Purchase Cover Credit</h3>
+
+    <p style="color:var(--text-secondary); font-size:0.9em; margin-bottom:15px;">
+      Your free covers for today are used. Purchase an additional cover for <strong style="color:var(--gold);">$0.25</strong>.
+    </p>
+
+    <div style="background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.3); border-radius:8px; padding:15px; margin-bottom:15px;">
+      <h4 style="color:var(--gold); font-size:0.9em; margin-bottom:10px;">Cover Details</h4>
+      <p style="font-size:0.85em; margin-bottom:5px;"><strong>Title:</strong> <span id="coverPromptTitle">-</span></p>
+      <p style="font-size:0.85em; margin-bottom:5px;"><strong>World:</strong> <span id="coverPromptWorld">-</span></p>
+      <p style="font-size:0.85em;"><strong>Focal Object:</strong> <span id="coverPromptObject">-</span></p>
+    </div>
+
+    <div style="margin-bottom:15px;">
+      <label style="display:block; color:var(--gold); font-size:0.85em; margin-bottom:5px;">
+        Edit Cover Prompt (optional):
+      </label>
+      <textarea id="coverPromptInput" style="width:100%; height:100px; background:#1a1a1a; border:1px solid #444; color:var(--text-primary); padding:10px; border-radius:6px; font-size:0.9em; resize:none;" placeholder="Describe your ideal cover..."></textarea>
+      <p id="coverPromptSafetyWarning" class="hidden" style="color:#ff6b6b; font-size:0.8em; margin-top:5px;">
+        ⚠️ Some words or combinations may prevent image generation.
+      </p>
+    </div>
+
+    <div style="background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.3); border-radius:6px; padding:12px; margin-bottom:20px;">
+      <p style="color:#ff9999; font-size:0.8em; line-height:1.5;">
+        <strong>⚠️ Important:</strong><br>
+        Certain words, phrases, or combinations may cause image generation to fail.
+        If generation fails due to restricted or incompatible input, the cover credit is forfeited.
+        Storybound is not responsible for unfulfilled image requests.
+      </p>
+    </div>
+
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button onclick="window.processPaidCoverPurchase();" style="background:linear-gradient(145deg, var(--gold), #b8860b); color:black; font-weight:bold; padding:12px 24px; border-radius:6px; cursor:pointer;">
+        Pay $0.25 & Generate
+      </button>
+      <button onclick="window.hideCoverPurchaseModal();" style="background:#444; padding:12px 24px; border-radius:6px; cursor:pointer;">
+        Cancel
+      </button>
+    </div>
   </div>
 </div>
 
@@ -306,11 +387,11 @@
     <div class="choice-buttons">
       <div style="text-align:center">
           <button class="choice" onclick="window.setMode('solo')">Solo</button>
-          <p class="choice-desc">Your private laboratory—intentional, charged.</p>
+          <p class="choice-desc" id="soloSubtitle">Just you and your curiosity.</p>
       </div>
       <div style="text-align:center">
           <button class="choice" id="btnCoupleMode" onclick="window.setMode('couple')">Couple</button>
-          <p class="choice-desc">Link devices and co-create a shared seduction.</p>
+          <p class="choice-desc">Play in bed, together or miles apart.</p>
       </div>
       <div style="text-align:center">
           <button class="choice" onclick="window.setMode('stranger')">Stranger</button>
@@ -320,14 +401,17 @@
   </div>
 
   <div id="setup" class="screen hidden" style="max-width:800px; margin:0 auto; padding-bottom:50px;">
-    
+
     <div class="section-title">Shape Your Story</div>
+    <p id="coupleSubhead" class="hidden" style="text-align:center; color:var(--pink); font-style:italic; margin:-10px 0 20px; font-size:0.95em;">Play in bed, together or miles apart.</p>
+    <!-- Golden vignette overlay for Guided Fate ceremony -->
+    <div id="fateVignette"></div>
     <div class="fate-shortcut-row fate-shortcut-vertical">
       <span class="fate-shortcut-text">or Let Fate Decide</span>
       <div class="fate-destiny-card" id="fateDestinyCard">
         <div class="fate-destiny-inner">
           <div class="fate-destiny-face fate-destiny-back">
-            <span class="fate-destiny-title">Destiny's Choice</span>
+            <span class="fate-destiny-title">Guided Fate</span>
           </div>
           <div class="fate-destiny-face fate-destiny-front">
             <div class="fate-golden-tree"></div>
@@ -336,9 +420,10 @@
       </div>
     </div>
 
+    <div class="story-shape-row">
     <!-- Player Character Block: "Your Character" -->
-    <div class="character-block character-block-horizontal">
-        <div class="character-destiny-side">
+    <div class="character-block character-block-horizontal story-shape-character">
+        <div class="character-destiny-side destiny-card">
             <div class="character-destiny-card character-destiny-card-tall" id="playerDestinyCard" data-character="player">
                 <div class="character-destiny-inner">
                     <div class="character-destiny-face character-destiny-back"></div>
@@ -346,7 +431,7 @@
                 </div>
             </div>
         </div>
-        <div class="character-fields-side">
+        <div class="character-fields-side story-shape-fields">
             <div class="character-section-header">
                 <span class="character-section-title">Your Character</span>
             </div>
@@ -389,8 +474,8 @@
     </div>
 
     <!-- Love Interest Block: "Your Love Interest" -->
-    <div class="character-block character-block-horizontal" style="margin-top: 20px;">
-        <div class="character-destiny-side">
+    <div class="character-block character-block-horizontal story-shape-character">
+        <div class="character-destiny-side destiny-card">
             <div class="character-destiny-card character-destiny-card-tall" id="loveInterestDestinyCard" data-character="loveInterest">
                 <div class="character-destiny-inner">
                     <div class="character-destiny-face character-destiny-back"></div>
@@ -398,7 +483,7 @@
                 </div>
             </div>
         </div>
-        <div class="character-fields-side">
+        <div class="character-fields-side story-shape-fields">
             <div class="character-section-header">
                 <span class="character-section-title">Your Love Interest</span>
             </div>
@@ -439,6 +524,7 @@
             </div>
         </div>
     </div>
+    </div>
 
     <div class="section-title" id="archetypeSectionTitle">Archetype Storybeau</div>
     <p class="archetype-header-text">Choose a core personality for your Love Interest.</p>
@@ -460,25 +546,25 @@
       <div class="sb-card" data-grp="intensity" data-val="Clean">
         <div class="sb-card-inner">
           <div class="sb-card-face sb-card-back"><span class="sb-card-title">Clean</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Clean</span><span class="sb-card-desc">Romantic, non-explicit.</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Clean</span><span class="sb-card-desc">Romantic, non-explicit.</span><span class="sb-card-example">"She sent him home with a stolen kiss."</span></div>
         </div>
       </div>
       <div class="sb-card selected flipped" data-grp="intensity" data-val="Naughty">
         <div class="sb-card-inner">
           <div class="sb-card-face sb-card-back"><span class="sb-card-title">Naughty</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Naughty</span><span class="sb-card-desc">Suggestive tension; no explicit anatomy.</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Naughty</span><span class="sb-card-desc">Suggestive tension; no explicit anatomy.</span><span class="sb-card-example">"She felt him pressed against her, and she pressed back."</span></div>
         </div>
       </div>
       <div class="sb-card locked" data-grp="intensity" data-val="Erotic" data-locked="tease">
         <div class="sb-card-inner">
           <div class="sb-card-face sb-card-back"><span class="sb-card-title">Erotic</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Erotic</span><span class="sb-card-desc">Explicit sex; adult consensual.</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Erotic</span><span class="sb-card-desc">Explicit sensuality.</span><span class="sb-card-example">"She shuddered as he [censored] deep inside her."</span></div>
         </div>
       </div>
-      <div class="sb-card locked" data-grp="intensity" data-val="Dirty" data-locked="sub">
+      <div class="sb-card locked" data-grp="intensity" data-val="Dirty" data-locked="sub" data-storypass-allowed="false">
         <div class="sb-card-inner">
           <div class="sb-card-face sb-card-back"><span class="sb-card-title">Dirty</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Dirty</span><span class="sb-card-desc">Very explicit; highest intensity.</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Dirty</span><span class="sb-card-desc">Very explicit; highest intensity.</span><span class="sb-card-example">"She [censored] his [censored] and [censored] it again."</span></div>
         </div>
       </div>
     </div>
@@ -488,10 +574,10 @@
         <p class="subtitle">Choose once. This shapes pacing and endings.</p>
         
         <div class="sb-grid sb-grid-4" id="lengthGrid">
-          <div class="sb-card selected flipped" data-grp="length" data-val="voyeur">
+          <div class="sb-card selected flipped" data-grp="length" data-val="tease">
             <div class="sb-card-inner">
-              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Voyeur Tease</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Voyeur Tease</span><span class="sb-card-desc">A front-row seat. No touching. Ends right when you lean in.</span></div>
+              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Tease</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Tease</span><span class="sb-card-desc">A front-row seat. No touching. Ends right when you lean in.</span></div>
             </div>
           </div>
           <div class="sb-card locked" data-grp="length" data-val="fling" data-locked="pass">
@@ -506,7 +592,7 @@
               <div class="sb-card-face sb-card-front"><span class="sb-card-title">Affair</span><span class="sb-card-desc">Longer nights, deeper consequences. Arcs unfold. Nothing is rushed.</span></div>
             </div>
           </div>
-          <div class="sb-card locked" data-grp="length" data-val="soulmates" data-locked="sub">
+          <div class="sb-card locked" data-grp="length" data-val="soulmates" data-locked="sub" data-storypass-allowed="false">
             <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back"><span class="sb-card-title">Soulmates</span></div>
               <div class="sb-card-face sb-card-front"><span class="sb-card-title">Soulmates</span><span class="sb-card-desc">This isn't about what happens next. It's about what keeps happening.</span></div>
@@ -557,12 +643,75 @@
 
     <!-- FLOATING SYNOPSIS PANEL (Side-mounted book jacket card) -->
     <div id="synopsisPanel" class="synopsis-panel">
-      <p id="synopsisText" class="synopsis-text">
-        <span id="synWorld">Where shadows hold secrets</span>
-        <span id="synTone">Face what you've buried</span>
-        <span id="synGenre">Navigate dangerous alliances</span>
-        <span id="synDynamic">The one you need most becomes your enemy</span>
-      </p>
+      <!-- Art Deco Border: Double gold frame, corner sunbursts, center diamonds -->
+      <svg class="dsp-art-deco-border" viewBox="0 0 200 280" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Brushed gold gradient for plated look -->
+          <linearGradient id="dspGoldBrushed" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#d4af5a"/>
+            <stop offset="25%" stop-color="#c9a24e"/>
+            <stop offset="50%" stop-color="#b8934a"/>
+            <stop offset="75%" stop-color="#c9a24e"/>
+            <stop offset="100%" stop-color="#d4af5a"/>
+          </linearGradient>
+          <linearGradient id="dspGoldHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#e8c86a"/>
+            <stop offset="50%" stop-color="#c9a24e"/>
+            <stop offset="100%" stop-color="#a8863c"/>
+          </linearGradient>
+        </defs>
+
+        <!-- OUTER FRAME: Double gold lines -->
+        <rect x="4" y="4" width="192" height="272" rx="3" ry="3"
+              fill="none" stroke="url(#dspGoldBrushed)" stroke-width="1.5" opacity="0.85"/>
+        <rect x="8" y="8" width="184" height="264" rx="2" ry="2"
+              fill="none" stroke="url(#dspGoldHighlight)" stroke-width="0.75" opacity="0.6"/>
+
+        <!-- TOP CENTER DIAMOND: Where double lines resolve -->
+        <polygon points="100,2 106,8 100,14 94,8"
+                 fill="url(#dspGoldBrushed)" opacity="0.8"/>
+        <polygon points="100,4 104,8 100,12 96,8"
+                 fill="none" stroke="url(#dspGoldHighlight)" stroke-width="0.5" opacity="0.6"/>
+
+        <!-- BOTTOM CENTER DIAMOND: Mirror of top -->
+        <polygon points="100,278 106,272 100,266 94,272"
+                 fill="url(#dspGoldBrushed)" opacity="0.8"/>
+        <polygon points="100,276 104,272 100,268 96,272"
+                 fill="none" stroke="url(#dspGoldHighlight)" stroke-width="0.5" opacity="0.6"/>
+
+        <!-- TOP-LEFT CORNER SUNBURST: 4 stepped angular rays pointing inward -->
+        <g opacity="0.7">
+          <line x1="4" y1="4" x2="20" y2="20" stroke="url(#dspGoldBrushed)" stroke-width="1.2"/>
+          <line x1="4" y1="12" x2="16" y2="24" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+          <line x1="4" y1="22" x2="14" y2="32" stroke="url(#dspGoldBrushed)" stroke-width="0.7"/>
+          <line x1="12" y1="4" x2="24" y2="16" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+        </g>
+
+        <!-- TOP-RIGHT CORNER SUNBURST: Mirror of top-left -->
+        <g opacity="0.7">
+          <line x1="196" y1="4" x2="180" y2="20" stroke="url(#dspGoldBrushed)" stroke-width="1.2"/>
+          <line x1="196" y1="12" x2="184" y2="24" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+          <line x1="196" y1="22" x2="186" y2="32" stroke="url(#dspGoldBrushed)" stroke-width="0.7"/>
+          <line x1="188" y1="4" x2="176" y2="16" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+        </g>
+
+        <!-- BOTTOM-LEFT CORNER SUNBURST: Mirror of top-left vertically -->
+        <g opacity="0.7">
+          <line x1="4" y1="276" x2="20" y2="260" stroke="url(#dspGoldBrushed)" stroke-width="1.2"/>
+          <line x1="4" y1="268" x2="16" y2="256" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+          <line x1="4" y1="258" x2="14" y2="248" stroke="url(#dspGoldBrushed)" stroke-width="0.7"/>
+          <line x1="12" y1="276" x2="24" y2="264" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+        </g>
+
+        <!-- BOTTOM-RIGHT CORNER SUNBURST: Mirror diagonally -->
+        <g opacity="0.7">
+          <line x1="196" y1="276" x2="180" y2="260" stroke="url(#dspGoldBrushed)" stroke-width="1.2"/>
+          <line x1="196" y1="268" x2="184" y2="256" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+          <line x1="196" y1="258" x2="186" y2="248" stroke="url(#dspGoldBrushed)" stroke-width="0.7"/>
+          <line x1="188" y1="276" x2="176" y2="264" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+        </g>
+      </svg>
+      <p id="synopsisText" class="synopsis-text"></p>
     </div>
 
     <!-- AXIS 1: STORY WORLD (Required, First) -->
@@ -678,6 +827,15 @@
       <div class="sb-card" data-grp="genre" data-val="Heist"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Heist</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Heist</span><span class="sb-card-desc">Elaborate plans, trust and betrayal.</span></div></div></div>
       <div class="sb-card" data-grp="genre" data-val="Espionage"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Espionage</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Espionage</span><span class="sb-card-desc">Spies, double lives, dangerous information.</span></div></div></div>
       <div class="sb-card" data-grp="genre" data-val="Political"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Political Intrigue</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Political Intrigue</span><span class="sb-card-desc">Power structures, alliances, betrayal.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="Escape"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape</span><span class="sb-card-desc">Running from the past, chasing freedom.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="Redemption"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Redemption</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Redemption</span><span class="sb-card-desc">Second chances, atonement, becoming worthy.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="BuildingBridges"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Building Bridges</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Building Bridges</span><span class="sb-card-desc">Healing rifts, unlikely alliances, found family.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="Purgatory"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Purgatory</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Purgatory</span><span class="sb-card-desc">Cycles, stalled time, escape through understanding.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="RelentlessPast"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Relentless Past</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Relentless Past</span><span class="sb-card-desc">Identity erosion, old lives resurfacing, consequences arriving.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="Sports"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Sports</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Sports</span><span class="sb-card-desc">Competition, teamwork, glory and defeat.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">Scarcity, endurance, brutal choices.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="Obsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Obsession</span><span class="sb-card-desc">Fixation, escalation, loss of control.</span></div></div></div>
+      <div class="sb-card" data-grp="genre" data-val="ForbiddenKnowledge"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Forbidden Knowledge</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Forbidden Knowledge</span><span class="sb-card-desc">Curiosity, revelation, the price of knowing.</span></div></div></div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
@@ -785,7 +943,7 @@
                         <div class="destiny-card-front"></div>
                     </div>
                 </div>
-                <div id="quillBox" class="input-wrapper fate-input-wrapper fate-textarea-wrapper locked-input" onclick="window.showPaywall('unlock')">
+                <div id="quillBox" class="input-wrapper fate-input-wrapper fate-textarea-wrapper locked-input">
                     <textarea id="quillInput" rows="2" class="fate-field" data-fate-type="quill"></textarea>
                     <div class="rotating-placeholder textarea-placeholder" data-for="quillInput"></div>
                 </div>
@@ -805,7 +963,48 @@
     </div>
 
     <br>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- BOOK COVER GENERATION — DISABLED (Earned Cover System Phase B)       -->
+    <!-- Cover generation is now READER-ONLY via btnReaderCover               -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <div id="coverGenSection" class="hidden" style="display:none; margin-top:20px; text-align:center;">
+      <button id="btnGenerateCover" style="font-size:1.1em; padding:10px 20px; background:linear-gradient(135deg, #2a2a2a, #1a1a1a); border:1px solid var(--gold); color:var(--gold); cursor:pointer;">
+        Generate Your Book Cover
+      </button>
+      <!-- Cover$ Credit Display -->
+      <p id="coverCreditDisplay" style="font-size:0.75em; color:var(--gold); margin-top:6px; opacity:0.8;">3 free covers remaining today</p>
+      <div id="coverGenStatus" class="hidden" style="margin-top:10px; color:var(--text-secondary); font-size:0.9em;">
+        <div id="coverGenLoading" style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <span>Generating your cover...</span>
+          <div class="cover-gen-bar" style="width:50px; height:3px; background:rgba(255,215,0,0.2); border-radius:2px; overflow:hidden;">
+            <div class="cover-gen-bar-fill" style="width:100%; height:100%; background:var(--gold); animation:coverGenBarFill 1.2s ease-in-out infinite;"></div>
+          </div>
+        </div>
+        <div id="coverGenComplete" class="hidden" style="color:var(--gold);">
+          Cover ready! It will appear when you begin your story.
+        </div>
+        <div id="coverGenLocked" class="hidden" style="color:var(--text-secondary);">
+          Cover generation unlocks again at Scene 5 <span id="coverGenSubLink" class="hidden">or <a href="#" onclick="window.showPaywall('sub_only'); return false;" style="color:var(--pink);">subscribe</a></span>
+        </div>
+      </div>
+      <p style="font-size:0.8em; color:var(--text-secondary); margin-top:8px; opacity:0.7;">Optional — you can skip this and start reading immediately</p>
+    </div>
+
     <button id="beginBtn" style="font-size:1.5em; margin-top:20px;">Begin Story</button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- BREADCRUMB INDICATOR — Non-clickable orientation display     -->
+  <!-- ============================================================ -->
+  <div id="storyBreadcrumb" class="story-breadcrumb hidden">
+    <span class="breadcrumb-step breadcrumb-origin" data-step="shape">Shape</span>
+    <span class="breadcrumb-dot">·</span>
+    <span class="breadcrumb-step" data-step="cover">Cover</span>
+    <span class="breadcrumb-arrow">→</span>
+    <span class="breadcrumb-step" data-step="setting">Setting</span>
+    <span class="breadcrumb-arrow">→</span>
+    <span class="breadcrumb-step" data-step="story">Story</span>
   </div>
 
   <div id="game" class="screen hidden" style="max-width:900px; margin:0 auto; padding-bottom:60px;">
@@ -819,6 +1018,7 @@
           <div id="coverProgressFill" class="cover-progress-fill"></div>
         </div>
         <p id="coverStatusText" class="cover-status-text">Building your book cover...</p>
+        <button id="coverAbortBtn" class="cover-abort-btn" title="Cancel cover generation">✕</button>
       </div>
 
       <!-- Physical book object - no buttons, click anywhere to open -->
@@ -829,23 +1029,231 @@
         <!-- Book cover with hinge -->
         <div id="bookCover" class="book-cover">
           <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
+          <!-- Fallback cover: Intentional empty-state design (textured, Art Deco border, watermark) -->
+          <div id="coverFallback" class="cover-fallback hidden">
+            <!-- Art Deco border frame -->
+            <svg class="fallback-border" viewBox="0 0 320 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Outer frame -->
+              <rect x="8" y="8" width="304" height="464" rx="4" stroke="currentColor" stroke-width="1.5"/>
+              <!-- Inner frame -->
+              <rect x="16" y="16" width="288" height="448" rx="2" stroke="currentColor" stroke-width="0.75" opacity="0.5"/>
+              <!-- Corner flourishes -->
+              <g opacity="0.6">
+                <!-- Top-left -->
+                <path d="M8,40 L8,8 L40,8" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M16,32 L16,16 L32,16" stroke="currentColor" stroke-width="0.75"/>
+                <!-- Top-right -->
+                <path d="M312,40 L312,8 L280,8" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M304,32 L304,16 L288,16" stroke="currentColor" stroke-width="0.75"/>
+                <!-- Bottom-left -->
+                <path d="M8,440 L8,472 L40,472" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M16,448 L16,464 L32,464" stroke="currentColor" stroke-width="0.75"/>
+                <!-- Bottom-right -->
+                <path d="M312,440 L312,472 L280,472" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M304,448 L304,464 L288,464" stroke="currentColor" stroke-width="0.75"/>
+              </g>
+              <!-- Top center keystone -->
+              <g transform="translate(160,0)" opacity="0.5">
+                <line x1="0" y1="24" x2="-20" y2="6" stroke="currentColor" stroke-width="0.6"/>
+                <line x1="0" y1="22" x2="0" y2="4" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="24" x2="20" y2="6" stroke="currentColor" stroke-width="0.6"/>
+                <circle cx="0" cy="18" r="4" stroke="currentColor" stroke-width="0.75"/>
+              </g>
+              <!-- Bottom center flourish -->
+              <g transform="translate(160,480)" opacity="0.5">
+                <line x1="0" y1="-24" x2="-20" y2="-6" stroke="currentColor" stroke-width="0.6"/>
+                <line x1="0" y1="-22" x2="0" y2="-4" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="-24" x2="20" y2="-6" stroke="currentColor" stroke-width="0.6"/>
+                <circle cx="0" cy="-18" r="4" stroke="currentColor" stroke-width="0.75"/>
+              </g>
+            </svg>
+            <!-- Embossed watermark (symbolic key) -->
+            <div class="fallback-watermark">
+              <svg viewBox="0 0 80 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Key bow (ring) -->
+                <circle cx="40" cy="24" r="18" stroke="currentColor" stroke-width="2"/>
+                <circle cx="40" cy="24" r="10" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+                <!-- Key shaft -->
+                <line x1="40" y1="42" x2="40" y2="105" stroke="currentColor" stroke-width="3"/>
+                <!-- Key teeth -->
+                <path d="M40,85 L52,85 L52,92 L40,92" stroke="currentColor" stroke-width="2"/>
+                <path d="M40,95 L48,95 L48,102 L40,102" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <!-- Title and author -->
+            <div class="fallback-title" id="fallbackTitle">Untitled</div>
+            <div class="fallback-author">by Anonymous</div>
+          </div>
+          <!-- Layer 2: Erotic border overlay (Art Deco filigree + implements) -->
+          <div id="coverEroticBorder" class="cover-erotic-border hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 480" fill="none" class="erotic-border-svg">
+              <!-- OUTER FRAME RAILS -->
+              <rect x="5" y="5" width="310" height="470" rx="6" stroke="currentColor" stroke-width="2" opacity="0.65"/>
+              <rect x="13" y="13" width="294" height="454" rx="3" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+
+              <!-- TOP-LEFT CORNER: stepped bracket + ribbon curl -->
+              <g opacity="0.6">
+                <path d="M5,60 L5,5 L60,5" stroke="currentColor" stroke-width="2"/>
+                <path d="M13,50 L13,13 L50,13" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M21,42 L21,21 L42,21" stroke="currentColor" stroke-width="0.8"/>
+                <path d="M5,40 C14,38 18,30 15,24 C12,18 18,11 25,14 C32,17 34,10 40,5" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+                <line x1="5" y1="5" x2="32" y2="32" stroke="currentColor" stroke-width="0.5" opacity="0.25"/>
+              </g>
+              <!-- TOP-RIGHT CORNER (mirror) -->
+              <g transform="translate(320,0) scale(-1,1)" opacity="0.6">
+                <path d="M5,60 L5,5 L60,5" stroke="currentColor" stroke-width="2"/>
+                <path d="M13,50 L13,13 L50,13" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M21,42 L21,21 L42,21" stroke="currentColor" stroke-width="0.8"/>
+                <path d="M5,40 C14,38 18,30 15,24 C12,18 18,11 25,14 C32,17 34,10 40,5" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+                <line x1="5" y1="5" x2="32" y2="32" stroke="currentColor" stroke-width="0.5" opacity="0.25"/>
+              </g>
+              <!-- BOTTOM-LEFT CORNER (mirror) -->
+              <g transform="translate(0,480) scale(1,-1)" opacity="0.6">
+                <path d="M5,60 L5,5 L60,5" stroke="currentColor" stroke-width="2"/>
+                <path d="M13,50 L13,13 L50,13" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M21,42 L21,21 L42,21" stroke="currentColor" stroke-width="0.8"/>
+                <path d="M5,40 C14,38 18,30 15,24 C12,18 18,11 25,14 C32,17 34,10 40,5" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+                <line x1="5" y1="5" x2="32" y2="32" stroke="currentColor" stroke-width="0.5" opacity="0.25"/>
+              </g>
+              <!-- BOTTOM-RIGHT CORNER (mirror both) -->
+              <g transform="translate(320,480) scale(-1,-1)" opacity="0.6">
+                <path d="M5,60 L5,5 L60,5" stroke="currentColor" stroke-width="2"/>
+                <path d="M13,50 L13,13 L50,13" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M21,42 L21,21 L42,21" stroke="currentColor" stroke-width="0.8"/>
+                <path d="M5,40 C14,38 18,30 15,24 C12,18 18,11 25,14 C32,17 34,10 40,5" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+                <line x1="5" y1="5" x2="32" y2="32" stroke="currentColor" stroke-width="0.5" opacity="0.25"/>
+              </g>
+
+              <!-- TOP CENTER: KEY as Art Deco keystone arch -->
+              <g transform="translate(160,0)" opacity="0.6">
+                <!-- Sunburst fan rays (key bow abstracted) -->
+                <line x1="0" y1="30" x2="-28" y2="3" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="30" x2="-16" y2="2" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="28" x2="0" y2="1" stroke="currentColor" stroke-width="0.8"/>
+                <line x1="0" y1="30" x2="16" y2="2" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="30" x2="28" y2="3" stroke="currentColor" stroke-width="0.7"/>
+                <!-- Key ring (bow) -->
+                <circle cx="0" cy="23" r="6.5" stroke="currentColor" stroke-width="1.2"/>
+                <circle cx="0" cy="23" r="3" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
+                <!-- Key shaft -->
+                <line x1="0" y1="29.5" x2="0" y2="52" stroke="currentColor" stroke-width="1.2"/>
+                <!-- Ward cuts (teeth) -->
+                <line x1="0" y1="44" x2="4.5" y2="44" stroke="currentColor" stroke-width="0.9"/>
+                <line x1="0" y1="48" x2="3.5" y2="48" stroke="currentColor" stroke-width="0.9"/>
+                <!-- Flanking accent lines -->
+                <line x1="-50" y1="8" x2="-32" y2="8" stroke="currentColor" stroke-width="0.7" opacity="0.35"/>
+                <line x1="32" y1="8" x2="50" y2="8" stroke="currentColor" stroke-width="0.7" opacity="0.35"/>
+              </g>
+
+              <!-- BOTTOM CENTER: HANDCUFFS as linked Art Deco rings -->
+              <g transform="translate(160,480)" opacity="0.55">
+                <!-- Left cuff -->
+                <ellipse cx="-15" cy="-25" rx="10" ry="9" stroke="currentColor" stroke-width="1.2"/>
+                <!-- Right cuff -->
+                <ellipse cx="15" cy="-25" rx="10" ry="9" stroke="currentColor" stroke-width="1.2"/>
+                <!-- Chain links (interlocking circles) -->
+                <circle cx="-3" cy="-25" r="3" stroke="currentColor" stroke-width="0.8"/>
+                <circle cx="3" cy="-25" r="3" stroke="currentColor" stroke-width="0.8"/>
+                <!-- Keyhole accents on cuffs -->
+                <line x1="-15" y1="-28" x2="-15" y2="-22" stroke="currentColor" stroke-width="0.5" opacity="0.4"/>
+                <line x1="15" y1="-28" x2="15" y2="-22" stroke="currentColor" stroke-width="0.5" opacity="0.4"/>
+                <!-- Stepped deco base -->
+                <line x1="-45" y1="-9" x2="45" y2="-9" stroke="currentColor" stroke-width="0.7" opacity="0.3"/>
+                <line x1="-35" y1="-13" x2="35" y2="-13" stroke="currentColor" stroke-width="0.5" opacity="0.2"/>
+              </g>
+
+              <!-- LEFT RAIL: FEATHER as Art Deco leaf filigree -->
+              <g transform="translate(9,140)" opacity="0.4">
+                <!-- Quill shaft -->
+                <line x1="4" y1="0" x2="4" y2="200" stroke="currentColor" stroke-width="0.7"/>
+                <!-- Barb pairs — symmetric leaf shapes -->
+                <path d="M4,8 C-1,18 -1,30 4,40" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,8 C9,18 9,30 4,40" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,48 C-1,58 -1,70 4,80" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,48 C9,58 9,70 4,80" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,88 C-1,98 -1,110 4,120" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,88 C9,98 9,110 4,120" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,128 C-1,138 -1,150 4,160" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,128 C9,138 9,150 4,160" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,168 C-1,178 -1,190 4,200" stroke="currentColor" stroke-width="0.5"/>
+                <path d="M4,168 C9,178 9,190 4,200" stroke="currentColor" stroke-width="0.5"/>
+              </g>
+
+              <!-- RIGHT RAIL: RIDING CROP as vertical accent -->
+              <g transform="translate(307,140)" opacity="0.4">
+                <!-- Shaft (slightly tapered) -->
+                <line x1="4" y1="12" x2="4" y2="188" stroke="currentColor" stroke-width="0.9"/>
+                <!-- Handle wrap (cross-lacing) -->
+                <line x1="2" y1="168" x2="6" y2="173" stroke="currentColor" stroke-width="0.4"/>
+                <line x1="2" y1="173" x2="6" y2="178" stroke="currentColor" stroke-width="0.4"/>
+                <line x1="2" y1="178" x2="6" y2="183" stroke="currentColor" stroke-width="0.4"/>
+                <line x1="2" y1="183" x2="6" y2="188" stroke="currentColor" stroke-width="0.4"/>
+                <!-- Keeper loop (wrist strap) -->
+                <path d="M4,188 C0,194 0,200 4,200 C8,200 8,194 4,188" stroke="currentColor" stroke-width="0.6"/>
+                <!-- Tongue/keeper flap at top -->
+                <ellipse cx="4" cy="6" rx="5" ry="4" stroke="currentColor" stroke-width="0.5" opacity="0.5"/>
+                <line x1="4" y1="10" x2="4" y2="12" stroke="currentColor" stroke-width="0.7"/>
+              </g>
+
+              <!-- SIDE ACCENT DASHES -->
+              <line x1="5" y1="80" x2="5" y2="115" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+              <line x1="5" y1="365" x2="5" y2="400" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+              <line x1="315" y1="80" x2="315" y2="115" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+              <line x1="315" y1="365" x2="315" y2="400" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+            </svg>
+          </div>
+          <!-- Layer 3: Dirty keyhole takeover -->
+          <div id="coverKeyholeOverlay" class="cover-keyhole-overlay hidden">
+            <div class="keyhole-plate"></div>
+            <div class="keyhole-title"></div>
+          </div>
         </div>
 
         <!-- Book pages underneath (visible during courtesy hinge) -->
         <div id="bookPagesPreview" class="book-pages-preview">
           <div class="page-edge-stack"></div>
+          <!-- Inside cover: BLANK paper only (no text, no images per spec) -->
+          <div id="bookInsideCover" class="book-inside-cover">
+            <!-- Intentionally empty: pure white/paper texture -->
+          </div>
         </div>
 
         <!-- Book spine/thickness -->
         <div class="book-spine"></div>
         <div class="book-thickness"></div>
       </div>
+
+      <!-- Cover View Buttons (below the book) -->
+      <div id="coverViewButtons" class="cover-view-buttons hidden">
+        <button id="btnSeeSetting" class="cover-view-btn setting-btn">See Your Story Setting</button>
+        <div id="settingBtnDisabledNotice" class="setting-disabled-notice hidden">Requires subscription to access</div>
+        <button id="btnBeginStory" class="cover-view-btn begin-btn">Begin Story</button>
+      </div>
     </div>
 
-    <!-- Page-turn animation overlay (deprecated - using hinge now) -->
-    <div id="pageTurnOverlay" class="page-turn-overlay hidden">
-      <div class="page-turn-left"></div>
-      <div class="page-turn-right"></div>
+    <!-- ============================================================ -->
+    <!-- SETTING VIEW - Full-screen setting image display            -->
+    <!-- ============================================================ -->
+    <div id="settingView" class="setting-view hidden">
+      <!-- NON-BLOCKING Loading: User can always proceed -->
+      <div id="settingViewLoading" class="setting-view-loading">
+        <p class="setting-status-text">Generating setting image<span class="setting-ellipsis"></span></p>
+        <p id="settingLongWaitHint" class="setting-long-wait-hint hidden">Still working… you can continue without it.</p>
+        <button id="btnSettingSkip" class="setting-skip-btn">Begin Story →</button>
+      </div>
+      <div id="settingViewContent" class="setting-view-content hidden">
+        <img id="settingViewImg" src="" alt="Story Setting" class="setting-view-image">
+        <p class="setting-view-hint">Tap to begin your story</p>
+      </div>
+      <!-- Setting Fallback: Shown on failure (not cancel) -->
+      <div id="settingViewFallback" class="setting-view-fallback hidden">
+        <div class="setting-fallback-inner">
+          <div class="setting-fallback-text">Setting image unavailable</div>
+          <button id="btnSettingBeginStory" class="setting-begin-btn">Begin Story</button>
+          <button id="btnSettingRetry" class="setting-retry-btn">Try Again</button>
+        </div>
+      </div>
+      <button id="btnSettingBack" class="setting-back-btn">← Back to Cover</button>
     </div>
 
     <!-- Main story content (hidden during cover) -->
@@ -853,10 +1261,19 @@
 
     <div id="billingBanner" style="display:none;"></div>
 
-    <!-- CORRECTIVE: Story start - title double size, Scene under synopsis -->
+    <!-- SCENE 1 COMPOSITION: Title → Synopsis → Setting Image → Prose -->
     <h2 id="storyTitle" style="font-size:3em; text-align:center; margin-bottom:10px;"></h2>
-    <p id="storySynopsis" style="color:var(--gold); font-style:italic; margin-bottom:10px; text-align:center;"></p>
+
+    <!-- Synopsis displays below title, before setting image -->
+    <p id="sceneSynopsis" class="scene-synopsis hidden" style="text-align:center; font-style:italic; color:var(--text-secondary); margin:0 20px 20px; line-height:1.5;"></p>
+
     <div id="sceneNumber" style="font-size:2em; color:var(--gold); font-weight:bold; text-align:center; margin:0 0 20px;">Scene 1</div>
+
+    <!-- Setting Plate: Inline within Scene 1 (between synopsis and prose) -->
+    <div id="settingPlate" class="setting-plate setting-inline">
+      <img id="bookSceneImg" src="" alt="" class="book-scene-image">
+      <div id="bookSceneLoading" class="book-scene-loading hidden">Conjuring the world…</div>
+    </div>
     
     <div id="batedBreathIndicator" class="hidden" style="text-align:center; font-size:0.8em; color:var(--gold); font-style:italic; margin-bottom:10px; opacity:0.8;">
         Waiting for partner...
@@ -884,8 +1301,9 @@
         </button>
     </div>
 
-    <div style="text-align:center; margin-bottom:10px;">
+    <div style="text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button id="vizSceneBtn" onclick="window.visualize()" style="font-size:0.9em; background:#444;">✨ Visualize This Scene</button>
+        <button id="btnReaderCover" style="font-size:0.9em; background:linear-gradient(135deg, #2a2a2a, #1a1a1a); border:1px solid var(--gold); color:var(--gold);">📖 Cover Sketch</button>
     </div>
     
     <div id="metaControls" class="hidden" style="margin: 10px auto; padding: 10px; border: 1px dashed var(--gold); border-radius: 8px; max-width: 600px;">
@@ -899,9 +1317,7 @@
 
     <div id="fateCardHeader" class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
 
-    <div style="display:flex; align-items:flex-start; gap:20px; justify-content:center;">
-        <!-- CORRECTIVE: Restored "Your Chosen Fate:" text -->
-        <div id="yourChoiceLabel" class="hidden" style="font-size:1.1em; color:var(--gold); font-style:italic; padding-top:20px; white-space:nowrap;">Your Chosen Fate:</div>
+    <div style="display:flex; align-items:flex-start; justify-content:center;">
         <div id="cardMount" class="fate-grid"></div>
     </div>
 
@@ -924,7 +1340,7 @@
     </div>
 
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
-       <button id="saveBtn" class="small-btn locked-style" onclick="window.showPaywall('unlock')">Save</button>
+       <button id="saveBtn" class="small-btn locked-style">Save</button>
        <button id="submitBtn" style="font-size:1.3em;">Submit Turn</button>
     </div>
     
@@ -961,6 +1377,8 @@
         <div class="qv-section">
             <label class="qv-label" style="display:block; margin-bottom:8px;">Quill</label>
             <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Steer tone, boundaries, or direction.</p>
+            <!-- Committed Quill entries (parallel to gameVetoCommitted) -->
+            <div id="gameQuillCommitted" class="committed-phrases" style="margin-bottom:10px;"></div>
             <div class="fate-input-row" style="margin-bottom:10px;">
                 <div id="gameQuillBox" class="input-wrapper fate-input-wrapper" style="flex:1;">
                     <textarea id="gameQuillInput" rows="3" class="fate-field" data-fate-type="quill" placeholder=""></textarea>
@@ -977,6 +1395,27 @@
     <div style="text-align:center; margin-top:20px;">
         <button onclick="document.getElementById('gameQuillVetoModal').classList.add('hidden')" style="background:#444;">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- TRIPLE-FORK CONTINUATION MODAL -->
+<div id="continuationForkModal" class="overlay hidden" style="z-index:10006;" onclick="if(event.target===this) window.defaultContinuationPath();">
+  <div class="box" style="max-width:450px; text-align:center;">
+    <h3 style="color:var(--gold); margin-bottom:20px;">What comes next?</h3>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button id="btnContinueStory" onclick="window.selectContinuationPath('continue')" style="padding:15px;">
+        Continue this story
+      </button>
+      <button id="btnSameWorld" onclick="window.selectContinuationPath('same_world')" style="padding:15px;">
+        Start a new story in this world
+      </button>
+      <button id="btnNewStory" onclick="window.selectContinuationPath('new_story')" style="padding:15px;">
+        Start a completely new story
+      </button>
+    </div>
+    <p style="font-size:0.75em; opacity:0.5; margin-top:15px;">
+      Click outside to start a completely new story.
+    </p>
   </div>
 </div>
 
@@ -1048,6 +1487,14 @@
     <h3>My Library</h3>
     <div id="myLibraryContent"></div>
     <button onclick="window.closeMyLibraryModal()" style="background:#444; margin-top:15px;">Close</button>
+  </div>
+</div>
+<!-- Dev HUD (developer-only, toggled with backtick key) -->
+<div id="devHud" class="dev-hud">
+  <div class="dev-hud-bar">
+    <span class="dev-hud-label">DEV</span>
+    <input id="devHudInput" type="text" placeholder="what can i say..." autocomplete="off" spellcheck="false">
+    <div id="devHudLog" class="dev-hud-log"></div>
   </div>
 </div>
 </body>
