@@ -1005,6 +1005,15 @@ textarea, input, select { width:100%; padding:15px; background:rgba(0,0,0,0.3); 
 /* Increased height for better prompt visibility */
 #vizPromptInput { width: 100%; height: 100px; font-size: 0.9em; margin-bottom: 8px; color: var(--gold); border: 1px solid var(--pink); background: rgba(0,0,0,0.5); resize: vertical; }
 
+/* Visualization prompt loading animation */
+#vizPromptInput.viz-loading::placeholder {
+    animation: viz-placeholder-pulse 1.5s ease-in-out infinite;
+}
+@keyframes viz-placeholder-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
 /* Visualize Modifier Pills */
 #vizModifierSection { margin-bottom: 12px; }
 .viz-modifier-pills {
@@ -4637,14 +4646,57 @@ textarea.fate-field {
 .setting-view-loading {
     text-align: center;
     color: var(--gold);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
 }
 
-.setting-view-loading p {
-    font-size: 1.2em;
-    margin-bottom: 20px;
+.setting-status-text {
+    font-size: 1.1em;
+    color: rgba(255, 215, 0, 0.8);
+    margin: 0;
 }
 
+/* Ellipsis animation for non-blocking status */
+.setting-ellipsis::after {
+    content: '';
+    animation: settingEllipsis 1.5s steps(4, end) infinite;
+}
+
+@keyframes settingEllipsis {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+    100% { content: ''; }
+}
+
+.setting-long-wait-hint {
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+}
+.setting-long-wait-hint.hidden { display: none; }
+
+.setting-skip-btn {
+    margin-top: 20px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 12px 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.2s ease;
+}
+.setting-skip-btn:hover {
+    background: rgba(255, 215, 0, 0.15);
+}
+
+/* Legacy progress bar — kept but unused */
 .setting-progress-bar {
+    display: none;
     width: 200px;
     height: 4px;
     background: rgba(255, 215, 0, 0.2);
@@ -4758,6 +4810,22 @@ textarea.fate-field {
 .setting-begin-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.setting-retry-btn {
+    display: block;
+    margin-top: 12px;
+    background: transparent;
+    border: none;
+    color: rgba(185, 153, 90, 0.7);
+    padding: 8px 16px;
+    font-size: 0.85em;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+.setting-retry-btn:hover {
+    color: rgba(185, 153, 90, 1);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */

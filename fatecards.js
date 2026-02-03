@@ -825,7 +825,14 @@ function stopContinuousSparkles() {
             clearInterval(e.interval);
             clearTimeout(e.stopTimer);
             clearTimeout(e.cleanupTimer);
-            if (e.overlay.parentNode) e.overlay.remove();
+            // Fade out overlay gracefully instead of instant removal
+            if (e.overlay.parentNode) {
+                e.overlay.style.transition = 'opacity 0.5s ease-out';
+                e.overlay.style.opacity = '0';
+                setTimeout(function() {
+                    if (e.overlay.parentNode) e.overlay.remove();
+                }, 500);
+            }
         });
         _activeEmanations = [];
     }
@@ -856,7 +863,7 @@ function stopContinuousSparkles() {
             'width:' + (rect.width + PERIMETER_OFFSET * 2) + 'px;' +
             'height:' + (rect.height + PERIMETER_OFFSET * 2) + 'px;' +
             'pointer-events:none;' +
-            'z-index:9999;' +
+            'z-index:2500;' /* Below modals (z-index: 3000+) */ +
             'overflow:visible;';
         document.body.appendChild(overlay);
 
@@ -1106,7 +1113,7 @@ function setSelectedState(mount, selectedCardEl){
             'width:' + rect.width + 'px;' +
             'height:' + rect.height + 'px;' +
             'pointer-events:none;' +
-            'z-index:9999;' +
+            'z-index:2500;' /* Below modals (z-index: 3000+) */ +
             'overflow:visible;';
         document.body.appendChild(overlay);
 

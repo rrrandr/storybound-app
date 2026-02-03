@@ -110,11 +110,11 @@
 
   const MONETIZATION_GATES = {
     free: {
-      name: 'Voyeur Tease',
+      name: 'Tease',
       allowedEroticism: ['Clean', 'Naughty'],
       completionAllowed: false,
       cliffhangerRequired: true,
-      maxStoryLength: 'voyeur'
+      maxStoryLength: 'tease'
     },
     pass: {
       name: '$3 Story Pass',

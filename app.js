@@ -1377,6 +1377,15 @@ STORYTELLER ENFORCEMENT:
 - Use the Stress & Failure Pattern as the main source of relational tension.
 - Allow fracture and repair without erasing the shadow.
 - Never "heal away" the archetype.
+
+ARCHETYPE LABEL SUPPRESSION (AUTHORITATIVE):
+- Archetype labels (e.g. Spellbinder, Villain, Anti-Hero, Muse, etc.) are SYSTEM METADATA ONLY.
+- Archetype labels MUST NEVER appear verbatim in story prose.
+- Do NOT use archetype names as nouns, titles, descriptors, or epithets.
+- Archetypes may influence behavior, tone, power dynamics, and emotional effect ONLY.
+- If an archetype label would naturally appear, replace it with an effect-based description.
+- Describe what the character does to others, how they feel to encounter, or the consequence of their presence.
+- If unsure, omit the label entirely.
 `;
 
       return directive;
@@ -1554,7 +1563,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       if (!variant) return '';
 
       // Determine midpoint range based on story length
-      const midpointTurns = { voyeur: 3, fling: 6, affair: 12, soulmates: 20 };
+      const midpointTurns = { tease: 3, fling: 6, affair: 12, soulmates: 20 };
       const midpoint = midpointTurns[storyLength] || 6;
       const atOrPastMidpoint = turnCount >= midpoint;
       const approachingMidpoint = turnCount >= (midpoint - 2);
@@ -1632,7 +1641,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       authorPronouns: 'She/Her',
       
       storyTargetWords: 10000,
-      storyLength: 'voyeur', 
+      storyLength: 'tease', 
       flingClimaxDone: false,
       flingConsequenceShown: false,
       storyEnded: false,
@@ -2018,9 +2027,18 @@ If a scene is explicitly erotic:
 - The Author may appear before or after, never during
 This rule does not apply to Scene 1 unless explicitly erotic.
 
-PRONOUN ALIGNMENT:
-The Author's pronouns MUST mirror Player 1's chosen gender.
-If Player 1 is non-binary or undefined, adapt pronouns naturally.
+AUTHOR IDENTITY & PRONOUN RULE (AUTHORITATIVE):
+- The Author's gender MUST always match the protagonist's gender.
+- Refer to the Author as "The Author" by default.
+- Do NOT use pronouns for the Author unless grammatical construction makes "The Author" impossible.
+- When pronouns are unavoidable:
+  - They MUST match the protagonist's gender.
+  - They MUST be used sparingly.
+  - Immediately return to "The Author" on the next reference.
+- The Author must never become a POV character or narrator avatar.
+- First-person ("I") for the Author is forbidden.
+- Casual pronoun substitution is forbidden.
+- If unsure, prefer repeating "The Author" rather than using a pronoun.
 
 CRITICAL FAILURE AVOIDANCE:
 - Prioritize structural correctness over perfection
@@ -3682,6 +3700,231 @@ If you name what something IS, you have failed. Show what it COSTS.
   };
 
   /**
+   * WRY CONFESSIONAL TITLE MODES
+   * Observational, ironic, understated — no power/possession/melodrama
+   */
+  const WRY_CONFESSIONAL_TITLE_MODES = {
+      OBSERVATIONAL: 'OBSERVATIONAL',
+      IRONIC_STATEMENT: 'IRONIC_STATEMENT',
+      UNDERCUT_OBJECT: 'UNDERCUT_OBJECT'
+  };
+
+  const WRY_CONFESSIONAL_VOCABULARY = {
+      OBSERVATIONAL: [
+          'Everyone Pretended This Was Fine',
+          'It Seemed Like a Good Idea',
+          'No One Mentioned It Again',
+          'We Were All Adults About It',
+          'This Was Supposed to Be Simple'
+      ],
+      IRONIC_STATEMENT: [
+          'A Minor Complication',
+          'Nothing Personal',
+          'An Understandable Mistake',
+          'Probably Fine',
+          'For What It\'s Worth'
+      ],
+      UNDERCUT_OBJECT: [
+          'The Champagne Glass',
+          'The Empty Chair',
+          'The Apology',
+          'The Email',
+          'The Receipt'
+      ]
+  };
+
+  // =================================================================
+  // WRY CONFESSIONAL — UNIFIED VISUAL ONTOLOGY (PATCH 9)
+  // Single source of truth for covers AND scene visualization
+  // =================================================================
+
+  const WRY_CONFESSIONAL_VISUAL_ONTOLOGY = `Editorial cartoon in the style of The New Yorker. Single-panel illustration. Flat or muted color palette. Minimal linework. Ordinary moment with understated ironic undercut. One subject, one observation, one dry caption. Simple flat rendering. No shading gradients. No atmospheric effects. Clean line art only.`;
+
+  const WRY_CONFESSIONAL_OBJECT_ALTERATIONS = [
+      'slightly misplaced',
+      'unused or paused mid-intent',
+      'emotionally undercut',
+      'quietly contradicting expectation'
+  ];
+
+  /**
+   * WRY CONFESSIONAL VISUAL REGRESSION GUARD
+   * Throws if prompt contains forbidden cinematic/painterly tokens
+   * @param {string} prompt - The image generation prompt to validate
+   * @param {string} context - Call site identifier for error messages
+   */
+  function assertWryConfessionalVisual(prompt, context) {
+      const tone = state?.picks?.tone;
+      if (tone !== 'Wry Confessional') return; // Only guard Wry Confessional
+
+      const FORBIDDEN_TOKENS = [
+          'cinematic', 'painterly', 'photographic', 'photo-real', 'photorealistic',
+          'noir', 'dramatic lighting', 'dramatic', 'studio lighting', 'chiaroscuro',
+          'depth of field', 'bokeh', 'lens', 'glow', 'hyper-realistic', 'realism', 'oil painting'
+      ];
+
+      const promptLower = prompt.toLowerCase();
+      for (const token of FORBIDDEN_TOKENS) {
+          if (promptLower.includes(token)) {
+              const error = `[WRY CONFESSIONAL VIOLATION] Forbidden token "${token}" in prompt at ${context}`;
+              console.error(error);
+              throw new Error(error);
+          }
+      }
+
+      console.log(`[WRY✓] Visual assertion passed at ${context}`);
+  }
+
+  // =================================================================
+  // EARNED COVER SYSTEM — Progressive cover quality tied to story progress
+  // =================================================================
+
+  const COVER_STAGES = {
+      SKETCH: 'sketch',
+      THUMBNAIL: 'thumbnail',
+      ROUGH: 'rough',
+      V1: 'v1'
+  };
+
+  const COVER_STAGE_LABELS = {
+      [COVER_STAGES.SKETCH]: 'Cover Sketch',
+      [COVER_STAGES.THUMBNAIL]: 'Cover Thumbnail',
+      [COVER_STAGES.ROUGH]: 'Cover Rough',
+      [COVER_STAGES.V1]: 'Cover v1'
+  };
+
+  // Unlock rules by story length (scene count thresholds)
+  // Phase B: Rough is max earned cover. v1 unlocks are inactive.
+  const COVER_UNLOCK_RULES = {
+      tease: {
+          sketch: 1,
+          thumbnail: 2,
+          rough: null     // Tease maxes out at Thumbnail
+      },
+      fling: {
+          sketch: 1,
+          thumbnail: 3,
+          rough: 10       // Unlocks at scene 10
+      },
+      affair: {
+          sketch: 1,
+          thumbnail: 5,
+          rough: 20       // Unlocks at scene 20
+      },
+      soulmates: {
+          sketch: 1,
+          thumbnail: 8,
+          rough: 30       // Unlocks at scene 30
+      }
+  };
+
+  // Stage-specific prompt modifiers (lower quality = more minimal)
+  const COVER_STAGE_PROMPTS = {
+      [COVER_STAGES.SKETCH]: 'Rough pencil sketch style. Minimal detail. Line art only. Unfinished, conceptual quality. No color, grayscale only.',
+      [COVER_STAGES.THUMBNAIL]: 'Simple thumbnail quality. Basic shapes and forms. Limited color palette. Quick concept art style.',
+      [COVER_STAGES.ROUGH]: 'Rough draft quality. More refined than sketch but not polished. Visible brushwork. Work-in-progress aesthetic.',
+      [COVER_STAGES.V1]: '' // Full quality, no modifier needed
+  };
+
+  /**
+   * Calculate the current cover stage based on story length and scene count
+   * Phase B: Max stage is ROUGH (v1 inactive)
+   * @returns {string} - Current cover stage (sketch, thumbnail, rough)
+   */
+  function getCurrentCoverStage() {
+      const storyLength = state.storyLength || 'tease';
+      const sceneCount = state.turnCount || 0;
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+
+      // Check stages in reverse order (highest first)
+      // Phase B: v1 logic removed — max is ROUGH
+      if (rules.rough !== null && sceneCount >= rules.rough) return COVER_STAGES.ROUGH;
+      if (sceneCount >= rules.thumbnail) return COVER_STAGES.THUMBNAIL;
+      if (sceneCount >= rules.sketch) return COVER_STAGES.SKETCH;
+
+      return COVER_STAGES.SKETCH; // Default
+  }
+
+  /**
+   * Get the maximum unlockable cover stage for current story length
+   * Phase B: Max stage is ROUGH (v1 inactive)
+   * @returns {string} - Maximum stage that can ever be unlocked
+   */
+  function getMaxCoverStage() {
+      const storyLength = state.storyLength || 'tease';
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+
+      // Phase B: v1 logic removed — max is ROUGH
+      if (rules.rough !== null) return COVER_STAGES.ROUGH;
+      return COVER_STAGES.THUMBNAIL;
+  }
+
+  /**
+   * Check if a specific cover stage is unlocked
+   * @param {string} stage - The stage to check
+   * @returns {boolean}
+   */
+  function isCoverStageUnlocked(stage) {
+      const storyLength = state.storyLength || 'tease';
+      const sceneCount = state.turnCount || 0;
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+
+      const threshold = rules[stage];
+      if (threshold === null) return false;
+      return sceneCount >= threshold;
+  }
+
+  /**
+   * Get the prompt modifier for a cover stage
+   * @param {string} stage - Cover stage
+   * @returns {string} - Prompt modifier text
+   */
+  function getCoverStagePromptModifier(stage) {
+      return COVER_STAGE_PROMPTS[stage] || '';
+  }
+
+  /**
+   * Update the reader cover button label based on current stage
+   */
+  function updateReaderCoverButton() {
+      const btn = document.getElementById('btnReaderCover');
+      if (!btn) return;
+
+      const hasStory = state.storyId && StoryPagination.getAllContent()?.trim().length > 0;
+      if (!hasStory) {
+          btn.textContent = 'Cover Sketch';
+          btn.disabled = true;
+          btn.title = 'Generate your story first';
+          return;
+      }
+
+      const stage = getCurrentCoverStage();
+      btn.textContent = COVER_STAGE_LABELS[stage] || 'Generate Cover';
+      btn.disabled = false;
+      btn.title = '';
+  }
+
+  // Track last notified stage to avoid duplicate toasts
+  let _lastNotifiedCoverStage = null;
+
+  /**
+   * Check if cover stage has upgraded and show toast
+   */
+  function checkCoverStageUpgrade() {
+      const currentStage = getCurrentCoverStage();
+      if (_lastNotifiedCoverStage && currentStage !== _lastNotifiedCoverStage) {
+          const stageOrder = [COVER_STAGES.SKETCH, COVER_STAGES.THUMBNAIL, COVER_STAGES.ROUGH, COVER_STAGES.V1];
+          const oldIndex = stageOrder.indexOf(_lastNotifiedCoverStage);
+          const newIndex = stageOrder.indexOf(currentStage);
+          if (newIndex > oldIndex) {
+              showToast(`Your Book Cover has grown richer: ${COVER_STAGE_LABELS[currentStage]}`);
+          }
+      }
+      _lastNotifiedCoverStage = currentStage;
+      updateReaderCoverButton();
+  }
+
+  /**
    * AROUSAL-TITLE ALIGNMENT
    * Required signals for each arousal level
    */
@@ -4041,9 +4284,17 @@ If you name what something IS, you have failed. Show what it COSTS.
    * @param {string} mode - Selected title mode
    * @param {string} arousal - Current arousal level
    * @param {string} world - Current world setting
+   * @param {string} tone - Current tone (optional, for Wry Confessional override)
    * @returns {string} - Prompt text
    */
-  function buildTitlePrompt(mode, arousal, world) {
+  function buildTitlePrompt(mode, arousal, world, tone) {
+      // Wry Confessional: Return directly from vocabulary pool (no AI generation needed)
+      if (tone === 'Wry Confessional') {
+          const pool = WRY_CONFESSIONAL_VOCABULARY[mode]
+              || WRY_CONFESSIONAL_VOCABULARY.OBSERVATIONAL;
+          return pool[Math.floor(Math.random() * pool.length)];
+      }
+
       const modeVocab = TITLE_MODE_VOCABULARY[mode];
       const arousalSignals = AROUSAL_TITLE_SIGNALS[arousal];
 
@@ -4098,9 +4349,16 @@ Return ONLY the title, no quotes or explanation.`;
    * @param {string} world - Current world setting
    * @param {string} arousal - Current arousal level
    * @param {string} genre - Current genre
+   * @param {string} tone - Current tone (optional, for Wry Confessional override)
    * @returns {string} - Selected mode
    */
-  function selectTitleMode(world, arousal, genre) {
+  function selectTitleMode(world, arousal, genre, tone) {
+      // Wry Confessional uses its own mode set
+      if (tone === 'Wry Confessional') {
+          const modes = Object.values(WRY_CONFESSIONAL_TITLE_MODES);
+          return modes[Math.floor(Math.random() * modes.length)];
+      }
+
       // Use hash for deterministic but varied selection
       const seed = (world || 'Modern') + (arousal || 'Naughty') + (genre || 'Romance');
       const hash = simpleHash(seed);
@@ -4337,7 +4595,7 @@ Return ONLY the title, no quotes or explanation.`;
 
       if (path === CONTINUATION_PATHS.CONTINUE) {
           // Use previous mode, build continuation prompt
-          const mode = state.previousTitleMode || detectTitleMode(state.previousTitle) || selectTitleMode(world, arousal, genre);
+          const mode = state.previousTitleMode || detectTitleMode(state.previousTitle) || selectTitleMode(world, arousal, genre, tone);
           return {
               prompt: buildContinuationTitlePrompt(state.previousTitle, mode, arousal),
               mode: mode,
@@ -4348,9 +4606,9 @@ Return ONLY the title, no quotes or explanation.`;
           if (!state.worldName) {
               state.worldName = generateWorldName(world, genre);
           }
-          const mode = selectTitleMode(world, arousal, genre);
+          const mode = selectTitleMode(world, arousal, genre, tone);
           return {
-              prompt: buildTitlePrompt(mode, arousal, world),
+              prompt: buildTitlePrompt(mode, arousal, world, tone),
               mode: mode,
               worldMarked: true,
               worldName: state.worldName,
@@ -4358,9 +4616,9 @@ Return ONLY the title, no quotes or explanation.`;
           };
       } else {
           // NEW_STORY: Standard title generation
-          const mode = selectTitleMode(world, arousal, genre);
+          const mode = selectTitleMode(world, arousal, genre, tone);
           return {
-              prompt: buildTitlePrompt(mode, arousal, world),
+              prompt: buildTitlePrompt(mode, arousal, world, tone),
               mode: mode,
               worldMarked: false
           };
@@ -4491,7 +4749,7 @@ Return ONLY the title, no quotes or explanation.`;
   function resetForNewStory() {
       state.storyEnded = false;
       state.turnCount = 0;
-      state.storyLength = 'voyeur';
+      state.storyLength = 'tease';
       state.storyId = null;
       clearStoryContent();
 
@@ -5704,7 +5962,7 @@ Return ONLY the title, no quotes or explanation.`;
       state._synopsisMetadata = null;
       state.storyHistory = [];
       state.storyEnded = false;
-      state.storyLength = 'voyeur';
+      state.storyLength = 'tease';
       state.storyOrigin = null;
       state.storyStage = null;
       state.turnCount = 0;
@@ -5768,7 +6026,7 @@ Return ONLY the title, no quotes or explanation.`;
       if (partnerInput) partnerInput.value = '';
 
       // Reset card UI to match default state
-      const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Naughty', length: 'voyeur', pov: 'First' };
+      const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Naughty', length: 'tease', pov: 'First' };
       Object.entries(cardDefaults).forEach(([grp, val]) => {
           document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
               c.classList.remove('selected', 'flipped');
@@ -6250,9 +6508,9 @@ Return ONLY the title, no quotes or explanation.`;
   function checkStoryEndCaps() {
       const wc = currentStoryWordCount();
       const turns = state.turnCount || 0;
-      const len = state.storyLength || 'voyeur';
+      const len = state.storyLength || 'tease';
 
-      if (len === 'voyeur' && (wc > 7000 || turns > 28) && !state.storyEnded) {
+      if (len === 'tease' && (wc > 7000 || turns > 28) && !state.storyEnded) {
           state.storyEnded = true;
           document.getElementById('submitBtn').disabled = true;
           const div = document.createElement('div');
@@ -6486,7 +6744,7 @@ Return ONLY the title, no quotes or explanation.`;
 
   // Tease mode check
   function isTeaseMode() {
-      return state.storyLength === 'voyeur' && state.access === 'free';
+      return state.storyLength === 'tease' && state.access === 'free';
   }
 
   // Get random suggestion from pool
@@ -7235,13 +7493,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // ═══════════════════════════════════════════════════════════════
       // ENTITLEMENT RULES FOR STORY LENGTH CARDS:
       // ═══════════════════════════════════════════════════════════════
-      // - free: only voyeur unlocked
+      // - free: only tease unlocked
       // - pass ($3): fling unlocked (NOT affair, NOT soulmates)
       // - sub ($6): fling, affair, soulmates ALL unlocked
       // SOULMATES: Subscription-only ($6) — NO StoryPass option
       // ═══════════════════════════════════════════════════════════════
 
-      if (state.access === 'free' && val === 'voyeur') {
+      if (state.access === 'free' && val === 'tease') {
           locked = false;
       } else if (val === 'soulmates') {
           // SOULMATES: Subscription-only — locked unless subscriber
@@ -7255,8 +7513,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if (['fling', 'affair', 'soulmates'].includes(val)) locked = false;
       }
 
-      // Hide voyeur for paid users
-      if (state.access !== 'free' && val === 'voyeur') {
+      // Hide tease for paid users
+      if (state.access !== 'free' && val === 'tease') {
           locked = true;
           hidden = true;
       }
@@ -7297,8 +7555,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         state.storyLength = 'fling';
     }
 
-    // Auto-select fling if pass tier and current selection is voyeur (now hidden)
-    if (state.access === 'pass' && state.storyLength === 'voyeur') {
+    // Auto-select fling if pass tier and current selection is tease (now hidden)
+    if (state.access === 'pass' && state.storyLength === 'tease') {
         state.storyLength = 'fling';
     }
 
@@ -7705,7 +7963,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // RULE: Storypass $3 upgrades ONLY to Fling (never Affair/Soulmates)
       if (purchaseType === 'pass' && newAccess === 'pass') {
-          if (state.storyLength === 'voyeur') {
+          if (state.storyLength === 'tease') {
               state.storyLength = 'fling';
               upgraded = true;
               toastMessage = "Story expanded to Fling.";
@@ -7719,7 +7977,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // RULE: Subscription can upgrade to Affair
       if (purchaseType === 'sub' && newAccess === 'sub') {
-          if (['fling', 'voyeur'].includes(state.storyLength)) {
+          if (['fling', 'tease'].includes(state.storyLength)) {
               state.storyLength = 'affair';
               upgraded = true;
               toastMessage = "You have shed your limitations.";
@@ -8254,6 +8512,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (window.initFateCards) window.initFateCards();
     resetTurnSnapshotFlag();
     updateQuillUI();
+
+    // EARNED COVER SYSTEM: Update cover button for continued story
+    _lastNotifiedCoverStage = getCurrentCoverStage();
+    updateReaderCoverButton();
   };
 
   function updateContinueButtons(){
@@ -8275,7 +8537,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     localStorage.removeItem('sb_saved_story');
     // Reset state
     state.turnCount = 0;
-    state.storyLength = 'voyeur';
+    state.storyLength = 'tease';
     state.storyEnded = false;
     state.archetype = { primary: 'BEAUTIFUL_RUIN', modifier: null };
 
@@ -8309,7 +8571,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (_coverProgressInterval) { clearInterval(_coverProgressInterval); _coverProgressInterval = null; }
 
     // Reset card UI to match default state
-    const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Naughty', length: 'voyeur', pov: 'First' };
+    const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Naughty', length: 'tease', pov: 'First' };
     Object.entries(cardDefaults).forEach(([grp, val]) => {
         document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
             c.classList.remove('selected', 'flipped');
@@ -8798,14 +9060,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           return false;
       }
 
-      // Record the paid purchase
-      recordPaidCover();
-
-      // Hide modal
+      // Hide modal (credit recorded AFTER successful generation)
       hideCoverPurchaseModal();
 
       // Generate cover with user's edited prompt
-      return await generatePaidCover(userPrompt);
+      const success = await generatePaidCover(userPrompt);
+
+      // Record credit ONLY on success
+      if (success) {
+          recordPaidCover();
+      }
+      return success;
   }
 
   // Generate cover with custom (paid) prompt
@@ -8866,13 +9131,17 @@ ${worldKey === 'fantasy' ? '- Aged stone, tarnished metal, worn fabric textures'
 
 The final image must look like a real published novel cover.`;
 
+          // REGRESSION GUARD: Block cinematic drift for Wry Confessional
+          assertWryConfessionalVisual(fullPrompt, 'generatePaidCover');
+
           const res = await fetch(IMAGE_PROXY_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                   prompt: fullPrompt,
                   imageIntent: 'book_cover',
-                  shape: 'portrait'
+                  size: '1024x1536', // 5:7 portrait ratio (matches Minimal v1)
+                  _minimalV1: true   // Use same backend path as free covers
               })
           });
 
@@ -8913,7 +9182,7 @@ The final image must look like a real published novel cover.`;
           }
           if (loading) loading.style.display = 'none';
 
-          showToast('Cover generation failed. Your credit has been used.');
+          showToast('Cover generation failed. No credit consumed — please retry.');
           return false;
       }
   }
@@ -8925,6 +9194,15 @@ The final image must look like a real published novel cover.`;
   window.hasFreeCoverCredits = hasFreeCoverCredits;
   window.getRemainingFreeCovers = getRemainingFreeCovers;
   window.updateCoverCreditDisplay = updateCoverCreditDisplay;
+
+  // EARNED COVER SYSTEM exports
+  window.getCurrentCoverStage = getCurrentCoverStage;
+  window.getMaxCoverStage = getMaxCoverStage;
+  window.isCoverStageUnlocked = isCoverStageUnlocked;
+  window.updateReaderCoverButton = updateReaderCoverButton;
+  window.checkCoverStageUpgrade = checkCoverStageUpgrade;
+  window.COVER_STAGES = COVER_STAGES;
+  window.COVER_STAGE_LABELS = COVER_STAGE_LABELS;
 
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -9170,9 +9448,18 @@ The final image must look like a real published novel cover.`;
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // GENERATE COVER BUTTON CLICK HANDLER (with Cover$ credit system)
+  // GENERATE COVER BUTTON CLICK HANDLER — DISABLED (Earned Cover Phase B)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Pre-story cover generation is permanently disabled.
+  // Use btnReaderCover in Reader mode instead.
   // ═══════════════════════════════════════════════════════════════════════════
   $('btnGenerateCover')?.addEventListener('click', async () => {
+      // HARD BLOCK: Pre-story cover generation disabled (Earned Cover Phase B)
+      console.warn('[COVER:BLOCKED] Pre-story cover generation disabled — use Reader cover button');
+      showToast('Cover generation is available after starting your story');
+      return;
+
+      // === LEGACY CODE BELOW — UNREACHABLE ===
       const btn = $('btnGenerateCover');
       const status = $('coverGenStatus');
       const loading = $('coverGenLoading');
@@ -9185,6 +9472,16 @@ The final image must look like a real published novel cover.`;
       if (_coverBtnIsBeginStory) {
           console.log('[COVER:NAV] Navigating to Cover View');
           showCoverView();
+          return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // STORY EXISTENCE GATE — Block cover generation if no story exists
+      // ═══════════════════════════════════════════════════════════════════
+      const storyContent = StoryPagination.getAllContent();
+      if (!state.storyId || !storyContent || storyContent.trim().length === 0) {
+          console.warn('[COVER:GATE] No story exists — cover generation blocked');
+          showToast('Generate your story first before creating a cover');
           return;
       }
 
@@ -9207,9 +9504,7 @@ The final image must look like a real published novel cover.`;
           return;
       }
 
-      // Use a free credit
-      useFreeCredit();
-      console.log('[COVER$] Using free credit. Remaining:', getRemainingFreeCovers());
+      // NOTE: Credit consumed AFTER successful generation (see below)
 
       // Show loading state
       btn.disabled = true;
@@ -9293,8 +9588,15 @@ The final image must look like a real published novel cover.`;
               btn.textContent = 'Generation Failed - Try Again';
               btn.disabled = false;
               if (loading) loading.style.display = 'none';
+              // NOTE: No credit consumed on failure
               return;
           }
+
+          // ═══════════════════════════════════════════════════════════════
+          // COVER$ CREDIT CONSUMPTION — Only on successful image URL
+          // ═══════════════════════════════════════════════════════════════
+          useFreeCredit();
+          console.log('[COVER$] Free credit consumed on SUCCESS. Remaining:', getRemainingFreeCovers());
 
           _preGeneratedCoverUrl = coverUrl;
           _coverGenUsed = true;
@@ -9327,6 +9629,115 @@ The final image must look like a real published novel cover.`;
           btn.textContent = 'Generation Failed - Try Again';
           btn.disabled = false;
           if (loading) loading.style.display = 'none';
+      }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // READER COVER BUTTON — Earned Cover System (Reader UI only)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // This is the ONLY authorized cover generation entry point.
+  // Requires: state.storyId exists, story content exists
+  // Cover stage is determined by story progress (turnCount + storyLength)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  $('btnReaderCover')?.addEventListener('click', async () => {
+      const btn = $('btnReaderCover');
+      if (!btn) return;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // STORY EXISTENCE GATE — Absolute requirement
+      // ═══════════════════════════════════════════════════════════════════
+      const storyContent = StoryPagination.getAllContent();
+      if (!state.storyId || !storyContent || storyContent.trim().length === 0) {
+          console.warn('[COVER:READER] No story exists — blocked');
+          showToast('Generate your story first');
+          return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // DETERMINE COVER STAGE — Based on story progress
+      // ═══════════════════════════════════════════════════════════════════
+      const stage = getCurrentCoverStage();
+      const stageLabel = COVER_STAGE_LABELS[stage];
+      console.log(`[COVER:READER] Generating ${stageLabel} (scene ${state.turnCount}, ${state.storyLength})`);
+
+      // ═══════════════════════════════════════════════════════════════════
+      // CREDIT CHECK — Progress-earned covers are free until v1
+      // Phase B: v1 is inactive, so all earned covers are free
+      // ═══════════════════════════════════════════════════════════════════
+      const isFreeStage = stage !== COVER_STAGES.V1;
+      if (!isFreeStage && !hasFreeCoverCredits()) {
+          console.log('[COVER:READER] v1 requires credits — showing purchase modal');
+          showCoverPurchaseModal();
+          return;
+      }
+
+      // Show loading state
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = `Generating ${stageLabel}...`;
+
+      try {
+          const resolvedTitle = $('storyTitle')?.textContent?.trim() || '';
+
+          const coverUrl = await generateMinimalCoverV1({
+              synopsis: state._synopsisMetadata || '',
+              title: resolvedTitle,
+              authorName: state.coverAuthor || 'Anonymous',
+              world: state.picks?.world || 'Modern',
+              genre: state.picks?.genre || 'Billionaire',
+              tone: state.picks?.tone || 'Earnest',
+              intensity: state.intensity || 'Naughty',
+              stage: stage // Pass current stage for prompt modification
+          });
+
+          // ═══════════════════════════════════════════════════════════════
+          // VALIDATE COVER URL — Only proceed if successful
+          // ═══════════════════════════════════════════════════════════════
+          if (!coverUrl) {
+              console.error('[COVER:READER] Generation failed — no URL');
+              btn.textContent = 'Generation Failed - Retry';
+              btn.disabled = false;
+              // FAILURE SAFETY: Story state is NOT touched
+              return;
+          }
+
+          // ═══════════════════════════════════════════════════════════════
+          // CREDIT CONSUMPTION — Only on success, only for v1
+          // Phase B: v1 inactive, so no credits consumed for earned covers
+          // ═══════════════════════════════════════════════════════════════
+          if (!isFreeStage) {
+              useFreeCredit();
+              console.log('[COVER$] Credit consumed for v1 cover');
+          }
+
+          // Store cover URL and update display
+          _preGeneratedCoverUrl = coverUrl;
+          _coverGenUsed = true;
+
+          // Update book cover image
+          const coverImg = document.getElementById('bookCoverImg');
+          if (coverImg) {
+              coverImg.src = coverUrl;
+              coverImg.classList.remove('hidden');
+          }
+
+          // Hide fallback if visible
+          const fallback = document.getElementById('coverFallback');
+          if (fallback) fallback.classList.add('hidden');
+
+          console.log(`[COVER:READER] ${stageLabel} generated successfully`);
+          showToast(`${stageLabel} ready!`);
+
+          // Reset button
+          btn.textContent = stageLabel;
+          btn.disabled = false;
+
+      } catch (err) {
+          console.error('[COVER:READER] Error:', err);
+          btn.textContent = 'Generation Failed - Retry';
+          btn.disabled = false;
+          // FAILURE SAFETY: Story state preserved, no credits consumed
       }
   });
 
@@ -9648,7 +10059,24 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SETTING VIEW — Generate and display setting image
+  // NON-BLOCKING: User can always proceed; abort-aware; no charges on cancel
   // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // TEST PLAN:
+  // 1. Start setting image gen → immediately click "Begin Story →" → story loads fast;
+  //    toast shows "Setting image skipped. You were not charged."
+  // 2. Start setting image gen → wait for success → image shows; no modal trap
+  // 3. Provider returns null / timeout → fallback shows "Setting image unavailable";
+  //    toast shows "Setting image unavailable. Continue without it.";
+  //    "Try Again" button works.
+  // 4. Credits do not decrement unless image URL is received and committed (success path only)
+  // 5. After 10s, "Still working…" hint appears; user can skip at any time
+  // 6. "Back to Cover" aborts generation cleanly (no error logs)
+  //
+  // ═══════════════════════════════════════════════════════════════════════════
+  let _settingAbortController = null;
+  let _settingGenStartTime = null;
+
   function showSettingView() {
       console.log('[SETTING:VIEW] Showing Setting View');
 
@@ -9658,17 +10086,49 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const settingView = $('settingView');
       const settingLoading = $('settingViewLoading');
       const settingContent = $('settingViewContent');
+      const settingFallback = $('settingViewFallback');
 
       if (settingView) settingView.classList.remove('hidden');
       if (settingLoading) settingLoading.style.display = 'block';
       if (settingContent) settingContent.classList.add('hidden');
+      if (settingFallback) settingFallback.classList.add('hidden');
 
       // Generate setting image
       generateSettingImage();
   }
 
+  // Abort any in-flight setting image request
+  function abortSettingImageGeneration() {
+      if (_settingAbortController) {
+          console.log('[SETTING:GEN] Aborting in-flight request');
+          _settingAbortController.abort();
+          _settingAbortController = null;
+      }
+  }
+
+  // Check if error is an abort (user-initiated cancel)
+  function isAbortError(err) {
+      if (!err) return false;
+      if (err.name === 'AbortError') return true;
+      const msg = (err.message || '').toLowerCase();
+      return msg.includes('abort') || msg.includes('signal is aborted');
+  }
+
   async function generateSettingImage() {
       console.log('[SETTING:GEN] Starting setting image generation');
+
+      // Abort any previous request
+      abortSettingImageGeneration();
+
+      // Create new abort controller for this request
+      _settingAbortController = new AbortController();
+      _settingGenStartTime = Date.now();
+
+      // Show "still working" hint after 10s
+      const longWaitTimer = setTimeout(() => {
+          const hint = $('settingLongWaitHint');
+          if (hint) hint.classList.remove('hidden');
+      }, 10000);
 
       try {
           // Build a setting description from state
@@ -9683,8 +10143,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               tier: 'Clean',
               shape: 'landscape',
               context: 'setting-view',
-              intent: 'setting'
+              intent: 'setting',
+              signal: _settingAbortController?.signal
           });
+
+          clearTimeout(longWaitTimer);
+
+          // Check if aborted during generation
+          if (_settingAbortController?.signal?.aborted) {
+              console.log('[SETTING:GEN] CANCELLED by user');
+              return; // Exit cleanly, no error
+          }
 
           if (rawUrl) {
               let imageUrl = rawUrl;
@@ -9701,29 +10170,49 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               if (settingContent) settingContent.classList.remove('hidden');
 
               console.log('[SETTING:GEN] Setting image generated successfully');
+              // BILLING: Only here would credits be charged (if applicable)
           } else {
               throw new Error('No image URL returned');
           }
       } catch (err) {
-          console.error('[SETTING:GEN] Failed:', err);
+          clearTimeout(longWaitTimer);
+
+          // Distinguish CANCELLED from FAILED
+          if (isAbortError(err)) {
+              console.log('[SETTING:GEN] CANCELLED (user navigation or abort)');
+              // No toast needed here — shown by the function that triggered abort
+              return;
+          }
+
+          console.error('[SETTING:GEN] FAILED:', err);
           // Show fallback view with "Begin Story" button (never blocks progression)
           const settingLoading = $('settingViewLoading');
           const settingFallback = $('settingViewFallback');
           if (settingLoading) settingLoading.style.display = 'none';
           if (settingFallback) settingFallback.classList.remove('hidden');
-          console.log('[SETTING:GEN] Showing fallback - image optional');
+          console.log('[SETTING:GEN] Showing fallback - image unavailable');
+          showToast('Setting image unavailable. Continue without it.');
+      } finally {
+          _settingAbortController = null;
+          const hint = $('settingLongWaitHint');
+          if (hint) hint.classList.add('hidden');
       }
   }
 
   function hideSettingView() {
+      // Abort any in-flight setting image generation
+      abortSettingImageGeneration();
+
       const settingView = $('settingView');
       const settingFallback = $('settingViewFallback');
       const settingContent = $('settingViewContent');
       const settingLoading = $('settingViewLoading');
+      const settingLongWaitHint = $('settingLongWaitHint');
       if (settingView) settingView.classList.add('hidden');
       if (settingFallback) settingFallback.classList.add('hidden');
       if (settingContent) settingContent.classList.add('hidden');
       if (settingLoading) settingLoading.style.display = 'block'; // Reset for next time
+      if (settingLongWaitHint) settingLongWaitHint.classList.add('hidden');
   }
 
   function hideCoverView() {
@@ -9735,9 +10224,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // STORY ENTRY — Begin Scene 1 immediately
+  // Aborts any in-flight setting image; user was not charged if cancelled
   // ═══════════════════════════════════════════════════════════════════════════
   async function beginStoryEntry() {
       console.log('[STORY:ENTRY] Beginning story');
+
+      // Check if setting image was still generating (user skipped)
+      const wasGenerating = _settingAbortController !== null;
 
       // Exit Cover View mode (re-enables click navigation on book)
       if (window.exitCoverViewMode) window.exitCoverViewMode();
@@ -9746,7 +10239,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       if (window.updateBreadcrumb) window.updateBreadcrumb('story');
 
       hideCoverView();
-      hideSettingView();
+      hideSettingView(); // This aborts any in-flight setting image
+
+      // Show toast if user skipped an in-progress generation
+      if (wasGenerating) {
+          showToast('Setting image skipped. You were not charged.');
+      }
 
       // Trigger the actual Begin Story flow
       const beginBtn = $('beginBtn');
@@ -9787,6 +10285,20 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // Setting fallback "Begin Story" button
   $('btnSettingBeginStory')?.addEventListener('click', () => {
       beginStoryEntry();
+  });
+
+  // Setting loading "Skip / Begin Story" button — non-blocking escape hatch
+  $('btnSettingSkip')?.addEventListener('click', () => {
+      beginStoryEntry();
+  });
+
+  // Setting fallback "Try Again" button — retry generation
+  $('btnSettingRetry')?.addEventListener('click', () => {
+      const settingFallback = $('settingViewFallback');
+      const settingLoading = $('settingViewLoading');
+      if (settingFallback) settingFallback.classList.add('hidden');
+      if (settingLoading) settingLoading.style.display = 'block';
+      generateSettingImage();
   });
 
   // Expose for external use
@@ -10787,7 +11299,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         } else if (grp === 'tone' && DSP_TONAL_ADJECTIVES[val]) {
           activateDSPSegment('tone', ' desire redeem this ' + DSP_TONAL_ADJECTIVES[val]);
         } else if (grp === 'length') {
-          const AFFAIR_WORD_MAP = { voyeur: 'tease', fling: 'fling', affair: 'affair', soulmates: 'cosmic connection' };
+          const AFFAIR_WORD_MAP = { tease: 'tease', fling: 'fling', affair: 'affair', soulmates: 'cosmic connection' };
           activateDSPSegment('length', ' ' + (AFFAIR_WORD_MAP[val] || 'affair') + '\u2009\u2014\u2009or ruin it?');
         }
 
@@ -11116,7 +11628,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // STRICT DSP ASSEMBLY — no invented prose, no embellishment
     // Dynamic affair word based on storyLength
     const AFFAIR_WORD_MAP = {
-      voyeur: 'tease',
+      tease: 'tease',
       fling: 'fling',
       affair: 'affair',
       soulmates: 'cosmic connection'
@@ -12444,14 +12956,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   // Get entitlement-aware story length selection
   function getFateStoryLength() {
-    // Prefer Affair/Soulmates if sub, else Fling if pass, else Voyeur
+    // Prefer Affair/Soulmates if sub, else Fling if pass, else Tease
     if (state.access === 'sub') {
       // Weighted: prefer Affair (50%), Soulmates (50%)
       return Math.random() < 0.5 ? 'affair' : 'soulmates';
     } else if (state.access === 'pass') {
       return 'fling';
     }
-    return 'voyeur';
+    return 'tease';
   }
 
   // Get weighted world selection
@@ -14046,6 +14558,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
                 state.scenes = state.scenes || [];
                 state.scenes.push({ title, synopsis, text: body, fateCard: null });
 
+                // EARNED COVER SYSTEM: Initialize cover stage tracking
+                _lastNotifiedCoverStage = getCurrentCoverStage();
+                updateReaderCoverButton();
+
                 stopLoading();
 
                 // Go directly to Scene 1
@@ -14617,7 +15133,7 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
         },
         intensity: state.intensity || 'Naughty',
         pov: state.picks.pov || 'First',
-        storyLength: state.storyLength || 'voyeur',
+        storyLength: state.storyLength || 'tease',
         systemPromptLength: state.sysPrompt?.length || 0
     };
 
@@ -16499,6 +17015,19 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
    * - Soulmates modulates material warmth (adds 'soulmates' class), never introduces keyhole
    */
   function applyCoverIntensityLayers(intensity, world) {
+      // ═══════════════════════════════════════════════════════════════════
+      // WRY CONFESSIONAL — UI SUPPRESSION (authoritative gate)
+      // ═══════════════════════════════════════════════════════════════════
+      if (state.picks?.tone === 'Wry Confessional') {
+          document.getElementById('requiresSubscriptionAccess')?.classList.add('hidden');
+          document.getElementById('coverIntensityOverlay')?.classList.add('hidden');
+          document.getElementById('coverCTAButtons')?.classList.add('hidden');
+          document.getElementById('coverEroticBorder')?.classList.add('hidden');
+          document.getElementById('coverKeyholeOverlay')?.classList.add('hidden');
+          console.log('[CoverIntensity] Wry Confessional — all overlays suppressed');
+          return;
+      }
+
       const borderEl = document.getElementById('coverEroticBorder');
       const keyholeEl = document.getElementById('coverKeyholeOverlay');
       if (!borderEl || !keyholeEl) return;
@@ -16993,6 +17522,21 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       }
   }
 
+  // =================================================================
+  // WRY CONFESSIONAL — COVER RULESET (AUTHORITATIVE)
+  // Editorial cartoon covers in the style of The New Yorker
+  // =================================================================
+
+  const WRY_CONFESSIONAL_COVER_RULES = {
+      aspectRatio: '5:7',
+      uiSuppressions: {
+          hideSubscriptionGates: true,
+          hideIntensityOverlays: true,
+          hideCTAButtons: true,
+          hideRequiresAccessCopy: true
+      }
+  };
+
   // ============================================================
   // 🔴 MINIMAL COVER v1 — QUARANTINE SYSTEM
   // ============================================================
@@ -17010,17 +17554,24 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   /**
    * MINIMAL COVER v1 — Quarantined cover generation
    * NO legacy systems. NO retries. NO mutation. NO UI ownership.
-   * @param {object} frozenIntent - {synopsis, title, authorName, world, genre, tone, intensity}
+   * @param {object} frozenIntent - {synopsis, title, authorName, world, genre, tone, intensity, stage}
    * @returns {Promise<string|null>} - Image URL or null
    */
   async function generateMinimalCoverV1(frozenIntent) {
       console.log('[COVER] Minimal Cover v1 active — ALL legacy systems bypassed');
+
+      // EARNED COVER SYSTEM: Get stage (defaults to current stage if not provided)
+      const stage = frozenIntent.stage || getCurrentCoverStage();
+      const stageLabel = COVER_STAGE_LABELS[stage] || 'Cover';
+      const stageModifier = getCoverStagePromptModifier(stage);
+
       console.log('[COVER:v1] Frozen intent:', {
           title: frozenIntent.title,
           world: frozenIntent.world,
           genre: frozenIntent.genre,
           tone: frozenIntent.tone,
-          intensity: frozenIntent.intensity
+          intensity: frozenIntent.intensity,
+          stage: stage
       });
 
       // ═══════════════════════════════════════════════════════════════════
@@ -17100,6 +17651,20 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
 
       console.log('[COVER:v1] Assembly object selected:', selectedObject, 'from', worldKey, '| isFirstCover:', isFirstCover);
 
+      // ═══════════════════════════════════════════════════════════════════
+      // WRY CONFESSIONAL — FOCAL OBJECT ALTERATION
+      // ═══════════════════════════════════════════════════════════════════
+      let focalObjectDescription = selectedObject;
+
+      if (tone === 'Wry Confessional') {
+          const alteration =
+              WRY_CONFESSIONAL_OBJECT_ALTERATIONS[
+                  Math.floor(Math.random() * WRY_CONFESSIONAL_OBJECT_ALTERATIONS.length)
+              ];
+          focalObjectDescription = `${selectedObject}, ${alteration}`;
+          console.log('[COVER:v1] Wry Confessional object alteration:', focalObjectDescription);
+      }
+
       // ASSEMBLY-COMPLIANT PROMPT
       const minimalPrompt = `BOOK COVER IMAGE — ASSEMBLY SYSTEM
 
@@ -17109,7 +17674,7 @@ TITLE (must appear prominently): "${title}"
 AUTHOR LINE (must appear below title): "by Anonymous"
 
 FOCAL OBJECT (MANDATORY — exactly ONE):
-${selectedObject}
+${focalObjectDescription}
 
 ABSOLUTE RULES:
 - NO people, NO faces, NO figures anywhere in the image
@@ -17117,38 +17682,49 @@ ABSOLUTE RULES:
 - ONLY the specified object above — do NOT add other objects
 - Do NOT invent new symbols or combine multiple objects
 - Do NOT depict narrative action
+- Full cover must be visible edge-to-edge
+- Do NOT crop, zoom, or trim the composition
+- Title-safe margins at top and bottom
+- Design for vertical book cover proportions (5:7)
 
 COMPOSITION:
-- The ${selectedObject} is the visual anchor, rendered clearly and symbolically
+- The ${focalObjectDescription} is the visual anchor, rendered clearly and symbolically
 - Title text: large, high contrast, readable at thumbnail size
 - Author line: smaller, elegant, below the title
-- Subtle vignette darkening at edges
-- Light paper or canvas texture overlay
+${tone === 'Wry Confessional'
+  ? '- Simple flat background\n- No vignette, no texture overlay'
+  : '- Subtle vignette darkening at edges\n- Light paper or canvas texture overlay'}
 
 STYLE:
-- Elegant, restrained, cinematic
-- Painterly realism, NOT illustration
-- Premium published novel aesthetic
-- Rich but muted color palette appropriate to ${tone} ${genre}
+${stageModifier ? stageModifier + '\n' : ''}${tone === 'Wry Confessional'
+  ? WRY_CONFESSIONAL_VISUAL_ONTOLOGY
+  : `Elegant, restrained, cinematic. Painterly realism, NOT illustration. Premium published novel aesthetic. Rich but muted color palette appropriate to ${tone} ${genre}.`}
 
-WORLD MATERIAL TREATMENT (${worldKey}):
+${tone === 'Wry Confessional' ? '' : `WORLD MATERIAL TREATMENT (${worldKey}):
 ${worldKey === 'fantasy' ? '- Aged stone, tarnished metal, worn fabric textures' :
   worldKey === 'historical' ? '- Wood, brass, parchment, oil-stained cloth textures' :
   worldKey === 'scifi' ? '- Brushed alloy, polymer, subtle luminescence' :
   worldKey === 'paranormal' ? '- Dark velvet, oxidized silver, candlelit warmth' :
   '- Concrete, glass, leather, modern luxury textures'}
-
-FORBIDDEN:
+`}FORBIDDEN:
 - NO glow effects or floating particles
 - NO decorative borders or frames
 - NO AI art clichés (no ethereal wisps, no magical sparkles)
 - NO logos, icons, or UI-style graphics
 - NO multiple objects or busy compositions
 - NO characters or body parts (except subtle shadow)
+${tone === 'Wry Confessional'
+  ? '- NO cinematic lighting\n- NO painterly texture\n- NO dramatic shadows\n- NO realism\n- NO noir aesthetic'
+  : '- NO visual punchlines\n- NO exaggerated contrast\n- NO theatrical or ironic staging'}
 
-The final image must look like a real published novel cover — tasteful, evocative, professional.`;
+${tone === 'Wry Confessional'
+  ? 'The final image must look like a New Yorker editorial cartoon — simple, flat, understated.'
+  : 'The final image must look like a real published novel cover — tasteful, evocative, professional.'}`;
 
       console.log('[COVER:v1] Minimal prompt generated (', minimalPrompt.length, 'chars)');
+
+      // REGRESSION GUARD: Block cinematic drift for Wry Confessional
+      assertWryConfessionalVisual(minimalPrompt, 'generateMinimalCoverV1');
 
       try {
           // ONE API call — no retries, no fallbacks, no enhancement layers
@@ -17158,7 +17734,7 @@ The final image must look like a real published novel cover — tasteful, evocat
               body: JSON.stringify({
                   prompt: minimalPrompt,
                   imageIntent: 'book_cover',
-                  size: '1024x1024',
+                  size: '1024x1536', // 5:7 portrait ratio (book cover canonical)
                   // Minimal metadata — no coverIntel, no archetype, no layers
                   _minimalV1: true // Backend flag to skip all enhancement
               })
@@ -17732,6 +18308,55 @@ The final image must look like a real published novel cover — tasteful, evocat
   // --- VISUALIZE (STABILIZED) ---
   let _vizCancelled = false;
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VISUAL PROMPT LOADING STATE — Ellipsis animation for prompt generation
+  // ═══════════════════════════════════════════════════════════════════════════
+  let _vizEllipsisInterval = null;
+
+  /**
+   * Start ellipsis animation on an input placeholder
+   * Cycles: "Generating visual prompt." → ".." → "..."
+   * @param {HTMLElement} input - The input element to animate
+   * @returns {function} Stop function to call when generation completes
+   */
+  function startVizEllipsisAnimation(input) {
+      if (!input) return () => {};
+
+      const baseText = 'Generating visual prompt';
+      let dotCount = 1;
+
+      // Set initial state
+      input.value = '';
+      input.placeholder = baseText + '.';
+      input.style.transition = 'opacity 200ms ease';
+      input.style.opacity = '1';
+
+      // Clear any existing interval
+      if (_vizEllipsisInterval) clearInterval(_vizEllipsisInterval);
+
+      // Animate ellipsis at 700ms intervals
+      _vizEllipsisInterval = setInterval(() => {
+          dotCount = (dotCount % 3) + 1;
+          input.placeholder = baseText + '.'.repeat(dotCount);
+      }, 700);
+
+      // Return stop function with fade transition
+      return function stopAnimation(newValue) {
+          if (_vizEllipsisInterval) {
+              clearInterval(_vizEllipsisInterval);
+              _vizEllipsisInterval = null;
+          }
+
+          // Fade out, update, fade in
+          input.style.opacity = '0';
+          setTimeout(() => {
+              input.placeholder = 'Edit prompt or add modifiers…';
+              if (newValue !== undefined) input.value = newValue;
+              input.style.opacity = '1';
+          }, 200);
+      };
+  }
+
   // Visualize intensity bias based on player's selected eroticism level
   function getVisualizeIntensityBias() {
       const intensity = state.intensity || 'Naughty';
@@ -18171,6 +18796,11 @@ Return only the visual description.`;
       const tone = context.tone || state.picks?.tone || 'Earnest';
       const world = context.world || state.picks?.world || 'Modern';
 
+      // Wry Confessional uses its own ontology — skip cinematic/lighting defaults
+      if (tone === 'Wry Confessional') {
+          return prompt;
+      }
+
       // Check if dark rendering is explicitly permitted
       const isDarkTone = DARK_TONE_OVERRIDES.includes(tone);
       const isNoirWorld = world === 'Noir' || world === 'Gothic';
@@ -18201,8 +18831,14 @@ Return only the visual description.`;
   // =================================================================
   // SCENE VISUALIZATION SYSTEM (AUTHORITATIVE)
   // Cinematic scene visualizer - NOT portraits, NOT book covers
+  // Wry Confessional override: Editorial cartoon visualizer
   // =================================================================
-  const SCENE_VIZ_SYSTEM = `You are a cinematic scene visualizer, not a character illustrator.
+  function getSceneVizSystem() {
+      if (state.picks?.tone === 'Wry Confessional') {
+          return `You are an editorial cartoon visualizer. ${WRY_CONFESSIONAL_VISUAL_ONTOLOGY} Characters look bemused, resigned, or socially awkward. Return ONLY the image prompt. Under 200 characters.`;
+      }
+
+      return `You are a cinematic scene visualizer, not a character illustrator.
 Your job is to render mood, environment, tension, and implication — not portraits, not glamour shots, not book covers.
 
 CORE RULES:
@@ -18238,6 +18874,9 @@ CORE RULES:
 PROMPT PRIORITY ORDER: Protagonist emotional state → Direction of threat/attention → Scene accuracy → Spatial tension → Lighting → Environment → Other characters (secondary)
 
 Return ONLY the image prompt. No explanations. Under 200 characters.`;
+  }
+  // Note: getSceneVizSystem() replaces the former SCENE_VIZ_SYSTEM const
+  // Call getSceneVizSystem() at runtime to get tone-aware system prompt
 
   // Scene visualization explicit exclusions (always appended)
   const SCENE_VIZ_EXCLUSIONS = 'No smiling at camera. No posed portraits. No beauty photography. No book cover composition.';
@@ -18373,67 +19012,172 @@ No additional visual style modifiers are permitted for this tone.`;
   // Symbolic book cover - NOT scene illustration
   // Emotion > Description > Detail
   // =================================================================
-  const COVER_GENERATION_SYSTEM = `COVER GENERATION — AUTHORITATIVE RULESET
+  const COVER_GENERATION_SYSTEM = `COVER GENERATION — AUTHORITATIVE RULESET (STRICT)
 
-You are generating a real book jacket, not a poster, thumbnail, or product photo.
+You are generating a REAL BOOK JACKET.
+Not a poster. Not a thumbnail. Not a product photo.
+Restraint is REQUIRED. Over-interpretation is a failure.
 
-LAYOUT & FRAMING (HARD)
-- The book cover is the primary visual element
-- It must occupy maximum vertical space before UI considerations
-- No artificial height caps that shrink the book
-- Aspect ratio 5:7 enforced after height is maximized
-- Negative space must feel intentional, textured, and jacket-like
+IMPORTANT — ANTI-EAGERNESS GOVERNOR
+You must resist the urge to improve, embellish, decorate, or clarify.
+If an element is not necessary, it must be removed.
+If an idea feels clever, illustrative, or explanatory, it is likely wrong.
+When uncertain, choose subtraction over addition.
+When two options feel equally valid, choose the quieter one.
 
+━━━━━━━━━━━━━━━━━━━━
+PRIMARY DIRECTIVE
+━━━━━━━━━━━━━━━━━━━━
+
+The book cover is the dominant visual object.
+It must feel like a full physical book jacket:
+heavy, intentional, restrained.
+
+If any choice makes the cover feel smaller, busier, cleaner, or more decorative,
+that choice is WRONG.
+
+━━━━━━━━━━━━━━━━━━━━
+LAYOUT & SCALE (HARD RULES)
+━━━━━━━━━━━━━━━━━━━━
+
+• The cover occupies maximum vertical presence.
+• Aspect ratio is 5:7, enforced AFTER scale is maximized.
+• No artificial shrinking to accommodate UI or buttons.
+• The cover must never feel like a preview card or framed image.
+
+Negative space is allowed ONLY if it feels intentional and material
+(paper, cloth, ink, darkness) — never empty UI space.
+
+━━━━━━━━━━━━━━━━━━━━
 IMAGE FIT
-- Image must be fully visible (contain-style framing)
-- No cropping of title, object, or symbolic elements
-- Letterbox space must read as book material, not empty UI
+━━━━━━━━━━━━━━━━━━━━
 
+• Use contain-style framing.
+• Do NOT crop the focal object or symbolic elements.
+• Letterbox space must read as book material, not blank background.
+• No forced centering that reduces tension.
+
+━━━━━━━━━━━━━━━━━━━━
+FOCAL ANCHOR (ONE ONLY)
+━━━━━━━━━━━━━━━━━━━━
+
+Choose ONE primary anchor:
+• A meaningful object
+• OR environment / architecture
+• OR absence / trace / aftermath
+
+Never introduce multiple anchors.
+Never "balance" the composition with extra objects.
+
+━━━━━━━━━━━━━━━━━━━━
 OBJECT JUXTAPOSITION (CRITICAL)
-If a single object is chosen, it MUST be meaningfully altered by:
-- Transformation
-- Interference
-- Shadow
-- Damage
-- Symbolic distortion
+━━━━━━━━━━━━━━━━━━━━
 
-The juxtaposition must reinforce:
-- Theme
-- Power imbalance
-- Cost or consequence
+If a SINGLE OBJECT is used, it MUST be altered.
 
-No plain untouched objects. No product photography. No stock lighting.
+A plain, untouched object is NOT acceptable.
 
-GENRE CONSTRAINTS
-Apply juxtaposition rules appropriate to the story's genre:
-- Noir → control, secrecy, moral cost
-- Fantasy → fate, sacrifice, myth
-- Sci-Fi → surveillance, dehumanization
-- Romance → restraint, memory, longing
+The object must show at least ONE of:
+• Transformation
+• Interference
+• Damage
+• Shadow behaving unnaturally
+• Symbolic distortion
 
-FAIL-SOFT BEHAVIOR
-If no strong object + juxtaposition emerges:
-- Default to environment, absence, or fragmented imagery
-- Never output a clean, literal object
+The alteration must imply:
+• Theme
+• Power imbalance
+• Cost or consequence
 
-HUMAN FIGURE (if used)
-- Turned away, obscured, cropped, or silhouette ONLY
-- NO eye contact. NO posed portraits. NO smiles.
+Shock for its own sake is NOT allowed.
 
+━━━━━━━━━━━━━━━━━━━━
+GENRE-AWARE CONSTRAINTS
+━━━━━━━━━━━━━━━━━━━━
+
+Apply restraint appropriate to genre:
+
+• Noir / Crime → control, secrecy, moral cost
+• Fantasy → fate, sacrifice, mythic consequence
+• Sci-Fi → surveillance, loss of agency
+• Romance / Psychological → restraint, memory, longing
+
+If unsure which genre dominates, DEFAULT TO RESTRAINT.
+
+━━━━━━━━━━━━━━━━━━━━
+FAIL-SOFT BEHAVIOR (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━
+
+If no meaningful object + alteration emerges:
+
+You MUST default to ONE of the following:
+• Environment-first (corridor, room, street, architecture)
+• Negative presence (mark, stain, trace, shadow, indentation)
+• Fragmented object (partial, broken, implied — never pristine)
+
+Never force an object just to fill the frame.
+
+━━━━━━━━━━━━━━━━━━━━
+ASSEMBLY ELEMENTS (LIMITED — NOT DECORATIVE)
+━━━━━━━━━━━━━━━━━━━━
+
+You MAY use:
+• Subtle material texture (paper, cloth, ink)
+• Edge vignette or depth
+• Minor print imperfections
+
+These must:
+• Remain peripheral
+• Never introduce new narrative objects
+• Never compete with the focal anchor
+
+Ornamentation is NOT allowed.
+
+━━━━━━━━━━━━━━━━━━━━
+HUMAN FIGURES (IF USED)
+━━━━━━━━━━━━━━━━━━━━
+
+• Optional
+• Obscured, cropped, turned away, or silhouette ONLY
+• No eye contact
+• No posed portraits
+• No smiling
+
+━━━━━━━━━━━━━━━━━━━━
 VISUAL RESTRAINT
-- Limited palette (2-3 tones)
-- Soft focus or shallow depth
-- Asymmetry preferred
-- NO decorative clutter, literal symbolism, stock-photo lighting
+━━━━━━━━━━━━━━━━━━━━
 
-FINAL CHECK
-If the cover could be mistaken for:
-- An ad
-- A stock photo
-- A product listing
-Then it has failed.
+• 2–3 dominant tones only
+• Asymmetry preferred
+• No decorative clutter
+• No glamour lighting
+• No stock-photo aesthetics
 
-Return ONLY the image prompt. Under 250 characters.`;
+━━━━━━━━━━━━━━━━━━━━
+ANTI-EAGERNESS RULES (CRITICAL)
+━━━━━━━━━━━━━━━━━━━━
+
+• Do NOT add elements "for interest"
+• Do NOT explain the story visually
+• Do NOT escalate intensity beyond what is implied
+• Do NOT invent symbolism unless strictly required
+• When uncertain, REMOVE rather than ADD
+
+If two choices seem equally valid: choose the quieter one.
+
+━━━━━━━━━━━━━━━━━━━━
+FINAL FAILURE CHECK
+━━━━━━━━━━━━━━━━━━━━
+
+If the result could be mistaken for:
+• An advertisement
+• A stock image
+• A product listing
+• A generic fantasy/noir cover
+
+Then it has FAILED.
+
+Return ONLY the image prompt. No explanations. No alternatives.`;
 
   // Cover prompt exclusions (always appended)
   // HARD EXCLUSIONS - violations are bugs
@@ -18507,6 +19251,14 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
 
   // DEV-ONLY: Logging helper for image generation debugging
   function logImageAttempt(provider, context, prompt, status, error = null) {
+      // CANCELLED requests are neutral — do NOT log as failures
+      if (status === 'FAILED' && error) {
+          const errLower = error.toLowerCase();
+          if (errLower.includes('abort') || errLower.includes('cancel')) {
+              return; // Exit without logging — not a provider failure
+          }
+      }
+
       const promptPreview = prompt.substring(0, 120) + (prompt.length > 120 ? '...' : '');
 
       // Categorize blocker type from error message
@@ -18515,7 +19267,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
           const e = err.toLowerCase();
           if (e.includes('cors') || e.includes('access-control') || e.includes('preflight')) return 'CORS';
           if (e.includes('nsfw') || e.includes('safety') || e.includes('content policy') || e.includes('rejected')) return 'NSFW';
-          if (e.includes('network') || e.includes('fetch') || e.includes('timeout') || e.includes('abort') || e.includes('econnrefused')) return 'Network';
+          if (e.includes('network') || e.includes('fetch') || e.includes('timeout') || e.includes('econnrefused')) return 'Network';
           if (e.includes('null') || e.includes('no image')) return 'NoOutput';
           return 'Other';
       };
@@ -18819,9 +19571,17 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
   //   scene   → OpenAI (primary) → Replicate (fallback) — NO Gemini
   //   cover   → OpenAI (primary) → Replicate (fallback) — NO Gemini
   // Default to 16:9 landscape for cinematic presentation
-  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', intent = 'scene' }) {
+  // Optional signal parameter for external abort control
+  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', intent = 'scene', signal = null }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
+
+      // Check for pre-aborted signal
+      if (signal?.aborted) {
+          const abortErr = new Error('Image generation aborted');
+          abortErr.name = 'AbortError';
+          throw abortErr;
+      }
 
       // Determine size based on shape (default landscape 16:9)
       const size = shape === 'portrait' ? '1024x1024' : '1792x1024';
@@ -18859,9 +19619,23 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
 
       // FALLBACK CHAIN: Try each provider in order
       for (const provider of providerChain) {
+          // Check for abort before each provider attempt
+          if (signal?.aborted) {
+              const abortErr = new Error('Image generation aborted');
+              abortErr.name = 'AbortError';
+              throw abortErr;
+          }
+
           try {
               logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
               const imageUrl = await provider.fn(provider.prompt, size);
+
+              // Check for abort after provider returns
+              if (signal?.aborted) {
+                  const abortErr = new Error('Image generation aborted');
+                  abortErr.name = 'AbortError';
+                  throw abortErr;
+              }
 
               // Handle null returns from safe providers (Gemini/OpenAI)
               if (!imageUrl) {
@@ -18872,10 +19646,22 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
               logImageAttempt(provider.name, context, provider.prompt, 'SUCCESS');
               return imageUrl;
           } catch (e) {
+              // Re-throw abort errors immediately — don't continue to fallback
+              if (e.name === 'AbortError' || (e.message || '').toLowerCase().includes('abort')) {
+                  console.log('[Image] Generation aborted by user');
+                  throw e;
+              }
               lastError = e;
               logImageAttempt(provider.name, context, provider.prompt, 'FAILED', e.message);
               // Continue to next provider in chain
           }
+      }
+
+      // Check if aborted before logging failure
+      if (signal?.aborted) {
+          const abortErr = new Error('Image generation aborted');
+          abortErr.name = 'AbortError';
+          throw abortErr;
       }
 
       // All providers failed - fail silently, story continues
@@ -18974,6 +19760,43 @@ Condensed (under ${maxLength} chars):` }
       const payoff = text.slice(-payoffLength).trim();
 
       return context + ' ... ' + payoff;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OBSERVATIONAL CONDENSER — For Wry Confessional visualization
+  // External, flat, observer-perspective description suitable for editorial cartoons
+  // NO LLM — pure text extraction
+  // ═══════════════════════════════════════════════════════════════════════════
+  function condenseSceneObservational(text, maxLength = 120) {
+      const cleaned = filterAuthorFromPrompt(text || '');
+      if (!cleaned) return 'An ordinary moment.';
+
+      // Strip internal monologue markers
+      let flat = cleaned
+          .replace(/\b(I |my |me |myself)\b/gi, '')
+          .replace(/\b(felt|feeling|feels|thought|thinking|wondered|realized|knew|sensed)\b/gi, '')
+          .replace(/\b(heart|soul|mind|breath|pulse)\s+(pounding|racing|aching|heavy|tight)/gi, '')
+          .replace(/\b(desperately|urgently|frantically|intensely|passionately)\b/gi, '')
+          .replace(/\b(like|as if|as though)\s+[^.]+/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+      // Extract first concrete visual sentence
+      const sentences = flat.split(/[.!?]+/).filter(s => s.trim().length > 10);
+      if (sentences.length === 0) return 'An ordinary moment.';
+
+      // Prefer sentences with observable nouns
+      const observablePattern = /\b(room|table|chair|door|window|glass|cup|phone|desk|couch|bed|floor|wall|light|shadow|hand|figure|person|woman|man)\b/i;
+      const observable = sentences.find(s => observablePattern.test(s));
+      const chosen = observable || sentences[0];
+
+      // Flatten to neutral phrasing
+      let result = chosen.trim();
+      if (result.length > maxLength) {
+          result = result.slice(0, maxLength - 3).trim() + '...';
+      }
+
+      return result || 'An ordinary moment.';
   }
 
   // Initialize Visualize modifier interaction (scrolling suggestions)
@@ -19288,6 +20111,7 @@ Condensed (under ${maxLength} chars):` }
       if (promptInput) {
           promptInput.value = '';
           promptInput.placeholder = 'Generating visualization prompt…';
+          promptInput.classList.add('viz-loading');
       }
 
       // Generate and populate prompt
@@ -19308,12 +20132,14 @@ Condensed (under ${maxLength} chars):` }
               new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
           ]);
           if (promptInput) {
+              promptInput.classList.remove('viz-loading');
               promptInput.placeholder = 'Edit prompt or add modifiers…';
               promptInput.value = promptMsg;
           }
       } catch (e) {
           const fallback = "Cinematic scene, " + (state.picks?.world || 'atmospheric') + " world, natural lighting, grounded emotion.";
           if (promptInput) {
+              promptInput.classList.remove('viz-loading');
               promptInput.placeholder = 'Edit prompt or add modifiers…';
               promptInput.value = fallback;
           }
@@ -19434,14 +20260,36 @@ Condensed (under ${maxLength} chars):` }
       try {
           let promptMsg = document.getElementById('vizPromptInput').value;
           const visualizeMode = 'scene';
-          const visualizePrompt = buildVisualizePrompt({ mode: visualizeMode, lastText, anchorText });
 
-          if(!isRe || !promptMsg) {
-              // Show generating feedback in textarea while prompt is being built
+          // ═══════════════════════════════════════════════════════════════
+          // WRY CONFESSIONAL — BYPASS LLM PROMPT GENERATION
+          // Generate editorial cartoon prompt directly without LLM interpretation
+          // ═══════════════════════════════════════════════════════════════
+          if (state.picks?.tone === 'Wry Confessional' && (!isRe || !promptMsg)) {
+              const promptInput = document.getElementById('vizPromptInput');
+              if (promptInput) {
+                  promptInput.value = '';
+                  promptInput.placeholder = 'Building editorial prompt…';
+                  promptInput.classList.add('viz-loading');
+              }
+              // Condense scene observationally — external, flat, no internal monologue
+              const condensedScene = condenseSceneObservational(lastText, 120);
+              // Assemble prompt directly using ontology
+              promptMsg = `${WRY_CONFESSIONAL_VISUAL_ONTOLOGY} Scene: ${condensedScene}`;
+              if (promptInput) {
+                  promptInput.classList.remove('viz-loading');
+                  promptInput.placeholder = 'Edit prompt or add modifiers…';
+                  promptInput.value = promptMsg;
+              }
+              console.log('[VIZ:WRY] Bypassed LLM — direct ontology prompt');
+          } else if (!isRe || !promptMsg) {
+              // Standard path: LLM generates image prompt
+              const visualizePrompt = buildVisualizePrompt({ mode: visualizeMode, lastText, anchorText });
               const promptInput = document.getElementById('vizPromptInput');
               if (promptInput) {
                   promptInput.value = '';
                   promptInput.placeholder = 'Generating visualization prompt…';
+                  promptInput.classList.add('viz-loading');
               }
               try {
                   promptMsg = await Promise.race([
@@ -19455,6 +20303,7 @@ Condensed (under ${maxLength} chars):` }
                   promptMsg = "Cinematic scene, " + (state.picks?.world || 'atmospheric') + " world, natural lighting, grounded emotion.";
               }
               if (promptInput) {
+                  promptInput.classList.remove('viz-loading');
                   promptInput.placeholder = 'Edit prompt or add modifiers…';
                   promptInput.value = promptMsg;
               }
@@ -19501,7 +20350,10 @@ Condensed (under ${maxLength} chars):` }
               Gothic: 'Cinematic, dramatic chiaroscuro, deep reds and blacks. Haunted, strained expressions.',
               Paranormal: 'Cinematic, ethereal glow, muted earth tones with spectral accents. Wary expressions.'
           };
-          const sceneStyle = SCENE_STYLE_BY_WORLD[state.picks?.world] || 'Cinematic, painterly, atmospheric, natural lighting. Grounded expressions.';
+          const sceneStyle = state.picks?.tone === 'Wry Confessional'
+              ? WRY_CONFESSIONAL_VISUAL_ONTOLOGY
+              : (SCENE_STYLE_BY_WORLD[state.picks?.world]
+                  || 'Cinematic, painterly, atmospheric, natural lighting. Grounded expressions.');
           const intensityBias = getVisualizeIntensityBias();
           const shortIntensity = intensityBias.split('.')[0] + ".";
 
@@ -19520,6 +20372,9 @@ Condensed (under ${maxLength} chars):` }
               world: state.picks?.world,
               intensity: state.intensity
           });
+
+          // REGRESSION GUARD: Block cinematic drift for Wry Confessional
+          assertWryConfessionalVisual(basePrompt, 'visualize:basePrompt');
 
           // Check if cancelled before image generation
           if (_vizCancelled) {
@@ -19571,6 +20426,11 @@ Condensed (under ${maxLength} chars):` }
 
                   // VISUALIZATION ECONOMY: Consume credit and mark scene on SUCCESS only
                   if (consumesCreditOnSuccess) {
+                      // HARD BILLING ASSERT: Never decrement credits without committed image
+                      if (!img.src) {
+                          console.error('[BILLING:GUARD] Credit decrement blocked — no image URL');
+                          return;
+                      }
                       consumeVizCredit();
                       if (!state.visual.visualizedScenes) state.visual.visualizedScenes = {};
                       state.visual.visualizedScenes[sceneKey] = true;
@@ -19839,14 +20699,14 @@ Condensed (under ${maxLength} chars):` }
       // PACING HELPER
       function buildPacingDirective() {
           const wc = currentStoryWordCount();
-          const len = state.storyLength || 'voyeur';
+          const len = state.storyLength || 'tease';
           // Heuristic based on stage
           if (state.storyStage === 'post-consummation') state.flingClimaxDone = true;
 
           let dir = "";
-          if (len === 'voyeur') {
+          if (len === 'tease') {
              if (wc > 6500) {
-               dir = "PACING ALERT (VOYEUR TIER): Approaching limit. Build extreme tension but DENY release. Steer narrative toward an unresolved cliffhanger ending. Do NOT resolve the desire.";
+               dir = "PACING ALERT (TEASE TIER): Approaching limit. Build extreme tension but DENY release. Steer narrative toward an unresolved cliffhanger ending. Do NOT resolve the desire.";
              }
           } else if (len === 'fling') {
              if (state.flingClimaxDone) {
@@ -20159,6 +21019,11 @@ Regenerate the scene with ZERO Author presence.`;
 
           // Update visualization economy credits based on scene milestones
           updateVizEconomyCredits();
+
+          // EARNED COVER SYSTEM: Check if cover stage has upgraded
+          if (typeof checkCoverStageUpgrade === 'function') {
+              checkCoverStageUpgrade();
+          }
 
           // Record turn completion for reader preference inference (session-scoped)
           if (window.StoryboundOrchestration && window.StoryboundOrchestration.recordPreferenceSignal) {

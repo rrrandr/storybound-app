@@ -27,7 +27,7 @@
 </div>
 
 <button id="burgerBtn">☰</button>
-<button id="globalBackBtn" class="hidden" style="position:fixed; top:15px; left:15px; z-index:5000; background:none; border:none; font-size:1.5em; cursor:pointer;">←</button>
+<button id="globalBackBtn" class="hidden" style="position:fixed; top:15px; left:15px; z-index:5000; background:none; border:none; font-size:1.8em; cursor:pointer; padding:0; box-shadow:none; color:var(--pink); text-shadow:0 0 5px var(--hot);">←</button>
 
 <div id="menuOverlay" class="overlay hidden" style="z-index:4999;">
   <div class="box">
@@ -574,10 +574,10 @@
         <p class="subtitle">Choose once. This shapes pacing and endings.</p>
         
         <div class="sb-grid sb-grid-4" id="lengthGrid">
-          <div class="sb-card selected flipped" data-grp="length" data-val="voyeur">
+          <div class="sb-card selected flipped" data-grp="length" data-val="tease">
             <div class="sb-card-inner">
-              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Voyeur Tease</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Voyeur Tease</span><span class="sb-card-desc">A front-row seat. No touching. Ends right when you lean in.</span></div>
+              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Tease</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Tease</span><span class="sb-card-desc">A front-row seat. No touching. Ends right when you lean in.</span></div>
             </div>
           </div>
           <div class="sb-card locked" data-grp="length" data-val="fling" data-locked="pass">
@@ -965,9 +965,10 @@
     <br>
 
     <!-- ════════════════════════════════════════════════════════════════════ -->
-    <!-- BOOK COVER GENERATION — Optional, never blocks Begin Story          -->
+    <!-- BOOK COVER GENERATION — DISABLED (Earned Cover System Phase B)       -->
+    <!-- Cover generation is now READER-ONLY via btnReaderCover               -->
     <!-- ════════════════════════════════════════════════════════════════════ -->
-    <div id="coverGenSection" style="margin-top:20px; text-align:center;">
+    <div id="coverGenSection" class="hidden" style="display:none; margin-top:20px; text-align:center;">
       <button id="btnGenerateCover" style="font-size:1.1em; padding:10px 20px; background:linear-gradient(135deg, #2a2a2a, #1a1a1a); border:1px solid var(--gold); color:var(--gold); cursor:pointer;">
         Generate Your Book Cover
       </button>
@@ -1234,21 +1235,22 @@
     <!-- SETTING VIEW - Full-screen setting image display            -->
     <!-- ============================================================ -->
     <div id="settingView" class="setting-view hidden">
+      <!-- NON-BLOCKING Loading: User can always proceed -->
       <div id="settingViewLoading" class="setting-view-loading">
-        <p>Creating your story world...</p>
-        <div class="setting-progress-bar">
-          <div id="settingProgressFill" class="setting-progress-fill"></div>
-        </div>
+        <p class="setting-status-text">Generating setting image<span class="setting-ellipsis"></span></p>
+        <p id="settingLongWaitHint" class="setting-long-wait-hint hidden">Still working… you can continue without it.</p>
+        <button id="btnSettingSkip" class="setting-skip-btn">Begin Story →</button>
       </div>
       <div id="settingViewContent" class="setting-view-content hidden">
         <img id="settingViewImg" src="" alt="Story Setting" class="setting-view-image">
         <p class="setting-view-hint">Tap to begin your story</p>
       </div>
-      <!-- Setting Fallback: Intentional design when image fails -->
+      <!-- Setting Fallback: Shown on failure (not cancel) -->
       <div id="settingViewFallback" class="setting-view-fallback hidden">
         <div class="setting-fallback-inner">
-          <div class="setting-fallback-text">Your world awaits...</div>
+          <div class="setting-fallback-text">Setting image unavailable</div>
           <button id="btnSettingBeginStory" class="setting-begin-btn">Begin Story</button>
+          <button id="btnSettingRetry" class="setting-retry-btn">Try Again</button>
         </div>
       </div>
       <button id="btnSettingBack" class="setting-back-btn">← Back to Cover</button>
@@ -1299,8 +1301,9 @@
         </button>
     </div>
 
-    <div style="text-align:center; margin-bottom:10px;">
+    <div style="text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button id="vizSceneBtn" onclick="window.visualize()" style="font-size:0.9em; background:#444;">✨ Visualize This Scene</button>
+        <button id="btnReaderCover" style="font-size:0.9em; background:linear-gradient(135deg, #2a2a2a, #1a1a1a); border:1px solid var(--gold); color:var(--gold);">📖 Cover Sketch</button>
     </div>
     
     <div id="metaControls" class="hidden" style="margin: 10px auto; padding: 10px; border: 1px dashed var(--gold); border-radius: 8px; max-width: 600px;">
@@ -1374,6 +1377,8 @@
         <div class="qv-section">
             <label class="qv-label" style="display:block; margin-bottom:8px;">Quill</label>
             <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Steer tone, boundaries, or direction.</p>
+            <!-- Committed Quill entries (parallel to gameVetoCommitted) -->
+            <div id="gameQuillCommitted" class="committed-phrases" style="margin-bottom:10px;"></div>
             <div class="fate-input-row" style="margin-bottom:10px;">
                 <div id="gameQuillBox" class="input-wrapper fate-input-wrapper" style="flex:1;">
                     <textarea id="gameQuillInput" rows="3" class="fate-field" data-fate-type="quill" placeholder=""></textarea>

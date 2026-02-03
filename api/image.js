@@ -8,8 +8,8 @@ export const config = {
 // SIZE MAPPING - Normalize to OpenAI-supported dimensions
 // ============================================================
 function mapToOpenAISize(size, imageIntent) {
-  // Book covers are always square for best typography composition
-  if (imageIntent === 'book_cover') return '1024x1024';
+  // Book covers use portrait ratio (OpenAI-supported 1024x1536)
+  if (imageIntent === 'book_cover') return '1024x1536';
 
   // OpenAI supports: 1024x1024, 1024x1536, 1536x1024, auto
   const [w, h] = (size || '1024x1024').split('x').map(Number);
