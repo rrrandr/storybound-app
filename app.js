@@ -3885,6 +3885,7 @@ If you name what something IS, you have failed. Show what it COSTS.
 
   /**
    * Update the reader cover button label based on current stage
+   * Format: "Generate Cover — <Stage>"
    */
   function updateReaderCoverButton() {
       const btn = document.getElementById('btnReaderCover');
@@ -3892,14 +3893,15 @@ If you name what something IS, you have failed. Show what it COSTS.
 
       const hasStory = state.storyId && StoryPagination.getAllContent()?.trim().length > 0;
       if (!hasStory) {
-          btn.textContent = 'Cover Sketch';
+          btn.textContent = 'Generate Cover — Sketch';
           btn.disabled = true;
           btn.title = 'Generate your story first';
           return;
       }
 
       const stage = getCurrentCoverStage();
-      btn.textContent = COVER_STAGE_LABELS[stage] || 'Generate Cover';
+      const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
+      btn.textContent = `Generate Cover — ${stageName}`;
       btn.disabled = false;
       btn.title = '';
   }
@@ -3923,6 +3925,311 @@ If you name what something IS, you have failed. Show what it COSTS.
       _lastNotifiedCoverStage = currentStage;
       updateReaderCoverButton();
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COVER GALLERY MODAL — Per-stage storage and modal management
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Per-stage cover URL storage
+  const _coversByStage = {
+      sketch: null,
+      thumbnail: null,
+      rough: null,
+      v1: null
+  };
+
+  // Currently selected stage in gallery
+  let _gallerySelectedStage = null;
+
+  // Primary cover stage (which one is displayed in reader)
+  let _primaryCoverStage = null;
+
+  /**
+   * Get scenes remaining until a stage unlocks
+   */
+  function getScenesUntilUnlock(stage) {
+      const storyLength = state.storyLength || 'tease';
+      const sceneCount = state.turnCount || 0;
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+      const threshold = rules[stage];
+      if (threshold === null) return -1; // Never unlocks for this story length
+      return Math.max(0, threshold - sceneCount);
+  }
+
+  /**
+   * Open the Cover Gallery Modal
+   */
+  function openCoverGalleryModal() {
+      const modal = document.getElementById('coverGalleryModal');
+      if (!modal) return;
+
+      // Default to current unlocked stage
+      _gallerySelectedStage = getCurrentCoverStage();
+
+      renderCoverStageRow();
+      renderGalleryPreview();
+      updateGalleryButtons();
+
+      modal.classList.remove('hidden');
+      console.log('[COVER:GALLERY] Modal opened');
+  }
+
+  /**
+   * Close the Cover Gallery Modal
+   */
+  function closeCoverGalleryModal() {
+      const modal = document.getElementById('coverGalleryModal');
+      if (modal) modal.classList.add('hidden');
+  }
+
+  /**
+   * Render the horizontal stage thumbnails row
+   */
+  function renderCoverStageRow() {
+      const row = document.getElementById('coverStageRow');
+      if (!row) return;
+
+      const stages = [COVER_STAGES.SKETCH, COVER_STAGES.THUMBNAIL, COVER_STAGES.ROUGH];
+      row.innerHTML = '';
+
+      stages.forEach(stage => {
+          const isUnlocked = isCoverStageUnlocked(stage);
+          const hasGenerated = !!_coversByStage[stage];
+          const scenesLeft = getScenesUntilUnlock(stage);
+          const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
+          const isSelected = stage === _gallerySelectedStage;
+
+          const tile = document.createElement('div');
+          tile.className = 'cover-stage-tile' + (isSelected ? ' selected' : '');
+          tile.style.cssText = `
+              width:100px; text-align:center; padding:10px; border-radius:8px; cursor:pointer;
+              border:2px solid ${isSelected ? 'var(--gold)' : '#444'};
+              background:${isSelected ? 'rgba(212,175,55,0.1)' : '#222'};
+              opacity:${isUnlocked ? '1' : '0.5'};
+          `;
+
+          if (hasGenerated) {
+              // Show thumbnail of generated cover
+              tile.innerHTML = `
+                  <img src="${_coversByStage[stage]}" style="width:80px; height:100px; object-fit:cover; border-radius:4px;">
+                  <div style="font-size:0.75em; color:var(--gold); margin-top:5px;">${stageName}</div>
+              `;
+          } else if (isUnlocked) {
+              // Unlocked but not generated
+              tile.innerHTML = `
+                  <div style="width:80px; height:100px; background:#333; border-radius:4px; display:flex; align-items:center; justify-content:center; margin:0 auto;">
+                      <span style="color:#666; font-size:2em;">+</span>
+                  </div>
+                  <div style="font-size:0.75em; color:#888; margin-top:5px;">${stageName}</div>
+              `;
+          } else {
+              // Locked
+              tile.innerHTML = `
+                  <div style="width:80px; height:100px; background:#222; border-radius:4px; display:flex; align-items:center; justify-content:center; margin:0 auto; border:1px solid #333;">
+                      <span style="font-size:1.5em;">🎭</span>
+                  </div>
+                  <div style="font-size:0.7em; color:#666; margin-top:5px;">${stageName}</div>
+                  <div style="font-size:0.65em; color:#555;">${scenesLeft > 0 ? `${scenesLeft} scenes` : 'Locked'}</div>
+              `;
+          }
+
+          if (isUnlocked) {
+              tile.onclick = () => {
+                  _gallerySelectedStage = stage;
+                  renderCoverStageRow();
+                  renderGalleryPreview();
+                  updateGalleryButtons();
+              };
+          }
+
+          row.appendChild(tile);
+      });
+  }
+
+  /**
+   * Render the main preview area based on selected stage
+   */
+  function renderGalleryPreview() {
+      const img = document.getElementById('coverGalleryImg');
+      const placeholder = document.getElementById('coverGalleryPlaceholder');
+      if (!img || !placeholder) return;
+
+      const coverUrl = _coversByStage[_gallerySelectedStage];
+      if (coverUrl) {
+          img.src = coverUrl;
+          img.classList.remove('hidden');
+          placeholder.style.display = 'none';
+      } else {
+          img.classList.add('hidden');
+          placeholder.style.display = 'flex';
+          const isUnlocked = isCoverStageUnlocked(_gallerySelectedStage);
+          placeholder.textContent = isUnlocked
+              ? 'Click "Generate Cover" to create this cover'
+              : 'This stage is locked';
+      }
+  }
+
+  /**
+   * Update gallery action buttons based on state
+   */
+  function updateGalleryButtons() {
+      const genBtn = document.getElementById('btnGalleryGenerate');
+      const primaryBtn = document.getElementById('btnGalleryPrimary');
+      if (!genBtn || !primaryBtn) return;
+
+      const isUnlocked = isCoverStageUnlocked(_gallerySelectedStage);
+      const hasGenerated = !!_coversByStage[_gallerySelectedStage];
+      const isPrimary = _primaryCoverStage === _gallerySelectedStage;
+
+      // Generate button: show if unlocked (for generate or regenerate)
+      if (isUnlocked) {
+          genBtn.classList.remove('hidden');
+          genBtn.textContent = hasGenerated ? 'Regenerate Cover' : 'Generate Cover';
+      } else {
+          genBtn.classList.add('hidden');
+      }
+
+      // Primary button: show only if generated and not already primary
+      if (hasGenerated && !isPrimary) {
+          primaryBtn.classList.remove('hidden');
+      } else {
+          primaryBtn.classList.add('hidden');
+      }
+  }
+
+  /**
+   * Generate cover for the selected stage (called from modal)
+   */
+  async function generateCoverInGallery() {
+      const stage = _gallerySelectedStage;
+      if (!stage || !isCoverStageUnlocked(stage)) return;
+
+      const genBtn = document.getElementById('btnGalleryGenerate');
+      const statusDiv = document.getElementById('coverGalleryStatus');
+      const placeholder = document.getElementById('coverGalleryPlaceholder');
+
+      const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
+
+      // Show loading state
+      if (genBtn) {
+          genBtn.disabled = true;
+          genBtn.textContent = 'Generating...';
+          genBtn.classList.add('btn-loading');
+      }
+      if (statusDiv) {
+          statusDiv.textContent = `Generating ${stageName}...`;
+          statusDiv.classList.remove('hidden');
+      }
+      if (placeholder) {
+          placeholder.textContent = 'Generating...';
+          placeholder.classList.add('cover-loading');
+      }
+
+      try {
+          const resolvedTitle = $('storyTitle')?.textContent?.trim() || '';
+
+          const coverUrl = await generateMinimalCoverV1({
+              synopsis: state._synopsisMetadata || '',
+              title: resolvedTitle,
+              authorName: state.coverAuthor || 'Anonymous',
+              world: state.picks?.world || 'Modern',
+              genre: state.picks?.genre || 'Billionaire',
+              tone: state.picks?.tone || 'Earnest',
+              intensity: state.intensity || 'Naughty',
+              stage: stage
+          });
+
+          if (!coverUrl) {
+              throw new Error('Generation failed');
+          }
+
+          // Store cover for this stage
+          _coversByStage[stage] = coverUrl;
+
+          // If no primary set, this becomes primary
+          if (!_primaryCoverStage) {
+              _primaryCoverStage = stage;
+              updatePrimaryCoverDisplay(coverUrl);
+          }
+
+          // Update modal display
+          renderCoverStageRow();
+          renderGalleryPreview();
+          updateGalleryButtons();
+
+          if (statusDiv) statusDiv.classList.add('hidden');
+          showToast(`Cover ${stageName} ready`);
+          console.log(`[COVER:GALLERY] ${stageName} generated successfully`);
+
+      } catch (err) {
+          console.error('[COVER:GALLERY] Error:', err);
+          showToast('Cover generation failed — please retry');
+          if (statusDiv) {
+              statusDiv.textContent = 'Generation failed';
+          }
+          if (placeholder) {
+              placeholder.textContent = 'Generation failed — try again';
+              placeholder.classList.remove('cover-loading');
+          }
+      } finally {
+          if (genBtn) {
+              genBtn.disabled = false;
+              genBtn.classList.remove('btn-loading');
+              updateGalleryButtons();
+          }
+          if (placeholder) {
+              placeholder.classList.remove('cover-loading');
+          }
+      }
+  }
+
+  /**
+   * Select the current gallery stage as primary cover
+   */
+  function selectCoverAsPrimary() {
+      const coverUrl = _coversByStage[_gallerySelectedStage];
+      if (!coverUrl) return;
+
+      _primaryCoverStage = _gallerySelectedStage;
+      updatePrimaryCoverDisplay(coverUrl);
+      updateGalleryButtons();
+
+      const stageName = _gallerySelectedStage.charAt(0).toUpperCase() + _gallerySelectedStage.slice(1);
+      showToast('Cover updated');
+      console.log(`[COVER:GALLERY] ${stageName} set as primary`);
+  }
+
+  /**
+   * Update the primary cover display in reader and book view
+   */
+  function updatePrimaryCoverDisplay(coverUrl) {
+      // Update book cover image
+      const bookCoverImg = document.getElementById('bookCoverImg');
+      if (bookCoverImg) {
+          bookCoverImg.src = coverUrl;
+          bookCoverImg.classList.remove('hidden');
+      }
+
+      // Update reader preview
+      const readerPreviewImg = document.getElementById('readerCoverImg');
+      const readerPreview = document.getElementById('readerCoverPreview');
+      if (readerPreviewImg) readerPreviewImg.src = coverUrl;
+      if (readerPreview) readerPreview.classList.remove('hidden');
+
+      // Hide fallback
+      const fallback = document.getElementById('coverFallback');
+      if (fallback) fallback.classList.add('hidden');
+
+      // Update legacy global
+      _preGeneratedCoverUrl = coverUrl;
+      _coverGenUsed = true;
+  }
+
+  // Expose for modal button wiring
+  window.openCoverGalleryModal = openCoverGalleryModal;
+  window.closeCoverGalleryModal = closeCoverGalleryModal;
+  window.generateCoverInGallery = generateCoverInGallery;
+  window.selectCoverAsPrimary = selectCoverAsPrimary;
 
   /**
    * AROUSAL-TITLE ALIGNMENT
@@ -9640,13 +9947,11 @@ The final image must look like a real published novel cover.`;
   // Cover stage is determined by story progress (turnCount + storyLength)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  $('btnReaderCover')?.addEventListener('click', async () => {
-      const btn = $('btnReaderCover');
-      if (!btn) return;
-
-      // ═══════════════════════════════════════════════════════════════════
-      // STORY EXISTENCE GATE — Absolute requirement
-      // ═══════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  // READER COVER BUTTON — Opens Cover Gallery Modal (does NOT generate directly)
+  // ═══════════════════════════════════════════════════════════════════════════
+  $('btnReaderCover')?.addEventListener('click', () => {
+      // STORY EXISTENCE GATE
       const storyContent = StoryPagination.getAllContent();
       if (!state.storyId || !storyContent || storyContent.trim().length === 0) {
           console.warn('[COVER:READER] No story exists — blocked');
@@ -9654,92 +9959,16 @@ The final image must look like a real published novel cover.`;
           return;
       }
 
-      // ═══════════════════════════════════════════════════════════════════
-      // DETERMINE COVER STAGE — Based on story progress
-      // ═══════════════════════════════════════════════════════════════════
-      const stage = getCurrentCoverStage();
-      const stageLabel = COVER_STAGE_LABELS[stage];
-      console.log(`[COVER:READER] Generating ${stageLabel} (scene ${state.turnCount}, ${state.storyLength})`);
-
-      // ═══════════════════════════════════════════════════════════════════
-      // CREDIT CHECK — Progress-earned covers are free until v1
-      // Phase B: v1 is inactive, so all earned covers are free
-      // ═══════════════════════════════════════════════════════════════════
-      const isFreeStage = stage !== COVER_STAGES.V1;
-      if (!isFreeStage && !hasFreeCoverCredits()) {
-          console.log('[COVER:READER] v1 requires credits — showing purchase modal');
-          showCoverPurchaseModal();
-          return;
-      }
-
-      // Show loading state
-      const originalText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = `Generating ${stageLabel}...`;
-
-      try {
-          const resolvedTitle = $('storyTitle')?.textContent?.trim() || '';
-
-          const coverUrl = await generateMinimalCoverV1({
-              synopsis: state._synopsisMetadata || '',
-              title: resolvedTitle,
-              authorName: state.coverAuthor || 'Anonymous',
-              world: state.picks?.world || 'Modern',
-              genre: state.picks?.genre || 'Billionaire',
-              tone: state.picks?.tone || 'Earnest',
-              intensity: state.intensity || 'Naughty',
-              stage: stage // Pass current stage for prompt modification
-          });
-
-          // ═══════════════════════════════════════════════════════════════
-          // VALIDATE COVER URL — Only proceed if successful
-          // ═══════════════════════════════════════════════════════════════
-          if (!coverUrl) {
-              console.error('[COVER:READER] Generation failed — no URL');
-              btn.textContent = 'Generation Failed - Retry';
-              btn.disabled = false;
-              // FAILURE SAFETY: Story state is NOT touched
-              return;
-          }
-
-          // ═══════════════════════════════════════════════════════════════
-          // CREDIT CONSUMPTION — Only on success, only for v1
-          // Phase B: v1 inactive, so no credits consumed for earned covers
-          // ═══════════════════════════════════════════════════════════════
-          if (!isFreeStage) {
-              useFreeCredit();
-              console.log('[COVER$] Credit consumed for v1 cover');
-          }
-
-          // Store cover URL and update display
-          _preGeneratedCoverUrl = coverUrl;
-          _coverGenUsed = true;
-
-          // Update book cover image
-          const coverImg = document.getElementById('bookCoverImg');
-          if (coverImg) {
-              coverImg.src = coverUrl;
-              coverImg.classList.remove('hidden');
-          }
-
-          // Hide fallback if visible
-          const fallback = document.getElementById('coverFallback');
-          if (fallback) fallback.classList.add('hidden');
-
-          console.log(`[COVER:READER] ${stageLabel} generated successfully`);
-          showToast(`${stageLabel} ready!`);
-
-          // Reset button
-          btn.textContent = stageLabel;
-          btn.disabled = false;
-
-      } catch (err) {
-          console.error('[COVER:READER] Error:', err);
-          btn.textContent = 'Generation Failed - Retry';
-          btn.disabled = false;
-          // FAILURE SAFETY: Story state preserved, no credits consumed
-      }
+      // Open the Cover Gallery Modal
+      openCoverGalleryModal();
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COVER GALLERY MODAL BUTTON WIRING
+  // ═══════════════════════════════════════════════════════════════════════════
+  $('btnGalleryClose')?.addEventListener('click', closeCoverGalleryModal);
+  $('btnGalleryGenerate')?.addEventListener('click', generateCoverInGallery);
+  $('btnGalleryPrimary')?.addEventListener('click', selectCoverAsPrimary);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BACKGROUND STORY GENERATION
@@ -17866,7 +18095,58 @@ ${tone === 'Wry Confessional'
               settingPlate.classList.add('hidden');
           }
 
+          // ═══════════════════════════════════════════════════════════════
+          // C. PRECOMPUTE VISUALIZE PROMPT — Non-blocking prefill on scene mount
+          // ═══════════════════════════════════════════════════════════════
+          precomputeVizPrompt();
+
           console.log('[READER] Page 1+: SCENE (Title → Prose, synopsis hidden)');
+      }
+  }
+
+  /**
+   * C. PRECOMPUTE VISUALIZE PROMPT — Pre-fill prompt input when scene mounts
+   * Non-blocking: runs in background, does not delay scene display
+   */
+  async function precomputeVizPrompt() {
+      const promptInput = document.getElementById('vizPromptInput');
+      if (!promptInput) return;
+
+      // Don't overwrite if user has already edited
+      if (promptInput.value.trim()) return;
+
+      const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+      if (!allStoryContent.trim()) return;
+
+      const lastText = allStoryContent.slice(-600) || "";
+
+      try {
+          // Wry Confessional: Direct ontology-based prompt (no LLM call)
+          if (state.picks?.tone === 'Wry Confessional') {
+              const condensedScene = condenseSceneObservational(lastText, 120);
+              promptInput.value = `${WRY_CONFESSIONAL_VISUAL_ONTOLOGY} Scene: ${condensedScene}`;
+              console.log('[VIZ:PREFILL] Wry Confessional prompt precomputed');
+              return;
+          }
+
+          // Standard: LLM generates prompt
+          await ensureVisualBible(allStoryContent);
+          const anchorText = buildVisualAnchorsText();
+          const visualizePrompt = buildVisualizePrompt({ mode: 'scene', lastText, anchorText });
+
+          const promptMsg = await Promise.race([
+              callChat([{ role: 'user', content: visualizePrompt }]),
+              new Promise((_, reject) => setTimeout(() => reject(new Error("Prefill timeout")), 15000))
+          ]);
+
+          // Only set if still empty (user may have started editing)
+          if (!promptInput.value.trim()) {
+              promptInput.value = promptMsg;
+              console.log('[VIZ:PREFILL] Standard prompt precomputed');
+          }
+      } catch (e) {
+          console.log('[VIZ:PREFILL] Failed (non-critical):', e.message);
+          // Non-blocking failure — prompt will be generated when modal opens
       }
   }
 
@@ -19595,7 +19875,23 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
 
       // All providers now use sanitized prompts for stability
       // Explicit content belongs in prose, not images
-      const basePrompt = sanitizedPrompt;
+      let basePrompt = sanitizedPrompt;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // D. WRY CONFESSIONAL SCENE VISUALIZATION ENFORCEMENT
+      // Strip cinematic defaults and ensure ontology is present
+      // ═══════════════════════════════════════════════════════════════════
+      if (context === 'visualize' && state.picks?.tone === 'Wry Confessional') {
+          // Remove cinematic/photorealistic tokens that may have leaked
+          const CINEMATIC_TOKENS = /\b(cinematic|painterly|photorealistic|photo-real|dramatic lighting|chiaroscuro|depth of field|bokeh|lens flare|hyper-realistic|oil painting)\b/gi;
+          basePrompt = basePrompt.replace(CINEMATIC_TOKENS, '');
+
+          // Ensure ontology prefix is present
+          if (!basePrompt.includes('Editorial cartoon') && !basePrompt.includes('New Yorker')) {
+              basePrompt = `${WRY_CONFESSIONAL_VISUAL_ONTOLOGY} ${basePrompt}`;
+          }
+          console.log('[VIZ:WRY] Enforced Wry Confessional visual style');
+      }
 
       // INTENT-BASED PROVIDER CHAIN (AUTHORITATIVE)
       // setting: Gemini → OpenAI (NO Replicate)
