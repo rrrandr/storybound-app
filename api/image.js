@@ -430,7 +430,16 @@ No gibberish text. No watermarks.`;
   return appendStoryboundBorder(withTypography);
 }
 
-function wrapScenePrompt(basePrompt) {
+function wrapScenePrompt(basePrompt, meta = {}) {
+  // ═══════════════════════════════════════════════════════════════════
+  // WRY CONFESSIONAL BYPASS — Return raw prompt, no cinematic wrapping
+  // Editorial cartoon style must not be overridden by scene wrapper
+  // ═══════════════════════════════════════════════════════════════════
+  if (meta?.tone === 'Wry Confessional') {
+    console.log('[IMAGE] Wry Confessional — bypassing wrapScenePrompt, using raw editorial prompt');
+    return basePrompt;
+  }
+
   // Scene visualization: MOOD-FIRST, atmosphere over description
   // Single moment, tension prioritized, no portrait framing
   return `SCENE VISUALIZATION — MOOD-FIRST
@@ -1173,6 +1182,7 @@ export default async function handler(req, res) {
   // dynamic, storyStyle, genre: Story context for symbolic object selection
   // recentFocalObjects: Array of recently used focal objects (for diversity)
   // Phase 2b: archetype, arousal, world, era — structural scaffolding (not yet used)
+  // tone: Story tone for Wry Confessional bypass
   const {
     prompt,
     provider,
@@ -1191,7 +1201,9 @@ export default async function handler(req, res) {
     world,
     era,
     // Minimal Cover v1 quarantine flag
-    _minimalV1
+    _minimalV1,
+    // Tone for Wry Confessional server-side bypass
+    tone
   } = req.body;
 
   if (!prompt) {
@@ -1325,7 +1337,7 @@ export default async function handler(req, res) {
   const isSetting = imageIntent === 'setting';
   const finalPrompt = isBookCover
     ? dispatchCoverPrompt(archetype, { prompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentFocalObjects, arousal, world, era })
-    : wrapScenePrompt(prompt);
+    : wrapScenePrompt(prompt, { tone });
 
   console.log(`[IMAGE] Intent: ${imageIntent || 'scene_visualize'}, isBookCover: ${isBookCover}, isSetting: ${isSetting}, archetype: ${archetype || 'null (canonical)'}`);
 

@@ -19723,7 +19723,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
   }
 
   // OPENAI LAST RESORT: Call OpenAI image generation (SAFE - never throws)
-  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000) {
+  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000, tone = null) {
       try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -19740,7 +19740,8 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
                   model: 'gpt-image-1.5',
                   size: size,
                   aspect_ratio: aspectRatio,
-                  n: 1
+                  n: 1,
+                  tone: tone  // Pass tone for server-side Wry Confessional bypass
               }),
               signal: controller.signal
           });
@@ -19956,7 +19957,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
   //   cover   → OpenAI (primary) → Replicate (fallback) — NO Gemini
   // Default to 16:9 landscape for cinematic presentation
   // Optional signal parameter for external abort control
-  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', intent = 'scene', signal = null }) {
+  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', intent = 'scene', signal = null, tone = null }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
 
@@ -20015,18 +20016,19 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       // scene/cover: OpenAI → Replicate (NO Gemini)
       // CRITICAL: Use basePrompt (enforced) not sanitizedPrompt (original)
       const finalPrompt = basePrompt;
+      const finalTone = tone;  // Pass through for server-side Wry bypass
       let providerChain;
       if (intent === 'setting') {
           // Setting images: Gemini primary, OpenAI fallback, NO Replicate
           providerChain = [
-              { name: 'Gemini', fn: callGeminiImageGen, prompt: finalPrompt },
-              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt }
+              { name: 'Gemini', fn: callGeminiImageGen, prompt: finalPrompt, tone: finalTone },
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt, tone: finalTone }
           ];
       } else {
           // Scene/Cover images: OpenAI primary, Replicate fallback, NO Gemini
           providerChain = [
-              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt },
-              { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: finalPrompt }
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt, tone: finalTone },
+              { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: finalPrompt, tone: finalTone }
           ];
       }
 
@@ -20043,7 +20045,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
 
           try {
               logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
-              const imageUrl = await provider.fn(provider.prompt, size);
+              const imageUrl = await provider.fn(provider.prompt, size, 60000, provider.tone);
 
               // Check for abort after provider returns
               if (signal?.aborted) {
@@ -20092,7 +20094,8 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
           tier: tier,
           shape: 'portrait',
           context: 'visualize',
-          intent: 'scene'
+          intent: 'scene',
+          tone: state.picks?.tone || null  // Pass tone for server-side Wry bypass
       });
   }
 
