@@ -432,11 +432,14 @@ No gibberish text. No watermarks.`;
 
 function wrapScenePrompt(basePrompt, meta = {}) {
   // ═══════════════════════════════════════════════════════════════════
-  // WRY CONFESSIONAL BYPASS — Return raw prompt, no cinematic wrapping
-  // Editorial cartoon style must not be overridden by scene wrapper
+  // 🔒 TONE VISUAL ONTOLOGY BYPASS — Return raw prompt, no cinematic wrapping
+  // Tones with visual ontologies must not be overridden by scene wrapper
+  // Tone style ALWAYS takes priority over Genre/World defaults
   // ═══════════════════════════════════════════════════════════════════
-  if (meta?.tone === 'Wry Confessional') {
-    console.log('[IMAGE] Wry Confessional — bypassing wrapScenePrompt, using raw editorial prompt');
+  const TONES_WITH_VISUAL_ONTOLOGY = ['Wry Confessional', 'WryConfession', 'Lurid Confessional', 'Ink Noir', 'Horror'];
+
+  if (meta?.toneStyleLock || TONES_WITH_VISUAL_ONTOLOGY.includes(meta?.tone)) {
+    console.log(`[IMAGE] Tone visual ontology (${meta?.tone}) — bypassing wrapScenePrompt, using raw prompt`);
     return basePrompt;
   }
 
@@ -1202,12 +1205,93 @@ export default async function handler(req, res) {
     era,
     // Minimal Cover v1 quarantine flag
     _minimalV1,
-    // Tone for Wry Confessional server-side bypass
-    tone
+    // Tone for visual ontology server-side bypass
+    tone,
+    // Tone style lock flag — when true, client has pre-applied tone ontology
+    toneStyleLock,
+    // Style authority metadata for debugging
+    styleAuthority,
+    styleExpectedTags
   } = req.body;
 
   if (!prompt) {
     return res.status(400).json({ error: 'Prompt required' });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 🔒 TONE VISUAL ONTOLOGY BYPASS — Priority over Genre/World styling
+  // When toneStyleLock is true OR tone has visual ontology, send prompt DIRECTLY.
+  // Skip ALL: wrapScenePrompt, normalization, defaults, post-processing.
+  // Tone visual style ALWAYS overrides Genre styling for scene visualization.
+  // ═══════════════════════════════════════════════════════════════════
+
+  // Tones with visual ontologies that require server-side bypass
+  const TONES_WITH_VISUAL_ONTOLOGY = ['Wry Confessional', 'WryConfession', 'Lurid Confessional', 'Ink Noir', 'Horror'];
+  const hasToneOntology = TONES_WITH_VISUAL_ONTOLOGY.includes(tone);
+
+  // DIAGNOSTIC: Log tone, intent, and style authority
+  console.log('[IMAGE:DIAG] tone:', tone, '| imageIntent:', imageIntent, '| toneStyleLock:', toneStyleLock, '| styleAuthority:', styleAuthority);
+
+  if ((toneStyleLock || hasToneOntology) && imageIntent !== 'book_cover') {
+    console.log(`[IMAGE:TONE] ✓ BYPASS TRIGGERED — tone style lock active (${tone})`);
+    console.log('[IMAGE:TONE] styleAuthority:', styleAuthority || 'Tone');
+    console.log('[IMAGE:TONE] styleExpectedTags:', styleExpectedTags?.join(', ') || 'N/A');
+    console.log('[IMAGE:TONE] Raw prompt (first 250 chars):', prompt.substring(0, 250));
+
+    try {
+      const openaiSize = mapToOpenAISize(size, imageIntent);
+      const model = 'gpt-image-1'; // Fast model for scene visualization
+
+      const openaiRes = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model,
+          prompt: prompt, // RAW prompt — tone ontology already applied client-side
+          n: 1,
+          size: openaiSize
+        })
+      });
+
+      const openaiData = await openaiRes.json();
+
+      if (!openaiRes.ok) {
+        console.error('[IMAGE:TONE] OpenAI error:', openaiData.error?.message || openaiData);
+        return res.status(openaiRes.status).json({
+          error: openaiData.error?.message || 'OpenAI API error',
+          _toneBypass: true,
+          styleAuthority: styleAuthority || 'Tone'
+        });
+      }
+
+      let imageUrl = openaiData.data?.[0]?.url || null;
+      if (!imageUrl && openaiData.data?.[0]?.b64_json) {
+        imageUrl = `data:image/png;base64,${openaiData.data[0].b64_json}`;
+      }
+
+      if (!imageUrl) {
+        console.error('[IMAGE:TONE] No image in response');
+        return res.status(500).json({ error: 'No image generated', _toneBypass: true });
+      }
+
+      console.log(`[IMAGE:TONE] SUCCESS — ${tone} visual style generated`);
+      return res.status(200).json({
+        url: imageUrl,
+        provider: 'OpenAI',
+        model,
+        intent: imageIntent,
+        _toneBypass: true,
+        styleAuthority: styleAuthority || 'Tone',
+        styleExpectedTags: styleExpectedTags || []
+      });
+
+    } catch (err) {
+      console.error('[IMAGE:TONE] Error:', err.message);
+      return res.status(500).json({ error: err.message, _toneBypass: true });
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════

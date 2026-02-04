@@ -1089,6 +1089,10 @@ function setSelectedState(mount, selectedCardEl){
         );
         if (!Number.isNaN(idx)) {
             window.state.fateSelectedIndex = idx;
+            // SPECULATIVE PRELOAD: Invalidate on fate card change
+            if (typeof window.invalidateSpeculativeScene === 'function') {
+                window.invalidateSpeculativeScene();
+            }
         }
     }
 
@@ -1282,6 +1286,11 @@ function setSelectedState(mount, selectedCardEl){
         window.state.fateSelectedIndex = -1;
         window.state.fateCommitted = false;
 
+        // SPECULATIVE PRELOAD: Invalidate when new cards dealt
+        if (typeof window.invalidateSpeculativeScene === 'function') {
+            window.invalidateSpeculativeScene();
+        }
+
         // Reset per-hand runtime flags
         _allFlipped = false;
         clearPendingTimer();
@@ -1368,10 +1377,22 @@ function setSelectedState(mount, selectedCardEl){
                     if (diaInput) triggerGoldenFlow(card, diaInput);
                 }, 150); // Slight stagger for elegance
 
-                // Apply content to inputs after animation delay (match existing 600ms timing)
+                // ═══════════════════════════════════════════════════════════════
+                // CONTEXTUAL PREVIEW GENERATION — Scene-aware Say/Do suggestions
+                // Cancel any prior preview, then generate new contextual preview
+                // after animation delay (match existing 600ms timing)
+                // ═══════════════════════════════════════════════════════════════
+                if (typeof window.cancelFatePreview === 'function') {
+                    window.cancelFatePreview();
+                }
                 _pendingApplyTimer = setTimeout(() => {
-                    if(actInput) actInput.value = data.action;
-                    if(diaInput) diaInput.value = data.dialogue;
+                    // Use contextual preview if available, fallback to card defaults
+                    if (typeof window.generateFatePreview === 'function') {
+                        window.generateFatePreview(data);
+                    } else {
+                        if(actInput) actInput.value = data.action;
+                        if(diaInput) diaInput.value = data.dialogue;
+                    }
                 }, 600);
             };
 
@@ -1495,10 +1516,19 @@ function setSelectedState(mount, selectedCardEl){
                     if (diaInput && window.triggerGoldenFlow) window.triggerGoldenFlow(card, diaInput);
                 }, 150);
 
-                // Apply content to inputs after animation delay
+                // ═══════════════════════════════════════════════════════════════
+                // CONTEXTUAL PREVIEW GENERATION — Scene-aware Say/Do suggestions
+                // ═══════════════════════════════════════════════════════════════
+                if (typeof window.cancelFatePreview === 'function') {
+                    window.cancelFatePreview();
+                }
                 _pendingApplyTimer = setTimeout(() => {
-                    if (actInput) actInput.value = data.action;
-                    if (diaInput) diaInput.value = data.dialogue;
+                    if (typeof window.generateFatePreview === 'function') {
+                        window.generateFatePreview(data);
+                    } else {
+                        if (actInput) actInput.value = data.action;
+                        if (diaInput) diaInput.value = data.dialogue;
+                    }
                 }, 600);
             };
         });

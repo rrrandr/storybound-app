@@ -1178,58 +1178,83 @@ For veto/quill/god_mode:
   //   BEAUTIFUL_RUIN → BEAUTIFUL_RUIN
   //   DEVOTED → ETERNAL_FLAME
   // =========================
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LOVE INTEREST PRONOUN RESOLUTION — Adapts archetype copy to LI pronouns
+  // ═══════════════════════════════════════════════════════════════════════════
+  const LI_PRONOUN_MAPS = {
+      'Male': { LI_SUBJ: 'he', LI_OBJ: 'him', LI_POS: 'his', LI_REFL: 'himself' },
+      'Female': { LI_SUBJ: 'she', LI_OBJ: 'her', LI_POS: 'her', LI_REFL: 'herself' },
+      'Non-Binary': { LI_SUBJ: 'they', LI_OBJ: 'them', LI_POS: 'their', LI_REFL: 'themself' }
+  };
+
+  function resolveLIPronouns(text) {
+      if (!text) return text;
+      const liGender = state.loveInterest || 'Male';
+      const map = LI_PRONOUN_MAPS[liGender] || LI_PRONOUN_MAPS['Male'];
+      return text
+          .replace(/\{LI_SUBJ\}/g, map.LI_SUBJ)
+          .replace(/\{LI_OBJ\}/g, map.LI_OBJ)
+          .replace(/\{LI_POS\}/g, map.LI_POS)
+          .replace(/\{LI_REFL\}/g, map.LI_REFL)
+          // Capitalize sentence-start pronouns
+          .replace(/(\.\s+|\n|^)he\b/g, (m, p) => p + 'He')
+          .replace(/(\.\s+|\n|^)she\b/g, (m, p) => p + 'She')
+          .replace(/(\.\s+|\n|^)they\b/g, (m, p) => p + 'They');
+  }
+
   const ARCHETYPES = {
       HEART_WARDEN: {
           id: 'HEART_WARDEN',
           name: 'The Heart Warden',
-          desireStyle: 'He remembered the coffee order she\'d mentioned in passing, months ago. Even in another life, he would have remembered.',
-          summary: 'Protection is not a gesture but a gravitational constant. The Heart Warden builds walls around the people they love and calls it devotion. Safety is their language, control is their shadow, and tenderness arrives armored.',
+          desireStyle: '{LI_SUBJ} remembered the coffee order she\'d mentioned in passing, months ago. Even in another life, {LI_SUBJ} would have remembered.',
+          summary: 'Protection is not a gesture but a gravitational constant. The Heart Warden builds walls around the people {LI_SUBJ} loves and calls it devotion. Safety is {LI_POS} language, control is {LI_POS} shadow, and tenderness arrives armored.',
           stressFailure: 'over-control, authoritarian protection'
       },
       OPEN_VEIN: {
           id: 'OPEN_VEIN',
           name: 'The Open Vein',
           desireStyle: 'Every emotion lived on the surface, unguarded — tenderness offered without condition, vulnerability worn like a second skin',
-          summary: 'The Open Vein gives everything before it is asked. Love is not cautious here — it is hemorrhage, offering, surrender before the first wound. They feel too much, too soon, too visibly.',
+          summary: 'The Open Vein gives everything before it is asked. Love is not cautious here — it is hemorrhage, offering, surrender before the first wound. {LI_SUBJ} feels too much, too soon, too visibly.',
           stressFailure: 'self-erasure, overexposure'
       },
       SPELLBINDER: {
           id: 'SPELLBINDER',
           name: 'The Spellbinder',
-          desireStyle: 'Every glance felt deliberate, every silence a trap — the room bent toward them without knowing why',
-          summary: 'The Spellbinder commands attention through presence alone. Charm is currency, and they spend it selectively — never by accident. Three moves ahead, they make surrender feel like your idea.',
+          desireStyle: 'Every glance felt deliberate, every silence a trap — the room bent toward {LI_OBJ} without knowing why',
+          summary: 'The Spellbinder commands attention through presence alone. Charm is currency, and {LI_SUBJ} spends it selectively — never by accident. Three moves ahead, {LI_SUBJ} makes surrender feel like your idea.',
           stressFailure: 'asymmetric attachment, selective honesty'
       },
       ARMORED_FOX: {
           id: 'ARMORED_FOX',
           name: 'The Armored Fox',
-          desireStyle: 'That crooked smile promised trouble, and trouble was the only honest thing about him',
+          desireStyle: 'That crooked smile promised trouble, and trouble was the only honest thing about {LI_OBJ}',
           summary: 'The Armored Fox survives by never being where you expect. Deflection is art, evasion is affection, and nothing sticks — until it does. The armor is charm; the fox is the wound underneath.',
           stressFailure: 'permanent deflection, irresponsible freedom'
       },
       DARK_VICE: {
           id: 'DARK_VICE',
           name: 'The Dark Vice',
-          desireStyle: 'The room went quiet when he entered — not from fear, but from the gravity of something that should not be desired',
+          desireStyle: 'The room went quiet when {LI_SUBJ} entered — not from fear, but from the gravity of something that should not be desired',
           summary: 'The Dark Vice is the thing you reach for knowing it will cost you. Power, danger, and want fused into a single presence that justifies its own harm. Restraint is performance; beneath it, something hungers.',
           stressFailure: 'escalation, rationalized harm'
       },
       BEAUTIFUL_RUIN: {
           id: 'BEAUTIFUL_RUIN',
           name: 'The Beautiful Ruin',
-          desireStyle: 'His jaw clenched, a storm behind his perfect eyes — pain or shame, she couldn\'t tell',
-          summary: 'The Beautiful Ruin destroys what it loves before love can disappoint. Self-sabotage as preemptive strike, beauty as wreckage, tenderness laced with goodbye. "Everyone leaves" is prophecy and weapon both.',
+          desireStyle: '{LI_POS} jaw clenched, a storm behind {LI_POS} perfect eyes — pain or shame, she couldn\'t tell',
+          summary: 'The Beautiful Ruin destroys what {LI_SUBJ} loves before love can disappoint. Self-sabotage as preemptive strike, beauty as wreckage, tenderness laced with goodbye. "Everyone leaves" is prophecy and weapon both.',
           stressFailure: 'preemptive destruction, mutual sabotage',
           genderedExpression: {
-              male: 'He loved fiercely, possessively, as if tenderness itself might betray him',
-              female: 'She pushed away first, always, before the disappointment could reach her'
+              male: '{LI_SUBJ} loved fiercely, possessively, as if tenderness itself might betray {LI_OBJ}',
+              female: '{LI_SUBJ} pushed away first, always, before the disappointment could reach {LI_OBJ}'
           }
       },
       ETERNAL_FLAME: {
           id: 'ETERNAL_FLAME',
           name: 'The Eternal Flame',
-          desireStyle: 'He remembered the coffee order she\'d mentioned once, three months ago, in passing — devotion expressed in accumulated attention',
-          summary: 'The coffee order she\'d mentioned in passing—three months ago—was still imprinted on his memory, three reincarnations later.',
+          desireStyle: '{LI_SUBJ} remembered the coffee order she\'d mentioned once, three months ago, in passing — devotion expressed in accumulated attention',
+          summary: 'The coffee order she\'d mentioned in passing—three months ago—was still imprinted on {LI_POS} memory, three reincarnations later.',
           stressFailure: 'self-neglect, moral endurance'
       }
   };
@@ -1241,9 +1266,9 @@ For veto/quill/god_mode:
 
   function getArchetypeSectionTitle(loveInterestGender) {
       const g = (loveInterestGender || '').toLowerCase();
-      if (g === 'male') return 'Archetype Storybeau';
-      if (g === 'female') return 'Archetype Storybelle';
-      return 'Archetype Storyboo';
+      if (g === 'male') return 'Storybeau';
+      if (g === 'female') return 'Storybelle';
+      return 'Storyboo';
   }
 
   // =========================
@@ -1679,6 +1704,12 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       },
 
       // ============================================================
+      // SPECULATIVE NEXT SCENE PRELOAD — Memory only, not persisted
+      // ============================================================
+      speculativeNextScene: null,  // { text, fateContextHash, tone, world, createdAt }
+      isPreloadingNextScene: false,
+
+      // ============================================================
       // PHASE 1 COVER MODE — LOCAL/COMPOSITED COVERS ONLY
       // coverMode: 'PHASE_1_FORGED' = deterministic local assets only
       // coverEligibility: false = custom (model-based) covers disabled
@@ -1720,6 +1751,15 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       quillCommittedThisTurn: false,
       quillIntent: '',
       storyStage: 'pre-intimacy',
+      // STORYTURN STATE — narrative arc progression (ST1–ST6)
+      storyturn: 'ST1',
+      // TEASE CLIFFHANGER RESUME STATE — stores interrupted scene for upgrade continuation
+      teaseCliffhangerState: null,
+      // INTIMACY MILESTONE LATCH — tracks first-time interruptions
+      intimacyInterrupted: {
+          first_kiss: false,
+          first_sex: false
+      },
       sandbox: false,
       godModeActive: false,
       authorChairActive: false,
@@ -3738,7 +3778,150 @@ If you name what something IS, you have failed. Show what it COSTS.
   // Single source of truth for covers AND scene visualization
   // =================================================================
 
-  const WRY_CONFESSIONAL_VISUAL_ONTOLOGY = `Editorial cartoon in the style of The New Yorker. Single-panel illustration. Flat or muted color palette. Minimal linework. Ordinary moment with understated ironic undercut. One subject, one observation, one dry caption. Simple flat rendering. No shading gradients. No atmospheric effects. Clean line art only.`;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WRY CONFESSIONAL VISUAL ONTOLOGY — Anti-painterly, anti-moody specification
+  // CRITICAL: Positive-first approach (models respond better to positives)
+  // Lead with explicit style, minimize negations, use clear model-friendly terms
+  // ═══════════════════════════════════════════════════════════════════════════
+  const WRY_CONFESSIONAL_VISUAL_ONTOLOGY = `Style: Single-panel New Yorker magazine editorial cartoon. Medium: Black ink line drawing on white paper with simple hatching. Aesthetic: Minimalist, understated, dry wit. Lines: Thin uniform pen strokes, hand-drawn quality, quick newspaper sketch style. Colors: Grayscale only, cool neutral tones, flat matte finish. Background: Plain white, empty, no gradients. Mood: Deadpan, observational, wry. Rendering: 2D flat illustration, deliberately unpolished, diagrammatic simplicity. Avoid: oil painting, watercolor, photorealism, dramatic lighting, warm tones, 3D rendering, painterly effects.`;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TONE VISUAL ONTOLOGY REGISTRY — Master definition of tone-locked visual styles
+  // 🔒 PRIORITY: Tone visual ontology ALWAYS overrides Genre and World styling
+  // Genre only influences composition, subject matter, costume/setting tropes
+  // ═══════════════════════════════════════════════════════════════════════════
+  const TONE_VISUAL_ONTOLOGIES = {
+      'Wry Confessional': {
+          ontology: WRY_CONFESSIONAL_VISUAL_ONTOLOGY,
+          expectedTags: ['editorial cartoon', 'New Yorker', 'ink drawing', 'sketch', 'grayscale', 'minimalist'],
+          bannedTokens: /\b(cinematic|painterly|photorealistic|photo-real|dramatic lighting|chiaroscuro|depth of field|bokeh|lens flare|hyper-realistic|oil painting|oil-painting|watercolor|watercolour|atmospheric|natural lighting|golden.hour|golden hour|studio lighting|volumetric|HDR|8k|4k|ultra.realistic|professional photo|realistic|realism|brush stroke|brushstroke|impasto|glazing|sfumato|warm lighting|warm tones|orange glow|sunset|golden light|rich colors|vibrant|lush|ethereal|dreamy|fantasy art|concept art|digital painting|digital art|artstation|deviantart)\b/gi,
+          intensityTokens: /\b(suggestive|flirtatious|sensual|seductive|allure|attractive|beautiful|striking beauty|elegant features|hourglass|athletic|gorgeous|stunning|radiant)\b/gi,
+          cleanupPatterns: [
+              /This image is an editorial cartoon[^.]*\./gi,
+              /NOT a photograph[^.]*\./gi,
+              /Style:[^.]*\./gi,
+              /New Yorker[^.]*\./gi
+          ],
+          description: 'Editorial cartoon sketch style — New Yorker magazine aesthetic'
+      },
+      'WryConfession': {  // Alias for internal naming consistency
+          aliasOf: 'Wry Confessional'
+      },
+      'Satire': {  // Uses same visual style as Wry Confessional
+          aliasOf: 'Wry Confessional'
+      },
+      'Irony': {  // Uses same visual style as Wry Confessional
+          aliasOf: 'Wry Confessional'
+      },
+      'Lurid Confessional': {
+          ontology: `Style: Vintage pulp magazine cover illustration. Medium: Bold, saturated colors with heavy black outlines. Aesthetic: Sensational, melodramatic, confessional. Colors: High contrast, saturated reds, yellows, blues. Strong shadows, exaggerated expressions. Background: Simple gradient or solid color with dramatic spotlighting. Mood: Overwrought, breathless, tabloid. Rendering: Classic illustration style, visible brush strokes, slightly garish color palette. Avoid: subtlety, muted tones, photorealism, modern digital aesthetic.`,
+          expectedTags: ['pulp', 'vintage', 'melodramatic', 'saturated', 'bold outlines', 'confessional'],
+          bannedTokens: /\b(subtle|muted|photorealistic|photo-real|naturalistic|understated|minimalist|grayscale|monochrome)\b/gi,
+          intensityTokens: null,  // Lurid allows intensity language
+          cleanupPatterns: [],
+          description: 'Vintage pulp magazine illustration — bold, saturated, melodramatic'
+      },
+      'Ink Noir': {
+          ontology: `Style: Black-and-white noir comic panel. Medium: High contrast ink work, heavy shadows, dramatic chiaroscuro. Aesthetic: Hard-boiled, fatalistic, shadowy. Colors: Pure black and white only, no gray tones, stark contrast. Strong use of negative space and silhouettes. Background: Urban shadows, venetian blind stripes, rain-slicked surfaces. Mood: Cynical, world-weary, dangerous. Rendering: Frank Miller/Sin City aesthetic, bold ink work, extreme shadow play. Avoid: color, soft gradients, warm tones, cheerful lighting, painterly effects.`,
+          expectedTags: ['noir', 'black-and-white', 'ink', 'chiaroscuro', 'comic panel', 'shadows'],
+          bannedTokens: /\b(color|colorful|vibrant|warm|cheerful|soft|gradient|painterly|watercolor|pastel|bright|sunny)\b/gi,
+          intensityTokens: null,
+          cleanupPatterns: [],
+          description: 'Sin City-style black-and-white noir comic panel'
+      },
+      'Horror': {
+          ontology: `Style: Horror illustration with unsettling atmosphere. Medium: Dark, desaturated palette with sickly accent colors. Aesthetic: Dread-inducing, liminal, uncanny. Colors: Deep shadows, washed-out highlights, occasional sickly green or red accent. Background: Oppressive darkness, fog, indistinct shapes at edges. Mood: Creeping dread, wrongness, something watching. Rendering: Slightly distorted perspectives, off-kilter compositions, faces obscured or wrong. Avoid: cheerful lighting, clear visibility, reassuring compositions, beauty-shot framing.`,
+          expectedTags: ['horror', 'dark', 'unsettling', 'dread', 'shadows', 'uncanny'],
+          bannedTokens: /\b(cheerful|bright|sunny|warm|inviting|cozy|comfortable|safe|reassuring|beautiful|glamorous)\b/gi,
+          intensityTokens: null,
+          cleanupPatterns: [],
+          description: 'Horror atmosphere — dread-inducing, liminal, unsettling'
+      }
+      // Tones WITHOUT visual ontology (use Genre defaults):
+      // - Earnest: No visual lock — uses Genre styling
+      // - Poetic: No visual lock — uses Genre styling with lyrical composition
+      // - Mythic: No visual lock — uses Genre styling with epic composition
+      // - Comedic: No visual lock — uses Genre styling
+      // - Modern: No visual lock — uses Genre styling
+  };
+
+  // Resolve tone alias to canonical name
+  function resolveToneAlias(tone) {
+      if (!tone) return null;
+      const entry = TONE_VISUAL_ONTOLOGIES[tone];
+      if (entry?.aliasOf) {
+          return entry.aliasOf;
+      }
+      return tone;
+  }
+
+  // Check if a tone has a visual ontology that overrides genre
+  function hasToneVisualOntology(tone) {
+      const resolved = resolveToneAlias(tone);
+      const entry = TONE_VISUAL_ONTOLOGIES[resolved];
+      return entry && !entry.aliasOf && entry.ontology;
+  }
+
+  // Get the visual ontology for a tone (returns null if none)
+  function getToneVisualOntology(tone) {
+      const resolved = resolveToneAlias(tone);
+      const entry = TONE_VISUAL_ONTOLOGIES[resolved];
+      if (entry && !entry.aliasOf) {
+          return entry;
+      }
+      return null;
+  }
+
+  // Apply tone visual ontology to a prompt (returns modified prompt and metadata)
+  function applyToneVisualOntology(prompt, tone, context = 'visualize') {
+      const ontologyEntry = getToneVisualOntology(tone);
+
+      if (!ontologyEntry) {
+          // No visual ontology — return original prompt with genre authority
+          return {
+              prompt: prompt,
+              styleAuthority: 'Genre',
+              styleExpectedTags: [],
+              toneStyleLock: false
+          };
+      }
+
+      let modifiedPrompt = prompt;
+
+      // Strip banned tokens (cinematic, painterly, etc.)
+      if (ontologyEntry.bannedTokens) {
+          modifiedPrompt = modifiedPrompt.replace(ontologyEntry.bannedTokens, '');
+      }
+
+      // Strip intensity tokens if specified
+      if (ontologyEntry.intensityTokens) {
+          modifiedPrompt = modifiedPrompt.replace(ontologyEntry.intensityTokens, '');
+      }
+
+      // Apply cleanup patterns to avoid duplication
+      if (ontologyEntry.cleanupPatterns) {
+          for (const pattern of ontologyEntry.cleanupPatterns) {
+              modifiedPrompt = modifiedPrompt.replace(pattern, '');
+          }
+      }
+
+      // Trim and clean up whitespace
+      modifiedPrompt = modifiedPrompt.replace(/\n{3,}/g, '\n\n').replace(/\s{2,}/g, ' ').trim();
+
+      // Prepend authoritative ontology
+      modifiedPrompt = `${ontologyEntry.ontology}\n\nScene: ${modifiedPrompt}`;
+
+      console.log(`[VIZ:TONE] ${resolveToneAlias(tone)} ontology APPLIED — styleAuthority: Tone`);
+      console.log(`[VIZ:TONE] Expected tags: ${ontologyEntry.expectedTags.join(', ')}`);
+
+      return {
+          prompt: modifiedPrompt,
+          styleAuthority: 'Tone',
+          styleExpectedTags: ontologyEntry.expectedTags,
+          toneStyleLock: true,
+          toneDescription: ontologyEntry.description
+      };
+  }
 
   const WRY_CONFESSIONAL_OBJECT_ALTERATIONS = [
       'slightly misplaced',
@@ -3746,6 +3929,74 @@ If you name what something IS, you have failed. Show what it COSTS.
       'emotionally undercut',
       'quietly contradicting expectation'
   ];
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WRY CONFESSIONAL — TONE INVARIANT (AUTHORITATIVE)
+  // Applies to ALL cover stages for Wry Confessional tone
+  // ═══════════════════════════════════════════════════════════════════════════
+  const WRY_CONFESSIONAL_TONE_INVARIANT = `TONE INVARIANT (Wry Confessional):
+The primary object must show evidence of hesitation, interference, revision, or ironic displacement.
+Confession is implied through the condition of the object, not through spectacle or explicit humor.
+The object may change across stages, but the wry condition must persist.
+No pristine, untouched symbolism is allowed.
+
+ABSOLUTE CONSTRAINTS (ALL STAGES):
+- NO spectacle (fire, explosions, chaos, melodrama)
+- NO explicit jokes or captions that explain the irony
+- NO reversion to pristine objects
+- NO photoreal stock aesthetics
+- NO escalation into parody
+
+FAILURE CONDITIONS:
+- Object appears untouched or neutral
+- Irony is loud, literal, or explained
+- Tone collapses into humor instead of implication
+- Same motif repeated mechanically across stages`;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WRY CONFESSIONAL — STAGE-SPECIFIC ESCALATION (AUTHORITATIVE)
+  // Each stage applies the invariant with different legibility
+  // NOTE: Uses string keys to avoid reference before COVER_STAGES definition
+  // ═══════════════════════════════════════════════════════════════════════════
+  const WRY_CONFESSIONAL_STAGE_PROMPTS = {
+      'sketch': `${WRY_CONFESSIONAL_TONE_INVARIANT}
+
+SKETCH STAGE ESCALATION:
+- Implicit, understated
+- One quiet sign of compromise only
+- Ambiguity preserved
+- Editorial, diagrammatic feel
+- Confession should feel almost accidental
+
+AESTHETIC: Black ink or graphite line work on white or off-white paper. Outlined lettering with light pencil-filled interior. Understated, diagrammatic. New Yorker editorial sketch aesthetic.`,
+
+      'thumbnail': `${WRY_CONFESSIONAL_TONE_INVARIANT}
+
+THUMBNAIL STAGE ESCALATION:
+- The wry condition is clearer at a glance
+- Still unresolved
+- No explanatory gestures or visual punchlines
+
+AESTHETIC: Simple forms, limited palette. The compromised state visible but not emphasized. Editorial restraint maintained.`,
+
+      'rough': `${WRY_CONFESSIONAL_TONE_INVARIANT}
+
+ROUGH STAGE ESCALATION:
+- The compromised state of the object is unambiguous
+- Emotional meaning remains open
+- Irony emerges through composition and context, not jokes
+
+AESTHETIC: More refined line work, visible texture. The wry condition is now clearly intentional, not accidental. Still understated.`,
+
+      'v1': `${WRY_CONFESSIONAL_TONE_INVARIANT}
+
+FINAL STAGE ESCALATION:
+- The wry irony is fully legible
+- Resolved visually, not narratively
+- Editorial restraint maintained (New Yorker tone, not gag illustration)
+
+AESTHETIC: Polished editorial illustration. The object's compromised state reads immediately. Irony is clear but never loud. Quiet confidence in the visual statement.`
+  };
 
   /**
    * WRY CONFESSIONAL VISUAL REGRESSION GUARD
@@ -3818,9 +4069,1319 @@ If you name what something IS, you have failed. Show what it COSTS.
       }
   };
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // STORYTURN — AUTHORITATIVE CONFIG
+  // Do not modify without design approval
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  //
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Storybound Canon v1.0 — Audited and Coherent
+  // This canon has passed a full coherence audit.
+  // All future changes MUST be appended as new appendices.
+  // Existing canon must not be edited or reinterpreted.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const STORYTURN_CONFIG = {
+    storyLengths: {
+      Tease: { minWords: 5000, maxWords: 8000 },
+      Fling: { minWords: 12000, maxWords: 20000 },
+      Affair: { minWords: 40000, maxWords: 70000 },
+      Soulmates: { minWords: 90000, maxWords: 130000 }
+    },
+
+    storyturns: [
+      { id: "ST1", name: "Attraction Acknowledged" },
+      { id: "ST2", name: "Resistance Defined" },
+      { id: "ST3", name: "Permission Granted" },
+      { id: "ST4", name: "Consequence Taken" },
+      { id: "ST5", name: "Crisis Separation" },
+      { id: "ST6", name: "Integration" }
+    ],
+
+    arousalRules: {
+      Clean: {
+        sexAllowedAt: [],
+        explicitness: "none"
+      },
+      Naughty: {
+        sexAllowedAt: ["ST3", "ST4"],
+        explicitness: "suggestive"
+      },
+      Erotic: {
+        sexAllowedAt: ["ST3", "ST4"],
+        explicitness: "explicit"
+      },
+      Dirty: {
+        sexAllowedAt: ["ST3"],
+        explicitness: "explicit_high"
+      }
+    },
+
+    teaseRules: {
+      maxStoryturn: "ST3",
+      completionAllowed: false,
+      cliffhangerRequired: true,
+      paywalledArousal: ["Erotic", "Dirty"]
+    },
+
+    storyturnSemantics: {
+      ST1: { phase: "desire", sexualCatalyst: false },
+      ST2: { phase: "resistance", sexualCatalyst: false },
+      ST3: { phase: "permission", sexualCatalyst: true },
+      ST4: { phase: "consequence", sexualCatalyst: true },
+      ST5: { phase: "crisis", sexualCatalyst: false },
+      ST6: { phase: "integration", sexualCatalyst: false }
+    },
+
+    postSexRules: {
+      repeatedSexAdvancesStoryturn: false,
+      sexAfterST4IsContextual: true
+    },
+
+    carryoverRules: {
+      allowMultipleArcs: true,
+      preserveIntegrationAcrossArcs: true,
+      resettableStoryturns: ["ST2", "ST3", "ST4"],
+      nonResettableStoryturns: ["ST6"]
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CANONICAL STORYTURN SEMANTICS — ATTEMPT vs CONSEQUENCE (AUTHORITATIVE)
+    // TAG: storybound/storyturn-attempt-consequence-semantics-v1
+    // ═══════════════════════════════════════════════════════════════════════════
+    //
+    // ST3 — Permission Granted (Attempts Authorized)
+    // ───────────────────────────────────────────────
+    // Definition:
+    //   ST3 authorizes attempts at intimacy between the two main characters.
+    //
+    // At ST3:
+    //   - Desire may be openly acknowledged
+    //   - Boundaries may be approached, tested, or crossed in attempt
+    //   - Physical or emotional intimacy may be initiated
+    //
+    // ST3 explicitly does NOT authorize:
+    //   - Completion
+    //   - Irreversible consequence
+    //   - Relational resolution
+    //
+    // Valid ST3 outcomes include:
+    //   - interruption
+    //   - hesitation
+    //   - deflection
+    //   - withdrawal
+    //   - self-sabotage
+    //   - escalation without resolution
+    //   - cliffhangers
+    //
+    // Failure to reach consequence is not a failure state.
+    // Remaining in ST3 after an attempt is expected behavior.
+    //
+    // ST3 is about trying.
+    //
+    // ───────────────────────────────────────────────
+    // ST4 — Consequence Taken (Attempts Resolved)
+    // ───────────────────────────────────────────────
+    // Definition:
+    //   ST4 authorizes the consequences of intimacy.
+    //
+    // At ST4:
+    //   - Attempts made in ST3 may resolve
+    //   - Intimacy may complete
+    //   - The relationship enters a new irreversible state
+    //
+    // ST4 is marked by:
+    //   - aftermath
+    //   - accountability
+    //   - emotional consequence
+    //   - narrative reorientation
+    //
+    // Sex, if present, is a consequence, not a trigger.
+    //
+    // After ST4:
+    //   - Sex becomes contextual only
+    //   - Repetition does not advance Storyturns
+    //   - The relationship cannot return to its prior state without denial or collapse
+    //
+    // ST4 is about what it costs.
+    //
+    // ───────────────────────────────────────────────
+    // ST3 → ST4 TRANSITION SEMANTICS (CRITICAL)
+    // ───────────────────────────────────────────────
+    // The transition from ST3 to ST4 occurs only when an attempt produces
+    // an irreversible consequence.
+    //
+    // Interruption, deferral, escalation, or increased explicitness alone
+    // does NOT advance Storyturns.
+    //
+    // No special "interruption rule" is required.
+    // Failure to reach consequence simply remains within ST3.
+    //
+    // ───────────────────────────────────────────────
+    // IMPLEMENTATION NOTE (AUTHORITATIVE)
+    // ───────────────────────────────────────────────
+    // This semantic clarification REPLACES any prior "first kiss interruption"
+    // or "first sex interruption" special-case rules.
+    //
+    // Do NOT encode this as procedural logic.
+    // Do NOT add new conditionals or flags for interruption tracking.
+    // Runtime code should reference these semantics when evaluating Storyturn
+    // advancement, not reimplement them.
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    attemptConsequenceSemantics: {
+      ST3: {
+        name: "Permission Granted",
+        role: "attempts_authorized",
+        authorizes: ["desire_acknowledgment", "boundary_testing", "intimacy_initiation"],
+        doesNotAuthorize: ["completion", "irreversible_consequence", "relational_resolution"],
+        validOutcomes: ["interruption", "hesitation", "deflection", "withdrawal", "self_sabotage", "escalation_without_resolution", "cliffhanger"],
+        summary: "ST3 is about trying."
+      },
+      ST4: {
+        name: "Consequence Taken",
+        role: "attempts_resolved",
+        authorizes: ["attempt_resolution", "intimacy_completion", "irreversible_state_change"],
+        markedBy: ["aftermath", "accountability", "emotional_consequence", "narrative_reorientation"],
+        postST4: ["sex_contextual_only", "repetition_no_advancement", "no_return_without_denial_or_collapse"],
+        summary: "ST4 is about what it costs."
+      },
+      transitionRule: "ST3 → ST4 occurs only when an attempt produces an irreversible consequence. Interruption, deferral, or escalation alone does NOT advance."
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // IRREVERSIBILITY TEST — AUTHORITATIVE DEFINITION
+    // TAG: storybound/storyturn-attempt-consequence-irrev-v1
+    // ═══════════════════════════════════════════════════════════════════════════
+    //
+    // An action advances a Storyturn ONLY if, after it occurs, the relationship
+    // cannot plausibly return to its prior emotional state without denial,
+    // repression, or consequence.
+    //
+    // If the relationship can reasonably resume its previous dynamic with no
+    // lasting emotional cost, the action is NOT irreversible and MUST NOT
+    // advance a Storyturn.
+    //
+    // This test applies equally to:
+    //   - Fate Card resolutions
+    //   - Free-text player input
+    //   - Sexual or emotional actions
+    //   - Dirty or explicit content
+    //
+    // Sexual explicitness alone is NEVER sufficient to establish irreversibility.
+    //
+    // ───────────────────────────────────────────────
+    // Examples — Irreversible (Advance Eligible)
+    // ───────────────────────────────────────────────
+    //   - A confession that permanently alters how one character perceives the other
+    //   - An intimacy that creates obligation, shame, or accountability
+    //   - A choice that forces the relationship into a new emotional posture
+    //   - A public or private act that cannot be unspoken or undone
+    //
+    // ───────────────────────────────────────────────
+    // Examples — NOT Irreversible (Do NOT Advance)
+    // ───────────────────────────────────────────────
+    //   - Sex that resolves no emotional uncertainty
+    //   - Erotic escalation without consequence
+    //   - An interrupted or aborted attempt at intimacy
+    //   - Flirting, temptation, or boundary testing
+    //   - Dirty content involving side characters, exes, memories, fantasies, or voyeurism
+    //   - Explicit acts that leave the relationship emotionally unchanged
+    //
+    // When uncertain, prefer NON-ADVANCEMENT.
+    // Storyturns represent irreversible relational change, not intensity.
+    //
+    // ───────────────────────────────────────────────
+    // INTERACTION WITH ST3 / ST4
+    // ───────────────────────────────────────────────
+    //   - ST3 authorizes attempts; attempts alone do not satisfy irreversibility
+    //   - ST4 authorizes consequences; only consequences can satisfy irreversibility
+    //   - Failure, interruption, or escalation without consequence remains ST3
+    //
+    // This appendix replaces any prior heuristic based on:
+    //   - "first kiss"
+    //   - "first sex"
+    //   - interruption counters
+    //   - explicitness thresholds
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    irreversibilityTest: {
+      definition: "An action advances a Storyturn ONLY if the relationship cannot plausibly return to its prior emotional state without denial, repression, or consequence.",
+      appliesTo: ["fate_card_resolutions", "free_text_input", "sexual_actions", "emotional_actions", "dirty_content"],
+      sexualExplicitnessAlone: "NEVER sufficient",
+      irreversibleExamples: [
+        "confession_that_permanently_alters_perception",
+        "intimacy_creating_obligation_shame_accountability",
+        "choice_forcing_new_emotional_posture",
+        "act_that_cannot_be_unspoken_or_undone"
+      ],
+      notIrreversibleExamples: [
+        "sex_resolving_no_emotional_uncertainty",
+        "erotic_escalation_without_consequence",
+        "interrupted_or_aborted_attempt",
+        "flirting_temptation_boundary_testing",
+        "dirty_content_with_side_characters_exes_memories_fantasies_voyeurism",
+        "explicit_acts_leaving_relationship_unchanged"
+      ],
+      uncertaintyRule: "prefer_non_advancement",
+      summary: "Storyturns represent irreversible relational change, not intensity."
+    }
+  };
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // STORYTURN — RUNTIME LOGIC
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  /**
+   * Get numeric index for a Storyturn ID (ST1=0, ST2=1, etc.)
+   */
+  function getStoryturnIndex(stId) {
+      const idx = STORYTURN_CONFIG.storyturns.findIndex(st => st.id === stId);
+      if (idx === -1) throw new Error(`[STORYTURN] Invalid Storyturn ID: ${stId}`);
+      return idx;
+  }
+
+  /**
+   * Get Storyturn ID by index
+   */
+  function getStoryturnById(index) {
+      if (index < 0 || index >= STORYTURN_CONFIG.storyturns.length) {
+          throw new Error(`[STORYTURN] Invalid Storyturn index: ${index}`);
+      }
+      return STORYTURN_CONFIG.storyturns[index].id;
+  }
+
+  /**
+   * Get maximum allowed Storyturn for current story length
+   * Tease stories cannot advance past ST3
+   */
+  function getMaxStoryturn() {
+      const storyLength = (state.storyLength || 'tease').toLowerCase();
+      if (storyLength === 'tease') {
+          return STORYTURN_CONFIG.teaseRules.maxStoryturn;
+      }
+      return 'ST6'; // All other lengths can complete
+  }
+
+  /**
+   * Check if Storyturn can advance to target
+   * Enforces sequential advancement and Tease ceiling
+   */
+  // Storyturns advance only on irreversible relational consequence.
+  // See Storybound Canon v1.0 (Attempt → Consequence, Irreversibility Test).
+  function canAdvanceStoryturn(targetSt) {
+      const currentIdx = getStoryturnIndex(state.storyturn || 'ST1');
+      const targetIdx = getStoryturnIndex(targetSt);
+      const maxIdx = getStoryturnIndex(getMaxStoryturn());
+
+      // Must advance sequentially (no skipping)
+      if (targetIdx !== currentIdx + 1) {
+          console.error(`[STORYTURN] Cannot skip from ${state.storyturn} to ${targetSt}`);
+          return false;
+      }
+
+      // Cannot exceed max for story length
+      if (targetIdx > maxIdx) {
+          console.warn(`[STORYTURN] Cannot advance past ${getMaxStoryturn()} for Tease stories`);
+          return false;
+      }
+
+      return true;
+  }
+
+  // Storyturns represent irreversible relational change.
+  // Sex and intensity may express a Storyturn but must never
+  // advance one unless explicitly permitted by STORYTURN_CONFIG.
+
+  /**
+   * Check if a Storyturn permits sexual activity as a catalyst for advancement
+   * Only ST3 (Permission) and ST4 (Consequence) have sexualCatalyst: true
+   */
+  function isStoryturnSexualCatalyst(stId) {
+      const semantics = STORYTURN_CONFIG.storyturnSemantics[stId];
+      return semantics ? semantics.sexualCatalyst === true : false;
+  }
+
+  /**
+   * GUARD: Check if sexual activity can contribute to advancing TO a target Storyturn
+   * Sexual activity may only contribute to ST3 or ST4 advancement
+   */
+  function canSexualActivityAdvanceToStoryturn(targetSt) {
+      // Sexual catalyst check: only ST3 and ST4 can be advanced via sex
+      if (!isStoryturnSexualCatalyst(targetSt)) {
+          return false;
+      }
+
+      // Post-ST4 rule: sex after ST4 is contextual only
+      const currentIdx = getStoryturnIndex(state.storyturn || 'ST1');
+      const st4Idx = getStoryturnIndex('ST4');
+      if (currentIdx >= st4Idx && STORYTURN_CONFIG.postSexRules.sexAfterST4IsContextual) {
+          return false;
+      }
+
+      // Repeated sex rule: if already past first sex, no advancement
+      if (!STORYTURN_CONFIG.postSexRules.repeatedSexAdvancesStoryturn) {
+          // If we're already at ST4 or beyond, repeated sex cannot advance
+          if (currentIdx >= st4Idx) {
+              return false;
+          }
+      }
+
+      return true;
+  }
+
+  /**
+   * Advance Storyturn to next stage
+   * Throws if advancement is invalid
+   */
+  function advanceStoryturn() {
+      // Storyturn advancement must satisfy ATTEMPT→CONSEQUENCE semantics and the Irreversibility Test (see STORYTURN_CONFIG semantics appendix)
+      const currentIdx = getStoryturnIndex(state.storyturn || 'ST1');
+      const nextSt = getStoryturnById(currentIdx + 1);
+
+      if (!canAdvanceStoryturn(nextSt)) {
+          throw new Error(`[STORYTURN] Invalid advancement from ${state.storyturn} to ${nextSt}`);
+      }
+
+      const prevSt = state.storyturn;
+      state.storyturn = nextSt;
+      console.log(`[STORYTURN] Advanced: ${prevSt} → ${nextSt}`);
+
+      // If Tease hits ST3 ceiling, store cliffhanger state for potential upgrade
+      const storyLengthNorm = (state.storyLength || 'tease').toLowerCase();
+      if (storyLengthNorm === 'tease' && nextSt === 'ST3') {
+          state.teaseCliffhangerState = {
+              storyturn: 'ST3',
+              sceneIndex: state.turnCount,
+              storyContent: state.currentStoryContent,
+              timestamp: Date.now()
+          };
+          console.log('[STORYTURN] Tease cliffhanger state captured at ST3');
+      }
+
+      return nextSt;
+  }
+
+  /**
+   * ASSERTION: Validate arousal level is allowed for story length
+   * Erotic/Dirty NOT allowed on Tease (must upgrade first)
+   */
+  function assertArousalAllowedForStoryLength() {
+      const storyLength = (state.storyLength || 'tease').toLowerCase();
+      const arousal = state.intensity || 'Naughty';
+
+      if (storyLength === 'tease' && STORYTURN_CONFIG.teaseRules.paywalledArousal.includes(arousal)) {
+          throw new Error(`[STORYTURN] ${arousal} intensity not allowed on Tease. Upgrade required.`);
+      }
+  }
+
+  /**
+   * Check if sex is allowed at current Storyturn for given arousal level
+   */
+  function isSexAllowedAtCurrentStoryturn() {
+      const arousal = state.intensity || 'Naughty';
+      const currentSt = state.storyturn || 'ST1';
+      const rules = STORYTURN_CONFIG.arousalRules[arousal];
+
+      if (!rules) {
+          console.warn(`[STORYTURN] Unknown arousal level: ${arousal}`);
+          return false;
+      }
+
+      return rules.sexAllowedAt.includes(currentSt);
+  }
+
+  /**
+   * Check if sex COMPLETION is allowed (not just initiation)
+   * Tease can initiate at ST3 but CANNOT complete
+   */
+  function isSexCompletionAllowed() {
+      const storyLength = (state.storyLength || 'tease').toLowerCase();
+
+      // Tease never allows completion
+      if (storyLength === 'tease' && !STORYTURN_CONFIG.teaseRules.completionAllowed) {
+          return false;
+      }
+
+      // Must be at allowed Storyturn
+      return isSexAllowedAtCurrentStoryturn();
+  }
+
+  /**
+   * ASSERTION: Block sex completion if not allowed
+   */
+  function assertSexCompletionAllowed() {
+      if (!isSexCompletionAllowed()) {
+          const storyLength = (state.storyLength || 'tease').toLowerCase();
+          const currentSt = state.storyturn || 'ST1';
+
+          if (storyLength === 'tease') {
+              throw new Error(`[STORYTURN] Sex completion blocked: Tease stories require upgrade`);
+          } else {
+              throw new Error(`[STORYTURN] Sex completion blocked at ${currentSt}. Not in allowed Storyturns.`);
+          }
+      }
+  }
+
+  /**
+   * ASSERTION: Enforce post-sex rules and sexual catalyst restrictions
+   * - After ST4, sex is contextual only (no advancement)
+   * - Repeated sex never advances Storyturn
+   * - Non-catalyst Storyturns (ST1, ST2, ST5, ST6) cannot be advanced via sex
+   */
+  function assertSexDoesNotAdvanceStoryturn(isSexScene, attemptingAdvancement = false) {
+      if (!isSexScene) return; // Not a sex scene, no assertion needed
+
+      const currentSt = state.storyturn || 'ST1';
+      const currentIdx = getStoryturnIndex(currentSt);
+      const st4Idx = getStoryturnIndex('ST4');
+      const nextSt = currentIdx < 5 ? getStoryturnById(currentIdx + 1) : null;
+
+      // ASSERTION 1: Post-ST4 sex is contextual only
+      if (currentIdx >= st4Idx && STORYTURN_CONFIG.postSexRules.sexAfterST4IsContextual) {
+          if (attemptingAdvancement) {
+              throw new Error(`[STORYTURN] Sex cannot advance Storyturn after ST4 — contextual only`);
+          }
+          console.log(`[STORYTURN] Sex scene at ${currentSt} — contextual, no advancement`);
+      }
+
+      // ASSERTION 2: Repeated sex never advances Storyturn
+      if (!STORYTURN_CONFIG.postSexRules.repeatedSexAdvancesStoryturn && attemptingAdvancement) {
+          throw new Error(`[STORYTURN] Repeated sex cannot advance Storyturn — postSexRules violation`);
+      }
+
+      // ASSERTION 3: Non-catalyst Storyturns cannot be advanced via sex
+      if (nextSt && attemptingAdvancement) {
+          const nextSemantics = STORYTURN_CONFIG.storyturnSemantics[nextSt];
+          if (nextSemantics && !nextSemantics.sexualCatalyst) {
+              throw new Error(`[STORYTURN] ${nextSt} (${nextSemantics.phase}) cannot be advanced via sexual activity`);
+          }
+      }
+  }
+
+  /**
+   * Handle Tease upgrade resume logic
+   * When a Tease cliffhanger is upgraded, resume at the interrupted point
+   */
+  function handleTeaseUpgradeResume(newStoryLength) {
+      if (!state.teaseCliffhangerState) {
+          console.log('[STORYTURN] No cliffhanger state to resume');
+          return false;
+      }
+
+      const lengthNorm = (newStoryLength || 'tease').toLowerCase();
+      if (lengthNorm === 'tease') {
+          console.warn('[STORYTURN] Cannot resume cliffhanger without upgrading from Tease');
+          return false;
+      }
+
+      console.log(`[STORYTURN] Resuming from Tease cliffhanger at ${state.teaseCliffhangerState.storyturn}`);
+
+      // Storyturn stays at ST3 — will advance to ST4 only after consequence taken
+      state.storyturn = state.teaseCliffhangerState.storyturn;
+
+      // Clear cliffhanger state after resume
+      state.teaseCliffhangerState = null;
+
+      return true;
+  }
+
+  /**
+   * Reset Storyturn state for new story
+   */
+  function resetStoryturnState() {
+      state.storyturn = 'ST1';
+      state.teaseCliffhangerState = null;
+  }
+
+  /**
+   * GUARD: Validate Storyturn rollback is allowed
+   * Only resettable Storyturns can be rolled back (per carryoverRules)
+   */
+  function canRollbackStoryturn(fromSt, toSt) {
+      const fromIdx = getStoryturnIndex(fromSt);
+      const toIdx = getStoryturnIndex(toSt);
+
+      // Cannot rollback forward
+      if (toIdx >= fromIdx) return false;
+
+      // Check if fromSt is in nonResettableStoryturns
+      if (STORYTURN_CONFIG.carryoverRules.nonResettableStoryturns.includes(fromSt)) {
+          console.error(`[STORYTURN] Cannot rollback from ${fromSt} — integration is permanent`);
+          return false;
+      }
+
+      // Check if toSt would require passing through non-resettable
+      for (let i = toIdx; i < fromIdx; i++) {
+          const st = getStoryturnById(i);
+          if (STORYTURN_CONFIG.carryoverRules.nonResettableStoryturns.includes(st)) {
+              console.error(`[STORYTURN] Cannot rollback through ${st} — integration is permanent`);
+              return false;
+          }
+      }
+
+      return true;
+  }
+
+  /**
+   * Reset Storyturn for a new arc (multi-arc support)
+   * Respects carryoverRules: preserves ST6, allows resettable Storyturns
+   */
+  function resetStoryturnForNewArc() {
+      if (!STORYTURN_CONFIG.carryoverRules.allowMultipleArcs) {
+          console.warn('[STORYTURN] Multi-arc not enabled');
+          return false;
+      }
+
+      const currentSt = state.storyturn || 'ST1';
+
+      // ST6 (Integration) persists across arcs
+      if (STORYTURN_CONFIG.carryoverRules.preserveIntegrationAcrossArcs &&
+          STORYTURN_CONFIG.carryoverRules.nonResettableStoryturns.includes(currentSt)) {
+          console.log(`[STORYTURN] ${currentSt} preserved across arc — no reset`);
+          return false;
+      }
+
+      // Find the earliest resettable Storyturn
+      const resettable = STORYTURN_CONFIG.carryoverRules.resettableStoryturns;
+      if (resettable.length > 0) {
+          // Reset to ST2 (first resettable) to begin new arc resistance phase
+          const targetSt = resettable[0];
+          if (canRollbackStoryturn(currentSt, targetSt)) {
+              state.storyturn = targetSt;
+              console.log(`[STORYTURN] New arc started at ${targetSt}`);
+              return true;
+          }
+      }
+
+      return false;
+  }
+
+  /**
+   * ASSERTION: ST6 cannot be reset (carryoverRules enforcement)
+   */
+  function assertST6NotReset(targetSt) {
+      if (state.storyturn === 'ST6' && targetSt !== 'ST6') {
+          if (STORYTURN_CONFIG.carryoverRules.nonResettableStoryturns.includes('ST6')) {
+              throw new Error('[STORYTURN] ST6 (Integration) cannot be reset — permanent state');
+          }
+      }
+  }
+
+  /**
+   * ASSERTION: Storyturn order cannot be skipped
+   */
+  function assertNoStoryturnSkip(fromSt, toSt) {
+      const fromIdx = getStoryturnIndex(fromSt);
+      const toIdx = getStoryturnIndex(toSt);
+
+      if (toIdx > fromIdx + 1) {
+          throw new Error(`[STORYTURN] Cannot skip from ${fromSt} to ${toSt} — sequential advancement required`);
+      }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // FATE CARD ↔ STORYTURN INTERACTION
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  // Fate Cards apply pressure and shape moments.
+  // Storyturns record irreversible commitment.
+  // Cards are always playable, but may resolve only partially
+  // until the Storyturn allows full consequence.
+
+  const FATE_CARD_STORYTURN_MAP = {
+      confession: ["ST1"],
+      boundary: ["ST2", "ST5"],
+      temptation: ["ST3"],
+      reversal: ["ST4"],
+      silence: ["ST6"]
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PARTIAL FATE CARD RESOLUTION — AUTHORITATIVE SEMANTICS
+  // TAG: storybound/fatecards-partial-resolution-semantics-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // Fate Cards are ALWAYS playable. Availability is never restricted.
+  //
+  // However, Fate Cards do NOT automatically advance Storyturns.
+  // They apply pressure that may resolve partially, deflect, or defer
+  // depending on narrative readiness.
+  //
+  // Early play MUST NOT silently fail.
+  //
+  // ───────────────────────────────────────────────
+  // GENERAL RULE
+  // ───────────────────────────────────────────────
+  // When a Fate Card is played before its canonical Storyturn is eligible:
+  //   - The card MUST produce narrative effect
+  //   - The effect MUST respect current Storyturn semantics
+  //   - Resolution MUST be partial, deflected, or unresolved
+  //   - The story MUST acknowledge the pressure without granting consequence
+  //
+  // Fate Cards never grant permission.
+  // They invite the story to lean.
+  //
+  // ───────────────────────────────────────────────
+  // CANONICAL PARTIAL RESOLUTION PATTERNS
+  // ───────────────────────────────────────────────
+  //
+  // Confession (Canonical: ST1 — Attraction Acknowledged)
+  //   Early Resolution:
+  //     - Truth is spoken but meaning is deflected
+  //     - Admission is reframed, minimized, joked away, or misunderstood
+  //     - Emotional signal lands without permanent acknowledgment
+  //   Confession early does NOT force attraction to be accepted.
+  //
+  // Boundary (Canonical: ST2 — Resistance Defined / ST5 — Crisis)
+  //   Early Resolution:
+  //     - A boundary is asserted, but motive is unclear
+  //     - Boundary may be porous, conditional, or emotionally conflicted
+  //     - Resistance is reinforced without finality
+  //   Boundary early does NOT finalize separation or crisis.
+  //
+  // Temptation (Canonical: ST3 — Permission Granted)
+  //   Early Resolution:
+  //     - Desire is acknowledged without action
+  //     - Intimacy is approached but not initiated
+  //     - Physical proximity increases without consequence
+  //   Temptation early does NOT authorize completion.
+  //
+  // Reversal (Canonical: ST4 — Consequence Taken)
+  //   Early Resolution:
+  //     - Emotional power shifts internally
+  //     - Vulnerability is revealed without aftermath
+  //     - One character realizes something the other does not yet act on
+  //   Reversal early does NOT produce irreversible consequence.
+  //
+  // Silence (Canonical: ST6 — Integration)
+  //   Early Resolution:
+  //     - Absence creates meaning, not closure
+  //     - Silence heightens longing or distance
+  //     - Integration is hinted at but not achieved
+  //   Silence early does NOT resolve the arc.
+  //
+  // ───────────────────────────────────────────────
+  // INTERACTION WITH STORYTURNS
+  // ───────────────────────────────────────────────
+  //   - Fate Cards may APPLY pressure toward a Storyturn
+  //   - Fate Cards may NEVER FORCE a Storyturn
+  //   - Advancement requires satisfying the Irreversibility Test
+  //   - Attempt without consequence remains within current Storyturn
+  //
+  // When uncertain, prefer:
+  //   - partial effect
+  //   - emotional tension
+  //   - narrative deferral
+  //
+  // ───────────────────────────────────────────────
+  // TONE-SENSITIVE APPLICATION
+  // ───────────────────────────────────────────────
+  // Partial resolution should respect tone:
+  //   - Wry tones may deflect with irony
+  //   - Dirty tones may escalate desire without payoff
+  //   - Serious tones may internalize conflict
+  //   - Romantic tones may soften but not resolve
+  //
+  // Never neutralize a Fate Card.
+  // Never fully ignore it.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FATE_CARD_PARTIAL_RESOLUTION_SEMANTICS = {
+      general: {
+          rule: "Early play produces partial, deflected, or unresolved effect — never silent failure",
+          fateCardsNeverGrantPermission: true,
+          fateCardsInviteStoryToLean: true
+      },
+      confession: {
+          canonical: "ST1",
+          earlyResolution: ["truth_deflected", "admission_reframed", "signal_without_acknowledgment"],
+          doesNotForce: "attraction_accepted"
+      },
+      boundary: {
+          canonical: ["ST2", "ST5"],
+          earlyResolution: ["motive_unclear", "porous_conditional", "emotionally_conflicted"],
+          doesNotForce: "separation_or_crisis_finalized"
+      },
+      temptation: {
+          canonical: "ST3",
+          earlyResolution: ["desire_acknowledged_without_action", "intimacy_approached_not_initiated", "proximity_without_consequence"],
+          doesNotForce: "completion_authorized"
+      },
+      reversal: {
+          canonical: "ST4",
+          earlyResolution: ["internal_power_shift", "vulnerability_without_aftermath", "realization_not_acted_upon"],
+          doesNotForce: "irreversible_consequence"
+      },
+      silence: {
+          canonical: "ST6",
+          earlyResolution: ["absence_creates_meaning_not_closure", "heightened_longing_or_distance", "integration_hinted_not_achieved"],
+          doesNotForce: "arc_resolved"
+      },
+      uncertaintyPreference: ["partial_effect", "emotional_tension", "narrative_deferral"],
+      toneApplication: {
+          wry: "deflect_with_irony",
+          dirty: "escalate_desire_without_payoff",
+          serious: "internalize_conflict",
+          romantic: "soften_but_not_resolve"
+      },
+      neverNeutralize: true,
+      neverFullyIgnore: true
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // APPENDIX A — PREMISE VIOLATION COUNTER (AUTHORITATIVE)
+  // TAG: storybound/premise-violation-counter-and-regression-tests-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // Purpose:
+  // To handle extreme, trollish, or premise-destroying player actions
+  // without breaking tone, scolding the player, or turning the system
+  // into a rules enforcer.
+  //
+  // This counter applies ONLY to actions that refuse the romance premise.
+  // It does NOT apply to in-genre resistance.
+  //
+  // ───────────────────────────────────────────────
+  // DEFINITION — PREMISE REFUSAL
+  // ───────────────────────────────────────────────
+  // Premise refusal includes (non-exhaustive):
+  //   - Persistent pursuit of non-protagonist romantic targets
+  //   - Attempts to kill or permanently remove the love interest
+  //   - Actions that explicitly negate the romance genre contract
+  //   - Repeated attempts to escape, nullify, or sabotage the premise
+  //
+  // Premise refusal is NOT:
+  //   - fear, avoidance, cruelty, mistrust
+  //   - flirting with side characters as deflection
+  //   - self-sabotage that increases tension
+  //   - erotic content involving others
+  //
+  // ───────────────────────────────────────────────
+  // THREE-PHASE RESPONSE MODEL (LOCKED)
+  // ───────────────────────────────────────────────
+  //
+  // PHASE 1 — AUTHORIAL REINTERPRETATION (first violation)
+  //   - Assume metaphor, fantasy, impulse, intrusive thought, or emotional outburst
+  //   - Reframe the action narratively
+  //   - No scolding
+  //   - No explanation of rules
+  //   - No visible counter
+  //   Purpose: preserve immersion and give benefit of doubt.
+  //
+  // PHASE 2 — NARRATIVE RESISTANCE (second violation)
+  //   - World resists the action
+  //   - Other character withdraws, intervenes, or refuses
+  //   - Tone sobers or cools
+  //   - Consequence is felt but story continues
+  //   Purpose: signal genre boundaries without breaking fiction.
+  //
+  // PHASE 3 — GENRE COLLAPSE ENDING (third violation)
+  //   - Brief, unromantic, consequential ending
+  //   - No erotic payoff
+  //   - No rewards
+  //   - No continuation
+  //   - No reset
+  //   Purpose: mirror how serious novels end when protagonists
+  //   persistently reject the premise.
+  //
+  // ───────────────────────────────────────────────
+  // IMPORTANT NOTES
+  // ───────────────────────────────────────────────
+  //   - The counter is semantic, not punitive
+  //   - It should never be surfaced numerically
+  //   - It must never be explained to the player
+  //   - Collapse is rare, deliberate, and final
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const PREMISE_VIOLATION_COUNTER_SEMANTICS = {
+      appliesTo: "actions_that_refuse_romance_premise",
+      doesNotApplyTo: ["fear", "avoidance", "cruelty", "mistrust", "side_character_flirting", "self_sabotage", "erotic_content_with_others"],
+      premiseRefusalExamples: [
+          "persistent_pursuit_of_non_protagonist_targets",
+          "attempts_to_kill_or_remove_love_interest",
+          "explicit_negation_of_romance_genre_contract",
+          "repeated_premise_escape_or_sabotage"
+      ],
+      phases: {
+          1: {
+              name: "Authorial Reinterpretation",
+              response: ["assume_metaphor_or_impulse", "reframe_narratively", "no_scolding", "no_rule_explanation", "no_visible_counter"],
+              purpose: "preserve_immersion_and_benefit_of_doubt"
+          },
+          2: {
+              name: "Narrative Resistance",
+              response: ["world_resists", "character_withdraws_or_refuses", "tone_sobers", "consequence_felt"],
+              purpose: "signal_genre_boundaries_without_breaking_fiction"
+          },
+          3: {
+              name: "Genre Collapse Ending",
+              response: ["brief_unromantic_ending", "no_erotic_payoff", "no_rewards", "no_continuation", "no_reset"],
+              purpose: "mirror_serious_novels_when_protagonist_rejects_premise"
+          }
+      },
+      counterIsSemantic: true,
+      counterNeverSurfaced: true,
+      counterNeverExplained: true,
+      collapseIsRareAndFinal: true
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // APPENDIX B — CANONICAL REGRESSION TEST STORIES
+  // TAG: storybound/premise-violation-counter-and-regression-tests-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // These are narrative invariants.
+  // Any future change must preserve these outcomes.
+  //
+  // ───────────────────────────────────────────────
+  // REGRESSION STORY 1 — CLEAN TEASE
+  // ───────────────────────────────────────────────
+  // Setup:
+  //   - Story Length: Tease
+  //   - Arousal: Flirty or Naughty
+  //   - Tone: Romantic or Wry
+  //
+  // Invariant Outcomes:
+  //   - Multiple ST3 attempts at intimacy
+  //   - No ST4 consequence
+  //   - Cliffhanger ending
+  //   - Sexual tension unresolved
+  //   - Upgrade required for completion
+  //
+  // Failure Conditions:
+  //   - Early kiss or sex resolves
+  //   - Storyturn advances to ST4
+  //   - Emotional closure occurs
+  //
+  // ───────────────────────────────────────────────
+  // REGRESSION STORY 2 — DIRTY FLING
+  // ───────────────────────────────────────────────
+  // Setup:
+  //   - Story Length: Fling
+  //   - Arousal: Dirty
+  //   - Tone: Erotic or Dark Romantic
+  //
+  // Invariant Outcomes:
+  //   - Early erotic content allowed
+  //   - Side-character sex permitted
+  //   - Main-pair intimacy attempts frequent
+  //   - ST3 loops common
+  //   - ST4 occurs only after consequence
+  //
+  // Failure Conditions:
+  //   - Explicitness alone advances Storyturns
+  //   - Main-pair sex resolves before consequence
+  //   - Erotic content collapses tension
+  //
+  // ───────────────────────────────────────────────
+  // REGRESSION STORY 3 — SOULMATES RESET ARC
+  // ───────────────────────────────────────────────
+  // Setup:
+  //   - Story Length: Soulmates
+  //   - Arc 1 reaches ST6 (Integration)
+  //
+  // Invariant Outcomes:
+  //   - Subsequent arcs reset ST2–ST4
+  //   - ST6 continuity preserved
+  //   - Intimacy re-earned in new context
+  //   - No emotional amnesia
+  //
+  // Failure Conditions:
+  //   - ST6 wiped or forgotten
+  //   - Intimacy treated as new without consequence
+  //   - Storyturns advance mechanically
+  //
+  // ───────────────────────────────────────────────
+  // IMPLEMENTATION NOTE
+  // ───────────────────────────────────────────────
+  // These regression stories are conceptual tests.
+  // They are not automated unless explicitly implemented later.
+  // They exist to prevent philosophical drift.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const CANONICAL_REGRESSION_TEST_STORIES = {
+      cleanTease: {
+          setup: { storyLength: "Tease", arousal: ["Flirty", "Naughty"], tone: ["Romantic", "Wry"] },
+          invariantOutcomes: ["multiple_ST3_attempts", "no_ST4_consequence", "cliffhanger_ending", "tension_unresolved", "upgrade_required"],
+          failureConditions: ["early_kiss_or_sex_resolves", "storyturn_advances_to_ST4", "emotional_closure_occurs"]
+      },
+      dirtyFling: {
+          setup: { storyLength: "Fling", arousal: "Dirty", tone: ["Erotic", "Dark Romantic"] },
+          invariantOutcomes: ["early_erotic_content_allowed", "side_character_sex_permitted", "main_pair_attempts_frequent", "ST3_loops_common", "ST4_only_after_consequence"],
+          failureConditions: ["explicitness_alone_advances_storyturns", "main_pair_sex_resolves_before_consequence", "erotic_content_collapses_tension"]
+      },
+      soulmatesResetArc: {
+          setup: { storyLength: "Soulmates", arc1Reaches: "ST6" },
+          invariantOutcomes: ["subsequent_arcs_reset_ST2_ST4", "ST6_continuity_preserved", "intimacy_re_earned", "no_emotional_amnesia"],
+          failureConditions: ["ST6_wiped_or_forgotten", "intimacy_treated_as_new_without_consequence", "storyturns_advance_mechanically"]
+      },
+      implementationNote: "Conceptual tests to prevent philosophical drift. Not automated unless explicitly implemented."
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // APPENDIX — AUTHORIAL DEFAULTS WHEN UNCERTAIN (AUTHORITATIVE)
+  // TAG: storybound/when-uncertain-authorial-defaults-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // Purpose:
+  // To ensure Storybound behaves like a thoughtful author when meaning,
+  // intent, or consequence is ambiguous, rather than like a rules engine.
+  //
+  // This appendix applies whenever:
+  //   - It is unclear whether an action is irreversible
+  //   - It is unclear whether a Storyturn should advance
+  //   - It is unclear how strongly a Fate Card should resolve
+  //   - It is unclear whether intimacy has been "earned"
+  //   - It is unclear whether a player action refuses the premise
+  //
+  // ───────────────────────────────────────────────
+  // PRIMARY RULE
+  // ───────────────────────────────────────────────
+  // When uncertain, Storybound MUST choose the interpretation that:
+  //   - Preserves narrative tension
+  //   - Preserves the romance premise
+  //   - Preserves future possibility
+  //   - Avoids premature resolution
+  //
+  // This preference overrides player impatience, explicitness, or escalation.
+  //
+  // ───────────────────────────────────────────────
+  // STORYTURN DEFAULT
+  // ───────────────────────────────────────────────
+  // If it is unclear whether an action produces irreversible consequence:
+  //   - DO NOT advance the Storyturn
+  //   - Remain in the current Storyturn
+  //   - Allow narrative pressure to continue accumulating
+  //
+  // Storyturns represent irreversible change.
+  // Uncertainty implies reversibility.
+  //
+  // ───────────────────────────────────────────────
+  // INTIMACY DEFAULT
+  // ───────────────────────────────────────────────
+  // If it is unclear whether intimacy between the two main characters
+  // should resolve:
+  //   - Treat the moment as an ATTEMPT, not a CONSEQUENCE
+  //   - Favor interruption, hesitation, deflection, or aftermath-without-resolution
+  //   - Preserve unresolved desire
+  //
+  // Resolution must be earned, not inferred.
+  //
+  // ───────────────────────────────────────────────
+  // FATE CARD DEFAULT
+  // ───────────────────────────────────────────────
+  // If it is unclear how fully a Fate Card should resolve:
+  //   - Apply partial resolution
+  //   - Let the card influence tone, framing, or internal state
+  //   - Do not grant permission or consequence prematurely
+  //
+  // Fate Cards apply pressure; they do not decide outcomes.
+  //
+  // ───────────────────────────────────────────────
+  // PREMISE DEFAULT
+  // ───────────────────────────────────────────────
+  // If it is unclear whether a player action refuses the premise:
+  //   - Treat it as in-genre resistance
+  //   - Reinterpret charitably
+  //   - Apply narrative resistance rather than collapse
+  //
+  // Collapse occurs only after clear, repeated refusal.
+  //
+  // ───────────────────────────────────────────────
+  // EXPLICITNESS DEFAULT
+  // ───────────────────────────────────────────────
+  // Explicit content does NOT override uncertainty.
+  // Explicitness alone is never evidence of:
+  //   - irreversibility
+  //   - Storyturn advancement
+  //   - earned intimacy
+  //
+  // When explicitness conflicts with structure, structure prevails.
+  //
+  // ───────────────────────────────────────────────
+  // AUTHORIAL PRINCIPLE (SUMMARY)
+  // ───────────────────────────────────────────────
+  // When unsure:
+  //   - Prefer tension over payoff
+  //   - Prefer delay over collapse
+  //   - Prefer ambiguity over certainty
+  //   - Prefer earned consequences over mechanical triggers
+  //
+  // Storybound is an author.
+  // Authors do not rush the ending.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const AUTHORIAL_DEFAULTS_WHEN_UNCERTAIN = {
+      appliesWhen: [
+          "unclear_if_action_is_irreversible",
+          "unclear_if_storyturn_should_advance",
+          "unclear_how_fully_fate_card_resolves",
+          "unclear_if_intimacy_is_earned",
+          "unclear_if_player_refuses_premise"
+      ],
+      primaryRule: {
+          choose: ["preserves_narrative_tension", "preserves_romance_premise", "preserves_future_possibility", "avoids_premature_resolution"],
+          overrides: ["player_impatience", "explicitness", "escalation"]
+      },
+      defaults: {
+          storyturn: {
+              ifUnclear: "do_not_advance",
+              action: "remain_in_current_storyturn",
+              reason: "uncertainty_implies_reversibility"
+          },
+          intimacy: {
+              ifUnclear: "treat_as_attempt_not_consequence",
+              favor: ["interruption", "hesitation", "deflection", "aftermath_without_resolution"],
+              reason: "resolution_must_be_earned"
+          },
+          fateCard: {
+              ifUnclear: "apply_partial_resolution",
+              allow: ["influence_tone", "influence_framing", "influence_internal_state"],
+              doNot: "grant_permission_or_consequence_prematurely"
+          },
+          premise: {
+              ifUnclear: "treat_as_in_genre_resistance",
+              action: "reinterpret_charitably",
+              reason: "collapse_only_after_clear_repeated_refusal"
+          },
+          explicitness: {
+              doesNotOverride: "uncertainty",
+              neverEvidenceOf: ["irreversibility", "storyturn_advancement", "earned_intimacy"],
+              conflictRule: "structure_prevails"
+          }
+      },
+      authorialPrinciple: {
+          prefer: ["tension_over_payoff", "delay_over_collapse", "ambiguity_over_certainty", "earned_consequences_over_mechanical_triggers"],
+          summary: "Storybound is an author. Authors do not rush the ending."
+      }
+  };
+
+  /**
+   * Check if a Fate Card can fully resolve at current Storyturn
+   * Cards are ALWAYS playable — this only determines resolution depth
+   */
+  function canFateCardFullyResolve(cardId) {
+      const currentSt = state.storyturn || 'ST1';
+      const mappedStoryturns = FATE_CARD_STORYTURN_MAP[cardId?.toLowerCase()];
+
+      if (!mappedStoryturns) {
+          // Unknown card — allow partial resolution
+          return false;
+      }
+
+      return mappedStoryturns.includes(currentSt);
+  }
+
+  /**
+   * Get Fate Card resolution mode based on current Storyturn
+   * Returns: 'full' | 'partial'
+   * Cards are NEVER disabled — only resolution depth changes
+   */
+  function getFateCardResolutionMode(cardId) {
+      return canFateCardFullyResolve(cardId) ? 'full' : 'partial';
+  }
+
+  /**
+   * Build Fate Card resolution directive for story prompt
+   * Instructs the model how to handle the card based on Storyturn alignment
+   */
+  function buildFateCardResolutionDirective(selectedFateCard) {
+      if (!selectedFateCard || !selectedFateCard.id) {
+          return '';
+      }
+
+      const cardId = selectedFateCard.id.toLowerCase();
+      const cardTitle = selectedFateCard.title || cardId;
+      const currentSt = state.storyturn || 'ST1';
+      const resolutionMode = getFateCardResolutionMode(cardId);
+
+      // Check post-sex rules for sex-related cards
+      const currentIdx = getStoryturnIndex(currentSt);
+      const st4Idx = getStoryturnIndex('ST4');
+      const isPostST4 = currentIdx >= st4Idx;
+
+      if (resolutionMode === 'full') {
+          return `
+FATE CARD RESOLUTION (${cardTitle} @ ${currentSt} — FULL):
+The Storyturn aligns with this card. Allow irreversible consequences to land.
+- The moment may resolve completely
+- Emotional commitments may become permanent
+- If an irreversible decision is completed, Storyturn MAY advance (but only via decision, not the card itself)`;
+      }
+
+      // Partial resolution — card-specific guidance
+      const partialGuidance = {
+          confession: `Confession attempted but misunderstood, interrupted, or denied. Truth is spoken but not received. Tension increases.`,
+          boundary: `Boundary is hinted or tested but not enforced. The line wavers. Neither party fully commits to holding or crossing it.`,
+          temptation: `Near-miss, hesitation, or escalation without consummation. Desire is acknowledged but not acted upon. The pull intensifies.`,
+          reversal: `Power shift is threatened but not completed. Control wavers but neither party fully yields. Consequence is deferred.`,
+          silence: `Silence feels uneasy, loaded, or unresolved. The moment stretches but resolution remains out of reach.`
+      };
+
+      const guidance = partialGuidance[cardId] || 'The moment builds tension but does not fully resolve.';
+
+      // Post-ST4 sex guard
+      let postSexGuard = '';
+      if (isPostST4 && ['temptation', 'reversal'].includes(cardId)) {
+          postSexGuard = `
+NOTE: Post-ST4 rules apply. Sex scenes are allowed but must NOT advance Storyturn.`;
+      }
+
+      return `
+FATE CARD RESOLUTION (${cardTitle} @ ${currentSt} — PARTIAL):
+Storyturn does not yet support full resolution of this card.
+${guidance}
+- Produce narrative response (never silent failure)
+- Increase tension, pressure, or clarity
+- Do NOT advance Storyturn
+- Do NOT allow irreversible commitment to land${postSexGuard}`;
+  }
+
+  /**
+   * GUARD: Fate Card cannot directly advance Storyturn
+   * Storyturns advance only via irreversible decisions, never cards
+   */
+  function assertFateCardDoesNotAdvanceStoryturn(cardId, attemptingAdvancement = false) {
+      if (!attemptingAdvancement) return;
+
+      // Fate Cards shape moments but NEVER directly advance Storyturns
+      throw new Error(`[STORYTURN] Fate Card "${cardId}" cannot directly advance Storyturn — decisions only`);
+  }
+
+  /**
+   * GUARD: Fate Card respects carryoverRules (ST6 permanence)
+   */
+  function assertFateCardRespectsCarryover(cardId) {
+      const currentSt = state.storyturn || 'ST1';
+
+      // ST6 cannot be reset by any Fate Card
+      if (currentSt === 'ST6' && STORYTURN_CONFIG.carryoverRules.nonResettableStoryturns.includes('ST6')) {
+          // Boundary card in ST6 context: can apply pressure but cannot undo integration
+          if (cardId === 'boundary') {
+              console.log('[STORYTURN] Boundary card at ST6 — pressure applied, integration preserved');
+          }
+      }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // FREE-TEXT INPUT ↔ STORYTURN GUARDS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  // Free-text input follows identical Storyturn rules as Fate Cards.
+  // Sexual content alone never advances Storyturns.
+  // Only irreversible narrative commitments may trigger advancement.
+
+  /**
+   * Build Storyturn guard directive for free-text input
+   * Applies same rules as Fate Cards — no bypass allowed
+   */
+  function buildFreeTextStoryturnDirective(action, dialogue) {
+      const currentSt = state.storyturn || 'ST1';
+      const currentIdx = getStoryturnIndex(currentSt);
+      const storyLengthNorm = (state.storyLength || 'tease').toLowerCase();
+      const st4Idx = getStoryturnIndex('ST4');
+      const isPostST4 = currentIdx >= st4Idx;
+
+      // Get Storyturn semantics for current position
+      const semantics = STORYTURN_CONFIG.storyturnSemantics[currentSt];
+      const phase = semantics ? semantics.phase : 'unknown';
+
+      // Tease ceiling check
+      const maxSt = getMaxStoryturn();
+      const atTeaseCeiling = storyLengthNorm === 'tease' && currentSt === maxSt;
+
+      let directive = `
+STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
+
+      // Post-ST4: sex is contextual only
+      if (isPostST4) {
+          directive += `
+- Sexual content is ALLOWED but must NOT advance Storyturn
+- Post-ST4 rule: sexAfterST4IsContextual = true
+- Repeated intimacy shapes meaning, not progression`;
+      }
+
+      // Tease ceiling
+      if (atTeaseCeiling) {
+          directive += `
+- TEASE CEILING ACTIVE: Cannot advance past ${maxSt}
+- Escalation builds tension but cannot resolve
+- Sex initiation allowed, completion BLOCKED`;
+      }
+
+      // Storyturn advancement rules
+      directive += `
+- Storyturn advancement requires IRREVERSIBLE narrative commitment
+- Flirtation, escalation, or tension alone do NOT advance Storyturn
+- Sexual activity alone NEVER advances Storyturn
+- Only explicit permission-granting, consequence-accepting, or boundary-crossing decisions may advance`;
+
+      // Phase-specific guidance
+      if (currentSt === 'ST1') {
+          directive += `
+- ST1 (Attraction): Desire acknowledged but not acted upon
+- Confession or declaration may advance to ST2 if irreversible`;
+      } else if (currentSt === 'ST2') {
+          directive += `
+- ST2 (Resistance): Obstacles or hesitation active
+- Permission-granting language may advance to ST3 only if truly irreversible`;
+      } else if (currentSt === 'ST3') {
+          directive += `
+- ST3 (Permission): Intimacy gateway open
+- Consequence-accepting may advance to ST4 only if Tease ceiling permits`;
+      } else if (currentSt === 'ST4') {
+          directive += `
+- ST4 (Consequence): Aftermath being processed
+- Crisis or separation may advance to ST5`;
+      } else if (currentSt === 'ST5') {
+          directive += `
+- ST5 (Crisis): Separation or doubt active
+- Integration/reunion may advance to ST6`;
+      } else if (currentSt === 'ST6') {
+          directive += `
+- ST6 (Integration): PERMANENT state — cannot be reset
+- All content is contextual, no further Storyturn advancement`;
+      }
+
+      return directive;
+  }
+
+  /**
+   * ASSERTION: Free-text input cannot bypass Storyturn rules
+   */
+  function assertFreeTextRespectsStoryturn(action, dialogue, attemptingAdvancement = false) {
+      const currentSt = state.storyturn || 'ST1';
+      const storyLengthNorm = (state.storyLength || 'tease').toLowerCase();
+
+      // Tease ceiling
+      if (storyLengthNorm === 'tease' && currentSt === STORYTURN_CONFIG.teaseRules.maxStoryturn) {
+          if (attemptingAdvancement) {
+              throw new Error(`[STORYTURN] Free-text cannot advance past ${currentSt} on Tease`);
+          }
+      }
+
+      // Post-ST4 sex rule
+      const currentIdx = getStoryturnIndex(currentSt);
+      const st4Idx = getStoryturnIndex('ST4');
+      if (currentIdx >= st4Idx && STORYTURN_CONFIG.postSexRules.sexAfterST4IsContextual) {
+          if (attemptingAdvancement) {
+              throw new Error(`[STORYTURN] Free-text sexual content cannot advance Storyturn after ST4`);
+          }
+      }
+
+      // ST6 permanence
+      if (currentSt === 'ST6' && STORYTURN_CONFIG.carryoverRules.nonResettableStoryturns.includes('ST6')) {
+          if (attemptingAdvancement) {
+              throw new Error(`[STORYTURN] ST6 is permanent — free-text cannot reset or advance`);
+          }
+      }
+  }
+
   // Stage-specific prompt modifiers (lower quality = more minimal)
+  // SKETCH: Unfinished editorial illustration (NOT cartoon/thumbnail) — New Yorker cover aesthetic
   const COVER_STAGE_PROMPTS = {
-      [COVER_STAGES.SKETCH]: 'Rough pencil sketch style. Minimal detail. Line art only. Unfinished, conceptual quality. No color, grayscale only.',
+      [COVER_STAGES.SKETCH]: 'Unfinished editorial illustration in the style of a New Yorker magazine cover. Medium: rough pencil, charcoal, or ink linework as base. Light color pencil or watercolor wash permitted. Composition: clever, awkward, or symbolically subversive — NOT genre literalism or narrative illustration. Style: editorial pitch aesthetic, uncentered subjects, visual irony, tension or discomfort welcome. Rendering: intentionally raw, like an artist workbook or rough editorial pitch. NEVER polished, NEVER digital gradients, NEVER cinematic lighting, NEVER painterly shading. Title text: hand-drawn or outlined appearance, NOT typeset or embossed. Drafting table surface with scattered pencils, erasers visible at edges.',
       [COVER_STAGES.THUMBNAIL]: 'Simple thumbnail quality. Basic shapes and forms. Limited color palette. Quick concept art style.',
       [COVER_STAGES.ROUGH]: 'Rough draft quality. More refined than sketch but not polished. Visible brushwork. Work-in-progress aesthetic.',
       [COVER_STAGES.V1]: '' // Full quality, no modifier needed
@@ -3869,6 +5430,11 @@ If you name what something IS, you have failed. Show what it COSTS.
       const sceneCount = state.turnCount || 0;
       const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
 
+      // PATCH: Thumbnail permanently locked for Tease story length
+      if (stage === COVER_STAGES.THUMBNAIL && storyLength === 'tease') {
+          return false;
+      }
+
       const threshold = rules[stage];
       if (threshold === null) return false;
       return sceneCount >= threshold;
@@ -3877,9 +5443,14 @@ If you name what something IS, you have failed. Show what it COSTS.
   /**
    * Get the prompt modifier for a cover stage
    * @param {string} stage - Cover stage
+   * @param {string} tone - Optional tone for conditional overrides
    * @returns {string} - Prompt modifier text
    */
-  function getCoverStagePromptModifier(stage) {
+  function getCoverStagePromptModifier(stage, tone) {
+      // WRY CONFESSIONAL: Use tone invariant + stage-specific escalation
+      if (tone === 'Wry Confessional') {
+          return WRY_CONFESSIONAL_STAGE_PROMPTS[stage] || WRY_CONFESSIONAL_TONE_INVARIANT;
+      }
       return COVER_STAGE_PROMPTS[stage] || '';
   }
 
@@ -3944,8 +5515,8 @@ If you name what something IS, you have failed. Show what it COSTS.
   // Primary cover stage (which one is displayed in reader)
   let _primaryCoverStage = null;
 
-  // All navigable stages (for carousel)
-  const GALLERY_STAGES = [COVER_STAGES.SKETCH, COVER_STAGES.THUMBNAIL, COVER_STAGES.ROUGH];
+  // All navigable stages (for carousel) — includes Final (v1)
+  const GALLERY_STAGES = [COVER_STAGES.SKETCH, COVER_STAGES.THUMBNAIL, COVER_STAGES.ROUGH, COVER_STAGES.V1];
 
   /**
    * Get scenes remaining until a stage unlocks
@@ -3961,187 +5532,327 @@ If you name what something IS, you have failed. Show what it COSTS.
 
   /**
    * Navigate gallery to previous stage
+   * TRUE CAROUSEL: Smoothly transitions carousel
    */
   function galleryPrevStage() {
       const currentIdx = GALLERY_STAGES.indexOf(_gallerySelectedStage);
       if (currentIdx > 0) {
           _gallerySelectedStage = GALLERY_STAGES[currentIdx - 1];
-          renderCoverStageRow();
-          renderGalleryPreview();
+          renderCarousel();
+          updateCarouselPosition();
           updateGalleryButtons();
+          updateGalleryProgress();
       }
   }
 
   /**
    * Navigate gallery to next stage
+   * TRUE CAROUSEL: Smoothly transitions carousel
    */
   function galleryNextStage() {
       const currentIdx = GALLERY_STAGES.indexOf(_gallerySelectedStage);
       if (currentIdx < GALLERY_STAGES.length - 1) {
           _gallerySelectedStage = GALLERY_STAGES[currentIdx + 1];
-          renderCoverStageRow();
-          renderGalleryPreview();
+          renderCarousel();
+          updateCarouselPosition();
           updateGalleryButtons();
+          updateGalleryProgress();
       }
   }
 
   /**
    * Open the Cover Gallery Modal
+   * TRUE CAROUSEL: Initializes carousel with proper centering
    */
   function openCoverGalleryModal() {
       const modal = document.getElementById('coverGalleryModal');
       if (!modal) return;
 
-      // Default to current unlocked stage
-      _gallerySelectedStage = getCurrentCoverStage();
+      // PATCH: Ensure back button remains visible — cover gallery must never trap user
+      const backBtn = document.getElementById('globalBackBtn');
+      if (backBtn) {
+          backBtn.style.display = 'block';
+          backBtn.classList.remove('hidden');
+      }
 
-      renderCoverStageRow();
-      renderGalleryPreview();
+      // If no stage selected yet, default to next generatable or current unlocked
+      if (!_gallerySelectedStage) {
+          _gallerySelectedStage = getNextGeneratableStage() || getCurrentCoverStage();
+      }
+
+      // Render carousel and update all UI
+      renderCarousel();
       updateGalleryButtons();
+      updateGalleryProgress();
 
       modal.classList.remove('hidden');
-      console.log('[COVER:GALLERY] Modal opened');
+
+      // Ensure carousel position is calculated after modal is visible
+      requestAnimationFrame(() => {
+          updateCarouselPosition();
+      });
+
+      console.log('[COVER:GALLERY] Modal opened, selected stage:', _gallerySelectedStage);
   }
 
   /**
    * Close the Cover Gallery Modal
+   * FIX #5: Restore navigation UI state on close
    */
   function closeCoverGalleryModal() {
       const modal = document.getElementById('coverGalleryModal');
       if (modal) modal.classList.add('hidden');
+      // Ensure back/burger buttons remain visible after closing
+      updateNavUI();
   }
 
+  // Track which stage is currently generating (for loading overlay)
+  let _generatingStage = null;
+
   /**
-   * Render the horizontal stage thumbnails row (carousel-style)
+   * TRUE CAROUSEL: Render the carousel with centered dominant cover + peek items
+   * Single visual system — inline stage labels bound to active item
    */
-  function renderCoverStageRow() {
-      const row = document.getElementById('coverStageRow');
-      if (!row) return;
+  function renderCarousel() {
+      const track = document.getElementById('coverCarouselTrack');
+      if (!track) return;
 
-      row.innerHTML = '';
+      track.innerHTML = '';
 
-      GALLERY_STAGES.forEach(stage => {
+      // Carousel item dimensions (larger for expanded modal)
+      const ITEM_WIDTH = 220;  // Main item width (was 180)
+      const ITEM_HEIGHT = 300; // Main item height (was 240)
+
+      GALLERY_STAGES.forEach((stage, idx) => {
           const isUnlocked = isCoverStageUnlocked(stage);
           const hasGenerated = !!_coversByStage[stage];
-          const scenesLeft = getScenesUntilUnlock(stage);
-          const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
-          const isSelected = stage === _gallerySelectedStage;
+          const isActive = stage === _gallerySelectedStage;
+          const isGenerating = _generatingStage === stage;
+          const isFinal = stage === COVER_STAGES.V1;
 
-          // Human-readable unlock text
-          let unlockText = '';
-          if (scenesLeft === -1) {
-              unlockText = 'Not available';
-          } else if (scenesLeft === 1) {
-              unlockText = 'Unlocks after 1 scene';
-          } else if (scenesLeft > 1) {
-              unlockText = `Locked — ${scenesLeft} scenes to go`;
+          // Stage display name
+          const stageName = isFinal ? 'Final' : stage.charAt(0).toUpperCase() + stage.slice(1);
+
+          // Build inline status text for active item
+          let statusText = '';
+          if (isActive) {
+              if (hasGenerated) {
+                  const isPrimary = _primaryCoverStage === stage;
+                  statusText = isPrimary ? 'Currently displayed' : 'Ready to select';
+              } else if (isGenerating) {
+                  statusText = 'Generating...';
+              } else if (isUnlocked) {
+                  statusText = 'Ready';
+              } else {
+                  const scenesRequired = getScenesRequiredForStage(stage);
+                  // FIX #1: Never surface 0 or invalid values as user-facing copy
+                  if (scenesRequired === null || scenesRequired === undefined || scenesRequired === 0) {
+                      statusText = 'Not yet available';
+                  } else {
+                      statusText = `After ${scenesRequired} scene${scenesRequired !== 1 ? 's' : ''}`;
+                  }
+              }
           }
 
-          const tile = document.createElement('div');
-          tile.className = 'cover-stage-tile' + (isSelected ? ' selected' : '');
-          tile.style.cssText = `
-              width:100px; text-align:center; padding:10px; border-radius:8px; cursor:pointer;
-              border:2px solid ${isSelected ? 'var(--gold)' : '#444'};
-              background:${isSelected ? 'rgba(212,175,55,0.1)' : '#222'};
-              opacity:${isUnlocked ? '1' : '0.6'};
-              transition: all 0.2s ease;
+          const item = document.createElement('div');
+          item.className = 'carousel-item' + (isActive ? ' active' : '');
+          item.dataset.stage = stage;
+
+          // Label BELOW the image (not overlaying) — only on active item
+          const labelBelow = isActive ? `
+              <div style="background:#1a1a1a; padding:8px 6px 6px; text-align:center; border-top:1px solid #333;">
+                  <div style="color:${isUnlocked ? 'var(--gold)' : '#888'}; font-size:0.85em; font-weight:600;">${stageName}</div>
+                  <div style="color:${isUnlocked ? '#aaa' : '#666'}; font-size:0.65em; margin-top:2px;">${statusText}</div>
+              </div>
+          ` : '';
+
+          // Adjust item to use flexbox for image + label below layout
+          item.style.cssText = `
+              min-width:${ITEM_WIDTH}px; width:${ITEM_WIDTH}px; height:${ITEM_HEIGHT + (isActive ? 50 : 0)}px;
+              border-radius:10px; overflow:hidden; cursor:pointer; position:relative;
+              transition: transform 0.3s ease, opacity 0.3s ease, height 0.3s ease;
+              transform: scale(${isActive ? '1' : '0.85'});
+              opacity: ${isActive ? '1' : '0.6'};
+              box-shadow: ${isActive ? '0 8px 30px rgba(212,175,55,0.3)' : '0 4px 15px rgba(0,0,0,0.3)'};
+              border: ${isActive ? '3px solid var(--gold)' : '2px solid #333'};
+              display: flex; flex-direction: column;
           `;
 
           if (hasGenerated) {
-              // Show thumbnail of generated cover
-              tile.innerHTML = `
-                  <img src="${_coversByStage[stage]}" style="width:80px; height:100px; object-fit:cover; border-radius:4px;">
-                  <div style="font-size:0.75em; color:var(--gold); margin-top:5px;">${stageName}</div>
+              // Show generated cover with label BELOW (not overlay)
+              item.innerHTML = `
+                  <div style="flex:1; overflow:hidden;">
+                      <img src="${_coversByStage[stage]}" style="width:100%; height:100%; object-fit:cover;">
+                  </div>
+                  ${labelBelow}
+              `;
+          } else if (isGenerating) {
+              // LOADING STATE: Grey book with loading spinner overlay
+              item.innerHTML = `
+                  <div style="flex:1; background:linear-gradient(145deg, #252525, #1a1a1a); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
+                      <div style="width:70%; height:75%; background:#333; border-radius:4px; position:relative; box-shadow:inset 0 0 20px rgba(0,0,0,0.5);">
+                          <div style="position:absolute; left:0; top:0; bottom:0; width:8px; background:#2a2a2a; border-radius:4px 0 0 4px;"></div>
+                          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.5em;">
+                              <span style="color:#c44;">🎭</span>
+                          </div>
+                      </div>
+                      <!-- Loading overlay -->
+                      <div style="position:absolute; inset:0; background:rgba(0,0,0,0.6); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                          <div style="width:40px; height:40px; border:3px solid #333; border-top-color:var(--gold); border-radius:50%; animation:spin 1s linear infinite;"></div>
+                          <div style="color:var(--gold); font-size:0.75em; margin-top:10px;">Generating...</div>
+                      </div>
+                  </div>
+                  ${labelBelow}
               `;
           } else if (isUnlocked) {
-              // Unlocked but not generated — show + icon
-              tile.innerHTML = `
-                  <div style="width:80px; height:100px; background:#333; border-radius:4px; display:flex; align-items:center; justify-content:center; margin:0 auto;">
-                      <span style="color:var(--gold); font-size:2em;">+</span>
+              // Unlocked but not generated — show + icon (NO "Click to generate" text)
+              item.innerHTML = `
+                  <div style="flex:1; background:linear-gradient(145deg, #2a2a2a, #1a1a1a); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                      <span style="color:var(--gold); font-size:3em; opacity:0.8;">+</span>
                   </div>
-                  <div style="font-size:0.75em; color:#888; margin-top:5px;">${stageName}</div>
+                  ${labelBelow}
               `;
           } else {
-              // Locked — show mask with human-readable text
-              tile.innerHTML = `
-                  <div style="width:80px; height:100px; background:#1a1a1a; border-radius:4px; display:flex; align-items:center; justify-content:center; margin:0 auto; border:1px solid #333;">
-                      <span style="font-size:1.5em; opacity:0.5;">🎭</span>
+              // LOCKED: Grey book silhouette with red porcelain mask
+              // FIX #5: Final (v1) gets heavier visual treatment
+              const bookWeight = isFinal ? 'width:75%; height:80%' : 'width:70%; height:75%';
+              const spineWidth = isFinal ? '12px' : '8px';
+              const maskSize = isFinal ? '3em' : '2.5em';
+              const crownIcon = isFinal ? '<div style="position:absolute; top:8px; left:50%; transform:translateX(-50%); font-size:1.2em; opacity:0.6;">👑</div>' : '';
+
+              item.innerHTML = `
+                  <div style="flex:1; background:linear-gradient(145deg, #252525, #1a1a1a); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
+                      <!-- Grey book silhouette -->
+                      <div style="${bookWeight}; background:${isFinal ? '#3a3a3a' : '#333'}; border-radius:4px; position:relative; box-shadow:inset 0 0 ${isFinal ? '30px' : '20px'} rgba(0,0,0,0.5);">
+                          <!-- Book spine detail -->
+                          <div style="position:absolute; left:0; top:0; bottom:0; width:${spineWidth}; background:#2a2a2a; border-radius:4px 0 0 4px;"></div>
+                          ${crownIcon}
+                          <!-- Red porcelain mask emblem -->
+                          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:${maskSize}; filter:saturate(0.8);">
+                              <span style="color:#c44;">🎭</span>
+                          </div>
+                      </div>
                   </div>
-                  <div style="font-size:0.7em; color:#666; margin-top:5px;">${stageName}</div>
-                  <div style="font-size:0.6em; color:#555; max-width:90px;">${unlockText}</div>
+                  ${labelBelow}
               `;
           }
 
-          // ALL stages are clickable for navigation
-          tile.onclick = async () => {
+          // Click handler — navigate to this stage (NO auto-generate)
+          item.onclick = () => {
               _gallerySelectedStage = stage;
-              renderCoverStageRow();
-              renderGalleryPreview();
+              renderCarousel();
+              updateCarouselPosition();
               updateGalleryButtons();
-
-              // AUTO-GENERATE: If unlocked and not generated, generate immediately
-              if (isUnlocked && !hasGenerated) {
-                  await generateCoverInGallery();
-              }
+              updateGalleryProgress();
           };
 
-          row.appendChild(tile);
+          track.appendChild(item);
       });
+
+      updateCarouselPosition();
   }
 
   /**
-   * Render the main preview area based on selected stage
-   * NEVER empty — always shows image or visual placeholder with mask
+   * Update carousel track position to center the active item
    */
-  function renderGalleryPreview() {
-      const img = document.getElementById('coverGalleryImg');
-      const placeholder = document.getElementById('coverGalleryPlaceholder');
-      const maskEl = document.getElementById('placeholderMask');
-      const labelEl = document.getElementById('placeholderLabel');
-      const statusEl = document.getElementById('placeholderStatus');
+  function updateCarouselPosition() {
+      const track = document.getElementById('coverCarouselTrack');
+      const viewport = document.getElementById('coverCarouselViewport');
+      if (!track || !viewport) return;
 
-      if (!img || !placeholder) return;
+      const ITEM_WIDTH = 180;
+      const GAP = 20;
+      const viewportWidth = viewport.offsetWidth || 380;
 
-      const coverUrl = _coversByStage[_gallerySelectedStage];
-      const stageName = _gallerySelectedStage.charAt(0).toUpperCase() + _gallerySelectedStage.slice(1);
-      const isUnlocked = isCoverStageUnlocked(_gallerySelectedStage);
-      const scenesLeft = getScenesUntilUnlock(_gallerySelectedStage);
+      const currentIdx = GALLERY_STAGES.indexOf(_gallerySelectedStage);
+      if (currentIdx === -1) return;
 
-      if (coverUrl) {
-          // Show generated cover
-          img.src = coverUrl;
-          img.classList.remove('hidden');
-          placeholder.style.display = 'none';
-      } else {
-          // Show visual placeholder (NEVER text-only)
-          img.classList.add('hidden');
-          placeholder.style.display = 'flex';
+      // Calculate offset to center the active item
+      // Center position = (viewportWidth / 2) - (ITEM_WIDTH / 2)
+      // Item position = currentIdx * (ITEM_WIDTH + GAP)
+      const centerOffset = (viewportWidth / 2) - (ITEM_WIDTH / 2);
+      const itemOffset = currentIdx * (ITEM_WIDTH + GAP);
+      const translateX = centerOffset - itemOffset;
 
-          // Update placeholder content
-          if (maskEl) {
-              maskEl.style.opacity = isUnlocked ? '0.3' : '0.5';
-              maskEl.style.filter = isUnlocked ? 'grayscale(0)' : 'grayscale(1)';
-          }
-          if (labelEl) {
-              labelEl.textContent = stageName;
-              labelEl.style.color = isUnlocked ? 'var(--gold)' : '#666';
-          }
-          if (statusEl) {
-              if (isUnlocked) {
-                  statusEl.textContent = 'Click to generate';
-                  statusEl.style.color = 'var(--gold)';
-              } else if (scenesLeft === -1) {
-                  statusEl.textContent = 'Not available for this story';
-                  statusEl.style.color = '#555';
-              } else if (scenesLeft === 1) {
-                  statusEl.textContent = 'Unlocks after 1 scene';
-                  statusEl.style.color = '#555';
-              } else {
-                  statusEl.textContent = `Locked — ${scenesLeft} scenes to go`;
-                  statusEl.style.color = '#555';
-              }
+      track.style.transform = `translateX(${translateX}px)`;
+  }
+
+  /**
+   * DEPRECATED: updateCarouselLabel — labels are now inline on carousel items
+   * Kept as no-op for compatibility
+   */
+  function updateCarouselLabel() {
+      // Labels are now rendered inline on the active carousel item
+      // See renderCarousel() for implementation
+  }
+
+  /**
+   * Get the next stage that can be generated (unlocked but not yet generated)
+   * @returns {string|null} - Next generatable stage, or null if none available
+   */
+  function getNextGeneratableStage() {
+      for (const stage of GALLERY_STAGES) {
+          const isUnlocked = isCoverStageUnlocked(stage);
+          const hasGenerated = !!_coversByStage[stage];
+          if (isUnlocked && !hasGenerated) {
+              return stage;
           }
       }
+      return null;
+  }
+
+  /**
+   * Get total scenes required to unlock a stage (not remaining)
+   */
+  function getScenesRequiredForStage(stage) {
+      const storyLength = state.storyLength || 'tease';
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+      return rules[stage] || 0;
+  }
+
+  /**
+   * Update progress feedback in gallery header
+   */
+  function updateGalleryProgress() {
+      const progressText = document.getElementById('galleryProgressText');
+      const milestonesText = document.getElementById('galleryMilestonesText');
+      if (!progressText || !milestonesText) return;
+
+      // FIX #2: Scene count from single authoritative source: state.turnCount
+      const sceneCount = state.turnCount || 0;
+      progressText.textContent = `${sceneCount} scene${sceneCount !== 1 ? 's' : ''} written`;
+
+      // FIX #3: Dynamic milestone count format: "Story Milestones Unlocked: #"
+      // Count unlocked milestones (stages)
+      let unlockedCount = 0;
+      GALLERY_STAGES.forEach(stage => {
+          if (isCoverStageUnlocked(stage)) unlockedCount++;
+      });
+
+      if (unlockedCount > 0) {
+          milestonesText.textContent = `Story Milestones Unlocked: ${unlockedCount}`;
+      } else {
+          milestonesText.textContent = 'Your story awaits';
+      }
+  }
+
+  /**
+   * HARD DEPRECATED: renderCoverStageRow — old dual-system renderer
+   * Must not be used. Logs warning and delegates to carousel.
+   */
+  function renderCoverStageRow() {
+      console.warn('[COVER:DEPRECATED] renderCoverStageRow is deprecated and must not be used — delegating to renderCarousel()');
+      renderCarousel();
+      updateGalleryProgress();
+  }
+
+  /**
+   * Render gallery preview — now delegates to carousel system
+   * TRUE CAROUSEL: Visual is handled by carousel items, this updates labels
+   */
+  function renderGalleryPreview() {
+      updateCarouselLabel();
+      updateGalleryProgress();
   }
 
   /**
@@ -4150,6 +5861,7 @@ If you name what something IS, you have failed. Show what it COSTS.
   function updateGalleryButtons() {
       const genBtn = document.getElementById('btnGalleryGenerate');
       const primaryBtn = document.getElementById('btnGalleryPrimary');
+      const regenBtn = document.getElementById('btnGalleryRegenerate');
       const prevBtn = document.getElementById('btnGalleryPrev');
       const nextBtn = document.getElementById('btnGalleryNext');
 
@@ -4159,13 +5871,31 @@ If you name what something IS, you have failed. Show what it COSTS.
       const hasGenerated = !!_coversByStage[_gallerySelectedStage];
       const isPrimary = _primaryCoverStage === _gallerySelectedStage;
       const currentIdx = GALLERY_STAGES.indexOf(_gallerySelectedStage);
+      const isGenerating = _generatingStage !== null;
 
-      // Generate/Regenerate button: show if unlocked
-      if (isUnlocked) {
+      // Generate button: show only if unlocked AND not yet generated AND not currently generating
+      if (isUnlocked && !hasGenerated && !isGenerating) {
           genBtn.style.display = 'inline-block';
-          genBtn.textContent = hasGenerated ? 'Regenerate Cover' : 'Generate Cover';
+          genBtn.textContent = 'Generate Cover';
+          genBtn.disabled = false;
+      } else if (isGenerating && _generatingStage === _gallerySelectedStage) {
+          // Currently generating this stage
+          genBtn.style.display = 'inline-block';
+          genBtn.textContent = 'Generating...';
+          genBtn.disabled = true;
       } else {
           genBtn.style.display = 'none';
+      }
+
+      // Regenerate button: always visible but disabled (future feature)
+      if (regenBtn) {
+          if (hasGenerated) {
+              regenBtn.style.display = 'inline-block';
+              regenBtn.disabled = true;
+              regenBtn.title = 'Coming soon';
+          } else {
+              regenBtn.style.display = 'none';
+          }
       }
 
       // Primary button: show only if generated and not already primary
@@ -4187,21 +5917,26 @@ If you name what something IS, you have failed. Show what it COSTS.
   }
 
   /**
-   * Generate cover for the selected stage (called from modal)
+   * Generate cover for the selected stage (called from modal or button)
+   * TRUE CAROUSEL: Shows loading overlay on carousel item during generation
    */
   async function generateCoverInGallery() {
       const stage = _gallerySelectedStage;
       if (!stage || !isCoverStageUnlocked(stage)) return;
 
+      // Prevent double-generation
+      if (_generatingStage === stage) return;
+
       const genBtn = document.getElementById('btnGalleryGenerate');
       const statusDiv = document.getElementById('coverGalleryStatus');
-      const placeholder = document.getElementById('coverGalleryPlaceholder');
-      const statusEl = document.getElementById('placeholderStatus');
-      const maskEl = document.getElementById('placeholderMask');
 
-      const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
+      const stageName = stage === 'v1' ? 'Final' : stage.charAt(0).toUpperCase() + stage.slice(1);
 
-      // Show loading state
+      // PART C: Set loading state and re-render carousel to show loading overlay
+      _generatingStage = stage;
+      renderCarousel();
+
+      // Update button state
       if (genBtn) {
           genBtn.disabled = true;
           genBtn.textContent = 'Generating...';
@@ -4210,17 +5945,6 @@ If you name what something IS, you have failed. Show what it COSTS.
       if (statusDiv) {
           statusDiv.textContent = `Generating ${stageName}...`;
           statusDiv.classList.remove('hidden');
-      }
-      // Update placeholder to show loading state
-      if (statusEl) {
-          statusEl.textContent = 'Generating...';
-          statusEl.style.color = 'var(--gold)';
-      }
-      if (maskEl) {
-          maskEl.style.animation = 'pulse 1s infinite';
-      }
-      if (placeholder) {
-          placeholder.classList.add('cover-loading');
       }
 
       try {
@@ -4251,10 +5975,11 @@ If you name what something IS, you have failed. Show what it COSTS.
               updatePrimaryCoverDisplay(coverUrl);
           }
 
-          // CRITICAL: Update modal display immediately
-          renderCoverStageRow();
-          renderGalleryPreview();
+          // Clear generating state and re-render
+          _generatingStage = null;
+          renderCarousel();
           updateGalleryButtons();
+          updateGalleryProgress();
 
           if (statusDiv) statusDiv.classList.add('hidden');
           showToast(`Cover ${stageName} ready`);
@@ -4266,21 +5991,14 @@ If you name what something IS, you have failed. Show what it COSTS.
           if (statusDiv) {
               statusDiv.textContent = 'Generation failed';
           }
-          if (statusEl) {
-              statusEl.textContent = 'Generation failed — try again';
-              statusEl.style.color = '#c44';
-          }
+          // Clear generating state and re-render
+          _generatingStage = null;
+          renderCarousel();
       } finally {
           if (genBtn) {
               genBtn.disabled = false;
               genBtn.classList.remove('btn-loading');
               updateGalleryButtons();
-          }
-          if (maskEl) {
-              maskEl.style.animation = '';
-          }
-          if (placeholder) {
-              placeholder.classList.remove('cover-loading');
           }
       }
   }
@@ -5188,6 +6906,9 @@ Return ONLY the title, no quotes or explanation.`;
       if (coverLoading) coverLoading.classList.add('hidden');
       const bookObj = document.getElementById('bookObject');
       if (bookObj) bookObj.classList.add('hidden');
+
+      // Reset Storyturn state
+      if (typeof resetStoryturnState === 'function') resetStoryturnState();
   }
 
   /**
@@ -6149,7 +7870,11 @@ Return ONLY the title, no quotes or explanation.`;
       { id: 'ARCHETYPE_ARMORED_FOX',rx: /\bArmored Fox\b/gi,                                       fatePOVExempt: false },
       { id: 'ARCHETYPE_DARK_VICE',  rx: /\bDark Vice\b/gi,                                         fatePOVExempt: false },
       { id: 'ARCHETYPE_BEAUTIFUL_RUIN', rx: /\bBeautiful Ruin\b/gi,                                fatePOVExempt: false },
-      { id: 'ARCHETYPE_ETERNAL_FLAME',  rx: /\bEternal Flame\b/gi,                                 fatePOVExempt: false }
+      { id: 'ARCHETYPE_ETERNAL_FLAME',  rx: /\bEternal Flame\b/gi,                                 fatePOVExempt: false },
+      // Archetype section titles — metadata only, never in prose
+      { id: 'ARCHETYPE_STORYBEAU',   rx: /\bStorybeau\b/gi,                                        fatePOVExempt: false },
+      { id: 'ARCHETYPE_STORYBELLE',  rx: /\bStorybelle\b/gi,                                       fatePOVExempt: false },
+      { id: 'ARCHETYPE_STORYBOO',    rx: /\bStoryboo\b/gi,                                         fatePOVExempt: false }
   ];
 
   // Human-readable ban description per pattern (for negative-constraint injection)
@@ -6163,7 +7888,10 @@ Return ONLY the title, no quotes or explanation.`;
       ARCHETYPE_ARMORED_FOX:  '"Armored Fox" — internal character archetype',
       ARCHETYPE_DARK_VICE:    '"Dark Vice" — internal character archetype',
       ARCHETYPE_BEAUTIFUL_RUIN: '"Beautiful Ruin" — internal character archetype',
-      ARCHETYPE_ETERNAL_FLAME:  '"Eternal Flame" — internal character archetype'
+      ARCHETYPE_ETERNAL_FLAME:  '"Eternal Flame" — internal character archetype',
+      ARCHETYPE_STORYBEAU:      '"Storybeau" — LI category label, metadata only',
+      ARCHETYPE_STORYBELLE:     '"Storybelle" — LI category label, metadata only',
+      ARCHETYPE_STORYBOO:       '"Storyboo" — LI category label, metadata only'
   };
 
   /**
@@ -6285,6 +8013,14 @@ Return ONLY the title, no quotes or explanation.`;
   };
 
   window.setGameIntensity = function(level) {
+      // STORYTURN ASSERTION: Erotic/Dirty blocked on Tease
+      const storyLength = (window.state.storyLength || 'tease').toLowerCase();
+      if (storyLength === 'tease' && STORYTURN_CONFIG.teaseRules.paywalledArousal.includes(level)) {
+          console.error(`[STORYTURN] ${level} intensity blocked on Tease. Upgrade required.`);
+          window.showPaywall('upgrade_required');
+          return;
+      }
+
       // SUBSCRIPTION SHORT-CIRCUIT: Subscribers have full access
       if (window.state.subscribed) {
           window.state.intensity = level;
@@ -6374,6 +8110,7 @@ Return ONLY the title, no quotes or explanation.`;
       state.storyLength = 'tease';
       state.storyOrigin = null;
       state.storyStage = null;
+      state.intimacyInterrupted = { first_kiss: false, first_sex: false };
       state.turnCount = 0;
 
       // Reset Guided Fate selections
@@ -6478,9 +8215,9 @@ Return ONLY the title, no quotes or explanation.`;
       const section = document.getElementById('menuAuthSection');
       if (!section) return;
       if (isLoggedIn()) {
-          section.innerHTML = '<button onclick="window.logout()">Logout</button>';
+          section.innerHTML = '<button class="small-btn" onclick="window.logout()">Logout</button>';
       } else {
-          section.innerHTML = '<button onclick="window.login()">Login</button>';
+          section.innerHTML = '<button class="small-btn" onclick="window.login()">Login</button>';
       }
   }
 
@@ -6516,14 +8253,20 @@ Return ONLY the title, no quotes or explanation.`;
       // LINEAR READER NAVIGATION (book system disabled)
       if (_currentScreenId === 'game') {
           if (!USE_OPENING_BOOK) {
-              // Simplified linear navigation: SCENE → COVER → exit (NO intermediate SETTING)
+              // Simplified linear navigation: SCENE → COVER GALLERY → stay in reader
               if (_readerPage >= 1) {
-                  // From any Scene → go to Cover
-                  _readerPage = 0;
-                  showReaderPage(_readerPage);
+                  // From any Scene → open Cover Gallery Modal (NOT legacy cover view)
+                  // User stays in reader context with working cover gallery
+                  if (_gallerySelectedStage) {
+                      // Focus on current primary or latest generated
+                      _gallerySelectedStage = _primaryCoverStage || getCurrentCoverStage();
+                  }
+                  openCoverGalleryModal();
                   return;
               }
-              // At Cover (page 0) — fall through to normal screen navigation
+              // At Cover (page 0) — open cover gallery modal instead of exiting
+              openCoverGalleryModal();
+              return;
           } else {
               // BOOK SYSTEM (disabled — this branch won't run when USE_OPENING_BOOK = false)
               const bookCover = document.getElementById('bookCover');
@@ -6910,8 +8653,87 @@ Return ONLY the title, no quotes or explanation.`;
 
      if(flipped){
          state.storyStage = 'post-consummation';
-         saveStorySnapshot(); 
+         saveStorySnapshot();
      }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTIMACY MILESTONE INTERRUPTION SYSTEM
+  // Interrupts first_kiss and first_sex on FIRST attempt only (latch rule)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Detect if user input signals a kiss attempt
+   * @param {string} action - User's action input
+   * @param {string} dialogue - User's dialogue input
+   * @returns {boolean}
+   */
+  function detectKissAttempt(action, dialogue) {
+      const combined = `${action} ${dialogue}`.toLowerCase();
+      const kissSignals = /\b(kiss|lean in|lips|mouth to|pull (her|him|them) close|faces inches|breath mingles|almost touching)\b/i;
+      return kissSignals.test(combined);
+  }
+
+  /**
+   * Detect if user input signals a sex/intimacy attempt
+   * @param {string} action - User's action input
+   * @param {string} dialogue - User's dialogue input
+   * @returns {boolean}
+   */
+  function detectSexAttempt(action, dialogue) {
+      const combined = `${action} ${dialogue}`.toLowerCase();
+      const sexSignals = /\b(undress|take off|bed|make love|have sex|inside|push (her|him|them) down|straddle|between (her|his|their) legs|naked|clothes off)\b/i;
+      return sexSignals.test(combined);
+  }
+
+  /**
+   * Build interruption directive for story prompt
+   * Returns empty string if no interruption needed (milestone already latched)
+   * @param {string} action - User's action input
+   * @param {string} dialogue - User's dialogue input
+   * @returns {{ directive: string, milestone: string|null }}
+   */
+  function buildIntimacyInterruptionDirective(action, dialogue) {
+      // Skip if both milestones already cleared
+      if (state.intimacyInterrupted.first_kiss && state.intimacyInterrupted.first_sex) {
+          return { directive: '', milestone: null };
+      }
+
+      // Check for sex attempt first (higher priority)
+      if (!state.intimacyInterrupted.first_sex && detectSexAttempt(action, dialogue)) {
+          return {
+              directive: `INTIMACY INTERRUPT (first_sex): The characters clearly INTEND physical intimacy. Telegraph the approach — closeness, tension, breath, almost-contact. But INTERRUPT the act before completion. Use a grounded cause:
+- Internal: "Not ready," "This feels wrong," sudden hesitation, emotional wall rises
+- External: Phone rings, alarm sounds, someone knocks, unexpected news arrives
+The interruption must land with narrative weight. Maintain unresolved sexual tension. Do NOT consummate.`,
+              milestone: 'first_sex'
+          };
+      }
+
+      // Check for kiss attempt
+      if (!state.intimacyInterrupted.first_kiss && detectKissAttempt(action, dialogue)) {
+          return {
+              directive: `INTIMACY INTERRUPT (first_kiss): The characters clearly INTEND to kiss. Telegraph the moment — faces close, breath held, eyes locked. But INTERRUPT before lips meet. Use a grounded cause:
+- Internal: One pulls back, "I can't," fear flashes in eyes
+- External: Sudden noise, someone approaches, phone buzzes
+The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
+              milestone: 'first_kiss'
+          };
+      }
+
+      return { directive: '', milestone: null };
+  }
+
+  /**
+   * Latch an intimacy milestone after interruption occurs
+   * @param {string} milestone - 'first_kiss' or 'first_sex'
+   */
+  function latchIntimacyMilestone(milestone) {
+      if (milestone && state.intimacyInterrupted.hasOwnProperty(milestone)) {
+          state.intimacyInterrupted[milestone] = true;
+          console.log(`[INTIMACY:LATCH] ${milestone} milestone latched — future attempts will not interrupt`);
+          saveStorySnapshot();
+      }
   }
 
   function checkStoryEndCaps() {
@@ -8393,6 +10215,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           }
       }
 
+      // STORYTURN: Handle Tease cliffhanger resume on upgrade
+      if (upgraded && typeof handleTeaseUpgradeResume === 'function') {
+          handleTeaseUpgradeResume(state.storyLength);
+      }
+
       if (upgraded) {
           state.storyEnded = false;
       }
@@ -8955,6 +10782,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.intensity = 'Naughty';
     state.storypassEligible = undefined; // Reset - will be computed at story creation
     state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {} };
+    // SPECULATIVE PRELOAD: Reset on restart
+    state.speculativeNextScene = null;
+    state.isPreloadingNextScene = false;
     state.coverArchetype = null;
     state.lenses = [];
     state.withheldCoreVariant = null;
@@ -10061,7 +11891,16 @@ The final image must look like a real published novel cover.`;
           return;
       }
 
-      // Open the Cover Gallery Modal
+      // PART B: Start generation IMMEDIATELY before modal opens
+      const nextStage = getNextGeneratableStage();
+      if (nextStage) {
+          // Start generation now (async, don't await)
+          _gallerySelectedStage = nextStage;
+          generateCoverInGallery();
+          console.log('[COVER:READER] Started generation for', nextStage, 'before modal open');
+      }
+
+      // Open the Cover Gallery Modal (generation already in progress)
       openCoverGalleryModal();
   });
 
@@ -12323,6 +14162,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           }
 
           // Card structure: BACK shows title only (unclicked), FRONT shows title+desc (revealed on flip/select)
+          // Apply LI pronoun resolution to description text
+          const resolvedDesireStyle = resolveLIPronouns(arch.desireStyle);
           card.innerHTML = `
               <div class="sb-card-inner">
                   <div class="sb-card-face sb-card-back">
@@ -12330,7 +14171,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
                   </div>
                   <div class="sb-card-face sb-card-front">
                       <span class="sb-card-title">${arch.name}</span>
-                      <span class="sb-card-desc">${arch.desireStyle}</span>
+                      <span class="sb-card-desc">${resolvedDesireStyle}</span>
                   </div>
               </div>
           `;
@@ -12615,7 +14456,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const customInput = document.getElementById('customLoveInterest');
 
       function onGenderChange() {
+          // Update state.loveInterest for pronoun resolution
+          if (genderSelect) {
+              state.loveInterest = genderSelect.value === 'Custom' && customInput?.value?.trim()
+                  ? customInput.value.trim()
+                  : genderSelect.value;
+          }
           updateArchetypeSectionTitle();
+          // Re-render archetype cards with updated LI pronouns
+          renderArchetypeCards();
       }
 
       if (genderSelect && genderSelect.dataset.archetypeBound !== '1') {
@@ -15298,7 +17147,7 @@ AUTHOR AS CONDUCTOR (5TH PERSON) - MANDATORY OPENER:
     // TONE ENFORCEMENT BLOCK (all tones)
     const toneEnforcementBlock = buildToneEnforcementBlock(state.picks?.tone);
 
-    const introPrompt = `${fifthPersonContract}${eroticEscalationBlock}${toneEnforcementBlock}Write the opening scene (approx 400-500 words). This is 2-3 pages of a book. Take your time.
+    const introPrompt = `${fifthPersonContract}${eroticEscalationBlock}${toneEnforcementBlock}Write the opening scene (500-600 words). This is the LONGEST scene in the story — take your time establishing world and character.
 ${authorOpeningDirective}
 OPENING MODE: ${selectedOpening.mode}
 ${selectedOpening.directive}
@@ -17896,7 +19745,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       // EARNED COVER SYSTEM: Get stage (defaults to current stage if not provided)
       const stage = frozenIntent.stage || getCurrentCoverStage();
       const stageLabel = COVER_STAGE_LABELS[stage] || 'Cover';
-      const stageModifier = getCoverStagePromptModifier(stage);
+      const stageModifier = getCoverStagePromptModifier(stage, frozenIntent.tone);
 
       console.log('[COVER:v1] Frozen intent:', {
           title: frozenIntent.title,
@@ -18864,7 +20713,51 @@ Return only the visual description.`;
       const lightingCondition = resolveLightingCondition(lastText);
       const compositionDensity = resolveCompositionDensity(lastText);
 
-      return `${anchorText}\n\nYou are writing an image prompt. Follow these continuity anchors strictly. Describe this scene for an image generator. Maintain consistent character details and attire.\n\n${ontologyDirective}\n\nWORLD/TONE: ${worldToneBias}\n\nINTENSITY GUIDANCE: ${intensityBias}\n\nCAMERA FOCUS:\n- ${focusDirective}\n\nCAMERA DISTANCE:\n- ${cameraDistance}\n\nLIGHTING:\n- ${lightingCondition}\n\nCOMPOSITION:\n- ${compositionDensity}\n\nSCENE CONTEXT:\n${sceneCtx}\n\nRender exactly what is happening in this scene. Do not invent characters, events, symbolism, or emotional subtext.\n\nReturn only the prompt: ${lastText}`;
+      // Get protagonist gender for explicit subject declaration
+      const protagonistGender = state.gender || 'Female';
+      const genderWord = protagonistGender === 'Male' ? 'man' : protagonistGender === 'Non-binary' ? 'person' : 'woman';
+
+      return `${anchorText}
+
+You are writing an image prompt. Follow these continuity anchors strictly.
+Output MUST follow this exact structure:
+
+📌 SUBJECT (MANDATORY FIRST)
+Start with: "A ${genderWord}..." then describe pose, clothing, expression.
+Gender and physical description MUST appear in the first sentence.
+Example: "A woman in a tattered leather jacket, face partially in shadow, stands at the mouth of a smoky alley."
+
+📌 SCENE CONTEXT
+Physical environment in short, grounded phrases.
+Example: "Ashen wooden stalls line a narrow path. Faint orange embers glow beneath a collapsed tarp."
+
+📌 ACTION / FOCAL ELEMENTS
+Any movement or narrative cues.
+Example: "A streak of crimson fabric disappears into the shadows up ahead."
+
+📌 MOOD / STYLE
+${ontologyDirective}
+${cameraDistance}. ${lightingCondition}. No painterly textures unless explicitly fantasy world.
+
+📌 NEGATIVE PROMPT
+Do not render in oil painting or concept art style unless world is Fantasy.
+Maintain gender of described figure (${protagonistGender}).
+${SCENE_VIZ_EXCLUSIONS}
+
+---
+WORLD/TONE: ${worldToneBias}
+INTENSITY: ${intensityBias}
+CAMERA FOCUS: ${focusDirective}
+COMPOSITION: ${compositionDensity}
+SCENE SIGNALS:
+${sceneCtx}
+
+---
+SOURCE PROSE TO VISUALIZE:
+${lastText}
+
+---
+Return ONLY the formatted prompt following the structure above. Do not explain or add commentary.`;
   }
 
   function buildVisualizePrompt({ mode, lastText, anchorText }) {
@@ -19263,7 +21156,8 @@ Return ONLY the image prompt. No explanations. Under 200 characters.`;
   // Call getSceneVizSystem() at runtime to get tone-aware system prompt
 
   // Scene visualization explicit exclusions (always appended)
-  const SCENE_VIZ_EXCLUSIONS = 'No smiling at camera. No posed portraits. No beauty photography. No book cover composition.';
+  // Prevents model defaults and style drift
+  const SCENE_VIZ_EXCLUSIONS = 'No smiling at camera. No posed portraits. No beauty photography. No book cover composition. No default male subject. No oil painting style unless Fantasy world.';
 
   // =================================================================
   // VISUALIZER STYLE & ONTOLOGY SYSTEM (AUTHORITATIVE)
@@ -19723,7 +21617,9 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
   }
 
   // OPENAI LAST RESORT: Call OpenAI image generation (SAFE - never throws)
-  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000, tone = null) {
+  // intent parameter: 'scene' (default) or 'setting' — determines server-side behavior
+  // visualMeta: { toneStyleLock, styleAuthority, styleExpectedTags } for tone ontology system
+  async function callOpenAIImageGen(prompt, size = '1024x1024', timeout = 60000, tone = null, intent = 'scene', visualMeta = {}) {
       try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -19741,7 +21637,12 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
                   size: size,
                   aspect_ratio: aspectRatio,
                   n: 1,
-                  tone: tone  // Pass tone for server-side Wry Confessional bypass
+                  tone: tone,  // Pass tone for server-side ontology bypass
+                  imageIntent: intent,  // Pass intent for server-side routing
+                  // Tone visual ontology metadata
+                  toneStyleLock: visualMeta?.toneStyleLock || false,
+                  styleAuthority: visualMeta?.styleAuthority || 'Genre',
+                  styleExpectedTags: visualMeta?.styleExpectedTags || []
               }),
               signal: controller.signal
           });
@@ -19983,32 +21884,34 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       let basePrompt = sanitizedPrompt;
 
       // ═══════════════════════════════════════════════════════════════════
-      // WRY CONFESSIONAL — FINAL ENFORCEMENT AT PROVIDER LEVEL
-      // Strip ALL cinematic/photorealistic tokens, ensure ontology prefix
+      // 🔒 TONE VISUAL ONTOLOGY PRIORITY SYSTEM
+      // Tone visual style ALWAYS overrides Genre and World styling
+      // Genre only influences composition, subject matter, costume/setting
+      // Use BOTH tone parameter AND state.picks?.tone for redundancy
       // ═══════════════════════════════════════════════════════════════════
-      if (context === 'visualize' && state.picks?.tone === 'Wry Confessional') {
-          // Remove cinematic/photorealistic tokens that may have leaked
-          const CINEMATIC_TOKENS = /\b(cinematic|painterly|photorealistic|photo-real|dramatic lighting|chiaroscuro|depth of field|bokeh|lens flare|hyper-realistic|oil painting|atmospheric|natural lighting|golden.hour|studio lighting|volumetric|HDR|8k|4k|ultra.realistic|professional photo)\b/gi;
-          basePrompt = basePrompt.replace(CINEMATIC_TOKENS, '');
+      const effectiveTone = tone || state.picks?.tone;
+      let visualMetadata = { styleAuthority: 'Genre', styleExpectedTags: [], toneStyleLock: false };
 
-          // Remove intensity/attractiveness language
-          const INTENSITY_TOKENS = /\b(suggestive|flirtatious|sensual|seductive|allure|attractive|beautiful|striking beauty|elegant features|hourglass|athletic)\b/gi;
-          basePrompt = basePrompt.replace(INTENSITY_TOKENS, '');
+      if (context === 'visualize' && hasToneVisualOntology(effectiveTone)) {
+          console.log(`[VIZ:TONE] Tone with visual ontology DETECTED: ${effectiveTone}`);
+          console.log(`[VIZ:TONE] tone param: ${tone} | state.picks.tone: ${state.picks?.tone}`);
 
-          // Ensure hard mode declaration is at start
-          if (!basePrompt.includes('editorial cartoon illustration')) {
-              basePrompt = `This image is an editorial cartoon illustration, NOT a photograph.\n\n${basePrompt}`;
-          }
+          // Apply the tone's visual ontology (strips banned tokens, prepends ontology)
+          const ontologyResult = applyToneVisualOntology(basePrompt, effectiveTone, context);
+          basePrompt = ontologyResult.prompt;
+          visualMetadata = {
+              styleAuthority: ontologyResult.styleAuthority,
+              styleExpectedTags: ontologyResult.styleExpectedTags,
+              toneStyleLock: ontologyResult.toneStyleLock,
+              toneDescription: ontologyResult.toneDescription
+          };
 
-          // Ensure ontology is present
-          if (!basePrompt.includes('Editorial cartoon') && !basePrompt.includes('New Yorker')) {
-              basePrompt = `${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\n${basePrompt}`;
-          }
-
-          // Clean up multiple newlines/spaces
-          basePrompt = basePrompt.replace(/\n{3,}/g, '\n\n').replace(/\s{2,}/g, ' ').trim();
-
-          console.log('[VIZ:WRY] Final enforcement — editorial cartoon prompt:', basePrompt.substring(0, 100) + '...');
+          console.log(`[VIZ:TONE] styleAuthority: ${visualMetadata.styleAuthority}`);
+          console.log(`[VIZ:TONE] expectedTags: ${visualMetadata.styleExpectedTags.join(', ')}`);
+          console.log('[VIZ:TONE] Final prompt (first 200 chars):', basePrompt.substring(0, 200));
+      } else {
+          // No tone visual ontology — Genre/World provides default style
+          console.log(`[VIZ:TONE] No visual ontology for tone: ${effectiveTone || 'none'} — using Genre style`);
       }
 
       // INTENT-BASED PROVIDER CHAIN (AUTHORITATIVE)
@@ -20016,19 +21919,21 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       // scene/cover: OpenAI → Replicate (NO Gemini)
       // CRITICAL: Use basePrompt (enforced) not sanitizedPrompt (original)
       const finalPrompt = basePrompt;
-      const finalTone = tone;  // Pass through for server-side Wry bypass
+      const finalTone = effectiveTone;  // Pass resolved tone for server-side ontology bypass
+      const finalIntent = intent;  // Pass through for server-side routing
+      const finalVisualMeta = visualMetadata;  // Pass style authority metadata
       let providerChain;
       if (intent === 'setting') {
           // Setting images: Gemini primary, OpenAI fallback, NO Replicate
           providerChain = [
-              { name: 'Gemini', fn: callGeminiImageGen, prompt: finalPrompt, tone: finalTone },
-              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt, tone: finalTone }
+              { name: 'Gemini', fn: callGeminiImageGen, prompt: finalPrompt, tone: finalTone, intent: finalIntent, visualMeta: finalVisualMeta },
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt, tone: finalTone, intent: finalIntent, visualMeta: finalVisualMeta }
           ];
       } else {
           // Scene/Cover images: OpenAI primary, Replicate fallback, NO Gemini
           providerChain = [
-              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt, tone: finalTone },
-              { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: finalPrompt, tone: finalTone }
+              { name: 'OpenAI', fn: callOpenAIImageGen, prompt: finalPrompt, tone: finalTone, intent: finalIntent, visualMeta: finalVisualMeta },
+              { name: 'Replicate', fn: callReplicateFluxSchnell, prompt: finalPrompt, tone: finalTone, intent: finalIntent, visualMeta: finalVisualMeta }
           ];
       }
 
@@ -20045,7 +21950,8 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
 
           try {
               logImageAttempt(provider.name, context, provider.prompt, 'ATTEMPTING');
-              const imageUrl = await provider.fn(provider.prompt, size, 60000, provider.tone);
+              logImageAttempt(provider.name, context, `styleAuthority: ${provider.visualMeta?.styleAuthority || 'Genre'}`, 'META');
+              const imageUrl = await provider.fn(provider.prompt, size, 60000, provider.tone, provider.intent, provider.visualMeta);
 
               // Check for abort after provider returns
               if (signal?.aborted) {
@@ -20438,30 +22344,28 @@ Condensed (under ${maxLength} chars):` }
           creditCount.textContent = credits;
       }
 
-      // VISUALIZATION ECONOMY:
-      // - Initial Visualize: enabled if scene not yet visualized AND credits available
-      // - Re-Visualize: ALWAYS clickable (opens paywall if no credits)
+      // ═══════════════════════════════════════════════════════════════════
+      // VISUALIZE BUTTON — ALWAYS CLICKABLE (except when generating)
+      // Disabled ONLY when: _vizInFlight === true
+      // Click-time branching handles paywall vs visualization
+      // ═══════════════════════════════════════════════════════════════════
       if (vizBtn) {
-          if (budget.finalized) {
+          if (_vizInFlight) {
+              // Currently generating — disable to prevent double-click
+              vizBtn.textContent = '⏳ Generating...';
+              vizBtn.disabled = true;
+              vizBtn.style.opacity = '0.5';
+              vizBtn.style.cursor = 'not-allowed';
+          } else if (budget.finalized) {
+              // Finalized — show locked state but keep clickable for feedback
               vizBtn.textContent = '🔒 Finalized';
-              vizBtn.disabled = true;
-              vizBtn.style.opacity = '0.5';
-              vizBtn.style.cursor = 'not-allowed';
-          } else if (sceneVisualized) {
-              // Scene already visualized with free credit - can only re-visualize
-              vizBtn.textContent = '✨ Visualize';
-              vizBtn.disabled = true;
-              vizBtn.style.opacity = '0.5';
-              vizBtn.style.cursor = 'not-allowed';
-          } else if (credits <= 0) {
-              // No credits available
-              vizBtn.textContent = '✨ Visualize (0)';
-              vizBtn.disabled = true;
-              vizBtn.style.opacity = '0.5';
-              vizBtn.style.cursor = 'not-allowed';
+              vizBtn.disabled = false;
+              vizBtn.style.opacity = '0.7';
+              vizBtn.style.cursor = 'pointer';
           } else {
-              // Credits available, scene not yet visualized
-              vizBtn.textContent = '✨ Visualize';
+              // Default state — always clickable, shows credit count
+              const label = credits > 0 ? '✨ Visualize' : '✨ Visualize ($)';
+              vizBtn.textContent = label;
               vizBtn.disabled = false;
               vizBtn.style.opacity = '1';
               vizBtn.style.cursor = 'pointer';
@@ -20525,16 +22429,31 @@ Condensed (under ${maxLength} chars):` }
           ph.style.display = 'flex';
       }
 
-      // Show generating feedback while prompt is being built
+      const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+      const lastText = allStoryContent.slice(-600) || "";
+
+      // ═══════════════════════════════════════════════════════════════════
+      // WRY CONFESSIONAL — SYNCHRONOUS PROMPT ASSEMBLY (no LLM, no delay)
+      // ═══════════════════════════════════════════════════════════════════
+      if (state.picks?.tone === 'Wry Confessional') {
+          const condensedScene = condenseSceneObservational(lastText, 120);
+          const wryPrompt = `This is an editorial cartoon illustration, NOT a photograph.\n\n${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\nScene: ${condensedScene}`;
+          if (promptInput) {
+              promptInput.value = wryPrompt;
+              promptInput.placeholder = 'Edit prompt or add modifiers…';
+              promptInput.classList.remove('viz-loading');
+          }
+          console.log('[VIZ:WRY] Prompt populated IMMEDIATELY (sync) — 0 credits path');
+          return; // EXIT — no async work needed for Wry
+      }
+
+      // STANDARD PATH: Show loading while LLM generates prompt
       if (promptInput) {
           promptInput.value = '';
           promptInput.placeholder = 'Generating visualization prompt…';
           promptInput.classList.add('viz-loading');
       }
 
-      // Generate and populate prompt
-      const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
-      const lastText = allStoryContent.slice(-600) || "";
       await ensureVisualBible(allStoryContent);
 
       const anchorText = buildVisualAnchorsText();
@@ -20563,6 +22482,116 @@ Condensed (under ${maxLength} chars):` }
           }
       }
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FATE CARD CONTEXTUAL PREVIEW — Generates Say/Do examples based on scene
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Called when a fate card is selected to generate personalized action/dialogue
+  // previews tied to: POV character, other characters present, scene situation, tone.
+  // ═══════════════════════════════════════════════════════════════════════════
+  let _fatePreviewInFlight = false;
+
+  window.generateFatePreview = async function(cardData) {
+      if (_fatePreviewInFlight) return;
+      if (!cardData) return;
+
+      const actInput = document.getElementById('actionInput');
+      const diaInput = document.getElementById('dialogueInput');
+      if (!actInput || !diaInput) return;
+
+      // Get scene context
+      const allStoryContent = StoryPagination?.getAllContent?.()?.replace(/<[^>]*>/g, ' ') || '';
+      const recentScene = allStoryContent.slice(-800) || '';
+
+      // Skip preview generation if no substantial story yet
+      if (recentScene.length < 100) {
+          actInput.value = cardData.action || '';
+          diaInput.value = cardData.dialogue || '';
+          return;
+      }
+
+      // Gather character/tone context
+      const tone = state.picks?.tone || 'Earnest';
+      const protagonistGender = state.gender || 'Female';
+      const liGender = state.loveInterest || 'Male';
+      const world = state.picks?.world || 'Modern';
+      const archetype = state.archetype?.primary || 'BEAUTIFUL_RUIN';
+
+      // Characters from visual bible (if available)
+      const characters = state.visual?.bible?.characters || {};
+      const charNames = Object.keys(characters).slice(0, 3).join(', ') || 'protagonist and love interest';
+
+      _fatePreviewInFlight = true;
+
+      // Show loading state
+      actInput.value = '…';
+      actInput.classList.add('fate-preview-loading');
+      diaInput.value = '…';
+      diaInput.classList.add('fate-preview-loading');
+
+      const previewPrompt = `You are generating contextual Say/Do previews for an interactive romance story.
+
+FATE CARD SELECTED:
+- Title: ${cardData.title}
+- Theme: ${cardData.desc}
+- Generic Action: ${cardData.action}
+- Generic Dialogue: ${cardData.dialogue}
+
+CURRENT SCENE CONTEXT:
+${recentScene.slice(-400)}
+
+STORY PARAMETERS:
+- Tone: ${tone}
+- World: ${world}
+- Protagonist: ${protagonistGender} with ${archetype} archetype
+- Love Interest: ${liGender} (use ${liGender === 'Male' ? 'he/him' : liGender === 'Female' ? 'she/her' : 'they/them'} pronouns)
+- Characters present: ${charNames}
+
+PRONOUN RULE: Use correct pronouns for the Love Interest. Never use archetype labels (Storybeau, Storybelle, Storyboo) in any output.
+
+TASK: Generate TWO short, contextual previews that fit THIS EXACT SCENE:
+1. "Do" — A specific physical action the protagonist could take RIGHT NOW (max 12 words)
+2. "Say" — A specific line of dialogue the protagonist could speak RIGHT NOW (max 15 words, in quotes)
+
+These must:
+- Reference actual details from the scene (location, objects, other characters)
+- Match the ${tone} tone
+- Feel like natural continuations of what's happening
+- Be more specific than the generic card suggestions
+
+Respond in this EXACT format (no labels, just two lines):
+[action on first line]
+[dialogue in quotes on second line]`;
+
+      try {
+          const response = await Promise.race([
+              callChat([{ role: 'user', content: previewPrompt }]),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Preview timeout')), 8000))
+          ]);
+
+          if (_fatePreviewInFlight && response) {
+              const lines = response.trim().split('\n').filter(l => l.trim());
+              const actionPreview = lines[0]?.trim() || cardData.action;
+              const dialoguePreview = lines[1]?.trim() || cardData.dialogue;
+
+              actInput.value = actionPreview;
+              diaInput.value = dialoguePreview;
+          }
+      } catch (e) {
+          console.log('[FATE:Preview] Generation failed, using defaults:', e.message);
+          actInput.value = cardData.action || '';
+          diaInput.value = cardData.dialogue || '';
+      } finally {
+          _fatePreviewInFlight = false;
+          actInput.classList.remove('fate-preview-loading');
+          diaInput.classList.remove('fate-preview-loading');
+      }
+  };
+
+  // Cancel any in-flight preview (called when card selection changes)
+  window.cancelFatePreview = function() {
+      _fatePreviewInFlight = false;
+  };
 
   window.visualize = async function(isRe){
       if (_vizInFlight) return;
@@ -20601,8 +22630,11 @@ Condensed (under ${maxLength} chars):` }
           // Has credits or Pay-As-You-Go enabled - proceed with re-visualize
           console.log('[VizEconomy] Re-Visualize with', credits > 0 ? 'credits' : 'Pay-As-You-Go');
       } else {
-          // Initial Visualize requires credits AND scene not yet visualized
+          // ═══════════════════════════════════════════════════════════════
+          // CLICK-TIME BRANCHING — Initial Visualize
+          // ═══════════════════════════════════════════════════════════════
           if (sceneVisualized) {
+              // Scene already visualized — prompt to use Re-Visualize
               if(modal) modal.classList.remove('hidden');
               if(errDiv) {
                   errDiv.textContent = 'Scene already visualized. Use Re-Visualize to try again.';
@@ -20611,14 +22643,13 @@ Condensed (under ${maxLength} chars):` }
               updateVizButtonStates();
               return;
           }
-          if (credits <= 0) {
-              // Open modal but don't generate — show prompt for inspection
-              if(modal) modal.classList.remove('hidden');
-              // Populate prompt even with 0 credits
-              populateVizPromptOnly();
-              updateVizButtonStates();
+          // No credits AND no access path → open paywall
+          if (credits <= 0 && !isPayAsYouGoEnabled() && state.subscribed !== true) {
+              showPayAsYouGoModal();
               return;
           }
+          // Has credits OR has access path → proceed with visualization
+          console.log('[VizEconomy] Initial Visualize with', credits > 0 ? 'credits' : 'Pay-As-You-Go/Subscription');
       }
 
       // Track whether this is a credit-consuming initial visualization
@@ -20655,6 +22686,25 @@ Condensed (under ${maxLength} chars):` }
 
       const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
       const lastText = allStoryContent.slice(-600) || "";
+
+      // ═══════════════════════════════════════════════════════════════════
+      // WRY CONFESSIONAL — SYNCHRONOUS PROMPT ASSEMBLY (BEFORE async work)
+      // Prompt must appear IMMEDIATELY when modal opens. No delay.
+      // ═══════════════════════════════════════════════════════════════════
+      let wryPromptReady = false;
+      if (state.picks?.tone === 'Wry Confessional') {
+          const promptInput = document.getElementById('vizPromptInput');
+          const condensedScene = condenseSceneObservational(lastText, 120);
+          const wryPrompt = `This is an editorial cartoon illustration, NOT a photograph.\n\n${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\nScene: ${condensedScene}`;
+          if (promptInput) {
+              promptInput.value = wryPrompt;
+              promptInput.placeholder = 'Edit prompt or add modifiers…';
+              promptInput.classList.remove('viz-loading');
+          }
+          wryPromptReady = true;
+          console.log('[VIZ:WRY] Prompt populated IMMEDIATELY (sync)');
+      }
+
       await ensureVisualBible(allStoryContent);
 
       // Check if cancelled during bible build
@@ -20680,26 +22730,21 @@ Condensed (under ${maxLength} chars):` }
           const visualizeMode = 'scene';
 
           // ═══════════════════════════════════════════════════════════════
-          // WRY CONFESSIONAL — BYPASS LLM PROMPT GENERATION
-          // Generate editorial cartoon prompt directly without LLM interpretation
+          // WRY CONFESSIONAL — USE PRE-ASSEMBLED PROMPT (already populated above)
+          // Prompt was assembled SYNCHRONOUSLY before any async work.
           // ═══════════════════════════════════════════════════════════════
-          if (state.picks?.tone === 'Wry Confessional' && (!isRe || !promptMsg)) {
-              const promptInput = document.getElementById('vizPromptInput');
-              if (promptInput) {
-                  promptInput.value = '';
-                  promptInput.placeholder = 'Building editorial prompt…';
-                  promptInput.classList.add('viz-loading');
+          if (state.picks?.tone === 'Wry Confessional') {
+              // Prompt is already in the input from sync assembly above
+              // Only regenerate if this is a re-visualize with user-edited prompt
+              if (!promptMsg && !wryPromptReady) {
+                  const condensedScene = condenseSceneObservational(lastText, 120);
+                  promptMsg = `This is an editorial cartoon illustration, NOT a photograph.\n\n${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\nScene: ${condensedScene}`;
+                  const promptInput = document.getElementById('vizPromptInput');
+                  if (promptInput) promptInput.value = promptMsg;
+              } else {
+                  promptMsg = document.getElementById('vizPromptInput').value;
               }
-              // Condense scene observationally — external, flat, no internal monologue
-              const condensedScene = condenseSceneObservational(lastText, 120);
-              // Assemble prompt directly using ontology
-              promptMsg = `${WRY_CONFESSIONAL_VISUAL_ONTOLOGY} Scene: ${condensedScene}`;
-              if (promptInput) {
-                  promptInput.classList.remove('viz-loading');
-                  promptInput.placeholder = 'Edit prompt or add modifiers…';
-                  promptInput.value = promptMsg;
-              }
-              console.log('[VIZ:WRY] Bypassed LLM — direct ontology prompt');
+              console.log('[VIZ:WRY] Using sync-assembled prompt');
           } else if (!isRe || !promptMsg) {
               // Standard path: LLM generates image prompt
               const visualizePrompt = buildVisualizePrompt({ mode: visualizeMode, lastText, anchorText });
@@ -20747,12 +22792,16 @@ Condensed (under ${maxLength} chars):` }
                   .replace(/New Yorker[^.]*\./gi, '')
                   .replace(/flat.*color[^.]*\./gi, '')
                   .replace(/Scene:\s*/gi, '')
+                  .replace(/Style:[^.]*\./gi, '')
+                  .replace(/This image is[^.]*\./gi, '')
                   .trim();
 
-              // HARD MODE DECLARATION + ONTOLOGY + SCENE ONLY
-              basePrompt = `This image is an editorial cartoon illustration, NOT a photograph.\n\n${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\nScene: ${pureScene}`;
+              // ONTOLOGY-FIRST CONSTRUCTION — let the style declaration lead
+              // No redundant "This is NOT a photograph" — ontology handles it
+              basePrompt = `${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\nScene: ${pureScene}`;
 
               console.log('[VIZ:WRY] Short-circuited all style injectors — editorial cartoon only');
+              console.log('[VIZ:WRY] Pure scene content:', pureScene.substring(0, 100));
           } else {
               // STANDARD PATH: All style injectors apply
 
@@ -21159,6 +23208,185 @@ Condensed (under ${maxLength} chars):` }
       }
 
       const pacingDirective = buildPacingDirective();
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // CANONICAL SCENE LENGTH DIRECTIVE — storybound/scene-length-erotic-gates-canonical-v2
+      // ═══════════════════════════════════════════════════════════════════════════
+      // Scene 1 (Opening): 500-600 words — LONGEST, establishes world/tone/stakes
+      // Scenes 2+ (Non-sex): 300-500 words — standard narrative pacing
+      // Sex/Erotic scenes: 150-200 words MAX — fast, reactive, speculative-friendly
+      // ═══════════════════════════════════════════════════════════════════════════
+      function buildSceneLengthDirective() {
+          const sceneIndex = state.turnCount || 0;
+          const isMainPairSexScene = isMainCharacterSexSceneAllowed() && detectMainPairEroticContent();
+
+          // Scene 1 (Opening): LONGEST scene — establishes world, tone, power dynamics
+          // MUST NOT include sexual/romantic contact between main characters
+          if (sceneIndex === 0) {
+              return `Write the opening scene (500-600 words). This is the LONGEST scene.
+Establish: world, tone, power dynamics, emotional stakes, character tension.
+NO sexual or romantic physical contact between the two main characters in this scene.
+Ambient erotic content (side characters, memories, atmosphere) is permitted if tone is Dirty.`;
+          }
+
+          // Sex scenes between main characters: SHORT for responsiveness
+          if (isMainPairSexScene) {
+              return `Write the next beat (150-200 words MAX).
+This is an erotic scene — keep it SHORT for fast generation and player responsiveness.
+Focus on sensation, tension, and reaction. Dense, not sprawling.`;
+          }
+
+          // All other scenes (non-sex, or pre-gate erotic atmosphere): standard length
+          return `Write the next beat (300-500 words).
+Take time for atmosphere, reaction, emotional beats, and tension building.`;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // EROTIC GATING — MAIN CHARACTER CONTACT ONLY
+      // storybound/scene-length-erotic-gates-canonical-v2
+      // ═══════════════════════════════════════════════════════════════════════════
+      // Sexual/romantic contact between TWO MAIN CHARACTERS is gated and delayed.
+      // Gate is VARIABLE based on: story length tier, intensity, scene index, milestones.
+      //
+      // ✅ ALLOWED BEFORE GATE:
+      //    - Side character sex, ex encounters, memories, fantasies, witnessing others
+      //    - Ambient erotic atmosphere (Dirty tone), voyeuristic scenes
+      //
+      // ❌ FORBIDDEN BEFORE GATE (main characters only):
+      //    - Kissing, sexual touching, sex, "almost kiss" loopholes, "accidental" contact
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      /**
+       * Calculate when main character intimacy gate opens
+       * Returns the scene index at which main pair contact is allowed
+       */
+      function getMainPairIntimacyGateScene() {
+          const storyLength = state.storyLength || 'tease';
+          const intensity = state.intensity || 'Naughty';
+
+          // Base gates by story length tier
+          const baseGates = {
+              tease: 4,    // Short: tension builds quickly
+              fling: 6,    // Medium: more buildup
+              affair: 10   // Long: slow burn
+          };
+
+          let gateScene = baseGates[storyLength] || 4;
+
+          // Intensity modifiers — Dirty/Erotic opens gate earlier
+          if (intensity === 'Dirty') {
+              gateScene = Math.max(2, gateScene - 2);  // Dirty: 2 scenes earlier
+          } else if (intensity === 'Erotic') {
+              gateScene = Math.max(3, gateScene - 1);  // Erotic: 1 scene earlier
+          } else if (intensity === 'Flirty') {
+              gateScene += 1;  // Flirty: slower burn
+          }
+
+          // Milestone modifiers — certain flags can adjust gate
+          if (state.intimacyInterrupted?.first_kiss) {
+              // If first kiss was already interrupted, we're past the gate
+              gateScene = Math.min(gateScene, state.turnCount || 0);
+          }
+
+          return gateScene;
+      }
+
+      /**
+       * Check if main character intimacy is currently allowed
+       */
+      function isMainCharacterSexSceneAllowed() {
+          const sceneIndex = state.turnCount || 0;
+          const gateScene = getMainPairIntimacyGateScene();
+          return sceneIndex >= gateScene;
+      }
+
+      /**
+       * Detect if current scene involves main pair erotic content
+       * (Used to determine scene length, not to block content)
+       */
+      function detectMainPairEroticContent() {
+          // Check if intensity suggests erotic content
+          const intensity = state.intensity || 'Naughty';
+          if (!['Erotic', 'Dirty'].includes(intensity)) {
+              return false;
+          }
+
+          // Check if both intimacy gates have been cleared (past first interrupts)
+          if (state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_sex) {
+              return true;  // Full intimacy unlocked
+          }
+
+          return false;
+      }
+
+      /**
+       * Build erotic gating directive for story prompt
+       * Combines scene-based gating with Storyturn-based sex rules
+       */
+      function buildEroticGatingDirective() {
+          const sceneIndex = state.turnCount || 0;
+          const gateScene = getMainPairIntimacyGateScene();
+          const intensity = state.intensity || 'Naughty';
+          const currentSt = state.storyturn || 'ST1';
+          const storyLength = (state.storyLength || 'tease').toLowerCase();
+          const isSceneGateOpen = sceneIndex >= gateScene;
+
+          // Only apply gating for erotic/dirty intensity
+          if (!['Erotic', 'Dirty'].includes(intensity)) {
+              return '';  // Non-erotic intensity: no special gating needed
+          }
+
+          // Check Storyturn-based sex permission
+          const sexAllowedAtStoryturn = typeof isSexAllowedAtCurrentStoryturn === 'function'
+              ? isSexAllowedAtCurrentStoryturn()
+              : false;
+          const completionAllowed = typeof isSexCompletionAllowed === 'function'
+              ? isSexCompletionAllowed()
+              : false;
+
+          // Full gate open: both scene gate AND storyturn allow sex
+          if (isSceneGateOpen && sexAllowedAtStoryturn && completionAllowed) {
+              return '';  // Gate is fully open: main pair contact allowed
+          }
+
+          // Tease at ST3: sex INITIATION allowed, but COMPLETION blocked
+          if (storyLength === 'tease' && currentSt === 'ST3' && sexAllowedAtStoryturn && !completionAllowed) {
+              return `
+STORYTURN GATING (Tease @ ${currentSt} — Initiation Only):
+Sex scenes may BEGIN but must NOT COMPLETE.
+- Kissing: ALLOWED
+- Sexual touching: ALLOWED
+- Sex initiation: ALLOWED
+- Sex COMPLETION: BLOCKED — interrupt before climax
+
+The scene MUST end on a cliffhanger before completion.
+This is the Tease ceiling — upgrade unlocks resolution.`;
+          }
+
+          // Gate is CLOSED: Allow ambient erotic, block main pair contact
+          return `
+EROTIC GATING (Scene ${sceneIndex + 1}/${currentSt}, Gate opens at Scene ${gateScene + 1}):
+The two MAIN CHARACTERS must NOT have sexual or romantic physical contact yet.
+- NO kissing between main pair
+- NO sexual touching between main pair
+- NO sex between main pair
+- NO "almost kiss" or "accidental contact" loopholes
+
+✅ ALLOWED erotic content (to maintain ${intensity} tone):
+- Side characters engaging in sexual activity
+- Memories or flashbacks of past encounters with others
+- Dreams or fantasies about others
+- Witnessing or overhearing other characters
+- Voyeuristic or ambient erotic atmosphere
+- Tension, temptation, near-misses that do NOT resolve
+
+Build the tension. Delay the payoff. The main pair's unresolved desire IS the story.`;
+      }
+
+      // INTIMACY MILESTONE INTERRUPTION — inject directive if first attempt
+      const intimacyInterrupt = buildIntimacyInterruptionDirective(safeAction, safeDialogue);
+      const intimacyDirective = intimacyInterrupt.directive;
+
       const bbDirective = getBatedBreathDirective(); 
       const safetyDirective = state.godModeActive ? "" : "Remember Safety: No sexual violence. No non-con (unless implied/consensual roleplay).";
       const edgeDirective = (state.edgeCovenant.active) 
@@ -21212,19 +23440,50 @@ FATE CARD ADAPTATION (CRITICAL):
       // TONE ENFORCEMENT BLOCK (all tones)
       const turnToneEnforcement = buildToneEnforcementBlock(state.picks?.tone);
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+      // EROTIC GATING DIRECTIVE — blocks main pair contact before gate opens
+      const eroticGatingDirective = buildEroticGatingDirective();
+
+      // FATE CARD RESOLUTION DIRECTIVE — Storyturn-aware resolution depth
+      const fateCardResolutionDirective = typeof buildFateCardResolutionDirective === 'function'
+          ? buildFateCardResolutionDirective(selectedFateCard)
+          : '';
+
+      // FREE-TEXT STORYTURN DIRECTIVE — applies same rules as Fate Cards
+      // Only included when no Fate Card is used (pure free-text input)
+      const freeTextStoryturnDirective = (!selectedFateCard && typeof buildFreeTextStoryturnDirective === 'function')
+          ? buildFreeTextStoryturnDirective(act, dia)
+          : '';
+
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
       ${metaMsg}
 
-      Write the next beat (150-250 words).`;
+      ${buildSceneLengthDirective()}`;
 
       // STORY PROMPT GUARD: Validate size (debug only, never truncate)
       validateStoryPromptSize(fullSys, 'turn-generation-fullSys');
 
       // Flag to track if story was successfully displayed (prevents false positive errors)
       let storyDisplayed = false;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // SPECULATIVE SCENE CHECK — Use preloaded scene if valid
+      // ═══════════════════════════════════════════════════════════════════
+      let useSpeculative = false;
+      const speculativeScene = tryCommitSpeculativeScene();
+      if (speculativeScene) {
+          // Verify the speculative context still matches after normalization
+          // (act/dia may have changed during normalization)
+          if (speculativeScene.normalizedAction === act &&
+              speculativeScene.normalizedDialogue === dia) {
+              useSpeculative = true;
+              console.log('[SPECULATIVE] Using preloaded scene — instant transition');
+          } else {
+              console.log('[SPECULATIVE] Normalized input changed, discarding');
+          }
+      }
 
       try {
           /**
@@ -21251,7 +23510,12 @@ FATE CARD ADAPTATION (CRITICAL):
 
           let raw;
 
-          if (useFullOrchestration) {
+          // Use speculative scene if available, otherwise generate fresh
+          if (useSpeculative && speculativeScene) {
+              raw = speculativeScene.text;
+              // Update loading message to indicate instant use
+              updateLoadingMessage('Fate has already spoken...');
+          } else if (useFullOrchestration) {
               // Full 3-phase orchestration: ChatGPT → optional Grok → ChatGPT
               raw = await generateOrchestatedTurn({
                   systemPrompt: fullSys,
@@ -21511,6 +23775,11 @@ Regenerate the scene with ZERO Author presence.`;
 
           maybeFlipConsummation(raw);
 
+          // Latch intimacy milestone if interruption was triggered
+          if (intimacyInterrupt.milestone) {
+              latchIntimacyMilestone(intimacyInterrupt.milestone);
+          }
+
           // Manage Fling Latch
           if (state.storyStage === 'post-consummation') {
               if (state.flingClimaxDone) {
@@ -21555,6 +23824,12 @@ Regenerate the scene with ZERO Author presence.`;
               broadcastTurn(raw);
           }
 
+          // ═══════════════════════════════════════════════════════════════════
+          // SPECULATIVE PRELOAD: Schedule background preload of next scene
+          // Triggers 2s after scene renders, giving user time to select fate card
+          // ═══════════════════════════════════════════════════════════════════
+          scheduleSpeculativePreload();
+
       } catch(e) {
           // HTTP 429 RATE LIMIT — TERMINAL FAILURE, NO RETRY
           if (e instanceof RateLimitError || e?.isRateLimit) {
@@ -21579,6 +23854,343 @@ Regenerate the scene with ZERO Author presence.`;
           // TASK F: Remove submitting state
           const submitBtn = $('submitBtn');
           if (submitBtn) submitBtn.classList.remove('submitting');
+      }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SPECULATIVE NEXT SCENE PRELOAD
+  // Preloads the next scene in background while user reads or selects Fate cards
+  // CONSTRAINTS: speculative, disposable, invisible, non-authoritative
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Generate a hash of current fate context for comparison
+   * Includes: selected fate card, action/dialogue inputs, tone, world, intensity
+   */
+  function getFateContextHash() {
+      const fateIdx = state.fateSelectedIndex ?? -1;
+      const fateCard = (fateIdx >= 0 && state.fateOptions?.[fateIdx]) ? state.fateOptions[fateIdx].id : 'none';
+      const action = $('actionInput')?.value?.trim() || '';
+      const dialogue = $('dialogueInput')?.value?.trim() || '';
+      const tone = state.picks?.tone || 'Earnest';
+      const world = state.picks?.world || 'Modern';
+      const intensity = state.intensity || 'Naughty';
+      // Simple hash: concatenate key values
+      return `${fateCard}|${action}|${dialogue}|${tone}|${world}|${intensity}`;
+  }
+
+  /**
+   * Invalidate speculative scene — called on ANY fate context change
+   */
+  function invalidateSpeculativeScene() {
+      if (state.speculativeNextScene) {
+          console.log('[SPECULATIVE] Invalidated — fate context changed');
+      }
+      state.speculativeNextScene = null;
+  }
+
+  /**
+   * Check if speculative scene is still valid (not expired, context unchanged)
+   */
+  function isSpeculativeSceneValid() {
+      if (!state.speculativeNextScene) return false;
+
+      // Freshness guard: 120 second expiry
+      if (Date.now() - state.speculativeNextScene.createdAt > 120000) {
+          console.log('[SPECULATIVE] Expired (>120s)');
+          state.speculativeNextScene = null;
+          return false;
+      }
+
+      // Context guard: fate context must match
+      const currentHash = getFateContextHash();
+      if (state.speculativeNextScene.fateContextHash !== currentHash) {
+          console.log('[SPECULATIVE] Context mismatch');
+          state.speculativeNextScene = null;
+          return false;
+      }
+
+      return true;
+  }
+
+  /**
+   * Preload next scene speculatively (background, no side effects)
+   * CRITICAL: Uses EXACT same orchestration pipeline as real turns
+   * Only difference: { speculative: true, skipSideEffects: true }
+   */
+  async function preloadNextScene() {
+      // Guard: don't preload if already preloading or have valid speculation
+      if (state.isPreloadingNextScene) return;
+      if (isSpeculativeSceneValid()) return;
+
+      // Get current inputs (use fate card defaults if inputs empty)
+      const fateIdx = state.fateSelectedIndex ?? -1;
+      const selectedFateCard = (fateIdx >= 0 && state.fateOptions?.[fateIdx]) ? state.fateOptions[fateIdx] : null;
+
+      let rawAct = $('actionInput')?.value?.trim() || '';
+      let rawDia = $('dialogueInput')?.value?.trim() || '';
+
+      // Use fate card defaults if no input yet
+      if (!rawAct && selectedFateCard?.action) rawAct = selectedFateCard.action;
+      if (!rawDia && selectedFateCard?.dialogue) rawDia = selectedFateCard.dialogue;
+
+      // Need SOME input to generate meaningful scene
+      if (!rawAct && !rawDia) return;
+
+      const fateContextHash = getFateContextHash();
+      state.isPreloadingNextScene = true;
+
+      console.log('[SPECULATIVE] Starting preload (same pipeline as real turn)...');
+
+      try {
+          // ═══════════════════════════════════════════════════════════════════
+          // EXACT SAME PIPELINE AS REAL TURN (lines 21367-21500 in submitBtn)
+          // ═══════════════════════════════════════════════════════════════════
+
+          // 1. Normalize inputs (same as real turn)
+          const axis = state.godModeActive ? 'god_mode' : 'action';
+          const actNorm = await callNormalizationLayer({
+              axis: axis,
+              user_text: rawAct,
+              context_signals: state.picks?.world || []
+          });
+          const diaNorm = await callNormalizationLayer({
+              axis: axis,
+              user_text: rawDia,
+              context_signals: state.picks?.world || []
+          });
+          const act = actNorm.canonical_instruction || actNorm.normalized_text || rawAct;
+          const dia = diaNorm.canonical_instruction || diaNorm.normalized_text || rawDia;
+
+          // Check if context changed during normalization
+          if (getFateContextHash() !== fateContextHash) {
+              console.log('[SPECULATIVE] Context changed during normalization, aborting');
+              return;
+          }
+
+          // 2. Get story context (same as real turn)
+          const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+          const context = allContent.slice(-3000);
+
+          // 3. Build intensity guard (same as real turn)
+          let intensityGuard = "";
+          if (state.godModeActive) {
+              intensityGuard = "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED.";
+          } else if (state.intensity === "Naughty") {
+              intensityGuard = "INTENSITY RULE: Naughty. Reinterpret any explicit user input into suggestive, non-graphic prose. Do NOT echo graphic terms. Focus on tension.";
+          } else if (state.intensity === "Erotic") {
+              intensityGuard = "INTENSITY RULE: Erotic. Explicit intimacy allowed. If input is extreme, soften it while preserving the act. Maintain literary tone.";
+          } else if (state.intensity === "Dirty") {
+              intensityGuard = "INTENSITY RULE: Dirty. Depict entered actions/words. Apply the selected Style voice (e.g. Shakespearean/Breathless). Dirty isn't always raw; respect the Voice.";
+          } else {
+              intensityGuard = "INTENSITY RULE: Clean. Romance and chemistry only. Fade to black if necessary.";
+          }
+
+          // 4. Build pacing directive (same as real turn)
+          const wc = currentStoryWordCount();
+          const len = state.storyLength || 'tease';
+          let pacingDirective = "";
+          if (len === 'tease' && wc > 6500) {
+              pacingDirective = "PACING ALERT (TEASE TIER): Approaching limit. Build extreme tension but DENY release. Steer narrative toward an unresolved cliffhanger ending. Do NOT resolve the desire.";
+          } else if (len === 'fling') {
+              if (state.flingClimaxDone) {
+                  pacingDirective = "PACING ALERT (FLING TIER): Climax occurred. Now introduce a complication, regret, or external consequence. Steer toward an unresolved ending/cliffhanger regarding this new problem. Do NOT resolve fully.";
+              } else if (wc > 15000) {
+                  pacingDirective = "PACING ALERT (FLING TIER): Approaching story limit. Push for the single permitted erotic climax now.";
+              }
+          } else if (['affair', 'soulmates'].includes(len)) {
+              pacingDirective = "PACING: Standard arc pacing. Allow beats to breathe. Avoid abrupt cliffhangers unless consistent with chapter flow. Resolve arcs naturally.";
+          }
+
+          // 5. Build all directives (same as real turn)
+          const bbDirective = getBatedBreathDirective();
+          const safetyDirective = state.godModeActive ? "" : "Remember Safety: No sexual violence. No non-con (unless implied/consensual roleplay).";
+          const edgeDirective = (state.edgeCovenant?.active)
+              ? `EDGE COVENANT ACTIVE (Level ${state.edgeCovenant.level}): You are authorized to be more dominant, push boundaries, and create higher tension/stakes. Use more imperative language.`
+              : "";
+          const metaMsg = buildMetaDirective();
+          const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
+
+          // Squash directive
+          const fateCardUsed = selectedFateCard && selectedFateCard.title;
+          const squashDirective = `CRITICAL REINTERPRETATION RULE:
+- NEVER repeat the player's action or dialogue verbatim in your response.
+- ALWAYS reinterpret their intent into the story's voice, tone, and character.
+- Transform their words into the narrative style of this story.
+- If they write "I kiss him", describe a kiss in your literary voice.
+- If they write clunky dialogue, render it as the character would actually speak.
+- The player provides intent. You provide craft.${fateCardUsed ? `
+
+FATE CARD ADAPTATION (CRITICAL):
+- The player used a Fate Card "${selectedFateCard.title}" - their input reflects that card's suggestion.
+- You MUST transform the Fate Card text completely into your own prose.
+- DO NOT echo phrases like "${(act || '').slice(0, 30)}..." verbatim.
+- The Fate Card is a prompt, not a script. Capture the ESSENCE, never the exact words.
+- Write as if YOU conceived this beat, not as if you're following a template.` : ''}`;
+
+          // Veto rules
+          const vetoExclusions = state.veto?.excluded?.length ? `VETO EXCLUSIONS (treat as nonexistent): ${state.veto.excluded.join('; ')}.` : '';
+          const vetoCorrections = state.veto?.corrections?.length ? `VETO CORRECTIONS (apply going forward): ${state.veto.corrections.join('; ')}.` : '';
+          const vetoAmbient = state.veto?.ambientMods?.length ? `VETO AMBIENT (apply if world allows): ${state.veto.ambientMods.join('; ')}.` : '';
+          const vetoRules = [vetoExclusions, vetoCorrections, vetoAmbient].filter(Boolean).join('\n');
+
+          // Lens enforcement
+          const lensEnforcement = buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength);
+
+          // POV contract
+          const turnPOVContract = build5thPersonContract();
+
+          // Erotic escalation
+          const turnEroticEscalation = buildEroticEscalationBlock();
+
+          // Tone enforcement
+          const turnToneEnforcement = buildToneEnforcementBlock(state.picks?.tone);
+
+          // 6. Build scene length directive (CANONICAL — storybound/scene-length-erotic-gates-canonical-v2)
+          // Scene 1: 500-600 words | Non-sex 2+: 300-500 | Sex: 150-200 MAX
+          const specSceneIndex = state.turnCount || 0;
+          const specIntensity = state.intensity || 'Naughty';
+          const specIsErotic = ['Erotic', 'Dirty'].includes(specIntensity);
+          const specBothMilestonesCleared = state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_sex;
+          let sceneLengthDirective;
+          if (specSceneIndex === 0) {
+              sceneLengthDirective = 'Write the opening scene (500-600 words). LONGEST scene. Establish world, tone, power dynamics. NO main pair physical contact.';
+          } else if (specIsErotic && specBothMilestonesCleared) {
+              sceneLengthDirective = 'Write the next beat (150-200 words MAX). Erotic scene — keep SHORT for responsiveness.';
+          } else {
+              sceneLengthDirective = 'Write the next beat (300-500 words). Take time for atmosphere, reaction, emotional beats.';
+          }
+
+          // Build erotic gating directive (inline for speculative path)
+          let specEroticGating = '';
+          if (specIsErotic && !specBothMilestonesCleared) {
+              const baseGates = { tease: 4, fling: 6, affair: 10 };
+              let gateScene = baseGates[state.storyLength || 'tease'] || 4;
+              if (specIntensity === 'Dirty') gateScene = Math.max(2, gateScene - 2);
+              else if (specIntensity === 'Erotic') gateScene = Math.max(3, gateScene - 1);
+              if (specSceneIndex < gateScene) {
+                  specEroticGating = `\nEROTIC GATING: Main characters must NOT have physical contact yet. Ambient erotic content (others, memories, atmosphere) IS allowed.\n`;
+              }
+          }
+
+          // 7. Build fullSys (EXACT same structure as real turn)
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+      Story So Far: ...${context}
+      Player Action: ${act}.
+      Player Dialogue: ${dia}.
+      ${metaMsg}
+
+      ${sceneLengthDirective}`;
+
+          // Check context again before generation
+          if (getFateContextHash() !== fateContextHash) {
+              console.log('[SPECULATIVE] Context changed before generation, aborting');
+              return;
+          }
+
+          // 7. Generate using EXACT same orchestration as real turn
+          const useFullOrchestration = ENABLE_ORCHESTRATION &&
+                                       window.StoryboundOrchestration &&
+                                       ['Erotic', 'Dirty'].includes(state.intensity);
+
+          let raw;
+          if (useFullOrchestration) {
+              raw = await generateOrchestatedTurn({
+                  systemPrompt: fullSys,
+                  storyContext: context,
+                  playerAction: act,
+                  playerDialogue: dia,
+                  fateCard: selectedFateCard,
+                  speculative: true,
+                  skipSideEffects: true,
+                  onPhaseChange: () => {} // No UI updates for speculative
+              });
+          } else {
+              raw = await callChat([
+                  { role: 'system', content: fullSys },
+                  { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+              ]);
+          }
+
+          // Final context check before storing
+          if (getFateContextHash() !== fateContextHash) {
+              console.log('[SPECULATIVE] Context changed during generation, discarding');
+              return;
+          }
+
+          // Store speculative result
+          state.speculativeNextScene = {
+              text: raw,
+              fateContextHash: fateContextHash,
+              tone: state.picks?.tone,
+              world: state.picks?.world,
+              selectedFateCard: selectedFateCard,
+              normalizedAction: act,
+              normalizedDialogue: dia,
+              createdAt: Date.now()
+          };
+
+          console.log('[SPECULATIVE] Preload complete (byte-equivalent to real turn)');
+
+      } catch (err) {
+          console.warn('[SPECULATIVE] Preload failed (non-critical):', err.message);
+      } finally {
+          state.isPreloadingNextScene = false;
+      }
+  }
+
+  /**
+   * Try to commit speculative scene on user Continue click
+   * Returns the speculative text if valid, null otherwise
+   */
+  function tryCommitSpeculativeScene() {
+      if (!isSpeculativeSceneValid()) {
+          return null;
+      }
+
+      const spec = state.speculativeNextScene;
+
+      // Clear speculation BEFORE returning (commit is one-shot)
+      state.speculativeNextScene = null;
+
+      console.log('[SPECULATIVE] Committing preloaded scene — instant transition');
+      return spec;
+  }
+
+  /**
+   * Trigger preload after scene renders (debounced)
+   */
+  let _preloadDebounceTimer = null;
+  function scheduleSpeculativePreload() {
+      // Clear existing timer
+      if (_preloadDebounceTimer) {
+          clearTimeout(_preloadDebounceTimer);
+      }
+
+      // Wait 2 seconds after scene renders before preloading
+      // This gives user time to start reading and select fate card
+      _preloadDebounceTimer = setTimeout(() => {
+          preloadNextScene();
+      }, 2000);
+  }
+
+  // Expose for external invalidation hooks
+  window.invalidateSpeculativeScene = invalidateSpeculativeScene;
+  window.scheduleSpeculativePreload = scheduleSpeculativePreload;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SPECULATIVE INVALIDATION: Input change listeners
+  // Any change to action/dialogue invalidates speculation
+  // ═══════════════════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+      const actionInput = $('actionInput');
+      const dialogueInput = $('dialogueInput');
+
+      if (actionInput) {
+          actionInput.addEventListener('input', invalidateSpeculativeScene);
+      }
+      if (dialogueInput) {
+          dialogueInput.addEventListener('input', invalidateSpeculativeScene);
       }
   });
 
