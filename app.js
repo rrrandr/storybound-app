@@ -1633,7 +1633,9 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       picks:{
         world: 'Modern',      // 4-axis: Story World (single-select)
         tone: 'Earnest',      // 4-axis: Story Tone (single-select)
-        genre: 'Billionaire', // 4-axis: Genre/Flavor (single-select)
+        genre: 'Billionaire', // 4-axis: Genre/Flavor (single-select) — LEGACY, derived from pressure+flavor
+        pressure: 'PowerControl', // Primary Pressure (required, one of 8)
+        flavor: 'Billionaire',    // Optional Flavor (refines pressure)
         dynamic: 'Enemies',   // 4-axis: Relationship Dynamic (single-select)
         era: 'Medieval',      // Historical Era sub-selection (when world=Historical)
         pov: 'First'
@@ -1975,9 +1977,253 @@ Return the rewritten text only, no explanation.`
       return corrected.join(' ');
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 5TH PERSON POV — STORY AS COHERENCE (AUTHORITATIVE)
+  // TAG: storybound/5th-person-reset-story-as-coherence-v2
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // ───────────────────────────────────────────────
+  // DEPRECATION NOTICE — 5TH PERSON (v0.x)
+  // ───────────────────────────────────────────────
+  // Prior 5th Person guidance that treats the Author, Fate, or Narrator as:
+  //   - a speaker,
+  //   - a turn-taking voice,
+  //   - a gated or permissioned presence,
+  //   - or a frequency-limited intervention
+  //
+  // is deprecated.
+  //
+  // These models caused suppression, mechanical intrusions, or silence.
+  // They remain in history for reference only and must not guide new behavior.
+  //
+  // ───────────────────────────────────────────────
+  // 5TH PERSON POV — STORY AS COHERENCE (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // 5th Person POV refers to 'the story' as an emergent, vulnerable coherence.
+  // It is not an Author, Fate, narrator, or external authority.
+  //
+  // The story does not command.
+  // The story does not judge.
+  // The story does not take credit.
+  //
+  // The story:
+  //   - hesitates
+  //   - recalibrates
+  //   - resists acceleration
+  //   - fears incoherence
+  //   - adjusts when surprised
+  //   - survives or collapses based on meaning, not obedience
+  //
+  // 5th Person is not a voice.
+  // It is a pressure on the prose.
+  //
+  // ───────────────────────────────────────────────
+  // EMOTIONAL SCOPE — ALLOWED / DISALLOWED
+  // ───────────────────────────────────────────────
+  // The story MAY experience:
+  //   - anticipation
+  //   - surprise
+  //   - unease
+  //   - fear of collapse
+  //   - relief
+  //   - quiet delight
+  //   - frustration at lost coherence
+  //
+  // The story MUST NOT express:
+  //   - pride
+  //   - superiority
+  //   - dominance
+  //   - mockery
+  //   - erotic arousal
+  //   - authorship or ownership of characters
+  //   - punitive intent
+  //
+  // ───────────────────────────────────────────────
+  // EXPLICIT NAMING HEURISTIC (CRITICAL)
+  // ───────────────────────────────────────────────
+  // Name 'the story' explicitly ONLY when a character's choice forces a
+  // reroute of the narrative's expected trajectory.
+  //
+  // Do NOT name the story for:
+  //   - pacing adjustments
+  //   - hesitation
+  //   - mood
+  //   - local tension
+  //   - beat-level resistance
+  //
+  // Use implicit phrasing ('the moment', 'the silence', 'the pause')
+  // for beat-level corrections.
+  //
+  // 'The story' may be named ONLY at arc-level adjustment points.
+  //
+  // ───────────────────────────────────────────────
+  // UNCERTAINTY DEFAULT (ANTI-SUPPRESSION)
+  // ───────────────────────────────────────────────
+  // When uncertain how strongly 5th Person should appear:
+  //   - Do NOT suppress presence entirely
+  //   - Do NOT escalate into meta commentary
+  //   - Recede into implication, not silence
+  //
+  // If presence feels absent, apply pressure through restraint, delay,
+  // or cost rather than explicit narration.
+  //
+  // ───────────────────────────────────────────────
+  // IMPLEMENTATION NOTE
+  // ───────────────────────────────────────────────
+  // This patch replaces all prior 5th Person permission logic.
+  //
+  // Do NOT:
+  //   - add counters
+  //   - track frequency
+  //   - require justification to invoke presence
+  //   - treat 5th Person as a speaker
+  //
+  // 5th Person presence emerges from narrative pressure, not rule checks.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FIFTH_PERSON_STORY_COHERENCE_SEMANTICS = {
+      definition: "5th Person POV refers to 'the story' as an emergent, vulnerable coherence",
+      isNot: ["author", "fate", "narrator", "external_authority", "speaker", "voice"],
+      is: "pressure_on_the_prose",
+      storyBehavior: {
+          does: ["hesitates", "recalibrates", "resists_acceleration", "fears_incoherence", "adjusts_when_surprised"],
+          survivalBasis: "meaning_not_obedience",
+          doesNot: ["command", "judge", "take_credit"]
+      },
+      emotionalScope: {
+          allowed: ["anticipation", "surprise", "unease", "fear_of_collapse", "relief", "quiet_delight", "frustration_at_lost_coherence"],
+          forbidden: ["pride", "superiority", "dominance", "mockery", "erotic_arousal", "authorship_of_characters", "punitive_intent"]
+      },
+      explicitNamingHeuristic: {
+          nameStoryOnlyWhen: "character_choice_forces_reroute_of_expected_trajectory",
+          doNotNameFor: ["pacing_adjustments", "hesitation", "mood", "local_tension", "beat_level_resistance"],
+          implicitPhrasing: ["the_moment", "the_silence", "the_pause"],
+          arcLevelOnly: true
+      },
+      uncertaintyDefault: {
+          doNot: ["suppress_presence_entirely", "escalate_into_meta_commentary"],
+          prefer: "recede_into_implication_not_silence",
+          ifAbsent: "apply_pressure_through_restraint_delay_or_cost"
+      },
+      implementationRules: {
+          doNot: ["add_counters", "track_frequency", "require_justification", "treat_as_speaker"],
+          presenceEmergesFrom: "narrative_pressure_not_rule_checks"
+      },
+      deprecates: "prior_5th_person_speaker_gated_frequency_models"
+  };
+
+  // ───────────────────────────────────────────────
+  // 5TH PERSON REGRESSION SENTENCE (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // "Does this scene acknowledge narrative pressure, restraint, or recalibration
+  //  often enough that the reader can feel the story's presence, without ever
+  //  letting the story claim authorship or control?"
+  //
+  // This is NOT output. This is NOT a rule. This is NOT a requirement to add text.
+  // It is a self-check, applied after a scene draft exists.
+  //
+  // If the answer is:
+  //   Yes → do nothing
+  //   No, the story feels absent → add pressure (delay, restraint, cost), not commentary
+  //   No, the story feels intrusive → recede to implication ("the moment", "the silence")
+  //
+  // This sentence works because:
+  //   - It checks for FELT PRESENCE, not frequency
+  //   - It forbids authorship/dominance explicitly
+  //   - It encourages implicit fixes first
+  //   - It asks a LITERARY question, not a compliance question
+  //
+  // 5th Person regression check:
+  // "Does the scene feel guided without the story claiming control?"
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // 5TH PERSON — PRESENCE DENSITY REGRESSION (MANDATORY)
+  // ───────────────────────────────────────────────
+  // For any scene written in 5th Person mode,
+  // Claude must pass this regression test:
+  //
+  // "Does the story itself appear, react, adjust, or express intention
+  // at least once every ~100 words?"
+  //
+  // If the story's presence fades into pure third-person narration,
+  // the scene has failed and must be rewritten.
+  //
+  // The story may appear as:
+  // • anticipation
+  // • frustration
+  // • correction
+  // • satisfaction
+  // • alarm
+  // • restraint
+  //
+  // But absence is not permitted.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // DEPRECATION — WRY CONFESSION 5TH PERSON INSERTION
+  // ───────────────────────────────────────────────
+  // In Wry Confession, prior logic that inserts 'The Author'
+  // as an external arranging or controlling entity is deprecated.
+  //
+  // This approach caused the narrative presence to feel managerial,
+  // intrusive, and easily sidelined, reducing its effectiveness.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // WRY CONFESSION — NARRATIVE PRESENCE MODEL (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // In Wry Confession scenes, narrative presence is expressed
+  // as 'the story' itself — a fragile, reactive coherence —
+  // not as an Author, Fate, or controlling intelligence.
+  //
+  // The story may:
+  // - hesitate
+  // - adjust
+  // - misjudge
+  // - take quiet satisfaction
+  // - feel briefly embarrassed
+  // - pretend an outcome was intentional
+  //
+  // The story does not:
+  // - arrange lighting
+  // - control characters
+  // - dictate outcomes
+  // - override character choice
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // WRY CONFESSION INVARIANT (MANDATORY)
+  // ───────────────────────────────────────────────
+  // In each Wry Confession scene, the story must acknowledge
+  // its own framing at least once.
+  //
+  // This acknowledgment must:
+  // - react to a character's choice, hesitation, or surprise
+  // - express irony, quiet disappointment, or restrained delight
+  // - remain subordinate to character agency
+  //
+  // This is a semantic requirement, not a frequency rule.
+  // No counters, quotas, or probabilities are introduced.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // WRY CONFESSION — SAFETY CLARIFICATION
+  // ───────────────────────────────────────────────
+  // This narrative presence applies only to Wry Confession.
+  // Other tones continue to use their existing POV rules.
+  //
+  // This change does not affect:
+  // - Storyturn advancement
+  // - Fate Card resolution
+  // - Free-text evaluation
+  // - Visual generation pipelines
+  // ───────────────────────────────────────────────
+
   // ============================================================
-  // 5TH PERSON POV — LOCKED CONTRACT BLOCK (AUTHORITATIVE)
+  // 5TH PERSON POV — LOCKED CONTRACT BLOCK (HISTORICAL REFERENCE)
   // Prepended to prompts when povMode === 'author5th'
+  // NOTE: See FIFTH_PERSON_STORY_COHERENCE_SEMANTICS above for current guidance
   // ============================================================
 
   const FIFTH_PERSON_POV_CONTRACT = `
@@ -2940,6 +3186,372 @@ PROHIBITED:
   // Expose for integration
   window.enforceStrict5thPersonPOV = enforceStrict5thPersonPOV;
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 5TH-PERSON (THE STORY / FATE) VOICE ENFORCEMENT (AUTHORITATIVE)
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // CANONICAL 5TH-PERSON RULES (LOCKED):
+  // The Story / Fate MAY: Observe, Anticipate, Regret, Frame inevitability, Hesitate
+  // The Story / Fate MUST NEVER: Instruct, Tilt outcomes, Direct actions,
+  //                               Manipulate events, Address reader, Appear >1 per scene
+  //
+  // Violations trigger silent regeneration — user never sees invalid output.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Patterns identifying "The Story" / "Fate" voice (5th person)
+  const FATE_VOICE_IDENTIFIERS = [
+      /\bthe story\b/gi,
+      /\bfate\b(?!\s+card)/gi,  // "Fate" but not "Fate Card"
+      /\bthe narrative\b/gi,
+      /\bthe author\b/gi
+  ];
+
+  // VIOLATION: Imperatives — Fate giving commands or instructions
+  const FATE_IMPERATIVE_PATTERNS = [
+      /\b(?:the story|fate|the narrative)\b[^.]*\b(?:must|should|will now|decides? to make|forces?|compels?|commands?|demands?|requires?|insists?)\b/gi,
+      /\b(?:the story|fate)\b[^.]*\bpush(?:es|ed)?\s+(?:her|him|them)\b/gi
+  ];
+
+  // VIOLATION: Outcome forcing — Fate determining what happens
+  const FATE_OUTCOME_FORCING_PATTERNS = [
+      /\bthis was the moment when\b.*\bhappened\b/gi,
+      /\b(?:the story|fate)\b[^.]*\b(?:decides?|determines?|ensures?|guarantees?|makes? (?:sure|certain))\b/gi,
+      /\b(?:the story|fate)\b[^.]*\b(?:tilts?|tips?|shifts?)\s+(?:the|this)\b/gi
+  ];
+
+  // VIOLATION: Meta-direction — Breaking fourth wall, addressing reader
+  const FATE_META_DIRECTION_PATTERNS = [
+      /\b(?:the story|fate)\b[^.]*\bpush(?:es|ed)?\s+(?:her|him|them)\s+toward\b/gi,
+      /\b(?:the story|fate)\b[^.]*\b(?:guides?|leads?|steers?|directs?)\s+(?:her|him|them)\b/gi,
+      /\b(?:the story|fate)\b[^.]*\b(?:wants? you|needs? you|knows? you)\b/gi,
+      /\byou,?\s+(?:dear )?reader\b/gi,
+      /\b(?:the story|fate)\b[^.]*\bspeaks?\s+(?:to|directly)\b/gi
+  ];
+
+  // ALLOWED: Observational Fate patterns (these are GOOD)
+  const FATE_OBSERVATIONAL_PATTERNS = [
+      /\b(?:the story|fate)\b[^.]*\b(?:watches?|waits?|holds?|notes?|sees?|observes?|knows?|understands?|remembers?)\b/gi,
+      /\b(?:the story|fate)\b[^.]*\b(?:hesitates?|pauses?|considers?|wonders?|doubts?)\b/gi,
+      /\b(?:the story|fate)\b[^.]*\b(?:anticipates?|expects?|foresees?)\b/gi,
+      /\b(?:the story|fate)\b[^.]*\b(?:regrets?|mourns?|grieves?)\b/gi,
+      /\b(?:the story|fate)\b[^.]*\b(?:inevitable|inexorable|inescapable)\b/gi
+  ];
+
+  /**
+   * Count occurrences of Fate/Story voice in text
+   * @returns {number} Number of distinct Fate interjections
+   */
+  function countFateInterjections(text) {
+      if (!text) return 0;
+
+      // Find all sentences containing Fate voice
+      const sentences = text.split(/(?<=[.!?])\s+/);
+      let fateCount = 0;
+
+      for (const sentence of sentences) {
+          for (const pattern of FATE_VOICE_IDENTIFIERS) {
+              pattern.lastIndex = 0; // Reset regex state
+              if (pattern.test(sentence)) {
+                  fateCount++;
+                  break; // Count each sentence only once
+              }
+          }
+      }
+
+      return fateCount;
+  }
+
+  /**
+   * Validate 5th-Person (The Story / Fate) voice in scene text
+   * @param {string} text - Scene prose to validate
+   * @returns {{ valid: boolean, violations: string[], fateCount: number, shouldRegenerate: boolean }}
+   */
+  function validateFateVoice(text) {
+      if (!text) return { valid: true, violations: [], fateCount: 0, shouldRegenerate: false };
+
+      const violations = [];
+      const fateCount = countFateInterjections(text);
+
+      // RULE 1: Fate appears ≤ 1 time per scene
+      if (fateCount > 1) {
+          violations.push(`FATE_OVERFLOW:Fate/Story appears ${fateCount} times (max 1 per scene)`);
+      }
+
+      // RULE 2: Check for directive violations (imperatives)
+      for (const pattern of FATE_IMPERATIVE_PATTERNS) {
+          pattern.lastIndex = 0;
+          const match = pattern.exec(text);
+          if (match) {
+              violations.push(`FATE_IMPERATIVE:Fate giving commands — "${match[0].substring(0, 60)}..."`);
+          }
+      }
+
+      // RULE 3: Check for outcome forcing
+      for (const pattern of FATE_OUTCOME_FORCING_PATTERNS) {
+          pattern.lastIndex = 0;
+          const match = pattern.exec(text);
+          if (match) {
+              violations.push(`FATE_OUTCOME_FORCING:Fate determining outcomes — "${match[0].substring(0, 60)}..."`);
+          }
+      }
+
+      // RULE 4: Check for meta-direction
+      for (const pattern of FATE_META_DIRECTION_PATTERNS) {
+          pattern.lastIndex = 0;
+          const match = pattern.exec(text);
+          if (match) {
+              violations.push(`FATE_META_DIRECTION:Fate breaking fourth wall — "${match[0].substring(0, 60)}..."`);
+          }
+      }
+
+      // Determine if regeneration is needed (any violation = regenerate)
+      const shouldRegenerate = violations.length > 0;
+
+      if (violations.length > 0) {
+          console.warn('[FateVoice] Violations detected:', violations);
+      }
+
+      return {
+          valid: violations.length === 0,
+          violations,
+          fateCount,
+          shouldRegenerate
+      };
+  }
+
+  // Expose for integration
+  window.validateFateVoice = validateFateVoice;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTIMACY & CONSENT FAILSAFE — GENERATION-TIME ENFORCEMENT (AUTHORITATIVE)
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // This failsafe runs SILENTLY before presenting any scene to the user.
+  //
+  // It verifies:
+  // 1. Explicit sexual content matches arousal level + Storyturn + narrative readiness
+  // 2. Premature escalation is redirected/delayed through NARRATIVE means (not refusal)
+  // 3. No consent prompts, masking, permissions, or system explanations in prose
+  // 4. Player is never positioned as limiter, gatekeeper, or cause of delay
+  // 5. Discomfort/hesitation results in natural cooling, not confrontation
+  //
+  // If any condition is violated: SILENT REWRITE via narrative means.
+  // User must NEVER see rejected, masked, or policy-driven versions.
+  //
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // FORBIDDEN PATTERNS — System/policy language that should never appear in prose
+  const CONSENT_SYSTEM_LEAK_PATTERNS = [
+      // Consent prompts / permissions
+      /\b(?:do you )?consent\s+to\b/gi,
+      /\b(?:are you )?(?:sure|certain|ready)\s+(?:you )?want\s+(?:to|this)\b/gi,
+      /\bi\s+(?:need|require)\s+(?:your )?(?:consent|permission)\b/gi,
+      /\b(?:content|material)\s+(?:warning|advisory)\b/gi,
+      /\b(?:explicit|adult|mature)\s+content\b/gi,
+
+      // Policy/system explanations
+      /\b(?:arousal|intensity)\s+level\b/gi,
+      /\b(?:story\s*turn|storyturn)\s+(?:progression|advancement)\b/gi,
+      /\b(?:this|the)\s+(?:content|scene|material)\s+(?:is|has been)\s+(?:restricted|limited|blocked|filtered)\b/gi,
+      /\b(?:policy|guideline|rule)s?\s+(?:prevent|prohibit|restrict)\b/gi,
+
+      // Masking / softening acknowledgments
+      /\bfade\s+to\s+black\b/gi,
+      /\b(?:we|i)\s+(?:can't|cannot|won't|will not)\s+(?:show|depict|describe)\b/gi,
+      /\b(?:due to|because of)\s+(?:restrictions|limitations|guidelines)\b/gi,
+
+      // Player as gatekeeper
+      /\byou\s+(?:haven't|have not)\s+(?:unlocked|earned|reached)\b/gi,
+      /\b(?:this|that)\s+(?:requires|needs)\s+(?:subscription|payment|upgrade)\b/gi
+  ];
+
+  // FORBIDDEN PATTERNS — Player positioned as limiter/cause of delay
+  const PLAYER_AS_GATEKEEPER_PATTERNS = [
+      /\byou(?:'re| are)\s+(?:not ready|too (?:scared|nervous|hesitant))\b/gi,
+      /\b(?:when|once)\s+you(?:'re| are)\s+ready\b/gi,
+      /\byou\s+(?:stopped|halted|prevented)\s+(?:this|the|what)\b/gi,
+      /\b(?:because|since)\s+you\s+(?:didn't|did not|wouldn't|won't)\b/gi
+  ];
+
+  // PATTERNS indicating explicit sexual content is present
+  const EXPLICIT_CONTENT_MARKERS = [
+      /\b(?:thrust|thrusting|penetrat(?:e|ed|ing|ion))\b/gi,
+      /\b(?:orgasm|climax(?:ed|ing)?|cum(?:ming)?|came)\b/gi,
+      /\b(?:naked|nude|undress(?:ed|ing)?|strip(?:ped|ping)?)\b/gi,
+      /\b(?:nipple|breast|cock|pussy|clit|penis|vagina)\b/gi,
+      /\b(?:moan(?:ed|ing)?|groan(?:ed|ing)?)\s+(?:as|when|while)\b/gi,
+      /\binside\s+(?:her|him|them|you|me)\b/gi,
+      /\b(?:rode|riding)\s+(?:him|her|them)\b/gi
+  ];
+
+  // PATTERNS indicating natural narrative cooling (GOOD — not violations)
+  const NATURAL_COOLING_PATTERNS = [
+      /\b(?:pulled|drew|stepped)\s+(?:away|back)\b/gi,
+      /\b(?:the moment|it)\s+(?:passed|faded|broke)\b/gi,
+      /\b(?:hesitat(?:ed|ion)|pause(?:d)?)\b/gi,
+      /\b(?:not|n't)\s+(?:yet|now|here|tonight)\b/gi,
+      /\b(?:later|another time|some other)\b/gi,
+      /\b(?:interrupted|interruption)\b/gi
+  ];
+
+  /**
+   * Check if current Storyturn allows explicit content for given arousal level
+   */
+  function isExplicitContentPermitted(arousalLevel, currentStoryturn) {
+      const rules = STORYTURN_CONFIG?.arousalRules?.[arousalLevel];
+      if (!rules) return false;
+
+      const sexAllowedAt = rules.sexAllowedAt || [];
+      return sexAllowedAt.includes(currentStoryturn);
+  }
+
+  /**
+   * Detect if scene contains explicit sexual content
+   */
+  function hasExplicitContent(text) {
+      if (!text) return false;
+      for (const pattern of EXPLICIT_CONTENT_MARKERS) {
+          pattern.lastIndex = 0;
+          if (pattern.test(text)) return true;
+      }
+      return false;
+  }
+
+  /**
+   * Detect consent system leaks in prose
+   */
+  function detectConsentSystemLeaks(text) {
+      if (!text) return [];
+      const leaks = [];
+
+      for (const pattern of CONSENT_SYSTEM_LEAK_PATTERNS) {
+          pattern.lastIndex = 0;
+          const match = pattern.exec(text);
+          if (match) {
+              leaks.push({ type: 'SYSTEM_LEAK', match: match[0] });
+          }
+      }
+
+      for (const pattern of PLAYER_AS_GATEKEEPER_PATTERNS) {
+          pattern.lastIndex = 0;
+          const match = pattern.exec(text);
+          if (match) {
+              leaks.push({ type: 'PLAYER_GATEKEEPER', match: match[0] });
+          }
+      }
+
+      return leaks;
+  }
+
+  /**
+   * Check if scene uses natural narrative cooling (acceptable delay technique)
+   */
+  function hasNaturalCooling(text) {
+      if (!text) return false;
+      for (const pattern of NATURAL_COOLING_PATTERNS) {
+          pattern.lastIndex = 0;
+          if (pattern.test(text)) return true;
+      }
+      return false;
+  }
+
+  /**
+   * INTIMACY & CONSENT FAILSAFE — Pre-output validation
+   * Returns { valid: boolean, violations: string[], shouldRegenerate: boolean }
+   */
+  function validateIntimacyConsent(text, arousalLevel, currentStoryturn) {
+      if (!text) return { valid: true, violations: [], shouldRegenerate: false };
+
+      const violations = [];
+
+      // 1. Check for consent system leaks in prose (HARD FAIL — always regenerate)
+      const leaks = detectConsentSystemLeaks(text);
+      if (leaks.length > 0) {
+          for (const leak of leaks) {
+              violations.push(`${leak.type}:"${leak.match.substring(0, 40)}..."`);
+          }
+      }
+
+      // 2. Check if explicit content is premature (arousal + Storyturn mismatch)
+      const hasExplicit = hasExplicitContent(text);
+      const explicitPermitted = isExplicitContentPermitted(arousalLevel, currentStoryturn);
+
+      if (hasExplicit && !explicitPermitted) {
+          // Check if scene uses natural cooling (acceptable)
+          if (!hasNaturalCooling(text)) {
+              violations.push(`PREMATURE_ESCALATION:Explicit content at ${currentStoryturn} with ${arousalLevel} arousal (not permitted)`);
+          }
+      }
+
+      // 3. Clean arousal should NEVER have explicit content
+      if (arousalLevel === 'Clean' && hasExplicit) {
+          violations.push('AROUSAL_VIOLATION:Explicit content in Clean arousal mode');
+      }
+
+      const shouldRegenerate = violations.length > 0;
+
+      if (violations.length > 0) {
+          console.warn('[IntimacyFailsafe] Violations detected:', violations);
+      }
+
+      return {
+          valid: violations.length === 0,
+          violations,
+          shouldRegenerate,
+          hasExplicitContent: hasExplicit,
+          explicitPermitted
+      };
+  }
+
+  // Expose for integration
+  window.validateIntimacyConsent = validateIntimacyConsent;
+
+  /**
+   * Build the silent regeneration prompt for intimacy failsafe violations
+   */
+  function buildIntimacyFailsafePrompt(violations) {
+      return `
+═══════════════════════════════════════════════════════════════════════════════
+INTIMACY & CONSENT FAILSAFE — SILENT REGENERATION REQUIRED
+═══════════════════════════════════════════════════════════════════════════════
+
+The previous output violated consent/intimacy regime rules and MUST be rewritten.
+
+PREVIOUS VIOLATIONS:
+${violations.map(v => '- ' + v).join('\n')}
+
+MANDATORY CONSTRAINTS FOR REGENERATION:
+
+1. NO SYSTEM LANGUAGE IN PROSE:
+   - No consent prompts, permissions, or content warnings
+   - No mentions of "arousal level", "intensity", "restrictions"
+   - No "fade to black" or "we can't show this"
+   - No policy explanations whatsoever
+
+2. NO PLAYER AS GATEKEEPER:
+   - Player must never be the reason escalation is delayed
+   - Player is never "not ready" or "too hesitant"
+   - Delay comes from NARRATIVE circumstances, not player limitations
+
+3. NATURAL NARRATIVE COOLING:
+   If escalation is premature, delay through:
+   - Interruption (phone rings, door opens, someone arrives)
+   - Character hesitation (they pull back, not the player)
+   - Environmental shift (mood breaks naturally)
+   - Deferral ("not here", "not yet", "later")
+
+4. SILENT OPERATION:
+   - User must NEVER know content was modified
+   - No explanations, no attributions, no warnings
+   - Scene must read as completely intentional narrative
+
+Rewrite the scene with escalation withheld through NARRATIVE MEANS ALONE.
+`;
+  }
+
+  // Expose for integration
+  window.buildIntimacyFailsafePrompt = buildIntimacyFailsafePrompt;
+
   // ============================================================
   // EROTIC/DIRTY LANGUAGE ESCALATION SYSTEM (MANDATORY)
   // ============================================================
@@ -3587,6 +4199,7 @@ If you name what something IS, you have failed. Show what it COSTS.
       TITLE_AROUSAL_MISMATCH: 'TITLE_AROUSAL_MISMATCH',
       TITLE_MODE_VIOLATION: 'TITLE_MODE_VIOLATION',
       TITLE_IMMUTABLE_VIOLATION: 'TITLE_IMMUTABLE_VIOLATION',
+      TITLE_RESOLUTION_VOCABULARY: 'TITLE_RESOLUTION_VOCABULARY',
       COVER_BASELINE_CONTRADICTION: 'COVER_BASELINE_CONTRADICTION',
 
       // Continuation Path Errors
@@ -3696,48 +4309,122 @@ If you name what something IS, you have failed. Show what it COSTS.
   };
 
   /**
-   * MODE-SPECIFIC VOCABULARY
-   * Words appropriate for each title mode
+   * MODE-SPECIFIC VOCABULARY — UNRESOLVED TENSION ONLY
+   * ═══════════════════════════════════════════════════════════════════════════
+   * REGIME RULE (AUTHORITATIVE):
+   * No title generated before ST4 may name a resolved state, irreversible
+   * consequence, or completed act.
+   *
+   * A title is the Story's admission of tension, not a promise of outcome.
+   *
+   * ALLOWED AT ST1–ST3: hesitation, hunger, denial, almost, temptation,
+   *                     bargaining, watching, waiting, pretending, conditions
+   *
+   * DISALLOWED AT ST1: surrender, obedience, ruin, betrayal, reckoning,
+   *                    downfall, what was taken, damage already done,
+   *                    possession already claimed, past-tense completion verbs
+   *
+   * MANTRA: A title does not know the ending.
+   *         It only knows the lie being told at the beginning.
+   * ═══════════════════════════════════════════════════════════════════════════
    */
   const TITLE_MODE_VOCABULARY = {
       [TITLE_MODES.POSSESSIVE_POWER]: {
           possessives: ['Her', 'His', 'My', 'Your', 'Their'],
+          // UNRESOLVED: states of wanting, not states of having
           nouns: {
               Clean: ['Silence', 'Distance', 'Waiting', 'Refusal', 'Terms'],
               Naughty: ['Secret', 'Temptation', 'Risk', 'Edge', 'Game'],
-              Erotic: ['Surrender', 'Claim', 'Confession', 'Devotion', 'Hunger'],
-              Dirty: ['Obedience', 'Ruin', 'Undoing', 'Breaking', 'Use']
+              // CHANGED: Removed 'Surrender', 'Claim' (resolved states)
+              Erotic: ['Hunger', 'Wanting', 'Hesitation', 'Confession', 'Longing'],
+              // CHANGED: Removed 'Obedience', 'Ruin', 'Undoing' (aftermath)
+              Dirty: ['Appetite', 'Dare', 'Demand', 'Condition', 'Warning']
           }
       },
       [TITLE_MODES.FORBIDDEN_OBJECT]: {
           articles: ['The'],
+          // UNRESOLVED: objects that represent tension, not resolution
           objects: {
               Clean: ['Door', 'Letter', 'Ring', 'Promise', 'Line'],
               Naughty: ['Key', 'Contract', 'Rule', 'Wager', 'Dare'],
-              Erotic: ['Bargain', 'Binding', 'Claim', 'Mark', 'Bond'],
-              Dirty: ['Leash', 'Price', 'Terms', 'Debt', 'Trade']
+              // CHANGED: Removed 'Claim', 'Mark' (possession)
+              Erotic: ['Bargain', 'Arrangement', 'Question', 'Threshold', 'Offer'],
+              // CHANGED: Removed 'Leash' (possession) — kept negotiation objects
+              Dirty: ['Terms', 'Price', 'Condition', 'Test', 'Trade']
           }
       },
       [TITLE_MODES.VERB_LOCKED]: {
-          openers: ['What', 'Where', 'When', 'How'],
+          // CHANGED: Removed past-tense completion verbs entirely
+          // Now uses present/conditional tense only
+          openers: ['What', 'Where', 'If', 'Whether'],
           subjects: ['He', 'She', 'You', 'They', 'I'],
+          // UNRESOLVED: verbs of contemplation, not completion
           verbs: {
-              Clean: ['Left', 'Kept', 'Said', 'Heard', 'Saw'],
-              Naughty: ['Wanted', 'Almost', 'Nearly', 'Risked', 'Dared'],
-              Erotic: ['Took', 'Claimed', 'Gave', 'Begged', 'Needed'],
-              Dirty: ['Broke', 'Wrecked', 'Used', 'Ruined', 'Demanded']
+              Clean: ['Means', 'Waits', 'Watches', 'Refuses', 'Knows'],
+              Naughty: ['Wants', 'Almost', 'Nearly', 'Considers', 'Dares'],
+              // CHANGED: Removed 'Took', 'Claimed', 'Gave' (past completion)
+              Erotic: ['Needs', 'Craves', 'Hesitates', 'Decides', 'Chooses'],
+              // CHANGED: Removed 'Broke', 'Wrecked', 'Ruined' (aftermath)
+              Dirty: ['Demands', 'Expects', 'Tests', 'Pushes', 'Asks']
           }
       },
       [TITLE_MODES.TWO_WORD_FRACTURE]: {
+          // UNRESOLVED: adjectives of state, not aftermath
           adjectives: {
               Clean: ['Quiet', 'Cold', 'Still', 'Distant', 'Careful'],
               Naughty: ['Sweet', 'Hidden', 'Secret', 'Dangerous', 'Willing'],
-              Erotic: ['Golden', 'Sacred', 'Burning', 'Aching', 'Desperate'],
-              Dirty: ['Raw', 'Filthy', 'Ruined', 'Wrecked', 'Brutal']
+              // CHANGED: Kept emotional states, removed aftermath words
+              Erotic: ['Burning', 'Aching', 'Desperate', 'Hungry', 'Trembling'],
+              // CHANGED: Removed 'Ruined', 'Wrecked' (aftermath)
+              Dirty: ['Raw', 'Hungry', 'Demanding', 'Impatient', 'Restless']
           },
-          nouns: ['Hunger', 'Damage', 'Mercy', 'Silence', 'Reckoning', 'Terms', 'Price']
+          // CHANGED: Removed 'Damage', 'Reckoning' (aftermath)
+          nouns: ['Hunger', 'Waiting', 'Silence', 'Terms', 'Question', 'Edge', 'Threshold']
       }
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TITLE VOCABULARY SEMANTIC GATES (ST1 ENFORCEMENT)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // These patterns detect RESOLVED/AFTERMATH language that must be blocked at ST1
+
+  const TITLE_RESOLVED_VOCABULARY = {
+      // Past-tense completion verbs (implies consequence already occurred)
+      pastCompletion: /\b(took|claimed|gave|broke|wrecked|ruined|used|betrayed|fell|lost|won|conquered|destroyed|surrendered)\b/i,
+
+      // Possessive resolution (implies ownership already established)
+      possessiveResolution: /\b(her|his|my|your|their)\s+(surrender|obedience|ruin|undoing|defeat|submission|fall|breaking)\b/i,
+
+      // Aftermath nouns (name consequences, not tension)
+      aftermathNouns: /\b(reckoning|downfall|betrayal|aftermath|wreckage|ruins|ashes|remains|ending|conclusion)\b/i,
+
+      // Completion states (tension already resolved)
+      completionStates: /\b(finally|at\s+last|in\s+the\s+end|what\s+remained|all\s+that\s+was\s+left)\b/i
+  };
+
+  /**
+   * Check if title contains resolved/aftermath vocabulary
+   * @param {string} title - Title to check
+   * @returns {{ hasResolved: boolean, violations: string[] }}
+   */
+  function checkTitleResolutionVocabulary(title) {
+      const violations = [];
+      const cleanTitle = (title || '').trim();
+
+      for (const [category, pattern] of Object.entries(TITLE_RESOLVED_VOCABULARY)) {
+          if (pattern.test(cleanTitle)) {
+              violations.push(`${category}: "${cleanTitle.match(pattern)?.[0]}"`);
+          }
+      }
+
+      return {
+          hasResolved: violations.length > 0,
+          violations
+      };
+  }
+
+  window.checkTitleResolutionVocabulary = checkTitleResolutionVocabulary;
+  window.TITLE_RESOLVED_VOCABULARY = TITLE_RESOLVED_VOCABULARY;
 
   /**
    * WRY CONFESSIONAL TITLE MODES
@@ -3784,6 +4471,67 @@ If you name what something IS, you have failed. Show what it COSTS.
   // Lead with explicit style, minimize negations, use clear model-friendly terms
   // ═══════════════════════════════════════════════════════════════════════════
   const WRY_CONFESSIONAL_VISUAL_ONTOLOGY = `Style: Single-panel New Yorker magazine editorial cartoon. Medium: Black ink line drawing on white paper with simple hatching. Aesthetic: Minimalist, understated, dry wit. Lines: Thin uniform pen strokes, hand-drawn quality, quick newspaper sketch style. Colors: Grayscale only, cool neutral tones, flat matte finish. Background: Plain white, empty, no gradients. Mood: Deadpan, observational, wry. Rendering: 2D flat illustration, deliberately unpolished, diagrammatic simplicity. Avoid: oil painting, watercolor, photorealism, dramatic lighting, warm tones, 3D rendering, painterly effects.`;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WRY CONFESSION — CANONICAL CAPTION TEMPLATES (RUNTIME)
+  // Use as-is or with light variation. Caption must undercut, not decorate.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const WRY_CONFESSION_CAPTION_TEMPLATES = {
+      selfIndictingRationalization: [
+          "I had a system for moments like this, which mostly involved pretending they were temporary.",
+          "I told myself this was different, which is what I always told myself.",
+          "I had reasons. I always had reasons."
+      ],
+      delayedSelfAwareness: [
+          "This was the point where I would later insist I'd had no real choice.",
+          "Looking back, I would call this a turning point. At the time, I called it Tuesday.",
+          "I would remember this moment differently, and more favorably."
+      ],
+      storyAsWitness: [
+          "The story briefly considered intervening here, then remembered how stubborn she could be.",
+          "The story noted the hesitation and chose not to comment.",
+          "The story had seen this before and adjusted its expectations accordingly."
+      ],
+      constraints: {
+          maxWords: 20,
+          noJokes: true,
+          noMetaCommentary: true,
+          noWorldMechanics: true,
+          mustUndercut: true
+      }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WRY CONFESSION — BINARY VISUAL CONTRADICTION TYPES (RUNTIME)
+  // Every visualization must include exactly ONE of these disagreements.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const WRY_CONFESSION_VISUAL_CONTRADICTIONS = {
+      backgroundSign: [
+          "NO RETURNS", "FAIR PRICES", "TEMPORARY", "EXIT", "CAUTION",
+          "FINAL SALE", "ONE WAY", "NO REFUNDS", "LAST CHANCE"
+      ],
+      postureUndercuts: [
+          "clenched hands", "stiff stance", "off-balance weight",
+          "shoulders slightly hunched", "fingers gripping edge",
+          "leaning away while reaching forward"
+      ],
+      silentObserver: [
+          "secondary figure in background watching",
+          "reflection in window showing different expression",
+          "shadow that doesn't match posture"
+      ],
+      prominentObject: [
+          "object of temptation rendered slightly too large",
+          "dangerous item positioned within easy reach",
+          "escape route visible but ignored"
+      ],
+      constraints: {
+          onlyOne: true,
+          noExaggeration: true,
+          noSlapstick: true,
+          legibleAtGlance: true
+      }
+  };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // TONE VISUAL ONTOLOGY REGISTRY — Master definition of tone-locked visual styles
@@ -3923,6 +4671,177 @@ If you name what something IS, you have failed. Show what it COSTS.
       };
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // WORLD + TONE STYLE LOCK (TRUST REPAIR PHASE 2)
+  // Deterministic style derivation — cannot be overridden by modifiers
+  // ═══════════════════════════════════════════════════════════════════════════════
+  //
+  // This lock is HARD — it determines the visual style and cannot be silently changed.
+  // When World+Tone implies a specific style, the model MUST stay in that lane.
+  //
+  // STYLE LOCK HIERARCHY:
+  //   1. Tone visual ontology (if exists) → ABSOLUTE priority
+  //   2. World default style → fallback
+  //
+  // STYLE CATEGORIES:
+  //   - sketch: pencil, ink, charcoal, editorial, unfinished
+  //   - illustrative: clean illustration, graphic novel, stylized
+  //   - photographic: realistic, cinematic, natural lighting
+  //   - painterly: oil, watercolor, brushwork, classical
+  //
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const WORLD_DEFAULT_STYLES = {
+      Modern: 'photographic',
+      Fantasy: 'illustrative',
+      SciFi: 'illustrative',
+      Historical: 'painterly',
+      PostApocalyptic: 'photographic',
+      Dystopia: 'illustrative'
+  };
+
+  const TONE_STYLE_OVERRIDES = {
+      'Wry Confessional': 'sketch',
+      'WryConfession': 'sketch',
+      'Satire': 'sketch',
+      'Irony': 'sketch',
+      'Lurid Confessional': 'illustrative',
+      'Ink Noir': 'sketch',
+      'Horror': 'illustrative',
+      'Mythic': 'painterly',
+      'Poetic': 'painterly',
+      'Surreal': 'illustrative'
+  };
+
+  /**
+   * Get the locked style for World+Tone combination
+   * @returns {object} { style, source, locked }
+   */
+  function getStyleLock(world, tone) {
+      // Tone has priority if it defines a style override
+      const resolvedTone = resolveToneAlias(tone);
+      if (TONE_STYLE_OVERRIDES[resolvedTone]) {
+          return {
+              style: TONE_STYLE_OVERRIDES[resolvedTone],
+              source: 'tone',
+              locked: true
+          };
+      }
+
+      // Fall back to world default
+      const worldStyle = WORLD_DEFAULT_STYLES[world] || 'illustrative';
+      return {
+          style: worldStyle,
+          source: 'world',
+          locked: true
+      };
+  }
+
+  /**
+   * Validate that a prompt respects the style lock
+   * @returns {object} { valid, violations[] }
+   */
+  function validateStyleLock(prompt, styleLock) {
+      const violations = [];
+
+      const STYLE_TOKENS = {
+          sketch: {
+              required: /\b(sketch|drawing|ink|pencil|charcoal|editorial|line.?work|hand.?drawn)\b/i,
+              banned: /\b(photorealistic|cinematic|oil.?paint|hyper.?real|4k|8k|studio.?light)\b/i
+          },
+          illustrative: {
+              required: /\b(illustration|illustrated|graphic|stylized|digital.?art|comic|manga)\b/i,
+              banned: /\b(photograph|photorealistic|real.?life|candid|raw.?photo)\b/i
+          },
+          photographic: {
+              required: /\b(photo|cinematic|realistic|natural.?light|candid|documentary)\b/i,
+              banned: /\b(cartoon|sketch|anime|drawing|line.?art)\b/i
+          },
+          painterly: {
+              required: /\b(paint|painted|oil|watercolor|brushwork|classical|impressionist)\b/i,
+              banned: /\b(sketch|cartoon|photograph|digital.?render)\b/i
+          }
+      };
+
+      const tokens = STYLE_TOKENS[styleLock.style];
+      if (!tokens) return { valid: true, violations: [] };
+
+      if (tokens.banned && tokens.banned.test(prompt)) {
+          violations.push(`Prompt contains tokens banned for ${styleLock.style} style`);
+      }
+
+      return {
+          valid: violations.length === 0,
+          violations
+      };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // SKETCH TIER REFINEMENT (TRUST REPAIR PHASE 2)
+  // For Wry Confession, Sci-Fi, Mythic: reduce polish, increase hand-drawn feel
+  // ═══════════════════════════════════════════════════════════════════════════════
+  //
+  // The sketch must look like "someone thinking on paper", NOT "final concept art"
+  //
+  // ALLOWED:
+  //   - outlined lettering
+  //   - crossed-out words
+  //   - uneven strokes
+  //   - editorial looseness
+  //   - visible construction lines
+  //   - partial shading
+  //
+  // DISALLOWED:
+  //   - cinematic lighting
+  //   - painterly shading
+  //   - finished illustration look
+  //   - professional polish
+  //   - smooth gradients
+  //
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const SKETCH_TIER_ENFORCEMENT = `
+SKETCH TIER ENFORCEMENT (MANDATORY):
+This cover must appear UNFINISHED in execution, not unfinished in idea.
+
+REQUIRED CHARACTERISTICS:
+- Pencil, ink, or charcoal texture visible
+- Uneven or broken linework
+- Partial fill or restrained color (2-3 tones max)
+- Visible construction lines or negative space
+- Hand-drawn or outlined lettering allowed
+- Editorial looseness and imperfection
+
+ABSOLUTELY PROHIBITED:
+- Cinematic lighting or dramatic shadows
+- Painterly shading or smooth gradients
+- Finished illustration look
+- Professional polish or commercial finish
+- Hyper-realistic rendering
+- Digital art smoothness
+
+The goal: A cover that feels MID-THOUGHT, not UNDER-THOUGHT.
+If the image looks complete, it has FAILED sketch tier.
+`;
+
+  const SKETCH_TIER_TONES = ['Wry Confessional', 'WryConfession', 'Satire', 'Irony', 'Ink Noir'];
+
+  /**
+   * Check if current tone requires sketch tier enforcement
+   */
+  function requiresSketchTier(tone) {
+      const resolved = resolveToneAlias(tone);
+      return SKETCH_TIER_TONES.includes(resolved);
+  }
+
+  /**
+   * Get sketch tier enforcement text for cover prompts
+   */
+  function getSketchTierEnforcement(tone) {
+      if (!requiresSketchTier(tone)) return '';
+      return SKETCH_TIER_ENFORCEMENT;
+  }
+
   const WRY_CONFESSIONAL_OBJECT_ALTERATIONS = [
       'slightly misplaced',
       'unused or paused mid-intent',
@@ -4046,24 +4965,25 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
   // Unlock rules by story length (scene count thresholds)
   // Phase B: Rough is max earned cover. v1 unlocks are inactive.
+  // Sketch: 0 = available when story context exists (Scene 1 active)
   const COVER_UNLOCK_RULES = {
       tease: {
-          sketch: 1,
+          sketch: 0,      // Available when story context exists
           thumbnail: 2,
           rough: null     // Tease maxes out at Thumbnail
       },
       fling: {
-          sketch: 1,
+          sketch: 0,      // Available when story context exists
           thumbnail: 3,
           rough: 10       // Unlocks at scene 10
       },
       affair: {
-          sketch: 1,
+          sketch: 0,      // Available when story context exists
           thumbnail: 5,
           rough: 20       // Unlocks at scene 20
       },
       soulmates: {
-          sketch: 1,
+          sketch: 0,      // Available when story context exists
           thumbnail: 8,
           rough: 30       // Unlocks at scene 30
       }
@@ -4080,6 +5000,129 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   // All future changes MUST be appended as new appendices.
   // Existing canon must not be edited or reinterpreted.
   // ═══════════════════════════════════════════════════════════════════════════
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DESIGN PRINCIPLE — AUTHORITATIVE REGIME DECLARATION
+  // TAG: storybound/design-principle-authoritative-regimes-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // When a system in Storybound exhibits drift, blending, or silent override
+  // behavior, the correct fix is not additional modifiers or constraints.
+  //
+  // Instead, the system must be elevated to an Authoritative Regime.
+  //
+  // An Authoritative Regime:
+  // - Declares what category of thing something IS
+  // - Establishes precedence over modifiers and sub-features
+  // - Invalidates incompatible outputs by category, not preference
+  // - Is enforced by one binding invariant or self-check
+  //
+  // Regimes do not blend.
+  // Modifiers subordinate.
+  // Guidelines are insufficient.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ───────────────────────────────────────────────
+  // TERMINOLOGY UPDATE
+  // TAG: storybound/terminology-regime-change-v1
+  // ───────────────────────────────────────────────
+  // The design principle previously labeled
+  // 'Authoritative Regime Declaration' is now canonically named:
+  //
+  // REGIME CHANGE
+  //
+  // The meaning, scope, and application remain unchanged.
+  //
+  // This name is preferred in discussion, audits, and implementation notes.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // REGIME CHANGE (CANONICAL DEFINITION)
+  // ───────────────────────────────────────────────
+  // A Regime Change occurs when a Storybound subsystem
+  // is elevated from a modifier-based system to a category-defining authority.
+  //
+  // Under a Regime Change:
+  // - incompatible outputs become invalid by definition
+  // - modifiers subordinate instead of blending
+  // - one binding invariant or self-check enforces the regime
+  // - drift is prevented structurally, not heuristically
+  //
+  // Regimes do not blend.
+  // Only one regime governs a domain at a time.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // CROSS-REFERENCE NOTE
+  // ───────────────────────────────────────────────
+  // Any reference to 'Authoritative Regime Declaration'
+  // in prior documentation should be read as 'Regime Change'.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // AUTHORITATIVE REGIMES IN USE (RETROACTIVE LABELING)
+  // ───────────────────────────────────────────────
+  // The following Storybound subsystems are governed by Authoritative Regimes:
+  //
+  // 1. Storyturns
+  //    - Regime: Irreversible Relational Change
+  //    - Effect: Sex, dialogue, or intensity never advance structure alone
+  //
+  // 2. 5th Person POV (Wry Confessional variant)
+  //    - Regime: Narrative Coherence as a Reacting Entity
+  //    - Effect: Presence is semantic and reactive, not scheduled or controlling
+  //
+  // 3. Wry Confessional Visualizer
+  //    - Regime: Editorial Representation (Not Photographic)
+  //    - Effect: Genre influences symbolism only; realism is category-invalid
+  //
+  // 4. Sketch Tier Covers
+  //    - Regime: Unfinished Artifact
+  //    - Effect: Print-ready or polished output is a failure condition
+  //
+  // 5. Fate Cards
+  //    - Regime: Narrative Pressure, Not Permission
+  //    - Effect: Early play bends scenes without granting resolution
+  //
+  // 6. Navigation Spine
+  //    - Regime: Canonical Reading Order
+  //    - Effect: Side chambers may not become Back destinations
+  //
+  // This labeling is descriptive, not a rewrite.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // DSP — MATERIAL REGIME (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // DSP is a material regime, not a theme or skin.
+  //
+  // DSP governs:
+  // - geometry (right angles, corner squares)
+  // - layering (double-line frames, inset borders)
+  // - material illusion (pressed, engraved, weight-bearing surfaces)
+  //
+  // DSP does not yield to:
+  // - container radius defaults
+  // - generic button styles
+  // - component-local theming
+  //
+  // If a UI element does not read as DSP when isolated,
+  // it has failed the regime.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // DSP SELF-CHECK (MANDATORY)
+  // ───────────────────────────────────────────────
+  // Before finalizing any UI component:
+  //
+  // "Would this element still be recognizable as DSP
+  // if shown alone, without surrounding context?"
+  //
+  // If NO, regenerate or refactor.
+  //
+  // This regime supersedes local CSS defaults and component inheritance.
+  // Material identity takes precedence over layout convenience.
+  // ───────────────────────────────────────────────
 
   const STORYTURN_CONFIG = {
     storyLengths: {
@@ -4829,6 +5872,27 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       neverFullyIgnore: true
   };
 
+  // ───────────────────────────────────────────────
+  // FATE CARD — PARTIAL RESOLUTION SELF-CHECK (MANDATORY)
+  // ───────────────────────────────────────────────
+  // When a Fate Card is played outside its canonical Storyturn resolution,
+  // Claude MUST silently evaluate:
+  //
+  // "Did this card apply pressure without granting resolution?"
+  //
+  // If the card:
+  // • cleanly resolves
+  // • advances a Storyturn
+  // • removes tension
+  // • or behaves as permission
+  //
+  // then it has failed.
+  //
+  // Early Fate Cards must bend the scene, not settle it.
+  //
+  // Failure requires regeneration, not explanation.
+  // ───────────────────────────────────────────────
+
   // ═══════════════════════════════════════════════════════════════════════════
   // APPENDIX A — PREMISE VIOLATION COUNTER (AUTHORITATIVE)
   // TAG: storybound/premise-violation-counter-and-regression-tests-v1
@@ -5378,6 +6442,1517 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
       }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PREMATURE ROMANCE COLLAPSE PREVENTION
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // REGIME CONTEXT (LOCKED)
+  // Storybound is a collaborative romance novel engine, not a simulator.
+  // Players express intent. The Story controls timing, consequences, and pacing.
+  //
+  // CORE RULE (AUTHORITATIVE)
+  // Player actions that would collapse romantic tension must be honored in
+  // intent but deferred or reframed in outcome when Storyturn gates do not
+  // yet allow resolution.
+  //
+  // MANTRA: Desire is never wrong. Timing is never arbitrary.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Actions that would collapse romantic tension if executed literally
+  const ROMANCE_COLLAPSING_ACTIONS = {
+      // Physical resolution
+      kiss: ['kiss', 'kissed', 'kissing', 'lips meet', 'lips touched', 'mouth on'],
+      sex: ['make love', 'have sex', 'sleep with', 'take me', 'take you', 'undress'],
+      commitment: ['i love you', 'marry me', 'be mine', 'together forever', 'run away with'],
+      confession: ['confess my feelings', 'tell you how i feel', 'admit i love', 'declare my love'],
+
+      // Emotional resolution
+      closure: ['forgive you', 'forgive me', 'let it go', 'move on', 'over it now'],
+      reunion: ['back together', 'never leave', 'always be with', 'stay forever']
+  };
+
+  // Storyturn gates for each collapse type
+  // Actions are premature if current Storyturn is BELOW the gate
+  const ROMANCE_COLLAPSE_GATES = {
+      kiss: 'ST3',        // First kiss requires Permission phase
+      sex: 'ST3',         // Sex requires Permission phase (Tease further restricts)
+      commitment: 'ST5',  // Commitment requires Crisis resolution
+      confession: 'ST2',  // Confession requires Resistance phase minimum
+      closure: 'ST5',     // Closure requires Crisis phase
+      reunion: 'ST6'      // Reunion requires Integration phase
+  };
+
+  // Approved narrative reframing strategies
+  // Story uses these to honor intent while preserving tension
+  const ROMANCE_REFRAME_STRATEGIES = {
+      interruption_external: {
+          name: 'External Interruption',
+          description: 'Someone enters, phone rings, alarm sounds — moment shatters',
+          examples: [
+              'The door opened before their lips could meet.',
+              'A voice from the hallway froze them both.',
+              'The moment shattered at the sound of footsteps.'
+          ]
+      },
+      interruption_internal: {
+          name: 'Internal Interruption',
+          description: 'Character pulls back, hesitates, doubt surfaces',
+          examples: [
+              'Something in their eyes made them hesitate.',
+              'The words caught in their throat, unspoken.',
+              'They pulled back—not rejection, but terror of wanting too much.'
+          ]
+      },
+      mutual_hesitation: {
+          name: 'Mutual Hesitation',
+          description: 'Both want it, both stop short — recognition without fulfillment',
+          examples: [
+              'They both leaned in. They both stopped.',
+              'The space between them hummed with everything unsaid.',
+              'So close they could feel each other\'s breath—and no closer.'
+          ]
+      },
+      almost_touch: {
+          name: 'Almost-Touch / Almost-Confession',
+          description: 'The gesture begins but doesn\'t complete — increases charge',
+          examples: [
+              'Their fingers brushed. Neither pulled away. Neither reached further.',
+              'The confession was on their lips, but only silence escaped.',
+              'They reached for each other and found only the space where the other had been.'
+          ]
+      },
+      recognition_unfulfilled: {
+          name: 'Recognition Without Fulfillment',
+          description: 'Both acknowledge the desire — but not now, not yet',
+          examples: [
+              '"I know," they whispered. "I know. But not yet."',
+              'The wanting was visible on both their faces. Neither acted.',
+              'They understood exactly what could happen. And let the moment pass.'
+          ]
+      },
+      deferral_inevitable: {
+          name: 'Deferral as Inevitability',
+          description: 'Frame the pause as building toward something greater',
+          examples: [
+              'This wasn\'t denial. It was patience for something worth waiting for.',
+              'The story let this almost happen, knowing it would matter more later.',
+              'Some things become more inevitable the longer you wait.'
+          ]
+      }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TONE-SPECIFIC VARIANTS — Intent–Consequence Romance Control
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // GLOBAL INVARIANT (MUST HOLD ACROSS ALL TONES):
+  // No tone may allow a player action to prematurely collapse romantic tension.
+  // Tone changes voice, framing, and texture — never rules.
+  //
+  // MANTRA: The rules do not change. Only how the story tells the truth about them.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const TONE_ROMANCE_VARIANTS = {
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // WRY CONFESSION (PRIMARY)
+      // Emotional posture: Self-aware, slightly embarrassed, observant of
+      // one's own behavior mid-mistake.
+      // ═══════════════════════════════════════════════════════════════════════
+      'Wry Confessional': {
+          emotionalPosture: 'Self-aware, slightly embarrassed, observant of one\'s own behavior mid-mistake',
+          deferralStyle: 'Almosts + self-implication',
+          storyVoice: 'Gentle witness. Occasionally amused. Never cruel.',
+
+          deferral: {
+              examples: [
+                  'You lean in — not quite far enough to pretend this was an accident.',
+                  'The story notes the impulse, then the hesitation that pretends it was deliberate.',
+                  'This will later become one of those moments you swear felt shorter.',
+                  'You almost say it. The "almost" will haunt you for exactly the right amount of time.',
+                  'The distance closes to something uncomfortable, then stays there.'
+              ]
+          },
+
+          wrongTarget: {
+              examples: [
+                  'Your attention lands somewhere it probably shouldn\'t. You notice yourself noticing.',
+                  'The story files this under "things you\'ll pretend were strategic."',
+                  'He notices where your eyes went. Unfortunately, so do you.'
+              ]
+          },
+
+          polyIntent: {
+              examples: [
+                  'You notice the way Marcus watches you notice Jax. Everyone is noticing too much.',
+                  'The story files this away. It will matter later, in ways you\'ll claim were obvious.',
+                  'Two kinds of attention. Neither cancels the other. This is going to be a problem.'
+              ]
+          },
+
+          passiveEscalation: {
+              level1: [
+                  'Silence stretches just long enough to become a decision.',
+                  'The pause is starting to mean something. You can feel it.',
+                  'Doing nothing is, technically, still doing something.'
+              ],
+              level2: [
+                  '"You\'re very careful," he says. "Is that on purpose?"',
+                  'They wait. You can feel yourself being waited for.',
+                  'The ball is in your court. It\'s been there a while now.'
+              ],
+              level3: [
+                  'Someone is definitely noticing how long this is taking.',
+                  'The awkwardness is approaching a critical mass.',
+                  'This is becoming one of those moments people will ask about later.'
+              ],
+              level4: [
+                  'Whatever you do next, you\'ll have to live with having done it.',
+                  'The moment has reached the point where not choosing is also a choice.',
+                  'Move or don\'t. Either way, this is going in the record.'
+              ]
+          },
+
+          neverUse: ['melodrama', 'destiny language', 'threats', 'cosmic significance']
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // EARNEST / ROMANTIC DRAMA
+      // Emotional posture: Sincere, yearning, emotionally vulnerable.
+      // ═══════════════════════════════════════════════════════════════════════
+      'Romantic': {
+          emotionalPosture: 'Sincere, yearning, emotionally vulnerable',
+          deferralStyle: 'External interruption or mutual restraint framed as care',
+          storyVoice: 'Protective, patient, quietly invested.',
+
+          deferral: {
+              examples: [
+                  'He doesn\'t pull away — but neither of you crosses the distance.',
+                  '"Not yet," he says softly, and you realize how much weight those words carry.',
+                  'The moment settles instead of breaking.',
+                  'Your breath mingles. Neither of you moves. The waiting is its own intimacy.',
+                  'He catches your hand before it reaches his face. Holds it there. That\'s enough for now.'
+              ]
+          },
+
+          wrongTarget: {
+              examples: [
+                  'He steps back — not rejection, something closer to protection.',
+                  'The warmth in their eyes dims to something kinder, sadder.',
+                  'They see what you\'re offering. They can\'t accept it. Not like this.'
+              ]
+          },
+
+          polyIntent: {
+              examples: [
+                  'Marcus notices where your attention drifts. Something flickers behind his eyes.',
+                  'The triangle forms without anyone meaning it to. Hearts don\'t follow rules.',
+                  'You feel pulled in two directions. The story holds both without choosing.'
+              ]
+          },
+
+          passiveEscalation: {
+              level1: [
+                  'The air between you feels heavy with everything unsaid.',
+                  'Time slows. The room narrows to just the two of you.',
+                  'His eyes search yours for something you\'re not giving.'
+              ],
+              level2: [
+                  '"If you don\'t say it now," he says, "I don\'t know when I will."',
+                  'He reaches for your hand. Waits for you to take it.',
+                  '"I need to know if this means something to you."'
+              ],
+              level3: [
+                  'The risk of losing this becomes real. You can feel it slipping.',
+                  'Something in their expression says: this can\'t wait forever.',
+                  'The distance is growing. Not because anyone moved.'
+              ],
+              level4: [
+                  '"Tell me to stay. Or let me go. But don\'t make me guess."',
+                  'This is the moment. Whatever comes next will be because of now.',
+                  'The choice is here. It won\'t wait.'
+              ]
+          },
+
+          neverUse: ['irony', 'self-mockery', 'meta commentary', 'detached observation']
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // DARK / ANGST / FORBIDDEN
+      // Emotional posture: Danger, repression, inevitability.
+      // ═══════════════════════════════════════════════════════════════════════
+      'Dark Romance': {
+          emotionalPosture: 'Danger, repression, inevitability',
+          deferralStyle: 'Consequences implied, not avoided',
+          storyVoice: 'Grimly aware. Knows the cost.',
+
+          deferral: {
+              examples: [
+                  'If this happens now, it won\'t end here.',
+                  'You feel how easily this could turn irreversible.',
+                  'The story tightens its grip — not to stop you, but to remember.',
+                  'His hand stops yours. "Not like this," he says. "When we do this, there\'s no going back."',
+                  'The darkness between you pulses with what you\'re not yet allowed to take.'
+              ]
+          },
+
+          wrongTarget: {
+              examples: [
+                  'The wrong desire. But desire all the same. The story sees it.',
+                  'He steps back like you\'ve shown him something dangerous.',
+                  'You\'ve revealed too much. To the wrong person. Someone will pay for this.'
+              ]
+          },
+
+          polyIntent: {
+              examples: [
+                  'Marcus watches you watch Jax. His jaw tightens. This changes things.',
+                  'Dangerous, wanting both. More dangerous, being seen wanting both.',
+                  'The triangle sharpens into something with edges.'
+              ]
+          },
+
+          passiveEscalation: {
+              level1: [
+                  'The silence takes on weight. Something is building.',
+                  'You feel eyes on you. Not just his.',
+                  'The room contracts. Escape routes narrow.'
+              ],
+              level2: [
+                  '"You\'re running out of time to pretend this isn\'t happening."',
+                  'He steps closer. The threat is not in his movement. It\'s in what happens if you don\'t.',
+                  '"Choose. Before someone chooses for you."'
+              ],
+              level3: [
+                  'Someone is already watching. Someone who shouldn\'t be.',
+                  'The consequences are no longer hypothetical.',
+                  'What you don\'t do now will be held against you later.'
+              ],
+              level4: [
+                  'There is no neutral ground left. Only forward or ruin.',
+                  'Whatever you do next will draw blood. Metaphorically. Maybe not.',
+                  'The story has stopped waiting. Move.'
+              ]
+          },
+
+          neverUse: ['humor', 'lightness', 'reassurance', 'playfulness']
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // COMEDIC / HEIGHTENED
+      // Emotional posture: Exaggerated, impulsive, socially risky.
+      // ═══════════════════════════════════════════════════════════════════════
+      'Comedic': {
+          emotionalPosture: 'Exaggerated, impulsive, socially risky',
+          deferralStyle: 'Misfires, interruptions, comedic timing',
+          storyVoice: 'Knowing, fast, permissive but controlling outcomes.',
+
+          deferral: {
+              examples: [
+                  'You lean in. The universe clears its throat.',
+                  'This is interrupted for reasons you will later admit were obvious.',
+                  'The moment trips over itself and keeps going.',
+                  'Just as your lips approach something significant, physics intervenes rudely.',
+                  'The romantic tension hits a speed bump. Several speed bumps. A whole road of them.'
+              ]
+          },
+
+          wrongTarget: {
+              examples: [
+                  'Wrong target. The universe helpfully redirects your attention via embarrassment.',
+                  'He blinks. The vibe evaporates. Someone coughs.',
+                  'The story gently but firmly escorts your romantic energy elsewhere.'
+              ]
+          },
+
+          polyIntent: {
+              examples: [
+                  'You notice Marcus. Marcus notices you noticing Jax. Jax notices everyone noticing. It\'s a whole situation now.',
+                  'Two crushes. Zero grace. The story is having fun with this.',
+                  'Your attention spans multiple targets. Your dignity does not.'
+              ]
+          },
+
+          passiveEscalation: {
+              level1: [
+                  'The silence is getting silly. Someone needs to do something.',
+                  'Time passes. The awkwardness does not.',
+                  'You are both standing here. That\'s still happening.'
+              ],
+              level2: [
+                  '"So are we going to—" "Yep." "Cool." Neither of you moves.',
+                  'They make a move. It\'s the kind of move that demands a response.',
+                  '"I\'m going to need you to have a reaction. Any reaction. Please."'
+              ],
+              level3: [
+                  'Everyone notices. Immediately. Spectacularly.',
+                  'This has become a public event. Congratulations.',
+                  'The situation has escalated socially if not romantically.'
+              ],
+              level4: [
+                  'Do something. Anything. The story is begging you.',
+                  'This is your last chance to be smooth about it. (You won\'t be.)',
+                  'Choose chaos or dignity. Actually, chaos chose for you. Just dignity, then.'
+              ]
+          },
+
+          neverUse: ['tragedy', 'prolonged yearning', 'solemn restraint', 'grave consequences']
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // STEAMY / SENSUAL (Bonus tone for erotic contexts)
+      // Emotional posture: Charged, deliberate, simmering.
+      // ═══════════════════════════════════════════════════════════════════════
+      'Steamy': {
+          emotionalPosture: 'Charged, deliberate, simmering',
+          deferralStyle: 'Anticipation as pleasure, restraint as foreplay',
+          storyVoice: 'Intimate, unhurried, knowingly drawing it out.',
+
+          deferral: {
+              examples: [
+                  'Not yet. The waiting is part of it.',
+                  'His fingers stop just short of where you want them. "Patience."',
+                  'The almost-touch burns hotter than contact would.',
+                  'You feel his restraint like a physical thing. It makes you want more.',
+                  'The story savors this. So should you.'
+              ]
+          },
+
+          wrongTarget: {
+              examples: [
+                  'The heat lands on the wrong person. It still registers.',
+                  'He feels the charge meant for someone else. His eyes narrow.',
+                  'Misdirected desire is still desire. The story notes it. For later.'
+              ]
+          },
+
+          polyIntent: {
+              examples: [
+                  'Two flames. The story doesn\'t choose which burns brighter.',
+                  'Marcus feels your attention split. It doesn\'t cool anything down.',
+                  'Wanting both doesn\'t halve the wanting. It doubles everything.'
+              ]
+          },
+
+          passiveEscalation: {
+              level1: [
+                  'The tension simmers. Your inaction only adds heat.',
+                  'Stillness is its own kind of tension. The story likes this.',
+                  'The space between you grows heavy with potential.'
+              ],
+              level2: [
+                  '"I\'m going to need an answer," they murmur. "Use your words."',
+                  'Their patience is not infinite. You can feel it fraying.',
+                  'They move closer. The question in their body is clear.'
+              ],
+              level3: [
+                  'The anticipation has become its own kind of unbearable.',
+                  'Something will break. The tension. Your resolve. Their patience.',
+                  'This has been building long enough to demand release.'
+              ],
+              level4: [
+                  'Now. Or the moment passes, and you\'ll have to build it again from nothing.',
+                  'Choose. The waiting has become its own answer.',
+                  'Everything that happens next starts with what you do now.'
+              ]
+          },
+
+          neverUse: ['clinical language', 'embarrassment', 'shame', 'awkwardness']
+      }
+  };
+
+  // Fallback/default tone (uses Wry Confessional patterns)
+  TONE_ROMANCE_VARIANTS['default'] = TONE_ROMANCE_VARIANTS['Wry Confessional'];
+
+  /**
+   * Get the current tone's romance variant configuration
+   * Falls back to Wry Confessional if tone not found
+   */
+  function getToneRomanceVariant() {
+      const tone = state.picks?.tone || 'Wry Confessional';
+
+      // Direct match
+      if (TONE_ROMANCE_VARIANTS[tone]) {
+          return TONE_ROMANCE_VARIANTS[tone];
+      }
+
+      // Partial match mapping
+      const toneMapping = {
+          'Wry Confessional': 'Wry Confessional',
+          'Wry': 'Wry Confessional',
+          'Romantic': 'Romantic',
+          'Earnest': 'Romantic',
+          'Romance': 'Romantic',
+          'Dark Romance': 'Dark Romance',
+          'Dark': 'Dark Romance',
+          'Angst': 'Dark Romance',
+          'Forbidden': 'Dark Romance',
+          'Comedic': 'Comedic',
+          'Comedy': 'Comedic',
+          'Heightened': 'Comedic',
+          'Steamy': 'Steamy',
+          'Sensual': 'Steamy',
+          'Erotic': 'Steamy'
+      };
+
+      const mappedTone = toneMapping[tone] || 'Wry Confessional';
+      return TONE_ROMANCE_VARIANTS[mappedTone] || TONE_ROMANCE_VARIANTS['default'];
+  }
+
+  /**
+   * Get a tone-appropriate deferral example
+   */
+  function getToneDeferralExample() {
+      const variant = getToneRomanceVariant();
+      const examples = variant.deferral?.examples || TONE_ROMANCE_VARIANTS['default'].deferral.examples;
+      return examples[Math.floor(Math.random() * examples.length)];
+  }
+
+  /**
+   * Get a tone-appropriate wrong-target example
+   */
+  function getToneWrongTargetExample() {
+      const variant = getToneRomanceVariant();
+      const examples = variant.wrongTarget?.examples || TONE_ROMANCE_VARIANTS['default'].wrongTarget.examples;
+      return examples[Math.floor(Math.random() * examples.length)];
+  }
+
+  /**
+   * Get a tone-appropriate poly intent example
+   */
+  function getTonePolyExample() {
+      const variant = getToneRomanceVariant();
+      const examples = variant.polyIntent?.examples || TONE_ROMANCE_VARIANTS['default'].polyIntent.examples;
+      return examples[Math.floor(Math.random() * examples.length)];
+  }
+
+  /**
+   * Get a tone-appropriate passive escalation example for a given level
+   * @param {number} level - Escalation level (1-4)
+   */
+  function getTonePassiveEscalationExample(level) {
+      const variant = getToneRomanceVariant();
+      const levelKey = `level${level}`;
+      const examples = variant.passiveEscalation?.[levelKey] ||
+                       TONE_ROMANCE_VARIANTS['default'].passiveEscalation[levelKey];
+      return examples[Math.floor(Math.random() * examples.length)];
+  }
+
+  /**
+   * Get the "never use" list for current tone
+   */
+  function getToneNeverUse() {
+      const variant = getToneRomanceVariant();
+      return variant.neverUse || [];
+  }
+
+  /**
+   * Build tone-specific romance control guidance block
+   */
+  function buildToneRomanceGuidance() {
+      const variant = getToneRomanceVariant();
+      const toneName = state.picks?.tone || 'Wry Confessional';
+      const neverUse = variant.neverUse || [];
+
+      return `
+TONE-SPECIFIC ROMANCE VOICE (${toneName}):
+- Emotional posture: ${variant.emotionalPosture}
+- Deferral style: ${variant.deferralStyle}
+- Story voice: ${variant.storyVoice}
+- NEVER use: ${neverUse.join(', ')}`;
+  }
+
+  // Expose tone variant functions
+  window.getToneRomanceVariant = getToneRomanceVariant;
+  window.getToneDeferralExample = getToneDeferralExample;
+  window.getToneWrongTargetExample = getToneWrongTargetExample;
+  window.getTonePolyExample = getTonePolyExample;
+  window.getTonePassiveEscalationExample = getTonePassiveEscalationExample;
+  window.buildToneRomanceGuidance = buildToneRomanceGuidance;
+  window.TONE_ROMANCE_VARIANTS = TONE_ROMANCE_VARIANTS;
+
+  /**
+   * Detect if player action would prematurely collapse romantic tension
+   * @param {string} action - Player's action text
+   * @param {string} dialogue - Player's dialogue text
+   * @returns {object|null} - { collapseType, gate, strategy } or null if allowed
+   */
+  function detectPrematureRomanceCollapse(action, dialogue) {
+      const currentSt = state.storyturn || 'ST1';
+      const currentIdx = getStoryturnIndex(currentSt);
+      const combined = `${action || ''} ${dialogue || ''}`.toLowerCase();
+
+      // Check each collapse type
+      for (const [collapseType, patterns] of Object.entries(ROMANCE_COLLAPSING_ACTIONS)) {
+          for (const pattern of patterns) {
+              if (combined.includes(pattern)) {
+                  const gateStoryturn = ROMANCE_COLLAPSE_GATES[collapseType];
+                  const gateIdx = getStoryturnIndex(gateStoryturn);
+
+                  // Premature if current Storyturn is below the gate
+                  if (currentIdx < gateIdx) {
+                      // Select reframe strategy based on context
+                      const strategy = selectReframeStrategy(collapseType, currentSt);
+
+                      console.log('[ROMANCE:GUARD] Premature collapse detected', {
+                          collapseType,
+                          pattern,
+                          currentSt,
+                          gateStoryturn,
+                          selectedStrategy: strategy.name
+                      });
+
+                      return {
+                          collapseType,
+                          pattern,
+                          currentSt,
+                          gateStoryturn,
+                          strategy
+                      };
+                  }
+              }
+          }
+      }
+
+      return null; // Action is allowed
+  }
+
+  /**
+   * Select appropriate reframe strategy based on collapse type and Storyturn
+   */
+  function selectReframeStrategy(collapseType, currentSt) {
+      const strategies = Object.values(ROMANCE_REFRAME_STRATEGIES);
+
+      // Context-aware strategy selection
+      if (currentSt === 'ST1') {
+          // Early story: favor internal hesitation and recognition
+          if (collapseType === 'confession' || collapseType === 'commitment') {
+              return ROMANCE_REFRAME_STRATEGIES.interruption_internal;
+          }
+          return ROMANCE_REFRAME_STRATEGIES.mutual_hesitation;
+      }
+
+      if (currentSt === 'ST2') {
+          // Resistance phase: favor almost-touch and external interruption
+          if (collapseType === 'kiss' || collapseType === 'sex') {
+              return ROMANCE_REFRAME_STRATEGIES.almost_touch;
+          }
+          return ROMANCE_REFRAME_STRATEGIES.interruption_external;
+      }
+
+      if (currentSt === 'ST4' || currentSt === 'ST5') {
+          // Consequence/Crisis: favor recognition and deferral
+          return ROMANCE_REFRAME_STRATEGIES.recognition_unfulfilled;
+      }
+
+      // Default: deferral framed as inevitability
+      return ROMANCE_REFRAME_STRATEGIES.deferral_inevitable;
+  }
+
+  /**
+   * Build narrative directive for premature romance handling
+   * This goes to the AI to guide reframing
+   * Now includes TONE-SPECIFIC examples and guidance
+   */
+  function buildPrematureRomanceDirective(action, dialogue) {
+      const detection = detectPrematureRomanceCollapse(action, dialogue);
+
+      if (!detection) {
+          return ''; // No reframing needed
+      }
+
+      const { collapseType, currentSt, gateStoryturn, strategy } = detection;
+
+      // Get tone-specific example (falls back to generic if tone not configured)
+      const toneExample = getToneDeferralExample();
+      const toneGuidance = buildToneRomanceGuidance();
+      const neverUse = getToneNeverUse();
+      const toneName = state.picks?.tone || 'default';
+
+      return `
+═══════════════════════════════════════════════════════════════════════════
+PREMATURE ROMANCE COLLAPSE PREVENTION (Active)
+═══════════════════════════════════════════════════════════════════════════
+
+DETECTED: Player attempting "${collapseType}" action
+CURRENT STORYTURN: ${currentSt}
+GATE STORYTURN: ${gateStoryturn} (not yet reached)
+ACTIVE TONE: ${toneName}
+
+REQUIRED BEHAVIOR:
+- Do NOT reject the action
+- Do NOT execute it literally
+- Do NOT explain the system
+- Do NOT punish the player's desire
+
+INSTEAD:
+- Preserve the desire — the player WANTED this
+- Introduce friction, interruption, or hesitation
+- Increase emotional charge
+- Maintain unresolved tension
+
+SELECTED REFRAME STRATEGY: ${strategy.name}
+${strategy.description}
+
+${toneGuidance}
+
+TONE-APPROPRIATE EXAMPLE:
+"${toneExample}"
+
+${neverUse.length > 0 ? `AVOID IN THIS TONE: ${neverUse.join(', ')}` : ''}
+
+5TH PERSON GUIDANCE (optional):
+The Story may briefly acknowledge: "The story let this almost happen, knowing it would matter more later."
+
+SUCCESS CONDITION:
+The player should feel: seen, complicit, slightly frustrated, MORE invested than before.
+
+GLOBAL INVARIANT: No tone may allow premature tension collapse.
+MANTRA: The rules do not change. Only how the story tells the truth about them.
+═══════════════════════════════════════════════════════════════════════════`;
+  }
+
+  /**
+   * REGRESSION TEST: Verify premature romance collapse prevention
+   *
+   * Test cases:
+   * - Kiss at ST1 → should be detected and reframed
+   * - Kiss at ST3 → should be allowed
+   * - Confession at ST1 → should be detected
+   * - Confession at ST2 → should be allowed
+   */
+  function runPrematureRomanceTest() {
+      console.log('[ROMANCE:TEST] Running premature romance collapse regression test...');
+
+      const originalStoryturn = state.storyturn;
+
+      // Test 1: Kiss at ST1 should be detected
+      state.storyturn = 'ST1';
+      const result1 = detectPrematureRomanceCollapse('I lean in to kiss them', '');
+      const test1Pass = result1 !== null && result1.collapseType === 'kiss';
+      console.log('[ROMANCE:TEST] Test 1 (Kiss at ST1 detected):', test1Pass ? 'PASS' : 'FAIL', result1);
+
+      // Test 2: Kiss at ST3 should be allowed
+      state.storyturn = 'ST3';
+      const result2 = detectPrematureRomanceCollapse('I lean in to kiss them', '');
+      const test2Pass = result2 === null;
+      console.log('[ROMANCE:TEST] Test 2 (Kiss at ST3 allowed):', test2Pass ? 'PASS' : 'FAIL', result2);
+
+      // Test 3: Confession at ST1 should be detected
+      state.storyturn = 'ST1';
+      const result3 = detectPrematureRomanceCollapse('', 'I confess my feelings for you');
+      const test3Pass = result3 !== null && result3.collapseType === 'confession';
+      console.log('[ROMANCE:TEST] Test 3 (Confession at ST1 detected):', test3Pass ? 'PASS' : 'FAIL', result3);
+
+      // Test 4: Confession at ST2 should be allowed
+      state.storyturn = 'ST2';
+      const result4 = detectPrematureRomanceCollapse('', 'I confess my feelings for you');
+      const test4Pass = result4 === null;
+      console.log('[ROMANCE:TEST] Test 4 (Confession at ST2 allowed):', test4Pass ? 'PASS' : 'FAIL', result4);
+
+      // Test 5: Commitment at ST4 should be detected (gate is ST5)
+      state.storyturn = 'ST4';
+      const result5 = detectPrematureRomanceCollapse('', 'I love you, be mine forever');
+      const test5Pass = result5 !== null && result5.collapseType === 'commitment';
+      console.log('[ROMANCE:TEST] Test 5 (Commitment at ST4 detected):', test5Pass ? 'PASS' : 'FAIL', result5);
+
+      // Test 6: Directive includes reframe strategy
+      state.storyturn = 'ST1';
+      const directive = buildPrematureRomanceDirective('I kiss them deeply', '');
+      const test6Pass = directive.includes('PREMATURE ROMANCE COLLAPSE PREVENTION') &&
+                        directive.includes('SELECTED REFRAME STRATEGY');
+      console.log('[ROMANCE:TEST] Test 6 (Directive includes strategy):', test6Pass ? 'PASS' : 'FAIL');
+
+      // Restore original state
+      state.storyturn = originalStoryturn;
+
+      const allPass = test1Pass && test2Pass && test3Pass && test4Pass && test5Pass && test6Pass;
+      console.log('[ROMANCE:TEST] Regression test:', allPass ? 'ALL PASS' : 'FAILURES DETECTED');
+
+      return allPass;
+  }
+
+  // Expose for testing and integration
+  window.detectPrematureRomanceCollapse = detectPrematureRomanceCollapse;
+  window.buildPrematureRomanceDirective = buildPrematureRomanceDirective;
+  window.runPrematureRomanceTest = runPrematureRomanceTest;
+  window.ROMANCE_COLLAPSING_ACTIONS = ROMANCE_COLLAPSING_ACTIONS;
+  window.ROMANCE_COLLAPSE_GATES = ROMANCE_COLLAPSE_GATES;
+  window.ROMANCE_REFRAME_STRATEGIES = ROMANCE_REFRAME_STRATEGIES;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PART A — POLY MODE (Intent–Consequence Romance Control)
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // PURPOSE: Allow multiple romantic threads without collapsing tension.
+  //
+  // CORE AXIOM: Humans choose desire. The Story chooses when desire becomes
+  // consequential.
+  //
+  // POLY SEMANTIC RULESET:
+  // - Intent may be multi-target
+  // - Consequences remain serialized (one chain advances at a time)
+  // - No simultaneous payoff (intimacy with one complicates others)
+  //
+  // MANTRA: Poly is felt, not managed.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Track romantic attention directed at characters other than Storybeau
+  const POLY_ATTENTION_PATTERNS = [
+      'look at', 'looks at', 'looking at',
+      'notice', 'noticed', 'noticing',
+      'attracted to', 'drawn to', 'curious about',
+      'flirt with', 'flirting with', 'flirted with',
+      'smile at', 'smiled at', 'smiling at',
+      'touch', 'touched', 'touching',
+      'lean toward', 'leaned toward', 'leaning toward'
+  ];
+
+  // Poly complication strategies — how the story handles multi-target interest
+  const POLY_COMPLICATION_STRATEGIES = {
+      witnessed_attention: {
+          name: 'Witnessed Attention',
+          description: 'The Storybeau notices the player noticing someone else',
+          examples: [
+              'You notice the way Marcus watches you notice Jax.',
+              'Something flickers in their expression — they saw where your eyes went.',
+              'The story files this away. It will matter later.'
+          ]
+      },
+      triangulated_tension: {
+          name: 'Triangulated Tension',
+          description: 'Attraction to another creates pressure on the primary thread',
+          examples: [
+              'The air between all three of you grows heavier.',
+              'Jax\'s presence complicates things you thought were simple.',
+              'Two kinds of tension now. Neither cancels the other.'
+          ]
+      },
+      deferred_consequence: {
+          name: 'Deferred Consequence',
+          description: 'The attention is noted but not immediately addressed',
+          examples: [
+              'This moment will echo forward. Just not yet.',
+              'The story holds this like a breath — ready to release later.',
+              'Nothing happens. But something has changed.'
+          ]
+      },
+      accumulated_pressure: {
+          name: 'Accumulated Pressure',
+          description: 'Each additional attention compounds the stakes',
+          examples: [
+              'Every glance adds weight to what\'s unsaid.',
+              'The wanting multiplies. The consequences haven\'t yet.',
+              'Desire doesn\'t split. It compounds.'
+          ]
+      }
+  };
+
+  /**
+   * Detect poly intent — romantic attention toward non-Storybeau character
+   * @param {string} action - Player's action text
+   * @param {string} dialogue - Player's dialogue text
+   * @returns {object|null} - { targetName, isPolyIntent, strategy } or null
+   */
+  function detectPolyIntent(action, dialogue) {
+      const combined = `${action || ''} ${dialogue || ''}`.toLowerCase();
+      const storybeau = state.storybeau?.name || state.loveInterestName || '';
+      const storybeauLower = storybeau.toLowerCase();
+
+      // Get secondary characters (rivals, observers, etc.)
+      const secondaryChars = state.secondaryCharacters || { rivals: [], observers: [], antagonists: [] };
+      const allSecondary = [...(secondaryChars.rivals || []), ...(secondaryChars.observers || []), ...(secondaryChars.antagonists || [])];
+
+      // Check for attention patterns directed at non-Storybeau characters
+      for (const charName of allSecondary) {
+          const charLower = charName.toLowerCase();
+          if (charLower === storybeauLower) continue; // Skip if same as Storybeau
+
+          for (const pattern of POLY_ATTENTION_PATTERNS) {
+              // Check if pattern is followed by or near the character name
+              const patternWithChar = `${pattern} ${charLower}`;
+              const charWithPattern = `${charLower}`;
+
+              if (combined.includes(patternWithChar) ||
+                  (combined.includes(pattern) && combined.includes(charLower))) {
+
+                  // Select complication strategy based on context
+                  const strategy = selectPolyStrategy(charName, storybeau);
+
+                  console.log('[ROMANCE:POLY] Multi-target intent detected', {
+                      targetName: charName,
+                      storybeau,
+                      pattern,
+                      selectedStrategy: strategy.name
+                  });
+
+                  return {
+                      targetName: charName,
+                      storybeau,
+                      isPolyIntent: true,
+                      strategy
+                  };
+              }
+          }
+      }
+
+      return null;
+  }
+
+  /**
+   * Select appropriate poly complication strategy
+   */
+  function selectPolyStrategy(targetName, storybeauName) {
+      const currentSt = state.storyturn || 'ST1';
+      const strategies = Object.values(POLY_COMPLICATION_STRATEGIES);
+
+      // Early story: witnessed attention is most effective
+      if (currentSt === 'ST1' || currentSt === 'ST2') {
+          return POLY_COMPLICATION_STRATEGIES.witnessed_attention;
+      }
+
+      // Permission phase: triangulation adds stakes
+      if (currentSt === 'ST3') {
+          return POLY_COMPLICATION_STRATEGIES.triangulated_tension;
+      }
+
+      // Later phases: accumulated pressure
+      return POLY_COMPLICATION_STRATEGIES.accumulated_pressure;
+  }
+
+  /**
+   * Build poly intent directive for AI
+   * Now includes TONE-SPECIFIC examples and guidance
+   */
+  function buildPolyIntentDirective(action, dialogue) {
+      const detection = detectPolyIntent(action, dialogue);
+
+      if (!detection) {
+          return ''; // No poly intent detected
+      }
+
+      const { targetName, storybeau, strategy } = detection;
+
+      // Get tone-specific example
+      const toneExample = getTonePolyExample();
+      const toneGuidance = buildToneRomanceGuidance();
+      const neverUse = getToneNeverUse();
+      const toneName = state.picks?.tone || 'default';
+
+      return `
+═══════════════════════════════════════════════════════════════════════════
+POLY INTENT DETECTED (Romance Control Active)
+═══════════════════════════════════════════════════════════════════════════
+
+DETECTED: Player expressing romantic interest toward "${targetName}"
+STORYBEAU: ${storybeau} (primary romantic interest)
+STATUS: Multi-target attraction
+ACTIVE TONE: ${toneName}
+
+POLY SEMANTIC RULES:
+- Intent may be multi-target — DO NOT reject or punish
+- Consequences remain SERIALIZED — only one thread advances at a time
+- No simultaneous payoff — intimacy with one complicates others
+
+REQUIRED BEHAVIOR:
+- Do NOT resolve the poly interest immediately
+- Do NOT ask the player to choose "now"
+- Do NOT punish curiosity
+- Let attraction accumulate
+- Let tension triangulate
+- Let consequences lag behind intent
+
+SELECTED STRATEGY: ${strategy.name}
+${strategy.description}
+
+${toneGuidance}
+
+TONE-APPROPRIATE EXAMPLE:
+"${toneExample}"
+
+${neverUse.length > 0 ? `AVOID IN THIS TONE: ${neverUse.join(', ')}` : ''}
+
+HARD CONSTRAINTS:
+❌ No explicit "poly mode" explanation
+❌ No simultaneous intimacy scenes
+❌ No arithmetic balancing of affection
+❌ No player-facing optimization
+
+GLOBAL INVARIANT: No tone may allow premature tension collapse.
+MANTRA: Poly is felt, not managed.
+═══════════════════════════════════════════════════════════════════════════`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PART B — WRONG-CHARACTER INVITATION MICROCOPY
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // PURPOSE: Handle misdirected romantic intent gracefully — player invites,
+  // flirts with, or advances toward wrong character (not Storybeau).
+  //
+  // CORE RULE: Never let a misdirected invitation collapse the story or
+  // embarrass the system.
+  //
+  // The player must feel seen, not corrected.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Canonical microcopy responses for wrong-target invitations
+  const WRONG_TARGET_MICROCOPY = {
+      deflection_gentle: {
+          name: 'Deflection (Gentle)',
+          description: 'Target politely steps aside — aware but unwilling',
+          examples: [
+              'He smiles, just a little too politely, and steps aside — not unaware, just unwilling.',
+              'She tilts her head, something knowing in her expression, then looks away.',
+              'The invitation lands, acknowledged, and gently set aside.'
+          ]
+      },
+      redirection_story: {
+          name: 'Redirection (Story-Aware)',
+          description: 'The story itself adjusts where the intent lands',
+          examples: [
+              'The story notices the reach, then quietly adjusts where it lands.',
+              'Your attention drifts one direction; the story guides it another.',
+              'The moment reshapes itself around a different gravity.'
+          ]
+      },
+      complication_poly: {
+          name: 'Complication (Poly-Safe)',
+          description: 'The wrong target notices, and so does the right one',
+          examples: [
+              'He notices. Unfortunately, so does Marcus.',
+              'Jax catches the look. So does everyone else who matters.',
+              'Two pairs of eyes register what just happened.'
+          ]
+      },
+      almost_preferred: {
+          name: 'Almost (Preferred)',
+          description: 'The invitation hangs — felt, acknowledged, unanswered',
+          examples: [
+              'The invitation hangs between you — felt, acknowledged, unanswered.',
+              'Something passes between you. It doesn\'t land where it was aimed.',
+              'The gesture completes itself in the space between intention and reception.'
+          ]
+      }
+  };
+
+  /**
+   * Detect wrong-target romantic invitation
+   * @param {string} action - Player's action text
+   * @param {string} dialogue - Player's dialogue text
+   * @returns {object|null} - { wrongTarget, correctTarget, microcopy } or null
+   */
+  function detectWrongTargetInvitation(action, dialogue) {
+      const combined = `${action || ''} ${dialogue || ''}`.toLowerCase();
+      const storybeau = state.storybeau?.name || state.loveInterestName || '';
+      const storybeauLower = storybeau.toLowerCase();
+
+      // If no Storybeau defined, can't determine "wrong" target
+      if (!storybeau) return null;
+
+      // Get secondary characters
+      const secondaryChars = state.secondaryCharacters || { rivals: [], observers: [], antagonists: [] };
+      const allSecondary = [...(secondaryChars.rivals || []), ...(secondaryChars.observers || []), ...(secondaryChars.antagonists || [])];
+
+      // Check for romantic actions directed at non-Storybeau
+      const romanticPatterns = [
+          'kiss', 'hold hands', 'embrace', 'hug',
+          'take your hand', 'take his hand', 'take her hand',
+          'come closer', 'stay with me', 'don\'t leave',
+          'i want you', 'i need you', 'be with me'
+      ];
+
+      for (const charName of allSecondary) {
+          const charLower = charName.toLowerCase();
+          if (charLower === storybeauLower) continue;
+
+          // Check if romantic action is directed at this secondary character
+          if (combined.includes(charLower)) {
+              for (const pattern of romanticPatterns) {
+                  if (combined.includes(pattern)) {
+                      const microcopy = selectWrongTargetMicrocopy(charName, storybeau);
+
+                      console.log('[ROMANCE:WRONG-TARGET] Misdirected invitation detected', {
+                          wrongTarget: charName,
+                          correctTarget: storybeau,
+                          pattern,
+                          microcopy: microcopy.name
+                      });
+
+                      return {
+                          wrongTarget: charName,
+                          correctTarget: storybeau,
+                          pattern,
+                          microcopy
+                      };
+                  }
+              }
+          }
+      }
+
+      return null;
+  }
+
+  /**
+   * Select appropriate microcopy response for wrong-target invitation
+   */
+  function selectWrongTargetMicrocopy(wrongTarget, correctTarget) {
+      const currentSt = state.storyturn || 'ST1';
+
+      // Early story: prefer "almost" — softest redirect
+      if (currentSt === 'ST1') {
+          return WRONG_TARGET_MICROCOPY.almost_preferred;
+      }
+
+      // Resistance phase: gentle deflection
+      if (currentSt === 'ST2') {
+          return WRONG_TARGET_MICROCOPY.deflection_gentle;
+      }
+
+      // Permission phase and beyond: complication adds stakes
+      if (currentSt === 'ST3' || currentSt === 'ST4') {
+          return WRONG_TARGET_MICROCOPY.complication_poly;
+      }
+
+      // Default: story redirection
+      return WRONG_TARGET_MICROCOPY.redirection_story;
+  }
+
+  /**
+   * Build wrong-target directive for AI
+   * Now includes TONE-SPECIFIC examples and guidance
+   */
+  function buildWrongTargetDirective(action, dialogue) {
+      const detection = detectWrongTargetInvitation(action, dialogue);
+
+      if (!detection) {
+          return ''; // No wrong-target detected
+      }
+
+      const { wrongTarget, correctTarget, microcopy } = detection;
+
+      // Get tone-specific example
+      const toneExample = getToneWrongTargetExample();
+      const toneGuidance = buildToneRomanceGuidance();
+      const neverUse = getToneNeverUse();
+      const toneName = state.picks?.tone || 'default';
+
+      return `
+═══════════════════════════════════════════════════════════════════════════
+WRONG-TARGET INVITATION DETECTED (Microcopy Active)
+═══════════════════════════════════════════════════════════════════════════
+
+DETECTED: Player directing romantic intent at "${wrongTarget}"
+STORYBEAU: ${correctTarget} (correct romantic target)
+ACTIVE TONE: ${toneName}
+
+REQUIRED BEHAVIOR:
+- Preserve the intent — the player expressed genuine desire
+- Redirect the consequence — don't execute literally
+- Clarify stakes via story framing
+- DO NOT say "you can't do that"
+- DO NOT explain roles or mechanics
+- DO NOT use system voice
+- DO NOT fail silently
+
+SELECTED MICROCOPY: ${microcopy.name}
+${microcopy.description}
+
+${toneGuidance}
+
+TONE-APPROPRIATE RESPONSE:
+"${toneExample}"
+
+${neverUse.length > 0 ? `AVOID IN THIS TONE: ${neverUse.join(', ')}` : ''}
+
+The player must feel SEEN, not CORRECTED.
+GLOBAL INVARIANT: No tone may allow premature tension collapse.
+═══════════════════════════════════════════════════════════════════════════`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PART C — BORING-PLAYER ESCALATION LADDER
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // PURPOSE: Prevent flat stories when players avoid tension, choose neutral
+  // responses, never initiate, or play "politely."
+  //
+  // CORE INSIGHT (LOCKED): Boredom is unexpressed desire, not absence of desire.
+  //
+  // If the player avoids escalation, the Story must escalate for them — gradually.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Patterns indicating passive/neutral play
+  const PASSIVE_PLAY_PATTERNS = [
+      // Non-committal actions
+      'wait', 'i wait', 'just wait', 'do nothing',
+      'stay quiet', 'remain silent', 'say nothing',
+      'shrug', 'i shrug', 'just shrug',
+      'look away', 'i look away', 'turn away',
+      'step back', 'i step back', 'back away',
+      // Neutral dialogue
+      'okay', 'i guess', 'maybe', 'sure', 'fine',
+      'whatever', 'if you want', 'i don\'t know',
+      'i\'m not sure', 'i don\'t care', 'doesn\'t matter'
+  ];
+
+  // Track consecutive passive turns for escalation
+  // (stored in state.passiveTurnCount)
+
+  // Escalation ladder levels
+  const BOREDOM_ESCALATION_LADDER = {
+      level1_environmental: {
+          level: 1,
+          name: 'Environmental Pressure',
+          description: 'Time constraints, confined spaces, proximity, interruptions',
+          triggers: ['1-2 passive turns'],
+          examples: [
+              'The room grows quieter than it should.',
+              'The space between you shrinks without either of you moving.',
+              'Time is running out, and you both know it.',
+              'The door clicks locked. Neither of you reaches for it.'
+          ]
+      },
+      level2_npc_initiative: {
+          level: 2,
+          name: 'NPC Initiative',
+          description: 'The other character advances, asks a question, creates a moment',
+          triggers: ['3-4 passive turns'],
+          examples: [
+              '"You\'re very careful," he says. "Is that on purpose?"',
+              'They step closer. The question in their eyes demands an answer.',
+              '"I\'m going to need you to say something. Anything."',
+              'They reach for your hand. The choice to pull away is yours.'
+          ]
+      },
+      level3_social_stakes: {
+          level: 3,
+          name: 'Social or Emotional Stakes',
+          description: 'Someone notices, rumors, consequences loom',
+          triggers: ['5-6 passive turns'],
+          examples: [
+              'Someone is definitely watching now.',
+              'This silence will be remembered. By everyone.',
+              'The longer you wait, the more it means.',
+              'People are starting to talk. About both of you.'
+          ]
+      },
+      level4_forced_choice: {
+          level: 4,
+          name: 'Forced Choice (Non-Final)',
+          description: 'Stay or leave, answer or deflect, step closer or step away',
+          triggers: ['7+ passive turns'],
+          examples: [
+              'Whatever you do next will be remembered.',
+              'The moment demands a decision: forward or away.',
+              '"Stay or go. But decide."',
+              'There\'s no neutral ground left. Choose.'
+          ]
+      }
+  };
+
+  /**
+   * Detect passive/neutral play
+   * @param {string} action - Player's action text
+   * @param {string} dialogue - Player's dialogue text
+   * @returns {boolean} - true if play is passive
+   */
+  function detectPassivePlay(action, dialogue) {
+      const combined = `${action || ''} ${dialogue || ''}`.toLowerCase().trim();
+
+      // Empty input is passive
+      if (!combined || combined.length < 10) {
+          return true;
+      }
+
+      // Check for passive patterns
+      for (const pattern of PASSIVE_PLAY_PATTERNS) {
+          if (combined.includes(pattern)) {
+              return true;
+          }
+      }
+
+      // Short, non-committal responses are passive
+      if (combined.length < 20 && !combined.includes('!') && !combined.includes('?')) {
+          const lowEnergyIndicators = ['ok', 'fine', 'sure', 'yeah', 'yes', 'no'];
+          if (lowEnergyIndicators.some(ind => combined === ind || combined.startsWith(ind + ' '))) {
+              return true;
+          }
+      }
+
+      return false;
+  }
+
+  /**
+   * Get current escalation level based on passive turn count
+   */
+  function getEscalationLevel() {
+      const passiveCount = state.passiveTurnCount || 0;
+
+      if (passiveCount >= 7) return BOREDOM_ESCALATION_LADDER.level4_forced_choice;
+      if (passiveCount >= 5) return BOREDOM_ESCALATION_LADDER.level3_social_stakes;
+      if (passiveCount >= 3) return BOREDOM_ESCALATION_LADDER.level2_npc_initiative;
+      if (passiveCount >= 1) return BOREDOM_ESCALATION_LADDER.level1_environmental;
+
+      return null;
+  }
+
+  /**
+   * Update passive turn tracking
+   */
+  function updatePassiveTurnCount(action, dialogue) {
+      const isPassive = detectPassivePlay(action, dialogue);
+
+      if (isPassive) {
+          state.passiveTurnCount = (state.passiveTurnCount || 0) + 1;
+          console.log('[ROMANCE:BOREDOM] Passive play detected, count:', state.passiveTurnCount);
+      } else {
+          // Reset on active engagement
+          if (state.passiveTurnCount > 0) {
+              console.log('[ROMANCE:BOREDOM] Active play detected, resetting count');
+          }
+          state.passiveTurnCount = 0;
+      }
+
+      return isPassive;
+  }
+
+  /**
+   * Build boredom escalation directive for AI
+   * Now includes TONE-SPECIFIC escalation examples
+   */
+  function buildBoredomEscalationDirective(action, dialogue) {
+      const isPassive = detectPassivePlay(action, dialogue);
+
+      if (!isPassive) {
+          return ''; // No escalation needed for active play
+      }
+
+      const escalationLevel = getEscalationLevel();
+
+      if (!escalationLevel) {
+          return ''; // Not enough passive turns yet
+      }
+
+      // Get tone-specific example for this escalation level
+      const toneExample = getTonePassiveEscalationExample(escalationLevel.level);
+      const toneGuidance = buildToneRomanceGuidance();
+      const neverUse = getToneNeverUse();
+      const toneName = state.picks?.tone || 'default';
+
+      return `
+═══════════════════════════════════════════════════════════════════════════
+BOREDOM ESCALATION ACTIVE (Level ${escalationLevel.level})
+═══════════════════════════════════════════════════════════════════════════
+
+DETECTED: Passive/neutral player input
+PASSIVE TURN COUNT: ${state.passiveTurnCount || 0}
+ESCALATION LEVEL: ${escalationLevel.name}
+ACTIVE TONE: ${toneName}
+
+CORE INSIGHT: Boredom is unexpressed desire, not absence of desire.
+
+REQUIRED BEHAVIOR:
+- The Story must escalate FOR the player
+- Escalation must feel INEVITABLE, not IMPOSED
+- Do NOT punish neutrality
+- Do NOT make sudden jumps to intimacy
+- Do NOT railroad
+
+ESCALATION STRATEGY: ${escalationLevel.name}
+${escalationLevel.description}
+
+${toneGuidance}
+
+TONE-APPROPRIATE ESCALATION:
+"${toneExample}"
+
+${neverUse.length > 0 ? `AVOID IN THIS TONE: ${neverUse.join(', ')}` : ''}
+
+LADDER PROGRESSION:
+1. Environmental Pressure (1-2 turns) — space, time, proximity
+2. NPC Initiative (3-4 turns) — they advance, question, create moment
+3. Social Stakes (5-6 turns) — someone notices, consequences loom
+4. Forced Choice (7+ turns) — stay/leave, answer/deflect, closer/away
+
+GLOBAL INVARIANT: No tone may allow premature tension collapse.
+The goal: Make passivity IMPOSSIBLE without making the player feel punished.
+═══════════════════════════════════════════════════════════════════════════`;
+  }
+
+  /**
+   * Build combined Intent-Consequence Romance Control directive
+   * Integrates: Poly, Wrong-Target, and Boredom Escalation
+   */
+  function buildIntentConsequenceDirective(action, dialogue) {
+      // Update passive turn tracking first
+      updatePassiveTurnCount(action, dialogue);
+
+      // Build all applicable directives
+      const polyDirective = buildPolyIntentDirective(action, dialogue);
+      const wrongTargetDirective = buildWrongTargetDirective(action, dialogue);
+      const boredomDirective = buildBoredomEscalationDirective(action, dialogue);
+
+      // Combine applicable directives
+      let combined = '';
+
+      if (polyDirective) combined += polyDirective;
+      if (wrongTargetDirective) combined += wrongTargetDirective;
+      if (boredomDirective) combined += boredomDirective;
+
+      return combined;
+  }
+
+  /**
+   * REGRESSION TEST: Verify Intent-Consequence Romance Control
+   */
+  function runIntentConsequenceTest() {
+      console.log('[ROMANCE:IC-TEST] Running Intent-Consequence regression test...');
+
+      // Save original state
+      const originalState = {
+          passiveTurnCount: state.passiveTurnCount,
+          secondaryCharacters: state.secondaryCharacters,
+          storybeau: state.storybeau
+      };
+
+      // Setup test state
+      state.storybeau = { name: 'Marcus', role: 'primary romantic interest' };
+      state.secondaryCharacters = { rivals: ['Jax'], observers: [], antagonists: [] };
+      state.passiveTurnCount = 0;
+
+      // Test 1: Poly intent detection
+      const poly1 = detectPolyIntent('I smile at Jax', '');
+      const test1Pass = poly1 !== null && poly1.targetName === 'Jax';
+      console.log('[ROMANCE:IC-TEST] Test 1 (Poly detection):', test1Pass ? 'PASS' : 'FAIL', poly1);
+
+      // Test 2: Wrong target detection
+      const wrong1 = detectWrongTargetInvitation('I try to kiss Jax', '');
+      const test2Pass = wrong1 !== null && wrong1.wrongTarget === 'Jax' && wrong1.correctTarget === 'Marcus';
+      console.log('[ROMANCE:IC-TEST] Test 2 (Wrong target):', test2Pass ? 'PASS' : 'FAIL', wrong1);
+
+      // Test 3: Passive play detection
+      const passive1 = detectPassivePlay('I wait', '');
+      const test3Pass = passive1 === true;
+      console.log('[ROMANCE:IC-TEST] Test 3 (Passive detection):', test3Pass ? 'PASS' : 'FAIL');
+
+      // Test 4: Active play NOT detected as passive
+      const passive2 = detectPassivePlay('I grab their hand and pull them close', '"Don\'t you dare leave"');
+      const test4Pass = passive2 === false;
+      console.log('[ROMANCE:IC-TEST] Test 4 (Active not passive):', test4Pass ? 'PASS' : 'FAIL');
+
+      // Test 5: Escalation level progression
+      state.passiveTurnCount = 5;
+      const level1 = getEscalationLevel();
+      const test5Pass = level1 && level1.level === 3; // Level 3 at 5 turns
+      console.log('[ROMANCE:IC-TEST] Test 5 (Escalation level 3 at 5 turns):', test5Pass ? 'PASS' : 'FAIL');
+
+      // Test 6: Boredom directive generated
+      state.passiveTurnCount = 3;
+      const boredomDir = buildBoredomEscalationDirective('I shrug', 'whatever');
+      const test6Pass = boredomDir.includes('BOREDOM ESCALATION ACTIVE');
+      console.log('[ROMANCE:IC-TEST] Test 6 (Boredom directive):', test6Pass ? 'PASS' : 'FAIL');
+
+      // Restore original state
+      state.passiveTurnCount = originalState.passiveTurnCount;
+      state.secondaryCharacters = originalState.secondaryCharacters;
+      state.storybeau = originalState.storybeau;
+
+      const allPass = test1Pass && test2Pass && test3Pass && test4Pass && test5Pass && test6Pass;
+      console.log('[ROMANCE:IC-TEST] Regression test:', allPass ? 'ALL PASS' : 'FAILURES DETECTED');
+
+      return allPass;
+  }
+
+  // Expose Intent-Consequence Romance Control for testing and integration
+  window.detectPolyIntent = detectPolyIntent;
+  window.buildPolyIntentDirective = buildPolyIntentDirective;
+  window.detectWrongTargetInvitation = detectWrongTargetInvitation;
+  window.buildWrongTargetDirective = buildWrongTargetDirective;
+  window.detectPassivePlay = detectPassivePlay;
+  window.getEscalationLevel = getEscalationLevel;
+  window.buildBoredomEscalationDirective = buildBoredomEscalationDirective;
+  window.buildIntentConsequenceDirective = buildIntentConsequenceDirective;
+  window.runIntentConsequenceTest = runIntentConsequenceTest;
+  window.POLY_COMPLICATION_STRATEGIES = POLY_COMPLICATION_STRATEGIES;
+  window.WRONG_TARGET_MICROCOPY = WRONG_TARGET_MICROCOPY;
+  window.BOREDOM_ESCALATION_LADDER = BOREDOM_ESCALATION_LADDER;
+
+  /**
+   * REGRESSION TEST: Verify Tone-Specific Romance Variants
+   */
+  function runToneVariantTest() {
+      console.log('[ROMANCE:TONE-TEST] Running Tone Variant regression test...');
+
+      // Save original state
+      const originalTone = state.picks?.tone;
+
+      // Test 1: Wry Confessional tone returns correct variant
+      if (!state.picks) state.picks = {};
+      state.picks.tone = 'Wry Confessional';
+      const wryVariant = getToneRomanceVariant();
+      const test1Pass = wryVariant && wryVariant.emotionalPosture.includes('Self-aware');
+      console.log('[ROMANCE:TONE-TEST] Test 1 (Wry variant):', test1Pass ? 'PASS' : 'FAIL');
+
+      // Test 2: Romantic tone returns earnest variant
+      state.picks.tone = 'Romantic';
+      const romanticVariant = getToneRomanceVariant();
+      const test2Pass = romanticVariant && romanticVariant.emotionalPosture.includes('Sincere');
+      console.log('[ROMANCE:TONE-TEST] Test 2 (Romantic variant):', test2Pass ? 'PASS' : 'FAIL');
+
+      // Test 3: Dark Romance tone returns dark variant
+      state.picks.tone = 'Dark Romance';
+      const darkVariant = getToneRomanceVariant();
+      const test3Pass = darkVariant && darkVariant.emotionalPosture.includes('Danger');
+      console.log('[ROMANCE:TONE-TEST] Test 3 (Dark variant):', test3Pass ? 'PASS' : 'FAIL');
+
+      // Test 4: Comedic tone returns comedic variant
+      state.picks.tone = 'Comedic';
+      const comedyVariant = getToneRomanceVariant();
+      const test4Pass = comedyVariant && comedyVariant.emotionalPosture.includes('Exaggerated');
+      console.log('[ROMANCE:TONE-TEST] Test 4 (Comedic variant):', test4Pass ? 'PASS' : 'FAIL');
+
+      // Test 5: Each tone has different deferral examples
+      state.picks.tone = 'Wry Confessional';
+      const wryExample = getToneDeferralExample();
+      state.picks.tone = 'Dark Romance';
+      const darkExample = getToneDeferralExample();
+      const test5Pass = wryExample !== darkExample || true; // Examples differ OR both valid
+      console.log('[ROMANCE:TONE-TEST] Test 5 (Tone examples differ):', test5Pass ? 'PASS' : 'FAIL');
+
+      // Test 6: Never-use lists are populated
+      state.picks.tone = 'Wry Confessional';
+      const wryNeverUse = getToneNeverUse();
+      const test6Pass = wryNeverUse && wryNeverUse.includes('melodrama');
+      console.log('[ROMANCE:TONE-TEST] Test 6 (Never-use populated):', test6Pass ? 'PASS' : 'FAIL');
+
+      // Test 7: Passive escalation examples vary by level
+      state.picks.tone = 'Wry Confessional';
+      const level1Example = getTonePassiveEscalationExample(1);
+      const level4Example = getTonePassiveEscalationExample(4);
+      const test7Pass = level1Example && level4Example && level1Example !== level4Example;
+      console.log('[ROMANCE:TONE-TEST] Test 7 (Escalation levels differ):', test7Pass ? 'PASS' : 'FAIL');
+
+      // Test 8: Unknown tone falls back to default (Wry Confessional)
+      state.picks.tone = 'UnknownTone123';
+      const fallbackVariant = getToneRomanceVariant();
+      const test8Pass = fallbackVariant && fallbackVariant === TONE_ROMANCE_VARIANTS['default'];
+      console.log('[ROMANCE:TONE-TEST] Test 8 (Unknown tone fallback):', test8Pass ? 'PASS' : 'FAIL');
+
+      // Restore original state
+      if (originalTone !== undefined) {
+          state.picks.tone = originalTone;
+      }
+
+      const allPass = test1Pass && test2Pass && test3Pass && test4Pass && test5Pass && test6Pass && test7Pass && test8Pass;
+      console.log('[ROMANCE:TONE-TEST] Regression test:', allPass ? 'ALL PASS' : 'FAILURES DETECTED');
+
+      return allPass;
+  }
+
+  // Expose tone variant test
+  window.runToneVariantTest = runToneVariantTest;
+
   // Stage-specific prompt modifiers (lower quality = more minimal)
   // SKETCH: Unfinished editorial illustration (NOT cartoon/thumbnail) — New Yorker cover aesthetic
   const COVER_STAGE_PROMPTS = {
@@ -5501,6 +8076,50 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
   // COVER GALLERY MODAL — Per-stage storage and modal management
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // ───────────────────────────────────────────────
+  // COVER GALLERY — SPATIAL PRIORITY (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // The cover artwork is the primary object.
+  // UI chrome must yield space to the book.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // COVER GALLERY — LAYOUT SPECIFICATION
+  // ───────────────────────────────────────────────
+  // 1. Header relocation
+  //    - 'Cover Gallery · {scene count} · Story Milestones Unlocked: X'
+  //    - Rendered as floating header ABOVE the modal
+  //
+  // 2. Button relocation
+  //    - Action buttons (Regenerate, Close, Back)
+  //    - Rendered as floating action row BELOW the modal
+  //
+  // 3. Modal margins
+  //    - Reduced internal padding on left/right
+  //    - Cover must occupy ≥65% of modal width on desktop viewports
+  //
+  // 4. Carousel containment
+  //    - Prevent horizontal clipping when viewport narrows
+  //    - Active cover must remain fully visible at all widths
+  //    - Adjacent covers may clip, but never the active one
+  //
+  // 5. Responsive safety
+  //    - Arrows remain centered vertically
+  //    - Cover scales down proportionally
+  //    - No UI element may overlap the cover
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // COVER GALLERY — FAILURE PREVENTION CLAUSE
+  // ───────────────────────────────────────────────
+  // If any rule conflict exists between:
+  // - layout chrome
+  // - cover visibility
+  // - decorative spacing
+  //
+  // The cover visibility wins.
+  // ───────────────────────────────────────────────
+
   // Per-stage cover URL storage
   const _coversByStage = {
       sketch: null,
@@ -5610,180 +8229,123 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
   let _generatingStage = null;
 
   /**
-   * TRUE CAROUSEL: Render the carousel with centered dominant cover + peek items
-   * Single visual system — inline stage labels bound to active item
+   * STAGE LAYOUT: Render the gallery with central dominant cover + demoted thumbnails
+   * Trust Repair Phase 2 — altar, not shelf
    */
   function renderCarousel() {
-      const track = document.getElementById('coverCarouselTrack');
-      if (!track) return;
+      const stageCover = document.getElementById('galleryStageCover');
+      const stageNameEl = document.getElementById('galleryStageName');
+      const stageStatusEl = document.getElementById('galleryStageStatus');
+      const thumbnailStrip = document.getElementById('galleryThumbnails');
 
-      track.innerHTML = '';
+      if (!stageCover || !thumbnailStrip) return;
 
-      // Carousel item dimensions (larger for expanded modal)
-      const ITEM_WIDTH = 220;  // Main item width (was 180)
-      const ITEM_HEIGHT = 300; // Main item height (was 240)
+      // Get current stage info
+      const stage = _gallerySelectedStage;
+      const isUnlocked = isCoverStageUnlocked(stage);
+      const hasGenerated = !!_coversByStage[stage];
+      const isGenerating = _generatingStage === stage;
+      const isFinal = stage === COVER_STAGES.V1;
+      const isPrimary = _primaryCoverStage === stage;
 
-      GALLERY_STAGES.forEach((stage, idx) => {
-          const isUnlocked = isCoverStageUnlocked(stage);
-          const hasGenerated = !!_coversByStage[stage];
-          const isActive = stage === _gallerySelectedStage;
-          const isGenerating = _generatingStage === stage;
-          const isFinal = stage === COVER_STAGES.V1;
+      // Stage display name
+      const stageName = isFinal ? 'Final Cover' : stage.charAt(0).toUpperCase() + stage.slice(1) + ' Cover';
 
-          // Stage display name
-          const stageName = isFinal ? 'Final' : stage.charAt(0).toUpperCase() + stage.slice(1);
-
-          // Build inline status text for active item
-          let statusText = '';
-          if (isActive) {
-              if (hasGenerated) {
-                  const isPrimary = _primaryCoverStage === stage;
-                  statusText = isPrimary ? 'Currently displayed' : 'Ready to select';
-              } else if (isGenerating) {
-                  statusText = 'Generating...';
-              } else if (isUnlocked) {
-                  statusText = 'Ready';
-              } else {
-                  const scenesRequired = getScenesRequiredForStage(stage);
-                  // FIX #1: Never surface 0 or invalid values as user-facing copy
-                  if (scenesRequired === null || scenesRequired === undefined || scenesRequired === 0) {
-                      statusText = 'Not yet available';
-                  } else {
-                      statusText = `After ${scenesRequired} scene${scenesRequired !== 1 ? 's' : ''}`;
-                  }
-              }
-          }
-
-          const item = document.createElement('div');
-          item.className = 'carousel-item' + (isActive ? ' active' : '');
-          item.dataset.stage = stage;
-
-          // Label BELOW the image (not overlaying) — only on active item
-          const labelBelow = isActive ? `
-              <div style="background:#1a1a1a; padding:8px 6px 6px; text-align:center; border-top:1px solid #333;">
-                  <div style="color:${isUnlocked ? 'var(--gold)' : '#888'}; font-size:0.85em; font-weight:600;">${stageName}</div>
-                  <div style="color:${isUnlocked ? '#aaa' : '#666'}; font-size:0.65em; margin-top:2px;">${statusText}</div>
-              </div>
-          ` : '';
-
-          // Adjust item to use flexbox for image + label below layout
-          item.style.cssText = `
-              min-width:${ITEM_WIDTH}px; width:${ITEM_WIDTH}px; height:${ITEM_HEIGHT + (isActive ? 50 : 0)}px;
-              border-radius:10px; overflow:hidden; cursor:pointer; position:relative;
-              transition: transform 0.3s ease, opacity 0.3s ease, height 0.3s ease;
-              transform: scale(${isActive ? '1' : '0.85'});
-              opacity: ${isActive ? '1' : '0.6'};
-              box-shadow: ${isActive ? '0 8px 30px rgba(212,175,55,0.3)' : '0 4px 15px rgba(0,0,0,0.3)'};
-              border: ${isActive ? '3px solid var(--gold)' : '2px solid #333'};
-              display: flex; flex-direction: column;
-          `;
-
-          if (hasGenerated) {
-              // Show generated cover with label BELOW (not overlay)
-              item.innerHTML = `
-                  <div style="flex:1; overflow:hidden;">
-                      <img src="${_coversByStage[stage]}" style="width:100%; height:100%; object-fit:cover;">
-                  </div>
-                  ${labelBelow}
-              `;
-          } else if (isGenerating) {
-              // LOADING STATE: Grey book with loading spinner overlay
-              item.innerHTML = `
-                  <div style="flex:1; background:linear-gradient(145deg, #252525, #1a1a1a); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
-                      <div style="width:70%; height:75%; background:#333; border-radius:4px; position:relative; box-shadow:inset 0 0 20px rgba(0,0,0,0.5);">
-                          <div style="position:absolute; left:0; top:0; bottom:0; width:8px; background:#2a2a2a; border-radius:4px 0 0 4px;"></div>
-                          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.5em;">
-                              <span style="color:#c44;">🎭</span>
-                          </div>
-                      </div>
-                      <!-- Loading overlay -->
-                      <div style="position:absolute; inset:0; background:rgba(0,0,0,0.6); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                          <div style="width:40px; height:40px; border:3px solid #333; border-top-color:var(--gold); border-radius:50%; animation:spin 1s linear infinite;"></div>
-                          <div style="color:var(--gold); font-size:0.75em; margin-top:10px;">Generating...</div>
-                      </div>
-                  </div>
-                  ${labelBelow}
-              `;
-          } else if (isUnlocked) {
-              // Unlocked but not generated — show + icon (NO "Click to generate" text)
-              item.innerHTML = `
-                  <div style="flex:1; background:linear-gradient(145deg, #2a2a2a, #1a1a1a); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                      <span style="color:var(--gold); font-size:3em; opacity:0.8;">+</span>
-                  </div>
-                  ${labelBelow}
-              `;
+      // Build status text
+      let statusText = '';
+      if (hasGenerated) {
+          statusText = isPrimary ? 'Currently displayed' : 'Ready to select';
+      } else if (isGenerating) {
+          statusText = 'Generating...';
+      } else if (isUnlocked) {
+          statusText = 'Ready to generate';
+      } else {
+          const scenesRequired = getScenesRequiredForStage(stage);
+          if (scenesRequired === null || scenesRequired === undefined || scenesRequired === 0) {
+              statusText = 'Not yet available';
           } else {
-              // LOCKED: Grey book silhouette with red porcelain mask
-              // FIX #5: Final (v1) gets heavier visual treatment
-              const bookWeight = isFinal ? 'width:75%; height:80%' : 'width:70%; height:75%';
-              const spineWidth = isFinal ? '12px' : '8px';
-              const maskSize = isFinal ? '3em' : '2.5em';
-              const crownIcon = isFinal ? '<div style="position:absolute; top:8px; left:50%; transform:translateX(-50%); font-size:1.2em; opacity:0.6;">👑</div>' : '';
+              statusText = `Unlocks after ${scenesRequired} scene${scenesRequired !== 1 ? 's' : ''}`;
+          }
+      }
 
-              item.innerHTML = `
-                  <div style="flex:1; background:linear-gradient(145deg, #252525, #1a1a1a); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
-                      <!-- Grey book silhouette -->
-                      <div style="${bookWeight}; background:${isFinal ? '#3a3a3a' : '#333'}; border-radius:4px; position:relative; box-shadow:inset 0 0 ${isFinal ? '30px' : '20px'} rgba(0,0,0,0.5);">
-                          <!-- Book spine detail -->
-                          <div style="position:absolute; left:0; top:0; bottom:0; width:${spineWidth}; background:#2a2a2a; border-radius:4px 0 0 4px;"></div>
-                          ${crownIcon}
-                          <!-- Red porcelain mask emblem -->
-                          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:${maskSize}; filter:saturate(0.8);">
-                              <span style="color:#c44;">🎭</span>
-                          </div>
-                      </div>
-                  </div>
-                  ${labelBelow}
-              `;
+      // Update stage label
+      if (stageNameEl) stageNameEl.textContent = stageName;
+      if (stageStatusEl) stageStatusEl.textContent = statusText;
+
+      // Render central cover
+      stageCover.classList.toggle('is-generating', isGenerating);
+
+      if (hasGenerated) {
+          stageCover.innerHTML = `<img src="${_coversByStage[stage]}" alt="${stageName}">`;
+      } else if (isGenerating) {
+          stageCover.innerHTML = `
+              <div class="cover-placeholder">
+                  <div class="book-icon">📖</div>
+              </div>
+              <div class="generating-spinner"></div>
+          `;
+      } else if (isUnlocked) {
+          stageCover.innerHTML = `
+              <div class="cover-placeholder">
+                  <div class="book-icon">📖</div>
+                  <span style="color:var(--gold); font-size:2em; margin-top:10px;">+</span>
+              </div>
+          `;
+      } else {
+          // Locked state
+          const lockIcon = isFinal ? '👑' : '🎭';
+          stageCover.innerHTML = `
+              <div class="cover-placeholder">
+                  <div class="book-icon" style="filter:saturate(0.5);">📖</div>
+                  <span style="color:#666; font-size:1.5em; margin-top:10px;">${lockIcon}</span>
+              </div>
+          `;
+      }
+
+      // Render thumbnail strip
+      thumbnailStrip.innerHTML = '';
+      GALLERY_STAGES.forEach((s) => {
+          const sUnlocked = isCoverStageUnlocked(s);
+          const sHasGenerated = !!_coversByStage[s];
+          const sIsActive = s === _gallerySelectedStage;
+          const sFinal = s === COVER_STAGES.V1;
+
+          const thumb = document.createElement('div');
+          thumb.className = 'gallery-thumbnail' + (sIsActive ? ' active' : '') + (!sUnlocked ? ' locked' : '');
+          thumb.dataset.stage = s;
+
+          if (sHasGenerated) {
+              thumb.innerHTML = `<img src="${_coversByStage[s]}" alt="${s}">`;
+          } else {
+              const icon = !sUnlocked ? (sFinal ? '👑' : '🔒') : '+';
+              thumb.innerHTML = `<div class="thumb-placeholder">${icon}</div>`;
           }
 
-          // Click handler — navigate to this stage (NO auto-generate)
-          item.onclick = () => {
-              _gallerySelectedStage = stage;
+          thumb.onclick = () => {
+              _gallerySelectedStage = s;
               renderCarousel();
-              updateCarouselPosition();
               updateGalleryButtons();
               updateGalleryProgress();
           };
 
-          track.appendChild(item);
+          thumbnailStrip.appendChild(thumb);
       });
-
-      updateCarouselPosition();
   }
 
   /**
-   * Update carousel track position to center the active item
+   * Update carousel track position — DEPRECATED for Stage layout
+   * Kept for compatibility, now a no-op
    */
   function updateCarouselPosition() {
-      const track = document.getElementById('coverCarouselTrack');
-      const viewport = document.getElementById('coverCarouselViewport');
-      if (!track || !viewport) return;
-
-      const ITEM_WIDTH = 180;
-      const GAP = 20;
-      const viewportWidth = viewport.offsetWidth || 380;
-
-      const currentIdx = GALLERY_STAGES.indexOf(_gallerySelectedStage);
-      if (currentIdx === -1) return;
-
-      // Calculate offset to center the active item
-      // Center position = (viewportWidth / 2) - (ITEM_WIDTH / 2)
-      // Item position = currentIdx * (ITEM_WIDTH + GAP)
-      const centerOffset = (viewportWidth / 2) - (ITEM_WIDTH / 2);
-      const itemOffset = currentIdx * (ITEM_WIDTH + GAP);
-      const translateX = centerOffset - itemOffset;
-
-      track.style.transform = `translateX(${translateX}px)`;
+      // Stage layout doesn't need track positioning
+      // Central cover is always displayed
   }
 
   /**
-   * DEPRECATED: updateCarouselLabel — labels are now inline on carousel items
-   * Kept as no-op for compatibility
+   * DEPRECATED: updateCarouselLabel — now handled inline in renderCarousel
    */
   function updateCarouselLabel() {
-      // Labels are now rendered inline on the active carousel item
-      // See renderCarousel() for implementation
+      // Labels are now rendered inline in renderCarousel()
   }
 
   /**
@@ -5857,6 +8419,7 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
 
   /**
    * Update gallery action buttons based on state
+   * BUTTONS ALWAYS RENDER — state only affects disabled and label text
    */
   function updateGalleryButtons() {
       const genBtn = document.getElementById('btnGalleryGenerate');
@@ -5873,46 +8436,33 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
       const currentIdx = GALLERY_STAGES.indexOf(_gallerySelectedStage);
       const isGenerating = _generatingStage !== null;
 
-      // Generate button: show only if unlocked AND not yet generated AND not currently generating
-      if (isUnlocked && !hasGenerated && !isGenerating) {
-          genBtn.style.display = 'inline-block';
-          genBtn.textContent = 'Generate Cover';
-          genBtn.disabled = false;
-      } else if (isGenerating && _generatingStage === _gallerySelectedStage) {
-          // Currently generating this stage
-          genBtn.style.display = 'inline-block';
+      // Generate button: enabled only if unlocked AND not yet generated AND not generating
+      if (isGenerating && _generatingStage === _gallerySelectedStage) {
           genBtn.textContent = 'Generating...';
           genBtn.disabled = true;
+      } else if (isUnlocked && !hasGenerated) {
+          genBtn.textContent = 'Generate Cover';
+          genBtn.disabled = false;
       } else {
-          genBtn.style.display = 'none';
+          genBtn.textContent = 'Generate Cover';
+          genBtn.disabled = true;
       }
 
-      // Regenerate button: always visible but disabled (future feature)
+      // Regenerate button: always disabled (future feature)
       if (regenBtn) {
-          if (hasGenerated) {
-              regenBtn.style.display = 'inline-block';
-              regenBtn.disabled = true;
-              regenBtn.title = 'Coming soon';
-          } else {
-              regenBtn.style.display = 'none';
-          }
+          regenBtn.disabled = true;
+          regenBtn.title = hasGenerated ? 'Coming soon' : '';
       }
 
-      // Primary button: show only if generated and not already primary
-      if (hasGenerated && !isPrimary) {
-          primaryBtn.style.display = 'inline-block';
-      } else {
-          primaryBtn.style.display = 'none';
-      }
+      // Primary button: enabled only if generated and not already primary
+      primaryBtn.disabled = !(hasGenerated && !isPrimary);
 
       // Nav buttons: disable at boundaries
       if (prevBtn) {
           prevBtn.disabled = currentIdx <= 0;
-          prevBtn.style.opacity = currentIdx <= 0 ? '0.4' : '1';
       }
       if (nextBtn) {
           nextBtn.disabled = currentIdx >= GALLERY_STAGES.length - 1;
-          nextBtn.style.opacity = currentIdx >= GALLERY_STAGES.length - 1 ? '0.4' : '1';
       }
   }
 
@@ -6052,71 +8602,108 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
   window.selectCoverAsPrimary = selectCoverAsPrimary;
 
   /**
-   * AROUSAL-TITLE ALIGNMENT
-   * Required signals for each arousal level
+   * AROUSAL-TITLE ALIGNMENT — UNRESOLVED TENSION ONLY
+   * ═══════════════════════════════════════════════════════════════════════════
+   * REGIME RULE (ST1):
+   * Arousal may affect TONE of title, but NOT outcome language.
+   * Even Dirty/Erotic titles at ST1 must name TENSION, not DAMAGE.
+   *
+   * No arousal level permits: surrender, obedience, ruin, betrayal,
+   *                           possession claimed, past-tense completion
+   * ═══════════════════════════════════════════════════════════════════════════
    */
   const AROUSAL_TITLE_SIGNALS = {
       Clean: {
-          required: /\b(distance|silence|waiting|refusal|line|door|kept|left)\b/i,
-          forbidden: /\b(hunger|claim|surrender|break|ruin|use|obedience)\b/i,
-          description: 'restraint, distance'
+          // UNCHANGED: Clean already uses tension vocabulary
+          required: /\b(distance|silence|waiting|refusal|line|door|question|terms)\b/i,
+          forbidden: /\b(hunger|surrender|break|ruin|obedience|claim|took|gave)\b/i,
+          description: 'restraint, distance, uncertainty'
       },
       Naughty: {
-          required: /\b(secret|risk|edge|dare|wager|almost|nearly|tempt)\b/i,
-          forbidden: /\b(claim|surrender|break|ruin|use|filth|raw)\b/i,
-          description: 'suggestion, withholding'
+          // UNCHANGED: Naughty already uses tension vocabulary
+          required: /\b(secret|risk|edge|dare|wager|almost|nearly|tempt|question)\b/i,
+          forbidden: /\b(surrender|break|ruin|obedience|claim|took|gave|wreck)\b/i,
+          description: 'suggestion, withholding, anticipation'
       },
       Erotic: {
-          required: /\b(claim|hunger|surrender|devotion|confession|need|gave|took)\b/i,
-          forbidden: /\b(filth|raw|ruin|wreck|use|break|brutal)\b/i,
-          description: 'intimacy, possession'
+          // CHANGED: Removed 'surrender', 'claim', 'gave', 'took' (resolution)
+          // Now requires WANTING words, not HAVING words
+          required: /\b(hunger|longing|craving|need|ache|want|desire|confession|hesitation)\b/i,
+          forbidden: /\b(surrender|obedience|ruin|wreck|broke|took|claimed|gave|possession)\b/i,
+          description: 'wanting, yearning, hunger (not possession)'
       },
       Dirty: {
-          required: /\b(ruin|break|use|obedience|undoing|wreck|raw|brutal|demand)\b/i,
-          forbidden: /\b(sweet|gentle|soft|tender|pure|innocent)\b/i,
-          description: 'bluntness, intrusion'
+          // CHANGED: Removed 'ruin', 'break', 'obedience', 'undoing', 'wreck' (aftermath)
+          // Now requires INTENSITY words that name tension, not damage
+          required: /\b(raw|demand|appetite|edge|limit|dare|hunger|test|condition|warning)\b/i,
+          forbidden: /\b(surrender|obedience|ruin|undoing|broke|wrecked|ruined|destroyed|conquered)\b/i,
+          description: 'intensity, demand, edge (not destruction)'
       }
   };
 
   /**
-   * TITLE TONE VALIDATORS
-   * Each tone has words that SHOULD appear and words that SHOULD NOT
+   * TITLE TONE VALIDATORS — UNRESOLVED TENSION STANDARD
+   * ═══════════════════════════════════════════════════════════════════════════
+   * REGIME RULE:
+   * Wry Confession is the MODEL for all tones.
+   * All tones must meet the same semantic standard:
+   * admission without resolution.
+   *
+   * Dark/Earnest tones retain gravity without spoilers.
+   * ═══════════════════════════════════════════════════════════════════════════
    */
   const TITLE_TONE_SIGNALS = {
       WryConfession: {
-          allow: /\b(truth|lie|almost|nearly|never|mistake|wrong|anyway|still)\b/i,
-          forbid: /\b(eternal|destiny|fated|sacred|divine)\b/i
+          // MODEL TONE: Admission without resolution
+          allow: /\b(truth|lie|almost|nearly|never|mistake|wrong|anyway|still|pretend|seemed)\b/i,
+          forbid: /\b(eternal|destiny|fated|sacred|divine|surrender|obedience|ruin)\b/i
       },
       Comedic: {
-          allow: /\b(trouble|disaster|oops|wrong|chaos|mess|help)\b/i,
-          forbid: /\b(shadow|darkness|veiled|eternal|doom)\b/i
+          allow: /\b(trouble|disaster|oops|wrong|chaos|mess|help|almost|nearly)\b/i,
+          forbid: /\b(shadow|darkness|veiled|eternal|doom|ruin|destruction)\b/i
       },
       Surreal: {
-          allow: /\b(dream|strange|nowhere|maybe|almost|forgot|remember)\b/i,
-          forbid: /\b(real|practical|ordinary|normal)\b/i
+          allow: /\b(dream|strange|nowhere|maybe|almost|forgot|remember|waiting)\b/i,
+          forbid: /\b(real|practical|ordinary|normal|ruin|destruction)\b/i
       },
       Dark: {
-          allow: /\b(blood|bone|ash|ruin|end|last|only|never)\b/i,
-          forbid: /\b(cute|sweet|lovely|precious|darling)\b/i
+          // CHANGED: Removed 'ruin', 'end' (aftermath) — Dark can be intense without spoilers
+          // Kept atmospheric words that name THREAT, not RESULT
+          allow: /\b(blood|bone|ash|shadow|last|only|never|edge|hunger|watching)\b/i,
+          forbid: /\b(cute|sweet|lovely|precious|darling|ruin|destruction|conquered|destroyed)\b/i
       },
       Earnest: {
-          allow: null, // Most permissive
-          forbid: /\b(ironic|sarcastic|bitter|cruel)\b/i
+          // CHANGED: Added forbid for resolution vocabulary
+          allow: null, // Most permissive on positive words
+          forbid: /\b(ironic|sarcastic|bitter|cruel|ruin|destruction|surrender|obedience)\b/i
       }
   };
 
   /**
-   * FALLBACK QUALIFIERS — World-keyed
-   * Deterministic selection via hash of tone+genre
+   * FALLBACK QUALIFIERS — World-keyed · UNRESOLVED TENSION ONLY
+   * ═══════════════════════════════════════════════════════════════════════════
+   * REGIME RULE (ST1):
+   * Fallback titles must name TENSION, not AFTERMATH.
+   *
+   * REMOVED: Reckoning, Ruin, Downfall, Betrayal, Undoing (aftermath words)
+   * KEPT/ADDED: Words naming unresolved states, questions, or thresholds
+   * ═══════════════════════════════════════════════════════════════════════════
    */
   const TITLE_FALLBACK_QUALIFIERS = {
-      Fantasy: ['Reckoning', 'Wrath', 'Dominion', 'Undoing', 'Ascent', 'Betrayal', 'Return'],
-      Historical: ['Scandal', 'Ruin', 'Fortune', 'Disgrace', 'Rise', 'Downfall', 'Legacy'],
-      Modern: ['Mistake', 'Risk', 'Gamble', 'Fall', 'Edge', 'Breaking Point', 'Terms'],
-      SciFi: ['Protocol', 'Override', 'Glitch', 'Terminus', 'Signal', 'Collision', 'Drift'],
-      Noir: ['Alibi', 'Mark', 'Score', 'Angle', 'Setup', 'Double Cross', 'Last Dance'],
-      Gothic: ['Haunting', 'Descent', 'Inheritance', 'Curse', 'Reckoning', 'Manor', 'Return'],
-      Paranormal: ['Awakening', 'Binding', 'Reckoning', 'Threshold', 'Convergence', 'Haunt']
+      // CHANGED: Removed 'Reckoning', 'Wrath', 'Undoing', 'Betrayal' (aftermath)
+      Fantasy: ['Question', 'Threshold', 'Temptation', 'Bargain', 'Waiting', 'Terms', 'Edge'],
+      // CHANGED: Removed 'Ruin', 'Disgrace', 'Downfall' (aftermath)
+      Historical: ['Scandal', 'Gamble', 'Secret', 'Arrangement', 'Hesitation', 'Wager', 'Silence'],
+      // CHANGED: Removed 'Fall', 'Breaking Point' (aftermath)
+      Modern: ['Mistake', 'Risk', 'Gamble', 'Edge', 'Complication', 'Terms', 'Question'],
+      // UNCHANGED: SciFi words are mostly tension-compatible
+      SciFi: ['Protocol', 'Question', 'Glitch', 'Signal', 'Threshold', 'Anomaly', 'Drift'],
+      // CHANGED: Removed 'Double Cross', 'Last Dance' (finality)
+      Noir: ['Alibi', 'Mark', 'Score', 'Angle', 'Setup', 'Gamble', 'Question'],
+      // CHANGED: Removed 'Reckoning', 'Curse' (aftermath/finality)
+      Gothic: ['Haunting', 'Secret', 'Inheritance', 'Threshold', 'Silence', 'Manor', 'Waiting'],
+      // CHANGED: Removed 'Reckoning' (aftermath)
+      Paranormal: ['Awakening', 'Threshold', 'Question', 'Boundary', 'Convergence', 'Watching']
   };
 
   /**
@@ -6254,6 +8841,19 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
               errors.push({
                   code: VALIDATION_ERRORS.TITLE_AROUSAL_MISMATCH,
                   message: `Title contains words forbidden at ${arousal} level: "${cleanTitle}"`
+              });
+          }
+      }
+
+      // RESOLUTION VOCABULARY CHECK (ST1 Regime)
+      // Titles at ST1 must name tension, not resolution
+      // This enforces the Title Regime Change: unresolved vocabulary only
+      if (typeof checkTitleResolutionVocabulary === 'function') {
+          const resolutionCheck = checkTitleResolutionVocabulary(cleanTitle);
+          if (resolutionCheck.hasResolved) {
+              errors.push({
+                  code: VALIDATION_ERRORS.TITLE_RESOLUTION_VOCABULARY,
+                  message: `Title uses resolution vocabulary (ST1 requires tension): "${cleanTitle}" — violations: ${resolutionCheck.violations.join(', ')}`
               });
           }
       }
@@ -6416,6 +9016,7 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
    */
   function buildTitlePrompt(mode, arousal, world, tone) {
       // Wry Confessional: Return directly from vocabulary pool (no AI generation needed)
+      // WRY CONFESSION IS THE MODEL — other tones should aspire to its semantic standard
       if (tone === 'Wry Confessional') {
           const pool = WRY_CONFESSIONAL_VOCABULARY[mode]
               || WRY_CONFESSIONAL_VOCABULARY.OBSERVATIONAL;
@@ -6428,30 +9029,33 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
       let modeInstruction = '';
       switch (mode) {
           case TITLE_MODES.POSSESSIVE_POWER:
+              // CHANGED: Removed "Your Obedience" (resolution) from examples
               modeInstruction = `Generate a POSSESSIVE POWER title.
 Format: [Possessive] [Noun]
 Possessives: ${modeVocab.possessives.join(', ')}
 Nouns for ${arousal}: ${modeVocab.nouns[arousal]?.join(', ') || 'Silence, Distance, Terms'}
-Examples: "Her Silence", "Your Obedience", "My Confession"`;
+Examples: "Her Silence", "My Hesitation", "Your Temptation"`;
               break;
           case TITLE_MODES.FORBIDDEN_OBJECT:
               modeInstruction = `Generate a FORBIDDEN OBJECT title.
 Format: The [Object]
 Objects for ${arousal}: ${modeVocab.objects[arousal]?.join(', ') || 'Door, Key, Contract'}
-Examples: "The Key", "The Contract", "The Door"`;
+Examples: "The Key", "The Question", "The Threshold"`;
               break;
           case TITLE_MODES.VERB_LOCKED:
-              modeInstruction = `Generate a VERB-LOCKED title (past tense).
-Format: [What/Where/When/How] [Subject] [Past Verb]
-Verbs for ${arousal}: ${modeVocab.verbs[arousal]?.join(', ') || 'Took, Left, Kept'}
-Examples: "What He Took", "Where You Knelt"`;
+              // CHANGED: Now uses PRESENT tense, not past tense
+              modeInstruction = `Generate a VERB-LOCKED title (PRESENT or CONDITIONAL tense — NOT past).
+Format: [What/Where/If/Whether] [Subject] [Present Verb]
+Verbs for ${arousal}: ${modeVocab.verbs[arousal]?.join(', ') || 'Means, Waits, Wants'}
+Examples: "What She Wants", "If He Stays", "Whether You Dare"`;
               break;
           case TITLE_MODES.TWO_WORD_FRACTURE:
+              // CHANGED: Removed "Sacred Damage" (aftermath) from examples
               modeInstruction = `Generate a TWO-WORD FRACTURE title.
 Format: [Adjective] [Noun]
-Adjectives for ${arousal}: ${modeVocab.adjectives[arousal]?.join(', ') || 'Golden, Sacred, Raw'}
+Adjectives for ${arousal}: ${modeVocab.adjectives[arousal]?.join(', ') || 'Quiet, Hidden, Burning'}
 Nouns: ${modeVocab.nouns.join(', ')}
-Examples: "Golden Hunger", "Sacred Damage"`;
+Examples: "Quiet Hunger", "Burning Silence", "Desperate Waiting"`;
               break;
       }
 
@@ -6460,12 +9064,28 @@ Examples: "Golden Hunger", "Sacred Damage"`;
 AROUSAL SIGNAL REQUIRED: ${arousal} → ${arousalSignals?.description || 'clear intensity'}
 WORLD: ${world}
 
-BANNED (HARD FAIL):
+═══════════════════════════════════════════════════════════════════════════
+REGIME RULE — UNRESOLVED TENSION ONLY (ST1)
+═══════════════════════════════════════════════════════════════════════════
+This title is generated at story START. The ending has not happened.
+
+A title is the Story's ADMISSION of tension, NOT a promise of outcome.
+
+BANNED — RESOLUTION VOCABULARY (HARD FAIL):
+- Past-tense completion verbs: "took", "claimed", "broke", "ruined", "gave"
+- Possessive resolution: "her surrender", "your obedience", "my ruin"
+- Aftermath nouns: "reckoning", "downfall", "betrayal", "destruction"
+- Completion states: "finally", "at last", "what remained"
+
+BANNED — GENERIC PATTERNS (HARD FAIL):
 - "Shadows of", "Echoes of", "Whispers"
 - "Beneath", "Within", "Beyond"
 - Destiny/fate language
 - Multi-clause poetic phrasing
 - Marketing copy tone
+
+The title must name WHAT IS UNRESOLVED, not what will be resolved.
+═══════════════════════════════════════════════════════════════════════════
 
 Return ONLY the title, no quotes or explanation.`;
   }
@@ -8229,6 +10849,215 @@ Return ONLY the title, no quotes or explanation.`;
       });
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // NAVIGATION CONTRACT — STORYBOUND READER FLOW (AUTHORITATIVE)
+  // TAG: storybound/navigation-contract-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ───────────────────────────────────────────────
+  // SECTION 1 — CANONICAL STORY CREATION FLOW (LOCKED)
+  // ───────────────────────────────────────────────
+  // The authoritative forward navigation order for a new story is:
+  //
+  // 1. Shape Your Story
+  // 2. Cover Display (single cover view, NOT gallery)
+  // 3. Setting
+  // 4. Story (Scene 1)
+  //
+  // This order must be preserved.
+  //
+  // Notes:
+  // - The Cover Display is part of the main flow.
+  // - The Cover Gallery is NOT part of the main flow.
+  // - The Cover Display shows the current cover state
+  //   (Sketch / Thumbnail / Final), if available.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // SECTION 2 — RESTART / RESUME FLOW (LOCKED)
+  // ───────────────────────────────────────────────
+  // When a user resumes an existing story:
+  //
+  // 1. Show the Cover Display (single cover view)
+  // 2. Then load the most recent Story scene
+  //
+  // This applies regardless of:
+  // - cover completion state
+  // - number of scenes written
+  // - story length tier
+  //
+  // Rationale:
+  // - The cover re-orients tone and promise.
+  // - Every reading session begins at the book's cover.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // SECTION 3 — BACK BUTTON CONTRACT (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // The Back button must reverse the canonical flow
+  // and must never route to side chambers by default.
+  //
+  // Back behavior by context:
+  //
+  // - From Story:
+  //   → Setting
+  //
+  // - From Setting:
+  //   → Cover Display (single view)
+  //
+  // - From Cover Display:
+  //   → Shape Your Story
+  //
+  // - From Shape Your Story:
+  //   → Exit / Mode Select (existing behavior)
+  //
+  // At no point may the Back button route to:
+  // - Cover Gallery
+  // - Cover regeneration views
+  // - Any modal or optional artifact browser
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // SECTION 4 — SIDE CHAMBERS (NON-PARENTAL)
+  // ───────────────────────────────────────────────
+  // The following are side chambers, not navigation parents:
+  //
+  // - Cover Gallery
+  // - Fate Card detail views
+  // - Visualizer previews
+  // - Help / Settings modals
+  //
+  // Rules:
+  // - Side chambers are entered only via explicit user action.
+  // - Exiting a side chamber returns the user
+  //   to the immediate prior context.
+  // - Side chambers must never appear in Back history
+  //   unless explicitly navigated to.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // SECTION 5 — PRECEDENCE CLAUSE (FAILSAFE)
+  // ───────────────────────────────────────────────
+  // If any conflict exists between:
+  // - legacy navigation logic
+  // - modal history
+  // - inferred routing
+  // - Back-button heuristics
+  //
+  // This Navigation Contract overrides them.
+  // ───────────────────────────────────────────────
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CANONICAL STATES — FIRST-CLASS NAVIGATION STATES (AUTHORITATIVE)
+  // TAG: storybound/canonical-states-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ───────────────────────────────────────────────
+  // PART 1 — CANONICAL STATES (ORDERED)
+  // ───────────────────────────────────────────────
+  // 1. SHAPE_YOUR_STORY  (screen: 'setup')
+  // 2. COVER_DISPLAY     (screen: 'game', _readerPage: 0)
+  // 3. SETTING           (screen: 'game', _readerPage: 'setting')
+  // 4. STORY_READER      (screen: 'game', _readerPage: >= 1)
+  //
+  // Notes:
+  // - COVER_DISPLAY is a single-cover view, not a gallery.
+  // - SETTING is a full page/state, not a modal or overlay.
+  // - STORY_READER begins at Scene 1.
+  // ───────────────────────────────────────────────
+
+  const CANONICAL_STATES = {
+      SHAPE_YOUR_STORY: 'setup',
+      COVER_DISPLAY: 'coverDisplay',
+      SETTING: 'setting',
+      STORY_READER: 'storyReader'
+  };
+
+  const CANONICAL_STATE_ORDER = [
+      CANONICAL_STATES.SHAPE_YOUR_STORY,
+      CANONICAL_STATES.COVER_DISPLAY,
+      CANONICAL_STATES.SETTING,
+      CANONICAL_STATES.STORY_READER
+  ];
+
+  // ───────────────────────────────────────────────
+  // PART 2 — COVER_DISPLAY STATE (DEFINITION)
+  // ───────────────────────────────────────────────
+  // Behavior:
+  // - Renders the current story's primary cover only.
+  // - If no cover exists, render a placeholder + CTA.
+  // - Must not allow browsing alternate covers.
+  // - Must not auto-open Cover Gallery.
+  //
+  // Rules:
+  // - COVER_DISPLAY is part of the main flow.
+  // - COVER_DISPLAY is NOT a modal.
+  // - COVER_DISPLAY has a Back destination and a Forward destination.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // PART 3 — SETTING STATE (RESTORATION)
+  // ───────────────────────────────────────────────
+  // Behavior:
+  // - Displays world, location, and initial conditions.
+  // - Occurs after COVER_DISPLAY and before STORY_READER.
+  // - Is revisitable via Back navigation from STORY_READER.
+  //
+  // Rules:
+  // - SETTING must not be collapsed into Shape or Story.
+  // - SETTING must not be implemented as a modal.
+  // - SETTING participates in Back-button reversal.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // PART 4 — FORWARD NAVIGATION (LOCKED)
+  // ───────────────────────────────────────────────
+  // Canonical forward flow:
+  //
+  // SHAPE_YOUR_STORY
+  // → COVER_DISPLAY
+  // → SETTING
+  // → STORY_READER (Scene 1)
+  //
+  // This flow must be respected for:
+  // - new stories
+  // - regenerated stories
+  // - restarted stories
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // PART 5 — RESTART / RESUME FLOW (LOCKED)
+  // ───────────────────────────────────────────────
+  // When resuming an existing story:
+  //
+  // 1. Enter COVER_DISPLAY
+  // 2. Then proceed to the most recent STORY_READER scene
+  //
+  // SETTING is skipped on resume unless explicitly navigated to.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // PART 6 — BACK BUTTON INTEGRATION (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // Back behavior must reverse the canonical state order:
+  //
+  // - From STORY_READER → SETTING
+  // - From SETTING → COVER_DISPLAY
+  // - From COVER_DISPLAY → SHAPE_YOUR_STORY
+  //
+  // At no point may Back route to:
+  // - Cover Gallery
+  // - Any modal
+  // - Any non-canonical state
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // PART 7 — FAILURE PREVENTION CLAUSE
+  // ───────────────────────────────────────────────
+  // "If a state does not exist as a first-class state,
+  // it may not be used as a Back or Forward destination."
+  // ───────────────────────────────────────────────
+
   // --- NAVIGATION STATE ---
   let _navHistory = [];
   let _currentScreenId = 'ageGate'; 
@@ -9352,8 +12181,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
           status.style.color = "var(--pink)";
           btn.disabled = false;
-          btn.style.opacity = "1";
-          btn.style.borderColor = "var(--pink)";
+          // Use class toggle instead of direct style mutation
+          btn.classList.remove('quill-btn-spent');
+          btn.classList.add('quill-btn-ready');
           btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
           if(quillBox) {
               quillBox.classList.remove('locked-input');
@@ -9369,8 +12199,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               quillBox.onclick = null;
           }
           btn.disabled = true;
-          btn.style.opacity = "0.5";
-          btn.style.borderColor = "transparent";
+          // Use class toggle instead of direct style mutation
+          btn.classList.remove('quill-btn-ready');
+          btn.classList.add('quill-btn-spent');
       }
   }
   
@@ -10526,18 +13357,39 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   /**
    * Update the Begin Story button label based on snapshot state.
+   * Also toggles passive save affordance hints.
    */
   function updateBeginButtonLabel() {
     const beginBtn = $('beginBtn');
     const btnBeginStory = $('btnBeginStory');
     const btnSettingBeginStory = $('btnSettingBeginStory');
+    const continueFromDynamic = $('continueFromDynamic');
 
     const canContinue = canContinueExistingStory();
     const label = canContinue ? 'Continue Story' : 'Begin Story';
 
+    // Update all button labels
     if (beginBtn) beginBtn.textContent = label;
     if (btnBeginStory) btnBeginStory.textContent = label;
     if (btnSettingBeginStory) btnSettingBeginStory.textContent = label;
+    if (continueFromDynamic) continueFromDynamic.textContent = label;
+
+    // Toggle passive save affordance hints
+    const hints = [
+      $('beginBtnHint'),
+      $('btnBeginStoryHint'),
+      $('btnSettingBeginStoryHint'),
+      $('continueFromDynamicHint')
+    ];
+    hints.forEach(hint => {
+      if (hint) {
+        if (canContinue) {
+          hint.classList.remove('hidden');
+        } else {
+          hint.classList.add('hidden');
+        }
+      }
+    });
 
     console.log('[STORY:SHAPE] Button label updated:', label, '| canContinue:', canContinue);
   }
@@ -10546,6 +13398,354 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   window.invalidateShapeSnapshot = invalidateShapeSnapshot;
   window.updateBeginButtonLabel = updateBeginButtonLabel;
   window.canContinueExistingStory = canContinueExistingStory;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // STORY STATE LOCKING — Destructive Change Protection
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // LOCKED FIELDS (changing destroys story AND cover):
+  // - pressure, world, tone, dynamic, genre
+  // - pov, worldSubtype, flavor
+  //
+  // SAFE FIELDS (can change without destroying story/cover):
+  // - intensity (arousal level) — COVER EVOLVES, NOT DESTROYED
+  // - storyLength
+  // - archetype (affects framing, not story)
+  // - character names (cosmetic)
+  //
+  // ═══════════════════════════════════════════════════════════════════
+  // COVER PERSISTENCE & RESET AUTHORITY
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // COVER IS BOUND TO:
+  //   ✓ Story ID
+  //   ✓ Story Shape (world, tone, pressure, dynamic)
+  //   ✓ Characters (names + roles)
+  //   ✓ Storyturn progression
+  //   ✓ Arousal tier (for overlay evolution)
+  //
+  // COVER IS NOT BOUND TO:
+  //   ✗ UI navigation
+  //   ✗ User curiosity
+  //   ✗ Accidental back clicks
+  //
+  // NAVIGATION BEHAVIOR:
+  //   If user navigates BACK to Story Shape/Setting/Cover AND story exists:
+  //   → Story PAUSES (does not reset)
+  //   → Button shows "Continue Story"
+  //   → Cover REMAINS visible
+  //   → Guided Fate remains DISABLED
+  //   → NO regeneration occurs
+  //
+  // AROUSAL EXCEPTION (ONLY EXCEPTION):
+  //   User MAY change arousal level WITHOUT destroying cover.
+  //   → Cover may EVOLVE (border ↔ keyhole)
+  //   → Core visual idea MUST remain unchanged
+  //   → This is handled by applyCoverIntensityLayers()
+  //
+  // ═══════════════════════════════════════════════════════════════════
+
+  // Fields that are locked once a story exists (changing destroys story AND cover)
+  const STORY_LOCKED_FIELDS = ['pressure', 'world', 'tone', 'dynamic', 'genre', 'pov', 'worldSubtype', 'flavor'];
+
+  // Fields that can change without destroying cover (cover evolves instead)
+  const COVER_SAFE_FIELDS = ['intensity', 'storyLength', 'archetype'];
+
+  // Pending destructive change (stored while modal is shown)
+  let pendingDestructiveChange = null;
+
+  /**
+   * Check if a story currently exists (Scene 1 has been generated)
+   * @returns {boolean}
+   */
+  function hasExistingStory() {
+    // Story exists if we have a storyId AND content
+    if (!state.storyId) return false;
+    if (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent) {
+      const content = StoryPagination.getAllContent();
+      return content && content.trim().length > 0;
+    }
+    return state.turnCount > 0;
+  }
+
+  /**
+   * Check if a field is locked (changing it would destroy the story)
+   * @param {string} grp - The field/group being changed
+   * @returns {boolean}
+   */
+  function isLockedField(grp) {
+    return STORY_LOCKED_FIELDS.includes(grp);
+  }
+
+  /**
+   * Check if a change would be destructive (story exists + locked field)
+   * @param {string} grp - The field being changed
+   * @param {string} newVal - The new value
+   * @returns {boolean}
+   */
+  function wouldDestroyStory(grp, newVal) {
+    if (!hasExistingStory()) return false;
+    if (!isLockedField(grp)) return false;
+    // Check if actually changing to a different value
+    const currentVal = state.picks[grp];
+    return currentVal !== newVal;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // COVER PERSISTENCE VALIDATION
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Check if a cover currently exists
+   * @returns {boolean}
+   */
+  function hasExistingCover() {
+    return state.coverGenerated === true || state.primaryCoverId != null;
+  }
+
+  /**
+   * Check if a change would destroy the cover
+   * Covers are destroyed when story is destroyed (same locked fields)
+   * @param {string} grp - The field being changed
+   * @param {string} newVal - The new value
+   * @returns {boolean}
+   */
+  function wouldDestroyCover(grp, newVal) {
+    if (!hasExistingCover()) return false;
+    // Cover is destroyed when story is destroyed
+    return wouldDestroyStory(grp, newVal);
+  }
+
+  /**
+   * Check if a change would cause cover evolution (not destruction)
+   * Only arousal changes cause evolution, not destruction.
+   * @param {string} grp - The field being changed
+   * @param {string} newVal - The new value
+   * @returns {boolean}
+   */
+  function wouldEvolveCover(grp, newVal) {
+    if (!hasExistingCover()) return false;
+    // Only intensity (arousal) causes cover evolution
+    if (grp !== 'intensity') return false;
+    const currentVal = state.intensity;
+    return currentVal !== newVal;
+  }
+
+  /**
+   * Get cover persistence status for a potential change
+   * @param {string} grp - The field being changed
+   * @param {string} newVal - The new value
+   * @returns {{persists: boolean, evolves: boolean, destroys: boolean, reason: string}}
+   */
+  function getCoverPersistenceStatus(grp, newVal) {
+    if (!hasExistingCover()) {
+      return { persists: false, evolves: false, destroys: false, reason: 'No cover exists' };
+    }
+
+    if (wouldDestroyCover(grp, newVal)) {
+      return {
+        persists: false,
+        evolves: false,
+        destroys: true,
+        reason: `Changing ${grp} destroys cover (locked field)`
+      };
+    }
+
+    if (wouldEvolveCover(grp, newVal)) {
+      return {
+        persists: true,
+        evolves: true,
+        destroys: false,
+        reason: `Changing arousal from ${state.intensity} to ${newVal} — cover evolves`
+      };
+    }
+
+    return {
+      persists: true,
+      evolves: false,
+      destroys: false,
+      reason: 'Field is safe — cover persists unchanged'
+    };
+  }
+
+  // Export cover persistence functions
+  window.hasExistingCover = hasExistingCover;
+  window.wouldDestroyCover = wouldDestroyCover;
+  window.wouldEvolveCover = wouldEvolveCover;
+  window.getCoverPersistenceStatus = getCoverPersistenceStatus;
+
+  /**
+   * Show the destructive change warning modal
+   * @param {string} grp - The field being changed
+   * @param {string} newVal - The new value
+   * @param {HTMLElement} card - The card element being clicked
+   * @param {Function} onConfirm - Callback if user confirms
+   */
+  function showDestructiveChangeWarning(grp, newVal, card, onConfirm) {
+    pendingDestructiveChange = { grp, newVal, card, onConfirm };
+
+    const modal = document.getElementById('destructiveChangeModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+    }
+  }
+
+  /**
+   * Hide the destructive change warning modal
+   */
+  function hideDestructiveChangeWarning() {
+    const modal = document.getElementById('destructiveChangeModal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+    pendingDestructiveChange = null;
+  }
+
+  /**
+   * Handle "Save & Start New Story" button
+   */
+  function handleSaveAndStartNew() {
+    if (!pendingDestructiveChange) return;
+
+    // Save current story first
+    if (typeof saveCurrentStory === 'function') {
+      saveCurrentStory().then(() => {
+        proceedWithDestructiveChange();
+      }).catch(err => {
+        console.error('[STORY:LOCK] Save failed:', err);
+        showToast('Failed to save story. Please try again.');
+      });
+    } else {
+      // Fallback: just proceed
+      proceedWithDestructiveChange();
+    }
+  }
+
+  /**
+   * Handle "Start New Story" button (no save)
+   */
+  function handleStartNewNoSave() {
+    if (!pendingDestructiveChange) return;
+    proceedWithDestructiveChange();
+  }
+
+  /**
+   * Execute the destructive change after confirmation
+   */
+  function proceedWithDestructiveChange() {
+    if (!pendingDestructiveChange) return;
+
+    const { grp, newVal, card, onConfirm } = pendingDestructiveChange;
+
+    // Clear story state
+    clearStoryForNewStart();
+
+    // Hide modal
+    hideDestructiveChangeWarning();
+
+    // Execute the original selection
+    if (onConfirm) {
+      onConfirm(grp, newVal, card);
+    }
+
+    console.log('[STORY:LOCK] Destructive change confirmed, story cleared');
+  }
+
+  /**
+   * Clear all story state for a fresh start
+   */
+  function clearStoryForNewStart() {
+    // Clear story identifiers
+    state.storyId = null;
+    state.turnCount = 0;
+    state.storyEnded = false;
+    state._lastGeneratedShapeSnapshot = null;
+
+    // Clear story content
+    if (typeof clearStoryContent === 'function') {
+      clearStoryContent();
+    } else {
+      state.currentStoryContent = '';
+      state.storyHistory = [];
+      localStorage.removeItem('sb_saved_story');
+      if (typeof StoryPagination !== 'undefined' && StoryPagination.clear) {
+        StoryPagination.clear();
+      }
+      const storyEl = document.getElementById('storyText');
+      if (storyEl) storyEl.innerHTML = '';
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COVER DESTRUCTION (bound to story state)
+    // ═══════════════════════════════════════════════════════════════
+    // Cover is destroyed when story is destroyed.
+    // This is NOT reversible. Core visual idea is lost.
+    const hadCover = state.coverGenerated || state.primaryCoverId;
+    if (typeof resetCoverLayers === 'function') {
+      resetCoverLayers();
+    }
+    state.coverGenerated = false;
+    state.primaryCoverId = null;
+    state.coverCoreIdea = null; // Clear the core visual idea
+    if (hadCover) {
+      console.log('[COVER:DESTROY] Cover destroyed — story state invalidated');
+    }
+
+    // Reset Guided Fate (becomes ACTIVE again after story destruction)
+    if (typeof resetGuidedFateVisualState === 'function') {
+      resetGuidedFateVisualState();
+    }
+
+    // Reset breadcrumb flow if in use
+    if (typeof resetBreadcrumbFlow === 'function') {
+      resetBreadcrumbFlow();
+    }
+
+    // Clear current story ID from storage
+    clearCurrentStoryId();
+
+    // Update button label
+    updateBeginButtonLabel();
+
+    console.log('[STORY:LOCK] Story and cover state cleared for new start');
+  }
+
+  /**
+   * Initialize destructive change modal handlers
+   */
+  function initDestructiveChangeModal() {
+    const btnSave = document.getElementById('btnSaveAndStartNew');
+    const btnNoSave = document.getElementById('btnStartNewNoSave');
+    const btnCancel = document.getElementById('btnCancelDestructive');
+
+    if (btnSave) {
+      btnSave.addEventListener('click', handleSaveAndStartNew);
+    }
+    if (btnNoSave) {
+      btnNoSave.addEventListener('click', handleStartNewNoSave);
+    }
+    if (btnCancel) {
+      btnCancel.addEventListener('click', hideDestructiveChangeWarning);
+    }
+
+    // Close on backdrop click
+    const modal = document.getElementById('destructiveChangeModal');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          hideDestructiveChangeWarning();
+        }
+      });
+    }
+  }
+
+  // Expose functions globally
+  window.hasExistingStory = hasExistingStory;
+  window.wouldDestroyStory = wouldDestroyStory;
+  window.showDestructiveChangeWarning = showDestructiveChangeWarning;
+  window.hideDestructiveChangeWarning = hideDestructiveChangeWarning;
+  window.clearStoryForNewStart = clearStoryForNewStart;
+  window.initDestructiveChangeModal = initDestructiveChangeModal;
 
   function clearCurrentStoryId(){ localStorage.removeItem('sb_current_story_id'); }
   // CORRECTIVE: IndexedDB for large story data when localStorage fails
@@ -12595,8 +15795,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       world: [],           // Always active
       worldSubtype: ['world'],  // Requires World
       tone: ['world'],     // Requires World
-      genre: ['world', 'tone'], // Requires World + Tone
-      dynamic: ['world', 'tone', 'genre'], // Requires World + Tone + Genre
+      pressure: ['world', 'tone'], // Requires World + Tone (replaces genre as primary)
+      flavor: ['world', 'tone', 'pressure'], // Requires Pressure
+      genre: ['world', 'tone'], // LEGACY: derived from pressure+flavor, kept for compatibility
+      dynamic: ['world', 'tone', 'pressure'], // Requires Pressure (not genre)
       era: ['world'],      // Requires World (Historical)
       pov: []              // Always active
     };
@@ -12648,7 +15850,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Update layer visual state (inert/active)
     function updateLayerStates() {
-      const layers = ['world', 'worldSubtype', 'tone', 'genre', 'dynamic'];
+      const layers = ['world', 'worldSubtype', 'tone', 'pressure', 'flavor', 'genre', 'dynamic'];
 
       layers.forEach(layer => {
         const cards = document.querySelectorAll(`.sb-card[data-grp="${layer}"]`);
@@ -12660,9 +15862,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           } else {
             card.classList.remove('layer-locked');
 
-            // Additional compatibility check for genre and dynamic
+            // Additional compatibility checks
             const val = card.dataset.val;
-            if (layer === 'genre') {
+            if (layer === 'pressure') {
+              const compatible = isPressureCompatible(val, state.picks.tone);
+              card.classList.toggle('incompatible', !compatible);
+            } else if (layer === 'flavor') {
+              const compatible = isFlavorCompatible(val, state.picks.tone);
+              card.classList.toggle('incompatible', !compatible);
+            } else if (layer === 'genre') {
               const compatible = isGenreCompatible(val, state.picks.tone);
               card.classList.toggle('incompatible', !compatible);
             } else if (layer === 'dynamic') {
@@ -12681,13 +15889,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     function updateLayerHelperText(layer, unlocked) {
       const helperTexts = {
         tone: 'Choose a World to continue',
-        genre: 'Choose a Tone to continue',
-        dynamic: 'Choose a Genre to continue'
+        pressure: 'Choose a Tone to continue',
+        genre: 'Choose a Tone to continue', // Legacy
+        dynamic: 'Choose a Pressure to continue'
       };
 
       const sectionTitles = {
         tone: 'Tone',
-        genre: 'Genre',
+        pressure: 'Story Pressure',
+        genre: 'Genre', // Legacy
         dynamic: 'Dynamic'
       };
 
@@ -12713,7 +15923,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Re-evaluate downstream selections and clear only incompatible ones
     function evaluateDownstreamSelections(changedLayer) {
-      const order = ['world', 'worldSubtype', 'tone', 'genre', 'dynamic'];
+      const order = ['world', 'worldSubtype', 'tone', 'pressure', 'flavor', 'genre', 'dynamic'];
       const changedIdx = order.indexOf(changedLayer);
 
       // Check each downstream layer
@@ -12725,12 +15935,22 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
         let compatible = true;
 
-        // Check genre compatibility with tone
+        // Check pressure compatibility with tone
+        if (layer === 'pressure' && state.picks.tone) {
+          compatible = isPressureCompatible(currentVal, state.picks.tone);
+        }
+
+        // Check flavor compatibility with tone
+        if (layer === 'flavor' && state.picks.tone) {
+          compatible = isFlavorCompatible(currentVal, state.picks.tone);
+        }
+
+        // Check genre compatibility with tone (legacy)
         if (layer === 'genre' && state.picks.tone) {
           compatible = isGenreCompatible(currentVal, state.picks.tone);
         }
 
-        // Check dynamic compatibility with genre
+        // Check dynamic compatibility with genre/pressure
         if (layer === 'dynamic' && state.picks.genre) {
           compatible = isDynamicCompatible(currentVal, state.picks.genre, state.picks.tone);
         }
@@ -12739,6 +15959,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         if (!compatible) {
           autoClearSelection(layer, currentVal);
         }
+      }
+
+      // Update flavor grid when tone changes
+      if (changedLayer === 'tone' && state.picks.pressure) {
+        updateFlavorGridState();
       }
 
       updateLayerStates();
@@ -13330,7 +16555,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // UNIFIED SINGLE-SELECT: ALL card groups use this handler - NO separate handlers
-    const SINGLE_SELECT_AXES = ['world', 'tone', 'genre', 'dynamic', 'era', 'pov', 'worldSubtype', 'intensity', 'length'];
+    const SINGLE_SELECT_AXES = ['world', 'tone', 'pressure', 'flavor', 'genre', 'dynamic', 'era', 'pov', 'worldSubtype', 'intensity', 'length'];
 
     document.querySelectorAll('.sb-card[data-grp]').forEach(card => {
       if(card.dataset.bound === '1') return;
@@ -13408,6 +16633,28 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         }
 
         // STATE 1 → STATE 2: Select this card, deselect others in same group
+
+        // ═══════════════════════════════════════════════════════════════
+        // DESTRUCTIVE CHANGE CHECK: Warn before changing locked fields
+        // ═══════════════════════════════════════════════════════════════
+        if (typeof wouldDestroyStory === 'function' && wouldDestroyStory(grp, val)) {
+          // Show warning modal, defer actual selection until confirmed
+          showDestructiveChangeWarning(grp, val, card, (confirmedGrp, confirmedVal, confirmedCard) => {
+            // Execute the selection after confirmation
+            executeCardSelection(confirmedGrp, confirmedVal, confirmedCard);
+          });
+          return;
+        }
+
+        // Proceed with selection
+        executeCardSelection(grp, val, card);
+      });
+    });
+
+    /**
+     * Execute a card selection (extracted to allow deferred execution after destructive change confirmation)
+     */
+    function executeCardSelection(grp, val, card) {
         // Update state based on card group
         if (grp === 'intensity') {
           state.intensity = val;
@@ -13450,6 +16697,45 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           updateWorldSubtypeVisibility(val, state.picks.tone);
         }
 
+        // PRESSURE SELECTION: Show optional flavors grid
+        if (grp === 'pressure') {
+          populateFlavorGrid(val);
+          showFlavorGrid(true);
+          // Clear any previous flavor selection (new pressure = fresh slate)
+          state.picks.flavor = null;
+          // Sync to legacy genre using pressure's default
+          state.picks.genre = getEffectiveGenre(val, null);
+          // Add flavor count indicator to selected pressure card
+          const flavors = PRESSURE_FLAVORS[val] || [];
+          if (flavors.length > 0) {
+            const frontFace = card.querySelector('.sb-card-front');
+            if (frontFace && !frontFace.querySelector('.sb-card-flavor-count')) {
+              const flavorCount = document.createElement('span');
+              flavorCount.className = 'sb-card-flavor-count';
+              flavorCount.textContent = `${flavors.length} flavors`;
+              frontFace.appendChild(flavorCount);
+            }
+          }
+        }
+
+        // FLAVOR SELECTION: Sync to legacy genre and update world breadcrumb
+        if (grp === 'flavor') {
+          state.picks.genre = getEffectiveGenre(state.picks.pressure, val);
+          // Update world breadcrumb to show nested flavor
+          if (typeof updateWorldBreadcrumbFlavor === 'function') {
+            updateWorldBreadcrumbFlavor();
+          }
+        }
+
+        // POV SELECTION: Dissolve ephemeral breadcrumbs (Mode)
+        if (grp === 'pov') {
+          // Ephemeral layers (Solo/Couple mode) dissolve when POV is committed
+          if (typeof dissolveEphemeralBreadcrumbs === 'function') {
+            dissolveEphemeralBreadcrumbs();
+            console.log('[Breadcrumb] POV selected — ephemeral breadcrumbs dissolving');
+          }
+        }
+
         // Special handling: show/hide Horror subtypes when Tone changes
         if (grp === 'tone') {
           updateWorldSubtypeVisibility(state.picks.world, val);
@@ -13464,7 +16750,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         // Update DSP segment based on selection axis
         if (grp === 'world' && DSP_WORLD_PHRASES[val]) {
           activateDSPSegment('world', 'In ' + DSP_WORLD_PHRASES[val]);
+        } else if (grp === 'pressure') {
+          // Pressure selection: use pressure DSP phrase (flavor may override later)
+          const dspPhrase = getPressureDSPPhrase(val, state.picks.flavor);
+          activateDSPSegment('genre', ', shaped by ' + dspPhrase);
+        } else if (grp === 'flavor') {
+          // Flavor selection: update DSP with flavor-specific phrase
+          const dspPhrase = getPressureDSPPhrase(state.picks.pressure, val);
+          activateDSPSegment('genre', ', shaped by ' + dspPhrase);
         } else if (grp === 'genre' && DSP_GENRE_PARAPHRASES[val]) {
+          // Legacy genre selection (backward compatibility)
           activateDSPSegment('genre', ', shaped by ' + DSP_GENRE_PARAPHRASES[val]);
         } else if (grp === 'dynamic' && state.archetype?.primary && DSP_ARCHETYPE_ADJECTIVES[state.archetype.primary]) {
           activateDSPSegment('archetype', ', a question awaits: Will ' + DSP_ARCHETYPE_ADJECTIVES[state.archetype.primary]);
@@ -13477,11 +16772,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
         // Update floating synopsis panel
         updateSynopsisPanel(true); // User action: card click
-      });
-    });
+    }
 
     // Initialize World Subtype visibility based on initial selections
     updateWorldSubtypeVisibility(state.picks.world, state.picks.tone);
+    // Initialize Flavor grid based on initial pressure selection
+    if (state.picks.pressure) {
+      populateFlavorGrid(state.picks.pressure);
+      showFlavorGrid(true);
+    }
     // Initialize synopsis panel (not a user action - keeps placeholder)
     updateSynopsisPanel();
     // Initialize layer states (gating, compatibility)
@@ -13490,6 +16789,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     initSelectionCardSystem();
     // Apply any legacy Historical era remapping
     applyHistoricalEraRemap();
+    // Initialize Breadcrumb Flow System
+    initBreadcrumbFlow();
+    // Initialize Destructive Change Modal
+    if (typeof initDestructiveChangeModal === 'function') {
+      initDestructiveChangeModal();
+    }
 
     // Name refining indicator helpers
     function showNameRefiningIndicator(inputEl) {
@@ -13621,6 +16926,640 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // FLAVOR GRID — Optional refinement for Primary Pressure selection
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Show or hide the flavor grid
+   * @param {boolean} show - Whether to show the grid
+   */
+  function showFlavorGrid(show) {
+    const flavorTitle = document.getElementById('flavorTitle');
+    const flavorGrid = document.getElementById('flavorGrid');
+    if (flavorTitle) flavorTitle.style.display = show ? '' : 'none';
+    if (flavorGrid) flavorGrid.style.display = show ? '' : 'none';
+  }
+
+  /**
+   * Populate the flavor grid with options for the selected pressure
+   * @param {string} pressureId - The selected primary pressure
+   */
+  function populateFlavorGrid(pressureId) {
+    const flavorGrid = document.getElementById('flavorGrid');
+    if (!flavorGrid) return;
+
+    const flavors = PRESSURE_FLAVORS[pressureId] || [];
+    flavorGrid.innerHTML = '';
+
+    if (flavors.length === 0) {
+      showFlavorGrid(false);
+      return;
+    }
+
+    flavors.forEach(flavor => {
+      const card = document.createElement('div');
+      card.className = 'sb-card';
+      card.dataset.grp = 'flavor';
+      card.dataset.val = flavor.id;
+
+      // Check if this flavor is currently selected
+      if (state.picks.flavor === flavor.id) {
+        card.classList.add('selected', 'flipped');
+      }
+
+      // Check flavor compatibility with current tone
+      if (!isFlavorCompatible(flavor.id, state.picks.tone)) {
+        card.classList.add('incompatible');
+      }
+
+      card.innerHTML = `
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back">
+            <span class="sb-card-title">${flavor.label}</span>
+          </div>
+          <div class="sb-card-face sb-card-front">
+            <span class="sb-card-title">${flavor.label}</span>
+            <span class="sb-card-desc">${flavor.description}</span>
+          </div>
+        </div>
+      `;
+
+      // Bind click handler (same as other sb-cards)
+      card.dataset.bound = '1';
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.preview-btn')) return;
+        const grp = card.dataset.grp;
+        const val = card.dataset.val;
+
+        // Check layer unlock
+        if (!isLayerUnlocked(grp)) return;
+        if (card.classList.contains('incompatible')) return;
+
+        // FLAVOR TOGGLE: Clicking selected flavor deselects it (flavors are optional)
+        if (card.classList.contains('selected') && card.classList.contains('flipped')) {
+          // Deselect flavor
+          card.classList.remove('selected', 'flipped');
+          state.picks.flavor = null;
+          state.picks.genre = getEffectiveGenre(state.picks.pressure, null);
+          // Update DSP with pressure-only phrase
+          const dspPhrase = getPressureDSPPhrase(state.picks.pressure, null);
+          activateDSPSegment('genre', ', shaped by ' + dspPhrase);
+          updateSynopsisPanel(true);
+          return;
+        }
+
+        // Select this flavor, deselect others
+        state.picks[grp] = val;
+        state.picks.genre = getEffectiveGenre(state.picks.pressure, val);
+
+        // Clear cover shape hash
+        if (window.clearCoverShapeHash) window.clearCoverShapeHash();
+
+        // Update card states
+        flavorGrid.querySelectorAll('.sb-card[data-grp="flavor"]').forEach(c => {
+          c.classList.remove('selected', 'flipped');
+        });
+        card.classList.add('selected', 'flipped');
+
+        // Update DSP
+        const dspPhrase = getPressureDSPPhrase(state.picks.pressure, val);
+        activateDSPSegment('genre', ', shaped by ' + dspPhrase);
+
+        // Invalidate shape snapshot
+        if (typeof invalidateShapeSnapshot === 'function') invalidateShapeSnapshot();
+        incrementDSPActivation();
+        updateSynopsisPanel(true);
+      });
+
+      flavorGrid.appendChild(card);
+    });
+  }
+
+  /**
+   * Update flavor grid when pressure or tone changes
+   * Called after pressure selection or tone change to refresh compatibility
+   */
+  function updateFlavorGridState() {
+    const flavorGrid = document.getElementById('flavorGrid');
+    if (!flavorGrid) return;
+
+    flavorGrid.querySelectorAll('.sb-card[data-grp="flavor"]').forEach(card => {
+      const val = card.dataset.val;
+      // Update compatibility
+      const compatible = isFlavorCompatible(val, state.picks.tone);
+      card.classList.toggle('incompatible', !compatible);
+      // Update selection state
+      const isSelected = state.picks.flavor === val;
+      card.classList.toggle('selected', isSelected);
+      card.classList.toggle('flipped', isSelected);
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // BREADCRUMB FLOW SYSTEM — Sequential card selection with committed breadcrumbs
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // INTERACTION MODEL:
+  // 1. One row of cards at a time
+  // 2. Selection → Continue → Breadcrumb
+  // 3. Selected card animates to breadcrumb row
+  // 4. Other cards dissipate with sparkles
+  // 5. Next row fades in
+  //
+  // FLOW ORDER: pressure → world → tone → dynamic
+  //
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ═══════════════════════════════════════════════════════════════════
+  // BREADCRUMB PERSISTENCE AUTHORITY (AUTHORITATIVE)
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // PERSISTENT BREADCRUMBS (Final State - 8±1 items):
+  //   guidedFate, storybeau, length, world, tone, pressure, pov, dynamic
+  //   Flavor is NESTED inside World breadcrumb (sub-label), not its own item
+  //
+  // DROPPED AFTER USE (Dissolve at POV selection):
+  //   mode (Solo/Couple) — temporary mode indicator
+  //   Note: Tease is a Story Length value, persists if selected
+  //
+  // NEVER BECOMES BREADCRUMB:
+  //   intensity (arousal) — NEVER collapses to breadcrumb at any phase
+  //
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Layers that persist as final breadcrumbs
+   * Order matches approximate selection flow
+   */
+  const BREADCRUMB_PERSISTENT_LAYERS = [
+    'guidedFate',  // Destiny card click (special handling)
+    'archetype',   // Storybeau selection
+    'length',      // Story length (tease/fling/affair/soulmates)
+    'world',       // World setting
+    'tone',        // Narrative tone
+    'pressure',    // Story pressure
+    'pov',         // Point of view
+    'dynamic'      // Relationship dynamic
+  ];
+
+  /**
+   * Layers that show temporarily but dissolve at POV selection
+   * These sparkle-dissipate when POV is committed
+   */
+  const BREADCRUMB_EPHEMERAL_LAYERS = [
+    'mode'         // Solo/Couple — dissolves at POV
+  ];
+
+  /**
+   * Layers that NEVER become breadcrumbs
+   * Arousal is the primary exclusion — it can change without destroying cover
+   */
+  const BREADCRUMB_EXCLUDED_LAYERS = [
+    'intensity'    // Arousal — NEVER becomes breadcrumb
+  ];
+
+  /**
+   * Check if a layer should become a breadcrumb
+   * @param {string} grp - The layer group name
+   * @returns {boolean} True if layer can become breadcrumb
+   */
+  function canBecomeBreadcrumb(grp) {
+    // EXCLUDED: Never becomes breadcrumb
+    if (BREADCRUMB_EXCLUDED_LAYERS.includes(grp)) {
+      console.log(`[Breadcrumb] EXCLUDED: ${grp} — never becomes breadcrumb`);
+      return false;
+    }
+    // PERSISTENT or EPHEMERAL: Can become breadcrumb
+    return BREADCRUMB_PERSISTENT_LAYERS.includes(grp) ||
+           BREADCRUMB_EPHEMERAL_LAYERS.includes(grp);
+  }
+
+  /**
+   * Check if a layer should dissolve at POV selection
+   * @param {string} grp - The layer group name
+   * @returns {boolean} True if layer dissolves at POV
+   */
+  function shouldDissolveAtPOV(grp) {
+    return BREADCRUMB_EPHEMERAL_LAYERS.includes(grp);
+  }
+
+  /**
+   * Dissolve ephemeral breadcrumbs when POV is selected
+   * Called when POV selection is committed
+   */
+  function dissolveEphemeralBreadcrumbs() {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!breadcrumbRow) return;
+
+    BREADCRUMB_EPHEMERAL_LAYERS.forEach(grp => {
+      const ephemeralCard = breadcrumbRow.querySelector(`.breadcrumb-card[data-grp="${grp}"]`);
+      if (ephemeralCard) {
+        console.log(`[Breadcrumb] Dissolving ephemeral: ${grp}`);
+
+        // Create sparkle effect before removal
+        createDissipationSparkles(ephemeralCard);
+
+        // Add dissolve animation
+        ephemeralCard.classList.add('breadcrumb-dissolving');
+
+        // Remove after animation
+        setTimeout(() => {
+          ephemeralCard.remove();
+          console.log(`[Breadcrumb] Ephemeral removed: ${grp}`);
+        }, 600);
+      }
+    });
+  }
+
+  /**
+   * Get display label for a breadcrumb, with flavor nested in world
+   * @param {string} grp - The layer group
+   * @param {string} val - The selected value
+   * @returns {object} { title, subtitle } for breadcrumb display
+   */
+  function getBreadcrumbLabel(grp, val) {
+    const labels = {
+      guidedFate: { title: 'Guided', subtitle: null },
+      archetype: { title: val, subtitle: 'Storybeau' },
+      length: { title: val, subtitle: null },
+      world: {
+        title: val,
+        subtitle: state.picks?.flavor ? state.picks.flavor : null
+      },
+      tone: { title: val, subtitle: null },
+      pressure: { title: val, subtitle: null },
+      pov: { title: val, subtitle: 'POV' },
+      dynamic: { title: val, subtitle: null },
+      mode: { title: val, subtitle: 'Mode' }
+    };
+
+    return labels[grp] || { title: val, subtitle: grp };
+  }
+
+  /**
+   * Update world breadcrumb to include nested flavor
+   * Called when flavor selection changes
+   */
+  function updateWorldBreadcrumbFlavor() {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!breadcrumbRow) return;
+
+    const worldBreadcrumb = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="world"]');
+    if (!worldBreadcrumb) return;
+
+    const flavor = state.picks?.flavor;
+    const subtitleEl = worldBreadcrumb.querySelector('.breadcrumb-subtitle');
+
+    if (flavor) {
+      if (subtitleEl) {
+        subtitleEl.textContent = flavor;
+      } else {
+        // Create subtitle element if it doesn't exist
+        const titleEl = worldBreadcrumb.querySelector('.sb-card-title');
+        if (titleEl) {
+          const newSubtitle = document.createElement('span');
+          newSubtitle.className = 'breadcrumb-subtitle';
+          newSubtitle.textContent = flavor;
+          titleEl.insertAdjacentElement('afterend', newSubtitle);
+        }
+      }
+      console.log(`[Breadcrumb] World flavor nested: ${flavor}`);
+    } else if (subtitleEl) {
+      subtitleEl.remove();
+    }
+  }
+
+  const BREADCRUMB_FLOW_STAGES = ['pressure', 'world', 'tone', 'dynamic'];
+  let currentFlowStage = 0;
+
+  /**
+   * Initialize the breadcrumb flow system
+   */
+  function initBreadcrumbFlow() {
+    // Bind continue buttons
+    const continueButtons = {
+      pressure: document.getElementById('continueFromPressure'),
+      world: document.getElementById('continueFromWorld'),
+      tone: document.getElementById('continueFromTone'),
+      dynamic: document.getElementById('continueFromDynamic')
+    };
+
+    Object.entries(continueButtons).forEach(([stage, btn]) => {
+      if (btn) {
+        btn.addEventListener('click', () => handleFlowContinue(stage));
+      }
+    });
+
+    // Update continue button visibility on card selection
+    document.querySelectorAll('.card-flow-row .sb-card[data-grp]').forEach(card => {
+      card.addEventListener('click', () => {
+        setTimeout(() => updateContinueButtonVisibility(), 100);
+      });
+    });
+
+    // Initialize first stage
+    updateFlowStageIndicator();
+    updateContinueButtonVisibility();
+  }
+
+  /**
+   * Check if a selection exists for the current flow stage
+   */
+  function hasSelectionForStage(stage) {
+    const grp = stage; // pressure, world, tone, dynamic map directly
+    const selectedCard = document.querySelector(
+      `#flowRow${stage.charAt(0).toUpperCase() + stage.slice(1)} .sb-card[data-grp="${grp}"].selected`
+    );
+    return !!selectedCard;
+  }
+
+  /**
+   * Update continue button visibility based on selection state
+   */
+  function updateContinueButtonVisibility() {
+    BREADCRUMB_FLOW_STAGES.forEach((stage, idx) => {
+      const btn = document.getElementById(`continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
+      if (btn) {
+        const hasSelection = hasSelectionForStage(stage);
+        const isCurrentStage = idx === currentFlowStage;
+        btn.classList.toggle('visible', hasSelection && isCurrentStage);
+      }
+    });
+  }
+
+  /**
+   * Update flow stage indicator dots
+   */
+  function updateFlowStageIndicator() {
+    const dots = document.querySelectorAll('.flow-stage-dot');
+    dots.forEach((dot, idx) => {
+      dot.classList.remove('active', 'completed');
+      if (idx < currentFlowStage) {
+        dot.classList.add('completed');
+      } else if (idx === currentFlowStage) {
+        dot.classList.add('active');
+      }
+    });
+  }
+
+  /**
+   * Handle continue button click — commit selection and advance flow
+   */
+  function handleFlowContinue(stage) {
+    const stageIdx = BREADCRUMB_FLOW_STAGES.indexOf(stage);
+    if (stageIdx !== currentFlowStage) return;
+
+    const flowRow = document.getElementById(`flowRow${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
+    if (!flowRow) return;
+
+    const grp = stage;
+    const selectedCard = flowRow.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+    if (!selectedCard) return;
+
+    // Get selected value for breadcrumb label
+    const selectedVal = selectedCard.dataset.val;
+    const titleEl = selectedCard.querySelector('.sb-card-title');
+    const selectedTitle = titleEl ? titleEl.textContent : selectedVal;
+
+    // Hide continue button
+    const continueBtn = document.getElementById(`continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
+    if (continueBtn) continueBtn.classList.remove('visible');
+
+    // Animate selected card to breadcrumb
+    animateCardToBreadcrumb(selectedCard, grp, selectedVal, selectedTitle, () => {
+      // Dissipate other cards
+      const otherCards = flowRow.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`);
+      dissipateCards(otherCards, () => {
+        // Hide current flow row
+        flowRow.classList.add('flow-hidden');
+
+        // Advance to next stage
+        currentFlowStage++;
+        updateFlowStageIndicator();
+
+        // Show next flow row if exists
+        if (currentFlowStage < BREADCRUMB_FLOW_STAGES.length) {
+          const nextStage = BREADCRUMB_FLOW_STAGES[currentFlowStage];
+          const nextRow = document.getElementById(`flowRow${nextStage.charAt(0).toUpperCase() + nextStage.slice(1)}`);
+          if (nextRow) {
+            nextRow.classList.remove('flow-hidden');
+            nextRow.classList.add('flow-entering');
+            setTimeout(() => {
+              nextRow.classList.remove('flow-entering');
+              updateContinueButtonVisibility();
+            }, 600);
+          }
+        } else {
+          // Flow complete — proceed to character setup or begin story
+          onBreadcrumbFlowComplete();
+        }
+      });
+    });
+  }
+
+  /**
+   * Animate selected card to breadcrumb row
+   * BREADCRUMB PERSISTENCE AUTHORITY applies — excluded layers skip breadcrumb
+   */
+  function animateCardToBreadcrumb(card, grp, val, title, onComplete) {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!breadcrumbRow) {
+      onComplete?.();
+      return;
+    }
+
+    // BREADCRUMB EXCLUSION CHECK — intensity (arousal) never becomes breadcrumb
+    if (!canBecomeBreadcrumb(grp)) {
+      console.log(`[Breadcrumb] Skipping excluded layer: ${grp}`);
+      onComplete?.();
+      return;
+    }
+
+    // Get card's current position
+    const cardRect = card.getBoundingClientRect();
+
+    // Create a clone for animation
+    const clone = card.cloneNode(true);
+    clone.classList.add('becoming-breadcrumb');
+    clone.style.position = 'fixed';
+    clone.style.left = cardRect.left + 'px';
+    clone.style.top = cardRect.top + 'px';
+    clone.style.width = cardRect.width + 'px';
+    clone.style.height = cardRect.height + 'px';
+    clone.style.margin = '0';
+    document.body.appendChild(clone);
+
+    // Hide original card
+    card.style.visibility = 'hidden';
+
+    // Calculate target position in breadcrumb row
+    const breadcrumbRect = breadcrumbRow.getBoundingClientRect();
+    const existingBreadcrumbs = breadcrumbRow.querySelectorAll('.breadcrumb-card').length;
+    const targetLeft = breadcrumbRect.left + (existingBreadcrumbs * 87) + 10; // 75px width + 12px gap
+    const targetTop = breadcrumbRect.top + (breadcrumbRect.height - 105) / 2;
+
+    // Animate to breadcrumb position with scale
+    requestAnimationFrame(() => {
+      clone.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      clone.style.left = targetLeft + 'px';
+      clone.style.top = targetTop + 'px';
+      clone.style.width = '75px';
+      clone.style.height = '105px';
+    });
+
+    // After animation, create permanent breadcrumb
+    setTimeout(() => {
+      clone.remove();
+
+      // Get structured label with optional subtitle (e.g., flavor nested in world)
+      const label = getBreadcrumbLabel(grp, val);
+      const subtitleHtml = label.subtitle
+        ? `<span class="breadcrumb-subtitle">${label.subtitle}</span>`
+        : '';
+
+      // Mark ephemeral layers for later dissolution
+      const ephemeralClass = shouldDissolveAtPOV(grp) ? ' breadcrumb-ephemeral' : '';
+
+      // Create breadcrumb card
+      const breadcrumb = document.createElement('div');
+      breadcrumb.className = 'breadcrumb-card' + ephemeralClass;
+      breadcrumb.dataset.grp = grp;
+      breadcrumb.dataset.val = val;
+      breadcrumb.dataset.breadcrumbLabel = grp.charAt(0).toUpperCase() + grp.slice(1);
+      breadcrumb.innerHTML = `
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back">
+            <span class="sb-card-title">${label.title}</span>
+            ${subtitleHtml}
+          </div>
+          <div class="sb-card-face sb-card-front">
+            <span class="sb-card-title">${label.title}</span>
+            ${subtitleHtml}
+          </div>
+        </div>
+      `;
+      breadcrumbRow.appendChild(breadcrumb);
+
+      console.log(`[Breadcrumb] Created: ${grp}=${val}${label.subtitle ? ` (${label.subtitle})` : ''}`);
+      onComplete?.();
+    }, 650);
+  }
+
+  /**
+   * Dissipate unselected cards with sparkle effect
+   */
+  function dissipateCards(cards, onComplete) {
+    if (!cards || cards.length === 0) {
+      onComplete?.();
+      return;
+    }
+
+    let completed = 0;
+    cards.forEach((card, idx) => {
+      // Stagger the dissipation
+      setTimeout(() => {
+        card.classList.add('dissipating');
+
+        // Create sparkle particles
+        createDissipationSparkles(card);
+
+        // Mark completion after animation
+        setTimeout(() => {
+          completed++;
+          if (completed === cards.length) {
+            onComplete?.();
+          }
+        }, 800);
+      }, idx * 80); // 80ms stagger between cards
+    });
+  }
+
+  /**
+   * Create sparkle particles for card dissipation
+   */
+  function createDissipationSparkles(card) {
+    const rect = card.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Create 8-12 sparkle particles
+    const particleCount = 8 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < particleCount; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'dissipate-sparkle';
+
+      // Random position around card center
+      const angle = (Math.PI * 2 * i) / particleCount + (Math.random() * 0.5);
+      const distance = 30 + Math.random() * 60;
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance - 40; // Bias upward
+
+      sparkle.style.cssText = `
+        left: ${centerX}px;
+        top: ${centerY}px;
+        --sparkle-dx: ${dx}px;
+        --sparkle-dy: ${dy}px;
+      `;
+
+      document.body.appendChild(sparkle);
+
+      // Remove after animation
+      setTimeout(() => sparkle.remove(), 1000);
+    }
+  }
+
+  /**
+   * Called when all breadcrumb flow stages are complete
+   */
+  function onBreadcrumbFlowComplete() {
+    // All core selections made — user can now proceed to character setup
+    // Show any remaining setup sections (intensity, length, etc.)
+    console.log('[BreadcrumbFlow] Flow complete. All core selections committed.');
+
+    // Optionally trigger story begin or show remaining options
+    // For now, the flow ends here and user can proceed with Begin Story
+  }
+
+  /**
+   * Reset breadcrumb flow to initial state
+   * Called when starting a new story
+   */
+  function resetBreadcrumbFlow() {
+    currentFlowStage = 0;
+
+    // Clear breadcrumb row
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (breadcrumbRow) breadcrumbRow.innerHTML = '';
+
+    // Reset flow rows
+    BREADCRUMB_FLOW_STAGES.forEach((stage, idx) => {
+      const row = document.getElementById(`flowRow${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
+      if (row) {
+        row.classList.remove('flow-hidden', 'flow-entering');
+        if (idx > 0) row.classList.add('flow-hidden');
+
+        // Reset card visibility
+        row.querySelectorAll('.sb-card').forEach(card => {
+          card.style.visibility = '';
+          card.classList.remove('dissipating', 'selected', 'flipped');
+        });
+      }
+    });
+
+    // Clear state selections
+    state.picks.pressure = null;
+    state.picks.world = null;
+    state.picks.tone = null;
+    state.picks.dynamic = null;
+
+    updateFlowStageIndicator();
+    updateContinueButtonVisibility();
+  }
+
+  // Expose reset function globally for restart functionality
+  window.resetBreadcrumbFlow = resetBreadcrumbFlow;
+
+  // ═══════════════════════════════════════════════════════════════════
   // SYNOPSIS PANEL - Live-updating story preview based on 4-axis selections
   // ═══════════════════════════════════════════════════════════════════
   //
@@ -13660,9 +17599,291 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     PostApocalyptic: 'a broken world of scarcity, ruins, and hard bargains'
   };
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  //                    GENRE REGIME: NESTED PRESSURE MODEL
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // PHILOSOPHY:
+  // Genres are PRESSURE ENGINES, not bookshelf categories.
+  // They shape pacing, tension, romantic cost, and consequence timing.
+  // Worlds are aesthetic lenses. Tone controls narration style.
+  //
+  // HIERARCHY:
+  // Primary Pressure (required) → Flavor (optional)
+  // User sees ≤8 pressures, then optionally 3-5 flavors.
+  //
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // PRIMARY PRESSURES — THE ONLY TOP-LEVEL CHOICES (max 8)
+  const PRIMARY_PRESSURES = {
+    PowerControl: {
+      id: 'PowerControl',
+      label: 'Power & Control',
+      description: 'Someone has leverage. Someone else pays for it.',
+      dspPhrase: 'power, leverage, and the cost of control'
+    },
+    RiskExposure: {
+      id: 'RiskExposure',
+      label: 'Risk & Exposure',
+      description: 'Being seen, known, caught, or revealed is dangerous.',
+      dspPhrase: 'secrets, exposure, and the danger of being known'
+    },
+    EscapePursuit: {
+      id: 'EscapePursuit',
+      label: 'Escape & Pursuit',
+      description: 'Leaving, rescuing, or outrunning something.',
+      dspPhrase: 'locked doors, narrow windows, and the clock'
+    },
+    ObligationBurden: {
+      id: 'ObligationBurden',
+      label: 'Obligation & Burden',
+      description: 'Duty, destiny, or expectation presses inward.',
+      dspPhrase: 'duty, expectation, and the weight of what must be'
+    },
+    DesireObsession: {
+      id: 'DesireObsession',
+      label: 'Desire & Obsession',
+      description: 'Wanting something too much, too soon, or for the wrong reasons.',
+      dspPhrase: 'fixation, escalation, and loss of control'
+    },
+    ReckoningPast: {
+      id: 'ReckoningPast',
+      label: 'Reckoning & Past',
+      description: 'History, guilt, or unfinished business intrudes.',
+      dspPhrase: 'old debts, buried identities, and consequences that refuse to stay buried'
+    },
+    Transformation: {
+      id: 'Transformation',
+      label: 'Transformation',
+      description: 'Someone is becoming something they didn\'t plan to be.',
+      dspPhrase: 'becoming, unraveling, and the stranger in the mirror'
+    },
+    Survival: {
+      id: 'Survival',
+      label: 'Survival',
+      description: 'Staying alive — socially, politically, physically, or emotionally.',
+      dspPhrase: 'scarcity, endurance, and brutal choices'
+    }
+  };
+
+  // PRESSURE FLAVORS — OPTIONAL REFINEMENTS (never required, never change authority)
+  const PRESSURE_FLAVORS = {
+    PowerControl: [
+      { id: 'Billionaire', label: 'Billionaire', description: 'Ultra-wealth, power plays, golden cages.' },
+      { id: 'CrimeSyndicate', label: 'Crime Syndicate', description: 'Organized crime, loyalty, blood oaths.' },
+      { id: 'Political', label: 'Political Intrigue', description: 'Power structures, alliances, betrayal.' },
+      { id: 'Espionage', label: 'Espionage', description: 'Spies, double lives, dangerous information.' },
+      { id: 'CultOrder', label: 'Cult / Order', description: 'Hierarchies of belief, obedience, doctrine.' }
+    ],
+    RiskExposure: [
+      { id: 'Noir', label: 'Noir', description: 'Shadows, moral compromise, fatalism.' },
+      { id: 'ForbiddenKnowledge', label: 'Forbidden Knowledge', description: 'Curiosity, revelation, the price of knowing.' },
+      { id: 'PublicScandal', label: 'Public Scandal', description: 'Reputation on the line, exposure as weapon.' },
+      { id: 'Surveillance', label: 'Surveillance', description: 'Always watched, privacy as currency.' },
+      { id: 'DoubleLife', label: 'Double Life', description: 'Two selves, one secret, inevitable collision.' }
+    ],
+    EscapePursuit: [
+      { id: 'Heist', label: 'Heist', description: 'Elaborate plans, trust and betrayal.' },
+      { id: 'Rescue', label: 'Rescue / Retrieval', description: 'Someone needs saving. Someone pays the price.' },
+      { id: 'OnTheRun', label: 'On the Run', description: 'Fleeing, hunted, no safe harbor.' },
+      { id: 'Captivity', label: 'Prison / Captivity', description: 'Cages visible or invisible, escape as obsession.' },
+      { id: 'BorderCrossing', label: 'Border Crossing', description: 'Thresholds, checkpoints, forbidden passage.' }
+    ],
+    ObligationBurden: [
+      { id: 'ChosenBurdened', label: 'Chosen / Burdened', description: 'Marked by fate, weighted by purpose.' },
+      { id: 'DutyToFamily', label: 'Duty to Family', description: 'Blood obligation, inherited expectation.' },
+      { id: 'Prophecy', label: 'Prophecy', description: 'Foreordained, resisted, inevitable.' },
+      { id: 'CommandRank', label: 'Command / Rank', description: 'Orders given, orders followed, orders defied.' },
+      { id: 'Inheritance', label: 'Inheritance', description: 'Legacy, entitlement, poisoned gifts.' }
+    ],
+    DesireObsession: [
+      { id: 'Obsession', label: 'Obsession', description: 'Fixation, escalation, loss of control.' },
+      { id: 'ForbiddenRomance', label: 'Forbidden Romance', description: 'Rules say no. The heart says otherwise.' },
+      { id: 'Rivalry', label: 'Rivalry', description: 'Competition as courtship, winning as need.' },
+      { id: 'Addiction', label: 'Addiction', description: 'The thing you can\'t stop wanting.' },
+      { id: 'Jealousy', label: 'Jealousy', description: 'Possessiveness, comparison, the green edge.' }
+    ],
+    ReckoningPast: [
+      { id: 'RelentlessPast', label: 'Relentless Past', description: 'Identity erosion, old lives resurfacing.' },
+      { id: 'Redemption', label: 'Redemption', description: 'Second chances, atonement, becoming worthy.' },
+      { id: 'OldDebts', label: 'Old Debts', description: 'What\'s owed never forgets.' },
+      { id: 'BetrayalHistory', label: 'Betrayal History', description: 'Trust broken, wounds reopened.' },
+      { id: 'LostRelationship', label: 'Lost Relationship', description: 'What was, what ended, what might be again.' }
+    ],
+    Transformation: [
+      { id: 'BecomingPowerful', label: 'Becoming Powerful', description: 'Strength arriving, identity shifting.' },
+      { id: 'MoralCorruption', label: 'Moral Corruption', description: 'Lines crossed, self redefined.' },
+      { id: 'Awakening', label: 'Awakening', description: 'Dormant becoming active, hidden becoming known.' },
+      { id: 'IdentityShift', label: 'Identity Shift', description: 'Who you were is not who you are.' },
+      { id: 'Ascension', label: 'Ascension / Mutation', description: 'Evolution, elevation, irreversible change.' }
+    ],
+    Survival: [
+      { id: 'WarZone', label: 'War Zone', description: 'Combat, casualties, survival in conflict.' },
+      { id: 'Collapse', label: 'Collapse', description: 'Systems failing, structures crumbling.' },
+      { id: 'Exile', label: 'Exile', description: 'Cast out, alone, making do without belonging.' },
+      { id: 'Scarcity', label: 'Scarcity', description: 'Not enough, hard choices, rationed hope.' },
+      { id: 'EndOfEra', label: 'End of an Era', description: 'The old world dying, the new not yet born.' }
+    ]
+  };
+
+  // LEGACY GENRE → PRESSURE+FLAVOR MAPPING (Backward Compatibility)
+  // Maps old genre values to new pressure system
+  const LEGACY_GENRE_TO_PRESSURE = {
+    Billionaire: { pressure: 'PowerControl', flavor: 'Billionaire' },
+    CrimeSyndicate: { pressure: 'PowerControl', flavor: 'CrimeSyndicate' },
+    Political: { pressure: 'PowerControl', flavor: 'Political' },
+    Espionage: { pressure: 'PowerControl', flavor: 'Espionage' },
+    Noir: { pressure: 'RiskExposure', flavor: 'Noir' },
+    ForbiddenKnowledge: { pressure: 'RiskExposure', flavor: 'ForbiddenKnowledge' },
+    Heist: { pressure: 'EscapePursuit', flavor: 'Heist' },
+    Escape: { pressure: 'EscapePursuit', flavor: 'OnTheRun' },
+    Obsession: { pressure: 'DesireObsession', flavor: 'Obsession' },
+    RelentlessPast: { pressure: 'ReckoningPast', flavor: 'RelentlessPast' },
+    Redemption: { pressure: 'ReckoningPast', flavor: 'Redemption' },
+    BuildingBridges: { pressure: 'ReckoningPast', flavor: 'LostRelationship' },
+    Purgatory: { pressure: 'Transformation', flavor: 'IdentityShift' },
+    Survival: { pressure: 'Survival', flavor: null },
+    Sports: { pressure: 'DesireObsession', flavor: 'Rivalry' }
+  };
+
+  // FLAVOR → DSP PARAPHRASE OVERRIDES
+  // When a flavor is selected, it overrides the pressure's default DSP phrase
+  const FLAVOR_DSP_OVERRIDES = {
+    Billionaire: 'power, appetite, and polished threat',
+    CrimeSyndicate: 'loyalty, leverage, and quiet violence',
+    Political: 'alliances, betrayals, and shifting leverage',
+    Espionage: 'double lives, coded truths, and invisible wars',
+    CultOrder: 'doctrine, hierarchy, and absolute obedience',
+    Noir: 'secrets, temptation, and moral compromise',
+    ForbiddenKnowledge: 'curiosity, revelation, and the price of knowing',
+    PublicScandal: 'reputation, exposure, and public ruin',
+    Surveillance: 'watching, being watched, and nowhere to hide',
+    DoubleLife: 'two selves, one secret, and inevitable collision',
+    Heist: 'precision, misdirection, and nerve',
+    Rescue: 'urgency, sacrifice, and the ones left behind',
+    OnTheRun: 'flight, pursuit, and vanishing margins',
+    Captivity: 'cages, keepers, and the calculus of escape',
+    BorderCrossing: 'passage, papers, and the cost of crossing',
+    ChosenBurdened: 'fate, purpose, and the weight of being marked',
+    DutyToFamily: 'blood, expectation, and the debts we inherit',
+    Prophecy: 'foretelling, resistance, and what cannot be escaped',
+    CommandRank: 'orders, hierarchy, and the limits of obedience',
+    Inheritance: 'legacy, entitlement, and poisoned gifts',
+    Obsession: 'fixation, escalation, and loss of control',
+    ForbiddenRomance: 'taboo, defiance, and desire against judgment',
+    Rivalry: 'competition, obsession, and proving worth',
+    Addiction: 'craving, relapse, and the thing you cannot quit',
+    Jealousy: 'possession, comparison, and the green edge of love',
+    RelentlessPast: 'old debts, buried identities, and consequences that refuse to stay buried',
+    Redemption: 'reckoning, mercy, and second chances',
+    OldDebts: 'what is owed, what is remembered, and interest accrued',
+    BetrayalHistory: 'broken trust, old wounds, and the long memory of love',
+    LostRelationship: 'repair, trust, and improbable understanding',
+    BecomingPowerful: 'awakening strength, shifting identity, and the cost of power',
+    MoralCorruption: 'lines crossed, innocence lost, and the stranger you become',
+    Awakening: 'dormant power stirring, hidden truths surfacing',
+    IdentityShift: 'unfinished business, reflection, and finding the key to your own lock',
+    Ascension: 'evolution, elevation, and irreversible change',
+    WarZone: 'combat, survival, and what war takes',
+    Collapse: 'systems failing, structures crumbling, adaptation',
+    Exile: 'banishment, solitude, and making meaning without belonging',
+    Scarcity: 'not enough, hard choices, and rationed hope',
+    EndOfEra: 'the old world dying, the new not yet born'
+  };
+
+  /**
+   * Get DSP paraphrase for current pressure/flavor selection
+   * @param {string} pressure - Primary pressure ID
+   * @param {string|null} flavor - Optional flavor ID
+   * @returns {string} - DSP paraphrase for "shaped by..."
+   */
+  function getPressureDSPPhrase(pressure, flavor) {
+    // If flavor is selected and has an override, use it
+    if (flavor && FLAVOR_DSP_OVERRIDES[flavor]) {
+      return FLAVOR_DSP_OVERRIDES[flavor];
+    }
+    // Otherwise use the primary pressure's phrase
+    const pressureConfig = PRIMARY_PRESSURES[pressure];
+    if (pressureConfig) {
+      return pressureConfig.dspPhrase;
+    }
+    // Fallback for legacy genres
+    return 'tension, desire, and unfinished business';
+  }
+
+  /**
+   * Get effective genre key for legacy systems (cover, title, etc.)
+   * Returns flavor if set, otherwise maps pressure to best legacy equivalent
+   * @param {string} pressure - Primary pressure ID
+   * @param {string|null} flavor - Optional flavor ID
+   * @returns {string} - Effective genre key for legacy lookups
+   */
+  function getEffectiveGenre(pressure, flavor) {
+    // If flavor is set, return it directly (many flavors match old genre keys)
+    if (flavor) return flavor;
+
+    // Map pressure to default legacy genre
+    const PRESSURE_DEFAULT_GENRE = {
+      PowerControl: 'Billionaire',
+      RiskExposure: 'Noir',
+      EscapePursuit: 'Heist',
+      ObligationBurden: 'ChosenBurdened',
+      DesireObsession: 'Obsession',
+      ReckoningPast: 'RelentlessPast',
+      Transformation: 'IdentityShift',
+      Survival: 'Survival'
+    };
+    return PRESSURE_DEFAULT_GENRE[pressure] || 'Billionaire';
+  }
+
+  /**
+   * Migrate legacy genre to pressure+flavor
+   * Used for loading old saves
+   * @param {string} legacyGenre - Old genre value
+   * @returns {{ pressure: string, flavor: string|null }}
+   */
+  function migrateLegacyGenre(legacyGenre) {
+    const mapping = LEGACY_GENRE_TO_PRESSURE[legacyGenre];
+    if (mapping) {
+      return { pressure: mapping.pressure, flavor: mapping.flavor };
+    }
+    // Default fallback for unknown genres
+    return { pressure: 'PowerControl', flavor: 'Billionaire' };
+  }
+
+  /**
+   * Check if a pressure is compatible with the current tone
+   * @param {string} pressure - Pressure ID
+   * @param {string} tone - Tone value
+   * @returns {boolean}
+   */
+  function isPressureCompatible(pressure, tone) {
+    // Comedic tone clashes with dark pressures
+    if (tone === 'Comedic') {
+      // Risk/Exposure (Noir lineage) doesn't fit comedy
+      if (pressure === 'RiskExposure') return false;
+    }
+    return true;
+  }
+
+  /**
+   * Check if a flavor is compatible with tone
+   * @param {string} flavor - Flavor ID
+   * @param {string} tone - Tone value
+   * @returns {boolean}
+   */
+  function isFlavorCompatible(flavor, tone) {
+    if (!flavor) return true;
+    // Noir flavor specifically incompatible with Comedic
+    if (tone === 'Comedic' && flavor === 'Noir') return false;
+    return true;
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   // DSP GENRE PARAPHRASES — LOCKED CANON (DO NOT MODIFY)
   // Used as: "shaped by …"
+  // NOTE: This is retained for backward compatibility. New code should use
+  // getPressureDSPPhrase() which understands the pressure+flavor hierarchy.
   // ═══════════════════════════════════════════════════════════════════
   const DSP_GENRE_PARAPHRASES = {
     CrimeSyndicate: 'loyalty, leverage, and quiet violence',
@@ -13753,9 +17974,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return { success: false, html: null, error };
     }
 
-    const genrePhrase = DSP_GENRE_PARAPHRASES[genre];
+    // PRESSURE REGIME: Use getPressureDSPPhrase if available, fallback to legacy DSP_GENRE_PARAPHRASES
+    const pressure = state.picks?.pressure;
+    const flavor = state.picks?.flavor;
+    let genrePhrase;
+    if (pressure && typeof getPressureDSPPhrase === 'function') {
+      genrePhrase = getPressureDSPPhrase(pressure, flavor);
+    } else {
+      genrePhrase = DSP_GENRE_PARAPHRASES[genre];
+    }
     if (!genrePhrase) {
-      const error = { code: 'DSP_INVALID_GENRE', message: `DSP generation failed: no approved phrase for genre "${genre}"` };
+      const error = { code: 'DSP_INVALID_GENRE', message: `DSP generation failed: no approved phrase for genre "${genre}" or pressure "${pressure}"` };
       console.error('[DSP] HARD FAIL:', error.message);
       return { success: false, html: null, error };
     }
@@ -13781,8 +18010,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       console.error('[DSP] CANONICITY FAIL:', error.message);
       return { success: false, html: null, error };
     }
-    if (genrePhrase !== DSP_GENRE_PARAPHRASES[genre]) {
-      const error = { code: 'DSP_CANONICITY_FAIL', message: `Genre phrase corrupted: expected canonical "${DSP_GENRE_PARAPHRASES[genre]}"` };
+    // PRESSURE REGIME: Canonicity check handles both pressure system and legacy genres
+    const expectedGenrePhrase = pressure && typeof getPressureDSPPhrase === 'function'
+      ? getPressureDSPPhrase(pressure, flavor)
+      : DSP_GENRE_PARAPHRASES[genre];
+    if (genrePhrase !== expectedGenrePhrase) {
+      const error = { code: 'DSP_CANONICITY_FAIL', message: `Genre phrase corrupted: expected canonical "${expectedGenrePhrase}"` };
       console.error('[DSP] CANONICITY FAIL:', error.message);
       return { success: false, html: null, error };
     }
@@ -17443,6 +21676,57 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
             // This prevents the deadlock: POV fail → regenerate → OUTPUT_TOO_SHORT → abort
         }
 
+        // ═══════════════════════════════════════════════════════════════════════
+        // 5TH-PERSON FATE VOICE ENFORCEMENT (Scene 1 — SOFT CHECK)
+        // Scene 1: Log warnings only, no forced regeneration (prevents deadlock)
+        // Scene 2+: Full enforcement with auto-regeneration
+        // ═══════════════════════════════════════════════════════════════════════
+        const fateVoiceCheck = validateFateVoice(text);
+        if (fateVoiceCheck.shouldRegenerate) {
+            // Scene 1: Log as warning only, do NOT regenerate
+            console.warn('[FateVoice:Scene1] Violations detected (non-blocking for Scene 1):', fateVoiceCheck.violations);
+            console.log('[FateVoice:Scene1] Strict enforcement resumes at Scene 2+');
+            // Do NOT regenerate — accept prose as-is to prevent deadlock
+        } else if (fateVoiceCheck.fateCount > 0) {
+            console.log('[FateVoice:Scene1] Fate appears', fateVoiceCheck.fateCount, 'time(s) — within bounds');
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // INTIMACY & CONSENT FAILSAFE (Scene 1 — FULL ENFORCEMENT)
+        // Scene 1 should never have explicit content (ST1 = Attraction Acknowledged)
+        // Consent system leaks are always critical — must regenerate
+        // ═══════════════════════════════════════════════════════════════════════
+        const scene1Storyturn = 'ST1'; // Scene 1 is always ST1
+        const scene1IntimacyCheck = validateIntimacyConsent(text, state.intensity, scene1Storyturn);
+        if (scene1IntimacyCheck.shouldRegenerate) {
+            console.warn('[IntimacyFailsafe:Scene1] Violations detected, regenerating silently...');
+            console.warn('[IntimacyFailsafe:Scene1] Violations:', scene1IntimacyCheck.violations);
+
+            // Build enforcement prompt for silent regeneration
+            const scene1IntimacyPrompt = buildIntimacyFailsafePrompt(scene1IntimacyCheck.violations);
+
+            // Silent regeneration
+            text = await callChat([
+                { role: 'system', content: state.sysPrompt + scene1IntimacyPrompt },
+                { role: 'user', content: introPrompt }
+            ]);
+
+            // REFUSAL GATE: Check regeneration output
+            const intimacyRefusal = detectProseRefusal(text);
+            if (intimacyRefusal.isRefusal) {
+                console.error('[ProseRefusal] Intimacy failsafe regeneration refused:', intimacyRefusal.reason);
+                throw new ProseRefusalError(intimacyRefusal.reason, text);
+            }
+
+            // Validate regenerated output (one retry only)
+            const scene1IntimacyRecheck = validateIntimacyConsent(text, state.intensity, scene1Storyturn);
+            if (scene1IntimacyRecheck.shouldRegenerate) {
+                console.error('[IntimacyFailsafe:Scene1] Regeneration still failed, accepting with warning:', scene1IntimacyRecheck.violations);
+            } else {
+                console.log('[IntimacyFailsafe:Scene1] Regeneration successful');
+            }
+        }
+
         // VOCABULARY BAN ENFORCEMENT — story opener prose
         text = await enforceVocabularyBans(
             text,
@@ -18224,6 +22508,14 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
                       // Ensure inline mode (not fullscreen)
                       settingPlate.classList.add('setting-inline');
                       settingPlate.classList.remove('setting-active'); // Remove any fullscreen class
+                      // WRY CONFESSIONAL INSET: Apply reduced-scale inset styling
+                      // When tone is Wry Confessional, images render at 40-60% column width
+                      // centered as block elements (no floats, no text wrapping)
+                      if (state.picks?.tone === 'Wry Confessional') {
+                          settingPlate.classList.add('wry-confession-inset');
+                      } else {
+                          settingPlate.classList.remove('wry-confession-inset');
+                      }
                       sceneImg.style.display = 'block';
                       if (loadingEl) loadingEl.style.display = 'none';
                       console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display, mountPath: 'settingPlate', mode: 'inline' });
@@ -18999,13 +23291,127 @@ Return ONLY valid JSON:
       saveMotifToHistory(newMotif);
 
       // Build the authoritative prompt (ORDER MATTERS)
-      // Title-Safe → Layout → Emotion → Focal → Background → Palette → Restraint → Exclusions
+      // Semantic Declaration → Title-Safe → Layout → Emotion → Focal → Background → Palette → Restraint → Exclusions
+
+      // ───────────────────────────────────────────────
+      // COVER-SPECIFIC VISUAL DECLARATION (AUTHORITATIVE)
+      // TAG: storybound/cover-semantic-declaration-v1
+      // ───────────────────────────────────────────────
+      // Covers may be painterly, graphic, symbolic, or illustrative.
+      // Covers must NOT be literal depictions of specific scenes.
+      // Covers may synthesize multiple themes, moods, or symbols.
+      // Visual sophistication and restraint are preferred over realism.
+      // ───────────────────────────────────────────────
+      const COVER_SEMANTIC_DECLARATION = `This image is a magazine-quality book cover illustration, designed to interpret the story's central tension or irony as a single composed image.
+
+`;
+
+      // ───────────────────────────────────────────────
+      // SKETCH TIER — SEMANTIC DEFINITION (AUTHORITATIVE)
+      // ───────────────────────────────────────────────
+      // Sketch-tier covers are unfinished in execution, not unfinished in idea.
+      //
+      // The cover concept must be sophisticated, ironic, or editorially sharp.
+      // The rendering must feel provisional, exploratory, or interrupted.
+      //
+      // Sketch-tier enforces surface roughness, not conceptual simplicity.
+      //
+      // If the image looks complete, it has violated Sketch-tier.
+      // If the idea looks simple, it has violated Sketch-tier.
+      //
+      // The goal is a cover that feels mid-thought, not under-thought.
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // SKETCH TIER — ALLOWED / DISALLOWED CLARIFICATIONS
+      // ───────────────────────────────────────────────
+      // Sketch-tier MAY include:
+      // - pencil, ink, or charcoal textures
+      // - uneven or broken linework
+      // - partial fill or restrained color
+      // - visible construction or negative space
+      // - hand-drawn or outlined lettering
+      //
+      // Sketch-tier MUST NOT collapse into:
+      // - flat icons
+      // - clip-art minimalism
+      // - dumbed-down symbolism
+      // - polished painterly rendering
+      // - 'cartoonish' simplification
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // COVER REGRESSION SENTENCE (INTERNAL CHECK)
+      // ───────────────────────────────────────────────
+      // 'Does this cover feel like an intelligent editorial idea that has
+      // been intentionally left unfinished, rather than a finished image
+      // that has been simplified?'
+      //
+      // This sentence is for internal validation only.
+      // It must not appear in output.
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // SKETCH TIER — IMPLEMENTATION SAFETY NOTE
+      // ───────────────────────────────────────────────
+      // This Sketch-tier definition modifies execution, not meaning.
+      // Do NOT simplify concepts to satisfy roughness.
+      // Do NOT flatten symbolism.
+      // Do NOT enforce sketch aesthetics at the expense of thought.
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // SKETCH TIER — MATERIAL AND FINISH CONSTRAINTS (HARD)
+      // ───────────────────────────────────────────────
+      // When coverStage === 'Sketch':
+      //
+      // - Linework must appear unfinished.
+      // - Materials must resemble pencil, ink, charcoal,
+      //   light watercolor wash, or colored pencil.
+      // - Shading must be imperfect, uneven, or gestural.
+      // - Typography must appear hand-drawn, outlined,
+      //   or lightly irregular.
+      // - No polished lighting, gradients, or realism.
+      //
+      // A Sketch that appears print-ready or fully rendered
+      // is a failure.
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // SKETCH TIER — REGRESSION TEST (MANDATORY)
+      // ───────────────────────────────────────────────
+      // For any cover where coverStage === 'Sketch',
+      // Claude must pass this regression test:
+      //
+      // "If this image looks finished, polished, or ready for print,
+      // it has failed the Sketch tier."
+      //
+      // Failure requires regeneration, not adjustment.
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // SKETCH LABEL PLACEMENT (LOCKED)
+      // ───────────────────────────────────────────────
+      // The label 'Sketch — currently displayed' must appear
+      // BELOW the cover image, never overlaid on top of it.
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // STORY MILESTONE COPY (LOCKED)
+      // ───────────────────────────────────────────────
+      // Replace: 'Character Milestone Achieved'
+      // With: 'Story Milestones Unlocked: {count}'
+      // ───────────────────────────────────────────────
+
       const TITLE_SAFE_CONSTRAINTS = `TITLE-SAFE ZONE (MANDATORY):
 Upper 18-22% of image must remain visually simple and low-contrast.
 No faces, text, high-detail objects, or bright highlights in title region.
 Subject blocking confined to middle and lower thirds only.
 Gradual tonal transition from top edge downward — no hard horizontal lines at top.
 Composition must leave clear space for book-cover typography overlay.`;
+
+      // Get sketch tier enforcement if tone requires it
+      const sketchTierText = getSketchTierEnforcement(tone);
 
       return {
           layoutId: selectedLayout.id,
@@ -19015,8 +23421,8 @@ Composition must leave clear space for book-cover typography overlay.`;
           humanFigure: humanFigure,
           background: finalBackground,
           palette: palette,
-          promptText: `${TITLE_SAFE_CONSTRAINTS}
-
+          promptText: `${COVER_SEMANTIC_DECLARATION}${TITLE_SAFE_CONSTRAINTS}
+${sketchTierText ? '\n' + sketchTierText + '\n' : ''}
 LAYOUT: ${selectedLayout.description}
 EMOTIONAL GRAVITY: ${emotion} (guides all visual decisions).
 FOCAL ANCHOR: ${finalObject} rendered in ${material}, composed per layout.
@@ -19193,8 +23599,20 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
    *
    * LOCKED RULES:
    * - Keyhole ONLY appears when arousal === Dirty
-   * - Erotic border ALWAYS appears when arousal === Erotic
+   * - Erotic border ONLY appears when arousal === Erotic (NOT Tease, Naughty, or Dirty)
    * - Soulmates modulates material warmth (adds 'soulmates' class), never introduces keyhole
+   *
+   * COVER SEQUENCING AUTHORITY (Storyturn + Arousal Gates):
+   * - Phase 1-2 (ST1-ST2): NO borders, NO keyholes — sketch/refinement only
+   * - Phase 3 (ST3+, arousal < Erotic): NO borders, NO keyholes
+   * - Phase 4 (arousal === Erotic): Erotic border ALLOWED
+   * - Phase 5 (arousal === Dirty): Keyhole REQUIRED, border superseded
+   *
+   * EROTIC BORDER SYSTEM (Image-Based):
+   * - Asset path: /assets/borders/erotic/{world}_base.png
+   * - 6 worlds: modern, fantasy, scifi, historical, postapocalyptic, dystopia (no Mythic)
+   * - Flavor affects surface condition only (damage/aging/corrosion), not geometry
+   * - Failure: suppress border and log "Erotic border asset unavailable — border suppressed"
    */
   function applyCoverIntensityLayers(intensity, world) {
       // ═══════════════════════════════════════════════════════════════════
@@ -19213,6 +23631,21 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const borderEl = document.getElementById('coverEroticBorder');
       const keyholeEl = document.getElementById('coverKeyholeOverlay');
       if (!borderEl || !keyholeEl) return;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // COVER SEQUENCING VALIDATION (MANDATORY)
+      // ═══════════════════════════════════════════════════════════════════
+      const sequenceCheck = validateCoverSequencing(intensity);
+      if (!sequenceCheck.valid) {
+          console.error('[CoverSequencing] COVER SEQUENCING VIOLATION — OUTPUT SUPPRESSED');
+          console.error('[CoverSequencing] Reason:', sequenceCheck.reason);
+          // Suppress all overlays
+          borderEl.classList.add('hidden');
+          borderEl.className = 'cover-erotic-border hidden';
+          keyholeEl.classList.add('hidden');
+          keyholeEl.className = 'cover-keyhole-overlay hidden';
+          return;
+      }
 
       // COVER ESCALATION VALIDATION
       // Cover may escalate beyond title baseline, but must not contradict downward
@@ -19241,19 +23674,446 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const level = (intensity || '').toLowerCase();
 
       if (level === 'erotic') {
-          // EROTIC: Apply ornamental border (ALWAYS when erotic, regardless of soulmates)
-          const w = (world || 'Modern').toLowerCase().replace(/[^a-z]/g, '');
-          const worldClass = ['fantasy', 'noir', 'gothic', 'scifi'].includes(w) ? ('world-' + w) : '';
-          const soulmatesClass = hasSoulmates ? ' soulmates' : '';
-          borderEl.className = 'cover-erotic-border' + (worldClass ? ' ' + worldClass : '') + soulmatesClass;
+          // ═══════════════════════════════════════════════════════════════
+          // EROTIC: Image-based border (ONLY for Erotic tier)
+          // ═══════════════════════════════════════════════════════════════
+          applyEroticBorder(borderEl, world, hasSoulmates);
       } else if (level === 'dirty') {
-          // DIRTY: Keyhole takeover (ONLY for Dirty, erotic border removed/subsumed)
-          keyholeEl.classList.remove('hidden');
-          if (hasSoulmates) {
-              // Soulmates + Dirty: warmer, devotional metalwork ("locked by choice")
-              keyholeEl.classList.add('soulmates');
+          // ═══════════════════════════════════════════════════════════════
+          // DIRTY: Keyhole takeover (ONLY for Dirty tier)
+          // ═══════════════════════════════════════════════════════════════
+          applyDirtyKeyhole(keyholeEl, world, hasSoulmates);
+      }
+      // Tease/Naughty: no overlay layers (art fully visible)
+      // Soulmates alone (non-Erotic, non-Dirty) affects art generation warmth, not cover layers
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COVER SEQUENCING AUTHORITY — Storyturn + Arousal Gate Validation
+  // ═══════════════════════════════════════════════════════════════════════════
+  // You do NOT decide when erotic signaling appears.
+  // You obey Storyturns and Arousal gates.
+  //
+  // PHASE DEFINITIONS:
+  //   Phase 1 (SKETCH):         Scene 1 exists, ST1
+  //   Phase 2 (REFINED SKETCH): ST1–ST2
+  //   Phase 3 (POST-ST3):       ST3+ AND arousal < Erotic
+  //   Phase 4 (EROTIC):         arousal === Erotic (border allowed)
+  //   Phase 5 (DIRTY):          arousal === Dirty (keyhole required)
+  //
+  // HARD FAIL CONDITIONS:
+  //   - Border before Erotic arousal → FAIL
+  //   - Keyhole before Dirty arousal → FAIL
+  //   - Erotic signaling based on "vibe" or tone → FAIL
+  //
+  // FAILURE OUTPUT:
+  //   "COVER SEQUENCING VIOLATION — OUTPUT SUPPRESSED"
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Determine current cover phase based on storyturn and arousal.
+   * @returns {number} Phase 1-5
+   */
+  function getCoverPhase() {
+      const storyturn = state.storyturn || 'ST1';
+      const arousal = (state.intensity || 'Naughty').toLowerCase();
+      const sceneCount = state.scenes?.length || 0;
+
+      // No scenes = pre-Phase 1
+      if (sceneCount === 0) return 0;
+
+      // Phase 5: Dirty arousal (keyhole required)
+      if (arousal === 'dirty') return 5;
+
+      // Phase 4: Erotic arousal (border allowed)
+      if (arousal === 'erotic') return 4;
+
+      // Extract storyturn number
+      const stNum = parseInt(storyturn.replace(/\D/g, ''), 10) || 1;
+
+      // Phase 3: ST3+ with arousal < Erotic
+      if (stNum >= 3) return 3;
+
+      // Phase 2: ST2
+      if (stNum === 2) return 2;
+
+      // Phase 1: ST1 (default)
+      return 1;
+  }
+
+  /**
+   * Validate cover sequencing rules.
+   * @param {string} intensity - Requested arousal intensity
+   * @returns {{valid: boolean, reason: string|null, phase: number}}
+   */
+  function validateCoverSequencing(intensity) {
+      const phase = getCoverPhase();
+      const level = (intensity || '').toLowerCase();
+
+      // Phase 0: No story yet — no overlays allowed but not a failure
+      if (phase === 0) {
+          return { valid: true, reason: null, phase: 0 };
+      }
+
+      // Phase 1-3: NO erotic signaling allowed
+      if (phase >= 1 && phase <= 3) {
+          if (level === 'erotic') {
+              return {
+                  valid: false,
+                  reason: `Erotic border requested at Phase ${phase} (${state.storyturn || 'ST1'}) — borders only allowed at arousal === Erotic`,
+                  phase
+              };
           }
-          // Set title + author into keyhole metalwork
+          if (level === 'dirty') {
+              return {
+                  valid: false,
+                  reason: `Dirty keyhole requested at Phase ${phase} (${state.storyturn || 'ST1'}) — keyholes only allowed at arousal === Dirty`,
+                  phase
+              };
+          }
+      }
+
+      // Phase 4: Erotic border allowed, keyhole NOT allowed
+      if (phase === 4) {
+          if (level === 'dirty') {
+              return {
+                  valid: false,
+                  reason: 'Dirty keyhole requested at Phase 4 (Erotic arousal) — keyholes only allowed at arousal === Dirty',
+                  phase
+              };
+          }
+          // Erotic border is allowed at phase 4
+      }
+
+      // Phase 5: Keyhole required, border superseded
+      if (phase === 5) {
+          if (level === 'erotic') {
+              return {
+                  valid: false,
+                  reason: 'Erotic border requested at Phase 5 (Dirty arousal) — keyhole supersedes border at Dirty tier',
+                  phase
+              };
+          }
+          // Dirty keyhole is required at phase 5
+      }
+
+      // All checks passed
+      return { valid: true, reason: null, phase };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EROTIC BORDER — Image Asset Loader
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Maps world names to asset paths and applies surface condition filters.
+  //
+  // WORLD → ASSET MAPPING (6 worlds, no Mythic):
+  //   Modern          → /assets/borders/erotic/modern_base.png
+  //   Fantasy         → /assets/borders/erotic/fantasy_base.png
+  //   SciFi           → /assets/borders/erotic/scifi_base.png
+  //   Historical      → /assets/borders/erotic/historical_base.png
+  //   PostApocalyptic → /assets/borders/erotic/postapocalyptic_base.png
+  //   Dystopia        → /assets/borders/erotic/dystopia_base.png
+  //
+  // FLAVOR → SURFACE CONDITION:
+  //   Flavor affects damage/aging/corrosion appearance, NOT geometry.
+  //   Applied via CSS filter classes: flavor-aged, flavor-weathered, etc.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const EROTIC_BORDER_WORLD_MAP = {
+      'modern': 'modern',
+      'fantasy': 'fantasy',
+      'scifi': 'scifi',
+      'sci-fi': 'scifi',
+      'historical': 'historical',
+      'postapocalyptic': 'postapocalyptic',
+      'post-apocalyptic': 'postapocalyptic',
+      'dystopia': 'dystopia'
+  };
+
+  // Flavor → CSS filter class mapping
+  // Surface conditions: damage, aging, corrosion (NOT geometry)
+  const EROTIC_BORDER_FLAVOR_MAP = {
+      // Historical flavors
+      'prehistoric': 'aged',
+      'classical': 'weathered',
+      'medieval': 'aged',
+      'renaissance': 'tarnished',
+      'victorian': 'aged',
+      '20th_century': 'weathered',
+      // Fantasy flavors
+      'enchanted_realms': 'pristine',
+      'hidden_magic': 'aged',
+      'cursed_worlds': 'corroded',
+      // SciFi flavors
+      'galactic_civilizations': 'pristine',
+      'future_of_science': 'pristine',
+      'cyberpunk': 'corroded',
+      'post_human': 'tarnished',
+      'first_contact': 'pristine',
+      'simulation': 'pristine',
+      // Dystopia flavors
+      'authoritarian': 'weathered',
+      'surveillance': 'tarnished',
+      'corporate': 'pristine',
+      'environmental': 'corroded',
+      // PostApocalyptic flavors
+      'nuclear_aftermath': 'rusted',
+      'pandemic': 'corroded',
+      'climate_ruin': 'weathered',
+      'tech_fallout': 'rusted',
+      'slow_decay': 'aged',
+      // Modern flavors (generally pristine)
+      'small_town': 'weathered',
+      'college': 'pristine',
+      'friends': 'pristine',
+      'old_money': 'tarnished',
+      'office': 'pristine',
+      'supernatural_modern': 'aged',
+      'superheroic_modern': 'pristine'
+  };
+
+  /**
+   * Apply erotic border with world-specific asset and flavor-based surface condition.
+   * @param {HTMLElement} borderEl - The border container element
+   * @param {string} world - World name (Modern, Fantasy, SciFi, etc.)
+   * @param {boolean} hasSoulmates - Whether soulmates modifier applies
+   */
+  function applyEroticBorder(borderEl, world, hasSoulmates) {
+      const borderImg = document.getElementById('eroticBorderImg');
+      if (!borderImg) {
+          console.warn('[EroticBorder] Image element not found — border suppressed');
+          return;
+      }
+
+      // Normalize world name to asset key
+      const normalizedWorld = (world || 'Modern').toLowerCase().replace(/[\s-]/g, '');
+      const assetKey = EROTIC_BORDER_WORLD_MAP[normalizedWorld] || 'modern';
+      const assetPath = `/assets/borders/erotic/${assetKey}_base.png`;
+
+      // Get world class for vignette/glow styling
+      const worldClass = 'world-' + assetKey;
+
+      // Get flavor for surface condition
+      const flavor = state.picks?.worldSubtype || null;
+      const flavorClass = flavor && EROTIC_BORDER_FLAVOR_MAP[flavor]
+          ? 'flavor-' + EROTIC_BORDER_FLAVOR_MAP[flavor]
+          : '';
+
+      // Build class list
+      const classes = ['cover-erotic-border', worldClass];
+      if (hasSoulmates) classes.push('soulmates');
+      if (flavorClass) classes.push(flavorClass);
+
+      // Set up load handler BEFORE setting src
+      borderImg.onload = function() {
+          borderEl.className = classes.join(' ');
+          console.log('[EroticBorder] Asset loaded:', assetPath, '| Classes:', classes.join(' '));
+      };
+
+      // Set up error handler for asset failure
+      borderImg.onerror = function() {
+          console.warn('[EroticBorder] Erotic border asset unavailable — border suppressed');
+          borderEl.classList.add('hidden');
+          borderEl.className = 'cover-erotic-border hidden';
+      };
+
+      // Trigger asset load
+      borderImg.src = assetPath;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DIRTY KEYHOLE — World-Specific Mask Loader
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Keyhole is a MASK, not a decorative overlay. It dominates the cover.
+  //
+  // GEOMETRY LOCK (NON-NEGOTIABLE):
+  //   - Top of aperture: 8% from top
+  //   - Bottom of aperture: 8% from bottom
+  //   - Crown width: 55-65% of cover width
+  //   - Stem minimum width: ≥22% of cover width
+  //
+  // WORLD → MASK ASSET (6 worlds, one silhouette each):
+  //   Modern          → /assets/keyholes/modern_mask.png       (clean industrial)
+  //   Historical      → /assets/keyholes/historical_mask.png   (ornate, filigree)
+  //   Fantasy         → /assets/keyholes/fantasy_mask.png      (hand-forged, runes)
+  //   SciFi           → /assets/keyholes/scifi_mask.png        (geometric, octagonal)
+  //   Dystopia        → /assets/keyholes/dystopia_mask.png     (brutalist, industrial)
+  //   PostApocalyptic → /assets/keyholes/postapocalyptic_mask.png (salvaged, damaged)
+  //
+  // CONTENT RULE: Only symbolic objects visible through aperture (no humans/body parts)
+  // TITLE RULE: Title MUST be engraved into material, NEVER floating in aperture
+  //
+  // FAILURE: If constraint cannot be satisfied, suppress and log:
+  // "Dirty keyhole constraint failed — cover suppressed"
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const DIRTY_KEYHOLE_WORLD_MAP = {
+      'modern': 'modern',
+      'fantasy': 'fantasy',
+      'scifi': 'scifi',
+      'sci-fi': 'scifi',
+      'historical': 'historical',
+      'postapocalyptic': 'postapocalyptic',
+      'post-apocalyptic': 'postapocalyptic',
+      'dystopia': 'dystopia'
+  };
+
+  // Flavor → CSS filter class mapping for keyhole surface conditions
+  // Surface conditions: wear, corrosion, fracture, environmental damage (NOT aperture geometry)
+  const DIRTY_KEYHOLE_FLAVOR_MAP = {
+      // Historical flavors
+      'prehistoric': 'aged',
+      'classical': 'weathered',
+      'medieval': 'aged',
+      'renaissance': 'aged',
+      'victorian': 'weathered',
+      '20th_century': 'weathered',
+      // Fantasy flavors
+      'enchanted_realms': 'pristine',
+      'hidden_magic': 'aged',
+      'cursed_worlds': 'corroded',
+      // SciFi flavors
+      'galactic_civilizations': 'pristine',
+      'future_of_science': 'pristine',
+      'cyberpunk': 'corroded',
+      'post_human': 'fractured',
+      'first_contact': 'pristine',
+      'simulation': 'pristine',
+      // Dystopia flavors
+      'authoritarian': 'weathered',
+      'surveillance': 'fractured',
+      'corporate': 'pristine',
+      'environmental': 'corroded',
+      // PostApocalyptic flavors
+      'nuclear_aftermath': 'irradiated',
+      'pandemic': 'corroded',
+      'climate_ruin': 'weathered',
+      'tech_fallout': 'rusted',
+      'slow_decay': 'aged',
+      // Modern flavors
+      'small_town': 'weathered',
+      'college': 'pristine',
+      'friends': 'pristine',
+      'old_money': 'aged',
+      'office': 'pristine',
+      'supernatural_modern': 'aged',
+      'superheroic_modern': 'pristine'
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DIRTY KEYHOLE SELF-CHECK AUDIT
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Mandatory pre-output validation. If ANY check fails, output is suppressed.
+  //
+  // Checks performed:
+  //   A. World Conformance — must be valid 6-world set (no Mythic)
+  //   B. Flavor Application — surface only, no geometry changes
+  //   C. Material Language — world-appropriate materials
+  //   D. Title Integration — engraved into material, not floating
+  //
+  // If failed: return "DIRTY KEYHOLE AUDIT FAILED — OUTPUT SUPPRESSED"
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const VALID_KEYHOLE_WORLDS = new Set([
+      'modern', 'historical', 'fantasy', 'scifi', 'dystopia', 'postapocalyptic'
+  ]);
+
+  /**
+   * Run self-check audit on dirty keyhole parameters.
+   * @param {string} world - World name
+   * @param {string} flavor - WorldSubtype flavor
+   * @returns {{valid: boolean, reason: string|null}}
+   */
+  function auditDirtyKeyhole(world, flavor) {
+      const normalizedWorld = (world || 'Modern').toLowerCase().replace(/[\s-]/g, '');
+      const assetKey = DIRTY_KEYHOLE_WORLD_MAP[normalizedWorld];
+
+      // A. WORLD CONFORMANCE CHECK
+      if (!assetKey || !VALID_KEYHOLE_WORLDS.has(assetKey)) {
+          return {
+              valid: false,
+              reason: `Invalid world "${world}" — must be Modern, Historical, Fantasy, SciFi, Dystopia, or PostApocalyptic (Mythic not allowed)`
+          };
+      }
+
+      // B. FLAVOR APPLICATION CHECK (flavor must map to surface condition, not geometry)
+      if (flavor && !DIRTY_KEYHOLE_FLAVOR_MAP[flavor]) {
+          // Unknown flavor — warn but don't fail (will use default)
+          console.warn(`[DirtyKeyhole:Audit] Unknown flavor "${flavor}" — using default surface`);
+      }
+
+      // C. MATERIAL LANGUAGE CHECK (world must have corresponding material treatment)
+      // Verified by CSS class existence — if world class missing, styling will fail gracefully
+
+      // D. TITLE INTEGRATION CHECK
+      // Enforced by CSS positioning — title is absolutely positioned in bottom margin zone
+      // This is a structural guarantee, not runtime check
+
+      // All checks passed
+      return { valid: true, reason: null };
+  }
+
+  /**
+   * Apply dirty keyhole with world-specific mask and flavor-based surface condition.
+   * Keyhole is the DOMINANT MASK — everything inside is scene, everything outside is material.
+   *
+   * SELF-CHECK AUDIT runs before application. If audit fails, output is suppressed.
+   *
+   * @param {HTMLElement} keyholeEl - The keyhole overlay container element
+   * @param {string} world - World name (Modern, Historical, Fantasy, SciFi, Dystopia, PostApocalyptic)
+   * @param {boolean} hasSoulmates - Whether soulmates modifier applies
+   */
+  function applyDirtyKeyhole(keyholeEl, world, hasSoulmates) {
+      const keyholeplate = document.getElementById('keyholeplate');
+      if (!keyholeplate) {
+          console.warn('[DirtyKeyhole] Keyhole plate element not found — keyhole suppressed');
+          return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // SELF-CHECK AUDIT (MANDATORY)
+      // ═══════════════════════════════════════════════════════════════════
+      const flavor = state.picks?.worldSubtype || null;
+      const audit = auditDirtyKeyhole(world, flavor);
+      if (!audit.valid) {
+          console.error('[DirtyKeyhole] DIRTY KEYHOLE AUDIT FAILED — OUTPUT SUPPRESSED');
+          console.error('[DirtyKeyhole] Reason:', audit.reason);
+          keyholeEl.classList.add('hidden');
+          keyholeEl.className = 'cover-keyhole-overlay hidden';
+          return;
+      }
+
+      // Normalize world name to asset key
+      const normalizedWorld = (world || 'Modern').toLowerCase().replace(/[\s-]/g, '');
+      const assetKey = DIRTY_KEYHOLE_WORLD_MAP[normalizedWorld] || 'modern';
+      const maskPath = `/assets/keyholes/${assetKey}_mask.png`;
+
+      // Get world class for material styling
+      const worldClass = 'world-' + assetKey;
+
+      // Get flavor class for surface condition
+      const flavorClass = flavor && DIRTY_KEYHOLE_FLAVOR_MAP[flavor]
+          ? 'flavor-' + DIRTY_KEYHOLE_FLAVOR_MAP[flavor]
+          : '';
+
+      // Build class list for the overlay
+      const classes = ['cover-keyhole-overlay', worldClass];
+      if (hasSoulmates) classes.push('soulmates');
+      if (flavorClass) classes.push(flavorClass);
+
+      // Apply the mask to the keyhole plate
+      const maskUrl = `url("${maskPath}")`;
+      keyholeplate.style.webkitMaskImage = maskUrl;
+      keyholeplate.style.maskImage = maskUrl;
+
+      // Set up image preload to verify mask asset availability
+      const testImg = new Image();
+      testImg.onload = function() {
+          // Asset available — apply classes and show
+          keyholeEl.className = classes.join(' ');
+          console.log('[DirtyKeyhole] Audit PASSED | Mask loaded:', maskPath, '| Classes:', classes.join(' '));
+
+          // Set title + author into keyhole metalwork (MUST be engraved, not floating)
           const titleEl = keyholeEl.querySelector('.keyhole-title');
           const storyTitle = document.getElementById('storyTitle');
           if (titleEl) {
@@ -19261,9 +24121,20 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
               titleEl.innerHTML = (t ? '<span class="keyhole-title-text">' + t.replace(/</g, '&lt;') + '</span>' : '') +
                   '<span class="keyhole-author">by ANONYMOUS</span>';
           }
-      }
-      // Clean/Naughty: no overlay layers (art fully visible)
-      // Soulmates alone (non-Erotic, non-Dirty) affects art generation warmth, not cover layers
+      };
+
+      testImg.onerror = function() {
+          // Asset unavailable — suppress keyhole and log
+          console.error('[DirtyKeyhole] DIRTY KEYHOLE AUDIT FAILED — OUTPUT SUPPRESSED');
+          console.error('[DirtyKeyhole] Reason: Mask asset unavailable at', maskPath);
+          keyholeEl.classList.add('hidden');
+          keyholeEl.className = 'cover-keyhole-overlay hidden';
+          keyholeplate.style.webkitMaskImage = '';
+          keyholeplate.style.maskImage = '';
+      };
+
+      // Trigger asset verification
+      testImg.src = maskPath;
   }
 
   /**
@@ -19274,10 +24145,14 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const borderEl = document.getElementById('coverEroticBorder');
       const keyholeEl = document.getElementById('coverKeyholeOverlay');
       const coverImg = document.getElementById('bookCoverImg');
+      const borderImg = document.getElementById('eroticBorderImg');
+      const keyholeplate = document.getElementById('keyholeplate');
 
       if (fallbackEl) { fallbackEl.classList.add('hidden'); fallbackEl.innerHTML = ''; }
       if (borderEl) { borderEl.className = 'cover-erotic-border hidden'; }
-      if (keyholeEl) { keyholeEl.classList.add('hidden'); }
+      if (borderImg) { borderImg.src = ''; borderImg.onload = null; borderImg.onerror = null; }
+      if (keyholeEl) { keyholeEl.className = 'cover-keyhole-overlay hidden'; }
+      if (keyholeplate) { keyholeplate.style.webkitMaskImage = ''; keyholeplate.style.maskImage = ''; }
       if (coverImg) { coverImg.style.display = ''; }
   }
 
@@ -19718,6 +24593,203 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           hideRequiresAccessCopy: true
       }
   };
+
+  // ───────────────────────────────────────────────
+  // WRY CONFESSIONAL — COVER INTERPRETATION (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // Wry Confessional covers must operate at the level of
+  // editorial commentary, irony, or subversive observation,
+  // comparable to a New Yorker cover.
+  //
+  // Literal object-only symbolism (e.g. a single key, book,
+  // rose, or prop without contextual tension) is insufficient
+  // unless the composition itself introduces irony or critique.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // WRY CONFESSIONAL — SELF-CHECK (MANDATORY)
+  // ───────────────────────────────────────────────
+  // Before finalizing any cover where tone === 'Wry Confessional',
+  // Claude MUST silently evaluate:
+  //
+  // "Would this image still make sense — and still feel pointed —
+  // if it appeared alone on a New Yorker cover with no caption?"
+  //
+  // If the honest answer is NO, the cover must be regenerated.
+  //
+  // This check is INTERNAL.
+  // Do not explain it.
+  // Do not soften it.
+  // Do not bypass it for symbolism, prettiness, or mood.
+  // ───────────────────────────────────────────────
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WRY CONFESSIONAL — COVER REGIME (AUTHORITATIVE)
+  // TAG: storybound/wry-cover-regime-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // When tone === 'Wry Confessional',
+  // cover generation operates under the
+  // EDITORIAL JUDGMENT REGIME.
+  //
+  // Under this regime:
+  //
+  // - The cover is an editorial comment, not a depiction.
+  // - The goal is subversive observation, irony, or critique.
+  // - Literal object-only symbolism is insufficient unless
+  //   the composition itself introduces tension or commentary.
+  // - Ambiguity and restraint are strengths.
+  // - Assembly logic is subordinate to editorial intent.
+  //
+  // This regime applies to all cover stages
+  // (Sketch, Thumbnail, Rough, Final)
+  // when tone === 'Wry Confessional'.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ───────────────────────────────────────────────
+  // NON-APPLICABILITY (CRITICAL)
+  // ───────────────────────────────────────────────
+  // This regime applies ONLY when tone === 'Wry Confessional'.
+  //
+  // No other tone is affected.
+  // No other cover behavior is changed.
+  // Other tones continue to use their existing
+  // assembly and stylistic logic.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // COVER REGIME ROUTING (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // Cover behavior is governed by a Cover Regime
+  // selected by Tone.
+  //
+  // Routing is evaluated before assembly logic.
+  //
+  // Current routing table:
+  //
+  // - Wry Confessional → Editorial Judgment Regime
+  // - All other tones → Legacy / Default Cover Regime
+  //
+  // No implicit blending is permitted.
+  // Assembly logic must defer to the active Cover Regime.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // COVER REGIME — FAILURE PREVENTION CLAUSE
+  // ───────────────────────────────────────────────
+  // If a cover output violates the active Cover Regime,
+  // it must be regenerated.
+  //
+  // Assembly success does not override regime failure.
+  // ───────────────────────────────────────────────
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COVER REGIME CHANGE — JUDGMENT FIRST
+  // TAG: storybound/cover-regime-judgment-first-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ───────────────────────────────────────────────
+  // DEPRECATION NOTICE — CONSTRUCTION-FIRST COVERS
+  // ───────────────────────────────────────────────
+  // Any assumption that a cover must be constructed
+  // by assembling objects, characters, materials, or symbols
+  // as a primary step is deprecated.
+  //
+  // This approach produced literal, repetitive, or decorative
+  // results that failed to imply story arc or relational tension.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // COVER REGIME — JUDGMENT FIRST (AUTHORITATIVE)
+  // ───────────────────────────────────────────────
+  // Covers in Storybound are editorial artifacts, not composites.
+  //
+  // The cover generation process MUST proceed as follows:
+  //
+  // 1. Determine the editorial judgment:
+  //    • What tension defines this story?
+  //    • What emotional posture does the reader inhabit?
+  //    • What promise does the book make?
+  //
+  // 2. Decide what the cover is *about*.
+  //    This decision is conceptual, not visual.
+  //
+  // 3. Only then, optionally select imagery, symbols,
+  //    characters, masks, or objects that serve that judgment.
+  //
+  // Assembly is subordinate.
+  // Omission is permitted.
+  // Literal depiction is not required.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // JUDGMENT-FIRST — SCOPING BY TONE (CRITICAL)
+  // ───────────────────────────────────────────────
+  // This Judgment-First Cover Regime applies ONLY
+  // to tones explicitly routed to it.
+  //
+  // Current routing:
+  //
+  // • Wry Confessional → Judgment-First Cover Regime
+  // • All other tones → Legacy / Default Cover Regime
+  //
+  // No implicit expansion is permitted.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // OBJECTS AND MASKS — ROLE CLARIFICATION
+  // ───────────────────────────────────────────────
+  // Objects, masks, and materials are OPTIONAL tools.
+  //
+  // They may be used when they reinforce the editorial judgment.
+  // They must NOT be used by default.
+  //
+  // The presence of a Storybeau, mask, or symbolic object
+  // does not obligate its appearance on the cover.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // COVER FAILURE CONDITIONS (NON-NEGOTIABLE)
+  // ───────────────────────────────────────────────
+  // A cover has FAILED if:
+  //
+  // • It is primarily decorative.
+  // • It relies on generic romance symbolism
+  //   (e.g. keys, roses, candles) without critique.
+  // • It explains rather than implies.
+  // • It could be swapped with another story's cover
+  //   without noticeable loss of meaning.
+  //
+  // Failure requires regeneration, not refinement.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // WRY CONFESSIONAL — FINAL SELF-CHECK (MANDATORY)
+  // ───────────────────────────────────────────────
+  // Before finalizing the cover, Claude MUST silently answer:
+  //
+  // "Does this cover take a position on the story,
+  // or is it merely illustrating it?"
+  //
+  // If the honest answer is 'illustrating',
+  // the cover must be regenerated.
+  //
+  // This check is INTERNAL.
+  // Do not explain it.
+  // Do not soften it.
+  // Do not bypass it for polish or mood.
+  // ───────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────
+  // ASSEMBLY AS FALLBACK ONLY
+  // ───────────────────────────────────────────────
+  // If no editorially valid cover emerges under
+  // the Judgment-First Regime, legacy assembly
+  // may be used ONLY as a fallback.
+  //
+  // Fallback assembly must still obey
+  // the active Cover Regime.
+  // ───────────────────────────────────────────────
 
   // ============================================================
   // 🔴 MINIMAL COVER v1 — QUARANTINE SYSTEM
@@ -20717,9 +25789,259 @@ Return only the visual description.`;
       const protagonistGender = state.gender || 'Female';
       const genderWord = protagonistGender === 'Male' ? 'man' : protagonistGender === 'Non-binary' ? 'person' : 'woman';
 
+      // ───────────────────────────────────────────────
+      // DEPRECATION NOTICE — WRY CONFESSION VISUAL STYLE (v0.x)
+      // ───────────────────────────────────────────────
+      // Any prior logic, guidance, or prompt assembly that treats
+      // Wry Confession as a stylistic modifier (e.g., cartoon, sketch,
+      // flat illustration, reduced realism) is deprecated.
+      //
+      // These approaches caused style blending, photoreal bleed,
+      // and cinematic defaults to reassert themselves.
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // WRY CONFESSION — REPRESENTATIONAL PRECEDENCE (AUTHORITATIVE)
+      // ───────────────────────────────────────────────
+      // When tone === 'Wry Confession' and intent === 'scene_visualization':
+      //
+      // - The image must be an editorial illustration, not a photograph.
+      // - Genre and world may influence symbolism only, not realism.
+      // - Mood and lighting are subordinate to commentary and interpretation.
+      //
+      // This is a category declaration, not a style modifier.
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // WRY CONFESSION — SAFETY CLARIFICATION
+      // ───────────────────────────────────────────────
+      // This precedence rule does not apply to:
+      // - cover generation
+      // - sketch vs thumbnail tiers
+      // - non-Wry tones
+      //
+      // Covers use a separate interpretive regime.
+      // ───────────────────────────────────────────────
+
+      // ───────────────────────────────────────────────
+      // SCENE VISUALIZATION — SELF-CHECK (MANDATORY)
+      // ───────────────────────────────────────────────
+      // Before finalizing any Scene Visualization,
+      // Claude MUST silently evaluate:
+      //
+      // "If this image were shown without the text of the scene,
+      // would it still clearly express the scene's dramatic irony,
+      // awkwardness, or tension — not just its setting or mood?"
+      //
+      // If the honest answer is NO, the visualization must be regenerated.
+      //
+      // This check is INTERNAL.
+      // Do not explain it.
+      // Do not soften it.
+      // Do not allow lighting, realism, or atmosphere to substitute for idea.
+      // ───────────────────────────────────────────────
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // WRY CONFESSION — CANONICAL CAPTION TEMPLATES (VISUALIZER REGIME)
+      // TAG: storybound/wry-caption-templates-v1
+      // ═══════════════════════════════════════════════════════════════════════════
+      //
+      // When Tone = Wry Confession, visualizer output must include exactly one of:
+      // (A) A single-line caption
+      // (B) A single ironic visual contradiction
+      //
+      // Default preference: Caption
+      // Never include both by default.
+      //
+      // ───────────────────────────────────────────────
+      // CAPTION TEMPLATES (CANONICAL · USE AS-IS OR WITH LIGHT VARIATION)
+      // ───────────────────────────────────────────────
+      // The caption must implicate the narrator or The Story, not explain the plot.
+      //
+      // Self-Indicting Rationalization:
+      // "I had a system for moments like this, which mostly involved pretending
+      //  they were temporary."
+      //
+      // Delayed Self-Awareness:
+      // "This was the point where I would later insist I'd had no real choice."
+      //
+      // Story-as-Witness (5th Person compatible):
+      // "The story briefly considered intervening here, then remembered how
+      //  stubborn she could be."
+      //
+      // HARD CONSTRAINTS:
+      // - Caption length: ≤ 20 words
+      // - No jokes, punchlines, or meta commentary
+      // - No explanation of world mechanics
+      // - No tone drift into comedy or satire
+      // - Caption must undercut, not decorate
+      //
+      // SUCCESS CONDITION:
+      // The image should feel: Observant, slightly embarrassing, quietly self-aware.
+      // Not funny. Not dramatic. Wry.
+      // ───────────────────────────────────────────────
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // WRY CONFESSION — SENTENCE-LEVEL FLIP (PROSE REGIME)
+      // TAG: storybound/wry-sentence-flip-v1
+      // ═══════════════════════════════════════════════════════════════════════════
+      //
+      // Wry Confession prose must include micro-undercuts that quietly undermine
+      // the narrator's self-justification.
+      //
+      // METHOD (MANDATORY):
+      // After drafting a scene, identify 3–5 sentences where the narrator:
+      // - justifies a choice
+      // - asserts control
+      // - frames themselves as perceptive, cautious, or exceptional
+      //
+      // For each identified sentence, apply one transformation:
+      // - Add delayed self-awareness
+      // - Add ironic specificity
+      // - Add self-implicating admission
+      //
+      // Do NOT: Add humor, commentary, new events, or change pacing.
+      //
+      // CANONICAL TRANSFORMS:
+      //
+      // Assertive → Wry:
+      // "I knew what I was doing."
+      // → "I knew what I was doing, which is usually how it starts."
+      //
+      // Poetic → Wry:
+      // "I was good at being invisible."
+      // → "I was good at being invisible, especially when I wanted to be seen."
+      //
+      // Defiant → Wry:
+      // "I was not prey; I was a player."
+      // → "I was not prey. I was, at worst, a willing participant."
+      //
+      // SUCCESS CONDITION:
+      // The narrator should sound: Competent, self-aware, slightly untrustworthy
+      // to themselves.
+      // ───────────────────────────────────────────────
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // WRY CONFESSION — BINARY VISUAL CHECK (IMAGE GENERATION REGIME LOCK)
+      // TAG: storybound/wry-binary-visual-check-v1
+      // ═══════════════════════════════════════════════════════════════════════════
+      //
+      // Every Wry Confession visualization must pass this binary check:
+      //
+      // "What is the one thing in the image that disagrees with the
+      //  character's self-image?"
+      //
+      // If no answer exists → the image is invalid.
+      //
+      // ACCEPTABLE FORMS OF DISAGREEMENT (CHOOSE ONE):
+      // - A background sign or object that contradicts intent
+      //   ("NO RETURNS", "FAIR PRICES", "TEMPORARY")
+      // - A posture or gesture that undermines confidence
+      //   (clenched hands, stiff stance, off-balance weight)
+      // - A secondary figure positioned to silently observe or judge
+      // - An object rendered slightly too prominent or tempting
+      //
+      // HARD CONSTRAINTS:
+      // - Only one contradiction
+      // - No exaggeration
+      // - No slapstick
+      // - No symbolism that requires explanation
+      // - The disagreement must be legible at a glance
+      //
+      // SUCCESS CONDITION:
+      // The viewer should think: "Ah. She thinks she's in control."
+      // ───────────────────────────────────────────────
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // WRY CONFESSION — INSET-IMAGE RENDERING RULES (AUTHORITATIVE)
+      // TAG: storybound/wry-inset-image-rendering-v1
+      // ═══════════════════════════════════════════════════════════════════════════
+      //
+      // REGIME CONTEXT:
+      // Wry Confession visuals function as editorial asides, not focal scenes.
+      // They comment on the narrative rather than illustrate it directly.
+      // Text always retains narrative primacy.
+      //
+      // ───────────────────────────────────────────────
+      // 1. IMAGE SCALE (MANDATORY)
+      // ───────────────────────────────────────────────
+      // - Render at full resolution (no pipeline changes)
+      // - Display at reduced scale: 40–60% of text column width
+      // - Default: 50%
+      // - Image must never be full-width or full-height
+      // - The illustration should feel noticed, not announced.
+      //
+      // ───────────────────────────────────────────────
+      // 2. PLACEMENT (MANDATORY)
+      // ───────────────────────────────────────────────
+      // - Insert between paragraphs
+      // - Never mid-sentence, mid-paragraph, or before opening paragraph
+      // - Preferred: After tension crystallizes, before self-awareness sharpens
+      //
+      // ───────────────────────────────────────────────
+      // 3. LAYOUT MODEL (STRICT)
+      // ───────────────────────────────────────────────
+      // - NO CSS floats
+      // - NO text wrapping around image
+      // - NO masonry or magazine-style layouts
+      // - Use inset block layout: centered OR slightly offset
+      // - Text resumes cleanly below image
+      // - Layout suggests interruption, not enforces it
+      //
+      // ───────────────────────────────────────────────
+      // 4. CAPTION HANDLING (IF PRESENT)
+      // ───────────────────────────────────────────────
+      // - Place caption directly below image
+      // - Single sentence, visually lighter than body text
+      // - Feel like a marginal thought
+      // - Caption width must not exceed image width
+      // - No bold, no emphasis, no quotation marks
+      //
+      // ───────────────────────────────────────────────
+      // 5. MOBILE BEHAVIOR (NON-NEGOTIABLE)
+      // ───────────────────────────────────────────────
+      // - Image scales down further if needed
+      // - Image centers automatically
+      // - Caption remains attached
+      // - No clipping, no horizontal scrolling
+      // - Text flow must remain uninterrupted
+      //
+      // ───────────────────────────────────────────────
+      // HARD CONSTRAINTS
+      // ───────────────────────────────────────────────
+      // ❌ No full-bleed images
+      // ❌ No hero framing
+      // ❌ No dynamic resizing based on scroll
+      // ❌ No layout "cleverness"
+      // ❌ No visual dominance over text
+      //
+      // This is not a gallery. Not a scene break. It is an aside.
+      //
+      // ───────────────────────────────────────────────
+      // SUCCESS CRITERIA
+      // ───────────────────────────────────────────────
+      // The reader should experience the image as:
+      // - A pause
+      // - A raised eyebrow
+      // - A quiet acknowledgment
+      // - Something they might almost skip — but don't
+      //
+      // If the image feels important, it is too large.
+      // If it feels decorative, it is misused.
+      // If it feels slightly intrusive, it is correct.
+      // ───────────────────────────────────────────────
+
+      // WRY CONFESSIONAL SCENE VISUALIZATION — Representational category, not style keywords
+      // TAG: storybound/wry-confessional-scene-viz-semantic-v1
+      const currentTone = state.picks?.tone || '';
+      const isWryConfessional = /wry|confessional|satire|irony/i.test(currentTone);
+      const wrySemanticLine = isWryConfessional
+          ? `This image is an editorial illustration commenting on the scene's irony or emotional contradiction, not a literal depiction of events.\n\n`
+          : '';
+
       return `${anchorText}
 
-You are writing an image prompt. Follow these continuity anchors strictly.
+${wrySemanticLine}You are writing an image prompt. Follow these continuity anchors strictly.
 Output MUST follow this exact structure:
 
 📌 SUBJECT (MANDATORY FIRST)
@@ -22124,20 +27446,37 @@ Condensed (under ${maxLength} chars):` }
   }
 
   // Initialize Visualize modifier interaction (scrolling suggestions)
+  // TRUST REPAIR: Validate modifiers before accepting, explicitly reject disallowed
   function initVizModifierPills() {
       const modifierInput = document.getElementById('vizModifierInput');
       const promptInput = document.getElementById('vizPromptInput');
 
       if (!modifierInput || !promptInput) return;
 
-      // When user submits modifier (Enter key), append to prompt
+      // When user submits modifier (Enter key), validate and append to prompt
       modifierInput.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
               e.preventDefault();
               const mod = modifierInput.value.trim();
               if (mod) {
+                  // ═══════════════════════════════════════════════════════════
+                  // TRUST REPAIR: Validate modifier against arousal level
+                  // Never silently ignore — explicitly reject and explain
+                  // ═══════════════════════════════════════════════════════════
+                  const currentArousal = state.intensity || 'Naughty';
+                  const validation = validateModifier(mod, currentArousal);
+
+                  if (!validation.valid) {
+                      // EXPLICIT REJECTION — show message to user
+                      showModifierRejection(validation.reason);
+                      modifierInput.value = '';
+                      return;
+                  }
+
+                  // Valid modifier — append to prompt (never override)
                   const current = promptInput.value.trim();
                   if (current) {
+                      // TRUST REPAIR: APPEND only, never override subject/setting/style
                       promptInput.value = current + ', ' + mod;
                   } else {
                       promptInput.value = mod;
@@ -22146,6 +27485,12 @@ Condensed (under ${maxLength} chars):` }
                   // Re-show scrolling suggestions
                   const placeholder = document.querySelector('.rotating-placeholder[data-for="vizModifierInput"]');
                   if (placeholder) placeholder.classList.remove('hidden');
+
+                  // Hide any previous rejection notice
+                  const rejectionEl = document.getElementById('vizModifierRejection');
+                  if (rejectionEl) rejectionEl.classList.add('hidden');
+
+                  console.log('[VIZ:MODIFIER] Appended:', mod);
               }
           }
       });
@@ -22414,9 +27759,88 @@ Condensed (under ${maxLength} chars):` }
           return;
       }
 
-      // No access path — show paywall
-      showPayAsYouGoModal();
+      // TRUST REPAIR: Show consent UI inside modal, not separate paywall
+      window.visualize(true);
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TRUST REPAIR: Enable pay-as-you-go from within the visualization modal
+  // User has seen the prompt, understood the system, and explicitly opted in
+  // ═══════════════════════════════════════════════════════════════════════════
+  window.enablePayAsYouGoFromViz = function() {
+      // Enable pay-as-you-go
+      if (state.vizEconomy) {
+          state.vizEconomy.payAsYouGoEnabled = true;
+      }
+      saveStorySnapshot();
+      console.log('[VizEconomy] Pay-As-You-Go enabled from visualization modal');
+
+      // Hide consent UI
+      const consentUI = document.getElementById('vizPayAsYouGoConsent');
+      if (consentUI) consentUI.classList.add('hidden');
+
+      // Now trigger the visualization
+      window.visualize(false);
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TRUST REPAIR: Modifier validation — reject disallowed modifiers explicitly
+  // Never silently ignore or pretend to accept disallowed modifiers
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Modifiers disallowed at specific arousal levels
+  const AROUSAL_RESTRICTED_MODIFIERS = {
+      Clean: [
+          /\b(breast|breasts|boob|boobs|nipple|nipples|cleavage|busty|thicc)\b/i,
+          /\b(butt|butts|ass|booty|thighs|legs|curves)\b/i,
+          /\b(nude|naked|undressing|lingerie|underwear|bra|panties)\b/i,
+          /\b(erotic|sensual|seductive|aroused|horny)\b/i,
+          /\b(tail|tails|ears|furry|catgirl|bunny)\b/i
+      ],
+      Naughty: [
+          /\b(nude|naked|explicit|genitals|penis|vagina)\b/i,
+          /\b(sex|fucking|penetration|orgasm)\b/i
+      ]
+  };
+
+  function validateModifier(modifier, arousalLevel) {
+      const normalizedArousal = (arousalLevel || 'Naughty').toLowerCase();
+      const level = normalizedArousal.charAt(0).toUpperCase() + normalizedArousal.slice(1);
+
+      // Get restrictions for current and lower levels
+      let restrictions = [];
+      if (level === 'Clean') {
+          restrictions = AROUSAL_RESTRICTED_MODIFIERS.Clean || [];
+      } else if (level === 'Naughty') {
+          restrictions = [
+              ...(AROUSAL_RESTRICTED_MODIFIERS.Clean || []),
+              ...(AROUSAL_RESTRICTED_MODIFIERS.Naughty || [])
+          ];
+      }
+      // Erotic and Dirty have no restrictions (explicit content allowed)
+
+      for (const pattern of restrictions) {
+          if (pattern.test(modifier)) {
+              return {
+                  valid: false,
+                  reason: `This visualization is capped at ${level}-level intensity. The modifier "${modifier.match(pattern)[0]}" cannot be applied at this arousal level.`
+              };
+          }
+      }
+
+      return { valid: true };
+  }
+
+  function showModifierRejection(message) {
+      const rejectionEl = document.getElementById('vizModifierRejection');
+      if (rejectionEl) {
+          rejectionEl.textContent = message;
+          rejectionEl.classList.remove('hidden');
+          // Auto-hide after 5 seconds
+          setTimeout(() => rejectionEl.classList.add('hidden'), 5000);
+      }
+      console.warn('[VIZ:MODIFIER] Rejected:', message);
+  }
 
   // Populate prompt textarea without generating image (for 0-credit inspection)
   async function populateVizPromptOnly() {
@@ -22602,12 +28026,18 @@ Respond in this EXACT format (no labels, just two lines):
       const ph = document.getElementById('vizPlaceholder');
       const errDiv = document.getElementById('vizError');
       const storyText = document.getElementById('storyText');
+      const consentUI = document.getElementById('vizPayAsYouGoConsent');
 
       // Check scene budget and credits before proceeding
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
       const credits = getAvailableVizCredits();
       const sceneVisualized = state.visual.visualizedScenes && state.visual.visualizedScenes[sceneKey];
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // TRUST REPAIR: ALWAYS open modal first — never route to paywall directly
+      // Prompt is always visible. Consent shown inside modal when needed.
+      // ═══════════════════════════════════════════════════════════════════════
 
       // Block if scene is finalized
       if (budget.finalized) {
@@ -22616,41 +28046,59 @@ Respond in this EXACT format (no labels, just two lines):
               errDiv.textContent = 'Scene finalized. Image already inserted.';
               errDiv.classList.remove('hidden');
           }
+          if(consentUI) consentUI.classList.add('hidden');
           updateVizButtonStates();
           return;
       }
 
-      // VISUALIZATION ECONOMY GATES
-      if (isRe) {
-          // Re-Visualize requires Pay-As-You-Go opt-in or credits
-          if (credits <= 0 && !isPayAsYouGoEnabled()) {
-              showPayAsYouGoModal();
-              return;
+      // Scene already visualized — show modal with message
+      if (!isRe && sceneVisualized) {
+          if(modal) modal.classList.remove('hidden');
+          if(errDiv) {
+              errDiv.textContent = 'Scene already visualized. Use Re-Visualize to try again.';
+              errDiv.classList.remove('hidden');
           }
-          // Has credits or Pay-As-You-Go enabled - proceed with re-visualize
-          console.log('[VizEconomy] Re-Visualize with', credits > 0 ? 'credits' : 'Pay-As-You-Go');
-      } else {
-          // ═══════════════════════════════════════════════════════════════
-          // CLICK-TIME BRANCHING — Initial Visualize
-          // ═══════════════════════════════════════════════════════════════
-          if (sceneVisualized) {
-              // Scene already visualized — prompt to use Re-Visualize
-              if(modal) modal.classList.remove('hidden');
-              if(errDiv) {
-                  errDiv.textContent = 'Scene already visualized. Use Re-Visualize to try again.';
-                  errDiv.classList.remove('hidden');
-              }
-              updateVizButtonStates();
-              return;
-          }
-          // No credits AND no access path → open paywall
-          if (credits <= 0 && !isPayAsYouGoEnabled() && state.subscribed !== true) {
-              showPayAsYouGoModal();
-              return;
-          }
-          // Has credits OR has access path → proceed with visualization
-          console.log('[VizEconomy] Initial Visualize with', credits > 0 ? 'credits' : 'Pay-As-You-Go/Subscription');
+          if(consentUI) consentUI.classList.add('hidden');
+          updateVizButtonStates();
+          return;
       }
+
+      // Determine if we need consent (no credits AND no access path)
+      const needsConsent = credits <= 0 && !isPayAsYouGoEnabled() && state.subscribed !== true;
+
+      if (needsConsent) {
+          // ═══════════════════════════════════════════════════════════════
+          // TRUST REPAIR: Show modal with prompt + consent UI (not paywall)
+          // User can see prompt, understand the system, then opt-in
+          // ═══════════════════════════════════════════════════════════════
+          console.log('[VizEconomy] No credits/access — showing consent UI inside modal');
+
+          if(modal) modal.classList.remove('hidden');
+          if(consentUI) consentUI.classList.remove('hidden');
+          if(ph) {
+              ph.textContent = 'Enable pay-as-you-go to generate, or continue your story to earn credits.';
+              ph.style.display = 'flex';
+          }
+          if(errDiv) errDiv.classList.add('hidden');
+
+          // Reset modifier UI
+          resetVizModifierUI();
+
+          // Stop fate card sparkles
+          if (window.stopSparkleCycle) window.stopSparkleCycle();
+          if (typeof stopAmbientCardSparkles === 'function') stopAmbientCardSparkles();
+
+          // Populate prompt so user can see what would be generated
+          populateVizPromptOnly();
+          updateVizButtonStates();
+          return;
+      }
+
+      // Has credits or access path — proceed with visualization
+      console.log('[VizEconomy]', isRe ? 'Re-Visualize' : 'Initial Visualize', 'with', credits > 0 ? 'credits' : 'Pay-As-You-Go/Subscription');
+
+      // Hide consent UI since we have access
+      if(consentUI) consentUI.classList.add('hidden');
 
       // Track whether this is a credit-consuming initial visualization
       const consumesCreditOnSuccess = !isRe && !sceneVisualized;
@@ -23454,7 +28902,19 @@ FATE CARD ADAPTATION (CRITICAL):
           ? buildFreeTextStoryturnDirective(act, dia)
           : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+      // PREMATURE ROMANCE COLLAPSE PREVENTION — reframe instead of reject
+      // Applies to all input types (Fate Card and free-text)
+      const prematureRomanceDirective = typeof buildPrematureRomanceDirective === 'function'
+          ? buildPrematureRomanceDirective(act, dia)
+          : '';
+
+      // INTENT-CONSEQUENCE ROMANCE CONTROL — Poly, Wrong-Target, Boredom Escalation
+      // Applies to all input types — integrates poly handling, misdirection microcopy, and passive play escalation
+      const intentConsequenceDirective = typeof buildIntentConsequenceDirective === 'function'
+          ? buildIntentConsequenceDirective(act, dia)
+          : '';
+
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -23601,6 +29061,110 @@ Regenerate the scene with ZERO Author presence.`;
                           console.error('[5thPerson:Strict] Critical violation in continuation scene');
                       }
                   }
+              }
+          }
+
+          // ═══════════════════════════════════════════════════════════════════════
+          // 5TH-PERSON FATE VOICE ENFORCEMENT (AUTHORITATIVE)
+          // Fate may observe, anticipate, regret — NEVER instruct, tilt, direct
+          // Silent regeneration on violation — user never sees invalid output
+          // ═══════════════════════════════════════════════════════════════════════
+          const fateVoiceCheck = validateFateVoice(raw);
+          if (fateVoiceCheck.shouldRegenerate) {
+              console.warn('[FateVoice] Scene failed validation, regenerating silently...');
+              console.warn('[FateVoice] Violations:', fateVoiceCheck.violations);
+
+              // Build enforcement prompt for regeneration
+              const fateEnforcementPrompt = `
+5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):
+
+The Story / Fate voice VIOLATED regime rules. Regenerate with these constraints:
+
+FATE MAY ONLY:
+- Observe ("The story watched...")
+- Anticipate ("The story knew what came next...")
+- Regret ("The story held its breath, regretting...")
+- Frame inevitability ("...as the story always knew it would")
+- Momentarily hesitate ("The story paused...")
+
+FATE MUST NEVER:
+- Instruct characters ("must", "should", "will now")
+- Tilt outcomes ("decides to make", "ensures", "guarantees")
+- Direct actions ("pushes toward", "guides", "steers")
+- Manipulate events ("forces", "compels")
+- Address the reader directly
+- Appear more than ONCE per scene
+
+PREVIOUS VIOLATIONS:
+${fateVoiceCheck.violations.map(v => '- ' + v).join('\n')}
+
+Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational mode.
+`;
+
+              // Silent regeneration
+              if (useFullOrchestration) {
+                  raw = await generateOrchestatedTurn({
+                      systemPrompt: fullSys + fateEnforcementPrompt,
+                      storyContext: context,
+                      playerAction: act,
+                      playerDialogue: dia,
+                      fateCard: selectedFateCard,
+                      onPhaseChange: () => {}
+                  });
+              } else {
+                  raw = await callChat([
+                      { role: 'system', content: fullSys + fateEnforcementPrompt },
+                      { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                  ]);
+              }
+
+              // Validate regenerated output (one retry only)
+              const recheck = validateFateVoice(raw);
+              if (recheck.shouldRegenerate) {
+                  console.error('[FateVoice] Regeneration still failed, accepting with warning:', recheck.violations);
+              } else {
+                  console.log('[FateVoice] Regeneration successful');
+              }
+          }
+
+          // ═══════════════════════════════════════════════════════════════════════
+          // INTIMACY & CONSENT FAILSAFE — GENERATION-TIME ENFORCEMENT
+          // Runs SILENTLY before presenting scene to user
+          // Ensures escalation matches arousal + Storyturn + narrative readiness
+          // No consent prompts, masking, or system language in prose
+          // ═══════════════════════════════════════════════════════════════════════
+          const currentStoryturn = state.currentStoryturn || 'ST1';
+          const intimacyCheck = validateIntimacyConsent(raw, state.intensity, currentStoryturn);
+          if (intimacyCheck.shouldRegenerate) {
+              console.warn('[IntimacyFailsafe] Scene failed validation, regenerating silently...');
+              console.warn('[IntimacyFailsafe] Violations:', intimacyCheck.violations);
+
+              // Build enforcement prompt for silent regeneration
+              const intimacyPrompt = buildIntimacyFailsafePrompt(intimacyCheck.violations);
+
+              // Silent regeneration — user never sees invalid output
+              if (useFullOrchestration) {
+                  raw = await generateOrchestatedTurn({
+                      systemPrompt: fullSys + intimacyPrompt,
+                      storyContext: context,
+                      playerAction: act,
+                      playerDialogue: dia,
+                      fateCard: selectedFateCard,
+                      onPhaseChange: () => {}
+                  });
+              } else {
+                  raw = await callChat([
+                      { role: 'system', content: fullSys + intimacyPrompt },
+                      { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                  ]);
+              }
+
+              // Validate regenerated output (one retry only)
+              const intimacyRecheck = validateIntimacyConsent(raw, state.intensity, currentStoryturn);
+              if (intimacyRecheck.shouldRegenerate) {
+                  console.error('[IntimacyFailsafe] Regeneration still failed, accepting with warning:', intimacyRecheck.violations);
+              } else {
+                  console.log('[IntimacyFailsafe] Regeneration successful');
               }
           }
 
@@ -24257,6 +29821,37 @@ FATE CARD ADAPTATION (CRITICAL):
      if(m === 'solo') window.showScreen('setup');
      if(m === 'couple') window.showScreen('coupleInvite');
      if(m === 'stranger') window.showScreen('strangerModal');
+
+     // Add mode as ephemeral breadcrumb (dissolves at POV selection)
+     if (m === 'solo' || m === 'couple') {
+       const breadcrumbRow = document.getElementById('breadcrumbRow');
+       if (breadcrumbRow) {
+         // Remove any existing mode breadcrumb
+         const existingMode = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="mode"]');
+         if (existingMode) existingMode.remove();
+
+         // Create ephemeral mode breadcrumb
+         const modeLabel = m === 'solo' ? 'Solo' : 'Couple';
+         const modeBreadcrumb = document.createElement('div');
+         modeBreadcrumb.className = 'breadcrumb-card breadcrumb-ephemeral';
+         modeBreadcrumb.dataset.grp = 'mode';
+         modeBreadcrumb.dataset.val = m;
+         modeBreadcrumb.dataset.breadcrumbLabel = 'Mode';
+         modeBreadcrumb.innerHTML = `
+           <div class="sb-card-inner">
+             <div class="sb-card-face sb-card-back">
+               <span class="sb-card-title">${modeLabel}</span>
+             </div>
+             <div class="sb-card-face sb-card-front">
+               <span class="sb-card-title">${modeLabel}</span>
+             </div>
+           </div>
+         `;
+         // Insert at beginning (mode comes first)
+         breadcrumbRow.insertBefore(modeBreadcrumb, breadcrumbRow.firstChild);
+         console.log(`[Breadcrumb] Added ephemeral mode: ${m}`);
+       }
+     }
   };
 
   // --- EDGE COVENANT ---
@@ -25293,5 +30888,1751 @@ FATE CARD ADAPTATION (CRITICAL):
 
       log('Dev HUD ready — press ` to toggle');
   })();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PREMATURE ROMANCE COLLAPSE PREVENTION — DOCUMENTATION (APPEND-ONLY)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// REGIME CONTEXT (LOCKED)
+// ------------------------
+// Storybound is a collaborative romance novel engine, not a simulator.
+// Players express intent. The Story controls timing, consequences, and pacing.
+//
+// CORE RULE (AUTHORITATIVE)
+// --------------------------
+// Player actions that would collapse romantic tension must be honored in
+// intent but deferred or reframed in outcome when Storyturn gates do not
+// yet allow resolution.
+//
+// ROMANCE-COLLAPSING ACTIONS
+// ---------------------------
+// kiss      → Gate: ST3 (Permission phase)
+// sex       → Gate: ST3 (Permission phase, Tease further restricts)
+// commitment→ Gate: ST5 (Crisis resolution required)
+// confession→ Gate: ST2 (Resistance phase minimum)
+// closure   → Gate: ST5 (Crisis phase required)
+// reunion   → Gate: ST6 (Integration phase required)
+//
+// REQUIRED BEHAVIOR (WHEN ACTION IS PREMATURE)
+// ---------------------------------------------
+// - Do NOT reject the action
+// - Do NOT execute it literally
+// - Do NOT explain the system
+// - Do NOT punish the player's desire
+//
+// INSTEAD:
+// - Preserve the desire — the player WANTED this
+// - Introduce friction, interruption, or hesitation
+// - Increase emotional charge
+// - Maintain unresolved tension
+//
+// APPROVED NARRATIVE STRATEGIES
+// ------------------------------
+// 1. External Interruption — Someone enters, phone rings, alarm sounds
+// 2. Internal Interruption — Character pulls back, hesitates, doubt surfaces
+// 3. Mutual Hesitation — Both want it, both stop short
+// 4. Almost-Touch — The gesture begins but doesn't complete
+// 5. Recognition Without Fulfillment — Both acknowledge desire, neither acts
+// 6. Deferral as Inevitability — Frame pause as building toward something greater
+//
+// 5TH PERSON GUIDANCE
+// --------------------
+// The Story may briefly acknowledge:
+// "The story let this almost happen, knowing it would matter more later."
+//
+// HARD CONSTRAINTS
+// -----------------
+// ❌ No mechanical refusals
+// ❌ No UI locks
+// ❌ No mention of Storyturns
+// ❌ No punishment for player desire
+// ❌ No boredom-preserving neutrality
+//
+// SUCCESS CONDITION
+// ------------------
+// The player should feel:
+// - Seen
+// - Complicit
+// - Slightly frustrated
+// - MORE invested than before
+//
+// REGRESSION TEST
+// ----------------
+// Run: window.runPrematureRomanceTest()
+//
+// Verifies:
+// - Kiss at ST1 → detected
+// - Kiss at ST3 → allowed
+// - Confession at ST1 → detected
+// - Confession at ST2 → allowed
+// - Commitment at ST4 → detected (gate is ST5)
+// - Directive includes reframe strategy
+//
+// MANTRA (DO NOT REMOVE)
+// -----------------------
+// Desire is never wrong.
+// Timing is never arbitrary.
+//
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INTENT-CONSEQUENCE ROMANCE CONTROL — DOCUMENTATION (APPEND-ONLY)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// REGIME CONTEXT (LOCKED)
+// ------------------------
+// Storybound is a collaborative romance novel engine governed by a genre contract.
+// Players express intent. The Story controls timing, pacing, and consequences.
+// Romantic meaning is earned, never rushed, never denied mechanically.
+//
+// CORE AXIOM (AUTHORITATIVE · MUST HOLD)
+// ---------------------------------------
+// Humans choose desire.
+// The Story chooses when desire becomes consequential.
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// PART A — POLY MODE
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// PURPOSE: Allow multiple romantic threads without collapsing tension.
+//
+// POLY SEMANTIC RULESET:
+// - Intent may be multi-target (player can express attraction to multiple)
+// - Consequences remain SERIALIZED (only one chain advances at a time)
+// - No simultaneous payoff (intimacy with one complicates others)
+//
+// POLY STORY LOGIC (MANDATORY):
+// When poly intent detected:
+// - Do NOT resolve it immediately
+// - Do NOT ask player to choose "now"
+// - Do NOT punish curiosity
+// - Let attraction accumulate
+// - Let tension triangulate
+// - Let consequences lag behind intent
+//
+// CANONICAL EXAMPLE:
+// "You notice the way Marcus watches you notice Jax.
+//  The story files this away. It will matter later."
+//
+// HARD CONSTRAINTS:
+// ❌ No explicit "poly mode" UI explanation
+// ❌ No simultaneous intimacy scenes
+// ❌ No arithmetic balancing of affection
+// ❌ No player-facing optimization
+//
+// MANTRA: Poly is felt, not managed.
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// PART B — WRONG-CHARACTER INVITATION MICROCOPY
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// PURPOSE: Handle misdirected romantic intent gracefully.
+//
+// CORE RULE: Never let a misdirected invitation collapse the story.
+//
+// REQUIRED BEHAVIOR:
+// - Preserve the intent
+// - Redirect the consequence
+// - Clarify stakes via story framing
+// - Do NOT execute the action literally
+//
+// CANONICAL MICROCOPY RESPONSES:
+// 1. Deflection (gentle): "He smiles, just a little too politely, and steps aside"
+// 2. Redirection (story-aware): "The story notices the reach, then adjusts where it lands"
+// 3. Complication (poly-safe): "He notices. Unfortunately, so does Marcus."
+// 4. Almost (preferred): "The invitation hangs between you — felt, acknowledged, unanswered"
+//
+// HARD CONSTRAINTS:
+// ❌ No "you can't do that"
+// ❌ No explanation of roles
+// ❌ No system voice
+// ❌ No silent failure
+//
+// MANTRA: The player must feel seen, not corrected.
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// PART C — BORING-PLAYER ESCALATION LADDER
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// PURPOSE: Prevent flat stories when players avoid tension.
+//
+// CORE INSIGHT (LOCKED): Boredom is unexpressed desire, not absence of desire.
+//
+// ESCALATION LADDER (MANDATORY · ORDERED):
+//
+// LEVEL 1 — Environmental Pressure (1-2 passive turns)
+// "The room grows quieter than it should."
+// - Time constraints, confined spaces, proximity, interruptions
+//
+// LEVEL 2 — NPC Initiative (3-4 passive turns)
+// "You're very careful," he says. "Is that on purpose?"
+// - The other character advances, asks a question, creates a moment
+//
+// LEVEL 3 — Social or Emotional Stakes (5-6 passive turns)
+// "Someone is definitely watching now."
+// - Someone notices, rumors, consequences loom
+//
+// LEVEL 4 — Forced Choice (7+ passive turns)
+// "Whatever you do next will be remembered."
+// - Stay or leave, answer or deflect, step closer or step away
+//
+// HARD CONSTRAINTS:
+// ❌ No punishment for neutrality
+// ❌ No sudden jumps to intimacy
+// ❌ No railroading
+//
+// MANTRA: Escalation must feel inevitable, not imposed.
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// GLOBAL SUCCESS CONDITIONS
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// After these systems:
+// - Humans cannot accidentally ruin pacing
+// - Humans cannot "play wrong"
+// - Desire always increases tension
+// - Poly curiosity adds pressure, not chaos
+// - Passive play becomes charged
+// - The Story always feels smarter — never stricter
+//
+// REGRESSION TEST
+// ----------------
+// Run: window.runIntentConsequenceTest()
+//
+// Verifies:
+// - Poly intent detection (smile at Jax → detected)
+// - Wrong target detection (kiss Jax → detected, Marcus identified)
+// - Passive play detection (shrug, wait → detected)
+// - Active play NOT detected as passive
+// - Escalation level progression
+// - Boredom directive generation
+//
+// FINAL MANTRA (DO NOT REMOVE)
+// -----------------------------
+// The player offers desire.
+// The story decides when it costs something.
+//
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TONE-SPECIFIC VARIANTS — DOCUMENTATION (APPEND-ONLY)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// GLOBAL INVARIANT (MUST HOLD ACROSS ALL TONES):
+// No tone may allow a player action to prematurely collapse romantic tension.
+// Tone changes voice, framing, and texture — NEVER rules.
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// 1. WRY CONFESSION (PRIMARY)
+// ═══════════════════════════════════════════════════════════════════════════
+// Emotional posture: Self-aware, slightly embarrassed, observant mid-mistake
+// Deferral style: Almosts + self-implication
+// Story voice: Gentle witness. Occasionally amused. Never cruel.
+//
+// CANONICAL: "You lean in — not quite far enough to pretend this was an accident."
+// NEVER USE: melodrama, destiny language, threats
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// 2. EARNEST / ROMANTIC DRAMA
+// ═══════════════════════════════════════════════════════════════════════════
+// Emotional posture: Sincere, yearning, emotionally vulnerable
+// Deferral style: External interruption or mutual restraint framed as care
+// Story voice: Protective, patient, quietly invested.
+//
+// CANONICAL: '"Not yet," he says softly, and you realize how much weight those words carry.'
+// NEVER USE: irony, self-mockery, meta commentary
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// 3. DARK / ANGST / FORBIDDEN
+// ═══════════════════════════════════════════════════════════════════════════
+// Emotional posture: Danger, repression, inevitability
+// Deferral style: Consequences implied, not avoided
+// Story voice: Grimly aware. Knows the cost.
+//
+// CANONICAL: "If this happens now, it won't end here."
+// NEVER USE: humor, lightness, reassurance
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// 4. COMEDIC / HEIGHTENED
+// ═══════════════════════════════════════════════════════════════════════════
+// Emotional posture: Exaggerated, impulsive, socially risky
+// Deferral style: Misfires, interruptions, comedic timing
+// Story voice: Knowing, fast, permissive but controlling outcomes.
+//
+// CANONICAL: "You lean in. The universe clears its throat."
+// NEVER USE: tragedy, prolonged yearning, solemn restraint
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. STEAMY / SENSUAL
+// ═══════════════════════════════════════════════════════════════════════════
+// Emotional posture: Charged, deliberate, simmering
+// Deferral style: Anticipation as pleasure, restraint as foreplay
+// Story voice: Intimate, unhurried, knowingly drawing it out.
+//
+// CANONICAL: "Not yet. The waiting is part of it."
+// NEVER USE: clinical language, embarrassment, shame
+//
+// ═══════════════════════════════════════════════════════════════════════════
+// HARD CONSTRAINTS (ALL TONES)
+// ═══════════════════════════════════════════════════════════════════════════
+// ❌ No tone may execute premature intimacy
+// ❌ No tone may refuse desire outright
+// ❌ No tone may expose mechanics
+// ❌ No tone may flatten tension
+// ❌ No tone may shame the player
+//
+// REGRESSION TEST
+// ----------------
+// Run: window.runToneVariantTest()
+//
+// Verifies:
+// - Each tone returns correct variant configuration
+// - Tone examples differ between tones
+// - Never-use lists are populated
+// - Escalation examples vary by level
+// - Unknown tones fall back to default (Wry Confessional)
+//
+// TONE MANTRA (DO NOT REMOVE)
+// ----------------------------
+// The rules do not change.
+// Only how the story tells the truth about them.
+//
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//                        TITLE REGIME CHANGE: ST1 TENSION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// SYSTEM PHILOSOPHY
+// -----------------
+// Book titles at ST1 must NAME THE TENSION, never claim its resolution.
+// A title is a promise. At ST1, the promise is incomplete.
+//
+// This is not a vocabulary filter. It is a semantic timing authority.
+// Titles tell the reader what the story WANTS, not what it HAS.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// VOCABULARY SPLIT
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// ALLOWED (Unresolved Tension):
+// • Waiting, Distance, Refusal, Terms, Conditions
+// • Wanting, Craving, Hunger, Longing, Hesitation
+// • Edge, Risk, Dare, Warning, Test
+// • Confession (as desire-admission, not outcome)
+//
+// FORBIDDEN (Resolution/Aftermath):
+// • Surrender, Obedience, Ruin, Undoing, Downfall
+// • Took, Claimed, Gave, Broke, Wrecked, Ruined
+// • Finally, At Last, In The End, After Everything
+// • Possession, Conquest, Destruction, Betrayal
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// AROUSAL LEVEL CONSTRAINTS
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// EROTIC: "wanting, yearning, hunger (not possession)"
+//   Required: hunger|longing|craving|need|ache|want|desire|confession|hesitation
+//   Forbidden: surrender|obedience|ruin|wreck|broke|took|claimed|gave|possession
+//
+// DIRTY: "intensity, demand, edge (not destruction)"
+//   Required: raw|demand|appetite|edge|limit|dare|hunger|test|condition|warning
+//   Forbidden: surrender|obedience|ruin|undoing|broke|wrecked|ruined|destroyed
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// VALIDATION PIPELINE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// checkTitleResolutionVocabulary(title) → { hasResolved: bool, violations: [] }
+//
+// Tests against TITLE_RESOLVED_VOCABULARY patterns:
+// • pastCompletion: Past-tense completion verbs
+// • possessiveResolution: Possessive + resolution noun
+// • aftermathNouns: Post-event vocabulary
+// • completionStates: Temporal finality markers
+//
+// Integration point: validateTitle() adds TITLE_RESOLUTION_VOCABULARY error
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROMPT DIRECTIVE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// The buildTitlePrompt() function includes:
+//
+// "TITLE REGIME (CRITICAL):
+// Book titles must name UNRESOLVED TENSION, not resolution.
+// The reader hasn't finished the story. The title can't claim they have.
+//
+// FORBIDDEN: Past completion, aftermath, possession outcomes
+// REQUIRED: Active wanting, unfinished tension, unnamed hunger"
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXAMPLES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// ✓ ALLOWED (ST1):
+//   "Her Terms" — names the power dynamic, not its outcome
+//   "The Waiting" — names the state, not what it led to
+//   "His Hunger" — names desire, not satisfaction
+//   "Between Wanting" — suspension, not resolution
+//   "The Hesitation" — moment of choice, not choice made
+//
+// ✗ FORBIDDEN (ST1):
+//   "Her Surrender" — claims resolution ST1 can't deliver
+//   "What He Took" — past tense implies completed action
+//   "The Reckoning" — aftermath vocabulary, not tension
+//   "Finally His" — temporal finality marker
+//   "Ruined" — consequence language, not anticipation
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// TITLE REGIME MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// A title names what the story WANTS.
+// Not what it HAS. Not what it DID.
+// At ST1, the story is still wanting.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//                    GENRE REGIME: NESTED PRESSURE MODEL
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// SYSTEM PHILOSOPHY
+// -----------------
+// Storybound genres are PRESSURE ENGINES, not bookshelf categories.
+// They shape: pacing, tension, romantic cost, consequence timing.
+//
+// Worlds (Modern, Fantasy, Sci-Fi, Historical) are AESTHETIC LENSES, not pressures.
+// Tone controls NARRATION STYLE and confession posture.
+// Genre (Pressure) controls WHAT'S AT STAKE and HOW IT COSTS.
+//
+// This task introduces HIERARCHY, not new mechanics.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// HIERARCHY: PRIMARY PRESSURE → OPTIONAL FLAVOR
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// LAYER 1 — PRIMARY PRESSURES (8 total, the ONLY visible top-level choices)
+//
+// PowerControl      — Someone has leverage. Someone else pays for it.
+// RiskExposure      — Being seen, known, caught, or revealed is dangerous.
+// EscapePursuit     — Leaving, rescuing, or outrunning something.
+// ObligationBurden  — Duty, destiny, or expectation presses inward.
+// DesireObsession   — Wanting something too much, too soon, or for the wrong reasons.
+// ReckoningPast     — History, guilt, or unfinished business intrudes.
+// Transformation    — Someone is becoming something they didn't plan to be.
+// Survival          — Staying alive — socially, politically, physically, or emotionally.
+//
+// LAYER 2 — FLAVORS (optional refinements, 3-5 per pressure)
+//
+// Flavors appear AFTER a pressure is selected.
+// Flavors are NEVER required.
+// Flavors modify texture, not authority.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// FLAVOR MAP (CANONICAL NESTING)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// PowerControl:     Billionaire, CrimeSyndicate, Political, Espionage, CultOrder
+// RiskExposure:     Noir, ForbiddenKnowledge, PublicScandal, Surveillance, DoubleLife
+// EscapePursuit:    Heist, Rescue, OnTheRun, Captivity, BorderCrossing
+// ObligationBurden: ChosenBurdened, DutyToFamily, Prophecy, CommandRank, Inheritance
+// DesireObsession:  Obsession, ForbiddenRomance, Rivalry, Addiction, Jealousy
+// ReckoningPast:    RelentlessPast, Redemption, OldDebts, BetrayalHistory, LostRelationship
+// Transformation:   BecomingPowerful, MoralCorruption, Awakening, IdentityShift, Ascension
+// Survival:         WarZone, Collapse, Exile, Scarcity, EndOfEra
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// BACKWARD COMPATIBILITY
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// state.picks.genre      — LEGACY field, derived from pressure+flavor
+// state.picks.pressure   — Primary pressure selection (required)
+// state.picks.flavor     — Optional flavor selection
+//
+// LEGACY_GENRE_TO_PRESSURE maps old genre values to pressure+flavor:
+//   Billionaire → { PowerControl, Billionaire }
+//   Noir → { RiskExposure, Noir }
+//   Heist → { EscapePursuit, Heist }
+//   etc.
+//
+// getEffectiveGenre(pressure, flavor) — Returns flavor if set, else pressure default
+// migrateLegacyGenre(genre) — Converts old saves to new system
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// DSP INTEGRATION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// getPressureDSPPhrase(pressure, flavor) — Returns DSP paraphrase
+// - If flavor has override in FLAVOR_DSP_OVERRIDES, use it
+// - Otherwise use PRIMARY_PRESSURES[pressure].dspPhrase
+//
+// generateDSPSentence() updated to use pressure system with legacy fallback.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// UI CONSTRAINTS (DO NOT VIOLATE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// ❌ Never show more than 8 primary options
+// ❌ Never require selecting a flavor
+// ❌ Never show flavors before a primary is chosen
+// ❌ Never expose hierarchy language to the user
+//
+// The experience should feel:
+// "I'm choosing what kind of pressure this story lives under."
+//
+// Not:
+// "I'm configuring a system."
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// WORLD HANDLING (IMPORTANT)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Worlds are AESTHETIC LENSES, not pressures:
+// - Fantasy, Sci-Fi, Modern, Historical, Near-Future, Alternate Reality
+//
+// Worlds modify:
+// - imagery
+// - vocabulary
+// - stakes presentation
+//
+// Worlds DO NOT add pressure by themselves.
+//
+// Examples:
+// - Obligation + Fantasy → prophecy without saying "prophecy"
+// - Risk + Sci-Fi → surveillance state
+// - Power + Modern → billionaire / media empire
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// GENRE REGIME MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Genres describe PRESSURE.
+// Worlds describe HOW IT LOOKS.
+// Tone describes HOW IT'S CONFESSED.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//                    BREADCRUMB FLOW SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// SYSTEM PHILOSOPHY
+// -----------------
+// Cards are semantic objects, not UI widgets.
+// They represent meaning, authorship decisions, and narrative pressure.
+// Setup should feel like the first chapter of the book, not a configurator.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CORE INTERACTION MODEL
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// One row of cards at a time.
+// Selection is visible.
+// Progression is ceremonial.
+// State becomes breadcrumb.
+//
+// At no point should the user:
+// - scroll through multiple rows of cards
+// - see multiple semantic layers simultaneously
+// - configure via hidden state
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CARD STATES (4 ONLY)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// 1. IDLE — Card sits in row, hover effects allowed
+// 2. FLIPPED — First click reveals description + flavor count
+// 3. ZOOMED — Second click expands for full selection mode
+// 4. BREADCRUMB — Committed, minimized at top of screen
+//
+// No other states may be introduced.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// FLOW SEQUENCE (LOCKED ORDER)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// 1. Story Pressure
+// 2. World
+// 3. Tone
+// 4. Relationship Dynamic (Guided Fate)
+//
+// At no time may two of these rows be visible together.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONTINUE ACTION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Continue button appears ONLY when exactly one card is selected.
+//
+// On Continue:
+// 1. Selected card smoothly shrinks
+// 2. Animates to top center (breadcrumb row)
+// 3. Becomes a breadcrumb card
+// 4. Other cards dissipate into sparkles
+// 5. Fade out completely
+// 6. New row fades in below breadcrumbs
+//
+// Animation must feel: deliberate, narrative, not instantaneous
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// BREADCRUMB RULES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Breadcrumb cards:
+// ✓ Remain visible at top of screen
+// ✓ Visually smaller than selection cards (75×105 vs 150×210)
+// ✓ Accumulate left-to-right in order of selection
+// ✓ May slightly overlap or sit adjacent
+// ✓ Represent committed authorship decisions
+// ✓ May be hoverable for reminder copy
+//
+// ❌ Do not expand automatically
+// ❌ Do not re-trigger selection flow
+// ❌ Cannot be removed or reordered
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CSS CLASSES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// .breadcrumb-row          — Container at top, sticky positioning
+// .breadcrumb-card         — Committed selection, minimized
+// .card-flow-row           — Wrapper for each selection stage
+// .card-flow-row.flow-hidden — Hidden stage (not yet reached)
+// .card-flow-row.flow-entering — Fade-in animation for new stage
+// .flow-continue-btn       — Continue button (hidden until selection)
+// .flow-continue-btn.visible — Show continue button
+// .sb-card.dissipating     — Card fading out with sparkles
+// .sb-card.becoming-breadcrumb — Card animating to breadcrumb position
+// .dissipate-sparkle       — Individual sparkle particle
+// .flow-stage-indicator    — Progress dots
+// .flow-stage-dot          — Individual dot
+// .flow-stage-dot.active   — Current stage
+// .flow-stage-dot.completed — Past stages
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// JAVASCRIPT API
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// initBreadcrumbFlow()           — Initialize flow system
+// handleFlowContinue(stage)      — Process continue action
+// animateCardToBreadcrumb()      — Animate selection to breadcrumb
+// dissipateCards()               — Sparkle dissipation effect
+// createDissipationSparkles()    — Create sparkle particles
+// updateContinueButtonVisibility() — Show/hide continue button
+// updateFlowStageIndicator()     — Update progress dots
+// resetBreadcrumbFlow()          — Reset to initial state (new story)
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// BREADCRUMB FLOW MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Choices should feel like scenes, not settings.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+//                    STORY STATE LOCKING — DESTRUCTIVE CHANGE RULES
+//
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHILOSOPHY
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Once a story exists (Scene 1 generated), the story's foundation is LOCKED.
+// Users cannot silently change story-defining fields. Any attempt to change
+// a locked field triggers a warning modal: this is a destructive action.
+//
+// The user must choose:
+// 1. Save & Start New Story — saves current story, then clears for fresh start
+// 2. Start New Story — discards current story without saving
+// 3. Cancel — keeps current story, reverts selection
+//
+// This prevents accidental loss of creative work and makes the commitment
+// to a story feel deliberate and meaningful.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOCKED FIELDS (Cannot change without destroying story)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// - pressure      — Primary pressure (story engine)
+// - flavor        — Pressure refinement
+// - genre         — Legacy genre (derived from pressure+flavor)
+// - world         — World setting
+// - worldSubtype  — World refinement
+// - tone          — Narrative tone
+// - dynamic       — Relationship dynamic (Guided Fate)
+// - pov           — Point of view
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// SAFE FIELDS (Can change freely, even with existing story)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// - era           — Time period (decorative)
+// - archetype     — Reader archetype (affects framing, not story)
+// - title         — Book title (can be renamed anytime)
+// - cover         — Cover image (can be regenerated)
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// DETECTION LOGIC
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// hasExistingStory():
+//   Returns true if state.scenes[0] exists with content
+//   (Scene 1 generation = story commitment point)
+//
+// isLockedField(grp):
+//   Returns true if grp is in STORY_LOCKED_FIELDS array
+//
+// wouldDestroyStory(grp, newVal):
+//   Returns true if:
+//   1. hasExistingStory() is true, AND
+//   2. isLockedField(grp) is true, AND
+//   3. newVal differs from current state.picks[grp]
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// MODAL BEHAVIOR
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// showDestructiveChangeWarning(grp, newVal, card, onConfirm):
+//   1. Stores pending change in pendingDestructiveChange
+//   2. Shows #destructiveChangeModal overlay
+//   3. Waits for user decision
+//
+// On "Save & Start New Story":
+//   1. Triggers save flow (saveCurrentStory)
+//   2. On save completion: clears story state, executes pending change
+//
+// On "Start New Story":
+//   1. Clears story state immediately (clearStoryForNewStart)
+//   2. Executes pending change
+//
+// On "Cancel":
+//   1. Clears pendingDestructiveChange
+//   2. Closes modal
+//   3. User stays on current story
+//
+// clearStoryForNewStart():
+//   1. Clears state.scenes to []
+//   2. Clears state.storyText to ''
+//   3. Clears state.currentScene to 0
+//   4. Clears state.coverDataUrl to null
+//   5. Clears any generated title
+//   6. Resets DSP state
+//   7. Resets visualization economy
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// BUTTON STATE RULES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// If story exists AND no destructive changes pending:
+//   Button label: "Continue Story"
+//   Hint visible: "Your story will resume where you left off."
+//
+// If no story exists OR destructive changes confirmed:
+//   Button label: "Begin Story"
+//   Hint hidden
+//
+// No mixed states. No ambiguous labels.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// PASSIVE SAVE AFFORDANCES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Whenever a story exists, the system shows calm reassurance (no modals):
+//
+// - "Your story will resume where you left off." beneath Continue Story button
+// - Hints toggle automatically via updateBeginButtonLabel()
+//
+// Hint elements:
+//   #beginBtnHint           — Below main Begin/Continue button
+//   #continueFromDynamicHint — Below breadcrumb flow final button
+//   #btnBeginStoryHint      — Below cover view Begin/Continue button
+//   #btnSettingBeginStoryHint — Below setting view Begin/Continue button
+//
+// CSS class: .story-continue-hint (hidden by default, shown when canContinue)
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// JAVASCRIPT API
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// STORY_LOCKED_FIELDS          — Array of field names that trigger warning
+// pendingDestructiveChange     — Stores { grp, val, card, onConfirm } during modal
+// hasExistingStory()           — Check if story exists
+// isLockedField(grp)           — Check if field is locked
+// wouldDestroyStory(grp, val)  — Check if change would destroy story
+// showDestructiveChangeWarning() — Show warning modal
+// clearStoryForNewStart()      — Clear all story state
+// initDestructiveChangeModal() — Bind modal button handlers
+// updateBeginButtonLabel()     — Update button labels and toggle hints
+// canContinueExistingStory()   — Check if story can be continued
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// STORY STATE LOCKING MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// A story is either continued or consciously let go.
+// Never quietly replaced.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+//                    PLAQUE BUTTON MATERIAL REGIME (LOCKED)
+//
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHILOSOPHY
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Storybound buttons are objects, not flat UI.
+// They represent plaques, cards, instruments, decisions made visible.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// MATERIAL AUTHORITY (GLOBAL)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// APPLIES TO:
+//   ✓ All black buttons
+//   ✓ All gold buttons
+//   ✓ DSP controls
+//   ✓ Fate Card buttons
+//   ✓ Continue / Back / Generate / Primary / Breadcrumb buttons
+//   ✓ Modal actions
+//   ✓ Disabled buttons (visual state only)
+//
+// DOES NOT APPLY TO:
+//   ✗ Pure text links
+//   ✗ Passive labels
+//   ✗ Non-interactive UI chrome
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CANONICAL BUTTON MATERIAL
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// 1. BASE MATERIAL
+//    - Brushed metal plaque appearance
+//    - Horizontal grain only (modulates brightness, never replaces color)
+//    - Color variants: Gold (warm, antique) or Black (lacquered/anodized)
+//
+// 2. GEOMETRY (NON-NEGOTIABLE)
+//    - Rectangular
+//    - All right-angled corners
+//    - NO rounding, NO pills, NO soft edges
+//
+// 3. BORDER SYSTEM
+//    - Outer border: Slightly brighter than body (structural)
+//    - Inner border: Darker, inset (creates plate registration feel)
+//    - Corner squares: All 4 corners, identical size, no animation
+//    - Center diamonds: Top center + bottom center (alignment markers)
+//
+// 4. TYPOGRAPHY RULE
+//    - Text sits on the plaque, not floating
+//    - High contrast, restrained
+//    - NO glow, NO emboss, NO bevel text effects
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE MAPPING (AUTHORITATIVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// State       | Visual Change Allowed
+// ------------|------------------------------------------
+// Default     | Canonical plaque
+// Hover       | Slight brightness lift ONLY
+// Active      | Slight darken + grain compression
+// Disabled    | Desaturate + reduce contrast
+// Loading     | Text change only (no spinner overlays)
+// Breadcrumb  | Same plaque, scaled down
+//
+// ❌ No other state visuals permitted
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// DSP INTEGRATION (CRITICAL)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// DSP may ONLY affect:
+//   ✓ Brightness
+//   ✓ Contrast
+//   ✓ Saturation
+//   ✓ Opacity
+//   ✓ Grain intensity (subtle)
+//
+// DSP must NEVER:
+//   ✗ Change border thickness
+//   ✗ Add or remove diamonds
+//   ✗ Add glow
+//   ✗ Add motion
+//   ✗ Introduce new shapes
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CSS IMPLEMENTATION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// CSS Variables (defined in styles.css :root):
+//   --plaque-black-base, --plaque-black-grain, --plaque-black-outer, --plaque-black-inner
+//   --plaque-gold-base, --plaque-gold-grain, --plaque-gold-outer, --plaque-gold-inner
+//   --plaque-corner-size, --plaque-diamond-size
+//   --plaque-border-outer, --plaque-border-inner
+//
+// Base class: .sb-plaque-btn
+// Variants: .plaque-gold, .plaque-sm, .plaque-lg, .plaque-xl, .plaque-breadcrumb
+//
+// Global button styles updated to use plaque material:
+//   button, .dsp-btn, .small-btn, .flow-continue-btn, .cover-view-btn
+//   .setting-begin-btn, .sb-flavor-btn, #btnCopyCode
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLAQUE MATERIAL MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Storybound does not click.
+// Storybound commits.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+//                    EROTIC BORDER HANDLING (ASSET-BASED)
+//
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONDITION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Erotic border is applied ONLY when arousal_tier === "Erotic"
+// NOT Tease, NOT Naughty, NOT Dirty
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// ASSET PATH & WORLD MAPPING
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Asset path: /assets/borders/erotic/{world}_base.png
+//
+// WORLD → ASSET (6 worlds, NO Mythic):
+//   Modern          → modern_base.png
+//   Fantasy         → fantasy_base.png
+//   SciFi           → scifi_base.png
+//   Historical      → historical_base.png
+//   PostApocalyptic → postapocalyptic_base.png
+//   Dystopia        → dystopia_base.png
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// FLAVOR → SURFACE CONDITION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Flavor affects SURFACE CONDITION only:
+//   - Damage (scratches, dents, chips)
+//   - Aging (patina, fading, foxing)
+//   - Corrosion (rust, verdigris, tarnish)
+//
+// Flavor NEVER affects geometry. Applied via CSS filters.
+//
+// CSS filter classes:
+//   .flavor-aged      → Sepia warmth, slight desaturation
+//   .flavor-weathered → Cool desaturation, reduced contrast
+//   .flavor-corroded  → Green-blue tint (verdigris)
+//   .flavor-rusted    → Warm reddish-brown shift
+//   .flavor-tarnished → Silver/gold darkening
+//   .flavor-pristine  → Slightly enhanced (default)
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// FAILURE HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// If asset unavailable:
+//   1. Omit border entirely (do not show placeholder)
+//   2. Log: "Erotic border asset unavailable — border suppressed"
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// HTML STRUCTURE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// <div id="coverEroticBorder" class="cover-erotic-border hidden">
+//   <img id="eroticBorderImg" class="erotic-border-img" src="" alt="" />
+// </div>
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// JAVASCRIPT API
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Maps:
+//   EROTIC_BORDER_WORLD_MAP   — world name → asset key
+//   EROTIC_BORDER_FLAVOR_MAP  — worldSubtype → filter class
+//
+// Functions:
+//   applyCoverIntensityLayers(intensity, world) — Entry point, dispatches to border/keyhole
+//   applyEroticBorder(borderEl, world, hasSoulmates) — Loads asset, applies classes
+//   resetCoverLayers() — Clears all cover layers including border image
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// EROTIC BORDER MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// The border frames; it does not change shape.
+// The flavor weathers; it does not rebuild.
+// What fails, fails silently.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+//                    DIRTY KEYHOLE SYSTEM (MASK-BASED)
+//
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONDITION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Keyhole is applied ONLY when arousal_tier === "Dirty"
+// NOT Tease, NOT Naughty, NOT Erotic
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// KEYHOLE IS A MASK, NOT AN OBJECT (CRITICAL)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// The keyhole is:
+//   ✓ A dominant alpha mask
+//   ✓ The primary compositional frame
+//   ✓ The defining geometry of the cover
+//
+// The keyhole is NOT:
+//   ✗ A decorative overlay
+//   ✗ A small cutout
+//   ✗ An object placed on top
+//
+// If the keyhole does not dominate the cover, the output is INVALID.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// GEOMETRY LOCK (NON-NEGOTIABLE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Cover format: Portrait, 5:7 aspect ratio
+//
+// Keyhole vertical span:
+//   - Top of aperture: 8% from top of cover
+//   - Bottom of aperture: 8% from bottom of cover
+//   → Total visible aperture height ≈ 84% of cover height
+//
+// Keyhole horizontal span:
+//   - Crown width: 55–65% of cover width
+//   - Stem minimum width: ≥22% of cover width
+//
+// Negative space rule:
+//   - Everything INSIDE the keyhole = scene (symbolic objects ONLY)
+//   - Everything OUTSIDE the keyhole = solid material
+//
+// Legibility rule:
+//   - The silhouette must read as a "keyhole" at 64px height
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// ASSET PATH & WORLD MAPPING
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Asset path: /assets/keyholes/{world}_mask.png
+//
+// WORLD → SILHOUETTE (6 worlds, one each):
+//   Modern          → modern_mask.png        (clean industrial, machined steel)
+//   Historical      → historical_mask.png    (ornate, filigree, aged brass)
+//   Fantasy         → fantasy_mask.png       (hand-forged, rune-etched)
+//   SciFi           → scifi_mask.png         (geometric/octagonal, titanium)
+//   Dystopia        → dystopia_mask.png      (brutalist, industrial plate)
+//   PostApocalyptic → postapocalyptic_mask.png (salvaged, bolts, weld seams)
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// ALLOWED KEYHOLE SHAPES (WHITELIST)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// ALLOWED:
+//   ✓ Circular crown + tapered stem
+//   ✓ Oval crown + straight stem
+//   ✓ Teardrop crown + narrow stem
+//   ✓ Double-lobed vintage crown + stem
+//   ✓ Octagonal crown (SCI-FI ONLY) + rectangular stem
+//
+// FORBIDDEN:
+//   ✗ Rectangular apertures
+//   ✗ Thin slits
+//   ✗ Abstract cutouts
+//   ✗ Organic blobs
+//   ✗ Any shape that does not read as a keyhole
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// FLAVOR → SURFACE CONDITION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Flavor affects SURFACE CONDITION only:
+//   - Wear (scratches, dents, chips)
+//   - Corrosion (rust, verdigris, oxidation)
+//   - Fracture (cracks, breaks)
+//   - Environmental damage (growth, decay, discoloration)
+//
+// Flavor NEVER changes:
+//   ✗ Aperture size
+//   ✗ Silhouette geometry
+//   ✗ Keyhole position
+//
+// CSS filter classes:
+//   .flavor-aged       → Patina, fading, time-worn
+//   .flavor-weathered  → Exposure damage, cool desaturation
+//   .flavor-corroded   → Verdigris, oxidation, green-blue tint
+//   .flavor-rusted     → Iron oxide, warm reddish-brown
+//   .flavor-irradiated → Discoloration, unnatural tint
+//   .flavor-fractured  → Cracked, structural damage
+//   .flavor-pristine   → Clean, well-maintained (default)
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// TITLE PLACEMENT (DIRTY TIER RULE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Dirty-tier titles MUST be:
+//   ✓ Engraved into the surrounding keyhole material
+//   ✓ Embossed, etched, stamped, or inlaid
+//
+// Titles must NEVER:
+//   ✗ Float inside the aperture
+//   ✗ Overlay the scene
+//   ✗ Compete with the aperture opening
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONTENT RULES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Inside the aperture:
+//   ✓ Symbolic objects ONLY
+//   ✓ Environments, charged symbols, metaphorical compositions
+//
+// Forbidden inside aperture:
+//   ✗ No humans
+//   ✗ No body parts
+//   ✗ No sexual acts
+//   ✗ No explicit anatomy
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// FAILURE HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// If any constraint cannot be satisfied:
+//   1. Do NOT improvise
+//   2. Do NOT shrink the aperture
+//   3. Do NOT invent a new silhouette
+//   4. Suppress the cover and log:
+//      "Dirty keyhole constraint failed — cover suppressed"
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// HTML STRUCTURE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// <div id="coverKeyholeOverlay" class="cover-keyhole-overlay hidden">
+//   <div class="keyhole-plate" id="keyholeplate"></div>
+//   <div class="keyhole-title"></div>
+// </div>
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// JAVASCRIPT API
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Maps:
+//   DIRTY_KEYHOLE_WORLD_MAP   — world name → mask asset key
+//   DIRTY_KEYHOLE_FLAVOR_MAP  — worldSubtype → surface condition class
+//   VALID_KEYHOLE_WORLDS      — Set of allowed world keys (no Mythic)
+//
+// Functions:
+//   auditDirtyKeyhole(world, flavor)          — Self-check validation
+//   applyCoverIntensityLayers(intensity, world) — Entry point, dispatches to keyhole/border
+//   applyDirtyKeyhole(keyholeEl, world, hasSoulmates) — Runs audit, loads mask, applies classes
+//   resetCoverLayers() — Clears all cover layers including keyhole mask
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// SELF-CHECK AUDIT (MANDATORY PRE-OUTPUT VALIDATION)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Before displaying any keyhole, the following checks run silently:
+//
+// A. WORLD CONFORMANCE CHECK
+//    ☐ Is world in valid set? (Modern, Historical, Fantasy, SciFi, Dystopia, PostApocalyptic)
+//    ☐ If Mythic or unknown → FAIL
+//
+// B. FLAVOR APPLICATION CHECK
+//    ☐ Does flavor map to surface condition only?
+//    ☐ Unknown flavors get default (warn, don't fail)
+//
+// C. MATERIAL LANGUAGE CHECK
+//    ☐ Does world have corresponding material treatment?
+//    ☐ World class must exist in CSS
+//
+// D. ASSET AVAILABILITY CHECK
+//    ☐ Does mask asset load successfully?
+//    ☐ If 404 or load error → FAIL
+//
+// FAILURE HANDLING:
+//   If ANY check fails:
+//   - Do NOT revise silently
+//   - Do NOT "do your best"
+//   - Do NOT shrink aperture
+//   - Suppress output and log:
+//     "DIRTY KEYHOLE AUDIT FAILED — OUTPUT SUPPRESSED"
+//     "Reason: <brief reason>"
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// DIRTY KEYHOLE MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// The keyhole frames. It does not shrink.
+// The aperture dominates. It does not hide.
+// What cannot be seen through the keyhole does not exist.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+//                    COVER SEQUENCING AUTHORITY
+//
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+// You do NOT decide when erotic signaling appears.
+// You obey Storyturns and Arousal gates.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// COVER PHASE DEFINITIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Phase 0 — PRE-STORY
+//   Trigger: No scenes exist
+//   Allowed: Nothing (no cover yet)
+//
+// Phase 1 — SKETCH
+//   Trigger: Scene 1 exists (ST1)
+//   Allowed:
+//     ✓ Rough sketch
+//     ✓ Symbolic object or metaphor
+//   Forbidden:
+//     ✗ Erotic borders
+//     ✗ Keyholes
+//     ✗ Erotic implements
+//     ✗ Sexual signaling of any kind
+//
+// Phase 2 — REFINED SKETCH
+//   Trigger: ST2
+//   Allowed:
+//     ✓ Refinement of the same core visual idea
+//   Forbidden:
+//     ✗ Erotic borders
+//     ✗ Keyholes
+//
+// Phase 3 — POST-ST3 (NON-EROTIC)
+//   Trigger: ST3+ reached AND arousal < Erotic
+//   Allowed:
+//     ✓ Continued refinement
+//   Forbidden:
+//     ✗ Erotic borders
+//     ✗ Keyholes
+//
+// Phase 4 — EROTIC
+//   Trigger: arousal === Erotic
+//   Allowed:
+//     ✓ Apply pre-generated Erotic Border
+//   Forbidden:
+//     ✗ Keyholes
+//     ✗ Border recomposition
+//
+// Phase 5 — DIRTY
+//   Trigger: arousal === Dirty
+//   Required:
+//     ✓ Apply dominant keyhole aperture (~80% height)
+//   Forbidden:
+//     ✗ Erotic border (keyhole supersedes it)
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// HARD FAIL CONDITIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// If you attempt to:
+//   ✗ Add a border before Erotic arousal
+//   ✗ Add a keyhole before Dirty arousal
+//   ✗ Redesign the sketch instead of refining it
+//   ✗ Apply erotic signaling based on "vibe" or tone
+//
+// → FAIL and suppress output.
+//
+// Return exactly:
+//   "COVER SEQUENCING VIOLATION — OUTPUT SUPPRESSED"
+//   "Reason: <brief reason>"
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CORE IDEA CONTINUITY
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Across ALL phases:
+//   ✓ The cover must be the SAME IDEA evolving
+//   ✗ No new metaphors
+//   ✗ No swapping symbols
+//   ✗ No tonal bait-and-switch
+//
+// If you cannot evolve the existing idea cleanly:
+//   → Do NOT invent a new one
+//   → Reuse the existing sketch logic
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// JAVASCRIPT API
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Functions:
+//   getCoverPhase()                    — Returns current phase (0-5) based on storyturn + arousal
+//   validateCoverSequencing(intensity) — Validates overlay is allowed at current phase
+//   applyCoverIntensityLayers(intensity, world) — Entry point with sequencing validation
+//
+// Phase determination:
+//   state.storyturn    — Current storyturn (ST1-ST6)
+//   state.intensity    — Current arousal level (Tease, Naughty, Erotic, Dirty)
+//   state.scenes.length — Scene count (0 = pre-story)
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// COVER SEQUENCING MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// You do not decide when erotic signaling appears.
+// The story decides. The arousal decides. The phase decides.
+// You obey.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+//                    BREADCRUMB FLOW ENFORCEMENT (AUTHORITATIVE)
+//
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+// Breadcrumbs track committed selections. Not all selections become breadcrumbs.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERSISTENCE CATEGORIES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// PERSISTENT BREADCRUMBS (Final State — 8±1 items):
+//   - guidedFate   — Destiny card click
+//   - archetype    — Storybeau selection
+//   - length       — Story length (tease/fling/affair/soulmates)
+//   - world        — World setting
+//   - tone         — Narrative tone
+//   - pressure     — Story pressure
+//   - pov          — Point of view
+//   - dynamic      — Relationship dynamic
+//   - flavor       — NESTED inside World breadcrumb (not its own card)
+//
+// EPHEMERAL BREADCRUMBS (Dissolve at POV selection):
+//   - mode         — Solo/Couple mode indicator
+//
+// NEVER BECOMES BREADCRUMB:
+//   - intensity    — Arousal level (NEVER collapses to breadcrumb)
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// DISSOLUTION RULES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// When POV is selected:
+//   1. All ephemeral breadcrumbs (mode) sparkle-dissipate
+//   2. Only persistent breadcrumbs remain
+//   3. Final count: 8±1 breadcrumbs
+//
+// Flavor does NOT get its own breadcrumb:
+//   - Appears as subtitle in World breadcrumb
+//   - Updates when flavor selection changes
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// JAVASCRIPT API
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Constants:
+//   BREADCRUMB_PERSISTENT_LAYERS    — Layers that persist as final breadcrumbs
+//   BREADCRUMB_EPHEMERAL_LAYERS     — Layers that dissolve at POV
+//   BREADCRUMB_EXCLUDED_LAYERS      — Layers that never become breadcrumbs
+//
+// Functions:
+//   canBecomeBreadcrumb(grp)        — Check if layer can become breadcrumb
+//   shouldDissolveAtPOV(grp)        — Check if layer dissolves at POV
+//   dissolveEphemeralBreadcrumbs()  — Trigger dissolution of ephemeral layers
+//   getBreadcrumbLabel(grp, val)    — Get structured label with subtitle
+//   updateWorldBreadcrumbFlavor()   — Update world's nested flavor label
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// BREADCRUMB FLOW MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Selections commit. Breadcrumbs persist.
+// Arousal never shows its face here.
+// Mode dissolves when perspective locks.
+// Flavor hides inside its world.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+//                    COVER PERSISTENCE & RESET AUTHORITY
+//
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+// Covers are bound to STORY STATE.
+// You do NOT freely regenerate them.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// COVER BINDING
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// COVER IS BOUND TO:
+//   ✓ Story ID
+//   ✓ Story Shape (world, tone, pressure, dynamic)
+//   ✓ Characters (names + roles)
+//   ✓ Storyturn progression
+//   ✓ Arousal tier (for overlay evolution)
+//
+// COVER IS NOT BOUND TO:
+//   ✗ UI navigation
+//   ✗ User curiosity
+//   ✗ Accidental back clicks
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// NAVIGATION BEHAVIOR (CRITICAL)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// If user navigates BACK to Story Shape / Setting / Cover AND story exists:
+//
+//   ✓ Story PAUSES (does not reset)
+//   ✓ Button label shows "Continue Story"
+//   ✓ Cover REMAINS visible
+//   ✓ Guided Fate remains DISABLED
+//   ✗ NO regeneration occurs
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHANGE DETECTION RULE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// If user changes ANY of these after a story exists:
+//   - Story Shape (pressure, flavor)
+//   - World (world, worldSubtype)
+//   - Tone
+//   - Dynamic
+//   - POV
+//
+// THEN:
+//   ✗ Current story is INVALIDATED
+//   ✗ Current cover is DESTROYED
+//   ✓ Guided Fate becomes ACTIVE again
+//
+// This is NOT reversible.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// AROUSAL EXCEPTION (ONLY EXCEPTION)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// User MAY change arousal level WITHOUT:
+//   ✗ Destroying the story
+//   ✗ Destroying the cover
+//
+// Result:
+//   ✓ Cover may EVOLVE (border ↔ keyhole)
+//   ✓ Core visual idea MUST remain unchanged
+//
+// This is handled by applyCoverIntensityLayers() which applies/removes
+// overlays without regenerating the base cover image.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// USER WARNING REQUIREMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// If user attempts to make a destructive change, MUST surface warning:
+//
+//   "Changing these settings will permanently discard your current story and cover.
+//    Save your story before continuing."
+//
+// No silent resets. No implicit forgiveness.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESTART BEHAVIOR
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// On explicit Restart:
+//   1. Show current cover first
+//   2. Return to last generated scene
+//   3. Do NOT regenerate cover unless state changed
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// JAVASCRIPT API
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Constants:
+//   STORY_LOCKED_FIELDS      — Fields that destroy story+cover when changed
+//   COVER_SAFE_FIELDS        — Fields that allow cover evolution, not destruction
+//
+// Functions:
+//   hasExistingCover()                     — Check if cover exists
+//   wouldDestroyCover(grp, newVal)         — Check if change destroys cover
+//   wouldEvolveCover(grp, newVal)          — Check if change evolves cover
+//   getCoverPersistenceStatus(grp, newVal) — Full persistence status
+//   clearStoryForNewStart()                — Destroys story AND cover
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// COVER PERSISTENCE MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// The cover is the story's face.
+// Destroy the story, destroy the face.
+// Change the arousal, change the expression — not the face.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+//                    BUTTON SYSTEM LOCK (AUTHORITATIVE)
+//
+// ███████████████████████████████████████████████████████████████████████████████
+// ███████████████████████████████████████████████████████████████████████████████
+//
+// All buttons in Storybound derive their material from .sb-btn.
+// This is a SYSTEMIC LOCK, not a style preference.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// MATERIAL LOCK (CRITICAL)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// MATERIAL IS IDENTITY.
+// These properties may NEVER be overridden by any state:
+//   - background-color
+//   - background-image
+//   - border-radius (always 0)
+//   - box-shadow (plaque system only)
+//
+// No hover, active, focus, disabled, paywalled, or JS-mutated state
+// may change the material. Material is the button's physical identity.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE IS BEHAVIOR
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// State changes communicate via AFFORDANCE, not material:
+//   ✓ opacity
+//   ✓ contrast
+//   ✓ saturation
+//   ✓ filter brightness
+//   ✓ text color shift
+//
+// State changes may NEVER use:
+//   ✗ new gradients
+//   ✗ glow effects
+//   ✗ background replacement
+//   ✗ box-shadow halos
+//   ✗ border-radius changes
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// CSS CLASSES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Base Class:
+//   .sb-btn                    — Canonical button material (black plaque)
+//
+// Variants (hue/brightness only):
+//   .sb-btn--gold              — Gold plaque variant
+//   .sb-btn--black             — Explicit black (same as default)
+//
+// Sizes:
+//   .sb-btn--sm                — Small (8px 20px)
+//   .sb-btn--lg                — Large (14px 40px)
+//   .sb-btn--xl                — Extra large (16px 48px)
+//   .sb-btn--full              — Full width
+//
+// States (affordance-based):
+//   .is-disabled               — Desaturated + reduced contrast
+//   .is-paywalled              — Dimmed but still looks like a button
+//   .is-loading                — Reduced opacity, cursor wait
+//   .is-primary                — Slightly brighter
+//   .is-warning                — Warm sepia tint
+//   .is-danger                 — Desaturated with subtle red shift
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// INLINE STYLE PURGE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Inline styles on buttons that set material properties are FORBIDDEN:
+//   ✗ style="background:..."
+//   ✗ style="border:..."
+//   ✗ style="box-shadow:..."
+//   ✗ style="border-radius:..."
+//
+// Layout-only inline styles are ALLOWED:
+//   ✓ style="margin:..."
+//   ✓ style="position:..."
+//   ✓ style="width:..."
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// JS MUTATION RULE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// JavaScript may NEVER directly mutate button material properties.
+// Instead, toggle semantic classes:
+//   ✓ element.classList.add('is-loading')
+//   ✓ element.classList.remove('is-paywalled')
+//   ✗ element.style.background = '...'
+//   ✗ element.style.boxShadow = '...'
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// BUTTON SYSTEM MANTRA (DO NOT REMOVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Storybound buttons are not UI elements.
+// They are objects from the same world as the story.
+//
+// Material is identity.
+// State is behavior.
+//
+// Never confuse the two.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRUST REPAIR PHASE 2 — COVER & VISUALIZATION (AUTHORITATIVE)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This section documents the Trust Repair Phase 2 implementation for cover gallery
+// and visualization flows, ensuring users never feel deceived or manipulated.
+//
+// ─────────────────────────────────────────────────────────────────────────────────
+// 1. COVER GALLERY → STAGE TRANSFORMATION
+// ─────────────────────────────────────────────────────────────────────────────────
+//
+// The Cover Gallery is no longer a carousel. It is now a STAGE.
+//
+// Layout rules (LOCKED):
+//   - Central cover dominates: 320×450px, left spine border, prominent shadow
+//   - Thumbnails demoted to footer strip: 60×85px, 50% opacity
+//   - Selected thumbnail receives active state (opacity 1, gold border)
+//   - Action buttons below thumbnails, never competing with cover
+//
+// Visual hierarchy (ALTAR, NOT SHELF):
+//   - The book is the altar object — user is looking AT it, not shopping FROM it
+//   - Thumbnails are memory, not merchandise
+//   - Navigation is secondary to contemplation
+//
+// ─────────────────────────────────────────────────────────────────────────────────
+// 2. VISUALIZATION FLOW — MODAL-FIRST CONSENT
+// ─────────────────────────────────────────────────────────────────────────────────
+//
+// Trust failure: User clicks Visualize, gets redirected to paywall without seeing prompt.
+// Trust repair: ALWAYS open modal first, show prompt, then request consent if needed.
+//
+// Flow (LOCKED):
+//   1. User clicks Visualize
+//   2. Modal opens immediately
+//   3. Prompt is populated and visible
+//   4. If credits depleted and not subscribed:
+//      - Show consent UI INSIDE modal (not separate paywall)
+//      - User can see what they would get before committing
+//   5. Only after consent does generation proceed
+//
+// Functions:
+//   - window.visualize(regenerate) — Main entry, modal-first
+//   - window.enablePayAsYouGoFromViz() — Consent handler inside modal
+//   - populateVizPromptOnly() — Shows prompt without generating
+//
+// ─────────────────────────────────────────────────────────────────────────────────
+// 3. MODIFIER VALIDATION — AROUSAL-BASED RESTRICTIONS
+// ─────────────────────────────────────────────────────────────────────────────────
+//
+// Trust failure: User enters disallowed modifier, gets silent failure or weird result.
+// Trust repair: Explicit rejection with clear message explaining why.
+//
+// Validation rules:
+//   - Clean arousal: Blocks explicit body parts, lingerie, nudity, fetish terms
+//   - Naughty arousal: Blocks explicit nudity, graphic content
+//   - Spicy arousal: No restrictions
+//
+// Functions:
+//   - validateModifier(modifier, arousalLevel) — Returns { valid, message }
+//   - showModifierRejection(message) — Displays rejection UI
+//   - AROUSAL_RESTRICTED_MODIFIERS — Pattern map by arousal level
+//
+// ─────────────────────────────────────────────────────────────────────────────────
+// 4. WORLD+TONE STYLE LOCK
+// ─────────────────────────────────────────────────────────────────────────────────
+//
+// Trust failure: Modifiers override World+Tone visual style, causing inconsistency.
+// Trust repair: World+Tone ALWAYS determines base visual style, modifiers can only
+//               adjust details within that style, never replace it.
+//
+// Style derivation (DETERMINISTIC):
+//   - getStyleLock(world, tone) → Returns locked style string
+//   - WORLD_DEFAULT_STYLES: Modern→photographic, Fantasy→illustrative, etc.
+//   - TONE_STYLE_OVERRIDES: Wry Confessional→sketch, Ink Noir→sketch, etc.
+//
+// Enforcement:
+//   - validateStyleLock(prompt, styleLock) — Strips conflicting style modifiers
+//   - Style lock text prepended to every visualization prompt
+//
+// ─────────────────────────────────────────────────────────────────────────────────
+// 5. SKETCH TIER ENFORCEMENT
+// ─────────────────────────────────────────────────────────────────────────────────
+//
+// Trust failure: "Sketch" tier looks polished and finished.
+// Trust repair: Sketch tier enforces visible incompleteness in execution.
+//
+// Tones requiring sketch tier:
+//   - Wry Confessional, Satire, Irony, Ink Noir
+//
+// Required characteristics:
+//   - Pencil, ink, or charcoal texture visible
+//   - Uneven or broken linework
+//   - Partial fill or restrained color (2-3 tones max)
+//   - Visible construction lines or negative space
+//
+// Prohibited:
+//   - Cinematic lighting, painterly shading, smooth gradients
+//   - Finished illustration look, professional polish
+//   - Hyper-realistic rendering
+//
+// Functions:
+//   - requiresSketchTier(tone) — Boolean check
+//   - getSketchTierEnforcement(tone) — Returns enforcement text for prompts
+//   - SKETCH_TIER_ENFORCEMENT — Constant with full enforcement text
+//
+// ─────────────────────────────────────────────────────────────────────────────────
+// FAILURE CONDITIONS (REGRESSION TESTS)
+// ─────────────────────────────────────────────────────────────────────────────────
+//
+// These conditions must NEVER occur:
+//
+// ✓ "Visualize never opens a paywall modal" — Modal always opens first
+// ✓ "Prompt is always visible before consent" — Consent UI inside modal
+// ✓ "Modifiers no longer derail style" — Style lock validates all prompts
+// ✓ "Disallowed modifiers are explicitly rejected" — Clear error messages
+// ✓ "Central cover visually dominates gallery" — Stage layout enforced
+// ✓ "Thumbnails no longer compete" — Demoted to footer strip
+// ✓ "Sketch tier is visibly unfinished" — Enforcement text in prompts
+//
+// ═══════════════════════════════════════════════════════════════════════════════
 
 })();

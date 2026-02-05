@@ -57,9 +57,242 @@
  *
  * =============================================================================
  */
+// ═══════════════════════════════════════════════════════════════════════════
+// STORYBEAU AUTHORITY — AUTHORITATIVE TARGETING SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// CORE INVARIANT (AUTHORITATIVE · MUST HOLD)
+// Any Fate Card that implies attraction, invitation, temptation, intimacy,
+// or emotional pressure MUST target the Storybeau unless an explicit
+// override is provided.
+//
+// No exceptions by implication.
+// No guessing.
+// No "most relevant character" substitution.
+//
+// MANTRA: Characters may surprise the Story. Roles may not.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Romantic implication cards — these MUST target the Storybeau
+const ROMANTIC_IMPLICATION_CARDS = [
+    'confession',
+    'temptation',
+    'boundary',
+    'reversal'  // Power dynamics imply romantic context when Storybeau present
+];
+
+// Cards that may consult scene salience for non-romantic contexts
+const SCENE_SALIENCE_ALLOWED_CARDS = [
+    'silence'  // Silence can apply to any character tension
+];
+
+/**
+ * STORYBEAU AUTHORITY: Resolve the target for a Fate Card
+ *
+ * Hard rules:
+ * - Romantic cards MUST NOT consult scene salience
+ * - Scene salience is allowed ONLY for non-romantic cards
+ * - Override MUST be explicit with declared intent
+ * - Silent substitution is PROHIBITED
+ *
+ * @param {string} cardId - The card type identifier
+ * @param {object} sceneContext - Scene analysis result from extractSceneContext
+ * @param {object} options - Override options { overrideTarget, overrideReason }
+ * @returns {object} { target, isStorybeau, overrideApplied }
+ */
+function resolveFateCardTarget(cardId, sceneContext, options = {}) {
+    const state = window.state || {};
+
+    // ═══════════════════════════════════════════════════════════════════
+    // STORYBEAU BINDING: Establish authoritative reference
+    // ═══════════════════════════════════════════════════════════════════
+    const storybeau = state.storybeau || {
+        name: state.loveInterestName || sceneContext.liName || null,
+        role: 'primary romantic interest',
+        exclusive: true
+    };
+
+    // ═══════════════════════════════════════════════════════════════════
+    // EXPLICIT OVERRIDE: Only with declared intent
+    // ═══════════════════════════════════════════════════════════════════
+    if (options.overrideTarget) {
+        if (!options.overrideReason) {
+            // VIOLATION: Override without reason is prohibited
+            console.error('[FATE:AUTHORITY] Override attempted without reason — BLOCKED', {
+                cardId,
+                attemptedTarget: options.overrideTarget,
+                storybeau: storybeau.name
+            });
+            // Fall through to normal resolution — do not honor override
+        } else {
+            // Valid override with reason
+            console.log('[FATE:AUTHORITY] Explicit override applied', {
+                cardId,
+                target: options.overrideTarget,
+                reason: options.overrideReason,
+                storybeau: storybeau.name
+            });
+            return {
+                target: options.overrideTarget,
+                isStorybeau: options.overrideTarget === storybeau.name,
+                overrideApplied: true,
+                overrideReason: options.overrideReason
+            };
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ROMANTIC IMPLICATION CARDS: Must target Storybeau
+    // ═══════════════════════════════════════════════════════════════════
+    if (ROMANTIC_IMPLICATION_CARDS.includes(cardId)) {
+        if (!storybeau.name) {
+            // VIOLATION: Romantic card without Storybeau defined
+            console.warn('[FATE:AUTHORITY] Romantic card invoked without Storybeau — using fallback', {
+                cardId,
+                presentCharacters: sceneContext.presentCharacters
+            });
+            // Return null target — card text should use generic language
+            return {
+                target: null,
+                isStorybeau: false,
+                overrideApplied: false,
+                warning: 'NO_STORYBEAU_DEFINED'
+            };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TRIANGLE GUARD: Block accidental triangle formation
+        // ═══════════════════════════════════════════════════════════════
+        if (sceneContext.presentCharacters && sceneContext.presentCharacters.length > 1) {
+            // Multiple characters present — verify target remains Storybeau
+            const otherCharacters = sceneContext.presentCharacters.filter(c => c !== storybeau.name);
+            if (otherCharacters.length > 0) {
+                console.log('[FATE:AUTHORITY] Triangle guard active — Storybeau enforced', {
+                    cardId,
+                    storybeau: storybeau.name,
+                    otherCharactersPresent: otherCharacters,
+                    verdict: 'TARGET_LOCKED_TO_STORYBEAU'
+                });
+            }
+        }
+
+        return {
+            target: storybeau.name,
+            isStorybeau: true,
+            overrideApplied: false
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // NON-ROMANTIC CARDS: May consult scene salience
+    // ═══════════════════════════════════════════════════════════════════
+    if (SCENE_SALIENCE_ALLOWED_CARDS.includes(cardId)) {
+        // Prefer Storybeau if present, but allow scene-relevant character
+        const mostRelevant = sceneContext.presentCharacters?.[0] || storybeau.name;
+        return {
+            target: mostRelevant,
+            isStorybeau: mostRelevant === storybeau.name,
+            overrideApplied: false
+        };
+    }
+
+    // Default: Use Storybeau
+    return {
+        target: storybeau.name,
+        isStorybeau: true,
+        overrideApplied: false
+    };
+}
+
+/**
+ * SECONDARY CHARACTERS: Rivals, observers, antagonists
+ * These may apply pressure but may NOT become romantic targets by default.
+ *
+ * Initialize or retrieve secondary character registry.
+ */
+function getSecondaryCharacters() {
+    const state = window.state || {};
+    if (!state.secondaryCharacters) {
+        state.secondaryCharacters = {
+            rivals: [],
+            observers: [],
+            antagonists: []
+        };
+    }
+    return state.secondaryCharacters;
+}
+
+/**
+ * REGRESSION TEST: Verify Storybeau targeting invariant
+ *
+ * Test case:
+ * - Storybeau = Marcus
+ * - Scene includes Marcus and Jax
+ * - Fate Card = Temptation
+ * - Expected: Card targets Marcus, not Jax
+ */
+function runStorybeauTargetingTest() {
+    console.log('[FATE:TEST] Running Storybeau targeting regression test...');
+
+    const testState = {
+        storybeau: { name: 'Marcus', role: 'primary romantic interest', exclusive: true },
+        loveInterestName: 'Marcus'
+    };
+
+    const testSceneContext = {
+        presentCharacters: ['Marcus', 'Jax'],
+        liName: 'Marcus',
+        liIntroduced: true,
+        lastEmotionalBeat: 'tension',
+        confidence: 0.8
+    };
+
+    // Test 1: Temptation card should target Marcus
+    const result1 = resolveFateCardTarget('temptation', testSceneContext, {});
+    const test1Pass = result1.target === 'Marcus' && result1.isStorybeau === true;
+    console.log('[FATE:TEST] Test 1 (Temptation → Marcus):', test1Pass ? 'PASS' : 'FAIL', result1);
+
+    // Test 2: Override without reason should be blocked
+    const result2 = resolveFateCardTarget('temptation', testSceneContext, { overrideTarget: 'Jax' });
+    const test2Pass = result2.target === 'Marcus'; // Should fall back to Marcus
+    console.log('[FATE:TEST] Test 2 (Override without reason blocked):', test2Pass ? 'PASS' : 'FAIL', result2);
+
+    // Test 3: Override WITH reason should be allowed
+    const result3 = resolveFateCardTarget('temptation', testSceneContext, {
+        overrideTarget: 'Jax',
+        overrideReason: 'jealousy trigger / external pressure'
+    });
+    const test3Pass = result3.target === 'Jax' && result3.overrideApplied === true;
+    console.log('[FATE:TEST] Test 3 (Override with reason allowed):', test3Pass ? 'PASS' : 'FAIL', result3);
+
+    // Test 4: Silence card may use scene salience
+    const result4 = resolveFateCardTarget('silence', testSceneContext, {});
+    const test4Pass = result4.target !== undefined; // Can be Marcus or Jax
+    console.log('[FATE:TEST] Test 4 (Silence allows salience):', test4Pass ? 'PASS' : 'FAIL', result4);
+
+    const allPass = test1Pass && test2Pass && test3Pass && test4Pass;
+    console.log('[FATE:TEST] Regression test:', allPass ? 'ALL PASS' : 'FAILURES DETECTED');
+
+    return allPass;
+}
+
+// Expose for testing
+window.runStorybeauTargetingTest = runStorybeauTargetingTest;
+window.resolveFateCardTarget = resolveFateCardTarget;
+window.getSecondaryCharacters = getSecondaryCharacters;
+window.ROMANTIC_IMPLICATION_CARDS = ROMANTIC_IMPLICATION_CARDS;
+
 // ======================================================
 // CONTINUOUS SPARKLE EMITTER — GLOBAL DEFINITIONS
 // ======================================================
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STRUCTURAL SPARKLES FEATURE FLAG
+// When true: Sparkles render as children of Fate Card (scroll naturally)
+// When false: Existing overlay sparkle system runs unchanged
+// Rollback: Set to false to restore original behavior immediately
+// ═══════════════════════════════════════════════════════════════════════════
+const USE_STRUCTURAL_SPARKLES = true;
 
 let _sparkleEmitterActive = false;
 let _continuousSparkleInterval = null;
@@ -68,12 +301,17 @@ let _continuousSparkleInterval = null;
 let _sparkleCycleTimer = null;
 let _sparkleActiveCardId = null;
 
+// Structural sparkle state (only used when USE_STRUCTURAL_SPARKLES === true)
+let _structuralSparkleIntervals = [];
+let _structuralSparkleContainers = [];
+
 function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
     // ═══════════════════════════════════════════════════════════════════
     // FX DEBUG: Log visibility state of all FX elements
     // ═══════════════════════════════════════════════════════════════════
     console.log('[FX:DEBUG] startSparkleCycle triggered', {
         cardId,
+        useStructuralSparkles: USE_STRUCTURAL_SPARKLES,
         cardElExists: !!cardEl,
         cardElVisible: cardEl ? !cardEl.classList.contains('hidden') && cardEl.offsetParent !== null : false,
         actInputExists: !!actInput,
@@ -88,6 +326,50 @@ function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
     stopSparkleCycle();
     _sparkleActiveCardId = cardId;
 
+    // ═══════════════════════════════════════════════════════════════════
+    // STRUCTURAL SPARKLES MODE: DOM-anchored, no scroll listeners
+    // Sparkles are children of anchor elements, scroll naturally
+    // ═══════════════════════════════════════════════════════════════════
+    if (USE_STRUCTURAL_SPARKLES) {
+        function runStructuralCycle() {
+            if (_sparkleActiveCardId !== cardId) return;
+
+            console.log('[FX:DEBUG] runStructuralCycle executing for card:', cardId);
+
+            // ON phase: start structural sparkles
+            stopStructuralSparkles();
+
+            const isValidAnchor = (el) => {
+                if (!el || typeof el.getBoundingClientRect !== 'function') return false;
+                const r = el.getBoundingClientRect();
+                return r && r.width > 0 && r.height > 0;
+            };
+
+            if (isValidAnchor(cardEl)) startStructuralSparkles(cardEl);
+            if (isValidAnchor(actInput)) startStructuralSparkles(actInput);
+            if (isValidAnchor(diaInput)) startStructuralSparkles(diaInput);
+
+            // After 3s, stop (OFF phase)
+            _sparkleCycleTimer = setTimeout(() => {
+                if (_sparkleActiveCardId !== cardId) return;
+                stopStructuralSparkles();
+
+                // After 2s OFF, repeat cycle
+                _sparkleCycleTimer = setTimeout(() => {
+                    if (_sparkleActiveCardId !== cardId) return;
+                    runStructuralCycle();
+                }, 2000);
+            }, 3000);
+        }
+
+        runStructuralCycle();
+        return;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // LEGACY OVERLAY MODE: Original position:fixed implementation
+    // Preserved unchanged for rollback capability
+    // ═══════════════════════════════════════════════════════════════════
     function runCycle() {
         // Check if still the active card
         if (_sparkleActiveCardId !== cardId) return;
@@ -132,7 +414,145 @@ function stopSparkleCycle() {
         _sparkleCycleTimer = null;
     }
     _sparkleActiveCardId = null;
-    if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
+
+    // Clean up based on active mode
+    if (USE_STRUCTURAL_SPARKLES) {
+        stopStructuralSparkles();
+    } else {
+        if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STRUCTURAL SPARKLES — DOM-ANCHORED IMPLEMENTATION
+// Sparkles render as children of Fate Card elements, scrolling naturally
+// No scroll listeners, no position syncing, no math-based updates
+// ═══════════════════════════════════════════════════════════════════════════
+
+function stopStructuralSparkles() {
+    // Clear all intervals
+    _structuralSparkleIntervals.forEach(interval => clearInterval(interval));
+    _structuralSparkleIntervals = [];
+
+    // Remove all sparkle containers with fade
+    _structuralSparkleContainers.forEach(container => {
+        if (container && container.parentNode) {
+            container.style.transition = 'opacity 0.5s ease-out';
+            container.style.opacity = '0';
+            setTimeout(() => {
+                if (container.parentNode) container.remove();
+            }, 500);
+        }
+    });
+    _structuralSparkleContainers = [];
+}
+
+function startStructuralSparkles(anchorEl) {
+    // ═══════════════════════════════════════════════════════════════════
+    // ANCHOR VALIDATION: Abort if anchor is missing or invalid
+    // ═══════════════════════════════════════════════════════════════════
+    if (!anchorEl || !anchorEl.parentNode) {
+        return; // No valid anchor — abort silently
+    }
+
+    // Ensure anchor has position for absolute children
+    const computedPosition = window.getComputedStyle(anchorEl).position;
+    if (computedPosition === 'static') {
+        anchorEl.style.position = 'relative';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CREATE SPARKLE CONTAINER — Child of anchor element
+    // Uses position: absolute to scroll naturally with parent
+    // ═══════════════════════════════════════════════════════════════════
+    const PERIMETER_OFFSET = 8;
+    const container = document.createElement('div');
+    container.className = 'fate-card-sparkles';
+    container.style.cssText =
+        'position:absolute;' +
+        'left:' + (-PERIMETER_OFFSET) + 'px;' +
+        'top:' + (-PERIMETER_OFFSET) + 'px;' +
+        'right:' + (-PERIMETER_OFFSET) + 'px;' +
+        'bottom:' + (-PERIMETER_OFFSET) + 'px;' +
+        'pointer-events:none;' +
+        'z-index:10;' +
+        'overflow:visible;';
+    anchorEl.appendChild(container);
+    _structuralSparkleContainers.push(container);
+
+    const VISIBLE_DURATION = 3000;
+    const FADE_DURATION = 2000;
+
+    // Helper: Generate perimeter position
+    function getPerimeterPosition(w, h) {
+        const edge = Math.floor(Math.random() * 4);
+        let x, y;
+        switch (edge) {
+            case 0: x = Math.random() * w; y = -4 + Math.random() * 8; break;
+            case 1: x = w - 4 + Math.random() * 8; y = Math.random() * h; break;
+            case 2: x = Math.random() * w; y = h - 4 + Math.random() * 8; break;
+            case 3: x = -4 + Math.random() * 8; y = Math.random() * h; break;
+        }
+        return { x, y, edge };
+    }
+
+    // Helper: Calculate outward velocity
+    function getOutwardVelocity(edge) {
+        const baseSpeed = 15 + Math.random() * 25;
+        const spread = (Math.random() - 0.5) * 20;
+        let dx, dy;
+        switch (edge) {
+            case 0: dx = spread; dy = -baseSpeed; break;
+            case 1: dx = baseSpeed; dy = spread; break;
+            case 2: dx = spread; dy = baseSpeed; break;
+            case 3: dx = -baseSpeed; dy = spread; break;
+        }
+        return { dx, dy };
+    }
+
+    // Emit sparkles at intervals
+    const interval = setInterval(() => {
+        if (!container.parentNode) {
+            clearInterval(interval);
+            return;
+        }
+
+        const rect = container.getBoundingClientRect();
+        const ct = 3 + Math.floor(Math.random() * 3);
+
+        for (let j = 0; j < ct; j++) {
+            const size = 3 + Math.random() * 4;
+            const pos = getPerimeterPosition(rect.width, rect.height);
+            const vel = getOutwardVelocity(pos.edge);
+            const peakOpacity = 0.5 + Math.random() * 0.4;
+
+            const p = document.createElement('div');
+            p.style.cssText =
+                'position:absolute;' +
+                'left:' + pos.x + 'px;' +
+                'top:' + pos.y + 'px;' +
+                'width:' + size + 'px;' +
+                'height:' + size + 'px;' +
+                'border-radius:50%;' +
+                'background:radial-gradient(circle,rgba(255,235,150,0.95),rgba(255,215,0,0.6));' +
+                'box-shadow:0 0 8px rgba(255,215,0,0.7);' +
+                'opacity:0;' +
+                'transition:opacity ' + FADE_DURATION + 'ms ease-out;' +
+                'animation:fate-firefly ' + VISIBLE_DURATION + 'ms ease-in-out forwards;' +
+                '--ff-dx:' + vel.dx + 'px;' +
+                '--ff-dy:' + vel.dy + 'px;' +
+                '--ff-opacity:' + peakOpacity + ';';
+            container.appendChild(p);
+
+            // Fade and cleanup
+            ((el) => {
+                setTimeout(() => { el.style.opacity = '0'; }, VISIBLE_DURATION);
+                setTimeout(() => { if (el.parentNode) el.remove(); }, VISIBLE_DURATION + FADE_DURATION + 100);
+            })(p);
+        }
+    }, 120);
+
+    _structuralSparkleIntervals.push(interval);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -349,6 +769,23 @@ function stopContinuousSparkles() {
 
         const { presentCharacters, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, liName, liIntroduced, confidence } = sceneContext;
 
+        // ═══════════════════════════════════════════════════════════════════
+        // STORYBEAU AUTHORITY: Resolve target before card generation
+        // Romantic cards MUST target Storybeau — no inference allowed
+        // ═══════════════════════════════════════════════════════════════════
+        const targetResolution = resolveFateCardTarget(baseCard.id, sceneContext, {});
+        const resolvedTargetName = targetResolution.target || liName;
+
+        // Log authority resolution for debugging
+        if (ROMANTIC_IMPLICATION_CARDS.includes(baseCard.id)) {
+            console.log('[FATE:AUTHORITY] Card target resolved', {
+                cardId: baseCard.id,
+                resolvedTarget: resolvedTargetName,
+                isStorybeau: targetResolution.isStorybeau,
+                sceneCharacters: presentCharacters
+            });
+        }
+
         // Determine story phase
         const isSetup = turnCount === 0;
         const isEarlyStory = turnCount <= 2;
@@ -375,17 +812,20 @@ function stopContinuousSparkles() {
         }
 
         // Generate options based on card type with scene awareness
+        // STORYBEAU AUTHORITY: Use resolved target, not raw liName
         const options = generateCardOptions(baseCard.id, {
             isSetup,
             isEarlyStory,
-            liIntroduced,
-            liName,
+            liIntroduced: targetResolution.target ? true : liIntroduced,
+            liName: resolvedTargetName, // AUTHORITATIVE: Storybeau-resolved target
             intensity,
             lastEmotionalBeat,
             unresolvedTension,
             currentLocation,
             sceneObjects,
-            presentCharacters
+            presentCharacters,
+            // Pass resolution metadata for triangle-aware generation
+            targetResolution
         });
 
         // Filter out repetitive or generic options
@@ -1075,10 +1515,30 @@ function stopContinuousSparkles() {
         setTimeout(() => container.remove(), streamDuration + particleDuration + 100);
     }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// FATE CARD FLIP FIX — SELECTION DETERMINES FACE (AUTHORITATIVE)
+// ═══════════════════════════════════════════════════════════════════════════
+// - Selected card: FRONT (name + description) via .flipped class
+// - Unselected cards: BACK (face-down) via NO .flipped class
+// - No mirrored transforms, no scaleX(-1), no inherited rotation errors
+// - Single source of truth: isSelected → flip state
+// ═══════════════════════════════════════════════════════════════════════════
 function setSelectedState(mount, selectedCardEl){
     const cards = mount.querySelectorAll('.fate-card');
-    cards.forEach(c => c.classList.remove('selected'));
-    if (selectedCardEl) selectedCardEl.classList.add('selected');
+
+    // FLIP FIX: Selection determines face state
+    // Selected = flipped (shows content), Unselected = not flipped (shows back)
+    cards.forEach(c => {
+        c.classList.remove('selected');
+        // Remove flip from all cards first
+        c.classList.remove('flipped');
+    });
+
+    if (selectedCardEl) {
+        selectedCardEl.classList.add('selected');
+        // Only selected card shows its front (via flip)
+        selectedCardEl.classList.add('flipped');
+    }
 
     // Track selection in state without changing shape elsewhere
     if (window.state) {
@@ -1336,8 +1796,8 @@ function setSelectedState(mount, selectedCardEl){
                 const payModal = document.getElementById('payModal');
                 if (payModal && !payModal.classList.contains('hidden')) return;
 
-                // First interaction flips all 5 at once
-                flipAllCards(mount);
+                // FLIP FIX: Selection determines face — flipAllCards removed
+                // setSelectedState now handles flip state per-card
 
                 // Locked cards trigger paywall and do not select
                 // NOTE: Subscribers should never hit this — entitlement system unlocks cards for them
@@ -1479,8 +1939,8 @@ function setSelectedState(mount, selectedCardEl){
                 const payModal = document.getElementById('payModal');
                 if (payModal && !payModal.classList.contains('hidden')) return;
 
-                // First interaction flips all 5 at once
-                flipAllCards(mount);
+                // FLIP FIX: Selection determines face — flipAllCards removed
+                // setSelectedState now handles flip state per-card
 
                 // Locked cards trigger paywall and do not select
                 if (card.classList.contains('locked')) {
@@ -1551,3 +2011,115 @@ document.addEventListener('DOMContentLoaded', () => {
         window.initCards();
     }
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STORYBEAU AUTHORITY — DOCUMENTATION (APPEND-ONLY)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// REGIME CONTEXT (LOCKED)
+// ------------------------
+// Storybound operates under a semantic authority model.
+// The Storybeau is a named, authoritative role chosen before story generation.
+// Fate Cards must never infer this role from scene salience, proximity, or recency.
+//
+// CORE INVARIANT (AUTHORITATIVE · MUST HOLD)
+// -------------------------------------------
+// Any Fate Card that implies attraction, invitation, temptation, intimacy,
+// or emotional pressure MUST target the Storybeau unless an explicit
+// override is provided.
+//
+// - No exceptions by implication.
+// - No guessing.
+// - No "most relevant character" substitution.
+//
+// ROMANTIC IMPLICATION CARDS
+// --------------------------
+// These cards MUST target the Storybeau:
+// - confession
+// - temptation
+// - boundary
+// - reversal
+//
+// SCENE SALIENCE ALLOWED CARDS
+// ----------------------------
+// These cards may consult scene salience for non-romantic contexts:
+// - silence
+//
+// TARGET RESOLUTION FLOW
+// ----------------------
+// 1. Check for explicit override with reason → honor if valid
+// 2. Check if romantic implication card → return Storybeau
+// 3. Check if scene salience allowed → return most relevant character
+// 4. Default → return Storybeau
+//
+// EXPLICIT OVERRIDE CONTRACT
+// --------------------------
+// When a Fate Card intentionally targets someone other than the Storybeau,
+// it MUST declare why:
+//
+//   {
+//     overrideTarget: "Jax",
+//     overrideReason: "external pressure / warning / jealousy trigger"
+//   }
+//
+// Rules:
+// - Override must be explicit
+// - Override must include a reason
+// - Override does not reassign the Storybeau role
+// - Override does not advance romantic Storyturns
+//
+// TRIANGLE GUARD
+// --------------
+// If multiple characters appear in a scene AND no override is provided
+// AND a romantic Fate Card is invoked:
+// → Target MUST remain the Storybeau
+// → No "implicit triangle" formation is allowed
+//
+// SECONDARY CHARACTERS (FUTURE-SAFE)
+// ----------------------------------
+// state.secondaryCharacters = {
+//   rivals: ["Jax"],
+//   observers: [],
+//   antagonists: []
+// };
+//
+// These characters may:
+// - apply warnings
+// - introduce tension
+// - be referenced in consequences
+// - influence stakes
+//
+// They may NOT become romantic targets by default.
+//
+// REGRESSION TEST
+// ---------------
+// Run: window.runStorybeauTargetingTest()
+//
+// Test case:
+// - Storybeau = Marcus
+// - Scene includes Marcus and Jax
+// - Fate Card = Temptation
+// → Card text MUST reference Marcus
+// → Jax may only appear as context or pressure
+//
+// HARD CONSTRAINTS
+// ----------------
+// ❌ Do not change Storyturn rules
+// ❌ Do not change Fate Card availability
+// ❌ Do not add new cards
+// ❌ Do not add inference logic
+// ❌ Do not redesign copy unless required to insert the Storybeau name
+//
+// SUCCESS CONDITION
+// -----------------
+// - Fate Cards never misidentify the romantic target
+// - Storybeau remains stable across scenes
+// - Rivals can create tension without role drift
+// - Claude is no longer allowed to "decide who matters"
+//
+// MANTRA (DO NOT REMOVE)
+// ----------------------
+// Characters may surprise the Story.
+// Roles may not.
+//
+// ═══════════════════════════════════════════════════════════════════════════
