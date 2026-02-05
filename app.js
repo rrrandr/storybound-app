@@ -26506,10 +26506,11 @@ Return ONLY the image prompt. No explanations. Under 200 characters.`;
   };
 
   /**
-   * Tone-based style overrides
+   * Tone-based visual overrides (for Visual Ontology system)
    * Some tones force specific visual treatments regardless of world
+   * NOTE: Separate from TONE_STYLE_OVERRIDES (Style Lock system at line ~4703)
    */
-  const TONE_STYLE_OVERRIDES = {
+  const TONE_VISUAL_OVERRIDES = {
       'Wry Confessional': {
           override: true,
           ontology: 'illustration',
@@ -26533,7 +26534,7 @@ Return ONLY the image prompt. No explanations. Under 200 characters.`;
       const tone = state.picks?.tone || '';
 
       // Check for tone override first (Wry Confessional forces illustration)
-      const toneOverride = TONE_STYLE_OVERRIDES[tone];
+      const toneOverride = TONE_VISUAL_OVERRIDES[tone];
       if (toneOverride?.override) {
           return {
               ontology: toneOverride.ontology,
