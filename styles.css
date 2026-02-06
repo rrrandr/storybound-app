@@ -195,11 +195,274 @@ body.night-mode .story-pages-container {
     --plaque-gold-inner: #5a4510;
     --plaque-gold-text: #1a1008;
 
-    /* Corner & Diamond sizing */
-    --plaque-corner-size: 5px;
-    --plaque-diamond-size: 6px;
-    --plaque-border-outer: 2px;
-    --plaque-border-inner: 1px;
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LOCKED PLAQUE STATE — Neutral grey filigree and text
+       Material (base + grain) unchanged. Only decoration color shifts to grey.
+       No opacity, no grayscale, no filter. Plaque remains physically present.
+       ═══════════════════════════════════════════════════════════════════════════ */
+    --plaque-locked-border: #555555;      /* Grey filigree (was gold/bright) */
+    --plaque-locked-text: #666666;        /* Grey inscribed text */
+    --plaque-locked-inner: #222222;       /* Grey inner border */
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ART DECO PLAQUE GEOMETRY — Exact structural dimensions
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    /* Filigree gold — warm metallic, not neon, not UI yellow */
+    --filigree-gold: #d4af37;
+    --filigree-gold-dark: #a8892c;
+
+    /* Frame geometry */
+    --outer-frame-inset: 3px;           /* Distance from plaque edge to outer filigree */
+    --inner-frame-inset: 8px;           /* Distance from plaque edge to inner filigree */
+    --outer-frame-thickness: 2px;       /* Outer filigree line weight */
+    --inner-frame-thickness: 1px;       /* Inner filigree line weight */
+    --frame-spacing: 5px;               /* Space between outer and inner frames */
+
+    /* Corner ornaments */
+    --corner-size: 5px;                 /* Small square corner ornaments */
+
+    /* Center diamond */
+    --diamond-size: 8px;                /* Diamond width/height before rotation */
+}
+
+/* ███████████████████████████████████████████████████████████████████████████████ */
+/* ███████████████████████████████████████████████████████████████████████████████ */
+/*                                                                                 */
+/*                   PNG ASSET INTEGRATION — AUTHORITATIVE RULES                   */
+/*                                                                                 */
+/* ███████████████████████████████████████████████████████████████████████████████ */
+/* ███████████████████████████████████████████████████████████████████████████████ */
+/*
+ * ASSET LOCATION (LOCKED): /public/assets/ui/
+ *
+ * CORE RULES (NON-NEGOTIABLE):
+ * 1. PNG assets are authoritative — do NOT stretch, scale, slice, or resize
+ * 2. Width/height set to asset's natural pixel size
+ * 3. If different size needed, swap the asset — do not transform
+ * 4. No background-size: cover — use contain only
+ * 5. At breakpoints, swap assets, do not scale
+ * 6. Gleam overlay allowed as ::after pseudo-element only
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/*                     PNG BUTTON BASE — Asset-First Pattern                        */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.sb-btn-png {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+    overflow: visible;
+
+    /* Typography */
+    color: var(--filigree-gold);
+    font-family: 'lust-script-display', 'Playfair Display', 'Times New Roman', serif;
+    font-size: 1em;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.8),
+        0 -1px 0 rgba(255, 215, 0, 0.1);
+
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/*                     BLACK-GOLD BUTTONS — Size Variants                           */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* XL: 640x176 */
+.sb-btn-png.xl {
+    background-image: url('/public/assets/ui/Black-Gold-640x176.png');
+    width: 640px;
+    height: 176px;
+}
+
+/* LG: 520x144 */
+.sb-btn-png.lg {
+    background-image: url('/public/assets/ui/Black-Gold-520x144.png');
+    width: 520px;
+    height: 144px;
+}
+
+/* MD: 400x112 */
+.sb-btn-png.md {
+    background-image: url('/public/assets/ui/Black-Gold-400x112.png');
+    width: 400px;
+    height: 112px;
+}
+
+/* SM: 320x88 */
+.sb-btn-png.sm {
+    background-image: url('/public/assets/ui/Black-Gold-320x88.png');
+    width: 320px;
+    height: 88px;
+}
+
+/* XS: 120x36 */
+.sb-btn-png.xs {
+    background-image: url('/public/assets/ui/Black-Gold-120x36.png');
+    width: 120px;
+    height: 36px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/*                     BLACK-GOLD FLAVOR BUTTON                                     */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.sb-btn-png.flavor {
+    background-image: url('/public/assets/ui/Black-Gold-Flavor-440x104.png');
+    width: 440px;
+    height: 104px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/*                     BLACK-GOLD TEXT BUTTONS                                      */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Text LG: 840x128 */
+.sb-btn-png.text-lg {
+    background-image: url('/public/assets/ui/Black-Gold-Text-840x128.png');
+    width: 840px;
+    height: 128px;
+}
+
+/* Text MD: 640x112 */
+.sb-btn-png.text-md {
+    background-image: url('/public/assets/ui/Black-Gold-Text-640x112.png');
+    width: 640px;
+    height: 112px;
+}
+
+/* Text SM: 420x64 */
+.sb-btn-png.text-sm {
+    background-image: url('/public/assets/ui/Black-Gold-Text-420x64.png');
+    width: 420px;
+    height: 64px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/*                     BLACK-GOLD TOGGLE BUTTON                                     */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.sb-btn-png.toggle {
+    background-image: url('/public/assets/ui/Black-Gold-toggle-360x96.png');
+    width: 360px;
+    height: 96px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/*                     DSP PANELS — Design Semantic Prosody                         */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.dsp-panel {
+    position: relative;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+/* DSP Wide: 1800x440 */
+.dsp-panel.wide {
+    background-image: url('/public/assets/ui/DSP-Gold-Blk-1800x440.png');
+    width: 1800px;
+    height: 440px;
+}
+
+/* DSP Tall: 720x1040 */
+.dsp-panel.tall {
+    background-image: url('/public/assets/ui/DSP-Gold-Blk-720x1040.png');
+    width: 720px;
+    height: 1040px;
+}
+
+/* DSP content overlay */
+.dsp-panel .dsp-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    pointer-events: none;
+}
+
+.dsp-panel .dsp-content > * {
+    pointer-events: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/*                     GLEAM OVERLAY — Pseudo-Element Animation                     */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.sb-btn-png::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        120deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.25) 45%,
+        transparent 60%
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.sb-btn-png:hover:not(:disabled):not(.is-loading)::after {
+    animation: gleam-sweep 1.2s ease-out;
+}
+
+.sb-btn-png:active:not(:disabled):not(.is-loading)::after {
+    opacity: 0.15;
+    animation: none;
+}
+
+@keyframes gleam-sweep {
+    0% {
+        opacity: 0;
+        background-position: -100% 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        background-position: 200% 0;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/*                     PNG BUTTON STATES                                            */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.sb-btn-png:disabled,
+.sb-btn-png.is-disabled,
+.sb-btn-png.is-locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.sb-btn-png:disabled::after,
+.sb-btn-png.is-disabled::after,
+.sb-btn-png.is-locked::after {
+    display: none;
 }
 
 /* ███████████████████████████████████████████████████████████████████████████████ */
@@ -239,156 +502,470 @@ body.night-mode .story-pages-container {
  */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
+/* ███████████████████████████████████████████████████████████████████████████████ */
+/* ███████████████████████████████████████████████████████████████████████████████ */
+/*                                                                                 */
+/*          CANONICAL ART DECO PLAQUE BUTTON — BASE OBJECT (AUTHORITATIVE)         */
+/*                                                                                 */
+/* ███████████████████████████████████████████████████████████████████████████████ */
+/* ███████████████████████████████████████████████████████████████████████████████ */
+/*                                                                                 */
+/* ONTOLOGY: A button is a ceremonial Art Deco plaque that happens to be          */
+/*           clickable. NOT a UI control.                                          */
+/*                                                                                 */
+/* GEOMETRY (MANDATORY):                                                           */
+/*   1. Plaque Face — Perfect rectangle, sharp 90° corners, NO rounding/chamfers  */
+/*   2. Inner Filigree Frame — Thin gold line, inset, breaks at top for diamond   */
+/*   3. Center Diamond — Rotated 45° square, embedded in top of inner frame       */
+/*   4. Outer Filigree Frame — Thin gold line, parallel to inner, slightly thicker*/
+/*   5. Corner Ornaments — Small squares at each corner                           */
+/*                                                                                 */
+/* MATERIAL: Blackened metal (deep charcoal) with directional brushed grain       */
+/* FILIGREE: Warm metallic gold (#d4af37)                                          */
+/*                                                                                 */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* .sb-btn — CANONICAL BASE BUTTON CLASS                                           */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+
 .sb-btn {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 32px;
+    padding: 16px 44px;
+    overflow: visible;
 
     /* ════════════════════════════════════════════════════════════════════════════
-       MATERIAL LOCK — These properties define the button's physical identity.
-       They may NEVER be overridden by hover, active, focus, disabled, or JS.
+       1. PLAQUE FACE — Perfect rectangle, sharp 90° corners
        ════════════════════════════════════════════════════════════════════════════ */
-    background-color: var(--plaque-black-base) !important;
-    background-image: var(--plaque-black-grain) !important;
-    background-size: 100% 100% !important;
-
-    /* Dual border system — outer brighter, inner inset */
-    border: var(--plaque-border-outer) solid var(--plaque-black-outer) !important;
-    box-shadow:
-        inset 0 0 0 var(--plaque-border-inner) var(--plaque-black-inner),
-        0 2px 4px rgba(0, 0, 0, 0.5) !important;
-
-    /* NO ROUNDING — Rectangular plaque, square corners only */
     border-radius: 0 !important;
+    clip-path: none !important;
+    border: none !important;
 
-    /* Typography */
-    color: var(--plaque-black-text);
-    font-family: var(--font-main);
+    /* ════════════════════════════════════════════════════════════════════════════
+       BLACKENED METAL MATERIAL — Brushed horizontal grain, machined finish
+       Near-black backing with visible grain contrast (not pure void)
+       ════════════════════════════════════════════════════════════════════════════ */
+    background-color: #141414;
+
+    /* ════════════════════════════════════════════════════════════════════════════
+       BEVEL — Originates from inner filigree edge (carved around ornament)
+       ════════════════════════════════════════════════════════════════════════════ */
+    box-shadow:
+        /* Inner bevel — carved from inner filigree inward */
+        inset 0 0 0 var(--inner-frame-inset) rgba(0, 0, 0, 0.4),
+        inset 1px 1px 2px var(--inner-frame-inset) rgba(0, 0, 0, 0.5),
+        inset -1px -1px 1px var(--inner-frame-inset) rgba(255, 255, 255, 0.03);
+    background-image:
+        /* ════════════════════════════════════════════════════════════════════════
+           5. CORNER ORNAMENTS — Small gold squares at each corner
+           ════════════════════════════════════════════════════════════════════════ */
+        /* Top-left corner */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Top-right corner */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Bottom-left corner */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Bottom-right corner */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+
+        /* ════════════════════════════════════════════════════════════════════════
+           4. OUTER FILIGREE FRAME — Slightly thicker gold rectangle
+           ════════════════════════════════════════════════════════════════════════ */
+        /* Left edge */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Right edge */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Top edge */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Bottom edge */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+
+        /* ════════════════════════════════════════════════════════════════════════
+           2. INNER FILIGREE FRAME — Thin gold rectangle, continuous (no diamond gap)
+           ════════════════════════════════════════════════════════════════════════ */
+        /* Left edge */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Right edge */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Top edge — continuous */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Bottom edge */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+
+        /* ════════════════════════════════════════════════════════════════════════
+           BRUSHED METAL GRAIN — Horizontal directional brushing
+           Increased contrast for readability on dark backgrounds
+           ════════════════════════════════════════════════════════════════════════ */
+        linear-gradient(90deg,
+            rgba(70, 70, 70, 0.5) 0%,
+            rgba(40, 40, 40, 0.25) 12%,
+            rgba(65, 65, 65, 0.45) 25%,
+            rgba(35, 35, 35, 0.2) 37%,
+            rgba(75, 75, 75, 0.5) 50%,
+            rgba(45, 45, 45, 0.3) 62%,
+            rgba(60, 60, 60, 0.4) 75%,
+            rgba(38, 38, 38, 0.22) 87%,
+            rgba(68, 68, 68, 0.45) 100%
+        );
+
+    background-size:
+        /* Corner ornaments: 5px squares */
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        /* Outer frame: 2px thick lines */
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        /* Inner frame: 1px thick lines — continuous rectangle */
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        calc(100% - var(--inner-frame-inset) * 2) var(--inner-frame-thickness),
+        calc(100% - var(--inner-frame-inset) * 2) var(--inner-frame-thickness),
+        /* Brushed grain: full coverage */
+        100% 100%;
+
+    background-position:
+        /* Corner ornaments */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        calc(100% - var(--outer-frame-inset)) calc(100% - var(--outer-frame-inset)),
+        /* Outer frame edges */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        /* Inner frame edges — continuous rectangle */
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(100% - var(--inner-frame-inset)) var(--inner-frame-inset),
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        var(--inner-frame-inset) calc(100% - var(--inner-frame-inset)),
+        /* Brushed grain */
+        0 0;
+
+    background-repeat: no-repeat;
+
+    /* ════════════════════════════════════════════════════════════════════════════
+       TYPOGRAPHY — Inscription style, engraved appearance
+       ════════════════════════════════════════════════════════════════════════════ */
+    color: var(--filigree-gold);
+    font-family: 'lust-script-display', 'Playfair Display', 'Times New Roman', serif;
     font-size: 1em;
-    text-shadow: none;
-    letter-spacing: 0.02em;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.8),
+        0 -1px 0 rgba(255, 215, 0, 0.1);
 
-    /* Interaction */
+    /* Interaction affordance */
     cursor: pointer;
-    transition: filter 0.15s ease, opacity 0.15s ease;
+
+    /* ════════════════════════════════════════════════════════════════════════════
+       FOCUS — Suppress all native browser outlines
+       ════════════════════════════════════════════════════════════════════════════ */
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Suppress focus outline absolutely */
+.sb-btn:focus,
+.sb-btn:focus-visible,
+.sb-btn:focus-within {
+    outline: none !important;
+    box-shadow: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* .sb-btn STATE CHANGES — Brightness/Contrast/Opacity ONLY                        */
-/* Material NEVER changes. Identity is preserved.                                  */
+/* DIAMOND ACCENTS — REMOVED for clarity                                          */
+/* Previous conic-gradient diamonds had triangular/directional read               */
+/* Prefer subtraction over unclear embellishment                                   */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Hover: Brightness lift — NO glow, NO transform */
-.sb-btn:hover:not(:disabled):not(.is-loading) {
-    filter: brightness(1.15);
+.sb-btn::before {
+    /* Reserved for future use — currently empty */
+    content: none;
 }
 
-/* Active: Darken + grain compression */
-.sb-btn:active:not(:disabled):not(.is-loading) {
-    filter: brightness(0.9) contrast(1.1);
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* GLEAM SYSTEM — Moving light across static metal surface                         */
+/* ::after is reserved for gleam — do not use for decoration                       */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.sb-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 80%; /* Wider highlight for metallic feel */
+    height: 100%;
+    /* Wider, softer highlight — metallic, not UI-driven */
+    background: linear-gradient(
+        100deg,
+        transparent 0%,
+        transparent 25%,
+        rgba(255, 255, 255, 0.03) 35%,
+        rgba(255, 255, 255, 0.06) 45%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0.06) 55%,
+        rgba(255, 255, 255, 0.03) 65%,
+        transparent 75%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 3; /* Above diamond (z-index: 2) */
 }
 
-/* Focus: Subtle outline only — NO glow */
-.sb-btn:focus {
-    outline: 1px solid var(--plaque-black-outer);
-    outline-offset: 2px;
+/* Hover: Gleam sweeps slowly — metallic, not UI-driven */
+.sb-btn:hover:not(:disabled):not(.is-loading)::after {
+    animation: plaque-gleam 1.4s ease-in-out forwards;
 }
 
-/* Disabled: Desaturate + reduce contrast */
+/* Active: Gleam holds at edge */
+.sb-btn:active:not(:disabled):not(.is-loading)::after {
+    left: 100%;
+    animation: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* LOCKED/DISABLED STATE — Grey filigree replaces gold, text greys out             */
+/* Material unchanged. No opacity, no grayscale, no filter.                        */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 .sb-btn:disabled,
-.sb-btn.is-disabled {
-    filter: saturate(0.3) contrast(0.7);
-    opacity: 0.6;
+.sb-btn.is-disabled,
+.sb-btn.is-locked {
     cursor: not-allowed;
     pointer-events: none;
+
+    /* Grey inscribed text */
+    color: var(--plaque-locked-text) !important;
+
+    /* Replace gold filigree with grey in all background layers */
+    background-image:
+        /* Corner ornaments - grey */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Outer frame - grey */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Inner frame - grey */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Brushed grain - unchanged */
+        linear-gradient(90deg,
+            rgba(60, 60, 60, 0.4) 0%,
+            rgba(35, 35, 35, 0.2) 12%,
+            rgba(55, 55, 55, 0.35) 25%,
+            rgba(30, 30, 30, 0.2) 37%,
+            rgba(65, 65, 65, 0.4) 50%,
+            rgba(40, 40, 40, 0.25) 62%,
+            rgba(50, 50, 50, 0.3) 75%,
+            rgba(35, 35, 35, 0.2) 87%,
+            rgba(55, 55, 55, 0.35) 100%
+        ) !important;
+}
+
+/* Grey diamonds on locked state */
+/* Locked state ::before — diamonds removed */
+.sb-btn:disabled::before,
+.sb-btn.is-disabled::before,
+.sb-btn.is-locked::before {
+    content: none;
+}
+
+/* No gleam on locked plaques */
+.sb-btn:disabled::after,
+.sb-btn.is-disabled::after,
+.sb-btn.is-locked::after {
+    display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* .sb-btn VARIANTS — Adjust hue/brightness, NEVER replace material                */
+/* PLAQUE GLEAM — Metallic light sweep with pause                                  */
+/* Slow animation, wider highlight, pause between passes                           */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+@keyframes plaque-gleam {
+    0% { left: -100%; opacity: 0; }
+    10% { opacity: 1; }
+    70% { left: 120%; opacity: 1; }
+    80% { opacity: 0; }
+    100% { left: 120%; opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* .sb-btn--gold — BRUSHED GOLD PLAQUE VARIANT                                     */
+/* Same Art Deco geometry, gold material with dark bronze filigree                 */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Gold Variant — Same brushed metal, gold hue */
 .sb-btn--gold {
-    background-color: var(--plaque-gold-base) !important;
-    background-image: var(--plaque-gold-grain) !important;
-    border-color: var(--plaque-gold-outer) !important;
-    box-shadow:
-        inset 0 0 0 var(--plaque-border-inner) var(--plaque-gold-inner),
-        0 2px 4px rgba(0, 0, 0, 0.5) !important;
+    /* Gold brushed metal base */
+    background-color: #9a7b2a;
+    background-image:
+        /* Corner ornaments - dark bronze */
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        /* Outer frame - dark bronze */
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        /* Inner frame - dark bronze */
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        /* Brushed gold grain */
+        linear-gradient(90deg,
+            rgba(255, 235, 150, 0.35) 0%,
+            rgba(180, 140, 50, 0.2) 12%,
+            rgba(255, 220, 120, 0.4) 25%,
+            rgba(200, 160, 60, 0.25) 37%,
+            rgba(255, 240, 160, 0.35) 50%,
+            rgba(190, 150, 55, 0.2) 62%,
+            rgba(255, 225, 130, 0.4) 75%,
+            rgba(180, 140, 50, 0.25) 87%,
+            rgba(255, 235, 150, 0.35) 100%
+        ) !important;
+
+    /* Dark text for contrast on gold */
     color: var(--plaque-gold-text);
-    font-weight: 600;
+    text-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.2),
+        0 -1px 0 rgba(0, 0, 0, 0.3);
+    font-weight: 500;
 }
 
-.sb-btn--gold:hover:not(:disabled):not(.is-loading) {
-    filter: brightness(1.1);
+/* Gold variant — diamonds removed */
+.sb-btn--gold::before {
+    content: none;
 }
 
-.sb-btn--gold:active:not(:disabled):not(.is-loading) {
-    filter: brightness(0.85) contrast(1.1);
+/* Gold gleam — warmer cream highlight */
+.sb-btn--gold::after {
+    background: linear-gradient(
+        105deg,
+        transparent 0%,
+        transparent 35%,
+        rgba(255, 255, 240, 0.1) 45%,
+        rgba(255, 255, 240, 0.18) 50%,
+        rgba(255, 255, 240, 0.1) 55%,
+        transparent 65%,
+        transparent 100%
+    );
 }
 
-/* Black Variant — Explicit black plaque (same as default, for semantic clarity) */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* .sb-btn--black — Explicit black plaque (same as default, for semantic clarity)  */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 .sb-btn--black {
     /* Inherits default .sb-btn material */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* .sb-btn SEMANTIC STATES — Communicate via affordance, NOT material              */
+/* .sb-btn SEMANTIC STATES — No visual change to material                          */
+/* State is communicated by context and text, not by plaque appearance             */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Paywalled: Dimmed but still looks like a button */
+/* Paywalled: Material unchanged — context communicates restriction */
 .sb-btn.is-paywalled {
-    filter: saturate(0.5) contrast(0.85);
-    opacity: 0.75;
+    /* No visual change — gleam still works */
 }
 
-.sb-btn.is-paywalled:hover:not(:disabled) {
-    filter: saturate(0.6) contrast(0.9) brightness(1.1);
-}
-
-/* Loading: Reduced opacity, cursor wait */
+/* Loading: Cursor change only — material unchanged */
 .sb-btn.is-loading {
-    opacity: 0.7;
     cursor: wait;
 }
 
-/* Primary Action: Slightly brighter, draws attention */
-.sb-btn.is-primary {
-    filter: brightness(1.05);
+.sb-btn.is-loading::after {
+    /* Continuous subtle gleam during loading */
+    animation: plaque-gleam-slow 2s ease-in-out infinite;
 }
 
-/* Warning: Warm tint via filter */
-.sb-btn.is-warning {
-    filter: sepia(0.2) saturate(1.2);
+@keyframes plaque-gleam-slow {
+    0% { left: -100%; }
+    50% { left: 150%; }
+    100% { left: 150%; }
 }
 
-/* Danger: Desaturated with subtle red shift */
+/* Primary/Warning/Danger: No visual distinction — plaque is plaque */
+.sb-btn.is-primary,
+.sb-btn.is-warning,
 .sb-btn.is-danger {
-    filter: hue-rotate(-10deg) saturate(0.8);
+    /* Material unchanged — context and text communicate meaning */
+}
+
+/* Finalized: Material unchanged — text communicates finalization */
+.sb-btn.is-finalized {
+    cursor: default;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* .sb-btn SIZE VARIANTS                                                           */
+/* GLOBAL BUTTON STATES — Apply to any button element                              */
+/* These extend the Plaque regime to all buttons, not just .sb-btn                 */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Loading state — cursor change + slow gleam */
+button.is-loading,
+.dsp-btn.is-loading {
+    cursor: wait;
+}
+
+button.is-loading::after,
+.dsp-btn.is-loading::after {
+    animation: plaque-gleam-slow 2s ease-in-out infinite;
+}
+
+/* Finalized state — cursor change only */
+button.is-finalized,
+.dsp-btn.is-finalized {
+    cursor: default;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* LOCKED SECTION — For locking non-button containers                              */
+/* No opacity, grayscale, or filter. Section remains visually present but inert.   */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.locked-section {
+    pointer-events: none;
+    /* NO filter, NO opacity — locked sections stay physically present */
+}
+
+/* Grey out text and borders in locked sections */
+.locked-section button,
+.locked-section .dsp-btn {
+    border-color: var(--plaque-locked-border) !important;
+    color: var(--plaque-locked-text) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* .sb-btn SIZE VARIANTS — Adjust padding/font, geometry scales automatically      */
+/* Sharp 90° corners maintained at all sizes (NO chamfers)                         */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
 .sb-btn--sm {
-    padding: 8px 20px;
+    padding: 10px 28px;
     font-size: 0.9em;
 }
 
 .sb-btn--lg {
-    padding: 14px 40px;
-    font-size: 1.2em;
+    padding: 18px 52px;
+    font-size: 1.15em;
 }
 
 .sb-btn--xl {
-    padding: 16px 48px;
-    font-size: 1.4em;
+    padding: 22px 64px;
+    font-size: 1.3em;
 }
 
 /* Full width */
@@ -397,245 +974,216 @@ body.night-mode .story-pages-container {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* .sb-btn CORNER DECORATIONS (Optional — add via inner elements)                  */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
-
-.sb-btn .btn-corners {
-    position: absolute;
-    inset: calc(-1 * var(--plaque-border-outer));
-    pointer-events: none;
-    z-index: 2;
-}
-
-/* Top-left corner */
-.sb-btn::before {
-    content: '';
-    position: absolute;
-    top: calc(-1 * var(--plaque-border-outer));
-    left: calc(-1 * var(--plaque-border-outer));
-    width: var(--plaque-corner-size);
-    height: var(--plaque-corner-size);
-    background: var(--plaque-black-outer);
-    pointer-events: none;
-    z-index: 2;
-}
-
-/* Top-right corner */
-.sb-btn::after {
-    content: '';
-    position: absolute;
-    top: calc(-1 * var(--plaque-border-outer));
-    right: calc(-1 * var(--plaque-border-outer));
-    width: var(--plaque-corner-size);
-    height: var(--plaque-corner-size);
-    background: var(--plaque-black-outer);
-    pointer-events: none;
-    z-index: 2;
-}
-
-/* Bottom corners via inner wrapper */
-.sb-btn .btn-corners::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: var(--plaque-corner-size);
-    height: var(--plaque-corner-size);
-    background: var(--plaque-black-outer);
-}
-
-.sb-btn .btn-corners::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: var(--plaque-corner-size);
-    height: var(--plaque-corner-size);
-    background: var(--plaque-black-outer);
-}
-
-/* Gold variant corners */
-.sb-btn--gold::before,
-.sb-btn--gold::after,
-.sb-btn--gold .btn-corners::before,
-.sb-btn--gold .btn-corners::after {
-    background: var(--plaque-gold-outer);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════ */
 /* END .sb-btn BUTTON MATERIAL AUTHORITY                                           */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
 /* Legacy alias for backward compatibility */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* .sb-plaque-btn — ART DECO CEREMONIAL PLAQUE (Background-image filigree system) */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 .sb-plaque-btn {
     position: relative;
+    overflow: hidden; /* Contain gleam */
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 12px 32px;
 
-    /* Brushed metal base with horizontal grain */
-    background-color: var(--plaque-black-base);
-    background-image: var(--plaque-black-grain);
-    background-size: 100% 100%;
-
-    /* Dual border system */
-    border: var(--plaque-border-outer) solid var(--plaque-black-outer);
-    box-shadow:
-        inset 0 0 0 var(--plaque-border-inner) var(--plaque-black-inner),
-        0 2px 4px rgba(0, 0, 0, 0.5);
-
     /* NO ROUNDING - Rectangular plaque */
-    border-radius: 0;
+    border-radius: 0 !important;
+    border: none !important;
 
-    /* Typography */
-    color: var(--plaque-black-text);
+    /* MATERIAL LOCK — Brushed metal base with filigree overlay */
+    background-color: var(--plaque-black-base);
+    background-image:
+        /* Corner ornaments: 4 small squares at outer frame corners */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Outer filigree frame */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Inner filigree frame (top split for diamond) */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Brushed metal grain */
+        var(--plaque-black-grain);
+
+    background-size:
+        /* Corner ornaments */
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        /* Outer frame */
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        /* Inner frame */
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(100% - var(--inner-frame-inset) * 2) var(--inner-frame-thickness),
+        /* Grain */
+        100% 100%;
+
+    background-position:
+        /* Corner ornaments */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        calc(100% - var(--outer-frame-inset)) calc(100% - var(--outer-frame-inset)),
+        /* Outer frame edges */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        /* Inner frame edges */
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(100% - var(--inner-frame-inset)) var(--inner-frame-inset),
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(50% + 6px) var(--inner-frame-inset),
+        var(--inner-frame-inset) calc(100% - var(--inner-frame-inset)),
+        /* Grain */
+        0 0;
+
+    background-repeat: no-repeat;
+
+    /* Typography — engraved appearance */
+    color: var(--filigree-gold);
     font-family: var(--font-main);
     font-size: 1em;
-    text-shadow: none;
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.8),
+        0 -1px 0 rgba(255, 215, 0, 0.1);
     letter-spacing: 0.02em;
 
-    /* No transform on interaction */
     cursor: pointer;
-    transition: filter 0.15s ease, background-color 0.15s ease;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* Corner Squares — All 4 corners */
+/* Diamond accents removed — prefer subtraction over unclear embellishment */
 .sb-plaque-btn::before {
-    content: '';
-    position: absolute;
-    top: calc(-1 * var(--plaque-border-outer));
-    left: calc(-1 * var(--plaque-border-outer));
-    width: var(--plaque-corner-size);
-    height: var(--plaque-corner-size);
-    background: var(--plaque-black-outer);
-    pointer-events: none;
-    z-index: 2;
+    content: none;
 }
+
+/* Focus suppression */
+.sb-plaque-btn:focus,
+.sb-plaque-btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* PLAQUE STATE CHANGES — Gleam ONLY, no brightness/opacity changes                */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Gleam element for sb-plaque-btn */
 .sb-plaque-btn::after {
     content: '';
     position: absolute;
-    top: calc(-1 * var(--plaque-border-outer));
-    right: calc(-1 * var(--plaque-border-outer));
-    width: var(--plaque-corner-size);
-    height: var(--plaque-corner-size);
-    background: var(--plaque-black-outer);
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        105deg,
+        transparent 0%,
+        transparent 35%,
+        rgba(255, 255, 255, 0.08) 45%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.08) 55%,
+        transparent 65%,
+        transparent 100%
+    );
     pointer-events: none;
-    z-index: 2;
+    z-index: 1;
 }
 
-/* Bottom corners via inner wrapper */
-.sb-plaque-btn .plaque-corners {
-    position: absolute;
-    inset: calc(-1 * var(--plaque-border-outer));
-    pointer-events: none;
-    z-index: 2;
-}
-.sb-plaque-btn .plaque-corners::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: var(--plaque-corner-size);
-    height: var(--plaque-corner-size);
-    background: var(--plaque-black-outer);
-}
-.sb-plaque-btn .plaque-corners::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: var(--plaque-corner-size);
-    height: var(--plaque-corner-size);
-    background: var(--plaque-black-outer);
+/* Hover: Gleam sweeps across — material unchanged */
+.sb-plaque-btn:hover:not(:disabled)::after {
+    animation: plaque-gleam 0.6s ease-out forwards;
 }
 
-/* Center Diamonds — Top and Bottom */
-.sb-plaque-btn .plaque-diamonds {
-    position: absolute;
-    inset: calc(-1 * var(--plaque-border-outer));
-    pointer-events: none;
-    z-index: 2;
-}
-.sb-plaque-btn .plaque-diamonds::before {
-    content: '';
-    position: absolute;
-    top: calc(-1 * var(--plaque-diamond-size) / 2);
-    left: 50%;
-    transform: translateX(-50%) rotate(45deg);
-    width: var(--plaque-diamond-size);
-    height: var(--plaque-diamond-size);
-    background: var(--plaque-black-outer);
-}
-.sb-plaque-btn .plaque-diamonds::after {
-    content: '';
-    position: absolute;
-    bottom: calc(-1 * var(--plaque-diamond-size) / 2);
-    left: 50%;
-    transform: translateX(-50%) rotate(45deg);
-    width: var(--plaque-diamond-size);
-    height: var(--plaque-diamond-size);
-    background: var(--plaque-black-outer);
+/* Active: Gleam holds at edge */
+.sb-plaque-btn:active:not(:disabled)::after {
+    left: 100%;
+    animation: none;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
-/* PLAQUE STATE CHANGES — Brightness/Contrast ONLY                                 */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
-
-/* Hover: Slight brightness lift */
-.sb-plaque-btn:hover:not(:disabled) {
-    filter: brightness(1.15);
-    background-color: #151515;
-}
-
-/* Active: Slight darken + grain compression */
-.sb-plaque-btn:active:not(:disabled) {
-    filter: brightness(0.9) contrast(1.1);
-    background-color: #080808;
-}
-
-/* Focus: Subtle outline only, no glow */
-.sb-plaque-btn:focus {
-    outline: 1px solid var(--plaque-black-outer);
-    outline-offset: 2px;
-}
-
-/* Disabled: Desaturate + reduce contrast */
+/* Disabled: Grey filigree and text — NO filter, NO opacity */
 .sb-plaque-btn:disabled {
-    filter: saturate(0.3) contrast(0.7);
-    opacity: 0.6;
     cursor: not-allowed;
+    color: var(--plaque-locked-text) !important;
+    background-image:
+        /* Grey corner ornaments */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Grey outer frame */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Grey inner frame */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        var(--plaque-black-grain);
+}
+
+.sb-plaque-btn:disabled::before {
+    content: none;
+}
+
+.sb-plaque-btn:disabled::after {
+    display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* GOLD PLAQUE VARIANT                                                             */
+/* GOLD PLAQUE VARIANT — Dark filigree on gold base                                */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .sb-plaque-btn.plaque-gold {
     background-color: var(--plaque-gold-base);
-    background-image: var(--plaque-gold-grain);
-    border-color: var(--plaque-gold-outer);
-    box-shadow:
-        inset 0 0 0 var(--plaque-border-inner) var(--plaque-gold-inner),
-        0 2px 4px rgba(0, 0, 0, 0.5);
+    background-image:
+        /* Dark corner ornaments on gold */
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        /* Dark outer frame */
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        /* Dark inner frame */
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        var(--plaque-gold-grain);
     color: var(--plaque-gold-text);
+    text-shadow:
+        0 1px 0 rgba(255, 215, 0, 0.3),
+        0 -1px 0 rgba(0, 0, 0, 0.4);
     font-weight: 600;
 }
 
-.sb-plaque-btn.plaque-gold::before,
-.sb-plaque-btn.plaque-gold::after,
-.sb-plaque-btn.plaque-gold .plaque-corners::before,
-.sb-plaque-btn.plaque-gold .plaque-corners::after,
-.sb-plaque-btn.plaque-gold .plaque-diamonds::before,
-.sb-plaque-btn.plaque-gold .plaque-diamonds::after {
-    background: var(--plaque-gold-outer);
-}
-
-.sb-plaque-btn.plaque-gold:hover:not(:disabled) {
-    background-color: #a07a1a;
-}
-
-.sb-plaque-btn.plaque-gold:active:not(:disabled) {
-    background-color: #6a5010;
+.sb-plaque-btn.plaque-gold::before {
+    content: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -646,24 +1194,24 @@ body.night-mode .story-pages-container {
 .sb-plaque-btn.plaque-sm {
     padding: 8px 20px;
     font-size: 0.9em;
-    --plaque-corner-size: 4px;
-    --plaque-diamond-size: 5px;
+    --corner-size: 4px;
+    --diamond-size: 5px;
 }
 
 /* Large plaque */
 .sb-plaque-btn.plaque-lg {
     padding: 14px 40px;
     font-size: 1.2em;
-    --plaque-corner-size: 6px;
-    --plaque-diamond-size: 7px;
+    --corner-size: 6px;
+    --diamond-size: 7px;
 }
 
 /* Extra large plaque (primary actions) */
 .sb-plaque-btn.plaque-xl {
     padding: 16px 48px;
     font-size: 1.4em;
-    --plaque-corner-size: 7px;
-    --plaque-diamond-size: 8px;
+    --corner-size: 7px;
+    --diamond-size: 8px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -710,15 +1258,148 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 #setup {
     max-width: none !important;
     width: 95%;
+    /* Account for fixed Shape Your Story header with breadcrumbs */
+    padding-top: 140px;
+    /* Black velvet background — soft, subtle, non-directional */
+    background:
+        /* Subtle noise texture for velvet feel */
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"),
+        /* Solid black base */
+        #0a0a0a;
 }
 
-/* Story Shape Row - layout owner for both character blocks */
+/* Story Shape Row - layout owner for character tarot cards + mini-deck */
 .story-shape-row {
     display: flex;
     gap: 24px;
     justify-content: center;
     align-items: flex-start;
     flex-wrap: wrap;
+    padding: 20px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* CHARACTER TAROT CARDS — Canonical tarot ratio (2.75 x 4.75)                     */
+/* Fields must not float directly on background; cards provide containment         */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.character-tarot-card {
+    width: 165px;
+    aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+    /* Subtle inner shadow for depth */
+    box-shadow:
+        inset 0 0 20px rgba(0, 0, 0, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.character-tarot-header {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85em;
+    color: var(--gold);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(218, 165, 32, 0.3);
+    margin-bottom: 10px;
+}
+
+.character-tarot-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.character-tarot-card .character-field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.character-tarot-card .character-field label {
+    font-size: 0.65em;
+    margin-bottom: 2px;
+    color: var(--gold);
+    opacity: 0.8;
+}
+
+.character-tarot-card .character-field input,
+.character-tarot-card .character-field select {
+    font-size: 0.8em;
+    padding: 4px 6px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    color: var(--ink);
+}
+
+.character-tarot-card .character-field input::placeholder {
+    font-size: 0.85em;
+}
+
+/* Character tarot card with fate overlay - positioned relatively for absolute children */
+.character-tarot-card.has-fate-card {
+    position: relative;
+}
+
+/* Fate overlay on character tarot cards - absolute positioning within card */
+.character-tarot-card .fate-overlay-card {
+    position: absolute;
+    inset: 2px; /* Inside the border */
+    background: linear-gradient(135deg, #2d1810 0%, #4a2c17 50%, #6b3a1f 100%);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    box-sizing: border-box;
+    text-align: center;
+    z-index: 5;
+    /* Entry animation */
+    animation: fateOverlayReveal 0.4s ease-out forwards;
+}
+
+@keyframes fateOverlayReveal {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.character-tarot-card .fate-overlay-card .fate-card-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.character-tarot-card .fate-overlay-card .fate-card-details {
+    font-family: 'Lora', serif;
+    font-size: 0.75em;
+    color: rgba(245, 240, 230, 0.8);
+    line-height: 1.4;
+}
+
+/* Continue button wrapper - bottom center */
+.character-continue-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
 }
 
 /* Story Shape Character - internal layout only, width owned by parent */
@@ -745,12 +1426,6 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     width: clamp(15ch, 20ch, 30ch);
     flex: 0 0 auto;
     min-width: auto;
-}
-
-.story-shape-character .character-field-age {
-    width: 3ch;
-    min-width: 2ch;
-    flex: 0 0 auto;
 }
 
 .story-shape-character .character-field-gender {
@@ -968,37 +1643,168 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     padding: 10px;
 }
 
-/* DSP MATERIAL: Page nav button — Plaque Material Regime */
+/* DSP MATERIAL: Page nav button — Ceremonial Metal Plaque */
 .page-nav-btn {
-    /* Plaque material */
-    background-color: var(--plaque-black-base);
-    background-image: var(--plaque-black-grain);
-    background-size: 100% 100%;
-    border: var(--plaque-border-outer) solid var(--plaque-black-outer);
-    box-shadow: inset 0 0 0 var(--plaque-border-inner) var(--plaque-black-inner),
-                0 2px 4px rgba(0, 0, 0, 0.5);
-    color: var(--gold);
-    padding: 8px 16px;
-    border-radius: 0;
-    font-size: 0.9em;
-    cursor: pointer;
-    transition: filter 0.15s ease, background-color 0.15s ease;
+    position: relative;
+    overflow: hidden; /* Contain gleam */
     display: flex;
     align-items: center;
     gap: 6px;
+    padding: 8px 16px;
+    border-radius: 0 !important;
+    border: none !important;
+    font-size: 0.9em;
+    cursor: pointer;
+
+    /* MATERIAL LOCK — Brushed metal with Art Deco filigree */
+    background-color: var(--plaque-black-base);
+    background-image:
+        /* Corner ornaments */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Outer filigree frame */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Inner filigree frame (top split for diamond) */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Brushed metal grain */
+        var(--plaque-black-grain);
+
+    background-size:
+        /* Corner ornaments */
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        /* Outer frame */
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        /* Inner frame */
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(100% - var(--inner-frame-inset) * 2) var(--inner-frame-thickness),
+        /* Grain */
+        100% 100%;
+
+    background-position:
+        /* Corner ornaments */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        calc(100% - var(--outer-frame-inset)) calc(100% - var(--outer-frame-inset)),
+        /* Outer frame edges */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        /* Inner frame edges */
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(100% - var(--inner-frame-inset)) var(--inner-frame-inset),
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(50% + 6px) var(--inner-frame-inset),
+        var(--inner-frame-inset) calc(100% - var(--inner-frame-inset)),
+        /* Grain */
+        0 0;
+
+    background-repeat: no-repeat;
+
+    /* Typography — engraved */
+    color: var(--filigree-gold);
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.8),
+        0 -1px 0 rgba(255, 215, 0, 0.1);
+
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* Hover: Brightness lift only — no glow, no transform */
-.page-nav-btn:hover:not(:disabled) {
-    filter: brightness(1.15);
-    background-color: #151515;
+/* Diamond accents removed — prefer subtraction over unclear embellishment */
+.page-nav-btn::before {
+    content: none;
 }
 
-/* Disabled: Desaturate + reduce contrast */
+/* Focus suppression */
+.page-nav-btn:focus,
+.page-nav-btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Gleam element for page-nav-btn */
+.page-nav-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        105deg,
+        transparent 0%,
+        transparent 35%,
+        rgba(255, 255, 255, 0.08) 45%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.08) 55%,
+        transparent 65%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Hover: Gleam sweeps across — material unchanged */
+.page-nav-btn:hover:not(:disabled)::after {
+    animation: plaque-gleam 0.6s ease-out forwards;
+}
+
+/* Active: Gleam holds at edge */
+.page-nav-btn:active:not(:disabled)::after {
+    left: 100%;
+    animation: none;
+}
+
+/* Disabled: Grey filigree and text — NO filter, NO opacity */
 .page-nav-btn:disabled {
-    filter: saturate(0.3) contrast(0.7);
-    opacity: 0.6;
     cursor: not-allowed;
+    color: var(--plaque-locked-text) !important;
+    background-image:
+        /* Grey corner ornaments */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Grey outer frame */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Grey inner frame */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        var(--plaque-black-grain);
+}
+
+.page-nav-btn:disabled::before {
+    content: none;
+}
+
+.page-nav-btn:disabled::after {
+    display: none;
 }
 
 .page-indicator {
@@ -1067,14 +1873,57 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     color: var(--ink);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* TITLE + SCENE — Printed-book elements inside page (AUTHORITATIVE)          */
+/* Typography: Lora font, lower visual salience, no UI decoration             */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.story-page-title {
+    font-family: 'Lora', serif;
+    font-size: 1.8em;
+    font-weight: 400;
+    color: rgba(245, 240, 230, 0.7); /* Lower salience than body text */
+    text-align: center;
+    margin: 0 0 8px 0;
+    padding: 0;
+    letter-spacing: 0.02em;
+    /* No glow, no gradients, no UI decoration */
+}
+
+.story-page-title.compact {
+    font-size: 1.2em;
+}
+
+.story-page-scene {
+    font-family: 'Lora', serif;
+    font-size: 0.9em;
+    font-weight: 400;
+    color: rgba(245, 240, 230, 0.5); /* Even lower salience */
+    text-align: center;
+    margin: 0 0 20px 0;
+    padding: 0;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    /* No glow, no gradients, no UI decoration */
+}
+
+/* Synopsis inherits printed-book typography */
+#storyText .scene-synopsis {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.95em;
+    color: rgba(245, 240, 230, 0.6);
+    text-align: center;
+    margin: 0 20px 20px;
+    line-height: 1.5;
+}
+
 /* DIALOGUE */
 .dialogue-block { display: block; margin: 15px 0; padding-left: 20px; border-left: 3px solid rgba(255,255,255,0.2); font-style: italic; font-weight: 500; font-size: 1.1em; }
 .p1-dia { color: var(--p1-color); border-color: var(--p1-color); }
 .p2-dia { color: var(--p2-color); border-color: var(--p2-color); }
 
-/* STORY DIALOGUE FORMATTING */
-#storyText .story-dialogue { font-style: italic; font-size: 1.15em; color: var(--pink); display: inline; }
-#storyText .dialogue-tag { font-style: italic; font-size: 1.15em; color: var(--pink); display: inline; }
+/* STORY DIALOGUE — Solo mode renders as plain text (no styling needed) */
+/* Couple mode uses .p1-dia and .p2-dia for speaker-identified dialogue only */
 
 body.lgbtq-mode .p1-dia { color: #bf55ec !important; border-color: #bf55ec !important; }
 body.lgbtq-mode .p2-dia { color: #ffae00 !important; border-color: #ffae00 !important; }
@@ -1083,65 +1932,184 @@ body.lgbtq-mode .p2-dia { color: #ffae00 !important; border-color: #ffae00 !impo
 /* DSP MATERIAL: Buttons — Matte black metal, 2px double gold border, no radius */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* GLOBAL BUTTON STYLES — Inherit from .sb-btn Material Authority                  */
+/* GLOBAL BUTTON STYLES — Art Deco Ceremonial Plaque                               */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 /*
- * All <button> elements inherit the plaque material from .sb-btn.
+ * All <button> elements inherit the Art Deco filigree plaque material.
  * This ensures visual consistency across the entire application.
  *
  * MATERIAL LOCK applies here:
- *   - background-color, background-image use !important
- *   - border-radius: 0 !important
  *   - No state may override material properties
+ *   - Filigree drawn via background-image layers
  */
 button, .dsp-btn {
     position: relative;
-    /* MATERIAL LOCK — Brushed metal base with horizontal grain */
-    background-color: var(--plaque-black-base) !important;
-    background-image: var(--plaque-black-grain) !important;
-    background-size: 100% 100% !important;
-    color: var(--gold);
+    overflow: hidden; /* Contain gleam */
     padding: 10px 30px;
-    /* Dual border: outer brighter, inner inset */
-    border: var(--plaque-border-outer) solid var(--plaque-black-outer) !important;
-    box-shadow: inset 0 0 0 var(--plaque-border-inner) var(--plaque-black-inner),
-                0 2px 4px rgba(0, 0, 0, 0.5) !important;
-    /* NO ROUNDING — rectangular plaque */
     border-radius: 0 !important;
+    border: none !important;
     font-size: 1em;
     cursor: pointer;
-    transition: filter 0.15s ease, opacity 0.15s ease;
     font-family: var(--font-main);
+
+    /* MATERIAL LOCK — Brushed metal with Art Deco filigree */
+    background-color: var(--plaque-black-base);
+    background-image:
+        /* Corner ornaments */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Outer filigree frame */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Inner filigree frame (top split for diamond) */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Brushed metal grain */
+        var(--plaque-black-grain);
+
+    background-size:
+        /* Corner ornaments */
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        /* Outer frame */
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        /* Inner frame */
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(100% - var(--inner-frame-inset) * 2) var(--inner-frame-thickness),
+        /* Grain */
+        100% 100%;
+
+    background-position:
+        /* Corner ornaments */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        calc(100% - var(--outer-frame-inset)) calc(100% - var(--outer-frame-inset)),
+        /* Outer frame edges */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        /* Inner frame edges */
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(100% - var(--inner-frame-inset)) var(--inner-frame-inset),
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(50% + 6px) var(--inner-frame-inset),
+        var(--inner-frame-inset) calc(100% - var(--inner-frame-inset)),
+        /* Grain */
+        0 0;
+
+    background-repeat: no-repeat;
+
+    /* Typography — engraved */
+    color: var(--filigree-gold);
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.8),
+        0 -1px 0 rgba(255, 215, 0, 0.1);
+
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
 }
-/* Hover: Brightness lift ONLY — no glow, no transform, NO material change */
-button:hover:not(:disabled), .dsp-btn:hover:not(:disabled) {
-    filter: brightness(1.15);
-    /* Material unchanged — brightness only */
+
+/* Diamond accents removed — prefer subtraction over unclear embellishment */
+button::before, .dsp-btn::before {
+    content: none;
 }
-/* Focus: Subtle outline, no glow */
-button:focus, .dsp-btn:focus {
-    outline: 1px solid var(--plaque-black-outer);
-    outline-offset: 2px;
+
+/* Gleam element — diagonal highlight that sweeps across on hover */
+button::after, .dsp-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        105deg,
+        transparent 0%,
+        transparent 35%,
+        rgba(255, 255, 255, 0.08) 45%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.08) 55%,
+        transparent 65%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
 }
-/* Active: Darken + contrast — NO material change */
-button:active:not(:disabled), .dsp-btn:active:not(:disabled) {
-    filter: brightness(0.9) contrast(1.1);
-    /* Material unchanged — filter only */
+
+/* Hover: Gleam sweeps across — material unchanged */
+button:hover:not(:disabled)::after, .dsp-btn:hover:not(:disabled)::after {
+    animation: plaque-gleam 0.6s ease-out forwards;
 }
-/* Disabled: Desaturate + reduce contrast */
+
+/* Focus suppression */
+button:focus, .dsp-btn:focus,
+button:focus-visible, .dsp-btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Active: Gleam holds at edge — pressed state implied by stillness */
+button:active:not(:disabled)::after, .dsp-btn:active:not(:disabled)::after {
+    left: 100%;
+    animation: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* LOCKED/DISABLED — Inert plaque with grey filigree and text                      */
+/* Material unchanged. No opacity. No grayscale. No filter.                        */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 button:disabled, .dsp-btn:disabled {
-    filter: saturate(0.3) contrast(0.7);
-    opacity: 0.6;
     cursor: not-allowed;
+    color: var(--plaque-locked-text) !important;
+    background-image:
+        /* Grey corner ornaments */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Grey outer frame */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Grey inner frame */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        var(--plaque-black-grain);
 }
-/* DSP Secondary Button: Same material, reduced opacity */
+
+button:disabled::before, .dsp-btn:disabled::before {
+    content: none;
+}
+button:disabled::after, .dsp-btn:disabled::after {
+    display: none;
+}
+/* DSP Secondary Button: Identical material — no opacity differentiation */
 .dsp-btn-secondary {
-    opacity: 0.8;
-    /* Material inherited from button — cannot override */
+    /* Material inherited from button — identical appearance */
 }
-.dsp-btn-secondary:hover:not(:disabled) {
-    filter: brightness(1.1);
-    opacity: 0.9;
+.dsp-btn-secondary:hover:not(:disabled)::after {
+    /* Inherits gleam behavior */
 }
 /* Small button variant */
 .small-btn {
@@ -1248,7 +2216,13 @@ select:-webkit-autofill {
 /* Altar, not shelf — visual dominance, no competing borders                   */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Override .overlay centering for gallery — stage layout with central dominance */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* COVER GALLERY — TWO-COLUMN LAYOUT (AUTHORITATIVE)                          */
+/* Desktop: Hero + side thumbnail rail                                         */
+/* Mobile: Hero + bottom carousel                                              */
+/* Hero NEVER shares vertical space with thumbnails on desktop                 */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
 #coverGalleryModal.overlay {
     align-items: center;
     justify-content: center;
@@ -1264,16 +2238,22 @@ select:-webkit-autofill {
     padding: 0 !important;
 }
 
-/* Gallery Stage Layout: Central dominant cover + demoted thumbnails */
+/* Gallery Stage Layout: Two-column on desktop */
 .gallery-stage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+        "thumbs hero"
+        "thumbs label"
+        "controls controls";
     gap: 20px;
+    align-items: start;
 }
 
 /* CENTRAL COVER — Book object with presence */
 .gallery-stage-cover {
+    grid-area: hero;
     position: relative;
     width: 320px;
     height: 450px;
@@ -1286,13 +2266,16 @@ select:-webkit-autofill {
     border-radius: 2px 8px 8px 2px;
     overflow: hidden;
     background: #1a1a1a;
-    /* NO double yellow frame — removed */
+    /* Reserve space before rendering — prevent layout shift */
+    min-height: 450px;
 }
 
+/* HERO IMAGE CONTAINMENT — Full visibility mandatory (AUTHORITATIVE) */
 .gallery-stage-cover img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* NEVER cover — entire image must be visible */
+    background: #1a1a1a; /* Letterbox fill */
 }
 
 /* Cover placeholder when no image */
@@ -1313,33 +2296,42 @@ select:-webkit-autofill {
     opacity: 0.5;
 }
 
-/* Stage label below central cover — single hierarchy */
+/* Stage label below central cover — museum-placard hierarchy */
 .gallery-stage-label {
+    grid-area: label;
     text-align: center;
     padding: 12px 0;
 }
 
 .gallery-stage-label .stage-name {
     color: var(--gold);
-    font-size: 1.1em;
-    font-weight: 600;
-    font-family: 'lust-script-display', serif;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: var(--font-main);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
+/* Sketch Cover label — museum-placard tone, context not content */
 .gallery-stage-label .stage-status {
-    color: #888;
-    font-size: 0.85em;
+    color: #666;
+    font-size: 0.8em;
+    font-weight: 400;
     margin-top: 4px;
+    font-family: var(--font-main);
+    letter-spacing: 0.03em;
 }
 
-/* THUMBNAIL STRIP — Demoted, smaller, peripheral */
+/* THUMBNAIL RAIL — Side-mounted vertical navigation (desktop) */
 .gallery-thumbnails {
+    grid-area: thumbs;
     display: flex;
-    gap: 12px;
-    justify-content: center;
-    padding: 10px 0;
-    overflow-x: auto;
-    max-width: 100%;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0;
+    max-height: 450px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .gallery-thumbnail {
@@ -1387,6 +2379,73 @@ select:-webkit-autofill {
     color: #444;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* CONTROL BAND — Dedicated zone outside hero visual field (AUTHORITATIVE)    */
+/* Buttons must NEVER overlap cover image                                      */
+/* Buttons must NEVER clip at any viewport size                                */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.gallery-control-band {
+    grid-area: controls;
+    width: 100%;
+    padding: 20px 0 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.gallery-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    max-width: 100%;
+}
+
+/* Gallery Buttons — Literary typography (matches Fate Cards / book UI) */
+.sb-btn--gallery {
+    font-family: var(--font-main);
+    font-size: 0.85em;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    color: #999;
+    background: transparent;
+    border: 1px solid #444 !important;
+    border-radius: 0 !important;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+    /* Visual salience: low → neutral. Never emphasized. */
+}
+
+.sb-btn--gallery:hover:not(:disabled) {
+    color: var(--gold);
+    border-color: #666 !important;
+}
+
+.sb-btn--gallery:disabled {
+    color: #444;
+    border-color: #333 !important;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Progress info — subdued, contextual */
+.gallery-progress-info {
+    color: #555;
+    font-size: 0.75em;
+    font-family: var(--font-main);
+    letter-spacing: 0.03em;
+    text-align: center;
+}
+
+.gallery-progress-info .progress-divider {
+    margin: 0 8px;
+    color: #444;
+}
+
 /* Loading state for generating cover */
 .gallery-stage-cover.is-generating {
     position: relative;
@@ -1416,15 +2475,40 @@ select:-webkit-autofill {
     z-index: 2;
 }
 
-/* Narrow screen: maintain book dominance */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* MOBILE: Bottom carousel — NEVER side rail on mobile                         */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
     .cover-gallery-box {
         padding: 10px !important;
     }
 
+    /* Mobile: Single column, thumbnails below hero */
+    .gallery-stage {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "hero"
+            "label"
+            "thumbs"
+            "controls";
+        justify-items: center;
+    }
+
     .gallery-stage-cover {
         width: 280px;
         height: 400px;
+        min-height: 400px;
+    }
+
+    /* Mobile: Horizontal carousel at bottom */
+    .gallery-thumbnails {
+        flex-direction: row;
+        max-height: none;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        justify-content: center;
+        padding: 10px 0;
     }
 
     .gallery-thumbnail {
@@ -1526,6 +2610,17 @@ select:-webkit-autofill {
 
 /* INPUTS & LOCKS */
 .input-wrapper { position: relative; width: 95%; margin: 0 auto 15px; overflow:hidden; }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* CEREMONIAL SPARKLE OVERFLOW — Allow sparkles on Say/Do input boxes          */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+#actionWrapper, #dialogueWrapper {
+    overflow: visible;
+}
+#actionWrapper textarea, #dialogueWrapper textarea {
+    position: relative;
+    overflow: visible;
+}
 .input-wrapper label, .setting-label { display:block; text-align:center; color:var(--gold); margin-bottom:5px; font-size:0.9em; font-family:var(--font-main); text-transform:uppercase; letter-spacing:1px; }
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* DSP MATERIAL: Text Fields & Selects — Plaque-aligned (no glow)              */
@@ -1579,12 +2674,18 @@ select {
     height: 100%; width: 100%;
 }
 
-/* LOCKS & CURSOR */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* LOCKS & CURSOR — Locked elements remain physically present                      */
+/* NO opacity, NO grayscale, NO filter. Grey filigree/text indicates locked state. */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 .locked-input, .locked-input textarea, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
 .intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
-    opacity:0.6; filter:grayscale(0.9);
+    /* NO opacity, NO filter — element stays physically present */
     cursor: url('/cursor-dollar-plane-64.png'), pointer !important;
     pointer-events: auto !important;
+    /* Grey filigree (border) and text */
+    border-color: var(--plaque-locked-border) !important;
+    color: var(--plaque-locked-text) !important;
 }
 .locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
 .intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
@@ -1825,12 +2926,14 @@ select {
 }
 
 /* Selection card in-place zoom state */
+/* Uses position: fixed to break out of parent stacking contexts */
 .selection-card.zoomed {
-    position: relative;
-    z-index: 1000;
+    position: fixed !important;
+    z-index: 1001; /* Above backdrop and any row dimming */
     transition: transform 0.3s ease;
     pointer-events: auto !important;
     opacity: 1 !important;
+    isolation: isolate;
 }
 
 .selection-card.zoomed .selection-card-front {
@@ -1961,13 +3064,17 @@ select {
     font-weight: bold;
     filter: brightness(1.1);
 }
-/* Locked: Desaturate */
+/* Locked: Grey filigree and text — NO filter, NO opacity */
 .chip.locked-chip {
     cursor: not-allowed;
-    filter: saturate(0.3) contrast(0.7);
-    opacity: 0.5;
+    border-color: var(--plaque-locked-border) !important;
+    color: var(--plaque-locked-text) !important;
+    /* NO filter, NO opacity — chip remains physically present */
 }
-.chip.locked-chip:hover { filter: saturate(0.3) contrast(0.7); }
+.chip.locked-chip:hover {
+    /* No hover response on locked chips */
+    border-color: var(--plaque-locked-border) !important;
+}
 /* CORRECTIVE: Toast positioned between Veto/Quill panels, not overlapping Begin Story */
 /* DSP MATERIAL: Toast — Matte black, 2px double gold, no radius */
 .toast {
@@ -2054,6 +3161,50 @@ select {
 #vizModal { z-index: 6000; }
 .viz-modal-content { text-align: center; max-width: 650px; width: 95%; max-height:95vh; overflow-y:auto; }
 .viz-controls { display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* VISUALIZER BUTTON PLAQUE CONTAINMENT (AUTHORITATIVE)                            */
+/* Gleam must be contained within button bounds — never escape to modal/viewport   */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* All visualizer buttons: enforce containment */
+#vizModal .sb-btn,
+#vizModal button,
+.viz-controls button,
+.viz-controls .sb-btn {
+    position: relative !important;
+    overflow: hidden !important;
+    /* Reset any inherited positioning that might anchor gleam to parent */
+    transform: translateZ(0); /* Create stacking context */
+}
+
+/* Gleam containment: ensure ::after is relative to button only */
+#vizModal .sb-btn::after,
+#vizModal button::after,
+.viz-controls button::after,
+.viz-controls .sb-btn::after {
+    position: absolute;
+    top: 0;
+    left: -100%; /* Start fully outside left edge */
+    width: 50%;
+    height: 100%;
+    /* No animation at rest — gleam is idle */
+    animation: none;
+}
+
+/* Gleam activates ONLY on hover */
+#vizModal .sb-btn:hover:not(:disabled)::after,
+#vizModal button:hover:not(:disabled)::after,
+.viz-controls button:hover:not(:disabled)::after,
+.viz-controls .sb-btn:hover:not(:disabled)::after {
+    animation: plaque-gleam 0.6s ease-out forwards;
+}
+
+/* Ensure viz-modal-content doesn't interfere with button positioning */
+.viz-modal-content .sb-btn,
+.viz-modal-content button {
+    isolation: isolate; /* Prevent blend mode inheritance */
+}
 #vizPreviewImg { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 400px; object-fit: contain; background:#000; min-height:200px; display:none; }
 #vizPlaceholder { width: 100%; height:200px; display:flex; align-items:center; justify-content:center; border:1px dashed #444; margin-top:10px; color:#666; font-style:italic;}
 /* DSP MATERIAL: Viz prompt input — inherits DSP field style with gold accent */
@@ -2377,7 +3528,7 @@ select {
 /* Fate input row - contains input + fate hand */
 .fate-input-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* Align to top to prevent vertical collision */
     gap: 12px;
     position: relative;
 }
@@ -2386,6 +3537,14 @@ select {
     flex: 1;
     position: relative;
     min-width: 0;
+    overflow: hidden; /* Contain rotating placeholder within bounds */
+}
+
+/* Ensure Destiny's Choice card doesn't get pushed by input content */
+.fate-input-row .destiny-flip-card {
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 3px; /* Align with textarea top padding */
 }
 
 /* DSP MATERIAL: Fate fields — Plaque-aligned (no glow) */
@@ -2837,6 +3996,211 @@ textarea.fate-field {
     text-shadow: 0 0 8px rgba(218, 165, 32, 0.5);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* DESTINY'S CHOICE MINI-DECK — Central fate card dispenser                        */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.destiny-mini-deck {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 10px;
+    transition: transform 0.2s ease;
+    z-index: 10;
+}
+
+.destiny-mini-deck:hover {
+    transform: scale(1.08);
+}
+
+.destiny-mini-deck:active {
+    transform: scale(0.95);
+}
+
+.destiny-mini-deck-stack {
+    position: relative;
+    width: 45px;
+    height: 70px;
+}
+
+.destiny-mini-card {
+    position: absolute;
+    width: 45px;
+    height: 65px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border: 1px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.destiny-mini-card::after {
+    content: "⚜";
+    font-size: 14px;
+    color: var(--gold);
+}
+
+/* Stacked card offsets for depth illusion */
+.destiny-mini-card.deck-card-1 {
+    top: 0;
+    left: 0;
+    z-index: 3;
+}
+
+.destiny-mini-card.deck-card-2 {
+    top: 2px;
+    left: 2px;
+    z-index: 2;
+}
+
+.destiny-mini-card.deck-card-3 {
+    top: 4px;
+    left: 4px;
+    z-index: 1;
+}
+
+/* Hover lift effect on top card */
+.destiny-mini-deck:hover .deck-card-1 {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.destiny-mini-deck-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65em;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
+/* Retracted/faded state after Continue */
+.destiny-mini-deck.retracted {
+    opacity: 0;
+    transform: scale(0.5);
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Ambient sparkle emitter for destiny deck */
+.destiny-deck-sparkle-emitter {
+    position: absolute;
+    inset: -15px;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* DESTINY FLYING CARDS — Animated cards that fly from deck to character positions */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.destiny-flying-card {
+    position: fixed;
+    width: 55px;
+    height: 95px;
+    z-index: 1000;
+    pointer-events: none;
+    perspective: 800px;
+}
+
+.destiny-flying-card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+}
+
+.destiny-flying-card.flipping .destiny-flying-card-inner {
+    transform: rotateY(180deg);
+}
+
+.destiny-flying-card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    box-sizing: border-box;
+}
+
+.destiny-flying-card-back {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border: 1px solid var(--gold);
+}
+
+.destiny-flying-card-back::after {
+    content: "⚜";
+    font-size: 18px;
+    color: var(--gold);
+}
+
+.destiny-flying-card-front {
+    background: linear-gradient(135deg, #2d1810 0%, #4a2c17 50%, #6b3a1f 100%);
+    border: 1px solid var(--gold);
+    transform: rotateY(180deg);
+    text-align: center;
+}
+
+.destiny-flying-card-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55em;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.destiny-flying-card-details {
+    font-family: 'Lora', serif;
+    font-size: 0.45em;
+    color: rgba(245, 240, 230, 0.8);
+    line-height: 1.3;
+}
+
+/* Character card with fate overlay */
+.character-destiny-card-tall.has-fate-card {
+    position: relative;
+}
+
+.character-destiny-card-tall .fate-overlay-card {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #2d1810 0%, #4a2c17 50%, #6b3a1f 100%);
+    border: 1px solid var(--gold);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    box-sizing: border-box;
+    text-align: center;
+    z-index: 5;
+}
+
+.fate-overlay-card .fate-card-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6em;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.fate-overlay-card .fate-card-details {
+    font-family: 'Lora', serif;
+    font-size: 0.5em;
+    color: rgba(245, 240, 230, 0.8);
+    line-height: 1.3;
+}
+
 .character-fields-side {
     flex: 1;
     min-width: 0;
@@ -2904,23 +4268,7 @@ textarea.fate-field {
     top: 14px;
 }
 
-/* PASS 9D: Age field - compact numeric input */
-.character-field-age {
-    flex: 0 0 60px;
-    min-width: 50px;
-    max-width: 70px;
-}
-
-.character-field-age input {
-    text-align: center;
-    -moz-appearance: textfield;
-}
-
-.character-field-age input::-webkit-outer-spin-button,
-.character-field-age input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
+/* Age field removed — no longer part of character form */
 
 .custom-gender-input {
     margin-top: 5px;
@@ -2960,15 +4308,9 @@ textarea.fate-field {
     .character-field-name,
     .character-field-gender,
     .character-field-pronouns,
-    .character-field-ancestry,
-    .character-field-age {
+    .character-field-ancestry {
         flex: none;
         min-width: auto;
-    }
-
-    .character-field-age {
-        max-width: none;
-        width: 100%;
     }
 }
 
@@ -2979,6 +4321,13 @@ textarea.fate-field {
 }
 .fate-textarea-wrapper {
     width: 100%;
+    overflow: hidden; /* Contain scrolling placeholder */
+}
+
+/* Ensure rotating placeholder stays within textarea bounds */
+.fate-textarea-wrapper .rotating-placeholder {
+    max-width: 100%;
+    overflow: hidden;
 }
 
 /* Committed Phrases (Debossed/Carved Look) */
@@ -3089,14 +4438,18 @@ textarea.fate-field {
     outline: none;
 }
 
-/* Disabled state - visually muted */
+/* Disabled state — grey border, NO filter, NO opacity */
 .sb-radio input[type="radio"]:disabled + .sb-radio-visual {
-    filter: grayscale(0.7) brightness(0.6);
     cursor: not-allowed;
+    border: 2px solid var(--plaque-locked-border);
+    /* NO filter — element stays physically present */
 }
 .sb-radio:has(input[type="radio"]:disabled) {
     cursor: not-allowed;
-    opacity: 0.6;
+    /* NO opacity change */
+}
+.sb-radio:has(input[type="radio"]:disabled) .sb-radio-label {
+    color: var(--plaque-locked-text);
 }
 
 /* Label text styling - DOUBLED SIZE */
@@ -3177,14 +4530,18 @@ textarea.fate-field {
     outline: none;
 }
 
-/* Disabled state - visually muted */
+/* Disabled state — grey border, NO filter, NO opacity */
 .sb-checkbox input[type="checkbox"]:disabled + .sb-checkbox-visual {
-    filter: grayscale(0.7) brightness(0.6);
     cursor: not-allowed;
+    border: 2px solid var(--plaque-locked-border);
+    /* NO filter — element stays physically present */
 }
 .sb-checkbox:has(input[type="checkbox"]:disabled) {
     cursor: not-allowed;
-    opacity: 0.6;
+    /* NO opacity change */
+}
+.sb-checkbox:has(input[type="checkbox"]:disabled) .sb-checkbox-label {
+    color: var(--plaque-locked-text);
 }
 
 /* Label text styling - DOUBLED SIZE */
@@ -4296,18 +5653,27 @@ textarea.fate-field {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* WRY CONFESSION — INSET-IMAGE RENDERING (TONE-SPECIFIC)                      */
+/* WRY CONFESSION — INSET-IMAGE RENDERING (AUTHORITATIVE, MANDATORY)           */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* VISUALIZER LAYOUT RULE — WRY CONFESSION (AUTHORITATIVE):                    */
+/*                                                                             */
+/* On desktop viewports, Wry Confession illustrations MUST render at 50% of    */
+/* the standard cover/image width. They MUST be centered with surrounding      */
+/* whitespace and MUST NOT function as a dominant hero image.                  */
+/*                                                                             */
+/* This scaling is MANDATORY for tone correctness.                             */
+/*                                                                             */
 /* Editorial aside, not focal scene. Text retains narrative primacy.           */
 /* TAG: storybound/wry-inset-image-v1                                          */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Wry Confession: Image as inset aside, not hero */
+/* Wry Confession: Image as inset aside, not hero (MANDATORY SIZING) */
 .setting-plate.setting-inline.wry-confession-inset {
-    width: 50%; /* Default: 50% of text column */
+    width: 50%; /* MANDATORY: 50% of text column for tone correctness */
     max-width: 60%;
     min-width: 40%;
     max-height: 35vh; /* Reduced from 50vh */
-    margin: 1.5em auto; /* Centered block, not float */
+    margin: 1.5em auto; /* MANDATORY: Centered block with whitespace */
     background: transparent;
     border-radius: 4px;
 }
@@ -4721,6 +6087,14 @@ textarea.fate-field {
     visibility: visible;
 }
 
+/* DSP CORRIDOR COMPLETE — Fade out after corridor completion (post-Arousal) */
+.synopsis-panel.corridor-complete {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    DSP DECORATIONS — CSS-only double-line frame with corner marks
    Applied at ALL screen widths (replaces removed SVG art-deco border)
@@ -4877,30 +6251,34 @@ textarea.fate-field {
     100% { opacity: 1; }
 }
 
-/* Mobile: DSP pins to top of viewport, floats above content */
-/* CONSTRAINED WIDTH: Avoids overlapping back arrow / burger menu */
+/* ═══════════════════════════════════════════════════════════════════════════════
+   DSP NARROW VIEWPORT — Docks to BOTTOM to avoid obscuring breadcrumbs
+   AUTHORITATIVE: DSP must never overlap or obscure breadcrumbs
+   ═══════════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1100px) {
-    /* Narrow screens: reposition to top-center, adjust sizing */
+    /* Narrow screens: dock to BOTTOM, never top (breadcrumbs at top) */
     .synopsis-panel {
         position: fixed;
-        top: 52px; /* DSP: clear back arrow + breathing room */
+        top: auto;
+        bottom: 0; /* DSP: dock to bottom on narrow viewports */
         left: 50%;
         right: auto;
-        bottom: auto;
         transform: translateX(-50%);
-        width: calc(100% - 140px); /* 70px clearance each side */
-        max-width: 780px;
+        width: calc(100% - 40px); /* Slightly wider at bottom */
+        max-width: 600px;
         min-height: auto;
         max-height: none;
         margin: 0;
         padding: 14px 22px;
-        z-index: 500;
+        z-index: 400; /* Below breadcrumb header (500) */
         /* DSP: gold background */
         background: linear-gradient(180deg, #d4b36a 0%, #b8954f 100%);
         /* DSP: pressed/embossed effect - no glow */
         box-shadow:
+            0 -2px 10px rgba(0, 0, 0, 0.3),
             inset 0 1px 0 rgba(255, 236, 180, 0.25),
             inset 0 -1px 0 rgba(80, 60, 20, 0.35);
+        border-radius: 8px 8px 0 0;
         overflow: visible;
     }
 
@@ -4928,17 +6306,17 @@ textarea.fate-field {
         margin-bottom: 0;
     }
 
-    /* Add top padding to setup screen when DSP is floating */
+    /* DSP is now at BOTTOM on narrow screens - add bottom padding instead */
     #setup {
-        padding-top: 120px !important; /* DSP: room for repositioned panel */
+        padding-bottom: 120px !important; /* Room for bottom-docked DSP */
     }
 }
 
 /* Extra narrow screens — tighter constraints */
 @media (max-width: 500px) {
     .synopsis-panel {
-        top: 48px; /* DSP: still clear nav controls */
-        width: calc(100% - 100px); /* 50px clearance each side */
+        /* DSP: stays at bottom on narrow screens */
+        width: calc(100% - 20px); /* Tighter side margins */
         padding: 10px 14px;
         font-size: 0.85em;
     }
@@ -5235,13 +6613,23 @@ textarea.fate-field {
     border-color: var(--gold);
 }
 
-/* Locked state */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* LOCKED CARD STATE — Grey filigree/text, NO opacity, NO grayscale                */
+/* Card remains physically present and visible. Only decoration shifts to grey.    */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 .sb-card.locked {
-    opacity: 0.5;
-    filter: grayscale(0.8);
     cursor: url('/cursor-dollar-plane-64.png'), pointer !important;
+    /* NO opacity, NO filter — card stays physically present */
 }
 
+/* Grey filigree on locked card borders */
+.sb-card.locked .sb-card-back,
+.sb-card.locked .sb-card-front {
+    border-color: var(--plaque-locked-border) !important;
+    color: var(--plaque-locked-text) !important;
+}
+
+/* Lock icon overlay */
 .sb-card.locked::after {
     content: "";
     position: absolute;
@@ -5249,32 +6637,32 @@ textarea.fate-field {
     right: 5px;
     width: 18px;
     height: 18px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.5 13.5a3.5 3.5 0 1 0-2.5-5.9l-1.5 1.5'%3E%3C/path%3E%3Cpath d='M6.5 10.5a3.5 3.5 0 1 0 2.5 5.9l1.5-1.5'%3E%3C/path%3E%3Cpath d='M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0'%3E%3C/path%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.5 13.5a3.5 3.5 0 1 0-2.5-5.9l-1.5 1.5'%3E%3C/path%3E%3Cpath d='M6.5 10.5a3.5 3.5 0 1 0 2.5 5.9l1.5-1.5'%3E%3C/path%3E%3Cpath d='M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-size: contain;
-    opacity: 0.9;
     pointer-events: none;
     z-index: 10;
 }
 
-/* PASS 8M: Locked card hover preview - flips to show description while staying locked
-   Card remains greyed/locked, but user can preview description on hover.
+/* Locked card hover preview - flips to show description while staying locked
    Click still triggers paywall modal (no selection occurs). */
 .sb-card.locked:hover .sb-card-inner {
     transform: rotateY(180deg);
 }
 
-/* Keep locked styling during hover-flip preview */
+/* No visual change on hover — locked state is static */
 .sb-card.locked:hover {
-    opacity: 0.6; /* Slightly brighter on hover but still dimmed */
-    filter: grayscale(0.6);
+    /* NO opacity change, NO filter change — card remains inert */
 }
 
-/* Dimmed state during zoom */
+/* Dimmed state during zoom — CEREMONIAL PLAQUE COMPLIANT
+   NO opacity or filter changes. Cards remain physically present but
+   pointer-events disabled and pushed back via z-index */
 .sb-card.dimmed {
-    opacity: 0.3;
     pointer-events: none;
-    filter: blur(1px);
+    z-index: 0;
+    /* NO opacity: 0.3 — violates plaque paradigm */
+    /* NO filter: blur(1px) — violates plaque paradigm */
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -5300,14 +6688,27 @@ textarea.fate-field {
 }
 
 /* Zoomed card state - transforms the SAME card element */
+/* Uses position: fixed to break out of parent stacking contexts */
 .sb-card.zoomed {
-    position: relative;
-    z-index: 1000;
+    position: fixed !important;
+    z-index: 1001; /* Above backdrop (999) and any row dimming */
     /* Transform is set dynamically via JS to center the card */
     transition: transform 0.3s ease;
     pointer-events: auto !important;
     opacity: 1 !important;
     filter: none !important;
+    /* Ensure all children are interactive */
+    isolation: isolate;
+}
+
+/* Ensure zoom content and flavor buttons are fully interactive */
+.sb-card.zoomed .sb-zoom-content,
+.sb-card.zoomed .sb-zoom-flavors,
+.sb-card.zoomed .sb-flavor-btn,
+.sb-card.zoomed .sb-zoom-custom-input {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
 }
 
 /* When zoomed, the inner card should not flip back */
@@ -5364,32 +6765,31 @@ textarea.fate-field {
 }
 
 /* DSP MATERIAL: Individual flavor button — Plaque Material (miniature) */
+/* Too small for gleam animation — selection indicated by border only */
 .sb-flavor-btn {
     font-size: 5px;
     padding: 2px 4px;
-    background-color: var(--plaque-black-base);
-    background-image: var(--plaque-black-grain);
-    background-size: 100% 100%;
+    background-color: var(--plaque-black-base) !important;
+    background-image: var(--plaque-black-grain) !important;
+    background-size: 100% 100% !important;
     border: 1px solid var(--plaque-black-outer);
     /* NO ROUNDING */
-    border-radius: 0;
+    border-radius: 0 !important;
     color: #f5f0e6;
     cursor: pointer;
-    transition: filter 0.15s ease, background-color 0.15s ease;
     font-family: 'Crimson Text', serif;
+    /* NO TRANSITIONS — plaque is inert */
 }
 
-/* Hover: Brightness lift only */
+/* Hover: Border highlight only — no material change */
 .sb-flavor-btn:hover:not(:disabled) {
-    filter: brightness(1.15);
+    border-color: var(--gold);
 }
 
-/* Selected: Brighter base, gold border — no glow */
+/* Selected: Gold border only — no brightness/background change */
 .sb-flavor-btn.selected {
-    background-color: #1a1508;
     border-color: var(--gold);
     color: var(--gold);
-    filter: brightness(1.1);
 }
 
 /* Custom setting wrapper */
@@ -5400,10 +6800,12 @@ textarea.fate-field {
     gap: 2px;
 }
 
-.sb-zoom-custom-label {
+.sb-zoom-custom-label,
+.sb-zoom-flavor-label {
     font-size: 5px;
     color: var(--gold);
-    text-align: left;
+    text-align: center;
+    margin-bottom: 2px;
 }
 
 .sb-zoom-custom-wrapper {
@@ -5508,38 +6910,215 @@ textarea.fate-field {
    ======================================== */
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   BREADCRUMB CONTAINER — Fixed at top, never scrolls with content
+   SHAPE YOUR STORY HEADER — Section title + breadcrumb row
+   Breadcrumbs visually belong to this section header.
+   NORMAL DOCUMENT FLOW: Header and breadcrumbs push content down, no overlaying.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.shape-your-story-header {
+    position: sticky;
+    top: 0;
+    z-index: 500;
+    background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.92) 100%);
+    /* Gold divider line removed per spec */
+    padding-top: 10px;
+    /* Normal document flow - pushes content down */
+    width: 100%;
+}
+
+.shape-your-story-header .section-title {
+    margin: 0 0 5px 0;
+    padding: 0;
+    text-align: center;
+    font-size: 1.4em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   BREADCRUMB CONTAINER — Inside Shape Your Story header
    Breadcrumbs accumulate left-to-right. Replaces legacy nav entirely.
+   LAYOUT: Normal document flow, expands vertically, pushes content down.
    ═══════════════════════════════════════════════════════════════════════════════ */
 .breadcrumb-row {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 12px;
-    padding: 15px 20px;
-    min-height: 80px;
-    background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%);
-    border-bottom: 2px double var(--gold);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 500;
+    gap: 8px;
+    padding: 10px 15px 15px;
+    min-height: 50px;
+    background: transparent;
     flex-wrap: wrap;
+    /* Normal flow - row height determined by content */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .breadcrumb-row:empty {
     display: none;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE BREADCRUMBS — Compact indicator on narrow screens
+   On mobile, breadcrumbs collapse to dot indicators to save space.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+    .breadcrumb-row {
+        gap: 4px;
+        padding: 8px 10px 10px;
+        min-height: 40px;
+    }
+
+    /* Collapse breadcrumb cards to compact dots */
+    .breadcrumb-card {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
+    .breadcrumb-card .sb-card-inner {
+        display: none;
+    }
+
+    /* Show dot indicator instead of card content */
+    .breadcrumb-card::before {
+        content: '';
+        position: absolute;
+        inset: 4px;
+        background: var(--gold);
+        border-radius: 50%;
+        opacity: 0.8;
+    }
+
+    /* Ghost steps also collapse to dots */
+    .ghost-step {
+        width: 20px;
+        height: 20px;
+        min-height: auto;
+        border-radius: 50%;
+        border-width: 1px;
+    }
+
+    .ghost-step .ghost-step-label,
+    .ghost-step .ghost-step-number {
+        display: none;
+    }
+
+    /* Compact breadcrumb tooltip on hover */
+    .breadcrumb-card:hover::after {
+        font-size: 9px;
+        padding: 2px 4px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* GHOST STEP PLACEHOLDERS — Pre-breadcrumb progress indicators                */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* Ghost steps show remaining steps before selection.                          */
+/* They are NOT interactive — purely presentational scaffolding.               */
+/* Real breadcrumbs replace ghost steps left-to-right as corridor advances.    */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+.ghost-step {
+    width: 75px;
+    height: 105px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Subdued dashed outline */
+    border: 2px dashed rgba(218, 165, 32, 0.25);
+    border-radius: 4px;
+    background: transparent;
+    /* Low contrast, ghostly appearance */
+    opacity: 0.4;
+    pointer-events: none; /* NOT interactive */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Ghost step label: small all-caps "CHOICE" above numeral */
+.ghost-step-label {
+    font-family: 'Lora', serif;
+    font-size: 8px;
+    color: var(--gold);
+    opacity: 0.6;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+/* Ghost step number: large Roman numerals, Lora font */
+.ghost-step-number {
+    font-family: 'Lora', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold);
+    opacity: 0.5;
+}
+
+/* Ghost step fade-out when being replaced */
+.ghost-step.replacing {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Hide ghost steps when corridor is complete */
+body.corridor-complete .ghost-step {
+    display: none;
+}
+
+/* Hover on real breadcrumbs should NOT affect ghost steps */
+.breadcrumb-card:hover ~ .ghost-step {
+    opacity: 0.4; /* Maintain ghost opacity, don't fade further */
+    transform: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* BREADCRUMB INTERACTION — DESTRUCTIVE NAVIGATION (AUTHORITATIVE)             */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* Breadcrumbs are clickable. On hover over breadcrumb N:                      */
+/*   - Breadcrumb N remains fully opaque                                       */
+/*   - All breadcrumbs to the RIGHT visually fade to indicate provisional state */
+/* On click: Navigate to section, DESTROY all downstream breadcrumbs           */
+/* No confirmation dialogs — visual signaling alone is sufficient              */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
 /* Breadcrumb Card - Minimized committed selection (plaque material) */
 .breadcrumb-card {
     width: 75px;
     height: 105px;
     perspective: 500px;
-    cursor: default;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    cursor: pointer; /* CLICKABLE — destructive navigation */
+    transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
     position: relative;
+    flex-shrink: 0;
+}
+
+/* Solo breadcrumb de-emphasis — slides/shrinks when compound breadcrumbs arrive */
+.breadcrumb-card:first-child:not(:only-child) {
+    /* When more breadcrumbs are added, first one can shrink slightly */
+    width: 70px;
+    opacity: 0.9;
+}
+
+/* Further de-emphasis when many breadcrumbs present */
+.breadcrumb-row:has(.breadcrumb-card:nth-child(4)) .breadcrumb-card:first-child {
+    width: 65px;
+    opacity: 0.85;
+}
+
+/* DESTRUCTIVE HOVER: When hovering a breadcrumb, fade all siblings to the right */
+/* This signals that clicking will destroy downstream choices */
+.breadcrumb-card:hover ~ .breadcrumb-card {
+    opacity: 0.35;
+    transform: scale(0.95);
+}
+
+/* Ensure hovered breadcrumb stays fully opaque and prominent */
+.breadcrumb-card:hover {
+    opacity: 1 !important;
+    transform: scale(1.08);
+    z-index: 10;
 }
 
 .breadcrumb-card .sb-card-inner {
@@ -5556,6 +7135,10 @@ textarea.fate-field {
     height: 100%;
     backface-visibility: hidden;
     border-radius: 0; /* PLAQUE MATERIAL — square corners only */
+    /* Vertical centering for multi-line titles */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -5582,21 +7165,29 @@ textarea.fate-field {
 }
 
 .breadcrumb-card .sb-card-title {
-    font-family: 'lust-script-display', serif;
-    font-size: 11px;
+    font-family: 'Lora', serif;
+    font-size: 10px;
     color: var(--gold);
     text-align: center;
-    line-height: 1.2;
+    line-height: 1.25;
+    /* Multi-line support: wrap to up to 2 lines, centered */
+    display: -webkit-box;
+    -webkit-line-clamp: unset; /* No clamping - allow full wrap */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    /* Title Case - explicitly disable any uppercase transform */
+    text-transform: none;
+    /* Never clip or truncate */
+    overflow: visible;
+    white-space: normal;
 }
 
 .breadcrumb-card .sb-card-desc {
     display: none; /* Hide description in breadcrumb */
 }
 
-/* Breadcrumb hover - subtle tooltip effect */
-.breadcrumb-card:hover {
-    transform: scale(1.05);
-}
+/* Breadcrumb hover - tooltip visibility (scale handled by destructive nav rules above) */
 
 .breadcrumb-card::after {
     content: attr(data-breadcrumb-label);
@@ -5620,17 +7211,39 @@ textarea.fate-field {
 .breadcrumb-subtitle {
     display: block;
     font-family: 'Lora', serif;
-    font-size: 9px;
+    font-size: 8px;
     color: var(--ink);
     text-align: center;
     margin-top: 2px;
     opacity: 0.75;
     font-style: italic;
+    text-transform: none; /* Title Case, never uppercase */
 }
 
 /* Ephemeral Breadcrumb — Will dissolve at POV selection */
 .breadcrumb-ephemeral {
     opacity: 0.85;
+}
+
+/* Breadcrumb Destroying — Destructive navigation removal animation */
+.breadcrumb-destroying {
+    animation: breadcrumbDestroy 300ms ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes breadcrumbDestroy {
+    0% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(0.9) translateY(-5px);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.7) translateY(-15px);
+    }
 }
 
 .breadcrumb-ephemeral::before {
@@ -5697,43 +7310,262 @@ textarea.fate-field {
     }
 }
 
-/* Continue Button — Plaque Material Regime */
+/* ═══════════════════════════════════════════════════════════════════
+   CORRIDOR SYSTEM — 9-row single-screen selection
+   Only one row visible at a time until Arousal is selected
+   ═══════════════════════════════════════════════════════════════════ */
+
+.corridor-section {
+    /* Base corridor section styling */
+}
+
+.corridor-row,
+.corridor-section {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.corridor-row.corridor-hidden,
+.corridor-section.corridor-hidden {
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.corridor-row.corridor-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    visibility: visible;
+    animation: corridorRowEnter 0.5s ease forwards;
+}
+
+.corridor-row.corridor-completed {
+    /* Completed rows are hidden but their state is preserved */
+}
+
+@keyframes corridorRowEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* REMOVED: Corridor stage indicator dots
+   Breadcrumbs are the ONLY progress indicator */
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CORRIDOR NAVIGATION ARROWS — Desktop row navigation affordances
+   Subtle arrows at row edges for navigating between corridor rows.
+   No auto-select, no auto-commit, no bypass of validation.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.corridor-nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 80px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(218, 165, 32, 0.3);
+    color: var(--gold);
+    font-size: 28px;
+    font-weight: 300;
+    cursor: pointer;
+    z-index: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.4;
+    transition: opacity 0.2s ease, background 0.2s ease;
+    /* Subtle, not intrusive */
+    pointer-events: auto;
+}
+
+.corridor-nav-arrow:hover {
+    opacity: 0.9;
+    background: rgba(0, 0, 0, 0.7);
+    border-color: var(--gold);
+}
+
+.corridor-nav-arrow:active {
+    opacity: 1;
+    transform: translateY(-50%) scale(0.95);
+}
+
+.corridor-nav-arrow.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.corridor-nav-left {
+    left: 10px;
+    border-radius: 0 4px 4px 0;
+}
+
+.corridor-nav-right {
+    right: 10px;
+    border-radius: 4px 0 0 4px;
+}
+
+/* Hide navigation arrows on mobile (use swipe instead) */
+@media (max-width: 768px) {
+    .corridor-nav-arrow {
+        display: none;
+    }
+}
+
+/* Hide arrows when zoomed card is open */
+.sb-zoom-backdrop.active ~ .corridor-nav-arrow,
+body:has(.sb-card.zoomed) .corridor-nav-arrow {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Body state when corridor is complete — allow scrolling to Safety/Veto/Begin */
+body.corridor-complete #setup {
+    overflow-y: auto;
+}
+
+/* Continue Button — Ceremonial Metal Plaque */
 .flow-continue-btn {
     display: none;
+    position: relative;
+    overflow: hidden; /* Contain gleam */
     margin: 25px auto;
     padding: 14px 48px;
+    border-radius: 0 !important;
+    border: none !important;
+    cursor: pointer;
+
+    /* Typography — engraved */
     font-family: 'lust-script-display', serif;
     font-size: 1.3em;
-    color: var(--gold);
-    /* Brushed metal plaque */
+    color: var(--filigree-gold);
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.8),
+        0 -1px 0 rgba(255, 215, 0, 0.1);
+
+    /* MATERIAL LOCK — Brushed metal with Art Deco filigree */
     background-color: var(--plaque-black-base);
-    background-image: var(--plaque-black-grain);
-    background-size: 100% 100%;
-    /* Dual border system */
-    border: var(--plaque-border-outer) solid var(--plaque-black-outer);
-    box-shadow: inset 0 0 0 var(--plaque-border-inner) var(--plaque-black-inner),
-                0 2px 4px rgba(0, 0, 0, 0.5);
-    /* NO ROUNDING */
-    border-radius: 0;
-    cursor: pointer;
-    transition: filter 0.15s ease, background-color 0.15s ease;
+    background-image:
+        /* Corner ornaments */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Outer filigree frame */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Inner filigree frame (top split for diamond) */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Brushed metal grain */
+        var(--plaque-black-grain);
+
+    background-size:
+        /* Corner ornaments */
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        /* Outer frame */
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        /* Inner frame */
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(100% - var(--inner-frame-inset) * 2) var(--inner-frame-thickness),
+        /* Grain */
+        100% 100%;
+
+    background-position:
+        /* Corner ornaments */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        calc(100% - var(--outer-frame-inset)) calc(100% - var(--outer-frame-inset)),
+        /* Outer frame edges */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        /* Inner frame edges */
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(100% - var(--inner-frame-inset)) var(--inner-frame-inset),
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(50% + 6px) var(--inner-frame-inset),
+        var(--inner-frame-inset) calc(100% - var(--inner-frame-inset)),
+        /* Grain */
+        0 0;
+
+    background-repeat: no-repeat;
+
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Diamond accents removed — prefer subtraction over unclear embellishment */
+.flow-continue-btn::before {
+    content: none;
+}
+
+/* Focus suppression */
+.flow-continue-btn:focus,
+.flow-continue-btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .flow-continue-btn.visible {
     display: block;
-    /* No pulse animation — plaques don't glow */
 }
 
-/* Hover: Brightness lift only */
-.flow-continue-btn:hover:not(:disabled) {
-    filter: brightness(1.15);
-    background-color: #151515;
+/* Gleam element for flow-continue-btn */
+.flow-continue-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        105deg,
+        transparent 0%,
+        transparent 35%,
+        rgba(255, 255, 255, 0.08) 45%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.08) 55%,
+        transparent 65%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
 }
 
-/* Active: Darken + grain compression */
-.flow-continue-btn:active:not(:disabled) {
-    filter: brightness(0.9) contrast(1.1);
-    background-color: #080808;
+/* Hover: Gleam sweeps across — material unchanged */
+.flow-continue-btn:hover:not(:disabled)::after {
+    animation: plaque-gleam 0.6s ease-out forwards;
+}
+
+/* Active: Gleam holds at edge */
+.flow-continue-btn:active:not(:disabled)::after {
+    left: 100%;
+    animation: none;
 }
 
 /* Card Dissipation Animation */
@@ -5797,12 +7629,10 @@ textarea.fate-field {
     margin-bottom: 20px;
 }
 
-/* Flow Stage Indicator */
+/* Flow Stage Indicator — HIDDEN
+   Breadcrumbs are the ONLY progress indicator */
 .flow-stage-indicator {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 15px;
+    display: none !important;
 }
 
 .flow-stage-dot {
@@ -5828,16 +7658,194 @@ textarea.fate-field {
     50% { transform: scale(1.3); opacity: 0.8; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* AUTHORSHIP CHOICE ROW — Two-card selection (Choose Your Hand vs Guided Fate)   */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.authorship-choice-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    /* Fill available corridor space and center vertically */
+    min-height: calc(100vh - 200px);
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: opacity 0.4s ease, max-height 0.4s ease;
+}
+
+/* Collapse row after choice is made and breadcrumb created */
+.authorship-choice-row.collapsed {
+    opacity: 0;
+    max-height: 0;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.authorship-card {
+    width: 140px;
+    height: 196px; /* 5:7 ratio */
+    perspective: 800px;
+    cursor: pointer;
+    transition: transform 0.3s ease, opacity 0.4s ease;
+}
+
+.authorship-card:hover:not(.selected):not(.dissipating) {
+    transform: scale(1.05);
+}
+
+.authorship-card.selected {
+    transform: scale(1.08);
+}
+
+.authorship-card.dissipating {
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+}
+
+.authorship-card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+}
+
+.authorship-card.flipped .authorship-card-inner {
+    transform: rotateY(180deg);
+}
+
+.authorship-card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 12px;
+    box-sizing: border-box;
+    /* Plaque material */
+    background-color: var(--plaque-black-base, #141414);
+    background-image: var(--plaque-black-grain);
+    border: 2px solid var(--filigree-gold, #c5a356);
+    box-shadow:
+        inset 0 0 0 3px var(--plaque-black-inner, #1a1a1a),
+        0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.authorship-card-back {
+    transform: rotateY(0deg);
+}
+
+.authorship-card-front {
+    transform: rotateY(180deg);
+}
+
+.authorship-card-title {
+    font-family: 'Cinzel', 'Playfair Display', serif;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--gold, #daa520);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    margin-bottom: 8px;
+}
+
+.authorship-card-desc {
+    font-family: 'Lora', serif;
+    font-size: 0.75em;
+    color: rgba(245, 240, 230, 0.7);
+    line-height: 1.3;
+}
+
+/* Selected state: gold glow */
+.authorship-card.selected .authorship-card-face {
+    border-color: var(--gold);
+    box-shadow:
+        inset 0 0 0 3px var(--plaque-black-inner, #1a1a1a),
+        0 0 20px rgba(218, 165, 32, 0.4),
+        0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* AUTHORSHIP CARD SPARKLE EMITTER — Continuous flitting sparkles                  */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.authorship-card-face {
+    position: relative;
+    overflow: visible; /* Allow sparkles to escape slightly */
+}
+
+/* Sparkle emitter container */
+.authorship-sparkle-emitter {
+    position: absolute;
+    inset: -10px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Individual sparkle particle - profile-driven via CSS variables */
+.authorship-sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 230, 140, 0.95) 0%, rgba(255, 215, 0, 0.6) 50%, transparent 70%);
+    pointer-events: none;
+    opacity: 0;
+    animation: authorship-sparkle-flit var(--sparkle-duration, 2s) ease-in-out forwards;
+}
+
+@keyframes authorship-sparkle-flit {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(calc(0.3 * var(--sparkle-scale, 1)));
+    }
+    15% {
+        opacity: var(--sparkle-opacity, 0.8);
+        transform: translate(
+            calc(var(--sparkle-drift-x, 5px) * 0.3),
+            calc(var(--sparkle-drift-y, -5px) * 0.3)
+        ) scale(var(--sparkle-scale, 1));
+    }
+    50% {
+        opacity: calc(var(--sparkle-opacity, 0.8) * 0.7);
+        transform: translate(
+            calc(var(--sparkle-drift-x, 5px) * 0.7),
+            calc(var(--sparkle-drift-y, -5px) * 0.7)
+        ) scale(calc(0.8 * var(--sparkle-scale, 1)));
+    }
+    100% {
+        opacity: 0;
+        transform: translate(
+            var(--sparkle-drift-x, 5px),
+            var(--sparkle-drift-y, -5px)
+        ) scale(calc(0.2 * var(--sparkle-scale, 1)));
+    }
+}
+
 /* ========================================
-   FATE DESTINY CARD - Let Fate Decide
+   FATE DESTINY CARD - Let Fate Decide (Legacy)
    ======================================== */
 .fate-shortcut-row {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 15px;
     margin: 10px 0 25px;
     flex-wrap: wrap;
+}
+
+/* "Choose Manually" button in Guided Fate row */
+.fate-shortcut-row .flow-continue-btn {
+    margin-top: 10px;
 }
 
 .fate-shortcut-text {
@@ -6286,15 +8294,92 @@ textarea.fate-field {
     /* No animation — JS handles fade via transition */
 }
 
-/* Begin Story ready state — subtle glow */
-/* Begin Story ready state — Material Regime: brightness pulse only, no glow */
-.begin-story-ready {
-    animation: begin-story-pulse 2s ease-in-out infinite;
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* BEGIN STORY — CEREMONIAL ACTIVATION STATE                                        */
+/* Filigree etches itself complete. Text appears more deeply engraved.              */
+/* No glow. No highlight. No UI effects. The plaque is "finished", not "activated". */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Pre-ready state: Begin button filigree awaits etching (faint appearance) */
+.cover-view-btn.begin-btn:not(.begin-story-ready),
+#beginBtn:not(.begin-story-ready),
+.setting-begin-btn:not(.begin-story-ready) {
+    /* Filigree appears faint, not yet fully engraved */
+    filter: contrast(0.85);
 }
 
-@keyframes begin-story-pulse {
-    0%, 100% { filter: brightness(1); }
-    50% { filter: brightness(1.15); }
+.cover-view-btn.begin-btn:not(.begin-story-ready)::before,
+#beginBtn:not(.begin-story-ready)::before,
+.setting-begin-btn:not(.begin-story-ready)::before {
+    /* Diamond also faint */
+    opacity: 0.4;
+}
+
+/* Ready state: Filigree etches to full visibility */
+.begin-story-ready {
+    /* Trigger etching animation */
+    animation: filigree-etch 1.2s ease-out forwards;
+
+    /* Deeper engraved text — pronounced inset effect */
+    text-shadow:
+        0 2px 1px rgba(0, 0, 0, 0.95),
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 -1px 0 rgba(90, 69, 16, 0.15);
+}
+
+/* Diamond fully visible when ready */
+.begin-story-ready::before {
+    opacity: 1;
+    transition: opacity 0.8s ease-out;
+}
+
+/* Filigree etching animation — from faint to fully engraved */
+@keyframes filigree-etch {
+    0% {
+        filter: contrast(0.85);
+    }
+    40% {
+        filter: contrast(0.95);
+    }
+    100% {
+        filter: contrast(1);
+    }
+}
+
+/* Gleam catches on engraved letters — ceremonial sweep with letter catch */
+.begin-story-ready::after {
+    animation: ceremonial-gleam 4s ease-in-out infinite;
+    animation-delay: 1.5s; /* Wait for etch to complete */
+}
+
+@keyframes ceremonial-gleam {
+    0% {
+        left: -100%;
+    }
+    25% {
+        left: 20%;
+    }
+    /* Gleam briefly catches on engraved text — slight deceleration */
+    35% {
+        left: 45%;
+    }
+    40% {
+        left: 55%;
+    }
+    /* Resume normal speed */
+    60% {
+        left: 150%;
+    }
+    100% {
+        left: 150%;
+    }
+}
+
+/* Focus suppression for Begin Story plaque */
+.begin-story-ready:focus,
+.begin-story-ready:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -6326,40 +8411,167 @@ textarea.fate-field {
     padding: 0 20px;
 }
 
-/* Cover View Buttons — Plaque Material Regime */
+/* Cover View Buttons — Ceremonial Metal Plaque */
 .cover-view-btn {
+    position: relative;
+    overflow: hidden; /* Contain gleam */
     width: auto;
     padding: 10px 24px;
     font-size: 0.95em;
-    /* NO ROUNDING */
-    border-radius: 0;
+    border-radius: 0 !important;
+    border: none !important;
     cursor: pointer;
-    transition: filter 0.15s ease, background-color 0.15s ease;
     white-space: nowrap;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* Setting Button: Black plaque */
+/* Focus suppression */
+.cover-view-btn:focus,
+.cover-view-btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Setting Button: Black plaque — Art Deco filigree */
 .cover-view-btn.setting-btn {
     background-color: var(--plaque-black-base);
-    background-image: var(--plaque-black-grain);
-    background-size: 100% 100%;
-    border: var(--plaque-border-outer) solid var(--plaque-black-outer);
-    box-shadow: inset 0 0 0 var(--plaque-border-inner) var(--plaque-black-inner),
-                0 2px 4px rgba(0, 0, 0, 0.5);
-    color: var(--gold);
+    background-image:
+        /* Corner ornaments */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Outer filigree frame */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Inner filigree frame (top split for diamond) */
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
+        /* Brushed metal grain */
+        var(--plaque-black-grain);
+
+    background-size:
+        /* Corner ornaments */
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        /* Outer frame */
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        /* Inner frame */
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(100% - var(--inner-frame-inset) * 2) var(--inner-frame-thickness),
+        /* Grain */
+        100% 100%;
+
+    background-position:
+        /* Corner ornaments */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        calc(100% - var(--outer-frame-inset)) calc(100% - var(--outer-frame-inset)),
+        /* Outer frame edges */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        /* Inner frame edges */
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(100% - var(--inner-frame-inset)) var(--inner-frame-inset),
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(50% + 6px) var(--inner-frame-inset),
+        var(--inner-frame-inset) calc(100% - var(--inner-frame-inset)),
+        /* Grain */
+        0 0;
+
+    background-repeat: no-repeat;
+
+    color: var(--filigree-gold);
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.8),
+        0 -1px 0 rgba(255, 215, 0, 0.1);
 }
 
-/* Hover: Brightness lift only — no glow */
-.cover-view-btn.setting-btn:hover:not(:disabled) {
-    filter: brightness(1.15);
-    background-color: #151515;
+/* Diamond accents removed — prefer subtraction over unclear embellishment */
+.cover-view-btn.setting-btn::before {
+    content: none;
 }
 
-/* Disabled: Desaturate + reduce contrast */
+/* Gleam element for cover-view-btn */
+.cover-view-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        105deg,
+        transparent 0%,
+        transparent 35%,
+        rgba(255, 255, 255, 0.08) 45%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.08) 55%,
+        transparent 65%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Hover: Gleam sweeps across — material unchanged */
+.cover-view-btn:hover:not(:disabled)::after {
+    animation: plaque-gleam 0.6s ease-out forwards;
+}
+
+/* Active: Gleam holds at edge */
+.cover-view-btn:active:not(:disabled)::after {
+    left: 100%;
+    animation: none;
+}
+
+/* Disabled: Grey filigree and text — NO filter, NO opacity */
 .cover-view-btn.setting-btn:disabled {
-    filter: saturate(0.3) contrast(0.7);
-    opacity: 0.6;
     cursor: not-allowed;
+    color: var(--plaque-locked-text) !important;
+    background-image:
+        /* Grey corner ornaments */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Grey outer frame */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        /* Grey inner frame */
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
+        var(--plaque-black-grain);
+}
+
+.cover-view-btn.setting-btn:disabled::before {
+    content: none;
+}
+
+.cover-view-btn:disabled::after {
+    display: none;
 }
 
 .setting-disabled-notice {
@@ -6379,28 +8591,106 @@ textarea.fate-field {
     font-size: 0.85em;
 }
 
-/* Begin Button: Gold plaque */
+/* Begin Button: Gold plaque — MATERIAL LOCK */
+/* Begin Button: Gold plaque — Art Deco filigree (dark on gold) */
 .cover-view-btn.begin-btn {
     background-color: var(--plaque-gold-base);
-    background-image: var(--plaque-gold-grain);
-    background-size: 100% 100%;
-    border: var(--plaque-border-outer) solid var(--plaque-gold-outer);
-    box-shadow: inset 0 0 0 var(--plaque-border-inner) var(--plaque-gold-inner),
-                0 2px 4px rgba(0, 0, 0, 0.5);
+    background-image:
+        /* Dark corner ornaments on gold */
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        /* Dark outer frame */
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        /* Dark inner frame */
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        linear-gradient(var(--plaque-gold-inner), var(--plaque-gold-inner)),
+        var(--plaque-gold-grain);
+
+    background-size:
+        /* Corner ornaments */
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        var(--corner-size) var(--corner-size),
+        /* Outer frame */
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
+        /* Inner frame */
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
+        calc(100% - var(--inner-frame-inset) * 2) var(--inner-frame-thickness),
+        /* Grain */
+        100% 100%;
+
+    background-position:
+        /* Corner ornaments */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        calc(100% - var(--outer-frame-inset)) calc(100% - var(--outer-frame-inset)),
+        /* Outer frame edges */
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
+        var(--outer-frame-inset) var(--outer-frame-inset),
+        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
+        /* Inner frame edges */
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(100% - var(--inner-frame-inset)) var(--inner-frame-inset),
+        var(--inner-frame-inset) var(--inner-frame-inset),
+        calc(50% + 6px) var(--inner-frame-inset),
+        var(--inner-frame-inset) calc(100% - var(--inner-frame-inset)),
+        /* Grain */
+        0 0;
+
+    background-repeat: no-repeat;
+
     color: var(--plaque-gold-text);
+    text-shadow:
+        0 1px 0 rgba(255, 215, 0, 0.3),
+        0 -1px 0 rgba(0, 0, 0, 0.4);
     font-weight: 600;
 }
 
-/* Hover: Brightness lift only — no glow, no transform */
-.cover-view-btn.begin-btn:hover:not(:disabled) {
-    filter: brightness(1.15);
-    background-color: #a07a1a;
+/* Diamond accents removed — prefer subtraction over unclear embellishment */
+.cover-view-btn.begin-btn::before {
+    content: none;
 }
 
-/* Active: Darken */
-.cover-view-btn.begin-btn:active:not(:disabled) {
-    filter: brightness(0.9) contrast(1.1);
-    background-color: #6a5010;
+/* Gold gleam — warmer highlight */
+.cover-view-btn.begin-btn::after {
+    background: linear-gradient(
+        105deg,
+        transparent 0%,
+        transparent 35%,
+        rgba(255, 248, 220, 0.12) 45%,
+        rgba(255, 248, 220, 0.22) 50%,
+        rgba(255, 248, 220, 0.12) 55%,
+        transparent 65%,
+        transparent 100%
+    );
+}
+
+/* Hover: Gleam sweeps across — material unchanged */
+.cover-view-btn.begin-btn:hover:not(:disabled)::after {
+    animation: plaque-gleam 0.6s ease-out forwards;
+}
+
+/* Active: Gleam holds at edge */
+.cover-view-btn.begin-btn:active:not(:disabled)::after {
+    left: 100%;
+    animation: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -6600,31 +8890,56 @@ textarea.fate-field {
 
 /* Setting Begin Button — Gold Plaque Material */
 .setting-begin-btn {
-    background-color: var(--plaque-gold-base);
-    background-image: var(--plaque-gold-grain);
-    background-size: 100% 100%;
-    border: var(--plaque-border-outer) solid var(--plaque-gold-outer);
+    position: relative;
+    overflow: hidden; /* Contain gleam */
+    background-color: var(--plaque-gold-base) !important;
+    background-image: var(--plaque-gold-grain) !important;
+    background-size: 100% 100% !important;
+    border: var(--plaque-border-outer) solid var(--plaque-gold-outer) !important;
     box-shadow: inset 0 0 0 var(--plaque-border-inner) var(--plaque-gold-inner),
-                0 2px 4px rgba(0, 0, 0, 0.5);
+                0 2px 4px rgba(0, 0, 0, 0.5) !important;
     color: var(--plaque-gold-text);
     padding: 14px 32px;
     font-size: 1em;
     font-weight: 600;
     letter-spacing: 0.08em;
     /* NO ROUNDING */
-    border-radius: 0;
+    border-radius: 0 !important;
     cursor: pointer;
-    transition: filter 0.15s ease, background-color 0.15s ease;
+    /* NO TRANSITIONS — plaque is inert */
 }
-/* Hover: Brightness lift only — no transform, no glow */
-.setting-begin-btn:hover:not(:disabled) {
-    filter: brightness(1.15);
-    background-color: #a07a1a;
+
+/* Gold gleam for setting-begin-btn */
+.setting-begin-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        105deg,
+        transparent 0%,
+        transparent 35%,
+        rgba(255, 248, 220, 0.12) 45%,
+        rgba(255, 248, 220, 0.22) 50%,
+        rgba(255, 248, 220, 0.12) 55%,
+        transparent 65%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
 }
-/* Active: Darken */
-.setting-begin-btn:active:not(:disabled) {
-    filter: brightness(0.9) contrast(1.1);
-    background-color: #6a5010;
+
+/* Hover: Gleam sweeps across — material unchanged */
+.setting-begin-btn:hover:not(:disabled)::after {
+    animation: plaque-gleam 0.6s ease-out forwards;
+}
+
+/* Active: Gleam holds at edge */
+.setting-begin-btn:active:not(:disabled)::after {
+    left: 100%;
+    animation: none;
 }
 
 .setting-retry-btn {
