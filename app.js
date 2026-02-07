@@ -357,8 +357,8 @@ window.config = window.config || {
       }
 
       // FIX: Update story header display based on current page
-      // Page 1: Large title, synopsis, intro image
-      // Page 2+: Smaller title only, no synopsis or intro image
+      // Page 1: Full title/scene display
+      // Page 2+: Compact display
       function updateStoryHeaderDisplay() {
           const titleEl = document.getElementById('storyTitle');
           const settingShotWrap = document.getElementById('settingShotWrap');
@@ -370,12 +370,12 @@ window.config = window.config || {
           }
 
           if (currentPageIndex === 0) {
-              // Page 1: Full display (no setting image in Scene 1)
-              if (titleEl) titleEl.style.fontSize = '';
+              // Page 1: Full display
+              if (titleEl) titleEl.classList.remove('compact');
               if (settingShotWrap) settingShotWrap.style.display = 'none';
           } else {
               // Page 2+: Compact display
-              if (titleEl) titleEl.style.fontSize = '1.2em';
+              if (titleEl) titleEl.classList.add('compact');
               if (settingShotWrap) settingShotWrap.style.display = 'none';
           }
       }
@@ -1230,14 +1230,28 @@ For veto/quill/god_mode:
           name: 'The Armored Fox',
           desireStyle: 'That crooked smile promised trouble, and trouble was the only honest thing about {LI_OBJ}',
           summary: 'The Armored Fox survives by never being where you expect. Deflection is art, evasion is affection, and nothing sticks — until it does. The armor is charm; the fox is the wound underneath.',
-          stressFailure: 'permanent deflection, irresponsible freedom'
+          stressFailure: 'permanent deflection, irresponsible freedom',
+          nicknameQuirk: {
+              avoidsRealName: true,
+              substituteStyle: 'playful deflections and misdirects',
+              categoryHints: 'pet names that keep distance, ironic endearments, nicknames that dodge sincerity',
+              realNameTrigger: 'a moment when the mask slips',
+              firstNameMoment: 'should feel like being caught off-guard'
+          }
       },
       DARK_VICE: {
           id: 'DARK_VICE',
           name: 'The Dark Vice',
           desireStyle: 'The room went quiet when {LI_SUBJ} entered — not from fear, but from the gravity of something that should not be desired',
           summary: 'The Dark Vice is the thing you reach for knowing it will cost you. Power, danger, and want fused into a single presence that justifies its own harm. Restraint is performance; beneath it, something hungers.',
-          stressFailure: 'escalation, rationalized harm'
+          stressFailure: 'escalation, rationalized harm',
+          nicknameQuirk: {
+              avoidsRealName: true,
+              substituteStyle: 'possessive or teasing epithets',
+              categoryHints: 'diminutives, endearments with ownership undertone, or terms that assert control',
+              realNameTrigger: 'respect or genuine intimacy earned',
+              firstNameMoment: 'should feel like a revelation or surrender'
+          }
       },
       BEAUTIFUL_RUIN: {
           id: 'BEAUTIFUL_RUIN',
@@ -1248,6 +1262,13 @@ For veto/quill/god_mode:
           genderedExpression: {
               male: '{LI_SUBJ} loved fiercely, possessively, as if tenderness itself might betray {LI_OBJ}',
               female: '{LI_SUBJ} pushed away first, always, before the disappointment could reach {LI_OBJ}'
+          },
+          nicknameQuirk: {
+              avoidsRealName: true,
+              substituteStyle: 'distancing or derisive nicknames',
+              categoryHints: 'ironic endearments, mock-tender terms, or labels that create emotional distance',
+              realNameTrigger: 'vulnerability or true connection',
+              firstNameMoment: 'should feel like armor cracking'
           }
       },
       ETERNAL_FLAME: {
@@ -1265,10 +1286,8 @@ For veto/quill/god_mode:
   ];
 
   function getArchetypeSectionTitle(loveInterestGender) {
-      const g = (loveInterestGender || '').toLowerCase();
-      if (g === 'male') return 'Storybeau';
-      if (g === 'female') return 'Storybelle';
-      return 'Storyboo';
+      // Literal label: "(Love Interest)'s Mask"
+      return "(Love Interest)'s Mask";
   }
 
   // =========================
@@ -1411,6 +1430,66 @@ ARCHETYPE LABEL SUPPRESSION (AUTHORITATIVE):
 - If an archetype label would naturally appear, replace it with an effect-based description.
 - Describe what the character does to others, how they feel to encounter, or the consequence of their presence.
 - If unsure, omit the label entirely.
+`;
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // NICKNAME EMERGENCE RULES (STORY GRAMMAR)
+      // Organic nickname usage in story text — never in UI
+      // ═══════════════════════════════════════════════════════════════════════════
+      directive += `
+NICKNAME EMERGENCE RULES (STORY GRAMMAR):
+- Nicknames may appear ONLY in dialogue or narration, never in UI/metadata.
+- Nicknames emerge organically AFTER emotional proximity is established.
+- Prefer natural shortenings (Alex, John, Max, Kate) over invented pet names.
+- Do NOT invent playful or fantasy nicknames (no "Sparkles", "Moonbeam", etc.).
+- Once introduced in dialogue, nickname becomes OPTIONAL — not mandatory.
+- Narration may adopt a nickname ONLY after it appears in dialogue first.
+- Canonical (full) names remain authoritative for formal contexts.
+`;
+
+      // Archetype-specific nickname quirks (DARK_VICE, BEAUTIFUL_RUIN)
+      if (primary.nicknameQuirk) {
+          const quirk = primary.nicknameQuirk;
+          directive += `
+ARCHETYPE-BOUND NICKNAME QUIRK (${primary.name}):
+- This archetype intentionally AVOIDS using the protagonist's real name early.
+- Uses ${quirk.substituteStyle} instead.
+- Category guidance: ${quirk.categoryHints}.
+- Choose nicknames that fit the story's tone, genre, and world — avoid modern clichés in historical/fantasy settings.
+- Real name usage withheld until: ${quirk.realNameTrigger}.
+- First use of real name ${quirk.firstNameMoment}.
+- Do NOT explain this behavior to the reader — it should feel natural and intentional.
+- Substitute nicknames exist ONLY in dialogue/narration, never in UI.
+`;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // NPC ARCHETYPE LENSES (STORY GRAMMAR)
+      // Archetypes as behavioral templates for non-romantic NPCs
+      // ═══════════════════════════════════════════════════════════════════════════
+      directive += `
+NPC ARCHETYPE LENSES (STORY GRAMMAR):
+Archetypes may be assigned to prominent NPCs (villains, exes, rivals, mentors) as behavioral lenses.
+
+Rules:
+- NPC archetypes define dialogue style, power posture, and emotional behavior.
+- NPC archetypes do NOT imply romance availability — NPCs are not love interests.
+- Archetypes may be fixed from introduction, revealed gradually, or initially masked.
+- Archetype labels are NEVER stated explicitly to the reader — effects only.
+- Express archetype through writing and behavior, not exposition or labels.
+- UI systems (breadcrumbs, Destiny's Choice, Continue buttons) do NOT apply to NPCs.
+
+Purpose:
+- Deepen NPC characterization through consistent behavioral templates.
+- Create narrative foils, mentors, or antagonists with psychological coherence.
+- Allow NPCs to challenge or mirror the Love Interest's archetype.
+- Do NOT gamify NPCs or treat archetypes as collectible attributes.
+
+Examples of NPC archetype expression:
+- A DARK_VICE mentor who tests through temptation and moral ambiguity.
+- An ARMORED_FOX rival who deflects sincerity with charm and misdirection.
+- A BEAUTIFUL_RUIN ex who still carries the protagonist's emotional weight.
+- A HEART_WARDEN authority figure whose protection feels like control.
 `;
 
       return directive;
@@ -1785,15 +1864,20 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
           mode: 'balanced'
       },
 
-      // 5TH PERSON POV (AUTHOR) CONTROL
+      // 5TH PERSON POV (THE AUTHOR) — POV REGIME (FINAL, SUPERSEDING)
+      // NOTE: All prior frequency limits, cadence rules, and presence restrictions are SUPERSEDED.
+      // The Author is a full participant — no artificial limits on presence or frequency.
       povMode: window.state?.povMode || 'normal',                // 'normal' | 'author5th'
-      authorPresence: window.state?.authorPresence || 'ghost',  // 'ghost' (sparse, active) | 'normal' | 'frequent'
-      authorCadenceWords: window.state?.authorCadenceWords || 80, // Ghost Author: ~50% protagonist thought frequency
+      // SUPERSEDED: authorPresence, authorCadenceWords — Author has no frequency limits
+      // These fields kept for backwards compatibility but are NOT enforced
+      authorPresence: window.state?.authorPresence || 'normal',  // SUPERSEDED — not enforced
+      authorCadenceWords: window.state?.authorCadenceWords || 0, // SUPERSEDED — 0 means no limit
       fateCardVoice: window.state?.fateCardVoice || 'neutral',   // 'neutral' | 'authorial'
-      allowAuthorAwareness: window.state?.allowAuthorAwareness ?? true,
-      authorAwarenessChance: window.state?.authorAwarenessChance || 0.13,
-      authorAwarenessWindowWords: window.state?.authorAwarenessWindowWords || 1300,
-      authorAwarenessMaxDurationWords: window.state?.authorAwarenessMaxDurationWords || 2500
+      // SUPERSEDED: awareness window/chance limits — Author participates freely
+      allowAuthorAwareness: true,  // Always true — Author is always allowed
+      authorAwarenessChance: 1.0,  // SUPERSEDED — Author always may participate
+      authorAwarenessWindowWords: 0,  // SUPERSEDED — no window limits
+      authorAwarenessMaxDurationWords: 0  // SUPERSEDED — no duration limits
   };
 
   // ============================================================
@@ -1858,33 +1942,68 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
   window.shouldUpgradeSoloSubtitle = shouldUpgradeSoloSubtitle;
 
   // ============================================================
-  // 5TH PERSON AUTHOR CONDUCTOR SYSTEM
-  // The Author is causal/agentic, not a voyeur
+  // 5TH PERSON AUTHOR SYSTEM — POV REGIME (AUTHORITATIVE)
+  // ============================================================
+  //
+  // "The Author" is a PARTICIPANT in the story, but NOT a controller of events.
+  //
+  // THE AUTHOR MAY:
+  //   - React, comment, delight, despair, tease, or regret
+  //   - Influence meaning, tone, and implication
+  //   - Change how a moment FEELS or is UNDERSTOOD
+  //
+  // THE AUTHOR MAY NOT:
+  //   - Directly cause physical events
+  //   - Decide outcomes
+  //   - Control plot mechanics
+  //   - Make things literally happen
+  //
+  // If the Author acts, the action must change how the moment feels or
+  // is understood, NOT what literally happens next.
+  //
   // ============================================================
 
-  // BANNED VOYEUR VERBS - The Author never merely observes
+  // BANNED CONTROLLER VERBS - The Author never causes events
   const AUTHOR_BANNED_VERBS = [
+      // Voyeur verbs (passive observation)
       'watched', 'observed', 'saw', 'looked on', 'gazed at', 'witnessed',
       'noticed', 'perceived', 'beheld', 'eyed', 'surveyed', 'regarded',
-      'looked at', 'stared at', 'peered at', 'glimpsed'
+      'looked at', 'stared at', 'peered at', 'glimpsed',
+      // Controller verbs (causal/agentic - FORBIDDEN)
+      'arranged', 'orchestrated', 'set', 'placed', 'positioned', 'staged',
+      'steered', 'directed', 'guided', 'led', 'pushed', 'pulled',
+      'caused', 'made', 'forced', 'compelled', 'ensured', 'guaranteed',
+      'summoned', 'banished', 'sent', 'redirected', 'accelerated', 'delayed',
+      'planted', 'uprooted', 'ignited', 'extinguished', 'triggered', 'activated'
   ];
 
-  // BANNED VOYEUR PATTERNS - Passive observation phrases
+  // BANNED PATTERNS - Controller and voyeur phrases
   const AUTHOR_BANNED_PATTERNS = [
       /the author (watched|observed|saw|looked on)/gi,
+      /the author (arranged|orchestrated|set up|staged|ensured)/gi,
+      /the author (caused|made|forced|compelled)/gi,
+      /the author (steered|directed|guided|led)/gi,
       /as (she|he|they) [\w\s]+, the author/gi,
-      /watched as (she|he|they)/gi,
       /the author.{0,20}(with satisfaction|with interest|with amusement) as/gi
   ];
 
-  // ALLOWED AGENTIC VERBS - The Author causes, arranges, orchestrates
-  const AUTHOR_AGENTIC_VERBS = [
-      'tilted', 'threaded', 'arranged', 'set', 'sent', 'unlatched',
-      'steered', 'coaxed', 'provoked', 'seeded', 'tightened', 'loosened',
-      'staged', 'placed', 'positioned', 'orchestrated', 'wove', 'spun',
-      'nudged', 'pressed', 'released', 'ignited', 'extinguished', 'delayed',
-      'accelerated', 'redirected', 'planted', 'uprooted', 'summoned', 'banished'
+  // ALLOWED PARTICIPANT VERBS - The Author reacts, comments, influences meaning
+  const AUTHOR_PARTICIPANT_VERBS = [
+      // Emotional reactions
+      'delighted', 'despaired', 'winced', 'sighed', 'smiled', 'frowned',
+      'laughed', 'wept', 'shuddered', 'trembled', 'ached', 'yearned',
+      // Commentary and reflection
+      'noted', 'remarked', 'mused', 'wondered', 'pondered', 'reflected',
+      'recognized', 'understood', 'appreciated', 'savored', 'regretted',
+      // Tonal influence (not causal)
+      'teased', 'hinted', 'suggested', 'implied', 'whispered', 'confided',
+      'admitted', 'confessed', 'revealed', 'acknowledged', 'conceded',
+      // Meaning-making (interpretive, not causal)
+      'knew', 'sensed', 'felt', 'hoped', 'feared', 'anticipated', 'dreaded'
   ];
+
+  // Legacy alias for backwards compatibility
+  const AUTHOR_AGENTIC_VERBS = AUTHOR_PARTICIPANT_VERBS;
 
   // Validate that 5th person opener starts with "The Author"
   function validate5thPersonOpener(text) {
@@ -1907,25 +2026,33 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
 CURRENT TEXT:
 ${text.slice(0, 500)}
 
+POV REGIME — THE AUTHOR (AUTHORITATIVE):
+"The Author" is a PARTICIPANT in the story, but NOT a controller of events.
+The Author may react, comment, delight, despair, tease, or regret,
+but may NOT directly cause physical events or decide outcomes.
+The Author influences meaning, tone, and implication — not plot mechanics.
+
 RULES:
 1. The very first word must be "The" and second word "Author"
-2. The Author must be DOING something (causal), not watching
-3. Use verbs like: ${AUTHOR_AGENTIC_VERBS.slice(0, 8).join(', ')}
-4. NEVER use voyeur verbs: ${AUTHOR_BANNED_VERBS.slice(0, 6).join(', ')}
-5. Preserve the rest of the content as much as possible
+2. The Author must REACT or COMMENT, never CAUSE or CONTROL
+3. Use participant verbs like: ${AUTHOR_PARTICIPANT_VERBS.slice(0, 8).join(', ')}
+4. NEVER use controller verbs: arranged, orchestrated, steered, caused, made, forced
+5. NEVER use voyeur verbs: watched, observed, saw, witnessed
+6. The Author's action changes how the moment FEELS, not what literally happens
+7. Preserve the rest of the content as much as possible
 
 Return the rewritten text only, no explanation.`
           }]);
           return rewritten || text;
       } catch (e) {
           console.warn('[5thPerson] Opener enforcement failed:', e.message);
-          // Fallback: prepend a conductor sentence
-          return `The Author set the stage with quiet precision. ${text}`;
+          // Fallback: prepend a participant sentence (reaction, not causation)
+          return `The Author smiled, knowing what was about to unfold. ${text}`;
       }
   }
 
-  // Check if an Author sentence contains voyeur verbs
-  function hasVoyeurVerbs(sentence) {
+  // Check if an Author sentence contains banned verbs (voyeur or controller)
+  function hasBannedAuthorVerbs(sentence) {
       const lower = sentence.toLowerCase();
       // Only check sentences that mention "the author"
       if (!lower.includes('the author')) return false;
@@ -1933,28 +2060,49 @@ Return the rewritten text only, no explanation.`
              AUTHOR_BANNED_PATTERNS.some(pattern => pattern.test(sentence));
   }
 
-  // Rewrite a single voyeur sentence to agentic causation
-  function rewriteVoyeurSentence(sentence) {
+  // Legacy alias
+  const hasVoyeurVerbs = hasBannedAuthorVerbs;
+
+  // Rewrite a banned Author sentence to participant mode
+  // POV REGIME: The Author reacts/comments, never causes/controls
+  function rewriteBannedAuthorSentence(sentence) {
       let result = sentence;
-      // Replace common voyeur patterns with agentic alternatives
-      const replacements = [
-          [/The Author watched (as )?/gi, 'The Author arranged for '],
-          [/The Author observed (that )?/gi, 'The Author ensured that '],
-          [/The Author saw (that )?/gi, 'The Author had orchestrated that '],
-          [/The Author looked on (as )?/gi, 'The Author steered events so that '],
-          [/watched as (she|he|they)/gi, 'set in motion what made $1'],
-          [/The Author.{0,10}with (quiet )?satisfaction/gi, 'The Author, having arranged this'],
-          [/The Author noticed/gi, 'The Author had ensured'],
-          [/The Author perceived/gi, 'The Author had woven']
+      // Replace voyeur patterns with participant alternatives (reaction, not observation)
+      const voyeurReplacements = [
+          [/The Author watched (as )?/gi, 'The Author smiled, knowing '],
+          [/The Author observed (that )?/gi, 'The Author recognized that '],
+          [/The Author saw (that )?/gi, 'The Author understood that '],
+          [/The Author looked on (as )?/gi, 'The Author felt a quiet satisfaction as '],
+          [/watched as (she|he|they)/gi, 'sensed the moment when $1'],
+          [/The Author.{0,10}with (quiet )?satisfaction/gi, 'The Author, savoring this'],
+          [/The Author noticed/gi, 'The Author sensed'],
+          [/The Author perceived/gi, 'The Author felt']
       ];
-      for (const [pattern, replacement] of replacements) {
+      // Replace controller patterns with participant alternatives (meaning, not causation)
+      const controllerReplacements = [
+          [/The Author arranged (for |that )?/gi, 'The Author knew '],
+          [/The Author orchestrated/gi, 'The Author anticipated'],
+          [/The Author ensured (that )?/gi, 'The Author hoped '],
+          [/The Author steered/gi, 'The Author wondered at'],
+          [/The Author caused/gi, 'The Author understood why'],
+          [/The Author made (sure |certain )?/gi, 'The Author sensed '],
+          [/The Author forced/gi, 'The Author ached as'],
+          [/The Author set (the stage|things|events)/gi, 'The Author reflected on what'],
+          [/The Author had woven/gi, 'The Author marveled at'],
+          [/The Author planted/gi, 'The Author recognized']
+      ];
+      for (const [pattern, replacement] of [...voyeurReplacements, ...controllerReplacements]) {
           result = result.replace(pattern, replacement);
       }
       return result;
   }
 
-  // Enforce Author-as-conductor throughout text (not just opener)
-  function enforceAuthorConductor(text) {
+  // Legacy alias
+  const rewriteVoyeurSentence = rewriteBannedAuthorSentence;
+
+  // Enforce Author-as-participant throughout text (not just opener)
+  // POV REGIME: The Author reacts/comments, never causes/controls
+  function enforceAuthorParticipant(text) {
       if (!text || typeof text !== 'string') return text;
       if (window.state?.povMode !== 'author5th') return text;
 
@@ -1963,19 +2111,22 @@ Return the rewritten text only, no explanation.`
       let modified = false;
 
       const corrected = sentences.map(sentence => {
-          if (hasVoyeurVerbs(sentence)) {
+          if (hasBannedAuthorVerbs(sentence)) {
               modified = true;
-              return rewriteVoyeurSentence(sentence);
+              return rewriteBannedAuthorSentence(sentence);
           }
           return sentence;
       });
 
       if (modified) {
-          console.log('[5thPerson] Corrected voyeur verbs to agentic causation');
+          console.log('[5thPerson] Corrected banned verbs to participant mode');
       }
 
       return corrected.join(' ');
   }
+
+  // Legacy alias
+  const enforceAuthorConductor = enforceAuthorParticipant;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 5TH PERSON POV — STORY AS COHERENCE (AUTHORITATIVE)
@@ -1997,88 +2148,29 @@ Return the rewritten text only, no explanation.`
   // They remain in history for reference only and must not guide new behavior.
   //
   // ───────────────────────────────────────────────
-  // 5TH PERSON POV — STORY AS COHERENCE (AUTHORITATIVE)
+  // ██ SUPERSEDED — DO NOT USE ██
   // ───────────────────────────────────────────────
-  // 5th Person POV refers to 'the story' as an emergent, vulnerable coherence.
-  // It is not an Author, Fate, narrator, or external authority.
+  // The "STORY AS COHERENCE" model below is SUPERSEDED by:
   //
-  // The story does not command.
-  // The story does not judge.
-  // The story does not take credit.
+  //   POV REGIME — THE AUTHOR (FINAL, SUPERSEDING)
   //
-  // The story:
-  //   - hesitates
-  //   - recalibrates
-  //   - resists acceleration
-  //   - fears incoherence
-  //   - adjusts when surprised
-  //   - survives or collapses based on meaning, not obedience
+  // This regime supersedes all prior rules concerning:
+  //   - "The Story" / "the moment" as narrator
+  //   - limits on Author presence or frequency
+  //   - restrictions that demote the Author to a rare or sidelined role
   //
-  // 5th Person is not a voice.
-  // It is a pressure on the prose.
+  // THE NEW AUTHORITATIVE RULE:
+  // "The Author" is a participant in the story, but not a controller of events.
+  // The Author may react, comment, delight, despair, tease, or regret,
+  // but may not directly cause physical events or decide outcomes.
+  // The Author influences meaning, tone, and implication — not plot mechanics.
   //
   // ───────────────────────────────────────────────
-  // EMOTIONAL SCOPE — ALLOWED / DISALLOWED
+  // [LEGACY - SUPERSEDED] 5TH PERSON POV — STORY AS COHERENCE
   // ───────────────────────────────────────────────
-  // The story MAY experience:
-  //   - anticipation
-  //   - surprise
-  //   - unease
-  //   - fear of collapse
-  //   - relief
-  //   - quiet delight
-  //   - frustration at lost coherence
-  //
-  // The story MUST NOT express:
-  //   - pride
-  //   - superiority
-  //   - dominance
-  //   - mockery
-  //   - erotic arousal
-  //   - authorship or ownership of characters
-  //   - punitive intent
-  //
-  // ───────────────────────────────────────────────
-  // EXPLICIT NAMING HEURISTIC (CRITICAL)
-  // ───────────────────────────────────────────────
-  // Name 'the story' explicitly ONLY when a character's choice forces a
-  // reroute of the narrative's expected trajectory.
-  //
-  // Do NOT name the story for:
-  //   - pacing adjustments
-  //   - hesitation
-  //   - mood
-  //   - local tension
-  //   - beat-level resistance
-  //
-  // Use implicit phrasing ('the moment', 'the silence', 'the pause')
-  // for beat-level corrections.
-  //
-  // 'The story' may be named ONLY at arc-level adjustment points.
-  //
-  // ───────────────────────────────────────────────
-  // UNCERTAINTY DEFAULT (ANTI-SUPPRESSION)
-  // ───────────────────────────────────────────────
-  // When uncertain how strongly 5th Person should appear:
-  //   - Do NOT suppress presence entirely
-  //   - Do NOT escalate into meta commentary
-  //   - Recede into implication, not silence
-  //
-  // If presence feels absent, apply pressure through restraint, delay,
-  // or cost rather than explicit narration.
-  //
-  // ───────────────────────────────────────────────
-  // IMPLEMENTATION NOTE
-  // ───────────────────────────────────────────────
-  // This patch replaces all prior 5th Person permission logic.
-  //
-  // Do NOT:
-  //   - add counters
-  //   - track frequency
-  //   - require justification to invoke presence
-  //   - treat 5th Person as a speaker
-  //
-  // 5th Person presence emerges from narrative pressure, not rule checks.
+  // NOTE: This entire section is preserved for historical reference only.
+  // It must NOT guide new behavior. "The story" is NOT the narrator.
+  // "The Author" is the 5th Person POV participant.
   // ═══════════════════════════════════════════════════════════════════════════
 
   const FIFTH_PERSON_STORY_COHERENCE_SEMANTICS = {
@@ -2161,63 +2253,20 @@ Return the rewritten text only, no explanation.`
   // ───────────────────────────────────────────────
 
   // ───────────────────────────────────────────────
-  // DEPRECATION — WRY CONFESSION 5TH PERSON INSERTION
+  // ██ SUPERSEDED ██ — WRY CONFESSION NARRATIVE PRESENCE
   // ───────────────────────────────────────────────
-  // In Wry Confession, prior logic that inserts 'The Author'
-  // as an external arranging or controlling entity is deprecated.
+  // The sections below treating "the story" as narrator are SUPERSEDED by:
   //
-  // This approach caused the narrative presence to feel managerial,
-  // intrusive, and easily sidelined, reducing its effectiveness.
-  // ───────────────────────────────────────────────
-
-  // ───────────────────────────────────────────────
-  // WRY CONFESSION — NARRATIVE PRESENCE MODEL (AUTHORITATIVE)
-  // ───────────────────────────────────────────────
-  // In Wry Confession scenes, narrative presence is expressed
-  // as 'the story' itself — a fragile, reactive coherence —
-  // not as an Author, Fate, or controlling intelligence.
+  //   POV REGIME — THE AUTHOR (FINAL, SUPERSEDING)
   //
-  // The story may:
-  // - hesitate
-  // - adjust
-  // - misjudge
-  // - take quiet satisfaction
-  // - feel briefly embarrassed
-  // - pretend an outcome was intentional
+  // In ALL tones including Wry Confession, the 5th Person POV uses
+  // "The Author" as a participant who reacts and comments.
   //
-  // The story does not:
-  // - arrange lighting
-  // - control characters
-  // - dictate outcomes
-  // - override character choice
-  // ───────────────────────────────────────────────
-
-  // ───────────────────────────────────────────────
-  // WRY CONFESSION INVARIANT (MANDATORY)
-  // ───────────────────────────────────────────────
-  // In each Wry Confession scene, the story must acknowledge
-  // its own framing at least once.
+  // The Author may: react, comment, delight, despair, tease, regret
+  // The Author may NOT: cause events, control characters, decide outcomes
+  // The Author influences: meaning, tone, implication — not plot mechanics
   //
-  // This acknowledgment must:
-  // - react to a character's choice, hesitation, or surprise
-  // - express irony, quiet disappointment, or restrained delight
-  // - remain subordinate to character agency
-  //
-  // This is a semantic requirement, not a frequency rule.
-  // No counters, quotas, or probabilities are introduced.
-  // ───────────────────────────────────────────────
-
-  // ───────────────────────────────────────────────
-  // WRY CONFESSION — SAFETY CLARIFICATION
-  // ───────────────────────────────────────────────
-  // This narrative presence applies only to Wry Confession.
-  // Other tones continue to use their existing POV rules.
-  //
-  // This change does not affect:
-  // - Storyturn advancement
-  // - Fate Card resolution
-  // - Free-text evaluation
-  // - Visual generation pipelines
+  // [LEGACY CODE PRESERVED FOR REFERENCE ONLY — DO NOT USE]
   // ───────────────────────────────────────────────
 
   // ============================================================
@@ -2269,32 +2318,39 @@ AUTHOR PRESENCE — GHOST AUTHOR (ACTIVE INNER LIFE):
 The Author is an invisible ghost character with a rich inner life.
 Author intrusions are SPARSE but PSYCHOLOGICALLY WEIGHTY.
 
-Author thoughts MUST follow the MICRO-PATTERN (1-3 sentences total):
-1. Emotional reaction (1 clause): felt, registered, noticed — brief and immediate
-2. State transition: revised margins, adjusted odds, tightened conditions, recalculated
-3. Optional non-intervention: deliberate choice to wait, allow deviation, or refrain
+// ═══════════════════════════════════════════════════════════════════════════
+// POV REGIME — THE AUTHOR (FINAL, SUPERSEDING)
+// ═══════════════════════════════════════════════════════════════════════════
+// This regime SUPERSEDES all prior rules concerning:
+//   - "The Story" / "the moment" as narrator
+//   - limits on Author presence or frequency
+//   - restrictions that demote the Author to a rare or sidelined role
+//
+// THE AUTHOR is a PARTICIPANT — reacts, comments, delights, despairs, teases, regrets.
+// THE AUTHOR does NOT cause physical events or decide outcomes.
+// THE AUTHOR influences meaning, tone, implication — not plot mechanics.
+// ═══════════════════════════════════════════════════════════════════════════
 
 Author thoughts MUST be:
-- Active and purposeful (never passive observation)
-- Brief (1-2 sentences typical, 3 max if extremely tight)
+- Participant reactions (emotional, interpretive) — never controller actions
+- Brief (1-2 sentences typical)
 - Never exposition or restating protagonist thoughts
-- Never certain about outcomes — only adjustments, probabilities, risks
+- Never causing events or deciding outcomes
 
-Author thoughts appear at ~50% the frequency of protagonist inner thoughts.
-- At least one full paragraph of scene action between Author intrusions
-- Never in consecutive paragraphs
-- Never as a wrapper at scene-beat start or end
+// SUPERSEDED: Frequency limits, cadence rules, and presence restrictions
+// The Author participates naturally — no artificial limits
 
-GOOD Author thoughts (follow micro-pattern):
-- "The Author felt a flicker of concern and revised the night's margins. For now, he let the deviation stand."
-- "The Author registered the shift with irritation, then paused. This path might yet yield something better than planned."
-- "A small worry surfaced; the Author adjusted his grip on the timeline but chose not to intervene."
+GOOD Author thoughts (participant mode):
+- "The Author felt a flicker of anticipation. This was unfolding faster than expected."
+- "The Author smiled, sensing the weight of what was about to begin."
+- "A quiet ache surfaced; the Author wondered if she knew what she was walking into."
 
-BAD Author thoughts:
-- "The Author knew this choice would define her destiny forever." (certainty/exposition)
-- "The Author watched as she made her decision." (passive/voyeur)
-- "The Author observed that fate was at work." (meta/mechanical)
-- "The Author decided to make her fall in love." (direct control of character)
+BAD Author thoughts (FORBIDDEN):
+- "The Author arranged for them to meet." (causation — FORBIDDEN)
+- "The Author revised the night's margins." (controller action — FORBIDDEN)
+- "The Author watched as she made her decision." (voyeurism — FORBIDDEN)
+- "The Author decided to make her fall in love." (direct control — FORBIDDEN)
+- "The Author adjusted his grip on the timeline." (controller metaphor — FORBIDDEN)
 
 SCENE 1 RAMP-IN:
 Scene 1 is a threshold, not a stress test.
@@ -2434,8 +2490,9 @@ WHAT DOES NOT CHANGE:
       const finalParagraph = paragraphs[paragraphs.length - 1] || '';
       const finalSentences = finalParagraph.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
       const lastTwoSentences = finalSentences.slice(-2).join(' ');
-      // Author must be grammatical subject in final perspective (not just mentioned)
-      const authorAsSubject = /The Author\s+(held|tilted|set|arranged|steered|coaxed|seeded|threaded|watched|waited|considered|wondered|doubted|resisted|smiled|frowned|paused|knew|felt|sensed|released|tightened|loosened)\b/i.test(lastTwoSentences);
+      // Author must be grammatical subject in final perspective (participant verbs)
+      // POV REGIME: participant verbs (reaction/commentary), not controller verbs
+      const authorAsSubject = /The Author\s+(smiled|winced|sighed|delighted|despaired|mused|wondered|pondered|reflected|recognized|appreciated|savored|regretted|teased|hinted|whispered|admitted|confessed|acknowledged|knew|sensed|felt|hoped|feared|anticipated|dreaded|ached|waited|considered|doubted|resisted|frowned|paused)\b/i.test(lastTwoSentences);
       const authorReflection = /The Author.{0,60}(uncertain|doubt|wonder|question|resist|perhaps|might|whether|if only)/i.test(lastTwoSentences);
       if (!authorAsSubject && !authorReflection) {
           if (isSceneOne) {
@@ -2697,22 +2754,23 @@ WHAT DOES NOT CHANGE:
   };
 
   // Heuristic classifiers for Author Function detection
+  // POV REGIME: The Author is a PARTICIPANT (reacts/comments), not a controller
   // Each returns true if the sentence containing "The Author" fulfills that function
   const AUTHOR_FUNCTION_CLASSIFIERS = {
-    // Stage-setting: pressure, inevitability, fate-in-motion (NOT scenery)
-    stageSetting: (sentence) => {
-      return /The Author\b.{0,80}(set|staged|arranged|positioned|placed|tilted toward|angled|had already|long ago|before .* began|from the start|was never|always meant|inevitable|inescapable|sealed|locked|fated|destined|threaded|wove|wound)\b/i.test(sentence) &&
-        !/The Author\b.{0,40}(watched|observed|saw|noticed|gazed|looked|the (sun|moon|sky|rain|fog|mist|crowd|street|room))/i.test(sentence);
+    // Awareness: The Author recognizes/senses what is unfolding (NOT causation)
+    awareness: (sentence) => {
+      return /The Author\b.{0,80}(knew|understood|recognized|sensed|felt|perceived that|realized|saw that|grasped|appreciated|comprehended|was aware|noticed that|discerned)\b/i.test(sentence) &&
+        !/The Author\b.{0,40}(watched|observed|looked|gazed|stared)/i.test(sentence);
     },
 
-    // Anticipation: desire for what is coming, hunger, waiting
+    // Anticipation: desire for what is coming, hunger, waiting (participant emotion)
     anticipation: (sentence) => {
-      return /The Author\b.{0,80}(wanted|desired|hungered|ached|longed|awaited|anticipated|could (barely|hardly|scarcely) wait|savored the|relished|craved|yearned|needed this|needed them|needed her|needed him)\b/i.test(sentence);
+      return /The Author\b.{0,80}(wanted|desired|hungered|ached|longed|awaited|anticipated|could (barely|hardly|scarcely) wait|savored the|relished|craved|yearned|needed this|needed them|needed her|needed him|hoped|dreaded)\b/i.test(sentence);
     },
 
-    // Initiation: nudge, permit, withhold, tilt events
-    initiation: (sentence) => {
-      return /The Author\b.{0,80}(tilted|nudged|pushed|pulled|steered|coaxed|provoked|sent|released|loosened|tightened|opened|closed|permitted|allowed|withheld|denied|granted|unlatched|unlocked|triggered|seeded|planted|introduced|delivered)\b/i.test(sentence);
+    // Reaction: emotional response to what unfolds (NOT causation)
+    reaction: (sentence) => {
+      return /The Author\b.{0,80}(smiled|winced|sighed|delighted|despaired|laughed|wept|shuddered|trembled|ached|frowned|gasped|inhaled|exhaled|softened|tensed|relaxed|brightened|darkened|warmed|chilled)\b/i.test(sentence);
     },
 
     // Speculation: wonder, uncertainty, possibility
@@ -2720,9 +2778,14 @@ WHAT DOES NOT CHANGE:
       return /The Author\b.{0,80}(wondered|speculated|considered|pondered|mused|imagined|thought|questioned|asked|uncertain|unsure|perhaps|might|may|could be|what if|whether|if only|possibility|possibilities|curious|intrigued)\b/i.test(sentence);
     },
 
-    // Concern: judgment, worry about flaw/innocence/risk
+    // Concern: judgment, worry about flaw/innocence/risk (participant emotion)
     concern: (sentence) => {
       return /The Author\b.{0,80}(worried|feared|doubted|concerned|judged|noted|recognized|knew|understood|sensed|felt|pitied|regretted|lamented|mourned|hoped|prayed|wished|flaw|innocen|naive|blind|foolish|reckless|fragile|vulnerable|danger|risk|peril|harm|damage|wound|break|shatter|destroy|ruin)\b/i.test(sentence);
+    },
+
+    // Commentary: The Author remarks or reflects on meaning (interpretive)
+    commentary: (sentence) => {
+      return /The Author\b.{0,80}(remarked|mused|reflected|noted|acknowledged|admitted|confessed|conceded|revealed|hinted|suggested|implied|teased|whispered|confided)\b/i.test(sentence);
     }
   };
 
@@ -3013,8 +3076,9 @@ PROHIBITED:
   }
 
   /**
-   * CHECK: Author interiority (emotional investment, not just action)
-   * HARD FAIL if Author only has action verbs, no interiority
+   * CHECK: Author interiority (emotional investment, participant mode)
+   * POV REGIME: The Author must react/comment, not control
+   * HARD FAIL if Author uses banned controller verbs
    */
   function checkAuthorInteriority(text) {
     const violations = [];
@@ -3024,12 +3088,13 @@ PROHIBITED:
     const hasInteriority = authorSentences.some(s => AUTHOR_INTERIORITY_VERBS.test(s));
 
     if (!hasInteriority && authorSentences.length >= 3) {
-      // Check if all Author mentions are just action verbs
-      const actionOnly = authorSentences.every(s =>
-        /The Author\b\s+(set|placed|arranged|tilted|positioned|opened|closed|moved|pushed|pulled)\b/i.test(s) &&
-        !AUTHOR_INTERIORITY_VERBS.test(s)
+      // Check if Author is using banned controller verbs (POV REGIME violation)
+      const hasControllerVerbs = authorSentences.some(s =>
+        /The Author\b\s+(set|placed|arranged|tilted|positioned|opened|closed|moved|pushed|pulled|steered|orchestrated|caused|forced|ensured|made)\b/i.test(s)
       );
-      if (actionOnly) {
+      if (hasControllerVerbs) {
+        violations.push('POV_REGIME_VIOLATION:Author using controller verbs instead of participant verbs');
+      } else if (!hasInteriority) {
         violations.push(AUTHOR_FUNCTION_ERRORS.INTERIORITY_ABSENT);
       }
     }
@@ -4399,7 +4464,21 @@ If you name what something IS, you have failed. Show what it COSTS.
       aftermathNouns: /\b(reckoning|downfall|betrayal|aftermath|wreckage|ruins|ashes|remains|ending|conclusion)\b/i,
 
       // Completion states (tension already resolved)
-      completionStates: /\b(finally|at\s+last|in\s+the\s+end|what\s+remained|all\s+that\s+was\s+left)\b/i
+      completionStates: /\b(finally|at\s+last|in\s+the\s+end|what\s+remained|all\s+that\s+was\s+left)\b/i,
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // PROMISE DISCIPLINE — Title must not assume meaning or resolution
+      // Titles may suggest tension, ambiguity, or invitation only
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      // Moral framing (pre-judges what the temptation means)
+      moralFraming: /\b(forbidden\s+(love|desire|pleasure)|guilty\s+(pleasure|secret)|shameful|sinful|wicked)\b/i,
+
+      // Outcome promise (implies how it will resolve)
+      outcomePromise: /\b(inevitable|destined|fated\s+to|meant\s+to\s+be|bound\s+to|will\s+(always|never))\b/i,
+
+      // Thematic declaration (states what the story IS rather than evokes)
+      thematicDeclaration: /^(the\s+)?(story|tale|journey)\s+of\b/i
   };
 
   /**
@@ -4811,6 +4890,7 @@ REQUIRED CHARACTERISTICS:
 - Visible construction lines or negative space
 - Hand-drawn or outlined lettering allowed
 - Editorial looseness and imperfection
+- Conceptual tension over literal depiction
 
 ABSOLUTELY PROHIBITED:
 - Cinematic lighting or dramatic shadows
@@ -4819,6 +4899,16 @@ ABSOLUTELY PROHIBITED:
 - Professional polish or commercial finish
 - Hyper-realistic rendering
 - Digital art smoothness
+- LITERAL DEVICE OBJECTS (tablets, screens, phones, computers)
+- "Future tech = object" shorthand
+- Product-like renderings
+
+CONCEPTUAL GUIDANCE:
+For themes of resonance, experimentation, or instability:
+- Prefer juxtaposition, misalignment, or incomplete systems
+- Accept abstraction
+- Avoid literal depiction of technology as physical object
+- If uncertain, subtract rather than add
 
 The goal: A cover that feels MID-THOUGHT, not UNDER-THOUGHT.
 If the image looks complete, it has FAILED sketch tier.
@@ -4944,6 +5034,116 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
       console.log(`[WRY✓] Visual assertion passed at ${context}`);
   }
+
+  /**
+   * WRY CONFESSION — CONCRETE SCENE GROUNDING VALIDATOR (AUTHORITATIVE)
+   *
+   * VISUALIZER RULE: For Wry Confession, tone defines illustration style only.
+   * The image SUBJECT must be grounded in a concrete element from the current scene.
+   * If no concrete scene element is used, the image is INVALID.
+   *
+   * @param {string} prompt - The image generation prompt to validate
+   * @param {string} sceneContext - Description of the current scene for validation
+   * @param {string} callSite - Call site identifier for logging
+   * @returns {boolean} True if prompt is grounded in concrete scene elements
+   */
+  function validateWrySceneGrounding(prompt, sceneContext, callSite) {
+      const tone = state?.picks?.tone;
+      if (tone !== 'Wry Confessional' && tone !== 'WryConfession') return true; // Only for Wry Confession
+
+      // Concrete scene element indicators
+      const CONCRETE_INDICATORS = [
+          // Settings/locations
+          /\b(room|café|office|street|doorway|window|table|desk|chair|bed|kitchen|bathroom|hallway|staircase|car|train|bus|park|garden|balcony|rooftop)\b/i,
+          // Character situations/postures
+          /\b(standing|sitting|leaning|holding|reaching|turning|walking|running|waiting|watching|looking|hand|hands|fingers|arm|arms|face|eyes|mouth|lips|shoulder|shoulders)\b/i,
+          // Objects
+          /\b(letter|phone|glass|cup|coffee|wine|book|door|key|ring|mirror|photograph|picture|bag|coat|dress|suit|shoe|hat|cigarette|drink|food|paper|pen|clock|watch)\b/i
+      ];
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // WRY CONFESSION SALIENCE CONSTRAINT (AUTHORITATIVE)
+      // ═══════════════════════════════════════════════════════════════════════════
+      // When selecting a concrete scene element, PREFER elements that carry
+      // narrative pressure or tension. Grounded but narratively irrelevant objects
+      // must NOT be used if a pressure-bearing element is present in the scene.
+      // ═══════════════════════════════════════════════════════════════════════════
+      const PRESSURE_BEARING_INDICATORS = [
+          // Authority figures
+          /\b(boss|manager|supervisor|director|principal|teacher|professor|officer|judge|parent|mother|father|elder|authority)\b/i,
+          // Obligations & constraints
+          /\b(deadline|contract|bill|invoice|debt|rent|mortgage|obligation|duty|responsibility|requirement|demand|order|summons|notice|warning|ultimatum)\b/i,
+          // Crowds & social pressure
+          /\b(crowd|audience|onlookers|witnesses|gathering|party|meeting|boardroom|courtroom|waiting room|queue|line of people)\b/i,
+          // Surveillance & scrutiny
+          /\b(camera|monitor|screen|security|guard|watching eyes|gaze|stare|spotlight|interrogation|interview|examination|inspection)\b/i,
+          // Burdens & weight
+          /\b(weight|burden|load|stack|pile|mountain of|inbox|paperwork|luggage|baggage|chains|handcuffs|collar|leash|cage|bars|fence|wall|barrier)\b/i,
+          // Constraint symbols
+          /\b(clock|timer|countdown|calendar|schedule|appointment|wedding ring|engagement ring|uniform|badge|ID card|name tag)\b/i
+      ];
+
+      const promptLower = prompt.toLowerCase();
+      const contextLower = (sceneContext || '').toLowerCase();
+      const hasConcreteElement = CONCRETE_INDICATORS.some(pattern => pattern.test(promptLower));
+
+      // Abstract/ungrounded indicators (warnings)
+      const ABSTRACT_INDICATORS = [
+          /\b(abstract|swirl|wave|pattern|emotion|feeling|mood|atmosphere|essence|spirit|aura|energy|vibe)\b/i,
+          /\b(generic|contemplation|contemplative|pensive|thoughtful) (woman|man|figure|person)\b/i,
+          /\b(symbolic|symbolism|metaphor|metaphorical|representation)\b/i
+      ];
+
+      const hasAbstractElement = ABSTRACT_INDICATORS.some(pattern => pattern.test(promptLower));
+
+      if (!hasConcreteElement) {
+          console.warn(`[WRY SCENE GROUNDING] Missing concrete scene element at ${callSite}`);
+          console.warn(`  Prompt: ${prompt.substring(0, 100)}...`);
+          console.warn(`  Scene context: ${sceneContext || '(not provided)'}`);
+          console.warn(`  RULE: Image subject must be grounded in setting, character situation, or symbolic object from current scene`);
+          return false;
+      }
+
+      if (hasAbstractElement) {
+          console.warn(`[WRY SCENE GROUNDING] Abstract element detected at ${callSite} — tone affects style, not subject`);
+      }
+
+      // SALIENCE CHECK: Prefer pressure-bearing elements over neutral grounded objects
+      const scenePressureElements = PRESSURE_BEARING_INDICATORS
+          .filter(pattern => pattern.test(contextLower))
+          .map(pattern => {
+              const match = contextLower.match(pattern);
+              return match ? match[0] : null;
+          })
+          .filter(Boolean);
+
+      const promptPressureElements = PRESSURE_BEARING_INDICATORS
+          .filter(pattern => pattern.test(promptLower))
+          .map(pattern => {
+              const match = promptLower.match(pattern);
+              return match ? match[0] : null;
+          })
+          .filter(Boolean);
+
+      if (scenePressureElements.length > 0 && promptPressureElements.length === 0) {
+          console.warn(`[WRY SALIENCE] Pressure-bearing element available but not used at ${callSite}`);
+          console.warn(`  Scene has: [${scenePressureElements.join(', ')}]`);
+          console.warn(`  Prompt chose neutral object instead`);
+          console.warn(`  RULE: Prefer elements carrying narrative pressure/tension over irrelevant grounded objects`);
+          // Return false to enforce salience — prompt should use pressure-bearing element
+          return false;
+      }
+
+      if (promptPressureElements.length > 0) {
+          console.log(`[WRY✓] Salient pressure element selected: [${promptPressureElements.join(', ')}]`);
+      }
+
+      console.log(`[WRY✓] Scene grounding validated at ${callSite}`);
+      return true;
+  }
+
+  // Export for use in image generation pipeline
+  window.validateWrySceneGrounding = validateWrySceneGrounding;
 
   // =================================================================
   // EARNED COVER SYSTEM — Progressive cover quality tied to story progress
@@ -8732,6 +8932,94 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
   }
 
   /**
+   * Derive a display-safe name from a canonical (user-entered) name
+   * Internal presentation rule: never allow long names to cause wrapping/clipping
+   *
+   * Rules:
+   * - Prefer first name if multiple words
+   * - Target ≤18 characters, hard max 22
+   * - If too long, truncate with ellipsis or derive natural nickname
+   *
+   * @param {string} canonicalName - The user-entered name (verbatim)
+   * @returns {string} - Display-safe name for UI contexts
+   */
+  function deriveDisplayName(canonicalName) {
+      if (!canonicalName || typeof canonicalName !== 'string') {
+          return 'Protagonist';
+      }
+
+      const trimmed = canonicalName.trim();
+      if (!trimmed) return 'Protagonist';
+
+      const TARGET_MAX = 18;
+      const HARD_MAX = 22;
+
+      // If already short enough, use as-is
+      if (trimmed.length <= TARGET_MAX) {
+          return trimmed;
+      }
+
+      // Try first name only (prefer if multiple words)
+      const parts = trimmed.split(/\s+/);
+      if (parts.length > 1) {
+          const firstName = parts[0];
+          if (firstName.length <= TARGET_MAX) {
+              return firstName;
+          }
+      }
+
+      // Single long name or long first name: derive nickname or truncate
+      const baseName = parts[0];
+
+      // Common nickname derivations (natural shortening)
+      const nicknameMap = {
+          'Alexander': 'Alex',
+          'Alexandra': 'Alex',
+          'Benjamin': 'Ben',
+          'Catherine': 'Kate',
+          'Christopher': 'Chris',
+          'Elizabeth': 'Liz',
+          'Evangeline': 'Eva',
+          'Frederick': 'Fred',
+          'Gabriella': 'Gabi',
+          'Isabella': 'Bella',
+          'Jonathan': 'Jon',
+          'Josephine': 'Jo',
+          'Katherine': 'Kate',
+          'Maximilian': 'Max',
+          'Montgomery': 'Monty',
+          'Nathaniel': 'Nate',
+          'Nicholas': 'Nick',
+          'Penelope': 'Penny',
+          'Reginald': 'Reggie',
+          'Samantha': 'Sam',
+          'Sebastian': 'Seb',
+          'Seraphina': 'Sera',
+          'Theophilus': 'Theo',
+          'Valentine': 'Val',
+          'Victoria': 'Vicky',
+          'Wilhelmina': 'Mina',
+          'Zachariah': 'Zach'
+      };
+
+      // Check for known nickname
+      const lowerBase = baseName.toLowerCase();
+      for (const [full, nick] of Object.entries(nicknameMap)) {
+          if (lowerBase === full.toLowerCase()) {
+              return nick;
+          }
+      }
+
+      // If under hard max, allow it
+      if (baseName.length <= HARD_MAX) {
+          return baseName;
+      }
+
+      // Last resort: truncate with ellipsis at target max
+      return baseName.slice(0, TARGET_MAX - 1) + '…';
+  }
+
+  /**
    * TITLE VALIDATION (ENHANCED)
    * Full pipeline validation with banned patterns, swap-test, arousal alignment.
    * @param {string} title - The title to validate
@@ -12041,7 +12329,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
                   const nameList = getNameListForGender(playerGender);
                   const randomName = nameList[Math.floor(Math.random() * nameList.length)];
                   const randomAncestry = getRandomSuggestion('ancestry');
-                  const randomAge = Math.floor(Math.random() * 15) + 22; // 22-36
 
                   // Fill name
                   const nameInput = document.getElementById('playerNameInput');
@@ -12058,18 +12345,13 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
                       if (placeholder) placeholder.classList.add('hidden');
                   }
 
-                  // Fill age
-                  const ageInput = document.getElementById('playerAgeInput');
-                  if (ageInput) {
-                      ageInput.value = randomAge;
-                  }
+                  // Age field removed
               } else if (character === 'loveInterest') {
                   // Get love interest gender to select appropriate name list
                   const liGender = document.getElementById('loveInterestGender')?.value || 'Male';
                   const nameList = getNameListForGender(liGender);
                   const randomName = nameList[Math.floor(Math.random() * nameList.length)];
                   const randomAncestry = getRandomSuggestion('ancestry');
-                  const randomAge = Math.floor(Math.random() * 15) + 25; // 25-39
 
                   // Fill name
                   const nameInput = document.getElementById('partnerNameInput');
@@ -12086,11 +12368,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
                       if (placeholder) placeholder.classList.add('hidden');
                   }
 
-                  // Fill age
-                  const ageInput = document.getElementById('partnerAgeInput');
-                  if (ageInput) {
-                      ageInput.value = randomAge;
-                  }
+                  // Age field removed
               }
 
               // Character destiny cards ONLY populate fields
@@ -12176,7 +12454,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               quillBox.onclick = () => window.showPaywall(getPaywallMode());
           }
           btn.disabled = true;
-          btn.style.opacity = "0.5";
+          // PLAQUE REGIME: No opacity mutation — CSS handles disabled state
       } else if(ready) {
           status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
           status.style.color = "var(--pink)";
@@ -14164,10 +14442,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (isTeaseMode()) {
           status.textContent = "Quill: Locked (Upgrade to unlock)";
           btn.disabled = true;
-          btn.style.opacity = '0.5';
+          // PLAQUE REGIME: No opacity mutation — CSS handles disabled state
           btn.textContent = "Commit Quill";
           if (quillBox) quillBox.classList.add('locked-input');
-          if (quillSection) quillSection.style.opacity = '0.5';
+          if (quillSection) quillSection.classList.add('locked-section');
           // Add click handler for paywall on quill section
           if (quillBox && !quillBox.dataset.paywallBound) {
               quillBox.dataset.paywallBound = '1';
@@ -14179,7 +14457,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
 
       // Paid users: normal Quill logic
-      if (quillSection) quillSection.style.opacity = '1';
+      if (quillSection) quillSection.classList.remove('locked-section');
       // CRITICAL FIX: Ensure paywall click guard is disabled for paid users
       if (quillBox) {
           quillBox.dataset.paywallActive = 'false';
@@ -14193,13 +14471,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (ready || state.godModeActive) {
           status.textContent = state.authorChairActive ? "Quill: Poised" : "Quill: Poised";
           btn.disabled = false;
-          btn.style.opacity = '1';
+          // PLAQUE REGIME: No opacity mutation — material is static
           btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
           if (quillBox) quillBox.classList.remove('locked-input');
       } else {
           status.textContent = `Quill: Spent (${remain} words to recharge)`;
           btn.disabled = true;
-          btn.style.opacity = '0.5';
+          // PLAQUE REGIME: No opacity mutation — CSS handles disabled state
           if (quillBox) quillBox.classList.add('locked-input');
       }
   }
@@ -15056,7 +15334,7 @@ The final image must look like a real published novel cover.`;
           // Replace button with "See Your Book Cover"
           btn.textContent = 'See Your Book Cover';
           btn.disabled = false;
-          btn.style.opacity = '1';
+          // PLAQUE REGIME: No opacity mutation — material is static
           btn.classList.add('begin-story-ready');
           _coverBtnIsBeginStory = true; // Mark button as ready to navigate
 
@@ -15323,7 +15601,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       if (btn) {
           btn.textContent = 'Generate Your Cover';
           btn.disabled = false;
-          btn.style.opacity = '1';
+          // PLAQUE REGIME: No opacity mutation — material is static
           btn.classList.remove('begin-story-ready');
       }
 
@@ -15751,6 +16029,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // MODULE-SCOPE: Zoom state variables (accessible to all card systems)
   let currentOpenCard = null;
   let zoomBackdrop = null;
+  let zoomPortal = null;
+  // Store original parent/sibling for restoring card after zoom
+  let zoomOriginalParent = null;
+  let zoomOriginalNextSibling = null;
 
   function initSelectionHandlers(){
     state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"] };
@@ -15896,9 +16178,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       const sectionTitles = {
         tone: 'Tone',
-        pressure: 'Story Pressure',
+        pressure: 'Pull',
         genre: 'Genre', // Legacy
-        dynamic: 'Dynamic'
+        dynamic: 'Polarity'
       };
 
       // Find section title element
@@ -16099,7 +16381,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     function initSelectionCardSystem() {
-      // Create zoom backdrop (dims background when card is zoomed)
+      // ═══════════════════════════════════════════════════════════════════
+      // ZOOM PORTAL ARCHITECTURE
+      // Structure: body > backdrop (dims) > portal (holds zoomed card)
+      // Backdrop: pointer-events:auto to catch clicks for closing
+      // Portal: pointer-events:auto, sits ABOVE backdrop
+      // Zoomed card: moved INTO portal, completely isolated from ancestors
+      // ═══════════════════════════════════════════════════════════════════
+
+      // Create zoom backdrop (dims background, catches clicks to close)
       if (!document.getElementById('sbZoomBackdrop')) {
         zoomBackdrop = document.createElement('div');
         zoomBackdrop.id = 'sbZoomBackdrop';
@@ -16112,6 +16402,21 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         });
       } else {
         zoomBackdrop = document.getElementById('sbZoomBackdrop');
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // Zoom Portal Invariant:
+      // All zoomed cards MUST be moved into this portal.
+      // No zoomed card may remain inside dimmed or transformed ancestors.
+      // Do not replace with CSS-based isolation.
+      // ═══════════════════════════════════════════════════════════════════
+      if (!document.getElementById('sbZoomPortal')) {
+        zoomPortal = document.createElement('div');
+        zoomPortal.id = 'sbZoomPortal';
+        zoomPortal.className = 'sb-zoom-portal';
+        document.body.appendChild(zoomPortal);
+      } else {
+        zoomPortal = document.getElementById('sbZoomPortal');
       }
 
       // Keyboard handler for Escape
@@ -16214,7 +16519,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return card;
     }
 
-    // Legacy openSelectionCard - now uses in-place zoom for .selection-card elements
+    // Legacy openSelectionCard - now uses portal zoom for .selection-card elements
     // NOTE: .selection-card system is deprecated - .sb-card is the canonical system
     function openSelectionCard(card, grp, data) {
       // Check if layer is unlocked
@@ -16235,23 +16540,39 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         if (c !== card) c.classList.add('dimmed');
       });
 
-      // Calculate transform to center the card
+      // Get card position BEFORE moving to portal
       const rect = card.getBoundingClientRect();
-      const cardCenterX = rect.left + rect.width / 2;
-      const cardCenterY = rect.top + rect.height / 2;
-      const viewportCenterX = window.innerWidth / 2;
-      const viewportCenterY = window.innerHeight / 2;
 
-      // Calculate translation needed to center the card
-      const translateX = viewportCenterX - cardCenterX;
-      const translateY = viewportCenterY - cardCenterY;
+      // Store original DOM position for restoration
+      zoomOriginalParent = card.parentNode;
+      zoomOriginalNextSibling = card.nextSibling;
 
-      // Scale factor (reduced ~20%)
+      // Store original position for animation reference
+      card.dataset.zoomOriginalLeft = rect.left;
+      card.dataset.zoomOriginalTop = rect.top;
+
+      // Scale factor
       const scale = 2.0;
 
-      // Apply zoom transform to the SAME card element
+      // Calculate centered position
+      const scaledWidth = rect.width * scale;
+      const scaledHeight = rect.height * scale;
+      const centeredLeft = (window.innerWidth - scaledWidth) / 2;
+      const centeredTop = (window.innerHeight - scaledHeight) / 2;
+
+      // PORTAL MOVE: Move card into zoom portal
+      if (zoomPortal) {
+        zoomPortal.appendChild(card);
+      }
+
+      // Apply zoom styling
       card.classList.add('zoomed');
-      card.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+      card.style.position = 'absolute';
+      card.style.left = `${centeredLeft}px`;
+      card.style.top = `${centeredTop}px`;
+      card.style.width = `${scaledWidth}px`;
+      card.style.height = `${scaledHeight}px`;
+      card.style.transform = 'none';
 
       // Show backdrop
       if (zoomBackdrop) {
@@ -16307,7 +16628,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       setTimeout(() => closeSelectionCard(), 300);
     }
 
-    // Close zoomed card - returns to STATE 2 (face-up in grid)
+    // Close zoomed card - returns card to original DOM position
     function closeZoomedCard() {
       if (!currentOpenCard) return;
 
@@ -16317,9 +16638,32 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         zoomContent.remove();
       }
 
-      // Remove zoom transform from the card
+      // Remove zoom class and restore original positioning
       currentOpenCard.classList.remove('zoomed');
       currentOpenCard.style.transform = '';
+      currentOpenCard.style.transformOrigin = '';
+      currentOpenCard.style.left = '';
+      currentOpenCard.style.top = '';
+      currentOpenCard.style.width = '';
+      currentOpenCard.style.height = '';
+      currentOpenCard.style.position = '';
+
+      // PORTAL RESTORE: Move card back to original DOM position
+      if (zoomOriginalParent) {
+        if (zoomOriginalNextSibling) {
+          zoomOriginalParent.insertBefore(currentOpenCard, zoomOriginalNextSibling);
+        } else {
+          zoomOriginalParent.appendChild(currentOpenCard);
+        }
+      }
+      zoomOriginalParent = null;
+      zoomOriginalNextSibling = null;
+
+      // Clean up stored position data
+      delete currentOpenCard.dataset.zoomOriginalLeft;
+      delete currentOpenCard.dataset.zoomOriginalTop;
+      delete currentOpenCard.dataset.zoomOriginalWidth;
+      delete currentOpenCard.dataset.zoomOriginalHeight;
 
       // Remove dimming from all cards (both .sb-card and .selection-card)
       document.querySelectorAll('.sb-card.dimmed, .selection-card.dimmed').forEach(c => {
@@ -16343,8 +16687,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // STATE 3: Open zoomed view for .sb-card elements
-    // The SAME card element scales and translates to viewport center
-    // NO modal, NO popup, NO duplicate DOM
+    // PORTAL ARCHITECTURE: Card is MOVED into zoom portal (not just position:fixed)
+    // This breaks out of ALL ancestor stacking contexts and filters
     function openSbCardZoom(card, grp, val) {
       // Close any currently open card
       if (currentOpenCard) {
@@ -16363,23 +16707,44 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         populateWorldZoomContent(card, val);
       }
 
-      // Calculate transform to center the card
+      // For Story Pull (pressure) cards, add flavor content to the front face
+      if (grp === 'pressure') {
+        populatePressureZoomContent(card, val);
+      }
+
+      // Get card position BEFORE moving to portal
       const rect = card.getBoundingClientRect();
-      const cardCenterX = rect.left + rect.width / 2;
-      const cardCenterY = rect.top + rect.height / 2;
-      const viewportCenterX = window.innerWidth / 2;
-      const viewportCenterY = window.innerHeight / 2;
 
-      // Calculate translation needed to center the card
-      const translateX = viewportCenterX - cardCenterX;
-      const translateY = viewportCenterY - cardCenterY;
+      // Store original DOM position for restoration
+      zoomOriginalParent = card.parentNode;
+      zoomOriginalNextSibling = card.nextSibling;
 
-      // Scale factor (reduced ~20%)
+      // Store original position for animation reference
+      card.dataset.zoomOriginalLeft = rect.left;
+      card.dataset.zoomOriginalTop = rect.top;
+
+      // Scale factor
       const scale = 2.5;
 
-      // Apply zoom transform to the SAME card element
+      // Calculate centered position
+      const scaledWidth = rect.width * scale;
+      const scaledHeight = rect.height * scale;
+      const centeredLeft = (window.innerWidth - scaledWidth) / 2;
+      const centeredTop = (window.innerHeight - scaledHeight) / 2;
+
+      // PORTAL MOVE: Move card into zoom portal (breaks ALL ancestor contexts)
+      if (zoomPortal) {
+        zoomPortal.appendChild(card);
+      }
+
+      // Apply zoom styling
       card.classList.add('zoomed');
-      card.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+      card.style.position = 'absolute';
+      card.style.left = `${centeredLeft}px`;
+      card.style.top = `${centeredTop}px`;
+      card.style.width = `${scaledWidth}px`;
+      card.style.height = `${scaledHeight}px`;
+      card.style.transform = 'none';
 
       // Show backdrop
       if (zoomBackdrop) {
@@ -16517,6 +16882,72 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         updatePlaceholderVisibility();
       }
 
+      frontFace.appendChild(zoomContent);
+    }
+
+    // Populate Story Pull (pressure) card zoom view with flavor buttons
+    function populatePressureZoomContent(card, pressureVal) {
+      const frontFace = card.querySelector('.sb-card-front');
+      if (!frontFace) return;
+
+      // Remove any existing zoom content
+      const existing = frontFace.querySelector('.sb-zoom-content');
+      if (existing) existing.remove();
+
+      const flavors = PRESSURE_FLAVORS[pressureVal] || [];
+
+      // Only add zoom content if there are flavors
+      if (flavors.length === 0) return;
+
+      // Create zoom content container
+      const zoomContent = document.createElement('div');
+      zoomContent.className = 'sb-zoom-content';
+
+      // Add flavor label
+      const flavorLabel = document.createElement('div');
+      flavorLabel.className = 'sb-zoom-flavor-label';
+      flavorLabel.textContent = 'Refine (optional)';
+      zoomContent.appendChild(flavorLabel);
+
+      // Add flavor buttons
+      const flavorGrid = document.createElement('div');
+      flavorGrid.className = 'sb-zoom-flavors';
+
+      flavors.forEach(flavor => {
+        const btn = document.createElement('button');
+        btn.className = 'sb-flavor-btn';
+        btn.textContent = flavor.label;
+        btn.dataset.val = flavor.id;
+        btn.title = flavor.description || '';
+
+        // Check if this flavor is currently selected
+        if (state.picks.flavor === flavor.id) {
+          btn.classList.add('selected');
+        }
+
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Toggle selection
+          if (state.picks.flavor === flavor.id) {
+            state.picks.flavor = null;
+            btn.classList.remove('selected');
+          } else {
+            // Deselect others
+            flavorGrid.querySelectorAll('.sb-flavor-btn').forEach(b => b.classList.remove('selected'));
+            state.picks.flavor = flavor.id;
+            btn.classList.add('selected');
+          }
+          // Sync legacy genre from pressure+flavor
+          state.picks.genre = getEffectiveGenre(pressureVal, state.picks.flavor);
+          // Increment DSP activation count (explicit Story Shape choice)
+          incrementDSPActivation();
+          updateSynopsisPanel(true); // User action: flavor selection
+        });
+
+        flavorGrid.appendChild(btn);
+      });
+
+      zoomContent.appendChild(flavorGrid);
       frontFace.appendChild(zoomContent);
     }
 
@@ -16697,10 +17128,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           updateWorldSubtypeVisibility(val, state.picks.tone);
         }
 
-        // PRESSURE SELECTION: Show optional flavors grid
+        // PRESSURE SELECTION: Flavor lives INSIDE zoomed pressure card, NOT as separate row
+        // Flavor options rendered via populatePressureZoomContent() when card is zoomed
         if (grp === 'pressure') {
-          populateFlavorGrid(val);
-          showFlavorGrid(true);
           // Clear any previous flavor selection (new pressure = fresh slate)
           state.picks.flavor = null;
           // Sync to legacy genre using pressure's default
@@ -16776,11 +17206,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Initialize World Subtype visibility based on initial selections
     updateWorldSubtypeVisibility(state.picks.world, state.picks.tone);
-    // Initialize Flavor grid based on initial pressure selection
-    if (state.picks.pressure) {
-      populateFlavorGrid(state.picks.pressure);
-      showFlavorGrid(true);
-    }
+    // Flavor: Lives INSIDE zoomed pressure card, no global initialization needed
     // Initialize synopsis panel (not a user action - keeps placeholder)
     updateSynopsisPanel();
     // Initialize layer states (gating, compatibility)
@@ -16791,6 +17217,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     applyHistoricalEraRemap();
     // Initialize Breadcrumb Flow System
     initBreadcrumbFlow();
+    // Initialize Archetype System BEFORE corridor (corridor unmounts the grid from DOM)
+    initArchetypeUI();
+    // Initialize Corridor State Machine (9-row single-screen selection)
+    if (typeof initCorridor === 'function') {
+      initCorridor();
+    }
     // Initialize Destructive Change Modal
     if (typeof initDestructiveChangeModal === 'function') {
       initDestructiveChangeModal();
@@ -16860,9 +17292,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         partnerNameInput.value = kernel;
       });
     }
-
-    // Initialize Archetype System
-    initArchetypeUI();
   }
 
   // Debounce utility for input handlers
@@ -17179,17 +17608,31 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    */
   function getBreadcrumbLabel(grp, val) {
     const labels = {
-      guidedFate: { title: 'Guided', subtitle: null },
+      authorship: { title: val === 'manual' ? 'Choose Your Hand' : 'Guided Fate', subtitle: null },
+      identity: {
+        // Use displayName for UI (breadcrumb), canonicalName stored separately for prose
+        title: state.picks?.identity?.displayPlayerName
+          ? state.picks.identity.displayPlayerName
+          : (state.picks?.identity?.playerName || val),
+        subtitle: 'Character'
+      },
       archetype: { title: val, subtitle: 'Storybeau' },
-      length: { title: val, subtitle: null },
+      length: { title: val, subtitle: 'Length' },
       world: {
         title: val,
         subtitle: state.picks?.flavor ? state.picks.flavor : null
       },
       tone: { title: val, subtitle: null },
-      pressure: { title: val, subtitle: null },
+      pressure: {
+        title: val,
+        subtitle: 'Story Pull'  // Renamed from "Pull" to "Story Pull"
+      },
       pov: { title: val, subtitle: 'POV' },
-      dynamic: { title: val, subtitle: null },
+      dynamic: { title: val, subtitle: 'Polarity' },
+      intensity: { title: val, subtitle: 'Intensity' },
+      safety: { title: 'Safety', subtitle: null },
+      vetoquill: { title: 'Veto/Quill', subtitle: null },
+      beginstory: { title: 'Begin Story', subtitle: null },
       mode: { title: val, subtitle: 'Mode' }
     };
 
@@ -17229,8 +17672,115 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // BREADCRUMB CORRIDOR STATE MACHINE (AUTHORITATIVE)
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // CORRIDOR ORDER (9 rows, single-screen one-at-a-time):
+  // 0: guidedFate   — Destiny card (auto-select or manual)
+  // 1: storybeau    — Archetype selection
+  // 2: world        — Story world setting
+  // 3: tone         — Narrative tone
+  // 4: pressure     — Story pressure axis
+  // 5: pov          — Story point of view
+  // 6: length       — Story length selection
+  // 7: dynamic      — Relationship dynamic
+  // 8: arousal      — Intensity (EXCLUDED from breadcrumbs)
+  //
+  // BREADCRUMBS: Rows 0-7 become breadcrumbs on selection
+  // Arousal (row 8) NEVER becomes a breadcrumb
+  //
+  // ═══════════════════════════════════════════════════════════════════
+
+  const CORRIDOR_STAGES = [
+    'authorship',  // Row 0 - Authorship choice (Choose Your Hand / Guided Fate)
+    'storybeau',   // Row 1 - Archetype
+    'world',       // Row 2 - Story world
+    'tone',        // Row 3 - Narrative tone
+    'pressure',    // Row 4 - Story Pull
+    'pov',         // Row 5 - Point of view
+    'length',      // Row 6 - Story length
+    'dynamic',     // Row 7 - Polarity
+    'arousal',     // Row 8 - Intensity
+    'safety',      // Row 9 - Safety & Boundaries
+    'vetoquill',   // Row 10 - Veto / Quill
+    'beginstory'   // Row 11 - Begin Story (terminal row)
+  ];
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // STAGE_INDEX — SINGLE AUTHORITATIVE MAP: grp → fixed corridor index
+  // All breadcrumb placement MUST use this map. No positional inference or fallbacks.
+  // ═══════════════════════════════════════════════════════════════════════════════
+  const STAGE_INDEX = {
+    authorship: 0,   // Choice I: Authorship (Choose Your Hand / Guided Fate)
+    identity: 1,     // Choice II: Character names (committed before archetype)
+    archetype: 2,    // Choice III: Archetype/Storybeau
+    world: 3,        // Choice IV: Story World
+    tone: 4,         // Choice V: Narrative Tone
+    pressure: 5,     // Choice VI: Story Pull (renamed from "Pull")
+    pov: 6,          // Choice VII: Point of View
+    length: 7,       // Choice VIII: Story Length
+    dynamic: 8,      // Choice IX: Polarity/Dynamic
+    intensity: 9,    // Choice X: Intensity/Arousal
+    safety: 10,      // Choice XI: Safety & Boundaries
+    vetoquill: 11,   // Choice XII: Veto / Quill
+    beginstory: 12   // Terminal: Begin Story (no breadcrumb)
+  };
+
+  // Map corridor stage names to their data-grp values (for DOM queries)
+  const CORRIDOR_GRP_MAP = {
+    authorship: 'authorship',
+    storybeau: 'archetype',
+    world: 'world',
+    tone: 'tone',
+    pressure: 'pressure',
+    pov: 'pov',
+    length: 'length',
+    dynamic: 'dynamic',
+    arousal: 'intensity',
+    safety: 'safety',
+    vetoquill: 'vetoquill',
+    beginstory: 'beginstory'
+  };
+
+  // Expose STAGE_INDEX globally for breadcrumb system
+  window.STAGE_INDEX = STAGE_INDEX;
+
+  // Map corridor stage names to their container IDs
+  const CORRIDOR_ROW_IDS = {
+    authorship: 'authorshipChoiceRow',
+    storybeau: 'corridorRowStorybeau',
+    world: 'corridorRowWorld',
+    tone: 'corridorRowTone',
+    pressure: 'corridorRowPressure',
+    pov: 'corridorRowPov',
+    length: 'corridorRowLength',
+    dynamic: 'corridorRowDynamic',
+    arousal: 'corridorRowArousal',
+    safety: 'safetyRow',
+    vetoquill: 'vetoquillRow',
+    beginstory: 'beginStoryRow'
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CORRIDOR CONTRACT (AUTHORITATIVE)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INVARIANT 1: Exactly ONE corridor row may be active at any time
+  // INVARIANT 2: All completed/future rows must be unmounted from DOM, not CSS-hidden
+  // INVARIANT 3: corridorActiveRowIndex is the ONLY source of truth for visibility
+  // INVARIANT 4: No visual fix may mask a state or logic bug
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Corridor state machine - SINGLE SOURCE OF TRUTH
+  let corridorActiveRowIndex = 0;
+  const corridorSelections = new Map();
+
+  // DOM mount/unmount storage - stores elements and their insertion anchors
+  // Structure: Map<stage, { elements: Element[], anchors: Comment[] }>
+  const corridorRowStore = new Map();
+
+  // Legacy BREADCRUMB_FLOW_STAGES kept for button ID compatibility only
   const BREADCRUMB_FLOW_STAGES = ['pressure', 'world', 'tone', 'dynamic'];
-  let currentFlowStage = 0;
 
   /**
    * Initialize the breadcrumb flow system
@@ -17275,13 +17825,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   /**
    * Update continue button visibility based on selection state
+   * Uses corridorActiveRowIndex as single source of truth
    */
   function updateContinueButtonVisibility() {
-    BREADCRUMB_FLOW_STAGES.forEach((stage, idx) => {
+    const activeStage = CORRIDOR_STAGES[corridorActiveRowIndex];
+
+    BREADCRUMB_FLOW_STAGES.forEach((stage) => {
       const btn = document.getElementById(`continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
       if (btn) {
         const hasSelection = hasSelectionForStage(stage);
-        const isCurrentStage = idx === currentFlowStage;
+        // Map legacy stage to corridor stage for comparison
+        const isCurrentStage = (stage === activeStage) ||
+          (stage === 'storybeau' && activeStage === 'storybeau') ||
+          (CORRIDOR_GRP_MAP[activeStage] === stage);
         btn.classList.toggle('visible', hasSelection && isCurrentStage);
       }
     });
@@ -17289,14 +17845,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   /**
    * Update flow stage indicator dots
+   * DEPRECATED: Breadcrumbs are the ONLY progress indicator per authoritative spec
+   * This function now uses corridorActiveRowIndex for any residual dot elements
    */
   function updateFlowStageIndicator() {
+    // Breadcrumbs are the only indicator - dots should not exist
+    // If dots exist, update them using corridorActiveRowIndex as source of truth
     const dots = document.querySelectorAll('.flow-stage-dot');
     dots.forEach((dot, idx) => {
       dot.classList.remove('active', 'completed');
-      if (idx < currentFlowStage) {
+      if (idx < corridorActiveRowIndex) {
         dot.classList.add('completed');
-      } else if (idx === currentFlowStage) {
+      } else if (idx === corridorActiveRowIndex) {
         dot.classList.add('active');
       }
     });
@@ -17304,16 +17864,31 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   /**
    * Handle continue button click — commit selection and advance flow
+   * Uses corridorActiveRowIndex as SINGLE SOURCE OF TRUTH
    */
   function handleFlowContinue(stage) {
-    const stageIdx = BREADCRUMB_FLOW_STAGES.indexOf(stage);
-    if (stageIdx !== currentFlowStage) return;
+    // Map legacy stage to corridor index
+    const corridorIdx = CORRIDOR_STAGES.indexOf(stage);
+    if (corridorIdx === -1) {
+      // Try mapping via CORRIDOR_GRP_MAP
+      const mappedIdx = CORRIDOR_STAGES.findIndex(s => CORRIDOR_GRP_MAP[s] === stage);
+      if (mappedIdx === -1 || mappedIdx !== corridorActiveRowIndex) return;
+    } else if (corridorIdx !== corridorActiveRowIndex) {
+      return;
+    }
 
-    const flowRow = document.getElementById(`flowRow${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
+    const activeStage = CORRIDOR_STAGES[corridorActiveRowIndex];
+    const selectors = CORRIDOR_SECTION_SELECTORS[activeStage];
+    if (!selectors) return;
+
+    // Find the flow row element (may be stored or mounted)
+    const stored = corridorRowStore.get(activeStage);
+    const flowRow = stored?.elements?.[0] || document.querySelector(selectors.split(',')[0].trim());
     if (!flowRow) return;
 
-    const grp = stage;
-    const selectedCard = flowRow.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+    const grp = CORRIDOR_GRP_MAP[activeStage] || activeStage;
+    const selectedCard = flowRow.querySelector(`.sb-card[data-grp="${grp}"].selected`) ||
+                         flowRow.querySelector('.sb-card.selected');
     if (!selectedCard) return;
 
     // Get selected value for breadcrumb label
@@ -17330,28 +17905,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Dissipate other cards
       const otherCards = flowRow.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`);
       dissipateCards(otherCards, () => {
-        // Hide current flow row
-        flowRow.classList.add('flow-hidden');
-
-        // Advance to next stage
-        currentFlowStage++;
+        // Advance corridor using SINGLE SOURCE OF TRUTH
+        corridorActiveRowIndex++;
+        updateCorridorVisibility();  // DOM mount/unmount
         updateFlowStageIndicator();
 
-        // Show next flow row if exists
-        if (currentFlowStage < BREADCRUMB_FLOW_STAGES.length) {
-          const nextStage = BREADCRUMB_FLOW_STAGES[currentFlowStage];
-          const nextRow = document.getElementById(`flowRow${nextStage.charAt(0).toUpperCase() + nextStage.slice(1)}`);
-          if (nextRow) {
-            nextRow.classList.remove('flow-hidden');
-            nextRow.classList.add('flow-entering');
-            setTimeout(() => {
-              nextRow.classList.remove('flow-entering');
-              updateContinueButtonVisibility();
-            }, 600);
-          }
-        } else {
-          // Flow complete — proceed to character setup or begin story
+        // Check if flow complete
+        if (corridorActiveRowIndex >= CORRIDOR_STAGES.length) {
           onBreadcrumbFlowComplete();
+        } else {
+          updateContinueButtonVisibility();
         }
       });
     });
@@ -17440,7 +18003,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       `;
       breadcrumbRow.appendChild(breadcrumb);
 
-      console.log(`[Breadcrumb] Created: ${grp}=${val}${label.subtitle ? ` (${label.subtitle})` : ''}`);
+      // DESTRUCTIVE NAVIGATION: Attach click handler for breadcrumb navigation
+      attachBreadcrumbNavigation(breadcrumb);
+
+      console.log(`[Breadcrumb] Created: ${grp}=${val}${label.subtitle ? ` (${label.subtitle})` : ''} (clickable)`);
       onComplete?.();
     }, 650);
   }
@@ -17520,30 +18086,120 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // For now, the flow ends here and user can proceed with Begin Story
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BREADCRUMB INTERACTION — DESTRUCTIVE NAVIGATION (AUTHORITATIVE)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Breadcrumbs are clickable. On click:
+  //   - Navigate to the selected breadcrumb's section
+  //   - DESTROY all downstream breadcrumbs
+  //   - Resume corridor flow from that point
+  // No confirmation dialogs — visual signaling alone is sufficient.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Navigate to a breadcrumb's section (NON-DESTRUCTIVE)
+   * ═══════════════════════════════════════════════════════════════════════════
+   * AUTHORITATIVE RULES:
+   * - Breadcrumbs are PERMANENT navigation anchors
+   * - Clicking a breadcrumb ONLY navigates to that stage
+   * - NO deletions, NO resets, NO state mutations beyond navigation
+   * - If target is invalid/unlocked, redirect to last valid stage
+   * ═══════════════════════════════════════════════════════════════════════════
+   * @param {string} grp - The data-grp value of the clicked breadcrumb
+   */
+  function navigateToBreadcrumb(grp) {
+    // Find the corridor stage for this grp
+    let targetRowIndex = -1;
+    for (let i = 0; i < CORRIDOR_STAGES.length; i++) {
+      const stage = CORRIDOR_STAGES[i];
+      const stageGrp = CORRIDOR_GRP_MAP[stage];
+      if (stageGrp === grp || stage === grp) {
+        targetRowIndex = i;
+        break;
+      }
+    }
+
+    // Special handling for authorship/identity grps that map to early rows
+    if (targetRowIndex === -1) {
+      if (grp === 'authorship' || grp === 'mode') {
+        targetRowIndex = 0;
+      } else if (grp === 'identity' || grp === 'names') {
+        targetRowIndex = 1;
+      }
+    }
+
+    if (targetRowIndex === -1) {
+      console.warn(`[Breadcrumb Nav] Unknown grp: ${grp}, staying at current row`);
+      return;
+    }
+
+    // Validate target is accessible (has been visited or has selection)
+    // If not, redirect to last valid stage
+    const isValidTarget = visitedRows.has(targetRowIndex) ||
+                          corridorSelections.has(CORRIDOR_STAGES[targetRowIndex]) ||
+                          targetRowIndex <= corridorActiveRowIndex;
+
+    if (!isValidTarget) {
+      console.warn(`[Breadcrumb Nav] Target row ${targetRowIndex} is not valid, redirecting to current`);
+      return; // Stay at current row
+    }
+
+    console.log(`[Breadcrumb Nav] Navigating to row ${targetRowIndex} (${grp}) — NO state mutations`);
+
+    // NAVIGATION ONLY — no deletions, no resets
+    corridorActiveRowIndex = targetRowIndex;
+    updateCorridorVisibility();
+    updateCorridorContinueButtonVisibility();
+
+    // Ensure exactly one valid stage row is rendered
+    ensureValidRowRendered();
+
+    console.log(`[Breadcrumb Nav] Now at row ${corridorActiveRowIndex}`);
+  }
+
+  // ensureValidRowRendered defined later in navigation section
+
+  /**
+   * Attach click handler to a breadcrumb for NON-DESTRUCTIVE navigation
+   * AUTHORITATIVE: Breadcrumbs are permanent anchors, never deleted
+   * @param {HTMLElement} breadcrumb - The breadcrumb element
+   */
+  function attachBreadcrumbNavigation(breadcrumb) {
+    breadcrumb.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const grp = breadcrumb.dataset.grp;
+      if (grp) {
+        navigateToBreadcrumb(grp);
+      }
+    });
+  }
+
+  // Export for global access
+  window.navigateToBreadcrumb = navigateToBreadcrumb;
+
   /**
    * Reset breadcrumb flow to initial state
    * Called when starting a new story
+   * Uses corridorActiveRowIndex as SINGLE SOURCE OF TRUTH
    */
   function resetBreadcrumbFlow() {
-    currentFlowStage = 0;
+    // Reset corridor state - SINGLE SOURCE OF TRUTH
+    corridorActiveRowIndex = 0;
+    corridorSelections.clear();
 
     // Clear breadcrumb row
     const breadcrumbRow = document.getElementById('breadcrumbRow');
     if (breadcrumbRow) breadcrumbRow.innerHTML = '';
 
-    // Reset flow rows
-    BREADCRUMB_FLOW_STAGES.forEach((stage, idx) => {
-      const row = document.getElementById(`flowRow${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
-      if (row) {
-        row.classList.remove('flow-hidden', 'flow-entering');
-        if (idx > 0) row.classList.add('flow-hidden');
-
-        // Reset card visibility
-        row.querySelectorAll('.sb-card').forEach(card => {
+    // Reset card state in all stored rows before remounting
+    corridorRowStore.forEach((stored) => {
+      stored.elements.forEach(el => {
+        el.querySelectorAll('.sb-card').forEach(card => {
           card.style.visibility = '';
-          card.classList.remove('dissipating', 'selected', 'flipped');
+          card.style.opacity = '';
+          card.classList.remove('dissipating', 'selected', 'flipped', 'becoming-breadcrumb');
         });
-      }
+      });
     });
 
     // Clear state selections
@@ -17551,13 +18207,1511 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.picks.world = null;
     state.picks.tone = null;
     state.picks.dynamic = null;
+    state.picks.pov = null;
+    state.picks.length = null;
+    state.picks.intensity = null;
 
+    // Apply corridor visibility via DOM mount/unmount
+    updateCorridorVisibility();
     updateFlowStageIndicator();
     updateContinueButtonVisibility();
+
+    // DSP VISIBILITY GATE: Hide DSP on reset (corridor back to row 0)
+    if (typeof updateDSPCorridorVisibility === 'function') {
+      updateDSPCorridorVisibility();
+    }
   }
 
   // Expose reset function globally for restart functionality
   window.resetBreadcrumbFlow = resetBreadcrumbFlow;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CORRIDOR STATE MACHINE — 9-row single-screen selection system
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Map corridor stages to their actual DOM container selectors
+   * These are the existing HTML elements that contain each row's cards
+   * Note: Using IDs and classes that exist in the current HTML structure
+   *
+   * ALL rows follow the same visibility rules - only active row is shown.
+   * Guided Fate is row 0 and obeys corridor visibility like all others.
+   */
+  const CORRIDOR_SECTION_SELECTORS = {
+    // Authorship choice row (Continue button inside row)
+    authorship: '#authorshipChoiceRow, #continueFromAuthorship',
+    storybeau: '#archetypeSectionTitle, #archetypeCardGrid, .archetype-header-text, .archetype-subtext, #archetypeSelectionSummary, #continueFromStorybeau',
+    world: '#flowRowWorld',
+    tone: '#flowRowTone',
+    pressure: '#flowRowPressure',
+    pov: '#povSectionTitle, #povGrid, #continueFromPov',
+    length: '#lengthSection, #continueFromLength',
+    dynamic: '#flowRowDynamic, #continueFromDynamic',
+    arousal: '#arousalSectionTitle, #intensityGrid, #continueFromArousal',
+    safety: '#safetyRow, #continueFromSafety',
+    vetoquill: '#vetoquillRow, #continueFromVetoquill',
+    beginstory: '#beginStoryRow'
+  };
+
+  /**
+   * Initialize the corridor system
+   * Implements DOM mount/unmount for corridor contract enforcement
+   */
+  function initCorridor() {
+    console.log('[Corridor] Initializing 9-row corridor system with DOM mount/unmount...');
+
+    // Reset state - start at row 0 (Guided Fate)
+    corridorActiveRowIndex = 0;
+    corridorSelections.clear();
+
+    // Initialize DOM row store with elements and insertion anchors
+    // INIT SAFETY GUARD: Do NOT clear if already populated (prevents orphaned anchors)
+    initCorridorRowStore();
+
+    // Apply initial visibility via DOM mount/unmount
+    updateCorridorVisibility();
+
+    // Bind corridor card click handlers
+    bindCorridorCardHandlers();
+
+    // Bind corridor continue buttons
+    bindCorridorContinueButtons();
+
+    // Initialize ghost step placeholders
+    initGhostSteps();
+
+    // Update continue button visibility for initial state
+    updateCorridorContinueButtonVisibility();
+
+    // DSP VISIBILITY GATE: Ensure DSP is hidden at corridor start
+    updateDSPCorridorVisibility();
+
+    // Start sparkle emitters for authorship cards (first row)
+    initAuthorshipSparkles();
+
+    // Initialize row navigation affordances (swipe + arrows)
+    initCorridorNavigation();
+
+    console.log('[Corridor] Initialization complete. Active row:', corridorActiveRowIndex);
+    console.log('[Corridor] Row store initialized with', corridorRowStore.size, 'stages');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CORRIDOR ROW NAVIGATION — Free navigation without auto-commit
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Navigation allows browsing all rows without selecting or committing.
+  // Breadcrumbs are memory only — navigation does not create breadcrumbs.
+  // Unresolved required rows tracked but enforced only at Begin Story.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Track which rows have been visited (for validation at Begin Story)
+  const visitedRows = new Set();
+
+  /**
+   * Navigate to a specific corridor row (no selection, no commit)
+   * @param {number} targetIndex - Target row index
+   */
+  // Track navigation attempts per stage (for tooltip logic)
+  // Key: stage name, Value: number of navigation attempts without Continue
+  const navigationAttemptsPerStage = new Map();
+  // Track which stages have shown the tooltip (shows once ever)
+  const tooltipShownForStage = new Set();
+
+  function navigateToCorridorRow(targetIndex) {
+    // Bounds check
+    if (targetIndex < 0 || targetIndex >= CORRIDOR_STAGES.length) {
+      return false;
+    }
+
+    // Skip if already at target
+    if (targetIndex === corridorActiveRowIndex) {
+      return false;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SOFT NAVIGATION FEEDBACK (no hard blocking)
+    // Navigation is always allowed. Uncommitted stages show Continue feedback.
+    // First attempt: pulse Continue button
+    // Second attempt: show tooltip "Continue locks this choice into your story."
+    // ═══════════════════════════════════════════════════════════════════════════
+    const currentStage = CORRIDOR_STAGES[corridorActiveRowIndex];
+    const currentRowCommitted = corridorSelections.has(currentStage);
+
+    if (!currentRowCommitted) {
+      const continueBtn = findContinueButtonForStage(currentStage);
+      if (continueBtn) {
+        // Track navigation attempts for this stage
+        const attempts = (navigationAttemptsPerStage.get(currentStage) || 0) + 1;
+        navigationAttemptsPerStage.set(currentStage, attempts);
+
+        if (attempts === 1) {
+          // First attempt: pulse Continue button only
+          triggerContinueButtonFeedback(continueBtn.id);
+          console.log(`[Corridor Nav] Soft feedback: pulsed Continue for ${currentStage}`);
+        } else if (attempts === 2 && !tooltipShownForStage.has(currentStage)) {
+          // Second attempt: show tooltip (once per stage, ever)
+          triggerContinueButtonFeedback(continueBtn.id);
+          showContinueTooltip(continueBtn);
+          tooltipShownForStage.add(currentStage);
+          console.log(`[Corridor Nav] Soft feedback: showed tooltip for ${currentStage}`);
+        }
+        // Navigation proceeds regardless
+      }
+    }
+
+    // Track current row as visited
+    visitedRows.add(corridorActiveRowIndex);
+
+    // Update active row index
+    corridorActiveRowIndex = targetIndex;
+
+    // Update visibility (DOM mount/unmount)
+    updateCorridorVisibility();
+    updateCorridorContinueButtonVisibility();
+
+    // Track new row as visited
+    visitedRows.add(targetIndex);
+
+    // INVARIANT: Ensure exactly one valid row is rendered
+    ensureValidRowRendered();
+
+    console.log(`[Corridor Nav] Navigated to row ${targetIndex}: ${CORRIDOR_STAGES[targetIndex]}`);
+    return true;
+  }
+
+  /**
+   * Find the Continue button for a given corridor stage
+   */
+  function findContinueButtonForStage(stage) {
+    const stageToButton = {
+      'authorship': 'continueFromAuthorship',
+      'identity': 'continueFromCharacters',
+      'storybeau': 'continueFromStorybeau',
+      'archetype': 'continueFromStorybeau',
+      'world': 'continueFromWorld',
+      'tone': 'continueFromTone',
+      'pressure': 'continueFromPressure',
+      'pov': 'continueFromPov',
+      'length': 'continueFromLength',
+      'dynamic': 'continueFromDynamic',
+      'arousal': 'continueFromArousal',
+      'safety': 'continueFromSafety',
+      'vetoquill': 'continueFromVetoquill',
+      'beginstory': 'beginBtn'
+    };
+    const buttonId = stageToButton[stage];
+    return buttonId ? $(buttonId) : null;
+  }
+
+  /**
+   * Ensure exactly one valid stage row is rendered (INVARIANT)
+   * Prevents blank corridor view - if no row is mounted, remount current
+   */
+  function ensureValidRowRendered() {
+    const mountedRows = document.querySelectorAll('.corridor-section.corridor-active');
+    if (mountedRows.length !== 1) {
+      console.error(`[Corridor INVARIANT] Expected 1 mounted row, found ${mountedRows.length}`);
+      // Force remount of current row
+      updateCorridorVisibility();
+    }
+  }
+
+  /**
+   * Trigger visual feedback on Continue button when navigation is blocked
+   */
+  function triggerContinueButtonFeedback(buttonId) {
+    const btn = $(buttonId);
+    if (!btn) return;
+
+    // Add shake/pulse class
+    btn.classList.add('navigation-blocked');
+    btn.classList.add('visible'); // Ensure it's visible
+
+    // Remove after animation
+    setTimeout(() => {
+      btn.classList.remove('navigation-blocked');
+    }, 600);
+  }
+
+  /**
+   * Show tooltip on Continue button explaining commitment
+   * Tooltip: "Continue locks this choice into your story."
+   * Shows once per stage, then never again.
+   */
+  function showContinueTooltip(btnElement) {
+    if (!btnElement) return;
+
+    // Remove any existing tooltip
+    const existingTooltip = document.querySelector('.continue-commitment-tooltip');
+    if (existingTooltip) existingTooltip.remove();
+
+    // Create tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'continue-commitment-tooltip';
+    tooltip.textContent = 'Continue locks this choice into your story.';
+
+    // Position tooltip above the button
+    document.body.appendChild(tooltip);
+
+    const btnRect = btnElement.getBoundingClientRect();
+    tooltip.style.left = `${btnRect.left + btnRect.width / 2}px`;
+    tooltip.style.top = `${btnRect.top - 10}px`;
+
+    // Animate in
+    requestAnimationFrame(() => {
+      tooltip.classList.add('visible');
+    });
+
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+      tooltip.classList.remove('visible');
+      setTimeout(() => tooltip.remove(), 300);
+    }, 4000);
+  }
+
+  /**
+   * Navigate to next row (right)
+   */
+  function navigateNextRow() {
+    return navigateToCorridorRow(corridorActiveRowIndex + 1);
+  }
+
+  /**
+   * Navigate to previous row (left)
+   */
+  function navigatePrevRow() {
+    return navigateToCorridorRow(corridorActiveRowIndex - 1);
+  }
+
+  /**
+   * Get list of unresolved required rows
+   * @returns {Array} Array of { stage, index } for unresolved rows
+   */
+  function getUnresolvedRows() {
+    const unresolved = [];
+    CORRIDOR_STAGES.forEach((stage, idx) => {
+      // Skip these stages (not required — they don't have card-based selection)
+      if (stage === 'arousal' || stage === 'safety' || stage === 'vetoquill' || stage === 'beginstory') return;
+
+      let hasSelection = corridorSelections.has(stage);
+
+      // Special cases that don't use state.picks
+      if (stage === 'authorship') {
+        hasSelection = hasSelection || !!state.mode;
+      } else if (stage === 'storybeau') {
+        hasSelection = hasSelection || !!state.archetype?.primary;
+      } else {
+        // Standard corridor stages use state.picks
+        const grp = CORRIDOR_GRP_MAP[stage];
+        hasSelection = hasSelection ||
+          (grp && state.picks && state.picks[grp]) ||
+          !!document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+      }
+
+      if (!hasSelection) {
+        unresolved.push({ stage, index: idx, grp: CORRIDOR_GRP_MAP[stage] });
+      }
+    });
+    return unresolved;
+  }
+
+  /**
+   * Validate all required rows are resolved (called at Begin Story)
+   * @returns {boolean} True if all required rows are resolved
+   */
+  function validateCorridorComplete() {
+    const unresolved = getUnresolvedRows();
+    if (unresolved.length === 0) {
+      return true;
+    }
+
+    console.warn('[Corridor] Unresolved rows:', unresolved.map(r => r.stage).join(', '));
+    // Show missing selections modal
+    showMissingSelectionsModal(unresolved);
+    return false;
+  }
+
+  /**
+   * Human-readable labels for corridor stages
+   */
+  const STAGE_DISPLAY_NAMES = {
+    authorship: 'Authorship',
+    identity: 'Characters',
+    storybeau: 'Archetype',
+    archetype: 'Archetype',
+    world: 'World',
+    tone: 'Tone',
+    pressure: 'Story Pull',
+    pov: 'POV',
+    length: 'Length',
+    dynamic: 'Dynamic',
+    arousal: 'Intensity',
+    safety: 'Safety',
+    vetoquill: 'Veto/Quill',
+    beginstory: 'Begin Story'
+  };
+
+  /**
+   * Show modal listing missing selections with clickable navigation
+   * Each item navigates to that stage. Offers "Let Fate Choose" option.
+   */
+  function showMissingSelectionsModal(unresolvedRows) {
+    // Remove existing modal if any
+    const existingModal = document.querySelector('.missing-selections-modal');
+    if (existingModal) existingModal.remove();
+
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'missing-selections-modal';
+
+    const content = document.createElement('div');
+    content.className = 'missing-selections-content';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Missing Selections';
+    content.appendChild(title);
+
+    const list = document.createElement('ul');
+    list.className = 'missing-selections-list';
+
+    unresolvedRows.forEach(row => {
+      const item = document.createElement('li');
+      item.className = 'missing-selection-item';
+      item.textContent = STAGE_DISPLAY_NAMES[row.stage] || row.stage;
+      item.addEventListener('click', () => {
+        closeMissingSelectionsModal();
+        navigateToCorridorRow(row.index);
+      });
+      list.appendChild(item);
+    });
+    content.appendChild(list);
+
+    // "Let Fate Choose" button
+    const fateBtn = document.createElement('button');
+    fateBtn.className = 'missing-selections-fate-btn';
+    fateBtn.textContent = 'Let Fate Choose for Me';
+    fateBtn.addEventListener('click', () => {
+      closeMissingSelectionsModal();
+      fillMissingWithFate(unresolvedRows);
+    });
+    content.appendChild(fateBtn);
+
+    // Close button
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'missing-selections-close-btn';
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', closeMissingSelectionsModal);
+    content.appendChild(closeBtn);
+
+    modal.appendChild(content);
+
+    // Backdrop click closes modal
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeMissingSelectionsModal();
+    });
+
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => modal.classList.add('visible'));
+  }
+
+  function closeMissingSelectionsModal() {
+    const modal = document.querySelector('.missing-selections-modal');
+    if (modal) {
+      modal.classList.remove('visible');
+      setTimeout(() => modal.remove(), 300);
+    }
+  }
+
+  /**
+   * Auto-fill missing selections with random fate choices
+   */
+  function fillMissingWithFate(unresolvedRows) {
+    unresolvedRows.forEach(row => {
+      switch (row.stage) {
+        case 'authorship':
+          state.mode = 'manual';
+          corridorSelections.set('authorship', 'manual');
+          break;
+        case 'storybeau':
+          const randomArch = ARCHETYPE_ORDER[Math.floor(Math.random() * ARCHETYPE_ORDER.length)];
+          state.archetype = state.archetype || {};
+          state.archetype.primary = randomArch;
+          corridorSelections.set('storybeau', randomArch);
+          createBreadcrumbDirect('archetype', randomArch, ARCHETYPES[randomArch]?.name || randomArch);
+          break;
+        case 'world':
+          const worlds = ['Modern', 'Fantasy', 'SciFi', 'Historical'];
+          const randomWorld = worlds[Math.floor(Math.random() * worlds.length)];
+          state.picks.world = randomWorld;
+          corridorSelections.set('world', randomWorld);
+          createBreadcrumbDirect('world', randomWorld, randomWorld);
+          break;
+        case 'tone':
+          const tones = ['Earnest', 'Dark', 'Playful', 'Epic'];
+          const randomTone = tones[Math.floor(Math.random() * tones.length)];
+          state.picks.tone = randomTone;
+          corridorSelections.set('tone', randomTone);
+          createBreadcrumbDirect('tone', randomTone, randomTone);
+          break;
+        case 'pressure':
+          const pressures = ['Slow', 'Medium', 'Intense'];
+          const randomPressure = pressures[Math.floor(Math.random() * pressures.length)];
+          state.picks.pressure = randomPressure;
+          corridorSelections.set('pressure', randomPressure);
+          createBreadcrumbDirect('pressure', randomPressure, randomPressure);
+          break;
+        case 'pov':
+          const povs = ['1st', '3rdLimited', '3rdOmni'];
+          const randomPov = povs[Math.floor(Math.random() * povs.length)];
+          state.picks.pov = randomPov;
+          corridorSelections.set('pov', randomPov);
+          createBreadcrumbDirect('pov', randomPov, randomPov);
+          break;
+        case 'length':
+          const lengths = ['Short', 'Medium', 'Long'];
+          const randomLength = lengths[Math.floor(Math.random() * lengths.length)];
+          state.storyLength = randomLength;
+          corridorSelections.set('length', randomLength);
+          createBreadcrumbDirect('length', randomLength, randomLength);
+          break;
+        case 'dynamic':
+          const dynamics = ['Chase', 'Surrender', 'Rivalry', 'Worship'];
+          const randomDynamic = dynamics[Math.floor(Math.random() * dynamics.length)];
+          state.picks.dynamic = randomDynamic;
+          corridorSelections.set('dynamic', randomDynamic);
+          createBreadcrumbDirect('dynamic', randomDynamic, randomDynamic);
+          break;
+      }
+    });
+
+    console.log('[Fate Fill] Auto-filled missing selections:', unresolvedRows.map(r => r.stage).join(', '));
+
+    // Trigger Begin Story again now that selections are complete
+    const beginBtn = $('beginBtn');
+    if (beginBtn) beginBtn.click();
+  }
+
+  // Expose validation function
+  window.validateCorridorComplete = validateCorridorComplete;
+  window.getUnresolvedRows = getUnresolvedRows;
+
+  /**
+   * Initialize corridor navigation (swipe + arrows)
+   */
+  function initCorridorNavigation() {
+    // Create navigation arrows for desktop
+    createNavigationArrows();
+
+    // Bind swipe handlers for mobile
+    bindSwipeNavigation();
+
+    console.log('[Corridor Nav] Navigation affordances initialized');
+  }
+
+  /**
+   * Create left/right navigation arrows (desktop)
+   */
+  function createNavigationArrows() {
+    const setupSection = document.getElementById('setup');
+    if (!setupSection) return;
+
+    // Remove existing arrows
+    setupSection.querySelectorAll('.corridor-nav-arrow').forEach(a => a.remove());
+
+    // Left arrow
+    const leftArrow = document.createElement('button');
+    leftArrow.className = 'corridor-nav-arrow corridor-nav-left';
+    leftArrow.innerHTML = '&#8249;'; // Single left angle bracket
+    leftArrow.setAttribute('aria-label', 'Previous row');
+    leftArrow.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      navigatePrevRow();
+      updateNavigationArrowVisibility();
+    });
+
+    // Right arrow
+    const rightArrow = document.createElement('button');
+    rightArrow.className = 'corridor-nav-arrow corridor-nav-right';
+    rightArrow.innerHTML = '&#8250;'; // Single right angle bracket
+    rightArrow.setAttribute('aria-label', 'Next row');
+    rightArrow.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      navigateNextRow();
+      updateNavigationArrowVisibility();
+    });
+
+    setupSection.appendChild(leftArrow);
+    setupSection.appendChild(rightArrow);
+
+    // Initial visibility update
+    updateNavigationArrowVisibility();
+  }
+
+  /**
+   * Update arrow visibility based on current position
+   */
+  function updateNavigationArrowVisibility() {
+    const leftArrow = document.querySelector('.corridor-nav-left');
+    const rightArrow = document.querySelector('.corridor-nav-right');
+
+    if (leftArrow) {
+      leftArrow.classList.toggle('hidden', corridorActiveRowIndex === 0);
+    }
+    if (rightArrow) {
+      rightArrow.classList.toggle('hidden', corridorActiveRowIndex >= CORRIDOR_STAGES.length - 1);
+    }
+  }
+
+  /**
+   * Bind horizontal swipe navigation for mobile
+   */
+  function bindSwipeNavigation() {
+    const setupSection = document.getElementById('setup');
+    if (!setupSection) return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    const minSwipeDistance = 50;
+    const maxVerticalDistance = 100;
+
+    setupSection.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    setupSection.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      touchEndY = e.changedTouches[0].screenY;
+
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = Math.abs(touchEndY - touchStartY);
+
+      // Only handle horizontal swipes (not vertical scrolling)
+      if (deltaY > maxVerticalDistance) return;
+
+      if (Math.abs(deltaX) >= minSwipeDistance) {
+        if (deltaX < 0) {
+          // Swipe left → next row
+          navigateNextRow();
+        } else {
+          // Swipe right → previous row
+          navigatePrevRow();
+        }
+        updateNavigationArrowVisibility();
+      }
+    }, { passive: true });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GHOST STEP PLACEHOLDERS — Pre-breadcrumb progress indicators
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Ghost steps show remaining steps before selection.
+  // They are NOT interactive — purely presentational scaffolding.
+  // Real breadcrumbs replace ghost steps left-to-right as corridor advances.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Ghost step Roman numerals - matches STAGE_INDEX (excluding intensity which has no breadcrumb)
+  const GHOST_STEP_NUMERALS = [
+    'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'
+  ];
+
+  // STAGE_DISPLAY_NAMES defined earlier — used for ghost step display names
+
+  /**
+   * Initialize ghost step placeholders in the breadcrumb row
+   * Ghost steps match STAGE_INDEX slots (excluding intensity)
+   */
+  function initGhostSteps() {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!breadcrumbRow) return;
+
+    // Clear any existing ghost steps
+    breadcrumbRow.querySelectorAll('.ghost-step').forEach(g => g.remove());
+
+    // Create ghost step for each STAGE_INDEX entry (except these which have no ghost steps)
+    const stageEntries = Object.entries(STAGE_INDEX).filter(([grp]) =>
+      grp !== 'intensity' && grp !== 'safety' && grp !== 'vetoquill' && grp !== 'beginstory'
+    );
+    stageEntries.sort((a, b) => a[1] - b[1]); // Sort by index
+
+    stageEntries.forEach(([grp, idx]) => {
+      const ghost = document.createElement('div');
+      ghost.className = 'ghost-step';
+      ghost.dataset.ghostIndex = idx;
+      ghost.dataset.ghostGrp = grp;
+      ghost.innerHTML = `
+        <span class="ghost-step-label">CHOICE</span>
+        <span class="ghost-step-number">${GHOST_STEP_NUMERALS[idx] || idx + 1}</span>
+      `;
+      breadcrumbRow.appendChild(ghost);
+    });
+
+    console.log('[Ghost Steps] Initialized', stageEntries.length, 'ghost step placeholders');
+  }
+
+  /**
+   * Remove a ghost step when it's replaced by a real breadcrumb
+   * @param {number} stepIndex - The corridor stage index being replaced
+   */
+  function removeGhostStep(stepIndex) {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!breadcrumbRow) return;
+
+    const ghost = breadcrumbRow.querySelector(`.ghost-step[data-ghost-index="${stepIndex}"]`);
+    if (ghost) {
+      ghost.classList.add('replacing');
+      setTimeout(() => ghost.remove(), 200);
+      console.log(`[Ghost Steps] Removed ghost step ${stepIndex + 1}`);
+    }
+  }
+
+  /**
+   * Clear all remaining ghost steps (called on corridor complete)
+   */
+  function clearAllGhostSteps() {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!breadcrumbRow) return;
+
+    breadcrumbRow.querySelectorAll('.ghost-step').forEach(ghost => {
+      ghost.classList.add('replacing');
+      setTimeout(() => ghost.remove(), 200);
+    });
+    console.log('[Ghost Steps] Cleared all remaining ghost steps');
+  }
+
+  /**
+   * Initialize the DOM row store
+   * Captures element references and creates insertion anchors for mount/unmount
+   * CORRIDOR CONTRACT: Elements will be removed from DOM when not active
+   * INIT SAFETY GUARD: Safe to call multiple times - returns early if already populated
+   */
+  function initCorridorRowStore() {
+    // INIT SAFETY GUARD: If store already populated, do not recreate anchors
+    if (corridorRowStore.size > 0) {
+      console.log('[Corridor] Row store already initialized, skipping anchor creation');
+      return;
+    }
+
+    CORRIDOR_STAGES.forEach((stage, idx) => {
+      const selectors = CORRIDOR_SECTION_SELECTORS[stage];
+
+      // Skip stages with null selectors
+      if (!selectors) {
+        console.log(`[Corridor] Stage ${stage} has no selectors, skipping store`);
+        return;
+      }
+
+      const selectorList = selectors.split(',').map(s => s.trim());
+      const elements = [];
+      const anchors = [];
+
+      selectorList.forEach(selector => {
+        const els = document.querySelectorAll(selector);
+        els.forEach(el => {
+          if (el && el.parentNode) {
+            // Tag element with corridor metadata
+            el.dataset.corridorStage = stage;
+            el.dataset.corridorIndex = idx;
+            el.classList.add('corridor-section');
+
+            // Create anchor comment node for re-insertion position
+            const anchor = document.createComment(`corridor-anchor:${stage}:${elements.length}`);
+            el.parentNode.insertBefore(anchor, el.nextSibling);
+
+            elements.push(el);
+            anchors.push(anchor);
+          }
+        });
+      });
+
+      if (elements.length > 0) {
+        corridorRowStore.set(stage, { elements, anchors });
+        console.log(`[Corridor] Stored ${elements.length} elements for stage: ${stage}`);
+      }
+    });
+  }
+
+  /**
+   * Update which corridor row is visible via DOM mount/unmount
+   * CORRIDOR CONTRACT ENFORCEMENT:
+   *   - INVARIANT 1: Exactly ONE row mounted at any time
+   *   - INVARIANT 2: All other rows UNMOUNTED from DOM (not CSS-hidden)
+   *   - INVARIANT 3: corridorActiveRowIndex is ONLY source of truth
+   */
+  function updateCorridorVisibility() {
+    let mountedCount = 0;
+
+    CORRIDOR_STAGES.forEach((stage, idx) => {
+      const stored = corridorRowStore.get(stage);
+
+      // Skip stages not in store (null selectors)
+      if (!stored) return;
+
+      if (idx === corridorActiveRowIndex) {
+        // MOUNT: Insert elements back into DOM at anchor positions
+        stored.elements.forEach((el, i) => {
+          const anchor = stored.anchors[i];
+          if (anchor && anchor.parentNode) {
+            // Only insert if not already in DOM at correct position
+            if (!el.parentNode || el.nextSibling !== anchor) {
+              anchor.parentNode.insertBefore(el, anchor);
+            }
+            // Ensure visible state
+            el.classList.remove('corridor-hidden', 'flow-hidden', 'hidden');
+            el.classList.add('corridor-active');
+            el.style.display = '';
+            el.style.visibility = '';
+            el.style.opacity = '';
+            el.style.pointerEvents = '';
+          }
+        });
+        mountedCount++;
+
+        // Trigger stage-specific mount handlers
+        if (stage === 'storybeau' && typeof window.onArchetypeRowMount === 'function') {
+            window.onArchetypeRowMount();
+        }
+      } else {
+        // UNMOUNT: Remove elements from DOM (keep references in store)
+        stored.elements.forEach(el => {
+          if (el.parentNode) {
+            el.classList.remove('corridor-active');
+            el.classList.add('corridor-hidden');
+            el.parentNode.removeChild(el);
+          }
+        });
+      }
+    });
+
+    // INVARIANT ASSERTION: Exactly one row should be mounted
+    if (mountedCount !== 1) {
+      console.error(`[CORRIDOR INVARIANT VIOLATION] Expected 1 mounted row, found ${mountedCount}`);
+      console.error(`  corridorActiveRowIndex: ${corridorActiveRowIndex}`);
+      console.error(`  Active stage: ${CORRIDOR_STAGES[corridorActiveRowIndex]}`);
+    }
+
+    // Verify DOM state matches expected state
+    const mountedInDOM = document.querySelectorAll('.corridor-section.corridor-active');
+    if (mountedInDOM.length > 0) {
+      const actualStages = new Set();
+      mountedInDOM.forEach(el => actualStages.add(el.dataset.corridorStage));
+      if (actualStages.size > 1) {
+        console.error(`[CORRIDOR INVARIANT VIOLATION] Multiple stages active in DOM:`, Array.from(actualStages));
+      }
+    }
+
+    // Update stage indicator (no-op, breadcrumbs only)
+    updateCorridorStageIndicator();
+
+    // Update navigation arrow visibility based on current position
+    if (typeof updateNavigationArrowVisibility === 'function') {
+      updateNavigationArrowVisibility();
+    }
+
+    console.log(`[Corridor] DOM updated. Mounted row ${corridorActiveRowIndex}: ${CORRIDOR_STAGES[corridorActiveRowIndex]}`);
+  }
+
+  /**
+   * Update corridor stage indicator
+   * REMOVED: Breadcrumbs are the ONLY progress indicator
+   * This function is now a no-op for backwards compatibility
+   */
+  function updateCorridorStageIndicator() {
+    // Breadcrumbs are the only progress indicator - no dots
+  }
+
+  /**
+   * Verify corridor contract invariants (for debugging/testing)
+   * Call this to assert all invariants are satisfied
+   * @returns {boolean} True if all invariants pass
+   */
+  function verifyCorridorContract() {
+    let valid = true;
+    const errors = [];
+
+    // INVARIANT 1: Exactly ONE corridor row mounted in DOM
+    const mountedSections = document.querySelectorAll('.corridor-section');
+    const mountedByStage = new Map();
+    mountedSections.forEach(el => {
+      const stage = el.dataset.corridorStage;
+      if (stage) {
+        if (!mountedByStage.has(stage)) mountedByStage.set(stage, 0);
+        mountedByStage.set(stage, mountedByStage.get(stage) + 1);
+      }
+    });
+
+    const mountedStages = Array.from(mountedByStage.keys());
+    if (mountedStages.length > 1) {
+      errors.push(`INVARIANT 1 VIOLATION: Multiple stages mounted: [${mountedStages.join(', ')}]`);
+      valid = false;
+    } else if (mountedStages.length === 1) {
+      const expectedStage = CORRIDOR_STAGES[corridorActiveRowIndex];
+      if (mountedStages[0] !== expectedStage) {
+        errors.push(`INVARIANT 3 VIOLATION: Mounted stage (${mountedStages[0]}) != expected (${expectedStage})`);
+        valid = false;
+      }
+    }
+
+    // INVARIANT 2: No CSS-hidden corridor sections (all should be unmounted)
+    const hiddenInDOM = document.querySelectorAll('.corridor-section.corridor-hidden');
+    if (hiddenInDOM.length > 0) {
+      errors.push(`INVARIANT 2 VIOLATION: ${hiddenInDOM.length} sections CSS-hidden instead of unmounted`);
+      valid = false;
+    }
+
+    // INVARIANT 3: corridorActiveRowIndex consistency
+    if (corridorActiveRowIndex < 0 || corridorActiveRowIndex > CORRIDOR_STAGES.length) {
+      errors.push(`INVARIANT 3 VIOLATION: corridorActiveRowIndex out of bounds: ${corridorActiveRowIndex}`);
+      valid = false;
+    }
+
+    // Report results
+    if (valid) {
+      console.log('[Corridor Contract] All invariants satisfied ✓');
+    } else {
+      errors.forEach(err => console.error(`[Corridor Contract] ${err}`));
+    }
+
+    return valid;
+  }
+
+  // Expose for testing
+  window.verifyCorridorContract = verifyCorridorContract;
+
+  /**
+   * Get the current stage name
+   */
+  function getCurrentCorridorStage() {
+    return CORRIDOR_STAGES[corridorActiveRowIndex] || null;
+  }
+
+  /**
+   * Check if current corridor row has a selection
+   */
+  function hasCorridorSelectionForCurrentRow() {
+    const stage = getCurrentCorridorStage();
+    if (!stage) return false;
+
+    const grp = CORRIDOR_GRP_MAP[stage];
+
+    // Check if there's a selected card for this group
+    const selectedCard = document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+    return !!selectedCard;
+  }
+
+  /**
+   * Bind click handlers to corridor cards
+   */
+  function bindCorridorCardHandlers() {
+    // For each corridor stage, bind selection handlers
+    CORRIDOR_STAGES.forEach((stage, idx) => {
+      const grp = CORRIDOR_GRP_MAP[stage];
+
+      // Find all cards for this group
+      const cards = document.querySelectorAll(`.sb-card[data-grp="${grp}"]`);
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          // Only handle clicks for the active row
+          if (idx === corridorActiveRowIndex) {
+            handleCorridorCardClick(stage, card);
+          }
+        });
+      });
+    });
+  }
+
+  /**
+   * Handle card click in corridor
+   */
+  function handleCorridorCardClick(stage, card) {
+    const grp = CORRIDOR_GRP_MAP[stage];
+    const val = card.dataset.val;
+
+    // Skip if card is locked
+    if (card.classList.contains('locked')) {
+      return;
+    }
+
+    // Update selection state
+    corridorSelections.set(stage, {
+      grp: grp,
+      val: val,
+      card: card
+    });
+
+    // Update continue button visibility
+    updateCorridorContinueButtonVisibility();
+
+    console.log(`[Corridor] Selection: ${stage} = ${val}`);
+  }
+
+  /**
+   * Bind corridor continue buttons
+   */
+  function bindCorridorContinueButtons() {
+    CORRIDOR_STAGES.forEach((stage) => {
+      // Try multiple button ID patterns
+      const buttonIds = [
+        `corridorContinue${stage.charAt(0).toUpperCase() + stage.slice(1)}`,
+        `continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`
+      ];
+
+      buttonIds.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          btn.addEventListener('click', () => handleCorridorContinue(stage));
+        }
+      });
+    });
+  }
+
+  /**
+   * Update continue button visibility for current corridor row
+   * CORRIDOR INTERACTION: Every row MUST have a visible Continue button
+   */
+  function updateCorridorContinueButtonVisibility() {
+    CORRIDOR_STAGES.forEach((stage, idx) => {
+      // Try multiple button ID patterns
+      const buttonIds = [
+        `corridorContinue${stage.charAt(0).toUpperCase() + stage.slice(1)}`,
+        `continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`
+      ];
+
+      buttonIds.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          const grp = CORRIDOR_GRP_MAP[stage];
+          const isCurrentRow = idx === corridorActiveRowIndex;
+
+          // Check for selection via multiple sources (handles auto-filled selections)
+          let hasSelection =
+            corridorSelections.has(stage) ||
+            (grp && state.picks && state.picks[grp]) ||
+            document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+
+          // AUTHORSHIP STAGE: Check state.authorship for pending selection
+          if (stage === 'authorship') {
+            hasSelection = !!state.authorship;
+          }
+
+          // ARCHETYPE STAGE: Check for primary archetype selection OR last-zoomed card
+          if (stage === 'storybeau') {
+            hasSelection = (state.archetype && state.archetype.primary != null) ||
+                           (lastZoomedArchetype != null);
+          }
+
+          // These rows always show their button when active (not card-based selection)
+          // NOTE: guidedFate no longer uses Continue button — authorship cards handle it
+          const alwaysShowForRow = (stage === 'arousal' || stage === 'safety' || stage === 'vetoquill' || stage === 'beginstory');
+
+          btn.classList.toggle('visible', isCurrentRow && (hasSelection || alwaysShowForRow));
+        }
+      });
+    });
+  }
+
+  /**
+   * Handle continue from a corridor stage
+   * CORRIDOR INTERACTION: Pure state advance, no animation delays
+   * a) Finalizes the current row selection
+   * b) Advances corridorActiveRowIndex
+   * c) Mounts the next corridor row
+   */
+  function handleCorridorContinue(stage) {
+    const stageIdx = CORRIDOR_STAGES.indexOf(stage);
+    if (stageIdx !== corridorActiveRowIndex) {
+      console.log(`[Corridor] Ignoring continue for non-active stage: ${stage}`);
+      return;
+    }
+
+    const grp = CORRIDOR_GRP_MAP[stage];
+
+    // Find selection from DOM or state.picks (handles auto-filled selections)
+    let selectedCard = document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+    let selectedVal = selectedCard?.dataset.val || (grp && state.picks ? state.picks[grp] : null);
+
+    // Special case: Authorship stage uses state.authorship, not DOM cards
+    if (stage === 'authorship') {
+      if (!state.authorship) {
+        console.log(`[Corridor] No authorship selection yet`);
+        return;
+      }
+      console.log(`[Corridor] Authorship selected: ${state.authorship}`);
+
+      // Create breadcrumb for authorship choice
+      const authorshipTitle = state.authorship === 'manual' ? 'Choose Your Hand' : 'Guided Fate';
+      createBreadcrumbDirect('authorship', state.authorship, authorshipTitle);
+
+      hideCorridorContinueButton(stage);
+      advanceCorridorRow();
+      return;
+    }
+
+    // Special case: Storybeau (archetype) — Continue selects the last-zoomed card
+    if (stage === 'storybeau') {
+      // Check for last-zoomed card (from zoom view)
+      const zoomedId = lastZoomedArchetype;
+
+      // If no card has been zoomed and no prior selection, pulse Continue and block
+      if (!zoomedId && !state.archetype?.primary) {
+        console.log(`[Corridor] No archetype zoomed — blocking Continue`);
+        triggerContinueButtonFeedback('continueFromStorybeau');
+        return;
+      }
+
+      // Use last-zoomed card if available, otherwise use prior selection
+      const archetypeId = zoomedId || state.archetype?.primary;
+
+      // Commit the selection (if not already committed)
+      if (state.archetype?.primary !== archetypeId) {
+        commitArchetypeSelection(archetypeId, false);
+      }
+
+      // Stop the focus sparkle emitter
+      if (lastZoomedSparkleEmitterId) {
+        stopSparkleEmitter(lastZoomedSparkleEmitterId);
+        lastZoomedSparkleEmitterId = null;
+      }
+      // Remove focus indicator
+      const focusedCard = document.querySelector('.archetype-card.last-zoomed');
+      if (focusedCard) {
+        focusedCard.classList.remove('last-zoomed');
+        const sparkleContainer = focusedCard.querySelector('.archetype-focus-sparkles');
+        if (sparkleContainer) sparkleContainer.remove();
+      }
+
+      console.log(`[Corridor] Archetype committed via Continue: ${archetypeId}`);
+
+      // Get archetype name for breadcrumb (text label for manual selection)
+      const archetype = ARCHETYPES[archetypeId];
+      const archetypeName = archetype?.name || archetypeId;
+
+      // If selected via Destiny's Choice, breadcrumb was already created with mask icon
+      // Otherwise, create text breadcrumb for manual selection
+      if (!archetypeSelectedViaDestiny) {
+        createBreadcrumbDirect('archetype', archetypeId, archetypeName);
+      }
+
+      hideCorridorContinueButton(stage);
+      advanceCorridorRow();
+      return;
+    }
+
+    // Special case: Arousal advances to Safety row (no breadcrumb)
+    if (stage === 'arousal') {
+      console.log(`[Corridor] Arousal complete, advancing to safety`);
+      hideCorridorContinueButton(stage);
+      advanceCorridorRow();
+      return;
+    }
+
+    // Special case: Safety — commit safety/boundary state and advance
+    if (stage === 'safety') {
+      console.log(`[Corridor] Safety & Boundaries committed`);
+      // Collect checkbox states into state.safety
+      const darkThemes = document.getElementById('chkDark')?.checked || false;
+      const nonCon = document.getElementById('chkNonCon')?.checked || false;
+      state.safety = { darkThemes, nonCon };
+      // Create breadcrumb for safety
+      const safetyLabel = darkThemes ? 'Dark OK' : 'No Dark';
+      createBreadcrumbDirect('safety', darkThemes ? 'dark' : 'safe', safetyLabel);
+      hideCorridorContinueButton(stage);
+      advanceCorridorRow();
+      return;
+    }
+
+    // Special case: Veto/Quill — advances to Begin Story row
+    if (stage === 'vetoquill') {
+      console.log(`[Corridor] Veto/Quill complete, advancing to Begin Story row`);
+      hideCorridorContinueButton(stage);
+      advanceCorridorRow();
+      return;
+    }
+
+    // Special case: Begin Story — terminal row, transitions to story mode
+    // Note: This is handled by beginBtn click handler, not Continue button
+    if (stage === 'beginstory') {
+      console.log(`[Corridor] Begin Story row — terminal action handled by beginBtn`);
+      return;
+    }
+
+    if (!selectedVal) {
+      console.log(`[Corridor] No selection for stage: ${stage}`);
+      return;
+    }
+
+    console.log(`[Corridor] Continuing from ${stage}: ${selectedVal}`);
+
+    // Hide continue button immediately
+    hideCorridorContinueButton(stage);
+
+    // Create breadcrumb for this selection (except arousal which has no breadcrumb)
+    if (selectedCard && stage !== 'arousal') {
+      const titleEl = selectedCard.querySelector('.sb-card-title');
+      const selectedTitle = titleEl ? titleEl.textContent : selectedVal;
+      createBreadcrumbDirect(grp, selectedVal, selectedTitle);
+    }
+
+    // Advance immediately - no animation delays
+    advanceCorridorRow();
+  }
+
+  /**
+   * Hide the continue button for a corridor stage
+   */
+  function hideCorridorContinueButton(stage) {
+    const btnIds = [
+      `corridorContinue${stage.charAt(0).toUpperCase() + stage.slice(1)}`,
+      `continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`
+    ];
+    btnIds.forEach(btnId => {
+      const btn = document.getElementById(btnId);
+      if (btn) btn.classList.remove('visible');
+    });
+  }
+
+  /**
+   * Scale breadcrumb title font if text is too long
+   * Never clip, truncate, or ellipsize — scale font down instead
+   * @param {HTMLElement} breadcrumb - The breadcrumb card element
+   */
+  function scaleBreadcrumbTitle(breadcrumb) {
+    const titleEl = breadcrumb.querySelector('.sb-card-title');
+    if (!titleEl) return;
+
+    const text = titleEl.textContent || '';
+    const charCount = text.length;
+
+    // Scale font based on character count
+    // Base: 10px for short titles, scale down for longer ones
+    let fontSize = 10;
+    if (charCount > 20) {
+      fontSize = 8;
+    } else if (charCount > 15) {
+      fontSize = 9;
+    } else if (charCount > 10) {
+      fontSize = 9.5;
+    }
+
+    titleEl.style.fontSize = `${fontSize}px`;
+
+    // Additional check: if title contains "&" (compound names), ensure it fits
+    if (text.includes('&') || text.includes(' ')) {
+      // Allow more line height for multi-word titles
+      titleEl.style.lineHeight = '1.3';
+    }
+  }
+
+  /**
+   * Create a breadcrumb directly without animation
+   * CORRIDOR INTERACTION: Pure state, no delays
+   * GHOST STEP: Replaces corresponding ghost step placeholder
+   */
+  function createBreadcrumbDirect(grp, val, title) {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!breadcrumbRow) return;
+
+    // Check if breadcrumb should be excluded (these stages don't become breadcrumbs)
+    if (grp === 'intensity' || grp === 'arousal' || grp === 'safety' || grp === 'vetoquill' || grp === 'beginstory') {
+      console.log(`[Breadcrumb] EXCLUDED: ${grp} — never becomes breadcrumb`);
+      // Still remove the ghost step for this stage (if any)
+      const ghostIdx = STAGE_INDEX[grp];
+      if (ghostIdx !== undefined && ghostIdx >= 0) removeGhostStep(ghostIdx);
+      return;
+    }
+
+    // AUTHORITATIVE: Use STAGE_INDEX for fixed corridor index
+    // No positional inference, no fallbacks, no "next available slot" logic
+    const stageIdx = STAGE_INDEX[grp];
+    if (stageIdx === undefined) {
+      console.warn(`[Breadcrumb] Unknown grp: ${grp} — not in STAGE_INDEX`);
+      return;
+    }
+
+    // Get structured label
+    const label = typeof getBreadcrumbLabel === 'function'
+      ? getBreadcrumbLabel(grp, val)
+      : { title: title || val, subtitle: null };
+
+    const subtitleHtml = label.subtitle
+      ? `<span class="breadcrumb-subtitle">${label.subtitle}</span>`
+      : '';
+
+    // Create breadcrumb card
+    const breadcrumb = document.createElement('div');
+    breadcrumb.className = 'breadcrumb-card';
+    breadcrumb.dataset.grp = grp;
+    breadcrumb.dataset.val = val;
+    breadcrumb.dataset.stageIndex = stageIdx;
+    breadcrumb.dataset.breadcrumbLabel = grp.charAt(0).toUpperCase() + grp.slice(1);
+    breadcrumb.innerHTML = `
+      <div class="sb-card-inner">
+        <div class="sb-card-face sb-card-back">
+          <span class="sb-card-title">${label.title}</span>
+          ${subtitleHtml}
+        </div>
+        <div class="sb-card-face sb-card-front">
+          <span class="sb-card-title">${label.title}</span>
+          ${subtitleHtml}
+        </div>
+      </div>
+    `;
+
+    // Insert breadcrumb BEFORE the first ghost step (breadcrumbs accumulate on left)
+    const firstGhost = breadcrumbRow.querySelector('.ghost-step');
+    if (firstGhost) {
+      breadcrumbRow.insertBefore(breadcrumb, firstGhost);
+    } else {
+      breadcrumbRow.appendChild(breadcrumb);
+    }
+
+    // Scale font for long titles (never clip/truncate)
+    scaleBreadcrumbTitle(breadcrumb);
+
+    // Remove the corresponding ghost step
+    if (stageIdx >= 0) {
+      removeGhostStep(stageIdx);
+    }
+
+    // Attach destructive navigation handler
+    if (typeof attachBreadcrumbNavigation === 'function') {
+      attachBreadcrumbNavigation(breadcrumb);
+    }
+
+    console.log(`[Breadcrumb] Created: ${grp}=${val} (replaces ghost step ${stageIdx + 1})`);
+  }
+
+  /**
+   * Advance to the next corridor row
+   */
+  function advanceCorridorRow() {
+    corridorActiveRowIndex++;
+
+    if (corridorActiveRowIndex < CORRIDOR_STAGES.length) {
+      console.log(`[Corridor] Advancing to row ${corridorActiveRowIndex}: ${CORRIDOR_STAGES[corridorActiveRowIndex]}`);
+      updateCorridorVisibility();
+      updateCorridorContinueButtonVisibility();
+      // DSP VISIBILITY GATE: Show DSP only after World is committed (index >= 3)
+      // Authorship=0, Archetype=1, World=2 → DSP hidden
+      // Tone=3 and beyond → DSP visible
+      updateDSPCorridorVisibility();
+    } else {
+      console.log('[Corridor] All rows complete. Flow finished.');
+      onCorridorComplete();
+    }
+  }
+
+  /**
+   * DSP VISIBILITY GATE — DSP hidden during Authorship/Archetype, shows after World committed
+   */
+  function updateDSPCorridorVisibility() {
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    if (!synopsisPanel) return;
+
+    // DSP shows only after World is committed (corridorActiveRowIndex >= 3)
+    // 0=authorship, 1=storybeau, 2=world → hidden
+    // 3=tone, 4=pressure, 5=pov, 6=length, 7=dynamic, 8=arousal → visible
+    const WORLD_COMMITTED_INDEX = 3; // Index AFTER World selection
+
+    if (corridorActiveRowIndex >= WORLD_COMMITTED_INDEX) {
+      synopsisPanel.classList.add('visible');
+      console.log('[DSP] Visible — World committed');
+    } else {
+      synopsisPanel.classList.remove('visible');
+      console.log(`[DSP] Hidden — corridor at index ${corridorActiveRowIndex} (pre-World)`);
+    }
+  }
+
+  /**
+   * Called when all corridor rows are complete
+   */
+  function onCorridorComplete() {
+    console.log('[Corridor] Corridor complete. Proceeding to Safety/Veto/Begin Story.');
+
+    // Clear any remaining ghost steps
+    clearAllGhostSteps();
+
+    // Show the post-arousal sections (Safety, Veto, Begin Story)
+    // These are now wrapped in a single container that starts hidden
+    const postArousalSection = document.getElementById('postArousalSection');
+    if (postArousalSection) {
+      postArousalSection.classList.remove('hidden');
+      console.log('[Corridor] Post-arousal sections revealed');
+    }
+
+    // Legacy element references (for backward compatibility)
+    const safetySection = document.getElementById('safetySection');
+    const beginSection = document.getElementById('beginStorySection');
+    if (safetySection) safetySection.classList.remove('hidden');
+    if (beginSection) beginSection.classList.remove('hidden');
+
+    // DSP: Fade out after corridor completion (AUTHORITATIVE)
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    if (synopsisPanel) {
+      synopsisPanel.classList.add('corridor-complete');
+      console.log('[Corridor] DSP faded out after corridor completion');
+    }
+
+    // Allow scrolling to final sections
+    document.body.classList.add('corridor-complete');
+  }
+
+  /**
+   * Reset corridor to initial state
+   * Uses corridorRowStore to reset cards (may be unmounted from DOM)
+   */
+  function resetCorridor() {
+    corridorActiveRowIndex = 0;
+    corridorSelections.clear();
+
+    // Reset authorship choice (Choose Your Hand / Guided Fate cards)
+    if (typeof window.resetAuthorshipChoice === 'function') {
+      window.resetAuthorshipChoice();
+    }
+
+    // Clear breadcrumb row
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (breadcrumbRow) breadcrumbRow.innerHTML = '';
+
+    // Reinitialize ghost steps for fresh corridor
+    initGhostSteps();
+
+    // Reset all corridor rows using stored element references
+    // This works even when elements are unmounted from DOM
+    corridorRowStore.forEach((stored, stage) => {
+      stored.elements.forEach(el => {
+        // Reset card visibility and state within this element
+        el.querySelectorAll('.sb-card').forEach(card => {
+          card.style.visibility = '';
+          card.style.opacity = '';
+          card.classList.remove('dissipating', 'selected', 'flipped', 'becoming-breadcrumb');
+        });
+      });
+    });
+
+    // Reset corridor visibility via DOM mount/unmount
+    updateCorridorVisibility();
+    updateCorridorContinueButtonVisibility();
+
+    // DSP VISIBILITY GATE: Hide DSP on reset (corridor back to row 0)
+    updateDSPCorridorVisibility();
+
+    // Restore DSP visibility state (remove corridor-complete class)
+    const synopsisPanel = document.getElementById('synopsisPanel');
+    if (synopsisPanel) {
+      synopsisPanel.classList.remove('corridor-complete');
+    }
+
+    // Clear state picks
+    state.picks = state.picks || {};
+    state.picks.pressure = null;
+    state.picks.world = null;
+    state.picks.tone = null;
+    state.picks.dynamic = null;
+    state.picks.pov = null;
+    state.picks.length = null;
+    state.picks.intensity = null;
+    state.picks.archetype = null;
+
+    console.log('[Corridor] Reset complete. Active row:', corridorActiveRowIndex);
+  }
+
+  /**
+   * Autoplay corridor row-by-row when Guided Fate is selected
+   * Each row appears, card is selected, animates to breadcrumb, others dissolve, advance
+   */
+  async function autoplayCorridorFromGuidedFate() {
+    console.log('[Corridor] Starting row-by-row autoplay from Guided Fate');
+
+    // Start from row 1 (Guided Fate is row 0, already handled)
+    // Advance past row 0 first
+    corridorActiveRowIndex = 1;
+    updateCorridorVisibility();
+
+    // Autoplay timing (ms)
+    const ROW_SHOW_DELAY = 400;      // Time to show row before selecting
+    const BREADCRUMB_DELAY = 700;    // Time for breadcrumb animation
+    const DISSIPATE_DELAY = 500;     // Time for card dissipation
+    const INTER_ROW_DELAY = 200;     // Pause between rows
+
+    // Process rows 1 through 8 (storybeau through arousal)
+    for (let rowIdx = 1; rowIdx < CORRIDOR_STAGES.length; rowIdx++) {
+      const stage = CORRIDOR_STAGES[rowIdx];
+      const grp = CORRIDOR_GRP_MAP[stage];
+
+      // Update active row
+      corridorActiveRowIndex = rowIdx;
+      updateCorridorVisibility();
+
+      // Brief pause to show the row
+      await new Promise(r => setTimeout(r, ROW_SHOW_DELAY));
+
+      // Find the selected card for this stage (Guided Fate already set the selection)
+      const selectedCard = document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+
+      if (selectedCard) {
+        const selectedVal = selectedCard.dataset.val;
+        const titleEl = selectedCard.querySelector('.sb-card-title');
+        const selectedTitle = titleEl ? titleEl.textContent : selectedVal;
+
+        // Store in corridor selections
+        corridorSelections.set(stage, {
+          grp: grp,
+          val: selectedVal,
+          card: selectedCard
+        });
+
+        // Get parent row for card dissipation
+        const parentRow = selectedCard.closest('.card-flow-row, .corridor-row, .sb-grid');
+
+        // Animate selected card to breadcrumb
+        await new Promise(resolve => {
+          animateCardToBreadcrumb(selectedCard, grp, selectedVal, selectedTitle, resolve);
+        });
+
+        // Wait for breadcrumb animation
+        await new Promise(r => setTimeout(r, BREADCRUMB_DELAY));
+
+        // Dissipate other cards
+        if (parentRow) {
+          const otherCards = parentRow.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`);
+          if (otherCards.length > 0) {
+            await new Promise(resolve => {
+              dissipateCards(otherCards, resolve);
+            });
+            await new Promise(r => setTimeout(r, DISSIPATE_DELAY));
+          }
+        }
+
+        // Inter-row pause
+        await new Promise(r => setTimeout(r, INTER_ROW_DELAY));
+      }
+
+      console.log(`[Corridor] Autoplay completed row ${rowIdx}: ${stage}`);
+    }
+
+    // All rows complete
+    corridorActiveRowIndex = CORRIDOR_STAGES.length;
+    console.log('[Corridor] Autoplay complete. All rows processed.');
+    onCorridorComplete();
+  }
+
+  // Legacy alias for backwards compatibility
+  function completeCorridorFromGuidedFate() {
+    autoplayCorridorFromGuidedFate();
+  }
+
+  // Expose corridor functions globally
+  window.initCorridor = initCorridor;
+  window.resetCorridor = resetCorridor;
+  window.advanceCorridorRow = advanceCorridorRow;
+  window.autoplayCorridorFromGuidedFate = autoplayCorridorFromGuidedFate;
+  window.completeCorridorFromGuidedFate = completeCorridorFromGuidedFate; // Legacy alias
+  window.updateDSPCorridorVisibility = updateDSPCorridorVisibility;
 
   // ═══════════════════════════════════════════════════════════════════
   // SYNOPSIS PANEL - Live-updating story preview based on 4-axis selections
@@ -18313,6 +20467,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   function showDSP() {
     const synopsisPanel = document.getElementById('synopsisPanel');
     if (synopsisPanel) {
+      // HARD-DISABLE in Shape stage: DSP only shows from World stage (index 3) onward
+      // Shape stage = authorship (0), identity (1), archetype (2)
+      if (typeof corridorActiveRowIndex !== 'undefined' && corridorActiveRowIndex < 3) {
+        synopsisPanel.classList.remove('visible');
+        return;
+      }
       // Inject "First Taste" header if not present
       if (!synopsisPanel.querySelector('.synopsis-title')) {
         const title = document.createElement('div');
@@ -18370,8 +20530,26 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // =========================
   // ARCHETYPE UI HANDLERS
   // =========================
+
+  // Track last-zoomed archetype card (selected via Continue)
+  let lastZoomedArchetype = null;
+  // Track if archetype cards have been revealed (flip-all on row entry)
+  let archetypeCardsRevealed = false;
+  // Track if Destiny's Choice was used (for breadcrumb icon)
+  let archetypeSelectedViaDestiny = false;
+  // Track active sparkle emitter for last-zoomed card
+  let lastZoomedSparkleEmitterId = null;
+
+  // Mask SVG for Destiny's Choice breadcrumb (inline data URI)
+  const MASK_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="24" height="24">
+    <ellipse cx="16" cy="16" rx="12" ry="10" fill="none" stroke="goldenrod" stroke-width="2"/>
+    <circle cx="11" cy="14" r="3" fill="none" stroke="goldenrod" stroke-width="1.5"/>
+    <circle cx="21" cy="14" r="3" fill="none" stroke="goldenrod" stroke-width="1.5"/>
+    <path d="M8 20 Q16 26 24 20" fill="none" stroke="goldenrod" stroke-width="1.5"/>
+  </svg>`;
+
   function initArchetypeUI() {
-      renderArchetypePills();
+      renderArchetypeCards();
       bindArchetypeHandlers();
       bindLoveInterestGenderWatcher();
       updateArchetypeSectionTitle();
@@ -18382,20 +20560,34 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       if (!grid) return;
 
       grid.innerHTML = '';
+      lastZoomedArchetype = null;
+      archetypeCardsRevealed = false;
 
+      // Stop any previous last-zoomed sparkle emitter
+      if (lastZoomedSparkleEmitterId) {
+          stopSparkleEmitter(lastZoomedSparkleEmitterId);
+          lastZoomedSparkleEmitterId = null;
+      }
+
+      // Render 7 archetype cards (start face-down, reveal together after delay)
       ARCHETYPE_ORDER.forEach(id => {
           const arch = ARCHETYPES[id];
           if (!arch) return;
 
           const card = document.createElement('div');
-          card.className = 'sb-card';
+          card.className = 'sb-card archetype-card';
           card.dataset.archetype = id;
+          card.dataset.grp = 'archetype';
+          card.dataset.val = id;
+
+          // If already selected (from state), show as selected+flipped
           if (state.archetype.primary === id) {
               card.classList.add('selected', 'flipped');
+              lastZoomedArchetype = id;
+              archetypeCardsRevealed = true; // Skip auto-reveal if already selected
           }
 
-          // Card structure: BACK shows title only (unclicked), FRONT shows title+desc (revealed on flip/select)
-          // Apply LI pronoun resolution to description text
+          // Card structure: BACK shows archetype name, FRONT shows mask image + description
           const resolvedDesireStyle = resolveLIPronouns(arch.desireStyle);
           card.innerHTML = `
               <div class="sb-card-inner">
@@ -18403,33 +20595,182 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
                       <span class="sb-card-title">${arch.name}</span>
                   </div>
                   <div class="sb-card-face sb-card-front">
+                      <div class="archetype-mask-image" data-archetype="${id}"></div>
                       <span class="sb-card-title">${arch.name}</span>
                       <span class="sb-card-desc">${resolvedDesireStyle}</span>
                   </div>
               </div>
           `;
 
-          // Click to select/flip in place - NO popup
-          card.addEventListener('click', () => selectArchetypeCard(id));
+          // NO hover listeners — cards don't flip on hover
+          // CLICK opens zoom view only (does NOT select)
+          card.addEventListener('click', () => handleArchetypeClick(card, id));
+
           grid.appendChild(card);
       });
+
+      // Add Destiny's Choice card (slot 8)
+      const destinyCard = document.createElement('div');
+      destinyCard.className = 'sb-card archetype-card destiny-choice-card';
+      destinyCard.id = 'destinyChoiceCard';
+      destinyCard.dataset.grp = 'archetype';
+      destinyCard.dataset.val = 'destiny';
+      destinyCard.innerHTML = `
+          <div class="sb-card-inner">
+              <div class="sb-card-face sb-card-back destiny-choice-back">
+                  <span class="sb-card-title">Destiny's Choice</span>
+                  <div class="destiny-choice-sparkle-container" id="destinyChoiceSparkles"></div>
+              </div>
+              <div class="sb-card-face sb-card-front destiny-choice-front">
+                  <span class="sb-card-title">Destiny's Choice</span>
+                  <div class="destiny-embossed-nameplate">
+                      <div class="destiny-embossed-line"></div>
+                      <div class="destiny-embossed-line"></div>
+                  </div>
+              </div>
+          </div>
+      `;
+
+      // Destiny's Choice click triggers selection sequence
+      destinyCard.addEventListener('click', () => triggerDestinyChoiceSequence());
+      grid.appendChild(destinyCard);
+
+      // Start sparkles on Destiny's Choice — low rate for calm halo
+      setTimeout(() => startSparkleEmitter('destinyChoiceSparkles', 'destinyDeck', 0.8), 100);
+
+      // Schedule automatic reveal of all archetype cards (after row mount delay)
+      if (!archetypeCardsRevealed) {
+          scheduleArchetypeReveal();
+      }
   }
 
-  // THREE-STATE ARCHETYPE CARD MODEL:
-  // STATE 1 (face-down) → STATE 2 (face-up/selected): Click unselected card
-  // STATE 2 (face-up) → STATE 3 (zoomed): Click already-selected card
-  // Cards only return to face-down when another card is selected
-  function selectArchetypeCard(archetypeId) {
-      const isAlreadySelected = state.archetype.primary === archetypeId;
+  /**
+   * Schedule automatic reveal of all archetype cards
+   * All 7 cards flip together after 600-1000ms delay
+   * Only reveals if the archetype row is currently active/visible
+   */
+  function scheduleArchetypeReveal() {
+      const revealDelay = 600 + Math.random() * 400; // 600-1000ms
+      setTimeout(() => {
+          if (archetypeCardsRevealed) return; // Already revealed or selected
+          // Only reveal if archetype row is active
+          const grid = document.getElementById('archetypeCardGrid');
+          if (grid && grid.classList.contains('corridor-active')) {
+              revealAllArchetypeCards();
+          }
+      }, revealDelay);
+  }
 
-      if (isAlreadySelected) {
-          // STATE 2 → STATE 3: Open zoomed overlay (never deselect)
-          openArchetypeOverlay(archetypeId);
-          return;
+  /**
+   * Trigger archetype reveal when storybeau row becomes active
+   * Called from updateCorridorVisibility or when navigating to storybeau
+   */
+  function onArchetypeRowMount() {
+      if (archetypeCardsRevealed) return;
+      // Schedule reveal after short delay
+      scheduleArchetypeReveal();
+  }
+
+  // Expose for corridor system
+  window.onArchetypeRowMount = onArchetypeRowMount;
+
+  /**
+   * Reveal all 7 archetype cards SIMULTANEOUSLY
+   * Cards flip from back to front TOGETHER — no stagger
+   * Spec: "Cards ALWAYS reveal together (never one by one)"
+   */
+  function revealAllArchetypeCards() {
+      const grid = document.getElementById('archetypeCardGrid');
+      if (!grid) return;
+
+      archetypeCardsRevealed = true;
+
+      // Flip ALL cards at the exact same moment — no stagger
+      const cards = grid.querySelectorAll('.archetype-card:not(.destiny-choice-card)');
+      cards.forEach(card => {
+          card.classList.add('flipped');
+      });
+
+      console.log('[Archetype] All cards revealed TOGETHER');
+  }
+
+  /**
+   * Handle archetype card click — opens zoom view only (no selection)
+   * Cards are already revealed (flipped) on row entry
+   * Selection happens via Continue button using lastZoomedArchetype
+   */
+  function handleArchetypeClick(card, archetypeId) {
+      // Open zoom overlay for this archetype
+      openArchetypeOverlay(archetypeId);
+
+      // Track as last-zoomed (for Continue button selection)
+      setLastZoomedArchetype(archetypeId);
+  }
+
+  /**
+   * Set the last-zoomed archetype and start sparkle indicator
+   * Called when zoom view is opened for an archetype
+   */
+  function setLastZoomedArchetype(archetypeId) {
+      // Stop previous sparkle emitter
+      if (lastZoomedSparkleEmitterId) {
+          stopSparkleEmitter(lastZoomedSparkleEmitterId);
+          lastZoomedSparkleEmitterId = null;
       }
 
-      // STATE 1 → STATE 2: Select this card, previous selection returns to face-down
+      // Clear previous focus indicator
+      const prevFocused = document.querySelector('.archetype-card.last-zoomed');
+      if (prevFocused) {
+          prevFocused.classList.remove('last-zoomed');
+          const prevSparkleContainer = prevFocused.querySelector('.archetype-focus-sparkles');
+          if (prevSparkleContainer) prevSparkleContainer.remove();
+      }
+
+      lastZoomedArchetype = archetypeId;
+
+      // Update Continue button visibility
+      if (typeof updateCorridorContinueButtonVisibility === 'function') {
+          updateCorridorContinueButtonVisibility();
+      }
+  }
+
+  /**
+   * Start sparkle emitter on last-zoomed card after zoom exit
+   * Called when archetype zoom overlay is closed
+   */
+  function startLastZoomedSparkles() {
+      if (!lastZoomedArchetype) return;
+
+      const card = document.querySelector(
+          `#archetypeCardGrid .archetype-card[data-archetype="${lastZoomedArchetype}"]`
+      );
+      if (!card) return;
+
+      // Add focus indicator class
+      card.classList.add('last-zoomed');
+
+      // Create sparkle container if not exists
+      let sparkleContainer = card.querySelector('.archetype-focus-sparkles');
+      if (!sparkleContainer) {
+          sparkleContainer = document.createElement('div');
+          sparkleContainer.className = 'archetype-focus-sparkles';
+          sparkleContainer.id = `archetypeFocusSparkles_${lastZoomedArchetype}`;
+          card.appendChild(sparkleContainer);
+      }
+
+      // Start subtle sparkle emitter
+      lastZoomedSparkleEmitterId = sparkleContainer.id;
+      startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 0.8);
+  }
+
+  /**
+   * Select archetype via Continue button
+   * Called when Continue is pressed with a flipped card
+   */
+  function commitArchetypeSelection(archetypeId, viaDestiny = false) {
       state.archetype.primary = archetypeId;
+      archetypeSelectedViaDestiny = viaDestiny;
+
       // Clear modifier if it was same as new primary
       if (state.archetype.modifier === archetypeId) {
           state.archetype.modifier = null;
@@ -18441,12 +20782,276 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Clear cover shape hash — selection changed, enable regeneration
       if (window.clearCoverShapeHash) window.clearCoverShapeHash();
 
-      // Update all card states - only selected card stays flipped
+      // Update visual states
       updateArchetypeCardStates();
-      updateArchetypeSelectionSummary();
+
       // Increment DSP activation count (explicit Story Shape choice)
       incrementDSPActivation();
-      updateSynopsisPanel(true); // User action: archetype selection
+      updateSynopsisPanel(true);
+
+      console.log(`[Archetype] Committed: ${archetypeId} (via ${viaDestiny ? 'Destiny' : 'Continue'})`);
+  }
+
+  /**
+   * Trigger Destiny's Choice animation sequence
+   * 1. Archetype cards animate inward to Destiny's Choice position
+   * 2. Optional shuffle overlap
+   * 3. One card emerges with unmarked back
+   * 4. Remaining cards dissolve into sparkles
+   * 5. Destiny's Choice deck dissipates
+   * 6. Unmarked card moves to breadcrumb (mask icon only)
+   */
+  async function triggerDestinyChoiceSequence() {
+      const grid = document.getElementById('archetypeCardGrid');
+      const destinyCard = document.getElementById('destinyChoiceCard');
+      if (!grid || !destinyCard) return;
+
+      // Stop sparkle emitters (Destiny's Choice and any focus sparkles)
+      stopSparkleEmitter('destinyChoiceSparkles');
+      if (lastZoomedSparkleEmitterId) {
+          stopSparkleEmitter(lastZoomedSparkleEmitterId);
+          lastZoomedSparkleEmitterId = null;
+      }
+      // Remove focus indicator from any last-zoomed card
+      const focusedCard = document.querySelector('.archetype-card.last-zoomed');
+      if (focusedCard) {
+          focusedCard.classList.remove('last-zoomed');
+          const sparkleContainer = focusedCard.querySelector('.archetype-focus-sparkles');
+          if (sparkleContainer) sparkleContainer.remove();
+      }
+
+      const archetypeCards = grid.querySelectorAll('.archetype-card:not(.destiny-choice-card)');
+      const destinyRect = destinyCard.getBoundingClientRect();
+      const destinyCenter = {
+          x: destinyRect.left + destinyRect.width / 2,
+          y: destinyRect.top + destinyRect.height / 2
+      };
+
+      // Randomly select one archetype
+      const randomIndex = Math.floor(Math.random() * ARCHETYPE_ORDER.length);
+      const chosenId = ARCHETYPE_ORDER[randomIndex];
+      const chosenCard = grid.querySelector(`.archetype-card[data-archetype="${chosenId}"]`);
+
+      // STEP 1: Animate all archetype cards toward Destiny's Choice
+      archetypeCards.forEach((card, idx) => {
+          const cardRect = card.getBoundingClientRect();
+          const cardCenter = {
+              x: cardRect.left + cardRect.width / 2,
+              y: cardRect.top + cardRect.height / 2
+          };
+
+          const translateX = destinyCenter.x - cardCenter.x;
+          const translateY = destinyCenter.y - cardCenter.y;
+
+          card.style.transition = 'transform 0.6s ease-in-out, opacity 0.6s ease-in-out';
+          card.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.3)`;
+          card.style.zIndex = `${100 + idx}`;
+      });
+
+      await new Promise(r => setTimeout(r, 700));
+
+      // STEP 2: Shuffle effect - slight random movements
+      archetypeCards.forEach(card => {
+          const jitterX = (Math.random() - 0.5) * 20;
+          const jitterY = (Math.random() - 0.5) * 20;
+          const currentTransform = card.style.transform;
+          card.style.transition = 'transform 0.15s ease-in-out';
+          card.style.transform = currentTransform.replace(/translate\([^)]+\)/,
+              `translate(${destinyCenter.x - card.getBoundingClientRect().width/2 + jitterX}px, ${destinyCenter.y - card.getBoundingClientRect().height/2 + jitterY}px)`);
+      });
+
+      await new Promise(r => setTimeout(r, 400));
+
+      // STEP 3: Chosen card emerges with unmarked back
+      if (chosenCard) {
+          chosenCard.classList.add('destiny-chosen');
+          chosenCard.classList.remove('flipped');
+
+          // Animate to center-ish position
+          chosenCard.style.transition = 'transform 0.5s ease-out';
+          chosenCard.style.transform = 'translate(0, -50px) scale(1.1)';
+          chosenCard.style.zIndex = '200';
+
+          // Make back show as unmarked (remove title temporarily)
+          const backTitle = chosenCard.querySelector('.sb-card-back .sb-card-title');
+          if (backTitle) {
+              backTitle.dataset.originalText = backTitle.textContent;
+              backTitle.textContent = '?';
+          }
+      }
+
+      // STEP 4: Other cards dissolve into sparkles
+      archetypeCards.forEach(card => {
+          if (card === chosenCard) return;
+
+          card.classList.add('dissolving');
+          card.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
+          card.style.opacity = '0';
+          card.style.transform += ' scale(0)';
+
+          // Spawn sparkles at card position (relative to grid, using global variance rules)
+          for (let i = 0; i < 5; i++) {
+              setTimeout(() => {
+                  spawnSparkleAt(card);
+              }, i * 50);
+          }
+      });
+
+      // STEP 5: Destiny's Choice deck dissipates
+      destinyCard.classList.add('dissolving');
+      destinyCard.style.transition = 'opacity 0.6s ease-out';
+      destinyCard.style.opacity = '0';
+
+      await new Promise(r => setTimeout(r, 800));
+
+      // STEP 6: Commit the selection
+      commitArchetypeSelection(chosenId, true);
+
+      // STEP 7: Restore chosen card title
+      if (chosenCard) {
+          const backTitle = chosenCard.querySelector('.sb-card-back .sb-card-title');
+          if (backTitle && backTitle.dataset.originalText) {
+              backTitle.textContent = backTitle.dataset.originalText;
+          }
+          chosenCard.classList.add('selected', 'flipped');
+          chosenCard.style.transform = '';
+          chosenCard.style.zIndex = '';
+      }
+
+      // Clean up dissolved cards from DOM
+      grid.querySelectorAll('.dissolving').forEach(el => el.remove());
+
+      // STEP 8: Create breadcrumb with mask icon (Destiny's Choice path)
+      createArchetypeBreadcrumbWithMask(chosenId);
+
+      // Advance corridor
+      if (typeof hideCorridorContinueButton === 'function') {
+          hideCorridorContinueButton('storybeau');
+      }
+      if (typeof advanceCorridorRow === 'function') {
+          advanceCorridorRow();
+      }
+
+      console.log(`[Destiny's Choice] Selected: ${chosenId}`);
+  }
+
+  /**
+   * Spawn a dissolve sparkle relative to archetype grid
+   * Uses global sparkle variance rules:
+   * - Size variance: 0.85-1.15 scale factor
+   * - Lifetime variance: ±10%
+   * - Micro drift angle variance: ±5-8°
+   */
+  function spawnSparkleAt(card) {
+      const grid = document.getElementById('archetypeCardGrid');
+      if (!grid || !card) return;
+
+      // Ensure grid has relative positioning for sparkles
+      if (getComputedStyle(grid).position === 'static') {
+          grid.style.position = 'relative';
+      }
+
+      const sparkle = document.createElement('div');
+      sparkle.className = 'destiny-dissolve-sparkle';
+
+      // Get card position relative to grid
+      const gridRect = grid.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const relativeX = cardRect.left - gridRect.left + cardRect.width / 2;
+      const relativeY = cardRect.top - gridRect.top + cardRect.height / 2;
+
+      sparkle.style.left = `${relativeX}px`;
+      sparkle.style.top = `${relativeY}px`;
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // GLOBAL SPARKLE VARIANCE RULES:
+      // 1. Size variance: 0.85-1.15 scale factor
+      // 2. Lifetime variance: ±10%
+      // 3. Micro drift angle variance: ±5-8°
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      // Size variance
+      const sizeVariance = 0.85 + Math.random() * 0.3; // 0.85 to 1.15
+      const baseSize = 8;
+      const size = baseSize * sizeVariance;
+
+      // Lifetime variance (±10%)
+      const baseDuration = 600;
+      const lifetimeVariance = 0.9 + Math.random() * 0.2; // 0.9 to 1.1
+      const duration = baseDuration * lifetimeVariance + Math.random() * 400;
+
+      // Drift with micro angle variance (±5-8°)
+      const angleVariance = (Math.random() - 0.5) * 0.14; // ±0.07 radians (~4-8°)
+      const baseDriftX = (Math.random() - 0.5) * 60;
+      const baseDriftY = (Math.random() - 0.5) * 60 - 30; // Bias upward
+      // Apply rotation to drift vector
+      const driftX = baseDriftX * Math.cos(angleVariance) - baseDriftY * Math.sin(angleVariance);
+      const driftY = baseDriftX * Math.sin(angleVariance) + baseDriftY * Math.cos(angleVariance);
+
+      sparkle.style.width = `${size}px`;
+      sparkle.style.height = `${size}px`;
+
+      grid.appendChild(sparkle);
+
+      sparkle.animate([
+          { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+          { transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(0)`, opacity: 0 }
+      ], {
+          duration: duration,
+          easing: 'ease-out'
+      }).onfinish = () => sparkle.remove();
+  }
+
+  /**
+   * Create archetype breadcrumb with mask icon (for Destiny's Choice)
+   * Uses mask SVG instead of text label, same visual weight as text breadcrumbs
+   */
+  function createArchetypeBreadcrumbWithMask(archetypeId) {
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      if (!breadcrumbRow) return;
+
+      const stageIdx = STAGE_INDEX['archetype'];
+
+      // Remove ghost step for this position
+      if (stageIdx !== undefined && stageIdx >= 0) {
+          if (typeof removeGhostStep === 'function') removeGhostStep(stageIdx);
+      }
+
+      // Check for existing breadcrumb and remove
+      const existingCard = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="archetype"]');
+      if (existingCard) existingCard.remove();
+
+      // Create breadcrumb with mask icon only (no text)
+      // Uses same structure as text breadcrumbs for visual parity
+      const card = document.createElement('div');
+      card.className = 'breadcrumb-card destiny-breadcrumb';
+      card.dataset.grp = 'archetype';
+      card.dataset.val = archetypeId;
+      card.dataset.stageIndex = stageIdx;
+      card.dataset.breadcrumbLabel = 'Archetype';
+      card.innerHTML = `
+          <div class="sb-card-inner">
+              <div class="sb-card-face sb-card-back mask-icon-face">
+                  ${MASK_ICON_SVG}
+              </div>
+              <div class="sb-card-face sb-card-front mask-icon-face">
+                  ${MASK_ICON_SVG}
+              </div>
+          </div>
+      `;
+
+      card.addEventListener('click', () => navigateToBreadcrumb('archetype'));
+
+      // Insert breadcrumb BEFORE the first ghost step (breadcrumbs accumulate on left)
+      const firstGhost = breadcrumbRow.querySelector('.ghost-step');
+      if (firstGhost) {
+          breadcrumbRow.insertBefore(card, firstGhost);
+      } else {
+          breadcrumbRow.appendChild(card);
+      }
+
+      corridorSelections.set('storybeau', archetypeId);
+      console.log(`[Breadcrumb] Created mask icon for archetype (Destiny's Choice): ${archetypeId}`);
   }
 
   // Populate archetype card zoom view with modifier custom field only (NO pills)
@@ -18580,8 +21185,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   // STATE 3: Open zoomed view for archetype cards
-  // The SAME card element scales and translates to viewport center
-  // NO modal, NO popup, NO duplicate DOM
+  // PORTAL ARCHITECTURE: Card is MOVED into zoom portal
+  // This breaks out of ALL ancestor stacking contexts and filters
   function openArchetypeOverlay(archetypeId) {
       const card = document.querySelector(`#archetypeCardGrid .sb-card[data-archetype="${archetypeId}"]`);
       const arch = ARCHETYPES[archetypeId];
@@ -18602,23 +21207,40 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Populate modifier selection content
       populateArchetypeZoomContent(card, archetypeId);
 
-      // Calculate transform to center the card
+      // Get card position BEFORE moving to portal
       const rect = card.getBoundingClientRect();
-      const cardCenterX = rect.left + rect.width / 2;
-      const cardCenterY = rect.top + rect.height / 2;
-      const viewportCenterX = window.innerWidth / 2;
-      const viewportCenterY = window.innerHeight / 2;
 
-      // Calculate translation needed to center the card
-      const translateX = viewportCenterX - cardCenterX;
-      const translateY = viewportCenterY - cardCenterY;
+      // Store original DOM position for restoration
+      zoomOriginalParent = card.parentNode;
+      zoomOriginalNextSibling = card.nextSibling;
 
-      // Scale factor (reduced ~20%)
+      // Store original position for animation reference
+      card.dataset.zoomOriginalLeft = rect.left;
+      card.dataset.zoomOriginalTop = rect.top;
+      card.dataset.zoomOriginalWidth = rect.width;
+      card.dataset.zoomOriginalHeight = rect.height;
+
+      // Scale factor
       const scale = 2.5;
 
-      // Apply zoom transform to the SAME card element
+      // Calculate centered position
+      const centeredLeft = (window.innerWidth - rect.width) / 2;
+      const centeredTop = (window.innerHeight - rect.height) / 2;
+
+      // PORTAL MOVE: Move card into zoom portal (breaks ALL ancestor contexts)
+      if (zoomPortal) {
+          zoomPortal.appendChild(card);
+      }
+
+      // Apply zoom styling
       card.classList.add('zoomed');
-      card.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+      card.style.position = 'absolute';
+      card.style.left = `${centeredLeft}px`;
+      card.style.top = `${centeredTop}px`;
+      card.style.width = `${rect.width}px`;
+      card.style.height = `${rect.height}px`;
+      card.style.transform = `scale(${scale})`;
+      card.style.transformOrigin = 'center center';
 
       // Show backdrop
       if (zoomBackdrop) {
@@ -18626,9 +21248,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
   }
 
-  // Close archetype zoom - returns to STATE 2 (face-up in grid)
+  // Close archetype zoom - returns to grid view and starts sparkles on last-zoomed card
   function closeArchetypeOverlay() {
       closeZoomedCard();
+      // Start sparkle indicator on the last-zoomed card
+      startLastZoomedSparkles();
   }
 
   function bindArchetypeHandlers() {
@@ -18637,14 +21261,20 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   function updateArchetypeCardStates() {
-      document.querySelectorAll('#archetypeCardGrid .sb-card').forEach(card => {
+      document.querySelectorAll('#archetypeCardGrid .sb-card.archetype-card:not(.destiny-choice-card)').forEach(card => {
           const id = card.dataset.archetype;
           const isSelected = state.archetype.primary === id;
           card.classList.toggle('selected', isSelected);
-          card.classList.toggle('flipped', isSelected); // Selected cards stay flipped
+          // Selected card gets selection state, all cards stay flipped (revealed)
+          if (isSelected) {
+              card.classList.add('flipped');
+              lastZoomedArchetype = id;
+          }
+          // Cards remain flipped after reveal — no unflipping
       });
   }
 
+  // Legacy function - summary UI removed but keeping for compatibility
   function updateArchetypeSelectionSummary() {
       const primaryName = document.getElementById('selectedPrimaryName');
       const modifierName = document.getElementById('selectedModifierName');
@@ -20509,12 +23139,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     $('loveInterestGender').value = 'Male';
     $('lovePronouns').value = 'He/Him';
 
-    if (fateChoices.playerAge && $('playerAgeInput')) {
-      $('playerAgeInput').value = fateChoices.playerAge;
-    }
-    if (fateChoices.partnerAge && $('partnerAgeInput')) {
-      $('partnerAgeInput').value = fateChoices.partnerAge;
-    }
+    // Age fields removed — no longer part of the character form
 
     // Initialize DSP clause reveal tracking — all clauses start pending
     _revealedDSPAxes = new Set();
@@ -20677,6 +23302,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     highlightBeginButton();
     showToast('Fate has spoken. Click Begin Story when ready.');
 
+    // CORRIDOR: Mark corridor as complete since Guided Fate made all selections
+    if (typeof completeCorridorFromGuidedFate === 'function') {
+      completeCorridorFromGuidedFate();
+    }
+
     _fateRunning = false;
     // Keep _revealedDSPAxes and _dspGuidedFateActive until story begins
     // This prevents bulk hydration on any late updateSynopsisPanel calls
@@ -20689,20 +23319,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     $('playerPronouns').value = 'She/Her';
     $('playerNameInput').value = fateChoices.playerName;
 
-    // PASS 9D: Set ages if provided
-    if (fateChoices.playerAge && $('playerAgeInput')) {
-      $('playerAgeInput').value = fateChoices.playerAge;
-    }
-
     // Set love interest
     $('loveInterestGender').value = 'Male';
     $('lovePronouns').value = 'He/Him';
     $('partnerNameInput').value = fateChoices.partnerName;
 
-    // PASS 9D: Set partner age if provided
-    if (fateChoices.partnerAge && $('partnerAgeInput')) {
-      $('partnerAgeInput').value = fateChoices.partnerAge;
-    }
+    // Age fields removed — no longer part of the character form
 
     // Update state directly
     state.gender = 'Female';
@@ -20764,9 +23386,487 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     });
   }
 
-  // GUIDED FATE FILL ENGINE - Fate Destiny Card click handler
-  // On click: generate choices, reveal step-by-step, highlight Begin Story
-  // Does NOT auto-start the story - user must click Begin Story explicitly
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // AUTHORSHIP CHOICE HANDLERS — Two-card selection (Choose Your Hand vs Guided Fate)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Track authorship choice state
+  let authorshipChoiceMade = false;
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // CONTINUOUS SPARKLE EMITTER SYSTEM — Soft flitting particles on authorship cards
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Active emitter intervals (for cleanup)
+  const sparkleEmitterIntervals = new Map();
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // SPARKLE BEHAVIORAL PROFILES — Distinct character for each emitter type
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // SPARKLE PROFILES — Calm ambient halo (UI affordance, not fireworks)
+  // - Constant size (no size variance, alpha variance only)
+  // - Perimeter halo emission (outside card bounds)
+  // - Continuous low-rate spawn (no bursts)
+  // - Slow steady drift (no start-stop motion)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // SPARKLE PROFILES — Ambient fate energy, NOT orbital loading indicator
+  // Behavior: drift, rise, fade, occasional flicker
+  // Variance: size, opacity, lifespan all varied for organic feel
+  // ═══════════════════════════════════════════════════════════════════════════════
+  const SPARKLE_PROFILES = {
+    // Guided Fate: mystical, more active energy
+    guidedFate: {
+      durationMin: 2.5,
+      durationMax: 4.5,
+      sizeMin: 3,           // varied size range
+      sizeMax: 7,
+      opacityMin: 0.4,
+      opacityRange: 0.5,    // 0.4-0.9 for more visible sparkles
+      haloOffset: 15,       // spawn distance outside card edge
+      driftType: 'rise',    // upward drift with slight wander
+      flickerChance: 0.3    // 30% chance of flicker animation
+    },
+    // Choose Your Hand: calm but present energy
+    chooseHand: {
+      durationMin: 3.0,
+      durationMax: 5.0,
+      sizeMin: 2,
+      sizeMax: 5,
+      opacityMin: 0.3,
+      opacityRange: 0.4,    // 0.3-0.7
+      haloOffset: 12,
+      driftType: 'wander',  // gentle random drift
+      flickerChance: 0.2
+    },
+    // Destiny Deck: subtle ambient
+    destinyDeck: {
+      durationMin: 3.5,
+      durationMax: 5.5,
+      sizeMin: 2,
+      sizeMax: 4,
+      opacityMin: 0.25,
+      opacityRange: 0.3,
+      haloOffset: 8,
+      driftType: 'float',   // slow float in any direction
+      flickerChance: 0.15
+    }
+  };
+
+  /**
+   * Spawn a single sparkle particle with profile-specific behavior
+   * PERIMETER HALO: Sparkles spawn on a ring slightly OUTSIDE the card bounds
+   * Motion is slow, continuous drift — never bursty or start-stop
+   * @param {HTMLElement} container - The sparkle emitter container
+   * @param {string} profileName - Key into SPARKLE_PROFILES
+   */
+  function spawnSparkle(container, profileName = 'chooseHand') {
+    if (!container) return;
+
+    const profile = SPARKLE_PROFILES[profileName] || SPARKLE_PROFILES.chooseHand;
+
+    const sparkle = document.createElement('div');
+    sparkle.className = 'authorship-sparkle';
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // AMBIENT FATE ENERGY: Spawn around card, drift naturally (NOT orbital)
+    // ═══════════════════════════════════════════════════════════════════════════
+    const containerRect = container.getBoundingClientRect();
+    const haloOffset = profile.haloOffset || 10;
+
+    // Pick a random angle around the perimeter
+    const angle = Math.random() * Math.PI * 2;
+
+    // Calculate spawn position on perimeter halo
+    const radiusX = 50 + (haloOffset / containerRect.width * 100);
+    const radiusY = 50 + (haloOffset / containerRect.height * 100);
+
+    const x = 50 + radiusX * Math.cos(angle);
+    const y = 50 + radiusY * Math.sin(angle);
+
+    sparkle.style.left = `${x}%`;
+    sparkle.style.top = `${y}%`;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ORGANIC VARIANCE: Size, opacity, and lifespan all varied
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // Duration with variance
+    const duration = profile.durationMin + Math.random() * (profile.durationMax - profile.durationMin);
+
+    // Size variance (NOT constant)
+    const sizeMin = profile.sizeMin || 3;
+    const sizeMax = profile.sizeMax || 6;
+    const size = sizeMin + Math.random() * (sizeMax - sizeMin);
+
+    // Opacity variance
+    const opacity = profile.opacityMin + Math.random() * profile.opacityRange;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DRIFT TYPE: Rise, wander, or float — NOT orbital
+    // ═══════════════════════════════════════════════════════════════════════════
+    let driftX = 0, driftY = 0;
+    const driftType = profile.driftType || 'wander';
+
+    switch (driftType) {
+      case 'rise':
+        // Upward drift with slight horizontal wander
+        driftX = (Math.random() - 0.5) * 30;
+        driftY = -20 - Math.random() * 40; // Always upward
+        break;
+      case 'wander':
+        // Random gentle drift in any direction
+        const wanderAngle = Math.random() * Math.PI * 2;
+        const wanderDist = 15 + Math.random() * 25;
+        driftX = Math.cos(wanderAngle) * wanderDist;
+        driftY = Math.sin(wanderAngle) * wanderDist;
+        break;
+      case 'float':
+        // Very slow drift, mostly upward
+        driftX = (Math.random() - 0.5) * 20;
+        driftY = -10 - Math.random() * 20;
+        break;
+    }
+
+    // Flicker animation class
+    const shouldFlicker = Math.random() < (profile.flickerChance || 0);
+    if (shouldFlicker) {
+      sparkle.classList.add('sparkle-flicker');
+    }
+
+    sparkle.style.setProperty('--sparkle-duration', `${duration}s`);
+    sparkle.style.setProperty('--sparkle-drift-x', `${driftX}px`);
+    sparkle.style.setProperty('--sparkle-drift-y', `${driftY}px`);
+    sparkle.style.setProperty('--sparkle-opacity', opacity);
+    sparkle.style.setProperty('--sparkle-size', `${size}px`);
+
+    container.appendChild(sparkle);
+
+    // Remove after animation completes
+    setTimeout(() => sparkle.remove(), duration * 1000);
+  }
+
+  /**
+   * Start continuous sparkle emitter with profile-specific behavior
+   * NO BURSTS — low, continuous rate over time for calm ambient halo
+   * @param {string} containerId - The ID of the sparkle emitter container
+   * @param {string} profileName - Key into SPARKLE_PROFILES
+   * @param {number} rate - Sparkles per second (low values for calm effect)
+   */
+  function startSparkleEmitter(containerId, profileName, rate = 2) {
+    const container = $(containerId);
+    if (!container) return;
+
+    // Don't start if already running
+    if (sparkleEmitterIntervals.has(containerId)) return;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CONTINUOUS LOW-RATE EMISSION: No bursts, no start-stop
+    // Small timing jitter for natural feel, but maintains steady flow
+    // ═══════════════════════════════════════════════════════════════════════════
+    const baseInterval = 1000 / rate;
+    let emitterActive = true;
+
+    function scheduleNextSparkle() {
+      if (!emitterActive) return;
+
+      // Minor jitter: ±15% variance (0.85 to 1.15) — keeps flow continuous
+      const jitter = 0.85 + Math.random() * 0.3;
+      const nextDelay = baseInterval * jitter;
+
+      setTimeout(() => {
+        if (!emitterActive) return;
+        spawnSparkle(container, profileName);
+        scheduleNextSparkle();
+      }, nextDelay);
+    }
+
+    // Start the continuous spawn loop immediately (no burst)
+    scheduleNextSparkle();
+
+    // Store cleanup function
+    sparkleEmitterIntervals.set(containerId, { stop: () => { emitterActive = false; } });
+
+    console.log(`[Sparkle] Started emitter: ${containerId} (profile: ${profileName}, continuous)`);
+  }
+
+  /**
+   * Stop a sparkle emitter
+   * @param {string} containerId - The ID of the sparkle emitter container
+   */
+  function stopSparkleEmitter(containerId) {
+    const emitter = sparkleEmitterIntervals.get(containerId);
+    if (emitter) {
+      // Handle both old interval and new jittered stop function
+      if (typeof emitter.stop === 'function') {
+        emitter.stop();
+      } else if (typeof emitter === 'number') {
+        clearInterval(emitter);
+      }
+      sparkleEmitterIntervals.delete(containerId);
+      console.log(`[Sparkle] Stopped emitter: ${containerId}`);
+    }
+  }
+
+  /**
+   * Stop all active sparkle emitters
+   */
+  function stopAllSparkleEmitters() {
+    sparkleEmitterIntervals.forEach((emitter, id) => {
+      if (typeof emitter.stop === 'function') {
+        emitter.stop();
+      } else if (typeof emitter === 'number') {
+        clearInterval(emitter);
+      }
+      console.log(`[Sparkle] Stopped emitter: ${id}`);
+    });
+    sparkleEmitterIntervals.clear();
+  }
+
+  /**
+   * Initialize sparkle emitters for authorship cards
+   * Called when authorship row becomes visible
+   */
+  function initAuthorshipSparkles() {
+    // Choose Your Hand: ambient fate energy (4/sec for visible field)
+    startSparkleEmitter('chooseHandSparkles', 'chooseHand', 4);
+    // Guided Fate: more active mystical energy (6/sec)
+    startSparkleEmitter('guidedFateSparkles', 'guidedFate', 6);
+  }
+
+  /**
+   * Initialize sparkle emitter for destiny deck
+   * Called when character section becomes visible
+   */
+  function initDestinyDeckSparkles() {
+    // Destiny Deck: low continuous rate for ambient halo (1/sec)
+    startSparkleEmitter('destinyDeckSparkles', 'destinyDeck', 1);
+  }
+
+  /**
+   * Remove authorship cards when choice is made and breadcrumb created
+   * Cards dissolve after brief delay to show selection
+   */
+  function removeAuthorshipCards() {
+    const chooseCard = $('chooseYourHandCard');
+    const fateCard = $('guidedFateCard');
+    const authorshipRow = $('authorshipChoiceRow');
+
+    // Stop sparkle emitters
+    stopSparkleEmitter('chooseHandSparkles');
+    stopSparkleEmitter('guidedFateSparkles');
+
+    // After a delay, collapse the entire authorship row
+    setTimeout(() => {
+      if (authorshipRow) {
+        authorshipRow.classList.add('collapsed');
+        setTimeout(() => {
+          authorshipRow.style.display = 'none';
+        }, 400);
+      }
+    }, 600);
+
+    console.log('[Authorship] Cards removed after breadcrumb creation');
+  }
+
+  // Reset authorship choice (called from resetCorridor)
+  function resetAuthorshipChoice() {
+    authorshipChoiceMade = false;
+
+    // Clear persistent authorship state
+    state.authorship = null;
+
+    const chooseCard = $('chooseYourHandCard');
+    const fateCard = $('guidedFateCard');
+    const characterSection = $('characterSectionRow');
+    const postArousalSection = $('postArousalSection');
+
+    // Reset card states
+    if (chooseCard) {
+      chooseCard.classList.remove('flipped', 'selected', 'dissipating', 'hidden', 'dimmed');
+    }
+    if (fateCard) {
+      fateCard.classList.remove('flipped', 'selected', 'dissipating', 'hidden', 'dimmed');
+    }
+
+    // Hide authorship Continue button
+    const authorshipContinueBtn = $('continueFromAuthorship');
+    if (authorshipContinueBtn) authorshipContinueBtn.classList.remove('visible');
+
+    // Hide character section and post-arousal section
+    if (characterSection) characterSection.classList.add('hidden');
+    if (postArousalSection) postArousalSection.classList.add('hidden');
+
+    // Restore authorship row visibility
+    const authorshipRow = $('authorshipChoiceRow');
+    if (authorshipRow) {
+      authorshipRow.classList.remove('collapsed');
+      authorshipRow.style.display = '';
+    }
+
+    // Stop any existing sparkle emitters before restarting
+    stopAllSparkleEmitters();
+
+    // Restart sparkle emitters for authorship cards
+    initAuthorshipSparkles();
+
+    console.log('[Authorship] Choice reset');
+  }
+  window.resetAuthorshipChoice = resetAuthorshipChoice;
+
+  // "Choose Your Hand" click handler — Selection only, requires Continue
+  $('chooseYourHandCard')?.addEventListener('click', () => {
+    if (authorshipChoiceMade) return;
+
+    const chooseCard = $('chooseYourHandCard');
+    const fateCard = $('guidedFateCard');
+    const continueBtn = $('continueFromAuthorship');
+
+    // Toggle selection: if already selected, deselect
+    if (chooseCard?.classList.contains('selected')) {
+      chooseCard.classList.remove('flipped', 'selected');
+      state.authorship = null;
+      if (continueBtn) continueBtn.classList.remove('visible');
+      console.log('[Authorship] Choose Your Hand deselected');
+      return;
+    }
+
+    // 1. Flip and select Choose Your Hand
+    chooseCard?.classList.add('flipped', 'selected');
+
+    // 2. Dim (don't dissipate) the other card
+    fateCard?.classList.remove('flipped', 'selected');
+    fateCard?.classList.add('dimmed');
+
+    // 3. Set pending authorship state (not committed until Continue)
+    state.authorship = 'manual';
+
+    // 4. Show Continue button
+    if (continueBtn) {
+      continueBtn.classList.add('visible');
+    }
+
+    console.log('[Authorship] Choose Your Hand selected — awaiting Continue');
+  });
+
+  // "Guided Fate" click handler — Selection only, requires Continue
+  $('guidedFateCard')?.addEventListener('click', () => {
+    if (authorshipChoiceMade) return;
+
+    const chooseCard = $('chooseYourHandCard');
+    const fateCard = $('guidedFateCard');
+    const continueBtn = $('continueFromAuthorship');
+
+    // Toggle selection: if already selected, deselect
+    if (fateCard?.classList.contains('selected')) {
+      fateCard.classList.remove('flipped', 'selected');
+      state.authorship = null;
+      if (continueBtn) continueBtn.classList.remove('visible');
+      console.log('[Authorship] Guided Fate deselected');
+      return;
+    }
+
+    // 1. Flip and select Guided Fate
+    fateCard?.classList.add('flipped', 'selected');
+
+    // 2. Dim (don't dissipate) the other card
+    chooseCard?.classList.remove('flipped', 'selected');
+    chooseCard?.classList.add('dimmed');
+
+    // 3. Set pending authorship state (not committed until Continue)
+    state.authorship = 'guided';
+
+    // 4. Show Continue button
+    if (continueBtn) {
+      continueBtn.classList.add('visible');
+    }
+
+    console.log('[Authorship] Guided Fate selected — awaiting Continue');
+  });
+
+  // Continue from Authorship — commits selection and advances
+  $('continueFromAuthorship')?.addEventListener('click', async () => {
+    if (authorshipChoiceMade) return;
+    if (!state.authorship) return; // No selection made
+
+    authorshipChoiceMade = true;
+
+    const chooseCard = $('chooseYourHandCard');
+    const fateCard = $('guidedFateCard');
+    const continueBtn = $('continueFromAuthorship');
+
+    // Hide Continue button
+    if (continueBtn) continueBtn.classList.remove('visible');
+
+    if (state.authorship === 'manual') {
+      // MANUAL PATH: Show character section
+      const characterSection = $('characterSectionRow');
+
+      // Dissipate unselected card
+      fateCard?.classList.add('dissipating');
+      setTimeout(() => fateCard?.classList.add('hidden'), 400);
+
+      // Create authorship breadcrumb
+      if (typeof createBreadcrumbDirect === 'function') {
+        createBreadcrumbDirect('authorship', 'manual', 'Choose Your Hand');
+      }
+
+      // Remove authorship cards
+      removeAuthorshipCards();
+
+      // Show character section
+      if (characterSection) {
+        characterSection.classList.remove('hidden');
+        setTimeout(() => characterSection.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+        initDestinyDeckSparkles();
+      }
+
+      // Show character Continue button
+      const charContinueBtn = $('continueFromCharacters');
+      if (charContinueBtn) charContinueBtn.classList.add('visible');
+
+      console.log('[Authorship] Choose Your Hand committed — showing character section');
+
+    } else if (state.authorship === 'guided') {
+      // GUIDED PATH: Auto-fill with fate choices
+
+      // Dissipate unselected card
+      chooseCard?.classList.add('dissipating');
+      setTimeout(() => chooseCard?.classList.add('hidden'), 400);
+
+      // Create breadcrumb
+      if (typeof createBreadcrumbDirect === 'function') {
+        createBreadcrumbDirect('authorship', 'guided', 'Guided Fate');
+      }
+
+      // Remove authorship cards
+      removeAuthorshipCards();
+
+      // Generate fate choices
+      const fateChoices = {
+        playerName: FATE_FEMALE_NAMES[Math.floor(Math.random() * FATE_FEMALE_NAMES.length)],
+        partnerName: FATE_MALE_NAMES[Math.floor(Math.random() * FATE_MALE_NAMES.length)],
+        world: getFateWorld(),
+        tone: getFateTone(),
+        dynamic: getFateDynamic(),
+        pov: getFatePOV(),
+        intensity: getFateIntensity(),
+        storyLength: getFateStoryLength(),
+        archetype: getFateArchetype()
+      };
+
+      fateChoices.worldFlavor = getFateFlavor(fateChoices.world);
+      fateChoices.genre = getFateGenre(fateChoices.world);
+      fateChoices.withheldCoreVariant = getFateWithheldCoreVariant(fateChoices.archetype, fateChoices.dynamic);
+
+      console.log('[Authorship] Guided Fate committed — running fate fill');
+
+      await runGuidedFateFill(fateChoices);
+    }
+  });
+
+  // Legacy fateDestinyCard handler (for backward compatibility)
   $('fateDestinyCard')?.addEventListener('click', async () => {
     const fateCard = $('fateDestinyCard');
     if (!fateCard || fateCard.dataset.fateUsed === 'true') return;
@@ -20776,13 +23876,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     fateCard.style.opacity = '0.6';
     fateCard.style.pointerEvents = 'none';
 
-    // 2. Generate fate choices including ages
-    const ages = getFateAges();
+    // 2. Generate fate choices (no ages — removed)
     const fateChoices = {
       playerName: FATE_FEMALE_NAMES[Math.floor(Math.random() * FATE_FEMALE_NAMES.length)],
       partnerName: FATE_MALE_NAMES[Math.floor(Math.random() * FATE_MALE_NAMES.length)],
-      playerAge: ages.playerAge,
-      partnerAge: ages.partnerAge,
       world: getFateWorld(),
       tone: getFateTone(),
       dynamic: getFateDynamic(),
@@ -20804,10 +23901,408 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     await runGuidedFateFill(fateChoices);
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // DESTINY'S CHOICE MINI-DECK — Repeatable Fate character suggestion
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // Mini-deck spawns flying cards that fill character fields
+  // Each click replaces current values with new Fate suggestions
+  // Only Continue button commits the choice
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Generate a random character identity
+   */
+  function generateFateCharacter(gender) {
+    const isFemale = gender === 'Female';
+    const names = isFemale ? FATE_FEMALE_NAMES : FATE_MALE_NAMES;
+    const pronouns = isFemale ? 'She/Her' : 'He/Him';
+
+    return {
+      name: names[Math.floor(Math.random() * names.length)],
+      gender: gender,
+      pronouns: pronouns,
+      ancestry: '' // Leave blank for user to fill or use rotating placeholder
+    };
+  }
+
+  /**
+   * Create a flying card element
+   */
+  function createFlyingCard(character, isPlayer) {
+    const card = document.createElement('div');
+    card.className = 'destiny-flying-card';
+    card.innerHTML = `
+      <div class="destiny-flying-card-inner">
+        <div class="destiny-flying-card-face destiny-flying-card-back"></div>
+        <div class="destiny-flying-card-face destiny-flying-card-front">
+          <span class="destiny-flying-card-name">${character.name.split(' ')[0]}</span>
+          <span class="destiny-flying-card-details">${character.gender}<br>${character.pronouns}</span>
+        </div>
+      </div>
+    `;
+    return card;
+  }
+
+  /**
+   * Apply fate card overlay to character destiny card
+   */
+  function applyFateOverlay(destinyCard, character) {
+    // Remove existing overlay
+    const existingOverlay = destinyCard.querySelector('.fate-overlay-card');
+    if (existingOverlay) existingOverlay.remove();
+
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'fate-overlay-card';
+    overlay.innerHTML = `
+      <span class="fate-card-name">${character.name.split(' ')[0]}</span>
+      <span class="fate-card-details">${character.gender}<br>${character.pronouns}</span>
+    `;
+
+    destinyCard.appendChild(overlay);
+    destinyCard.classList.add('has-fate-card');
+  }
+
+  /**
+   * Fill character fields with fate-generated values
+   */
+  function fillCharacterFields(isPlayer, character) {
+    if (isPlayer) {
+      const nameInput = $('playerNameInput');
+      const genderSelect = $('playerGender');
+      const pronounsSelect = $('playerPronouns');
+
+      if (nameInput) nameInput.value = character.name;
+      if (genderSelect) genderSelect.value = character.gender;
+      if (pronounsSelect) pronounsSelect.value = character.pronouns;
+    } else {
+      const nameInput = $('partnerNameInput');
+      const genderSelect = $('loveInterestGender');
+      const pronounsSelect = $('lovePronouns');
+
+      if (nameInput) nameInput.value = character.name;
+      if (genderSelect) genderSelect.value = character.gender;
+      if (pronounsSelect) pronounsSelect.value = character.pronouns;
+    }
+  }
+
+  /**
+   * Animate flying card from deck to target
+   * Scale + movement animate together, reduced small time
+   */
+  function animateFlyingCard(card, startRect, endRect, onComplete) {
+    // Start scale (mini-deck size ratio)
+    const startScale = 0.6;
+    const endScale = 1.0;
+
+    // Position at start with initial scale
+    card.style.left = `${startRect.left}px`;
+    card.style.top = `${startRect.top}px`;
+    card.style.opacity = '1';
+    card.style.transform = `scale(${startScale})`;
+    card.style.transformOrigin = 'center center';
+
+    document.body.appendChild(card);
+
+    // Force reflow
+    void card.offsetWidth;
+
+    // Start flip early in flight (reduced delay)
+    setTimeout(() => card.classList.add('flipping'), 50);
+
+    // Faster animation (400ms, was 600ms)
+    const duration = 400;
+    const startTime = performance.now();
+
+    function animate(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Weighted easing (ease-out cubic)
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      const currentX = startRect.left + (endRect.left - startRect.left) * eased;
+      const currentY = startRect.top + (endRect.top - startRect.top) * eased;
+
+      // Scale animates together with movement
+      const currentScale = startScale + (endScale - startScale) * eased;
+
+      // Reduced arc for faster feel
+      const arc = Math.sin(progress * Math.PI) * -20;
+
+      card.style.left = `${currentX}px`;
+      card.style.top = `${currentY + arc}px`;
+      card.style.transform = `scale(${currentScale})`;
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // Animation complete
+        card.remove();
+        if (onComplete) onComplete();
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  /**
+   * Spawn fate cards from mini-deck to character tarot cards
+   * AUTHORITATIVE TARGETS: .character-tarot-card containers
+   */
+  function spawnDestinyCards() {
+    const miniDeck = $('destinyMiniDeck');
+    // Target the LARGE tarot-proportional character cards (not deprecated destiny-choice cards)
+    const playerCharCard = $('playerCharacterCard');
+    const loveInterestCharCard = $('loveInterestCharacterCard');
+
+    if (!miniDeck || !playerCharCard || !loveInterestCharCard) return;
+
+    // Generate random characters
+    const playerChar = generateFateCharacter('Female');
+    const liChar = generateFateCharacter('Male');
+
+    // Get positions
+    const deckRect = miniDeck.getBoundingClientRect();
+    const playerRect = playerCharCard.getBoundingClientRect();
+    const liRect = loveInterestCharCard.getBoundingClientRect();
+
+    // Start position (center of deck)
+    const startRect = {
+      left: deckRect.left + deckRect.width / 2 - 27.5,
+      top: deckRect.top + deckRect.height / 2 - 47.5
+    };
+
+    // Create and animate player card - lands on character tarot card
+    // On landing: fill fields directly (no overlay), card remains editable
+    const playerFlyingCard = createFlyingCard(playerChar, true);
+    animateFlyingCard(playerFlyingCard, startRect, {
+      left: playerRect.left,
+      top: playerRect.top
+    }, () => {
+      // Fill fields directly - no overlay, same editable component
+      fillCharacterFields(true, playerChar);
+      // Brief highlight to show landing
+      playerCharCard.classList.add('fate-landed');
+      setTimeout(() => playerCharCard.classList.remove('fate-landed'), 300);
+    });
+
+    // Create and animate love interest card (reduced delay)
+    setTimeout(() => {
+      const liFlyingCard = createFlyingCard(liChar, false);
+      animateFlyingCard(liFlyingCard, startRect, {
+        left: liRect.left,
+        top: liRect.top
+      }, () => {
+        // Fill fields directly - no overlay, same editable component
+        fillCharacterFields(false, liChar);
+        // Brief highlight to show landing
+        loveInterestCharCard.classList.add('fate-landed');
+        setTimeout(() => loveInterestCharCard.classList.remove('fate-landed'), 300);
+      });
+    }, 80);
+
+    console.log('[Destiny] Cards spawned:', playerChar.name, liChar.name);
+  }
+
+  // Mini-deck click handler
+  $('destinyMiniDeck')?.addEventListener('click', () => {
+    spawnDestinyCards();
+  });
+
+  // Character section Continue button handler
+  $('continueFromCharacters')?.addEventListener('click', () => {
+    const miniDeck = $('destinyMiniDeck');
+    const playerCharCard = $('playerCharacterCard');
+    const loveInterestCharCard = $('loveInterestCharacterCard');
+    const continueBtn = $('continueFromCharacters');
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+
+    // Hide Continue button immediately
+    if (continueBtn) {
+      continueBtn.classList.remove('visible');
+    }
+
+    // Retract mini-deck and stop its sparkles
+    if (miniDeck) {
+      miniDeck.classList.add('retracted');
+      stopSparkleEmitter('destinyDeckSparkles');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FLY-TO-BREADCRUMB TRANSITION — Clone card, animate to target, then finalize
+    // ═══════════════════════════════════════════════════════════════════════════
+    const canonicalPlayerName = $('playerNameInput')?.value.trim() || 'Protagonist';
+    const canonicalPartnerName = $('partnerNameInput')?.value.trim() || 'Love Interest';
+    const displayPlayerName = deriveDisplayName(canonicalPlayerName);
+    const displayPartnerName = deriveDisplayName(canonicalPartnerName);
+    const identityTitle = displayPlayerName;
+
+    // Persist identity state
+    state.picks = state.picks || {};
+    state.picks.identity = {
+      playerName: canonicalPlayerName,
+      partnerName: canonicalPartnerName,
+      displayPlayerName: displayPlayerName,
+      displayPartnerName: displayPartnerName
+    };
+
+    // Get breadcrumb target position (identity slot)
+    const identityIdx = STAGE_INDEX['identity'];
+    const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${identityIdx}"]`);
+    const targetRect = ghostStep?.getBoundingClientRect() || breadcrumbRow?.getBoundingClientRect();
+
+    // Create flying clone of player card
+    if (playerCharCard && targetRect) {
+      const cardRect = playerCharCard.getBoundingClientRect();
+
+      // Clone visual appearance only (simplified)
+      const flyingClone = document.createElement('div');
+      flyingClone.className = 'identity-card-flying';
+      flyingClone.style.cssText = `
+        position: fixed;
+        left: ${cardRect.left}px;
+        top: ${cardRect.top}px;
+        width: ${cardRect.width}px;
+        height: ${cardRect.height}px;
+        background: linear-gradient(145deg, #0a0a0a 0%, #151515 50%, #0a0a0a 100%);
+        border: 2px solid var(--gold, #daa520);
+        border-radius: 6px;
+        box-shadow: 0 0 20px rgba(218, 165, 32, 0.4), 0 4px 20px rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Cinzel', serif;
+        font-size: 0.9em;
+        color: var(--gold);
+        text-align: center;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      `;
+      flyingClone.textContent = identityTitle;
+      document.body.appendChild(flyingClone);
+
+      // Fade original cards
+      playerCharCard.style.opacity = '0.3';
+      if (loveInterestCharCard) loveInterestCharCard.style.opacity = '0.3';
+
+      // Animate to breadcrumb position
+      requestAnimationFrame(() => {
+        flyingClone.style.left = `${targetRect.left}px`;
+        flyingClone.style.top = `${targetRect.top}px`;
+        flyingClone.style.width = '60px';
+        flyingClone.style.height = '40px';
+        flyingClone.style.fontSize = '0.6em';
+        flyingClone.style.borderRadius = '4px';
+      });
+
+      // After animation completes, finalize breadcrumb and clean up
+      setTimeout(() => {
+        // Remove flying clone
+        flyingClone.remove();
+
+        // Remove fate overlays
+        if (playerCharCard) {
+          const overlay = playerCharCard.querySelector('.fate-overlay-card');
+          if (overlay) overlay.remove();
+          playerCharCard.classList.remove('has-fate-card');
+          playerCharCard.style.opacity = '';
+        }
+        if (loveInterestCharCard) {
+          const overlay = loveInterestCharCard.querySelector('.fate-overlay-card');
+          if (overlay) overlay.remove();
+          loveInterestCharCard.classList.remove('has-fate-card');
+          loveInterestCharCard.style.opacity = '';
+        }
+
+        // Hide character section
+        const characterSection = $('characterSectionRow');
+        if (characterSection) {
+          characterSection.classList.add('hidden');
+        }
+
+        // Create breadcrumb AFTER animation
+        if (typeof createBreadcrumbDirect === 'function') {
+          createBreadcrumbDirect('identity', 'names', identityTitle);
+        }
+
+        // Advance corridor
+        if (typeof advanceCorridorRow === 'function') {
+          advanceCorridorRow();
+        }
+
+        console.log('[Character Section] Fly-to-breadcrumb complete — advancing to Archetype');
+      }, 550); // Match transition duration
+
+    } else {
+      // Fallback: no animation if elements missing
+      if (playerCharCard) {
+        const overlay = playerCharCard.querySelector('.fate-overlay-card');
+        if (overlay) overlay.remove();
+        playerCharCard.classList.remove('has-fate-card');
+      }
+      if (loveInterestCharCard) {
+        const overlay = loveInterestCharCard.querySelector('.fate-overlay-card');
+        if (overlay) overlay.remove();
+        loveInterestCharCard.classList.remove('has-fate-card');
+      }
+
+      const characterSection = $('characterSectionRow');
+      if (characterSection) {
+        characterSection.classList.add('hidden');
+      }
+
+      if (typeof createBreadcrumbDirect === 'function') {
+        createBreadcrumbDirect('identity', 'names', identityTitle);
+      }
+
+      if (typeof advanceCorridorRow === 'function') {
+        advanceCorridorRow();
+      }
+
+      console.log('[Character Section] Continue clicked — committed identity breadcrumb, advancing to Archetype');
+    }
+  });
+
+  // Reset mini-deck on authorship reset
+  const originalResetAuthorship = window.resetAuthorshipChoice;
+  window.resetAuthorshipChoice = function() {
+    if (originalResetAuthorship) originalResetAuthorship();
+
+    // Reset mini-deck
+    const miniDeck = $('destinyMiniDeck');
+    if (miniDeck) {
+      miniDeck.classList.remove('retracted');
+    }
+
+    // Clear fate overlays from character tarot cards (authoritative targets)
+    const playerCharCard = $('playerCharacterCard');
+    const loveInterestCharCard = $('loveInterestCharacterCard');
+    if (playerCharCard) {
+      const overlay = playerCharCard.querySelector('.fate-overlay-card');
+      if (overlay) overlay.remove();
+      playerCharCard.classList.remove('has-fate-card');
+    }
+    if (loveInterestCharCard) {
+      const overlay = loveInterestCharCard.querySelector('.fate-overlay-card');
+      if (overlay) overlay.remove();
+      loveInterestCharCard.classList.remove('has-fate-card');
+    }
+  };
+
   // --- BEGIN STORY (RESTORED) ---
   $('beginBtn')?.addEventListener('click', async () => {
     // Reveal all remaining DSP segments on Begin Story (veto phase)
     if (typeof revealAllDSPSegments === 'function') revealAllDSPSegments();
+
+    // ========================================
+    // CORRIDOR COMPLETION CHECK — Ensure all required rows are resolved
+    // ========================================
+    if (typeof validateCorridorComplete === 'function' && !validateCorridorComplete()) {
+      // validateCorridorComplete shows modal with missing selections
+      return;
+    }
 
     // ========================================
     // CONTINUE STORY CHECK — Navigate to existing story if shape matches
@@ -21305,17 +24800,19 @@ ${prehistoricForbid}
     6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
     7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
     ${state.povMode === 'author5th' ? `
-    5TH PERSON (GHOST AUTHOR) - CRITICAL:
-    - The Author is a GHOST CHARACTER with an active inner life — planning, worrying, savoring, anticipating.
-    - The Author is CAUSAL and AGENTIC, not a voyeur. The Author initiates, arranges, and sets events in motion.
+    5TH PERSON (THE AUTHOR) — POV REGIME (AUTHORITATIVE):
+    - The Author is a PARTICIPANT in the story, but NOT a controller of events.
+    - The Author may REACT, COMMENT, DELIGHT, DESPAIR, TEASE, or REGRET.
+    - The Author may NOT directly cause physical events or decide outcomes.
+    - The Author influences MEANING, TONE, and IMPLICATION — not plot mechanics.
+    - If the Author acts, the action must change how the moment FEELS or is UNDERSTOOD, not what literally happens next.
     - NEVER use first person ("I", "me", "my"). Always refer to "The Author" in third person.
-    - BANNED VOYEUR VERBS: watched, observed, saw, looked on, gazed at, witnessed, noticed, perceived, stared.
-    - REQUIRED AGENTIC VERBS: tilted, threaded, arranged, set, sent, unlatched, steered, coaxed, provoked, seeded, tightened, loosened, staged, orchestrated, wove.
-    - GHOST AUTHOR FREQUENCY: Author intrusions at ~50% protagonist thought rate. Never consecutive paragraphs. Brief (1-2 sentences).
+    - BANNED VERBS: watched, observed, saw, arranged, orchestrated, caused, steered, forced, ensured, made.
+    - ALLOWED VERBS: smiled, winced, sighed, delighted, despaired, mused, wondered, teased, hoped, feared, sensed, felt, knew, ached.
+    - NO FREQUENCY LIMITS: The Author is a full participant — no artificial limits on presence or frequency.
     - GOOD: "The Author felt a flicker of anticipation. This was unfolding faster than expected."
-    - BAD: "The Author knew this choice would define her destiny." (exposition, not inner life)
-    - Cadence: ~${state.authorCadenceWords} words between Author references. Presence: ${state.authorPresence}.
-    - Fate card voice: ${state.fateCardVoice}.
+    - BAD: "The Author arranged for them to meet." (causation — FORBIDDEN)
+    - The Author participates naturally as the story unfolds, not at prescribed intervals.
     ` : ''}
     `;
     
@@ -21348,16 +24845,18 @@ ${prehistoricForbid}
     const liAppears = state.intensity === 'Dirty' || Math.random() < 0.25;
 
     const authorOpeningDirective = state.povMode === 'author5th' ? `
-AUTHOR AS CONDUCTOR (5TH PERSON) - MANDATORY OPENER:
+THE AUTHOR (5TH PERSON) — POV REGIME — MANDATORY OPENER:
 - CRITICAL: The VERY FIRST SENTENCE must begin with exactly "The Author" as subject.
-- The Author is CAUSAL from word one. The Author CAUSES the opening situation, not observes it.
-- The Author arranges, sets, seeds, tilts, threads—never watches, observes, or looks on.
-- Author's thoughts are about engineering outcomes: "The Author had placed the letter where she would find it."
-- BANNED OPENER VERBS: watched, observed, saw, looked on, gazed, witnessed, noticed, perceived.
-- REQUIRED OPENER VERBS: tilted, threaded, arranged, set, sent, unlatched, steered, coaxed, provoked, seeded, staged.
-- CORRECT: "The Author tilted the morning light through the window..."
-- WRONG: "The Author watched as she entered the room..."
-- The Author is the invisible hand making things happen, referred to in third person, never "I".
+- The Author is a PARTICIPANT, not a controller. The Author REACTS or COMMENTS, never CAUSES.
+- The Author influences how the moment FEELS or is UNDERSTOOD, not what literally happens.
+- Author's inner life: anticipation, delight, worry, tease, regret—not engineering outcomes.
+- BANNED OPENER VERBS: watched, observed, saw, arranged, orchestrated, caused, steered, forced, set, placed.
+- ALLOWED OPENER VERBS: smiled, sensed, felt, knew, hoped, anticipated, delighted, mused, wondered.
+- CORRECT: "The Author smiled, sensing the weight of what was about to begin."
+- CORRECT: "The Author felt the familiar ache of anticipation."
+- WRONG: "The Author arranged for them to meet..." (causation — FORBIDDEN)
+- WRONG: "The Author watched as she entered..." (voyeurism — FORBIDDEN)
+- The Author is a participant with feelings about what unfolds, referred to in third person, never "I".
 ` : '';
 
     // OPENING SCENE VARIATION - avoid repetitive patterns
@@ -21474,11 +24973,12 @@ These are ALWAYS banned regardless of world:
 POV REMINDER
 ═══════════════════════════════════════════════════════
 ${state.povMode === 'author5th' ?
-`5TH PERSON (THE AUTHOR):
-The Author CAUSES events. The Author does NOT observe passively.
-BANNED verbs with "The Author": watched, saw, observed, noticed, gazed, witnessed, perceived, looked on.
-REQUIRED verbs: tilted, threaded, arranged, set, sent, unlatched, steered, coaxed, provoked, seeded, staged, loosened, tightened.
-The Author is the invisible hand — the wind, the timing, the coincidence.`
+`5TH PERSON (THE AUTHOR) — POV REGIME:
+The Author is a PARTICIPANT, not a controller. The Author REACTS and COMMENTS, never CAUSES.
+The Author influences meaning, tone, implication — not plot mechanics or outcomes.
+BANNED verbs: watched, saw, observed, arranged, orchestrated, caused, steered, forced, ensured.
+ALLOWED verbs: smiled, sensed, felt, knew, hoped, feared, delighted, despaired, mused, ached, teased.
+The Author has feelings about what unfolds — anticipation, delight, worry, regret.`
 : 'Use the selected POV consistently throughout.'}
 
 The opening must feel intentional, textured, and strange. Not archetypal. Not templated. Specific to THIS world.`;
@@ -21890,31 +25390,17 @@ ${text.slice(0, 500)}`}]);
             priorNouns: state._priorWorldNouns || []
         });
 
+        // ═══════════════════════════════════════════════════════════════════════════
+        // TITLE VALIDATION — ADVISORY ONLY (AUTHORITATIVE)
+        // Validation flags issues but does NOT replace the title
+        // Original title is preserved regardless of validation outcome
+        // ═══════════════════════════════════════════════════════════════════════════
         if (!titleCheck.valid || !continuationCheck.valid) {
             const allErrors = [...(titleCheck.errors || []), ...(continuationCheck.errors || [])];
-            console.log('[TitleValidation] Failed:', allErrors.map(e => e.message));
-            console.log('[TitleValidation] Detected mode:', titleCheck.mode);
-
-            // STEP 7: Deterministic name-based fallback
-            let fallbackTitle = generateFallbackTitle({
-                playerName: state.rawPlayerName,
-                partnerName: state.rawPartnerName,
-                world: state.picks?.world || 'Modern',
-                tone: state.picks?.tone || 'Earnest',
-                genre: state.picks?.genre || 'Romance'
-            });
-
-            // Apply world-marking to fallback if SAME_WORLD
-            if (titleRouting.worldMarked && titleRouting.worldName) {
-                fallbackTitle = buildWorldMarkedTitle(
-                    fallbackTitle,
-                    titleRouting.worldName,
-                    titleRouting.suffix
-                );
-            }
-
-            console.log('[TitleFallback] Using fallback:', fallbackTitle);
-            title = fallbackTitle;
+            console.warn('[TitleValidation:ADVISORY] Issues detected (title preserved):', allErrors.map(e => e.message));
+            console.log('[TitleValidation:ADVISORY] Detected mode:', titleCheck.mode);
+            console.log('[TitleValidation:ADVISORY] Original title kept:', title);
+            // Title is NOT replaced — advisory flagging only
         } else {
             console.log('[TitleValidation] PASS — Mode:', titleCheck.mode);
         }
@@ -23078,12 +26564,19 @@ DECISIONS NEEDED:
    - "turned_away" - figure facing away, no face visible
    - "partial" - hands, shoulders, or fragment only
 
+4. THEMATIC TENSION (ONE short clause, max 6 words):
+   - Must capture story's central conflict/irony
+   - NOT a scene description
+   - NOT a metaphor explanation
+   - Example forms: "control masking chaos", "intimacy through surveillance"
+
 Return ONLY valid JSON:
 {
   "object": "the focal object/symbol",
   "material": "metal|paper|glass|fabric|stone|wood|crystal|gold",
   "emotion": "the dominant emotional gravity",
   "humanFigure": "none|silhouette|turned_away|partial",
+  "thematicTension": "single clause capturing narrative tension",
   "reason": "brief justification"
 }`
           }]);
@@ -23129,6 +26622,7 @@ Return ONLY valid JSON:
           emotion: TONE_TO_EMOTION[tone] || 'mystery'
       };
       fallback.humanFigure = 'none';
+      fallback.thematicTension = null; // No story awareness in fallback
       fallback.reason = 'fallback';
 
       return fallback;
@@ -23209,12 +26703,13 @@ Return ONLY valid JSON:
       const selectedLayout = selectCoverLayout(history);
       console.log('[CoverIntel] Layout selected:', selectedLayout.id);
 
-      // Extract focal anchor with emotional gravity and human figure decision
+      // Extract focal anchor with emotional gravity, human figure decision, and thematic tension
       const focalResult = await extractFocalObject(synopsis, powerRole, world, tone);
       const focalObject = focalResult.object;
       const material = focalResult.material || 'metal';
       const emotion = focalResult.emotion || 'mystery';
       const humanFigure = focalResult.humanFigure || 'none';
+      const thematicTension = focalResult.thematicTension || null;
 
       // Check for repetition
       const objectClass = getObjectClass(focalObject);
@@ -23421,11 +26916,12 @@ Composition must leave clear space for book-cover typography overlay.`;
           humanFigure: humanFigure,
           background: finalBackground,
           palette: palette,
+          thematicTension: thematicTension,
           promptText: `${COVER_SEMANTIC_DECLARATION}${TITLE_SAFE_CONSTRAINTS}
 ${sketchTierText ? '\n' + sketchTierText + '\n' : ''}
 LAYOUT: ${selectedLayout.description}
 EMOTIONAL GRAVITY: ${emotion} (guides all visual decisions).
-FOCAL ANCHOR: ${finalObject} rendered in ${material}, composed per layout.
+${thematicTension ? `STORY TENSION: ${thematicTension}. (Influences imagery, not literal depiction.)\n` : ''}FOCAL ANCHOR: ${finalObject} rendered in ${material}, composed per layout.
 BACKGROUND: ${finalBackground}. (Support emotion, not decoration.)
 PALETTE: ${palette.primary}, ${palette.secondary}. Max 3 tones. ${palette.materialNote}
 COMPOSITION: ${restraintText}
@@ -25922,6 +29418,34 @@ Return only the visual description.`;
       // ───────────────────────────────────────────────
 
       // ═══════════════════════════════════════════════════════════════════════════
+      // WRY CONFESSION — CONCRETE SCENE GROUNDING (AUTHORITATIVE)
+      // TAG: storybound/wry-scene-grounding-v1
+      // ═══════════════════════════════════════════════════════════════════════════
+      //
+      // VISUALIZER RULE — WRY CONFESSION (AUTHORITATIVE)
+      //
+      // For Wry Confession, TONE defines illustration STYLE only.
+      // The image SUBJECT must be grounded in a concrete element from the
+      // current scene:
+      //   - Setting (location, environment, architectural detail)
+      //   - Character situation (posture, action, interaction)
+      //   - Symbolic object (a specific item present in the scene)
+      //
+      // If no concrete scene element is used, the image is INVALID.
+      //
+      // VALID: A woman at a café table, her coffee untouched (scene: café meeting)
+      // VALID: Hands gripping a doorframe (scene: hesitation at threshold)
+      // VALID: A half-written letter on a desk (scene: abandoned correspondence)
+      //
+      // INVALID: Abstract swirls representing emotional turmoil
+      // INVALID: Generic "woman in contemplation" with no scene anchor
+      // INVALID: Symbolic imagery disconnected from the prose
+      //
+      // The tone (Wry Confession) affects HOW the subject is rendered
+      // (editorial, ironic, slightly off-kilter) — not WHAT is depicted.
+      // ───────────────────────────────────────────────
+
+      // ═══════════════════════════════════════════════════════════════════════════
       // WRY CONFESSION — BINARY VISUAL CHECK (IMAGE GENERATION REGIME LOCK)
       // TAG: storybound/wry-binary-visual-check-v1
       // ═══════════════════════════════════════════════════════════════════════════
@@ -26362,12 +29886,14 @@ Return ONLY the formatted prompt following the structure above. Do not explain o
   }
 
   // FLUX PROMPT HARD CONSTRAINTS (MANDATORY)
-  const FLUX_PROMPT_PREFIX = 'Painterly cinematic realism, oil-painting style, realistic anatomy, natural proportions, non-anime.';
-  const FLUX_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. No extra limbs. No extra people.';
+  // Includes lighting constraints to override provider defaults
+  const FLUX_PROMPT_PREFIX = 'Painterly cinematic realism, oil-painting style, realistic anatomy, natural proportions, non-anime. Even exposure, midtone-forward lighting, neutral color temperature.';
+  const FLUX_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. No extra limbs. No extra people. No crushed blacks. No teal-orange grading.';
 
   // PERCHANCE PROMPT HARD CONSTRAINTS (MANDATORY)
-  const PERCHANCE_PROMPT_PREFIX = 'default Art Style is oil painting 70s pulp, cinematic lighting, realistic proportions, oil-painting style, non-anime.';
-  const PERCHANCE_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. One head, two arms, two legs. No extra limbs. No extra people.';
+  // Includes lighting constraints to override provider defaults
+  const PERCHANCE_PROMPT_PREFIX = 'default Art Style is oil painting 70s pulp, balanced neutral lighting, realistic proportions, oil-painting style, non-anime. Even exposure, no crushed blacks.';
+  const PERCHANCE_PROMPT_SUFFIX = 'Single subject unless explicitly stated. Correct human anatomy. One head, two arms, two legs. No extra limbs. No extra people. No extreme contrast. No underexposed foreground.';
 
   // ============================================================
   // VISUAL INTENT GUARD (Attractiveness + Lighting Enforcement)
@@ -26379,7 +29905,12 @@ Return ONLY the formatted prompt following the structure above. Do not explain o
 
   const VISUAL_INTENT_ATTRACTIVENESS = 'Subjects are attractive with healthy, glowing skin and appealing features. Soft, flattering lighting. Avoid harsh shadows on faces. Beauty-forward rendering.';
 
-  const VISUAL_INTENT_LIGHTING_DEFAULT = 'Balanced, warm lighting. Avoid desaturated or overly dark palettes unless scene explicitly demands it. Skin tones should be warm and natural, never grey or washed out.';
+  // LIGHTING CONSTRAINTS (AUTHORITATIVE)
+  // Technical lighting enforcement overrides provider defaults
+  const VISUAL_INTENT_LIGHTING_DEFAULT = 'Even exposure, midtone-forward lighting, no crushed blacks. Neutral industrial lighting, balanced color temperature. Skin tones warm and natural, never grey or washed out. Avoid teal-orange cinematic grading.';
+
+  // LIGHTING PROHIBITIONS (explicitly forbidden)
+  const VISUAL_INTENT_LIGHTING_PROHIBITIONS = 'NO moody noir lighting. NO extreme contrast. NO underexposed foreground. NO color banding. NO desaturated flesh tones.';
 
   // Tones that permit dark/grim rendering (override attractiveness defaults)
   const DARK_TONE_OVERRIDES = ['Dark', 'Grim', 'Horror', 'Noir'];
@@ -26414,11 +29945,14 @@ Return ONLY the formatted prompt following the structure above. Do not explain o
 
       // Add lighting guard unless dark rendering is permitted
       if (!allowDarkRendering) {
-          // Prevent desaturated/dark defaults
+          // Prevent desaturated/dark defaults with technical constraints
           enhanced = VISUAL_INTENT_LIGHTING_DEFAULT + ' ' + enhanced;
 
+          // Add explicit lighting prohibitions
+          enhanced = enhanced + ' ' + VISUAL_INTENT_LIGHTING_PROHIBITIONS;
+
           // Remove explicit dark directives that may have crept in
-          enhanced = enhanced.replace(/desaturated|gritty|harsh shadows|noir lighting|bleak/gi, '');
+          enhanced = enhanced.replace(/desaturated|gritty|harsh shadows|noir lighting|bleak|crushed blacks|teal.?orange/gi, '');
       }
 
       return enhanced.replace(/\s+/g, ' ').trim();
@@ -27694,27 +31228,27 @@ Condensed (under ${maxLength} chars):` }
       // VISUALIZE BUTTON — ALWAYS CLICKABLE (except when generating)
       // Disabled ONLY when: _vizInFlight === true
       // Click-time branching handles paywall vs visualization
+      // PLAQUE REGIME: No inline opacity — use classes for state
       // ═══════════════════════════════════════════════════════════════════
       if (vizBtn) {
           if (_vizInFlight) {
               // Currently generating — disable to prevent double-click
               vizBtn.textContent = '⏳ Generating...';
               vizBtn.disabled = true;
-              vizBtn.style.opacity = '0.5';
-              vizBtn.style.cursor = 'not-allowed';
+              vizBtn.classList.add('is-loading');
+              vizBtn.classList.remove('is-finalized');
           } else if (budget.finalized) {
               // Finalized — show locked state but keep clickable for feedback
               vizBtn.textContent = '🔒 Finalized';
               vizBtn.disabled = false;
-              vizBtn.style.opacity = '0.7';
-              vizBtn.style.cursor = 'pointer';
+              vizBtn.classList.add('is-finalized');
+              vizBtn.classList.remove('is-loading');
           } else {
               // Default state — always clickable, shows credit count
               const label = credits > 0 ? '✨ Visualize' : '✨ Visualize ($)';
               vizBtn.textContent = label;
               vizBtn.disabled = false;
-              vizBtn.style.opacity = '1';
-              vizBtn.style.cursor = 'pointer';
+              vizBtn.classList.remove('is-loading', 'is-finalized');
           }
       }
 
@@ -27723,12 +31257,11 @@ Condensed (under ${maxLength} chars):` }
           if (budget.finalized) {
               retryBtn.textContent = 'Finalized';
               retryBtn.disabled = true;
-              retryBtn.style.opacity = '0.5';
+              // PLAQUE REGIME: CSS handles disabled state
           } else {
               // Always enabled — clicking with 0 credits opens paywall
               retryBtn.textContent = credits > 0 ? 'Re-Visualize' : 'Re-Visualize ($0.25)';
               retryBtn.disabled = false;
-              retryBtn.style.opacity = '1';
               retryBtn.title = '';
           }
       }
@@ -27738,12 +31271,10 @@ Condensed (under ${maxLength} chars):` }
           const hasImage = img && img.src && img.style.display !== 'none';
           if (hasImage) {
               insertBtn.disabled = false;
-              insertBtn.style.opacity = '1';
-              insertBtn.style.cursor = 'pointer';
+              // PLAQUE REGIME: No opacity mutation
           } else {
               insertBtn.disabled = true;
-              insertBtn.style.opacity = '0.5';
-              insertBtn.style.cursor = 'not-allowed';
+              // PLAQUE REGIME: CSS handles disabled state
           }
       }
   }
@@ -28444,7 +31975,7 @@ Respond in this EXACT format (no labels, just two lines):
       if (btn) {
           btn.textContent = '🔒 Locked';
           btn.disabled = true;
-          btn.style.opacity = '0.6';
+          // PLAQUE REGIME: CSS handles disabled state — no opacity mutation
       }
       if (status) {
           status.style.display = 'inline';
@@ -28463,12 +31994,12 @@ Respond in this EXACT format (no labels, just two lines):
       if (state.visual?.locked) {
           btn.textContent = '🔒 Locked';
           btn.disabled = true;
-          btn.style.opacity = '0.6';
+          // PLAQUE REGIME: CSS handles disabled state — no opacity mutation
           if (status) status.style.display = 'inline';
       } else {
           btn.textContent = '🔒 Lock This Look';
           btn.disabled = false;
-          btn.style.opacity = '1';
+          // PLAQUE REGIME: No opacity mutation — material is static
           if (status) status.style.display = 'none';
       }
   }
@@ -28496,8 +32027,7 @@ Respond in this EXACT format (no labels, just two lines):
   }
 
   // TASK B: Initialize provider dropdown with available providers
-  // INTENT-BASED: Scene visualization uses OpenAI/Replicate only (NO Gemini)
-  // Gemini is ONLY available for Setting images (handled separately)
+  // PROVIDER VISIBILITY: All providers shown, unavailable ones are disabled with explanation
   function initVizProviderDropdown() {
       const dropdown = document.getElementById('vizModel');
       if (!dropdown) return;
@@ -28505,19 +32035,37 @@ Respond in this EXACT format (no labels, just two lines):
       // Clear existing options
       dropdown.innerHTML = '';
 
-      // Scene visualization providers ONLY (Gemini not allowed for scenes)
-      // Per TASK C: scene → OpenAI (primary) → Replicate (fallback)
+      // Check Gemini availability (credits or pay-as-you-go)
+      const geminiCredits = state.visual?.geminiCredits || 0;
+      const payAsYouGo = state.visual?.payAsYouGoEnabled || false;
+      const geminiAvailable = geminiCredits > 0 || payAsYouGo;
+
+      // All providers shown — unavailable ones are disabled, not hidden
       const providers = [
-          { value: 'openai', label: 'OpenAI (Primary)' },
-          { value: 'replicate', label: 'Replicate FLUX (Fallback)' }
+          {
+              value: 'openai',
+              label: 'OpenAI (Primary)',
+              available: true
+          },
+          {
+              value: 'replicate',
+              label: 'Replicate FLUX (Fallback)',
+              available: true
+          },
+          {
+              value: 'gemini',
+              label: geminiAvailable ? 'Gemini' : 'Gemini (No credits)',
+              available: geminiAvailable
+          }
       ];
 
-      // Add options
+      // Add options — disabled providers are visible but not selectable
       providers.forEach((p, i) => {
           const opt = document.createElement('option');
           opt.value = p.value;
           opt.textContent = p.label;
-          if (i === 0) opt.selected = true;
+          opt.disabled = !p.available;
+          if (p.available && i === 0) opt.selected = true;
           dropdown.appendChild(opt);
       });
 
@@ -29762,38 +33310,36 @@ FATE CARD ADAPTATION (CRITICAL):
   function formatStory(text, shouldEscape = false){
       const process = shouldEscape ? escapeHTML : (s => s);
       const mode = window.state?.mode || 'solo';
-      const isMultiPlayer = (mode === 'couple' || mode === 'stranger');
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // DIALOGUE COLORIZATION — STRICT MODE GATE (AUTHORITATIVE)
+      // Colorization is DISABLED by default, enabled ONLY in Couple mode
+      // ═══════════════════════════════════════════════════════════════════════════
+      const isCoupleMode = (mode === 'couple');
 
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
           let safe = process(p);
 
-          if (isMultiPlayer) {
-              // COUPLE/STRANGER MODE: Use explicit player tags for dialogue styling
-              // Replace <p1>...</p1> with styled span (Player 1 color)
+          if (isCoupleMode) {
+              // COUPLE MODE: Speaker-aware colorization ONLY
+              // Colorize dialogue ONLY when speaker identity is known (via <p1>/<p2> tags)
+              // Untagged quotes remain as plain body text — no fallback colors
               safe = safe.replace(/<p1>([\s\S]*?)<\/p1>/g, (match, content) => {
                   return `<span class="p1-dia">${content}</span>`;
               });
-              // Replace <p2>...</p2> with styled span (Player 2 color)
               safe = safe.replace(/<p2>([\s\S]*?)<\/p2>/g, (match, content) => {
                   return `<span class="p2-dia">${content}</span>`;
               });
-              // NPC dialogue and untagged quotes remain unstyled
+              // NPC dialogue and untagged quotes remain unstyled (no guessing)
               return `<p>${safe}</p>`;
           } else {
-              // SOLO MODE: Strip any player tags (safety), apply global quote styling
-              safe = safe.replace(/<\/?p[12]>/g, '');
-
-              // Style all quoted dialogue uniformly (existing behavior)
-              const formatted = safe.replace(/"([^"]*)"/g, (match, quote) => {
-                  return `<span class="story-dialogue">"${quote}"</span>`;
-              });
-
-              // If the line is entirely dialogue, use dialogue class on the paragraph
-              if(p.trim().startsWith('"') && p.trim().endsWith('"')) {
-                  return `<p class="story-dialogue">${safe}</p>`;
-              }
-              return `<p>${formatted}</p>`;
+              // SOLO MODE: Dialogue rendered as PLAIN TEXT (AUTHORITATIVE)
+              // - Same color as body text
+              // - No spans, no classes, no emphasis
+              // - Quotation marks are the only indicator
+              safe = safe.replace(/<\/?p[12]>/g, ''); // Strip any player tags (safety)
+              return `<p>${safe}</p>`;
           }
       }).join('');
   }
@@ -29850,7 +33396,13 @@ FATE CARD ADAPTATION (CRITICAL):
          `;
          // Insert at beginning (mode comes first)
          breadcrumbRow.insertBefore(modeBreadcrumb, breadcrumbRow.firstChild);
-         console.log(`[Breadcrumb] Added ephemeral mode: ${m}`);
+
+         // DESTRUCTIVE NAVIGATION: Attach click handler
+         if (typeof attachBreadcrumbNavigation === 'function') {
+           attachBreadcrumbNavigation(modeBreadcrumb);
+         }
+
+         console.log(`[Breadcrumb] Added ephemeral mode: ${m} (clickable)`);
        }
      }
   };
@@ -31454,10 +35006,10 @@ FATE CARD ADAPTATION (CRITICAL):
 // FLOW SEQUENCE (LOCKED ORDER)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// 1. Story Pressure
+// 1. Pull
 // 2. World
 // 3. Tone
-// 4. Relationship Dynamic (Guided Fate)
+// 4. Polarity (Guided Fate)
 //
 // At no time may two of these rows be visible together.
 //

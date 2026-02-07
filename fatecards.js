@@ -455,29 +455,56 @@ function startStructuralSparkles(anchorEl) {
         return; // No valid anchor — abort silently
     }
 
-    // Ensure anchor has position for absolute children
-    const computedPosition = window.getComputedStyle(anchorEl).position;
+    // ═══════════════════════════════════════════════════════════════════
+    // TEXTAREA HANDLING: Textareas cannot have children
+    // Append sparkle container to parent wrapper, position relative to textarea
+    // ═══════════════════════════════════════════════════════════════════
+    const isTextarea = anchorEl.tagName && anchorEl.tagName.toLowerCase() === 'textarea';
+    const containerParent = isTextarea ? anchorEl.parentNode : anchorEl;
+
+    // Ensure container parent has position for absolute children
+    const computedPosition = window.getComputedStyle(containerParent).position;
     if (computedPosition === 'static') {
-        anchorEl.style.position = 'relative';
+        containerParent.style.position = 'relative';
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // CREATE SPARKLE CONTAINER — Child of anchor element
+    // CREATE SPARKLE CONTAINER — Child of anchor (or parent for textareas)
     // Uses position: absolute to scroll naturally with parent
     // ═══════════════════════════════════════════════════════════════════
     const PERIMETER_OFFSET = 8;
     const container = document.createElement('div');
     container.className = 'fate-card-sparkles';
-    container.style.cssText =
-        'position:absolute;' +
-        'left:' + (-PERIMETER_OFFSET) + 'px;' +
-        'top:' + (-PERIMETER_OFFSET) + 'px;' +
-        'right:' + (-PERIMETER_OFFSET) + 'px;' +
-        'bottom:' + (-PERIMETER_OFFSET) + 'px;' +
-        'pointer-events:none;' +
-        'z-index:10;' +
-        'overflow:visible;';
-    anchorEl.appendChild(container);
+
+    if (isTextarea) {
+        // For textareas, position relative to textarea within wrapper
+        const anchorRect = anchorEl.getBoundingClientRect();
+        const parentRect = containerParent.getBoundingClientRect();
+        const offsetLeft = anchorRect.left - parentRect.left;
+        const offsetTop = anchorRect.top - parentRect.top;
+
+        container.style.cssText =
+            'position:absolute;' +
+            'left:' + (offsetLeft - PERIMETER_OFFSET) + 'px;' +
+            'top:' + (offsetTop - PERIMETER_OFFSET) + 'px;' +
+            'width:' + (anchorRect.width + PERIMETER_OFFSET * 2) + 'px;' +
+            'height:' + (anchorRect.height + PERIMETER_OFFSET * 2) + 'px;' +
+            'pointer-events:none;' +
+            'z-index:10;' +
+            'overflow:visible;';
+    } else {
+        container.style.cssText =
+            'position:absolute;' +
+            'left:' + (-PERIMETER_OFFSET) + 'px;' +
+            'top:' + (-PERIMETER_OFFSET) + 'px;' +
+            'right:' + (-PERIMETER_OFFSET) + 'px;' +
+            'bottom:' + (-PERIMETER_OFFSET) + 'px;' +
+            'pointer-events:none;' +
+            'z-index:10;' +
+            'overflow:visible;';
+    }
+
+    containerParent.appendChild(container);
     _structuralSparkleContainers.push(container);
 
     const VISIBLE_DURATION = 3000;
@@ -570,23 +597,30 @@ function startContinuousSparkles() {
     _continuousSparkleInterval = setInterval(() => {
         const mount = document.getElementById('cardMount');
         const actInput = document.getElementById('actionInput');
-        if (!mount || !actInput) return;
+        const diaInput = document.getElementById('dialogueInput');
+        if (!mount) return;
 
-        // Validate anchor has valid dimensions before emission
-        const actRect = actInput.getBoundingClientRect();
-        if (!actRect || actRect.width === 0 || actRect.height === 0) return;
-
-        // reuse existing golden flow if present
         const selected = mount.querySelector('.fate-card.selected');
         if (selected) {
             // Validate selected card has valid dimensions
             const selRect = selected.getBoundingClientRect();
             if (!selRect || selRect.width === 0 || selRect.height === 0) return;
 
+            // Golden flow to both Say (dialogue) and Do (action) boxes
             if (typeof window.triggerGoldenFlow === 'function') {
-                window.triggerGoldenFlow(selected, actInput);
+                if (actInput) {
+                    const actRect = actInput.getBoundingClientRect();
+                    if (actRect && actRect.width > 0 && actRect.height > 0) {
+                        window.triggerGoldenFlow(selected, actInput);
+                    }
+                }
+                if (diaInput) {
+                    const diaRect = diaInput.getBoundingClientRect();
+                    if (diaRect && diaRect.width > 0 && diaRect.height > 0) {
+                        window.triggerGoldenFlow(selected, diaInput);
+                    }
+                }
             }
-            // NOTE: Removed fate-glow fallback — was masking flip/sparkle layers
         }
     }, 600);
 }
@@ -1518,26 +1552,27 @@ function stopContinuousSparkles() {
 // ═══════════════════════════════════════════════════════════════════════════
 // FATE CARD FLIP FIX — SELECTION DETERMINES FACE (AUTHORITATIVE)
 // ═══════════════════════════════════════════════════════════════════════════
-// - Selected card: FRONT (name + description) via .flipped class
-// - Unselected cards: BACK (face-down) via NO .flipped class
-// - No mirrored transforms, no scaleX(-1), no inherited rotation errors
-// - Single source of truth: isSelected → flip state
+// CEREMONIAL FATE CARD SELECTION — AUTHORITATIVE
+// ═══════════════════════════════════════════════════════════════════════════
+// - Group flip is triggered by PHASE change (via flipAllCards), not selection
+// - Selection ONLY adds .selected class — no flip logic here
+// - Sparkle cycle targets selected card AND active Say/Do boxes
 // ═══════════════════════════════════════════════════════════════════════════
 function setSelectedState(mount, selectedCardEl){
     const cards = mount.querySelectorAll('.fate-card');
 
-    // FLIP FIX: Selection determines face state
-    // Selected = flipped (shows content), Unselected = not flipped (shows back)
+    // CEREMONIAL FIX: Selection only sets .selected class
+    // Flip state is controlled by group flip (flipAllCards), not per-card selection
     cards.forEach(c => {
         c.classList.remove('selected');
-        // Remove flip from all cards first
-        c.classList.remove('flipped');
     });
 
     if (selectedCardEl) {
         selectedCardEl.classList.add('selected');
-        // Only selected card shows its front (via flip)
-        selectedCardEl.classList.add('flipped');
+
+        // CEREMONIAL GROUP FLIP: First selection triggers group reveal
+        // All cards flip together on first interaction, not individually
+        flipAllCards(mount);
     }
 
     // Track selection in state without changing shape elsewhere
@@ -1556,7 +1591,7 @@ function setSelectedState(mount, selectedCardEl){
         }
     }
 
-    // 🔑 SPARKLE WIRING (THE FIX)
+    // 🔑 SPARKLE WIRING — Sparkles on card + Say/Do boxes
     if (selectedCardEl) {
         startContinuousSparkles();
     } else {
