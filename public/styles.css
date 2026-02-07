@@ -1369,7 +1369,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     width: 165px;
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     /* CHARACTER CARD ART PNG */
-    background-image: url('/assets/Card Art/Cards/Character-face.png');
+    background-image: url('/assets/card-art/cards/Character-face.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
