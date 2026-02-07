@@ -1285,9 +1285,33 @@ For veto/quill/god_mode:
       'DARK_VICE', 'BEAUTIFUL_RUIN', 'ETERNAL_FLAME'
   ];
 
+  /**
+   * Derive DISPLAY_NAME from full name for row titles
+   * Rules:
+   * - Take first two name parts
+   * - If result exceeds 22 chars, use first name only
+   * @param {string} fullName - Full name entered by user
+   * @returns {string} Display name for row titles
+   */
+  function deriveDisplayName(fullName) {
+      if (!fullName || !fullName.trim()) return 'Love Interest';
+      const parts = fullName.trim().split(/\s+/);
+      // Take first two parts
+      const twoPartName = parts.slice(0, 2).join(' ');
+      // Length safeguard: if > 22 chars, use first name only
+      if (twoPartName.length > 22) {
+          return parts[0];
+      }
+      return twoPartName;
+  }
+
   function getArchetypeSectionTitle(loveInterestGender) {
-      // Literal label: "(Love Interest)'s Mask"
-      return "(Love Interest)'s Mask";
+      // Get Love Interest name from canonical input
+      const nameInput = document.getElementById('partnerNameInput');
+      const fullName = nameInput?.value?.trim() || '';
+      const displayName = deriveDisplayName(fullName);
+      // Generate possessive title: "{DISPLAY_NAME}'s Mask"
+      return `${displayName}'s Mask`;
   }
 
   // =========================
@@ -17274,7 +17298,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const partnerNameInput = $('partnerNameInput');
     if (partnerNameInput) {
       partnerNameInput.addEventListener('input', () => {
-        // Name entry does NOT trigger DSP update — names are not in DSP
+        // Update archetype row title with Love Interest name
+        if (typeof updateArchetypeSectionTitle === 'function') {
+          updateArchetypeSectionTitle();
+        }
       });
       partnerNameInput.addEventListener('blur', async () => {
         const raw = partnerNameInput.value.trim();
@@ -17290,6 +17317,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         state.normalizedPartnerKernel = kernel;
         state.rawPartnerName = raw;
         partnerNameInput.value = kernel;
+        // Update archetype row title with normalized name
+        if (typeof updateArchetypeSectionTitle === 'function') {
+          updateArchetypeSectionTitle();
+        }
       });
     }
   }
