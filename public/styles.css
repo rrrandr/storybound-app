@@ -1548,6 +1548,9 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     display: flex;
     justify-content: center;
     margin-top: 20px;
+    /* Ensure button z-index works correctly */
+    position: relative;
+    z-index: 100; /* Above cards (10-50), below button (1000) within same context */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -3117,6 +3120,8 @@ select {
     padding: 0;
     transform-style: preserve-3d;
     transition: transform 0.6s;
+    /* Z-INDEX CAP: Cards must never exceed z-index 50 (button is 1000) */
+    z-index: 10;
 }
 /* Fate card — Plaque regime: no rounded corners, no glow */
 /* FLIP FIX: Explicit transform-origin center to prevent hinge artifacts */
@@ -7099,6 +7104,9 @@ textarea.fate-field {
     height: 210px; /* 5:7 ratio */
     perspective: 1000px;
     cursor: pointer;
+    /* Z-INDEX CAP: Cards must never exceed z-index 50 (button is 1000) */
+    position: relative;
+    z-index: 10;
 }
 
 /* Responsive card sizes */
@@ -8210,6 +8218,18 @@ body.corridor-complete #setup {
     border: none !important;
     border-radius: 0 !important;
     cursor: pointer;
+
+    /* Z-INDEX AUTHORITY: Button must exceed all cards */
+    z-index: 1000;
+    pointer-events: auto;
+
+    /* SIZING: Prevent squishing in flex containers */
+    width: auto;
+    min-width: 200px;
+    height: auto;
+    flex: none;
+    flex-shrink: 0;
+    align-self: center;
 
     /* Real text overlay: Lora, white */
     font-family: 'Lora', serif !important;
