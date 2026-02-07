@@ -8026,11 +8026,19 @@ body.corridor-complete .ghost-step {
    ═══════════════════════════════════════════════════════════════════ */
 
 .corridor-section {
-    /* Base corridor section styling */
-    min-height: 120px; /* GUARANTEE: Navigation never lands in empty space */
-    background: transparent; /* Isolate from other row backgrounds */
+    /* VIEWPORT ISOLATION: Each stage occupies exactly one viewport */
+    min-height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
     position: relative;
     z-index: 1;
+    /* Black velvet background - no bleed from adjacent rows */
+    background: #0a0a0a;
+    /* Center content vertically within viewport */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .corridor-row,
@@ -8202,9 +8210,22 @@ body:has(.sb-card.zoomed) .corridor-nav-arrow {
     pointer-events: none;
 }
 
+/* CORRIDOR MODE: Prevent body/page scrolling during stages */
+body.corridor-mode {
+    overflow: hidden;
+}
+
+body.corridor-mode #setup {
+    overflow: hidden;
+}
+
 /* Body state when corridor is complete — allow scrolling to Safety/Veto/Begin */
 body.corridor-complete #setup {
     overflow-y: auto;
+}
+
+body.corridor-complete {
+    overflow: auto;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */

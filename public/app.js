@@ -18260,6 +18260,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   function initCorridor() {
     console.log('[Corridor] Initializing 9-row corridor system with DOM mount/unmount...');
 
+    // VIEWPORT ISOLATION: Prevent body scrolling during corridor stages
+    document.body.classList.add('corridor-mode');
+    document.body.classList.remove('corridor-complete');
+
     // Reset state - start at row 0 (Guided Fate)
     corridorActiveRowIndex = 0;
     corridorSelections.clear();
@@ -19556,7 +19560,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       console.log('[Corridor] DSP faded out after corridor completion');
     }
 
-    // Allow scrolling to final sections
+    // VIEWPORT ISOLATION: Exit corridor mode, allow scrolling to final sections
+    document.body.classList.remove('corridor-mode');
     document.body.classList.add('corridor-complete');
   }
 
@@ -19567,6 +19572,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   function resetCorridor() {
     corridorActiveRowIndex = 0;
     corridorSelections.clear();
+
+    // VIEWPORT ISOLATION: Re-enter corridor mode on reset
+    document.body.classList.add('corridor-mode');
+    document.body.classList.remove('corridor-complete');
 
     // Reset authorship choice (Choose Your Hand / Guided Fate cards)
     if (typeof window.resetAuthorshipChoice === 'function') {
