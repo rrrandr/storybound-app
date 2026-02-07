@@ -20627,11 +20627,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               archetypeCardsRevealed = true; // Skip auto-reveal if already selected
           }
 
-          // Card structure: BACK = Black PNG art, FRONT = Gold PNG art (image-only, no text)
+          // Card structure: BACK = Black PNG art, FRONT = Gold PNG art + description (visible when zoomed)
+          const resolvedDesireStyle = resolveLIPronouns(arch.desireStyle);
           card.innerHTML = `
               <div class="sb-card-inner">
                   <div class="sb-card-face sb-card-back" data-archetype="${id}"></div>
-                  <div class="sb-card-face sb-card-front" data-archetype="${id}"></div>
+                  <div class="sb-card-face sb-card-front" data-archetype="${id}">
+                      <span class="archetype-printed-desc">${resolvedDesireStyle}</span>
+                  </div>
               </div>
           `;
 
@@ -21036,8 +21039,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   /**
-   * Create archetype breadcrumb with mask icon (for Destiny's Choice)
-   * Uses mask SVG instead of text label, same visual weight as text breadcrumbs
+   * Create archetype breadcrumb with PNG art (for Destiny's Choice)
+   * Uses Gold front PNG - no mask icon, no text overlay
    */
   function createArchetypeBreadcrumbWithMask(archetypeId) {
       const breadcrumbRow = document.getElementById('breadcrumbRow');
@@ -21054,24 +21057,28 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const existingCard = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="archetype"]');
       if (existingCard) existingCard.remove();
 
-      // Create breadcrumb with mask icon only (no text)
-      // Uses same structure as text breadcrumbs for visual parity
+      // Map archetype ID to PNG filename
+      const pngMap = {
+          'HEART_WARDEN': 'Tarot-Gold-front-HeartWarden.png',
+          'OPEN_VEIN': 'Tarot-Gold-front-OpenVein.png',
+          'SPELLBINDER': 'Tarot-Gold-front-Spellbinder.png',
+          'ARMORED_FOX': 'Tarot-Gold-front-AFox.png',
+          'DARK_VICE': 'Tarot-Gold-front-DarkVice.png',
+          'BEAUTIFUL_RUIN': 'Tarot-Gold-front-BRuin.png',
+          'ETERNAL_FLAME': 'Tarot-Gold-front-EternalFlame.png'
+      };
+      const pngFile = pngMap[archetypeId] || 'Tarot-Gold-front-HeartWarden.png';
+
+      // Create breadcrumb with PNG art only (no mask icon, no text)
       const card = document.createElement('div');
-      card.className = 'breadcrumb-card destiny-breadcrumb';
+      card.className = 'breadcrumb-card archetype-breadcrumb-png';
       card.dataset.grp = 'archetype';
       card.dataset.val = archetypeId;
       card.dataset.stageIndex = stageIdx;
       card.dataset.breadcrumbLabel = 'Archetype';
-      card.innerHTML = `
-          <div class="sb-card-inner">
-              <div class="sb-card-face sb-card-back mask-icon-face">
-                  ${MASK_ICON_SVG}
-              </div>
-              <div class="sb-card-face sb-card-front mask-icon-face">
-                  ${MASK_ICON_SVG}
-              </div>
-          </div>
-      `;
+      card.style.backgroundImage = `url('/assets/card-art/cards/${pngFile}')`;
+      card.style.backgroundSize = 'cover';
+      card.style.backgroundPosition = 'center';
 
       card.addEventListener('click', () => navigateToBreadcrumb('archetype'));
 
@@ -21084,7 +21091,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
 
       corridorSelections.set('storybeau', archetypeId);
-      console.log(`[Breadcrumb] Created mask icon for archetype (Destiny's Choice): ${archetypeId}`);
+      console.log(`[Breadcrumb] Created PNG card for archetype (Destiny's Choice): ${archetypeId}`);
   }
 
   // Populate archetype card zoom view with modifier custom field only (NO pills)

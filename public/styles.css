@@ -6771,10 +6771,38 @@ textarea.fate-field {
     background-image: url('/assets/card-art/cards/Tarot-Gold-front-EternalFlame.png');
 }
 
-/* Hide any text on archetype cards — PNG art only */
-.archetype-card .sb-card-title,
-.archetype-card .sb-card-desc {
+/* Hide card name on archetype cards — PNG art has name baked in */
+.archetype-card .sb-card-title {
     display: none !important;
+}
+
+/* ARCHETYPE PRINTED DESCRIPTION — visible only when zoomed */
+.archetype-printed-desc {
+    display: none; /* Hidden in grid view */
+    position: absolute;
+    bottom: 12px;
+    left: 8px;
+    right: 8px;
+    font-family: 'Lora', serif;
+    font-size: 9px;
+    line-height: 1.35;
+    color: #1a1a1a; /* Black, printed look */
+    text-align: center;
+    /* Printed feel: no glow, no outline, flat */
+    text-shadow: none;
+    background: rgba(255, 248, 230, 0.85); /* Subtle parchment backing */
+    padding: 6px 4px;
+    border-radius: 2px;
+}
+
+/* Show description only when card is zoomed */
+.archetype-card.zoomed .archetype-printed-desc {
+    display: block;
+    font-size: 11px;
+    bottom: 20px;
+    left: 15px;
+    right: 15px;
+    padding: 10px 8px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
