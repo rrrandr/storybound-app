@@ -1551,6 +1551,8 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     /* Ensure button z-index works correctly */
     position: relative;
     z-index: 100; /* Above cards (10-50), below button (1000) within same context */
+    /* CLIP FIX: Ensure button is not clipped by parent */
+    overflow: visible;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -6690,6 +6692,17 @@ textarea.fate-field {
     }
 }
 
+/* POINTER-EVENTS: Ensure cards cannot intercept Continue button clicks */
+.archetype-grid-8,
+.archetype-card {
+    pointer-events: auto;
+}
+
+/* When card is zoomed, ensure Continue button remains clickable */
+.archetype-card.zoomed ~ .flow-continue-btn {
+    pointer-events: auto;
+}
+
 /* Archetype card flip state controlled via JS .flipped class
    All cards reveal (flip) together on row entry
    Cards remain flipped permanently — no hover interactions */
@@ -8365,13 +8378,16 @@ body.corridor-complete {
     z-index: 1000;
     pointer-events: auto;
 
-    /* SIZING: Prevent squishing in flex containers */
-    width: auto;
-    min-width: 200px;
-    height: auto;
+    /* FLEX ISOLATION: Hard-prevent shrinking in flex containers */
     flex: none;
     flex-shrink: 0;
     align-self: center;
+
+    /* SIZING: Prevent squishing in flex containers */
+    width: auto;
+    min-width: 220px;
+    max-width: none;
+    height: auto;
 
     /* Real text overlay: Lora, white */
     font-family: 'Lora', serif !important;
