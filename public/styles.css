@@ -6711,14 +6711,45 @@ textarea.fate-field {
    All cards reveal (flip) together on row entry
    Cards remain flipped permanently — no hover interactions */
 
-/* Archetype mask image placeholder on front face */
+/* Archetype mask image — full card art from PNG */
 .archetype-mask-image {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, rgba(218,165,32,0.3) 0%, rgba(218,165,32,0.1) 100%);
-    border-radius: 50%;
-    border: 2px solid rgba(218,165,32,0.5);
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    z-index: 0;
+}
+
+/* ARCHETYPE CARD ART MAPPING — PNG backgrounds by archetype ID */
+.archetype-mask-image[data-archetype="HEART_WARDEN"] {
+    background-image: url('/assets/card-art/cards/Tarot-Black-back-HeartWard.png');
+}
+.archetype-mask-image[data-archetype="OPEN_VEIN"] {
+    background-image: url('/assets/card-art/cards/Tarot-Black-back-OpenVein.png');
+}
+.archetype-mask-image[data-archetype="SPELLBINDER"] {
+    background-image: url('/assets/card-art/cards/Tarot-Black-back-Spellbinder.png');
+}
+.archetype-mask-image[data-archetype="ARMORED_FOX"] {
+    background-image: url('/assets/card-art/cards/Tarot-Black-back-AFox.png');
+}
+.archetype-mask-image[data-archetype="DARK_VICE"] {
+    background-image: url('/assets/card-art/cards/Tarot-Black-back-DarkVice.png');
+}
+.archetype-mask-image[data-archetype="BEAUTIFUL_RUIN"] {
+    background-image: url('/assets/card-art/cards/Tarot-Black-back-BeauRuin.png');
+}
+.archetype-mask-image[data-archetype="ETERNAL_FLAME"] {
+    background-image: url('/assets/card-art/cards/Tarot-Black-back-EternalFlame.png');
+}
+
+/* Ensure card title/desc appear above the art */
+.archetype-card .sb-card-front .sb-card-title,
+.archetype-card .sb-card-front .sb-card-desc {
+    position: relative;
+    z-index: 1;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -8065,6 +8096,17 @@ body.corridor-complete .ghost-step {
     -webkit-mask: none !important;
     mask: none !important;
     clip-path: none !important;
+}
+
+/* ARCHETYPE KEYHOLE SUPPRESSION — No keyhole overlay on archetype cards EVER */
+.archetype-card .cover-keyhole-overlay,
+.archetype-card.zoomed .cover-keyhole-overlay,
+#archetypeCardGrid .cover-keyhole-overlay,
+.sb-zoom-portal .archetype-card .cover-keyhole-overlay {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .corridor-row.corridor-hidden,
