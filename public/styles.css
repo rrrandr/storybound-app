@@ -291,35 +291,35 @@ body.night-mode .story-pages-container {
 
 /* XL: 640x176 @2x → 320x88 display */
 .sb-btn-png.xl {
-    background-image: url('/public/assets/ui/Black-Gold-640x176.png') !important;
+    background-image: url('/assets/ui/Black-Gold-640x176.png') !important;
     width: 320px;
     height: 88px;
 }
 
 /* LG: 520x144 @2x → 260x72 display */
 .sb-btn-png.lg {
-    background-image: url('/public/assets/ui/Black-Gold-520x144.png') !important;
+    background-image: url('/assets/ui/Black-Gold-520x144.png') !important;
     width: 260px;
     height: 72px;
 }
 
 /* MD: 400x112 @2x → 200x56 display */
 .sb-btn-png.md {
-    background-image: url('/public/assets/ui/Black-Gold-400x112.png') !important;
+    background-image: url('/assets/ui/Black-Gold-400x112.png') !important;
     width: 200px;
     height: 56px;
 }
 
 /* SM: 320x88 @2x → 160x44 display */
 .sb-btn-png.sm {
-    background-image: url('/public/assets/ui/Black-Gold-320x88.png') !important;
+    background-image: url('/assets/ui/Black-Gold-320x88.png') !important;
     width: 160px;
     height: 44px;
 }
 
 /* XS: 120x36 @2x → 60x18 display */
 .sb-btn-png.xs {
-    background-image: url('/public/assets/ui/Black-Gold-120x36.png') !important;
+    background-image: url('/assets/ui/Black-Gold-120x36.png') !important;
     width: 60px;
     height: 18px;
 }
@@ -330,7 +330,7 @@ body.night-mode .story-pages-container {
 
 /* Flavor: 440x104 @2x → 220x52 display */
 .sb-btn-png.flavor {
-    background-image: url('/public/assets/ui/Black-Gold-Flavor-440x104.png') !important;
+    background-image: url('/assets/ui/Black-Gold-Flavor-440x104.png') !important;
     width: 220px;
     height: 52px;
 }
@@ -341,28 +341,28 @@ body.night-mode .story-pages-container {
 
 /* Text LG: 840x128 @2x → 420x64 display */
 .sb-btn-png.text-lg {
-    background-image: url('/public/assets/ui/Black-Gold-Text-840x128.png') !important;
+    background-image: url('/assets/ui/Black-Gold-Text-840x128.png') !important;
     width: 420px;
     height: 64px;
 }
 
 /* Text MD: 640x112 @2x → 320x56 display */
 .sb-btn-png.text-md {
-    background-image: url('/public/assets/ui/Black-Gold-Text-640x112.png') !important;
+    background-image: url('/assets/ui/Black-Gold-Text-640x112.png') !important;
     width: 320px;
     height: 56px;
 }
 
 /* Text SM: 420x64 @2x → 210x32 display */
 .sb-btn-png.text-sm {
-    background-image: url('/public/assets/ui/Black-Gold-Text-420x64.png') !important;
+    background-image: url('/assets/ui/Black-Gold-Text-420x64.png') !important;
     width: 210px;
     height: 32px;
 }
 
 /* TOS Button: 420x64 @2x → 210x32 display */
 .sb-btn-png.tos {
-    background-image: url('/public/assets/ui/Black-Gold-Text-420x64.png') !important;
+    background-image: url('/assets/ui/Black-Gold-Text-420x64.png') !important;
     width: 210px;
     height: 32px;
 }
@@ -373,14 +373,14 @@ body.night-mode .story-pages-container {
 
 /* Age Confirm: 320x88 @2x → 160x44 display */
 .sb-btn-png.age-confirm {
-    background-image: url('/public/assets/ui/Black-Gold-320x88.png') !important;
+    background-image: url('/assets/ui/Black-Gold-320x88.png') !important;
     width: 160px;
     height: 44px;
 }
 
 /* Age Exit: 120x36 @2x → 60x18 display */
 .sb-btn-png.age-exit {
-    background-image: url('/public/assets/ui/Black-Gold-120x36.png') !important;
+    background-image: url('/assets/ui/Black-Gold-120x36.png') !important;
     width: 60px;
     height: 18px;
     opacity: 0.7;
@@ -396,14 +396,14 @@ body.night-mode .story-pages-container {
 
 /* Consent Primary: 320x88 @2x → 160x44 display */
 .sb-btn-png.consent-primary {
-    background-image: url('/public/assets/ui/Black-Gold-320x88.png') !important;
+    background-image: url('/assets/ui/Black-Gold-320x88.png') !important;
     width: 160px;
     height: 44px;
 }
 
 /* Consent Secondary: 320x88 @2x → 160x44 display, reduced opacity */
 .sb-btn-png.consent-secondary {
-    background-image: url('/public/assets/ui/Black-Gold-320x88.png') !important;
+    background-image: url('/assets/ui/Black-Gold-320x88.png') !important;
     width: 160px;
     height: 44px;
     opacity: 0.75;
@@ -415,7 +415,7 @@ body.night-mode .story-pages-container {
 
 /* Modal Exit: 120x36 @2x → 60x18 display */
 .sb-btn-png.modal-exit {
-    background-image: url('/public/assets/ui/Black-Gold-120x36.png') !important;
+    background-image: url('/assets/ui/Black-Gold-120x36.png') !important;
     width: 60px;
     height: 18px;
     opacity: 0.7;
@@ -431,7 +431,7 @@ body.night-mode .story-pages-container {
 
 /* Toggle: 360x96 @2x → 180x48 display */
 .sb-btn-png.toggle {
-    background-image: url('/public/assets/ui/Black-Gold-toggle-360x96.png') !important;
+    background-image: url('/assets/ui/Black-Gold-toggle-360x96.png') !important;
     width: 180px;
     height: 48px;
 }
@@ -449,14 +449,14 @@ body.night-mode .story-pages-container {
 
 /* DSP Wide: 1800x440 */
 .dsp-panel.wide {
-    background-image: url('/public/assets/ui/DSP-Gold-Blk-1800x440.png');
+    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png');
     width: 1800px;
     height: 440px;
 }
 
 /* DSP Tall: 720x1040 */
 .dsp-panel.tall {
-    background-image: url('/public/assets/ui/DSP-Gold-Blk-720x1040.png');
+    background-image: url('/assets/ui/DSP-Gold-Blk-720x1040.png');
     width: 720px;
     height: 1040px;
 }
@@ -8252,7 +8252,7 @@ body.corridor-complete #setup {
 
 /* CONTINUE PNG: Black-Gold-400x112.png — native 400×112, display at 200×56 */
 .flow-continue-btn.sb-btn-png.sm {
-    background-image: url('/public/assets/ui/Black-Gold-400x112.png') !important;
+    background-image: url('/assets/ui/Black-Gold-400x112.png') !important;
     width: 200px !important;
     height: 56px !important;
 }
