@@ -20627,18 +20627,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               archetypeCardsRevealed = true; // Skip auto-reveal if already selected
           }
 
-          // Card structure: BACK shows archetype name, FRONT shows mask image + description
-          const resolvedDesireStyle = resolveLIPronouns(arch.desireStyle);
+          // Card structure: BACK = Black PNG art, FRONT = Gold PNG art (image-only, no text)
           card.innerHTML = `
               <div class="sb-card-inner">
-                  <div class="sb-card-face sb-card-back">
-                      <span class="sb-card-title">${arch.name}</span>
-                  </div>
-                  <div class="sb-card-face sb-card-front">
-                      <div class="archetype-mask-image" data-archetype="${id}"></div>
-                      <span class="sb-card-title">${arch.name}</span>
-                      <span class="sb-card-desc">${resolvedDesireStyle}</span>
-                  </div>
+                  <div class="sb-card-face sb-card-back" data-archetype="${id}"></div>
+                  <div class="sb-card-face sb-card-front" data-archetype="${id}"></div>
               </div>
           `;
 

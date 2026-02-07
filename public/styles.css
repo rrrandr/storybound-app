@@ -6711,45 +6711,70 @@ textarea.fate-field {
    All cards reveal (flip) together on row entry
    Cards remain flipped permanently — no hover interactions */
 
-/* Archetype mask image — full card art from PNG */
-.archetype-mask-image {
-    position: absolute;
-    inset: 0;
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ARCHETYPE CARD ART — PNG-only cards (no text overlay)
+   BACK: Tarot-Black-back-*.png (visible in grid before selection)
+   FRONT: Tarot-Gold-front-*.png (visible when zoomed/selected)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Base archetype card face styling */
+.archetype-card .sb-card-back,
+.archetype-card .sb-card-front {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: inherit;
-    z-index: 0;
 }
 
-/* ARCHETYPE CARD ART MAPPING — PNG backgrounds by archetype ID */
-.archetype-mask-image[data-archetype="HEART_WARDEN"] {
+/* BACK CARDS — Black tarot backs (visible in grid) */
+.archetype-card .sb-card-back[data-archetype="HEART_WARDEN"] {
     background-image: url('/assets/card-art/cards/Tarot-Black-back-HeartWard.png');
 }
-.archetype-mask-image[data-archetype="OPEN_VEIN"] {
+.archetype-card .sb-card-back[data-archetype="OPEN_VEIN"] {
     background-image: url('/assets/card-art/cards/Tarot-Black-back-OpenVein.png');
 }
-.archetype-mask-image[data-archetype="SPELLBINDER"] {
+.archetype-card .sb-card-back[data-archetype="SPELLBINDER"] {
     background-image: url('/assets/card-art/cards/Tarot-Black-back-Spellbinder.png');
 }
-.archetype-mask-image[data-archetype="ARMORED_FOX"] {
+.archetype-card .sb-card-back[data-archetype="ARMORED_FOX"] {
     background-image: url('/assets/card-art/cards/Tarot-Black-back-AFox.png');
 }
-.archetype-mask-image[data-archetype="DARK_VICE"] {
+.archetype-card .sb-card-back[data-archetype="DARK_VICE"] {
     background-image: url('/assets/card-art/cards/Tarot-Black-back-DarkVice.png');
 }
-.archetype-mask-image[data-archetype="BEAUTIFUL_RUIN"] {
+.archetype-card .sb-card-back[data-archetype="BEAUTIFUL_RUIN"] {
     background-image: url('/assets/card-art/cards/Tarot-Black-back-BeauRuin.png');
 }
-.archetype-mask-image[data-archetype="ETERNAL_FLAME"] {
+.archetype-card .sb-card-back[data-archetype="ETERNAL_FLAME"] {
     background-image: url('/assets/card-art/cards/Tarot-Black-back-EternalFlame.png');
 }
 
-/* Ensure card title/desc appear above the art */
-.archetype-card .sb-card-front .sb-card-title,
-.archetype-card .sb-card-front .sb-card-desc {
-    position: relative;
-    z-index: 1;
+/* FRONT CARDS — Gold tarot fronts (visible when zoomed/selected) */
+.archetype-card .sb-card-front[data-archetype="HEART_WARDEN"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-front-HeartWarden.png');
+}
+.archetype-card .sb-card-front[data-archetype="OPEN_VEIN"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-front-OpenVein.png');
+}
+.archetype-card .sb-card-front[data-archetype="SPELLBINDER"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-front-Spellbinder.png');
+}
+.archetype-card .sb-card-front[data-archetype="ARMORED_FOX"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-front-AFox.png');
+}
+.archetype-card .sb-card-front[data-archetype="DARK_VICE"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-front-DarkVice.png');
+}
+.archetype-card .sb-card-front[data-archetype="BEAUTIFUL_RUIN"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-front-BRuin.png');
+}
+.archetype-card .sb-card-front[data-archetype="ETERNAL_FLAME"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-front-EternalFlame.png');
+}
+
+/* Hide any text on archetype cards — PNG art only */
+.archetype-card .sb-card-title,
+.archetype-card .sb-card-desc {
+    display: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -6818,10 +6843,13 @@ textarea.fate-field {
     z-index: -1;
 }
 
-/* BACK SIDE: BLACK with gold accents — DECK face */
+/* BACK SIDE: Black Destiny Choice PNG — DECK face */
 .destiny-choice-back {
-    background: linear-gradient(145deg, #0a0a0a 0%, #121212 30%, #0d0d0d 70%, #080808 100%);
-    border: 3px solid var(--gold);
+    background-image: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -6833,15 +6861,10 @@ textarea.fate-field {
         inset 0 -1px 0 rgba(0, 0, 0, 0.5);
 }
 
-.destiny-choice-back .sb-card-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--gold);
-    text-shadow:
-        0 0 8px rgba(218, 165, 32, 0.5),
-        0 1px 2px rgba(0, 0, 0, 0.8);
-    letter-spacing: 0.06em;
+/* Hide text on Destiny's Choice — PNG art only */
+.destiny-choice-back .sb-card-title,
+.destiny-choice-front .sb-card-title {
+    display: none !important;
 }
 
 /* FRONT SIDE: GOLD with embossed styling */
@@ -6942,8 +6965,30 @@ textarea.fate-field {
 }
 
 /* Last-zoomed card focus indicator (sparkle emitter shows selection intent) */
+/* Last-zoomed archetype — no glow, just subtle edge sparkles */
 .archetype-card.last-zoomed {
-    box-shadow: 0 0 12px rgba(218, 165, 32, 0.4);
+    box-shadow: none;
+}
+
+/* Edge sparkles for last-zoomed card */
+.archetype-card.last-zoomed::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    background:
+        radial-gradient(circle at 5% 10%, rgba(255, 248, 220, 0.3) 0%, transparent 2%),
+        radial-gradient(circle at 95% 10%, rgba(218, 165, 32, 0.25) 0%, transparent 2%),
+        radial-gradient(circle at 5% 90%, rgba(218, 165, 32, 0.2) 0%, transparent 2%),
+        radial-gradient(circle at 95% 90%, rgba(255, 248, 220, 0.25) 0%, transparent 2%);
+    pointer-events: none;
+    z-index: -1;
+    animation: last-zoomed-sparkle 2s ease-in-out infinite;
+    opacity: 0.7;
+}
+
+@keyframes last-zoomed-sparkle {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
 }
 
 .archetype-focus-sparkles {
@@ -7456,12 +7501,35 @@ textarea.fate-field {
                 0 0 30px rgba(255, 105, 180, 0.3);
 }
 
-/* ARCHETYPE ZOOMED CARD — Gold glow, not pink */
+/* ARCHETYPE ZOOMED CARD — No glow, clean presentation */
 .archetype-card.zoomed .sb-card-front {
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8),
-                0 0 40px rgba(218, 165, 32, 0.5),
-                inset 0 0 30px rgba(218, 165, 32, 0.1);
-    border: 2px solid var(--gold);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    border: none;
+}
+
+/* ARCHETYPE EDGE SPARKLES — Subtle particles around zoomed card */
+.archetype-card.zoomed::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    background:
+        radial-gradient(circle at 10% 20%, rgba(255, 248, 220, 0.4) 0%, transparent 3%),
+        radial-gradient(circle at 90% 15%, rgba(218, 165, 32, 0.3) 0%, transparent 2%),
+        radial-gradient(circle at 85% 80%, rgba(255, 248, 220, 0.35) 0%, transparent 2.5%),
+        radial-gradient(circle at 15% 85%, rgba(218, 165, 32, 0.25) 0%, transparent 2%),
+        radial-gradient(circle at 50% 5%, rgba(255, 255, 255, 0.3) 0%, transparent 1.5%),
+        radial-gradient(circle at 5% 50%, rgba(218, 165, 32, 0.2) 0%, transparent 2%),
+        radial-gradient(circle at 95% 50%, rgba(255, 248, 220, 0.3) 0%, transparent 2%),
+        radial-gradient(circle at 50% 95%, rgba(218, 165, 32, 0.25) 0%, transparent 2%);
+    pointer-events: none;
+    z-index: -1;
+    animation: archetype-sparkle-drift 3s ease-in-out infinite;
+    opacity: 0.8;
+}
+
+@keyframes archetype-sparkle-drift {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.02); opacity: 0.9; }
 }
 
 /* Flavor count indicator on face-up cards */
