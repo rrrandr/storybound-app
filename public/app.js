@@ -23967,17 +23967,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   /**
    * Create a flying card element
+   * Back: Gold-Tarot-Card-DESTINY-X.png
+   * Front: Character-face.png (player) or Love-Interest-face.png (love interest)
+   * No text overlay — PNG has baked text
    */
   function createFlyingCard(character, isPlayer) {
     const card = document.createElement('div');
     card.className = 'destiny-flying-card';
+    // Front face uses data-face attribute to select correct PNG
+    const faceAttr = isPlayer ? '' : 'data-face="love-interest"';
     card.innerHTML = `
       <div class="destiny-flying-card-inner">
         <div class="destiny-flying-card-face destiny-flying-card-back"></div>
-        <div class="destiny-flying-card-face destiny-flying-card-front">
-          <span class="destiny-flying-card-name">${character.name.split(' ')[0]}</span>
-          <span class="destiny-flying-card-details">${character.gender}<br>${character.pronouns}</span>
-        </div>
+        <div class="destiny-flying-card-face destiny-flying-card-front" ${faceAttr}></div>
       </div>
     `;
     return card;
@@ -24028,7 +24030,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   /**
    * Animate flying card from deck to target
-   * Scale + movement animate together, reduced small time
+   * Y-axis flip + continuous growth (no pause at 90°)
+   * Duration: 600ms (50% slower for dramatic effect)
+   * Z-index 2000 during animation, ends slightly askew
    */
   function animateFlyingCard(card, startRect, endRect, onComplete) {
     // Start scale (mini-deck size ratio)
@@ -24041,43 +24045,51 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     card.style.opacity = '1';
     card.style.transform = `scale(${startScale})`;
     card.style.transformOrigin = 'center center';
+    card.style.zIndex = '2000';
 
     document.body.appendChild(card);
 
     // Force reflow
     void card.offsetWidth;
 
-    // Start flip early in flight (reduced delay)
-    setTimeout(() => card.classList.add('flipping'), 50);
+    // Start flip immediately — continuous with growth
+    card.classList.add('flipping');
 
-    // Faster animation (400ms, was 600ms)
-    const duration = 400;
+    // 600ms duration (50% slower than previous 400ms)
+    const duration = 600;
     const startTime = performance.now();
+
+    // Random askew angle for end state (-2 to +2 degrees)
+    const askewAngle = (Math.random() - 0.5) * 4;
 
     function animate(currentTime) {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Weighted easing (ease-out cubic)
+      // Smooth easing (ease-out cubic) — continuous, no pause at 90°
       const eased = 1 - Math.pow(1 - progress, 3);
 
       const currentX = startRect.left + (endRect.left - startRect.left) * eased;
       const currentY = startRect.top + (endRect.top - startRect.top) * eased;
 
-      // Scale animates together with movement
+      // Scale grows continuously during flip (no pause)
       const currentScale = startScale + (endScale - startScale) * eased;
 
-      // Reduced arc for faster feel
-      const arc = Math.sin(progress * Math.PI) * -20;
+      // Arc path during flight
+      const arc = Math.sin(progress * Math.PI) * -25;
+
+      // Apply askew rotation as we approach end
+      const currentAskew = askewAngle * eased;
 
       card.style.left = `${currentX}px`;
       card.style.top = `${currentY + arc}px`;
-      card.style.transform = `scale(${currentScale})`;
+      card.style.transform = `scale(${currentScale}) rotate(${currentAskew}deg)`;
 
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
-        // Animation complete
+        // Animation complete — card rests on top, slightly askew
+        card.style.zIndex = '100';
         card.remove();
         if (onComplete) onComplete();
       }

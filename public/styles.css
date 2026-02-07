@@ -4275,87 +4275,70 @@ textarea.fate-field {
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 /* DESTINY FLYING CARDS — Animated cards that fly from deck to character positions */
-/* NO FLIP — simple position animation only                                         */
+/* Y-AXIS FLIP with PNG art — Gold-Tarot-Card-DESTINY-X.png back                   */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .destiny-flying-card {
     position: fixed;
     width: 55px;
     height: 85px;
-    z-index: 1000;
+    z-index: 2000;
     pointer-events: none;
-    /* NO perspective — no 3D transforms */
-    /* BLACK / GOLD styling */
-    background: linear-gradient(145deg, #0a0a0a 0%, #121212 50%, #0a0a0a 100%);
-    border: 2px solid var(--gold, #daa520);
+    perspective: 800px;
+    /* No background, border, or box-shadow on container — PNG provides visuals */
+    background: transparent;
+    border: none;
     border-radius: 4px;
-    box-shadow:
-        inset 0 0 10px rgba(218, 165, 32, 0.15),
-        0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* Flying card content — NO flip structure */
+/* Flying card inner — 3D flip container */
 .destiny-flying-card-inner {
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 6px;
-    box-sizing: border-box;
-    /* NO transform-style, NO transition for rotateY */
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Flipping class disabled — no effect */
+/* When flipping — Y-axis rotation */
 .destiny-flying-card.flipping .destiny-flying-card-inner {
-    /* NO rotateY — disabled */
-    transform: none;
+    transform: rotateY(180deg);
 }
 
+/* Card faces — positioned for 3D flip */
 .destiny-flying-card-face {
+    position: absolute;
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 6px;
-    box-sizing: border-box;
-    /* NO backface-visibility — not needed without flip */
+    backface-visibility: hidden;
+    border-radius: 4px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
+/* BACK — Gold-Tarot-Card-DESTINY-X.png (Character/Identity corridor) */
 .destiny-flying-card-back {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    border: 1px solid var(--gold);
+    background-image: url('/assets/card-art/cards/Gold-Tarot-Card-DESTINY-X.png');
+    /* No border, no gradient — PNG only */
 }
 
-.destiny-flying-card-back::after {
-    content: "⚜";
-    font-size: 18px;
-    color: var(--gold);
-}
-
+/* FRONT — Character or Love Interest face PNG (set via data attribute) */
 .destiny-flying-card-front {
-    background: linear-gradient(135deg, #2d1810 0%, #4a2c17 50%, #6b3a1f 100%);
-    border: 1px solid var(--gold);
     transform: rotateY(180deg);
-    text-align: center;
+    /* Default to Character-face.png, JS sets data-face for Love Interest */
+    background-image: url('/assets/card-art/cards/Character-face.png');
 }
 
-.destiny-flying-card-name {
-    font-family: 'Cinzel', serif;
-    font-size: 0.55em;
-    font-weight: 600;
-    color: var(--gold);
-    margin-bottom: 4px;
-    line-height: 1.2;
+/* Love Interest face variant */
+.destiny-flying-card-front[data-face="love-interest"] {
+    background-image: url('/assets/card-art/cards/Love-Interest-face.png');
 }
 
+/* No text overlays — PNG has baked text */
+.destiny-flying-card-name,
 .destiny-flying-card-details {
-    font-family: 'Lora', serif;
-    font-size: 0.45em;
-    color: rgba(245, 240, 230, 0.8);
-    line-height: 1.3;
+    display: none;
 }
 
 /* Character card with fate overlay */
