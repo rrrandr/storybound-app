@@ -1,14 +1,16 @@
 /* GLOBAL VARS */
-:root { 
-    --bg1: #0a001f; --bg2: #2a0033; --pink: #ff69b4; --hot: #ff1493; --gold: #ffd700; --ink: #f0e6ff; --panel: rgba(20,0,40,.6); 
+:root {
+    --bg1: #0a0a0a; --bg2: #121212; --pink: #ff69b4; --hot: #ff1493; --gold: #ffd700; --ink: #f0e6ff; --panel: rgba(10,10,10,.8);
     --btn-bg: linear-gradient(145deg, #8b008b, var(--hot)); --btn-txt: var(--gold);
     --p1-color: #B0E0E6; --p2-color: #FFB6C1;
-    --font-main: 'Lora', serif; 
+    --font-main: 'Lora', serif;
     --font-story: 'Lora', serif;
     --story-size: 1.15em;
-    --line-height: 1.8; 
+    --line-height: 1.8;
     --letter-spacing: 0.02em;
     --cursor-url: url('cursor-dollar-plane-64.png');
+    /* Header height for corridor centering — measured by JS, fallback for initial load */
+    --sb-header-height: 80px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -283,6 +285,17 @@ body.night-mode .story-pages-container {
 
     outline: none !important;
     -webkit-tap-highlight-color: transparent;
+}
+
+/* PNG Button — Complete outline/border suppression for all states */
+.sb-btn-png:focus,
+.sb-btn-png:focus-visible,
+.sb-btn-png:focus-within,
+.sb-btn-png:active,
+.sb-btn-png:hover {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -1348,17 +1361,33 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* ROW MUST OWN ACTIVE STATE — claim corridor until Continue pressed */
 .story-shape-row {
     display: flex;
+    flex-direction: row;
     gap: 24px;
     justify-content: center;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    padding: 30px 20px;
-    /* ACTIVE ROW OWNERSHIP */
-    min-height: 280px;
+    align-items: center;
+    align-content: center;
+    flex-wrap: nowrap; /* Keep cards in single row, shrink to fit */
+    padding: 0 20px;
+    /* Full viewport height minus header for proper centering */
+    min-height: calc(100vh - var(--sb-header-height));
+    overflow: hidden;
+    width: 100%;
     background: var(--bg-dark, #0a0a0a);
     position: relative;
     z-index: 1;
     isolation: isolate; /* Prevent background bleed */
+    box-sizing: border-box;
+}
+
+/* Character cards and deck stay in row - allow shrinking to fit */
+#characterSectionRow > .character-tarot-card,
+#characterSectionRow > .destiny-mini-deck {
+    flex-shrink: 1;
+}
+
+/* Continue button wrapper - hidden, control plane owns Continue now */
+#characterSectionRow > .character-continue-wrapper {
+    display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -1366,25 +1395,23 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* These are identity plates, not reveal cards                                      */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .character-tarot-card {
-    width: 165px;
+    width: 206px; /* 25% larger than 165px */
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
-    /* CHARACTER CARD ART PNG */
+    /* CHARACTER CARD ART PNG — frame baked into PNG, no CSS border */
     background-image: url('/assets/card-art/cards/Character-face.png');
-    background-size: cover;
+    background-size: 102%; /* Slightly oversized to hide PNG edge irregularities */
     background-position: center;
     background-repeat: no-repeat;
-    background-color: #0a0a0a;
-    border: 2px solid var(--gold, #daa520);
-    border-radius: 6px;
+    background-color: #0a0a0a; /* Match background to hide any gaps */
+    border: none;
+    border-radius: 0;
     display: flex;
     flex-direction: column;
     padding: 0; /* Moved to content wrapper for edge-to-edge PNG */
     box-sizing: border-box;
-    /* Gold inner glow */
-    box-shadow:
-        inset 0 0 15px rgba(218, 165, 32, 0.1),
-        inset 0 0 30px rgba(0, 0, 0, 0.4),
-        0 4px 12px rgba(0, 0, 0, 0.5);
+    overflow: hidden; /* Clip any PNG edge irregularities */
+    /* Subtle drop shadow only — no gold glow (frame in PNG) */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     /* NO flip, NO perspective, NO rotateY */
     transform: none !important;
     perspective: none !important;
@@ -1393,13 +1420,10 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 }
 
 
-/* Identity plate selection highlight */
+/* Identity plate selection highlight — subtle glow only, no border */
 .character-tarot-card.selected,
 .character-tarot-card:focus-within {
-    box-shadow:
-        inset 0 0 15px rgba(218, 165, 32, 0.2),
-        0 0 20px rgba(218, 165, 32, 0.4),
-        0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 20px rgba(218, 165, 32, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 /* NO hover transforms */
@@ -1407,29 +1431,24 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     transform: none !important;
 }
 
+/* Love Interest card uses different PNG */
+#loveInterestCharacterCard {
+    background-image: url('/assets/card-art/cards/Love-Interest-face.png');
+}
+
+/* Headers hidden — titles baked into PNG */
 .character-tarot-header {
-    font-family: 'Cinzel', serif;
-    font-size: 0.8em;
-    /* Engraved header: deep charcoal with subtle highlight */
-    color: #1a1612;
-    text-shadow: 0 1px 0 rgba(218, 165, 32, 0.18);
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-    padding: 10px 12px 6px 12px;
-    /* Hairline engraved border */
-    border-bottom: 1px solid rgba(30, 25, 15, 0.35);
-    margin-bottom: 0;
+    display: none;
 }
 
 .character-tarot-fields {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
     flex: 1;
     overflow: hidden;
-    padding: 8px 10px 10px 10px;
+    /* Padding to avoid black border lines of PNG - generous margins, scaled for larger card */
+    padding: 60px 22px 48px 22px;
     background: transparent;
 }
 
@@ -1437,21 +1456,19 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     display: flex;
     flex-direction: column;
     width: 100%;
-    /* Pressed nameplate cavity */
+    /* No bounding box - only inputs are embossed */
     background: transparent;
-    border-radius: 2px;
-    box-shadow:
-        inset 1px 1px 2px rgba(0, 0, 0, 0.4),
-        inset -1px -1px 1px rgba(255, 215, 0, 0.08);
-    padding: 4px 6px;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 2px 0;
 }
 
 .character-tarot-card .character-field label {
-    font-size: 0.6em;
+    font-size: 0.65em;
     margin-bottom: 2px;
     /* Engraved label: deep charcoal with subtle highlight */
     color: #1a1612;
-    text-shadow: 0 1px 0 rgba(218, 165, 32, 0.15);
+    text-shadow: 0 1px 0 rgba(218, 165, 32, 0.2);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 600;
@@ -1459,14 +1476,16 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 
 .character-tarot-card .character-field input,
 .character-tarot-card .character-field select {
-    font-size: 0.75em;
-    padding: 2px 4px;
-    /* Transparent to show gold PNG beneath */
-    background: transparent;
-    /* Hairline engraved border */
+    font-size: 0.8em;
+    padding: 4px 6px;
+    /* Pressed/embossed input field */
+    background: rgba(0, 0, 0, 0.08);
+    /* Inset shadow: dark on top/right, highlight on bottom/left */
     border: none;
-    border-bottom: 1px solid rgba(30, 25, 15, 0.5);
-    border-radius: 0;
+    border-radius: 3px;
+    box-shadow:
+        inset 2px 2px 3px rgba(0, 0, 0, 0.3),
+        inset -1px -1px 2px rgba(255, 248, 220, 0.2);
     /* Engraved text: deep charcoal */
     color: #1a1612;
     text-shadow: 0 1px 0 rgba(218, 165, 32, 0.12);
@@ -1475,12 +1494,40 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 
 .character-tarot-card .character-field input::placeholder {
     font-size: 0.85em;
-    color: rgba(30, 25, 15, 0.4);
+    color: rgba(30, 25, 15, 0.35);
+}
+
+/* Hide custom gender/pronoun inputs completely - no space taken */
+.character-tarot-card .custom-gender-input,
+.character-tarot-card .custom-gender-input.hidden {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
 }
 
 .character-tarot-card .character-field input:focus,
 .character-tarot-card .character-field select:focus {
-    border-bottom-color: rgba(30, 25, 15, 0.7);
+    background: rgba(0, 0, 0, 0.1);
+    box-shadow:
+        inset 2px 2px 3px rgba(0, 0, 0, 0.3),
+        inset -1px -1px 2px rgba(255, 248, 220, 0.15);
+    outline: none;
+}
+
+/* Ancestry field rotating placeholder - position within pressed field */
+.character-tarot-card .character-field-ancestry {
+    position: relative;
+}
+
+.character-tarot-card .character-field-ancestry .rotating-placeholder {
+    position: absolute;
+    top: 16px;
+    left: 4px;
+    right: 4px;
+    font-size: 0.6em;
+    color: rgba(30, 25, 15, 0.35);
+    pointer-events: none;
 }
 
 /* Character tarot card with fate overlay - positioned relatively for absolute children */
@@ -2770,6 +2817,174 @@ select:-webkit-autofill {
 }
 .choice-desc { opacity:0.7; max-width:250px; margin:10px auto; }
 
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* MODE CARDS — Flip cards for Solo/Couple/Stranger selection                       */
+/* Click/hover flips to reveal face, click on face to select mode                   */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Mode card row - centers cards on screen */
+.mode-card-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 500px) {
+    .mode-card-row {
+        gap: 16px;
+    }
+    .mode-card {
+        width: 100px;
+    }
+}
+
+.mode-card {
+    width: 150px;
+    aspect-ratio: 2.75 / 4.75;
+    perspective: 1000px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.mode-card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s ease;
+}
+
+.mode-card.flipped .mode-card-inner {
+    transform: rotateY(180deg);
+}
+
+.mode-card-back,
+.mode-card-front {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mode-card-back img,
+.mode-card-front img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.mode-card-front {
+    transform: rotateY(180deg);
+}
+
+/* Sparkle container for mode cards */
+.mode-card-sparkles {
+    position: absolute;
+    inset: -10px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mode-card.flipped .mode-card-sparkles {
+    opacity: 1;
+}
+
+/* Selected mode card glow */
+.mode-card.selected {
+    z-index: 20;
+}
+
+.mode-card.selected::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 12px;
+    background: linear-gradient(135deg,
+        rgba(218, 165, 32, 0.6),
+        rgba(255, 215, 0, 0.4),
+        rgba(218, 165, 32, 0.6));
+    z-index: -1;
+    animation: mode-card-glow 2s ease-in-out infinite;
+}
+
+@keyframes mode-card-glow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* Dim non-selected cards when one is selected */
+.mode-card.dimmed {
+    opacity: 0.4;
+    filter: grayscale(0.3);
+    transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.mode-card.dimmed .mode-card-sparkles {
+    opacity: 0;
+}
+
+/* Sparkle animation for mode cards */
+@keyframes modeSparkle {
+    0% {
+        opacity: 1;
+        transform: scale(0.5);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.5);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.5) translateY(-10px);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* TIER CARD BUTTONS — Tarot-style PNG buttons for Tease/Indulge selection         */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.tier-card-btn {
+    width: 160px;
+    aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
+    background-image: url('/assets/card-art/cards/Tarot-Gold-Tease-face.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tier-card-btn.tier-card-indulge {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-Indulge-face.png');
+}
+
+.tier-card-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(218, 165, 32, 0.4);
+}
+
+.tier-card-btn:active {
+    transform: scale(0.98);
+}
+
+.tier-card-btn:focus,
+.tier-card-btn:focus-visible {
+    outline: none;
+    border: none;
+    box-shadow: 0 0 30px rgba(218, 165, 32, 0.5);
+}
+
 /* INPUTS & LOCKS */
 .input-wrapper { position: relative; width: 95%; margin: 0 auto 15px; overflow:hidden; }
 
@@ -2959,7 +3174,7 @@ select {
 
 .selection-card {
     width: 85px;
-    height: 119px; /* 5:7 ratio */
+    aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     perspective: 1000px;
     cursor: pointer;
     position: relative;
@@ -3114,7 +3329,7 @@ select {
 
 .fate-card {
     width: 100px;
-    aspect-ratio: 5/7;
+    aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     position: relative;
     cursor: pointer;
     background: none;
@@ -3173,7 +3388,7 @@ select {
 /* FATE CARD SEPARATOR IN STORY */
 .fate-card-separator { display: flex; justify-content: center; margin: 25px auto; padding: 15px 0; border-top: 1px solid rgba(255,215,0,0.3); border-bottom: 1px solid rgba(255,215,0,0.3); background: rgba(0,0,0,0.2); }
 /* Fate mini card — Plaque regime: no rounded corners, no glow */
-.fate-card-separator .fate-mini { width: 60px; aspect-ratio: 5/7; background: linear-gradient(145deg, #2a0033, #400020); border: 1px solid var(--gold); border-radius: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.fate-card-separator .fate-mini { width: 60px; aspect-ratio: 2.75 / 4.75; background: linear-gradient(145deg, #2a0033, #400020); border: 1px solid var(--gold); border-radius: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .fate-card-separator .fate-mini h4 { font-size: 0.6em; color: var(--gold); margin: 0 0 3px; text-transform: uppercase; }
 
 /* INTENSITY BUTTONS — Plaque Material Regime */
@@ -3844,10 +4059,10 @@ textarea.fate-field {
 }
 
 /* Fate Tree Card (revealed oracle) - uses image_62.png */
-/* 3× original size (original: 32x46), using transform for responsiveness */
+/* 3× original size, using transform for responsiveness */
 .fate-tree-card {
     width: 96px;
-    height: 138px; /* 5:7 tarot proportion, 3× original */
+    aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     background: url('image_62.png') center/contain no-repeat;
     border: none;
     border-radius: 0;
@@ -4181,27 +4396,27 @@ textarea.fate-field {
 
 .destiny-mini-deck-stack {
     position: relative;
-    /* LARGER than normal cards — heavier presence */
-    width: 55px;
-    height: 85px;
+    /* 5-card stack needs extra space for offsets - 25% larger */
+    width: 148px;  /* 138px + 10px offset */
+    height: 248px; /* ~238px (138 × 4.75/2.75) + 10px offset */
 }
 
 .destiny-mini-card {
     position: absolute;
-    width: 55px;
-    height: 80px;
-    /* BLACK / GOLD — No blue */
-    background: linear-gradient(145deg, #0a0a0a 0%, #121212 50%, #0a0a0a 100%);
-    /* THICKER border for stacked look */
-    border: 2px solid var(--gold, #daa520);
-    border-radius: 4px;
+    width: 138px; /* 25% larger than 110px */
+    aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
+    /* PNG has frame baked in */
+    background: transparent;
+    border: none;
+    border-radius: 8px; /* Match PNG rounded corners */
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
     /* NO transform transitions for flip */
     transition: box-shadow 0.15s ease;
-    /* Gold inner glow */
-    box-shadow: inset 0 0 10px rgba(218, 165, 32, 0.15);
+    /* Subtle drop shadow only */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* Fleur-de-lis removed - using text label instead */
@@ -4218,31 +4433,40 @@ textarea.fate-field {
     opacity: 0.9;
 }
 
-/* Stacked card offsets for depth illusion — thicker stack */
+/* Stacked card offsets for depth illusion — 5 cards for thicker deck */
 .destiny-mini-card.deck-card-1 {
     top: 0;
     left: 0;
-    z-index: 3;
+    z-index: 5;
 }
 
 .destiny-mini-card.deck-card-2 {
-    top: 3px;
-    left: 3px;
-    z-index: 2;
+    top: 2px;
+    left: 2px;
+    z-index: 4;
 }
 
 .destiny-mini-card.deck-card-3 {
+    top: 4px;
+    left: 4px;
+    z-index: 3;
+}
+
+.destiny-mini-card.deck-card-4 {
     top: 6px;
     left: 6px;
+    z-index: 2;
+}
+
+.destiny-mini-card.deck-card-5 {
+    top: 8px;
+    left: 8px;
     z-index: 1;
 }
 
-/* Hover glow effect — NO transform */
+/* Hover glow effect — NO transform, outer glow only (PNG has frame) */
 .destiny-mini-deck:hover .deck-card-1 {
-    /* NO translateY — just glow */
-    box-shadow:
-        inset 0 0 10px rgba(218, 165, 32, 0.2),
-        0 0 15px rgba(218, 165, 32, 0.3);
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.3), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* External label removed - text now on card back */
@@ -4340,6 +4564,40 @@ textarea.fate-field {
 /* No text overlays — PNG has baked text */
 .destiny-flying-card-name,
 .destiny-flying-card-details {
+    display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* CORRIDOR-SCOPED FIX: Character/Identity corridor (#characterSectionRow)         */
+/* Prevents flex compression of character cards and destiny deck                   */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Character cards: Proportional sizing, allow shrinking to fit viewport */
+#characterSectionRow .character-tarot-card {
+    flex-shrink: 1;
+    min-width: 150px; /* Minimum readable size - 25% larger */
+    border: none !important; /* PNG has frame baked in */
+}
+
+/* Destiny mini-deck: Centered between cards */
+#characterSectionRow .destiny-mini-deck {
+    flex-shrink: 1;
+    align-self: center;
+}
+
+/* Destiny deck back art: Black-DestinyChoice-back.png */
+#characterSectionRow .destiny-mini-card {
+    background: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 1px solid rgba(218, 165, 32, 0.5);
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+/* Hide text label since PNG has baked text */
+#characterSectionRow .destiny-card-back-label {
     display: none;
 }
 
@@ -6214,9 +6472,9 @@ textarea.fate-field {
 
 .synopsis-panel {
     position: fixed;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 100;
     /* Gold gradient: warm champagne to muted parchment */
     background: linear-gradient(165deg,
@@ -6225,11 +6483,12 @@ textarea.fate-field {
         rgba(180, 150, 85, 0.85) 70%,
         rgba(165, 140, 80, 0.82) 100%);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    padding: 24px 20px;
-    /* 5:7 aspect ratio like book jacket card - width ~180px, height ~252px */
-    width: 180px;
-    min-height: 220px;
-    max-height: 280px;
+    padding: 16px 24px;
+    /* Wider horizontal layout at bottom of screen */
+    width: auto;
+    max-width: 800px;
+    min-height: auto;
+    max-height: none;
     overflow: visible; /* Allow border SVG to extend slightly */
     /* Hidden by default - JS controls visibility based on scroll position */
     opacity: 0;
@@ -6331,7 +6590,7 @@ textarea.fate-field {
     color: rgba(40, 30, 20, 0.85);
     text-shadow: 0 1px 0 rgba(255, 240, 200, 0.25);
     margin: 0;
-    text-align: left;
+    text-align: center;
     font-style: italic;
     letter-spacing: 0.01em;
 }
@@ -6430,81 +6689,11 @@ textarea.fate-field {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   DSP NARROW VIEWPORT — Docks to BOTTOM to avoid obscuring breadcrumbs
-   AUTHORITATIVE: DSP must never overlap or obscure breadcrumbs
+   DSP MOBILE — HIDDEN on mobile screens entirely
    ═══════════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 1100px) {
-    /* Narrow screens: dock to BOTTOM, never top (breadcrumbs at top) */
+@media (max-width: 768px) {
     .synopsis-panel {
-        position: fixed;
-        top: auto;
-        bottom: 0; /* DSP: dock to bottom on narrow viewports */
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        width: calc(100% - 40px); /* Slightly wider at bottom */
-        max-width: 600px;
-        min-height: auto;
-        max-height: none;
-        margin: 0;
-        padding: 14px 22px;
-        z-index: 400; /* Below breadcrumb header (500) */
-        /* DSP: gold background */
-        background: linear-gradient(180deg, #d4b36a 0%, #b8954f 100%);
-        /* DSP: pressed/embossed effect - no glow */
-        box-shadow:
-            0 -2px 10px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 236, 180, 0.25),
-            inset 0 -1px 0 rgba(80, 60, 20, 0.35);
-        border-radius: 8px 8px 0 0;
-        overflow: visible;
-    }
-
-    /* Narrow: tighter inner border inset */
-    .synopsis-panel::before {
-        inset: 5px;
-    }
-
-    /* DSP narrow-screen fix: dark text for gold background */
-    .synopsis-text {
-        font-size: 0.9em;
-        text-align: center;
-        line-height: 1.5;
-        color: rgba(40, 30, 20, 0.9);
-        text-shadow: 0 1px 0 rgba(255, 240, 200, 0.3);
-    }
-
-    .synopsis-title {
-        color: rgba(45, 30, 15, 0.95);
-        text-shadow: 0 1px 0 rgba(255, 240, 200, 0.35);
-    }
-
-    .synopsis-text span {
-        display: inline;
-        margin-bottom: 0;
-    }
-
-    /* DSP is now at BOTTOM on narrow screens - add bottom padding instead */
-    #setup {
-        padding-bottom: 120px !important; /* Room for bottom-docked DSP */
-    }
-}
-
-/* Extra narrow screens — tighter constraints */
-@media (max-width: 500px) {
-    .synopsis-panel {
-        /* DSP: stays at bottom on narrow screens */
-        width: calc(100% - 20px); /* Tighter side margins */
-        padding: 10px 14px;
-        font-size: 0.85em;
-    }
-
-    .synopsis-panel::before {
-        inset: 4px;
-    }
-
-    .synopsis-panel::after {
-        background-size: 10px 10px; /* Smaller corner marks */
+        display: none !important;
     }
 }
 
@@ -6549,12 +6738,13 @@ textarea.fate-field {
    ═══════════════════════════════════════════════════════════════════ */
 
 /* PASS 9F: Relationship Dynamics - unified margins with other sections */
+/* Corridor owns vertical space; content negotiates within it */
 .dynamic-grouped {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
     width: 95%;
-    margin: 20px auto;
+    margin: 0 auto; /* Horizontal center only */
     padding: 0;
     box-sizing: border-box;
 }
@@ -6562,19 +6752,13 @@ textarea.fate-field {
 .dynamic-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     width: 100%;
 }
 
 .dynamic-group-label {
-    font-family: 'Lora', 'Georgia', serif;
-    font-size: 0.85em;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.45);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    text-align: center;
-    margin-bottom: 2px;
+    /* Hidden - cards are self-explanatory */
+    display: none;
 }
 
 /* Dynamic group inherits flex spread from .style-cards */
@@ -6611,16 +6795,18 @@ textarea.fate-field {
    - At narrow: cards=70px, gap=8px, 2 cols: 148px
 */
 /* Card grid - 5 cards max per row, centered with margin on ultra-wide */
+/* Corridor owns vertical space; grid negotiates within it */
 .sb-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: flex !important; /* Override corridor-section column flex */
+    flex-direction: row !important; /* Force horizontal wrapping */
+    flex-wrap: wrap !important;
     gap: 16px;
     justify-content: center;
-    align-content: start;
+    align-content: center; /* Center rows vertically within available space */
+    align-items: center;
     width: 95%;
     max-width: 814px; /* 5 cards max: 5×150 + 4×16 */
-    margin-inline: auto;
-    margin-block: 20px;
+    margin: 0 auto; /* Horizontal center only, vertical handled by parent */
 }
 
 /* Size-specific grids inherit max-width cap */
@@ -6656,39 +6842,43 @@ textarea.fate-field {
    Layout: 4x2 on wide, 4x2 on medium, 2x4 on narrow
    ═══════════════════════════════════════════════════════════════════════════════ */
 .archetype-grid-8 {
-    display: grid;
-    grid-template-columns: repeat(4, 150px);
+    display: grid !important; /* Override corridor-section flex */
+    flex-direction: unset !important;
+    /* Grid columns scale via minmax, cards fill cells */
+    grid-template-columns: repeat(4, minmax(90px, 150px));
     gap: 16px;
     justify-content: center;
-    max-width: 680px;
-    margin-inline: auto;
-    margin-block: 20px;
+    align-content: center;
+    max-width: 95%;
+    margin: 0 auto; /* Horizontal center only, vertical handled by parent */
     position: relative; /* For dissolve sparkle positioning */
     overflow: visible;  /* Allow sparkles to animate outside grid bounds */
 }
 
+/* Archetype cards: fill grid cell, grid controls size */
+.archetype-grid-8 .sb-card {
+    width: 100%;
+    max-width: none; /* Grid cell is the constraint */
+}
+
 @media (max-width: 700px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(4, 130px);
+        grid-template-columns: repeat(4, minmax(80px, 130px));
         gap: 12px;
     }
 }
 
 @media (max-width: 560px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(2, 130px);
+        grid-template-columns: repeat(2, minmax(90px, 150px));
         gap: 12px;
     }
 }
 
 @media (max-width: 400px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(2, 100px);
+        grid-template-columns: repeat(2, minmax(80px, 120px));
         gap: 8px;
-    }
-    .archetype-grid-8 .sb-card:not(.destiny-choice-card) {
-        width: 100px;
-        height: 140px;
     }
 }
 
@@ -6713,12 +6903,27 @@ textarea.fate-field {
    FRONT: Tarot-Gold-front-*.png (visible when zoomed/selected)
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Base archetype card face styling */
+/* Base archetype card face styling — PNG has frame baked in, no CSS border */
 .archetype-card .sb-card-back,
 .archetype-card .sb-card-front {
-    background-size: cover;
+    background-size: 102%; /* Slightly oversized to hide PNG edge irregularities */
     background-position: center;
     background-repeat: no-repeat;
+    border: none !important;
+    border-radius: 0;
+    overflow: hidden; /* Clip any edge irregularities */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CARD EDGE MASKING — Handled via background-size: 102% (slightly oversized)
+   and overflow: hidden on parent. No clip-path needed (breaks 3D transforms).
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.archetype-card {
+    overflow: hidden; /* Clip any edge artifacts at card level */
+}
+
+.character-tarot-card {
+    overflow: hidden; /* Clip at card level */
 }
 
 /* BACK CARDS — Black tarot backs (visible in grid) */
@@ -6772,33 +6977,111 @@ textarea.fate-field {
     display: none !important;
 }
 
-/* ARCHETYPE PRINTED DESCRIPTION — visible only when zoomed */
+/* ARCHETYPE PRINTED DESCRIPTION — visible only when zoomed
+   Positioned ABOVE the divider line, below the mask artwork */
 .archetype-printed-desc {
     display: none; /* Hidden in grid view */
     position: absolute;
-    bottom: 12px;
+    /* Position above the divider: ~28-30% from bottom leaves room for divider + title */
+    bottom: 28%;
     left: 8px;
     right: 8px;
     font-family: 'Lora', serif;
-    font-size: 9px;
-    line-height: 1.35;
+    font-size: 7px;
+    line-height: 1.25;
     color: #1a1a1a; /* Black, printed look */
     text-align: center;
     /* Printed feel: no glow, no outline, flat */
     text-shadow: none;
     background: rgba(255, 248, 230, 0.85); /* Subtle parchment backing */
-    padding: 6px 4px;
+    padding: 4px 3px;
     border-radius: 2px;
+    max-height: 18%;
+    overflow: hidden;
 }
 
-/* Show description only when card is zoomed */
+/* Show description only when card is zoomed — scaled for larger card */
 .archetype-card.zoomed .archetype-printed-desc {
     display: block;
-    font-size: 11px;
-    bottom: 20px;
+    font-size: 9px;
+    line-height: 1.3;
+    bottom: 26%;
+    left: 12px;
+    right: 12px;
+    padding: 6px 5px;
+    max-height: 20%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ARCHETYPE MODIFIER BOX — Straddles the black divider line
+   Shows available secondary archetype modifiers as scrolling marquee text
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.archetype-modifier-box {
+    display: none; /* Hidden in grid view */
+    position: absolute;
+    /* Straddle the divider line: positioned at ~22% from bottom */
+    bottom: 20%;
+    left: 10px;
+    right: 10px;
+    height: 14px;
+    background: linear-gradient(90deg,
+        rgba(218, 165, 32, 0.15) 0%,
+        rgba(218, 165, 32, 0.25) 50%,
+        rgba(218, 165, 32, 0.15) 100%);
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    border-radius: 2px;
+    overflow: hidden;
+    z-index: 5;
+}
+
+/* Show modifier box when zoomed */
+.archetype-card.zoomed .archetype-modifier-box {
+    display: block;
+    bottom: 18%;
     left: 15px;
     right: 15px;
-    padding: 10px 8px;
+    height: 18px;
+}
+
+/* Modifier marquee container */
+.archetype-modifier-marquee {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    white-space: nowrap;
+    animation: marqueeScroll 12s linear infinite;
+}
+
+/* Modifier text styling */
+.archetype-modifier-text {
+    display: inline-block;
+    font-family: 'Lora', serif;
+    font-size: 8px;
+    font-style: italic;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    padding-right: 40px; /* Gap before repeat */
+    text-shadow: 0 0 4px rgba(218, 165, 32, 0.3);
+}
+
+.archetype-card.zoomed .archetype-modifier-text {
+    font-size: 10px;
+    padding-right: 50px;
+}
+
+/* Marquee scroll animation — subtle, slow movement */
+@keyframes marqueeScroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Pause marquee on hover for readability */
+.archetype-modifier-box:hover .archetype-modifier-marquee {
+    animation-play-state: paused;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -6816,9 +7099,9 @@ textarea.fate-field {
 /* BASE SIZE: Standard sb-card dimensions in archetype grid */
 .archetype-grid-8 .destiny-choice-card {
     position: relative;
-    /* Standard sb-card size — NOT 2× */
-    width: 150px;
-    height: 210px;
+    /* Match other cards in grid - fill cell width */
+    width: 100%;
+    aspect-ratio: 2.75 / 4.75;
     /* Single column slot */
     grid-column: span 1;
     /* DECK PRESENCE: Heavy shadow for stacked deck effect */
@@ -6831,48 +7114,55 @@ textarea.fate-field {
 .destiny-choice-card .sb-card-inner {
     width: 100%;
     height: 100%;
+    position: relative;
+    z-index: 5; /* Above stack layers */
+    overflow: hidden;
 }
 
-/* DECK STACK EFFECT: Pseudo-elements create stacked card illusion */
-/* ISOLATION: Fixed positioning relative to card, no external transform inheritance */
-.destiny-choice-card::before,
-.destiny-choice-card::after {
-    content: '';
+/* 5-CARD DECK STACK: Explicit layers for stability (immune to transform/flip changes) */
+.destiny-stack-layer {
     position: absolute;
-    border-radius: 6px;
+    inset: 0;
+    background: url('/assets/card-art/cards/Black-DestinyChoice-back.png') center/cover no-repeat;
+    border: none;
+    border-radius: 0;
     pointer-events: none;
-    /* Prevent transform inheritance from parent zoom states */
-    transform: none !important;
+    overflow: hidden;
 }
 
-/* Bottom card in stack */
-.destiny-choice-card::before {
-    width: 94%;
-    height: 98%;
-    bottom: -4px;
-    left: 3%;
-    background: linear-gradient(145deg, #050505 0%, #151515 100%);
-    border: 1px solid rgba(218, 165, 32, 0.3);
-    z-index: -2;
+/* Stack offsets via transform (cleaner than top/left) */
+.destiny-stack-layer.layer-5 {
+    transform: translate(8px, 8px);
+    z-index: 1;
+    opacity: 0.7;
 }
 
-/* Middle card in stack */
-.destiny-choice-card::after {
-    width: 97%;
-    height: 99%;
-    bottom: -2px;
-    left: 1.5%;
-    background: linear-gradient(145deg, #080808 0%, #181818 100%);
-    border: 1px solid rgba(218, 165, 32, 0.4);
-    z-index: -1;
+.destiny-stack-layer.layer-4 {
+    transform: translate(6px, 6px);
+    z-index: 2;
+    opacity: 0.8;
+}
+
+.destiny-stack-layer.layer-3 {
+    transform: translate(4px, 4px);
+    z-index: 3;
+    opacity: 0.85;
+}
+
+.destiny-stack-layer.layer-2 {
+    transform: translate(2px, 2px);
+    z-index: 4;
+    opacity: 0.9;
 }
 
 /* BACK SIDE: Black Destiny Choice PNG — DECK face */
-.destiny-choice-back {
+/* Higher specificity to override .sb-card-back gradient */
+.sb-card-back.destiny-choice-back {
     background-image: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    background-color: #0a0a0a; /* Fallback */
     border: none;
     display: flex;
     flex-direction: column;
@@ -6883,6 +7173,7 @@ textarea.fate-field {
     box-shadow:
         inset 0 1px 0 rgba(255, 215, 0, 0.1),
         inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    overflow: hidden;
 }
 
 /* Hide text on Destiny's Choice — PNG art only */
@@ -6969,8 +7260,7 @@ textarea.fate-field {
 /* Responsive sizing for Destiny's Choice — matches standard sb-card sizing */
 @media (max-width: 400px) {
     .archetype-grid-8 .destiny-choice-card {
-        width: 100px;
-        height: 140px;
+        width: 100%; /* Fill grid cell */
     }
     .destiny-choice-back .sb-card-title,
     .destiny-choice-front .sb-card-title {
@@ -7198,10 +7488,12 @@ textarea.fate-field {
     color: #fff;
 }
 
-/* Base Card - 5×7 vertical proportions, ~50% larger for readability */
+/* Base Card - Tarot proportions, container-constrained (NOT viewport-driven) */
+/* Cards are dumb rectangles that fill their grid cell */
 .sb-card {
-    width: 150px;
-    height: 210px; /* 5:7 ratio */
+    width: 100%;
+    max-width: 150px;
+    aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     perspective: 1000px;
     cursor: pointer;
     /* Z-INDEX CAP: Cards must never exceed z-index 50 (button is 1000) */
@@ -7209,9 +7501,9 @@ textarea.fate-field {
     z-index: 10;
 }
 
-/* Responsive card sizes */
+/* Responsive: smaller max on narrow screens */
 @media (max-width: 400px) {
-    .sb-card { width: 105px; height: 147px; }
+    .sb-card { max-width: 105px; }
 }
 
 /* Inner wrapper for 3D flip */
@@ -7234,7 +7526,7 @@ textarea.fate-field {
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
-    border-radius: 8px;
+    border-radius: 0; /* PNG has frame baked in */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -7245,9 +7537,10 @@ textarea.fate-field {
 }
 
 /* BACK FACE - Initially visible (unclicked state), shows TITLE ONLY */
+/* Using individual properties to avoid overriding PNG background-images in subclasses */
 .sb-card-back {
-    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
-    border: 1px solid var(--gold);
+    background-color: #0d0d0d;
+    border: none; /* PNG cards have frame baked in */
     z-index: 2;
     text-align: center;
     justify-content: center;
@@ -7264,9 +7557,10 @@ textarea.fate-field {
 }
 
 /* FRONT FACE - Revealed on flip (clicked state), shows title + description + flavors */
+/* Using background-color to avoid overriding PNG background-images in subclasses */
 .sb-card-front {
-    background: linear-gradient(145deg, #2a1a2a 0%, #1a0a1a 100%);
-    border: 1px solid var(--pink);
+    background-color: #0a0a0a;
+    border: none; /* PNG cards have frame baked in */
     transform: rotateY(180deg);
     justify-content: flex-start;
     padding-top: 10px;
@@ -7275,12 +7569,12 @@ textarea.fate-field {
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 /* ARCHETYPE CARD GOLD FRONT FACE — Black + Gold Art Deco, NOT purple/pink        */
 /* After flip reveal, archetype cards display their GOLD face                      */
+/* NOTE: Using background-color, NOT shorthand, to not override PNG background-image */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .archetype-card .sb-card-front {
-    background: linear-gradient(145deg, #0a0a0a 0%, #151515 50%, #0a0a0a 100%);
-    border: 2px solid var(--gold);
-    box-shadow: inset 0 0 20px rgba(218, 165, 32, 0.15),
-                0 0 8px rgba(218, 165, 32, 0.3);
+    background-color: #0a0a0a; /* Fallback only - PNG covers this */
+    border: none !important; /* PNG has frame baked in */
+    box-shadow: none; /* PNG provides all visual treatment */
 }
 
 .archetype-card .sb-card-front .sb-card-title {
@@ -7752,18 +8046,20 @@ textarea.fate-field {
     position: sticky;
     top: 0;
     z-index: 500;
-    background: transparent;
-    /* Reduced padding - was 10px */
-    padding-top: 5px;
+    background: #0a0a0a; /* Solid background to prevent content showing through */
+    /* Minimal padding */
+    padding-top: 2px;
+    padding-bottom: 2px;
     /* Normal document flow - pushes content down */
     width: 100%;
 }
 
 .shape-your-story-header .section-title {
-    margin: 0 0 2px 0;
-    padding: 0;
+    margin: 0;
+    padding: 4px 0;
     text-align: center;
-    font-size: 1.3em;
+    font-size: 1em;
+    line-height: 1;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -7775,12 +8071,11 @@ textarea.fate-field {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 6px;
-    padding: 5px 10px 8px;
-    min-height: 30px;
+    gap: 4px;
+    padding: 4px 10px 6px;
+    min-height: 0;
     background: transparent;
     flex-wrap: wrap;
-    /* Normal flow - row height determined by content */
     width: 100%;
     box-sizing: border-box;
 }
@@ -7795,9 +8090,9 @@ textarea.fate-field {
    ═══════════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 600px) {
     .breadcrumb-row {
-        gap: 4px;
-        padding: 8px 10px 10px;
-        min-height: 40px;
+        gap: 3px;
+        padding: 2px 8px 4px;
+        min-height: 0;
     }
 
     /* Collapse breadcrumb cards to compact dots */
@@ -7824,16 +8119,24 @@ textarea.fate-field {
 
     /* Ghost steps also collapse to dots */
     .ghost-step {
-        width: 20px;
-        height: 20px;
+        width: 28px;
+        height: 28px;
         min-height: auto;
-        border-radius: 50%;
+        border-radius: 4px;
         border-width: 1px;
     }
 
-    .ghost-step .ghost-step-label,
-    .ghost-step .ghost-step-number {
+    .ghost-step .ghost-step-label {
         display: none;
+    }
+
+    .ghost-step .ghost-step-number {
+        font-size: 10px;
+    }
+
+    .breadcrumb-card {
+        width: 28px;
+        height: 28px;
     }
 
     /* Compact breadcrumb tooltip on hover */
@@ -7852,15 +8155,15 @@ textarea.fate-field {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 .ghost-step {
-    width: 50px;
-    height: 70px;
+    width: 40px;
+    height: 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* Subdued dashed outline — thinner for smaller size */
+    /* Subdued dashed outline — minimal */
     border: 1px dashed rgba(218, 165, 32, 0.25);
-    border-radius: 0;
+    border-radius: 6px;
     background: transparent;
     /* Low contrast, ghostly appearance */
     opacity: 0.4;
@@ -7870,23 +8173,16 @@ textarea.fate-field {
 
 /* Ghost step label: small all-caps "CHOICE" above numeral */
 .ghost-step-label {
-    font-family: 'Lora', serif;
-    font-size: 6px;
-    color: var(--gold);
-    opacity: 0.6;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 2px;
+    display: none; /* Hidden at compact size */
 }
 
-/* Ghost step number: Roman numerals, Lora font — sized to match breadcrumb cards */
+/* Ghost step number: Roman numerals only */
 .ghost-step-number {
     font-family: 'Lora', serif;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--gold);
-    opacity: 0.5;
+    opacity: 0.6;
 }
 
 /* Ghost step fade-out when being replaced */
@@ -7918,28 +8214,29 @@ body.corridor-complete .ghost-step {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Breadcrumb Card - Minimized committed selection (plaque material) */
-/* Sized as indicators, not content (~30% smaller than original) */
-/* Breadcrumb Card - Minimized committed selection (plaque material) */
+/* Sized to match ghost steps for visual consistency */
 .breadcrumb-card {
-    width: 50px;
-    height: 70px;
+    width: 40px;
+    height: 40px;
     perspective: 500px;
     cursor: pointer; /* CLICKABLE — destructive navigation */
     transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
     position: relative;
     flex-shrink: 0;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 /* Solo breadcrumb de-emphasis — slides/shrinks when compound breadcrumbs arrive */
 .breadcrumb-card:first-child:not(:only-child) {
     /* When more breadcrumbs are added, first one can shrink slightly */
-    width: 46px;
+    width: 38px;
     opacity: 0.9;
 }
 
 /* Further de-emphasis when many breadcrumbs present */
 .breadcrumb-row:has(.breadcrumb-card:nth-child(4)) .breadcrumb-card:first-child {
-    width: 42px;
+    width: 36px;
     opacity: 0.85;
 }
 
@@ -7958,87 +8255,60 @@ body.corridor-complete .ghost-step {
 }
 
 .breadcrumb-card .sb-card-inner {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transform: rotateY(180deg); /* Always show front */
+    display: none; /* Hidden at compact size - use dot indicator */
 }
 
-.breadcrumb-card .sb-card-face {
+/* Compact breadcrumb: gold-outlined indicator */
+.breadcrumb-card::before {
+    content: '';
     position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 0; /* PLAQUE MATERIAL — square corners only */
-    /* Vertical centering for multi-line titles */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 6px;
-    box-sizing: border-box;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(218, 165, 32, 0.15), rgba(255, 215, 0, 0.1));
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    border-radius: 6px;
 }
 
-.breadcrumb-card .sb-card-back {
-    background-color: var(--plaque-black-base);
-    background-image: var(--plaque-black-grain);
-    border: 2px solid var(--plaque-black-outer);
-    box-shadow: inset 0 0 0 1px var(--plaque-black-inner);
-    z-index: 2;
-}
-
-.breadcrumb-card .sb-card-front {
-    background-color: var(--plaque-black-base);
-    background-image: var(--plaque-black-grain);
-    border: 2px solid var(--plaque-black-outer);
-    box-shadow: inset 0 0 0 1px var(--plaque-black-inner);
-    transform: rotateY(180deg);
-    /* NO glow — plaque material regime */
-}
-
-.breadcrumb-card .sb-card-title {
-    font-family: 'Lora', serif;
-    font-size: 8px;
-    color: var(--gold);
-    text-align: center;
-    line-height: 1.2;
-    /* Multi-line support: wrap to up to 2 lines, centered */
-    display: -webkit-box;
-    -webkit-line-clamp: unset; /* No clamping - allow full wrap */
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-    /* Title Case - explicitly disable any uppercase transform */
-    text-transform: none;
-    /* Never clip or truncate */
-    overflow: visible;
-    white-space: normal;
-}
-
-.breadcrumb-card .sb-card-desc {
-    display: none; /* Hide description in breadcrumb */
-}
-
-/* Breadcrumb hover - tooltip visibility (scale handled by destructive nav rules above) */
-
+/* Gold center dot */
 .breadcrumb-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, var(--gold) 0%, rgba(218, 165, 32, 0.5) 100%);
+    border-radius: 50%;
+    transition: opacity 0.2s ease;
+}
+
+/* Hover: show tooltip below */
+.breadcrumb-card:hover::after {
     content: attr(data-breadcrumb-label);
     position: absolute;
-    bottom: -24px;
+    top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    font-family: 'Lora', serif;
+    width: auto;
+    height: auto;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    color: var(--gold);
     font-size: 10px;
-    color: var(--ink);
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    font-family: 'Lora', serif;
     white-space: nowrap;
+    border-radius: 4px;
+    z-index: 100;
+    margin-top: 6px;
 }
 
-.breadcrumb-card:hover::after {
-    opacity: 0.7;
-}
+/* Legacy card inner styles - hidden at compact size */
+.breadcrumb-card .sb-card-face { display: none; }
+.breadcrumb-card .sb-card-back { display: none; }
+.breadcrumb-card .sb-card-front { display: none; }
+.breadcrumb-card .sb-card-title { display: none; }
+.breadcrumb-card .sb-card-desc { display: none; }
 
 /* Breadcrumb Subtitle — Nested label (e.g., flavor inside world) */
 .breadcrumb-subtitle {
@@ -8149,19 +8419,64 @@ body.corridor-complete .ghost-step {
    ═══════════════════════════════════════════════════════════════════ */
 
 .corridor-section {
-    /* VIEWPORT ISOLATION: Each stage occupies exactly one viewport */
-    min-height: 100vh;
-    max-height: 100vh;
+    /* VIEWPORT ISOLATION: Use measured header height for centering */
+    min-height: calc(100vh - var(--sb-header-height));
+    max-height: calc(100vh - var(--sb-header-height));
     overflow: hidden;
     position: relative;
     z-index: 1;
     /* Black velvet background - no bleed from adjacent rows */
     background: #0a0a0a;
-    /* Center content vertically within viewport */
+    /* Center content both vertically and horizontally within viewport */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Story Shape Row needs horizontal layout even when used as corridor */
+.story-shape-row.corridor-section {
+    flex-direction: row;
+    gap: 24px;
+    flex-wrap: nowrap;
+    /* Explicit vertical centering for row layout */
+    align-items: center;
+    align-content: center;
+}
+
+/* Section titles inside corridors - SHOW for card-flow-rows, smaller size */
+/* Match "Shape Your Story" header styling for visual consistency */
+.corridor-section > .section-title,
+.card-flow-row > .section-title {
+    display: block !important;
+    font-size: 1em !important;
+    margin: 0 0 15px 0 !important;
+    padding: 0 !important;
+    border-top: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   STORYBEAU CORRIDOR — Multi-element stage requires special handling
+   These elements share one corridor but should NOT each get 100vh
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Storybeau section title — not full viewport, just centered text */
+#archetypeSectionTitle.corridor-section {
+    min-height: auto !important;
+    max-height: auto !important;
+    padding: 0 0 15px 0 !important;
+    display: block !important;
+    flex-direction: unset !important;
+}
+
+/* Archetype grid — NOT full viewport, grid owns its height */
+#archetypeCardGrid.corridor-section,
+.archetype-grid-8.corridor-section {
+    min-height: auto !important;
+    max-height: none !important;
+    /* Grid display already set in .archetype-grid-8 */
 }
 
 .corridor-row,
@@ -8216,8 +8531,7 @@ body.corridor-complete .ghost-step {
     pointer-events: auto;
     visibility: visible;
     animation: corridorRowEnter 0.5s ease forwards;
-    /* ROW HEIGHT GUARANTEE: Active row claims vertical space */
-    min-height: 120px;
+    /* Height inherited from .corridor-section — do not duplicate calc here */
     /* BACKGROUND ISOLATION: Prevent next-row colors bleeding through */
     background: var(--bg-dark, #0a0a0a);
     isolation: isolate;
@@ -8230,11 +8544,11 @@ body.corridor-complete .ghost-step {
 @keyframes corridorRowEnter {
     0% {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateX(50px); /* Slide in from right (matches arrow direction) */
     }
     100% {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
     }
 }
 
@@ -8383,10 +8697,8 @@ body.corridor-complete {
     flex-shrink: 0;
     align-self: center;
 
-    /* SIZING: Prevent squishing in flex containers */
+    /* SIZING: Base sizing (overridden by .sm variant) */
     width: auto;
-    min-width: 220px;
-    max-width: none;
     height: auto;
 
     /* Real text overlay: Lora, white */
@@ -8433,6 +8745,134 @@ body.corridor-complete {
     background-image: url('/assets/ui/Black-Gold-400x112.png') !important;
     width: 200px !important;
     height: 56px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    flex: 0 0 200px !important;
+    box-sizing: border-box !important;
+}
+
+/* NUCLEAR FIX: ID-based rules for maximum specificity on ALL Continue buttons */
+#continueFromAuthorship,
+#continueFromCharacters,
+#continueFromStorybeau,
+#continueFromArousal,
+#continueFromLength,
+#continueFromPov,
+#continueFromWorld,
+#continueFromTone,
+#continueFromPressure,
+#continueFromDynamic,
+#continueFromSafety,
+#continueFromVetoquill {
+    width: 200px !important;
+    height: 56px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+}
+
+/* Corridor sections: Ensure buttons don't stretch */
+.corridor-section > .flow-continue-btn,
+.story-shape-row > .flow-continue-btn,
+.authorship-choice-row > .flow-continue-btn {
+    width: 200px !important;
+    height: 56px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    align-self: center !important;
+    flex: 0 0 auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* CONTROL PLANE — Fixed layer for Continue button                                 */
+/* Floats above ALL content. Never occluded by cards, corridors, or animations.    */
+/* Controls are semantic. Content is flexible. These roles never mix.              */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+#controlPlane {
+    position: fixed;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483647; /* Maximum z-index — nothing can exceed this */
+    pointer-events: none; /* Layer doesn't block interaction with content below */
+}
+
+#controlPlane #continueButton {
+    pointer-events: auto; /* Button itself is clickable */
+    display: none; /* Hidden by default, shown by JS when appropriate */
+    width: 200px !important;
+    height: 56px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    margin: 0;
+    /* Subtle halo for visual authority when floating over content */
+    box-shadow:
+        0 0 0 1px rgba(255, 215, 128, 0.35),
+        0 8px 24px rgba(0, 0, 0, 0.65);
+}
+
+/* Nuclear transform isolation — NO corridor animation can drag this into warped space */
+#controlPlane,
+#controlPlane * {
+    transform-origin: center center;
+    filter: none !important;
+    perspective: none !important;
+}
+
+/* Override the translateX on the plane itself (needed for centering) */
+#controlPlane {
+    transform: translateX(-50%);
+}
+
+/* When visible */
+#controlPlane #continueButton.visible {
+    display: flex;
+}
+
+/* Hide Continue button when card is zoomed */
+.sb-zoom-backdrop.active ~ #controlPlane,
+body:has(.sb-card.zoomed) #controlPlane {
+    display: none !important;
+}
+
+/* Hide control plane during gate screens (age, TOS, tier) */
+#ageGate:not(.hidden) ~ #controlPlane,
+#tosGate:not(.hidden) ~ #controlPlane,
+#tierGate:not(.hidden) ~ #controlPlane,
+body:has(#ageGate:not(.hidden)) #controlPlane,
+body:has(#tosGate:not(.hidden)) #controlPlane,
+body:has(#tierGate:not(.hidden)) #controlPlane {
+    display: none !important;
+}
+
+/* Hide legacy per-corridor Continue buttons — control plane owns Continue now */
+.corridor-section > .flow-continue-btn:not(#continueButton),
+.story-shape-row > .flow-continue-btn:not(#continueButton),
+.authorship-choice-row > .flow-continue-btn:not(#continueButton),
+#continueFromAuthorship,
+#continueFromCharacters,
+#continueFromStorybeau,
+#continueFromWorld,
+#continueFromTone,
+#continueFromPressure,
+#continueFromPov,
+#continueFromLength,
+#continueFromDynamic,
+#continueFromArousal,
+#continueFromSafety,
+#continueFromVetoquill {
+    display: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -8594,7 +9034,137 @@ body.corridor-complete {
     }
 }
 
-/* Card-to-Breadcrumb Animation */
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SPARKLE TELEPORT ANIMATION — Card dissolves, sparkles travel, breadcrumb appears
+   The card does not travel. The decision does.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Phase 1: Card dissolving in place */
+.dissolving-to-breadcrumb {
+    animation: cardDissolve 0.5s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes cardDissolve {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0) brightness(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(0.98);
+        filter: blur(1px) brightness(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.95);
+        filter: blur(4px) brightness(1.5);
+    }
+}
+
+/* Dissolution sparkles — appear on card surface */
+.dissolution-sparkle {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, rgba(255, 248, 220, 0.95) 0%, var(--gold) 40%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+    animation: dissolutionGlow 0.4s ease-out forwards;
+}
+
+@keyframes dissolutionGlow {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    30% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.3) translateY(-20px);
+    }
+}
+
+/* Phase 2: Traveling sparkles — arc from card to breadcrumb */
+.traveling-sparkle {
+    position: fixed;
+    width: 5px;
+    height: 5px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, var(--gold) 50%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1001;
+    animation: sparkleTravel 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    box-shadow: 0 0 8px rgba(218, 165, 32, 0.6);
+}
+
+@keyframes sparkleTravel {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+    30% {
+        opacity: 1;
+        transform: translate(var(--arc-x, 0), var(--arc-y, -50px)) scale(1.3);
+    }
+    100% {
+        opacity: 0.8;
+        transform: translate(var(--target-x, 0), var(--target-y, 0)) scale(0.6);
+    }
+}
+
+/* Phase 3: Convergence sparkles — appear at breadcrumb during reveal */
+.convergence-sparkle {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, rgba(255, 248, 220, 1) 0%, var(--gold) 60%, transparent 80%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1002;
+    animation: convergenceGlow 0.5s ease-out forwards;
+}
+
+@keyframes convergenceGlow {
+    0% {
+        opacity: 1;
+        transform: scale(1.5);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0) translateY(0);
+    }
+}
+
+/* Breadcrumb materializing — fades in with glow */
+.breadcrumb-card.materializing {
+    animation: breadcrumbMaterialize 0.4s ease-out forwards;
+}
+
+@keyframes breadcrumbMaterialize {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+        filter: brightness(2) blur(2px);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+        filter: brightness(1.3) blur(0);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1) blur(0);
+    }
+}
+
+/* Legacy — keep for compatibility but no longer used */
 .sb-card.becoming-breadcrumb {
     position: fixed !important;
     z-index: 600;
@@ -8605,7 +9175,7 @@ body.corridor-complete {
 /* Row Section Title in Flow */
 .card-flow-row .section-title {
     text-align: center;
-    margin-bottom: 20px;
+    /* Smaller consistent margin - matches corridor section titles */
 }
 
 /* Flow Stage Indicator — HIDDEN
@@ -8645,15 +9215,15 @@ body.corridor-complete {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 30px;
-    /* CENTER: Fixed 2-card decision row, no space reserved for arrows */
-    min-height: 320px;
-    max-width: 500px; /* Contain the pair + button */
-    margin: 40px auto; /* Center horizontally */
-    padding: 30px 20px;
+    gap: 20px;
+    /* Height inherited from .corridor-section — do not duplicate calc here */
+    overflow: hidden;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 0 20px; /* Minimal padding - centering handles vertical */
     box-sizing: border-box;
-    transition: opacity 0.4s ease, max-height 0.4s ease;
-    /* ACTIVE ROW OWNERSHIP: Claim corridor state */
+    transition: opacity 0.4s ease;
     background: var(--bg-dark, #0a0a0a);
     position: relative;
     z-index: 1;
@@ -8666,11 +9236,50 @@ body.corridor-complete {
     align-items: center;
     gap: 40px;
     flex-wrap: nowrap;
+    /* Prevent vertical stretching of children */
+    flex-shrink: 0;
 }
 
 /* Continue button positioning */
 .authorship-choice-row > .flow-continue-btn {
     margin-top: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* AUTHORSHIP CORRIDOR LAYOUT (#authorshipChoiceRow)                               */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Row layout: column flex, cards centered */
+#authorshipChoiceRow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+/* Cards container: no shrink, maintains size */
+#authorshipChoiceRow .authorship-cards-container {
+    flex-shrink: 0;
+}
+
+/* Selected-static: Freezes layout when clone is animating */
+#authorshipChoiceRow .authorship-card.selected-static {
+    visibility: hidden; /* Hide but preserve layout space */
+    pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* CORRIDOR-SCOPED FIX: Archetype corridor (storybeau)                             */
+/* Prevents Continue button squishing                                              */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Archetype Continue button: Canonical 200×56 enforced via .flow-continue-btn.sb-btn-png.sm */
+#continueFromStorybeau {
+    display: inline-flex;
+    align-self: center;
+    margin-top: 20px;
+    /* No dimension overrides - canonical spec is 200×56 */
 }
 
 /* Collapse row after choice is made and breadcrumb created */
@@ -8686,7 +9295,13 @@ body.corridor-complete {
 
 .authorship-card {
     width: 140px;
-    height: 196px; /* 5:7 ratio */
+    /* Explicit height from tarot ratio: 140 * (4.75/2.75) = 241.8px */
+    height: 242px;
+    aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions (fallback) */
+    /* Prevent flex stretching */
+    flex-shrink: 0;
+    flex-grow: 0;
+    align-self: center;
     perspective: 800px;
     cursor: pointer;
     transition: transform 0.3s ease, opacity 0.4s ease;
@@ -8698,6 +9313,10 @@ body.corridor-complete {
 
 .authorship-card.selected {
     transform: scale(1.08);
+    opacity: 1 !important; /* Ensure selected card is fully visible */
+    filter: none !important; /* No grayscale on selected */
+    pointer-events: auto; /* Ensure clickable */
+    z-index: 10; /* Above dimmed cards */
 }
 
 .authorship-card.dissipating {

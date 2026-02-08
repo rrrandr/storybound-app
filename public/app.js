@@ -1202,7 +1202,6 @@ For veto/quill/god_mode:
           .replace(/(\.\s+|\n|^)she\b/g, (m, p) => p + 'She')
           .replace(/(\.\s+|\n|^)they\b/g, (m, p) => p + 'They');
   }
-
   const ARCHETYPES = {
       HEART_WARDEN: {
           id: 'HEART_WARDEN',
@@ -1309,7 +1308,8 @@ For veto/quill/god_mode:
       // Get Love Interest name from canonical input
       const nameInput = document.getElementById('partnerNameInput');
       const fullName = nameInput?.value?.trim() || '';
-      const displayName = deriveDisplayName(fullName);
+      // Explicit fallback: Love Interest (NEVER Protagonist for this context)
+      const displayName = fullName ? deriveDisplayName(fullName) : 'Love Interest';
       // Generate possessive title: "{DISPLAY_NAME}'s Mask"
       return `${displayName}'s Mask`;
   }
@@ -16575,27 +16575,41 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       card.dataset.zoomOriginalLeft = rect.left;
       card.dataset.zoomOriginalTop = rect.top;
 
-      // Scale factor
-      const scale = 2.0;
+      // TAROT ASPECT RATIO: 2.75 / 4.75 (canonical proportions)
+      // Calculate zoomed size based on aspect ratio, not original rect
+      const tarotAspect = 2.75 / 4.75;
+      const padding = 120;
+      const maxWidth = window.innerWidth - padding;
+      const maxHeight = window.innerHeight - padding;
+
+      // Calculate max dimensions that fit viewport while maintaining aspect ratio
+      let zoomedWidth, zoomedHeight;
+      if (maxWidth / maxHeight > tarotAspect) {
+        // Height-constrained: fill height, calculate width from aspect
+        zoomedHeight = maxHeight;
+        zoomedWidth = zoomedHeight * tarotAspect;
+      } else {
+        // Width-constrained: fill width, calculate height from aspect
+        zoomedWidth = maxWidth;
+        zoomedHeight = zoomedWidth / tarotAspect;
+      }
 
       // Calculate centered position
-      const scaledWidth = rect.width * scale;
-      const scaledHeight = rect.height * scale;
-      const centeredLeft = (window.innerWidth - scaledWidth) / 2;
-      const centeredTop = (window.innerHeight - scaledHeight) / 2;
+      const centeredLeft = (window.innerWidth - zoomedWidth) / 2;
+      const centeredTop = (window.innerHeight - zoomedHeight) / 2;
 
       // PORTAL MOVE: Move card into zoom portal
       if (zoomPortal) {
         zoomPortal.appendChild(card);
       }
 
-      // Apply zoom styling
+      // Apply zoom styling with correct tarot proportions
       card.classList.add('zoomed');
       card.style.position = 'absolute';
       card.style.left = `${centeredLeft}px`;
       card.style.top = `${centeredTop}px`;
-      card.style.width = `${scaledWidth}px`;
-      card.style.height = `${scaledHeight}px`;
+      card.style.width = `${zoomedWidth}px`;
+      card.style.height = `${zoomedHeight}px`;
       card.style.transform = 'none';
 
       // Show backdrop
@@ -16747,27 +16761,41 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       card.dataset.zoomOriginalLeft = rect.left;
       card.dataset.zoomOriginalTop = rect.top;
 
-      // Scale factor
-      const scale = 2.5;
+      // TAROT ASPECT RATIO: 2.75 / 4.75 (canonical proportions)
+      // Calculate zoomed size based on aspect ratio, not original rect
+      const tarotAspect = 2.75 / 4.75;
+      const padding = 120;
+      const maxWidth = window.innerWidth - padding;
+      const maxHeight = window.innerHeight - padding;
+
+      // Calculate max dimensions that fit viewport while maintaining aspect ratio
+      let zoomedWidth, zoomedHeight;
+      if (maxWidth / maxHeight > tarotAspect) {
+        // Height-constrained: fill height, calculate width from aspect
+        zoomedHeight = maxHeight;
+        zoomedWidth = zoomedHeight * tarotAspect;
+      } else {
+        // Width-constrained: fill width, calculate height from aspect
+        zoomedWidth = maxWidth;
+        zoomedHeight = zoomedWidth / tarotAspect;
+      }
 
       // Calculate centered position
-      const scaledWidth = rect.width * scale;
-      const scaledHeight = rect.height * scale;
-      const centeredLeft = (window.innerWidth - scaledWidth) / 2;
-      const centeredTop = (window.innerHeight - scaledHeight) / 2;
+      const centeredLeft = (window.innerWidth - zoomedWidth) / 2;
+      const centeredTop = (window.innerHeight - zoomedHeight) / 2;
 
       // PORTAL MOVE: Move card into zoom portal (breaks ALL ancestor contexts)
       if (zoomPortal) {
         zoomPortal.appendChild(card);
       }
 
-      // Apply zoom styling
+      // Apply zoom styling with correct tarot proportions
       card.classList.add('zoomed');
       card.style.position = 'absolute';
       card.style.left = `${centeredLeft}px`;
       card.style.top = `${centeredTop}px`;
-      card.style.width = `${scaledWidth}px`;
-      card.style.height = `${scaledHeight}px`;
+      card.style.width = `${zoomedWidth}px`;
+      card.style.height = `${zoomedHeight}px`;
       card.style.transform = 'none';
 
       // Show backdrop
@@ -17725,17 +17753,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   const CORRIDOR_STAGES = [
     'authorship',  // Row 0 - Authorship choice (Choose Your Hand / Guided Fate)
-    'storybeau',   // Row 1 - Archetype
-    'world',       // Row 2 - Story world
-    'tone',        // Row 3 - Narrative tone
-    'pressure',    // Row 4 - Story Pull
-    'pov',         // Row 5 - Point of view
-    'length',      // Row 6 - Story length
-    'dynamic',     // Row 7 - Polarity
-    'arousal',     // Row 8 - Intensity
-    'safety',      // Row 9 - Safety & Boundaries
-    'vetoquill',   // Row 10 - Veto / Quill
-    'beginstory'   // Row 11 - Begin Story (terminal row)
+    'identity',    // Row 1 - Character names (only shown if Choose Your Hand)
+    'storybeau',   // Row 2 - Archetype
+    'world',       // Row 3 - Story world
+    'tone',        // Row 4 - Narrative tone
+    'pressure',    // Row 5 - Story Pull
+    'pov',         // Row 6 - Point of view
+    'length',      // Row 7 - Story length
+    'dynamic',     // Row 8 - Polarity
+    'arousal',     // Row 9 - Intensity
+    'safety',      // Row 10 - Safety & Boundaries
+    'vetoquill',   // Row 11 - Veto / Quill
+    'beginstory'   // Row 12 - Begin Story (terminal row)
   ];
 
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -17744,15 +17773,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // ═══════════════════════════════════════════════════════════════════════════════
   const STAGE_INDEX = {
     authorship: 0,   // Choice I: Authorship (Choose Your Hand / Guided Fate)
-    identity: 1,     // Choice II: Character names (committed before archetype)
-    archetype: 2,    // Choice III: Archetype/Storybeau
+    identity: 1,     // Choice II: Character names (only if Choose Your Hand)
+    storybeau: 2,    // Choice III: Archetype/Storybeau
+    archetype: 2,    // Alias for storybeau
     world: 3,        // Choice IV: Story World
     tone: 4,         // Choice V: Narrative Tone
-    pressure: 5,     // Choice VI: Story Pull (renamed from "Pull")
+    pressure: 5,     // Choice VI: Story Pull
     pov: 6,          // Choice VII: Point of View
     length: 7,       // Choice VIII: Story Length
     dynamic: 8,      // Choice IX: Polarity/Dynamic
-    intensity: 9,    // Choice X: Intensity/Arousal
+    arousal: 9,      // Choice X: Intensity/Arousal
+    intensity: 9,    // Alias for arousal
     safety: 10,      // Choice XI: Safety & Boundaries
     vetoquill: 11,   // Choice XII: Veto / Quill
     beginstory: 12   // Terminal: Begin Story (no breadcrumb)
@@ -17761,6 +17792,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // Map corridor stage names to their data-grp values (for DOM queries)
   const CORRIDOR_GRP_MAP = {
     authorship: 'authorship',
+    identity: 'identity',
     storybeau: 'archetype',
     world: 'world',
     tone: 'tone',
@@ -17952,7 +17984,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   /**
-   * Animate selected card to breadcrumb row
+   * Animate selected card to breadcrumb row via SPARKLE TELEPORT
+   * Phase 1: Card dissolves in place with sparkles
+   * Phase 2: Sparkles travel to breadcrumb position
+   * Phase 3: Breadcrumb materializes from sparkles
    * BREADCRUMB PERSISTENCE AUTHORITY applies — excluded layers skip breadcrumb
    */
   function animateCardToBreadcrumb(card, grp, val, title, onComplete) {
@@ -17969,43 +18004,91 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return;
     }
 
-    // Get card's current position
+    // Get positions
     const cardRect = card.getBoundingClientRect();
+    const cardCenterX = cardRect.left + cardRect.width / 2;
+    const cardCenterY = cardRect.top + cardRect.height / 2;
 
-    // Create a clone for animation
-    const clone = card.cloneNode(true);
-    clone.classList.add('becoming-breadcrumb');
-    clone.style.position = 'fixed';
-    clone.style.left = cardRect.left + 'px';
-    clone.style.top = cardRect.top + 'px';
-    clone.style.width = cardRect.width + 'px';
-    clone.style.height = cardRect.height + 'px';
-    clone.style.margin = '0';
-    document.body.appendChild(clone);
-
-    // Hide original card
-    card.style.visibility = 'hidden';
-
-    // Calculate target position in breadcrumb row
     const breadcrumbRect = breadcrumbRow.getBoundingClientRect();
     const existingBreadcrumbs = breadcrumbRow.querySelectorAll('.breadcrumb-card').length;
-    const targetLeft = breadcrumbRect.left + (existingBreadcrumbs * 87) + 10; // 75px width + 12px gap
-    const targetTop = breadcrumbRect.top + (breadcrumbRect.height - 105) / 2;
+    const targetX = breadcrumbRect.left + (existingBreadcrumbs * 87) + 10 + 37.5; // Center of breadcrumb slot
+    const targetY = breadcrumbRect.top + breadcrumbRect.height / 2;
 
-    // Animate to breadcrumb position with scale
-    requestAnimationFrame(() => {
-      clone.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-      clone.style.left = targetLeft + 'px';
-      clone.style.top = targetTop + 'px';
-      clone.style.width = '75px';
-      clone.style.height = '105px';
-    });
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PHASE 1: Dissolve card in place
+    // Card stays put, emits sparkles, fades to 0
+    // ═══════════════════════════════════════════════════════════════════════════
+    card.classList.add('dissolving-to-breadcrumb');
 
-    // After animation, create permanent breadcrumb
+    // Create dissolution sparkles from card surface
+    const dissolutionCount = 12 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < dissolutionCount; i++) {
+      setTimeout(() => {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'dissolution-sparkle';
+
+        // Random position on card surface
+        const startX = cardRect.left + Math.random() * cardRect.width;
+        const startY = cardRect.top + Math.random() * cardRect.height;
+
+        sparkle.style.cssText = `
+          left: ${startX}px;
+          top: ${startY}px;
+        `;
+        document.body.appendChild(sparkle);
+
+        // Remove after brief glow
+        setTimeout(() => sparkle.remove(), 400);
+      }, i * 30); // Stagger sparkle creation
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PHASE 2: Sparkle travel (teleport illusion)
+    // Sparkles arc from card to breadcrumb — card is not visible during transit
+    // ═══════════════════════════════════════════════════════════════════════════
     setTimeout(() => {
-      clone.remove();
+      const travelCount = 8 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < travelCount; i++) {
+        setTimeout(() => {
+          const sparkle = document.createElement('div');
+          sparkle.className = 'traveling-sparkle';
 
-      // Get structured label with optional subtitle (e.g., flavor nested in world)
+          // Start from random position around card center
+          const offsetX = (Math.random() - 0.5) * cardRect.width * 0.6;
+          const offsetY = (Math.random() - 0.5) * cardRect.height * 0.6;
+          const startX = cardCenterX + offsetX;
+          const startY = cardCenterY + offsetY;
+
+          // Calculate arc control point (curved path)
+          const midX = (startX + targetX) / 2 + (Math.random() - 0.5) * 100;
+          const midY = Math.min(startY, targetY) - 50 - Math.random() * 80; // Arc upward
+
+          sparkle.style.cssText = `
+            left: ${startX}px;
+            top: ${startY}px;
+            --target-x: ${targetX - startX}px;
+            --target-y: ${targetY - startY}px;
+            --arc-x: ${midX - startX}px;
+            --arc-y: ${midY - startY}px;
+          `;
+          document.body.appendChild(sparkle);
+
+          // Remove after travel animation
+          setTimeout(() => sparkle.remove(), 600);
+        }, i * 50); // Stagger travel starts
+      }
+    }, 250); // Start travel after dissolution begins
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PHASE 3: Breadcrumb materializes
+    // Sparkles converge, breadcrumb appears with reveal animation
+    // ═══════════════════════════════════════════════════════════════════════════
+    setTimeout(() => {
+      // Hide original card completely
+      card.style.visibility = 'hidden';
+      card.classList.remove('dissolving-to-breadcrumb');
+
+      // Get structured label with optional subtitle
       const label = getBreadcrumbLabel(grp, val);
       const subtitleHtml = label.subtitle
         ? `<span class="breadcrumb-subtitle">${label.subtitle}</span>`
@@ -18014,9 +18097,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Mark ephemeral layers for later dissolution
       const ephemeralClass = shouldDissolveAtPOV(grp) ? ' breadcrumb-ephemeral' : '';
 
-      // Create breadcrumb card
+      // Create breadcrumb card with materializing class
       const breadcrumb = document.createElement('div');
-      breadcrumb.className = 'breadcrumb-card' + ephemeralClass;
+      breadcrumb.className = 'breadcrumb-card materializing' + ephemeralClass;
       breadcrumb.dataset.grp = grp;
       breadcrumb.dataset.val = val;
       breadcrumb.dataset.breadcrumbLabel = grp.charAt(0).toUpperCase() + grp.slice(1);
@@ -18034,12 +18117,31 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       `;
       breadcrumbRow.appendChild(breadcrumb);
 
+      // Create convergence sparkles at breadcrumb
+      for (let i = 0; i < 6; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'convergence-sparkle';
+        const angle = (Math.PI * 2 * i) / 6;
+        const dist = 20 + Math.random() * 15;
+        sparkle.style.cssText = `
+          left: ${targetX + Math.cos(angle) * dist}px;
+          top: ${targetY + Math.sin(angle) * dist}px;
+        `;
+        document.body.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 500);
+      }
+
+      // Remove materializing class after animation
+      setTimeout(() => {
+        breadcrumb.classList.remove('materializing');
+      }, 400);
+
       // DESTRUCTIVE NAVIGATION: Attach click handler for breadcrumb navigation
       attachBreadcrumbNavigation(breadcrumb);
 
-      console.log(`[Breadcrumb] Created: ${grp}=${val}${label.subtitle ? ` (${label.subtitle})` : ''} (clickable)`);
+      console.log(`[Breadcrumb] Created via sparkle-teleport: ${grp}=${val}${label.subtitle ? ` (${label.subtitle})` : ''}`);
       onComplete?.();
-    }, 650);
+    }, 700); // Total time for dissolution + travel
   }
 
   /**
@@ -18182,6 +18284,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     updateCorridorVisibility();
     updateCorridorContinueButtonVisibility();
 
+    // Update DSP visibility (only shows during World, Tone, Pressure, POV, Length)
+    updateDSPCorridorVisibility();
+
     // Ensure exactly one valid stage row is rendered
     ensureValidRowRendered();
 
@@ -18271,6 +18376,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   const CORRIDOR_SECTION_SELECTORS = {
     // Authorship choice row (Continue button inside row)
     authorship: '#authorshipChoiceRow, #continueFromAuthorship',
+    // Identity/character section (shown after Choose Your Hand)
+    identity: '#characterSectionRow, #continueFromCharacters',
     storybeau: '#archetypeSectionTitle, #archetypeCardGrid, .archetype-header-text, .archetype-subtext, #archetypeSelectionSummary, #continueFromStorybeau',
     world: '#flowRowWorld',
     tone: '#flowRowTone',
@@ -18285,11 +18392,28 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   };
 
   /**
+   * Measure sticky header height and set CSS variable for corridor centering
+   * Called on init and resize to keep centering accurate
+   */
+  function measureAndSetHeaderHeight() {
+    const header = document.querySelector('.shape-your-story-header');
+    if (header) {
+      const height = header.offsetHeight;
+      document.documentElement.style.setProperty('--sb-header-height', `${height}px`);
+      console.log(`[Corridor] Header height measured: ${height}px`);
+    }
+  }
+
+  /**
    * Initialize the corridor system
    * Implements DOM mount/unmount for corridor contract enforcement
    */
   function initCorridor() {
     console.log('[Corridor] Initializing 9-row corridor system with DOM mount/unmount...');
+
+    // MEASURE HEADER HEIGHT: Set CSS variable for corridor centering
+    measureAndSetHeaderHeight();
+    window.addEventListener('resize', debounce(measureAndSetHeaderHeight, 100));
 
     // VIEWPORT ISOLATION: Prevent body scrolling during corridor stages
     document.body.classList.add('corridor-mode');
@@ -18403,6 +18527,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Update visibility (DOM mount/unmount)
     updateCorridorVisibility();
     updateCorridorContinueButtonVisibility();
+
+    // Update DSP visibility (only shows during World, Tone, Pressure, POV, Length)
+    updateDSPCorridorVisibility();
 
     // Track new row as visited
     visitedRows.add(targetIndex);
@@ -19010,6 +19137,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         if (stage === 'storybeau' && typeof window.onArchetypeRowMount === 'function') {
             window.onArchetypeRowMount();
         }
+
+        // AUTHORSHIP MOUNT: Restore authorship cards when navigating back
+        // resetAuthorshipChoice() handles: card visibility, character section, post-arousal section
+        if (stage === 'authorship' && typeof window.resetAuthorshipChoice === 'function') {
+          window.resetAuthorshipChoice();
+          console.log('[Corridor] Authorship mount: Reset authorship choice for re-selection');
+        }
       } else {
         // UNMOUNT: Remove elements from DOM (keep references in store)
         stored.elements.forEach(el => {
@@ -19186,10 +19320,45 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   /**
    * Bind corridor continue buttons
+   * CONTROL PLANE: Single #continueButton dispatches to current active stage
    */
   function bindCorridorContinueButtons() {
+    // CONTROL PLANE: Bind the single Continue button to dispatch based on active stage
+    const controlPlaneBtn = document.getElementById('continueButton');
+    if (controlPlaneBtn) {
+      controlPlaneBtn.addEventListener('click', () => {
+        const stage = CORRIDOR_STAGES[corridorActiveRowIndex];
+        if (stage) {
+          console.log(`[Control Plane] Continue clicked for stage: ${stage}`);
+
+          // SPECIAL CASE: Character section (identity stage or during authorship)
+          // Dispatch to continueFromCharacters button
+          const characterSection = document.getElementById('characterSectionRow');
+          if ((stage === 'identity' || stage === 'authorship') && characterSection && !characterSection.classList.contains('hidden')) {
+            const charContinueBtn = document.getElementById('continueFromCharacters');
+            if (charContinueBtn) {
+              console.log('[Control Plane] Dispatching to character section Continue');
+              charContinueBtn.click();
+              return;
+            }
+          }
+
+          // For stages with special handlers, trigger those via legacy button click
+          // This ensures all custom logic (animations, path branching) executes
+          const legacyBtn = document.getElementById(`continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
+          if (legacyBtn) {
+            // Dispatch click to trigger any attached legacy handlers
+            legacyBtn.click();
+          } else {
+            // Fallback to direct corridor continue
+            handleCorridorContinue(stage);
+          }
+        }
+      });
+    }
+
+    // Legacy: Keep per-stage button bindings for any remaining direct handlers
     CORRIDOR_STAGES.forEach((stage) => {
-      // Try multiple button ID patterns
       const buttonIds = [
         `corridorContinue${stage.charAt(0).toUpperCase() + stage.slice(1)}`,
         `continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`
@@ -19206,47 +19375,44 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   /**
    * Update continue button visibility for current corridor row
-   * CORRIDOR INTERACTION: Every row MUST have a visible Continue button
+   * CONTROL PLANE: Uses single #continueButton, not per-corridor buttons
    */
   function updateCorridorContinueButtonVisibility() {
-    CORRIDOR_STAGES.forEach((stage, idx) => {
-      // Try multiple button ID patterns
-      const buttonIds = [
-        `corridorContinue${stage.charAt(0).toUpperCase() + stage.slice(1)}`,
-        `continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`
-      ];
+    const controlPlaneBtn = document.getElementById('continueButton');
+    if (!controlPlaneBtn) return;
 
-      buttonIds.forEach(btnId => {
-        const btn = document.getElementById(btnId);
-        if (btn) {
-          const grp = CORRIDOR_GRP_MAP[stage];
-          const isCurrentRow = idx === corridorActiveRowIndex;
+    const stage = CORRIDOR_STAGES[corridorActiveRowIndex];
+    if (!stage) {
+      controlPlaneBtn.classList.remove('visible');
+      return;
+    }
 
-          // Check for selection via multiple sources (handles auto-filled selections)
-          let hasSelection =
-            corridorSelections.has(stage) ||
-            (grp && state.picks && state.picks[grp]) ||
-            document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+    const grp = CORRIDOR_GRP_MAP[stage];
 
-          // AUTHORSHIP STAGE: Check state.authorship for pending selection
-          if (stage === 'authorship') {
-            hasSelection = !!state.authorship;
-          }
+    // Check for selection via multiple sources (handles auto-filled selections)
+    let hasSelection =
+      corridorSelections.has(stage) ||
+      (grp && state.picks && state.picks[grp]) ||
+      document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
 
-          // ARCHETYPE STAGE: Check for primary archetype selection OR last-zoomed card
-          if (stage === 'storybeau') {
-            hasSelection = (state.archetype && state.archetype.primary != null) ||
-                           (lastZoomedArchetype != null);
-          }
+    // AUTHORSHIP STAGE: Check state.authorship for pending selection
+    // Also check if character section is visible (always show Continue when it is)
+    if (stage === 'authorship') {
+      const characterSection = document.getElementById('characterSectionRow');
+      const charSectionVisible = characterSection && !characterSection.classList.contains('hidden');
+      hasSelection = !!state.authorship || charSectionVisible;
+    }
 
-          // These rows always show their button when active (not card-based selection)
-          // NOTE: guidedFate no longer uses Continue button — authorship cards handle it
-          const alwaysShowForRow = (stage === 'arousal' || stage === 'safety' || stage === 'vetoquill' || stage === 'beginstory');
+    // ARCHETYPE STAGE: Check for primary archetype selection OR last-zoomed card
+    if (stage === 'storybeau') {
+      hasSelection = (state.archetype && state.archetype.primary != null) ||
+                     (lastZoomedArchetype != null);
+    }
 
-          btn.classList.toggle('visible', isCurrentRow && (hasSelection || alwaysShowForRow));
-        }
-      });
-    });
+    // These rows always show their button when active (not card-based selection)
+    const alwaysShowForRow = (stage === 'authorship' || stage === 'identity' || stage === 'arousal' || stage === 'safety' || stage === 'vetoquill' || stage === 'beginstory');
+
+    controlPlaneBtn.classList.toggle('visible', hasSelection || alwaysShowForRow);
   }
 
   /**
@@ -19396,17 +19562,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   /**
-   * Hide the continue button for a corridor stage
+   * Hide the continue button (control plane)
    */
   function hideCorridorContinueButton(stage) {
-    const btnIds = [
-      `corridorContinue${stage.charAt(0).toUpperCase() + stage.slice(1)}`,
-      `continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`
-    ];
-    btnIds.forEach(btnId => {
-      const btn = document.getElementById(btnId);
-      if (btn) btn.classList.remove('visible');
-    });
+    const controlPlaneBtn = document.getElementById('continueButton');
+    if (controlPlaneBtn) controlPlaneBtn.classList.remove('visible');
   }
 
   /**
@@ -19541,23 +19701,25 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   /**
-   * DSP VISIBILITY GATE — DSP hidden during Authorship/Archetype, shows after World committed
+   * DSP VISIBILITY GATE — DSP only visible during World, Tone, Pressure, POV, Length
+   * Hidden before World and after Length (Dynamic, Arousal, Safety, etc.)
    */
   function updateDSPCorridorVisibility() {
     const synopsisPanel = document.getElementById('synopsisPanel');
     if (!synopsisPanel) return;
 
-    // DSP shows only after World is committed (corridorActiveRowIndex >= 3)
-    // 0=authorship, 1=storybeau, 2=world → hidden
-    // 3=tone, 4=pressure, 5=pov, 6=length, 7=dynamic, 8=arousal → visible
-    const WORLD_COMMITTED_INDEX = 3; // Index AFTER World selection
+    // DSP visible ONLY during these stages:
+    // 3=world, 4=tone, 5=pressure, 6=pov, 7=length
+    // Hidden during: 0=authorship, 1=identity, 2=storybeau, 8=dynamic, 9=arousal, 10+=safety/vetoquill/beginstory
+    const DSP_START_INDEX = 3;  // World
+    const DSP_END_INDEX = 7;    // Length
 
-    if (corridorActiveRowIndex >= WORLD_COMMITTED_INDEX) {
+    if (corridorActiveRowIndex >= DSP_START_INDEX && corridorActiveRowIndex <= DSP_END_INDEX) {
       synopsisPanel.classList.add('visible');
-      console.log('[DSP] Visible — World committed');
+      console.log(`[DSP] Visible — stage ${CORRIDOR_STAGES[corridorActiveRowIndex]}`);
     } else {
       synopsisPanel.classList.remove('visible');
-      console.log(`[DSP] Hidden — corridor at index ${corridorActiveRowIndex} (pre-World)`);
+      console.log(`[DSP] Hidden — stage ${CORRIDOR_STAGES[corridorActiveRowIndex] || corridorActiveRowIndex}`);
     }
   }
 
@@ -20620,8 +20782,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           card.dataset.grp = 'archetype';
           card.dataset.val = id;
 
-          // If already selected (from state), show as selected+flipped
-          if (state.archetype.primary === id) {
+          // If explicitly selected (user chose, not just default), show as selected+flipped
+          // Check corridorSelections to distinguish explicit selection from default state
+          const hasExplicitSelection = corridorSelections.has('storybeau') || corridorSelections.has('archetype');
+          if (hasExplicitSelection && state.archetype.primary === id) {
               card.classList.add('selected', 'flipped');
               lastZoomedArchetype = id;
               archetypeCardsRevealed = true; // Skip auto-reveal if already selected
@@ -20629,11 +20793,26 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
           // Card structure: BACK = Black PNG art, FRONT = Gold PNG art + description (visible when zoomed)
           const resolvedDesireStyle = resolveLIPronouns(arch.desireStyle);
+
+          // Build modifier marquee content: valid secondary archetypes for this primary
+          const validModifiers = getValidModifierArchetypes(id);
+          const modifierNames = validModifiers.map(modId => {
+              const mod = ARCHETYPES[modId];
+              return mod ? mod.name.replace('The ', '') : null;
+          }).filter(Boolean);
+          // Duplicate list for seamless scroll loop
+          const marqueeContent = [...modifierNames, ...modifierNames].join(' \u2022 ');
+
           card.innerHTML = `
               <div class="sb-card-inner">
                   <div class="sb-card-face sb-card-back" data-archetype="${id}"></div>
                   <div class="sb-card-face sb-card-front" data-archetype="${id}">
                       <span class="archetype-printed-desc">${resolvedDesireStyle}</span>
+                      <div class="archetype-modifier-box">
+                          <div class="archetype-modifier-marquee">
+                              <span class="archetype-modifier-text">${marqueeContent}</span>
+                          </div>
+                      </div>
                   </div>
               </div>
           `;
@@ -20652,6 +20831,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       destinyCard.dataset.grp = 'archetype';
       destinyCard.dataset.val = 'destiny';
       destinyCard.innerHTML = `
+          <div class="destiny-stack-layer layer-5"></div>
+          <div class="destiny-stack-layer layer-4"></div>
+          <div class="destiny-stack-layer layer-3"></div>
+          <div class="destiny-stack-layer layer-2"></div>
           <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back destiny-choice-back">
                   <span class="sb-card-title">Destiny's Choice</span>
@@ -20669,6 +20852,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Destiny's Choice click triggers selection sequence
       destinyCard.addEventListener('click', () => triggerDestinyChoiceSequence());
+
       grid.appendChild(destinyCard);
 
       // Start sparkles on Destiny's Choice — low rate for calm halo
@@ -20700,11 +20884,45 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   /**
    * Trigger archetype reveal when storybeau row becomes active
    * Called from updateCorridorVisibility or when navigating to storybeau
+   * Handles both initial reveal AND back-navigation restoration
    */
   function onArchetypeRowMount() {
-      if (archetypeCardsRevealed) return;
-      // Schedule reveal after short delay
-      scheduleArchetypeReveal();
+      const grid = document.getElementById('archetypeCardGrid');
+      if (!grid) return;
+
+      // Check if cards need to be restored (back-navigation after Destiny's Choice dissolved them)
+      const currentCardCount = grid.querySelectorAll('.archetype-card:not(.destiny-choice-card)').length;
+      const expectedCardCount = ARCHETYPE_ORDER ? ARCHETYPE_ORDER.length : 7;
+      const needsRestoration = currentCardCount < expectedCardCount;
+
+      if (needsRestoration) {
+          console.log('[Archetype] Cards missing — restoring for back-navigation');
+          // Re-render all archetype cards (this will mark selected one and reset state)
+          renderArchetypeCards();
+          // Cards are already flipped if there was a prior selection
+          // Start sparkles on the selected card
+          if (state.archetype && state.archetype.primary) {
+              const selectedId = state.archetype.primary;
+              lastZoomedArchetype = selectedId;
+              // Start sparkles on selected card after a brief delay for DOM update
+              setTimeout(() => {
+                  startLastZoomedSparkles();
+              }, 100);
+          }
+          return;
+      }
+
+      // First visit - reveal cards if not yet revealed
+      if (!archetypeCardsRevealed) {
+          scheduleArchetypeReveal();
+      } else if (state.archetype && state.archetype.primary) {
+          // Cards already revealed, but ensure sparkles on selected card
+          const selectedId = state.archetype.primary;
+          if (lastZoomedArchetype !== selectedId) {
+              lastZoomedArchetype = selectedId;
+          }
+          startLastZoomedSparkles();
+      }
   }
 
   // Expose for corridor system
@@ -21260,10 +21478,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       card.dataset.zoomOriginalWidth = rect.width;
       card.dataset.zoomOriginalHeight = rect.height;
 
-      // Scale factor
-      const scale = 2.5;
+      // ARCHETYPE ZOOM: Use scale transform to preserve internal layout
+      // Card has content (description, modifiers) that needs proportional scaling
+      const padding = 60;
+      const maxWidth = window.innerWidth - padding;
+      const maxHeight = window.innerHeight - padding;
+      const scaleByWidth = maxWidth / rect.width;
+      const scaleByHeight = maxHeight / rect.height;
+      const scale = Math.min(2.5, scaleByWidth, scaleByHeight);
 
-      // Calculate centered position
+      // Calculate centered position (using original dimensions, scale handles size)
       const centeredLeft = (window.innerWidth - rect.width) / 2;
       const centeredTop = (window.innerHeight - rect.height) / 2;
 
@@ -21272,7 +21496,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           zoomPortal.appendChild(card);
       }
 
-      // Apply zoom styling
+      // Apply zoom styling with scale transform
       card.classList.add('zoomed');
       card.style.position = 'absolute';
       card.style.left = `${centeredLeft}px`;
@@ -23761,19 +23985,25 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     const chooseCard = $('chooseYourHandCard');
     const fateCard = $('guidedFateCard');
-    const continueBtn = $('continueFromAuthorship');
 
     // Toggle selection: if already selected, deselect
     if (chooseCard?.classList.contains('selected')) {
-      chooseCard.classList.remove('flipped', 'selected');
+      chooseCard.classList.remove('selected');
+      fateCard?.classList.remove('dimmed');
       state.authorship = null;
-      if (continueBtn) continueBtn.classList.remove('visible');
+      // Restore sparkles on both cards
+      startSparkleEmitter('chooseHandSparkles', 'chooseHand', 4);
+      startSparkleEmitter('guidedFateSparkles', 'guidedFate', 6);
+      // Update control plane Continue visibility
+      if (typeof updateCorridorContinueButtonVisibility === 'function') {
+        updateCorridorContinueButtonVisibility();
+      }
       console.log('[Authorship] Choose Your Hand deselected');
       return;
     }
 
-    // 1. Flip and select Choose Your Hand
-    chooseCard?.classList.add('flipped', 'selected');
+    // 1. Select Choose Your Hand (scale up, sparkles - NO flip)
+    chooseCard?.classList.add('selected');
 
     // 2. Dim (don't dissipate) the other card
     fateCard?.classList.remove('flipped', 'selected');
@@ -23782,9 +24012,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // 3. Set pending authorship state (not committed until Continue)
     state.authorship = 'manual';
 
-    // 4. Show Continue button
-    if (continueBtn) {
-      continueBtn.classList.add('visible');
+    // 4. Adjust sparkles: enhance selected, stop dimmed
+    stopSparkleEmitter('guidedFateSparkles');
+    startSparkleEmitter('chooseHandSparkles', 'chooseHand', 10); // Enhanced rate
+
+    // 5. Update control plane Continue visibility
+    if (typeof updateCorridorContinueButtonVisibility === 'function') {
+      updateCorridorContinueButtonVisibility();
     }
 
     console.log('[Authorship] Choose Your Hand selected — awaiting Continue');
@@ -23796,19 +24030,25 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     const chooseCard = $('chooseYourHandCard');
     const fateCard = $('guidedFateCard');
-    const continueBtn = $('continueFromAuthorship');
 
     // Toggle selection: if already selected, deselect
     if (fateCard?.classList.contains('selected')) {
-      fateCard.classList.remove('flipped', 'selected');
+      fateCard.classList.remove('selected');
+      chooseCard?.classList.remove('dimmed');
       state.authorship = null;
-      if (continueBtn) continueBtn.classList.remove('visible');
+      // Restore sparkles on both cards
+      startSparkleEmitter('chooseHandSparkles', 'chooseHand', 4);
+      startSparkleEmitter('guidedFateSparkles', 'guidedFate', 6);
+      // Update control plane Continue visibility
+      if (typeof updateCorridorContinueButtonVisibility === 'function') {
+        updateCorridorContinueButtonVisibility();
+      }
       console.log('[Authorship] Guided Fate deselected');
       return;
     }
 
-    // 1. Flip and select Guided Fate
-    fateCard?.classList.add('flipped', 'selected');
+    // 1. Select Guided Fate (scale up, sparkles - NO flip)
+    fateCard?.classList.add('selected');
 
     // 2. Dim (don't dissipate) the other card
     chooseCard?.classList.remove('flipped', 'selected');
@@ -23817,13 +24057,112 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // 3. Set pending authorship state (not committed until Continue)
     state.authorship = 'guided';
 
-    // 4. Show Continue button
-    if (continueBtn) {
-      continueBtn.classList.add('visible');
+    // 4. Adjust sparkles: enhance selected, stop dimmed
+    stopSparkleEmitter('chooseHandSparkles');
+    startSparkleEmitter('guidedFateSparkles', 'guidedFate', 10); // Enhanced rate
+
+    // 5. Update control plane Continue visibility
+    if (typeof updateCorridorContinueButtonVisibility === 'function') {
+      updateCorridorContinueButtonVisibility();
     }
 
     console.log('[Authorship] Guided Fate selected — awaiting Continue');
   });
+
+  /**
+   * Animate authorship card to breadcrumb via SPARKLE TELEPORT
+   * Card dissolves in place, sparkles travel, breadcrumb materializes
+   * CORRIDOR-SCOPED: Only affects #authorshipChoiceRow
+   */
+  function animateAuthorshipCardToBreadcrumb(card, onComplete) {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!card || !breadcrumbRow) {
+      onComplete?.();
+      return;
+    }
+
+    const cardRect = card.getBoundingClientRect();
+    const cardCenterX = cardRect.left + cardRect.width / 2;
+    const cardCenterY = cardRect.top + cardRect.height / 2;
+
+    const breadcrumbRect = breadcrumbRow.getBoundingClientRect();
+    const existingBreadcrumbs = breadcrumbRow.querySelectorAll('.breadcrumb-card').length;
+    const targetX = breadcrumbRect.left + (existingBreadcrumbs * 87) + 10 + 37.5;
+    const targetY = breadcrumbRect.top + breadcrumbRect.height / 2;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PHASE 1: Dissolve card in place
+    // ═══════════════════════════════════════════════════════════════════════════
+    card.classList.add('dissolving-to-breadcrumb');
+
+    // Create dissolution sparkles
+    const dissolutionCount = 10 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < dissolutionCount; i++) {
+      setTimeout(() => {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'dissolution-sparkle';
+        const startX = cardRect.left + Math.random() * cardRect.width;
+        const startY = cardRect.top + Math.random() * cardRect.height;
+        sparkle.style.cssText = `left: ${startX}px; top: ${startY}px;`;
+        document.body.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 400);
+      }, i * 25);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PHASE 2: Sparkle travel
+    // ═══════════════════════════════════════════════════════════════════════════
+    setTimeout(() => {
+      const travelCount = 6 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < travelCount; i++) {
+        setTimeout(() => {
+          const sparkle = document.createElement('div');
+          sparkle.className = 'traveling-sparkle';
+          const offsetX = (Math.random() - 0.5) * cardRect.width * 0.5;
+          const offsetY = (Math.random() - 0.5) * cardRect.height * 0.5;
+          const startX = cardCenterX + offsetX;
+          const startY = cardCenterY + offsetY;
+          const midX = (startX + targetX) / 2 + (Math.random() - 0.5) * 80;
+          const midY = Math.min(startY, targetY) - 40 - Math.random() * 60;
+          sparkle.style.cssText = `
+            left: ${startX}px;
+            top: ${startY}px;
+            --target-x: ${targetX - startX}px;
+            --target-y: ${targetY - startY}px;
+            --arc-x: ${midX - startX}px;
+            --arc-y: ${midY - startY}px;
+          `;
+          document.body.appendChild(sparkle);
+          setTimeout(() => sparkle.remove(), 600);
+        }, i * 40);
+      }
+    }, 200);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PHASE 3: Complete (breadcrumb created by handleCorridorContinue)
+    // ═══════════════════════════════════════════════════════════════════════════
+    setTimeout(() => {
+      card.style.visibility = 'hidden';
+      card.classList.remove('dissolving-to-breadcrumb');
+      card.classList.add('selected-static');
+
+      // Create convergence sparkles at target
+      for (let i = 0; i < 5; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'convergence-sparkle';
+        const angle = (Math.PI * 2 * i) / 5;
+        const dist = 15 + Math.random() * 10;
+        sparkle.style.cssText = `
+          left: ${targetX + Math.cos(angle) * dist}px;
+          top: ${targetY + Math.sin(angle) * dist}px;
+        `;
+        document.body.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 500);
+      }
+
+      onComplete?.();
+    }, 600);
+  }
 
   // Continue from Authorship — commits selection and advances
   $('continueFromAuthorship')?.addEventListener('click', async () => {
@@ -23834,54 +24173,43 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     const chooseCard = $('chooseYourHandCard');
     const fateCard = $('guidedFateCard');
-    const continueBtn = $('continueFromAuthorship');
 
-    // Hide Continue button
-    if (continueBtn) continueBtn.classList.remove('visible');
+    // Hide control plane Continue button
+    const controlPlaneBtn = document.getElementById('continueButton');
+    if (controlPlaneBtn) controlPlaneBtn.classList.remove('visible');
+
+    // Determine selected card
+    const selectedCard = state.authorship === 'manual' ? chooseCard : fateCard;
+    const unselectedCard = state.authorship === 'manual' ? fateCard : chooseCard;
+
+    // Dissipate unselected card
+    unselectedCard?.classList.add('dissipating');
+    setTimeout(() => unselectedCard?.classList.add('hidden'), 400);
+
+    // Animate selected card to breadcrumb (600ms, above Continue button)
+    animateAuthorshipCardToBreadcrumb(selectedCard, () => {
+      // NOTE: Breadcrumb created by handleCorridorContinue() — do NOT duplicate here
+      // Remove authorship cards after animation
+      removeAuthorshipCards();
+    });
 
     if (state.authorship === 'manual') {
-      // MANUAL PATH: Show character section
-      const characterSection = $('characterSectionRow');
+      // MANUAL PATH: Advance to identity corridor (character section)
+      // Let corridor system handle visibility via DOM mount/unmount
+      corridorActiveRowIndex = 1; // Identity is now row 1
+      updateCorridorVisibility();
 
-      // Dissipate unselected card
-      fateCard?.classList.add('dissipating');
-      setTimeout(() => fateCard?.classList.add('hidden'), 400);
+      // Initialize sparkles after corridor mounts the section
+      setTimeout(() => initDestinyDeckSparkles(), 100);
 
-      // Create authorship breadcrumb
-      if (typeof createBreadcrumbDirect === 'function') {
-        createBreadcrumbDirect('authorship', 'manual', 'Choose Your Hand');
-      }
+      // Show control plane Continue button for identity stage
+      updateCorridorContinueButtonVisibility();
 
-      // Remove authorship cards
-      removeAuthorshipCards();
-
-      // Show character section
-      if (characterSection) {
-        characterSection.classList.remove('hidden');
-        setTimeout(() => characterSection.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
-        initDestinyDeckSparkles();
-      }
-
-      // Show character Continue button
-      const charContinueBtn = $('continueFromCharacters');
-      if (charContinueBtn) charContinueBtn.classList.add('visible');
-
-      console.log('[Authorship] Choose Your Hand committed — showing character section');
+      console.log('[Authorship] Choose Your Hand committed — advanced to identity corridor');
 
     } else if (state.authorship === 'guided') {
       // GUIDED PATH: Auto-fill with fate choices
-
-      // Dissipate unselected card
-      chooseCard?.classList.add('dissipating');
-      setTimeout(() => chooseCard?.classList.add('hidden'), 400);
-
-      // Create breadcrumb
-      if (typeof createBreadcrumbDirect === 'function') {
-        createBreadcrumbDirect('authorship', 'guided', 'Guided Fate');
-      }
-
-      // Remove authorship cards
-      removeAuthorshipCards();
+      // (Card dissipate and animation handled above)
 
       // Generate fate choices
       const fateChoices = {
@@ -24055,8 +24383,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Start flip immediately — continuous with growth
     card.classList.add('flipping');
 
-    // 600ms duration (50% slower than previous 400ms)
-    const duration = 600;
+    // 1200ms duration (50% slower again per user request)
+    const duration = 1200;
     const startTime = performance.now();
 
     // Random askew angle for end state (-2 to +2 degrees)
@@ -24066,14 +24394,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Smooth easing (ease-out cubic) — continuous, no pause at 90°
+      // Smooth easing for position (ease-out cubic)
       const eased = 1 - Math.pow(1 - progress, 3);
 
       const currentX = startRect.left + (endRect.left - startRect.left) * eased;
       const currentY = startRect.top + (endRect.top - startRect.top) * eased;
 
-      // Scale grows continuously during flip (no pause)
-      const currentScale = startScale + (endScale - startScale) * eased;
+      // Scale grows LINEARLY during flip (per user request)
+      const currentScale = startScale + (endScale - startScale) * progress;
 
       // Arc path during flight
       const arc = Math.sin(progress * Math.PI) * -25;
@@ -24279,12 +24607,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           createBreadcrumbDirect('identity', 'names', identityTitle);
         }
 
-        // Advance corridor
+        // Advance corridor from identity (row 1) to storybeau (row 2)
+        // This mounts the archetype section elements into the DOM
         if (typeof advanceCorridorRow === 'function') {
           advanceCorridorRow();
         }
 
-        console.log('[Character Section] Fly-to-breadcrumb complete — advancing to Archetype');
+        // Update Archetype title with Love Interest name AFTER corridor advances
+        // (title element is part of storybeau stage, must be mounted first)
+        if (typeof updateArchetypeSectionTitle === 'function') {
+          updateArchetypeSectionTitle();
+        }
+
+        console.log('[Character Section] Fly-to-breadcrumb complete — Archetype row now visible');
       }, 550); // Match transition duration
 
     } else {
@@ -24309,11 +24644,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         createBreadcrumbDirect('identity', 'names', identityTitle);
       }
 
+      // Advance corridor from identity (row 1) to storybeau (row 2)
+      // This mounts the archetype section elements into the DOM
       if (typeof advanceCorridorRow === 'function') {
         advanceCorridorRow();
       }
 
-      console.log('[Character Section] Continue clicked — committed identity breadcrumb, advancing to Archetype');
+      // Update Archetype title with Love Interest name AFTER corridor advances
+      // (title element is part of storybeau stage, must be mounted first)
+      if (typeof updateArchetypeSectionTitle === 'function') {
+        updateArchetypeSectionTitle();
+      }
+
+      console.log('[Character Section] Continue clicked — committed identity breadcrumb, Archetype row now visible');
     }
   });
 
@@ -33405,7 +33748,163 @@ FATE CARD ADAPTATION (CRITICAL):
       console.log("broadcastTurn stub:", { isInit, textLength: text?.length });
   }
 
-  window.setMode = function(m){
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // MODE CARD FLIP SYSTEM — Solo/Couple/Stranger selection with flip animation
+  // First click: flip card to reveal face, start sparkles
+  // Second click (on face): select mode and proceed
+  // ═══════════════════════════════════════════════════════════════════════════════
+  let selectedModeCard = null;
+  let modeCardSparkleInterval = null;
+
+  function initModeCards() {
+    const modeCards = document.querySelectorAll('.mode-card');
+    if (!modeCards.length) return;
+
+    modeCards.forEach(card => {
+      card.addEventListener('click', handleModeCardClick);
+    });
+    console.log('[ModeCards] Initialized', modeCards.length, 'mode cards');
+  }
+
+  function handleModeCardClick(e) {
+    const card = e.currentTarget;
+    const mode = card.dataset.mode;
+    const isFlipped = card.classList.contains('flipped');
+
+    if (!isFlipped) {
+      // First click: flip to show face, start sparkles
+      flipModeCard(card);
+    } else if (card === selectedModeCard) {
+      // Second click on selected card: proceed with mode selection
+      proceedWithMode(mode);
+    } else {
+      // Click on different flipped card: select this one instead
+      flipModeCard(card);
+    }
+  }
+
+  function flipModeCard(card) {
+    const allCards = document.querySelectorAll('.mode-card');
+    const mode = card.dataset.mode;
+
+    // Unflip and undim all other cards
+    allCards.forEach(c => {
+      if (c !== card) {
+        c.classList.remove('flipped', 'selected');
+        c.classList.add('dimmed');
+        // Stop sparkles on other cards
+        const sparkleContainer = c.querySelector('.mode-card-sparkles');
+        if (sparkleContainer) sparkleContainer.innerHTML = '';
+      }
+    });
+
+    // Flip and select this card
+    card.classList.add('flipped', 'selected');
+    card.classList.remove('dimmed');
+    selectedModeCard = card;
+
+    // Start sparkles on this card
+    startModeCardSparkles(card);
+
+    console.log('[ModeCards] Flipped card:', mode);
+  }
+
+  function startModeCardSparkles(card) {
+    const sparkleContainer = card.querySelector('.mode-card-sparkles');
+    if (!sparkleContainer) return;
+
+    // Clear any existing sparkles
+    sparkleContainer.innerHTML = '';
+
+    // Stop any existing interval
+    if (modeCardSparkleInterval) {
+      clearInterval(modeCardSparkleInterval);
+    }
+
+    // Create sparkle particles continuously
+    modeCardSparkleInterval = setInterval(() => {
+      if (!card.classList.contains('flipped')) {
+        clearInterval(modeCardSparkleInterval);
+        modeCardSparkleInterval = null;
+        return;
+      }
+      createModeSparkle(sparkleContainer);
+    }, 150);
+
+    // Initial burst of sparkles
+    for (let i = 0; i < 8; i++) {
+      setTimeout(() => createModeSparkle(sparkleContainer), i * 50);
+    }
+  }
+
+  function createModeSparkle(container) {
+    const sparkle = document.createElement('div');
+    sparkle.className = 'mode-sparkle';
+
+    // Random position around the edge
+    const side = Math.floor(Math.random() * 4);
+    let x, y;
+    switch (side) {
+      case 0: x = Math.random() * 100; y = 0; break;        // top
+      case 1: x = 100; y = Math.random() * 100; break;      // right
+      case 2: x = Math.random() * 100; y = 100; break;      // bottom
+      case 3: x = 0; y = Math.random() * 100; break;        // left
+    }
+
+    sparkle.style.cssText = `
+      position: absolute;
+      left: ${x}%;
+      top: ${y}%;
+      width: 4px;
+      height: 4px;
+      background: radial-gradient(circle, rgba(255,215,0,1) 0%, rgba(255,215,0,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: modeSparkle 1.2s ease-out forwards;
+    `;
+
+    container.appendChild(sparkle);
+
+    // Remove after animation
+    setTimeout(() => sparkle.remove(), 1200);
+  }
+
+  function proceedWithMode(mode) {
+    console.log('[ModeCards] Proceeding with mode:', mode);
+
+    // Stop sparkle interval
+    if (modeCardSparkleInterval) {
+      clearInterval(modeCardSparkleInterval);
+      modeCardSparkleInterval = null;
+    }
+
+    // Call the actual setMode function
+    actualSetMode(mode);
+  }
+
+  function resetModeCards() {
+    const allCards = document.querySelectorAll('.mode-card');
+    allCards.forEach(c => {
+      c.classList.remove('flipped', 'selected', 'dimmed');
+      const sparkleContainer = c.querySelector('.mode-card-sparkles');
+      if (sparkleContainer) sparkleContainer.innerHTML = '';
+    });
+    selectedModeCard = null;
+    if (modeCardSparkleInterval) {
+      clearInterval(modeCardSparkleInterval);
+      modeCardSparkleInterval = null;
+    }
+  }
+
+  // Initialize mode cards on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initModeCards);
+  } else {
+    initModeCards();
+  }
+
+  // Actual mode selection logic (renamed from window.setMode)
+  function actualSetMode(m) {
      if(m === 'couple') {
          if(!sb){ alert("Couple mode unavailable (No backend)."); return; }
          if(state.storyOrigin === 'solo' && state.storyStage === 'post-consummation') {
@@ -33457,6 +33956,13 @@ FATE CARD ADAPTATION (CRITICAL):
          console.log(`[Breadcrumb] Added ephemeral mode: ${m} (clickable)`);
        }
      }
+  }
+
+  // Public wrapper - allows direct mode selection (bypasses flip animation)
+  window.setMode = function(m) {
+    // Reset mode cards when called directly
+    resetModeCards();
+    actualSetMode(m);
   };
 
   // --- EDGE COVENANT ---

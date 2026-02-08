@@ -305,11 +305,11 @@
       <h2>Storybound</h2>
       <div class="choice-buttons">
         <div style="text-align:center">
-          <button class="choice" id="btnTease">Tease</button>
+          <button class="tier-card-btn" id="btnTease"></button>
           <p class="choice-desc">A playful warmup—gentle choices, tension, and atmosphere.<br><br><strong>From $Free</strong></p>
         </div>
         <div style="text-align:center">
-          <button class="choice" id="btnIndulge">Indulge</button>
+          <button class="tier-card-btn tier-card-indulge" id="btnIndulge"></button>
           <p class="choice-desc">Longer openings, deeper memory, full control, saved stories.<br><br><strong>From $6/mo</strong></p>
         </div>
       </div>
@@ -489,21 +489,40 @@
 <div id="app" class="hidden">
 
   <div id="modeSelect" class="screen">
-    <h1 style="margin-top:40px">Storybound</h1>
-    
-    <div class="choice-buttons">
-      <div style="text-align:center">
-          <button class="choice" onclick="window.setMode('solo')">Solo</button>
-          <p class="choice-desc" id="soloSubtitle">Just you and your curiosity.</p>
-      </div>
-      <div style="text-align:center">
-          <button class="choice" id="btnCoupleMode" onclick="window.setMode('couple')">Couple</button>
-          <p class="choice-desc">Play in bed, together or miles apart.</p>
-      </div>
-      <div style="text-align:center">
-          <button class="choice" onclick="window.setMode('stranger')">Stranger</button>
-          <p class="choice-desc">Tempt fate with a random encounter.</p>
-      </div>
+    <div class="mode-card-row" id="modeCardContainer">
+        <div class="mode-card" data-mode="solo">
+            <div class="mode-card-inner">
+                <div class="mode-card-back">
+                    <img src="/assets/card-art/cards/Tarot-Gold-bdsm-back-Solo.png" alt="Solo">
+                </div>
+                <div class="mode-card-front">
+                    <img src="/assets/card-art/cards/Tarot-Gold-Solo-face.png" alt="Solo">
+                </div>
+            </div>
+            <div class="mode-card-sparkles"></div>
+        </div>
+        <div class="mode-card" data-mode="couple" id="btnCoupleMode">
+            <div class="mode-card-inner">
+                <div class="mode-card-back">
+                    <img src="/assets/card-art/cards/Tarot-Gold-bdsm-back-Couple.png" alt="Couple">
+                </div>
+                <div class="mode-card-front">
+                    <img src="/assets/card-art/cards/Tarot-Gold-Couplet-face.png" alt="Couple">
+                </div>
+            </div>
+            <div class="mode-card-sparkles"></div>
+        </div>
+        <div class="mode-card" data-mode="stranger">
+            <div class="mode-card-inner">
+                <div class="mode-card-back">
+                    <img src="/assets/card-art/cards/Tarot-Gold-bdsm-back-Stranger.png" alt="Stranger">
+                </div>
+                <div class="mode-card-front">
+                    <img src="/assets/card-art/cards/Tarot-Gold-Stranger-face.png" alt="Stranger">
+                </div>
+            </div>
+            <div class="mode-card-sparkles"></div>
+        </div>
     </div>
   </div>
 
@@ -583,11 +602,6 @@
                 </select>
                 <input id="customPlayerGender" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
             </div>
-            <div class="character-field character-field-ancestry fate-input-wrapper">
-                <label>Ancestry</label>
-                <input id="ancestryInputPlayer" type="text" class="fate-field ancestry-field plaque-input" data-fate-type="ancestry" placeholder="e.g. Irish-American">
-                <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
-            </div>
             <div class="character-field character-field-pronouns">
                 <label>Pronouns</label>
                 <select id="playerPronouns" class="plaque-input" onchange="checkCustom(this, 'customPlayerPronouns')">
@@ -598,18 +612,23 @@
                 </select>
                 <input id="customPlayerPronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
             </div>
+            <div class="character-field character-field-ancestry fate-input-wrapper">
+                <label>Ancestry</label>
+                <input id="ancestryInputPlayer" type="text" class="fate-field ancestry-field plaque-input" data-fate-type="ancestry" placeholder="e.g. Irish-American">
+                <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
+            </div>
         </div>
     </div>
 
-    <!-- DESTINY'S CHOICE MINI-DECK — Central fate card dispenser -->
+    <!-- DESTINY'S CHOICE MINI-DECK — Central fate card dispenser (5 stacked cards) -->
     <div class="destiny-mini-deck" id="destinyMiniDeck">
         <div class="destiny-mini-deck-stack">
-            <!-- Cards with label on back face -->
-            <div class="destiny-mini-card deck-card-1">
-                <span class="destiny-card-back-label">Destiny's<br>Choice</span>
-            </div>
+            <!-- 5 stacked cards for deck illusion -->
+            <div class="destiny-mini-card deck-card-1"></div>
             <div class="destiny-mini-card deck-card-2"></div>
             <div class="destiny-mini-card deck-card-3"></div>
+            <div class="destiny-mini-card deck-card-4"></div>
+            <div class="destiny-mini-card deck-card-5"></div>
             <!-- Sparkles inside deck stack, scale with deck -->
             <div class="destiny-deck-sparkle-emitter" id="destinyDeckSparkles"></div>
         </div>
@@ -633,11 +652,6 @@
                 </select>
                 <input id="customLoveInterest" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
             </div>
-            <div class="character-field character-field-ancestry fate-input-wrapper">
-                <label>Ancestry</label>
-                <input id="ancestryInputLI" type="text" class="fate-field ancestry-field plaque-input" data-fate-type="ancestry" placeholder="e.g. British Aristocracy">
-                <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
-            </div>
             <div class="character-field character-field-pronouns">
                 <label>Pronouns</label>
                 <select id="lovePronouns" class="plaque-input" onchange="checkCustom(this, 'customLovePronouns')">
@@ -647,6 +661,11 @@
                     <option value="Custom">Custom</option>
                 </select>
                 <input id="customLovePronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+            </div>
+            <div class="character-field character-field-ancestry fate-input-wrapper">
+                <label>Ancestry</label>
+                <input id="ancestryInputLI" type="text" class="fate-field ancestry-field plaque-input" data-fate-type="ancestry" placeholder="e.g. British Aristocracy">
+                <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
             </div>
         </div>
     </div>
@@ -1552,6 +1571,15 @@
     <button onclick="window.closeMyLibraryModal()" style="margin-top:15px;">Close</button>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     CONTROL PLANE — Fixed layer for Continue button
+     Floats above all content. Never occluded by cards, corridors, or animations.
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div id="controlPlane">
+  <button id="continueButton" class="flow-continue-btn sb-btn-png sm">Continue</button>
+</div>
+
 <!-- Dev HUD (developer-only, toggled with backtick key) -->
 <div id="devHud" class="dev-hud">
   <div class="dev-hud-bar">
