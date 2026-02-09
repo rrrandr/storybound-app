@@ -96,6 +96,13 @@ body.theme-print .section-title, body.theme-easy .section-title { text-shadow: n
 html, body { margin:0; padding:0; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--ink); font-family:var(--font-main); overflow-x:hidden; min-height:100vh; }
 body { text-align:center; padding:0; transition: background 0.3s, color 0.3s; }
 
+/* Custom scrollbar — grey/charcoal to match dark theme */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #1a1a1a; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #666; }
+* { scrollbar-width: thin; scrollbar-color: #444 #1a1a1a; }
+
 /* ═══════════════════════════════════════════════════════════════════
    NIGHT MODE - Dims app environment only
    Book cover and book object remain unchanged
@@ -1444,28 +1451,35 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 .character-tarot-fields {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    flex: 1;
+    gap: 4px;
+    flex: 0 0 auto; /* Don't stretch - natural height */
     overflow: hidden;
-    /* Padding to avoid black border lines of PNG - generous margins, scaled for larger card */
-    padding: 60px 22px 48px 22px;
+    /* Padding to keep content inside black border lines of PNG */
+    padding: 60px 25px 48px 25px;
     background: transparent;
 }
 
 .character-tarot-card .character-field {
     display: flex;
     flex-direction: column;
+    align-items: center; /* Center label and input */
+    flex: 0 0 auto; /* Neutralize legacy row-layout flex-basis (e.g. 90px) that controls height in column */
     width: 100%;
+    max-width: none; /* Override legacy .character-field-gender/pronouns 100px cap */
+    min-width: 0;    /* Override legacy 80px floor */
     /* No bounding box - only inputs are embossed */
     background: transparent;
     border-radius: 0;
     box-shadow: none;
-    padding: 2px 0;
+    padding: 0;
+    margin: 0;
 }
 
 .character-tarot-card .character-field label {
     font-size: 0.65em;
     margin-bottom: 2px;
+    width: 100%;
+    text-align: center;
     /* Engraved label: deep charcoal with subtle highlight */
     color: #1a1612;
     text-shadow: 0 1px 0 rgba(218, 165, 32, 0.2);
@@ -1478,6 +1492,8 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 .character-tarot-card .character-field select {
     font-size: 0.8em;
     padding: 4px 6px;
+    width: 100%; /* Full width of container */
+    box-sizing: border-box;
     /* Pressed/embossed input field */
     background: rgba(0, 0, 0, 0.08);
     /* Inset shadow: dark on top/right, highlight on bottom/left */
@@ -1499,11 +1515,18 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 
 /* Hide custom gender/pronoun inputs completely - no space taken */
 .character-tarot-card .custom-gender-input,
-.character-tarot-card .custom-gender-input.hidden {
+.character-tarot-card .custom-gender-input.hidden,
+.character-tarot-card input.hidden {
     display: none !important;
     margin: 0 !important;
     padding: 0 !important;
     height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    visibility: hidden !important;
 }
 
 .character-tarot-card .character-field input:focus,
@@ -1522,12 +1545,25 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 
 .character-tarot-card .character-field-ancestry .rotating-placeholder {
     position: absolute;
-    top: 16px;
-    left: 4px;
-    right: 4px;
-    font-size: 0.6em;
-    color: rgba(30, 25, 15, 0.35);
+    top: 14px;  /* Align with input top (label ~12px + 2px margin) */
+    left: 6px;
+    right: 6px;
+    height: 22px;
+    font-size: 0.65em;
+    color: rgba(30, 25, 15, 0.4);
     pointer-events: none;
+    z-index: 1;
+}
+
+/* Override global 10px padding-top that pushes text out of small container */
+.character-tarot-card .character-field-ancestry .rotating-placeholder-inner {
+    padding-top: 4px;
+}
+
+/* Hide native placeholder when rotating suggestions are present */
+/* Specificity must beat .character-tarot-card .character-field input::placeholder (0-2-2) */
+.character-tarot-card .character-field-ancestry input.ancestry-field::placeholder {
+    opacity: 0;
 }
 
 /* Character tarot card with fate overlay - positioned relatively for absolute children */
@@ -1589,6 +1625,74 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     line-height: 1.4;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* RESPONSIVE CHARACTER CARDS — Narrow screens                                     */
+/* Move fields up so Ancestry stays visible; shrink Destiny deck 50%              */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    /* Reduce top padding to push fields up — keeps Ancestry visible */
+    .character-tarot-fields {
+        padding: 40px 20px 30px 20px;
+        gap: 2px;
+    }
+
+    .character-tarot-card .character-field label {
+        font-size: 0.55em;
+        margin-bottom: 1px;
+    }
+
+    .character-tarot-card .character-field input,
+    .character-tarot-card .character-field select {
+        font-size: 0.7em;
+        padding: 3px 5px;
+    }
+
+    /* Shrink Destiny deck 50% — transform + negative margins to reclaim layout space */
+    #characterSectionRow .destiny-mini-deck-stack {
+        transform: scale(0.5);
+        transform-origin: center center;
+        margin: -62px -37px; /* (248-124)/2 vertical, (148-74)/2 horizontal */
+    }
+
+    /* Reduce row gap so cards can breathe */
+    .story-shape-row {
+        gap: 12px;
+        padding: 0 8px;
+    }
+
+    /* Allow character cards to shrink further */
+    #characterSectionRow .character-tarot-card {
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 500px) {
+    /* Extra-narrow: even tighter field spacing */
+    .character-tarot-fields {
+        padding: 30px 15px 20px 15px;
+        gap: 1px;
+    }
+
+    .character-tarot-card .character-field label {
+        font-size: 0.5em;
+    }
+
+    .character-tarot-card .character-field input,
+    .character-tarot-card .character-field select {
+        font-size: 0.65em;
+        padding: 2px 4px;
+    }
+
+    .story-shape-row {
+        gap: 6px;
+        padding: 0 4px;
+    }
+
+    #characterSectionRow .character-tarot-card {
+        min-width: 100px;
+    }
+}
+
 /* Continue button wrapper - bottom center */
 .character-continue-wrapper {
     width: 100%;
@@ -1603,13 +1707,6 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* IDENTITY CARD FLYING CLONE — Fly-to-breadcrumb transition                       */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
-.identity-card-flying {
-    /* Styles set inline via JS, but ensure smooth transition */
-    will-change: transform, left, top, width, height;
-}
-
 /* Story Shape Character - internal layout only, width owned by parent */
 .story-shape-character {
     display: flex;
@@ -2898,27 +2995,9 @@ select:-webkit-autofill {
     opacity: 1;
 }
 
-/* Selected mode card glow */
+/* Selected mode card - no glow, just z-index for layering */
 .mode-card.selected {
     z-index: 20;
-}
-
-.mode-card.selected::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 12px;
-    background: linear-gradient(135deg,
-        rgba(218, 165, 32, 0.6),
-        rgba(255, 215, 0, 0.4),
-        rgba(218, 165, 32, 0.6));
-    z-index: -1;
-    animation: mode-card-glow 2s ease-in-out infinite;
-}
-
-@keyframes mode-card-glow {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
 }
 
 /* Dim non-selected cards when one is selected */
@@ -3525,9 +3604,57 @@ select {
 .loading-cancel-btn:hover { color: var(--gold); }
 .loading-cancel-btn.visible { display: block; }
 
-/* BURGER */
-#burgerBtn { position:fixed; top:15px; right:15px; z-index:5000; font-size:1.8em; background:none; border:none; color:var(--pink); padding:0; cursor:pointer; text-shadow: 0 0 5px var(--hot); box-shadow:none; }
-#burgerBtn:hover { transform: scale(1.1); box-shadow:none; }
+/* BURGER & BACK ARROW — Gleam on hover */
+#burgerBtn,
+#globalBackBtn {
+    position: fixed;
+    z-index: 5000;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: none;
+    line-height: 0;
+    overflow: hidden;
+    border-radius: 4px;
+}
+#burgerBtn { top: 10px; right: 10px; }
+#globalBackBtn { top: 15px; left: 15px; }
+
+#burgerBtn::after,
+#globalBackBtn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -30%;
+    width: 30%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.08) 25%,
+        rgba(255, 255, 255, 0.30) 50%,
+        rgba(255, 255, 255, 0.08) 75%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+}
+
+#burgerBtn:hover::after,
+#globalBackBtn:hover::after {
+    opacity: 1;
+    animation: gleam-sweep 0.7s ease-out forwards;
+}
+
+#burgerBtn:hover,
+#globalBackBtn:hover {
+    transform: scale(1.1);
+    box-shadow: none;
+}
+
+#burgerBtn img { filter: none; }
 
 /* VISUALIZE MODAL — z-index above sparkles (5000) */
 #vizModal { z-index: 6000; }
@@ -3967,7 +4094,7 @@ textarea.fate-field {
 .rotating-placeholder-inner {
     display: inline-block;
     padding-top: 10px;
-    animation: scrollPlaceholder 30s linear infinite;
+    animation: scrollPlaceholder 39s linear infinite;
 }
 .rotating-placeholder-inner .suggestion {
     display: inline;
@@ -4501,34 +4628,28 @@ textarea.fate-field {
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 /* DESTINY FLYING CARDS — Animated cards that fly from deck to character positions */
-/* Y-AXIS FLIP with PNG art — Gold-Tarot-Card-DESTINY-X.png back                   */
+/* PEEL-OPEN FLIP with PNG art — Gold-Tarot-Card-DESTINY-X.png back                */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .destiny-flying-card {
     position: fixed;
-    width: 55px;
-    height: 85px;
+    /* Width/height set dynamically by JS for grow animation */
     z-index: 2000;
     pointer-events: none;
-    perspective: 800px;
+    perspective: 1200px;
     /* No background, border, or box-shadow on container — PNG provides visuals */
     background: transparent;
     border: none;
-    border-radius: 4px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
 }
 
-/* Flying card inner — 3D flip container */
+/* Flying card inner — 3D flip container, transform controlled by JS */
 .destiny-flying-card-inner {
     width: 100%;
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* When flipping — Y-axis rotation */
-.destiny-flying-card.flipping .destiny-flying-card-inner {
-    transform: rotateY(180deg);
+    /* No CSS transition — JS handles smooth animation */
 }
 
 /* Card faces — positioned for 3D flip */
@@ -4537,15 +4658,16 @@ textarea.fate-field {
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
-    border-radius: 4px;
+    border-radius: 8px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    box-shadow: inset 0 0 0 1px rgba(218, 165, 32, 0.3);
 }
 
-/* BACK — Gold-Tarot-Card-DESTINY-X.png (Character/Identity corridor) */
+/* BACK — Black-DestinyChoice-back.png (peels from Destiny's Choice deck) */
 .destiny-flying-card-back {
-    background-image: url('/assets/card-art/cards/Gold-Tarot-Card-DESTINY-X.png');
+    background-image: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
     /* No border, no gradient — PNG only */
 }
 
@@ -4559,6 +4681,21 @@ textarea.fate-field {
 /* Love Interest face variant */
 .destiny-flying-card-front[data-face="love-interest"] {
     background-image: url('/assets/card-art/cards/Love-Interest-face.png');
+}
+
+/* Live front face — cloned character card with actual fields */
+.destiny-flying-card-front-live {
+    transform: rotateY(180deg);
+    overflow: hidden;
+    background: transparent;
+}
+
+/* Ensure cloned card fills the flying card face */
+.destiny-flying-card-front-live .character-tarot-card {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    aspect-ratio: auto !important;
 }
 
 /* No text overlays — PNG has baked text */
@@ -6472,7 +6609,7 @@ textarea.fate-field {
 
 .synopsis-panel {
     position: fixed;
-    bottom: 20px;
+    bottom: 56px; /* Above the Continue button (12px + 39px button + 5px gap) */
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
@@ -6483,10 +6620,10 @@ textarea.fate-field {
         rgba(180, 150, 85, 0.85) 70%,
         rgba(165, 140, 80, 0.82) 100%);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    padding: 16px 24px;
-    /* Wider horizontal layout at bottom of screen */
-    width: auto;
-    max-width: 800px;
+    padding: 12px 24px;
+    /* Wide layout — aim for 2 lines of synopsis text */
+    width: 90vw;
+    max-width: 1100px;
     min-height: auto;
     max-height: none;
     overflow: visible; /* Allow border SVG to extend slightly */
@@ -6689,11 +6826,15 @@ textarea.fate-field {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   DSP MOBILE — HIDDEN on mobile screens entirely
+   DSP HIDDEN — When screen is too narrow for synopsis layout
    ═══════════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
     .synopsis-panel {
         display: none !important;
+    }
+    /* When DSP is hidden, restore Continue button to default position */
+    body:has(.synopsis-panel.visible) #controlPlane {
+        bottom: 48px;
     }
 }
 
@@ -6737,33 +6878,44 @@ textarea.fate-field {
    Visual organization only - selection logic remains flat/single-select
    ═══════════════════════════════════════════════════════════════════ */
 
-/* PASS 9F: Relationship Dynamics - unified margins with other sections */
-/* Corridor owns vertical space; content negotiates within it */
+/* PASS 9F: Relationship Dynamics — flat grid, groups removed via display:contents.
+   11 cards: 6+5 on wide screens, 4+4+3 on medium, 3-col on narrow. */
 .dynamic-grouped {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(68px, 112px));
     gap: 12px;
+    justify-content: center;
     width: 95%;
-    margin: 0 auto; /* Horizontal center only */
+    max-width: 760px; /* 6×112 + 5×12 = 732, + breathing room */
+    margin: 0 auto;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* Flatten group wrappers so .sb-card elements become direct grid children */
 .dynamic-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
+    display: contents;
+}
+.dynamic-group .sb-grid {
+    display: contents;
 }
 
 .dynamic-group-label {
-    /* Hidden - cards are self-explanatory */
     display: none;
 }
 
-/* Dynamic group inherits flex spread from .style-cards */
-.dynamic-group .style-cards {
-    gap: 14px 16px;
+@media (max-width: 800px) {
+    .dynamic-grouped {
+        grid-template-columns: repeat(4, minmax(68px, 112px));
+        max-width: 496px; /* 4×112 + 3×12 */
+    }
+}
+@media (max-width: 500px) {
+    .dynamic-grouped {
+        grid-template-columns: repeat(3, minmax(60px, 90px));
+        max-width: 302px;
+        gap: 8px;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -6805,16 +6957,29 @@ textarea.fate-field {
     align-content: center; /* Center rows vertically within available space */
     align-items: center;
     width: 95%;
-    max-width: 814px; /* 5 cards max: 5×150 + 4×16 */
+    max-width: 624px; /* 5 cards max: 5×112 + 4×16 */
     margin: 0 auto; /* Horizontal center only, vertical handled by parent */
 }
 
 /* Size-specific grids inherit max-width cap */
-.sb-grid-4, .sb-grid-5, .sb-grid-6, .sb-grid-9 {
+.sb-grid-4, .sb-grid-5, .sb-grid-9 {
     width: 95%;
 }
 
+/* 6-card grid: wider to fit all 6 on one row (6×112 + 5×16 = 752px) */
+.sb-grid-6 {
+    width: 95%;
+    max-width: 760px;
+}
+
 /* Medium screens */
+@media (max-width: 800px) {
+    /* 6-card grid: force 3+3 wrapping when 6 won't fit in one row */
+    .sb-grid-6 {
+        max-width: 368px; /* 3×112 + 2×16 = 368px */
+    }
+}
+
 @media (max-width: 700px) {
     .sb-grid,
     .sb-grid-4,
@@ -6844,9 +7009,9 @@ textarea.fate-field {
 .archetype-grid-8 {
     display: grid !important; /* Override corridor-section flex */
     flex-direction: unset !important;
-    /* Grid columns scale via minmax, cards fill cells */
-    grid-template-columns: repeat(4, minmax(90px, 150px));
-    gap: 16px;
+    /* Grid columns scale via minmax — cards 25% smaller than original 150px max */
+    grid-template-columns: repeat(4, minmax(68px, 112px));
+    gap: 12px;
     justify-content: center;
     align-content: center;
     max-width: 95%;
@@ -6863,21 +7028,21 @@ textarea.fate-field {
 
 @media (max-width: 700px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(4, minmax(80px, 130px));
-        gap: 12px;
+        grid-template-columns: repeat(4, minmax(60px, 98px));
+        gap: 10px;
     }
 }
 
 @media (max-width: 560px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(2, minmax(90px, 150px));
-        gap: 12px;
+        grid-template-columns: repeat(2, minmax(68px, 112px));
+        gap: 10px;
     }
 }
 
 @media (max-width: 400px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(2, minmax(80px, 120px));
+        grid-template-columns: repeat(2, minmax(60px, 90px));
         gap: 8px;
     }
 }
@@ -6978,38 +7143,42 @@ textarea.fate-field {
 }
 
 /* ARCHETYPE PRINTED DESCRIPTION — visible only when zoomed
-   Positioned ABOVE the divider line, below the mask artwork */
+   Positioned between mask and dark bar at bottom */
 .archetype-printed-desc {
     display: none; /* Hidden in grid view */
     position: absolute;
-    /* Position above the divider: ~28-30% from bottom leaves room for divider + title */
-    bottom: 28%;
+    bottom: 30%; /* Just below the mask chin */
     left: 8px;
     right: 8px;
     font-family: 'Lora', serif;
     font-size: 7px;
     line-height: 1.25;
-    color: #1a1a1a; /* Black, printed look */
+    /* Black text faintly pressed into gold surface */
+    color: rgba(15, 12, 8, 0.5);
     text-align: center;
-    /* Printed feel: no glow, no outline, flat */
-    text-shadow: none;
-    background: rgba(255, 248, 230, 0.85); /* Subtle parchment backing */
+    text-shadow: 0 0.5px 0 rgba(255, 235, 180, 0.35); /* Debossed into gold */
+    background: transparent;
     padding: 4px 3px;
     border-radius: 2px;
-    max-height: 18%;
+    max-height: 10%;
     overflow: hidden;
 }
 
 /* Show description only when card is zoomed — scaled for larger card */
 .archetype-card.zoomed .archetype-printed-desc {
     display: block;
-    font-size: 9px;
+    font-size: 5px;
     line-height: 1.3;
-    bottom: 26%;
+    bottom: auto;
+    top: calc(58% + 35px); /* 35px below mask image bottom (~58% from top) */
     left: 12px;
     right: 12px;
-    padding: 6px 5px;
-    max-height: 20%;
+    padding: 3px 5px;
+    max-height: 10%;
+    background: transparent;
+    /* Black text faintly pressed into gold surface */
+    color: rgba(15, 12, 8, 0.5);
+    text-shadow: 0 0.5px 0 rgba(255, 235, 180, 0.35); /* Gold highlight below = debossed */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -7034,13 +7203,45 @@ textarea.fate-field {
     z-index: 5;
 }
 
-/* Show modifier box when zoomed */
+/* ZOOMED: Show modifier box between card bottom and Continue button */
 .archetype-card.zoomed .archetype-modifier-box {
-    display: block;
-    bottom: 18%;
-    left: 15px;
-    right: 15px;
-    height: 18px;
+    display: flex;
+    align-items: center;
+    bottom: auto;
+    top: calc(100% + 6px); /* Right below the card */
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 2px;
+    z-index: 10;
+    cursor: pointer;
+    overflow: visible; /* Allow dropdown to extend above the box */
+    pointer-events: auto;
+}
+
+/* "Modifier" gold label on the left — sits above scrolling text */
+.archetype-card.zoomed .archetype-modifier-box::before {
+    content: 'Modifier';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    font-family: 'Cinzel', 'Lora', serif;
+    font-size: 5px;
+    font-weight: 700;
+    font-variant: small-caps;
+    color: var(--gold);
+    text-shadow: 0 0 4px rgba(218, 165, 32, 0.4);
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    z-index: 2;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    border-radius: 2px 0 0 2px;
 }
 
 /* Modifier marquee container */
@@ -7050,6 +7251,16 @@ textarea.fate-field {
     height: 100%;
     white-space: nowrap;
     animation: marqueeScroll 12s linear infinite;
+}
+
+/* Zoomed: seamless left scroll, always visible, grey text */
+.archetype-card.zoomed .archetype-modifier-marquee {
+    animation: marqueeScroll 20s linear infinite;
+    padding-left: 90px; /* Clear space for "Modifier" label */
+    overflow: hidden; /* Clip scrolling text within marquee bounds */
+    /* Fade text out on the left as it approaches "Modifier" label */
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 10%, black 18%, black 100%);
+    mask-image: linear-gradient(to right, transparent 0%, transparent 10%, black 18%, black 100%);
 }
 
 /* Modifier text styling */
@@ -7065,11 +7276,14 @@ textarea.fate-field {
 }
 
 .archetype-card.zoomed .archetype-modifier-text {
-    font-size: 10px;
+    font-size: 5px;
     padding-right: 50px;
+    font-style: normal;
+    color: #999;
+    text-shadow: none;
 }
 
-/* Marquee scroll animation — subtle, slow movement */
+/* Marquee scroll animation — grid view, subtle left scroll */
 @keyframes marqueeScroll {
     0% {
         transform: translateX(0);
@@ -7079,9 +7293,54 @@ textarea.fate-field {
     }
 }
 
+/* marqueeScrollRight removed — zoomed view now uses seamless marqueeScroll */
+
 /* Pause marquee on hover for readability */
 .archetype-modifier-box:hover .archetype-modifier-marquee {
     animation-play-state: paused;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MODIFIER DROPDOWN MENU — Opens on click, lists available secondary archetypes
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.archetype-modifier-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    margin-bottom: 2px;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 2px;
+    max-height: 80px;
+    overflow-y: auto;
+    z-index: 20;
+    padding: 2px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #444 #1a1a1a;
+}
+
+.archetype-modifier-dropdown::-webkit-scrollbar { width: 4px; }
+.archetype-modifier-dropdown::-webkit-scrollbar-track { background: #1a1a1a; }
+.archetype-modifier-dropdown::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+
+.archetype-modifier-dropdown-item {
+    padding: 2px 4px;
+    font-family: 'Lora', serif;
+    font-size: 5px;
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.archetype-modifier-dropdown-item:hover {
+    background: rgba(255, 215, 0, 0.15);
+}
+
+.archetype-modifier-dropdown-item.selected {
+    color: var(--gold);
+    font-weight: 700;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -7104,11 +7363,18 @@ textarea.fate-field {
     aspect-ratio: 2.75 / 4.75;
     /* Single column slot */
     grid-column: span 1;
-    /* DECK PRESENCE: Heavy shadow for stacked deck effect */
+    /* DECK PRESENCE: Gold outline + heavy shadow matching naming corridor */
     filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6));
     /* ISOLATION: Own stacking context, immune to external transforms */
     isolation: isolate;
     transform: none !important;
+}
+
+/* Gold outline on the top card face — matches naming corridor deck presence */
+.destiny-choice-card .sb-card-back.destiny-choice-back {
+    border: 1px solid rgba(218, 165, 32, 0.5);
+    box-shadow: 0 0 10px rgba(218, 165, 32, 0.15),
+                0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .destiny-choice-card .sb-card-inner {
@@ -7116,7 +7382,7 @@ textarea.fate-field {
     height: 100%;
     position: relative;
     z-index: 5; /* Above stack layers */
-    overflow: hidden;
+    overflow: visible; /* Allow sparkles to escape */
 }
 
 /* 5-CARD DECK STACK: Explicit layers for stability (immune to transform/flip changes) */
@@ -7124,35 +7390,36 @@ textarea.fate-field {
     position: absolute;
     inset: 0;
     background: url('/assets/card-art/cards/Black-DestinyChoice-back.png') center/cover no-repeat;
-    border: none;
-    border-radius: 0;
+    border: 1px solid rgba(218, 165, 32, 0.3);
+    border-radius: 4px;
     pointer-events: none;
     overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Stack offsets via transform (cleaner than top/left) */
+/* Stack offsets via transform — matching naming corridor stacked deck */
 .destiny-stack-layer.layer-5 {
     transform: translate(8px, 8px);
     z-index: 1;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 .destiny-stack-layer.layer-4 {
     transform: translate(6px, 6px);
     z-index: 2;
-    opacity: 0.8;
+    opacity: 0.85;
 }
 
 .destiny-stack-layer.layer-3 {
     transform: translate(4px, 4px);
     z-index: 3;
-    opacity: 0.85;
+    opacity: 0.9;
 }
 
 .destiny-stack-layer.layer-2 {
     transform: translate(2px, 2px);
     z-index: 4;
-    opacity: 0.9;
+    opacity: 0.95;
 }
 
 /* BACK SIDE: Black Destiny Choice PNG — DECK face */
@@ -7252,9 +7519,9 @@ textarea.fate-field {
 
 .destiny-choice-sparkle-container {
     position: absolute;
-    inset: 0;
+    inset: -8px;
     pointer-events: none;
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* Responsive sizing for Destiny's Choice — matches standard sb-card sizing */
@@ -7309,8 +7576,13 @@ textarea.fate-field {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 8px;
+}
+
+/* Allow sparkles to escape card bounds for last-zoomed indicator */
+.archetype-card.last-zoomed {
+    overflow: visible;
 }
 
 /* Dissolve sparkle effect — positioned relative to archetype grid */
@@ -7492,18 +7764,19 @@ textarea.fate-field {
 /* Cards are dumb rectangles that fill their grid cell */
 .sb-card {
     width: 100%;
-    max-width: 150px;
+    max-width: 112px; /* 25% smaller than 150px */
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     perspective: 1000px;
     cursor: pointer;
     /* Z-INDEX CAP: Cards must never exceed z-index 50 (button is 1000) */
     position: relative;
     z-index: 10;
+    overflow: visible; /* Allow sparkles to show outside card bounds */
 }
 
 /* Responsive: smaller max on narrow screens */
 @media (max-width: 400px) {
-    .sb-card { max-width: 105px; }
+    .sb-card { max-width: 79px; } /* 25% smaller than 105px */
 }
 
 /* Inner wrapper for 3D flip */
@@ -7533,7 +7806,6 @@ textarea.fate-field {
     justify-content: center;
     padding: 8px;
     box-sizing: border-box;
-    overflow: hidden;
 }
 
 /* BACK FACE - Initially visible (unclicked state), shows TITLE ONLY */
@@ -7566,6 +7838,74 @@ textarea.fate-field {
     padding-top: 10px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CARD GLEAM LAYER — Per-card rotating radial spokes
+
+   Applied to every card type: .sb-card, .authorship-card, .mode-card.
+   One .card-gleam-layer per face, inserted as first child at z-index:-1
+   (above face background-image, below ALL text/UI content).
+
+   Animation: smooth 10° pendulum — 5° fast through center, 5° decelerating to reversal.
+   Mimics a viewer shifting their gaze, not a spinning card.
+
+   Blend: mix-blend-mode: screen — additive light, preserves dark text contrast.
+   Max per-spoke opacity: 0.5. Overall multiplier: 0.7–1.0.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.card-gleam-layer {
+    position: absolute;
+    /* Oversized so the rotating rectangle always covers the card area.
+       Inscribed circle radius > parent half-diagonal for any card aspect ratio. */
+    inset: -75%;
+    pointer-events: none;
+    z-index: -1;
+    mix-blend-mode: screen;
+    opacity: var(--gleam-opacity-multiplier, 0.8);
+    /* Clip gleam to card face boundary without overflow:hidden on parent.
+       30% of 250% (due to inset:-75%) = 75%, bringing edges back to parent bounds. */
+    clip-path: inset(30%);
+    /* Animation driven by JS — organic sway with random pauses at edges */
+    will-change: transform;
+}
+
+/* Clip wrapper — used on faces with overflow:visible (authorship cards) */
+.card-gleam-clip {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: inherit;
+}
+.card-gleam-clip > .card-gleam-layer {
+    z-index: auto;
+}
+
+/* Mode cards: back face has no stacking context (no z-index/transform),
+   so z-index:-1 would escape upward. Override to 0 — no text to protect. */
+.mode-card .card-gleam-layer,
+.mode-card .card-gleam-clip {
+    z-index: 0;
+}
+
+/* Suppress gleam on breadcrumbs (too small) and transient flying cards */
+.breadcrumb-card .card-gleam-layer,
+.breadcrumb-card .card-gleam-clip {
+    display: none;
+}
+
+/* Tier cards (Tease/Indulge) and character tarot cards need position context
+   and overflow clipping for the gleam layer */
+.tier-card-btn,
+.character-tarot-card {
+    position: relative;
+    overflow: hidden;
+}
+.tier-card-btn .card-gleam-layer,
+.character-tarot-card .card-gleam-layer {
+    z-index: 0; /* Above background, below all fields/inputs */
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 /* ARCHETYPE CARD GOLD FRONT FACE — Black + Gold Art Deco, NOT purple/pink        */
 /* After flip reveal, archetype cards display their GOLD face                      */
@@ -7595,6 +7935,271 @@ textarea.fate-field {
     background: rgba(218, 165, 32, 0.15);
     border: 1px solid var(--gold);
     color: var(--gold);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* STORY PULL (PRESSURE) CARDS — Gold PNG background with black text              */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+#pressureGrid .sb-card .sb-card-back {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANKXL-back.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    justify-content: flex-start;
+    padding: 0;
+    position: relative;
+}
+
+#pressureGrid .sb-card .sb-card-back {
+    background-color: transparent;
+}
+
+#pressureGrid .sb-card .sb-card-front {
+    background-color: transparent;
+}
+
+#pressureGrid .sb-card .sb-card-back .sb-card-title {
+    position: absolute;
+    top: auto;
+    bottom: 6%;
+    left: 12%;
+    right: 12%;
+    font-family: 'lust-script-display', 'lust-script', serif;
+    font-size: 0.9em;
+    font-weight: 400;
+    color: var(--gold);
+    text-shadow: none;
+    text-align: center;
+    word-spacing: normal;
+    line-height: 1.15;
+    margin: 0;
+}
+
+#pressureGrid .sb-card .sb-card-back .sb-card-desc {
+    position: absolute;
+    top: calc(28% + 5px);
+    left: 12%;
+    right: 12%;
+    font-family: 'Lora', serif;
+    font-size: 0.65em;
+    color: rgba(30, 25, 20, 0.5);
+    line-height: 1.3;
+    text-shadow: 0 1px 0 rgba(255, 215, 0, 0.06);
+    margin: 0;
+}
+
+/* Selected state for pressure cards - sparkles only, no glow */
+#pressureGrid .sb-card.selected .sb-card-face {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* POV CARDS — Gold PNG background with black text                                 */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+#povGrid .sb-card .sb-card-back {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANKXL-back.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    justify-content: flex-start;
+    padding: 0;
+    position: relative;
+}
+
+#povGrid .sb-card .sb-card-back,
+#povGrid .sb-card .sb-card-front {
+    background-color: transparent;
+}
+
+#povGrid .sb-card .sb-card-back .sb-card-title {
+    position: absolute;
+    top: auto;
+    bottom: 6%;
+    left: 12%;
+    right: 12%;
+    font-family: 'lust-script-display', 'lust-script', serif;
+    font-size: 0.9em;
+    font-weight: 400;
+    color: var(--gold);
+    text-shadow: none;
+    text-align: center;
+    word-spacing: normal;
+    line-height: 1.15;
+    margin: 0;
+}
+
+#povGrid .sb-card .sb-card-back .sb-card-desc {
+    position: absolute;
+    top: calc(28% + 5px);
+    left: 12%;
+    right: 12%;
+    font-family: 'Lora', serif;
+    font-size: 0.65em;
+    color: rgba(30, 25, 20, 0.5);
+    line-height: 1.3;
+    text-shadow: 0 1px 0 rgba(255, 215, 0, 0.06);
+    margin: 0;
+}
+
+/* Selected state for POV cards - sparkles only, no glow */
+#povGrid .sb-card.selected .sb-card-face {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* POLARITY (DYNAMIC) CARDS — Gold PNG background with black text                  */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+#dynamicGrid .sb-card .sb-card-back {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANKXL-back.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    justify-content: flex-start;
+    padding: 0;
+    position: relative;
+}
+
+#dynamicGrid .sb-card .sb-card-back,
+#dynamicGrid .sb-card .sb-card-front {
+    background-color: transparent;
+}
+
+#dynamicGrid .sb-card .sb-card-back .sb-card-title {
+    position: absolute;
+    top: auto;
+    bottom: 6%;
+    left: 12%;
+    right: 12%;
+    font-family: 'lust-script-display', 'lust-script', serif;
+    font-size: 0.9em;
+    font-weight: 400;
+    color: var(--gold);
+    text-shadow: none;
+    text-align: center;
+    word-spacing: normal;
+    line-height: 1.15;
+    margin: 0;
+}
+
+#dynamicGrid .sb-card .sb-card-back .sb-card-desc {
+    position: absolute;
+    top: calc(28% + 5px);
+    left: 12%;
+    right: 12%;
+    font-family: 'Lora', serif;
+    font-size: 0.7em;
+    color: rgba(30, 25, 20, 0.5);
+    line-height: 1.3;
+    text-shadow: 0 1px 0 rgba(255, 215, 0, 0.06);
+    margin: 0;
+}
+
+/* Selected state for polarity cards - sparkles only, no glow */
+#dynamicGrid .sb-card.selected .sb-card-face {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* CORRIDOR CARD FACE PNGs — Black front, Gold back                               */
+/* Front (flipped/zoomed): Blank-Black-Face for all 7 corridor grids              */
+/* Back (initial view): BLANK1-back for Arousal, Length, Tone, World              */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Front face → Black card with gold Art Deco frame */
+#worldGrid .sb-card .sb-card-front,
+#toneGrid .sb-card .sb-card-front,
+#pressureGrid .sb-card .sb-card-front,
+#povGrid .sb-card .sb-card-front,
+#lengthGrid .sb-card .sb-card-front,
+#dynamicGrid .sb-card .sb-card-front,
+#intensityGrid .sb-card .sb-card-front {
+    background-image: url('/assets/card-art/cards/Blank-Black-Face.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    justify-content: center;
+    padding: 8px 10px;
+}
+
+/* Back face → Gold card for Arousal, Length, Tone, World */
+#worldGrid .sb-card .sb-card-back,
+#toneGrid .sb-card .sb-card-back,
+#intensityGrid .sb-card .sb-card-back,
+#lengthGrid .sb-card .sb-card-back {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANK1-back.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    justify-content: flex-start; /* Title positioned via padding */
+    padding: 0;
+    position: relative; /* For absolute-positioned title */
+}
+
+/* Black text positioned in gold text window on BLANK1 back */
+#worldGrid .sb-card .sb-card-back .sb-card-title,
+#toneGrid .sb-card .sb-card-back .sb-card-title,
+#intensityGrid .sb-card .sb-card-back .sb-card-title,
+#lengthGrid .sb-card .sb-card-back .sb-card-title {
+    position: absolute;
+    top: auto;
+    bottom: 6%;
+    left: 12%;
+    right: 12%;
+    color: var(--gold);
+    text-shadow: none;
+    text-align: center;
+    word-spacing: normal;
+    font-size: 14px;
+    line-height: 1.0;
+}
+
+/* Gold text on black front cards: Pull, POV, Polarity (override grid dark text) */
+#pressureGrid .sb-card .sb-card-front .sb-card-title,
+#povGrid .sb-card .sb-card-front .sb-card-title,
+#dynamicGrid .sb-card .sb-card-front .sb-card-title {
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(218, 165, 32, 0.3);
+    word-spacing: 100vw;
+    margin-top: 0;
+}
+
+#pressureGrid .sb-card .sb-card-front .sb-card-desc,
+#povGrid .sb-card .sb-card-front .sb-card-desc,
+#dynamicGrid .sb-card .sb-card-front .sb-card-desc {
+    color: var(--ink);
+    text-shadow: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* CARD SELECTION SPARKLES — Sparkle emitter for selected PNG cards               */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.card-selection-sparkles {
+    position: absolute;
+    inset: -15px; /* Extend beyond card for halo effect */
+    pointer-events: none;
+    z-index: 10;
+    overflow: visible;
+    transition: opacity 0.8s ease-out;
+}
+
+/* Fade out sparkles when card is deselected */
+.card-selection-sparkles.sparkles-fading {
+    opacity: 0;
 }
 
 .sb-card-front .sb-card-title {
@@ -7660,6 +8265,17 @@ textarea.fate-field {
 /* Selected state - glow effect */
 .sb-card.selected {
     filter: drop-shadow(0 0 10px var(--gold));
+}
+
+/* Black-face corridor cards: sparkles only, no golden glow */
+#worldGrid .sb-card.selected,
+#toneGrid .sb-card.selected,
+#intensityGrid .sb-card.selected,
+#lengthGrid .sb-card.selected,
+#pressureGrid .sb-card.selected,
+#povGrid .sb-card.selected,
+#dynamicGrid .sb-card.selected {
+    filter: none;
 }
 
 .sb-card.selected .sb-card-back {
@@ -7781,18 +8397,24 @@ textarea.fate-field {
     pointer-events: auto; /* Catch clicks to close */
 }
 
-/* Zoom portal - holds zoomed card ABOVE backdrop */
+/* Zoom portal - holds zoomed card ABOVE backdrop, uses flexbox for centering */
 .sb-zoom-portal {
     position: fixed;
     inset: 0;
     z-index: 9999; /* ABOVE backdrop */
     pointer-events: none; /* Let clicks through to backdrop by default */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Reserve bottom space for modifier box + Continue button so card centers higher */
+    padding-bottom: 70px;
+    box-sizing: border-box;
 }
 
-/* Zoomed card state - card is INSIDE portal, no ancestor interference */
+/* Zoomed card state - card is INSIDE portal, centered by flexbox */
 .sb-card.zoomed,
 .selection-card.zoomed {
-    position: absolute; /* Fallback if JS fails */
+    position: relative; /* Let flexbox handle centering */
     pointer-events: auto; /* Card itself is interactive */
     transition: transform 0.3s ease;
     /* No opacity/filter overrides needed - portal isolates from ancestors */
@@ -7825,6 +8447,20 @@ textarea.fate-field {
     border: none;
 }
 
+/* ZOOMED ARCHETYPE: Allow sparkles to escape card bounds */
+.archetype-card.zoomed {
+    overflow: visible;
+}
+.archetype-card.zoomed .sb-card-front {
+    overflow: visible;
+}
+
+/* Clip gleam to card boundary in zoomed view — front has overflow:visible for
+   modifier box + sparkles, so use clip-path instead of shrinking inset */
+.sb-card.zoomed .card-gleam-layer {
+    clip-path: inset(30% round 8px);
+}
+
 /* ARCHETYPE EDGE SPARKLES — Subtle particles around zoomed card */
 .archetype-card.zoomed::before {
     content: '';
@@ -7848,6 +8484,112 @@ textarea.fate-field {
 @keyframes archetype-sparkle-drift {
     0%, 100% { transform: scale(1); opacity: 0.6; }
     50% { transform: scale(1.02); opacity: 0.9; }
+}
+
+/* Dynamic sparkle emitters on edges of zoomed archetype card */
+.zoom-side-sparkles {
+    position: absolute;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 5;
+}
+.zoom-side-sparkles[data-side="left"],
+.zoom-side-sparkles[data-side="right"] {
+    top: 0;
+    bottom: 0;
+    width: 6px;
+}
+.zoom-side-sparkles[data-side="left"] {
+    left: -3px;
+}
+.zoom-side-sparkles[data-side="right"] {
+    right: -3px;
+}
+.zoom-side-sparkles[data-side="top"],
+.zoom-side-sparkles[data-side="bottom"] {
+    left: 0;
+    right: 0;
+    height: 6px;
+}
+.zoom-side-sparkles[data-side="top"] {
+    top: -3px;
+}
+.zoom-side-sparkles[data-side="bottom"] {
+    bottom: -3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ZOOM NAV ARROWS — Navigate between archetype cards in zoom view
+   Positioned in the zoom portal, outside the card's scale transform
+   ═══════════════════════════════════════════════════════════════════ */
+.zoom-nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 48px;
+    color: rgba(255, 215, 0, 0.6);
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 10000;
+    user-select: none;
+    transition: color 0.2s ease, transform 0.15s ease;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    font-family: 'Lora', serif;
+    line-height: 1;
+    padding: 16px 8px;
+}
+.zoom-nav-arrow:hover {
+    color: rgba(255, 215, 0, 0.9);
+}
+.zoom-nav-arrow:active {
+    transform: translateY(-50%) scale(0.9);
+}
+.zoom-nav-left {
+    left: 12px;
+}
+.zoom-nav-right {
+    right: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ZOOM CONTINUE BUTTON — Commit selection from zoomed card view
+   ═══════════════════════════════════════════════════════════════════ */
+.zoom-continue-btn {
+    position: fixed;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: auto;
+    z-index: 10000;
+    /* PNG button background — matches .sb-btn-png.sm (Black-Gold-320x88.png) */
+    background-image: url('/assets/ui/Black-Gold-320x88.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: transparent;
+    width: 160px;
+    height: 44px;
+    border: none;
+    border-radius: 0;
+    color: #ffffff;
+    font-family: 'Lora', serif;
+    font-size: 0.77rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    padding: 0;
+    cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    box-shadow: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+.zoom-continue-btn:hover {
+    filter: brightness(1.1);
+}
+.zoom-continue-btn:active {
+    transform: translateX(-50%) scale(0.96);
 }
 
 /* Flavor count indicator on face-up cards */
@@ -8005,14 +8747,35 @@ textarea.fate-field {
     font-style: italic;
 }
 
-/* Storybeau (archetype) zoom - NO pills, only custom field with scrolling modifiers */
+/* Storybeau (archetype) zoom - replaced by restyled .archetype-modifier-box */
 .sb-zoom-content-storybeau {
-    justify-content: center;
-    flex: 1;
+    display: none !important; /* Modifier box handles this now */
 }
 
 .sb-zoom-content-storybeau .sb-zoom-custom {
     margin-top: 0;
+}
+
+/* Hide the Secondary label in archetype zoom */
+.sb-zoom-content-storybeau .sb-zoom-custom-label {
+    display: none;
+}
+
+/* Style the input as a dark bar showing scrolling modifiers */
+.sb-zoom-content-storybeau .sb-zoom-custom-input {
+    height: 16px;
+    font-size: 7px;
+    padding: 2px 5px;
+    text-align: center;
+}
+
+/* Make the rotating placeholder more visible as the primary content */
+.sb-zoom-content-storybeau .sb-zoom-rotating-placeholder {
+    font-size: 7px;
+    top: 2px;
+    opacity: 0.8;
+    color: var(--gold);
+    font-style: normal;
 }
 
 /* Incompatible/dimmed state */
@@ -8049,7 +8812,7 @@ textarea.fate-field {
     background: #0a0a0a; /* Solid background to prevent content showing through */
     /* Minimal padding */
     padding-top: 2px;
-    padding-bottom: 2px;
+    padding-bottom: 0;
     /* Normal document flow - pushes content down */
     width: 100%;
 }
@@ -8071,11 +8834,12 @@ textarea.fate-field {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 4px;
+    /* No gap — spacing controlled by child margins for negative overlap */
     padding: 4px 10px 6px;
     min-height: 0;
     background: transparent;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* NEVER wrap to second row */
+    overflow: hidden;
     width: 100%;
     box-sizing: border-box;
 }
@@ -8084,67 +8848,30 @@ textarea.fate-field {
     display: none;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   RESPONSIVE BREADCRUMBS — Compact indicator on narrow screens
-   On mobile, breadcrumbs collapse to dot indicators to save space.
-   ═══════════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 600px) {
-    .breadcrumb-row {
-        gap: 3px;
-        padding: 2px 8px 4px;
-        min-height: 0;
-    }
-
-    /* Collapse breadcrumb cards to compact dots */
-    .breadcrumb-card {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        overflow: hidden;
-    }
-
-    .breadcrumb-card .sb-card-inner {
-        display: none;
-    }
-
-    /* Show dot indicator instead of card content */
-    .breadcrumb-card::before {
-        content: '';
-        position: absolute;
-        inset: 4px;
-        background: var(--gold);
-        border-radius: 50%;
-        opacity: 0.8;
-    }
-
-    /* Ghost steps also collapse to dots */
-    .ghost-step {
-        width: 28px;
-        height: 28px;
-        min-height: auto;
-        border-radius: 4px;
-        border-width: 1px;
-    }
-
-    .ghost-step .ghost-step-label {
-        display: none;
-    }
-
-    .ghost-step .ghost-step-number {
-        font-size: 10px;
-    }
-
-    .breadcrumb-card {
-        width: 28px;
-        height: 28px;
-    }
-
-    /* Compact breadcrumb tooltip on hover */
-    .breadcrumb-card:hover::after {
-        font-size: 9px;
-        padding: 2px 4px;
-    }
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* BREADCRUMB / GHOST CRUMB OVERLAP — Negative margins on narrow screens      */
+/* At wide viewports: normal 6px spacing. As viewport narrows, spacing        */
+/* reduces to zero then goes negative so cards slide behind each other.       */
+/* z-index: leftmost (earliest) on top, newer items slide underneath.         */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.breadcrumb-row > :not(:first-child) {
+    margin-left: clamp(-38px, calc(6vw - 42px), 4px);
 }
+
+/* z-index ordering: leftmost on top (position 1 = highest) */
+.breadcrumb-row > :nth-child(1)  { z-index: 13; }
+.breadcrumb-row > :nth-child(2)  { z-index: 12; }
+.breadcrumb-row > :nth-child(3)  { z-index: 11; }
+.breadcrumb-row > :nth-child(4)  { z-index: 10; }
+.breadcrumb-row > :nth-child(5)  { z-index: 9; }
+.breadcrumb-row > :nth-child(6)  { z-index: 8; }
+.breadcrumb-row > :nth-child(7)  { z-index: 7; }
+.breadcrumb-row > :nth-child(8)  { z-index: 6; }
+.breadcrumb-row > :nth-child(9)  { z-index: 5; }
+.breadcrumb-row > :nth-child(10) { z-index: 4; }
+.breadcrumb-row > :nth-child(11) { z-index: 3; }
+.breadcrumb-row > :nth-child(12) { z-index: 2; }
+.breadcrumb-row > :nth-child(13) { z-index: 1; }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* GHOST STEP PLACEHOLDERS — Pre-breadcrumb progress indicators                */
@@ -8155,20 +8882,23 @@ textarea.fate-field {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 .ghost-step {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 78px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     /* Subdued dashed outline — minimal */
     border: 1px dashed rgba(218, 165, 32, 0.25);
-    border-radius: 6px;
+    border-radius: 4px;
     background: transparent;
     /* Low contrast, ghostly appearance */
     opacity: 0.4;
     pointer-events: none; /* NOT interactive */
+    flex-shrink: 0; /* Never shrink — overlap via negative margins instead */
+    overflow: hidden;
     transition: opacity 0.3s ease, transform 0.3s ease;
+    position: relative; /* For z-index ordering */
 }
 
 /* Ghost step label: small all-caps "CHOICE" above numeral */
@@ -8179,10 +8909,11 @@ textarea.fate-field {
 /* Ghost step number: Roman numerals only */
 .ghost-step-number {
     font-family: 'Lora', serif;
-    font-size: 12px;
+    font-size: 9px;
     font-weight: 600;
     color: var(--gold);
     opacity: 0.6;
+    font-variant-caps: all-small-caps;
 }
 
 /* Ghost step fade-out when being replaced */
@@ -8213,30 +8944,34 @@ body.corridor-complete .ghost-step {
 /* No confirmation dialogs — visual signaling alone is sufficient              */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Breadcrumb Card - Minimized committed selection (plaque material) */
+/* Breadcrumb Card - Miniature tarot card showing committed selection */
 /* Sized to match ghost steps for visual consistency */
 .breadcrumb-card {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 78px;
     perspective: 500px;
     cursor: pointer; /* CLICKABLE — destructive navigation */
-    transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
     position: relative;
-    flex-shrink: 0;
-    border-radius: 6px;
+    flex-shrink: 0; /* Never shrink — overlap via negative margins instead */
+    border-radius: 4px;
     overflow: hidden;
+    /* Miniature card appearance — DSP gold/black background */
+    background-image: url('/assets/ui/DSP-Gold-Blk-720x1040.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Solo breadcrumb de-emphasis — slides/shrinks when compound breadcrumbs arrive */
+/* Solo breadcrumb de-emphasis — slight opacity fade when many breadcrumbs */
 .breadcrumb-card:first-child:not(:only-child) {
-    /* When more breadcrumbs are added, first one can shrink slightly */
-    width: 38px;
     opacity: 0.9;
 }
 
-/* Further de-emphasis when many breadcrumbs present */
 .breadcrumb-row:has(.breadcrumb-card:nth-child(4)) .breadcrumb-card:first-child {
-    width: 36px;
     opacity: 0.85;
 }
 
@@ -8251,40 +8986,39 @@ body.corridor-complete .ghost-step {
 .breadcrumb-card:hover {
     opacity: 1 !important;
     transform: scale(1.08);
-    z-index: 10;
+    z-index: 20 !important; /* Above all static z-indices (max 13) */
 }
 
 .breadcrumb-card .sb-card-inner {
-    display: none; /* Hidden at compact size - use dot indicator */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 4px;
+    box-sizing: border-box;
 }
 
-/* Compact breadcrumb: gold-outlined indicator */
+/* Breadcrumb card border overlay */
 .breadcrumb-card::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(218, 165, 32, 0.15), rgba(255, 215, 0, 0.1));
-    border: 1px solid rgba(218, 165, 32, 0.4);
-    border-radius: 6px;
+    border: 1px solid rgba(218, 165, 32, 0.5);
+    border-radius: 4px;
+    pointer-events: none;
 }
 
-/* Gold center dot */
+/* No default ::after — hover replaces it with tooltip */
 .breadcrumb-card::after {
     content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 10px;
-    height: 10px;
-    background: radial-gradient(circle, var(--gold) 0%, rgba(218, 165, 32, 0.5) 100%);
-    border-radius: 50%;
-    transition: opacity 0.2s ease;
+    display: none;
 }
 
 /* Hover: show tooltip below */
 .breadcrumb-card:hover::after {
     content: attr(data-breadcrumb-label);
+    display: block;
     position: absolute;
     top: 100%;
     left: 50%;
@@ -8297,30 +9031,80 @@ body.corridor-complete .ghost-step {
     color: var(--gold);
     font-size: 10px;
     font-family: 'Lora', serif;
+    font-variant-caps: all-small-caps;
     white-space: nowrap;
     border-radius: 4px;
     z-index: 100;
     margin-top: 6px;
 }
 
-/* Legacy card inner styles - hidden at compact size */
+/* Breadcrumb card inner content — show title as miniature card label */
 .breadcrumb-card .sb-card-face { display: none; }
-.breadcrumb-card .sb-card-back { display: none; }
+.breadcrumb-card .sb-card-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    background-color: transparent; /* Let parent's DSP background show through */
+}
 .breadcrumb-card .sb-card-front { display: none; }
-.breadcrumb-card .sb-card-title { display: none; }
+.breadcrumb-card .sb-card-title {
+    display: block;
+    font-family: 'Cinzel', 'Lora', serif;
+    font-size: 7px;
+    font-weight: 700;
+    color: #1a1612;
+    text-shadow: 0 1px 0 rgba(218, 165, 32, 0.2);
+    text-transform: none;
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+    word-break: normal;
+    overflow-wrap: normal;
+    white-space: normal;
+    max-width: 100%;
+    padding: 0 2px;
+}
 .breadcrumb-card .sb-card-desc { display: none; }
 
 /* Breadcrumb Subtitle — Nested label (e.g., flavor inside world) */
 .breadcrumb-subtitle {
     display: block;
     font-family: 'Lora', serif;
-    font-size: 8px;
+    font-size: 6px;
     color: var(--ink);
     text-align: center;
     margin-top: 2px;
     opacity: 0.75;
     font-style: italic;
     text-transform: none; /* Title Case, never uppercase */
+}
+
+/* Black-card breadcrumbs — use the card's own PNG instead of DSP gold */
+.breadcrumb-card[data-grp="world"],
+.breadcrumb-card[data-grp="tone"],
+.breadcrumb-card[data-grp="length"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANK1-back.png');
+    background-size: cover;
+}
+
+.breadcrumb-card[data-grp="pressure"],
+.breadcrumb-card[data-grp="pov"],
+.breadcrumb-card[data-grp="dynamic"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANKXL-back.png');
+    background-size: cover;
+}
+
+.breadcrumb-card[data-grp="world"] .sb-card-title,
+.breadcrumb-card[data-grp="tone"] .sb-card-title,
+.breadcrumb-card[data-grp="length"] .sb-card-title,
+.breadcrumb-card[data-grp="pressure"] .sb-card-title,
+.breadcrumb-card[data-grp="pov"] .sb-card-title,
+.breadcrumb-card[data-grp="dynamic"] .sb-card-title {
+    color: white;
+    text-shadow: none;
 }
 
 /* Ephemeral Breadcrumb — Will dissolve at POV selection */
@@ -8441,9 +9225,16 @@ body.corridor-complete .ghost-step {
     flex-direction: row;
     gap: 24px;
     flex-wrap: nowrap;
-    /* Explicit vertical centering for row layout */
+    justify-content: center;
     align-items: center;
     align-content: center;
+}
+/* Corridor-mode sets justify-content:flex-start on all .corridor-section (0-2-1 specificity).
+   Row layouts need center — this selector (0-3-1) beats the generic override. */
+body.corridor-mode .story-shape-row.corridor-section,
+body.corridor-mode .archetype-grid-8.corridor-section,
+body.corridor-mode .authorship-choice-row.corridor-section {
+    justify-content: center !important;
 }
 
 /* Section titles inside corridors - SHOW for card-flow-rows, smaller size */
@@ -8466,7 +9257,7 @@ body.corridor-complete .ghost-step {
 #archetypeSectionTitle.corridor-section {
     min-height: auto !important;
     max-height: auto !important;
-    padding: 0 0 15px 0 !important;
+    padding: 0 !important;
     display: block !important;
     flex-direction: unset !important;
 }
@@ -8477,6 +9268,45 @@ body.corridor-complete .ghost-step {
     min-height: auto !important;
     max-height: none !important;
     /* Grid display already set in .archetype-grid-8 */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   POV CORRIDOR — Multi-element stage (title + grid + continue)
+   Same pattern as storybeau: sub-elements share one corridor row
+   ═══════════════════════════════════════════════════════════════════════════════ */
+#povSectionTitle.corridor-section {
+    min-height: auto !important;
+    max-height: auto !important;
+    padding: 0 !important;
+    display: block !important;
+    flex-direction: unset !important;
+    flex: 0 0 auto !important;
+    overflow-y: visible !important;
+}
+
+#povGrid.corridor-section {
+    min-height: auto !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   AROUSAL CORRIDOR — Multi-element stage (title + grid + continue)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+#arousalSectionTitle.corridor-section {
+    min-height: auto !important;
+    max-height: auto !important;
+    padding: 0 !important;
+    display: block !important;
+    flex-direction: unset !important;
+    flex: 0 0 auto !important;
+    overflow-y: visible !important;
+}
+
+#intensityGrid.corridor-section {
+    min-height: auto !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
 }
 
 .corridor-row,
@@ -8635,12 +9465,12 @@ body.corridor-complete .ghost-step {
 }
 
 .corridor-nav-left {
-    left: 10px;
+    left: 30px;
     border-radius: 0 4px 4px 0;
 }
 
 .corridor-nav-right {
-    right: 10px;
+    right: 30px;
     border-radius: 4px 0 0 4px;
 }
 
@@ -8664,7 +9494,86 @@ body.corridor-mode {
 }
 
 body.corridor-mode #setup {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
     overflow: hidden;
+    padding-bottom: 0 !important; /* Override inline 50px during corridor */
+}
+
+body.corridor-mode .shape-your-story-header {
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+/* Corridor section titles — Lora small caps, white with gold outline */
+body.corridor-mode .section-title {
+    font-family: 'Lora', serif !important;
+    font-variant: small-caps;
+    font-size: 1em;
+    margin: 0;
+    padding: 6px 0;
+    border-top: none;
+    color: white !important;
+    -webkit-text-stroke: 0;
+    text-shadow: none !important;
+    letter-spacing: 0.06em;
+}
+
+/* Corridor sections fill remaining viewport space exactly via flex —
+   eliminates calc(100vh - header) mismatch that pushed cards down */
+body.corridor-mode .corridor-section {
+    flex: 1 1 0%;
+    min-height: 0 !important;
+    max-height: none !important;
+    /* Title right under breadcrumbs, not vertically centered */
+    justify-content: flex-start !important;
+    padding-top: 4px;
+    /* Account for fixed Continue button at bottom so cards don't hide behind it */
+    padding-bottom: 80px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Archetype sub-sections share a stage — only the grid should flex-grow */
+body.corridor-mode #archetypeSectionTitle.corridor-section {
+    flex: 0 0 auto !important;
+    overflow-y: visible !important;
+}
+body.corridor-mode .archetype-header-text.corridor-section,
+body.corridor-mode .archetype-subtext.corridor-section,
+body.corridor-mode #archetypeSelectionSummary.corridor-section {
+    flex: 0 0 auto !important;
+    padding-bottom: 0 !important;
+    overflow-y: visible !important;
+}
+
+/* POV sub-sections share a stage — title shrinks, grid grows */
+body.corridor-mode #povSectionTitle.corridor-section {
+    flex: 0 0 auto !important;
+    overflow-y: visible !important;
+    padding-bottom: 0 !important;
+}
+
+/* Arousal sub-sections share a stage — title shrinks, grid grows */
+body.corridor-mode #arousalSectionTitle.corridor-section {
+    flex: 0 0 auto !important;
+    overflow-y: visible !important;
+    padding-bottom: 0 !important;
+}
+
+/* Continue buttons should NEVER consume flex space as corridor sections */
+body.corridor-mode .flow-continue-btn.corridor-section {
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Mobile: Reduce corridor bottom padding since Continue button is scaled down */
+@media (max-width: 600px) {
+    body.corridor-mode .corridor-section {
+        padding-bottom: 40px;
+    }
 }
 
 /* Body state when corridor is complete — allow scrolling to Safety/Veto/Begin */
@@ -8703,7 +9612,7 @@ body.corridor-complete {
 
     /* Real text overlay: Lora, white */
     font-family: 'Lora', serif !important;
-    font-size: 1.1rem !important;
+    font-size: 0.77rem !important;
     font-weight: 500 !important;
     line-height: 1 !important;
     color: #ffffff !important;
@@ -8740,16 +9649,16 @@ body.corridor-complete {
     clip-path: inset(0 1px 0 0);
 }
 
-/* CONTINUE PNG: Black-Gold-400x112.png — native 400×112, display at 200×56 */
+/* CONTINUE PNG: Black-Gold-400x112.png — native 400×112, display at 140×39 (30% smaller) */
 .flow-continue-btn.sb-btn-png.sm {
     background-image: url('/assets/ui/Black-Gold-400x112.png') !important;
-    width: 200px !important;
-    height: 56px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
-    min-height: 56px !important;
-    max-height: 56px !important;
-    flex: 0 0 200px !important;
+    width: 140px !important;
+    height: 39px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    min-height: 39px !important;
+    max-height: 39px !important;
+    flex: 0 0 140px !important;
     box-sizing: border-box !important;
 }
 
@@ -8766,12 +9675,12 @@ body.corridor-complete {
 #continueFromDynamic,
 #continueFromSafety,
 #continueFromVetoquill {
-    width: 200px !important;
-    height: 56px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
-    min-height: 56px !important;
-    max-height: 56px !important;
+    width: 140px !important;
+    height: 39px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    min-height: 39px !important;
+    max-height: 39px !important;
     flex: 0 0 auto !important;
     flex-shrink: 0 !important;
     flex-grow: 0 !important;
@@ -8781,12 +9690,12 @@ body.corridor-complete {
 .corridor-section > .flow-continue-btn,
 .story-shape-row > .flow-continue-btn,
 .authorship-choice-row > .flow-continue-btn {
-    width: 200px !important;
-    height: 56px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
-    min-height: 56px !important;
-    max-height: 56px !important;
+    width: 140px !important;
+    height: 39px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    min-height: 39px !important;
+    max-height: 39px !important;
     align-self: center !important;
     flex: 0 0 auto !important;
 }
@@ -8806,15 +9715,20 @@ body.corridor-complete {
     pointer-events: none; /* Layer doesn't block interaction with content below */
 }
 
+/* When DSP is visible, move Continue button to very bottom of screen */
+body:has(.synopsis-panel.visible) #controlPlane {
+    bottom: 12px;
+}
+
 #controlPlane #continueButton {
     pointer-events: auto; /* Button itself is clickable */
     display: none; /* Hidden by default, shown by JS when appropriate */
-    width: 200px !important;
-    height: 56px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
-    min-height: 56px !important;
-    max-height: 56px !important;
+    width: 140px !important;
+    height: 39px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    min-height: 39px !important;
+    max-height: 39px !important;
     margin: 0;
     /* Subtle halo for visual authority when floating over content */
     box-shadow:
@@ -8844,6 +9758,19 @@ body.corridor-complete {
 .sb-zoom-backdrop.active ~ #controlPlane,
 body:has(.sb-card.zoomed) #controlPlane {
     display: none !important;
+}
+
+/* Mobile: Scale Continue button down 50% */
+@media (max-width: 600px) {
+    #controlPlane {
+        transform: translateX(-50%) scale(0.5);
+        bottom: 24px;
+    }
+    #controlPlane #continueButton {
+        box-shadow:
+            0 0 0 2px rgba(255, 215, 128, 0.35),
+            0 16px 48px rgba(0, 0, 0, 0.65);
+    }
 }
 
 /* Hide control plane during gate screens (age, TOS, tier) */
@@ -9164,6 +10091,15 @@ body:has(#tierGate:not(.hidden)) #controlPlane {
     }
 }
 
+/* Active breadcrumb sparkles — surrounds the most recent breadcrumb */
+.breadcrumb-active-sparkles {
+    position: absolute;
+    inset: -4px;
+    pointer-events: none;
+    z-index: 15;
+    overflow: visible;
+}
+
 /* Legacy — keep for compatibility but no longer used */
 .sb-card.becoming-breadcrumb {
     position: fixed !important;
@@ -9344,18 +10280,22 @@ body:has(#tierGate:not(.hidden)) #controlPlane {
     backface-visibility: hidden;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: center; /* Center text within constrained gold box area */
     align-items: center;
     text-align: center;
-    padding: 12px;
+    /* Pixel padding constrains content to the gold text box on the PNG.
+       Card is 242px tall; gold box spans ~42px to ~97px from top.
+       CSS %-padding resolves against WIDTH not height, so use px. */
+    padding: 42px 15px 148px 15px;
     box-sizing: border-box;
-    /* Plaque material */
-    background-color: var(--plaque-black-base, #141414);
-    background-image: var(--plaque-black-grain);
-    border: 2px solid var(--filigree-gold, #c5a356);
-    box-shadow:
-        inset 0 0 0 3px var(--plaque-black-inner, #1a1a1a),
-        0 4px 12px rgba(0, 0, 0, 0.6);
+    /* Use the gold tarot card PNG as background */
+    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANKXL-back.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 .authorship-card-back {
@@ -9367,28 +10307,25 @@ body:has(#tierGate:not(.hidden)) #controlPlane {
 }
 
 .authorship-card-title {
-    font-family: 'Cinzel', 'Playfair Display', serif;
-    font-size: 0.95em;
-    font-weight: 600;
-    color: var(--gold, #daa520);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-    margin-bottom: 8px;
+    font-family: 'lust-script-display', 'lust-script', serif;
+    font-size: 1.1em;
+    font-weight: 400;
+    color: #1a1612; /* Black text */
+    text-shadow: none;
+    margin-bottom: 4px;
+    margin-top: 15px;
 }
 
 .authorship-card-desc {
     font-family: 'Lora', serif;
     font-size: 0.75em;
-    color: rgba(245, 240, 230, 0.7);
+    color: #2a2520; /* Dark brown/black text */
     line-height: 1.3;
 }
 
-/* Selected state: gold glow */
+/* Selected state for authorship cards - sparkles only, no glow */
 .authorship-card.selected .authorship-card-face {
-    border-color: var(--gold);
-    box-shadow:
-        inset 0 0 0 3px var(--plaque-black-inner, #1a1a1a),
-        0 0 20px rgba(218, 165, 32, 0.4),
-        0 4px 12px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */

@@ -1188,39 +1188,49 @@ For veto/quill/god_mode:
       'Non-Binary': { LI_SUBJ: 'they', LI_OBJ: 'them', LI_POS: 'their', LI_REFL: 'themself' }
   };
 
+  const MC_PRONOUN_MAPS = {
+      'Male': { MC_SUBJ: 'he', MC_OBJ: 'him', MC_POS: 'his', MC_REFL: 'himself' },
+      'Female': { MC_SUBJ: 'she', MC_OBJ: 'her', MC_POS: 'her', MC_REFL: 'herself' },
+      'Non-Binary': { MC_SUBJ: 'they', MC_OBJ: 'them', MC_POS: 'their', MC_REFL: 'themself' }
+  };
+
   function resolveLIPronouns(text) {
       if (!text) return text;
       const liGender = state.loveInterest || 'Male';
-      const map = LI_PRONOUN_MAPS[liGender] || LI_PRONOUN_MAPS['Male'];
+      const liMap = LI_PRONOUN_MAPS[liGender] || LI_PRONOUN_MAPS['Male'];
+      const mcGender = state.gender || 'Female';
+      const mcMap = MC_PRONOUN_MAPS[mcGender] || MC_PRONOUN_MAPS['Female'];
       return text
-          .replace(/\{LI_SUBJ\}/g, map.LI_SUBJ)
-          .replace(/\{LI_OBJ\}/g, map.LI_OBJ)
-          .replace(/\{LI_POS\}/g, map.LI_POS)
-          .replace(/\{LI_REFL\}/g, map.LI_REFL)
-          // Capitalize sentence-start pronouns
-          .replace(/(\.\s+|\n|^)he\b/g, (m, p) => p + 'He')
-          .replace(/(\.\s+|\n|^)she\b/g, (m, p) => p + 'She')
-          .replace(/(\.\s+|\n|^)they\b/g, (m, p) => p + 'They');
+          .replace(/\{LI_SUBJ\}/g, liMap.LI_SUBJ)
+          .replace(/\{LI_OBJ\}/g, liMap.LI_OBJ)
+          .replace(/\{LI_POS\}/g, liMap.LI_POS)
+          .replace(/\{LI_REFL\}/g, liMap.LI_REFL)
+          .replace(/\{MC_SUBJ\}/g, mcMap.MC_SUBJ)
+          .replace(/\{MC_OBJ\}/g, mcMap.MC_OBJ)
+          .replace(/\{MC_POS\}/g, mcMap.MC_POS)
+          .replace(/\{MC_REFL\}/g, mcMap.MC_REFL)
+          // Capitalize sentence-start pronouns (subject, possessive, object)
+          .replace(/(^|[.!?]\s+|[\n])([a-z])/g, (m, prefix, ch) => prefix + ch.toUpperCase());
   }
   const ARCHETYPES = {
       HEART_WARDEN: {
           id: 'HEART_WARDEN',
           name: 'The Heart Warden',
-          desireStyle: '{LI_SUBJ} remembered the coffee order she\'d mentioned in passing, months ago. Even in another life, {LI_SUBJ} would have remembered.',
+          desireStyle: '{LI_POS} protection was absolute, a fortress of love and fear encircled {MC_OBJ}.',
           summary: 'Protection is not a gesture but a gravitational constant. The Heart Warden builds walls around the people {LI_SUBJ} loves and calls it devotion. Safety is {LI_POS} language, control is {LI_POS} shadow, and tenderness arrives armored.',
           stressFailure: 'over-control, authoritarian protection'
       },
       OPEN_VEIN: {
           id: 'OPEN_VEIN',
           name: 'The Open Vein',
-          desireStyle: 'Every emotion lived on the surface, unguarded — tenderness offered without condition, vulnerability worn like a second skin',
+          desireStyle: '{MC_SUBJ} felt {LI_POS} desire like it was tattooed all over {LI_OBJ}.',
           summary: 'The Open Vein gives everything before it is asked. Love is not cautious here — it is hemorrhage, offering, surrender before the first wound. {LI_SUBJ} feels too much, too soon, too visibly.',
           stressFailure: 'self-erasure, overexposure'
       },
       SPELLBINDER: {
           id: 'SPELLBINDER',
           name: 'The Spellbinder',
-          desireStyle: 'Every glance felt deliberate, every silence a trap — the room bent toward {LI_OBJ} without knowing why',
+          desireStyle: 'Every glance a lure, every silence a trap; the room bent toward {LI_OBJ}.',
           summary: 'The Spellbinder commands attention through presence alone. Charm is currency, and {LI_SUBJ} spends it selectively — never by accident. Three moves ahead, {LI_SUBJ} makes surrender feel like your idea.',
           stressFailure: 'asymmetric attachment, selective honesty'
       },
@@ -1241,7 +1251,7 @@ For veto/quill/god_mode:
       DARK_VICE: {
           id: 'DARK_VICE',
           name: 'The Dark Vice',
-          desireStyle: 'The room went quiet when {LI_SUBJ} entered — not from fear, but from the gravity of something that should not be desired',
+          desireStyle: '{LI_SUBJ} drew {MC_OBJ} toward the edge, smiling as if the fall were mutual.',
           summary: 'The Dark Vice is the thing you reach for knowing it will cost you. Power, danger, and want fused into a single presence that justifies its own harm. Restraint is performance; beneath it, something hungers.',
           stressFailure: 'escalation, rationalized harm',
           nicknameQuirk: {
@@ -1255,7 +1265,7 @@ For veto/quill/god_mode:
       BEAUTIFUL_RUIN: {
           id: 'BEAUTIFUL_RUIN',
           name: 'The Beautiful Ruin',
-          desireStyle: '{LI_POS} jaw clenched, a storm behind {LI_POS} perfect eyes — pain or shame, she couldn\'t tell',
+          desireStyle: '{LI_POS} jaw clenched, a storm behind {LI_POS} perfect eyes\u2014pain or shame, {MC_SUBJ} couldn\u2019t tell.',
           summary: 'The Beautiful Ruin destroys what {LI_SUBJ} loves before love can disappoint. Self-sabotage as preemptive strike, beauty as wreckage, tenderness laced with goodbye. "Everyone leaves" is prophecy and weapon both.',
           stressFailure: 'preemptive destruction, mutual sabotage',
           genderedExpression: {
@@ -1273,7 +1283,7 @@ For veto/quill/god_mode:
       ETERNAL_FLAME: {
           id: 'ETERNAL_FLAME',
           name: 'The Eternal Flame',
-          desireStyle: '{LI_SUBJ} remembered the coffee order she\'d mentioned once, three months ago, in passing — devotion expressed in accumulated attention',
+          desireStyle: '{LI_SUBJ} remembered {MC_POS} pleasures\u2014months, or even lifetimes later.',
           summary: 'The coffee order she\'d mentioned in passing—three months ago—was still imprinted on {LI_POS} memory, three reincarnations later.',
           stressFailure: 'self-neglect, moral endurance'
       }
@@ -1305,11 +1315,11 @@ For veto/quill/god_mode:
   }
 
   function getArchetypeSectionTitle(loveInterestGender) {
-      // Get Love Interest name from canonical input
-      const nameInput = document.getElementById('partnerNameInput');
-      const fullName = nameInput?.value?.trim() || '';
-      // Explicit fallback: Love Interest (NEVER Protagonist for this context)
-      const displayName = fullName ? deriveDisplayName(fullName) : 'Love Interest';
+      // Get Love Interest name from state (DOM input may be unmounted during storybeau stage)
+      const displayName = state.picks?.identity?.displayPartnerName
+        || (document.getElementById('partnerNameInput')?.value?.trim()
+            ? deriveDisplayName(document.getElementById('partnerNameInput').value.trim())
+            : 'Love Interest');
       // Generate possessive title: "{DISPLAY_NAME}'s Mask"
       return `${displayName}'s Mask`;
   }
@@ -11379,7 +11389,7 @@ Return ONLY the title, no quotes or explanation.`;
       const burger = document.getElementById('burgerBtn');
 
       if(backBtn) {
-          const hidden = ['ageGate', 'tosGate', 'tierGate', 'modeSelect'].includes(_currentScreenId);
+          const hidden = ['ageGate', 'tosGate', 'tierGate'].includes(_currentScreenId);
           if(hidden) backBtn.classList.add('hidden');
           else backBtn.classList.remove('hidden');
       }
@@ -12196,6 +12206,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           }
       }, 4000);
   }
+
+  // Expose for corridor mount (identity row is unmounted when initFateHandSystem runs)
+  window.initRotatingPlaceholder = initRotatingPlaceholder;
 
   // Handle fate hand click - reveal card and populate field
   function handleFateHandClick(hand) {
@@ -16443,10 +16456,23 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         zoomPortal = document.getElementById('sbZoomPortal');
       }
 
-      // Keyboard handler for Escape
+      // Keyboard handler for Escape and arrow keys
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && currentOpenCard) {
+        if (!currentOpenCard) return;
+        if (e.key === 'Escape') {
           closeZoomedCard();
+          return;
+        }
+        // Arrow key navigation for archetype zoom
+        if (currentOpenCard.classList.contains('archetype-card') && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+          const curId = currentOpenCard.dataset.archetype;
+          if (!curId) return;
+          const idx = ARCHETYPE_ORDER.indexOf(curId);
+          if (idx === -1) return;
+          const newIdx = e.key === 'ArrowLeft'
+            ? (idx - 1 + ARCHETYPE_ORDER.length) % ARCHETYPE_ORDER.length
+            : (idx + 1) % ARCHETYPE_ORDER.length;
+          navigateZoomedArchetype(ARCHETYPE_ORDER[newIdx]);
         }
       });
 
@@ -16578,9 +16604,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // TAROT ASPECT RATIO: 2.75 / 4.75 (canonical proportions)
       // Calculate zoomed size based on aspect ratio, not original rect
       const tarotAspect = 2.75 / 4.75;
-      const padding = 120;
-      const maxWidth = window.innerWidth - padding;
-      const maxHeight = window.innerHeight - padding;
+      const sidePadding = 60;
+      const topPadding = 40;
+      const bottomPadding = 90; // modifier box + continue button + portal padding
+      const maxWidth = window.innerWidth - sidePadding * 2;
+      const maxHeight = window.innerHeight - topPadding - bottomPadding;
 
       // Calculate max dimensions that fit viewport while maintaining aspect ratio
       let zoomedWidth, zoomedHeight;
@@ -16594,23 +16622,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         zoomedHeight = zoomedWidth / tarotAspect;
       }
 
-      // Calculate centered position
-      const centeredLeft = (window.innerWidth - zoomedWidth) / 2;
-      const centeredTop = (window.innerHeight - zoomedHeight) / 2;
-
       // PORTAL MOVE: Move card into zoom portal
       if (zoomPortal) {
         zoomPortal.appendChild(card);
       }
 
-      // Apply zoom styling with correct tarot proportions
+      // Apply zoom styling - flexbox in portal handles centering
       card.classList.add('zoomed');
-      card.style.position = 'absolute';
-      card.style.left = `${centeredLeft}px`;
-      card.style.top = `${centeredTop}px`;
       card.style.width = `${zoomedWidth}px`;
       card.style.height = `${zoomedHeight}px`;
       card.style.transform = 'none';
+      card.style.position = '';
+      card.style.left = '';
+      card.style.top = '';
 
       // Show backdrop
       if (zoomBackdrop) {
@@ -16670,6 +16694,21 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     function closeZoomedCard() {
       if (!currentOpenCard) return;
 
+      const wasArchetype = currentOpenCard.classList.contains('archetype-card');
+
+      // Stop and remove zoom side sparkle emitters
+      ['left', 'right', 'top', 'bottom'].forEach(side => {
+        const id = `zoomSideSparkles_${side}`;
+        stopSparkleEmitter(id);
+        const el = currentOpenCard.querySelector(`#${id}`);
+        if (el) el.remove();
+      });
+
+      // Remove zoom nav arrows and zoom continue button from portal
+      if (zoomPortal) {
+        zoomPortal.querySelectorAll('.zoom-nav-arrow, .zoom-continue-btn').forEach(el => el.remove());
+      }
+
       // Remove any dynamically added zoom content
       const zoomContent = currentOpenCard.querySelector('.sb-zoom-content');
       if (zoomContent) {
@@ -16685,6 +16724,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       currentOpenCard.style.width = '';
       currentOpenCard.style.height = '';
       currentOpenCard.style.position = '';
+
+      // Remove inlined backgrounds (grid-scoped selectors take over once card is back)
+      removeInlinedBackgrounds(currentOpenCard);
 
       // PORTAL RESTORE: Move card back to original DOM position
       if (zoomOriginalParent) {
@@ -16717,11 +16759,68 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Re-apply layer states
       updateSelectionCardStates();
+
+      // Post-close: start corridor sparkles for archetype cards
+      if (wasArchetype) {
+        startLastZoomedSparkles();
+      }
     }
+
+    // Resize zoomed card on window resize (flexbox handles centering)
+    function recenterZoomedCard() {
+      if (!currentOpenCard || !currentOpenCard.classList.contains('zoomed')) return;
+
+      const tarotAspect = 2.75 / 4.75;
+      const sidePadding = 60;
+      const topPadding = 40;
+      const bottomPadding = 90; // modifier box + continue button + portal padding
+      const maxWidth = window.innerWidth - sidePadding * 2;
+      const maxHeight = window.innerHeight - topPadding - bottomPadding;
+
+      let zoomedWidth, zoomedHeight;
+      if (maxWidth / maxHeight > tarotAspect) {
+        zoomedHeight = maxHeight;
+        zoomedWidth = zoomedHeight * tarotAspect;
+      } else {
+        zoomedWidth = maxWidth;
+        zoomedHeight = zoomedWidth / tarotAspect;
+      }
+
+      // Flexbox handles centering, just update size
+      currentOpenCard.style.width = `${zoomedWidth}px`;
+      currentOpenCard.style.height = `${zoomedHeight}px`;
+    }
+
+    // Add resize listener for zoomed card centering
+    window.addEventListener('resize', recenterZoomedCard);
 
     // Legacy alias for compatibility
     function closeSelectionCard() {
       closeZoomedCard();
+    }
+
+    // Inline computed background-image on card faces before portal move.
+    // Grid-scoped selectors (#worldGrid .sb-card .sb-card-front, etc.) break
+    // when the card is moved to the zoom portal, so we bake the URL inline.
+    function inlineCardFaceBackgrounds(card) {
+      card.querySelectorAll('.sb-card-face').forEach(face => {
+        if (face.dataset.bgInlined) return;
+        const bg = getComputedStyle(face).backgroundImage;
+        if (bg && bg !== 'none') {
+          face.style.backgroundImage = bg;
+          face.dataset.bgInlined = '1';
+        }
+      });
+    }
+
+    // Remove inlined backgrounds when card returns to grid
+    function removeInlinedBackgrounds(card) {
+      card.querySelectorAll('.sb-card-face').forEach(face => {
+        if (face.dataset.bgInlined) {
+          face.style.backgroundImage = '';
+          delete face.dataset.bgInlined;
+        }
+      });
     }
 
     // STATE 3: Open zoomed view for .sb-card elements
@@ -16735,8 +16834,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       currentOpenCard = card;
 
-      // Dim all other cards
-      document.querySelectorAll('.sb-card[data-grp]').forEach(c => {
+      // Dim all other cards in same group
+      document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
         if (c !== card) c.classList.add('dimmed');
       });
 
@@ -16750,6 +16849,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         populatePressureZoomContent(card, val);
       }
 
+      // Inline background-image before portal move (grid-scoped selectors break in portal)
+      inlineCardFaceBackgrounds(card);
+
       // Get card position BEFORE moving to portal
       const rect = card.getBoundingClientRect();
 
@@ -16762,27 +16864,21 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       card.dataset.zoomOriginalTop = rect.top;
 
       // TAROT ASPECT RATIO: 2.75 / 4.75 (canonical proportions)
-      // Calculate zoomed size based on aspect ratio, not original rect
       const tarotAspect = 2.75 / 4.75;
-      const padding = 120;
-      const maxWidth = window.innerWidth - padding;
-      const maxHeight = window.innerHeight - padding;
+      const sidePadding = 60;
+      const topPadding = 40;
+      const bottomPadding = 90;
+      const maxWidth = window.innerWidth - sidePadding * 2;
+      const maxHeight = window.innerHeight - topPadding - bottomPadding;
 
-      // Calculate max dimensions that fit viewport while maintaining aspect ratio
       let zoomedWidth, zoomedHeight;
       if (maxWidth / maxHeight > tarotAspect) {
-        // Height-constrained: fill height, calculate width from aspect
         zoomedHeight = maxHeight;
         zoomedWidth = zoomedHeight * tarotAspect;
       } else {
-        // Width-constrained: fill width, calculate height from aspect
         zoomedWidth = maxWidth;
         zoomedHeight = zoomedWidth / tarotAspect;
       }
-
-      // Calculate centered position
-      const centeredLeft = (window.innerWidth - zoomedWidth) / 2;
-      const centeredTop = (window.innerHeight - zoomedHeight) / 2;
 
       // PORTAL MOVE: Move card into zoom portal (breaks ALL ancestor contexts)
       if (zoomPortal) {
@@ -16791,17 +16887,220 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Apply zoom styling with correct tarot proportions
       card.classList.add('zoomed');
-      card.style.position = 'absolute';
-      card.style.left = `${centeredLeft}px`;
-      card.style.top = `${centeredTop}px`;
       card.style.width = `${zoomedWidth}px`;
       card.style.height = `${zoomedHeight}px`;
       card.style.transform = 'none';
+      card.style.position = '';
+      card.style.left = '';
+      card.style.top = '';
 
       // Show backdrop
       if (zoomBackdrop) {
         zoomBackdrop.classList.add('active');
       }
+
+      // Add left/right navigation arrows
+      if (zoomPortal) {
+        const siblings = zoomOriginalParent
+          ? Array.from(zoomOriginalParent.querySelectorAll(`.sb-card[data-grp="${grp}"]`))
+          : [];
+
+        if (siblings.length > 1) {
+          const leftArrow = document.createElement('div');
+          leftArrow.className = 'zoom-nav-arrow zoom-nav-left';
+          leftArrow.innerHTML = '&#8249;';
+          leftArrow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigateZoomedSbCard(-1);
+          });
+          zoomPortal.appendChild(leftArrow);
+
+          const rightArrow = document.createElement('div');
+          rightArrow.className = 'zoom-nav-arrow zoom-nav-right';
+          rightArrow.innerHTML = '&#8250;';
+          rightArrow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigateZoomedSbCard(1);
+          });
+          zoomPortal.appendChild(rightArrow);
+        }
+
+        // Add Continue button
+        const zoomContinueBtn = document.createElement('button');
+        zoomContinueBtn.className = 'zoom-continue-btn';
+        zoomContinueBtn.textContent = 'Continue';
+        zoomContinueBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          commitSbCardFromZoom();
+        });
+        zoomPortal.appendChild(zoomContinueBtn);
+      }
+    }
+
+    /**
+     * Navigate between corridor cards while in zoom view.
+     * direction: -1 for previous, +1 for next
+     */
+    function navigateZoomedSbCard(direction) {
+      if (!currentOpenCard || !zoomPortal || !zoomOriginalParent) return;
+
+      const grp = currentOpenCard.dataset.grp;
+      const oldCard = currentOpenCard;
+
+      // Get all sibling cards from the original grid (includes old card which is in portal)
+      // Old card is in portal, so query grid siblings + include old card
+      const gridSiblings = Array.from(
+        zoomOriginalParent.querySelectorAll(`.sb-card[data-grp="${grp}"]`)
+      );
+      // Add old card back in to determine index
+      const allCards = [...gridSiblings];
+      // Find where old card WAS by looking at zoomOriginalNextSibling
+      let oldIdx = -1;
+      if (zoomOriginalNextSibling) {
+        const nextIdx = allCards.indexOf(zoomOriginalNextSibling);
+        oldIdx = nextIdx >= 0 ? nextIdx : allCards.length;
+      } else {
+        oldIdx = allCards.length;
+      }
+      // Insert old card reference at its original position
+      allCards.splice(oldIdx, 0, oldCard);
+
+      const currentIdx = allCards.indexOf(oldCard);
+      const newIdx = (currentIdx + direction + allCards.length) % allCards.length;
+      const newCard = allCards[newIdx];
+      if (!newCard || newCard === oldCard) return;
+
+      const newGrp = newCard.dataset.grp;
+      const newVal = newCard.dataset.val;
+
+      // Remove old zoom content
+      const oldZoomContent = oldCard.querySelector('.sb-zoom-content');
+      if (oldZoomContent) oldZoomContent.remove();
+
+      // Remove inlined backgrounds and restore old card to grid
+      removeInlinedBackgrounds(oldCard);
+      oldCard.classList.remove('zoomed');
+      oldCard.style.transform = '';
+      oldCard.style.width = '';
+      oldCard.style.height = '';
+      oldCard.style.position = '';
+      if (zoomOriginalParent) {
+        if (zoomOriginalNextSibling) {
+          zoomOriginalParent.insertBefore(oldCard, zoomOriginalNextSibling);
+        } else {
+          zoomOriginalParent.appendChild(oldCard);
+        }
+      }
+      delete oldCard.dataset.zoomOriginalLeft;
+      delete oldCard.dataset.zoomOriginalTop;
+
+      // Dim/undim cards
+      document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
+        c.classList.toggle('dimmed', c !== newCard);
+      });
+
+      // Populate zoom content for new card
+      if (newGrp === 'world') populateWorldZoomContent(newCard, newVal);
+      if (newGrp === 'pressure') populatePressureZoomContent(newCard, newVal);
+
+      // Inline backgrounds before portal move
+      inlineCardFaceBackgrounds(newCard);
+
+      // Store new card's position and move to portal
+      const rect = newCard.getBoundingClientRect();
+      zoomOriginalParent = newCard.parentNode;
+      zoomOriginalNextSibling = newCard.nextSibling;
+      newCard.dataset.zoomOriginalLeft = rect.left;
+      newCard.dataset.zoomOriginalTop = rect.top;
+
+      const tarotAspect = 2.75 / 4.75;
+      const sidePadding = 60;
+      const topPadding = 40;
+      const bottomPadding = 90;
+      const maxWidth = window.innerWidth - sidePadding * 2;
+      const maxHeight = window.innerHeight - topPadding - bottomPadding;
+
+      let zoomedWidth, zoomedHeight;
+      if (maxWidth / maxHeight > tarotAspect) {
+        zoomedHeight = maxHeight;
+        zoomedWidth = zoomedHeight * tarotAspect;
+      } else {
+        zoomedWidth = maxWidth;
+        zoomedHeight = zoomedWidth / tarotAspect;
+      }
+
+      // Insert before nav arrows
+      const firstArrow = zoomPortal.querySelector('.zoom-nav-arrow');
+      if (firstArrow) {
+        zoomPortal.insertBefore(newCard, firstArrow);
+      } else {
+        zoomPortal.appendChild(newCard);
+      }
+
+      newCard.classList.add('zoomed');
+      newCard.style.width = `${zoomedWidth}px`;
+      newCard.style.height = `${zoomedHeight}px`;
+      newCard.style.transform = 'none';
+      newCard.style.position = '';
+      newCard.style.left = '';
+      newCard.style.top = '';
+
+      currentOpenCard = newCard;
+    }
+
+    /**
+     * Commit selection from zoomed corridor card view.
+     * Selects the card, creates breadcrumb, closes zoom, advances corridor.
+     */
+    function commitSbCardFromZoom() {
+      if (!currentOpenCard) return;
+
+      const grp = currentOpenCard.dataset.grp;
+      const val = currentOpenCard.dataset.val;
+      if (!grp || !val) return;
+
+      // Update state (same as selectFromZoomedCard but without auto-close)
+      state.picks[grp] = val;
+      if (window.clearCoverShapeHash) window.clearCoverShapeHash();
+
+      // Mark card as selected
+      document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
+        const isSelected = c.dataset.val === val;
+        c.classList.toggle('selected', isSelected);
+        c.classList.toggle('flipped', isSelected);
+      });
+
+      // Handle World-specific updates
+      if (grp === 'world') {
+        updateWorldSubtypeVisibility(val, state.picks.tone);
+        if (state.picks.worldSubtype && !WORLD_SUB_OPTIONS[val]?.some(o => o.val === state.picks.worldSubtype)) {
+          state.picks.worldSubtype = null;
+        }
+      }
+      if (grp === 'tone') {
+        updateWorldSubtypeVisibility(state.picks.world, val);
+      }
+
+      evaluateDownstreamSelections(grp);
+      incrementDSPActivation();
+      updateSynopsisPanel(true);
+
+      // Get card title for breadcrumb
+      const titleEl = currentOpenCard.querySelector('.sb-card-title');
+      const selectedTitle = titleEl ? titleEl.textContent : val;
+
+      // Close zoom
+      closeZoomedCard();
+
+      // Create breadcrumb and advance corridor
+      createBreadcrumbDirect(grp, val, selectedTitle);
+
+      // Find and hide the corridor continue button for this stage
+      const stageMap = { world: 'world', tone: 'tone', pressure: 'pressure', pov: 'pov', length: 'length', dynamic: 'dynamic', intensity: 'arousal' };
+      const stage = stageMap[grp] || grp;
+      hideCorridorContinueButton(stage);
+
+      setTimeout(() => advanceCorridorRow(), 600);
     }
 
     // Populate World card zoom view with flavor buttons and optional custom field
@@ -17162,8 +17461,27 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           // Remove any flavor count indicators
           const oldFlavorCount = c.querySelector('.sb-card-flavor-count');
           if (oldFlavorCount) oldFlavorCount.remove();
+          // Fade out sparkles on deselected cards
+          const oldSparkleContainer = c.querySelector('.card-selection-sparkles');
+          if (oldSparkleContainer && typeof stopSparkleEmitter === 'function') {
+            stopSparkleEmitter(oldSparkleContainer.id);
+            oldSparkleContainer.classList.add('sparkles-fading');
+            setTimeout(() => oldSparkleContainer.remove(), 1200);
+          }
         });
         card.classList.add('selected', 'flipped');
+
+        // Start sparkles on selected card
+        let sparkleContainer = card.querySelector('.card-selection-sparkles');
+        if (!sparkleContainer) {
+          sparkleContainer = document.createElement('div');
+          sparkleContainer.className = 'card-selection-sparkles';
+          sparkleContainer.id = `cardSparkles_${grp}_${val}`;
+          card.appendChild(sparkleContainer);
+        }
+        if (typeof startSparkleEmitter === 'function') {
+          startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 1.5);
+        }
 
         // Add flavor count indicator for World cards
         if (grp === 'world') {
@@ -17250,6 +17568,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         } else if (grp === 'length') {
           const AFFAIR_WORD_MAP = { tease: 'tease', fling: 'fling', affair: 'affair', soulmates: 'cosmic connection' };
           activateDSPSegment('length', ' ' + (AFFAIR_WORD_MAP[val] || 'affair') + '\u2009\u2014\u2009or ruin it?');
+        } else if (grp === 'pov') {
+          // POV changes the pronoun in the archetype clause — full re-render
         }
 
         // Update floating synopsis panel
@@ -17351,6 +17671,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         }
       });
     }
+
+    // Expose closeZoomedCard for module-scope callers (archetype overlay, zoom continue)
+    window.closeZoomedCard = closeZoomedCard;
   }
 
   // Debounce utility for input handlers
@@ -17520,6 +17843,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       });
 
       flavorGrid.appendChild(card);
+      if (window.applyCardGleam) window.applyCardGleam(card);
     });
   }
 
@@ -18009,10 +18333,20 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const cardCenterX = cardRect.left + cardRect.width / 2;
     const cardCenterY = cardRect.top + cardRect.height / 2;
 
-    const breadcrumbRect = breadcrumbRow.getBoundingClientRect();
-    const existingBreadcrumbs = breadcrumbRow.querySelectorAll('.breadcrumb-card').length;
-    const targetX = breadcrumbRect.left + (existingBreadcrumbs * 87) + 10 + 37.5; // Center of breadcrumb slot
-    const targetY = breadcrumbRect.top + breadcrumbRect.height / 2;
+    // Target the ghost step that this breadcrumb will replace
+    const stageIdx = STAGE_INDEX[grp];
+    const ghostStep = breadcrumbRow.querySelector(`.ghost-step[data-ghost-index="${stageIdx}"]`);
+    let targetX, targetY;
+    if (ghostStep) {
+      const ghostRect = ghostStep.getBoundingClientRect();
+      targetX = ghostRect.left + ghostRect.width / 2;
+      targetY = ghostRect.top + ghostRect.height / 2;
+    } else {
+      // Fallback: center of breadcrumb row
+      const breadcrumbRect = breadcrumbRow.getBoundingClientRect();
+      targetX = breadcrumbRect.left + breadcrumbRect.width / 2;
+      targetY = breadcrumbRect.top + breadcrumbRect.height / 2;
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // PHASE 1: Dissolve card in place
@@ -18102,6 +18436,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       breadcrumb.className = 'breadcrumb-card materializing' + ephemeralClass;
       breadcrumb.dataset.grp = grp;
       breadcrumb.dataset.val = val;
+      breadcrumb.dataset.stageIndex = STAGE_INDEX[grp];
       breadcrumb.dataset.breadcrumbLabel = grp.charAt(0).toUpperCase() + grp.slice(1);
       breadcrumb.innerHTML = `
         <div class="sb-card-inner">
@@ -18115,7 +18450,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           </div>
         </div>
       `;
-      breadcrumbRow.appendChild(breadcrumb);
+      // Insert before the first ghost step (breadcrumbs accumulate on left)
+      const firstGhost = breadcrumbRow.querySelector('.ghost-step');
+      if (firstGhost) {
+        breadcrumbRow.insertBefore(breadcrumb, firstGhost);
+      } else {
+        breadcrumbRow.appendChild(breadcrumb);
+      }
+
+      // Remove the corresponding ghost step
+      const stageIdxForGhost = STAGE_INDEX[grp];
+      if (stageIdxForGhost >= 0) {
+        removeGhostStep(stageIdxForGhost);
+      }
 
       // Create convergence sparkles at breadcrumb
       for (let i = 0; i < 6; i++) {
@@ -18799,7 +19146,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           state.archetype = state.archetype || {};
           state.archetype.primary = randomArch;
           corridorSelections.set('storybeau', randomArch);
-          createBreadcrumbDirect('archetype', randomArch, ARCHETYPES[randomArch]?.name || randomArch);
+          createArchetypeBreadcrumbWithMask(randomArch, false);
           break;
         case 'world':
           const worlds = ['Modern', 'Fantasy', 'SciFi', 'Historical'];
@@ -18978,7 +19325,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   // Ghost step Roman numerals - matches STAGE_INDEX (excluding intensity which has no breadcrumb)
   const GHOST_STEP_NUMERALS = [
-    'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'
+    'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'
   ];
 
   // STAGE_DISPLAY_NAMES defined earlier — used for ghost step display names
@@ -18994,9 +19341,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Clear any existing ghost steps
     breadcrumbRow.querySelectorAll('.ghost-step').forEach(g => g.remove());
 
-    // Create ghost step for each STAGE_INDEX entry (except these which have no ghost steps)
+    // Create ghost step for each STAGE_INDEX entry (except aliases and non-breadcrumb stages)
     const stageEntries = Object.entries(STAGE_INDEX).filter(([grp]) =>
-      grp !== 'intensity' && grp !== 'safety' && grp !== 'vetoquill' && grp !== 'beginstory'
+      grp !== 'archetype' && grp !== 'intensity' && grp !== 'safety' && grp !== 'vetoquill' && grp !== 'beginstory'
     );
     stageEntries.sort((a, b) => a[1] - b[1]); // Sort by index
 
@@ -19136,6 +19483,27 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         // Trigger stage-specific mount handlers
         if (stage === 'storybeau' && typeof window.onArchetypeRowMount === 'function') {
             window.onArchetypeRowMount();
+        }
+
+        // IDENTITY MOUNT: Restore mini-deck when navigating back
+        if (stage === 'identity') {
+          const miniDeck = document.getElementById('destinyMiniDeck');
+          if (miniDeck) {
+            miniDeck.classList.remove('retracted');
+            // Restart sparkles on mini-deck
+            if (typeof startSparkleEmitter === 'function') {
+              startSparkleEmitter('destinyDeckSparkles', 'destinyDeck', 3);
+            }
+          }
+          // Initialize ancestry rotating placeholders (identity row was unmounted
+          // when initFateHandSystem ran, so these were skipped)
+          ['ancestryInputPlayer', 'ancestryInputLI'].forEach(id => {
+            const ph = document.querySelector(`.rotating-placeholder[data-for="${id}"]`);
+            if (ph && !ph.innerHTML.trim() && typeof window.initRotatingPlaceholder === 'function') {
+              window.initRotatingPlaceholder(id, 'ancestry');
+            }
+          });
+          console.log('[Corridor] Identity mount: Restored mini-deck');
         }
 
         // AUTHORSHIP MOUNT: Restore authorship cards when navigating back
@@ -19435,20 +19803,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     let selectedCard = document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
     let selectedVal = selectedCard?.dataset.val || (grp && state.picks ? state.picks[grp] : null);
 
-    // Special case: Authorship stage uses state.authorship, not DOM cards
+    // Special case: Authorship stage — breadcrumb created by animateAuthorshipCardToBreadcrumb
+    // Only hide button here; corridor advancement handled by custom authorship handler
     if (stage === 'authorship') {
       if (!state.authorship) {
         console.log(`[Corridor] No authorship selection yet`);
         return;
       }
-      console.log(`[Corridor] Authorship selected: ${state.authorship}`);
-
-      // Create breadcrumb for authorship choice
-      const authorshipTitle = state.authorship === 'manual' ? 'Choose Your Hand' : 'Guided Fate';
-      createBreadcrumbDirect('authorship', state.authorship, authorshipTitle);
-
+      console.log(`[Corridor] Authorship selected: ${state.authorship} — breadcrumb via animation`);
       hideCorridorContinueButton(stage);
-      advanceCorridorRow();
+      // Do NOT advanceCorridorRow here — the custom authorship handler does it
       return;
     }
 
@@ -19487,18 +19851,109 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       console.log(`[Corridor] Archetype committed via Continue: ${archetypeId}`);
 
-      // Get archetype name for breadcrumb (text label for manual selection)
       const archetype = ARCHETYPES[archetypeId];
       const archetypeName = archetype?.name || archetypeId;
 
-      // If selected via Destiny's Choice, breadcrumb was already created with mask icon
-      // Otherwise, create text breadcrumb for manual selection
-      if (!archetypeSelectedViaDestiny) {
-        createBreadcrumbDirect('archetype', archetypeId, archetypeName);
+      hideCorridorContinueButton(stage);
+
+      // If selected via Destiny's Choice, breadcrumb was already created — just advance
+      if (archetypeSelectedViaDestiny) {
+        setTimeout(() => advanceCorridorRow(), 600);
+        return;
       }
 
-      hideCorridorContinueButton(stage);
-      advanceCorridorRow();
+      // Sparkle teleport from selected card to breadcrumb III
+      const selectedCard = document.querySelector(
+        `#archetypeCardGrid .archetype-card[data-archetype="${archetypeId}"]`
+      );
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      const archGhostIdx = STAGE_INDEX['storybeau'];
+      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${archGhostIdx}"]`);
+
+      let targetX, targetY;
+      if (ghostStep) {
+        const ghostRect = ghostStep.getBoundingClientRect();
+        targetX = ghostRect.left + ghostRect.width / 2;
+        targetY = ghostRect.top + ghostRect.height / 2;
+      } else if (breadcrumbRow) {
+        const brRect = breadcrumbRow.getBoundingClientRect();
+        targetX = brRect.left + brRect.width / 2;
+        targetY = brRect.top + brRect.height / 2;
+      }
+
+      if (selectedCard && targetX !== undefined) {
+        const cardRect = selectedCard.getBoundingClientRect();
+        const cardCenterX = cardRect.left + cardRect.width / 2;
+        const cardCenterY = cardRect.top + cardRect.height / 2;
+
+        // Phase 1: Dissolution sparkles + fade card
+        selectedCard.style.opacity = '0.3';
+        const dissolutionCount = 12 + Math.floor(Math.random() * 5);
+        for (let i = 0; i < dissolutionCount; i++) {
+          setTimeout(() => {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'dissolution-sparkle';
+            const sx = cardRect.left + Math.random() * cardRect.width;
+            const sy = cardRect.top + Math.random() * cardRect.height;
+            sparkle.style.cssText = `left: ${sx}px; top: ${sy}px;`;
+            document.body.appendChild(sparkle);
+            setTimeout(() => sparkle.remove(), 400);
+          }, i * 25);
+        }
+
+        // Phase 2: Sparkle travel to breadcrumb target
+        setTimeout(() => {
+          const travelCount = 6 + Math.floor(Math.random() * 3);
+          for (let i = 0; i < travelCount; i++) {
+            setTimeout(() => {
+              const sparkle = document.createElement('div');
+              sparkle.className = 'traveling-sparkle';
+              const offX = (Math.random() - 0.5) * cardRect.width * 0.5;
+              const offY = (Math.random() - 0.5) * cardRect.height * 0.5;
+              const sx = cardCenterX + offX;
+              const sy = cardCenterY + offY;
+              const midX = (sx + targetX) / 2 + (Math.random() - 0.5) * 80;
+              const midY = Math.min(sy, targetY) - 40 - Math.random() * 60;
+              sparkle.style.cssText = `
+                left: ${sx}px; top: ${sy}px;
+                --target-x: ${targetX - sx}px;
+                --target-y: ${targetY - sy}px;
+                --arc-x: ${midX - sx}px;
+                --arc-y: ${midY - sy}px;
+              `;
+              document.body.appendChild(sparkle);
+              setTimeout(() => sparkle.remove(), 600);
+            }, i * 40);
+          }
+        }, 200);
+
+        // Phase 3: Convergence sparkles + breadcrumb + advance
+        setTimeout(() => {
+          for (let i = 0; i < 5; i++) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'convergence-sparkle';
+            const angle = (Math.PI * 2 * i) / 5;
+            const dist = 15 + Math.random() * 10;
+            sparkle.style.cssText = `
+              left: ${targetX + Math.cos(angle) * dist}px;
+              top: ${targetY + Math.sin(angle) * dist}px;
+            `;
+            document.body.appendChild(sparkle);
+            setTimeout(() => sparkle.remove(), 500);
+          }
+
+          selectedCard.style.opacity = '';
+          createArchetypeBreadcrumbWithMask(archetypeId, false);
+
+          // Advance after materializing animation
+          setTimeout(() => advanceCorridorRow(), 600);
+        }, 600);
+
+      } else {
+        // Fallback: no animation
+        createArchetypeBreadcrumbWithMask(archetypeId, false);
+        setTimeout(() => advanceCorridorRow(), 600);
+      }
       return;
     }
 
@@ -19521,7 +19976,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const safetyLabel = darkThemes ? 'Dark OK' : 'No Dark';
       createBreadcrumbDirect('safety', darkThemes ? 'dark' : 'safe', safetyLabel);
       hideCorridorContinueButton(stage);
-      advanceCorridorRow();
+      // Advance after breadcrumb materializes so user sees it land
+      setTimeout(() => advanceCorridorRow(), 600);
       return;
     }
 
@@ -19550,6 +20006,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Hide continue button immediately
     hideCorridorContinueButton(stage);
 
+    // Stop sparkles on the selected card before advancing
+    if (selectedCard) {
+      const sparkleContainer = selectedCard.querySelector('.card-selection-sparkles');
+      if (sparkleContainer && typeof stopSparkleEmitter === 'function') {
+        stopSparkleEmitter(sparkleContainer.id);
+      }
+    }
+
     // Create breadcrumb for this selection (except arousal which has no breadcrumb)
     if (selectedCard && stage !== 'arousal') {
       const titleEl = selectedCard.querySelector('.sb-card-title');
@@ -19557,8 +20021,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       createBreadcrumbDirect(grp, selectedVal, selectedTitle);
     }
 
-    // Advance immediately - no animation delays
-    advanceCorridorRow();
+    // Advance after breadcrumb materializes so user sees it land
+    setTimeout(() => advanceCorridorRow(), 600);
   }
 
   /**
@@ -19578,27 +20042,38 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const titleEl = breadcrumb.querySelector('.sb-card-title');
     if (!titleEl) return;
 
-    const text = titleEl.textContent || '';
-    const charCount = text.length;
+    const text = (titleEl.textContent || '').trim();
+    if (!text) return;
 
-    // Scale font based on character count
-    // Base: 10px for short titles, scale down for longer ones
-    let fontSize = 10;
-    if (charCount > 20) {
-      fontSize = 8;
-    } else if (charCount > 15) {
-      fontSize = 9;
-    } else if (charCount > 10) {
-      fontSize = 9.5;
+    // Find the longest word — that's the minimum width we must fit
+    const words = text.split(/\s+/);
+    const cardWidth = breadcrumb.offsetWidth || 45; // fallback to CSS width
+    const availWidth = cardWidth - 4; // subtract padding (0 2px each side)
+
+    // Use a canvas to measure text width at a given font size
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const fontFamily = "'Cinzel', 'Lora', serif";
+
+    function longestWordWidth(size) {
+      ctx.font = `700 ${size}px ${fontFamily}`;
+      let maxW = 0;
+      for (const w of words) {
+        const m = ctx.measureText(w).width;
+        if (m > maxW) maxW = m;
+      }
+      return maxW;
+    }
+
+    // Start at base size, scale down until the longest word fits
+    let fontSize = 7;
+    const minSize = 3;
+    while (fontSize > minSize && longestWordWidth(fontSize) > availWidth) {
+      fontSize -= 0.5;
     }
 
     titleEl.style.fontSize = `${fontSize}px`;
-
-    // Additional check: if title contains "&" (compound names), ensure it fits
-    if (text.includes('&') || text.includes(' ')) {
-      // Allow more line height for multi-word titles
-      titleEl.style.lineHeight = '1.3';
-    }
+    titleEl.style.lineHeight = '1.3';
   }
 
   /**
@@ -19627,6 +20102,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return;
     }
 
+    // Remove existing breadcrumb for this stage (prevents duplicates on re-navigation)
+    const existingCard = breadcrumbRow.querySelector(`.breadcrumb-card[data-grp="${grp}"]`);
+    if (existingCard) existingCard.remove();
+
     // Get structured label
     const label = typeof getBreadcrumbLabel === 'function'
       ? getBreadcrumbLabel(grp, val)
@@ -19638,7 +20117,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Create breadcrumb card
     const breadcrumb = document.createElement('div');
-    breadcrumb.className = 'breadcrumb-card';
+    breadcrumb.className = 'breadcrumb-card materializing';
     breadcrumb.dataset.grp = grp;
     breadcrumb.dataset.val = val;
     breadcrumb.dataset.stageIndex = stageIdx;
@@ -19672,12 +20151,47 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       removeGhostStep(stageIdx);
     }
 
+    // Remove materializing class after animation completes
+    setTimeout(() => breadcrumb.classList.remove('materializing'), 400);
+
     // Attach destructive navigation handler
     if (typeof attachBreadcrumbNavigation === 'function') {
       attachBreadcrumbNavigation(breadcrumb);
     }
 
+    // Sparkles on the active (most recent) breadcrumb
+    updateActiveBreadcrumbSparkles(breadcrumb);
+
     console.log(`[Breadcrumb] Created: ${grp}=${val} (replaces ghost step ${stageIdx + 1})`);
+  }
+
+  /**
+   * Move sparkles to the most recently created breadcrumb
+   * Removes sparkles from any previous breadcrumb, adds to the new one
+   */
+  function updateActiveBreadcrumbSparkles(newBreadcrumb) {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!breadcrumbRow) return;
+
+    // Stop and remove sparkles from all breadcrumbs
+    breadcrumbRow.querySelectorAll('.breadcrumb-card .breadcrumb-active-sparkles').forEach(container => {
+      if (typeof stopSparkleEmitter === 'function') {
+        stopSparkleEmitter(container.id);
+      }
+      container.remove();
+    });
+
+    if (!newBreadcrumb) return;
+
+    // Add sparkle container to the new breadcrumb
+    const sparkleContainer = document.createElement('div');
+    sparkleContainer.className = 'breadcrumb-active-sparkles';
+    sparkleContainer.id = `breadcrumbSparkle_${newBreadcrumb.dataset.grp}_${Date.now()}`;
+    newBreadcrumb.appendChild(sparkleContainer);
+
+    if (typeof startSparkleEmitter === 'function') {
+      startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 1.5);
+    }
   }
 
   /**
@@ -19715,10 +20229,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const DSP_END_INDEX = 7;    // Length
 
     if (corridorActiveRowIndex >= DSP_START_INDEX && corridorActiveRowIndex <= DSP_END_INDEX) {
-      synopsisPanel.classList.add('visible');
+      showDSP(); // Populates content AND adds .visible
       console.log(`[DSP] Visible — stage ${CORRIDOR_STAGES[corridorActiveRowIndex]}`);
     } else {
-      synopsisPanel.classList.remove('visible');
+      hideDSP(); // Removes .visible
       console.log(`[DSP] Hidden — stage ${CORRIDOR_STAGES[corridorActiveRowIndex] || corridorActiveRowIndex}`);
     }
   }
@@ -20395,18 +20909,36 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       soulmates: 'cosmic connection'
     };
 
+    // POV pronoun mapping (inserted before archetype adjective)
+    const POV_PRONOUN_MAP = {
+      First: 'my ',
+      Second: 'your ',
+      Third: 'their ',
+      Fourth: '',      // Omniscient — no pronoun
+      Fifth: null       // Author POV — entirely different sentence
+    };
+
+    const pov = state.picks?.pov;
+    const isFifthPerson = pov === 'Fifth';
+    const povPronoun = pov ? (POV_PRONOUN_MAP[pov] ?? '') : '';
+
     let html = '';
 
     // FULL MODE: Only after story has begun (turnCount > 0)
     // SPARSE MODE: During Story Shape and Guided Fate (progressive reveal)
     const storyHasBegun = (state.turnCount || 0) > 0;
 
-    if (storyHasBegun) {
+    if (isFifthPerson) {
+      // 5th Person (Author POV): Different sentence structure entirely
+      html = 'The Author sets the stage in <span class="dsp-clause" data-axis="world">' + worldPhrase +
+        ',</span><br>shaped by <span class="dsp-clause" data-axis="genre">' + genrePhrase + '</span>.';
+    } else if (storyHasBegun) {
       // FULL MODE: Render complete sentence (story in progress)
       const affairWord = AFFAIR_WORD_MAP[state.storyLength] || 'affair';
       html = 'In <span class="dsp-clause" data-axis="world">' + worldPhrase +
         ', shaped by ' + genrePhrase + '</span>' +
-        ', a question awaits: Will <span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>' +
+        ', a question awaits:<br>Will ' + povPronoun +
+        '<span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>' +
         ' desire redeem this <span class="dsp-clause" data-axis="tone">' + toneAdj + '</span>' +
         ' ' + affairWord + '&#8201;&#8212;&#8201;or ruin it?';
     } else {
@@ -20436,7 +20968,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           ', shaped by ' + genrePhrase + '</span>';
       }
       if (hasWorld && hasArchetype) {
-        html += ', a question awaits: Will <span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>';
+        html += ', a question awaits:<br>Will ' + povPronoun +
+          '<span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>';
       }
       if (hasWorld && hasArchetype && hasTone) {
         html += ' desire redeem this <span class="dsp-clause" data-axis="tone">' + toneAdj + '</span>';
@@ -20506,6 +21039,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // by revealDSPClause — no pending classes needed here
 
       setTimeout(() => synopsisText.classList.remove('updating'), 500);
+
+      // DSP text is allowed to wrap naturally — no line-count gate
     }
   }
 
@@ -20631,7 +21166,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   function buildDSPPlaceholderHTML() {
       return '<span class="dsp-segment dsp-inactive" data-axis="world">In a world yet unchosen</span>' +
              '<span class="dsp-segment dsp-inactive" data-axis="genre">, shaped by forces unknown</span>' +
-             '<span class="dsp-segment dsp-inactive" data-axis="archetype">, a question awaits: Will unspoken</span>' +
+             '<span class="dsp-segment dsp-inactive" data-axis="archetype">, a question awaits:<br>Will unspoken</span>' +
              '<span class="dsp-segment dsp-inactive" data-axis="tone"> desire redeem this</span>' +
              '<span class="dsp-segment dsp-inactive" data-axis="length"> untold affair&#8201;&#8212;&#8201;or ruin it?</span>';
   }
@@ -20757,6 +21292,185 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       updateArchetypeSectionTitle();
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════════
+     CARD GLEAM SYSTEM — Subtle shift-and-hold radial spokes per card
+
+     Applied to ALL card types: .sb-card, .authorship-card, .mode-card.
+     One .card-gleam-layer per face, inserted as first child.
+     Seeded from card's data-val for deterministic, non-uniform results.
+
+     Animation: quick ~15° swing → pause → swing back → longer pause.
+     Simulates a viewer shifting their gaze, not a spinning light.
+
+     Blend: mix-blend-mode: screen (additive light, safe for dark text).
+     ═══════════════════════════════════════════════════════════════════════════ */
+  (function initGleamSystem() {
+    function gleamHash(str) {
+      var h = 0;
+      for (var i = 0; i < str.length; i++) {
+        h = ((h << 5) - h) + str.charCodeAt(i);
+        h |= 0;
+      }
+      return Math.abs(h) || 1;
+    }
+
+    function gleamRng(seed) {
+      var s = seed;
+      return function() {
+        s = (s * 1103515245 + 12345) & 0x7fffffff;
+        return s / 0x7fffffff;
+      };
+    }
+
+    // Build conic-gradient with 6 spokes at 30°, 90°, 150°, 210°, 270°, 330°
+    // 5 gold spokes + 1 dark spoke (70% black) for subtle contrast variation
+    // Each spoke: transparent → edge → peak → edge → transparent
+    function buildGleamGradient(rng) {
+      var centers = [30, 90, 150, 210, 270, 330];
+      var FEATHER = 5;
+      // Pick two spokes to be dark, seeded per card
+      var darkIdx = Math.floor(rng() * 6);
+      var darkIdx2 = (darkIdx + 2 + Math.floor(rng() * 3)) % 6; // offset 2–4 from first
+      if (darkIdx2 === darkIdx) darkIdx2 = (darkIdx + 3) % 6;
+      var stops = ['transparent 0deg'];
+
+      for (var i = 0; i < 6; i++) {
+        var c = centers[i];
+        var halfW = (8 + rng() * 44) / 2;      // 8–52° total width (more variation)
+        var opacity = 0.2 + rng() * 0.3;        // 0.2–0.5
+        var s1 = c - halfW - FEATHER;
+        var s2 = c - halfW;
+        var s4 = c + halfW;
+        var s5 = c + halfW + FEATHER;
+        var peak, edge;
+
+        if (i === darkIdx) {
+          // Dark spoke 1: 70% black
+          peak = 'rgba(0,0,0,' + (opacity * 0.7).toFixed(2) + ')';
+          edge = 'rgba(0,0,0,' + (opacity * 0.21).toFixed(2) + ')';
+        } else if (i === darkIdx2) {
+          // Dark spoke 2: 80% black
+          peak = 'rgba(0,0,0,' + (opacity * 0.8).toFixed(2) + ')';
+          edge = 'rgba(0,0,0,' + (opacity * 0.24).toFixed(2) + ')';
+        } else {
+          // Gold spoke
+          peak = 'rgba(255,240,200,' + opacity.toFixed(2) + ')';
+          edge = 'rgba(200,170,100,' + (opacity * 0.3).toFixed(2) + ')';
+        }
+
+        stops.push(
+          'transparent ' + s1.toFixed(1) + 'deg',
+          edge + ' ' + s2.toFixed(1) + 'deg',
+          peak + ' ' + c + 'deg',
+          edge + ' ' + s4.toFixed(1) + 'deg',
+          'transparent ' + s5.toFixed(1) + 'deg'
+        );
+      }
+
+      stops.push('transparent 360deg');
+      return 'conic-gradient(from 0deg, ' + stops.join(', ') + ')';
+    }
+
+    /**
+     * JS-driven gleam sway — organic, non-predictable motion.
+     * Each gleam swings between ±amplitude with ease-in-out transitions
+     * of varying duration, pausing 0-5s at each edge.
+     */
+    function startGleamSway(gleamEl) {
+      var amp = 10;
+      var currentAngle = (Math.random() > 0.5 ? 1 : -1) * amp;
+      // Set initial position
+      gleamEl.style.transform = 'rotate(' + currentAngle + 'deg)';
+
+      function swing() {
+        // Reverse direction
+        currentAngle = currentAngle > 0 ? -amp : amp;
+        // Random swing duration: 4-8 seconds (organic variation)
+        var duration = 4 + Math.random() * 4;
+        gleamEl.style.transition = 'transform ' + duration.toFixed(1) + 's ease-in-out';
+        gleamEl.style.transform = 'rotate(' + currentAngle + 'deg)';
+
+        var handler = function() {
+          gleamEl.removeEventListener('transitionend', handler);
+          // Random pause at edge: 0-5 seconds
+          var pause = Math.random() * 5000;
+          setTimeout(swing, pause);
+        };
+        gleamEl.addEventListener('transitionend', handler);
+      }
+
+      // Stagger start: random 0-3s initial delay
+      setTimeout(swing, Math.random() * 3000);
+    }
+
+    // Face selectors for multi-face card types
+    var FACE_SELECTORS = '.sb-card-face, .authorship-card-face, .mode-card-back, .mode-card-front';
+
+    // Card types that ARE their own face (no child face elements)
+    var SELF_FACE_CLASSES = ['tier-card-btn', 'character-tarot-card'];
+
+    /**
+     * Apply gleam to a single card element. Idempotent.
+     * Works on .sb-card, .authorship-card, .mode-card, .tier-card-btn, .character-tarot-card.
+     */
+    function applyCardGleam(card) {
+      if (!card || card.dataset.gleamApplied) return;
+      card.dataset.gleamApplied = '1';
+
+      var seedStr = card.dataset.val || card.dataset.choice || card.dataset.mode || card.id || String(Math.random());
+      var seed = gleamHash(seedStr);
+      var rng = gleamRng(seed);
+
+      var speed = 10;                          // fixed 10s cycle (all cards in sync)
+      var swayAmp = 10;                        // fixed 10° rotation
+      var opacityMult = 0.7 + rng() * 0.3;   // 0.7–1.0 (visual variety only)
+      var gradient = buildGleamGradient(rng);
+
+      // Determine target faces: child faces or the card itself
+      var isSelfFace = SELF_FACE_CLASSES.some(function(cls) { return card.classList.contains(cls); });
+      var faces = isSelfFace ? [card] : Array.from(card.querySelectorAll(FACE_SELECTORS));
+      if (!faces.length) return;
+
+      faces.forEach(function(face) {
+        if (face.querySelector('.card-gleam-layer')) return;
+
+        var gleam = document.createElement('div');
+        gleam.className = 'card-gleam-layer';
+        gleam.style.setProperty('--gleam-opacity-multiplier', opacityMult.toFixed(2));
+        gleam.style.backgroundImage = gradient;
+
+        // Authorship faces have overflow:visible — wrap in a clip container
+        if (face.classList.contains('authorship-card-face')) {
+          var clip = document.createElement('div');
+          clip.className = 'card-gleam-clip';
+          clip.appendChild(gleam);
+          face.insertBefore(clip, face.firstChild);
+        } else {
+          face.insertBefore(gleam, face.firstChild);
+        }
+
+        // Start organic JS-driven sway animation
+        startGleamSway(gleam);
+      });
+    }
+
+    /** Bulk-apply to all card elements in the DOM. */
+    function initAllCardGleams() {
+      document.querySelectorAll('.sb-card, .authorship-card, .mode-card, .tier-card-btn, .character-tarot-card').forEach(applyCardGleam);
+    }
+
+    // Expose globally for dynamic card creation
+    window.applyCardGleam = applyCardGleam;
+    window.initAllCardGleams = initAllCardGleams;
+
+    // Apply to static HTML cards on DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAllCardGleams);
+    } else {
+      initAllCardGleams();
+    }
+  })();
+
   function renderArchetypeCards() {
       const grid = document.getElementById('archetypeCardGrid');
       if (!grid) return;
@@ -20822,6 +21536,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           card.addEventListener('click', () => handleArchetypeClick(card, id));
 
           grid.appendChild(card);
+          if (window.applyCardGleam) window.applyCardGleam(card);
       });
 
       // Add Destiny's Choice card (slot 8)
@@ -20854,9 +21569,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       destinyCard.addEventListener('click', () => triggerDestinyChoiceSequence());
 
       grid.appendChild(destinyCard);
+      if (window.applyCardGleam) window.applyCardGleam(destinyCard);
 
-      // Start sparkles on Destiny's Choice — low rate for calm halo
-      setTimeout(() => startSparkleEmitter('destinyChoiceSparkles', 'destinyDeck', 0.8), 100);
+      // Start sparkles on Destiny's Choice card in archetype grid
+      setTimeout(() => startSparkleEmitter('destinyChoiceSparkles', 'destinyDeck', 3), 100);
 
       // Schedule automatic reveal of all archetype cards (after row mount delay)
       if (!archetypeCardsRevealed) {
@@ -20954,6 +21670,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * Selection happens via Continue button using lastZoomedArchetype
    */
   function handleArchetypeClick(card, archetypeId) {
+      // If already zoomed, ignore (don't re-open same card)
+      if (card.classList.contains('zoomed')) return;
+
       // Open zoom overlay for this archetype
       openArchetypeOverlay(archetypeId);
 
@@ -21012,9 +21731,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           card.appendChild(sparkleContainer);
       }
 
-      // Start subtle sparkle emitter
+      // Start sparkle emitter on selected archetype card (3x intensity)
       lastZoomedSparkleEmitterId = sparkleContainer.id;
-      startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 0.8);
+      startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 6);
   }
 
   /**
@@ -21086,97 +21805,135 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const chosenId = ARCHETYPE_ORDER[randomIndex];
       const chosenCard = grid.querySelector(`.archetype-card[data-archetype="${chosenId}"]`);
 
-      // STEP 1: Animate all archetype cards toward Destiny's Choice
-      archetypeCards.forEach((card, idx) => {
-          const cardRect = card.getBoundingClientRect();
-          const cardCenter = {
-              x: cardRect.left + cardRect.width / 2,
-              y: cardRect.top + cardRect.height / 2
-          };
-
-          const translateX = destinyCenter.x - cardCenter.x;
-          const translateY = destinyCenter.y - cardCenter.y;
-
-          card.style.transition = 'transform 0.6s ease-in-out, opacity 0.6s ease-in-out';
-          card.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.3)`;
-          card.style.zIndex = `${100 + idx}`;
-      });
-
-      await new Promise(r => setTimeout(r, 700));
-
-      // STEP 2: Shuffle effect - slight random movements
+      // Capture original positions before any transforms
+      const cardPositions = new Map();
       archetypeCards.forEach(card => {
-          const jitterX = (Math.random() - 0.5) * 20;
-          const jitterY = (Math.random() - 0.5) * 20;
-          const currentTransform = card.style.transform;
-          card.style.transition = 'transform 0.15s ease-in-out';
-          card.style.transform = currentTransform.replace(/translate\([^)]+\)/,
-              `translate(${destinyCenter.x - card.getBoundingClientRect().width/2 + jitterX}px, ${destinyCenter.y - card.getBoundingClientRect().height/2 + jitterY}px)`);
+          const rect = card.getBoundingClientRect();
+          cardPositions.set(card, {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2
+          });
       });
 
-      await new Promise(r => setTimeout(r, 400));
+      // STEP 1: Flip all cards face-down
+      archetypeCards.forEach(card => {
+          card.classList.remove('flipped');
+      });
 
-      // STEP 3: Chosen card emerges with unmarked back
+      await new Promise(r => setTimeout(r, 500));
+
+      // STEP 2: Slide all cards UNDER the Destiny deck at current size
+      // Set Destiny deck z-index high so cards slide underneath
+      destinyCard.style.zIndex = '300';
+
+      archetypeCards.forEach((card, idx) => {
+          const pos = cardPositions.get(card);
+          const translateX = destinyCenter.x - pos.x;
+          const translateY = destinyCenter.y - pos.y;
+
+          card.style.transition = `transform ${0.5 + idx * 0.05}s ease-in-out`;
+          card.style.transform = `translate(${translateX}px, ${translateY}px)`;
+          card.style.zIndex = `${50 + idx}`; // Below Destiny deck (z:300)
+      });
+
+      await new Promise(r => setTimeout(r, 800));
+
+      // STEP 3: Brief pause — cards stacked under deck
+      await new Promise(r => setTimeout(r, 300));
+
+      // STEP 4: Chosen card pops up from top of deck
       if (chosenCard) {
-          chosenCard.classList.add('destiny-chosen');
-          chosenCard.classList.remove('flipped');
-
-          // Animate to center-ish position
-          chosenCard.style.transition = 'transform 0.5s ease-out';
-          chosenCard.style.transform = 'translate(0, -50px) scale(1.1)';
-          chosenCard.style.zIndex = '200';
-
-          // Make back show as unmarked (remove title temporarily)
+          // Make back show as unmarked
           const backTitle = chosenCard.querySelector('.sb-card-back .sb-card-title');
           if (backTitle) {
               backTitle.dataset.originalText = backTitle.textContent;
               backTitle.textContent = '?';
           }
+
+          chosenCard.classList.add('destiny-chosen');
+          chosenCard.style.zIndex = '400'; // Above Destiny deck
+          chosenCard.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          // Pop upward from deck position
+          const pos = cardPositions.get(chosenCard);
+          const deckOffX = destinyCenter.x - pos.x;
+          const deckOffY = destinyCenter.y - pos.y;
+          chosenCard.style.transform = `translate(${deckOffX}px, ${deckOffY - 80}px)`;
       }
 
-      // STEP 4: Other cards dissolve into sparkles
-      archetypeCards.forEach(card => {
-          if (card === chosenCard) return;
+      await new Promise(r => setTimeout(r, 600));
 
-          card.classList.add('dissolving');
-          card.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
-          card.style.opacity = '0';
-          card.style.transform += ' scale(0)';
-
-          // Spawn sparkles at card position (relative to grid, using global variance rules)
-          for (let i = 0; i < 5; i++) {
-              setTimeout(() => {
-                  spawnSparkleAt(card);
-              }, i * 50);
-          }
-      });
-
-      // STEP 5: Destiny's Choice deck dissipates
-      destinyCard.classList.add('dissolving');
-      destinyCard.style.transition = 'opacity 0.6s ease-out';
-      destinyCard.style.opacity = '0';
-
-      await new Promise(r => setTimeout(r, 800));
+      // STEP 5: Card stays face-down — Destiny's mask is a secret
+      await new Promise(r => setTimeout(r, 400));
 
       // STEP 6: Commit the selection
       commitArchetypeSelection(chosenId, true);
 
-      // STEP 7: Restore chosen card title
+      // STEP 7: Other cards + Destiny deck dissolve
+      archetypeCards.forEach(card => {
+          if (card === chosenCard) return;
+          card.classList.add('dissolving');
+          card.style.transition = 'opacity 0.5s ease-out';
+          card.style.opacity = '0';
+      });
+      destinyCard.classList.add('dissolving');
+      destinyCard.style.transition = 'opacity 0.5s ease-out';
+      destinyCard.style.opacity = '0';
+
+      await new Promise(r => setTimeout(r, 300));
+
+      // STEP 8: Fly chosen card to breadcrumb position
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      const archGhostIdx = STAGE_INDEX['storybeau'];
+      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${archGhostIdx}"]`);
+
+      let targetX, targetY;
+      if (ghostStep) {
+          const ghostRect = ghostStep.getBoundingClientRect();
+          targetX = ghostRect.left + ghostRect.width / 2;
+          targetY = ghostRect.top + ghostRect.height / 2;
+      } else if (breadcrumbRow) {
+          const brRect = breadcrumbRow.getBoundingClientRect();
+          targetX = brRect.left + brRect.width / 2;
+          targetY = brRect.top + brRect.height / 2;
+      }
+
+      if (chosenCard && targetX !== undefined) {
+          const cardRect = chosenCard.getBoundingClientRect();
+          const cardCenterX = cardRect.left + cardRect.width / 2;
+          const cardCenterY = cardRect.top + cardRect.height / 2;
+          const flyX = targetX - cardCenterX;
+          const flyY = targetY - cardCenterY;
+
+          // Scale down to breadcrumb size (45x78 vs ~140x242 card ≈ 0.32)
+          chosenCard.style.transition = 'transform 0.6s ease-in-out, opacity 0.3s ease-out 0.4s';
+          const currentTransform = chosenCard.style.transform;
+          // Extract existing translate, add the flight offset
+          const match = currentTransform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+          const existX = match ? parseFloat(match[1]) : 0;
+          const existY = match ? parseFloat(match[2]) : 0;
+          chosenCard.style.transform = `translate(${existX + flyX}px, ${existY + flyY}px) scale(0.32)`;
+          chosenCard.style.opacity = '0';
+      }
+
+      await new Promise(r => setTimeout(r, 700));
+
+      // Restore chosen card title but do NOT mark as selected (secret)
       if (chosenCard) {
           const backTitle = chosenCard.querySelector('.sb-card-back .sb-card-title');
           if (backTitle && backTitle.dataset.originalText) {
               backTitle.textContent = backTitle.dataset.originalText;
           }
-          chosenCard.classList.add('selected', 'flipped');
+          // No .selected class — Destiny's mask stays hidden
           chosenCard.style.transform = '';
           chosenCard.style.zIndex = '';
+          chosenCard.style.opacity = '';
       }
 
       // Clean up dissolved cards from DOM
       grid.querySelectorAll('.dissolving').forEach(el => el.remove());
 
-      // STEP 8: Create breadcrumb with mask icon (Destiny's Choice path)
-      createArchetypeBreadcrumbWithMask(chosenId);
+      // STEP 9: Create breadcrumb with Destiny's Choice back PNG
+      createArchetypeBreadcrumbWithMask(chosenId, true);
 
       // Advance corridor
       if (typeof hideCorridorContinueButton === 'function') {
@@ -21257,10 +22014,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   /**
-   * Create archetype breadcrumb with PNG art (for Destiny's Choice)
-   * Uses Gold front PNG - no mask icon, no text overlay
+   * Create archetype breadcrumb with PNG art
+   * viaDestiny=false: shows mask gold front PNG
+   * viaDestiny=true: shows Destiny's Choice back PNG
    */
-  function createArchetypeBreadcrumbWithMask(archetypeId) {
+  function createArchetypeBreadcrumbWithMask(archetypeId, viaDestiny = false) {
       const breadcrumbRow = document.getElementById('breadcrumbRow');
       if (!breadcrumbRow) return;
 
@@ -21285,15 +22043,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           'BEAUTIFUL_RUIN': 'Tarot-Gold-front-BRuin.png',
           'ETERNAL_FLAME': 'Tarot-Gold-front-EternalFlame.png'
       };
-      const pngFile = pngMap[archetypeId] || 'Tarot-Gold-front-HeartWarden.png';
+      const pngFile = viaDestiny
+          ? 'Black-DestinyChoice-back.png'
+          : (pngMap[archetypeId] || 'Tarot-Gold-front-HeartWarden.png');
 
       // Create breadcrumb with PNG art only (no mask icon, no text)
       const card = document.createElement('div');
       card.className = 'breadcrumb-card archetype-breadcrumb-png';
+      if (viaDestiny) card.classList.add('destiny-choice-breadcrumb');
       card.dataset.grp = 'archetype';
       card.dataset.val = archetypeId;
       card.dataset.stageIndex = stageIdx;
-      card.dataset.breadcrumbLabel = 'Archetype';
+      card.dataset.breadcrumbLabel = viaDestiny ? "Destiny's Choice" : 'Archetype';
       card.style.backgroundImage = `url('/assets/card-art/cards/${pngFile}')`;
       card.style.backgroundSize = 'cover';
       card.style.backgroundPosition = 'center';
@@ -21308,8 +22069,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           breadcrumbRow.appendChild(card);
       }
 
+      // Attach destructive navigation handler
+      if (typeof attachBreadcrumbNavigation === 'function') {
+          attachBreadcrumbNavigation(card);
+      }
+
+      // Sparkles on the active breadcrumb
+      updateActiveBreadcrumbSparkles(card);
+
       corridorSelections.set('storybeau', archetypeId);
-      console.log(`[Breadcrumb] Created PNG card for archetype (Destiny's Choice): ${archetypeId}`);
+      console.log(`[Breadcrumb] Created PNG card for archetype (${viaDestiny ? 'Destiny' : 'Continue'}): ${archetypeId}`);
   }
 
   // Populate archetype card zoom view with modifier custom field only (NO pills)
@@ -21440,6 +22209,67 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
 
       frontFace.appendChild(zoomContent);
+
+      // ═══════════════════════════════════════════════════════════════
+      // MODIFIER BOX CLICK → DROPDOWN MENU
+      // ═══════════════════════════════════════════════════════════════
+      const modifierBox = frontFace.querySelector('.archetype-modifier-box');
+      if (modifierBox && !modifierBox._modClickBound) {
+          modifierBox._modClickBound = true;
+          modifierBox.addEventListener('click', (e) => {
+              e.stopPropagation(); // Don't trigger card close
+
+              // Toggle: if dropdown already open, close it
+              const existingDropdown = modifierBox.querySelector('.archetype-modifier-dropdown');
+              if (existingDropdown) {
+                  existingDropdown.remove();
+                  return;
+              }
+
+              // Build dropdown
+              const dropdown = document.createElement('div');
+              dropdown.className = 'archetype-modifier-dropdown';
+
+              validModifiers.forEach(modId => {
+                  const mod = ARCHETYPES[modId];
+                  if (!mod) return;
+                  const item = document.createElement('div');
+                  item.className = 'archetype-modifier-dropdown-item';
+                  item.textContent = mod.name.replace('The ', '');
+                  item.dataset.modId = modId;
+
+                  // Highlight current selection
+                  if (state.archetype?.modifier === modId) {
+                      item.classList.add('selected');
+                  }
+
+                  item.addEventListener('click', (ev) => {
+                      ev.stopPropagation();
+                      state.archetype.modifier = modId;
+                      state.archetype.modifierText = null;
+                      if (typeof updateArchetypeSelectionSummary === 'function') {
+                          updateArchetypeSelectionSummary();
+                      }
+                      dropdown.remove();
+                      console.log(`[Modifier] Selected: ${mod.name} for ${archetypeId}`);
+                  });
+
+                  dropdown.appendChild(item);
+              });
+
+              modifierBox.appendChild(dropdown);
+
+              // Close dropdown when clicking outside
+              const closeDropdown = (ev) => {
+                  if (!dropdown.contains(ev.target) && ev.target !== modifierBox) {
+                      dropdown.remove();
+                      document.removeEventListener('click', closeDropdown, true);
+                  }
+              };
+              // Delay listener to avoid immediate close from this click
+              setTimeout(() => document.addEventListener('click', closeDropdown, true), 0);
+          });
+      }
   }
 
   // STATE 3: Open zoomed view for archetype cards
@@ -21451,8 +22281,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       if (!card || !arch) return;
 
       // Close any currently zoomed card
-      if (currentOpenCard) {
-          closeZoomedCard();
+      if (currentOpenCard && window.closeZoomedCard) {
+          window.closeZoomedCard();
       }
 
       currentOpenCard = card;
@@ -21487,36 +22317,311 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const scaleByHeight = maxHeight / rect.height;
       const scale = Math.min(2.5, scaleByWidth, scaleByHeight);
 
-      // Calculate centered position (using original dimensions, scale handles size)
-      const centeredLeft = (window.innerWidth - rect.width) / 2;
-      const centeredTop = (window.innerHeight - rect.height) / 2;
-
       // PORTAL MOVE: Move card into zoom portal (breaks ALL ancestor contexts)
       if (zoomPortal) {
           zoomPortal.appendChild(card);
       }
 
-      // Apply zoom styling with scale transform
+      // Apply zoom styling - flexbox in portal handles centering
       card.classList.add('zoomed');
-      card.style.position = 'absolute';
-      card.style.left = `${centeredLeft}px`;
-      card.style.top = `${centeredTop}px`;
       card.style.width = `${rect.width}px`;
       card.style.height = `${rect.height}px`;
       card.style.transform = `scale(${scale})`;
       card.style.transformOrigin = 'center center';
+      card.style.position = '';
+      card.style.left = '';
+      card.style.top = '';
 
       // Show backdrop
       if (zoomBackdrop) {
           zoomBackdrop.classList.add('active');
       }
+
+      // Add sparkle emitters to all four edges of zoomed card
+      const frontFace = card.querySelector('.sb-card-front');
+      if (frontFace) {
+          ['left', 'right', 'top', 'bottom'].forEach(side => {
+              const sparkleContainer = document.createElement('div');
+              sparkleContainer.className = 'zoom-side-sparkles';
+              sparkleContainer.id = `zoomSideSparkles_${side}`;
+              sparkleContainer.dataset.side = side;
+              frontFace.appendChild(sparkleContainer);
+              startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 2.5);
+          });
+      }
+
+      // Add left/right navigation arrows to portal
+      if (zoomPortal) {
+          const currentIdx = ARCHETYPE_ORDER.indexOf(archetypeId);
+
+          const leftArrow = document.createElement('div');
+          leftArrow.className = 'zoom-nav-arrow zoom-nav-left';
+          leftArrow.innerHTML = '&#8249;'; // ‹
+          leftArrow.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const curId = currentOpenCard?.dataset.archetype;
+              if (!curId) return;
+              const idx = ARCHETYPE_ORDER.indexOf(curId);
+              const prevIdx = (idx - 1 + ARCHETYPE_ORDER.length) % ARCHETYPE_ORDER.length;
+              navigateZoomedArchetype(ARCHETYPE_ORDER[prevIdx]);
+          });
+          zoomPortal.appendChild(leftArrow);
+
+          const rightArrow = document.createElement('div');
+          rightArrow.className = 'zoom-nav-arrow zoom-nav-right';
+          rightArrow.innerHTML = '&#8250;'; // ›
+          rightArrow.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const curId = currentOpenCard?.dataset.archetype;
+              if (!curId) return;
+              const idx = ARCHETYPE_ORDER.indexOf(curId);
+              const nextIdx = (idx + 1) % ARCHETYPE_ORDER.length;
+              navigateZoomedArchetype(ARCHETYPE_ORDER[nextIdx]);
+          });
+          zoomPortal.appendChild(rightArrow);
+
+          // Add Continue button below the zoomed card
+          const zoomContinueBtn = document.createElement('button');
+          zoomContinueBtn.className = 'zoom-continue-btn';
+          zoomContinueBtn.textContent = 'Continue';
+          zoomContinueBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const curId = currentOpenCard?.dataset.archetype;
+              if (!curId) return;
+              commitArchetypeFromZoom(curId);
+          });
+          zoomPortal.appendChild(zoomContinueBtn);
+      }
   }
 
-  // Close archetype zoom - returns to grid view and starts sparkles on last-zoomed card
+  /**
+   * Navigate between archetype cards while in zoom view
+   * Swaps the zoomed card without closing the overlay
+   */
+  function navigateZoomedArchetype(newArchetypeId) {
+      if (!currentOpenCard || !zoomPortal) return;
+
+      const oldCard = currentOpenCard;
+      const oldId = oldCard.dataset.archetype;
+      if (oldId === newArchetypeId) return;
+
+      // Find the new card in the grid (it's still in the grid since only oldCard is in portal)
+      const newCard = document.querySelector(`#archetypeCardGrid .sb-card[data-archetype="${newArchetypeId}"]`);
+      if (!newCard) return;
+
+      // Stop old sparkle emitters
+      ['left', 'right', 'top', 'bottom'].forEach(side => {
+          const id = `zoomSideSparkles_${side}`;
+          stopSparkleEmitter(id);
+          const el = oldCard.querySelector(`#${id}`);
+          if (el) el.remove();
+      });
+
+      // Remove old zoom content
+      const oldZoomContent = oldCard.querySelector('.sb-zoom-content');
+      if (oldZoomContent) oldZoomContent.remove();
+
+      // Restore old card to grid
+      oldCard.classList.remove('zoomed');
+      oldCard.style.transform = '';
+      oldCard.style.transformOrigin = '';
+      oldCard.style.width = '';
+      oldCard.style.height = '';
+      oldCard.style.position = '';
+      if (zoomOriginalParent) {
+          if (zoomOriginalNextSibling) {
+              zoomOriginalParent.insertBefore(oldCard, zoomOriginalNextSibling);
+          } else {
+              zoomOriginalParent.appendChild(oldCard);
+          }
+      }
+      delete oldCard.dataset.zoomOriginalLeft;
+      delete oldCard.dataset.zoomOriginalTop;
+      delete oldCard.dataset.zoomOriginalWidth;
+      delete oldCard.dataset.zoomOriginalHeight;
+
+      // Dim all cards, un-dim the new one
+      document.querySelectorAll('#archetypeCardGrid .sb-card').forEach(c => {
+          c.classList.toggle('dimmed', c !== newCard);
+      });
+
+      // Populate new card zoom content
+      populateArchetypeZoomContent(newCard, newArchetypeId);
+
+      // Store new card's position and move to portal
+      const rect = newCard.getBoundingClientRect();
+      zoomOriginalParent = newCard.parentNode;
+      zoomOriginalNextSibling = newCard.nextSibling;
+      newCard.dataset.zoomOriginalLeft = rect.left;
+      newCard.dataset.zoomOriginalTop = rect.top;
+      newCard.dataset.zoomOriginalWidth = rect.width;
+      newCard.dataset.zoomOriginalHeight = rect.height;
+
+      const padding = 60;
+      const maxWidth = window.innerWidth - padding;
+      const maxHeight = window.innerHeight - padding;
+      const scaleByWidth = maxWidth / rect.width;
+      const scaleByHeight = maxHeight / rect.height;
+      const scale = Math.min(2.5, scaleByWidth, scaleByHeight);
+
+      // Insert card BEFORE the nav arrows (first child position)
+      const firstArrow = zoomPortal.querySelector('.zoom-nav-arrow');
+      if (firstArrow) {
+          zoomPortal.insertBefore(newCard, firstArrow);
+      } else {
+          zoomPortal.appendChild(newCard);
+      }
+
+      newCard.classList.add('zoomed');
+      newCard.style.width = `${rect.width}px`;
+      newCard.style.height = `${rect.height}px`;
+      newCard.style.transform = `scale(${scale})`;
+      newCard.style.transformOrigin = 'center center';
+
+      currentOpenCard = newCard;
+
+      // Track as last-zoomed
+      setLastZoomedArchetype(newArchetypeId);
+
+      // Add sparkle emitters to new card
+      const frontFace = newCard.querySelector('.sb-card-front');
+      if (frontFace) {
+          ['left', 'right', 'top', 'bottom'].forEach(side => {
+              const sparkleContainer = document.createElement('div');
+              sparkleContainer.className = 'zoom-side-sparkles';
+              sparkleContainer.id = `zoomSideSparkles_${side}`;
+              sparkleContainer.dataset.side = side;
+              frontFace.appendChild(sparkleContainer);
+              startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 2.5);
+          });
+      }
+  }
+
+  /**
+   * Commit archetype selection from zoom Continue button
+   * Closes zoom, triggers sparkle teleport to breadcrumb, advances corridor
+   */
+  function commitArchetypeFromZoom(archetypeId) {
+      // Commit the selection
+      if (state.archetype?.primary !== archetypeId) {
+          commitArchetypeSelection(archetypeId, false);
+      }
+
+      // Close the zoom overlay (this restores card to grid and starts corridor sparkles)
+      if (window.closeZoomedCard) window.closeZoomedCard();
+
+      // Stop focus sparkles (we're about to teleport)
+      if (lastZoomedSparkleEmitterId) {
+          stopSparkleEmitter(lastZoomedSparkleEmitterId);
+          lastZoomedSparkleEmitterId = null;
+      }
+      const focusedCard = document.querySelector('.archetype-card.last-zoomed');
+      if (focusedCard) {
+          focusedCard.classList.remove('last-zoomed');
+          const sc = focusedCard.querySelector('.archetype-focus-sparkles');
+          if (sc) sc.remove();
+      }
+
+      const archetype = ARCHETYPES[archetypeId];
+      const archetypeName = archetype?.name || archetypeId;
+
+      hideCorridorContinueButton('storybeau');
+
+      // Sparkle teleport from card to breadcrumb III
+      const selectedCard = document.querySelector(
+          `#archetypeCardGrid .archetype-card[data-archetype="${archetypeId}"]`
+      );
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      const archGhostIdx = STAGE_INDEX['storybeau'];
+      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${archGhostIdx}"]`);
+
+      let targetX, targetY;
+      if (ghostStep) {
+          const ghostRect = ghostStep.getBoundingClientRect();
+          targetX = ghostRect.left + ghostRect.width / 2;
+          targetY = ghostRect.top + ghostRect.height / 2;
+      } else if (breadcrumbRow) {
+          const brRect = breadcrumbRow.getBoundingClientRect();
+          targetX = brRect.left + brRect.width / 2;
+          targetY = brRect.top + brRect.height / 2;
+      }
+
+      if (selectedCard && targetX !== undefined) {
+          const cardRect = selectedCard.getBoundingClientRect();
+          const cardCenterX = cardRect.left + cardRect.width / 2;
+          const cardCenterY = cardRect.top + cardRect.height / 2;
+
+          // Phase 1: Dissolution sparkles + fade card
+          selectedCard.style.opacity = '0.3';
+          const dissolutionCount = 12 + Math.floor(Math.random() * 5);
+          for (let i = 0; i < dissolutionCount; i++) {
+              setTimeout(() => {
+                  const sparkle = document.createElement('div');
+                  sparkle.className = 'dissolution-sparkle';
+                  const sx = cardRect.left + Math.random() * cardRect.width;
+                  const sy = cardRect.top + Math.random() * cardRect.height;
+                  sparkle.style.cssText = `left: ${sx}px; top: ${sy}px;`;
+                  document.body.appendChild(sparkle);
+                  setTimeout(() => sparkle.remove(), 400);
+              }, i * 25);
+          }
+
+          // Phase 2: Sparkle travel to breadcrumb
+          setTimeout(() => {
+              const travelCount = 6 + Math.floor(Math.random() * 3);
+              for (let i = 0; i < travelCount; i++) {
+                  setTimeout(() => {
+                      const sparkle = document.createElement('div');
+                      sparkle.className = 'traveling-sparkle';
+                      const offX = (Math.random() - 0.5) * cardRect.width * 0.5;
+                      const offY = (Math.random() - 0.5) * cardRect.height * 0.5;
+                      const sx = cardCenterX + offX;
+                      const sy = cardCenterY + offY;
+                      const midX = (sx + targetX) / 2 + (Math.random() - 0.5) * 80;
+                      const midY = Math.min(sy, targetY) - 40 - Math.random() * 60;
+                      sparkle.style.cssText = `
+                          left: ${sx}px; top: ${sy}px;
+                          --target-x: ${targetX - sx}px;
+                          --target-y: ${targetY - sy}px;
+                          --arc-x: ${midX - sx}px;
+                          --arc-y: ${midY - sy}px;
+                      `;
+                      document.body.appendChild(sparkle);
+                      setTimeout(() => sparkle.remove(), 600);
+                  }, i * 40);
+              }
+          }, 200);
+
+          // Phase 3: Convergence sparkles + breadcrumb + advance
+          setTimeout(() => {
+              for (let i = 0; i < 5; i++) {
+                  const sparkle = document.createElement('div');
+                  sparkle.className = 'convergence-sparkle';
+                  const angle = (Math.PI * 2 * i) / 5;
+                  const dist = 15 + Math.random() * 10;
+                  sparkle.style.cssText = `
+                      left: ${targetX + Math.cos(angle) * dist}px;
+                      top: ${targetY + Math.sin(angle) * dist}px;
+                  `;
+                  document.body.appendChild(sparkle);
+                  setTimeout(() => sparkle.remove(), 500);
+              }
+
+              selectedCard.style.opacity = '';
+              createArchetypeBreadcrumbWithMask(archetypeId, false);
+              setTimeout(() => advanceCorridorRow(), 600);
+          }, 600);
+      } else {
+          // Fallback: no animation
+          createArchetypeBreadcrumbWithMask(archetypeId, false);
+          setTimeout(() => advanceCorridorRow(), 600);
+      }
+  }
+
+  // Close archetype zoom — now handled by closeZoomedCard() which detects archetype cards
+  // and auto-starts corridor sparkles. Kept as alias for compatibility.
   function closeArchetypeOverlay() {
-      closeZoomedCard();
-      // Start sparkle indicator on the last-zoomed card
-      startLastZoomedSparkles();
+      if (window.closeZoomedCard) window.closeZoomedCard();
   }
 
   function bindArchetypeHandlers() {
@@ -21528,13 +22633,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       document.querySelectorAll('#archetypeCardGrid .sb-card.archetype-card:not(.destiny-choice-card)').forEach(card => {
           const id = card.dataset.archetype;
           const isSelected = state.archetype.primary === id;
-          card.classList.toggle('selected', isSelected);
-          // Selected card gets selection state, all cards stay flipped (revealed)
-          if (isSelected) {
-              card.classList.add('flipped');
-              lastZoomedArchetype = id;
+
+          if (archetypeSelectedViaDestiny) {
+              // Destiny's Choice: mask is SECRET — all cards face-down, no selection shown
+              card.classList.remove('selected', 'flipped');
+          } else {
+              card.classList.toggle('selected', isSelected);
+              // Selected card gets selection state, all cards stay flipped (revealed)
+              if (isSelected) {
+                  card.classList.add('flipped');
+                  lastZoomedArchetype = id;
+              }
           }
-          // Cards remain flipped after reveal — no unflipping
       });
   }
 
@@ -21582,7 +22692,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const genderSelect = document.getElementById('loveInterestGender');
       const customInput = document.getElementById('customLoveInterest');
 
-      function onGenderChange() {
+      function onLIGenderChange() {
           // Update state.loveInterest for pronoun resolution
           if (genderSelect) {
               state.loveInterest = genderSelect.value === 'Custom' && customInput?.value?.trim()
@@ -21590,18 +22700,42 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
                   : genderSelect.value;
           }
           updateArchetypeSectionTitle();
-          // Re-render archetype cards with updated LI pronouns
+          // Re-render archetype cards with updated pronouns
           renderArchetypeCards();
       }
 
       if (genderSelect && genderSelect.dataset.archetypeBound !== '1') {
           genderSelect.dataset.archetypeBound = '1';
-          genderSelect.addEventListener('change', onGenderChange);
+          genderSelect.addEventListener('change', onLIGenderChange);
       }
 
       if (customInput && customInput.dataset.archetypeBound !== '1') {
           customInput.dataset.archetypeBound = '1';
-          customInput.addEventListener('input', onGenderChange);
+          customInput.addEventListener('input', onLIGenderChange);
+      }
+
+      // Also watch player gender changes for MC pronoun resolution
+      const playerGenderSelect = document.getElementById('playerGender');
+      const customPlayerGender = document.getElementById('customPlayerGender');
+
+      function onPlayerGenderChange() {
+          if (playerGenderSelect) {
+              state.gender = playerGenderSelect.value === 'Custom' && customPlayerGender?.value?.trim()
+                  ? customPlayerGender.value.trim()
+                  : playerGenderSelect.value;
+          }
+          // Re-render archetype cards with updated MC pronouns
+          renderArchetypeCards();
+      }
+
+      if (playerGenderSelect && playerGenderSelect.dataset.archetypeBound !== '1') {
+          playerGenderSelect.dataset.archetypeBound = '1';
+          playerGenderSelect.addEventListener('change', onPlayerGenderChange);
+      }
+
+      if (customPlayerGender && customPlayerGender.dataset.archetypeBound !== '1') {
+          customPlayerGender.dataset.archetypeBound = '1';
+          customPlayerGender.addEventListener('input', onPlayerGenderChange);
       }
   }
 
@@ -23692,29 +24826,29 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       driftType: 'rise',    // upward drift with slight wander
       flickerChance: 0.3    // 30% chance of flicker animation
     },
-    // Choose Your Hand: calm but present energy
+    // Choose Your Hand: matches Guided Fate energy
     chooseHand: {
-      durationMin: 3.0,
-      durationMax: 5.0,
-      sizeMin: 2,
-      sizeMax: 5,
-      opacityMin: 0.3,
-      opacityRange: 0.4,    // 0.3-0.7
-      haloOffset: 12,
+      durationMin: 2.5,
+      durationMax: 4.5,
+      sizeMin: 3,           // match guidedFate size
+      sizeMax: 7,
+      opacityMin: 0.4,
+      opacityRange: 0.5,    // 0.4-0.9 for more visible sparkles
+      haloOffset: 15,       // match guidedFate spawn distance
       driftType: 'wander',  // gentle random drift
-      flickerChance: 0.2
+      flickerChance: 0.3    // match guidedFate flicker
     },
     // Destiny Deck: subtle ambient
     destinyDeck: {
-      durationMin: 3.5,
-      durationMax: 5.5,
-      sizeMin: 2,
-      sizeMax: 4,
-      opacityMin: 0.25,
-      opacityRange: 0.3,
-      haloOffset: 8,
+      durationMin: 2.5,
+      durationMax: 4.5,
+      sizeMin: 3,
+      sizeMax: 6,
+      opacityMin: 0.4,
+      opacityRange: 0.4,
+      haloOffset: 12,
       driftType: 'float',   // slow float in any direction
-      flickerChance: 0.15
+      flickerChance: 0.25
     }
   };
 
@@ -23893,9 +25027,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * Called when authorship row becomes visible
    */
   function initAuthorshipSparkles() {
-    // Choose Your Hand: ambient fate energy (4/sec for visible field)
-    startSparkleEmitter('chooseHandSparkles', 'chooseHand', 4);
-    // Guided Fate: more active mystical energy (6/sec)
+    // Both cards: same sparkle energy (6/sec each)
+    startSparkleEmitter('chooseHandSparkles', 'chooseHand', 6);
     startSparkleEmitter('guidedFateSparkles', 'guidedFate', 6);
   }
 
@@ -23904,8 +25037,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * Called when character section becomes visible
    */
   function initDestinyDeckSparkles() {
-    // Destiny Deck: low continuous rate for ambient halo (1/sec)
-    startSparkleEmitter('destinyDeckSparkles', 'destinyDeck', 1);
+    // Destiny Deck: visible sparkle halo around mini-deck
+    startSparkleEmitter('destinyDeckSparkles', 'destinyDeck', 3);
   }
 
   /**
@@ -23991,8 +25124,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       chooseCard.classList.remove('selected');
       fateCard?.classList.remove('dimmed');
       state.authorship = null;
-      // Restore sparkles on both cards
-      startSparkleEmitter('chooseHandSparkles', 'chooseHand', 4);
+      // Restore sparkles on both cards (same rate for both)
+      startSparkleEmitter('chooseHandSparkles', 'chooseHand', 6);
       startSparkleEmitter('guidedFateSparkles', 'guidedFate', 6);
       // Update control plane Continue visibility
       if (typeof updateCorridorContinueButtonVisibility === 'function') {
@@ -24012,9 +25145,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // 3. Set pending authorship state (not committed until Continue)
     state.authorship = 'manual';
 
-    // 4. Adjust sparkles: enhance selected, stop dimmed
+    // 4. Adjust sparkles: enhance selected (2x), stop dimmed
     stopSparkleEmitter('guidedFateSparkles');
-    startSparkleEmitter('chooseHandSparkles', 'chooseHand', 10); // Enhanced rate
+    startSparkleEmitter('chooseHandSparkles', 'chooseHand', 12); // Double rate when selected
 
     // 5. Update control plane Continue visibility
     if (typeof updateCorridorContinueButtonVisibility === 'function') {
@@ -24036,8 +25169,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       fateCard.classList.remove('selected');
       chooseCard?.classList.remove('dimmed');
       state.authorship = null;
-      // Restore sparkles on both cards
-      startSparkleEmitter('chooseHandSparkles', 'chooseHand', 4);
+      // Restore sparkles on both cards (same rate for both)
+      startSparkleEmitter('chooseHandSparkles', 'chooseHand', 6);
       startSparkleEmitter('guidedFateSparkles', 'guidedFate', 6);
       // Update control plane Continue visibility
       if (typeof updateCorridorContinueButtonVisibility === 'function') {
@@ -24057,9 +25190,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // 3. Set pending authorship state (not committed until Continue)
     state.authorship = 'guided';
 
-    // 4. Adjust sparkles: enhance selected, stop dimmed
+    // 4. Adjust sparkles: enhance selected (2x), stop dimmed
     stopSparkleEmitter('chooseHandSparkles');
-    startSparkleEmitter('guidedFateSparkles', 'guidedFate', 10); // Enhanced rate
+    startSparkleEmitter('guidedFateSparkles', 'guidedFate', 12); // Double rate when selected
 
     // 5. Update control plane Continue visibility
     if (typeof updateCorridorContinueButtonVisibility === 'function') {
@@ -24085,10 +25218,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const cardCenterX = cardRect.left + cardRect.width / 2;
     const cardCenterY = cardRect.top + cardRect.height / 2;
 
-    const breadcrumbRect = breadcrumbRow.getBoundingClientRect();
-    const existingBreadcrumbs = breadcrumbRow.querySelectorAll('.breadcrumb-card').length;
-    const targetX = breadcrumbRect.left + (existingBreadcrumbs * 87) + 10 + 37.5;
-    const targetY = breadcrumbRect.top + breadcrumbRect.height / 2;
+    // Target the ghost step for authorship (stage index 0)
+    const ghostStep = breadcrumbRow.querySelector('.ghost-step[data-ghost-index="0"]');
+    let targetX, targetY;
+    if (ghostStep) {
+      const ghostRect = ghostStep.getBoundingClientRect();
+      targetX = ghostRect.left + ghostRect.width / 2;
+      targetY = ghostRect.top + ghostRect.height / 2;
+    } else {
+      // Fallback: center of breadcrumb row
+      const breadcrumbRect = breadcrumbRow.getBoundingClientRect();
+      targetX = breadcrumbRect.left + breadcrumbRect.width / 2;
+      targetY = breadcrumbRect.top + breadcrumbRect.height / 2;
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // PHASE 1: Dissolve card in place
@@ -24139,12 +25281,73 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }, 200);
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // PHASE 3: Complete (breadcrumb created by handleCorridorContinue)
+    // PHASE 3: Create breadcrumb card at target + convergence sparkles
     // ═══════════════════════════════════════════════════════════════════════════
     setTimeout(() => {
       card.style.visibility = 'hidden';
       card.classList.remove('dissolving-to-breadcrumb');
       card.classList.add('selected-static');
+
+      // Create the breadcrumb card (authorship) if not already created
+      const existingAuth = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="authorship"]');
+      if (!existingAuth) {
+        const authorshipTitle = state.authorship === 'manual' ? 'Choose Your Hand' : 'Guided Fate';
+        const label = typeof getBreadcrumbLabel === 'function'
+          ? getBreadcrumbLabel('authorship', state.authorship)
+          : { title: authorshipTitle, subtitle: null };
+        const subtitleHtml = label.subtitle
+          ? `<span class="breadcrumb-subtitle">${label.subtitle}</span>`
+          : '';
+
+        const breadcrumb = document.createElement('div');
+        breadcrumb.className = 'breadcrumb-card materializing';
+        breadcrumb.dataset.grp = 'authorship';
+        breadcrumb.dataset.val = state.authorship;
+        breadcrumb.dataset.stageIndex = STAGE_INDEX['authorship'];
+        breadcrumb.dataset.breadcrumbLabel = 'Authorship';
+        breadcrumb.innerHTML = `
+          <div class="sb-card-inner">
+            <div class="sb-card-face sb-card-back">
+              <span class="sb-card-title">${label.title}</span>
+              ${subtitleHtml}
+            </div>
+            <div class="sb-card-face sb-card-front">
+              <span class="sb-card-title">${label.title}</span>
+              ${subtitleHtml}
+            </div>
+          </div>
+        `;
+
+        // Insert before first ghost step
+        const firstGhost = breadcrumbRow.querySelector('.ghost-step');
+        if (firstGhost) {
+          breadcrumbRow.insertBefore(breadcrumb, firstGhost);
+        } else {
+          breadcrumbRow.appendChild(breadcrumb);
+        }
+
+        // Remove ghost step 0 (authorship)
+        removeGhostStep(STAGE_INDEX['authorship']);
+
+        // Scale font for long titles
+        if (typeof scaleBreadcrumbTitle === 'function') {
+          scaleBreadcrumbTitle(breadcrumb);
+        }
+
+        // Attach destructive navigation
+        if (typeof attachBreadcrumbNavigation === 'function') {
+          attachBreadcrumbNavigation(breadcrumb);
+        }
+
+        setTimeout(() => breadcrumb.classList.remove('materializing'), 400);
+
+        // Sparkles on the active breadcrumb
+        if (typeof updateActiveBreadcrumbSparkles === 'function') {
+          updateActiveBreadcrumbSparkles(breadcrumb);
+        }
+
+        console.log(`[Breadcrumb] Created via authorship animation: authorship=${state.authorship}`);
+      }
 
       // Create convergence sparkles at target
       for (let i = 0; i < 5; i++) {
@@ -24187,27 +25390,30 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     setTimeout(() => unselectedCard?.classList.add('hidden'), 400);
 
     // Animate selected card to breadcrumb (600ms, above Continue button)
+    // Advance AFTER breadcrumb materializes so user sees it land in position I
     animateAuthorshipCardToBreadcrumb(selectedCard, () => {
-      // NOTE: Breadcrumb created by handleCorridorContinue() — do NOT duplicate here
       // Remove authorship cards after animation
       removeAuthorshipCards();
+
+      // Wait for materializing animation (400ms) before advancing
+      setTimeout(() => {
+        if (state.authorship === 'manual') {
+          // MANUAL PATH: Advance to identity corridor (character section)
+          corridorActiveRowIndex = 1; // Identity is now row 1
+          updateCorridorVisibility();
+
+          // Initialize sparkles after corridor mounts the section
+          setTimeout(() => initDestinyDeckSparkles(), 100);
+
+          // Show control plane Continue button for identity stage
+          updateCorridorContinueButtonVisibility();
+
+          console.log('[Authorship] Choose Your Hand committed — advanced to identity corridor');
+        }
+      }, 500);
     });
 
-    if (state.authorship === 'manual') {
-      // MANUAL PATH: Advance to identity corridor (character section)
-      // Let corridor system handle visibility via DOM mount/unmount
-      corridorActiveRowIndex = 1; // Identity is now row 1
-      updateCorridorVisibility();
-
-      // Initialize sparkles after corridor mounts the section
-      setTimeout(() => initDestinyDeckSparkles(), 100);
-
-      // Show control plane Continue button for identity stage
-      updateCorridorContinueButtonVisibility();
-
-      console.log('[Authorship] Choose Your Hand committed — advanced to identity corridor');
-
-    } else if (state.authorship === 'guided') {
+    if (state.authorship === 'guided') {
       // GUIDED PATH: Auto-fill with fate choices
       // (Card dissipate and animation handled above)
 
@@ -24300,16 +25506,53 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * No text overlay — PNG has baked text
    */
   function createFlyingCard(character, isPlayer) {
+    // Get the target card to clone its structure
+    const targetCard = isPlayer ? $('playerCharacterCard') : $('loveInterestCharacterCard');
+
     const card = document.createElement('div');
     card.className = 'destiny-flying-card';
-    // Front face uses data-face attribute to select correct PNG
-    const faceAttr = isPlayer ? '' : 'data-face="love-interest"';
-    card.innerHTML = `
-      <div class="destiny-flying-card-inner">
-        <div class="destiny-flying-card-face destiny-flying-card-back"></div>
-        <div class="destiny-flying-card-face destiny-flying-card-front" ${faceAttr}></div>
-      </div>
-    `;
+
+    // Create the flip container
+    const inner = document.createElement('div');
+    inner.className = 'destiny-flying-card-inner';
+
+    // Back face: Black Destiny Choice back
+    const backFace = document.createElement('div');
+    backFace.className = 'destiny-flying-card-face destiny-flying-card-back';
+
+    // Front face: Clone of the actual character card with fields
+    const frontFace = document.createElement('div');
+    frontFace.className = 'destiny-flying-card-face destiny-flying-card-front-live';
+
+    if (targetCard) {
+      // Clone the target card's content
+      const clone = targetCard.cloneNode(true);
+      // Preserve background-image before removing ID (Love Interest PNG is ID-scoped)
+      const computedBg = getComputedStyle(targetCard).backgroundImage;
+      if (computedBg && computedBg !== 'none') {
+        clone.style.backgroundImage = computedBg;
+      }
+      clone.removeAttribute('id');
+      clone.style.width = '100%';
+      clone.style.height = '100%';
+      clone.style.position = 'relative';
+
+      // Pre-fill the cloned fields with fate character data
+      const nameInput = clone.querySelector('input[id*="NameInput"], input[id*="partnerName"]');
+      const genderSelect = clone.querySelector('select[id*="Gender"]');
+      const pronounsSelect = clone.querySelector('select[id*="Pronouns"], select[id*="pronouns"]');
+
+      if (nameInput) nameInput.value = character.name;
+      if (genderSelect) genderSelect.value = character.gender;
+      if (pronounsSelect) pronounsSelect.value = character.pronouns;
+
+      frontFace.appendChild(clone);
+    }
+
+    inner.appendChild(backFace);
+    inner.appendChild(frontFace);
+    card.appendChild(inner);
+
     return card;
   }
 
@@ -24341,82 +25584,167 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const nameInput = $('playerNameInput');
       const genderSelect = $('playerGender');
       const pronounsSelect = $('playerPronouns');
+      const ancestryInput = $('ancestryInputPlayer');
 
       if (nameInput) nameInput.value = character.name;
       if (genderSelect) genderSelect.value = character.gender;
       if (pronounsSelect) pronounsSelect.value = character.pronouns;
+      if (ancestryInput) {
+        ancestryInput.value = getRandomSuggestion('ancestry');
+        const ph = document.querySelector('.rotating-placeholder[data-for="ancestryInputPlayer"]');
+        if (ph) ph.classList.add('hidden');
+      }
     } else {
       const nameInput = $('partnerNameInput');
       const genderSelect = $('loveInterestGender');
       const pronounsSelect = $('lovePronouns');
+      const ancestryInput = $('ancestryInputLI');
 
       if (nameInput) nameInput.value = character.name;
       if (genderSelect) genderSelect.value = character.gender;
       if (pronounsSelect) pronounsSelect.value = character.pronouns;
+      if (ancestryInput) {
+        ancestryInput.value = getRandomSuggestion('ancestry');
+        const ph = document.querySelector('.rotating-placeholder[data-for="ancestryInputLI"]');
+        if (ph) ph.classList.add('hidden');
+      }
     }
   }
 
   /**
-   * Animate flying card from deck to target
-   * Y-axis flip + continuous growth (no pause at 90°)
-   * Duration: 600ms (50% slower for dramatic effect)
-   * Z-index 2000 during animation, ends slightly askew
+   * Animate flying card from deck to target - book cover opening effect
+   *
+   * For 'left' direction (to Character card):
+   *   - Hinge on LEFT edge of deck
+   *   - Right edge lifts up like opening a book cover
+   *   - At 90°, detaches and flies to target while continuing to flip
+   *
+   * For 'right' direction (to Love Interest card):
+   *   - Hinge on RIGHT edge of deck
+   *   - Left edge lifts up
+   *   - At 90°, detaches and flies to target
    */
-  function animateFlyingCard(card, startRect, endRect, onComplete) {
-    // Start scale (mini-deck size ratio)
-    const startScale = 0.6;
-    const endScale = 1.0;
+  function animateFlyingCard(card, startRect, endRect, direction, onComplete) {
+    // Get deck dimensions
+    const miniDeck = $('destinyMiniDeck');
+    const deckRect = miniDeck ? miniDeck.getBoundingClientRect() : { width: 80, height: 120 };
 
-    // Position at start with initial scale
+    // Start at deck size, end at target card size
+    const startWidth = deckRect.width;
+    const startHeight = deckRect.height;
+    const endWidth = endRect.width || 200;
+    const endHeight = endRect.height || 300;
+
+    // Position card exactly on top of deck
+    card.style.position = 'fixed';
     card.style.left = `${startRect.left}px`;
     card.style.top = `${startRect.top}px`;
+    card.style.width = `${startWidth}px`;
+    card.style.height = `${startHeight}px`;
     card.style.opacity = '1';
-    card.style.transform = `scale(${startScale})`;
-    card.style.transformOrigin = 'center center';
     card.style.zIndex = '2000';
 
     document.body.appendChild(card);
 
+    // Set transform origin on inner element - the hinge edge
+    const inner = card.querySelector('.destiny-flying-card-inner');
+    if (inner) {
+      // 'left' direction: hinge on LEFT edge (opens like a book to the right)
+      // 'right' direction: hinge on RIGHT edge (opens like a book to the left)
+      inner.style.transformOrigin = direction === 'left' ? 'left center' : 'right center';
+      inner.style.transformStyle = 'preserve-3d';
+    }
+
     // Force reflow
     void card.offsetWidth;
 
-    // Start flip immediately — continuous with growth
-    card.classList.add('flipping');
-
-    // 1200ms duration (50% slower again per user request)
-    const duration = 1200;
+    // Animation timing
+    const duration = 1800; // Slower for dramatic effect
     const startTime = performance.now();
 
-    // Random askew angle for end state (-2 to +2 degrees)
-    const askewAngle = (Math.random() - 0.5) * 4;
+    // Rotation direction based on hinge position
+    // 'left' hinge + NEGATIVE rotateY = right edge lifts UP toward viewer (like opening a book outward)
+    // 'right' hinge + POSITIVE rotateY = left edge lifts UP toward viewer
+    const rotationSign = direction === 'left' ? -1 : 1;
 
     function animate(currentTime) {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Smooth easing for position (ease-out cubic)
-      const eased = 1 - Math.pow(1 - progress, 3);
+      let rotateY, currentX, currentY, currentWidth, currentHeight;
 
-      const currentX = startRect.left + (endRect.left - startRect.left) * eased;
-      const currentY = startRect.top + (endRect.top - startRect.top) * eased;
+      // Phase 1 (0-40%): Hinged rotation - card opens like a book cover
+      // Phase 2 (40-100%): Detach, continue flipping, grow, and fly to target
 
-      // Scale grows LINEARLY during flip (per user request)
-      const currentScale = startScale + (endScale - startScale) * progress;
+      if (progress < 0.4) {
+        // Phase 1: Book cover opening - hinged rotation from 0° to 90°
+        const hingeProgress = progress / 0.4;
+        // Smooth ease-out for the hinge rotation
+        const hingeEased = 1 - Math.pow(1 - hingeProgress, 2);
 
-      // Arc path during flight
-      const arc = Math.sin(progress * Math.PI) * -25;
+        rotateY = rotationSign * hingeEased * 90;
 
-      // Apply askew rotation as we approach end
-      const currentAskew = askewAngle * eased;
+        // Card stays anchored at deck position during hinge phase
+        currentX = startRect.left;
+        currentY = startRect.top;
+        currentWidth = startWidth;
+        currentHeight = startHeight;
 
+      } else {
+        // Phase 2: Detach and fly - continue rotation from 90° to 180°, grow, move
+        const flyProgress = (progress - 0.4) / 0.6;
+        // Smooth ease-out for flight
+        const flyEased = 1 - Math.pow(1 - flyProgress, 3);
+
+        // Continue rotation from 90° to 180°
+        rotateY = rotationSign * (90 + 90 * flyEased);
+
+        // At detach point, card center shifts from hinge edge to card center
+        // Calculate where the card center should be at the start of phase 2
+        const detachCenterX = startRect.left + (direction === 'left' ? 0 : startWidth);
+        const detachCenterY = startRect.top + startHeight / 2;
+
+        // Target center
+        const targetCenterX = endRect.left + endWidth / 2;
+        const targetCenterY = endRect.top + endHeight / 2;
+
+        // Interpolate center position
+        const currentCenterX = detachCenterX + (targetCenterX - detachCenterX) * flyEased;
+        const currentCenterY = detachCenterY + (targetCenterY - detachCenterY) * flyEased;
+
+        // Grow from deck size to target size
+        currentWidth = startWidth + (endWidth - startWidth) * flyEased;
+        currentHeight = startHeight + (endHeight - startHeight) * flyEased;
+
+        // Convert center position to top-left
+        currentX = currentCenterX - currentWidth / 2;
+        currentY = currentCenterY - currentHeight / 2;
+
+        // Add arc to the flight path
+        const arc = Math.sin(flyProgress * Math.PI) * -40;
+        currentY += arc;
+
+        // Switch transform origin to center for phase 2
+        if (inner && flyProgress < 0.1) {
+          inner.style.transformOrigin = 'center center';
+        }
+      }
+
+      // Apply position and size
       card.style.left = `${currentX}px`;
-      card.style.top = `${currentY + arc}px`;
-      card.style.transform = `scale(${currentScale}) rotate(${currentAskew}deg)`;
+      card.style.top = `${currentY}px`;
+      card.style.width = `${currentWidth}px`;
+      card.style.height = `${currentHeight}px`;
+
+      // Apply rotation to inner element
+      if (inner) {
+        inner.style.transform = `rotateY(${rotateY}deg)`;
+      }
 
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
-        // Animation complete — card rests on top, slightly askew
+        // Animation complete
         card.style.zIndex = '100';
         card.remove();
         if (onComplete) onComplete();
@@ -24428,6 +25756,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   /**
    * Spawn fate cards from mini-deck to character tarot cards
+   * Sequential peel-open animation: first card peels left, second peels right
    * AUTHORITATIVE TARGETS: .character-tarot-card containers
    */
   function spawnDestinyCards() {
@@ -24442,47 +25771,50 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const playerChar = generateFateCharacter('Female');
     const liChar = generateFateCharacter('Male');
 
-    // Get positions
+    // Get positions and dimensions
     const deckRect = miniDeck.getBoundingClientRect();
     const playerRect = playerCharCard.getBoundingClientRect();
     const liRect = loveInterestCharCard.getBoundingClientRect();
 
-    // Start position (center of deck)
+    // Start position (aligned with top of deck)
     const startRect = {
-      left: deckRect.left + deckRect.width / 2 - 27.5,
-      top: deckRect.top + deckRect.height / 2 - 47.5
+      left: deckRect.left,
+      top: deckRect.top
     };
 
-    // Create and animate player card - lands on character tarot card
-    // On landing: fill fields directly (no overlay), card remains editable
+    // First card: peel LEFT to Character card
     const playerFlyingCard = createFlyingCard(playerChar, true);
     animateFlyingCard(playerFlyingCard, startRect, {
       left: playerRect.left,
-      top: playerRect.top
-    }, () => {
+      top: playerRect.top,
+      width: playerRect.width,
+      height: playerRect.height
+    }, 'left', () => {
       // Fill fields directly - no overlay, same editable component
       fillCharacterFields(true, playerChar);
       // Brief highlight to show landing
       playerCharCard.classList.add('fate-landed');
       setTimeout(() => playerCharCard.classList.remove('fate-landed'), 300);
+
+      // After first card lands, start second card: peel RIGHT to Love Interest
+      setTimeout(() => {
+        const liFlyingCard = createFlyingCard(liChar, false);
+        animateFlyingCard(liFlyingCard, startRect, {
+          left: liRect.left,
+          top: liRect.top,
+          width: liRect.width,
+          height: liRect.height
+        }, 'right', () => {
+          // Fill fields directly - no overlay, same editable component
+          fillCharacterFields(false, liChar);
+          // Brief highlight to show landing
+          loveInterestCharCard.classList.add('fate-landed');
+          setTimeout(() => loveInterestCharCard.classList.remove('fate-landed'), 300);
+        });
+      }, 200); // Brief pause after first card lands
     });
 
-    // Create and animate love interest card (reduced delay)
-    setTimeout(() => {
-      const liFlyingCard = createFlyingCard(liChar, false);
-      animateFlyingCard(liFlyingCard, startRect, {
-        left: liRect.left,
-        top: liRect.top
-      }, () => {
-        // Fill fields directly - no overlay, same editable component
-        fillCharacterFields(false, liChar);
-        // Brief highlight to show landing
-        loveInterestCharCard.classList.add('fate-landed');
-        setTimeout(() => loveInterestCharCard.classList.remove('fate-landed'), 300);
-      });
-    }, 80);
-
-    console.log('[Destiny] Cards spawned:', playerChar.name, liChar.name);
+    console.log('[Destiny] Cards spawning:', playerChar.name, liChar.name);
   }
 
   // Mini-deck click handler
@@ -24530,59 +25862,83 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Get breadcrumb target position (identity slot)
     const identityIdx = STAGE_INDEX['identity'];
     const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${identityIdx}"]`);
-    const targetRect = ghostStep?.getBoundingClientRect() || breadcrumbRow?.getBoundingClientRect();
+    let targetX, targetY;
+    if (ghostStep) {
+      const ghostRect = ghostStep.getBoundingClientRect();
+      targetX = ghostRect.left + ghostRect.width / 2;
+      targetY = ghostRect.top + ghostRect.height / 2;
+    } else if (breadcrumbRow) {
+      const brRect = breadcrumbRow.getBoundingClientRect();
+      targetX = brRect.left + brRect.width / 2;
+      targetY = brRect.top + brRect.height / 2;
+    }
 
-    // Create flying clone of player card
-    if (playerCharCard && targetRect) {
+    // Sparkle teleport animation (like authorship)
+    if (playerCharCard && targetX !== undefined) {
       const cardRect = playerCharCard.getBoundingClientRect();
+      const cardCenterX = cardRect.left + cardRect.width / 2;
+      const cardCenterY = cardRect.top + cardRect.height / 2;
 
-      // Clone visual appearance only (simplified)
-      const flyingClone = document.createElement('div');
-      flyingClone.className = 'identity-card-flying';
-      flyingClone.style.cssText = `
-        position: fixed;
-        left: ${cardRect.left}px;
-        top: ${cardRect.top}px;
-        width: ${cardRect.width}px;
-        height: ${cardRect.height}px;
-        background: linear-gradient(145deg, #0a0a0a 0%, #151515 50%, #0a0a0a 100%);
-        border: 2px solid var(--gold, #daa520);
-        border-radius: 6px;
-        box-shadow: 0 0 20px rgba(218, 165, 32, 0.4), 0 4px 20px rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        pointer-events: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Cinzel', serif;
-        font-size: 0.9em;
-        color: var(--gold);
-        text-align: center;
-        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-      `;
-      flyingClone.textContent = identityTitle;
-      document.body.appendChild(flyingClone);
-
-      // Fade original cards
+      // Phase 1: Dissolution sparkles from card
       playerCharCard.style.opacity = '0.3';
       if (loveInterestCharCard) loveInterestCharCard.style.opacity = '0.3';
 
-      // Animate to breadcrumb position
-      requestAnimationFrame(() => {
-        flyingClone.style.left = `${targetRect.left}px`;
-        flyingClone.style.top = `${targetRect.top}px`;
-        flyingClone.style.width = '60px';
-        flyingClone.style.height = '40px';
-        flyingClone.style.fontSize = '0.6em';
-        flyingClone.style.borderRadius = '4px';
-      });
+      const dissolutionCount = 10 + Math.floor(Math.random() * 5);
+      for (let i = 0; i < dissolutionCount; i++) {
+        setTimeout(() => {
+          const sparkle = document.createElement('div');
+          sparkle.className = 'dissolution-sparkle';
+          const startX = cardRect.left + Math.random() * cardRect.width;
+          const startY = cardRect.top + Math.random() * cardRect.height;
+          sparkle.style.cssText = `left: ${startX}px; top: ${startY}px;`;
+          document.body.appendChild(sparkle);
+          setTimeout(() => sparkle.remove(), 400);
+        }, i * 25);
+      }
 
-      // After animation completes, finalize breadcrumb and clean up
+      // Phase 2: Sparkle travel to breadcrumb target
       setTimeout(() => {
-        // Remove flying clone
-        flyingClone.remove();
+        const travelCount = 6 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < travelCount; i++) {
+          setTimeout(() => {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'traveling-sparkle';
+            const offsetX = (Math.random() - 0.5) * cardRect.width * 0.5;
+            const offsetY = (Math.random() - 0.5) * cardRect.height * 0.5;
+            const startX = cardCenterX + offsetX;
+            const startY = cardCenterY + offsetY;
+            const midX = (startX + targetX) / 2 + (Math.random() - 0.5) * 80;
+            const midY = Math.min(startY, targetY) - 40 - Math.random() * 60;
+            sparkle.style.cssText = `
+              left: ${startX}px; top: ${startY}px;
+              --target-x: ${targetX - startX}px;
+              --target-y: ${targetY - startY}px;
+              --arc-x: ${midX - startX}px;
+              --arc-y: ${midY - startY}px;
+            `;
+            document.body.appendChild(sparkle);
+            setTimeout(() => sparkle.remove(), 600);
+          }, i * 40);
+        }
+      }, 200);
 
-        // Remove fate overlays
+      // Phase 3: Convergence sparkles + create breadcrumb + advance
+      setTimeout(() => {
+        // Convergence sparkles at target
+        for (let i = 0; i < 5; i++) {
+          const sparkle = document.createElement('div');
+          sparkle.className = 'convergence-sparkle';
+          const angle = (Math.PI * 2 * i) / 5;
+          const dist = 15 + Math.random() * 10;
+          sparkle.style.cssText = `
+            left: ${targetX + Math.cos(angle) * dist}px;
+            top: ${targetY + Math.sin(angle) * dist}px;
+          `;
+          document.body.appendChild(sparkle);
+          setTimeout(() => sparkle.remove(), 500);
+        }
+
+        // Clean up cards
         if (playerCharCard) {
           const overlay = playerCharCard.querySelector('.fate-overlay-card');
           if (overlay) overlay.remove();
@@ -24607,20 +25963,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           createBreadcrumbDirect('identity', 'names', identityTitle);
         }
 
-        // Advance corridor from identity (row 1) to storybeau (row 2)
-        // This mounts the archetype section elements into the DOM
-        if (typeof advanceCorridorRow === 'function') {
-          advanceCorridorRow();
-        }
-
-        // Update Archetype title with Love Interest name AFTER corridor advances
-        // (title element is part of storybeau stage, must be mounted first)
-        if (typeof updateArchetypeSectionTitle === 'function') {
-          updateArchetypeSectionTitle();
-        }
-
-        console.log('[Character Section] Fly-to-breadcrumb complete — Archetype row now visible');
-      }, 550); // Match transition duration
+        // Wait for materializing animation, then advance
+        setTimeout(() => {
+          if (typeof advanceCorridorRow === 'function') {
+            advanceCorridorRow();
+          }
+          if (typeof updateArchetypeSectionTitle === 'function') {
+            updateArchetypeSectionTitle();
+          }
+          console.log('[Character Section] Sparkle teleport complete — Archetype row now visible');
+        }, 600);
+      }, 600);
 
     } else {
       // Fallback: no animation if elements missing
@@ -33920,42 +35273,7 @@ FATE CARD ADAPTATION (CRITICAL):
      if(m === 'couple') window.showScreen('coupleInvite');
      if(m === 'stranger') window.showScreen('strangerModal');
 
-     // Add mode as ephemeral breadcrumb (dissolves at POV selection)
-     if (m === 'solo' || m === 'couple') {
-       const breadcrumbRow = document.getElementById('breadcrumbRow');
-       if (breadcrumbRow) {
-         // Remove any existing mode breadcrumb
-         const existingMode = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="mode"]');
-         if (existingMode) existingMode.remove();
-
-         // Create ephemeral mode breadcrumb
-         const modeLabel = m === 'solo' ? 'Solo' : 'Couple';
-         const modeBreadcrumb = document.createElement('div');
-         modeBreadcrumb.className = 'breadcrumb-card breadcrumb-ephemeral';
-         modeBreadcrumb.dataset.grp = 'mode';
-         modeBreadcrumb.dataset.val = m;
-         modeBreadcrumb.dataset.breadcrumbLabel = 'Mode';
-         modeBreadcrumb.innerHTML = `
-           <div class="sb-card-inner">
-             <div class="sb-card-face sb-card-back">
-               <span class="sb-card-title">${modeLabel}</span>
-             </div>
-             <div class="sb-card-face sb-card-front">
-               <span class="sb-card-title">${modeLabel}</span>
-             </div>
-           </div>
-         `;
-         // Insert at beginning (mode comes first)
-         breadcrumbRow.insertBefore(modeBreadcrumb, breadcrumbRow.firstChild);
-
-         // DESTRUCTIVE NAVIGATION: Attach click handler
-         if (typeof attachBreadcrumbNavigation === 'function') {
-           attachBreadcrumbNavigation(modeBreadcrumb);
-         }
-
-         console.log(`[Breadcrumb] Added ephemeral mode: ${m} (clickable)`);
-       }
-     }
+     // Mode breadcrumb removed — Solo/Couple is not a corridor choice step
   }
 
   // Public wrapper - allows direct mode selection (bypasses flip animation)
