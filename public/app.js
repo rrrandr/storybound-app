@@ -598,17 +598,28 @@ window.config = window.config || {
       office: '9-5 / Office',
       supernatural_modern: 'Supernatural Modern',
       superheroic_modern: 'Superheroic Modern',
+      // Historical Flavors
+      prehistoric: 'Prehistoric',
+      classical: 'Classical',
+      medieval: 'Medieval',
+      renaissance: 'Renaissance',
+      victorian: 'Victorian',
+      '20th_century': '20th Century',
       // Sci-Fi Flavors
+      galactic_civilizations: 'Galactic Civilizations',
+      future_of_science: 'Future of Science',
       space_opera: 'Star-Spanning Civilizations',
       hard_scifi: 'Future Built on Science',
       cyberpunk: 'Neon Futures',
       post_human: 'Post-Human',
       alien_contact: 'First Contact',
+      first_contact: 'First Contact',
       simulation: 'Simulation',
       final_frontier: 'Final Frontier',
       // Fantasy Flavors (invented magical worlds, not mythology)
       enchanted_realms: 'Enchanted Realms',
       hidden_magic: 'Hidden Magic',
+      cursed_worlds: 'Cursed Worlds',
       cursed_corrupt: 'Cursed & Corrupt Worlds',
       // Dystopia Flavors (7 locked canon)
       glass_house: 'The Glass House',
@@ -618,12 +629,12 @@ window.config = window.config || {
       perfect_match: 'The Perfect Match',
       ministry_of_affection: 'The Ministry of Affection',
       endless_edit: 'The Endless Edit',
-      // Post-Apocalyptic Flavors
-      nuclear: 'Nuclear Aftermath',
-      pandemic: 'Pandemic Collapse',
-      climate: 'Climate Ruin',
-      technological: 'Technological Fallout',
-      slow_decay: 'Slow Civilizational Decay'
+      // Post-Apocalyptic Flavors (5 canonical conditions)
+      ashfall: 'Ashfall',
+      year_zero: 'Year Zero',
+      dystimulation: 'Dystimulation',
+      predation: 'Predation',
+      hunger: 'Hunger'
   };
 
   function getWorldLabel(worldCode) {
@@ -691,6 +702,54 @@ window.config = window.config || {
           narrativeHook: 'People voluntarily edit themselves to remain socially viable — smoothing memories, shedding traits, discarding former selves. Intimacy stakes center on continuity: can you love someone who keeps revising? Can they recognize you after you revise yourself?',
           eroticEngine: ['voluntary self-editing', 'memory continuity', 'recognition', 'shared past as anchor', 'being seen as you were'],
           sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'social' }
+      }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POST-APOCALYPTIC FLAVORS — Canonical data model (LOCKED, do not invent or merge)
+  // World-specific CONDITION variants that bias intimacy risk, desire cost, and
+  // failure modes. Conditions, not causes — the catastrophe is background only.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const POST_APOC_FLAVORS = {
+      ashfall: {
+          id: 'ashfall', world: 'postapocalyptic', title: 'Ashfall',
+          subtitle: 'Bodily Fragility Condition',
+          uiDescription: 'The body fails first. Skin blisters, lungs scar, touching someone is a survival cost.',
+          narrativeHook: 'The environment attacks the body — air burns lungs, water corrodes skin, exposure is cumulative. Physical intimacy is not forbidden but genuinely costly: every hour skin-to-skin is an hour unprotected. Characters must decide what touch is worth when the body is already failing.',
+          eroticEngine: ['physical cost of contact', 'borrowed time', 'skin as liability', 'cumulative exposure', 'tenderness under duress'],
+          sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'environmental' }
+      },
+      year_zero: {
+          id: 'year-zero', world: 'postapocalyptic', title: 'Year Zero',
+          subtitle: 'Psychological Rupture Condition',
+          uiDescription: 'The past intrudes. Everyone carries a before-self that doesn\'t fit the after-world.',
+          narrativeHook: 'There is a hard line between before and after. Characters carry memories, habits, and attachments from a world that no longer exists. Intimacy fails when one partner reaches for a version of love that belonged to the old world — and the other has already let it go. Grief is not backstory; it is active interference.',
+          eroticEngine: ['interrupted identity', 'grief intrusion', 'mismatched pasts', 'before-world reflexes', 'recognition failure'],
+          sceneBias: { pacing: 'moderate', intimacyRisk: 'high', powerDynamic: 'psychological' }
+      },
+      dystimulation: {
+          id: 'dystimulation', world: 'postapocalyptic', title: 'Dystimulation',
+          subtitle: 'Anhedonia Condition',
+          uiDescription: 'Desire doesn\'t arrive. The body is intact but sensation is absent. Connection despite numbness.',
+          narrativeHook: 'Something neurological or biological has shifted — pleasure signals are delayed, muted, or absent. This is not low libido as character flaw. Characters are not broken; they are navigating a body that no longer confirms what the mind wants. Intimacy requires patience, invention, and the willingness to stay present when nothing registers.',
+          eroticEngine: ['delayed response', 'asymmetric wanting', 'patience as devotion', 'sensation hunting', 'presence without confirmation'],
+          sceneBias: { pacing: 'slow', intimacyRisk: 'medium', powerDynamic: 'internal' }
+      },
+      predation: {
+          id: 'predation', world: 'postapocalyptic', title: 'Predation',
+          subtitle: 'Exposure Condition',
+          uiDescription: 'Being seen together makes you a target. Closeness creates leverage for others.',
+          narrativeHook: 'No law, no recourse, no institutional protection. Anyone who knows what you care about can use it against you. Intimacy is not illegal — it is strategically dangerous. Coercion is ambient and normalized. The threat is not a single predator but a social ecology where attachment is exploitable.',
+          eroticEngine: ['strategic vulnerability', 'leveraged attachment', 'visible dependence', 'ambient coercion', 'trust as exposure'],
+          sceneBias: { pacing: 'tense', intimacyRisk: 'extreme', powerDynamic: 'social' }
+      },
+      hunger: {
+          id: 'hunger', world: 'postapocalyptic', title: 'Hunger',
+          subtitle: 'Chronic Scarcity Condition',
+          uiDescription: 'Sharing kills you. Desire competes with calories, warmth, medicine.',
+          narrativeHook: 'Scarcity is chronic, not dramatic — every calorie, every dose, every warm hour is accounted for. Desire competes directly with survival arithmetic. Generosity toward a partner is subtracted from your own endurance. Characters do not starve in a single scene; they erode across weeks of choosing someone else over themselves.',
+          eroticEngine: ['resource arithmetic', 'generosity as sacrifice', 'endurance erosion', 'warmth as currency', 'the cost of staying'],
+          sceneBias: { pacing: 'moderate', intimacyRisk: 'high', powerDynamic: 'material' }
       }
   };
 
@@ -1189,6 +1248,13 @@ For veto/quill/god_mode:
               perfect_match: ['breeding', 'genetic', 'reproductive', 'pairing', 'eugenics', 'biological mandate', 'fitness'],
               ministry_of_affection: ['accusation', 'retroactive', 'consent', 'branding', 'reputational', 'juridical', 'compliance'],
               endless_edit: ['self-edit', 'revision', 'erasure', 'memory', 'continuity', 'recognition', 'optimize']
+          },
+          postapocalyptic: {
+              ashfall: ['ash', 'radiation', 'contaminated', 'exposure', 'blisters', 'lungs', 'toxic', 'fallout', 'hazard', 'skin'],
+              year_zero: ['before', 'after', 'memory', 'grief', 'past life', 'rupture', 'old world', 'identity', 'loss', 'interrupted'],
+              dystimulation: ['numb', 'anhedonia', 'sensation', 'absent', 'delayed', 'response', 'flat', 'neurological', 'nothing registers'],
+              predation: ['predator', 'target', 'leverage', 'exploit', 'coercion', 'lawless', 'exposed', 'no protection', 'visible'],
+              hunger: ['scarcity', 'ration', 'calories', 'warmth', 'medicine', 'starvation', 'sharing', 'endurance', 'resource']
           }
       };
 
@@ -12144,9 +12210,10 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           "Underground feeling house", "Asset depreciation ward", "Accusation records vault", "Memory continuity shrine"
       ],
       PostApocalyptic: [
-          "Ruined city overgrowth", "Survivor settlement", "Irradiated wasteland edge", "Flooded coastal ruins",
-          "Bunker community", "Reclaimed factory", "Nomad caravan camp", "Plague quarantine zone",
-          "Fallen skyscraper shelter", "Clean water spring", "Tech scavenger den", "Nature-reclaimed highway"
+          "Sealed shelter with rationed air", "Clinic with dwindling supplies", "Shared sleeping quarters, too close",
+          "Water collection point at dawn", "Abandoned building with one warm room", "Trade post where debts are public",
+          "Makeshift infirmary cot", "Rooftop with breathable air after dark", "Root cellar with someone else's stores",
+          "Crossroads where caravans are watched", "Quiet place where the numbness lifts", "Room where the old photographs are kept"
       ]
   };
 
@@ -15471,6 +15538,18 @@ The final image must look like a real published novel cover.`;
    * Other worlds pass through worldSubtype as a simple label.
    */
   function buildWorldFlavorDirectives(world, worldSubtype) {
+      // Custom text flavor — user-entered free text, interpreted through the world lens
+      if (!worldSubtype && state.worldCustomText) {
+          return `
+WORLD FLAVOR (custom): "${state.worldCustomText}"
+INTERPRETATION RULES:
+- This is a user-supplied setting hint. Interpret it through the lens of the ${world || 'chosen'} world.
+- If it names a recognizable setting, franchise, or concept, extract the TONAL and STRUCTURAL qualities — never reproduce copyrighted characters, dialogue, or plot.
+- If it is a real place, treat it as a setting with authentic local texture.
+- If it is nonsensical or unrecognizable, ignore it gracefully — do not mention it in prose.
+- The custom flavor modifies WHERE and HOW the story feels, not what happens.`;
+      }
+
       if (!worldSubtype) return '';
 
       // Dystopia flavors have rich data models — bias stakes, fear, and intimacy mechanics
@@ -15495,7 +15574,24 @@ FLAVOR RULES:
           return directives;
       }
 
-      // Non-dystopia worlds: simple label pass-through
+      // Post-Apocalyptic flavors — bias conditions, fear, and intimacy cost
+      if (world === 'PostApocalyptic' && POST_APOC_FLAVORS[worldSubtype]) {
+          const f = POST_APOC_FLAVORS[worldSubtype];
+          let directives = `
+WORLD FLAVOR: ${f.title} (${f.subtitle})
+SCENE FRAMING (use as guidance, never quote verbatim):
+${f.narrativeHook}
+EROTIC DRIVERS: ${f.eroticEngine.join(', ')}
+SCENE BIAS: pacing=${f.sceneBias.pacing}, intimacy-risk=${f.sceneBias.intimacyRisk}, power=${f.sceneBias.powerDynamic}
+FLAVOR RULES:
+- Bias CONDITIONS (what the body/mind/world does to intimacy), FEAR (what goes wrong), and COST (what desire competes with).
+- Do NOT bias prose style — the Tone axis controls that.
+- The catastrophe that created this world is BACKGROUND ONLY. Never name, dramatize, or spectacularize the cause.
+- ZERO spectacle, disaster-porn, or genre shorthand. This is a condition, not an event. Play it mundane and grinding.`;
+          return directives;
+      }
+
+      // Other worlds: simple label pass-through
       const label = getWorldLabel(worldSubtype);
       return label ? `\nWORLD FLAVOR: ${label}` : '';
   }
@@ -15562,7 +15658,7 @@ Each response must advance character psychology, not just physical tension.
 End most responses with a complication, choice, or destabilizing revelation.
 
 You are writing a story with the following configuration:
-- World: ${storyWorld}${state.picks?.worldSubtype ? ` (${getWorldLabel(state.picks.worldSubtype)})` : ''}
+- World: ${storyWorld}${state.picks?.worldSubtype ? ` (${getWorldLabel(state.picks.worldSubtype)})` : (state.worldCustomText ? ` (Custom: ${state.worldCustomText})` : '')}
 - Tone: ${state.picks?.tone || 'Earnest'}
 - Genre: ${storyPowerRole}
 - Power Frame: ${storyPowerFrame}
@@ -16429,11 +16525,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'endless_edit', label: 'The Endless Edit' }
       ],
       PostApocalyptic: [
-        { val: 'nuclear_aftermath', label: 'Nuclear Aftermath' },
-        { val: 'pandemic', label: 'Pandemic' },
-        { val: 'climate_ruin', label: 'Climate Ruin' },
-        { val: 'tech_fallout', label: 'Tech Fallout' },
-        { val: 'slow_decay', label: 'Slow Decay' }
+        { val: 'ashfall', label: 'Ashfall' },
+        { val: 'year_zero', label: 'Year Zero' },
+        { val: 'dystimulation', label: 'Dystimulation' },
+        { val: 'predation', label: 'Predation' },
+        { val: 'hunger', label: 'Hunger' }
       ]
     };
 
@@ -16793,6 +16889,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       if (zoomFlavorArc) {
         zoomFlavorArc.remove();
       }
+      // Remove baked-art overlay (Modern and other PNG-button cards)
+      const bakedOverlay = currentOpenCard.querySelector('.sb-zoom-baked-overlay');
+      if (bakedOverlay) {
+        bakedOverlay.remove();
+      }
+      // Restore card title hidden during baked-art zoom (front face only)
+      const hiddenTitle = currentOpenCard.querySelector('.sb-card-front .sb-card-title');
+      if (hiddenTitle && hiddenTitle.style.display === 'none') {
+        hiddenTitle.style.display = '';
+      }
 
       // Remove zoom class and restore original positioning
       currentOpenCard.classList.remove('zoomed');
@@ -17001,7 +17107,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         // Add Continue button
         const zoomContinueBtn = document.createElement('button');
         zoomContinueBtn.className = 'zoom-continue-btn';
-        zoomContinueBtn.textContent = 'Continue';
+        zoomContinueBtn.textContent = 'Proceed';
         zoomContinueBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           commitSbCardFromZoom();
@@ -17215,11 +17321,91 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // Populate World card zoom view with flavor buttons and optional custom field
+    // Baked-in button positions for world cards with custom PNG art.
+    // Positions are percentages of the card face. Hit zones are transparent
+    // overlays that map clicks to the buttons baked into the PNG.
+    // ═══════════════════════════════════════════════════════════════════
+    // BAKED-ART HIT ZONES — Transparent click regions over zoomed card art
+    // 2-column layout: left col ~17.6%, right col ~53%, rows spaced ~6.5%
+    // ═══════════════════════════════════════════════════════════════════
+    const BAKED_ART_BUTTONS = {
+      Modern: [
+        { val: 'small_town',          top: 56.7, left: 17.6, width: 29.1, height: 4.9 },
+        { val: 'college',             top: 56.7, left: 53.3, width: 29.1, height: 4.5 },
+        { val: 'friends',             top: 63.4, left: 17.6, width: 29.4, height: 4.5 },
+        { val: 'old_money',           top: 63.2, left: 53,   width: 29.4, height: 4.8 },
+        { val: 'office',              top: 69.8, left: 17.4, width: 29.6, height: 4.9 },
+        { val: 'superheroic_modern',  top: 70,   left: 53,   width: 30.2, height: 4.6 },
+        { val: 'supernatural_modern', top: 76.5, left: 17.6, width: 29.4, height: 5 }
+      ],
+      Historical: [
+        { val: 'prehistoric',   top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'classical',     top: 56.7, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'medieval',      top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'renaissance',   top: 63.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'victorian',     top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
+        { val: '20th_century',  top: 69.9, left: 53,   width: 29.2, height: 4.8 }
+      ],
+      Fantasy: [
+        { val: 'enchanted_realms', top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'hidden_magic',     top: 56.7, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'cursed_worlds',    top: 63.3, left: 17.6, width: 29.2, height: 4.8 }
+      ],
+      SciFi: [
+        { val: 'galactic_civilizations', top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'future_of_science',      top: 56.7, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'cyberpunk',              top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'post_human',             top: 63.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'first_contact',          top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'simulation',             top: 69.9, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'final_frontier',         top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
+      ],
+      Dystopia: [
+        { val: 'glass_house',            top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'velvet_trap',            top: 56.7, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'the_ledger',             top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'crimson_veil',           top: 63.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'perfect_match',          top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'ministry_of_affection',  top: 69.9, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'endless_edit',           top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
+      ],
+      PostApocalyptic: [
+        { val: 'ashfall',        top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'year_zero',      top: 56.7, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'dystimulation',  top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'predation',      top: 63.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'hunger',         top: 69.9, left: 17.6, width: 29.2, height: 4.8 }
+      ]
+    };
+    const BAKED_ART_SCROLL_ZONE = {
+      Modern:          { top: 76.7, left: 54,   width: 27.5, height: 4.1 },
+      Historical:      { top: 76.5, left: 17.6, width: 64.6, height: 4.1 },
+      Fantasy:         { top: 63.3, left: 53,   width: 29.2, height: 4.1 },
+      SciFi:           { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
+      Dystopia:        { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
+      PostApocalyptic: { top: 69.9, left: 53,   width: 29.2, height: 4.1 }
+    };
+    // Scrolling suggestions for baked-art cards — themes NOT already in the buttons
+    const BAKED_ART_SUGGESTIONS = {
+      Modern: [
+        'Western', 'Moviestar', 'Rockstar', 'Artist', 'Treasure Hunter',
+        'Astronaut', 'Activist', 'Agent', 'Retirement', 'World Travel',
+        'West Wing', 'Undercover', 'Firefighter', 'Chef', 'Journalist',
+        'Architect', 'Pilot', 'Deep Sea', 'Vineyard', 'Festival Circuit'
+      ]
+    };
+
     function populateWorldZoomContent(card, worldVal) {
       const frontFace = card.querySelector('.sb-card-front');
       if (!frontFace) return;
 
-      // Remove any existing zoom content and flavor arc
+      // If baked-art overlay already exists for this world, preserve it
+      // (prevents re-creation that would destroy user's selection state)
+      const existingBaked = frontFace.querySelector('.sb-zoom-baked-overlay');
+      if (existingBaked && existingBaked.dataset.world === worldVal) return;
+      if (existingBaked) existingBaked.remove();
+
+      // Remove any existing standard zoom content and flavor arc
       const existing = frontFace.querySelector('.sb-zoom-content');
       if (existing) existing.remove();
       const existingArc = frontFace.querySelector('.sb-zoom-flavor-arc');
@@ -17227,6 +17413,194 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       const flavors = WORLD_SUB_OPTIONS[worldVal] || [];
       const hasCustomField = WORLDS_WITH_CUSTOM_FIELD.includes(worldVal);
+
+      // ═══════════════════════════════════════════════════════════════════
+      // BAKED-ART CARDS: Use invisible hit zones over PNG buttons
+      // ═══════════════════════════════════════════════════════════════════
+      if (BAKED_ART_BUTTONS[worldVal]) {
+        const bakedButtons = BAKED_ART_BUTTONS[worldVal];
+        const scrollZone = BAKED_ART_SCROLL_ZONE[worldVal];
+        const suggestions = BAKED_ART_SUGGESTIONS[worldVal] || [];
+
+        // Hide the card title text (baked into PNG)
+        const titleEl = frontFace.querySelector('.sb-card-title');
+        if (titleEl) titleEl.style.display = 'none';
+
+        const overlay = document.createElement('div');
+        overlay.className = 'sb-zoom-baked-overlay';
+        overlay.dataset.world = worldVal;
+        // Absorb clicks so they never reach the parent card handler
+        overlay.style.pointerEvents = 'auto';
+        overlay.addEventListener('click', (e) => { e.stopPropagation(); });
+
+        // Gleam slowdown helper — halve gleam speed while hovering any hit zone
+        function slowGleam() {
+          card.querySelectorAll('.card-gleam-layer').forEach(g => {
+            const t = g.style.transition || '';
+            // Double the duration in the current transition string
+            g.style.transition = t.replace(/([\d.]+)s/, (_, d) => (parseFloat(d) * 2).toFixed(2) + 's');
+          });
+        }
+        function restoreGleam() {
+          card.querySelectorAll('.card-gleam-layer').forEach(g => {
+            const t = g.style.transition || '';
+            g.style.transition = t.replace(/([\d.]+)s/, (_, d) => (parseFloat(d) / 2).toFixed(2) + 's');
+          });
+        }
+
+        // Create hit zones over each baked-in button
+        bakedButtons.forEach(btn => {
+          const zone = document.createElement('div');
+          zone.className = 'baked-hitzone';
+          zone.dataset.val = btn.val;
+          zone.style.top = btn.top + '%';
+          zone.style.left = btn.left + '%';
+          zone.style.width = btn.width + '%';
+          zone.style.height = btn.height + '%';
+
+          if (state.picks.worldSubtype === btn.val) {
+            zone.classList.add('selected');
+          }
+
+          zone.addEventListener('mouseenter', slowGleam);
+          zone.addEventListener('mouseleave', restoreGleam);
+
+          zone.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (state.picks.worldSubtype === btn.val) {
+              state.picks.worldSubtype = null;
+              zone.classList.remove('selected');
+            } else {
+              overlay.querySelectorAll('.baked-hitzone').forEach(z => z.classList.remove('selected'));
+              state.picks.worldSubtype = btn.val;
+              zone.classList.add('selected');
+              // Clear custom text when selecting a preset flavor
+              state.worldCustomText = '';
+              const scrollEl = overlay.querySelector('.baked-scroll-zone');
+              if (scrollEl) {
+                scrollEl.classList.remove('editing', 'committed');
+                const inp = scrollEl.querySelector('.baked-scroll-input');
+                if (inp) inp.value = '';
+                const ph = scrollEl.querySelector('.baked-scroll-placeholder');
+                if (ph) ph.classList.remove('hidden');
+              }
+            }
+            incrementDSPActivation();
+            updateSynopsisPanel(true);
+          });
+
+          overlay.appendChild(zone);
+        });
+
+        // Scroll zone — shows scrolling suggestions, click to enter custom flavor
+        if (scrollZone) {
+          const allSuggestions = suggestions.length > 0 ? suggestions : ['Custom'];
+          const scrollContainer = document.createElement('div');
+          scrollContainer.className = 'baked-scroll-zone';
+          scrollContainer.style.top = scrollZone.top + '%';
+          scrollContainer.style.left = scrollZone.left + '%';
+          scrollContainer.style.width = scrollZone.width + '%';
+          scrollContainer.style.height = scrollZone.height + '%';
+
+          const inputWrapper = document.createElement('div');
+          inputWrapper.className = 'baked-scroll-input-wrapper';
+
+          // Single-line input (not textarea — no newlines, no vertical shift)
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'baked-scroll-input';
+          input.value = state.worldCustomText || '';
+
+          // Scrolling placeholder — doubled for seamless loop
+          const phWrap = document.createElement('div');
+          phWrap.className = 'baked-scroll-placeholder';
+          const doubled = [...allSuggestions, ...allSuggestions];
+          const phInner = document.createElement('span');
+          phInner.className = 'baked-scroll-inner';
+          phInner.innerHTML = doubled.map(s => `<span>${s}</span>`).join('<span class="separator">\u00b7</span>');
+          phWrap.appendChild(phInner);
+
+          function commitCustomText() {
+            const text = input.value.trim();
+            if (text) {
+              state.worldCustomText = normalizeWorldCustom(text);
+              // Deselect preset buttons — custom overrides
+              overlay.querySelectorAll('.baked-hitzone').forEach(z => z.classList.remove('selected'));
+              state.picks.worldSubtype = null;
+              // Show committed state — depressed bevel on scroll zone
+              scrollContainer.classList.add('committed');
+              input.blur();
+            } else {
+              state.worldCustomText = '';
+              scrollContainer.classList.remove('editing', 'committed');
+              phWrap.classList.remove('hidden');
+            }
+            incrementDSPActivation();
+            updateSynopsisPanel(true);
+          }
+
+          // Click the zone → enter editing mode
+          scrollContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!scrollContainer.classList.contains('editing')) {
+              scrollContainer.classList.add('editing');
+              scrollContainer.classList.remove('committed');
+              phWrap.classList.add('hidden');
+              input.focus();
+            }
+          });
+
+          input.addEventListener('click', (e) => e.stopPropagation());
+          input.addEventListener('mousedown', (e) => e.stopPropagation());
+
+          // Enter commits the custom text
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commitCustomText();
+            }
+            e.stopPropagation();
+          });
+
+          input.addEventListener('input', () => {
+            // Live update while typing
+            state.worldCustomText = normalizeWorldCustom(input.value);
+            if (input.value.trim().length > 0) {
+              overlay.querySelectorAll('.baked-hitzone').forEach(z => z.classList.remove('selected'));
+              state.picks.worldSubtype = null;
+            }
+          });
+
+          input.addEventListener('blur', () => {
+            // Commit on blur if text exists, otherwise revert to scrolling
+            if (input.value.trim()) {
+              commitCustomText();
+            } else {
+              scrollContainer.classList.remove('editing', 'committed');
+              phWrap.classList.remove('hidden');
+              state.worldCustomText = '';
+            }
+          });
+
+          // Restore state if custom text was previously entered
+          if (state.worldCustomText) {
+            scrollContainer.classList.add('editing', 'committed');
+            phWrap.classList.add('hidden');
+          }
+
+          inputWrapper.appendChild(input);
+          inputWrapper.appendChild(phWrap);
+          scrollContainer.appendChild(inputWrapper);
+          overlay.appendChild(scrollContainer);
+        }
+
+        frontFace.appendChild(overlay);
+        return; // Baked-art card done — skip standard overlay generation
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // STANDARD CARDS: Generated overlay buttons (Blank-Black-Face PNG)
+      // ═══════════════════════════════════════════════════════════════════
 
       // === FLAVOR ARC in the half-circle: ONLY the number ===
       if (flavors.length > 0) {
@@ -17720,9 +18094,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         }
 
         // Add flavor arc indicator for World cards (number + curved "FLAVORS" in top arch)
+        // Skip for baked-art cards — the art already includes this info
         if (grp === 'world') {
           const flavors = WORLD_SUB_OPTIONS[val] || [];
-          if (flavors.length > 0) {
+          if (flavors.length > 0 && !BAKED_ART_BUTTONS[val]) {
             const frontFace = card.querySelector('.sb-card-front');
             if (frontFace && !frontFace.querySelector('.sb-card-arc-flavors')) {
               frontFace.appendChild(buildFlavorArc(flavors.length));
@@ -21594,6 +21969,24 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const panel = document.getElementById('synopsisPanel');
     if (!panel) return;
 
+    // DSP collapse/expand toggle
+    const collapseBtn = document.getElementById('dspCollapseBtn');
+    if (collapseBtn) {
+      collapseBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.add('dsp-collapsed');
+      });
+    }
+    const dragHandleEl = document.getElementById('dspDragHandle');
+    if (dragHandleEl) {
+      dragHandleEl.addEventListener('click', function(e) {
+        if (panel.classList.contains('dsp-collapsed') && !e.target.closest('.dsp-collapse-btn')) {
+          e.stopPropagation();
+          panel.classList.remove('dsp-collapsed');
+        }
+      });
+    }
+
     var mode = null;        // 'drag' | 'resize'
     var resizeCorner = null; // 'nw' | 'ne' | 'sw' | 'se'
     var startX = 0, startY = 0;
@@ -22804,7 +23197,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           // Add Continue button below the zoomed card
           const zoomContinueBtn = document.createElement('button');
           zoomContinueBtn.className = 'zoom-continue-btn';
-          zoomContinueBtn.textContent = 'Continue';
+          zoomContinueBtn.textContent = 'Proceed';
           zoomContinueBtn.addEventListener('click', (e) => {
               e.stopPropagation();
               const curId = currentOpenCard?.dataset.archetype;
@@ -29640,12 +30033,12 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'perfect_match': 'pristine',
       'ministry_of_affection': 'aged',
       'endless_edit': 'fractured',
-      // PostApocalyptic flavors
-      'nuclear_aftermath': 'rusted',
-      'pandemic': 'corroded',
-      'climate_ruin': 'weathered',
-      'tech_fallout': 'rusted',
-      'slow_decay': 'aged',
+      // PostApocalyptic flavors (5 canonical conditions)
+      'ashfall': 'corroded',
+      'year_zero': 'weathered',
+      'dystimulation': 'tarnished',
+      'predation': 'rusted',
+      'hunger': 'aged',
       // Modern flavors (generally pristine)
       'small_town': 'weathered',
       'college': 'pristine',
@@ -29772,12 +30165,12 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'perfect_match': 'pristine',
       'ministry_of_affection': 'aged',
       'endless_edit': 'fractured',
-      // PostApocalyptic flavors
-      'nuclear_aftermath': 'irradiated',
-      'pandemic': 'corroded',
-      'climate_ruin': 'weathered',
-      'tech_fallout': 'rusted',
-      'slow_decay': 'aged',
+      // PostApocalyptic flavors (5 canonical conditions)
+      'ashfall': 'corroded',
+      'year_zero': 'weathered',
+      'dystimulation': 'fractured',
+      'predation': 'rusted',
+      'hunger': 'aged',
       // Modern flavors
       'small_town': 'weathered',
       'college': 'pristine',
@@ -35982,6 +36375,36 @@ FATE CARD ADAPTATION (CRITICAL):
   initSelectionHandlers();
   initNavBindings();
   wireIntensityHandlers();
+
+  // --- MICRO-TOOLTIP TOUCH HANDLER ---
+  // On touch devices, first tap reveals tooltip, second tap selects.
+  (function initMicroTipTouch() {
+      if (!('ontouchstart' in window)) return;
+      let activeTipCard = null;
+      document.addEventListener('touchstart', function(e) {
+          const card = e.target.closest('.sb-card[data-micro-tip]');
+          if (!card) {
+              // Tap elsewhere dismisses active tooltip
+              if (activeTipCard) {
+                  activeTipCard.classList.remove('micro-tip-visible');
+                  activeTipCard = null;
+              }
+              return;
+          }
+          if (card === activeTipCard) {
+              // Second tap on same card — let the click through to select
+              card.classList.remove('micro-tip-visible');
+              activeTipCard = null;
+              return;
+          }
+          // First tap — show tooltip, block selection
+          e.preventDefault();
+          e.stopPropagation();
+          if (activeTipCard) activeTipCard.classList.remove('micro-tip-visible');
+          card.classList.add('micro-tip-visible');
+          activeTipCard = card;
+      }, { passive: false });
+  })();
 
   // AUTH GATE: Check login status and handle persistence accordingly
   state.isLoggedIn = localStorage.getItem('sb_logged_in') === '1';

@@ -3769,6 +3769,30 @@ select {
 
 #burgerBtn img { filter: none; }
 
+/* Narrow screens: scale down corner buttons but keep in view */
+@media (max-width: 600px) {
+    #burgerBtn,
+    #globalBackBtn {
+        transform: scale(0.75);
+    }
+    #burgerBtn {
+        transform-origin: top right;
+        top: 4px;
+        right: 4px;
+    }
+    #globalBackBtn {
+        transform-origin: top left;
+        top: 4px;
+        left: 4px;
+    }
+}
+@media (max-width: 400px) {
+    #burgerBtn,
+    #globalBackBtn {
+        transform: scale(0.6);
+    }
+}
+
 /* VISUALIZE MODAL — z-index above sparkles (5000) */
 #vizModal { z-index: 6000; }
 .viz-modal-content { text-align: center; max-width: 650px; width: 95%; max-height:95vh; overflow-y:auto; }
@@ -6984,17 +7008,18 @@ textarea.fate-field {
 }
 
 /* DSP DRAG HANDLE — User-positionable floating panel */
+/* DSP TAB — full-width bar with handle flush-left, X flush-right */
 .dsp-drag-handle {
     position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px;
+    top: -14px;
+    left: 0;
+    right: 0;
+    width: 100%;
     height: 14px;
     cursor: grab;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     z-index: 1;
     border-radius: 4px 4px 0 0;
     background: linear-gradient(180deg, rgba(195, 160, 90, 0.95), rgba(180, 150, 85, 0.9));
@@ -7012,6 +7037,47 @@ textarea.fate-field {
     color: rgba(60, 45, 20, 0.6);
     line-height: 1;
     user-select: none;
+    padding-left: 6px;
+}
+
+/* DSP COLLAPSE BUTTON — X flush-right inside the tab bar */
+.dsp-collapse-btn {
+    width: 20px;
+    height: 14px;
+    background: none;
+    border: none;
+    color: rgba(60, 45, 20, 0.7);
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 2;
+}
+.dsp-collapse-btn:hover {
+    color: rgba(60, 45, 20, 1);
+}
+
+/* Collapsed state: thin bar with handle + corners visible */
+.synopsis-panel.dsp-collapsed {
+    height: 4px !important;
+    min-height: 0 !important;
+    overflow: hidden;
+    padding: 0 16px;
+    transition: height 0.25s ease, padding 0.25s ease, opacity 0.3s ease, visibility 0.3s ease;
+}
+.synopsis-panel.dsp-collapsed .synopsis-text,
+.synopsis-panel.dsp-collapsed .synopsis-title,
+.synopsis-panel.dsp-collapsed .dsp-art-deco-border {
+    display: none;
+}
+.synopsis-panel.dsp-collapsed .dsp-drag-handle {
+    top: -14px;
+}
+.synopsis-panel.dsp-collapsed .dsp-resize-handle {
+    display: none;
 }
 
 /* DSP RESIZE HANDLES — Corner grips for scaling the panel */
@@ -8077,6 +8143,44 @@ textarea.fate-field {
     .sb-card { max-width: 79px; } /* 25% smaller than 105px */
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   FLAVOR MICRO-TOOLTIPS — Inline hint text beneath flavor cards
+   Triggered by data-micro-tip attribute on .sb-card elements.
+   ═══════════════════════════════════════════════════════════════════ */
+.sb-card[data-micro-tip]::after {
+    content: attr(data-micro-tip);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-family: 'Lora', serif;
+    font-size: 8px;
+    line-height: 1.2;
+    color: rgba(255, 248, 230, 0.82);
+    opacity: 0;
+    transition: opacity 120ms ease;
+    pointer-events: none;
+    padding-top: 3px;
+    z-index: 5;
+    text-align: center;
+}
+.sb-card[data-micro-tip]:hover::after,
+.sb-card[data-micro-tip]:focus-within::after,
+.sb-card[data-micro-tip].micro-tip-visible::after {
+    opacity: 1;
+}
+/* Hide tooltip on already-selected/flipped cards */
+.sb-card[data-micro-tip].selected::after,
+.sb-card[data-micro-tip].flipped::after {
+    display: none;
+}
+/* Subtype grids need slightly more row-gap to accommodate tooltip text */
+#dystopiaSubtypeGrid,
+#apocalypseSubtypeGrid {
+    row-gap: 22px;
+}
+
 /* Inner wrapper for 3D flip */
 .sb-card-inner {
     width: 100%;
@@ -9065,6 +9169,22 @@ textarea.fate-field {
 .zoom-nav-right {
     right: 12px;
 }
+/* Narrow screens: arrows float semi-transparent over cards */
+@media (max-width: 768px) {
+    .zoom-nav-arrow {
+        font-size: 36px;
+        padding: 12px 4px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+        opacity: 0.7;
+    }
+    .zoom-nav-arrow:hover,
+    .zoom-nav-arrow:active {
+        opacity: 1;
+    }
+    .zoom-nav-left { left: 4px; }
+    .zoom-nav-right { right: 4px; }
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    ZOOM CONTINUE BUTTON — Commit selection from zoomed card view
@@ -9117,13 +9237,14 @@ textarea.fate-field {
    FLAVOR ARC — Number + curved "FLAVORS" in the top arch of black face cards
    Positioned inside the decorative U-shaped arch of Blank-Black-Face.png
    ═══════════════════════════════════════════════════════════════════ */
+/* Flavor arc hidden on unzoomed cards — only shown inside zoom overlay */
 .sb-card-arc-flavors {
     position: absolute;
     top: 1%;
     left: 15%;
     right: 15%;
     height: 20%;
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
@@ -9335,6 +9456,151 @@ textarea.fate-field {
     font-style: italic;
 }
 
+/* Baked-art cards: hide HTML text overlays on FRONT only — back keeps the name */
+.sb-card[data-val="Modern"] .sb-card-front .sb-card-title,
+.sb-card[data-val="Modern"] .sb-card-front .sb-card-desc {
+    display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BAKED-ART CARD ZOOM — Hit zones over PNG buttons, scrolling text
+   For world cards with custom art (e.g. Modern) where buttons are
+   baked into the PNG. No overlay buttons generated; transparent
+   click regions map to the art's button positions.
+   ═══════════════════════════════════════════════════════════════════ */
+.sb-zoom-baked-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none; /* Pass through except on children */
+}
+.baked-hitzone {
+    position: absolute;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 1px;
+    cursor: pointer;
+    z-index: 5;
+    pointer-events: auto;
+    padding: 0;
+    margin: 0;
+    outline: none;
+    box-sizing: border-box;
+    transition: box-shadow 0.08s ease, border-color 0.08s ease, background 0.08s ease;
+}
+.baked-hitzone:hover {
+    box-shadow: inset 0 0 6px rgba(218, 165, 32, 0.25);
+}
+/* Pressed-in bevel: dark top/left edge, light bottom/right edge + inset shadow */
+.baked-hitzone.selected {
+    background: rgba(0, 0, 0, 0.22);
+    border-color: rgba(50, 40, 20, 0.8) rgba(220, 210, 180, 0.65) rgba(220, 210, 180, 0.65) rgba(50, 40, 20, 0.8);
+    box-shadow:
+        inset 3px 3px 6px rgba(0, 0, 0, 0.55),
+        inset 1px 1px 3px rgba(0, 0, 0, 0.35),
+        inset -1px -1px 2px rgba(255, 255, 255, 0.08),
+        inset 0 0 10px rgba(218, 165, 32, 0.3);
+}
+/* Scrolling text zone — positioned over the blank gold button in PNG */
+.baked-scroll-zone {
+    position: absolute;
+    overflow: hidden;
+    z-index: 5;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border: 1px solid transparent;
+    box-sizing: border-box;
+    border-radius: 1px;
+    transition: border-color 0.15s ease;
+}
+.baked-scroll-zone:hover {
+    border-color: rgba(218, 165, 32, 0.3);
+}
+/* Active editing state */
+.baked-scroll-zone.editing {
+    cursor: text;
+    border-color: rgba(218, 165, 32, 0.5);
+    box-shadow: inset 0 0 4px rgba(218, 165, 32, 0.2);
+}
+.baked-scroll-input-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+.baked-scroll-input {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    color: #1a1a0a;
+    font-family: 'Crimson Text', serif;
+    font-size: 4.5px;
+    padding: 0 2px;
+    box-sizing: border-box;
+    outline: none;
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+    text-align: center;
+}
+/* Show input only when editing */
+.baked-scroll-zone.editing .baked-scroll-input {
+    opacity: 1;
+    pointer-events: auto;
+}
+.baked-scroll-input:focus {
+    outline: none;
+}
+/* Committed custom text — same pressed-in bevel as flavor buttons */
+.baked-scroll-zone.committed {
+    background: rgba(0, 0, 0, 0.18);
+    border-color: rgba(60, 50, 30, 0.7) rgba(210, 200, 170, 0.6) rgba(210, 200, 170, 0.6) rgba(60, 50, 30, 0.7);
+    box-shadow:
+        inset 3px 3px 5px rgba(0, 0, 0, 0.45),
+        inset 1px 1px 2px rgba(0, 0, 0, 0.25),
+        inset 0 0 10px rgba(218, 165, 32, 0.35);
+}
+.baked-scroll-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    z-index: 2;
+}
+.baked-scroll-placeholder.hidden {
+    display: none;
+}
+.baked-scroll-inner {
+    display: inline-block;
+    color: #1a1a0a !important;
+    font-family: 'Crimson Text', serif;
+    font-style: italic !important;
+    font-size: 4.5px;
+    opacity: 0.55;
+    animation: bakedScrollMarquee 20s linear infinite;
+    white-space: nowrap;
+}
+.baked-scroll-inner .separator {
+    margin: 0 3px;
+    opacity: 0.4;
+}
+@keyframes bakedScrollMarquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
 /* Incompatible/dimmed state */
 .sb-card.incompatible,
 .sb-card.layer-locked {
@@ -9380,6 +9646,7 @@ textarea.fate-field {
     text-align: center;
     font-size: 1em;
     line-height: 1;
+    letter-spacing: 0.6em;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -10100,7 +10367,7 @@ body.corridor-mode .section-title {
     color: white !important;
     -webkit-text-stroke: 0;
     text-shadow: none !important;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.6em;
 }
 
 /* Corridor sections fill remaining viewport space exactly via flex —
@@ -10338,7 +10605,7 @@ body.corridor-complete {
 
 /* When DSP is visible, move Continue button to very bottom of screen */
 body:has(.synopsis-panel.visible) #controlPlane {
-    bottom: 12px;
+    bottom: 8px;
 }
 
 #controlPlane #continueButton {
@@ -10381,11 +10648,11 @@ body:has(.sb-card.zoomed) #controlPlane {
     display: none !important;
 }
 
-/* Mobile: Scale Continue button down 50% */
+/* Mobile: Scale Continue button down — never below screen bottom */
 @media (max-width: 600px) {
     #controlPlane {
-        transform: translateX(-50%) scale(0.5);
-        bottom: 24px;
+        transform: translateX(-50%) scale(0.65);
+        bottom: 8px;
     }
     #controlPlane #continueButton {
         box-shadow:
@@ -10972,8 +11239,11 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* - Perimeter halo emission (outside card bounds)                                 */
 /* - Slow continuous motion (no start-stop)                                        */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
+/* NOTE: .authorship-card-face MUST remain position: absolute (set at line 10937).
+   Setting position: relative here broke the 3D flip — faces rendered in flow
+   instead of stacked, causing the front face to appear below the back face.
+   overflow: visible is safe to set without changing position. */
 .authorship-card-face {
-    position: relative;
     overflow: visible; /* Allow sparkles to render outside card bounds */
 }
 
