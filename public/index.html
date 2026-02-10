@@ -714,8 +714,6 @@
 
     <div id="lengthSection">
         <div class="section-title">Story Length</div>
-        <p class="subtitle">Choose once. This shapes pacing and endings.</p>
-        
         <div class="sb-grid sb-grid-4" id="lengthGrid">
           <div class="sb-card selected flipped" data-grp="length" data-val="tease">
             <div class="sb-card-inner">
@@ -788,6 +786,10 @@
 
     <!-- FLOATING SYNOPSIS PANEL (Side-mounted book jacket card) -->
     <div id="synopsisPanel" class="synopsis-panel">
+      <!-- Drag handle: lets users reposition the floating panel -->
+      <div class="dsp-drag-handle" id="dspDragHandle">
+        <span class="dsp-drag-dots">&#x2801;&#x2801;&#x2801;</span>
+      </div>
       <!-- Art Deco Border: Double gold frame, corner sunbursts, center diamonds -->
       <svg class="dsp-art-deco-border" viewBox="0 0 200 280" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -857,6 +859,11 @@
         </g>
       </svg>
       <p id="synopsisText" class="synopsis-text"></p>
+      <!-- Resize handles on all four corners -->
+      <div class="dsp-resize-handle dsp-resize-nw" data-resize="nw"></div>
+      <div class="dsp-resize-handle dsp-resize-ne" data-resize="ne"></div>
+      <div class="dsp-resize-handle dsp-resize-sw" data-resize="sw"></div>
+      <div class="dsp-resize-handle dsp-resize-se" data-resize="se"></div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
@@ -898,7 +905,8 @@
         <div class="sb-card" data-grp="worldSubtype" data-val="cyberpunk"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Neon Futures</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Neon Futures</span><span class="sb-card-desc">Neon cities, corporate shadows, hackers and augmentation.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="post_human"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Post-Human</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Post-Human</span><span class="sb-card-desc">Transcendence, uploaded minds, evolved consciousness.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="alien_contact"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">First Contact</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">First Contact</span><span class="sb-card-desc">Alien encounters, xenobiology, interspecies discovery.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="abundance_collapse"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Abundance or Collapse</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Abundance or Collapse</span><span class="sb-card-desc">Post-scarcity utopia or civilizational decline.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="simulation"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Simulation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Simulation</span><span class="sb-card-desc">Layered realities, reincarnation loops, lovers finding each other across lives.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="final_frontier"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Final Frontier</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Final Frontier</span><span class="sb-card-desc">Exploration, close quarters, mutual reliance.</span></div></div></div>
       </div>
     </div>
 
@@ -928,10 +936,13 @@
     <div id="dystopiaSubtypeSelection" class="world-subtype-selection hidden">
       <div class="section-title sub-title">Dystopia Flavor</div>
       <div class="sb-grid" id="dystopiaSubtypeGrid">
-        <div class="sb-card" data-grp="worldSubtype" data-val="authoritarian"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Authoritarian</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Authoritarian</span><span class="sb-card-desc">Totalitarian state, thought control, rebellion.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="surveillance"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Surveillance</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Surveillance</span><span class="sb-card-desc">Constant monitoring, no privacy, digital control.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="corporate"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Corporate</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Corporate</span><span class="sb-card-desc">Mega-corps rule, profit over people, wage slavery.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="environmental"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Environmental</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Environmental</span><span class="sb-card-desc">Ecological collapse, scarce resources, climate ruin.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="glass_house"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Glass House</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Glass House</span><span class="sb-card-desc">Every pulse, flush, and micro-expression is tracked. Arousal itself is evidence.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="velvet_trap"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Velvet Trap</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Velvet Trap</span><span class="sb-card-desc">Pleasure is mandatory. Longing and refusal are diagnosed as illness. Meaning is the contraband.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="the_ledger"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Ledger</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Ledger</span><span class="sb-card-desc">People are ranked, valued, and leveraged. Love is a liability on someone's balance sheet.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="crimson_veil"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Crimson Veil</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Crimson Veil</span><span class="sb-card-desc">Doctrine governs bodies. Pleasure without sanctioned purpose is apostasy.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="perfect_match"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Perfect Match</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Perfect Match</span><span class="sb-card-desc">Pairing is biological mandate. Desire for the wrong person is defection against the species.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="ministry_of_affection"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Ministry of Affection</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Ministry of Affection</span><span class="sb-card-desc">Every intimate act carries legal and existential risk. Accusation is permanent.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="endless_edit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Endless Edit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Endless Edit</span><span class="sb-card-desc">Selves are drafts revised under social pressure. Love is the refusal to optimize away what you were.</span></div></div></div>
       </div>
     </div>
 
@@ -1050,95 +1061,132 @@
     <!-- ═══════════════════════════════════════════════════════════════════
          SAFETY ROW (Row 9) — Own corridor row after Arousal
          ═══════════════════════════════════════════════════════════════════ -->
-    <div id="safetyRow" class="corridor-section" data-corridor-stage="safety">
-        <div class="section-title" id="safetySectionTitle">Safety & Boundaries</div>
-        <div class="sb-checkbox-group">
-            <label class="sb-checkbox">
-                <input type="checkbox" id="chkDark" checked>
-                <span class="sb-checkbox-visual"></span>
-                <span class="sb-checkbox-label">Dark Themes</span>
-            </label>
-            <label class="sb-checkbox">
-                <input type="checkbox" id="chkNonCon">
-                <span class="sb-checkbox-visual"></span>
-                <span class="sb-checkbox-label">Implied Non-consent</span>
-            </label>
-            <label class="sb-checkbox">
-                <input type="checkbox" id="chkViolence" checked>
-                <span class="sb-checkbox-visual"></span>
-                <span class="sb-checkbox-label">Violence / Peril</span>
-            </label>
+    <div id="safetyRow" class="story-shape-row corridor-section" data-corridor-stage="safety">
+      <!-- LEFT CARD: Theme Toggles -->
+      <div class="safety-tarot-card" id="safetyThemesCard">
+        <div class="safety-arc-container">
+          <svg class="safety-arc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2L3 7v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5z"/>
+          </svg>
+          <svg class="safety-arc-text" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet">
+            <defs><path id="safetyThemesArc" d="M 15,18 A 40,40 0 0,1 85,18"/></defs>
+            <text><textPath href="#safetyThemesArc" startOffset="50%" text-anchor="middle"
+              fill="#c9a84c" font-family="Lora, serif" font-size="7" font-variant="small-caps"
+              letter-spacing="2">themes</textPath></text>
+          </svg>
         </div>
-        <div class="boundary-chips" id="boundaryChips">
-            <div class="chip locked-chip active" title="Always enforced">No sexual violence</div>
-            <div class="chip" data-boundary="coercion">No coercion</div>
-            <div class="chip" data-boundary="degradation">No degradation language</div>
-            <div class="chip" data-boundary="captivity">No captivity</div>
-            <div class="chip" data-boundary="blackmail">No blackmail</div>
+        <div class="safety-card-content">
+          <label class="sb-checkbox sb-checkbox-sm">
+            <input type="checkbox" id="chkDark" checked>
+            <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
+            <span class="sb-checkbox-label sb-checkbox-label-sm">Dark Themes</span>
+          </label>
+          <label class="sb-checkbox sb-checkbox-sm">
+            <input type="checkbox" id="chkNonCon">
+            <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
+            <span class="sb-checkbox-label sb-checkbox-label-sm">Implied Non-consent</span>
+          </label>
+          <label class="sb-checkbox sb-checkbox-sm">
+            <input type="checkbox" id="chkViolence" checked>
+            <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
+            <span class="sb-checkbox-label sb-checkbox-label-sm">Violence / Peril</span>
+          </label>
         </div>
-        <button class="flow-continue-btn sb-btn-png sm" id="continueFromSafety">Continue</button>
+      </div>
+
+      <!-- RIGHT CARD: Boundary Chips -->
+      <div class="safety-tarot-card" id="safetyBoundaryCard">
+        <div class="safety-arc-container">
+          <svg class="safety-arc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          <svg class="safety-arc-text" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet">
+            <defs><path id="safetyLimitsArc" d="M 15,18 A 40,40 0 0,1 85,18"/></defs>
+            <text><textPath href="#safetyLimitsArc" startOffset="50%" text-anchor="middle"
+              fill="#c9a84c" font-family="Lora, serif" font-size="7" font-variant="small-caps"
+              letter-spacing="2">limits</textPath></text>
+          </svg>
+        </div>
+        <div class="safety-card-content boundary-chips" id="boundaryChips">
+          <div class="chip-gold locked-chip active" title="Always enforced">No sexual violence</div>
+          <div class="chip-gold" data-boundary="coercion">No coercion</div>
+          <div class="chip-gold" data-boundary="degradation">No degradation language</div>
+          <div class="chip-gold" data-boundary="captivity">No captivity</div>
+          <div class="chip-gold" data-boundary="blackmail">No blackmail</div>
+        </div>
+      </div>
+
+      <button class="flow-continue-btn sb-btn-png sm" id="continueFromSafety">Continue</button>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
          VETO/QUILL ROW (Row 10) — Own corridor row after Safety
          ═══════════════════════════════════════════════════════════════════ -->
-    <div id="vetoquillRow" class="corridor-section" data-corridor-stage="vetoquill">
-        <div class="section-title" id="vetoquillSectionTitle">Quill & Veto</div>
-
-        <div class="quill-veto-container">
-            <div class="qv-section">
-                <label class="qv-label">Veto</label>
-                <p class="qv-hint-above">Block elements you never want to appear. Vetoes are immediate and permanent.</p>
-                <div id="vetoCommitted" class="committed-phrases"></div>
-                <div class="fate-input-row">
-                    <div class="destiny-flip-card" data-target="vetoInput" data-type="veto">
-                        <div class="destiny-card-inner">
-                            <div class="destiny-card-back"></div>
-                            <div class="destiny-card-front"></div>
-                        </div>
-                    </div>
-                    <div class="input-wrapper fate-input-wrapper fate-textarea-wrapper">
-                        <textarea id="vetoInput" rows="2" class="fate-field" data-fate-type="veto"></textarea>
-                        <div class="rotating-placeholder textarea-placeholder" data-for="vetoInput"></div>
-                    </div>
-                </div>
-                <div class="qv-commit-row qv-commit-center">
-                    <span id="vetoStatus" style="font-size:0.85em; color:var(--pink);">Veto: Ready</span>
-                    <button id="btnCommitVeto" class="small-btn" style="padding:4px 10px; font-size:0.85em;">Commit Veto</button>
-                </div>
-                <p class="qv-hint-below">Vetoes remove content from consideration. They cannot start scenes or direct the story.</p>
-            </div>
-
-            <div class="qv-section">
-                <label class="qv-label">Quill</label>
-                <p class="qv-hint-above">Use the Quill to gently steer tone, boundaries, or direction without rewriting what's already happened.</p>
-                <div id="quillCommitted" class="committed-phrases"></div>
-                <div class="fate-input-row">
-                    <div class="destiny-flip-card" data-target="quillInput" data-type="quill">
-                        <div class="destiny-card-inner">
-                            <div class="destiny-card-back"></div>
-                            <div class="destiny-card-front"></div>
-                        </div>
-                    </div>
-                    <div id="quillBox" class="input-wrapper fate-input-wrapper fate-textarea-wrapper locked-input">
-                        <textarea id="quillInput" rows="2" class="fate-field" data-fate-type="quill"></textarea>
-                        <div class="rotating-placeholder textarea-placeholder" data-for="quillInput"></div>
-                    </div>
-                </div>
-                <div class="qv-commit-row qv-commit-center">
-                    <span id="quillStatus">Quill: Poised</span>
-                    <button id="btnCommitQuill" class="small-btn" style="padding:4px 10px; font-size:0.85em; opacity:0.5;" disabled>Commit Quill</button>
-                </div>
-                <p class="qv-hint-below">Quill edits shape what follows and may persist. Each use exhausts the Quill, requiring time and words before it can be wielded again.</p>
-            </div>
+    <div id="vetoquillRow" class="story-shape-row corridor-section" data-corridor-stage="vetoquill">
+      <!-- LEFT: VETO CARD -->
+      <div class="vq-tarot-card" id="vetoCard">
+        <div class="vq-arc-container">
+          <svg class="vq-arc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/>
+          </svg>
+          <svg class="vq-arc-text" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet">
+            <defs><path id="vetoArc" d="M 15,18 A 40,40 0 0,1 85,18" fill="none"/></defs>
+            <text fill="rgba(218,165,32,0.8)" font-size="8" font-family="Lora, serif" font-variant="small-caps" letter-spacing="3">
+              <textPath href="#vetoArc" startOffset="50%" text-anchor="middle">veto</textPath>
+            </text>
+          </svg>
         </div>
-
-        <div class="quill-veto-ui">
-            <div id="godModeToggle" class="hidden">
-                <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> Enable God Mode (Sandbox)</label>
-            </div>
+        <div class="vq-tarot-fields">
+          <div id="vetoCommitted" class="committed-phrases"></div>
+          <div class="vq-input-wrapper fate-input-wrapper fate-textarea-wrapper">
+            <textarea id="vetoInput" rows="2" class="fate-field vq-textarea" data-fate-type="veto"></textarea>
+            <div class="rotating-placeholder textarea-placeholder" data-for="vetoInput"></div>
+          </div>
+          <span id="vetoStatus" class="vq-status vq-status-veto">Veto: Ready</span>
         </div>
+      </div>
+
+      <!-- CENTER: DESTINY'S CHOICE DECK -->
+      <div class="destiny-mini-deck" id="vqDestinyDeck">
+        <div class="destiny-mini-deck-stack">
+          <div class="destiny-mini-card deck-card-1"></div>
+          <div class="destiny-mini-card deck-card-2"></div>
+          <div class="destiny-mini-card deck-card-3"></div>
+          <div class="destiny-mini-card deck-card-4"></div>
+          <div class="destiny-mini-card deck-card-5"></div>
+          <div class="destiny-deck-sparkle-emitter" id="vqDeckSparkles"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: QUILL CARD -->
+      <div class="vq-tarot-card" id="quillCard">
+        <div class="vq-arc-container">
+          <svg class="vq-arc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.5 1.5c-1.5 1.5-5 5-7 9s-2.5 7-3 9.5c-.2.8-.4 1.5-.5 2 0 0 1-1.5 2.5-3s3.5-3 5-4c2-1.2 3.5-2 4.5-3.5s1-3.5-1.5-10z"/>
+            <path d="M10 22c0 0-.5-3 1-6.5"/>
+            <line x1="9" y1="23" x2="15" y2="17"/>
+          </svg>
+          <svg class="vq-arc-text" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet">
+            <defs><path id="quillArc" d="M 15,18 A 40,40 0 0,1 85,18" fill="none"/></defs>
+            <text fill="rgba(218,165,32,0.8)" font-size="8" font-family="Lora, serif" font-variant="small-caps" letter-spacing="3">
+              <textPath href="#quillArc" startOffset="50%" text-anchor="middle">quill</textPath>
+            </text>
+          </svg>
+        </div>
+        <div class="vq-tarot-fields">
+          <div id="quillCommitted" class="committed-phrases"></div>
+          <div id="quillBox" class="vq-input-wrapper fate-input-wrapper fate-textarea-wrapper locked-input">
+            <textarea id="quillInput" rows="2" class="fate-field vq-textarea" data-fate-type="quill"></textarea>
+            <div class="rotating-placeholder textarea-placeholder" data-for="quillInput"></div>
+          </div>
+          <span id="quillStatus" class="vq-status">Quill: Poised</span>
+        </div>
+      </div>
+
+      <!-- Hidden: Legacy Continue (control plane owns it) -->
+      <div class="vq-footer">
         <button class="flow-continue-btn sb-btn-png sm" id="continueFromVetoquill">Continue</button>
+      </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
@@ -1147,7 +1195,10 @@
     <div id="beginStoryRow" class="corridor-section" data-corridor-stage="beginstory">
         <div class="begin-story-container">
             <div class="begin-story-flourish"></div>
-            <button class="sb-btn-png lg" id="beginBtn">Begin Story</button>
+            <div class="begin-btn-wrapper">
+                <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
+                <button class="sb-btn-png lg" id="beginBtn">Begin Story</button>
+            </div>
             <p class="story-continue-hint hidden" id="beginBtnHint">Your story will resume where you left off.</p>
         </div>
     </div>
@@ -1577,6 +1628,9 @@
      Floats above all content. Never occluded by cards, corridors, or animations.
      ═══════════════════════════════════════════════════════════════════════════════ -->
 <div id="controlPlane">
+  <div id="godModeToggle" class="hidden god-mode-plaque">
+    <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> God Mode</label>
+  </div>
   <button id="continueButton" class="flow-continue-btn sb-btn-png sm">Continue</button>
 </div>
 

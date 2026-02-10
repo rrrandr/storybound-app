@@ -604,16 +604,20 @@ window.config = window.config || {
       cyberpunk: 'Neon Futures',
       post_human: 'Post-Human',
       alien_contact: 'First Contact',
-      abundance_collapse: 'Abundance or Collapse',
+      simulation: 'Simulation',
+      final_frontier: 'Final Frontier',
       // Fantasy Flavors (invented magical worlds, not mythology)
       enchanted_realms: 'Enchanted Realms',
       hidden_magic: 'Hidden Magic',
       cursed_corrupt: 'Cursed & Corrupt Worlds',
-      // Dystopia Flavors
-      authoritarian: 'Authoritarian',
-      surveillance: 'Surveillance',
-      corporate: 'Corporate',
-      environmental: 'Environmental',
+      // Dystopia Flavors (7 locked canon)
+      glass_house: 'The Glass House',
+      velvet_trap: 'The Velvet Trap',
+      the_ledger: 'The Ledger',
+      crimson_veil: 'The Crimson Veil',
+      perfect_match: 'The Perfect Match',
+      ministry_of_affection: 'The Ministry of Affection',
+      endless_edit: 'The Endless Edit',
       // Post-Apocalyptic Flavors
       nuclear: 'Nuclear Aftermath',
       pandemic: 'Pandemic Collapse',
@@ -625,6 +629,70 @@ window.config = window.config || {
   function getWorldLabel(worldCode) {
       return WORLD_LABELS[worldCode] || worldCode;
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DYSTOPIA FLAVORS — Canonical data model (LOCKED, do not invent or merge)
+  // World-specific flavor variants that bias scene construction, stakes, and
+  // intimacy mechanics. NOT genres, tones, or archetypes.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const DYSTOPIA_FLAVORS = {
+      glass_house: {
+          id: 'glass-house', world: 'dystopia', title: 'The Glass House',
+          subtitle: 'Biometric Surveillance State',
+          uiDescription: 'Privacy is extinct. Every pulse, flush, and micro-expression is tracked. Arousal itself is evidence.',
+          narrativeHook: 'Intimacy is physiological treason — elevated heart rate, dilated pupils, and skin conductance betray desire before a word is spoken. The body confesses what the mind refuses to.',
+          eroticEngine: ['biometric betrayal', 'involuntary response', 'micro-movement', 'physiological risk', 'somatic stillness'],
+          sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'state' }
+      },
+      velvet_trap: {
+          id: 'velvet-trap', world: 'dystopia', title: 'The Velvet Trap',
+          subtitle: 'Mandatory Pleasure State',
+          uiDescription: 'Pleasure is mandatory. Longing, jealousy, and refusal are diagnosed as illness. Meaning is the contraband.',
+          narrativeHook: 'In a world drowning in sensation, genuine feeling is pathology. Withholding pleasure to preserve its meaning — choosing to want rather than consume — is the only rebellion that terrifies the state.',
+          eroticEngine: ['chosen deprivation', 'longing as defiance', 'meaninglessness', 'emotional starvation', 'refusal'],
+          sceneBias: { pacing: 'moderate', intimacyRisk: 'medium', powerDynamic: 'social' }
+      },
+      the_ledger: {
+          id: 'the-ledger', world: 'dystopia', title: 'The Ledger',
+          subtitle: 'Human Capital Regime',
+          uiDescription: 'People are ranked, valued, and leveraged. Love is a liability on someone\'s balance sheet.',
+          narrativeHook: 'Relationships form through acquisition, leverage, or contractual imbalance. Characters are assets that appreciate or depreciate — and real emotion is an unaudited risk that threatens both their valuations.',
+          eroticEngine: ['ownership', 'depreciation', 'ROI of devotion', 'leveraged vulnerability', 'contractual breach'],
+          sceneBias: { pacing: 'moderate', intimacyRisk: 'medium', powerDynamic: 'corporate' }
+      },
+      crimson_veil: {
+          id: 'crimson-veil', world: 'dystopia', title: 'The Crimson Veil',
+          subtitle: 'Institutional Dogma State',
+          uiDescription: 'Doctrine governs bodies. Pleasure without sanctioned purpose is apostasy punished by the institution, not individuals.',
+          narrativeHook: 'The enforcer does not act from personal cruelty but from institutional conviction. Desire corrupts not a person but a role — the doctrine demands the body serve its purpose, and deviation is structural heresy prosecuted by committee.',
+          eroticEngine: ['institutional guilt', 'doctrinal authority', 'structural transgression', 'sanctioned vs forbidden touch'],
+          sceneBias: { pacing: 'tense', intimacyRisk: 'extreme', powerDynamic: 'religious' }
+      },
+      perfect_match: {
+          id: 'perfect-match', world: 'dystopia', title: 'The Perfect Match',
+          subtitle: 'Reproductive Destiny Regime',
+          uiDescription: 'Pairing is biological mandate. Compatibility means genetic fitness. Desire for the wrong person is defection against the species.',
+          narrativeHook: 'Two people matched to others by reproductive destiny choose each other instead — misusing their bodies against their assigned biological purpose. Every touch is species-level treason.',
+          eroticEngine: ['forbidden pairing', 'biological defiance', 'body against purpose', 'reproductive treason', 'wrong-match desire'],
+          sceneBias: { pacing: 'moderate', intimacyRisk: 'high', powerDynamic: 'eugenic' }
+      },
+      ministry_of_affection: {
+          id: 'ministry-of-affection', world: 'dystopia', title: 'The Ministry of Affection',
+          subtitle: 'Compliance Terror State',
+          uiDescription: 'Every intimate act carries legal, reputational, and existential risk. Accusation is permanent. Protection, not permission, is what lovers seek.',
+          narrativeHook: 'Intimacy exists under retroactive judgment — any encounter can be reframed, any partner can become an accuser, and the record is permanent. Characters approach each other through defensive consent language, documented proof, and the constant fear that what feels mutual today becomes evidence tomorrow.',
+          eroticEngine: ['retroactive judgment', 'permanent branding', 'accusation fear', 'defensive intimacy', 'reputational annihilation'],
+          sceneBias: { pacing: 'tense', intimacyRisk: 'extreme', powerDynamic: 'juridical' }
+      },
+      endless_edit: {
+          id: 'endless-edit', world: 'dystopia', title: 'The Endless Edit',
+          subtitle: 'Voluntary Erasure Culture',
+          uiDescription: 'Selves are drafts revised under social pressure. Love is the refusal to optimize away what you were.',
+          narrativeHook: 'People voluntarily edit themselves to remain socially viable — smoothing memories, shedding traits, discarding former selves. Intimacy stakes center on continuity: can you love someone who keeps revising? Can they recognize you after you revise yourself?',
+          eroticEngine: ['voluntary self-editing', 'memory continuity', 'recognition', 'shared past as anchor', 'being seen as you were'],
+          sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'social' }
+      }
+  };
 
   // =========================
   // RUNTIME NORMALIZATION PROMPT
@@ -1099,7 +1167,8 @@ For veto/quill/god_mode:
               cyberpunk: ['neon', 'corporate', 'hacker', 'dystopia', 'augment', 'cyber', 'rain', 'noir'],
               post_human: ['transcend', 'upload', 'singularity', 'evolved', 'posthuman', 'ai consciousness'],
               alien_contact: ['alien', 'first contact', 'extraterrestrial', 'xeno', 'encounter'],
-              abundance_collapse: ['utopia', 'abundance', 'collapse', 'post-scarcity', 'automated', 'end of work']
+              simulation: ['simulation', 'reincarnation', 'multiverse', 'reality', 'loop', 'déjà vu', 'past lives'],
+              final_frontier: ['frontier', 'exploration', 'crew', 'ship', 'deep space', 'expedition', 'outpost', 'close quarters']
           },
           fantasy: {
               high_fantasy: ['magic', 'elf', 'elves', 'quest', 'enchant', 'fairy', 'mystical', 'wizard', 'kingdom'],
@@ -1111,6 +1180,15 @@ For veto/quill/god_mode:
               norse_myth: ['norse', 'viking', 'odin', 'thor', 'ragnarok', 'rune', 'valhalla', 'frost'],
               egyptian_myth: ['egypt', 'pharaoh', 'nile', 'pyramid', 'afterlife', 'anubis', 'ra', 'isis'],
               biblical_myth: ['biblical', 'angel', 'prophet', 'covenant', 'divine law', 'heaven', 'apocalypse']
+          },
+          dystopia: {
+              glass_house: ['surveillance', 'biometric', 'monitor', 'sensor', 'pulse', 'tracked', 'panopticon', 'exposure'],
+              velvet_trap: ['pleasure', 'mandatory', 'hedonism', 'meaningless', 'compulsory', 'longing', 'refusal'],
+              the_ledger: ['asset', 'valuation', 'leverage', 'depreciation', 'ROI', 'ownership', 'ranked', 'capital'],
+              crimson_veil: ['doctrine', 'dogma', 'apostasy', 'institution', 'sanctioned', 'heresy', 'purity'],
+              perfect_match: ['breeding', 'genetic', 'reproductive', 'pairing', 'eugenics', 'biological mandate', 'fitness'],
+              ministry_of_affection: ['accusation', 'retroactive', 'consent', 'branding', 'reputational', 'juridical', 'compliance'],
+              endless_edit: ['self-edit', 'revision', 'erasure', 'memory', 'continuity', 'recognition', 'optimize']
           }
       };
 
@@ -1540,99 +1618,36 @@ Examples of NPC archetype expression:
       });
   }
 
-  // Normalize user input to best matching secondary archetype
-  // Maps free text to closest secondary (IP-safe transformation)
-  function normalizeArchetypeModifierInput(input, currentPrimary) {
-      if (!input || typeof input !== 'string') return null;
+  // Silently assign a secondary archetype modifier at story generation time.
+  // ~25% chance of receiving one. Allowed pairings weighted 3x vs conditional 1x.
+  function assignProbabilisticModifier() {
+      const primaryId = state.archetype?.primary;
+      if (!primaryId) return;
+      // Don't overwrite an existing assignment
+      if (state.archetype.modifier) return;
 
-      const normalized = input.trim().toLowerCase();
-      if (!normalized) return null;
-
-      // Get valid secondaries (respects pairing rules)
-      const validModifiers = getValidModifierArchetypes(currentPrimary);
-
-      // Direct match by name
-      for (const id of validModifiers) {
-          const arch = ARCHETYPES[id];
-          if (arch.name.toLowerCase().includes(normalized) ||
-              normalized.includes(arch.name.toLowerCase().replace('the ', ''))) {
-              return id;
-          }
+      // 25% base chance
+      if (Math.random() > 0.25) {
+          console.log('[Modifier] No secondary assigned (75% path)');
+          return;
       }
 
-      // Keyword matching — maps legacy and descriptive terms to canonical archetypes
-      const keywordMap = {
-          // Heart Warden (absorbs Guardian, Sovereign)
-          'warden': 'HEART_WARDEN',
-          'protective': 'HEART_WARDEN',
-          'guardian': 'HEART_WARDEN',
-          'safe': 'HEART_WARDEN',
-          'shield': 'HEART_WARDEN',
-          'authority': 'HEART_WARDEN',
-          'sovereign': 'HEART_WARDEN',
-          'paladin': 'HEART_WARDEN',
-          'knight': 'HEART_WARDEN',
-          'steady': 'HEART_WARDEN',
-          // Open Vein (absorbs Romantic, Cloistered)
-          'vein': 'OPEN_VEIN',
-          'vulnerable': 'OPEN_VEIN',
-          'romantic': 'OPEN_VEIN',
-          'tender': 'OPEN_VEIN',
-          'expressive': 'OPEN_VEIN',
-          'poetic': 'OPEN_VEIN',
-          'cloistered': 'OPEN_VEIN',
-          'sheltered': 'OPEN_VEIN',
-          'innocent': 'OPEN_VEIN',
-          'awakening': 'OPEN_VEIN',
-          // Spellbinder (absorbs Enchanting, Strategist)
-          'spellbinder': 'SPELLBINDER',
-          'charm': 'SPELLBINDER',
-          'magnetic': 'SPELLBINDER',
-          'allure': 'SPELLBINDER',
-          'enchanting': 'SPELLBINDER',
-          'seductive': 'SPELLBINDER',
-          'strategist': 'SPELLBINDER',
-          'intelligent': 'SPELLBINDER',
-          'clever': 'SPELLBINDER',
-          'anticipation': 'SPELLBINDER',
-          // Armored Fox (absorbs Rogue)
-          'fox': 'ARMORED_FOX',
-          'rogue': 'ARMORED_FOX',
-          'playful': 'ARMORED_FOX',
-          'irreverent': 'ARMORED_FOX',
-          'evasive': 'ARMORED_FOX',
-          'deflect': 'ARMORED_FOX',
-          // Dark Vice (absorbs Dangerous, Anti-Hero)
-          'vice': 'DARK_VICE',
-          'dangerous': 'DARK_VICE',
-          'menace': 'DARK_VICE',
-          'dark': 'DARK_VICE',
-          'restrained': 'DARK_VICE',
-          'power': 'DARK_VICE',
-          'anti-hero': 'DARK_VICE',
-          // Beautiful Ruin
-          'ruin': 'BEAUTIFUL_RUIN',
-          'destruction': 'BEAUTIFUL_RUIN',
-          'sabotage': 'BEAUTIFUL_RUIN',
-          'wreckage': 'BEAUTIFUL_RUIN',
-          // Eternal Flame (absorbs Devoted)
-          'flame': 'ETERNAL_FLAME',
-          'devoted': 'ETERNAL_FLAME',
-          'loyal': 'ETERNAL_FLAME',
-          'endure': 'ETERNAL_FLAME',
-          'unwavering': 'ETERNAL_FLAME',
-          'focused': 'ETERNAL_FLAME',
-          'attention': 'ETERNAL_FLAME',
-          'exclusive': 'ETERNAL_FLAME'
-      };
+      const rules = ARCHETYPE_PAIRING_RULES[primaryId];
+      if (!rules) return;
 
-      for (const [keyword, archId] of Object.entries(keywordMap)) {
-          if (normalized.includes(keyword) && validModifiers.includes(archId)) {
-              return archId;
-          }
+      // Build weighted pool: allowed = 3x, conditional = 1x
+      const pool = [];
+      (rules.allowed || []).forEach(id => { pool.push(id, id, id); }); // 3x weight
+      (rules.conditional || []).forEach(id => { pool.push(id); });     // 1x weight
+
+      if (pool.length === 0) {
+          console.log('[Modifier] No valid pairings for', primaryId);
+          return;
       }
 
-      return null;
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      state.archetype.modifier = chosen;
+      console.log(`[Modifier] Silently assigned: ${ARCHETYPES[chosen]?.name} to ${ARCHETYPES[primaryId]?.name}`);
   }
 
   // =========================
@@ -11448,6 +11463,12 @@ Return ONLY the title, no quotes or explanation.`;
           }
       }
 
+      // modeSelect clears _navHistory — explicit back to tierGate
+      if (_currentScreenId === 'modeSelect') {
+          window.showScreen('tierGate', true);
+          return;
+      }
+
       if (_navHistory.length === 0) {
           if(typeof coupleCleanup === 'function' && state.mode === 'couple') coupleCleanup();
           window.showScreen('modeSelect');
@@ -11471,10 +11492,18 @@ Return ONLY the title, no quotes or explanation.`;
           if (!_guidedFateVisualsActive && typeof cleanupFateVisuals === 'function') cleanupFateVisuals();
       }
 
+      // Hide corridor Continue button when leaving setup screen
+      if (id !== 'setup') {
+          const controlPlaneBtn = document.getElementById('continueButton');
+          if (controlPlaneBtn) controlPlaneBtn.classList.remove('visible');
+      }
+
       if(id === 'modeSelect') {
           _navHistory = [];
           // Update Solo subtitle based on permission gradient
           if (typeof updateSoloSubtitle === 'function') updateSoloSubtitle();
+          // Reset mode cards so they start face-down each time
+          if (window.resetModeCards) window.resetModeCards();
       } else if (!isBack && _currentScreenId && _currentScreenId !== id) {
          if(!['ageGate', 'tosGate', 'tierGate'].includes(_currentScreenId)) {
              _navHistory.push(_currentScreenId);
@@ -12110,9 +12139,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           "Quantum research hub", "First contact zone", "Post-singularity haven", "Asteroid mining outpost"
       ],
       Dystopia: [
-          "Surveillance state tower", "Underground resistance base", "Corporate zone boundary", "Memory wipe facility",
-          "Rationing district", "Propaganda broadcast center", "Elite compound walls", "Rebel safe house",
-          "Black market tunnels", "Re-education center", "Border checkpoint", "Forbidden archive"
+          "Biometric monitoring hub", "Mandatory pleasure pavilion", "Human valuation exchange", "Doctrinal enforcement hall",
+          "Breeding compatibility center", "Consent tribunal archive", "Identity revision clinic", "Sensor-blind alley",
+          "Underground feeling house", "Asset depreciation ward", "Accusation records vault", "Memory continuity shrine"
       ],
       PostApocalyptic: [
           "Ruined city overgrowth", "Survivor settlement", "Irradiated wasteland edge", "Flooded coastal ruins",
@@ -12453,11 +12482,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   }
 
   function updateQuillUI() {
-      const btn = document.getElementById('btnCommitQuill');
+      const btn = document.getElementById('btnCommitQuill'); // May not exist (removed from UI)
       const status = document.getElementById('quillStatus');
       const godToggle = document.getElementById('godModeToggle');
       const quillBox = document.getElementById('quillBox');
-      if(!btn || !status) return;
+      if(!status) return;
 
       if(state.mode === 'solo') {
           if(godToggle) godToggle.classList.remove('hidden');
@@ -12490,16 +12519,17 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               // CANONICAL: Use isStorypassAllowed() for correct paywall mode
               quillBox.onclick = () => window.showPaywall(getPaywallMode());
           }
-          btn.disabled = true;
+          if(btn) btn.disabled = true;
           // PLAQUE REGIME: No opacity mutation — CSS handles disabled state
       } else if(ready) {
           status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
           status.style.color = "var(--pink)";
-          btn.disabled = false;
-          // Use class toggle instead of direct style mutation
-          btn.classList.remove('quill-btn-spent');
-          btn.classList.add('quill-btn-ready');
-          btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
+          if(btn) {
+              btn.disabled = false;
+              btn.classList.remove('quill-btn-spent');
+              btn.classList.add('quill-btn-ready');
+              btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
+          }
           if(quillBox) {
               quillBox.classList.remove('locked-input');
               quillBox.onclick = null;
@@ -12513,10 +12543,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               quillBox.classList.remove('locked-input');
               quillBox.onclick = null;
           }
-          btn.disabled = true;
-          // Use class toggle instead of direct style mutation
-          btn.classList.remove('quill-btn-ready');
-          btn.classList.add('quill-btn-spent');
+          if(btn) {
+              btn.disabled = true;
+              btn.classList.remove('quill-btn-ready');
+              btn.classList.add('quill-btn-spent');
+          }
       }
   }
   
@@ -15434,6 +15465,41 @@ The final image must look like a real published novel cover.`;
   // This function starts story generation in the background.
   // Returns a promise that resolves when story text is ready.
   // ═══════════════════════════════════════════════════════════════════════════
+  /**
+   * Build world flavor directives for scene generation prompt.
+   * Dystopia flavors inject narrative hook, erotic engine keywords, and scene bias.
+   * Other worlds pass through worldSubtype as a simple label.
+   */
+  function buildWorldFlavorDirectives(world, worldSubtype) {
+      if (!worldSubtype) return '';
+
+      // Dystopia flavors have rich data models — bias stakes, fear, and intimacy mechanics
+      if (world === 'Dystopia' && DYSTOPIA_FLAVORS[worldSubtype]) {
+          const f = DYSTOPIA_FLAVORS[worldSubtype];
+          const tone = state.picks?.tone || '';
+          const isSatirical = tone === 'Satirical';
+          let directives = `
+WORLD FLAVOR: ${f.title} (${f.subtitle})
+SCENE FRAMING (use as guidance, never quote verbatim):
+${f.narrativeHook}
+EROTIC DRIVERS: ${f.eroticEngine.join(', ')}
+SCENE BIAS: pacing=${f.sceneBias.pacing}, intimacy-risk=${f.sceneBias.intimacyRisk}, power=${f.sceneBias.powerDynamic}
+FLAVOR RULES:
+- Bias STAKES (what intimacy threatens), FEAR (what can go wrong), and SOCIAL CONSEQUENCES.
+- Do NOT bias prose style — the Tone axis controls that.
+- Consequences are social and systemic, not only state punishment.`;
+          if (!isSatirical) {
+              directives += `
+- ZERO comedic, whimsical, or absurdist framing. This is not satire. Play it straight.`;
+          }
+          return directives;
+      }
+
+      // Non-dystopia worlds: simple label pass-through
+      const label = getWorldLabel(worldSubtype);
+      return label ? `\nWORLD FLAVOR: ${label}` : '';
+  }
+
   async function startBackgroundStoryGeneration() {
       console.log('[BACKGROUND:STORY] Starting background story generation');
 
@@ -15485,6 +15551,9 @@ The final image must look like a real published novel cover.`;
           const archetypeDirectives = buildArchetypeDirectives(state.archetype?.primary, state.archetype?.modifier, lGen);
           const safetyStr = buildConsentDirectives();
 
+          // Build world flavor directives (dystopia flavors inject scene bias)
+          const worldFlavorDirectives = buildWorldFlavorDirectives(storyWorld, state.picks?.worldSubtype);
+
           const sysPrompt = `You are a bestselling erotica author.
 
 LONG-FORM STORY ARC RULES (CRITICAL):
@@ -15493,12 +15562,13 @@ Each response must advance character psychology, not just physical tension.
 End most responses with a complication, choice, or destabilizing revelation.
 
 You are writing a story with the following configuration:
-- World: ${storyWorld}
+- World: ${storyWorld}${state.picks?.worldSubtype ? ` (${getWorldLabel(state.picks.worldSubtype)})` : ''}
 - Tone: ${state.picks?.tone || 'Earnest'}
 - Genre: ${storyPowerRole}
 - Power Frame: ${storyPowerFrame}
 - Dynamic: ${state.picks?.dynamic || 'Enemies'}
 - POV: ${state.picks?.pov || 'First'}
+${worldFlavorDirectives}
 
 Protagonist: ${pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
 Love Interest: ${lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
@@ -16087,7 +16157,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // Bind boundary chips (non-locked ones)
-    document.querySelectorAll('.boundary-chips .chip[data-boundary]').forEach(chip => {
+    document.querySelectorAll('.boundary-chips .chip-gold[data-boundary]').forEach(chip => {
         if (chip.dataset.bound === '1') return;
         chip.dataset.bound = '1';
         chip.addEventListener('click', () => {
@@ -16346,13 +16416,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'cyberpunk', label: 'Cyberpunk' },
         { val: 'post_human', label: 'Post-Human' },
         { val: 'first_contact', label: 'First Contact' },
-        { val: 'simulation', label: 'Simulation' }
+        { val: 'simulation', label: 'Simulation' },
+        { val: 'final_frontier', label: 'Final Frontier' }
       ],
       Dystopia: [
-        { val: 'authoritarian', label: 'Authoritarian' },
-        { val: 'surveillance', label: 'Surveillance' },
-        { val: 'corporate', label: 'Corporate' },
-        { val: 'environmental', label: 'Environmental' }
+        { val: 'glass_house', label: 'The Glass House' },
+        { val: 'velvet_trap', label: 'The Velvet Trap' },
+        { val: 'the_ledger', label: 'The Ledger' },
+        { val: 'crimson_veil', label: 'The Crimson Veil' },
+        { val: 'perfect_match', label: 'The Perfect Match' },
+        { val: 'ministry_of_affection', label: 'The Ministry of Affection' },
+        { val: 'endless_edit', label: 'The Endless Edit' }
       ],
       PostApocalyptic: [
         { val: 'nuclear_aftermath', label: 'Nuclear Aftermath' },
@@ -16595,7 +16669,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Store original DOM position for restoration
       zoomOriginalParent = card.parentNode;
-      zoomOriginalNextSibling = card.nextSibling;
+      zoomOriginalNextSibling = card.nextElementSibling;
 
       // Store original position for animation reference
       card.dataset.zoomOriginalLeft = rect.left;
@@ -16714,6 +16788,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       if (zoomContent) {
         zoomContent.remove();
       }
+      // Remove zoom flavor arc (world/pressure cards)
+      const zoomFlavorArc = currentOpenCard.querySelector('.sb-zoom-flavor-arc');
+      if (zoomFlavorArc) {
+        zoomFlavorArc.remove();
+      }
 
       // Remove zoom class and restore original positioning
       currentOpenCard.classList.remove('zoomed');
@@ -16770,25 +16849,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     function recenterZoomedCard() {
       if (!currentOpenCard || !currentOpenCard.classList.contains('zoomed')) return;
 
-      const tarotAspect = 2.75 / 4.75;
+      const origWidth = parseFloat(currentOpenCard.dataset.zoomOriginalWidth) || 112;
+      const origHeight = parseFloat(currentOpenCard.dataset.zoomOriginalHeight) || 193;
       const sidePadding = 60;
       const topPadding = 40;
-      const bottomPadding = 90; // modifier box + continue button + portal padding
+      const bottomPadding = 90;
       const maxWidth = window.innerWidth - sidePadding * 2;
       const maxHeight = window.innerHeight - topPadding - bottomPadding;
+      const scale = Math.min(maxWidth / origWidth, maxHeight / origHeight);
 
-      let zoomedWidth, zoomedHeight;
-      if (maxWidth / maxHeight > tarotAspect) {
-        zoomedHeight = maxHeight;
-        zoomedWidth = zoomedHeight * tarotAspect;
-      } else {
-        zoomedWidth = maxWidth;
-        zoomedHeight = zoomedWidth / tarotAspect;
-      }
-
-      // Flexbox handles centering, just update size
-      currentOpenCard.style.width = `${zoomedWidth}px`;
-      currentOpenCard.style.height = `${zoomedHeight}px`;
+      // Flexbox handles centering, just update scale
+      currentOpenCard.style.transform = `scale(${scale})`;
     }
 
     // Add resize listener for zoomed card centering
@@ -16799,15 +16870,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       closeZoomedCard();
     }
 
-    // Inline computed background-image on card faces before portal move.
+    // Inline computed background properties on card faces before portal move.
     // Grid-scoped selectors (#worldGrid .sb-card .sb-card-front, etc.) break
-    // when the card is moved to the zoom portal, so we bake the URL inline.
+    // when the card is moved to the zoom portal, so we bake styles inline.
     function inlineCardFaceBackgrounds(card) {
       card.querySelectorAll('.sb-card-face').forEach(face => {
         if (face.dataset.bgInlined) return;
-        const bg = getComputedStyle(face).backgroundImage;
+        const cs = getComputedStyle(face);
+        const bg = cs.backgroundImage;
         if (bg && bg !== 'none') {
           face.style.backgroundImage = bg;
+          face.style.backgroundSize = cs.backgroundSize;
+          face.style.backgroundPosition = cs.backgroundPosition;
+          face.style.backgroundRepeat = cs.backgroundRepeat;
           face.dataset.bgInlined = '1';
         }
       });
@@ -16818,6 +16893,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       card.querySelectorAll('.sb-card-face').forEach(face => {
         if (face.dataset.bgInlined) {
           face.style.backgroundImage = '';
+          face.style.backgroundSize = '';
+          face.style.backgroundPosition = '';
+          face.style.backgroundRepeat = '';
           delete face.dataset.bgInlined;
         }
       });
@@ -16857,39 +16935,34 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Store original DOM position for restoration
       zoomOriginalParent = card.parentNode;
-      zoomOriginalNextSibling = card.nextSibling;
+      zoomOriginalNextSibling = card.nextElementSibling;
 
-      // Store original position for animation reference
+      // Store original position and dimensions for scale calculation
       card.dataset.zoomOriginalLeft = rect.left;
       card.dataset.zoomOriginalTop = rect.top;
+      card.dataset.zoomOriginalWidth = rect.width;
+      card.dataset.zoomOriginalHeight = rect.height;
 
-      // TAROT ASPECT RATIO: 2.75 / 4.75 (canonical proportions)
-      const tarotAspect = 2.75 / 4.75;
+      // SCALE ZOOM: Card stays at original size, scale() enlarges uniformly
+      // This preserves the PNG art contract — text, buttons, art all scale together
       const sidePadding = 60;
       const topPadding = 40;
       const bottomPadding = 90;
       const maxWidth = window.innerWidth - sidePadding * 2;
       const maxHeight = window.innerHeight - topPadding - bottomPadding;
-
-      let zoomedWidth, zoomedHeight;
-      if (maxWidth / maxHeight > tarotAspect) {
-        zoomedHeight = maxHeight;
-        zoomedWidth = zoomedHeight * tarotAspect;
-      } else {
-        zoomedWidth = maxWidth;
-        zoomedHeight = zoomedWidth / tarotAspect;
-      }
+      const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
 
       // PORTAL MOVE: Move card into zoom portal (breaks ALL ancestor contexts)
       if (zoomPortal) {
         zoomPortal.appendChild(card);
       }
 
-      // Apply zoom styling with correct tarot proportions
+      // Apply zoom: lock original dimensions, scale uniformly like a physical card
       card.classList.add('zoomed');
-      card.style.width = `${zoomedWidth}px`;
-      card.style.height = `${zoomedHeight}px`;
-      card.style.transform = 'none';
+      card.style.width = `${rect.width}px`;
+      card.style.height = `${rect.height}px`;
+      card.style.transform = `scale(${scale})`;
+      card.style.transformOrigin = 'center center';
       card.style.position = '';
       card.style.left = '';
       card.style.top = '';
@@ -16935,6 +17008,22 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         });
         zoomPortal.appendChild(zoomContinueBtn);
       }
+
+      // Add sparkle emitters to world/pressure zoomed cards (doubled rate on left/right)
+      if (grp === 'world' || grp === 'pressure') {
+        const frontFace = card.querySelector('.sb-card-front');
+        if (frontFace) {
+          ['left', 'right', 'top', 'bottom'].forEach(side => {
+            const sparkleContainer = document.createElement('div');
+            sparkleContainer.className = 'zoom-side-sparkles';
+            sparkleContainer.id = `zoomSideSparkles_${side}`;
+            sparkleContainer.dataset.side = side;
+            frontFace.appendChild(sparkleContainer);
+            const rate = (side === 'left' || side === 'right') ? 16 : 8;
+            startSparkleEmitter(sparkleContainer.id, 'destinyDeck', rate);
+          });
+        }
+      }
     }
 
     /**
@@ -16973,9 +17062,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const newGrp = newCard.dataset.grp;
       const newVal = newCard.dataset.val;
 
-      // Remove old zoom content
+      // Remove old zoom content and flavor arc
       const oldZoomContent = oldCard.querySelector('.sb-zoom-content');
       if (oldZoomContent) oldZoomContent.remove();
+      const oldFlavorArc = oldCard.querySelector('.sb-zoom-flavor-arc');
+      if (oldFlavorArc) oldFlavorArc.remove();
+
+      // Stop and remove zoom side sparkle emitters from old card
+      ['left', 'right', 'top', 'bottom'].forEach(side => {
+        const id = `zoomSideSparkles_${side}`;
+        stopSparkleEmitter(id);
+        const el = oldCard.querySelector(`#${id}`);
+        if (el) el.remove();
+      });
 
       // Remove inlined backgrounds and restore old card to grid
       removeInlinedBackgrounds(oldCard);
@@ -17009,25 +17108,20 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Store new card's position and move to portal
       const rect = newCard.getBoundingClientRect();
       zoomOriginalParent = newCard.parentNode;
-      zoomOriginalNextSibling = newCard.nextSibling;
+      zoomOriginalNextSibling = newCard.nextElementSibling;
       newCard.dataset.zoomOriginalLeft = rect.left;
       newCard.dataset.zoomOriginalTop = rect.top;
 
-      const tarotAspect = 2.75 / 4.75;
+      // SCALE ZOOM: Card stays at original size, scale() enlarges uniformly
       const sidePadding = 60;
       const topPadding = 40;
       const bottomPadding = 90;
       const maxWidth = window.innerWidth - sidePadding * 2;
       const maxHeight = window.innerHeight - topPadding - bottomPadding;
+      const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
 
-      let zoomedWidth, zoomedHeight;
-      if (maxWidth / maxHeight > tarotAspect) {
-        zoomedHeight = maxHeight;
-        zoomedWidth = zoomedHeight * tarotAspect;
-      } else {
-        zoomedWidth = maxWidth;
-        zoomedHeight = zoomedWidth / tarotAspect;
-      }
+      newCard.dataset.zoomOriginalWidth = rect.width;
+      newCard.dataset.zoomOriginalHeight = rect.height;
 
       // Insert before nav arrows
       const firstArrow = zoomPortal.querySelector('.zoom-nav-arrow');
@@ -17038,14 +17132,31 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
 
       newCard.classList.add('zoomed');
-      newCard.style.width = `${zoomedWidth}px`;
-      newCard.style.height = `${zoomedHeight}px`;
-      newCard.style.transform = 'none';
+      newCard.style.width = `${rect.width}px`;
+      newCard.style.height = `${rect.height}px`;
+      newCard.style.transform = `scale(${scale})`;
+      newCard.style.transformOrigin = 'center center';
       newCard.style.position = '';
       newCard.style.left = '';
       newCard.style.top = '';
 
       currentOpenCard = newCard;
+
+      // Add sparkle emitters to new world/pressure card (doubled rate on left/right)
+      if (newGrp === 'world' || newGrp === 'pressure') {
+        const frontFace = newCard.querySelector('.sb-card-front');
+        if (frontFace) {
+          ['left', 'right', 'top', 'bottom'].forEach(side => {
+            const sparkleContainer = document.createElement('div');
+            sparkleContainer.className = 'zoom-side-sparkles';
+            sparkleContainer.id = `zoomSideSparkles_${side}`;
+            sparkleContainer.dataset.side = side;
+            frontFace.appendChild(sparkleContainer);
+            const rate = (side === 'left' || side === 'right') ? 16 : 8;
+            startSparkleEmitter(sparkleContainer.id, 'destinyDeck', rate);
+          });
+        }
+      }
     }
 
     /**
@@ -17108,18 +17219,68 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const frontFace = card.querySelector('.sb-card-front');
       if (!frontFace) return;
 
-      // Remove any existing zoom content
+      // Remove any existing zoom content and flavor arc
       const existing = frontFace.querySelector('.sb-zoom-content');
       if (existing) existing.remove();
+      const existingArc = frontFace.querySelector('.sb-zoom-flavor-arc');
+      if (existingArc) existingArc.remove();
 
       const flavors = WORLD_SUB_OPTIONS[worldVal] || [];
       const hasCustomField = WORLDS_WITH_CUSTOM_FIELD.includes(worldVal);
 
-      // Create zoom content container
+      // === FLAVOR ARC in the half-circle: ONLY the number ===
+      if (flavors.length > 0) {
+        var arcContainer = document.createElement('div');
+        arcContainer.className = 'sb-zoom-flavor-arc';
+
+        var num = document.createElement('span');
+        num.className = 'arc-flavor-number';
+        num.textContent = flavors.length;
+        arcContainer.appendChild(num);
+        frontFace.appendChild(arcContainer);
+      }
+
+      // === ZOOM CONTENT: "FLAVORS" label + flavor buttons + custom setting ===
       const zoomContent = document.createElement('div');
       zoomContent.className = 'sb-zoom-content';
 
-      // Add flavor buttons if any
+      // "FLAVORS" curved text — bottom-of-circle arc, sits below the arch, above buttons
+      if (flavors.length > 0) {
+        var ns = 'http://www.w3.org/2000/svg';
+        var svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('class', 'sb-zoom-flavor-label');
+        svg.setAttribute('viewBox', '0 0 100 18');
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+        var defs = document.createElementNS(ns, 'defs');
+        var path = document.createElementNS(ns, 'path');
+        var pathId = 'zoomFlavorArc_' + (++_flavorArcUid);
+        path.setAttribute('id', pathId);
+        // Downward arc (bottom of circle) — sweep-flag=0 curves down
+        path.setAttribute('d', 'M 15,6 A 100,100 0 0,0 85,6');
+        path.setAttribute('fill', 'none');
+        defs.appendChild(path);
+        svg.appendChild(defs);
+
+        var text = document.createElementNS(ns, 'text');
+        text.setAttribute('fill', '#c9a84c');
+        text.setAttribute('font-size', '6');
+        text.setAttribute('font-family', 'Cinzel, serif');
+        text.setAttribute('font-variant', 'small-caps');
+        text.setAttribute('letter-spacing', '2');
+
+        var textPath = document.createElementNS(ns, 'textPath');
+        textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + pathId);
+        textPath.setAttribute('startOffset', '50%');
+        textPath.setAttribute('text-anchor', 'middle');
+        textPath.textContent = 'flavors';
+
+        text.appendChild(textPath);
+        svg.appendChild(text);
+        zoomContent.appendChild(svg);
+      }
+
+      // Flavor buttons directly under the FLAVORS label
       if (flavors.length > 0) {
         const flavorGrid = document.createElement('div');
         flavorGrid.className = 'sb-zoom-flavors';
@@ -17130,26 +17291,22 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           btn.textContent = flavor.label;
           btn.dataset.val = flavor.val;
 
-          // Check if this flavor is currently selected
           if (state.picks.worldSubtype === flavor.val) {
             btn.classList.add('selected');
           }
 
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            // Toggle selection
             if (state.picks.worldSubtype === flavor.val) {
               state.picks.worldSubtype = null;
               btn.classList.remove('selected');
             } else {
-              // Deselect others
               flavorGrid.querySelectorAll('.sb-flavor-btn').forEach(b => b.classList.remove('selected'));
               state.picks.worldSubtype = flavor.val;
               btn.classList.add('selected');
             }
-            // Increment DSP activation count (explicit Story Shape choice)
             incrementDSPActivation();
-            updateSynopsisPanel(true); // User action: flavor selection
+            updateSynopsisPanel(true);
           });
 
           flavorGrid.appendChild(btn);
@@ -17158,7 +17315,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         zoomContent.appendChild(flavorGrid);
       }
 
-      // Add custom text field if this world supports it
+      // Custom setting box (above the bottom title text box)
       if (hasCustomField) {
         const customWrapper = document.createElement('div');
         customWrapper.className = 'sb-zoom-custom';
@@ -17167,34 +17324,31 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         customLabel.className = 'sb-zoom-custom-label';
         customLabel.textContent = 'Custom Setting:';
 
-        // Create input wrapper for rotating placeholder
         const inputWrapper = document.createElement('div');
         inputWrapper.className = 'sb-zoom-custom-wrapper';
 
         const customInput = document.createElement('textarea');
         customInput.className = 'sb-zoom-custom-input';
-        customInput.id = 'worldCustomInput-' + Date.now(); // Unique ID
+        customInput.id = 'worldCustomInput-' + Date.now();
         customInput.value = state.worldCustomText || '';
         customInput.rows = 2;
 
-        // Create rotating placeholder
+        // Scrolling flavor examples — show this world's flavor labels in grey italic
         const rotatingPlaceholder = document.createElement('div');
         rotatingPlaceholder.className = 'sb-zoom-rotating-placeholder';
 
-        // PASS 9D: Build scrolling suggestion content scoped to selected world
-        const suggestions = WORLD_CUSTOM_SUGGESTIONS[worldVal] || FATE_SUGGESTIONS.world || [];
-        if (suggestions.length > 0) {
-          const doubled = [...suggestions, ...suggestions];
+        const flavorLabels = (WORLD_SUB_OPTIONS[worldVal] || []).map(f => f.label);
+        if (flavorLabels.length > 0) {
+          const doubled = [...flavorLabels, ...flavorLabels];
           let html = '<span class="sb-zoom-placeholder-inner">';
           doubled.forEach((s, i) => {
             html += `<span class="suggestion">${s}</span>`;
-            if (i < doubled.length - 1) html += '<span class="separator">•</span>';
+            if (i < doubled.length - 1) html += '<span class="separator">\u2022</span>';
           });
           html += '</span>';
           rotatingPlaceholder.innerHTML = html;
         }
 
-        // Show/hide placeholder based on input content
         const updatePlaceholderVisibility = () => {
           if (customInput.value.trim().length > 0) {
             rotatingPlaceholder.classList.add('hidden');
@@ -17229,7 +17383,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         customWrapper.appendChild(inputWrapper);
         zoomContent.appendChild(customWrapper);
 
-        // Initialize visibility
         updatePlaceholderVisibility();
       }
 
@@ -17241,26 +17394,63 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const frontFace = card.querySelector('.sb-card-front');
       if (!frontFace) return;
 
-      // Remove any existing zoom content
+      // Remove any existing zoom content and flavor arc
       const existing = frontFace.querySelector('.sb-zoom-content');
       if (existing) existing.remove();
+      const existingArc = frontFace.querySelector('.sb-zoom-flavor-arc');
+      if (existingArc) existingArc.remove();
 
       const flavors = PRESSURE_FLAVORS[pressureVal] || [];
-
-      // Only add zoom content if there are flavors
       if (flavors.length === 0) return;
 
-      // Create zoom content container
+      // === FLAVOR ARC in the half-circle: ONLY the number ===
+      var arcContainer = document.createElement('div');
+      arcContainer.className = 'sb-zoom-flavor-arc';
+
+      var num = document.createElement('span');
+      num.className = 'arc-flavor-number';
+      num.textContent = flavors.length;
+      arcContainer.appendChild(num);
+      frontFace.appendChild(arcContainer);
+
+      // === ZOOM CONTENT: "FLAVORS" label + flavor buttons ===
       const zoomContent = document.createElement('div');
       zoomContent.className = 'sb-zoom-content';
 
-      // Add flavor label
-      const flavorLabel = document.createElement('div');
-      flavorLabel.className = 'sb-zoom-flavor-label';
-      flavorLabel.textContent = 'Refine (optional)';
-      zoomContent.appendChild(flavorLabel);
+      // "FLAVORS" curved text — bottom-of-circle arc, below the arch, above buttons
+      var ns = 'http://www.w3.org/2000/svg';
+      var svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('class', 'sb-zoom-flavor-label');
+      svg.setAttribute('viewBox', '0 0 100 18');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-      // Add flavor buttons
+      var defs = document.createElementNS(ns, 'defs');
+      var path = document.createElementNS(ns, 'path');
+      var pathId = 'zoomPressureArc_' + (++_flavorArcUid);
+      path.setAttribute('id', pathId);
+      // Downward arc (bottom of circle) — sweep-flag=0 curves down
+      path.setAttribute('d', 'M 15,6 A 100,100 0 0,0 85,6');
+      path.setAttribute('fill', 'none');
+      defs.appendChild(path);
+      svg.appendChild(defs);
+
+      var text = document.createElementNS(ns, 'text');
+      text.setAttribute('fill', '#c9a84c');
+      text.setAttribute('font-size', '6');
+      text.setAttribute('font-family', 'Cinzel, serif');
+      text.setAttribute('font-variant', 'small-caps');
+      text.setAttribute('letter-spacing', '2');
+
+      var textPath = document.createElementNS(ns, 'textPath');
+      textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + pathId);
+      textPath.setAttribute('startOffset', '50%');
+      textPath.setAttribute('text-anchor', 'middle');
+      textPath.textContent = 'flavors';
+
+      text.appendChild(textPath);
+      svg.appendChild(text);
+      zoomContent.appendChild(svg);
+
       const flavorGrid = document.createElement('div');
       flavorGrid.className = 'sb-zoom-flavors';
 
@@ -17271,28 +17461,23 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         btn.dataset.val = flavor.id;
         btn.title = flavor.description || '';
 
-        // Check if this flavor is currently selected
         if (state.picks.flavor === flavor.id) {
           btn.classList.add('selected');
         }
 
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          // Toggle selection
           if (state.picks.flavor === flavor.id) {
             state.picks.flavor = null;
             btn.classList.remove('selected');
           } else {
-            // Deselect others
             flavorGrid.querySelectorAll('.sb-flavor-btn').forEach(b => b.classList.remove('selected'));
             state.picks.flavor = flavor.id;
             btn.classList.add('selected');
           }
-          // Sync legacy genre from pressure+flavor
           state.picks.genre = getEffectiveGenre(pressureVal, state.picks.flavor);
-          // Increment DSP activation count (explicit Story Shape choice)
           incrementDSPActivation();
-          updateSynopsisPanel(true); // User action: flavor selection
+          updateSynopsisPanel(true);
         });
 
         flavorGrid.appendChild(btn);
@@ -17433,6 +17618,55 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       });
     });
 
+    // Build flavor arc element: number in arch + curved "FLAVORS" text
+    var _flavorArcUid = 0;
+    function buildFlavorArc(count) {
+      var container = document.createElement('div');
+      container.className = 'sb-card-arc-flavors';
+
+      // Number
+      var num = document.createElement('span');
+      num.className = 'arc-flavor-number';
+      num.textContent = count;
+      container.appendChild(num);
+
+      // SVG with curved "FLAVORS" text along underside of arch
+      var ns = 'http://www.w3.org/2000/svg';
+      var svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('class', 'arc-flavor-svg');
+      svg.setAttribute('viewBox', '0 0 100 14');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+      var defs = document.createElementNS(ns, 'defs');
+      var path = document.createElementNS(ns, 'path');
+      var pathId = 'flavorArcPath_' + (++_flavorArcUid);
+      path.setAttribute('id', pathId);
+      // Arc curving upward — text hangs below the half-circle, following its shape
+      path.setAttribute('d', 'M 20,2 A 35,35 0 0,1 80,2');
+      path.setAttribute('fill', 'none');
+      defs.appendChild(path);
+      svg.appendChild(defs);
+
+      var text = document.createElementNS(ns, 'text');
+      text.setAttribute('fill', 'rgba(218,165,32,0.7)');
+      text.setAttribute('font-size', '6');
+      text.setAttribute('font-family', 'Cinzel, serif');
+      text.setAttribute('font-variant', 'small-caps');
+      text.setAttribute('letter-spacing', '2');
+      text.setAttribute('dominant-baseline', 'hanging');
+
+      var textPath = document.createElementNS(ns, 'textPath');
+      textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + pathId);
+      textPath.setAttribute('startOffset', '50%');
+      textPath.setAttribute('text-anchor', 'middle');
+      textPath.textContent = 'flavors';
+
+      text.appendChild(textPath);
+      svg.appendChild(text);
+      container.appendChild(svg);
+      return container;
+    }
+
     /**
      * Execute a card selection (extracted to allow deferred execution after destructive change confirmation)
      */
@@ -17458,9 +17692,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         // Deselect all other cards in this group, select this one
         document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
           c.classList.remove('selected', 'flipped');
-          // Remove any flavor count indicators
+          // Remove any flavor count indicators (old pill + new arc)
           const oldFlavorCount = c.querySelector('.sb-card-flavor-count');
           if (oldFlavorCount) oldFlavorCount.remove();
+          const oldArc = c.querySelector('.sb-card-arc-flavors');
+          if (oldArc) oldArc.remove();
           // Fade out sparkles on deselected cards
           const oldSparkleContainer = c.querySelector('.card-selection-sparkles');
           if (oldSparkleContainer && typeof stopSparkleEmitter === 'function') {
@@ -17480,19 +17716,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           card.appendChild(sparkleContainer);
         }
         if (typeof startSparkleEmitter === 'function') {
-          startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 1.5);
+          startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 6);
         }
 
-        // Add flavor count indicator for World cards
+        // Add flavor arc indicator for World cards (number + curved "FLAVORS" in top arch)
         if (grp === 'world') {
           const flavors = WORLD_SUB_OPTIONS[val] || [];
           if (flavors.length > 0) {
             const frontFace = card.querySelector('.sb-card-front');
-            if (frontFace && !frontFace.querySelector('.sb-card-flavor-count')) {
-              const flavorCount = document.createElement('span');
-              flavorCount.className = 'sb-card-flavor-count';
-              flavorCount.textContent = `${flavors.length} flavors`;
-              frontFace.appendChild(flavorCount);
+            if (frontFace && !frontFace.querySelector('.sb-card-arc-flavors')) {
+              frontFace.appendChild(buildFlavorArc(flavors.length));
             }
           }
           updateWorldSubtypeVisibility(val, state.picks.tone);
@@ -17505,15 +17738,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           state.picks.flavor = null;
           // Sync to legacy genre using pressure's default
           state.picks.genre = getEffectiveGenre(val, null);
-          // Add flavor count indicator to selected pressure card
+          // Add flavor arc indicator to selected pressure card
           const flavors = PRESSURE_FLAVORS[val] || [];
           if (flavors.length > 0) {
             const frontFace = card.querySelector('.sb-card-front');
-            if (frontFace && !frontFace.querySelector('.sb-card-flavor-count')) {
-              const flavorCount = document.createElement('span');
-              flavorCount.className = 'sb-card-flavor-count';
-              flavorCount.textContent = `${flavors.length} flavors`;
-              frontFace.appendChild(flavorCount);
+            if (frontFace && !frontFace.querySelector('.sb-card-arc-flavors')) {
+              frontFace.appendChild(buildFlavorArc(flavors.length));
             }
           }
         }
@@ -17574,6 +17804,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
         // Update floating synopsis panel
         updateSynopsisPanel(true); // User action: card click
+
+        // Update corridor Continue button visibility (card selected → show Continue)
+        if (typeof window.updateCorridorContinueButtonVisibility === 'function') {
+          window.updateCorridorContinueButtonVisibility();
+        }
     }
 
     // Initialize World Subtype visibility based on initial selections
@@ -17927,7 +18162,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * Arousal is the primary exclusion — it can change without destroying cover
    */
   const BREADCRUMB_EXCLUDED_LAYERS = [
-    'intensity'    // Arousal — NEVER becomes breadcrumb
+    // (intensity/arousal now gets a breadcrumb)
   ];
 
   /**
@@ -19343,7 +19578,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Create ghost step for each STAGE_INDEX entry (except aliases and non-breadcrumb stages)
     const stageEntries = Object.entries(STAGE_INDEX).filter(([grp]) =>
-      grp !== 'archetype' && grp !== 'intensity' && grp !== 'safety' && grp !== 'vetoquill' && grp !== 'beginstory'
+      grp !== 'archetype' && grp !== 'safety' && grp !== 'vetoquill' && grp !== 'beginstory'
     );
     stageEntries.sort((a, b) => a[1] - b[1]); // Sort by index
 
@@ -19504,6 +19739,33 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             }
           });
           console.log('[Corridor] Identity mount: Restored mini-deck');
+        }
+
+        // VETOQUILL MOUNT: Restore VQ destiny deck + init placeholders
+        if (stage === 'vetoquill') {
+          const vqDeck = document.getElementById('vqDestinyDeck');
+          if (vqDeck) {
+            vqDeck.classList.remove('retracted');
+            if (typeof startSparkleEmitter === 'function') {
+              startSparkleEmitter('vqDeckSparkles', 'destinyDeck', 3);
+            }
+          }
+          // Init rotating placeholders (row unmounted when initFateHandSystem ran)
+          ['vetoInput', 'quillInput'].forEach(id => {
+            const ph = document.querySelector(`.rotating-placeholder[data-for="${id}"]`);
+            if (ph && !ph.innerHTML.trim() && typeof window.initRotatingPlaceholder === 'function') {
+              window.initRotatingPlaceholder(id, id === 'vetoInput' ? 'veto' : 'quill');
+            }
+          });
+          console.log('[Corridor] Vetoquill mount: Restored VQ destiny deck');
+        }
+
+        // BEGIN STORY MOUNT: Start sparkles around Begin Story button
+        if (stage === 'beginstory') {
+          if (typeof startSparkleEmitter === 'function') {
+            startSparkleEmitter('beginBtnSparkles', 'guidedFate', 12);
+          }
+          console.log('[Corridor] Begin Story mount: Started sparkles');
         }
 
         // AUTHORSHIP MOUNT: Restore authorship cards when navigating back
@@ -19711,16 +19973,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             }
           }
 
-          // For stages with special handlers, trigger those via legacy button click
-          // This ensures all custom logic (animations, path branching) executes
-          const legacyBtn = document.getElementById(`continueFrom${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
-          if (legacyBtn) {
-            // Dispatch click to trigger any attached legacy handlers
-            legacyBtn.click();
-          } else {
-            // Fallback to direct corridor continue
-            handleCorridorContinue(stage);
+          // AUTHORSHIP: Has a separate animation handler on continueFromAuthorship
+          // (bound at module scope when row 0 is in DOM). Dispatch to it.
+          if (stage === 'authorship') {
+            const authBtn = document.getElementById('continueFromAuthorship');
+            if (authBtn) { authBtn.click(); return; }
           }
+
+          // ALL OTHER STAGES: Call handleCorridorContinue directly.
+          // Legacy per-row buttons are unmounted at init (only row 0 is in DOM),
+          // so bindCorridorContinueButtons never binds handlers to them.
+          // Clicking an unbound button does nothing — dispatch directly instead.
+          handleCorridorContinue(stage);
         }
       });
     }
@@ -19781,6 +20045,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const alwaysShowForRow = (stage === 'authorship' || stage === 'identity' || stage === 'arousal' || stage === 'safety' || stage === 'vetoquill' || stage === 'beginstory');
 
     controlPlaneBtn.classList.toggle('visible', hasSelection || alwaysShowForRow);
+
+    // God Mode toggle: only visible on vetoquill stage in solo mode
+    const godToggle = document.getElementById('godModeToggle');
+    if (godToggle) {
+      const showGod = stage === 'vetoquill' && state.mode === 'solo';
+      godToggle.classList.toggle('hidden', !showGod);
+    }
   }
 
   /**
@@ -19957,11 +20228,28 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return;
     }
 
-    // Special case: Arousal advances to Safety row (no breadcrumb)
+    // Special case: Arousal — create breadcrumb from selected card, then advance
     if (stage === 'arousal') {
+      const arousalGrp = CORRIDOR_GRP_MAP[stage]; // 'intensity'
+      const arousalCard = document.querySelector(`.sb-card[data-grp="${arousalGrp}"].selected`);
+      const arousalVal = arousalCard?.dataset.val || state.picks?.intensity || state.intensity;
+
+      if (arousalCard) {
+        const sparkleContainer = arousalCard.querySelector('.card-selection-sparkles');
+        if (sparkleContainer && typeof stopSparkleEmitter === 'function') {
+          stopSparkleEmitter(sparkleContainer.id);
+        }
+      }
+
+      if (arousalVal) {
+        const titleEl = arousalCard?.querySelector('.sb-card-title');
+        const arousalTitle = titleEl ? titleEl.textContent : arousalVal;
+        createBreadcrumbDirect(arousalGrp, arousalVal, arousalTitle);
+      }
+
       console.log(`[Corridor] Arousal complete, advancing to safety`);
       hideCorridorContinueButton(stage);
-      advanceCorridorRow();
+      setTimeout(() => advanceCorridorRow(), 600);
       return;
     }
 
@@ -19971,7 +20259,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Collect checkbox states into state.safety
       const darkThemes = document.getElementById('chkDark')?.checked || false;
       const nonCon = document.getElementById('chkNonCon')?.checked || false;
-      state.safety = { darkThemes, nonCon };
+      const violence = document.getElementById('chkViolence')?.checked || false;
+      // Collect boundary chips
+      const boundaries = [];
+      document.querySelectorAll('#boundaryChips .chip-gold.active').forEach(c => {
+        boundaries.push(c.textContent.trim());
+      });
+      state.safety = { darkThemes, nonConImplied: nonCon, violence, boundaries, mode: 'balanced' };
       // Create breadcrumb for safety
       const safetyLabel = darkThemes ? 'Dark OK' : 'No Dark';
       createBreadcrumbDirect('safety', darkThemes ? 'dark' : 'safe', safetyLabel);
@@ -19981,9 +20275,38 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return;
     }
 
-    // Special case: Veto/Quill — advances to Begin Story row
+    // Special case: Veto/Quill — auto-commit veto, then advance to Begin Story row
     if (stage === 'vetoquill') {
       console.log(`[Corridor] Veto/Quill complete, advancing to Begin Story row`);
+
+      // Auto-commit any pending veto text (Commit button removed from UI)
+      const vetoEl = document.getElementById('vetoInput');
+      if (vetoEl && vetoEl.value.trim()) {
+        const lines = vetoEl.value.trim().split('\n').filter(l => l.trim());
+        for (const line of lines) {
+          const rawPhrase = line.trim();
+          if (!state.committedVeto.includes(rawPhrase)) {
+            state.committedVeto.push(rawPhrase);
+          }
+        }
+        renderCommittedPhrases('veto');
+        applyVetoFromInput();
+      }
+
+      // Auto-commit any pending quill text (Commit button removed from UI)
+      const quillEl = document.getElementById('quillInput');
+      if (quillEl && quillEl.value.trim()) {
+        const rawQuillText = quillEl.value.trim();
+        // Store quill intent in state for prompt injection
+        window.state.quillIntent = rawQuillText;
+        state.committedQuill.push(rawQuillText);
+        renderCommittedPhrases('quill');
+        window.state.quillCommittedThisTurn = true;
+        window.state.quill.uses++;
+        window.state.quill.nextReadyAtWords = (typeof currentStoryWordCount === 'function' ? currentStoryWordCount() : 0) + (typeof computeNextCooldownWords === 'function' ? computeNextCooldownWords() : 1200);
+        quillEl.value = '';
+      }
+
       hideCorridorContinueButton(stage);
       advanceCorridorRow();
       return;
@@ -20014,8 +20337,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
     }
 
-    // Create breadcrumb for this selection (except arousal which has no breadcrumb)
-    if (selectedCard && stage !== 'arousal') {
+    // Create breadcrumb for this selection
+    if (selectedCard) {
       const titleEl = selectedCard.querySelector('.sb-card-title');
       const selectedTitle = titleEl ? titleEl.textContent : selectedVal;
       createBreadcrumbDirect(grp, selectedVal, selectedTitle);
@@ -20086,7 +20409,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (!breadcrumbRow) return;
 
     // Check if breadcrumb should be excluded (these stages don't become breadcrumbs)
-    if (grp === 'intensity' || grp === 'arousal' || grp === 'safety' || grp === 'vetoquill' || grp === 'beginstory') {
+    if (grp === 'safety' || grp === 'vetoquill' || grp === 'beginstory') {
       console.log(`[Breadcrumb] EXCLUDED: ${grp} — never becomes breadcrumb`);
       // Still remove the ghost step for this stage (if any)
       const ghostIdx = STAGE_INDEX[grp];
@@ -20135,10 +20458,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       </div>
     `;
 
-    // Insert breadcrumb BEFORE the first ghost step (breadcrumbs accumulate on left)
-    const firstGhost = breadcrumbRow.querySelector('.ghost-step');
-    if (firstGhost) {
-      breadcrumbRow.insertBefore(breadcrumb, firstGhost);
+    // Insert breadcrumb at correct position based on stage index
+    // Find the first breadcrumb or ghost step with a HIGHER stage index
+    const allSlots = breadcrumbRow.querySelectorAll('.breadcrumb-card, .ghost-step');
+    let insertBefore = null;
+    for (const slot of allSlots) {
+      const slotIdx = parseInt(slot.dataset.stageIndex ?? slot.dataset.ghostIndex, 10);
+      if (!isNaN(slotIdx) && slotIdx > stageIdx) {
+        insertBefore = slot;
+        break;
+      }
+    }
+    if (insertBefore) {
+      breadcrumbRow.insertBefore(breadcrumb, insertBefore);
     } else {
       breadcrumbRow.appendChild(breadcrumb);
     }
@@ -20428,6 +20760,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   window.autoplayCorridorFromGuidedFate = autoplayCorridorFromGuidedFate;
   window.completeCorridorFromGuidedFate = completeCorridorFromGuidedFate; // Legacy alias
   window.updateDSPCorridorVisibility = updateDSPCorridorVisibility;
+  window.updateCorridorContinueButtonVisibility = updateCorridorContinueButtonVisibility;
 
   // ═══════════════════════════════════════════════════════════════════
   // SYNOPSIS PANEL - Live-updating story preview based on 4-axis selections
@@ -20931,13 +21264,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (isFifthPerson) {
       // 5th Person (Author POV): Different sentence structure entirely
       html = 'The Author sets the stage in <span class="dsp-clause" data-axis="world">' + worldPhrase +
-        ',</span><br>shaped by <span class="dsp-clause" data-axis="genre">' + genrePhrase + '</span>.';
+        ',</span> shaped by <span class="dsp-clause" data-axis="genre">' + genrePhrase + '</span>.';
     } else if (storyHasBegun) {
       // FULL MODE: Render complete sentence (story in progress)
       const affairWord = AFFAIR_WORD_MAP[state.storyLength] || 'affair';
       html = 'In <span class="dsp-clause" data-axis="world">' + worldPhrase +
         ', shaped by ' + genrePhrase + '</span>' +
-        ', a question awaits:<br>Will ' + povPronoun +
+        ', a question awaits: Will ' + povPronoun +
         '<span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>' +
         ' desire redeem this <span class="dsp-clause" data-axis="tone">' + toneAdj + '</span>' +
         ' ' + affairWord + '&#8201;&#8212;&#8201;or ruin it?';
@@ -20968,7 +21301,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           ', shaped by ' + genrePhrase + '</span>';
       }
       if (hasWorld && hasArchetype) {
-        html += ', a question awaits:<br>Will ' + povPronoun +
+        html += ', a question awaits: Will ' + povPronoun +
           '<span class="dsp-clause" data-axis="archetype">' + archAdj + '</span>';
       }
       if (hasWorld && hasArchetype && hasTone) {
@@ -21210,12 +21543,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         synopsisPanel.classList.remove('visible');
         return;
       }
-      // Inject "First Taste" header if not present
+      // Inject "First Taste" header if not present (after drag handle)
       if (!synopsisPanel.querySelector('.synopsis-title')) {
         const title = document.createElement('div');
         title.className = 'synopsis-title';
         title.textContent = 'First Taste';
-        synopsisPanel.insertBefore(title, synopsisPanel.firstChild);
+        const dragHandle = synopsisPanel.querySelector('.dsp-drag-handle');
+        if (dragHandle && dragHandle.nextSibling) {
+          synopsisPanel.insertBefore(title, dragHandle.nextSibling);
+        } else {
+          synopsisPanel.insertBefore(title, synopsisPanel.firstChild);
+        }
       }
       const synopsisText = document.getElementById('synopsisText');
       // Phase 0: Show intro message
@@ -21248,6 +21586,178 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       hideDSP();
     }
   }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP DRAG + RESIZE — Reposition and scale the floating synopsis panel
+  // ═══════════════════════════════════════════════════════════════════
+  (function initDSPInteraction() {
+    const panel = document.getElementById('synopsisPanel');
+    if (!panel) return;
+
+    var mode = null;        // 'drag' | 'resize'
+    var resizeCorner = null; // 'nw' | 'ne' | 'sw' | 'se'
+    var startX = 0, startY = 0;
+    var startRect = null;
+
+    // Switch panel from CSS-positioned to inline-positioned
+    function ensureInlinePosition() {
+      if (panel._dspPositioned) return;
+      var rect = panel.getBoundingClientRect();
+      // Clear CSS positioning — use inline only
+      panel.style.transform = 'none';
+      panel.style.left = rect.left + 'px';
+      panel.style.top = rect.top + 'px';
+      panel.style.right = 'auto';
+      panel.style.bottom = 'auto';
+      panel.style.width = rect.width + 'px';
+      panel.style.maxWidth = 'none';
+      panel._dspPositioned = true;
+    }
+
+    function onStart(clientX, clientY) {
+      ensureInlinePosition();
+      startX = clientX;
+      startY = clientY;
+      startRect = {
+        left: parseFloat(panel.style.left),
+        top: parseFloat(panel.style.top),
+        width: panel.offsetWidth,
+        height: panel.offsetHeight
+      };
+      panel.classList.add('dsp-interacting');
+    }
+
+    function onMove(clientX, clientY) {
+      var dx = clientX - startX;
+      var dy = clientY - startY;
+
+      if (mode === 'drag') {
+        var x = Math.max(0, Math.min(startRect.left + dx, window.innerWidth - startRect.width));
+        var y = Math.max(0, Math.min(startRect.top + dy, window.innerHeight - startRect.height));
+        panel.style.left = x + 'px';
+        panel.style.top = y + 'px';
+      } else if (mode === 'resize') {
+        var minW = 160, minH = 60;
+        var newLeft = startRect.left, newTop = startRect.top;
+        var newW = startRect.width, newH = startRect.height;
+
+        if (resizeCorner === 'se') {
+          newW = Math.max(minW, startRect.width + dx);
+          newH = Math.max(minH, startRect.height + dy);
+        } else if (resizeCorner === 'sw') {
+          newW = Math.max(minW, startRect.width - dx);
+          newH = Math.max(minH, startRect.height + dy);
+          newLeft = startRect.left + (startRect.width - newW);
+        } else if (resizeCorner === 'ne') {
+          newW = Math.max(minW, startRect.width + dx);
+          newH = Math.max(minH, startRect.height - dy);
+          newTop = startRect.top + (startRect.height - newH);
+        } else if (resizeCorner === 'nw') {
+          newW = Math.max(minW, startRect.width - dx);
+          newH = Math.max(minH, startRect.height - dy);
+          newLeft = startRect.left + (startRect.width - newW);
+          newTop = startRect.top + (startRect.height - newH);
+        }
+
+        // Clamp to viewport
+        newLeft = Math.max(0, newLeft);
+        newTop = Math.max(0, newTop);
+
+        panel.style.left = newLeft + 'px';
+        panel.style.top = newTop + 'px';
+        panel.style.width = newW + 'px';
+        panel.style.height = newH + 'px';
+        panel.style.maxHeight = 'none';
+        panel.style.minHeight = '0';
+      }
+    }
+
+    function onEnd() {
+      mode = null;
+      resizeCorner = null;
+      panel.classList.remove('dsp-interacting');
+    }
+
+    // ── Mouse ──
+    panel.addEventListener('mousedown', function(e) {
+      var corner = e.target.dataset && e.target.dataset.resize;
+      if (corner) {
+        e.preventDefault();
+        mode = 'resize';
+        resizeCorner = corner;
+        onStart(e.clientX, e.clientY);
+      } else if (e.target.closest('.dsp-drag-handle')) {
+        e.preventDefault();
+        mode = 'drag';
+        onStart(e.clientX, e.clientY);
+      }
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (mode) { e.preventDefault(); onMove(e.clientX, e.clientY); }
+    });
+    document.addEventListener('mouseup', onEnd);
+
+    // ── Touch ──
+    panel.addEventListener('touchstart', function(e) {
+      if (e.touches.length !== 1) return;
+      var t = e.touches[0];
+      var corner = e.target.dataset && e.target.dataset.resize;
+      if (corner) {
+        e.preventDefault();
+        mode = 'resize';
+        resizeCorner = corner;
+        onStart(t.clientX, t.clientY);
+      } else if (e.target.closest('.dsp-drag-handle')) {
+        e.preventDefault();
+        mode = 'drag';
+        onStart(t.clientX, t.clientY);
+      }
+    }, { passive: false });
+    document.addEventListener('touchmove', function(e) {
+      if (mode && e.touches.length === 1) {
+        e.preventDefault();
+        onMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: false });
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('touchcancel', onEnd);
+  })();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DSP MARQUEE — Auto-wrap synopsis text in a scrolling inner span
+  // Whenever synopsisText.innerHTML changes, wrap all content inside
+  // a .synopsis-text-inner span so the CSS animation scrolls it.
+  // ═══════════════════════════════════════════════════════════════════
+  (function initDSPMarquee() {
+    var el = document.getElementById('synopsisText');
+    if (!el) return;
+
+    var wrapping = false;
+
+    function wrapContent() {
+      if (wrapping) return;
+      // Skip if already wrapped
+      if (el.children.length === 1 && el.firstElementChild &&
+          el.firstElementChild.classList.contains('synopsis-text-inner')) return;
+      // Skip if empty
+      if (!el.innerHTML.trim()) return;
+      wrapping = true;
+      var inner = document.createElement('span');
+      inner.className = 'synopsis-text-inner';
+      // Move all child nodes into the wrapper
+      while (el.firstChild) inner.appendChild(el.firstChild);
+      el.appendChild(inner);
+      wrapping = false;
+    }
+
+    // Observe content changes
+    var obs = new MutationObserver(function() {
+      if (!wrapping) requestAnimationFrame(wrapContent);
+    });
+    obs.observe(el, { childList: true, characterData: true, subtree: true });
+    // Wrap any initial content
+    wrapContent();
+  })();
 
   // Expose for external calls
   window.showDSP = showDSP;
@@ -21325,82 +21835,117 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Build conic-gradient with 6 spokes at 30°, 90°, 150°, 210°, 270°, 330°
     // 5 gold spokes + 1 dark spoke (70% black) for subtle contrast variation
     // Each spoke: transparent → edge → peak → edge → transparent
-    function buildGleamGradient(rng) {
-      var centers = [30, 90, 150, 210, 270, 330];
-      var FEATHER = 5;
-      // Pick two spokes to be dark, seeded per card
-      var darkIdx = Math.floor(rng() * 6);
-      var darkIdx2 = (darkIdx + 2 + Math.floor(rng() * 3)) % 6; // offset 2–4 from first
-      if (darkIdx2 === darkIdx) darkIdx2 = (darkIdx + 3) % 6;
-      var stops = ['transparent 0deg'];
+    function buildGleamGradient(rng, angleOffset) {
+      // Vertical bands tilted 15° off vertical (105° in CSS gradient space)
+      // Per-card angle variation: ±5° from base 105°
+      var angle = 105 + (angleOffset || 0);
+      // Dark band + gold band, per-card variation in width and opacity
+      var goldCenter = 48 + rng() * 6;            // gold band center: 48-54%
+      var goldHW = 2 + rng() * 2;                 // gold half-width: 2-4%
+      var goldPeak = 0.3 + rng() * 0.15;           // white peak: 0.3-0.45
+      var goldEdge = goldPeak * 0.4;
 
-      for (var i = 0; i < 6; i++) {
-        var c = centers[i];
-        var halfW = (8 + rng() * 44) / 2;      // 8–52° total width (more variation)
-        var opacity = 0.2 + rng() * 0.3;        // 0.2–0.5
-        var s1 = c - halfW - FEATHER;
-        var s2 = c - halfW;
-        var s4 = c + halfW;
-        var s5 = c + halfW + FEATHER;
-        var peak, edge;
+      var darkCenter = goldCenter - 8 - rng() * 4; // dark band: 8-12% left of gold
+      var darkHW = 2 + rng() * 2;                  // dark half-width: 2-4%
+      var darkPeak = 0.25 + rng() * 0.15;          // dark peak: 0.25-0.4
+      var darkEdge = darkPeak * 0.3;
 
-        if (i === darkIdx) {
-          // Dark spoke 1: 70% black
-          peak = 'rgba(0,0,0,' + (opacity * 0.7).toFixed(2) + ')';
-          edge = 'rgba(0,0,0,' + (opacity * 0.21).toFixed(2) + ')';
-        } else if (i === darkIdx2) {
-          // Dark spoke 2: 80% black
-          peak = 'rgba(0,0,0,' + (opacity * 0.8).toFixed(2) + ')';
-          edge = 'rgba(0,0,0,' + (opacity * 0.24).toFixed(2) + ')';
-        } else {
-          // Gold spoke
-          peak = 'rgba(255,240,200,' + opacity.toFixed(2) + ')';
-          edge = 'rgba(200,170,100,' + (opacity * 0.3).toFixed(2) + ')';
-        }
+      var feather = 3;                              // feather zone in %
 
-        stops.push(
-          'transparent ' + s1.toFixed(1) + 'deg',
-          edge + ' ' + s2.toFixed(1) + 'deg',
-          peak + ' ' + c + 'deg',
-          edge + ' ' + s4.toFixed(1) + 'deg',
-          'transparent ' + s5.toFixed(1) + 'deg'
-        );
-      }
-
-      stops.push('transparent 360deg');
-      return 'conic-gradient(from 0deg, ' + stops.join(', ') + ')';
+      return 'linear-gradient(' + angle.toFixed(1) + 'deg, ' +
+        'transparent ' + (darkCenter - darkHW - feather).toFixed(1) + '%, ' +
+        'rgba(0, 0, 0, ' + darkEdge.toFixed(2) + ') ' + (darkCenter - darkHW).toFixed(1) + '%, ' +
+        'rgba(0, 0, 0, ' + darkPeak.toFixed(2) + ') ' + darkCenter.toFixed(1) + '%, ' +
+        'rgba(0, 0, 0, ' + darkEdge.toFixed(2) + ') ' + (darkCenter + darkHW).toFixed(1) + '%, ' +
+        'transparent ' + (darkCenter + darkHW + feather).toFixed(1) + '%, ' +
+        'transparent ' + (goldCenter - goldHW - feather).toFixed(1) + '%, ' +
+        'rgba(255, 255, 255, ' + goldEdge.toFixed(2) + ') ' + (goldCenter - goldHW).toFixed(1) + '%, ' +
+        'rgba(255, 255, 255, ' + goldPeak.toFixed(2) + ') ' + goldCenter.toFixed(1) + '%, ' +
+        'rgba(255, 255, 255, ' + goldEdge.toFixed(2) + ') ' + (goldCenter + goldHW).toFixed(1) + '%, ' +
+        'transparent ' + (goldCenter + goldHW + feather).toFixed(1) + '%)';
     }
 
     /**
-     * JS-driven gleam sway — organic, non-predictable motion.
-     * Each gleam swings between ±amplitude with ease-in-out transitions
-     * of varying duration, pausing 0-5s at each edge.
+     * Global gleam controller — all bands move in lockstep (simulated light reflection).
+     * Each card's band has unique thickness/opacity, but position is shared.
      */
-    function startGleamSway(gleamEl) {
-      var amp = 10;
-      var currentAngle = (Math.random() > 0.5 ? 1 : -1) * amp;
-      // Set initial position
-      gleamEl.style.transform = 'rotate(' + currentAngle + 'deg)';
+    var gleamRegistry = [];
+    var gleamPos = 0;
+    var gleamCycleRunning = false;
 
-      function swing() {
-        // Reverse direction
-        currentAngle = currentAngle > 0 ? -amp : amp;
-        // Random swing duration: 4-8 seconds (organic variation)
-        var duration = 4 + Math.random() * 4;
-        gleamEl.style.transition = 'transform ' + duration.toFixed(1) + 's ease-in-out';
-        gleamEl.style.transform = 'rotate(' + currentAngle + 'deg)';
-
-        var handler = function() {
-          gleamEl.removeEventListener('transitionend', handler);
-          // Random pause at edge: 0-5 seconds
-          var pause = Math.random() * 5000;
-          setTimeout(swing, pause);
-        };
-        gleamEl.addEventListener('transitionend', handler);
+    function registerGleam(gleamEl) {
+      gleamRegistry.push(gleamEl);
+      // Sync new element to current global position (with per-card offset)
+      var off = gleamEl._gleamOffset || 0;
+      gleamEl.style.transform = 'translateX(' + (gleamPos + off) + 'px)';
+      if (!gleamCycleRunning) {
+        gleamCycleRunning = true;
+        gleamCycle();
       }
+    }
 
-      // Stagger start: random 0-3s initial delay
-      setTimeout(swing, Math.random() * 3000);
+    function setAllGleams(px, dur, easing) {
+      gleamPos = px;
+      var e = easing || 'ease-in-out';
+      var t = 'transform ' + dur.toFixed(2) + 's ' + e;
+      for (var i = 0; i < gleamRegistry.length; i++) {
+        var off = gleamRegistry[i]._gleamOffset || 0;
+        gleamRegistry[i].style.transition = t;
+        gleamRegistry[i].style.transform = 'translateX(' + (px + off) + 'px)';
+      }
+      // Shift debossed text shadow to simulate light moving over pressed-in letters
+      updateDebossedShadow(px, dur, e);
+    }
+
+    function updateDebossedShadow(px, dur, easing) {
+      // Query live DOM — only visible (mounted) elements get updated
+      var els = document.querySelectorAll(
+        '#pressureGrid .sb-card .sb-card-back .sb-card-desc,' +
+        '#povGrid .sb-card .sb-card-back .sb-card-desc,' +
+        '#dynamicGrid .sb-card .sb-card-back .sb-card-desc'
+      );
+      if (!els.length) return;
+      // Scale gleam position (±13px) to shadow offset (±0.8px)
+      var hx = (px * 0.06).toFixed(2);
+      var shadow =
+        hx + 'px 0.5px 0.5px rgba(255,255,255,0.1), ' +
+        (-hx).toFixed(2) + 'px -0.5px 0.5px rgba(0,0,0,0.2)';
+      var t = 'text-shadow ' + dur.toFixed(2) + 's ' + easing;
+      for (var i = 0; i < els.length; i++) {
+        els[i].style.transition = t;
+        els[i].style.textShadow = shadow;
+      }
+    }
+
+    function gleamBreathe(count, baseOffset, cb) {
+      if (count <= 0) { cb(); return; }
+      var dist = 2 + Math.random();   // 2-3px
+      var target = baseOffset + (gleamPos >= baseOffset ? -dist : dist);
+      var dur = 1.8 + Math.random() * 0.4; // ~2s per sway
+      setAllGleams(target, dur, 'ease-in-out');
+      setTimeout(function() { gleamBreathe(count - 1, baseOffset, cb); }, dur * 1000);
+    }
+
+    function gleamCycle() {
+      // Phase 1: breathe at center for 5-7s (2-3 breaths)
+      var b1 = 2 + Math.floor(Math.random() * 2);
+      gleamBreathe(b1, 0, function() {
+        // Phase 2: slide left 13px (0.6-0.9s, ease-in-out for soft landing)
+        setAllGleams(-13, 0.6 + Math.random() * 0.3, 'ease-in-out');
+        setTimeout(function() {
+          // Phase 3: breathe at -13px for 0-7s (0-3 breaths)
+          var b2 = Math.floor(Math.random() * 4);
+          gleamBreathe(b2, -13, function() {
+            // Phase 4: slide right back to center (0.5-0.8s, ease-in-out for soft landing)
+            setAllGleams(0, 0.5 + Math.random() * 0.3, 'ease-in-out');
+            setTimeout(function() {
+              // Phase 5: breathe at center for 5-10s (2-4 breaths)
+              var b3 = 2 + Math.floor(Math.random() * 3);
+              gleamBreathe(b3, 0, gleamCycle);
+            }, 400);
+          });
+        }, 500);
+      });
     }
 
     // Face selectors for multi-face card types
@@ -21423,8 +21968,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       var speed = 10;                          // fixed 10s cycle (all cards in sync)
       var swayAmp = 10;                        // fixed 10° rotation
-      var opacityMult = 0.7 + rng() * 0.3;   // 0.7–1.0 (visual variety only)
-      var gradient = buildGleamGradient(rng);
+      var opacityMult = 0.85 + rng() * 0.15;  // 0.85–1.0 (visual variety only)
+      var posOffset = (rng() - 0.5) * 50;     // ±25px per-card position offset
+      var angleOffset = (rng() - 0.5) * 10;   // ±5° per-card angle variation
+      var gradient = buildGleamGradient(rng, angleOffset);
 
       // Determine target faces: child faces or the card itself
       var isSelfFace = SELF_FACE_CLASSES.some(function(cls) { return card.classList.contains(cls); });
@@ -21438,19 +21985,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         gleam.className = 'card-gleam-layer';
         gleam.style.setProperty('--gleam-opacity-multiplier', opacityMult.toFixed(2));
         gleam.style.backgroundImage = gradient;
+        gleam._gleamOffset = posOffset; // per-card position offset for variety
 
-        // Authorship faces have overflow:visible — wrap in a clip container
-        if (face.classList.contains('authorship-card-face')) {
-          var clip = document.createElement('div');
-          clip.className = 'card-gleam-clip';
-          clip.appendChild(gleam);
-          face.insertBefore(clip, face.firstChild);
-        } else {
-          face.insertBefore(gleam, face.firstChild);
-        }
+        // Wrap gleam in a non-rotating clip container so overflow:hidden
+        // clips the rotating gleam to the face boundary (clip-path on the
+        // gleam itself would rotate with it, making motion invisible)
+        var clip = document.createElement('div');
+        clip.className = 'card-gleam-clip';
+        clip.appendChild(gleam);
+        face.insertBefore(clip, face.firstChild);
 
-        // Start organic JS-driven sway animation
-        startGleamSway(gleam);
+        // Register with global gleam controller (all bands move in sync)
+        registerGleam(gleam);
       });
     }
 
@@ -21497,9 +22043,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           card.dataset.val = id;
 
           // If explicitly selected (user chose, not just default), show as selected+flipped
-          // Check corridorSelections to distinguish explicit selection from default state
+          // Destiny's Choice: mask is SECRET — all cards stay face-down, no selection shown
           const hasExplicitSelection = corridorSelections.has('storybeau') || corridorSelections.has('archetype');
-          if (hasExplicitSelection && state.archetype.primary === id) {
+          if (hasExplicitSelection && state.archetype.primary === id && !archetypeSelectedViaDestiny) {
               card.classList.add('selected', 'flipped');
               lastZoomedArchetype = id;
               archetypeCardsRevealed = true; // Skip auto-reveal if already selected
@@ -21508,25 +22054,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           // Card structure: BACK = Black PNG art, FRONT = Gold PNG art + description (visible when zoomed)
           const resolvedDesireStyle = resolveLIPronouns(arch.desireStyle);
 
-          // Build modifier marquee content: valid secondary archetypes for this primary
-          const validModifiers = getValidModifierArchetypes(id);
-          const modifierNames = validModifiers.map(modId => {
-              const mod = ARCHETYPES[modId];
-              return mod ? mod.name.replace('The ', '') : null;
-          }).filter(Boolean);
-          // Duplicate list for seamless scroll loop
-          const marqueeContent = [...modifierNames, ...modifierNames].join(' \u2022 ');
-
           card.innerHTML = `
               <div class="sb-card-inner">
                   <div class="sb-card-face sb-card-back" data-archetype="${id}"></div>
                   <div class="sb-card-face sb-card-front" data-archetype="${id}">
                       <span class="archetype-printed-desc">${resolvedDesireStyle}</span>
-                      <div class="archetype-modifier-box">
-                          <div class="archetype-modifier-marquee">
-                              <span class="archetype-modifier-text">${marqueeContent}</span>
-                          </div>
-                      </div>
                   </div>
               </div>
           `;
@@ -21615,9 +22147,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           console.log('[Archetype] Cards missing — restoring for back-navigation');
           // Re-render all archetype cards (this will mark selected one and reset state)
           renderArchetypeCards();
-          // Cards are already flipped if there was a prior selection
-          // Start sparkles on the selected card
-          if (state.archetype && state.archetype.primary) {
+          // Destiny's Choice: mask is SECRET — no sparkles, no face, just backs like the others
+          if (state.archetype && state.archetype.primary && !archetypeSelectedViaDestiny) {
               const selectedId = state.archetype.primary;
               lastZoomedArchetype = selectedId;
               // Start sparkles on selected card after a brief delay for DOM update
@@ -21731,9 +22262,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           card.appendChild(sparkleContainer);
       }
 
-      // Start sparkle emitter on selected archetype card (3x intensity)
+      // Start sparkle emitter on selected archetype card (high intensity when all masks visible)
       lastZoomedSparkleEmitterId = sparkleContainer.id;
-      startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 6);
+      startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 18);
   }
 
   /**
@@ -21742,12 +22273,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    */
   function commitArchetypeSelection(archetypeId, viaDestiny = false) {
       state.archetype.primary = archetypeId;
+      state.archetype.modifier = null; // Modifier assigned silently at generation time
       archetypeSelectedViaDestiny = viaDestiny;
-
-      // Clear modifier if it was same as new primary
-      if (state.archetype.modifier === archetypeId) {
-          state.archetype.modifier = null;
-      }
 
       // STORY-DEFINING INPUT: Invalidate snapshot → forces "Begin Story"
       if (typeof invalidateShapeSnapshot === 'function') invalidateShapeSnapshot();
@@ -21881,11 +22408,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       await new Promise(r => setTimeout(r, 300));
 
-      // STEP 8: Fly chosen card to breadcrumb position
+      // STEP 8: Slide chosen card to CENTER of corridor
       const breadcrumbRow = document.getElementById('breadcrumbRow');
       const archGhostIdx = STAGE_INDEX['storybeau'];
       const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${archGhostIdx}"]`);
 
+      // Compute breadcrumb target position for later sparkle travel
       let targetX, targetY;
       if (ghostStep) {
           const ghostRect = ghostStep.getBoundingClientRect();
@@ -21897,42 +22425,106 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           targetY = brRect.top + brRect.height / 2;
       }
 
-      if (chosenCard && targetX !== undefined) {
-          const cardRect = chosenCard.getBoundingClientRect();
-          const cardCenterX = cardRect.left + cardRect.width / 2;
-          const cardCenterY = cardRect.top + cardRect.height / 2;
-          const flyX = targetX - cardCenterX;
-          const flyY = targetY - cardCenterY;
+      // Slide card to corridor center (viewport center)
+      const corridorCenterX = window.innerWidth / 2;
+      const corridorCenterY = window.innerHeight / 2;
 
-          // Scale down to breadcrumb size (45x78 vs ~140x242 card ≈ 0.32)
-          chosenCard.style.transition = 'transform 0.6s ease-in-out, opacity 0.3s ease-out 0.4s';
-          const currentTransform = chosenCard.style.transform;
-          // Extract existing translate, add the flight offset
-          const match = currentTransform.match(/translate\(([^,]+),\s*([^)]+)\)/);
-          const existX = match ? parseFloat(match[1]) : 0;
-          const existY = match ? parseFloat(match[2]) : 0;
-          chosenCard.style.transform = `translate(${existX + flyX}px, ${existY + flyY}px) scale(0.32)`;
-          chosenCard.style.opacity = '0';
+      if (chosenCard) {
+          const pos = cardPositions.get(chosenCard);
+          const toCenterX = corridorCenterX - pos.x;
+          const toCenterY = corridorCenterY - pos.y;
+          chosenCard.style.transition = 'transform 0.6s ease-in-out';
+          chosenCard.style.transform = `translate(${toCenterX}px, ${toCenterY}px)`;
       }
 
       await new Promise(r => setTimeout(r, 700));
 
-      // Restore chosen card title but do NOT mark as selected (secret)
+      // Clean up dissolved cards from DOM (while card is centered)
+      grid.querySelectorAll('.dissolving').forEach(el => el.remove());
+
+      // STEP 9: Sparkle teleport from corridor center to breadcrumb
+      if (chosenCard && targetX !== undefined) {
+          const cardRect = chosenCard.getBoundingClientRect();
+          const cardCenterX = cardRect.left + cardRect.width / 2;
+          const cardCenterY = cardRect.top + cardRect.height / 2;
+
+          // Phase 1: Dissolution sparkles from card surface
+          chosenCard.style.transition = 'opacity 0.3s ease-out';
+          chosenCard.style.opacity = '0.2';
+
+          const dissolutionCount = 14 + Math.floor(Math.random() * 6);
+          for (let i = 0; i < dissolutionCount; i++) {
+              setTimeout(() => {
+                  const sparkle = document.createElement('div');
+                  sparkle.className = 'dissolution-sparkle';
+                  const sx = cardRect.left + Math.random() * cardRect.width;
+                  const sy = cardRect.top + Math.random() * cardRect.height;
+                  sparkle.style.cssText = `left: ${sx}px; top: ${sy}px;`;
+                  document.body.appendChild(sparkle);
+                  setTimeout(() => sparkle.remove(), 400);
+              }, i * 25);
+          }
+
+          // Phase 2: Traveling sparkles arc from card center to breadcrumb
+          setTimeout(() => {
+              const travelCount = 8 + Math.floor(Math.random() * 4);
+              for (let i = 0; i < travelCount; i++) {
+                  setTimeout(() => {
+                      const sparkle = document.createElement('div');
+                      sparkle.className = 'traveling-sparkle';
+                      const offX = (Math.random() - 0.5) * cardRect.width * 0.5;
+                      const offY = (Math.random() - 0.5) * cardRect.height * 0.5;
+                      const sx = cardCenterX + offX;
+                      const sy = cardCenterY + offY;
+                      const midX = (sx + targetX) / 2 + (Math.random() - 0.5) * 80;
+                      const midY = Math.min(sy, targetY) - 40 - Math.random() * 60;
+                      sparkle.style.cssText = `
+                          left: ${sx}px; top: ${sy}px;
+                          --target-x: ${targetX - sx}px;
+                          --target-y: ${targetY - sy}px;
+                          --arc-x: ${midX - sx}px;
+                          --arc-y: ${midY - sy}px;
+                      `;
+                      document.body.appendChild(sparkle);
+                      setTimeout(() => sparkle.remove(), 600);
+                  }, i * 45);
+              }
+          }, 200);
+
+          // Phase 3: Convergence sparkles + breadcrumb creation
+          await new Promise(r => setTimeout(r, 700));
+
+          // Hide the card fully
+          chosenCard.style.opacity = '0';
+
+          // Convergence sparkles at breadcrumb position
+          for (let i = 0; i < 6; i++) {
+              const sparkle = document.createElement('div');
+              sparkle.className = 'convergence-sparkle';
+              const angle = (Math.PI * 2 * i) / 6;
+              const dist = 18 + Math.random() * 12;
+              sparkle.style.cssText = `
+                  left: ${targetX + Math.cos(angle) * dist}px;
+                  top: ${targetY + Math.sin(angle) * dist}px;
+              `;
+              document.body.appendChild(sparkle);
+              setTimeout(() => sparkle.remove(), 500);
+          }
+      }
+
+      // Restore chosen card state
       if (chosenCard) {
           const backTitle = chosenCard.querySelector('.sb-card-back .sb-card-title');
           if (backTitle && backTitle.dataset.originalText) {
               backTitle.textContent = backTitle.dataset.originalText;
           }
-          // No .selected class — Destiny's mask stays hidden
           chosenCard.style.transform = '';
           chosenCard.style.zIndex = '';
           chosenCard.style.opacity = '';
+          chosenCard.style.transition = '';
       }
 
-      // Clean up dissolved cards from DOM
-      grid.querySelectorAll('.dissolving').forEach(el => el.remove());
-
-      // STEP 9: Create breadcrumb with Destiny's Choice back PNG
+      // STEP 10: Create breadcrumb with Destiny's Choice back PNG
       createArchetypeBreadcrumbWithMask(chosenId, true);
 
       // Advance corridor
@@ -22024,11 +22616,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       const stageIdx = STAGE_INDEX['archetype'];
 
-      // Remove ghost step for this position
-      if (stageIdx !== undefined && stageIdx >= 0) {
-          if (typeof removeGhostStep === 'function') removeGhostStep(stageIdx);
-      }
-
       // Check for existing breadcrumb and remove
       const existingCard = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="archetype"]');
       if (existingCard) existingCard.remove();
@@ -22049,7 +22636,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Create breadcrumb with PNG art only (no mask icon, no text)
       const card = document.createElement('div');
-      card.className = 'breadcrumb-card archetype-breadcrumb-png';
+      card.className = 'breadcrumb-card archetype-breadcrumb-png materializing';
       if (viaDestiny) card.classList.add('destiny-choice-breadcrumb');
       card.dataset.grp = 'archetype';
       card.dataset.val = archetypeId;
@@ -22061,13 +22648,30 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       card.addEventListener('click', () => navigateToBreadcrumb('archetype'));
 
-      // Insert breadcrumb BEFORE the first ghost step (breadcrumbs accumulate on left)
-      const firstGhost = breadcrumbRow.querySelector('.ghost-step');
-      if (firstGhost) {
-          breadcrumbRow.insertBefore(card, firstGhost);
+      // Insert breadcrumb at correct position using stage-index ordering
+      // (insert BEFORE removing ghost step to prevent layout lurch)
+      const allSlots = breadcrumbRow.querySelectorAll('.breadcrumb-card, .ghost-step');
+      let insertBefore = null;
+      for (const slot of allSlots) {
+        const slotIdx = parseInt(slot.dataset.stageIndex ?? slot.dataset.ghostIndex, 10);
+        if (!isNaN(slotIdx) && slotIdx > stageIdx) {
+          insertBefore = slot;
+          break;
+        }
+      }
+      if (insertBefore) {
+          breadcrumbRow.insertBefore(card, insertBefore);
       } else {
           breadcrumbRow.appendChild(card);
       }
+
+      // NOW remove the ghost step (after breadcrumb is already in place)
+      if (stageIdx !== undefined && stageIdx >= 0) {
+          if (typeof removeGhostStep === 'function') removeGhostStep(stageIdx);
+      }
+
+      // Remove materializing class after animation
+      setTimeout(() => card.classList.remove('materializing'), 400);
 
       // Attach destructive navigation handler
       if (typeof attachBreadcrumbNavigation === 'function') {
@@ -22081,195 +22685,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       console.log(`[Breadcrumb] Created PNG card for archetype (${viaDestiny ? 'Destiny' : 'Continue'}): ${archetypeId}`);
   }
 
-  // Populate archetype card zoom view with modifier custom field only (NO pills)
+  // Populate archetype card zoom view — primary archetype only, no modifier UI
   function populateArchetypeZoomContent(card, archetypeId) {
       const frontFace = card.querySelector('.sb-card-front');
       if (!frontFace) return;
-
-      // Remove any existing zoom content
       const existing = frontFace.querySelector('.sb-zoom-content');
       if (existing) existing.remove();
-
-      // Get valid secondaries (respects pairing rules, excludes current primary)
-      const validModifiers = getValidModifierArchetypes(archetypeId);
-
-      // Create zoom content container
-      const zoomContent = document.createElement('div');
-      zoomContent.className = 'sb-zoom-content sb-zoom-content-storybeau';
-
-      // NO modifier pills - only custom text field with scrolling examples
-
-      // Add custom text field with rotating placeholder
-      const customWrapper = document.createElement('div');
-      customWrapper.className = 'sb-zoom-custom';
-
-      const customLabel = document.createElement('label');
-      customLabel.className = 'sb-zoom-custom-label';
-      customLabel.textContent = 'Secondary:';
-
-      // Create input wrapper for rotating placeholder
-      const inputWrapper = document.createElement('div');
-      inputWrapper.className = 'sb-zoom-custom-wrapper';
-
-      const customInput = document.createElement('textarea');
-      customInput.className = 'sb-zoom-custom-input';
-      customInput.id = 'archetypeModifierInput-' + Date.now();
-      customInput.rows = 1;
-
-      // Restore modifier value from state if previously set
-      if (state.archetype.modifier && ARCHETYPES[state.archetype.modifier]) {
-          customInput.value = ARCHETYPES[state.archetype.modifier].name;
-      }
-
-      // Create rotating placeholder
-      const rotatingPlaceholder = document.createElement('div');
-      rotatingPlaceholder.className = 'sb-zoom-rotating-placeholder';
-
-      // Build scrolling suggestion content from valid modifier names
-      const modifierNames = validModifiers.map(modId => {
-          const mod = ARCHETYPES[modId];
-          return mod ? mod.name.replace('The ', '') : null;
-      }).filter(Boolean);
-
-      if (modifierNames.length > 0) {
-          // Double the list for seamless scrolling
-          const doubled = [...modifierNames, ...modifierNames];
-          let html = '<span class="sb-zoom-placeholder-inner">';
-          doubled.forEach((name, i) => {
-              html += `<span class="suggestion">${name}</span>`;
-              if (i < doubled.length - 1) html += '<span class="separator">•</span>';
-          });
-          html += '</span>';
-          rotatingPlaceholder.innerHTML = html;
-      }
-
-      // TASK A: Single commitModifier function for ALL exit paths
-      function commitModifier() {
-          const inputVal = customInput.value.trim();
-          if (!inputVal) {
-              // Empty input - show placeholder but don't clear state
-              rotatingPlaceholder.classList.remove('hidden');
-              return;
-          }
-
-          // Try to normalize and match
-          const matchedModifier = normalizeArchetypeModifierInput(inputVal, archetypeId);
-          if (matchedModifier) {
-              // Matched archetype - update state and show canonical name
-              state.archetype.modifier = matchedModifier;
-              state.archetype.modifierText = null;
-              const canonicalName = ARCHETYPES[matchedModifier]?.name || matchedModifier;
-              customInput.value = canonicalName;
-          } else {
-              // No match - keep the text as custom modifier text
-              // DO NOT clear the input - user's text stays visible
-              state.archetype.modifier = null;
-              state.archetype.modifierText = inputVal; // Store raw text
-          }
-          updateArchetypeSelectionSummary();
-          // Keep placeholder hidden since input has value
-          rotatingPlaceholder.classList.add('hidden');
-      }
-
-      customInput.addEventListener('click', (e) => {
-          e.stopPropagation();
-      });
-
-      customInput.addEventListener('focus', () => {
-          const inner = rotatingPlaceholder.querySelector('.sb-zoom-placeholder-inner');
-          if (inner) inner.style.animationPlayState = 'paused';
-          rotatingPlaceholder.classList.add('hidden');
-      });
-
-      // TASK A & C: blur routes through commitModifier
-      customInput.addEventListener('blur', () => {
-          const inner = rotatingPlaceholder.querySelector('.sb-zoom-placeholder-inner');
-          if (inner) inner.style.animationPlayState = 'running';
-          commitModifier();
-      });
-
-      // TASK C: Enter key commits without clearing
-      customInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-              e.preventDefault();
-              commitModifier();
-              customInput.blur();
-          }
-      });
-
-      inputWrapper.appendChild(customInput);
-      inputWrapper.appendChild(rotatingPlaceholder);
-      customWrapper.appendChild(customLabel);
-      customWrapper.appendChild(inputWrapper);
-      zoomContent.appendChild(customWrapper);
-
-      // Hide placeholder if input already has value (restored from state)
-      if (customInput.value.trim()) {
-          rotatingPlaceholder.classList.add('hidden');
-      }
-
-      frontFace.appendChild(zoomContent);
-
-      // ═══════════════════════════════════════════════════════════════
-      // MODIFIER BOX CLICK → DROPDOWN MENU
-      // ═══════════════════════════════════════════════════════════════
-      const modifierBox = frontFace.querySelector('.archetype-modifier-box');
-      if (modifierBox && !modifierBox._modClickBound) {
-          modifierBox._modClickBound = true;
-          modifierBox.addEventListener('click', (e) => {
-              e.stopPropagation(); // Don't trigger card close
-
-              // Toggle: if dropdown already open, close it
-              const existingDropdown = modifierBox.querySelector('.archetype-modifier-dropdown');
-              if (existingDropdown) {
-                  existingDropdown.remove();
-                  return;
-              }
-
-              // Build dropdown
-              const dropdown = document.createElement('div');
-              dropdown.className = 'archetype-modifier-dropdown';
-
-              validModifiers.forEach(modId => {
-                  const mod = ARCHETYPES[modId];
-                  if (!mod) return;
-                  const item = document.createElement('div');
-                  item.className = 'archetype-modifier-dropdown-item';
-                  item.textContent = mod.name.replace('The ', '');
-                  item.dataset.modId = modId;
-
-                  // Highlight current selection
-                  if (state.archetype?.modifier === modId) {
-                      item.classList.add('selected');
-                  }
-
-                  item.addEventListener('click', (ev) => {
-                      ev.stopPropagation();
-                      state.archetype.modifier = modId;
-                      state.archetype.modifierText = null;
-                      if (typeof updateArchetypeSelectionSummary === 'function') {
-                          updateArchetypeSelectionSummary();
-                      }
-                      dropdown.remove();
-                      console.log(`[Modifier] Selected: ${mod.name} for ${archetypeId}`);
-                  });
-
-                  dropdown.appendChild(item);
-              });
-
-              modifierBox.appendChild(dropdown);
-
-              // Close dropdown when clicking outside
-              const closeDropdown = (ev) => {
-                  if (!dropdown.contains(ev.target) && ev.target !== modifierBox) {
-                      dropdown.remove();
-                      document.removeEventListener('click', closeDropdown, true);
-                  }
-              };
-              // Delay listener to avoid immediate close from this click
-              setTimeout(() => document.addEventListener('click', closeDropdown, true), 0);
-          });
-      }
   }
 
   // STATE 3: Open zoomed view for archetype cards
@@ -22300,7 +22721,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Store original DOM position for restoration
       zoomOriginalParent = card.parentNode;
-      zoomOriginalNextSibling = card.nextSibling;
+      zoomOriginalNextSibling = card.nextElementSibling;
 
       // Store original position for animation reference
       card.dataset.zoomOriginalLeft = rect.left;
@@ -22346,7 +22767,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               sparkleContainer.id = `zoomSideSparkles_${side}`;
               sparkleContainer.dataset.side = side;
               frontFace.appendChild(sparkleContainer);
-              startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 2.5);
+              startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 8);
           });
       }
 
@@ -22451,7 +22872,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Store new card's position and move to portal
       const rect = newCard.getBoundingClientRect();
       zoomOriginalParent = newCard.parentNode;
-      zoomOriginalNextSibling = newCard.nextSibling;
+      zoomOriginalNextSibling = newCard.nextElementSibling;
       newCard.dataset.zoomOriginalLeft = rect.left;
       newCard.dataset.zoomOriginalTop = rect.top;
       newCard.dataset.zoomOriginalWidth = rect.width;
@@ -22492,7 +22913,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               sparkleContainer.id = `zoomSideSparkles_${side}`;
               sparkleContainer.dataset.side = side;
               frontFace.appendChild(sparkleContainer);
-              startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 2.5);
+              startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 8);
           });
       }
   }
@@ -22648,18 +23069,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       });
   }
 
-  // Legacy function - summary UI removed but keeping for compatibility
+  // Legacy stub — modifier UI removed, selection summary no longer displayed
   function updateArchetypeSelectionSummary() {
       const primaryName = document.getElementById('selectedPrimaryName');
-      const modifierName = document.getElementById('selectedModifierName');
-
       if (primaryName) {
           const primary = state.archetype.primary ? ARCHETYPES[state.archetype.primary] : null;
           primaryName.textContent = primary ? primary.name : 'None';
-      }
-      if (modifierName) {
-          const modifier = state.archetype.modifier ? ARCHETYPES[state.archetype.modifier] : null;
-          modifierName.textContent = modifier ? modifier.name : 'None';
       }
   }
 
@@ -24840,15 +25255,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     },
     // Destiny Deck: subtle ambient
     destinyDeck: {
-      durationMin: 2.5,
-      durationMax: 4.5,
-      sizeMin: 3,
-      sizeMax: 6,
-      opacityMin: 0.4,
-      opacityRange: 0.4,
-      haloOffset: 12,
-      driftType: 'float',   // slow float in any direction
-      flickerChance: 0.25
+      durationMin: 1.5,
+      durationMax: 3.0,
+      sizeMin: 1,
+      sizeMax: 2.5,
+      opacityMin: 0.3,
+      opacityRange: 0.5,
+      haloOffset: 8,
+      driftType: 'float',
+      flickerChance: 0.15
     }
   };
 
@@ -25119,10 +25534,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const chooseCard = $('chooseYourHandCard');
     const fateCard = $('guidedFateCard');
 
-    // Toggle selection: if already selected, deselect
+    // Toggle selection: if already selected, deselect (unflip)
     if (chooseCard?.classList.contains('selected')) {
-      chooseCard.classList.remove('selected');
-      fateCard?.classList.remove('dimmed');
+      chooseCard.classList.remove('selected', 'flipped');
       state.authorship = null;
       // Restore sparkles on both cards (same rate for both)
       startSparkleEmitter('chooseHandSparkles', 'chooseHand', 6);
@@ -25135,12 +25549,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return;
     }
 
-    // 1. Select Choose Your Hand (scale up, sparkles - NO flip)
-    chooseCard?.classList.add('selected');
+    // 1. Select Choose Your Hand (scale up, sparkles, flip to art)
+    chooseCard?.classList.add('selected', 'flipped');
 
-    // 2. Dim (don't dissipate) the other card
+    // 2. Deselect the other card (unflip, deselect)
     fateCard?.classList.remove('flipped', 'selected');
-    fateCard?.classList.add('dimmed');
 
     // 3. Set pending authorship state (not committed until Continue)
     state.authorship = 'manual';
@@ -25164,10 +25577,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const chooseCard = $('chooseYourHandCard');
     const fateCard = $('guidedFateCard');
 
-    // Toggle selection: if already selected, deselect
+    // Toggle selection: if already selected, deselect (unflip)
     if (fateCard?.classList.contains('selected')) {
-      fateCard.classList.remove('selected');
-      chooseCard?.classList.remove('dimmed');
+      fateCard.classList.remove('selected', 'flipped');
       state.authorship = null;
       // Restore sparkles on both cards (same rate for both)
       startSparkleEmitter('chooseHandSparkles', 'chooseHand', 6);
@@ -25180,12 +25592,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return;
     }
 
-    // 1. Select Guided Fate (scale up, sparkles - NO flip)
-    fateCard?.classList.add('selected');
+    // 1. Select Guided Fate (scale up, sparkles, flip to art)
+    fateCard?.classList.add('selected', 'flipped');
 
-    // 2. Dim (don't dissipate) the other card
+    // 2. Deselect the other card (unflip, deselect)
     chooseCard?.classList.remove('flipped', 'selected');
-    chooseCard?.classList.add('dimmed');
 
     // 3. Set pending authorship state (not committed until Continue)
     state.authorship = 'guided';
@@ -25822,6 +26233,128 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     spawnDestinyCards();
   });
 
+  // VQ Destiny Deck — spawn random suggestions into veto + quill textareas
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VQ FLYING CARD SYSTEM — mirrors character corridor destiny deck
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function createVQFlyingCard(targetCardId, suggestion) {
+    const targetCard = $(targetCardId);
+    const card = document.createElement('div');
+    card.className = 'destiny-flying-card';
+
+    const inner = document.createElement('div');
+    inner.className = 'destiny-flying-card-inner';
+
+    // Back face: Black-DestinyChoice-back.png (same as deck cards)
+    const backFace = document.createElement('div');
+    backFace.className = 'destiny-flying-card-face destiny-flying-card-back';
+
+    // Front face: Clone of the VQ card with suggestion pre-filled
+    const frontFace = document.createElement('div');
+    frontFace.className = 'destiny-flying-card-face destiny-flying-card-front-live';
+
+    if (targetCard) {
+      const clone = targetCard.cloneNode(true);
+      const computedBg = getComputedStyle(targetCard).backgroundImage;
+      if (computedBg && computedBg !== 'none') {
+        clone.style.backgroundImage = computedBg;
+      }
+      clone.removeAttribute('id');
+      clone.style.width = '100%';
+      clone.style.height = '100%';
+      clone.style.position = 'relative';
+
+      // Pre-fill the cloned textarea with the suggestion
+      const textarea = clone.querySelector('.vq-textarea');
+      if (textarea) textarea.value = suggestion;
+
+      // Hide rotating placeholder in clone
+      const ph = clone.querySelector('.rotating-placeholder');
+      if (ph) ph.classList.add('hidden');
+
+      frontFace.appendChild(clone);
+    }
+
+    inner.appendChild(backFace);
+    inner.appendChild(frontFace);
+    card.appendChild(inner);
+    return card;
+  }
+
+  function fillVQFields(type, suggestion) {
+    const inputId = type === 'veto' ? 'vetoInput' : 'quillInput';
+    const cardId = type === 'veto' ? 'vetoCard' : 'quillCard';
+    const input = $(inputId);
+    const card = $(cardId);
+
+    if (input) {
+      input.value = input.value ? input.value + '\n' + suggestion : suggestion;
+      const ph = document.querySelector(`.rotating-placeholder[data-for="${inputId}"]`);
+      if (ph) ph.classList.add('hidden');
+    }
+
+    if (card) {
+      card.classList.add('fate-landed');
+      setTimeout(() => card.classList.remove('fate-landed'), 300);
+    }
+  }
+
+  function spawnVQDestinyCards() {
+    const miniDeck = $('vqDestinyDeck');
+    const vetoCard = $('vetoCard');
+    const quillCard = $('quillCard');
+    const quillInput = $('quillInput');
+
+    if (!miniDeck || !vetoCard || !quillCard) return;
+
+    const vetoSuggestion = getRandomSuggestion('veto',
+      ($('vetoInput')?.value || '').split('\n'));
+    const quillUnlocked = quillInput && !quillInput.closest('.locked-input');
+    const quillSuggestion = quillUnlocked
+      ? getRandomSuggestion('quill', (quillInput.value || '').split('\n'))
+      : null;
+
+    const deckRect = miniDeck.getBoundingClientRect();
+    const vetoRect = vetoCard.getBoundingClientRect();
+    const quillRect = quillCard.getBoundingClientRect();
+
+    const startRect = { left: deckRect.left, top: deckRect.top };
+
+    // First card: peel LEFT to Veto card
+    const vetoFlyingCard = createVQFlyingCard('vetoCard', vetoSuggestion);
+    animateFlyingCard(vetoFlyingCard, startRect, {
+      left: vetoRect.left,
+      top: vetoRect.top,
+      width: vetoRect.width,
+      height: vetoRect.height
+    }, 'left', () => {
+      fillVQFields('veto', vetoSuggestion);
+
+      // After first card lands, spawn second if quill is unlocked
+      if (quillSuggestion) {
+        setTimeout(() => {
+          const quillFlyingCard = createVQFlyingCard('quillCard', quillSuggestion);
+          animateFlyingCard(quillFlyingCard, startRect, {
+            left: quillRect.left,
+            top: quillRect.top,
+            width: quillRect.width,
+            height: quillRect.height
+          }, 'right', () => {
+            fillVQFields('quill', quillSuggestion);
+          });
+        }, 200);
+      }
+    });
+
+    console.log('[Destiny VQ] Cards spawning:', vetoSuggestion, quillSuggestion);
+  }
+
+  // VQ Destiny Deck click handler — flying cards
+  $('vqDestinyDeck')?.addEventListener('click', () => {
+    spawnVQDestinyCards();
+  });
+
   // Character section Continue button handler
   $('continueFromCharacters')?.addEventListener('click', () => {
     const miniDeck = $('destinyMiniDeck');
@@ -26098,6 +26631,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (!state.withheldCoreVariant && state.archetype.primary) {
         state.withheldCoreVariant = getFateWithheldCoreVariant(state.archetype.primary, state.picks.dynamic);
     }
+
+    // Silently assign a secondary modifier (~25% chance) before building directives
+    assignProbabilisticModifier();
 
     // Early validation with pre-normalization values
     const earlyArchetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
@@ -29095,11 +29631,15 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'post_human': 'tarnished',
       'first_contact': 'pristine',
       'simulation': 'pristine',
-      // Dystopia flavors
-      'authoritarian': 'weathered',
-      'surveillance': 'tarnished',
-      'corporate': 'pristine',
-      'environmental': 'corroded',
+      'final_frontier': 'weathered',
+      // Dystopia flavors (7 locked canon)
+      'glass_house': 'tarnished',
+      'velvet_trap': 'pristine',
+      'the_ledger': 'pristine',
+      'crimson_veil': 'weathered',
+      'perfect_match': 'pristine',
+      'ministry_of_affection': 'aged',
+      'endless_edit': 'fractured',
       // PostApocalyptic flavors
       'nuclear_aftermath': 'rusted',
       'pandemic': 'corroded',
@@ -29223,11 +29763,15 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'post_human': 'fractured',
       'first_contact': 'pristine',
       'simulation': 'pristine',
-      // Dystopia flavors
-      'authoritarian': 'weathered',
-      'surveillance': 'fractured',
-      'corporate': 'pristine',
-      'environmental': 'corroded',
+      'final_frontier': 'weathered',
+      // Dystopia flavors (7 locked canon)
+      'glass_house': 'tarnished',
+      'velvet_trap': 'pristine',
+      'the_ledger': 'pristine',
+      'crimson_veil': 'weathered',
+      'perfect_match': 'pristine',
+      'ministry_of_affection': 'aged',
+      'endless_edit': 'fractured',
       // PostApocalyptic flavors
       'nuclear_aftermath': 'irradiated',
       'pandemic': 'corroded',
@@ -35140,11 +35684,10 @@ FATE CARD ADAPTATION (CRITICAL):
     const allCards = document.querySelectorAll('.mode-card');
     const mode = card.dataset.mode;
 
-    // Unflip and undim all other cards
+    // Unflip and deselect all other cards (no dimming)
     allCards.forEach(c => {
       if (c !== card) {
         c.classList.remove('flipped', 'selected');
-        c.classList.add('dimmed');
         // Stop sparkles on other cards
         const sparkleContainer = c.querySelector('.mode-card-sparkles');
         if (sparkleContainer) sparkleContainer.innerHTML = '';
@@ -35153,7 +35696,6 @@ FATE CARD ADAPTATION (CRITICAL):
 
     // Flip and select this card
     card.classList.add('flipped', 'selected');
-    card.classList.remove('dimmed');
     selectedModeCard = card;
 
     // Start sparkles on this card
@@ -35248,6 +35790,9 @@ FATE CARD ADAPTATION (CRITICAL):
       modeCardSparkleInterval = null;
     }
   }
+
+  // Expose resetModeCards for showScreen to call when returning to modeSelect
+  window.resetModeCards = resetModeCards;
 
   // Initialize mode cards on DOM ready
   if (document.readyState === 'loading') {
