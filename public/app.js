@@ -216,8 +216,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 window.config = window.config || {
   enableAncestry: true,
   enableStorybeau: true,
-  enableQuill: true,
-  enableVeto: true,
+  enablePetitionFate: true,
   enablePillCycling: true,
   enableAdvancedUI: true
 };
@@ -231,6 +230,7 @@ window.config = window.config || {
     if(session?.user?.id) return session.user.id;
     const { data, error } = await sb.auth.signInAnonymously();
     if(error) { console.error("Auth error:", error); return null; }
+    console.log("Supabase ready");
     return data.user.id;
   }
 
