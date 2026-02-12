@@ -234,6 +234,9 @@ window.config = window.config || {
     return data.user.id;
   }
 
+  // Fire anonymous sign-in at boot (non-blocking)
+  ensureAnonSession();
+
   function getNickname(){
     let n = localStorage.getItem("sb_nickname");
     if(!n){
