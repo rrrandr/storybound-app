@@ -324,10 +324,10 @@
     <div id="godModePay" class="hidden">
        <h4 style="color:var(--gold); margin-top:0; font-size:1.4em;">Unlock God Mode</h4>
        <p style="font-size:0.9em; opacity:0.8; margin-bottom:20px;">
-         Sandbox power. No cooldowns. No safety.
+         Remove all pacing gates, cooldowns, and safety filters. Quill is always ready. Intimate scenes unlock immediately. Your veto list and story choices still apply — God Mode overrides the engine, not your taste.
          <br><strong>$50 One-time purchase.</strong>
        </p>
-       <button id="payGodMode" class="sb-btn sb-btn--gold sb-btn--full" style="margin-top:10px;">Unlock Forever ($50)</button>
+       <button id="payGodMode" class="god-mode-unlock-btn" style="margin-top:10px;">Unlock Forever ($50)</button>
     </div>
 
     <div id="standardPay">
@@ -353,7 +353,7 @@
         </div>
     </div>
     
-    <button onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="margin-top:15px;">Cancel</button>
+    <button class="sb-btn-png sm" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="margin-top:15px;">Cancel</button>
   </div>
 </div>
 
@@ -772,8 +772,8 @@
       </div>
       <div class="sb-card" data-grp="pov" data-val="Fifth">
         <div class="sb-card-inner">
-          <div class="sb-card-face sb-card-back"><span class="sb-card-title">5th Person (Author)</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The story has big plans for you..."</span></div>
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The Author has big plans for you..."</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The Author has big plans for you..."</span></div>
         </div>
       </div>
     </div>
@@ -890,7 +890,7 @@
         <div class="sb-card" data-grp="worldSubtype" data-val="small_town"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Small Town</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Small Town</span><span class="sb-card-desc">Close communities, local secrets, familiar faces.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="college"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">College</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">College</span><span class="sb-card-desc">Campus life, coming of age, academic settings.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="friends"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Friends</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Friends</span><span class="sb-card-desc">Friend groups, shared spaces, everyday drama.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="old_money"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Old Money</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Old Money</span><span class="sb-card-desc">Inherited wealth, elite circles, social expectations.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="blue_blood"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Blue Blood</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Blue Blood</span><span class="sb-card-desc">Inherited wealth, elite circles, social expectations.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="office"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">9-5 / Office</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">9-5 / Office</span><span class="sb-card-desc">Workplace dynamics, corporate settings, professional life.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="supernatural_modern"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Supernatural Modern</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Supernatural Modern</span><span class="sb-card-desc">Vampires, shifters, witches in hidden worlds.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="superheroic_modern"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Superheroic Modern</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Superheroic Modern</span><span class="sb-card-desc">Powers, masks, secret identities, cosmic stakes.</span></div></div></div>
@@ -901,13 +901,13 @@
     <div id="scifiSubtypeSelection" class="world-subtype-selection hidden">
       <div class="section-title sub-title">Sci-Fi Flavor</div>
       <div class="sb-grid" id="scifiSubtypeGrid">
-        <div class="sb-card" data-grp="worldSubtype" data-val="space_opera"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Star-Spanning Civilizations</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Star-Spanning Civilizations</span><span class="sb-card-desc">Galactic empires, starship voyages, interstellar politics.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="hard_scifi"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Future Built on Science</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Future Built on Science</span><span class="sb-card-desc">Scientific accuracy, plausible technology, realistic physics.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="cyberpunk"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Neon Futures</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Neon Futures</span><span class="sb-card-desc">Neon cities, corporate shadows, hackers and augmentation.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="post_human"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Post-Human</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Post-Human</span><span class="sb-card-desc">Transcendence, uploaded minds, evolved consciousness.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="alien_contact"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">First Contact</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">First Contact</span><span class="sb-card-desc">Alien encounters, xenobiology, interspecies discovery.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="simulation"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Simulation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Simulation</span><span class="sb-card-desc">Layered realities, reincarnation loops, lovers finding each other across lives.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="final_frontier"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Final Frontier</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Final Frontier</span><span class="sb-card-desc">Exploration, close quarters, mutual reliance.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="galactic_civilizations"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Galactic Conflict</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Galactic Conflict</span><span class="sb-card-desc">Love can save a world, or burn a galaxy.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="future_of_science"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Science Future</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Science Future</span><span class="sb-card-desc">Love measured against progress, reason, and unintended consequences.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="cyberpunk"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Cyberpunk</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Cyberpunk</span><span class="sb-card-desc">Love survives beneath power, tech, and exploitation.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="post_human"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Post-Human</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Post-Human</span><span class="sb-card-desc">Desire outpaces bodies, identity, and human limits.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="first_contact"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">First Contact</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">First Contact</span><span class="sb-card-desc">Desire collides with the truly unknown.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="simulation"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Simulation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Simulation</span><span class="sb-card-desc">Intimacy questions what's real, chosen, or programmed.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="final_frontier"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Final Frontier</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Final Frontier</span><span class="sb-card-desc">Love tested by distance, discovery, and leaving everything behind.</span></div></div></div>
       </div>
     </div>
 
@@ -915,9 +915,11 @@
     <div id="fantasySubtypeSelection" class="world-subtype-selection hidden">
       <div class="section-title sub-title">Fantasy Flavor</div>
       <div class="sb-grid" id="fantasySubtypeGrid">
-        <div class="sb-card" data-grp="worldSubtype" data-val="enchanted_realms"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Enchanted Realms</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Enchanted Realms</span><span class="sb-card-desc">Epic quests, powerful magic, wondrous creatures.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="hidden_magic"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Hidden Magic</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Hidden Magic</span><span class="sb-card-desc">Subtle magic, grounded stakes, rare supernatural.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="cursed_corrupt"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Cursed & Corrupt Worlds</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Cursed & Corrupt Worlds</span><span class="sb-card-desc">Grim worlds, dangerous magic, moral corruption.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="arcane_binding"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Arcane Binding</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Arcane Binding</span><span class="sb-card-desc">Magic binds them to choices love cannot undo.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="fated_blood"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Fated Blood</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Fated Blood</span><span class="sb-card-desc">Their blood decides who they may love.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="the_inhuman"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Inhuman</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Inhuman</span><span class="sb-card-desc">To love them means never fully belonging together.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="the_beyond"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Beyond</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Beyond</span><span class="sb-card-desc">Love survives death, distance, or worlds apart.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="cursed"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Cursed</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Cursed</span><span class="sb-card-desc">A spell stands between them, waiting to be broken.</span></div></div></div>
       </div>
     </div>
 
@@ -937,13 +939,13 @@
     <div id="dystopiaSubtypeSelection" class="world-subtype-selection hidden">
       <div class="section-title sub-title">Dystopia Flavor</div>
       <div class="sb-grid" id="dystopiaSubtypeGrid">
-        <div class="sb-card" data-grp="worldSubtype" data-val="glass_house" data-micro-tip="Your body is watched. Arousal itself is evidence."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Glass House</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Glass House</span><span class="sb-card-desc">Every pulse, flush, and micro-expression is tracked. Arousal itself is evidence.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="velvet_trap" data-micro-tip="Pleasure is required. Choosing to feel less is criminal."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Velvet Trap</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Velvet Trap</span><span class="sb-card-desc">Pleasure is mandatory. Longing and refusal are diagnosed as illness. Meaning is the contraband.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="the_ledger" data-micro-tip="People are assets. Love risks your market value."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Ledger</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Ledger</span><span class="sb-card-desc">People are ranked, valued, and leveraged. Love is a liability on someone's balance sheet.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="crimson_veil" data-micro-tip="Desire without institutional approval is punished."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Crimson Veil</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Crimson Veil</span><span class="sb-card-desc">Doctrine governs bodies. Pleasure without sanctioned purpose is apostasy.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="perfect_match" data-micro-tip="Reproduction is assigned. Wanting wrong is treason."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Perfect Match</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Perfect Match</span><span class="sb-card-desc">Pairing is biological mandate. Desire for the wrong person is defection against the species.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="ministry_of_affection" data-micro-tip="Any intimate act can become a permanent accusation."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Ministry of Affection</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Ministry of Affection</span><span class="sb-card-desc">Every intimate act carries legal and existential risk. Accusation is permanent.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="endless_edit" data-micro-tip="People revise themselves. Partners become unrecognizable."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Endless Edit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Endless Edit</span><span class="sb-card-desc">Selves are drafts revised under social pressure. Love is the refusal to optimize away what you were.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="glass_house" data-micro-tip="You will never love alone — you will love us."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Glass House</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Glass House</span><span class="sb-card-desc">You will never love alone — you will love us.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="velvet_trap" data-micro-tip="True intimacy is forbidden in a world of endless indulgence."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Mandatory Pleasure</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Mandatory Pleasure</span><span class="sb-card-desc">True intimacy is forbidden in a world of endless indulgence.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="the_ledger" data-micro-tip="Your heart has a market value."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Human Capital</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Human Capital</span><span class="sb-card-desc">Your heart has a market value.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="crimson_veil" data-micro-tip="Desire is sacred. Would you risk damnation for it?"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dogma</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dogma</span><span class="sb-card-desc">Desire is sacred. Would you risk damnation for it?</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="perfect_match" data-micro-tip="You are not mine. You are humanity's."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Perfect Breed</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Perfect Breed</span><span class="sb-card-desc">You are not mine. You are humanity's.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="ministry_of_affection" data-micro-tip="Every touch negotiated until desire breaks."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dysconsent</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dysconsent</span><span class="sb-card-desc">Every touch negotiated until desire breaks.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="endless_edit" data-micro-tip="Love fades as selves are edited away."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Erasure</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Erasure</span><span class="sb-card-desc">Love fades as selves are edited away.</span></div></div></div>
       </div>
     </div>
 
@@ -951,11 +953,11 @@
     <div id="apocalypseSubtypeSelection" class="world-subtype-selection hidden">
       <div class="section-title sub-title">World Condition</div>
       <div class="sb-grid" id="apocalypseSubtypeGrid">
-        <div class="sb-card" data-grp="worldSubtype" data-val="ashfall" data-micro-tip="Touching someone costs your body. Exposure is cumulative."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Ashfall</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Ashfall</span><span class="sb-card-desc">The body fails first. Skin blisters, lungs scar, touching someone is a survival cost.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="year_zero" data-micro-tip="Grief from the old world interrupts every connection."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Year Zero</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Year Zero</span><span class="sb-card-desc">The past intrudes. Everyone carries a before-self that doesn't fit the after-world.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="dystimulation" data-micro-tip="Pleasure signals are muted. Desire does not arrive."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dystimulation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dystimulation</span><span class="sb-card-desc">Desire doesn't arrive. The body is intact but sensation is absent. Connection despite numbness.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="predation" data-micro-tip="Being close to someone makes you both targets."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Predation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Predation</span><span class="sb-card-desc">Being seen together makes you a target. Closeness creates leverage for others.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="hunger" data-micro-tip="Every shared resource is subtracted from your survival."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Hunger</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Hunger</span><span class="sb-card-desc">Sharing kills you. Desire competes with calories, warmth, medicine.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="ashfall" data-micro-tip="The world burns between you."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Ashfall</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Ashfall</span><span class="sb-card-desc">The world burns between you.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="year_zero" data-micro-tip="Love is the aftermath."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Year 0</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Year 0</span><span class="sb-card-desc">Love is the aftermath.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="dystimulation" data-micro-tip="You must risk everything to feel anything."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dystimulation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dystimulation</span><span class="sb-card-desc">You must risk everything to feel anything.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="predation" data-micro-tip="Love makes you prey."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Predation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Predation</span><span class="sb-card-desc">Love makes you prey.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="hunger" data-micro-tip="Love competes with survival."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Hunger</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Hunger</span><span class="sb-card-desc">Love competes with survival.</span></div></div></div>
       </div>
     </div>
 
@@ -994,12 +996,8 @@
       <div class="section-title">Story Pull</div>
       <div class="sb-grid sb-grid-4" id="pressureGrid">
         <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power & Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">Someone has leverage. Someone else pays for it.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="RiskExposure"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Risk & Exposure</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Risk & Exposure</span><span class="sb-card-desc">Being seen, known, caught, or revealed is dangerous.</span></div></div></div>
         <div class="sb-card" data-grp="pressure" data-val="EscapePursuit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape & Pursuit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape & Pursuit</span><span class="sb-card-desc">Leaving, rescuing, or outrunning something.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="ObligationBurden"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Obligation & Burden</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Obligation & Burden</span><span class="sb-card-desc">Duty, destiny, or expectation presses inward.</span></div></div></div>
         <div class="sb-card" data-grp="pressure" data-val="DesireObsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Desire & Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Desire & Obsession</span><span class="sb-card-desc">Wanting something too much, too soon, or for the wrong reasons.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="ReckoningPast"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Reckoning & Past</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Reckoning & Past</span><span class="sb-card-desc">History, guilt, or unfinished business intrudes.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="Transformation"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Transformation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Transformation</span><span class="sb-card-desc">Someone is becoming something they didn't plan to be.</span></div></div></div>
         <div class="sb-card" data-grp="pressure" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">Staying alive — socially, politically, physically, or emotionally.</span></div></div></div>
       </div>
 
@@ -1023,15 +1021,14 @@
          Groupings are for cognitive organization only—selection remains flat.
          ═══════════════════════════════════════════════════════════════════ -->
     <div class="card-flow-row flow-hidden" id="flowRowDynamic" data-flow-stage="dynamic">
-      <div class="section-title">Polarity</div>
+      <div class="section-title">Story Polarity</div>
       <div class="dynamic-grouped" id="dynamicGrid">
-        <!-- Circumstance-Based -->
+        <!-- Circumstance -->
         <div class="dynamic-group">
-          <div class="dynamic-group-label">Circumstance-Based</div>
-          <div class="sb-grid sb-grid-4">
+          <div class="dynamic-group-label">Circumstance</div>
+          <div class="sb-grid sb-grid-2">
             <div class="sb-card" data-grp="dynamic" data-val="Proximity"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Forced Proximity</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Forced Proximity</span><span class="sb-card-desc">Circumstance throws them together.</span></div></div></div>
             <div class="sb-card" data-grp="dynamic" data-val="SecretIdentity"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Secret Identity</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Secret Identity</span><span class="sb-card-desc">Hidden truths, masks, revelations.</span></div></div></div>
-            <div class="sb-card" data-grp="dynamic" data-val="Caretaker"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Caretaker / Wounded</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Caretaker / Wounded</span><span class="sb-card-desc">Vulnerability and steady presence.</span></div></div></div>
           </div>
         </div>
         <!-- Emotional Arc -->
@@ -1044,16 +1041,6 @@
             <div class="sb-card" data-grp="dynamic" data-val="Forbidden"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Forbidden Love</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Forbidden Love</span><span class="sb-card-desc">Rules, taboo, desire against judgment.</span></div></div></div>
           </div>
         </div>
-        <!-- Intensity / Attachment -->
-        <div class="dynamic-group">
-          <div class="dynamic-group-label">Intensity / Attachment</div>
-          <div class="sb-grid sb-grid-4">
-            <div class="sb-card" data-grp="dynamic" data-val="Dangerous"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dangerous</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dangerous</span><span class="sb-card-desc">Risk in proximity, threat as aphrodisiac.</span></div></div></div>
-            <div class="sb-card" data-grp="dynamic" data-val="Obsessive"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Obsessive Devotion</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Obsessive Devotion</span><span class="sb-card-desc">Consuming focus, intensity as love language.</span></div></div></div>
-            <div class="sb-card" data-grp="dynamic" data-val="Fated"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Fated</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Fated</span><span class="sb-card-desc">Destined bond, cosmic inevitability.</span></div></div></div>
-            <div class="sb-card" data-grp="dynamic" data-val="Partners"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Partners in Crime</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Partners in Crime</span><span class="sb-card-desc">Complicity, shared secrets, us vs them.</span></div></div></div>
-          </div>
-        </div>
       </div>
       <button class="flow-continue-btn sb-btn-png sm" id="continueFromDynamic">Begin Story</button>
       <p id="continueFromDynamicHint" class="story-continue-hint hidden">Your story will resume where you left off.</p>
@@ -1063,6 +1050,7 @@
          SAFETY ROW (Row 9) — Own corridor row after Arousal
          ═══════════════════════════════════════════════════════════════════ -->
     <div id="safetyRow" class="story-shape-row corridor-section" data-corridor-stage="safety">
+      <div class="section-title">Safety</div>
       <!-- LEFT CARD: Theme Toggles -->
       <div class="safety-tarot-card" id="safetyThemesCard">
         <div class="safety-arc-container">
@@ -1109,7 +1097,7 @@
           </svg>
         </div>
         <div class="safety-card-content boundary-chips" id="boundaryChips">
-          <div class="chip-gold locked-chip active" title="Always enforced">No sexual violence</div>
+          <div class="chip-gold" data-boundary="sexual-violence">No sexual violence</div>
           <div class="chip-gold" data-boundary="coercion">No coercion</div>
           <div class="chip-gold" data-boundary="degradation">No degradation language</div>
           <div class="chip-gold" data-boundary="captivity">No captivity</div>
@@ -1124,6 +1112,7 @@
          VETO/QUILL ROW (Row 10) — Own corridor row after Safety
          ═══════════════════════════════════════════════════════════════════ -->
     <div id="vetoquillRow" class="story-shape-row corridor-section" data-corridor-stage="vetoquill">
+      <div class="section-title">Veto &amp; Quill</div>
       <!-- LEFT: VETO CARD -->
       <div class="vq-tarot-card" id="vetoCard">
         <div class="vq-arc-container">
@@ -1163,9 +1152,9 @@
       <div class="vq-tarot-card" id="quillCard">
         <div class="vq-arc-container">
           <svg class="vq-arc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.5 1.5c-1.5 1.5-5 5-7 9s-2.5 7-3 9.5c-.2.8-.4 1.5-.5 2 0 0 1-1.5 2.5-3s3.5-3 5-4c2-1.2 3.5-2 4.5-3.5s1-3.5-1.5-10z"/>
-            <path d="M10 22c0 0-.5-3 1-6.5"/>
-            <line x1="9" y1="23" x2="15" y2="17"/>
+            <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
+            <line x1="16" y1="8" x2="2" y2="22"/>
+            <line x1="17.5" y1="15" x2="9" y2="15"/>
           </svg>
           <svg class="vq-arc-text" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet">
             <defs><path id="quillArc" d="M 15,18 A 40,40 0 0,1 85,18" fill="none"/></defs>

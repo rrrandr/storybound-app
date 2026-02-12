@@ -247,7 +247,42 @@ window.config = window.config || {
   // STORYBOUND EVENT LOGGER
   // =========================
   const SB_ANALYTICS_KEY = "sb_analytics_v1";
-  
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // USED-NAME TRACKING — Persists character names across stories so AI never
+  // reuses a name the reader has already seen.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const SB_USED_NAMES_KEY = 'sb_used_names';
+
+  function getUsedNames() {
+      try { return JSON.parse(localStorage.getItem(SB_USED_NAMES_KEY) || '[]'); }
+      catch { return []; }
+  }
+
+  function addUsedName(name) {
+      if (!name || !name.trim()) return;
+      const clean = name.trim();
+      const names = getUsedNames();
+      // Store lowercase for comparison, original for display
+      if (!names.some(n => n.toLowerCase() === clean.toLowerCase())) {
+          names.push(clean);
+          localStorage.setItem(SB_USED_NAMES_KEY, JSON.stringify(names));
+      }
+  }
+
+  /** Build a NAME INVENTION prompt block when user left a name field blank. */
+  function buildNameInventionDirective(role, gender, pronouns) {
+      const used = getUsedNames();
+      const exclusion = used.length > 0
+          ? `\nNEVER reuse any of these previously seen names: ${used.join(', ')}.`
+          : '';
+      return `[${role.toUpperCase()} NAME — INVENT]:
+You MUST invent a compelling, original full name for the ${role} in Scene 1.
+The name must suit the world, tone, and era of this story.
+Gender context: ${gender}, ${pronouns}.${exclusion}
+Introduce the name naturally within the first few paragraphs — do not announce it mechanically.`;
+  }
+
   function sbLog(event, payload = {}) {
     try {
       const raw = localStorage.getItem(SB_ANALYTICS_KEY);
@@ -594,44 +629,46 @@ window.config = window.config || {
       small_town: 'Small Town',
       college: 'College',
       friends: 'Friends',
-      old_money: 'Old Money',
+      blue_blood: 'Blue Blood',
       office: '9-5 / Office',
       supernatural_modern: 'Supernatural Modern',
       superheroic_modern: 'Superheroic Modern',
       // Historical Flavors
       prehistoric: 'Prehistoric',
+      bronze_age: 'Bronze Age',
       classical: 'Classical',
       medieval: 'Medieval',
       renaissance: 'Renaissance',
       victorian: 'Victorian',
       '20th_century': '20th Century',
       // Sci-Fi Flavors
-      galactic_civilizations: 'Galactic Civilizations',
-      future_of_science: 'Future of Science',
+      galactic_civilizations: 'Galactic Conflict',
+      future_of_science: 'Science Future',
       space_opera: 'Star-Spanning Civilizations',
       hard_scifi: 'Future Built on Science',
-      cyberpunk: 'Neon Futures',
+      cyberpunk: 'Cyberpunk',
       post_human: 'Post-Human',
       alien_contact: 'First Contact',
       first_contact: 'First Contact',
       simulation: 'Simulation',
       final_frontier: 'Final Frontier',
-      // Fantasy Flavors (invented magical worlds, not mythology)
-      enchanted_realms: 'Enchanted Realms',
-      hidden_magic: 'Hidden Magic',
-      cursed_worlds: 'Cursed Worlds',
-      cursed_corrupt: 'Cursed & Corrupt Worlds',
+      // Fantasy Flavors (romance-breaking pressures, not settings)
+      arcane_binding: 'Arcane Binding',
+      fated_blood: 'Fated Blood',
+      the_inhuman: 'The Inhuman',
+      the_beyond: 'The Beyond',
+      cursed: 'Cursed',
       // Dystopia Flavors (7 locked canon)
-      glass_house: 'The Glass House',
-      velvet_trap: 'The Velvet Trap',
-      the_ledger: 'The Ledger',
-      crimson_veil: 'The Crimson Veil',
-      perfect_match: 'The Perfect Match',
-      ministry_of_affection: 'The Ministry of Affection',
-      endless_edit: 'The Endless Edit',
+      glass_house: 'Glass House',
+      velvet_trap: 'Mandatory Pleasure',
+      the_ledger: 'Human Capital',
+      crimson_veil: 'Dogma',
+      perfect_match: 'Perfect Breed',
+      ministry_of_affection: 'Dysconsent',
+      endless_edit: 'Erasure',
       // Post-Apocalyptic Flavors (5 canonical conditions)
       ashfall: 'Ashfall',
-      year_zero: 'Year Zero',
+      year_zero: 'Year 0',
       dystimulation: 'Dystimulation',
       predation: 'Predation',
       hunger: 'Hunger'
@@ -648,59 +685,59 @@ window.config = window.config || {
   // ═══════════════════════════════════════════════════════════════════════════
   const DYSTOPIA_FLAVORS = {
       glass_house: {
-          id: 'glass-house', world: 'dystopia', title: 'The Glass House',
-          subtitle: 'Biometric Surveillance State',
-          uiDescription: 'Privacy is extinct. Every pulse, flush, and micro-expression is tracked. Arousal itself is evidence.',
-          narrativeHook: 'Intimacy is physiological treason — elevated heart rate, dilated pupils, and skin conductance betray desire before a word is spoken. The body confesses what the mind refuses to.',
-          eroticEngine: ['biometric betrayal', 'involuntary response', 'micro-movement', 'physiological risk', 'somatic stillness'],
-          sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'state' }
+          id: 'glass-house', world: 'dystopia', title: 'Glass House',
+          subtitle: 'Radical Transparency of Consciousness',
+          uiDescription: 'No one is alone inside their own mind. Love, lust, grief — all are communal currents. Exclusivity cannot survive collective experience.',
+          narrativeHook: 'Neural implants bind humanity into a shared field of sensation, emotion, and perspective. The chemistry of attachment is amplified and harmonized. Nothing is hidden. Nothing is withheld. Nothing is yours. To love privately, you must disconnect — and disconnection is agony. The most dangerous act is wanting someone for yourself.',
+          eroticEngine: ['collective sensation', 'exclusivity as rebellion', 'disconnection agony', 'private desire', 'communal intimacy'],
+          sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'collective' }
       },
       velvet_trap: {
-          id: 'velvet-trap', world: 'dystopia', title: 'The Velvet Trap',
-          subtitle: 'Mandatory Pleasure State',
-          uiDescription: 'Pleasure is mandatory. Longing, jealousy, and refusal are diagnosed as illness. Meaning is the contraband.',
-          narrativeHook: 'In a world drowning in sensation, genuine feeling is pathology. Withholding pleasure to preserve its meaning — choosing to want rather than consume — is the only rebellion that terrifies the state.',
-          eroticEngine: ['chosen deprivation', 'longing as defiance', 'meaninglessness', 'emotional starvation', 'refusal'],
+          id: 'velvet-trap', world: 'dystopia', title: 'Mandatory Pleasure',
+          subtitle: 'Enforced Hedonism',
+          uiDescription: 'Pleasure is mandatory. Depth and exclusivity are taboo. True intimacy is the only forbidden act.',
+          narrativeHook: 'In a world of enforced indulgence, choosing to want one person — choosing depth over breadth, meaning over sensation — is the only rebellion. Longing, jealousy, and refusal are symptoms of deviance. The system does not punish desire; it punishes distinction.',
+          eroticEngine: ['enforced indulgence', 'depth as contraband', 'chosen deprivation', 'meaninglessness', 'exclusive longing'],
           sceneBias: { pacing: 'moderate', intimacyRisk: 'medium', powerDynamic: 'social' }
       },
       the_ledger: {
-          id: 'the-ledger', world: 'dystopia', title: 'The Ledger',
-          subtitle: 'Human Capital Regime',
-          uiDescription: 'People are ranked, valued, and leveraged. Love is a liability on someone\'s balance sheet.',
-          narrativeHook: 'Relationships form through acquisition, leverage, or contractual imbalance. Characters are assets that appreciate or depreciate — and real emotion is an unaudited risk that threatens both their valuations.',
-          eroticEngine: ['ownership', 'depreciation', 'ROI of devotion', 'leveraged vulnerability', 'contractual breach'],
+          id: 'the-ledger', world: 'dystopia', title: 'Human Capital',
+          subtitle: 'Financialization of Personhood',
+          uiDescription: 'People are assets. Attachment alters valuation, risk, and future prospects. Your heart has a market value.',
+          narrativeHook: 'Relationships form through acquisition, leverage, or contractual imbalance. Characters are assets that appreciate or depreciate — and real emotion is an unaudited risk. Attachment changes your credit rating. Love is not forbidden; it is financially irresponsible.',
+          eroticEngine: ['asset valuation', 'leveraged vulnerability', 'emotional liability', 'contractual breach', 'unaudited risk'],
           sceneBias: { pacing: 'moderate', intimacyRisk: 'medium', powerDynamic: 'corporate' }
       },
       crimson_veil: {
-          id: 'crimson-veil', world: 'dystopia', title: 'The Crimson Veil',
-          subtitle: 'Institutional Dogma State',
-          uiDescription: 'Doctrine governs bodies. Pleasure without sanctioned purpose is apostasy punished by the institution, not individuals.',
-          narrativeHook: 'The enforcer does not act from personal cruelty but from institutional conviction. Desire corrupts not a person but a role — the doctrine demands the body serve its purpose, and deviation is structural heresy prosecuted by committee.',
-          eroticEngine: ['institutional guilt', 'doctrinal authority', 'structural transgression', 'sanctioned vs forbidden touch'],
+          id: 'crimson-veil', world: 'dystopia', title: 'Dogma',
+          subtitle: 'Theocratic Moral Authority',
+          uiDescription: 'Love outside doctrine is heresy. Desire is sacred — and sacred things are controlled.',
+          narrativeHook: 'The institution does not act from personal cruelty but from doctrinal conviction. Desire corrupts not a person but a role. The body must serve its sanctioned purpose, and deviation is structural heresy. Would you risk damnation for what you feel?',
+          eroticEngine: ['doctrinal authority', 'sacred transgression', 'institutional guilt', 'sanctioned vs forbidden touch', 'heretical desire'],
           sceneBias: { pacing: 'tense', intimacyRisk: 'extreme', powerDynamic: 'religious' }
       },
       perfect_match: {
-          id: 'perfect-match', world: 'dystopia', title: 'The Perfect Match',
-          subtitle: 'Reproductive Destiny Regime',
-          uiDescription: 'Pairing is biological mandate. Compatibility means genetic fitness. Desire for the wrong person is defection against the species.',
-          narrativeHook: 'Two people matched to others by reproductive destiny choose each other instead — misusing their bodies against their assigned biological purpose. Every touch is species-level treason.',
-          eroticEngine: ['forbidden pairing', 'biological defiance', 'body against purpose', 'reproductive treason', 'wrong-match desire'],
+          id: 'perfect-match', world: 'dystopia', title: 'Perfect Breed',
+          subtitle: 'Species Survival Override',
+          uiDescription: 'Exclusive bonding threatens genetic distribution and human viability. You are not yours to give.',
+          narrativeHook: 'DNA is screened, filtered, ranked. Extraction replaces intimacy. Distribution replaces devotion. Pair-bonding is prohibited — not from cruelty, but math. Love is not forbidden. It is irresponsible.',
+          eroticEngine: ['genetic obligation', 'reproductive infrastructure', 'species-level treason', 'forbidden pairing', 'body as commons'],
           sceneBias: { pacing: 'moderate', intimacyRisk: 'high', powerDynamic: 'eugenic' }
       },
       ministry_of_affection: {
-          id: 'ministry-of-affection', world: 'dystopia', title: 'The Ministry of Affection',
-          subtitle: 'Compliance Terror State',
-          uiDescription: 'Every intimate act carries legal, reputational, and existential risk. Accusation is permanent. Protection, not permission, is what lovers seek.',
-          narrativeHook: 'Intimacy exists under retroactive judgment — any encounter can be reframed, any partner can become an accuser, and the record is permanent. Characters approach each other through defensive consent language, documented proof, and the constant fear that what feels mutual today becomes evidence tomorrow.',
-          eroticEngine: ['retroactive judgment', 'permanent branding', 'accusation fear', 'defensive intimacy', 'reputational annihilation'],
+          id: 'ministry-of-affection', world: 'dystopia', title: 'Dysconsent',
+          subtitle: 'Hyper-Legalized Intimacy',
+          uiDescription: 'Spontaneity collapses under contractual regulation. Every touch is negotiated until desire breaks.',
+          narrativeHook: 'Intimacy exists under procedural regulation — every escalation requires documented consent, every advance is logged, every touch is negotiated. Spontaneity is not forbidden; it is procedurally impossible. Desire suffocates under the weight of compliance.',
+          eroticEngine: ['procedural suffocation', 'contractual intimacy', 'negotiated desire', 'compliance fatigue', 'spontaneity death'],
           sceneBias: { pacing: 'tense', intimacyRisk: 'extreme', powerDynamic: 'juridical' }
       },
       endless_edit: {
-          id: 'endless-edit', world: 'dystopia', title: 'The Endless Edit',
-          subtitle: 'Voluntary Erasure Culture',
-          uiDescription: 'Selves are drafts revised under social pressure. Love is the refusal to optimize away what you were.',
-          narrativeHook: 'People voluntarily edit themselves to remain socially viable — smoothing memories, shedding traits, discarding former selves. Intimacy stakes center on continuity: can you love someone who keeps revising? Can they recognize you after you revise yourself?',
-          eroticEngine: ['voluntary self-editing', 'memory continuity', 'recognition', 'shared past as anchor', 'being seen as you were'],
+          id: 'endless-edit', world: 'dystopia', title: 'Erasure',
+          subtitle: 'Identity Instability',
+          uiDescription: 'Memory and continuity dissolve attachment. Love fades as selves are edited away.',
+          narrativeHook: 'People voluntarily edit themselves to remain socially viable — smoothing memories, shedding traits, discarding former selves. Can you love someone who keeps revising? Can they recognize you after you revise yourself? The person you fell for may no longer exist.',
+          eroticEngine: ['identity dissolution', 'memory erosion', 'recognition failure', 'continuity anchor', 'being seen as you were'],
           sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'social' }
       }
   };
@@ -713,44 +750,158 @@ window.config = window.config || {
   const POST_APOC_FLAVORS = {
       ashfall: {
           id: 'ashfall', world: 'postapocalyptic', title: 'Ashfall',
-          subtitle: 'Bodily Fragility Condition',
-          uiDescription: 'The body fails first. Skin blisters, lungs scar, touching someone is a survival cost.',
-          narrativeHook: 'The environment attacks the body — air burns lungs, water corrodes skin, exposure is cumulative. Physical intimacy is not forbidden but genuinely costly: every hour skin-to-skin is an hour unprotected. Characters must decide what touch is worth when the body is already failing.',
-          eroticEngine: ['physical cost of contact', 'borrowed time', 'skin as liability', 'cumulative exposure', 'tenderness under duress'],
+          subtitle: 'Environmental Hostility',
+          uiDescription: 'The environment is an active antagonist. Proximity has a price: masks, burns, exposure time limits.',
+          narrativeHook: 'The world punishes closeness — toxic air, ash storms, radiation, contaminated water. Romance tension comes from proximity having a price: sharing oxygen, sealing a suit, washing ash off skin. Sex and intimacy are possible but constrained: timed, sheltered, improvised, costly. Tenderness can be lethal. Make the world punish mistakes immediately.',
+          eroticEngine: ['physical cost of contact', 'timed proximity', 'decon rituals', 'near-touch', 'tenderness under hazard'],
           sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'environmental' }
       },
       year_zero: {
-          id: 'year-zero', world: 'postapocalyptic', title: 'Year Zero',
-          subtitle: 'Psychological Rupture Condition',
-          uiDescription: 'The past intrudes. Everyone carries a before-self that doesn\'t fit the after-world.',
-          narrativeHook: 'There is a hard line between before and after. Characters carry memories, habits, and attachments from a world that no longer exists. Intimacy fails when one partner reaches for a version of love that belonged to the old world — and the other has already let it go. Grief is not backstory; it is active interference.',
-          eroticEngine: ['interrupted identity', 'grief intrusion', 'mismatched pasts', 'before-world reflexes', 'recognition failure'],
+          id: 'year-zero', world: 'postapocalyptic', title: 'Year 0',
+          subtitle: 'Sudden Rupture and Mass Loss',
+          uiDescription: 'The before/after line is still raw. Romance emerges from shock, grief, survivor guilt, and the need for a witness.',
+          narrativeHook: 'The apocalypse is recent or psychologically recent. Characters carry memories, habits, and attachments from a world that no longer exists. Intimacy is charged by fragility: tomorrow might not exist, I can\'t lose another person. Show the rupture through behavior, reflexes, and haunted logistics — not melodrama.',
+          eroticEngine: ['grief-charged desire', 'survivor bonding', 'fragile tomorrows', 'mourning rituals', 'witness intimacy'],
           sceneBias: { pacing: 'moderate', intimacyRisk: 'high', powerDynamic: 'psychological' }
       },
       dystimulation: {
           id: 'dystimulation', world: 'postapocalyptic', title: 'Dystimulation',
-          subtitle: 'Anhedonia Condition',
-          uiDescription: 'Desire doesn\'t arrive. The body is intact but sensation is absent. Connection despite numbness.',
-          narrativeHook: 'Something neurological or biological has shifted — pleasure signals are delayed, muted, or absent. This is not low libido as character flaw. Characters are not broken; they are navigating a body that no longer confirms what the mind wants. Intimacy requires patience, invention, and the willingness to stay present when nothing registers.',
-          eroticEngine: ['delayed response', 'asymmetric wanting', 'patience as devotion', 'sensation hunting', 'presence without confirmation'],
+          subtitle: 'Trauma-Blunted Reward Systems',
+          uiDescription: 'Desire is buried, not gone. Breakthroughs happen in flashes through danger, trust, or rediscovery.',
+          narrativeHook: 'Pleasure signals are delayed, muted, or absent — not low libido as character flaw, but neurochemical damage. Ignition comes through adrenaline, through patient rewiring together, or through the emotional unlock when armor drops and the body finally responds. Sex scenes must feel like high-stakes discovery, not medical troubleshooting.',
+          eroticEngine: ['adrenaline ignition', 'sensory rediscovery', 'emotional unlock', 'patience as devotion', 'breakthrough flashes'],
           sceneBias: { pacing: 'slow', intimacyRisk: 'medium', powerDynamic: 'internal' }
       },
       predation: {
           id: 'predation', world: 'postapocalyptic', title: 'Predation',
-          subtitle: 'Exposure Condition',
-          uiDescription: 'Being seen together makes you a target. Closeness creates leverage for others.',
-          narrativeHook: 'No law, no recourse, no institutional protection. Anyone who knows what you care about can use it against you. Intimacy is not illegal — it is strategically dangerous. Coercion is ambient and normalized. The threat is not a single predator but a social ecology where attachment is exploitable.',
-          eroticEngine: ['strategic vulnerability', 'leveraged attachment', 'visible dependence', 'ambient coercion', 'trust as exposure'],
+          subtitle: 'No Institutional Protection',
+          uiDescription: 'Intimacy creates vulnerability and leverage. Someone you love can be used against you.',
+          narrativeHook: 'The threat is people: raiders, gangs, coercion, manipulation, betrayal. Attachment is exploitable — giving your name, revealing a hideout, sharing supplies, sleeping with your guard down. Sex and intimacy can be hot because it is forbidden softness, but it carries danger and consequence. Safety is negotiated and fragile.',
+          eroticEngine: ['strategic vulnerability', 'exploitable attachment', 'forbidden softness', 'trust as exposure', 'negotiated safety'],
           sceneBias: { pacing: 'tense', intimacyRisk: 'extreme', powerDynamic: 'social' }
       },
       hunger: {
           id: 'hunger', world: 'postapocalyptic', title: 'Hunger',
-          subtitle: 'Chronic Scarcity Condition',
-          uiDescription: 'Sharing kills you. Desire competes with calories, warmth, medicine.',
-          narrativeHook: 'Scarcity is chronic, not dramatic — every calorie, every dose, every warm hour is accounted for. Desire competes directly with survival arithmetic. Generosity toward a partner is subtracted from your own endurance. Characters do not starve in a single scene; they erode across weeks of choosing someone else over themselves.',
-          eroticEngine: ['resource arithmetic', 'generosity as sacrifice', 'endurance erosion', 'warmth as currency', 'the cost of staying'],
+          subtitle: 'Chronic Scarcity',
+          uiDescription: 'Shortage forces betrayal, sacrifice, or hoarding. Love competes directly with survival.',
+          narrativeHook: 'The antagonist is shortage: food, water, antibiotics, batteries, shelter, heat. Romance tension is choice: give to your lover vs save for later, share vs survive, protect vs provide. Show moral injury and sacrifice — rationing, bargaining, trading dignity for supplies. Intimacy can be a refuge but also a cost.',
+          eroticEngine: ['resource arithmetic', 'generosity as sacrifice', 'moral injury', 'warmth as currency', 'sharp personal choices'],
           sceneBias: { pacing: 'moderate', intimacyRisk: 'high', powerDynamic: 'material' }
       }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FANTASY FLAVORS — Romance-breaking pressures (LOCKED, do not invent or merge)
+  // Each Flavor biases intimacy risk, power imbalance, and what goes wrong
+  // when characters choose love. Creatures emerge FROM Flavors, never replace them.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const FANTASY_FLAVORS = {
+      arcane_binding: {
+          id: 'arcane-binding', world: 'fantasy', title: 'Arcane Binding',
+          pressure: 'Magical bargains, enforced spells, or debt',
+          romanceCost: 'Romance choices incur magical cost or restriction',
+          avoid: 'fate or lineage framing (belongs to Fated Blood)',
+          eroticEngine: ['magical debt', 'spell enforcement', 'contract loopholes', 'binding consequence', 'forbidden bargain'],
+          sceneBias: { pacing: 'moderate', intimacyRisk: 'high', powerDynamic: 'magical' }
+      },
+      fated_blood: {
+          id: 'fated-blood', world: 'fantasy', title: 'Fated Blood',
+          pressure: 'Prophecy, inheritance, or bloodline consequence',
+          romanceCost: 'Romance threatens destiny or future generations',
+          avoid: 'active spell enforcement (belongs to Arcane Binding)',
+          eroticEngine: ['bloodline obligation', 'prophetic dread', 'inheritance burden', 'dynastic threat', 'forbidden lineage'],
+          sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'ancestral' }
+      },
+      the_inhuman: {
+          id: 'the-inhuman', world: 'fantasy', title: 'The Inhuman',
+          pressure: 'Incompatibility, not monstrosity',
+          romanceCost: 'Romance involves misunderstanding, asymmetry, or irreversible difference',
+          avoid: 'curse or punishment framing',
+          eroticEngine: ['species asymmetry', 'recognition failure', 'alien tenderness', 'irreversible difference', 'mistranslated desire'],
+          sceneBias: { pacing: 'moderate', intimacyRisk: 'high', powerDynamic: 'biological' }
+      },
+      the_beyond: {
+          id: 'the-beyond', world: 'fantasy', title: 'The Beyond',
+          pressure: 'Separation by death, time, immortality, or planes',
+          romanceCost: 'Romance persists but cannot fully resolve',
+          avoid: 'spatial exile or isolation-only framing',
+          eroticEngine: ['temporal mismatch', 'borrowed presence', 'fading contact', 'immortal patience', 'threshold intimacy'],
+          sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'existential' }
+      },
+      cursed: {
+          id: 'cursed', world: 'fantasy', title: 'Cursed',
+          pressure: 'External spells or enchantments blocking intimacy',
+          romanceCost: 'Romance is delayed, warped, or conditional',
+          avoid: 'moral punishment framing — curse may be arbitrary or inherited',
+          eroticEngine: ['conditional touch', 'warped timing', 'enchantment interference', 'arbitrary restriction', 'breaking conditions'],
+          sceneBias: { pacing: 'tense', intimacyRisk: 'high', powerDynamic: 'external' }
+      }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WORLD FLAVOR CLASSIFICATION — Systemic vs Contextual (internal only)
+  // Never expose these labels to UI or prompt output.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const SYSTEMIC_FLAVORS = new Set([
+    'glass_house', 'velvet_trap', 'the_ledger', 'crimson_veil', 'perfect_match',
+    'ministry_of_affection', 'endless_edit',
+    'ashfall', 'year_zero', 'dystimulation', 'predation', 'hunger',
+    'galactic_civilizations'
+  ]);
+
+  const CONTEXTUAL_FLAVORS = new Set([
+    'small_town', 'college', 'friends', 'blue_blood', 'office',
+    'superheroic_modern', 'supernatural_modern',
+    'arcane_binding', 'fated_blood', 'the_inhuman', 'the_beyond', 'cursed',
+    'final_frontier', 'first_contact', 'future_of_science', 'simulation',
+    'cyberpunk', 'post_human'
+  ]);
+
+  // Systemic flavor "World Pressure" lines for prompt injection
+  const SYSTEMIC_PRESSURE_LINES = {
+    glass_house: 'You will never love alone \u2014 you will love us.',
+    velvet_trap: 'True intimacy is forbidden in a world of endless indulgence.',
+    the_ledger: 'Your heart has a market value.',
+    crimson_veil: 'Desire is sacred. Would you risk damnation for it?',
+    perfect_match: 'You are not mine. You are humanity\u2019s.',
+    ministry_of_affection: 'Every touch negotiated until desire breaks.',
+    endless_edit: 'Love fades as selves are edited away.',
+    ashfall: 'The world burns between you.',
+    year_zero: 'Love is the aftermath.',
+    dystimulation: 'You must risk everything to feel anything.',
+    predation: 'Love makes you prey.',
+    hunger: 'Love competes with survival.',
+    galactic_civilizations: 'Love can save a world, or burn a galaxy.'
+  };
+
+  // Contextual flavor gravity — engine-facing prompt injection (LOCKED Bible entry)
+  const CONTEXT_GRAVITY = {
+    small_town:          'Visibility, memory, and rivalry intensify romantic consequence.',
+    college:             'Overwhelming choice and unformed futures compete with desire.',
+    friends:             'Group dynamics complicate every romantic choice.',
+    blue_blood:          'Legacy and rank shape romantic eligibility.',
+    office:              'Hierarchy and professionalism constrain open attraction.',
+    superheroic_modern:  'Secret identities, public expectations, and power asymmetry strain intimacy.',
+    supernatural_modern: 'Hidden realities destabilize trust and safety.',
+    arcane_binding:      'Magic enforces rules love cannot easily defy.',
+    fated_blood:         'Lineage dictates desire and forbidden alliances.',
+    the_inhuman:         'Nonhuman norms reshape how intimacy functions.',
+    cursed:              'Intimacy directly interacts with the affliction.',
+    the_beyond:          'Otherworldly forces intrude on intimate connection.',
+    final_frontier:      'Isolation, danger, duty, and close quarters intensify attachment.',
+    first_contact:       'Intimacy complicates a history-defining encounter.',
+    future_of_science:   'Technology reshapes identity and relational boundaries.',
+    simulation:          'Reality instability undermines emotional certainty.',
+    cyberpunk:           'Augmentation and commodification distort human connection.',
+    post_human:          'Humanity itself becomes relationally uncertain.'
+  };
+
+  // Same-world contextual flavor pools for auto-stack resolution
+  const WORLD_CONTEXTUAL_POOL = {
+    Fantasy: ['arcane_binding', 'fated_blood', 'the_inhuman', 'the_beyond', 'cursed'],
+    SciFi: ['final_frontier', 'first_contact', 'future_of_science', 'simulation', 'cyberpunk', 'post_human'],
+    Modern: ['small_town', 'college', 'friends', 'blue_blood', 'office', 'superheroic_modern', 'supernatural_modern']
   };
 
   // =========================
@@ -1241,20 +1392,20 @@ For veto/quill/god_mode:
               biblical_myth: ['biblical', 'angel', 'prophet', 'covenant', 'divine law', 'heaven', 'apocalypse']
           },
           dystopia: {
-              glass_house: ['surveillance', 'biometric', 'monitor', 'sensor', 'pulse', 'tracked', 'panopticon', 'exposure'],
-              velvet_trap: ['pleasure', 'mandatory', 'hedonism', 'meaningless', 'compulsory', 'longing', 'refusal'],
-              the_ledger: ['asset', 'valuation', 'leverage', 'depreciation', 'ROI', 'ownership', 'ranked', 'capital'],
-              crimson_veil: ['doctrine', 'dogma', 'apostasy', 'institution', 'sanctioned', 'heresy', 'purity'],
-              perfect_match: ['breeding', 'genetic', 'reproductive', 'pairing', 'eugenics', 'biological mandate', 'fitness'],
-              ministry_of_affection: ['accusation', 'retroactive', 'consent', 'branding', 'reputational', 'juridical', 'compliance'],
-              endless_edit: ['self-edit', 'revision', 'erasure', 'memory', 'continuity', 'recognition', 'optimize']
+              glass_house: ['hivenet', 'collective', 'shared consciousness', 'transparency', 'communal', 'disconnect', 'exclusivity', 'neural'],
+              velvet_trap: ['pleasure', 'mandatory', 'hedonism', 'indulgence', 'depth', 'longing', 'refusal', 'enforced'],
+              the_ledger: ['asset', 'valuation', 'leverage', 'liability', 'capital', 'credit', 'market value', 'financialized'],
+              crimson_veil: ['doctrine', 'dogma', 'heresy', 'theocratic', 'sanctioned', 'damnation', 'sacred', 'institution'],
+              perfect_match: ['breeding', 'genetic', 'reproductive', 'species', 'viability', 'distribution', 'pair-bond', 'infrastructure'],
+              ministry_of_affection: ['consent', 'contractual', 'negotiated', 'procedural', 'compliance', 'logged', 'regulation', 'spontaneity'],
+              endless_edit: ['erasure', 'identity', 'memory', 'continuity', 'recognition', 'revision', 'dissolve', 'edited']
           },
           postapocalyptic: {
-              ashfall: ['ash', 'radiation', 'contaminated', 'exposure', 'blisters', 'lungs', 'toxic', 'fallout', 'hazard', 'skin'],
-              year_zero: ['before', 'after', 'memory', 'grief', 'past life', 'rupture', 'old world', 'identity', 'loss', 'interrupted'],
-              dystimulation: ['numb', 'anhedonia', 'sensation', 'absent', 'delayed', 'response', 'flat', 'neurological', 'nothing registers'],
-              predation: ['predator', 'target', 'leverage', 'exploit', 'coercion', 'lawless', 'exposed', 'no protection', 'visible'],
-              hunger: ['scarcity', 'ration', 'calories', 'warmth', 'medicine', 'starvation', 'sharing', 'endurance', 'resource']
+              ashfall: ['ash', 'radiation', 'contaminated', 'exposure', 'toxic', 'fallout', 'hazard', 'masks', 'decon', 'burns'],
+              year_zero: ['before', 'after', 'grief', 'rupture', 'old world', 'loss', 'survivor', 'witness', 'fragile', 'raw'],
+              dystimulation: ['numb', 'anhedonia', 'sensation', 'blunted', 'ignition', 'adrenaline', 'rediscovery', 'neurochemical', 'breakthrough'],
+              predation: ['predator', 'target', 'leverage', 'exploit', 'coercion', 'lawless', 'exposed', 'raiders', 'vulnerability'],
+              hunger: ['scarcity', 'ration', 'calories', 'warmth', 'medicine', 'shortage', 'sharing', 'sacrifice', 'resource']
           }
       };
 
@@ -1975,7 +2126,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
           darkThemes: true,
           nonConImplied: false,
           violence: true,
-          boundaries: ["No sexual violence"],
+          boundaries: [],
           mode: 'balanced'
       },
 
@@ -12195,9 +12346,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           "Ming Dynasty palace", "French Revolution Paris", "Viking settlement", "Ottoman Empire harem"
       ],
       Fantasy: [
-          "Enchanted forest glade", "Floating sky citadel", "Dragon-ruled kingdom", "Fae court realm",
-          "Underwater mer-kingdom", "Crystal cave sanctuary", "Witch's hidden academy", "Cursed castle ruins",
-          "Living forest heart", "Elemental nexus", "Shadow realm border", "Phoenix empire capital"
+          "Blood-sealed tower", "Fae court crossing", "Ruined spell-keep", "Immortal's threshold",
+          "Cursed betrothal hall", "Shifting borderlands", "Witch-debt sanctum", "Forgotten god's altar",
+          "Inheritance trial grounds", "Veilside manor", "Dragon-bound estate", "Enchanted exile wood"
       ],
       SciFi: [
           "Space station colony", "Terraformed Mars city", "Generation ship deck", "Cyberpunk megacity",
@@ -15533,15 +15684,61 @@ The final image must look like a real published novel cover.`;
   // Returns a promise that resolves when story text is ready.
   // ═══════════════════════════════════════════════════════════════════════════
   /**
-   * Build world flavor directives for scene generation prompt.
-   * Dystopia flavors inject narrative hook, erotic engine keywords, and scene bias.
-   * Other worlds pass through worldSubtype as a simple label.
+   * Resolve world flavors: classify manual pick, auto-stack probabilistically.
+   * Returns array of {val, type} (max length 2).
+   * type = 'systemic' | 'contextual' | 'unclassified'
    */
-  function buildWorldFlavorDirectives(world, worldSubtype) {
+  function resolveWorldFlavors(world, manualPick) {
+      if (!manualPick) {
+          // Modern auto-resolution: 90% chance of picking a random contextual
+          if (world === 'Modern') {
+              if (Math.random() < 0.90) {
+                  const pool = WORLD_CONTEXTUAL_POOL.Modern;
+                  const pick = pool[Math.floor(Math.random() * pool.length)];
+                  return [{ val: pick, type: 'contextual' }];
+              }
+              return []; // ≤10% zero-flavor
+          }
+          return [];
+      }
+
+      const type = SYSTEMIC_FLAVORS.has(manualPick) ? 'systemic'
+                 : CONTEXTUAL_FLAVORS.has(manualPick) ? 'contextual'
+                 : 'unclassified';
+      const result = [{ val: manualPick, type }];
+
+      // Dystopia / PostApocalyptic: no auto-stack
+      if (world === 'Dystopia' || world === 'PostApocalyptic') return result;
+
+      // Historical: no auto-stack (unclassified)
+      if (world === 'Historical') return result;
+
+      // Fantasy / SciFi / Modern: 25% chance of auto-stacking a 2nd contextual
+      const pool = WORLD_CONTEXTUAL_POOL[world];
+      if (pool && Math.random() < 0.25) {
+          const candidates = pool.filter(v => v !== manualPick && CONTEXTUAL_FLAVORS.has(v));
+          if (candidates.length > 0) {
+              const pick = candidates[Math.floor(Math.random() * candidates.length)];
+              result.push({ val: pick, type: 'contextual' });
+          }
+      }
+
+      return result;
+  }
+
+  /**
+   * Build world flavor directives for LLM system prompt.
+   * Accepts resolved flavor array from resolveWorldFlavors().
+   * Systemic → World Flavor + World Pressure; Contextual → World Context + Context Effect.
+   * Max 4 flavor-related prompt lines. Never exposes classification labels.
+   */
+  function buildWorldFlavorDirectives(world, resolvedFlavors) {
       // Custom text flavor — user-entered free text, interpreted through the world lens
-      if (!worldSubtype && state.worldCustomText) {
+      const customText = state.worldCustomTexts?.[world] || '';
+      const hasManualPick = resolvedFlavors && resolvedFlavors.some(f => f.val === state.picks?.worldSubtype);
+      if (!hasManualPick && customText) {
           return `
-WORLD FLAVOR (custom): "${state.worldCustomText}"
+WORLD FLAVOR (custom): "${customText}"
 INTERPRETATION RULES:
 - This is a user-supplied setting hint. Interpret it through the lens of the ${world || 'chosen'} world.
 - If it names a recognizable setting, franchise, or concept, extract the TONAL and STRUCTURAL qualities — never reproduce copyrighted characters, dialogue, or plot.
@@ -15550,50 +15747,31 @@ INTERPRETATION RULES:
 - The custom flavor modifies WHERE and HOW the story feels, not what happens.`;
       }
 
-      if (!worldSubtype) return '';
+      if (!resolvedFlavors || resolvedFlavors.length === 0) return '';
 
-      // Dystopia flavors have rich data models — bias stakes, fear, and intimacy mechanics
-      if (world === 'Dystopia' && DYSTOPIA_FLAVORS[worldSubtype]) {
-          const f = DYSTOPIA_FLAVORS[worldSubtype];
-          const tone = state.picks?.tone || '';
-          const isSatirical = tone === 'Satirical';
-          let directives = `
-WORLD FLAVOR: ${f.title} (${f.subtitle})
-SCENE FRAMING (use as guidance, never quote verbatim):
-${f.narrativeHook}
-EROTIC DRIVERS: ${f.eroticEngine.join(', ')}
-SCENE BIAS: pacing=${f.sceneBias.pacing}, intimacy-risk=${f.sceneBias.intimacyRisk}, power=${f.sceneBias.powerDynamic}
-FLAVOR RULES:
-- Bias STAKES (what intimacy threatens), FEAR (what can go wrong), and SOCIAL CONSEQUENCES.
-- Do NOT bias prose style — the Tone axis controls that.
-- Consequences are social and systemic, not only state punishment.`;
-          if (!isSatirical) {
-              directives += `
-- ZERO comedic, whimsical, or absurdist framing. This is not satire. Play it straight.`;
+      // Sort: systemic before contextual
+      const sorted = [...resolvedFlavors].sort((a, b) => {
+          const order = { systemic: 0, contextual: 1, unclassified: 2 };
+          return (order[a.type] ?? 2) - (order[b.type] ?? 2);
+      });
+
+      let block = '';
+      for (const flavor of sorted) {
+          const label = getWorldLabel(flavor.val);
+          if (flavor.type === 'systemic') {
+              const pressure = SYSTEMIC_PRESSURE_LINES[flavor.val] || '';
+              block += `\nWorld Flavor: ${label}`;
+              if (pressure) block += `\nWorld Pressure: ${pressure}`;
+          } else if (flavor.type === 'contextual') {
+              const effect = CONTEXT_GRAVITY[flavor.val] || '';
+              block += `\nWorld Context: ${label}`;
+              if (effect) block += `\nContext Effect: ${effect}`;
+          } else {
+              // Unclassified (Historical) — simple label
+              block += `\nWorld Flavor: ${label}`;
           }
-          return directives;
       }
-
-      // Post-Apocalyptic flavors — bias conditions, fear, and intimacy cost
-      if (world === 'PostApocalyptic' && POST_APOC_FLAVORS[worldSubtype]) {
-          const f = POST_APOC_FLAVORS[worldSubtype];
-          let directives = `
-WORLD FLAVOR: ${f.title} (${f.subtitle})
-SCENE FRAMING (use as guidance, never quote verbatim):
-${f.narrativeHook}
-EROTIC DRIVERS: ${f.eroticEngine.join(', ')}
-SCENE BIAS: pacing=${f.sceneBias.pacing}, intimacy-risk=${f.sceneBias.intimacyRisk}, power=${f.sceneBias.powerDynamic}
-FLAVOR RULES:
-- Bias CONDITIONS (what the body/mind/world does to intimacy), FEAR (what goes wrong), and COST (what desire competes with).
-- Do NOT bias prose style — the Tone axis controls that.
-- The catastrophe that created this world is BACKGROUND ONLY. Never name, dramatize, or spectacularize the cause.
-- ZERO spectacle, disaster-porn, or genre shorthand. This is a condition, not an event. Play it mundane and grinding.`;
-          return directives;
-      }
-
-      // Other worlds: simple label pass-through
-      const label = getWorldLabel(worldSubtype);
-      return label ? `\nWORLD FLAVOR: ${label}` : '';
+      return block;
   }
 
   async function startBackgroundStoryGeneration() {
@@ -15601,8 +15779,12 @@ FLAVOR RULES:
 
       try {
           // Gather required state (same as Begin Story flow)
-          const rawPlayerName = $('playerNameInput')?.value.trim() || "The Protagonist";
-          const rawPartnerName = $('partnerNameInput')?.value.trim() || "The Love Interest";
+          const playerInputVal = $('playerNameInput')?.value.trim() || '';
+          const partnerInputVal = $('partnerNameInput')?.value.trim() || '';
+          const playerNameBlank = !playerInputVal;
+          const partnerNameBlank = !partnerInputVal;
+          const rawPlayerName = playerInputVal || "The Protagonist";
+          const rawPartnerName = partnerInputVal || "The Love Interest";
           const pGen = $('customPlayerGender')?.value.trim() || $('playerGender')?.value || 'Female';
           const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender')?.value || 'Male';
           const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns')?.value || 'She/Her';
@@ -15610,26 +15792,40 @@ FLAVOR RULES:
           const pAge = $('playerAgeInput')?.value.trim() || '';
           const lAge = $('partnerAgeInput')?.value.trim() || '';
 
-          // Normalization
+          // Normalization (skip for blank names — AI will invent)
           let pKernel, lKernel;
           try {
-              const playerNorm = await callNormalizationLayer({
-                  axis: 'character',
-                  user_text: rawPlayerName,
-                  context_signals: state.picks?.world || []
-              });
-              const partnerNorm = await callNormalizationLayer({
-                  axis: 'character',
-                  user_text: rawPartnerName,
-                  context_signals: state.picks?.world || []
-              });
-              pKernel = playerNorm.normalized_text || playerNorm.archetype || rawPlayerName;
-              lKernel = partnerNorm.normalized_text || partnerNorm.archetype || rawPartnerName;
+              if (!playerNameBlank) {
+                  const playerNorm = await callNormalizationLayer({
+                      axis: 'character',
+                      user_text: rawPlayerName,
+                      context_signals: state.picks?.world || []
+                  });
+                  pKernel = playerNorm.normalized_text || playerNorm.archetype || rawPlayerName;
+              } else {
+                  pKernel = rawPlayerName;
+              }
+              if (!partnerNameBlank) {
+                  const partnerNorm = await callNormalizationLayer({
+                      axis: 'character',
+                      user_text: rawPartnerName,
+                      context_signals: state.picks?.world || []
+                  });
+                  lKernel = partnerNorm.normalized_text || partnerNorm.archetype || rawPartnerName;
+              } else {
+                  lKernel = rawPartnerName;
+              }
           } catch (normError) {
               console.warn('[BACKGROUND:STORY] Normalization failed, using raw names:', normError);
               pKernel = rawPlayerName;
               lKernel = rawPartnerName;
           }
+
+          // Build name-invention directives for blank names
+          const nameInventionDirectives = [
+              playerNameBlank ? buildNameInventionDirective('Protagonist', pGen, pPro) : '',
+              partnerNameBlank ? buildNameInventionDirective('Love Interest', lGen, lPro) : ''
+          ].filter(Boolean).join('\n\n');
 
           // Store in state
           state.normalizedPlayerKernel = pKernel;
@@ -15647,8 +15843,16 @@ FLAVOR RULES:
           const archetypeDirectives = buildArchetypeDirectives(state.archetype?.primary, state.archetype?.modifier, lGen);
           const safetyStr = buildConsentDirectives();
 
-          // Build world flavor directives (dystopia flavors inject scene bias)
-          const worldFlavorDirectives = buildWorldFlavorDirectives(storyWorld, state.picks?.worldSubtype);
+          // Resolve world flavors (classify + auto-stack) and build prompt directives
+          const resolvedFlavors1 = resolveWorldFlavors(storyWorld, state.picks?.worldSubtype);
+          state.resolvedWorldFlavors = resolvedFlavors1; // persist for story lifetime
+          const worldFlavorDirectives = buildWorldFlavorDirectives(storyWorld, resolvedFlavors1);
+
+          // Pre-compute probabilistic injections so polarity can check suppression
+          const _tone1 = state.picks?.tone || 'Earnest';
+          const _fracture1 = buildTonalFracture(_tone1);
+          const _pullBlock1 = buildStoryPullBlock(_fracture1);
+          const _polarityBlock1 = buildPolarityBlock(_fracture1, _pullBlock1);
 
           const sysPrompt = `You are a bestselling erotica author.
 
@@ -15658,17 +15862,17 @@ Each response must advance character psychology, not just physical tension.
 End most responses with a complication, choice, or destabilizing revelation.
 
 You are writing a story with the following configuration:
-- World: ${storyWorld}${state.picks?.worldSubtype ? ` (${getWorldLabel(state.picks.worldSubtype)})` : (state.worldCustomText ? ` (Custom: ${state.worldCustomText})` : '')}
-- Tone: ${state.picks?.tone || 'Earnest'}
+- World: ${storyWorld}${state.worldCustomTexts?.[storyWorld] && !state.picks?.worldSubtype ? ` (Custom: ${state.worldCustomTexts[storyWorld]})` : ''}
+- Tone: ${_tone1}${_fracture1}
 - Genre: ${storyPowerRole}
-- Power Frame: ${storyPowerFrame}
-- Dynamic: ${state.picks?.dynamic || 'Enemies'}
+- Power Frame: ${storyPowerFrame}${_pullBlock1}
+${_polarityBlock1}
 - POV: ${state.picks?.pov || 'First'}
 ${worldFlavorDirectives}
 
-Protagonist: ${pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
-Love Interest: ${lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
-
+Protagonist: ${playerNameBlank ? '[TO BE INVENTED — see NAME INVENTION rules]' : pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
+Love Interest: ${partnerNameBlank ? '[TO BE INVENTED — see NAME INVENTION rules]' : lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
+${nameInventionDirectives ? '\n' + nameInventionDirectives : ''}
 ${archetypeDirectives}
 ${safetyStr}
 
@@ -15714,6 +15918,10 @@ RULES:
           state._backgroundStoryText = body;
           state._backgroundStoryTitle = title;
           state._backgroundStorySynopsis = synopsis;
+
+          // Record user-provided names so they're never reused by AI
+          if (!playerNameBlank) addUsedName(pKernel);
+          if (!partnerNameBlank) addUsedName(lKernel);
 
           console.log('[BACKGROUND:STORY] Scene 1 generated successfully');
           console.log('[BACKGROUND:STORY] Title:', title);
@@ -16238,7 +16446,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   let zoomOriginalNextSibling = null;
 
   function initSelectionHandlers(){
-    state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:["No sexual violence"] };
+    state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:[] };
 
     // Initialize default dynamic (single-select in 4-axis system)
     if (!state.picks.dynamic) {
@@ -16252,7 +16460,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         chkLock.addEventListener('change', (e) => { state.visual.autoLock = e.target.checked; saveStorySnapshot(); });
     }
 
-    // Bind boundary chips (non-locked ones)
+    // Bind boundary chips
     document.querySelectorAll('.boundary-chips .chip-gold[data-boundary]').forEach(chip => {
         if (chip.dataset.bound === '1') return;
         chip.dataset.bound = '1';
@@ -16383,7 +16591,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         tone: 'Tone',
         pressure: 'Pull',
         genre: 'Genre', // Legacy
-        dynamic: 'Polarity'
+        dynamic: 'Story Polarity'
       };
 
       // Find section title element
@@ -16488,13 +16696,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'small_town', label: 'Small Town' },
         { val: 'college', label: 'College' },
         { val: 'friends', label: 'Friends' },
-        { val: 'old_money', label: 'Old Money' },
+        { val: 'blue_blood', label: 'Blue Blood' },
         { val: 'office', label: '9-5 / Office' },
         { val: 'supernatural_modern', label: 'Supernatural' },
         { val: 'superheroic_modern', label: 'Superheroic' }
       ],
       Historical: [
         { val: 'prehistoric', label: 'Prehistoric' },
+        { val: 'bronze_age', label: 'Bronze Age' },
         { val: 'classical', label: 'Classical' },
         { val: 'medieval', label: 'Medieval' },
         { val: 'renaissance', label: 'Renaissance' },
@@ -16502,13 +16711,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: '20th_century', label: '20th Century' }
       ],
       Fantasy: [
-        { val: 'enchanted_realms', label: 'Enchanted Realms' },
-        { val: 'hidden_magic', label: 'Hidden Magic' },
-        { val: 'cursed_worlds', label: 'Cursed Worlds' }
+        { val: 'arcane_binding', label: 'Arcane Binding' },
+        { val: 'fated_blood', label: 'Fated Blood' },
+        { val: 'the_inhuman', label: 'The Inhuman' },
+        { val: 'the_beyond', label: 'The Beyond' },
+        { val: 'cursed', label: 'Cursed' }
       ],
       SciFi: [
-        { val: 'galactic_civilizations', label: 'Galactic Civilizations' },
-        { val: 'future_of_science', label: 'Future of Science' },
+        { val: 'galactic_civilizations', label: 'Galactic Conflict' },
+        { val: 'future_of_science', label: 'Science Future' },
         { val: 'cyberpunk', label: 'Cyberpunk' },
         { val: 'post_human', label: 'Post-Human' },
         { val: 'first_contact', label: 'First Contact' },
@@ -16516,17 +16727,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'final_frontier', label: 'Final Frontier' }
       ],
       Dystopia: [
-        { val: 'glass_house', label: 'The Glass House' },
-        { val: 'velvet_trap', label: 'The Velvet Trap' },
-        { val: 'the_ledger', label: 'The Ledger' },
-        { val: 'crimson_veil', label: 'The Crimson Veil' },
-        { val: 'perfect_match', label: 'The Perfect Match' },
-        { val: 'ministry_of_affection', label: 'The Ministry of Affection' },
-        { val: 'endless_edit', label: 'The Endless Edit' }
+        { val: 'glass_house', label: 'Glass House' },
+        { val: 'velvet_trap', label: 'Mandatory Pleasure' },
+        { val: 'the_ledger', label: 'Human Capital' },
+        { val: 'crimson_veil', label: 'Dogma' },
+        { val: 'perfect_match', label: 'Perfect Breed' },
+        { val: 'ministry_of_affection', label: 'Dysconsent' },
+        { val: 'endless_edit', label: 'Erasure' }
       ],
       PostApocalyptic: [
         { val: 'ashfall', label: 'Ashfall' },
-        { val: 'year_zero', label: 'Year Zero' },
+        { val: 'year_zero', label: 'Year 0' },
         { val: 'dystimulation', label: 'Dystimulation' },
         { val: 'predation', label: 'Predation' },
         { val: 'hunger', label: 'Hunger' }
@@ -16541,6 +16752,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const HISTORICAL_ERA_REMAP = {
       'Ancient': 'prehistoric',
       'ancient': 'prehistoric',
+      'Bronze Age': 'bronze_age',
+      'bronze age': 'bronze_age',
+      'Bronze': 'bronze_age',
       'Classical': 'classical',
       'Biblical': 'classical',
       'Medieval': 'medieval',
@@ -16958,8 +17172,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const origWidth = parseFloat(currentOpenCard.dataset.zoomOriginalWidth) || 112;
       const origHeight = parseFloat(currentOpenCard.dataset.zoomOriginalHeight) || 193;
       const sidePadding = 60;
-      const topPadding = 40;
-      const bottomPadding = 90;
+      const topPadding = 20;
+      const bottomPadding = 60;
       const maxWidth = window.innerWidth - sidePadding * 2;
       const maxHeight = window.innerHeight - topPadding - bottomPadding;
       const scale = Math.min(maxWidth / origWidth, maxHeight / origHeight);
@@ -17052,8 +17266,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // SCALE ZOOM: Card stays at original size, scale() enlarges uniformly
       // This preserves the PNG art contract — text, buttons, art all scale together
       const sidePadding = 60;
-      const topPadding = 40;
-      const bottomPadding = 90;
+      const topPadding = 20;
+      const bottomPadding = 60;
       const maxWidth = window.innerWidth - sidePadding * 2;
       const maxHeight = window.innerHeight - topPadding - bottomPadding;
       const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
@@ -17220,8 +17434,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // SCALE ZOOM: Card stays at original size, scale() enlarges uniformly
       const sidePadding = 60;
-      const topPadding = 40;
-      const bottomPadding = 90;
+      const topPadding = 20;
+      const bottomPadding = 60;
       const maxWidth = window.innerWidth - sidePadding * 2;
       const maxHeight = window.innerHeight - topPadding - bottomPadding;
       const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
@@ -17289,6 +17503,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Handle World-specific updates
       if (grp === 'world') {
+        state.resolvedWorldFlavors = null; // force recomputation on next generation
         updateWorldSubtypeVisibility(val, state.picks.tone);
         if (state.picks.worldSubtype && !WORLD_SUB_OPTIONS[val]?.some(o => o.val === state.picks.worldSubtype)) {
           state.picks.worldSubtype = null;
@@ -17333,32 +17548,35 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'small_town',          top: 56.7, left: 17.6, width: 29.1, height: 4.9 },
         { val: 'college',             top: 56.7, left: 53.3, width: 29.1, height: 4.5 },
         { val: 'friends',             top: 63.4, left: 17.6, width: 29.4, height: 4.5 },
-        { val: 'old_money',           top: 63.2, left: 53,   width: 29.4, height: 4.8 },
+        { val: 'blue_blood',          top: 63.2, left: 53,   width: 29.4, height: 4.8 },
         { val: 'office',              top: 69.8, left: 17.4, width: 29.6, height: 4.9 },
         { val: 'superheroic_modern',  top: 70,   left: 53,   width: 30.2, height: 4.6 },
         { val: 'supernatural_modern', top: 76.5, left: 17.6, width: 29.4, height: 5 }
       ],
       Historical: [
-        { val: 'prehistoric',   top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'classical',     top: 56.7, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'medieval',      top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'renaissance',   top: 63.3, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'victorian',     top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
-        { val: '20th_century',  top: 69.9, left: 53,   width: 29.2, height: 4.8 }
+        { val: '20th_century',  top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'victorian',     top: 56.7, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'renaissance',   top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'medieval',      top: 63.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'classical',     top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'bronze_age',    top: 69.9, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'prehistoric',   top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       Fantasy: [
-        { val: 'enchanted_realms', top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'hidden_magic',     top: 56.7, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'cursed_worlds',    top: 63.3, left: 17.6, width: 29.2, height: 4.8 }
+        { val: 'arcane_binding', top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'fated_blood',    top: 63.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'the_beyond',     top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'the_inhuman',    top: 69.9, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'cursed',         top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       SciFi: [
-        { val: 'galactic_civilizations', top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'future_of_science',      top: 56.7, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'cyberpunk',              top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'post_human',             top: 63.3, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'first_contact',          top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'simulation',             top: 69.9, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'final_frontier',         top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
+        { val: 'final_frontier',         top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'first_contact',          top: 56.7, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'future_of_science',      top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'simulation',             top: 63.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'post_human',             top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'cyberpunk',              top: 69.9, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'galactic_civilizations', top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       Dystopia: [
         { val: 'glass_house',            top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
@@ -17366,24 +17584,24 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'the_ledger',             top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
         { val: 'crimson_veil',           top: 63.3, left: 53,   width: 29.2, height: 4.8 },
         { val: 'perfect_match',          top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'ministry_of_affection',  top: 69.9, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'endless_edit',           top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
+        { val: 'endless_edit',           top: 69.9, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'ministry_of_affection',  top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       PostApocalyptic: [
-        { val: 'ashfall',        top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'year_zero',      top: 56.7, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'dystimulation',  top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'predation',      top: 63.3, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'hunger',         top: 69.9, left: 17.6, width: 29.2, height: 4.8 }
+        { val: 'ashfall',        top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'year_zero',      top: 63.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'dystimulation',  top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'predation',      top: 69.9, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'hunger',         top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ]
     };
     const BAKED_ART_SCROLL_ZONE = {
       Modern:          { top: 76.7, left: 54,   width: 27.5, height: 4.1 },
-      Historical:      { top: 76.5, left: 17.6, width: 64.6, height: 4.1 },
-      Fantasy:         { top: 63.3, left: 53,   width: 29.2, height: 4.1 },
+      Historical:      { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
+      Fantasy:         { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       SciFi:           { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       Dystopia:        { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
-      PostApocalyptic: { top: 69.9, left: 53,   width: 29.2, height: 4.1 }
+      PostApocalyptic: { top: 76.5, left: 53,   width: 29.2, height: 4.1 }
     };
     // Scrolling suggestions for baked-art cards — themes NOT already in the buttons
     const BAKED_ART_SUGGESTIONS = {
@@ -17392,12 +17610,164 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         'Astronaut', 'Activist', 'Agent', 'Retirement', 'World Travel',
         'West Wing', 'Undercover', 'Firefighter', 'Chef', 'Journalist',
         'Architect', 'Pilot', 'Deep Sea', 'Vineyard', 'Festival Circuit'
+      ],
+      Historical: [
+        'Ancient Rome', 'Silk Road', 'Viking Age', 'Samurai', 'Ottoman Court',
+        'Egyptian Dynasty', 'Crusades', 'Pirate Age', 'Wild West', 'Tudor Court',
+        'Byzantine', 'Ming Dynasty', 'Aztec Empire', 'French Revolution',
+        'Edo Japan', 'Colonial India', 'Ancient Greece', 'Mongol Empire',
+        'Roaring Twenties', 'Spartan'
+      ],
+      Fantasy: [
+        'Dragon Keep', 'Fae Court', 'Necromancer', 'Shapeshifter', 'Dark Academy',
+        'Witch Coven', 'Dragon Rider', 'Sunken Kingdom', 'Forbidden Library',
+        'Shadow Realm', 'Spirit World', 'Elf Kingdom', 'Portal World',
+        'Alchemist', 'Rune Magic', 'Blood Oath', 'Dream Walker',
+        'Enchanted Forest', 'Siren Sea', 'Golem War'
+      ],
+      SciFi: [
+        'Generation Ship', 'AI Uprising', 'Mars Colony', 'Space Station',
+        'Time Loop', 'Android Love', 'Parallel Universe', 'Asteroid Mining',
+        'Alien Embassy', 'Cryo Ship', 'Neural Interface', 'Orbital City',
+        'Quantum Realm', 'Wormhole', 'Clone Wars', 'Dyson Sphere',
+        'Mech Pilot', 'Virtual Reality', 'Terraform', 'Rogue Planet'
+      ],
+      Dystopia: [
+        'Surveillance State', 'Memory Trade', 'Caste System', 'Dream Police',
+        'Fertility Lottery', 'Happiness Tax', 'Clone Labor', 'Thought Crime',
+        'Body Auction', 'Loyalty Score', 'Emotion Ban', 'Sleep Ration',
+        'Name Lottery', 'Pain Economy', 'Truth Serum', 'Love License',
+        'Beauty Standard', 'Age Limit', 'Silence Law', 'Pleasure Debt'
+      ],
+      PostApocalyptic: [
+        'Nuclear Winter', 'Overgrown Ruins', 'Warlord Territory', 'Bunker Society',
+        'Mutant Frontier', 'Flooded Earth', 'Frozen Wasteland', 'Desert Expanse',
+        'Last Outpost', 'Nomad Caravan', 'Plague Survivor', 'Robot Uprising',
+        'Solar Collapse', 'Underground Haven', 'Ghost City', 'Tribal Rebirth',
+        'Quarantine Zone', 'Rad Storm', 'Sunken Metropolis', 'Feral Coast'
       ]
+    };
+
+    // Verbatim tooltip microtext for baked-art flavor hit zones
+    const BAKED_ART_TOOLTIPS = {
+      // Modern flavors
+      small_town: 'Everyone knows, remembers, and judges who you love.',
+      college: 'Desire ignites before identity hardens.',
+      friends: 'Crossing the line risks everything you already have.',
+      blue_blood: 'Love threatens legacy, inheritance, and unspoken rules.',
+      office: 'Attraction grows where it could cost everything.',
+      superheroic_modern: 'Love lives beside secrets, danger, and impossible responsibility.',
+      supernatural_modern: 'Desire entangles hidden worlds just beneath ordinary life.',
+      // Historical flavors
+      '20th_century': 'Love strained by war, progress, and modern disillusionment.',
+      victorian: 'Desire hidden beneath manners, reputation, and restraint.',
+      renaissance: 'Passion collides with ambition, art, and dangerous politics.',
+      medieval: 'Honor, faith, and duty stand between lovers.',
+      classical: 'Love challenged by fate, glory, and immortal ideals.',
+      bronze_age: 'Desire, caught between gods and empires.',
+      prehistoric: 'Instinct, hunger, and passion before any rule but survival.',
+      // Sci-Fi flavors
+      final_frontier: 'Love tested by distance, discovery, and leaving everything behind.',
+      first_contact: 'Desire collides with the truly unknown.',
+      future_of_science: 'Love measured against progress, reason, and unintended consequences.',
+      simulation: 'Intimacy questions what\u2019s real, chosen, or programmed.',
+      cyberpunk: 'Love survives beneath power, tech, and exploitation.',
+      post_human: 'Desire outpaces bodies, identity, and human limits.',
+      galactic_civilizations: 'Love can save a world, or burn a galaxy.',
+      // Dystopia flavors
+      glass_house: 'You will never love alone \u2014 you will love us.',
+      velvet_trap: 'True intimacy is forbidden in a world of endless indulgence.',
+      the_ledger: 'Your heart has a market value.',
+      crimson_veil: 'Desire is sacred. Would you risk damnation for it?',
+      perfect_match: 'You are not mine. You are humanity\u2019s.',
+      ministry_of_affection: 'Every touch negotiated until desire breaks.',
+      endless_edit: 'Love fades as selves are edited away.',
+      // Post-Apocalyptic flavors
+      ashfall: 'The world burns between you.',
+      year_zero: 'Love is the aftermath.',
+      dystimulation: 'You must risk everything to feel anything.',
+      predation: 'Love makes you prey.',
+      hunger: 'Love competes with survival.',
+      // Fantasy flavors
+      arcane_binding: 'Magic binds them to choices love cannot undo.',
+      fated_blood: 'Their blood decides who they may love.',
+      the_inhuman: 'To love them means never fully belonging together.',
+      the_beyond: 'Love survives death, distance, or worlds apart.',
+      cursed: 'A spell stands between them, waiting to be broken.'
+    };
+
+    // Pressure flavor tooltips — literary descriptions of how each flavor manifests
+    const PRESSURE_FLAVOR_TOOLTIPS = {
+      // Power & Control
+      Billionaire: 'Wealth becomes the cage — and the key.',
+      CrimeSyndicate: 'Loyalty is currency; betrayal costs blood.',
+      Political: 'Every alliance is a leash with two ends.',
+      Espionage: 'Love is the one secret they cannot afford.',
+      CultOrder: 'Devotion demanded before desire is permitted.',
+      // Risk & Exposure
+      Noir: 'Every shadow hides a choice already made.',
+      ForbiddenKnowledge: 'The truth demands its price in innocence.',
+      PublicScandal: 'Privacy is the first casualty of desire.',
+      Surveillance: 'Every glance is witnessed; every touch, evidence.',
+      DoubleLife: 'Two selves, one heart, no room for both.',
+      // Escape & Pursuit
+      Heist: 'Trust is the heist within the heist.',
+      Rescue: 'Saving someone changes who you become.',
+      OnTheRun: 'Every safe place is temporary; every bond, a risk.',
+      Captivity: 'Walls make desire desperate and inventive.',
+      BorderCrossing: 'Freedom waits beyond the line they dare not cross.',
+      // Obligation & Burden
+      ChosenBurdened: 'Destiny chose them. They would have chosen differently.',
+      DutyToFamily: 'Blood demands what the heart cannot afford.',
+      Prophecy: 'The future is written. Defiance is the only freedom.',
+      CommandRank: 'Authority makes every tenderness a compromise.',
+      Inheritance: 'What was given poisons what was earned.',
+      // Desire & Obsession
+      Obsession: 'Want becomes need becomes gravity.',
+      ForbiddenRomance: 'The rule exists because the desire is that strong.',
+      Rivalry: 'They compete because surrender terrifies them both.',
+      Addiction: 'The only thing worse than having it is stopping.',
+      Jealousy: 'Possession disguised as passion, corroding from within.',
+      // Reckoning & Past
+      RelentlessPast: 'Who they were never stops reaching for who they are.',
+      Redemption: 'Forgiveness begins with deserving it less.',
+      OldDebts: 'The past always sends a bill.',
+      BetrayalHistory: 'Trust, once shattered, cuts with every piece.',
+      LostRelationship: 'What ended between them never truly stopped.',
+      // Transformation
+      BecomingPowerful: 'Strength arrives. Tenderness may not survive the crossing.',
+      MoralCorruption: 'Each line crossed redraws the map of who they are.',
+      Awakening: 'Something dormant stirs — and hunger follows.',
+      IdentityShift: 'The self dissolves. What emerges may not remember love.',
+      Ascension: 'Evolution has no reverse. Neither does loss.',
+      // Survival
+      WarZone: 'Between bombardments, desire is the only defiance.',
+      Collapse: 'When systems fail, only connection holds.',
+      Exile: 'Banishment strips everything but what you carry inside.',
+      Scarcity: 'When there is not enough, love becomes the hardest luxury.',
+      EndOfEra: 'The old world dies. What blooms in the ashes?'
     };
 
     function populateWorldZoomContent(card, worldVal) {
       const frontFace = card.querySelector('.sb-card-front');
       if (!frontFace) return;
+
+      // Dystopia has separate zoomed/unzoomed PNGs — set zoomed art explicitly
+      // so inlineCardFaceBackgrounds() captures the correct (zoomed) art.
+      // Must run BEFORE the early-return guard below.
+      if (worldVal === 'Dystopia') {
+        frontFace.style.backgroundImage = "url('/assets/card-art/cards/Tarot-Gold-on-Black-DYSTOPIAzoomed.png')";
+      } else if (worldVal === 'Fantasy') {
+        frontFace.style.backgroundImage = "url('/assets/card-art/cards/Tarot-Gold-on-Black-FANTASYzoomed.png')";
+      } else if (worldVal === 'Historical') {
+        frontFace.style.backgroundImage = "url('/assets/card-art/cards/Tarot-Gold-on-Black-HISTORICALzoomed.png')";
+      } else if (worldVal === 'Modern') {
+        frontFace.style.backgroundImage = "url('/assets/card-art/cards/Tarot-Gold-on-Black-MODERNzoomed.png')";
+      } else if (worldVal === 'PostApocalyptic') {
+        frontFace.style.backgroundImage = "url('/assets/card-art/cards/Tarot-Gold-on-Black-PostApoczoomed.png')";
+      } else if (worldVal === 'SciFi') {
+        frontFace.style.backgroundImage = "url('/assets/card-art/cards/Tarot-Gold-on-Black-SciFizoomed.png')";
+      }
 
       // If baked-art overlay already exists for this world, preserve it
       // (prevents re-creation that would destroy user's selection state)
@@ -17458,6 +17828,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           zone.style.width = btn.width + '%';
           zone.style.height = btn.height + '%';
 
+          // Tooltip microtext (Fantasy flavors)
+          if (BAKED_ART_TOOLTIPS[btn.val]) {
+            zone.dataset.tooltip = BAKED_ART_TOOLTIPS[btn.val];
+          }
+
           if (state.picks.worldSubtype === btn.val) {
             zone.classList.add('selected');
           }
@@ -17467,6 +17842,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
           zone.addEventListener('click', (e) => {
             e.stopPropagation();
+            state.resolvedWorldFlavors = null; // force recomputation on next generation
             if (state.picks.worldSubtype === btn.val) {
               state.picks.worldSubtype = null;
               zone.classList.remove('selected');
@@ -17475,7 +17851,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               state.picks.worldSubtype = btn.val;
               zone.classList.add('selected');
               // Clear custom text when selecting a preset flavor
-              state.worldCustomText = '';
+              if (!state.worldCustomTexts) state.worldCustomTexts = {};
+              state.worldCustomTexts[worldVal] = '';
               const scrollEl = overlay.querySelector('.baked-scroll-zone');
               if (scrollEl) {
                 scrollEl.classList.remove('editing', 'committed');
@@ -17487,6 +17864,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             }
             incrementDSPActivation();
             updateSynopsisPanel(true);
+            if (typeof updateWorldBreadcrumbFlavor === 'function') updateWorldBreadcrumbFlavor();
           });
 
           overlay.appendChild(zone);
@@ -17509,7 +17887,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           const input = document.createElement('input');
           input.type = 'text';
           input.className = 'baked-scroll-input';
-          input.value = state.worldCustomText || '';
+          if (!state.worldCustomTexts) state.worldCustomTexts = {};
+          input.value = state.worldCustomTexts[worldVal] || '';
 
           // Scrolling placeholder — doubled for seamless loop
           const phWrap = document.createElement('div');
@@ -17523,7 +17902,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           function commitCustomText() {
             const text = input.value.trim();
             if (text) {
-              state.worldCustomText = normalizeWorldCustom(text);
+              state.worldCustomTexts[worldVal] = normalizeWorldCustom(text);
               // Deselect preset buttons — custom overrides
               overlay.querySelectorAll('.baked-hitzone').forEach(z => z.classList.remove('selected'));
               state.picks.worldSubtype = null;
@@ -17531,21 +17910,25 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               scrollContainer.classList.add('committed');
               input.blur();
             } else {
-              state.worldCustomText = '';
+              state.worldCustomTexts[worldVal] = '';
               scrollContainer.classList.remove('editing', 'committed');
               phWrap.classList.remove('hidden');
             }
             incrementDSPActivation();
             updateSynopsisPanel(true);
+            if (typeof updateWorldBreadcrumbFlavor === 'function') updateWorldBreadcrumbFlavor();
           }
 
-          // Click the zone → enter editing mode
+          // Click the zone → enter editing mode and deselect preset buttons
           scrollContainer.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!scrollContainer.classList.contains('editing')) {
               scrollContainer.classList.add('editing');
               scrollContainer.classList.remove('committed');
               phWrap.classList.add('hidden');
+              // Deselect preset flavor buttons — custom field takes priority
+              overlay.querySelectorAll('.baked-hitzone').forEach(z => z.classList.remove('selected'));
+              state.picks.worldSubtype = null;
               input.focus();
             }
           });
@@ -17564,7 +17947,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
           input.addEventListener('input', () => {
             // Live update while typing
-            state.worldCustomText = normalizeWorldCustom(input.value);
+            state.worldCustomTexts[worldVal] = normalizeWorldCustom(input.value);
             if (input.value.trim().length > 0) {
               overlay.querySelectorAll('.baked-hitzone').forEach(z => z.classList.remove('selected'));
               state.picks.worldSubtype = null;
@@ -17578,12 +17961,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             } else {
               scrollContainer.classList.remove('editing', 'committed');
               phWrap.classList.remove('hidden');
-              state.worldCustomText = '';
+              state.worldCustomTexts[worldVal] = '';
+              if (typeof updateWorldBreadcrumbFlavor === 'function') updateWorldBreadcrumbFlavor();
             }
           });
 
-          // Restore state if custom text was previously entered
-          if (state.worldCustomText) {
+          // Restore state if custom text was previously entered for THIS world
+          if (state.worldCustomTexts[worldVal]) {
             scrollContainer.classList.add('editing', 'committed');
             phWrap.classList.add('hidden');
           }
@@ -17671,6 +18055,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
+            state.resolvedWorldFlavors = null; // force recomputation on next generation
             if (state.picks.worldSubtype === flavor.val) {
               state.picks.worldSubtype = null;
               btn.classList.remove('selected');
@@ -17704,7 +18089,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         const customInput = document.createElement('textarea');
         customInput.className = 'sb-zoom-custom-input';
         customInput.id = 'worldCustomInput-' + Date.now();
-        customInput.value = state.worldCustomText || '';
+        if (!state.worldCustomTexts) state.worldCustomTexts = {};
+        customInput.value = state.worldCustomTexts[worldVal] || '';
         customInput.rows = 2;
 
         // Scrolling flavor examples — show this world's flavor labels in grey italic
@@ -17732,7 +18118,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         };
 
         customInput.addEventListener('input', (e) => {
-          state.worldCustomText = normalizeWorldCustom(e.target.value);
+          if (!state.worldCustomTexts) state.worldCustomTexts = {};
+          state.worldCustomTexts[worldVal] = normalizeWorldCustom(e.target.value);
           updatePlaceholderVisibility();
         });
 
@@ -17777,7 +18164,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const flavors = PRESSURE_FLAVORS[pressureVal] || [];
       if (flavors.length === 0) return;
 
-      // === FLAVOR ARC in the half-circle: ONLY the number ===
+      // === FLAVOR ARC: number + "FLAVORS" label in the half-circle arch ===
       var arcContainer = document.createElement('div');
       arcContainer.className = 'sb-zoom-flavor-arc';
 
@@ -17785,45 +18172,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       num.className = 'arc-flavor-number';
       num.textContent = flavors.length;
       arcContainer.appendChild(num);
+
+      var label = document.createElement('span');
+      label.className = 'arc-flavor-label';
+      label.textContent = 'FLAVORS';
+      arcContainer.appendChild(label);
+
       frontFace.appendChild(arcContainer);
 
-      // === ZOOM CONTENT: "FLAVORS" label + flavor buttons ===
+      // === ZOOM CONTENT: flavor buttons with tooltips ===
       const zoomContent = document.createElement('div');
       zoomContent.className = 'sb-zoom-content';
-
-      // "FLAVORS" curved text — bottom-of-circle arc, below the arch, above buttons
-      var ns = 'http://www.w3.org/2000/svg';
-      var svg = document.createElementNS(ns, 'svg');
-      svg.setAttribute('class', 'sb-zoom-flavor-label');
-      svg.setAttribute('viewBox', '0 0 100 18');
-      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-
-      var defs = document.createElementNS(ns, 'defs');
-      var path = document.createElementNS(ns, 'path');
-      var pathId = 'zoomPressureArc_' + (++_flavorArcUid);
-      path.setAttribute('id', pathId);
-      // Downward arc (bottom of circle) — sweep-flag=0 curves down
-      path.setAttribute('d', 'M 15,6 A 100,100 0 0,0 85,6');
-      path.setAttribute('fill', 'none');
-      defs.appendChild(path);
-      svg.appendChild(defs);
-
-      var text = document.createElementNS(ns, 'text');
-      text.setAttribute('fill', '#c9a84c');
-      text.setAttribute('font-size', '6');
-      text.setAttribute('font-family', 'Cinzel, serif');
-      text.setAttribute('font-variant', 'small-caps');
-      text.setAttribute('letter-spacing', '2');
-
-      var textPath = document.createElementNS(ns, 'textPath');
-      textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + pathId);
-      textPath.setAttribute('startOffset', '50%');
-      textPath.setAttribute('text-anchor', 'middle');
-      textPath.textContent = 'flavors';
-
-      text.appendChild(textPath);
-      svg.appendChild(text);
-      zoomContent.appendChild(svg);
 
       const flavorGrid = document.createElement('div');
       flavorGrid.className = 'sb-zoom-flavors';
@@ -17831,9 +18190,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       flavors.forEach(flavor => {
         const btn = document.createElement('button');
         btn.className = 'sb-flavor-btn';
-        btn.textContent = flavor.label;
         btn.dataset.val = flavor.id;
         btn.title = flavor.description || '';
+
+        // Tooltip for literary description
+        if (PRESSURE_FLAVOR_TOOLTIPS[flavor.id]) {
+          btn.dataset.tooltip = PRESSURE_FLAVOR_TOOLTIPS[flavor.id];
+        }
+
+        // Text node inside a span so gleam layer doesn't affect text flow
+        const textSpan = document.createElement('span');
+        textSpan.className = 'sb-flavor-btn-text';
+        textSpan.textContent = flavor.label;
+        btn.appendChild(textSpan);
 
         if (state.picks.flavor === flavor.id) {
           btn.classList.add('selected');
@@ -17852,6 +18221,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           state.picks.genre = getEffectiveGenre(pressureVal, state.picks.flavor);
           incrementDSPActivation();
           updateSynopsisPanel(true);
+          syncPressureFrontFlavors();
         });
 
         flavorGrid.appendChild(btn);
@@ -17859,6 +18229,188 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       zoomContent.appendChild(flavorGrid);
       frontFace.appendChild(zoomContent);
+
+      // === BUTTON GLEAM: individual gleam layers offset 5px from card gleam ===
+      if (window.applyGleamToElement) {
+        flavorGrid.querySelectorAll('.sb-flavor-btn').forEach(btn => {
+          window.applyGleamToElement(btn, 5);
+        });
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // UNZOOMED PRESSURE FRONT FLAVORS — Miniature buttons on the card face
+    // Lets users pick a flavor without entering zoom view.
+    // ═══════════════════════════════════════════════════════════════════
+    function initPressureFrontFlavors() {
+      document.querySelectorAll('#pressureGrid .sb-card[data-grp="pressure"]').forEach(card => {
+        if (card.dataset.val === 'destiny') return; // Skip Destiny's Choice card
+        const pressureVal = card.dataset.val;
+        const flavors = PRESSURE_FLAVORS[pressureVal];
+        if (!flavors || flavors.length === 0) return;
+
+        const frontFace = card.querySelector('.sb-card-front');
+        if (!frontFace) return;
+
+        // Permanent flavor arc (number in half-circle arch)
+        if (!frontFace.querySelector('.sb-card-arc-flavors')) {
+          const arc = buildFlavorArc(flavors.length);
+          arc.dataset.permanent = '1';
+          frontFace.appendChild(arc);
+        }
+
+        // Already populated?
+        if (frontFace.querySelector('.pressure-front-flavors')) return;
+
+        // Miniature flavor button column
+        const container = document.createElement('div');
+        container.className = 'pressure-front-flavors';
+
+        flavors.forEach(flavor => {
+          const btn = document.createElement('button');
+          btn.className = 'sb-flavor-btn';
+          btn.textContent = flavor.label;
+          btn.dataset.val = flavor.id;
+          btn.title = flavor.description || '';
+
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Only allow selection on the currently active (flipped) pressure card
+            if (!card.classList.contains('selected')) return;
+
+            if (state.picks.flavor === flavor.id) {
+              state.picks.flavor = null;
+              btn.classList.remove('selected');
+            } else {
+              container.querySelectorAll('.sb-flavor-btn').forEach(b => b.classList.remove('selected'));
+              state.picks.flavor = flavor.id;
+              btn.classList.add('selected');
+            }
+            state.picks.genre = getEffectiveGenre(pressureVal, state.picks.flavor);
+            incrementDSPActivation();
+            updateSynopsisPanel(true);
+            syncPressureZoomFlavors();
+          });
+
+          container.appendChild(btn);
+        });
+
+        frontFace.appendChild(container);
+      });
+    }
+
+    // Sync unzoomed pressure flavor button highlights with current state
+    function syncPressureFrontFlavors() {
+      document.querySelectorAll('#pressureGrid .pressure-front-flavors').forEach(container => {
+        container.querySelectorAll('.sb-flavor-btn').forEach(btn => {
+          btn.classList.toggle('selected', state.picks.flavor === btn.dataset.val);
+        });
+      });
+    }
+
+    // Sync zoom-view flavor buttons with current state
+    function syncPressureZoomFlavors() {
+      const zoomFlavors = document.querySelector('.sb-zoom-content .sb-zoom-flavors');
+      if (!zoomFlavors) return;
+      zoomFlavors.querySelectorAll('.sb-flavor-btn').forEach(btn => {
+        btn.classList.toggle('selected', state.picks.flavor === btn.dataset.val);
+      });
+    }
+
+    /**
+     * Inject Destiny's Choice card into pressureGrid (9th card, bottom-right)
+     * Mirrors archetype Destiny card structure with stack layers + sparkles
+     */
+    function injectPressureDestinyCard() {
+      const grid = document.getElementById('pressureGrid');
+      if (!grid || grid.querySelector('#pressureDestinyChoiceCard')) return;
+
+      const destinyCard = document.createElement('div');
+      destinyCard.className = 'sb-card destiny-choice-card pressure-destiny-card';
+      destinyCard.id = 'pressureDestinyChoiceCard';
+      destinyCard.dataset.grp = 'pressure';
+      destinyCard.dataset.val = 'destiny';
+      destinyCard.innerHTML = `
+        <div class="destiny-stack-layer layer-5"></div>
+        <div class="destiny-stack-layer layer-4"></div>
+        <div class="destiny-stack-layer layer-3"></div>
+        <div class="destiny-stack-layer layer-2"></div>
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back destiny-choice-back">
+            <span class="sb-card-title">Destiny's Choice</span>
+            <div class="destiny-choice-sparkle-container" id="pressureDestinySparkles"></div>
+          </div>
+          <div class="sb-card-face sb-card-front destiny-choice-front">
+            <span class="sb-card-title">Destiny's Choice</span>
+            <div class="destiny-embossed-nameplate">
+              <div class="destiny-embossed-line"></div>
+              <div class="destiny-embossed-line"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      destinyCard.addEventListener('click', () => triggerPressureDestinySequence());
+
+      grid.appendChild(destinyCard);
+      if (window.applyCardGleam) window.applyCardGleam(destinyCard);
+
+      // Start sparkles after brief delay
+      setTimeout(() => {
+        if (typeof startSparkleEmitter === 'function') {
+          startSparkleEmitter('pressureDestinySparkles', 'destinyDeck', 3);
+        }
+      }, 100);
+    }
+
+    /**
+     * Inject Destiny's Choice card into dynamicGrid (last group, bottom-right)
+     */
+    function injectDynamicDestinyCard() {
+      const dynamicGrid = document.getElementById('dynamicGrid');
+      if (!dynamicGrid || dynamicGrid.querySelector('#dynamicDestinyChoiceCard')) return;
+
+      // Find the last sb-grid inside the last dynamic-group
+      const groups = dynamicGrid.querySelectorAll('.dynamic-group');
+      const lastGroup = groups[groups.length - 1];
+      const lastGrid = lastGroup?.querySelector('.sb-grid');
+      if (!lastGrid) return;
+
+      const destinyCard = document.createElement('div');
+      destinyCard.className = 'sb-card destiny-choice-card dynamic-destiny-card';
+      destinyCard.id = 'dynamicDestinyChoiceCard';
+      destinyCard.dataset.grp = 'dynamic';
+      destinyCard.dataset.val = 'destiny';
+      destinyCard.innerHTML = `
+        <div class="destiny-stack-layer layer-5"></div>
+        <div class="destiny-stack-layer layer-4"></div>
+        <div class="destiny-stack-layer layer-3"></div>
+        <div class="destiny-stack-layer layer-2"></div>
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back destiny-choice-back">
+            <span class="sb-card-title">Destiny's Choice</span>
+            <div class="destiny-choice-sparkle-container" id="dynamicDestinySparkles"></div>
+          </div>
+          <div class="sb-card-face sb-card-front destiny-choice-front">
+            <span class="sb-card-title">Destiny's Choice</span>
+            <div class="destiny-embossed-nameplate">
+              <div class="destiny-embossed-line"></div>
+              <div class="destiny-embossed-line"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      destinyCard.addEventListener('click', () => triggerDynamicDestinySequence());
+
+      lastGrid.appendChild(destinyCard);
+      if (window.applyCardGleam) window.applyCardGleam(destinyCard);
+
+      setTimeout(() => {
+        if (typeof startSparkleEmitter === 'function') {
+          startSparkleEmitter('dynamicDestinySparkles', 'destinyDeck', 3);
+        }
+      }, 100);
     }
 
     function updateSelectionCardStates() {
@@ -18070,7 +18622,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           const oldFlavorCount = c.querySelector('.sb-card-flavor-count');
           if (oldFlavorCount) oldFlavorCount.remove();
           const oldArc = c.querySelector('.sb-card-arc-flavors');
-          if (oldArc) oldArc.remove();
+          if (oldArc && !oldArc.dataset.permanent) oldArc.remove();
           // Fade out sparkles on deselected cards
           const oldSparkleContainer = c.querySelector('.card-selection-sparkles');
           if (oldSparkleContainer && typeof stopSparkleEmitter === 'function') {
@@ -18109,6 +18661,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         // PRESSURE SELECTION: Flavor lives INSIDE zoomed pressure card, NOT as separate row
         // Flavor options rendered via populatePressureZoomContent() when card is zoomed
         if (grp === 'pressure') {
+          // Override Destiny's Choice if user manually selects
+          pressureSelectedViaDestiny = false;
           // Clear any previous flavor selection (new pressure = fresh slate)
           state.picks.flavor = null;
           // Sync to legacy genre using pressure's default
@@ -18121,6 +18675,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               frontFace.appendChild(buildFlavorArc(flavors.length));
             }
           }
+          // Sync unzoomed flavor button highlights (all cleared)
+          syncPressureFrontFlavors();
         }
 
         // FLAVOR SELECTION: Sync to legacy genre and update world breadcrumb
@@ -18139,6 +18695,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             dissolveEphemeralBreadcrumbs();
             console.log('[Breadcrumb] POV selected — ephemeral breadcrumbs dissolving');
           }
+        }
+
+        // DYNAMIC SELECTION: Override Destiny's Choice if user manually selects
+        if (grp === 'dynamic') {
+          dynamicSelectedViaDestiny = false;
         }
 
         // Special handling: show/hide Horror subtypes when Tone changes
@@ -18599,6 +19160,24 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * @param {string} val - The selected value
    * @returns {object} { title, subtitle } for breadcrumb display
    */
+  // Human-readable display names for pressure breadcrumbs (matching card back text)
+  const PRESSURE_DISPLAY = {
+    PowerControl: 'Power & Control',
+    EscapePursuit: 'Escape & Pursuit',
+    DesireObsession: 'Desire & Obsession',
+    Survival: 'Survival'
+  };
+
+  // Human-readable display names for dynamic/polarity breadcrumbs
+  const DYNAMIC_DISPLAY = {
+    Proximity: 'Forced Proximity',
+    SecretIdentity: 'Secret Identity',
+    Friends: 'Friends to Lovers',
+    Enemies: 'Enemies to Lovers',
+    SecondChance: '2nd Chance',
+    Forbidden: 'Forbidden Love'
+  };
+
   function getBreadcrumbLabel(grp, val) {
     const labels = {
       authorship: { title: val === 'manual' ? 'Choose Your Hand' : 'Guided Fate', subtitle: null },
@@ -18613,15 +19192,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       length: { title: val, subtitle: 'Length' },
       world: {
         title: val,
-        subtitle: state.picks?.flavor ? state.picks.flavor : null
+        subtitle: state.picks?.worldSubtype ? getWorldLabel(state.picks.worldSubtype) : (state.worldCustomTexts?.[val] || null)
       },
-      tone: { title: val, subtitle: null },
+      tone: { title: val === 'WryConfession' ? 'Wry<br>Confession' : val, subtitle: null },
       pressure: {
-        title: val,
-        subtitle: 'Story Pull'  // Renamed from "Pull" to "Story Pull"
+        title: PRESSURE_DISPLAY[val] || val,
+        subtitle: 'Story Pull'
       },
       pov: { title: val, subtitle: 'POV' },
-      dynamic: { title: val, subtitle: 'Polarity' },
+      dynamic: { title: DYNAMIC_DISPLAY[val] || val, subtitle: 'Story Polarity' },
       intensity: { title: val, subtitle: 'Intensity' },
       safety: { title: 'Safety', subtitle: null },
       vetoquill: { title: 'Veto/Quill', subtitle: null },
@@ -18643,23 +19222,25 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const worldBreadcrumb = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="world"]');
     if (!worldBreadcrumb) return;
 
-    const flavor = state.picks?.flavor;
+    const worldVal = worldBreadcrumb.dataset.val;
+    const flavorLabel = state.picks?.worldSubtype
+      ? getWorldLabel(state.picks.worldSubtype)
+      : (state.worldCustomTexts?.[worldVal] || null);
     const subtitleEl = worldBreadcrumb.querySelector('.breadcrumb-subtitle');
+    const backFace = worldBreadcrumb.querySelector('.sb-card-back');
 
-    if (flavor) {
+    if (flavorLabel) {
       if (subtitleEl) {
-        subtitleEl.textContent = flavor;
+        subtitleEl.textContent = flavorLabel;
       } else {
-        // Create subtitle element if it doesn't exist
-        const titleEl = worldBreadcrumb.querySelector('.sb-card-title');
-        if (titleEl) {
-          const newSubtitle = document.createElement('span');
-          newSubtitle.className = 'breadcrumb-subtitle';
-          newSubtitle.textContent = flavor;
-          titleEl.insertAdjacentElement('afterend', newSubtitle);
-        }
+        // Create subtitle element in the back face (visible face for breadcrumbs)
+        const target = backFace || worldBreadcrumb;
+        const newSubtitle = document.createElement('span');
+        newSubtitle.className = 'breadcrumb-subtitle';
+        newSubtitle.textContent = flavorLabel;
+        target.appendChild(newSubtitle);
       }
-      console.log(`[Breadcrumb] World flavor nested: ${flavor}`);
+      console.log(`[Breadcrumb] World flavor nested: ${flavorLabel}`);
     } else if (subtitleEl) {
       subtitleEl.remove();
     }
@@ -18864,6 +19445,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * Uses corridorActiveRowIndex as SINGLE SOURCE OF TRUTH
    */
   function handleFlowContinue(stage) {
+    // Safety: if pressure was selected via Destiny, breadcrumb already exists — just advance
+    if (stage === 'pressure' && pressureSelectedViaDestiny) {
+      if (typeof hideCorridorContinueButton === 'function') hideCorridorContinueButton('pressure');
+      advanceCorridorRow();
+      return;
+    }
+    // Safety: if dynamic was selected via Destiny, breadcrumb already exists — just advance
+    if (stage === 'dynamic' && dynamicSelectedViaDestiny) {
+      if (typeof hideCorridorContinueButton === 'function') hideCorridorContinueButton('dynamic');
+      advanceCorridorRow();
+      return;
+    }
+
     // Map legacy stage to corridor index
     const corridorIdx = CORRIDOR_STAGES.indexOf(stage);
     if (corridorIdx === -1) {
@@ -19773,7 +20367,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           createBreadcrumbDirect('tone', randomTone, randomTone);
           break;
         case 'pressure':
-          const pressures = ['Slow', 'Medium', 'Intense'];
+          const pressures = Array.from(VISIBLE_PULLS);
           const randomPressure = pressures[Math.floor(Math.random() * pressures.length)];
           state.picks.pressure = randomPressure;
           corridorSelections.set('pressure', randomPressure);
@@ -19794,11 +20388,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           createBreadcrumbDirect('length', randomLength, randomLength);
           break;
         case 'dynamic':
-          const dynamics = ['Chase', 'Surrender', 'Rivalry', 'Worship'];
+          const dynamics = ['Friends', 'Enemies', 'SecondChance', 'Forbidden', 'Proximity', 'SecretIdentity'];
           const randomDynamic = dynamics[Math.floor(Math.random() * dynamics.length)];
           state.picks.dynamic = randomDynamic;
           corridorSelections.set('dynamic', randomDynamic);
-          createBreadcrumbDirect('dynamic', randomDynamic, randomDynamic);
+          createBreadcrumbDirect('dynamic', randomDynamic, DYNAMIC_DISPLAY[randomDynamic] || randomDynamic);
           break;
       }
     });
@@ -20095,6 +20689,32 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             window.onArchetypeRowMount();
         }
 
+        // PRESSURE MOUNT: Init front flavors + re-inject Destiny card if removed during animation
+        if (stage === 'pressure') {
+            initPressureFrontFlavors();
+            if (!document.getElementById('pressureDestinyChoiceCard')) {
+                injectPressureDestinyCard();
+            }
+            // If selected via Destiny, keep all cards face-down (secret)
+            if (pressureSelectedViaDestiny) {
+                document.querySelectorAll('#pressureGrid .sb-card[data-grp="pressure"]:not(.destiny-choice-card)').forEach(c => {
+                    c.classList.remove('selected', 'flipped');
+                });
+            }
+        }
+
+        // DYNAMIC MOUNT: Re-inject Destiny card if removed during animation
+        if (stage === 'dynamic') {
+            if (!document.getElementById('dynamicDestinyChoiceCard')) {
+                injectDynamicDestinyCard();
+            }
+            if (dynamicSelectedViaDestiny) {
+                document.querySelectorAll('#dynamicGrid .sb-card[data-grp="dynamic"]:not(.destiny-choice-card)').forEach(c => {
+                    c.classList.remove('selected', 'flipped');
+                });
+            }
+        }
+
         // IDENTITY MOUNT: Restore mini-deck when navigating back
         if (stage === 'identity') {
           const miniDeck = document.getElementById('destinyMiniDeck');
@@ -20116,6 +20736,22 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           console.log('[Corridor] Identity mount: Restored mini-deck');
         }
 
+        // LENGTH MOUNT: Re-evaluate length locks (subscription may have changed)
+        if (stage === 'length') {
+            if (typeof applyLengthLocks === 'function') {
+                applyLengthLocks();
+                console.log('[Corridor] Length mount: Re-applied length locks');
+            }
+        }
+
+        // AROUSAL MOUNT: Re-evaluate intensity locks (subscription may have changed)
+        if (stage === 'arousal') {
+            if (typeof applyIntensityLocks === 'function') {
+                applyIntensityLocks();
+                console.log('[Corridor] Arousal mount: Re-applied intensity locks');
+            }
+        }
+
         // VETOQUILL MOUNT: Restore VQ destiny deck + init placeholders
         if (stage === 'vetoquill') {
           const vqDeck = document.getElementById('vqDestinyDeck');
@@ -20132,7 +20768,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               window.initRotatingPlaceholder(id, id === 'vetoInput' ? 'veto' : 'quill');
             }
           });
-          console.log('[Corridor] Vetoquill mount: Restored VQ destiny deck');
+          // Re-evaluate Quill lock state (HTML starts locked; subscription resolves at runtime)
+          syncTierFromAccess();
+          updateQuillUI();
+          console.log('[Corridor] Vetoquill mount: Restored VQ destiny deck + re-evaluated Quill lock');
         }
 
         // BEGIN STORY MOUNT: Start sparkles around Begin Story button
@@ -20417,7 +21056,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // These rows always show their button when active (not card-based selection)
-    const alwaysShowForRow = (stage === 'authorship' || stage === 'identity' || stage === 'arousal' || stage === 'safety' || stage === 'vetoquill' || stage === 'beginstory');
+    const alwaysShowForRow = (stage === 'authorship' || stage === 'identity' || stage === 'arousal' || stage === 'safety' || stage === 'vetoquill');
 
     controlPlaneBtn.classList.toggle('visible', hasSelection || alwaysShowForRow);
 
@@ -21192,6 +21831,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   //
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // VISIBLE PULLS — The 4 selectable Story Pull cards (hidden pulls become undercurrent modifiers)
+  const VISIBLE_PULLS = new Set(['PowerControl', 'EscapePursuit', 'DesireObsession', 'Survival']);
+
   // PRIMARY PRESSURES — THE ONLY TOP-LEVEL CHOICES (max 8)
   const PRIMARY_PRESSURES = {
     PowerControl: {
@@ -21243,6 +21885,222 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       dspPhrase: 'scarcity, endurance, and brutal choices'
     }
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // TONAL FRACTURE — LLM prompt injection (never shown in UI, 10% probability)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const TONAL_FRACTURES = {
+    Earnest:       'Doubt hums beneath devotion.',
+    WryConfession: 'Sincerity breaks through the irony.',
+    Satirical:     'Genuine ache surfaces under the mockery.',
+    Dark:          'Protectiveness softens the cruelty.',
+    Horror:        'Fleeting tenderness interrupts the dread.',
+    Mythic:        'Grandeur is shadowed by quiet melancholy.',
+    Comedic:       'A real wound flickers behind the laughter.',
+    Surreal:       'Clarity pierces the dream for one breath.',
+    Poetic:        'Bluntness cuts through the lyricism.'
+  };
+
+  /**
+   * Build Tonal Fracture injection for LLM system prompt.
+   * 10% probability. Returns empty string or single fracture line.
+   */
+  function buildTonalFracture(tone) {
+    if (!tone || !TONAL_FRACTURES[tone]) return '';
+    if (Math.random() >= 0.10) return '';
+    return `\nTone Fracture: ${TONAL_FRACTURES[tone]}`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // STORY PULL GRAVITY — LLM prompt injection (never shown in UI)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const PULL_GRAVITY = {
+    PowerControl:      { axis: 'Power & Control',      gravity: 'Intimacy shifts leverage between characters.' },
+    RiskExposure:      { axis: 'Risk & Exposure',      gravity: 'Being revealed carries consequence.' },
+    EscapePursuit:     { axis: 'Escape & Pursuit',     gravity: 'Movement and urgency drive the connection.' },
+    ObligationBurden:  { axis: 'Obligation & Burden',  gravity: 'Duty presses against desire.' },
+    DesireObsession:   { axis: 'Desire & Obsession',   gravity: 'Wanting destabilizes reason and restraint.' },
+    ReckoningPast:     { axis: 'Reckoning & Past',     gravity: 'History intrudes and demands response.' },
+    Transformation:    { axis: 'Becoming',             gravity: 'Identity changes under emotional pressure.' },
+    Survival:          { axis: 'Survival',             gravity: 'Staying alive competes with intimacy.' }
+  };
+
+  const HIDDEN_MODIFIER_ALLOWED = {
+    PowerControl:    ['ObligationBurden', 'Transformation', 'ReckoningPast', 'RiskExposure'],
+    EscapePursuit:   ['RiskExposure', 'ReckoningPast', 'ObligationBurden'],
+    DesireObsession: ['RiskExposure', 'Transformation', 'ReckoningPast'],
+    Survival:        ['ObligationBurden', 'ReckoningPast', 'RiskExposure']
+  };
+
+  /**
+   * Build Story Pull injection block for LLM system prompt.
+   * Returns empty string if no pressure selected or not a visible pull.
+   * 25% chance of one hidden modifier from curated compatibility matrix.
+   * Suppressed when tonal fracture active AND circumstance card selected
+   * (conservative pre-check for polarity Constraint + Attachment stacking).
+   */
+  function buildStoryPullBlock(tonalFractureStr) {
+    const pressure = state.picks?.pressure;
+    if (!pressure || !VISIBLE_PULLS.has(pressure) || !PULL_GRAVITY[pressure]) return '';
+
+    const primary = PULL_GRAVITY[pressure];
+    let block = `\nStory Pull: ${primary.axis}\nPull Gravity: ${primary.gravity}`;
+
+    // 25% chance of hidden modifier
+    if (Math.random() < 0.25) {
+      // Suppress if fracture active AND circumstance card selected (stacking guard)
+      const fractureActive = tonalFractureStr && tonalFractureStr.trim().length > 0;
+      const circumstanceSelected = CIRCUMSTANCE_CARDS.has(state.picks?.dynamic);
+      if (!(fractureActive && circumstanceSelected)) {
+        const candidates = HIDDEN_MODIFIER_ALLOWED[pressure];
+        if (candidates && candidates.length > 0) {
+          const pick = candidates[Math.floor(Math.random() * candidates.length)];
+          const undercurrent = PULL_GRAVITY[pick];
+          if (undercurrent) {
+            block += `\nUndercurrent: ${undercurrent.gravity}`;
+          }
+        }
+      }
+    }
+
+    return block;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // POLARITY SYSTEM — Emotional Arc + Circumstance + Hidden Intensity Modifier
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const EMOTIONAL_ARCS = new Set(['Friends', 'Enemies', 'SecondChance', 'Forbidden']);
+  const CIRCUMSTANCE_CARDS = new Set(['Proximity', 'SecretIdentity']);
+
+  const POLARITY_DIRECTIVES = {
+    Friends:      'Safety slowly becomes desire.',
+    Enemies:      'Conflict masks attraction.',
+    SecondChance: 'Past intimacy complicates reunion.',
+    Forbidden:    'Desire defies external rule.'
+  };
+
+  const CIRCUMSTANCE_DIRECTIVES = {
+    Proximity:      'Circumstance traps them together.',
+    SecretIdentity: 'Hidden truth threatens connection.'
+  };
+
+  // Auto-resolution when only a Circumstance card is selected
+  const CIRCUMSTANCE_AUTO_RESOLVE = {
+    Proximity: [
+      { arc: 'Enemies',      weight: 30 },
+      { arc: 'Friends',      weight: 30 },
+      { arc: 'Forbidden',    weight: 20 },
+      { arc: 'SecondChance', weight: 20 }
+    ],
+    SecretIdentity: [
+      { arc: 'Forbidden',    weight: 35 },
+      { arc: 'Enemies',      weight: 25 },
+      { arc: 'SecondChance', weight: 20 },
+      { arc: 'Friends',      weight: 20 }
+    ]
+  };
+
+  // Hidden intensity modifier — per-arc distributions (probabilities out of 100)
+  const INTENSITY_MODIFIERS = {
+    Friends:      [{ id: 'Risk', weight: 10 }, { id: 'Loyalty', weight: 5 }, { id: 'Obsessive', weight: 5 }],
+    Enemies:      [{ id: 'Risk', weight: 20 }, { id: 'Obsessive', weight: 15 }, { id: 'Loyalty', weight: 10 }],
+    SecondChance: [{ id: 'Obsessive', weight: 15 }, { id: 'Risk', weight: 10 }, { id: 'Loyalty', weight: 5 }],
+    Forbidden:    [{ id: 'Risk', weight: 20 }, { id: 'Obsessive', weight: 15 }, { id: 'Loyalty', weight: 5 }]
+  };
+
+  const INTENSITY_DIRECTIVE = {
+    Risk:      'Risk heightens desire.',
+    Obsessive: 'Attachment becomes consuming.',
+    Loyalty:   'Loyalty isolates them from others.'
+  };
+
+  function weightedPick(entries) {
+    const total = entries.reduce((s, e) => s + e.weight, 0);
+    let r = Math.random() * total;
+    for (const e of entries) {
+      r -= e.weight;
+      if (r <= 0) return e;
+    }
+    return entries[entries.length - 1];
+  }
+
+  /**
+   * Build Polarity injection block for LLM system prompt.
+   * Replaces the old single `- Dynamic: [value]` line.
+   * Max 3 lines: Polarity + Relational Engine, optional Constraint, optional Attachment Modifier.
+   *
+   * @param {string} tonalFractureStr — result of buildTonalFracture() (empty or "\nTone Fracture: ...")
+   * @param {string} pullBlockStr — result of buildStoryPullBlock() (empty or "\nStory Pull: ...")
+   */
+  function buildPolarityBlock(tonalFractureStr, pullBlockStr) {
+    const dynamic = state.picks?.dynamic;
+    let emotionalArc = null;
+    let circumstance = null;
+
+    if (dynamic && EMOTIONAL_ARCS.has(dynamic)) {
+      emotionalArc = dynamic;
+    } else if (dynamic && CIRCUMSTANCE_CARDS.has(dynamic)) {
+      circumstance = dynamic;
+      // Auto-resolve emotional arc from probability table
+      const table = CIRCUMSTANCE_AUTO_RESOLVE[dynamic];
+      if (table) {
+        emotionalArc = weightedPick(table).arc;
+      } else {
+        emotionalArc = 'Enemies';
+      }
+    } else {
+      // Nothing selected or unknown value — default
+      emotionalArc = 'Enemies';
+    }
+
+    const arcLabel = DYNAMIC_DISPLAY[emotionalArc] || emotionalArc;
+    let block = `- Polarity: ${arcLabel}\n- Relational Engine: ${POLARITY_DIRECTIVES[emotionalArc] || 'Conflict masks attraction.'}`;
+
+    // Constraint line (if Circumstance selected)
+    if (circumstance && CIRCUMSTANCE_DIRECTIVES[circumstance]) {
+      block += `\n- Constraint: ${CIRCUMSTANCE_DIRECTIVES[circumstance]}`;
+    }
+
+    // Hidden intensity modifier (30% base probability)
+    const suppressIntensity = shouldSuppressIntensity(tonalFractureStr, pullBlockStr);
+    if (!suppressIntensity && Math.random() < 0.30) {
+      const modifiers = INTENSITY_MODIFIERS[emotionalArc];
+      if (modifiers) {
+        const pick = weightedPick(modifiers);
+        const directive = INTENSITY_DIRECTIVE[pick.id];
+        if (directive) {
+          block += `\n- Attachment Modifier: ${directive}`;
+        }
+      }
+    }
+
+    return block;
+  }
+
+  /**
+   * Check suppression rules for intensity modifier.
+   * Suppress if: Tone Fracture AND Undercurrent both active,
+   * or Pull = Survival with stakes dominant,
+   * or Arousal tier is Clean.
+   */
+  function shouldSuppressIntensity(tonalFractureStr, pullBlockStr) {
+    const hasFracture = tonalFractureStr && tonalFractureStr.length > 0;
+    const hasUndercurrent = pullBlockStr && pullBlockStr.includes('Undercurrent:');
+
+    // Suppress if both Tonal Fracture and Undercurrent are active
+    if (hasFracture && hasUndercurrent) return true;
+
+    // Suppress if Pull = Survival and stakes dominant
+    if (state.picks?.pressure === 'Survival') return true;
+
+    // Suppress if arousal tier is low (Clean)
+    if (state.intensity === 'Clean') return true;
+
+    return false;
+  }
 
   // PRESSURE FLAVORS — OPTIONAL REFINEMENTS (never required, never change authority)
   const PRESSURE_FLAVORS = {
@@ -21303,6 +22161,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       { id: 'EndOfEra', label: 'End of an Era', description: 'The old world dying, the new not yet born.' }
     ]
   };
+
+  // NOTE: initPressureFrontFlavors(), injectPressureDestinyCard(), and
+  // injectDynamicDestinyCard() are defined inside initSelectionHandlers() —
+  // they are called from the corridor mount handlers in updateCorridorVisibility()
+  // when the pressure/dynamic rows become active (not at module scope).
 
   // LEGACY GENRE → PRESSURE+FLAVOR MAPPING (Backward Compatibility)
   // Maps old genre values to new pressure system
@@ -21974,15 +22837,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (collapseBtn) {
       collapseBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        panel.classList.add('dsp-collapsed');
-      });
-    }
-    const dragHandleEl = document.getElementById('dspDragHandle');
-    if (dragHandleEl) {
-      dragHandleEl.addEventListener('click', function(e) {
-        if (panel.classList.contains('dsp-collapsed') && !e.target.closest('.dsp-collapse-btn')) {
-          e.stopPropagation();
+        if (panel.classList.contains('dsp-collapsed')) {
           panel.classList.remove('dsp-collapsed');
+          collapseBtn.innerHTML = '&times;';
+          collapseBtn.setAttribute('aria-label', 'Collapse panel');
+        } else {
+          panel.classList.add('dsp-collapsed');
+          collapseBtn.innerHTML = '&#9675;';
+          collapseBtn.setAttribute('aria-label', 'Expand panel');
         }
       });
     }
@@ -22177,6 +23039,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   let archetypeCardsRevealed = false;
   // Track if Destiny's Choice was used (for breadcrumb icon)
   let archetypeSelectedViaDestiny = false;
+  // Track if pressure Destiny's Choice was used
+  let pressureSelectedViaDestiny = false;
+  // Track if dynamic/polarity Destiny's Choice was used
+  let dynamicSelectedViaDestiny = false;
   // Track active sparkle emitter for last-zoomed card
   let lastZoomedSparkleEmitterId = null;
 
@@ -22401,6 +23267,32 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Expose globally for dynamic card creation
     window.applyCardGleam = applyCardGleam;
     window.initAllCardGleams = initAllCardGleams;
+
+    /**
+     * Apply a gleam layer to an arbitrary element (e.g., flavor buttons).
+     * Reads the parent card's existing gleam gradient and applies it with an offset.
+     * @param {HTMLElement} el - Target element (needs position:relative; overflow:hidden in CSS)
+     * @param {number} extraOffset - Additional px offset from the card's gleam
+     */
+    window.applyGleamToElement = function(el, extraOffset) {
+      if (!el || el.querySelector('.card-gleam-clip')) return;
+      var sbCard = el.closest('.sb-card');
+      var cardGleam = sbCard ? sbCard.querySelector('.card-gleam-layer') : null;
+      var gradient = cardGleam ? cardGleam.style.backgroundImage : '';
+      var opacity = cardGleam ? cardGleam.style.getPropertyValue('--gleam-opacity-multiplier') : '0.85';
+      var cardOffset = cardGleam ? (cardGleam._gleamOffset || 0) : 0;
+
+      var clip = document.createElement('div');
+      clip.className = 'card-gleam-clip';
+      var gleam = document.createElement('div');
+      gleam.className = 'card-gleam-layer';
+      gleam._gleamOffset = cardOffset + (extraOffset || 0);
+      if (gradient) gleam.style.backgroundImage = gradient;
+      gleam.style.setProperty('--gleam-opacity-multiplier', opacity);
+      clip.appendChild(gleam);
+      el.insertBefore(clip, el.firstChild);
+      registerGleam(gleam);
+    };
 
     // Apply to static HTML cards on DOM ready
     if (document.readyState === 'loading') {
@@ -22832,7 +23724,21 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       await new Promise(r => setTimeout(r, 700));
 
-      // Clean up dissolved cards from DOM (while card is centered)
+      // Lock chosen card to its current visual position (position:fixed) BEFORE
+      // removing dissolved cards — grid reflow would shift its natural position
+      // and cause the transform-based placement to jump.
+      if (chosenCard) {
+          const lockedRect = chosenCard.getBoundingClientRect();
+          chosenCard.style.position = 'fixed';
+          chosenCard.style.left = lockedRect.left + 'px';
+          chosenCard.style.top = lockedRect.top + 'px';
+          chosenCard.style.width = lockedRect.width + 'px';
+          chosenCard.style.height = lockedRect.height + 'px';
+          chosenCard.style.transform = 'none';
+          chosenCard.style.margin = '0';
+      }
+
+      // Clean up dissolved cards from DOM (card is now position:fixed, immune to reflow)
       grid.querySelectorAll('.dissolving').forEach(el => el.remove());
 
       // STEP 9: Sparkle teleport from corridor center to breadcrumb
@@ -22915,6 +23821,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           chosenCard.style.zIndex = '';
           chosenCard.style.opacity = '';
           chosenCard.style.transition = '';
+          chosenCard.style.position = '';
+          chosenCard.style.left = '';
+          chosenCard.style.top = '';
+          chosenCard.style.width = '';
+          chosenCard.style.height = '';
+          chosenCard.style.margin = '';
       }
 
       // STEP 10: Create breadcrumb with Destiny's Choice back PNG
@@ -22929,6 +23841,568 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
 
       console.log(`[Destiny's Choice] Selected: ${chosenId}`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRESSURE DESTINY'S CHOICE — Random Pull + Flavor Selection
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  async function triggerPressureDestinySequence() {
+      const grid = document.getElementById('pressureGrid');
+      const destinyCard = document.getElementById('pressureDestinyChoiceCard');
+      if (!grid || !destinyCard) return;
+
+      // Stop sparkle emitter on Destiny card
+      if (typeof stopSparkleEmitter === 'function') {
+          stopSparkleEmitter('pressureDestinySparkles');
+      }
+
+      const pressureCards = grid.querySelectorAll('.sb-card[data-grp="pressure"]:not(.destiny-choice-card)');
+      const destinyRect = destinyCard.getBoundingClientRect();
+      const destinyCenter = {
+          x: destinyRect.left + destinyRect.width / 2,
+          y: destinyRect.top + destinyRect.height / 2
+      };
+
+      // Randomly select a pressure category AND a flavor (visible pulls only)
+      const pressureKeys = Array.from(VISIBLE_PULLS);
+      const randomPressureIdx = Math.floor(Math.random() * pressureKeys.length);
+      const chosenPressure = pressureKeys[randomPressureIdx];
+      const chosenFlavors = PRESSURE_FLAVORS[chosenPressure];
+      const randomFlavorIdx = Math.floor(Math.random() * chosenFlavors.length);
+      const chosenFlavor = chosenFlavors[randomFlavorIdx];
+
+      const chosenCard = grid.querySelector(`.sb-card[data-grp="pressure"][data-val="${chosenPressure}"]`);
+
+      // Capture original positions
+      const cardPositions = new Map();
+      pressureCards.forEach(card => {
+          const rect = card.getBoundingClientRect();
+          cardPositions.set(card, {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2
+          });
+      });
+
+      // STEP 1: Flip all cards face-down
+      pressureCards.forEach(card => {
+          card.classList.remove('flipped', 'selected');
+      });
+
+      await new Promise(r => setTimeout(r, 500));
+
+      // STEP 2: Slide all cards UNDER the Destiny deck
+      destinyCard.style.zIndex = '300';
+
+      pressureCards.forEach((card, idx) => {
+          const pos = cardPositions.get(card);
+          const translateX = destinyCenter.x - pos.x;
+          const translateY = destinyCenter.y - pos.y;
+
+          card.style.transition = `transform ${0.5 + idx * 0.05}s ease-in-out`;
+          card.style.transform = `translate(${translateX}px, ${translateY}px)`;
+          card.style.zIndex = `${50 + idx}`;
+      });
+
+      await new Promise(r => setTimeout(r, 800));
+
+      // STEP 3: Brief pause
+      await new Promise(r => setTimeout(r, 300));
+
+      // STEP 4: Chosen card pops up from deck
+      if (chosenCard) {
+          const backTitle = chosenCard.querySelector('.sb-card-back .sb-card-title');
+          if (backTitle) {
+              backTitle.dataset.originalText = backTitle.textContent;
+              backTitle.textContent = '?';
+          }
+
+          chosenCard.classList.add('destiny-chosen');
+          chosenCard.style.zIndex = '400';
+          chosenCard.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          const pos = cardPositions.get(chosenCard);
+          const deckOffX = destinyCenter.x - pos.x;
+          const deckOffY = destinyCenter.y - pos.y;
+          chosenCard.style.transform = `translate(${deckOffX}px, ${deckOffY - 80}px)`;
+      }
+
+      await new Promise(r => setTimeout(r, 600));
+
+      // STEP 5: Card stays face-down — Destiny's mask is a secret
+      await new Promise(r => setTimeout(r, 400));
+
+      // STEP 6: Commit the selection (secretly)
+      state.picks.pressure = chosenPressure;
+      state.picks.flavor = chosenFlavor.id;
+      state.picks.genre = getEffectiveGenre(chosenPressure, chosenFlavor.id);
+      pressureSelectedViaDestiny = true;
+      if (typeof invalidateShapeSnapshot === 'function') invalidateShapeSnapshot();
+      if (window.clearCoverShapeHash) window.clearCoverShapeHash();
+      incrementDSPActivation();
+      updateSynopsisPanel(true);
+
+      // STEP 7: Dissolve other cards + Destiny deck
+      pressureCards.forEach(card => {
+          if (card === chosenCard) return;
+          card.classList.add('dissolving');
+          card.style.transition = 'opacity 0.5s ease-out';
+          card.style.opacity = '0';
+      });
+      destinyCard.classList.add('dissolving');
+      destinyCard.style.transition = 'opacity 0.5s ease-out';
+      destinyCard.style.opacity = '0';
+
+      await new Promise(r => setTimeout(r, 300));
+
+      // STEP 8: Slide chosen card to center of corridor
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      const pressureGhostIdx = STAGE_INDEX['pressure'];
+      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${pressureGhostIdx}"]`);
+
+      let targetX, targetY;
+      if (ghostStep) {
+          const ghostRect = ghostStep.getBoundingClientRect();
+          targetX = ghostRect.left + ghostRect.width / 2;
+          targetY = ghostRect.top + ghostRect.height / 2;
+      } else if (breadcrumbRow) {
+          const brRect = breadcrumbRow.getBoundingClientRect();
+          targetX = brRect.left + brRect.width / 2;
+          targetY = brRect.top + brRect.height / 2;
+      }
+
+      const corridorCenterX = window.innerWidth / 2;
+      const corridorCenterY = window.innerHeight / 2;
+
+      if (chosenCard) {
+          const pos = cardPositions.get(chosenCard);
+          const toCenterX = corridorCenterX - pos.x;
+          const toCenterY = corridorCenterY - pos.y;
+          chosenCard.style.transition = 'transform 0.6s ease-in-out';
+          chosenCard.style.transform = `translate(${toCenterX}px, ${toCenterY}px)`;
+      }
+
+      await new Promise(r => setTimeout(r, 700));
+
+      // Lock chosen card to fixed position before DOM cleanup
+      if (chosenCard) {
+          const lockedRect = chosenCard.getBoundingClientRect();
+          chosenCard.style.position = 'fixed';
+          chosenCard.style.left = lockedRect.left + 'px';
+          chosenCard.style.top = lockedRect.top + 'px';
+          chosenCard.style.width = lockedRect.width + 'px';
+          chosenCard.style.height = lockedRect.height + 'px';
+          chosenCard.style.transform = 'none';
+          chosenCard.style.margin = '0';
+      }
+
+      // Remove dissolved cards from DOM
+      grid.querySelectorAll('.dissolving').forEach(el => el.remove());
+
+      // STEP 9: Sparkle teleport to breadcrumb
+      if (chosenCard && targetX !== undefined) {
+          const cardRect = chosenCard.getBoundingClientRect();
+          const cardCenterX = cardRect.left + cardRect.width / 2;
+          const cardCenterY = cardRect.top + cardRect.height / 2;
+
+          // Phase 1: Dissolution sparkles
+          chosenCard.style.transition = 'opacity 0.3s ease-out';
+          chosenCard.style.opacity = '0.2';
+
+          const dissolutionCount = 14 + Math.floor(Math.random() * 6);
+          for (let i = 0; i < dissolutionCount; i++) {
+              setTimeout(() => {
+                  const sparkle = document.createElement('div');
+                  sparkle.className = 'dissolution-sparkle';
+                  const sx = cardRect.left + Math.random() * cardRect.width;
+                  const sy = cardRect.top + Math.random() * cardRect.height;
+                  sparkle.style.cssText = `left: ${sx}px; top: ${sy}px;`;
+                  document.body.appendChild(sparkle);
+                  setTimeout(() => sparkle.remove(), 400);
+              }, i * 25);
+          }
+
+          // Phase 2: Traveling sparkles
+          setTimeout(() => {
+              const travelCount = 8 + Math.floor(Math.random() * 4);
+              for (let i = 0; i < travelCount; i++) {
+                  setTimeout(() => {
+                      const sparkle = document.createElement('div');
+                      sparkle.className = 'traveling-sparkle';
+                      const offX = (Math.random() - 0.5) * cardRect.width * 0.5;
+                      const offY = (Math.random() - 0.5) * cardRect.height * 0.5;
+                      const sx = cardCenterX + offX;
+                      const sy = cardCenterY + offY;
+                      const midX = (sx + targetX) / 2 + (Math.random() - 0.5) * 80;
+                      const midY = Math.min(sy, targetY) - 40 - Math.random() * 60;
+                      sparkle.style.cssText = `
+                          left: ${sx}px; top: ${sy}px;
+                          --target-x: ${targetX - sx}px;
+                          --target-y: ${targetY - sy}px;
+                          --arc-x: ${midX - sx}px;
+                          --arc-y: ${midY - sy}px;
+                      `;
+                      document.body.appendChild(sparkle);
+                      setTimeout(() => sparkle.remove(), 600);
+                  }, i * 45);
+              }
+          }, 200);
+
+          // Phase 3: Convergence sparkles + breadcrumb
+          await new Promise(r => setTimeout(r, 700));
+
+          chosenCard.style.opacity = '0';
+
+          for (let i = 0; i < 6; i++) {
+              const sparkle = document.createElement('div');
+              sparkle.className = 'convergence-sparkle';
+              const angle = (Math.PI * 2 * i) / 6;
+              const dist = 18 + Math.random() * 12;
+              sparkle.style.cssText = `
+                  left: ${targetX + Math.cos(angle) * dist}px;
+                  top: ${targetY + Math.sin(angle) * dist}px;
+              `;
+              document.body.appendChild(sparkle);
+              setTimeout(() => sparkle.remove(), 500);
+          }
+      }
+
+      // Restore chosen card state
+      if (chosenCard) {
+          const backTitle = chosenCard.querySelector('.sb-card-back .sb-card-title');
+          if (backTitle && backTitle.dataset.originalText) {
+              backTitle.textContent = backTitle.dataset.originalText;
+          }
+          chosenCard.style.transform = '';
+          chosenCard.style.zIndex = '';
+          chosenCard.style.opacity = '';
+          chosenCard.style.transition = '';
+          chosenCard.style.position = '';
+          chosenCard.style.left = '';
+          chosenCard.style.top = '';
+          chosenCard.style.width = '';
+          chosenCard.style.height = '';
+          chosenCard.style.margin = '';
+      }
+
+      // STEP 10: Create breadcrumb with Destiny's Choice mask
+      createPressureBreadcrumbWithMask(chosenPressure, chosenFlavor.id);
+
+      // Advance corridor
+      if (typeof hideCorridorContinueButton === 'function') {
+          hideCorridorContinueButton('pressure');
+      }
+      if (typeof advanceCorridorRow === 'function') {
+          advanceCorridorRow();
+      }
+
+      console.log(`[Pressure Destiny] Selected: ${chosenPressure} / ${chosenFlavor.id}`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DYNAMIC/POLARITY DESTINY'S CHOICE — Random Polarity Selection
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  async function triggerDynamicDestinySequence() {
+      const dynamicGrid = document.getElementById('dynamicGrid');
+      const destinyCard = document.getElementById('dynamicDestinyChoiceCard');
+      if (!dynamicGrid || !destinyCard) return;
+
+      if (typeof stopSparkleEmitter === 'function') {
+          stopSparkleEmitter('dynamicDestinySparkles');
+      }
+
+      const dynamicCards = dynamicGrid.querySelectorAll('.sb-card[data-grp="dynamic"]:not(.destiny-choice-card)');
+      const destinyRect = destinyCard.getBoundingClientRect();
+      const destinyCenter = {
+          x: destinyRect.left + destinyRect.width / 2,
+          y: destinyRect.top + destinyRect.height / 2
+      };
+
+      // Collect all dynamic vals for random selection
+      const dynamicVals = [];
+      dynamicCards.forEach(c => { if (c.dataset.val) dynamicVals.push(c.dataset.val); });
+      const randomIdx = Math.floor(Math.random() * dynamicVals.length);
+      const chosenVal = dynamicVals[randomIdx];
+      const chosenCard = dynamicGrid.querySelector(`.sb-card[data-grp="dynamic"][data-val="${chosenVal}"]`);
+
+      // Capture original positions
+      const cardPositions = new Map();
+      dynamicCards.forEach(card => {
+          const rect = card.getBoundingClientRect();
+          cardPositions.set(card, {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2
+          });
+      });
+
+      // STEP 1: Flip all cards face-down
+      dynamicCards.forEach(card => {
+          card.classList.remove('flipped', 'selected');
+      });
+
+      await new Promise(r => setTimeout(r, 500));
+
+      // STEP 2: Slide all under Destiny deck
+      destinyCard.style.zIndex = '300';
+
+      dynamicCards.forEach((card, idx) => {
+          const pos = cardPositions.get(card);
+          const translateX = destinyCenter.x - pos.x;
+          const translateY = destinyCenter.y - pos.y;
+          card.style.transition = `transform ${0.5 + idx * 0.05}s ease-in-out`;
+          card.style.transform = `translate(${translateX}px, ${translateY}px)`;
+          card.style.zIndex = `${50 + idx}`;
+      });
+
+      // Also hide group labels during animation
+      dynamicGrid.querySelectorAll('.dynamic-group-label').forEach(lbl => {
+          lbl.style.transition = 'opacity 0.4s ease-out';
+          lbl.style.opacity = '0';
+      });
+
+      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 300));
+
+      // STEP 4: Chosen card pops up
+      if (chosenCard) {
+          const backTitle = chosenCard.querySelector('.sb-card-back .sb-card-title');
+          if (backTitle) {
+              backTitle.dataset.originalText = backTitle.textContent;
+              backTitle.textContent = '?';
+          }
+          chosenCard.classList.add('destiny-chosen');
+          chosenCard.style.zIndex = '400';
+          chosenCard.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          const pos = cardPositions.get(chosenCard);
+          const deckOffX = destinyCenter.x - pos.x;
+          const deckOffY = destinyCenter.y - pos.y;
+          chosenCard.style.transform = `translate(${deckOffX}px, ${deckOffY - 80}px)`;
+      }
+
+      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 400));
+
+      // STEP 6: Commit
+      state.picks.dynamic = chosenVal;
+      dynamicSelectedViaDestiny = true;
+      if (typeof invalidateShapeSnapshot === 'function') invalidateShapeSnapshot();
+      if (window.clearCoverShapeHash) window.clearCoverShapeHash();
+      incrementDSPActivation();
+      updateSynopsisPanel(true);
+
+      // STEP 7: Dissolve others + Destiny deck
+      dynamicCards.forEach(card => {
+          if (card === chosenCard) return;
+          card.classList.add('dissolving');
+          card.style.transition = 'opacity 0.5s ease-out';
+          card.style.opacity = '0';
+      });
+      destinyCard.classList.add('dissolving');
+      destinyCard.style.transition = 'opacity 0.5s ease-out';
+      destinyCard.style.opacity = '0';
+
+      await new Promise(r => setTimeout(r, 300));
+
+      // STEP 8: Slide chosen to center
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      const dynamicGhostIdx = STAGE_INDEX['dynamic'];
+      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${dynamicGhostIdx}"]`);
+
+      let targetX, targetY;
+      if (ghostStep) {
+          const ghostRect = ghostStep.getBoundingClientRect();
+          targetX = ghostRect.left + ghostRect.width / 2;
+          targetY = ghostRect.top + ghostRect.height / 2;
+      } else if (breadcrumbRow) {
+          const brRect = breadcrumbRow.getBoundingClientRect();
+          targetX = brRect.left + brRect.width / 2;
+          targetY = brRect.top + brRect.height / 2;
+      }
+
+      const corridorCenterX = window.innerWidth / 2;
+      const corridorCenterY = window.innerHeight / 2;
+
+      if (chosenCard) {
+          const pos = cardPositions.get(chosenCard);
+          const toCenterX = corridorCenterX - pos.x;
+          const toCenterY = corridorCenterY - pos.y;
+          chosenCard.style.transition = 'transform 0.6s ease-in-out';
+          chosenCard.style.transform = `translate(${toCenterX}px, ${toCenterY}px)`;
+      }
+
+      await new Promise(r => setTimeout(r, 700));
+
+      // Lock position before DOM cleanup
+      if (chosenCard) {
+          const lockedRect = chosenCard.getBoundingClientRect();
+          chosenCard.style.position = 'fixed';
+          chosenCard.style.left = lockedRect.left + 'px';
+          chosenCard.style.top = lockedRect.top + 'px';
+          chosenCard.style.width = lockedRect.width + 'px';
+          chosenCard.style.height = lockedRect.height + 'px';
+          chosenCard.style.transform = 'none';
+          chosenCard.style.margin = '0';
+      }
+
+      // Remove dissolved cards
+      dynamicGrid.querySelectorAll('.dissolving').forEach(el => el.remove());
+
+      // STEP 9: Sparkle teleport
+      if (chosenCard && targetX !== undefined) {
+          const cardRect = chosenCard.getBoundingClientRect();
+          const cardCenterX = cardRect.left + cardRect.width / 2;
+          const cardCenterY = cardRect.top + cardRect.height / 2;
+
+          chosenCard.style.transition = 'opacity 0.3s ease-out';
+          chosenCard.style.opacity = '0.2';
+
+          const dissolutionCount = 14 + Math.floor(Math.random() * 6);
+          for (let i = 0; i < dissolutionCount; i++) {
+              setTimeout(() => {
+                  const sparkle = document.createElement('div');
+                  sparkle.className = 'dissolution-sparkle';
+                  const sx = cardRect.left + Math.random() * cardRect.width;
+                  const sy = cardRect.top + Math.random() * cardRect.height;
+                  sparkle.style.cssText = `left: ${sx}px; top: ${sy}px;`;
+                  document.body.appendChild(sparkle);
+                  setTimeout(() => sparkle.remove(), 400);
+              }, i * 25);
+          }
+
+          setTimeout(() => {
+              const travelCount = 8 + Math.floor(Math.random() * 4);
+              for (let i = 0; i < travelCount; i++) {
+                  setTimeout(() => {
+                      const sparkle = document.createElement('div');
+                      sparkle.className = 'traveling-sparkle';
+                      const offX = (Math.random() - 0.5) * cardRect.width * 0.5;
+                      const offY = (Math.random() - 0.5) * cardRect.height * 0.5;
+                      const sx = cardCenterX + offX;
+                      const sy = cardCenterY + offY;
+                      const midX = (sx + targetX) / 2 + (Math.random() - 0.5) * 80;
+                      const midY = Math.min(sy, targetY) - 40 - Math.random() * 60;
+                      sparkle.style.cssText = `
+                          left: ${sx}px; top: ${sy}px;
+                          --target-x: ${targetX - sx}px;
+                          --target-y: ${targetY - sy}px;
+                          --arc-x: ${midX - sx}px;
+                          --arc-y: ${midY - sy}px;
+                      `;
+                      document.body.appendChild(sparkle);
+                      setTimeout(() => sparkle.remove(), 600);
+                  }, i * 45);
+              }
+          }, 200);
+
+          await new Promise(r => setTimeout(r, 700));
+          chosenCard.style.opacity = '0';
+
+          for (let i = 0; i < 6; i++) {
+              const sparkle = document.createElement('div');
+              sparkle.className = 'convergence-sparkle';
+              const angle = (Math.PI * 2 * i) / 6;
+              const dist = 18 + Math.random() * 12;
+              sparkle.style.cssText = `
+                  left: ${targetX + Math.cos(angle) * dist}px;
+                  top: ${targetY + Math.sin(angle) * dist}px;
+              `;
+              document.body.appendChild(sparkle);
+              setTimeout(() => sparkle.remove(), 500);
+          }
+      }
+
+      // Restore chosen card state
+      if (chosenCard) {
+          const backTitle = chosenCard.querySelector('.sb-card-back .sb-card-title');
+          if (backTitle && backTitle.dataset.originalText) {
+              backTitle.textContent = backTitle.dataset.originalText;
+          }
+          chosenCard.style.transform = '';
+          chosenCard.style.zIndex = '';
+          chosenCard.style.opacity = '';
+          chosenCard.style.transition = '';
+          chosenCard.style.position = '';
+          chosenCard.style.left = '';
+          chosenCard.style.top = '';
+          chosenCard.style.width = '';
+          chosenCard.style.height = '';
+          chosenCard.style.margin = '';
+      }
+
+      // Restore group labels
+      dynamicGrid.querySelectorAll('.dynamic-group-label').forEach(lbl => {
+          lbl.style.opacity = '';
+          lbl.style.transition = '';
+      });
+
+      // STEP 10: Create breadcrumb with Destiny's mask
+      createDynamicBreadcrumbWithMask(chosenVal);
+
+      if (typeof hideCorridorContinueButton === 'function') {
+          hideCorridorContinueButton('dynamic');
+      }
+      if (typeof advanceCorridorRow === 'function') {
+          advanceCorridorRow();
+      }
+
+      console.log(`[Dynamic Destiny] Selected: ${chosenVal}`);
+  }
+
+  /**
+   * Create dynamic/polarity breadcrumb with Destiny's Choice mask
+   */
+  function createDynamicBreadcrumbWithMask(dynamicVal) {
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      if (!breadcrumbRow) return;
+
+      const stageIdx = STAGE_INDEX['dynamic'];
+
+      const existingCard = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="dynamic"]');
+      if (existingCard) existingCard.remove();
+
+      const card = document.createElement('div');
+      card.className = 'breadcrumb-card destiny-choice-breadcrumb materializing';
+      card.dataset.grp = 'dynamic';
+      card.dataset.val = dynamicVal;
+      card.dataset.stageIndex = stageIdx;
+      card.dataset.breadcrumbLabel = "Destiny's Choice";
+      card.style.backgroundImage = "url('/assets/card-art/cards/Black-DestinyChoice-back.png')";
+      card.style.backgroundSize = 'cover';
+      card.style.backgroundPosition = 'center';
+
+      card.addEventListener('click', () => {
+          if (typeof navigateToBreadcrumb === 'function') navigateToBreadcrumb('dynamic');
+      });
+
+      const allSlots = breadcrumbRow.querySelectorAll('.breadcrumb-card, .ghost-step');
+      let insertBefore = null;
+      for (const slot of allSlots) {
+          const slotIdx = parseInt(slot.dataset.stageIndex ?? slot.dataset.ghostIndex, 10);
+          if (!isNaN(slotIdx) && slotIdx > stageIdx) {
+              insertBefore = slot;
+              break;
+          }
+      }
+      if (insertBefore) {
+          breadcrumbRow.insertBefore(card, insertBefore);
+      } else {
+          breadcrumbRow.appendChild(card);
+      }
+
+      if (stageIdx !== undefined && stageIdx >= 0) {
+          if (typeof removeGhostStep === 'function') removeGhostStep(stageIdx);
+      }
+
+      setTimeout(() => card.classList.remove('materializing'), 400);
+
+      if (typeof attachBreadcrumbNavigation === 'function') {
+          attachBreadcrumbNavigation(card);
+      }
+
+      updateActiveBreadcrumbSparkles(card);
+
+      corridorSelections.set('dynamic', dynamicVal);
+      console.log(`[Breadcrumb] Created Destiny mask for dynamic: ${dynamicVal}`);
   }
 
   /**
@@ -23076,6 +24550,67 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       corridorSelections.set('storybeau', archetypeId);
       console.log(`[Breadcrumb] Created PNG card for archetype (${viaDestiny ? 'Destiny' : 'Continue'}): ${archetypeId}`);
+  }
+
+  /**
+   * Create pressure breadcrumb with Destiny's Choice mask
+   * Uses Black-DestinyChoice-back.png (no reveal of chosen pressure/flavor)
+   */
+  function createPressureBreadcrumbWithMask(pressureVal, flavorId) {
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      if (!breadcrumbRow) return;
+
+      const stageIdx = STAGE_INDEX['pressure'];
+
+      // Remove existing pressure breadcrumb
+      const existingCard = breadcrumbRow.querySelector('.breadcrumb-card[data-grp="pressure"]');
+      if (existingCard) existingCard.remove();
+
+      const card = document.createElement('div');
+      card.className = 'breadcrumb-card destiny-choice-breadcrumb materializing';
+      card.dataset.grp = 'pressure';
+      card.dataset.val = pressureVal;
+      card.dataset.stageIndex = stageIdx;
+      card.dataset.breadcrumbLabel = "Destiny's Choice";
+      card.style.backgroundImage = "url('/assets/card-art/cards/Black-DestinyChoice-back.png')";
+      card.style.backgroundSize = 'cover';
+      card.style.backgroundPosition = 'center';
+
+      card.addEventListener('click', () => {
+          if (typeof navigateToBreadcrumb === 'function') navigateToBreadcrumb('pressure');
+      });
+
+      // Insert at correct position using stage-index ordering
+      const allSlots = breadcrumbRow.querySelectorAll('.breadcrumb-card, .ghost-step');
+      let insertBefore = null;
+      for (const slot of allSlots) {
+          const slotIdx = parseInt(slot.dataset.stageIndex ?? slot.dataset.ghostIndex, 10);
+          if (!isNaN(slotIdx) && slotIdx > stageIdx) {
+              insertBefore = slot;
+              break;
+          }
+      }
+      if (insertBefore) {
+          breadcrumbRow.insertBefore(card, insertBefore);
+      } else {
+          breadcrumbRow.appendChild(card);
+      }
+
+      // Remove ghost step AFTER inserting breadcrumb
+      if (stageIdx !== undefined && stageIdx >= 0) {
+          if (typeof removeGhostStep === 'function') removeGhostStep(stageIdx);
+      }
+
+      setTimeout(() => card.classList.remove('materializing'), 400);
+
+      if (typeof attachBreadcrumbNavigation === 'function') {
+          attachBreadcrumbNavigation(card);
+      }
+
+      updateActiveBreadcrumbSparkles(card);
+
+      corridorSelections.set('pressure', pressureVal);
+      console.log(`[Breadcrumb] Created Destiny mask for pressure: ${pressureVal} / ${flavorId}`);
   }
 
   // Populate archetype card zoom view — primary archetype only, no modifier UI
@@ -23913,8 +25448,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       phrase.className = `committed-phrase ${type}-phrase`;
       phrase.dataset.index = index;
       phrase.innerHTML = `
-          <button class="committed-phrase-remove" title="Remove" aria-label="Remove veto">&times;</button>
           <span class="committed-phrase-text">${text}</span>
+          <button class="committed-phrase-remove" title="Remove" aria-label="Remove">&times;</button>
       `;
       // Insert at top (new commits above old)
       container.insertBefore(phrase, container.firstChild);
@@ -24182,14 +25717,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   const FATE_WORLD_FLAVORS = {
     Modern: [
       { val: 'small_town' }, { val: 'college' }, { val: 'friends' },
-      { val: 'old_money' }, { val: 'office' }
+      { val: 'blue_blood' }, { val: 'office' }
     ],
     Historical: [
       { val: 'medieval' }, { val: 'victorian' }, { val: 'renaissance' },
-      { val: 'classical' }, { val: '20th_century' }
+      { val: 'classical' }, { val: 'bronze_age' }, { val: '20th_century' }
     ],
     Fantasy: [
-      { val: 'enchanted_realms' }, { val: 'hidden_magic' }, { val: 'cursed_worlds' }
+      { val: 'arcane_binding' }, { val: 'fated_blood' }, { val: 'the_inhuman' },
+      { val: 'the_beyond' }, { val: 'cursed' }
     ],
     SciFi: [
       { val: 'galactic_civilizations' }, { val: 'cyberpunk' }, { val: 'future_of_science' }
@@ -24261,9 +25797,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   // Get weighted dynamic selection
   function getFateDynamic() {
-    // Prefer Friends to Lovers, Forbidden Love, Fated
-    const dynamics = ['Friends', 'Forbidden', 'Fated', 'Enemies', 'SecondChance'];
-    const weights = [35, 30, 25, 5, 5];
+    // Prefer Friends to Lovers, Forbidden Love
+    const dynamics = ['Friends', 'Forbidden', 'Enemies', 'SecondChance', 'Proximity', 'SecretIdentity'];
+    const weights = [30, 25, 20, 10, 10, 5];
     return weightedSelect(dynamics, weights);
   }
 
@@ -27010,8 +28546,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // Capture raw form values synchronously (needed for early validation)
-    const rawPlayerName = $('playerNameInput').value.trim() || "The Protagonist";
-    const rawPartnerName = $('partnerNameInput').value.trim() || "The Love Interest";
+    const playerInputVal2 = $('playerNameInput').value.trim();
+    const partnerInputVal2 = $('partnerNameInput').value.trim();
+    const playerNameBlank2 = !playerInputVal2;
+    const partnerNameBlank2 = !partnerInputVal2;
+    const rawPlayerName = playerInputVal2 || "The Protagonist";
+    const rawPartnerName = partnerInputVal2 || "The Love Interest";
     const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
     const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
     const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
@@ -27240,26 +28780,41 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // RUNTIME NORMALIZATION: Character names flow through ChatGPT normalization layer
     // PASS 9B FIX: Handle normalization errors gracefully to prevent loader hang
+    // Skip normalization for blank names — AI will invent them
     let playerNorm, partnerNorm, pKernel, lKernel;
     try {
-        playerNorm = await callNormalizationLayer({
-            axis: 'character',
-            user_text: rawPlayerName,
-            context_signals: state.picks?.world || []
-        });
-        partnerNorm = await callNormalizationLayer({
-            axis: 'character',
-            user_text: rawPartnerName,
-            context_signals: state.picks?.world || []
-        });
-        pKernel = playerNorm.normalized_text || playerNorm.archetype || 'the one who carries the story';
-        lKernel = partnerNorm.normalized_text || partnerNorm.archetype || 'the one who draws them forward';
+        if (!playerNameBlank2) {
+            playerNorm = await callNormalizationLayer({
+                axis: 'character',
+                user_text: rawPlayerName,
+                context_signals: state.picks?.world || []
+            });
+            pKernel = playerNorm.normalized_text || playerNorm.archetype || 'the one who carries the story';
+        } else {
+            pKernel = rawPlayerName;
+        }
+        if (!partnerNameBlank2) {
+            partnerNorm = await callNormalizationLayer({
+                axis: 'character',
+                user_text: rawPartnerName,
+                context_signals: state.picks?.world || []
+            });
+            lKernel = partnerNorm.normalized_text || partnerNorm.archetype || 'the one who draws them forward';
+        } else {
+            lKernel = rawPartnerName;
+        }
     } catch (normError) {
         console.error('[NORMALIZATION ERROR]', normError);
         // Fallback: Use raw names if normalization fails
         pKernel = rawPlayerName || 'the one who carries the story';
         lKernel = rawPartnerName || 'the one who draws them forward';
     }
+
+    // Build name-invention directives for blank names
+    const nameInventionDirectives2 = [
+        playerNameBlank2 ? buildNameInventionDirective('Protagonist', pGen, pPro) : '',
+        partnerNameBlank2 ? buildNameInventionDirective('Love Interest', lGen, lPro) : ''
+    ].filter(Boolean).join('\n\n');
 
     // CRITICAL: Store normalized kernels in state and overwrite raw display
     state.normalizedPlayerKernel = pKernel;
@@ -27268,6 +28823,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.rawPartnerName = rawPartnerName;
     if ($('playerNameInput')) $('playerNameInput').value = pKernel;
     if ($('partnerNameInput')) $('partnerNameInput').value = lKernel;
+
+    // Record user-provided names so they're never reused by AI
+    if (!playerNameBlank2) addUsedName(pKernel);
+    if (!partnerNameBlank2) addUsedName(lKernel);
 
     // Determine Author Identity based on selections
     if(pGen === 'Male' && lGen === 'Female') { state.authorGender = 'Female'; state.authorPronouns = 'She/Her'; }
@@ -27395,6 +28954,16 @@ Use instead: tribal structures, clan hierarchy, natural landmarks, oral traditio
     console.log('[DEV:StoryGen] world:', storyWorld, '| tone:', state.picks.tone, '| genre:', storyGenre, '→ powerRole:', storyPowerRole, '| powerFrame:', storyPowerFrame, '| intensity:', state.intensity);
     console.log('[DEV:WorldResolve] world:', storyWorld, '| genre:', storyGenre, '→ powerFrame:', storyPowerFrame, '| prehistoricForbid:', storyWorld === 'Prehistoric');
 
+    // Resolve world flavors (use stored from story start, or recompute if missing)
+    const resolvedFlavors2 = state.resolvedWorldFlavors || resolveWorldFlavors(storyWorld, state.picks?.worldSubtype);
+    const worldFlavorDirectives2 = buildWorldFlavorDirectives(storyWorld, resolvedFlavors2);
+
+    // Pre-compute probabilistic injections so polarity can check suppression
+    const _tone2 = state.picks.tone || 'Earnest';
+    const _fracture2 = buildTonalFracture(_tone2);
+    const _pullBlock2 = buildStoryPullBlock(_fracture2);
+    const _polarityBlock2 = buildPolarityBlock(_fracture2, _pullBlock2);
+
     const sys = `You are a bestselling erotica author (Voice: ${state.authorGender}, ${state.authorPronouns}).
 
 ${state.storyOrigin === "couple" && !state.player2Joined && !state.inviteRevoked ? batedBreathRules : ""}
@@ -27450,17 +29019,18 @@ Long-Arc Presence Awareness:
 ────────────────────────────────────
 
 You are writing a story with the following 4-axis configuration:
-- World: ${state.picks.world || 'Modern'}${state.picks.world === 'Historical' && state.picks.era ? ` (${state.picks.era} Era)` : ''}
-- Tone: ${state.picks.tone || 'Earnest'}
+- World: ${storyWorld}${state.worldCustomTexts?.[storyWorld] && !state.picks?.worldSubtype ? ` (Custom: ${state.worldCustomTexts[storyWorld]})` : ''}
+- Tone: ${_tone2}${_fracture2}
 - Genre: ${storyPowerRole}
-- Power Frame: ${storyPowerFrame}
-- Dynamic: ${state.picks.dynamic || 'Enemies'}
+- Power Frame: ${storyPowerFrame}${_pullBlock2}
+${_polarityBlock2}
 - POV: ${state.picks.pov || 'First'}
+${worldFlavorDirectives2}
 ${prehistoricForbid}
 
-    Protagonist: ${pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
-    Love Interest: ${lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
-
+    Protagonist: ${playerNameBlank2 ? '[TO BE INVENTED — see NAME INVENTION rules]' : pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
+    Love Interest: ${partnerNameBlank2 ? '[TO BE INVENTED — see NAME INVENTION rules]' : lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
+    ${nameInventionDirectives2 ? '\n' + nameInventionDirectives2 : ''}
     ${buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen)}
     ${buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength)}
     ${safetyStr}
@@ -29642,14 +31212,9 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           Enemies: 'rivals become something more',
           Friends: 'friendship ignites',
           Forbidden: 'the forbidden pulls closer',
-          Fated: 'destiny refuses to let go',
           SecondChance: 'the past returns uninvited',
-          ForcedProximity: 'proximity rewrites the rules',
-          OnlyOneBed: 'closeness becomes unavoidable',
-          Fake: 'the lie begins to feel real',
-          Grumpy: 'opposites collide',
-          Boss: 'authority blurs every line',
-          Rivals: 'competition sparks something unexpected'
+          Proximity: 'proximity rewrites the rules',
+          SecretIdentity: 'hidden truths threaten everything'
       };
       const WORLD_SHADE = {
           Modern: 'under city lights',
@@ -30008,15 +31573,18 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   const EROTIC_BORDER_FLAVOR_MAP = {
       // Historical flavors
       'prehistoric': 'aged',
+      'bronze_age': 'weathered',
       'classical': 'weathered',
       'medieval': 'aged',
       'renaissance': 'tarnished',
       'victorian': 'aged',
       '20th_century': 'weathered',
-      // Fantasy flavors
-      'enchanted_realms': 'pristine',
-      'hidden_magic': 'aged',
-      'cursed_worlds': 'corroded',
+      // Fantasy flavors (romance-breaking pressures)
+      'arcane_binding': 'tarnished',
+      'fated_blood': 'aged',
+      'the_inhuman': 'weathered',
+      'the_beyond': 'pristine',
+      'cursed': 'corroded',
       // SciFi flavors
       'galactic_civilizations': 'pristine',
       'future_of_science': 'pristine',
@@ -30043,7 +31611,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'small_town': 'weathered',
       'college': 'pristine',
       'friends': 'pristine',
-      'old_money': 'tarnished',
+      'blue_blood': 'tarnished',
       'office': 'pristine',
       'supernatural_modern': 'aged',
       'superheroic_modern': 'pristine'
@@ -30140,15 +31708,18 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   const DIRTY_KEYHOLE_FLAVOR_MAP = {
       // Historical flavors
       'prehistoric': 'aged',
+      'bronze_age': 'weathered',
       'classical': 'weathered',
       'medieval': 'aged',
       'renaissance': 'aged',
       'victorian': 'weathered',
       '20th_century': 'weathered',
-      // Fantasy flavors
-      'enchanted_realms': 'pristine',
-      'hidden_magic': 'aged',
-      'cursed_worlds': 'corroded',
+      // Fantasy flavors (romance-breaking pressures)
+      'arcane_binding': 'tarnished',
+      'fated_blood': 'aged',
+      'the_inhuman': 'weathered',
+      'the_beyond': 'pristine',
+      'cursed': 'corroded',
       // SciFi flavors
       'galactic_civilizations': 'pristine',
       'future_of_science': 'pristine',
@@ -30175,7 +31746,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'small_town': 'weathered',
       'college': 'pristine',
       'friends': 'pristine',
-      'old_money': 'aged',
+      'blue_blood': 'aged',
       'office': 'pristine',
       'supernatural_modern': 'aged',
       'superheroic_modern': 'pristine'
@@ -36521,8 +38092,8 @@ FATE CARD ADAPTATION (CRITICAL):
                   'Sports', 'Survival', 'Obsession', 'ForbiddenKnowledge'],
           tone: ['Earnest', 'WryConfession', 'Satirical', 'Dark', 'Horror', 'Mythic',
                  'Comedic', 'Surreal', 'Poetic'],
-          dynamic: ['Proximity', 'SecretIdentity', 'Caretaker', 'Friends', 'Enemies',
-                    'SecondChance', 'Forbidden', 'Dangerous', 'Obsessive', 'Fated', 'Partners'],
+          dynamic: ['Proximity', 'SecretIdentity', 'Friends', 'Enemies',
+                    'SecondChance', 'Forbidden'],
           arousal: ['Clean', 'Naughty', 'Erotic', 'Dirty']
       };
 
@@ -36684,7 +38255,7 @@ FATE CARD ADAPTATION (CRITICAL):
               log('set world <Modern|Historical|Fantasy|SciFi|Dystopia|PostApocalyptic>');
               log('set genre <' + DEV_CMD_REGISTRY.genre.slice(0, 5).join('|') + '|...>');
               log('set tone <Earnest|WryConfession|Satirical|Dark|Horror|Mythic|Comedic|Surreal|Poetic>');
-              log('set dynamic <Proximity|SecretIdentity|Caretaker|Friends|Enemies|...>');
+              log('set dynamic <Proximity|SecretIdentity|Friends|Enemies|SecondChance|Forbidden>');
               log('set arousal <Clean|Naughty|Erotic|Dirty>');
               log('=== LEGACY COMMANDS ===');
               log('COVER: make [world] [intensity] cover | pretend cover failed | show fallback | show/hide keyhole | reset cover');
