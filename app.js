@@ -8425,6 +8425,30 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     } catch(e) {
         // QuotaExceededError - try IndexedDB
         console.warn('localStorage quota exceeded, trying IndexedDB...', e);
+
+// Supabase upsert story snapshot
+    if (typeof sb !== 'undefined' && state.storyId) {
+      (async () => {
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          const user = session?.user;
+          if (user) {
+            await sb.from('story_snapshots').upsert({
+              user_id: user.id,
+              story_id: state.storyId,
+              title: state.title || null,
+              world: state.world || null,
+              genre: state.genre || null,
+              arousal: typeof getCurrentArousal === 'function' ? getCurrentArousal() : null,
+              word_count: typeof currentStoryWordCount === 'function' ? currentStoryWordCount() : 0,
+              state_snapshot: state
+            }, { onConflict: 'user_id,story_id' });
+          }
+        } catch (e) {
+          console.warn('[Vault] story upsert failed:', e);
+        }
+      })();
+    }
         try {
             localStorage.removeItem(SB_ANALYTICS_KEY); // Free space
             localStorage.removeItem('sb_saved_story');
