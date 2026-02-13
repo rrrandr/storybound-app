@@ -1280,7 +1280,7 @@ function stopContinuousSparkles() {
     function flipAllCards(mount){
         if (_allFlipped) return;
         _allFlipped = true;
-        const cards = mount.querySelectorAll('.fate-card');
+        const cards = mount.querySelectorAll('.fate-card:not(.petition-fate-card)');
         cards.forEach(c => c.classList.add('flipped'));
     }
 
@@ -1893,6 +1893,24 @@ function setSelectedState(mount, selectedCardEl){
 
             mount.appendChild(card);
         });
+
+        // Petition Fate card — 6th card, always visible, always unlocked, pre-flipped
+        const petitionCard = document.createElement('div');
+        petitionCard.className = 'fate-card petition-fate-card flipped';
+        petitionCard.innerHTML = `
+            <div class="inner">
+                <div class="front"><h3>Fate</h3></div>
+                <div class="back petition-back">
+                    <span class="petition-quill-icon">&#x270D;</span>
+                    <h3 style="margin:2px 0; font-size:0.9em;">Petition Fate</h3>
+                    <p style="font-size:0.7em; opacity:0.7; margin:0;">Speak your desire</p>
+                </div>
+            </div>
+        `;
+        petitionCard.onclick = () => {
+            if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
+        };
+        mount.appendChild(petitionCard);
 
         // Bind commitment triggers once (safe no-op if elements missing)
         bindCommitHooks(mount);

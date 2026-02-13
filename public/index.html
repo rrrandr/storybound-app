@@ -32,14 +32,30 @@
 <div id="menuOverlay" class="overlay hidden" style="z-index:4999;">
   <div class="box">
     <h3>Menu</h3>
-<div id="menuAuthSection"></div>
 
+    <!-- ── ACCOUNT ── -->
+    <label class="setting-label" style="margin-top:10px;">Account</label>
+    <div id="menuAuthSection"></div>
+    <button id="menuSignInBtn" class="small-btn">Sign in (coming soon)</button>
+    <button id="menuProfileBtn" class="small-btn">Profile</button>
+    <button id="menuLibraryBtn" class="small-btn">Library</button>
+    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+
+    <!-- ── STORY ── -->
+    <label class="setting-label">Story</label>
     <button onclick="window.restart()">Restart Story</button>
-    <button onclick="window.changeTier()">Change Tier</button>
     <button id="continueStoryBtn" class="hidden" onclick="window.continueStory()">Continue Saved Story</button>
-    <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
-    
-    <label class="setting-label">Theme</label>
+    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+
+    <!-- ── PURCHASES ── -->
+    <label class="setting-label">Purchases</label>
+    <button onclick="window.changeTier()">Change Tier</button>
+    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+
+    <!-- ── APPEARANCE ── -->
+    <label class="setting-label">Appearance</label>
+
+    <label class="setting-label" style="font-size:0.8em; margin-top:8px;">Theme</label>
     <div style="display:flex; gap:5px; justify-content:center; flex-wrap:wrap; margin-bottom:15px;">
         <button class="small-btn" onclick="setTheme('default')">Default</button>
         <button class="small-btn" onclick="setTheme('sepia')">Sepia</button>
@@ -48,7 +64,7 @@
         <button class="small-btn" onclick="setTheme('easy')">Easy</button>
     </div>
 
-    <label class="setting-label">Font</label>
+    <label class="setting-label" style="font-size:0.8em;">Font</label>
     <select id="fontSelect" onchange="setFont(this.value)" style="margin-bottom:15px; width:100%;">
         <option value="'Lora', serif">Lora (Default)</option>
         <option value="'Grenze Gotisch', cursive">Grenze Gotisch</option>
@@ -61,11 +77,13 @@
         <option value="'Roboto', sans-serif">Roboto</option>
     </select>
 
-    <label class="setting-label">Font Size</label>
+    <label class="setting-label" style="font-size:0.8em;">Font Size</label>
     <input type="range" min="16" max="72" value="18" oninput="setFontSize(this.value)">
+    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
 
-    <br><br>
-    <button onclick="document.getElementById('menuOverlay').classList.add('hidden')">Close</button>
+    <!-- ── HELP ── -->
+    <label class="setting-label">Help</label>
+    <button class="small-btn" onclick="document.getElementById('menuOverlay').classList.add('hidden')">Close Menu</button>
   </div>
 </div>
 
@@ -324,7 +342,7 @@
     <div id="godModePay" class="hidden">
        <h4 style="color:var(--gold); margin-top:0; font-size:1.4em;">Unlock God Mode</h4>
        <p style="font-size:0.9em; opacity:0.8; margin-bottom:20px;">
-         Remove all pacing gates, cooldowns, and safety filters. Quill is always ready. Intimate scenes unlock immediately. Your veto list and story choices still apply — God Mode overrides the engine, not your taste.
+         Remove all pacing gates, cooldowns, and safety filters. Petition Fate freely. Intimate scenes unlock immediately. Your story choices still apply — God Mode overrides the engine, not your taste.
          <br><strong>$50 One-time purchase.</strong>
        </p>
        <button id="payGodMode" class="god-mode-unlock-btn" style="margin-top:10px;">Unlock Forever ($50)</button>
@@ -334,7 +352,7 @@
         <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
             <div id="optUnlock" style="background:linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%); padding:15px; border-radius:0; border:2px double gold; box-shadow:0 0 0 1px #0a0a0a; width:220px; text-align:left;">
                 <h4 style="color:var(--gold); margin-top:0;">Unlock This Story</h4>
-                <p style="font-size:0.85em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, Quill access.<br><strong>$3 Story Pass.</strong></p>
+                <p style="font-size:0.85em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, full Petition Fate.<br><strong>$3 Story Pass.</strong></p>
                 <button id="payOneTime" style="width:100%; margin-top:15px;">Storypass $3</button>
                 <div id="storypassDisabledNotice" class="hidden" style="margin-top:10px; font-size:0.75em; color:#888; text-align:center;">Unavailable for Dirty intensity</div>
             </div>
@@ -344,7 +362,7 @@
                 <ul style="font-size:0.8em; padding-left:15px; opacity:0.9; line-height:1.4; list-style-type: '⚜ ';">
                     <li>Dirty intensity</li>
                     <li>Long-form stories</li>
-                    <li>Unlimited Quill</li>
+                    <li>Unlimited Petitions</li>
                     <li>Save anytime</li>
                 </ul>
                 <div style="text-align:center; font-size:0.9em; margin:10px 0; color:var(--gold);">$6/month</div>
@@ -995,10 +1013,10 @@
     <div class="card-flow-row" id="flowRowPressure" data-flow-stage="pressure">
       <div class="section-title">Story Pull</div>
       <div class="sb-grid sb-grid-4" id="pressureGrid">
-        <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power & Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">Someone has leverage. Someone else pays for it.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="EscapePursuit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape & Pursuit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape & Pursuit</span><span class="sb-card-desc">Leaving, rescuing, or outrunning something.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="DesireObsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Desire & Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Desire & Obsession</span><span class="sb-card-desc">Wanting something too much, too soon, or for the wrong reasons.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">Staying alive — socially, politically, physically, or emotionally.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power & Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">The entire city answers to him. Except for her.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="EscapePursuit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape & Pursuit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape & Pursuit</span><span class="sb-card-desc">The world hunts them. They only have each other.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="DesireObsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Desire & Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Desire & Obsession</span><span class="sb-card-desc">He should walk away. He never can.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">The mountain tried to freeze them; instead, they burned.</span></div></div></div>
       </div>
 
       <!-- FLAVOR GRID REMOVED: Flavors now selected inside zoomed Story Pull card -->
@@ -1073,12 +1091,12 @@
           <label class="sb-checkbox sb-checkbox-sm">
             <input type="checkbox" id="chkNonCon">
             <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
-            <span class="sb-checkbox-label sb-checkbox-label-sm">Implied Non-consent</span>
+            <span class="sb-checkbox-label sb-checkbox-label-sm">Implied Non&#8209;consent</span>
           </label>
           <label class="sb-checkbox sb-checkbox-sm">
             <input type="checkbox" id="chkViolence" checked>
             <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
-            <span class="sb-checkbox-label sb-checkbox-label-sm">Violence / Peril</span>
+            <span class="sb-checkbox-label sb-checkbox-label-sm">Violence &amp; Peril</span>
           </label>
         </div>
       </div>
@@ -1106,77 +1124,6 @@
       </div>
 
       <button class="flow-continue-btn sb-btn-png sm" id="continueFromSafety">Proceed</button>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         VETO/QUILL ROW (Row 10) — Own corridor row after Safety
-         ═══════════════════════════════════════════════════════════════════ -->
-    <div id="vetoquillRow" class="story-shape-row corridor-section" data-corridor-stage="vetoquill">
-      <div class="section-title">Veto &amp; Quill</div>
-      <!-- LEFT: VETO CARD -->
-      <div class="vq-tarot-card" id="vetoCard">
-        <div class="vq-arc-container">
-          <svg class="vq-arc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <circle cx="12" cy="12" r="9"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/>
-          </svg>
-          <svg class="vq-arc-text" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet">
-            <defs><path id="vetoArc" d="M 15,18 A 40,40 0 0,1 85,18" fill="none"/></defs>
-            <text fill="rgba(218,165,32,0.8)" font-size="8" font-family="Lora, serif" font-variant="small-caps" letter-spacing="3">
-              <textPath href="#vetoArc" startOffset="50%" text-anchor="middle">veto</textPath>
-            </text>
-          </svg>
-        </div>
-        <div class="vq-tarot-fields">
-          <div id="vetoCommitted" class="committed-phrases"></div>
-          <div class="vq-input-wrapper fate-input-wrapper fate-textarea-wrapper">
-            <textarea id="vetoInput" rows="2" class="fate-field vq-textarea" data-fate-type="veto"></textarea>
-            <div class="rotating-placeholder textarea-placeholder" data-for="vetoInput"></div>
-          </div>
-          <span id="vetoStatus" class="vq-status vq-status-veto">Veto: Ready</span>
-        </div>
-      </div>
-
-      <!-- CENTER: DESTINY'S CHOICE DECK -->
-      <div class="destiny-mini-deck" id="vqDestinyDeck">
-        <div class="destiny-mini-deck-stack">
-          <div class="destiny-mini-card deck-card-1"></div>
-          <div class="destiny-mini-card deck-card-2"></div>
-          <div class="destiny-mini-card deck-card-3"></div>
-          <div class="destiny-mini-card deck-card-4"></div>
-          <div class="destiny-mini-card deck-card-5"></div>
-          <div class="destiny-deck-sparkle-emitter" id="vqDeckSparkles"></div>
-        </div>
-      </div>
-
-      <!-- RIGHT: QUILL CARD -->
-      <div class="vq-tarot-card" id="quillCard">
-        <div class="vq-arc-container">
-          <svg class="vq-arc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
-            <line x1="16" y1="8" x2="2" y2="22"/>
-            <line x1="17.5" y1="15" x2="9" y2="15"/>
-          </svg>
-          <svg class="vq-arc-text" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet">
-            <defs><path id="quillArc" d="M 15,18 A 40,40 0 0,1 85,18" fill="none"/></defs>
-            <text fill="rgba(218,165,32,0.8)" font-size="8" font-family="Lora, serif" font-variant="small-caps" letter-spacing="3">
-              <textPath href="#quillArc" startOffset="50%" text-anchor="middle">quill</textPath>
-            </text>
-          </svg>
-        </div>
-        <div class="vq-tarot-fields">
-          <div id="quillCommitted" class="committed-phrases"></div>
-          <div id="quillBox" class="vq-input-wrapper fate-input-wrapper fate-textarea-wrapper locked-input">
-            <textarea id="quillInput" rows="2" class="fate-field vq-textarea" data-fate-type="quill"></textarea>
-            <div class="rotating-placeholder textarea-placeholder" data-for="quillInput"></div>
-          </div>
-          <span id="quillStatus" class="vq-status">Quill: Poised</span>
-        </div>
-      </div>
-
-      <!-- Hidden: Legacy Continue (control plane owns it) -->
-      <div class="vq-footer">
-        <button class="flow-continue-btn sb-btn-png sm" id="continueFromVetoquill">Proceed</button>
-      </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
@@ -1468,7 +1415,7 @@
     </div>
     
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-       <button id="gameControlsBtn" class="small-btn">Quill & Veto</button>
+       <button id="gameGodModeBtn" class="small-btn hidden">God Mode</button>
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
     </div>
 
@@ -1478,45 +1425,31 @@
 
   <div id="toast" class="toast hidden">Boundaries redirected the scene.</div>
 
-<div id="gameQuillVetoModal" class="overlay hidden" style="z-index:10004;">
-  <div class="box" style="max-width:90vw; width:700px; text-align:left;">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-        <div class="qv-section">
-            <label class="qv-label" style="display:block; margin-bottom:8px;">Veto</label>
-            <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Block elements you never want to appear.</p>
-            <!-- CORRECTIVE: Show committed veto entries in game modal -->
-            <div id="gameVetoCommitted" class="committed-phrases" style="margin-bottom:10px;"></div>
-            <div class="fate-input-row" style="margin-bottom:10px;">
-                <div class="input-wrapper fate-input-wrapper" style="flex:1;">
-                    <textarea id="gameVetoInput" rows="3" class="fate-field" data-fate-type="veto" placeholder=""></textarea>
-                    <div class="rotating-placeholder" data-for="gameVetoInput"></div>
-                </div>
-            </div>
-            <div class="veto-ui" style="display:flex; align-items:center; justify-content:flex-end;">
-                <button id="btnGameCommitVeto" class="small-btn" style="padding:6px 12px; font-size:0.85em;">Commit Veto</button>
-            </div>
-        </div>
-
-        <div class="qv-section">
-            <label class="qv-label" style="display:block; margin-bottom:8px;">Quill</label>
-            <p class="qv-hint-above" style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">Steer tone, boundaries, or direction.</p>
-            <!-- Committed Quill entries (parallel to gameVetoCommitted) -->
-            <div id="gameQuillCommitted" class="committed-phrases" style="margin-bottom:10px;"></div>
-            <div class="fate-input-row" style="margin-bottom:10px;">
-                <div id="gameQuillBox" class="input-wrapper fate-input-wrapper" style="flex:1;">
-                    <textarea id="gameQuillInput" rows="3" class="fate-field" data-fate-type="quill" placeholder=""></textarea>
-                    <div class="rotating-placeholder" data-for="gameQuillInput"></div>
-                </div>
-            </div>
-            <div class="quill-ui" style="display:flex; align-items:center; justify-content:space-between;">
-                <span id="gameQuillStatus" style="font-size:0.9em;">Quill: Poised</span>
-                <button id="btnGameCommitQuill" class="small-btn" style="padding:6px 12px; font-size:0.85em;">Commit Quill</button>
-            </div>
-        </div>
+<div id="petitionFateModal" class="overlay hidden" style="z-index:10004;">
+  <div class="box petition-box" style="max-width:90vw; width:500px; text-align:center;">
+    <h3 style="color:var(--gold); margin:0;">Petition Fate</h3>
+    <p style="font-size:0.85em; opacity:0.8; margin:8px 0 16px;">Speak your desire. Fate may honor, twist, or ignore it.</p>
+    <div style="width:100%;">
+      <div class="fate-input-wrapper fate-textarea-wrapper" style="width:100%;">
+        <textarea id="petitionInput" rows="3" class="fate-field" data-fate-type="petition"></textarea>
+        <div class="rotating-placeholder textarea-placeholder" data-for="petitionInput"></div>
+      </div>
     </div>
-
-    <div style="text-align:center; margin-top:20px;">
-        <button onclick="document.getElementById('gameQuillVetoModal').classList.add('hidden')">Close</button>
+    <div id="petitionRitualArea" class="hidden">
+      <div id="petitionOmen" class="petition-omen"></div>
+      <div id="petitionSacrifice" class="petition-sacrifice hidden">
+        <p style="color:var(--gold); font-size:0.9em;">What will you offer?</p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+          <button class="small-btn petition-sacrifice-btn" data-choice="offer">Offer</button>
+          <button class="small-btn petition-sacrifice-btn" data-choice="withhold">Withhold</button>
+          <button class="small-btn petition-sacrifice-btn" data-choice="letfate">Let Fate Choose</button>
+        </div>
+      </div>
+      <div id="petitionResult" class="petition-result hidden"></div>
+    </div>
+    <div id="petitionActions" style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+      <button id="btnSubmitPetition" class="small-btn">Submit Petition</button>
+      <button id="btnClosePetition" onclick="document.getElementById('petitionFateModal').classList.add('hidden')">Close</button>
     </div>
   </div>
 </div>
@@ -1593,15 +1526,9 @@
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
   <div class="box" style="max-width:450px;">
-    <h3>Author Profile</h3>
-    <label class="setting-label">Pen Name</label>
-    <input type="text" id="profilePenName" placeholder="Your pen name" style="width:100%; margin-bottom:15px; padding:10px;">
-    <label style="display:flex; align-items:center; gap:10px; margin-bottom:20px; cursor:pointer;">
-      <input type="checkbox" id="profileAttribution" style="width:20px; height:20px;">
-      <span>Show my name on public stories</span>
-    </label>
-    <button onclick="window.saveProfile()">Save</button>
-    <button onclick="window.closeProfileModal()" style="margin-top:10px;">Cancel</button>
+    <h3>Account Status</h3>
+    <div id="profileStatusContent"></div>
+    <button onclick="window.closeProfileModal()" style="margin-top:15px;">Close</button>
   </div>
 </div>
 

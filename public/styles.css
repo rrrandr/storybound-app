@@ -1350,7 +1350,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 95%; margin: 20px auto 0; }
 @media (max-width: 600px) { .grid-2-col { grid-template-columns: 1fr; } }
 
-/* Setup container - override inline max-width to match Quill/Veto horizontal span */
+/* Setup container - override inline max-width */
 #setup {
     max-width: none !important;
     width: 100%;
@@ -3574,16 +3574,16 @@ select {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 24px 20px 20px;
+    padding: 24px 20px 20px 25px;
     margin-top: 17%;
     flex: 1;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
 }
 
 /* Scaled-down checkbox for safety cards */
 .sb-checkbox-sm {
-    gap: 6px;
+    gap: 25px;
     padding: 2px 0;
 }
 .sb-checkbox-visual-sm {
@@ -3597,6 +3597,7 @@ select {
 .sb-checkbox-label-sm {
     font-size: 0.85em !important;
     color: #c9a84c;
+    text-align: left;
 }
 
 /* Boundary chips with Black-Gold-320x88.png background */
@@ -3604,11 +3605,12 @@ select {
     gap: 6px;
     margin-top: 17%;
     padding: 24px 16px 20px;
+    align-items: center;
 }
 .chip-gold {
-    display: block;
-    width: 100%;
-    padding: 5px 10px;
+    display: inline-block;
+    width: auto;
+    padding: 6px;
     text-align: center;
     background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png');
     background-size: 100% 100%;
@@ -3630,16 +3632,15 @@ select {
 .chip-gold.active {
     opacity: 1;
     font-weight: bold;
-    background: rgba(0, 0, 0, 0.22);
-    border-color: rgba(50, 40, 20, 0.8) rgba(220, 210, 180, 0.65) rgba(220, 210, 180, 0.65) rgba(50, 40, 20, 0.8);
+    filter: brightness(0.75);
+    border-color: rgba(80, 65, 30, 0.6) rgba(180, 170, 140, 0.45) rgba(180, 170, 140, 0.45) rgba(80, 65, 30, 0.6);
     box-shadow:
-        inset 3px 3px 6px rgba(0, 0, 0, 0.55),
-        inset 1px 1px 3px rgba(0, 0, 0, 0.35),
-        inset -1px -1px 2px rgba(255, 255, 255, 0.08),
-        inset 0 0 10px rgba(218, 165, 32, 0.3);
+        inset 2px 2px 4px rgba(0, 0, 0, 0.3),
+        inset -1px -1px 2px rgba(255, 255, 255, 0.06),
+        inset 0 0 8px rgba(218, 165, 32, 0.2);
 }
 
-/* CORRECTIVE: Toast positioned between Veto/Quill panels, not overlapping Begin Story */
+/* CORRECTIVE: Toast positioned above Begin Story */
 /* DSP MATERIAL: Toast — Matte black, 2px double gold, no radius */
 .toast {
     position: fixed;
@@ -3949,279 +3950,19 @@ select {
 #godModeToggle { margin-top:10px; font-size:0.8em; display:flex; align-items:center; justify-content:center; gap:8px; opacity:0.8; cursor:pointer; }
 #godModeToggle input { width:auto; margin:0; cursor:pointer; }
 #godModeLabel { color: var(--gold); font-family:var(--font-main); letter-spacing:1px; }
-.quill-ui, .quill-veto-ui { display:flex; flex-direction:column; align-items:center; margin-top:5px; font-size:0.8em; color:var(--gold); width:95%; margin-left:auto; margin-right:auto; }
-@media (max-width: 600px) {
-    .quill-veto-ui > div:first-child { flex-direction: column; gap: 10px !important; }
-}
-
-/* QUILL & VETO CONTAINER */
-.quill-veto-container { display:grid; grid-template-columns:1fr 1fr; gap:20px; width:95%; margin:15px auto; }
-@media (max-width:700px) { .quill-veto-container { grid-template-columns:1fr; } }
-.qv-section { background:rgba(0,0,0,0.2); border:1px solid rgba(255, 215, 0, 0.2); border-radius:0; padding:15px; }
-
-/* Quill button states — class-based for JS (no direct style mutations) */
-.quill-btn-ready { filter: brightness(1.1); }
-.quill-btn-spent { filter: saturate(0.3) contrast(0.7); opacity: 0.6; }
-.qv-label { display:block; font-size:1.1em; color:var(--gold); font-family:'lust-script-display',serif; margin-bottom:5px; text-align:center; }
-.qv-hint-above { font-size:0.75em; opacity:0.7; margin:0 0 8px; text-align:center; line-height:1.3; }
-.qv-hint-below { font-size:0.7em; opacity:0.5; margin:8px 0 0; text-align:center; line-height:1.3; font-style:italic; }
-.qv-commit-row { display:flex; align-items:center; gap:10px; margin-top:8px; }
-.qv-commit-row.qv-commit-center { justify-content:center; }
-.qv-section textarea { width:100%; min-height:50px; resize:vertical; }
-
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* VETO/QUILL TAROT CARDS — Black face, white/gold text, mirrors character card   */
-/* Layout: [Veto card] [Destiny deck] [Quill card] in story-shape-row             */
+/* PETITION FATE MODAL                                                          */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-.vq-tarot-card {
-    width: 206px;
-    aspect-ratio: 2.75 / 4.75;
-    background-image: url('/assets/card-art/cards/Blank-Black-Face.png');
-    background-size: 100% 100%;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: #0a0a0a;
-    border: none;
-    border-radius: 0;
-    outline: 1px solid rgba(218, 165, 32, 0.5);
-    outline-offset: -1px;
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    box-sizing: border-box;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    transform: none !important;
-    perspective: none !important;
-    transition: box-shadow 0.2s ease, opacity 0.2s ease;
-    flex-shrink: 1;
-    min-width: 150px;
-    position: relative;
-}
-
-.vq-tarot-card:focus-within {
-    box-shadow: 0 0 20px rgba(218, 165, 32, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.vq-tarot-card.fate-landed {
-    box-shadow: 0 0 25px rgba(218, 165, 32, 0.4), 0 4px 12px rgba(0, 0, 0, 0.5);
-    transition: box-shadow 0.15s ease;
-}
-
-/* Arc container: icon + curved label in card's top half-circle */
-.vq-arc-container {
-    position: absolute;
-    top: 1%;
-    left: 15%;
-    right: 15%;
-    height: 16%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    z-index: 2;
-}
-.vq-arc-icon {
-    width: 20px;
-    height: 20px;
-    color: var(--gold);
-    opacity: 0.8;
-}
-.vq-arc-text {
-    width: 100%;
-    height: 14px;
-}
-
-.vq-tarot-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
-    overflow: hidden;
-    padding: 8px 20px 28px;
-    margin-top: 17%;
-    background: transparent;
-}
-
-.vq-hint { display: none; }
-
-/* Hide VQ commit buttons — Continue button auto-commits both */
-.vq-commit-row { display: none; }
-
-.vq-tarot-card .committed-phrases {
-    max-height: 80px;
-    overflow-y: auto;
-    font-size: 0.75em;
-}
-
-.vq-input-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.vq-textarea {
-    width: 100%;
-    min-height: 40px;
-    max-height: 60px;
-    resize: none;
-    font-size: 0.75em;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(218, 165, 32, 0.3);
-    border-radius: 3px;
-    color: rgba(245, 240, 230, 0.9);
-    box-shadow:
-        inset 2px 2px 3px rgba(0, 0, 0, 0.4),
-        inset -1px -1px 2px rgba(255, 248, 220, 0.08);
-    padding: 4px 6px;
-    box-sizing: border-box;
-}
-
-.vq-textarea::placeholder {
-    color: rgba(200, 200, 200, 0.3);
-}
-
-.vq-textarea:focus {
-    outline: none;
-    border-color: rgba(218, 165, 32, 0.5);
-    box-shadow:
-        inset 2px 2px 3px rgba(0, 0, 0, 0.5),
-        inset -1px -1px 2px rgba(255, 248, 220, 0.1);
-}
-
-.vq-commit-row {
-    display: flex;
-    justify-content: center;
-    margin-top: 4px;
-}
-
-.vq-commit-btn {
-    font-size: 0.7em;
-    padding: 3px 12px;
-    background: rgba(218, 165, 32, 0.15);
-    border: 1px solid rgba(218, 165, 32, 0.4);
-    border-radius: 3px;
-    color: var(--gold);
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-}
-
-.vq-commit-btn:hover:not(:disabled) {
-    background: rgba(218, 165, 32, 0.25);
-    border-color: rgba(218, 165, 32, 0.6);
-}
-
-.vq-commit-btn:disabled {
-    opacity: 0.4;
-    cursor: default;
-}
-
-.vq-status {
-    font-family: 'Lora', serif;
-    font-variant: small-caps;
-    font-size: 0.65em;
-    text-align: center;
-    display: block;
-    color: var(--gold);
-    opacity: 1;
-    text-shadow:
-        -1px -1px 0 rgba(218, 165, 32, 0.4),
-        1px -1px 0 rgba(218, 165, 32, 0.4),
-        -1px 1px 0 rgba(218, 165, 32, 0.4),
-        1px 1px 0 rgba(218, 165, 32, 0.4),
-        0 0 4px rgba(218, 165, 32, 0.2);
-}
-
-.vq-status-veto { color: var(--pink); }
-
-.vq-footer {
-    display: none;
-}
-
-/* VQ cards + deck shrink to fit viewport */
-#vetoquillRow > .vq-tarot-card,
-#vetoquillRow > .destiny-mini-deck {
-    flex-shrink: 1;
-}
-
-/* Destiny deck card art in VQ row */
-#vetoquillRow .destiny-mini-card {
-    background: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    border: 1px solid rgba(218, 165, 32, 0.5);
-}
-
-/* Destiny deck centered between VQ cards */
-#vetoquillRow .destiny-mini-deck {
-    flex-shrink: 1;
-    align-self: center;
-}
-
-/* VQ rotating placeholder — vertical upward scroll, no bullets */
-.vq-tarot-card .rotating-placeholder {
-    color: rgba(200, 200, 200, 0.3);
-    font-size: 0.7em;
-    white-space: normal;
-    overflow: hidden;
-}
-.vq-tarot-card .rotating-placeholder-inner {
-    display: flex;
-    flex-direction: column;
-    padding-left: 0;
-    padding-top: 100%;
-    animation: scrollPlaceholderVertical 25s linear infinite;
-}
-.vq-tarot-card .rotating-placeholder-inner .separator {
-    display: none;
-}
-.vq-tarot-card .rotating-placeholder-inner .suggestion {
-    display: block;
-    padding: 2px 0;
-    line-height: 1.4;
-}
-@keyframes scrollPlaceholderVertical {
-    0%   { transform: translateY(0); }
-    100% { transform: translateY(-50%); }
-}
-
-/* God mode toggle inside quill card */
-/* Responsive: shrink VQ cards at narrow viewports */
-@media (max-width: 600px) {
-    .vq-tarot-card {
-        width: 160px;
-        min-width: 120px;
-    }
-    .vq-tarot-fields {
-        padding: 6px 14px 22px;
-        gap: 4px;
-    }
-    #vetoquillRow .destiny-mini-deck-stack {
-        transform: scale(0.5);
-        transform-origin: center center;
-        margin: -62px -37px;
-    }
-}
-
-@media (max-width: 500px) {
-    .vq-tarot-card {
-        width: 140px;
-        min-width: 100px;
-    }
-    .vq-tarot-fields {
-        padding: 4px 10px 18px;
-    }
-}
-
-/* PILL TRAY - DSP pill variants */
-/* Veto pill: red accent on DSP matte metal */
-.pill.veto-pill { border-color: rgba(255, 100, 100, 0.4); }
-.pill.veto-pill:hover { border-color: rgba(255, 100, 100, 0.7); }
-
-/* Quill pill: gold accent on DSP matte metal (already gold by default) */
-.pill.quill-pill { border-color: rgba(255, 215, 0, 0.5); }
-.pill.quill-pill:hover { border-color: rgba(255, 215, 0, 0.8); }
+.petition-box { background: rgba(10,5,15,0.95); border: 1px solid rgba(218,165,32,0.3); }
+.petition-omen { color: var(--gold); font-style: italic; font-family: 'Lora',serif; font-size: 1.1em; margin: 15px 0; opacity: 0; transition: opacity 0.8s ease; }
+.petition-omen.fade-in { opacity: 1; }
+.petition-result { color: var(--pink); font-family: 'Lora',serif; margin: 15px 0; opacity: 0; transition: opacity 0.8s ease; }
+.petition-result.fade-in { opacity: 1; }
+.petition-sacrifice-btn { background: rgba(218,165,32,0.15); border: 1px solid rgba(218,165,32,0.4); color: var(--gold); padding: 8px 16px; cursor: pointer; transition: background 0.2s; }
+.petition-sacrifice-btn:hover { background: rgba(218,165,32,0.3); }
+.petition-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; }
+.petition-back { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.petition-quill-icon { font-size: 1.5em; color: var(--gold); opacity: 0.8; }
 
 /* AUTH PANEL */
 #auth-panel { position:fixed; top:10px; right:60px; z-index:2000; background:rgba(0,0,0,0.9); padding:10px; border:1px solid #444; border-radius:0; display:flex; flex-direction:column; gap:5px; }
@@ -4498,7 +4239,7 @@ textarea.fate-field {
 }
 
 /* =================================
-   DESTINY FLIP CARD (Quill/Veto)
+   DESTINY FLIP CARD
    Same style as Ancestry card
    ================================= */
 .destiny-flip-card {
@@ -5073,8 +4814,7 @@ textarea.fate-field {
 }
 
 /* Ensure cloned card fills the flying card face */
-.destiny-flying-card-front-live .character-tarot-card,
-.destiny-flying-card-front-live .vq-tarot-card {
+.destiny-flying-card-front-live .character-tarot-card {
     width: 100% !important;
     height: 100% !important;
     margin: 0 !important;
@@ -5271,11 +5011,6 @@ textarea.fate-field {
     }
 }
 
-/* PASS 9F: Quill-Veto container - unified margins with other sections */
-/* Primary grid definition is at line ~897 */
-.qv-section {
-    width: 100%;
-}
 .fate-textarea-wrapper {
     width: 100%;
     overflow: hidden; /* Contain scrolling placeholder */
@@ -5311,14 +5046,6 @@ textarea.fate-field {
     font-family: var(--font-main);
     text-shadow: 0 1px 0 rgba(0,0,0,0.5);
     letter-spacing: 0.02em;
-}
-.committed-phrase.quill-phrase {
-    color: rgba(200,180,140,0.9);
-    border-color: rgba(180,140,60,0.3);
-}
-.committed-phrase.veto-phrase {
-    color: rgba(180,160,170,0.9);
-    border-color: rgba(140,100,120,0.3);
 }
 .committed-phrase-text {
     flex: 1;
@@ -8718,7 +8445,7 @@ textarea.fate-field {
 #dynamicGrid .sb-card .sb-card-front .sb-card-title {
     position: absolute;
     top: auto;
-    bottom: 4%;
+    bottom: calc(4% + 3px);
     left: 10%;
     right: 10%;
     /* Gold metallic gradient */
@@ -8731,7 +8458,7 @@ textarea.fate-field {
     text-align: center;
     word-spacing: normal;
     white-space: nowrap;
-    font-size: 10px;
+    font-size: 10.5px;
     line-height: 1.2;
     margin: 0;
 }
@@ -8743,10 +8470,7 @@ textarea.fate-field {
     font-size: 8px;
 }
 
-/* Hide desc on non-zoomed front face for pressure only (world desc restored) */
-#pressureGrid .sb-card:not(.zoomed) .sb-card-front .sb-card-desc {
-    display: none;
-}
+/* Pressure front desc visible (descriptions live on front/black face) */
 
 /* Gold pressed desc on all black card fronts */
 #worldGrid .sb-card .sb-card-front .sb-card-desc,
@@ -8877,36 +8601,32 @@ textarea.fate-field {
     padding-top: 18%;
 }
 
-/* Arousal desc: true small caps with outer bevel, clear of gold lines */
+/* Arousal desc: true small caps, centered, clear of gold lines */
 #intensityGrid .sb-card .sb-card-front .sb-card-desc {
     flex: 0 0 auto;
     font-family: 'Lora', serif;
     font-variant: small-caps;
     letter-spacing: 0.03em;
     padding: 0 12%;
-    text-shadow:
-        -1px -1px 0 rgba(218, 165, 32, 0.4),
-        1px -1px 0 rgba(218, 165, 32, 0.4),
-        -1px 1px 0 rgba(218, 165, 32, 0.4),
-        1px 1px 0 rgba(218, 165, 32, 0.4),
-        0 0 4px rgba(218, 165, 32, 0.2);
+    text-align: center;
+    text-shadow: none;
 }
 
-/* Arousal example quote: pressed-in, clear of gold lines */
+/* Arousal example quote: centered, clear of gold lines */
 #intensityGrid .sb-card .sb-card-front .sb-card-example {
     position: absolute;
     bottom: 20%;
     left: 12%;
     right: 12%;
     margin-top: 0;
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+    text-align: center;
+    text-shadow: none;
 }
 
-/* Arousal title: emboss highlight in bottom text box */
+/* Arousal title: clean text in bottom text box */
 #intensityGrid .sb-card .sb-card-front .sb-card-title {
-    text-shadow:
-        0 1px 0 rgba(255, 240, 200, 0.12),
-        0 -1px 0 rgba(0, 0, 0, 0.4);
+    text-shadow: none;
+    text-align: center;
 }
 
 /* Portal-safe zoomed overrides (cards leave grid for zoom portal) */
@@ -8918,12 +8638,8 @@ textarea.fate-field {
     font-family: 'Lora', serif;
     font-variant: small-caps;
     letter-spacing: 0.03em;
-    text-shadow:
-        -1px -1px 0 rgba(218, 165, 32, 0.4),
-        1px -1px 0 rgba(218, 165, 32, 0.4),
-        -1px 1px 0 rgba(218, 165, 32, 0.4),
-        1px 1px 0 rgba(218, 165, 32, 0.4),
-        0 0 4px rgba(218, 165, 32, 0.2);
+    text-align: center;
+    text-shadow: none;
 }
 .sb-card.zoomed[data-grp="intensity"] .sb-card-front .sb-card-example {
     position: absolute;
@@ -8932,12 +8648,12 @@ textarea.fate-field {
     right: 12%;
     margin-top: 0;
     font-size: 5px;
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+    text-align: center;
+    text-shadow: none;
 }
 .sb-card.zoomed[data-grp="intensity"] .sb-card-front .sb-card-title {
-    text-shadow:
-        0 1px 0 rgba(255, 240, 200, 0.12),
-        0 -1px 0 rgba(0, 0, 0, 0.4);
+    text-shadow: none;
+    text-align: center;
 }
 
 /* Zoom uses scale() — text scales with card art. Override sizes to fit gold frame lines */
@@ -8995,15 +8711,16 @@ textarea.fate-field {
     text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
 }
 
-/* POV zoomed: desc in bottom text box, above title, with margins off gold lines */
+/* POV zoomed: desc centered on card face, 2× size */
 .sb-card.zoomed[data-grp="pov"] .sb-card-front .sb-card-desc {
     position: absolute;
-    top: auto;
-    bottom: 10%;
+    top: 50%;
+    bottom: auto;
     left: 14%;
     right: 14%;
+    transform: translateY(-50%);
     text-align: center;
-    font-size: 5px;
+    font-size: 10px;
     line-height: 1.3;
     z-index: 2;
 }
@@ -9308,36 +9025,13 @@ textarea.fate-field {
     50% { transform: scale(1.02); opacity: 0.9; }
 }
 
-/* Dynamic sparkle emitters on edges of zoomed archetype card */
-.zoom-side-sparkles {
+/* Dynamic sparkle emitter covering full face of zoomed card */
+.zoom-card-sparkles {
     position: absolute;
+    inset: 0;
     pointer-events: none;
     overflow: visible;
     z-index: 5;
-}
-.zoom-side-sparkles[data-side="left"],
-.zoom-side-sparkles[data-side="right"] {
-    top: 0;
-    bottom: 0;
-    width: 6px;
-}
-.zoom-side-sparkles[data-side="left"] {
-    left: -3px;
-}
-.zoom-side-sparkles[data-side="right"] {
-    right: -3px;
-}
-.zoom-side-sparkles[data-side="top"],
-.zoom-side-sparkles[data-side="bottom"] {
-    left: 0;
-    right: 0;
-    height: 6px;
-}
-.zoom-side-sparkles[data-side="top"] {
-    top: -3px;
-}
-.zoom-side-sparkles[data-side="bottom"] {
-    bottom: -3px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -9489,6 +9183,7 @@ textarea.fate-field {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 2px;
     margin-top: 0;
     width: 100%;
@@ -9498,7 +9193,7 @@ textarea.fate-field {
     left: 0;
     right: 0;
     bottom: 16%;           /* stay above card name text box */
-    padding: 0 8%;
+    padding: 0 14%;
     overflow-y: hidden;     /* prevent bleeding into title area */
     overflow-x: visible;    /* allow SVG arc to overflow horizontally */
 }
@@ -9533,32 +9228,41 @@ textarea.fate-field {
     line-height: 1;
 }
 
-/* Flavor buttons grid — spaced for tooltip floats */
+/* Flavor buttons grid — evenly distributed to fit all flavors in bounded area */
 .sb-zoom-flavors {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    justify-content: space-evenly;
     align-items: center;
     width: 100%;
+    height: 100%;
+}
+.sb-zoom-flavors .sb-flavor-btn {
+    width: 80%;
+    text-align: center;
 }
 
-/* Flavor button — DSP gold-on-black art panel */
+/* Flavor button — gold plaque with black text */
 .sb-flavor-btn {
     font-size: 5px;
     padding: 3px 8px;
     background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png') !important;
-    background-size: calc(100% + 2px) calc(100% + 2px) !important;
+    background-size: 100% 100% !important;
     background-position: center !important;
     background-color: transparent !important;
     background-repeat: no-repeat !important;
-    border: none !important;
-    border-radius: 0 !important;
-    color: #f5f0e6;
+    border: 1px solid rgba(218, 165, 32, 0.5) !important;
+    border-radius: 3px !important;
+    color: #1a1408;
+    font-weight: 600;
     cursor: pointer;
     font-family: 'Crimson Text', serif;
     min-height: 9px;
     position: relative;
     overflow: hidden;
+    box-sizing: border-box;
+    text-shadow: 0 1px 0 rgba(255, 215, 0, 0.15);
+    transition: box-shadow 0.08s ease, border-color 0.08s ease, background 0.08s ease, filter 0.08s ease;
 }
 
 /* Button text above gleam layer */
@@ -9580,18 +9284,24 @@ textarea.fate-field {
     mix-blend-mode: screen;
 }
 
-/* Hover: Brighten PNG */
-.sb-flavor-btn:hover:not(:disabled) {
-    filter: brightness(1.2);
+/* Hover: subtle inner glow */
+.sb-flavor-btn:hover:not(:disabled):not(.selected) {
+    box-shadow: inset 0 0 6px rgba(218, 165, 32, 0.25);
 }
 
-/* Selected: Gold text + brightness */
+/* Selected: Pressed-in bevel matching world flavor hit zones — stays pressed */
 .sb-flavor-btn.selected {
-    color: var(--gold);
-    filter: brightness(1.3);
+    color: #1a1408;
+    border-color: rgba(50, 40, 20, 0.8) rgba(220, 210, 180, 0.65) rgba(220, 210, 180, 0.65) rgba(50, 40, 20, 0.8) !important;
+    box-shadow:
+        inset 3px 3px 6px rgba(0, 0, 0, 0.55),
+        inset 1px 1px 3px rgba(0, 0, 0, 0.35),
+        inset -1px -1px 2px rgba(255, 255, 255, 0.08),
+        inset 0 0 10px rgba(218, 165, 32, 0.3);
+    filter: brightness(0.9);
 }
 
-/* Flavor button tooltip — literary description, floats below button */
+/* Flavor button tooltip — literary description, matches World tooltip style */
 .sb-flavor-btn[data-tooltip]::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -9600,7 +9310,7 @@ textarea.fate-field {
     transform: translateX(-50%);
     white-space: nowrap;
     font-family: 'Lora', serif;
-    font-size: 4px;
+    font-size: 2.75px;
     font-style: italic;
     line-height: 1.15;
     color: rgba(255, 248, 230, 0.88);
@@ -9610,13 +9320,12 @@ textarea.fate-field {
     opacity: 0;
     transition: opacity 120ms ease;
     pointer-events: none;
-    margin-top: 2px;
+    margin-top: 1px;
     z-index: 10;
     text-align: center;
 }
 .sb-flavor-btn[data-tooltip]:hover::after,
-.sb-flavor-btn[data-tooltip]:focus::after,
-.sb-flavor-btn[data-tooltip].selected::after {
+.sb-flavor-btn[data-tooltip]:focus::after {
     opacity: 1;
 }
 
@@ -9774,7 +9483,7 @@ textarea.fate-field {
     transform: translateX(-50%);
     white-space: nowrap;
     font-family: 'Lora', serif;
-    font-size: 5.5px;
+    font-size: 2.75px;
     font-style: italic;
     line-height: 1.15;
     color: rgba(255, 248, 230, 0.88);
@@ -9789,8 +9498,7 @@ textarea.fate-field {
     text-align: center;
 }
 .baked-hitzone[data-tooltip]:hover::after,
-.baked-hitzone[data-tooltip]:focus::after,
-.baked-hitzone[data-tooltip].selected::after {
+.baked-hitzone[data-tooltip]:focus::after {
     opacity: 1;
 }
 
@@ -10670,11 +10378,17 @@ body.corridor-mode .sb-grid.corridor-section {
     border-radius: 4px 0 0 4px;
 }
 
-/* Hide navigation arrows on mobile (use swipe instead) */
+/* Compact corridor arrows on narrow screens */
 @media (max-width: 768px) {
     .corridor-nav-arrow {
-        display: none;
+        width: 32px;
+        height: 60px;
+        font-size: 22px;
+        opacity: 0.5;
+        background: rgba(0, 0, 0, 0.3);
     }
+    .corridor-nav-left { left: 4px; }
+    .corridor-nav-right { right: 4px; }
 }
 
 /* Hide arrows when zoomed card is open */
@@ -10780,7 +10494,7 @@ body.corridor-mode .flow-continue-btn.corridor-section {
     }
 }
 
-/* Body state when corridor is complete — allow scrolling to Safety/Veto/Begin */
+/* Body state when corridor is complete — allow scrolling to Safety/Begin */
 body.corridor-complete #setup {
     overflow-y: auto;
 }
@@ -10877,8 +10591,7 @@ body.corridor-complete {
 #continueFromTone,
 #continueFromPressure,
 #continueFromDynamic,
-#continueFromSafety,
-#continueFromVetoquill {
+#continueFromSafety {
     width: 140px !important;
     height: 39px !important;
     min-width: 140px !important;
@@ -11074,8 +10787,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 #continueFromLength,
 #continueFromDynamic,
 #continueFromArousal,
-#continueFromSafety,
-#continueFromVetoquill {
+#continueFromSafety {
     display: none !important;
 }
 

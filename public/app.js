@@ -234,8 +234,69 @@ window.config = window.config || {
     return data.user.id;
   }
 
-  // Fire anonymous sign-in at boot (non-blocking)
-  ensureAnonSession();
+  // Fire anonymous sign-in at boot and hydrate God Mode profile (non-blocking)
+  ensureAnonSession().then(async (userId) => {
+    if (!userId || !sb) return;
+    try {
+      let { data: profile, error } = await sb
+        .from('profiles')
+        .select(`
+          has_god_mode,
+          god_mode_temp_granted_at,
+          god_mode_temp_duration_hours,
+          god_mode_active_story_id,
+          god_mode_active_started_at,
+          god_mode_temp_expires_at
+        `)
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) { console.error('God Mode profile fetch error:', error); return; }
+      if (!profile) {
+        const { error: insertErr } = await sb.from('profiles').insert({ id: userId });
+        if (insertErr) { console.error('God Mode profile insert error:', insertErr); return; }
+        const refetch = await sb.from('profiles').select(`
+          has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
+          god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at
+        `).eq('id', userId).single();
+        if (refetch.error || !refetch.data) { console.error('God Mode profile refetch error:', refetch.error); return; }
+        profile = refetch.data;
+      }
+      state.godMode.owned = profile.has_god_mode || false;
+      state.godMode.tempGrantedAt = profile.god_mode_temp_granted_at;
+      state.godMode.tempDurationHours = profile.god_mode_temp_duration_hours;
+      state.godMode.activeStoryId = profile.god_mode_active_story_id;
+      state.godMode.activeStartedAt = profile.god_mode_active_started_at;
+      state.godMode.tempExpiresAt = profile.god_mode_temp_expires_at;
+      console.log('God Mode profile hydrated:', state.godMode);
+    } catch (e) {
+      console.error('God Mode profile fetch failed:', e);
+    }
+  });
+
+  // God Mode power level: 1 = full, 0 = expired/none, fractional = decaying temp grant
+  function getGodModePowerLevel(currentStoryId) {
+    const gm = state.godMode;
+    const now = Date.now();
+
+    if (gm.owned) return 1;
+
+    if (
+      gm.activeStoryId === currentStoryId &&
+      gm.tempExpiresAt &&
+      gm.activeStartedAt
+    ) {
+      const start = new Date(gm.activeStartedAt).getTime();
+      const end = new Date(gm.tempExpiresAt).getTime();
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0;
+      if (now >= end) return 0;
+
+      const ratio = (end - now) / (end - start);
+      const eased = Math.pow(ratio, 0.75); // locked decay curve
+      return Math.max(0, Math.min(1, eased));
+    }
+
+    return 0;
+  }
 
   function getNickname(){
     let n = localStorage.getItem("sb_nickname");
@@ -1013,10 +1074,10 @@ If axis == "world_subtype":
 TOOL-SPECIFIC RULES
 --------------------------------
 
-If axis == "veto":
-- Normalize the TARGET of the veto, not the wording.
+If axis == "constraint":
+- Normalize the TARGET of the constraint, not the wording.
 
-If axis == "quill":
+If axis == "petition":
 - Normalize BEFORE applying rename or rewrite.
 - Never allow IP to enter canon.
 
@@ -1042,7 +1103,7 @@ For world subtype:
   "secondary_subtype": "string | null"
 }
 
-For veto/quill/god_mode:
+For constraint/petition/god_mode:
 {
   "canonical_instruction": "string"
 }`;
@@ -1315,7 +1376,7 @@ For veto/quill/god_mode:
    * All user-authored inputs MUST flow through this before committing to canon.
    *
    * @param {string} text - Raw user input
-   * @param {Object} options - { source: 'veto'|'quill'|'godmode'|'character'|'dsp', worldContext: string[] }
+   * @param {Object} options - { source: 'constraint'|'petition'|'godmode'|'character'|'dsp', worldContext: string[] }
    * @returns {string} - Canonicalized text safe for storage and prompts
    */
   function canonicalizeInput(text, options = {}) {
@@ -1335,7 +1396,7 @@ For veto/quill/god_mode:
           const hasWorldReinforcement = matches.some(m =>
               worldContext.some(w => w.toLowerCase().includes(m.franchise))
           );
-          const isPrivilegedSource = source === 'quill' || source === 'godmode';
+          const isPrivilegedSource = source === 'petition' || source === 'godmode';
 
           // If no reinforcement and not from privileged source, allow
           if (!hasWorldReinforcement && !isPrivilegedSource) {
@@ -2096,10 +2157,16 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       _snapshotThisTurn: false,
       sexPushCount: 0,
       lastSexPushAt: null,
-      veto: { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] },
-      quill: { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600 },
-      quillCommittedThisTurn: false,
-      quillIntent: '',
+      constraints: { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] },
+      fate: { stance: 'neutral', minorUsedThisScene: false, greaterUsedThisScene: false, lastGreaterSceneIndex: null, earnedIntimacy: false, earlyGamingCount: 0, pendingPetition: null },
+      godMode: {
+        owned: false,
+        tempGrantedAt: null,
+        tempDurationHours: null,
+        activeStoryId: null,
+        activeStartedAt: null,
+        tempExpiresAt: null
+      },
       storyStage: 'pre-intimacy',
       // STORYTURN STATE — narrative arc progression (ST1–ST6)
       storyturn: 'ST1',
@@ -2112,7 +2179,6 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       },
       sandbox: false,
       godModeActive: false,
-      authorChairActive: false,
       lastSavedWordCount: 0,
       storyOrigin: 'solo',
       player2Joined: false,
@@ -2684,7 +2750,7 @@ WHAT CHANGES:
 - The Author does NOT name the interloper
 
 AUTHOR EMOTIONAL RUPTURE (GOD MODE ONLY):
-When God Mode is active OR player/Quill directly overrides Author intent:
+When God Mode is active OR player/Petition directly overrides Author intent:
 - Author MAY express: panic, desperation, cold rage, disorientation
 - Rupture thoughts are INTERNAL ONLY (not narration)
 - Brief (1-2 sentences maximum)
@@ -4209,7 +4275,7 @@ DIRTY INTENSITY ADDENDUM:
       // Tone labels
       /\b(earnest|wry\s*confession|poetic|mythic|comedic|surreal|dark)\s+(tone|mood|register)\b/gi,
       // System concepts
-      /\b(arousal\s*level|intensity\s*level|story\s*length|fate\s*card|quill\s*intervention)\b/gi,
+      /\b(arousal\s*level|intensity\s*level|story\s*length|fate\s*card)\b/gi,
       // Meta-narrative terms
       /\b(the\s+narrator|this\s+story|the\s+reader|narrative\s*arc|character\s*development)\b/gi
   ];
@@ -11400,10 +11466,56 @@ Return ONLY the title, no quotes or explanation.`;
 
   // NAV HELPER
   function closeAllOverlays() {
-      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'gameQuillVetoModal'].forEach(id => {
+      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'petitionFateModal'].forEach(id => {
           const el = document.getElementById(id);
           if(el) el.classList.add('hidden');
       });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROFILE STATUS MODAL — Read-only account status display
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function openProfileModal() {
+      populateProfileStatus();
+      document.getElementById('profileModal')?.classList.remove('hidden');
+  }
+  window.openProfileModal = openProfileModal;
+
+  window.closeProfileModal = function() {
+      document.getElementById('profileModal')?.classList.add('hidden');
+  };
+
+  function populateProfileStatus() {
+      const el = document.getElementById('profileStatusContent');
+      if (!el) return;
+
+      const currentStoryId = typeof makeStoryId === 'function' ? makeStoryId() : null;
+      const powerLevel = currentStoryId ? getGodModePowerLevel(currentStoryId) : 0;
+
+      const tier = state.tier || 'free';
+      const hasStorypass =
+          typeof hasStorypassForCurrentStory === 'function'
+              ? hasStorypassForCurrentStory()
+              : false;
+
+      const gm = state.godMode || {};
+      let godModeStatus = 'None';
+
+      if (gm.owned) {
+          godModeStatus = 'Permanent';
+      } else if (gm.tempGrantedAt && !gm.activeStoryId) {
+          godModeStatus = 'Temp granted (not activated)';
+      } else if (powerLevel > 0) {
+          godModeStatus = 'Temp active (this story)';
+      } else if (gm.tempGrantedAt && gm.activeStoryId && powerLevel === 0) {
+          godModeStatus = 'Temp expired';
+      }
+
+      el.innerHTML =
+          `<div><strong>Tier:</strong> ${tier}</div>` +
+          `<div><strong>Storypass (this story):</strong> ${hasStorypass ? 'Yes' : 'No'}</div>` +
+          `<div><strong>God Mode:</strong> ${godModeStatus}</div>`;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -11819,6 +11931,9 @@ Return ONLY the title, no quotes or explanation.`;
       } else if (id === 'game') {
           // Game screen breadcrumb is managed by Cover/Setting/Story views
           // Don't update here — let the view functions handle it
+          // Show God Mode button in solo mode
+          const godBtn = document.getElementById('gameGodModeBtn');
+          if (godBtn) godBtn.classList.toggle('hidden', state.mode !== 'solo');
       } else {
           if (typeof stopAmbientCardSparkles === 'function') stopAmbientCardSparkles();
           // Stop fate card sparkle cycle when leaving game screen
@@ -12008,10 +12123,10 @@ Return ONLY the title, no quotes or explanation.`;
 
   window.openPaywall = function(reason) {
       if(typeof window.showPaywall === 'function') {
-          // Close Quill/Veto modal if open (prevents z-index stacking)
-          const qvModal = document.getElementById('gameQuillVetoModal');
-          if (qvModal && !qvModal.classList.contains('hidden')) {
-              qvModal.classList.add('hidden');
+          // Close Petition modal if open (prevents z-index stacking)
+          const petModal = document.getElementById('petitionFateModal');
+          if (petModal && !petModal.classList.contains('hidden')) {
+              petModal.classList.add('hidden');
           }
           // Respect explicit 'sub_only' from caller (e.g., Dirty/Soulmates cards)
           const mode = (reason === 'god' || reason === 'sub_only') ? reason : getPaywallMode();
@@ -12172,122 +12287,197 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       }
   }
 
-  function getQuillReady() {
-      if(state.godModeActive) return true; 
-      return currentStoryWordCount() >= (state.quill.nextReadyAtWords || 0);
-  }
+  // --- PETITION FATE SYSTEM ---
 
-  function computeNextCooldownWords() {
-      if(state.godModeActive) return 0;
-      // Base 1200, +600 per use, cap at 3600
-      const base = 1200;
-      const perUse = 600;
-      const cap = 3600;
-      return Math.min(cap, base + (state.quill.uses * perUse));
-  }
-
-  function checkAuthorChairUnlock() {
-      const totalWords = Number(localStorage.getItem('sb_global_word_count') || 0);
-      return totalWords >= 250000;
-  }
-
-  // Veto patterns that indicate scene/event demands (rejected)
-  const VETO_SCENE_PATTERNS = [
-      /^(make|have|let|force|ensure|require|demand|insist|want|need)\s+(them|him|her|it|the|a)\b/i,
-      /^bring\s+(them|him|her)\s+to/i,
-      /^start\s+a\s+(scene|chapter|sequence)/i,
-      /^introduce\s+(a|the|new)\b/i,
-      /^add\s+(a|the|new)\s+(scene|character|kink|setting)/i
+  const PETITION_OMENS = [
+      "The threads of fate shiver...",
+      "Something stirs in the deep weave...",
+      "Fate leans closer to listen...",
+      "The golden thread pulls taut...",
+      "A whisper from beyond the veil...",
+      "The cards tremble in your hand...",
+      "Destiny holds its breath...",
+      "The weave acknowledges your voice..."
   ];
 
-  async function parseVetoInput(rawText) {
-      if(!rawText) return { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
-
-      // RUNTIME NORMALIZATION: All veto input flows through ChatGPT normalization layer
-      // CRITICAL: Never store raw text - always use normalized kernel
-      const vetoNorm = await callNormalizationLayer({
-          axis: 'veto',
-          user_text: rawText,
-          context_signals: state.picks?.world || []
-      });
-      // Extract kernel - prefer archetype/burden format, then normalized_text, NEVER raw
-      const kernel = vetoNorm.archetype || vetoNorm.burden || vetoNorm.normalized_text || vetoNorm.canonical_instruction;
-      const canonicalized = kernel || 'excluded element';
-
-      const lines = canonicalized.split('\n');
-      const result = { exclusions:[], corrections:[], ambientMods:[], rejected:[] };
-
-      lines.forEach(line => {
-          const l = line.trim();
-          if(!l) return;
-          const lower = l.toLowerCase();
-
-          // Check if this is a scene/event demand (reject it)
-          const isSceneDemand = VETO_SCENE_PATTERNS.some(p => p.test(l));
-          if(isSceneDemand) {
-              result.rejected.push(l);
-              return;
-          }
-
-          // HARD EXCLUSIONS: ban:, no , never
-          if(lower.startsWith('ban:') || lower.startsWith('ban ')) {
-              result.exclusions.push(l.replace(/^ban[:\s]+/i, '').trim());
-          } else if(lower.startsWith('no ') || lower.startsWith('never ')) {
-              result.exclusions.push(l);
-          }
-          // EDITORIAL CORRECTIONS: rename:, replace:, call
-          else if(lower.startsWith('rename:') || lower.startsWith('replace:')) {
-              result.corrections.push(l);
-          } else if(lower.includes('->') || lower.includes('→')) {
-              result.corrections.push(l);
-          } else if(lower.startsWith('call ') && lower.includes(' not ')) {
-              result.corrections.push(l);
-          }
-          // AMBIENT MODIFIERS: add more, increase, keep, make it, let the
-          else if(/^(add\s+more|increase|decrease|keep|make\s+it|let\s+the|more\s+)/i.test(l)) {
-              result.ambientMods.push(l);
-          }
-          // Default: treat as exclusion
-          else {
-              result.exclusions.push(l);
-          }
-      });
-      return result;
+  function classifyPetition(text) {
+      const greater = /\b(love|power|escape|reverse|revert|undo|destroy|transform|resurrect|betray)\b|remove\s.*conflict|force\s.*together|make\s.*fall|structural\s*shift|skip.*scene/i;
+      return greater.test(text) ? 'greater' : 'minor';
   }
 
-  async function applyVetoFromInput() {
-      const el = document.getElementById('vetoInput');
-      if(!el) return;
-      const parsed = await parseVetoInput(el.value);
+  function canAttemptGreaterPetition() {
+      const stIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+      if (stIdx < 2) return false;
+      if (state.fate?.greaterUsedThisScene) return false;
+      return true;
+  }
 
-      // Show rejection toast if any lines were rejected
-      if(parsed.rejected.length > 0) {
-          showToast("Veto removes elements or applies ambient constraints. It can't be used to make events happen.");
+  function resolveFateOutcome(stance, classification, sacrificeChoice, powerLevel = 0) {
+      let weights;
+      if (classification === 'greater' && !canAttemptGreaterPetition()) {
+          weights = { benevolent: 10, twist: 60, silent: 30 };
+      } else {
+          const stanceWeights = {
+              neutral:   { benevolent: 40, twist: 20, silent: 5, neutral: 35 },
+              trickster: { benevolent: 20, twist: 50, silent: 30 },
+              intimate:  { benevolent: 50, twist: 35, silent: 15 }
+          };
+          weights = { ...(stanceWeights[stance] || stanceWeights.neutral) };
+      }
+      if (sacrificeChoice === 'offer') weights.benevolent = (weights.benevolent || 0) + 10;
+      if (sacrificeChoice === 'withhold') weights.twist = (weights.twist || 0) + 10;
+
+      // God Mode power bias — blend toward 80/20 benevolent/twist
+      if (powerLevel > 0) {
+        const gmTotal =
+          (weights.benevolent || 0) +
+          (weights.twist || 0) +
+          (weights.silent || 0) +
+          (weights.neutral || 0);
+
+        if (gmTotal > 0) {
+          const targetB = 0.8;
+          const targetT = 0.2;
+
+          const currentB = (weights.benevolent || 0) / gmTotal;
+          const currentT = (weights.twist || 0) / gmTotal;
+
+          const blendedB = currentB + (targetB - currentB) * powerLevel;
+          const blendedT = currentT + (targetT - currentT) * powerLevel;
+
+          weights.benevolent = blendedB;
+          weights.twist = blendedT;
+
+          if ('silent' in weights) weights.silent = (weights.silent / gmTotal) * (1 - powerLevel);
+          if ('neutral' in weights) weights.neutral = (weights.neutral / gmTotal) * (1 - powerLevel);
+
+          // Renormalize to sum = 1
+          const newTotal =
+            (weights.benevolent || 0) +
+            (weights.twist || 0) +
+            (weights.silent || 0) +
+            (weights.neutral || 0);
+
+          if (newTotal > 0) {
+            for (const k in weights) {
+              weights[k] = weights[k] / newTotal;
+            }
+          }
+        }
       }
 
-      // Map to existing state.veto structure
-      state.veto.bannedWords = parsed.exclusions;
-      state.veto.excluded = parsed.exclusions;
-      state.veto.corrections = parsed.corrections;
-      state.veto.ambientMods = parsed.ambientMods;
+      const total = Object.values(weights).reduce((s, v) => s + v, 0);
+      let r = Math.random() * total;
+      for (const [outcome, w] of Object.entries(weights)) {
+          r -= w;
+          if (r <= 0) return outcome;
+      }
+      return 'neutral';
   }
 
-  // Legacy compatibility wrapper
-  async function parseStoryControls(rawText) {
-      const vetoResult = await parseVetoInput(rawText);
-      return {
-          veto: {
-              bannedWords: vetoResult.exclusions,
-              bannedNames: [],
-              excluded: vetoResult.exclusions,
-              tone: vetoResult.ambientMods
-          },
-          quillDraft: ""
+  function disableTurnControls() {
+      const mount = document.getElementById('cardMount');
+      if (mount) mount.style.pointerEvents = 'none';
+      const ai = document.getElementById('actionInput');
+      const di = document.getElementById('dialogueInput');
+      const sb = document.getElementById('submitBtn');
+      if (ai) ai.disabled = true;
+      if (di) di.disabled = true;
+      if (sb) sb.disabled = true;
+  }
+
+  function enableTurnControls() {
+      const mount = document.getElementById('cardMount');
+      if (mount) mount.style.pointerEvents = '';
+      const ai = document.getElementById('actionInput');
+      const di = document.getElementById('dialogueInput');
+      const sb = document.getElementById('submitBtn');
+      if (ai) ai.disabled = false;
+      if (di) di.disabled = false;
+      if (sb) sb.disabled = false;
+  }
+
+  window.openPetitionZoom = function() {
+      const modal = document.getElementById('petitionFateModal');
+      if (!modal) return;
+
+      // Compute God Mode eligibility for this ritual session
+      const currentStoryId = makeStoryId();
+      const powerLevel = getGodModePowerLevel(currentStoryId);
+      const arousalOk = !(getCurrentArousal && getCurrentArousal() === 'tease');
+      const tierOk = state.tier === 'subscriber' || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory());
+      state.godModeEligibleThisRitual = arousalOk && tierOk && powerLevel > 0;
+      state.godModeActive = false;
+
+      const input = document.getElementById('petitionInput');
+      if (input) input.value = '';
+      document.getElementById('petitionRitualArea')?.classList.add('hidden');
+      document.getElementById('petitionSacrifice')?.classList.add('hidden');
+      document.getElementById('petitionResult')?.classList.add('hidden');
+      document.getElementById('petitionActions')?.classList.remove('hidden');
+      document.getElementById('btnSubmitPetition')?.classList.remove('hidden');
+      const ph = document.querySelector('.rotating-placeholder[data-for="petitionInput"]');
+      if (ph && !ph.innerHTML.trim() && typeof initRotatingPlaceholder === 'function') {
+          initRotatingPlaceholder('petitionInput', 'petition');
+      }
+      modal.classList.remove('hidden');
+  };
+
+  function completePetitionRitual(text, classification, sacrificeChoice) {
+      document.getElementById('petitionSacrifice')?.classList.add('hidden');
+      const resultEl = document.getElementById('petitionResult');
+
+      // Warm welcome: first petition ever → force benevolent minor
+      const isFirst = state.fate && !state.fate.lastGreaterSceneIndex && !state.fate.minorUsedThisScene && !state.fate.greaterUsedThisScene;
+      let outcome;
+      if (isFirst && classification === 'minor') {
+          outcome = 'benevolent';
+      } else {
+          const currentStoryId = makeStoryId();
+          let powerLevel = getGodModePowerLevel(currentStoryId);
+
+          // God Mode never applies in Tease, and requires Subscriber OR Storypass for this story
+          if (getCurrentArousal && getCurrentArousal() === 'tease') powerLevel = 0;
+          if (!(state.tier === 'subscriber' || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory()))) powerLevel = 0;
+
+          outcome = resolveFateOutcome(state.fate?.stance || 'neutral', classification, sacrificeChoice, powerLevel);
+      }
+
+      if (classification === 'minor') state.fate.minorUsedThisScene = true;
+      if (classification === 'greater') {
+          state.fate.greaterUsedThisScene = true;
+          state.fate.lastGreaterSceneIndex = state.turnCount;
+      }
+
+      const stIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+      if (classification === 'greater' && stIdx < 4) {
+          state.fate.earlyGamingCount++;
+      }
+
+      const resultTexts = {
+          benevolent: "Fate smiles upon your petition.",
+          twist: "Fate hears you... but the threads tangle.",
+          silent: "Fate acknowledges your words, but remains unmoved.",
+          neutral: "The weave absorbs your petition quietly."
       };
-  }
 
-  async function applyVetoFromControls() {
-      await applyVetoFromInput();
+      if (resultEl) {
+          resultEl.textContent = resultTexts[outcome] || resultTexts.neutral;
+          resultEl.classList.remove('hidden');
+          resultEl.classList.add('fade-in');
+      }
+
+      state.fate.pendingPetition = { text, classification, outcome, sacrificeChoice };
+
+      const ritualHtml = `<div class="petition-ritual-block" style="color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;"><em>${resultTexts[outcome] || resultTexts.neutral}</em></div>`;
+      if (typeof StoryPagination !== 'undefined' && StoryPagination.appendToCurrentPage) {
+          StoryPagination.appendToCurrentPage(ritualHtml);
+      }
+
+      setTimeout(() => {
+          document.getElementById('petitionFateModal')?.classList.add('hidden');
+          enableTurnControls();
+      }, 2000);
   }
 
   // --- FATE HAND SYSTEM (Replaces pill system) ---
@@ -12310,18 +12500,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           "Volcanic archipelago", "Haunted frontier", "Merchant crossroads", "Border fortress",
           "Hidden valley", "Plague quarantine", "Orbital station", "Dream realm"
       ],
-      veto: [
-          "No humiliation", "No betrayal", 'No "M\'Lady"', "No tattoos", "No scars",
-          "No cheating", "No amnesia", "No pregnancy", "No ghosts", "No death",
-          "No love triangles", "No supernatural", "No time skips", "No flowery language",
-          "No second person", "No violence", "No crying scenes", "No miscommunication trope"
-      ],
-      quill: [
-          "Public Bathhouse Setting", "Make it bigger", "Make it a Musical",
-          "More tension", "Confession scene", "Jealousy beat", "Stolen glance",
-          "Only one bed", "Enemies to lovers", "Forced proximity", "Vulnerability scene",
-          "Take them somewhere private", "Build tension slowly", "Unexpected interruption",
-          "Moonlit garden", "Charged silence", "Near miss moment", "Secret revealed"
+      petition: [
+          "More tension between them", "A private moment alone",
+          "An unexpected interruption", "Let them confess",
+          "A dangerous revelation", "Shift the power dynamic",
+          "A stolen moment", "Force a difficult choice",
+          "An obstacle to overcome", "Bring them closer"
       ],
       visualize: [
           "more muscular", "more elegant", "brighter lighting", "darker mood",
@@ -12469,12 +12653,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       if (!input || !treeCard) return;
 
-      // TEASE MODE: Quill fate hand triggers paywall
-      if (type === 'quill' && isTeaseMode()) {
-          if (window.openPaywall) window.openPaywall('unlock');
-          return;
-      }
-
       // Get all cards in the hand
       const cards = hand.querySelectorAll('.fate-hand-card');
       const centerCard = cards[2]; // Middle card
@@ -12526,12 +12704,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       const type = hand.dataset.type;
 
-      // TEASE MODE: Quill tree card triggers paywall
-      if (type === 'quill' && isTeaseMode()) {
-          if (window.openPaywall) window.openPaywall('unlock');
-          return;
-      }
-
       // Two-stage leaf animation state machine
       if (leaf) {
           const clicks = parseInt(leaf.dataset.leafClicks || '0', 10);
@@ -12579,16 +12751,8 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       // Initialize rotating placeholders
       initRotatingPlaceholder('ancestryInputPlayer', 'ancestry');
       initRotatingPlaceholder('ancestryInputLI', 'ancestry');
-      initRotatingPlaceholder('vetoInput', 'veto');
-      initRotatingPlaceholder('quillInput', 'quill');
-      // Game modal rotating placeholders
-      initRotatingPlaceholder('gameVetoInput', 'veto');
-      initRotatingPlaceholder('gameQuillInput', 'quill');
       // Visualize modifier suggestions
       initRotatingPlaceholder('vizModifierInput', 'visualize');
-
-      // Initialize destiny flip cards (Quill/Veto)
-      initDestinyFlipCards();
 
       // Initialize character destiny cards (name + ancestry per character)
       initCharacterDestinyCards();
@@ -12673,104 +12837,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       return Math.random() < 0.5 ? FATE_FEMALE_NAMES : FATE_MALE_NAMES;
   }
 
-  function initDestinyFlipCards() {
-      // Destiny flip cards (Quill/Veto) - flip in place + insert random suggestion
-      document.querySelectorAll('.destiny-flip-card').forEach(flipCard => {
-          flipCard.addEventListener('click', () => {
-              const targetId = flipCard.dataset.target;
-              const type = flipCard.dataset.type;
-              const input = document.getElementById(targetId);
-
-              // Flip the card
-              flipCard.classList.toggle('flipped');
-
-              // Insert random suggestion from the appropriate pool
-              if (input && type) {
-                  const suggestion = getRandomSuggestion(type);
-                  if (input.tagName === 'TEXTAREA') {
-                      // For textareas (Quill/Veto), append on new line
-                      input.value = input.value ? input.value + '\n' + suggestion : suggestion;
-                  } else {
-                      // For inputs, replace
-                      input.value = suggestion;
-                  }
-                  // Hide placeholder
-                  const placeholder = document.querySelector(`.rotating-placeholder[data-for="${targetId}"]`);
-                  if (placeholder) placeholder.classList.add('hidden');
-              }
-          });
-      });
-  }
-
-  function updateQuillUI() {
-      const btn = document.getElementById('btnCommitQuill'); // May not exist (removed from UI)
-      const status = document.getElementById('quillStatus');
-      const godToggle = document.getElementById('godModeToggle');
-      const quillBox = document.getElementById('quillBox');
-      if(!status) return;
-
-      if(state.mode === 'solo') {
-          if(godToggle) godToggle.classList.remove('hidden');
-          const chk = document.getElementById('godModeCheck');
-          if(chk) {
-              chk.checked = state.godModeActive;
-              chk.disabled = state.godModeActive;
-              if(state.godModeActive) {
-                  const lbl = document.getElementById('godModeLabel');
-                  if(lbl) { lbl.innerHTML = "GOD MODE ACTIVE"; lbl.style.color = "var(--hot)"; }
-              }
-          }
-      } else {
-          if(godToggle) godToggle.classList.add('hidden');
-      }
-
-      const ready = getQuillReady();
-      const wc = currentStoryWordCount();
-      const needed = state.quill.nextReadyAtWords;
-
-      // Quill unlocks with: subscription, story pass, or god mode
-      const quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
-
-      if (!quillUnlocked) {
-          // Quill is paywalled
-          status.textContent = "Quill: Locked";
-          status.style.color = "var(--gold)";
-          if(quillBox) {
-              quillBox.classList.add('locked-input');
-              // CANONICAL: Use isStorypassAllowed() for correct paywall mode
-              quillBox.onclick = () => window.showPaywall(getPaywallMode());
-          }
-          if(btn) btn.disabled = true;
-          // PLAQUE REGIME: No opacity mutation — CSS handles disabled state
-      } else if(ready) {
-          status.textContent = state.authorChairActive ? "🪑 Quill: Poised" : "Quill: Poised";
-          status.style.color = "var(--pink)";
-          if(btn) {
-              btn.disabled = false;
-              btn.classList.remove('quill-btn-spent');
-              btn.classList.add('quill-btn-ready');
-              btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
-          }
-          if(quillBox) {
-              quillBox.classList.remove('locked-input');
-              quillBox.onclick = null;
-          }
-      } else {
-          const remain = Math.max(0, needed - wc);
-          status.textContent = `Quill: Spent (${remain} words to recharge)`;
-          status.style.color = "var(--gold)";
-          // Don't lock for cooldown - just disable button
-          if(quillBox) {
-              quillBox.classList.remove('locked-input');
-              quillBox.onclick = null;
-          }
-          if(btn) {
-              btn.disabled = true;
-              btn.classList.remove('quill-btn-ready');
-              btn.classList.add('quill-btn-spent');
-          }
-      }
-  }
+  // (initDestinyFlipCards + updateQuillUI removed — Petition Fate system replaces quill/veto)
   
   function updateBatedBreathState(){
       state.batedBreathActive = (state.storyOrigin === 'couple' && !state.player2Joined && !state.inviteRevoked);
@@ -13036,16 +13103,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           }
       });
 
-      const quillCtrl = document.getElementById('quillInput');
-      if(quillCtrl) {
-          quillCtrl.disabled = false;
-          quillCtrl.readOnly = !paid;
-      }
-
       // Determine paywall mode from story metadata (persisted, immutable per-story)
       const lockPaywallMode = getPaywallMode();
 
-      ['quillBox', 'actionWrapper', 'dialogueWrapper'].forEach(id => {
+      ['actionWrapper', 'dialogueWrapper'].forEach(id => {
         const wrap = document.getElementById(id);
         if(wrap) {
             if (shouldLock) {
@@ -13076,13 +13137,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if(couple || paid) saveBtn.classList.remove('locked-style');
           else saveBtn.classList.add('locked-style');
           setPaywallClickGuard(saveBtn, !(couple || paid), lockPaywallMode);
-      }
-
-      // Quill & Veto button is ALWAYS unlocked (even in Tease)
-      const controlsBtn = document.getElementById('gameControlsBtn');
-      if(controlsBtn) {
-          controlsBtn.classList.remove('locked-style');
-          setPaywallClickGuard(controlsBtn, false);
       }
 
       if (!couple) {
@@ -13331,10 +13385,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const pm = document.getElementById('payModal');
     if(!pm) return;
 
-    // Close Quill/Veto modal if open (prevents z-index stacking)
-    const qvModal = document.getElementById('gameQuillVetoModal');
-    if (qvModal && !qvModal.classList.contains('hidden')) {
-        qvModal.classList.add('hidden');
+    // Close Petition modal if open (prevents z-index stacking)
+    const petModal = document.getElementById('petitionFateModal');
+    if (petModal && !petModal.classList.contains('hidden')) {
+        petModal.classList.add('hidden');
     }
 
     // Support both string mode and object { mode, source }
@@ -13635,10 +13689,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (typeof applyStyleLocks === 'function') applyStyleLocks();
       if (typeof applyTierUI === 'function') applyTierUI();
 
-      // CRITICAL FIX: Update Quill UI on both setup and game screens
-      if (typeof updateQuillUI === 'function') updateQuillUI();
-      if (typeof updateGameQuillUI === 'function') updateGameQuillUI();
-
       // Reset Fate ceremony state — full restart after paywall
       _fateRunning = false;
       _fateOverridden = false;
@@ -13715,19 +13765,54 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   const gmCheck = $('godModeCheck');
   if(gmCheck) {
       gmCheck.addEventListener('change', (e) => {
-          if(!e.target.checked) return; 
-          e.target.checked = false; 
-          const unlocked = localStorage.getItem('sb_god_mode_owned') === '1';
+          if(!e.target.checked) return;
+          e.target.checked = false;
+          if (!state.godModeEligibleThisRitual) return;
+          const unlocked = !!state.godMode?.owned || !!state.godModeEligibleThisRitual;
           if(!unlocked) window.showPaywall('god');
           else if(confirm("WARNING: God Mode permanently removes this story from canon.")) activateGodMode();
       });
   }
 
   function activateGodMode() {
+      // Temp God Mode activation writeback (story-scoped)
+      if (
+        !state.godMode.owned &&
+        state.godMode.tempGrantedAt &&
+        state.godMode.tempDurationHours &&
+        !state.godMode.activeStoryId
+      ) {
+        const currentStoryId = makeStoryId();
+        const now = new Date();
+        state.godMode.activeStoryId = currentStoryId;
+        state.godMode.activeStartedAt = now.toISOString();
+        state.godMode.tempExpiresAt = new Date(now.getTime() + (state.godMode.tempDurationHours * 3600000)).toISOString();
+
+        // Persist to Supabase (non-blocking, uses current session)
+        if (sb) {
+          (async () => {
+            try {
+              const { data: { session } } = await sb.auth.getSession();
+              const userId = session?.user?.id;
+              if (!userId) return;
+              const { error } = await sb.from('profiles')
+                .update({
+                  god_mode_active_story_id: state.godMode.activeStoryId,
+                  god_mode_active_started_at: state.godMode.activeStartedAt,
+                  god_mode_temp_expires_at: state.godMode.tempExpiresAt
+                })
+                .eq('id', userId);
+              if (error) console.error('God Mode activation writeback failed:', error);
+            } catch (e) {
+              console.error('God Mode activation writeback failed:', e);
+            }
+          })();
+        }
+      }
+
       state.sandbox = true;
       state.godModeActive = true;
-      state.storyStage = 'sandbox'; 
-      updateQuillUI();
+      state.storyStage = 'sandbox';
       alert("God Mode Active.");
   }
 
@@ -14483,7 +14568,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if(data.stateSnapshot) Object.assign(state, data.stateSnapshot);
     state.sysPrompt = data.sysPrompt || state.sysPrompt;
     state.subscribed = !!data.subscribed;
-    state.authorChairActive = checkAuthorChairUnlock();
+    // (authorChairActive removed — Petition Fate replaces quill)
 
     updateBatedBreathState();
     applyAccessLocks();
@@ -14514,7 +14599,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // REBIND: Ensure FX handlers are attached after navigation
     if (window.initFateCards) window.initFateCards();
     resetTurnSnapshotFlag();
-    updateQuillUI();
 
     // EARNED COVER SYSTEM: Update cover button for continued story
     _lastNotifiedCoverStage = getCurrentCoverStage();
@@ -14612,7 +14696,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // FIX: Explicit lock re-application ensures intensity cards reflect current access tier
     applyAccessLocks();
     applyIntensityLocks();
-    updateQuillUI();
     updateBatedBreathState();
   };
 
@@ -14630,186 +14713,74 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       showToast("Story saved.");
   });
 
-  // Story Controls button - toggle Quill & Veto modal (always opens, Quill locked in Tease)
-  $('gameControlsBtn')?.addEventListener('click', (e) => {
-      // Clear inputs for new entries (committed entries are shown separately)
-      const quillInput = document.getElementById('gameQuillInput');
-      const vetoInput = document.getElementById('gameVetoInput');
-      if (quillInput) quillInput.value = '';
-      if (vetoInput) vetoInput.value = '';
+  // (Quill & Veto game modal handlers removed — replaced by Petition Fate)
 
-      // CORRECTIVE: Render committed veto phrases in game modal (with remove buttons)
-      const gameVetoCommitted = document.getElementById('gameVetoCommitted');
-      if (gameVetoCommitted && state.committedVeto) {
-          renderGameVetoPills(gameVetoCommitted);
+  // God Mode button in story interface
+  $('gameGodModeBtn')?.addEventListener('click', () => {
+      if (!state.godModeEligibleThisRitual) return;
+      const unlocked = !!state.godMode?.owned || !!state.godModeEligibleThisRitual;
+      if (!unlocked) {
+          if (window.showPaywall) window.showPaywall('god');
+      } else if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
+          activateGodMode();
       }
-
-      // Render committed quill phrases in game modal (with remove buttons)
-      const gameQuillCommitted = document.getElementById('gameQuillCommitted');
-      if (gameQuillCommitted && state.committedQuill) {
-          renderGameQuillPills(gameQuillCommitted);
-      }
-
-      updateGameQuillUI();
-      document.getElementById('gameQuillVetoModal')?.classList.remove('hidden');
   });
 
-  // Game Quill commit button
-  $('btnGameCommitQuill')?.addEventListener('click', async (e) => {
-      e.preventDefault(); // Prevent scroll to top
-      e.stopPropagation();
+  // Petition Fate submit handler
+  $('btnSubmitPetition')?.addEventListener('click', () => {
+      const input = document.getElementById('petitionInput');
+      const text = input?.value?.trim();
+      if (!text) return;
 
-      // Save scroll position before any DOM changes
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
+      const classification = classifyPetition(text);
 
-      if (!getQuillReady()) return;
-      const quillEl = document.getElementById('gameQuillInput');
-      if (!quillEl) return;
-      const rawQuillText = quillEl.value.trim();
-      if (!rawQuillText) { showToast("No Quill edit to commit."); return; }
-
-      // RUNTIME NORMALIZATION: Quill input flows through ChatGPT normalization layer
-      const quillNorm = await callNormalizationLayer({
-          axis: 'quill',
-          user_text: rawQuillText,
-          context_signals: state.picks?.world || []
-      });
-      const quillText = quillNorm.canonical_instruction || quillNorm.normalized_text || rawQuillText;
-
-      // Also apply any pending veto constraints from game modal
-      await applyGameVetoFromInput();
-
-      // Add to committed phrases (parity with setup modal)
-      state.committedQuill.push(quillText);
-      window.state.quillIntent = quillText;
-
-      // Re-render committed pills in game modal
-      const gameQuillCommitted = document.getElementById('gameQuillCommitted');
-      if (gameQuillCommitted) renderGameQuillPills(gameQuillCommitted);
-
-      if (quillText) {
-          const quillHtml = `<div class="quill-intervention" style="color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;">${formatStory(quillText)}</div>`;
-          StoryPagination.appendToCurrentPage(quillHtml);
+      // Gate: check for duplicate petition this scene
+      if (classification === 'minor' && state.fate?.minorUsedThisScene) {
+          if (typeof showToast === 'function') showToast('You have already petitioned Fate this scene.');
+          return;
       }
-      window.state.quillCommittedThisTurn = true;
-      window.state.quill.uses++;
-      window.state.quill.nextReadyAtWords = currentStoryWordCount() + computeNextCooldownWords();
-      quillEl.value = '';
-      updateQuillUI();
-      updateGameQuillUI();
-      document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
-      showToast("Quill committed.");
-
-      // Restore scroll position after all DOM changes
-      requestAnimationFrame(() => {
-          window.scrollTo(scrollX, scrollY);
-      });
-  });
-
-  // Game Veto commit button
-  $('btnGameCommitVeto')?.addEventListener('click', async () => {
-      const vetoEl = document.getElementById('gameVetoInput');
-      if (!vetoEl) return;
-      const vetoText = vetoEl.value.trim();
-      if (!vetoText) { showToast("No Veto rules to commit."); return; }
-
-      await applyGameVetoFromInput();
-      vetoEl.value = '';
-      document.getElementById('gameQuillVetoModal')?.classList.add('hidden');
-      showToast(`Excluded: "${vetoText}"`);
-  });
-
-  function updateGameQuillUI() {
-      const btn = document.getElementById('btnGameCommitQuill');
-      const status = document.getElementById('gameQuillStatus');
-      const quillBox = document.getElementById('gameQuillBox');
-      const quillSection = quillBox?.closest('.qv-section');
-      if (!btn || !status) return;
-
-      // TEASE MODE: Lock entire Quill section
-      if (isTeaseMode()) {
-          status.textContent = "Quill: Locked (Upgrade to unlock)";
-          btn.disabled = true;
-          // PLAQUE REGIME: No opacity mutation — CSS handles disabled state
-          btn.textContent = "Commit Quill";
-          if (quillBox) quillBox.classList.add('locked-input');
-          if (quillSection) quillSection.classList.add('locked-section');
-          // Add click handler for paywall on quill section
-          if (quillBox && !quillBox.dataset.paywallBound) {
-              quillBox.dataset.paywallBound = '1';
-              quillBox.addEventListener('click', () => {
-                  if (isTeaseMode() && window.openPaywall) window.openPaywall('unlock');
-              });
-          }
+      if (classification === 'greater' && state.fate?.greaterUsedThisScene) {
+          if (typeof showToast === 'function') showToast('A greater petition has already been made this scene.');
           return;
       }
 
-      // Paid users: normal Quill logic
-      if (quillSection) quillSection.classList.remove('locked-section');
-      // CRITICAL FIX: Ensure paywall click guard is disabled for paid users
-      if (quillBox) {
-          quillBox.dataset.paywallActive = 'false';
+      // Hide submit, show ritual
+      document.getElementById('btnSubmitPetition')?.classList.add('hidden');
+      document.getElementById('petitionRitualArea')?.classList.remove('hidden');
+      disableTurnControls();
+
+      // Omen phase
+      const omenEl = document.getElementById('petitionOmen');
+      const omen = PETITION_OMENS[Math.floor(Math.random() * PETITION_OMENS.length)];
+      if (omenEl) {
+          omenEl.textContent = omen;
+          omenEl.classList.add('fade-in');
       }
 
-      const ready = getQuillReady();
-      const needed = state.quill.nextReadyAtWords;
-      const wc = currentStoryWordCount();
-      const remain = Math.max(0, needed - wc);
-
-      if (ready || state.godModeActive) {
-          status.textContent = state.authorChairActive ? "Quill: Poised" : "Quill: Poised";
-          btn.disabled = false;
-          // PLAQUE REGIME: No opacity mutation — material is static
-          btn.textContent = state.godModeActive ? "Commit Quill (God Mode)" : "Commit Quill";
-          if (quillBox) quillBox.classList.remove('locked-input');
-      } else {
-          status.textContent = `Quill: Spent (${remain} words to recharge)`;
-          btn.disabled = true;
-          // PLAQUE REGIME: No opacity mutation — CSS handles disabled state
-          if (quillBox) quillBox.classList.add('locked-input');
-      }
-  }
-
-  async function applyGameVetoFromInput() {
-      const vetoEl = document.getElementById('gameVetoInput');
-      if (!vetoEl) return;
-      const rawTxt = vetoEl.value.trim();
-      if (!rawTxt) return;
-
-      // RUNTIME NORMALIZATION: Game veto input flows through ChatGPT normalization layer
-      // CRITICAL: Never store raw text - always use normalized kernel
-      const vetoNorm = await callNormalizationLayer({
-          axis: 'veto',
-          user_text: rawTxt,
-          context_signals: state.picks?.world || []
-      });
-      // Extract kernel - prefer archetype/burden format, then normalized_text, NEVER raw
-      const kernel = vetoNorm.archetype || vetoNorm.burden || vetoNorm.normalized_text || vetoNorm.canonical_instruction;
-      const txt = kernel || 'excluded element';
-
-      // Parse and add to veto state (same as setup veto)
-      txt.split('\n').forEach(line => {
-          line = line.trim();
-          if (!line) return;
-          if (line.toLowerCase().startsWith('ban:')) {
-              const word = line.slice(4).trim();
-              if (word && !state.veto.bannedWords.includes(word)) state.veto.bannedWords.push(word);
-          } else if (line.toLowerCase().startsWith('rename:')) {
-              const parts = line.slice(7).split('->').map(s => s.trim());
-              if (parts.length === 2 && parts[0] && parts[1]) {
-                  state.veto.corrections.push({ from: parts[0], to: parts[1] });
-              }
-          } else {
-              if (!state.veto.excluded.includes(line)) state.veto.excluded.push(line);
-          }
-      });
-      vetoEl.value = '';
-  }
+      // After omen, show sacrifice choice
+      setTimeout(() => {
+          document.getElementById('petitionSacrifice')?.classList.remove('hidden');
+          // Bind sacrifice buttons
+          document.querySelectorAll('.petition-sacrifice-btn').forEach(btn => {
+              btn.onclick = () => {
+                  const choice = btn.dataset.choice;
+                  completePetitionRitual(text, classification, choice);
+              };
+          });
+      }, 1500);
+  });
 
   $('burgerBtn')?.addEventListener('click', () => {
       if (typeof renderBurgerMenu === 'function') renderBurgerMenu();
       document.getElementById('menuOverlay')?.classList.remove('hidden');
+  });
+  $('menuProfileBtn')?.addEventListener('click', () => {
+      document.getElementById('menuOverlay')?.classList.add('hidden');
+      openProfileModal();
+  });
+  $('menuLibraryBtn')?.addEventListener('click', () => {
+      document.getElementById('menuOverlay')?.classList.add('hidden');
+      if (typeof window.continueStory === 'function') window.continueStory();
   });
   $('ageYes')?.addEventListener('click', () => window.showScreen('tosGate'));
   $('tosCheck')?.addEventListener('change', (e) => $('tosBtn').disabled = !e.target.checked);
@@ -15888,8 +15859,8 @@ RULES:
 3. Keep pacing slow and tense (unless Dirty).
 4. Focus on sensory details, longing, and chemistry.
 5. Be creative, surprising, and emotionally resonant.
-6. BANNED WORDS/TOPICS: ${(state.veto?.bannedWords || []).join(', ')}.
-7. TONE ADJUSTMENTS: ${(state.veto?.tone || []).join(', ')}.`;
+6. BANNED WORDS/TOPICS: ${(state.constraints?.bannedWords || []).join(', ')}.
+7. TONE ADJUSTMENTS: ${(state.constraints?.tone || []).join(', ')}.`;
 
           const introPrompt = buildScene1IntroPrompt(pKernel, lKernel, pGen, lGen, pPro, lPro);
 
@@ -17083,13 +17054,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       const wasArchetype = currentOpenCard.classList.contains('archetype-card');
 
-      // Stop and remove zoom side sparkle emitters
-      ['left', 'right', 'top', 'bottom'].forEach(side => {
-        const id = `zoomSideSparkles_${side}`;
-        stopSparkleEmitter(id);
-        const el = currentOpenCard.querySelector(`#${id}`);
-        if (el) el.remove();
-      });
+      // Stop and remove zoom sparkle emitter
+      stopSparkleEmitter('zoomCardSparkles');
+      const sparkleEl = currentOpenCard.querySelector('#zoomCardSparkles');
+      if (sparkleEl) sparkleEl.remove();
 
       // Remove zoom nav arrows and zoom continue button from portal
       if (zoomPortal) {
@@ -17332,19 +17300,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         zoomPortal.appendChild(zoomContinueBtn);
       }
 
-      // Add sparkle emitters to world/pressure zoomed cards (doubled rate on left/right)
+      // Add sparkle emitter to world/pressure zoomed cards (single full-card container)
       if (grp === 'world' || grp === 'pressure') {
         const frontFace = card.querySelector('.sb-card-front');
         if (frontFace) {
-          ['left', 'right', 'top', 'bottom'].forEach(side => {
-            const sparkleContainer = document.createElement('div');
-            sparkleContainer.className = 'zoom-side-sparkles';
-            sparkleContainer.id = `zoomSideSparkles_${side}`;
-            sparkleContainer.dataset.side = side;
-            frontFace.appendChild(sparkleContainer);
-            const rate = (side === 'left' || side === 'right') ? 16 : 8;
-            startSparkleEmitter(sparkleContainer.id, 'destinyDeck', rate);
-          });
+          const sparkleContainer = document.createElement('div');
+          sparkleContainer.className = 'zoom-card-sparkles';
+          sparkleContainer.id = 'zoomCardSparkles';
+          frontFace.appendChild(sparkleContainer);
+          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 20);
         }
       }
     }
@@ -17391,13 +17355,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const oldFlavorArc = oldCard.querySelector('.sb-zoom-flavor-arc');
       if (oldFlavorArc) oldFlavorArc.remove();
 
-      // Stop and remove zoom side sparkle emitters from old card
-      ['left', 'right', 'top', 'bottom'].forEach(side => {
-        const id = `zoomSideSparkles_${side}`;
-        stopSparkleEmitter(id);
-        const el = oldCard.querySelector(`#${id}`);
-        if (el) el.remove();
-      });
+      // Stop and remove zoom sparkle emitter from old card
+      stopSparkleEmitter('zoomCardSparkles');
+      const oldSparkleEl = oldCard.querySelector('#zoomCardSparkles');
+      if (oldSparkleEl) oldSparkleEl.remove();
 
       // Remove inlined backgrounds and restore old card to grid
       removeInlinedBackgrounds(oldCard);
@@ -17465,19 +17426,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       currentOpenCard = newCard;
 
-      // Add sparkle emitters to new world/pressure card (doubled rate on left/right)
+      // Add sparkle emitter to new world/pressure card
       if (newGrp === 'world' || newGrp === 'pressure') {
         const frontFace = newCard.querySelector('.sb-card-front');
         if (frontFace) {
-          ['left', 'right', 'top', 'bottom'].forEach(side => {
-            const sparkleContainer = document.createElement('div');
-            sparkleContainer.className = 'zoom-side-sparkles';
-            sparkleContainer.id = `zoomSideSparkles_${side}`;
-            sparkleContainer.dataset.side = side;
-            frontFace.appendChild(sparkleContainer);
-            const rate = (side === 'left' || side === 'right') ? 16 : 8;
-            startSparkleEmitter(sparkleContainer.id, 'destinyDeck', rate);
-          });
+          const sparkleContainer = document.createElement('div');
+          sparkleContainer.className = 'zoom-card-sparkles';
+          sparkleContainer.id = 'zoomCardSparkles';
+          frontFace.appendChild(sparkleContainer);
+          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 20);
         }
       }
     }
@@ -17745,10 +17702,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       Ascension: 'Evolution has no reverse. Neither does loss.',
       // Survival
       WarZone: 'Between bombardments, desire is the only defiance.',
-      Collapse: 'When systems fail, only connection holds.',
-      Exile: 'Banishment strips everything but what you carry inside.',
-      Scarcity: 'When there is not enough, love becomes the hardest luxury.',
-      EndOfEra: 'The old world dies. What blooms in the ashes?'
+      Hostage: 'Compliance keeps you alive. Defiance keeps you human.',
+      Castaway: 'No shore in sight. Only each other.',
+      Lost: 'The trail vanished. So did certainty.',
+      Trapped: 'The walls close in. So does the distance between them.',
+      Afflicted: 'The body fails. What remains refuses to quit.',
+      Scarcity: 'When there is not enough, love becomes the hardest luxury.'
     };
 
     function populateWorldZoomContent(card, worldVal) {
@@ -18848,6 +18807,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Expose closeZoomedCard for module-scope callers (archetype overlay, zoom continue)
     window.closeZoomedCard = closeZoomedCard;
+    window.initPressureFrontFlavors = initPressureFrontFlavors;
+    window.injectPressureDestinyCard = injectPressureDestinyCard;
+    window.injectDynamicDestinyCard = injectDynamicDestinyCard;
   }
 
   // Debounce utility for input handlers
@@ -19206,7 +19168,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       dynamic: { title: DYNAMIC_DISPLAY[val] || val, subtitle: 'Story Polarity' },
       intensity: { title: val, subtitle: 'Intensity' },
       safety: { title: 'Safety', subtitle: null },
-      vetoquill: { title: 'Veto/Quill', subtitle: null },
       beginstory: { title: 'Begin Story', subtitle: null },
       mode: { title: val, subtitle: 'Mode' }
     };
@@ -19281,8 +19242,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     'dynamic',     // Row 8 - Polarity
     'arousal',     // Row 9 - Intensity
     'safety',      // Row 10 - Safety & Boundaries
-    'vetoquill',   // Row 11 - Veto / Quill
-    'beginstory'   // Row 12 - Begin Story (terminal row)
+    'beginstory'   // Row 11 - Begin Story (terminal row)
   ];
 
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -19303,8 +19263,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     arousal: 9,      // Choice X: Intensity/Arousal
     intensity: 9,    // Alias for arousal
     safety: 10,      // Choice XI: Safety & Boundaries
-    vetoquill: 11,   // Choice XII: Veto / Quill
-    beginstory: 12   // Terminal: Begin Story (no breadcrumb)
+    beginstory: 11   // Terminal: Begin Story (no breadcrumb)
   };
 
   // Map corridor stage names to their data-grp values (for DOM queries)
@@ -19320,7 +19279,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     dynamic: 'dynamic',
     arousal: 'intensity',
     safety: 'safety',
-    vetoquill: 'vetoquill',
     beginstory: 'beginstory'
   };
 
@@ -19339,7 +19297,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     dynamic: 'corridorRowDynamic',
     arousal: 'corridorRowArousal',
     safety: 'safetyRow',
-    vetoquill: 'vetoquillRow',
     beginstory: 'beginStoryRow'
   };
 
@@ -19941,7 +19898,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     dynamic: '#flowRowDynamic, #continueFromDynamic',
     arousal: '#arousalSectionTitle, #intensityGrid, #continueFromArousal',
     safety: '#safetyRow, #continueFromSafety',
-    vetoquill: '#vetoquillRow, #continueFromVetoquill',
     beginstory: '#beginStoryRow'
   };
 
@@ -20078,6 +20034,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Update active row index
     corridorActiveRowIndex = targetIndex;
 
+    // RESTORE CORRIDOR MODE: If navigating back from corridor-complete,
+    // re-enter corridor mode to restore viewport isolation (one row visible)
+    if (document.body.classList.contains('corridor-complete')) {
+      document.body.classList.remove('corridor-complete');
+      document.body.classList.add('corridor-mode');
+      // Re-hide post-arousal sections (Safety/Begin row shown by onCorridorComplete)
+      const postArousalSection = document.getElementById('postArousalSection');
+      if (postArousalSection) postArousalSection.classList.add('hidden');
+      // Restore DSP visibility
+      const synopsisPanel = document.getElementById('synopsisPanel');
+      if (synopsisPanel) synopsisPanel.classList.remove('corridor-complete');
+    }
+
     // Update visibility (DOM mount/unmount)
     updateCorridorVisibility();
     updateCorridorContinueButtonVisibility();
@@ -20112,7 +20081,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       'dynamic': 'continueFromDynamic',
       'arousal': 'continueFromArousal',
       'safety': 'continueFromSafety',
-      'vetoquill': 'continueFromVetoquill',
       'beginstory': 'beginBtn'
     };
     const buttonId = stageToButton[stage];
@@ -20207,7 +20175,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const unresolved = [];
     CORRIDOR_STAGES.forEach((stage, idx) => {
       // Skip these stages (not required — they don't have card-based selection)
-      if (stage === 'arousal' || stage === 'safety' || stage === 'vetoquill' || stage === 'beginstory') return;
+      if (stage === 'arousal' || stage === 'safety' || stage === 'beginstory') return;
 
       let hasSelection = corridorSelections.has(stage);
 
@@ -20216,6 +20184,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         hasSelection = hasSelection || !!state.mode;
       } else if (stage === 'storybeau') {
         hasSelection = hasSelection || !!state.archetype?.primary;
+      } else if (stage === 'length') {
+        // Length is stored in state.storyLength, not state.picks.length
+        hasSelection = hasSelection || !!state.storyLength;
       } else {
         // Standard corridor stages use state.picks
         const grp = CORRIDOR_GRP_MAP[stage];
@@ -20263,7 +20234,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     dynamic: 'Dynamic',
     arousal: 'Intensity',
     safety: 'Safety',
-    vetoquill: 'Veto/Quill',
     beginstory: 'Begin Story'
   };
 
@@ -20550,7 +20520,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Create ghost step for each STAGE_INDEX entry (except aliases and non-breadcrumb stages)
     const stageEntries = Object.entries(STAGE_INDEX).filter(([grp]) =>
-      grp !== 'archetype' && grp !== 'safety' && grp !== 'vetoquill' && grp !== 'beginstory'
+      grp !== 'archetype' && grp !== 'intensity' && grp !== 'safety' && grp !== 'beginstory'
     );
     stageEntries.sort((a, b) => a[1] - b[1]); // Sort by index
 
@@ -20683,6 +20653,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             el.style.visibility = '';
             el.style.opacity = '';
             el.style.pointerEvents = '';
+            // Clean up dissipating cards from Guided Fate autoplay
+            el.querySelectorAll('.sb-card.dissipating').forEach(card => {
+              card.classList.remove('dissipating');
+              card.style.opacity = '';
+              card.style.visibility = '';
+            });
           }
         });
         mountedCount++;
@@ -20694,9 +20670,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
         // PRESSURE MOUNT: Init front flavors + re-inject Destiny card if removed during animation
         if (stage === 'pressure') {
-            initPressureFrontFlavors();
-            if (!document.getElementById('pressureDestinyChoiceCard')) {
-                injectPressureDestinyCard();
+            if (typeof window.initPressureFrontFlavors === 'function') window.initPressureFrontFlavors();
+            if (!document.getElementById('pressureDestinyChoiceCard') && typeof window.injectPressureDestinyCard === 'function') {
+                window.injectPressureDestinyCard();
             }
             // If selected via Destiny, keep all cards face-down (secret)
             if (pressureSelectedViaDestiny) {
@@ -20708,8 +20684,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
         // DYNAMIC MOUNT: Re-inject Destiny card if removed during animation
         if (stage === 'dynamic') {
-            if (!document.getElementById('dynamicDestinyChoiceCard')) {
-                injectDynamicDestinyCard();
+            if (!document.getElementById('dynamicDestinyChoiceCard') && typeof window.injectDynamicDestinyCard === 'function') {
+                window.injectDynamicDestinyCard();
             }
             if (dynamicSelectedViaDestiny) {
                 document.querySelectorAll('#dynamicGrid .sb-card[data-grp="dynamic"]:not(.destiny-choice-card)').forEach(c => {
@@ -20753,28 +20729,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
                 applyIntensityLocks();
                 console.log('[Corridor] Arousal mount: Re-applied intensity locks');
             }
-        }
-
-        // VETOQUILL MOUNT: Restore VQ destiny deck + init placeholders
-        if (stage === 'vetoquill') {
-          const vqDeck = document.getElementById('vqDestinyDeck');
-          if (vqDeck) {
-            vqDeck.classList.remove('retracted');
-            if (typeof startSparkleEmitter === 'function') {
-              startSparkleEmitter('vqDeckSparkles', 'destinyDeck', 3);
-            }
-          }
-          // Init rotating placeholders (row unmounted when initFateHandSystem ran)
-          ['vetoInput', 'quillInput'].forEach(id => {
-            const ph = document.querySelector(`.rotating-placeholder[data-for="${id}"]`);
-            if (ph && !ph.innerHTML.trim() && typeof window.initRotatingPlaceholder === 'function') {
-              window.initRotatingPlaceholder(id, id === 'vetoInput' ? 'veto' : 'quill');
-            }
-          });
-          // Re-evaluate Quill lock state (HTML starts locked; subscription resolves at runtime)
-          syncTierFromAccess();
-          updateQuillUI();
-          console.log('[Corridor] Vetoquill mount: Restored VQ destiny deck + re-evaluated Quill lock');
         }
 
         // BEGIN STORY MOUNT: Start sparkles around Begin Story button
@@ -21041,6 +20995,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Check for selection via multiple sources (handles auto-filled selections)
     let hasSelection =
       corridorSelections.has(stage) ||
+      (grp === 'length' && !!state.storyLength) ||
       (grp && state.picks && state.picks[grp]) ||
       document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
 
@@ -21059,16 +21014,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // These rows always show their button when active (not card-based selection)
-    const alwaysShowForRow = (stage === 'authorship' || stage === 'identity' || stage === 'arousal' || stage === 'safety' || stage === 'vetoquill');
+    const alwaysShowForRow = (stage === 'authorship' || stage === 'identity' || stage === 'arousal' || stage === 'safety');
 
     controlPlaneBtn.classList.toggle('visible', hasSelection || alwaysShowForRow);
-
-    // God Mode toggle: only visible on vetoquill stage in solo mode
-    const godToggle = document.getElementById('godModeToggle');
-    if (godToggle) {
-      const showGod = stage === 'vetoquill' && state.mode === 'solo';
-      godToggle.classList.toggle('hidden', !showGod);
-    }
   }
 
   /**
@@ -21087,9 +21035,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     const grp = CORRIDOR_GRP_MAP[stage];
 
-    // Find selection from DOM or state.picks (handles auto-filled selections)
+    // Find selection from DOM or state (handles auto-filled selections)
     let selectedCard = document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
-    let selectedVal = selectedCard?.dataset.val || (grp && state.picks ? state.picks[grp] : null);
+    let selectedVal = selectedCard?.dataset.val ||
+      (grp === 'length' ? state.storyLength : null) ||
+      (grp && state.picks ? state.picks[grp] : null);
 
     // Special case: Authorship stage — breadcrumb created by animateAuthorshipCardToBreadcrumb
     // Only hide button here; corridor advancement handled by custom authorship handler
@@ -21292,47 +21242,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return;
     }
 
-    // Special case: Veto/Quill — auto-commit veto, then advance to Begin Story row
-    if (stage === 'vetoquill') {
-      console.log(`[Corridor] Veto/Quill complete, advancing to Begin Story row`);
-
-      // Auto-commit any pending veto text (Commit button removed from UI)
-      const vetoEl = document.getElementById('vetoInput');
-      if (vetoEl && vetoEl.value.trim()) {
-        const lines = vetoEl.value.trim().split('\n').filter(l => l.trim());
-        for (const line of lines) {
-          const rawPhrase = line.trim();
-          if (!state.committedVeto.includes(rawPhrase)) {
-            state.committedVeto.push(rawPhrase);
-          }
-        }
-        renderCommittedPhrases('veto');
-        applyVetoFromInput();
-      }
-
-      // Auto-commit any pending quill text (Commit button removed from UI)
-      const quillEl = document.getElementById('quillInput');
-      if (quillEl && quillEl.value.trim()) {
-        const rawQuillText = quillEl.value.trim();
-        // Store quill intent in state for prompt injection
-        window.state.quillIntent = rawQuillText;
-        state.committedQuill.push(rawQuillText);
-        renderCommittedPhrases('quill');
-        window.state.quillCommittedThisTurn = true;
-        window.state.quill.uses++;
-        window.state.quill.nextReadyAtWords = (typeof currentStoryWordCount === 'function' ? currentStoryWordCount() : 0) + (typeof computeNextCooldownWords === 'function' ? computeNextCooldownWords() : 1200);
-        quillEl.value = '';
-      }
-
-      hideCorridorContinueButton(stage);
-      advanceCorridorRow();
-      return;
-    }
-
-    // Special case: Begin Story — terminal row, transitions to story mode
-    // Note: This is handled by beginBtn click handler, not Continue button
+    // Special case: Begin Story — terminal row, dispatch to beginBtn handler
     if (stage === 'beginstory') {
-      console.log(`[Corridor] Begin Story row — terminal action handled by beginBtn`);
+      console.log(`[Corridor] Begin Story row — dispatching to beginBtn`);
+      const beginBtn = document.getElementById('beginBtn');
+      if (beginBtn) beginBtn.click();
       return;
     }
 
@@ -21342,6 +21256,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     console.log(`[Corridor] Continuing from ${stage}: ${selectedVal}`);
+
+    // Record selection in corridorSelections (corridor card click handlers may not be bound
+    // for unmounted rows, so set it here as the authoritative commit point)
+    corridorSelections.set(stage, { grp, val: selectedVal, card: selectedCard });
 
     // Hide continue button immediately
     hideCorridorContinueButton(stage);
@@ -21426,7 +21344,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (!breadcrumbRow) return;
 
     // Check if breadcrumb should be excluded (these stages don't become breadcrumbs)
-    if (grp === 'safety' || grp === 'vetoquill' || grp === 'beginstory') {
+    if (grp === 'safety' || grp === 'beginstory') {
       console.log(`[Breadcrumb] EXCLUDED: ${grp} — never becomes breadcrumb`);
       // Still remove the ghost step for this stage (if any)
       const ghostIdx = STAGE_INDEX[grp];
@@ -21573,7 +21491,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // DSP visible ONLY during these stages:
     // 3=world, 4=tone, 5=pressure, 6=pov, 7=length
-    // Hidden during: 0=authorship, 1=identity, 2=storybeau, 8=dynamic, 9=arousal, 10+=safety/vetoquill/beginstory
+    // Hidden during: 0=authorship, 1=identity, 2=storybeau, 8=dynamic, 9=arousal, 10+=safety/beginstory
     const DSP_START_INDEX = 3;  // World
     const DSP_END_INDEX = 7;    // Length
 
@@ -21590,12 +21508,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * Called when all corridor rows are complete
    */
   function onCorridorComplete() {
-    console.log('[Corridor] Corridor complete. Proceeding to Safety/Veto/Begin Story.');
+    console.log('[Corridor] Corridor complete. Proceeding to Safety/Begin Story.');
 
     // Clear any remaining ghost steps
     clearAllGhostSteps();
 
-    // Show the post-arousal sections (Safety, Veto, Begin Story)
+    // Show the post-arousal sections (Safety, Begin Story)
     // These are now wrapped in a single container that starts hidden
     const postArousalSection = document.getElementById('postArousalSection');
     if (postArousalSection) {
@@ -21703,23 +21621,80 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const DISSIPATE_DELAY = 500;     // Time for card dissipation
     const INTER_ROW_DELAY = 200;     // Pause between rows
 
-    // Process rows 1 through 8 (storybeau through arousal)
+    // Helper: resolve the fate-chosen value for a stage from pre-set state
+    function getFateValueForStage(stg, g) {
+      if (stg === 'storybeau') return state.archetype?.primary || null;
+      if (g === 'length') return state.storyLength || null;
+      if (g === 'intensity') return state.intensity || null;
+      if (g && state.picks) return state.picks[g] || null;
+      return null;
+    }
+
+    // Process rows 1 through end
     for (let rowIdx = 1; rowIdx < CORRIDOR_STAGES.length; rowIdx++) {
       const stage = CORRIDOR_STAGES[rowIdx];
       const grp = CORRIDOR_GRP_MAP[stage];
 
-      // Update active row
+      // Skip non-card rows (safety, beginstory have no selectable cards)
+      if (stage === 'safety' || stage === 'beginstory') {
+        corridorActiveRowIndex = rowIdx;
+        updateCorridorVisibility();
+        await new Promise(r => setTimeout(r, 100));
+        // Safety: auto-commit default
+        if (stage === 'safety') {
+          state.safety = state.safety || { mode: 'balanced', darkThemes: true, nonConImplied: false, violence: true, boundaries: [] };
+        }
+        console.log(`[Corridor] Autoplay skipped non-card row ${rowIdx}: ${stage}`);
+        continue;
+      }
+
+      // Update active row — MOUNTS the row into DOM
       corridorActiveRowIndex = rowIdx;
       updateCorridorVisibility();
+
+      // Identity row: fill character names + set dropdowns (now in DOM)
+      if (stage === 'identity') {
+        await new Promise(r => setTimeout(r, ROW_SHOW_DELAY));
+        // Set dropdowns now that they're mounted
+        const pgEl = $('playerGender'); if (pgEl) pgEl.value = state.gender || 'Female';
+        const ppEl = $('playerPronouns'); if (ppEl) ppEl.value = 'She/Her';
+        const lgEl = $('loveInterestGender'); if (lgEl) lgEl.value = state.loveInterest || 'Male';
+        const lpEl = $('lovePronouns'); if (lpEl) lpEl.value = 'He/Him';
+        // Fill character name inputs
+        const mcInput = $('playerNameInput');
+        const liInput = $('partnerNameInput');
+        if (mcInput && state.normalizedPlayerKernel) mcInput.value = state.normalizedPlayerKernel;
+        if (liInput && state.normalizedPartnerKernel) liInput.value = state.normalizedPartnerKernel;
+        console.log(`[Corridor] Autoplay completed row ${rowIdx}: ${stage} (identity)`);
+        await new Promise(r => setTimeout(r, INTER_ROW_DELAY));
+        continue;
+      }
 
       // Brief pause to show the row
       await new Promise(r => setTimeout(r, ROW_SHOW_DELAY));
 
-      // Find the selected card for this stage (Guided Fate already set the selection)
-      const selectedCard = document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+      // Find the selected card — or select from state if not pre-selected
+      let selectedCard = document.querySelector(`.sb-card[data-grp="${grp}"].selected`);
+
+      // Cards may not be pre-selected (corridor unmount prevented runGuidedFateFill
+      // from reaching grids). Use state values to select the correct card now.
+      if (!selectedCard) {
+        const stateVal = getFateValueForStage(stage, grp);
+        if (stateVal) {
+          // Archetype cards use different selector
+          if (stage === 'storybeau') {
+            selectedCard = document.querySelector(`.archetype-card[data-archetype="${stateVal}"]`);
+          } else {
+            selectedCard = document.querySelector(`.sb-card[data-grp="${grp}"][data-val="${stateVal}"]`);
+          }
+          if (selectedCard) {
+            selectedCard.classList.add('selected', 'flipped');
+          }
+        }
+      }
 
       if (selectedCard) {
-        const selectedVal = selectedCard.dataset.val;
+        const selectedVal = selectedCard.dataset.val || selectedCard.dataset.archetype;
         const titleEl = selectedCard.querySelector('.sb-card-title');
         const selectedTitle = titleEl ? titleEl.textContent : selectedVal;
 
@@ -21774,6 +21749,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   window.initCorridor = initCorridor;
   window.resetCorridor = resetCorridor;
   window.advanceCorridorRow = advanceCorridorRow;
+  window._corridorRowStore = corridorRowStore;
   window.autoplayCorridorFromGuidedFate = autoplayCorridorFromGuidedFate;
   window.completeCorridorFromGuidedFate = completeCorridorFromGuidedFate; // Legacy alias
   window.updateDSPCorridorVisibility = updateDSPCorridorVisibility;
@@ -21884,8 +21860,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     Survival: {
       id: 'Survival',
       label: 'Survival',
-      description: 'Staying alive — socially, politically, physically, or emotionally.',
-      dspPhrase: 'scarcity, endurance, and brutal choices'
+      description: 'Immediate physical danger forces dependence and proximity.',
+      dspPhrase: 'danger, dependence, and desperate proximity'
     }
   };
 
@@ -21927,7 +21903,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     DesireObsession:   { axis: 'Desire & Obsession',   gravity: 'Wanting destabilizes reason and restraint.' },
     ReckoningPast:     { axis: 'Reckoning & Past',     gravity: 'History intrudes and demands response.' },
     Transformation:    { axis: 'Becoming',             gravity: 'Identity changes under emotional pressure.' },
-    Survival:          { axis: 'Survival',             gravity: 'Staying alive competes with intimacy.' }
+    Survival:          { axis: 'Survival',             gravity: 'Immediate physical danger forces dependence and proximity.\nScope: Threat is situational and localized. Stakes are personal and present (terrain, injury, war zone, disease, disaster). The world is not ending unless Apocalypse is injected.\nIntimacy emerges through bodily reliance: heat, wounds, guarding, rationing, coordinated survival.\nForbidden: No global extinction framing by default. No cosmic finality language. No abstract "social survival" without physical danger.\nCore engine: Staying alive sharpens or accelerates intimacy.' }
   };
 
   const HIDDEN_MODIFIER_ALLOWED = {
@@ -21966,6 +21942,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           }
         }
       }
+    }
+
+    // Hidden Apocalypse flavor — Survival only, ~10% chance, rare escalation override
+    if (pressure === 'Survival' && Math.random() < 0.10) {
+      block += '\nHidden Flavor: Apocalypse — Global framing UNLOCKED. Civilization-level collapse permitted (bombs, plague, flood, famine). End-of-era tone allowed. Coexists with selected Survival flavor.';
+    } else if (pressure === 'Survival') {
+      // Safeguard: when Apocalypse is NOT injected, enforce localized framing
+      block += '\nSafeguard: Apocalypse not active — Survival must remain localized. No global collapse, no extinction-level framing, no civilization-ending scope.';
     }
 
     return block;
@@ -22158,10 +22142,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     ],
     Survival: [
       { id: 'WarZone', label: 'War Zone', description: 'Combat, casualties, survival in conflict.' },
-      { id: 'Collapse', label: 'Collapse', description: 'Systems failing, structures crumbling.' },
-      { id: 'Exile', label: 'Exile', description: 'Cast out, alone, making do without belonging.' },
-      { id: 'Scarcity', label: 'Scarcity', description: 'Not enough, hard choices, rationed hope.' },
-      { id: 'EndOfEra', label: 'End of an Era', description: 'The old world dying, the new not yet born.' }
+      { id: 'Hostage', label: 'Hostage', description: 'Captive, leveraged, survival by compliance.' },
+      { id: 'Castaway', label: 'Castaway', description: 'Stranded, exposed, no rescue coming.' },
+      { id: 'Lost', label: 'Lost', description: 'Disoriented, off-trail, the terrain closing in.' },
+      { id: 'Trapped', label: 'Trapped', description: 'Pinned, enclosed, no way out but through.' },
+      { id: 'Afflicted', label: 'Afflicted', description: 'Sick, poisoned, injured — the body failing.' },
+      { id: 'Scarcity', label: 'Scarcity', description: 'Not enough, hard choices, rationed hope.' }
     ]
   };
 
@@ -22187,6 +22173,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     BuildingBridges: { pressure: 'ReckoningPast', flavor: 'LostRelationship' },
     Purgatory: { pressure: 'Transformation', flavor: 'IdentityShift' },
     Survival: { pressure: 'Survival', flavor: null },
+    // Removed Survival flavors → remap to nearest equivalent
+    Collapse: { pressure: 'Survival', flavor: 'Scarcity' },
+    Exile: { pressure: 'Survival', flavor: 'Castaway' },
+    EndOfEra: { pressure: 'Survival', flavor: 'Scarcity' },
     Sports: { pressure: 'DesireObsession', flavor: 'Rivalry' }
   };
 
@@ -22228,11 +22218,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     Awakening: 'dormant power stirring, hidden truths surfacing',
     IdentityShift: 'unfinished business, reflection, and finding the key to your own lock',
     Ascension: 'evolution, elevation, and irreversible change',
-    WarZone: 'combat, survival, and what war takes',
-    Collapse: 'systems failing, structures crumbling, adaptation',
-    Exile: 'banishment, solitude, and making meaning without belonging',
-    Scarcity: 'not enough, hard choices, and rationed hope',
-    EndOfEra: 'the old world dying, the new not yet born'
+    // Survival flavors: no DSP copy at flavor level (pressure DSP phrase covers all)
   };
 
   /**
@@ -24689,17 +24675,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           zoomBackdrop.classList.add('active');
       }
 
-      // Add sparkle emitters to all four edges of zoomed card
+      // Add sparkle emitter to zoomed card
       const frontFace = card.querySelector('.sb-card-front');
       if (frontFace) {
-          ['left', 'right', 'top', 'bottom'].forEach(side => {
-              const sparkleContainer = document.createElement('div');
-              sparkleContainer.className = 'zoom-side-sparkles';
-              sparkleContainer.id = `zoomSideSparkles_${side}`;
-              sparkleContainer.dataset.side = side;
-              frontFace.appendChild(sparkleContainer);
-              startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 8);
-          });
+          const sparkleContainer = document.createElement('div');
+          sparkleContainer.className = 'zoom-card-sparkles';
+          sparkleContainer.id = 'zoomCardSparkles';
+          frontFace.appendChild(sparkleContainer);
+          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 20);
       }
 
       // Add left/right navigation arrows to portal
@@ -24761,13 +24744,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const newCard = document.querySelector(`#archetypeCardGrid .sb-card[data-archetype="${newArchetypeId}"]`);
       if (!newCard) return;
 
-      // Stop old sparkle emitters
-      ['left', 'right', 'top', 'bottom'].forEach(side => {
-          const id = `zoomSideSparkles_${side}`;
-          stopSparkleEmitter(id);
-          const el = oldCard.querySelector(`#${id}`);
-          if (el) el.remove();
-      });
+      // Stop old sparkle emitter
+      stopSparkleEmitter('zoomCardSparkles');
+      const oldSparkleEl = oldCard.querySelector('#zoomCardSparkles');
+      if (oldSparkleEl) oldSparkleEl.remove();
 
       // Remove old zoom content
       const oldZoomContent = oldCard.querySelector('.sb-zoom-content');
@@ -24835,17 +24815,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Track as last-zoomed
       setLastZoomedArchetype(newArchetypeId);
 
-      // Add sparkle emitters to new card
+      // Add sparkle emitter to new card
       const frontFace = newCard.querySelector('.sb-card-front');
       if (frontFace) {
-          ['left', 'right', 'top', 'bottom'].forEach(side => {
-              const sparkleContainer = document.createElement('div');
-              sparkleContainer.className = 'zoom-side-sparkles';
-              sparkleContainer.id = `zoomSideSparkles_${side}`;
-              sparkleContainer.dataset.side = side;
-              frontFace.appendChild(sparkleContainer);
-              startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 8);
-          });
+          const sparkleContainer = document.createElement('div');
+          sparkleContainer.className = 'zoom-card-sparkles';
+          sparkleContainer.id = 'zoomCardSparkles';
+          frontFace.appendChild(sparkleContainer);
+          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 20);
       }
   }
 
@@ -25441,196 +25418,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
   });
 
-  // Track committed phrases in state
-  if (!state.committedQuill) state.committedQuill = [];
-  if (!state.committedVeto) state.committedVeto = [];
-
-  // Add a committed phrase to the UI
-  function addCommittedPhrase(container, text, type, index) {
-      const phrase = document.createElement('div');
-      phrase.className = `committed-phrase ${type}-phrase`;
-      phrase.dataset.index = index;
-      phrase.innerHTML = `
-          <span class="committed-phrase-text">${text}</span>
-          <button class="committed-phrase-remove" title="Remove" aria-label="Remove">&times;</button>
-      `;
-      // Insert at top (new commits above old)
-      container.insertBefore(phrase, container.firstChild);
-
-      // Bind remove button
-      phrase.querySelector('.committed-phrase-remove').addEventListener('click', () => {
-          removeCommittedPhrase(type, index);
-      });
-  }
-
-  // Remove a committed phrase
-  function removeCommittedPhrase(type, index) {
-      const arr = type === 'quill' ? state.committedQuill : state.committedVeto;
-      arr.splice(index, 1);
-      renderCommittedPhrases(type);
-      // Update veto state if needed
-      if (type === 'veto') rebuildVetoFromCommitted();
-      // Sync quillIntent to most recent committed Quill (or clear if none)
-      if (type === 'quill') {
-          state.quillIntent = arr.length > 0 ? arr[arr.length - 1] : '';
-      }
-      saveStorySnapshot();
-  }
-
-  // Render all committed phrases for a type
-  function renderCommittedPhrases(type) {
-      const container = document.getElementById(type === 'quill' ? 'quillCommitted' : 'vetoCommitted');
-      const arr = type === 'quill' ? state.committedQuill : state.committedVeto;
-      if (!container) return;
-      container.innerHTML = '';
-      arr.forEach((text, i) => addCommittedPhrase(container, text, type, i));
-  }
-
-  // Render veto pills in game modal (with remove buttons)
-  function renderGameVetoPills(container) {
-      if (!container || !state.committedVeto) return;
-      container.innerHTML = '';
-      state.committedVeto.forEach((text, i) => {
-          const phrase = document.createElement('div');
-          phrase.className = 'committed-phrase veto-phrase';
-          phrase.style.cssText = 'display:flex; align-items:center; background:rgba(255,100,100,0.15); border:1px solid rgba(255,100,100,0.3); padding:4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em;';
-          phrase.innerHTML = `
-              <span style="color:var(--pink); flex:1;">${text}</span>
-              <button class="game-veto-remove" data-index="${i}" title="Remove" aria-label="Remove veto" style="background:none; border:none; color:rgba(255,100,100,0.5); cursor:pointer; font-size:1em; padding:0 0 0 8px; line-height:1;">&times;</button>
-          `;
-          container.appendChild(phrase);
-      });
-      // Bind remove buttons
-      container.querySelectorAll('.game-veto-remove').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const idx = parseInt(btn.dataset.index, 10);
-              state.committedVeto.splice(idx, 1);
-              rebuildVetoFromCommitted();
-              renderGameVetoPills(container); // Re-render after removal
-          });
-      });
-  }
-
-  // Render quill pills in game modal (with remove buttons)
-  function renderGameQuillPills(container) {
-      if (!container || !state.committedQuill) return;
-      container.innerHTML = '';
-      state.committedQuill.forEach((text, i) => {
-          const phrase = document.createElement('div');
-          phrase.className = 'committed-phrase quill-phrase';
-          phrase.style.cssText = 'display:flex; align-items:center; background:rgba(200,170,100,0.15); border:1px solid rgba(200,170,100,0.3); padding:4px 8px; margin:4px 0; border-radius:4px; font-size:0.85em;';
-          phrase.innerHTML = `
-              <span style="color:var(--gold); flex:1;">${text}</span>
-              <button class="game-quill-remove" data-index="${i}" title="Remove" aria-label="Remove quill" style="background:none; border:none; color:rgba(200,170,100,0.5); cursor:pointer; font-size:1em; padding:0 0 0 8px; line-height:1;">&times;</button>
-          `;
-          container.appendChild(phrase);
-      });
-      // Bind remove buttons
-      container.querySelectorAll('.game-quill-remove').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const idx = parseInt(btn.dataset.index, 10);
-              state.committedQuill.splice(idx, 1);
-              // Sync quillIntent to most recent (or clear if none)
-              state.quillIntent = state.committedQuill.length > 0 ? state.committedQuill[state.committedQuill.length - 1] : '';
-              renderGameQuillPills(container); // Re-render after removal
-          });
-      });
-  }
-
-  // Rebuild veto state from committed phrases
-  function rebuildVetoFromCommitted() {
-      state.veto = state.veto || { bannedWords: [], tone: [] };
-      state.veto.bannedWords = [];
-      state.veto.tone = [];
-      state.committedVeto.forEach(line => {
-          const l = line.trim().toLowerCase();
-          if (l.startsWith('ban:')) {
-              state.veto.bannedWords.push(l.replace('ban:', '').trim());
-          } else if (l.startsWith('no ') || l.startsWith('avoid ')) {
-              state.veto.tone.push(line.trim());
-          } else {
-              state.veto.tone.push(line.trim());
-          }
-      });
-  }
-
-  $('btnCommitQuill')?.addEventListener('click', async (e) => {
-      e.preventDefault(); // Prevent scroll to top
-      e.stopPropagation();
-
-      // Save scroll position before any DOM changes
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
-
-      if (!getQuillReady()) return;
-      const quillEl = document.getElementById('quillInput');
-      if (!quillEl) return;
-      const rawQuillText = quillEl.value.trim();
-      if (!rawQuillText) { showToast("No Quill edit to commit."); return; }
-
-      // RUNTIME NORMALIZATION: Quill input flows through ChatGPT normalization layer
-      const quillNorm = await callNormalizationLayer({
-          axis: 'quill',
-          user_text: rawQuillText,
-          context_signals: state.picks?.world || []
-      });
-      const quillText = quillNorm.canonical_instruction || quillNorm.normalized_text || rawQuillText;
-
-      // Also apply any pending veto constraints
-      await applyVetoFromInput();
-
-      // Store quill intent in state for prompt injection
-      window.state.quillIntent = quillText;
-
-      // Add to committed phrases
-      state.committedQuill.push(quillText);
-      renderCommittedPhrases('quill');
-
-      if (quillText) {
-          const quillHtml = `<div class="quill-intervention" style="font-style:italic; color:var(--gold); border-left:2px solid var(--gold); padding-left:10px; margin:15px 0;">${formatStory(quillText, true)}</div>`;
-          StoryPagination.appendToCurrentPage(quillHtml);
-      }
-
-      window.state.quillCommittedThisTurn = true;
-      window.state.quill.uses++;
-      window.state.quill.nextReadyAtWords = currentStoryWordCount() + computeNextCooldownWords();
-      quillEl.value = '';
-      updateQuillUI();
-      saveStorySnapshot();
-      showToast("Quill committed.");
-
-      // Restore scroll position after all DOM changes
-      requestAnimationFrame(() => {
-          window.scrollTo(scrollX, scrollY);
-      });
-  });
-
-  // Commit Veto Button Handler
-  // TASK E: Store EXACT phrase, not normalized kernel
-  $('btnCommitVeto')?.addEventListener('click', async () => {
-      const vetoEl = document.getElementById('vetoInput');
-      if (!vetoEl) return;
-      const vetoText = vetoEl.value.trim();
-      if (!vetoText) { showToast("No veto to commit."); return; }
-
-      // TASK E: Store exact user phrase for display, normalize internally for rules
-      const lines = vetoText.split('\n').filter(l => l.trim());
-      for (const line of lines) {
-          const rawPhrase = line.trim();
-          // Store the EXACT phrase user entered (not normalized)
-          if (!state.committedVeto.includes(rawPhrase)) {
-              state.committedVeto.push(rawPhrase);
-          }
-      }
-      renderCommittedPhrases('veto');
-
-      await applyVetoFromInput();
-      vetoEl.value = '';
-      saveStorySnapshot();
-      showToast(`Excluded: "${vetoText}"`);
-  });
+  // (Quill/Veto committed phrase system removed — replaced by Petition Fate)
 
   // --- META SYSTEM (RESTORED) ---
   function buildMetaDirective(){
@@ -26868,21 +26656,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // STORY-DEFINING INPUTS CHANGED: Invalidate snapshot → forces "Begin Story"
     if (typeof invalidateShapeSnapshot === 'function') invalidateShapeSnapshot();
 
-    state.veto = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
-    state.quillIntent = '';
-    // QUILL STATE RESET: Reset cooldown on new story (quillSpent only set AFTER actual commit)
-    state.quill = { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600 };
-    state.quillCommittedThisTurn = false;
-    // VETO SCOPING: Clear shape-phase committed vetoes on story start
-    // In-story vetoes are added fresh via gameVetoInput
-    state.committedVeto = [];
-    state.committedQuill = [];
+    state.constraints = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
+    state.fate = { stance: 'neutral', minorUsedThisScene: false, greaterUsedThisScene: false, lastGreaterSceneIndex: null, earnedIntimacy: false, earlyGamingCount: 0, pendingPetition: null };
 
-    // Pre-set dropdowns silently
-    $('playerGender').value = 'Female';
-    $('playerPronouns').value = 'She/Her';
-    $('loveInterestGender').value = 'Male';
-    $('lovePronouns').value = 'He/Him';
+    // Pre-set dropdowns silently (elements may be in unmounted corridor row)
+    const _pgEl = $('playerGender'); if (_pgEl) _pgEl.value = 'Female';
+    const _ppEl = $('playerPronouns'); if (_ppEl) _ppEl.value = 'She/Her';
+    const _lgEl = $('loveInterestGender'); if (_lgEl) _lgEl.value = 'Male';
+    const _lpEl = $('lovePronouns'); if (_lpEl) _lpEl.value = 'He/Him';
 
     // Age fields removed — no longer part of the character form
 
@@ -26915,6 +26696,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (_fateOverridden) { _fateRunning = false; return; }
 
     // Fill MC name (letter-by-letter with gold glow, 120ms per char for gravitas)
+    // Set character name kernel regardless of input availability (corridor may unmount it)
+    if (fateChoices.playerName) state.normalizedPlayerKernel = fateChoices.playerName;
     const mcInput = $('playerNameInput');
     if (mcInput && fateChoices.playerName && !_fateOverridden) {
       mcInput.value = '';
@@ -26927,15 +26710,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       mcInput.classList.remove('fate-typing');
       mcInput.classList.add('fate-typed');
       setTimeout(() => mcInput.classList.remove('fate-typed'), 800);
-
-      // Set character name kernel (no longer displayed in DSP)
-      state.normalizedPlayerKernel = fateChoices.playerName;
     }
 
     await new Promise(r => setTimeout(r, 800)); // Pause between names
     if (_fateOverridden) { _fateRunning = false; return; }
 
     // Fill LI name (letter-by-letter with gold glow, 120ms per char for gravitas)
+    // Set partner name kernel regardless of input availability (corridor may unmount it)
+    if (fateChoices.partnerName) state.normalizedPartnerKernel = fateChoices.partnerName;
     const liInput = $('partnerNameInput');
     if (liInput && fateChoices.partnerName && !_fateOverridden) {
       liInput.value = '';
@@ -27097,15 +26879,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // STORY-DEFINING INPUTS CHANGED: Invalidate snapshot → forces "Begin Story"
     if (typeof invalidateShapeSnapshot === 'function') invalidateShapeSnapshot();
 
-    // Clear veto/quill (defaults only)
-    state.veto = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
-    state.quillIntent = '';
-    // QUILL STATE RESET: Reset cooldown on new story (quillSpent only set AFTER actual commit)
-    state.quill = { uses: 0, nextReadyAtWords: 0, baseCooldown: 1200, perUse: 600, cap: 3600 };
-    state.quillCommittedThisTurn = false;
-    // VETO SCOPING: Clear shape-phase committed vetoes on story start
-    state.committedVeto = [];
-    state.committedQuill = [];
+    // Clear constraints + reset petition fate
+    state.constraints = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
+    state.fate = { stance: 'neutral', minorUsedThisScene: false, greaterUsedThisScene: false, lastGreaterSceneIndex: null, earnedIntimacy: false, earlyGamingCount: 0, pendingPetition: null };
 
     // Update UI cards to reflect selections
     updateAllCardSelections();
@@ -27196,6 +26972,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       haloOffset: 8,
       driftType: 'float',
       flickerChance: 0.15
+    },
+    // Zoomed card: all sparkles spawn from card edges outward
+    zoomCard: {
+      durationMin: 2.5,
+      durationMax: 5.0,
+      sizeMin: 1,
+      sizeMax: 3,
+      opacityMin: 0.25,
+      opacityRange: 0.45,
+      haloOffset: 15,
+      driftType: 'wander',
+      flickerChance: 0.15,
+      outsideRatio: 1.0
     }
   };
 
@@ -27223,9 +27012,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Pick a random angle around the perimeter
     const angle = Math.random() * Math.PI * 2;
 
-    // Calculate spawn position on perimeter halo
-    const radiusX = 50 + (haloOffset / containerRect.width * 100);
-    const radiusY = 50 + (haloOffset / containerRect.height * 100);
+    // Calculate spawn position — outsideRatio controls inside/outside split
+    const outsideRatio = profile.outsideRatio ?? 1.0;
+    let radiusX, radiusY;
+    if (outsideRatio < 1.0 && Math.random() > outsideRatio) {
+      // Spawn inside card boundary (radius < 50% = within card)
+      const innerScale = 0.2 + Math.random() * 0.7; // 20-90% from center
+      radiusX = 50 * innerScale;
+      radiusY = 50 * innerScale;
+    } else {
+      // Spawn on perimeter halo (outside card)
+      radiusX = 50 + (haloOffset / containerRect.width * 100);
+      radiusY = 50 + (haloOffset / containerRect.height * 100);
+    }
 
     const x = 50 + radiusX * Math.cos(angle);
     const y = 50 + radiusY * Math.sin(angle);
@@ -27261,8 +27060,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         driftY = -20 - Math.random() * 40; // Always upward
         break;
       case 'wander':
-        // Random gentle drift in any direction
-        const wanderAngle = Math.random() * Math.PI * 2;
+        // Drift outward from spawn angle (edge sparkles drift away from card)
+        const wanderAngle = angle + (Math.random() - 0.5) * 1.2; // ±35° from spawn angle
         const wanderDist = 15 + Math.random() * 25;
         driftX = Math.cos(wanderAngle) * wanderDist;
         driftY = Math.sin(wanderAngle) * wanderDist;
@@ -27426,12 +27225,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const characterSection = $('characterSectionRow');
     const postArousalSection = $('postArousalSection');
 
-    // Reset card states
+    // Reset card states (including inline visibility set by breadcrumb animation)
     if (chooseCard) {
-      chooseCard.classList.remove('flipped', 'selected', 'dissipating', 'hidden', 'dimmed');
+      chooseCard.classList.remove('flipped', 'selected', 'selected-static', 'dissolving-to-breadcrumb', 'dissipating', 'hidden', 'dimmed');
+      chooseCard.style.visibility = '';
     }
     if (fateCard) {
-      fateCard.classList.remove('flipped', 'selected', 'dissipating', 'hidden', 'dimmed');
+      fateCard.classList.remove('flipped', 'selected', 'selected-static', 'dissolving-to-breadcrumb', 'dissipating', 'hidden', 'dimmed');
+      fateCard.style.visibility = '';
     }
 
     // Hide authorship Continue button
@@ -27779,7 +27580,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       console.log('[Authorship] Guided Fate committed — running fate fill');
 
-      await runGuidedFateFill(fateChoices);
+      try {
+        await runGuidedFateFill(fateChoices);
+      } catch (err) {
+        console.error('[Authorship] Guided Fate fill error:', err);
+        // Ensure fate state is cleaned up on error
+        _fateRunning = false;
+        if (typeof deactivateGuidedFateVisuals === 'function') deactivateGuidedFateVisuals();
+        // Still advance corridor so the user isn't stuck
+        if (typeof completeCorridorFromGuidedFate === 'function') completeCorridorFromGuidedFate();
+      }
     }
   });
 
@@ -28165,127 +27975,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     spawnDestinyCards();
   });
 
-  // VQ Destiny Deck — spawn random suggestions into veto + quill textareas
-  // ═══════════════════════════════════════════════════════════════════════════
-  // VQ FLYING CARD SYSTEM — mirrors character corridor destiny deck
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  function createVQFlyingCard(targetCardId, suggestion) {
-    const targetCard = $(targetCardId);
-    const card = document.createElement('div');
-    card.className = 'destiny-flying-card';
-
-    const inner = document.createElement('div');
-    inner.className = 'destiny-flying-card-inner';
-
-    // Back face: Black-DestinyChoice-back.png (same as deck cards)
-    const backFace = document.createElement('div');
-    backFace.className = 'destiny-flying-card-face destiny-flying-card-back';
-
-    // Front face: Clone of the VQ card with suggestion pre-filled
-    const frontFace = document.createElement('div');
-    frontFace.className = 'destiny-flying-card-face destiny-flying-card-front-live';
-
-    if (targetCard) {
-      const clone = targetCard.cloneNode(true);
-      const computedBg = getComputedStyle(targetCard).backgroundImage;
-      if (computedBg && computedBg !== 'none') {
-        clone.style.backgroundImage = computedBg;
-      }
-      clone.removeAttribute('id');
-      clone.style.width = '100%';
-      clone.style.height = '100%';
-      clone.style.position = 'relative';
-
-      // Pre-fill the cloned textarea with the suggestion
-      const textarea = clone.querySelector('.vq-textarea');
-      if (textarea) textarea.value = suggestion;
-
-      // Hide rotating placeholder in clone
-      const ph = clone.querySelector('.rotating-placeholder');
-      if (ph) ph.classList.add('hidden');
-
-      frontFace.appendChild(clone);
-    }
-
-    inner.appendChild(backFace);
-    inner.appendChild(frontFace);
-    card.appendChild(inner);
-    return card;
-  }
-
-  function fillVQFields(type, suggestion) {
-    const inputId = type === 'veto' ? 'vetoInput' : 'quillInput';
-    const cardId = type === 'veto' ? 'vetoCard' : 'quillCard';
-    const input = $(inputId);
-    const card = $(cardId);
-
-    if (input) {
-      input.value = input.value ? input.value + '\n' + suggestion : suggestion;
-      const ph = document.querySelector(`.rotating-placeholder[data-for="${inputId}"]`);
-      if (ph) ph.classList.add('hidden');
-    }
-
-    if (card) {
-      card.classList.add('fate-landed');
-      setTimeout(() => card.classList.remove('fate-landed'), 300);
-    }
-  }
-
-  function spawnVQDestinyCards() {
-    const miniDeck = $('vqDestinyDeck');
-    const vetoCard = $('vetoCard');
-    const quillCard = $('quillCard');
-    const quillInput = $('quillInput');
-
-    if (!miniDeck || !vetoCard || !quillCard) return;
-
-    const vetoSuggestion = getRandomSuggestion('veto',
-      ($('vetoInput')?.value || '').split('\n'));
-    const quillUnlocked = quillInput && !quillInput.closest('.locked-input');
-    const quillSuggestion = quillUnlocked
-      ? getRandomSuggestion('quill', (quillInput.value || '').split('\n'))
-      : null;
-
-    const deckRect = miniDeck.getBoundingClientRect();
-    const vetoRect = vetoCard.getBoundingClientRect();
-    const quillRect = quillCard.getBoundingClientRect();
-
-    const startRect = { left: deckRect.left, top: deckRect.top };
-
-    // First card: peel LEFT to Veto card
-    const vetoFlyingCard = createVQFlyingCard('vetoCard', vetoSuggestion);
-    animateFlyingCard(vetoFlyingCard, startRect, {
-      left: vetoRect.left,
-      top: vetoRect.top,
-      width: vetoRect.width,
-      height: vetoRect.height
-    }, 'left', () => {
-      fillVQFields('veto', vetoSuggestion);
-
-      // After first card lands, spawn second if quill is unlocked
-      if (quillSuggestion) {
-        setTimeout(() => {
-          const quillFlyingCard = createVQFlyingCard('quillCard', quillSuggestion);
-          animateFlyingCard(quillFlyingCard, startRect, {
-            left: quillRect.left,
-            top: quillRect.top,
-            width: quillRect.width,
-            height: quillRect.height
-          }, 'right', () => {
-            fillVQFields('quill', quillSuggestion);
-          });
-        }, 200);
-      }
-    });
-
-    console.log('[Destiny VQ] Cards spawning:', vetoSuggestion, quillSuggestion);
-  }
-
-  // VQ Destiny Deck click handler — flying cards
-  $('vqDestinyDeck')?.addEventListener('click', () => {
-    spawnVQDestinyCards();
-  });
+  // (VQ Destiny Deck removed — Petition Fate replaces quill/veto)
 
   // Character section Continue button handler
   $('continueFromCharacters')?.addEventListener('click', () => {
@@ -28549,16 +28239,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // Capture raw form values synchronously (needed for early validation)
-    const playerInputVal2 = $('playerNameInput').value.trim();
-    const partnerInputVal2 = $('partnerNameInput').value.trim();
+    const playerInputVal2 = $('playerNameInput')?.value.trim() || '';
+    const partnerInputVal2 = $('partnerNameInput')?.value.trim() || '';
     const playerNameBlank2 = !playerInputVal2;
     const partnerNameBlank2 = !partnerInputVal2;
     const rawPlayerName = playerInputVal2 || "The Protagonist";
     const rawPartnerName = partnerInputVal2 || "The Love Interest";
-    const pGen = $('customPlayerGender')?.value.trim() || $('playerGender').value;
-    const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender').value;
-    const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns').value;
-    const lPro = $('customLovePronouns')?.value.trim() || $('lovePronouns').value;
+    const pGen = $('customPlayerGender')?.value.trim() || $('playerGender')?.value || 'Female';
+    const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender')?.value || 'Male';
+    const pPro = $('customPlayerPronouns')?.value.trim() || $('playerPronouns')?.value || 'She/Her';
+    const lPro = $('customLovePronouns')?.value.trim() || $('lovePronouns')?.value || 'He/Him';
     // PASS 9D: Capture ages from form fields
     const pAge = $('playerAgeInput')?.value.trim() || '';
     const lAge = $('partnerAgeInput')?.value.trim() || '';
@@ -28837,17 +28527,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     else if(pGen === 'Female' && lGen === 'Female') { state.authorGender = 'Female'; state.authorPronouns = 'She/Her'; }
     else { state.authorGender = 'Non-Binary'; state.authorPronouns = 'They/Them'; }
 
-    // PASS 9B FIX: Wrap veto in try/catch to prevent hang
-    try {
-        await applyVetoFromControls();
-    } catch (vetoError) {
-        console.error('[VETO ERROR]', vetoError);
-        // Continue without veto if it fails
-    }
+    // (applyVetoFromControls removed — constraints state set at init)
 
     // Check for LGBTQ Colors
-    state.gender = $('playerGender').value;
-    state.loveInterest = $('loveInterestGender').value;
+    state.gender = $('playerGender')?.value || pGen;
+    state.loveInterest = $('loveInterestGender')?.value || lGen;
     const isQueer = (state.gender === state.loveInterest) || state.gender === 'Non-Binary' || state.loveInterest === 'Non-Binary';
     if(isQueer) document.body.classList.add('lgbtq-mode');
     else document.body.classList.remove('lgbtq-mode');
@@ -28868,7 +28552,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     let ancestryPlayer = $('ancestryInputPlayer')?.value.trim() || '';
     let ancestryLI = $('ancestryInputLI')?.value.trim() || '';
     let archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
-    let quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+    // (quillUnlocked removed — Petition Fate replaces quill)
 
     const coupleArcRules = `
 COUPLE MODE ARC RULES (CRITICAL):
@@ -29047,8 +28731,8 @@ ${prehistoricForbid}
     3. Keep pacing slow and tense (unless Dirty).
     4. Focus on sensory details, longing, and chemistry.
     5. Be creative, surprising, and emotionally resonant.
-    6. BANNED WORDS/TOPICS: ${state.veto.bannedWords.join(', ')}.
-    7. TONE ADJUSTMENTS: ${state.veto.tone.join(', ')}.
+    6. BANNED WORDS/TOPICS: ${(state.constraints?.bannedWords || []).join(', ')}.
+    7. TONE ADJUSTMENTS: ${(state.constraints?.tone || []).join(', ')}.
     ${state.povMode === 'author5th' ? `
     5TH PERSON (THE AUTHOR) — POV REGIME (AUTHORITATIVE):
     - The Author is a PARTICIPANT in the story, but NOT a controller of events.
@@ -29262,10 +28946,10 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
     archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
 
     // Determine unlock tier (reassign)
-    quillUnlocked = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+    const paidAccess = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
     let tier = 'free';
     if (state.subscribed) tier = 'subscribed';
-    else if (quillUnlocked) tier = 'quill_unlocked';
+    else if (paidAccess) tier = 'paid';
     else if (state.storyId && hasStoryPass(state.storyId)) tier = 'story_unlocked';
 
     // Build structured payload for diagnostic (4-axis system)
@@ -29288,13 +28972,13 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
             yours: ancestryPlayer || '(empty)',
             storybeau: ancestryLI || '(empty)'
         },
-        quill: {
-            unlocked: quillUnlocked,
-            directives: quillUnlocked ? (state.quillIntent || '(none this turn)') : '(LOCKED - not injected)'
+        fate: {
+            stance: state.fate?.stance || 'neutral',
+            pendingPetition: state.fate?.pendingPetition || null
         },
-        veto: {
-            bannedWords: state.veto?.bannedWords || [],
-            tone: state.veto?.tone || []
+        constraints: {
+            bannedWords: state.constraints?.bannedWords || [],
+            tone: state.constraints?.tone || []
         },
         intensity: state.intensity || 'Naughty',
         pov: state.picks.pov || 'First',
@@ -29327,11 +29011,11 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
         if (payload.systemPromptLength === 0) errors.push('System prompt is empty (critical failure)');
 
         // Check for null/undefined in directive arrays
-        if (payload.veto.bannedWords.some(w => w === null || w === undefined)) {
-            errors.push('Veto bannedWords array contains null/undefined');
+        if (payload.constraints?.bannedWords?.some(w => w === null || w === undefined)) {
+            errors.push('Constraints bannedWords array contains null/undefined');
         }
-        if (payload.veto.tone.some(t => t === null || t === undefined)) {
-            errors.push('Veto tone array contains null/undefined');
+        if (payload.constraints?.tone?.some(t => t === null || t === undefined)) {
+            errors.push('Constraints tone array contains null/undefined');
         }
 
         // Check archetype directives actually built
@@ -29889,7 +29573,6 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         else if(window.initCards) window.initCards();
         // PERMANENT FX REBIND: Ensure fate cards have handlers after story generation
         if (window.initFateCards) window.initFateCards();
-        updateQuillUI();
         updateBatedBreathState();
     }
   });
@@ -36056,8 +35739,8 @@ Respond in this EXACT format (no labels, just two lines):
               const userModifiers = vizNorm.normalized_text || rawModifiers;
 
               // Include veto exclusions in visual prompt
-              const vetoExclusions = state.veto?.excluded?.length > 0
-                  ? " Exclude: " + state.veto.excluded.slice(0, 3).join(', ') + "."
+              const vetoExclusions = state.constraints?.excluded?.length > 0
+                  ? " Exclude: " + state.constraints.excluded.slice(0, 3).join(', ') + "."
                   : "";
 
               // SCENE-FIRST PROMPT CONSTRUCTION
@@ -36670,18 +36353,23 @@ FATE CARD ADAPTATION (CRITICAL):
       
       const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
       
-      // Build VETO constraints
-      const vetoExclusions = state.veto.excluded.length ? `VETO EXCLUSIONS (treat as nonexistent): ${state.veto.excluded.join('; ')}.` : '';
-      const vetoCorrections = state.veto.corrections?.length ? `VETO CORRECTIONS (apply going forward): ${state.veto.corrections.join('; ')}.` : '';
-      const vetoAmbient = state.veto.ambientMods?.length ? `VETO AMBIENT (apply if world allows): ${state.veto.ambientMods.join('; ')}.` : '';
+      // Build constraint directives (renamed from veto)
+      const vetoExclusions = state.constraints?.excluded?.length ? `VETO EXCLUSIONS (treat as nonexistent): ${state.constraints.excluded.join('; ')}.` : '';
+      const vetoCorrections = state.constraints?.corrections?.length ? `VETO CORRECTIONS (apply going forward): ${state.constraints.corrections.join('; ')}.` : '';
+      const vetoAmbient = state.constraints?.ambientMods?.length ? `VETO AMBIENT (apply if world allows): ${state.constraints.ambientMods.join('; ')}.` : '';
       const vetoRules = [vetoExclusions, vetoCorrections, vetoAmbient].filter(Boolean).join('\n');
 
-      // Build QUILL directive
-      let quillDirective = '';
-      if (state.quillCommittedThisTurn && state.quillIntent) {
-          quillDirective = `QUILL INTENT (honor as Fate allows, may be delayed/partial/costly): ${state.quillIntent}`;
-      } else if (state.quillCommittedThisTurn) {
-          quillDirective = `NOTE: The user just committed a Quill edit. Honor the authorial intent.`;
+      // Build PETITION FATE directive
+      let petitionDirective = '';
+      if (state.fate && state.fate.pendingPetition) {
+          const _p = state.fate.pendingPetition;
+          const _instr = {
+              benevolent: 'Honor this petition fully and naturally.',
+              twist: 'Honor with unexpected cost, complication, or ironic twist.',
+              silent: 'Acknowledge subtly but do not honor directly.',
+              neutral: 'Weave naturally if the story flows that way.'
+          };
+          petitionDirective = `PETITION FATE (${_p.outcome}): "${_p.text}"\n${_instr[_p.outcome] || _instr.neutral}`;
       }
 
       // Lens: dynamic midpoint enforcement (evaluated per-turn)
@@ -36722,7 +36410,7 @@ FATE CARD ADAPTATION (CRITICAL):
           ? buildIntentConsequenceDirective(act, dia)
           : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${quillDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -37161,12 +36849,29 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           }
 
           const wc = currentStoryWordCount();
-          if(state.quill && !state.godModeActive) {
-              state.quill.uses++;
-              state.quill.nextReadyAtWords = wc + computeNextCooldownWords();
-              state.quillCommittedThisTurn = false;
-              state.quillIntent = '';
-              updateQuillUI();
+
+          // Reset per-scene petition flags
+          if (state.fate) {
+              state.fate.minorUsedThisScene = false;
+              state.fate.greaterUsedThisScene = false;
+              state.fate.pendingPetition = null;
+
+              // Stance evolution
+              const _stIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+              if (_stIdx >= 5 && !state.fate.earnedIntimacy && state.fate.earlyGamingCount <= 1) {
+                  state.fate.earnedIntimacy = true;
+                  state.fate.stance = 'intimate';
+              }
+              if (state.fate.earlyGamingCount > 2 && state.fate.stance !== 'intimate') {
+                  state.fate.stance = 'trickster';
+              }
+              if (state.fate.earlyGamingCount > 0 && state.fate.lastGreaterSceneIndex !== null &&
+                  (state.turnCount - state.fate.lastGreaterSceneIndex) >= 3) {
+                  state.fate.earlyGamingCount = Math.max(0, state.fate.earlyGamingCount - 1);
+                  if (state.fate.earlyGamingCount <= 1 && state.fate.stance === 'trickster') {
+                      state.fate.stance = 'neutral';
+                  }
+              }
           }
 
           if(wc > getSexAllowedAtWordCount()) state.sexPushCount = 0;
@@ -37401,9 +37106,9 @@ FATE CARD ADAPTATION (CRITICAL):
 - Write as if YOU conceived this beat, not as if you're following a template.` : ''}`;
 
           // Veto rules
-          const vetoExclusions = state.veto?.excluded?.length ? `VETO EXCLUSIONS (treat as nonexistent): ${state.veto.excluded.join('; ')}.` : '';
-          const vetoCorrections = state.veto?.corrections?.length ? `VETO CORRECTIONS (apply going forward): ${state.veto.corrections.join('; ')}.` : '';
-          const vetoAmbient = state.veto?.ambientMods?.length ? `VETO AMBIENT (apply if world allows): ${state.veto.ambientMods.join('; ')}.` : '';
+          const vetoExclusions = state.constraints?.excluded?.length ? `VETO EXCLUSIONS (treat as nonexistent): ${state.constraints.excluded.join('; ')}.` : '';
+          const vetoCorrections = state.constraints?.corrections?.length ? `VETO CORRECTIONS (apply going forward): ${state.constraints.corrections.join('; ')}.` : '';
+          const vetoAmbient = state.constraints?.ambientMods?.length ? `VETO AMBIENT (apply if world allows): ${state.constraints.ambientMods.join('; ')}.` : '';
           const vetoRules = [vetoExclusions, vetoCorrections, vetoAmbient].filter(Boolean).join('\n');
 
           // Lens enforcement
@@ -38415,15 +38120,6 @@ FATE CARD ADAPTATION (CRITICAL):
               return;
           }
 
-          // --- QUILL ---
-          if (/\bset\b.*\bquill\b.*\b\d+/.test(input)) {
-              const m = input.match(/(\d+)/);
-              if (m) {
-                  state.quillTarget = parseInt(m[1], 10);
-                  log('Quill target -> ' + m[1] + ' words');
-              }
-              return;
-          }
           if (/\bpretend\b.*\bwritten\b.*\b\d+/.test(input)) {
               const m = input.match(/(\d+)/);
               if (m) {
@@ -39312,7 +39008,7 @@ FATE CARD ADAPTATION (CRITICAL):
 // DesireObsession:  Obsession, ForbiddenRomance, Rivalry, Addiction, Jealousy
 // ReckoningPast:    RelentlessPast, Redemption, OldDebts, BetrayalHistory, LostRelationship
 // Transformation:   BecomingPowerful, MoralCorruption, Awakening, IdentityShift, Ascension
-// Survival:         WarZone, Collapse, Exile, Scarcity, EndOfEra
+// Survival:         WarZone, Hostage, Castaway, Lost, Trapped, Afflicted, Scarcity  [Hidden: Apocalypse]
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // BACKWARD COMPATIBILITY
