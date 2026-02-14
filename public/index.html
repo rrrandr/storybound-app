@@ -29,62 +29,86 @@
 <button id="burgerBtn"><img src="/assets/ui/burger-keyhole-ornate.png" alt="Menu" style="width:32px; height:32px; vertical-align:middle;"></button>
 <button id="globalBackBtn" class="hidden"><img src="/assets/ui/back-arrow.png" alt="Back" style="width:32px; height:32px;"></button>
 
-<div id="menuOverlay" class="overlay hidden" style="z-index:4999;">
-  <div class="box">
-    <h3>Menu</h3>
+<div id="menuOverlay" class="overlay hidden" style="z-index:10002;">
 
-    <!-- ── ACCOUNT ── -->
-    <label class="setting-label" style="margin-top:10px;">Account</label>
+  <!-- ── MAIN VAULT PANEL ── -->
+  <div class="vault-panel">
+    <button class="vault-x" onclick="document.getElementById('menuOverlay').classList.add('hidden')">&times;</button>
+    <div class="vault-title">Your Vault</div>
+    <div class="vault-tabs">
+      <button class="vault-tab sb-btn-png md" data-vault-section="Account">Account</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Story">Story</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Purchases">Purchases</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Appearance</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Help">Help</button>
+    </div>
+    <button id="vaultCloseBtn" class="sb-btn-png sm" style="margin-top:14px;">Close Vault</button>
+  </div>
+
+  <!-- ── ACCOUNT SUB-PANEL ── -->
+  <div id="vaultAccount" class="vault-sub hidden">
+    <div class="vault-sub-title">Account</div>
     <div id="menuAuthSection"></div>
-    <button id="menuSignInBtn" class="small-btn">Sign in (coming soon)</button>
-    <button id="menuProfileBtn" class="small-btn">Profile</button>
-    <button id="menuLibraryBtn" class="small-btn">Library</button>
-    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+    <button id="menuSignInBtn" class="sb-btn-png sm">Sign In</button>
+    <button id="menuProfileBtn" class="sb-btn-png sm">Profile</button>
+    <button id="menuLibraryBtn" class="sb-btn-png sm">Library</button>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
 
-    <!-- ── STORY ── -->
-    <label class="setting-label">Story</label>
-    <button onclick="window.restart()">Restart Story</button>
-    <button id="continueStoryBtn" class="hidden" onclick="window.continueStory()">Continue Saved Story</button>
-    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+  <!-- ── STORY SUB-PANEL ── -->
+  <div id="vaultStory" class="vault-sub hidden">
+    <div class="vault-sub-title">Story</div>
+    <button class="sb-btn-png md" onclick="window.restart()">Restart Story</button>
+    <button id="continueStoryBtn" class="sb-btn-png md hidden" onclick="window.continueStory()">Continue Story</button>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
 
-    <!-- ── PURCHASES ── -->
-    <label class="setting-label">Purchases</label>
-    <button onclick="window.changeTier()">Change Tier</button>
-    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+  <!-- ── PURCHASES SUB-PANEL ── -->
+  <div id="vaultPurchases" class="vault-sub hidden">
+    <div class="vault-sub-title">Purchases</div>
+    <button class="sb-btn-png md" onclick="window.changeTier()">Change Tier</button>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
 
-    <!-- ── APPEARANCE ── -->
-    <label class="setting-label">Appearance</label>
+  <!-- ── APPEARANCE SUB-PANEL ── -->
+  <div id="vaultAppearance" class="vault-sub hidden">
+    <div class="vault-sub-title">Appearance</div>
 
-    <label class="setting-label" style="font-size:0.8em; margin-top:8px;">Theme</label>
-    <div style="display:flex; gap:5px; justify-content:center; flex-wrap:wrap; margin-bottom:15px;">
-        <button class="small-btn" onclick="setTheme('default')">Default</button>
-        <button class="small-btn" onclick="setTheme('sepia')">Sepia</button>
-        <button class="small-btn" onclick="setTheme('midnight')">Midnight</button>
-        <button class="small-btn" onclick="setTheme('print')">Print</button>
-        <button class="small-btn" onclick="setTheme('easy')">Easy</button>
+    <label class="vault-label">Theme</label>
+    <div class="vault-theme-row">
+      <button class="sb-btn-png sm" onclick="setTheme('default')">Default</button>
+      <button class="sb-btn-png sm" onclick="setTheme('sepia')">Sepia</button>
+      <button class="sb-btn-png sm" onclick="setTheme('midnight')">Midnight</button>
+      <button class="sb-btn-png sm" onclick="setTheme('print')">Print</button>
+      <button class="sb-btn-png sm" onclick="setTheme('easy')">Easy</button>
     </div>
 
-    <label class="setting-label" style="font-size:0.8em;">Font</label>
-    <select id="fontSelect" onchange="setFont(this.value)" style="margin-bottom:15px; width:100%;">
-        <option value="'Lora', serif">Lora (Default)</option>
-        <option value="'Grenze Gotisch', cursive">Grenze Gotisch</option>
-        <option value="'Allura', cursive">Allura</option>
-        <option value="'Glass Antiqua', cursive">Glass Antiqua</option>
-        <option value="'Eagle Lake', cursive">Eagle Lake</option>
-        <option value="'Smooch Sans', sans-serif">Smooch Sans</option>
-        <option value="'Pinyon Script', cursive">Pinyon Script</option>
-        <option value="'Merriweather', serif">Merriweather</option>
-        <option value="'Roboto', sans-serif">Roboto</option>
+    <label class="vault-label">Font</label>
+    <select id="fontSelect" class="vault-select" onchange="setFont(this.value)">
+      <option value="'Lora', serif">Lora (Default)</option>
+      <option value="'Grenze Gotisch', cursive">Grenze Gotisch</option>
+      <option value="'Allura', cursive">Allura</option>
+      <option value="'Glass Antiqua', cursive">Glass Antiqua</option>
+      <option value="'Eagle Lake', cursive">Eagle Lake</option>
+      <option value="'Smooch Sans', sans-serif">Smooch Sans</option>
+      <option value="'Pinyon Script', cursive">Pinyon Script</option>
+      <option value="'Merriweather', serif">Merriweather</option>
+      <option value="'Roboto', sans-serif">Roboto</option>
     </select>
 
-    <label class="setting-label" style="font-size:0.8em;">Font Size</label>
+    <label class="vault-label">Font Size</label>
     <input type="range" min="16" max="72" value="18" oninput="setFontSize(this.value)">
-    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
 
-    <!-- ── HELP ── -->
-    <label class="setting-label">Help</label>
-    <button class="small-btn" onclick="document.getElementById('menuOverlay').classList.add('hidden')">Close Menu</button>
+    <button class="vault-back sb-btn-png sm">Back</button>
   </div>
+
+  <!-- ── HELP SUB-PANEL ── -->
+  <div id="vaultHelp" class="vault-sub hidden">
+    <div class="vault-sub-title">Help</div>
+    <p style="color:var(--ink); font-family:'Lora',serif; font-size:0.85em; margin:8px 0;">Support coming soon.</p>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
 </div>
 
 <div id="loadingOverlay" class="overlay hidden" style="z-index:9000;">
@@ -123,28 +147,19 @@
         Visualization credits = <span id="vizCreditCount">0</span>
     </div>
 
-    <!-- ════════════════════════════════════════════════════════════════════ -->
-    <!-- TRUST REPAIR: Pay-as-you-go consent (INSIDE modal, not blocking)    -->
-    <!-- Shown when credits = 0 AND not yet opted in                          -->
-    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- No-credits notice (INSIDE modal, not blocking) -->
     <div id="vizPayAsYouGoConsent" class="hidden" style="background:rgba(255,215,0,0.08); border:2px double gold; border-radius:0; padding:15px; margin:15px 0; text-align:center;">
         <p style="font-size:0.9em; color:var(--gold); margin-bottom:10px;">
-            <strong>How free visualization works:</strong>
+            <strong>Image credits required</strong>
         </p>
-        <ul style="font-size:0.85em; color:#aaa; text-align:left; padding-left:20px; margin-bottom:15px; line-height:1.6;">
-            <li>Earn 1 credit for every 3 scenes you complete</li>
-            <li>First visualization for each scene uses a credit</li>
-            <li>Re-visualize costs $0.25 (pay-as-you-go)</li>
-        </ul>
         <p style="font-size:0.85em; color:#888; margin-bottom:15px;">
-            You currently have <strong style="color:var(--gold);">0 credits</strong>.
-            Enable pay-as-you-go to generate now, or continue your story to earn credits.
+            Each visualization costs 1 image credit. Purchase a credit pack to continue.
         </p>
-        <div style="display:flex; gap:10px; justify-content:center;">
-            <button class="sb-btn sb-btn--gold sb-btn--sm" id="vizEnablePayAsYouGo" onclick="window.enablePayAsYouGoFromViz();">
-                Enable Pay-As-You-Go ($0.25/image)
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <button class="sb-btn-png text-sm" id="vizEnablePayAsYouGo" onclick="window.enablePayAsYouGoFromViz();">
+                Purchase Credits
             </button>
-            <button class="sb-btn sb-btn--sm" onclick="window.closeViz();">
+            <button class="sb-btn-png sm" onclick="window.closeViz();">
                 Continue Story
             </button>
         </div>
@@ -152,7 +167,7 @@
 
     <!-- Image placeholder and container -->
     <div id="vizPlaceholder" style="display:flex; align-items:center; justify-content:center; min-height:200px; color:#888; font-style:italic; text-align:center; padding:20px;">
-        Earn 1 Visualization credit for every 3 Scenes you complete.
+        1 credit per image. Purchase credit packs to visualize scenes.
     </div>
 
     <div id="vizImgContainer">
@@ -180,30 +195,10 @@
         <span class="sb-checkbox-visual"></span>
         <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Lock character look for more consistent portrayals next time.</span>
     </label>
-    <!-- Lock Look Now button - manual immediate lock -->
-    <div id="lockLookContainer" style="margin-top:10px; text-align:center;">
-        <button id="btnLockLook" class="sb-btn sb-btn--sm" onclick="window.lockCharacterLook()">🔒 Lock This Look</button>
-        <span id="lockLookStatus" style="display:none; margin-left:8px; color:var(--gold); font-size:0.8em;">✓ Locked</span>
-    </div>
   </div>
 </div>
 
-<div id="payAsYouGoModal" class="overlay hidden" style="z-index:10002;">
-  <div class="box" style="max-width:420px; text-align:center;">
-    <h3 style="color:var(--gold);">Enable Re-Visualize</h3>
-    <p style="opacity:0.9; font-size:0.95em; margin-bottom:15px;">
-        Re-visualizing a scene costs <strong>$0.25</strong> per attempt.
-    </p>
-    <p style="opacity:0.7; font-size:0.85em; margin-bottom:20px;">
-        Initial visualizations are free (using earned credits).
-        Re-Visualize is pay-as-you-go for when you want a different take.
-    </p>
-    <div style="display:flex; gap:10px; justify-content:center;">
-        <button class="sb-btn sb-btn--gold" onclick="window.confirmPayAsYouGo();">Enable Pay-As-You-Go</button>
-        <button class="sb-btn" onclick="window.closePayAsYouGoModal();">Not Now</button>
-    </div>
-  </div>
-</div>
+<!-- Legacy payAsYouGoModal removed — redirects to creditPurchaseModal via JS -->
 
 <div id="eroticPreviewModal" class="overlay hidden" style="z-index:10001;">
   <div class="box" style="max-width:500px;">
@@ -451,49 +446,37 @@
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 <!-- COVER$ PURCHASE MODAL — Paid cover generation with prompt editing        -->
 <!-- ════════════════════════════════════════════════════════════════════════ -->
-<div id="coverPurchaseModal" class="overlay hidden" style="z-index:10020;">
-  <div class="box" style="max-width:500px; text-align:left;">
-    <h3 style="color:var(--gold); margin-bottom:15px; text-align:center;">✨ Purchase Cover Credit</h3>
-
-    <p style="color:var(--text-secondary); font-size:0.9em; margin-bottom:15px;">
-      Your free covers for today are used. Purchase an additional cover for <strong style="color:var(--gold);">$0.25</strong>.
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- CREDIT PURCHASE MODAL — Prepaid image credit packs                      -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="creditPurchaseModal" class="overlay hidden" style="z-index:10020;">
+  <div class="box" style="max-width:420px; text-align:center;">
+    <h3 style="color:var(--gold); margin-bottom:10px;">Purchase Image Credits</h3>
+    <p style="opacity:0.8; font-size:0.9em; margin-bottom:5px;">
+      1 credit per image (covers + scene visualizations)
+    </p>
+    <p style="opacity:0.6; font-size:0.85em; margin-bottom:20px;">
+      Current balance: <strong style="color:var(--gold);"><span id="creditModalBalance">0</span> credits</strong>
     </p>
 
-    <div style="background:rgba(255,215,0,0.08); border:2px double gold; border-radius:0; box-shadow:0 0 0 1px #0a0a0a; padding:15px; margin-bottom:15px;">
-      <h4 style="color:var(--gold); font-size:0.9em; margin-bottom:10px;">Cover Details</h4>
-      <p style="font-size:0.85em; margin-bottom:5px;"><strong>Title:</strong> <span id="coverPromptTitle">-</span></p>
-      <p style="font-size:0.85em; margin-bottom:5px;"><strong>World:</strong> <span id="coverPromptWorld">-</span></p>
-      <p style="font-size:0.85em;"><strong>Focal Object:</strong> <span id="coverPromptObject">-</span></p>
-    </div>
-
-    <div style="margin-bottom:15px;">
-      <label style="display:block; color:var(--gold); font-size:0.85em; margin-bottom:5px;">
-        Edit Cover Prompt (optional):
-      </label>
-      <textarea id="coverPromptInput" style="width:100%; height:100px; background:linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%); border:2px double gold; color:var(--text-primary); padding:10px; border-radius:0; box-shadow:0 0 0 1px #0a0a0a; font-size:0.9em; resize:none;" placeholder="Describe your ideal cover..."></textarea>
-      <p id="coverPromptSafetyWarning" class="hidden" style="color:#ff6b6b; font-size:0.8em; margin-top:5px;">
-        ⚠️ Some words or combinations may prevent image generation.
-      </p>
-    </div>
-
-    <div style="background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.3); border-radius:0; padding:12px; margin-bottom:20px;">
-      <p style="color:#ff9999; font-size:0.8em; line-height:1.5;">
-        <strong>⚠️ Important:</strong><br>
-        Certain words, phrases, or combinations may cause image generation to fail.
-        If generation fails due to restricted or incompatible input, the cover credit is forfeited.
-        Storybound is not responsible for unfulfilled image requests.
-      </p>
-    </div>
-
-    <div style="display:flex; gap:10px; justify-content:center;">
-      <button class="sb-plaque-btn plaque-gold" onclick="window.processPaidCoverPurchase();" style="padding:12px 24px;">
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseCreditPack(20, '$5');" style="padding:12px 20px; width:100%;">
         <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
-        Pay $0.25 & Generate
+        20 Credits &mdash; $5
       </button>
-      <button onclick="window.hideCoverPurchaseModal();" style="padding:12px 24px;">
-        Cancel
+      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseCreditPack(50, '$10');" style="padding:12px 20px; width:100%;">
+        <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
+        50 Credits &mdash; $10
+      </button>
+      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseCreditPack(120, '$20');" style="padding:12px 20px; width:100%;">
+        <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
+        120 Credits &mdash; $20
       </button>
     </div>
+
+    <button class="sb-btn" onclick="window.closeCreditPurchaseModal();" style="padding:10px 24px;">
+      Not Now
+    </button>
   </div>
 </div>
 
@@ -790,7 +773,7 @@
       </div>
       <div class="sb-card" data-grp="pov" data-val="Fifth">
         <div class="sb-card-inner">
-          <div class="sb-card-face sb-card-back"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The Author has big plans for you..."</span></div>
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">5th Person (Author)</span></div>
           <div class="sb-card-face sb-card-front"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The Author has big plans for you..."</span></div>
         </div>
       </div>
@@ -984,16 +967,11 @@
          ═══════════════════════════════════════════════════════════════════ -->
     <div class="card-flow-row flow-hidden" id="flowRowTone" data-flow-stage="tone">
       <div class="section-title">Story Tone</div>
-      <div class="sb-grid sb-grid-9" id="toneGrid">
+      <div class="sb-grid sb-grid-4" id="toneGrid">
         <div class="sb-card" data-grp="tone" data-val="Earnest"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Earnest</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Earnest</span><span class="sb-card-desc">Sincere emotion, unironic stakes.</span></div></div></div>
-        <div class="sb-card" data-grp="tone" data-val="WryConfession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Wry Confession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Wry Confession</span><span class="sb-card-desc">Intimacy with irony, self-aware narrator.</span></div></div></div>
-        <div class="sb-card" data-grp="tone" data-val="Satirical"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Satirical</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Satirical</span><span class="sb-card-desc">Social critique, exaggeration, systems mocked.</span></div></div></div>
+        <div class="sb-card" data-grp="tone" data-val="WryConfession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Wry</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Wry</span><span class="sb-card-desc">Intimacy with irony, self-aware narrator.</span></div></div></div>
         <div class="sb-card" data-grp="tone" data-val="Dark"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dark</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dark</span><span class="sb-card-desc">Morally complex, shadowed desire.</span></div></div></div>
-        <div class="sb-card" data-grp="tone" data-val="Horror"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Horror</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Horror</span><span class="sb-card-desc">Dread, the uncanny, fear as tension.</span></div></div></div>
         <div class="sb-card" data-grp="tone" data-val="Mythic"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Mythic</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Mythic</span><span class="sb-card-desc">Archetypal weight, legendary scale.</span></div></div></div>
-        <div class="sb-card" data-grp="tone" data-val="Comedic"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Comedic</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Comedic</span><span class="sb-card-desc">Humor is primary, stakes are light.</span></div></div></div>
-        <div class="sb-card" data-grp="tone" data-val="Surreal"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Surreal</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Surreal</span><span class="sb-card-desc">Dreamlike, unstable, symbolic.</span></div></div></div>
-        <div class="sb-card" data-grp="tone" data-val="Poetic"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Poetic</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Poetic</span><span class="sb-card-desc">Lyrical prose, sensory immersion.</span></div></div></div>
       </div>
       <button class="flow-continue-btn sb-btn-png sm" id="continueFromTone">Proceed</button>
     </div>
@@ -1063,6 +1041,9 @@
       <button class="flow-continue-btn sb-btn-png sm" id="continueFromDynamic">Begin Story</button>
       <p id="continueFromDynamicHint" class="story-continue-hint hidden">Your story will resume where you left off.</p>
     </div>
+
+    <!-- POST-AROUSAL WRAPPER: Safety + Begin Story shown after corridor completes -->
+    <div id="postArousalSection" class="hidden">
 
     <!-- ═══════════════════════════════════════════════════════════════════
          SAFETY ROW (Row 9) — Own corridor row after Arousal
@@ -1415,7 +1396,7 @@
     </div>
     
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-       <button id="gameGodModeBtn" class="small-btn hidden">God Mode</button>
+       <button id="gameGodModeBtn" class="god-mode-reader-btn hidden">God Mode</button>
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
     </div>
 

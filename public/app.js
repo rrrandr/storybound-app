@@ -194,6 +194,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   
   // Singleton Supabase Client
   let sb = null;
+  let _supabaseProfileId = null; // Set by ensureAnonSession, used for snapshot persistence
   if (window.supabase && SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY) {
     try {
         sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -237,6 +238,7 @@ window.config = window.config || {
   // Fire anonymous sign-in at boot and hydrate God Mode profile (non-blocking)
   ensureAnonSession().then(async (userId) => {
     if (!userId || !sb) return;
+    _supabaseProfileId = userId;
     try {
       let { data: profile, error } = await sb
         .from('profiles')
@@ -246,19 +248,22 @@ window.config = window.config || {
           god_mode_temp_duration_hours,
           god_mode_active_story_id,
           god_mode_active_started_at,
-          god_mode_temp_expires_at
+          god_mode_temp_expires_at,
+          image_credits,
+          last_scene_rewarded
         `)
         .eq('id', userId)
         .maybeSingle();
-      if (error) { console.error('God Mode profile fetch error:', error); return; }
+      if (error) { console.error('Profile fetch error:', error); return; }
       if (!profile) {
         const { error: insertErr } = await sb.from('profiles').insert({ id: userId });
-        if (insertErr) { console.error('God Mode profile insert error:', insertErr); return; }
+        if (insertErr) { console.error('Profile insert error:', insertErr); return; }
         const refetch = await sb.from('profiles').select(`
           has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
-          god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at
+          god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
+          image_credits, last_scene_rewarded
         `).eq('id', userId).single();
-        if (refetch.error || !refetch.data) { console.error('God Mode profile refetch error:', refetch.error); return; }
+        if (refetch.error || !refetch.data) { console.error('Profile refetch error:', refetch.error); return; }
         profile = refetch.data;
       }
       state.godMode.owned = profile.has_god_mode || false;
@@ -267,7 +272,18 @@ window.config = window.config || {
       state.godMode.activeStoryId = profile.god_mode_active_story_id;
       state.godMode.activeStartedAt = profile.god_mode_active_started_at;
       state.godMode.tempExpiresAt = profile.god_mode_temp_expires_at;
-      console.log('God Mode profile hydrated:', state.godMode);
+      // Hydrate image credits — Supabase wins over localStorage if higher
+      const remoteCredits = profile.image_credits || 0;
+      const localCredits = state.imageCredits || 0;
+      state.imageCredits = Math.max(remoteCredits, localCredits);
+      localStorage.setItem('sb_image_credits', String(state.imageCredits));
+      // Hydrate last scene rewarded — take the higher value to prevent re-awards
+      const remoteReward = profile.last_scene_rewarded || 0;
+      const localReward = state.lastSceneRewarded || 0;
+      state.lastSceneRewarded = Math.max(remoteReward, localReward);
+      localStorage.setItem('sb_last_scene_rewarded', String(state.lastSceneRewarded));
+      if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
+      console.log('Profile hydrated. God Mode:', state.godMode, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
     } catch (e) {
       console.error('God Mode profile fetch failed:', e);
     }
@@ -2041,13 +2057,21 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       tier:'free',
       picks:{
         world: 'Modern',      // 4-axis: Story World (single-select)
-        tone: 'Earnest',      // 4-axis: Story Tone (single-select)
+        tone: 'Earnest',      // 4-axis: Story Tone (single-select — Earnest, WryConfession, Dark, Mythic)
         genre: 'Billionaire', // 4-axis: Genre/Flavor (single-select) — LEGACY, derived from pressure+flavor
         pressure: 'PowerControl', // Primary Pressure (required, one of 8)
         flavor: 'Billionaire',    // Optional Flavor (refines pressure)
         dynamic: 'Enemies',   // 4-axis: Relationship Dynamic (single-select)
         era: 'Medieval',      // Historical Era sub-selection (when world=Historical)
         pov: 'First'
+      },
+      // Hidden tone bias flags — NOT user-selectable, contextually derived (later phase)
+      toneBias: {
+        humor: 0,        // formerly Comedic
+        satire: 0,       // formerly Satirical
+        horror: 0,       // formerly Horror
+        surreal: 0,      // formerly Surreal
+        poetic: 0        // formerly Poetic prose weighting
       },
       gender:'Female',
       loveInterest:'Male',
@@ -2072,7 +2096,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       continuationPath: null,     // 'continue' | 'same_world' | 'new_story'
       access: 'free',
       subscribed: false,
-      isLoggedIn: false,  // AUTH GATE: persistence only allowed when logged in
+      // isLoggedIn removed — auth state comes from Supabase session
       authorGender: 'Female',
       authorPronouns: 'She/Her',
       
@@ -2082,6 +2106,9 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       flingConsequenceShown: false,
       storyEnded: false,
       
+      imageCredits: 0,
+      lastSceneRewarded: 0,
+
       billingStatus: 'active',
       billingGraceUntil: 0,
       billingLastError: '',
@@ -2214,6 +2241,80 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       authorAwarenessWindowWords: 0,  // SUPERSEDED — no window limits
       authorAwarenessMaxDurationWords: 0  // SUPERSEDED — no duration limits
   };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CANONICAL TONE NORMALIZATION — Collapse legacy tones to 4 pillars
+  // ═══════════════════════════════════════════════════════════════════
+  function canonicalizeTone(tone) {
+    switch (tone) {
+      case 'Comedic':
+      case 'Satirical':
+        return 'WryConfession';
+      case 'Horror':
+        return 'Dark';
+      case 'Surreal':
+        return 'Mythic';
+      case 'Poetic':
+        return 'Earnest';
+      default:
+        return tone;
+    }
+  }
+  window.canonicalizeTone = canonicalizeTone;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CONTEXTUAL toneBias DERIVATION — Deterministic, no stacking
+  // ═══════════════════════════════════════════════════════════════════
+  function deriveToneBias() {
+    const tone = state.picks.tone;
+    const world = state.picks.world;
+    const pressure = state.picks.pressure;
+
+    // Reset all bias first (NO stacking)
+    state.toneBias = {
+      humor: 0,
+      satire: 0,
+      horror: 0,
+      surreal: 0,
+      poetic: 0
+    };
+
+    // === WRY LOGIC ===
+    if (tone === 'WryConfession') {
+      state.toneBias.humor = 0.3;
+      if (world === 'Dystopia') state.toneBias.satire = 0.6;
+      if (pressure === 'Survival') {
+        state.toneBias.satire += 0.2;
+        state.toneBias.humor -= 0.1;
+      }
+    }
+
+    // === DARK LOGIC ===
+    if (tone === 'Dark') {
+      state.toneBias.horror = 0.3;
+      if (pressure === 'Survival') state.toneBias.horror = 0.6;
+    }
+
+    // === MYTHIC LOGIC ===
+    if (tone === 'Mythic') {
+      state.toneBias.surreal = 0.4;
+      if (world === 'Fantasy') state.toneBias.surreal = 0.6;
+    }
+
+    // === EARNEST LOGIC ===
+    if (tone === 'Earnest') {
+      state.toneBias.poetic = 0.2;
+      if (world === 'Historical') state.toneBias.poetic = 0.4;
+    }
+
+    // Clamp values between 0 and 1
+    Object.keys(state.toneBias).forEach(k => {
+      state.toneBias[k] = Math.max(0, Math.min(1, state.toneBias[k]));
+    });
+
+    console.log('[ToneBias]', JSON.stringify(state.toneBias));
+  }
+  window.deriveToneBias = deriveToneBias;
 
   // ============================================================
   // SOLO SUBTITLE SYSTEM — Staged permission gradient
@@ -3098,9 +3199,19 @@ WHAT DOES NOT CHANGE:
         !/The Author\b.{0,40}(watched|observed|looked|gazed|stared)/i.test(sentence);
     },
 
+    // Stage-setting: The Author establishes presence in the scene, notes the setting
+    stageSetting: (sentence) => {
+      return /The Author\b.{0,80}(surveyed|took in|absorbed|entered|arrived|stood|sat|settled|waited|lingered|paused|remained|inhabited|occupied|filled|moved through|stepped into|breathed in|tasted the|drank in)\b/i.test(sentence);
+    },
+
     // Anticipation: desire for what is coming, hunger, waiting (participant emotion)
     anticipation: (sentence) => {
       return /The Author\b.{0,80}(wanted|desired|hungered|ached|longed|awaited|anticipated|could (barely|hardly|scarcely) wait|savored the|relished|craved|yearned|needed this|needed them|needed her|needed him|hoped|dreaded)\b/i.test(sentence);
+    },
+
+    // Initiation: The Author begins interaction, makes a move, starts something
+    initiation: (sentence) => {
+      return /The Author\b.{0,80}(reached|began|started|initiated|offered|extended|opened|chose|decided|moved (toward|closer)|leaned|touched|spoke|called|beckoned|invited|drew near|approached|turned to)\b/i.test(sentence);
     },
 
     // Reaction: emotional response to what unfolds (NOT causation)
@@ -4273,7 +4384,7 @@ DIRTY INTENSITY ADDENDUM:
       // Genre labels
       /\b(billionaire|bodyguard|enemies.to.lovers|forbidden|second.chance|rockstar|professor)\s+(romance|trope|genre|story)\b/gi,
       // Tone labels
-      /\b(earnest|wry\s*confession|poetic|mythic|comedic|surreal|dark)\s+(tone|mood|register)\b/gi,
+      /\b(earnest|wry\s*confession|mythic|dark)\s+(tone|mood|register)\b/gi,
       // System concepts
       /\b(arousal\s*level|intensity\s*level|story\s*length|fate\s*card)\b/gi,
       // Meta-narrative terms
@@ -4991,20 +5102,8 @@ If you name what something IS, you have failed. Show what it COSTS.
           cleanupPatterns: [],
           description: 'Sin City-style black-and-white noir comic panel'
       },
-      'Horror': {
-          ontology: `Style: Horror illustration with unsettling atmosphere. Medium: Dark, desaturated palette with sickly accent colors. Aesthetic: Dread-inducing, liminal, uncanny. Colors: Deep shadows, washed-out highlights, occasional sickly green or red accent. Background: Oppressive darkness, fog, indistinct shapes at edges. Mood: Creeping dread, wrongness, something watching. Rendering: Slightly distorted perspectives, off-kilter compositions, faces obscured or wrong. Avoid: cheerful lighting, clear visibility, reassuring compositions, beauty-shot framing.`,
-          expectedTags: ['horror', 'dark', 'unsettling', 'dread', 'shadows', 'uncanny'],
-          bannedTokens: /\b(cheerful|bright|sunny|warm|inviting|cozy|comfortable|safe|reassuring|beautiful|glamorous)\b/gi,
-          intensityTokens: null,
-          cleanupPatterns: [],
-          description: 'Horror atmosphere — dread-inducing, liminal, unsettling'
-      }
       // Tones WITHOUT visual ontology (use Genre defaults):
-      // - Earnest: No visual lock — uses Genre styling
-      // - Poetic: No visual lock — uses Genre styling with lyrical composition
-      // - Mythic: No visual lock — uses Genre styling with epic composition
-      // - Comedic: No visual lock — uses Genre styling
-      // - Modern: No visual lock — uses Genre styling
+      // - Earnest, WryConfession, Dark, Mythic: No visual lock — uses Genre styling
   };
 
   // Resolve tone alias to canonical name
@@ -5121,10 +5220,7 @@ If you name what something IS, you have failed. Show what it COSTS.
       'Irony': 'sketch',
       'Lurid Confessional': 'illustrative',
       'Ink Noir': 'sketch',
-      'Horror': 'illustrative',
-      'Mythic': 'painterly',
-      'Poetic': 'painterly',
-      'Surreal': 'illustrative'
+      'Mythic': 'painterly'
   };
 
   /**
@@ -8441,11 +8537,11 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
       const test3Pass = darkVariant && darkVariant.emotionalPosture.includes('Danger');
       console.log('[ROMANCE:TONE-TEST] Test 3 (Dark variant):', test3Pass ? 'PASS' : 'FAIL');
 
-      // Test 4: Comedic tone returns comedic variant
-      state.picks.tone = 'Comedic';
-      const comedyVariant = getToneRomanceVariant();
-      const test4Pass = comedyVariant && comedyVariant.emotionalPosture.includes('Exaggerated');
-      console.log('[ROMANCE:TONE-TEST] Test 4 (Comedic variant):', test4Pass ? 'PASS' : 'FAIL');
+      // Test 4: Mythic tone returns variant
+      state.picks.tone = 'Mythic';
+      const mythicVariant = getToneRomanceVariant();
+      const test4Pass = !!mythicVariant;
+      console.log('[ROMANCE:TONE-TEST] Test 4 (Mythic variant):', test4Pass ? 'PASS' : 'FAIL');
 
       // Test 5: Each tone has different deferral examples
       state.picks.tone = 'Wry Confessional';
@@ -9188,29 +9284,22 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
    * ═══════════════════════════════════════════════════════════════════════════
    */
   const TITLE_TONE_SIGNALS = {
+      Earnest: {
+          allow: null, // Most permissive on positive words
+          forbid: /\b(ironic|sarcastic|bitter|cruel|ruin|destruction|surrender|obedience)\b/i
+      },
       WryConfession: {
           // MODEL TONE: Admission without resolution
           allow: /\b(truth|lie|almost|nearly|never|mistake|wrong|anyway|still|pretend|seemed)\b/i,
           forbid: /\b(eternal|destiny|fated|sacred|divine|surrender|obedience|ruin)\b/i
       },
-      Comedic: {
-          allow: /\b(trouble|disaster|oops|wrong|chaos|mess|help|almost|nearly)\b/i,
-          forbid: /\b(shadow|darkness|veiled|eternal|doom|ruin|destruction)\b/i
-      },
-      Surreal: {
-          allow: /\b(dream|strange|nowhere|maybe|almost|forgot|remember|waiting)\b/i,
-          forbid: /\b(real|practical|ordinary|normal|ruin|destruction)\b/i
-      },
       Dark: {
-          // CHANGED: Removed 'ruin', 'end' (aftermath) — Dark can be intense without spoilers
-          // Kept atmospheric words that name THREAT, not RESULT
           allow: /\b(blood|bone|ash|shadow|last|only|never|edge|hunger|watching)\b/i,
           forbid: /\b(cute|sweet|lovely|precious|darling|ruin|destruction|conquered|destroyed)\b/i
       },
-      Earnest: {
-          // CHANGED: Added forbid for resolution vocabulary
-          allow: null, // Most permissive on positive words
-          forbid: /\b(ironic|sarcastic|bitter|cruel|ruin|destruction|surrender|obedience)\b/i
+      Mythic: {
+          allow: /\b(fated|destined|eternal|ancient|prophecy|legend|chosen|ordained)\b/i,
+          forbid: /\b(cute|sweet|oops|chaos|mess|trouble|ironic|sarcastic)\b/i
       }
   };
 
@@ -9814,8 +9903,7 @@ Return ONLY the title, no quotes or explanation.`;
    */
   function getWorldStorySuffix(world, tone) {
       // Different tones get different suffixes
-      if (tone === 'Dark' || tone === 'Horror') return 'Chronicle';
-      if (tone === 'Comedic') return 'Adventure';
+      if (tone === 'Dark') return 'Chronicle';
       if (tone === 'WryConfession') return 'Exposé';
       if (world === 'Noir') return 'Affair';
       return 'Tale';
@@ -10300,25 +10388,21 @@ Return ONLY the title, no quotes or explanation.`;
    * Secondary axis - tone signals in title/cover
    */
   const TONE_AXIS_SIGNALS = {
+      Earnest: {
+          title: null, // Most permissive
+          cover: ['sincerity', 'hope', 'warmth', 'openness']
+      },
       WryConfession: {
           title: /\b(almost|anyway|still|wrong|mistake|lie|truth|never)\b/i,
           cover: ['irony', 'self-awareness', 'confession', 'doubt']
-      },
-      Comedic: {
-          title: /\b(oops|wrong|disaster|mess|trouble|help|chaos)\b/i,
-          cover: ['lightness', 'absurdity', 'playfulness', 'mischief']
-      },
-      Surreal: {
-          title: /\b(dream|strange|nowhere|forgot|remember|almost|maybe)\b/i,
-          cover: ['dream-logic', 'dissolution', 'unreality', 'drift']
       },
       Dark: {
           title: /\b(blood|bone|ash|ruin|end|last|only|never|death)\b/i,
           cover: ['weight', 'shadow', 'gravity', 'consequence', 'doom']
       },
-      Earnest: {
-          title: null, // Most permissive
-          cover: ['sincerity', 'hope', 'warmth', 'openness']
+      Mythic: {
+          title: /\b(fated|destined|eternal|ancient|prophecy|legend|chosen)\b/i,
+          cover: ['fate', 'destiny', 'grandeur', 'ancient weight']
       }
   };
 
@@ -11308,31 +11392,9 @@ Return ONLY the title, no quotes or explanation.`;
   // Persistence is ONLY allowed when logged in.
   // Without login, app behaves stateless (no story/purchase restoration on reload).
 
-  function isLoggedIn() {
-      return !!state.isLoggedIn;
-  }
-
-  // Login function - sets persistence gate
-  window.login = function() {
-      state.isLoggedIn = true;
-      localStorage.setItem('sb_logged_in', '1');
-      // AUTH RESET: Fresh session on login
-      performAuthReset();
-      renderBurgerMenu();
-      updateContinueButtons();
-  };
-
-  // Logout function - clears persistence gate and all persisted state
-  window.logout = function() {
-      state.isLoggedIn = false;
-      localStorage.removeItem('sb_logged_in');
-      // Clear all persisted story/purchase state
-      clearAnonymousState();
-      // AUTH RESET: Fresh session on logout
-      performAuthReset();
-      renderBurgerMenu();
-      updateContinueButtons();
-  };
+  // isLoggedIn / window.login / window.logout removed —
+  // Auth state now comes from Supabase session (anon auto-provisioned at boot).
+  // Persistence is always allowed when a Supabase session exists.
 
   // ═══════════════════════════════════════════════════════════════════════════
   // AUTH RESET — Full story creation state reset on login/logout
@@ -11453,15 +11515,23 @@ Return ONLY the title, no quotes or explanation.`;
       }
   }
 
-  // Render burger menu auth section
-  function renderBurgerMenu() {
+  // Render burger menu auth section — reflects Supabase session
+  async function renderBurgerMenu() {
       const section = document.getElementById('menuAuthSection');
       if (!section) return;
-      if (isLoggedIn()) {
-          section.innerHTML = '<button class="small-btn" onclick="window.logout()">Logout</button>';
-      } else {
-          section.innerHTML = '<button class="small-btn" onclick="window.login()">Login</button>';
+      let label = 'Guest';
+      if (sb) {
+          try {
+              const { data: { session } } = await sb.auth.getSession();
+              const user = session?.user || null;
+              if (user) {
+                  label = user.email || 'Anonymous';
+              }
+          } catch (e) {
+              console.warn('[Vault] session check failed:', e);
+          }
       }
+      section.textContent = label.startsWith('Guest') ? 'Guest' : 'Signed in as ' + label;
   }
 
   // NAV HELPER
@@ -12868,7 +12938,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               state.billingGraceUntil = 0;
               state.billingLastError = '';
               // AUTH GATE: Only persist to storage when logged in
-              if (isLoggedIn()) localStorage.setItem('sb_billing_status', 'active');
+              localStorage.setItem('sb_billing_status', 'active');
           }
           return;
       }
@@ -12881,18 +12951,14 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       state.billingStatus = 'grace';
       state.billingGraceUntil = Date.now() + (hours * 3600 * 1000);
       state.billingLastError = msg;
-      // AUTH GATE: Only persist to storage when logged in
-      if (isLoggedIn()) {
-          localStorage.setItem('sb_billing_status', state.billingStatus);
-          localStorage.setItem('sb_billing_grace_until', state.billingGraceUntil);
-      }
+      localStorage.setItem('sb_billing_status', state.billingStatus);
+      localStorage.setItem('sb_billing_grace_until', state.billingGraceUntil);
       if(typeof applyAccessLocks === 'function') applyAccessLocks();
   }
 
   function endBillingGrace() {
       state.billingStatus = 'past_due';
-      // AUTH GATE: Only persist to storage when logged in
-      if (isLoggedIn()) localStorage.setItem('sb_billing_status', 'past_due');
+      localStorage.setItem('sb_billing_status', 'past_due');
       if(typeof applyAccessLocks === 'function') applyAccessLocks();
   }
 
@@ -13624,11 +13690,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Persist subscription if this was a subscription purchase
       if (state.pendingUpgradeToAffair || purchaseType === 'sub') {
           state.subscribed = true;
-          // AUTH GATE: Only persist to storage when logged in
-          if (isLoggedIn()) {
-              localStorage.setItem('sb_subscribed', '1');
-              console.log('[ENTITLEMENT] Subscription persisted to localStorage');
-          }
+          localStorage.setItem('sb_subscribed', '1');
+          console.log('[ENTITLEMENT] Subscription persisted to localStorage');
       }
 
       // Resolve access from canonical source (reads from localStorage)
@@ -13819,7 +13882,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function makeStoryId(){
     const existing = localStorage.getItem('sb_current_story_id');
     if(existing) return existing;
-    const id = 'sb_' + Date.now().toString(36);
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'sb_' + Date.now().toString(36);
     localStorage.setItem('sb_current_story_id', id);
     return id;
   }
@@ -14461,14 +14526,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   function hasSavedStory() {
-      // AUTH GATE: No saved story visible unless logged in
-      if (!isLoggedIn()) return false;
       return !!localStorage.getItem('sb_saved_story') || localStorage.getItem('sb_story_in_idb') === '1';
   }
 
   function saveStorySnapshot(){
-    // AUTH GATE: Persistence only allowed when logged in
-    if (!isLoggedIn()) return;
     const el = document.getElementById('storyText');
     if(!el) return;
     const currentWc = currentStoryWordCount();
@@ -14501,7 +14562,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       synopsis: state._synopsisMetadata || '', // Metadata only, never rendered
       storyHTML: StoryPagination.getAllContent(),  // Full content for fallback
       storyPages: StoryPagination.getPages(),       // Individual pages for pagination
-      stateSnapshot: cleanState
+      stateSnapshot: cleanState,
+      updated_at: new Date().toISOString()
     };
 
     // CORRECTIVE: Try localStorage first, fall back to IndexedDB on quota error
@@ -14528,6 +14590,57 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         });
     }
     updateContinueButtons();
+
+    // Supabase parallel save (non-blocking, fire-and-forget)
+    if (sb && _supabaseProfileId && state.storyId) {
+      saveStorySnapshotToSupabase(_supabaseProfileId, state.storyId, snapshot);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SUPABASE STORY SNAPSHOT PERSISTENCE (Phase 1)
+  // Parallel write alongside localStorage. Never blocks UI.
+  // ═══════════════════════════════════════════════════════════════════
+
+  async function saveStorySnapshotToSupabase(profileId, storyId, snapshot) {
+    try {
+      const { error } = await sb
+        .from('story_snapshots')
+        .upsert({
+          profile_id: profileId,
+          story_id: storyId,
+          snapshot: snapshot,
+          updated_at: snapshot.updated_at || new Date().toISOString()
+        }, {
+          onConflict: 'profile_id,story_id'
+        });
+      if (error) {
+        console.error('[Supabase] Snapshot save failed:', error.message);
+      } else {
+        console.log('[Supabase] Snapshot saved for story:', storyId);
+      }
+    } catch (err) {
+      console.error('[Supabase] Snapshot save error:', err);
+    }
+  }
+
+  async function loadSupabaseSnapshot(profileId, storyId) {
+    try {
+      const { data, error } = await sb
+        .from('story_snapshots')
+        .select('snapshot, updated_at')
+        .eq('profile_id', profileId)
+        .eq('story_id', storyId)
+        .maybeSingle();
+      if (error) {
+        console.error('[Supabase] Snapshot load failed:', error.message);
+        return null;
+      }
+      return data; // { snapshot, updated_at } or null
+    } catch (err) {
+      console.error('[Supabase] Snapshot load error:', err);
+      return null;
+    }
   }
 
   // CORRECTIVE: Load story data from localStorage or IndexedDB
@@ -14550,22 +14663,36 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   window.continueStory = async function(){
-    // AUTH GATE: Continue Story only available when logged in
-    if (!isLoggedIn()) {
-        showToast('Please login to continue a saved story.');
-        return;
-    }
-    const data = await loadStoryData();
+    let data = await loadStoryData();
     if (!data) {
         showToast('No saved story found.');
         return;
     }
 
+    // Supabase snapshot merge: if remote is newer, replace local data
+    if (sb && _supabaseProfileId && data.storyId) {
+      try {
+        const remote = await loadSupabaseSnapshot(_supabaseProfileId, data.storyId);
+        if (remote?.snapshot && remote.updated_at) {
+          const localTime = data.updated_at ? new Date(data.updated_at).getTime() : 0;
+          const remoteTime = new Date(remote.updated_at).getTime();
+          if (remoteTime > localTime) {
+            console.log('[Supabase] Remote snapshot is newer, using it');
+            data = remote.snapshot;
+          }
+        }
+      } catch (err) {
+        console.error('[Supabase] Snapshot merge check failed:', err);
+      }
+    }
+
     state.storyId = data.storyId || makeStoryId();
-    // AUTH GATE: Only persist when logged in (redundant but safe)
-    if (isLoggedIn()) localStorage.setItem('sb_current_story_id', state.storyId);
+    localStorage.setItem('sb_current_story_id', state.storyId);
 
     if(data.stateSnapshot) Object.assign(state, data.stateSnapshot);
+    // Canonicalize legacy tone values from saved state
+    if (state.picks?.tone) state.picks.tone = canonicalizeTone(state.picks.tone);
+    deriveToneBias();
     state.sysPrompt = data.sysPrompt || state.sysPrompt;
     state.subscribed = !!data.subscribed;
     // (authorChairActive removed — Petition Fate replaces quill)
@@ -14717,8 +14844,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // God Mode button in story interface
   $('gameGodModeBtn')?.addEventListener('click', () => {
-      if (!state.godModeEligibleThisRitual) return;
-      const unlocked = !!state.godMode?.owned || !!state.godModeEligibleThisRitual;
+      // Compute eligibility inline (same logic as openPetitionZoom)
+      const currentStoryId = typeof makeStoryId === 'function' ? makeStoryId() : '';
+      const powerLevel = typeof getGodModePowerLevel === 'function' ? getGodModePowerLevel(currentStoryId) : 0;
+      const arousalOk = !(typeof getCurrentArousal === 'function' && getCurrentArousal() === 'tease');
+      const tierOk = state.tier === 'subscriber' || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory());
+      const unlocked = !!state.godMode?.owned || (arousalOk && tierOk && powerLevel > 0);
+
       if (!unlocked) {
           if (window.showPaywall) window.showPaywall('god');
       } else if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
@@ -14770,16 +14902,59 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }, 1500);
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VAULT MENU — Tab panel interaction handlers
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function resetVaultState() {
+      document.querySelector('.vault-panel')?.classList.remove('hidden');
+      document.querySelectorAll('.vault-sub').forEach(s => s.classList.add('hidden'));
+  }
+
+  // Burger open → reset vault to main panel, then show overlay
   $('burgerBtn')?.addEventListener('click', () => {
-      if (typeof renderBurgerMenu === 'function') renderBurgerMenu();
-      document.getElementById('menuOverlay')?.classList.remove('hidden');
+      try { if (typeof renderBurgerMenu === 'function') renderBurgerMenu(); } catch(e) { console.warn('[Burger] renderBurgerMenu error:', e); }
+      const overlay = document.getElementById('menuOverlay');
+      if (overlay) {
+          resetVaultState();
+          overlay.classList.remove('hidden');
+      }
   });
+
+  // Tab click → hide main panel, show matching sub-panel
+  document.querySelectorAll('.vault-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+          const section = tab.dataset.vaultSection;
+          document.querySelector('.vault-panel')?.classList.add('hidden');
+          const sub = document.getElementById('vault' + section);
+          if (sub) sub.classList.remove('hidden');
+      });
+  });
+
+  // Back buttons → hide all sub-panels, show main panel
+  document.querySelectorAll('.vault-back').forEach(btn => {
+      btn.addEventListener('click', () => {
+          resetVaultState();
+      });
+  });
+
+  // Close button
+  $('vaultCloseBtn')?.addEventListener('click', () => {
+      document.getElementById('menuOverlay')?.classList.add('hidden');
+      resetVaultState();
+  });
+
+  // Profile button
   $('menuProfileBtn')?.addEventListener('click', () => {
       document.getElementById('menuOverlay')?.classList.add('hidden');
+      resetVaultState();
       openProfileModal();
   });
+
+  // Library button
   $('menuLibraryBtn')?.addEventListener('click', () => {
       document.getElementById('menuOverlay')?.classList.add('hidden');
+      resetVaultState();
       if (typeof window.continueStory === 'function') window.continueStory();
   });
   $('ageYes')?.addEventListener('click', () => window.showScreen('tosGate'));
@@ -14814,16 +14989,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // ═══════════════════════════════════════════════════════════════════════════
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // COVER$ SYSTEM — Cover Credit Microtransaction System
+  // IMAGE CREDIT SYSTEM — Prepaid credit pack model
   // ═══════════════════════════════════════════════════════════════════════════
-  // - 3 free covers per day (all users, including subscribers)
-  // - $0.25 per additional cover after limit
-  // - Paid covers allow prompt editing before generation
+  // - 1 image generation = 1 credit (covers + scene visualizations)
+  // - Credits purchased in packs (20 / 50 / 120)
+  // - If credits = 0 → show purchase modal
   // - God Mode excluded from this system
   // ═══════════════════════════════════════════════════════════════════════════
-
-  const COVER_DAILY_FREE_LIMIT = 3;
-  const COVER_PAID_PRICE = 0.25;
 
   // Verboten terms that may cause image generation to fail
   const COVER_BLOCKED_TERMS = [
@@ -14833,80 +15005,63 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       'drugs', 'cocaine', 'heroin', 'meth', 'racist', 'hate'
   ];
 
-  // Get today's date key for localStorage
-  function getCoverDateKey() {
-      return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  // Check if user has image credits available
+  function hasImageCredits() {
+      if (state.godModeEnabled) return true;
+      return (state.imageCredits || 0) > 0;
   }
 
-  // Get current cover credit state
-  function getCoverCredits() {
-      const stored = localStorage.getItem('storybound_cover_credits');
-      if (!stored) return { date: getCoverDateKey(), used: 0, purchased: 0 };
-      try {
-          const data = JSON.parse(stored);
-          // Reset if new day
-          if (data.date !== getCoverDateKey()) {
-              return { date: getCoverDateKey(), used: 0, purchased: 0 };
-          }
-          return data;
-      } catch (e) {
-          return { date: getCoverDateKey(), used: 0, purchased: 0 };
+  // Consume one image credit after successful generation
+  function consumeImageCredit() {
+      if (state.godModeEnabled) return;
+      if ((state.imageCredits || 0) <= 0) {
+          console.warn('[ImageCredits] Attempted credit consumption with 0 balance');
+          return;
+      }
+      state.imageCredits -= 1;
+      persistImageCredits();
+      console.log('[ImageCredits] Credit consumed. Remaining:', state.imageCredits);
+  }
+
+  // Persist imageCredits to localStorage and Supabase
+  function persistImageCredits() {
+      localStorage.setItem('sb_image_credits', String(state.imageCredits || 0));
+      localStorage.setItem('sb_last_scene_rewarded', String(state.lastSceneRewarded || 0));
+      if (sb && _supabaseProfileId) {
+          sb.from('profiles')
+            .update({
+                image_credits: state.imageCredits || 0,
+                last_scene_rewarded: state.lastSceneRewarded || 0
+            })
+            .eq('id', _supabaseProfileId)
+            .then(({ error }) => {
+                if (error) console.error('[ImageCredits] Supabase persist error:', error);
+            });
       }
   }
 
-  // Save cover credit state
-  function saveCoverCredits(credits) {
-      credits.date = getCoverDateKey();
-      localStorage.setItem('storybound_cover_credits', JSON.stringify(credits));
-      updateCoverCreditDisplay();
-  }
-
-  // Check if user has free covers remaining
-  function hasFreeCoverCredits() {
-      // God Mode excluded from credit system
-      if (state.godModeEnabled) return true;
-      const credits = getCoverCredits();
-      return credits.used < COVER_DAILY_FREE_LIMIT;
-  }
-
-  // Get remaining free covers
-  function getRemainingFreeCovers() {
-      if (state.godModeEnabled) return '∞';
-      const credits = getCoverCredits();
-      return Math.max(0, COVER_DAILY_FREE_LIMIT - credits.used);
-  }
-
-  // Use a free cover credit
-  function useFreeCredit() {
-      const credits = getCoverCredits();
-      credits.used++;
-      saveCoverCredits(credits);
-      console.log('[COVER$] Free credit used. Remaining:', COVER_DAILY_FREE_LIMIT - credits.used);
-  }
-
-  // Record a paid cover purchase
-  function recordPaidCover() {
-      const credits = getCoverCredits();
-      credits.purchased++;
-      credits.used++; // Paid covers still count toward usage tracking
-      saveCoverCredits(credits);
-      console.log('[COVER$] Paid cover recorded. Total purchased today:', credits.purchased);
+  // Load imageCredits + lastSceneRewarded from localStorage (Supabase hydration happens in ensureAnonSession)
+  function loadImageCreditsFromLocal() {
+      const stored = localStorage.getItem('sb_image_credits');
+      if (stored !== null) {
+          state.imageCredits = parseInt(stored, 10) || 0;
+      }
+      const storedReward = localStorage.getItem('sb_last_scene_rewarded');
+      if (storedReward !== null) {
+          state.lastSceneRewarded = parseInt(storedReward, 10) || 0;
+      }
   }
 
   // Update the cover credit display UI
   function updateCoverCreditDisplay() {
       const display = $('coverCreditDisplay');
       if (!display) return;
-      const remaining = getRemainingFreeCovers();
-      if (remaining === '∞') {
+      if (state.godModeEnabled) {
           display.textContent = 'God Mode: Unlimited';
           display.classList.add('god-mode');
-      } else if (remaining > 0) {
-          display.textContent = `${remaining} free cover${remaining !== 1 ? 's' : ''} remaining today`;
-          display.classList.remove('god-mode', 'exhausted');
       } else {
-          display.textContent = 'Free covers exhausted • $0.25 per cover';
-          display.classList.add('exhausted');
+          const credits = state.imageCredits || 0;
+          display.textContent = `${credits} image credit${credits !== 1 ? 's' : ''} remaining`;
           display.classList.remove('god-mode');
       }
   }
@@ -14972,82 +15127,30 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       };
   }
 
-  // Show the Cover$ purchase modal for paid covers
-  function showCoverPurchaseModal() {
-      const modal = $('coverPurchaseModal');
+  // Show credit purchase modal when user has no image credits
+  function openCreditPurchaseModal() {
+      const modal = $('creditPurchaseModal');
       if (!modal) {
-          console.error('[COVER$] Purchase modal not found');
+          console.error('[ImageCredits] Purchase modal not found');
           return;
       }
-
-      // Build editable prompt
-      const promptData = buildEditableCoverPrompt();
-      const promptInput = $('coverPromptInput');
-      const titleDisplay = $('coverPromptTitle');
-      const worldDisplay = $('coverPromptWorld');
-      const objectDisplay = $('coverPromptObject');
-      const safetyWarning = $('coverPromptSafetyWarning');
-
-      if (promptInput) promptInput.value = promptData.prompt;
-      if (titleDisplay) titleDisplay.textContent = promptData.title;
-      if (worldDisplay) worldDisplay.textContent = promptData.world;
-      if (objectDisplay) objectDisplay.textContent = promptData.focalObject;
-      if (safetyWarning) safetyWarning.classList.add('hidden');
-
-      // Wire up prompt input safety check
-      if (promptInput) {
-          promptInput.oninput = () => {
-              const check = checkPromptSafety(promptInput.value);
-              if (safetyWarning) {
-                  if (!check.safe) {
-                      safetyWarning.textContent = '⚠️ Some words or combinations may prevent image generation.';
-                      safetyWarning.classList.remove('hidden');
-                  } else {
-                      safetyWarning.classList.add('hidden');
-                  }
-              }
-          };
-      }
-
+      // Update credit display in modal
+      const bal = $('creditModalBalance');
+      if (bal) bal.textContent = state.imageCredits || 0;
       modal.classList.remove('hidden');
   }
 
-  // Hide the Cover$ purchase modal
-  function hideCoverPurchaseModal() {
-      const modal = $('coverPurchaseModal');
+  // Hide credit purchase modal
+  function closeCreditPurchaseModal() {
+      const modal = $('creditPurchaseModal');
       if (modal) modal.classList.add('hidden');
   }
 
-  // Process paid cover purchase and generation
-  async function processPaidCoverPurchase() {
-      const promptInput = $('coverPromptInput');
-      let userPrompt = promptInput?.value || '';
-
-      // Auto-sanitize unsafe inputs
-      const sanitizeResult = sanitizeCoverPrompt(userPrompt);
-      if (sanitizeResult.modified) {
-          userPrompt = sanitizeResult.sanitized;
-          showToast('Some inputs were adjusted for image safety.');
-      }
-
-      // Final safety check - block if still unsafe
-      const safetyCheck = checkPromptSafety(userPrompt);
-      if (!safetyCheck.safe) {
-          showToast('Cannot generate cover: blocked terms detected. Please edit your prompt.');
-          return false;
-      }
-
-      // Hide modal (credit recorded AFTER successful generation)
-      hideCoverPurchaseModal();
-
-      // Generate cover with user's edited prompt
-      const success = await generatePaidCover(userPrompt);
-
-      // Record credit ONLY on success
-      if (success) {
-          recordPaidCover();
-      }
-      return success;
+  // Stub: handle credit pack purchase (Stripe integration later)
+  function purchaseCreditPack(packSize, priceLabel) {
+      console.log(`[ImageCredits] Purchase requested: ${packSize} credits (${priceLabel})`);
+      showToast('Credit purchase coming soon. Check back shortly!');
+      closeCreditPurchaseModal();
   }
 
   // Generate cover with custom (paid) prompt
@@ -15164,12 +15267,11 @@ The final image must look like a real published novel cover.`;
       }
   }
 
-  // Expose Cover$ functions
-  window.showCoverPurchaseModal = showCoverPurchaseModal;
-  window.hideCoverPurchaseModal = hideCoverPurchaseModal;
-  window.processPaidCoverPurchase = processPaidCoverPurchase;
-  window.hasFreeCoverCredits = hasFreeCoverCredits;
-  window.getRemainingFreeCovers = getRemainingFreeCovers;
+  // Expose image credit functions
+  window.openCreditPurchaseModal = openCreditPurchaseModal;
+  window.closeCreditPurchaseModal = closeCreditPurchaseModal;
+  window.purchaseCreditPack = purchaseCreditPack;
+  window.hasImageCredits = hasImageCredits;
   window.updateCoverCreditDisplay = updateCoverCreditDisplay;
 
   // EARNED COVER SYSTEM exports
@@ -15473,11 +15575,11 @@ The final image must look like a real published novel cover.`;
       }
 
       // ═══════════════════════════════════════════════════════════════════
-      // COVER$ CREDIT CHECK — Free credits or show purchase modal
+      // IMAGE CREDIT CHECK — Must have credits or show purchase modal
       // ═══════════════════════════════════════════════════════════════════
-      if (!hasFreeCoverCredits()) {
-          console.log('[COVER$] Free credits exhausted — showing purchase modal');
-          showCoverPurchaseModal();
+      if (!hasImageCredits()) {
+          console.log('[ImageCredits] No credits — showing purchase modal');
+          openCreditPurchaseModal();
           return;
       }
 
@@ -15570,10 +15672,10 @@ The final image must look like a real published novel cover.`;
           }
 
           // ═══════════════════════════════════════════════════════════════
-          // COVER$ CREDIT CONSUMPTION — Only on successful image URL
+          // IMAGE CREDIT CONSUMPTION — Only on successful image URL
           // ═══════════════════════════════════════════════════════════════
-          useFreeCredit();
-          console.log('[COVER$] Free credit consumed on SUCCESS. Remaining:', getRemainingFreeCovers());
+          consumeImageCredit();
+          updateCoverCreditDisplay();
 
           _preGeneratedCoverUrl = coverUrl;
           _coverGenUsed = true;
@@ -16473,21 +16575,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Tone × Genre compatibility - null means all compatible
     // Format: { tone: [incompatible genres] }
     const TONE_GENRE_INCOMPATIBLE = {
-      Comedic: ['Noir'],  // Comedic tone doesn't fit noir fatalism
-      Horror: [],         // Horror works with most genres
-      Satirical: [],      // Satirical can work with anything
-      Mythic: [],         // Mythic is flexible
-      Surreal: [],        // Surreal works widely
-      Poetic: [],         // Poetic is flexible
       Earnest: [],        // Earnest works with everything
       WryConfession: [],  // Wry works broadly
-      Dark: []            // Dark fits everything
+      Dark: [],           // Dark fits everything
+      Mythic: []          // Mythic is flexible
     };
 
     // Genre × Dynamic compatibility - null means all compatible
     // Format: { genre: [incompatible dynamics] }
     const GENRE_DYNAMIC_INCOMPATIBLE = {
-      Noir: ['Comedic'],  // Noir fatalism clashes with pure comedy dynamics (if any existed)
+      Noir: [],
       Heist: [],
       CrimeSyndicate: [],
       Billionaire: [],
@@ -17001,8 +17098,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     function selectFromZoomedCard(grp, val) {
-      // Update state
-      state.picks[grp] = val;
+      // Update state (canonicalize tone)
+      state.picks[grp] = grp === 'tone' ? canonicalizeTone(val) : val;
+
+      // Derive tone bias when structural axes change
+      if (grp === 'tone' || grp === 'world' || grp === 'pressure') deriveToneBias();
 
       // Clear cover shape hash — selection changed, enable regeneration
       if (window.clearCoverShapeHash) window.clearCoverShapeHash();
@@ -17140,7 +17240,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     function recenterZoomedCard() {
       if (!currentOpenCard || !currentOpenCard.classList.contains('zoomed')) return;
 
-      const origWidth = parseFloat(currentOpenCard.dataset.zoomOriginalWidth) || 112;
+      const origWidth = parseFloat(currentOpenCard.dataset.zoomOriginalWidth) || 140;
       const origHeight = parseFloat(currentOpenCard.dataset.zoomOriginalHeight) || 193;
       const sidePadding = 60;
       const topPadding = 20;
@@ -17450,9 +17550,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const val = currentOpenCard.dataset.val;
       if (!grp || !val) return;
 
-      // Update state (same as selectFromZoomedCard but without auto-close)
-      state.picks[grp] = val;
+      // Update state (canonicalize tone)
+      state.picks[grp] = grp === 'tone' ? canonicalizeTone(val) : val;
       if (window.clearCoverShapeHash) window.clearCoverShapeHash();
+
+      // Derive tone bias when structural axes change
+      if (grp === 'tone' || grp === 'world' || grp === 'pressure') deriveToneBias();
 
       // Mark card as selected
       document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
@@ -18482,6 +18585,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         const isAlreadySelected = card.classList.contains('selected') && card.classList.contains('flipped');
 
         if (isAlreadySelected) {
+          // Destiny's Choice has no zoom view — it auto-selects only
+          if (grp === 'pressure' && val === 'destiny') return;
           // STATE 2 → STATE 3: Open zoom view (NEVER deselect)
           openSbCardZoom(card, grp, val);
           return;
@@ -18569,9 +18674,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           applyLengthLocks(); // Re-apply locks after selection
           // NOTE: storyLength is a RUNTIME MODIFIER — does NOT invalidate story shape
         } else {
-          state.picks[grp] = val;
+          state.picks[grp] = grp === 'tone' ? canonicalizeTone(val) : val;
           // STORY-DEFINING INPUT: Invalidate snapshot → forces "Begin Story"
           if (typeof invalidateShapeSnapshot === 'function') invalidateShapeSnapshot();
+        }
+
+        // Derive tone bias when structural axes change
+        if (grp === 'tone' || grp === 'world' || grp === 'pressure') {
+          deriveToneBias();
         }
 
         // Clear cover shape hash — selection changed, enable regeneration
@@ -18664,7 +18774,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           dynamicSelectedViaDestiny = false;
         }
 
-        // Special handling: show/hide Horror subtypes when Tone changes
+        // Update world subtype visibility when Tone changes
         if (grp === 'tone') {
           updateWorldSubtypeVisibility(state.picks.world, val);
         }
@@ -19602,18 +19712,37 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       breadcrumb.dataset.val = val;
       breadcrumb.dataset.stageIndex = STAGE_INDEX[grp];
       breadcrumb.dataset.breadcrumbLabel = grp.charAt(0).toUpperCase() + grp.slice(1);
-      breadcrumb.innerHTML = `
-        <div class="sb-card-inner">
-          <div class="sb-card-face sb-card-back">
-            <span class="sb-card-title">${label.title}</span>
-            ${subtitleHtml}
+
+      // Archetype/mask breadcrumbs use PNG art instead of text
+      const archetypePngMap = {
+        'HEART_WARDEN': 'Tarot-Gold-front-HeartWarden.png',
+        'OPEN_VEIN': 'Tarot-Gold-front-OpenVein.png',
+        'SPELLBINDER': 'Tarot-Gold-front-Spellbinder.png',
+        'ARMORED_FOX': 'Tarot-Gold-front-AFox.png',
+        'DARK_VICE': 'Tarot-Gold-front-DarkVice.png',
+        'BEAUTIFUL_RUIN': 'Tarot-Gold-front-BRuin.png',
+        'ETERNAL_FLAME': 'Tarot-Gold-front-EternalFlame.png'
+      };
+
+      if (grp === 'archetype' && archetypePngMap[val]) {
+        breadcrumb.classList.add('archetype-breadcrumb-png');
+        breadcrumb.style.backgroundImage = `url('/assets/card-art/cards/${archetypePngMap[val]}')`;
+        breadcrumb.style.backgroundSize = 'cover';
+        breadcrumb.style.backgroundPosition = 'center';
+      } else {
+        breadcrumb.innerHTML = `
+          <div class="sb-card-inner">
+            <div class="sb-card-face sb-card-back">
+              <span class="sb-card-title">${label.title}</span>
+              ${subtitleHtml}
+            </div>
+            <div class="sb-card-face sb-card-front">
+              <span class="sb-card-title">${label.title}</span>
+              ${subtitleHtml}
+            </div>
           </div>
-          <div class="sb-card-face sb-card-front">
-            <span class="sb-card-title">${label.title}</span>
-            ${subtitleHtml}
-          </div>
-        </div>
-      `;
+        `;
+      }
       // Insert before the first ghost step (breadcrumbs accumulate on left)
       const firstGhost = breadcrumbRow.querySelector('.ghost-step');
       if (firstGhost) {
@@ -19788,9 +19917,66 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return; // Stay at current row
     }
 
-    console.log(`[Breadcrumb Nav] Navigating to row ${targetRowIndex} (${grp}) — NO state mutations`);
+    console.log(`[Breadcrumb Nav] Navigating to row ${targetRowIndex} (${grp})`);
 
-    // NAVIGATION ONLY — no deletions, no resets
+    // Clear downstream breadcrumbs and selections so user can re-choose
+    if (targetRowIndex < corridorActiveRowIndex) {
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      for (let i = targetRowIndex + 1; i < CORRIDOR_STAGES.length; i++) {
+        const downstreamStage = CORRIDOR_STAGES[i];
+        const downstreamGrp = CORRIDOR_GRP_MAP[downstreamStage];
+
+        // Remove breadcrumb from DOM
+        if (breadcrumbRow) {
+          const bc = breadcrumbRow.querySelector(`.breadcrumb-card[data-grp="${downstreamGrp}"]`);
+          if (bc) {
+            bc.remove();
+            // Restore ghost step for this slot
+            const stageIdx = STAGE_INDEX[downstreamGrp];
+            if (stageIdx >= 0 && !breadcrumbRow.querySelector(`.ghost-step[data-ghost-index="${stageIdx}"]`)) {
+              const ghost = document.createElement('div');
+              ghost.className = 'ghost-step';
+              ghost.dataset.ghostIndex = stageIdx;
+              ghost.dataset.ghostGrp = downstreamGrp;
+              ghost.innerHTML = `
+                <span class="ghost-step-label">CHOICE</span>
+                <span class="ghost-step-number">${GHOST_STEP_NUMERALS[stageIdx] || stageIdx + 1}</span>
+              `;
+              // Insert in correct order among existing ghosts
+              const allGhosts = breadcrumbRow.querySelectorAll('.ghost-step');
+              let inserted = false;
+              for (const g of allGhosts) {
+                if (parseInt(g.dataset.ghostIndex) > stageIdx) {
+                  breadcrumbRow.insertBefore(ghost, g);
+                  inserted = true;
+                  break;
+                }
+              }
+              if (!inserted) breadcrumbRow.appendChild(ghost);
+            }
+            console.log(`[Breadcrumb Nav] Removed downstream breadcrumb: ${downstreamGrp}`);
+          }
+        }
+
+        // Clear corridor selection
+        corridorSelections.delete(downstreamStage);
+
+        // Restore card visibility in stored corridor rows
+        const stored = corridorRowStore.get(i);
+        if (stored) {
+          stored.elements.forEach(el => {
+            el.querySelectorAll('.sb-card.dissipating, .sb-card[style*="visibility: hidden"]').forEach(card => {
+              card.classList.remove('dissipating', 'selected', 'flipped');
+              card.style.opacity = '';
+              card.style.visibility = '';
+              card.style.animation = '';
+              card.style.animationFillMode = '';
+            });
+          });
+        }
+      }
+    }
+
     corridorActiveRowIndex = targetRowIndex;
     updateCorridorVisibility();
     updateCorridorContinueButtonVisibility();
@@ -20175,7 +20361,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const unresolved = [];
     CORRIDOR_STAGES.forEach((stage, idx) => {
       // Skip these stages (not required — they don't have card-based selection)
-      if (stage === 'arousal' || stage === 'safety' || stage === 'beginstory') return;
+      if (stage === 'identity' || stage === 'arousal' || stage === 'safety' || stage === 'beginstory') return;
 
       let hasSelection = corridorSelections.has(stage);
 
@@ -20333,9 +20519,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           createBreadcrumbDirect('world', randomWorld, randomWorld);
           break;
         case 'tone':
-          const tones = ['Earnest', 'Dark', 'Playful', 'Epic'];
+          const tones = ['Earnest', 'WryConfession', 'Dark', 'Mythic'];
           const randomTone = tones[Math.floor(Math.random() * tones.length)];
           state.picks.tone = randomTone;
+          deriveToneBias();
           corridorSelections.set('tone', randomTone);
           createBreadcrumbDirect('tone', randomTone, randomTone);
           break;
@@ -20658,6 +20845,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               card.classList.remove('dissipating');
               card.style.opacity = '';
               card.style.visibility = '';
+              card.style.animation = '';
+              card.style.animationFillMode = '';
             });
           }
         });
@@ -20756,6 +20945,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         });
       }
     });
+
+    // POST-AROUSAL WRAPPER: Safety and Begin Story rows live inside
+    // #postArousalSection which starts hidden. Unhide it when the corridor
+    // reaches those rows so the anchor-based mount actually shows content.
+    const postArousalSection = document.getElementById('postArousalSection');
+    if (postArousalSection) {
+      if (corridorActiveRowIndex >= STAGE_INDEX.safety) {
+        postArousalSection.classList.remove('hidden');
+      } else {
+        postArousalSection.classList.add('hidden');
+      }
+    }
 
     // INVARIANT ASSERTION: Exactly one row should be mounted
     if (mountedCount !== 1) {
@@ -21652,7 +21853,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       corridorActiveRowIndex = rowIdx;
       updateCorridorVisibility();
 
-      // Identity row: fill character names + set dropdowns (now in DOM)
+      // Identity row: fill character names + set dropdowns, create breadcrumb, advance
       if (stage === 'identity') {
         await new Promise(r => setTimeout(r, ROW_SHOW_DELAY));
         // Set dropdowns now that they're mounted
@@ -21665,6 +21866,30 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         const liInput = $('partnerNameInput');
         if (mcInput && state.normalizedPlayerKernel) mcInput.value = state.normalizedPlayerKernel;
         if (liInput && state.normalizedPartnerKernel) liInput.value = state.normalizedPartnerKernel;
+
+        // Persist identity state (mirrors continueFromCharacters handler)
+        const canonicalPlayerName = mcInput?.value?.trim() || 'Protagonist';
+        const canonicalPartnerName = liInput?.value?.trim() || 'Love Interest';
+        const displayPlayerName = typeof deriveDisplayName === 'function' ? deriveDisplayName(canonicalPlayerName) : canonicalPlayerName;
+        const displayPartnerName = typeof deriveDisplayName === 'function' ? deriveDisplayName(canonicalPartnerName) : canonicalPartnerName;
+        state.picks = state.picks || {};
+        state.picks.identity = {
+          playerName: canonicalPlayerName,
+          partnerName: canonicalPartnerName,
+          displayPlayerName: displayPlayerName,
+          displayPartnerName: displayPartnerName
+        };
+
+        // Mark identity as resolved and create breadcrumb
+        corridorSelections.set('identity', { grp: 'identity', val: 'names' });
+        if (typeof createBreadcrumbDirect === 'function') {
+          createBreadcrumbDirect('identity', 'names', displayPlayerName);
+        }
+
+        // Retract mini-deck
+        const miniDeck = $('destinyMiniDeck');
+        if (miniDeck) miniDeck.classList.add('retracted');
+
         console.log(`[Corridor] Autoplay completed row ${rowIdx}: ${stage} (identity)`);
         await new Promise(r => setTimeout(r, INTER_ROW_DELAY));
         continue;
@@ -22288,11 +22513,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * @returns {boolean}
    */
   function isPressureCompatible(pressure, tone) {
-    // Comedic tone clashes with dark pressures
-    if (tone === 'Comedic') {
-      // Risk/Exposure (Noir lineage) doesn't fit comedy
-      if (pressure === 'RiskExposure') return false;
-    }
     return true;
   }
 
@@ -22303,9 +22523,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * @returns {boolean}
    */
   function isFlavorCompatible(flavor, tone) {
-    if (!flavor) return true;
-    // Noir flavor specifically incompatible with Comedic
-    if (tone === 'Comedic' && flavor === 'Noir') return false;
     return true;
   }
 
@@ -22346,13 +22563,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   const DSP_TONAL_ADJECTIVES = {
     Earnest: 'heartfelt',
     WryConfession: 'self-deprecating',
-    Poetic: 'brewing',
     Dark: 'suffocating',
-    Horror: 'terrifying',
-    Mythic: 'fated',
-    Comedic: 'utterly unnecessary',
-    Surreal: 'reality-bending',
-    Satirical: 'forethoughtless'
+    Mythic: 'fated'
   };
 
   /**
@@ -23549,6 +23761,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       state.archetype.primary = archetypeId;
       state.archetype.modifier = null; // Modifier assigned silently at generation time
       archetypeSelectedViaDestiny = viaDestiny;
+      deriveToneBias();
 
       // STORY-DEFINING INPUT: Invalidate snapshot → forces "Begin Story"
       if (typeof invalidateShapeSnapshot === 'function') invalidateShapeSnapshot();
@@ -25397,21 +25610,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Persist subscription to localStorage (source of truth)
     state.subscribed = true;
-    // AUTH GATE: Only persist to storage when logged in
-    if (isLoggedIn()) {
-        localStorage.setItem('sb_subscribed', '1');
-        console.log('[ENTITLEMENT] Subscription stored in localStorage');
-    }
+    localStorage.setItem('sb_subscribed', '1');
+    console.log('[ENTITLEMENT] Subscription stored in localStorage');
 
     // Complete purchase - will resolve access from localStorage
     completePurchase();
   });
 
   $('payGodMode')?.addEventListener('click', () => {
-      // AUTH GATE: Only persist to storage when logged in
-      if (isLoggedIn()) {
-          localStorage.setItem('sb_god_mode_owned', '1');
-      }
+      localStorage.setItem('sb_god_mode_owned', '1');
       document.getElementById('payModal')?.classList.add('hidden');
       if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
           activateGodMode();
@@ -25563,11 +25770,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     return selected.val;
   }
 
-  // Get weighted tone selection
+  // Get weighted tone selection (4 visible tone pillars only)
   function getFateTone() {
-    // Prefer Earnest, WryConfession, Poetic
-    const tones = ['Earnest', 'WryConfession', 'Poetic', 'Mythic', 'Comedic'];
-    const weights = [40, 30, 20, 5, 5];
+    const tones = ['Earnest', 'WryConfession', 'Dark', 'Mythic'];
+    const weights = [40, 30, 20, 10];
     return weightedSelect(tones, weights);
   }
 
@@ -26337,6 +26543,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     _fateRunning = false;
     _dspGuidedFateActive = false;
 
+    // Ensure DSP activation threshold is met so panel renders after fate cleanup
+    if (_dspActivationCount < 2) _dspActivationCount = 2;
+
     // Clear DSP pending state — reveal all clauses immediately on override
     _revealedDSPAxes = null;
     const synopsisText = document.getElementById('synopsisText');
@@ -26365,6 +26574,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     document.querySelectorAll('.fate-active').forEach(el => el.classList.remove('fate-active'));
     document.querySelectorAll('.fate-typing').forEach(el => el.classList.remove('fate-typing'));
     document.querySelectorAll('.fate-ceremony').forEach(el => el.classList.remove('fate-ceremony'));
+
+    // Rebuild DSP with current state now that guided fate gate is cleared
+    updateSynopsisPanel(true);
   }
 
   // Override handler - user takes control from Fate
@@ -26641,13 +26853,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.loveInterest = 'Male';
     state.picks.world = fateChoices.world;
     state.picks.worldSubtype = fateChoices.worldFlavor;
-    state.picks.tone = fateChoices.tone;
+    state.picks.tone = canonicalizeTone(fateChoices.tone);
     state.picks.genre = fateChoices.genre;
     state.picks.dynamic = fateChoices.dynamic;
     state.picks.pov = fateChoices.pov;
     state.intensity = fateChoices.intensity;
     state.storyLength = fateChoices.storyLength;
     state.archetype = { primary: fateChoices.archetype, modifier: null };
+    deriveToneBias();
 
     if (fateChoices.world === 'Historical' && fateChoices.worldFlavor) {
       state.picks.era = fateChoices.worldFlavor;
@@ -26835,8 +27048,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     _fateRunning = false;
-    // Keep _revealedDSPAxes and _dspGuidedFateActive until story begins
-    // This prevents bulk hydration on any late updateSynopsisPanel calls
+    state._fateTriggered = true;
   }
 
   // Populate all UI selections from fate choices
@@ -26858,7 +27070,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.loveInterest = 'Male';
     state.picks.world = fateChoices.world;
     state.picks.worldSubtype = fateChoices.worldFlavor;
-    state.picks.tone = fateChoices.tone;
+    state.picks.tone = canonicalizeTone(fateChoices.tone);
     state.picks.genre = fateChoices.genre;
     state.picks.dynamic = fateChoices.dynamic;
     state.picks.pov = fateChoices.pov;
@@ -26867,6 +27079,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Set archetype (required for story generation)
     state.archetype = { primary: fateChoices.archetype, modifier: null };
+    deriveToneBias();
 
     // Set Withheld Core lens variant (if assigned by fate)
     state.withheldCoreVariant = fateChoices.withheldCoreVariant || null;
@@ -28387,6 +28600,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
                 // Go directly to Scene 1
                 advanceReaderPage();
 
+                // Pre-load visualization prompt in background while user reads
+                if (typeof preloadVizPrompt === 'function') preloadVizPrompt();
+
                 // Reset background story state for future use
                 if (window.resetBackgroundStory) window.resetBackgroundStory();
 
@@ -29431,6 +29647,9 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // Go directly to Scene 1 (skip synopsis page)
         advanceReaderPage();
 
+        // Pre-load visualization prompt in background while user reads
+        if (typeof preloadVizPrompt === 'function') preloadVizPrompt();
+
         // OPENING SPREAD COMPOSITION: Populate inside cover with title + synopsis
         // Page 1 (inside cover) = paper background + title + synopsis (NO image generation)
         // Page 2+ (scene) = scene text with setting image INLINE if present
@@ -30464,13 +30683,8 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
       const TONE_TO_EMOTION = {
           Earnest: 'yearning',
           WryConfession: 'tension',
-          Satirical: 'rebellion',
           Dark: 'foreboding',
-          Horror: 'foreboding',
-          Mythic: 'inevitability',
-          Comedic: 'mystery',
-          Surreal: 'mystery',
-          Poetic: 'longing'
+          Mythic: 'inevitability'
       };
 
       try {
@@ -32983,16 +33197,14 @@ ${tone === 'Wry Confessional'
   if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
           initCoverPageListeners();
-          // Initialize Cover$ credit display
+          loadImageCreditsFromLocal();
           if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
-          // Initialize Begin/Continue button label based on story state
           if (typeof updateBeginButtonLabel === 'function') updateBeginButtonLabel();
       });
   } else {
       initCoverPageListeners();
-      // Initialize Cover$ credit display
+      loadImageCreditsFromLocal();
       if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
-      // Initialize Begin/Continue button label based on story state
       if (typeof updateBeginButtonLabel === 'function') updateBeginButtonLabel();
   }
 
@@ -33855,7 +34067,7 @@ Return ONLY the formatted prompt following the structure above. Do not explain o
   const VISUAL_INTENT_LIGHTING_PROHIBITIONS = 'NO moody noir lighting. NO extreme contrast. NO underexposed foreground. NO color banding. NO desaturated flesh tones.';
 
   // Tones that permit dark/grim rendering (override attractiveness defaults)
-  const DARK_TONE_OVERRIDES = ['Dark', 'Grim', 'Horror', 'Noir'];
+  const DARK_TONE_OVERRIDES = ['Dark', 'Grim', 'Noir'];
 
   /**
    * Apply Visual Intent Guard to a prompt
@@ -33978,7 +34190,6 @@ Return ONLY the image prompt. No explanations. Under 200 characters.`;
       'Fantasy Romantic': { ontology: 'illustration', style: 'soft painterly fantasy' },
       'Fantasy Enchanted': { ontology: 'illustration', style: 'soft painterly fantasy' },
       'Sci-Fi Stylized': { ontology: 'illustration', style: 'high-concept illustration' },
-      'Satirical': { ontology: 'illustration', style: 'editorial illustration' }
   };
 
   /**
@@ -33993,11 +34204,6 @@ Return ONLY the image prompt. No explanations. Under 200 characters.`;
           style: 'New Yorker–style cartoon, sparse linework, minimal color, emotional understatement',
           captionRequired: true,
           captionRules: 'Caption REQUIRED. AI-authored. Clever, opaque, understated, emotionally undercutting. NEVER literally describes the image.'
-      },
-      'Comedic': {
-          override: false, // Preserves world ontology
-          styleModifier: 'caricature distortion — exaggerated heads, faces, posture, proportions. Preserve realistic lighting/textures. Not Pixar, not filters.',
-          arousalNote: 'Higher arousal → more absurd exaggeration, not sexiness'
       }
   };
 
@@ -34026,7 +34232,7 @@ Return ONLY the image prompt. No explanations. Under 200 characters.`;
       const baseOntology = WORLD_ONTOLOGY_MAP[world]
           || { ontology: 'photographic', style: 'cinematic' }; // Safe default
 
-      // Apply tone modifier if present (Comedic adds caricature to existing ontology)
+      // Apply tone modifier if present
       let finalStyle = baseOntology.style;
       let arousalNote = '';
       if (toneOverride?.styleModifier) {
@@ -34922,6 +35128,16 @@ Condensed (under ${maxLength} chars):` }
       return result || 'An ordinary moment.';
   }
 
+  // Prevent copy/cut on viz prompt (editable but not copyable)
+  {
+      const vizPrompt = document.getElementById('vizPromptInput');
+      if (vizPrompt) {
+          vizPrompt.addEventListener('copy', e => e.preventDefault());
+          vizPrompt.addEventListener('cut', e => e.preventDefault());
+          vizPrompt.addEventListener('selectstart', e => e.preventDefault());
+      }
+  }
+
   // Initialize Visualize modifier interaction (scrolling suggestions)
   // TRUST REPAIR: Validate modifiers before accepting, explicitly reject disallowed
   function initVizModifierPills() {
@@ -35152,7 +35368,7 @@ Condensed (under ${maxLength} chars):` }
   function updateVizButtonStates() {
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
-      const credits = getAvailableVizCredits();
+      const credits = state.imageCredits || 0;
       const sceneVisualized = state.visual.visualizedScenes && state.visual.visualizedScenes[sceneKey];
 
       const vizBtn = document.getElementById('vizSceneBtn');
@@ -35187,22 +35403,20 @@ Condensed (under ${maxLength} chars):` }
               vizBtn.classList.remove('is-loading');
           } else {
               // Default state — always clickable, shows credit count
-              const label = credits > 0 ? '✨ Visualize' : '✨ Visualize ($)';
+              const label = credits > 0 ? '✨ Visualize' : '✨ Visualize (1 credit)';
               vizBtn.textContent = label;
               vizBtn.disabled = false;
               vizBtn.classList.remove('is-loading', 'is-finalized');
           }
       }
 
-      // Re-Visualize: NEVER disabled — opens paywall if no credits
+      // Re-Visualize: NEVER disabled — opens credit purchase if no credits
       if (retryBtn) {
           if (budget.finalized) {
               retryBtn.textContent = 'Finalized';
               retryBtn.disabled = true;
-              // PLAQUE REGIME: CSS handles disabled state
           } else {
-              // Always enabled — clicking with 0 credits opens paywall
-              retryBtn.textContent = credits > 0 ? 'Re-Visualize' : 'Re-Visualize ($0.25)';
+              retryBtn.textContent = credits > 0 ? 'Re-Visualize' : 'Re-Visualize (1 credit)';
               retryBtn.disabled = false;
               retryBtn.title = '';
           }
@@ -35221,19 +35435,12 @@ Condensed (under ${maxLength} chars):` }
       }
   }
 
-  // Re-Visualize handler: opens paywall only when no access path exists
+  // Re-Visualize handler: opens credit purchase if no credits
   window.handleReVisualize = function() {
-      const credits = getAvailableVizCredits();
-      const hasPayAsYouGo = isPayAsYouGoEnabled();
-      const hasSubscription = state.subscribed === true;
-
-      // Allow visualization if ANY access path exists
-      if (credits > 0 || hasPayAsYouGo || hasSubscription) {
-          window.visualize(true);
+      if (!hasImageCredits()) {
+          openCreditPurchaseModal();
           return;
       }
-
-      // TRUST REPAIR: Show consent UI inside modal, not separate paywall
       window.visualize(true);
   };
 
@@ -35242,19 +35449,8 @@ Condensed (under ${maxLength} chars):` }
   // User has seen the prompt, understood the system, and explicitly opted in
   // ═══════════════════════════════════════════════════════════════════════════
   window.enablePayAsYouGoFromViz = function() {
-      // Enable pay-as-you-go
-      if (state.vizEconomy) {
-          state.vizEconomy.payAsYouGoEnabled = true;
-      }
-      saveStorySnapshot();
-      console.log('[VizEconomy] Pay-As-You-Go enabled from visualization modal');
-
-      // Hide consent UI
-      const consentUI = document.getElementById('vizPayAsYouGoConsent');
-      if (consentUI) consentUI.classList.add('hidden');
-
-      // Now trigger the visualization
-      window.visualize(false);
+      // Redirect to credit purchase modal
+      openCreditPurchaseModal();
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -35316,6 +35512,58 @@ Condensed (under ${maxLength} chars):` }
       console.warn('[VIZ:MODIFIER] Rejected:', message);
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BACKGROUND PROMPT PRE-LOADING — Cache prompt while user reads
+  // ═══════════════════════════════════════════════════════════════════════════
+  let _vizPromptCache = { turnCount: -1, prompt: null, pending: null };
+
+  async function preloadVizPrompt() {
+      const turn = state.turnCount;
+      // Already cached or in-flight for this turn
+      if (_vizPromptCache.turnCount === turn && (_vizPromptCache.prompt || _vizPromptCache.pending)) return;
+
+      _vizPromptCache = { turnCount: turn, prompt: null, pending: null };
+
+      // Wry Confessional: synchronous, cache immediately
+      if (state.picks?.tone === 'Wry Confessional') {
+          const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+          const lastText = allStoryContent.slice(-600) || "";
+          const condensedScene = condenseSceneObservational(lastText, 120);
+          _vizPromptCache.prompt = `This is an editorial cartoon illustration, NOT a photograph.\n\n${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\nScene: ${condensedScene}`;
+          console.log('[VIZ:PRELOAD] Wry prompt cached (sync) for turn', turn);
+          return;
+      }
+
+      // Standard path: async LLM call in background
+      const job = (async () => {
+          try {
+              const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
+              const lastText = allStoryContent.slice(-600) || "";
+              await ensureVisualBible(allStoryContent);
+              const anchorText = buildVisualAnchorsText();
+              const visualizePrompt = buildVisualizePrompt({ mode: 'scene', lastText, anchorText });
+
+              const promptMsg = await Promise.race([
+                  callChat([{ role:'user', content: visualizePrompt }]),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error("Preload timeout")), 25000))
+              ]);
+              // Only cache if still same turn
+              if (_vizPromptCache.turnCount === turn) {
+                  _vizPromptCache.prompt = promptMsg;
+                  console.log('[VIZ:PRELOAD] Prompt cached for turn', turn);
+              }
+          } catch (e) {
+              // Fallback — still useful
+              if (_vizPromptCache.turnCount === turn) {
+                  _vizPromptCache.prompt = "Cinematic scene, " + (state.picks?.world || 'atmospheric') + " world, natural lighting, grounded emotion.";
+                  console.log('[VIZ:PRELOAD] Fallback prompt cached for turn', turn);
+              }
+          }
+      })();
+      _vizPromptCache.pending = job;
+  }
+  window.preloadVizPrompt = preloadVizPrompt;
+
   // Populate prompt textarea without generating image (for 0-credit inspection)
   async function populateVizPromptOnly() {
       const ph = document.getElementById('vizPlaceholder');
@@ -35327,12 +35575,40 @@ Condensed (under ${maxLength} chars):` }
           ph.style.display = 'flex';
       }
 
+      // Check cache first
+      if (_vizPromptCache.turnCount === state.turnCount) {
+          if (_vizPromptCache.prompt) {
+              if (promptInput) {
+                  promptInput.value = _vizPromptCache.prompt;
+                  promptInput.placeholder = 'Edit prompt or add modifiers…';
+                  promptInput.classList.remove('viz-loading');
+              }
+              console.log('[VIZ] Prompt loaded from cache (instant)');
+              return;
+          }
+          if (_vizPromptCache.pending) {
+              // Cache is in-flight — show loading, then fill when ready
+              if (promptInput) {
+                  promptInput.value = '';
+                  promptInput.placeholder = 'Generating visualization prompt…';
+                  promptInput.classList.add('viz-loading');
+              }
+              await _vizPromptCache.pending;
+              if (_vizPromptCache.prompt && promptInput) {
+                  promptInput.value = _vizPromptCache.prompt;
+                  promptInput.placeholder = 'Edit prompt or add modifiers…';
+                  promptInput.classList.remove('viz-loading');
+              }
+              console.log('[VIZ] Prompt loaded from pending cache');
+              return;
+          }
+      }
+
+      // No cache — generate fresh (original path)
       const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
       const lastText = allStoryContent.slice(-600) || "";
 
-      // ═══════════════════════════════════════════════════════════════════
-      // WRY CONFESSIONAL — SYNCHRONOUS PROMPT ASSEMBLY (no LLM, no delay)
-      // ═══════════════════════════════════════════════════════════════════
+      // WRY CONFESSIONAL — SYNCHRONOUS
       if (state.picks?.tone === 'Wry Confessional') {
           const condensedScene = condenseSceneObservational(lastText, 120);
           const wryPrompt = `This is an editorial cartoon illustration, NOT a photograph.\n\n${WRY_CONFESSIONAL_VISUAL_ONTOLOGY}\n\nScene: ${condensedScene}`;
@@ -35341,8 +35617,7 @@ Condensed (under ${maxLength} chars):` }
               promptInput.placeholder = 'Edit prompt or add modifiers…';
               promptInput.classList.remove('viz-loading');
           }
-          console.log('[VIZ:WRY] Prompt populated IMMEDIATELY (sync) — 0 credits path');
-          return; // EXIT — no async work needed for Wry
+          return;
       }
 
       // STANDARD PATH: Show loading while LLM generates prompt
@@ -35505,7 +35780,6 @@ Respond in this EXACT format (no labels, just two lines):
       // Check scene budget and credits before proceeding
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
-      const credits = getAvailableVizCredits();
       const sceneVisualized = state.visual.visualizedScenes && state.visual.visualizedScenes[sceneKey];
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -35537,45 +35811,20 @@ Respond in this EXACT format (no labels, just two lines):
           return;
       }
 
-      // Determine if we need consent (no credits AND no access path)
-      const needsConsent = credits <= 0 && !isPayAsYouGoEnabled() && state.subscribed !== true;
+      // Check image credits (God Mode bypasses)
+      const hasCreditsOrAccess = hasImageCredits();
 
-      if (needsConsent) {
-          // ═══════════════════════════════════════════════════════════════
-          // TRUST REPAIR: Show modal with prompt + consent UI (not paywall)
-          // User can see prompt, understand the system, then opt-in
-          // ═══════════════════════════════════════════════════════════════
-          console.log('[VizEconomy] No credits/access — showing consent UI inside modal');
-
-          if(modal) modal.classList.remove('hidden');
-          if(consentUI) consentUI.classList.remove('hidden');
-          if(ph) {
-              ph.textContent = 'Enable pay-as-you-go to generate, or continue your story to earn credits.';
-              ph.style.display = 'flex';
-          }
-          if(errDiv) errDiv.classList.add('hidden');
-
-          // Reset modifier UI
-          resetVizModifierUI();
-
-          // Stop fate card sparkles
-          if (window.stopSparkleCycle) window.stopSparkleCycle();
-          if (typeof stopAmbientCardSparkles === 'function') stopAmbientCardSparkles();
-
-          // Populate prompt so user can see what would be generated
-          populateVizPromptOnly();
-          updateVizButtonStates();
+      if (!hasCreditsOrAccess) {
+          console.log('[ImageCredits] No credits — showing purchase modal');
+          openCreditPurchaseModal();
           return;
       }
 
-      // Has credits or access path — proceed with visualization
-      console.log('[VizEconomy]', isRe ? 'Re-Visualize' : 'Initial Visualize', 'with', credits > 0 ? 'credits' : 'Pay-As-You-Go/Subscription');
+      // Has credits — proceed with visualization
+      console.log('[ImageCredits]', isRe ? 'Re-Visualize' : 'Initial Visualize');
 
       // Hide consent UI since we have access
       if(consentUI) consentUI.classList.add('hidden');
-
-      // Track whether this is a credit-consuming initial visualization
-      const consumesCreditOnSuccess = !isRe && !sceneVisualized;
 
       _vizInFlight = true;
       _vizCancelled = false;
@@ -35668,25 +35917,51 @@ Respond in this EXACT format (no labels, just two lines):
               }
               console.log('[VIZ:WRY] Using sync-assembled prompt');
           } else if (!isRe || !promptMsg) {
-              // Standard path: LLM generates image prompt
-              const visualizePrompt = buildVisualizePrompt({ mode: visualizeMode, lastText, anchorText });
+              // Standard path: check cache first, then LLM
               const promptInput = document.getElementById('vizPromptInput');
-              if (promptInput) {
-                  promptInput.value = '';
-                  promptInput.placeholder = 'Generating visualization prompt…';
-                  promptInput.classList.add('viz-loading');
+              let usedCache = false;
+
+              if (_vizPromptCache.turnCount === state.turnCount) {
+                  if (_vizPromptCache.prompt) {
+                      promptMsg = _vizPromptCache.prompt;
+                      usedCache = true;
+                      console.log('[VIZ] Using cached prompt (instant)');
+                  } else if (_vizPromptCache.pending) {
+                      if (promptInput) {
+                          promptInput.value = '';
+                          promptInput.placeholder = 'Generating visualization prompt…';
+                          promptInput.classList.add('viz-loading');
+                      }
+                      await _vizPromptCache.pending;
+                      if (_vizPromptCache.prompt) {
+                          promptMsg = _vizPromptCache.prompt;
+                          usedCache = true;
+                          console.log('[VIZ] Using pending-cached prompt');
+                      }
+                  }
               }
-              try {
-                  promptMsg = await Promise.race([
-                      callChat([{
-                          role:'user',
-                          content: visualizePrompt
-                      }]),
-                      new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
-                  ]);
-              } catch (e) {
-                  promptMsg = "Cinematic scene, " + (state.picks?.world || 'atmospheric') + " world, natural lighting, grounded emotion.";
+
+              if (!usedCache) {
+                  // No cache — generate fresh
+                  const visualizePrompt = buildVisualizePrompt({ mode: visualizeMode, lastText, anchorText });
+                  if (promptInput) {
+                      promptInput.value = '';
+                      promptInput.placeholder = 'Generating visualization prompt…';
+                      promptInput.classList.add('viz-loading');
+                  }
+                  try {
+                      promptMsg = await Promise.race([
+                          callChat([{
+                              role:'user',
+                              content: visualizePrompt
+                          }]),
+                          new Promise((_, reject) => setTimeout(() => reject(new Error("Prompt timeout")), 25000))
+                      ]);
+                  } catch (e) {
+                      promptMsg = "Cinematic scene, " + (state.picks?.world || 'atmospheric') + " world, natural lighting, grounded emotion.";
+                  }
               }
+
               if (promptInput) {
                   promptInput.classList.remove('viz-loading');
                   promptInput.placeholder = 'Edit prompt or add modifiers…';
@@ -35833,18 +36108,14 @@ Respond in this EXACT format (no labels, just two lines):
                   }
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
 
-                  // VISUALIZATION ECONOMY: Consume credit and mark scene on SUCCESS only
-                  if (consumesCreditOnSuccess) {
-                      // HARD BILLING ASSERT: Never decrement credits without committed image
-                      if (!img.src) {
-                          console.error('[BILLING:GUARD] Credit decrement blocked — no image URL');
-                          return;
-                      }
-                      consumeVizCredit();
-                      if (!state.visual.visualizedScenes) state.visual.visualizedScenes = {};
-                      state.visual.visualizedScenes[sceneKey] = true;
-                      console.log(`[VizEconomy] Credit consumed, scene ${sceneKey} marked as visualized`);
+                  // IMAGE CREDIT CONSUMPTION: Always consume 1 credit on successful generation
+                  if (!img.src) {
+                      console.error('[ImageCredits] Credit decrement blocked — no image URL');
+                      return;
                   }
+                  consumeImageCredit();
+                  if (!state.visual.visualizedScenes) state.visual.visualizedScenes = {};
+                  state.visual.visualizedScenes[sceneKey] = true;
 
                   updateVizButtonStates();
 
@@ -35882,91 +36153,63 @@ Respond in this EXACT format (no labels, just two lines):
   };
 
   // ============================================================
-  // PAY-AS-YOU-GO CONSENT MODAL
-  // Required for Re-Visualize ($0.25 per use)
+  // CREDIT PURCHASE REDIRECT (legacy pay-as-you-go entry points)
   // ============================================================
 
   function showPayAsYouGoModal() {
-      const modal = document.getElementById('payAsYouGoModal');
-      if (modal) modal.classList.remove('hidden');
+      openCreditPurchaseModal();
   }
 
   window.closePayAsYouGoModal = function() {
-      const modal = document.getElementById('payAsYouGoModal');
-      if (modal) modal.classList.add('hidden');
+      closeCreditPurchaseModal();
   };
 
   window.confirmPayAsYouGo = function() {
-      // NOTE: Billing is a STUB — no payment processor wired yet
-      enablePayAsYouGo();
-      window.closePayAsYouGoModal();
-      updateVizButtonStates();
-      // User must click Re-Visualize explicitly — no auto-trigger
+      // Redirect to credit purchase flow
+      openCreditPurchaseModal();
   };
 
-  // Lock Character Look - manual immediate lock
+  // Lock Character Look — driven by checkbox toggle
   window.lockCharacterLook = function() {
       if (!state.visual) {
           state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
       }
       state.visual.locked = true;
-
-      // Update UI feedback
-      const btn = document.getElementById('btnLockLook');
-      const status = document.getElementById('lockLookStatus');
-      if (btn) {
-          btn.textContent = '🔒 Locked';
-          btn.disabled = true;
-          // PLAQUE REGIME: CSS handles disabled state — no opacity mutation
-      }
-      if (status) {
-          status.style.display = 'inline';
-      }
-
       showToast('Character look locked. Appearance will persist.');
       saveStorySnapshot();
   };
 
-  // Update lock button state when vizModal opens
-  function updateLockButtonState() {
-      const btn = document.getElementById('btnLockLook');
-      const status = document.getElementById('lockLookStatus');
-      if (!btn) return;
+  window.unlockCharacterLook = function() {
+      if (!state.visual) return;
+      state.visual.locked = false;
+      showToast('Character look unlocked.');
+      saveStorySnapshot();
+  };
 
-      if (state.visual?.locked) {
-          btn.textContent = '🔒 Locked';
-          btn.disabled = true;
-          // PLAQUE REGIME: CSS handles disabled state — no opacity mutation
-          if (status) status.style.display = 'inline';
+  // Sync checkbox state when vizModal opens
+  function syncLockCheckbox() {
+      const chk = document.getElementById('chkAutoLockVisual');
+      if (chk) chk.checked = !!state.visual?.locked;
+  }
+
+  // Wire checkbox to lock/unlock directly
+  document.getElementById('chkAutoLockVisual')?.addEventListener('change', function() {
+      if (this.checked) {
+          window.lockCharacterLook();
       } else {
-          btn.textContent = '🔒 Lock This Look';
-          btn.disabled = false;
-          // PLAQUE REGIME: No opacity mutation — material is static
-          if (status) status.style.display = 'none';
+          window.unlockCharacterLook();
       }
+  });
+
+  // Backwards-compatible stub
+  function ensureLockButtonExists() {
+      syncLockCheckbox();
+  }
+  function updateLockButtonState() {
+      syncLockCheckbox();
   }
 
-  // Fallback: Ensure lock button exists when vizModal opens
-  function ensureLockButtonExists() {
-      const container = document.getElementById('lockLookContainer');
-      if (container) {
-          updateLockButtonState();
-          return;
-      }
-      // Fallback injection if container missing
-      const vizModal = document.querySelector('#vizModal .viz-modal-content');
-      if (vizModal && !document.getElementById('lockLookContainer')) {
-          const fallbackDiv = document.createElement('div');
-          fallbackDiv.id = 'lockLookContainer';
-          fallbackDiv.style.cssText = 'margin-top:10px; text-align:center;';
-          fallbackDiv.innerHTML = `
-              <button id="btnLockLook" class="small-btn" style="background:#444; font-size:0.85em;" onclick="window.lockCharacterLook()">🔒 Lock This Look</button>
-              <span id="lockLookStatus" style="display:none; margin-left:8px; color:var(--gold); font-size:0.8em;">✓ Locked</span>
-          `;
-          vizModal.appendChild(fallbackDiv);
-          updateLockButtonState();
-      }
-  }
+  // (Legacy lockLookContainer fallback removed — checkbox drives lock state directly)
 
   // TASK B: Initialize provider dropdown with available providers
   // PROVIDER VISIBILITY: All providers shown, unavailable ones are disabled with explanation
@@ -35977,10 +36220,8 @@ Respond in this EXACT format (no labels, just two lines):
       // Clear existing options
       dropdown.innerHTML = '';
 
-      // Check Gemini availability (credits or pay-as-you-go)
-      const geminiCredits = state.visual?.geminiCredits || 0;
-      const payAsYouGo = state.visual?.payAsYouGoEnabled || false;
-      const geminiAvailable = geminiCredits > 0 || payAsYouGo;
+      // Check Gemini availability (image credits required)
+      const geminiAvailable = hasImageCredits();
 
       // All providers shown — unavailable ones are disabled, not hidden
       const providers = [
@@ -36779,6 +37020,16 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
 
           state.turnCount++;
 
+          // Subscriber reward: +1 image credit every 5 scenes
+          if (state.subscribed === true) {
+              const sceneNumber = state.turnCount;
+              if (sceneNumber % 5 === 0 && sceneNumber > (state.lastSceneRewarded || 0)) {
+                  state.imageCredits = (state.imageCredits || 0) + 1;
+                  state.lastSceneRewarded = sceneNumber;
+                  persistImageCredits();
+              }
+          }
+
           // Update visualization economy credits based on scene milestones
           updateVizEconomyCredits();
 
@@ -36817,6 +37068,9 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
 
           // Add new page with animation
           StoryPagination.addPage(pageContent, true);
+
+          // Pre-load visualization prompt in background while user reads
+          if (typeof preloadVizPrompt === 'function') preloadVizPrompt();
 
           // CRITICAL: Mark story as displayed AFTER successful DOM insertion
           storyDisplayed = true;
@@ -37685,22 +37939,10 @@ FATE CARD ADAPTATION (CRITICAL):
       }, { passive: false });
   })();
 
-  // AUTH GATE: Check login status and handle persistence accordingly
-  state.isLoggedIn = localStorage.getItem('sb_logged_in') === '1';
-
-  if (!state.isLoggedIn) {
-      // STATELESS MODE: Clear all persisted state when not logged in
-      // This ensures testing reloads do not retain stories, purchases, or progress
-      clearAnonymousState();
-      state.storyId = null;
-      state.subscribed = false;
-      state.billingStatus = 'active';
-  } else {
-      // LOGGED IN: Restore persisted state normally
-      state.storyId = localStorage.getItem('sb_current_story_id');
-      state.subscribed = localStorage.getItem('sb_subscribed') === '1';
-      state.billingStatus = localStorage.getItem('sb_billing_status') || 'active';
-  }
+  // Restore persisted state (Supabase anon session auto-provisioned at boot)
+  state.storyId = localStorage.getItem('sb_current_story_id');
+  state.subscribed = localStorage.getItem('sb_subscribed') === '1';
+  state.billingStatus = localStorage.getItem('sb_billing_status') || 'active';
 
   syncTierFromAccess();
   updateContinueButtons();
@@ -37798,8 +38040,7 @@ FATE CARD ADAPTATION (CRITICAL):
           genre: ['CrimeSyndicate', 'Billionaire', 'Noir', 'Heist', 'Espionage', 'Political',
                   'Escape', 'Redemption', 'BuildingBridges', 'Purgatory', 'RelentlessPast',
                   'Sports', 'Survival', 'Obsession', 'ForbiddenKnowledge'],
-          tone: ['Earnest', 'WryConfession', 'Satirical', 'Dark', 'Horror', 'Mythic',
-                 'Comedic', 'Surreal', 'Poetic'],
+          tone: ['Earnest', 'WryConfession', 'Dark', 'Mythic'],
           dynamic: ['Proximity', 'SecretIdentity', 'Friends', 'Enemies',
                     'SecondChance', 'Forbidden'],
           arousal: ['Clean', 'Naughty', 'Erotic', 'Dirty']
@@ -37918,13 +38159,16 @@ FATE CARD ADAPTATION (CRITICAL):
               if (axis === 'arousal') {
                   state.intensity = canonical;
               } else {
-                  state.picks[axis] = canonical;
+                  state.picks[axis] = axis === 'tone' ? canonicalizeTone(canonical) : canonical;
               }
-              console.log('[DEV:StateChange] ' + axis + ' → ' + canonical);
-              log('[DEV:StateChange] ' + axis + ' → ' + canonical);
+              console.log('[DEV:StateChange] ' + axis + ' → ' + (state.picks[axis] || canonical));
+              log('[DEV:StateChange] ' + axis + ' → ' + (state.picks[axis] || canonical));
               // Trigger dependent recalculations
               if (axis === 'arousal') {
                   applyCoverIntensityLayers(canonical, state.picks?.world);
+              }
+              if (axis === 'tone' || axis === 'world' || axis === 'pressure') {
+                  deriveToneBias();
               }
               return true;
           }
@@ -37962,7 +38206,7 @@ FATE CARD ADAPTATION (CRITICAL):
               log('regen cover');
               log('set world <Modern|Historical|Fantasy|SciFi|Dystopia|PostApocalyptic>');
               log('set genre <' + DEV_CMD_REGISTRY.genre.slice(0, 5).join('|') + '|...>');
-              log('set tone <Earnest|WryConfession|Satirical|Dark|Horror|Mythic|Comedic|Surreal|Poetic>');
+              log('set tone <Earnest|WryConfession|Dark|Mythic>');
               log('set dynamic <Proximity|SecretIdentity|Friends|Enemies|SecondChance|Forbidden>');
               log('set arousal <Clean|Naughty|Erotic|Dirty>');
               log('=== LEGACY COMMANDS ===');

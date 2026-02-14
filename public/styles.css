@@ -83,7 +83,7 @@
 #storyContent.theme-easy { background: #fffdd0; color: #000; }
 #storyContent.theme-easy #storyText, #storyContent.theme-easy .story-page { background: #fffdd0; color: #000; }
 
-/* LEGACY: Keep body-level themes for backwards compatibility but they are no longer applied */
+/* LEGACY: body-level theme vars kept for reference but not applied — themes scope to #storyContent only */
 body.theme-sepia { --bg1:#2c2218; --bg2:#3e2f22; --pink:#d2b48c; --hot:#8b4513; --gold:#ffa500; --ink:#f5deb3; --panel:rgba(40,30,20,0.8); --btn-bg:#5c4033; --btn-txt:#f5deb3; }
 body.theme-midnight { --bg1:#000000; --bg2:#111111; --pink:#444; --hot:#666; --gold:#888; --ink:#ccc; --panel:rgba(20,20,20,0.9); --btn-bg:#333; --btn-txt:#aaa; }
 body.theme-print { --bg1:#e0e0e0; --bg2:#f0f0f0; --pink:#333; --hot:#000; --gold:#444; --ink:#111; --panel:rgba(255,255,255,0.95); --btn-bg:#ccc; --btn-txt:#000; }
@@ -1402,7 +1402,8 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* These are identity plates, not reveal cards                                      */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .character-tarot-card {
-    width: 206px; /* 25% larger than 165px */
+    width: 206px;
+    max-width: 45vw; /* Scale down on narrow viewports */
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     /* CHARACTER CARD ART PNG — frame baked into PNG, no CSS border */
     background-image: url('/assets/card-art/cards/Character-face.png');
@@ -1647,11 +1648,11 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
         padding: 3px 5px;
     }
 
-    /* Shrink Destiny deck 50% — transform + negative margins to reclaim layout space */
+    /* Shrink Destiny deck 55% — transform + negative margins to reclaim layout space */
     #characterSectionRow .destiny-mini-deck-stack {
-        transform: scale(0.5);
+        transform: scale(0.55);
         transform-origin: center center;
-        margin: -62px -37px; /* (248-124)/2 vertical, (148-74)/2 horizontal */
+        margin: -56px -33px;
     }
 
     /* Reduce row gap so cards can breathe */
@@ -1662,7 +1663,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 
     /* Allow character cards to shrink further */
     #characterSectionRow .character-tarot-card {
-        min-width: 120px;
+        min-width: 110px;
     }
 }
 
@@ -1689,7 +1690,14 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     }
 
     #characterSectionRow .character-tarot-card {
-        min-width: 100px;
+        min-width: 90px;
+    }
+
+    /* Shrink Destiny deck further on extra-narrow */
+    #characterSectionRow .destiny-mini-deck-stack {
+        transform: scale(0.4);
+        transform-origin: center center;
+        margin: -74px -44px;
     }
 }
 
@@ -2202,12 +2210,13 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     font-family: 'Lora', serif;
     font-size: 0.9em;
     font-weight: 400;
-    color: rgba(245, 240, 230, 0.5); /* Even lower salience */
+    color: rgba(160, 160, 160, 0.7); /* Grey, lower salience */
     text-align: center;
     margin: 0 0 20px 0;
     padding: 0;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    letter-spacing: 0.6em;
+    font-variant: small-caps;
+    text-transform: none;
     /* No glow, no gradients, no UI decoration */
 }
 
@@ -2874,6 +2883,117 @@ select:-webkit-autofill {
 
 /* UTILS — DSP: Box uses 2px double gold border, no radius */
 .box { max-width:600px; margin:20px auto; padding:25px; background:var(--panel); border:2px double gold; border-radius:0; box-shadow:0 0 0 1px #0a0a0a, 0 0 20px rgba(0,0,0,0.2); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/*                     VAULT MENU — Collapsible Tab Panels                         */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+#menuOverlay.overlay {
+    background: transparent;
+    pointer-events: none;
+}
+#menuOverlay > * {
+    pointer-events: auto;
+}
+
+.vault-panel {
+    position: relative;
+    background: var(--panel);
+    border: 2px double gold;
+    border-radius: 0;
+    padding: 20px 24px;
+    max-width: 280px;
+    width: 90%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.vault-x {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 1.4em;
+    cursor: pointer;
+    opacity: 0.6;
+    line-height: 1;
+    padding: 0;
+}
+.vault-x:hover { opacity: 1; }
+
+.vault-title {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold);
+    letter-spacing: 0.6em;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.vault-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.vault-sub {
+    background: var(--panel);
+    border: 2px double gold;
+    border-radius: 0;
+    padding: 20px 24px;
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.vault-sub-title {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold);
+    letter-spacing: 0.4em;
+    font-size: 1em;
+    margin-bottom: 6px;
+}
+
+.vault-label {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    font-size: 0.85em;
+    margin-top: 4px;
+}
+
+.vault-theme-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.vault-select {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg1);
+    color: var(--ink);
+    border: 1px solid var(--gold);
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+}
+
+.vault-sub input[type="range"] {
+    width: 100%;
+}
 
 /* CHOICE BUTTONS - Responsive Stack */
 .choice-buttons { 
@@ -3771,27 +3891,15 @@ select {
 
 #burgerBtn img { filter: none; }
 
-/* Narrow screens: scale down corner buttons but keep in view */
+/* Narrow screens: reposition corner buttons but keep full size (32×32) */
 @media (max-width: 600px) {
-    #burgerBtn,
-    #globalBackBtn {
-        transform: scale(0.75);
-    }
     #burgerBtn {
-        transform-origin: top right;
         top: 4px;
         right: 4px;
     }
     #globalBackBtn {
-        transform-origin: top left;
         top: 4px;
         left: 4px;
-    }
-}
-@media (max-width: 400px) {
-    #burgerBtn,
-    #globalBackBtn {
-        transform: scale(0.6);
     }
 }
 
@@ -3855,6 +3963,8 @@ select {
     border: 1px solid rgba(255, 215, 0, 0.4); /* Gold outline */
     background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%); /* DSP matte metal */
     resize: vertical;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 /* Visualization prompt loading animation */
@@ -4836,7 +4946,7 @@ textarea.fate-field {
 /* Character cards: Proportional sizing, allow shrinking to fit viewport */
 #characterSectionRow .character-tarot-card {
     flex-shrink: 1;
-    min-width: 150px; /* Minimum readable size - 25% larger */
+    min-width: 120px; /* Minimum readable size */
     border: none !important; /* PNG has frame baked in */
 }
 
@@ -7197,19 +7307,19 @@ textarea.fate-field {
     display: flex !important; /* Override corridor-section column flex */
     flex-direction: row !important; /* Force horizontal wrapping */
     flex-wrap: wrap !important;
-    gap: 16px;
+    gap: 12px;
     justify-content: center;
     align-content: center; /* Center rows vertically within available space */
     align-items: center;
     width: 95%;
-    max-width: 624px; /* 5 cards max: 5×112 + 4×16 */
+    max-width: 748px; /* 5 cards max: 5×140 + 4×12 */
     margin: 0 auto; /* Horizontal center only, vertical handled by parent */
 }
 
 /* Explicit flex sizing: width:100% on .sb-card resolves to container-wide
    flex-basis, which can cause wrapping at tight margins. Fix the basis. */
 .sb-grid .sb-card {
-    flex: 0 0 112px;
+    flex: 0 0 140px;
 }
 
 /* Size-specific grids inherit max-width cap */
@@ -7219,20 +7329,20 @@ textarea.fate-field {
 
 /* 2-card grid: cap width to keep cards visually grouped */
 .sb-grid-2 {
-    max-width: 280px; /* 2×112 + 1×16 + breathing room */
+    max-width: 292px; /* 2×140 + 1×12 */
 }
 
-/* 6-card grid: wider to fit all 6 on one row (6×112 + 5×16 = 752px) */
+/* 6-card grid: wider to fit all 6 on one row (6×140 + 5×12 = 900px) */
 .sb-grid-6 {
     width: 95%;
-    max-width: 780px;
+    max-width: 900px;
 }
 
 /* Medium screens */
 @media (max-width: 800px) {
     /* 6-card grid: force 3+3 wrapping when 6 won't fit in one row */
     .sb-grid-6 {
-        max-width: 368px; /* 3×112 + 2×16 = 368px */
+        max-width: 432px; /* 3×140 + 2×12 = 444px, slightly under */
     }
 }
 
@@ -7254,10 +7364,10 @@ textarea.fate-field {
     .sb-grid-6,
     .sb-grid-9 {
         width: 95%;
-        gap: 8px;
+        gap: 6px;
     }
     .sb-grid .sb-card {
-        flex-basis: 79px;
+        flex-basis: 100px;
     }
 }
 
@@ -7268,9 +7378,8 @@ textarea.fate-field {
 .archetype-grid-8 {
     display: grid !important; /* Override corridor-section flex */
     flex-direction: unset !important;
-    /* Grid columns scale via minmax — cards 25% smaller than original 150px max */
-    grid-template-columns: repeat(4, minmax(68px, 112px));
-    gap: 12px;
+    grid-template-columns: repeat(4, minmax(85px, 140px));
+    gap: 10px;
     justify-content: center;
     align-content: center;
     max-width: 95%;
@@ -7287,22 +7396,22 @@ textarea.fate-field {
 
 @media (max-width: 700px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(4, minmax(60px, 98px));
-        gap: 10px;
+        grid-template-columns: repeat(4, minmax(75px, 122px));
+        gap: 8px;
     }
 }
 
 @media (max-width: 560px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(2, minmax(68px, 112px));
-        gap: 10px;
+        grid-template-columns: repeat(2, minmax(85px, 140px));
+        gap: 8px;
     }
 }
 
 @media (max-width: 400px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(2, minmax(60px, 90px));
-        gap: 8px;
+        grid-template-columns: repeat(2, minmax(75px, 112px));
+        gap: 6px;
     }
 }
 
@@ -7910,7 +8019,7 @@ textarea.fate-field {
 /* Cards are dumb rectangles that fill their grid cell */
 .sb-card {
     width: 100%;
-    max-width: 112px; /* 25% smaller than 150px */
+    max-width: 140px;
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     perspective: 1000px;
     cursor: pointer;
@@ -7922,7 +8031,7 @@ textarea.fate-field {
 
 /* Responsive: smaller max on narrow screens */
 @media (max-width: 400px) {
-    .sb-card { max-width: 79px; } /* 25% smaller than 105px */
+    .sb-card { max-width: 100px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -8136,6 +8245,9 @@ textarea.fate-field {
 #pressureGrid .sb-card .sb-card-back {
     background-color: transparent;
 }
+#pressureGrid .sb-card.destiny-choice-card .sb-card-back.destiny-choice-back {
+    background-image: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
+}
 
 #pressureGrid .sb-card .sb-card-front {
     background-color: transparent;
@@ -8245,6 +8357,9 @@ textarea.fate-field {
 #dynamicGrid .sb-card .sb-card-back,
 #dynamicGrid .sb-card .sb-card-front {
     background-color: transparent;
+}
+#dynamicGrid .sb-card.destiny-choice-card .sb-card-back.destiny-choice-back {
+    background-image: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
 }
 
 #dynamicGrid .sb-card .sb-card-back .sb-card-title {
@@ -8404,7 +8519,7 @@ textarea.fate-field {
     top: calc(24% + 5px);
 }
 #toneGrid .sb-card[data-val="WryConfession"] .sb-card-back .sb-card-title {
-    top: calc(24% - 5px);
+    top: calc(24% + 5px);
 }
 
 /* Pressure (Story Pull) card back text: 10px lower */
@@ -8472,6 +8587,18 @@ textarea.fate-field {
 
 /* Pressure front desc visible (descriptions live on front/black face) */
 
+/* Pressure front desc: above flavor buttons, inside gold text box */
+#pressureGrid .sb-card:not(.zoomed) .sb-card-front .sb-card-desc {
+    position: absolute;
+    top: 17%;
+    left: 10%;
+    right: 10%;
+    z-index: 3;
+    font-size: 5px;
+    line-height: 1.25;
+    flex: none;
+}
+
 /* Gold pressed desc on all black card fronts */
 #worldGrid .sb-card .sb-card-front .sb-card-desc,
 #toneGrid .sb-card .sb-card-front .sb-card-desc,
@@ -8509,7 +8636,7 @@ textarea.fate-field {
 /* Container for miniature flavor buttons on the front face */
 .pressure-front-flavors {
     position: absolute;
-    top: 28%;
+    top: calc(28% + 20px);
     left: 8%;
     right: 8%;
     bottom: 14%;
@@ -8526,14 +8653,10 @@ textarea.fate-field {
     font-size: 4.5px;
     padding: 2px 4px;
     min-height: 8px;
-    width: 100%;
+    width: auto;
 }
 /* Hide unzoomed flavor buttons when card is zoomed — zoom has its own UI */
 .sb-card.zoomed .pressure-front-flavors {
-    display: none;
-}
-/* No tooltips on unzoomed miniature buttons — too small */
-.pressure-front-flavors .sb-flavor-btn[data-tooltip]::after {
     display: none;
 }
 /* No gleam on unzoomed miniature buttons */
@@ -8698,10 +8821,24 @@ textarea.fate-field {
     z-index: 2;
 }
 
-/* World/Pressure zoomed: hide face-up desc (zoom has its own content) */
-.sb-card.zoomed[data-grp="world"] .sb-card-front .sb-card-desc,
-.sb-card.zoomed[data-grp="pressure"] .sb-card-front .sb-card-desc {
+/* World zoomed: hide face-up desc (zoom has its own content) */
+.sb-card.zoomed[data-grp="world"] .sb-card-front .sb-card-desc {
     display: none;
+}
+
+/* Pressure zoomed: desc visible above flavor buttons */
+.sb-card.zoomed[data-grp="pressure"] .sb-card-front .sb-card-desc {
+    position: absolute;
+    top: 18%;
+    left: 12%;
+    right: 12%;
+    font-family: 'Lora', serif;
+    font-size: 5px;
+    line-height: 1.3;
+    color: #c9a84c;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+    text-align: center;
+    z-index: 3;
 }
 
 /* Description: 50% smaller, gold pressed into card surface */
@@ -8950,7 +9087,7 @@ textarea.fate-field {
     position: relative; /* Let flexbox handle centering */
     pointer-events: auto; /* Card itself is interactive */
     transition: transform 0.3s ease;
-    max-width: none; /* Override base 112px cap — JS sets explicit zoom dimensions */
+    max-width: none; /* Override base 140px cap — JS sets explicit zoom dimensions */
     overflow: visible; /* Allow sparkles to escape card bounds */
 }
 
@@ -8960,8 +9097,14 @@ textarea.fate-field {
 .sb-card.zoomed .sb-flavor-btn,
 .sb-card.zoomed .sb-zoom-custom-input {
     pointer-events: auto;
-    position: relative;
     z-index: 1;
+}
+/* Children need position:relative for z-index stacking, but .sb-zoom-content
+   MUST stay position:absolute (top/bottom layout). Don't override it. */
+.sb-card.zoomed .sb-zoom-flavors,
+.sb-card.zoomed .sb-flavor-btn,
+.sb-card.zoomed .sb-zoom-custom-input {
+    position: relative;
 }
 
 /* When zoomed, keep front face visible.
@@ -9232,10 +9375,13 @@ textarea.fate-field {
 .sb-zoom-flavors {
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: flex-end;
     align-items: center;
     width: 100%;
     height: 100%;
+    gap: 10px;
+    padding-bottom: 20px;
+    box-sizing: border-box;
 }
 .sb-zoom-flavors .sb-flavor-btn {
     width: 80%;
@@ -9251,7 +9397,7 @@ textarea.fate-field {
     background-position: center !important;
     background-color: transparent !important;
     background-repeat: no-repeat !important;
-    border: 1px solid rgba(218, 165, 32, 0.5) !important;
+    border: none !important;
     border-radius: 3px !important;
     color: #1a1408;
     font-weight: 600;
@@ -9292,6 +9438,7 @@ textarea.fate-field {
 /* Selected: Pressed-in bevel matching world flavor hit zones — stays pressed */
 .sb-flavor-btn.selected {
     color: #1a1408;
+    border: 1px solid transparent !important;
     border-color: rgba(50, 40, 20, 0.8) rgba(220, 210, 180, 0.65) rgba(220, 210, 180, 0.65) rgba(50, 40, 20, 0.8) !important;
     box-shadow:
         inset 3px 3px 6px rgba(0, 0, 0, 0.55),
@@ -9643,9 +9790,25 @@ textarea.fate-field {
     margin: 0;
     padding: 4px 0;
     text-align: center;
+    font-family: 'Lora', serif !important;
+    font-variant: small-caps;
     font-size: 1em;
     line-height: 1;
     letter-spacing: 0.6em;
+    /* Realistic gold — layered metallic gradient with highlight and shadow */
+    background: linear-gradient(
+        180deg,
+        #bf953f 0%,
+        #fcf6ba 25%,
+        #b38728 50%,
+        #fbf5b7 75%,
+        #aa771c 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #d4a940; /* fallback */
+    text-shadow: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -10378,15 +10541,8 @@ body.corridor-mode .sb-grid.corridor-section {
     border-radius: 4px 0 0 4px;
 }
 
-/* Compact corridor arrows on narrow screens */
+/* Narrow screens: reposition corridor arrows but keep full size */
 @media (max-width: 768px) {
-    .corridor-nav-arrow {
-        width: 32px;
-        height: 60px;
-        font-size: 22px;
-        opacity: 0.5;
-        background: rgba(0, 0, 0, 0.3);
-    }
     .corridor-nav-left { left: 4px; }
     .corridor-nav-right { right: 4px; }
 }
@@ -10453,6 +10609,13 @@ body.corridor-mode .corridor-section {
     -webkit-overflow-scrolling: touch;
 }
 
+/* Small-grid corridors (few cards) — vertically center instead of flex-start */
+body.corridor-mode #lengthSection.corridor-section,
+body.corridor-mode #flowRowPressure.corridor-section,
+body.corridor-mode #flowRowDynamic.corridor-section {
+    justify-content: center !important;
+}
+
 /* Archetype sub-sections share a stage — only the grid should flex-grow */
 body.corridor-mode #archetypeSectionTitle.corridor-section {
     flex: 0 0 auto !important;
@@ -10501,6 +10664,13 @@ body.corridor-complete #setup {
 
 body.corridor-complete {
     overflow: auto;
+}
+
+/* Corridor-complete: corridor sections revert to auto height, no dark bg block */
+body.corridor-complete .corridor-section {
+    min-height: auto !important;
+    max-height: none !important;
+    background: transparent !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -10628,7 +10798,7 @@ body.corridor-complete {
     bottom: 48px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 2147483647; /* Maximum z-index — nothing can exceed this */
+    z-index: 2000; /* Above cards/corridors, below overlays (3000) */
     pointer-events: none; /* Layer doesn't block interaction with content below */
     display: flex;
     flex-direction: column;
@@ -10673,6 +10843,33 @@ body.corridor-complete {
 .god-mode-plaque input[type="checkbox"] {
     accent-color: var(--gold);
 }
+
+/* God Mode reader button — DSP gold plaque in story interface */
+.god-mode-reader-btn {
+    width: 160px;
+    height: 44px;
+    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.85em;
+    color: #111;
+    text-shadow:
+        -1px -1px 0 rgba(218, 165, 32, 0.4),
+        1px -1px 0 rgba(218, 165, 32, 0.4),
+        -1px 1px 0 rgba(218, 165, 32, 0.4),
+        1px 1px 0 rgba(218, 165, 32, 0.4);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: filter 0.15s ease;
+}
+.god-mode-reader-btn:hover { filter: brightness(1.1); }
+.god-mode-reader-btn.hidden { display: none; }
 
 /* God Mode unlock button — DSP gold plaque with Lora small caps */
 .god-mode-unlock-btn {

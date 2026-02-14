@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "vercel": "^50.13.2"
+    "@supabase/supabase-js": "^2.95.3",
+    "stripe": "^20.3.1",
+    "vercel": "^50.15.1"
   }
 }

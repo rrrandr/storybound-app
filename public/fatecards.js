@@ -327,85 +327,35 @@ function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
     _sparkleActiveCardId = cardId;
 
     // ═══════════════════════════════════════════════════════════════════
-    // STRUCTURAL SPARKLES MODE: DOM-anchored, no scroll listeners
-    // Sparkles are children of anchor elements, scroll naturally
+    // CONTINUOUS SPARKLES: Anchored sparkles stay on permanently
+    // No ON/OFF cycling — anchored elements don't need stop/restart
     // ═══════════════════════════════════════════════════════════════════
+
+    const isValidAnchor = (el) => {
+        if (!el || typeof el.getBoundingClientRect !== 'function') return false;
+        const r = el.getBoundingClientRect();
+        return r && r.width > 0 && r.height > 0;
+    };
+
     if (USE_STRUCTURAL_SPARKLES) {
-        function runStructuralCycle() {
-            if (_sparkleActiveCardId !== cardId) return;
-
-            console.log('[FX:DEBUG] runStructuralCycle executing for card:', cardId);
-
-            // ON phase: start structural sparkles
-            stopStructuralSparkles();
-
-            const isValidAnchor = (el) => {
-                if (!el || typeof el.getBoundingClientRect !== 'function') return false;
-                const r = el.getBoundingClientRect();
-                return r && r.width > 0 && r.height > 0;
-            };
-
-            if (isValidAnchor(cardEl)) startStructuralSparkles(cardEl);
-            if (isValidAnchor(actInput)) startStructuralSparkles(actInput);
-            if (isValidAnchor(diaInput)) startStructuralSparkles(diaInput);
-
-            // After 3s, stop (OFF phase)
-            _sparkleCycleTimer = setTimeout(() => {
-                if (_sparkleActiveCardId !== cardId) return;
-                stopStructuralSparkles();
-
-                // After 2s OFF, repeat cycle
-                _sparkleCycleTimer = setTimeout(() => {
-                    if (_sparkleActiveCardId !== cardId) return;
-                    runStructuralCycle();
-                }, 2000);
-            }, 3000);
-        }
-
-        runStructuralCycle();
+        console.log('[FX:DEBUG] Starting continuous structural sparkles for card:', cardId);
+        stopStructuralSparkles();
+        if (isValidAnchor(cardEl)) startStructuralSparkles(cardEl);
+        if (isValidAnchor(actInput)) startStructuralSparkles(actInput);
+        if (isValidAnchor(diaInput)) startStructuralSparkles(diaInput);
         return;
     }
 
-    // ═══════════════════════════════════════════════════════════════════
-    // LEGACY OVERLAY MODE: Original position:fixed implementation
-    // Preserved unchanged for rollback capability
-    // ═══════════════════════════════════════════════════════════════════
-    function runCycle() {
-        // Check if still the active card
-        if (_sparkleActiveCardId !== cardId) return;
-
-        console.log('[FX:DEBUG] runCycle executing for card:', cardId);
-
-        // ON phase: start emanations (only for valid anchors)
-        if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
-        if (typeof window.startFireflyEmanation === 'function') {
-            // Validate anchors before emission — abort if stale/removed
-            const isValidAnchor = (el) => {
-                if (!el || typeof el.getBoundingClientRect !== 'function') return false;
-                const r = el.getBoundingClientRect();
-                return r && r.width > 0 && r.height > 0;
-            };
-            if (isValidAnchor(cardEl)) window.startFireflyEmanation(cardEl);
-            if (isValidAnchor(actInput)) window.startFireflyEmanation(actInput);
-            if (isValidAnchor(diaInput)) window.startFireflyEmanation(diaInput);
-        } else {
-            console.warn('[FX:DEBUG] startFireflyEmanation not found — FX will not render');
-        }
-
-        // After 3s, stop emanations (OFF phase)
-        _sparkleCycleTimer = setTimeout(() => {
-            if (_sparkleActiveCardId !== cardId) return;
-            if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
-
-            // After 2s OFF, repeat cycle
-            _sparkleCycleTimer = setTimeout(() => {
-                if (_sparkleActiveCardId !== cardId) return;
-                runCycle();
-            }, 2000);
-        }, 3000);
+    // LEGACY OVERLAY MODE: Start emanations once, keep running
+    console.log('[FX:DEBUG] Starting continuous emanations for card:', cardId);
+    if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
+    if (typeof window.startFireflyEmanation === 'function') {
+        if (isValidAnchor(cardEl)) window.startFireflyEmanation(cardEl);
+        if (isValidAnchor(actInput)) window.startFireflyEmanation(actInput);
+        if (isValidAnchor(diaInput)) window.startFireflyEmanation(diaInput);
+    } else {
+        console.warn('[FX:DEBUG] startFireflyEmanation not found — FX will not render');
     }
-
-    runCycle();
 }
 
 function stopSparkleCycle() {
@@ -2045,6 +1995,14 @@ function setSelectedState(mount, selectedCardEl){
                 }, 600);
             };
         });
+
+        // Rebind Petition Fate card (has no fateOptions entry, skipped by forEach above)
+        const petitionCard = mount.querySelector('.petition-fate-card');
+        if (petitionCard) {
+            petitionCard.onclick = () => {
+                if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
+            };
+        }
 
         // Rebind commit hooks
         bindCommitHooks(mount);

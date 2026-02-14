@@ -8,3 +8,5 @@ api/config
 index.html.backup
 .vercel
 .env*.local
+
+node_modules/
