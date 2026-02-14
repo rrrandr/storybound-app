@@ -34,10 +34,15 @@
 </button>
 
 <div id="auth-panel" class="hidden">
+  <div id="auth-title" style="color:gold; font-family:'Lora',serif; font-size:0.95em; text-align:center; margin-bottom:2px;">Sign In</div>
   <input id="auth-email" placeholder="Email" />
   <input id="auth-password" type="password" placeholder="Password" />
-  <button id="btn-signin">Sign in</button>
+  <button id="btn-auth-submit">Sign In</button>
   <div id="auth-status"></div>
+  <div id="auth-toggle" style="font-size:0.75em; text-align:center; margin-top:2px;">
+    <span style="color:#888;">New user?</span>
+    <a href="#" id="auth-toggle-link" style="color:gold; text-decoration:underline; cursor:pointer;">Create Account</a>
+  </div>
 </div>
 
 <button id="burgerBtn"><img src="/assets/ui/burger-keyhole-ornate.png" alt="Menu" style="width:32px; height:32px; vertical-align:middle;"></button>

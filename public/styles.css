@@ -4085,9 +4085,12 @@ select {
 .petition-quill-icon { font-size: 1.5em; color: var(--gold); opacity: 0.8; }
 
 /* AUTH PANEL */
-#auth-panel { position:fixed; top:10px; right:60px; z-index:10003; background:rgba(0,0,0,0.9); padding:10px; border:1px solid #444; border-radius:0; display:flex; flex-direction:column; gap:5px; }
-#auth-panel input { padding:5px; width: 150px; font-size: 0.8em; }
-#auth-status { font-size:12px; margin-top:6px; color:#fff; }
+#auth-panel { position:fixed; top:10px; right:60px; z-index:10003; background:rgba(0,0,0,0.92); padding:14px 16px; border:1px solid gold; border-radius:0; display:flex; flex-direction:column; gap:6px; }
+#auth-panel input { padding:6px 8px; width: 180px; font-size: 0.85em; background: rgba(20,20,20,0.9); border: 1px solid rgba(218,165,32,0.3); color: #fff; font-family: 'Lora', serif; }
+#auth-panel input:focus { outline: none; border-color: gold; }
+#btn-auth-submit { padding:6px 12px; background: rgba(0,0,0,0.8); color: gold; border: 1px solid gold; cursor: pointer; font-family: 'Lora', serif; font-size: 0.85em; letter-spacing: 0.05em; }
+#btn-auth-submit:active { transform: scale(0.97); opacity: 0.85; }
+#auth-status { font-size:11px; margin-top:4px; color:gold; text-align:center; }
 
 /* ARCHETYPE SYSTEM */
 .archetype-header-text { font-size: 1.1em; color: var(--ink); opacity: 0.9; margin: 0 0 5px; text-align: center; }

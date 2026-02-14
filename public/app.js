@@ -230,36 +230,78 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     location.reload();
   });
 
-  // Email/password login handler
-  document.getElementById('btn-signin')?.addEventListener('click', async () => {
-    const email = document.getElementById('auth-email')?.value;
+  // Auth panel — sign in / sign up toggle
+  let authMode = 'signin'; // 'signin' or 'signup'
+
+  document.getElementById('auth-toggle-link')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const title = document.getElementById('auth-title');
+    const btn = document.getElementById('btn-auth-submit');
+    const link = document.getElementById('auth-toggle-link');
+    const label = link?.previousElementSibling;
+    const status = document.getElementById('auth-status');
+    if (status) status.textContent = '';
+
+    if (authMode === 'signin') {
+      authMode = 'signup';
+      if (title) title.textContent = 'Create Account';
+      if (btn) btn.textContent = 'Create Account';
+      if (label) label.textContent = 'Have an account?';
+      if (link) link.textContent = 'Sign In';
+    } else {
+      authMode = 'signin';
+      if (title) title.textContent = 'Sign In';
+      if (btn) btn.textContent = 'Sign In';
+      if (label) label.textContent = 'New user?';
+      if (link) link.textContent = 'Create Account';
+    }
+  });
+
+  // Auth submit — sign in or sign up based on current mode
+  document.getElementById('btn-auth-submit')?.addEventListener('click', async () => {
+    const email = document.getElementById('auth-email')?.value?.trim();
     const password = document.getElementById('auth-password')?.value;
+    const status = document.getElementById('auth-status');
 
     if (!email || !password) {
-      console.warn('[AUTH] Email or password missing');
+      if (status) status.textContent = 'Email and password required.';
+      return;
+    }
+    if (authMode === 'signup' && password.length < 6) {
+      if (status) status.textContent = 'Password must be at least 6 characters.';
       return;
     }
 
+    if (status) status.textContent = authMode === 'signin' ? 'Signing in...' : 'Creating account...';
+
     try {
-      const { data, error } = await sb.auth.signInWithPassword({
-        email,
-        password
-      });
+      let data, error;
+      if (authMode === 'signin') {
+        ({ data, error } = await sb.auth.signInWithPassword({ email, password }));
+      } else {
+        ({ data, error } = await sb.auth.signUp({ email, password }));
+      }
 
       if (error) {
-        console.error('[AUTH] Login failed:', error.message);
+        console.error(`[AUTH] ${authMode} failed:`, error.message);
+        if (status) status.textContent = error.message;
         return;
       }
 
-      console.log('[AUTH] Login successful:', data.user?.id);
+      if (authMode === 'signup' && data.user && !data.session) {
+        // Email confirmation required
+        if (status) status.textContent = 'Check your email to confirm your account.';
+        console.log('[AUTH] Sign-up successful, confirmation email sent');
+        return;
+      }
 
-      // Hide auth panel after success
+      console.log(`[AUTH] ${authMode} successful:`, data.user?.id);
       document.getElementById('auth-panel')?.classList.add('hidden');
-
       location.reload();
 
     } catch (err) {
-      console.error('[AUTH] Login error:', err);
+      console.error(`[AUTH] ${authMode} error:`, err);
+      if (status) status.textContent = 'Something went wrong. Try again.';
     }
   });
 
