@@ -1,3 +1,8 @@
+/* Boot render lock — screens hidden until hydration resolves */
+body.booting .screen {
+  display: none !important;
+}
+
 /* GLOBAL VARS */
 :root {
     --bg1: #0a0a0a; --bg2: #121212; --pink: #ff69b4; --hot: #ff1493; --gold: #ffd700; --ink: #f0e6ff; --panel: rgba(10,10,10,.8);

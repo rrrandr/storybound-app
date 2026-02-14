@@ -18,13 +18,15 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 
-<body>
+<body class="booting">
 
 <div id="auth-panel" class="hidden">
   <div id="auth-title" style="color:gold; font-family:'Lora',serif; font-size:0.95em; text-align:center; margin-bottom:2px;">Sign In</div>
-  <input id="auth-email" placeholder="Email" />
-  <input id="auth-password" type="password" placeholder="Password" />
-  <button id="btn-auth-submit" class="sb-btn-png sm">Sign In</button>
+  <form id="auth-form" method="post">
+    <input id="auth-email" name="email" type="email" placeholder="Email" autocomplete="username" />
+    <input id="auth-password" name="password" type="password" placeholder="Password" autocomplete="current-password" />
+    <button id="btn-auth-submit" type="submit" class="sb-btn-png sm">Sign In</button>
+  </form>
   <div id="auth-status"></div>
   <div id="auth-reset" class="hidden" style="font-size:0.75em; text-align:center;">
     <a href="#" id="auth-reset-link" style="color:gold; text-decoration:underline; cursor:pointer;">Reset Password</a>
@@ -300,7 +302,7 @@
   </div>
 </div>
 
-<div id="ageGate" class="screen overlay" style="background:#000; z-index:9999;">
+<div id="ageGate" class="screen overlay hidden" style="background:#000; z-index:9999;">
   <div style="text-align:center;">
       <h2>Storybound</h2>
       <p style="font-size:1.2em; max-width:500px; margin:20px;">Explicit adult themes. 18+ Only.</p>
@@ -1506,9 +1508,11 @@
   <div class="box" style="max-width:400px;">
     <h3 id="authModalTitle">Log In</h3>
     <div id="authError" style="color:#e74c3c; margin-bottom:10px; display:none;"></div>
-    <input type="email" id="authEmail" placeholder="Email" style="width:100%; margin-bottom:10px; padding:10px;">
-    <input type="password" id="authPassword" placeholder="Password" style="width:100%; margin-bottom:15px; padding:10px;">
-    <button id="authSubmitBtn" onclick="window.handleAuthSubmit()">Log In</button>
+    <form id="authModalForm" method="post">
+      <input type="email" id="authEmail" name="email" placeholder="Email" autocomplete="username" style="width:100%; margin-bottom:10px; padding:10px;">
+      <input type="password" id="authPassword" name="password" placeholder="Password" autocomplete="current-password" style="width:100%; margin-bottom:15px; padding:10px;">
+      <button id="authSubmitBtn" type="submit">Log In</button>
+    </form>
     <p style="margin-top:15px; font-size:0.9em;">
       <span id="authToggleText">Don't have an account?</span>
       <a href="#" id="authToggleLink" onclick="window.toggleAuthMode(); return false;">Sign up</a>

@@ -273,7 +273,8 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   });
 
   // Auth submit — sign in or sign up based on current mode
-  document.getElementById('btn-auth-submit')?.addEventListener('click', async () => {
+  document.getElementById('auth-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
     const email = document.getElementById('auth-email')?.value?.trim();
     const password = document.getElementById('auth-password')?.value;
     const status = document.getElementById('auth-status');
@@ -378,7 +379,7 @@ window.config = window.config || {
 
   // Fire anonymous sign-in at boot and hydrate God Mode profile (non-blocking)
   ensureAnonSession().then(async (userId) => {
-    if (!userId || !sb) return;
+    if (!userId || !sb) { window.showScreen && window.showScreen('ageGate'); document.body.classList.remove('booting'); return; }
     _supabaseProfileId = userId;
     try {
       let { data: profile, error } = await sb
@@ -399,16 +400,16 @@ window.config = window.config || {
         `)
         .eq('id', userId)
         .maybeSingle();
-      if (error) { console.error('Profile fetch error:', error); return; }
+      if (error) { console.error('Profile fetch error:', error); window.showScreen && window.showScreen('ageGate'); document.body.classList.remove('booting'); return; }
       if (!profile) {
         const { error: insertErr } = await sb.from('profiles').insert({ id: userId });
-        if (insertErr) { console.error('Profile insert error:', insertErr); return; }
+        if (insertErr) { console.error('Profile insert error:', insertErr); window.showScreen && window.showScreen('ageGate'); document.body.classList.remove('booting'); return; }
         const refetch = await sb.from('profiles').select(`
           has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
           god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
           image_credits, last_scene_rewarded, is_subscriber, has_storypass, age_confirmed, tos_version
         `).eq('id', userId).single();
-        if (refetch.error || !refetch.data) { console.error('Profile refetch error:', refetch.error); return; }
+        if (refetch.error || !refetch.data) { console.error('Profile refetch error:', refetch.error); window.showScreen && window.showScreen('ageGate'); document.body.classList.remove('booting'); return; }
         profile = refetch.data;
       }
       state.godMode.owned = profile.has_god_mode || false;
@@ -433,7 +434,8 @@ window.config = window.config || {
       // Boot-time gate resolution
       if (profile) {
         if (profile.age_confirmed !== true) {
-          // do nothing — ageGate remains default
+          console.log('[BOOT] Age not confirmed — showing ageGate');
+          window.showScreen && window.showScreen('ageGate');
         } else if ((profile.tos_version || 0) < CURRENT_TOS_VERSION) {
           console.log('[TOS] Version outdated — showing TOS');
           window.showScreen && window.showScreen('tosGate');
@@ -442,8 +444,11 @@ window.config = window.config || {
           window.showScreen && window.showScreen('tierGate');
         }
       }
+      document.body.classList.remove('booting');
     } catch (e) {
       console.error('God Mode profile fetch failed:', e);
+      window.showScreen && window.showScreen('ageGate');
+      document.body.classList.remove('booting');
     }
   });
 
