@@ -213,6 +213,23 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
          }
      }
   }
+  // Logout button handler
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    console.log('[AUTH] Logging out');
+
+    try {
+      await window.supabase.auth.signOut();
+    } catch (err) {
+      console.error('[AUTH] Logout error:', err);
+    }
+
+    // Clear local state remnants
+    localStorage.clear();
+
+    // Reload clean
+    location.reload();
+  });
+
 // GLOBAL CONFIG (TEMP – UNTIL EXTERNALIZED CLEANLY)
 window.config = window.config || {
   enableAncestry: true,
@@ -229,10 +246,12 @@ window.config = window.config || {
     if(!sb) return null;
     const { data: { session } } = await sb.auth.getSession();
     if(session?.user?.id) return session.user.id;
-    const { data, error } = await sb.auth.signInAnonymously();
-    if(error) { console.error("Auth error:", error); return null; }
-    console.log("Supabase ready");
-    return data.user.id;
+    // Anonymous auto-login disabled — require real sign-in
+    // const { data, error } = await sb.auth.signInAnonymously();
+    // if(error) { console.error("Auth error:", error); return null; }
+    // console.log("Supabase ready");
+    // return data.user.id;
+    return null;
   }
 
   // Fire anonymous sign-in at boot and hydrate God Mode profile (non-blocking)
@@ -25601,20 +25620,40 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     completePurchase();
   });
 
-  // PASS 1 FIX: Subscription purchase - grants full access
-  $('paySub')?.addEventListener('click', () => {
-    console.log('[ENTITLEMENT] Subscribe purchase initiated');
+  // Subscription purchase — real Stripe checkout
+  document.getElementById('paySub')?.addEventListener('click', async () => {
+    console.log('[STRIPE] Subscription checkout initiated');
 
-    // Mark purchase type
-    state.lastPurchaseType = 'sub';
+    try {
+      const user = window.supabase?.auth?.getUser
+        ? (await window.supabase.auth.getUser()).data.user
+        : null;
 
-    // Persist subscription to localStorage (source of truth)
-    state.subscribed = true;
-    localStorage.setItem('sb_subscribed', '1');
-    console.log('[ENTITLEMENT] Subscription stored in localStorage');
+      if (!user?.id) {
+        console.error('[STRIPE] No Supabase user ID found');
+        return;
+      }
 
-    // Complete purchase - will resolve access from localStorage
-    completePurchase();
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId: process.env.STRIPE_PRICE_ID_SUBSCRIPTION,
+          supabaseUserId: user.id
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.url) {
+        console.error('[STRIPE] No checkout URL returned', data);
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('[STRIPE] Subscription checkout error:', err);
+    }
   });
 
   $('payGodMode')?.addEventListener('click', () => {
