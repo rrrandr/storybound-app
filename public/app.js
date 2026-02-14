@@ -394,7 +394,8 @@ window.config = window.config || {
           last_scene_rewarded,
           is_subscriber,
           has_storypass,
-          age_confirmed
+          age_confirmed,
+          tos_version
         `)
         .eq('id', userId)
         .maybeSingle();
@@ -405,7 +406,7 @@ window.config = window.config || {
         const refetch = await sb.from('profiles').select(`
           has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
           god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
-          image_credits, last_scene_rewarded, is_subscriber, has_storypass, age_confirmed
+          image_credits, last_scene_rewarded, is_subscriber, has_storypass, age_confirmed, tos_version
         `).eq('id', userId).single();
         if (refetch.error || !refetch.data) { console.error('Profile refetch error:', refetch.error); return; }
         profile = refetch.data;
