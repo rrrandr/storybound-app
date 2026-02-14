@@ -263,6 +263,12 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     }
   });
 
+  // Vault Menu Sign-In button → open auth panel
+  document.getElementById('menuSignInBtn')?.addEventListener('click', () => {
+    console.log('[AUTH] Vault Sign-In clicked');
+    document.getElementById('auth-panel')?.classList.remove('hidden');
+  });
+
 // GLOBAL CONFIG (TEMP – UNTIL EXTERNALIZED CLEANLY)
 window.config = window.config || {
   enableAncestry: true,
