@@ -63,12 +63,7 @@
   <div id="vaultAccount" class="vault-sub hidden">
     <div class="vault-sub-title">Account</div>
     <div id="menuAuthSection"></div>
-    <div id="menuSignInBtn" style="
-      width: 160px; height: 44px; cursor: pointer; position: relative; z-index: 1;
-      background: rgba(0,0,0,0.8); border: 1px solid gold; color: gold;
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Lora', serif; font-size: 1em; user-select: none;
-    " onclick="alert('SIGN IN CLICKED'); document.getElementById('menuOverlay')?.classList.add('hidden'); document.getElementById('auth-panel')?.classList.remove('hidden');">Sign In</div>
+    <button id="menuSignInBtn" class="sb-btn-png sm" onclick="document.getElementById('menuOverlay')?.classList.add('hidden'); document.getElementById('auth-panel')?.classList.remove('hidden');">Sign In</button>
     <button id="menuProfileBtn" class="sb-btn-png sm">Profile</button>
     <button id="menuLibraryBtn" class="sb-btn-png sm">Library</button>
     <button class="vault-back sb-btn-png sm">Back</button>
