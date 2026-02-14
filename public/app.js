@@ -15108,10 +15108,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     try {
       const { data: { user } } = await sb.auth.getUser();
       if (user?.id) {
-        await sb
+        const { data, error } = await sb
           .from('profiles')
           .update({ tos_version: CURRENT_TOS_VERSION })
-          .eq('id', user.id);
+          .eq('id', user.id)
+          .select();
+        console.log('[TOS] Update result:', data, error);
       }
     } catch (err) {
       console.error('[TOS] Failed to persist TOS acceptance:', err);
