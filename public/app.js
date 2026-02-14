@@ -263,9 +263,10 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     }
   });
 
-  // Vault Menu Sign-In button → open auth panel
+  // Vault Menu Sign-In button → close vault, open auth panel
   document.getElementById('menuSignInBtn')?.addEventListener('click', () => {
     console.log('[AUTH] Vault Sign-In clicked');
+    document.getElementById('menuOverlay')?.classList.add('hidden');
     document.getElementById('auth-panel')?.classList.remove('hidden');
   });
 
