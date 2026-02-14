@@ -230,6 +230,39 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     location.reload();
   });
 
+  // Email/password login handler
+  document.getElementById('btn-signin')?.addEventListener('click', async () => {
+    const email = document.getElementById('auth-email')?.value;
+    const password = document.getElementById('auth-password')?.value;
+
+    if (!email || !password) {
+      console.warn('[AUTH] Email or password missing');
+      return;
+    }
+
+    try {
+      const { data, error } = await window.supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        console.error('[AUTH] Login failed:', error.message);
+        return;
+      }
+
+      console.log('[AUTH] Login successful:', data.user?.id);
+
+      // Hide auth panel after success
+      document.getElementById('auth-panel')?.classList.add('hidden');
+
+      location.reload();
+
+    } catch (err) {
+      console.error('[AUTH] Login error:', err);
+    }
+  });
+
 // GLOBAL CONFIG (TEMP – UNTIL EXTERNALIZED CLEANLY)
 window.config = window.config || {
   enableAncestry: true,
