@@ -213,6 +213,23 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
          }
      }
   }
+  // Age confirmation — persist to Supabase profile then proceed
+  document.getElementById('confirmAgeBtn')?.addEventListener('click', async () => {
+    try {
+      const { data: { user } } = await window.supabase.auth.getUser();
+      if (user?.id) {
+        await window.supabase
+          .from('profiles')
+          .update({ age_confirmed: true })
+          .eq('id', user.id);
+      }
+    } catch (err) {
+      console.error('[AGE] Failed to persist age confirmation:', err);
+    }
+
+    window.showScreen && window.showScreen('tosGate');
+  });
+
   // Vault Sign Out button handler
   document.getElementById('vaultSignOutBtn')?.addEventListener('click', async () => {
     console.log('[AUTH] Logging out');
@@ -373,7 +390,10 @@ window.config = window.config || {
           god_mode_active_started_at,
           god_mode_temp_expires_at,
           image_credits,
-          last_scene_rewarded
+          last_scene_rewarded,
+          is_subscriber,
+          has_storypass,
+          age_confirmed
         `)
         .eq('id', userId)
         .maybeSingle();
@@ -384,7 +404,7 @@ window.config = window.config || {
         const refetch = await sb.from('profiles').select(`
           has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
           god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
-          image_credits, last_scene_rewarded
+          image_credits, last_scene_rewarded, is_subscriber, has_storypass, age_confirmed
         `).eq('id', userId).single();
         if (refetch.error || !refetch.data) { console.error('Profile refetch error:', refetch.error); return; }
         profile = refetch.data;
@@ -395,18 +415,24 @@ window.config = window.config || {
       state.godMode.activeStoryId = profile.god_mode_active_story_id;
       state.godMode.activeStartedAt = profile.god_mode_active_started_at;
       state.godMode.tempExpiresAt = profile.god_mode_temp_expires_at;
+      // Hydrate subscription state from Supabase (single source of truth)
+      state.subscribed = profile.is_subscriber || false;
       // Hydrate image credits — Supabase wins over localStorage if higher
       const remoteCredits = profile.image_credits || 0;
       const localCredits = state.imageCredits || 0;
       state.imageCredits = Math.max(remoteCredits, localCredits);
-      localStorage.setItem('sb_image_credits', String(state.imageCredits));
       // Hydrate last scene rewarded — take the higher value to prevent re-awards
       const remoteReward = profile.last_scene_rewarded || 0;
       const localReward = state.lastSceneRewarded || 0;
       state.lastSceneRewarded = Math.max(remoteReward, localReward);
-      localStorage.setItem('sb_last_scene_rewarded', String(state.lastSceneRewarded));
       if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
-      console.log('Profile hydrated. God Mode:', state.godMode, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
+      syncTierFromAccess();
+      console.log('Profile hydrated. Subscribed:', state.subscribed, '| God Mode:', state.godMode, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
+      // Skip age gate if already confirmed
+      if (profile?.age_confirmed === true) {
+        console.log('[AGE] Already confirmed — skipping age gate');
+        window.showScreen && window.showScreen('tosGate');
+      }
     } catch (e) {
       console.error('God Mode profile fetch failed:', e);
     }
@@ -11617,9 +11643,6 @@ Return ONLY the title, no quotes or explanation.`;
       localStorage.removeItem('sb_saved_story');
       localStorage.removeItem('sb_story_in_idb');
       localStorage.removeItem('sb_current_story_id');
-      localStorage.removeItem('sb_subscribed');
-      localStorage.removeItem('sb_billing_status');
-      localStorage.removeItem('sb_god_mode_owned');
       // Clear all story pass keys
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -12268,10 +12291,7 @@ Return ONLY the title, no quotes or explanation.`;
   // --- ACCESS HELPERS ---
   // PASS 1 FIX: Canonical access resolver - ALL access checks must use this
   function resolveAccess() {
-    // Read subscribed status from localStorage (source of truth)
-    if (localStorage.getItem('sb_subscribed') === '1') {
-        state.subscribed = true;
-    }
+    // state.subscribed is set by Supabase profile hydration (single source of truth)
 
     // Check billing validity
     const inGrace = (state.billingStatus === 'grace' && Date.now() < state.billingGraceUntil);
@@ -13060,8 +13080,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               state.billingStatus = 'active';
               state.billingGraceUntil = 0;
               state.billingLastError = '';
-              // AUTH GATE: Only persist to storage when logged in
-              localStorage.setItem('sb_billing_status', 'active');
           }
           return;
       }
@@ -13074,14 +13092,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       state.billingStatus = 'grace';
       state.billingGraceUntil = Date.now() + (hours * 3600 * 1000);
       state.billingLastError = msg;
-      localStorage.setItem('sb_billing_status', state.billingStatus);
-      localStorage.setItem('sb_billing_grace_until', state.billingGraceUntil);
       if(typeof applyAccessLocks === 'function') applyAccessLocks();
   }
 
   function endBillingGrace() {
       state.billingStatus = 'past_due';
-      localStorage.setItem('sb_billing_status', 'past_due');
       if(typeof applyAccessLocks === 'function') applyAccessLocks();
   }
 
@@ -13810,14 +13825,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           storyId: state.storyId
       });
 
-      // Persist subscription if this was a subscription purchase
+      // Mark subscription in memory for immediate UI response (Stripe webhook writes to Supabase; next reload hydrates)
       if (state.pendingUpgradeToAffair || purchaseType === 'sub') {
           state.subscribed = true;
-          localStorage.setItem('sb_subscribed', '1');
-          console.log('[ENTITLEMENT] Subscription persisted to localStorage');
+          console.log('[ENTITLEMENT] Subscription set in memory (Supabase is source of truth)');
       }
 
-      // Resolve access from canonical source (reads from localStorage)
+      // Resolve access from canonical source
       const newAccess = syncTierFromAccess();
 
       console.log('[ENTITLEMENT] Access resolved:', {
@@ -25761,7 +25775,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   });
 
   $('payGodMode')?.addEventListener('click', () => {
-      localStorage.setItem('sb_god_mode_owned', '1');
       document.getElementById('payModal')?.classList.add('hidden');
       if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
           activateGodMode();
@@ -38084,8 +38097,7 @@ FATE CARD ADAPTATION (CRITICAL):
 
   // Restore persisted state (Supabase anon session auto-provisioned at boot)
   state.storyId = localStorage.getItem('sb_current_story_id');
-  state.subscribed = localStorage.getItem('sb_subscribed') === '1';
-  state.billingStatus = localStorage.getItem('sb_billing_status') || 'active';
+  // state.subscribed is set by Supabase profile hydration (not localStorage)
 
   syncTierFromAccess();
   updateContinueButtons();
