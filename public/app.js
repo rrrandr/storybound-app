@@ -216,9 +216,9 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   // Age confirmation — persist to Supabase profile then proceed
   document.getElementById('confirmAgeBtn')?.addEventListener('click', async () => {
     try {
-      const { data: { user } } = await window.supabase.auth.getUser();
+      const { data: { user } } = await sb.auth.getUser();
       if (user?.id) {
-        await window.supabase
+        await sb
           .from('profiles')
           .update({ age_confirmed: true })
           .eq('id', user.id);
