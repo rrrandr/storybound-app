@@ -22,6 +22,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   const SUPABASE_URL = config.supabaseUrl || "";
   const SUPABASE_ANON_KEY = config.supabaseAnonKey || "";
+  const CURRENT_TOS_VERSION = 1;
   // Use local proxy by default (requires XAI_API_KEY env var)
   // Falls back to external proxy if explicitly configured
   const PROXY_URL = config.proxyUrl || '/api/proxy';
@@ -428,10 +429,17 @@ window.config = window.config || {
       if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
       syncTierFromAccess();
       console.log('Profile hydrated. Subscribed:', state.subscribed, '| God Mode:', state.godMode, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
-      // Skip age gate if already confirmed
-      if (profile?.age_confirmed === true) {
-        console.log('[AGE] Already confirmed — skipping age gate');
-        window.showScreen && window.showScreen('tosGate');
+      // Boot-time gate resolution
+      if (profile) {
+        if (profile.age_confirmed !== true) {
+          // do nothing — ageGate remains default
+        } else if ((profile.tos_version || 0) < CURRENT_TOS_VERSION) {
+          console.log('[TOS] Version outdated — showing TOS');
+          window.showScreen && window.showScreen('tosGate');
+        } else {
+          console.log('[BOOT] Age + TOS satisfied — skipping to tierGate');
+          window.showScreen && window.showScreen('tierGate');
+        }
       }
     } catch (e) {
       console.error('God Mode profile fetch failed:', e);
@@ -15096,7 +15104,21 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   });
   $('ageYes')?.addEventListener('click', () => window.showScreen('tosGate'));
   $('tosCheck')?.addEventListener('change', (e) => $('tosBtn').disabled = !e.target.checked);
-  $('tosBtn')?.addEventListener('click', () => window.showScreen('tierGate'));
+  $('tosBtn')?.addEventListener('click', async () => {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (user?.id) {
+        await sb
+          .from('profiles')
+          .update({ tos_version: CURRENT_TOS_VERSION })
+          .eq('id', user.id);
+      }
+    } catch (err) {
+      console.error('[TOS] Failed to persist TOS acceptance:', err);
+    }
+
+    window.showScreen && window.showScreen('tierGate');
+  });
 
   $('btnTease')?.addEventListener('click', () => {
     state.tier = 'free';
