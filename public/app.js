@@ -218,7 +218,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     console.log('[AUTH] Logging out');
 
     try {
-      await window.supabase.auth.signOut();
+      await sb.auth.signOut();
     } catch (err) {
       console.error('[AUTH] Logout error:', err);
     }
@@ -241,7 +241,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     }
 
     try {
-      const { data, error } = await window.supabase.auth.signInWithPassword({
+      const { data, error } = await sb.auth.signInWithPassword({
         email,
         password
       });
