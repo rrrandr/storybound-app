@@ -263,12 +263,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     }
   });
 
-  // Vault Menu Sign-In button → close vault, open auth panel
-  document.getElementById('menuSignInBtn')?.addEventListener('click', () => {
-    console.log('[AUTH] Vault Sign-In clicked');
-    document.getElementById('menuOverlay')?.classList.add('hidden');
-    document.getElementById('auth-panel')?.classList.remove('hidden');
-  });
+  // Vault Menu Sign-In button — moved to vault handler section (~line 15005)
 
 // GLOBAL CONFIG (TEMP – UNTIL EXTERNALIZED CLEANLY)
 window.config = window.config || {
@@ -15001,6 +14996,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   $('vaultCloseBtn')?.addEventListener('click', () => {
       document.getElementById('menuOverlay')?.classList.add('hidden');
       resetVaultState();
+  });
+
+  // Sign-In button → close vault, show auth panel
+  $('menuSignInBtn')?.addEventListener('click', () => {
+      console.log('[AUTH] Vault Sign-In clicked');
+      const btn = document.getElementById('menuSignInBtn');
+      if (btn) {
+          btn.style.transform = 'scale(0.95)';
+          btn.style.opacity = '0.8';
+          setTimeout(() => { btn.style.transform = ''; btn.style.opacity = ''; }, 150);
+      }
+      document.getElementById('menuOverlay')?.classList.add('hidden');
+      resetVaultState();
+      document.getElementById('auth-panel')?.classList.remove('hidden');
   });
 
   // Profile button

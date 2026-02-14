@@ -298,11 +298,17 @@ body.night-mode .story-pages-container {
 .sb-btn-png:focus,
 .sb-btn-png:focus-visible,
 .sb-btn-png:focus-within,
-.sb-btn-png:active,
 .sb-btn-png:hover {
     outline: none !important;
     border: none !important;
     box-shadow: none !important;
+}
+.sb-btn-png:active:not(:disabled) {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: scale(0.95);
+    opacity: 0.85;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
