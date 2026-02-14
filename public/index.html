@@ -20,26 +20,15 @@
 
 <body>
 
-<button id="logoutBtn" style="
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 9999;
-  background: black;
-  color: gold;
-  border: 1px solid gold;
-  padding: 6px 10px;
-  cursor: pointer;
-">
-  Logout
-</button>
-
 <div id="auth-panel" class="hidden">
   <div id="auth-title" style="color:gold; font-family:'Lora',serif; font-size:0.95em; text-align:center; margin-bottom:2px;">Sign In</div>
   <input id="auth-email" placeholder="Email" />
   <input id="auth-password" type="password" placeholder="Password" />
-  <button id="btn-auth-submit">Sign In</button>
+  <button id="btn-auth-submit" class="sb-btn-png sm">Sign In</button>
   <div id="auth-status"></div>
+  <div id="auth-reset" class="hidden" style="font-size:0.75em; text-align:center;">
+    <a href="#" id="auth-reset-link" style="color:gold; text-decoration:underline; cursor:pointer;">Reset Password</a>
+  </div>
   <div id="auth-toggle" style="font-size:0.75em; text-align:center; margin-top:2px;">
     <span style="color:#888;">New user?</span>
     <a href="#" id="auth-toggle-link" style="color:gold; text-decoration:underline; cursor:pointer;">Create Account</a>
@@ -55,6 +44,10 @@
   <div class="vault-panel">
     <button class="vault-x" onclick="document.getElementById('menuOverlay').classList.add('hidden')">&times;</button>
     <div class="vault-title">Your Vault</div>
+    <div class="vault-auth-row" style="display:flex; gap:8px; justify-content:center; margin-bottom:8px;">
+      <button id="vaultSignInBtn" class="sb-btn-png sm" onclick="document.getElementById('menuOverlay')?.classList.add('hidden'); document.getElementById('auth-panel')?.classList.remove('hidden');">Sign In</button>
+      <button id="vaultSignOutBtn" class="sb-btn-png sm">Sign Out</button>
+    </div>
     <div class="vault-tabs">
       <button class="vault-tab sb-btn-png md" data-vault-section="Account">Account</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Story">Story</button>
@@ -69,7 +62,6 @@
   <div id="vaultAccount" class="vault-sub hidden">
     <div class="vault-sub-title">Account</div>
     <div id="menuAuthSection"></div>
-    <button id="menuSignInBtn" class="sb-btn-png sm" onclick="document.getElementById('menuOverlay')?.classList.add('hidden'); document.getElementById('auth-panel')?.classList.remove('hidden');">Sign In</button>
     <button id="menuProfileBtn" class="sb-btn-png sm">Profile</button>
     <button id="menuLibraryBtn" class="sb-btn-png sm">Library</button>
     <button class="vault-back sb-btn-png sm">Back</button>

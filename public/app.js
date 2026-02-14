@@ -213,20 +213,17 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
          }
      }
   }
-  // Logout button handler
-  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+  // Vault Sign Out button handler
+  document.getElementById('vaultSignOutBtn')?.addEventListener('click', async () => {
     console.log('[AUTH] Logging out');
 
     try {
-      await sb.auth.signOut();
+      if (sb) await sb.auth.signOut();
     } catch (err) {
       console.error('[AUTH] Logout error:', err);
     }
 
-    // Clear local state remnants
     localStorage.clear();
-
-    // Reload clean
     location.reload();
   });
 
@@ -285,6 +282,10 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       if (error) {
         console.error(`[AUTH] ${authMode} failed:`, error.message);
         if (status) status.textContent = error.message;
+        // Show reset password link on sign-in failure
+        if (authMode === 'signin') {
+          document.getElementById('auth-reset')?.classList.remove('hidden');
+        }
         return;
       }
 
@@ -305,7 +306,33 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     }
   });
 
-  // Vault Menu Sign-In button — moved to vault handler section (~line 15005)
+  // Reset password handler
+  document.getElementById('auth-reset-link')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('auth-email')?.value?.trim();
+    const status = document.getElementById('auth-status');
+
+    if (!email) {
+      if (status) status.textContent = 'Enter your email above, then click Reset.';
+      return;
+    }
+
+    if (status) status.textContent = 'Sending reset email...';
+
+    try {
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin
+      });
+      if (error) {
+        if (status) status.textContent = error.message;
+      } else {
+        if (status) status.textContent = 'Password reset email sent. Check your inbox.';
+      }
+    } catch (err) {
+      console.error('[AUTH] Reset password error:', err);
+      if (status) status.textContent = 'Something went wrong. Try again.';
+    }
+  });
 
 // GLOBAL CONFIG (TEMP – UNTIL EXTERNALIZED CLEANLY)
 window.config = window.config || {
@@ -15038,20 +15065,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   $('vaultCloseBtn')?.addEventListener('click', () => {
       document.getElementById('menuOverlay')?.classList.add('hidden');
       resetVaultState();
-  });
-
-  // Sign-In button → close vault, show auth panel
-  $('menuSignInBtn')?.addEventListener('click', () => {
-      console.log('[AUTH] Vault Sign-In clicked');
-      const btn = document.getElementById('menuSignInBtn');
-      if (btn) {
-          btn.style.transform = 'scale(0.95)';
-          btn.style.opacity = '0.8';
-          setTimeout(() => { btn.style.transform = ''; btn.style.opacity = ''; }, 150);
-      }
-      document.getElementById('menuOverlay')?.classList.add('hidden');
-      resetVaultState();
-      document.getElementById('auth-panel')?.classList.remove('hidden');
   });
 
   // Profile button
