@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Storybound</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400&family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Allura&family=Glass+Antiqua&family=Eagle+Lake&family=Smooch+Sans:wght@300;500&family=Pinyon+Script&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
+
+  <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+
+<button id="logoutBtn" style="
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 9999;
+  background: black;
+  color: gold;
+  border: 1px solid gold;
+  padding: 6px 10px;
+  cursor: pointer;
+">
+  Logout
+</button>
+
+<div id="auth-panel" class="hidden">
+  <input id="auth-email" placeholder="Email" />
+  <input id="auth-password" type="password" placeholder="Password" />
+  <button id="btn-signin">Sign in</button>
+  <div id="auth-status"></div>
+</div>
+
+<button id="burgerBtn"><img src="/assets/ui/burger-keyhole-ornate.png" alt="Menu" style="width:32px; height:32px; vertical-align:middle;"></button>
+<button id="globalBackBtn" class="hidden"><img src="/assets/ui/back-arrow.png" alt="Back" style="width:32px; height:32px;"></button>
+
+<div id="menuOverlay" class="overlay hidden" style="z-index:10002;">
+
+  <!-- ── MAIN VAULT PANEL ── -->
+  <div class="vault-panel">
+    <button class="vault-x" onclick="document.getElementById('menuOverlay').classList.add('hidden')">&times;</button>
+    <div class="vault-title">Your Vault</div>
+    <div class="vault-tabs">
+      <button class="vault-tab sb-btn-png md" data-vault-section="Account">Account</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Story">Story</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Purchases">Purchases</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Appearance</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Help">Help</button>
+    </div>
+    <button id="vaultCloseBtn" class="sb-btn-png sm" style="margin-top:14px;">Close Vault</button>
+  </div>
+
+  <!-- ── ACCOUNT SUB-PANEL ── -->
+  <div id="vaultAccount" class="vault-sub hidden">
+    <div class="vault-sub-title">Account</div>
+    <div id="menuAuthSection"></div>
+    <button id="menuSignInBtn" class="sb-btn-png sm" onclick="document.getElementById('menuOverlay')?.classList.add('hidden'); document.getElementById('auth-panel')?.classList.remove('hidden');">Sign In</button>
+    <button id="menuProfileBtn" class="sb-btn-png sm">Profile</button>
+    <button id="menuLibraryBtn" class="sb-btn-png sm">Library</button>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+  <!-- ── STORY SUB-PANEL ── -->
+  <div id="vaultStory" class="vault-sub hidden">
+    <div class="vault-sub-title">Story</div>
+    <button class="sb-btn-png md" onclick="window.restart()">Restart Story</button>
+    <button id="continueStoryBtn" class="sb-btn-png md hidden" onclick="window.continueStory()">Continue Story</button>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+  <!-- ── PURCHASES SUB-PANEL ── -->
+  <div id="vaultPurchases" class="vault-sub hidden">
+    <div class="vault-sub-title">Purchases</div>
+    <button class="sb-btn-png md" onclick="window.changeTier()">Change Tier</button>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+  <!-- ── APPEARANCE SUB-PANEL ── -->
+  <div id="vaultAppearance" class="vault-sub hidden">
+    <div class="vault-sub-title">Appearance</div>
+
+    <label class="vault-label">Theme</label>
+    <div class="vault-theme-row">
+      <button class="sb-btn-png sm" onclick="setTheme('default')">Default</button>
+      <button class="sb-btn-png sm" onclick="setTheme('sepia')">Sepia</button>
+      <button class="sb-btn-png sm" onclick="setTheme('midnight')">Midnight</button>
+      <button class="sb-btn-png sm" onclick="setTheme('print')">Print</button>
+      <button class="sb-btn-png sm" onclick="setTheme('easy')">Easy</button>
+    </div>
+
+    <label class="vault-label">Font</label>
+    <select id="fontSelect" class="vault-select" onchange="setFont(this.value)">
+      <option value="'Lora', serif">Lora (Default)</option>
+      <option value="'Grenze Gotisch', cursive">Grenze Gotisch</option>
+      <option value="'Allura', cursive">Allura</option>
+      <option value="'Glass Antiqua', cursive">Glass Antiqua</option>
+      <option value="'Eagle Lake', cursive">Eagle Lake</option>
+      <option value="'Smooch Sans', sans-serif">Smooch Sans</option>
+      <option value="'Pinyon Script', cursive">Pinyon Script</option>
+      <option value="'Merriweather', serif">Merriweather</option>
+      <option value="'Roboto', sans-serif">Roboto</option>
+    </select>
+
+    <label class="vault-label">Font Size</label>
+    <input type="range" min="16" max="72" value="18" oninput="setFontSize(this.value)">
+
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+  <!-- ── HELP SUB-PANEL ── -->
+  <div id="vaultHelp" class="vault-sub hidden">
+    <div class="vault-sub-title">Help</div>
+    <p style="color:var(--ink); font-family:'Lora',serif; font-size:0.85em; margin:8px 0;">Support coming soon.</p>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+</div>
+
+<div id="loadingOverlay" class="overlay hidden" style="z-index:9000;">
+  <div id="loadingOverlayInner">
+    <button id="loadingCancelBtn" class="loading-cancel-btn" title="Cancel">&times;</button>
+    <div id="loadingText">Stoking the embers...</div>
+    <div id="loadingOverlayBar"><div id="loadingOverlayFill"></div></div>
+    <div id="loadingPercent">0%</div>
+  </div>
+</div>
+
+<div id="vizModal" class="overlay hidden">
+  <div class="box viz-modal-content">
+    <h3>Visualization</h3>
+    <!-- TRUST REPAIR: Always show prompt first, explain credits -->
+    <p style="font-size:0.85em; color:var(--gold); margin-bottom:10px; font-style:italic;">
+        You may freely edit the prompt below. Images are limited to Naughty-level eroticism.
+        Prompts are automatically scaled down to avoid artist refusal.
+    </p>
+    <textarea id="vizPromptInput" placeholder="Prompt will appear here..."></textarea>
+
+    <!-- Quick Prompt Modifier heading -->
+    <h4 style="font-size:1.1em; color:var(--pink); margin:15px 0 5px; font-weight:bold;">Quick Prompt Modifier</h4>
+    <!-- Modifier section: scrolling suggestions + text input -->
+    <div id="vizModifierSection" class="fate-input-wrapper" style="margin-top:5px;">
+        <input type="text" id="vizModifierInput" class="fate-field" placeholder="">
+        <div class="rotating-placeholder" data-for="vizModifierInput"></div>
+    </div>
+    <!-- TRUST REPAIR: Explain modifier behavior -->
+    <p style="font-size:0.8em; color:#888; margin-top:5px; font-style:italic;">
+        Modifiers are appended to your prompt. They cannot override style or subject.
+    </p>
+
+    <!-- Credit display (always visible) -->
+    <div id="vizCreditDisplay" style="font-size:0.85em; color:var(--gold); margin:10px 0; text-align:center;">
+        Visualization credits = <span id="vizCreditCount">0</span>
+    </div>
+
+    <!-- No-credits notice (INSIDE modal, not blocking) -->
+    <div id="vizPayAsYouGoConsent" class="hidden" style="background:rgba(255,215,0,0.08); border:2px double gold; border-radius:0; padding:15px; margin:15px 0; text-align:center;">
+        <p style="font-size:0.9em; color:var(--gold); margin-bottom:10px;">
+            <strong>Image credits required</strong>
+        </p>
+        <p style="font-size:0.85em; color:#888; margin-bottom:15px;">
+            Each visualization costs 1 image credit. Purchase a credit pack to continue.
+        </p>
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <button class="sb-btn-png text-sm" id="vizEnablePayAsYouGo" onclick="window.enablePayAsYouGoFromViz();">
+                Purchase Credits
+            </button>
+            <button class="sb-btn-png sm" onclick="window.closeViz();">
+                Continue Story
+            </button>
+        </div>
+    </div>
+
+    <!-- Image placeholder and container -->
+    <div id="vizPlaceholder" style="display:flex; align-items:center; justify-content:center; min-height:200px; color:#888; font-style:italic; text-align:center; padding:20px;">
+        1 credit per image. Purchase credit packs to visualize scenes.
+    </div>
+
+    <div id="vizImgContainer">
+        <img id="vizPreviewImg" alt="Scene" style="display:none">
+        <div id="vizError" class="img-error-msg hidden"></div>
+    </div>
+
+    <!-- Modifier rejection notice (shown when disallowed modifier attempted) -->
+    <div id="vizModifierRejection" class="hidden" style="background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.3); border-radius:0; padding:10px; margin:10px 0; font-size:0.85em; color:#c88;">
+        <!-- Populated by JS when modifier is rejected -->
+    </div>
+
+    <div class="viz-controls">
+        <select id="vizModel">
+            <option value="gemini" selected>Gemini (Primary)</option>
+            <option value="openai">OpenAI (Fallback)</option>
+            <option value="replicate">Replicate FLUX</option>
+        </select>
+        <button class="sb-btn sb-btn--sm" id="vizRetryBtn" onclick="window.handleReVisualize()">Re-Visualize</button>
+        <button class="sb-btn sb-btn--sm sb-btn--gold" id="vizInsertBtn" onclick="window.insertImage()">Insert</button>
+        <button class="sb-btn sb-btn--sm" onclick="window.closeViz()">Cancel</button>
+    </div>
+    <label class="sb-checkbox" style="font-size:0.8em; justify-content:center; margin-top:12px;">
+        <input type="checkbox" id="chkAutoLockVisual" checked>
+        <span class="sb-checkbox-visual"></span>
+        <span class="sb-checkbox-label" style="color:var(--gold); opacity:0.8;">Lock character look for more consistent portrayals next time.</span>
+    </label>
+  </div>
+</div>
+
+<!-- Legacy payAsYouGoModal removed — redirects to creditPurchaseModal via JS -->
+
+<div id="eroticPreviewModal" class="overlay hidden" style="z-index:10001;">
+  <div class="box" style="max-width:500px;">
+    <h3 style="color:var(--hot)">Erotic Intensity Preview</h3>
+    <p style="opacity:0.8; font-size:0.9em;">Explicit content enabled. Sample:</p>
+    <div id="eroticPreviewText"></div>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+        <button id="eroticPreviewStorypassBtn" onclick="window.showPaywall('unlock');">Storypass $3</button>
+        <button id="eroticPreviewSubBtn" class="hidden" onclick="window.showPaywall('sub_only');">Subscribe $6</button>
+        <button onclick="document.getElementById('eroticPreviewModal').classList.add('hidden')">Not Now</button>
+    </div>
+  </div>
+</div>
+
+<div id="coupleInvite" class="overlay hidden">
+  <div class="box" style="max-width:520px; text-align:center;">
+    <h3>Open a Private Chamber</h3>
+
+    <div class="couple-status-box">
+      <div><strong>Your nickname:</strong> <span id="sbNickLabel" style="color:var(--gold)">…</span></div>
+      <div><strong>Status:</strong> <span id="coupleStatus" style="font-style:italic">Not connected</span></div>
+      <div><strong>Room Code:</strong> <span id="coupleRoomCodeLabel" style="font-family:monospace; color:var(--pink)">—</span></div>
+    </div>
+
+    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
+      <button id="btnCreateRoom">New Invitation</button>
+      <button id="btnJoinRoom">Join Room</button>
+    </div>
+
+    <div id="joinRow" class="hidden" style="margin-bottom:15px; display:flex; gap:10px; justify-content:center;">
+      <input id="joinCodeInput" placeholder="Enter 6-char Code" style="text-transform:uppercase; text-align:center; width:150px;">
+      <button id="btnJoinGo">Enter</button>
+    </div>
+
+    <div id="roomCodeWrap" class="hidden" style="margin-bottom:15px;">
+      <div class="invitation-card" style="background: rgba(255,105,180,0.08); border: 1px solid rgba(255,105,180,0.3); border-radius: 0; padding: 20px; margin-bottom: 15px;">
+        <p id="invitationText" style="font-style: italic; color: var(--ink); margin: 0 0 15px; line-height: 1.5;">
+          "A private chamber awaits. The mask is optional. The curiosity is not."
+        </p>
+        <div id="coupleRoomCodeWrap">
+           <div id="roomCodeBig">—</div>
+           <button id="btnCopyCode" title="Copy Code">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+           </button>
+        </div>
+      </div>
+
+      <p style="margin:0 0 10px; font-size:0.85em; color:var(--gold);">Send invitation via:</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
+        <button id="btnSendEmail" class="invite-send-btn small-btn">Email</button>
+        <button id="btnSendSMS" class="invite-send-btn small-btn">SMS</button>
+        <button id="btnSendBoth" class="invite-send-btn small-btn">Both</button>
+      </div>
+      <p id="inviteSentStatus" class="hidden" style="color:var(--gold); font-size:0.85em; margin:10px 0;">Invitation sent. Awaiting your paramour...</p>
+    </div>
+
+    <div>
+      <button id="btnEnterCoupleGame" class="hidden" style="width:100%; margin-bottom:10px;" disabled>Enter Chamber Together</button>
+      <button id="btnPlaySoloWaiting" class="hidden" style="width:100%; margin-bottom:10px;">Play Solo Until Your Paramour Joins</button>
+      <button onclick="window.coupleCleanup(); window.showScreen('modeSelect')" style="font-size:0.9em;">Back</button>
+    </div>
+  </div>
+</div>
+
+<div id="coupleConsentModal" class="overlay hidden">
+  <div class="box" style="max-width:450px; text-align:center;">
+    <h3 style="color:var(--gold);">Shared Intensity Agreement</h3>
+    <p>You are entering a shared hallucination. Before you begin:</p>
+    <ul style="text-align:left; font-size:0.9em; line-height:1.5; color:var(--ink); margin: 20px auto; max-width: 350px;">
+        <li><strong>Intensity is a hard ceiling.</strong> Limits depictions regardless of input.</li>
+        <li><strong>Inputs are requests.</strong> Naughty reinterprets explicit inputs as tension.</li>
+        <li><strong>Upgrades required.</strong> Higher intensity requires appropriate tier.</li>
+    </ul>
+    <div style="display:flex; gap:16px; justify-content:center; align-items:center;">
+        <button id="btnCoupleAgree" class="sb-btn-png consent-primary">Agree & Enter</button>
+        <button class="sb-btn-png consent-secondary" onclick="window.showScreen('setup'); document.getElementById('coupleConsentModal').classList.add('hidden');">Change Settings</button>
+    </div>
+  </div>
+</div>
+
+<div id="strangerModal" class="overlay hidden">
+  <div class="box">
+    <h3>How Daring...</h3>
+    <p><span id="strangerCount">12,408</span> others are seeking a connection right now.</p>
+    <p style="font-style:italic; color:var(--gold)">Matching is currently unavailable in this version.</p>
+    <button class="sb-btn-png modal-exit" onclick="window.showScreen('modeSelect')">Return</button>
+  </div>
+</div>
+
+<div id="ageGate" class="screen overlay" style="background:#000; z-index:9999;">
+  <div style="text-align:center;">
+      <h2>Storybound</h2>
+      <p style="font-size:1.2em; max-width:500px; margin:20px;">Explicit adult themes. 18+ Only.</p>
+      <button id="ageYes" class="sb-btn-png age-confirm" onclick="window.showScreen && window.showScreen('tosGate')">I am 18+</button>
+      <button class="sb-btn-png age-exit" onclick="location.href='https://google.com'">Exit</button>
+  </div>
+</div>
+
+<div id="tosGate" class="screen overlay hidden" style="background:#000; z-index:9998;">
+  <div class="box" style="text-align:center;">
+      <h2>Terms of Service</h2>
+      <div class="tos-box">
+        <p><strong>TERMS OF SERVICE</strong></p>
+        <p>1. <strong>Age Requirement:</strong> You must be 18+.</p>
+        <p>2. <strong>Content Policy:</strong> Adult fantasy roleplay only. Content must be consensual. Optional power play is permitted only if explicitly opted-in. No non-consensual sexual acts, sexual violence, or minors.</p>
+        <p>3. <strong>Data & AI:</strong> Content generated by third-party AI models. We may anonymize data.</p>
+        <p>4. <strong>Liability:</strong> Use at your own risk. Entertainment purposes only.</p>
+      </div>
+      <label><input type="checkbox" id="tosCheck"> I agree to the Terms</label>
+      <br>
+      <button id="tosBtn" class="sb-btn-png tos" disabled>Enter Storybound</button>
+  </div>
+</div>
+
+<div id="tierGate" class="screen overlay hidden" style="background:#000; z-index:9997;">
+  <div style="text-align:center;">
+      <h2>Storybound</h2>
+      <div class="choice-buttons">
+        <div style="text-align:center">
+          <button class="tier-card-btn" id="btnTease"></button>
+          <p class="choice-desc">A playful warmup—gentle choices, tension, and atmosphere.<br><br><strong>From $Free</strong></p>
+        </div>
+        <div style="text-align:center">
+          <button class="tier-card-btn tier-card-indulge" id="btnIndulge"></button>
+          <p class="choice-desc">Longer openings, deeper memory, full control, saved stories.<br><br><strong>From $6/mo</strong></p>
+        </div>
+      </div>
+      <button id="continueFromTierBtn" class="choice hidden" style="margin-top:20px; width:80%; max-width:300px;" onclick="window.continueStory()">Continue Saved Story</button>
+  </div>
+</div>
+
+<div id="payModal" class="overlay hidden" style="z-index:10000;">
+  <div class="box" style="text-align:center; max-width: 500px;">
+    <h3>Unshackle Your Fate</h3>
+    
+    <div id="godModePay" class="hidden">
+       <h4 style="color:var(--gold); margin-top:0; font-size:1.4em;">Unlock God Mode</h4>
+       <p style="font-size:0.9em; opacity:0.8; margin-bottom:20px;">
+         Remove all pacing gates, cooldowns, and safety filters. Petition Fate freely. Intimate scenes unlock immediately. Your story choices still apply — God Mode overrides the engine, not your taste.
+         <br><strong>$50 One-time purchase.</strong>
+       </p>
+       <button id="payGodMode" class="god-mode-unlock-btn" style="margin-top:10px;">Unlock Forever ($50)</button>
+    </div>
+
+    <div id="standardPay">
+        <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
+            <div id="optUnlock" style="background:linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%); padding:15px; border-radius:0; border:2px double gold; box-shadow:0 0 0 1px #0a0a0a; width:220px; text-align:left;">
+                <h4 style="color:var(--gold); margin-top:0;">Unlock This Story</h4>
+                <p style="font-size:0.85em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, full Petition Fate.<br><strong>$3 Story Pass.</strong></p>
+                <button id="payOneTime" style="width:100%; margin-top:15px;">Storypass $3</button>
+                <div id="storypassDisabledNotice" class="hidden" style="margin-top:10px; font-size:0.75em; color:#888; text-align:center;">Unavailable for Dirty intensity</div>
+            </div>
+
+            <div id="optSub" style="background:linear-gradient(145deg, #400020, #200010); padding:15px; border-radius:0; border:2px double gold; box-shadow:0 0 0 1px #0a0a0a; width:220px; text-align:left;">
+                <h4 style="color:var(--gold); margin-top:0;">Indulge Limits</h4>
+                <ul style="font-size:0.8em; padding-left:15px; opacity:0.9; line-height:1.4; list-style-type: '⚜ ';">
+                    <li>Dirty intensity</li>
+                    <li>Long-form stories</li>
+                    <li>Unlimited Petitions</li>
+                    <li>Save anytime</li>
+                </ul>
+                <div style="text-align:center; font-size:0.9em; margin:10px 0; color:var(--gold);">$6/month</div>
+                <button id="paySub" class="sb-btn sb-btn--gold sb-btn--full">Subscribe</button>
+            </div>
+        </div>
+    </div>
+    
+    <button class="sb-btn-png sm" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="margin-top:15px;">Cancel</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- DESTRUCTIVE CHANGE WARNING MODAL — Story state locking enforcement       -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="destructiveChangeModal" class="overlay hidden" style="z-index:10050;">
+  <div class="box" style="text-align:center; max-width:450px;">
+    <h3 style="color:var(--gold); margin-bottom:15px;">Start a new story?</h3>
+    <p style="color:var(--ink); font-size:0.95em; line-height:1.5; margin-bottom:25px;">
+      Changing this will discard your current story and cover.<br>
+      If you want to keep it, save it first.
+    </p>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button id="btnSaveAndStartNew" class="sb-btn sb-btn--sm sb-btn--full">
+        Save & Start New Story
+      </button>
+      <button id="btnStartNewNoSave" class="sb-btn sb-btn--sm sb-btn--full is-warning">
+        Start New Story
+      </button>
+      <button id="btnCancelDestructive" class="sb-btn sb-btn--sm sb-btn--full">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- COVER GALLERY → STAGE (TRUST REPAIR PHASE 2)                            -->
+<!-- Central book object dominates — altar, not shelf                         -->
+<!-- Thumbnails demoted to peripheral navigation                              -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="coverGalleryModal" class="overlay hidden" style="z-index:10015;">
+  <!-- STAGE LAYOUT: Central dominant cover + demoted thumbnails -->
+  <div class="box cover-gallery-box">
+    <div class="gallery-stage">
+      <!-- CENTRAL COVER — Book object with presence -->
+      <div class="gallery-stage-cover" id="galleryStageCover">
+        <!-- Rendered by JS: img or placeholder -->
+      </div>
+
+      <!-- Stage label below cover — single hierarchy -->
+      <div class="gallery-stage-label">
+        <div class="stage-name" id="galleryStageName">-</div>
+        <div class="stage-status" id="galleryStageStatus">-</div>
+      </div>
+
+      <!-- Generation status -->
+      <div id="coverGalleryStatus" class="hidden" style="color:var(--gold); font-size:0.9em;"></div>
+
+      <!-- THUMBNAIL RAIL — Side navigation (desktop) / Bottom carousel (mobile) -->
+      <div class="gallery-thumbnails" id="galleryThumbnails">
+        <!-- Rendered by JS: small thumbnail buttons -->
+      </div>
+
+      <!-- CONTROL BAND — Outside hero visual field (AUTHORITATIVE) -->
+      <div class="gallery-control-band">
+        <div class="gallery-buttons">
+          <button id="btnGalleryBack" class="sb-btn sb-btn--gallery" onclick="window.closeCoverGalleryModal();">Back</button>
+          <button id="btnGalleryGenerate" class="sb-btn sb-btn--gallery" disabled>Generate</button>
+          <button id="btnGalleryPrimary" class="sb-btn sb-btn--gallery" disabled>Select</button>
+          <button id="btnGalleryRegenerate" class="sb-btn sb-btn--gallery" disabled>Regenerate</button>
+          <button id="btnGalleryClose" class="sb-btn sb-btn--gallery">Close</button>
+        </div>
+
+        <!-- Progress info (subtle, below buttons) -->
+        <div id="coverGalleryProgress" class="gallery-progress-info">
+          <span id="galleryProgressText">0 scenes written</span>
+          <span class="progress-divider">·</span>
+          <span id="galleryMilestonesText">Your story awaits</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- COVER$ PURCHASE MODAL — Paid cover generation with prompt editing        -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- CREDIT PURCHASE MODAL — Prepaid image credit packs                      -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="creditPurchaseModal" class="overlay hidden" style="z-index:10020;">
+  <div class="box" style="max-width:420px; text-align:center;">
+    <h3 style="color:var(--gold); margin-bottom:10px;">Purchase Image Credits</h3>
+    <p style="opacity:0.8; font-size:0.9em; margin-bottom:5px;">
+      1 credit per image (covers + scene visualizations)
+    </p>
+    <p style="opacity:0.6; font-size:0.85em; margin-bottom:20px;">
+      Current balance: <strong style="color:var(--gold);"><span id="creditModalBalance">0</span> credits</strong>
+    </p>
+
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseCreditPack(20, '$5');" style="padding:12px 20px; width:100%;">
+        <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
+        20 Credits &mdash; $5
+      </button>
+      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseCreditPack(50, '$10');" style="padding:12px 20px; width:100%;">
+        <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
+        50 Credits &mdash; $10
+      </button>
+      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseCreditPack(120, '$20');" style="padding:12px 20px; width:100%;">
+        <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
+        120 Credits &mdash; $20
+      </button>
+    </div>
+
+    <button class="sb-btn" onclick="window.closeCreditPurchaseModal();" style="padding:10px 24px;">
+      Not Now
+    </button>
+  </div>
+</div>
+
+<div id="previewModal" class="overlay hidden" style="z-index:10010;">
+  <div class="box">
+    <p id="previewText" style="font-size:1.3em; font-style:italic; line-height:1.6"></p>
+    <button onclick="document.getElementById('previewModal').classList.add('hidden')">Close</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+
+  <div id="modeSelect" class="screen">
+    <div class="mode-card-row" id="modeCardContainer">
+        <div class="mode-card" data-mode="solo">
+            <div class="mode-card-inner">
+                <div class="mode-card-back">
+                    <img src="/assets/card-art/cards/Tarot-Gold-bdsm-back-Solo.png" alt="Solo">
+                </div>
+                <div class="mode-card-front">
+                    <img src="/assets/card-art/cards/Tarot-Gold-Solo-face.png" alt="Solo">
+                </div>
+            </div>
+            <div class="mode-card-sparkles"></div>
+        </div>
+        <div class="mode-card" data-mode="couple" id="btnCoupleMode">
+            <div class="mode-card-inner">
+                <div class="mode-card-back">
+                    <img src="/assets/card-art/cards/Tarot-Gold-bdsm-back-Couple.png" alt="Couple">
+                </div>
+                <div class="mode-card-front">
+                    <img src="/assets/card-art/cards/Tarot-Gold-Couplet-face.png" alt="Couple">
+                </div>
+            </div>
+            <div class="mode-card-sparkles"></div>
+        </div>
+        <div class="mode-card" data-mode="stranger">
+            <div class="mode-card-inner">
+                <div class="mode-card-back">
+                    <img src="/assets/card-art/cards/Tarot-Gold-bdsm-back-Stranger.png" alt="Stranger">
+                </div>
+                <div class="mode-card-front">
+                    <img src="/assets/card-art/cards/Tarot-Gold-Stranger-face.png" alt="Stranger">
+                </div>
+            </div>
+            <div class="mode-card-sparkles"></div>
+        </div>
+    </div>
+  </div>
+
+  <div id="setup" class="screen hidden" style="padding-bottom:50px;">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SHAPE YOUR STORY SECTION (AUTHORITATIVE)
+         Breadcrumbs visually belong to this section header.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="shape-your-story-header">
+      <div class="section-title" id="shapeYourStoryTitle">Shape Your Story</div>
+      <!-- BREADCRUMB ROW - Committed selections accumulate here -->
+      <div class="breadcrumb-row" id="breadcrumbRow"></div>
+    </div>
+
+    <!-- FLOW STAGE INDICATOR — REMOVED (DSP invisible until story-shaping cards resolve) -->
+    <p id="coupleSubhead" class="hidden" style="text-align:center; color:var(--pink); font-style:italic; margin:-10px 0 20px; font-size:0.95em;">Play in bed, together or miles apart.</p>
+    <!-- Golden vignette overlay for Guided Fate ceremony -->
+    <div id="fateVignette"></div>
+
+    <!-- TWO-CARD AUTHORSHIP CHOICE ROW -->
+    <div class="authorship-choice-row corridor-section" id="authorshipChoiceRow" data-corridor-stage="authorship">
+      <div class="authorship-cards-container">
+      <div class="authorship-card" id="chooseYourHandCard" data-choice="manual">
+        <div class="authorship-card-inner">
+          <div class="authorship-card-face authorship-card-back">
+            <span class="authorship-card-title">Choose Your Hand</span>
+          </div>
+          <div class="authorship-card-face authorship-card-front">
+            <span class="authorship-card-title">Choose Your Hand</span>
+            <span class="authorship-card-desc">Take the lead.</span>
+          </div>
+        </div>
+        <!-- Continuous sparkle emitter -->
+        <div class="authorship-sparkle-emitter" id="chooseHandSparkles"></div>
+      </div>
+      <div class="authorship-card" id="guidedFateCard" data-choice="fate">
+        <div class="authorship-card-inner">
+          <div class="authorship-card-face authorship-card-back">
+            <span class="authorship-card-title">Guided<br>Fate</span>
+          </div>
+          <div class="authorship-card-face authorship-card-front">
+            <span class="authorship-card-title">Guided<br>Fate</span>
+            <span class="authorship-card-desc">Yield to the story.</span>
+          </div>
+        </div>
+        <!-- Continuous sparkle emitter -->
+        <div class="authorship-sparkle-emitter" id="guidedFateSparkles"></div>
+      </div>
+      </div><!-- END authorship-cards-container -->
+      <!-- Continue button for authorship decision -->
+      <button class="flow-continue-btn sb-btn-png sm" id="continueFromAuthorship">Proceed</button>
+    </div>
+
+    <!-- Legacy fate card reference for compatibility (hidden) -->
+    <div id="fateDestinyCard" class="hidden" style="display:none;"></div>
+
+    <!-- CHARACTER SECTIONS - Hidden until "Choose Your Hand" is selected -->
+    <!-- ROW MUST OWN ACTIVE STATE — claim corridor until Continue pressed -->
+    <div class="story-shape-row corridor-section hidden" id="characterSectionRow" data-corridor-stage="identity">
+
+    <!-- Player Character Tarot Card (canonical 2.75:4.75 ratio) -->
+    <div class="character-tarot-card" id="playerCharacterCard">
+        <div class="character-tarot-header">Your Character</div>
+        <div class="character-tarot-fields">
+            <div class="character-field character-field-name">
+                <label>Name</label>
+                <input id="playerNameInput" type="text" class="plaque-input" placeholder="e.g. Elara Vance">
+            </div>
+            <div class="character-field character-field-gender">
+                <label>Gender</label>
+                <select id="playerGender" class="plaque-input" onchange="checkCustom(this, 'customPlayerGender')">
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Non-Binary">Non-Binary</option>
+                    <option value="Custom">Custom</option>
+                </select>
+                <input id="customPlayerGender" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+            </div>
+            <div class="character-field character-field-pronouns">
+                <label>Pronouns</label>
+                <select id="playerPronouns" class="plaque-input" onchange="checkCustom(this, 'customPlayerPronouns')">
+                    <option value="She/Her">She/Her</option>
+                    <option value="He/Him">He/Him</option>
+                    <option value="They/Them">They/Them</option>
+                    <option value="Custom">Custom</option>
+                </select>
+                <input id="customPlayerPronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+            </div>
+            <div class="character-field character-field-ancestry fate-input-wrapper">
+                <label>Ancestry</label>
+                <input id="ancestryInputPlayer" type="text" class="fate-field ancestry-field plaque-input" data-fate-type="ancestry" placeholder="e.g. Irish-American">
+                <div class="rotating-placeholder" data-for="ancestryInputPlayer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DESTINY'S CHOICE MINI-DECK — Central fate card dispenser (5 stacked cards) -->
+    <div class="destiny-mini-deck" id="destinyMiniDeck">
+        <div class="destiny-mini-deck-stack">
+            <!-- 5 stacked cards for deck illusion -->
+            <div class="destiny-mini-card deck-card-1"></div>
+            <div class="destiny-mini-card deck-card-2"></div>
+            <div class="destiny-mini-card deck-card-3"></div>
+            <div class="destiny-mini-card deck-card-4"></div>
+            <div class="destiny-mini-card deck-card-5"></div>
+            <!-- Sparkles inside deck stack, scale with deck -->
+            <div class="destiny-deck-sparkle-emitter" id="destinyDeckSparkles"></div>
+        </div>
+    </div>
+
+    <!-- Love Interest Tarot Card (canonical 2.75:4.75 ratio) -->
+    <div class="character-tarot-card" id="loveInterestCharacterCard">
+        <div class="character-tarot-header">Your Love Interest</div>
+        <div class="character-tarot-fields">
+            <div class="character-field character-field-name">
+                <label>Name</label>
+                <input id="partnerNameInput" type="text" class="plaque-input" placeholder="e.g. Lord Blackwood">
+            </div>
+            <div class="character-field character-field-gender">
+                <label>Gender</label>
+                <select id="loveInterestGender" class="plaque-input" onchange="checkCustom(this, 'customLoveInterest')">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-Binary">Non-Binary</option>
+                    <option value="Custom">Custom</option>
+                </select>
+                <input id="customLoveInterest" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+            </div>
+            <div class="character-field character-field-pronouns">
+                <label>Pronouns</label>
+                <select id="lovePronouns" class="plaque-input" onchange="checkCustom(this, 'customLovePronouns')">
+                    <option value="He/Him">He/Him</option>
+                    <option value="She/Her">She/Her</option>
+                    <option value="They/Them">They/Them</option>
+                    <option value="Custom">Custom</option>
+                </select>
+                <input id="customLovePronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+            </div>
+            <div class="character-field character-field-ancestry fate-input-wrapper">
+                <label>Ancestry</label>
+                <input id="ancestryInputLI" type="text" class="fate-field ancestry-field plaque-input" data-fate-type="ancestry" placeholder="e.g. British Aristocracy">
+                <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Character Section Continue Button (bottom center) -->
+    <div class="character-continue-wrapper">
+        <button class="flow-continue-btn sb-btn-png sm" id="continueFromCharacters">Proceed</button>
+    </div>
+    </div>
+
+    <div class="section-title" id="archetypeSectionTitle">Archetype Storybeau</div>
+
+    <div class="sb-grid archetype-grid-8" id="archetypeCardGrid">
+        <!-- 7 archetype cards + Destiny's Choice (slot 8) dynamically generated by JS -->
+    </div>
+    <button class="flow-continue-btn sb-btn-png sm" id="continueFromStorybeau">Proceed</button>
+
+    <div class="section-title" id="arousalSectionTitle">Arousal Intensity</div>
+    <div class="sb-grid sb-grid-4" id="intensityGrid">
+      <div class="sb-card" data-grp="intensity" data-val="Clean">
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">Clean</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Clean</span><span class="sb-card-desc">Romantic, non-explicit.</span><span class="sb-card-example">"She sent him home with a stolen kiss."</span></div>
+        </div>
+      </div>
+      <div class="sb-card selected flipped" data-grp="intensity" data-val="Naughty">
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">Naughty</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Naughty</span><span class="sb-card-desc">Suggestive tension; no explicit anatomy.</span><span class="sb-card-example">"She felt him pressed against her, and she pressed back."</span></div>
+        </div>
+      </div>
+      <div class="sb-card locked" data-grp="intensity" data-val="Erotic" data-locked="tease">
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">Erotic</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Erotic</span><span class="sb-card-desc">Explicit sensuality.</span><span class="sb-card-example">"She shuddered as he [censored] deep inside her."</span></div>
+        </div>
+      </div>
+      <div class="sb-card locked" data-grp="intensity" data-val="Dirty" data-locked="sub" data-storypass-allowed="false">
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">Dirty</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Dirty</span><span class="sb-card-desc">Very explicit; highest intensity.</span><span class="sb-card-example">"She [censored] his [censored] and [censored] it again."</span></div>
+        </div>
+      </div>
+    </div>
+    <button class="flow-continue-btn sb-btn-png sm" id="continueFromArousal">Proceed</button>
+
+    <div id="lengthSection">
+        <div class="section-title">Story Length</div>
+        <div class="sb-grid sb-grid-4" id="lengthGrid">
+          <div class="sb-card selected flipped" data-grp="length" data-val="tease">
+            <div class="sb-card-inner">
+              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Tease</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Tease</span><span class="sb-card-desc">A front-row seat. No touching. Ends right when you lean in.</span></div>
+            </div>
+          </div>
+          <div class="sb-card locked" data-grp="length" data-val="fling" data-locked="pass">
+            <div class="sb-card-inner">
+              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Fling</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Fling</span><span class="sb-card-desc">You get to get off, but you don't get to finish.</span></div>
+            </div>
+          </div>
+          <div class="sb-card locked" data-grp="length" data-val="affair" data-locked="sub">
+            <div class="sb-card-inner">
+              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Affair</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Affair</span><span class="sb-card-desc">Longer nights, deeper consequences. Arcs unfold. Nothing is rushed.</span></div>
+            </div>
+          </div>
+          <div class="sb-card locked" data-grp="length" data-val="soulmates" data-locked="sub" data-storypass-allowed="false">
+            <div class="sb-card-inner">
+              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Soulmates</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Soulmates</span><span class="sb-card-desc">This isn't about what happens next. It's about what keeps happening.</span></div>
+            </div>
+          </div>
+        </div>
+        <button class="flow-continue-btn sb-btn-png sm" id="continueFromLength">Proceed</button>
+    </div>
+
+    <!-- STORY POV (Repositioned: POV → Safety → World) -->
+    <div class="section-title" id="povSectionTitle">Story POV</div>
+    <div class="sb-grid sb-grid-5" id="povGrid">
+      <div class="sb-card selected flipped" data-grp="pov" data-val="First">
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">1st Person (I)</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">1st Person (I)</span><span class="sb-card-desc">"I shouldn't have gone back—but my hand was already on the door."</span></div>
+        </div>
+      </div>
+      <div class="sb-card" data-grp="pov" data-val="Second">
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">2nd Person (You)</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">2nd Person (You)</span><span class="sb-card-desc">"You hesitate, knowing once you knock, nothing will be the same."</span></div>
+        </div>
+      </div>
+      <div class="sb-card" data-grp="pov" data-val="Third">
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">3rd Person (They)</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">3rd Person (They)</span><span class="sb-card-desc">"We watch her falter at the threshold, pride warring with need."</span></div>
+        </div>
+      </div>
+      <div class="sb-card" data-grp="pov" data-val="Fourth">
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">4th Person (We)</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">4th Person (We)</span><span class="sb-card-desc">"We feel the moment tighten, as if the room itself is holding its breath."</span></div>
+        </div>
+      </div>
+      <div class="sb-card" data-grp="pov" data-val="Fifth">
+        <div class="sb-card-inner">
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">5th Person (Author)</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The Author has big plans for you..."</span></div>
+        </div>
+      </div>
+    </div>
+    <button class="flow-continue-btn sb-btn-png sm" id="continueFromPov">Proceed</button>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         FOUR-AXIS STORY SELECTION SYSTEM (AUTHORITATIVE)
+         Order: World → Tone → Genre → Dynamic
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- FLOATING SYNOPSIS PANEL (Side-mounted book jacket card) -->
+    <div id="synopsisPanel" class="synopsis-panel">
+      <!-- Drag handle: lets users reposition the floating panel -->
+      <div class="dsp-drag-handle" id="dspDragHandle">
+        <span class="dsp-drag-dots">&#x2801;&#x2801;&#x2801;</span>
+        <button class="dsp-collapse-btn" id="dspCollapseBtn" aria-label="Collapse panel">&times;</button>
+      </div>
+      <!-- Art Deco Border: Double gold frame, corner sunbursts, center diamonds -->
+      <svg class="dsp-art-deco-border" viewBox="0 0 200 280" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Brushed gold gradient for plated look -->
+          <linearGradient id="dspGoldBrushed" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#d4af5a"/>
+            <stop offset="25%" stop-color="#c9a24e"/>
+            <stop offset="50%" stop-color="#b8934a"/>
+            <stop offset="75%" stop-color="#c9a24e"/>
+            <stop offset="100%" stop-color="#d4af5a"/>
+          </linearGradient>
+          <linearGradient id="dspGoldHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#e8c86a"/>
+            <stop offset="50%" stop-color="#c9a24e"/>
+            <stop offset="100%" stop-color="#a8863c"/>
+          </linearGradient>
+        </defs>
+
+        <!-- OUTER FRAME: Double gold lines -->
+        <rect x="4" y="4" width="192" height="272" rx="3" ry="3"
+              fill="none" stroke="url(#dspGoldBrushed)" stroke-width="1.5" opacity="0.85"/>
+        <rect x="8" y="8" width="184" height="264" rx="2" ry="2"
+              fill="none" stroke="url(#dspGoldHighlight)" stroke-width="0.75" opacity="0.6"/>
+
+        <!-- TOP CENTER DIAMOND: Where double lines resolve -->
+        <polygon points="100,2 106,8 100,14 94,8"
+                 fill="url(#dspGoldBrushed)" opacity="0.8"/>
+        <polygon points="100,4 104,8 100,12 96,8"
+                 fill="none" stroke="url(#dspGoldHighlight)" stroke-width="0.5" opacity="0.6"/>
+
+        <!-- BOTTOM CENTER DIAMOND: Mirror of top -->
+        <polygon points="100,278 106,272 100,266 94,272"
+                 fill="url(#dspGoldBrushed)" opacity="0.8"/>
+        <polygon points="100,276 104,272 100,268 96,272"
+                 fill="none" stroke="url(#dspGoldHighlight)" stroke-width="0.5" opacity="0.6"/>
+
+        <!-- TOP-LEFT CORNER SUNBURST: 4 stepped angular rays pointing inward -->
+        <g opacity="0.7">
+          <line x1="4" y1="4" x2="20" y2="20" stroke="url(#dspGoldBrushed)" stroke-width="1.2"/>
+          <line x1="4" y1="12" x2="16" y2="24" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+          <line x1="4" y1="22" x2="14" y2="32" stroke="url(#dspGoldBrushed)" stroke-width="0.7"/>
+          <line x1="12" y1="4" x2="24" y2="16" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+        </g>
+
+        <!-- TOP-RIGHT CORNER SUNBURST: Mirror of top-left -->
+        <g opacity="0.7">
+          <line x1="196" y1="4" x2="180" y2="20" stroke="url(#dspGoldBrushed)" stroke-width="1.2"/>
+          <line x1="196" y1="12" x2="184" y2="24" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+          <line x1="196" y1="22" x2="186" y2="32" stroke="url(#dspGoldBrushed)" stroke-width="0.7"/>
+          <line x1="188" y1="4" x2="176" y2="16" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+        </g>
+
+        <!-- BOTTOM-LEFT CORNER SUNBURST: Mirror of top-left vertically -->
+        <g opacity="0.7">
+          <line x1="4" y1="276" x2="20" y2="260" stroke="url(#dspGoldBrushed)" stroke-width="1.2"/>
+          <line x1="4" y1="268" x2="16" y2="256" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+          <line x1="4" y1="258" x2="14" y2="248" stroke="url(#dspGoldBrushed)" stroke-width="0.7"/>
+          <line x1="12" y1="276" x2="24" y2="264" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+        </g>
+
+        <!-- BOTTOM-RIGHT CORNER SUNBURST: Mirror diagonally -->
+        <g opacity="0.7">
+          <line x1="196" y1="276" x2="180" y2="260" stroke="url(#dspGoldBrushed)" stroke-width="1.2"/>
+          <line x1="196" y1="268" x2="184" y2="256" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+          <line x1="196" y1="258" x2="186" y2="248" stroke="url(#dspGoldBrushed)" stroke-width="0.7"/>
+          <line x1="188" y1="276" x2="176" y2="264" stroke="url(#dspGoldBrushed)" stroke-width="0.9"/>
+        </g>
+      </svg>
+      <p id="synopsisText" class="synopsis-text"></p>
+      <!-- Resize handles on all four corners -->
+      <div class="dsp-resize-handle dsp-resize-nw" data-resize="nw"></div>
+      <div class="dsp-resize-handle dsp-resize-ne" data-resize="ne"></div>
+      <div class="dsp-resize-handle dsp-resize-sw" data-resize="sw"></div>
+      <div class="dsp-resize-handle dsp-resize-se" data-resize="se"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         FLOW ROW 2: STORY WORLD (Required, Second in Breadcrumb Flow)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="card-flow-row flow-hidden" id="flowRowWorld" data-flow-stage="world">
+      <div class="section-title">Story World</div>
+      <div class="sb-grid sb-grid-6" id="worldGrid">
+        <div class="sb-card" data-grp="world" data-val="Modern"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Modern</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Modern</span><span class="sb-card-desc">Present-day settings, familiar social norms.</span></div></div></div>
+        <div class="sb-card" data-grp="world" data-val="Historical"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Historical</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Historical</span><span class="sb-card-desc">A real past era with period constraints.</span></div></div></div>
+        <div class="sb-card" data-grp="world" data-val="Fantasy"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Fantasy</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Fantasy</span><span class="sb-card-desc">Magic, invented worlds, enchanted realms.</span></div></div></div>
+        <div class="sb-card" data-grp="world" data-val="SciFi"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Sci-Fi</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Sci-Fi</span><span class="sb-card-desc">Advanced technology, space, future societies.</span></div></div></div>
+        <div class="sb-card" data-grp="world" data-val="Dystopia"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dystopia</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dystopia</span><span class="sb-card-desc">Oppressive systems, controlled societies.</span></div></div></div>
+        <div class="sb-card" data-grp="world" data-val="PostApocalyptic"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Post-Apocalyptic</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Post-Apocalyptic</span><span class="sb-card-desc">Survival after collapse, scarce resources.</span></div></div></div>
+      </div>
+      <button class="flow-continue-btn sb-btn-png sm" id="continueFromWorld">Proceed</button>
+    </div>
+
+    <!-- Modern Subtype Sub-Selection (shown only when Modern selected) -->
+    <div id="modernSubtypeSelection" class="world-subtype-selection hidden">
+      <div class="section-title sub-title">Modern Flavor</div>
+      <div class="sb-grid" id="modernSubtypeGrid">
+        <div class="sb-card" data-grp="worldSubtype" data-val="small_town"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Small Town</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Small Town</span><span class="sb-card-desc">Close communities, local secrets, familiar faces.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="college"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">College</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">College</span><span class="sb-card-desc">Campus life, coming of age, academic settings.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="friends"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Friends</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Friends</span><span class="sb-card-desc">Friend groups, shared spaces, everyday drama.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="blue_blood"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Blue Blood</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Blue Blood</span><span class="sb-card-desc">Inherited wealth, elite circles, social expectations.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="office"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">9-5 / Office</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">9-5 / Office</span><span class="sb-card-desc">Workplace dynamics, corporate settings, professional life.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="supernatural_modern"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Supernatural Modern</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Supernatural Modern</span><span class="sb-card-desc">Vampires, shifters, witches in hidden worlds.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="superheroic_modern"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Superheroic Modern</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Superheroic Modern</span><span class="sb-card-desc">Powers, masks, secret identities, cosmic stakes.</span></div></div></div>
+      </div>
+    </div>
+
+    <!-- Sci-Fi Subtype Sub-Selection (shown only when SciFi selected) -->
+    <div id="scifiSubtypeSelection" class="world-subtype-selection hidden">
+      <div class="section-title sub-title">Sci-Fi Flavor</div>
+      <div class="sb-grid" id="scifiSubtypeGrid">
+        <div class="sb-card" data-grp="worldSubtype" data-val="galactic_civilizations"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Galactic Conflict</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Galactic Conflict</span><span class="sb-card-desc">Love can save a world, or burn a galaxy.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="future_of_science"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Science Future</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Science Future</span><span class="sb-card-desc">Love measured against progress, reason, and unintended consequences.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="cyberpunk"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Cyberpunk</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Cyberpunk</span><span class="sb-card-desc">Love survives beneath power, tech, and exploitation.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="post_human"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Post-Human</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Post-Human</span><span class="sb-card-desc">Desire outpaces bodies, identity, and human limits.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="first_contact"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">First Contact</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">First Contact</span><span class="sb-card-desc">Desire collides with the truly unknown.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="simulation"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Simulation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Simulation</span><span class="sb-card-desc">Intimacy questions what's real, chosen, or programmed.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="final_frontier"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Final Frontier</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Final Frontier</span><span class="sb-card-desc">Love tested by distance, discovery, and leaving everything behind.</span></div></div></div>
+      </div>
+    </div>
+
+    <!-- Fantasy Subtype Sub-Selection (shown only when Fantasy selected) -->
+    <div id="fantasySubtypeSelection" class="world-subtype-selection hidden">
+      <div class="section-title sub-title">Fantasy Flavor</div>
+      <div class="sb-grid" id="fantasySubtypeGrid">
+        <div class="sb-card" data-grp="worldSubtype" data-val="arcane_binding"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Arcane Binding</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Arcane Binding</span><span class="sb-card-desc">Magic binds them to choices love cannot undo.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="fated_blood"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Fated Blood</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Fated Blood</span><span class="sb-card-desc">Their blood decides who they may love.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="the_inhuman"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Inhuman</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Inhuman</span><span class="sb-card-desc">To love them means never fully belonging together.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="the_beyond"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Beyond</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Beyond</span><span class="sb-card-desc">Love survives death, distance, or worlds apart.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="cursed"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Cursed</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Cursed</span><span class="sb-card-desc">A spell stands between them, waiting to be broken.</span></div></div></div>
+      </div>
+    </div>
+
+    <!-- Horror Subtype Sub-Selection (shown when Horror tone selected with Fantasy/Supernatural) -->
+    <div id="horrorSubtypeSelection" class="world-subtype-selection hidden">
+      <div class="section-title sub-title">Horror Flavor</div>
+      <div class="sb-grid" id="horrorSubtypeGrid">
+        <div class="sb-card" data-grp="worldSubtype" data-val="cosmic_horror"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Cosmic Horror</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Cosmic Horror</span><span class="sb-card-desc">Unknowable entities, insignificance, existential dread.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="psychological_horror"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Psychological</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Psychological</span><span class="sb-card-desc">Mind games, paranoia, internal terror.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="gothic_horror"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Gothic Horror</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Gothic Horror</span><span class="sb-card-desc">Decaying mansions, ancestral curses, romantic dread.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="body_horror"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Body Horror</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Body Horror</span><span class="sb-card-desc">Transformation, corruption of flesh, visceral dread.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="folk_horror"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Folk Horror</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Folk Horror</span><span class="sb-card-desc">Rural isolation, ancient rituals, community darkness.</span></div></div></div>
+      </div>
+    </div>
+
+    <!-- Dystopia Subtype Sub-Selection (shown only when Dystopia selected) -->
+    <div id="dystopiaSubtypeSelection" class="world-subtype-selection hidden">
+      <div class="section-title sub-title">Dystopia Flavor</div>
+      <div class="sb-grid" id="dystopiaSubtypeGrid">
+        <div class="sb-card" data-grp="worldSubtype" data-val="glass_house" data-micro-tip="You will never love alone — you will love us."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Glass House</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Glass House</span><span class="sb-card-desc">You will never love alone — you will love us.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="velvet_trap" data-micro-tip="True intimacy is forbidden in a world of endless indulgence."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Mandatory Pleasure</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Mandatory Pleasure</span><span class="sb-card-desc">True intimacy is forbidden in a world of endless indulgence.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="the_ledger" data-micro-tip="Your heart has a market value."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Human Capital</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Human Capital</span><span class="sb-card-desc">Your heart has a market value.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="crimson_veil" data-micro-tip="Desire is sacred. Would you risk damnation for it?"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dogma</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dogma</span><span class="sb-card-desc">Desire is sacred. Would you risk damnation for it?</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="perfect_match" data-micro-tip="You are not mine. You are humanity's."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Perfect Breed</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Perfect Breed</span><span class="sb-card-desc">You are not mine. You are humanity's.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="ministry_of_affection" data-micro-tip="Every touch negotiated until desire breaks."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dysconsent</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dysconsent</span><span class="sb-card-desc">Every touch negotiated until desire breaks.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="endless_edit" data-micro-tip="Love fades as selves are edited away."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Erasure</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Erasure</span><span class="sb-card-desc">Love fades as selves are edited away.</span></div></div></div>
+      </div>
+    </div>
+
+    <!-- Post-Apocalyptic Subtype Sub-Selection (shown only when PostApocalyptic selected) -->
+    <div id="apocalypseSubtypeSelection" class="world-subtype-selection hidden">
+      <div class="section-title sub-title">World Condition</div>
+      <div class="sb-grid" id="apocalypseSubtypeGrid">
+        <div class="sb-card" data-grp="worldSubtype" data-val="ashfall" data-micro-tip="The world burns between you."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Ashfall</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Ashfall</span><span class="sb-card-desc">The world burns between you.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="year_zero" data-micro-tip="Love is the aftermath."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Year 0</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Year 0</span><span class="sb-card-desc">Love is the aftermath.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="dystimulation" data-micro-tip="You must risk everything to feel anything."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dystimulation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dystimulation</span><span class="sb-card-desc">You must risk everything to feel anything.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="predation" data-micro-tip="Love makes you prey."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Predation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Predation</span><span class="sb-card-desc">Love makes you prey.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="hunger" data-micro-tip="Love competes with survival."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Hunger</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Hunger</span><span class="sb-card-desc">Love competes with survival.</span></div></div></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         FLOW ROW 3: STORY TONE (Required, Third in Breadcrumb Flow)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="card-flow-row flow-hidden" id="flowRowTone" data-flow-stage="tone">
+      <div class="section-title">Story Tone</div>
+      <div class="sb-grid sb-grid-4" id="toneGrid">
+        <div class="sb-card" data-grp="tone" data-val="Earnest"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Earnest</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Earnest</span><span class="sb-card-desc">Sincere emotion, unironic stakes.</span></div></div></div>
+        <div class="sb-card" data-grp="tone" data-val="WryConfession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Wry</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Wry</span><span class="sb-card-desc">Intimacy with irony, self-aware narrator.</span></div></div></div>
+        <div class="sb-card" data-grp="tone" data-val="Dark"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dark</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dark</span><span class="sb-card-desc">Morally complex, shadowed desire.</span></div></div></div>
+        <div class="sb-card" data-grp="tone" data-val="Mythic"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Mythic</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Mythic</span><span class="sb-card-desc">Archetypal weight, legendary scale.</span></div></div></div>
+      </div>
+      <button class="flow-continue-btn sb-btn-png sm" id="continueFromTone">Proceed</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         FLOW ROW 1: STORY PRESSURE (Required, First in Breadcrumb Flow)
+
+         GENRE REGIME: NESTED PRESSURE MODEL
+         Primary Pressures are the only top-level choices (max 8).
+         Flavors appear after pressure selection and are NEVER required.
+
+         BREADCRUMB FLOW:
+         1. User sees Pressure cards only
+         2. User flips, zooms, selects
+         3. Continue → Pressure becomes breadcrumb, World cards appear
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="card-flow-row" id="flowRowPressure" data-flow-stage="pressure">
+      <div class="section-title">Story Pull</div>
+      <div class="sb-grid sb-grid-4" id="pressureGrid">
+        <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power & Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">The entire city answers to him. Except for her.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="EscapePursuit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape & Pursuit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape & Pursuit</span><span class="sb-card-desc">The world hunts them. They only have each other.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="DesireObsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Desire & Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Desire & Obsession</span><span class="sb-card-desc">He should walk away. He never can.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">The mountain tried to freeze them; instead, they burned.</span></div></div></div>
+      </div>
+
+      <!-- FLAVOR GRID REMOVED: Flavors now selected inside zoomed Story Pull card -->
+      <!-- Legacy elements kept hidden for backward compatibility -->
+      <div class="section-title flavor-title" id="flavorTitle" style="display:none !important;">Flavor</div>
+      <div class="sb-grid sb-grid-5" id="flavorGrid" style="display:none !important;"></div>
+
+      <button class="flow-continue-btn sb-btn-png sm" id="continueFromPressure">Proceed</button>
+    </div>
+
+    <!-- HIDDEN: Legacy genre field for backward compatibility (synced from pressure+flavor) -->
+    <input type="hidden" id="legacyGenre" value="Billionaire">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         FLOW ROW 4: RELATIONSHIP DYNAMIC (Required, Last in Breadcrumb Flow)
+
+         LOCKED DESIGN RULE:
+         Relationship Dynamics are single-select and represent emotional structure,
+         not identity. They describe how characters relate, not who they are.
+         Groupings are for cognitive organization only—selection remains flat.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="card-flow-row flow-hidden" id="flowRowDynamic" data-flow-stage="dynamic">
+      <div class="section-title">Story Polarity</div>
+      <div class="dynamic-grouped" id="dynamicGrid">
+        <!-- Circumstance -->
+        <div class="dynamic-group">
+          <div class="dynamic-group-label">Circumstance</div>
+          <div class="sb-grid sb-grid-2">
+            <div class="sb-card" data-grp="dynamic" data-val="Proximity"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Forced Proximity</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Forced Proximity</span><span class="sb-card-desc">Circumstance throws them together.</span></div></div></div>
+            <div class="sb-card" data-grp="dynamic" data-val="SecretIdentity"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Secret Identity</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Secret Identity</span><span class="sb-card-desc">Hidden truths, masks, revelations.</span></div></div></div>
+          </div>
+        </div>
+        <!-- Emotional Arc -->
+        <div class="dynamic-group">
+          <div class="dynamic-group-label">Emotional Arc</div>
+          <div class="sb-grid sb-grid-4">
+            <div class="sb-card" data-grp="dynamic" data-val="Friends"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Friends to Lovers</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Friends to Lovers</span><span class="sb-card-desc">Safety tipping into something more.</span></div></div></div>
+            <div class="sb-card" data-grp="dynamic" data-val="Enemies"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Enemies to Lovers</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Enemies to Lovers</span><span class="sb-card-desc">Friction that becomes fire.</span></div></div></div>
+            <div class="sb-card" data-grp="dynamic" data-val="SecondChance"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">2nd Chance</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">2nd Chance</span><span class="sb-card-desc">Past lovers, unfinished business.</span></div></div></div>
+            <div class="sb-card" data-grp="dynamic" data-val="Forbidden"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Forbidden Love</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Forbidden Love</span><span class="sb-card-desc">Rules, taboo, desire against judgment.</span></div></div></div>
+          </div>
+        </div>
+      </div>
+      <button class="flow-continue-btn sb-btn-png sm" id="continueFromDynamic">Begin Story</button>
+      <p id="continueFromDynamicHint" class="story-continue-hint hidden">Your story will resume where you left off.</p>
+    </div>
+
+    <!-- POST-AROUSAL WRAPPER: Safety + Begin Story shown after corridor completes -->
+    <div id="postArousalSection" class="hidden">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SAFETY ROW (Row 9) — Own corridor row after Arousal
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div id="safetyRow" class="story-shape-row corridor-section" data-corridor-stage="safety">
+      <div class="section-title">Safety</div>
+      <!-- LEFT CARD: Theme Toggles -->
+      <div class="safety-tarot-card" id="safetyThemesCard">
+        <div class="safety-arc-container">
+          <svg class="safety-arc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2L3 7v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5z"/>
+          </svg>
+          <svg class="safety-arc-text" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet">
+            <defs><path id="safetyThemesArc" d="M 15,18 A 40,40 0 0,1 85,18"/></defs>
+            <text><textPath href="#safetyThemesArc" startOffset="50%" text-anchor="middle"
+              fill="#c9a84c" font-family="Lora, serif" font-size="7" font-variant="small-caps"
+              letter-spacing="2">themes</textPath></text>
+          </svg>
+        </div>
+        <div class="safety-card-content">
+          <label class="sb-checkbox sb-checkbox-sm">
+            <input type="checkbox" id="chkDark" checked>
+            <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
+            <span class="sb-checkbox-label sb-checkbox-label-sm">Dark Themes</span>
+          </label>
+          <label class="sb-checkbox sb-checkbox-sm">
+            <input type="checkbox" id="chkNonCon">
+            <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
+            <span class="sb-checkbox-label sb-checkbox-label-sm">Implied Non&#8209;consent</span>
+          </label>
+          <label class="sb-checkbox sb-checkbox-sm">
+            <input type="checkbox" id="chkViolence" checked>
+            <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
+            <span class="sb-checkbox-label sb-checkbox-label-sm">Violence &amp; Peril</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- RIGHT CARD: Boundary Chips -->
+      <div class="safety-tarot-card" id="safetyBoundaryCard">
+        <div class="safety-arc-container">
+          <svg class="safety-arc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          <svg class="safety-arc-text" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet">
+            <defs><path id="safetyLimitsArc" d="M 15,18 A 40,40 0 0,1 85,18"/></defs>
+            <text><textPath href="#safetyLimitsArc" startOffset="50%" text-anchor="middle"
+              fill="#c9a84c" font-family="Lora, serif" font-size="7" font-variant="small-caps"
+              letter-spacing="2">limits</textPath></text>
+          </svg>
+        </div>
+        <div class="safety-card-content boundary-chips" id="boundaryChips">
+          <div class="chip-gold" data-boundary="sexual-violence">No sexual violence</div>
+          <div class="chip-gold" data-boundary="coercion">No coercion</div>
+          <div class="chip-gold" data-boundary="degradation">No degradation language</div>
+          <div class="chip-gold" data-boundary="captivity">No captivity</div>
+          <div class="chip-gold" data-boundary="blackmail">No blackmail</div>
+        </div>
+      </div>
+
+      <button class="flow-continue-btn sb-btn-png sm" id="continueFromSafety">Proceed</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         BEGIN STORY ROW (Row 11) — Terminal corridor row
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div id="beginStoryRow" class="corridor-section" data-corridor-stage="beginstory">
+        <div class="begin-story-container">
+            <div class="begin-story-flourish"></div>
+            <div class="begin-btn-wrapper">
+                <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
+                <button class="sb-btn-png lg" id="beginBtn">Begin Story</button>
+            </div>
+            <p class="story-continue-hint hidden" id="beginBtnHint">Your story will resume where you left off.</p>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- BOOK COVER GENERATION — DISABLED (Earned Cover System Phase B)       -->
+    <!-- Cover generation is now READER-ONLY via btnReaderCover               -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <div id="coverGenSection" class="hidden" style="display:none; margin-top:20px; text-align:center;">
+      <button id="btnGenerateCover" class="sb-btn sb-btn--lg">
+        Generate Your Book Cover
+      </button>
+      <!-- Cover$ Credit Display -->
+      <p id="coverCreditDisplay" style="font-size:0.75em; color:var(--gold); margin-top:6px; opacity:0.8;">3 free covers remaining today</p>
+      <div id="coverGenStatus" class="hidden" style="margin-top:10px; color:var(--text-secondary); font-size:0.9em;">
+        <div id="coverGenLoading" style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <span>Generating your cover...</span>
+          <div class="cover-gen-bar" style="width:50px; height:3px; background:rgba(255,215,0,0.2); border-radius:2px; overflow:hidden;">
+            <div class="cover-gen-bar-fill" style="width:100%; height:100%; background:var(--gold); animation:coverGenBarFill 1.2s ease-in-out infinite;"></div>
+          </div>
+        </div>
+        <div id="coverGenComplete" class="hidden" style="color:var(--gold);">
+          Cover ready! It will appear when you begin your story.
+        </div>
+        <div id="coverGenLocked" class="hidden" style="color:var(--text-secondary);">
+          Cover generation unlocks again at Scene 5 <span id="coverGenSubLink" class="hidden">or <a href="#" onclick="window.showPaywall('sub_only'); return false;" style="color:var(--pink);">subscribe</a></span>
+        </div>
+      </div>
+      <p style="font-size:0.8em; color:var(--text-secondary); margin-top:8px; opacity:0.7;">Optional — you can skip this and start reading immediately</p>
+    </div>
+
+    <!-- Legacy beginBtn removed — Begin Story is now a corridor row (#beginStoryRow) -->
+
+    </div><!-- END postArousalSection -->
+  </div>
+
+  <!-- LEGACY BREADCRUMB REMOVED: "Shape > Cover > Setting > Story" component deleted -->
+
+  <div id="game" class="screen hidden" style="max-width:900px; margin:0 auto; padding-bottom:60px;">
+
+    <!-- ============================================================ -->
+    <!-- BOOK COVER PAGE - Physical book object, clickable anywhere   -->
+    <!-- ============================================================ -->
+    <div id="bookCoverPage" class="book-cover-page">
+      <div id="coverLoadingState" class="cover-loading">
+        <div class="cover-progress-bar">
+          <div id="coverProgressFill" class="cover-progress-fill"></div>
+        </div>
+        <p id="coverStatusText" class="cover-status-text">Building your book cover...</p>
+        <button id="coverAbortBtn" class="cover-abort-btn" title="Cancel cover generation">✕</button>
+      </div>
+
+      <!-- Physical book object - no buttons, click anywhere to open -->
+      <div id="bookObject" class="book-object hidden">
+        <!-- Bookmark ribbon (visible for returning readers) -->
+        <div id="bookmarkRibbon" class="bookmark-ribbon hidden"></div>
+
+        <!-- Book cover with hinge -->
+        <div id="bookCover" class="book-cover">
+          <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
+          <!-- Fallback cover: Intentional empty-state design (textured, Art Deco border, watermark) -->
+          <div id="coverFallback" class="cover-fallback hidden">
+            <!-- Art Deco border frame -->
+            <svg class="fallback-border" viewBox="0 0 320 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Outer frame -->
+              <rect x="8" y="8" width="304" height="464" rx="4" stroke="currentColor" stroke-width="1.5"/>
+              <!-- Inner frame -->
+              <rect x="16" y="16" width="288" height="448" rx="2" stroke="currentColor" stroke-width="0.75" opacity="0.5"/>
+              <!-- Corner flourishes -->
+              <g opacity="0.6">
+                <!-- Top-left -->
+                <path d="M8,40 L8,8 L40,8" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M16,32 L16,16 L32,16" stroke="currentColor" stroke-width="0.75"/>
+                <!-- Top-right -->
+                <path d="M312,40 L312,8 L280,8" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M304,32 L304,16 L288,16" stroke="currentColor" stroke-width="0.75"/>
+                <!-- Bottom-left -->
+                <path d="M8,440 L8,472 L40,472" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M16,448 L16,464 L32,464" stroke="currentColor" stroke-width="0.75"/>
+                <!-- Bottom-right -->
+                <path d="M312,440 L312,472 L280,472" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M304,448 L304,464 L288,464" stroke="currentColor" stroke-width="0.75"/>
+              </g>
+              <!-- Top center keystone -->
+              <g transform="translate(160,0)" opacity="0.5">
+                <line x1="0" y1="24" x2="-20" y2="6" stroke="currentColor" stroke-width="0.6"/>
+                <line x1="0" y1="22" x2="0" y2="4" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="24" x2="20" y2="6" stroke="currentColor" stroke-width="0.6"/>
+                <circle cx="0" cy="18" r="4" stroke="currentColor" stroke-width="0.75"/>
+              </g>
+              <!-- Bottom center flourish -->
+              <g transform="translate(160,480)" opacity="0.5">
+                <line x1="0" y1="-24" x2="-20" y2="-6" stroke="currentColor" stroke-width="0.6"/>
+                <line x1="0" y1="-22" x2="0" y2="-4" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="0" y1="-24" x2="20" y2="-6" stroke="currentColor" stroke-width="0.6"/>
+                <circle cx="0" cy="-18" r="4" stroke="currentColor" stroke-width="0.75"/>
+              </g>
+            </svg>
+            <!-- Embossed watermark (symbolic key) -->
+            <div class="fallback-watermark">
+              <svg viewBox="0 0 80 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Key bow (ring) -->
+                <circle cx="40" cy="24" r="18" stroke="currentColor" stroke-width="2"/>
+                <circle cx="40" cy="24" r="10" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+                <!-- Key shaft -->
+                <line x1="40" y1="42" x2="40" y2="105" stroke="currentColor" stroke-width="3"/>
+                <!-- Key teeth -->
+                <path d="M40,85 L52,85 L52,92 L40,92" stroke="currentColor" stroke-width="2"/>
+                <path d="M40,95 L48,95 L48,102 L40,102" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <!-- Title and author -->
+            <div class="fallback-title" id="fallbackTitle">Untitled</div>
+            <div class="fallback-author">by Anonymous</div>
+          </div>
+          <!-- Layer 2: Erotic border overlay (world-specific asset-based frame) -->
+          <!-- EROTIC BORDER SYSTEM: Image-based borders, one per world (6 total)
+               Asset path: /assets/borders/erotic/{world}_base.png
+               Worlds: modern, fantasy, scifi, historical, postapocalyptic, dystopia
+               Flavor: Affects surface condition (damage/aging/corrosion) via CSS filters, NOT geometry -->
+          <div id="coverEroticBorder" class="cover-erotic-border hidden">
+            <img id="eroticBorderImg" class="erotic-border-img" src="" alt="" />
+          </div>
+          <!-- Layer 3: Dirty keyhole takeover (world-specific mask-based frame) -->
+          <!-- DIRTY KEYHOLE SYSTEM: Mask-based keyholes, one silhouette per world (6 total)
+               Asset path: /assets/keyholes/{world}_mask.png
+               Worlds: modern, historical, fantasy, scifi, dystopia, postapocalyptic
+               Geometry: 8% top/bottom margin, 55-65% crown width, ≥22% stem width
+               Flavor: Affects surface condition (wear/corrosion/damage) via CSS filters, NOT aperture geometry
+               Content: Symbolic objects ONLY visible through aperture (no humans/body parts) -->
+          <div id="coverKeyholeOverlay" class="cover-keyhole-overlay hidden">
+            <div class="keyhole-plate" id="keyholeplate"></div>
+            <div class="keyhole-title"></div>
+          </div>
+        </div>
+
+        <!-- Book pages underneath (visible during courtesy hinge) -->
+        <div id="bookPagesPreview" class="book-pages-preview">
+          <div class="page-edge-stack"></div>
+          <!-- Inside cover: BLANK paper only (no text, no images per spec) -->
+          <div id="bookInsideCover" class="book-inside-cover">
+            <!-- Intentionally empty: pure white/paper texture -->
+          </div>
+        </div>
+
+        <!-- Book spine/thickness -->
+        <div class="book-spine"></div>
+        <div class="book-thickness"></div>
+      </div>
+
+      <!-- Cover View Buttons (below the book) -->
+      <div id="coverViewButtons" class="cover-view-buttons hidden">
+        <button id="btnSeeSetting" class="cover-view-btn setting-btn">See Your Story Setting</button>
+        <div id="settingBtnDisabledNotice" class="setting-disabled-notice hidden">Requires subscription to access</div>
+        <button id="btnBeginStory" class="cover-view-btn begin-btn">Begin Story</button>
+        <p id="btnBeginStoryHint" class="story-continue-hint hidden">Your story will resume where you left off.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SETTING VIEW - Full-screen setting image display            -->
+    <!-- ============================================================ -->
+    <div id="settingView" class="setting-view hidden">
+      <!-- NON-BLOCKING Loading: User can always proceed -->
+      <div id="settingViewLoading" class="setting-view-loading">
+        <p class="setting-status-text">Generating setting image<span class="setting-ellipsis"></span></p>
+        <p id="settingLongWaitHint" class="setting-long-wait-hint hidden">Still working… you can continue without it.</p>
+        <button id="btnSettingSkip" class="setting-skip-btn">Begin Story →</button>
+      </div>
+      <div id="settingViewContent" class="setting-view-content hidden">
+        <img id="settingViewImg" src="" alt="Story Setting" class="setting-view-image">
+        <p class="setting-view-hint">Tap to begin your story</p>
+      </div>
+      <!-- Setting Fallback: Shown on failure (not cancel) -->
+      <div id="settingViewFallback" class="setting-view-fallback hidden">
+        <div class="setting-fallback-inner">
+          <div class="setting-fallback-text">Setting image unavailable</div>
+          <button id="btnSettingBeginStory" class="setting-begin-btn">Begin Story</button>
+          <p id="btnSettingBeginStoryHint" class="story-continue-hint hidden">Your story will resume where you left off.</p>
+          <button id="btnSettingRetry" class="setting-retry-btn">Try Again</button>
+        </div>
+      </div>
+      <button id="btnSettingBack" class="setting-back-btn">← Back to Cover</button>
+    </div>
+
+    <!-- Main story content (hidden during cover) -->
+    <div id="storyContent" class="story-content hidden">
+
+    <div id="billingBanner" style="display:none;"></div>
+
+    <!-- Setting Plate: Inline within Scene 1 (between synopsis and prose) -->
+    <div id="settingPlate" class="setting-plate setting-inline">
+      <img id="bookSceneImg" src="" alt="" class="book-scene-image">
+      <div id="bookSceneLoading" class="book-scene-loading hidden">Conjuring the world…</div>
+    </div>
+
+    <div id="batedBreathIndicator" class="hidden" style="text-align:center; font-size:0.8em; color:var(--gold); font-style:italic; margin-bottom:10px; opacity:0.8;">
+        Waiting for partner...
+        <button id="btnAbandonCouple" style="background:none; border:none; text-decoration:underline; color:var(--pink); cursor:pointer; padding:0; font-size:inherit; margin-left:5px;">Play Solo (Revoke Invite)</button>
+    </div>
+
+    <!-- TEXT-FIRST LAYOUT: Story text begins immediately after Scene 1 -->
+    <div id="storyText" class="box">
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- TITLE + SCENE — Inside page container (AUTHORITATIVE)                       -->
+        <!-- Typography: Lora font, lower visual salience, printed-book elements         -->
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <h2 id="storyTitle" class="story-page-title"></h2>
+        <div id="sceneNumber" class="story-page-scene">Scene 1</div>
+        <!-- Synopsis displays below title -->
+        <p id="sceneSynopsis" class="scene-synopsis hidden"></p>
+        <div class="story-pages-container" id="storyPagesContainer"></div>
+    </div>
+
+    <!-- Setting shot appears as landscape element AFTER text (does not replace text) -->
+    <div id="settingShotWrap">
+        <div id="settingError" class="img-error-msg hidden"></div>
+        <img id="settingShotImg" src="" alt="Setting" style="display:none; width:100%;">
+    </div>
+
+    <div class="page-nav-controls" id="pageNavControls">
+        <button class="page-nav-btn" id="prevPageBtn" disabled>
+            <span>←</span> Previous
+        </button>
+        <span class="page-indicator" id="pageIndicator">Page 1 of 1</span>
+        <button class="page-nav-btn" id="nextPageBtn" disabled>
+            Next <span>→</span>
+        </button>
+    </div>
+
+    <div style="text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <button id="vizSceneBtn" onclick="window.visualize()" class="small-btn">✨ Visualize</button>
+        <button id="btnReaderCover" class="small-btn">📖 Generate Cover — Sketch</button>
+    </div>
+
+    <!-- Reader Cover Preview (shown after generation) -->
+    <div id="readerCoverPreview" class="hidden" style="margin:15px auto; max-width:300px; text-align:center;">
+        <img id="readerCoverImg" src="" alt="Generated Cover" style="max-width:100%; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+    </div>
+    
+    <div id="metaControls" class="hidden" style="margin: 10px auto; padding: 10px; border: 2px double gold; border-radius: 0; box-shadow: 0 0 0 1px #0a0a0a; max-width: 600px;">
+      <div style="font-size: 0.8em; color: var(--gold); margin-bottom: 5px;">CHARACTERS REACT TO FATE (Meta System)</div>
+      <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 5px;">
+        <button class="small-btn meta-stance" onclick="window.setMetaStance('aid')">Aid Fate</button>
+        <button class="small-btn meta-stance" onclick="window.setMetaStance('rebel')">Resist Fate</button>
+        <button class="small-btn meta-stance" onclick="window.setMetaStance('seduce')">Tempt Fate</button>
+      </div>
+    </div>
+
+    <div id="fateCardHeader" class="section-title" style="font-size:1.8em; margin-top:0; display:flex; justify-content:center;">Let Fate Guide You</div>
+
+    <div style="display:flex; align-items:flex-start; justify-content:center;">
+        <div id="cardMount" class="fate-grid"></div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
+      <div class="input-wrapper" id="actionWrapper">
+          <label>What do you do?</label>
+          <textarea id="actionInput" rows="3" placeholder="Action..."></textarea>
+      </div>
+      <div class="input-wrapper" id="dialogueWrapper">
+          <label>What do you say?</label>
+          <textarea id="dialogueInput" rows="3" placeholder="Dialogue..."></textarea>
+      </div>
+    </div>
+
+    <div class="intensity-mini" id="gameIntensity">
+        <button onclick="window.setGameIntensity('Clean')">Clean</button>
+        <button onclick="window.setGameIntensity('Naughty')" class="active">Naughty</button>
+        <button onclick="window.setGameIntensity('Erotic')">Erotic</button>
+        <button onclick="window.setGameIntensity('Dirty')">Dirty</button>
+    </div>
+
+    <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
+       <button id="saveBtn" class="small-btn locked-style">Save</button>
+       <button id="submitBtn" style="font-size:1.3em;">Submit Turn</button>
+    </div>
+    
+    <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+       <button id="gameGodModeBtn" class="god-mode-reader-btn hidden">God Mode</button>
+       <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
+    </div>
+
+  </div>
+
+    </div><!-- END storyContent -->
+
+  <div id="toast" class="toast hidden">Boundaries redirected the scene.</div>
+
+<div id="petitionFateModal" class="overlay hidden" style="z-index:10004;">
+  <div class="box petition-box" style="max-width:90vw; width:500px; text-align:center;">
+    <h3 style="color:var(--gold); margin:0;">Petition Fate</h3>
+    <p style="font-size:0.85em; opacity:0.8; margin:8px 0 16px;">Speak your desire. Fate may honor, twist, or ignore it.</p>
+    <div style="width:100%;">
+      <div class="fate-input-wrapper fate-textarea-wrapper" style="width:100%;">
+        <textarea id="petitionInput" rows="3" class="fate-field" data-fate-type="petition"></textarea>
+        <div class="rotating-placeholder textarea-placeholder" data-for="petitionInput"></div>
+      </div>
+    </div>
+    <div id="petitionRitualArea" class="hidden">
+      <div id="petitionOmen" class="petition-omen"></div>
+      <div id="petitionSacrifice" class="petition-sacrifice hidden">
+        <p style="color:var(--gold); font-size:0.9em;">What will you offer?</p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+          <button class="small-btn petition-sacrifice-btn" data-choice="offer">Offer</button>
+          <button class="small-btn petition-sacrifice-btn" data-choice="withhold">Withhold</button>
+          <button class="small-btn petition-sacrifice-btn" data-choice="letfate">Let Fate Choose</button>
+        </div>
+      </div>
+      <div id="petitionResult" class="petition-result hidden"></div>
+    </div>
+    <div id="petitionActions" style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+      <button id="btnSubmitPetition" class="small-btn">Submit Petition</button>
+      <button id="btnClosePetition" onclick="document.getElementById('petitionFateModal').classList.add('hidden')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRIPLE-FORK CONTINUATION MODAL -->
+<div id="continuationForkModal" class="overlay hidden" style="z-index:10006;" onclick="if(event.target===this) window.defaultContinuationPath();">
+  <div class="box" style="max-width:450px; text-align:center;">
+    <h3 style="color:var(--gold); margin-bottom:20px;">What comes next?</h3>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button id="btnContinueStory" onclick="window.selectContinuationPath('continue')" style="padding:15px;">
+        Continue this story
+      </button>
+      <button id="btnSameWorld" onclick="window.selectContinuationPath('same_world')" style="padding:15px;">
+        Start a new story in this world
+      </button>
+      <button id="btnNewStory" onclick="window.selectContinuationPath('new_story')" style="padding:15px;">
+        Start a completely new story
+      </button>
+    </div>
+    <p style="font-size:0.75em; opacity:0.5; margin-top:15px;">
+      Click outside to start a completely new story.
+    </p>
+  </div>
+</div>
+
+<div id="edgeCovenantModal" class="overlay hidden" style="z-index:10005;">
+  <div class="box" style="max-width:500px; text-align:center;">
+    <h3 style="color:var(--pink)">The Covenant</h3>
+    <p style="font-size:0.9em; opacity:0.9; line-height:1.5; margin-bottom:20px;">
+      This option allows a more intense, commanding tone between characters—like dark-romance tension—while keeping clear boundaries. You can pause, soften, or stop at any time. Safewords are always honored instantly.
+    </p>
+    
+    <div id="edgeActions">
+        <button id="btnInviteEdge" onclick="window.inviteEdgeOffer()">Invite In-Story Offer</button>
+        <div style="margin-top:10px; font-size:0.8em; opacity:0.6;">(If Solo/NPC play)</div>
+        
+        <div id="coupleEdgeControls" class="hidden" style="margin-top:20px; border-top:1px solid #444; padding-top:15px;">
+            <p>Offer this dynamic to your partner?</p>
+            <button onclick="window.sendEdgeOffer()">Send Offer</button>
+        </div>
+    </div>
+
+    <div id="edgeAcceptance" class="hidden">
+        <p style="font-style:italic; color:var(--gold); margin-bottom:20px;">
+            "Accepting means your character consents to a more intense dynamic—stronger pressure, firmer guidance, and heightened tension—within your chosen intensity setting. You can stop or renegotiate at any time."
+        </p>
+        <button onclick="window.acceptEdgeCovenant()">I’m not afraid to enter your world.</button>
+        <button onclick="window.closeEdgeModal()" style="margin-top:10px;">Not like this.</button>
+    </div>
+
+    <button onclick="window.closeEdgeModal()" style="color:#aaa; margin-top:20px; font-size:0.8em;">Close</button>
+  </div>
+</div>
+
+</div>
+
+<script src="/fatecards.js"></script>
+<script src="/orchestration-client.js"></script>
+<script src="/app.js"></script>
+<div id="authModal" class="overlay hidden" style="z-index:5001;">
+  <div class="box" style="max-width:400px;">
+    <h3 id="authModalTitle">Log In</h3>
+    <div id="authError" style="color:#e74c3c; margin-bottom:10px; display:none;"></div>
+    <input type="email" id="authEmail" placeholder="Email" style="width:100%; margin-bottom:10px; padding:10px;">
+    <input type="password" id="authPassword" placeholder="Password" style="width:100%; margin-bottom:15px; padding:10px;">
+    <button id="authSubmitBtn" onclick="window.handleAuthSubmit()">Log In</button>
+    <p style="margin-top:15px; font-size:0.9em;">
+      <span id="authToggleText">Don't have an account?</span>
+      <a href="#" id="authToggleLink" onclick="window.toggleAuthMode(); return false;">Sign up</a>
+    </p>
+    <button onclick="window.closeAuthModal()" style="margin-top:10px;">Cancel</button>
+  </div>
+</div>
+
+<div id="profileModal" class="overlay hidden" style="z-index:5001;">
+  <div class="box" style="max-width:450px;">
+    <h3>Account Status</h3>
+    <div id="profileStatusContent"></div>
+    <button onclick="window.closeProfileModal()" style="margin-top:15px;">Close</button>
+  </div>
+</div>
+
+<div id="myLibraryModal" class="overlay hidden" style="z-index:5000;">
+  <div class="box" style="max-width:600px; max-height:80vh; overflow-y:auto;">
+    <h3>My Library</h3>
+    <div id="myLibraryContent"></div>
+    <button onclick="window.closeMyLibraryModal()" style="margin-top:15px;">Close</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     CONTROL PLANE — Fixed layer for Continue button
+     Floats above all content. Never occluded by cards, corridors, or animations.
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div id="controlPlane">
+  <div id="godModeToggle" class="hidden god-mode-plaque">
+    <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> God Mode</label>
+  </div>
+  <button id="continueButton" class="flow-continue-btn sb-btn-png sm">Proceed</button>
+</div>
+
+<!-- Dev HUD (developer-only, toggled with backtick key) -->
+<div id="devHud" class="dev-hud">
+  <div class="dev-hud-bar">
+    <span class="dev-hud-label">DEV</span>
+    <input id="devHudInput" type="text" placeholder="what can i say..." autocomplete="off" spellcheck="false">
+    <div id="devHudLog" class="dev-hud-log"></div>
+  </div>
+</div>
+</body>
+</html>
