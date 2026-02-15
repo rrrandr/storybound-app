@@ -10809,7 +10809,7 @@ body.corridor-complete .corridor-section {
     bottom: 48px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 2000; /* Above cards/corridors, below overlays (3000) */
+    z-index: 9100; /* Above DSP (9000), below modals */
     pointer-events: none; /* Layer doesn't block interaction with content below */
     display: flex;
     flex-direction: column;

@@ -1063,7 +1063,6 @@ Introduce the name naturally within the first few paragraphs — do not announce
       cursed: 'Cursed',
       // Dystopia Flavors (7 locked canon)
       glass_house: 'Glass House',
-      velvet_trap: 'Mandatory Pleasure',
       the_ledger: 'Human Capital',
       crimson_veil: 'Dogma',
       perfect_match: 'Perfect Breed',
@@ -1094,14 +1093,6 @@ Introduce the name naturally within the first few paragraphs — do not announce
           narrativeHook: 'Neural implants bind humanity into a shared field of sensation, emotion, and perspective. The chemistry of attachment is amplified and harmonized. Nothing is hidden. Nothing is withheld. Nothing is yours. To love privately, you must disconnect — and disconnection is agony. The most dangerous act is wanting someone for yourself.',
           eroticEngine: ['collective sensation', 'exclusivity as rebellion', 'disconnection agony', 'private desire', 'communal intimacy'],
           sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'collective' }
-      },
-      velvet_trap: {
-          id: 'velvet-trap', world: 'dystopia', title: 'Mandatory Pleasure',
-          subtitle: 'Enforced Hedonism',
-          uiDescription: 'Pleasure is mandatory. Depth and exclusivity are taboo. True intimacy is the only forbidden act.',
-          narrativeHook: 'In a world of enforced indulgence, choosing to want one person — choosing depth over breadth, meaning over sensation — is the only rebellion. Longing, jealousy, and refusal are symptoms of deviance. The system does not punish desire; it punishes distinction.',
-          eroticEngine: ['enforced indulgence', 'depth as contraband', 'chosen deprivation', 'meaninglessness', 'exclusive longing'],
-          sceneBias: { pacing: 'moderate', intimacyRisk: 'medium', powerDynamic: 'social' }
       },
       the_ledger: {
           id: 'the-ledger', world: 'dystopia', title: 'Human Capital',
@@ -1247,7 +1238,7 @@ Introduce the name naturally within the first few paragraphs — do not announce
   // ═══════════════════════════════════════════════════════════════════════════
 
   const SYSTEMIC_FLAVORS = new Set([
-    'glass_house', 'velvet_trap', 'the_ledger', 'crimson_veil', 'perfect_match',
+    'glass_house', 'the_ledger', 'crimson_veil', 'perfect_match',
     'ministry_of_affection', 'endless_edit',
     'ashfall', 'year_zero', 'dystimulation', 'predation', 'hunger',
     'galactic_civilizations'
@@ -1264,7 +1255,6 @@ Introduce the name naturally within the first few paragraphs — do not announce
   // Systemic flavor "World Pressure" lines for prompt injection
   const SYSTEMIC_PRESSURE_LINES = {
     glass_house: 'You will never love alone \u2014 you will love us.',
-    velvet_trap: 'True intimacy is forbidden in a world of endless indulgence.',
     the_ledger: 'Your heart has a market value.',
     crimson_veil: 'Desire is sacred. Would you risk damnation for it?',
     perfect_match: 'You are not mine. You are humanity\u2019s.',
@@ -1796,7 +1786,6 @@ For constraint/petition/god_mode:
           },
           dystopia: {
               glass_house: ['hivenet', 'collective', 'shared consciousness', 'transparency', 'communal', 'disconnect', 'exclusivity', 'neural'],
-              velvet_trap: ['pleasure', 'mandatory', 'hedonism', 'indulgence', 'depth', 'longing', 'refusal', 'enforced'],
               the_ledger: ['asset', 'valuation', 'leverage', 'liability', 'capital', 'credit', 'market value', 'financialized'],
               crimson_veil: ['doctrine', 'dogma', 'heresy', 'theocratic', 'sanctioned', 'damnation', 'sacred', 'institution'],
               perfect_match: ['breeding', 'genetic', 'reproductive', 'species', 'viability', 'distribution', 'pair-bond', 'infrastructure'],
@@ -17141,7 +17130,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       ],
       Dystopia: [
         { val: 'glass_house', label: 'Glass House' },
-        { val: 'velvet_trap', label: 'Mandatory Pleasure' },
         { val: 'the_ledger', label: 'Human Capital' },
         { val: 'crimson_veil', label: 'Dogma' },
         { val: 'perfect_match', label: 'Perfect Breed' },
@@ -17985,12 +17973,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       ],
       Dystopia: [
         { val: 'glass_house',            top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'velvet_trap',            top: 56.7, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'the_ledger',             top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'crimson_veil',           top: 63.3, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'perfect_match',          top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'endless_edit',           top: 69.9, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'ministry_of_affection',  top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
+        { val: 'the_ledger',             top: 56.7, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'crimson_veil',           top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'perfect_match',          top: 63.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'endless_edit',           top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'ministry_of_affection',  top: 69.9, left: 53,   width: 29.2, height: 4.8 }
       ],
       PostApocalyptic: [
         { val: 'ashfall',        top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
@@ -18081,7 +18068,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       galactic_civilizations: 'Love can save a world, or burn a galaxy.',
       // Dystopia flavors
       glass_house: 'You will never love alone \u2014 you will love us.',
-      velvet_trap: 'True intimacy is forbidden in a world of endless indulgence.',
       the_ledger: 'Your heart has a market value.',
       crimson_veil: 'Desire is sacred. Would you risk damnation for it?',
       perfect_match: 'You are not mine. You are humanity\u2019s.',
@@ -18119,7 +18105,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       Heist: 'Trust is the heist within the heist.',
       Rescue: 'Saving someone changes who you become.',
       OnTheRun: 'Every safe place is temporary; every bond, a risk.',
-      Captivity: 'Walls make desire desperate and inventive.',
+      Captivity: 'Confinement sharpens every feeling.',
       BorderCrossing: 'Freedom waits beyond the line they dare not cross.',
       // Obligation & Burden
       ChosenBurdened: 'Destiny chose them. They would have chosen differently.',
@@ -18147,7 +18133,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       Ascension: 'Evolution has no reverse. Neither does loss.',
       // Survival
       WarZone: 'Between bombardments, desire is the only defiance.',
-      Hostage: 'Compliance keeps you alive. Defiance keeps you human.',
       Castaway: 'No shore in sight. Only each other.',
       Lost: 'The trail vanished. So did certainty.',
       Trapped: 'The walls close in. So does the distance between them.',
@@ -22680,7 +22665,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       { id: 'Heist', label: 'Heist', description: 'Elaborate plans, trust and betrayal.' },
       { id: 'Rescue', label: 'Rescue / Retrieval', description: 'Someone needs saving. Someone pays the price.' },
       { id: 'OnTheRun', label: 'On the Run', description: 'Fleeing, hunted, no safe harbor.' },
-      { id: 'Captivity', label: 'Prison / Captivity', description: 'Cages visible or invisible, escape as obsession.' },
+      { id: 'Captivity', label: 'Locked Away', description: 'Confined, isolated, escape as obsession.' },
       { id: 'BorderCrossing', label: 'Border Crossing', description: 'Thresholds, checkpoints, forbidden passage.' }
     ],
     ObligationBurden: [
@@ -22713,7 +22698,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     ],
     Survival: [
       { id: 'WarZone', label: 'War Zone', description: 'Combat, casualties, survival in conflict.' },
-      { id: 'Hostage', label: 'Hostage', description: 'Captive, leveraged, survival by compliance.' },
       { id: 'Castaway', label: 'Castaway', description: 'Stranded, exposed, no rescue coming.' },
       { id: 'Lost', label: 'Lost', description: 'Disoriented, off-trail, the terrain closing in.' },
       { id: 'Trapped', label: 'Trapped', description: 'Pinned, enclosed, no way out but through.' },
@@ -22767,7 +22751,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     Heist: 'precision, misdirection, and nerve',
     Rescue: 'urgency, sacrifice, and the ones left behind',
     OnTheRun: 'flight, pursuit, and vanishing margins',
-    Captivity: 'cages, keepers, and the calculus of escape',
+    Captivity: 'confinement, isolation, and the calculus of escape',
     BorderCrossing: 'passage, papers, and the cost of crossing',
     ChosenBurdened: 'fate, purpose, and the weight of being marked',
     DutyToFamily: 'blood, expectation, and the debts we inherit',
@@ -31857,7 +31841,6 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'final_frontier': 'weathered',
       // Dystopia flavors (7 locked canon)
       'glass_house': 'tarnished',
-      'velvet_trap': 'pristine',
       'the_ledger': 'pristine',
       'crimson_veil': 'weathered',
       'perfect_match': 'pristine',
@@ -31992,7 +31975,6 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'final_frontier': 'weathered',
       // Dystopia flavors (7 locked canon)
       'glass_house': 'tarnished',
-      'velvet_trap': 'pristine',
       'the_ledger': 'pristine',
       'crimson_veil': 'weathered',
       'perfect_match': 'pristine',
@@ -39606,12 +39588,12 @@ FATE CARD ADAPTATION (CRITICAL):
 //
 // PowerControl:     Billionaire, CrimeSyndicate, Political, Espionage, CultOrder
 // RiskExposure:     Noir, ForbiddenKnowledge, PublicScandal, Surveillance, DoubleLife
-// EscapePursuit:    Heist, Rescue, OnTheRun, Captivity, BorderCrossing
+// EscapePursuit:    Heist, Rescue, OnTheRun, LockedAway, BorderCrossing
 // ObligationBurden: ChosenBurdened, DutyToFamily, Prophecy, CommandRank, Inheritance
 // DesireObsession:  Obsession, ForbiddenRomance, Rivalry, Addiction, Jealousy
 // ReckoningPast:    RelentlessPast, Redemption, OldDebts, BetrayalHistory, LostRelationship
 // Transformation:   BecomingPowerful, MoralCorruption, Awakening, IdentityShift, Ascension
-// Survival:         WarZone, Hostage, Castaway, Lost, Trapped, Afflicted, Scarcity  [Hidden: Apocalypse]
+// Survival:         WarZone, Castaway, Lost, Trapped, Afflicted, Scarcity  [Hidden: Apocalypse]
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // BACKWARD COMPATIBILITY
