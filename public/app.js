@@ -24898,7 +24898,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       card.dataset.val = dynamicVal;
       card.dataset.stageIndex = stageIdx;
       card.dataset.breadcrumbLabel = "Destiny's Choice";
-      card.style.backgroundImage = "url('/assets/card-art/cards/Black-DestinyChoice-back.png')";
+      card.style.backgroundImage = "url('/assets/card-art/cards/Romance-black-back-DC.png')";
       card.style.backgroundSize = 'cover';
       card.style.backgroundPosition = 'center';
 
@@ -25030,7 +25030,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           'ETERNAL_FLAME': 'Tarot-Gold-front-EternalFlame.png'
       };
       const pngFile = viaDestiny
-          ? 'Black-DestinyChoice-back.png'
+          ? 'Romance-black-back-DC.png'
           : (pngMap[archetypeId] || 'Tarot-Gold-front-HeartWarden.png');
 
       // Create breadcrumb with PNG art only (no mask icon, no text)
@@ -25086,7 +25086,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   /**
    * Create pressure breadcrumb with Destiny's Choice mask
-   * Uses Black-DestinyChoice-back.png (no reveal of chosen pressure/flavor)
+   * Uses Romance-black-back-DC.png (no reveal of chosen pressure/flavor)
    */
   function createPressureBreadcrumbWithMask(pressureVal, flavorId) {
       const breadcrumbRow = document.getElementById('breadcrumbRow');
@@ -25104,7 +25104,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       card.dataset.val = pressureVal;
       card.dataset.stageIndex = stageIdx;
       card.dataset.breadcrumbLabel = "Destiny's Choice";
-      card.style.backgroundImage = "url('/assets/card-art/cards/Black-DestinyChoice-back.png')";
+      card.style.backgroundImage = "url('/assets/card-art/cards/Romance-black-back-DC.png')";
       card.style.backgroundSize = 'cover';
       card.style.backgroundPosition = 'center';
 
@@ -37926,9 +37926,34 @@ FATE CARD ADAPTATION (CRITICAL):
     if (!modeCards.length) return;
 
     modeCards.forEach(card => {
-      card.addEventListener('click', handleModeCardClick);
+      const mode = card.dataset.mode;
+
+      // Solo & Couple: hover to flip, click to proceed
+      if (mode === 'solo' || mode === 'couple') {
+        card.addEventListener('mouseenter', () => {
+          if (!card.classList.contains('flipped')) {
+            flipModeCard(card);
+          }
+        });
+        card.addEventListener('mouseleave', () => {
+          if (card.classList.contains('flipped') && card !== selectedModeCard) {
+            unflipModeCard(card);
+          }
+        });
+        // Touch support: first tap flips, second tap proceeds
+        card.addEventListener('click', handleModeCardClick);
+      } else {
+        // Stranger: click-only (original behavior)
+        card.addEventListener('click', handleModeCardClick);
+      }
     });
     console.log('[ModeCards] Initialized', modeCards.length, 'mode cards');
+  }
+
+  function unflipModeCard(card) {
+    card.classList.remove('flipped', 'selected');
+    const sparkleContainer = card.querySelector('.mode-card-sparkles');
+    if (sparkleContainer) sparkleContainer.innerHTML = '';
   }
 
   function handleModeCardClick(e) {
@@ -37939,12 +37964,9 @@ FATE CARD ADAPTATION (CRITICAL):
     if (!isFlipped) {
       // First click: flip to show face, start sparkles
       flipModeCard(card);
-    } else if (card === selectedModeCard) {
-      // Second click on selected card: proceed with mode selection
-      proceedWithMode(mode);
     } else {
-      // Click on different flipped card: select this one instead
-      flipModeCard(card);
+      // Card is flipped (by hover or prior click): proceed with mode selection
+      proceedWithMode(mode);
     }
   }
 

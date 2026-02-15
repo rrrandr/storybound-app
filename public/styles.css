@@ -4909,9 +4909,9 @@ textarea.fate-field {
     box-shadow: inset 0 0 0 1px rgba(218, 165, 32, 0.3);
 }
 
-/* BACK — Black-DestinyChoice-back.png (peels from Destiny's Choice deck) */
+/* BACK — Romance-black-back-DC.png (peels from Destiny's Choice deck) */
 .destiny-flying-card-back {
-    background-image: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
+    background-image: url('/assets/card-art/cards/Romance-black-back-DC.png');
     /* No border, no gradient — PNG only */
 }
 
@@ -4967,9 +4967,9 @@ textarea.fate-field {
     align-self: center;
 }
 
-/* Destiny deck back art: Black-DestinyChoice-back.png */
+/* Destiny deck back art: Romance-black-back-DC.png */
 #characterSectionRow .destiny-mini-card {
-    background: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
+    background: url('/assets/card-art/cards/Romance-black-back-DC.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -7471,26 +7471,8 @@ textarea.fate-field {
 }
 
 /* BACK CARDS — Black tarot backs (visible in grid) */
-.archetype-card .sb-card-back[data-archetype="HEART_WARDEN"] {
-    background-image: url('/assets/card-art/cards/Tarot-Black-back-HeartWard.png');
-}
-.archetype-card .sb-card-back[data-archetype="OPEN_VEIN"] {
-    background-image: url('/assets/card-art/cards/Tarot-Black-back-OpenVein.png');
-}
-.archetype-card .sb-card-back[data-archetype="SPELLBINDER"] {
-    background-image: url('/assets/card-art/cards/Tarot-Black-back-Spellbinder.png');
-}
-.archetype-card .sb-card-back[data-archetype="ARMORED_FOX"] {
-    background-image: url('/assets/card-art/cards/Tarot-Black-back-AFox.png');
-}
-.archetype-card .sb-card-back[data-archetype="DARK_VICE"] {
-    background-image: url('/assets/card-art/cards/Tarot-Black-back-DarkVice.png');
-}
-.archetype-card .sb-card-back[data-archetype="BEAUTIFUL_RUIN"] {
-    background-image: url('/assets/card-art/cards/Tarot-Black-back-BeauRuin.png');
-}
-.archetype-card .sb-card-back[data-archetype="ETERNAL_FLAME"] {
-    background-image: url('/assets/card-art/cards/Tarot-Black-back-EternalFlame.png');
+.archetype-card .sb-card-back {
+    background-image: url('/assets/card-art/cards/Romance-black-back.png');
 }
 
 /* FRONT CARDS — Gold tarot fronts (visible when zoomed/selected) */
@@ -7619,7 +7601,7 @@ textarea.fate-field {
 .destiny-stack-layer {
     position: absolute;
     inset: 0;
-    background: url('/assets/card-art/cards/Black-DestinyChoice-back.png') center/cover no-repeat;
+    background: url('/assets/card-art/cards/Romance-black-back-DC.png') center/cover no-repeat;
     border: 1px solid rgba(218, 165, 32, 0.3);
     border-radius: 4px;
     pointer-events: none;
@@ -7655,7 +7637,7 @@ textarea.fate-field {
 /* BACK SIDE: Black Destiny Choice PNG — DECK face */
 /* Higher specificity to override .sb-card-back gradient */
 .sb-card-back.destiny-choice-back {
-    background-image: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
+    background-image: url('/assets/card-art/cards/Romance-black-back-DC.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -8242,7 +8224,7 @@ textarea.fate-field {
 /* STORY PULL (PRESSURE) CARDS — Gold PNG background with black text              */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 #pressureGrid .sb-card .sb-card-back {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANKXL-back.png');
+    background-image: url('/assets/card-art/cards/Tarot-Gold-BLANKXL-back.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -8257,7 +8239,7 @@ textarea.fate-field {
     background-color: transparent;
 }
 #pressureGrid .sb-card.destiny-choice-card .sb-card-back.destiny-choice-back {
-    background-image: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
+    background-image: url('/assets/card-art/cards/Romance-black-back-DC.png');
 }
 
 #pressureGrid .sb-card .sb-card-front {
@@ -8301,7 +8283,7 @@ textarea.fate-field {
 /* POV CARDS — Gold PNG background with black text                                 */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 #povGrid .sb-card .sb-card-back {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANKXL-back.png');
+    background-image: url('/assets/card-art/cards/Tarot-Gold-BLANKXL-back.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -8354,7 +8336,7 @@ textarea.fate-field {
 /* POLARITY (DYNAMIC) CARDS — Gold PNG background with black text                  */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 #dynamicGrid .sb-card .sb-card-back {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANKXL-back.png');
+    background-image: url('/assets/card-art/cards/Tarot-Gold-BLANKXL-back.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -8370,7 +8352,7 @@ textarea.fate-field {
     background-color: transparent;
 }
 #dynamicGrid .sb-card.destiny-choice-card .sb-card-back.destiny-choice-back {
-    background-image: url('/assets/card-art/cards/Black-DestinyChoice-back.png');
+    background-image: url('/assets/card-art/cards/Romance-black-back-DC.png');
 }
 
 #dynamicGrid .sb-card .sb-card-back .sb-card-title {
@@ -8415,12 +8397,26 @@ textarea.fate-field {
 /* Front face → Black card with gold Art Deco frame */
 #worldGrid .sb-card .sb-card-front,
 #toneGrid .sb-card .sb-card-front,
-#pressureGrid .sb-card .sb-card-front,
 #povGrid .sb-card .sb-card-front,
 #lengthGrid .sb-card .sb-card-front,
 #dynamicGrid .sb-card .sb-card-front,
 #intensityGrid .sb-card .sb-card-front {
     background-image: url('/assets/card-art/cards/Blank-Black-Face.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    justify-content: center;
+    padding: 8px 10px;
+    outline: 1px solid rgba(218, 165, 32, 0.6);
+    outline-offset: -1px;
+}
+
+/* Story Pull (pressure) front face — gold-on-black flavors card */
+#pressureGrid .sb-card .sb-card-front {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-on-Black-FLAVORS.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -8486,7 +8482,7 @@ textarea.fate-field {
 #toneGrid .sb-card .sb-card-back,
 #intensityGrid .sb-card .sb-card-back,
 #lengthGrid .sb-card .sb-card-back {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANK1-back.png');
+    background-image: url('/assets/card-art/cards/Tarot-Gold-BLANK1-back.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -10083,12 +10079,17 @@ body.corridor-complete .ghost-step {
 /* Black-card breadcrumbs — World through Arousal use black face PNG */
 .breadcrumb-card[data-grp="world"],
 .breadcrumb-card[data-grp="tone"],
-.breadcrumb-card[data-grp="pressure"],
 .breadcrumb-card[data-grp="pov"],
 .breadcrumb-card[data-grp="length"],
 .breadcrumb-card[data-grp="dynamic"],
 .breadcrumb-card[data-grp="intensity"] {
     background-image: url('/assets/card-art/cards/Blank-Black-Face.png');
+    background-size: cover;
+}
+
+/* Story Pull breadcrumb — gold-on-black flavors card */
+.breadcrumb-card[data-grp="pressure"] {
+    background-image: url('/assets/card-art/cards/Tarot-Gold-on-Black-FLAVORS.png');
     background-size: cover;
 }
 
@@ -11486,7 +11487,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     padding: 42px 15px 148px 15px;
     box-sizing: border-box;
     /* Use the gold tarot card PNG as background */
-    background-image: url('/assets/card-art/cards/Tarot-Gold-bdsm-BLANKXL-back.png');
+    background-image: url('/assets/card-art/cards/Tarot-Gold-BLANKXL-back.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
