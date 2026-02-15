@@ -22,7 +22,7 @@
 
 <div id="auth-panel" class="hidden">
   <div id="auth-title" style="color:gold; font-family:'Lora',serif; font-size:0.95em; text-align:center; margin-bottom:2px;">Sign In</div>
-  <form id="auth-form" method="post">
+  <form id="auth-form" method="post" action="/">
     <input id="auth-email" name="email" type="email" placeholder="Email" autocomplete="username" />
     <input id="auth-password" name="password" type="password" placeholder="Password" autocomplete="current-password" />
     <button id="btn-auth-submit" type="submit" class="sb-btn-png sm">Sign In</button>
@@ -139,8 +139,8 @@
     <h3>Visualization</h3>
     <!-- TRUST REPAIR: Always show prompt first, explain credits -->
     <p style="font-size:0.85em; color:var(--gold); margin-bottom:10px; font-style:italic;">
-        You may freely edit the prompt below. Images are limited to Naughty-level eroticism.
-        Prompts are automatically scaled down to avoid artist refusal.
+        You may freely edit the prompt below. Images follow the story's tone.
+        Prompts are automatically adjusted for model compatibility.
     </p>
     <textarea id="vizPromptInput" placeholder="Prompt will appear here..."></textarea>
 
@@ -214,18 +214,6 @@
 
 <!-- Legacy payAsYouGoModal removed — redirects to creditPurchaseModal via JS -->
 
-<div id="eroticPreviewModal" class="overlay hidden" style="z-index:10001;">
-  <div class="box" style="max-width:500px;">
-    <h3 style="color:var(--hot)">Erotic Intensity Preview</h3>
-    <p style="opacity:0.8; font-size:0.9em;">Explicit content enabled. Sample:</p>
-    <div id="eroticPreviewText"></div>
-    <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-        <button id="eroticPreviewStorypassBtn" onclick="window.showPaywall('unlock');">Storypass $3</button>
-        <button id="eroticPreviewSubBtn" class="hidden" onclick="window.showPaywall('sub_only');">Subscribe $6</button>
-        <button onclick="document.getElementById('eroticPreviewModal').classList.add('hidden')">Not Now</button>
-    </div>
-  </div>
-</div>
 
 <div id="coupleInvite" class="overlay hidden">
   <div class="box" style="max-width:520px; text-align:center;">
@@ -279,12 +267,12 @@
 
 <div id="coupleConsentModal" class="overlay hidden">
   <div class="box" style="max-width:450px; text-align:center;">
-    <h3 style="color:var(--gold);">Shared Intensity Agreement</h3>
-    <p>You are entering a shared hallucination. Before you begin:</p>
+    <h3 style="color:var(--gold);">Shared Story Agreement</h3>
+    <p>You are entering a shared story experience. Before you begin:</p>
     <ul style="text-align:left; font-size:0.9em; line-height:1.5; color:var(--ink); margin: 20px auto; max-width: 350px;">
-        <li><strong>Intensity is a hard ceiling.</strong> Limits depictions regardless of input.</li>
-        <li><strong>Inputs are requests.</strong> Naughty reinterprets explicit inputs as tension.</li>
-        <li><strong>Upgrades required.</strong> Higher intensity requires appropriate tier.</li>
+        <li><strong>Story tone is a ceiling.</strong> Limits depictions regardless of input.</li>
+        <li><strong>Inputs are requests.</strong> The story adapts your suggestions to fit the narrative.</li>
+        <li><strong>Premium features require appropriate tier.</strong></li>
     </ul>
     <div style="display:flex; gap:16px; justify-content:center; align-items:center;">
         <button id="btnCoupleAgree" class="sb-btn-png consent-primary">Agree & Enter</button>
@@ -327,6 +315,37 @@
   </div>
 </div>
 
+<div id="legalGate" class="screen hidden">
+  <div class="legal-box">
+    <h2 id="legal-heading">Before You Continue</h2>
+    <p id="legal-subtext" class="hidden"></p>
+
+    <label>
+      <input type="checkbox" id="legal-tos">
+      I agree to the <a href="#" id="legal-tos-link" class="legal-doc-link">Terms of Service</a>
+    </label>
+
+    <label>
+      <input type="checkbox" id="legal-privacy">
+      I agree to the <a href="#" id="legal-privacy-link" class="legal-doc-link">Privacy Policy</a>
+    </label>
+
+    <label>
+      <input type="checkbox" id="legal-adult">
+      I understand this platform may contain adult fictional content
+    </label>
+
+    <button id="legal-continue" disabled>Continue</button>
+  </div>
+</div>
+
+<div id="legalModal" class="hidden">
+  <div class="legal-modal-box">
+    <div id="legalModalContent" class="legal-scroll"></div>
+    <button id="legalModalClose" disabled>I Have Read This</button>
+  </div>
+</div>
+
 <div id="tierGate" class="screen overlay hidden" style="background:#000; z-index:9997;">
   <div style="text-align:center;">
       <h2>Storybound</h2>
@@ -346,12 +365,12 @@
 
 <div id="payModal" class="overlay hidden" style="z-index:10000;">
   <div class="box" style="text-align:center; max-width: 500px;">
-    <h3>Unshackle Your Fate</h3>
-    
+    <h3>Upgrade Your Story</h3>
+
     <div id="godModePay" class="hidden">
        <h4 style="color:var(--gold); margin-top:0; font-size:1.4em;">Unlock God Mode</h4>
        <p style="font-size:0.9em; opacity:0.8; margin-bottom:20px;">
-         Remove all pacing gates, cooldowns, and safety filters. Petition Fate freely. Intimate scenes unlock immediately. Your story choices still apply — God Mode overrides the engine, not your taste.
+         Skip all pacing gates and cooldowns. Petition Fate freely. Faster scene generation, no wait times. Your story choices still apply — God Mode removes limits, not your taste.
          <br><strong>$50 One-time purchase.</strong>
        </p>
        <button id="payGodMode" class="god-mode-unlock-btn" style="margin-top:10px;">Unlock Forever ($50)</button>
@@ -361,15 +380,15 @@
         <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
             <div id="optUnlock" style="background:linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%); padding:15px; border-radius:0; border:2px double gold; box-shadow:0 0 0 1px #0a0a0a; width:220px; text-align:left;">
                 <h4 style="color:var(--gold); margin-top:0;">Unlock This Story</h4>
-                <p style="font-size:0.85em; line-height:1.4;">Go deeper for this one arc.<br>Erotic intensity, longer pacing, full Petition Fate.<br><strong>$3 Story Pass.</strong></p>
+                <p style="font-size:0.85em; line-height:1.4;">Go deeper for this one arc.<br>Extended narrative depth, longer pacing, full Petition Fate.<br><strong>$3 Story Pass.</strong></p>
                 <button id="payOneTime" style="width:100%; margin-top:15px;">Storypass $3</button>
-                <div id="storypassDisabledNotice" class="hidden" style="margin-top:10px; font-size:0.75em; color:#888; text-align:center;">Unavailable for Dirty intensity</div>
+                <div id="storypassDisabledNotice" class="hidden" style="margin-top:10px; font-size:0.75em; color:#888; text-align:center;">Unavailable with current settings</div>
             </div>
 
             <div id="optSub" style="background:linear-gradient(145deg, #400020, #200010); padding:15px; border-radius:0; border:2px double gold; box-shadow:0 0 0 1px #0a0a0a; width:220px; text-align:left;">
-                <h4 style="color:var(--gold); margin-top:0;">Indulge Limits</h4>
+                <h4 style="color:var(--gold); margin-top:0;">Premium Experience</h4>
                 <ul style="font-size:0.8em; padding-left:15px; opacity:0.9; line-height:1.4; list-style-type: '⚜ ';">
-                    <li>Dirty intensity</li>
+                    <li>Extended story arcs</li>
                     <li>Long-form stories</li>
                     <li>Unlimited Petitions</li>
                     <li>Save anytime</li>
@@ -698,34 +717,10 @@
     </div>
     <button class="flow-continue-btn sb-btn-png sm" id="continueFromStorybeau">Proceed</button>
 
-    <div class="section-title" id="arousalSectionTitle">Arousal Intensity</div>
-    <div class="sb-grid sb-grid-4" id="intensityGrid">
-      <div class="sb-card" data-grp="intensity" data-val="Clean">
-        <div class="sb-card-inner">
-          <div class="sb-card-face sb-card-back"><span class="sb-card-title">Clean</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Clean</span><span class="sb-card-desc">Romantic, non-explicit.</span><span class="sb-card-example">"She sent him home with a stolen kiss."</span></div>
-        </div>
-      </div>
-      <div class="sb-card selected flipped" data-grp="intensity" data-val="Naughty">
-        <div class="sb-card-inner">
-          <div class="sb-card-face sb-card-back"><span class="sb-card-title">Naughty</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Naughty</span><span class="sb-card-desc">Suggestive tension; no explicit anatomy.</span><span class="sb-card-example">"She felt him pressed against her, and she pressed back."</span></div>
-        </div>
-      </div>
-      <div class="sb-card locked" data-grp="intensity" data-val="Erotic" data-locked="tease">
-        <div class="sb-card-inner">
-          <div class="sb-card-face sb-card-back"><span class="sb-card-title">Erotic</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Erotic</span><span class="sb-card-desc">Explicit sensuality.</span><span class="sb-card-example">"She shuddered as he [censored] deep inside her."</span></div>
-        </div>
-      </div>
-      <div class="sb-card locked" data-grp="intensity" data-val="Dirty" data-locked="sub" data-storypass-allowed="false">
-        <div class="sb-card-inner">
-          <div class="sb-card-face sb-card-back"><span class="sb-card-title">Dirty</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">Dirty</span><span class="sb-card-desc">Very explicit; highest intensity.</span><span class="sb-card-example">"She [censored] his [censored] and [censored] it again."</span></div>
-        </div>
-      </div>
-    </div>
-    <button class="flow-continue-btn sb-btn-png sm" id="continueFromArousal">Proceed</button>
+    <!-- Arousal stage: auto-skipped by corridor system, no visible UI -->
+    <div id="arousalSectionTitle" style="display:none;"></div>
+    <div id="intensityGrid" style="display:none;"></div>
+    <button id="continueFromArousal" style="display:none;"></button>
 
     <div id="lengthSection">
         <div class="section-title">Story Length</div>
@@ -733,13 +728,13 @@
           <div class="sb-card selected flipped" data-grp="length" data-val="tease">
             <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back"><span class="sb-card-title">Tease</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Tease</span><span class="sb-card-desc">A front-row seat. No touching. Ends right when you lean in.</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Tease</span><span class="sb-card-desc">A quick glimpse. The story hooks you, then leaves you wanting more.</span></div>
             </div>
           </div>
           <div class="sb-card locked" data-grp="length" data-val="fling" data-locked="pass">
             <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back"><span class="sb-card-title">Fling</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Fling</span><span class="sb-card-desc">You get to get off, but you don't get to finish.</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Fling</span><span class="sb-card-desc">A short arc with real stakes. Enough to matter, not enough to resolve.</span></div>
             </div>
           </div>
           <div class="sb-card locked" data-grp="length" data-val="affair" data-locked="sub">
@@ -1083,11 +1078,8 @@
             <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
             <span class="sb-checkbox-label sb-checkbox-label-sm">Dark Themes</span>
           </label>
-          <label class="sb-checkbox sb-checkbox-sm">
-            <input type="checkbox" id="chkNonCon">
-            <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
-            <span class="sb-checkbox-label sb-checkbox-label-sm">Implied Non&#8209;consent</span>
-          </label>
+          <!-- Non-consent toggle removed from visible UI; checkbox preserved for backend -->
+          <input type="checkbox" id="chkNonCon" style="display:none;">
           <label class="sb-checkbox sb-checkbox-sm">
             <input type="checkbox" id="chkViolence" checked>
             <span class="sb-checkbox-visual sb-checkbox-visual-sm"></span>
@@ -1110,9 +1102,6 @@
           </svg>
         </div>
         <div class="safety-card-content boundary-chips" id="boundaryChips">
-          <div class="chip-gold" data-boundary="sexual-violence">No sexual violence</div>
-          <div class="chip-gold" data-boundary="coercion">No coercion</div>
-          <div class="chip-gold" data-boundary="degradation">No degradation language</div>
           <div class="chip-gold" data-boundary="captivity">No captivity</div>
           <div class="chip-gold" data-boundary="blackmail">No blackmail</div>
         </div>
@@ -1397,12 +1386,8 @@
       </div>
     </div>
 
-    <div class="intensity-mini" id="gameIntensity">
-        <button onclick="window.setGameIntensity('Clean')">Clean</button>
-        <button onclick="window.setGameIntensity('Naughty')" class="active">Naughty</button>
-        <button onclick="window.setGameIntensity('Erotic')">Erotic</button>
-        <button onclick="window.setGameIntensity('Dirty')">Dirty</button>
-    </div>
+    <!-- In-reader intensity selector removed (intensity set internally) -->
+    <div class="intensity-mini" id="gameIntensity" style="display:none;"></div>
 
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="saveBtn" class="small-btn locked-style">Save</button>
@@ -1504,22 +1489,6 @@
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js"></script>
 <script src="/app.js"></script>
-<div id="authModal" class="overlay hidden" style="z-index:5001;">
-  <div class="box" style="max-width:400px;">
-    <h3 id="authModalTitle">Log In</h3>
-    <div id="authError" style="color:#e74c3c; margin-bottom:10px; display:none;"></div>
-    <form id="authModalForm" method="post">
-      <input type="email" id="authEmail" name="email" placeholder="Email" autocomplete="username" style="width:100%; margin-bottom:10px; padding:10px;">
-      <input type="password" id="authPassword" name="password" placeholder="Password" autocomplete="current-password" style="width:100%; margin-bottom:15px; padding:10px;">
-      <button id="authSubmitBtn" type="submit">Log In</button>
-    </form>
-    <p style="margin-top:15px; font-size:0.9em;">
-      <span id="authToggleText">Don't have an account?</span>
-      <a href="#" id="authToggleLink" onclick="window.toggleAuthMode(); return false;">Sign up</a>
-    </p>
-    <button onclick="window.closeAuthModal()" style="margin-top:10px;">Cancel</button>
-  </div>
-</div>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
   <div class="box" style="max-width:450px;">

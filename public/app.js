@@ -22,7 +22,11 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   const SUPABASE_URL = config.supabaseUrl || "";
   const SUPABASE_ANON_KEY = config.supabaseAnonKey || "";
-  const CURRENT_TOS_VERSION = 1;
+  const LEGAL = {
+    TOS_VERSION: 1,
+    PRIVACY_VERSION: 1,
+    ADULT_ACK_VERSION: 1
+  };
   // Use local proxy by default (requires XAI_API_KEY env var)
   // Falls back to external proxy if explicitly configured
   const PROXY_URL = config.proxyUrl || '/api/proxy';
@@ -377,80 +381,236 @@ window.config = window.config || {
     return null;
   }
 
-  // Fire anonymous sign-in at boot and hydrate God Mode profile (non-blocking)
-  ensureAnonSession().then(async (userId) => {
-    if (!userId || !sb) { window.showScreen && window.showScreen('ageGate'); document.body.classList.remove('booting'); return; }
-    _supabaseProfileId = userId;
-    try {
-      let { data: profile, error } = await sb
-        .from('profiles')
-        .select(`
-          has_god_mode,
-          god_mode_temp_granted_at,
-          god_mode_temp_duration_hours,
-          god_mode_active_story_id,
-          god_mode_active_started_at,
-          god_mode_temp_expires_at,
-          image_credits,
-          last_scene_rewarded,
-          is_subscriber,
-          has_storypass,
-          age_confirmed,
-          tos_version
-        `)
-        .eq('id', userId)
-        .maybeSingle();
-      if (error) { console.error('Profile fetch error:', error); window.showScreen && window.showScreen('ageGate'); document.body.classList.remove('booting'); return; }
-      if (!profile) {
-        const { error: insertErr } = await sb.from('profiles').insert({ id: userId });
-        if (insertErr) { console.error('Profile insert error:', insertErr); window.showScreen && window.showScreen('ageGate'); document.body.classList.remove('booting'); return; }
-        const refetch = await sb.from('profiles').select(`
-          has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
-          god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
-          image_credits, last_scene_rewarded, is_subscriber, has_storypass, age_confirmed, tos_version
-        `).eq('id', userId).single();
-        if (refetch.error || !refetch.data) { console.error('Profile refetch error:', refetch.error); window.showScreen && window.showScreen('ageGate'); document.body.classList.remove('booting'); return; }
-        profile = refetch.data;
-      }
-      state.godMode.owned = profile.has_god_mode || false;
-      state.godMode.tempGrantedAt = profile.god_mode_temp_granted_at;
-      state.godMode.tempDurationHours = profile.god_mode_temp_duration_hours;
-      state.godMode.activeStoryId = profile.god_mode_active_story_id;
-      state.godMode.activeStartedAt = profile.god_mode_active_started_at;
-      state.godMode.tempExpiresAt = profile.god_mode_temp_expires_at;
-      // Hydrate subscription state from Supabase (single source of truth)
-      state.subscribed = profile.is_subscriber || false;
-      // Hydrate image credits — Supabase wins over localStorage if higher
-      const remoteCredits = profile.image_credits || 0;
-      const localCredits = state.imageCredits || 0;
-      state.imageCredits = Math.max(remoteCredits, localCredits);
-      // Hydrate last scene rewarded — take the higher value to prevent re-awards
-      const remoteReward = profile.last_scene_rewarded || 0;
-      const localReward = state.lastSceneRewarded || 0;
-      state.lastSceneRewarded = Math.max(remoteReward, localReward);
-      if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
-      syncTierFromAccess();
-      console.log('Profile hydrated. Subscribed:', state.subscribed, '| God Mode:', state.godMode, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
-      // Boot-time gate resolution
-      if (profile) {
-        if (profile.age_confirmed !== true) {
-          console.log('[BOOT] Age not confirmed — showing ageGate');
-          window.showScreen && window.showScreen('ageGate');
-        } else if ((profile.tos_version || 0) < CURRENT_TOS_VERSION) {
-          console.log('[TOS] Version outdated — showing TOS');
-          window.showScreen && window.showScreen('tosGate');
-        } else {
-          console.log('[BOOT] Age + TOS satisfied — skipping to tierGate');
-          window.showScreen && window.showScreen('tierGate');
-        }
-      }
-      document.body.classList.remove('booting');
-    } catch (e) {
-      console.error('God Mode profile fetch failed:', e);
-      window.showScreen && window.showScreen('ageGate');
-      document.body.classList.remove('booting');
+  const PROFILE_COLUMNS = `
+    has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
+    god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
+    image_credits, last_scene_rewarded, is_subscriber, has_storypass,
+    age_confirmed, tos_version
+  `;
+
+  async function hydrateProfile(userId) {
+    let { data: profile, error } = await sb
+      .from('profiles')
+      .select(PROFILE_COLUMNS)
+      .eq('id', userId)
+      .maybeSingle();
+    if (error) { console.error('Profile fetch error:', error); return null; }
+    if (!profile) {
+      const { error: insertErr } = await sb.from('profiles').insert({ id: userId });
+      if (insertErr) { console.error('Profile insert error:', insertErr); return null; }
+      const refetch = await sb.from('profiles').select(PROFILE_COLUMNS).eq('id', userId).single();
+      if (refetch.error || !refetch.data) { console.error('Profile refetch error:', refetch.error); return null; }
+      profile = refetch.data;
     }
-  });
+    return profile;
+  }
+
+  function hydrateState(profile) {
+    state.godMode.owned = !!profile.has_god_mode;
+    state.godMode.tempGrantedAt = profile.god_mode_temp_granted_at;
+    state.godMode.tempDurationHours = profile.god_mode_temp_duration_hours;
+    state.godMode.activeStoryId = profile.god_mode_active_story_id;
+    state.godMode.activeStartedAt = profile.god_mode_active_started_at;
+    state.godMode.tempExpiresAt = profile.god_mode_temp_expires_at;
+    state.tier = profile.tier || 'free';
+    state.subscribed = !!profile.subscribed;
+    state.hasPass = !!profile.has_pass;
+    state.imageCredits = profile.image_credits || 0;
+    state.lastSceneRewarded = profile.last_scene_rewarded || 0;
+    if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
+    syncTierFromAccess();
+    console.log('Profile hydrated. Subscribed:', state.subscribed, '| God Mode:', state.godMode, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
+  }
+
+  function routeToLegalAcceptance(isReaccept = false) {
+    window.__legalReaccept = isReaccept;
+
+    const heading = document.getElementById('legal-heading');
+    const subtext = document.getElementById('legal-subtext');
+    const tos = document.getElementById('legal-tos');
+    const privacy = document.getElementById('legal-privacy');
+    const adult = document.getElementById('legal-adult');
+    const btn = document.getElementById('legal-continue');
+
+    if (tos) tos.checked = false;
+    if (privacy) privacy.checked = false;
+    if (adult) adult.checked = false;
+    if (btn) btn.disabled = true;
+
+    if (isReaccept) {
+      if (heading) heading.textContent = 'Terms Updated';
+      if (subtext) { subtext.textContent = 'Our terms have changed. Please review and accept to continue.'; subtext.classList.remove('hidden'); }
+    } else {
+      if (heading) heading.textContent = 'Before You Continue';
+      if (subtext) subtext.classList.add('hidden');
+    }
+
+    showScreen('legalGate');
+  }
+
+  (function initLegalGateCheckboxes() {
+    const tos = document.getElementById('legal-tos');
+    const privacy = document.getElementById('legal-privacy');
+    const adult = document.getElementById('legal-adult');
+    const btn = document.getElementById('legal-continue');
+    if (!tos || !privacy || !adult || !btn) return;
+    function sync() { btn.disabled = !(tos.checked && privacy.checked && adult.checked); }
+    tos.addEventListener('change', sync);
+    privacy.addEventListener('change', sync);
+    adult.addEventListener('change', sync);
+
+    btn.addEventListener('click', async function() {
+      btn.disabled = true;
+      try {
+        await sb
+          .from('profiles')
+          .update({
+            tos_version: LEGAL.TOS_VERSION,
+            tos_accepted_at: new Date(),
+            privacy_version: LEGAL.PRIVACY_VERSION,
+            privacy_accepted_at: new Date(),
+            adult_ack_version: LEGAL.ADULT_ACK_VERSION,
+            adult_acknowledged_at: new Date()
+          })
+          .eq('id', _supabaseProfileId);
+
+        // Fire-and-forget: capture IP + UA server-side
+        fetch('/api/record-legal-acceptance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: _supabaseProfileId })
+        }).catch(err => console.warn('[LEGAL] IP capture failed:', err));
+
+        window.showScreen('tierGate');
+      } catch (e) {
+        console.error('[LEGAL] Failed to update profile:', e);
+        btn.disabled = false;
+      }
+    });
+  })();
+
+  (function initLegalModal() {
+    const modal = document.getElementById('legalModal');
+    const content = document.getElementById('legalModalContent');
+    const closeBtn = document.getElementById('legalModalClose');
+    const tosLink = document.getElementById('legal-tos-link');
+    const privacyLink = document.getElementById('legal-privacy-link');
+    if (!modal || !content || !closeBtn) return;
+
+    const LEGAL_DOCS = {
+      tos: '<h3>Terms of Service</h3>'
+        + '<p>1. <strong>Age Requirement:</strong> You must be 18+.</p>'
+        + '<p>2. <strong>Content Policy:</strong> Adult fantasy roleplay only. Content must be consensual. Optional power play is permitted only if explicitly opted-in. No non-consensual sexual acts, sexual violence, or minors.</p>'
+        + '<p>3. <strong>Data &amp; AI:</strong> Content generated by third-party AI models. We may anonymize data.</p>'
+        + '<p>4. <strong>Liability:</strong> Use at your own risk. Entertainment purposes only.</p>',
+      privacy: '<h3>Privacy Policy</h3>'
+        + '<p>1. <strong>Data Collection:</strong> We collect anonymous usage data and story preferences to improve the service.</p>'
+        + '<p>2. <strong>Storage:</strong> Your stories and selections are stored securely. We do not sell personal data.</p>'
+        + '<p>3. <strong>AI Processing:</strong> Story content is processed by third-party AI providers. Prompts may be logged for safety and quality.</p>'
+        + '<p>4. <strong>Cookies:</strong> We use essential cookies for authentication and session management.</p>'
+        + '<p>5. <strong>Deletion:</strong> You may request deletion of your data at any time by contacting support.</p>'
+    };
+
+    function openLegalDoc(docKey) {
+      content.innerHTML = LEGAL_DOCS[docKey] || '';
+      content.scrollTop = 0;
+      closeBtn.disabled = true;
+      modal.classList.remove('hidden');
+      checkScrollBottom();
+    }
+
+    function checkScrollBottom() {
+      if (content.scrollHeight <= content.clientHeight) {
+        closeBtn.disabled = false;
+      } else if (content.scrollTop + content.clientHeight >= content.scrollHeight - 5) {
+        closeBtn.disabled = false;
+      }
+    }
+
+    content.addEventListener('scroll', checkScrollBottom);
+
+    if (tosLink) tosLink.addEventListener('click', function(e) { e.preventDefault(); openLegalDoc('tos'); });
+    if (privacyLink) privacyLink.addEventListener('click', function(e) { e.preventDefault(); openLegalDoc('privacy'); });
+
+    closeBtn.addEventListener('click', function() {
+      modal.classList.add('hidden');
+    });
+  })();
+
+  function resolveLegalGate(profile) {
+    if (profile.age_confirmed !== true) {
+      console.log('[BOOT] Age not confirmed — showing ageGate');
+      window.showScreen && window.showScreen('ageGate');
+      return;
+    }
+
+    if (!profile.tos_version ||
+        !profile.privacy_version ||
+        !profile.adult_ack_version) {
+      routeToLegalAcceptance();
+      return;
+    }
+
+    if (profile.tos_version !== LEGAL.TOS_VERSION ||
+        profile.privacy_version !== LEGAL.PRIVACY_VERSION ||
+        profile.adult_ack_version !== LEGAL.ADULT_ACK_VERSION) {
+      const isReaccept = profile.tos_version && profile.tos_version !== LEGAL.TOS_VERSION;
+      routeToLegalAcceptance(isReaccept);
+      return;
+    }
+
+    console.log('[BOOT] All legal gates satisfied — skipping to tierGate');
+    window.showScreen && window.showScreen('tierGate');
+  }
+
+  async function bootApp() {
+    if (window.__booted) return;
+    window.__booted = true;
+
+    try {
+      const userId = await ensureAnonSession();
+      if (!userId || !sb) {
+        window.showScreen && window.showScreen('ageGate');
+        return;
+      }
+      _supabaseProfileId = userId;
+
+      const profile = await hydrateProfile(userId);
+      if (!profile) {
+        window.showScreen && window.showScreen('ageGate');
+        return;
+      }
+
+      hydrateState(profile);
+
+      // Clean up expired temp god mode grants
+      if (profile.god_mode_temp_expires_at && new Date(profile.god_mode_temp_expires_at).getTime() < Date.now()) {
+        console.log('[BOOT] Expired temp god mode detected — clearing');
+        sb.from('profiles')
+          .update({
+            god_mode_temp_granted_at: null,
+            god_mode_temp_duration_hours: null,
+            god_mode_temp_expires_at: null,
+            god_mode_active_story_id: null,
+            god_mode_active_started_at: null
+          })
+          .eq('id', userId)
+          .then(({ error }) => {
+            if (error) console.error('[BOOT] Failed to clear expired temp god mode:', error);
+          });
+      }
+
+      resolveLegalGate(profile);
+    } catch (e) {
+      console.error('[BOOT] Boot sequence failed:', e);
+      window.showScreen && window.showScreen('ageGate');
+    } finally {
+      document.body.classList.remove('booting');
+      window.__initialScreenSet = false;
+    }
+  }
+
+  bootApp();
 
   // God Mode power level: 1 = full, 0 = expired/none, fractional = decaying temp grant
   function getGodModePowerLevel(currentStoryId) {
@@ -1683,7 +1843,6 @@ For constraint/petition/god_mode:
   // =========================
   // GROK PREVIEW GENERATOR
   // =========================
-  const EROTIC_PREVIEW_TEXT = "The air in the room grew heavy, charged with a raw, undeniable hunger. His hands didn't hesitate, sliding up her thighs with possessive intent, fingers digging into soft flesh. She gasped, arching into the touch, her breath hitching as he leaned in to bite gently at the sensitive cord of her neck. There was no room for coy games now; the heat radiating between them demanded friction, skin against skin. He guided her hips, aligning them with a rough urgency that made her knees weak. As they connected, the world narrowed down to the rhythm of their bodies and the sharp, exquisite friction of movement. It was unpolished, desperate, and entirely consuming.";
 
   const META_DIRECTIVES = {
       aid: [
@@ -2241,7 +2400,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       archetype: { primary: 'BEAUTIFUL_RUIN', modifier: null },
       lenses: [],                    // Active lens IDs (two-lens max, Withheld Core exempt)
       withheldCoreVariant: null,     // 'CLOISTERED' | 'UNWORTHINESS' | null
-      intensity:'Naughty',
+      intensity:'Erotic',
       turnCount:0,
       sysPrompt: "",
       fateOptions: [],
@@ -11522,7 +11681,6 @@ Return ONLY the title, no quotes or explanation.`;
       if (!isStorypassAllowed(tempState)) {
           window.showPaywall('sub_only'); return;
       }
-      if (level === 'Erotic' && window.state.access === 'free') { window.openEroticPreview(); return; }
       window.state.intensity = level;
       updateIntensityUI();
   };
@@ -11583,7 +11741,7 @@ Return ONLY the title, no quotes or explanation.`;
 
       // Reset Guided Fate selections
       state.picks = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', era: 'Medieval', pov: 'First' };
-      state.intensity = 'Naughty';
+      state.intensity = 'Erotic';
       state.storypassEligible = undefined; // Reset - will be computed at story creation
       state.lenses = [];
       state.withheldCoreVariant = null;
@@ -11640,7 +11798,7 @@ Return ONLY the title, no quotes or explanation.`;
       if (partnerInput) partnerInput.value = '';
 
       // Reset card UI to match default state
-      const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Naughty', length: 'tease', pov: 'First' };
+      const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Erotic', length: 'tease', pov: 'First' };
       Object.entries(cardDefaults).forEach(([grp, val]) => {
           document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
               c.classList.remove('selected', 'flipped');
@@ -11696,7 +11854,7 @@ Return ONLY the title, no quotes or explanation.`;
 
   // NAV HELPER
   function closeAllOverlays() {
-      ['payModal', 'vizModal', 'menuOverlay', 'eroticPreviewModal', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'petitionFateModal'].forEach(id => {
+      ['payModal', 'vizModal', 'menuOverlay', 'coupleConsentModal', 'coupleInvite', 'strangerModal', 'edgeCovenantModal', 'previewModal', 'petitionFateModal'].forEach(id => {
           const el = document.getElementById(id);
           if(el) el.classList.add('hidden');
       });
@@ -12041,6 +12199,10 @@ Return ONLY the title, no quotes or explanation.`;
   }
 
   window.showScreen = function(id, isBack = false){
+      if (document.body.classList.contains('booting')) {
+        if (window.__initialScreenSet) return;
+        window.__initialScreenSet = true;
+      }
       closeAllOverlays();
       // PASS 1 FIX: Clear any stuck toasts on screen change
       if (typeof clearToasts === 'function') clearToasts();
@@ -12332,10 +12494,24 @@ Return ONLY the title, no quotes or explanation.`;
   function syncTierFromAccess() {
     // Resolve access from canonical source
     const resolvedAccess = resolveAccess();
+    const tier = resolvedAccess ? ((resolvedAccess === 'free') ? 'free' : 'paid') : null;
 
-    // Update state
+    if (!resolvedAccess || !tier) {
+      console.warn('[ENTITLEMENT] Invalid access state — defaulting to free');
+      state.tier = 'free';
+      state.subscribed = false;
+      return;
+    }
+
+    // Update state — server-authoritative only
     state.access = resolvedAccess;
-    state.tier = (resolvedAccess === 'free') ? 'free' : 'paid';
+    state.tier = tier;
+
+    // Invariant: subscription flag must agree with tier
+    if (state.tier !== 'pro' && state.subscribed) {
+      console.warn('[ENTITLEMENT] Tier/subscription mismatch — normalizing');
+      state.subscribed = false;
+    }
 
     console.log('[ENTITLEMENT] syncTierFromAccess:', {
         access: state.access,
@@ -13515,14 +13691,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       gameBtns.forEach(b => updateLock(b, b.innerText.trim(), false));
 
       // FALLBACK: Downgrade forbidden intensities for non-subscribers
-      // - Dirty: Subscription-only, downgrade to Erotic (or Naughty if also forbidden)
-      // - Erotic: Free users must preview first, downgrade to Naughty
+      // - Dirty: Subscription-only, downgrade to Erotic
+      // - Erotic: Now the universal default (intensity UI removed)
       // NOTE: storypassEligible is computed at story creation and persists - no runtime flag needed
       if (state.intensity === 'Dirty' && access !== 'sub') {
-          console.log('[ENTITLEMENT] Downgrading intensity from Dirty to Naughty (subscription required)');
-          state.intensity = 'Naughty';
+          console.log('[ENTITLEMENT] Downgrading intensity from Dirty to Erotic (subscription required)');
+          state.intensity = 'Erotic';
       }
-      if (state.intensity === 'Erotic' && access === 'free') state.intensity = 'Naughty';
       updateIntensityUI();
   }
 
@@ -13577,27 +13752,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               window.showPaywall({ mode: 'sub_only', source: source });
               return;
           }
-          if(level === 'Erotic' && state.access === 'free'){ window.openEroticPreview(); return; }
           state.intensity = level;
           state.picks.intensity = level;
           updateIntensityUI();
       });
   }
-
-  window.openEroticPreview = function(){
-      const pText = document.getElementById('eroticPreviewText');
-      if(pText) pText.innerText = EROTIC_PREVIEW_TEXT;
-
-      // Toggle StoryPass vs Subscribe button based on story metadata (persisted, immutable per-story)
-      const storypassBtn = document.getElementById('eroticPreviewStorypassBtn');
-      const subBtn = document.getElementById('eroticPreviewSubBtn');
-      const storypassAllowed = getPaywallMode() === 'unlock';
-
-      if (storypassBtn) storypassBtn.classList.toggle('hidden', !storypassAllowed);
-      if (subBtn) subBtn.classList.toggle('hidden', storypassAllowed);
-
-      document.getElementById('eroticPreviewModal')?.classList.remove('hidden');
-  };
 
   window.showPaywall = function(modeOrOptions){
     const pm = document.getElementById('payModal');
@@ -14908,7 +15067,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // FIX: Full 4-axis + world state reset (prevents Ash Quarter / Warden-Cadre leak)
     state.picks = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', era: 'Medieval', pov: 'First' };
-    state.intensity = 'Naughty';
+    state.intensity = 'Erotic';
     state.storypassEligible = undefined; // Reset - will be computed at story creation
     state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {} };
     // SPECULATIVE PRELOAD: Reset on restart
@@ -14939,7 +15098,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (_coverProgressInterval) { clearInterval(_coverProgressInterval); _coverProgressInterval = null; }
 
     // Reset card UI to match default state
-    const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Naughty', length: 'tease', pov: 'First' };
+    const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Erotic', length: 'tease', pov: 'First' };
     Object.entries(cardDefaults).forEach(([grp, val]) => {
         document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
             c.classList.remove('selected', 'flipped');
@@ -15116,7 +15275,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (user?.id) {
         const { data, error } = await sb
           .from('profiles')
-          .update({ tos_version: CURRENT_TOS_VERSION })
+          .update({ tos_version: LEGAL.TOS_VERSION })
           .eq('id', user.id)
           .select();
         console.log('[TOS] Update result:', data, error);
@@ -15178,22 +15337,38 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       return (state.imageCredits || 0) > 0;
   }
 
-  // Consume one image credit after successful generation
-  function consumeImageCredit() {
-      if (state.godModeEnabled) return;
+  // Consume one image credit via server-side atomic decrement
+  async function consumeImageCredit() {
+      if (state.godModeEnabled) return true;
       if ((state.imageCredits || 0) <= 0) {
           console.warn('[ImageCredits] Attempted credit consumption with 0 balance');
-          return;
+          return false;
       }
-      state.imageCredits -= 1;
-      persistImageCredits();
-      console.log('[ImageCredits] Credit consumed. Remaining:', state.imageCredits);
+      try {
+          const resp = await fetch('/api/consume-credit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: _supabaseProfileId })
+          });
+          const data = await resp.json();
+          if (!resp.ok) {
+              console.warn('[ImageCredits] Server declined credit consumption:', data.error);
+              if (data.creditsRemaining !== undefined) state.imageCredits = data.creditsRemaining;
+              return false;
+          }
+          if (data.creditsRemaining !== null && data.creditsRemaining !== undefined) {
+              state.imageCredits = data.creditsRemaining;
+          }
+          console.log('[ImageCredits] Credit consumed (server). Remaining:', state.imageCredits);
+          return true;
+      } catch (err) {
+          console.error('[ImageCredits] Server credit consumption failed:', err);
+          return false;
+      }
   }
 
-  // Persist imageCredits to localStorage and Supabase
+  // Persist reward credits to Supabase (credit consumption handled server-side)
   function persistImageCredits() {
-      localStorage.setItem('sb_image_credits', String(state.imageCredits || 0));
-      localStorage.setItem('sb_last_scene_rewarded', String(state.lastSceneRewarded || 0));
       if (sb && _supabaseProfileId) {
           sb.from('profiles')
             .update({
@@ -15841,7 +16016,7 @@ The final image must look like a real published novel cover.`;
           // ═══════════════════════════════════════════════════════════════
           // IMAGE CREDIT CONSUMPTION — Only on successful image URL
           // ═══════════════════════════════════════════════════════════════
-          consumeImageCredit();
+          await consumeImageCredit();
           updateCoverCreditDisplay();
 
           _preGeneratedCoverUrl = coverUrl;
@@ -18719,9 +18894,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             if (!isStorypassAllowed(tempState)) {
               window.showPaywall('sub_only'); return;
             }
-            if (grp === 'intensity' && val === 'Erotic' && state.access === 'free') {
-              window.openEroticPreview(); return;
-            }
           }
 
           // Locked card: use correct paywall mode based on canonical eligibility
@@ -20874,7 +21046,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Create ghost step for each STAGE_INDEX entry (except aliases and non-breadcrumb stages)
     const stageEntries = Object.entries(STAGE_INDEX).filter(([grp]) =>
-      grp !== 'archetype' && grp !== 'intensity' && grp !== 'safety' && grp !== 'beginstory'
+      grp !== 'archetype' && grp !== 'intensity' && grp !== 'arousal' && grp !== 'safety' && grp !== 'beginstory'
     );
     stageEntries.sort((a, b) => a[1] - b[1]); // Sort by index
 
@@ -21834,6 +22006,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    */
   function advanceCorridorRow() {
     corridorActiveRowIndex++;
+
+    // Auto-skip arousal stage — intensity set internally, no UI shown
+    if (CORRIDOR_STAGES[corridorActiveRowIndex] === 'arousal') {
+      console.log('[Corridor] Auto-skipping arousal stage (intensity set internally)');
+      state.intensity = state.intensity || 'Erotic';
+      corridorActiveRowIndex++;
+    }
 
     if (corridorActiveRowIndex < CORRIDOR_STAGES.length) {
       console.log(`[Corridor] Advancing to row ${corridorActiveRowIndex}: ${CORRIDOR_STAGES[corridorActiveRowIndex]}`);
@@ -25918,11 +26097,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   // Get entitlement-aware intensity selection
   function getFateIntensity() {
-    // Prefer Erotic if entitled, else Naughty. Never Dirty.
-    if (state.access === 'sub' || state.access === 'pass') {
-      return 'Erotic';
-    }
-    return 'Naughty';
+    // Intensity selection removed from UI — default to Erotic internally
+    return 'Erotic';
   }
 
   // Get entitlement-aware story length selection
@@ -27153,7 +27329,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Define all Fate-relevant sections with their grid selectors and data keys
     const sectionConfigs = [
       { id: 'archetype', grid: '#archetypeCardGrid', titleId: 'archetypeSectionTitle', value: fateChoices.archetype, type: 'archetype' },
-      { id: 'intensity', grid: '#intensityGrid', value: fateChoices.intensity, type: 'card' },
+      // intensity removed from UI — set internally via getFateIntensity()
       { id: 'length', grid: '#lengthGrid', value: fateChoices.storyLength, type: 'card' },
       { id: 'pov', grid: '#povGrid', value: fateChoices.pov, type: 'card' },
       { id: 'world', grid: '#worldGrid', value: fateChoices.world, type: 'card' },
@@ -33383,13 +33559,11 @@ ${tone === 'Wry Confessional'
   if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
           initCoverPageListeners();
-          loadImageCreditsFromLocal();
           if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
           if (typeof updateBeginButtonLabel === 'function') updateBeginButtonLabel();
       });
   } else {
       initCoverPageListeners();
-      loadImageCreditsFromLocal();
       if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
       if (typeof updateBeginButtonLabel === 'function') updateBeginButtonLabel();
   }
@@ -36281,7 +36455,7 @@ Respond in this EXACT format (no labels, just two lines):
                   reject(new Error("Image load timeout"));
               }, 30000);
 
-              img.onload = () => {
+              img.onload = async () => {
                   clearTimeout(loadTimeout);
                   img.style.display = 'block';
                   if(ph) ph.style.display = 'none';
@@ -36299,7 +36473,7 @@ Respond in this EXACT format (no labels, just two lines):
                       console.error('[ImageCredits] Credit decrement blocked — no image URL');
                       return;
                   }
-                  consumeImageCredit();
+                  await consumeImageCredit();
                   if (!state.visual.visualizedScenes) state.visual.visualizedScenes = {};
                   state.visual.visualizedScenes[sceneKey] = true;
 

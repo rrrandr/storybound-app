@@ -3794,13 +3794,6 @@ select {
 }
 @keyframes toastFadeInOut { 0%{opacity:0; transform:translate(-50%, calc(-50% + 20px));} 10%{opacity:1; transform:translate(-50%, -50%);} 90%{opacity:1;} 100%{opacity:0;} }
 
-/* EROTIC PREVIEW TEXT */
-#eroticPreviewText { 
-    font-family: var(--font-story); font-size: 1.1em; line-height: 1.6; 
-    color: var(--p2-color); font-style: italic; border-left: 3px solid var(--pink); 
-    padding-left: 15px; margin: 20px 0; text-align: left;
-}
-
 /* LOADING BAR — Golden ceremonial glow */
 #loadingOverlayInner {
     background: rgba(10, 0, 30, 0.95);
@@ -4091,6 +4084,7 @@ select {
 
 /* AUTH PANEL */
 #auth-panel { position:fixed; top:10px; right:60px; z-index:10003; background:rgba(0,0,0,0.92); padding:14px 16px; border:1px solid gold; border-radius:0; display:flex; flex-direction:column; align-items:center; gap:6px; }
+#auth-panel.hidden { display:flex !important; visibility:hidden; opacity:0; position:absolute; pointer-events:none; }
 #auth-panel input { padding:6px 8px; width: 180px; font-size: 0.85em; background: rgba(20,20,20,0.9); border: 1px solid rgba(218,165,32,0.3); color: #fff; font-family: 'Lora', serif; }
 #auth-panel input:focus { outline: none; border-color: gold; }
 #auth-panel .sb-btn-png.sm { align-self: center; }
