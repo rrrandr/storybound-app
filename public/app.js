@@ -30137,7 +30137,6 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
         }
 
         // EROTIC ESCALATION VALIDATION — removed (intensity no longer controls routing)
-        }
 
         // TONE VALIDATION (Scene 1 — all stories)
         const currentTone = state.picks?.tone || 'Earnest';
