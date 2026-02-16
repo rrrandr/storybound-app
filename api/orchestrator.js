@@ -117,22 +117,22 @@ const DEFAULT_MODELS = {
  */
 const MONETIZATION_GATES = {
   free: {
-    name: 'Tease',
+    name: 'Taste',
     allowedEroticism: ['Clean', 'Naughty'],
     completionAllowed: false,
     cliffhangerRequired: true,
-    maxStoryLength: 'tease'
+    maxStoryLength: 'taste'
   },
   pass: {
     name: '$3 Story Pass',
-    allowedEroticism: ['Clean', 'Naughty', 'Erotic'],
+    allowedEroticism: ['Clean', 'Naughty', 'Steamy'],
     completionAllowed: true,
     cliffhangerRequired: false,
     maxStoryLength: 'fling'
   },
   sub: {
     name: '$6 Subscription',
-    allowedEroticism: ['Clean', 'Naughty', 'Erotic', 'Dirty'],
+    allowedEroticism: ['Clean', 'Naughty', 'Steamy', 'Passionate'],
     completionAllowed: true,
     cliffhangerRequired: false,
     maxStoryLength: 'soulmates'
@@ -200,7 +200,7 @@ function validateESD(esd) {
   }
 
   // Validate eroticism level
-  if (esd.eroticismLevel && !['Clean', 'Naughty', 'Erotic', 'Dirty'].includes(esd.eroticismLevel)) {
+  if (esd.eroticismLevel && !['Clean', 'Naughty', 'Steamy', 'Passionate'].includes(esd.eroticismLevel)) {
     errors.push(`Invalid eroticism level: ${esd.eroticismLevel}`);
   }
 
@@ -302,7 +302,7 @@ function enforceMonetizationGates(accessTier, requestedEroticism) {
   let effectiveEroticism = requestedEroticism;
   if (!gate.allowedEroticism.includes(requestedEroticism)) {
     // Downgrade to highest allowed level
-    const eroticismOrder = ['Clean', 'Naughty', 'Erotic', 'Dirty'];
+    const eroticismOrder = ['Clean', 'Naughty', 'Steamy', 'Passionate'];
     const requestedIndex = eroticismOrder.indexOf(requestedEroticism);
 
     for (let i = requestedIndex; i >= 0; i--) {
@@ -339,7 +339,7 @@ function shouldCallSexRenderer(esd, gateEnforcement) {
   }
 
   // Check eroticism level
-  const rendererLevels = ['Erotic', 'Dirty'];
+  const rendererLevels = ['Steamy', 'Passionate'];
   if (!rendererLevels.includes(esd.eroticismLevel)) {
     return {
       shouldCall: false,

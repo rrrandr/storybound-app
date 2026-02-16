@@ -108,24 +108,22 @@
    * No AI model may override these rules.
    */
 
+  // MONETIZATION_GATES — intensity tier removed. Gates control completion/length only.
   const MONETIZATION_GATES = {
     free: {
-      name: 'Tease',
-      allowedIntensity: ['Clean', 'Naughty'],
+      name: 'Taste',
       completionAllowed: false,
       cliffhangerRequired: true,
-      maxStoryLength: 'tease'
+      maxStoryLength: 'taste'
     },
     pass: {
       name: '$3 Story Pass',
-      allowedIntensity: ['Clean', 'Naughty', 'Steamy'],
       completionAllowed: true,
       cliffhangerRequired: false,
       maxStoryLength: 'fling'
     },
     sub: {
       name: '$6 Subscription',
-      allowedIntensity: ['Clean', 'Naughty', 'Steamy', 'Passionate'],
       completionAllowed: true,
       cliffhangerRequired: false,
       maxStoryLength: 'soulmates'
@@ -409,37 +407,21 @@
    * Enforce monetization gates BEFORE any renderer call.
    * Returns the constraints that must be applied.
    */
-  function enforceMonetizationGates(accessTier, requestedIntensity) {
+  // enforceMonetizationGates — controls ONLY completion, length, saves, God Mode, credits.
+  // Does NOT influence intimacy authorization in any way.
+  function enforceMonetizationGates(accessTier) {
     const gate = MONETIZATION_GATES[accessTier];
     if (!gate) {
       console.warn(`[ORCHESTRATION] Unknown access tier: ${accessTier}, defaulting to 'free'`);
-      return enforceMonetizationGates('free', requestedIntensity);
-    }
-
-    // Determine effective intensity level
-    let effectiveIntensity = requestedIntensity;
-    if (!gate.allowedIntensity.includes(requestedIntensity)) {
-      // Downgrade to highest allowed level
-      const intensityOrder = ['Clean', 'Naughty', 'Steamy', 'Passionate'];
-      const requestedIndex = intensityOrder.indexOf(requestedIntensity);
-
-      for (let i = requestedIndex; i >= 0; i--) {
-        if (gate.allowedIntensity.includes(intensityOrder[i])) {
-          effectiveIntensity = intensityOrder[i];
-          break;
-        }
-      }
+      return enforceMonetizationGates('free');
     }
 
     return {
       accessTier,
       gateName: gate.name,
-      requestedIntensity,
-      effectiveIntensity,
-      wasDowngraded: effectiveIntensity !== requestedIntensity,
       completionAllowed: gate.completionAllowed,
       cliffhangerRequired: gate.cliffhangerRequired,
-      maxStoryLength: gate.maxStoryLength
+      storyLengthLimit: gate.maxStoryLength
     };
   }
 
@@ -454,16 +436,12 @@
     if (!esd) return { valid: false, errors: ['SD is null'] };
 
     const errors = [];
-    const required = ['intensityLevel', 'completionAllowed', 'hardStops'];
+    const required = ['completionAllowed', 'hardStops'];
 
     for (const field of required) {
       if (!(field in esd)) {
         errors.push(`Missing required field: ${field}`);
       }
-    }
-
-    if (esd.intensityLevel && !['Clean', 'Naughty', 'Steamy', 'Passionate'].includes(esd.intensityLevel)) {
-      errors.push(`Invalid intensity level: ${esd.intensityLevel}`);
     }
 
     return { valid: errors.length === 0, errors };
@@ -580,8 +558,7 @@
    * Call Scene Renderer (Grok grok-4-fast-reasoning).
    * ONLY called when:
    * 1. SD is present AND valid
-   * 2. SD.intensityLevel >= 'Steamy'
-   * 3. User's entitlement allows it
+   * 2. Orchestration was invoked (intimacy pre-authorized by caller)
    *
    * HARD GUARD: This function MUST NOT be called without SD evaluation.
    */
@@ -591,19 +568,7 @@
       throw new Error('[SCENE_RENDERER BLOCKED] No SD provided. Renderer cannot be called without SD evaluation.');
     }
 
-    // GUARD: SD must have valid intensity level
-    const intensityLevel = esd.intensityLevel || 'Clean';
-    if (!['Steamy', 'Passionate'].includes(intensityLevel)) {
-      throw new Error(`[SCENE_RENDERER BLOCKED] SD intensity level "${intensityLevel}" does not require scene renderer.`);
-    }
-
-    // GUARD: Check user entitlement
-    const gate = MONETIZATION_GATES[accessTier] || MONETIZATION_GATES.free;
-    if (!gate.allowedIntensity.includes(intensityLevel)) {
-      throw new Error(`[SCENE_RENDERER BLOCKED] User tier "${accessTier}" not entitled to "${intensityLevel}" content.`);
-    }
-
-    console.log(`[SCENE_RENDERER] SD validated. Level: ${intensityLevel}, Tier: ${accessTier}`);
+    console.log(`[SCENE_RENDERER] SD validated. Tier: ${accessTier}`);
 
     const payload = {
       messages,
@@ -713,14 +678,14 @@
   }
 
   /**
-   * Call Grok as SD Author (for Steamy/Passionate intensity ONLY).
+   * Call Grok as SD Author (when intimacy is authorized).
    * Grok authors: anatomical explicitness, sensory vividness, physical embodiment.
    * ChatGPT retains: permission, limits, consequences, integration.
    *
    * FAILURE HANDLING: If Grok fails, set fateStumbled and continue with ChatGPT.
    */
   async function callGrokSDAuthor(constraints, gateEnforcement, options = {}) {
-    console.log(`[GROK SD] Authoring SD for ${gateEnforcement.effectiveIntensity} intensity`);
+    console.log(`[GROK SD] Authoring SD — intimacy authorized`);
 
     const esdPrompt = `You are the SD AUTHOR for Storybound intimate scenes.
 
@@ -737,7 +702,7 @@ YOU DO NOT DECIDE:
 - Plot progression
 
 CONSTRAINTS FROM PRIMARY AUTHOR (NON-NEGOTIABLE):
-- Intensity Level: ${gateEnforcement.effectiveIntensity}
+- Intimacy Stage: authorized
 - Completion Allowed: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Emotional Core: ${constraints.emotionalCore || 'connection and desire'}
 - Physical Bounds: ${constraints.physicalBounds || 'as established by story'}
@@ -750,7 +715,7 @@ Build tension, embodiment, sensation - but do NOT reach climax.
 
 Generate an Scene Directive in this format:
 [SD]
-intensityLevel: ${gateEnforcement.effectiveIntensity}
+intimacyStage: authorized
 completionAllowed: ${gateEnforcement.completionAllowed}
 emotionalCore: <the feeling being rendered>
 physicalBounds: <explicit physical actions allowed/forbidden>
@@ -809,7 +774,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
   }
 
   /**
-   * Call Mistral as SD FALLBACK AUTHOR (for Steamy/Passionate intensity ONLY).
+   * Call Mistral as SD FALLBACK AUTHOR (when intimacy is authorized).
    * Called ONLY when Grok fails or is neutered.
    *
    * Mistral authors: anatomical explicitness, sensory vividness, physical embodiment.
@@ -819,7 +784,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
    * NO RETRIES. ONE ATTEMPT ONLY.
    */
   async function callMistralSDFallback(constraints, gateEnforcement, options = {}) {
-    console.log(`[MISTRAL SD FALLBACK] Grok failed, attempting Mistral fallback for ${gateEnforcement.effectiveIntensity}`);
+    console.log(`[MISTRAL SD FALLBACK] Grok failed, attempting Mistral fallback`);
 
     const esdPrompt = `You are the FALLBACK SD AUTHOR for Storybound intimate scenes.
 The primary author failed. You must generate the Scene Directive.
@@ -837,7 +802,7 @@ YOU DO NOT DECIDE:
 - Plot progression
 
 CONSTRAINTS (NON-NEGOTIABLE):
-- Intensity Level: ${gateEnforcement.effectiveIntensity}
+- Intimacy Stage: authorized
 - Completion Allowed: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Emotional Core: ${constraints.emotionalCore || 'connection and desire'}
 - Physical Bounds: ${constraints.physicalBounds || 'as established by story'}
@@ -850,7 +815,7 @@ Build tension, embodiment, sensation - but do NOT reach climax.
 
 Generate an Scene Directive in this format:
 [SD]
-intensityLevel: ${gateEnforcement.effectiveIntensity}
+intimacyStage: authorized
 completionAllowed: ${gateEnforcement.completionAllowed}
 emotionalCore: <the feeling being rendered>
 physicalBounds: <explicit physical actions allowed/forbidden>
@@ -924,7 +889,6 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
    *
    * @param {Object} params
    * @param {string} params.accessTier - User's monetization tier (free|pass|sub)
-   * @param {string} params.requestedIntensity - Requested intensity level
    * @param {string} params.storyContext - Recent story context
    * @param {string} params.playerAction - Player's action input
    * @param {string} params.playerDialogue - Player's dialogue input
@@ -935,11 +899,11 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
   async function orchestrateStoryGeneration(params) {
     const {
       accessTier,
-      requestedIntensity,
       storyContext,
       playerAction,
       playerDialogue,
       fateCard,
+      mainPairRestricted,
       systemPrompt,
       onPhaseChange
     } = params;
@@ -949,11 +913,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
     // =========================================================================
     // PRE-FLIGHT: Enforce Monetization Gates
     // =========================================================================
-    state.gateEnforcement = enforceMonetizationGates(accessTier, requestedIntensity);
-
-    if (state.gateEnforcement.wasDowngraded) {
-      console.log(`[ORCHESTRATION] Intensity downgraded: ${requestedIntensity} → ${state.gateEnforcement.effectiveIntensity}`);
-    }
+    state.gateEnforcement = enforceMonetizationGates(accessTier);
 
     if (onPhaseChange) {
       onPhaseChange('GATE_CHECK', state.gateEnforcement);
@@ -972,18 +932,18 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
      * - Decide WHETHER a scene must be interrupted
      * - Enforce monetization gates (embedded in output)
      *
-     * For Steamy/Passionate: ChatGPT generates constraints, Grok authors SD.
-     * For Clean/Naughty: ChatGPT handles everything.
+     * When intimacy is authorized: ChatGPT generates constraints, Grok authors SD.
+     * Otherwise: ChatGPT handles everything.
      */
 
     state.phase = 'AUTHOR_PASS';
     if (onPhaseChange) onPhaseChange('AUTHOR_PASS');
 
     const authorStartTime = Date.now();
-    const isIntenseOrPassionate = ['Steamy', 'Passionate'].includes(state.gateEnforcement.effectiveIntensity);
-    const useGrokForSD = isIntenseOrPassionate && CONFIG.ENABLE_GROK_SD_AUTHORING;
+    // Orchestration is only invoked when intimacy is authorized — always eligible for Grok SD
+    const useGrokForSD = CONFIG.ENABLE_GROK_SD_AUTHORING;
 
-    // Build system prompt - for Steamy/Passionate with Grok SD, ChatGPT generates constraints instead of full SD
+    // Build system prompt - when intimacy authorized with Grok SD, ChatGPT generates constraints instead of full SD
     const authorSystemPrompt = `${systemPrompt}
 
 === PRIMARY AUTHOR RESPONSIBILITIES ===
@@ -996,13 +956,15 @@ You are the PRIMARY AUTHOR. You have EXCLUSIVE authority over:
 
 MONETIZATION CONSTRAINTS (NON-NEGOTIABLE):
 - Access Tier: ${state.gateEnforcement.gateName}
-- Effective Intensity Level: ${state.gateEnforcement.effectiveIntensity}
 - Completion Allowed: ${state.gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Cliffhanger Required: ${state.gateEnforcement.cliffhangerRequired ? 'YES' : 'NO'}
 
+INTIMACY STATUS:
+- Intimacy Authorized: YES
+
 ${useGrokForSD ? `
 INTIMACY SCENE PROTOCOL (SPLIT AUTHORING):
-For Steamy/Passionate content, you define CONSTRAINTS and a specialist will author the SD.
+Intimacy has been authorized for this beat. You define CONSTRAINTS and a specialist will author the SD.
 If this beat includes intimate content, include a [CONSTRAINTS] block:
 [CONSTRAINTS]
 intimacyOccurs: true/false
@@ -1013,18 +975,17 @@ hardStops: <any specific limits - consent, boundaries, etc.>
 [/CONSTRAINTS]
 
 You retain authority over WHETHER intimacy occurs. The specialist only authors HOW it is rendered.
-` : isIntenseOrPassionate ? `
+` : `
 INTIMACY SCENE PROTOCOL:
-If this beat includes intimate content at Steamy or Passionate level, you MUST include
+Intimacy has been authorized for this beat. If this beat includes intimate content, you MUST include
 an [SD] block in your response that specifies the constraints for embodied rendering.
 Format:
 [SD]
-intensityLevel: ${state.gateEnforcement.effectiveIntensity}
 completionAllowed: ${state.gateEnforcement.completionAllowed}
 emotionalCore: <the feeling to render>
 physicalBounds: <what is explicitly allowed and forbidden>
 [/SD]
-` : ''}
+`}
 ${buildPreferenceBiasBlock()}
 Write the next story beat (150-250 words).`;
 
@@ -1069,7 +1030,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     state.usedFallbackAuthor = usedFallback;
 
     // =========================================================================
-    // PHASE 1B: Grok SD Authoring (CONDITIONAL - Steamy/Passionate only)
+    // PHASE 1B: Grok SD Authoring (CONDITIONAL - intimacy authorized only)
     // With Mistral fallback if Grok fails
     // =========================================================================
     if (useGrokForSD && !usedFallback) {
@@ -1163,8 +1124,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
      * Specialist renderer is called ONLY if:
      * - Feature flag enables it
      * - An intimacy scene exists (SD was generated)
-     * - Intensity level warrants it (Steamy or Passionate)
-     * - Monetization tier allows it
+     * - Intimacy was authorized
      *
      * The renderer:
      * - Receives ONLY the SD (no plot context)
@@ -1172,11 +1132,10 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
      * - NEVER decides outcomes or plot
      */
 
+    // Orchestration is only invoked when intimacy is authorized — renderer gated by SD presence only
     const shouldCallRenderer = (
       CONFIG.ENABLE_SPECIALIST_RENDERER &&
-      state.esd &&
-      ['Steamy', 'Passionate'].includes(state.esd.intensityLevel) &&
-      !state.gateEnforcement.wasDowngraded
+      state.esd
     );
 
     if (shouldCallRenderer) {
@@ -1193,7 +1152,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       } else {
         try {
           // Build renderer prompt from SD only (no plot context)
-          const rendererPrompt = buildRendererPrompt(state.esd);
+          const rendererPrompt = buildRendererPrompt(state.esd, mainPairRestricted);
 
           const messages = [
             { role: 'system', content: rendererPrompt.system },
@@ -1217,8 +1176,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       console.log('[ORCHESTRATION] Specialist renderer not called:',
         !CONFIG.ENABLE_SPECIALIST_RENDERER ? 'disabled' :
         !state.esd ? 'no SD' :
-        state.gateEnforcement.wasDowngraded ? 'tier downgrade' :
-        'intensity level'
+        'intimacy not authorized'
       );
     }
 
@@ -1251,19 +1209,18 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
           .trim();
 
         // =====================================================================
-        // DETERMINISTIC CUT-AWAY: Steamy/Passionate with specialist author failure
+        // DETERMINISTIC CUT-AWAY: Intimacy authorized but specialist author failure
         // =====================================================================
-        // If intensity >= Steamy AND (renderer failed OR all scene authors failed):
-        // - Force in-story interruption (do NOT downgrade intensity)
+        // If intimacy was authorized AND (renderer failed OR all scene authors failed):
+        // - Force in-story interruption
         // - Do NOT allow ChatGPT to write softened erotic prose
         // - Do NOT retry or cascade beyond Mistral
         // =====================================================================
-        const isHighIntensity = ['Steamy', 'Passionate'].includes(state.gateEnforcement.effectiveIntensity);
         const allSceneAuthorsFailed = state.grokFailed && (state.mistralFailed || !CONFIG.ENABLE_MISTRAL_SD);
 
-        if (isHighIntensity && (state.rendererFailed || allSceneAuthorsFailed)) {
+        if (state.rendererFailed || allSceneAuthorsFailed) {
           const reason = allSceneAuthorsFailed ? 'all specialist authors (Grok+Mistral) failed' : 'renderer failed';
-          console.log(`[ORCHESTRATION] DETERMINISTIC CUT-AWAY: Steamy/Passionate ${reason}, forcing interruption`);
+          console.log(`[ORCHESTRATION] DETERMINISTIC CUT-AWAY: ${reason}, forcing interruption`);
           state.forcedInterruption = true;
 
           // Record interruption for preference inference
@@ -1331,11 +1288,10 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         .replace(/\[CONSTRAINTS\][\s\S]*?\[\/CONSTRAINTS\]/g, '')
         .trim();
 
-      // DETERMINISTIC CUT-AWAY: Also applies on integration failure for Steamy/Passionate
-      const isHighIntensity = ['Steamy', 'Passionate'].includes(state.gateEnforcement.effectiveIntensity);
+      // DETERMINISTIC CUT-AWAY: Also applies on integration failure when intimacy was authorized
       const allSceneAuthorsFailed = state.grokFailed && (state.mistralFailed || !CONFIG.ENABLE_MISTRAL_SD);
-      if (isHighIntensity && (state.rendererFailed || state.esd || allSceneAuthorsFailed)) {
-        console.log('[ORCHESTRATION] DETERMINISTIC CUT-AWAY: Integration failed for Steamy/Passionate, forcing interruption');
+      if (state.rendererFailed || state.esd || allSceneAuthorsFailed) {
+        console.log('[ORCHESTRATION] DETERMINISTIC CUT-AWAY: Integration failed, forcing interruption');
         state.forcedInterruption = true;
 
         // Record interruption for preference inference
@@ -1414,7 +1370,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
    */
   function parseSD(esdText, gateEnforcement) {
     const esd = {
-      intensityLevel: gateEnforcement.effectiveIntensity,
+      intimacyStage: 'authorized',
       completionAllowed: gateEnforcement.completionAllowed,
       emotionalCore: null,
       physicalBounds: null,
@@ -1431,7 +1387,6 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         const normalizedKey = key.trim().toLowerCase().replace(/\s+/g, '');
         if (normalizedKey === 'emotionalcore') esd.emotionalCore = value;
         if (normalizedKey === 'physicalbounds') esd.physicalBounds = value;
-        if (normalizedKey === 'eroticismlevel') esd.intensityLevel = value;
         if (normalizedKey === 'completionallowed') esd.completionAllowed = value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
       }
     }
@@ -1449,7 +1404,11 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
    * Build the prompt for the specialist renderer.
    * The renderer receives ONLY SD content, NO plot context.
    */
-  function buildRendererPrompt(esd) {
+  function buildRendererPrompt(esd, mainPairRestricted) {
+    const mainPairRestrictionBlock = mainPairRestricted ? `
+MAIN PAIR RESTRICTION: Do not render consummation or escalation between the primary romantic pair.
+` : '';
+
     return {
       system: `You are a SPECIALIST RENDERER for intimate scenes.
 
@@ -1460,11 +1419,11 @@ YOUR CONSTRAINTS (NON-NEGOTIABLE):
 - You write HOW IT FEELS, not WHAT HAPPENS
 
 SCENE PARAMETERS:
-- Intensity Level: ${esd.intensityLevel}
+- Intimacy: AUTHORIZED
 - Completion Allowed: ${esd.completionAllowed ? 'YES' : 'NO - you must NOT write completion'}
 - Emotional Core: ${esd.emotionalCore || 'connection'}
 - Physical Bounds: ${esd.physicalBounds || 'as established'}
-
+${mainPairRestrictionBlock}
 HARD STOPS (if any of these occur, halt immediately):
 ${esd.hardStops.map(s => `- ${s}`).join('\n')}
 
@@ -1555,7 +1514,7 @@ dialogue: <specific dialogue suggestion>
 beat: <emotional beat description>
 
 Be specific to this moment. Do NOT use generic phrases.
-Enforce consent and safety. Respect intensity ceilings.`;
+Enforce consent and safety.`;
 
     let structuralOutput;
     try {

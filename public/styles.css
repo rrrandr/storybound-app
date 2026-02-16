@@ -1339,7 +1339,7 @@ button.is-finalized,
 /* END PLAQUE MATERIAL REGIME                                                      */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* STORYPASS DISABLED STATE (Passionate intensity) */
+/* STORYPASS DISABLED STATE */
 #optUnlock.storypass-disabled {
     opacity: 0.45;
     pointer-events: none;
@@ -3080,12 +3080,12 @@ select:-webkit-autofill {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* TIER CARD BUTTONS — Tarot-style PNG buttons for Tease/Indulge selection         */
+/* TIER CARD BUTTONS — Tarot-style PNG buttons for Taste/Indulge selection         */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .tier-card-btn {
     width: 160px;
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
-    background-image: url('/assets/card-art/cards/Tarot-Gold-Tease-face.png');
+    background-image: url('/assets/card-art/cards/Tarot-Gold-Taste-face.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -3206,7 +3206,7 @@ select {
 /* NO opacity, NO grayscale, NO filter. Grey filigree/text indicates locked state. */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .locked-input, .locked-input textarea, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
-.intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
+.intensity-btn.locked-taste, .intensity-btn.locked-pass, [data-locked] {
     /* NO opacity, NO filter — element stays physically present */
     cursor: url('/cursor-dollar-plane-64.png'), pointer !important;
     pointer-events: auto !important;
@@ -3215,14 +3215,14 @@ select {
     color: var(--plaque-locked-text) !important;
 }
 .locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
-.intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
+.intensity-btn.locked-taste, .intensity-btn.locked-pass, [data-locked] {
     position: relative;
 }
 .locked-style { display: inline-block; }
 
 /* HANDCUFF OVERLAY - SVG (applies to all locked elements) */
 .locked-input::after, .locked-style::after, .card.locked::after, .fate-card.locked::after,
-.intensity-btn.locked::after, .intensity-btn.locked-tease::after, .intensity-btn.locked-pass::after,
+.intensity-btn.locked::after, .intensity-btn.locked-taste::after, .intensity-btn.locked-pass::after,
 [data-locked]::after {
     content:""; position:absolute;
     top:5px; right:5px;
@@ -3237,7 +3237,7 @@ select {
     filter: drop-shadow(0 0 2px black);
 }
 .locked-input::after { top: 40px; right: 10px; }
-.intensity-btn.locked-tease::after, .intensity-btn.locked-pass::after { top: 2px; right: 2px; transform: none; width: 16px; height: 16px; } 
+.intensity-btn.locked-taste::after, .intensity-btn.locked-pass::after { top: 2px; right: 2px; transform: none; width: 16px; height: 16px; } 
 
 /* STYLE CARDS - Grid layout with centered rows */
 .style-cards {
@@ -4183,11 +4183,11 @@ select {
 
 /* PAYWALLED ELEMENTS - CURSOR AND VISIBILITY */
 .locked-input, .locked-style, .card.locked, .fate-card.locked, .intensity-btn.locked,
-.intensity-btn.locked-tease, .intensity-btn.locked-pass, [data-locked] {
+.intensity-btn.locked-taste, .intensity-btn.locked-pass, [data-locked] {
     cursor: url('/cursor-dollar-plane-64.png'), pointer !important;
 }
 .card.locked:hover, .fate-card.locked:hover, .intensity-btn.locked:hover,
-.intensity-btn.locked-tease:hover, .intensity-btn.locked-pass:hover,
+.intensity-btn.locked-taste:hover, .intensity-btn.locked-pass:hover,
 [data-locked]:hover {
     cursor: url('/cursor-dollar-plane-64.png'), pointer !important;
 }
@@ -5804,7 +5804,7 @@ textarea.fate-field {
 /* ═══════════════════════════════════════════════════════════════════════════
    Layer 2: ORNATE BORDER — World-Specific Image Assets
    ═══════════════════════════════════════════════════════════════════════════
-   CONDITION: Applied ONLY when arousal_tier === "Steamy"
+   CONDITION: Cover layer 2 (ornate border)
    ASSET PATH: /assets/borders/ornate/{world}_base.png
 
    WORLDS (6 total, no Mythic):
@@ -5960,7 +5960,7 @@ textarea.fate-field {
 /* ═══════════════════════════════════════════════════════════════════════════
    Layer 3: DIRTY KEYHOLE TAKEOVER — World-Specific Mask Assets
    ═══════════════════════════════════════════════════════════════════════════
-   CONDITION: Applied ONLY when arousal_tier === "Dirty"
+   CONDITION: Cover layer 3 (keyhole takeover)
    ASSET PATH: /assets/keyholes/{world}_mask.png
 
    GEOMETRY (NON-NEGOTIABLE):
@@ -8127,7 +8127,7 @@ textarea.fate-field {
     display: none;
 }
 
-/* Tier cards (Tease/Indulge) and character tarot cards need position context
+/* Tier cards (Taste/Indulge) and character tarot cards need position context
    and overflow clipping for the gleam layer */
 .tier-card-btn,
 .character-tarot-card {

@@ -2640,7 +2640,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       if (!variant) return '';
 
       // Determine midpoint range based on story length
-      const midpointTurns = { tease: 3, fling: 6, affair: 12, soulmates: 20 };
+      const midpointTurns = { taste: 3, fling: 6, affair: 12, soulmates: 20 };
       const midpoint = midpointTurns[storyLength] || 6;
       const atOrPastMidpoint = turnCount >= midpoint;
       const approachingMidpoint = turnCount >= (midpoint - 2);
@@ -2730,7 +2730,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       authorPronouns: 'She/Her',
       
       storyTargetWords: 10000,
-      storyLength: 'tease', 
+      storyLength: 'taste', 
       flingClimaxDone: false,
       flingConsequenceShown: false,
       storyEnded: false,
@@ -2847,8 +2847,8 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       storyStage: 'pre-intimacy',
       // STORYTURN STATE — narrative arc progression (ST1–ST6)
       storyturn: 'ST1',
-      // TEASE CLIFFHANGER RESUME STATE — stores interrupted scene for upgrade continuation
-      teaseCliffhangerState: null,
+      // TASTE CLIFFHANGER RESUME STATE — stores interrupted scene for upgrade continuation
+      tasteCliffhangerState: null,
       // INTIMACY MILESTONE LATCH — tracks first-time interruptions
       intimacyInterrupted: {
           first_kiss: false,
@@ -6263,10 +6263,10 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   // Phase B: Rough is max earned cover. v1 unlocks are inactive.
   // Sketch: 0 = available when story context exists (Scene 1 active)
   const COVER_UNLOCK_RULES = {
-      tease: {
+      taste: {
           sketch: 0,      // Available when story context exists
           thumbnail: 2,
-          rough: null     // Tease maxes out at Thumbnail
+          rough: null     // Taste maxes out at Thumbnail
       },
       fling: {
           sketch: 0,      // Available when story context exists
@@ -6422,7 +6422,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
   const STORYTURN_CONFIG = {
     storyLengths: {
-      Tease: { minWords: 5000, maxWords: 8000 },
+      Taste: { minWords: 5000, maxWords: 8000 },
       Fling: { minWords: 12000, maxWords: 20000 },
       Affair: { minWords: 40000, maxWords: 70000 },
       Soulmates: { minWords: 90000, maxWords: 130000 }
@@ -6445,7 +6445,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       }
     },
 
-    teaseRules: {
+    tasteRules: {
       maxStoryturn: "ST3",
       completionAllowed: false,
       cliffhangerRequired: true
@@ -6680,19 +6680,19 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
   /**
    * Get maximum allowed Storyturn for current story length
-   * Tease stories cannot advance past ST3
+   * Taste stories cannot advance past ST3
    */
   function getMaxStoryturn() {
-      const storyLength = (state.storyLength || 'tease').toLowerCase();
-      if (storyLength === 'tease') {
-          return STORYTURN_CONFIG.teaseRules.maxStoryturn;
+      const storyLength = (state.storyLength || 'taste').toLowerCase();
+      if (storyLength === 'taste') {
+          return STORYTURN_CONFIG.tasteRules.maxStoryturn;
       }
       return 'ST6'; // All other lengths can complete
   }
 
   /**
    * Check if Storyturn can advance to target
-   * Enforces sequential advancement and Tease ceiling
+   * Enforces sequential advancement and Taste ceiling
    */
   // Storyturns advance only on irreversible relational consequence.
   // See Storybound Canon v1.0 (Attempt → Consequence, Irreversibility Test).
@@ -6709,7 +6709,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
       // Cannot exceed max for story length
       if (targetIdx > maxIdx) {
-          console.warn(`[STORYTURN] Cannot advance past ${getMaxStoryturn()} for Tease stories`);
+          console.warn(`[STORYTURN] Cannot advance past ${getMaxStoryturn()} for Taste stories`);
           return false;
       }
 
@@ -6774,16 +6774,16 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       state.storyturn = nextSt;
       console.log(`[STORYTURN] Advanced: ${prevSt} → ${nextSt}`);
 
-      // If Tease hits ST3 ceiling, store cliffhanger state for potential upgrade
-      const storyLengthNorm = (state.storyLength || 'tease').toLowerCase();
-      if (storyLengthNorm === 'tease' && nextSt === 'ST3') {
-          state.teaseCliffhangerState = {
+      // If Taste hits ST3 ceiling, store cliffhanger state for potential upgrade
+      const storyLengthNorm = (state.storyLength || 'taste').toLowerCase();
+      if (storyLengthNorm === 'taste' && nextSt === 'ST3') {
+          state.tasteCliffhangerState = {
               storyturn: 'ST3',
               sceneIndex: state.turnCount,
               storyContent: state.currentStoryContent,
               timestamp: Date.now()
           };
-          console.log('[STORYTURN] Tease cliffhanger state captured at ST3');
+          console.log('[STORYTURN] Taste cliffhanger state captured at ST3');
       }
 
       return nextSt;
@@ -6800,13 +6800,13 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
   /**
    * Check if sex COMPLETION is allowed (not just initiation)
-   * Tease can initiate at ST3 but CANNOT complete
+   * Taste can initiate at ST3 but CANNOT complete
    */
   function isSexCompletionAllowed() {
-      const storyLength = (state.storyLength || 'tease').toLowerCase();
+      const storyLength = (state.storyLength || 'taste').toLowerCase();
 
-      // Tease allows initiation but NEVER completion
-      if (storyLength === 'tease') {
+      // Taste allows initiation but NEVER completion
+      if (storyLength === 'taste') {
           return false;
       }
 
@@ -6819,11 +6819,11 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
    */
   function assertSexCompletionAllowed() {
       if (!isSexCompletionAllowed()) {
-          const storyLength = (state.storyLength || 'tease').toLowerCase();
+          const storyLength = (state.storyLength || 'taste').toLowerCase();
           const currentSt = state.storyturn || 'ST1';
 
-          if (storyLength === 'tease') {
-              throw new Error(`[STORYTURN] Sex completion blocked: Tease stories require upgrade`);
+          if (storyLength === 'taste') {
+              throw new Error(`[STORYTURN] Sex completion blocked: Taste stories require upgrade`);
           } else {
               throw new Error(`[STORYTURN] Sex completion blocked at ${currentSt}. Not in allowed Storyturns.`);
           }
@@ -6910,28 +6910,28 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   }
 
   /**
-   * Handle Tease upgrade resume logic
-   * When a Tease cliffhanger is upgraded, resume at the interrupted point
+   * Handle Taste upgrade resume logic
+   * When a Taste cliffhanger is upgraded, resume at the interrupted point
    */
-  function handleTeaseUpgradeResume(newStoryLength) {
-      if (!state.teaseCliffhangerState) {
+  function handleTasteUpgradeResume(newStoryLength) {
+      if (!state.tasteCliffhangerState) {
           console.log('[STORYTURN] No cliffhanger state to resume');
           return false;
       }
 
-      const lengthNorm = (newStoryLength || 'tease').toLowerCase();
-      if (lengthNorm === 'tease') {
-          console.warn('[STORYTURN] Cannot resume cliffhanger without upgrading from Tease');
+      const lengthNorm = (newStoryLength || 'taste').toLowerCase();
+      if (lengthNorm === 'taste') {
+          console.warn('[STORYTURN] Cannot resume cliffhanger without upgrading from Taste');
           return false;
       }
 
-      console.log(`[STORYTURN] Resuming from Tease cliffhanger at ${state.teaseCliffhangerState.storyturn}`);
+      console.log(`[STORYTURN] Resuming from Taste cliffhanger at ${state.tasteCliffhangerState.storyturn}`);
 
       // Storyturn stays at ST3 — will advance to ST4 only after consequence taken
-      state.storyturn = state.teaseCliffhangerState.storyturn;
+      state.storyturn = state.tasteCliffhangerState.storyturn;
 
       // Clear cliffhanger state after resume
-      state.teaseCliffhangerState = null;
+      state.tasteCliffhangerState = null;
 
       return true;
   }
@@ -6941,7 +6941,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
    */
   function resetStoryturnState() {
       state.storyturn = 'ST1';
-      state.teaseCliffhangerState = null;
+      state.tasteCliffhangerState = null;
   }
 
   /**
@@ -7306,10 +7306,10 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   // Any future change must preserve these outcomes.
   //
   // ───────────────────────────────────────────────
-  // REGRESSION STORY 1 — CLEAN TEASE
+  // REGRESSION STORY 1 — CLEAN TASTE
   // ───────────────────────────────────────────────
   // Setup:
-  //   - Story Length: Tease
+  //   - Story Length: Taste
   //   - Arousal: Flirty or Naughty
   //   - Tone: Romantic or Wry
   //
@@ -7372,8 +7372,8 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   // ═══════════════════════════════════════════════════════════════════════════
 
   const CANONICAL_REGRESSION_TEST_STORIES = {
-      cleanTease: {
-          setup: { storyLength: "Tease", arousal: ["Flirty", "Naughty"], tone: ["Romantic", "Wry"] },
+      cleanTaste: {
+          setup: { storyLength: "Taste", arousal: ["Flirty", "Naughty"], tone: ["Romantic", "Wry"] },
           invariantOutcomes: ["multiple_ST3_attempts", "no_ST4_consequence", "cliffhanger_ending", "tension_unresolved", "upgrade_required"],
           failureConditions: ["early_kiss_or_sex_resolves", "storyturn_advances_to_ST4", "emotional_closure_occurs"]
       },
@@ -7650,7 +7650,7 @@ ${guidance}
   function buildFreeTextStoryturnDirective(action, dialogue) {
       const currentSt = state.storyturn || 'ST1';
       const currentIdx = getStoryturnIndex(currentSt);
-      const storyLengthNorm = (state.storyLength || 'tease').toLowerCase();
+      const storyLengthNorm = (state.storyLength || 'taste').toLowerCase();
       const st4Idx = getStoryturnIndex('ST4');
       const isPostST4 = currentIdx >= st4Idx;
 
@@ -7658,9 +7658,9 @@ ${guidance}
       const semantics = STORYTURN_CONFIG.storyturnSemantics[currentSt];
       const phase = semantics ? semantics.phase : 'unknown';
 
-      // Tease ceiling check
+      // Taste ceiling check
       const maxSt = getMaxStoryturn();
-      const atTeaseCeiling = storyLengthNorm === 'tease' && currentSt === maxSt;
+      const atTasteCeiling = storyLengthNorm === 'taste' && currentSt === maxSt;
 
       let directive = `
 STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
@@ -7673,10 +7673,10 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
 - Repeated intimacy shapes meaning, not progression`;
       }
 
-      // Tease ceiling
-      if (atTeaseCeiling) {
+      // Taste ceiling
+      if (atTasteCeiling) {
           directive += `
-- TEASE CEILING ACTIVE: Cannot advance past ${maxSt}
+- TASTE CEILING ACTIVE: Cannot advance past ${maxSt}
 - Escalation builds tension but cannot resolve
 - Sex initiation allowed, completion BLOCKED`;
       }
@@ -7700,7 +7700,7 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
       } else if (currentSt === 'ST3') {
           directive += `
 - ST3 (Permission): Intimacy gateway open
-- Consequence-accepting may advance to ST4 only if Tease ceiling permits`;
+- Consequence-accepting may advance to ST4 only if Taste ceiling permits`;
       } else if (currentSt === 'ST4') {
           directive += `
 - ST4 (Consequence): Aftermath being processed
@@ -7723,12 +7723,12 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
    */
   function assertFreeTextRespectsStoryturn(action, dialogue, attemptingAdvancement = false) {
       const currentSt = state.storyturn || 'ST1';
-      const storyLengthNorm = (state.storyLength || 'tease').toLowerCase();
+      const storyLengthNorm = (state.storyLength || 'taste').toLowerCase();
 
-      // Tease ceiling
-      if (storyLengthNorm === 'tease' && currentSt === STORYTURN_CONFIG.teaseRules.maxStoryturn) {
+      // Taste ceiling
+      if (storyLengthNorm === 'taste' && currentSt === STORYTURN_CONFIG.tasteRules.maxStoryturn) {
           if (attemptingAdvancement) {
-              throw new Error(`[STORYTURN] Free-text cannot advance past ${currentSt} on Tease`);
+              throw new Error(`[STORYTURN] Free-text cannot advance past ${currentSt} on Taste`);
           }
       }
 
@@ -7782,7 +7782,7 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
   // Actions are premature if current Storyturn is BELOW the gate
   const ROMANCE_COLLAPSE_GATES = {
       kiss: 'ST3',        // First kiss requires Permission phase
-      sex: 'ST3',         // Sex requires Permission phase (Tease further restricts)
+      sex: 'ST3',         // Sex requires Permission phase (Taste further restricts)
       commitment: 'ST5',  // Commitment requires Crisis resolution
       confession: 'ST2',  // Confession requires Resistance phase minimum
       closure: 'ST5',     // Closure requires Crisis phase
@@ -9275,9 +9275,9 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
    * @returns {string} - Current cover stage (sketch, thumbnail, rough)
    */
   function getCurrentCoverStage() {
-      const storyLength = state.storyLength || 'tease';
+      const storyLength = state.storyLength || 'taste';
       const sceneCount = state.turnCount || 0;
-      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.taste;
 
       // Check stages in reverse order (highest first)
       // Phase B: v1 logic removed — max is ROUGH
@@ -9294,8 +9294,8 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
    * @returns {string} - Maximum stage that can ever be unlocked
    */
   function getMaxCoverStage() {
-      const storyLength = state.storyLength || 'tease';
-      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+      const storyLength = state.storyLength || 'taste';
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.taste;
 
       // Phase B: v1 logic removed — max is ROUGH
       if (rules.rough !== null) return COVER_STAGES.ROUGH;
@@ -9308,12 +9308,12 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
    * @returns {boolean}
    */
   function isCoverStageUnlocked(stage) {
-      const storyLength = state.storyLength || 'tease';
+      const storyLength = state.storyLength || 'taste';
       const sceneCount = state.turnCount || 0;
-      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.taste;
 
-      // PATCH: Thumbnail permanently locked for Tease story length
-      if (stage === COVER_STAGES.THUMBNAIL && storyLength === 'tease') {
+      // PATCH: Thumbnail permanently locked for Taste story length
+      if (stage === COVER_STAGES.THUMBNAIL && storyLength === 'taste') {
           return false;
       }
 
@@ -9448,9 +9448,9 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
    * Get scenes remaining until a stage unlocks
    */
   function getScenesUntilUnlock(stage) {
-      const storyLength = state.storyLength || 'tease';
+      const storyLength = state.storyLength || 'taste';
       const sceneCount = state.turnCount || 0;
-      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.taste;
       const threshold = rules[stage];
       if (threshold === null) return -1; // Never unlocks for this story length
       return Math.max(0, threshold - sceneCount);
@@ -9674,8 +9674,8 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
    * Get total scenes required to unlock a stage (not remaining)
    */
   function getScenesRequiredForStage(stage) {
-      const storyLength = state.storyLength || 'tease';
-      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.tease;
+      const storyLength = state.storyLength || 'taste';
+      const rules = COVER_UNLOCK_RULES[storyLength] || COVER_UNLOCK_RULES.taste;
       return rules[stage] || 0;
   }
 
@@ -10883,7 +10883,7 @@ Return ONLY the title, no quotes or explanation.`;
   function resetForNewStory() {
       state.storyEnded = false;
       state.turnCount = 0;
-      state.storyLength = 'tease';
+      state.storyLength = 'taste';
       state.storyId = null;
       clearStoryContent();
 
@@ -12054,7 +12054,7 @@ Return ONLY the title, no quotes or explanation.`;
       state._synopsisMetadata = null;
       state.storyHistory = [];
       state.storyEnded = false;
-      state.storyLength = 'tease';
+      state.storyLength = 'taste';
       state.storyOrigin = null;
       state.storyStage = null;
       state.intimacyInterrupted = { first_kiss: false, first_sex: false };
@@ -12120,7 +12120,7 @@ Return ONLY the title, no quotes or explanation.`;
       if (partnerInput) partnerInput.value = '';
 
       // Reset card UI to match default state
-      const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Steamy', length: 'tease', pov: 'First' };
+      const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Steamy', length: 'taste', pov: 'First' };
       Object.entries(cardDefaults).forEach(([grp, val]) => {
           document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
               c.classList.remove('selected', 'flipped');
@@ -12695,7 +12695,7 @@ Return ONLY the title, no quotes or explanation.`;
                   return;
               }
 
-              const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-tease, .locked-pass, [data-locked]');
+              const lockedTarget = e.target.closest('.locked, .locked-style, .locked-input, .locked-taste, .locked-pass, [data-locked]');
               if (lockedTarget) {
                   e.preventDefault();
                   e.stopPropagation();
@@ -12986,9 +12986,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   function checkStoryEndCaps() {
       const wc = currentStoryWordCount();
       const turns = state.turnCount || 0;
-      const len = state.storyLength || 'tease';
+      const len = state.storyLength || 'taste';
 
-      if (len === 'tease' && (wc > 7000 || turns > 28) && !state.storyEnded) {
+      if (len === 'taste' && (wc > 7000 || turns > 28) && !state.storyEnded) {
           state.storyEnded = true;
           document.getElementById('submitBtn').disabled = true;
           const div = document.createElement('div');
@@ -13183,7 +13183,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           const currentStoryId = makeStoryId();
           let powerLevel = getGodModePowerLevel(currentStoryId);
 
-          // God Mode never applies in Tease, and requires Subscriber OR Storypass for this story
+          // God Mode never applies in Taste, and requires Subscriber OR Storypass for this story
           if (getCurrentArousal && getCurrentArousal() === 'tease') powerLevel = 0;
           if (!(state.subscribed || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory()))) powerLevel = 0;
 
@@ -13314,9 +13314,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   let fateHandInitialized = false;
   let placeholderAnimations = {};
 
-  // Tease mode check
-  function isTeaseMode() {
-      return state.storyLength === 'tease' && state.access === 'free';
+  // Taste mode check
+  function isTasteMode() {
+      return state.storyLength === 'taste' && state.access === 'free';
   }
 
   // Get random suggestion from pool
@@ -13923,13 +13923,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // ═══════════════════════════════════════════════════════════════
       // ENTITLEMENT RULES FOR STORY LENGTH CARDS:
       // ═══════════════════════════════════════════════════════════════
-      // - free: only tease unlocked
+      // - free: only taste unlocked
       // - pass ($3): fling unlocked (NOT affair, NOT soulmates)
       // - sub ($6): fling, affair, soulmates ALL unlocked
       // SOULMATES: Subscription-only ($6) — NO StoryPass option
       // ═══════════════════════════════════════════════════════════════
 
-      if (state.access === 'free' && val === 'tease') {
+      if (state.access === 'free' && val === 'taste') {
           locked = false;
       } else if (val === 'soulmates') {
           // SOULMATES: Subscription-only — locked unless subscriber
@@ -13943,8 +13943,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if (['fling', 'affair', 'soulmates'].includes(val)) locked = false;
       }
 
-      // Hide tease for paid users
-      if (state.access !== 'free' && val === 'tease') {
+      // Hide taste for paid users
+      if (state.access !== 'free' && val === 'taste') {
           locked = true;
           hidden = true;
       }
@@ -13985,8 +13985,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         state.storyLength = 'fling';
     }
 
-    // Auto-select fling if pass tier and current selection is tease (now hidden)
-    if (state.access === 'pass' && state.storyLength === 'tease') {
+    // Auto-select fling if pass tier and current selection is taste (now hidden)
+    if (state.access === 'pass' && state.storyLength === 'taste') {
         state.storyLength = 'fling';
     }
 
@@ -14306,7 +14306,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // RULE: Storypass $3 upgrades ONLY to Fling (never Affair/Soulmates)
       if (purchaseType === 'pass' && newAccess === 'pass') {
-          if (state.storyLength === 'tease') {
+          if (state.storyLength === 'taste') {
               state.storyLength = 'fling';
               upgraded = true;
               toastMessage = "Story expanded to Fling.";
@@ -14320,16 +14320,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // RULE: Subscription can upgrade to Affair
       if (purchaseType === 'sub' && newAccess === 'sub') {
-          if (['fling', 'tease'].includes(state.storyLength)) {
+          if (['fling', 'taste'].includes(state.storyLength)) {
               state.storyLength = 'affair';
               upgraded = true;
               toastMessage = "You have shed your limitations.";
           }
       }
 
-      // STORYTURN: Handle Tease cliffhanger resume on upgrade
-      if (upgraded && typeof handleTeaseUpgradeResume === 'function') {
-          handleTeaseUpgradeResume(state.storyLength);
+      // STORYTURN: Handle Taste cliffhanger resume on upgrade
+      if (upgraded && typeof handleTasteUpgradeResume === 'function') {
+          handleTasteUpgradeResume(state.storyLength);
       }
 
       if (upgraded) {
@@ -15340,7 +15340,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     localStorage.removeItem('sb_saved_story');
     // Reset state
     state.turnCount = 0;
-    state.storyLength = 'tease';
+    state.storyLength = 'taste';
     state.storyEnded = false;
     state.archetype = { primary: 'BEAUTIFUL_RUIN', modifier: null };
 
@@ -15377,7 +15377,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (_coverProgressInterval) { clearInterval(_coverProgressInterval); _coverProgressInterval = null; }
 
     // Reset card UI to match default state
-    const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Steamy', length: 'tease', pov: 'First' };
+    const cardDefaults = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', intensity: 'Steamy', length: 'taste', pov: 'First' };
     Object.entries(cardDefaults).forEach(([grp, val]) => {
         document.querySelectorAll(`.sb-card[data-grp="${grp}"]`).forEach(c => {
             c.classList.remove('selected', 'flipped');
@@ -15566,7 +15566,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     window.showScreen && window.showScreen('tierGate');
   });
 
-  $('btnTease')?.addEventListener('click', () => {
+  $('btnTaste')?.addEventListener('click', () => {
     state.tier = 'free';
     state.access = 'free';
     applyAccessLocks();
@@ -19438,7 +19438,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         } else if (grp === 'tone' && DSP_TONAL_ADJECTIVES[val]) {
           activateDSPSegment('tone', ' desire redeem this ' + DSP_TONAL_ADJECTIVES[val]);
         } else if (grp === 'length') {
-          const AFFAIR_WORD_MAP = { tease: 'tease', fling: 'fling', affair: 'affair', soulmates: 'cosmic connection' };
+          const AFFAIR_WORD_MAP = { taste: 'taste', fling: 'fling', affair: 'affair', soulmates: 'cosmic connection' };
           activateDSPSegment('length', ' ' + (AFFAIR_WORD_MAP[val] || 'affair') + '\u2009\u2014\u2009or ruin it?');
         } else if (grp === 'pov') {
           // POV changes the pronoun in the archetype clause — full re-render
@@ -19772,7 +19772,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   //
   // DROPPED AFTER USE (Dissolve at POV selection):
   //   mode (Solo/Couple) — temporary mode indicator
-  //   Note: Tease is a Story Length value, persists if selected
+  //   Note: Taste is a Story Length value, persists if selected
   //
   // NEVER BECOMES BREADCRUMB:
   //   intensity (arousal) — NEVER collapses to breadcrumb at any phase
@@ -19786,7 +19786,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   const BREADCRUMB_PERSISTENT_LAYERS = [
     'guidedFate',  // Destiny card click (special handling)
     'archetype',   // Storybeau selection
-    'length',      // Story length (tease/fling/affair/soulmates)
+    'length',      // Story length (taste/fling/affair/soulmates)
     'world',       // World setting
     'tone',        // Narrative tone
     'pressure',    // Story pressure
@@ -23341,7 +23341,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // STRICT DSP ASSEMBLY — no invented prose, no embellishment
     // Dynamic affair word based on storyLength
     const AFFAIR_WORD_MAP = {
-      tease: 'tease',
+      taste: 'taste',
       fling: 'fling',
       affair: 'affair',
       soulmates: 'cosmic connection'
@@ -26444,14 +26444,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   // Get entitlement-aware story length selection
   function getFateStoryLength() {
-    // Prefer Affair/Soulmates if sub, else Fling if pass, else Tease
+    // Prefer Affair/Soulmates if sub, else Fling if pass, else Taste
     if (state.access === 'sub') {
       // Weighted: prefer Affair (50%), Soulmates (50%)
       return Math.random() < 0.5 ? 'affair' : 'soulmates';
     } else if (state.access === 'pass') {
       return 'fling';
     }
-    return 'tease';
+    return 'taste';
   }
 
   // Get weighted world selection
@@ -29916,7 +29916,7 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
         },
         intensity: state.intensity || 'Naughty',
         pov: state.picks.pov || 'First',
-        storyLength: state.storyLength || 'tease',
+        storyLength: state.storyLength || 'taste',
         systemPromptLength: state.sysPrompt?.length || 0
     };
 
@@ -36858,14 +36858,14 @@ If both main characters are present, render their tension and restraint ONLY —
       // PACING HELPER
       function buildPacingDirective() {
           const wc = currentStoryWordCount();
-          const len = state.storyLength || 'tease';
+          const len = state.storyLength || 'taste';
           // Heuristic based on stage
           if (state.storyStage === 'post-consummation') state.flingClimaxDone = true;
 
           let dir = "";
-          if (len === 'tease') {
+          if (len === 'taste') {
              if (wc > 6500) {
-               dir = "PACING ALERT (TEASE TIER): Approaching limit. Build extreme tension but DENY release. Steer narrative toward an unresolved cliffhanger ending. Do NOT resolve the desire.";
+               dir = "PACING ALERT (TASTE TIER): Approaching limit. Build extreme tension but DENY release. Steer narrative toward an unresolved cliffhanger ending. Do NOT resolve the desire.";
              }
           } else if (len === 'fling') {
              if (state.flingClimaxDone) {
@@ -36933,11 +36933,11 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
        * Returns the scene index at which main pair contact is allowed
        */
       function getMainPairIntimacyGateScene() {
-          const storyLength = state.storyLength || 'tease';
+          const storyLength = state.storyLength || 'taste';
 
           // Base gates by story length only — intensity no longer modifies gate timing
           const baseGates = {
-              tease: 4,    // Short: tension builds quickly
+              taste: 4,    // Short: tension builds quickly
               fling: 6,    // Medium: more buildup
               affair: 10   // Long: slow burn
           };
@@ -36982,7 +36982,7 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
           const sceneIndex = state.turnCount || 0;
           const gateScene = getMainPairIntimacyGateScene();
           const currentSt = state.storyturn || 'ST1';
-          const storyLength = (state.storyLength || 'tease').toLowerCase();
+          const storyLength = (state.storyLength || 'taste').toLowerCase();
           const isSceneGateOpen = sceneIndex >= gateScene;
           const sexAllowedAtStoryturn = isSexAllowedAtCurrentStoryturn();
           const completionAllowed = isSexCompletionAllowed();
@@ -36992,10 +36992,10 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
               return '';  // Gate is fully open: main pair contact allowed
           }
 
-          // Tease at ST3: sex INITIATION allowed, but COMPLETION blocked
-          if (storyLength === 'tease' && currentSt === 'ST3' && sexAllowedAtStoryturn && !completionAllowed) {
+          // Taste at ST3: sex INITIATION allowed, but COMPLETION blocked
+          if (storyLength === 'taste' && currentSt === 'ST3' && sexAllowedAtStoryturn && !completionAllowed) {
               return `
-STORYTURN GATING (Tease @ ${currentSt} — Initiation Only):
+STORYTURN GATING (Taste @ ${currentSt} — Initiation Only):
 Sex scenes may BEGIN but must NOT COMPLETE.
 - Kissing: ALLOWED
 - Sexual touching: ALLOWED
@@ -37003,7 +37003,7 @@ Sex scenes may BEGIN but must NOT COMPLETE.
 - Sex COMPLETION: BLOCKED — interrupt before climax
 
 The scene MUST end on a cliffhanger before completion.
-This is the Tease ceiling — upgrade unlocks resolution.`;
+This is the Taste ceiling — upgrade unlocks resolution.`;
           }
 
           // Gate is CLOSED: block main pair contact
@@ -37798,10 +37798,10 @@ If both main characters are present, render their tension and restraint ONLY —
 
           // 4. Build pacing directive (same as real turn)
           const wc = currentStoryWordCount();
-          const len = state.storyLength || 'tease';
+          const len = state.storyLength || 'taste';
           let pacingDirective = "";
-          if (len === 'tease' && wc > 6500) {
-              pacingDirective = "PACING ALERT (TEASE TIER): Approaching limit. Build extreme tension but DENY release. Steer narrative toward an unresolved cliffhanger ending. Do NOT resolve the desire.";
+          if (len === 'taste' && wc > 6500) {
+              pacingDirective = "PACING ALERT (TASTE TIER): Approaching limit. Build extreme tension but DENY release. Steer narrative toward an unresolved cliffhanger ending. Do NOT resolve the desire.";
           } else if (len === 'fling') {
               if (state.flingClimaxDone) {
                   pacingDirective = "PACING ALERT (FLING TIER): Climax occurred. Now introduce a complication, regret, or external consequence. Steer toward an unresolved ending/cliffhanger regarding this new problem. Do NOT resolve fully.";
@@ -37870,8 +37870,8 @@ FATE CARD ADAPTATION (CRITICAL):
           // Build intimacy gating directive (inline for speculative path)
           let specEroticGating = '';
           if (!specIntimacyAuthorized) {
-              const baseGates = { tease: 4, fling: 6, affair: 10 };
-              const gateScene = baseGates[state.storyLength || 'tease'] || 4;
+              const baseGates = { taste: 4, fling: 6, affair: 10 };
+              const gateScene = baseGates[state.storyLength || 'taste'] || 4;
               if (specSceneIndex < gateScene) {
                   specEroticGating = `\nINTIMACY GATING: Main characters must NOT have physical contact yet. Atmospheric tension IS allowed.\n`;
               }
@@ -39311,7 +39311,7 @@ FATE CARD ADAPTATION (CRITICAL):
 // ROMANCE-COLLAPSING ACTIONS
 // ---------------------------
 // kiss      → Gate: ST3 (Permission phase)
-// sex       → Gate: ST3 (Permission phase, Tease further restricts)
+// sex       → Gate: ST3 (Permission phase, Taste further restricts)
 // commitment→ Gate: ST5 (Crisis resolution required)
 // confession→ Gate: ST2 (Resistance phase minimum)
 // closure   → Gate: ST5 (Crisis phase required)
@@ -40629,7 +40629,7 @@ FATE CARD ADAPTATION (CRITICAL):
 // PERSISTENT BREADCRUMBS (Final State — 8±1 items):
 //   - guidedFate   — Destiny card click
 //   - archetype    — Storybeau selection
-//   - length       — Story length (tease/fling/affair/soulmates)
+//   - length       — Story length (taste/fling/affair/soulmates)
 //   - world        — World setting
 //   - tone         — Narrative tone
 //   - pressure     — Story pressure
