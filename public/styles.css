@@ -1339,7 +1339,7 @@ button.is-finalized,
 /* END PLAQUE MATERIAL REGIME                                                      */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* STORYPASS DISABLED STATE (Dirty intensity) */
+/* STORYPASS DISABLED STATE (Passionate intensity) */
 #optUnlock.storypass-disabled {
     opacity: 0.45;
     pointer-events: none;
@@ -1974,85 +1974,29 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* DSP MATERIAL: Page nav button — Ceremonial Metal Plaque */
 .page-nav-btn {
     position: relative;
-    overflow: hidden; /* Contain gleam */
+    overflow: hidden;
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 8px 16px;
     border-radius: 0 !important;
     border: none !important;
+    box-shadow: none !important;
     font-size: 0.9em;
     cursor: pointer;
 
-    /* MATERIAL LOCK — Brushed metal with Art Deco filigree */
-    background-color: var(--plaque-black-base);
-    background-image:
-        /* Corner ornaments */
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        /* Outer filigree frame */
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        /* Inner filigree frame (top split for diamond) */
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        linear-gradient(var(--filigree-gold), var(--filigree-gold)),
-        /* Brushed metal grain */
-        var(--plaque-black-grain);
+    /* Ornate plaque PNG */
+    background: url('/assets/ui/Black-Gold-120x36.png') center/100% 100% no-repeat, #0a0a0a;
 
-    background-size:
-        /* Corner ornaments */
-        var(--corner-size) var(--corner-size),
-        var(--corner-size) var(--corner-size),
-        var(--corner-size) var(--corner-size),
-        var(--corner-size) var(--corner-size),
-        /* Outer frame */
-        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
-        var(--outer-frame-thickness) calc(100% - var(--outer-frame-inset) * 2),
-        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
-        calc(100% - var(--outer-frame-inset) * 2) var(--outer-frame-thickness),
-        /* Inner frame */
-        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
-        var(--inner-frame-thickness) calc(100% - var(--inner-frame-inset) * 2),
-        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
-        calc(50% - var(--inner-frame-inset) - 6px) var(--inner-frame-thickness),
-        calc(100% - var(--inner-frame-inset) * 2) var(--inner-frame-thickness),
-        /* Grain */
-        100% 100%;
-
-    background-position:
-        /* Corner ornaments */
-        var(--outer-frame-inset) var(--outer-frame-inset),
-        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
-        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
-        calc(100% - var(--outer-frame-inset)) calc(100% - var(--outer-frame-inset)),
-        /* Outer frame edges */
-        var(--outer-frame-inset) var(--outer-frame-inset),
-        calc(100% - var(--outer-frame-inset)) var(--outer-frame-inset),
-        var(--outer-frame-inset) var(--outer-frame-inset),
-        var(--outer-frame-inset) calc(100% - var(--outer-frame-inset)),
-        /* Inner frame edges */
-        var(--inner-frame-inset) var(--inner-frame-inset),
-        calc(100% - var(--inner-frame-inset)) var(--inner-frame-inset),
-        var(--inner-frame-inset) var(--inner-frame-inset),
-        calc(50% + 6px) var(--inner-frame-inset),
-        var(--inner-frame-inset) calc(100% - var(--inner-frame-inset)),
-        /* Grain */
-        0 0;
-
-    background-repeat: no-repeat;
-
-    /* Typography — engraved */
-    color: var(--filigree-gold);
+    /* Gold text */
+    color: #d4a843;
+    -webkit-text-fill-color: #d4a843;
     text-shadow:
-        0 1px 0 rgba(0, 0, 0, 0.8),
-        0 -1px 0 rgba(255, 215, 0, 0.1);
+        0 0 2px rgba(252, 246, 186, 0.3),
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 -1px 0 rgba(252, 246, 186, 0.12),
+        0 0 6px rgba(191, 149, 63, 0.15);
+    font-weight: 600;
 
     outline: none !important;
     -webkit-tap-highlight-color: transparent;
@@ -2070,61 +2014,19 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     box-shadow: none !important;
 }
 
-/* Gleam element for page-nav-btn — element-bound */
+/* Hover: brighten plaque */
+.page-nav-btn:hover:not(:disabled) {
+    filter: brightness(1.15);
+}
+
 .page-nav-btn::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -30%;
-    width: 30%;
-    height: 100%;
-    background: linear-gradient(
-        105deg,
-        transparent 0%,
-        transparent 35%,
-        rgba(255, 255, 255, 0.08) 45%,
-        rgba(255, 255, 255, 0.15) 50%,
-        rgba(255, 255, 255, 0.08) 55%,
-        transparent 65%,
-        transparent 100%
-    );
-    pointer-events: none;
-    z-index: 1;
+    content: none;
 }
 
-/* Hover: Gleam sweeps across — material unchanged */
-.page-nav-btn:hover:not(:disabled)::after {
-    animation: plaque-gleam 0.6s ease-out forwards;
-}
-
-/* Active: Gleam holds at edge */
-.page-nav-btn:active:not(:disabled)::after {
-    left: 110%;
-    animation: none;
-}
-
-/* Disabled: Grey filigree and text — NO filter, NO opacity */
+/* Disabled: Dimmed plaque */
 .page-nav-btn:disabled {
     cursor: not-allowed;
-    color: var(--plaque-locked-text) !important;
-    background-image:
-        /* Grey corner ornaments */
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        /* Grey outer frame */
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        /* Grey inner frame */
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        linear-gradient(var(--plaque-locked-border), var(--plaque-locked-border)),
-        var(--plaque-black-grain);
+    opacity: 0.4;
 }
 
 .page-nav-btn:disabled::before {
@@ -2206,14 +2108,16 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* Typography: Lora font, lower visual salience, no UI decoration             */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 .story-page-title {
-    font-family: 'Lora', serif;
+    font-family: 'Lora', serif !important;
     font-size: 1.8em;
     font-weight: 400;
-    color: rgba(245, 240, 230, 0.7); /* Lower salience than body text */
+    color: rgba(245, 240, 230, 0.7) !important; /* Lower salience than body text */
+    text-shadow: none !important;
     text-align: center;
     margin: 0 0 8px 0;
     padding: 0;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.6em;
+    text-transform: capitalize;
     /* No glow, no gradients, no UI decoration */
 }
 
@@ -2444,7 +2348,29 @@ button:disabled::after, .dsp-btn:disabled::after {
 .small-btn {
     font-size: 0.9em;
     padding: 8px 16px;
-    /* Material inherited from button — no need to redefine */
+    /* Ornate plaque PNG */
+    background: url('/assets/ui/Black-Gold-120x36.png') center/100% 100% no-repeat, #0a0a0a !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #d4a843 !important;
+    -webkit-text-fill-color: #d4a843;
+    text-shadow:
+        0 0 2px rgba(252, 246, 186, 0.3),
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 -1px 0 rgba(252, 246, 186, 0.12),
+        0 0 6px rgba(191, 149, 63, 0.15) !important;
+    font-weight: 600;
+}
+.small-btn:hover {
+    filter: brightness(1.15);
+}
+#vizSceneBtn {
+    background: url('/assets/ui/Black-Gold-400x112.png') center/100% 100% no-repeat, #0a0a0a !important;
+    padding: 14px 44px;
+}
+#btnReaderCover {
+    background: url('/assets/ui/Black-Gold-Text-840x128.png') center/100% 100% no-repeat, #0a0a0a !important;
+    padding: 12px 28px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -3170,7 +3096,7 @@ select:-webkit-autofill {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.tier-card-btn.tier-card-indulge {
+.tier-card-btn.tier-card-premium {
     background-image: url('/assets/card-art/cards/Tarot-Gold-Indulge-face.png');
 }
 
@@ -3202,6 +3128,25 @@ select:-webkit-autofill {
 #actionWrapper textarea, #dialogueWrapper textarea {
     position: relative;
     overflow: visible;
+    /* Ornate plaque background */
+    background: url('/assets/ui/Black-Gold-640x176.png') center/100% 100% no-repeat, #0a0a0a;
+    border: none;
+    box-shadow: none;
+    /* Realistic gold text — multi-tone with engraved shadow */
+    color: #d4a843;
+    -webkit-text-fill-color: #d4a843;
+    text-shadow:
+        0 0 2px rgba(252, 246, 186, 0.3),
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 -1px 0 rgba(252, 246, 186, 0.12),
+        0 0 6px rgba(191, 149, 63, 0.15);
+    font-weight: 600;
+}
+#actionWrapper textarea::placeholder,
+#dialogueWrapper textarea::placeholder {
+    color: rgba(212, 168, 67, 0.35);
+    -webkit-text-fill-color: rgba(212, 168, 67, 0.35);
+    text-shadow: none;
 }
 .input-wrapper label, .setting-label { display:block; text-align:center; color:var(--gold); margin-bottom:5px; font-size:0.9em; font-family:var(--font-main); text-transform:uppercase; letter-spacing:1px; }
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -3551,11 +3496,15 @@ select {
 .fate-card.flipped .inner { transform:rotateY(180deg); }
 .fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:0; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); flex-direction: column; padding: 5px; box-sizing: border-box; }
 .fate-card .front {
-    background: url('destiny-tree.png') center/cover no-repeat, #111;
+    background: url('/assets/card-art/cards/Gold-Tarot-Card-DESTINY-X.png') center/cover no-repeat, #111;
     z-index:2;
 }
 .fate-card .front h3 { display: none; } /* Hide text, image has DESTINY label */
-.fate-card .back { background:#2a0033; transform:rotateY(180deg); z-index:1; }
+.fate-card .back { background-color:#2a0033; background-size:cover; background-position:center; background-repeat:no-repeat; transform:rotateY(180deg); z-index:1; }
+.fate-card .back h3 { display: none; } /* Hide text when card has baked art */
+.fate-card .back p { display: none; } /* Description baked into card art */
+.fate-card .petition-back h3 { display: block; } /* Petition card keeps text */
+.fate-card .petition-back p { display: block; }
 .fate-card h3 { font-size: 0.8em; margin-bottom: 5px; text-transform: uppercase; color: var(--gold); }
 .fate-card p { font-size: 0.6em; line-height: 1.2; opacity: 0.9; }
 .fate-card.poof { animation: smokePoof 0.6s forwards; }
@@ -5709,7 +5658,7 @@ textarea.fate-field {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   COVER ART LAYERS — fallback, erotic border, keyhole takeover
+   COVER ART LAYERS — fallback, ornate border, keyhole takeover
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -5853,10 +5802,10 @@ textarea.fate-field {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Layer 2: EROTIC BORDER — World-Specific Image Assets
+   Layer 2: ORNATE BORDER — World-Specific Image Assets
    ═══════════════════════════════════════════════════════════════════════════
-   CONDITION: Applied ONLY when arousal_tier === "Erotic"
-   ASSET PATH: /assets/borders/erotic/{world}_base.png
+   CONDITION: Applied ONLY when arousal_tier === "Steamy"
+   ASSET PATH: /assets/borders/ornate/{world}_base.png
 
    WORLDS (6 total, no Mythic):
    - modern_base.png      → Modern
@@ -5870,9 +5819,9 @@ textarea.fate-field {
    Applied via CSS filters on the image element.
 
    FAILURE: If asset unavailable, border is suppressed entirely.
-   Log: "Erotic border asset unavailable — border suppressed"
+   Log: "Ornate border asset unavailable — border suppressed"
    ═══════════════════════════════════════════════════════════════════════════ */
-.cover-erotic-border {
+.cover-ornate-border {
     position: absolute;
     inset: 0;
     z-index: 12;
@@ -5881,10 +5830,10 @@ textarea.fate-field {
     overflow: hidden;
     backface-visibility: hidden;
 }
-.cover-erotic-border.hidden { display: none; }
+.cover-ornate-border.hidden { display: none; }
 
 /* Border image fills frame absolutely */
-.cover-erotic-border .erotic-border-img {
+.cover-ornate-border .ornate-border-img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -5894,7 +5843,7 @@ textarea.fate-field {
 }
 
 /* Inner vignette shadow to frame the base image */
-.cover-erotic-border::after {
+.cover-ornate-border::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -5906,7 +5855,7 @@ textarea.fate-field {
 }
 
 /* Subtle outer glow */
-.cover-erotic-border::before {
+.cover-ornate-border::before {
     content: '';
     position: absolute;
     inset: -2px;
@@ -5919,47 +5868,47 @@ textarea.fate-field {
    WORLD-SPECIFIC TINTS — Applied to container, affects vignette/glow
    Border geometry is defined by the asset, not CSS.
    ═══════════════════════════════════════════════════════════════════════════ */
-.cover-erotic-border.world-fantasy::before {
+.cover-ornate-border.world-fantasy::before {
     box-shadow: 0 0 14px rgba(212, 175, 55, 0.2);
 }
-.cover-erotic-border.world-scifi::before {
+.cover-ornate-border.world-scifi::before {
     box-shadow: 0 0 14px rgba(64, 224, 208, 0.15);
 }
-.cover-erotic-border.world-scifi::after {
+.cover-ornate-border.world-scifi::after {
     box-shadow:
         inset 0 0 45px rgba(0, 10, 20, 0.6),
         inset 0 0 80px rgba(0, 5, 10, 0.25);
 }
-.cover-erotic-border.world-historical::before {
+.cover-ornate-border.world-historical::before {
     box-shadow: 0 0 10px rgba(180, 150, 100, 0.15);
 }
-.cover-erotic-border.world-historical::after {
+.cover-ornate-border.world-historical::after {
     box-shadow:
         inset 0 0 50px rgba(20, 15, 5, 0.55),
         inset 0 0 90px rgba(0, 0, 0, 0.2);
 }
-.cover-erotic-border.world-postapocalyptic::before {
+.cover-ornate-border.world-postapocalyptic::before {
     box-shadow: 0 0 8px rgba(140, 100, 60, 0.12);
 }
-.cover-erotic-border.world-postapocalyptic::after {
+.cover-ornate-border.world-postapocalyptic::after {
     box-shadow:
         inset 0 0 55px rgba(30, 20, 10, 0.65),
         inset 0 0 100px rgba(0, 0, 0, 0.3);
 }
-.cover-erotic-border.world-dystopia::before {
+.cover-ornate-border.world-dystopia::before {
     box-shadow: 0 0 10px rgba(100, 100, 100, 0.1);
 }
-.cover-erotic-border.world-dystopia::after {
+.cover-ornate-border.world-dystopia::after {
     box-shadow:
         inset 0 0 50px rgba(10, 10, 10, 0.6),
         inset 0 0 85px rgba(0, 0, 0, 0.25);
 }
 
 /* Soulmates modifier: warmer glow, richer vignette */
-.cover-erotic-border.soulmates::before {
+.cover-ornate-border.soulmates::before {
     box-shadow: 0 0 18px rgba(218, 165, 32, 0.25);
 }
-.cover-erotic-border.soulmates::after {
+.cover-ornate-border.soulmates::after {
     box-shadow:
         inset 0 0 35px rgba(0, 0, 0, 0.4),
         inset 0 0 70px rgba(0, 0, 0, 0.15),
@@ -5979,32 +5928,32 @@ textarea.fate-field {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* AGED: Sepia warmth, slight desaturation, reduced contrast */
-.cover-erotic-border.flavor-aged .erotic-border-img {
+.cover-ornate-border.flavor-aged .ornate-border-img {
     filter: sepia(0.15) saturate(0.85) contrast(0.95) brightness(0.97);
 }
 
 /* WEATHERED: More pronounced aging, cool desaturation */
-.cover-erotic-border.flavor-weathered .erotic-border-img {
+.cover-ornate-border.flavor-weathered .ornate-border-img {
     filter: sepia(0.08) saturate(0.7) contrast(0.9) brightness(0.92);
 }
 
 /* CORRODED: Green-blue tint (verdigris), reduced saturation */
-.cover-erotic-border.flavor-corroded .erotic-border-img {
+.cover-ornate-border.flavor-corroded .ornate-border-img {
     filter: sepia(0.05) hue-rotate(15deg) saturate(0.75) contrast(0.88) brightness(0.9);
 }
 
 /* RUSTED: Warm reddish-brown shift, gritty */
-.cover-erotic-border.flavor-rusted .erotic-border-img {
+.cover-ornate-border.flavor-rusted .ornate-border-img {
     filter: sepia(0.25) hue-rotate(-5deg) saturate(0.8) contrast(0.92) brightness(0.88);
 }
 
 /* TARNISHED: Silver/gold darkening, low saturation */
-.cover-erotic-border.flavor-tarnished .erotic-border-img {
+.cover-ornate-border.flavor-tarnished .ornate-border-img {
     filter: saturate(0.6) contrast(0.85) brightness(0.85);
 }
 
 /* PRISTINE: Slightly enhanced, no damage (default, no class needed) */
-.cover-erotic-border.flavor-pristine .erotic-border-img {
+.cover-ornate-border.flavor-pristine .ornate-border-img {
     filter: saturate(1.05) contrast(1.02) brightness(1.02);
 }
 
@@ -8162,11 +8111,14 @@ textarea.fate-field {
     z-index: auto;
 }
 
-/* Mode cards: back face has no stacking context (no z-index/transform),
-   so z-index:-1 would escape upward. Override to 0 — no text to protect. */
-.mode-card .card-gleam-layer,
+/* Mode cards: suppress gleam z-index overrides — any z-index on children
+   of faces breaks backface-visibility:hidden in some browsers by creating
+   a stacking context that defeats the 3D transform hiding. */
 .mode-card .card-gleam-clip {
-    z-index: 0;
+    z-index: auto;
+}
+.mode-card .card-gleam-clip > .card-gleam-layer {
+    z-index: auto;
 }
 
 /* Suppress gleam on breadcrumbs (too small) and transient flying cards */
@@ -11114,49 +11066,38 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 
 /* Card Dissipation Animation */
 .sb-card.dissipating {
-    animation: cardDissipate 0.8s ease-out forwards;
+    animation: cardDissipate 1.2s ease-out forwards;
     pointer-events: none;
 }
 
 @keyframes cardDissipate {
-    0% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-        filter: blur(0);
-    }
-    50% {
-        opacity: 0.6;
-        transform: scale(0.9) translateY(-10px);
-        filter: blur(2px);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(0.5) translateY(-30px);
-        filter: blur(8px);
-    }
+    0%   { opacity: 1; transform: scale(1); filter: blur(0); }
+    35%  { opacity: 0; transform: scale(1); filter: blur(2px); }
+    100% { opacity: 0; transform: scale(1); filter: blur(2px); }
 }
 
-/* Sparkle burst on dissipation */
+/* Sparkle burst on dissipation — gather then scatter */
 .dissipate-sparkle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+    position: fixed;
+    width: var(--sparkle-size, 5px);
+    height: var(--sparkle-size, 5px);
+    background: radial-gradient(circle, rgba(255, 248, 220, 0.95) 0%, var(--gold) 50%, transparent 80%);
     border-radius: 50%;
     pointer-events: none;
-    animation: sparkleFloat 1s ease-out forwards;
     z-index: 1000;
+    animation: sparkleGatherScatter var(--scatter-duration, 1.2s) ease-out forwards;
 }
 
-@keyframes sparkleFloat {
-    0% {
-        opacity: 1;
-        transform: translate(0, 0) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(var(--sparkle-dx, 50px), var(--sparkle-dy, -80px)) scale(0.3);
-    }
+@keyframes sparkleGatherScatter {
+    0%   { opacity: 0; transform: translate(0, 0) scale(0.3); }
+    25%  { opacity: 1; transform: translate(0, 0) scale(1.2); }
+    40%  { opacity: 1; transform: translate(
+             calc(var(--sparkle-dx) * 0.1 + var(--sparkle-curve-x, 5px)),
+             calc(var(--sparkle-dy) * 0.1 + var(--sparkle-curve-y, 5px))) scale(1); }
+    70%  { opacity: 0.7; transform: translate(
+             calc(var(--sparkle-dx) * 0.6 - var(--sparkle-curve-x, 5px) * 0.5),
+             calc(var(--sparkle-dy) * 0.6 - var(--sparkle-curve-y, 5px) * 0.5)) scale(0.7); }
+    100% { opacity: 0; transform: translate(var(--sparkle-dx), var(--sparkle-dy)) scale(0.2); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -11233,9 +11174,23 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
         opacity: 1;
         transform: translate(0, 0) scale(1);
     }
-    30% {
+    20% {
         opacity: 1;
-        transform: translate(var(--arc-x, 0), var(--arc-y, -50px)) scale(1.3);
+        transform: translate(
+            calc(var(--arc-x, 0) * 0.5 + var(--travel-curve-x, 8px)),
+            calc(var(--arc-y, -50px) * 0.5 + var(--travel-curve-y, 8px))) scale(1.2);
+    }
+    45% {
+        opacity: 1;
+        transform: translate(
+            calc(var(--arc-x, 0) - var(--travel-curve-x, 8px) * 0.6),
+            calc(var(--arc-y, -50px) - var(--travel-curve-y, 8px) * 0.6)) scale(1.3);
+    }
+    70% {
+        opacity: 0.9;
+        transform: translate(
+            calc(var(--target-x, 0) * 0.7 + var(--travel-curve-x, 8px) * 0.3),
+            calc(var(--target-y, 0) * 0.7 + var(--travel-curve-y, 8px) * 0.3)) scale(0.9);
     }
     100% {
         opacity: 0.8;
@@ -11577,7 +11532,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     animation: authorship-sparkle-drift var(--sparkle-duration, 4s) linear forwards;
 }
 
-/* Continuous drift animation — no scale changes, smooth linear motion */
+/* Continuous drift animation — sinusoidal curved firefly paths */
 @keyframes authorship-sparkle-drift {
     0% {
         opacity: 0;
@@ -11585,16 +11540,31 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     }
     10% {
         opacity: var(--sparkle-opacity, 0.5);
+        transform: translate(
+            calc(var(--sparkle-drift-x, 10px) * 0.1 + var(--sparkle-curve-x, 5px)),
+            calc(var(--sparkle-drift-y, 10px) * 0.1 + var(--sparkle-curve-y, 5px)));
+    }
+    35% {
+        opacity: var(--sparkle-opacity, 0.5);
+        transform: translate(
+            calc(var(--sparkle-drift-x, 10px) * 0.35 - var(--sparkle-curve-x, 5px)),
+            calc(var(--sparkle-drift-y, 10px) * 0.35 - var(--sparkle-curve-y, 5px)));
+    }
+    65% {
+        opacity: var(--sparkle-opacity, 0.5);
+        transform: translate(
+            calc(var(--sparkle-drift-x, 10px) * 0.65 + var(--sparkle-curve-x, 5px) * 0.7),
+            calc(var(--sparkle-drift-y, 10px) * 0.65 + var(--sparkle-curve-y, 5px) * 0.7));
     }
     90% {
         opacity: var(--sparkle-opacity, 0.5);
+        transform: translate(
+            calc(var(--sparkle-drift-x, 10px) * 0.9 - var(--sparkle-curve-x, 5px) * 0.3),
+            calc(var(--sparkle-drift-y, 10px) * 0.9 - var(--sparkle-curve-y, 5px) * 0.3));
     }
     100% {
         opacity: 0;
-        transform: translate(
-            var(--sparkle-drift-x, 10px),
-            var(--sparkle-drift-y, 10px)
-        );
+        transform: translate(var(--sparkle-drift-x, 10px), var(--sparkle-drift-y, 10px));
     }
 }
 
@@ -11716,7 +11686,29 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 /* =================================
-   TASK F: Submit Turn Feedback
+   Submit Button — Ornate plaque PNG
+   ================================= */
+#submitBtn {
+    background: url('/assets/ui/Black-Gold-400x112.png') center/100% 100% no-repeat, #0a0a0a;
+    border: none;
+    box-shadow: none;
+    color: #d4a843;
+    -webkit-text-fill-color: #d4a843;
+    text-shadow:
+        0 0 2px rgba(252, 246, 186, 0.3),
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 -1px 0 rgba(252, 246, 186, 0.12),
+        0 0 6px rgba(191, 149, 63, 0.15);
+    font-weight: 600;
+    padding: 14px 44px;
+    cursor: pointer;
+}
+#submitBtn:hover {
+    filter: brightness(1.15);
+}
+
+/* =================================
+   Submit Turn Feedback
    Immediate visual feedback on click
    ================================= */
 #submitBtn.submitting {

@@ -18,7 +18,7 @@
  *   - Monetization gate enforcement
  *   - Integration of all outputs
  *
- * Grok (ESD AUTHOR — Erotic/Dirty ONLY):
+ * Grok (SD AUTHOR — Steamy/Passionate ONLY):
  *   - Anatomical explicitness
  *   - Sensory vividness
  *   - Physical embodiment
@@ -36,18 +36,18 @@
  * 1. ChatGPT — Author Pass (ALWAYS RUNS)
  *    - Plot beats, character psychology, dialogue intent
  *    - Determines if intimacy occurs
- *    - For Erotic/Dirty: generates [CONSTRAINTS] for Grok
+ *    - For Steamy/Passionate: generates [CONSTRAINTS] for Grok
  *    - For Clean/Naughty: generates complete output
  *    - ON FAILURE: Gemini fallback (one attempt, no retries)
  *
- * 1B. Grok — ESD Authoring (Erotic/Dirty ONLY, CONDITIONAL)
- *    - Authors the Erotic Scene Directive
+ * 1B. Grok — SD Authoring (Steamy/Passionate ONLY, CONDITIONAL)
+ *    - Authors the Scene Directive
  *    - Receives constraints from ChatGPT
  *    - ON FAILURE: fateStumbled, continue with ChatGPT integration
  *
  * 2. Specialist Renderer (OPTIONAL)
- *    - Called only if ESD allows and entitlement permits
- *    - Renders embodied prose within ESD bounds
+ *    - Called only if SD allows and entitlement permits
+ *    - Renders embodied prose within SD bounds
  *
  * 3. ChatGPT — Integration Pass (ALWAYS RUNS)
  *    - Absorbs rendered scene (if any)
@@ -74,26 +74,26 @@
     // Default models
     PRIMARY_AUTHOR_MODEL: 'gpt-4o-mini',           // ChatGPT: Plot, psychology, consent, limits, consequences
     FALLBACK_AUTHOR_MODEL: 'gemini-2.0-flash',     // Gemini: Fallback if ChatGPT fails (conservative)
-    ESD_AUTHOR_MODEL: 'grok-4-fast-reasoning',     // Grok: ESD authoring for Erotic/Dirty ONLY (PRIMARY)
-    ESD_FALLBACK_MODEL: 'mistral-medium-latest',   // Mistral: ESD fallback if Grok fails (FALLBACK ONLY)
+    SD_AUTHOR_MODEL: 'grok-4-fast-reasoning',     // Grok: SD authoring for Steamy/Passionate ONLY (PRIMARY)
+    SD_FALLBACK_MODEL: 'mistral-medium-latest',   // Mistral: SD fallback if Grok fails (FALLBACK ONLY)
     RENDERER_MODEL: 'grok-4-fast-non-reasoning',   // Grok: Visual bible, visualization prompts ONLY
-    SEX_RENDERER_MODEL: 'grok-4-fast-reasoning',   // Grok: Explicit scenes (ESD-gated, entitlement-checked)
+    SCENE_RENDERER_MODEL: 'grok-4-fast-reasoning',   // Grok: Intense scenes (SD-gated, entitlement-checked)
     FATE_STRUCTURAL_MODEL: 'gpt-4o-mini',
     FATE_ELEVATION_MODEL: 'gpt-4o-mini',
 
     // Model allowlists (must match server-side)
     ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4'],
     ALLOWED_FALLBACK_MODELS: ['gemini-2.0-flash', 'gemini-1.5-flash'],
-    ALLOWED_ESD_AUTHOR_MODELS: ['grok-4-fast-reasoning'],
-    ALLOWED_ESD_FALLBACK_MODELS: ['mistral-medium-latest', 'mistral-large-latest'],
+    ALLOWED_SD_AUTHOR_MODELS: ['grok-4-fast-reasoning'],
+    ALLOWED_SD_FALLBACK_MODELS: ['mistral-medium-latest', 'mistral-large-latest'],
     ALLOWED_RENDERER_MODELS: ['grok-4-fast-non-reasoning'],
-    ALLOWED_SEX_RENDERER_MODELS: ['grok-4-fast-reasoning'],
+    ALLOWED_SCENE_RENDERER_MODELS: ['grok-4-fast-reasoning'],
 
     // Feature flags
     ENABLE_SPECIALIST_RENDERER: true,
     ENABLE_FATE_ELEVATION: true,
-    ENABLE_GROK_ESD_AUTHORING: true,   // Grok authors ESD for Erotic/Dirty
-    ENABLE_MISTRAL_ESD_FALLBACK: true, // Mistral fallback if Grok fails (Erotic/Dirty ONLY)
+    ENABLE_GROK_SD_AUTHORING: true,   // Grok authors SD for Steamy/Passionate
+    ENABLE_MISTRAL_SD: true, // Mistral fallback if Grok fails (Steamy/Passionate ONLY)
 
     // Timeouts
     API_TIMEOUT_MS: 60000
@@ -111,21 +111,21 @@
   const MONETIZATION_GATES = {
     free: {
       name: 'Tease',
-      allowedEroticism: ['Clean', 'Naughty'],
+      allowedIntensity: ['Clean', 'Naughty'],
       completionAllowed: false,
       cliffhangerRequired: true,
       maxStoryLength: 'tease'
     },
     pass: {
       name: '$3 Story Pass',
-      allowedEroticism: ['Clean', 'Naughty', 'Erotic'],
+      allowedIntensity: ['Clean', 'Naughty', 'Steamy'],
       completionAllowed: true,
       cliffhangerRequired: false,
       maxStoryLength: 'fling'
     },
     sub: {
       name: '$6 Subscription',
-      allowedEroticism: ['Clean', 'Naughty', 'Erotic', 'Dirty'],
+      allowedIntensity: ['Clean', 'Naughty', 'Steamy', 'Passionate'],
       completionAllowed: true,
       cliffhangerRequired: false,
       maxStoryLength: 'soulmates'
@@ -278,10 +278,10 @@
     }
 
     // --- sustainsHighIntensity ---
-    // Inferred from maintaining Erotic/Dirty for consecutive turns
+    // Inferred from maintaining Steamy/Passionate for consecutive turns
     const recentIntensity = data.intensityHistory.slice(-T.INTENSITY_SUSTAIN_TURNS);
     if (recentIntensity.length >= T.INTENSITY_SUSTAIN_TURNS) {
-      const allHigh = recentIntensity.every(i => ['Erotic', 'Dirty'].includes(i));
+      const allHigh = recentIntensity.every(i => ['Steamy', 'Passionate'].includes(i));
       if (allHigh) {
         summary.sustainsHighIntensity = true;
       }
@@ -384,12 +384,12 @@
       rendererCalled: false,
       rendererFailed: false,
       fateStumbled: false,
-      forcedInterruption: false,   // True if Erotic/Dirty scene was cut away due to renderer failure
+      forcedInterruption: false,   // True if Steamy/Passionate scene was cut away due to renderer failure
       usedFallbackAuthor: false,   // True if Gemini was used instead of ChatGPT
-      esdAuthoredByGrok: false,    // True if Grok authored the ESD
-      esdAuthoredByMistral: false, // True if Mistral authored the ESD (Grok fallback)
-      grokFailed: false,           // True if Grok ESD authoring failed
-      mistralFailed: false,        // True if Mistral ESD fallback also failed
+      esdAuthoredByGrok: false,    // True if Grok authored the SD
+      esdAuthoredByMistral: false, // True if Mistral authored the SD (Grok fallback)
+      grokFailed: false,           // True if Grok SD authoring failed
+      mistralFailed: false,        // True if Mistral SD fallback also failed
       errors: [],
       timing: {
         startTime: Date.now(),
@@ -409,23 +409,23 @@
    * Enforce monetization gates BEFORE any renderer call.
    * Returns the constraints that must be applied.
    */
-  function enforceMonetizationGates(accessTier, requestedEroticism) {
+  function enforceMonetizationGates(accessTier, requestedIntensity) {
     const gate = MONETIZATION_GATES[accessTier];
     if (!gate) {
       console.warn(`[ORCHESTRATION] Unknown access tier: ${accessTier}, defaulting to 'free'`);
-      return enforceMonetizationGates('free', requestedEroticism);
+      return enforceMonetizationGates('free', requestedIntensity);
     }
 
-    // Determine effective eroticism level
-    let effectiveEroticism = requestedEroticism;
-    if (!gate.allowedEroticism.includes(requestedEroticism)) {
+    // Determine effective intensity level
+    let effectiveIntensity = requestedIntensity;
+    if (!gate.allowedIntensity.includes(requestedIntensity)) {
       // Downgrade to highest allowed level
-      const eroticismOrder = ['Clean', 'Naughty', 'Erotic', 'Dirty'];
-      const requestedIndex = eroticismOrder.indexOf(requestedEroticism);
+      const intensityOrder = ['Clean', 'Naughty', 'Steamy', 'Passionate'];
+      const requestedIndex = intensityOrder.indexOf(requestedIntensity);
 
       for (let i = requestedIndex; i >= 0; i--) {
-        if (gate.allowedEroticism.includes(eroticismOrder[i])) {
-          effectiveEroticism = eroticismOrder[i];
+        if (gate.allowedIntensity.includes(intensityOrder[i])) {
+          effectiveIntensity = intensityOrder[i];
           break;
         }
       }
@@ -434,9 +434,9 @@
     return {
       accessTier,
       gateName: gate.name,
-      requestedEroticism,
-      effectiveEroticism,
-      wasDowngraded: effectiveEroticism !== requestedEroticism,
+      requestedIntensity,
+      effectiveIntensity,
+      wasDowngraded: effectiveIntensity !== requestedIntensity,
       completionAllowed: gate.completionAllowed,
       cliffhangerRequired: gate.cliffhangerRequired,
       maxStoryLength: gate.maxStoryLength
@@ -444,17 +444,17 @@
   }
 
   // ===========================================================================
-  // ESD VALIDATION
+  // SD VALIDATION
   // ===========================================================================
 
   /**
-   * Validate an Erotic Scene Directive before sending to specialist renderer.
+   * Validate an Scene Directive before sending to specialist renderer.
    */
-  function validateESD(esd) {
-    if (!esd) return { valid: false, errors: ['ESD is null'] };
+  function validateSD(esd) {
+    if (!esd) return { valid: false, errors: ['SD is null'] };
 
     const errors = [];
-    const required = ['eroticismLevel', 'completionAllowed', 'hardStops'];
+    const required = ['intensityLevel', 'completionAllowed', 'hardStops'];
 
     for (const field of required) {
       if (!(field in esd)) {
@@ -462,8 +462,8 @@
       }
     }
 
-    if (esd.eroticismLevel && !['Clean', 'Naughty', 'Erotic', 'Dirty'].includes(esd.eroticismLevel)) {
-      errors.push(`Invalid eroticism level: ${esd.eroticismLevel}`);
+    if (esd.intensityLevel && !['Clean', 'Naughty', 'Steamy', 'Passionate'].includes(esd.intensityLevel)) {
+      errors.push(`Invalid intensity level: ${esd.intensityLevel}`);
     }
 
     return { valid: errors.length === 0, errors };
@@ -476,7 +476,7 @@
   /**
    * Call ChatGPT (primary author).
    * ChatGPT is the ONLY model allowed to author plot, decide outcomes,
-   * and generate ESDs.
+   * and generate SDs.
    */
   async function callChatGPT(messages, role = 'PRIMARY_AUTHOR', options = {}) {
     const payload = {
@@ -577,41 +577,41 @@
   }
 
   /**
-   * Call Sex Renderer (Grok grok-4-fast-reasoning).
+   * Call Scene Renderer (Grok grok-4-fast-reasoning).
    * ONLY called when:
-   * 1. ESD is present AND valid
-   * 2. ESD.eroticismLevel >= 'Erotic'
+   * 1. SD is present AND valid
+   * 2. SD.intensityLevel >= 'Steamy'
    * 3. User's entitlement allows it
    *
-   * HARD GUARD: This function MUST NOT be called without ESD evaluation.
+   * HARD GUARD: This function MUST NOT be called without SD evaluation.
    */
-  async function callSexRenderer(messages, esd, accessTier, options = {}) {
-    // GUARD: ESD must be present
+  async function callSceneRenderer(messages, esd, accessTier, options = {}) {
+    // GUARD: SD must be present
     if (!esd) {
-      throw new Error('[SEX_RENDERER BLOCKED] No ESD provided. Renderer cannot be called without ESD evaluation.');
+      throw new Error('[SCENE_RENDERER BLOCKED] No SD provided. Renderer cannot be called without SD evaluation.');
     }
 
-    // GUARD: ESD must have valid eroticism level
-    const eroticismLevel = esd.eroticismLevel || 'Clean';
-    if (!['Erotic', 'Dirty'].includes(eroticismLevel)) {
-      throw new Error(`[SEX_RENDERER BLOCKED] ESD eroticism level "${eroticismLevel}" does not require sex renderer.`);
+    // GUARD: SD must have valid intensity level
+    const intensityLevel = esd.intensityLevel || 'Clean';
+    if (!['Steamy', 'Passionate'].includes(intensityLevel)) {
+      throw new Error(`[SCENE_RENDERER BLOCKED] SD intensity level "${intensityLevel}" does not require scene renderer.`);
     }
 
     // GUARD: Check user entitlement
     const gate = MONETIZATION_GATES[accessTier] || MONETIZATION_GATES.free;
-    if (!gate.allowedEroticism.includes(eroticismLevel)) {
-      throw new Error(`[SEX_RENDERER BLOCKED] User tier "${accessTier}" not entitled to "${eroticismLevel}" content.`);
+    if (!gate.allowedIntensity.includes(intensityLevel)) {
+      throw new Error(`[SCENE_RENDERER BLOCKED] User tier "${accessTier}" not entitled to "${intensityLevel}" content.`);
     }
 
-    console.log(`[SEX_RENDERER] ESD validated. Level: ${eroticismLevel}, Tier: ${accessTier}`);
+    console.log(`[SCENE_RENDERER] SD validated. Level: ${intensityLevel}, Tier: ${accessTier}`);
 
     const payload = {
       messages,
-      role: 'SEX_RENDERER',
-      model: CONFIG.SEX_RENDERER_MODEL,
+      role: 'SCENE_RENDERER',
+      model: CONFIG.SCENE_RENDERER_MODEL,
       temperature: options.temperature || 0.8,
       max_tokens: options.max_tokens || 1000,
-      esd: esd  // Pass ESD for server-side validation
+      esd: esd  // Pass SD for server-side validation
     };
 
     const controller = new AbortController();
@@ -629,13 +629,13 @@
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => '(could not read response body)');
-        throw new Error(`Sex Renderer API Error: ${res.status} - ${errorText}`);
+        throw new Error(`Scene Renderer API Error: ${res.status} - ${errorText}`);
       }
 
       const data = await res.json();
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('Sex Renderer returned malformed response');
+        throw new Error('Scene Renderer returned malformed response');
       }
 
       return data.choices[0].message.content;
@@ -643,16 +643,16 @@
     } catch (err) {
       clearTimeout(timeoutId);
       if (err.name === 'AbortError') {
-        throw new Error('Sex Renderer request timed out');
+        throw new Error('Scene Renderer request timed out');
       }
       throw err;
     }
   }
 
-  // Legacy alias for backward compatibility (routes to callSexRenderer with guards)
+  // Legacy alias for backward compatibility (routes to callSceneRenderer with guards)
   async function callSpecialistRenderer(messages, esd, options = {}) {
     const accessTier = options.accessTier || 'free';
-    return callSexRenderer(messages, esd, accessTier, options);
+    return callSceneRenderer(messages, esd, accessTier, options);
   }
 
   /**
@@ -713,16 +713,16 @@
   }
 
   /**
-   * Call Grok as ESD Author (for Erotic/Dirty intensity ONLY).
+   * Call Grok as SD Author (for Steamy/Passionate intensity ONLY).
    * Grok authors: anatomical explicitness, sensory vividness, physical embodiment.
    * ChatGPT retains: permission, limits, consequences, integration.
    *
    * FAILURE HANDLING: If Grok fails, set fateStumbled and continue with ChatGPT.
    */
-  async function callGrokESDAuthor(constraints, gateEnforcement, options = {}) {
-    console.log(`[GROK ESD] Authoring ESD for ${gateEnforcement.effectiveEroticism} intensity`);
+  async function callGrokSDAuthor(constraints, gateEnforcement, options = {}) {
+    console.log(`[GROK SD] Authoring SD for ${gateEnforcement.effectiveIntensity} intensity`);
 
-    const esdPrompt = `You are the ESD AUTHOR for Storybound intimate scenes.
+    const esdPrompt = `You are the SD AUTHOR for Storybound intimate scenes.
 
 YOUR EXCLUSIVE DOMAIN:
 - Anatomical explicitness and physical detail
@@ -737,7 +737,7 @@ YOU DO NOT DECIDE:
 - Plot progression
 
 CONSTRAINTS FROM PRIMARY AUTHOR (NON-NEGOTIABLE):
-- Eroticism Level: ${gateEnforcement.effectiveEroticism}
+- Intensity Level: ${gateEnforcement.effectiveIntensity}
 - Completion Allowed: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Emotional Core: ${constraints.emotionalCore || 'connection and desire'}
 - Physical Bounds: ${constraints.physicalBounds || 'as established by story'}
@@ -748,26 +748,26 @@ CRITICAL: Completion is FORBIDDEN by monetization tier.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
 
-Generate an Erotic Scene Directive in this format:
-[ESD]
-eroticismLevel: ${gateEnforcement.effectiveEroticism}
+Generate an Scene Directive in this format:
+[SD]
+intensityLevel: ${gateEnforcement.effectiveIntensity}
 completionAllowed: ${gateEnforcement.completionAllowed}
 emotionalCore: <the feeling being rendered>
 physicalBounds: <explicit physical actions allowed/forbidden>
 sensoryFocus: <primary sensations to emphasize>
 rhythm: <pacing - slow/building/urgent/suspended>
 hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowed ? ', monetization_gate_completion_forbidden' : ''}
-[/ESD]`;
+[/SD]`;
 
     const messages = [
       { role: 'system', content: esdPrompt },
-      { role: 'user', content: `Generate the ESD for this intimate moment.\n\nContext from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` }
+      { role: 'user', content: `Generate the SD for this intimate moment.\n\nContext from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` }
     ];
 
     const payload = {
       messages,
-      role: 'ESD_AUTHOR',
-      model: CONFIG.ESD_AUTHOR_MODEL,
+      role: 'SD_AUTHOR',
+      model: CONFIG.SD_AUTHOR_MODEL,
       temperature: options.temperature || 0.7,
       max_tokens: options.max_tokens || 500
     };
@@ -787,29 +787,29 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => '(could not read response body)');
-        throw new Error(`Grok ESD Author API Error: ${res.status} - ${errorText}`);
+        throw new Error(`Grok SD Author API Error: ${res.status} - ${errorText}`);
       }
 
       const data = await res.json();
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('Grok ESD Author returned malformed response');
+        throw new Error('Grok SD Author returned malformed response');
       }
 
-      console.log('[GROK ESD] ESD authored successfully');
+      console.log('[GROK SD] SD authored successfully');
       return data.choices[0].message.content;
 
     } catch (err) {
       clearTimeout(timeoutId);
       if (err.name === 'AbortError') {
-        throw new Error('Grok ESD Author request timed out');
+        throw new Error('Grok SD Author request timed out');
       }
       throw err;
     }
   }
 
   /**
-   * Call Mistral as ESD FALLBACK AUTHOR (for Erotic/Dirty intensity ONLY).
+   * Call Mistral as SD FALLBACK AUTHOR (for Steamy/Passionate intensity ONLY).
    * Called ONLY when Grok fails or is neutered.
    *
    * Mistral authors: anatomical explicitness, sensory vividness, physical embodiment.
@@ -818,11 +818,11 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
    * FAILURE HANDLING: If Mistral fails, return null and trigger forced interruption.
    * NO RETRIES. ONE ATTEMPT ONLY.
    */
-  async function callMistralESDFallback(constraints, gateEnforcement, options = {}) {
-    console.log(`[MISTRAL ESD FALLBACK] Grok failed, attempting Mistral fallback for ${gateEnforcement.effectiveEroticism}`);
+  async function callMistralSDFallback(constraints, gateEnforcement, options = {}) {
+    console.log(`[MISTRAL SD FALLBACK] Grok failed, attempting Mistral fallback for ${gateEnforcement.effectiveIntensity}`);
 
-    const esdPrompt = `You are the FALLBACK ESD AUTHOR for Storybound intimate scenes.
-The primary author failed. You must generate the Erotic Scene Directive.
+    const esdPrompt = `You are the FALLBACK SD AUTHOR for Storybound intimate scenes.
+The primary author failed. You must generate the Scene Directive.
 
 YOUR EXCLUSIVE DOMAIN:
 - Anatomical explicitness and physical detail
@@ -837,7 +837,7 @@ YOU DO NOT DECIDE:
 - Plot progression
 
 CONSTRAINTS (NON-NEGOTIABLE):
-- Eroticism Level: ${gateEnforcement.effectiveEroticism}
+- Intensity Level: ${gateEnforcement.effectiveIntensity}
 - Completion Allowed: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Emotional Core: ${constraints.emotionalCore || 'connection and desire'}
 - Physical Bounds: ${constraints.physicalBounds || 'as established by story'}
@@ -848,26 +848,26 @@ CRITICAL: Completion is FORBIDDEN by monetization tier.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
 
-Generate an Erotic Scene Directive in this format:
-[ESD]
-eroticismLevel: ${gateEnforcement.effectiveEroticism}
+Generate an Scene Directive in this format:
+[SD]
+intensityLevel: ${gateEnforcement.effectiveIntensity}
 completionAllowed: ${gateEnforcement.completionAllowed}
 emotionalCore: <the feeling being rendered>
 physicalBounds: <explicit physical actions allowed/forbidden>
 sensoryFocus: <primary sensations to emphasize>
 rhythm: <pacing - slow/building/urgent/suspended>
 hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowed ? ', monetization_gate_completion_forbidden' : ''}
-[/ESD]`;
+[/SD]`;
 
     const messages = [
       { role: 'system', content: esdPrompt },
-      { role: 'user', content: `Generate the ESD for this intimate moment.\n\nContext from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` }
+      { role: 'user', content: `Generate the SD for this intimate moment.\n\nContext from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` }
     ];
 
     const payload = {
       messages,
-      role: 'ESD_FALLBACK',
-      model: CONFIG.ESD_FALLBACK_MODEL,
+      role: 'SD_FALLBACK',
+      model: CONFIG.SD_FALLBACK_MODEL,
       temperature: options.temperature || 0.7,
       max_tokens: options.max_tokens || 500
     };
@@ -887,22 +887,22 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => '(could not read response body)');
-        throw new Error(`Mistral ESD Fallback API Error: ${res.status} - ${errorText}`);
+        throw new Error(`Mistral SD Fallback API Error: ${res.status} - ${errorText}`);
       }
 
       const data = await res.json();
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('Mistral ESD Fallback returned malformed response');
+        throw new Error('Mistral SD Fallback returned malformed response');
       }
 
-      console.log('[MISTRAL ESD FALLBACK] ESD authored successfully');
+      console.log('[MISTRAL SD FALLBACK] SD authored successfully');
       return data.choices[0].message.content;
 
     } catch (err) {
       clearTimeout(timeoutId);
       if (err.name === 'AbortError') {
-        throw new Error('Mistral ESD Fallback request timed out');
+        throw new Error('Mistral SD Fallback request timed out');
       }
       throw err;
     }
@@ -924,7 +924,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
    *
    * @param {Object} params
    * @param {string} params.accessTier - User's monetization tier (free|pass|sub)
-   * @param {string} params.requestedEroticism - Requested intensity level
+   * @param {string} params.requestedIntensity - Requested intensity level
    * @param {string} params.storyContext - Recent story context
    * @param {string} params.playerAction - Player's action input
    * @param {string} params.playerDialogue - Player's dialogue input
@@ -935,7 +935,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
   async function orchestrateStoryGeneration(params) {
     const {
       accessTier,
-      requestedEroticism,
+      requestedIntensity,
       storyContext,
       playerAction,
       playerDialogue,
@@ -949,10 +949,10 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
     // =========================================================================
     // PRE-FLIGHT: Enforce Monetization Gates
     // =========================================================================
-    state.gateEnforcement = enforceMonetizationGates(accessTier, requestedEroticism);
+    state.gateEnforcement = enforceMonetizationGates(accessTier, requestedIntensity);
 
     if (state.gateEnforcement.wasDowngraded) {
-      console.log(`[ORCHESTRATION] Eroticism downgraded: ${requestedEroticism} → ${state.gateEnforcement.effectiveEroticism}`);
+      console.log(`[ORCHESTRATION] Intensity downgraded: ${requestedIntensity} → ${state.gateEnforcement.effectiveIntensity}`);
     }
 
     if (onPhaseChange) {
@@ -972,7 +972,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
      * - Decide WHETHER a scene must be interrupted
      * - Enforce monetization gates (embedded in output)
      *
-     * For Erotic/Dirty: ChatGPT generates constraints, Grok authors ESD.
+     * For Steamy/Passionate: ChatGPT generates constraints, Grok authors SD.
      * For Clean/Naughty: ChatGPT handles everything.
      */
 
@@ -980,10 +980,10 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
     if (onPhaseChange) onPhaseChange('AUTHOR_PASS');
 
     const authorStartTime = Date.now();
-    const isEroticOrDirty = ['Erotic', 'Dirty'].includes(state.gateEnforcement.effectiveEroticism);
-    const useGrokForESD = isEroticOrDirty && CONFIG.ENABLE_GROK_ESD_AUTHORING;
+    const isIntenseOrPassionate = ['Steamy', 'Passionate'].includes(state.gateEnforcement.effectiveIntensity);
+    const useGrokForSD = isIntenseOrPassionate && CONFIG.ENABLE_GROK_SD_AUTHORING;
 
-    // Build system prompt - for Erotic/Dirty with Grok ESD, ChatGPT generates constraints instead of full ESD
+    // Build system prompt - for Steamy/Passionate with Grok SD, ChatGPT generates constraints instead of full SD
     const authorSystemPrompt = `${systemPrompt}
 
 === PRIMARY AUTHOR RESPONSIBILITIES ===
@@ -996,13 +996,13 @@ You are the PRIMARY AUTHOR. You have EXCLUSIVE authority over:
 
 MONETIZATION CONSTRAINTS (NON-NEGOTIABLE):
 - Access Tier: ${state.gateEnforcement.gateName}
-- Effective Eroticism Level: ${state.gateEnforcement.effectiveEroticism}
+- Effective Intensity Level: ${state.gateEnforcement.effectiveIntensity}
 - Completion Allowed: ${state.gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Cliffhanger Required: ${state.gateEnforcement.cliffhangerRequired ? 'YES' : 'NO'}
 
-${useGrokForESD ? `
+${useGrokForSD ? `
 INTIMACY SCENE PROTOCOL (SPLIT AUTHORING):
-For Erotic/Dirty content, you define CONSTRAINTS and a specialist will author the ESD.
+For Steamy/Passionate content, you define CONSTRAINTS and a specialist will author the SD.
 If this beat includes intimate content, include a [CONSTRAINTS] block:
 [CONSTRAINTS]
 intimacyOccurs: true/false
@@ -1013,17 +1013,17 @@ hardStops: <any specific limits - consent, boundaries, etc.>
 [/CONSTRAINTS]
 
 You retain authority over WHETHER intimacy occurs. The specialist only authors HOW it is rendered.
-` : isEroticOrDirty ? `
+` : isIntenseOrPassionate ? `
 INTIMACY SCENE PROTOCOL:
-If this beat includes intimate content at Erotic or Dirty level, you MUST include
-an [ESD] block in your response that specifies the constraints for embodied rendering.
+If this beat includes intimate content at Steamy or Passionate level, you MUST include
+an [SD] block in your response that specifies the constraints for embodied rendering.
 Format:
-[ESD]
-eroticismLevel: ${state.gateEnforcement.effectiveEroticism}
+[SD]
+intensityLevel: ${state.gateEnforcement.effectiveIntensity}
 completionAllowed: ${state.gateEnforcement.completionAllowed}
 emotionalCore: <the feeling to render>
 physicalBounds: <what is explicitly allowed and forbidden>
-[/ESD]
+[/SD]
 ` : ''}
 ${buildPreferenceBiasBlock()}
 Write the next story beat (150-250 words).`;
@@ -1069,10 +1069,10 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     state.usedFallbackAuthor = usedFallback;
 
     // =========================================================================
-    // PHASE 1B: Grok ESD Authoring (CONDITIONAL - Erotic/Dirty only)
+    // PHASE 1B: Grok SD Authoring (CONDITIONAL - Steamy/Passionate only)
     // With Mistral fallback if Grok fails
     // =========================================================================
-    if (useGrokForESD && !usedFallback) {
+    if (useGrokForSD && !usedFallback) {
       // Parse constraints from ChatGPT output
       const constraintsMatch = authorOutput.match(/\[CONSTRAINTS\]([\s\S]*?)\[\/CONSTRAINTS\]/);
 
@@ -1081,76 +1081,76 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
 
         // Only call Grok if ChatGPT indicated intimacy occurs
         if (constraints.intimacyOccurs) {
-          state.phase = 'ESD_AUTHORING';
-          if (onPhaseChange) onPhaseChange('ESD_AUTHORING');
+          state.phase = 'SD_AUTHORING';
+          if (onPhaseChange) onPhaseChange('SD_AUTHORING');
 
           let esdOutput = null;
           let grokSucceeded = false;
 
-          // STEP 1: Attempt Grok (PRIMARY erotic author)
+          // STEP 1: Attempt Grok (PRIMARY specialist author)
           try {
-            const grokESDOutput = await callGrokESDAuthor(constraints, state.gateEnforcement);
+            const grokSDOutput = await callGrokSDAuthor(constraints, state.gateEnforcement);
 
-            // Extract ESD from Grok output
-            const esdMatch = grokESDOutput.match(/\[ESD\]([\s\S]*?)\[\/ESD\]/);
+            // Extract SD from Grok output
+            const esdMatch = grokSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
             if (esdMatch) {
               esdOutput = esdMatch[1];
               grokSucceeded = true;
               state.esdAuthoredByGrok = true;
-              console.log('[ORCHESTRATION] Grok authored ESD successfully');
+              console.log('[ORCHESTRATION] Grok authored SD successfully');
             } else {
-              console.warn('[ORCHESTRATION] Grok output did not contain valid ESD block (neutered?)');
+              console.warn('[ORCHESTRATION] Grok output did not contain valid SD block (neutered?)');
               state.grokFailed = true;
             }
           } catch (grokErr) {
-            console.error('[ORCHESTRATION] Grok ESD authoring failed:', grokErr);
-            state.errors.push(`Grok ESD failed: ${grokErr.message}`);
+            console.error('[ORCHESTRATION] Grok SD authoring failed:', grokErr);
+            state.errors.push(`Grok SD failed: ${grokErr.message}`);
             state.grokFailed = true;
             state.esdAuthoredByGrok = false;
           }
 
-          // STEP 2: If Grok failed, attempt Mistral ONCE (FALLBACK erotic author)
+          // STEP 2: If Grok failed, attempt Mistral ONCE (FALLBACK specialist author)
           // NO RETRIES. ONE ATTEMPT ONLY.
-          if (!grokSucceeded && CONFIG.ENABLE_MISTRAL_ESD_FALLBACK) {
+          if (!grokSucceeded && CONFIG.ENABLE_MISTRAL_SD) {
             console.log('[ORCHESTRATION] Grok failed — attempting Mistral fallback (ONE ATTEMPT)');
 
             try {
-              const mistralESDOutput = await callMistralESDFallback(constraints, state.gateEnforcement);
+              const mistralSDOutput = await callMistralSDFallback(constraints, state.gateEnforcement);
 
-              // Extract ESD from Mistral output
-              const esdMatch = mistralESDOutput.match(/\[ESD\]([\s\S]*?)\[\/ESD\]/);
+              // Extract SD from Mistral output
+              const esdMatch = mistralSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
               if (esdMatch) {
                 esdOutput = esdMatch[1];
                 state.esdAuthoredByMistral = true;
-                console.log('[ORCHESTRATION] Mistral fallback authored ESD successfully');
+                console.log('[ORCHESTRATION] Mistral fallback authored SD successfully');
               } else {
-                console.warn('[ORCHESTRATION] Mistral output did not contain valid ESD block');
+                console.warn('[ORCHESTRATION] Mistral output did not contain valid SD block');
                 state.mistralFailed = true;
               }
             } catch (mistralErr) {
-              console.error('[ORCHESTRATION] Mistral ESD fallback also failed:', mistralErr);
-              state.errors.push(`Mistral ESD fallback failed: ${mistralErr.message}`);
+              console.error('[ORCHESTRATION] Mistral SD fallback also failed:', mistralErr);
+              state.errors.push(`Mistral SD fallback failed: ${mistralErr.message}`);
               state.mistralFailed = true;
               state.esdAuthoredByMistral = false;
             }
           }
 
-          // STEP 3: Parse ESD if either author succeeded
+          // STEP 3: Parse SD if either author succeeded
           if (esdOutput) {
-            state.esd = parseESD(esdOutput, state.gateEnforcement);
+            state.esd = parseSD(esdOutput, state.gateEnforcement);
           } else {
             // BOTH Grok and Mistral failed — force interruption, do NOT downgrade
-            console.warn('[ORCHESTRATION] ALL erotic authors failed — fateStumbled, forced interruption required');
+            console.warn('[ORCHESTRATION] ALL scene authors failed — fateStumbled, forced interruption required');
             state.fateStumbled = true;
             // forcedInterruption will be set in integration pass
           }
         }
       }
-    } else if (!useGrokForESD) {
-      // Original behavior: check for ESD in ChatGPT output
-      const esdMatch = authorOutput.match(/\[ESD\]([\s\S]*?)\[\/ESD\]/);
+    } else if (!useGrokForSD) {
+      // Original behavior: check for SD in ChatGPT output
+      const esdMatch = authorOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
       if (esdMatch) {
-        state.esd = parseESD(esdMatch[1], state.gateEnforcement);
+        state.esd = parseSD(esdMatch[1], state.gateEnforcement);
       }
     }
 
@@ -1162,12 +1162,12 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     /**
      * Specialist renderer is called ONLY if:
      * - Feature flag enables it
-     * - An intimacy scene exists (ESD was generated)
-     * - Eroticism level warrants it (Erotic or Dirty)
+     * - An intimacy scene exists (SD was generated)
+     * - Intensity level warrants it (Steamy or Passionate)
      * - Monetization tier allows it
      *
      * The renderer:
-     * - Receives ONLY the ESD (no plot context)
+     * - Receives ONLY the SD (no plot context)
      * - Renders sensory embodiment within bounds
      * - NEVER decides outcomes or plot
      */
@@ -1175,7 +1175,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     const shouldCallRenderer = (
       CONFIG.ENABLE_SPECIALIST_RENDERER &&
       state.esd &&
-      ['Erotic', 'Dirty'].includes(state.esd.eroticismLevel) &&
+      ['Steamy', 'Passionate'].includes(state.esd.intensityLevel) &&
       !state.gateEnforcement.wasDowngraded
     );
 
@@ -1185,14 +1185,14 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
 
       const renderStartTime = Date.now();
 
-      // Validate ESD before sending
-      const esdValidation = validateESD(state.esd);
+      // Validate SD before sending
+      const esdValidation = validateSD(state.esd);
       if (!esdValidation.valid) {
-        console.warn('[ORCHESTRATION] Invalid ESD, skipping renderer:', esdValidation.errors);
-        state.errors.push(`Invalid ESD: ${esdValidation.errors.join('; ')}`);
+        console.warn('[ORCHESTRATION] Invalid SD, skipping renderer:', esdValidation.errors);
+        state.errors.push(`Invalid SD: ${esdValidation.errors.join('; ')}`);
       } else {
         try {
-          // Build renderer prompt from ESD only (no plot context)
+          // Build renderer prompt from SD only (no plot context)
           const rendererPrompt = buildRendererPrompt(state.esd);
 
           const messages = [
@@ -1216,9 +1216,9 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     } else {
       console.log('[ORCHESTRATION] Specialist renderer not called:',
         !CONFIG.ENABLE_SPECIALIST_RENDERER ? 'disabled' :
-        !state.esd ? 'no ESD' :
+        !state.esd ? 'no SD' :
         state.gateEnforcement.wasDowngraded ? 'tier downgrade' :
-        'eroticism level'
+        'intensity level'
       );
     }
 
@@ -1244,26 +1244,26 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       if (!state.rendererCalled || state.rendererFailed) {
         state.integrationOutput = state.authorOutput;
 
-        // Strip ESD and CONSTRAINTS blocks from output if present
+        // Strip SD and CONSTRAINTS blocks from output if present
         state.integrationOutput = state.integrationOutput
-          .replace(/\[ESD\][\s\S]*?\[\/ESD\]/g, '')
+          .replace(/\[SD\][\s\S]*?\[\/SD\]/g, '')
           .replace(/\[CONSTRAINTS\][\s\S]*?\[\/CONSTRAINTS\]/g, '')
           .trim();
 
         // =====================================================================
-        // DETERMINISTIC CUT-AWAY: Erotic/Dirty with erotic author failure
+        // DETERMINISTIC CUT-AWAY: Steamy/Passionate with specialist author failure
         // =====================================================================
-        // If intensity >= Erotic AND (renderer failed OR all erotic authors failed):
+        // If intensity >= Steamy AND (renderer failed OR all scene authors failed):
         // - Force in-story interruption (do NOT downgrade intensity)
         // - Do NOT allow ChatGPT to write softened erotic prose
         // - Do NOT retry or cascade beyond Mistral
         // =====================================================================
-        const isEroticIntensity = ['Erotic', 'Dirty'].includes(state.gateEnforcement.effectiveEroticism);
-        const allEroticAuthorsFailed = state.grokFailed && (state.mistralFailed || !CONFIG.ENABLE_MISTRAL_ESD_FALLBACK);
+        const isHighIntensity = ['Steamy', 'Passionate'].includes(state.gateEnforcement.effectiveIntensity);
+        const allSceneAuthorsFailed = state.grokFailed && (state.mistralFailed || !CONFIG.ENABLE_MISTRAL_SD);
 
-        if (isEroticIntensity && (state.rendererFailed || allEroticAuthorsFailed)) {
-          const reason = allEroticAuthorsFailed ? 'all erotic authors (Grok+Mistral) failed' : 'renderer failed';
-          console.log(`[ORCHESTRATION] DETERMINISTIC CUT-AWAY: Erotic/Dirty ${reason}, forcing interruption`);
+        if (isHighIntensity && (state.rendererFailed || allSceneAuthorsFailed)) {
+          const reason = allSceneAuthorsFailed ? 'all specialist authors (Grok+Mistral) failed' : 'renderer failed';
+          console.log(`[ORCHESTRATION] DETERMINISTIC CUT-AWAY: Steamy/Passionate ${reason}, forcing interruption`);
           state.forcedInterruption = true;
 
           // Record interruption for preference inference
@@ -1325,17 +1325,17 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     } catch (err) {
       state.errors.push(`Integration Pass failed: ${err.message}`);
       console.error('[ORCHESTRATION] Integration Pass failed:', err);
-      // Use author output as fallback (strip ESD and CONSTRAINTS)
+      // Use author output as fallback (strip SD and CONSTRAINTS)
       state.integrationOutput = state.authorOutput
-        .replace(/\[ESD\][\s\S]*?\[\/ESD\]/g, '')
+        .replace(/\[SD\][\s\S]*?\[\/SD\]/g, '')
         .replace(/\[CONSTRAINTS\][\s\S]*?\[\/CONSTRAINTS\]/g, '')
         .trim();
 
-      // DETERMINISTIC CUT-AWAY: Also applies on integration failure for Erotic/Dirty
-      const isEroticIntensity = ['Erotic', 'Dirty'].includes(state.gateEnforcement.effectiveEroticism);
-      const allEroticAuthorsFailed = state.grokFailed && (state.mistralFailed || !CONFIG.ENABLE_MISTRAL_ESD_FALLBACK);
-      if (isEroticIntensity && (state.rendererFailed || state.esd || allEroticAuthorsFailed)) {
-        console.log('[ORCHESTRATION] DETERMINISTIC CUT-AWAY: Integration failed for Erotic/Dirty, forcing interruption');
+      // DETERMINISTIC CUT-AWAY: Also applies on integration failure for Steamy/Passionate
+      const isHighIntensity = ['Steamy', 'Passionate'].includes(state.gateEnforcement.effectiveIntensity);
+      const allSceneAuthorsFailed = state.grokFailed && (state.mistralFailed || !CONFIG.ENABLE_MISTRAL_SD);
+      if (isHighIntensity && (state.rendererFailed || state.esd || allSceneAuthorsFailed)) {
+        console.log('[ORCHESTRATION] DETERMINISTIC CUT-AWAY: Integration failed for Steamy/Passionate, forcing interruption');
         state.forcedInterruption = true;
 
         // Record interruption for preference inference
@@ -1360,10 +1360,10 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       gateEnforcement: state.gateEnforcement,
       rendererUsed: state.rendererCalled && !state.rendererFailed,
       fateStumbled: state.fateStumbled,
-      forcedInterruption: state.forcedInterruption,  // Erotic/Dirty cut-away due to author/renderer failure
+      forcedInterruption: state.forcedInterruption,  // Steamy/Passionate cut-away due to author/renderer failure
       usedFallbackAuthor: state.usedFallbackAuthor,
       esdAuthoredByGrok: state.esdAuthoredByGrok,
-      esdAuthoredByMistral: state.esdAuthoredByMistral,  // Mistral fallback was used for ESD
+      esdAuthoredByMistral: state.esdAuthoredByMistral,  // Mistral fallback was used for SD
       grokFailed: state.grokFailed,
       mistralFailed: state.mistralFailed,
       errors: state.errors,
@@ -1376,7 +1376,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
   // ===========================================================================
 
   /**
-   * Parse constraints from ChatGPT output (for split ESD authoring).
+   * Parse constraints from ChatGPT output (for split SD authoring).
    */
   function parseConstraints(constraintsText) {
     const constraints = {
@@ -1410,18 +1410,18 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
   }
 
   /**
-   * Parse ESD from author output.
+   * Parse SD from author output.
    */
-  function parseESD(esdText, gateEnforcement) {
+  function parseSD(esdText, gateEnforcement) {
     const esd = {
-      eroticismLevel: gateEnforcement.effectiveEroticism,
+      intensityLevel: gateEnforcement.effectiveIntensity,
       completionAllowed: gateEnforcement.completionAllowed,
       emotionalCore: null,
       physicalBounds: null,
       hardStops: ['consent_withdrawal', 'scene_boundary']
     };
 
-    // Parse fields from ESD text
+    // Parse fields from SD text
     const lines = esdText.trim().split('\n');
     for (const line of lines) {
       const [key, ...valueParts] = line.split(':');
@@ -1431,12 +1431,12 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         const normalizedKey = key.trim().toLowerCase().replace(/\s+/g, '');
         if (normalizedKey === 'emotionalcore') esd.emotionalCore = value;
         if (normalizedKey === 'physicalbounds') esd.physicalBounds = value;
-        if (normalizedKey === 'eroticismlevel') esd.eroticismLevel = value;
+        if (normalizedKey === 'eroticismlevel') esd.intensityLevel = value;
         if (normalizedKey === 'completionallowed') esd.completionAllowed = value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
       }
     }
 
-    // Enforce monetization constraints (ESD cannot override)
+    // Enforce monetization constraints (SD cannot override)
     if (!gateEnforcement.completionAllowed) {
       esd.completionAllowed = false;
       esd.hardStops.push('monetization_gate_completion_forbidden');
@@ -1447,7 +1447,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
 
   /**
    * Build the prompt for the specialist renderer.
-   * The renderer receives ONLY ESD content, NO plot context.
+   * The renderer receives ONLY SD content, NO plot context.
    */
   function buildRendererPrompt(esd) {
     return {
@@ -1460,7 +1460,7 @@ YOUR CONSTRAINTS (NON-NEGOTIABLE):
 - You write HOW IT FEELS, not WHAT HAPPENS
 
 SCENE PARAMETERS:
-- Eroticism Level: ${esd.eroticismLevel}
+- Intensity Level: ${esd.intensityLevel}
 - Completion Allowed: ${esd.completionAllowed ? 'YES' : 'NO - you must NOT write completion'}
 - Emotional Core: ${esd.emotionalCore || 'connection'}
 - Physical Bounds: ${esd.physicalBounds || 'as established'}
@@ -1485,9 +1485,9 @@ ${esd.physicalBounds ? `Physical context: ${esd.physicalBounds}` : ''}`
    * Build the integration prompt for ChatGPT's final pass.
    */
   function buildIntegrationPrompt(authorOutput, rendererOutput, gateEnforcement) {
-    // Strip ESD and CONSTRAINTS blocks from author output
+    // Strip SD and CONSTRAINTS blocks from author output
     const cleanAuthorOutput = authorOutput
-      .replace(/\[ESD\][\s\S]*?\[\/ESD\]/g, '')
+      .replace(/\[SD\][\s\S]*?\[\/SD\]/g, '')
       .replace(/\[CONSTRAINTS\][\s\S]*?\[\/CONSTRAINTS\]/g, '')
       .trim();
 
@@ -1700,9 +1700,9 @@ dialogue: <elevated dialogue>`;
     // Model callers
     callChatGPT,              // Primary author (plot, psychology, limits, consequences)
     callGemini,               // Fallback author (if ChatGPT fails)
-    callGrokESDAuthor,        // ESD author for Erotic/Dirty (PRIMARY)
-    callMistralESDFallback,   // ESD fallback for Erotic/Dirty (if Grok fails)
-    callSpecialistRenderer,   // Sex renderer (ESD-gated)
+    callGrokSDAuthor,        // SD author for Steamy/Passionate (PRIMARY)
+    callMistralSDFallback,   // SD fallback for Steamy/Passionate (if Grok fails)
+    callSpecialistRenderer,   // Scene renderer (SD-gated)
 
     // Legacy compatibility
     callChat: callChatLegacy,
@@ -1718,7 +1718,7 @@ dialogue: <elevated dialogue>`;
 
     // Utilities
     enforceMonetizationGates,
-    validateESD,
+    validateSD,
     parseConstraints,
     createOrchestrationState,
 

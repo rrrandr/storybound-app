@@ -1763,10 +1763,14 @@ function setSelectedState(mount, selectedCardEl){
             const isLocked = (i >= unlockCount);
             if (isLocked) card.classList.add('locked');
 
+            // Per-card art: capitalize first letter of id for filename
+            const artName = data.id.charAt(0).toUpperCase() + data.id.slice(1);
+            const artUrl = `/assets/card-art/cards/Tarot-Gold-front-${artName}.png`;
+
             card.innerHTML = `
                 <div class="inner">
                     <div class="front"><h3>Fate</h3></div>
-                    <div class="back">
+                    <div class="back" style="background-image: url('${artUrl}');">
                         <h3>${data.title}</h3>
                         <p>${data.desc}</p>
                     </div>
