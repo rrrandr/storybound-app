@@ -13151,9 +13151,8 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       // Compute God Mode eligibility for this ritual session
       const currentStoryId = makeStoryId();
       const powerLevel = getGodModePowerLevel(currentStoryId);
-      const arousalOk = !(getCurrentArousal && getCurrentArousal() === 'tease');
       const tierOk = state.tier === 'subscriber' || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory());
-      state.godModeEligibleThisRitual = arousalOk && tierOk && powerLevel > 0;
+      state.godModeEligibleThisRitual = tierOk && powerLevel > 0;
       state.godModeActive = false;
 
       const input = document.getElementById('petitionInput');
@@ -13183,8 +13182,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           const currentStoryId = makeStoryId();
           let powerLevel = getGodModePowerLevel(currentStoryId);
 
-          // God Mode never applies in Taste, and requires Subscriber OR Storypass for this story
-          if (getCurrentArousal && getCurrentArousal() === 'tease') powerLevel = 0;
+          // God Mode requires Subscriber OR Storypass for this story
           if (!(state.subscribed || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory()))) powerLevel = 0;
 
           outcome = resolveFateOutcome(state.fate?.stance || 'neutral', classification, sacrificeChoice, powerLevel);
@@ -15436,9 +15434,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Compute eligibility inline (same logic as openPetitionZoom)
       const currentStoryId = typeof makeStoryId === 'function' ? makeStoryId() : '';
       const powerLevel = typeof getGodModePowerLevel === 'function' ? getGodModePowerLevel(currentStoryId) : 0;
-      const arousalOk = !(typeof getCurrentArousal === 'function' && getCurrentArousal() === 'tease');
       const tierOk = state.tier === 'subscriber' || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory());
-      const unlocked = !!state.godMode?.owned || (arousalOk && tierOk && powerLevel > 0);
+      const unlocked = !!state.godMode?.owned || (tierOk && powerLevel > 0);
 
       if (!unlocked) {
           if (window.showPaywall) window.showPaywall('god');
@@ -38516,9 +38513,6 @@ FATE CARD ADAPTATION (CRITICAL):
           survival: 'Survival', obsession: 'Obsession', forbidden: 'ForbiddenKnowledge',
           'forbidden knowledge': 'ForbiddenKnowledge'
       };
-      const INTENSITY_MAP = {
-          tease: 'Naughty', naughty: 'Naughty', erotic: 'Steamy', dirty: 'Passionate'
-      };
       const ARCHETYPE_MAP = {
           'heart warden': 'HEART_WARDEN', 'open vein': 'OPEN_VEIN',
           'spellbinder': 'SPELLBINDER', 'armored fox': 'ARMORED_FOX',
@@ -38537,8 +38531,7 @@ FATE CARD ADAPTATION (CRITICAL):
                   'Sports', 'Survival', 'Obsession', 'ForbiddenKnowledge'],
           tone: ['Earnest', 'WryConfession', 'Dark', 'Mythic'],
           dynamic: ['Proximity', 'SecretIdentity', 'Friends', 'Enemies',
-                    'SecondChance', 'Forbidden'],
-          arousal: ['Clean', 'Naughty', 'Steamy', 'Passionate']
+                    'SecondChance', 'Forbidden']
       };
 
       // Case-insensitive lookup for canonical value
@@ -38718,7 +38711,7 @@ FATE CARD ADAPTATION (CRITICAL):
           if (/\b(make|generate)\b.*\bcover\b/.test(input)) {
               const world = extract(input, WORLD_MAP) || state.picks?.world || 'Modern';
               const genre = extract(input, GENRE_MAP) || state.picks?.genre || 'Billionaire';
-              const intensity = extract(input, INTENSITY_MAP) || state.intensity || 'Naughty';
+              const intensity = state.intensity || 'Naughty';
               state.picks = state.picks || {};
               state.picks.world = world;
               state.picks.genre = genre;
@@ -38797,27 +38790,6 @@ FATE CARD ADAPTATION (CRITICAL):
                   log('Fate cards re-dealt');
               } else {
                   log('Fate card system not available');
-              }
-              return;
-          }
-
-          // --- SET INTENSITY ---
-          if (/\bset\b.*\bintensity\b.*\bto\b/.test(input)) {
-              const intensity = extract(input, INTENSITY_MAP);
-              if (intensity) {
-                  state.intensity = intensity;
-                  log('Intensity -> ' + intensity);
-              } else {
-                  log('Unknown intensity. Try: tease, naughty, erotic, dirty');
-              }
-              return;
-          }
-          if (/^go\s+(dirty|erotic|naughty|tease)\b/.test(input)) {
-              const m = input.match(/^go\s+(\w+)/);
-              const intensity = INTENSITY_MAP[m[1]];
-              if (intensity) {
-                  state.intensity = intensity;
-                  log('Intensity -> ' + intensity);
               }
               return;
           }
@@ -40215,8 +40187,7 @@ FATE CARD ADAPTATION (CRITICAL):
 // CONDITION
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// Ornate border is applied ONLY when arousal_tier === "Steamy"
-// NOT Tease, NOT Naughty, NOT Dirty
+// Ornate border — cover layer 2 (world-specific decorative frame)
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // ASSET PATH & WORLD MAPPING
@@ -40302,8 +40273,7 @@ FATE CARD ADAPTATION (CRITICAL):
 // CONDITION
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// Keyhole is applied ONLY when arousal_tier === "Passionate"
-// NOT Tease, NOT Naughty, NOT Erotic
+// Keyhole takeover — cover layer 3 (world-specific mask-based frame)
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // KEYHOLE IS A MASK, NOT AN OBJECT (CRITICAL)
