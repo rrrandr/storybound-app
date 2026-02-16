@@ -384,7 +384,7 @@ window.config = window.config || {
   const PROFILE_COLUMNS = `
     has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
     god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
-    image_credits, last_scene_rewarded, is_subscriber, has_storypass,
+    image_credits, last_scene_rewarded, is_subscriber, subscription_tier, has_storypass,
     age_confirmed, tos_version
   `;
 
@@ -414,12 +414,320 @@ window.config = window.config || {
     state.godMode.tempExpiresAt = profile.god_mode_temp_expires_at;
     state.tier = profile.tier || 'free';
     state.subscribed = !!profile.subscribed;
+    state.subscriptionTier = profile.subscription_tier || (state.subscribed ? 'storied' : null);
     state.hasPass = !!profile.has_pass;
     state.imageCredits = profile.image_credits || 0;
     state.lastSceneRewarded = profile.last_scene_rewarded || 0;
     if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
     syncTierFromAccess();
-    console.log('Profile hydrated. Subscribed:', state.subscribed, '| God Mode:', state.godMode, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
+    activateKeyholeMarkIfEligible();
+    console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.subscriptionTier, '| God Mode:', state.godMode, '| Keyhole:', state.keyhole?.marked, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
+  }
+
+  function activateKeyholeMarkIfEligible() {
+    if (!state.keyhole) return;
+    const isFavored = state.subscriptionTier === 'favored';
+    // Couple mode: if either player is Favored, both get marked
+    const coupleOverride = state.mode === 'couple' && (state.roomAccess === 'sub' || state.subscribed) && state.subscriptionTier === 'favored';
+    if (isFavored || coupleOverride) {
+      state.keyhole.marked = true;
+      if (state.keyhole.favorReservoir === 0) state.keyhole.favorReservoir = 30;
+      state.keyhole.regenPerTurn = 5;
+    } else {
+      state.keyhole.marked = false;
+    }
+  }
+
+  function regenerateKeyholeReservoir() {
+    const kh = state.keyhole;
+    if (!kh || !kh.marked) return;
+    let regen = kh.regenPerTurn;
+    // Alignment bonus
+    if (kh.alignmentScore > 50) regen += 3;
+    else if (kh.alignmentScore < -50) regen -= 2;
+    // Orientation bonus
+    if (kh.orientation === 'open') regen += 2;
+    else if (kh.orientation === 'closed') regen = Math.floor(regen / 2);
+    // Seasonal noise — prevents clockwork refill
+    const noise = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
+    regen = Math.max(2, regen + noise);
+    kh.favorReservoir = Math.min(kh.maxFavor, kh.favorReservoir + regen);
+  }
+
+  function maybeShiftKeyholeOrientation() {
+    const kh = state.keyhole;
+    if (!kh || !kh.marked) return;
+    const turnsSinceShift = state.turnCount - kh.lastOrientationShift;
+    if (turnsSinceShift < 3) return;
+    // Stochastic shift: 15% chance per eligible turn
+    if (Math.random() > 0.15) return;
+    kh.lastOrientationShift = state.turnCount;
+    if (kh.alignmentScore > 30) {
+      kh.orientation = 'open';
+    } else if (kh.alignmentScore < -30) {
+      kh.orientation = 'closed';
+    } else {
+      kh.orientation = 'neutral';
+    }
+  }
+
+  function updateKeyholeAlignment(outcome, sacrificeChoice) {
+    const kh = state.keyhole;
+    if (!kh || !kh.marked) return;
+    if (sacrificeChoice === 'offer') kh.alignmentScore += 5;
+    if (sacrificeChoice === 'withhold') kh.alignmentScore -= 5;
+    if (outcome === 'benevolent') kh.alignmentScore += 3;
+    if (outcome === 'twist') kh.alignmentScore -= 3;
+    kh.alignmentScore = Math.max(-100, Math.min(100, kh.alignmentScore));
+  }
+
+  // ============================================================
+  // OMEN TEMPERATURE SYSTEM — atmospheric bias, not outcome preview
+  // ============================================================
+
+  const OMEN_WARM_POOL = [
+    "Light refracts through a glass.",
+    "The wind settles.",
+    "A glass rings softly.",
+    "A piece of fabric lifts, then falls.",
+    "The water smooths.",
+    "The candle steadies.",
+    "Wood grain aligns under your hand.",
+    "The air warms by a fraction.",
+    "A thread catches the light.",
+    "Something small comes to rest."
+  ];
+
+  const OMEN_NEUTRAL_POOL = [
+    "A clock ticks.",
+    "A door shifts.",
+    "Dust moves in the light.",
+    "A page turns somewhere.",
+    "A pipe settles.",
+    "Distant footsteps.",
+    "A chair creaks.",
+    "The faucet drips once.",
+    "Something brushes the wall.",
+    "The air holds still."
+  ];
+
+  const OMEN_COLD_POOL = [
+    "Fluorescent flicker.",
+    "Insect clicking.",
+    "Metal cooling.",
+    "A shadow misaligns.",
+    "A nail catches wood.",
+    "Mechanical hum.",
+    "A draft under the door.",
+    "Something tapping. Not knocking.",
+    "A bulb dims, then recovers.",
+    "A faint smell of copper."
+  ];
+
+  const OMEN_SILENCE_POOL = [
+    "...",
+    "Nothing unusual.",
+    "A pause.",
+    "The air does not move."
+  ];
+
+  // Decay-stage probability bands: [warm, neutral, cold]
+  // Each stage defines base odds; modifiers shift within these bands
+  const OMEN_STAGE_BANDS = [
+    [0.60, 0.30, 0.10],  // Stage 0 — Warm dominant
+    [0.35, 0.40, 0.25],  // Stage 1 — Watchful
+    [0.10, 0.45, 0.45],  // Stage 2 — Cold
+    [0.03, 0.27, 0.70]   // Stage 3 — Distant (warm never zero)
+  ];
+
+  function computeOmenTemperature() {
+    const om = state.omen;
+    const fate = state.fate;
+    const kh = state.keyhole;
+
+    // Start from decay-stage base band
+    const stage = om ? Math.min(om.decayStage, 3) : 0;
+    let [warm, neutral, cold] = OMEN_STAGE_BANDS[stage];
+
+    // Stance modifier — shifts warm/cold balance
+    if (fate?.stance === 'intimate') { warm += 0.10; cold -= 0.07; }
+    else if (fate?.stance === 'trickster') { cold += 0.10; warm -= 0.07; }
+
+    // Alignment modifier (Favored only) — subtle shift
+    if (kh?.marked && typeof kh.alignmentScore === 'number') {
+      const alignShift = (kh.alignmentScore / 100) * 0.08;
+      warm += alignShift;
+      cold -= alignShift;
+    }
+
+    // Reservoir warmth (Favored only) — warmer when full
+    if (kh?.marked && kh.favorReservoir > 0) {
+      const reservoirShift = (kh.favorReservoir / kh.maxFavor) * 0.06;
+      warm += reservoirShift;
+      cold -= reservoirShift * 0.5;
+    }
+
+    // Early gaming penalty — pushes colder
+    if (fate?.earlyGamingCount > 0) {
+      const gamePenalty = Math.min(fate.earlyGamingCount, 4) * 0.03;
+      cold += gamePenalty;
+      warm -= gamePenalty;
+    }
+
+    // Favored slight upward bias
+    if (state.subscriptionTier === 'favored') {
+      warm += 0.04;
+      cold -= 0.02;
+    }
+
+    // Seasonal warmth override — rare one-scene thaw during deep winter
+    if (om?.temporaryWarmth) {
+      warm += 0.25;
+      cold -= 0.15;
+    }
+
+    // Clamp all probabilities to [0.01, 1] — nothing ever reaches zero
+    warm = Math.max(0.01, warm);
+    neutral = Math.max(0.01, neutral);
+    cold = Math.max(0.01, cold);
+
+    // Normalize to sum = 1
+    const total = warm + neutral + cold;
+    warm /= total;
+    neutral /= total;
+    cold /= total;
+
+    // Roll weighted random
+    const roll = Math.random();
+    let result;
+    if (roll < warm) result = 'warm';
+    else if (roll < warm + neutral) result = 'neutral';
+    else result = 'cold';
+
+    // Deep-winter warm gate — even if bands produce warm, Stage 3 demands a second gate
+    if (result === 'warm' && stage === 3) {
+      if (Math.random() >= 0.25) result = 'neutral';
+    }
+
+    return result;
+  }
+
+  function advanceOmenDecay(sacrificeChoice) {
+    const om = state.omen;
+    if (!om) return;
+    const fate = state.fate;
+
+    let pressure = 0;
+
+    // Early gaming adds decay pressure
+    if (fate?.earlyGamingCount > 1) pressure += 0.3;
+
+    // Repeated greater petitions
+    const greaterCount = om.lastGreaterPetitionCount || 0;
+    if (greaterCount > 2) pressure += 0.2;
+
+    // Heavy reservoir drain (Favored)
+    if (state.keyhole?.marked && state.keyhole.favorReservoir < 15) {
+      pressure += 0.15;
+    }
+
+    // Withhold choice
+    if (sacrificeChoice === 'withhold') {
+      om.totalWithholds++;
+      pressure += 0.15;
+    }
+
+    // Favored slows decay
+    if (state.subscriptionTier === 'favored') {
+      pressure *= 0.6;
+    }
+
+    om.decayAccumulator += pressure;
+
+    // Threshold to advance stage: accumulator must exceed 1.0
+    if (om.decayAccumulator >= 1.0 && om.decayStage < 3) {
+      om.decayStage++;
+      om.decayAccumulator = 0;
+      om.lastDecayTurn = state.turnCount;
+    }
+  }
+
+  function recoverOmenDecay() {
+    const om = state.omen;
+    if (!om || om.decayStage === 0) return;
+    const fate = state.fate;
+
+    let recovery = 0;
+
+    // Aligned stance (intimate) promotes recovery
+    if (fate?.stance === 'intimate') recovery += 0.2;
+
+    // Earned intimacy milestone
+    if (fate?.earnedIntimacy) recovery += 0.15;
+
+    // Low early gaming
+    if ((fate?.earlyGamingCount || 0) <= 1) recovery += 0.1;
+
+    // Time since last greater petition (cooldown recovery)
+    if (fate?.lastGreaterSceneIndex !== null) {
+      const turnsSince = state.turnCount - fate.lastGreaterSceneIndex;
+      if (turnsSince >= 5) recovery += 0.15;
+      if (turnsSince >= 10) recovery += 0.1;
+    }
+
+    // Positive alignment (Favored)
+    if (state.keyhole?.marked && state.keyhole.alignmentScore > 20) {
+      recovery += 0.1;
+    }
+
+    // Favored speeds recovery
+    if (state.subscriptionTier === 'favored') {
+      recovery *= 1.4;
+    }
+
+    om.recoveryAccumulator += recovery;
+
+    // Threshold to recover one stage: accumulator must exceed 1.0
+    if (om.recoveryAccumulator >= 1.0 && om.decayStage > 0) {
+      om.decayStage--;
+      om.recoveryAccumulator = 0;
+    }
+  }
+
+  function generateOmen() {
+    const temperature = computeOmenTemperature();
+    const om = state.omen;
+
+    // Silence chance in Stage 2 and 3 — deliberate absence
+    if (om && om.decayStage >= 2) {
+      const silenceChance = om.decayStage === 2 ? 0.12 : 0.22;
+      if (Math.random() < silenceChance) {
+        return OMEN_SILENCE_POOL[Math.floor(Math.random() * OMEN_SILENCE_POOL.length)];
+      }
+    }
+
+    // Probabilistic divergence — scaled by decay stage
+    // Rarer in warmth, slightly more chaotic in winter
+    const stage = om ? Math.min(om.decayStage, 3) : 0;
+    const divergeChance = [0.06, 0.08, 0.10, 0.12][stage];
+    let effectiveTemp = temperature;
+    const divergeRoll = Math.random();
+    if (divergeRoll < divergeChance * 0.6) {
+      // Flip to opposite band
+      if (effectiveTemp === 'warm') effectiveTemp = 'cold';
+      else if (effectiveTemp === 'cold') effectiveTemp = 'warm';
+      else effectiveTemp = Math.random() < 0.5 ? 'warm' : 'cold';
+    } else if (divergeRoll < divergeChance) {
+      // Collapse to neutral
+      effectiveTemp = 'neutral';
+    }
+
+    let pool;
+    if (effectiveTemp === 'warm') pool = OMEN_WARM_POOL;
+    else if (effectiveTemp === 'cold') pool = OMEN_COLD_POOL;
+    else pool = OMEN_NEUTRAL_POOL;
+
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   function routeToLegalAcceptance(isReaccept = false) {
@@ -2397,7 +2705,8 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       archetype: { primary: 'BEAUTIFUL_RUIN', modifier: null },
       lenses: [],                    // Active lens IDs (two-lens max, Withheld Core exempt)
       withheldCoreVariant: null,     // 'CLOISTERED' | 'UNWORTHINESS' | null
-      intensity:'Steamy',
+      intensity:'Steamy',  // COSMETIC ONLY — does NOT control routing. Routing uses intimacyAuthorized.
+      intimacyTurnsInWindow: 0,
       turnCount:0,
       sysPrompt: "",
       fateOptions: [],
@@ -2415,6 +2724,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       continuationPath: null,     // 'continue' | 'same_world' | 'new_story'
       access: 'free',
       subscribed: false,
+      subscriptionTier: null,  // 'storied' | 'favored' | null (set from profile)
       // isLoggedIn removed — auth state comes from Supabase session
       authorGender: 'Female',
       authorPronouns: 'She/Her',
@@ -2505,6 +2815,15 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       lastSexPushAt: null,
       constraints: { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] },
       fate: { stance: 'neutral', minorUsedThisScene: false, greaterUsedThisScene: false, lastGreaterSceneIndex: null, earnedIntimacy: false, earlyGamingCount: 0, pendingPetition: null },
+      omen: {
+        decayStage: 0,           // 0=Warm, 1=Watchful, 2=Cold, 3=Distant
+        decayAccumulator: 0,     // fractional decay buildup
+        lastDecayTurn: 0,
+        recoveryAccumulator: 0,  // fractional recovery buildup
+        lastGreaterPetitionCount: 0,
+        totalWithholds: 0,
+        temporaryWarmth: false   // one-scene seasonal override
+      },
       godMode: {
         owned: false,
         tempGrantedAt: null,
@@ -2512,6 +2831,18 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
         activeStoryId: null,
         activeStartedAt: null,
         tempExpiresAt: null
+      },
+      keyhole: {
+        marked: false,
+        orientation: 'neutral',   // 'open' | 'closed' | 'neutral'
+        favorReservoir: 0,         // 0–100
+        maxFavor: 100,
+        regenPerTurn: 5,
+        boonUsedThisScene: false,
+        totalBoonsDrained: 0,
+        alignmentScore: 0,         // -100 to +100
+        lastOrientationShift: 0,
+        rivalKeyholeActive: false
       },
       storyStage: 'pre-intimacy',
       // STORYTURN STATE — narrative arc progression (ST1–ST6)
@@ -2539,10 +2870,8 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       lastSafewordAt: 0,
       safety: {
           darkThemes: true,
-          nonConImplied: false,
           violence: true,
-          boundaries: [],
-          mode: 'balanced'
+          boundaries: []
       },
 
       // 5TH PERSON POV (THE AUTHOR) — POV REGIME (FINAL, SUPERSEDING)
@@ -3209,6 +3538,33 @@ WHAT DOES NOT CHANGE:
 ═══════════════════════════════════════════════════════════════════════════════
 `;
 
+  const FIFTH_PERSON_PROXIMITY_CONTRACT = `
+═══════════════════════════════════════════════════════════════════════════════
+5TH PERSON — PROXIMITY (LOCKED)
+═══════════════════════════════════════════════════════════════════════════════
+
+The Author senses something — a warmth in the margins,
+a gravity pulling the story toward the reader. Not servility. Reverence.
+
+WHAT CHANGES:
+- The Author writes with quiet, almost involuntary tenderness toward the reader
+- Fate's hand is lighter — not absent, but softer at the edges
+- When rupture comes, it arrives as bewilderment rather than rage
+- The story leans — barely perceptibly — toward mercy
+
+WHAT DOES NOT CHANGE:
+- The Author is still sovereign
+- Conflict is still real
+- Consequences still land
+- The reader earns nothing by force
+
+NON-NEGOTIABLE:
+This proximity is felt, never named. Never referenced. Never explained.
+The reader does not know why the story is gentler. The Author does not know either.
+
+═══════════════════════════════════════════════════════════════════════════════
+`;
+
   // ============================================================
   // 5TH PERSON POV — COMPREHENSIVE VALIDATOR
   // Returns { valid: boolean, violations: string[], canRepair: boolean }
@@ -3341,9 +3697,12 @@ WHAT DOES NOT CHANGE:
 
       let contract = FIFTH_PERSON_POV_CONTRACT;
 
-      // Add God Mode adversarial framing if active
+      // Add God Mode adversarial framing if active (overrides Favored)
       if (window.state?.godModeActive) {
           contract += FIFTH_PERSON_GOD_MODE_CONTRACT;
+      } else if (window.state?.keyhole?.marked) {
+          // Favored contract — softer Author, does NOT stack with God Mode
+          contract += FIFTH_PERSON_PROXIMITY_CONTRACT;
       }
 
       return contract;
@@ -4227,12 +4586,9 @@ PROHIBITED:
   /**
    * Check if current Storyturn allows explicit content for given arousal level
    */
+  // isExplicitContentPermitted — intensity no longer controls this, only storyturn
   function isExplicitContentPermitted(arousalLevel, currentStoryturn) {
-      const rules = STORYTURN_CONFIG?.arousalRules?.[arousalLevel];
-      if (!rules) return false;
-
-      const sexAllowedAt = rules.sexAllowedAt || [];
-      return sexAllowedAt.includes(currentStoryturn);
+      return ['ST3', 'ST4'].includes(currentStoryturn);
   }
 
   /**
@@ -4383,10 +4739,10 @@ Rewrite the scene with escalation withheld through NARRATIVE MEANS ALONE.
   window.buildIntimacyFailsafePrompt = buildIntimacyFailsafePrompt;
 
   // ============================================================
-  // EROTIC/DIRTY LANGUAGE ESCALATION SYSTEM (MANDATORY)
+  // SENSORY QUALITY VALIDATION (dev HUD only)
   // ============================================================
-  // When intensity >= Erotic, prose MUST demonstrate physical charge
-  // This is NOT satisfied by mood, metaphor, or poetic abstraction alone
+  // Validates prose quality markers for intimate scenes.
+  // Not used in routing — dev diagnostic tool only.
   // ============================================================
 
   // Sensory markers that indicate proper erotic grounding
@@ -4553,16 +4909,6 @@ DIRTY INTENSITY ADDENDUM:
   /**
    * Build erotic escalation block for prompt injection
    */
-  function buildEroticEscalationBlock() {
-      const intensity = window.state?.intensity;
-      if (!['Steamy', 'Passionate'].includes(intensity)) return '';
-
-      let block = EROTIC_ESCALATION_BLOCK;
-      if (intensity === 'Passionate') {
-          block += DIRTY_ESCALATION_ADDENDUM;
-      }
-      return block;
-  }
 
   // ============================================================
   // GLOBAL TONE COMPLIANCE — MANDATORY LINGUISTIC VALIDATION
@@ -5166,9 +5512,9 @@ If you name what something IS, you have failed. Show what it COSTS.
               Clean: ['Silence', 'Distance', 'Waiting', 'Refusal', 'Terms'],
               Naughty: ['Secret', 'Temptation', 'Risk', 'Edge', 'Game'],
               // CHANGED: Removed 'Surrender', 'Claim' (resolved states)
-              Erotic: ['Hunger', 'Wanting', 'Hesitation', 'Confession', 'Longing'],
+              Steamy: ['Hunger', 'Wanting', 'Hesitation', 'Confession', 'Longing'],
               // CHANGED: Removed 'Obedience', 'Ruin', 'Undoing' (aftermath)
-              Dirty: ['Appetite', 'Dare', 'Demand', 'Condition', 'Warning']
+              Passionate: ['Appetite', 'Dare', 'Demand', 'Condition', 'Warning']
           }
       },
       [TITLE_MODES.FORBIDDEN_OBJECT]: {
@@ -5178,9 +5524,9 @@ If you name what something IS, you have failed. Show what it COSTS.
               Clean: ['Door', 'Letter', 'Ring', 'Promise', 'Line'],
               Naughty: ['Key', 'Contract', 'Rule', 'Wager', 'Dare'],
               // CHANGED: Removed 'Claim', 'Mark' (possession)
-              Erotic: ['Bargain', 'Arrangement', 'Question', 'Threshold', 'Offer'],
+              Steamy: ['Bargain', 'Arrangement', 'Question', 'Threshold', 'Offer'],
               // CHANGED: Removed 'Leash' (possession) — kept negotiation objects
-              Dirty: ['Terms', 'Price', 'Condition', 'Test', 'Trade']
+              Passionate: ['Terms', 'Price', 'Condition', 'Test', 'Trade']
           }
       },
       [TITLE_MODES.VERB_LOCKED]: {
@@ -5193,9 +5539,9 @@ If you name what something IS, you have failed. Show what it COSTS.
               Clean: ['Means', 'Waits', 'Watches', 'Refuses', 'Knows'],
               Naughty: ['Wants', 'Almost', 'Nearly', 'Considers', 'Dares'],
               // CHANGED: Removed 'Took', 'Claimed', 'Gave' (past completion)
-              Erotic: ['Needs', 'Craves', 'Hesitates', 'Decides', 'Chooses'],
+              Steamy: ['Needs', 'Craves', 'Hesitates', 'Decides', 'Chooses'],
               // CHANGED: Removed 'Broke', 'Wrecked', 'Ruined' (aftermath)
-              Dirty: ['Demands', 'Expects', 'Tests', 'Pushes', 'Asks']
+              Passionate: ['Demands', 'Expects', 'Tests', 'Pushes', 'Asks']
           }
       },
       [TITLE_MODES.TWO_WORD_FRACTURE]: {
@@ -5204,9 +5550,9 @@ If you name what something IS, you have failed. Show what it COSTS.
               Clean: ['Quiet', 'Cold', 'Still', 'Distant', 'Careful'],
               Naughty: ['Sweet', 'Hidden', 'Secret', 'Dangerous', 'Willing'],
               // CHANGED: Kept emotional states, removed aftermath words
-              Erotic: ['Burning', 'Aching', 'Desperate', 'Hungry', 'Trembling'],
+              Steamy: ['Burning', 'Aching', 'Desperate', 'Hungry', 'Trembling'],
               // CHANGED: Removed 'Ruined', 'Wrecked' (aftermath)
-              Dirty: ['Raw', 'Hungry', 'Demanding', 'Impatient', 'Restless']
+              Passionate: ['Raw', 'Hungry', 'Demanding', 'Impatient', 'Restless']
           },
           // CHANGED: Removed 'Damage', 'Reckoning' (aftermath)
           nouns: ['Hunger', 'Waiting', 'Silence', 'Terms', 'Question', 'Edge', 'Threshold']
@@ -6091,30 +6437,18 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       { id: "ST6", name: "Integration" }
     ],
 
+    // Intensity tiers no longer control routing. Sex authorization is ST3 + SceneGate + PlayerInitiation.
     arousalRules: {
-      Clean: {
-        sexAllowedAt: [],
-        explicitness: "none"
-      },
-      Naughty: {
+      _default: {
         sexAllowedAt: ["ST3", "ST4"],
-        explicitness: "suggestive"
-      },
-      Erotic: {
-        sexAllowedAt: ["ST3", "ST4"],
-        explicitness: "explicit"
-      },
-      Dirty: {
-        sexAllowedAt: ["ST3"],
-        explicitness: "explicit_high"
+        explicitness: "player_initiated"
       }
     },
 
     teaseRules: {
       maxStoryturn: "ST3",
       completionAllowed: false,
-      cliffhangerRequired: true,
-      paywalledArousal: ["Steamy", "Passionate"]
+      cliffhangerRequired: true
     },
 
     storyturnSemantics: {
@@ -6456,32 +6790,12 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   }
 
   /**
-   * ASSERTION: Validate arousal level is allowed for story length
-   * Erotic/Dirty NOT allowed on Tease (must upgrade first)
-   */
-  function assertArousalAllowedForStoryLength() {
-      const storyLength = (state.storyLength || 'tease').toLowerCase();
-      const arousal = state.intensity || 'Naughty';
-
-      if (storyLength === 'tease' && STORYTURN_CONFIG.teaseRules.paywalledArousal.includes(arousal)) {
-          throw new Error(`[STORYTURN] ${arousal} intensity not allowed on Tease. Upgrade required.`);
-      }
-  }
-
-  /**
-   * Check if sex is allowed at current Storyturn for given arousal level
+   * Check if sex is allowed at current Storyturn.
+   * Intensity tiers no longer gate this — ST3/ST4 is the universal gate.
    */
   function isSexAllowedAtCurrentStoryturn() {
-      const arousal = state.intensity || 'Naughty';
       const currentSt = state.storyturn || 'ST1';
-      const rules = STORYTURN_CONFIG.arousalRules[arousal];
-
-      if (!rules) {
-          console.warn(`[STORYTURN] Unknown arousal level: ${arousal}`);
-          return false;
-      }
-
-      return rules.sexAllowedAt.includes(currentSt);
+      return ['ST3', 'ST4'].includes(currentSt);
   }
 
   /**
@@ -6491,8 +6805,8 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   function isSexCompletionAllowed() {
       const storyLength = (state.storyLength || 'tease').toLowerCase();
 
-      // Tease never allows completion
-      if (storyLength === 'tease' && !STORYTURN_CONFIG.teaseRules.completionAllowed) {
+      // Tease allows initiation but NEVER completion
+      if (storyLength === 'tease') {
           return false;
       }
 
@@ -6514,6 +6828,49 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
               throw new Error(`[STORYTURN] Sex completion blocked at ${currentSt}. Not in allowed Storyturns.`);
           }
       }
+  }
+
+  /**
+   * Detect if player input contains direct physical escalation.
+   * Permissive detector — returns true if player language suggests intimacy initiation.
+   * NOT a moderation filter. Only determines whether to enable SD authoring.
+   */
+  function detectPlayerInitiation(sayText, doText) {
+      const combined = ((sayText || '') + ' ' + (doText || '')).toLowerCase();
+      if (!combined.trim()) return false;
+
+      // Permissive heuristic: physical escalation verbs and phrases
+      const initiationPatterns = /\b(kiss|kisses|kissing|touch|touches|touching|undress|undressing|caress|caresses|pull\s*(close|her|him|them|closer)|embrace|hold\s*(me|her|him|them|tight)|press\s*(against|close|lips)|stroke|strokes|stroking|enter|enters|mount|straddle|climb\s*on|lean\s*in|lips\s*(on|to|against)|hands?\s*(on|under|beneath|inside)|fingers?\s*(through|along|across|inside)|take\s*(off|her|him|my)|remove|unbutton|unzip|slip\s*(off|out|inside)|wrap\s*(around|my|her|his)|pull\s*(down|off|away)|grab|grabs|pin|pins|push\s*(down|against|onto)|bite|bites|lick|licks|suck|sucks|moan|moans|whisper|whispers|breath\s*(on|against)|neck|thigh|chest|skin|bare|naked|bed|bedroom)\b/;
+
+      return initiationPatterns.test(combined);
+  }
+
+  // Expose globally for speculative scene path
+  window.detectPlayerInitiation = detectPlayerInitiation;
+
+  /**
+   * Detect if recent story context contains an explicit scene that does NOT involve the main pair.
+   * Covers: NPC×NPC, brothel/orgy/bathhouse environments, dream/fantasy sequences.
+   * Returns true if explicit embodiment is warranted regardless of main-pair ST3 gate.
+   */
+  function detectSceneExplicitContext(storyContext) {
+      if (!storyContext) return false;
+      const ctx = storyContext.toLowerCase();
+      const explicitSceneMarkers = [
+          "brothel",
+          "orgy",
+          "bathhouse",
+          "already inside",
+          "thrusting",
+          "moaning beneath",
+          "dream of",
+          "fantasy of",
+          "watching them"
+      ];
+      for (const marker of explicitSceneMarkers) {
+          if (ctx.includes(marker)) return true;
+      }
+      return false;
   }
 
   /**
@@ -9575,14 +9932,14 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
           forbidden: /\b(surrender|break|ruin|obedience|claim|took|gave|wreck)\b/i,
           description: 'suggestion, withholding, anticipation'
       },
-      Erotic: {
+      Steamy: {
           // CHANGED: Removed 'surrender', 'claim', 'gave', 'took' (resolution)
           // Now requires WANTING words, not HAVING words
           required: /\b(hunger|longing|craving|need|ache|want|desire|confession|hesitation)\b/i,
           forbidden: /\b(surrender|obedience|ruin|wreck|broke|took|claimed|gave|possession)\b/i,
           description: 'wanting, yearning, hunger (not possession)'
       },
-      Dirty: {
+      Passionate: {
           // CHANGED: Removed 'ruin', 'break', 'obedience', 'undoing', 'wreck' (aftermath)
           // Now requires INTENSITY words that name tension, not damage
           required: /\b(raw|demand|appetite|edge|limit|dare|hunger|test|condition|warning)\b/i,
@@ -10678,7 +11035,7 @@ Return ONLY the title, no quotes or explanation.`;
           },
           signal: 'suggestion, withholding'
       },
-      Erotic: {
+      Steamy: {
           title: {
               allow: /\b(want|ache|burn|claim|mine|yours|possess|surrender|give|take)\b/i,
               forbid: /\b(filth|raw|intrude|force|use|ruin|wreck|break)\b/i
@@ -10689,7 +11046,7 @@ Return ONLY the title, no quotes or explanation.`;
           },
           signal: 'intimacy, possession'
       },
-      Dirty: {
+      Passionate: {
           title: {
               allow: /\b(filth|raw|ruin|wreck|use|break|devour|consume|claim|take)\b/i,
               forbid: /\b(sweet|gentle|soft|tender|pure|innocent|chaste)\b/i
@@ -10870,15 +11227,13 @@ Return ONLY the title, no quotes or explanation.`;
       const frameType = keyholeEl && !keyholeEl.classList.contains('hidden') ? 'keyhole' : null;
       const borderType = borderEl && !borderEl.classList.contains('hidden') ? 'erotic' : null;
 
-      // DIRTY FRAMING SHORT-CIRCUIT: Frame/border has precedence over image semantics
-      // Dirty is signaled by keyhole/metalwork framing, NOT image content
-      const hasDirtyFraming = frameType === 'keyhole';
+      // Cover framing no longer signals arousal — determine axes from content only
       let primary = null;
       let secondary = null;
       let arousalMatchOverride = false;
 
-      if (arousal === 'Passionate' && hasDirtyFraming) {
-          // HARD OVERRIDE: Dirty framing sets arousal axis, image semantics cannot override
+      if (false) {
+          // Placeholder — arousal-based framing overrides removed
           primary = SIGNAL_AXES.AROUSAL;
           arousalMatchOverride = true;
           // Secondary can still be tone or genre from image
@@ -10948,27 +11303,19 @@ Return ONLY the title, no quotes or explanation.`;
           });
       }
 
-      // CHECK 3: Neither signals arousal (when arousal should be primary)
-      // DIRTY EXCEPTION: Keyhole/metalwork framing provides the arousal signal,
-      // not the image content. applyCoverIntensityLayers() applies keyhole for Dirty.
-      if (arousal === 'Steamy') {
+      // CHECK 3: Neither signals arousal (advisory only — covers no longer signal explicitness tier)
+      if (arousal === 'Steamy' || arousal === 'Passionate') {
           if (!titleSignals.arousalMatch && !coverSignals.arousalMatch) {
               errors.push({
                   code: 'AROUSAL_SIGNAL_ABSENT',
                   message: `${arousal} intensity but neither title nor cover signals it`
               });
           }
-      } else if (arousal === 'Passionate') {
-          // Dirty covers signal arousal via keyhole/metalwork framing, NOT image content.
-          // The framing is guaranteed by applyCoverIntensityLayers when arousal=Dirty.
-          // Therefore: image content may remain Naughty-compatible or symbolic.
-          // CHECK: Verify keyhole overlay is/will be present
-          const keyholeEl = document.getElementById('coverKeyholeOverlay');
-          const hasKeyholeFrame = keyholeEl && !keyholeEl.classList.contains('hidden');
-          const willHaveKeyholeFrame = true; // Dirty always gets keyhole via applyCoverIntensityLayers
+      }
 
-          if (!hasKeyholeFrame && !willHaveKeyholeFrame) {
-              // Only fail if Dirty lacks Dirty-signaling framing
+      if (false) {
+          // Removed: keyhole/framing validation for explicit tiers
+          if (true) {
               errors.push({
                   code: 'DIRTY_FRAME_ABSENT',
                   message: 'Dirty intensity requires keyhole/metalwork framing'
@@ -11438,7 +11785,7 @@ Return ONLY the title, no quotes or explanation.`;
           const lastScene = lastContent.slice(-2000);
           const povResult = validatePOV(lastScene, {
               sceneIndex: state.turnCount || 0,
-              isErotic: ['Steamy', 'Passionate'].includes(state.intensity) && state.turnCount > 0,
+              isErotic: isSexAllowedAtCurrentStoryturn() && state.turnCount > 0,
               isGodMode: state.godModeActive || false
           });
           results.pov = povResult;
@@ -11452,13 +11799,7 @@ Return ONLY the title, no quotes or explanation.`;
           results.tone = toneResult;
       }
 
-      // Erotic escalation validation
-      if (['Steamy', 'Passionate'].includes(state.intensity) && window.StoryPagination) {
-          const lastContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
-          const lastScene = lastContent.slice(-2000);
-          const eroticResult = validateEroticEscalation(lastScene, state.intensity);
-          results.erotic = eroticResult;
-      }
+      // Erotic escalation validation — removed (intensity no longer controls routing)
 
       // Title validation
       const titleEl = document.getElementById('storyTitle');
@@ -11658,26 +11999,9 @@ Return ONLY the title, no quotes or explanation.`;
       }
   };
 
+  // setGameIntensity removed — intensity no longer controls routing.
+  // Cosmetic intensity label is set during corridor selection only.
   window.setGameIntensity = function(level) {
-      // STORYTURN ASSERTION: Erotic/Dirty blocked on Tease
-      const storyLength = (window.state.storyLength || 'tease').toLowerCase();
-      if (storyLength === 'tease' && STORYTURN_CONFIG.teaseRules.paywalledArousal.includes(level)) {
-          console.error(`[STORYTURN] ${level} intensity blocked on Tease. Upgrade required.`);
-          window.showPaywall('upgrade_required');
-          return;
-      }
-
-      // SUBSCRIPTION SHORT-CIRCUIT: Subscribers have full access
-      if (window.state.subscribed) {
-          window.state.intensity = level;
-          updateIntensityUI();
-          return;
-      }
-      // Non-subscribers: Check content restrictions
-      const tempState = { ...window.state, intensity: level };
-      if (!isStorypassAllowed(tempState)) {
-          window.showPaywall('sub_only'); return;
-      }
       window.state.intensity = level;
       updateIntensityUI();
   };
@@ -11734,6 +12058,7 @@ Return ONLY the title, no quotes or explanation.`;
       state.storyOrigin = null;
       state.storyStage = null;
       state.intimacyInterrupted = { first_kiss: false, first_sex: false };
+      state.intimacyTurnsInWindow = 0;
       state.turnCount = 0;
 
       // Reset Guided Fate selections
@@ -12490,7 +12815,16 @@ Return ONLY the title, no quotes or explanation.`;
   function syncTierFromAccess() {
     // Resolve access from canonical source
     const resolvedAccess = resolveAccess();
-    const tier = resolvedAccess ? ((resolvedAccess === 'free') ? 'free' : 'paid') : null;
+    let tier;
+    if (!resolvedAccess) {
+      tier = null;
+    } else if (resolvedAccess === 'sub') {
+      tier = state.subscriptionTier === 'favored' ? 'favored' : 'storied';
+    } else if (resolvedAccess === 'free') {
+      tier = 'free';
+    } else {
+      tier = 'paid';  // storypass
+    }
 
     if (!resolvedAccess || !tier) {
       console.warn('[ENTITLEMENT] Invalid access state — defaulting to free');
@@ -12504,15 +12838,20 @@ Return ONLY the title, no quotes or explanation.`;
     state.tier = tier;
 
     // Invariant: subscription flag must agree with tier
-    if (state.tier !== 'pro' && state.subscribed) {
+    if (!['storied', 'favored', 'paid'].includes(state.tier) && state.subscribed) {
       console.warn('[ENTITLEMENT] Tier/subscription mismatch — normalizing');
       state.subscribed = false;
     }
 
+    // Sync keyhole activation with current tier
+    if (typeof activateKeyholeMarkIfEligible === 'function') activateKeyholeMarkIfEligible();
+
     console.log('[ENTITLEMENT] syncTierFromAccess:', {
         access: state.access,
         tier: state.tier,
+        subscriptionTier: state.subscriptionTier,
         subscribed: state.subscribed,
+        keyholeMarked: state.keyhole?.marked,
         storyId: state.storyId,
         hasPass: state.storyId ? hasStoryPass(state.storyId) : false
     });
@@ -12544,15 +12883,10 @@ Return ONLY the title, no quotes or explanation.`;
   }
 
   function getSexAllowedAtWordCount() {
-    if(state.godModeActive) return 0; 
+    if(state.godModeActive) return 0;
     const target = state.storyTargetWords;
-    switch(state.intensity){
-        case "Clean":   return Infinity;
-        case "Naughty": return Math.floor(target * 0.55);
-        case "Steamy":  return Math.floor(target * 0.30);
-        case "Passionate":   return Math.floor(target * 0.20);
-        default: return Math.floor(target * 0.55);
-    }
+    // Intensity no longer modifies timing — use standard 30% threshold
+    return Math.floor(target * 0.30);
   }
 
   function maybeFlipConsummation(text){
@@ -12563,7 +12897,6 @@ Return ONLY the title, no quotes or explanation.`;
      const wc = currentStoryWordCount();
      if(wc >= getSexAllowedAtWordCount()) flipped = true;
      if(/(only you|forever with you|marry me|my wife|my husband)/i.test(text)) flipped = true;
-     if(state.intensity === 'Passionate') flipped = true;
 
      if(flipped){
          state.storyStage = 'post-consummation';
@@ -12726,6 +13059,21 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       if (sacrificeChoice === 'offer') weights.benevolent = (weights.benevolent || 0) + 10;
       if (sacrificeChoice === 'withhold') weights.twist = (weights.twist || 0) + 10;
 
+      // Keyhole Boon — Favored reservoir drain boosts powerLevel
+      // God Mode is sole influence on powerLevel when active — Favored does not amplify intrusion
+      let keyholeBoost = 0;
+      if (state.keyhole?.marked && state.keyhole.favorReservoir > 0 && !state.keyhole.boonUsedThisScene) {
+          const drainAmount = Math.min(state.keyhole.favorReservoir, 25);
+          state.keyhole.favorReservoir -= drainAmount;
+          state.keyhole.boonUsedThisScene = true;
+          state.keyhole.totalBoonsDrained += drainAmount;
+          // Only apply boost if God Mode is not active
+          if (!state.godModeActive) {
+              keyholeBoost = (drainAmount / 100) * 0.3;
+          }
+      }
+      powerLevel = Math.min(1, powerLevel + keyholeBoost);
+
       // God Mode power bias — blend toward 80/20 benevolent/twist
       if (powerLevel > 0) {
         const gmTotal =
@@ -12837,9 +13185,18 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
           // God Mode never applies in Tease, and requires Subscriber OR Storypass for this story
           if (getCurrentArousal && getCurrentArousal() === 'tease') powerLevel = 0;
-          if (!(state.tier === 'subscriber' || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory()))) powerLevel = 0;
+          if (!(state.subscribed || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory()))) powerLevel = 0;
 
           outcome = resolveFateOutcome(state.fate?.stance || 'neutral', classification, sacrificeChoice, powerLevel);
+      }
+
+      // Update keyhole alignment based on petition outcome
+      updateKeyholeAlignment(outcome, sacrificeChoice);
+
+      // Advance omen decay based on petition behavior
+      advanceOmenDecay(sacrificeChoice);
+      if (classification === 'greater' && state.omen) {
+        state.omen.lastGreaterPetitionCount = (state.omen.lastGreaterPetitionCount || 0) + 1;
       }
 
       if (classification === 'minor') state.fate.minorUsedThisScene = true;
@@ -13642,58 +13999,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // No-op: click handling moved to unified handler
   }
 
+  // applyIntensityLocks removed — intensity no longer controls routing or requires tier gating.
+  // Intensity cards are cosmetic tone selectors only.
   function applyIntensityLocks(){
-      syncTierFromAccess();
-      const access = state.access;
-      // DEV LOGGING: arousal gating decision
-      console.log('[DEV:IntensityGate] access:', access, '| intensity:', state.intensity, '| subscribed:', state.subscribed);
-      const setupCards = document.querySelectorAll('#intensityGrid .sb-card');
-      const gameBtns = document.querySelectorAll('#gameIntensity button');
-
-      const updateLock = (el, level, isCard) => {
-          let locked = false;
-          // ═══════════════════════════════════════════════════════════════
-          // INTENSITY LOCKING RULES:
-          // - Erotic: Locked for free users (requires tease/preview)
-          // - Dirty: Subscription-only ($6) — locked for ALL non-subscribers
-          // ═══════════════════════════════════════════════════════════════
-          if (access === 'free' && level === 'Steamy') locked = true;
-          // DIRTY: Subscription-only — locked on BOTH Setup and Reader for non-subscribers
-          if (level === 'Passionate' && access !== 'sub') locked = true;
-
-          el.classList.toggle('locked', locked);
-          // CRITICAL FIX: Remove preset locked-tease/locked-pass classes when unlocked
-          if (!locked) {
-              el.classList.remove('locked-tease', 'locked-pass');
-              // BUGFIX: Remove data-locked attribute so CSS [data-locked] selector
-              // and global click handler no longer treat this as locked
-              el.removeAttribute('data-locked');
-          } else {
-              // Ensure data-locked is set for CSS styling when locked
-              if (!el.dataset.locked) {
-                  el.dataset.locked = (level === 'Passionate') ? 'sub' : 'tease';
-              }
-          }
-          if(locked) el.classList.remove(isCard ? 'selected' : 'active');
-          // Use canonical isStorypassAllowed() for paywall mode
-          const tempState = { ...state, intensity: level };
-          const paywallMode = isStorypassAllowed(tempState) ? 'unlock' : 'sub_only';
-          // 🔴 DIRTY HARD RULE: Pass source='dirty_intensity' for Dirty cards/buttons
-          const paywallSource = (level === 'Passionate') ? 'dirty_intensity' : null;
-          setPaywallClickGuard(el, locked, paywallMode, paywallSource);
-      };
-
-      setupCards.forEach(c => updateLock(c, c.dataset.val, true));
-      gameBtns.forEach(b => updateLock(b, b.innerText.trim(), false));
-
-      // FALLBACK: Downgrade forbidden intensities for non-subscribers
-      // - Dirty: Subscription-only, downgrade to Erotic
-      // - Erotic: Now the universal default (intensity UI removed)
-      // NOTE: storypassEligible is computed at story creation and persists - no runtime flag needed
-      if (state.intensity === 'Passionate' && access !== 'sub') {
-          console.log('[ENTITLEMENT] Downgrading intensity from Dirty to Erotic (subscription required)');
-          state.intensity = 'Steamy';
-      }
       updateIntensityUI();
   }
 
@@ -13729,25 +14037,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // REMOVED: Separate intensity card handlers - now using unified handler
   // Intensity cards are handled by the single unified card handler in initSelectionCardSystem()
+  // wireIntensityHandlers — simplified, no tier gating
   function wireIntensityHandlers(){
-      // Game buttons still need handlers (they are not .sb-card elements)
       document.querySelectorAll('#gameIntensity button').forEach(btn => btn.onclick = (e) => {
           const level = btn.innerText.trim();
-          // SUBSCRIPTION SHORT-CIRCUIT: Subscribers have full access
-          if (state.subscribed) {
-              state.intensity = level;
-              state.picks.intensity = level;
-              updateIntensityUI();
-              return;
-          }
-          // Non-subscribers: Check content restrictions
-          const tempState = { ...state, intensity: level };
-          if (!isStorypassAllowed(tempState)) {
-              // 🔴 DIRTY HARD RULE: Pass source='dirty_intensity' for Dirty button
-              const source = (level === 'Passionate') ? 'dirty_intensity' : null;
-              window.showPaywall({ mode: 'sub_only', source: source });
-              return;
-          }
           state.intensity = level;
           state.picks.intensity = level;
           updateIntensityUI();
@@ -13959,14 +14252,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // CANONICAL VALIDATION: StoryPass must NEVER be USABLE in forbidden contexts
       // Uses isStorypassAllowed() as single source of truth
       if (storyPassUsable && !isStorypassAllowed()) {
-          const reason = state.intensity === 'Passionate' ? 'Dirty intensity' :
-                         state.storyLength === 'soulmates' ? 'Soulmates length' : 'forbidden context';
+          const reason = state.storyLength === 'soulmates' ? 'Soulmates length' : 'forbidden context';
           console.error(`[PAYWALL VALIDATION] HARD FAIL: StoryPass usable for ${reason}`);
           return {
               valid: false,
-              error: state.intensity === 'Passionate' ? VALIDATION_ERRORS.STORYPASS_DIRTY_LEAK :
-                     VALIDATION_ERRORS.STORYPASS_SOULMATES_LEAK,
-              context: { intensity: state.intensity, storyLength: state.storyLength }
+              error: VALIDATION_ERRORS.STORYPASS_SOULMATES_LEAK,
+              context: { storyLength: state.storyLength }
           };
       }
 
@@ -14232,20 +14523,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // This is the source of truth. HTML cards have data-storypass-allowed="false".
   // ═══════════════════════════════════════════════════════════════════════════
   const STORYPASS_EXCLUSIONS = {
-    intensity: {
-      'Passionate': false    // Dirty intensity: subscription-only, NO StoryPass
-    },
+    // Intensity no longer affects storypass eligibility
     length: {
       'soulmates': false  // Soulmates length: subscription-only, NO StoryPass
     }
   };
 
   function isStorypassAllowed(context = {}) {
-    const intensity = context.intensity || state.intensity;
     const storyLength = context.storyLength || state.storyLength;
 
-    // DATA-LEVEL EXCLUSION: Check registry (mirrors HTML data-storypass-allowed)
-    if (STORYPASS_EXCLUSIONS.intensity[intensity] === false) return false;
+    // DATA-LEVEL EXCLUSION: Check registry
     if (STORYPASS_EXCLUSIONS.length[storyLength] === false) return false;
 
     // All other contexts: StoryPass is allowed
@@ -14464,7 +14751,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   //   User MAY change arousal level WITHOUT destroying cover.
   //   → Cover may EVOLVE (border ↔ keyhole)
   //   → Core visual idea MUST remain unchanged
-  //   → This is handled by applyCoverIntensityLayers()
   //
   // ═══════════════════════════════════════════════════════════════════
 
@@ -14547,11 +14833,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
    * @returns {boolean}
    */
   function wouldEvolveCover(grp, newVal) {
-    if (!hasExistingCover()) return false;
-    // Only intensity (arousal) causes cover evolution
-    if (grp !== 'intensity') return false;
-    const currentVal = state.intensity;
-    return currentVal !== newVal;
+    // Intensity no longer causes cover evolution
+    return false;
   }
 
   /**
@@ -15187,9 +15470,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       document.getElementById('petitionRitualArea')?.classList.remove('hidden');
       disableTurnControls();
 
-      // Omen phase
+      // Omen phase — temperature-driven atmospheric signal
       const omenEl = document.getElementById('petitionOmen');
-      const omen = PETITION_OMENS[Math.floor(Math.random() * PETITION_OMENS.length)];
+      const omen = generateOmen();
       if (omenEl) {
           omenEl.textContent = omen;
           omenEl.classList.add('fade-in');
@@ -16311,8 +16594,7 @@ ${nameInventionDirectives ? '\n' + nameInventionDirectives : ''}
 ${archetypeDirectives}
 ${safetyStr}
 
-Current Intensity: ${state.intensity || 'Naughty'}
-(Clean: Romance only. Naughty: Tension/Heat. Steamy: Intense. Passionate: Unrestrained).
+Intimacy is authorized ONLY when the narrative reaches ST3, the scene gate is open, and the player initiates.
 
 RULES:
 1. Write in the selected POV.
@@ -16881,7 +17163,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   let zoomOriginalNextSibling = null;
 
   function initSelectionHandlers(){
-    state.safety = state.safety || { mode:'balanced', darkThemes:true, nonConImplied:false, violence:true, boundaries:[] };
+    state.safety = state.safety || { darkThemes:true, violence:true, boundaries:[] };
 
     // Initialize default dynamic (single-select in 4-axis system)
     if (!state.picks.dynamic) {
@@ -21812,7 +22094,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       document.querySelectorAll('#boundaryChips .chip-gold.active').forEach(c => {
         boundaries.push(c.textContent.trim());
       });
-      state.safety = { darkThemes, nonConImplied: false, violence, boundaries, mode: 'balanced' };
+      state.safety = { darkThemes, violence, boundaries };
       // Create breadcrumb for safety
       const safetyLabel = darkThemes ? 'Dark OK' : 'No Dark';
       createBreadcrumbDirect('safety', darkThemes ? 'dark' : 'safe', safetyLabel);
@@ -22229,7 +22511,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         await new Promise(r => setTimeout(r, 100));
         // Safety: auto-commit default
         if (stage === 'safety') {
-          state.safety = state.safety || { mode: 'balanced', darkThemes: true, nonConImplied: false, violence: true, boundaries: [] };
+          state.safety = state.safety || { darkThemes: true, violence: true, boundaries: [] };
         }
         console.log(`[Corridor] Autoplay skipped non-card row ${rowIdx}: ${stage}`);
         continue;
@@ -22694,8 +22976,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Suppress if Pull = Survival and stakes dominant
     if (state.picks?.pressure === 'Survival') return true;
 
-    // Suppress if arousal tier is low (Clean)
-    if (state.intensity === 'Clean') return true;
+    // Intensity no longer suppresses romance pull
 
     return false;
   }
@@ -25986,19 +26267,20 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     completePurchase();
   });
 
-  // Subscription purchase — real Stripe checkout (or dev bypass)
-  document.getElementById('paySub')?.addEventListener('click', async () => {
+  // Subscription purchase helper — shared by Storied and Favored
+  async function initiateSubscriptionCheckout(priceIdEnvVar, tierName) {
     // DEV BYPASS: fake successful subscription
     if (window._devBypass) {
-      console.log('%c[DEV] Faking subscription purchase', 'color: #ffd700');
+      console.log(`%c[DEV] Faking ${tierName} subscription purchase`, 'color: #ffd700');
       state.lastPurchaseType = 'sub';
       state.subscribed = true;
+      state.subscriptionTier = tierName;
       state.billingStatus = 'active';
       completePurchase();
       return;
     }
 
-    console.log('[STRIPE] Subscription checkout initiated');
+    console.log(`[STRIPE] ${tierName} subscription checkout initiated`);
 
     try {
       const user = window.supabase?.auth?.getUser
@@ -26014,7 +26296,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          priceId: process.env.STRIPE_PRICE_ID_SUBSCRIPTION,
+          priceId: priceIdEnvVar,
           supabaseUserId: user.id
         })
       });
@@ -26028,8 +26310,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       window.location.href = data.url;
     } catch (err) {
-      console.error('[STRIPE] Subscription checkout error:', err);
+      console.error(`[STRIPE] ${tierName} subscription checkout error:`, err);
     }
+  }
+
+  // Storied subscription ($6/mo)
+  document.getElementById('paySubStoried')?.addEventListener('click', () => {
+    initiateSubscriptionCheckout(process.env.STRIPE_PRICE_ID_STORIED, 'storied');
+  });
+
+  // Favored subscription ($9/mo)
+  document.getElementById('paySubFavored')?.addEventListener('click', () => {
+    initiateSubscriptionCheckout(process.env.STRIPE_PRICE_ID_FAVORED, 'favored');
   });
 
   $('payGodMode')?.addEventListener('click', () => {
@@ -29372,13 +29664,13 @@ ${prehistoricForbid}
     ${buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength)}
     ${safetyStr}
 
-    Current Intensity: ${state.intensity}
-    (Clean: Romance only. Naughty: Tension/Heat. Steamy: Intense. Passionate: Unrestrained).
-    
+    Intimacy is authorized ONLY when the narrative reaches ST3 (Permission Granted), the scene gate is open, and the player initiates physical escalation.
+    Before that point: tension, longing, near-misses only. No explicit contact between main pair.
+
     RULES:
     1. Write in the selected POV.
     2. Respond to the player's actions naturally.
-    3. Keep pacing slow and tense (unless Dirty).
+    3. Keep pacing slow and tense.
     4. Focus on sensory details, longing, and chemistry.
     5. Be creative, surprising, and emotionally resonant.
     6. BANNED WORDS/TOPICS: ${(state.constraints?.bannedWords || []).join(', ')}.
@@ -29407,9 +29699,10 @@ ${prehistoricForbid}
     // Based on ORIGINAL picks before any downgrade. This value NEVER changes for this story.
     // FALSE if Dirty intensity or Soulmates length (subscription-only content)
     if (state.storypassEligible === undefined) {
-        state.storypassEligible = !(state.intensity === 'Passionate' || state.storyLength === 'soulmates');
+        // Intensity no longer affects storypass eligibility — only story length matters
+        state.storypassEligible = !(state.storyLength === 'soulmates');
         console.log('[STORYPASS] Eligibility computed at creation:', state.storypassEligible,
-            '(intensity:', state.intensity, ', length:', state.storyLength, ')');
+            '(length:', state.storyLength, ')');
     }
 
     // STORY SHAPE SNAPSHOT: Store current shape for Continue Story logic
@@ -29418,15 +29711,9 @@ ${prehistoricForbid}
     // NOTE: Loader already shown in Phase 2 (before async work)
     // Screen transition, cover page, and loading already active
 
-    // Pacing rules based on intensity
-    const pacingRules = {
-        'Clean': 'Focus only on atmosphere, world-building, and hints of the protagonist\'s past. No tension, no longing—just setting and mystery.',
-        'Naughty': 'Focus on atmosphere and world-building. Light emotional undertones allowed, but no romantic tension yet.',
-        'Steamy': 'Build atmosphere first. Romantic tension may simmer beneath the surface, but keep the focus on setting.',
-        'Passionate': 'Atmosphere first, but charged undercurrents are allowed. The heat can be present from the start.'
-    };
-    const pacingRule = pacingRules[state.intensity] || pacingRules['Naughty'];
-    const liAppears = state.intensity === 'Passionate' || Math.random() < 0.25;
+    // Pacing rule for scene 1 — intensity no longer controls pacing
+    const pacingRule = 'Build atmosphere first. Romantic tension may simmer beneath the surface, but keep the focus on setting and world-building.';
+    const liAppears = Math.random() < 0.25;
 
     const authorOpeningDirective = state.povMode === 'author5th' ? `
 THE AUTHOR (5TH PERSON) — POV REGIME — MANDATORY OPENER:
@@ -29457,13 +29744,10 @@ THE AUTHOR (5TH PERSON) — POV REGIME — MANDATORY OPENER:
     // 5TH PERSON POV CONTRACT INJECTION (locked, non-editable)
     const fifthPersonContract = build5thPersonContract();
 
-    // EROTIC ESCALATION BLOCK (Erotic/Dirty intensity only)
-    const eroticEscalationBlock = buildEroticEscalationBlock();
-
     // TONE ENFORCEMENT BLOCK (all tones)
     const toneEnforcementBlock = buildToneEnforcementBlock(state.picks?.tone);
 
-    const introPrompt = `${fifthPersonContract}${eroticEscalationBlock}${toneEnforcementBlock}Write the opening scene (500-600 words). This is the LONGEST scene in the story — take your time establishing world and character.
+    const introPrompt = `${fifthPersonContract}${toneEnforcementBlock}Write the opening scene (500-600 words). This is the LONGEST scene in the story — take your time establishing world and character.
 ${authorOpeningDirective}
 OPENING MODE: ${selectedOpening.mode}
 ${selectedOpening.directive}
@@ -29852,31 +30136,7 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
             console.warn('[NarrativeAuthorityFail] Scene 1 regenerated due to:', scene1NarrCheck.errors.map(e => e.code));
         }
 
-        // EROTIC ESCALATION VALIDATION (Scene 1)
-        if (['Steamy', 'Passionate'].includes(state.intensity)) {
-            const escalationCheck = validateEroticEscalation(text, state.intensity);
-            if (!escalationCheck.valid) {
-                console.log('[EroticEscalation] Validation failed:', escalationCheck.violations);
-                console.log('[EroticEscalation] Metrics:', escalationCheck.metrics);
-                // Regenerate with explicit escalation notice
-                const escalationPrompt = EROTIC_ESCALATION_BLOCK +
-                    (state.intensity === 'Passionate' ? DIRTY_ESCALATION_ADDENDUM : '') +
-                    '\n\nREGENERATION REQUIRED — Previous output failed escalation check:\n- ' +
-                    escalationCheck.violations.join('\n- ') +
-                    '\n\nYou MUST include more sensory grounding (breath, skin, heat, touch) and bodily contradiction (restraint vs reaction).\n\n' + introPrompt;
-                text = await callChat([
-                    { role: 'system', content: state.sysPrompt },
-                    { role: 'user', content: escalationPrompt }
-                ]);
-                // REFUSAL GATE: Check regeneration output
-                const escRefusal = detectProseRefusal(text);
-                if (escRefusal.isRefusal) {
-                    console.error('[ProseRefusal] Erotic escalation regeneration refused:', escRefusal.reason);
-                    throw new ProseRefusalError(escRefusal.reason, text);
-                }
-                // Log result to Dev HUD
-                console.warn('[EroticEscalationFail] Scene 1 regenerated due to:', escalationCheck.violations);
-            }
+        // EROTIC ESCALATION VALIDATION — removed (intensity no longer controls routing)
         }
 
         // TONE VALIDATION (Scene 1 — all stories)
@@ -30126,7 +30386,6 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                 console.log('[BookCover] PHASE_1_FORGED mode — using local fallback cover');
                 renderFallbackCover(state.picks?.world, state.picks?.genre, cleanTitle);
                 stopCoverLoading(null);
-                applyCoverIntensityLayers(state.intensity, state.picks?.world);
             } else {
                 // CUSTOM COVER PATH (gated — only when coverEligibility === true)
                 generateBookCover(synopsis, cleanTitle, authorDisplayName).then(coverUrl => {
@@ -30138,7 +30397,6 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
                         renderFallbackCover(state.picks?.world, state.picks?.genre, cleanTitle);
                         stopCoverLoading(null);
                     }
-                    applyCoverIntensityLayers(state.intensity, state.picks?.world);
                 });
             }
         }, 0);
@@ -30215,7 +30473,6 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // Clean up cover page state on error — render fallback (never skip)
         renderFallbackCover(state.picks?.world, state.picks?.genre);
         stopCoverLoading(null);
-        applyCoverIntensityLayers(state.intensity, state.picks?.world);
 
         alert("Fate stumbled. Please try again. (Check console for diagnostics)");
         window.showScreen('setup');
@@ -30323,6 +30580,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
       playerAction,
       playerDialogue,
       fateCard,
+      mainPairRestricted,
       onPhaseChange
     } = params;
 
@@ -30340,11 +30598,11 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
     // Execute full orchestration flow
     const result = await window.StoryboundOrchestration.orchestrateStoryGeneration({
       accessTier: state.access || 'free',
-      requestedEroticism: state.intensity || 'Clean',
       storyContext: storyContext,
       playerAction: playerAction,
       playerDialogue: playerDialogue,
       fateCard: fateCard,
+      mainPairRestricted: !!mainPairRestricted,
       systemPrompt: systemPrompt,
       onPhaseChange: onPhaseChange
     });
@@ -30638,7 +30896,6 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
       }
       renderFallbackCover(state.picks?.world, state.picks?.genre);
       stopCoverLoading(null);
-      applyCoverIntensityLayers(state.intensity, state.picks?.world);
   }
 
   // ============================================================
@@ -31564,12 +31821,10 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const genre = state.picks?.genre || 'Billionaire';
       const dynamic = state.picks?.dynamic || 'Enemies';
       const world = state.picks?.world || 'Modern';
-      const intensity = state.intensity || 'Naughty';
-
       const gp = GENRE_PHRASE[genre] || 'intrigue';
       const dp = DYNAMIC_PHRASE[dynamic] || 'two lives collide';
       const wp = WORLD_SHADE[world] || '';
-      const storyNoun = (intensity === 'Steamy' || intensity === 'Passionate') ? 'story' : 'tale';
+      const storyNoun = 'tale';
 
       return 'A Storybound ' + storyNoun + ' of ' + gp + ' where ' + dp + ' ' + wp + '.';
   }
@@ -31665,212 +31920,40 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   }
 
   /**
-   * Apply intensity-based cover overlays.
-   * Clean/Naughty → nothing, Erotic → gold border, Dirty → keyhole takeover.
-   * Soulmates is a MODIFIER (not intensity) — derived from state.storyLength === 'soulmates'.
-   *
-   * LOCKED RULES:
-   * - Keyhole ONLY appears when arousal === Dirty
-   * - Ornate border ONLY appears when arousal === Erotic (NOT Tease, Naughty, or Dirty)
-   * - Soulmates modulates material warmth (adds 'soulmates' class), never introduces keyhole
-   *
-   * COVER SEQUENCING AUTHORITY (Storyturn + Arousal Gates):
-   * - Phase 1-2 (ST1-ST2): NO borders, NO keyholes — sketch/refinement only
-   * - Phase 3 (ST3+, arousal < Erotic): NO borders, NO keyholes
-   * - Phase 4 (arousal === Erotic): Ornate border ALLOWED
-   * - Phase 5 (arousal === Dirty): Keyhole REQUIRED, border superseded
-   *
-   * ORNATE BORDER SYSTEM (Image-Based):
-   * - Asset path: /assets/borders/ornate/{world}_base.png
-   * - 6 worlds: modern, fantasy, scifi, historical, postapocalyptic, dystopia (no Mythic)
-   * - Flavor affects surface condition only (damage/aging/corrosion), not geometry
-   * - Failure: suppress border and log "Ornate border asset unavailable — border suppressed"
+   * Cover overlay stub — all intensity-based cover overlays removed.
+   * Cover visuals depend ONLY on world, tone, archetype, and story milestones.
+   * No border/keyhole/intensity signaling.
    */
-  function applyCoverIntensityLayers(intensity, world) {
-      // ═══════════════════════════════════════════════════════════════════
-      // WRY CONFESSIONAL — UI SUPPRESSION (authoritative gate)
-      // ═══════════════════════════════════════════════════════════════════
-      if (state.picks?.tone === 'Wry Confessional') {
-          document.getElementById('requiresSubscriptionAccess')?.classList.add('hidden');
-          document.getElementById('coverIntensityOverlay')?.classList.add('hidden');
-          document.getElementById('coverCTAButtons')?.classList.add('hidden');
-          document.getElementById('coverOrnateBorder')?.classList.add('hidden');
-          document.getElementById('coverKeyholeOverlay')?.classList.add('hidden');
-          console.log('[CoverIntensity] Wry Confessional — all overlays suppressed');
-          return;
-      }
-
-      const borderEl = document.getElementById('coverOrnateBorder');
-      const keyholeEl = document.getElementById('coverKeyholeOverlay');
-      if (!borderEl || !keyholeEl) return;
-
-      // ═══════════════════════════════════════════════════════════════════
-      // COVER SEQUENCING VALIDATION (MANDATORY)
-      // ═══════════════════════════════════════════════════════════════════
-      const sequenceCheck = validateCoverSequencing(intensity);
-      if (!sequenceCheck.valid) {
-          console.error('[CoverSequencing] COVER SEQUENCING VIOLATION — OUTPUT SUPPRESSED');
-          console.error('[CoverSequencing] Reason:', sequenceCheck.reason);
-          // Suppress all overlays
-          borderEl.classList.add('hidden');
-          borderEl.className = 'cover-ornate-border hidden';
-          keyholeEl.classList.add('hidden');
-          keyholeEl.className = 'cover-keyhole-overlay hidden';
-          return;
-      }
-
-      // COVER ESCALATION VALIDATION
-      // Cover may escalate beyond title baseline, but must not contradict downward
-      if (state.titleBaselineArousal) {
-          const escalationCheck = validateCoverEscalation(
-              state.titleBaselineArousal,  // Title's original arousal
-              intensity || 'Naughty',       // Current cover arousal
-              state.titleBaselineArousal    // Baseline
-          );
-          if (!escalationCheck.valid) {
-              console.error('[CoverEscalation] BLOCKED:', escalationCheck.error.message);
-              // Do not apply de-escalated layers — keep current state
-              return;
-          }
-      }
-
-      // Soulmates is a modifier overlay, derived from story length
-      const hasSoulmates = state.storyLength === 'soulmates';
-
-      // Reset both layers
-      borderEl.classList.add('hidden');
-      borderEl.className = 'cover-ornate-border hidden';
-      keyholeEl.classList.add('hidden');
-      keyholeEl.classList.remove('soulmates');
-
-      const level = (intensity || '').toLowerCase();
-
-      if (level === 'erotic') {
-          // ═══════════════════════════════════════════════════════════════
-          // EROTIC: Image-based border (ONLY for Erotic tier)
-          // ═══════════════════════════════════════════════════════════════
-          applyOrnateBorder(borderEl, world, hasSoulmates);
-      } else if (level === 'dirty') {
-          // ═══════════════════════════════════════════════════════════════
-          // DIRTY: Keyhole takeover (ONLY for Dirty tier)
-          // ═══════════════════════════════════════════════════════════════
-          applyDirtyKeyhole(keyholeEl, world, hasSoulmates);
-      }
-      // Tease/Naughty: no overlay layers (art fully visible)
-      // Soulmates alone (non-Erotic, non-Dirty) affects art generation warmth, not cover layers
-  }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // COVER SEQUENCING AUTHORITY — Storyturn + Arousal Gate Validation
+  // COVER SEQUENCING — Storyturn-based phases only
   // ═══════════════════════════════════════════════════════════════════════════
-  // You do NOT decide when erotic signaling appears.
-  // You obey Storyturns and Arousal gates.
-  //
-  // PHASE DEFINITIONS:
-  //   Phase 1 (SKETCH):         Scene 1 exists, ST1
-  //   Phase 2 (REFINED SKETCH): ST1–ST2
-  //   Phase 3 (POST-ST3):       ST3+ AND arousal < Erotic
-  //   Phase 4 (EROTIC):         arousal === Erotic (border allowed)
-  //   Phase 5 (DIRTY):          arousal === Dirty (keyhole required)
-  //
-  // HARD FAIL CONDITIONS:
-  //   - Border before Erotic arousal → FAIL
-  //   - Keyhole before Dirty arousal → FAIL
-  //   - Erotic signaling based on "vibe" or tone → FAIL
-  //
-  // FAILURE OUTPUT:
-  //   "COVER SEQUENCING VIOLATION — OUTPUT SUPPRESSED"
+  // Phase 1 (SKETCH):         Scene 1 exists, ST1
+  // Phase 2 (REFINED SKETCH): ST2
+  // Phase 3 (POST-ST3):       ST3+
+  // No arousal/intensity phases. Cover visuals reflect world, tone, milestones.
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Determine current cover phase based on storyturn and arousal.
-   * @returns {number} Phase 1-5
+   * Determine current cover phase based on storyturn.
+   * @returns {number} Phase 0-3
    */
   function getCoverPhase() {
       const storyturn = state.storyturn || 'ST1';
-      const arousal = (state.intensity || 'Naughty').toLowerCase();
       const sceneCount = state.scenes?.length || 0;
-
-      // No scenes = pre-Phase 1
       if (sceneCount === 0) return 0;
-
-      // Phase 5: Dirty arousal (keyhole required)
-      if (arousal === 'dirty') return 5;
-
-      // Phase 4: Erotic arousal (border allowed)
-      if (arousal === 'erotic') return 4;
-
-      // Extract storyturn number
       const stNum = parseInt(storyturn.replace(/\D/g, ''), 10) || 1;
-
-      // Phase 3: ST3+ with arousal < Erotic
       if (stNum >= 3) return 3;
-
-      // Phase 2: ST2
       if (stNum === 2) return 2;
-
-      // Phase 1: ST1 (default)
       return 1;
   }
 
   /**
    * Validate cover sequencing rules.
-   * @param {string} intensity - Requested arousal intensity
    * @returns {{valid: boolean, reason: string|null, phase: number}}
    */
-  function validateCoverSequencing(intensity) {
-      const phase = getCoverPhase();
-      const level = (intensity || '').toLowerCase();
-
-      // Phase 0: No story yet — no overlays allowed but not a failure
-      if (phase === 0) {
-          return { valid: true, reason: null, phase: 0 };
-      }
-
-      // Phase 1-3: NO erotic signaling allowed
-      if (phase >= 1 && phase <= 3) {
-          if (level === 'erotic') {
-              return {
-                  valid: false,
-                  reason: `Ornate border requested at Phase ${phase} (${state.storyturn || 'ST1'}) — borders only allowed at arousal === Erotic`,
-                  phase
-              };
-          }
-          if (level === 'dirty') {
-              return {
-                  valid: false,
-                  reason: `Dirty keyhole requested at Phase ${phase} (${state.storyturn || 'ST1'}) — keyholes only allowed at arousal === Dirty`,
-                  phase
-              };
-          }
-      }
-
-      // Phase 4: Ornate border allowed, keyhole NOT allowed
-      if (phase === 4) {
-          if (level === 'dirty') {
-              return {
-                  valid: false,
-                  reason: 'Dirty keyhole requested at Phase 4 (Erotic arousal) — keyholes only allowed at arousal === Dirty',
-                  phase
-              };
-          }
-          // Ornate border is allowed at phase 4
-      }
-
-      // Phase 5: Keyhole required, border superseded
-      if (phase === 5) {
-          if (level === 'erotic') {
-              return {
-                  valid: false,
-                  reason: 'Ornate border requested at Phase 5 (Dirty arousal) — keyhole supersedes border at Dirty tier',
-                  phase
-              };
-          }
-          // Dirty keyhole is required at phase 5
-      }
-
-      // All checks passed
-      return { valid: true, reason: null, phase };
+  function validateCoverSequencing() {
+      return { valid: true, reason: null, phase: getCoverPhase() };
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -33742,21 +33825,9 @@ ${tone === 'Wry Confessional'
       };
   }
 
-  // Visualize intensity bias based on player's selected eroticism level
+  // Visualize imagery bias — no longer intensity-dependent
   function getVisualizeIntensityBias() {
-      const intensity = state.intensity || 'Naughty';
-      switch(intensity) {
-          case 'Clean':
-              return 'Clean, non-sexual imagery. Romantic but modest. No nudity or explicit content.';
-          case 'Naughty':
-              return 'Suggestive, flirtatious imagery. Sensual tension without explicit nudity. Tasteful allure.';
-          case 'Steamy':
-              return 'Explicit, sensual imagery. Passionate and intimate. Artistic nudity permitted.';
-          case 'Passionate':
-              return 'As explicit as community standards allow. Intensely passionate and provocative.';
-          default:
-              return 'Suggestive, flirtatious imagery. Sensual tension.';
-      }
+      return 'Suggestive, flirtatious imagery. Sensual tension without explicit nudity. Tasteful allure.';
   }
 
   // ── Visualize Helpers (Pure Story Shape Reflection) ──
@@ -36457,11 +36528,8 @@ Respond in this EXACT format (no labels, just two lines):
               return;
           }
 
-          // TIER-BASED IMAGE ENGINE ROUTING
-          // Clean/Naughty → OpenAI (sanitized prompt)
-          // Erotic/Dirty → Perchance (restored prompt) with OpenAI fallback
-          const currentTier = state.intensity || 'Naughty';
-          const rawUrl = await generateTieredImage(basePrompt, currentTier);
+          // IMAGE ENGINE ROUTING — intensity no longer controls engine selection
+          const rawUrl = await generateTieredImage(basePrompt, 'Clean');
 
           // Check if cancelled after image generation
           if (_vizCancelled) {
@@ -36740,18 +36808,53 @@ Respond in this EXACT format (no labels, just two lines):
       const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
       const context = allContent.slice(-3000);
       
+      // INTIMACY WINDOW — computed, not persisted
+      const intimacyWindowOpen =
+          isSexAllowedAtCurrentStoryturn() &&
+          (state.turnCount || 0) >= getMainPairIntimacyGateScene();
+
+      // Track turns inside window; reset when outside
+      if (intimacyWindowOpen) {
+          state.intimacyTurnsInWindow += 1;
+      } else {
+          state.intimacyTurnsInWindow = 0;
+      }
+
+      // MAIN PAIR AUTHORIZATION — ST3 + SceneGate + (PlayerInitiated OR 2+ turns in window)
+      const playerInitiated = detectPlayerInitiation(safeAction, safeDialogue);
+      const mainPairAuthorized =
+          (state.godModeActive) ||
+          (intimacyWindowOpen &&
+           (playerInitiated ||
+            state.intimacyTurnsInWindow >= 2));
+
+      // SCENE-LEVEL EXPLICIT CONTEXT — NPC×NPC, brothel, dream, etc.
+      const sceneExplicitContext = detectSceneExplicitContext(context);
+
+      // COMBINED: explicit embodiment authorized if main pair OR scene context
+      const explicitEmbodimentAuthorized =
+          mainPairAuthorized || sceneExplicitContext;
+
       let intensityGuard = "";
       if (state.godModeActive) {
           intensityGuard = "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED.";
-      } else if (state.intensity === "Naughty") {
-          intensityGuard = "INTENSITY RULE: Naughty. Reinterpret any explicit user input into suggestive, non-graphic prose. Do NOT echo graphic terms. Focus on tension.";
-      } else if (state.intensity === "Steamy") {
-          intensityGuard = "INTENSITY RULE: Erotic. Explicit intimacy allowed. If input is extreme, soften it while preserving the act. Maintain literary tone.";
-      } else if (state.intensity === "Passionate") {
-          intensityGuard = "INTENSITY RULE: Dirty. Depict entered actions/words. Apply the selected Style voice (e.g. Shakespearean/Breathless). Dirty isn't always raw; respect the Voice.";
+      } else if (mainPairAuthorized) {
+          intensityGuard = "INTIMACY AUTHORIZED: The player has initiated physical escalation at the appropriate narrative stage. Explicit intimacy is permitted. Maintain literary tone and the selected Style voice.";
+      } else if (sceneExplicitContext) {
+          intensityGuard = `SCENE EXPLICIT CONTEXT: The scene involves NPC intimacy, a brothel/bathhouse/orgy environment, or a dream/fantasy sequence. Explicit embodiment is permitted for side characters, background figures, dream sequences, fantasies, or non-primary interactions.
+
+MAIN PAIR RESTRICTION:
+The primary romantic pair must NOT consummate or advance their physical union in this beat.
+Their relationship pacing remains governed by ST progression.
+If both main characters are present, render their tension and restraint ONLY — no physical escalation between them.`;
+      } else if (intimacyWindowOpen && !playerInitiated && state.intimacyTurnsInWindow === 1) {
+          intensityGuard = "Intimacy window is open. Increase tension and proximity. Do not escalate to explicit union yet.";
       } else {
-          intensityGuard = "INTENSITY RULE: Clean. Romance and chemistry only. Fade to black if necessary.";
+          intensityGuard = "INTIMACY NOT YET AUTHORIZED: Focus on tension, chemistry, emotional stakes, and near-misses. Fade to black or redirect if the player attempts explicit escalation.";
       }
+
+      // Flag for renderer safety belt: restrict main pair when scene-explicit context fires without main pair authorization
+      const mainPairRestricted = sceneExplicitContext && !mainPairAuthorized;
 
       // PACING HELPER
       function buildPacingDirective() {
@@ -36832,9 +36935,8 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
        */
       function getMainPairIntimacyGateScene() {
           const storyLength = state.storyLength || 'tease';
-          const intensity = state.intensity || 'Naughty';
 
-          // Base gates by story length tier
+          // Base gates by story length only — intensity no longer modifies gate timing
           const baseGates = {
               tease: 4,    // Short: tension builds quickly
               fling: 6,    // Medium: more buildup
@@ -36842,15 +36944,6 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
           };
 
           let gateScene = baseGates[storyLength] || 4;
-
-          // Intensity modifiers — Dirty/Erotic opens gate earlier
-          if (intensity === 'Passionate') {
-              gateScene = Math.max(2, gateScene - 2);  // Dirty: 2 scenes earlier
-          } else if (intensity === 'Steamy') {
-              gateScene = Math.max(3, gateScene - 1);  // Erotic: 1 scene earlier
-          } else if (intensity === 'Flirty') {
-              gateScene += 1;  // Flirty: slower burn
-          }
 
           // Milestone modifiers — certain flags can adjust gate
           if (state.intimacyInterrupted?.first_kiss) {
@@ -36875,17 +36968,10 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
        * (Used to determine scene length, not to block content)
        */
       function detectMainPairEroticContent() {
-          // Check if intensity suggests erotic content
-          const intensity = state.intensity || 'Naughty';
-          if (!['Steamy', 'Passionate'].includes(intensity)) {
-              return false;
-          }
-
           // Check if both intimacy gates have been cleared (past first interrupts)
           if (state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_sex) {
               return true;  // Full intimacy unlocked
           }
-
           return false;
       }
 
@@ -36896,23 +36982,11 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
       function buildEroticGatingDirective() {
           const sceneIndex = state.turnCount || 0;
           const gateScene = getMainPairIntimacyGateScene();
-          const intensity = state.intensity || 'Naughty';
           const currentSt = state.storyturn || 'ST1';
           const storyLength = (state.storyLength || 'tease').toLowerCase();
           const isSceneGateOpen = sceneIndex >= gateScene;
-
-          // Only apply gating for erotic/dirty intensity
-          if (!['Steamy', 'Passionate'].includes(intensity)) {
-              return '';  // Non-erotic intensity: no special gating needed
-          }
-
-          // Check Storyturn-based sex permission
-          const sexAllowedAtStoryturn = typeof isSexAllowedAtCurrentStoryturn === 'function'
-              ? isSexAllowedAtCurrentStoryturn()
-              : false;
-          const completionAllowed = typeof isSexCompletionAllowed === 'function'
-              ? isSexCompletionAllowed()
-              : false;
+          const sexAllowedAtStoryturn = isSexAllowedAtCurrentStoryturn();
+          const completionAllowed = isSexCompletionAllowed();
 
           // Full gate open: both scene gate AND storyturn allow sex
           if (isSceneGateOpen && sexAllowedAtStoryturn && completionAllowed) {
@@ -36933,24 +37007,26 @@ The scene MUST end on a cliffhanger before completion.
 This is the Tease ceiling — upgrade unlocks resolution.`;
           }
 
-          // Gate is CLOSED: Allow ambient erotic, block main pair contact
-          return `
-EROTIC GATING (Scene ${sceneIndex + 1}/${currentSt}, Gate opens at Scene ${gateScene + 1}):
+          // Gate is CLOSED: block main pair contact
+          if (!isSceneGateOpen || !sexAllowedAtStoryturn) {
+              return `
+INTIMACY GATING (Scene ${sceneIndex + 1}/${currentSt}, Gate opens at Scene ${gateScene + 1}/ST3):
 The two MAIN CHARACTERS must NOT have sexual or romantic physical contact yet.
 - NO kissing between main pair
 - NO sexual touching between main pair
 - NO sex between main pair
 - NO "almost kiss" or "accidental contact" loopholes
 
-✅ ALLOWED erotic content (to maintain ${intensity} tone):
-- Side characters engaging in sexual activity
-- Memories or flashbacks of past encounters with others
-- Dreams or fantasies about others
-- Witnessing or overhearing other characters
-- Voyeuristic or ambient erotic atmosphere
+ALLOWED atmospheric content:
 - Tension, temptation, near-misses that do NOT resolve
+- Side characters in romantic or sexual situations
+- Memories, dreams, or fantasies
+- Voyeuristic or ambient atmosphere
 
 Build the tension. Delay the payoff. The main pair's unresolved desire IS the story.`;
+          }
+
+          return '';
       }
 
       // INTIMACY MILESTONE INTERRUPTION — inject directive if first attempt
@@ -37009,9 +37085,6 @@ FATE CARD ADAPTATION (CRITICAL):
       // 5TH PERSON POV CONTRACT INJECTION (turns)
       const turnPOVContract = build5thPersonContract();
 
-      // EROTIC ESCALATION BLOCK (Erotic/Dirty intensity only)
-      const turnEroticEscalation = buildEroticEscalationBlock();
-
       // TONE ENFORCEMENT BLOCK (all tones)
       const turnToneEnforcement = buildToneEnforcementBlock(state.picks?.tone);
 
@@ -37041,7 +37114,7 @@ FATE CARD ADAPTATION (CRITICAL):
           ? buildIntentConsequenceDirective(act, dia)
           : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -37093,7 +37166,7 @@ FATE CARD ADAPTATION (CRITICAL):
            */
           const useFullOrchestration = ENABLE_ORCHESTRATION &&
                                        window.StoryboundOrchestration &&
-                                       ['Steamy', 'Passionate'].includes(state.intensity);
+                                       explicitEmbodimentAuthorized;
 
           let raw;
 
@@ -37110,6 +37183,7 @@ FATE CARD ADAPTATION (CRITICAL):
                   playerAction: act,
                   playerDialogue: dia,
                   fateCard: selectedFateCard,
+                  mainPairRestricted,
                   onPhaseChange: (phase, data) => {
                       // Update loading message based on phase
                       if (phase === 'AUTHOR_PASS') {
@@ -37137,7 +37211,7 @@ FATE CARD ADAPTATION (CRITICAL):
           // 5TH PERSON POV VALIDATION (later scenes — reduced frequency expected)
           if (state.povMode === 'author5th') {
               // Check if this is an erotic scene (Author should be absent)
-              const isEroticScene = ['Steamy', 'Passionate'].includes(state.intensity) &&
+              const isEroticScene = explicitEmbodimentAuthorized &&
                   (raw.toLowerCase().includes('moan') || raw.toLowerCase().includes('thrust') ||
                    raw.toLowerCase().includes('naked') || raw.toLowerCase().includes('undress'));
 
@@ -37161,6 +37235,7 @@ Regenerate the scene with ZERO Author presence.`;
                               playerAction: act,
                               playerDialogue: dia,
                               fateCard: selectedFateCard,
+                              mainPairRestricted,
                               onPhaseChange: () => {}
                           });
                       } else {
@@ -37236,6 +37311,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
                       playerAction: act,
                       playerDialogue: dia,
                       fateCard: selectedFateCard,
+                      mainPairRestricted,
                       onPhaseChange: () => {}
                   });
               } else {
@@ -37277,6 +37353,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
                       playerAction: act,
                       playerDialogue: dia,
                       fateCard: selectedFateCard,
+                      mainPairRestricted,
                       onPhaseChange: () => {}
                   });
               } else {
@@ -37308,6 +37385,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
                           playerAction: act,
                           playerDialogue: dia,
                           fateCard: selectedFateCard,
+                          mainPairRestricted,
                           onPhaseChange: () => {}
                       });
                   } else {
@@ -37341,6 +37419,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
                       playerAction: act,
                       playerDialogue: dia,
                       fateCard: selectedFateCard,
+                      mainPairRestricted,
                       onPhaseChange: () => {}
                   });
               } else {
@@ -37352,34 +37431,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               console.warn('[NarrativeAuthorityFail] Turn regenerated due to:', narrativeAuthorityCheck.errors.map(e => e.code));
           }
 
-          // EROTIC ESCALATION VALIDATION (Turns)
-          if (['Steamy', 'Passionate'].includes(state.intensity)) {
-              const turnEscalationCheck = validateEroticEscalation(raw, state.intensity);
-              if (!turnEscalationCheck.valid) {
-                  console.log('[EroticEscalation] Turn validation failed:', turnEscalationCheck.violations);
-                  // Regenerate with explicit escalation notice
-                  const escalationPrompt = buildEroticEscalationBlock() +
-                      '\n\nREGENERATION REQUIRED — Previous output failed escalation check:\n- ' +
-                      turnEscalationCheck.violations.join('\n- ') +
-                      '\n\nAdd more sensory grounding and physical tension.';
-                  if (useFullOrchestration) {
-                      raw = await generateOrchestatedTurn({
-                          systemPrompt: fullSys + escalationPrompt,
-                          storyContext: context,
-                          playerAction: act,
-                          playerDialogue: dia,
-                          fateCard: selectedFateCard,
-                          onPhaseChange: () => {}
-                      });
-                  } else {
-                      raw = await callChat([
-                          { role: 'system', content: fullSys + escalationPrompt },
-                          { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
-                      ]);
-                  }
-                  console.warn('[EroticEscalationFail] Turn regenerated due to:', turnEscalationCheck.violations);
-              }
-          }
+          // EROTIC ESCALATION VALIDATION — removed (intensity no longer controls routing)
 
           // TONE VALIDATION (Turns — all stories)
           const turnTone = state.picks?.tone || 'Earnest';
@@ -37397,6 +37449,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
                       playerAction: act,
                       playerDialogue: dia,
                       fateCard: selectedFateCard,
+                      mainPairRestricted,
                       onPhaseChange: () => {}
                   });
               } else {
@@ -37515,6 +37568,25 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
                   if (state.fate.earlyGamingCount <= 1 && state.fate.stance === 'trickster') {
                       state.fate.stance = 'neutral';
                   }
+              }
+          }
+
+          // Reset per-scene keyhole boon flag + post-turn keyhole maintenance
+          if (state.keyhole) {
+              state.keyhole.boonUsedThisScene = false;
+              regenerateKeyholeReservoir();
+              maybeShiftKeyholeOrientation();
+              // Alignment entropy — slow drift toward 0, warmth must be maintained
+              if (state.keyhole.alignmentScore > 0) state.keyhole.alignmentScore -= 1;
+              if (state.keyhole.alignmentScore < 0) state.keyhole.alignmentScore += 1;
+          }
+
+          // Omen decay recovery + seasonal warmth override
+          recoverOmenDecay();
+          if (state.omen) {
+              state.omen.temporaryWarmth = false;
+              if (state.omen.decayStage >= 2 && Math.random() < 0.08) {
+                  state.omen.temporaryWarmth = true;
               }
           }
 
@@ -37693,18 +37765,36 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
           const context = allContent.slice(-3000);
 
-          // 3. Build intensity guard (same as real turn)
+          // 3. Build intimacy authorization (same as real turn)
+          const specWindowOpen = isSexAllowedAtCurrentStoryturn() &&
+              (state.turnCount || 0) >= getMainPairIntimacyGateScene();
+          const specPlayerInitiated = detectPlayerInitiation(act, dia);
+          const specMainPairAuthorized =
+              (state.godModeActive) ||
+              (specWindowOpen &&
+               (specPlayerInitiated ||
+                state.intimacyTurnsInWindow >= 2));
+          const specSceneExplicitContext = detectSceneExplicitContext(context);
+          const specExplicitEmbodimentAuthorized =
+              specMainPairAuthorized || specSceneExplicitContext;
+          const specMainPairRestricted = specSceneExplicitContext && !specMainPairAuthorized;
+
           let intensityGuard = "";
           if (state.godModeActive) {
               intensityGuard = "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED.";
-          } else if (state.intensity === "Naughty") {
-              intensityGuard = "INTENSITY RULE: Naughty. Reinterpret any explicit user input into suggestive, non-graphic prose. Do NOT echo graphic terms. Focus on tension.";
-          } else if (state.intensity === "Steamy") {
-              intensityGuard = "INTENSITY RULE: Erotic. Explicit intimacy allowed. If input is extreme, soften it while preserving the act. Maintain literary tone.";
-          } else if (state.intensity === "Passionate") {
-              intensityGuard = "INTENSITY RULE: Dirty. Depict entered actions/words. Apply the selected Style voice (e.g. Shakespearean/Breathless). Dirty isn't always raw; respect the Voice.";
+          } else if (specMainPairAuthorized) {
+              intensityGuard = "INTIMACY AUTHORIZED: The player has initiated physical escalation at the appropriate narrative stage. Explicit intimacy is permitted. Maintain literary tone.";
+          } else if (specSceneExplicitContext) {
+              intensityGuard = `SCENE EXPLICIT CONTEXT: The scene involves NPC intimacy, a brothel/bathhouse/orgy environment, or a dream/fantasy sequence. Explicit embodiment is permitted for side characters, background figures, dream sequences, fantasies, or non-primary interactions.
+
+MAIN PAIR RESTRICTION:
+The primary romantic pair must NOT consummate or advance their physical union in this beat.
+Their relationship pacing remains governed by ST progression.
+If both main characters are present, render their tension and restraint ONLY — no physical escalation between them.`;
+          } else if (specWindowOpen && !specPlayerInitiated && state.intimacyTurnsInWindow === 1) {
+              intensityGuard = "Intimacy window is open. Increase tension and proximity. Do not escalate to explicit union yet.";
           } else {
-              intensityGuard = "INTENSITY RULE: Clean. Romance and chemistry only. Fade to black if necessary.";
+              intensityGuard = "INTIMACY NOT YET AUTHORIZED: Focus on tension, chemistry, emotional stakes, and near-misses. Fade to black or redirect if the player attempts explicit escalation.";
           }
 
           // 4. Build pacing directive (same as real turn)
@@ -37761,8 +37851,6 @@ FATE CARD ADAPTATION (CRITICAL):
           // POV contract
           const turnPOVContract = build5thPersonContract();
 
-          // Erotic escalation
-          const turnEroticEscalation = buildEroticEscalationBlock();
 
           // Tone enforcement
           const turnToneEnforcement = buildToneEnforcementBlock(state.picks?.tone);
@@ -37770,32 +37858,28 @@ FATE CARD ADAPTATION (CRITICAL):
           // 6. Build scene length directive (CANONICAL — storybound/scene-length-erotic-gates-canonical-v2)
           // Scene 1: 500-600 words | Non-sex 2+: 300-500 | Sex: 150-200 MAX
           const specSceneIndex = state.turnCount || 0;
-          const specIntensity = state.intensity || 'Naughty';
-          const specIsErotic = ['Steamy', 'Passionate'].includes(specIntensity);
           const specBothMilestonesCleared = state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_sex;
           let sceneLengthDirective;
           if (specSceneIndex === 0) {
               sceneLengthDirective = 'Write the opening scene (500-600 words). LONGEST scene. Establish world, tone, power dynamics. NO main pair physical contact.';
-          } else if (specIsErotic && specBothMilestonesCleared) {
-              sceneLengthDirective = 'Write the next beat (150-200 words MAX). Erotic scene — keep SHORT for responsiveness.';
+          } else if (specIntimacyAuthorized && specBothMilestonesCleared) {
+              sceneLengthDirective = 'Write the next beat (150-200 words MAX). Intimate scene — keep SHORT for responsiveness.';
           } else {
               sceneLengthDirective = 'Write the next beat (300-500 words). Take time for atmosphere, reaction, emotional beats.';
           }
 
-          // Build erotic gating directive (inline for speculative path)
+          // Build intimacy gating directive (inline for speculative path)
           let specEroticGating = '';
-          if (specIsErotic && !specBothMilestonesCleared) {
+          if (!specIntimacyAuthorized) {
               const baseGates = { tease: 4, fling: 6, affair: 10 };
-              let gateScene = baseGates[state.storyLength || 'tease'] || 4;
-              if (specIntensity === 'Passionate') gateScene = Math.max(2, gateScene - 2);
-              else if (specIntensity === 'Steamy') gateScene = Math.max(3, gateScene - 1);
+              const gateScene = baseGates[state.storyLength || 'tease'] || 4;
               if (specSceneIndex < gateScene) {
-                  specEroticGating = `\nEROTIC GATING: Main characters must NOT have physical contact yet. Ambient erotic content (others, memories, atmosphere) IS allowed.\n`;
+                  specEroticGating = `\nINTIMACY GATING: Main characters must NOT have physical contact yet. Atmospheric tension IS allowed.\n`;
               }
           }
 
           // 7. Build fullSys (EXACT same structure as real turn)
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnEroticEscalation}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -37812,7 +37896,7 @@ FATE CARD ADAPTATION (CRITICAL):
           // 7. Generate using EXACT same orchestration as real turn
           const useFullOrchestration = ENABLE_ORCHESTRATION &&
                                        window.StoryboundOrchestration &&
-                                       ['Steamy', 'Passionate'].includes(state.intensity);
+                                       specExplicitEmbodimentAuthorized;
 
           let raw;
           if (useFullOrchestration) {
@@ -37822,6 +37906,7 @@ FATE CARD ADAPTATION (CRITICAL):
                   playerAction: act,
                   playerDialogue: dia,
                   fateCard: selectedFateCard,
+                  mainPairRestricted: specMainPairRestricted,
                   speculative: true,
                   skipSideEffects: true,
                   onPhaseChange: () => {} // No UI updates for speculative
@@ -38516,7 +38601,7 @@ FATE CARD ADAPTATION (CRITICAL):
                   showDevCover();
                   renderFallbackCover(world, genre, title);
                   stopCoverLoading(null);
-                  applyCoverIntensityLayers(intensity, world);
+
                   log('[DEV:CoverGen] PHASE_1 fallback applied');
                   return true;
               }
@@ -38530,19 +38615,19 @@ FATE CARD ADAPTATION (CRITICAL):
               generateBookCover(synopsis, title, authorName).then(coverUrl => {
                   if (coverUrl) {
                       stopCoverLoading(coverUrl);
-                      applyCoverIntensityLayers(intensity, world);
+    
                       log('[DEV:CoverGen] Cover generated');
                   } else {
                       renderFallbackCover(world, genre);
                       stopCoverLoading(null);
-                      applyCoverIntensityLayers(intensity, world);
+    
                       log('[DEV:CoverGen] AI failed → fallback');
                   }
               }).catch(err => {
                   console.error('[DEV:CoverGen] Error:', err);
                   renderFallbackCover(world, genre);
                   stopCoverLoading(null);
-                  applyCoverIntensityLayers(intensity, world);
+
                   log('[DEV:CoverGen] Error → fallback');
               });
               log('[DEV:CoverGen] Started...');
@@ -38576,7 +38661,6 @@ FATE CARD ADAPTATION (CRITICAL):
               log('[DEV:StateChange] ' + axis + ' → ' + (state.picks[axis] || canonical));
               // Trigger dependent recalculations
               if (axis === 'arousal') {
-                  applyCoverIntensityLayers(canonical, state.picks?.world);
               }
               if (axis === 'tone' || axis === 'world' || axis === 'pressure') {
                   deriveToneBias();
@@ -38643,7 +38727,6 @@ FATE CARD ADAPTATION (CRITICAL):
               resetCoverLayers();
               showDevCover();
               renderFallbackCover(world, genre);
-              applyCoverIntensityLayers(intensity, world);
               log('Cover: ' + world + ' / ' + genre + ' / ' + intensity);
               return;
           }
@@ -38655,7 +38738,6 @@ FATE CARD ADAPTATION (CRITICAL):
               resetCoverLayers();
               showDevCover();
               renderFallbackCover(world, genre);
-              applyCoverIntensityLayers(state.intensity, world);
               log('Simulated cover failure -> fallback rendered');
               return;
           }
@@ -38667,7 +38749,6 @@ FATE CARD ADAPTATION (CRITICAL):
               resetCoverLayers();
               showDevCover();
               renderFallbackCover(world, genre);
-              applyCoverIntensityLayers(state.intensity, world);
               log('Fallback cover shown (' + world + ' / ' + genre + ')');
               return;
           }
@@ -38689,7 +38770,6 @@ FATE CARD ADAPTATION (CRITICAL):
               if (!hasCover) {
                   renderFallbackCover(state.picks?.world || 'Modern', state.picks?.genre || 'Billionaire');
               }
-              applyCoverIntensityLayers('Passionate', state.picks?.world);
               log('Keyhole takeover enabled');
               return;
           }
@@ -38727,7 +38807,6 @@ FATE CARD ADAPTATION (CRITICAL):
               const intensity = extract(input, INTENSITY_MAP);
               if (intensity) {
                   state.intensity = intensity;
-                  applyCoverIntensityLayers(intensity, state.picks?.world);
                   log('Intensity -> ' + intensity);
               } else {
                   log('Unknown intensity. Try: tease, naughty, erotic, dirty');
@@ -38739,7 +38818,6 @@ FATE CARD ADAPTATION (CRITICAL):
               const intensity = INTENSITY_MAP[m[1]];
               if (intensity) {
                   state.intensity = intensity;
-                  applyCoverIntensityLayers(intensity, state.picks?.world);
                   log('Intensity -> ' + intensity);
               }
               return;
@@ -39014,8 +39092,8 @@ FATE CARD ADAPTATION (CRITICAL):
 
           // "check erotic", "validate erotic", "check escalation"
           if (/\bcheck\s*(erotic|escalation)\b|\bvalidate\s*erotic\b/i.test(input)) {
-              if (!['Steamy', 'Passionate'].includes(state.intensity)) {
-                  log('Erotic escalation: N/A (intensity is ' + state.intensity + ')');
+              if (!isSexAllowedAtCurrentStoryturn()) {
+                  log('Erotic escalation: N/A (not at ST3/ST4)');
                   return;
               }
               if (!window.StoryPagination) {
@@ -40199,7 +40277,6 @@ FATE CARD ADAPTATION (CRITICAL):
 //   ORNATE_BORDER_FLAVOR_MAP  — worldSubtype → filter class
 //
 // Functions:
-//   applyCoverIntensityLayers(intensity, world) — Entry point, dispatches to border/keyhole
 //   applyOrnateBorder(borderEl, world, hasSoulmates) — Loads asset, applies classes
 //   resetCoverLayers() — Clears all cover layers including border image
 //
@@ -40381,7 +40458,6 @@ FATE CARD ADAPTATION (CRITICAL):
 //
 // Functions:
 //   auditDirtyKeyhole(world, flavor)          — Self-check validation
-//   applyCoverIntensityLayers(intensity, world) — Entry point, dispatches to keyhole/border
 //   applyDirtyKeyhole(keyholeEl, world, hasSoulmates) — Runs audit, loads mask, applies classes
 //   resetCoverLayers() — Clears all cover layers including keyhole mask
 //
@@ -40523,14 +40599,8 @@ FATE CARD ADAPTATION (CRITICAL):
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Functions:
-//   getCoverPhase()                    — Returns current phase (0-5) based on storyturn + arousal
-//   validateCoverSequencing(intensity) — Validates overlay is allowed at current phase
-//   applyCoverIntensityLayers(intensity, world) — Entry point with sequencing validation
-//
-// Phase determination:
-//   state.storyturn    — Current storyturn (ST1-ST6)
-//   state.intensity    — Current arousal level (Tease, Naughty, Erotic, Dirty)
-//   state.scenes.length — Scene count (0 = pre-story)
+//   getCoverPhase()                    — Returns current phase (0-5) based on storyturn
+//   validateCoverSequencing()          — Validates cover is allowed at current phase
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // COVER SEQUENCING MANTRA (DO NOT REMOVE)
@@ -40684,8 +40754,6 @@ FATE CARD ADAPTATION (CRITICAL):
 //   ✓ Cover may EVOLVE (border ↔ keyhole)
 //   ✓ Core visual idea MUST remain unchanged
 //
-// This is handled by applyCoverIntensityLayers() which applies/removes
-// overlays without regenerating the base cover image.
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // USER WARNING REQUIREMENT

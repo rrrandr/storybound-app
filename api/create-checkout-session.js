@@ -18,20 +18,35 @@ export default async function handler(req, res) {
   if (!priceId) return res.status(400).json({ error: 'priceId required' });
   if (!supabaseUserId) return res.status(400).json({ error: 'supabaseUserId required' });
 
+  // Resolve subscription tier from priceId
+  let subscriptionTier = null;
+  if (priceId === process.env.STRIPE_PRICE_ID_STORIED) subscriptionTier = 'storied';
+  else if (priceId === process.env.STRIPE_PRICE_ID_FAVORED) subscriptionTier = 'favored';
+
+  const isSubscription = subscriptionTier !== null;
+  const isStorypass = priceId === process.env.STRIPE_PRICE_ID_STORYPASS;
+  const isGodMode = priceId === process.env.STRIPE_PRICE_ID_GODMODE;
+
+  if (!isSubscription && !isStorypass && !isGodMode) {
+    return res.status(400).json({ error: 'Unknown priceId' });
+  }
+
   try {
     const stripe = new Stripe(secret);
+
+    const metadata = {
+      supabase_user_id: supabaseUserId,
+      price_id: priceId,
+    };
+    if (subscriptionTier) metadata.subscription_tier = subscriptionTier;
+
     const session = await stripe.checkout.sessions.create({
-      mode: priceId === process.env.STRIPE_PRICE_ID_SUBSCRIPTION
-        ? 'subscription'
-        : 'payment',
+      mode: isSubscription ? 'subscription' : 'payment',
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: 'https://storybound.love',
       cancel_url: 'https://storybound.love',
       client_reference_id: supabaseUserId,
-      metadata: {
-        supabase_user_id: supabaseUserId,
-        price_id: priceId,
-      },
+      metadata,
     });
 
     console.log(`[checkout] Session created: ${session.id} for price: ${priceId}`);

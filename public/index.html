@@ -356,7 +356,7 @@
         </div>
         <div style="text-align:center">
           <button class="tier-card-btn tier-card-premium" id="btnPremium"></button>
-          <p class="choice-desc">Full-length stories, persistent memory, complete control, saved progress.<br><br><strong>From $6/mo</strong></p>
+          <p class="choice-desc">Full-length stories, persistent memory, complete control, saved progress.<br><br><strong>From $6/mo+</strong></p>
         </div>
       </div>
   </div>
@@ -384,8 +384,9 @@
                 <div id="storypassDisabledNotice" class="hidden" style="margin-top:10px; font-size:0.75em; color:#888; text-align:center;">Unavailable with current settings</div>
             </div>
 
-            <div id="optSub" style="background:linear-gradient(145deg, #1a1a2e, #0d0d1a); padding:15px; border-radius:0; border:2px double gold; box-shadow:0 0 0 1px #0a0a0a; width:220px; text-align:left;">
-                <h4 style="color:var(--gold); margin-top:0;">Premium Experience</h4>
+            <div id="optSubStoried" style="background:linear-gradient(145deg, #1a1a2e, #0d0d1a); padding:15px; border-radius:0; border:2px double gold; box-shadow:0 0 0 1px #0a0a0a; width:220px; text-align:left;">
+                <h4 style="color:var(--gold); margin-top:0;">Storied</h4>
+                <p style="font-size:0.85em; line-height:1.4; opacity:0.9; font-style:italic;">You live within the Story.</p>
                 <ul style="font-size:0.8em; padding-left:15px; opacity:0.9; line-height:1.4; list-style-type: '⚜ ';">
                     <li>Extended story arcs</li>
                     <li>Long-form stories</li>
@@ -393,7 +394,20 @@
                     <li>Save anytime</li>
                 </ul>
                 <div style="text-align:center; font-size:0.9em; margin:10px 0; color:var(--gold);">$6/month</div>
-                <button id="paySub" class="sb-btn sb-btn--gold sb-btn--full">Subscribe</button>
+                <button id="paySubStoried" class="sb-btn sb-btn--gold sb-btn--full">Become Storied</button>
+            </div>
+
+            <div id="optSubFavored" style="background:linear-gradient(145deg, #1a1a2e, #0d0d1a); padding:15px; border-radius:0; border:2px double gold; box-shadow:0 0 0 1px #0a0a0a; width:220px; text-align:left;">
+                <h4 style="color:var(--gold); margin-top:0;">Favored</h4>
+                <p style="font-size:0.85em; line-height:1.4; opacity:0.9; font-style:italic;">The Story leans toward you.</p>
+                <ul style="font-size:0.8em; padding-left:15px; opacity:0.9; line-height:1.4; list-style-type: '⚜ ';">
+                    <li>Extended story arcs</li>
+                    <li>Long-form stories</li>
+                    <li>Unlimited Petitions</li>
+                    <li>Save anytime</li>
+                </ul>
+                <div style="text-align:center; font-size:0.9em; margin:10px 0; color:var(--gold);">$9/month</div>
+                <button id="paySubFavored" class="sb-btn sb-btn--gold sb-btn--full">Become Favored</button>
             </div>
         </div>
     </div>
@@ -732,25 +746,25 @@
           <div class="sb-card selected flipped" data-grp="length" data-val="tease">
             <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back"><span class="sb-card-title">Tease</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Tease</span><span class="sb-card-desc">A quick glimpse. The story hooks you — a single arc, fast and complete.</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Tease</span><span class="sb-card-desc">A quick glimpse. The story hooks you, then leaves you wanting more.</span></div>
             </div>
           </div>
           <div class="sb-card locked" data-grp="length" data-val="fling" data-locked="pass">
             <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back"><span class="sb-card-title">Fling</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Fling</span><span class="sb-card-desc">A short arc with real stakes. Enough to matter, not enough to resolve.</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Fling</span><span class="sb-card-desc">A story that burns bright and moves fast — but still leaves room to grow.</span></div>
             </div>
           </div>
           <div class="sb-card locked" data-grp="length" data-val="affair" data-locked="sub">
             <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back"><span class="sb-card-title">Affair</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Affair</span><span class="sb-card-desc">A longer arc with layered consequences. Multiple chapters unfold. Nothing is rushed.</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Affair</span><span class="sb-card-desc">Deeper entanglements. Harder choices. Love begins to cost something.</span></div>
             </div>
           </div>
           <div class="sb-card locked" data-grp="length" data-val="soulmates" data-locked="sub" data-storypass-allowed="false">
             <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back"><span class="sb-card-title">Soulmates</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Soulmates</span><span class="sb-card-desc">This isn't about what happens next. It's about what keeps happening.</span></div>
+              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Soulmates</span><span class="sb-card-desc">A long-form journey where love must survive itself.</span></div>
             </div>
           </div>
         </div>

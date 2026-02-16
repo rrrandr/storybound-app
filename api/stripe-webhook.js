@@ -140,9 +140,20 @@ export default async function handler(req, res) {
       console.log(`[stripe-webhook] Granting God Mode to ${supabaseUserId}`);
     }
 
-    if (priceId && priceId === process.env.STRIPE_PRICE_ID_SUBSCRIPTION) {
-      updates.is_subscriber = true;
-      console.log(`[stripe-webhook] Granting Subscription to ${supabaseUserId}`);
+    const isSubscription = priceId && (
+      priceId === process.env.STRIPE_PRICE_ID_STORIED ||
+      priceId === process.env.STRIPE_PRICE_ID_FAVORED
+    );
+
+    if (isSubscription) {
+      const tier = session.metadata?.subscription_tier;
+      if (!tier || (tier !== 'storied' && tier !== 'favored')) {
+        console.error(`[stripe-webhook] Subscription session missing valid subscription_tier in metadata. Got: ${tier}. Session: ${session.id}`);
+      } else {
+        updates.is_subscriber = true;
+        updates.subscription_tier = tier;
+        console.log(`[stripe-webhook] Granting ${tier} subscription to ${supabaseUserId}`);
+      }
     }
 
     if (!updates.has_storypass && !updates.has_god_mode && !updates.is_subscriber) {
@@ -217,12 +228,12 @@ export default async function handler(req, res) {
     if (userId) {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: false })
+        .update({ is_subscriber: false, subscription_tier: null })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] customer.subscription.deleted update failed:', error);
       } else {
-        console.log(`[stripe-webhook] customer.subscription.deleted — revoked is_subscriber for ${userId}`);
+        console.log(`[stripe-webhook] customer.subscription.deleted — revoked subscription for ${userId}`);
       }
     } else {
       console.warn(`[stripe-webhook] customer.subscription.deleted — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
