@@ -1848,17 +1848,13 @@ function setSelectedState(mount, selectedCardEl){
             mount.appendChild(card);
         });
 
-        // Petition Fate card — 6th card, always visible, always unlocked, pre-flipped
+        // Petition Fate card — 6th card, always visible, always unlocked, never flips
         const petitionCard = document.createElement('div');
-        petitionCard.className = 'fate-card petition-fate-card flipped';
+        petitionCard.className = 'fate-card petition-fate-card';
         petitionCard.innerHTML = `
             <div class="inner">
-                <div class="front"><h3>Fate</h3></div>
-                <div class="back petition-back">
-                    <span class="petition-quill-icon">&#x270D;</span>
-                    <h3 style="margin:2px 0; font-size:0.9em;">Petition Fate</h3>
-                    <p style="font-size:0.7em; opacity:0.7; margin:0;">Speak your desire</p>
-                </div>
+                <div class="front" style="background:url('/assets/card-art/cards/Tarot-Gold-PetitionFate-back.png') center/cover no-repeat, #111;"></div>
+                <div class="back" style="background-image:url('/assets/card-art/cards/Tarot-Gold-PetitionFate-front.png');"></div>
             </div>
         `;
         petitionCard.onclick = () => {
