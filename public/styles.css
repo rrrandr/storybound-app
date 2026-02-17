@@ -10971,13 +10971,13 @@ body:has(.sb-card.zoomed) #controlPlane {
     }
 }
 
-/* Hide control plane during gate screens (age, TOS, tier) */
+/* Hide control plane during gate screens (age, legal, tier) */
 /* Hide control plane on gate and mode-select screens */
 #ageGate:not(.hidden) ~ #controlPlane,
-#tosGate:not(.hidden) ~ #controlPlane,
+#legalGate:not(.hidden) ~ #controlPlane,
 #tierGate:not(.hidden) ~ #controlPlane,
 body:has(#ageGate:not(.hidden)) #controlPlane,
-body:has(#tosGate:not(.hidden)) #controlPlane,
+body:has(#legalGate:not(.hidden)) #controlPlane,
 body:has(#tierGate:not(.hidden)) #controlPlane,
 body:has(#modeSelect:not(.hidden)) #controlPlane {
     display: none !important;

@@ -232,7 +232,7 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
       console.error('[AGE] Failed to persist age confirmation:', err);
     }
 
-    window.showScreen && window.showScreen('tosGate');
+    window.showScreen && window.showScreen('legalGate');
   });
 
   // Vault Sign Out button handler
@@ -385,7 +385,7 @@ window.config = window.config || {
     has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
     god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
     image_credits, subscription_credits, last_scene_rewarded, is_subscriber, subscription_tier, has_storypass,
-    age_confirmed, tos_version
+    age_confirmed, tos_version, privacy_version, adult_ack_version
   `;
 
   async function hydrateProfile(userId) {
@@ -12503,7 +12503,7 @@ Return ONLY the title, no quotes or explanation.`;
       const burger = document.getElementById('burgerBtn');
 
       if(backBtn) {
-          const hidden = ['ageGate', 'tosGate', 'tierGate'].includes(_currentScreenId);
+          const hidden = ['ageGate', 'legalGate', 'tierGate'].includes(_currentScreenId);
           if(hidden) backBtn.classList.add('hidden');
           else backBtn.classList.remove('hidden');
       }
@@ -12613,7 +12613,7 @@ Return ONLY the title, no quotes or explanation.`;
           // Reset mode cards so they start face-down each time
           if (window.resetModeCards) window.resetModeCards();
       } else if (!isBack && _currentScreenId && _currentScreenId !== id) {
-         if(!['ageGate', 'tosGate', 'tierGate'].includes(_currentScreenId)) {
+         if(!['ageGate', 'legalGate', 'tierGate'].includes(_currentScreenId)) {
              _navHistory.push(_currentScreenId);
          }
       }
@@ -12726,7 +12726,7 @@ Return ONLY the title, no quotes or explanation.`;
               if (el.tagName === 'DIV') el.classList.add('screen');
           });
       }
-      ['ageGate', 'tosGate', 'tierGate'].forEach(id => {
+      ['ageGate', 'legalGate', 'tierGate'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.classList.add('screen');
       });
@@ -15923,25 +15923,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       resetVaultState();
       if (typeof window.continueStory === 'function') window.continueStory();
   });
-  $('ageYes')?.addEventListener('click', () => window.showScreen('tosGate'));
-  $('tosCheck')?.addEventListener('change', (e) => $('tosBtn').disabled = !e.target.checked);
-  $('tosBtn')?.addEventListener('click', async () => {
-    try {
-      const { data: { user } } = await sb.auth.getUser();
-      if (user?.id) {
-        const { data, error } = await sb
-          .from('profiles')
-          .update({ tos_version: LEGAL.TOS_VERSION })
-          .eq('id', user.id)
-          .select();
-        console.log('[TOS] Update result:', data, error);
-      }
-    } catch (err) {
-      console.error('[TOS] Failed to persist TOS acceptance:', err);
-    }
-
-    window.showScreen && window.showScreen('tierGate');
-  });
+  $('ageYes')?.addEventListener('click', () => window.showScreen('legalGate'));
 
   // Tier card hover-flip + click-to-proceed
   function initTierCards() {
