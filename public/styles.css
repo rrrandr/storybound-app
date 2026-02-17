@@ -9451,7 +9451,7 @@ textarea.fate-field {
     transform: translateX(-50%);
     white-space: nowrap;
     font-family: 'Lora', serif;
-    font-size: 2.75px;
+    font-size: 4.1px;
     font-style: italic;
     line-height: 1.15;
     color: rgba(255, 248, 230, 0.88);
@@ -9464,6 +9464,8 @@ textarea.fate-field {
     margin-top: 1px;
     z-index: 10;
     text-align: center;
+    max-width: 90%;
+    white-space: normal;
 }
 .sb-flavor-btn[data-tooltip]:hover::after,
 .sb-flavor-btn[data-tooltip]:focus::after {
@@ -9624,7 +9626,7 @@ textarea.fate-field {
     transform: translateX(-50%);
     white-space: nowrap;
     font-family: 'Lora', serif;
-    font-size: 2.75px;
+    font-size: 4.1px;
     font-style: italic;
     line-height: 1.15;
     color: rgba(255, 248, 230, 0.88);
@@ -9637,6 +9639,8 @@ textarea.fate-field {
     margin-top: 1px;
     z-index: 5;
     text-align: center;
+    max-width: 90%;
+    white-space: normal;
 }
 .baked-hitzone[data-tooltip]:hover::after,
 .baked-hitzone[data-tooltip]:focus::after {
@@ -10590,11 +10594,11 @@ body.corridor-mode .corridor-section {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Small-grid corridors (few cards) — vertically center instead of flex-start */
+/* Small-grid corridors — align to top like all other stages */
 body.corridor-mode #lengthSection.corridor-section,
 body.corridor-mode #flowRowPressure.corridor-section,
 body.corridor-mode #flowRowDynamic.corridor-section {
-    justify-content: center !important;
+    justify-content: flex-start !important;
 }
 
 /* Archetype sub-sections share a stage — only the grid should flex-grow */

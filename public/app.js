@@ -1595,7 +1595,7 @@ Introduce the name naturally within the first few paragraphs — do not announce
     supernatural_modern: 'Hidden realities destabilize trust and safety.',
     arcane_binding:      'Magic enforces rules love cannot easily defy.',
     fated_blood:         'Lineage dictates desire and forbidden alliances.',
-    the_inhuman:         'Nonhuman norms reshape how intimacy functions.',
+    the_inhuman:         'Non-human norms rewrite how intimacy functions \u2014 regardless of who is human.',
     cursed:              'Intimacy directly interacts with the affliction.',
     the_beyond:          'Otherworldly forces intrude on intimate connection.',
     final_frontier:      'Isolation, danger, duty, and close quarters intensify attachment.',
@@ -18406,12 +18406,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'galactic_civilizations', top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       Dystopia: [
-        { val: 'glass_house',            top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'the_ledger',             top: 56.7, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'crimson_veil',           top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'perfect_match',          top: 63.3, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'endless_edit',           top: 69.9, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'quieting_event',  top: 69.9, left: 53,   width: 29.2, height: 4.8 }
+        { val: 'glass_house',     top: 53.5, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'the_ledger',      top: 60.0, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'crimson_veil',    top: 60.0, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'perfect_match',   top: 66.5, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'endless_edit',    top: 66.5, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'quieting_event',  top: 73.0, left: 17.6, width: 29.2, height: 4.8 }
       ],
       PostApocalyptic: [
         { val: 'ashfall',        top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
@@ -18426,7 +18426,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       Historical:      { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       Fantasy:         { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       SciFi:           { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
-      Dystopia:        { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
+      Dystopia:        { top: 73.0, left: 53,   width: 29.2, height: 4.1 },
       PostApocalyptic: { top: 76.5, left: 53,   width: 29.2, height: 4.1 }
     };
     // Scrolling suggestions for baked-art cards — themes NOT already in the buttons
@@ -18493,11 +18493,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       bronze_age: 'Desire, caught between gods and empires.',
       prehistoric: 'Instinct, hunger, and passion before any rule but survival.',
       // Sci-Fi flavors
-      final_frontier: 'Love tested by distance, discovery, and leaving everything behind.',
-      first_contact: 'Desire collides with the truly unknown.',
-      future_of_science: 'Love measured against progress, reason, and unintended consequences.',
-      simulation: 'Intimacy questions what\u2019s real, chosen, or programmed.',
-      cyberpunk: 'Love survives beneath power, tech, and exploitation.',
+      final_frontier: 'Close quarters, endless stars.',
+      first_contact: 'Contact changes everything.',
+      future_of_science: 'Love is just another law of the universe.',
+      simulation: 'Through layers of unreality, love endures.',
+      cyberpunk: 'Even your backup heart can ache.',
       post_human: 'Desire outpaces bodies, identity, and human limits.',
       galactic_civilizations: 'Love can save a world, or burn a galaxy.',
       // Dystopia flavors
@@ -18505,7 +18505,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       the_ledger: 'Your heart has a market value.',
       crimson_veil: 'Desire is sacred. Would you risk damnation for it?',
       perfect_match: 'You are not mine. You are humanity\u2019s.',
-      quieting_event: 'In a world of engineered calm, desire is dangerous.',
+      quieting_event: 'In a world engineered for calm, feeling too much is rebellion.',
       endless_edit: 'Love fades as selves are edited away.',
       // Post-Apocalyptic flavors
       ashfall: 'The world burns between you.',
@@ -18516,7 +18516,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Fantasy flavors
       arcane_binding: 'Magic binds them to choices love cannot undo.',
       fated_blood: 'Their blood decides who they may love.',
-      the_inhuman: 'To love them means never fully belonging together.',
+      the_inhuman: 'Non-human norms rewrite desire and devotion.',
       the_beyond: 'Love survives death, distance, or worlds apart.',
       cursed: 'A spell stands between them, waiting to be broken.'
     };
