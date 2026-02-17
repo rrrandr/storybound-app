@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const allowedOrigin = origin === 'https://storybound.love' || origin.startsWith('http://localhost') ? origin : 'https://storybound.love';
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -20,10 +22,10 @@ export default async function handler(req, res) {
 
   const supabase = createClient(sbUrl, sbKey);
 
-  // Read current profile
+  // God mode check (read-only, no race risk)
   const { data: profile, error: readErr } = await supabase
     .from('profiles')
-    .select('image_credits, has_god_mode')
+    .select('has_god_mode')
     .eq('id', userId)
     .single();
 
@@ -32,31 +34,29 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: 'profile_not_found' });
   }
 
-  // God mode: unlimited credits, no decrement
   if (profile.has_god_mode) {
     return res.status(200).json({ success: true, creditsRemaining: null, godMode: true });
   }
 
-  // Check credit balance
-  const credits = profile.image_credits || 0;
-  if (credits <= 0) {
+  // Atomic decrement via DB function — safe under parallel requests.
+  // Deduction order: subscription_credits first → image_credits fallback.
+  // See SQL migration: consume_one_credit(p_user_id uuid)
+  const { data: rpcResult, error: rpcErr } = await supabase
+    .rpc('consume_one_credit', { p_user_id: userId });
+
+  if (rpcErr) {
+    console.error('[consume-credit] RPC failed:', rpcErr);
+    return res.status(500).json({ error: 'credit_deduction_failed' });
+  }
+
+  // rpcResult is a single row: { source, subscription_credits, image_credits }
+  const result = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
+
+  if (!result || result.source === 'none') {
     return res.status(403).json({ error: 'no_credits', creditsRemaining: 0 });
   }
 
-  // Atomic decrement with guard: only decrement if credits > 0
-  const { data: updated, error: updateErr } = await supabase
-    .from('profiles')
-    .update({ image_credits: credits - 1 })
-    .eq('id', userId)
-    .gt('image_credits', 0)
-    .select('image_credits')
-    .single();
-
-  if (updateErr || !updated) {
-    console.error('[consume-credit] Atomic decrement failed:', updateErr);
-    return res.status(403).json({ error: 'no_credits', creditsRemaining: 0 });
-  }
-
-  console.log(`[consume-credit] User ${userId}: ${credits} → ${updated.image_credits}`);
-  return res.status(200).json({ success: true, creditsRemaining: updated.image_credits });
+  const remaining = (result.subscription_credits || 0) + (result.image_credits || 0);
+  console.log(`[consume-credit] User ${userId}: ${result.source} credit consumed. Sub: ${result.subscription_credits}, Purchased: ${result.image_credits}, Total: ${remaining}`);
+  return res.status(200).json({ success: true, creditsRemaining: remaining });
 }

@@ -2826,6 +2826,129 @@ select:-webkit-autofill {
 .box { max-width:600px; margin:20px auto; padding:25px; background:var(--panel); border:2px double gold; border-radius:0; box-shadow:0 0 0 1px #0a0a0a, 0 0 20px rgba(0,0,0,0.2); }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
+/* PAYWALL MODAL — Responsive tier card layout                                     */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.pay-box {
+    max-width: 90vw;
+    width: 780px;
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: center;
+    box-sizing: border-box;
+}
+.pay-tier-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin: 20px 0;
+}
+.pay-tier-card {
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    padding: 15px;
+    border-radius: 0;
+    border: 2px double gold;
+    box-shadow: 0 0 0 1px #0a0a0a;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 240px;
+    text-align: left;
+}
+.pay-tier-card--sub {
+    background: linear-gradient(145deg, #1a1a2e, #0d0d1a);
+}
+.pay-tier-card h4 {
+    color: var(--gold);
+    margin-top: 0;
+    font-size: 1em;
+}
+.pay-tier-card p {
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+.pay-tier-card .pay-tier-tagline {
+    opacity: 0.9;
+    font-style: italic;
+}
+.pay-tier-card ul {
+    font-size: 0.8em;
+    padding-left: 15px;
+    opacity: 0.9;
+    line-height: 1.4;
+    list-style-type: '\2756  ';
+}
+.pay-tier-price {
+    text-align: center;
+    font-size: 0.9em;
+    margin: 10px 0;
+    color: var(--gold);
+}
+
+/* Narrow viewports: stack vertically, shrink text */
+@media (max-width: 700px) {
+    .pay-box {
+        width: auto;
+        padding: 15px;
+    }
+    .pay-tier-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    .pay-tier-card {
+        max-width: 300px;
+        width: 100%;
+    }
+}
+/* Paywall action buttons — DSP Gold Blk plaque with metallic text */
+.pay-tier-card button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    background: url('/assets/ui/DSP-Gold-Blk-1800x440.png') center / 100% 100% no-repeat;
+    background-color: transparent;
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.95em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #e8d48b;
+    background-clip: padding-box;
+    -webkit-background-clip: padding-box;
+    text-shadow:
+        0 1px 0 rgba(255, 235, 150, 0.5),
+        0 -1px 0 rgba(0, 0, 0, 0.6),
+        0 0 6px rgba(218, 165, 32, 0.3);
+    background-blend-mode: normal;
+}
+.pay-tier-card button:hover {
+    filter: brightness(1.15);
+}
+.pay-tier-card button:active {
+    filter: brightness(0.9);
+}
+
+/* Very small viewports: tighter spacing */
+@media (max-width: 400px) {
+    .pay-box {
+        padding: 10px;
+        max-height: 95vh;
+    }
+    .pay-tier-card {
+        padding: 10px;
+    }
+    .pay-tier-card h4 {
+        font-size: 0.9em;
+    }
+    .pay-tier-card p,
+    .pay-tier-card ul {
+        font-size: 0.75em;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 /*                     VAULT MENU — Collapsible Tab Panels                         */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
@@ -3080,40 +3203,47 @@ select:-webkit-autofill {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-/* TIER CARD BUTTONS — Tarot-style PNG buttons for Taste/Indulge selection         */
+/* TIER CARDS — Flippable Tarot cards for Taste/Indulge selection                  */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
-.tier-card-btn {
+.tier-card {
     width: 160px;
-    aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
-    background-image: url('/assets/card-art/cards/Tarot-Gold-Taste-face.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-color: transparent;
-    border: none;
-    outline: none;
+    aspect-ratio: 2.75 / 4.75;
+    perspective: 1000px;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: inline-block;
 }
 
-.tier-card-btn.tier-card-premium {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-Indulge-face.png');
+.tier-card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s ease;
 }
 
-.tier-card-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(218, 165, 32, 0.4);
+.tier-card.flipped .tier-card-inner {
+    transform: rotateY(180deg);
 }
 
-.tier-card-btn:active {
-    transform: scale(0.98);
+.tier-card-back,
+.tier-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-.tier-card-btn:focus,
-.tier-card-btn:focus-visible {
-    outline: none;
-    border: none;
-    box-shadow: 0 0 30px rgba(218, 165, 32, 0.5);
+.tier-card-back img,
+.tier-card-face img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.tier-card-face {
+    transform: rotateY(180deg);
 }
 
 /* INPUTS & LOCKS */
@@ -3552,11 +3682,6 @@ select {
 .intensity-mini button { padding: 5px 15px; font-size: 0.8em; opacity: 0.6; }
 .intensity-mini button.active { opacity: 1; border: 1px solid var(--gold); filter: brightness(1.1); }
 
-/* SAFETY & CONSENT UI — DSP: 2px double gold border, no radius */
-.consent-controls { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin: 15px auto; width: 95%; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 0; border: 2px double gold; box-shadow: 0 0 0 1px #0a0a0a; box-sizing: border-box; }
-.consent-controls.horizontal { flex-direction: row; justify-content: center; align-items: center; flex-wrap: wrap; }
-.consent-controls label { display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--ink); font-size: 0.9em; }
-.boundary-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; width: 95%; justify-content: center; }
 /* DSP MATERIAL: Chip — Plaque Material Regime */
 .chip {
     padding: 5px 12px;
@@ -3600,127 +3725,6 @@ select {
     border-color: var(--plaque-locked-border) !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SAFETY TAROT CARDS — Two-card layout matching VQ corridor style
-   ═══════════════════════════════════════════════════════════════════ */
-.safety-tarot-card {
-    width: 206px;
-    aspect-ratio: 2.75 / 4.75;
-    background-image: url('/assets/card-art/cards/Blank-Black-Face.png');
-    background-size: 100% 100%;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: #0a0a0a;
-    border: none;
-    border-radius: 0;
-    outline: 1px solid rgba(218, 165, 32, 0.5);
-    outline-offset: -1px;
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    box-sizing: border-box;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    position: relative;
-    flex-shrink: 1;
-    min-width: 150px;
-}
-
-/* Arc container: icon + curved label in card's top half-circle */
-.safety-arc-container {
-    position: absolute;
-    top: calc(1% - 2px);
-    left: 15%;
-    right: 15%;
-    height: 16%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    z-index: 2;
-}
-.safety-arc-icon {
-    width: 20px;
-    height: 20px;
-    color: var(--gold);
-    opacity: 0.8;
-}
-.safety-arc-text {
-    width: 100%;
-    height: 14px;
-}
-
-/* Card content area — below the arc */
-.safety-card-content {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 24px 20px 20px 25px;
-    margin-top: 17%;
-    flex: 1;
-    align-items: flex-start;
-    justify-content: center;
-}
-
-/* Scaled-down checkbox for safety cards */
-.sb-checkbox-sm {
-    gap: 25px;
-    padding: 2px 0;
-}
-.sb-checkbox-visual-sm {
-    width: 28px !important;
-    height: 28px !important;
-}
-.sb-checkbox-sm input[type="checkbox"] {
-    width: 28px;
-    height: 28px;
-}
-.sb-checkbox-label-sm {
-    font-size: 0.85em !important;
-    color: #c9a84c;
-    text-align: left;
-}
-
-/* Boundary chips with Black-Gold-320x88.png background */
-.safety-card-content.boundary-chips {
-    gap: 6px;
-    margin-top: 17%;
-    padding: 24px 16px 20px;
-    align-items: center;
-}
-.chip-gold {
-    display: inline-block;
-    width: auto;
-    padding: 6px;
-    text-align: center;
-    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
-    border: 2px solid transparent;
-    border-radius: 0;
-    font-size: 0.7em;
-    color: var(--gold);
-    cursor: pointer;
-    transition: filter 0.15s ease, opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-    opacity: 0.7;
-    box-sizing: border-box;
-}
-.chip-gold:hover {
-    filter: brightness(1.15);
-    opacity: 1;
-}
-.chip-gold.active {
-    opacity: 1;
-    font-weight: bold;
-    filter: brightness(0.75);
-    border-color: rgba(80, 65, 30, 0.6) rgba(180, 170, 140, 0.45) rgba(180, 170, 140, 0.45) rgba(80, 65, 30, 0.6);
-    box-shadow:
-        inset 2px 2px 4px rgba(0, 0, 0, 0.3),
-        inset -1px -1px 2px rgba(255, 255, 255, 0.06),
-        inset 0 0 8px rgba(218, 165, 32, 0.2);
-}
 
 /* CORRECTIVE: Toast positioned above Begin Story */
 /* DSP MATERIAL: Toast — Matte black, 2px double gold, no radius */
@@ -4019,15 +4023,43 @@ select {
 /* PETITION FATE MODAL                                                          */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .petition-box { background: rgba(10,5,15,0.95); border: 1px solid rgba(218,165,32,0.3); }
+.petition-ritual-title { color: var(--gold); margin: 0; font-family: 'Lora', serif; letter-spacing: 0.1em; }
+.petition-ritual-subtitle { font-size: 0.85em; opacity: 0.8; margin: 8px 0 16px; color: var(--ink); font-style: italic; }
+.petition-ritual-field {
+  width: 100%; box-sizing: border-box;
+  background: rgba(10,5,15,0.8);
+  border: 1px solid rgba(218,165,32,0.4);
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.6), inset 0 0 8px rgba(218,165,32,0.08);
+  color: var(--gold); font-family: 'Lora', serif; font-size: 0.95em;
+  padding: 10px 12px; resize: none; transition: border-color 0.3s;
+}
+.petition-ritual-field:focus { outline: none; border-color: rgba(218,165,32,0.7); }
+.petition-ritual-field[readonly] { opacity: 0.7; cursor: default; }
+.petition-field-wrap { position: relative; width: 100%; margin-bottom: 12px; }
+.petition-ritual-btn {
+  background: rgba(218,165,32,0.15); border: 1px solid rgba(218,165,32,0.4);
+  color: var(--gold); padding: 10px 24px; cursor: pointer;
+  font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.08em;
+  transition: background 0.2s; margin-bottom: 12px;
+}
+.petition-ritual-btn:hover { background: rgba(218,165,32,0.3); }
+.petition-ritual-btn:disabled { opacity: 0.5; cursor: default; }
+.petition-cost-hint {
+  color: var(--gold); font-style: italic; font-family: 'Lora', serif;
+  font-size: 1.05em; margin: 12px 0; opacity: 0; transition: opacity 1s ease;
+}
+.petition-cost-hint.fade-in { opacity: 1; }
 .petition-omen { color: var(--gold); font-style: italic; font-family: 'Lora',serif; font-size: 1.1em; margin: 15px 0; opacity: 0; transition: opacity 0.8s ease; }
 .petition-omen.fade-in { opacity: 1; }
 .petition-result { color: var(--pink); font-family: 'Lora',serif; margin: 15px 0; opacity: 0; transition: opacity 0.8s ease; }
 .petition-result.fade-in { opacity: 1; }
-.petition-sacrifice-btn { background: rgba(218,165,32,0.15); border: 1px solid rgba(218,165,32,0.4); color: var(--gold); padding: 8px 16px; cursor: pointer; transition: background 0.2s; }
-.petition-sacrifice-btn:hover { background: rgba(218,165,32,0.3); }
+.petition-close-btn {
+  background: transparent; border: 1px solid rgba(218,165,32,0.2);
+  color: var(--gold); opacity: 0.6; padding: 6px 16px; cursor: pointer;
+  font-family: 'Lora', serif; font-size: 0.8em; margin-top: 8px; transition: opacity 0.2s;
+}
+.petition-close-btn:hover { opacity: 1; }
 .petition-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; }
-.petition-back { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-.petition-quill-icon { font-size: 1.5em; color: var(--gold); opacity: 0.8; }
 
 /* AUTH PANEL */
 #auth-panel { position:fixed; top:10px; right:60px; z-index:10003; background:rgba(0,0,0,0.92); padding:14px 16px; border:1px solid gold; border-radius:0; display:flex; flex-direction:column; align-items:center; gap:6px; }
@@ -8127,14 +8159,20 @@ textarea.fate-field {
 
 /* Tier cards (Taste/Indulge) and character tarot cards need position context
    and overflow clipping for the gleam layer */
-.tier-card-btn,
 .character-tarot-card {
     position: relative;
     overflow: hidden;
 }
-.tier-card-btn .card-gleam-clip,
+.tier-card-back,
+.tier-card-face {
+    position: relative;
+    overflow: hidden;
+}
+.tier-card-back .card-gleam-clip,
+.tier-card-face .card-gleam-clip,
 .character-tarot-card .card-gleam-clip,
-.tier-card-btn .card-gleam-layer,
+.tier-card-back .card-gleam-layer,
+.tier-card-face .card-gleam-layer,
 .character-tarot-card .card-gleam-layer {
     z-index: 0; /* Above background, below all fields/inputs */
 }
@@ -10291,24 +10329,6 @@ body.corridor-mode .sb-grid.corridor-section {
     flex: 1 1 auto !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   AROUSAL CORRIDOR — Multi-element stage (title + grid + continue)
-   ═══════════════════════════════════════════════════════════════════════════════ */
-#arousalSectionTitle.corridor-section {
-    min-height: auto !important;
-    max-height: auto !important;
-    padding: 0 !important;
-    display: block !important;
-    flex-direction: unset !important;
-    flex: 0 0 auto !important;
-    overflow-y: visible !important;
-}
-
-#intensityGrid.corridor-section {
-    min-height: auto !important;
-    max-height: none !important;
-    flex: 1 1 auto !important;
-}
 
 .corridor-row,
 .corridor-section {
@@ -10598,12 +10618,6 @@ body.corridor-mode #povSectionTitle.corridor-section {
     padding-bottom: 0 !important;
 }
 
-/* Arousal sub-sections share a stage — title shrinks, grid grows */
-body.corridor-mode #arousalSectionTitle.corridor-section {
-    flex: 0 0 auto !important;
-    overflow-y: visible !important;
-    padding-bottom: 0 !important;
-}
 
 /* Continue buttons should NEVER consume flex space as corridor sections */
 body.corridor-mode .flow-continue-btn.corridor-section {
@@ -10716,14 +10730,12 @@ body.corridor-complete .corridor-section {
 #continueFromAuthorship,
 #continueFromCharacters,
 #continueFromStorybeau,
-#continueFromArousal,
 #continueFromLength,
 #continueFromPov,
 #continueFromWorld,
 #continueFromTone,
 #continueFromPressure,
-#continueFromDynamic,
-#continueFromSafety {
+#continueFromDynamic {
     width: 140px !important;
     height: 39px !important;
     min-width: 140px !important;
@@ -10944,9 +10956,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 #continueFromPressure,
 #continueFromPov,
 #continueFromLength,
-#continueFromDynamic,
-#continueFromArousal,
-#continueFromSafety {
+#continueFromDynamic {
     display: none !important;
 }
 

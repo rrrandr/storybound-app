@@ -608,7 +608,7 @@ World Grammar shapes visual atmosphere. It does NOT override focal anchor, emble
 // ============================================================
 // PHASE 3D — EROTIC MOTIF LAYER (GATED)
 // Symbolic erotic charge only. NO bodies, faces, or explicit acts.
-// Activates ONLY when arousal === 'Erotic' || arousal === 'Dirty'
+// Activates ONLY when arousal === 'Steamy' || arousal === 'Passionate'
 // Sits BELOW World Grammar, INSIDE the border.
 // One-line rollback: return prompt unchanged in applyEroticMotifLayer()
 // ============================================================
@@ -639,7 +639,7 @@ const EROTIC_MOTIF_REGISTRY = {
 // function applyEroticMotifLayer(prompt, arousal, archetype, world) { return prompt; }
 function applyEroticMotifLayer(prompt, arousal, archetype, world) {
   // Gate: Only activate for Erotic or Dirty arousal levels
-  if (arousal !== 'Erotic' && arousal !== 'Dirty') {
+  if (arousal !== 'Steamy' && arousal !== 'Passionate') {
     return prompt;
   }
 
@@ -1168,7 +1168,9 @@ function dispatchCoverPrompt(archetype, params) {
 // MAIN HANDLER
 // ============================================================
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const allowedOrigin = origin === 'https://storybound.love' || origin.startsWith('http://localhost') ? origin : 'https://storybound.love';
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

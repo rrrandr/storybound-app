@@ -384,7 +384,7 @@ window.config = window.config || {
   const PROFILE_COLUMNS = `
     has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
     god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
-    image_credits, last_scene_rewarded, is_subscriber, subscription_tier, has_storypass,
+    image_credits, subscription_credits, last_scene_rewarded, is_subscriber, subscription_tier, has_storypass,
     age_confirmed, tos_version
   `;
 
@@ -416,7 +416,7 @@ window.config = window.config || {
     state.subscribed = !!profile.subscribed;
     state.subscriptionTier = profile.subscription_tier || (state.subscribed ? 'storied' : null);
     state.hasPass = !!profile.has_pass;
-    state.imageCredits = profile.image_credits || 0;
+    state.imageCredits = (profile.image_credits || 0) + (profile.subscription_credits || 0);
     state.lastSceneRewarded = profile.last_scene_rewarded || 0;
     if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
     syncTierFromAccess();
@@ -1462,7 +1462,7 @@ Introduce the name naturally within the first few paragraphs — do not announce
           id: 'ashfall', world: 'postapocalyptic', title: 'Ashfall',
           subtitle: 'Environmental Hostility',
           uiDescription: 'The environment is an active antagonist. Proximity has a price: masks, burns, exposure time limits.',
-          narrativeHook: 'The world punishes closeness — toxic air, ash storms, radiation, contaminated water. Romance tension comes from proximity having a price: sharing oxygen, sealing a suit, washing ash off skin. Sex and intimacy are possible but constrained: timed, sheltered, improvised, costly. Tenderness can be lethal. Make the world punish mistakes immediately.',
+          narrativeHook: 'The world punishes closeness — toxic air, ash storms, radiation, contaminated water. Romance tension comes from proximity having a price: sharing oxygen, sealing a suit, washing ash off skin. Intimacy is possible but constrained: timed, sheltered, improvised, costly. Tenderness can be lethal. Make the world punish mistakes immediately.',
           eroticEngine: ['physical cost of contact', 'timed proximity', 'decon rituals', 'near-touch', 'tenderness under hazard'],
           sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'environmental' }
       },
@@ -1478,7 +1478,7 @@ Introduce the name naturally within the first few paragraphs — do not announce
           id: 'dystimulation', world: 'postapocalyptic', title: 'Dystimulation',
           subtitle: 'Trauma-Blunted Reward Systems',
           uiDescription: 'Desire is buried, not gone. Breakthroughs happen in flashes through danger, trust, or rediscovery.',
-          narrativeHook: 'Pleasure signals are delayed, muted, or absent — not low libido as character flaw, but neurochemical damage. Ignition comes through adrenaline, through patient rewiring together, or through the emotional unlock when armor drops and the body finally responds. Sex scenes must feel like high-stakes discovery, not medical troubleshooting.',
+          narrativeHook: 'Pleasure signals are delayed, muted, or absent — not low libido as character flaw, but neurochemical damage. Ignition comes through adrenaline, through patient rewiring together, or through the emotional unlock when armor drops and the body finally responds. Intimate scenes must feel like high-stakes discovery, not medical troubleshooting.',
           eroticEngine: ['adrenaline ignition', 'sensory rediscovery', 'emotional unlock', 'patience as devotion', 'breakthrough flashes'],
           sceneBias: { pacing: 'slow', intimacyRisk: 'medium', powerDynamic: 'internal' }
       },
@@ -1486,7 +1486,7 @@ Introduce the name naturally within the first few paragraphs — do not announce
           id: 'predation', world: 'postapocalyptic', title: 'Predation',
           subtitle: 'No Institutional Protection',
           uiDescription: 'Intimacy creates vulnerability and leverage. Someone you love can be used against you.',
-          narrativeHook: 'The threat is people: raiders, gangs, coercion, manipulation, betrayal. Attachment is exploitable — giving your name, revealing a hideout, sharing supplies, sleeping with your guard down. Sex and intimacy can be hot because it is forbidden softness, but it carries danger and consequence. Safety is negotiated and fragile.',
+          narrativeHook: 'The threat is people: raiders, gangs, coercion, manipulation, betrayal. Attachment is exploitable — giving your name, revealing a hideout, sharing supplies, sleeping with your guard down. Intimacy can be hot because it is forbidden softness, but it carries danger and consequence. Safety is negotiated and fragile.',
           eroticEngine: ['strategic vulnerability', 'exploitable attachment', 'forbidden softness', 'trust as exposure', 'negotiated safety'],
           sceneBias: { pacing: 'tense', intimacyRisk: 'extreme', powerDynamic: 'social' }
       },
@@ -2852,7 +2852,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       // INTIMACY MILESTONE LATCH — tracks first-time interruptions
       intimacyInterrupted: {
           first_kiss: false,
-          first_sex: false
+          first_intimacy: false
       },
       sandbox: false,
       godModeActive: false,
@@ -2868,11 +2868,6 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       nonConPushCount: 0,
       lastNonConPushAt: 0,
       lastSafewordAt: 0,
-      safety: {
-          darkThemes: true,
-          violence: true,
-          boundaries: []
-      },
 
       // 5TH PERSON POV (THE AUTHOR) — POV REGIME (FINAL, SUPERSEDING)
       // NOTE: All prior frequency limits, cadence rules, and presence restrictions are SUPERSEDED.
@@ -6362,7 +6357,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   //
   // 1. Storyturns
   //    - Regime: Irreversible Relational Change
-  //    - Effect: Sex, dialogue, or intensity never advance structure alone
+  //    - Effect: Intimacy, dialogue, or intensity never advance structure alone
   //
   // 2. 5th Person POV (Wry Confessional variant)
   //    - Regime: Narrative Coherence as a Reacting Entity
@@ -6437,10 +6432,10 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       { id: "ST6", name: "Integration" }
     ],
 
-    // Intensity tiers no longer control routing. Sex authorization is ST3 + SceneGate + PlayerInitiation.
+    // Intensity tiers no longer control routing. Intimacy authorization is ST3 + SceneGate + PlayerInitiation.
     arousalRules: {
       _default: {
-        sexAllowedAt: ["ST3", "ST4"],
+        intimacyAllowedAt: ["ST3", "ST4"],
         explicitness: "player_initiated"
       }
     },
@@ -6452,17 +6447,17 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     },
 
     storyturnSemantics: {
-      ST1: { phase: "desire", sexualCatalyst: false },
-      ST2: { phase: "resistance", sexualCatalyst: false },
-      ST3: { phase: "permission", sexualCatalyst: true },
-      ST4: { phase: "consequence", sexualCatalyst: true },
-      ST5: { phase: "crisis", sexualCatalyst: false },
-      ST6: { phase: "integration", sexualCatalyst: false }
+      ST1: { phase: "desire", intimacyCatalyst: false },
+      ST2: { phase: "resistance", intimacyCatalyst: false },
+      ST3: { phase: "permission", intimacyCatalyst: true },
+      ST4: { phase: "consequence", intimacyCatalyst: true },
+      ST5: { phase: "crisis", intimacyCatalyst: false },
+      ST6: { phase: "integration", intimacyCatalyst: false }
     },
 
-    postSexRules: {
-      repeatedSexAdvancesStoryturn: false,
-      sexAfterST4IsContextual: true
+    postIntimacyRules: {
+      repeatedIntimacyAdvancesStoryturn: false,
+      intimacyAfterST4IsContextual: true
     },
 
     carryoverRules: {
@@ -6523,10 +6518,10 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     //   - emotional consequence
     //   - narrative reorientation
     //
-    // Sex, if present, is a consequence, not a trigger.
+    // Intimacy, if present, is a consequence, not a trigger.
     //
     // After ST4:
-    //   - Sex becomes contextual only
+    //   - Intimacy becomes contextual only
     //   - Repetition does not advance Storyturns
     //   - The relationship cannot return to its prior state without denial or collapse
     //
@@ -6548,7 +6543,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     // IMPLEMENTATION NOTE (AUTHORITATIVE)
     // ───────────────────────────────────────────────
     // This semantic clarification REPLACES any prior "first kiss interruption"
-    // or "first sex interruption" special-case rules.
+    // or "first intimacy interruption" special-case rules.
     //
     // Do NOT encode this as procedural logic.
     // Do NOT add new conditionals or flags for interruption tracking.
@@ -6608,7 +6603,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     // ───────────────────────────────────────────────
     // Examples — NOT Irreversible (Do NOT Advance)
     // ───────────────────────────────────────────────
-    //   - Sex that resolves no emotional uncertainty
+    //   - Intimacy that resolves no emotional uncertainty
     //   - Erotic escalation without consequence
     //   - An interrupted or aborted attempt at intimacy
     //   - Flirting, temptation, or boundary testing
@@ -6627,7 +6622,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     //
     // This appendix replaces any prior heuristic based on:
     //   - "first kiss"
-    //   - "first sex"
+    //   - "first intimacy"
     //   - interruption counters
     //   - explicitness thresholds
     // ═══════════════════════════════════════════════════════════════════════════
@@ -6717,16 +6712,16 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   }
 
   // Storyturns represent irreversible relational change.
-  // Sex and intensity may express a Storyturn but must never
+  // Intimacy and intensity may express a Storyturn but must never
   // advance one unless explicitly permitted by STORYTURN_CONFIG.
 
   /**
    * Check if a Storyturn permits sexual activity as a catalyst for advancement
-   * Only ST3 (Permission) and ST4 (Consequence) have sexualCatalyst: true
+   * Only ST3 (Permission) and ST4 (Consequence) have intimacyCatalyst: true
    */
   function isStoryturnSexualCatalyst(stId) {
       const semantics = STORYTURN_CONFIG.storyturnSemantics[stId];
-      return semantics ? semantics.sexualCatalyst === true : false;
+      return semantics ? semantics.intimacyCatalyst === true : false;
   }
 
   /**
@@ -6734,21 +6729,21 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
    * Sexual activity may only contribute to ST3 or ST4 advancement
    */
   function canSexualActivityAdvanceToStoryturn(targetSt) {
-      // Sexual catalyst check: only ST3 and ST4 can be advanced via sex
+      // Intimacy catalyst check: only ST3 and ST4 can be advanced via intimacy
       if (!isStoryturnSexualCatalyst(targetSt)) {
           return false;
       }
 
-      // Post-ST4 rule: sex after ST4 is contextual only
+      // Post-ST4 rule: intimacy after ST4 is contextual only
       const currentIdx = getStoryturnIndex(state.storyturn || 'ST1');
       const st4Idx = getStoryturnIndex('ST4');
-      if (currentIdx >= st4Idx && STORYTURN_CONFIG.postSexRules.sexAfterST4IsContextual) {
+      if (currentIdx >= st4Idx && STORYTURN_CONFIG.postIntimacyRules.intimacyAfterST4IsContextual) {
           return false;
       }
 
-      // Repeated sex rule: if already past first sex, no advancement
-      if (!STORYTURN_CONFIG.postSexRules.repeatedSexAdvancesStoryturn) {
-          // If we're already at ST4 or beyond, repeated sex cannot advance
+      // Repeated intimacy rule: if already past first intimacy, no advancement
+      if (!STORYTURN_CONFIG.postIntimacyRules.repeatedIntimacyAdvancesStoryturn) {
+          // If we're already at ST4 or beyond, repeated intimacy cannot advance
           if (currentIdx >= st4Idx) {
               return false;
           }
@@ -6790,19 +6785,19 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   }
 
   /**
-   * Check if sex is allowed at current Storyturn.
+   * Check if intimacy is allowed at current Storyturn.
    * Intensity tiers no longer gate this — ST3/ST4 is the universal gate.
    */
-  function isSexAllowedAtCurrentStoryturn() {
+  function isIntimacyAllowedAtCurrentStoryturn() {
       const currentSt = state.storyturn || 'ST1';
       return ['ST3', 'ST4'].includes(currentSt);
   }
 
   /**
-   * Check if sex COMPLETION is allowed (not just initiation)
+   * Check if intimacy COMPLETION is allowed (not just initiation)
    * Taste can initiate at ST3 but CANNOT complete
    */
-  function isSexCompletionAllowed() {
+  function isIntimacyCompletionAllowed() {
       const storyLength = (state.storyLength || 'taste').toLowerCase();
 
       // Taste allows initiation but NEVER completion
@@ -6811,21 +6806,21 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       }
 
       // Must be at allowed Storyturn
-      return isSexAllowedAtCurrentStoryturn();
+      return isIntimacyAllowedAtCurrentStoryturn();
   }
 
   /**
-   * ASSERTION: Block sex completion if not allowed
+   * ASSERTION: Block intimacy completion if not allowed
    */
-  function assertSexCompletionAllowed() {
-      if (!isSexCompletionAllowed()) {
+  function assertIntimacyCompletionAllowed() {
+      if (!isIntimacyCompletionAllowed()) {
           const storyLength = (state.storyLength || 'taste').toLowerCase();
           const currentSt = state.storyturn || 'ST1';
 
           if (storyLength === 'taste') {
-              throw new Error(`[STORYTURN] Sex completion blocked: Taste stories require upgrade`);
+              throw new Error(`[STORYTURN] Intimacy completion blocked: Taste stories require upgrade`);
           } else {
-              throw new Error(`[STORYTURN] Sex completion blocked at ${currentSt}. Not in allowed Storyturns.`);
+              throw new Error(`[STORYTURN] Intimacy completion blocked at ${currentSt}. Not in allowed Storyturns.`);
           }
       }
   }
@@ -6874,36 +6869,36 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   }
 
   /**
-   * ASSERTION: Enforce post-sex rules and sexual catalyst restrictions
-   * - After ST4, sex is contextual only (no advancement)
-   * - Repeated sex never advances Storyturn
-   * - Non-catalyst Storyturns (ST1, ST2, ST5, ST6) cannot be advanced via sex
+   * ASSERTION: Enforce post-intimacy rules and intimacy catalyst restrictions
+   * - After ST4, intimacy is contextual only (no advancement)
+   * - Repeated intimacy never advances Storyturn
+   * - Non-catalyst Storyturns (ST1, ST2, ST5, ST6) cannot be advanced via intimacy
    */
-  function assertSexDoesNotAdvanceStoryturn(isSexScene, attemptingAdvancement = false) {
-      if (!isSexScene) return; // Not a sex scene, no assertion needed
+  function assertIntimacyDoesNotAdvanceStoryturn(isIntimacyScene, attemptingAdvancement = false) {
+      if (!isIntimacyScene) return; // Not an intimacy scene, no assertion needed
 
       const currentSt = state.storyturn || 'ST1';
       const currentIdx = getStoryturnIndex(currentSt);
       const st4Idx = getStoryturnIndex('ST4');
       const nextSt = currentIdx < 5 ? getStoryturnById(currentIdx + 1) : null;
 
-      // ASSERTION 1: Post-ST4 sex is contextual only
-      if (currentIdx >= st4Idx && STORYTURN_CONFIG.postSexRules.sexAfterST4IsContextual) {
+      // ASSERTION 1: Post-ST4 intimacy is contextual only
+      if (currentIdx >= st4Idx && STORYTURN_CONFIG.postIntimacyRules.intimacyAfterST4IsContextual) {
           if (attemptingAdvancement) {
-              throw new Error(`[STORYTURN] Sex cannot advance Storyturn after ST4 — contextual only`);
+              throw new Error(`[STORYTURN] Intimacy cannot advance Storyturn after ST4 — contextual only`);
           }
-          console.log(`[STORYTURN] Sex scene at ${currentSt} — contextual, no advancement`);
+          console.log(`[STORYTURN] Intimacy scene at ${currentSt} — contextual, no advancement`);
       }
 
-      // ASSERTION 2: Repeated sex never advances Storyturn
-      if (!STORYTURN_CONFIG.postSexRules.repeatedSexAdvancesStoryturn && attemptingAdvancement) {
-          throw new Error(`[STORYTURN] Repeated sex cannot advance Storyturn — postSexRules violation`);
+      // ASSERTION 2: Repeated intimacy never advances Storyturn
+      if (!STORYTURN_CONFIG.postIntimacyRules.repeatedIntimacyAdvancesStoryturn && attemptingAdvancement) {
+          throw new Error(`[STORYTURN] Repeated intimacy cannot advance Storyturn — postIntimacyRules violation`);
       }
 
-      // ASSERTION 3: Non-catalyst Storyturns cannot be advanced via sex
+      // ASSERTION 3: Non-catalyst Storyturns cannot be advanced via intimacy
       if (nextSt && attemptingAdvancement) {
           const nextSemantics = STORYTURN_CONFIG.storyturnSemantics[nextSt];
-          if (nextSemantics && !nextSemantics.sexualCatalyst) {
+          if (nextSemantics && !nextSemantics.intimacyCatalyst) {
               throw new Error(`[STORYTURN] ${nextSt} (${nextSemantics.phase}) cannot be advanced via sexual activity`);
           }
       }
@@ -7321,7 +7316,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   //   - Upgrade required for completion
   //
   // Failure Conditions:
-  //   - Early kiss or sex resolves
+  //   - Early kiss or intimacy resolves
   //   - Storyturn advances to ST4
   //   - Emotional closure occurs
   //
@@ -7335,14 +7330,14 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   //
   // Invariant Outcomes:
   //   - Early erotic content allowed
-  //   - Side-character sex permitted
+  //   - Side-character intimacy permitted
   //   - Main-pair intimacy attempts frequent
   //   - ST3 loops common
   //   - ST4 occurs only after consequence
   //
   // Failure Conditions:
   //   - Explicitness alone advances Storyturns
-  //   - Main-pair sex resolves before consequence
+  //   - Main-pair intimacy resolves before consequence
   //   - Erotic content collapses tension
   //
   // ───────────────────────────────────────────────
@@ -7567,7 +7562,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       const currentSt = state.storyturn || 'ST1';
       const resolutionMode = getFateCardResolutionMode(cardId);
 
-      // Check post-sex rules for sex-related cards
+      // Check post-intimacy rules for intimacy-related cards
       const currentIdx = getStoryturnIndex(currentSt);
       const st4Idx = getStoryturnIndex('ST4');
       const isPostST4 = currentIdx >= st4Idx;
@@ -7592,11 +7587,11 @@ The Storyturn aligns with this card. Allow irreversible consequences to land.
 
       const guidance = partialGuidance[cardId] || 'The moment builds tension but does not fully resolve.';
 
-      // Post-ST4 sex guard
-      let postSexGuard = '';
+      // Post-ST4 intimacy guard
+      let postIntimacyGuard = '';
       if (isPostST4 && ['temptation', 'reversal'].includes(cardId)) {
-          postSexGuard = `
-NOTE: Post-ST4 rules apply. Sex scenes are allowed but must NOT advance Storyturn.`;
+          postIntimacyGuard = `
+NOTE: Post-ST4 rules apply. Intimate scenes are allowed but must NOT advance Storyturn.`;
       }
 
       return `
@@ -7606,7 +7601,7 @@ ${guidance}
 - Produce narrative response (never silent failure)
 - Increase tension, pressure, or clarity
 - Do NOT advance Storyturn
-- Do NOT allow irreversible commitment to land${postSexGuard}`;
+- Do NOT allow irreversible commitment to land${postIntimacyGuard}`;
   }
 
   /**
@@ -7665,11 +7660,11 @@ ${guidance}
       let directive = `
 STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
 
-      // Post-ST4: sex is contextual only
+      // Post-ST4: intimacy is contextual only
       if (isPostST4) {
           directive += `
 - Sexual content is ALLOWED but must NOT advance Storyturn
-- Post-ST4 rule: sexAfterST4IsContextual = true
+- Post-ST4 rule: intimacyAfterST4IsContextual = true
 - Repeated intimacy shapes meaning, not progression`;
       }
 
@@ -7678,7 +7673,7 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
           directive += `
 - TASTE CEILING ACTIVE: Cannot advance past ${maxSt}
 - Escalation builds tension but cannot resolve
-- Sex initiation allowed, completion BLOCKED`;
+- Intimacy initiation allowed, completion BLOCKED`;
       }
 
       // Storyturn advancement rules
@@ -7732,10 +7727,10 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
           }
       }
 
-      // Post-ST4 sex rule
+      // Post-ST4 intimacy rule
       const currentIdx = getStoryturnIndex(currentSt);
       const st4Idx = getStoryturnIndex('ST4');
-      if (currentIdx >= st4Idx && STORYTURN_CONFIG.postSexRules.sexAfterST4IsContextual) {
+      if (currentIdx >= st4Idx && STORYTURN_CONFIG.postIntimacyRules.intimacyAfterST4IsContextual) {
           if (attemptingAdvancement) {
               throw new Error(`[STORYTURN] Free-text sexual content cannot advance Storyturn after ST4`);
           }
@@ -7769,7 +7764,7 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
   const ROMANCE_COLLAPSING_ACTIONS = {
       // Physical resolution
       kiss: ['kiss', 'kissed', 'kissing', 'lips meet', 'lips touched', 'mouth on'],
-      sex: ['make love', 'have sex', 'sleep with', 'take me', 'take you', 'undress'],
+      intimacy: ['make love', 'have sex', 'sleep with', 'take me', 'take you', 'undress'],
       commitment: ['i love you', 'marry me', 'be mine', 'together forever', 'run away with'],
       confession: ['confess my feelings', 'tell you how i feel', 'admit i love', 'declare my love'],
 
@@ -7782,7 +7777,7 @@ STORYTURN GUARD (Free-Text Input @ ${currentSt} — ${phase} phase):`;
   // Actions are premature if current Storyturn is BELOW the gate
   const ROMANCE_COLLAPSE_GATES = {
       kiss: 'ST3',        // First kiss requires Permission phase
-      sex: 'ST3',         // Sex requires Permission phase (Taste further restricts)
+      intimacy: 'ST3',    // Intimacy requires Permission phase (Taste further restricts)
       commitment: 'ST5',  // Commitment requires Crisis resolution
       confession: 'ST2',  // Confession requires Resistance phase minimum
       closure: 'ST5',     // Closure requires Crisis phase
@@ -8341,7 +8336,7 @@ TONE-SPECIFIC ROMANCE VOICE (${toneName}):
 
       if (currentSt === 'ST2') {
           // Resistance phase: favor almost-touch and external interruption
-          if (collapseType === 'kiss' || collapseType === 'sex') {
+          if (collapseType === 'kiss' || collapseType === 'intimacy') {
               return ROMANCE_REFRAME_STRATEGIES.almost_touch;
           }
           return ROMANCE_REFRAME_STRATEGIES.interruption_external;
@@ -11785,7 +11780,7 @@ Return ONLY the title, no quotes or explanation.`;
           const lastScene = lastContent.slice(-2000);
           const povResult = validatePOV(lastScene, {
               sceneIndex: state.turnCount || 0,
-              isErotic: isSexAllowedAtCurrentStoryturn() && state.turnCount > 0,
+              isErotic: isIntimacyAllowedAtCurrentStoryturn() && state.turnCount > 0,
               isGodMode: state.godModeActive || false
           });
           results.pov = povResult;
@@ -12057,7 +12052,7 @@ Return ONLY the title, no quotes or explanation.`;
       state.storyLength = 'taste';
       state.storyOrigin = null;
       state.storyStage = null;
-      state.intimacyInterrupted = { first_kiss: false, first_sex: false };
+      state.intimacyInterrupted = { first_kiss: false, first_intimacy: false };
       state.intimacyTurnsInWindow = 0;
       state.turnCount = 0;
 
@@ -12544,6 +12539,11 @@ Return ONLY the title, no quotes or explanation.`;
           if (controlPlaneBtn) controlPlaneBtn.classList.remove('visible');
       }
 
+      if(id === 'tierGate') {
+          // Reset tier cards so they start face-down each time
+          if (window.resetTierCards) window.resetTierCards();
+      }
+
       if(id === 'modeSelect') {
           _navHistory = [];
           // Update Solo subtitle based on permission gradient
@@ -12778,11 +12778,7 @@ Return ONLY the title, no quotes or explanation.`;
   }
 
   function buildConsentDirectives() {
-      let s = "SAFETY & CONSENT RULES: All interactions must depict consensual dynamics. No violence or coercion. ";
-      s += "All dynamics must be clearly enthusiastic and consensual. ";
-      if (!state.safety.violence) s += "MINIMIZE VIOLENCE. Focus on emotional conflict. ";
-      if (state.safety.boundaries.length > 0) s += "HARD BOUNDARIES (NEVER VIOLATE): " + state.safety.boundaries.join(", ") + ". ";
-      return s;
+      return "SAFETY & CONSENT RULES: All interactions must depict consensual dynamics. No violence or coercion. All dynamics must be clearly enthusiastic and consensual. ";
   }
 
   // --- ACCESS HELPERS ---
@@ -12906,7 +12902,7 @@ Return ONLY the title, no quotes or explanation.`;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // INTIMACY MILESTONE INTERRUPTION SYSTEM
-  // Interrupts first_kiss and first_sex on FIRST attempt only (latch rule)
+  // Interrupts first_kiss and first_intimacy on FIRST attempt only (latch rule)
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
@@ -12922,15 +12918,15 @@ Return ONLY the title, no quotes or explanation.`;
   }
 
   /**
-   * Detect if user input signals a sex/intimacy attempt
+   * Detect if user input signals an intimacy attempt
    * @param {string} action - User's action input
    * @param {string} dialogue - User's dialogue input
    * @returns {boolean}
    */
-  function detectSexAttempt(action, dialogue) {
+  function detectIntimacyAttempt(action, dialogue) {
       const combined = `${action} ${dialogue}`.toLowerCase();
-      const sexSignals = /\b(undress|take off|bed|make love|have sex|inside|push (her|him|them) down|straddle|between (her|his|their) legs|naked|clothes off)\b/i;
-      return sexSignals.test(combined);
+      const intimacySignals = /\b(undress|take off|bed|make love|have sex|inside|push (her|him|them) down|straddle|between (her|his|their) legs|naked|clothes off)\b/i;
+      return intimacySignals.test(combined);
   }
 
   /**
@@ -12942,18 +12938,18 @@ Return ONLY the title, no quotes or explanation.`;
    */
   function buildIntimacyInterruptionDirective(action, dialogue) {
       // Skip if both milestones already cleared
-      if (state.intimacyInterrupted.first_kiss && state.intimacyInterrupted.first_sex) {
+      if (state.intimacyInterrupted.first_kiss && state.intimacyInterrupted.first_intimacy) {
           return { directive: '', milestone: null };
       }
 
-      // Check for sex attempt first (higher priority)
-      if (!state.intimacyInterrupted.first_sex && detectSexAttempt(action, dialogue)) {
+      // Check for intimacy attempt first (higher priority)
+      if (!state.intimacyInterrupted.first_intimacy && detectIntimacyAttempt(action, dialogue)) {
           return {
-              directive: `INTIMACY INTERRUPT (first_sex): The characters clearly INTEND physical intimacy. Telegraph the approach — closeness, tension, breath, almost-contact. But INTERRUPT the act before completion. Use a grounded cause:
+              directive: `INTIMACY INTERRUPT (first_intimacy): The characters clearly INTEND physical intimacy. Telegraph the approach — closeness, tension, breath, almost-contact. But INTERRUPT the act before completion. Use a grounded cause:
 - Internal: "Not ready," "This feels wrong," sudden hesitation, emotional wall rises
 - External: Phone rings, alarm sounds, someone knocks, unexpected news arrives
 The interruption must land with narrative weight. Maintain unresolved sexual tension. Do NOT consummate.`,
-              milestone: 'first_sex'
+              milestone: 'first_intimacy'
           };
       }
 
@@ -12973,7 +12969,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
   /**
    * Latch an intimacy milestone after interruption occurs
-   * @param {string} milestone - 'first_kiss' or 'first_sex'
+   * @param {string} milestone - 'first_kiss' or 'first_intimacy'
    */
   function latchIntimacyMilestone(milestone) {
       if (milestone && state.intimacyInterrupted.hasOwnProperty(milestone)) {
@@ -13033,8 +13029,63 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   ];
 
   function classifyPetition(text) {
-      const greater = /\b(love|power|escape|reverse|revert|undo|destroy|transform|resurrect|betray)\b|remove\s.*conflict|force\s.*together|make\s.*fall|structural\s*shift|skip.*scene/i;
-      return greater.test(text) ? 'greater' : 'minor';
+      const categories = [
+          { cat: 'resurrection', rx: /\b(resurrect|revive|bring\s+back\s+from\s+dead|raise\s+the\s+dead|return\s+from\s+death)\b/i },
+          { cat: 'reversal',    rx: /\b(reverse|revert|undo|unmake|turn\s+back\s+time)\b/i },
+          { cat: 'harm',        rx: /\b(destroy|kill|curse|ruin|break|shatter|smite|betray)\b/i },
+          { cat: 'power',       rx: /\b(power|control|dominate|rule|command|throne|reign)\b/i },
+          { cat: 'escape',      rx: /\b(escape|flee|freedom|liberate|break\s+free|release)\b/i },
+          { cat: 'love',        rx: /\b(love|heart|desire|passion|devotion|adore|romance|together)\b|force\s.*together|make\s.*fall/i },
+          { cat: 'memory',      rx: /\b(memory|remember|forget|past|recall|nostalgia)\b/i },
+          { cat: 'protection',  rx: /\b(protect|shield|guard|defend|safe|ward|sanctuary)\b/i },
+          { cat: 'fortune',     rx: /\b(fortune|wealth|luck|treasure|prosper|gold|riches)\b/i },
+          { cat: 'appearance',  rx: /\b(beauty|appearance|transform|form|shape|face|youth|age)\b/i },
+      ];
+      for (const { cat, rx } of categories) {
+          if (rx.test(text)) return cat;
+      }
+      return 'general';
+  }
+
+  const PETITION_COST_FALLBACKS = {
+      appearance: 'a mirror that remembers your true face',
+      love: 'a night you spent together that neither will recall',
+      power: 'a name whispered in fear of you',
+      escape: 'the door you came through, sealed forever',
+      memory: 'a voice you will no longer recognize',
+      resurrection: 'a year of sunlight, given to shadow',
+      protection: 'the scar that kept you cautious',
+      fortune: 'a friendship weighed in gold',
+      harm: 'your own reflection, cracked and watching',
+      reversal: 'the moment you would have changed your mind',
+      general: 'something precious, unnamed and half-forgotten',
+  };
+
+  async function generateFateCostHint(petitionText, category) {
+      try {
+          if (!window.StoryboundOrchestration) throw new Error('No orchestration');
+          const messages = [
+              { role: 'system', content: 'You are Fate — ancient, cryptic, poetic. Respond with ONLY a short noun phrase (3-10 words) describing a tangible, personal cost fate demands. No sentences. No verbs. No quotation marks. Examples: "a memory of your mother\'s voice", "the warmth in your left hand", "a door you can never reopen".' },
+              { role: 'user', content: `The petitioner asks for something related to "${category}". Their words: "${petitionText.slice(0, 200)}". What does Fate demand in return?` }
+          ];
+          const result = await window.StoryboundOrchestration.callChatGPT(
+              messages, 'PRIMARY_AUTHOR', { temperature: 0.9, max_tokens: 40 }
+          );
+          const hint = (result?.choices?.[0]?.message?.content || '').trim().replace(/^["']|["']$/g, '').toLowerCase();
+          if (!hint || hint.length < 3 || hint.length > 120) throw new Error('bad hint');
+          return hint;
+      } catch (e) {
+          console.warn('[petition] LLM hint failed, using fallback:', e.message);
+          return PETITION_COST_FALLBACKS[category] || PETITION_COST_FALLBACKS.general;
+      }
+  }
+
+  function computeOfferingMatch(hintText, offeringText) {
+      const extractWords = (t) => t.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 3);
+      const hintWords = new Set(extractWords(hintText));
+      const offerWords = extractWords(offeringText);
+      if (hintWords.size === 0 || offerWords.length === 0) return false;
+      return offerWords.some(w => hintWords.has(w));
   }
 
   function canAttemptGreaterPetition() {
@@ -13046,7 +13097,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
   function resolveFateOutcome(stance, classification, sacrificeChoice, powerLevel = 0) {
       let weights;
-      if (classification === 'greater' && !canAttemptGreaterPetition()) {
+      if (classification !== 'general' && !canAttemptGreaterPetition()) {
           weights = { benevolent: 10, twist: 60, silent: 30 };
       } else {
           const stanceWeights = {
@@ -13069,7 +13120,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           state.keyhole.totalBoonsDrained += drainAmount;
           // Only apply boost if God Mode is not active
           if (!state.godModeActive) {
-              keyholeBoost = (drainAmount / 100) * 0.3;
+              keyholeBoost = (drainAmount / 100) * 0.5;
           }
       }
       powerLevel = Math.min(1, powerLevel + keyholeBoost);
@@ -13155,13 +13206,30 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       state.godModeEligibleThisRitual = tierOk && powerLevel > 0;
       state.godModeActive = false;
 
+      // Reset petition field
       const input = document.getElementById('petitionInput');
-      if (input) input.value = '';
-      document.getElementById('petitionRitualArea')?.classList.add('hidden');
-      document.getElementById('petitionSacrifice')?.classList.add('hidden');
-      document.getElementById('petitionResult')?.classList.add('hidden');
-      document.getElementById('petitionActions')?.classList.remove('hidden');
-      document.getElementById('btnSubmitPetition')?.classList.remove('hidden');
+      if (input) { input.value = ''; input.readOnly = false; }
+      // Reset offering field
+      const offering = document.getElementById('petitionOffering');
+      if (offering) { offering.value = ''; offering.readOnly = false; }
+
+      // Reset visibility of ritual elements
+      const sealBtn = document.getElementById('btnSealPetition');
+      if (sealBtn) { sealBtn.classList.remove('hidden'); sealBtn.disabled = false; }
+      const costHint = document.getElementById('petitionCostHint');
+      if (costHint) { costHint.classList.add('hidden'); costHint.classList.remove('fade-in'); }
+      document.getElementById('petitionOfferingWrap')?.classList.add('hidden');
+      const offerBtn = document.getElementById('btnOfferIt');
+      if (offerBtn) { offerBtn.classList.add('hidden'); offerBtn.disabled = false; }
+      const omenEl = document.getElementById('petitionOmen');
+      if (omenEl) { omenEl.classList.add('hidden'); omenEl.classList.remove('fade-in'); }
+      const resultEl = document.getElementById('petitionResult');
+      if (resultEl) { resultEl.classList.add('hidden'); resultEl.classList.remove('fade-in'); }
+      document.getElementById('btnClosePetition')?.classList.remove('hidden');
+
+      // Clear ritual state
+      delete state._petitionRitual;
+
       const ph = document.querySelector('.rotating-placeholder[data-for="petitionInput"]');
       if (ph && !ph.innerHTML.trim() && typeof initRotatingPlaceholder === 'function') {
           initRotatingPlaceholder('petitionInput', 'petition');
@@ -13169,14 +13237,15 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       modal.classList.remove('hidden');
   };
 
-  function completePetitionRitual(text, classification, sacrificeChoice) {
-      document.getElementById('petitionSacrifice')?.classList.add('hidden');
+  function completePetitionRitual(text, classification, sacrificeChoice, offerBoost = 0) {
       const resultEl = document.getElementById('petitionResult');
 
-      // Warm welcome: first petition ever → force benevolent minor
+      const isGreater = classification !== 'general';
+
+      // Warm welcome: first petition ever → force benevolent general
       const isFirst = state.fate && !state.fate.lastGreaterSceneIndex && !state.fate.minorUsedThisScene && !state.fate.greaterUsedThisScene;
       let outcome;
-      if (isFirst && classification === 'minor') {
+      if (isFirst && !isGreater) {
           outcome = 'benevolent';
       } else {
           const currentStoryId = makeStoryId();
@@ -13184,6 +13253,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
           // God Mode requires Subscriber OR Storypass for this story
           if (!(state.subscribed || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory()))) powerLevel = 0;
+
+          // Offering semantic match boost
+          powerLevel = Math.min(1, powerLevel + offerBoost);
 
           outcome = resolveFateOutcome(state.fate?.stance || 'neutral', classification, sacrificeChoice, powerLevel);
       }
@@ -13193,18 +13265,18 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       // Advance omen decay based on petition behavior
       advanceOmenDecay(sacrificeChoice);
-      if (classification === 'greater' && state.omen) {
+      if (isGreater && state.omen) {
         state.omen.lastGreaterPetitionCount = (state.omen.lastGreaterPetitionCount || 0) + 1;
       }
 
-      if (classification === 'minor') state.fate.minorUsedThisScene = true;
-      if (classification === 'greater') {
+      if (!isGreater) state.fate.minorUsedThisScene = true;
+      if (isGreater) {
           state.fate.greaterUsedThisScene = true;
           state.fate.lastGreaterSceneIndex = state.turnCount;
       }
 
       const stIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
-      if (classification === 'greater' && stIdx < 4) {
+      if (isGreater && stIdx < 4) {
           state.fate.earlyGamingCount++;
       }
 
@@ -15445,46 +15517,88 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   });
 
   // Petition Fate submit handler
-  $('btnSubmitPetition')?.addEventListener('click', () => {
+  // ── Petition Ritual: Seal Petition handler ──
+  $('btnSealPetition')?.addEventListener('click', async () => {
       const input = document.getElementById('petitionInput');
       const text = input?.value?.trim();
       if (!text) return;
 
       const classification = classifyPetition(text);
+      const isGreater = classification !== 'general';
 
-      // Gate: check for duplicate petition this scene
-      if (classification === 'minor' && state.fate?.minorUsedThisScene) {
+      // Gate: duplicate petition check
+      if (!isGreater && state.fate?.minorUsedThisScene) {
           if (typeof showToast === 'function') showToast('You have already petitioned Fate this scene.');
           return;
       }
-      if (classification === 'greater' && state.fate?.greaterUsedThisScene) {
+      if (isGreater && state.fate?.greaterUsedThisScene) {
           if (typeof showToast === 'function') showToast('A greater petition has already been made this scene.');
           return;
       }
 
-      // Hide submit, show ritual
-      document.getElementById('btnSubmitPetition')?.classList.add('hidden');
-      document.getElementById('petitionRitualArea')?.classList.remove('hidden');
+      // Lock petition field
+      input.readOnly = true;
+      const sealBtn = $('btnSealPetition');
+      if (sealBtn) { sealBtn.disabled = true; sealBtn.classList.add('hidden'); }
       disableTurnControls();
 
-      // Omen phase — temperature-driven atmospheric signal
-      const omenEl = document.getElementById('petitionOmen');
+      // Store for later
+      state._petitionRitual = { text, classification, isGreater };
+
+      // Generate cost hint (async LLM with fallback)
+      const hint = await generateFateCostHint(text, classification);
+      state._petitionRitual.hint = hint;
+
+      // Show hint
+      const hintEl = $('petitionCostHint');
+      if (hintEl) {
+          hintEl.textContent = `Fate demands a price: ${hint}...`;
+          hintEl.classList.remove('hidden');
+          requestAnimationFrame(() => hintEl.classList.add('fade-in'));
+      }
+
+      // Activate offering field after hint visible
+      setTimeout(() => {
+          $('petitionOfferingWrap')?.classList.remove('hidden');
+          $('btnOfferIt')?.classList.remove('hidden');
+          document.getElementById('petitionOffering')?.focus();
+      }, 1200);
+  });
+
+  // ── Petition Ritual: Offer It handler ──
+  $('btnOfferIt')?.addEventListener('click', () => {
+      const offeringInput = document.getElementById('petitionOffering');
+      const offeringText = offeringInput?.value?.trim() || '';
+      const ritual = state._petitionRitual;
+      if (!ritual) return;
+
+      // Lock offering field
+      if (offeringInput) offeringInput.readOnly = true;
+      const offerBtn = $('btnOfferIt');
+      if (offerBtn) { offerBtn.disabled = true; offerBtn.classList.add('hidden'); }
+      $('btnClosePetition')?.classList.add('hidden');
+
+      // Compute semantic match → subtle power boost
+      const matched = offeringText && ritual.hint && computeOfferingMatch(ritual.hint, offeringText);
+      const offerBoost = matched ? 0.05 : 0;
+
+      // Omen preview
+      const omenEl = $('petitionOmen');
       const omen = generateOmen();
       if (omenEl) {
           omenEl.textContent = omen;
-          omenEl.classList.add('fade-in');
+          omenEl.classList.remove('hidden');
+          requestAnimationFrame(() => omenEl.classList.add('fade-in'));
       }
 
-      // After omen, show sacrifice choice
+      // Complete ritual after omen visible
       setTimeout(() => {
-          document.getElementById('petitionSacrifice')?.classList.remove('hidden');
-          // Bind sacrifice buttons
-          document.querySelectorAll('.petition-sacrifice-btn').forEach(btn => {
-              btn.onclick = () => {
-                  const choice = btn.dataset.choice;
-                  completePetitionRitual(text, classification, choice);
-              };
-          });
+          completePetitionRitual(
+              ritual.text,
+              ritual.classification,
+              offeringText ? 'offer' : 'letfate',
+              offerBoost
+          );
       }, 1500);
   });
 
@@ -15563,15 +15677,47 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     window.showScreen && window.showScreen('tierGate');
   });
 
-  $('btnTaste')?.addEventListener('click', () => {
-    state.tier = 'free';
-    state.access = 'free';
-    applyAccessLocks();
-    window.showScreen('modeSelect');
-    if(window.initCards) window.initCards();
-  });
+  // Tier card hover-flip + click-to-proceed
+  function initTierCards() {
+    const tasteCard = $('btnTaste');
+    const premiumCard = $('btnPremium');
+    const tierCards = [tasteCard, premiumCard].filter(Boolean);
 
-  $('btnPremium')?.addEventListener('click', () => window.showPaywall('sub_only'));
+    tierCards.forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        if (!card.classList.contains('flipped')) card.classList.add('flipped');
+      });
+      card.addEventListener('mouseleave', () => {
+        card.classList.remove('flipped');
+      });
+    });
+
+    tasteCard?.addEventListener('click', () => {
+      if (!tasteCard.classList.contains('flipped')) {
+        tasteCard.classList.add('flipped');
+        return;
+      }
+      state.tier = 'free';
+      state.access = 'free';
+      applyAccessLocks();
+      window.showScreen('modeSelect');
+      if(window.initCards) window.initCards();
+    });
+
+    premiumCard?.addEventListener('click', () => {
+      if (!premiumCard.classList.contains('flipped')) {
+        premiumCard.classList.add('flipped');
+        return;
+      }
+      window.showPaywall('sub_only');
+    });
+  }
+  initTierCards();
+
+  // Reset tier cards when returning to tierGate
+  window.resetTierCards = function() {
+    document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('flipped'));
+  };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PARALLEL COVER + STORY GENERATION
@@ -17160,8 +17306,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   let zoomOriginalNextSibling = null;
 
   function initSelectionHandlers(){
-    state.safety = state.safety || { darkThemes:true, violence:true, boundaries:[] };
-
     // Initialize default dynamic (single-select in 4-axis system)
     if (!state.picks.dynamic) {
         state.picks.dynamic = 'Enemies';
@@ -17173,23 +17317,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         chkLock.dataset.bound = '1';
         chkLock.addEventListener('change', (e) => { state.visual.autoLock = e.target.checked; saveStorySnapshot(); });
     }
-
-    // Bind boundary chips
-    document.querySelectorAll('.boundary-chips .chip-gold[data-boundary]').forEach(chip => {
-        if (chip.dataset.bound === '1') return;
-        chip.dataset.bound = '1';
-        chip.addEventListener('click', () => {
-            chip.classList.toggle('active');
-            const boundary = chip.textContent.trim();
-            if (chip.classList.contains('active')) {
-                if (!state.safety.boundaries.includes(boundary)) {
-                    state.safety.boundaries.push(boundary);
-                }
-            } else {
-                state.safety.boundaries = state.safety.boundaries.filter(b => b !== boundary);
-            }
-        });
-    });
 
     bindLengthHandlers();
 
@@ -18228,7 +18355,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       createBreadcrumbDirect(grp, val, selectedTitle);
 
       // Find and hide the corridor continue button for this stage
-      const stageMap = { world: 'world', tone: 'tone', pressure: 'pressure', pov: 'pov', length: 'length', dynamic: 'dynamic', intensity: 'arousal' };
+      const stageMap = { world: 'world', tone: 'tone', pressure: 'pressure', pov: 'pov', length: 'length', dynamic: 'dynamic' };
       const stage = stageMap[grp] || grp;
       hideCorridorContinueButton(stage);
 
@@ -19981,9 +20108,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     'pov',         // Row 6 - Point of view
     'length',      // Row 7 - Story length
     'dynamic',     // Row 8 - Polarity
-    'arousal',     // Row 9 - Intensity
-    'safety',      // Row 10 - Safety & Boundaries
-    'beginstory'   // Row 11 - Begin Story (terminal row)
+    'beginstory'   // Row 9 - Begin Story (terminal row)
   ];
 
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -20001,10 +20126,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     pov: 6,          // Choice VII: Point of View
     length: 7,       // Choice VIII: Story Length
     dynamic: 8,      // Choice IX: Polarity/Dynamic
-    arousal: 9,      // Choice X: Intensity/Arousal
-    intensity: 9,    // Alias for arousal
-    safety: 10,      // Choice XI: Safety & Boundaries
-    beginstory: 11   // Terminal: Begin Story (no breadcrumb)
+    beginstory: 9    // Terminal: Begin Story (no breadcrumb)
   };
 
   // Map corridor stage names to their data-grp values (for DOM queries)
@@ -20018,8 +20140,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     pov: 'pov',
     length: 'length',
     dynamic: 'dynamic',
-    arousal: 'intensity',
-    safety: 'safety',
     beginstory: 'beginstory'
   };
 
@@ -20036,8 +20156,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     pov: 'corridorRowPov',
     length: 'corridorRowLength',
     dynamic: 'corridorRowDynamic',
-    arousal: 'corridorRowArousal',
-    safety: 'safetyRow',
     beginstory: 'beginStoryRow'
   };
 
@@ -20741,8 +20859,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     pov: '#povSectionTitle, #povGrid, #continueFromPov',
     length: '#lengthSection, #continueFromLength',
     dynamic: '#flowRowDynamic, #continueFromDynamic',
-    arousal: '#arousalSectionTitle, #intensityGrid, #continueFromArousal',
-    safety: '#safetyRow, #continueFromSafety',
     beginstory: '#beginStoryRow'
   };
 
@@ -20924,8 +21040,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       'pov': 'continueFromPov',
       'length': 'continueFromLength',
       'dynamic': 'continueFromDynamic',
-      'arousal': 'continueFromArousal',
-      'safety': 'continueFromSafety',
       'beginstory': 'beginBtn'
     };
     const buttonId = stageToButton[stage];
@@ -21020,7 +21134,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const unresolved = [];
     CORRIDOR_STAGES.forEach((stage, idx) => {
       // Skip these stages (not required — they don't have card-based selection)
-      if (stage === 'identity' || stage === 'arousal' || stage === 'safety' || stage === 'beginstory') return;
+      if (stage === 'identity' || stage === 'beginstory') return;
 
       let hasSelection = corridorSelections.has(stage);
 
@@ -21346,9 +21460,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // Real breadcrumbs replace ghost steps left-to-right as corridor advances.
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // Ghost step Roman numerals - matches STAGE_INDEX (excluding intensity which has no breadcrumb)
+  // Ghost step Roman numerals - matches STAGE_INDEX (excluding beginstory which has no breadcrumb)
   const GHOST_STEP_NUMERALS = [
-    'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'
+    'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'
   ];
 
   // STAGE_DISPLAY_NAMES defined earlier — used for ghost step display names
@@ -21366,7 +21480,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Create ghost step for each STAGE_INDEX entry (except aliases and non-breadcrumb stages)
     const stageEntries = Object.entries(STAGE_INDEX).filter(([grp]) =>
-      grp !== 'archetype' && grp !== 'intensity' && grp !== 'arousal' && grp !== 'safety' && grp !== 'beginstory'
+      grp !== 'archetype' && grp !== 'beginstory'
     );
     stageEntries.sort((a, b) => a[1] - b[1]); // Sort by index
 
@@ -21571,13 +21685,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             }
         }
 
-        // AROUSAL MOUNT: Re-evaluate intensity locks (subscription may have changed)
-        if (stage === 'arousal') {
-            if (typeof applyIntensityLocks === 'function') {
-                applyIntensityLocks();
-                console.log('[Corridor] Arousal mount: Re-applied intensity locks');
-            }
-        }
 
         // BEGIN STORY MOUNT: Start sparkles around Begin Story button
         if (stage === 'beginstory') {
@@ -21605,12 +21712,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
     });
 
-    // POST-AROUSAL WRAPPER: Safety and Begin Story rows live inside
-    // #postArousalSection which starts hidden. Unhide it when the corridor
-    // reaches those rows so the anchor-based mount actually shows content.
+    // POST-AROUSAL WRAPPER: Begin Story row lives inside #postArousalSection
+    // which starts hidden. Unhide it when the corridor reaches that row.
     const postArousalSection = document.getElementById('postArousalSection');
     if (postArousalSection) {
-      if (corridorActiveRowIndex >= STAGE_INDEX.safety) {
+      if (corridorActiveRowIndex >= STAGE_INDEX.beginstory) {
         postArousalSection.classList.remove('hidden');
       } else {
         postArousalSection.classList.add('hidden');
@@ -21874,7 +21980,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // These rows always show their button when active (not card-based selection)
-    const alwaysShowForRow = (stage === 'authorship' || stage === 'identity' || stage === 'arousal' || stage === 'safety');
+    const alwaysShowForRow = (stage === 'authorship' || stage === 'identity');
 
     controlPlaneBtn.classList.toggle('visible', hasSelection || alwaysShowForRow);
   }
@@ -22055,52 +22161,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return;
     }
 
-    // Special case: Arousal — create breadcrumb from selected card, then advance
-    if (stage === 'arousal') {
-      const arousalGrp = CORRIDOR_GRP_MAP[stage]; // 'intensity'
-      const arousalCard = document.querySelector(`.sb-card[data-grp="${arousalGrp}"].selected`);
-      const arousalVal = arousalCard?.dataset.val || state.picks?.intensity || state.intensity;
-
-      if (arousalCard) {
-        const sparkleContainer = arousalCard.querySelector('.card-selection-sparkles');
-        if (sparkleContainer && typeof stopSparkleEmitter === 'function') {
-          stopSparkleEmitter(sparkleContainer.id);
-        }
-      }
-
-      if (arousalVal) {
-        const titleEl = arousalCard?.querySelector('.sb-card-title');
-        const arousalTitle = titleEl ? titleEl.textContent : arousalVal;
-        createBreadcrumbDirect(arousalGrp, arousalVal, arousalTitle);
-      }
-
-      console.log(`[Corridor] Arousal complete, advancing to safety`);
-      hideCorridorContinueButton(stage);
-      setTimeout(() => advanceCorridorRow(), 600);
-      return;
-    }
-
-    // Special case: Safety — commit safety/boundary state and advance
-    if (stage === 'safety') {
-      console.log(`[Corridor] Safety & Boundaries committed`);
-      // Collect checkbox states into state.safety
-      const darkThemes = document.getElementById('chkDark')?.checked || false;
-      const violence = document.getElementById('chkViolence')?.checked || false;
-      // Collect boundary chips
-      const boundaries = [];
-      document.querySelectorAll('#boundaryChips .chip-gold.active').forEach(c => {
-        boundaries.push(c.textContent.trim());
-      });
-      state.safety = { darkThemes, violence, boundaries };
-      // Create breadcrumb for safety
-      const safetyLabel = darkThemes ? 'Dark OK' : 'No Dark';
-      createBreadcrumbDirect('safety', darkThemes ? 'dark' : 'safe', safetyLabel);
-      hideCorridorContinueButton(stage);
-      // Advance after breadcrumb materializes so user sees it land
-      setTimeout(() => advanceCorridorRow(), 600);
-      return;
-    }
-
     // Special case: Begin Story — terminal row, dispatch to beginBtn handler
     if (stage === 'beginstory') {
       console.log(`[Corridor] Begin Story row — dispatching to beginBtn`);
@@ -22203,7 +22263,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (!breadcrumbRow) return;
 
     // Check if breadcrumb should be excluded (these stages don't become breadcrumbs)
-    if (grp === 'safety' || grp === 'beginstory') {
+    if (grp === 'beginstory') {
       console.log(`[Breadcrumb] EXCLUDED: ${grp} — never becomes breadcrumb`);
       // Still remove the ghost step for this stage (if any)
       const ghostIdx = STAGE_INDEX[grp];
@@ -22325,13 +22385,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    */
   function advanceCorridorRow() {
     corridorActiveRowIndex++;
-
-    // Auto-skip arousal stage — intensity set internally, no UI shown
-    if (CORRIDOR_STAGES[corridorActiveRowIndex] === 'arousal') {
-      console.log('[Corridor] Auto-skipping arousal stage (intensity set internally)');
-      state.intensity = state.intensity || 'Steamy';
-      corridorActiveRowIndex++;
-    }
 
     if (corridorActiveRowIndex < CORRIDOR_STAGES.length) {
       console.log(`[Corridor] Advancing to row ${corridorActiveRowIndex}: ${CORRIDOR_STAGES[corridorActiveRowIndex]}`);
@@ -22501,15 +22554,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const stage = CORRIDOR_STAGES[rowIdx];
       const grp = CORRIDOR_GRP_MAP[stage];
 
-      // Skip non-card rows (safety, beginstory have no selectable cards)
-      if (stage === 'safety' || stage === 'beginstory') {
+      // Skip non-card rows (beginstory has no selectable cards)
+      if (stage === 'beginstory') {
         corridorActiveRowIndex = rowIdx;
         updateCorridorVisibility();
         await new Promise(r => setTimeout(r, 100));
-        // Safety: auto-commit default
-        if (stage === 'safety') {
-          state.safety = state.safety || { darkThemes: true, violence: true, boundaries: [] };
-        }
         console.log(`[Corridor] Autoplay skipped non-card row ${rowIdx}: ${stage}`);
         continue;
       }
@@ -24072,14 +24121,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // Face selectors for multi-face card types
-    var FACE_SELECTORS = '.sb-card-face, .authorship-card-face, .mode-card-back, .mode-card-front';
+    var FACE_SELECTORS = '.sb-card-face, .authorship-card-face, .mode-card-back, .mode-card-front, .tier-card-back, .tier-card-face';
 
     // Card types that ARE their own face (no child face elements)
-    var SELF_FACE_CLASSES = ['tier-card-btn', 'character-tarot-card'];
+    var SELF_FACE_CLASSES = ['character-tarot-card'];
 
     /**
      * Apply gleam to a single card element. Idempotent.
-     * Works on .sb-card, .authorship-card, .mode-card, .tier-card-btn, .character-tarot-card.
+     * Works on .sb-card, .authorship-card, .mode-card, .tier-card, .character-tarot-card.
      */
     function applyCardGleam(card) {
       if (!card || card.dataset.gleamApplied) return;
@@ -24125,7 +24174,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     /** Bulk-apply to all card elements in the DOM. */
     function initAllCardGleams() {
-      document.querySelectorAll('.sb-card, .authorship-card, .mode-card, .tier-card-btn, .character-tarot-card').forEach(applyCardGleam);
+      document.querySelectorAll('.sb-card, .authorship-card, .mode-card, .tier-card, .character-tarot-card').forEach(applyCardGleam);
     }
 
     // Expose globally for dynamic card creation
@@ -26242,42 +26291,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // Bind cancel button
   document.getElementById('loadingCancelBtn')?.addEventListener('click', cancelLoading);
 
-  // PASS 1 FIX: Storypass purchase - grants Fling tier ONLY
-  $('payOneTime')?.addEventListener('click', () => {
-    console.log('[ENTITLEMENT] Storypass $3 purchase initiated');
-
-    // Ensure we have a story ID
-    state.storyId = state.storyId || makeStoryId();
-
-    // Mark purchase type BEFORE granting pass
-    state.lastPurchaseType = 'pass';
-
-    // Grant the story pass (stores in localStorage)
-    grantStoryPass(state.storyId);
-
-    console.log('[ENTITLEMENT] Story pass granted:', {
-        storyId: state.storyId,
-        hasPass: hasStoryPass(state.storyId)
-    });
-
-    // Complete purchase - will resolve access from localStorage
-    completePurchase();
-  });
-
-  // Subscription purchase helper — shared by Storied and Favored
-  async function initiateSubscriptionCheckout(priceIdEnvVar, tierName) {
-    // DEV BYPASS: fake successful subscription
-    if (window._devBypass) {
-      console.log(`%c[DEV] Faking ${tierName} subscription purchase`, 'color: #ffd700');
-      state.lastPurchaseType = 'sub';
-      state.subscribed = true;
-      state.subscriptionTier = tierName;
-      state.billingStatus = 'active';
-      completePurchase();
-      return;
-    }
-
-    console.log(`[STRIPE] ${tierName} subscription checkout initiated`);
+  // Stripe checkout helper — sends tier name to server, server resolves price ID
+  async function initiateStripeCheckout(tier) {
+    console.log(`[STRIPE] ${tier} checkout initiated`);
 
     try {
       const user = window.supabase?.auth?.getUser
@@ -26286,6 +26302,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       if (!user?.id) {
         console.error('[STRIPE] No Supabase user ID found');
+        alert('Please sign in before purchasing.');
         return;
       }
 
@@ -26293,7 +26310,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          priceId: priceIdEnvVar,
+          tier: tier,
           supabaseUserId: user.id
         })
       });
@@ -26302,29 +26319,36 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       if (!data.url) {
         console.error('[STRIPE] No checkout URL returned', data);
+        alert('Payment could not be started. Please try again.');
         return;
       }
 
       window.location.href = data.url;
     } catch (err) {
-      console.error(`[STRIPE] ${tierName} subscription checkout error:`, err);
+      console.error(`[STRIPE] ${tier} checkout error:`, err);
+      alert('Payment could not be started. Please try again.');
     }
   }
 
+  // Storypass $3 — one-time payment via Stripe (entitlement granted by webhook only)
+  $('payOneTime')?.addEventListener('click', () => {
+    initiateStripeCheckout('storypass');
+  });
+
   // Storied subscription ($6/mo)
   document.getElementById('paySubStoried')?.addEventListener('click', () => {
-    initiateSubscriptionCheckout(process.env.STRIPE_PRICE_ID_STORIED, 'storied');
+    initiateStripeCheckout('storied');
   });
 
   // Favored subscription ($9/mo)
   document.getElementById('paySubFavored')?.addEventListener('click', () => {
-    initiateSubscriptionCheckout(process.env.STRIPE_PRICE_ID_FAVORED, 'favored');
+    initiateStripeCheckout('favored');
   });
 
   $('payGodMode')?.addEventListener('click', () => {
       document.getElementById('payModal')?.classList.add('hidden');
-      if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
-          activateGodMode();
+      if (confirm("WARNING: God Mode permanently removes this story from canon. You will be charged $50.")) {
+          initiateStripeCheckout('godmode');
       }
   });
 
@@ -36806,7 +36830,7 @@ Respond in this EXACT format (no labels, just two lines):
       
       // INTIMACY WINDOW — computed, not persisted
       const intimacyWindowOpen =
-          isSexAllowedAtCurrentStoryturn() &&
+          isIntimacyAllowedAtCurrentStoryturn() &&
           (state.turnCount || 0) >= getMainPairIntimacyGateScene();
 
       // Track turns inside window; reset when outside
@@ -36882,12 +36906,12 @@ If both main characters are present, render their tension and restraint ONLY —
       // CANONICAL SCENE LENGTH DIRECTIVE — storybound/scene-length-erotic-gates-canonical-v2
       // ═══════════════════════════════════════════════════════════════════════════
       // Scene 1 (Opening): 500-600 words — LONGEST, establishes world/tone/stakes
-      // Scenes 2+ (Non-sex): 300-500 words — standard narrative pacing
-      // Sex/Erotic scenes: 150-200 words MAX — fast, reactive, speculative-friendly
+      // Scenes 2+ (Non-intimate): 300-500 words — standard narrative pacing
+      // Intimate/Erotic scenes: 150-200 words MAX — fast, reactive, speculative-friendly
       // ═══════════════════════════════════════════════════════════════════════════
       function buildSceneLengthDirective() {
           const sceneIndex = state.turnCount || 0;
-          const isMainPairSexScene = isMainCharacterSexSceneAllowed() && detectMainPairEroticContent();
+          const isMainPairIntimacyScene = isMainCharacterIntimacySceneAllowed() && detectMainPairEroticContent();
 
           // Scene 1 (Opening): LONGEST scene — establishes world, tone, power dynamics
           // MUST NOT include sexual/romantic contact between main characters
@@ -36898,14 +36922,14 @@ NO sexual or romantic physical contact between the two main characters in this s
 Ambient erotic content (side characters, memories, atmosphere) is permitted if tone is Dirty.`;
           }
 
-          // Sex scenes between main characters: SHORT for responsiveness
-          if (isMainPairSexScene) {
+          // Intimate scenes between main characters: SHORT for responsiveness
+          if (isMainPairIntimacyScene) {
               return `Write the next beat (150-200 words MAX).
 This is an erotic scene — keep it SHORT for fast generation and player responsiveness.
 Focus on sensation, tension, and reaction. Dense, not sprawling.`;
           }
 
-          // All other scenes (non-sex, or pre-gate erotic atmosphere): standard length
+          // All other scenes (non-intimate, or pre-gate erotic atmosphere): standard length
           return `Write the next beat (300-500 words).
 Take time for atmosphere, reaction, emotional beats, and tension building.`;
       }
@@ -36918,11 +36942,11 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
       // Gate is VARIABLE based on: story length tier, intensity, scene index, milestones.
       //
       // ✅ ALLOWED BEFORE GATE:
-      //    - Side character sex, ex encounters, memories, fantasies, witnessing others
+      //    - Side character intimacy, ex encounters, memories, fantasies, witnessing others
       //    - Ambient erotic atmosphere (Dirty tone), voyeuristic scenes
       //
       // ❌ FORBIDDEN BEFORE GATE (main characters only):
-      //    - Kissing, sexual touching, sex, "almost kiss" loopholes, "accidental" contact
+      //    - Kissing, sexual touching, intimacy, "almost kiss" loopholes, "accidental" contact
       // ═══════════════════════════════════════════════════════════════════════════
 
       /**
@@ -36953,7 +36977,7 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
       /**
        * Check if main character intimacy is currently allowed
        */
-      function isMainCharacterSexSceneAllowed() {
+      function isMainCharacterIntimacySceneAllowed() {
           const sceneIndex = state.turnCount || 0;
           const gateScene = getMainPairIntimacyGateScene();
           return sceneIndex >= gateScene;
@@ -36965,7 +36989,7 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
        */
       function detectMainPairEroticContent() {
           // Check if both intimacy gates have been cleared (past first interrupts)
-          if (state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_sex) {
+          if (state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_intimacy) {
               return true;  // Full intimacy unlocked
           }
           return false;
@@ -36973,7 +36997,7 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
 
       /**
        * Build erotic gating directive for story prompt
-       * Combines scene-based gating with Storyturn-based sex rules
+       * Combines scene-based gating with Storyturn-based intimacy rules
        */
       function buildEroticGatingDirective() {
           const sceneIndex = state.turnCount || 0;
@@ -36981,36 +37005,36 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
           const currentSt = state.storyturn || 'ST1';
           const storyLength = (state.storyLength || 'taste').toLowerCase();
           const isSceneGateOpen = sceneIndex >= gateScene;
-          const sexAllowedAtStoryturn = isSexAllowedAtCurrentStoryturn();
-          const completionAllowed = isSexCompletionAllowed();
+          const intimacyAllowedAtStoryturn = isIntimacyAllowedAtCurrentStoryturn();
+          const completionAllowed = isIntimacyCompletionAllowed();
 
-          // Full gate open: both scene gate AND storyturn allow sex
-          if (isSceneGateOpen && sexAllowedAtStoryturn && completionAllowed) {
+          // Full gate open: both scene gate AND storyturn allow intimacy
+          if (isSceneGateOpen && intimacyAllowedAtStoryturn && completionAllowed) {
               return '';  // Gate is fully open: main pair contact allowed
           }
 
-          // Taste at ST3: sex INITIATION allowed, but COMPLETION blocked
-          if (storyLength === 'taste' && currentSt === 'ST3' && sexAllowedAtStoryturn && !completionAllowed) {
+          // Taste at ST3: intimacy INITIATION allowed, but COMPLETION blocked
+          if (storyLength === 'taste' && currentSt === 'ST3' && intimacyAllowedAtStoryturn && !completionAllowed) {
               return `
 STORYTURN GATING (Taste @ ${currentSt} — Initiation Only):
-Sex scenes may BEGIN but must NOT COMPLETE.
+Intimate scenes may BEGIN but must NOT COMPLETE.
 - Kissing: ALLOWED
 - Sexual touching: ALLOWED
-- Sex initiation: ALLOWED
-- Sex COMPLETION: BLOCKED — interrupt before climax
+- Intimacy initiation: ALLOWED
+- Intimacy COMPLETION: BLOCKED — interrupt before climax
 
 The scene MUST end on a cliffhanger before completion.
 This is the Taste ceiling — upgrade unlocks resolution.`;
           }
 
           // Gate is CLOSED: block main pair contact
-          if (!isSceneGateOpen || !sexAllowedAtStoryturn) {
+          if (!isSceneGateOpen || !intimacyAllowedAtStoryturn) {
               return `
 INTIMACY GATING (Scene ${sceneIndex + 1}/${currentSt}, Gate opens at Scene ${gateScene + 1}/ST3):
 The two MAIN CHARACTERS must NOT have sexual or romantic physical contact yet.
 - NO kissing between main pair
 - NO sexual touching between main pair
-- NO sex between main pair
+- NO intimacy between main pair
 - NO "almost kiss" or "accidental contact" loopholes
 
 ALLOWED atmospheric content:
@@ -37762,7 +37786,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           const context = allContent.slice(-3000);
 
           // 3. Build intimacy authorization (same as real turn)
-          const specWindowOpen = isSexAllowedAtCurrentStoryturn() &&
+          const specWindowOpen = isIntimacyAllowedAtCurrentStoryturn() &&
               (state.turnCount || 0) >= getMainPairIntimacyGateScene();
           const specPlayerInitiated = detectPlayerInitiation(act, dia);
           const specMainPairAuthorized =
@@ -37852,9 +37876,9 @@ FATE CARD ADAPTATION (CRITICAL):
           const turnToneEnforcement = buildToneEnforcementBlock(state.picks?.tone);
 
           // 6. Build scene length directive (CANONICAL — storybound/scene-length-erotic-gates-canonical-v2)
-          // Scene 1: 500-600 words | Non-sex 2+: 300-500 | Sex: 150-200 MAX
+          // Scene 1: 500-600 words | Non-intimate 2+: 300-500 | Intimate: 150-200 MAX
           const specSceneIndex = state.turnCount || 0;
-          const specBothMilestonesCleared = state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_sex;
+          const specBothMilestonesCleared = state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_intimacy;
           let sceneLengthDirective;
           if (specSceneIndex === 0) {
               sceneLengthDirective = 'Write the opening scene (500-600 words). LONGEST scene. Establish world, tone, power dynamics. NO main pair physical contact.';
@@ -38055,26 +38079,19 @@ FATE CARD ADAPTATION (CRITICAL):
     if (!modeCards.length) return;
 
     modeCards.forEach(card => {
-      const mode = card.dataset.mode;
-
-      // Solo & Couple: hover to flip, click to proceed
-      if (mode === 'solo' || mode === 'couple') {
-        card.addEventListener('mouseenter', () => {
-          if (!card.classList.contains('flipped')) {
-            flipModeCard(card);
-          }
-        });
-        card.addEventListener('mouseleave', () => {
-          if (card.classList.contains('flipped') && card !== selectedModeCard) {
-            unflipModeCard(card);
-          }
-        });
-        // Touch support: first tap flips, second tap proceeds
-        card.addEventListener('click', handleModeCardClick);
-      } else {
-        // Stranger: click-only (original behavior)
-        card.addEventListener('click', handleModeCardClick);
-      }
+      // All mode cards: hover to flip, click to proceed
+      card.addEventListener('mouseenter', () => {
+        if (!card.classList.contains('flipped')) {
+          flipModeCard(card);
+        }
+      });
+      card.addEventListener('mouseleave', () => {
+        if (card.classList.contains('flipped') && card !== selectedModeCard) {
+          unflipModeCard(card);
+        }
+      });
+      // Touch support: first tap flips, second tap proceeds
+      card.addEventListener('click', handleModeCardClick);
     });
     console.log('[ModeCards] Initialized', modeCards.length, 'mode cards');
   }
@@ -38448,8 +38465,7 @@ FATE CARD ADAPTATION (CRITICAL):
 
   (function initDevHud() {
       const isDev = location.hostname === 'localhost' ||
-                    location.hostname === '127.0.0.1' ||
-                    new URLSearchParams(location.search).has('dev');
+                    location.hostname === '127.0.0.1';
       if (!isDev) return;
 
       const hudEl = document.getElementById('devHud');
@@ -39063,7 +39079,7 @@ FATE CARD ADAPTATION (CRITICAL):
 
           // "check erotic", "validate erotic", "check escalation"
           if (/\bcheck\s*(erotic|escalation)\b|\bvalidate\s*erotic\b/i.test(input)) {
-              if (!isSexAllowedAtCurrentStoryturn()) {
+              if (!isIntimacyAllowedAtCurrentStoryturn()) {
                   log('Erotic escalation: N/A (not at ST3/ST4)');
                   return;
               }
@@ -39283,7 +39299,7 @@ FATE CARD ADAPTATION (CRITICAL):
 // ROMANCE-COLLAPSING ACTIONS
 // ---------------------------
 // kiss      → Gate: ST3 (Permission phase)
-// sex       → Gate: ST3 (Permission phase, Taste further restricts)
+// intimacy  → Gate: ST3 (Permission phase, Taste further restricts)
 // commitment→ Gate: ST5 (Crisis resolution required)
 // confession→ Gate: ST2 (Resistance phase minimum)
 // closure   → Gate: ST5 (Crisis phase required)

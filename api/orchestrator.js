@@ -75,8 +75,8 @@ const ALLOWED_MODELS = {
     'grok-4-fast-non-reasoning'
   ],
 
-  // Sex renderer model for explicit scenes (ESD-gated, entitlement-checked)
-  SEX_RENDERER: [
+  // Intimacy specialist model for explicit scenes (ESD-gated, entitlement-checked)
+  INTIMACY_SPECIALIST: [
     'grok-4-fast-reasoning'
   ],
 
@@ -101,7 +101,7 @@ const DEFAULT_MODELS = {
   VETO_NORMALIZATION: 'gpt-4o-mini',
   DSP_NORMALIZATION: 'gpt-4o-mini',
   RENDERER: 'grok-4-fast-non-reasoning',        // Visual bible, visualization prompts ONLY
-  SEX_RENDERER: 'grok-4-fast-reasoning',        // Explicit scenes (ESD-gated)
+  INTIMACY_SPECIALIST: 'grok-4-fast-reasoning',        // Explicit scenes (ESD-gated)
   FATE_STRUCTURAL: 'gpt-4o-mini',
   FATE_ELEVATION: 'gpt-4o-mini'
 };
@@ -617,7 +617,7 @@ async function orchestrateStoryGeneration({
           state.esd.hardStops.push('monetization_gate_completion_forbidden');
         }
 
-        state.rendererOutput = await callSpecialist(state.esd, 'SEX_RENDERER');
+        state.rendererOutput = await callSpecialist(state.esd, 'INTIMACY_SPECIALIST');
         state.rendererCalled = true;
 
       } catch (err) {

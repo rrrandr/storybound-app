@@ -1,7 +1,18 @@
 import Stripe from 'stripe';
 
+// Map tier names to env var keys and Stripe checkout modes
+// Map tier names to env var keys, Stripe checkout modes, and credits granted (for refund reversal)
+const TIER_CONFIG = {
+  storypass: { envKey: 'STRIPE_PRICE_ID_STORYPASS', mode: 'payment', creditsGranted: 0 },
+  storied:   { envKey: 'STRIPE_PRICE_ID_STORIED',   mode: 'subscription', creditsGranted: 0 },
+  favored:   { envKey: 'STRIPE_PRICE_ID_FAVORED',   mode: 'subscription', creditsGranted: 0 },
+  godmode:   { envKey: 'STRIPE_PRICE_ID_GODMODE',   mode: 'payment', creditsGranted: 0 },
+};
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const allowedOrigin = origin === 'https://storybound.love' || origin.startsWith('http://localhost') ? origin : 'https://storybound.love';
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -14,21 +25,17 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Stripe not configured' });
   }
 
-  const { priceId, supabaseUserId } = req.body || {};
-  if (!priceId) return res.status(400).json({ error: 'priceId required' });
+  const { tier, supabaseUserId } = req.body || {};
+  if (!tier) return res.status(400).json({ error: 'tier required' });
   if (!supabaseUserId) return res.status(400).json({ error: 'supabaseUserId required' });
 
-  // Resolve subscription tier from priceId
-  let subscriptionTier = null;
-  if (priceId === process.env.STRIPE_PRICE_ID_STORIED) subscriptionTier = 'storied';
-  else if (priceId === process.env.STRIPE_PRICE_ID_FAVORED) subscriptionTier = 'favored';
+  const config = TIER_CONFIG[tier];
+  if (!config) return res.status(400).json({ error: 'Unknown tier' });
 
-  const isSubscription = subscriptionTier !== null;
-  const isStorypass = priceId === process.env.STRIPE_PRICE_ID_STORYPASS;
-  const isGodMode = priceId === process.env.STRIPE_PRICE_ID_GODMODE;
-
-  if (!isSubscription && !isStorypass && !isGodMode) {
-    return res.status(400).json({ error: 'Unknown priceId' });
+  const priceId = process.env[config.envKey];
+  if (!priceId) {
+    console.error(`[checkout] ${config.envKey} not configured`);
+    return res.status(500).json({ error: 'Price not configured' });
   }
 
   try {
@@ -37,11 +44,12 @@ export default async function handler(req, res) {
     const metadata = {
       supabase_user_id: supabaseUserId,
       price_id: priceId,
+      credits_granted: String(config.creditsGranted || 0),  // For refund reversal
     };
-    if (subscriptionTier) metadata.subscription_tier = subscriptionTier;
+    if (config.mode === 'subscription') metadata.subscription_tier = tier;
 
     const session = await stripe.checkout.sessions.create({
-      mode: isSubscription ? 'subscription' : 'payment',
+      mode: config.mode,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: 'https://storybound.love',
       cancel_url: 'https://storybound.love',
@@ -49,7 +57,7 @@ export default async function handler(req, res) {
       metadata,
     });
 
-    console.log(`[checkout] Session created: ${session.id} for price: ${priceId}`);
+    console.log(`[checkout] Session created: ${session.id} for tier: ${tier} (price: ${priceId})`);
     res.status(200).json({ url: session.url });
   } catch (err) {
     console.error('[checkout] Stripe error:', err.message);

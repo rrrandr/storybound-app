@@ -55,13 +55,13 @@
 /**
  * Allowlisted Grok models for specialist rendering.
  * RENDERER: grok-4-fast-non-reasoning (visual bible, visualization prompts ONLY)
- * SEX_RENDERER: grok-4-fast-reasoning (explicit scenes, ESD-gated)
+ * INTIMACY_SPECIALIST: grok-4-fast-reasoning (explicit scenes, ESD-gated)
  *
  * HARD RULE: Grok must NEVER be called for DSP, normalization, veto, or story logic.
  */
 const ALLOWED_GROK_MODELS = [
   'grok-4-fast-non-reasoning',  // RENDERER: Visual extraction only
-  'grok-4-fast-reasoning'       // SEX_RENDERER: Explicit scenes (ESD required)
+  'grok-4-fast-reasoning'       // INTIMACY_SPECIALIST: Explicit scenes (ESD required)
 ];
 
 /**
@@ -84,7 +84,9 @@ function validateGrokModel(model) {
 
 export default async function handler(req, res) {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const allowedOrigin = origin === 'https://storybound.love' || origin.startsWith('http://localhost') ? origin : 'https://storybound.love';
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -130,7 +132,7 @@ export default async function handler(req, res) {
     /**
      * Model selection based on role:
      * - RENDERER: grok-4-fast-non-reasoning (visual bible, visualization ONLY)
-     * - SEX_RENDERER: grok-4-fast-reasoning (explicit scenes, ESD required)
+     * - INTIMACY_SPECIALIST: grok-4-fast-reasoning (explicit scenes, ESD required)
      *
      * HARD RULE: Grok must NEVER be called for DSP, normalization, veto, or story logic.
      */
@@ -145,7 +147,7 @@ export default async function handler(req, res) {
       console.error(`[SPECIALIST-PROXY] REJECTED: Role "${role}" is AUTHOR-equivalent and must use /api/chatgpt-proxy, not Grok.`);
       return res.status(400).json({
         error: 'WRONG_ENDPOINT',
-        detail: `Role "${role}" is an AUTHOR role and must use /api/chatgpt-proxy. Grok proxy is for RENDERER and SEX_RENDERER only.`
+        detail: `Role "${role}" is an AUTHOR role and must use /api/chatgpt-proxy. Grok proxy is for RENDERER and INTIMACY_SPECIALIST only.`
       });
     }
 
@@ -153,13 +155,13 @@ export default async function handler(req, res) {
     let selectedModel;
     if (role === 'RENDERER') {
       selectedModel = 'grok-4-fast-non-reasoning';
-    } else if (role === 'SEX_RENDERER' || role === 'SPECIALIST_RENDERER') {
+    } else if (role === 'INTIMACY_SPECIALIST' || role === 'SPECIALIST_RENDERER') {
       selectedModel = 'grok-4-fast-reasoning';
     } else {
       // Reject unknown roles
       return res.status(400).json({
         error: 'INVALID_ROLE',
-        detail: `Unknown role: "${role}". Valid Grok roles: RENDERER, SEX_RENDERER. AUTHOR roles use /api/chatgpt-proxy.`
+        detail: `Unknown role: "${role}". Valid Grok roles: RENDERER, INTIMACY_SPECIALIST. AUTHOR roles use /api/chatgpt-proxy.`
       });
     }
 
@@ -172,14 +174,14 @@ export default async function handler(req, res) {
     console.log(`[SPECIALIST-PROXY] Role: ${role}, Model: ${selectedModel}`);
 
     // ==========================================================================
-    // ESD VALIDATION (required for SEX_RENDERER)
+    // ESD VALIDATION (required for INTIMACY_SPECIALIST)
     // ==========================================================================
     /**
-     * SEX_RENDERER requires valid ESD. The renderer should only receive ESD content,
+     * INTIMACY_SPECIALIST requires valid ESD. The renderer should only receive ESD content,
      * not raw plot context. RENDERER (visual extraction) does not require ESD.
      */
 
-    if ((role === 'SEX_RENDERER' || role === 'SPECIALIST_RENDERER') && esd) {
+    if ((role === 'INTIMACY_SPECIALIST' || role === 'SPECIALIST_RENDERER') && esd) {
       // Validate ESD has required fields
       const requiredFields = ['eroticismLevel', 'completionAllowed', 'hardStops'];
       for (const field of requiredFields) {

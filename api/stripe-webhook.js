@@ -109,6 +109,31 @@ export default async function handler(req, res) {
   }
   const supabase = createClient(sbUrl, sbKey);
 
+  // ── Idempotency guard — prevent duplicate event processing ──
+  // Requires table: stripe_events (id text primary key, created_at timestamptz default now())
+  {
+    const { data: existing } = await supabase
+      .from('stripe_events')
+      .select('id')
+      .eq('id', event.id)
+      .single();
+
+    if (existing) {
+      console.log(`[stripe-webhook] Duplicate event ${event.id}, skipping`);
+      return res.status(200).json({ received: true });
+    }
+
+    const { error: insertErr } = await supabase
+      .from('stripe_events')
+      .insert({ id: event.id });
+
+    if (insertErr) {
+      // Race: another instance already inserted — safe to skip
+      console.warn(`[stripe-webhook] Event insert race (${event.id}):`, insertErr.message);
+      return res.status(200).json({ received: true });
+    }
+  }
+
   // ── checkout.session.completed ──
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
@@ -152,7 +177,8 @@ export default async function handler(req, res) {
       } else {
         updates.is_subscriber = true;
         updates.subscription_tier = tier;
-        console.log(`[stripe-webhook] Granting ${tier} subscription to ${supabaseUserId}`);
+        updates.subscription_credits = 100;
+        console.log(`[stripe-webhook] Granting ${tier} subscription + 100 subscription credits to ${supabaseUserId}`);
       }
     }
 
@@ -184,12 +210,12 @@ export default async function handler(req, res) {
     if (userId) {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: true })
+        .update({ is_subscriber: true, subscription_credits: 100 })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] invoice.paid update failed:', error);
       } else {
-        console.log(`[stripe-webhook] invoice.paid — restored is_subscriber for ${userId}`);
+        console.log(`[stripe-webhook] invoice.paid — restored is_subscriber + reset 100 subscription credits for ${userId}`);
       }
     } else {
       console.warn(`[stripe-webhook] invoice.paid — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
@@ -197,6 +223,9 @@ export default async function handler(req, res) {
   }
 
   // ── invoice.payment_failed — payment failure ──
+  // GRACE MODEL: We intentionally preserve subscription_credits during payment_failed.
+  // Stripe may retry payment (up to 3x) before firing customer.subscription.deleted.
+  // Credits are only zeroed on customer.subscription.deleted — not here.
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object;
     const subscriptionId = invoice.subscription;
@@ -228,7 +257,7 @@ export default async function handler(req, res) {
     if (userId) {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: false, subscription_tier: null })
+        .update({ is_subscriber: false, subscription_tier: null, subscription_credits: 0 })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] customer.subscription.deleted update failed:', error);
@@ -237,6 +266,120 @@ export default async function handler(req, res) {
       }
     } else {
       console.warn(`[stripe-webhook] customer.subscription.deleted — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
+    }
+  }
+
+  // ── charge.refunded — revoke entitlements for refunded charges ──
+  // Resolves what was purchased via Stripe API → metadata.price_id → targeted revocation.
+  // Falls back to full revocation if resolution fails.
+  if (event.type === 'charge.refunded') {
+    const charge = event.data.object;
+    const customerId = charge.customer;
+
+    if (customerId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, image_credits')
+        .eq('stripe_customer_id', customerId)
+        .single();
+
+      if (profile) {
+        // Try to resolve what was purchased via checkout session metadata
+        let priceId = null;
+        let creditsGranted = 0;
+        try {
+          const stripe = new (await import('stripe')).default(process.env.STRIPE_SECRET_KEY);
+          const paymentIntent = charge.payment_intent;
+          if (paymentIntent) {
+            const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntent, limit: 1 });
+            const session = sessions.data?.[0];
+            if (session?.metadata) {
+              priceId = session.metadata.price_id || null;
+              creditsGranted = parseInt(session.metadata.credits_granted, 10) || 0;
+            }
+          }
+        } catch (err) {
+          console.warn('[stripe-webhook] charge.refunded — Stripe lookup failed, full revocation:', err.message);
+        }
+
+        // Targeted revocation based on price_id
+        const updates = {};
+        if (priceId === process.env.STRIPE_PRICE_ID_STORYPASS) {
+          updates.has_storypass = false;
+        } else if (priceId === process.env.STRIPE_PRICE_ID_GODMODE) {
+          updates.has_god_mode = false;
+        } else if (priceId === process.env.STRIPE_PRICE_ID_STORIED || priceId === process.env.STRIPE_PRICE_ID_FAVORED) {
+          updates.is_subscriber = false;
+          updates.subscription_tier = null;
+          updates.subscription_credits = 0;
+        } else if (creditsGranted > 0) {
+          // Credit pack refund — deduct granted credits, prevent negative
+          updates.image_credits = Math.max(0, (profile.image_credits || 0) - creditsGranted);
+        } else {
+          // Unknown product or lookup failed — full revocation (safe over-revoke)
+          updates.has_storypass = false;
+          updates.has_god_mode = false;
+          updates.is_subscriber = false;
+          updates.subscription_tier = null;
+          updates.subscription_credits = 0;
+        }
+
+        const { error } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', profile.id);
+        if (error) {
+          console.error('[stripe-webhook] charge.refunded update failed:', error);
+        } else {
+          console.log(`[stripe-webhook] charge.refunded — revoked for ${profile.id}:`, Object.keys(updates).join(', '));
+        }
+      } else {
+        console.warn(`[stripe-webhook] charge.refunded — no profile found for customer: ${customerId}`);
+      }
+    }
+  }
+
+  // ── charge.dispute.created — revoke entitlements on chargeback ──
+  if (event.type === 'charge.dispute.created') {
+    const dispute = event.data.object;
+    const chargeId = dispute.charge;
+
+    // Resolve customer from the disputed charge
+    let customerId = null;
+    try {
+      const stripe = new (await import('stripe')).default(process.env.STRIPE_SECRET_KEY);
+      const charge = await stripe.charges.retrieve(chargeId);
+      customerId = charge.customer;
+    } catch (err) {
+      console.error('[stripe-webhook] charge.dispute.created — failed to retrieve charge:', err.message);
+    }
+
+    if (customerId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('stripe_customer_id', customerId)
+        .single();
+
+      if (profile) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            has_storypass: false,
+            has_god_mode: false,
+            is_subscriber: false,
+            subscription_tier: null,
+            subscription_credits: 0,
+          })
+          .eq('id', profile.id);
+        if (error) {
+          console.error('[stripe-webhook] charge.dispute.created update failed:', error);
+        } else {
+          console.log(`[stripe-webhook] charge.dispute.created — revoked entitlements for ${profile.id}`);
+        }
+      } else {
+        console.warn(`[stripe-webhook] charge.dispute.created — no profile found for customer: ${customerId}`);
+      }
     }
   }
 
