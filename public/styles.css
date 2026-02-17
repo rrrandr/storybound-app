@@ -8165,7 +8165,6 @@ textarea.fate-field {
 }
 .tier-card-back,
 .tier-card-face {
-    position: relative;
     overflow: hidden;
 }
 .tier-card-back .card-gleam-clip,
