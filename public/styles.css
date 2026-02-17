@@ -2109,15 +2109,16 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* ═══════════════════════════════════════════════════════════════════════════ */
 .story-page-title {
     font-family: 'Lora', serif !important;
-    font-size: 1.8em;
+    font-size: 0.9em;
     font-weight: 400;
+    font-variant: small-caps;
     color: rgba(245, 240, 230, 0.7) !important; /* Lower salience than body text */
     text-shadow: none !important;
     text-align: center;
     margin: 0 0 8px 0;
     padding: 0;
     letter-spacing: 0.6em;
-    text-transform: capitalize;
+    text-transform: lowercase;
     /* No glow, no gradients, no UI decoration */
 }
 
@@ -4060,6 +4061,41 @@ select {
 }
 .petition-close-btn:hover { opacity: 1; }
 .petition-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* PETITION ZOOM — Card zooms into portal with ritual overlay on face       */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.petition-fate-card.petition-zoomed {
+  max-width: none;
+  z-index: 10005;
+  position: relative;
+  pointer-events: auto;
+  transition: transform 0.3s ease;
+}
+.petition-zoom-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 5, 15, 0.88);
+  padding: 8px 6px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 2;
+}
+/* Scale-down: card is small, scale() enlarges — so use tiny font sizes */
+.petition-zoom-overlay .petition-ritual-title { font-size: 0.55em; margin: 0 0 2px; }
+.petition-zoom-overlay .petition-ritual-subtitle { font-size: 0.35em; margin: 2px 0 4px; }
+.petition-zoom-overlay .petition-ritual-field { font-size: 0.35em; padding: 3px 4px; min-height: 20px; }
+.petition-zoom-overlay .petition-ritual-btn { font-size: 0.35em; padding: 3px 8px; margin-bottom: 3px; }
+.petition-zoom-overlay .petition-cost-hint { font-size: 0.35em; margin: 3px 0; }
+.petition-zoom-overlay .petition-omen { font-size: 0.35em; margin: 3px 0; }
+.petition-zoom-overlay .petition-result { font-size: 0.35em; margin: 3px 0; }
+.petition-zoom-overlay .petition-close-btn { font-size: 0.3em; padding: 2px 6px; margin-top: 2px; }
+.petition-zoom-overlay .petition-field-wrap { width: 90%; margin-bottom: 3px; }
+.petition-zoom-overlay .rotating-placeholder { font-size: 0.35em; }
 
 /* AUTH PANEL */
 #auth-panel { position:fixed; top:10px; right:60px; z-index:10003; background:rgba(0,0,0,0.92); padding:14px 16px; border:1px solid gold; border-radius:0; display:flex; flex-direction:column; align-items:center; gap:6px; }
@@ -12016,6 +12052,14 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     }
 }
 
+/* Fate firefly emanation — gentle drift animation (used by legacy overlay emanation) */
+@keyframes fate-firefly {
+    0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    15%  { opacity: var(--ff-opacity, 0.3); transform: translate(calc(var(--ff-dx) * 0.1), calc(var(--ff-dy) * 0.1)) scale(1); }
+    70%  { opacity: var(--ff-opacity, 0.3); transform: translate(calc(var(--ff-dx) * 0.7), calc(var(--ff-dy) * 0.7)) scale(0.8); }
+    100% { opacity: var(--ff-opacity, 0.3); transform: translate(var(--ff-dx), var(--ff-dy)) scale(0.3); }
+}
+
 /* Golden glow radiating from fate card */
 .fate-destiny-card.fate-activating {
     animation: fate-card-radiate 1.5s ease-out forwards;
@@ -12047,14 +12091,6 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     text-shadow: 0 0 8px var(--gold);
 }
 
-/* Fate firefly emanation — gentle drift animation */
-@keyframes fate-firefly {
-    0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
-    15%  { opacity: var(--ff-opacity, 0.3); transform: translate(calc(var(--ff-dx) * 0.1), calc(var(--ff-dy) * 0.1)) scale(1); }
-    70%  { opacity: var(--ff-opacity, 0.3); transform: translate(calc(var(--ff-dx) * 0.7), calc(var(--ff-dy) * 0.7)) scale(0.8); }
-    /* 100%: Keep opacity at peak — JS transition handles the 2s fade-out after animation ends */
-    100% { opacity: var(--ff-opacity, 0.3); transform: translate(var(--ff-dx), var(--ff-dy)) scale(0.3); }
-}
 
 /* Fate card disintegration — radial burst on commit */
 @keyframes fate-disintegrate {

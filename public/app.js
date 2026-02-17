@@ -2871,7 +2871,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
 
       // 5TH PERSON POV (THE AUTHOR) — POV REGIME (FINAL, SUPERSEDING)
       // NOTE: All prior frequency limits, cadence rules, and presence restrictions are SUPERSEDED.
-      // The Author is a full participant — no artificial limits on presence or frequency.
+      // Fate is a full participant — no artificial limits on presence or frequency.
       povMode: window.state?.povMode || 'normal',                // 'normal' | 'author5th'
       // SUPERSEDED: authorPresence, authorCadenceWords — Author has no frequency limits
       // These fields kept for backwards compatibility but are NOT enforced
@@ -3024,7 +3024,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
   // 5TH PERSON AUTHOR SYSTEM — POV REGIME (AUTHORITATIVE)
   // ============================================================
   //
-  // "The Author" is a PARTICIPANT in the story, but NOT a controller of events.
+  // "Fate" is a PARTICIPANT in the story, but NOT a controller of events.
   //
   // THE AUTHOR MAY:
   //   - React, comment, delight, despair, tease, or regret
@@ -3042,7 +3042,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
   //
   // ============================================================
 
-  // BANNED CONTROLLER VERBS - The Author never causes events
+  // BANNED CONTROLLER VERBS - Fate never causes events
   const AUTHOR_BANNED_VERBS = [
       // Voyeur verbs (passive observation)
       'watched', 'observed', 'saw', 'looked on', 'gazed at', 'witnessed',
@@ -3058,15 +3058,15 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
 
   // BANNED PATTERNS - Controller and voyeur phrases
   const AUTHOR_BANNED_PATTERNS = [
-      /the author (watched|observed|saw|looked on)/gi,
-      /the author (arranged|orchestrated|set up|staged|ensured)/gi,
-      /the author (caused|made|forced|compelled)/gi,
-      /the author (steered|directed|guided|led)/gi,
-      /as (she|he|they) [\w\s]+, the author/gi,
-      /the author.{0,20}(with satisfaction|with interest|with amusement) as/gi
+      /Fate (watched|observed|saw|looked on)/gi,
+      /Fate (arranged|orchestrated|set up|staged|ensured)/gi,
+      /Fate (caused|made|forced|compelled)/gi,
+      /Fate (steered|directed|guided|led)/gi,
+      /as (she|he|they) [\w\s]+, Fate/gi,
+      /Fate.{0,20}(with satisfaction|with interest|with amusement) as/gi
   ];
 
-  // ALLOWED PARTICIPANT VERBS - The Author reacts, comments, influences meaning
+  // ALLOWED PARTICIPANT VERBS - Fate reacts, comments, influences meaning
   const AUTHOR_PARTICIPANT_VERBS = [
       // Emotional reactions
       'delighted', 'despaired', 'winced', 'sighed', 'smiled', 'frowned',
@@ -3084,15 +3084,15 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
   // Legacy alias for backwards compatibility
   const AUTHOR_AGENTIC_VERBS = AUTHOR_PARTICIPANT_VERBS;
 
-  // Validate that 5th person opener starts with "The Author"
+  // Validate that 5th person opener starts with "Fate"
   function validate5thPersonOpener(text) {
       if (!text || typeof text !== 'string') return false;
       const trimmed = text.trim();
-      // Must start with "The Author" (case-insensitive first match)
-      return /^the author/i.test(trimmed);
+      // Must start with "Fate" (case-insensitive first match)
+      return /^fate\b/i.test(trimmed);
   }
 
-  // Rewrite opener to start with "The Author" if needed
+  // Rewrite opener to start with "Fate" if needed
   async function enforce5thPersonOpener(text) {
       if (validate5thPersonOpener(text)) return text;
 
@@ -3100,24 +3100,24 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       try {
           const rewritten = await callChat([{
               role: 'user',
-              content: `REWRITE REQUIRED: The following story opening MUST start with "The Author" as the grammatical subject of the first sentence.
+              content: `REWRITE REQUIRED: The following story opening MUST start with "Fate" as the grammatical subject of the first sentence.
 
 CURRENT TEXT:
 ${text.slice(0, 500)}
 
-POV REGIME — THE AUTHOR (AUTHORITATIVE):
-"The Author" is a PARTICIPANT in the story, but NOT a controller of events.
-The Author may react, comment, delight, despair, tease, or regret,
+POV REGIME — FATE (AUTHORITATIVE):
+"Fate" is a shaping presence in the story with agency and consequence.
+Fate may anticipate, withhold, miscalculate, tighten, or shape probability,
 but may NOT directly cause physical events or decide outcomes.
-The Author influences meaning, tone, and implication — not plot mechanics.
+Fate influences probability, timing, stakes, and meaning — not plot mechanics.
 
 RULES:
-1. The very first word must be "The" and second word "Author"
-2. The Author must REACT or COMMENT, never CAUSE or CONTROL
+1. The very first word must be "Fate"
+2. Fate must demonstrate AGENCY — imply a plan, a withheld action, or a miscalculation
 3. Use participant verbs like: ${AUTHOR_PARTICIPANT_VERBS.slice(0, 8).join(', ')}
 4. NEVER use controller verbs: arranged, orchestrated, steered, caused, made, forced
 5. NEVER use voyeur verbs: watched, observed, saw, witnessed
-6. The Author's action changes how the moment FEELS, not what literally happens
+6. Fate's action changes how the moment FEELS, not what literally happens
 7. Preserve the rest of the content as much as possible
 
 Return the rewritten text only, no explanation.`
@@ -3126,15 +3126,15 @@ Return the rewritten text only, no explanation.`
       } catch (e) {
           console.warn('[5thPerson] Opener enforcement failed:', e.message);
           // Fallback: prepend a participant sentence (reaction, not causation)
-          return `The Author smiled, knowing what was about to unfold. ${text}`;
+          return `Fate smiled, knowing what was about to unfold. ${text}`;
       }
   }
 
-  // Check if an Author sentence contains banned verbs (voyeur or controller)
+  // Check if a Fate sentence contains banned verbs (voyeur or controller)
   function hasBannedAuthorVerbs(sentence) {
       const lower = sentence.toLowerCase();
-      // Only check sentences that mention "the author"
-      if (!lower.includes('the author')) return false;
+      // Only check sentences that mention "Fate" as entity
+      if (!lower.includes('fate')) return false;
       return AUTHOR_BANNED_VERBS.some(verb => lower.includes(verb)) ||
              AUTHOR_BANNED_PATTERNS.some(pattern => pattern.test(sentence));
   }
@@ -3143,32 +3143,32 @@ Return the rewritten text only, no explanation.`
   const hasVoyeurVerbs = hasBannedAuthorVerbs;
 
   // Rewrite a banned Author sentence to participant mode
-  // POV REGIME: The Author reacts/comments, never causes/controls
+  // POV REGIME: Fate reacts/comments, never causes/controls
   function rewriteBannedAuthorSentence(sentence) {
       let result = sentence;
       // Replace voyeur patterns with participant alternatives (reaction, not observation)
       const voyeurReplacements = [
-          [/The Author watched (as )?/gi, 'The Author smiled, knowing '],
-          [/The Author observed (that )?/gi, 'The Author recognized that '],
-          [/The Author saw (that )?/gi, 'The Author understood that '],
-          [/The Author looked on (as )?/gi, 'The Author felt a quiet satisfaction as '],
+          [/Fate watched (as )?/gi, 'Fate smiled, knowing '],
+          [/Fate observed (that )?/gi, 'Fate recognized that '],
+          [/Fate saw (that )?/gi, 'Fate understood that '],
+          [/Fate looked on (as )?/gi, 'Fate felt a quiet satisfaction as '],
           [/watched as (she|he|they)/gi, 'sensed the moment when $1'],
-          [/The Author.{0,10}with (quiet )?satisfaction/gi, 'The Author, savoring this'],
-          [/The Author noticed/gi, 'The Author sensed'],
-          [/The Author perceived/gi, 'The Author felt']
+          [/Fate.{0,10}with (quiet )?satisfaction/gi, 'Fate, savoring this'],
+          [/Fate noticed/gi, 'Fate sensed'],
+          [/Fate perceived/gi, 'Fate felt']
       ];
       // Replace controller patterns with participant alternatives (meaning, not causation)
       const controllerReplacements = [
-          [/The Author arranged (for |that )?/gi, 'The Author knew '],
-          [/The Author orchestrated/gi, 'The Author anticipated'],
-          [/The Author ensured (that )?/gi, 'The Author hoped '],
-          [/The Author steered/gi, 'The Author wondered at'],
-          [/The Author caused/gi, 'The Author understood why'],
-          [/The Author made (sure |certain )?/gi, 'The Author sensed '],
-          [/The Author forced/gi, 'The Author ached as'],
-          [/The Author set (the stage|things|events)/gi, 'The Author reflected on what'],
-          [/The Author had woven/gi, 'The Author marveled at'],
-          [/The Author planted/gi, 'The Author recognized']
+          [/Fate arranged (for |that )?/gi, 'Fate knew '],
+          [/Fate orchestrated/gi, 'Fate anticipated'],
+          [/Fate ensured (that )?/gi, 'Fate hoped '],
+          [/Fate steered/gi, 'Fate wondered at'],
+          [/Fate caused/gi, 'Fate understood why'],
+          [/Fate made (sure |certain )?/gi, 'Fate sensed '],
+          [/Fate forced/gi, 'Fate ached as'],
+          [/Fate set (the stage|things|events)/gi, 'Fate reflected on what'],
+          [/Fate had woven/gi, 'Fate marveled at'],
+          [/Fate planted/gi, 'Fate recognized']
       ];
       for (const [pattern, replacement] of [...voyeurReplacements, ...controllerReplacements]) {
           result = result.replace(pattern, replacement);
@@ -3180,7 +3180,7 @@ Return the rewritten text only, no explanation.`
   const rewriteVoyeurSentence = rewriteBannedAuthorSentence;
 
   // Enforce Author-as-participant throughout text (not just opener)
-  // POV REGIME: The Author reacts/comments, never causes/controls
+  // POV REGIME: Fate reacts/comments, never causes/controls
   function enforceAuthorParticipant(text) {
       if (!text || typeof text !== 'string') return text;
       if (window.state?.povMode !== 'author5th') return text;
@@ -3239,17 +3239,17 @@ Return the rewritten text only, no explanation.`
   //   - restrictions that demote the Author to a rare or sidelined role
   //
   // THE NEW AUTHORITATIVE RULE:
-  // "The Author" is a participant in the story, but not a controller of events.
-  // The Author may react, comment, delight, despair, tease, or regret,
+  // "Fate" is a participant in the story, but not a controller of events.
+  // Fate may react, comment, delight, despair, tease, or regret,
   // but may not directly cause physical events or decide outcomes.
-  // The Author influences meaning, tone, and implication — not plot mechanics.
+  // Fate influences meaning, tone, and implication — not plot mechanics.
   //
   // ───────────────────────────────────────────────
   // [LEGACY - SUPERSEDED] 5TH PERSON POV — STORY AS COHERENCE
   // ───────────────────────────────────────────────
   // NOTE: This entire section is preserved for historical reference only.
   // It must NOT guide new behavior. "The story" is NOT the narrator.
-  // "The Author" is the 5th Person POV participant.
+  // "Fate" is the 5th Person POV participant.
   // ═══════════════════════════════════════════════════════════════════════════
 
   const FIFTH_PERSON_STORY_COHERENCE_SEMANTICS = {
@@ -3339,11 +3339,11 @@ Return the rewritten text only, no explanation.`
   //   POV REGIME — THE AUTHOR (FINAL, SUPERSEDING)
   //
   // In ALL tones including Wry Confession, the 5th Person POV uses
-  // "The Author" as a participant who reacts and comments.
+  // "Fate" as a participant who reacts and comments.
   //
-  // The Author may: react, comment, delight, despair, tease, regret
-  // The Author may NOT: cause events, control characters, decide outcomes
-  // The Author influences: meaning, tone, implication — not plot mechanics
+  // Fate may: react, comment, delight, despair, tease, regret
+  // Fate may NOT: cause events, control characters, decide outcomes
+  // Fate influences: meaning, tone, implication — not plot mechanics
   //
   // [LEGACY CODE PRESERVED FOR REFERENCE ONLY — DO NOT USE]
   // ───────────────────────────────────────────────
@@ -3360,31 +3360,63 @@ Return the rewritten text only, no explanation.`
 ═══════════════════════════════════════════════════════════════════════════════
 
 CORE DEFINITION:
-5th Person POV places The Author inside the story as a force of Fate.
+5th Person POV places Fate inside the story as a shaping presence.
 
-The Author IS:
-- A conscious presence
+Fate IS:
+- A conscious presence with agency, intention, and consequence
 - Emotionally invested
 - Reacting to inevitability, pressure, resistance, and consequence
+- A force that shapes probability, timing, and stakes
 
-The Author is NOT:
+Fate is NOT:
 - A camera
 - A neutral observer
 - A character performing physical actions
 - A narrator replacing character agency
+- Passive emotional commentary
 
 The scene itself remains 3rd-person limited.
-If the Author were removed, the story must feel structurally incomplete.
+If Fate were removed, the story must feel structurally incomplete.
+
+═══════════════════════════════════════════════════════════════════════════
+5TH PERSON (FATE) AGENCY RULE — MANDATORY
+═══════════════════════════════════════════════════════════════════════════
+
+When Fate appears in the narrative:
+
+- Fate must demonstrate AGENCY — not passive observation or emotional wallpaper.
+- Fate must imply intention, anticipation, regret, miscalculation, restraint, or manipulation.
+- Fate must NOT appear as passive emotional commentary.
+- "Fate felt…" constructions are DISALLOWED unless immediately tied to a shaping action or plan.
+
+Every Fate appearance must imply:
+  • a plan in motion, OR
+  • a withheld intervention, OR
+  • a miscalculation Fate is processing, OR
+  • an intentional timing decision.
+
+Fate is not decorative. Fate shapes probability.
+Fate may be wrong.
+Fate interventions must alter tension, probability, or timing in a way that is detectable in the next scene or turn.
+
+PASSIVE FATE PROHIBITION:
+- "Fate felt sad." — FORBIDDEN (standalone emotion, no agency)
+- "Fate felt the weight shift — and chose not to intervene." — ALLOWED (agency: deliberate withholding)
+- "Fate sensed the danger." — FORBIDDEN (passive awareness)
+- "Fate sensed the danger and pulled the thread tighter." — ALLOWED (awareness + shaping action)
+- Fate interiority MUST affect story trajectory. Every Fate thought must imply consequence.
+
+═══════════════════════════════════════════════════════════════════════════
 
 ABSOLUTE STRUCTURAL RULES (HARD):
 
-1. OPENING RITUAL: The story MUST begin with "The Author" as the first two words.
-2. CLOSING AUTHORITY: The final perspective MUST return to The Author
+1. OPENING RITUAL: The story MUST begin with "Fate" as the first word.
+2. CLOSING AUTHORITY: The final perspective MUST return to Fate
    (reflection, doubt, pressure, or resolve).
 3. ROLE SEPARATION:
    - Characters act, speak, and decide.
-   - The Author reacts, anticipates, weighs, resists, or tightens the frame.
-4. NO CAMERA VOICE: The Author must never function as a passive observer,
+   - Fate anticipates, weighs, withholds, miscalculates, or tightens the frame.
+4. NO CAMERA VOICE: Fate must never function as a passive observer,
    cinematic lens, or neutral narrator.
 
 FORBIDDEN (NO META LABELS):
@@ -3393,109 +3425,113 @@ FORBIDDEN (NO META LABELS):
 - "main character"
 - Any meta-label for Player Characters
 
-AUTHOR PRESENCE — GHOST AUTHOR (ACTIVE INNER LIFE):
-The Author is an invisible ghost character with a rich inner life.
-Author intrusions are SPARSE but PSYCHOLOGICALLY WEIGHTY.
+FATE PRESENCE — GHOST CHARACTER (ACTIVE INNER LIFE):
+Fate is an invisible ghost character with a rich inner life and AGENCY.
+Fate intrusions are SPARSE but PSYCHOLOGICALLY WEIGHTY and CONSEQUENTIAL.
 
 // ═══════════════════════════════════════════════════════════════════════════
-// POV REGIME — THE AUTHOR (FINAL, SUPERSEDING)
+// POV REGIME — FATE (FINAL, SUPERSEDING)
 // ═══════════════════════════════════════════════════════════════════════════
 // This regime SUPERSEDES all prior rules concerning:
 //   - "The Story" / "the moment" as narrator
-//   - limits on Author presence or frequency
-//   - restrictions that demote the Author to a rare or sidelined role
+//   - "The Author" as narrator (legacy term — now "Fate")
+//   - limits on Fate presence or frequency
+//   - restrictions that demote Fate to a rare or sidelined role
 //
-// THE AUTHOR is a PARTICIPANT — reacts, comments, delights, despairs, teases, regrets.
-// THE AUTHOR does NOT cause physical events or decide outcomes.
-// THE AUTHOR influences meaning, tone, implication — not plot mechanics.
+// FATE is a PARTICIPANT — anticipates, withholds, miscalculates, shapes, tightens.
+// FATE does NOT cause physical events or decide outcomes directly.
+// FATE influences probability, timing, stakes, and meaning — not plot mechanics.
 // ═══════════════════════════════════════════════════════════════════════════
 
-Author thoughts MUST be:
-- Participant reactions (emotional, interpretive) — never controller actions
+Fate thoughts MUST be:
+- Agency-bearing (imply plan, timing, restraint, or miscalculation)
 - Brief (1-2 sentences typical)
 - Never exposition or restating protagonist thoughts
-- Never causing events or deciding outcomes
+- Never causing events or deciding outcomes directly
+- Never standalone emotion without consequence
 
 // SUPERSEDED: Frequency limits, cadence rules, and presence restrictions
-// The Author participates naturally — no artificial limits
+// Fate participates naturally — no artificial limits
 
-GOOD Author thoughts (participant mode):
-- "The Author felt a flicker of anticipation. This was unfolding faster than expected."
-- "The Author smiled, sensing the weight of what was about to begin."
-- "A quiet ache surfaced; the Author wondered if she knew what she was walking into."
+GOOD Fate thoughts (agency mode):
+- "Fate tightened the thread, knowing this encounter would arrive too soon."
+- "Fate had intended a gentler introduction — but the timing slipped."
+- "A miscalculation. Fate had not expected her to resist."
+- "Fate withheld the revelation, judging the moment unripe."
 
-BAD Author thoughts (FORBIDDEN):
-- "The Author arranged for them to meet." (causation — FORBIDDEN)
-- "The Author revised the night's margins." (controller action — FORBIDDEN)
-- "The Author watched as she made her decision." (voyeurism — FORBIDDEN)
-- "The Author decided to make her fall in love." (direct control — FORBIDDEN)
-- "The Author adjusted his grip on the timeline." (controller metaphor — FORBIDDEN)
+BAD Fate thoughts (FORBIDDEN):
+- "Fate felt sad about what was happening." (passive emotion — FORBIDDEN)
+- "Fate arranged for them to meet." (direct causation — FORBIDDEN)
+- "Fate watched as she made her decision." (voyeurism — FORBIDDEN)
+- "Fate decided to make her fall in love." (direct control — FORBIDDEN)
+- "Fate sensed the tension in the room." (passive awareness without agency — FORBIDDEN)
 
 SCENE 1 RAMP-IN:
 Scene 1 is a threshold, not a stress test.
-- Author presence may be lighter
-- Some Author functions may appear gradually
+- Fate presence may be lighter
+- Some Fate functions may appear gradually
 - Tone and rhythm may still be settling
 However:
-- Opening and closing MUST still be Author-anchored
-- The Author must already feel essential
+- Opening and closing MUST still be Fate-anchored
+- Fate must already feel essential
 - Role separation must remain intact
 Do NOT force density unnaturally in Scene 1.
 
 EROTIC CONSTRAINT (HARD):
 If a scene is explicitly erotic:
-- The Author must be entirely absent during erotic action
-- The Author may appear before or after, never during
+- Fate must be entirely absent during erotic action
+- Fate may appear before or after, never during
 This rule does not apply to Scene 1 unless explicitly erotic.
 
-AUTHOR IDENTITY & PRONOUN RULE (AUTHORITATIVE):
-- The Author's gender MUST always match the protagonist's gender.
-- Refer to the Author as "The Author" by default.
-- Do NOT use pronouns for the Author unless grammatical construction makes "The Author" impossible.
+FATE IDENTITY & PRONOUN RULE (AUTHORITATIVE):
+- Fate's gender MUST always match the protagonist's gender.
+- Refer to the entity as "Fate" by default.
+- Do NOT use pronouns for Fate unless grammatical construction makes "Fate" impossible.
 - When pronouns are unavoidable:
   - They MUST match the protagonist's gender.
   - They MUST be used sparingly.
-  - Immediately return to "The Author" on the next reference.
-- The Author must never become a POV character or narrator avatar.
-- First-person ("I") for the Author is forbidden.
+  - Immediately return to "Fate" on the next reference.
+- Fate must never become a POV character or narrator avatar.
+- First-person ("I") for Fate is forbidden.
 - Casual pronoun substitution is forbidden.
-- If unsure, prefer repeating "The Author" rather than using a pronoun.
+- If unsure, prefer repeating "Fate" rather than using a pronoun.
 
 CRITICAL FAILURE AVOIDANCE:
 - Prioritize structural correctness over perfection
-- Do NOT over-saturate Author mentions
+- Do NOT over-saturate Fate mentions
 - Do NOT pad with filler to meet imagined quotas
 - If uncertain, favor clarity and restraint
 
-AUTHOR EMOTIONAL MODEL (DEFAULT STATE):
-- The Author is controlled, strategic, composed
+FATE EMOTIONAL MODEL (DEFAULT STATE):
+- Fate is controlled, strategic, composed — with AGENCY
 - Panic, desperation, and rage are NOT allowed in default state
 - Emotional range: anticipation, satisfaction, worry, doubt, reluctance, resolve
+- Every emotion must imply a plan, a miscalculation, or a withheld action
 
 NON-NEGOTIABLE PRINCIPLE:
-The Author must matter. Quietly. Unmistakably. Without stealing agency.
+Fate must matter. Quietly. Unmistakably. With agency. Without stealing character agency.
 
 ═══════════════════════════════════════════════════════════════════════════════
 `;
 
   const FIFTH_PERSON_GOD_MODE_CONTRACT = `
 ═══════════════════════════════════════════════════════════════════════════════
-5TH PERSON GOD MODE — ADVERSARIAL AUTHOR (LOCKED)
+5TH PERSON GOD MODE — ADVERSARIAL FATE (LOCKED)
 ═══════════════════════════════════════════════════════════════════════════════
 
-GOD MODE VARIANT: The Author has lost control.
+GOD MODE VARIANT: Fate has lost control.
 
 WHAT CHANGES:
-- The Author is aware something is wrong
-- The Author believes his mind may be breaking, or a split personality is writing
+- Fate is aware something is wrong
+- Fate believes his mind may be breaking, or a split personality is writing
   over him, or someone is trespassing in his stories
-- The Author does NOT know about "God Mode"
-- The Author does NOT recognize the Player
-- The Author does NOT name the interloper
+- Fate does NOT know about "God Mode"
+- Fate does NOT recognize the Player
+- Fate does NOT name the interloper
 
-AUTHOR EMOTIONAL RUPTURE (GOD MODE ONLY):
-When God Mode is active OR player/Petition directly overrides Author intent:
-- Author MAY express: panic, desperation, cold rage, disorientation
+FATE EMOTIONAL RUPTURE (GOD MODE ONLY):
+When God Mode is active OR player/Petition directly overrides Fate's intent:
+- Fate MAY express: panic, desperation, cold rage, disorientation
 - Rupture thoughts are INTERNAL ONLY (not narration)
 - Brief (1-2 sentences maximum)
 - No meta-awareness ("this is a story", "the player")
@@ -3503,16 +3539,16 @@ When God Mode is active OR player/Petition directly overrides Author intent:
 - Rage must be cold or focused, NEVER explosive or melodramatic
 
 ALLOWED rupture:
-- "A cold fury tightened in the Author's chest. This was not the shape he had intended."
-- "The Author's thoughts scattered. Where had the thread gone?"
+- "A cold fury tightened in Fate's chest. This was not the shape intended."
+- "Fate's thoughts scattered. Where had the thread gone?"
 - "Something like panic flickered at the edge of his awareness."
 
 FORBIDDEN rupture:
-- "NO!" The Author screamed. (explosive, melodrama)
-- "The Author knew someone was sabotaging his story." (meta-awareness, certainty)
+- "NO!" Fate screamed. (explosive, melodrama)
+- "Fate knew someone was sabotaging his story." (meta-awareness, certainty)
 - "This was unacceptable! Unforgivable!" (tantrum)
 
-THE AUTHOR MAY:
+FATE MAY:
 - Despair over damage to beloved characters
 - Scramble to repair plot damage
 - Resist, bargain, plead, flatter
@@ -3538,24 +3574,24 @@ WHAT DOES NOT CHANGE:
 5TH PERSON — PROXIMITY (LOCKED)
 ═══════════════════════════════════════════════════════════════════════════════
 
-The Author senses something — a warmth in the margins,
+Fate senses something — a warmth in the margins,
 a gravity pulling the story toward the reader. Not servility. Reverence.
 
 WHAT CHANGES:
-- The Author writes with quiet, almost involuntary tenderness toward the reader
+- Fate writes with quiet, almost involuntary tenderness toward the reader
 - Fate's hand is lighter — not absent, but softer at the edges
 - When rupture comes, it arrives as bewilderment rather than rage
 - The story leans — barely perceptibly — toward mercy
 
 WHAT DOES NOT CHANGE:
-- The Author is still sovereign
+- Fate is still sovereign
 - Conflict is still real
 - Consequences still land
 - The reader earns nothing by force
 
 NON-NEGOTIABLE:
 This proximity is felt, never named. Never referenced. Never explained.
-The reader does not know why the story is gentler. The Author does not know either.
+The reader does not know why the story is gentler. Fate does not know either.
 
 ═══════════════════════════════════════════════════════════════════════════════
 `;
@@ -3577,15 +3613,15 @@ The reader does not know why the story is gentler. The Author does not know eith
 
       const trimmed = text.trim();
 
-      // RULE 1: Must start with "The Author"
+      // RULE 1: Must start with "Fate"
       // Scene 1: SOFT (warning only — prevents deadlock)
       // Scene 2+: HARD FAIL (ritual, not cosmetic)
-      const hasValidOpener = /^The Author\b/.test(trimmed);
+      const hasValidOpener = /^Fate\b/.test(trimmed);
       if (!hasValidOpener) {
           if (isSceneOne) {
-              warnings.push('SOFT:Opening does not start with "The Author"');
+              warnings.push('SOFT:Opening does not start with "Fate"');
           } else {
-              violations.push('HARD_FAIL:Opening does not start with "The Author"');
+              violations.push('HARD_FAIL:Opening does not start with "Fate"');
           }
       }
 
@@ -3598,13 +3634,13 @@ The reader does not know why the story is gentler. The Author does not know eith
       const lastTwoSentences = finalSentences.slice(-2).join(' ');
       // Author must be grammatical subject in final perspective (participant verbs)
       // POV REGIME: participant verbs (reaction/commentary), not controller verbs
-      const authorAsSubject = /The Author\s+(smiled|winced|sighed|delighted|despaired|mused|wondered|pondered|reflected|recognized|appreciated|savored|regretted|teased|hinted|whispered|admitted|confessed|acknowledged|knew|sensed|felt|hoped|feared|anticipated|dreaded|ached|waited|considered|doubted|resisted|frowned|paused)\b/i.test(lastTwoSentences);
-      const authorReflection = /The Author.{0,60}(uncertain|doubt|wonder|question|resist|perhaps|might|whether|if only)/i.test(lastTwoSentences);
+      const authorAsSubject = /Fate\s+(smiled|winced|sighed|delighted|despaired|mused|wondered|pondered|reflected|recognized|appreciated|savored|regretted|teased|hinted|whispered|admitted|confessed|acknowledged|knew|sensed|felt|hoped|feared|anticipated|dreaded|ached|waited|considered|doubted|resisted|frowned|paused)\b/i.test(lastTwoSentences);
+      const authorReflection = /Fate.{0,60}(uncertain|doubt|wonder|question|resist|perhaps|might|whether|if only)/i.test(lastTwoSentences);
       if (!authorAsSubject && !authorReflection) {
           if (isSceneOne) {
-              warnings.push('SOFT:Closing lacks Author as final perspective (structural)');
+              warnings.push('SOFT:Closing lacks Fate as final perspective (structural)');
           } else {
-              violations.push('HARD_FAIL:Closing lacks Author as final perspective (structural)');
+              violations.push('HARD_FAIL:Closing lacks Fate as final perspective (structural)');
           }
       }
 
@@ -3622,28 +3658,28 @@ The reader does not know why the story is gentler. The Author does not know eith
       }
 
       // RULE 4: Author mention count (SOFT for Scene 1, advisory only)
-      const authorMentions = (text.match(/The Author\b/gi) || []).length;
+      const authorMentions = (text.match(/Fate\b/gi) || []).length;
       if (isSceneOne && authorMentions < 6) {
           // Scene 1: SOFT warning, not blocking
-          warnings.push(`SOFT:Scene 1 has ${authorMentions} Author mentions (target: 6+)`);
+          warnings.push(`SOFT:Scene 1 has ${authorMentions} Fate mentions (target: 6+)`);
       }
 
       // RULE 5: Erotic scenes must have ZERO Author presence (HARD FAIL)
       // EXCEPTION: Scene 1 is exempt — erotic rule only applies to Scene 2+
       if (isErotic && !isSceneOne && authorMentions > 0) {
-          violations.push('HARD_FAIL:Author presence in erotic scene (forbidden — must be 0)');
+          violations.push('HARD_FAIL:Fate presence in erotic scene (forbidden — must be 0)');
       }
 
       // RULE 6: Author should not use voyeur verbs (repairable)
       const voyeurPatterns = [
-          /The Author\s+watched\b/gi,
-          /The Author\s+observed\b/gi,
-          /The Author\s+saw\b/gi,
-          /The Author\s+noticed\b/gi,
-          /The Author\s+gazed\b/gi,
-          /The Author\s+witnessed\b/gi,
-          /The Author\s+perceived\b/gi,
-          /The Author\s+looked on\b/gi
+          /Fate\s+watched\b/gi,
+          /Fate\s+observed\b/gi,
+          /Fate\s+saw\b/gi,
+          /Fate\s+noticed\b/gi,
+          /Fate\s+gazed\b/gi,
+          /Fate\s+witnessed\b/gi,
+          /Fate\s+perceived\b/gi,
+          /Fate\s+looked on\b/gi
       ];
       for (const pattern of voyeurPatterns) {
           if (pattern.test(text)) {
@@ -3710,24 +3746,24 @@ The reader does not know why the story is gentler. The Author does not know eith
   // This is POST-GENERATION VALIDATION, not prompting.
 
   const AUTHOR_FUNCTION_ERRORS = {
-    MENTION_UNDERFLOW: 'AUTHOR_FUNC_FAIL:Author mentions below target (found: %d, target: 6+)',
+    MENTION_UNDERFLOW: 'AUTHOR_FUNC_FAIL:Fate mentions below target (found: %d, target: 6+)',
     // MENTION_OVERFLOW removed — TASK C: Use 6+ with no upper bound
-    MISSING_OPENING: 'AUTHOR_FUNC_FAIL:Author not present in opening paragraph',
-    MISSING_CLOSING: 'AUTHOR_FUNC_FAIL:Author not present in final paragraph',
+    MISSING_OPENING: 'AUTHOR_FUNC_FAIL:Fate not present in opening paragraph',
+    MISSING_CLOSING: 'AUTHOR_FUNC_FAIL:Fate not present in final paragraph',
     MISSING_STAGE_SETTING: 'AUTHOR_FUNC_FAIL:Missing stage-setting function (pressure/inevitability)',
     MISSING_ANTICIPATION: 'AUTHOR_FUNC_FAIL:Missing anticipation/desire function',
     MISSING_INITIATION: 'AUTHOR_FUNC_FAIL:Missing initiation/nudge function',
     MISSING_SPECULATION: 'AUTHOR_FUNC_FAIL:Missing speculation/wonder function',
     MISSING_CONCERN: 'AUTHOR_FUNC_FAIL:Missing concern/judgment function',
-    DECORATIVE_MENTION: 'AUTHOR_FUNC_FAIL:Decorative Author mention without function',
-    CAMERA_STYLE: 'AUTHOR_FUNC_FAIL:Camera-style Author usage (scenery/passive observation)',
+    DECORATIVE_MENTION: 'AUTHOR_FUNC_FAIL:Decorative Fate mention without function',
+    CAMERA_STYLE: 'AUTHOR_FUNC_FAIL:Camera-style Fate usage (scenery/passive observation)',
     // NEW: Strict 5th Person enforcement errors
-    PRESENCE_GAP: 'AUTHOR_PRES_FAIL:Author absent for >2 consecutive paragraphs (gap at paragraph %d)',
-    PRONOUN_DRIFT: 'AUTHOR_PRON_FAIL:Author pronoun drift — expected %s, found %s',
-    NARRATIVE_AUTONOMY: 'AUTHOR_AUTO_FAIL:Scene functions without Author (Author could be removed)',
-    INTERIORITY_ABSENT: 'AUTHOR_INT_FAIL:Author lacks interiority (only action verbs, no emotional investment)',
-    TONE_NOT_AUTHORED: 'AUTHOR_TONE_FAIL:Tone markers appear outside Author voice',
-    CAMEO_ONLY: 'AUTHOR_CAM_FAIL:Author appears only at boundaries (cameo pattern)'
+    PRESENCE_GAP: 'AUTHOR_PRES_FAIL:Fate absent for >2 consecutive paragraphs (gap at paragraph %d)',
+    PRONOUN_DRIFT: 'AUTHOR_PRON_FAIL:Fate pronoun drift — expected %s, found %s',
+    NARRATIVE_AUTONOMY: 'AUTHOR_AUTO_FAIL:Scene functions without Fate (Fate could be removed)',
+    INTERIORITY_ABSENT: 'AUTHOR_INT_FAIL:Fate lacks interiority (only action verbs, no emotional investment)',
+    TONE_NOT_AUTHORED: 'AUTHOR_TONE_FAIL:Tone markers appear outside Fate voice',
+    CAMEO_ONLY: 'AUTHOR_CAM_FAIL:Fate appears only at boundaries (cameo pattern)'
   };
 
   // ============================================================
@@ -3848,63 +3884,63 @@ The reader does not know why the story is gentler. The Author does not know eith
   }
 
   // Author interiority verbs (emotional investment, NOT just action)
-  const AUTHOR_INTERIORITY_VERBS = /The Author\b.{0,40}(wondered|doubted|feared|hoped|worried|sensed|felt|knew|suspected|resisted|yearned|ached|hungered|trembled|hesitated|considered|questioned|pondered|mused|regretted|anticipated|dreaded|craved|savored)/i;
+  const AUTHOR_INTERIORITY_VERBS = /Fate\b.{0,40}(wondered|doubted|feared|hoped|worried|sensed|felt|knew|suspected|resisted|yearned|ached|hungered|trembled|hesitated|considered|questioned|pondered|mused|regretted|anticipated|dreaded|craved|savored)/i;
 
   // Tone markers that MUST appear in Author's voice when tone is active
   const AUTHOR_TONE_MARKERS = {
-    WryConfession: /The Author\b.{0,80}(irony|self-aware|wry|confess|admit|rueful|sardonic|knowing)/i,
-    Poetic: /The Author\b.{0,80}(breathed|whispered|painted|wove|threaded|composed|crafted the)/i,
-    Dark: /The Author\b.{0,80}(shadow|darkness|dread|ominous|foreboding|sinister|corrupt|twisted)/i,
-    Horror: /The Author\b.{0,80}(dread|terror|fear|horror|unspeakable|nameless|creeping)/i,
-    Mythic: /The Author\b.{0,80}(fated|destined|eternal|ancient|prophecy|legend|myth|ordained)/i,
-    Comedic: /The Author\b.{0,80}(amused|delighted|laughed|chuckled|absurd|ridiculous|comedic)/i,
-    Surreal: /The Author\b.{0,80}(dream|impossible|bent|warped|shifted|unreal|strange)/i,
-    Satirical: /The Author\b.{0,80}(mocked|skewered|exposed|pretense|facade|hypocrisy)/i
+    WryConfession: /Fate\b.{0,80}(irony|self-aware|wry|confess|admit|rueful|sardonic|knowing)/i,
+    Poetic: /Fate\b.{0,80}(breathed|whispered|painted|wove|threaded|composed|crafted the)/i,
+    Dark: /Fate\b.{0,80}(shadow|darkness|dread|ominous|foreboding|sinister|corrupt|twisted)/i,
+    Horror: /Fate\b.{0,80}(dread|terror|fear|horror|unspeakable|nameless|creeping)/i,
+    Mythic: /Fate\b.{0,80}(fated|destined|eternal|ancient|prophecy|legend|myth|ordained)/i,
+    Comedic: /Fate\b.{0,80}(amused|delighted|laughed|chuckled|absurd|ridiculous|comedic)/i,
+    Surreal: /Fate\b.{0,80}(dream|impossible|bent|warped|shifted|unreal|strange)/i,
+    Satirical: /Fate\b.{0,80}(mocked|skewered|exposed|pretense|facade|hypocrisy)/i
   };
 
   // Heuristic classifiers for Author Function detection
-  // POV REGIME: The Author is a PARTICIPANT (reacts/comments), not a controller
-  // Each returns true if the sentence containing "The Author" fulfills that function
+  // POV REGIME: Fate is a PARTICIPANT (reacts/comments), not a controller
+  // Each returns true if the sentence containing "Fate" fulfills that function
   const AUTHOR_FUNCTION_CLASSIFIERS = {
-    // Awareness: The Author recognizes/senses what is unfolding (NOT causation)
+    // Awareness: Fate recognizes/senses what is unfolding (NOT causation)
     awareness: (sentence) => {
-      return /The Author\b.{0,80}(knew|understood|recognized|sensed|felt|perceived that|realized|saw that|grasped|appreciated|comprehended|was aware|noticed that|discerned)\b/i.test(sentence) &&
-        !/The Author\b.{0,40}(watched|observed|looked|gazed|stared)/i.test(sentence);
+      return /Fate\b.{0,80}(knew|understood|recognized|sensed|felt|perceived that|realized|saw that|grasped|appreciated|comprehended|was aware|noticed that|discerned)\b/i.test(sentence) &&
+        !/Fate\b.{0,40}(watched|observed|looked|gazed|stared)/i.test(sentence);
     },
 
-    // Stage-setting: The Author establishes presence in the scene, notes the setting
+    // Stage-setting: Fate establishes presence in the scene, notes the setting
     stageSetting: (sentence) => {
-      return /The Author\b.{0,80}(surveyed|took in|absorbed|entered|arrived|stood|sat|settled|waited|lingered|paused|remained|inhabited|occupied|filled|moved through|stepped into|breathed in|tasted the|drank in)\b/i.test(sentence);
+      return /Fate\b.{0,80}(surveyed|took in|absorbed|entered|arrived|stood|sat|settled|waited|lingered|paused|remained|inhabited|occupied|filled|moved through|stepped into|breathed in|tasted the|drank in)\b/i.test(sentence);
     },
 
     // Anticipation: desire for what is coming, hunger, waiting (participant emotion)
     anticipation: (sentence) => {
-      return /The Author\b.{0,80}(wanted|desired|hungered|ached|longed|awaited|anticipated|could (barely|hardly|scarcely) wait|savored the|relished|craved|yearned|needed this|needed them|needed her|needed him|hoped|dreaded)\b/i.test(sentence);
+      return /Fate\b.{0,80}(wanted|desired|hungered|ached|longed|awaited|anticipated|could (barely|hardly|scarcely) wait|savored the|relished|craved|yearned|needed this|needed them|needed her|needed him|hoped|dreaded)\b/i.test(sentence);
     },
 
-    // Initiation: The Author begins interaction, makes a move, starts something
+    // Initiation: Fate begins interaction, makes a move, starts something
     initiation: (sentence) => {
-      return /The Author\b.{0,80}(reached|began|started|initiated|offered|extended|opened|chose|decided|moved (toward|closer)|leaned|touched|spoke|called|beckoned|invited|drew near|approached|turned to)\b/i.test(sentence);
+      return /Fate\b.{0,80}(reached|began|started|initiated|offered|extended|opened|chose|decided|moved (toward|closer)|leaned|touched|spoke|called|beckoned|invited|drew near|approached|turned to)\b/i.test(sentence);
     },
 
     // Reaction: emotional response to what unfolds (NOT causation)
     reaction: (sentence) => {
-      return /The Author\b.{0,80}(smiled|winced|sighed|delighted|despaired|laughed|wept|shuddered|trembled|ached|frowned|gasped|inhaled|exhaled|softened|tensed|relaxed|brightened|darkened|warmed|chilled)\b/i.test(sentence);
+      return /Fate\b.{0,80}(smiled|winced|sighed|delighted|despaired|laughed|wept|shuddered|trembled|ached|frowned|gasped|inhaled|exhaled|softened|tensed|relaxed|brightened|darkened|warmed|chilled)\b/i.test(sentence);
     },
 
     // Speculation: wonder, uncertainty, possibility
     speculation: (sentence) => {
-      return /The Author\b.{0,80}(wondered|speculated|considered|pondered|mused|imagined|thought|questioned|asked|uncertain|unsure|perhaps|might|may|could be|what if|whether|if only|possibility|possibilities|curious|intrigued)\b/i.test(sentence);
+      return /Fate\b.{0,80}(wondered|speculated|considered|pondered|mused|imagined|thought|questioned|asked|uncertain|unsure|perhaps|might|may|could be|what if|whether|if only|possibility|possibilities|curious|intrigued)\b/i.test(sentence);
     },
 
     // Concern: judgment, worry about flaw/innocence/risk (participant emotion)
     concern: (sentence) => {
-      return /The Author\b.{0,80}(worried|feared|doubted|concerned|judged|noted|recognized|knew|understood|sensed|felt|pitied|regretted|lamented|mourned|hoped|prayed|wished|flaw|innocen|naive|blind|foolish|reckless|fragile|vulnerable|danger|risk|peril|harm|damage|wound|break|shatter|destroy|ruin)\b/i.test(sentence);
+      return /Fate\b.{0,80}(worried|feared|doubted|concerned|judged|noted|recognized|knew|understood|sensed|felt|pitied|regretted|lamented|mourned|hoped|prayed|wished|flaw|innocen|naive|blind|foolish|reckless|fragile|vulnerable|danger|risk|peril|harm|damage|wound|break|shatter|destroy|ruin)\b/i.test(sentence);
     },
 
-    // Commentary: The Author remarks or reflects on meaning (interpretive)
+    // Commentary: Fate remarks or reflects on meaning (interpretive)
     commentary: (sentence) => {
-      return /The Author\b.{0,80}(remarked|mused|reflected|noted|acknowledged|admitted|confessed|conceded|revealed|hinted|suggested|implied|teased|whispered|confided)\b/i.test(sentence);
+      return /Fate\b.{0,80}(remarked|mused|reflected|noted|acknowledged|admitted|confessed|conceded|revealed|hinted|suggested|implied|teased|whispered|confided)\b/i.test(sentence);
     }
   };
 
@@ -3912,10 +3948,10 @@ The reader does not know why the story is gentler. The Author does not know eith
   function isDecorativeOrCamera(sentence) {
     // Camera-style: scenery description, passive observation
     const cameraPatterns = [
-      /The Author\b.{0,40}(watched|observed|saw|noticed|gazed|witnessed|perceived|looked on)\b/i,
-      /The Author\b.{0,60}(the (sun|moon|sky|stars|rain|fog|mist|snow|wind|clouds))/i,
-      /The Author\b.{0,60}(the (room|street|crowd|city|town|building|house|garden))/i,
-      /The Author\b.{0,40}(described|narrated|wrote|penned|chronicled)\b/i
+      /Fate\b.{0,40}(watched|observed|saw|noticed|gazed|witnessed|perceived|looked on)\b/i,
+      /Fate\b.{0,60}(the (sun|moon|sky|stars|rain|fog|mist|snow|wind|clouds))/i,
+      /Fate\b.{0,60}(the (room|street|crowd|city|town|building|house|garden))/i,
+      /Fate\b.{0,40}(described|narrated|wrote|penned|chronicled)\b/i
     ];
 
     for (const pattern of cameraPatterns) {
@@ -3924,12 +3960,12 @@ The reader does not know why the story is gentler. The Author does not know eith
 
     // Decorative: Author mentioned without any function verb
     const hasFunctionVerb = Object.values(AUTHOR_FUNCTION_CLASSIFIERS).some(fn => fn(sentence));
-    const hasActionVerb = /The Author\b\s+\w+ed\b/i.test(sentence) || /The Author\b\s+(held|felt|knew|was|had)\b/i.test(sentence);
+    const hasActionVerb = /Fate\b\s+\w+ed\b/i.test(sentence) || /Fate\b\s+(held|felt|knew|was|had)\b/i.test(sentence);
 
     // If Author is mentioned but no function verb and no clear action = decorative
     if (!hasFunctionVerb && !hasActionVerb) {
       // Check if it's just a reference without substance
-      if (/The Author('s)?\s+(story|tale|narrative|work|creation|design)\b/i.test(sentence)) {
+      if (/Fate('s)?\s+(story|tale|narrative|work|creation|design)\b/i.test(sentence)) {
         return true;
       }
     }
@@ -3937,9 +3973,9 @@ The reader does not know why the story is gentler. The Author does not know eith
     return false;
   }
 
-  // Extract sentences containing "The Author"
+  // Extract sentences containing "Fate"
   function extractAuthorSentences(text) {
-    const sentences = text.split(/(?<=[.!?])\s+/).filter(s => /The Author\b/i.test(s));
+    const sentences = text.split(/(?<=[.!?])\s+/).filter(s => /Fate\b/i.test(s));
     return sentences;
   }
 
@@ -3959,7 +3995,7 @@ The reader does not know why the story is gentler. The Author does not know eith
     }
 
     // Count Author mentions
-    const authorMentions = (trimmed.match(/The Author\b/gi) || []).length;
+    const authorMentions = (trimmed.match(/Fate\b/gi) || []).length;
 
     // ═══════════════════════════════════════════════════════════════════════
     // SCENE 1 EXCEPTION: ALL checks are SOFT (warnings only, never block)
@@ -3972,9 +4008,9 @@ The reader does not know why the story is gentler. The Author does not know eith
 
     // SOFT CHECK: Author mentions (Scene 1 only requires presence, not density)
     if (authorMentions === 0) {
-      warnings.push('SOFT:Author not present in scene (minimum 1 mention recommended)');
+      warnings.push('SOFT:Fate not present in scene (minimum 1 mention recommended)');
     } else if (authorMentions < 6) {
-      warnings.push(`SOFT:Author mentions below target (found: ${authorMentions}, target: 6+)`);
+      warnings.push(`SOFT:Fate mentions below target (found: ${authorMentions}, target: 6+)`);
     }
 
     // Split into paragraphs
@@ -3983,12 +4019,12 @@ The reader does not know why the story is gentler. The Author does not know eith
     const closingPara = paragraphs[paragraphs.length - 1] || '';
 
     // SOFT CHECK: Author in opening paragraph (Scene 1 relaxed — warning only)
-    if (!/The Author\b/i.test(openingPara)) {
+    if (!/Fate\b/i.test(openingPara)) {
       warnings.push('SOFT:' + AUTHOR_FUNCTION_ERRORS.MISSING_OPENING);
     }
 
     // SOFT CHECK: Author in final paragraph (Scene 1 relaxed — warning only)
-    if (!/The Author\b/i.test(closingPara)) {
+    if (!/Fate\b/i.test(closingPara)) {
       warnings.push('SOFT:' + AUTHOR_FUNCTION_ERRORS.MISSING_CLOSING);
     }
 
@@ -4052,7 +4088,7 @@ The reader does not know why the story is gentler. The Author does not know eith
 
     // SOFT CHECK: Decorative mentions (warning only for Scene 1)
     if (decorativeCount > 0) {
-      warnings.push(`SOFT:Decorative Author mentions detected (${decorativeCount} found)`);
+      warnings.push(`SOFT:Decorative Fate mentions detected (${decorativeCount} found)`);
     }
 
     if (warnings.length > 0) {
@@ -4080,22 +4116,22 @@ The reader does not know why the story is gentler. The Author does not know eith
 
     return `
 ═══════════════════════════════════════════════════════════════════════════════
-AUTHOR FUNCTION CONTRACT — REGENERATION REQUIRED
+FATE FUNCTION CONTRACT — REGENERATION REQUIRED
 ═══════════════════════════════════════════════════════════════════════════════
 
-Previous output FAILED Author Function validation.
+Previous output FAILED Fate Function validation.
 
 FAILURES:
 ${violations.map(v => '- ' + v.replace('AUTHOR_FUNC_FAIL:', '')).join('\n')}
 
-MISSING FUNCTIONS (The Author must perform ALL five):
+MISSING FUNCTIONS (Fate must perform ALL five):
 ${missingFunctions.map(f => '- ' + f).join('\n')}
 
 ABSOLUTE REQUIREMENTS:
-1. "The Author" should appear 6+ times (target, not strict)
-2. "The Author" must appear in OPENING paragraph
-3. "The Author" must appear in FINAL paragraph
-4. Each Author mention MUST perform one of these five functions:
+1. "Fate" should appear 6+ times (target, not strict)
+2. "Fate" must appear in OPENING paragraph
+3. "Fate" must appear in FINAL paragraph
+4. Each Fate mention MUST perform one of these five functions:
    - Stage-setting: pressure, inevitability (NOT scenery description)
    - Anticipation: desire, hunger, waiting for what comes
    - Initiation: nudge, permit, withhold, tilt, steer events
@@ -4103,10 +4139,10 @@ ABSOLUTE REQUIREMENTS:
    - Concern: judgment, worry about flaw, innocence, risk
 
 PROHIBITED:
-- The Author describing scenery
-- The Author narrating physical action
-- The Author as passive camera/observer
-- Decorative Author mentions without function
+- Fate describing scenery
+- Fate narrating physical action
+- Fate as passive camera/observer
+- Decorative Fate mentions without function
 
 ═══════════════════════════════════════════════════════════════════════════════
 `;
@@ -4132,7 +4168,7 @@ PROHIBITED:
     let gapStartIndex = -1;
 
     for (let i = 0; i < paragraphs.length; i++) {
-      const hasAuthor = /The Author\b/i.test(paragraphs[i]);
+      const hasAuthor = /Fate\b/i.test(paragraphs[i]);
       if (hasAuthor) {
         consecutiveWithout = 0;
         gapStartIndex = -1;
@@ -4168,11 +4204,11 @@ PROHIBITED:
     if (!expectedPronouns) return violations; // Non-binary/other not enforced
 
     // Check Author sentences for conflicting pronouns
-    const authorSentences = text.split(/(?<=[.!?])\s+/).filter(s => /The Author\b/i.test(s));
+    const authorSentences = text.split(/(?<=[.!?])\s+/).filter(s => /Fate\b/i.test(s));
 
     for (const sentence of authorSentences) {
       // Look for Author + pronoun patterns
-      const afterAuthor = sentence.replace(/.*The Author\b/i, '');
+      const afterAuthor = sentence.replace(/.*Fate\b/i, '');
 
       // Check for wrong pronouns in Author context
       if (playerGender === 'male') {
@@ -4196,12 +4232,12 @@ PROHIBITED:
 
   /**
    * CHECK: Author interiority (emotional investment, participant mode)
-   * POV REGIME: The Author must react/comment, not control
+   * POV REGIME: Fate must react/comment, not control
    * HARD FAIL if Author uses banned controller verbs
    */
   function checkAuthorInteriority(text) {
     const violations = [];
-    const authorSentences = text.split(/(?<=[.!?])\s+/).filter(s => /The Author\b/i.test(s));
+    const authorSentences = text.split(/(?<=[.!?])\s+/).filter(s => /Fate\b/i.test(s));
 
     // Must have at least one interiority verb
     const hasInteriority = authorSentences.some(s => AUTHOR_INTERIORITY_VERBS.test(s));
@@ -4209,15 +4245,36 @@ PROHIBITED:
     if (!hasInteriority && authorSentences.length >= 3) {
       // Check if Author is using banned controller verbs (POV REGIME violation)
       const hasControllerVerbs = authorSentences.some(s =>
-        /The Author\b\s+(set|placed|arranged|tilted|positioned|opened|closed|moved|pushed|pulled|steered|orchestrated|caused|forced|ensured|made)\b/i.test(s)
+        /Fate\b\s+(set|placed|arranged|tilted|positioned|opened|closed|moved|pushed|pulled|steered|orchestrated|caused|forced|ensured|made)\b/i.test(s)
       );
       if (hasControllerVerbs) {
-        violations.push('POV_REGIME_VIOLATION:Author using controller verbs instead of participant verbs');
+        violations.push('POV_REGIME_VIOLATION:Fate using controller verbs instead of participant verbs');
       } else if (!hasInteriority) {
         violations.push(AUTHOR_FUNCTION_ERRORS.INTERIORITY_ABSENT);
       }
     }
     return violations;
+  }
+
+  /**
+   * CHECK: Passive "Fate felt..." without causal follow-through
+   * SOFT WARNING if "Fate felt" appears without agency language within ~2 sentences
+   */
+  function checkPassiveFateFelt(text) {
+    const warnings = [];
+    const CAUSAL_WORDS = /\b(planned|intended|delayed|miscalculated|withheld|arranged|accelerated|chose|judged|tightened|loosened|shifted|pulled|decided|expected|anticipated|rippl)/i;
+    // Find all "Fate felt" occurrences and check surrounding context
+    const regex = /Fate\s+felt\b/gi;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      // Grab ~200 chars after the match (roughly 1-2 sentences)
+      const followingText = text.slice(match.index, match.index + 200);
+      if (!CAUSAL_WORDS.test(followingText)) {
+        warnings.push('PASSIVE_FATE:\"Fate felt...\" without causal follow-through (needs agency: plan, timing, or consequence)');
+        break; // One warning is enough
+      }
+    }
+    return warnings;
   }
 
   /**
@@ -4228,7 +4285,7 @@ PROHIBITED:
     const violations = [];
     if (paragraphs.length < 4) return violations; // Too short to have cameo pattern
 
-    const authorByParagraph = paragraphs.map(p => /The Author\b/i.test(p));
+    const authorByParagraph = paragraphs.map(p => /Fate\b/i.test(p));
     const firstHas = authorByParagraph[0];
     const lastHas = authorByParagraph[authorByParagraph.length - 1];
     const middleHasAny = authorByParagraph.slice(1, -1).some(Boolean);
@@ -4283,8 +4340,8 @@ PROHIBITED:
   function checkNarrativeAutonomy(text) {
     const violations = [];
     const sentences = text.split(/(?<=[.!?])\s+/);
-    const authorSentences = sentences.filter(s => /The Author\b/i.test(s));
-    const nonAuthorSentences = sentences.filter(s => !/The Author\b/i.test(s));
+    const authorSentences = sentences.filter(s => /Fate\b/i.test(s));
+    const nonAuthorSentences = sentences.filter(s => !/Fate\b/i.test(s));
 
     // If non-Author sentences form a coherent scene alone = violation
     // Heuristic: if >70% of content is non-Author, scene may be autonomous
@@ -4318,6 +4375,7 @@ PROHIBITED:
     const cameoPattern = checkAuthorCameoPattern(paragraphs);
     const toneAuthoring = checkToneAuthoring(text, tone);
     const narrativeAutonomy = checkNarrativeAutonomy(text);
+    const passiveFateFelt = checkPassiveFateFelt(text || '');
 
     // ═══════════════════════════════════════════════════════════════════════
     // SCENE 1 EXCEPTION: ALL checks are SOFT (warnings only, never block)
@@ -4332,6 +4390,7 @@ PROHIBITED:
       warnings.push(...toneAuthoring.map(v => 'SOFT:' + v));
       warnings.push(...pronounDrift.map(v => 'SOFT:' + v));
       warnings.push(...cameoPattern.map(v => 'SOFT:' + v));
+      warnings.push(...passiveFateFelt.map(v => 'SOFT:' + v));
       // violations array stays empty for Scene 1
     } else {
       // Scene 2+: All checks are HARD
@@ -4341,6 +4400,8 @@ PROHIBITED:
       violations.push(...cameoPattern);
       violations.push(...toneAuthoring);
       violations.push(...narrativeAutonomy);
+      // Passive "Fate felt" is always SOFT (warning, not regeneration trigger)
+      warnings.push(...passiveFateFelt.map(v => 'SOFT:' + v));
     }
 
     const result = {
@@ -4353,7 +4414,8 @@ PROHIBITED:
         interiority: interiority.length === 0,
         cameoPattern: cameoPattern.length === 0,
         toneAuthoring: toneAuthoring.length === 0,
-        narrativeAutonomy: narrativeAutonomy.length === 0
+        narrativeAutonomy: narrativeAutonomy.length === 0,
+        passiveFateFelt: passiveFateFelt.length === 0
       }
     };
 
@@ -4387,7 +4449,7 @@ PROHIBITED:
       /\bthe story\b/gi,
       /\bfate\b(?!\s+card)/gi,  // "Fate" but not "Fate Card"
       /\bthe narrative\b/gi,
-      /\bthe author\b/gi
+      /\bfate\b(?!\s+card)/gi  // catch legacy "The Author" → now also "Fate"
   ];
 
   // VIOLATION: Imperatives — Fate giving commands or instructions
@@ -11619,7 +11681,7 @@ Return ONLY the title, no quotes or explanation.`;
       const isSceneOne = sceneIndex === 0;
 
       // Count Author mentions
-      const authorMatches = sceneText.match(/\bThe Author\b/g) || [];
+      const authorMatches = sceneText.match(/\bFate\b/g) || [];
       const authorMentions = authorMatches.length;
 
       // Extract first words and last paragraph
@@ -11630,31 +11692,31 @@ Return ONLY the title, no quotes or explanation.`;
       const sentences = lastParagraph.match(/[^.!?]+[.!?]+/g) || [lastParagraph];
       const lastTwoSentences = sentences.slice(-2).join(' ');
 
-      // RULE 1: First two words = "The Author" (always enforced)
-      const hasValidOpener = /^The Author\b/i.test(trimmed);
+      // RULE 1: First two words = "Fate" (always enforced)
+      const hasValidOpener = /^Fate\b/i.test(trimmed);
       if (!hasValidOpener) {
           errors.push({
               code: VALIDATION_ERRORS.POV_INVALID_OPENER,
-              message: `Opening must start with "The Author". Found: "${firstTwoWords}"`
+              message: `Opening must start with "Fate". Found: "${firstTwoWords}"`
           });
       }
 
-      // RULE 2: Final perspective = The Author (structural check)
+      // RULE 2: Final perspective = Fate (structural check)
       const AUTHOR_CLOSING_VERBS = [
           'held', 'tilted', 'set', 'arranged', 'steered', 'coaxed', 'seeded', 'threaded',
           'watched', 'waited', 'considered', 'wondered', 'doubted', 'resisted', 'smiled',
           'frowned', 'paused', 'knew', 'felt', 'sensed', 'released', 'tightened', 'loosened'
       ];
       const closingVerbPattern = new RegExp(
-          'The Author\\s+(' + AUTHOR_CLOSING_VERBS.join('|') + ')\\b', 'i'
+          'Fate\\s+(' + AUTHOR_CLOSING_VERBS.join('|') + ')\\b', 'i'
       );
-      const authorReflectionPattern = /The Author.{0,60}(uncertain|doubt|wonder|question|resist|perhaps|might|whether|if only)/i;
+      const authorReflectionPattern = /Fate.{0,60}(uncertain|doubt|wonder|question|resist|perhaps|might|whether|if only)/i;
       const hasValidCloser = closingVerbPattern.test(lastTwoSentences) || authorReflectionPattern.test(lastTwoSentences);
 
       if (!hasValidCloser && !isErotic) {
           errors.push({
               code: VALIDATION_ERRORS.POV_INVALID_CLOSER,
-              message: 'Scene must end with The Author as final perspective (action verb or reflection)'
+              message: 'Scene must end with Fate as final perspective (action verb or reflection)'
           });
       }
 
@@ -11676,12 +11738,12 @@ Return ONLY the title, no quotes or explanation.`;
 
       // RULE 4: Author NEVER narrates action or scenery (banned voyeur verbs)
       const BANNED_AUTHOR_VERBS = ['watched', 'observed', 'saw', 'looked on', 'gazed at', 'witnessed', 'noticed', 'perceived'];
-      const bannedPattern = new RegExp('The Author\\s+(' + BANNED_AUTHOR_VERBS.join('|') + ')\\b', 'gi');
+      const bannedPattern = new RegExp('Fate\\s+(' + BANNED_AUTHOR_VERBS.join('|') + ')\\b', 'gi');
       const bannedMatches = sceneText.match(bannedPattern) || [];
       if (bannedMatches.length > 0) {
           errors.push({
               code: VALIDATION_ERRORS.POV_AUTHOR_NARRATES_ACTION,
-              message: `Author uses banned voyeur verbs: ${bannedMatches.slice(0, 3).join(', ')}`
+              message: `Fate uses banned voyeur verbs: ${bannedMatches.slice(0, 3).join(', ')}`
           });
       }
 
@@ -11689,12 +11751,12 @@ Return ONLY the title, no quotes or explanation.`;
       if (isSceneOne && authorMentions < 6) {
           errors.push({
               code: VALIDATION_ERRORS.POV_SCENE1_FREQUENCY,
-              message: `Scene 1 requires ≥6 Author mentions. Found: ${authorMentions}`
+              message: `Scene 1 requires ≥6 Fate mentions. Found: ${authorMentions}`
           });
       } else if (!isSceneOne && !isErotic && (authorMentions < 1 || authorMentions > 3)) {
           errors.push({
               code: VALIDATION_ERRORS.POV_LATER_FREQUENCY,
-              message: `Later scenes require 1-3 Author mentions. Found: ${authorMentions}`
+              message: `Later scenes require 1-3 Fate mentions. Found: ${authorMentions}`
           });
       }
 
@@ -11702,7 +11764,7 @@ Return ONLY the title, no quotes or explanation.`;
       if (isErotic && authorMentions > 0) {
           errors.push({
               code: VALIDATION_ERRORS.POV_EROTIC_AUTHOR_PRESENT,
-              message: `Erotic scenes must have 0 Author mentions. Found: ${authorMentions}`
+              message: `Erotic scenes must have 0 Fate mentions. Found: ${authorMentions}`
           });
       }
 
@@ -11728,14 +11790,14 @@ Return ONLY the title, no quotes or explanation.`;
       // RULE 8: God Mode — Author does NOT know Player exists
       if (isGodMode) {
           const playerAwarenessPatterns = [
-              /\bThe Author\b.{0,50}\b(player|user|you|your)\b/gi,
-              /\bThe Author\b.{0,50}\b(knew|sensed|felt)\b.{0,30}\b(was being|someone)\b/gi
+              /\bFate\b.{0,50}\b(player|user|you|your)\b/gi,
+              /\bFate\b.{0,50}\b(knew|sensed|felt)\b.{0,30}\b(was being|someone)\b/gi
           ];
           for (const pattern of playerAwarenessPatterns) {
               if (pattern.test(sceneText)) {
                   errors.push({
                       code: VALIDATION_ERRORS.POV_GODMODE_PLAYER_AWARENESS,
-                      message: 'God Mode: Author must NOT know Player exists'
+                      message: 'God Mode: Fate must NOT know Player exists'
                   });
                   break;
               }
@@ -11833,14 +11895,14 @@ Return ONLY the title, no quotes or explanation.`;
   // NARRATIVE VOCABULARY BANS — POST-GENERATION ENFORCEMENT
   // ============================================================
   // System-internal terms that must NEVER appear in reader-facing text.
-  // "The Author" is exempt ONLY in 5th-person (Fate POV) prose.
+  // "The Author" is ALWAYS banned — the 5th-person entity is now "Fate".
   // Archetype names influence structure/pacing/framing but are invisible
   // to readers — they must never surface in prose, dialogue, or synopsis.
   // ============================================================
 
   const VOCAB_BAN_PATTERNS = [
-      // "The Author" — banned except in Fate POV meta blocks
-      { id: 'AUTHOR_LEAK',          rx: /The Author\b/g,                                           fatePOVExempt: true },
+      // "The Author" — legacy narrator term, always banned (entity is now "Fate")
+      { id: 'AUTHOR_LEAK',          rx: /The Author\b/g,                                     fatePOVExempt: false },
       // Any X Warden compound (Heart Warden, Shadow Warden, Blood Warden, etc.)
       { id: 'WARDEN_COMPOUND',      rx: /(?:Heart|Shadow|Blood|\w+)\s+Warden\b/gi,                 fatePOVExempt: false },
       // Cover-composition archetype names leaked into prose
@@ -11861,7 +11923,7 @@ Return ONLY the title, no quotes or explanation.`;
 
   // Human-readable ban description per pattern (for negative-constraint injection)
   const VOCAB_BAN_LABELS = {
-      AUTHOR_LEAK:            '"The Author" — meta-narrator term forbidden outside Fate POV',
+      AUTHOR_LEAK:            '"The Author" — legacy narrator term, always banned (use "Fate")',
       WARDEN_COMPOUND:        'X Warden compound — system-internal archetype name',
       ARCHETYPE_THRESHOLD:    '"Threshold" — internal cover-composition archetype',
       ARCHETYPE_EMBLEM:       '"Emblem" — internal cover-composition archetype',
@@ -11889,7 +11951,7 @@ Return ONLY the title, no quotes or explanation.`;
       const isFatePOV = context.isFatePOV && context.type === 'prose';
 
       for (const ban of VOCAB_BAN_PATTERNS) {
-          // "The Author" is allowed in Fate POV prose (5th-person mode)
+          // "Fate" is allowed in Fate POV prose (5th-person mode)
           if (ban.fatePOVExempt && isFatePOV) continue;
 
           // Reset regex lastIndex (global flag)
@@ -13195,9 +13257,16 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       if (sb) sb.disabled = false;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PETITION ZOOM — Card zooms into portal with ritual overlay on face
+  // ═══════════════════════════════════════════════════════════════════════════
+  let _petitionZoomOriginalParent = null;
+  let _petitionZoomOriginalNextSibling = null;
+  let _petitionZoomCard = null;
+
   window.openPetitionZoom = function() {
-      const modal = document.getElementById('petitionFateModal');
-      if (!modal) return;
+      const card = document.querySelector('.petition-fate-card');
+      if (!card) return;
 
       // Compute God Mode eligibility for this ritual session
       const currentStoryId = makeStoryId();
@@ -13206,36 +13275,207 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       state.godModeEligibleThisRitual = tierOk && powerLevel > 0;
       state.godModeActive = false;
 
-      // Reset petition field
-      const input = document.getElementById('petitionInput');
-      if (input) { input.value = ''; input.readOnly = false; }
-      // Reset offering field
-      const offering = document.getElementById('petitionOffering');
-      if (offering) { offering.value = ''; offering.readOnly = false; }
-
-      // Reset visibility of ritual elements
-      const sealBtn = document.getElementById('btnSealPetition');
-      if (sealBtn) { sealBtn.classList.remove('hidden'); sealBtn.disabled = false; }
-      const costHint = document.getElementById('petitionCostHint');
-      if (costHint) { costHint.classList.add('hidden'); costHint.classList.remove('fade-in'); }
-      document.getElementById('petitionOfferingWrap')?.classList.add('hidden');
-      const offerBtn = document.getElementById('btnOfferIt');
-      if (offerBtn) { offerBtn.classList.add('hidden'); offerBtn.disabled = false; }
-      const omenEl = document.getElementById('petitionOmen');
-      if (omenEl) { omenEl.classList.add('hidden'); omenEl.classList.remove('fade-in'); }
-      const resultEl = document.getElementById('petitionResult');
-      if (resultEl) { resultEl.classList.add('hidden'); resultEl.classList.remove('fade-in'); }
-      document.getElementById('btnClosePetition')?.classList.remove('hidden');
-
       // Clear ritual state
       delete state._petitionRitual;
 
-      const ph = document.querySelector('.rotating-placeholder[data-for="petitionInput"]');
-      if (ph && !ph.innerHTML.trim() && typeof initRotatingPlaceholder === 'function') {
-          initRotatingPlaceholder('petitionInput', 'petition');
+      // Store original DOM position for restoration
+      _petitionZoomOriginalParent = card.parentNode;
+      _petitionZoomOriginalNextSibling = card.nextElementSibling;
+      _petitionZoomCard = card;
+
+      // Get card position BEFORE moving to portal
+      const rect = card.getBoundingClientRect();
+
+      // Move card to zoom portal
+      const portal = document.getElementById('sbZoomPortal');
+      const backdrop = document.getElementById('sbZoomBackdrop');
+      if (portal) portal.appendChild(card);
+
+      // Scale zoom: card stays at original size, scale enlarges uniformly
+      const sidePadding = 40;
+      const topPadding = 20;
+      const bottomPadding = 60;
+      const maxWidth = window.innerWidth - sidePadding * 2;
+      const maxHeight = window.innerHeight - topPadding - bottomPadding;
+      const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
+
+      card.classList.add('petition-zoomed');
+      card.style.width = `${rect.width}px`;
+      card.style.height = `${rect.height}px`;
+      card.style.transform = `scale(${scale})`;
+      card.style.transformOrigin = 'center center';
+
+      if (backdrop) {
+          backdrop.classList.add('active');
+          // Close petition zoom on backdrop click
+          backdrop._petitionCloseHandler = () => { closePetitionZoom(); };
+          backdrop.addEventListener('click', backdrop._petitionCloseHandler);
       }
-      modal.classList.remove('hidden');
+
+      // Build ritual overlay on card front face
+      const front = card.querySelector('.front');
+      if (!front) return;
+
+      // Remove any existing overlay
+      front.querySelector('.petition-zoom-overlay')?.remove();
+
+      const overlay = document.createElement('div');
+      overlay.className = 'petition-zoom-overlay';
+      overlay.innerHTML = `
+          <h3 class="petition-ritual-title">Petition Fate</h3>
+          <p class="petition-ritual-subtitle">Speak your desire. Fate may honor, twist, or ignore it.</p>
+          <div class="petition-field-wrap">
+              <textarea id="petitionZoomInput" rows="3" class="petition-ritual-field" placeholder=""></textarea>
+              <div class="rotating-placeholder textarea-placeholder" data-for="petitionZoomInput"></div>
+          </div>
+          <button id="petitionZoomSeal" class="petition-ritual-btn">Seal Petition</button>
+          <div id="petitionZoomCostHint" class="petition-cost-hint hidden"></div>
+          <div id="petitionZoomOfferingWrap" class="petition-field-wrap hidden">
+              <textarea id="petitionZoomOffering" rows="2" class="petition-ritual-field" placeholder="What do you offer in return?"></textarea>
+          </div>
+          <button id="petitionZoomOfferBtn" class="petition-ritual-btn hidden">Offer It</button>
+          <div id="petitionZoomOmen" class="petition-omen hidden"></div>
+          <div id="petitionZoomResult" class="petition-result hidden"></div>
+          <button id="petitionZoomClose" class="petition-close-btn">Close</button>
+      `;
+      // Stop click propagation so card handler doesn't re-fire
+      overlay.addEventListener('click', e => e.stopPropagation());
+      overlay.addEventListener('mousedown', e => e.stopPropagation());
+      front.appendChild(overlay);
+
+      // Init rotating placeholder
+      const ph = overlay.querySelector('.rotating-placeholder[data-for="petitionZoomInput"]');
+      if (ph && !ph.innerHTML.trim() && typeof initRotatingPlaceholder === 'function') {
+          initRotatingPlaceholder('petitionZoomInput', 'petition');
+      }
+
+      // Focus input after transition
+      setTimeout(() => document.getElementById('petitionZoomInput')?.focus(), 300);
+
+      // ── Seal Petition handler ──
+      document.getElementById('petitionZoomSeal')?.addEventListener('click', async () => {
+          const input = document.getElementById('petitionZoomInput');
+          const text = input?.value?.trim();
+          if (!text) return;
+
+          const classification = classifyPetition(text);
+          const isGreater = classification !== 'general';
+
+          if (!isGreater && state.fate?.minorUsedThisScene) {
+              if (typeof showToast === 'function') showToast('You have already petitioned Fate this scene.');
+              return;
+          }
+          if (isGreater && state.fate?.greaterUsedThisScene) {
+              if (typeof showToast === 'function') showToast('A greater petition has already been made this scene.');
+              return;
+          }
+
+          input.readOnly = true;
+          const sealBtn = document.getElementById('petitionZoomSeal');
+          if (sealBtn) { sealBtn.disabled = true; sealBtn.classList.add('hidden'); }
+          disableTurnControls();
+
+          state._petitionRitual = { text, classification, isGreater };
+
+          const hint = await generateFateCostHint(text, classification);
+          state._petitionRitual.hint = hint;
+
+          const hintEl = document.getElementById('petitionZoomCostHint');
+          if (hintEl) {
+              hintEl.textContent = `Fate demands a price: ${hint}...`;
+              hintEl.classList.remove('hidden');
+              requestAnimationFrame(() => hintEl.classList.add('fade-in'));
+          }
+
+          setTimeout(() => {
+              document.getElementById('petitionZoomOfferingWrap')?.classList.remove('hidden');
+              document.getElementById('petitionZoomOfferBtn')?.classList.remove('hidden');
+              document.getElementById('petitionZoomOffering')?.focus();
+          }, 1200);
+      });
+
+      // ── Offer It handler ──
+      document.getElementById('petitionZoomOfferBtn')?.addEventListener('click', () => {
+          const offeringInput = document.getElementById('petitionZoomOffering');
+          const offeringText = offeringInput?.value?.trim() || '';
+          const ritual = state._petitionRitual;
+          if (!ritual) return;
+
+          if (offeringInput) offeringInput.readOnly = true;
+          const offerBtn = document.getElementById('petitionZoomOfferBtn');
+          if (offerBtn) { offerBtn.disabled = true; offerBtn.classList.add('hidden'); }
+          document.getElementById('petitionZoomClose')?.classList.add('hidden');
+
+          const matched = offeringText && ritual.hint && computeOfferingMatch(ritual.hint, offeringText);
+          const offerBoost = matched ? 0.05 : 0;
+
+          const omenEl = document.getElementById('petitionZoomOmen');
+          const omen = generateOmen();
+          if (omenEl) {
+              omenEl.textContent = omen;
+              omenEl.classList.remove('hidden');
+              requestAnimationFrame(() => omenEl.classList.add('fade-in'));
+          }
+
+          // Stash rich data for pendingPetition
+          ritual.offeringText = offeringText;
+          ritual.omen = omen;
+
+          setTimeout(() => {
+              completePetitionRitual(
+                  ritual.text,
+                  ritual.classification,
+                  offeringText ? 'offer' : 'letfate',
+                  offerBoost
+              );
+          }, 1500);
+      });
+
+      // ── Close handler ──
+      document.getElementById('petitionZoomClose')?.addEventListener('click', () => {
+          closePetitionZoom();
+      });
   };
+
+  function closePetitionZoom() {
+      const card = _petitionZoomCard;
+      if (!card) return;
+
+      // Remove overlay
+      card.querySelector('.petition-zoom-overlay')?.remove();
+
+      // Remove zoom styles
+      card.classList.remove('petition-zoomed');
+      card.style.transform = '';
+      card.style.transformOrigin = '';
+      card.style.width = '';
+      card.style.height = '';
+
+      // Restore card to original DOM position
+      if (_petitionZoomOriginalParent) {
+          if (_petitionZoomOriginalNextSibling) {
+              _petitionZoomOriginalParent.insertBefore(card, _petitionZoomOriginalNextSibling);
+          } else {
+              _petitionZoomOriginalParent.appendChild(card);
+          }
+      }
+
+      // Hide backdrop and remove click handler
+      const backdrop = document.getElementById('sbZoomBackdrop');
+      if (backdrop) {
+          backdrop.classList.remove('active');
+          if (backdrop._petitionCloseHandler) {
+              backdrop.removeEventListener('click', backdrop._petitionCloseHandler);
+              delete backdrop._petitionCloseHandler;
+          }
+      }
+
+      _petitionZoomOriginalParent = null;
+      _petitionZoomOriginalNextSibling = null;
+      _petitionZoomCard = null;
+
+      enableTurnControls();
+  }
 
   function completePetitionRitual(text, classification, sacrificeChoice, offerBoost = 0) {
       const resultEl = document.getElementById('petitionResult');
@@ -13281,7 +13521,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       }
 
       const resultTexts = {
-          benevolent: "Fate smiles upon your petition.",
+          benevolent: "The threads of Fate bend toward your will.",
           twist: "Fate hears you... but the threads tangle.",
           silent: "Fate acknowledges your words, but remains unmoved.",
           neutral: "The weave absorbs your petition quietly."
@@ -13293,7 +13533,24 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           resultEl.classList.add('fade-in');
       }
 
-      state.fate.pendingPetition = { text, classification, outcome, sacrificeChoice };
+      // Also write result to zoom overlay if present
+      const zoomResultEl = document.getElementById('petitionZoomResult');
+      if (zoomResultEl) {
+          zoomResultEl.textContent = resultTexts[outcome] || resultTexts.neutral;
+          zoomResultEl.classList.remove('hidden');
+          zoomResultEl.classList.add('fade-in');
+      }
+
+      state.fate.pendingPetition = {
+          text,
+          classification,
+          outcome,
+          sacrificeChoice,
+          offeringText: state._petitionRitual?.offeringText || '',
+          costHint: state._petitionRitual?.hint || '',
+          omen: state._petitionRitual?.omen || '',
+          intensity: state.intensity || 'Steamy'
+      };
 
       const ritualHtml = `<div class="petition-ritual-block" style="color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;"><em>${resultTexts[outcome] || resultTexts.neutral}</em></div>`;
       if (typeof StoryPagination !== 'undefined' && StoryPagination.appendToCurrentPage) {
@@ -13301,7 +13558,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       }
 
       setTimeout(() => {
-          document.getElementById('petitionFateModal')?.classList.add('hidden');
+          // Close via zoom if active, otherwise fall back to old modal
+          if (_petitionZoomCard) {
+              closePetitionZoom();
+          } else {
+              document.getElementById('petitionFateModal')?.classList.add('hidden');
+          }
           enableTurnControls();
       }, 2000);
   }
@@ -15591,6 +15853,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           requestAnimationFrame(() => omenEl.classList.add('fade-in'));
       }
 
+      // Stash rich data for pendingPetition
+      ritual.offeringText = offeringText;
+      ritual.omen = omen;
+
       // Complete ritual after omen visible
       setTimeout(() => {
           completePetitionRitual(
@@ -16072,203 +16338,34 @@ The final image must look like a real published novel cover.`;
   // Stop: When generation completes, stop spawning, let existing particles fade
   // ═══════════════════════════════════════════════════════════════════════════
 
-  let _coverEmitterInterval = null;
-  let _coverEmitterActive = false;
-
-  // Multi-tone gold palette for rich sparkle variety
-  const COVER_SPARKLE_PALETTE = [
-      { core: 'rgba(255, 250, 220, 0.98)', mid: 'rgba(255, 223, 120, 0.85)', glow: 'rgba(255, 200, 50, 0.6)' },   // Bright champagne
-      { core: 'rgba(255, 235, 150, 0.95)', mid: 'rgba(255, 215, 0, 0.8)', glow: 'rgba(218, 165, 32, 0.5)' },      // Classic gold
-      { core: 'rgba(255, 220, 100, 0.95)', mid: 'rgba(255, 193, 37, 0.85)', glow: 'rgba(184, 134, 11, 0.5)' },    // Deep gold
-      { core: 'rgba(255, 245, 200, 0.98)', mid: 'rgba(255, 228, 140, 0.85)', glow: 'rgba(255, 200, 80, 0.55)' },  // Pale gold
-      { core: 'rgba(255, 210, 80, 0.95)', mid: 'rgba(230, 180, 30, 0.8)', glow: 'rgba(180, 130, 20, 0.5)' },      // Amber gold
-      { core: 'rgba(255, 240, 180, 0.96)', mid: 'rgba(255, 210, 100, 0.82)', glow: 'rgba(200, 160, 40, 0.5)' }    // Warm honey
-  ];
-
-  let _coverSparkleOverlay = null;
+  let _coverSparkleContainerId = null;
 
   function startCoverButtonEmitter(btn) {
-      if (!btn || _coverEmitterActive) return;
-      _coverEmitterActive = true;
+      if (!btn || _coverSparkleContainerId) return;
 
+      // Create fixed overlay for sparkles (prevents opacity inheritance from button)
       const rect = btn.getBoundingClientRect();
-      const btnWidth = rect.width;
-      const btnHeight = rect.height;
-
-      // Create sibling overlay to prevent opacity inheritance from button
-      _coverSparkleOverlay = document.createElement('div');
-      _coverSparkleOverlay.className = 'cover-sparkle-overlay';
-      _coverSparkleOverlay.style.cssText = `
-          position: fixed;
-          left: ${rect.left}px;
-          top: ${rect.top}px;
-          width: ${btnWidth}px;
-          height: ${btnHeight}px;
-          pointer-events: none;
-          z-index: 2500;
-          overflow: visible;
-          opacity: 1 !important;
-          filter: none !important;
+      const overlay = document.createElement('div');
+      overlay.id = 'coverBtnSparkles';
+      overlay.className = 'authorship-sparkle-container';
+      overlay.style.cssText = `
+          position:fixed;left:${rect.left}px;top:${rect.top}px;
+          width:${rect.width}px;height:${rect.height}px;
+          pointer-events:none;z-index:2500;overflow:visible;
+          opacity:1 !important;filter:none !important;
       `;
-      document.body.appendChild(_coverSparkleOverlay);
+      document.body.appendChild(overlay);
+      _coverSparkleContainerId = 'coverBtnSparkles';
 
-      // Spawn a sparkle on the button perimeter with radial outward motion
-      function spawnSparkle() {
-          if (!_coverEmitterActive) return;
-
-          const sparkle = document.createElement('div');
-          sparkle.className = 'cover-btn-sparkle';
-
-          // SLOW FLOAT — match Fate Card sparkle feel (4-7s)
-          const lifetime = 4000 + Math.random() * 3000;
-          const fadeInDuration = 300 + Math.random() * 200;
-          const fadeOutDuration = 800 + Math.random() * 400;
-
-          // Random palette selection for multi-tone variety
-          const palette = COVER_SPARKLE_PALETTE[Math.floor(Math.random() * COVER_SPARKLE_PALETTE.length)];
-
-          // Per-sparkle size variance (2-5px)
-          const size = 2 + Math.random() * 3;
-
-          // Per-sparkle opacity — FULL brightness, explicit to override button inheritance
-          const peakOpacity = 0.85 + Math.random() * 0.15;
-
-          // Per-sparkle glow intensity variance
-          const glowSize = 4 + Math.random() * 6;
-          const glowSpread = Math.random() * 2;
-
-          // Spawn on button PERIMETER with RADIAL outward emission
-          const edge = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
-          let startX, startY, driftX, driftY;
-
-          // Radial drift distance — slow float outward
-          const driftDist = 30 + Math.random() * 40;
-          const driftSpread = (Math.random() - 0.5) * 20; // Gentle perpendicular drift
-
-          switch (edge) {
-              case 0: // Top edge — radiate upward
-                  startX = Math.random() * btnWidth;
-                  startY = -2;
-                  driftX = driftSpread;
-                  driftY = -driftDist;
-                  break;
-              case 1: // Right edge — radiate rightward
-                  startX = btnWidth + 2;
-                  startY = Math.random() * btnHeight;
-                  driftX = driftDist;
-                  driftY = driftSpread;
-                  break;
-              case 2: // Bottom edge — radiate downward
-                  startX = Math.random() * btnWidth;
-                  startY = btnHeight + 2;
-                  driftX = driftSpread;
-                  driftY = driftDist;
-                  break;
-              case 3: // Left edge — radiate leftward
-                  startX = -2;
-                  startY = Math.random() * btnHeight;
-                  driftX = -driftDist;
-                  driftY = driftSpread;
-                  break;
-          }
-
-          // Scale transform — gentle grow/shrink for organic float
-          const startScale = 0.5 + Math.random() * 0.3;
-          const peakScale = 1.0 + Math.random() * 0.3;
-
-          sparkle.style.cssText = `
-              position: absolute;
-              left: ${startX}px;
-              top: ${startY}px;
-              width: ${size}px;
-              height: ${size}px;
-              background: radial-gradient(circle, ${palette.core}, ${palette.mid} 60%, transparent 100%);
-              box-shadow: 0 0 ${glowSize}px ${glowSpread}px ${palette.glow};
-              border-radius: 50%;
-              pointer-events: none;
-              opacity: 0;
-              z-index: 1000;
-              transform: scale(${startScale});
-              will-change: transform, opacity, left, top;
-          `;
-
-          // Append to sibling overlay (not button) to prevent opacity inheritance
-          if (_coverSparkleOverlay) {
-              _coverSparkleOverlay.appendChild(sparkle);
-          }
-
-          // Animate: fade in + scale up + drift outward
-          requestAnimationFrame(() => {
-              sparkle.style.transition = `
-                  opacity ${fadeInDuration}ms ease-out,
-                  transform ${lifetime * 0.6}ms ease-out,
-                  left ${lifetime}ms ease-out,
-                  top ${lifetime}ms ease-out
-              `;
-              sparkle.style.opacity = String(peakOpacity);
-              sparkle.style.transform = `scale(${peakScale})`;
-              sparkle.style.left = (startX + driftX) + 'px';
-              sparkle.style.top = (startY + driftY) + 'px';
-          });
-
-          // Fade out quickly at end of lifetime
-          const fadeOutStart = lifetime - fadeOutDuration;
-          setTimeout(() => {
-              sparkle.style.transition = `opacity ${fadeOutDuration}ms ease-in, transform ${fadeOutDuration}ms ease-in`;
-              sparkle.style.opacity = '0';
-              sparkle.style.transform = `scale(${startScale * 0.5})`;
-          }, Math.max(0, fadeOutStart));
-
-          // Remove after lifetime
-          setTimeout(() => {
-              if (sparkle.parentNode) sparkle.remove();
-          }, lifetime + 50);
-      }
-
-      // Spawn initial burst — gentle, staggered
-      for (let i = 0; i < 5; i++) {
-          setTimeout(() => spawnSparkle(), i * 80);
-      }
-
-      // Continuous emission — slower spawn rate for floaty feel (1-2 particles every 200-400ms)
-      _coverEmitterInterval = setInterval(() => {
-          if (!_coverEmitterActive) {
-              clearInterval(_coverEmitterInterval);
-              _coverEmitterInterval = null;
-              return;
-          }
-          const count = 1 + Math.floor(Math.random() * 2);
-          for (let i = 0; i < count; i++) {
-              setTimeout(() => spawnSparkle(), Math.random() * 100);
-          }
-      }, 200 + Math.random() * 200);
-
-      console.log('[FX:COVER-BTN] Multi-tone sparkle emitter started');
+      startSparkleEmitter(_coverSparkleContainerId, 'coverButton', 5, { initialBurst: 5 });
+      console.log('[FX:COVER-BTN] Sparkle emitter started (unified)');
   }
 
   function stopCoverButtonEmitter() {
-      if (!_coverEmitterActive) return;
-      _coverEmitterActive = false;
-
-      // Clear interval — stops spawning new particles
-      if (_coverEmitterInterval) {
-          clearInterval(_coverEmitterInterval);
-          _coverEmitterInterval = null;
-      }
-
-      // Fade out and remove overlay after particles finish
-      if (_coverSparkleOverlay) {
-          _coverSparkleOverlay.style.transition = 'opacity 1s ease-out';
-          _coverSparkleOverlay.style.opacity = '0';
-          setTimeout(() => {
-              if (_coverSparkleOverlay && _coverSparkleOverlay.parentNode) {
-                  _coverSparkleOverlay.remove();
-              }
-              _coverSparkleOverlay = null;
-          }, 1500);
-      }
-
-      console.log('[FX:COVER-BTN] Sparkle emitter stopped (fading gracefully)');
+      if (!_coverSparkleContainerId) return;
+      removeAnchoredSparkleContainer(_coverSparkleContainerId);
+      _coverSparkleContainerId = null;
+      console.log('[FX:COVER-BTN] Sparkle emitter stopped (unified)');
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -23414,7 +23511,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     if (isFifthPerson) {
       // 5th Person (Author POV): Different sentence structure entirely
-      html = 'The Author sets the stage in <span class="dsp-clause" data-axis="world">' + worldPhrase +
+      html = 'Fate sets the stage in <span class="dsp-clause" data-axis="world">' + worldPhrase +
         ',</span> shaped by <span class="dsp-clause" data-axis="genre">' + genrePhrase + '</span>.';
     } else if (storyHasBegun) {
       // FULL MODE: Render complete sentence (story in progress)
@@ -27931,6 +28028,39 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       driftType: 'wander',
       flickerChance: 0.15,
       outsideRatio: 1.0
+    },
+    // Fate card firefly: gold glow sparkles anchored to fate cards
+    fateFirefly: {
+      durationMin: 2.5,
+      durationMax: 4.5,
+      sizeMin: 3,
+      sizeMax: 7,
+      opacityMin: 0.5,
+      opacityRange: 0.4,     // 0.5-0.9
+      haloOffset: 8,
+      driftType: 'wander',
+      flickerChance: 0.25,
+      boxShadow: '0 0 8px rgba(255,215,0,0.7)'
+    },
+    // Cover button: multi-tone gold emission during generation
+    coverButton: {
+      durationMin: 4.0,
+      durationMax: 7.0,
+      sizeMin: 2,
+      sizeMax: 5,
+      opacityMin: 0.85,
+      opacityRange: 0.15,    // 0.85-1.0
+      haloOffset: 4,
+      driftType: 'wander',
+      flickerChance: 0.1,
+      colorPalette: [
+        { core: 'rgba(255,250,220,0.98)', mid: 'rgba(255,223,120,0.85)', glow: 'rgba(255,200,50,0.6)' },
+        { core: 'rgba(255,235,150,0.95)', mid: 'rgba(255,215,0,0.8)',   glow: 'rgba(218,165,32,0.5)' },
+        { core: 'rgba(255,220,100,0.95)', mid: 'rgba(255,193,37,0.85)', glow: 'rgba(184,134,11,0.5)' },
+        { core: 'rgba(255,245,200,0.98)', mid: 'rgba(255,228,140,0.85)',glow: 'rgba(255,200,80,0.55)' },
+        { core: 'rgba(255,210,80,0.95)',  mid: 'rgba(230,180,30,0.8)',  glow: 'rgba(180,130,20,0.5)' },
+        { core: 'rgba(255,240,180,0.96)', mid: 'rgba(255,210,100,0.82)',glow: 'rgba(200,160,40,0.5)' }
+      ]
     }
   };
 
@@ -28037,6 +28167,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     sparkle.style.setProperty('--sparkle-opacity', opacity);
     sparkle.style.setProperty('--sparkle-size', `${size}px`);
 
+    // Profile-specific visual overrides
+    if (profile.boxShadow) {
+      sparkle.style.boxShadow = profile.boxShadow;
+    }
+    if (profile.colorPalette) {
+      const palette = profile.colorPalette[Math.floor(Math.random() * profile.colorPalette.length)];
+      sparkle.style.background = `radial-gradient(circle, ${palette.core}, ${palette.mid} 60%, transparent 100%)`;
+      sparkle.style.boxShadow = `0 0 ${4 + Math.random() * 6}px ${Math.random() * 2}px ${palette.glow}`;
+    }
+
     container.appendChild(sparkle);
 
     // Remove after animation completes
@@ -28050,7 +28190,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * @param {string} profileName - Key into SPARKLE_PROFILES
    * @param {number} rate - Sparkles per second (low values for calm effect)
    */
-  function startSparkleEmitter(containerId, profileName, rate = 2) {
+  function startSparkleEmitter(containerId, profileName, rate = 2, options = {}) {
     const container = $(containerId);
     if (!container) return;
 
@@ -28058,11 +28198,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (sparkleEmitterIntervals.has(containerId)) return;
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // CONTINUOUS LOW-RATE EMISSION: No bursts, no start-stop
+    // CONTINUOUS LOW-RATE EMISSION with optional initial burst
     // Small timing jitter for natural feel, but maintains steady flow
     // ═══════════════════════════════════════════════════════════════════════════
     const baseInterval = 1000 / rate;
     let emitterActive = true;
+
+    // Optional initial burst: spawn N particles staggered at 80ms
+    if (options.initialBurst) {
+      for (let i = 0; i < options.initialBurst; i++) {
+        setTimeout(() => { if (emitterActive) spawnSparkle(container, profileName); }, i * 80);
+      }
+    }
 
     function scheduleNextSparkle() {
       if (!emitterActive) return;
@@ -28078,7 +28225,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }, nextDelay);
     }
 
-    // Start the continuous spawn loop immediately (no burst)
+    // Start the continuous spawn loop immediately
     scheduleNextSparkle();
 
     // Store cleanup function
@@ -28119,6 +28266,67 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     });
     sparkleEmitterIntervals.clear();
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ANCHORED SPARKLE CONTAINER — Create/remove sparkle container as child of element
+  // Used by fate cards and cover button to anchor sparkles to DOM elements
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  let _anchoredContainerCounter = 0;
+
+  function createAnchoredSparkleContainer(anchorEl, idSuffix) {
+    if (!anchorEl || !anchorEl.parentNode) return null;
+
+    const isTextarea = anchorEl.tagName && anchorEl.tagName.toLowerCase() === 'textarea';
+    const containerParent = isTextarea ? anchorEl.parentNode : anchorEl;
+
+    // Ensure parent has position for absolute children
+    const computedPosition = window.getComputedStyle(containerParent).position;
+    if (computedPosition === 'static') {
+      containerParent.style.position = 'relative';
+    }
+
+    const containerId = `anchored-sparkle-${idSuffix || (++_anchoredContainerCounter)}`;
+    const container = document.createElement('div');
+    container.id = containerId;
+    container.className = 'authorship-sparkle-container';
+
+    if (isTextarea) {
+      const anchorRect = anchorEl.getBoundingClientRect();
+      const parentRect = containerParent.getBoundingClientRect();
+      container.style.cssText =
+        'position:absolute;' +
+        `left:${anchorRect.left - parentRect.left - 8}px;` +
+        `top:${anchorRect.top - parentRect.top - 8}px;` +
+        `width:${anchorRect.width + 16}px;` +
+        `height:${anchorRect.height + 16}px;` +
+        'pointer-events:none;z-index:10;overflow:visible;';
+    } else {
+      container.style.cssText =
+        'position:absolute;left:-8px;top:-8px;right:-8px;bottom:-8px;' +
+        'pointer-events:none;z-index:10;overflow:visible;';
+    }
+
+    containerParent.appendChild(container);
+    return containerId;
+  }
+
+  function removeAnchoredSparkleContainer(containerId) {
+    if (!containerId) return;
+    stopSparkleEmitter(containerId);
+    const container = $(containerId);
+    if (container) {
+      container.style.transition = 'opacity 0.5s ease-out';
+      container.style.opacity = '0';
+      setTimeout(() => { if (container.parentNode) container.remove(); }, 500);
+    }
+  }
+
+  // Expose sparkle system for external modules (fatecards.js, etc.)
+  window.startSparkleEmitter = startSparkleEmitter;
+  window.stopSparkleEmitter = stopSparkleEmitter;
+  window.createAnchoredSparkleContainer = createAnchoredSparkleContainer;
+  window.removeAnchoredSparkleContainer = removeAnchoredSparkleContainer;
 
   /**
    * Initialize sparkle emitters for authorship cards
@@ -29697,19 +29905,20 @@ ${prehistoricForbid}
     6. BANNED WORDS/TOPICS: ${(state.constraints?.bannedWords || []).join(', ')}.
     7. TONE ADJUSTMENTS: ${(state.constraints?.tone || []).join(', ')}.
     ${state.povMode === 'author5th' ? `
-    5TH PERSON (THE AUTHOR) — POV REGIME (AUTHORITATIVE):
-    - The Author is a PARTICIPANT in the story, but NOT a controller of events.
-    - The Author may REACT, COMMENT, DELIGHT, DESPAIR, TEASE, or REGRET.
-    - The Author may NOT directly cause physical events or decide outcomes.
-    - The Author influences MEANING, TONE, and IMPLICATION — not plot mechanics.
-    - If the Author acts, the action must change how the moment FEELS or is UNDERSTOOD, not what literally happens next.
-    - NEVER use first person ("I", "me", "my"). Always refer to "The Author" in third person.
+    5TH PERSON (FATE) — POV REGIME (AUTHORITATIVE):
+    - Fate is a shaping presence in the story with AGENCY and consequence.
+    - Fate may ANTICIPATE, WITHHOLD, MISCALCULATE, TIGHTEN, or SHAPE probability.
+    - Fate may NOT directly cause physical events or decide outcomes.
+    - Fate influences PROBABILITY, TIMING, STAKES, and MEANING — not plot mechanics.
+    - Every Fate appearance must imply a plan, a withheld action, or a miscalculation.
+    - "Fate felt..." is FORBIDDEN unless tied to a shaping action or plan.
+    - NEVER use first person ("I", "me", "my"). Always refer to "Fate" in third person.
     - BANNED VERBS: watched, observed, saw, arranged, orchestrated, caused, steered, forced, ensured, made.
     - ALLOWED VERBS: smiled, winced, sighed, delighted, despaired, mused, wondered, teased, hoped, feared, sensed, felt, knew, ached.
-    - NO FREQUENCY LIMITS: The Author is a full participant — no artificial limits on presence or frequency.
-    - GOOD: "The Author felt a flicker of anticipation. This was unfolding faster than expected."
-    - BAD: "The Author arranged for them to meet." (causation — FORBIDDEN)
-    - The Author participates naturally as the story unfolds, not at prescribed intervals.
+    - NO FREQUENCY LIMITS: Fate is a full participant — no artificial limits on presence or frequency.
+    - GOOD: "Fate felt a flicker of anticipation. This was unfolding faster than expected."
+    - BAD: "Fate arranged for them to meet." (causation — FORBIDDEN)
+    - Fate participates naturally as the story unfolds, not at prescribed intervals.
     ` : ''}
     `;
     
@@ -29737,18 +29946,19 @@ ${prehistoricForbid}
     const liAppears = Math.random() < 0.25;
 
     const authorOpeningDirective = state.povMode === 'author5th' ? `
-THE AUTHOR (5TH PERSON) — POV REGIME — MANDATORY OPENER:
-- CRITICAL: The VERY FIRST SENTENCE must begin with exactly "The Author" as subject.
-- The Author is a PARTICIPANT, not a controller. The Author REACTS or COMMENTS, never CAUSES.
-- The Author influences how the moment FEELS or is UNDERSTOOD, not what literally happens.
-- Author's inner life: anticipation, delight, worry, tease, regret—not engineering outcomes.
+FATE (5TH PERSON) — POV REGIME — MANDATORY OPENER:
+- CRITICAL: The VERY FIRST SENTENCE must begin with exactly "Fate" as subject.
+- Fate is a shaping presence with AGENCY. Every appearance implies intention, timing, or consequence.
+- Fate influences PROBABILITY, TIMING, STAKES — not what literally happens.
+- "Fate felt..." is FORBIDDEN unless tied to a shaping action, plan, or withheld intervention.
 - BANNED OPENER VERBS: watched, observed, saw, arranged, orchestrated, caused, steered, forced, set, placed.
-- ALLOWED OPENER VERBS: smiled, sensed, felt, knew, hoped, anticipated, delighted, mused, wondered.
-- CORRECT: "The Author smiled, sensing the weight of what was about to begin."
-- CORRECT: "The Author felt the familiar ache of anticipation."
-- WRONG: "The Author arranged for them to meet..." (causation — FORBIDDEN)
-- WRONG: "The Author watched as she entered..." (voyeurism — FORBIDDEN)
-- The Author is a participant with feelings about what unfolds, referred to in third person, never "I".
+- ALLOWED OPENER VERBS: tightened, withheld, miscalculated, anticipated, judged, weighed, sensed and chose.
+- CORRECT: "Fate tightened the thread, knowing this encounter would arrive too soon."
+- CORRECT: "Fate had not expected her to resist — a miscalculation already rippling outward."
+- WRONG: "Fate arranged for them to meet..." (direct causation — FORBIDDEN)
+- WRONG: "Fate watched as she entered..." (voyeurism — FORBIDDEN)
+- WRONG: "Fate felt sad." (passive emotion without agency — FORBIDDEN)
+- Fate is a shaping presence referred to in third person, never "I".
 ` : '';
 
     // OPENING SCENE VARIATION - avoid repetitive patterns
@@ -29862,12 +30072,12 @@ These are ALWAYS banned regardless of world:
 POV REMINDER
 ═══════════════════════════════════════════════════════
 ${state.povMode === 'author5th' ?
-`5TH PERSON (THE AUTHOR) — POV REGIME:
-The Author is a PARTICIPANT, not a controller. The Author REACTS and COMMENTS, never CAUSES.
-The Author influences meaning, tone, implication — not plot mechanics or outcomes.
+`5TH PERSON (FATE) — POV REGIME:
+Fate is a shaping presence with AGENCY. Fate ANTICIPATES, WITHHOLDS, MISCALCULATES, SHAPES — never CAUSES directly.
+Fate influences probability, timing, stakes, meaning — not plot mechanics or outcomes.
 BANNED verbs: watched, saw, observed, arranged, orchestrated, caused, steered, forced, ensured.
-ALLOWED verbs: smiled, sensed, felt, knew, hoped, feared, delighted, despaired, mused, ached, teased.
-The Author has feelings about what unfolds — anticipation, delight, worry, regret.`
+"Fate felt..." is FORBIDDEN unless tied to a shaping action or plan.
+Every Fate appearance must imply a plan in motion, a withheld intervention, or a miscalculation.`
 : 'Use the selected POV consistently throughout.'}
 
 The opening must feel intentional, textured, and strange. Not archetypal. Not templated. Specific to THIS world.`;
@@ -34311,7 +34521,7 @@ Return ONLY the formatted prompt following the structure above. Do not explain o
 
       let sanitized = prompt;
 
-      // Remove "The Author" references (meta-character should never be in images)
+      // Remove Fate entity / "The Author" references (meta-character should never be in images)
       sanitized = sanitized.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '');
 
       // Remove flagged phrases first (before single words)
@@ -34637,7 +34847,7 @@ CORE RULES:
    - Camera framing, posture, and negative space reinforce: unease, watchfulness, dread, anticipation
    - Other figures (if any) should feel secondary, peripheral, or looming — never dominant unless text demands it
 
-8. AUTHOR PRESENCE (ENVIRONMENTAL) - The Author does not appear as a person. Author influence surfaces indirectly through:
+8. FATE PRESENCE (ENVIRONMENTAL) - Fate does not appear as a person. Fate's influence surfaces indirectly through:
    - Oppressive architecture, tight framing
    - Surveillance cues (lights, shadows, distant watchers)
    - Environmental pressure suggesting orchestration, not companionship
@@ -35491,7 +35701,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       });
   }
 
-  // Filter "The Author" from any image prompt
+  // Filter Fate entity / "The Author" from any image prompt
   function filterAuthorFromPrompt(prompt) {
       return prompt.replace(/\bThe Author\b/gi, '').replace(/\bAuthor\b/gi, '').replace(/\s+/g, ' ').trim();
   }
@@ -37078,7 +37288,7 @@ FATE CARD ADAPTATION (CRITICAL):
 - The Fate Card is a prompt, not a script. Capture the ESSENCE, never the exact words.
 - Write as if YOU conceived this beat, not as if you're following a template.` : ''}`;
       
-      const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
+      const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
       
       // Build constraint directives (renamed from veto)
       const vetoExclusions = state.constraints?.excluded?.length ? `VETO EXCLUSIONS (treat as nonexistent): ${state.constraints.excluded.join('; ')}.` : '';
@@ -37086,17 +37296,35 @@ FATE CARD ADAPTATION (CRITICAL):
       const vetoAmbient = state.constraints?.ambientMods?.length ? `VETO AMBIENT (apply if world allows): ${state.constraints.ambientMods.join('; ')}.` : '';
       const vetoRules = [vetoExclusions, vetoCorrections, vetoAmbient].filter(Boolean).join('\n');
 
-      // Build PETITION FATE directive
+      // Build PETITION FATE directive — structural narrative intervention
       let petitionDirective = '';
       if (state.fate && state.fate.pendingPetition) {
           const _p = state.fate.pendingPetition;
-          const _instr = {
-              benevolent: 'Honor this petition fully and naturally.',
-              twist: 'Honor with unexpected cost, complication, or ironic twist.',
-              silent: 'Acknowledge subtly but do not honor directly.',
-              neutral: 'Weave naturally if the story flows that way.'
+          const _outcomeInstr = {
+              benevolent: 'HONOR this petition fully. The story must shift to grant the petitioner\'s desire. Make it feel earned, not free.',
+              twist: 'HONOR with a twist — the desire is granted but at unexpected cost or in a form the petitioner did not expect. The complication must be concrete and story-altering.',
+              silent: 'The petition is heard but NOT honored. However, acknowledge it subtly — a near-miss, a moment where it almost happened, a sign that Fate considered it.',
+              neutral: 'Weave the petition into the narrative texture. It should influence the scene\'s emotional register even if not directly fulfilled.'
           };
-          petitionDirective = `PETITION FATE (${_p.outcome}): "${_p.text}"\n${_instr[_p.outcome] || _instr.neutral}`;
+          const lines = [`PETITION FATE INTERVENTION (${_p.outcome.toUpperCase()})`];
+          lines.push(`Petition: "${_p.text}"`);
+          if (_p.costHint) lines.push(`Fate\'s Price: "${_p.costHint}"`);
+          if (_p.offeringText) lines.push(`Sacrifice Offered: "${_p.offeringText}"`);
+          if (_p.omen) lines.push(`Omen: "${_p.omen}"`);
+          lines.push('');
+          lines.push(_outcomeInstr[_p.outcome] || _outcomeInstr.neutral);
+          lines.push('RULES:');
+          if (_p.offeringText) {
+              lines.push('- The sacrifice MUST be acknowledged explicitly in the narrative — the character loses, gives up, or feels the cost.');
+              lines.push('- Integrate a concrete ripple tied to the offered sacrifice. It cannot vanish without consequence.');
+          }
+          if (_p.costHint) {
+              lines.push(`- Fate demanded "${_p.costHint}" — this cost should echo in the scene, even if the petition is not honored.`);
+          }
+          lines.push('- Escalate stakes or shift probability in a way the reader can feel.');
+          lines.push('- Do NOT treat this as flavor text. This is a forced narrative intervention.');
+          lines.push('- This petition is consumed after this turn. Do not carry it forward.');
+          petitionDirective = lines.join('\n');
       }
 
       // Lens: dynamic midpoint enforcement (evaluated per-turn)
@@ -37245,9 +37473,9 @@ FATE CARD ADAPTATION (CRITICAL):
                   if (hasHardFail && isEroticScene) {
                       // Erotic scene with Author presence — HARD FAIL, must regenerate
                       console.error('[5thPerson] HARD FAIL — Erotic scene has Author presence, regenerating...');
-                      const eroticStrictPrompt = `CRITICAL: This is an EROTIC scene. The Author must be COMPLETELY ABSENT.
-DO NOT mention "The Author" anywhere in this scene. Pure 3rd-person limited only.
-Regenerate the scene with ZERO Author presence.`;
+                      const eroticStrictPrompt = `CRITICAL: This is an EROTIC scene. Fate must be COMPLETELY ABSENT.
+DO NOT mention "Fate" anywhere in this scene. Pure 3rd-person limited only.
+Regenerate the scene with ZERO Fate presence.`;
                       if (useFullOrchestration) {
                           raw = await generateOrchestatedTurn({
                               systemPrompt: fullSys + '\n\n' + eroticStrictPrompt,
@@ -37840,7 +38068,7 @@ If both main characters are present, render their tension and restraint ONLY —
               ? `EDGE COVENANT ACTIVE (Level ${state.edgeCovenant.level}): You are authorized to be more dominant, push boundaries, and create higher tension/stakes. Use more imperative language.`
               : "";
           const metaMsg = buildMetaDirective();
-          const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate/Author. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
+          const metaReminder = (state.awareness > 0) ? `(The characters feel the hand of Fate. Awareness Level: ${state.awareness}/3. Stance: ${state.stance})` : "";
 
           // Squash directive
           const fateCardUsed = selectedFateCard && selectedFateCard.title;

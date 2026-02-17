@@ -283,53 +283,21 @@ window.getSecondaryCharacters = getSecondaryCharacters;
 window.ROMANTIC_IMPLICATION_CARDS = ROMANTIC_IMPLICATION_CARDS;
 
 // ======================================================
-// CONTINUOUS SPARKLE EMITTER — GLOBAL DEFINITIONS
+// CONTINUOUS SPARKLE EMITTER — Delegates to unified sparkle system (app.js)
 // ======================================================
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STRUCTURAL SPARKLES FEATURE FLAG
-// When true: Sparkles render as children of Fate Card (scroll naturally)
-// When false: Existing overlay sparkle system runs unchanged
-// Rollback: Set to false to restore original behavior immediately
-// ═══════════════════════════════════════════════════════════════════════════
-const USE_STRUCTURAL_SPARKLES = true;
 
 let _sparkleEmitterActive = false;
 let _continuousSparkleInterval = null;
-
-// Sparkle cycle controller — 3s ON, 2s OFF pattern
 let _sparkleCycleTimer = null;
 let _sparkleActiveCardId = null;
-
-// Structural sparkle state (only used when USE_STRUCTURAL_SPARKLES === true)
-let _structuralSparkleIntervals = [];
-let _structuralSparkleContainers = [];
+let _fateSparkleContainerIds = [];
 
 function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
-    // ═══════════════════════════════════════════════════════════════════
-    // FX DEBUG: Log visibility state of all FX elements
-    // ═══════════════════════════════════════════════════════════════════
-    console.log('[FX:DEBUG] startSparkleCycle triggered', {
-        cardId,
-        useStructuralSparkles: USE_STRUCTURAL_SPARKLES,
-        cardElExists: !!cardEl,
-        cardElVisible: cardEl ? !cardEl.classList.contains('hidden') && cardEl.offsetParent !== null : false,
-        actInputExists: !!actInput,
-        actInputVisible: actInput ? !actInput.classList.contains('hidden') && actInput.offsetParent !== null : false,
-        diaInputExists: !!diaInput,
-        diaInputVisible: diaInput ? !diaInput.classList.contains('hidden') && diaInput.offsetParent !== null : false,
-        startFireflyEmanationExists: typeof window.startFireflyEmanation === 'function',
-        stopAllEmanationsExists: typeof window.stopAllEmanations === 'function'
-    });
+    console.log('[FX:DEBUG] startSparkleCycle triggered', { cardId });
 
     // Clear any existing cycle
     stopSparkleCycle();
     _sparkleActiveCardId = cardId;
-
-    // ═══════════════════════════════════════════════════════════════════
-    // CONTINUOUS SPARKLES: Anchored sparkles stay on permanently
-    // No ON/OFF cycling — anchored elements don't need stop/restart
-    // ═══════════════════════════════════════════════════════════════════
 
     const isValidAnchor = (el) => {
         if (!el || typeof el.getBoundingClientRect !== 'function') return false;
@@ -337,25 +305,17 @@ function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
         return r && r.width > 0 && r.height > 0;
     };
 
-    if (USE_STRUCTURAL_SPARKLES) {
-        console.log('[FX:DEBUG] Starting continuous structural sparkles for card:', cardId);
-        stopStructuralSparkles();
-        if (isValidAnchor(cardEl)) startStructuralSparkles(cardEl);
-        if (isValidAnchor(actInput)) startStructuralSparkles(actInput);
-        if (isValidAnchor(diaInput)) startStructuralSparkles(diaInput);
-        return;
-    }
-
-    // LEGACY OVERLAY MODE: Start emanations once, keep running
-    console.log('[FX:DEBUG] Starting continuous emanations for card:', cardId);
-    if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
-    if (typeof window.startFireflyEmanation === 'function') {
-        if (isValidAnchor(cardEl)) window.startFireflyEmanation(cardEl);
-        if (isValidAnchor(actInput)) window.startFireflyEmanation(actInput);
-        if (isValidAnchor(diaInput)) window.startFireflyEmanation(diaInput);
-    } else {
-        console.warn('[FX:DEBUG] startFireflyEmanation not found — FX will not render');
-    }
+    // Delegate to unified sparkle system
+    const anchors = [cardEl, actInput, diaInput].filter(isValidAnchor);
+    anchors.forEach((el, i) => {
+        if (typeof window.createAnchoredSparkleContainer === 'function') {
+            const containerId = window.createAnchoredSparkleContainer(el, `fate-${cardId}-${i}`);
+            if (containerId) {
+                _fateSparkleContainerIds.push(containerId);
+                window.startSparkleEmitter(containerId, 'fateFirefly', 8);
+            }
+        }
+    });
 }
 
 function stopSparkleCycle() {
@@ -365,171 +325,13 @@ function stopSparkleCycle() {
     }
     _sparkleActiveCardId = null;
 
-    // Clean up based on active mode
-    if (USE_STRUCTURAL_SPARKLES) {
-        stopStructuralSparkles();
-    } else {
-        if (typeof window.stopAllEmanations === 'function') window.stopAllEmanations();
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STRUCTURAL SPARKLES — DOM-ANCHORED IMPLEMENTATION
-// Sparkles render as children of Fate Card elements, scrolling naturally
-// No scroll listeners, no position syncing, no math-based updates
-// ═══════════════════════════════════════════════════════════════════════════
-
-function stopStructuralSparkles() {
-    // Clear all intervals
-    _structuralSparkleIntervals.forEach(interval => clearInterval(interval));
-    _structuralSparkleIntervals = [];
-
-    // Remove all sparkle containers with fade
-    _structuralSparkleContainers.forEach(container => {
-        if (container && container.parentNode) {
-            container.style.transition = 'opacity 0.5s ease-out';
-            container.style.opacity = '0';
-            setTimeout(() => {
-                if (container.parentNode) container.remove();
-            }, 500);
+    // Clean up anchored containers
+    _fateSparkleContainerIds.forEach(id => {
+        if (typeof window.removeAnchoredSparkleContainer === 'function') {
+            window.removeAnchoredSparkleContainer(id);
         }
     });
-    _structuralSparkleContainers = [];
-}
-
-function startStructuralSparkles(anchorEl) {
-    // ═══════════════════════════════════════════════════════════════════
-    // ANCHOR VALIDATION: Abort if anchor is missing or invalid
-    // ═══════════════════════════════════════════════════════════════════
-    if (!anchorEl || !anchorEl.parentNode) {
-        return; // No valid anchor — abort silently
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    // TEXTAREA HANDLING: Textareas cannot have children
-    // Append sparkle container to parent wrapper, position relative to textarea
-    // ═══════════════════════════════════════════════════════════════════
-    const isTextarea = anchorEl.tagName && anchorEl.tagName.toLowerCase() === 'textarea';
-    const containerParent = isTextarea ? anchorEl.parentNode : anchorEl;
-
-    // Ensure container parent has position for absolute children
-    const computedPosition = window.getComputedStyle(containerParent).position;
-    if (computedPosition === 'static') {
-        containerParent.style.position = 'relative';
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    // CREATE SPARKLE CONTAINER — Child of anchor (or parent for textareas)
-    // Uses position: absolute to scroll naturally with parent
-    // ═══════════════════════════════════════════════════════════════════
-    const PERIMETER_OFFSET = 8;
-    const container = document.createElement('div');
-    container.className = 'fate-card-sparkles';
-
-    if (isTextarea) {
-        // For textareas, position relative to textarea within wrapper
-        const anchorRect = anchorEl.getBoundingClientRect();
-        const parentRect = containerParent.getBoundingClientRect();
-        const offsetLeft = anchorRect.left - parentRect.left;
-        const offsetTop = anchorRect.top - parentRect.top;
-
-        container.style.cssText =
-            'position:absolute;' +
-            'left:' + (offsetLeft - PERIMETER_OFFSET) + 'px;' +
-            'top:' + (offsetTop - PERIMETER_OFFSET) + 'px;' +
-            'width:' + (anchorRect.width + PERIMETER_OFFSET * 2) + 'px;' +
-            'height:' + (anchorRect.height + PERIMETER_OFFSET * 2) + 'px;' +
-            'pointer-events:none;' +
-            'z-index:10;' +
-            'overflow:visible;';
-    } else {
-        container.style.cssText =
-            'position:absolute;' +
-            'left:' + (-PERIMETER_OFFSET) + 'px;' +
-            'top:' + (-PERIMETER_OFFSET) + 'px;' +
-            'right:' + (-PERIMETER_OFFSET) + 'px;' +
-            'bottom:' + (-PERIMETER_OFFSET) + 'px;' +
-            'pointer-events:none;' +
-            'z-index:10;' +
-            'overflow:visible;';
-    }
-
-    containerParent.appendChild(container);
-    _structuralSparkleContainers.push(container);
-
-    const VISIBLE_DURATION = 3000;
-    const FADE_DURATION = 2000;
-
-    // Helper: Generate perimeter position
-    function getPerimeterPosition(w, h) {
-        const edge = Math.floor(Math.random() * 4);
-        let x, y;
-        switch (edge) {
-            case 0: x = Math.random() * w; y = -4 + Math.random() * 8; break;
-            case 1: x = w - 4 + Math.random() * 8; y = Math.random() * h; break;
-            case 2: x = Math.random() * w; y = h - 4 + Math.random() * 8; break;
-            case 3: x = -4 + Math.random() * 8; y = Math.random() * h; break;
-        }
-        return { x, y, edge };
-    }
-
-    // Helper: Calculate outward velocity
-    function getOutwardVelocity(edge) {
-        const baseSpeed = 15 + Math.random() * 25;
-        const spread = (Math.random() - 0.5) * 20;
-        let dx, dy;
-        switch (edge) {
-            case 0: dx = spread; dy = -baseSpeed; break;
-            case 1: dx = baseSpeed; dy = spread; break;
-            case 2: dx = spread; dy = baseSpeed; break;
-            case 3: dx = -baseSpeed; dy = spread; break;
-        }
-        return { dx, dy };
-    }
-
-    // Emit sparkles at intervals
-    const interval = setInterval(() => {
-        if (!container.parentNode) {
-            clearInterval(interval);
-            return;
-        }
-
-        const rect = container.getBoundingClientRect();
-        const ct = 3 + Math.floor(Math.random() * 3);
-
-        for (let j = 0; j < ct; j++) {
-            const size = 3 + Math.random() * 4;
-            const pos = getPerimeterPosition(rect.width, rect.height);
-            const vel = getOutwardVelocity(pos.edge);
-            const peakOpacity = 0.5 + Math.random() * 0.4;
-
-            const p = document.createElement('div');
-            p.style.cssText =
-                'position:absolute;' +
-                'left:' + pos.x + 'px;' +
-                'top:' + pos.y + 'px;' +
-                'width:' + size + 'px;' +
-                'height:' + size + 'px;' +
-                'border-radius:50%;' +
-                'background:radial-gradient(circle,rgba(255,235,150,0.95),rgba(255,215,0,0.6));' +
-                'box-shadow:0 0 8px rgba(255,215,0,0.7);' +
-                'opacity:0;' +
-                'transition:opacity ' + FADE_DURATION + 'ms ease-out;' +
-                'animation:fate-firefly ' + VISIBLE_DURATION + 'ms ease-in-out forwards;' +
-                '--ff-dx:' + vel.dx + 'px;' +
-                '--ff-dy:' + vel.dy + 'px;' +
-                '--ff-opacity:' + peakOpacity + ';';
-            container.appendChild(p);
-
-            // Fade and cleanup
-            ((el) => {
-                setTimeout(() => { el.style.opacity = '0'; }, VISIBLE_DURATION);
-                setTimeout(() => { if (el.parentNode) el.remove(); }, VISIBLE_DURATION + FADE_DURATION + 100);
-            })(p);
-        }
-    }, 120);
-
-    _structuralSparkleIntervals.push(interval);
+    _fateSparkleContainerIds = [];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1228,7 +1030,6 @@ function stopContinuousSparkles() {
     }
 
     function flipAllCards(mount){
-        if (_allFlipped) return;
         _allFlipped = true;
         const cards = mount.querySelectorAll('.fate-card:not(.petition-fate-card)');
         cards.forEach(c => c.classList.add('flipped'));
