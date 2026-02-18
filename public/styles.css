@@ -2112,7 +2112,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     font-size: 0.9em;
     font-weight: 400;
     font-variant: small-caps;
-    color: rgba(245, 240, 230, 0.7) !important; /* Lower salience than body text */
+    color: var(--page-text, #1a1a1a) !important;
     text-shadow: none !important;
     text-align: center;
     margin: 0 0 8px 0;

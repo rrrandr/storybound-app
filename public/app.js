@@ -218,6 +218,20 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
          }
      }
   }
+  // Telemetry — minimal event logging to Supabase
+  async function logEvent(eventType, metadata = {}) {
+      if (!sb || !_supabaseProfileId) return;
+      try {
+          await sb.from('user_events').insert({
+              user_id: _supabaseProfileId,
+              event_type: eventType,
+              metadata
+          });
+      } catch (e) {
+          console.warn('[Telemetry] Event log failed:', e);
+      }
+  }
+
   // Age confirmation — persist to Supabase profile then proceed
   document.getElementById('confirmAgeBtn')?.addEventListener('click', async () => {
     try {
@@ -1583,6 +1597,113 @@ Introduce the name naturally within the first few paragraphs — do not announce
     hunger: 'Love competes with survival.',
     galactic_civilizations: 'Love can save a world, or burn a galaxy.'
   };
+
+  // Flavor hard constraints — injected when flavor is PRIMARY WORLD LENS
+  const FLAVOR_HARD_CONSTRAINTS = {
+    glass_house: `GLASS HOUSE HARD CONSTRAINTS:
+REQUIRES: High-tech social architecture, visibility/transparency enforcement, emotional compliance systems, collective influence (hive-mind, neural link, shared mood, or addictive calm), institutionalized monitoring or psychological exposure.
+FORBIDDEN DEFAULTS: Ash wasteland, bone-chip debt economy, generic Warden-cadre scarcity dystopia, desert ruin imagery. If such tropes appear, flavor enforcement has failed.`,
+    quieting_event: `QUIETING EVENT HARD CONSTRAINTS:
+REQUIRES: Biochemical serenity enforcement, ambient suppression (not authoritarian force), emotional flatline as status quo, desire as social destabilizer.
+FORBIDDEN DEFAULTS: Violent police state, armed rebellion, post-apocalyptic ruin. The Quieting is clinical calm, not martial law.`
+  };
+
+  // World Bible — canonical world doctrine (immutable, declarative form)
+  const WORLD_BIBLE = {
+    glass_house: `CANONICAL WORLD LAW — GLASS HOUSE
+
+The Chorus is a frequency field, not an implant. No surgery or hardware. Opt-in but socially magnetic.
+The Chorus universalizes emotion; it does not suppress, numb, or desensitize.
+Grief is witnessed, not erased. Joy resonates outward. Anger is possible but effortful to sustain.
+Reconnection produces softness, emotional stabilization, and relief from isolation — not spectacle.
+The Chorus is deeply addictive: total contextual understanding, immediate forgiveness, felt sense of being seen.
+
+Solo = remaining disconnected within Field range.
+Solos produce higher rates of crime AND higher rates of artistic/inventive breakthrough.
+Solo state increases: emotional sharpness, jealousy, misinterpretation, erotic voltage, creative and destructive volatility.
+Remaining Solo inside Field density feels effortful — like holding anger underwater.
+
+Secrets are possible but heavy. Withholding creates leakage risk. Secrecy is difficult to sustain long-term.
+Aperture = who is allowed into shared experience. Reconnecting mid-intimacy without consent = emotional infidelity.
+Sleep detunes the brain. Dreams remain private. Night is a natural Solo frontier.
+
+Dead zones are stigmatized but common. Remote regions, ships, shielded spaces weaken or block signal.
+Children do not harmonize cleanly. Adolescents begin natural alignment. Cultural debate over early exposure.
+The Chorus is relatively new. Social enforcement precedes legal enforcement. Not yet universally mandated.
+
+Central tension: Universal communion vs exclusive intensity.
+Can exclusive love survive universal understanding? Does harmony reduce greatness?
+Is being chosen more powerful than being understood?
+
+EVOLUTIONARY AMBIGUITY:
+The Chorus may drift, evolve, or appear selective over time.
+No single cause of incompatibility is canonically confirmed.
+Psychological, genetic, moral, and environmental explanations may coexist.
+Public interpretation varies by faction and era.
+The Chorus does not provide explanation.
+
+Do not substitute generic dystopian tropes (ash wasteland, authoritarian cadres, scarcity economy).`
+  };
+
+  // Compressed anchor for Glass House on subsequent turns (not Scene 1)
+  const GLASS_HOUSE_CANON_ANCHOR = `GLASS HOUSE CANON REMINDER:
+- The Chorus universalizes emotion; it does not numb.
+- Secrets are possible but heavy.
+- Sleep detunes. Dreams remain private.
+- Dead zones exist and are stigmatized but common.
+- Solos increase volatility AND creativity.
+- Aperture consent governs shared intimacy.
+- Do not default to generic dystopian tropes.`;
+
+  // Controlled surface strategy — Glass House doctrine surfacing rules
+  function buildGlassHouseSurfaceDirective() {
+      const pressure = state.picks?.pressure;
+      const isPropagandaEligible = (pressure === 'PowerControl' || pressure === 'EscapePursuit');
+
+      let directive = `\nGLASS HOUSE SURFACE RULES:
+The world bible is invisible scaffolding. Do NOT narrate canon mechanics unless the scene demands it.
+Diegetic doctrine (e.g. "Connection is care", "Harmony is responsibility", "Solos harm more than themselves") may surface ONLY when tension involves government pressure, workplace compliance, school policy, public shaming, or cultural argument about children. Max 1 sentence per scene. Do not surface doctrine in more than ~20% of scenes.`;
+
+      if (isPropagandaEligible) {
+          directive += `
+Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideological phrasing. Never default to propaganda tone — use only when an institution is actively pressuring characters.`;
+      }
+
+      return directive;
+  }
+
+  // Structural bellwethers — drift-prone structures only, not exhaustive
+  const BELLWETHERS = {
+    world: {
+      glass_house: `Structural example: A high-tech society of enforced transparency, emotional visibility, and addictive collective calm. Surveillance is normalized as intimacy. Compliance is aesthetic, not violent. Do not copy phrasing. Absorb structural logic only.`,
+      quieting_event: `Structural example: A society stabilized through biochemical emotional suppression. Longing destabilizes systems designed for serenity. Institutions react subtly before violently. Do not copy phrasing. Absorb structural logic only.`
+    },
+    pov: {
+      fifth_person: `Structural example: Fate has intention, timing, and the capacity to miscalculate. Fate alters probability or pressure in ways that become visible in the next scene. Do not copy phrasing. Apply structure only.`
+    },
+    tone: {
+      wry: `Structural example: Observant, restrained, intelligent detachment. Irony emerges from systemic absurdity. Avoid melodrama. Do not manufacture punchlines.`
+    }
+  };
+
+  // Template collapse prevention — tracks last 3 story world+flavor combos
+  // If same world generates 3 stories in a row under different flavors, inject freshness directive
+  const _recentWorldFlavors = []; // [{world, flavor}] — max length 3
+
+  function getAntiRepeatDirective(world, flavorVal) {
+    // Record this story's world+flavor
+    _recentWorldFlavors.push({ world, flavor: flavorVal });
+    if (_recentWorldFlavors.length > 3) _recentWorldFlavors.shift();
+    // Check if 3 consecutive stories used same world but different flavors
+    if (_recentWorldFlavors.length >= 3) {
+      const allSameWorld = _recentWorldFlavors.every(e => e.world === world);
+      const allDifferentFlavors = new Set(_recentWorldFlavors.map(e => e.flavor)).size >= 2;
+      if (allSameWorld && allDifferentFlavors) {
+        return `\nAVOID repeating prior ${world} structures. Reinterpret the selected flavor freshly — do not reuse identical setting elements, faction names, or economic systems from previous stories.`;
+      }
+    }
+    return '';
+  }
 
   // Contextual flavor gravity — engine-facing prompt injection (LOCKED Bible entry)
   const CONTEXT_GRAVITY = {
@@ -3736,6 +3857,9 @@ The reader does not know why the story is gentler. Fate does not know either.
           contract += FIFTH_PERSON_PROXIMITY_CONTRACT;
       }
 
+      // POV bellwether (structural anchor)
+      contract += `\n\nBELLWETHER — STRUCTURAL REFERENCE:\n${BELLWETHERS.pov.fifth_person}\nDo not copy wording from this example. Use it only to guide structural logic.`;
+
       return contract;
   }
 
@@ -4431,6 +4555,37 @@ PROHIBITED:
 
   // Expose for integration
   window.enforceStrict5thPersonPOV = enforceStrict5thPersonPOV;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ADDITIVE FATE CONSEQUENCE STABILIZATION (no regeneration trigger)
+  // If Fate appears but no consequence language is detectable, append corrective
+  // sentence and flag next turn for consequence surfacing.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const FATE_CONSEQUENCE_MARKERS = /\b(tighten|loosen|shift|accelerat|delay|withh[eo]ld|miscalculat|recalibrat|adjust|press|pull|judg|anticipat|plan|arrangi|timing|probability|pressure|stakes|thread|tension)\w*/i;
+
+  function additiveFateConsequenceCheck(text) {
+    if (!text || typeof text !== 'string') return text;
+    // Only applies to 5th person POV
+    if (window.state?.povMode !== 'author5th') return text;
+    // Check if Fate appears at all
+    const fateCount = (text.match(/\bFate\b/g) || []).length;
+    if (fateCount === 0) return text; // No Fate presence — nothing to correct
+    // Extract Fate sentences
+    const fateSentences = text.split(/(?<=[.!?])\s+/).filter(s => /\bFate\b/i.test(s));
+    // Check if ANY Fate sentence contains consequence language
+    const hasConsequence = fateSentences.some(s => FATE_CONSEQUENCE_MARKERS.test(s));
+    if (hasConsequence) {
+      // Fate already has detectable consequence — clear any pending flag
+      if (window.state) window.state._fateRecalibrationPending = false;
+      return text;
+    }
+    // Fate appears but no consequence detected — append corrective sentence
+    console.warn('[FateConsequence] Fate appears without consequence language — appending stabilization');
+    const trimmed = text.trimEnd();
+    const corrective = '\n\nFate recalibrated — the pressure shifted, imperceptible but certain.';
+    if (window.state) window.state._fateRecalibrationPending = true;
+    return trimmed + corrective;
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 5TH-PERSON (THE STORY / FATE) VOICE ENFORCEMENT (AUTHORITATIVE)
@@ -5299,7 +5454,7 @@ If you name what something IS, you have failed. Show what it COSTS.
    */
   const TONE_ENFORCEMENT_BLOCKS = {
       Earnest: `TONE ENFORCEMENT (Earnest): Prose must contain sincere, unguarded emotional expression. Show genuine feeling without ironic distance. Characters mean what they say.`,
-      WryConfession: `TONE ENFORCEMENT (Wry/Confessional): Prose must contain self-aware irony, internal contradiction, or quiet self-deprecation. Characters undercut their own dignity. Include moments of "I told myself" followed by reality contradicting it.`,
+      WryConfession: `TONE ENFORCEMENT (Wry/Confessional): The narrative stance is observant, controlled, and self-aware. The prose knows more than it says. Irony emerges naturally from systemic absurdity and characters who see clearly but act anyway. Emotional restraint without emotional absence — feeling is present but never indulged. Melodrama is refused. Sentimentality is deflected through intelligence, not coldness. Characters may recognize their own contradictions without narrating them. Do not make comedic. Do not break tension. Do not manufacture ironic beats — let the world's architecture supply them.`,
       Poetic: `TONE ENFORCEMENT (Poetic): Prose must be lyrical. Use similes, sensory metaphor, rhythm. Language should shimmer. Verbs should evoke texture and light.`,
       Mythic: `TONE ENFORCEMENT (Mythic): Prose must evoke fate, destiny, ancient patterns. Use words like "ordained," "chosen," "eternal." Events feel written in stone.`,
       Comedic: `TONE ENFORCEMENT (Comedic): Prose must include timing reversals, disproportionate reactions, or deadpan understatement. Something should go wrong in a way that's funny. Tonal whiplash is required.`,
@@ -5361,7 +5516,13 @@ If you name what something IS, you have failed. Show what it COSTS.
    */
   function buildToneEnforcementBlock(tone) {
       if (!tone || !TONE_ENFORCEMENT_BLOCKS[tone]) return '';
-      return '\n' + TONE_ENFORCEMENT_BLOCKS[tone] + '\n';
+      let block = '\n' + TONE_ENFORCEMENT_BLOCKS[tone] + '\n';
+      // Tone bellwether for drift-prone tones
+      const toneKey = tone === 'WryConfession' ? 'wry' : null;
+      if (toneKey && BELLWETHERS.tone[toneKey]) {
+          block += `\nBELLWETHER — STRUCTURAL REFERENCE:\n${BELLWETHERS.tone[toneKey]}\nDo not copy wording from this example. Use it only to guide structural logic.\n`;
+      }
+      return block;
   }
 
   // ============================================================
@@ -5451,6 +5612,80 @@ If you name what something IS, you have failed. Show what it COSTS.
       NARR_ABSTRACT_WITHOUT_CONSEQUENCE: 'NARR_ABSTRACT_WITHOUT_CONSEQUENCE',
       NARR_HELPFUL_NARRATOR: 'NARR_HELPFUL_NARRATOR'
   };
+
+  // ============================================================
+  // GLASS HOUSE TITLE WEIGHTING (PHASE I)
+  // ============================================================
+  const GLASS_HOUSE_TITLE = {
+      PHASE_I_LIMIT: 75,
+      STORAGE_KEY: 'sb_glass_house_title_count',
+      LEXICAL_MARKERS: /\b(glass\s*house|glass\s*houses|under\s+glass|in\s+the\s+field|glass|chorus|choir|field|harmonic|harmony|solo|dead\s+zone)\b/i,
+      BANNED_STANDALONE: /^dead\s+zone$/i,
+      SUBTITLE_MARKERS: [
+          'A Glass House Story',
+          'A Glass House Entry',
+          'From the Glass House Cycle'
+      ],
+      STRUCTURES: ['possessive', 'situational', 'juxtaposition', 'minimalist', 'subtitle'],
+      POSSESSIVE_CAP: 0.25,
+      SUBTITLE_CAP: 0.40,
+      getCount() { return parseInt(localStorage.getItem(this.STORAGE_KEY) || '0', 10); },
+      increment() { localStorage.setItem(this.STORAGE_KEY, String(this.getCount() + 1)); },
+      isPhaseI() { return this.getCount() < this.PHASE_I_LIMIT; }
+  };
+
+  function buildGlassHouseTitleDirective(previousTitle) {
+      if (!GLASS_HOUSE_TITLE.isPhaseI()) return '';
+      const count = GLASS_HOUSE_TITLE.getCount();
+
+      let antiStructure = '';
+      if (previousTitle) {
+          if (/^the\s+glass\s+house\s+of\s+/i.test(previousTitle)) {
+              antiStructure = '\nDo NOT use the structure "The Glass House of [Name]" — the previous title already used it.';
+          } else if (/^[\w\s]+'s\s+glass/i.test(previousTitle)) {
+              antiStructure = '\nDo NOT use a possessive structure — the previous title already used it.';
+          } else if (/\s*—\s*(A Glass House|From the Glass House)/i.test(previousTitle)) {
+              antiStructure = '\nDo NOT use a subtitle-appended structure — the previous title already used it.';
+          }
+      }
+
+      return `
+
+═══════════════════════════════════════════════════════════════════════════
+GLASS HOUSE WORLD — TITLE LEXEME REQUIREMENT (Phase I, story ${count + 1}/${GLASS_HOUSE_TITLE.PHASE_I_LIMIT})
+═══════════════════════════════════════════════════════════════════════════
+The title OR subtitle MUST contain at least one Glass House lexical marker:
+Glass, Glass House, The Glass House, Chorus, Choir, Field, Harmonic, Harmony, Solo, Dead Zone (only as part of a larger phrase), Under Glass, In the Field.
+
+"Dead Zone" alone is BANNED as a standalone title.
+Do NOT number titles.
+
+STRUCTURE VARIETY (cycle through these — do not repeat consecutive structure):
+- Possessive: "Belinda Claire's Glass House"
+- Situational: "Affair in a Glass House"
+- Juxtaposition: "Glass Houses and Open Veins"
+- Minimalist: "Under Glass"
+- Subtitle format: "Signal Loss — A Glass House Entry"
+${antiStructure}
+
+TONE: Literary, not sci-fi pulp. Avoid "Neural Sync Protocol", "Quantum Emotion Engine".
+Glass House is NOT wasteland dystopia — avoid ash/desert imagery.
+
+If the main title does not include a strong marker, you MAY append a subtitle:
+"— A Glass House Story", "— A Glass House Entry", or "— From the Glass House Cycle"
+═══════════════════════════════════════════════════════════════════════════`;
+  }
+
+  function enforceGlassHouseLexeme(title) {
+      if (!GLASS_HOUSE_TITLE.isPhaseI()) return title;
+      const clean = title.replace(/"/g, '').trim();
+      if (GLASS_HOUSE_TITLE.BANNED_STANDALONE.test(clean)) {
+          return clean + ' — A Glass House Entry';
+      }
+      if (GLASS_HOUSE_TITLE.LEXICAL_MARKERS.test(clean)) return clean;
+      const subtitles = GLASS_HOUSE_TITLE.SUBTITLE_MARKERS;
+      return clean + ' — ' + subtitles[Math.floor(Math.random() * subtitles.length)];
+  }
 
   // ============================================================
   // TITLE VALIDATION + FALLBACK SYSTEM
@@ -10459,7 +10694,7 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
    * @param {string} tone - Current tone (optional, for Wry Confessional override)
    * @returns {string} - Prompt text
    */
-  function buildTitlePrompt(mode, arousal, world, tone) {
+  function buildTitlePrompt(mode, arousal, world, tone, opts) {
       // Wry Confessional: Return directly from vocabulary pool (no AI generation needed)
       // WRY CONFESSION IS THE MODEL — other tones should aspire to its semantic standard
       if (tone === 'Wry Confessional') {
@@ -10531,7 +10766,7 @@ BANNED — GENERIC PATTERNS (HARD FAIL):
 
 The title must name WHAT IS UNRESOLVED, not what will be resolved.
 ═══════════════════════════════════════════════════════════════════════════
-
+${opts?.worldSubtype === 'glass_house' ? buildGlassHouseTitleDirective(opts?.previousTitle) : ''}
 Return ONLY the title, no quotes or explanation.`;
   }
 
@@ -10782,7 +11017,8 @@ Return ONLY the title, no quotes or explanation.`;
    * @returns {object} - { prompt: string, mode: string, worldMarked: boolean }
    */
   function routeTitleGeneration(path, context) {
-      const { world, arousal, genre, tone } = context;
+      const { world, arousal, genre, tone, worldSubtype } = context;
+      const titleOpts = { worldSubtype, previousTitle: state.previousTitle };
 
       if (path === CONTINUATION_PATHS.CONTINUE) {
           // Use previous mode, build continuation prompt
@@ -10799,7 +11035,7 @@ Return ONLY the title, no quotes or explanation.`;
           }
           const mode = selectTitleMode(world, arousal, genre, tone);
           return {
-              prompt: buildTitlePrompt(mode, arousal, world, tone),
+              prompt: buildTitlePrompt(mode, arousal, world, tone, titleOpts),
               mode: mode,
               worldMarked: true,
               worldName: state.worldName,
@@ -10809,7 +11045,7 @@ Return ONLY the title, no quotes or explanation.`;
           // NEW_STORY: Standard title generation
           const mode = selectTitleMode(world, arousal, genre, tone);
           return {
-              prompt: buildTitlePrompt(mode, arousal, world, tone),
+              prompt: buildTitlePrompt(mode, arousal, world, tone, titleOpts),
               mode: mode,
               worldMarked: false
           };
@@ -10896,6 +11132,8 @@ Return ONLY the title, no quotes or explanation.`;
           // Direct sequel — preserve most state, just reset story position
           state.storyEnded = false;
           state.turnCount = 0;
+          state._loggedStoryStart = false;
+          state._loggedScene3 = false;
           clearStoryContent();
           // Title should echo previous title's mode
           state.previousTitle = preservedTitle;
@@ -10940,6 +11178,8 @@ Return ONLY the title, no quotes or explanation.`;
   function resetForNewStory() {
       state.storyEnded = false;
       state.turnCount = 0;
+      state._loggedStoryStart = false;
+      state._loggedScene3 = false;
       state.storyLength = 'taste';
       state.storyId = null;
       clearStoryContent();
@@ -12117,6 +12357,8 @@ Return ONLY the title, no quotes or explanation.`;
       state.intimacyInterrupted = { first_kiss: false, first_intimacy: false };
       state.intimacyTurnsInWindow = 0;
       state.turnCount = 0;
+      state._loggedStoryStart = false;
+      state._loggedScene3 = false;
 
       // Reset Guided Fate selections
       state.picks = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', era: 'Medieval', pov: 'First' };
@@ -14727,6 +14969,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           window.showScreen('modeSelect');
       }
 
+      logEvent('purchase_completed', { product: purchaseType, access: state.access });
+
       console.log('[ENTITLEMENT] completePurchase END:', {
           access: state.access,
           storyLength: state.storyLength,
@@ -15296,6 +15540,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Clear story identifiers
     state.storyId = null;
     state.turnCount = 0;
+    state._loggedStoryStart = false;
+    state._loggedScene3 = false;
     state.storyEnded = false;
     state._lastGeneratedShapeSnapshot = null;
 
@@ -15672,6 +15918,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     localStorage.removeItem('sb_saved_story');
     // Reset state
     state.turnCount = 0;
+    state._loggedStoryStart = false;
+    state._loggedScene3 = false;
     state.storyLength = 'taste';
     state.storyEnded = false;
     state.archetype = { primary: 'BEAUTIFUL_RUIN', modifier: null };
@@ -16030,6 +16278,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               state.imageCredits = data.creditsRemaining;
           }
           console.log('[ImageCredits] Credit consumed (server). Remaining:', state.imageCredits);
+          logEvent('credit_spent');
           return true;
       } catch (err) {
           console.error('[ImageCredits] Server credit consumption failed:', err);
@@ -16682,8 +16931,36 @@ INTERPRETATION RULES:
           return (order[a.type] ?? 2) - (order[b.type] ?? 2);
       });
 
+      // Promote first systemic flavor to PRIMARY WORLD LENS (overrides generic genre tropes)
+      const primaryFlavor = sorted.find(f => f.type === 'systemic');
       let block = '';
+      if (primaryFlavor) {
+          const primaryLabel = getWorldLabel(primaryFlavor.val);
+          const primaryPressure = SYSTEMIC_PRESSURE_LINES[primaryFlavor.val] || '';
+          const hardConstraints = FLAVOR_HARD_CONSTRAINTS[primaryFlavor.val] || '';
+          block += `\nPRIMARY WORLD LENS: ${primaryLabel}`;
+          if (primaryPressure) block += `\nWorld Pressure: ${primaryPressure}`;
+          block += `\nBase Genre: ${world}`;
+          block += `\nIf PRIMARY WORLD LENS exists, it overrides generic ${world} tropes. Do not default to generic genre imagery unless explicitly part of the selected flavor.`;
+          if (hardConstraints) block += `\n${hardConstraints}`;
+          // World Bible — full on Scene 1, compressed anchor on subsequent turns
+          if (primaryFlavor.val === 'glass_house') {
+              const isScene1 = !state.turnCount || state.turnCount === 0;
+              if (isScene1) {
+                  block += `\n\n${WORLD_BIBLE.glass_house}`;
+                  block += buildGlassHouseSurfaceDirective();
+              } else {
+                  block += `\n\n${GLASS_HOUSE_CANON_ANCHOR}`;
+              }
+          }
+          // World bellwether (structural anchor for drift-prone flavors)
+          const worldBellwether = BELLWETHERS.world[primaryFlavor.val];
+          if (worldBellwether) {
+              block += `\n\nBELLWETHER — STRUCTURAL REFERENCE:\n${worldBellwether}\nDo not copy wording from this example. Use it only to guide structural logic.`;
+          }
+      }
       for (const flavor of sorted) {
+          if (flavor === primaryFlavor) continue; // Already emitted as primary lens
           const label = getWorldLabel(flavor.val);
           if (flavor.type === 'systemic') {
               const pressure = SYSTEMIC_PRESSURE_LINES[flavor.val] || '';
@@ -16694,7 +16971,6 @@ INTERPRETATION RULES:
               block += `\nWorld Context: ${label}`;
               if (effect) block += `\nContext Effect: ${effect}`;
           } else {
-              // Unclassified (Historical) — simple label
               block += `\nWorld Flavor: ${label}`;
           }
       }
@@ -16709,6 +16985,12 @@ QUIETING EVENT DIRECTIVES:
 - NEVER frame desire as coercion or non-consent. The suppression is biochemical and ambient, not authoritarian force.
 - Focus on longing, obsession, jealousy, creativity returning — the return of full emotional range.
 - Scene bias: moderate pacing early, escalating intensity, social destabilization consequences, public calm vs private ignition contrast.`;
+      }
+
+      // Template collapse prevention — anti-repeat directive
+      const primaryVal = primaryFlavor?.val || (sorted[0] && sorted[0].val);
+      if (primaryVal) {
+          block += getAntiRepeatDirective(world, primaryVal);
       }
 
       return block;
@@ -18485,12 +18767,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'galactic_civilizations', top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       Dystopia: [
-        { val: 'glass_house',     top: 53.5, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'the_ledger',      top: 60.0, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'crimson_veil',    top: 60.0, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'perfect_match',   top: 66.5, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'endless_edit',    top: 66.5, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'quieting_event',  top: 73.0, left: 17.6, width: 29.2, height: 4.8 }
+        { val: 'glass_house',     top: 58.5, left: 17.6, width: 64.6, height: 4.8 },
+        { val: 'the_ledger',      top: 65.0, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'crimson_veil',    top: 65.0, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'perfect_match',   top: 71.5, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'endless_edit',    top: 71.5, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'quieting_event',  top: 78.0, left: 17.6, width: 29.2, height: 4.8 }
       ],
       PostApocalyptic: [
         { val: 'ashfall',        top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
@@ -18505,7 +18787,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       Historical:      { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       Fantasy:         { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       SciFi:           { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
-      Dystopia:        { top: 73.0, left: 53,   width: 29.2, height: 4.1 },
+      Dystopia:        { top: 78.0, left: 53,   width: 29.2, height: 4.1 },
       PostApocalyptic: { top: 76.5, left: 53,   width: 29.2, height: 4.1 }
     };
     // Scrolling suggestions for baked-art cards — themes NOT already in the buttons
@@ -27962,29 +28244,33 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // Variance: size, opacity, lifespan all varied for organic feel
   // ═══════════════════════════════════════════════════════════════════════════════
   const SPARKLE_PROFILES = {
-    // Guided Fate: mystical, more active energy
+    // Guided Fate: mystical, hovering gold cloud around card
     guidedFate: {
-      durationMin: 2.5,
-      durationMax: 4.5,
-      sizeMin: 3,           // varied size range
+      durationMin: 4.0,
+      durationMax: 7.0,
+      sizeMin: 3,
       sizeMax: 7,
       opacityMin: 0.4,
-      opacityRange: 0.5,    // 0.4-0.9 for more visible sparkles
-      haloOffset: 15,       // spawn distance outside card edge
-      driftType: 'rise',    // upward drift with slight wander
-      flickerChance: 0.3    // 30% chance of flicker animation
+      opacityRange: 0.5,    // 0.4-0.9
+      haloOffset: 15,
+      driftType: 'hover',
+      driftDistance: 12,
+      curveAmp: 3,
+      flickerChance: 0.3
     },
     // Choose Your Hand: matches Guided Fate energy
     chooseHand: {
-      durationMin: 2.5,
-      durationMax: 4.5,
-      sizeMin: 3,           // match guidedFate size
+      durationMin: 4.0,
+      durationMax: 7.0,
+      sizeMin: 3,
       sizeMax: 7,
       opacityMin: 0.4,
-      opacityRange: 0.5,    // 0.4-0.9 for more visible sparkles
-      haloOffset: 15,       // match guidedFate spawn distance
-      driftType: 'wander',  // gentle random drift
-      flickerChance: 0.3    // match guidedFate flicker
+      opacityRange: 0.5,    // 0.4-0.9
+      haloOffset: 15,
+      driftType: 'hover',
+      driftDistance: 12,
+      curveAmp: 3,
+      flickerChance: 0.3
     },
     // Destiny Deck: subtle ambient
     destinyDeck: {
@@ -27998,30 +28284,34 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       driftType: 'float',
       flickerChance: 0.15
     },
-    // Zoomed card: all sparkles spawn from card edges outward
+    // Zoomed card: sparkles hovering around zoomed card edges
     zoomCard: {
-      durationMin: 2.5,
-      durationMax: 5.0,
+      durationMin: 4.0,
+      durationMax: 6.5,
       sizeMin: 1,
       sizeMax: 3,
       opacityMin: 0.25,
       opacityRange: 0.45,
       haloOffset: 15,
-      driftType: 'wander',
+      driftType: 'hover',
+      driftDistance: 10,
+      curveAmp: 2,
       flickerChance: 0.15,
       outsideRatio: 1.0
     },
-    // Fate card firefly: gold glow sparkles anchored to fate cards
+    // Fate card firefly: gold glow sparkles hovering around fate cards
     fateFirefly: {
-      durationMin: 2.5,
-      durationMax: 4.5,
+      durationMin: 4.0,
+      durationMax: 7.0,
       sizeMin: 3,
       sizeMax: 7,
       opacityMin: 0.5,
       opacityRange: 0.4,     // 0.5-0.9
       haloOffset: 8,
-      driftType: 'wander',
+      driftType: 'hover',
       flickerChance: 0.25,
+      driftDistance: 10,      // max px drift from spawn (keeps sparkles close)
+      curveAmp: 3,            // max px wiggle (gentle, not zig-zag)
       boxShadow: '0 0 8px rgba(255,215,0,0.7)'
     },
     // Cover button: multi-tone gold emission during generation
@@ -28124,6 +28414,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         driftX = Math.cos(wanderAngle) * wanderDist;
         driftY = Math.sin(wanderAngle) * wanderDist;
         break;
+      case 'hover':
+        // Gentle drift staying close to spawn point (orbit-like linger)
+        const hoverDist = profile.driftDistance || 10;
+        const hoverAngle = Math.random() * Math.PI * 2;
+        driftX = Math.cos(hoverAngle) * (Math.random() * hoverDist);
+        driftY = Math.sin(hoverAngle) * (Math.random() * hoverDist);
+        break;
       case 'float':
         // Very slow drift, mostly upward
         driftX = (Math.random() - 0.5) * 20;
@@ -28139,7 +28436,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Perpendicular curve amplitude for firefly wiggle
     const perpAngle = Math.atan2(driftY, driftX) + Math.PI / 2;
-    const curveAmp = 4 + Math.random() * 10; // 4-14px firefly wiggle
+    const maxCurve = profile.curveAmp ?? (4 + Math.random() * 10);
+    const curveAmp = typeof profile.curveAmp === 'number'
+      ? Math.random() * maxCurve  // profile-controlled: 0 to max
+      : maxCurve;                 // default: 4-14px firefly wiggle
 
     sparkle.style.setProperty('--sparkle-duration', `${duration}s`);
     sparkle.style.setProperty('--sparkle-drift-x', `${driftX}px`);
@@ -30273,6 +30573,15 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
         }
 
         // ═══════════════════════════════════════════════════════════════════════
+        // ADDITIVE FATE CONSEQUENCE STABILIZATION (no regeneration)
+        // If Fate appears but has no detectable consequence, append corrective sentence
+        // and flag next turn for consequence surfacing.
+        // ═══════════════════════════════════════════════════════════════════════
+        if (state.povMode === 'author5th') {
+            text = additiveFateConsequenceCheck(text);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
         // INTIMACY & CONSENT FAILSAFE (Scene 1 — FULL ENFORCEMENT)
         // Scene 1 should never have explicit content (ST1 = Attraction Acknowledged)
         // Consent system leaks are always critical — must regenerate
@@ -30391,7 +30700,8 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
             world: state.picks?.world || 'Modern',
             arousal: state.intensity || 'Naughty',
             genre: state.picks?.genre || 'Romance',
-            tone: state.picks?.tone || 'Earnest'
+            tone: state.picks?.tone || 'Earnest',
+            worldSubtype: state.picks?.worldSubtype || null
         });
 
         const selectedMode = titleRouting.mode;
@@ -30429,6 +30739,13 @@ ${text.slice(0, 500)}`}]);
                 titleRouting.suffix
             );
             console.log('[TitlePipeline] World-marked title:', title);
+        }
+
+        // STEP 4b: Glass House lexeme enforcement (Phase I)
+        if (state.picks?.worldSubtype === 'glass_house') {
+            title = enforceGlassHouseLexeme(title);
+            GLASS_HOUSE_TITLE.increment();
+            console.log('[TitlePipeline] Glass House Phase I title #' + GLASS_HOUSE_TITLE.getCount() + ':', title);
         }
 
         // STEP 5: Full pipeline validation
@@ -30549,6 +30866,15 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // STORY TEXT READY — Signal that Scene 1 can be displayed
         // ═══════════════════════════════════════════════════════════════════════
         resolveStoryTextReady();
+
+        if (!state._loggedStoryStart) {
+            logEvent('story_started', {
+                world: state.picks?.worldSubtype || state.picks?.world,
+                tone: state.picks?.tone,
+                arousal: state.intensity
+            });
+            state._loggedStoryStart = true;
+        }
 
         // Go directly to Scene 1 (skip synopsis page)
         advanceReaderPage();
@@ -37004,6 +37330,7 @@ Respond in this EXACT format (no labels, just two lines):
       let selectedFateCard = null;
       if (state.fateOptions && typeof state.fateSelectedIndex === 'number' && state.fateSelectedIndex >= 0) {
           selectedFateCard = state.fateOptions[state.fateSelectedIndex];
+          if (selectedFateCard) logEvent('fate_used', { card: selectedFateCard.title || selectedFateCard.id });
       }
 
       const { safeAction, safeDialogue, flags } = sanitizeUserIntent(act, dia);
@@ -37309,6 +37636,12 @@ FATE CARD ADAPTATION (CRITICAL):
           petitionDirective = lines.join('\n');
       }
 
+      // FATE RECALIBRATION CONSEQUENCE — surfaces effect from prior turn's corrective append
+      const fateRecalibrationDirective = state._fateRecalibrationPending
+          ? '\nFATE CONSEQUENCE (MANDATORY): The consequences of Fate\'s recalibration from the previous scene must surface now — a shift in tension, timing, or probability that characters can feel but not name.\n'
+          : '';
+      if (state._fateRecalibrationPending) state._fateRecalibrationPending = false; // consume
+
       // Lens: dynamic midpoint enforcement (evaluated per-turn)
       const lensEnforcement = buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength);
 
@@ -37344,7 +37677,7 @@ FATE CARD ADAPTATION (CRITICAL):
           ? buildIntentConsequenceDirective(act, dia)
           : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -37561,6 +37894,13 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           }
 
           // ═══════════════════════════════════════════════════════════════════════
+          // ADDITIVE FATE CONSEQUENCE STABILIZATION (no regeneration)
+          // ═══════════════════════════════════════════════════════════════════════
+          if (state.povMode === 'author5th') {
+              raw = additiveFateConsequenceCheck(raw);
+          }
+
+          // ═══════════════════════════════════════════════════════════════════════
           // INTIMACY & CONSENT FAILSAFE — GENERATION-TIME ENFORCEMENT
           // Runs SILENTLY before presenting scene to user
           // Ensures escalation matches arousal + Storyturn + narrative readiness
@@ -37692,6 +38032,11 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           }
 
           state.turnCount++;
+
+          if (!state._loggedScene3 && state.turnCount >= 2 && state.turnCount <= 3) {
+              logEvent('scene_3_reached');
+              state._loggedScene3 = true;
+          }
 
           // Subscriber reward: +1 image credit every 5 scenes
           if (state.subscribed === true) {
