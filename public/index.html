@@ -1471,6 +1471,17 @@
   <div class="box" style="max-width:450px;">
     <h3>Account Status</h3>
     <div id="profileStatusContent"></div>
+
+    <hr style="border-color:var(--gold,#c9a84c); opacity:0.3; margin:18px 0 12px;">
+    <h4 style="color:var(--gold,#c9a84c); margin:0 0 4px;">Romance Preferences <span style="font-weight:normal; font-size:0.8em;">(Optional)</span></h4>
+    <p style="font-size:0.75em; color:#999; margin:0 0 10px;">Tell us a few romance novels you love. We'll subtly tune your stories to match your vibe.</p>
+    <div id="romancePrefTags" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
+    <input id="romancePrefInput" type="text" placeholder="Type a book title…" autocomplete="off"
+           style="width:100%; box-sizing:border-box; padding:6px 8px; background:#1a1a1a; color:#eee; border:1px solid #555; border-radius:4px; font-size:0.85em;">
+    <div id="romancePrefSuggest" style="display:none; position:relative; background:#222; border:1px solid #555; border-radius:0 0 4px 4px; max-height:140px; overflow-y:auto; font-size:0.82em;"></div>
+    <button id="romancePrefSaveBtn" class="sb-btn-png sm" style="margin-top:10px;">Save Preferences</button>
+    <div id="romancePrefStatus" style="font-size:0.75em; color:#888; margin-top:4px;"></div>
+
     <button onclick="window.closeProfileModal()" style="margin-top:15px;">Close</button>
   </div>
 </div>

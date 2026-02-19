@@ -399,7 +399,8 @@ window.config = window.config || {
     has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
     god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
     image_credits, subscription_credits, last_scene_rewarded, is_subscriber, subscription_tier, has_storypass,
-    age_confirmed, tos_version, privacy_version, adult_ack_version
+    age_confirmed, tos_version, privacy_version, adult_ack_version,
+    romance_preferences
   `;
 
   async function hydrateProfile(userId) {
@@ -433,10 +434,169 @@ window.config = window.config || {
     state.imageCredits = (profile.image_credits || 0) + (profile.subscription_credits || 0);
     state.lastSceneRewarded = profile.last_scene_rewarded || 0;
     if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
+    state.romancePreferences = Array.isArray(profile.romance_preferences) ? profile.romance_preferences : [];
+    state.romanceVector = computeRomanceVector(state.romancePreferences);
     syncTierFromAccess();
     activateKeyholeMarkIfEligible();
     console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.subscriptionTier, '| God Mode:', state.godMode, '| Keyhole:', state.keyhole?.marked, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ROMANCE PREFERENCES — Vector mapping + Profile UI
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const ROMANCE_TITLE_VECTORS = {
+    'a court of thorns and roses':    { dominanceBias: 0.7, supernaturalBias: 0.9, slowBurnBias: 0.4, angstBias: 0.6, protectorBias: 0.8, eroticHeatBias: 0.7 },
+    'the cruel prince':               { dominanceBias: 0.8, supernaturalBias: 0.9, slowBurnBias: 0.6, angstBias: 0.8, protectorBias: 0.3, eroticHeatBias: 0.4 },
+    'from blood and ash':             { dominanceBias: 0.7, supernaturalBias: 0.8, slowBurnBias: 0.3, angstBias: 0.5, protectorBias: 0.9, eroticHeatBias: 0.8 },
+    'the love hypothesis':            { dominanceBias: 0.2, supernaturalBias: 0.0, slowBurnBias: 0.7, angstBias: 0.3, protectorBias: 0.5, eroticHeatBias: 0.3 },
+    'beach read':                     { dominanceBias: 0.1, supernaturalBias: 0.0, slowBurnBias: 0.5, angstBias: 0.4, protectorBias: 0.2, eroticHeatBias: 0.3 },
+    'it ends with us':                { dominanceBias: 0.3, supernaturalBias: 0.0, slowBurnBias: 0.4, angstBias: 0.9, protectorBias: 0.6, eroticHeatBias: 0.4 },
+    'ugly love':                      { dominanceBias: 0.4, supernaturalBias: 0.0, slowBurnBias: 0.3, angstBias: 0.8, protectorBias: 0.4, eroticHeatBias: 0.7 },
+    'twisted love':                   { dominanceBias: 0.8, supernaturalBias: 0.0, slowBurnBias: 0.5, angstBias: 0.7, protectorBias: 0.8, eroticHeatBias: 0.6 },
+    'the hating game':                { dominanceBias: 0.3, supernaturalBias: 0.0, slowBurnBias: 0.7, angstBias: 0.4, protectorBias: 0.3, eroticHeatBias: 0.4 },
+    'outlander':                      { dominanceBias: 0.6, supernaturalBias: 0.5, slowBurnBias: 0.6, angstBias: 0.7, protectorBias: 0.9, eroticHeatBias: 0.7 },
+    'the notebook':                   { dominanceBias: 0.2, supernaturalBias: 0.0, slowBurnBias: 0.8, angstBias: 0.7, protectorBias: 0.5, eroticHeatBias: 0.2 },
+    'twilight':                       { dominanceBias: 0.6, supernaturalBias: 1.0, slowBurnBias: 0.7, angstBias: 0.6, protectorBias: 0.9, eroticHeatBias: 0.2 },
+    'fifty shades of grey':           { dominanceBias: 1.0, supernaturalBias: 0.0, slowBurnBias: 0.1, angstBias: 0.5, protectorBias: 0.6, eroticHeatBias: 1.0 },
+    'the bride':                      { dominanceBias: 0.5, supernaturalBias: 0.7, slowBurnBias: 0.5, angstBias: 0.4, protectorBias: 0.6, eroticHeatBias: 0.5 },
+    'ice planet barbarians':          { dominanceBias: 0.6, supernaturalBias: 0.8, slowBurnBias: 0.2, angstBias: 0.2, protectorBias: 1.0, eroticHeatBias: 0.9 },
+    'haunting adeline':               { dominanceBias: 1.0, supernaturalBias: 0.1, slowBurnBias: 0.2, angstBias: 0.8, protectorBias: 0.3, eroticHeatBias: 1.0 },
+    'kingdom of the wicked':          { dominanceBias: 0.7, supernaturalBias: 0.9, slowBurnBias: 0.5, angstBias: 0.6, protectorBias: 0.4, eroticHeatBias: 0.6 },
+    'the spanish love deception':     { dominanceBias: 0.2, supernaturalBias: 0.0, slowBurnBias: 0.6, angstBias: 0.3, protectorBias: 0.4, eroticHeatBias: 0.3 },
+    'fourth wing':                    { dominanceBias: 0.6, supernaturalBias: 0.8, slowBurnBias: 0.4, angstBias: 0.5, protectorBias: 0.7, eroticHeatBias: 0.7 },
+    'the kiss quotient':              { dominanceBias: 0.2, supernaturalBias: 0.0, slowBurnBias: 0.6, angstBias: 0.3, protectorBias: 0.4, eroticHeatBias: 0.5 },
+    'pride and prejudice':            { dominanceBias: 0.3, supernaturalBias: 0.0, slowBurnBias: 1.0, angstBias: 0.5, protectorBias: 0.3, eroticHeatBias: 0.0 },
+    'the duke and i':                 { dominanceBias: 0.5, supernaturalBias: 0.0, slowBurnBias: 0.6, angstBias: 0.4, protectorBias: 0.5, eroticHeatBias: 0.5 },
+    'bound by hatred':                { dominanceBias: 0.9, supernaturalBias: 0.0, slowBurnBias: 0.3, angstBias: 0.9, protectorBias: 0.2, eroticHeatBias: 0.8 },
+    'credence':                       { dominanceBias: 0.7, supernaturalBias: 0.0, slowBurnBias: 0.4, angstBias: 0.8, protectorBias: 0.3, eroticHeatBias: 0.9 },
+    'punk 57':                        { dominanceBias: 0.5, supernaturalBias: 0.0, slowBurnBias: 0.5, angstBias: 0.7, protectorBias: 0.4, eroticHeatBias: 0.6 }
+  };
+
+  // Known titles for autocomplete suggestions
+  const ROMANCE_KNOWN_TITLES = Object.keys(ROMANCE_TITLE_VECTORS).map(t =>
+    t.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  );
+
+  function computeRomanceVector(preferencesArray) {
+    if (!Array.isArray(preferencesArray) || preferencesArray.length === 0) return null;
+
+    const axes = ['dominanceBias', 'supernaturalBias', 'slowBurnBias', 'angstBias', 'protectorBias', 'eroticHeatBias'];
+    const sums = {};
+    let matchCount = 0;
+    axes.forEach(a => { sums[a] = 0; });
+
+    for (const title of preferencesArray) {
+      const key = (title || '').toLowerCase().trim();
+      const vec = ROMANCE_TITLE_VECTORS[key];
+      if (!vec) continue;
+      matchCount++;
+      axes.forEach(a => { sums[a] += vec[a]; });
+    }
+
+    if (matchCount === 0) return null;
+
+    const result = {};
+    axes.forEach(a => { result[a] = Math.min(sums[a] / matchCount, 1); });
+    return result;
+  }
+
+  function buildRomanceVectorDirective() {
+    const v = state.romanceVector;
+    if (!v) return '';
+    return `USER ROMANCE PREFERENCE VECTOR (subtle tonal bias only — do NOT override user selections or safety filters):
+  dominanceBias: ${v.dominanceBias.toFixed(2)}
+  supernaturalBias: ${v.supernaturalBias.toFixed(2)}
+  slowBurnBias: ${v.slowBurnBias.toFixed(2)}
+  angstBias: ${v.angstBias.toFixed(2)}
+  protectorBias: ${v.protectorBias.toFixed(2)}
+  eroticHeatBias: ${v.eroticHeatBias.toFixed(2)}
+Favor these tonal biases subtly in character behavior and narrative texture.`;
+  }
+
+  // Romance Preferences UI logic (profile modal)
+  function initRomancePrefsUI() {
+    const input = document.getElementById('romancePrefInput');
+    const tagsEl = document.getElementById('romancePrefTags');
+    const suggestEl = document.getElementById('romancePrefSuggest');
+    const saveBtn = document.getElementById('romancePrefSaveBtn');
+    const statusEl = document.getElementById('romancePrefStatus');
+    if (!input || !tagsEl || !saveBtn) return;
+
+    let selected = [...(state.romancePreferences || [])];
+
+    function renderTags() {
+      tagsEl.innerHTML = selected.map((t, i) =>
+        `<span style="display:inline-flex;align-items:center;gap:4px;background:#333;color:#eee;padding:2px 8px;border-radius:12px;font-size:0.8em;">${t}<span data-rm="${i}" style="cursor:pointer;color:#999;margin-left:2px;">×</span></span>`
+      ).join('');
+      tagsEl.querySelectorAll('[data-rm]').forEach(x => {
+        x.onclick = () => { selected.splice(+x.dataset.rm, 1); renderTags(); };
+      });
+    }
+
+    function showSuggestions(query) {
+      if (!query || query.length < 2) { suggestEl.style.display = 'none'; return; }
+      const q = query.toLowerCase();
+      const matches = ROMANCE_KNOWN_TITLES.filter(t =>
+        t.toLowerCase().includes(q) && !selected.some(s => s.toLowerCase() === t.toLowerCase())
+      ).slice(0, 6);
+      if (matches.length === 0) { suggestEl.style.display = 'none'; return; }
+      suggestEl.innerHTML = matches.map(m =>
+        `<div class="romance-suggest-item" style="padding:5px 8px;cursor:pointer;color:#ccc;border-bottom:1px solid #333;">${m}</div>`
+      ).join('');
+      suggestEl.style.display = 'block';
+      suggestEl.querySelectorAll('.romance-suggest-item').forEach(el => {
+        el.onmousedown = (e) => {
+          e.preventDefault();
+          if (selected.length < 5) { selected.push(el.textContent.trim()); renderTags(); }
+          input.value = '';
+          suggestEl.style.display = 'none';
+        };
+      });
+    }
+
+    input.addEventListener('input', () => showSuggestions(input.value));
+    input.addEventListener('blur', () => { setTimeout(() => { suggestEl.style.display = 'none'; }, 150); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = input.value.trim();
+        if (val && selected.length < 5 && !selected.some(s => s.toLowerCase() === val.toLowerCase())) {
+          selected.push(val);
+          renderTags();
+        }
+        input.value = '';
+        suggestEl.style.display = 'none';
+      }
+    });
+
+    saveBtn.onclick = async () => {
+      statusEl.textContent = 'Saving…';
+      state.romancePreferences = [...selected];
+      state.romanceVector = computeRomanceVector(selected);
+      try {
+        const user = sb.auth.getUser ? (await sb.auth.getUser()).data?.user : null;
+        if (user) {
+          await sb.from('profiles').update({ romance_preferences: selected }).eq('id', user.id);
+        }
+        statusEl.textContent = 'Saved!';
+        setTimeout(() => { statusEl.textContent = ''; }, 2000);
+      } catch (err) {
+        console.error('[ROMANCE_PREFS] Save failed:', err);
+        statusEl.textContent = 'Save failed.';
+      }
+    };
+
+    renderTags();
+  }
+
+  // Initialize romance prefs UI when profile modal opens
+  const _origOpenProfile = openProfileModal;
+  function openProfileModalWithPrefs() {
+    _origOpenProfile();
+    initRomancePrefsUI();
+  }
+  window.openProfileModal = openProfileModalWithPrefs;
 
   function activateKeyholeMarkIfEligible() {
     if (!state.keyhole) return;
@@ -2346,14 +2506,14 @@ For constraint/petition/god_mode:
       OPEN_VEIN: {
           id: 'OPEN_VEIN',
           name: 'The Open Vein',
-          desireStyle: '{MC_SUBJ} felt {LI_POS} desire like it was tattooed all over {LI_OBJ}.',
+          desireStyle: '{MC_SUBJ} felt {LI_POS} desire like it was<br>tattooed all over {LI_OBJ}.',
           summary: 'The Open Vein gives everything before it is asked. Love is not cautious here — it is hemorrhage, offering, surrender before the first wound. {LI_SUBJ} feels too much, too soon, too visibly.',
           stressFailure: 'self-erasure, overexposure'
       },
       SPELLBINDER: {
           id: 'SPELLBINDER',
           name: 'The Spellbinder',
-          desireStyle: 'Every glance a lure, every silence a trap; the room bent toward {LI_OBJ}.',
+          desireStyle: 'Every glance a lure, every silence a trap;<br>the room bent toward {LI_OBJ}.',
           summary: 'The Spellbinder commands attention through presence alone. Charm is currency, and {LI_SUBJ} spends it selectively — never by accident. Three moves ahead, {LI_SUBJ} makes surrender feel like your idea.',
           stressFailure: 'asymmetric attachment, selective honesty'
       },
@@ -2896,6 +3056,33 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       // ============================================================
       speculativeNextScene: null,  // { text, fateContextHash, tone, world, createdAt }
       isPreloadingNextScene: false,
+
+      // ============================================================
+      // CASCADE MODE — Erotic fast-path (in-memory only, not persisted)
+      // ============================================================
+      cascadeMode: false,
+      cascadeCount: 0,
+      cascadeContext: null,
+      lastCascadeExcerpt: null,
+
+      // ============================================================
+      // ADAPTIVE PACING + EROTIC PRESSURE — runtime only, not persisted
+      // ============================================================
+      adaptiveMetrics: {
+        turnTimestamps: [],
+        userInputLengths: [],
+        sceneWordCounts: [],
+        cascadeCountWindow: 0,
+        eroticSignalCount: 0
+      },
+      pacingMode: 'HYBRID',
+      eroticPressureScore: 0,
+      eroticMode: 'ROMANTIC',
+      redirectCooldownTurns: 0,
+      seductionEligible: false,
+      gooseCooldown: 0,
+      romancePreferences: [],
+      romanceVector: null,
 
       // ============================================================
       // PHASE 1 COVER MODE — LOCAL/COMPOSITED COVERS ONLY
@@ -11134,6 +11321,9 @@ Return ONLY the title, no quotes or explanation.`;
           state.turnCount = 0;
           state._loggedStoryStart = false;
           state._loggedScene3 = false;
+          state._loggedScene6 = false;
+          state._loggedPetitionOpen = false;
+          state._loggedPetitionSubmit = false;
           clearStoryContent();
           // Title should echo previous title's mode
           state.previousTitle = preservedTitle;
@@ -11180,6 +11370,9 @@ Return ONLY the title, no quotes or explanation.`;
       state.turnCount = 0;
       state._loggedStoryStart = false;
       state._loggedScene3 = false;
+      state._loggedScene6 = false;
+      state._loggedPetitionOpen = false;
+      state._loggedPetitionSubmit = false;
       state.storyLength = 'taste';
       state.storyId = null;
       clearStoryContent();
@@ -12158,7 +12351,13 @@ Return ONLY the title, no quotes or explanation.`;
       // Archetype section titles — metadata only, never in prose
       { id: 'ARCHETYPE_STORYBEAU',   rx: /\bStorybeau\b/gi,                                        fatePOVExempt: false },
       { id: 'ARCHETYPE_STORYBELLE',  rx: /\bStorybelle\b/gi,                                       fatePOVExempt: false },
-      { id: 'ARCHETYPE_STORYBOO',    rx: /\bStoryboo\b/gi,                                         fatePOVExempt: false }
+      { id: 'ARCHETYPE_STORYBOO',    rx: /\bStoryboo\b/gi,                                         fatePOVExempt: false },
+      // Decorative Fate language — Fate acts structurally, never as atmospheric decoration
+      { id: 'FATE_DECORATIVE_SMILED',  rx: /\bFate smiled\b/gi,                                    fatePOVExempt: false },
+      { id: 'FATE_DECORATIVE_WATCHED', rx: /\bFate watched\b/gi,                                   fatePOVExempt: false },
+      { id: 'FATE_DECORATIVE_SENSED',  rx: /\bFate sensed\b/gi,                                    fatePOVExempt: false },
+      { id: 'FATE_DECORATIVE_COILED',  rx: /\bFate coiled\b/gi,                                    fatePOVExempt: false },
+      { id: 'FATE_DECORATIVE_KNEW',    rx: /\bFate knew\b/gi,                                      fatePOVExempt: false }
   ];
 
   // Human-readable ban description per pattern (for negative-constraint injection)
@@ -12175,7 +12374,12 @@ Return ONLY the title, no quotes or explanation.`;
       ARCHETYPE_ETERNAL_FLAME:  '"Eternal Flame" — internal character archetype',
       ARCHETYPE_STORYBEAU:      '"Storybeau" — LI category label, metadata only',
       ARCHETYPE_STORYBELLE:     '"Storybelle" — LI category label, metadata only',
-      ARCHETYPE_STORYBOO:       '"Storyboo" — LI category label, metadata only'
+      ARCHETYPE_STORYBOO:       '"Storyboo" — LI category label, metadata only',
+      FATE_DECORATIVE_SMILED:   '"Fate smiled" — decorative Fate language banned',
+      FATE_DECORATIVE_WATCHED:  '"Fate watched" — decorative Fate language banned',
+      FATE_DECORATIVE_SENSED:   '"Fate sensed" — decorative Fate language banned',
+      FATE_DECORATIVE_COILED:   '"Fate coiled" — decorative Fate language banned',
+      FATE_DECORATIVE_KNEW:     '"Fate knew" — decorative Fate language banned'
   };
 
   /**
@@ -12359,6 +12563,9 @@ Return ONLY the title, no quotes or explanation.`;
       state.turnCount = 0;
       state._loggedStoryStart = false;
       state._loggedScene3 = false;
+      state._loggedScene6 = false;
+      state._loggedPetitionOpen = false;
+      state._loggedPetitionSubmit = false;
 
       // Reset Guided Fate selections
       state.picks = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', era: 'Medieval', pov: 'First' };
@@ -13517,6 +13724,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       state.godModeEligibleThisRitual = tierOk && powerLevel > 0;
       state.godModeActive = false;
 
+      // Telemetry: petition opened (once per session)
+      if (!state._loggedPetitionOpen) {
+          try { logEvent('petition_opened', { tone: state.picks?.tone, world: state.picks?.world }); } catch(_){}
+          state._loggedPetitionOpen = true;
+      }
+
       // Clear ritual state
       delete state._petitionRitual;
 
@@ -13794,6 +14007,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           intensity: state.intensity || 'Steamy'
       };
 
+      // Telemetry: petition submitted (once per story)
+      if (!state._loggedPetitionSubmit) {
+          try { logEvent('petition_submitted', { tone: state.picks?.tone, world: state.picks?.world }); } catch(_){}
+          state._loggedPetitionSubmit = true;
+      }
+
       const ritualHtml = `<div class="petition-ritual-block" style="color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;"><em>${resultTexts[outcome] || resultTexts.neutral}</em></div>`;
       if (typeof StoryPagination !== 'undefined' && StoryPagination.appendToCurrentPage) {
           StoryPagination.appendToCurrentPage(ritualHtml);
@@ -13884,6 +14103,390 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           "Crossroads where caravans are watched", "Quiet place where the numbness lifts", "Room where the old photographs are kept"
       ]
   };
+
+  // ===========================================================================
+  // STRATEGY PASS — Structural pre-planning LLM layer
+  // ===========================================================================
+
+  // World → SUBTYPE_SIGNALS category mapping (mirrors normalizeWorldSubtype local data)
+  const WORLD_TO_SIGNAL_CATEGORY = {
+    SciFi: 'scifi', Fantasy: 'fantasy', Mythic: 'mythic',
+    Dystopia: 'dystopia', PostApocalyptic: 'postapocalyptic'
+  };
+
+  // Module-scope copy of subtype signal keywords for strategy pass artifact pool
+  const STRATEGY_SUBTYPE_SIGNALS = {
+    scifi: {
+      space_opera: ['empire', 'galactic', 'starship', 'fleet', 'interstellar'],
+      hard_scifi: ['physics', 'realistic', 'science', 'engineering'],
+      cyberpunk: ['neon', 'corporate', 'hacker', 'augment', 'cyber'],
+      post_human: ['transcend', 'upload', 'singularity', 'evolved'],
+      alien_contact: ['alien', 'first contact', 'extraterrestrial', 'xeno'],
+      simulation: ['simulation', 'multiverse', 'reality', 'loop'],
+      final_frontier: ['frontier', 'exploration', 'crew', 'deep space']
+    },
+    fantasy: {
+      high_fantasy: ['magic', 'quest', 'enchant', 'mystical', 'kingdom'],
+      low_fantasy: ['hidden magic', 'grounded', 'subtle', 'secret power'],
+      dark_fantasy: ['grim', 'corrupt', 'curse', 'dark', 'forbidden']
+    },
+    mythic: {
+      greek_myth: ['olymp', 'hero', 'fate', 'hubris', 'oracle'],
+      norse_myth: ['norse', 'viking', 'ragnarok', 'rune', 'valhalla'],
+      egyptian_myth: ['pharaoh', 'nile', 'pyramid', 'afterlife'],
+      biblical_myth: ['angel', 'prophet', 'covenant', 'divine law']
+    },
+    dystopia: {
+      glass_house: ['hivenet', 'collective', 'transparency', 'neural'],
+      the_ledger: ['asset', 'valuation', 'leverage', 'capital'],
+      crimson_veil: ['doctrine', 'dogma', 'heresy', 'theocratic'],
+      perfect_match: ['breeding', 'genetic', 'reproductive', 'pair-bond'],
+      quieting_event: ['longing', 'contagion', 'serenity', 'containment'],
+      endless_edit: ['erasure', 'identity', 'memory', 'revision']
+    },
+    postapocalyptic: {
+      ashfall: ['ash', 'radiation', 'contaminated', 'fallout'],
+      year_zero: ['grief', 'rupture', 'old world', 'survivor'],
+      dystimulation: ['numb', 'anhedonia', 'sensation', 'adrenaline'],
+      predation: ['predator', 'leverage', 'exploit', 'lawless'],
+      hunger: ['scarcity', 'ration', 'calories', 'shortage']
+    }
+  };
+
+  /**
+   * Build a pool of 6–10 world-specific artifacts for the strategy pass.
+   * Pure data assembly — no LLM call.
+   */
+  // Generic/soft nouns that don't represent systemic mechanics
+  const ARTIFACT_BLACKLIST = new Set([
+    'market', 'streets', 'council', 'city', 'room', 'village', 'town',
+    'place', 'area', 'building', 'house', 'world', 'land', 'people',
+    'thing', 'stuff', 'space', 'field', 'path', 'door', 'wall'
+  ]);
+
+  function buildWorldArtifactPool(world, worldSubtype) {
+    const artifacts = [];
+    // 1. Location suggestions from WORLD_CUSTOM_SUGGESTIONS
+    const suggestions = WORLD_CUSTOM_SUGGESTIONS[world] || [];
+    if (suggestions.length > 0) {
+      const shuffled = [...suggestions].sort(() => Math.random() - 0.5);
+      artifacts.push(...shuffled.slice(0, 3));
+    }
+    // 2. Subtype signal keywords
+    const cat = WORLD_TO_SIGNAL_CATEGORY[world];
+    if (cat && worldSubtype && STRATEGY_SUBTYPE_SIGNALS[cat]?.[worldSubtype]) {
+      artifacts.push(...STRATEGY_SUBTYPE_SIGNALS[cat][worldSubtype]);
+    }
+    // 3. Human-readable flavor name
+    const flavorLabel = WORLD_LABELS[worldSubtype];
+    if (flavorLabel) artifacts.push(flavorLabel);
+    // Deduplicate, quality-filter, cap at 10
+    let pool = [...new Set(artifacts)].filter(a =>
+      a.length >= 8 && !ARTIFACT_BLACKLIST.has(a.toLowerCase())
+    );
+    // Fallback: if pool too thin, pull from WORLD_BIBLE keys as systemic anchors
+    if (pool.length < 5 && worldSubtype && typeof WORLD_BIBLE === 'object' && WORLD_BIBLE[worldSubtype]) {
+      const bibleText = WORLD_BIBLE[worldSubtype];
+      const systemLines = bibleText.split('\n').filter(l => l.trim().length >= 8).slice(0, 5);
+      for (const line of systemLines) {
+        if (pool.length >= 5) break;
+        const trimmed = line.trim().slice(0, 60);
+        if (!pool.includes(trimmed)) pool.push(trimmed);
+      }
+    }
+    return pool.slice(0, 10);
+  }
+
+  /**
+   * Extract forbidden tropes from FLAVOR_HARD_CONSTRAINTS for current flavor.
+   */
+  function extractForbiddenTropes(worldSubtype) {
+    const constraint = FLAVOR_HARD_CONSTRAINTS[worldSubtype];
+    if (!constraint) return [];
+    const match = constraint.match(/FORBIDDEN DEFAULTS:\s*(.+?)(?:\.|$)/);
+    if (!match) return [];
+    return match[1].split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  /**
+   * Build the system + user prompt for the strategy LLM pre-pass.
+   * Returns { system, user } strings.
+   */
+  function buildStrategyPassPrompt(polarityBlock) {
+    const world = state.picks?.world || 'Modern';
+    const worldSubtype = state.picks?.worldSubtype || null;
+    const worldArtifacts = buildWorldArtifactPool(world, worldSubtype);
+    const forbiddenTropes = extractForbiddenTropes(worldSubtype);
+
+    // Fate stance → phase mapping
+    const fatePhaseMap = { neutral: 1, trickster: 2, intimate: 3 };
+    const fateStance = state.fate?.stance || 'neutral';
+    const fatePhase = fatePhaseMap[fateStance] || 1;
+
+    // Stance weights (mirrors resolveFateOutcome tables)
+    const stanceWeightTables = {
+      neutral:   { benevolent: 40, twist: 20, silent: 5, neutral: 35 },
+      trickster: { benevolent: 20, twist: 50, silent: 30 },
+      intimate:  { benevolent: 50, twist: 35, silent: 15 }
+    };
+    const fateStanceWeights = stanceWeightTables[fateStance] || stanceWeightTables.neutral;
+
+    const system = `ROLE: You are the Strategy Engine for an interactive romance story generator. You make STRUCTURAL decisions — power shifts, world artifacts, petition interpretation, tone pressure — that the downstream prose author must follow. You do NOT write prose. You output strict JSON only.
+
+REGIME RULES:
+- The storyturn (ST) phase determines narrative arc position. ST1–ST2 = setup/tension. ST3–ST4 = escalation. ST5+ = climax/resolution.
+- Power vector shifts define who gains/loses relational leverage this scene.
+- World artifacts MUST be drawn from the provided pool — never invent new ones.
+- Tone pressure adjusts intensity: "sustain" (keep current), "escalate" (push harder), "pull-back" (de-escalate for contrast).
+
+PETITION INTERPRETATION:
+- If petition_text is present, you MUST return a petition object.
+- intent_category: classify as "romantic", "plot", "power", "escape", or "revelation".
+- probability_tilt: float 0.0–1.0 reflecting how likely Fate honors this (use fate_stance_weights as prior).
+- structural_effect: one concrete narrative consequence (e.g., "ally betrays", "secret revealed", "physical barrier removed").
+- visible_world_change: one environmental/world change the reader will notice.
+- omen_type: "symbol", "weather", "animal", "sound", or "sensation".
+
+WORLD ENFORCEMENT:
+- world_artifact_to_surface: pick exactly ONE from the world_artifacts array. The prose author MUST reference it.
+- If forbidden_tropes are listed, NONE may appear in the artifact or structural effect.
+
+INSTABILITY ENFORCEMENT:
+- If instability_carryover_required is true in the input, you MUST set tone_pressure to "pull-back" or "escalate" (never "sustain") and ensure the world_artifact_to_surface introduces ambiguity or doubt.
+- You must alter ambiguity or leverage in this scene. This must affect power_vector_shift or world_artifact behavior — not tone only.
+- interpretive_instability_required (petition field): set to true when the petition outcome should produce lingering uncertainty in the next scene.
+
+OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
+{
+  "st_phase": "ST1"|"ST2"|...,
+  "power_vector_shift": "protagonist_gains"|"antagonist_gains"|"equilibrium"|"both_lose",
+  "world_artifact_to_surface": "<from world_artifacts>",
+  "tone_pressure": "sustain"|"escalate"|"pull-back",
+  "petition": {
+    "present": true|false,
+    "type": "<if present: minor|greater>",
+    "intent_category": "<if present: romantic|plot|power|escape|revelation>",
+    "allowed_under_regime": <if present: true|false>,
+    "probability_tilt": <if present: 0.0-1.0>,
+    "structural_effect": "<if present>",
+    "visible_world_change": "<if present>",
+    "omen_type": "<if present: symbol|weather|animal|sound|sensation>",
+    "interpretive_instability_required": <if present: true|false>
+  }
+}`;
+
+    const inputContext = {
+      current_st_phase: state.storyturn || 'ST1',
+      relational_geometry: polarityBlock || '',
+      anti_repetition_modifiers: (state._recentFocalObjects || []).slice(-3),
+      tone: state.picks?.tone || 'Earnest',
+      petition_text: state.fate?.pendingPetition?.text || null,
+      sacrifice_type: state.fate?.pendingPetition?.sacrificeChoice || null,
+      fate_phase: fatePhase,
+      fate_stance_weights: fateStanceWeights,
+      minor_used_this_scene: state.fate?.minorUsedThisScene || false,
+      greater_used_this_scene: state.fate?.greaterUsedThisScene || false,
+      world_artifacts: worldArtifacts,
+      forbidden_tropes: forbiddenTropes,
+      instability_carryover_required: state._instabilityRequiredNextScene || false
+    };
+
+    return { system, user: JSON.stringify(inputContext) };
+  }
+
+  /**
+   * Run the strategy LLM pre-pass. Returns parsed JSON or null on failure.
+   */
+  async function runStrategyPass(polarityBlock) {
+    const prompt = buildStrategyPassPrompt(polarityBlock);
+    try {
+      const raw = await window.StoryboundOrchestration.callChatGPT(
+        [{ role: 'system', content: prompt.system }, { role: 'user', content: prompt.user }],
+        'STRATEGY_PASS',
+        { temperature: 0.3, max_tokens: 500, jsonMode: true }
+      );
+      const parsed = JSON.parse(raw);
+      // Validate required top-level keys
+      const requiredTopLevel = ['st_phase', 'power_vector_shift', 'world_artifact_to_surface', 'tone_pressure', 'petition'];
+      const missingTop = requiredTopLevel.filter(k => parsed[k] === undefined || parsed[k] === null);
+      if (missingTop.length > 0) {
+        state._strategyPassFailed = true;
+        console.warn('[STRATEGY_PASS] Missing top-level keys:', missingTop.join(', '));
+        return null;
+      }
+      // Validate petition sub-keys when present
+      if (parsed.petition && parsed.petition.present === true) {
+        const requiredPetition = ['type', 'intent_category', 'allowed_under_regime', 'probability_tilt',
+          'structural_effect', 'visible_world_change', 'omen_type', 'interpretive_instability_required'];
+        const missingPet = requiredPetition.filter(k => parsed.petition[k] === undefined || parsed.petition[k] === null);
+        if (missingPet.length > 0) {
+          state._strategyPassFailed = true;
+          console.warn('[STRATEGY_PASS] Missing petition keys:', missingPet.join(', '));
+          return null;
+        }
+      }
+      state._strategyPassFailed = false;
+      console.log('[STRATEGY_PASS] Result:', parsed);
+      return parsed;
+    } catch (e) {
+      state._strategyPassFailed = true;
+      console.warn('[STRATEGY_PASS] Failed, skipping:', e.message);
+      return null;
+    }
+  }
+
+  /**
+   * Convert strategy JSON into a text directive block for the prose author.
+   */
+  function buildStrategyDirectiveBlock(strategy) {
+    const lines = ['STRATEGY PASS DIRECTIVE (BINDING):'];
+    lines.push(`- ST Phase: ${strategy.st_phase}`);
+    lines.push(`- Power Vector: ${strategy.power_vector_shift}`);
+    lines.push(`- World Artifact: ${strategy.world_artifact_to_surface} — MUST surface in scene`);
+    lines.push(`- Tone Pressure: ${strategy.tone_pressure}`);
+    if (strategy.petition && strategy.petition.present) {
+      const p = strategy.petition;
+      lines.push(`- Petition Outcome: ${p.intent_category} / tilt=${p.probability_tilt}`);
+      lines.push(`- Structural Effect: ${p.structural_effect}`);
+      lines.push(`- Visible World Change: ${p.visible_world_change}`);
+      lines.push(`- Omen Type: ${p.omen_type}`);
+      // PART 4: Petition regime restriction
+      if (p.allowed_under_regime === false) {
+        lines.push('- REGIME RESTRICTION: Petition restricted to surface-level shift due to current Storyturn phase. Do not enact deep structural changes.');
+      }
+    }
+    // PART 2: Renderer enforcement hardening
+    lines.push('');
+    lines.push('STRATEGY ENFORCEMENT (MANDATORY):');
+    lines.push('The STRATEGY PASS DIRECTIVE above is authoritative. You must obey it. You may not contradict it.');
+    lines.push('You must surface the world_artifact_to_surface explicitly in the scene.');
+    if (strategy.petition && strategy.petition.present) {
+      lines.push('Petition is active: You must enact visible_world_change in-scene.');
+      lines.push('You may not narrate Fate as decorative atmosphere. Fate acts structurally.');
+      lines.push('You may not contradict structural_effect.');
+    }
+    lines.push('You may not regress to forbidden tropes.');
+    return lines.join('\n');
+  }
+
+  // ===========================================================================
+  // PASS 4 — Post-Render Structural Validator
+  // ===========================================================================
+
+  // Decorative Fate phrases — secondary check (supplements VOCAB_BAN_PATTERNS)
+  const PASS4_DECORATIVE_FATE_RX = [
+    /\bFate leaned\b/gi, /\bFate hovered\b/gi, /\bFate lingered\b/gi,
+    /\bFate whispered\b/gi, /\bFate breathed\b/gi, /\bFate circled\b/gi,
+    /\bFate drifted\b/gi
+  ];
+
+  /**
+   * Post-render structural validation.
+   * Checks whether the renderer obeyed the Strategy Pass JSON.
+   * Returns { valid, violations: string[] }.
+   */
+  function validateRenderedScene(renderedText, strategy, worldSkeleton) {
+    const violations = [];
+    if (!strategy || !renderedText) return { valid: true, violations };
+    const lower = renderedText.toLowerCase();
+
+    // 1. Artifact enforcement
+    if (strategy.world_artifact_to_surface) {
+      const artifactLower = strategy.world_artifact_to_surface.toLowerCase();
+      if (!lower.includes(artifactLower)) {
+        violations.push('MISSING_ARTIFACT: "' + strategy.world_artifact_to_surface + '" not found in scene');
+      }
+    }
+
+    // 2. Petition visible effect enforcement
+    if (strategy.petition && strategy.petition.present === true && strategy.petition.visible_world_change) {
+      const changeLower = strategy.petition.visible_world_change.toLowerCase();
+      // Fuzzy match: check if at least 2 significant words appear
+      const words = changeLower.split(/\s+/).filter(w => w.length > 3);
+      const matchCount = words.filter(w => lower.includes(w)).length;
+      if (matchCount < Math.min(2, words.length)) {
+        violations.push('MISSING_VISIBLE_WORLD_CHANGE: "' + strategy.petition.visible_world_change + '" not manifested');
+      }
+    }
+
+    // 3. Structural effect soft contradiction check
+    if (strategy.petition && strategy.petition.structural_effect) {
+      const effect = strategy.petition.structural_effect.toLowerCase();
+      // Basic keyword negation: if effect says X happens, check for "did not X" / "never X"
+      const effectWords = effect.split(/\s+/).filter(w => w.length > 4);
+      for (const word of effectWords) {
+        const negationRx = new RegExp('(?:did not|didn\'t|never|no)\\s+\\w*' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        if (negationRx.test(renderedText)) {
+          violations.push('STRUCTURAL_CONTRADICTION: negation of "' + word + '" detected vs structural_effect');
+          break;
+        }
+      }
+    }
+
+    // 4. Forbidden tropes check
+    if (worldSkeleton && worldSkeleton.forbidden_tropes) {
+      for (const trope of worldSkeleton.forbidden_tropes) {
+        if (trope && lower.includes(trope.toLowerCase())) {
+          violations.push('FORBIDDEN_TROPE: "' + trope + '" appeared in scene');
+        }
+      }
+    }
+
+    // 5. Decorative Fate check (expanded set)
+    for (const rx of PASS4_DECORATIVE_FATE_RX) {
+      rx.lastIndex = 0;
+      const match = renderedText.match(rx);
+      if (match) {
+        violations.push('DECORATIVE_FATE: "' + match[0] + '" found in scene');
+      }
+    }
+
+    return { valid: violations.length === 0, violations };
+  }
+
+  /**
+   * Additive structural correction — appends 2-4 sentence fragment to fix violations.
+   * Does NOT regenerate the full scene.
+   */
+  async function applyStructuralCorrection(renderedText, strategy, violations) {
+    if (!window.StoryboundOrchestration || violations.length === 0) return renderedText;
+
+    const correctionSystem = `You are a structural correction engine. The scene below was generated but FAILED structural validation.
+
+VIOLATIONS:
+${violations.map(v => '- ' + v).join('\n')}
+
+STRATEGY CONTEXT:
+${JSON.stringify(strategy, null, 2)}
+
+RULES:
+- Append a concise correction fragment (2–4 sentences max) to the end of the scene.
+- Do NOT rewrite the prior scene.
+- Do NOT contradict the prior scene.
+- Only enforce the missing structural elements listed in violations.
+- Maintain the scene's existing tone and voice.
+- Do NOT explain meta logic or reference the correction process.
+- Return ONLY the appended fragment text, nothing else.`;
+
+    try {
+      const fragment = await window.StoryboundOrchestration.callChatGPT(
+        [
+          { role: 'system', content: correctionSystem },
+          { role: 'user', content: renderedText.slice(-2000) }
+        ],
+        'STRUCTURAL_CORRECTION',
+        { temperature: 0.4, max_tokens: 300 }
+      );
+      if (fragment && fragment.trim().length > 0) {
+        state._postRenderCorrectionApplied = true;
+        console.log('[PASS4] Structural correction applied:', violations.map(v => v.split(':')[0]));
+        return renderedText.trimEnd() + '\n\n' + fragment.trim();
+      }
+    } catch (e) {
+      console.warn('[PASS4] Structural correction failed:', e.message);
+    }
+    return renderedText;
+  }
 
   let fateHandInitialized = false;
   let placeholderAnimations = {};
@@ -15542,6 +16145,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.turnCount = 0;
     state._loggedStoryStart = false;
     state._loggedScene3 = false;
+    state._loggedScene6 = false;
+    state._loggedPetitionOpen = false;
+    state._loggedPetitionSubmit = false;
     state.storyEnded = false;
     state._lastGeneratedShapeSnapshot = null;
 
@@ -15920,6 +16526,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.turnCount = 0;
     state._loggedStoryStart = false;
     state._loggedScene3 = false;
+    state._loggedScene6 = false;
+    state._loggedPetitionOpen = false;
+    state._loggedPetitionSubmit = false;
     state.storyLength = 'taste';
     state.storyEnded = false;
     state.archetype = { primary: 'BEAUTIFUL_RUIN', modifier: null };
@@ -18709,8 +19318,31 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const titleEl = currentOpenCard.querySelector('.sb-card-title');
       const selectedTitle = titleEl ? titleEl.textContent : val;
 
+      // Capture zoomed card position BEFORE closing zoom for sparkle trail
+      const zoomedRect = currentOpenCard.getBoundingClientRect();
+      const fromX = zoomedRect.left + zoomedRect.width / 2;
+      const fromY = zoomedRect.top + zoomedRect.height / 2;
+
       // Close zoom
       closeZoomedCard();
+
+      // Fire sparkle trail from zoomed card position to breadcrumb target
+      const breadcrumbRow = document.getElementById('breadcrumbRow');
+      if (breadcrumbRow) {
+        const stageIdx = STAGE_INDEX[grp];
+        const ghostStep = breadcrumbRow.querySelector(`.ghost-step[data-ghost-index="${stageIdx}"]`);
+        let toX, toY;
+        if (ghostStep) {
+          const ghostRect = ghostStep.getBoundingClientRect();
+          toX = ghostRect.left + ghostRect.width / 2;
+          toY = ghostRect.top + ghostRect.height / 2;
+        } else {
+          const brRect = breadcrumbRow.getBoundingClientRect();
+          toX = brRect.left + brRect.width / 2;
+          toY = brRect.top + brRect.height / 2;
+        }
+        fireSparkleTrail(fromX, fromY, zoomedRect.width, zoomedRect.height, toX, toY);
+      }
 
       // Create breadcrumb and advance corridor
       createBreadcrumbDirect(grp, val, selectedTitle);
@@ -18767,12 +19399,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'galactic_civilizations', top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       Dystopia: [
-        { val: 'glass_house',     top: 58.5, left: 17.6, width: 64.6, height: 4.8 },
-        { val: 'the_ledger',      top: 65.0, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'crimson_veil',    top: 65.0, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'perfect_match',   top: 71.5, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'endless_edit',    top: 71.5, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'quieting_event',  top: 78.0, left: 17.6, width: 29.2, height: 4.8 }
+        { val: 'glass_house',     top: 57.8, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'the_ledger',      top: 64.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'crimson_veil',    top: 64.3, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'perfect_match',   top: 70.8, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'endless_edit',    top: 70.8, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'quieting_event',  top: 77.3, left: 17.6, width: 29.2, height: 4.8 }
       ],
       PostApocalyptic: [
         { val: 'ashfall',        top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
@@ -20692,6 +21324,78 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   /**
+   * JS-driven sparkle trail from source to target (requestAnimationFrame).
+   * Mirrors the fate card triggerGoldenFlow approach for reliable travel animation.
+   */
+  function fireSparkleTrail(fromX, fromY, fromW, fromH, toX, toY) {
+    const particleCount = 10;
+    const streamDuration = 500;
+    const particleDuration = 550;
+
+    for (let i = 0; i < particleCount; i++) {
+      const delay = (i / particleCount) * streamDuration;
+
+      setTimeout(() => {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'traveling-sparkle';
+        document.body.appendChild(sparkle);
+
+        // Random offset from source center
+        const offX = (Math.random() - 0.5) * (fromW || 80) * 0.5;
+        const offY = (Math.random() - 0.5) * (fromH || 120) * 0.5;
+        const startX = fromX + offX;
+        const startY = fromY + offY;
+
+        // Slight wave amplitude per particle
+        const waveAmp = 6 + Math.random() * 12;
+        const wavePhase = Math.random() * Math.PI * 2;
+
+        const pStartTime = performance.now();
+
+        function animateParticle(currentTime) {
+          const elapsed = currentTime - pStartTime;
+          const progress = Math.min(elapsed / particleDuration, 1);
+
+          // Ease-in-out
+          const eased = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+          // Sine wave for organic feel
+          const wave = Math.sin(progress * Math.PI * 2 + wavePhase) * waveAmp;
+
+          const currentX = startX + (toX - startX) * eased + wave;
+          const currentY = startY + (toY - startY) * eased;
+
+          sparkle.style.left = currentX + 'px';
+          sparkle.style.top = currentY + 'px';
+
+          // Fade in/out
+          if (progress < 0.15) {
+            sparkle.style.opacity = progress / 0.15;
+          } else if (progress > 0.75) {
+            sparkle.style.opacity = (1 - progress) / 0.25;
+          } else {
+            sparkle.style.opacity = '1';
+          }
+
+          // Scale down toward end
+          const scale = 1 + 0.3 * Math.sin(progress * Math.PI) - progress * 0.4;
+          sparkle.style.transform = `scale(${Math.max(scale, 0.3)})`;
+
+          if (progress < 1) {
+            requestAnimationFrame(animateParticle);
+          } else {
+            sparkle.remove();
+          }
+        }
+
+        requestAnimationFrame(animateParticle);
+      }, delay);
+    }
+  }
+
+  /**
    * Animate selected card to breadcrumb row via SPARKLE TELEPORT
    * Phase 1: Card dissolves in place with sparkles
    * Phase 2: Sparkles travel to breadcrumb position
@@ -20761,46 +21465,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // PHASE 2: Sparkle travel (teleport illusion)
-    // Sparkles arc from card to breadcrumb — card is not visible during transit
+    // PHASE 2: Sparkle travel (teleport illusion) — JS-driven like fate cards
+    // Sparkles arc from card to breadcrumb via requestAnimationFrame
     // ═══════════════════════════════════════════════════════════════════════════
     setTimeout(() => {
-      const travelCount = 8 + Math.floor(Math.random() * 4);
-      for (let i = 0; i < travelCount; i++) {
-        setTimeout(() => {
-          const sparkle = document.createElement('div');
-          sparkle.className = 'traveling-sparkle';
-
-          // Start from random position around card center
-          const offsetX = (Math.random() - 0.5) * cardRect.width * 0.6;
-          const offsetY = (Math.random() - 0.5) * cardRect.height * 0.6;
-          const startX = cardCenterX + offsetX;
-          const startY = cardCenterY + offsetY;
-
-          // Calculate arc control point (curved path)
-          const midX = (startX + targetX) / 2 + (Math.random() - 0.5) * 100;
-          const midY = Math.min(startY, targetY) - 50 - Math.random() * 80; // Arc upward
-
-          // Perpendicular curve for firefly travel path
-          const travelPerpAngle = Math.atan2(targetY - startY, targetX - startX) + Math.PI / 2;
-          const travelCurveAmp = 8 + Math.random() * 16;
-
-          sparkle.style.cssText = `
-            left: ${startX}px;
-            top: ${startY}px;
-            --target-x: ${targetX - startX}px;
-            --target-y: ${targetY - startY}px;
-            --arc-x: ${midX - startX}px;
-            --arc-y: ${midY - startY}px;
-            --travel-curve-x: ${Math.cos(travelPerpAngle) * travelCurveAmp}px;
-            --travel-curve-y: ${Math.sin(travelPerpAngle) * travelCurveAmp}px;
-          `;
-          document.body.appendChild(sparkle);
-
-          // Remove after travel animation
-          setTimeout(() => sparkle.remove(), 600);
-        }, i * 50); // Stagger travel starts
-      }
+      fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
     }, 250); // Start travel after dissolution begins
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -23228,7 +23897,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     let block = `\nStory Pull: ${primary.axis}\nPull Gravity: ${primary.gravity}`;
 
     // 25% chance of hidden modifier
-    if (Math.random() < 0.25) {
+    // Petition probability tilt applied here — boosts hidden modifier trigger
+    const _pullTilt = state._strategyPass?.petition?.probability_tilt || 0;
+    if (Math.random() < (0.25 + _pullTilt * 0.15)) {
       // Suppress if fracture active AND circumstance card selected (stacking guard)
       const fractureActive = tonalFractureStr && tonalFractureStr.trim().length > 0;
       const circumstanceSelected = CIRCUMSTANCE_CARDS.has(state.picks?.dynamic);
@@ -23352,8 +24023,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // Hidden intensity modifier (30% base probability)
+    // Petition probability tilt applied here — boosts modifier trigger chance
+    const petitionTilt = state._strategyPass?.petition?.probability_tilt || 0;
+    const modifierProbability = 0.30 + (petitionTilt * 0.20); // tilt 1.0 → 50% chance
     const suppressIntensity = shouldSuppressIntensity(tonalFractureStr, pullBlockStr);
-    if (!suppressIntensity && Math.random() < 0.30) {
+    if (!suppressIntensity && Math.random() < modifierProbability) {
       const modifiers = INTENSITY_MODIFIERS[emotionalArc];
       if (modifiers) {
         const pick = weightedPick(modifiers);
@@ -26181,30 +26855,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               }, i * 25);
           }
 
-          // Phase 2: Sparkle travel to breadcrumb
+          // Phase 2: Sparkle travel to breadcrumb (JS-driven)
           setTimeout(() => {
-              const travelCount = 6 + Math.floor(Math.random() * 3);
-              for (let i = 0; i < travelCount; i++) {
-                  setTimeout(() => {
-                      const sparkle = document.createElement('div');
-                      sparkle.className = 'traveling-sparkle';
-                      const offX = (Math.random() - 0.5) * cardRect.width * 0.5;
-                      const offY = (Math.random() - 0.5) * cardRect.height * 0.5;
-                      const sx = cardCenterX + offX;
-                      const sy = cardCenterY + offY;
-                      const midX = (sx + targetX) / 2 + (Math.random() - 0.5) * 80;
-                      const midY = Math.min(sy, targetY) - 40 - Math.random() * 60;
-                      sparkle.style.cssText = `
-                          left: ${sx}px; top: ${sy}px;
-                          --target-x: ${targetX - sx}px;
-                          --target-y: ${targetY - sy}px;
-                          --arc-x: ${midX - sx}px;
-                          --arc-y: ${midY - sy}px;
-                      `;
-                      document.body.appendChild(sparkle);
-                      setTimeout(() => sparkle.remove(), 600);
-                  }, i * 40);
-              }
+              fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
           }, 200);
 
           // Phase 3: Convergence sparkles + breadcrumb + advance
@@ -30865,6 +31518,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // ═══════════════════════════════════════════════════════════════════════
         // STORY TEXT READY — Signal that Scene 1 can be displayed
         // ═══════════════════════════════════════════════════════════════════════
+        if (state._sceneTokenCount) { console.log('SCENE_TOKEN_USAGE:', state._sceneTokenCount); state._sceneTokenCount = 0; }
         resolveStoryTextReady();
 
         if (!state._loggedStoryStart) {
@@ -37422,6 +38076,148 @@ If both main characters are present, render their tension and restraint ONLY —
       const pacingDirective = buildPacingDirective();
 
       // ═══════════════════════════════════════════════════════════════════════════
+      // ADAPTIVE PACING — Velocity Score + Erotic Pressure Scoring
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      const _EROTIC_KEYWORD_RX = /\b(fuck|sex|cock|pussy|cum|orgasm|moan|naked|strip|thrust|lick|suck|nipple|clit|erect|wet|hard(?:er)?|ride|spank|choke|bite|grind)\b/i;
+
+      function trackAdaptiveMetrics(playerInput, sceneText) {
+        const m = state.adaptiveMetrics;
+        m.turnTimestamps.push(Date.now());
+        m.userInputLengths.push((playerInput || '').length);
+        m.sceneWordCounts.push((sceneText || '').split(/\s+/).length);
+        if (state.cascadeMode) m.cascadeCountWindow++;
+        if (_EROTIC_KEYWORD_RX.test(playerInput || '')) m.eroticSignalCount++;
+        // Trim to 20 entries
+        if (m.turnTimestamps.length > 20) m.turnTimestamps.shift();
+        if (m.userInputLengths.length > 20) m.userInputLengths.shift();
+        if (m.sceneWordCounts.length > 20) m.sceneWordCounts.shift();
+      }
+
+      function computeVelocityScore() {
+        const m = state.adaptiveMetrics;
+        const ts = m.turnTimestamps;
+        if (ts.length < 2) return 0.5; // default HYBRID until enough data
+
+        let totalInterval = 0;
+        for (let i = 1; i < ts.length; i++) totalInterval += (ts[i] - ts[i - 1]);
+        const avgTurnIntervalMs = totalInterval / (ts.length - 1);
+
+        const windowMs = ts[ts.length - 1] - ts[0];
+        const scenesPerHour = windowMs > 0 ? (ts.length / (windowMs / 3600000)) : 0;
+
+        const sphComponent = Math.min(scenesPerHour / 20, 1) * 0.5;
+        const intervalComponent = Math.min(60000 / Math.max(avgTurnIntervalMs, 1000), 1) * 0.3;
+        const cascadeComponent = Math.min(m.cascadeCountWindow / 5, 1) * 0.2;
+
+        return Math.min(Math.max(sphComponent + intervalComponent + cascadeComponent, 0), 1);
+      }
+
+      function computeEroticPressureScore() {
+        const m = state.adaptiveMetrics;
+        const petitionFreq = state.omen?.lastGreaterPetitionCount || 0;
+
+        const eroticComponent = Math.min(m.eroticSignalCount / 10, 1) * 0.6;
+        const cascadeComponent = Math.min(m.cascadeCountWindow / 5, 1) * 0.2;
+        const petitionComponent = Math.min(petitionFreq / 5, 1) * 0.2;
+
+        return Math.min(Math.max(eroticComponent + cascadeComponent + petitionComponent, 0), 1);
+      }
+
+      function updateAdaptivePacing() {
+        const vs = computeVelocityScore();
+        if (vs < 0.33) state.pacingMode = 'IMMERSIVE';
+        else if (vs < 0.66) state.pacingMode = 'HYBRID';
+        else state.pacingMode = 'RAPID';
+
+        const ep = computeEroticPressureScore();
+        state.eroticPressureScore = ep;
+
+        // Classify erotic mode with redirect hysteresis
+        if (ep < 0.33) state.eroticMode = 'ROMANTIC';
+        else if (ep < 0.66) state.eroticMode = 'VISCERAL';
+        else if (ep < 0.85) state.eroticMode = 'CARNAL';
+        else if (state.redirectCooldownTurns > 0) state.eroticMode = 'CARNAL'; // hysteresis: stay CARNAL during cooldown
+        else {
+          state.eroticMode = 'INTENSITY_REDIRECT';
+          state.redirectCooldownTurns = 5;
+        }
+
+        // Decrement cooldowns
+        if (state.redirectCooldownTurns > 0) state.redirectCooldownTurns--;
+        if (state.gooseCooldown > 0) state.gooseCooldown--;
+
+        // Seduction eligibility: immersive pacer with high erotic signal but low cascade
+        const m = state.adaptiveMetrics;
+        const avgInputLen = m.userInputLengths.length > 0
+          ? m.userInputLengths.reduce((a, b) => a + b, 0) / m.userInputLengths.length
+          : 0;
+        state.seductionEligible = (
+          state.pacingMode === 'IMMERSIVE' &&
+          m.eroticSignalCount >= 3 &&
+          m.cascadeCountWindow <= 1 &&
+          avgInputLen >= 40
+        );
+      }
+
+      function getAdaptiveSceneBounds() {
+        const isScene1 = (state.turnCount || 0) === 0;
+        switch (state.pacingMode) {
+          case 'IMMERSIVE':
+            return isScene1
+              ? { min: 1200, max: 1500, cap: 1500 }
+              : { min: 1000, max: 1300, cap: 1500 };
+          case 'RAPID':
+            return isScene1
+              ? { min: 700, max: 900, cap: 900 }
+              : { min: 600, max: 800, cap: 900 };
+          default: // HYBRID
+            return isScene1
+              ? { min: 900, max: 1100, cap: 1100 }
+              : { min: 750, max: 950, cap: 1100 };
+        }
+      }
+
+      function buildEroticModeDirective() {
+        switch (state.eroticMode) {
+          case 'ROMANTIC':
+            return `EROTIC MODE — ROMANTIC:
+Focus on emotional connection, sensory implication, restrained explicitness.`;
+          case 'VISCERAL':
+            return `EROTIC MODE — VISCERAL:
+Allow explicit physical detail, controlled anatomy references, faster rhythm.`;
+          case 'CARNAL':
+            return `EROTIC MODE — CARNAL:
+Increase sensory saturation and power dynamic sharpness. Still prohibit taboo escalation.`;
+          case 'INTENSITY_REDIRECT':
+            return `EROTIC MODE — INTENSITY REDIRECT:
+Do NOT increase explicitness further. Instead:
+- Increase emotional stakes
+- Introduce psychological tension
+- Increase urgency
+- Suggest interruption or consequence compression
+Never escalate into prohibited themes.`;
+          default:
+            return '';
+        }
+      }
+
+      function buildGooseDirective() {
+        if (!state.seductionEligible) return '';
+        if (state.eroticMode !== 'ROMANTIC') return '';
+        if (state.gooseCooldown > 0) return '';
+        if (Math.random() >= 0.25) return '';
+
+        state.gooseCooldown = 8;
+        return `NPC SEDUCTION INITIATIVE:
+Allow the Love Interest to subtly initiate escalation.
+The initiative must feel organic, confident, and character-consistent.
+The user should feel chosen, not pressured.
+May: increase physical proximity, initiate touch, sharpen dialogue tension, move toward VISCERAL level.
+May NOT: jump to explicit anatomy, override consent, force non-consensual dynamics, skip to CARNAL.`;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════════
       // CANONICAL SCENE LENGTH DIRECTIVE — storybound/scene-length-erotic-gates-canonical-v2
       // ═══════════════════════════════════════════════════════════════════════════
       // Scene 1 (Opening): 500-600 words — LONGEST, establishes world/tone/stakes
@@ -37431,11 +38227,12 @@ If both main characters are present, render their tension and restraint ONLY —
       function buildSceneLengthDirective() {
           const sceneIndex = state.turnCount || 0;
           const isMainPairIntimacyScene = isMainCharacterIntimacySceneAllowed() && detectMainPairEroticContent();
+          const bounds = getAdaptiveSceneBounds();
 
           // Scene 1 (Opening): LONGEST scene — establishes world, tone, power dynamics
           // MUST NOT include sexual/romantic contact between main characters
           if (sceneIndex === 0) {
-              return `Write the opening scene (500-600 words). This is the LONGEST scene.
+              return `Write the opening scene (${bounds.min}-${bounds.max} words, hard cap ${bounds.cap}). This is the LONGEST scene.
 Establish: world, tone, power dynamics, emotional stakes, character tension.
 NO sexual or romantic physical contact between the two main characters in this scene.
 Ambient erotic content (side characters, memories, atmosphere) is permitted if tone is Dirty.`;
@@ -37448,8 +38245,8 @@ This is an erotic scene — keep it SHORT for fast generation and player respons
 Focus on sensation, tension, and reaction. Dense, not sprawling.`;
           }
 
-          // All other scenes (non-intimate, or pre-gate erotic atmosphere): standard length
-          return `Write the next beat (300-500 words).
+          // All other scenes: adaptive length based on pacing mode
+          return `Write the next beat (${bounds.min}-${bounds.max} words, hard cap ${bounds.cap}).
 Take time for atmosphere, reaction, emotional beats, and tension building.`;
       }
 
@@ -37677,7 +38474,36 @@ FATE CARD ADAPTATION (CRITICAL):
           ? buildIntentConsequenceDirective(act, dia)
           : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+      // ═══════════════════════════════════════════════════════════════════
+      // STRATEGY PASS — structural pre-planning (silent fail)
+      // ═══════════════════════════════════════════════════════════════════
+      let strategyDirective = '';
+      if (window.StoryboundOrchestration) {
+        try {
+          const strategyResult = await runStrategyPass(_polarityBlock2);
+          if (strategyResult) {
+            state._strategyPass = strategyResult;
+            state._strategyPassFailed = false;
+            strategyDirective = '\n' + buildStrategyDirectiveBlock(strategyResult) + '\n';
+            // PART 5: Instability carryover — set for next scene, clear after consumption
+            if (state._instabilityRequiredNextScene) {
+              state._instabilityRequiredNextScene = false; // consumed this scene
+            }
+            if (strategyResult.petition?.interpretive_instability_required === true) {
+              state._instabilityRequiredNextScene = true;
+            }
+          }
+        } catch (e) {
+          state._strategyPassFailed = true;
+          console.warn('[STRATEGY_PASS] Failed, proceeding without:', e.message);
+        }
+      }
+
+      const eroticModeBlock = buildEroticModeDirective();
+      const gooseBlock = buildGooseDirective();
+      const romanceVectorBlock = buildRomanceVectorDirective();
+
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -37967,6 +38793,22 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               }
           );
 
+          // ═══════════════════════════════════════════════════════════════════════
+          // PASS 4 — Post-Render Structural Validator (additive correction only)
+          // ═══════════════════════════════════════════════════════════════════════
+          state._postRenderCorrectionApplied = false;
+          if (state._strategyPass) {
+              const worldSkeleton = { forbidden_tropes: extractForbiddenTropes(state.picks?.worldSubtype) };
+              const pass4Result = validateRenderedScene(raw, state._strategyPass, worldSkeleton);
+              state._pass4Validation = pass4Result;
+              if (!pass4Result.valid) {
+                  console.warn('[PASS4] Violations:', pass4Result.violations);
+                  raw = await applyStructuralCorrection(raw, state._strategyPass, pass4Result.violations);
+              } else {
+                  console.log('[PASS4] Scene passed structural validation');
+              }
+          }
+
           // ============================================================
           // NARRATIVE AUTHORITY VALIDATION (Runs FIRST — before Tone/POV)
           // ============================================================
@@ -38038,6 +38880,11 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               state._loggedScene3 = true;
           }
 
+          if (!state._loggedScene6 && state.turnCount >= 5) {
+              try { logEvent('scene_6_reached', { tone: state.picks?.tone, world: state.picks?.world }); } catch(_){}
+              state._loggedScene6 = true;
+          }
+
           // Subscriber reward: +1 image credit every 5 scenes
           if (state.subscribed === true) {
               const sceneNumber = state.turnCount;
@@ -38064,6 +38911,10 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               });
           }
 
+          // ADAPTIVE PACING — track metrics and recompute pacing/erotic modes
+          trackAdaptiveMetrics(rawAct + ' ' + rawDia, raw);
+          updateAdaptivePacing();
+
           // Mark Solo session as completed for subtitle upgrade
           if (typeof markSoloSessionCompleted === 'function') markSoloSessionCompleted();
 
@@ -38073,9 +38924,15 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           // Build new page content
           let pageContent = '';
 
-          // FIX #1: Fate Card separator shows ONLY title icon, no descriptive text
-          if (selectedFateCard && selectedFateCard.title) {
-              pageContent += `<div class="fate-card-separator"><div class="fate-mini"><h4>${escapeHTML(selectedFateCard.title)}</h4></div></div>`;
+          // Fate Card separator — uses front-face PNG art
+          if (selectedFateCard && selectedFateCard.id) {
+              const fateArtName = selectedFateCard.id.charAt(0).toUpperCase() + selectedFateCard.id.slice(1);
+              const fateImgUrl = `/assets/card-art/cards/Tarot-Gold-front-${fateArtName}.png`;
+              let petitionHtml = '';
+              if (state.fate && state.fate.pendingPetition) {
+                  petitionHtml = `<img class="fate-mini-img" src="/assets/card-art/cards/Tarot-Gold-PetitionFate-front.png" alt="Petition Fate">`;
+              }
+              pageContent += `<div class="fate-card-separator">${petitionHtml}<img class="fate-mini-img" src="${fateImgUrl}" alt="${escapeHTML(selectedFateCard.title)}"></div>`;
           }
 
           // FIX #2: Removed user dialogue block - AI alone narrates the action
@@ -38091,6 +38948,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           if (typeof preloadVizPrompt === 'function') preloadVizPrompt();
 
           // CRITICAL: Mark story as displayed AFTER successful DOM insertion
+          if (state._sceneTokenCount) { console.log('SCENE_TOKEN_USAGE:', state._sceneTokenCount); state._sceneTokenCount = 0; }
           storyDisplayed = true;
 
           // Scroll to Fate Card header so player can pick next card
@@ -39793,6 +40651,37 @@ FATE CARD ADAPTATION (CRITICAL):
               const bookResult = validateBookFlowIntegrity();
               log('Book Flow: ' + (bookResult.valid ? 'PASS' : 'FAIL'));
               if (!bookResult.valid) bookResult.errors.forEach(e => log('  ' + e.code));
+
+              // Strategy Pass status
+              if (state._strategyPassFailed === true) {
+                  log('Strategy Pass: \u26A0 FAILED \u2014 Fallback Mode');
+              } else if (state._strategyPass) {
+                  log('Strategy Pass: PASS (ST=' + state._strategyPass.st_phase + ', artifact=' + state._strategyPass.world_artifact_to_surface + ')');
+              } else {
+                  log('Strategy Pass: N/A (not yet run)');
+              }
+
+              // Post-render structural validation (Pass 4) status
+              if (state._pass4Validation) {
+                  const p4 = state._pass4Validation;
+                  const corrected = state._postRenderCorrectionApplied === true;
+                  if (p4.valid) {
+                      log('Post-Render (P4): PASS');
+                  } else if (corrected) {
+                      log('Post-Render (P4): CORRECTED (' + p4.violations.length + ' violations fixed)');
+                  } else {
+                      log('Post-Render (P4): FAILED (' + p4.violations.length + ' violations)');
+                  }
+                  // Detail lines
+                  const hasArtifact = !p4.violations.some(v => v.startsWith('MISSING_ARTIFACT'));
+                  const hasVisEffect = !p4.violations.some(v => v.startsWith('MISSING_VISIBLE_WORLD_CHANGE'));
+                  const hasDecFate = p4.violations.some(v => v.startsWith('DECORATIVE_FATE'));
+                  log('  Artifact present: ' + (hasArtifact ? 'yes' : 'no'));
+                  log('  Visible effect present: ' + (hasVisEffect ? 'yes' : 'no'));
+                  log('  Decorative Fate detected: ' + (hasDecFate ? 'yes' : 'no'));
+              } else {
+                  log('Post-Render (P4): N/A');
+              }
 
               const allPass = Object.values(results).every(r => r.pass || r.valid || r.aligned);
               log('=== ' + (allPass ? 'ALL CHECKS PASS' : 'SOME CHECKS FAILED') + ' ===');

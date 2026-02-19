@@ -60,6 +60,14 @@
 (function(window) {
   'use strict';
 
+  // Token usage accumulator — measurement only, no behavioral impact
+  function _accumulateTokens(data) {
+    if (data && data.usage && typeof data.usage.total_tokens === 'number') {
+      const s = window.state;
+      if (s) s._sceneTokenCount = (s._sceneTokenCount || 0) + data.usage.total_tokens;
+    }
+  }
+
   // ===========================================================================
   // CONFIGURATION
   // ===========================================================================
@@ -80,6 +88,8 @@
     SCENE_RENDERER_MODEL: 'grok-4-fast-reasoning',   // Grok: Intense scenes (SD-gated, entitlement-checked)
     FATE_STRUCTURAL_MODEL: 'gpt-4o-mini',
     FATE_ELEVATION_MODEL: 'gpt-4o-mini',
+    STRATEGY_PASS_MODEL: 'gpt-4o-mini',          // Strategy pre-pass: structural decisions (low temp)
+    STRUCTURAL_CORRECTION_MODEL: 'gpt-4o-mini',  // Post-render additive correction (Pass 4)
 
     // Model allowlists (must match server-side)
     ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4'],
@@ -457,10 +467,17 @@
    * and generate SDs.
    */
   async function callChatGPT(messages, role = 'PRIMARY_AUTHOR', options = {}) {
+    // Resolve model: explicit option > role-specific config > default
+    const roleModelMap = {
+      STRATEGY_PASS: CONFIG.STRATEGY_PASS_MODEL,
+      STRUCTURAL_CORRECTION: CONFIG.STRUCTURAL_CORRECTION_MODEL,
+      FATE_STRUCTURAL: CONFIG.FATE_STRUCTURAL_MODEL,
+      FATE_ELEVATION: CONFIG.FATE_ELEVATION_MODEL
+    };
     const payload = {
       messages,
       role,
-      model: options.model || CONFIG.PRIMARY_AUTHOR_MODEL,
+      model: options.model || roleModelMap[role] || CONFIG.PRIMARY_AUTHOR_MODEL,
       temperature: options.temperature || 0.7,
       max_tokens: options.max_tokens || 1500
     };
@@ -489,6 +506,7 @@
       }
 
       const data = await res.json();
+      _accumulateTokens(data);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('ChatGPT returned malformed response (no choices)');
@@ -538,6 +556,7 @@
       }
 
       const data = await res.json();
+      _accumulateTokens(data);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Renderer returned malformed response');
@@ -598,6 +617,7 @@
       }
 
       const data = await res.json();
+      _accumulateTokens(data);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Scene Renderer returned malformed response');
@@ -660,6 +680,7 @@
       }
 
       const data = await res.json();
+      _accumulateTokens(data);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Gemini returned malformed response (no choices)');
@@ -756,6 +777,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
       }
 
       const data = await res.json();
+      _accumulateTokens(data);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Grok SD Author returned malformed response');
@@ -856,6 +878,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
       }
 
       const data = await res.json();
+      _accumulateTokens(data);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Mistral SD Fallback returned malformed response');
@@ -909,6 +932,135 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
     } = params;
 
     const state = createOrchestrationState();
+
+    // =========================================================================
+    // CASCADE FAST PATH (Step 3) + TERMINATION (Step 4)
+    // =========================================================================
+    const appState = window.state;
+    if (appState && appState.cascadeMode) {
+      // Step 4: Check termination conditions FIRST
+      // Part 6: Cascade cap adapts to pacing mode
+      const cascadeCap = appState.pacingMode === 'IMMERSIVE' ? 4
+                       : appState.pacingMode === 'RAPID' ? 2
+                       : 3; // HYBRID default
+      const shouldTerminate = (
+        fateCard ||                                           // Fate card selected
+        (appState.fate && appState.fate.pendingPetition) ||   // Petition submitted
+        (appState.fate && appState.fate.temptFateActive) ||   // Tempt Fate active
+        appState.cascadeCount >= cascadeCap                   // Adaptive max cascade beats
+      );
+
+      if (shouldTerminate) {
+        console.log('[CASCADE] Termination triggered — returning to full orchestration');
+        appState.cascadeMode = false;
+        appState.cascadeCount = 0;
+        appState.cascadeContext = null;
+        appState.lastCascadeExcerpt = null;
+        // Fall through to full orchestration below
+      } else {
+        // Step 3: Cascade fast path — Grok renderer only, skip Author/SD/Integration
+        console.log(`[CASCADE] Fast path beat #${appState.cascadeCount + 1}`);
+        state.gateEnforcement = enforceMonetizationGates(accessTier);
+
+        if (onPhaseChange) onPhaseChange('RENDER_PASS');
+
+        try {
+          const cascadeEsd = {
+            intimacyStage: 'authorized',
+            completionAllowed: appState.cascadeContext.completionAllowed,
+            emotionalCore: appState.cascadeContext.emotionalCore,
+            physicalBounds: appState.cascadeContext.physicalBounds,
+            hardStops: appState.cascadeContext.hardStops || ['consent_withdrawal']
+          };
+
+          const rendererPrompt = buildRendererPrompt(cascadeEsd, !!mainPairRestricted);
+
+          // Continuity context + voice stability anchor (Steps 3 & 4)
+          let continuityBlock = `Maintain the established narrative tone and voice from prior scene.
+Do not shift POV.
+Do not introduce new thematic direction.
+Remain in immediate embodied perspective.`;
+          if (appState.lastCascadeExcerpt) {
+            continuityBlock = `Recent physical continuity context:
+${appState.lastCascadeExcerpt}
+
+Continue from this exact physical and emotional state.
+Do not reset clothing, position, or intensity unless directed.
+
+${continuityBlock}`;
+          }
+
+          const messages = [
+            { role: 'system', content: rendererPrompt.system + '\n\n' + continuityBlock },
+            { role: 'user', content: rendererPrompt.user }
+          ];
+
+          let cascadeOutput = await callSpecialistRenderer(messages, cascadeEsd, { max_tokens: 300 });
+
+          // Step 5: Guardrails — strip structural meta from cascade output
+          if (cascadeOutput) {
+            // Strip references to Fate/Author/Story (structural meta leakage)
+            cascadeOutput = cascadeOutput
+              .replace(/\bFate\b/gi, '')
+              .replace(/\bAuthor\b/gi, '')
+              .replace(/\bStory\b/gi, '')
+              .replace(/\[.*?\]/g, '')          // Strip any bracketed tags
+              .replace(/\s{2,}/g, ' ')          // Collapse double spaces
+              .trim();
+
+            // Reject if output is too short after stripping (malformed)
+            if (cascadeOutput.length < 40) {
+              console.warn('[CASCADE] Output too short after guardrail strip — terminating cascade');
+              appState.cascadeMode = false;
+              appState.cascadeCount = 0;
+              appState.cascadeContext = null;
+              appState.lastCascadeExcerpt = null;
+              // Fall through to full orchestration below
+            } else {
+              // Store last ~150 words as continuity excerpt for next cascade beat
+              const words = cascadeOutput.split(/\s+/);
+              appState.lastCascadeExcerpt = words.slice(-150).join(' ');
+
+              appState.cascadeCount++;
+              state.phase = 'COMPLETE';
+              state.timing.totalMs = Date.now() - state.timing.startTime;
+
+              return {
+                success: true,
+                finalOutput: cascadeOutput,
+                orchestrationState: state,
+                gateEnforcement: state.gateEnforcement,
+                rendererUsed: true,
+                fateStumbled: false,
+                forcedInterruption: false,
+                usedFallbackAuthor: false,
+                esdAuthoredByGrok: false,
+                esdAuthoredByMistral: false,
+                grokFailed: false,
+                mistralFailed: false,
+                cascadeBeat: appState.cascadeCount,
+                errors: [],
+                timing: state.timing
+              };
+            }
+          } else {
+            // Null output — terminate cascade, fall through
+            console.warn('[CASCADE] Renderer returned null — terminating cascade');
+            appState.cascadeMode = false;
+            appState.cascadeCount = 0;
+            appState.cascadeContext = null;
+            appState.lastCascadeExcerpt = null;
+          }
+        } catch (err) {
+          // Renderer failed — terminate cascade, fall through to full orchestration
+          console.error('[CASCADE] Renderer failed — terminating cascade:', err.message);
+          appState.cascadeMode = false;
+          appState.cascadeCount = 0;
+          appState.cascadeContext = null;
+          appState.lastCascadeExcerpt = null;
+        }
+      }
+    }
 
     // =========================================================================
     // PRE-FLIGHT: Enforce Monetization Gates
@@ -1099,6 +1251,22 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
           // STEP 3: Parse SD if either author succeeded
           if (esdOutput) {
             state.esd = parseSD(esdOutput, state.gateEnforcement);
+
+            // CASCADE ANCHOR DETECTION (Step 2):
+            // If intimacy occurs and we are NOT already in cascade mode,
+            // this is the Anchor Beat — store context for subsequent cascade beats
+            const appState = window.state;
+            if (appState && !appState.cascadeMode && constraints.intimacyOccurs) {
+              appState.cascadeMode = true;
+              appState.cascadeCount = 0;
+              appState.cascadeContext = {
+                emotionalCore: state.esd.emotionalCore,
+                physicalBounds: state.esd.physicalBounds,
+                hardStops: state.esd.hardStops,
+                completionAllowed: state.esd.completionAllowed
+              };
+              console.log('[CASCADE] Anchor beat detected — cascade context stored');
+            }
           } else {
             // BOTH Grok and Mistral failed — force interruption, do NOT downgrade
             console.warn('[ORCHESTRATION] ALL scene authors failed — fateStumbled, forced interruption required');
@@ -1116,6 +1284,27 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     }
 
     state.timing.authorPassMs = Date.now() - authorStartTime;
+
+    // CASCADE TERMINATION (Step 4): If we're in cascade mode but Author Pass
+    // determined intimacy does NOT occur, terminate cascade immediately.
+    {
+      const _appState = window.state;
+      if (_appState && _appState.cascadeMode && !state.esd) {
+        console.log('[CASCADE] Intimacy ended (no SD) — terminating cascade');
+        _appState.cascadeMode = false;
+        _appState.cascadeCount = 0;
+        _appState.cascadeContext = null;
+        _appState.lastCascadeExcerpt = null;
+      }
+      // Also terminate on forcedInterruption
+      if (_appState && _appState.cascadeMode && state.forcedInterruption) {
+        console.log('[CASCADE] Forced interruption — terminating cascade');
+        _appState.cascadeMode = false;
+        _appState.cascadeCount = 0;
+        _appState.cascadeContext = null;
+        _appState.lastCascadeExcerpt = null;
+      }
+    }
 
     // =========================================================================
     // PHASE 2: Specialist Renderer (CONDITIONAL)
@@ -1303,6 +1492,20 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     }
 
     // =========================================================================
+    // CASCADE TERMINATION — post-integration (Step 4)
+    // =========================================================================
+    {
+      const _appState = window.state;
+      if (_appState && _appState.cascadeMode && state.forcedInterruption) {
+        console.log('[CASCADE] Forced interruption in integration — terminating cascade');
+        _appState.cascadeMode = false;
+        _appState.cascadeCount = 0;
+        _appState.cascadeContext = null;
+        _appState.lastCascadeExcerpt = null;
+      }
+    }
+
+    // =========================================================================
     // RETURN FINAL RESULT
     // =========================================================================
 
@@ -1409,6 +1612,21 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
 MAIN PAIR RESTRICTION: Do not render consummation or escalation between the primary romantic pair.
 ` : '';
 
+    // Erotic mode adaptation from adaptive pacing system
+    const appState = window.state;
+    let eroticModeBlock = '';
+    if (appState && appState.eroticMode) {
+      const modeMap = {
+        ROMANTIC: 'Focus on emotional connection, sensory implication, restrained explicitness.',
+        VISCERAL: 'Allow explicit physical detail, controlled anatomy references, faster rhythm.',
+        CARNAL: 'Increase sensory saturation and power dynamic sharpness. Still prohibit taboo escalation.',
+        INTENSITY_REDIRECT: 'Do NOT increase explicitness. Increase emotional stakes, psychological tension, urgency. Never escalate into prohibited themes.'
+      };
+      if (modeMap[appState.eroticMode]) {
+        eroticModeBlock = `\nEROTIC MODE — ${appState.eroticMode}:\n${modeMap[appState.eroticMode]}\n`;
+      }
+    }
+
     return {
       system: `You are a SPECIALIST RENDERER for intimate scenes.
 
@@ -1431,7 +1649,7 @@ ${!esd.completionAllowed ? `
 CRITICAL: Completion is FORBIDDEN. The scene must remain suspended.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
-
+${eroticModeBlock}
 Write embodied, sensory prose (150-200 words). Focus on physical sensation and emotional presence.`,
 
       user: `Render the intimate moment.
