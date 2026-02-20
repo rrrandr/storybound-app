@@ -1867,6 +1867,217 @@ dialogue: <elevated dialogue>`;
   }
 
   // ===========================================================================
+  // PASS TIER MULTI-PASS GENERATION
+  // ===========================================================================
+  // Deterministic literary depth passes — orthogonal to erotic orchestration.
+  // Tier 3: Beat outline → Thematic calibration → Final prose
+  // Tier 2: Beat outline → Final prose
+  // Tier 1: Single structured generation
+  // Pass tier NEVER varies based on fortune, subscription, or payment.
+
+  /**
+   * Beat Outline Pass — structural scene skeleton (JSON mode, low temp).
+   * Used by Tier 2 and Tier 3.
+   */
+  async function runBeatOutlinePass(systemPrompt, storyContext, playerAction) {
+    const outlinePrompt = `You are a structural story architect. Generate a JSON beat outline for the next scene.
+
+CONTEXT:
+${systemPrompt}
+
+STORY SO FAR (last 1500 chars):
+${(storyContext || '').slice(-1500)}
+
+PLAYER ACTION: ${playerAction}
+
+OUTPUT FORMAT (strict JSON):
+{
+  "beats": [
+    { "type": "opening|rising|pivot|falling|close", "summary": "1-sentence beat description", "emotional_note": "dominant emotion" }
+  ],
+  "scene_arc": "1-sentence arc summary",
+  "continuity_anchors": ["detail that must be preserved from prior scene"],
+  "tension_vector": "rising|sustaining|releasing"
+}
+
+Generate 3-6 beats. Be precise and structural. No prose.`;
+
+    const messages = [
+      { role: 'system', content: 'You are a structural story planner. Output valid JSON only.' },
+      { role: 'user', content: outlinePrompt }
+    ];
+
+    let result;
+    try {
+      result = await callChatGPT(messages, 'PRIMARY_AUTHOR', { temperature: 0.3 });
+      // Parse JSON from response (handle markdown code blocks)
+      const jsonStr = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      const parsed = JSON.parse(jsonStr);
+      console.log('[PASS_TIER] Beat outline generated:', parsed.beats?.length, 'beats');
+      return parsed;
+    } catch (e) {
+      console.warn('[PASS_TIER] Beat outline parse failed, using raw:', e.message);
+      return { raw: true, text: typeof result === 'string' ? result : 'Beat outline generation failed' };
+    }
+  }
+
+  /**
+   * Thematic Calibration Pass — tone/theme/emotion trajectory (Tier 3 only).
+   */
+  async function runThematicCalibrationPass(outline, systemPrompt) {
+    const calibrationPrompt = `You are a literary thematic calibrator. Given a structural beat outline and story context, produce a calibration block that guides the final prose pass.
+
+BEAT OUTLINE:
+${JSON.stringify(outline, null, 2)}
+
+STORY CONTEXT:
+${systemPrompt}
+
+OUTPUT FORMAT (plain text block):
+TONE_MARKERS: [comma-separated tone words for this scene]
+EMOTIONAL_TRAJECTORY: [arc description — e.g., "dread → fragile hope → shattered certainty"]
+THEMATIC_THREADS: [active themes to weave — e.g., "power asymmetry, surveillance as intimacy"]
+POV_CALIBRATION: [any POV-specific notes — Fate presence level, voyeuristic distance]
+PACING_NOTES: [beat-level pacing guidance]
+CONTINUITY_ALERTS: [anything the prose pass MUST NOT contradict]
+
+Be concise. This is injected into the prose generation prompt.`;
+
+    const messages = [
+      { role: 'system', content: 'You are a literary calibrator. Output a structured calibration block.' },
+      { role: 'user', content: calibrationPrompt }
+    ];
+
+    try {
+      const result = await callChatGPT(messages, 'PRIMARY_AUTHOR', { temperature: 0.5 });
+      console.log('[PASS_TIER] Thematic calibration complete');
+      return result;
+    } catch (e) {
+      console.warn('[PASS_TIER] Thematic calibration failed:', e.message);
+      return null;
+    }
+  }
+
+  /**
+   * Multi-pass orchestration entry point.
+   * Routes through 1, 2, or 3 literary passes based on pass tier,
+   * then delegates to the existing erotic orchestration pipeline.
+   *
+   * @param {Object} params
+   * @param {number} params.passTier - 1, 2, or 3
+   * @param {string} params.structuredStateSummary - compressed state for Tier 1/2
+   * @param {string} params.systemPrompt - full system prompt
+   * @param {string} params.storyContext - story context
+   * @param {string} params.playerAction - normalized player action
+   * @param {string} params.playerDialogue - normalized player dialogue
+   * @param {Object} params.fateCard - selected fate card (if any)
+   * @param {boolean} params.mainPairRestricted - main pair restriction flag
+   * @param {Function} params.onPhaseChange - phase change callback
+   * @param {string} params.accessTier - monetization tier
+   */
+  async function orchestrateWithPassTier(params) {
+    const {
+      passTier = 2,
+      structuredStateSummary,
+      systemPrompt,
+      storyContext,
+      playerAction,
+      playerDialogue,
+      fateCard,
+      mainPairRestricted,
+      onPhaseChange,
+      accessTier
+    } = params;
+
+    console.log(`[PASS_TIER] Starting Tier ${passTier} orchestration`);
+    const tierStart = Date.now();
+
+    let enrichedSystemPrompt = systemPrompt;
+    let outline = null;
+    let calibration = null;
+
+    // ── Tier 3: Beat Outline → Thematic Calibration → Final Prose ──
+    if (passTier === 3) {
+      if (onPhaseChange) onPhaseChange('BEAT_OUTLINE', {});
+
+      outline = await runBeatOutlinePass(systemPrompt, storyContext, playerAction);
+
+      if (onPhaseChange) onPhaseChange('THEMATIC_CALIBRATION', {});
+
+      calibration = await runThematicCalibrationPass(outline, systemPrompt);
+
+      // Inject outline + calibration into system prompt for final prose pass
+      const outlineBlock = outline.raw
+        ? `\n\nBEAT OUTLINE (structural guide):\n${outline.text}`
+        : `\n\nBEAT OUTLINE (structural guide):\n${JSON.stringify(outline.beats || outline, null, 1)}
+Scene Arc: ${outline.scene_arc || 'N/A'}
+Tension: ${outline.tension_vector || 'N/A'}`;
+
+      const calibrationBlock = calibration
+        ? `\n\nTHEMATIC CALIBRATION:\n${calibration}`
+        : '';
+
+      enrichedSystemPrompt = systemPrompt + outlineBlock + calibrationBlock;
+
+      console.log(`[PASS_TIER] Tier 3 pre-passes complete (${Date.now() - tierStart}ms)`);
+    }
+
+    // ── Tier 2: Beat Outline → Final Prose ──
+    else if (passTier === 2) {
+      if (onPhaseChange) onPhaseChange('BEAT_OUTLINE', {});
+
+      outline = await runBeatOutlinePass(systemPrompt, storyContext, playerAction);
+
+      const outlineBlock = outline.raw
+        ? `\n\nBEAT OUTLINE (structural guide):\n${outline.text}`
+        : `\n\nBEAT OUTLINE (structural guide):\n${JSON.stringify(outline.beats || outline, null, 1)}
+Scene Arc: ${outline.scene_arc || 'N/A'}
+Tension: ${outline.tension_vector || 'N/A'}`;
+
+      // For Tier 2, inject structured state summary if provided (replaces full context recap)
+      const stateBlock = structuredStateSummary
+        ? `\n\nSTRUCTURED STATE:\n${structuredStateSummary}`
+        : '';
+
+      enrichedSystemPrompt = systemPrompt + outlineBlock + stateBlock;
+
+      console.log(`[PASS_TIER] Tier 2 pre-pass complete (${Date.now() - tierStart}ms)`);
+    }
+
+    // ── Tier 1: Single structured generation ──
+    else {
+      // For Tier 1, inject structured state summary (replaces full context recap)
+      if (structuredStateSummary) {
+        enrichedSystemPrompt = systemPrompt + `\n\nSTRUCTURED STATE:\n${structuredStateSummary}`;
+      }
+      console.log(`[PASS_TIER] Tier 1 — direct pass`);
+    }
+
+    // ── Final Prose Pass: delegate to existing orchestration pipeline ──
+    if (onPhaseChange) onPhaseChange('AUTHOR_PASS', {});
+
+    const result = await orchestrateStoryGeneration({
+      accessTier: accessTier || 'free',
+      storyContext,
+      playerAction,
+      playerDialogue,
+      fateCard,
+      mainPairRestricted: !!mainPairRestricted,
+      systemPrompt: enrichedSystemPrompt,
+      onPhaseChange
+    });
+
+    console.log(`[PASS_TIER] Tier ${passTier} complete (${Date.now() - tierStart}ms total)`);
+
+    return {
+      ...result,
+      passTier,
+      outline,
+      calibration
+    };
+  }
+
+  // ===========================================================================
   // EXPORTS
   // ===========================================================================
 
@@ -1892,6 +2103,11 @@ dialogue: <elevated dialogue>`;
     inferReaderPreferences,     // Get current preference summary
     buildPreferenceBiasBlock,   // Get prompt injection text
     resetPreferenceData,        // Reset for new story
+
+    // Pass Tier multi-pass orchestration
+    orchestrateWithPassTier,
+    runBeatOutlinePass,
+    runThematicCalibrationPass,
 
     // Utilities
     enforceMonetizationGates,

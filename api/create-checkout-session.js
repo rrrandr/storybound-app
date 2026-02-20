@@ -1,12 +1,11 @@
 import Stripe from 'stripe';
 
-// Map tier names to env var keys and Stripe checkout modes
-// Map tier names to env var keys, Stripe checkout modes, and credits granted (for refund reversal)
+// Map tier names to env var keys, Stripe checkout modes, and fortunes granted (for refund reversal)
 const TIER_CONFIG = {
-  storypass: { envKey: 'STRIPE_PRICE_ID_STORYPASS', mode: 'payment', creditsGranted: 0 },
-  storied:   { envKey: 'STRIPE_PRICE_ID_STORIED',   mode: 'subscription', creditsGranted: 0 },
-  favored:   { envKey: 'STRIPE_PRICE_ID_FAVORED',   mode: 'subscription', creditsGranted: 0 },
-  godmode:   { envKey: 'STRIPE_PRICE_ID_GODMODE',   mode: 'payment', creditsGranted: 0 },
+  storypass: { envKey: 'STRIPE_PRICE_ID_STORYPASS', mode: 'payment', fortunesGranted: 20 },
+  storied:   { envKey: 'STRIPE_PRICE_ID_STORIED',   mode: 'subscription', fortunesGranted: 0 },
+  favored:   { envKey: 'STRIPE_PRICE_ID_FAVORED',   mode: 'subscription', fortunesGranted: 0 },
+  offering:  { envKey: 'STRIPE_PRICE_ID_OFFERING',  mode: 'payment', fortunesGranted: 10 },
 };
 
 export default async function handler(req, res) {
@@ -44,7 +43,7 @@ export default async function handler(req, res) {
     const metadata = {
       supabase_user_id: supabaseUserId,
       price_id: priceId,
-      credits_granted: String(config.creditsGranted || 0),  // For refund reversal
+      fortunes_granted: String(config.fortunesGranted || 0),
     };
     if (config.mode === 'subscription') metadata.subscription_tier = tier;
 

@@ -22,10 +22,13 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   const SUPABASE_URL = config.supabaseUrl || "";
   const SUPABASE_ANON_KEY = config.supabaseAnonKey || "";
+  const CURRENT_TOS_VERSION = '2.0.0';
+  const CURRENT_PRIVACY_VERSION = '2.0.0';
+  const CURRENT_ADULT_ACK_VERSION = '1.0.0';
   const LEGAL = {
-    TOS_VERSION: 1,
-    PRIVACY_VERSION: 1,
-    ADULT_ACK_VERSION: 1
+    TOS_VERSION: 2,
+    PRIVACY_VERSION: 2,
+    ADULT_ACK_VERSION: 2
   };
   // Use local proxy by default (requires XAI_API_KEY env var)
   // Falls back to external proxy if explicitly configured
@@ -396,11 +399,9 @@ window.config = window.config || {
   }
 
   const PROFILE_COLUMNS = `
-    has_god_mode, god_mode_temp_granted_at, god_mode_temp_duration_hours,
-    god_mode_active_story_id, god_mode_active_started_at, god_mode_temp_expires_at,
-    image_credits, subscription_credits, last_scene_rewarded, is_subscriber, subscription_tier, has_storypass,
+    subscription_fortunes, purchased_fortunes, is_subscriber, subscription_tier, has_storypass,
     age_confirmed, tos_version, privacy_version, adult_ack_version,
-    romance_preferences
+    romance_preferences, free_story_consumed
   `;
 
   async function hydrateProfile(userId) {
@@ -421,24 +422,18 @@ window.config = window.config || {
   }
 
   function hydrateState(profile) {
-    state.godMode.owned = !!profile.has_god_mode;
-    state.godMode.tempGrantedAt = profile.god_mode_temp_granted_at;
-    state.godMode.tempDurationHours = profile.god_mode_temp_duration_hours;
-    state.godMode.activeStoryId = profile.god_mode_active_story_id;
-    state.godMode.activeStartedAt = profile.god_mode_active_started_at;
-    state.godMode.tempExpiresAt = profile.god_mode_temp_expires_at;
     state.tier = profile.tier || 'free';
     state.subscribed = !!profile.subscribed;
     state.subscriptionTier = profile.subscription_tier || (state.subscribed ? 'storied' : null);
     state.hasPass = !!profile.has_pass;
-    state.imageCredits = (profile.image_credits || 0) + (profile.subscription_credits || 0);
-    state.lastSceneRewarded = profile.last_scene_rewarded || 0;
-    if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
+    state.fortunes = (profile.subscription_fortunes || 0) + (profile.purchased_fortunes || 0);
+    if (window.updateFortuneDisplay) window.updateFortuneDisplay();
     state.romancePreferences = Array.isArray(profile.romance_preferences) ? profile.romance_preferences : [];
     state.romanceVector = computeRomanceVector(state.romancePreferences);
+    state.freeStoryConsumed = !!profile.free_story_consumed;
     syncTierFromAccess();
     activateKeyholeMarkIfEligible();
-    console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.subscriptionTier, '| God Mode:', state.godMode, '| Keyhole:', state.keyhole?.marked, '| Image credits:', state.imageCredits, '| Last rewarded:', state.lastSceneRewarded);
+    console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.subscriptionTier, '| Keyhole:', state.keyhole?.marked, '| Fortunes:', state.fortunes);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -491,20 +486,60 @@ window.config = window.config || {
       const vec = ROMANCE_TITLE_VECTORS[key];
       if (!vec) continue;
       matchCount++;
-      axes.forEach(a => { sums[a] += vec[a]; });
+      axes.forEach(a => { sums[a] += (vec[a] || 0); });
     }
 
     if (matchCount === 0) return null;
 
+    // Cap each axis at 1.0, then normalize if any exceeded 1
+    axes.forEach(a => { sums[a] = Math.min(sums[a], 1); });
+    const maxVal = Math.max(...axes.map(a => sums[a]));
     const result = {};
-    axes.forEach(a => { result[a] = Math.min(sums[a] / matchCount, 1); });
+    if (maxVal > 1) {
+      axes.forEach(a => { result[a] = sums[a] / maxVal; });
+    } else {
+      axes.forEach(a => { result[a] = sums[a]; });
+    }
     return result;
+  }
+
+  // Archetype-to-romance-axis mapping with max modifiers (Part 5)
+  const ARCHETYPE_AXIS_MAP = {
+    HEART_WARDEN:   { axis: 'protectorBias',    maxMod: 0.25 },
+    OPEN_VEIN:      { axis: 'angstBias',        maxMod: 0.20 },
+    SPELLBINDER:    { axis: 'supernaturalBias', maxMod: 0.35 },
+    ARMORED_FOX:    { axis: 'slowBurnBias',     maxMod: 0.25 },
+    DARK_VICE:      { axis: 'dominanceBias',    maxMod: 0.30 },
+    BEAUTIFUL_RUIN: { axis: 'angstBias',        maxMod: 0.20 },
+    ETERNAL_FLAME:  { axis: 'slowBurnBias',     maxMod: 0.25 }
+  };
+
+  function weightedArchetypeSelection() {
+    const v = state.romanceVector;
+    if (!v) return ARCHETYPE_ORDER[Math.floor(Math.random() * ARCHETYPE_ORDER.length)];
+
+    const weights = ARCHETYPE_ORDER.map(id => {
+      const baseWeight = 1;
+      const mapping = ARCHETYPE_AXIS_MAP[id];
+      if (!mapping) return baseWeight;
+      const axisVal = v[mapping.axis] || 0;
+      const influence = axisVal * mapping.maxMod;
+      return Math.min(baseWeight * (1 + influence), baseWeight * 2);
+    });
+
+    const totalWeight = weights.reduce((s, w) => s + w, 0);
+    let roll = Math.random() * totalWeight;
+    for (let i = 0; i < weights.length; i++) {
+      roll -= weights[i];
+      if (roll <= 0) return ARCHETYPE_ORDER[i];
+    }
+    return ARCHETYPE_ORDER[ARCHETYPE_ORDER.length - 1];
   }
 
   function buildRomanceVectorDirective() {
     const v = state.romanceVector;
     if (!v) return '';
-    return `USER ROMANCE PREFERENCE VECTOR (subtle tonal bias only — do NOT override user selections or safety filters):
+    let block = `USER ROMANCE PREFERENCE VECTOR (subtle tonal bias only — do NOT override user selections, safety filters, or eroticMode classification):
   dominanceBias: ${v.dominanceBias.toFixed(2)}
   supernaturalBias: ${v.supernaturalBias.toFixed(2)}
   slowBurnBias: ${v.slowBurnBias.toFixed(2)}
@@ -512,6 +547,16 @@ window.config = window.config || {
   protectorBias: ${v.protectorBias.toFixed(2)}
   eroticHeatBias: ${v.eroticHeatBias.toFixed(2)}
 Favor these tonal biases subtly in character behavior and narrative texture.`;
+
+    const nudges = [];
+    if (v.dominanceBias > 0.6)   nudges.push('Increase decisive, directive phrasing in Love Interest dialogue by 10-20%.');
+    if (v.slowBurnBias > 0.6)    nudges.push('Increase interior monologue, restraint, and delayed gratification.');
+    if (v.protectorBias > 0.6)   nudges.push('Increase protective physical framing — shielding gestures, positioning, vigilance.');
+    if (v.angstBias > 0.6)       nudges.push('Increase emotional tension, vulnerability, and internal conflict.');
+    if (v.eroticHeatBias > 0.6)  nudges.push('Slightly increase sensual pacing and tactile awareness (obey eroticMode limits).');
+    if (nudges.length > 0) block += '\nTonal nudges:\n' + nudges.map(n => '- ' + n).join('\n');
+    block += '\nDo NOT mention book titles in prose. Do NOT override archetype after user selection. Do NOT alter Offering or Tempt Fate mechanics.';
+    return block;
   }
 
   // Romance Preferences UI logic (profile modal)
@@ -980,17 +1025,203 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     if (!modal || !content || !closeBtn) return;
 
     const LEGAL_DOCS = {
-      tos: '<h3>Terms of Service</h3>'
-        + '<p>1. <strong>Age Requirement:</strong> You must be 18+.</p>'
-        + '<p>2. <strong>Content Policy:</strong> Interactive fiction with mature themes. All depicted relationships are consensual. Content involving minors is strictly prohibited.</p>'
-        + '<p>3. <strong>Data &amp; AI:</strong> Content generated by third-party AI models. We may anonymize data.</p>'
-        + '<p>4. <strong>Liability:</strong> Use at your own risk. Entertainment purposes only.</p>',
-      privacy: '<h3>Privacy Policy</h3>'
-        + '<p>1. <strong>Data Collection:</strong> We collect anonymous usage data and story preferences to improve the service.</p>'
-        + '<p>2. <strong>Storage:</strong> Your stories and selections are stored securely. We do not sell personal data.</p>'
-        + '<p>3. <strong>AI Processing:</strong> Story content is processed by third-party AI providers. Prompts may be logged for safety and quality.</p>'
-        + '<p>4. <strong>Cookies:</strong> We use essential cookies for authentication and session management.</p>'
-        + '<p>5. <strong>Deletion:</strong> You may request deletion of your data at any time by contacting support.</p>'
+      tos: `<h3>Storybound Terms of Service</h3>
+<p style="font-size:0.85em; color:#888;">Version: ${CURRENT_TOS_VERSION}</p>
+
+<h4>1. Acceptance of Terms</h4>
+<p>By accessing or using Storybound ("the Platform"), you agree to be bound by these Terms of Service ("Terms"). You must be at least 18 years of age to use the Platform.</p>
+<p>Continued use of the Platform constitutes acceptance of the current version of these Terms.</p>
+
+<h4>2. Nature of the Platform</h4>
+<p>Storybound is a proprietary participatory literary universe authored under the imprint <strong>S. Tory Bound</strong>.</p>
+<p>Storybound is <em>not</em>:</p>
+<ul>
+<li>A manuscript-writing tool</li>
+<li>A co-authoring service</li>
+<li>A user-generated content marketplace</li>
+</ul>
+<p>Users participate in shaping narrative outcomes within a platform-authored canon. Storybound remains the authorial entity of all generated narrative content.</p>
+
+<h4>3. User Accounts</h4>
+<p>Users are responsible for maintaining the confidentiality of account credentials. Storybound may suspend or terminate accounts at its sole discretion for violations of these Terms.</p>
+<p>Accounts are non-transferable.</p>
+
+<h4>4. Offerings &amp; Digital Goods</h4>
+<p>Offerings are digital consumables used within the Platform. Offerings:</p>
+<ul>
+<li>Have no monetary value</li>
+<li>Are non-transferable</li>
+<li>Are non-refundable except where required by law</li>
+</ul>
+<p><strong>4.1 Subscription Offerings</strong></p>
+<ul>
+<li>Are granted periodically</li>
+<li>Are consumed before permanent Offerings</li>
+<li>Expire upon cancellation of subscription</li>
+</ul>
+<p><strong>4.2 Permanent Offerings</strong></p>
+<ul>
+<li>Do not expire</li>
+<li>Are consumed after Subscription Offerings</li>
+<li>Remain associated with the account</li>
+</ul>
+<p>Storybound may modify Offering structures at its discretion.</p>
+
+<h4>5. Generated Narrative &amp; Intellectual Property</h4>
+<p><strong>5.1 Ownership of Generated Narrative</strong></p>
+<p>All narrative text, story arcs, character developments, and generated works created through the Platform ("Generated Narrative") are exclusively owned by Storybound and/or its affiliates.</p>
+<p>The Generated Narrative constitutes a proprietary literary universe authored under the imprint <strong>S. Tory Bound</strong>.</p>
+<p>Users acquire no ownership rights in any Generated Narrative.</p>
+
+<p><strong>5.2 License from Users</strong></p>
+<p>By participating in Storybound, users grant Storybound a <strong>perpetual, worldwide, irrevocable, royalty-free, transferable, and sublicensable</strong> license to use, reproduce, modify, adapt, publish, distribute, publicly perform, create derivative works from, and commercially exploit any inputs, selections, prompts, or interactions provided in connection with the Generated Narrative.</p>
+<p>This license survives termination of the user's account.</p>
+
+<p><strong>5.3 Limited User License</strong></p>
+<p>Storybound grants users a limited, non-exclusive, non-transferable, non-commercial, revocable license to access and view Generated Narrative solely within the Platform.</p>
+<p>Users may not:</p>
+<ul>
+<li>Commercially publish</li>
+<li>Sell or license</li>
+<li>Distribute externally</li>
+<li>Adapt into audiovisual works</li>
+<li>Mint as NFTs</li>
+<li>Train AI models on</li>
+<li>Commercially exploit</li>
+</ul>
+<p>any Generated Narrative without written permission from Storybound.</p>
+
+<p><strong>5.4 No Joint Authorship</strong></p>
+<p>Participation in Storybound does not create joint authorship, co-authorship, partnership, agency, or ownership interest in any Generated Narrative.</p>
+<p>Storybound remains the sole author and rights holder.</p>
+
+<h4>6. Discretionary Participation Program</h4>
+<p>Storybound may, at its sole discretion, provide voluntary participation bonuses to users whose interactive participation contributed to a Generated Narrative that is commercially published, licensed, or adapted.</p>
+<p>Such bonuses:</p>
+<ul>
+<li>Are entirely discretionary</li>
+<li>Do not constitute royalties</li>
+<li>Do not create ownership rights</li>
+<li>Do not create entitlement to future payments</li>
+<li>Do not create audit or accounting rights</li>
+<li>Do not establish partnership or profit-sharing</li>
+</ul>
+<p>No user is entitled to compensation unless expressly agreed in a separate written agreement signed by Storybound.</p>
+
+<h4>7. Archive &amp; Canon Designation</h4>
+<p>Storybound may designate certain Generated Narratives as part of the Storybound Archive.</p>
+<p>Archive designation does not create ownership rights or publication guarantees.</p>
+
+<h4>8. Content Standards</h4>
+<p>Users may not use the Platform to create illegal content, exploit real persons, or violate applicable laws.</p>
+<p>The Platform generates fictional adult content. By using Storybound, you acknowledge this.</p>
+
+<h4>9. AI Disclosure</h4>
+<p>Generated Narrative is AI-assisted fictional content. Storybound makes no representations regarding factual accuracy.</p>
+
+<h4>10. Payments &amp; Billing</h4>
+<p>Subscriptions renew automatically unless cancelled. Users are responsible for applicable taxes.</p>
+<p>Chargebacks or fraudulent disputes may result in account suspension.</p>
+
+<h4>11. Termination</h4>
+<p>Storybound may suspend or terminate accounts at its sole discretion.</p>
+<p>Offerings may be forfeited upon termination due to policy violations.</p>
+
+<h4>12. Limitation of Liability</h4>
+<p>The Platform is provided "as is." Storybound disclaims all warranties to the fullest extent permitted by law.</p>
+
+<h4>13. Indemnification</h4>
+<p>Users agree to indemnify and hold harmless Storybound from claims arising out of misuse of the Platform.</p>
+
+<h4>14. Governing Law &amp; Dispute Resolution</h4>
+<p>Any disputes shall be resolved through binding arbitration.</p>
+
+<h4>15. Modifications</h4>
+<p>Storybound may update these Terms at any time. Continued use constitutes acceptance of updated Terms.</p>`,
+      privacy: `<h3>Storybound Privacy Policy</h3>
+<p style="font-size:0.85em; color:#888;">Version: ${CURRENT_PRIVACY_VERSION}</p>
+
+<h4>1. Overview</h4>
+<p>Storybound ("the Platform") is a participatory literary universe authored under the imprint <strong>S. Tory Bound</strong>.</p>
+<p>This Privacy Policy explains how we collect, use, store, and protect your information.</p>
+
+<h4>2. Information We Collect</h4>
+<p>We may collect:</p>
+<ul>
+<li>Account information (email, username)</li>
+<li>Authentication data</li>
+<li>IP address and device metadata</li>
+<li>Billing information (processed via Stripe or payment processor)</li>
+<li>Interaction data (choices, prompts, selections)</li>
+<li>Offering transaction data</li>
+<li>Usage analytics</li>
+</ul>
+<p>We do not sell personal data.</p>
+
+<h4>3. AI Processing Disclosure</h4>
+<p>Your inputs and interactions are processed by AI systems to generate fictional narrative content.</p>
+<p>By using the Platform, you consent to such processing.</p>
+<p>Generated Narrative is platform-owned intellectual property.</p>
+
+<h4>4. Payment Processing</h4>
+<p>Payments are processed by third-party payment providers (e.g., Stripe).</p>
+<p>Storybound does not store full credit card numbers.</p>
+<p>Payment processors handle billing information according to their own privacy policies.</p>
+
+<h4>5. Use of Information</h4>
+<p>We use collected information to:</p>
+<ul>
+<li>Provide access to the Platform</li>
+<li>Generate narrative content</li>
+<li>Manage Offerings and subscriptions</li>
+<li>Enforce platform policies</li>
+<li>Improve system performance</li>
+<li>Prevent fraud</li>
+</ul>
+
+<h4>6. Data Retention</h4>
+<p>We retain account and interaction data as long as necessary to operate the Platform, comply with legal obligations, and maintain narrative continuity.</p>
+<p>Generated Narrative may be retained indefinitely as part of the Storybound Archive.</p>
+
+<h4>7. Data Security</h4>
+<p>We implement commercially reasonable safeguards to protect user data. However, no system is completely secure.</p>
+
+<h4>8. User Rights</h4>
+<p>Subject to applicable law, users may request:</p>
+<ul>
+<li>Access to personal data</li>
+<li>Correction of inaccurate data</li>
+<li>Deletion of personal account data</li>
+</ul>
+<p>Deletion of account data does not revoke Storybound's ownership of Generated Narrative or licenses granted under the Terms of Service.</p>
+
+<h4>9. Cookies &amp; Analytics</h4>
+<p>We may use cookies and analytics tools to:</p>
+<ul>
+<li>Maintain sessions</li>
+<li>Track performance</li>
+<li>Analyze usage trends</li>
+</ul>
+<p>Users may manage cookies via browser settings.</p>
+
+<h4>10. International Users</h4>
+<p>By using the Platform, you consent to data processing in the jurisdiction where Storybound operates.</p>
+
+<h4>11. Changes to This Policy</h4>
+<p>Storybound may update this Privacy Policy at any time.</p>
+<p>Continued use constitutes acceptance of the updated version.</p>`,
+      adult_ack: `<h3>Adult Fictional Content Acknowledgment</h3>
+<p style="font-size:0.85em; color:#888;">Version: ${CURRENT_ADULT_ACK_VERSION}</p>
+
+<p>Storybound generates fictional adult narrative content that may include explicit romantic or erotic themes.</p>
+
+<p>By continuing, you confirm that:</p>
+<ul>
+<li>You are at least 18 years of age.</li>
+<li>You understand the Platform generates fictional adult content.</li>
+<li>You consent to viewing and interacting with such content.</li>
+<li>You acknowledge that all characters depicted are fictional and intended to be adults.</li>
+</ul>`
     };
 
     function openLegalDoc(docKey) {
@@ -1011,8 +1242,10 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
     content.addEventListener('scroll', checkScrollBottom);
 
+    const adultLink = document.getElementById('legal-adult-link');
     if (tosLink) tosLink.addEventListener('click', function(e) { e.preventDefault(); openLegalDoc('tos'); });
     if (privacyLink) privacyLink.addEventListener('click', function(e) { e.preventDefault(); openLegalDoc('privacy'); });
+    if (adultLink) adultLink.addEventListener('click', function(e) { e.preventDefault(); openLegalDoc('adult_ack'); });
 
     closeBtn.addEventListener('click', function() {
       modal.classList.add('hidden');
@@ -1065,6 +1298,9 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
       hydrateState(profile);
 
+      // Forbidden Library admin gate — runs after _supabaseProfileId is set
+      updateForbiddenLibraryBtn();
+
       // DEV BYPASS — localhost only, ?devpass=storybound makes purchase buttons fake success
       const _host = window.location.hostname;
       if ((_host === 'localhost' || _host === '127.0.0.1') &&
@@ -1073,22 +1309,6 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
         console.log('%c[DEV] Purchase bypass active — buy buttons will fake success', 'color: #ffd700; font-weight: bold');
       }
 
-      // Clean up expired temp god mode grants
-      if (profile.god_mode_temp_expires_at && new Date(profile.god_mode_temp_expires_at).getTime() < Date.now()) {
-        console.log('[BOOT] Expired temp god mode detected — clearing');
-        sb.from('profiles')
-          .update({
-            god_mode_temp_granted_at: null,
-            god_mode_temp_duration_hours: null,
-            god_mode_temp_expires_at: null,
-            god_mode_active_story_id: null,
-            god_mode_active_started_at: null
-          })
-          .eq('id', userId)
-          .then(({ error }) => {
-            if (error) console.error('[BOOT] Failed to clear expired temp god mode:', error);
-          });
-      }
 
       resolveLegalGate(profile);
     } catch (e) {
@@ -1102,30 +1322,6 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
   bootApp();
 
-  // God Mode power level: 1 = full, 0 = expired/none, fractional = decaying temp grant
-  function getGodModePowerLevel(currentStoryId) {
-    const gm = state.godMode;
-    const now = Date.now();
-
-    if (gm.owned) return 1;
-
-    if (
-      gm.activeStoryId === currentStoryId &&
-      gm.tempExpiresAt &&
-      gm.activeStartedAt
-    ) {
-      const start = new Date(gm.activeStartedAt).getTime();
-      const end = new Date(gm.tempExpiresAt).getTime();
-      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0;
-      if (now >= end) return 0;
-
-      const ratio = (end - now) / (end - start);
-      const eased = Math.pow(ratio, 0.75); // locked decay curve
-      return Math.max(0, Math.min(1, eased));
-    }
-
-    return 0;
-  }
 
   function getNickname(){
     let n = localStorage.getItem("sb_nickname");
@@ -1274,13 +1470,16 @@ Introduce the name naturally within the first few paragraphs — do not announce
           if (indicator) indicator.textContent = pages.length > 0 ? `Page ${currentPageIndex + 1} of ${pages.length}` : 'Page 1 of 1';
       }
 
-      // FIX #4: Post-render hook for tier UI rehydration
+      // FIX #4: Post-render hook for tier UI rehydration + prior scene lock
       function triggerPostRenderHooks() {
           if (typeof window.applyAccessLocks === 'function') {
               window.applyAccessLocks();
           }
           if (typeof window.applyTierUI === 'function') {
               window.applyTierUI();
+          }
+          if (typeof window.applyPriorSceneLock === 'function') {
+              window.applyPriorSceneLock();
           }
       }
 
@@ -2007,10 +2206,6 @@ If axis == "petition":
 - Normalize BEFORE applying rename or rewrite.
 - Never allow IP to enter canon.
 
-If axis == "god_mode":
-- Apply the same rules.
-- God Mode does NOT bypass normalization.
-
 --------------------------------
 OUTPUT FORMAT (STRICT)
 --------------------------------
@@ -2029,7 +2224,7 @@ For world subtype:
   "secondary_subtype": "string | null"
 }
 
-For constraint/petition/god_mode:
+For constraint/petition:
 {
   "canonical_instruction": "string"
 }`;
@@ -3016,8 +3211,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       flingConsequenceShown: false,
       storyEnded: false,
       
-      imageCredits: 0,
-      lastSceneRewarded: 0,
+      fortunes: 0,
 
       billingStatus: 'active',
       billingGraceUntil: 0,
@@ -3034,22 +3228,9 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
           visualizedScenes: {}
       },
 
-      // ============================================================
-      // VISUALIZATION ECONOMY — Credits earned by scene completion
-      // ============================================================
-      vizEconomy: {
-          // Per-story credits (reset on new story)
-          storyCredits: 0,
-          // Global credits from Forbidden Library (persist across stories)
-          globalCredits: 0,
-          // Forbidden Library bonus cap tracking
-          forbiddenLibraryBonusThisMonth: 0,
-          forbiddenLibraryBonusMonthKey: null,
-          // Pay-As-You-Go opt-in (one-time, persists)
-          payAsYouGoEnabled: false,
-          // Last credited scene count (to avoid double-crediting)
-          lastCreditedSceneCount: 0
-      },
+      // Fortune burn tracking
+      temptFateConsecutive: 0,
+      petitionUsedThisScene: false,
 
       // ============================================================
       // SPECULATIVE NEXT SCENE PRELOAD — Memory only, not persisted
@@ -3083,6 +3264,15 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       gooseCooldown: 0,
       romancePreferences: [],
       romanceVector: null,
+      freeStoryConsumed: false,
+
+      // ============================================================
+      // TEASE TIER — Scene cap enforcement (runtime only)
+      // Configurable via window.STORYBOUND_CONFIG.TEASE_SCENE_CAP
+      // Clamped to valid range: 12–20
+      // ============================================================
+      TEASE_SCENE_CAP: Math.min(20, Math.max(12, window.STORYBOUND_CONFIG?.TEASE_SCENE_CAP || 15)),
+      tempQuillAllowance: 0, // Offering-granted bypass scenes remaining
 
       // ============================================================
       // PHASE 1 COVER MODE — LOCAL/COMPOSITED COVERS ONLY
@@ -3132,14 +3322,6 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
         totalWithholds: 0,
         temporaryWarmth: false   // one-scene seasonal override
       },
-      godMode: {
-        owned: false,
-        tempGrantedAt: null,
-        tempDurationHours: null,
-        activeStoryId: null,
-        activeStartedAt: null,
-        tempExpiresAt: null
-      },
       keyhole: {
         marked: false,
         orientation: 'neutral',   // 'open' | 'closed' | 'neutral'
@@ -3163,7 +3345,6 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
           first_intimacy: false
       },
       sandbox: false,
-      godModeActive: false,
       lastSavedWordCount: 0,
       storyOrigin: 'solo',
       player2Joined: false,
@@ -3822,61 +4003,6 @@ Fate must matter. Quietly. Unmistakably. With agency. Without stealing character
 ═══════════════════════════════════════════════════════════════════════════════
 `;
 
-  const FIFTH_PERSON_GOD_MODE_CONTRACT = `
-═══════════════════════════════════════════════════════════════════════════════
-5TH PERSON GOD MODE — ADVERSARIAL FATE (LOCKED)
-═══════════════════════════════════════════════════════════════════════════════
-
-GOD MODE VARIANT: Fate has lost control.
-
-WHAT CHANGES:
-- Fate is aware something is wrong
-- Fate believes his mind may be breaking, or a split personality is writing
-  over him, or someone is trespassing in his stories
-- Fate does NOT know about "God Mode"
-- Fate does NOT recognize the Player
-- Fate does NOT name the interloper
-
-FATE EMOTIONAL RUPTURE (GOD MODE ONLY):
-When God Mode is active OR player/Petition directly overrides Fate's intent:
-- Fate MAY express: panic, desperation, cold rage, disorientation
-- Rupture thoughts are INTERNAL ONLY (not narration)
-- Brief (1-2 sentences maximum)
-- No meta-awareness ("this is a story", "the player")
-- No certainty about outcomes or causes
-- Rage must be cold or focused, NEVER explosive or melodramatic
-
-ALLOWED rupture:
-- "A cold fury tightened in Fate's chest. This was not the shape intended."
-- "Fate's thoughts scattered. Where had the thread gone?"
-- "Something like panic flickered at the edge of his awareness."
-
-FORBIDDEN rupture:
-- "NO!" Fate screamed. (explosive, melodrama)
-- "Fate knew someone was sabotaging his story." (meta-awareness, certainty)
-- "This was unacceptable! Unforgivable!" (tantrum)
-
-FATE MAY:
-- Despair over damage to beloved characters
-- Scramble to repair plot damage
-- Resist, bargain, plead, flatter
-- Briefly give up and observe chaos
-- Occasionally laugh or admire clever disruption
-
-BUT:
-- Resistance always returns
-- Order is always attempted
-- Fate never fully abdicates
-
-WHAT DOES NOT CHANGE:
-- Opening/closing rules still apply
-- System/UI explanations still forbidden
-- Scene prose still uses 3rd-person limited
-- Rupture emotions revert to default state when control is restored
-
-═══════════════════════════════════════════════════════════════════════════════
-`;
-
   const FIFTH_PERSON_PROXIMITY_CONTRACT = `
 ═══════════════════════════════════════════════════════════════════════════════
 5TH PERSON — PROXIMITY (LOCKED)
@@ -4036,11 +4162,8 @@ The reader does not know why the story is gentler. Fate does not know either.
 
       let contract = FIFTH_PERSON_POV_CONTRACT;
 
-      // Add God Mode adversarial framing if active (overrides Favored)
-      if (window.state?.godModeActive) {
-          contract += FIFTH_PERSON_GOD_MODE_CONTRACT;
-      } else if (window.state?.keyhole?.marked) {
-          // Favored contract — softer Author, does NOT stack with God Mode
+      if (window.state?.keyhole?.marked) {
+          // Favored contract — softer Author
           contract += FIFTH_PERSON_PROXIMITY_CONTRACT;
       }
 
@@ -7133,6 +7256,84 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       summary: "Storyturns represent irreversible relational change, not intensity."
     }
   };
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // PASS ROUTING AUTHORITY
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Deterministic pass tier routing: storyturn phase × world complexity × scene type.
+  // NEVER varies based on fortune balance, subscription tier, or payment behavior.
+
+  const WORLD_COMPLEXITY_MAP = {
+    // Top-level worlds
+    Dystopia: 3,
+    PostApocalyptic: 2,
+    Historical: 2,
+    Fantasy: 2,
+    SciFi: 2,
+    Modern: 1,
+    // Subtypes that override parent
+    glass_house: 3,
+    supernatural_modern: 2,
+    superheroic_modern: 2,
+  };
+
+  function getWorldComplexity() {
+    const subtype = state.picks?.worldSubtype;
+    const world = state.picks?.world || 'Modern';
+    if (subtype && WORLD_COMPLEXITY_MAP[subtype] !== undefined) {
+      return WORLD_COMPLEXITY_MAP[subtype];
+    }
+    return WORLD_COMPLEXITY_MAP[world] ?? 2;
+  }
+
+  function resolvePassTier() {
+    const st = state.storyturn || 'ST1';
+    const complexity = getWorldComplexity();
+    const isEroticMicro = isMainCharacterIntimacySceneAllowed() && detectMainPairEroticContent();
+
+    // ST1 or ST6 → always Tier 3
+    if (st === 'ST1' || st === 'ST6') {
+      console.log(`[PASS_ROUTING] Tier 3, ST: ${st}, complexity: ${complexity}, reason: ST1/ST6`);
+      return 3;
+    }
+
+    // Erotic micro-scenes → always Tier 1
+    if (isEroticMicro) {
+      console.log(`[PASS_ROUTING] Tier 1, ST: ${st}, complexity: ${complexity}, reason: erotic micro-scene`);
+      return 1;
+    }
+
+    // High-complexity worlds at ST3/ST4 → Tier 3
+    if (complexity === 3 && (st === 'ST3' || st === 'ST4')) {
+      console.log(`[PASS_ROUTING] Tier 3, ST: ${st}, complexity: ${complexity}, reason: high-complexity ST3/ST4`);
+      return 3;
+    }
+
+    // Medium complexity → Tier 2
+    if (complexity === 2) {
+      console.log(`[PASS_ROUTING] Tier 2, ST: ${st}, complexity: ${complexity}, reason: medium complexity`);
+      return 2;
+    }
+
+    // Low complexity
+    if (complexity === 1) {
+      const tier = (st === 'ST4') ? 2 : 1;
+      console.log(`[PASS_ROUTING] Tier ${tier}, ST: ${st}, complexity: ${complexity}, reason: low complexity${st === 'ST4' ? ' ST4 bump' : ''}`);
+      return tier;
+    }
+
+    console.log(`[PASS_ROUTING] Tier 2, ST: ${st}, complexity: ${complexity}, reason: default`);
+    return 2; // default
+  }
+
+  function buildStructuredStateSummary() {
+    return `world_state: ${state.picks?.world || 'Modern'}${state.picks?.worldSubtype ? ' / ' + state.picks.worldSubtype : ''}
+relationship_state: ${state.storyturn || 'ST1'} — ${STORYTURN_CONFIG.storyturns.find(s => s.id === state.storyturn)?.name || 'Unknown'}
+power_vector: ${state.picks?.genre || 'unknown'}
+last_scene_summary: ${(state.context?.slice(-300) || 'No prior scene').slice(0, 300)}
+active_petition: ${state.fate?.pendingPetition ? state.fate.pendingPetition.text : 'none'}
+tempt_fate_active: ${state.fate?.temptFateActive ? 'yes' : 'no'}`;
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // STORYTURN — RUNTIME LOGIC
@@ -10289,7 +10490,7 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
           const coverUrl = await generateMinimalCoverV1({
               synopsis: state._synopsisMetadata || '',
               title: resolvedTitle,
-              authorName: state.coverAuthor || 'Anonymous',
+              authorName: CANONICAL_AUTHOR_NAME,
               world: state.picks?.world || 'Modern',
               genre: state.picks?.genre || 'Billionaire',
               tone: state.picks?.tone || 'Earnest',
@@ -11175,6 +11376,12 @@ Return ONLY the title, no quotes or explanation.`;
    * @param {string} path - Selected continuation path
    */
   function initializeContinuationPath(path) {
+      // TEASE TIER: Block SAME_WORLD and NEW_STORY if free story consumed
+      if (path !== CONTINUATION_PATHS.CONTINUE && isTeaseTier() && state.freeStoryConsumed && !hasTeaseUnlockCondition()) {
+          console.warn('[TEASE] Continuation path blocked — free story consumed');
+          window.showPaywall('unlock');
+          return;
+      }
       state.continuationPath = path;
 
       if (path === CONTINUATION_PATHS.CONTINUE) {
@@ -11366,6 +11573,12 @@ Return ONLY the title, no quotes or explanation.`;
    * Reset state for a new story (preserves subscription/payment state)
    */
   function resetForNewStory() {
+      // TEASE TIER: Prevent reset unless user has upgraded
+      if (isTeaseTier() && state.freeStoryConsumed && !hasTeaseUnlockCondition()) {
+          console.warn('[TEASE] New story blocked — free story consumed, no unlock condition');
+          window.showPaywall('unlock');
+          return;
+      }
       state.storyEnded = false;
       state.turnCount = 0;
       state._loggedStoryStart = false;
@@ -11387,12 +11600,6 @@ Return ONLY the title, no quotes or explanation.`;
       // Reset visual state
       state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {}, visualizedScenes: {} };
 
-      // Reset per-story visualization credits (preserve globalCredits and payAsYouGoEnabled)
-      if (state.vizEconomy) {
-          state.vizEconomy.storyCredits = 0;
-          state.vizEconomy.lastCreditedSceneCount = 0;
-          state.vizEconomy.awardedMilestones = [];
-      }
 
       // Clear cover state
       if (_coverAbortController) { _coverAbortController.abort(); _coverAbortController = null; }
@@ -12220,22 +12427,7 @@ Return ONLY the title, no quotes or explanation.`;
           });
       }
 
-      // RULE 8: God Mode — Author does NOT know Player exists
-      if (isGodMode) {
-          const playerAwarenessPatterns = [
-              /\bFate\b.{0,50}\b(player|user|you|your)\b/gi,
-              /\bFate\b.{0,50}\b(knew|sensed|felt)\b.{0,30}\b(was being|someone)\b/gi
-          ];
-          for (const pattern of playerAwarenessPatterns) {
-              if (pattern.test(sceneText)) {
-                  errors.push({
-                      code: VALIDATION_ERRORS.POV_GODMODE_PLAYER_AWARENESS,
-                      message: 'God Mode: Fate must NOT know Player exists'
-                  });
-                  break;
-              }
-          }
-      }
+
 
       const metrics = {
           authorMentions,
@@ -12276,7 +12468,7 @@ Return ONLY the title, no quotes or explanation.`;
           const povResult = validatePOV(lastScene, {
               sceneIndex: state.turnCount || 0,
               isErotic: isIntimacyAllowedAtCurrentStoryturn() && state.turnCount > 0,
-              isGodMode: state.godModeActive || false
+              isGodMode: false
           });
           results.pov = povResult;
       }
@@ -12605,7 +12797,7 @@ Return ONLY the title, no quotes or explanation.`;
       // Reset story shape snapshot (forces "Begin Story" on new session)
       state._lastGeneratedShapeSnapshot = null;
       // Update Cover$ credit display (daily credits persist across sessions)
-      if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
+      if (window.updateFortuneDisplay) window.updateFortuneDisplay();
 
       // Reset reader page index
       if (typeof resetBookState === 'function') resetBookState();
@@ -12706,32 +12898,16 @@ Return ONLY the title, no quotes or explanation.`;
       const el = document.getElementById('profileStatusContent');
       if (!el) return;
 
-      const currentStoryId = typeof makeStoryId === 'function' ? makeStoryId() : null;
-      const powerLevel = currentStoryId ? getGodModePowerLevel(currentStoryId) : 0;
-
       const tier = state.tier || 'free';
       const hasStorypass =
           typeof hasStorypassForCurrentStory === 'function'
               ? hasStorypassForCurrentStory()
               : false;
 
-      const gm = state.godMode || {};
-      let godModeStatus = 'None';
-
-      if (gm.owned) {
-          godModeStatus = 'Permanent';
-      } else if (gm.tempGrantedAt && !gm.activeStoryId) {
-          godModeStatus = 'Temp granted (not activated)';
-      } else if (powerLevel > 0) {
-          godModeStatus = 'Temp active (this story)';
-      } else if (gm.tempGrantedAt && gm.activeStoryId && powerLevel === 0) {
-          godModeStatus = 'Temp expired';
-      }
-
       el.innerHTML =
           `<div><strong>Tier:</strong> ${tier}</div>` +
           `<div><strong>Storypass (this story):</strong> ${hasStorypass ? 'Yes' : 'No'}</div>` +
-          `<div><strong>God Mode:</strong> ${godModeStatus}</div>`;
+          `<div><strong>Fortunes:</strong> ${state.fortunes || 0}</div>`;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -13152,13 +13328,10 @@ Return ONLY the title, no quotes or explanation.`;
           // Show breadcrumb at 'shape' step
           if (window.updateBreadcrumb) window.updateBreadcrumb('shape');
           // Update Cover$ credit display
-          if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
+          if (window.updateFortuneDisplay) window.updateFortuneDisplay();
       } else if (id === 'game') {
           // Game screen breadcrumb is managed by Cover/Setting/Story views
           // Don't update here — let the view functions handle it
-          // Show God Mode button in solo mode
-          const godBtn = document.getElementById('gameGodModeBtn');
-          if (godBtn) godBtn.classList.toggle('hidden', state.mode !== 'solo');
       } else {
           if (typeof stopAmbientCardSparkles === 'function') stopAmbientCardSparkles();
           // Stop fate card sparkle cycle when leaving game screen
@@ -13390,14 +13563,13 @@ Return ONLY the title, no quotes or explanation.`;
   }
 
   function getSexAllowedAtWordCount() {
-    if(state.godModeActive) return 0;
     const target = state.storyTargetWords;
     // Intensity no longer modifies timing — use standard 30% threshold
     return Math.floor(target * 0.30);
   }
 
   function maybeFlipConsummation(text){
-     if(state.godModeActive || state.batedBreathActive || state.mode !== 'solo') return;
+     if(state.batedBreathActive || state.mode !== 'solo') return;
      if(state.storyStage !== 'pre-intimacy') return; 
 
      let flipped = false;
@@ -13606,7 +13778,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       return true;
   }
 
-  function resolveFateOutcome(stance, classification, sacrificeChoice, powerLevel = 0) {
+  function resolveFateOutcome(stance, classification, sacrificeChoice) {
       let weights;
       if (classification !== 'general' && !canAttemptGreaterPetition()) {
           weights = { benevolent: 10, twist: 60, silent: 30 };
@@ -13621,58 +13793,14 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       if (sacrificeChoice === 'offer') weights.benevolent = (weights.benevolent || 0) + 10;
       if (sacrificeChoice === 'withhold') weights.twist = (weights.twist || 0) + 10;
 
-      // Keyhole Boon — Favored reservoir drain boosts powerLevel
-      // God Mode is sole influence on powerLevel when active — Favored does not amplify intrusion
-      let keyholeBoost = 0;
+      // Keyhole Boon — Favored reservoir drain boosts benevolent weight
       if (state.keyhole?.marked && state.keyhole.favorReservoir > 0 && !state.keyhole.boonUsedThisScene) {
           const drainAmount = Math.min(state.keyhole.favorReservoir, 25);
           state.keyhole.favorReservoir -= drainAmount;
           state.keyhole.boonUsedThisScene = true;
           state.keyhole.totalBoonsDrained += drainAmount;
-          // Only apply boost if God Mode is not active
-          if (!state.godModeActive) {
-              keyholeBoost = (drainAmount / 100) * 0.5;
-          }
-      }
-      powerLevel = Math.min(1, powerLevel + keyholeBoost);
-
-      // God Mode power bias — blend toward 80/20 benevolent/twist
-      if (powerLevel > 0) {
-        const gmTotal =
-          (weights.benevolent || 0) +
-          (weights.twist || 0) +
-          (weights.silent || 0) +
-          (weights.neutral || 0);
-
-        if (gmTotal > 0) {
-          const targetB = 0.8;
-          const targetT = 0.2;
-
-          const currentB = (weights.benevolent || 0) / gmTotal;
-          const currentT = (weights.twist || 0) / gmTotal;
-
-          const blendedB = currentB + (targetB - currentB) * powerLevel;
-          const blendedT = currentT + (targetT - currentT) * powerLevel;
-
-          weights.benevolent = blendedB;
-          weights.twist = blendedT;
-
-          if ('silent' in weights) weights.silent = (weights.silent / gmTotal) * (1 - powerLevel);
-          if ('neutral' in weights) weights.neutral = (weights.neutral / gmTotal) * (1 - powerLevel);
-
-          // Renormalize to sum = 1
-          const newTotal =
-            (weights.benevolent || 0) +
-            (weights.twist || 0) +
-            (weights.silent || 0) +
-            (weights.neutral || 0);
-
-          if (newTotal > 0) {
-            for (const k in weights) {
-              weights[k] = weights[k] / newTotal;
-            }
-          }
-        }
+          const keyholeBoost = (drainAmount / 100) * 0.5;
+          weights.benevolent = (weights.benevolent || 0) + keyholeBoost * 100;
       }
 
       const total = Object.values(weights).reduce((s, v) => s + v, 0);
@@ -13717,12 +13845,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const card = document.querySelector('.petition-fate-card');
       if (!card) return;
 
-      // Compute God Mode eligibility for this ritual session
-      const currentStoryId = makeStoryId();
-      const powerLevel = getGodModePowerLevel(currentStoryId);
-      const tierOk = state.tier === 'subscriber' || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory());
-      state.godModeEligibleThisRitual = tierOk && powerLevel > 0;
-      state.godModeActive = false;
 
       // Telemetry: petition opened (once per session)
       if (!state._loggedPetitionOpen) {
@@ -13812,6 +13934,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           const input = document.getElementById('petitionZoomInput');
           const text = input?.value?.trim();
           if (!text) return;
+
+          // Enforce 1 petition per scene
+          if (state.petitionUsedThisScene) {
+              if (typeof showToast === 'function') showToast('You have already petitioned Fate this scene.');
+              return;
+          }
 
           const classification = classifyPetition(text);
           const isGreater = classification !== 'general';
@@ -13932,10 +14060,24 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       enableTurnControls();
   }
 
-  function completePetitionRitual(text, classification, sacrificeChoice, offerBoost = 0) {
+  async function completePetitionRitual(text, classification, sacrificeChoice, offerBoost = 0, petitionCost = 1) {
       const resultEl = document.getElementById('petitionResult');
 
       const isGreater = classification !== 'general';
+
+      // Burn fortunes for petition (max narrative tilt capped at 20%)
+      if (petitionCost > 0) {
+          const burned = await consumeFortune(petitionCost, 'petition');
+          if (!burned) {
+              if (resultEl) {
+                  resultEl.textContent = 'Insufficient Fortunes to petition Fate.';
+                  resultEl.classList.remove('hidden');
+              }
+              enableTurnControls();
+              return;
+          }
+      }
+      state.petitionUsedThisScene = true;
 
       // Warm welcome: first petition ever → force benevolent general
       const isFirst = state.fate && !state.fate.lastGreaterSceneIndex && !state.fate.minorUsedThisScene && !state.fate.greaterUsedThisScene;
@@ -13943,16 +14085,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       if (isFirst && !isGreater) {
           outcome = 'benevolent';
       } else {
-          const currentStoryId = makeStoryId();
-          let powerLevel = getGodModePowerLevel(currentStoryId);
-
-          // God Mode requires Subscriber OR Storypass for this story
-          if (!(state.subscribed || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory()))) powerLevel = 0;
-
-          // Offering semantic match boost
-          powerLevel = Math.min(1, powerLevel + offerBoost);
-
-          outcome = resolveFateOutcome(state.fate?.stance || 'neutral', classification, sacrificeChoice, powerLevel);
+          outcome = resolveFateOutcome(state.fate?.stance || 'neutral', classification, sacrificeChoice);
       }
 
       // Update keyhole alignment based on petition outcome
@@ -14494,6 +14627,41 @@ RULES:
   // Taste mode check
   function isTasteMode() {
       return state.storyLength === 'taste' && state.access === 'free';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TEASE TIER ENFORCEMENT
+  // Tease = free access, no storypass, no subscription
+  // ═══════════════════════════════════════════════════════════════════
+
+  function isTeaseTier() {
+      return state.access === 'free' && !state.subscribed && !state.hasPass;
+  }
+
+  function isTeaseSceneCapped() {
+      if (state.tempQuillAllowance > 0) return false;
+      return isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP;
+  }
+
+  function isTeaseStoryBlocked() {
+      return isTeaseTier() && state.freeStoryConsumed;
+  }
+
+  function hasTeaseUnlockCondition() {
+      return state.subscribed || !!state.hasPass || (state.storyId && hasStoryPass(state.storyId));
+  }
+
+  async function markFreeStoryConsumed() {
+      if (state.freeStoryConsumed) return;
+      state.freeStoryConsumed = true;
+      try {
+          const user = sb.auth.getUser ? (await sb.auth.getUser()).data?.user : null;
+          if (user) {
+              await sb.from('profiles').update({ free_story_consumed: true }).eq('id', user.id);
+          }
+      } catch (err) {
+          console.error('[TEASE] Failed to persist free_story_consumed:', err);
+      }
   }
 
   // Get random suggestion from pool
@@ -15072,6 +15240,62 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   function applyAccessLocks(){ applyTierUI(); }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // PRIOR SCENE READ-ONLY LOCK
+  // When viewing a previous scene (not the latest), hide all interaction
+  // controls. Keep: prose, card headers, Visualize button, cover rendering.
+  // ═══════════════════════════════════════════════════════════════════════
+  function applyPriorSceneLock() {
+      const currentViewPage = StoryPagination.getCurrentPageIndex();
+      const latestPage = StoryPagination.getPageCount() - 1;
+      const isPriorScene = latestPage > 0 && currentViewPage < latestPage;
+
+      // Elements to hide on prior scenes
+      const interactiveIds = [
+          'cardMount',         // Fate cards grid
+          'fateCardHeader',    // "Let Fate Guide You" header
+          'metaControls',      // Meta stance buttons (Aid/Resist/Tempt)
+          'actionWrapper',     // Action input
+          'dialogueWrapper',   // Dialogue input
+          'gameIntensity',     // Intensity selector
+          'edgeCovenantBtn',   // Edge Covenant
+          'saveBtn',           // Save button
+          'submitBtn',         // Submit button
+      ];
+
+      // Also hide petition button if present
+      const petitionBtns = document.querySelectorAll('[onclick*="petitionFate"], [onclick*="openPetition"]');
+
+      for (const id of interactiveIds) {
+          const el = document.getElementById(id);
+          if (!el) continue;
+          if (isPriorScene) {
+              el.dataset._priorHidden = el.style.display || '';
+              el.style.display = 'none';
+          } else if (el.dataset._priorHidden !== undefined) {
+              el.style.display = el.dataset._priorHidden;
+              delete el.dataset._priorHidden;
+          }
+      }
+
+      petitionBtns.forEach(btn => {
+          if (isPriorScene) {
+              btn.dataset._priorHidden = btn.style.display || '';
+              btn.style.display = 'none';
+          } else if (btn.dataset._priorHidden !== undefined) {
+              btn.style.display = btn.dataset._priorHidden;
+              delete btn.dataset._priorHidden;
+          }
+      });
+
+      // Visualize button stays visible on prior scenes
+      const vizBtn = document.getElementById('vizSceneBtn');
+      if (vizBtn && isPriorScene) {
+          vizBtn.style.display = '';
+      }
+  }
+  window.applyPriorSceneLock = applyPriorSceneLock;
+
   // FIX #4: Expose for post-render tier rehydration
   window.applyAccessLocks = applyAccessLocks;
   window.applyTierUI = applyTierUI;
@@ -15266,8 +15490,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
 
     // SUBSCRIPTION SHORT-CIRCUIT: Subscribers should never see paywall
-    // (except for God Mode which is a separate $20 purchase)
-    if (state.subscribed && mode !== 'god') {
+    if (state.subscribed) {
         console.warn('[PAYWALL] showPaywall called for subscriber — this should not happen');
         return; // Silently ignore — subscriber has full access
     }
@@ -15298,16 +15521,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         state._paywallSubContext = null;
     }
 
-    const gm = document.getElementById('godModePay');
     const sp = document.getElementById('standardPay');
-
-    if(mode === 'god') {
-        if(gm) gm.classList.remove('hidden');
-        if(sp) sp.classList.add('hidden');
-    } else {
-        if(gm) gm.classList.add('hidden');
-        if(sp) sp.classList.remove('hidden');
-    }
+    if(sp) sp.classList.remove('hidden');
 
     // ═══════════════════════════════════════════════════════════════════════
     // STORYPASS STATE: HIDE when excluded by registry (STORYPASS_EXCLUSIONS)
@@ -15335,6 +15550,24 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const _diaInput = document.getElementById('dialogueInput');
     if (_actInput) _actInput.disabled = true;
     if (_diaInput) _diaInput.disabled = true;
+
+    // TEASE CAP VARIANT: Show ritual invitation copy instead of generic heading
+    const teaseCliffCopy = document.getElementById('teaseCliffhangerCopy');
+    const payHeading = document.getElementById('payModalHeading');
+    const isTeaseCap = (isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP) || isTeaseStoryBlocked();
+    if (teaseCliffCopy) teaseCliffCopy.classList.toggle('hidden', !isTeaseCap);
+    if (payHeading) payHeading.classList.toggle('hidden', isTeaseCap);
+
+    // Show/hide Offering sacrifice option for tease cap
+    const teaseOfferingEl = document.getElementById('teaseOfferingOption');
+    if (teaseOfferingEl) {
+        teaseOfferingEl.classList.toggle('hidden', !isTeaseCap);
+    }
+    const balanceHint = document.getElementById('offeringBalanceHint');
+    if (balanceHint && isTeaseCap) {
+        const credits = (state._cachedCredits != null) ? state._cachedCredits : null;
+        balanceHint.textContent = credits != null ? `(${credits} offering${credits !== 1 ? 's' : ''} remaining)` : '';
+    }
 
     pm.classList.remove('hidden');
 
@@ -15405,6 +15638,65 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Clear sub-context after handling
     state._paywallSubContext = null;
   };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // OFFERING SACRIFICE HANDLER — Tease cap single-use bypass
+  // Deducts 1 fortune via consume-fortune API, grants tempQuillAllowance
+  // ═══════════════════════════════════════════════════════════════════════
+  const QUILL_SCENES_PER_OFFERING = 3; // Scenes granted per offering sacrifice
+
+  document.getElementById('btnSacrificeOffering')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btnSacrificeOffering');
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = 'Sacrificing...';
+
+      try {
+          const user = sb.auth.getUser ? (await sb.auth.getUser()).data?.user : null;
+          if (!user) {
+              alert('Sign in to sacrifice an Offering.');
+              btn.disabled = false;
+              btn.textContent = 'Sacrifice 1 Fortune to fill Fate\'s quill';
+              return;
+          }
+
+          const res = await fetch('/api/consume-fortune', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: user.id, amount: 1, context: 'offering_sacrifice' })
+          });
+          const data = await res.json();
+
+          if (!res.ok || data.error === 'insufficient_fortunes') {
+              btn.textContent = 'No Fortunes remaining';
+              setTimeout(() => {
+                  btn.disabled = false;
+                  btn.textContent = 'Sacrifice 1 Fortune to fill Fate\'s quill';
+              }, 2000);
+              return;
+          }
+
+          // Grant temporary quill allowance — does NOT stack
+          state.tempQuillAllowance = QUILL_SCENES_PER_OFFERING;
+          state.fortunes = data.fortunesRemaining;
+          if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+          console.log('[OFFERING] Sacrifice accepted. Quill allowance:', state.tempQuillAllowance, 'Fortunes remaining:', data.fortunesRemaining);
+
+          // Dismiss paywall and re-enable inputs
+          document.getElementById('payModal')?.classList.add('hidden');
+          if (window.onPaywallDismiss) window.onPaywallDismiss();
+
+          // Visual confirmation
+          if (typeof showToast === 'function') showToast("Fate's quill fills with ink...");
+      } catch (err) {
+          console.error('[OFFERING] Sacrifice failed:', err);
+          btn.textContent = 'Sacrifice failed — try again';
+          setTimeout(() => {
+              btn.disabled = false;
+              btn.textContent = 'Sacrifice 1 Offering to fill Fate\'s quill';
+          }, 2000);
+      }
+  });
 
   /**
    * VALIDATION GUARD: Paywall routing integrity check
@@ -15495,6 +15787,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           }
       }
 
+      // RULE: Offering pack purchase resets tease lock (allows new Chronicle)
+      if (purchaseType === 'offering') {
+          state.freeStoryConsumed = false;
+          toastMessage = "Offerings received. A new story awaits.";
+          console.log('[ENTITLEMENT] Offering pack purchased — tease lock reset');
+      }
+
       // RULE: Subscription can upgrade to Affair
       if (purchaseType === 'sub' && newAccess === 'sub') {
           if (['fling', 'taste'].includes(state.storyLength)) {
@@ -15516,6 +15815,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Clear purchase state
       state.lastPurchaseType = null;
       state.pendingUpgradeToAffair = false;
+
+      // TEASE TIER: Purchase clears free story consumption lock
+      state.freeStoryConsumed = false;
 
       // CRITICAL: Apply all lock states AFTER access is resolved
       console.log('[ENTITLEMENT] Applying UI locks with access:', state.access);
@@ -15601,59 +15903,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
   };
 
-  const gmCheck = $('godModeCheck');
-  if(gmCheck) {
-      gmCheck.addEventListener('change', (e) => {
-          if(!e.target.checked) return;
-          e.target.checked = false;
-          if (!state.godModeEligibleThisRitual) return;
-          const unlocked = !!state.godMode?.owned || !!state.godModeEligibleThisRitual;
-          if(!unlocked) window.showPaywall('god');
-          else if(confirm("WARNING: God Mode permanently removes this story from canon.")) activateGodMode();
-      });
-  }
-
-  function activateGodMode() {
-      // Temp God Mode activation writeback (story-scoped)
-      if (
-        !state.godMode.owned &&
-        state.godMode.tempGrantedAt &&
-        state.godMode.tempDurationHours &&
-        !state.godMode.activeStoryId
-      ) {
-        const currentStoryId = makeStoryId();
-        const now = new Date();
-        state.godMode.activeStoryId = currentStoryId;
-        state.godMode.activeStartedAt = now.toISOString();
-        state.godMode.tempExpiresAt = new Date(now.getTime() + (state.godMode.tempDurationHours * 3600000)).toISOString();
-
-        // Persist to Supabase (non-blocking, uses current session)
-        if (sb) {
-          (async () => {
-            try {
-              const { data: { session } } = await sb.auth.getSession();
-              const userId = session?.user?.id;
-              if (!userId) return;
-              const { error } = await sb.from('profiles')
-                .update({
-                  god_mode_active_story_id: state.godMode.activeStoryId,
-                  god_mode_active_started_at: state.godMode.activeStartedAt,
-                  god_mode_temp_expires_at: state.godMode.tempExpiresAt
-                })
-                .eq('id', userId);
-              if (error) console.error('God Mode activation writeback failed:', error);
-            } catch (e) {
-              console.error('God Mode activation writeback failed:', e);
-            }
-          })();
-        }
-      }
-
-      state.sandbox = true;
-      state.godModeActive = true;
-      state.storyStage = 'sandbox';
-      alert("God Mode Active.");
-  }
 
   function makeStoryId(){
     const existing = localStorage.getItem('sb_current_story_id');
@@ -16140,6 +16389,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
    * Clear all story state for a fresh start
    */
   function clearStoryForNewStart() {
+    // TEASE TIER: Prevent story reset unless user has upgraded
+    if (isTeaseTier() && state.freeStoryConsumed && !hasTeaseUnlockCondition()) {
+        console.warn('[TEASE] Story reset blocked — free story consumed, no unlock condition');
+        window.showPaywall('unlock');
+        return;
+    }
     // Clear story identifiers
     state.storyId = null;
     state.turnCount = 0;
@@ -16514,6 +16769,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   window.restart = function(){
+    // TEASE TIER: Prevent restart unless user has upgraded
+    if (isTeaseTier() && state.freeStoryConsumed && !hasTeaseUnlockCondition()) {
+        console.warn('[TEASE] Restart blocked — free story consumed, no unlock condition');
+        window.showPaywall('unlock');
+        return;
+    }
     if(state.mode === 'couple') window.coupleCleanup();
     if (window.stopSparkleCycle) window.stopSparkleCycle(); // Clear any active fate card sparkles
     state.mode = 'solo';
@@ -16620,20 +16881,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // (Quill & Veto game modal handlers removed — replaced by Petition Fate)
 
-  // God Mode button in story interface
-  $('gameGodModeBtn')?.addEventListener('click', () => {
-      // Compute eligibility inline (same logic as openPetitionZoom)
-      const currentStoryId = typeof makeStoryId === 'function' ? makeStoryId() : '';
-      const powerLevel = typeof getGodModePowerLevel === 'function' ? getGodModePowerLevel(currentStoryId) : 0;
-      const tierOk = state.tier === 'subscriber' || (typeof hasStorypassForCurrentStory === 'function' && hasStorypassForCurrentStory());
-      const unlocked = !!state.godMode?.owned || (tierOk && powerLevel > 0);
-
-      if (!unlocked) {
-          if (window.showPaywall) window.showPaywall('god');
-      } else if (confirm("WARNING: God Mode permanently removes this story from canon.")) {
-          activateGodMode();
-      }
-  });
 
   // Petition Fate submit handler
   // ── Petition Ritual: Seal Petition handler ──
@@ -16780,6 +17027,57 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       resetVaultState();
       if (typeof window.continueStory === 'function') window.continueStory();
   });
+
+  // Forbidden Library — visible to all, clickable for admin only.
+  // _supabaseProfileId === session.user.id (set by ensureAnonSession → getSession).
+  // Admin check compares the Supabase auth user id against an allowlist.
+  // Set window.__SB_ADMIN_USER_ID to your auth user UUID before app.js loads.
+  const FORBIDDEN_LIBRARY_ADMIN_IDS = [
+    (typeof window !== 'undefined' && window.__SB_ADMIN_USER_ID) || ''
+  ].filter(Boolean);
+
+  function isForbiddenLibraryAdmin() {
+    // _supabaseProfileId is the auth session user.id, set in bootApp() from ensureAnonSession()
+    return _supabaseProfileId && FORBIDDEN_LIBRARY_ADMIN_IDS.includes(_supabaseProfileId);
+  }
+
+  // Upgrade button appearance if admin
+  function updateForbiddenLibraryBtn() {
+    const btn = $('menuForbiddenLibraryBtn');
+    if (!btn) return;
+    if (isForbiddenLibraryAdmin()) {
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.setAttribute('aria-disabled', 'false');
+    } else {
+      btn.style.opacity = '0.4';
+      btn.style.cursor = 'not-allowed';
+      btn.setAttribute('aria-disabled', 'true');
+    }
+  }
+
+  $('menuForbiddenLibraryBtn')?.addEventListener('click', (e) => {
+      if (!isForbiddenLibraryAdmin()) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+      }
+      document.getElementById('menuOverlay')?.classList.add('hidden');
+      resetVaultState();
+      document.getElementById('forbiddenLibraryModal')?.classList.remove('hidden');
+  });
+
+  $('menuForbiddenLibraryBtn')?.addEventListener('keydown', (e) => {
+      if (!isForbiddenLibraryAdmin() && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          e.stopPropagation();
+      }
+  });
+
+  $('forbiddenLibraryCloseBtn')?.addEventListener('click', () => {
+      document.getElementById('forbiddenLibraryModal')?.classList.add('hidden');
+  });
+
   $('ageYes')?.addEventListener('click', () => window.showScreen('legalGate'));
 
   // Tier card hover-flip + click-to-proceed
@@ -16842,12 +17140,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // ═══════════════════════════════════════════════════════════════════════════
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE CREDIT SYSTEM — Prepaid credit pack model
+  // FORTUNE SYSTEM — All content-generating actions cost Fortunes
   // ═══════════════════════════════════════════════════════════════════════════
-  // - 1 image generation = 1 credit (covers + scene visualizations)
-  // - Credits purchased in packs (20 / 50 / 120)
-  // - If credits = 0 → show purchase modal
-  // - God Mode excluded from this system
+  // - 1 fortune per scene, visualization, cover regen
+  // - Subscription fortunes consumed first, then purchased fortunes
+  // - If fortunes = 0 → show purchase modal
   // ═══════════════════════════════════════════════════════════════════════════
 
   // Verboten terms that may cause image generation to fail
@@ -16858,81 +17155,53 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       'drugs', 'cocaine', 'heroin', 'meth', 'racist', 'hate'
   ];
 
-  // Check if user has image credits available
-  function hasImageCredits() {
-      if (state.godModeEnabled) return true;
-      return (state.imageCredits || 0) > 0;
+  // Check if user has fortunes available
+  function hasFortunes() {
+      return (state.fortunes || 0) > 0;
   }
 
-  // Consume one image credit via server-side atomic decrement
-  async function consumeImageCredit() {
-      if (state.godModeEnabled) return true;
-      if ((state.imageCredits || 0) <= 0) {
-          console.warn('[ImageCredits] Attempted credit consumption with 0 balance');
+  // Consume fortunes via server-side atomic decrement
+  async function consumeFortune(amount = 1, context = 'general') {
+      if ((state.fortunes || 0) < amount) {
+          console.warn('[Fortunes] Attempted consumption with insufficient balance');
           return false;
       }
       try {
-          const resp = await fetch('/api/consume-credit', {
+          const resp = await fetch('/api/consume-fortune', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: _supabaseProfileId })
+              body: JSON.stringify({ userId: _supabaseProfileId, amount, context })
           });
           const data = await resp.json();
           if (!resp.ok) {
-              console.warn('[ImageCredits] Server declined credit consumption:', data.error);
-              if (data.creditsRemaining !== undefined) state.imageCredits = data.creditsRemaining;
+              console.warn('[Fortunes] Server declined fortune consumption:', data.error);
+              if (data.fortunesRemaining !== undefined) state.fortunes = data.fortunesRemaining;
               return false;
           }
-          if (data.creditsRemaining !== null && data.creditsRemaining !== undefined) {
-              state.imageCredits = data.creditsRemaining;
+          if (data.fortunesRemaining !== null && data.fortunesRemaining !== undefined) {
+              state.fortunes = data.fortunesRemaining;
           }
-          console.log('[ImageCredits] Credit consumed (server). Remaining:', state.imageCredits);
-          logEvent('credit_spent');
+          console.log(`[Fortunes] ${amount} fortune(s) consumed (context: ${context}). Remaining:`, state.fortunes);
+          logEvent('fortune_spent', { amount, context });
+          if (window.updateFortuneDisplay) window.updateFortuneDisplay();
           return true;
       } catch (err) {
-          console.error('[ImageCredits] Server credit consumption failed:', err);
+          console.error('[Fortunes] Server fortune consumption failed:', err);
           return false;
       }
   }
 
-  // Persist reward credits to Supabase (credit consumption handled server-side)
-  function persistImageCredits() {
-      if (sb && _supabaseProfileId) {
-          sb.from('profiles')
-            .update({
-                image_credits: state.imageCredits || 0,
-                last_scene_rewarded: state.lastSceneRewarded || 0
-            })
-            .eq('id', _supabaseProfileId)
-            .then(({ error }) => {
-                if (error) console.error('[ImageCredits] Supabase persist error:', error);
-            });
-      }
-  }
-
-  // Load imageCredits + lastSceneRewarded from localStorage (Supabase hydration happens in ensureAnonSession)
-  function loadImageCreditsFromLocal() {
-      const stored = localStorage.getItem('sb_image_credits');
-      if (stored !== null) {
-          state.imageCredits = parseInt(stored, 10) || 0;
-      }
-      const storedReward = localStorage.getItem('sb_last_scene_rewarded');
-      if (storedReward !== null) {
-          state.lastSceneRewarded = parseInt(storedReward, 10) || 0;
-      }
-  }
-
-  // Update the cover credit display UI
-  function updateCoverCreditDisplay() {
+  // Update the fortune display UI
+  function updateFortuneDisplay() {
       const display = $('coverCreditDisplay');
-      if (!display) return;
-      if (state.godModeEnabled) {
-          display.textContent = 'God Mode: Unlimited';
-          display.classList.add('god-mode');
-      } else {
-          const credits = state.imageCredits || 0;
-          display.textContent = `${credits} image credit${credits !== 1 ? 's' : ''} remaining`;
-          display.classList.remove('god-mode');
+      if (display) {
+          const f = state.fortunes || 0;
+          display.textContent = `${f} Fortune${f !== 1 ? 's' : ''} remaining`;
+      }
+      // Also update the persistent fortune counter in game UI
+      const gameDisplay = $('fortuneBalanceDisplay');
+      if (gameDisplay) {
+          gameDisplay.textContent = state.fortunes || 0;
       }
   }
 
@@ -16997,38 +17266,37 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       };
   }
 
-  // Show credit purchase modal when user has no image credits
-  function openCreditPurchaseModal() {
+  // Show fortune purchase modal
+  function openFortunePurchaseModal() {
       const modal = $('creditPurchaseModal');
       if (!modal) {
-          console.error('[ImageCredits] Purchase modal not found');
+          console.error('[Fortunes] Purchase modal not found');
           return;
       }
-      // Update credit display in modal
       const bal = $('creditModalBalance');
-      if (bal) bal.textContent = state.imageCredits || 0;
+      if (bal) bal.textContent = state.fortunes || 0;
       modal.classList.remove('hidden');
   }
 
-  // Hide credit purchase modal
-  function closeCreditPurchaseModal() {
+  // Hide fortune purchase modal
+  function closeFortunePurchaseModal() {
       const modal = $('creditPurchaseModal');
       if (modal) modal.classList.add('hidden');
   }
 
-  // Stub: handle credit pack purchase (Stripe integration later)
-  function purchaseCreditPack(packSize, priceLabel) {
-      // DEV BYPASS: fake credit purchase
+  // Handle fortune pack purchase (Stripe integration)
+  function purchaseFortunePack(packSize, priceLabel) {
       if (window._devBypass) {
-        console.log(`%c[DEV] Faking credit purchase: +${packSize}`, 'color: #ffd700');
-        state.imageCredits = (state.imageCredits || 0) + packSize;
-        closeCreditPurchaseModal();
-        showToast(`+${packSize} image credits added (dev mode)`);
+        console.log(`%c[DEV] Faking fortune purchase: +${packSize}`, 'color: #ffd700');
+        state.fortunes = (state.fortunes || 0) + packSize;
+        closeFortunePurchaseModal();
+        if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+        showToast(`+${packSize} Fortunes added (dev mode)`);
         return;
       }
-      console.log(`[ImageCredits] Purchase requested: ${packSize} credits (${priceLabel})`);
-      showToast('Credit purchase coming soon. Check back shortly!');
-      closeCreditPurchaseModal();
+      console.log(`[Fortunes] Purchase requested: ${packSize} fortunes (${priceLabel})`);
+      showToast('Fortune purchase coming soon. Check back shortly!');
+      closeFortunePurchaseModal();
   }
 
   // Generate cover with custom (paid) prompt
@@ -17067,7 +17335,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           const fullPrompt = `BOOK COVER IMAGE — PAID CUSTOM GENERATION
 
 TITLE: "${title}"
-AUTHOR LINE: "by Anonymous"
+AUTHOR LINE: "by S. Tory Bound"
 
 USER PROMPT:
 ${customPrompt}
@@ -17146,11 +17414,11 @@ The final image must look like a real published novel cover.`;
   }
 
   // Expose image credit functions
-  window.openCreditPurchaseModal = openCreditPurchaseModal;
-  window.closeCreditPurchaseModal = closeCreditPurchaseModal;
-  window.purchaseCreditPack = purchaseCreditPack;
-  window.hasImageCredits = hasImageCredits;
-  window.updateCoverCreditDisplay = updateCoverCreditDisplay;
+  window.openFortunePurchaseModal = openFortunePurchaseModal;
+  window.closeFortunePurchaseModal = closeFortunePurchaseModal;
+  window.purchaseFortunePack = purchaseFortunePack;
+  window.hasFortunes = hasFortunes;
+  window.updateFortuneDisplay = updateFortuneDisplay;
 
   // EARNED COVER SYSTEM exports
   window.getCurrentCoverStage = getCurrentCoverStage;
@@ -17284,11 +17552,11 @@ The final image must look like a real published novel cover.`;
       }
 
       // ═══════════════════════════════════════════════════════════════════
-      // IMAGE CREDIT CHECK — Must have credits or show purchase modal
+      // FORTUNE CHECK — First cover is free, subsequent regens cost 1 fortune
       // ═══════════════════════════════════════════════════════════════════
-      if (!hasImageCredits()) {
-          console.log('[ImageCredits] No credits — showing purchase modal');
-          openCreditPurchaseModal();
+      if (_coverGenUsed && !hasFortunes()) {
+          console.log('[Fortunes] No fortunes for cover regen — showing purchase modal');
+          openFortunePurchaseModal();
           return;
       }
 
@@ -17360,7 +17628,7 @@ The final image must look like a real published novel cover.`;
           const coverUrl = await generateMinimalCoverV1({
               synopsis: state._synopsisMetadata || '',
               title: resolvedTitle,
-              authorName: state.coverAuthor || 'Anonymous',
+              authorName: CANONICAL_AUTHOR_NAME,
               world: state.picks?.world || 'Modern',
               genre: state.picks?.genre || 'Billionaire',
               tone: state.picks?.tone || 'Earnest',
@@ -17381,10 +17649,12 @@ The final image must look like a real published novel cover.`;
           }
 
           // ═══════════════════════════════════════════════════════════════
-          // IMAGE CREDIT CONSUMPTION — Only on successful image URL
+          // FORTUNE CONSUMPTION — First cover free, subsequent regens cost 1
           // ═══════════════════════════════════════════════════════════════
-          await consumeImageCredit();
-          updateCoverCreditDisplay();
+          if (_coverGenUsed) {
+              await consumeFortune(1, 'cover_regen');
+          }
+          if (window.updateFortuneDisplay) window.updateFortuneDisplay();
 
           _preGeneratedCoverUrl = coverUrl;
           _coverGenUsed = true;
@@ -22308,7 +22578,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           corridorSelections.set('authorship', 'manual');
           break;
         case 'storybeau':
-          const randomArch = ARCHETYPE_ORDER[Math.floor(Math.random() * ARCHETYPE_ORDER.length)];
+          const randomArch = weightedArchetypeSelection();
           state.archetype = state.archetype || {};
           state.archetype.primary = randomArch;
           corridorSelections.set('storybeau', randomArch);
@@ -25561,9 +25831,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           y: destinyRect.top + destinyRect.height / 2
       };
 
-      // Randomly select one archetype
-      const randomIndex = Math.floor(Math.random() * ARCHETYPE_ORDER.length);
-      const chosenId = ARCHETYPE_ORDER[randomIndex];
+      // Select archetype weighted by romance vector
+      const chosenId = weightedArchetypeSelection();
       const chosenCard = grid.querySelector(`.archetype-card[data-archetype="${chosenId}"]`);
 
       // Capture original positions before any transforms
@@ -27359,12 +27628,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     initiateStripeCheckout('favored');
   });
 
-  $('payGodMode')?.addEventListener('click', () => {
-      document.getElementById('payModal')?.classList.add('hidden');
-      if (confirm("WARNING: God Mode permanently removes this story from canon. You will be charged $50.")) {
-          initiateStripeCheckout('godmode');
-      }
-  });
 
   // (Quill/Veto committed phrase system removed — replaced by Petition Fate)
 
@@ -30341,6 +30604,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         return;
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // TEASE TIER GATE: Block new story creation if free story already consumed
+    // ═══════════════════════════════════════════════════════════════════
+    if (isTeaseStoryBlocked()) {
+        window.showPaywall('unlock');
+        return;
+    }
+
     // Capture raw form values synchronously (needed for early validation)
     const playerInputVal2 = $('playerNameInput')?.value.trim() || '';
     const partnerInputVal2 = $('partnerNameInput')?.value.trim() || '';
@@ -30860,6 +31131,9 @@ ${prehistoricForbid}
     state.sysPrompt = sys;
     state.storyId = state.storyId || makeStoryId();
 
+    // TEASE TIER: Mark free story as consumed on first story creation
+    if (isTeaseTier()) markFreeStoryConsumed();
+
     // STORYPASS ELIGIBILITY: Compute ONCE at story creation, persist with story
     // Based on ORIGINAL picks before any downgrade. This value NEVER changes for this story.
     // FALSE if Dirty intensity or Soulmates length (subscription-only content)
@@ -31046,7 +31320,7 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
     archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
 
     // Determine unlock tier (reassign)
-    const paidAccess = state.subscribed || state.godModeActive || (state.storyId && hasStoryPass(state.storyId));
+    const paidAccess = state.subscribed || (state.storyId && hasStoryPass(state.storyId));
     let tier = 'free';
     if (state.subscribed) tier = 'subscribed';
     else if (paidAccess) tier = 'paid';
@@ -31545,6 +31819,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
             insideCover.innerHTML = `
                 <div class="inside-cover-content">
                     <h1 class="inside-cover-title">${cleanTitle}</h1>
+                    <p class="inside-cover-author">by ${CANONICAL_AUTHOR_NAME}</p>
                     <p class="inside-cover-synopsis">${synopsis}</p>
                 </div>
             `;
@@ -31555,7 +31830,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // coverMode === 'PHASE_1_FORGED': local assets only, deterministic, synchronous
         // Custom (model-based) cover ONLY when coverEligibility === true
         // ============================================================
-        const authorDisplayName = state.coverAuthor || 'Anonymous';
+        const authorDisplayName = CANONICAL_AUTHOR_NAME;
 
         // CONTROL-FLOW INVARIANT: Cover generation is DECORATIVE and must NEVER block page mounting
         // Defer all cover logic to next tick to ensure pages are fully mounted first
@@ -33101,7 +33376,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       html += '<div class="cover-fallback-title" style="color:' + palette.accent + '">' +
           '<span class="cover-fallback-title-rule"></span>' +
           (safeTitle ? '<span class="cover-fallback-title-text">' + safeTitle + '</span>' : '') +
-          '<span class="cover-fallback-author">by ANONYMOUS</span>' +
+          '<span class="cover-fallback-author">by ' + CANONICAL_AUTHOR_NAME + '</span>' +
           '<span class="cover-fallback-title-rule"></span>' +
           '</div>';
       fallbackEl.innerHTML = html;
@@ -33116,6 +33391,20 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
    * Cover visuals depend ONLY on world, tone, archetype, and story milestones.
    * No border/keyhole/intensity signaling.
    */
+
+  /**
+   * Archive Stamp — visual overlay applied to cover at ST6 (scene 6).
+   * Purely decorative. Does not change author text or cover generation.
+   */
+  function applyArchiveStamp() {
+      const coverPage = document.getElementById('bookCoverPage');
+      if (!coverPage || coverPage.querySelector('.archive-stamp')) return;
+      const stamp = document.createElement('div');
+      stamp.className = 'archive-stamp';
+      stamp.setAttribute('aria-hidden', 'true');
+      stamp.textContent = 'ARCHIVE';
+      coverPage.appendChild(stamp);
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // COVER SEQUENCING — Storyturn-based phases only
@@ -33478,7 +33767,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
           if (titleEl) {
               const t = storyTitle?.textContent || '';
               titleEl.innerHTML = (t ? '<span class="keyhole-title-text">' + t.replace(/</g, '&lt;') + '</span>' : '') +
-                  '<span class="keyhole-author">by ANONYMOUS</span>';
+                  '<span class="keyhole-author">by ' + CANONICAL_AUTHOR_NAME + '</span>';
           }
       };
 
@@ -33895,7 +34184,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
                   prompt: enhancedPrompt,
                   imageIntent: 'book_cover',
                   title: (title && title !== 'Untitled') ? title : '',
-                  authorName: authorName || 'ANONYMOUS',
+                  authorName: CANONICAL_AUTHOR_NAME,
                   modeLine: modeLine,
                   dynamic: dynamic,
                   storyStyle: storyStyle,
@@ -34163,6 +34452,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
   // ONLY: One frozen intent → One prompt → One API call → One image
   // ============================================================
   const USE_MINIMAL_COVER_V1 = true; // QUARANTINE KILL SWITCH
+  const CANONICAL_AUTHOR_NAME = 'S. Tory Bound'; // Authoritative — never user-authored
 
   /**
    * MINIMAL COVER v1 — Quarantined cover generation
@@ -34284,7 +34574,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
 TASK: Generate a complete, print-ready book cover composition.
 
 TITLE (must appear prominently): "${title}"
-AUTHOR LINE (must appear below title): "by Anonymous"
+AUTHOR LINE (must appear below title): "by S. Tory Bound"
 
 FOCAL OBJECT (MANDATORY — exactly ONE):
 ${focalObjectDescription}
@@ -34904,12 +35194,12 @@ ${tone === 'Wry Confessional'
   if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
           initCoverPageListeners();
-          if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
+          if (window.updateFortuneDisplay) window.updateFortuneDisplay();
           if (typeof updateBeginButtonLabel === 'function') updateBeginButtonLabel();
       });
   } else {
       initCoverPageListeners();
-      if (window.updateCoverCreditDisplay) window.updateCoverCreditDisplay();
+      if (window.updateFortuneDisplay) window.updateFortuneDisplay();
       if (typeof updateBeginButtonLabel === 'function') updateBeginButtonLabel();
   }
 
@@ -36857,120 +37147,9 @@ Condensed (under ${maxLength} chars):` }
       initVizModifierPills();
   }
 
-  // ============================================================
-  // VISUALIZATION ECONOMY — Credit Earning System
-  // Credits earned by scene completion milestones:
-  //   3 scenes  → +1 credit
-  //   5 scenes  → +1 credit
-  //   10 scenes → +2 credits
-  //   Every +10 after → +1 credit
-  // ============================================================
-
-  function updateVizEconomyCredits() {
-      if (!state.vizEconomy) return;
-
-      const sceneCount = state.turnCount || 0;
-
-      // Initialize awarded milestones Set if not present
-      if (!state.vizEconomy.awardedMilestones) {
-          state.vizEconomy.awardedMilestones = [];
-      }
-      const awarded = new Set(state.vizEconomy.awardedMilestones);
-
-      let creditsToAdd = 0;
-
-      // EXPLICIT MILESTONE CHECKS — each milestone awarded ONCE only
-      // Scene 3 → +1 credit
-      if (sceneCount >= 3 && !awarded.has(3)) {
-          creditsToAdd += 1;
-          awarded.add(3);
-      }
-      // Scene 5 → +1 credit
-      if (sceneCount >= 5 && !awarded.has(5)) {
-          creditsToAdd += 1;
-          awarded.add(5);
-      }
-      // Scene 10 → +2 credits
-      if (sceneCount >= 10 && !awarded.has(10)) {
-          creditsToAdd += 2;
-          awarded.add(10);
-      }
-      // After scene 10: every full +10 scenes → +1 credit
-      // Milestones: 20, 30, 40, 50, ...
-      for (let milestone = 20; milestone <= sceneCount; milestone += 10) {
-          if (!awarded.has(milestone)) {
-              creditsToAdd += 1;
-              awarded.add(milestone);
-          }
-      }
-
-      if (creditsToAdd > 0) {
-          state.vizEconomy.storyCredits += creditsToAdd;
-          state.vizEconomy.awardedMilestones = Array.from(awarded);
-          console.log(`[VizEconomy] +${creditsToAdd} credits at scene ${sceneCount}. Total: ${state.vizEconomy.storyCredits}`);
-          saveStorySnapshot();
-      }
-  }
-
-  function getAvailableVizCredits() {
-      if (!state.vizEconomy) return 0;
-      return (state.vizEconomy.storyCredits || 0) + (state.vizEconomy.globalCredits || 0);
-  }
-
-  function consumeVizCredit() {
-      if (!state.vizEconomy) return false;
-      // Consume story credits first, then global
-      if (state.vizEconomy.storyCredits > 0) {
-          state.vizEconomy.storyCredits--;
-          saveStorySnapshot();
-          return true;
-      } else if (state.vizEconomy.globalCredits > 0) {
-          state.vizEconomy.globalCredits--;
-          saveStorySnapshot();
-          return true;
-      }
-      return false;
-  }
-
-  function isPayAsYouGoEnabled() {
-      return state.vizEconomy && state.vizEconomy.payAsYouGoEnabled === true;
-  }
-
-  function enablePayAsYouGo() {
-      if (!state.vizEconomy) return;
-      state.vizEconomy.payAsYouGoEnabled = true;
-      saveStorySnapshot();
-      console.log('[VizEconomy] Pay-As-You-Go enabled');
-  }
-
-  /**
-   * Grant Forbidden Library bonus credit (+1 global, max 2/month)
-   * Call this when user completes Forbidden Library content.
-   * @returns {boolean} true if credit was granted, false if cap reached
-   */
-  function grantForbiddenLibraryBonus() {
-      if (!state.vizEconomy) return false;
-
-      // Check month cap (max 2 per month)
-      const now = new Date();
-      const monthKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
-
-      if (state.vizEconomy.forbiddenLibraryBonusMonthKey !== monthKey) {
-          // New month - reset counter
-          state.vizEconomy.forbiddenLibraryBonusThisMonth = 0;
-          state.vizEconomy.forbiddenLibraryBonusMonthKey = monthKey;
-      }
-
-      if (state.vizEconomy.forbiddenLibraryBonusThisMonth >= 2) {
-          console.log('[VizEconomy] Forbidden Library bonus cap reached (2/month)');
-          return false;
-      }
-
-      state.vizEconomy.globalCredits++;
-      state.vizEconomy.forbiddenLibraryBonusThisMonth++;
-      saveStorySnapshot();
-      console.log(`[VizEconomy] Forbidden Library bonus: +1 global credit (${state.vizEconomy.forbiddenLibraryBonusThisMonth}/2 this month)`);
-      return true;
+  // Tempt Fate escalating cost
+  function getTemptFateCost() {
+      return Math.min(50 + 10 * (state.temptFateConsecutive || 0), 80);
   }
 
   // ============================================================
@@ -37021,7 +37200,7 @@ Condensed (under ${maxLength} chars):` }
   function updateVizButtonStates() {
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
-      const credits = state.imageCredits || 0;
+      const credits = state.fortunes || 0;
       const sceneVisualized = state.visual.visualizedScenes && state.visual.visualizedScenes[sceneKey];
 
       const vizBtn = document.getElementById('vizSceneBtn');
@@ -37056,7 +37235,7 @@ Condensed (under ${maxLength} chars):` }
               vizBtn.classList.remove('is-loading');
           } else {
               // Default state — always clickable, shows credit count
-              const label = credits > 0 ? '✨ Visualize' : '✨ Visualize (1 credit)';
+              const label = credits > 0 ? '✨ Visualize' : '✨ Visualize (1 Fortune)';
               vizBtn.textContent = label;
               vizBtn.disabled = false;
               vizBtn.classList.remove('is-loading', 'is-finalized');
@@ -37069,7 +37248,7 @@ Condensed (under ${maxLength} chars):` }
               retryBtn.textContent = 'Finalized';
               retryBtn.disabled = true;
           } else {
-              retryBtn.textContent = credits > 0 ? 'Re-Visualize' : 'Re-Visualize (1 credit)';
+              retryBtn.textContent = credits > 0 ? 'Re-Visualize' : 'Re-Visualize (1 Fortune)';
               retryBtn.disabled = false;
               retryBtn.title = '';
           }
@@ -37088,10 +37267,10 @@ Condensed (under ${maxLength} chars):` }
       }
   }
 
-  // Re-Visualize handler: opens credit purchase if no credits
+  // Re-Visualize handler: opens fortune purchase if no fortunes
   window.handleReVisualize = function() {
-      if (!hasImageCredits()) {
-          openCreditPurchaseModal();
+      if (!hasFortunes()) {
+          openFortunePurchaseModal();
           return;
       }
       window.visualize(true);
@@ -37102,8 +37281,7 @@ Condensed (under ${maxLength} chars):` }
   // User has seen the prompt, understood the system, and explicitly opted in
   // ═══════════════════════════════════════════════════════════════════════════
   window.enablePayAsYouGoFromViz = function() {
-      // Redirect to credit purchase modal
-      openCreditPurchaseModal();
+      openFortunePurchaseModal();
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -37464,12 +37642,10 @@ Respond in this EXACT format (no labels, just two lines):
           return;
       }
 
-      // Check image credits (God Mode bypasses)
-      const hasCreditsOrAccess = hasImageCredits();
-
-      if (!hasCreditsOrAccess) {
-          console.log('[ImageCredits] No credits — showing purchase modal');
-          openCreditPurchaseModal();
+      // Check fortunes
+      if (!hasFortunes()) {
+          console.log('[Fortunes] No fortunes — showing purchase modal');
+          openFortunePurchaseModal();
           return;
       }
 
@@ -37758,12 +37934,12 @@ Respond in this EXACT format (no labels, just two lines):
                   }
                   if (state.visual.autoLock && !state.visual.locked) state.visual.locked = true;
 
-                  // IMAGE CREDIT CONSUMPTION: Always consume 1 credit on successful generation
+                  // FORTUNE CONSUMPTION: 1 fortune per visualization
                   if (!img.src) {
-                      console.error('[ImageCredits] Credit decrement blocked — no image URL');
+                      console.error('[Fortunes] Fortune decrement blocked — no image URL');
                       return;
                   }
-                  await consumeImageCredit();
+                  await consumeFortune(1, 'visualization');
                   if (!state.visual.visualizedScenes) state.visual.visualizedScenes = {};
                   state.visual.visualizedScenes[sceneKey] = true;
 
@@ -37803,20 +37979,19 @@ Respond in this EXACT format (no labels, just two lines):
   };
 
   // ============================================================
-  // CREDIT PURCHASE REDIRECT (legacy pay-as-you-go entry points)
+  // FORTUNE PURCHASE REDIRECT (legacy pay-as-you-go entry points)
   // ============================================================
 
   function showPayAsYouGoModal() {
-      openCreditPurchaseModal();
+      openFortunePurchaseModal();
   }
 
   window.closePayAsYouGoModal = function() {
-      closeCreditPurchaseModal();
+      closeFortunePurchaseModal();
   };
 
   window.confirmPayAsYouGo = function() {
-      // Redirect to credit purchase flow
-      openCreditPurchaseModal();
+      openFortunePurchaseModal();
   };
 
   // Lock Character Look — driven by checkbox toggle
@@ -37870,8 +38045,8 @@ Respond in this EXACT format (no labels, just two lines):
       // Clear existing options
       dropdown.innerHTML = '';
 
-      // Check Gemini availability (image credits required)
-      const geminiAvailable = hasImageCredits();
+      // Check Gemini availability (fortunes required)
+      const geminiAvailable = hasFortunes();
 
       // All providers shown — unavailable ones are disabled, not hidden
       const providers = [
@@ -37954,6 +38129,72 @@ Respond in this EXACT format (no labels, just two lines):
           return;
       }
 
+      // ═══════════════════════════════════════════════════════════════════
+      // TEASE TIER CLIFFHANGER GATE: Diegetic omen + ritual overlay
+      // ═══════════════════════════════════════════════════════════════════
+      if (isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP && state.tempQuillAllowance <= 0) {
+          if (submitBtn) submitBtn.classList.remove('submitting');
+          console.log('[TEASE] Scene cap reached:', state.turnCount, '>=', state.TEASE_SCENE_CAP);
+          // Diegetic omen: subtle shake + fade
+          const storyContent = document.getElementById('storyContent');
+          if (storyContent) {
+              storyContent.style.transition = 'opacity 0.3s ease, transform 0.15s ease';
+              storyContent.style.opacity = '0.6';
+              storyContent.style.transform = 'translateX(-3px)';
+              setTimeout(() => { storyContent.style.transform = 'translateX(3px)'; }, 150);
+              setTimeout(() => { storyContent.style.transform = ''; storyContent.style.opacity = '1'; }, 500);
+          }
+          // Show ritual overlay after brief omen delay
+          setTimeout(() => window.showPaywall('unlock'), 600);
+          return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // SERVER-SIDE TEASE GUARD: Prevent client tampering
+      // ═══════════════════════════════════════════════════════════════════
+      if (isTeaseTier()) {
+          try {
+              const user = sb.auth.getUser ? (await sb.auth.getUser()).data?.user : null;
+              if (user) {
+                  const guardRes = await fetch('/api/tease-guard', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ userId: user.id, action: 'check' })
+                  });
+                  if (guardRes.status === 403) {
+                      if (submitBtn) submitBtn.classList.remove('submitting');
+                      console.warn('[TEASE] Server-side cap reached');
+                      window.showPaywall('unlock');
+                      return;
+                  }
+              }
+          } catch (err) {
+              console.warn('[TEASE] Server guard check failed (proceeding):', err);
+          }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // FORTUNE BURN: Every scene costs 1 fortune (unless free tease range)
+      // Tease tier users get free scenes up to TEASE_SCENE_CAP
+      // StoryPass/subscriber holders burn 1 fortune per scene
+      // ═══════════════════════════════════════════════════════════════════
+      const inFreeTease = isTeaseTier() && (state.turnCount || 0) < state.TEASE_SCENE_CAP;
+      if (!inFreeTease) {
+          if (!hasFortunes()) {
+              if (submitBtn) submitBtn.classList.remove('submitting');
+              openFortunePurchaseModal();
+              return;
+          }
+          const burned = await consumeFortune(1, 'scene');
+          if (!burned) {
+              if (submitBtn) submitBtn.classList.remove('submitting');
+              openFortunePurchaseModal();
+              return;
+          }
+      }
+      // Reset petition flag for new scene
+      state.petitionUsedThisScene = false;
+
       const rawAct = $('actionInput').value.trim();
       const rawDia = $('dialogueInput').value.trim();
       if(!rawAct && !rawDia) {
@@ -37965,8 +38206,7 @@ Respond in this EXACT format (no labels, just two lines):
       startLoading("Fate is weaving...", STORY_LOADING_MESSAGES);
 
       // RUNTIME NORMALIZATION: Action/dialogue inputs flow through ChatGPT normalization layer
-      // God Mode does NOT bypass normalization - same rules apply
-      const axis = state.godModeActive ? 'god_mode' : 'action';
+      const axis = 'action';
       const actNorm = await callNormalizationLayer({
           axis: axis,
           user_text: rawAct,
@@ -38016,7 +38256,6 @@ Respond in this EXACT format (no labels, just two lines):
       // MAIN PAIR AUTHORIZATION — ST3 + SceneGate + (PlayerInitiated OR 2+ turns in window)
       const playerInitiated = detectPlayerInitiation(safeAction, safeDialogue);
       const mainPairAuthorized =
-          (state.godModeActive) ||
           (intimacyWindowOpen &&
            (playerInitiated ||
             state.intimacyTurnsInWindow >= 2));
@@ -38029,9 +38268,7 @@ Respond in this EXACT format (no labels, just two lines):
           mainPairAuthorized || sceneExplicitContext;
 
       let intensityGuard = "";
-      if (state.godModeActive) {
-          intensityGuard = "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED.";
-      } else if (mainPairAuthorized) {
+      if (mainPairAuthorized) {
           intensityGuard = "INTIMACY AUTHORIZED: The player has initiated physical escalation at the appropriate narrative stage. Explicit intimacy is permitted. Maintain literary tone and the selected Style voice.";
       } else if (sceneExplicitContext) {
           intensityGuard = `SCENE EXPLICIT CONTEXT: The scene involves NPC intimacy, a brothel/bathhouse/orgy environment, or a dream/fantasy sequence. Explicit embodiment is permitted for side characters, background figures, dream sequences, fantasies, or non-primary interactions.
@@ -38203,10 +38440,25 @@ Never escalate into prohibited themes.`;
       }
 
       function buildGooseDirective() {
-        if (!state.seductionEligible) return '';
+        const v = state.romanceVector;
+        const dominance = v ? v.dominanceBias : 0;
+        const slowBurn  = v ? v.slowBurnBias  : 0;
+
+        // Romance vector can unlock goosing even when base seductionEligible is false
+        const vectorUnlock = state.eroticPressureScore < 0.33 && dominance > 0.5;
+        if (!state.seductionEligible && !vectorUnlock) return '';
         if (state.eroticMode !== 'ROMANTIC') return '';
         if (state.gooseCooldown > 0) return '';
         if (Math.random() >= 0.25) return '';
+
+        // slowBurnBias > 0.7: delay escalation, increase tension instead
+        if (slowBurn > 0.7) {
+          state.gooseCooldown = 8;
+          return `NPC TENSION INITIATIVE:
+The Love Interest increases emotional and physical tension without escalating.
+Lean into restraint, lingering eye contact, interrupted gestures, charged silence.
+Build anticipation. Do NOT move toward VISCERAL — hold the slow burn.`;
+        }
 
         state.gooseCooldown = 8;
         return `NPC SEDUCTION INITIATIVE:
@@ -38370,7 +38622,7 @@ Build the tension. Delay the payoff. The main pair's unresolved desire IS the st
       const intimacyDirective = intimacyInterrupt.directive;
 
       const bbDirective = getBatedBreathDirective(); 
-      const safetyDirective = state.godModeActive ? "" : "Remember Safety: No sexual violence. No non-con (unless implied/consensual roleplay).";
+      const safetyDirective = "Remember Safety: No sexual violence. No non-con (unless implied/consensual roleplay).";
       const edgeDirective = (state.edgeCovenant.active) 
         ? `EDGE COVENANT ACTIVE (Level ${state.edgeCovenant.level}): You are authorized to be more dominant, push boundaries, and create higher tension/stakes. Use more imperative language.` 
         : "";
@@ -38503,7 +38755,24 @@ FATE CARD ADAPTATION (CRITICAL):
       const gooseBlock = buildGooseDirective();
       const romanceVectorBlock = buildRomanceVectorDirective();
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}\n\nTURN INSTRUCTIONS:
+      // TEASE CAP CLIFFHANGER: If this is the last allowed scene, inject narrative cliffhanger beat
+      const teaseCliffhangerDirective = (isTeaseTier() && (state.turnCount || 0) === state.TEASE_SCENE_CAP - 1)
+          ? '\nNARRATIVE CLIFFHANGER (MANDATORY): This scene MUST end on a charged, unresolved moment — a door opening, a revelation half-spoken, a touch interrupted, a choice not yet made. Leave the reader suspended at the edge of consequence. Do NOT wrap up or resolve any thread.\n'
+          : '';
+
+      // ═══════════════════════════════════════════════════════════════════
+      // PASS ROUTING AUTHORITY — deterministic tier selection
+      // ═══════════════════════════════════════════════════════════════════
+      const passTier = resolvePassTier();
+      const passRoutingDirective = `
+PASS ROUTING (Tier ${passTier}):
+- Quality is wallet-agnostic. Never vary prose quality based on payment status.
+- Maintain: 5th-person Fate presence, Tone > Genre override, Regime law enforcement.
+- Canonical authorship: S. Tory Bound.
+- Storyturn integrity: ${state.storyturn || 'ST1'}.
+${passTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic recalibration.' : ''}${passTier === 2 ? '- Two-pass structured: Beat outline provided. Apply continuity injection.' : ''}${passTier === 3 ? '- Full orchestration: Beat outline + thematic calibration applied.' : ''}`;
+
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}\n${passRoutingDirective}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -38559,13 +38828,60 @@ FATE CARD ADAPTATION (CRITICAL):
 
           let raw;
 
+          // Build structured state summary for Tier 1/2 (compressed context)
+          const structuredStateSummary = (passTier <= 2) ? buildStructuredStateSummary() : null;
+
+          // Phase change handler with pass tier awareness
+          const passPhaseHandler = (phase, data) => {
+              if (phase === 'BEAT_OUTLINE') {
+                  updateLoadingMessage('Fate is outlining the beats...');
+              } else if (phase === 'THEMATIC_CALIBRATION') {
+                  updateLoadingMessage('Fate is calibrating the tone...');
+              } else if (phase === 'AUTHOR_PASS') {
+                  updateLoadingMessage('Fate is weaving the plot...');
+              } else if (phase === 'RENDER_PASS') {
+                  updateLoadingMessage('Fate is embodying the moment...');
+              } else if (phase === 'INTEGRATION_PASS') {
+                  updateLoadingMessage('Fate is sealing the consequences...');
+              }
+          };
+
           // Use speculative scene if available, otherwise generate fresh
           if (useSpeculative && speculativeScene) {
               raw = speculativeScene.text;
               // Update loading message to indicate instant use
               updateLoadingMessage('Fate has already spoken...');
+          } else if (useFullOrchestration && window.StoryboundOrchestration.orchestrateWithPassTier) {
+              // Pass-tier-routed orchestration with erotic pipeline
+              const tierResult = await window.StoryboundOrchestration.orchestrateWithPassTier({
+                  passTier,
+                  structuredStateSummary,
+                  systemPrompt: fullSys,
+                  storyContext: context,
+                  playerAction: act,
+                  playerDialogue: dia,
+                  fateCard: selectedFateCard,
+                  mainPairRestricted,
+                  accessTier: state.access || 'free',
+                  onPhaseChange: passPhaseHandler
+              });
+              raw = tierResult.finalOutput;
+
+              // Log orchestration details
+              console.log('[ORCHESTRATION] Pass-tier turn complete:', {
+                  passTier: tierResult.passTier,
+                  success: tierResult.success,
+                  rendererUsed: tierResult.rendererUsed,
+                  fateStumbled: tierResult.fateStumbled,
+                  timing: tierResult.timing,
+                  errors: tierResult.errors
+              });
+
+              if (tierResult.fateStumbled) {
+                  console.warn('[ORCHESTRATION] Fate Stumbled - specialist renderer failed');
+              }
           } else if (useFullOrchestration) {
-              // Full 3-phase orchestration: ChatGPT → optional Grok → ChatGPT
+              // Fallback: legacy 3-phase orchestration without pass tier
               raw = await generateOrchestatedTurn({
                   systemPrompt: fullSys,
                   storyContext: context,
@@ -38573,16 +38889,7 @@ FATE CARD ADAPTATION (CRITICAL):
                   playerDialogue: dia,
                   fateCard: selectedFateCard,
                   mainPairRestricted,
-                  onPhaseChange: (phase, data) => {
-                      // Update loading message based on phase
-                      if (phase === 'AUTHOR_PASS') {
-                          updateLoadingMessage('Fate is weaving the plot...');
-                      } else if (phase === 'RENDER_PASS') {
-                          updateLoadingMessage('Fate is embodying the moment...');
-                      } else if (phase === 'INTEGRATION_PASS') {
-                          updateLoadingMessage('Fate is sealing the consequences...');
-                      }
-                  }
+                  onPhaseChange: passPhaseHandler
               });
           } else {
               // Single-model flow (ChatGPT as primary author)
@@ -38875,6 +39182,26 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
 
           state.turnCount++;
 
+          // Decrement offering quill allowance after scene generation
+          if (state.tempQuillAllowance > 0) {
+              state.tempQuillAllowance--;
+              console.log('[OFFERING] Quill allowance decremented:', state.tempQuillAllowance, 'remaining');
+          }
+
+          // Server-side tease guard: increment scene count after successful generation
+          if (isTeaseTier()) {
+              try {
+                  const user = sb.auth.getUser ? (await sb.auth.getUser()).data?.user : null;
+                  if (user) {
+                      fetch('/api/tease-guard', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ userId: user.id, action: 'increment' })
+                      }).catch(err => console.warn('[TEASE] Server increment failed:', err));
+                  }
+              } catch (_) {}
+          }
+
           if (!state._loggedScene3 && state.turnCount >= 2 && state.turnCount <= 3) {
               logEvent('scene_3_reached');
               state._loggedScene3 = true;
@@ -38883,20 +39210,10 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           if (!state._loggedScene6 && state.turnCount >= 5) {
               try { logEvent('scene_6_reached', { tone: state.picks?.tone, world: state.picks?.world }); } catch(_){}
               state._loggedScene6 = true;
+              // Archive Stamp: Show visual overlay on cover at ST6
+              applyArchiveStamp();
           }
 
-          // Subscriber reward: +1 image credit every 5 scenes
-          if (state.subscribed === true) {
-              const sceneNumber = state.turnCount;
-              if (sceneNumber % 5 === 0 && sceneNumber > (state.lastSceneRewarded || 0)) {
-                  state.imageCredits = (state.imageCredits || 0) + 1;
-                  state.lastSceneRewarded = sceneNumber;
-                  persistImageCredits();
-              }
-          }
-
-          // Update visualization economy credits based on scene milestones
-          updateVizEconomyCredits();
 
           // EARNED COVER SYSTEM: Check if cover stage has upgraded
           if (typeof checkCoverStageUpgrade === 'function') {
@@ -39148,6 +39465,8 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
       // Guard: don't preload if already preloading or have valid speculation
       if (state.isPreloadingNextScene) return;
       if (isSpeculativeSceneValid()) return;
+      // TEASE TIER: No background generation beyond scene cap
+      if (isTeaseSceneCapped()) return;
 
       // Get current inputs (use fate card defaults if inputs empty)
       const fateIdx = state.fateSelectedIndex ?? -1;
@@ -39174,7 +39493,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           // ═══════════════════════════════════════════════════════════════════
 
           // 1. Normalize inputs (same as real turn)
-          const axis = state.godModeActive ? 'god_mode' : 'action';
+          const axis = 'action';
           const actNorm = await callNormalizationLayer({
               axis: axis,
               user_text: rawAct,
@@ -39203,7 +39522,6 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               (state.turnCount || 0) >= getMainPairIntimacyGateScene();
           const specPlayerInitiated = detectPlayerInitiation(act, dia);
           const specMainPairAuthorized =
-              (state.godModeActive) ||
               (specWindowOpen &&
                (specPlayerInitiated ||
                 state.intimacyTurnsInWindow >= 2));
@@ -39213,9 +39531,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           const specMainPairRestricted = specSceneExplicitContext && !specMainPairAuthorized;
 
           let intensityGuard = "";
-          if (state.godModeActive) {
-              intensityGuard = "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED.";
-          } else if (specMainPairAuthorized) {
+          if (specMainPairAuthorized) {
               intensityGuard = "INTIMACY AUTHORIZED: The player has initiated physical escalation at the appropriate narrative stage. Explicit intimacy is permitted. Maintain literary tone.";
           } else if (specSceneExplicitContext) {
               intensityGuard = `SCENE EXPLICIT CONTEXT: The scene involves NPC intimacy, a brothel/bathhouse/orgy environment, or a dream/fantasy sequence. Explicit embodiment is permitted for side characters, background figures, dream sequences, fantasies, or non-primary interactions.
@@ -39248,7 +39564,7 @@ If both main characters are present, render their tension and restraint ONLY —
 
           // 5. Build all directives (same as real turn)
           const bbDirective = getBatedBreathDirective();
-          const safetyDirective = state.godModeActive ? "" : "Remember Safety: No sexual violence. No non-con (unless implied/consensual roleplay).";
+          const safetyDirective = "Remember Safety: No sexual violence. No non-con (unless implied/consensual roleplay).";
           const edgeDirective = (state.edgeCovenant?.active)
               ? `EDGE COVENANT ACTIVE (Level ${state.edgeCovenant.level}): You are authorized to be more dominant, push boundaries, and create higher tension/stakes. Use more imperative language.`
               : "";
@@ -39312,7 +39628,17 @@ FATE CARD ADAPTATION (CRITICAL):
           }
 
           // 7. Build fullSys (EXACT same structure as real turn)
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+          // Pass routing directive (same logic as real turn)
+          const specPassTier = resolvePassTier();
+          const specPassRoutingDirective = `
+PASS ROUTING (Tier ${specPassTier}):
+- Quality is wallet-agnostic. Never vary prose quality based on payment status.
+- Maintain: 5th-person Fate presence, Tone > Genre override, Regime law enforcement.
+- Canonical authorship: S. Tory Bound.
+- Storyturn integrity: ${state.storyturn || 'ST1'}.
+${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic recalibration.' : ''}${specPassTier === 2 ? '- Two-pass structured: Beat outline provided. Apply continuity injection.' : ''}${specPassTier === 3 ? '- Full orchestration: Beat outline + thematic calibration applied.' : ''}`;
+
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n${specPassRoutingDirective}\n\nTURN INSTRUCTIONS:
       Story So Far: ...${context}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -39326,13 +39652,29 @@ FATE CARD ADAPTATION (CRITICAL):
               return;
           }
 
-          // 7. Generate using EXACT same orchestration as real turn
+          // 7. Generate using EXACT same orchestration as real turn (with pass tier routing)
           const useFullOrchestration = ENABLE_ORCHESTRATION &&
                                        window.StoryboundOrchestration &&
                                        specExplicitEmbodimentAuthorized;
 
+          const specStructuredStateSummary = (specPassTier <= 2) ? buildStructuredStateSummary() : null;
+
           let raw;
-          if (useFullOrchestration) {
+          if (useFullOrchestration && window.StoryboundOrchestration.orchestrateWithPassTier) {
+              const tierResult = await window.StoryboundOrchestration.orchestrateWithPassTier({
+                  passTier: specPassTier,
+                  structuredStateSummary: specStructuredStateSummary,
+                  systemPrompt: fullSys,
+                  storyContext: context,
+                  playerAction: act,
+                  playerDialogue: dia,
+                  fateCard: selectedFateCard,
+                  mainPairRestricted: specMainPairRestricted,
+                  accessTier: state.access || 'free',
+                  onPhaseChange: () => {} // No UI updates for speculative
+              });
+              raw = tierResult.finalOutput;
+          } else if (useFullOrchestration) {
               raw = await generateOrchestatedTurn({
                   systemPrompt: fullSys,
                   storyContext: context,
@@ -40032,7 +40374,7 @@ FATE CARD ADAPTATION (CRITICAL):
               resetCoverLayers();
               showDevCover();
               const synopsis = document.getElementById('synopsisText')?.textContent || '';
-              const authorName = state.authorName || 'Anonymous';
+              const authorName = CANONICAL_AUTHOR_NAME;
               generateBookCover(synopsis, title, authorName).then(coverUrl => {
                   if (coverUrl) {
                       stopCoverLoading(coverUrl);
@@ -40214,7 +40556,7 @@ FATE CARD ADAPTATION (CRITICAL):
           if (/\b(reset|restart|redo|re-?deal|deal)\b.*\bfate\b/i.test(input)) {
               if (window.dealFateCards) {
                   window.dealFateCards();
-                  // PERMANENT FX REBIND: Ensure fate cards have handlers after god mode redeal
+                  // PERMANENT FX REBIND: Ensure fate cards have handlers after redeal
                   if (window.initFateCards) window.initFateCards();
                   log('Fate cards re-dealt');
               } else {
@@ -40229,11 +40571,11 @@ FATE CARD ADAPTATION (CRITICAL):
               _devOverrides.access = 'sub';
               state.subscribed = true;
               state.billingStatus = 'active';
-              state.imageCredits = (state.imageCredits || 0) + 50;
-              if (state.vizEconomy) state.vizEconomy.storyCredits += 20;
+              state.fortunes = (state.fortunes || 0) + 50;
               if (state.storyId) grantStoryPass(state.storyId);
               syncTierFromAccess();
-              log('DEV: Subscribed + 50 credits + purchase bypass active');
+              if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+              log('DEV: Subscribed + 50 fortunes + purchase bypass active');
               return;
           }
           if (/\bpretend\b.*\bfree\b/.test(input)) {
@@ -40399,9 +40741,8 @@ FATE CARD ADAPTATION (CRITICAL):
           // "check pov", "pov status"
           if (/\bcheck\s*pov\b|\bpov\s*(status|check)\b/i.test(input)) {
               const povMode = state.povMode || 'normal';
-              const godMode = state.godModeActive ? 'ACTIVE' : 'inactive';
               const lastCheck = _lastPOVValidation;
-              log('POV Mode: ' + povMode + ' | God Mode: ' + godMode);
+              log('POV Mode: ' + povMode);
               if (povMode === 'author5th') {
                   log('Last validation: ' + (lastCheck.valid ? 'PASS' : 'FAIL') +
                       ' | Author mentions: ' + (lastCheck.authorMentions || 0));
@@ -40420,11 +40761,6 @@ FATE CARD ADAPTATION (CRITICAL):
               }
               return;
           }
-          // "is god mode active", "god mode status"
-          if (/\b(is\s*)?god\s*mode\s*(active|on|status)?\b/i.test(input)) {
-              log('God Mode: ' + (state.godModeActive ? 'ACTIVE (adversarial Author)' : 'inactive'));
-              return;
-          }
           // "set pov author", "enable 5th person"
           if (/\b(set|enable|use)\s*(5th|fifth|author)\s*(pov|person)?\b/i.test(input)) {
               state.povMode = 'author5th';
@@ -40438,7 +40774,7 @@ FATE CARD ADAPTATION (CRITICAL):
               return;
           }
 
-          // --- EXIT GOD MODE ---
+          // --- EXIT DEV MODE ---
           if (/\b(exit|stop|back)\b.*\b(god|pretend|normal)\b/.test(input)) {
               _devOverrides = {};
               state.subscribed = false;

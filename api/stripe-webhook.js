@@ -158,11 +158,15 @@ export default async function handler(req, res) {
     if (priceId && priceId === process.env.STRIPE_PRICE_ID_STORYPASS) {
       updates.has_storypass = true;
       console.log(`[stripe-webhook] Granting StoryPass to ${supabaseUserId}`);
-    }
 
-    if (priceId && priceId === process.env.STRIPE_PRICE_ID_GODMODE) {
-      updates.has_god_mode = true;
-      console.log(`[stripe-webhook] Granting God Mode to ${supabaseUserId}`);
+      // StoryPass also grants 20 purchased fortunes
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('purchased_fortunes')
+        .eq('id', supabaseUserId)
+        .single();
+      updates.purchased_fortunes = (currentProfile?.purchased_fortunes || 0) + 20;
+      console.log(`[stripe-webhook] Granting 20 purchased fortunes with StoryPass to ${supabaseUserId}`);
     }
 
     const isSubscription = priceId && (
@@ -177,12 +181,24 @@ export default async function handler(req, res) {
       } else {
         updates.is_subscriber = true;
         updates.subscription_tier = tier;
-        updates.subscription_credits = 100;
-        console.log(`[stripe-webhook] Granting ${tier} subscription + 100 subscription credits to ${supabaseUserId}`);
+        updates.subscription_fortunes = 100;
+        console.log(`[stripe-webhook] Granting ${tier} subscription + 100 subscription fortunes to ${supabaseUserId}`);
       }
     }
 
-    if (!updates.has_storypass && !updates.has_god_mode && !updates.is_subscriber) {
+    if (priceId && priceId === process.env.STRIPE_PRICE_ID_OFFERING) {
+      const fortunesGranted = parseInt(session.metadata?.fortunes_granted, 10) || 10;
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('purchased_fortunes')
+        .eq('id', supabaseUserId)
+        .single();
+      updates.purchased_fortunes = (currentProfile?.purchased_fortunes || 0) + fortunesGranted;
+      updates.free_story_consumed = false;
+      console.log(`[stripe-webhook] Granting Offering pack (${fortunesGranted} fortunes) + tease reset to ${supabaseUserId}`);
+    }
+
+    if (!updates.has_storypass && !updates.is_subscriber && !updates.purchased_fortunes && !updates.subscription_fortunes) {
       console.warn(`[stripe-webhook] No entitlement matched for priceId: ${priceId}`);
     }
 
@@ -210,12 +226,12 @@ export default async function handler(req, res) {
     if (userId) {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: true, subscription_credits: 100 })
+        .update({ is_subscriber: true, subscription_fortunes: 100 })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] invoice.paid update failed:', error);
       } else {
-        console.log(`[stripe-webhook] invoice.paid — restored is_subscriber + reset 100 subscription credits for ${userId}`);
+        console.log(`[stripe-webhook] invoice.paid — restored is_subscriber + reset 100 subscription fortunes for ${userId}`);
       }
     } else {
       console.warn(`[stripe-webhook] invoice.paid — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
@@ -223,9 +239,9 @@ export default async function handler(req, res) {
   }
 
   // ── invoice.payment_failed — payment failure ──
-  // GRACE MODEL: We intentionally preserve subscription_credits during payment_failed.
+  // GRACE MODEL: We intentionally preserve subscription_fortunes during payment_failed.
   // Stripe may retry payment (up to 3x) before firing customer.subscription.deleted.
-  // Credits are only zeroed on customer.subscription.deleted — not here.
+  // Fortunes are only zeroed on customer.subscription.deleted — not here.
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object;
     const subscriptionId = invoice.subscription;
@@ -257,7 +273,7 @@ export default async function handler(req, res) {
     if (userId) {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: false, subscription_tier: null, subscription_credits: 0 })
+        .update({ is_subscriber: false, subscription_tier: null, subscription_fortunes: 0 })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] customer.subscription.deleted update failed:', error);
@@ -279,14 +295,14 @@ export default async function handler(req, res) {
     if (customerId) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, image_credits')
+        .select('id, purchased_fortunes')
         .eq('stripe_customer_id', customerId)
         .single();
 
       if (profile) {
         // Try to resolve what was purchased via checkout session metadata
         let priceId = null;
-        let creditsGranted = 0;
+        let fortunesGranted = 0;
         try {
           const stripe = new (await import('stripe')).default(process.env.STRIPE_SECRET_KEY);
           const paymentIntent = charge.payment_intent;
@@ -295,7 +311,7 @@ export default async function handler(req, res) {
             const session = sessions.data?.[0];
             if (session?.metadata) {
               priceId = session.metadata.price_id || null;
-              creditsGranted = parseInt(session.metadata.credits_granted, 10) || 0;
+              fortunesGranted = parseInt(session.metadata.fortunes_granted, 10) || 0;
             }
           }
         } catch (err) {
@@ -306,22 +322,21 @@ export default async function handler(req, res) {
         const updates = {};
         if (priceId === process.env.STRIPE_PRICE_ID_STORYPASS) {
           updates.has_storypass = false;
-        } else if (priceId === process.env.STRIPE_PRICE_ID_GODMODE) {
-          updates.has_god_mode = false;
+          updates.purchased_fortunes = Math.max(0, (profile.purchased_fortunes || 0) - 20);
         } else if (priceId === process.env.STRIPE_PRICE_ID_STORIED || priceId === process.env.STRIPE_PRICE_ID_FAVORED) {
           updates.is_subscriber = false;
           updates.subscription_tier = null;
-          updates.subscription_credits = 0;
-        } else if (creditsGranted > 0) {
-          // Credit pack refund — deduct granted credits, prevent negative
-          updates.image_credits = Math.max(0, (profile.image_credits || 0) - creditsGranted);
+          updates.subscription_fortunes = 0;
+        } else if (fortunesGranted > 0) {
+          // Offering pack refund — deduct granted fortunes, prevent negative
+          updates.purchased_fortunes = Math.max(0, (profile.purchased_fortunes || 0) - fortunesGranted);
         } else {
           // Unknown product or lookup failed — full revocation (safe over-revoke)
           updates.has_storypass = false;
-          updates.has_god_mode = false;
           updates.is_subscriber = false;
           updates.subscription_tier = null;
-          updates.subscription_credits = 0;
+          updates.subscription_fortunes = 0;
+          updates.purchased_fortunes = 0;
         }
 
         const { error } = await supabase
@@ -366,10 +381,10 @@ export default async function handler(req, res) {
           .from('profiles')
           .update({
             has_storypass: false,
-            has_god_mode: false,
             is_subscriber: false,
             subscription_tier: null,
-            subscription_credits: 0,
+            subscription_fortunes: 0,
+            purchased_fortunes: 0,
           })
           .eq('id', profile.id);
         if (error) {

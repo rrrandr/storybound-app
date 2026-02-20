@@ -37,7 +37,7 @@
  * =============================================================================
  */
 
-const { validateModelForRole, getDefaultModel, ALLOWED_MODELS } = require('./orchestrator');
+const { validateModelForRole, getDefaultModel, ALLOWED_MODELS, getPassTier, buildPassTierPrompt, stripWalletData } = require('./orchestrator');
 
 module.exports = async function handler(req, res) {
   // CORS headers
@@ -73,7 +73,13 @@ module.exports = async function handler(req, res) {
       mode = 'solo',            // Story mode: solo, couple, stranger
       temperature = 0.7,
       max_tokens = 1500,
-      response_format  // Optional: { type: 'json_object' } for structured output
+      response_format,  // Optional: { type: 'json_object' } for structured output
+      // Pass Tier routing metadata (optional, from frontend orchestration)
+      world,
+      storyturn,
+      sceneType,
+      structuredState,
+      user_id
     } = req.body;
 
     // ==========================================================================
@@ -111,10 +117,28 @@ module.exports = async function handler(req, res) {
     console.log(`[CHATGPT-PROXY] Role: ${role}, Model: ${requestedModel}`);
 
     // ==========================================================================
+    // PASS TIER ROUTING — DETERMINISTIC (wallet-agnostic)
+    // ==========================================================================
+    let tier_used = null;
+
+    if (role === 'PRIMARY_AUTHOR' && world && storyturn) {
+      tier_used = getPassTier(world, storyturn, sceneType || null);
+      console.log(`[CHATGPT-PROXY] Pass tier: ${tier_used}, world: ${world}, storyturn: ${storyturn}, sceneType: ${sceneType || 'standard'}`);
+    }
+
+    // ==========================================================================
+    // WALLET DATA STRIPPING — Generation must not see wallet state
+    // ==========================================================================
+    // Strip any wallet/payment fields that may have leaked into the request body
+    const cleanBody = stripWalletData(req.body);
+    // Ensure messages don't contain wallet data in system prompts
+    // (defensive — frontend should not send this, but enforce server-side)
+
+    // ==========================================================================
     // ROLE-SPECIFIC SYSTEM PROMPTS
     // ==========================================================================
 
-    let finalMessages = messages;
+    let finalMessages = [...messages];
 
     if (role === 'NORMALIZATION') {
       const modeGuidance = {
@@ -181,6 +205,20 @@ Output only the mythic kernel. Prose realization is deferred.`
     }
 
     // ==========================================================================
+    // PASS TIER PROMPT INJECTION (PRIMARY_AUTHOR only)
+    // ==========================================================================
+    if (tier_used !== null && structuredState) {
+      const tierPrompt = buildPassTierPrompt(tier_used, structuredState);
+      // Inject as a system message before the user messages
+      finalMessages = [
+        finalMessages[0],  // Keep original system prompt
+        { role: 'system', content: tierPrompt },
+        ...finalMessages.slice(1)
+      ];
+      console.log(`[CHATGPT-PROXY] Tier ${tier_used} prompt injected`);
+    }
+
+    // ==========================================================================
     // CALL OPENAI API
     // ==========================================================================
 
@@ -241,12 +279,41 @@ Output only the mythic kernel. Prose realization is deferred.`
     // RETURN RESPONSE
     // ==========================================================================
 
+    // ==========================================================================
+    // LOG TIER USED (non-blocking, fire-and-forget)
+    // ==========================================================================
+    if (tier_used !== null && user_id) {
+      const sbUrl = process.env.SUPABASE_URL;
+      const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (sbUrl && sbKey) {
+        // Fire-and-forget — do not await, do not block response
+        fetch(`${sbUrl}/rest/v1/generation_logs`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': sbKey,
+            'Authorization': `Bearer ${sbKey}`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            user_id,
+            world: world || null,
+            storyturn: storyturn || null,
+            tier_used
+          })
+        }).catch(err => {
+          console.warn('[CHATGPT-PROXY] generation_logs insert failed (non-fatal):', err.message);
+        });
+      }
+    }
+
     // Add metadata about the orchestration role
     const enrichedResponse = {
       ...data,
       _orchestration: {
         role: role,
         model: requestedModel,
+        tier_used: tier_used,
         timestamp: new Date().toISOString()
       }
     };

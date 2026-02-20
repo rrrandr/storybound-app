@@ -78,6 +78,7 @@
     <div id="menuAuthSection"></div>
     <button id="menuProfileBtn" class="sb-btn-png sm">Profile</button>
     <button id="menuLibraryBtn" class="sb-btn-png sm">Library</button>
+    <button id="menuForbiddenLibraryBtn" class="sb-btn-png sm" style="opacity:0.4; cursor:not-allowed;" aria-disabled="true">Forbidden Library (Soon)</button>
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
@@ -149,7 +150,7 @@
 <div id="vizModal" class="overlay hidden">
   <div class="box viz-modal-content">
     <h3>Visualization</h3>
-    <!-- TRUST REPAIR: Always show prompt first, explain credits -->
+    <!-- TRUST REPAIR: Always show prompt first, explain fortunes -->
     <p style="font-size:0.85em; color:var(--gold); margin-bottom:10px; font-style:italic;">
         You may freely edit the prompt below. Images follow the story's tone.
         Prompts are automatically adjusted for model compatibility.
@@ -168,22 +169,22 @@
         Modifiers are appended to your prompt. They cannot override style or subject.
     </p>
 
-    <!-- Credit display (always visible) -->
+    <!-- Fortune display (always visible) -->
     <div id="vizCreditDisplay" style="font-size:0.85em; color:var(--gold); margin:10px 0; text-align:center;">
-        Visualization credits = <span id="vizCreditCount">0</span>
+        Fortunes = <span id="vizCreditCount">0</span>
     </div>
 
-    <!-- No-credits notice (INSIDE modal, not blocking) -->
+    <!-- No-fortunes notice (INSIDE modal, not blocking) -->
     <div id="vizPayAsYouGoConsent" class="hidden" style="background:rgba(255,215,0,0.08); border:2px double gold; border-radius:0; padding:15px; margin:15px 0; text-align:center;">
         <p style="font-size:0.9em; color:var(--gold); margin-bottom:10px;">
-            <strong>Image credits required</strong>
+            <strong>Fortunes required</strong>
         </p>
         <p style="font-size:0.85em; color:#888; margin-bottom:15px;">
-            Each visualization costs 1 image credit. Purchase a credit pack to continue.
+            Each visualization costs 1 Fortune. Purchase Fortunes to continue.
         </p>
         <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
             <button class="sb-btn-png text-sm" id="vizEnablePayAsYouGo" onclick="window.enablePayAsYouGoFromViz();">
-                Purchase Credits
+                Purchase Fortunes
             </button>
             <button class="sb-btn-png sm" onclick="window.closeViz();">
                 Continue Story
@@ -193,7 +194,7 @@
 
     <!-- Image placeholder and container -->
     <div id="vizPlaceholder" style="display:flex; align-items:center; justify-content:center; min-height:200px; color:#888; font-style:italic; text-align:center; padding:20px;">
-        1 credit per image. Purchase credit packs to visualize scenes.
+        1 Fortune per image. Purchase Fortunes to visualize scenes.
     </div>
 
     <div id="vizImgContainer">
@@ -224,7 +225,6 @@
   </div>
 </div>
 
-<!-- Legacy payAsYouGoModal removed — redirects to creditPurchaseModal via JS -->
 
 
 <div id="coupleInvite" class="overlay hidden">
@@ -328,7 +328,7 @@
 
     <label>
       <input type="checkbox" id="legal-adult">
-      I understand this platform may contain mature fictional content
+      I agree to the <a href="#" id="legal-adult-link" class="legal-doc-link">Adult Content Acknowledgment</a>
     </label>
 
     <button id="legal-continue" disabled>Continue</button>
@@ -378,16 +378,23 @@
 
 <div id="payModal" class="overlay hidden" style="z-index:10000;">
   <div class="box pay-box">
-    <h3>Upgrade Your Story</h3>
+    <h3 id="payModalHeading">Upgrade Your Story</h3>
 
-    <div id="godModePay" class="hidden">
-       <h4 style="color:var(--gold); margin-top:0; font-size:1.4em;">Unlock God Mode</h4>
-       <p style="font-size:0.9em; opacity:0.8; margin-bottom:20px;">
-         Skip all pacing gates and cooldowns. Petition Fate freely. Faster scene generation, no wait times. Your story choices still apply — God Mode removes pacing restrictions.
-         <br><strong>$50 One-time purchase.</strong>
-       </p>
-       <button id="payGodMode" class="god-mode-unlock-btn" style="margin-top:10px;">Unlock Forever ($50)</button>
+    <!-- TEASE CAP VARIANT — diegetic ritual invitation -->
+    <div id="teaseCliffhangerCopy" class="hidden" style="text-align:center; margin-bottom:18px;">
+      <p id="teaseOmenText" style="font-size:1.1em; color:var(--gold); font-style:italic; margin:0 0 10px;">The ink runs dry. Fate's quill trembles above the page.</p>
+      <p style="font-size:0.85em; color:var(--ink); opacity:0.8; line-height:1.6; margin:0;">
+        Your story pauses at the edge of what comes next.<br>
+        The world is listening. The characters are waiting.<br>
+        To cross the threshold, choose how you wish to continue.
+      </p>
+      <!-- Offering sacrifice option — primary CTA for tease cap -->
+      <div id="teaseOfferingOption" class="hidden" style="margin:16px 0 8px; padding:12px; border:1px solid var(--gold); border-radius:4px; background:rgba(255,215,0,0.05);">
+        <button id="btnSacrificeOffering" style="background:transparent; border:1px solid var(--gold); color:var(--gold); padding:8px 20px; cursor:pointer; font-family:'Lora',serif; font-size:0.95em; letter-spacing:0.5px;">Sacrifice 1 Fortune to fill Fate's quill</button>
+        <p id="offeringBalanceHint" style="font-size:0.7em; color:#888; margin:6px 0 0;"></p>
+      </div>
     </div>
+
 
     <div id="standardPay">
         <div class="pay-tier-row">
@@ -508,42 +515,39 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════════════ -->
-<!-- COVER$ PURCHASE MODAL — Paid cover generation with prompt editing        -->
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 <!-- ════════════════════════════════════════════════════════════════════════ -->
-<!-- CREDIT PURCHASE MODAL — Prepaid image credit packs                      -->
+<!-- FORTUNE PURCHASE MODAL — Prepaid fortune packs                          -->
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 <div id="creditPurchaseModal" class="overlay hidden" style="z-index:10020;">
   <div class="box" style="max-width:420px; text-align:center;">
-    <h3 style="color:var(--gold); margin-bottom:10px;">Purchase Image Credits</h3>
+    <h3 style="color:var(--gold); margin-bottom:10px;">Purchase Fortunes</h3>
     <p style="opacity:0.8; font-size:0.9em; margin-bottom:5px;">
-      1 credit per image (covers + scene visualizations)
+      Fortunes fuel every action: scenes, covers, visualizations, petitions
     </p>
     <p style="opacity:0.6; font-size:0.85em; margin-bottom:12px;">
-      Current balance: <strong style="color:var(--gold);"><span id="creditModalBalance">0</span> credits</strong>
+      Current balance: <strong style="color:var(--gold);"><span id="creditModalBalance">0</span> Fortunes</strong>
     </p>
     <p style="opacity:0.6; font-size:0.8em; margin-bottom:20px; line-height:1.5; border-top:1px solid rgba(255,215,0,0.15); padding-top:10px;">
-      <span style="color:var(--gold);">Earn free credits</span> as you play:<br>
-      3 scenes → +1 &nbsp;·&nbsp; 5 scenes → +1 &nbsp;·&nbsp; 10 scenes → +2<br>
-      Every 10 scenes after → +1
+      <span style="color:var(--gold);">Subscribers</span> receive 100 Fortunes/month
     </p>
 
     <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseCreditPack(20, '$5');" style="padding:12px 20px; width:100%;">
+      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseFortunePack(20, '$5');" style="padding:12px 20px; width:100%;">
         <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
-        20 Credits &mdash; $5
+        20 Fortunes &mdash; $5
       </button>
-      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseCreditPack(50, '$10');" style="padding:12px 20px; width:100%;">
+      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseFortunePack(50, '$10');" style="padding:12px 20px; width:100%;">
         <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
-        50 Credits &mdash; $10
+        50 Fortunes &mdash; $10
       </button>
-      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseCreditPack(120, '$20');" style="padding:12px 20px; width:100%;">
+      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseFortunePack(120, '$20');" style="padding:12px 20px; width:100%;">
         <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
-        120 Credits &mdash; $20
+        120 Fortunes &mdash; $20
       </button>
     </div>
 
-    <button class="sb-btn" onclick="window.closeCreditPurchaseModal();" style="padding:10px 24px;">
+    <button class="sb-btn" onclick="window.closeFortunePurchaseModal();" style="padding:10px 24px;">
       Not Now
     </button>
   </div>
@@ -1108,8 +1112,8 @@
       <button id="btnGenerateCover" class="sb-btn sb-btn--lg">
         Generate Your Book Cover
       </button>
-      <!-- Cover$ Credit Display -->
-      <p id="coverCreditDisplay" style="font-size:0.75em; color:var(--gold); margin-top:6px; opacity:0.8;">3 free covers remaining today</p>
+      <!-- Fortune Display -->
+      <p id="coverCreditDisplay" style="font-size:0.75em; color:var(--gold); margin-top:6px; opacity:0.8;">First cover free. Regens cost 1 Fortune.</p>
       <div id="coverGenStatus" class="hidden" style="margin-top:10px; color:var(--text-secondary); font-size:0.9em;">
         <div id="coverGenLoading" style="display:flex; flex-direction:column; align-items:center; gap:8px;">
           <span>Generating your cover...</span>
@@ -1209,7 +1213,7 @@
             </div>
             <!-- Title and author -->
             <div class="fallback-title" id="fallbackTitle">Untitled</div>
-            <div class="fallback-author">by Anonymous</div>
+            <div class="fallback-author">by S. Tory Bound</div>
           </div>
           <!-- Layer 2: Ornate border overlay (world-specific asset-based frame) -->
           <!-- ORNATE BORDER SYSTEM: Image-based borders, one per world (6 total)
@@ -1370,9 +1374,10 @@
        <button id="submitBtn" style="font-size:1.3em;">Submit</button>
     </div>
     
-    <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-       <button id="gameGodModeBtn" class="god-mode-reader-btn hidden">God Mode</button>
+    <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
+       <span id="fortuneBalanceDisplay" style="font-size:0.8em; color:var(--gold); opacity:0.7;">0</span>
+       <span style="font-size:0.7em; color:var(--gold); opacity:0.5;">Fortunes</span>
     </div>
 
   </div>
@@ -1494,14 +1499,20 @@
   </div>
 </div>
 
+<div id="forbiddenLibraryModal" class="overlay hidden" style="z-index:5002;">
+  <div class="box" style="max-width:500px; text-align:center;">
+    <h3 style="color:var(--gold,#c9a84c); font-family:'Lora',serif;">Forbidden Library</h3>
+    <p style="color:var(--ink,#eee); font-family:'Lora',serif; font-size:0.95em; margin:16px 0;">Coming Soon</p>
+    <p style="color:#999; font-family:'Lora',serif; font-size:0.8em; margin:8px 0 20px;">Catalog (covers/titles) will be public; reading requires login.</p>
+    <button id="forbiddenLibraryCloseBtn" style="margin-top:10px;">Close</button>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════════════════════════════════════════
      CONTROL PLANE — Fixed layer for Continue button
      Floats above all content. Never occluded by cards, corridors, or animations.
      ═══════════════════════════════════════════════════════════════════════════════ -->
 <div id="controlPlane">
-  <div id="godModeToggle" class="hidden god-mode-plaque">
-    <label id="godModeLabel"><input type="checkbox" id="godModeCheck"> God Mode</label>
-  </div>
   <button id="continueButton" class="flow-continue-btn sb-btn-png sm">Proceed</button>
 </div>
 

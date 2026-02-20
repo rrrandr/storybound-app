@@ -361,7 +361,7 @@ function generatePoeticSubtitle(genre, emotionalGravity) {
 
 function wrapBookCoverPrompt(basePrompt, title, authorName, modeLine, dynamic, storyStyle, genre, recentObjects = [], world = null, era = null, arousal = null) {
   const cleanTitle = (title || 'Untitled').trim();
-  const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
+  const cleanAuthor = (authorName || 'S. TORY BOUND').toUpperCase().trim();
 
   // Extract tone from storyStyle (format: "Tone Genre")
   const tone = (storyStyle || '').split(' ')[0] || 'Earnest';
@@ -893,7 +893,7 @@ function buildEmblemCoverPrompt(params) {
   const { title, authorName, modeLine, dynamic, storyStyle, genre, world, era, arousal } = params;
 
   const cleanTitle = (title || 'Untitled').trim();
-  const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
+  const cleanAuthor = (authorName || 'S. TORY BOUND').toUpperCase().trim();
 
   // Extract tone from storyStyle (format: "Tone Genre")
   const tone = (storyStyle || '').split(' ')[0] || 'Earnest';
@@ -1051,7 +1051,7 @@ function buildThresholdCoverPrompt(params) {
   const { title, authorName, modeLine, dynamic, storyStyle, genre, world, era, arousal } = params;
 
   const cleanTitle = (title || 'Untitled').trim();
-  const cleanAuthor = (authorName || 'ANONYMOUS').toUpperCase().trim();
+  const cleanAuthor = (authorName || 'S. TORY BOUND').toUpperCase().trim();
 
   // Extract tone from storyStyle (format: "Tone Genre")
   const tone = (storyStyle || '').split(' ')[0] || 'Earnest';

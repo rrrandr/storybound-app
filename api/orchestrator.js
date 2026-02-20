@@ -40,6 +40,144 @@
  */
 
 // =============================================================================
+// PASS TIER ROUTING — DETERMINISTIC LITERARY DEPTH
+// =============================================================================
+// Routes scenes through 1, 2, or 3 generation passes based on:
+//   - Storyturn phase (ST1–ST6)
+//   - World complexity
+//   - Scene type
+// NEVER references: fortune balance, subscription tier, burn rate, user status.
+
+const WORLD_COMPLEXITY = {
+  glass_house: 3,
+  dystopia: 3,
+  historical: 2,
+  fantasy: 2,
+  modern: 1,
+  billionaire_modern: 1,
+  supernatural_modern: 2,
+  post_apocalyptic: 2,
+  sci_fi: 2
+};
+
+/**
+ * Deterministic pass tier routing.
+ * Inputs: world, storyturn, sceneType.
+ * NO economic inputs. NO wallet data. NO subscription data.
+ */
+function getPassTier(world, storyturn, sceneType) {
+  const complexity = WORLD_COMPLEXITY[world] || 2;
+
+  if (storyturn === 'ST1' || storyturn === 'ST6') return 3;
+  if (sceneType === 'erotic_micro') return 1;
+
+  if (complexity === 3 && (storyturn === 'ST3' || storyturn === 'ST4')) {
+    return 3;
+  }
+
+  if (complexity === 2) return 2;
+
+  if (complexity === 1) {
+    if (storyturn === 'ST4') return 2;
+    return 1;
+  }
+
+  return 2;
+}
+
+// =============================================================================
+// STRUCTURED STATE FORMATTER
+// =============================================================================
+// Compressed state injection for Tier 1/2 — no full prior prose.
+
+function formatStructuredState(state) {
+  return `
+world_state: ${state.world_state}
+relationship_state: ${state.relationship_state}
+power_vector: ${state.power_vector}
+last_scene_summary: ${state.last_scene_summary}
+active_petition: ${state.active_petition}
+tempt_fate_active: ${state.tempt_fate_active}
+`;
+}
+
+// =============================================================================
+// TIER-SPECIFIC PROMPT BUILDERS
+// =============================================================================
+
+function buildTier3Prompt(state) {
+  return `
+[STRUCTURAL OUTLINE PASS]
+Generate structured beat outline.
+
+[THEMATIC CALIBRATION PASS]
+Align tone and regime law.
+
+[FINAL PROSE PASS]
+Generate full literary scene.
+
+Structured State:
+${formatStructuredState(state)}
+`;
+}
+
+function buildTier2Prompt(state) {
+  return `
+[OUTLINE PASS]
+Generate structured beat outline.
+
+[FINAL PROSE PASS]
+Generate full literary scene with continuity enforcement.
+
+Structured State:
+${formatStructuredState(state)}
+`;
+}
+
+function buildTier1Prompt(state) {
+  return `
+[SINGLE PASS GENERATION]
+Generate scene in one pass.
+
+Must maintain:
+- 5th-person Fate presence
+- Regime law compliance
+- Storyturn integrity
+
+Structured State:
+${formatStructuredState(state)}
+`;
+}
+
+/**
+ * Build the pass-tier prompt for a given tier and structured state.
+ * Returns the tier-specific prompt string.
+ */
+function buildPassTierPrompt(tier, structuredState) {
+  if (tier === 3) return buildTier3Prompt(structuredState);
+  if (tier === 2) return buildTier2Prompt(structuredState);
+  return buildTier1Prompt(structuredState);
+}
+
+/**
+ * Strip wallet/payment fields from a generation context object.
+ * Ensures generation layer never sees economic data.
+ */
+function stripWalletData(context) {
+  if (!context || typeof context !== 'object') return context;
+  const stripped = { ...context };
+  delete stripped.fortunes_remaining;
+  delete stripped.subscription_data;
+  delete stripped.subscription_tier;
+  delete stripped.burn_metrics;
+  delete stripped.burn_rate;
+  delete stripped.burn_velocity;
+  delete stripped.payment_status;
+  delete stripped.fortune_balance;
+  return stripped;
+}
+
+// =============================================================================
 // MODEL ALLOWLISTS — PINNED VERSIONS (NO AUTO-UPGRADES)
 // =============================================================================
 
@@ -825,5 +963,15 @@ module.exports = {
 
   // Prompt builders
   buildAuthorPrompt,
-  buildIntegrationPrompt
+  buildIntegrationPrompt,
+
+  // Pass Tier routing (deterministic, wallet-agnostic)
+  getPassTier,
+  formatStructuredState,
+  buildTier1Prompt,
+  buildTier2Prompt,
+  buildTier3Prompt,
+  buildPassTierPrompt,
+  stripWalletData,
+  WORLD_COMPLEXITY
 };

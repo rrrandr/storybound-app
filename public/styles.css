@@ -6651,6 +6651,23 @@ textarea.fate-field {
     margin: 12px auto;
 }
 
+/* Archive Stamp — visual overlay at ST6 */
+.archive-stamp {
+    position: absolute;
+    bottom: 8%;
+    right: 6%;
+    font-family: var(--font-story, Georgia, serif);
+    font-size: 0.55em;
+    font-variant: small-caps;
+    letter-spacing: 0.3em;
+    color: rgba(180, 160, 120, 0.35);
+    border: 1px solid rgba(180, 160, 120, 0.25);
+    padding: 2px 8px;
+    transform: rotate(-8deg);
+    pointer-events: none;
+    z-index: 5;
+}
+
 .page-edge-stack {
     position: absolute;
     right: 0;
