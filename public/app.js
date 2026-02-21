@@ -2226,6 +2226,104 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
 
       }
 
+    },
+
+    office: {
+      core_power_asymmetry: `
+Workplace hierarchies distort romantic leverage. Power may derive from rank, ownership, reputation, knowledge control, or economic dependency. Even when peers, visibility inside institutional systems alters risk calculus.
+`,
+
+      structural_stakes_engine: `
+Career advancement, professional survival, reputation permanence, HR enforcement, and financial stability. Romantic movement threatens livelihood or accelerates status shifts.
+`,
+
+      social_pressure_mechanism: `
+Colleague surveillance, rumor propagation, compliance policy, performance review systems, and public credit/blame structures.
+`,
+
+      default_romantic_tension_pattern: `
+Proximity-driven slow ignition under constraint. Attraction builds through collaboration, conflict over control, and forced strategic cooperation.
+`,
+
+      forbidden_collapse_patterns: `
+Scandal exposure
+HR investigation
+Power abuse revelation
+Termination or forced transfer
+Public humiliation
+`,
+
+      world_artifacts: [
+        "performance review cycles",
+        "promotion ladder",
+        "compliance policy",
+        "project deadlines",
+        "corporate gossip channels",
+        "private office vs open floor"
+      ],
+
+      power_vector_levers: [
+        "promotion leverage",
+        "salary dependency",
+        "intellectual ownership",
+        "client visibility",
+        "termination authority",
+        "performance evaluation control"
+      ],
+
+      entropy_axes: {
+        hierarchy_geometry: {
+          values: [
+            "direct_superior",
+            "rival_peers",
+            "cross_department_dependency",
+            "secret_cofounders",
+            "mentor_protege"
+          ],
+          structural_effect: "Determines baseline power imbalance and exposure volatility."
+        },
+
+        exposure_channel: {
+          values: [
+            "strict_hr_environment",
+            "rumor_heavy_floor",
+            "public_metrics_driven",
+            "private_family_owned",
+            "remote_digital_trace"
+          ],
+          structural_effect: "Defines how quickly romantic movement becomes visible and who weaponizes it."
+        },
+
+        economic_dependency_axis: {
+          values: [
+            "one_income_dependency",
+            "promotion_gatekeeper",
+            "mutual_risk",
+            "equity_entanglement"
+          ],
+          structural_effect: "Alters survival stakes if relationship collapses."
+        },
+
+        escalation_style: {
+          values: [
+            "slow_burn_competence",
+            "crisis_collaboration",
+            "territorial_power_play",
+            "career_sacrifice_arc"
+          ],
+          structural_effect: "Controls how intimacy accelerates under institutional pressure."
+        },
+
+        institutional_morality: {
+          values: [
+            "rigid_policy_enforced",
+            "selective_rule_bending",
+            "corrupt_power_network",
+            "image_obsessed_executive_layer"
+          ],
+          structural_effect: "Shapes consequences and collapse severity."
+        }
+      }
     }
 
   };
@@ -14749,6 +14847,11 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
       inputContext.entropy_axes = state._blueBloodEntropy;
     }
 
+    // Office entropy injection (when active, does not override Blue Blood)
+    if (state._officeEntropy && !inputContext.entropy_axes) {
+      inputContext.entropy_axes = state._officeEntropy;
+    }
+
     return { system, user: JSON.stringify(inputContext) };
   }
 
@@ -14784,7 +14887,7 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
         }
       }
       // Validate entropy output when entropy was provided
-      if (state._blueBloodEntropy) {
+      if (state._blueBloodEntropy || state._officeEntropy) {
         if (!parsed.active_entropy_axis || !parsed.entropy_manifestation_summary) {
           state._strategyPassFailed = true;
           console.warn('[STRATEGY_PASS] Missing entropy keys: active_entropy_axis or entropy_manifestation_summary');
@@ -18220,6 +18323,18 @@ QUIETING EVENT DIRECTIVES:
           }
       }
 
+      // Office structural contract
+      if (world === 'Modern' && sorted.some(f => f.val === 'office')) {
+          const officeData = MODERN_FLAVOR_STRUCTURAL_DATA.office;
+          if (officeData) {
+              block += `\n\nOFFICE STRUCTURAL CONTRACT (MANDATORY):`;
+              block += `\nCORE POWER ASYMMETRY: ${officeData.core_power_asymmetry}`;
+              block += `\nSTRUCTURAL STAKES ENGINE: ${officeData.structural_stakes_engine}`;
+              block += `\nSOCIAL PRESSURE MECHANISM: ${officeData.social_pressure_mechanism}`;
+              block += `\nFORBIDDEN COLLAPSE PATTERNS: ${officeData.forbidden_collapse_patterns}`;
+          }
+      }
+
       // Template collapse prevention — anti-repeat directive
       const primaryVal = primaryFlavor?.val || (sorted[0] && sorted[0].val);
       if (primaryVal) {
@@ -18326,6 +18441,19 @@ QUIETING EVENT DIRECTIVES:
                       state._blueBloodEntropy.monarchy_model = pick(axes.monarchy_model);
                   }
                   console.log('[BLUE_BLOOD] Entropy initialized:', JSON.stringify(state._blueBloodEntropy));
+              }
+          }
+
+          // Office entropy initialization — once per story
+          if (storyWorld === 'Modern' && resolvedFlavors1.some(f => f.val === 'office') && !state._officeEntropy) {
+              const axes = MODERN_FLAVOR_STRUCTURAL_DATA.office?.entropy_axes;
+              if (axes) {
+                  state._officeEntropy = {};
+                  Object.keys(axes).forEach(axis => {
+                      const values = axes[axis].values;
+                      state._officeEntropy[axis] = values[Math.floor(Math.random() * values.length)];
+                  });
+                  console.log('[OFFICE] Entropy initialized:', JSON.stringify(state._officeEntropy));
               }
           }
 
@@ -41641,6 +41769,18 @@ FATE CARD ADAPTATION (CRITICAL):
                       log('  Exposure: ' + e.exposure_level);
                       log('  Timeline: ' + e.structural_timeline_mode);
                       if (e.monarchy_model) log('  Monarchy Model: ' + e.monarchy_model);
+                  }
+              }
+
+              // Office debug (entropy)
+              if (state._officeEntropy) {
+                  log('Flavor: Office');
+                  const oe = state._officeEntropy;
+                  Object.keys(oe).forEach(axis => {
+                      log('  ' + axis + ': ' + oe[axis]);
+                  });
+                  if (state._strategyPass && state._strategyPass.active_entropy_axis) {
+                      log('  Active Entropy Axis (this scene): ' + state._strategyPass.active_entropy_axis);
                   }
               }
 
