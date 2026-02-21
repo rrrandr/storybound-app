@@ -149,7 +149,7 @@
 
 <div id="vizModal" class="overlay hidden">
   <div class="box viz-modal-content">
-    <h3>Visualization</h3>
+    <h3>Vision</h3>
     <!-- TRUST REPAIR: Always show prompt first, explain fortunes -->
     <p style="font-size:0.85em; color:var(--gold); margin-bottom:10px; font-style:italic;">
         You may freely edit the prompt below. Images follow the story's tone.
@@ -180,7 +180,7 @@
             <strong>Fortunes required</strong>
         </p>
         <p style="font-size:0.85em; color:#888; margin-bottom:15px;">
-            Each visualization costs 1 Fortune. Purchase Fortunes to continue.
+            Each Vision costs 1 Fortune. Purchase Fortunes to continue.
         </p>
         <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
             <button class="sb-btn-png text-sm" id="vizEnablePayAsYouGo" onclick="window.enablePayAsYouGoFromViz();">
@@ -194,7 +194,7 @@
 
     <!-- Image placeholder and container -->
     <div id="vizPlaceholder" style="display:flex; align-items:center; justify-content:center; min-height:200px; color:#888; font-style:italic; text-align:center; padding:20px;">
-        1 Fortune per image. Purchase Fortunes to visualize scenes.
+        1 Fortune per image. Purchase Fortunes to summon Visions.
     </div>
 
     <div id="vizImgContainer">
@@ -213,7 +213,7 @@
             <option value="openai">OpenAI (Fallback)</option>
             <option value="replicate">Replicate FLUX</option>
         </select>
-        <button class="sb-btn sb-btn--sm" id="vizRetryBtn" onclick="window.handleReVisualize()">Re-Visualize</button>
+        <button class="sb-btn sb-btn--sm" id="vizRetryBtn" onclick="window.handleReVisualize()">Re-Summon</button>
         <button class="sb-btn sb-btn--sm sb-btn--gold" id="vizInsertBtn" onclick="window.insertImage()">Insert</button>
         <button class="sb-btn sb-btn--sm" onclick="window.closeViz()">Cancel</button>
     </div>
@@ -1331,7 +1331,7 @@
     </div>
 
     <div style="text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-        <button id="vizSceneBtn" onclick="window.visualize()" class="small-btn">✨ Visualize</button>
+        <button id="vizSceneBtn" onclick="window.summonVision()" class="small-btn">✨ Summon Vision</button>
         <button id="btnReaderCover" class="small-btn">📖 Generate Cover — Sketch</button>
     </div>
 

@@ -3874,7 +3874,7 @@ select {
 /* Gleam must be contained within button bounds — never escape to modal/viewport   */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* All visualizer buttons: enforce containment */
+/* All Vision buttons: enforce containment */
 #vizModal .sb-btn,
 #vizModal button,
 .viz-controls button,
@@ -4017,10 +4017,7 @@ select {
 #coupleRoomCodeWrap { display: flex; align-items: center; justify-content: center; gap: 10px; }
 #btnCopyCode { background-color: var(--plaque-black-base); background-image: var(--plaque-black-grain); border: var(--plaque-border-outer) solid var(--plaque-black-outer); padding: 5px; border-radius: 0; cursor: pointer; color: var(--gold); }
 
-/* GOD MODE UI */
-#godModeToggle { margin-top:10px; font-size:0.8em; display:flex; align-items:center; justify-content:center; gap:8px; opacity:0.8; cursor:pointer; }
-#godModeToggle input { width:auto; margin:0; cursor:pointer; }
-#godModeLabel { color: var(--gold); font-family:var(--font-main); letter-spacing:1px; }
+
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 /* PETITION FATE MODAL                                                          */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -5532,7 +5529,7 @@ textarea.fate-field {
     }
 }
 
-/* Glow pulse for story/visualize loading bar */
+/* Glow pulse for story/vision loading bar */
 #loadingOverlayBar.sparkle-active {
     position: relative;
     overflow: visible;
@@ -10837,100 +10834,6 @@ body.corridor-complete .corridor-section {
     gap: 6px;
 }
 
-/* God Mode plaque — DSP gold background, same size as Continue button */
-.god-mode-plaque {
-    width: 140px;
-    height: 39px;
-    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: auto;
-    border-radius: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-.god-mode-plaque.hidden {
-    display: none;
-}
-.god-mode-plaque label {
-    font-family: 'Cinzel', serif;
-    font-size: 0.65em;
-    color: #111;
-    cursor: pointer;
-    text-shadow:
-        -1px -1px 0 rgba(218, 165, 32, 0.5),
-        1px -1px 0 rgba(218, 165, 32, 0.5),
-        -1px 1px 0 rgba(218, 165, 32, 0.5),
-        1px 1px 0 rgba(218, 165, 32, 0.5),
-        0 0 4px rgba(218, 165, 32, 0.3);
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.god-mode-plaque input[type="checkbox"] {
-    accent-color: var(--gold);
-}
-
-/* God Mode reader button — DSP gold plaque in story interface */
-.god-mode-reader-btn {
-    width: 160px;
-    height: 44px;
-    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-    font-family: 'Lora', serif;
-    font-variant: small-caps;
-    font-size: 0.85em;
-    color: #111;
-    text-shadow:
-        -1px -1px 0 rgba(218, 165, 32, 0.4),
-        1px -1px 0 rgba(218, 165, 32, 0.4),
-        -1px 1px 0 rgba(218, 165, 32, 0.4),
-        1px 1px 0 rgba(218, 165, 32, 0.4);
-    cursor: pointer;
-    letter-spacing: 0.05em;
-    transition: filter 0.15s ease;
-}
-.god-mode-reader-btn:hover { filter: brightness(1.1); }
-.god-mode-reader-btn.hidden { display: none; }
-
-/* God Mode unlock button — DSP gold plaque with Lora small caps */
-.god-mode-unlock-btn {
-    display: block;
-    width: 100%;
-    padding: 12px 20px;
-    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-    font-family: 'Lora', serif;
-    font-variant: small-caps;
-    font-size: 1.1em;
-    color: #111;
-    text-shadow:
-        -1px -1px 0 rgba(218, 165, 32, 0.4),
-        1px -1px 0 rgba(218, 165, 32, 0.4),
-        -1px 1px 0 rgba(218, 165, 32, 0.4),
-        1px 1px 0 rgba(218, 165, 32, 0.4);
-    cursor: pointer;
-    letter-spacing: 0.05em;
-    transition: filter 0.15s ease;
-}
-.god-mode-unlock-btn:hover {
-    filter: brightness(1.1);
-}
-
 /* When DSP is visible, move Continue button to very bottom of screen */
 body:has(.synopsis-panel.visible) #controlPlane {
     bottom: 8px;
@@ -12480,16 +12383,12 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* COVER$ CREDIT DISPLAY                                                        */
+/* COVER FORTUNE DISPLAY                                                        */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 #coverCreditDisplay {
     transition: color 0.3s ease, opacity 0.3s ease;
 }
 
-#coverCreditDisplay.god-mode {
-    color: #b8860b;
-    font-weight: bold;
-}
 
 #coverCreditDisplay.exhausted {
     color: var(--pink);

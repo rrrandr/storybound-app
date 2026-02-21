@@ -401,7 +401,7 @@ window.config = window.config || {
   const PROFILE_COLUMNS = `
     subscription_fortunes, purchased_fortunes, is_subscriber, subscription_tier, has_storypass,
     age_confirmed, tos_version, privacy_version, adult_ack_version,
-    romance_preferences, free_story_consumed
+    romance_preferences, free_story_consumed, first_tempt_fate_vision_triggered
   `;
 
   async function hydrateProfile(userId) {
@@ -431,6 +431,7 @@ window.config = window.config || {
     state.romancePreferences = Array.isArray(profile.romance_preferences) ? profile.romance_preferences : [];
     state.romanceVector = computeRomanceVector(state.romancePreferences);
     state.freeStoryConsumed = !!profile.free_story_consumed;
+    state.first_tempt_fate_vision_triggered = !!profile.first_tempt_fate_vision_triggered;
     syncTierFromAccess();
     activateKeyholeMarkIfEligible();
     console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.subscriptionTier, '| Keyhole:', state.keyhole?.marked, '| Fortunes:', state.fortunes);
@@ -555,7 +556,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     if (v.angstBias > 0.6)       nudges.push('Increase emotional tension, vulnerability, and internal conflict.');
     if (v.eroticHeatBias > 0.6)  nudges.push('Slightly increase sensual pacing and tactile awareness (obey eroticMode limits).');
     if (nudges.length > 0) block += '\nTonal nudges:\n' + nudges.map(n => '- ' + n).join('\n');
-    block += '\nDo NOT mention book titles in prose. Do NOT override archetype after user selection. Do NOT alter Offering or Tempt Fate mechanics.';
+    block += '\nDo NOT mention book titles in prose. Do NOT override archetype after user selection. Do NOT alter Fortune or Tempt Fate mechanics.';
     return block;
   }
 
@@ -1046,26 +1047,26 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 <p>Users are responsible for maintaining the confidentiality of account credentials. Storybound may suspend or terminate accounts at its sole discretion for violations of these Terms.</p>
 <p>Accounts are non-transferable.</p>
 
-<h4>4. Offerings &amp; Digital Goods</h4>
-<p>Offerings are digital consumables used within the Platform. Offerings:</p>
+<h4>4. Fortunes &amp; Digital Goods</h4>
+<p>Fortunes are digital consumables used within the Platform. Fortunes:</p>
 <ul>
 <li>Have no monetary value</li>
 <li>Are non-transferable</li>
 <li>Are non-refundable except where required by law</li>
 </ul>
-<p><strong>4.1 Subscription Offerings</strong></p>
+<p><strong>4.1 Subscription Fortunes</strong></p>
 <ul>
 <li>Are granted periodically</li>
-<li>Are consumed before permanent Offerings</li>
+<li>Are consumed before purchased Fortunes</li>
 <li>Expire upon cancellation of subscription</li>
 </ul>
-<p><strong>4.2 Permanent Offerings</strong></p>
+<p><strong>4.2 Purchased Fortunes</strong></p>
 <ul>
 <li>Do not expire</li>
-<li>Are consumed after Subscription Offerings</li>
+<li>Are consumed after Subscription Fortunes</li>
 <li>Remain associated with the account</li>
 </ul>
-<p>Storybound may modify Offering structures at its discretion.</p>
+<p>Storybound may modify Fortune structures at its discretion.</p>
 
 <h4>5. Generated Narrative &amp; Intellectual Property</h4>
 <p><strong>5.1 Ownership of Generated Narrative</strong></p>
@@ -1125,7 +1126,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
 <h4>11. Termination</h4>
 <p>Storybound may suspend or terminate accounts at its sole discretion.</p>
-<p>Offerings may be forfeited upon termination due to policy violations.</p>
+<p>Fortunes may be forfeited upon termination due to policy violations.</p>
 
 <h4>12. Limitation of Liability</h4>
 <p>The Platform is provided "as is." Storybound disclaims all warranties to the fullest extent permitted by law.</p>
@@ -1153,7 +1154,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 <li>IP address and device metadata</li>
 <li>Billing information (processed via Stripe or payment processor)</li>
 <li>Interaction data (choices, prompts, selections)</li>
-<li>Offering transaction data</li>
+<li>Fortune transaction data</li>
 <li>Usage analytics</li>
 </ul>
 <p>We do not sell personal data.</p>
@@ -1173,7 +1174,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 <ul>
 <li>Provide access to the Platform</li>
 <li>Generate narrative content</li>
-<li>Manage Offerings and subscriptions</li>
+<li>Manage Fortunes and subscriptions</li>
 <li>Enforce platform policies</li>
 <li>Improve system performance</li>
 <li>Prevent fraud</li>
@@ -2045,6 +2046,190 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
     }
   };
 
+  // =====================================================
+  // MODERN FLAVOR STRUCTURAL DATASET
+  // Phase 1 — Structural Data Only (No Entropy Wiring Yet)
+  // =====================================================
+
+  const MODERN_FLAVOR_STRUCTURAL_DATA = {
+
+    BlueBlood: {
+
+      variant_weights: {
+        royal: 0.85,
+        aristocratic: 0.15
+      },
+
+      variants: {
+
+        royal: {
+
+          core_power_asymmetry:
+            "Sovereign legitimacy versus private personhood. One character exists as a constitutional instrument — their body, marriage, reproduction, and public conduct are state functions governed by law, protocol, and institutional oversight. The other character is a private citizen whose proximity to the crown converts them from a person into a political variable.",
+
+          structural_stakes_engine:
+            "Succession as structural constraint. Marriage and attachment threaten constitutional continuity. Refusal of dynastic expectation triggers abdication protocol, line-of-succession restructuring, and institutional crisis. The stakes are jurisdictional, not merely personal.",
+
+          social_pressure_mechanism:
+            "The palace apparatus as enforcement body. Private secretaries, communications offices, security details, and advisory councils function as bureaucratic immune system. Opposition is procedural, not emotional.",
+
+          default_romantic_tension_pattern:
+            "State function versus private desire conducted under surveillance. Every absence is logged, every proximity interpreted, every deviation from protocol noticed.",
+
+          forbidden_collapse_patterns: [
+            "Royalty becomes aesthetic — crowns and palaces exist but no constitutional mechanism constrains choice",
+            "The palace is reduced to a single disapproving relative instead of a bureaucratic institution",
+            "Abdication is treated as a simple romantic gesture without institutional consequence",
+            "The commoner partner faces social awkwardness rather than security vetting and loss of private identity"
+          ],
+
+          world_artifacts: [
+            "privy council marriage consent petitions",
+            "line-of-succession registry amendments",
+            "palace communications office media suppression directives",
+            "abdication instrument draft legislation",
+            "royal household appointment and dismissal authorities",
+            "state banquet seating protocol charts with precedence rankings",
+            "official engagement announcement embargo schedules",
+            "crown estate trust disbursement conditions",
+            "parliamentary notification requirements for royal marriages",
+            "private secretary daily briefing memoranda",
+            "royal charter patronage assignment registers",
+            "security classification levels for intimate associates"
+          ],
+
+          power_vector_levers: [
+            "constitutional authority to grant or withhold marriage consent",
+            "control of the royal schedule through official diary management",
+            "security service authority to classify and exclude individuals from proximity",
+            "succession line positioning that determines institutional resistance",
+            "palace communications power to shape or weaponize media narratives",
+            "diplomatic obligation that removes the royal from jurisdiction"
+          ],
+
+          entropy_axes: {
+            entry_state: [
+              "pre-announcement secrecy — relationship exists but has not been disclosed to the institution",
+              "post-leak crisis — unauthorized exposure forces institutional response before the couple is ready",
+              "formal courtship under observation — palace has approved preliminary contact but monitors every interaction",
+              "diplomatic entanglement — romantic interest coincides with or disrupts an active diplomatic obligation"
+            ],
+            pressure_origin: [
+              "privy council constitutional objection — marriage requires parliamentary or council consent that is being withheld",
+              "succession line threat — the relationship destabilizes inheritance order for other claimants",
+              "media siege — press has obtained information and publication is imminent or ongoing",
+              "security reclassification — the partner has been flagged as a risk by protection services"
+            ],
+            polarity_orientation: [
+              "royal pursues, commoner retreats — sovereign initiates but the partner resists absorption into the institution",
+              "commoner pursues, institution blocks — outsider seeks proximity while palace apparatus enforces distance",
+              "mutual pursuit, external veto — both desire connection but a constitutional or diplomatic mechanism prevents it",
+              "forced proximity, denied intimacy — duty requires closeness while protocol forbids private attachment"
+            ],
+            exposure_level: [
+              "total concealment — no public or institutional awareness of the connection",
+              "inner circle only — a small number of palace staff or family members know",
+              "controlled disclosure — the institution is managing a staged revelation",
+              "full public exposure — the relationship is known and under active public scrutiny"
+            ],
+            structural_timeline_mode: [
+              "countdown — an external deadline forces resolution (coronation, parliamentary session, diplomatic summit)",
+              "slow erosion — institutional pressure accumulates gradually through procedural obstruction",
+              "crisis cascade — a single exposure event triggers a chain of institutional responses",
+              "cyclical negotiation — repeated rounds of proposal, rejection, and renegotiation with palace authorities"
+            ],
+            monarchy_model: [
+              "constitutional monarchy — sovereign authority is ceremonial but marriage requires parliamentary consent and public legitimacy",
+              "executive monarchy — the crown retains governing authority and marriage is a matter of state policy",
+              "dual monarchy — two parallel lines of authority create competing institutional claims on the relationship",
+              "restored monarchy — recently re-established crown with fragile legitimacy that any scandal could destroy"
+            ]
+          }
+
+        },
+
+        aristocratic: {
+
+          core_power_asymmetry:
+            "Dynastic legitimacy versus individual merit. Authority derives from hereditary entitlement — titles, seats, estates, and institutional positions held by bloodline rather than accomplishment.",
+
+          structural_stakes_engine:
+            "Lineage continuity as legal obligation. Marriage determines which bloodline controls the estate and name. Failure to produce an approved heir becomes institutional crisis.",
+
+          social_pressure_mechanism:
+            "Peerage society as closed recognition system. Admission requires genealogical legitimacy. Enforcement occurs through exclusion, withdrawal of patronage, and denial of institutional participation.",
+
+          default_romantic_tension_pattern:
+            "Vertical desire across a non-transferable legitimacy barrier. The aristocrat cannot renounce entailed inheritance without legal rupture. The outsider cannot acquire inherited authority.",
+
+          forbidden_collapse_patterns: [
+            "Aristocracy collapses into generic wealth with no hereditary obligation",
+            "Family opposition is emotional rather than enforced through trust or entail mechanics",
+            "Title renunciation occurs without legal or institutional resistance"
+          ],
+
+          world_artifacts: [
+            "entailed estate succession instruments with primogeniture clauses",
+            "hereditary peerage seat appointment registers",
+            "family trust modification requiring trustee consent",
+            "marriage settlement contract negotiations between family solicitors",
+            "primogeniture challenge litigation filings",
+            "estate entail break proceedings requiring parliamentary private bill",
+            "peerage recognition protocols",
+            "dowager residence right-of-occupation clauses",
+            "genealogical lineage verification submissions",
+            "hereditary charity patronage succession documents"
+          ],
+
+          power_vector_levers: [
+            "authority to enforce entail conditions determining inheritance rights",
+            "control of hereditary institutional appointments",
+            "possession of genealogical evidence that restructures succession claims",
+            "family solicitor authority over marriage settlement terms",
+            "ability to grant or deny formal social recognition"
+          ],
+
+          entropy_axes: {
+            entry_state: [
+              "pre-introduction — families have not yet formally met or acknowledged the connection",
+              "post-scandal recovery — a prior indiscretion has damaged the family's social standing and any new attachment is scrutinized",
+              "arranged proximity — families have engineered social contact for dynastic purposes",
+              "inheritance dispute — a contested succession has created competing claims within the family"
+            ],
+            pressure_origin: [
+              "trust and entail enforcement — legal instruments restrict who may inherit and under what marriage conditions",
+              "family solicitor intervention — the family's legal representative is actively opposing the match",
+              "peerage recognition withdrawal — the broader social network is threatening exclusion",
+              "dowager authority — a surviving matriarch or patriarch controls estate access and social endorsement"
+            ],
+            polarity_orientation: [
+              "heir pursues, outsider retreats — the titled party initiates but the partner refuses absorption into the dynasty",
+              "outsider pursues, family blocks — the untitled party seeks entry while hereditary gatekeepers enforce exclusion",
+              "mutual pursuit, legal barrier — both desire union but entail or trust mechanics prevent it",
+              "forced cohabitation, denied recognition — circumstances require proximity while the family withholds formal acknowledgment"
+            ],
+            exposure_level: [
+              "total concealment — the connection is unknown to the wider family and social circle",
+              "household awareness — immediate family and senior staff know but society does not",
+              "controlled social introduction — the family is managing a staged presentation to peers",
+              "full society exposure — the relationship is known and actively judged by the peerage"
+            ],
+            structural_timeline_mode: [
+              "inheritance deadline — a trust or entail condition imposes a marriage or heir-production timeline",
+              "slow social erosion — exclusion from events and patronage networks accumulates over seasons",
+              "legal crisis — a filed challenge to inheritance or title forces immediate resolution",
+              "generational negotiation — the resolution depends on outliving or persuading the controlling generation"
+            ]
+          }
+
+        }
+
+      }
+
+    }
+
+  };
+
   // Template collapse prevention — tracks last 3 story world+flavor combos
   // If same world generates 3 stories in a row under different flavors, inject freshness directive
   const _recentWorldFlavors = []; // [{world, flavor}] — max length 3
@@ -2497,7 +2682,7 @@ For constraint/petition:
    * All user-authored inputs MUST flow through this before committing to canon.
    *
    * @param {string} text - Raw user input
-   * @param {Object} options - { source: 'constraint'|'petition'|'godmode'|'character'|'dsp', worldContext: string[] }
+   * @param {Object} options - { source: 'constraint'|'petition'|'temptfate'|'character'|'dsp', worldContext: string[] }
    * @returns {string} - Canonicalized text safe for storage and prompts
    */
   function canonicalizeInput(text, options = {}) {
@@ -2517,7 +2702,7 @@ For constraint/petition:
           const hasWorldReinforcement = matches.some(m =>
               worldContext.some(w => w.toLowerCase().includes(m.franchise))
           );
-          const isPrivilegedSource = source === 'petition' || source === 'godmode';
+          const isPrivilegedSource = source === 'petition' || source === 'temptfate';
 
           // If no reinforcement and not from privileged source, allow
           if (!hasWorldReinforcement && !isPrivilegedSource) {
@@ -3224,13 +3409,29 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
           bible: { style: "", setting: "", characters: {} },
           // Per-scene visualization budget: sceneBudgets[sceneKey] = { remaining: 2, finalized: false }
           sceneBudgets: {},
-          // Per-scene visualization tracking: has this scene been visualized with a free credit?
+          // Per-scene visualization tracking: has this scene been visualized?
           visualizedScenes: {}
       },
 
       // Fortune burn tracking
-      temptFateConsecutive: 0,
       petitionUsedThisScene: false,
+
+      // Tempt Fate — explicit invocation (per-turn, per-session)
+      tempt_fate_invoked_this_turn: false,
+      consecutive_tempt_fate_count: 0,
+
+      // Onboarding milestone Visions — first story only
+      onboarding_story_id: null,
+      has_received_intro_vision: false,
+      has_received_reversal_vision: false,
+      has_received_tempt_fate_vision: false,
+      has_received_final_vision: false,
+      has_triggered_first_tempt_fate: false,
+      milestone_vision_fired_this_turn: false,
+
+      // Fate saturation + volatility (per-story, not per-user)
+      fate_saturation: 0,
+      volatility_window: { active: false, severity: 0, remaining_scenes: 0 },
 
       // ============================================================
       // SPECULATIVE NEXT SCENE PRELOAD — Memory only, not persisted
@@ -3272,7 +3473,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       // Clamped to valid range: 12–20
       // ============================================================
       TEASE_SCENE_CAP: Math.min(20, Math.max(12, window.STORYBOUND_CONFIG?.TEASE_SCENE_CAP || 15)),
-      tempQuillAllowance: 0, // Offering-granted bypass scenes remaining
+      tempQuillAllowance: 0, // Fortune-sacrifice-granted bypass scenes remaining
 
       // ============================================================
       // PHASE 1 COVER MODE — LOCAL/COMPOSITED COVERS ONLY
@@ -3313,6 +3514,8 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       lastSexPushAt: null,
       constraints: { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] },
       fate: { stance: 'neutral', minorUsedThisScene: false, greaterUsedThisScene: false, lastGreaterSceneIndex: null, earnedIntimacy: false, earlyGamingCount: 0, pendingPetition: null },
+      fate_saturation: 0,
+      volatility_window: { active: false, severity: 0, remaining_scenes: 0 },
       omen: {
         decayStage: 0,           // 0=Warm, 1=Watchful, 2=Cold, 3=Distant
         decayAccumulator: 0,     // fractional decay buildup
@@ -5867,7 +6070,7 @@ If you name what something IS, you have failed. Show what it COSTS.
       POV_AUTHOR_NARRATES_ACTION: 'POV_AUTHOR_NARRATES_ACTION',
       POV_NON_3RD_PERSON: 'POV_NON_3RD_PERSON',
       POV_META_AWARENESS_EXCESS: 'POV_META_AWARENESS_EXCESS',
-      POV_GODMODE_PLAYER_AWARENESS: 'POV_GODMODE_PLAYER_AWARENESS',
+      POV_TEMPTFATE_PLAYER_AWARENESS: 'POV_TEMPTFATE_PLAYER_AWARENESS',
 
       // Tone Errors
       TONE_DRIFT: 'TONE_DRIFT',
@@ -7332,7 +7535,99 @@ relationship_state: ${state.storyturn || 'ST1'} — ${STORYTURN_CONFIG.storyturn
 power_vector: ${state.picks?.genre || 'unknown'}
 last_scene_summary: ${(state.context?.slice(-300) || 'No prior scene').slice(0, 300)}
 active_petition: ${state.fate?.pendingPetition ? state.fate.pendingPetition.text : 'none'}
-tempt_fate_active: ${state.fate?.temptFateActive ? 'yes' : 'no'}`;
+tempt_fate_active: ${state.tempt_fate_invoked_this_turn ? 'yes' : 'no'}
+consecutive_tempt_fate_count: ${state.consecutive_tempt_fate_count || 0}
+fate_saturation: ${(state.fate_saturation || 0).toFixed(2)}
+volatility_window: ${state.volatility_window?.active ? 'active (severity ' + (state.volatility_window.severity || 0).toFixed(1) + ', ' + (state.volatility_window.remaining_scenes || 0) + ' scenes remaining)' : 'inactive'}`;
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // WORLD LAW + FATE SATURATION SYSTEM
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Deterministic Tempt Fate ontology per world. No AI guessing.
+  // Saturation penalizes spam. Volatility windows escalate consequences.
+
+  const WORLD_TEMPT_FATE_MODE = {
+    Modern: 'probability',
+    Historical: 'probability',
+    Fantasy: 'divine',
+    SciFi: 'glitch',
+    PostApocalyptic: 'scarcity',
+    Dystopia: 'instability'
+  };
+
+  const WORLD_LAW_DIRECTIVES = {
+    probability: `TEMPT FATE WORLD LAW:
+- Effects must remain within probabilistic or socially catastrophic bounds.
+- No permanent physics violations.
+- Physical anomalies must be temporary, ambiguous, or medically disputable.
+- No public, provable miracles.`,
+    divine: `TEMPT FATE WORLD LAW:
+- Effects may alter physical reality.
+- Must align with established magic logic.
+- Must carry consequence.
+- May not permanently rewrite core world laws.`,
+    glitch: `TEMPT FATE WORLD LAW:
+- Effects must resemble technological, systemic, or simulation instability.
+- No unexplained magic unless simulation premise allows.`,
+    scarcity: `TEMPT FATE WORLD LAW:
+- Effects must exploit or strain scarce resources.
+- Consequences must involve loss, trade-off, or environmental degradation.
+- No limitless abundance.`,
+    instability: `TEMPT FATE WORLD LAW:
+- Effects must destabilize systems, not annihilate them.
+- Regime may bend, not instantly collapse.`
+  };
+
+  function computeTemptFateSeverity() {
+    let severity = 0.4;
+    if (state.fate?.pendingPetition) severity += 0.2;
+    if (state.volatility_window?.active) severity += 0.2;
+    if ((state.fate_saturation || 0) > 0.6) severity += 0.2;
+    return Math.min(severity, 1.0);
+  }
+
+  function elevateImportance(level) {
+    const order = ['low', 'medium', 'high', 'apex'];
+    const idx = order.indexOf(level);
+    if (idx < 0) return 'medium';
+    return order[Math.min(idx + 1, order.length - 1)];
+  }
+
+  /**
+   * Build the World Law + Saturation directive for the system prompt.
+   * Only injected when Tempt Fate is explicitly invoked or volatility window is open.
+   */
+  function buildWorldLawDirective() {
+    const temptFateThisTurn = state.tempt_fate_invoked_this_turn;
+    const volActive = state.volatility_window?.active;
+    if (!temptFateThisTurn && !volActive) return '';
+
+    const world = state.picks?.world || 'Modern';
+    const mode = WORLD_TEMPT_FATE_MODE[world] || 'probability';
+    const lawBlock = WORLD_LAW_DIRECTIVES[mode] || WORLD_LAW_DIRECTIVES.probability;
+
+    let directive = `\n${lawBlock}\n`;
+
+    // Saturation warnings
+    const sat = state.fate_saturation || 0;
+    if (sat > 0.85) {
+      directive += `\nCRITICAL SATURATION:
+- High probability of twist or backfire.
+- Invoker may suffer consequences.
+- Romantic stability may erode.\n`;
+    } else if (sat > 0.6) {
+      directive += `\nFATE SATURATION WARNING:
+- Chaos weighting increases.
+- Benevolence decreases.
+- Collateral damage likelihood increases.
+- Emotional and relational destabilization more likely.\n`;
+    }
+
+    // Hard guardrails — Tempt Fate is per-invocation only, never a persistent power state
+    directive += `\nTempt Fate may not accelerate Storyturn stage, override intimacy authorization, override consent, or directly control love interest psychology.\n`;
+
+    return directive;
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -7453,6 +7748,14 @@ tempt_fate_active: ${state.fate?.temptFateActive ? 'yes' : 'no'}`;
       const prevSt = state.storyturn;
       state.storyturn = nextSt;
       console.log(`[STORYTURN] Advanced: ${prevSt} → ${nextSt}`);
+
+      // Onboarding: reversal vision on ST3→ST4 or ST4→ST5
+      if ((prevSt === 'ST3' && nextSt === 'ST4') || (prevSt === 'ST4' && nextSt === 'ST5')) {
+          if (state.storyId === state.onboarding_story_id && !state.has_received_reversal_vision) {
+              state.has_received_reversal_vision = true;
+              state._pendingReversalVision = true;
+          }
+      }
 
       // If Taste hits ST3 ceiling, store cliffhanger state for potential upgrade
       const storyLengthNorm = (state.storyLength || 'taste').toLowerCase();
@@ -11205,7 +11508,7 @@ Return ONLY the title, no quotes or explanation.`;
       NEW_STORY: 'new_story'
   };
 
-  const WORLD_STORY_SUFFIXES = ['Story', 'Tale', 'Chronicle', 'Affair', 'Exposé', 'Adventure'];
+  const WORLD_STORY_SUFFIXES = ['Story', 'Tale', 'Affair', 'Exposé', 'Adventure'];
 
   /**
    * Generate a unique World Instance ID
@@ -11259,7 +11562,7 @@ Return ONLY the title, no quotes or explanation.`;
    */
   function getWorldStorySuffix(world, tone) {
       // Different tones get different suffixes
-      if (tone === 'Dark') return 'Chronicle';
+      if (tone === 'Dark') return 'Tale';
       if (tone === 'WryConfession') return 'Exposé';
       if (world === 'Noir') return 'Affair';
       return 'Tale';
@@ -11304,7 +11607,7 @@ Return ONLY the title, no quotes or explanation.`;
    * Build same-world title with world-marking subtitle
    * @param {string} primaryTitle - The main title
    * @param {string} worldName - The persistent world name
-   * @param {string} suffix - Story/Tale/Chronicle etc.
+   * @param {string} suffix - Story/Tale/Affair etc.
    * @returns {string}
    */
   function buildWorldMarkedTitle(primaryTitle, worldName, suffix) {
@@ -12312,12 +12615,12 @@ Return ONLY the title, no quotes or explanation.`;
    * POV VALIDATION (5th Person) — Comprehensive scene validation
    *
    * @param {string} sceneText - The scene prose to validate
-   * @param {object} context - { sceneIndex, isErotic, isGodMode }
+   * @param {object} context - { sceneIndex, isErotic }
    * @returns {{ pass: boolean, errors: Array<{code: string, message: string}>, metrics: object }}
    */
   function validatePOV(sceneText, context) {
       const errors = [];
-      const { sceneIndex = 0, isErotic = false, isGodMode = false } = context;
+      const { sceneIndex = 0, isErotic = false } = context;
       const isSceneOne = sceneIndex === 0;
 
       // Count Author mentions
@@ -12433,7 +12736,6 @@ Return ONLY the title, no quotes or explanation.`;
           authorMentions,
           isSceneOne,
           isErotic,
-          isGodMode,
           hasValidOpener,
           hasValidCloser,
           wordCount
@@ -12468,7 +12770,6 @@ Return ONLY the title, no quotes or explanation.`;
           const povResult = validatePOV(lastScene, {
               sceneIndex: state.turnCount || 0,
               isErotic: isIntimacyAllowedAtCurrentStoryturn() && state.turnCount > 0,
-              isGodMode: false
           });
           results.pov = povResult;
       }
@@ -12796,7 +13097,7 @@ Return ONLY the title, no quotes or explanation.`;
       if (window.clearCoverShapeHash) window.clearCoverShapeHash();
       // Reset story shape snapshot (forces "Begin Story" on new session)
       state._lastGeneratedShapeSnapshot = null;
-      // Update Cover$ credit display (daily credits persist across sessions)
+      // Update Cover Fortune display
       if (window.updateFortuneDisplay) window.updateFortuneDisplay();
 
       // Reset reader page index
@@ -13327,7 +13628,7 @@ Return ONLY the title, no quotes or explanation.`;
           if (coupleSubhead) coupleSubhead.classList.toggle('hidden', state.mode !== 'couple');
           // Show breadcrumb at 'shape' step
           if (window.updateBreadcrumb) window.updateBreadcrumb('shape');
-          // Update Cover$ credit display
+          // Update Fortune display
           if (window.updateFortuneDisplay) window.updateFortuneDisplay();
       } else if (id === 'game') {
           // Game screen breadcrumb is managed by Cover/Setting/Story views
@@ -13669,6 +13970,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       if (len === 'taste' && (wc > 7000 || turns > 28) && !state.storyEnded) {
           state.storyEnded = true;
+          // Onboarding: final vision
+          if (state.storyId === state.onboarding_story_id && !state.has_received_final_vision) {
+              state.has_received_final_vision = true;
+              triggerVision({ reason: 'final', tone: state.picks?.tone, world: state.picks?.world, storyturn: state.storyturn });
+          }
           document.getElementById('submitBtn').disabled = true;
           const div = document.createElement('div');
           div.className = 'box';
@@ -13688,6 +13994,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           const overCap = (wc > 15000 || turns > 60);
           if (state.flingClimaxDone && state.flingConsequenceShown && overCap) {
               state.storyEnded = true;
+              // Onboarding: final vision
+              if (state.storyId === state.onboarding_story_id && !state.has_received_final_vision) {
+                  state.has_received_final_vision = true;
+                  triggerVision({ reason: 'final', tone: state.picks?.tone, world: state.picks?.world, storyturn: state.storyturn });
+              }
               document.getElementById('submitBtn').disabled = true;
               renderFlingEnd();
               // Show continuation fork after delay for user to read ending
@@ -14389,12 +14700,21 @@ INSTABILITY ENFORCEMENT:
 - You must alter ambiguity or leverage in this scene. This must affect power_vector_shift or world_artifact behavior — not tone only.
 - interpretive_instability_required (petition field): set to true when the petition outcome should produce lingering uncertainty in the next scene.
 
+ENTROPY UTILIZATION RULES (MANDATORY):
+- If entropy_axes is present in the input, select ONE axis to actively surface this scene.
+- The selected axis must visibly influence relational geometry, structural pressure, or scene stakes.
+- Do not merely mention the entropy value as atmosphere. It must produce observable consequence or constraint.
+- Do not rotate all axes in one scene. Focus on one.
+- Return "active_entropy_axis" (the axis key name) and "entropy_manifestation_summary" (how it shapes this scene).
+
 OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
 {
   "st_phase": "ST1"|"ST2"|...,
   "power_vector_shift": "protagonist_gains"|"antagonist_gains"|"equilibrium"|"both_lose",
   "world_artifact_to_surface": "<from world_artifacts>",
   "tone_pressure": "sustain"|"escalate"|"pull-back",
+  "active_entropy_axis": "<if entropy_axes present: axis key name>",
+  "entropy_manifestation_summary": "<if entropy_axes present: how axis shapes this scene>",
   "petition": {
     "present": true|false,
     "type": "<if present: minor|greater>",
@@ -14423,6 +14743,11 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
       forbidden_tropes: forbiddenTropes,
       instability_carryover_required: state._instabilityRequiredNextScene || false
     };
+
+    // Blue Blood entropy injection (when active)
+    if (state._blueBloodEntropy) {
+      inputContext.entropy_axes = state._blueBloodEntropy;
+    }
 
     return { system, user: JSON.stringify(inputContext) };
   }
@@ -14455,6 +14780,14 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
         if (missingPet.length > 0) {
           state._strategyPassFailed = true;
           console.warn('[STRATEGY_PASS] Missing petition keys:', missingPet.join(', '));
+          return null;
+        }
+      }
+      // Validate entropy output when entropy was provided
+      if (state._blueBloodEntropy) {
+        if (!parsed.active_entropy_axis || !parsed.entropy_manifestation_summary) {
+          state._strategyPassFailed = true;
+          console.warn('[STRATEGY_PASS] Missing entropy keys: active_entropy_axis or entropy_manifestation_summary');
           return null;
         }
       }
@@ -14499,6 +14832,13 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
       lines.push('You may not contradict structural_effect.');
     }
     lines.push('You may not regress to forbidden tropes.');
+    // Entropy directive (when Strategy Pass surfaced an axis)
+    if (strategy.active_entropy_axis && strategy.entropy_manifestation_summary) {
+      lines.push('');
+      lines.push('ENTROPY DIRECTIVE (MANDATORY):');
+      lines.push(`- Active Axis: ${strategy.active_entropy_axis}`);
+      lines.push(`- Manifestation: ${strategy.entropy_manifestation_summary}`);
+    }
     return lines.join('\n');
   }
 
@@ -15558,15 +15898,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (teaseCliffCopy) teaseCliffCopy.classList.toggle('hidden', !isTeaseCap);
     if (payHeading) payHeading.classList.toggle('hidden', isTeaseCap);
 
-    // Show/hide Offering sacrifice option for tease cap
+    // Show/hide Fortune sacrifice option for tease cap
     const teaseOfferingEl = document.getElementById('teaseOfferingOption');
     if (teaseOfferingEl) {
         teaseOfferingEl.classList.toggle('hidden', !isTeaseCap);
     }
     const balanceHint = document.getElementById('offeringBalanceHint');
     if (balanceHint && isTeaseCap) {
-        const credits = (state._cachedCredits != null) ? state._cachedCredits : null;
-        balanceHint.textContent = credits != null ? `(${credits} offering${credits !== 1 ? 's' : ''} remaining)` : '';
+        const fortunes = state.fortunes || 0;
+        balanceHint.textContent = `(${fortunes} Fortune${fortunes !== 1 ? 's' : ''} remaining)`;
     }
 
     pm.classList.remove('hidden');
@@ -15640,10 +15980,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   };
 
   // ═══════════════════════════════════════════════════════════════════════
-  // OFFERING SACRIFICE HANDLER — Tease cap single-use bypass
-  // Deducts 1 fortune via consume-fortune API, grants tempQuillAllowance
+  // FORTUNE SACRIFICE HANDLER — Tease cap single-use bypass
+  // Deducts 1 Fortune via consume-fortune API, grants tempQuillAllowance
   // ═══════════════════════════════════════════════════════════════════════
-  const QUILL_SCENES_PER_OFFERING = 3; // Scenes granted per offering sacrifice
+  const QUILL_SCENES_PER_SACRIFICE = 3; // Scenes granted per Fortune sacrifice
 
   document.getElementById('btnSacrificeOffering')?.addEventListener('click', async () => {
       const btn = document.getElementById('btnSacrificeOffering');
@@ -15654,7 +15994,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       try {
           const user = sb.auth.getUser ? (await sb.auth.getUser()).data?.user : null;
           if (!user) {
-              alert('Sign in to sacrifice an Offering.');
+              alert('Sign in to sacrifice a Fortune.');
               btn.disabled = false;
               btn.textContent = 'Sacrifice 1 Fortune to fill Fate\'s quill';
               return;
@@ -15663,7 +16003,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           const res = await fetch('/api/consume-fortune', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: user.id, amount: 1, context: 'offering_sacrifice' })
+              body: JSON.stringify({ userId: user.id, amount: 1, context: 'fortune_sacrifice' })
           });
           const data = await res.json();
 
@@ -15677,10 +16017,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           }
 
           // Grant temporary quill allowance — does NOT stack
-          state.tempQuillAllowance = QUILL_SCENES_PER_OFFERING;
+          state.tempQuillAllowance = QUILL_SCENES_PER_SACRIFICE;
           state.fortunes = data.fortunesRemaining;
           if (window.updateFortuneDisplay) window.updateFortuneDisplay();
-          console.log('[OFFERING] Sacrifice accepted. Quill allowance:', state.tempQuillAllowance, 'Fortunes remaining:', data.fortunesRemaining);
+          console.log('[FORTUNE_SACRIFICE] Accepted. Quill allowance:', state.tempQuillAllowance, 'Fortunes remaining:', data.fortunesRemaining);
 
           // Dismiss paywall and re-enable inputs
           document.getElementById('payModal')?.classList.add('hidden');
@@ -15689,11 +16029,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           // Visual confirmation
           if (typeof showToast === 'function') showToast("Fate's quill fills with ink...");
       } catch (err) {
-          console.error('[OFFERING] Sacrifice failed:', err);
+          console.error('[FORTUNE_SACRIFICE] Failed:', err);
           btn.textContent = 'Sacrifice failed — try again';
           setTimeout(() => {
               btn.disabled = false;
-              btn.textContent = 'Sacrifice 1 Offering to fill Fate\'s quill';
+              btn.textContent = 'Sacrifice 1 Fortune to fill Fate\'s quill';
           }, 2000);
       }
   });
@@ -15787,11 +16127,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           }
       }
 
-      // RULE: Offering pack purchase resets tease lock (allows new Chronicle)
-      if (purchaseType === 'offering') {
+      // RULE: Fortune pack purchase resets tease lock (allows new story)
+      if (purchaseType === 'fortune_pack') {
           state.freeStoryConsumed = false;
-          toastMessage = "Offerings received. A new story awaits.";
-          console.log('[ENTITLEMENT] Offering pack purchased — tease lock reset');
+          toastMessage = "Fortunes received. A new story awaits.";
+          console.log('[ENTITLEMENT] Fortune pack purchased — tease lock reset');
       }
 
       // RULE: Subscription can upgrade to Affair
@@ -17408,12 +17748,12 @@ The final image must look like a real published novel cover.`;
           }
           if (loading) loading.style.display = 'none';
 
-          showToast('Cover generation failed. No credit consumed — please retry.');
+          showToast('Cover generation failed. No Fortune consumed — please retry.');
           return false;
       }
   }
 
-  // Expose image credit functions
+  // Expose Fortune purchase functions
   window.openFortunePurchaseModal = openFortunePurchaseModal;
   window.closeFortunePurchaseModal = closeFortunePurchaseModal;
   window.purchaseFortunePack = purchaseFortunePack;
@@ -17560,7 +17900,7 @@ The final image must look like a real published novel cover.`;
           return;
       }
 
-      // NOTE: Credit consumed AFTER successful generation (see below)
+      // NOTE: Fortune consumed AFTER successful generation (see below)
 
       // Show loading state
       btn.disabled = true;
@@ -17644,7 +17984,7 @@ The final image must look like a real published novel cover.`;
               btn.textContent = 'Generation Failed - Try Again';
               btn.disabled = false;
               if (loading) loading.style.display = 'none';
-              // NOTE: No credit consumed on failure
+              // NOTE: No Fortune consumed on failure
               return;
           }
 
@@ -17866,6 +18206,20 @@ QUIETING EVENT DIRECTIVES:
 - Scene bias: moderate pacing early, escalating intensity, social destabilization consequences, public calm vs private ignition contrast.`;
       }
 
+      // Blue Blood structural contract (variant selected at story start)
+      if (world === 'Modern' && sorted.some(f => f.val === 'blue_blood')) {
+          const bbData = MODERN_FLAVOR_STRUCTURAL_DATA.BlueBlood;
+          const variantKey = state._blueBloodVariant || 'royal';
+          const variant = bbData?.variants?.[variantKey];
+          if (variant) {
+              block += `\n\nBLUE BLOOD STRUCTURAL CONTRACT (MANDATORY):`;
+              block += `\nCORE POWER ASYMMETRY: ${variant.core_power_asymmetry}`;
+              block += `\nSTRUCTURAL STAKES ENGINE: ${variant.structural_stakes_engine}`;
+              block += `\nSOCIAL PRESSURE MECHANISM: ${variant.social_pressure_mechanism}`;
+              block += `\nFORBIDDEN COLLAPSE PATTERNS:\n- ${variant.forbidden_collapse_patterns.join('\n- ')}`;
+          }
+      }
+
       // Template collapse prevention — anti-repeat directive
       const primaryVal = primaryFlavor?.val || (sorted[0] && sorted[0].val);
       if (primaryVal) {
@@ -17947,6 +18301,34 @@ QUIETING EVENT DIRECTIVES:
           // Resolve world flavors (classify + auto-stack) and build prompt directives
           const resolvedFlavors1 = resolveWorldFlavors(storyWorld, state.picks?.worldSubtype);
           state.resolvedWorldFlavors = resolvedFlavors1; // persist for story lifetime
+
+          // Blue Blood variant selection — once per story, weighted random
+          if (storyWorld === 'Modern' && resolvedFlavors1.some(f => f.val === 'blue_blood') && !state._blueBloodVariant) {
+              const weights = MODERN_FLAVOR_STRUCTURAL_DATA.BlueBlood.variant_weights;
+              const roll = Math.random();
+              state._blueBloodVariant = roll < weights.royal ? 'royal' : 'aristocratic';
+              console.log(`[BLUE_BLOOD] Variant selected: ${state._blueBloodVariant} (roll=${roll.toFixed(3)})`);
+          }
+
+          // Blue Blood entropy initialization — once per story
+          if (storyWorld === 'Modern' && state._blueBloodVariant && !state._blueBloodEntropy) {
+              const axes = MODERN_FLAVOR_STRUCTURAL_DATA.BlueBlood.variants[state._blueBloodVariant]?.entropy_axes;
+              if (axes) {
+                  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+                  state._blueBloodEntropy = {
+                      entry_state: pick(axes.entry_state),
+                      pressure_origin: pick(axes.pressure_origin),
+                      polarity_orientation: pick(axes.polarity_orientation),
+                      exposure_level: pick(axes.exposure_level),
+                      structural_timeline_mode: pick(axes.structural_timeline_mode)
+                  };
+                  if (axes.monarchy_model) {
+                      state._blueBloodEntropy.monarchy_model = pick(axes.monarchy_model);
+                  }
+                  console.log('[BLUE_BLOOD] Entropy initialized:', JSON.stringify(state._blueBloodEntropy));
+              }
+          }
+
           const worldFlavorDirectives = buildWorldFlavorDirectives(storyWorld, resolvedFlavors1);
 
           // Pre-compute probabilistic injections so polarity can check suppression
@@ -18230,7 +18612,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // 3. Provider returns null / timeout → fallback shows "Setting image unavailable";
   //    toast shows "Setting image unavailable. Continue without it.";
   //    "Try Again" button works.
-  // 4. Credits do not decrement unless image URL is received and committed (success path only)
+  // 4. Fortunes do not decrement unless image URL is received and committed (success path only)
   // 5. After 10s, "Still working…" hint appears; user can skip at any time
   // 6. "Back to Cover" aborts generation cleanly (no error logs)
   //
@@ -18331,7 +18713,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               if (settingContent) settingContent.classList.remove('hidden');
 
               console.log('[SETTING:GEN] Setting image generated successfully');
-              // BILLING: Only here would credits be charged (if applicable)
+              // BILLING: Only here would Fortunes be charged (if applicable)
           } else {
               throw new Error('No image URL returned');
           }
@@ -27641,11 +28023,62 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   window.setMetaStance = function(s){
+      // Tempt Fate requires explicit paid invocation — not just a stance toggle
+      if (s === 'seduce') {
+          invokeTemptFate();
+          return;
+      }
       state.stance = s;
       document.querySelectorAll('.meta-stance').forEach(b => b.classList.remove('active'));
       const btn = document.querySelector(`.meta-stance[onclick="window.setMetaStance('${s}')"]`);
       if(btn) btn.classList.add('active');
   };
+
+  /**
+   * TEMPT FATE — Explicit invocation flow.
+   * 1. Compute cost
+   * 2. Confirm with player
+   * 3. Deduct Fortunes atomically
+   * 4. Set invocation flag
+   * 5. Activate stance
+   */
+  async function invokeTemptFate() {
+      const cost = getTemptFateCost();
+
+      // Check balance before confirmation
+      if ((state.fortunes || 0) < cost) {
+          alert(`Tempt Fate requires ${cost} Fortunes. You have ${state.fortunes || 0}.`);
+          return;
+      }
+
+      // Cost confirmation
+      const confirmed = confirm(`Tempt Fate costs ${cost} Fortunes. Proceed?`);
+      if (!confirmed) return;
+
+      // Atomic deduction
+      const burned = await consumeFortune(cost, 'tempt_fate');
+      if (!burned) {
+          alert('Fortune deduction failed. Tempt Fate aborted.');
+          return;
+      }
+
+      // Set invocation flag + increment consecutive count
+      state.tempt_fate_invoked_this_turn = true;
+      state.consecutive_tempt_fate_count = (state.consecutive_tempt_fate_count || 0) + 1;
+
+      // Onboarding: mark first Tempt Fate invocation
+      if (!state.has_triggered_first_tempt_fate) {
+          state.has_triggered_first_tempt_fate = true;
+      }
+
+      // Activate stance for narrative directives
+      state.stance = 'seduce';
+      document.querySelectorAll('.meta-stance').forEach(b => b.classList.remove('active'));
+      const btn = document.querySelector('.meta-stance[onclick="window.setMetaStance(\'seduce\')"]');
+      if (btn) btn.classList.add('active');
+
+      console.log(`[TEMPT_FATE] Invoked. Cost: ${cost}, Consecutive: ${state.consecutive_tempt_fate_count}, Remaining Fortunes: ${state.fortunes}`);
+  }
 
   // --- BEGIN STORY VALIDATION GUARDRAIL ---
   function validateBeginStory() {
@@ -28881,6 +29314,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     state.constraints = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
     state.fate = { stance: 'neutral', minorUsedThisScene: false, greaterUsedThisScene: false, lastGreaterSceneIndex: null, earnedIntimacy: false, earlyGamingCount: 0, pendingPetition: null };
+    state.fate_saturation = 0;
+    state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
+    state.tempt_fate_invoked_this_turn = false;
+    state.consecutive_tempt_fate_count = 0;
 
     // Pre-set dropdowns silently (elements may be in unmounted corridor row)
     const _pgEl = $('playerGender'); if (_pgEl) _pgEl.value = 'Female';
@@ -29105,6 +29542,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Clear constraints + reset petition fate
     state.constraints = { bannedWords: [], bannedNames: [], excluded: [], tone: [], corrections: [], ambientMods: [] };
     state.fate = { stance: 'neutral', minorUsedThisScene: false, greaterUsedThisScene: false, lastGreaterSceneIndex: null, earnedIntimacy: false, earlyGamingCount: 0, pendingPetition: null };
+    state.fate_saturation = 0;
+    state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
+    state.tempt_fate_invoked_this_turn = false;
+    state.consecutive_tempt_fate_count = 0;
 
     // Update UI cards to reflect selections
     updateAllCardSelections();
@@ -31130,6 +31571,12 @@ ${prehistoricForbid}
     
     state.sysPrompt = sys;
     state.storyId = state.storyId || makeStoryId();
+
+    // Onboarding: lock first story ID for milestone Visions
+    if (!state.onboarding_story_id && !localStorage.getItem('sb_onboarding_story_id')) {
+        state.onboarding_story_id = state.storyId;
+        localStorage.setItem('sb_onboarding_story_id', state.storyId);
+    }
 
     // TEASE TIER: Mark free story as consumed on first story creation
     if (isTeaseTier()) markFreeStoryConsumed();
@@ -37147,9 +37594,9 @@ Condensed (under ${maxLength} chars):` }
       initVizModifierPills();
   }
 
-  // Tempt Fate escalating cost
+  // Tempt Fate escalating cost — uses consecutive_tempt_fate_count (explicit invocation counter)
   function getTemptFateCost() {
-      return Math.min(50 + 10 * (state.temptFateConsecutive || 0), 80);
+      return Math.min(50 + 10 * (state.consecutive_tempt_fate_count || 0), 80);
   }
 
   // ============================================================
@@ -37207,11 +37654,11 @@ Condensed (under ${maxLength} chars):` }
       const retryBtn = document.getElementById('vizRetryBtn');
       const insertBtn = document.getElementById('vizInsertBtn');
       const img = document.getElementById('vizPreviewImg');
-      const creditCount = document.getElementById('vizCreditCount');
+      const fortuneCount = document.getElementById('vizCreditCount');
 
-      // Update credit display (numeric, always visible)
-      if (creditCount) {
-          creditCount.textContent = credits;
+      // Update Fortune display (numeric, always visible)
+      if (fortuneCount) {
+          fortuneCount.textContent = credits;
       }
 
       // ═══════════════════════════════════════════════════════════════════
@@ -37234,27 +37681,27 @@ Condensed (under ${maxLength} chars):` }
               vizBtn.classList.add('is-finalized');
               vizBtn.classList.remove('is-loading');
           } else {
-              // Default state — always clickable, shows credit count
-              const label = credits > 0 ? '✨ Visualize' : '✨ Visualize (1 Fortune)';
+              // Default state — always clickable, shows Fortune count
+              const label = credits > 0 ? '✨ Summon Vision' : '✨ Summon Vision (1 Fortune)';
               vizBtn.textContent = label;
               vizBtn.disabled = false;
               vizBtn.classList.remove('is-loading', 'is-finalized');
           }
       }
 
-      // Re-Visualize: NEVER disabled — opens credit purchase if no credits
+      // Re-Visualize: NEVER disabled — opens Fortune purchase if none
       if (retryBtn) {
           if (budget.finalized) {
               retryBtn.textContent = 'Finalized';
               retryBtn.disabled = true;
           } else {
-              retryBtn.textContent = credits > 0 ? 'Re-Visualize' : 'Re-Visualize (1 Fortune)';
+              retryBtn.textContent = credits > 0 ? 'Re-Summon' : 'Re-Summon (1 Fortune)';
               retryBtn.disabled = false;
               retryBtn.title = '';
           }
       }
 
-      // Insert button: state-gated (disabled when no image), not credit-gated
+      // Insert button: state-gated (disabled when no image), not Fortune-gated
       if (insertBtn) {
           const hasImage = img && img.src && img.style.display !== 'none';
           if (hasImage) {
@@ -37273,7 +37720,7 @@ Condensed (under ${maxLength} chars):` }
           openFortunePurchaseModal();
           return;
       }
-      window.visualize(true);
+      window.summonVision(true);
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -37395,14 +37842,14 @@ Condensed (under ${maxLength} chars):` }
   }
   window.preloadVizPrompt = preloadVizPrompt;
 
-  // Populate prompt textarea without generating image (for 0-credit inspection)
+  // Populate prompt textarea without generating image (for 0-Fortune inspection)
   async function populateVizPromptOnly() {
       const ph = document.getElementById('vizPlaceholder');
       const promptInput = document.getElementById('vizPromptInput');
 
       // Show idle placeholder (not "Generating...")
       if (ph) {
-          ph.textContent = 'Earn 1 Visualization credit for every 3 Scenes you complete.';
+          ph.textContent = 'Visions cost 1 Fortune per scene.';
           ph.style.display = 'flex';
       }
 
@@ -37597,7 +38044,7 @@ Respond in this EXACT format (no labels, just two lines):
       _fatePreviewInFlight = false;
   };
 
-  window.visualize = async function(isRe){
+  window.summonVision = async function(isRe){
       if (_vizInFlight) return;
 
       const modal = document.getElementById('vizModal');
@@ -37608,7 +38055,7 @@ Respond in this EXACT format (no labels, just two lines):
       const storyText = document.getElementById('storyText');
       const consentUI = document.getElementById('vizPayAsYouGoConsent');
 
-      // Check scene budget and credits before proceeding
+      // Check scene budget and Fortunes before proceeding
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
       const sceneVisualized = state.visual.visualizedScenes && state.visual.visualizedScenes[sceneKey];
@@ -37634,7 +38081,7 @@ Respond in this EXACT format (no labels, just two lines):
       if (!isRe && sceneVisualized) {
           if(modal) modal.classList.remove('hidden');
           if(errDiv) {
-              errDiv.textContent = 'Scene already visualized. Use Re-Visualize to try again.';
+              errDiv.textContent = 'Scene already envisioned. Use Re-Summon to try again.';
               errDiv.classList.remove('hidden');
           }
           if(consentUI) consentUI.classList.add('hidden');
@@ -37649,8 +38096,8 @@ Respond in this EXACT format (no labels, just two lines):
           return;
       }
 
-      // Has credits — proceed with visualization
-      console.log('[ImageCredits]', isRe ? 'Re-Visualize' : 'Initial Visualize');
+      // Has Fortunes — proceed with visualization
+      console.log('[Vision]', isRe ? 'Re-Summon' : 'Initial Summon Vision');
 
       // Hide consent UI since we have access
       if(consentUI) consentUI.classList.add('hidden');
@@ -37676,7 +38123,7 @@ Respond in this EXACT format (no labels, just two lines):
           ph.textContent = 'Generating...';
       }
 
-      // Update button states (includes credit display)
+      // Update button states (includes Fortune display)
       updateVizButtonStates();
 
       // Start cancellable loading with cancel callback
@@ -37957,9 +38404,9 @@ Respond in this EXACT format (no labels, just two lines):
       } catch(e) {
           // Don't show error if cancelled
           if (!_vizCancelled) {
-              console.error("Visualize error:", e);
+              console.error("Vision error:", e);
               if(errDiv) {
-                  errDiv.innerText = "Visualization failed. Fate is cloudy.";
+                  errDiv.innerText = "Vision failed. Fate is cloudy.";
                   errDiv.classList.remove('hidden');
               }
               if(ph) ph.style.display = 'none';
@@ -37970,6 +38417,74 @@ Respond in this EXACT format (no labels, just two lines):
           if(retryBtn) retryBtn.disabled = false;
       }
   };
+
+  /**
+   * triggerVision — free milestone Vision bypass.
+   * Calls the same image generation pipeline as summonVision()
+   * but skips Fortune consumption entirely.
+   * Used ONLY for onboarding milestone Visions.
+   */
+  async function triggerVision(options = {}) {
+      const { overlayText = null, reason = 'milestone' } = options;
+
+      // Single-turn guard: only one milestone Vision per turn
+      if (state.milestone_vision_fired_this_turn) return;
+
+      console.log(`[VISION] Milestone vision triggered: ${reason}`);
+
+      const sceneKey = getSceneKey();
+      const modal = document.getElementById('vizModal');
+      const previewImg = document.getElementById('vizPreviewImg');
+      const errDiv = document.getElementById('vizError');
+      const placeholder = document.getElementById('vizPlaceholder');
+
+      if (!modal || _vizInFlight) return;
+
+      state.milestone_vision_fired_this_turn = true;
+      _vizInFlight = true;
+      _vizCancelled = false;
+      modal.classList.remove('hidden');
+
+      if (placeholder) placeholder.style.display = 'flex';
+      if (previewImg) previewImg.style.display = 'none';
+      if (errDiv) { errDiv.classList.add('hidden'); errDiv.textContent = ''; }
+
+      const lastText = StoryPagination.getLastPageText?.() || '';
+      const vizPrompt = buildVisualizePrompt({ mode: 'scene', lastText, anchorText: lastText });
+
+      try {
+          const result = await generateImageWithFallback({
+              prompt: vizPrompt,
+              tier: 'Clean',
+              shape: 'landscape',
+              context: 'vision_milestone',
+              intent: 'scene'
+          });
+
+          if (_vizCancelled) { _vizInFlight = false; return; }
+
+          if (result?.url) {
+              if (previewImg) {
+                  previewImg.src = result.url;
+                  previewImg.style.display = 'block';
+              }
+              if (placeholder) placeholder.style.display = 'none';
+
+              if (!state.visual.visualizedScenes) state.visual.visualizedScenes = {};
+              state.visual.visualizedScenes[sceneKey] = true;
+              updateVizButtonStates();
+
+              console.log(`[VISION] Milestone vision rendered: ${reason}`);
+          } else {
+              if (errDiv) { errDiv.textContent = 'Vision failed. Fate is cloudy.'; errDiv.classList.remove('hidden'); }
+          }
+      } catch (err) {
+          console.error('[VISION] Milestone vision error:', err);
+          if (errDiv) { errDiv.textContent = 'Vision failed. Fate is cloudy.'; errDiv.classList.remove('hidden'); }
+      } finally {
+          _vizInFlight = false;
+      }
+  }
 
   window.closeViz = function(){
       $('vizModal').classList.add('hidden');
@@ -38062,7 +38577,7 @@ Respond in this EXACT format (no labels, just two lines):
           },
           {
               value: 'gemini',
-              label: geminiAvailable ? 'Gemini' : 'Gemini (No credits)',
+              label: geminiAvailable ? 'Gemini' : 'Gemini (No Fortunes)',
               available: geminiAvailable
           }
       ];
@@ -38103,7 +38618,7 @@ Respond in this EXACT format (no labels, just two lines):
       finalizeScene(sceneKey);
 
       // Append visualized image to current page
-      const imgHtml = `<img src="${img.src}" class="story-image" alt="Visualized scene">`;
+      const imgHtml = `<img src="${img.src}" class="story-image" alt="Vision">`;
       StoryPagination.appendToCurrentPage(imgHtml);
 
       // Update button states to reflect finalized status
@@ -38584,15 +39099,14 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
           // Taste at ST3: intimacy INITIATION allowed, but COMPLETION blocked
           if (storyLength === 'taste' && currentSt === 'ST3' && intimacyAllowedAtStoryturn && !completionAllowed) {
               return `
-STORYTURN GATING (Taste @ ${currentSt} — Initiation Only):
+STORYTURN GATING (${currentSt} — Initiation Only):
 Intimate scenes may BEGIN but must NOT COMPLETE.
 - Kissing: ALLOWED
 - Sexual touching: ALLOWED
 - Intimacy initiation: ALLOWED
 - Intimacy COMPLETION: BLOCKED — interrupt before climax
 
-The scene MUST end on a cliffhanger before completion.
-This is the Taste ceiling — upgrade unlocks resolution.`;
+Scene must end on a charged, unresolved moment before completion.`;
           }
 
           // Gate is CLOSED: block main pair contact
@@ -38761,19 +39275,67 @@ FATE CARD ADAPTATION (CRITICAL):
           : '';
 
       // ═══════════════════════════════════════════════════════════════════
+      // FATE SATURATION + VOLATILITY WINDOW UPDATE
+      // ═══════════════════════════════════════════════════════════════════
+      if (state.tempt_fate_invoked_this_turn) {
+        // PART 5 — Saturation increment (invocation-gated only)
+        const satIncrement = 0.2 + ((state.consecutive_tempt_fate_count || 0) * 0.05);
+        state.fate_saturation = Math.min((state.fate_saturation || 0) + satIncrement, 1.0);
+
+        // PART 6 — Volatility window activation (invocation-gated only)
+        // Severity is snapshotted at invocation.
+        // Do NOT dynamically recompute during volatility window.
+        const severity = computeTemptFateSeverity();
+        state.volatility_window = {
+          active: true,
+          severity,
+          remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3
+        };
+        console.log(`[TEMPT_FATE] Invoked. Severity: ${severity}, Saturation: ${state.fate_saturation}, Consecutive: ${state.consecutive_tempt_fate_count}`);
+      } else {
+        // Decay on non-invocation turns
+        state.fate_saturation = Math.max((state.fate_saturation || 0) - 0.1, 0);
+      }
+
+      // Volatility window decay (skip on activation turn)
+      // Severity is NOT recomputed here — uses snapshotted value from invocation.
+      if (state.volatility_window?.active && !state.tempt_fate_invoked_this_turn) {
+        state.volatility_window.remaining_scenes -= 1;
+        if (state.volatility_window.remaining_scenes <= 0) {
+          // Taper: halve severity and grant 1 extra scene, or close window
+          if (state.volatility_window.severity > 0.2) {
+            state.volatility_window.severity *= 0.5;
+            state.volatility_window.remaining_scenes = 1;
+            console.log(`[TEMPT_FATE] Volatility window tapering. Severity: ${state.volatility_window.severity.toFixed(2)}`);
+          } else {
+            state.volatility_window.active = false;
+            console.log('[TEMPT_FATE] Volatility window closed');
+          }
+        }
+      }
+
+      // World Law + Saturation prompt directive
+      const worldLawDirective = buildWorldLawDirective();
+
+      // ═══════════════════════════════════════════════════════════════════
       // PASS ROUTING AUTHORITY — deterministic tier selection
       // ═══════════════════════════════════════════════════════════════════
-      const passTier = resolvePassTier();
-      const passRoutingDirective = `
-PASS ROUTING (Tier ${passTier}):
-- Quality is wallet-agnostic. Never vary prose quality based on payment status.
-- Maintain: 5th-person Fate presence, Tone > Genre override, Regime law enforcement.
-- Canonical authorship: S. Tory Bound.
-- Storyturn integrity: ${state.storyturn || 'ST1'}.
-${passTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic recalibration.' : ''}${passTier === 2 ? '- Two-pass structured: Beat outline provided. Apply continuity injection.' : ''}${passTier === 3 ? '- Full orchestration: Beat outline + thematic calibration applied.' : ''}`;
+      // Pass escalation: volatility window elevates scene importance
+      let sceneImportance = 'medium';
+      if (state.volatility_window?.active) {
+        sceneImportance = elevateImportance(sceneImportance);
+        console.log(`[TEMPT_FATE] Scene importance elevated to: ${sceneImportance}`);
+      }
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}\n${passRoutingDirective}\n\nTURN INSTRUCTIONS:
-      Story So Far: ...${context}
+      const passTier = resolvePassTier();
+      // Tier-dependent context: Tier 3 gets full prose context; Tier 1/2 get structured state only
+      const tierContextBlock = passTier >= 3
+        ? `Story So Far: ...${context}`
+        : `Structured State:\n${buildStructuredStateSummary()}`;
+      const tierContext = passTier >= 3 ? context : '';
+
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}\n\nTURN INSTRUCTIONS:
+      ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
       ${metaMsg}
@@ -38828,9 +39390,6 @@ ${passTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic reca
 
           let raw;
 
-          // Build structured state summary for Tier 1/2 (compressed context)
-          const structuredStateSummary = (passTier <= 2) ? buildStructuredStateSummary() : null;
-
           // Phase change handler with pass tier awareness
           const passPhaseHandler = (phase, data) => {
               if (phase === 'BEAT_OUTLINE') {
@@ -38855,9 +39414,8 @@ ${passTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic reca
               // Pass-tier-routed orchestration with erotic pipeline
               const tierResult = await window.StoryboundOrchestration.orchestrateWithPassTier({
                   passTier,
-                  structuredStateSummary,
                   systemPrompt: fullSys,
-                  storyContext: context,
+                  storyContext: tierContext,
                   playerAction: act,
                   playerDialogue: dia,
                   fateCard: selectedFateCard,
@@ -38884,7 +39442,7 @@ ${passTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic reca
               // Fallback: legacy 3-phase orchestration without pass tier
               raw = await generateOrchestatedTurn({
                   systemPrompt: fullSys,
-                  storyContext: context,
+                  storyContext: tierContext,
                   playerAction: act,
                   playerDialogue: dia,
                   fateCard: selectedFateCard,
@@ -38927,7 +39485,7 @@ Regenerate the scene with ZERO Fate presence.`;
                       if (useFullOrchestration) {
                           raw = await generateOrchestatedTurn({
                               systemPrompt: fullSys + '\n\n' + eroticStrictPrompt,
-                              storyContext: context,
+                              storyContext: tierContext,
                               playerAction: act,
                               playerDialogue: dia,
                               fateCard: selectedFateCard,
@@ -39003,7 +39561,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               if (useFullOrchestration) {
                   raw = await generateOrchestatedTurn({
                       systemPrompt: fullSys + fateEnforcementPrompt,
-                      storyContext: context,
+                      storyContext: tierContext,
                       playerAction: act,
                       playerDialogue: dia,
                       fateCard: selectedFateCard,
@@ -39052,7 +39610,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               if (useFullOrchestration) {
                   raw = await generateOrchestatedTurn({
                       systemPrompt: fullSys + intimacyPrompt,
-                      storyContext: context,
+                      storyContext: tierContext,
                       playerAction: act,
                       playerDialogue: dia,
                       fateCard: selectedFateCard,
@@ -39084,7 +39642,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
                   if (useFullOrchestration) {
                       return await generateOrchestatedTurn({
                           systemPrompt: fullSys + negConstraint,
-                          storyContext: context,
+                          storyContext: tierContext,
                           playerAction: act,
                           playerDialogue: dia,
                           fateCard: selectedFateCard,
@@ -39134,7 +39692,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               if (useFullOrchestration) {
                   raw = await generateOrchestatedTurn({
                       systemPrompt: fullSys + narrAuthPrompt,
-                      storyContext: context,
+                      storyContext: tierContext,
                       playerAction: act,
                       playerDialogue: dia,
                       fateCard: selectedFateCard,
@@ -39164,7 +39722,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               if (useFullOrchestration) {
                   raw = await generateOrchestatedTurn({
                       systemPrompt: fullSys + turnTonePrompt,
-                      storyContext: context,
+                      storyContext: tierContext,
                       playerAction: act,
                       playerDialogue: dia,
                       fateCard: selectedFateCard,
@@ -39182,10 +39740,10 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
 
           state.turnCount++;
 
-          // Decrement offering quill allowance after scene generation
+          // Decrement Fortune sacrifice quill allowance after scene generation
           if (state.tempQuillAllowance > 0) {
               state.tempQuillAllowance--;
-              console.log('[OFFERING] Quill allowance decremented:', state.tempQuillAllowance, 'remaining');
+              console.log('[FORTUNE_SACRIFICE] Quill allowance decremented:', state.tempQuillAllowance, 'remaining');
           }
 
           // Server-side tease guard: increment scene count after successful generation
@@ -39267,6 +39825,48 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           // CRITICAL: Mark story as displayed AFTER successful DOM insertion
           if (state._sceneTokenCount) { console.log('SCENE_TOKEN_USAGE:', state._sceneTokenCount); state._sceneTokenCount = 0; }
           storyDisplayed = true;
+
+          // ── Onboarding Milestone Visions ──
+          // Scene 2 intro vision
+          if (state.turnCount === 2
+              && state.storyId === state.onboarding_story_id
+              && !state.has_received_intro_vision) {
+              state.has_received_intro_vision = true;
+              triggerVision({ reason: 'intro' });
+              saveStorySnapshot();
+          }
+          // Deferred reversal vision (ST3→ST4 or ST4→ST5)
+          if (state._pendingReversalVision
+              && state.storyId === state.onboarding_story_id) {
+              state._pendingReversalVision = false;
+              triggerVision({ reason: 'reversal' });
+              saveStorySnapshot();
+          } else if (state._pendingReversalVision) {
+              state._pendingReversalVision = false;
+          }
+          // First-ever Tempt Fate vision (profile-backed, fires once per account)
+          if (state.tempt_fate_invoked_this_turn
+              && !state.first_tempt_fate_vision_triggered) {
+              state.first_tempt_fate_vision_triggered = true;
+              (async () => {
+                  try {
+                      const user = sb.auth.getUser ? (await sb.auth.getUser()).data?.user : null;
+                      if (!user) return;
+                      const { error } = await sb.from('profiles').update({
+                          first_tempt_fate_vision_triggered: true
+                      }).eq('id', user.id);
+                      if (error) {
+                          console.warn('[VISION] Tempt Fate vision profile update failed:', error);
+                          state.first_tempt_fate_vision_triggered = false;
+                          return;
+                      }
+                      triggerVision({ overlayText: 'Fate shudders.', reason: 'tempt_fate' });
+                  } catch (err) {
+                      console.error('[VISION] Tempt Fate vision error:', err);
+                      state.first_tempt_fate_vision_triggered = false;
+                  }
+              })();
+          }
 
           // Scroll to Fate Card header so player can pick next card
           try {
@@ -39357,6 +39957,14 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               console.warn('Fate card deal failed (non-critical):', fateErr);
           }
 
+          // PART 8 — Clear Tempt Fate invocation flag after scene completes
+          // Reset consecutive count if this was NOT a Tempt Fate turn
+          if (!state.tempt_fate_invoked_this_turn) {
+              state.consecutive_tempt_fate_count = 0;
+          }
+          state.tempt_fate_invoked_this_turn = false;
+          state.milestone_vision_fired_this_turn = false;
+
           saveStorySnapshot();
           checkStoryEndCaps();
 
@@ -39397,6 +40005,9 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           // TASK F: Remove submitting state
           const submitBtn = $('submitBtn');
           if (submitBtn) submitBtn.classList.remove('submitting');
+          // Guaranteed per-turn flag cleanup (prevents sticky flags on error/refresh)
+          state.milestone_vision_fired_this_turn = false;
+          state._pendingReversalVision = false;
       }
   });
 
@@ -39628,18 +40239,14 @@ FATE CARD ADAPTATION (CRITICAL):
           }
 
           // 7. Build fullSys (EXACT same structure as real turn)
-          // Pass routing directive (same logic as real turn)
           const specPassTier = resolvePassTier();
-          const specPassRoutingDirective = `
-PASS ROUTING (Tier ${specPassTier}):
-- Quality is wallet-agnostic. Never vary prose quality based on payment status.
-- Maintain: 5th-person Fate presence, Tone > Genre override, Regime law enforcement.
-- Canonical authorship: S. Tory Bound.
-- Storyturn integrity: ${state.storyturn || 'ST1'}.
-${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic recalibration.' : ''}${specPassTier === 2 ? '- Two-pass structured: Beat outline provided. Apply continuity injection.' : ''}${specPassTier === 3 ? '- Full orchestration: Beat outline + thematic calibration applied.' : ''}`;
+          const specTierContextBlock = specPassTier >= 3
+            ? `Story So Far: ...${context}`
+            : `Structured State:\n${buildStructuredStateSummary()}`;
+          const specTierContext = specPassTier >= 3 ? context : '';
 
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n${specPassRoutingDirective}\n\nTURN INSTRUCTIONS:
-      Story So Far: ...${context}
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+      ${specTierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
       ${metaMsg}
@@ -39657,15 +40264,12 @@ ${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic 
                                        window.StoryboundOrchestration &&
                                        specExplicitEmbodimentAuthorized;
 
-          const specStructuredStateSummary = (specPassTier <= 2) ? buildStructuredStateSummary() : null;
-
           let raw;
           if (useFullOrchestration && window.StoryboundOrchestration.orchestrateWithPassTier) {
               const tierResult = await window.StoryboundOrchestration.orchestrateWithPassTier({
                   passTier: specPassTier,
-                  structuredStateSummary: specStructuredStateSummary,
                   systemPrompt: fullSys,
-                  storyContext: context,
+                  storyContext: specTierContext,
                   playerAction: act,
                   playerDialogue: dia,
                   fateCard: selectedFateCard,
@@ -39677,7 +40281,7 @@ ${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic 
           } else if (useFullOrchestration) {
               raw = await generateOrchestatedTurn({
                   systemPrompt: fullSys,
-                  storyContext: context,
+                  storyContext: specTierContext,
                   playerAction: act,
                   playerDialogue: dia,
                   fateCard: selectedFateCard,
@@ -40208,6 +40812,9 @@ ${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic 
   state.storyId = localStorage.getItem('sb_current_story_id');
   // state.subscribed is set by Supabase profile hydration (not localStorage)
 
+  // Restore onboarding story ID (account-level, survives across stories)
+  state.onboarding_story_id = state.onboarding_story_id || localStorage.getItem('sb_onboarding_story_id') || null;
+
   syncTierFromAccess();
   updateContinueButtons();
   renderBurgerMenu();
@@ -40471,7 +41078,7 @@ ${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic 
               log('COVER: make [world] [intensity] cover | pretend cover failed | show fallback | show/hide keyhole | reset cover');
               log('STATE: set intensity to X | go dirty/erotic | pretend i paid | pretend i\'m free | what\'s going on');
               log('QUERY: what genre/world/tone/intensity/archetype/title? | title pipeline | test title [text]');
-              log('POV: check pov | why pov failed | is god mode active | set pov author/normal | exit god mode');
+              log('POV: check pov | why pov failed | set pov author/normal');
               log('VALIDATION: check dsp | check tone | check erotic | check authority | check title | check signal | check paywall | check book | check all');
               log('FATE: reset fate cards | deal fate');
               log('FORK: show fork (test continuation modal)');
@@ -40775,7 +41382,7 @@ ${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic 
           }
 
           // --- EXIT DEV MODE ---
-          if (/\b(exit|stop|back)\b.*\b(god|pretend|normal)\b/.test(input)) {
+          if (/\b(exit|stop|back)\b.*\b(pretend|normal)\b/.test(input)) {
               _devOverrides = {};
               state.subscribed = false;
               state.intensity = 'Naughty';
@@ -40993,6 +41600,10 @@ ${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic 
                   log('Strategy Pass: \u26A0 FAILED \u2014 Fallback Mode');
               } else if (state._strategyPass) {
                   log('Strategy Pass: PASS (ST=' + state._strategyPass.st_phase + ', artifact=' + state._strategyPass.world_artifact_to_surface + ')');
+                  if (state._strategyPass.active_entropy_axis) {
+                      log('  Entropy Axis Used: ' + state._strategyPass.active_entropy_axis);
+                      log('  Manifestation: ' + (state._strategyPass.entropy_manifestation_summary || 'N/A'));
+                  }
               } else {
                   log('Strategy Pass: N/A (not yet run)');
               }
@@ -41017,6 +41628,20 @@ ${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic 
                   log('  Decorative Fate detected: ' + (hasDecFate ? 'yes' : 'no'));
               } else {
                   log('Post-Render (P4): N/A');
+              }
+
+              // Blue Blood debug (variant + entropy)
+              if (state._blueBloodVariant) {
+                  log('Blue Blood Variant: ' + state._blueBloodVariant);
+                  if (state._blueBloodEntropy) {
+                      const e = state._blueBloodEntropy;
+                      log('  Entry State: ' + e.entry_state);
+                      log('  Pressure Origin: ' + e.pressure_origin);
+                      log('  Polarity: ' + e.polarity_orientation);
+                      log('  Exposure: ' + e.exposure_level);
+                      log('  Timeline: ' + e.structural_timeline_mode);
+                      if (e.monarchy_model) log('  Monarchy Model: ' + e.monarchy_model);
+                  }
               }
 
               const allPass = Object.values(results).every(r => r.pass || r.valid || r.aligned);
@@ -42709,13 +43334,13 @@ ${specPassTier === 1 ? '- Single-pass structured: Dense, efficient. No thematic 
 //   1. User clicks Visualize
 //   2. Modal opens immediately
 //   3. Prompt is populated and visible
-//   4. If credits depleted and not subscribed:
+//   4. If Fortunes depleted and not subscribed:
 //      - Show consent UI INSIDE modal (not separate paywall)
 //      - User can see what they would get before committing
 //   5. Only after consent does generation proceed
 //
 // Functions:
-//   - window.visualize(regenerate) — Main entry, modal-first
+//   - window.summonVision(regenerate) — Main entry, modal-first
 //   - window.enablePayAsYouGoFromViz() — Consent handler inside modal
 //   - populateVizPromptOnly() — Shows prompt without generating
 //
