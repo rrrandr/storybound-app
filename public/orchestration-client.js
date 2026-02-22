@@ -121,19 +121,19 @@
   // MONETIZATION_GATES — intensity tier removed. Gates control completion/length only.
   const MONETIZATION_GATES = {
     free: {
-      name: 'Taste',
+      name: 'TASTE_CAP',
       completionAllowed: false,
       cliffhangerRequired: true,
       maxStoryLength: 'taste'
     },
     pass: {
-      name: '$3 Story Pass',
+      name: 'PASS_UNLOCKED',
       completionAllowed: true,
       cliffhangerRequired: false,
       maxStoryLength: 'fling'
     },
     sub: {
-      name: '$6 Subscription',
+      name: 'SUB_UNLOCKED',
       completionAllowed: true,
       cliffhangerRequired: false,
       maxStoryLength: 'soulmates'
@@ -417,7 +417,7 @@
    * Enforce monetization gates BEFORE any renderer call.
    * Returns the constraints that must be applied.
    */
-  // enforceMonetizationGates — controls ONLY completion, length, saves, God Mode, credits.
+  // enforceMonetizationGates — controls ONLY completion, length, saves, credits.
   // Does NOT influence intimacy authorization in any way.
   function enforceMonetizationGates(accessTier) {
     const gate = MONETIZATION_GATES[accessTier];
@@ -428,7 +428,7 @@
 
     return {
       accessTier,
-      gateName: gate.name,
+      gateCode: gate.name,
       completionAllowed: gate.completionAllowed,
       cliffhangerRequired: gate.cliffhangerRequired,
       storyLengthLimit: gate.maxStoryLength
@@ -724,13 +724,13 @@ YOU DO NOT DECIDE:
 
 CONSTRAINTS FROM PRIMARY AUTHOR (NON-NEGOTIABLE):
 - Intimacy Stage: authorized
-- Completion Allowed: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
+- Completion Permitted: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Emotional Core: ${constraints.emotionalCore || 'connection and desire'}
 - Physical Bounds: ${constraints.physicalBounds || 'as established by story'}
 - Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
 
 ${!gateEnforcement.completionAllowed ? `
-CRITICAL: Completion is FORBIDDEN by monetization tier.
+CRITICAL: Completion is FORBIDDEN by narrative constraints.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
 
@@ -742,7 +742,7 @@ emotionalCore: <the feeling being rendered>
 physicalBounds: <explicit physical actions allowed/forbidden>
 sensoryFocus: <primary sensations to emphasize>
 rhythm: <pacing - slow/building/urgent/suspended>
-hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowed ? ', monetization_gate_completion_forbidden' : ''}
+hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowed ? ', completion_forbidden' : ''}
 [/SD]`;
 
     const messages = [
@@ -825,13 +825,13 @@ YOU DO NOT DECIDE:
 
 CONSTRAINTS (NON-NEGOTIABLE):
 - Intimacy Stage: authorized
-- Completion Allowed: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
+- Completion Permitted: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Emotional Core: ${constraints.emotionalCore || 'connection and desire'}
 - Physical Bounds: ${constraints.physicalBounds || 'as established by story'}
 - Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
 
 ${!gateEnforcement.completionAllowed ? `
-CRITICAL: Completion is FORBIDDEN by monetization tier.
+CRITICAL: Completion is FORBIDDEN by narrative constraints.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
 
@@ -843,7 +843,7 @@ emotionalCore: <the feeling being rendered>
 physicalBounds: <explicit physical actions allowed/forbidden>
 sensoryFocus: <primary sensations to emphasize>
 rhythm: <pacing - slow/building/urgent/suspended>
-hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowed ? ', monetization_gate_completion_forbidden' : ''}
+hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowed ? ', completion_forbidden' : ''}
 [/SD]`;
 
     const messages = [
@@ -946,7 +946,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
       const shouldTerminate = (
         fateCard ||                                           // Fate card selected
         (appState.fate && appState.fate.pendingPetition) ||   // Petition submitted
-        (appState.fate && appState.fate.temptFateActive) ||   // Tempt Fate active
+        appState.tempt_fate_invoked_this_turn ||                // Tempt Fate invoked
         appState.cascadeCount >= cascadeCap                   // Adaptive max cascade beats
       );
 
@@ -1106,9 +1106,8 @@ You are the PRIMARY AUTHOR. You have EXCLUSIVE authority over:
 - Whether the scene should be interrupted
 - Permission, limits, and consequences
 
-MONETIZATION CONSTRAINTS (NON-NEGOTIABLE):
-- Access Tier: ${state.gateEnforcement.gateName}
-- Completion Allowed: ${state.gateEnforcement.completionAllowed ? 'YES' : 'NO'}
+NARRATIVE CONSTRAINTS (NON-NEGOTIABLE):
+- Completion Permitted: ${state.gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 - Cliffhanger Required: ${state.gateEnforcement.cliffhangerRequired ? 'YES' : 'NO'}
 
 INTIMACY STATUS:
@@ -1597,7 +1596,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     // Enforce monetization constraints (SD cannot override)
     if (!gateEnforcement.completionAllowed) {
       esd.completionAllowed = false;
-      esd.hardStops.push('monetization_gate_completion_forbidden');
+      esd.hardStops.push('completion_forbidden');
     }
 
     return esd;
@@ -1677,9 +1676,9 @@ YOUR RESPONSIBILITIES:
 - Apply appropriate consequences
 - You are the FINAL AUTHORITY on story state
 
-CONSTRAINTS:
+NARRATIVE CONSTRAINTS:
 - Cliffhanger Required: ${gateEnforcement.cliffhangerRequired ? 'YES' : 'NO'}
-- Completion Allowed: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
+- Completion Permitted: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
 
 Output the final integrated narrative (200-300 words).`,
 
@@ -1978,7 +1977,6 @@ Be concise. This is injected into the prose generation prompt.`;
   async function orchestrateWithPassTier(params) {
     const {
       passTier = 2,
-      structuredStateSummary,
       systemPrompt,
       storyContext,
       playerAction,
@@ -1995,6 +1993,9 @@ Be concise. This is injected into the prose generation prompt.`;
     let enrichedSystemPrompt = systemPrompt;
     let outline = null;
     let calibration = null;
+
+    // Tier 1/2 context is already in systemPrompt (structured state); no full context blob
+    const effectiveContext = passTier >= 3 ? storyContext : '';
 
     // ── Tier 3: Beat Outline → Thematic Calibration → Final Prose ──
     if (passTier === 3) {
@@ -2026,7 +2027,7 @@ Tension: ${outline.tension_vector || 'N/A'}`;
     else if (passTier === 2) {
       if (onPhaseChange) onPhaseChange('BEAT_OUTLINE', {});
 
-      outline = await runBeatOutlinePass(systemPrompt, storyContext, playerAction);
+      outline = await runBeatOutlinePass(systemPrompt, effectiveContext, playerAction);
 
       const outlineBlock = outline.raw
         ? `\n\nBEAT OUTLINE (structural guide):\n${outline.text}`
@@ -2034,22 +2035,13 @@ Tension: ${outline.tension_vector || 'N/A'}`;
 Scene Arc: ${outline.scene_arc || 'N/A'}
 Tension: ${outline.tension_vector || 'N/A'}`;
 
-      // For Tier 2, inject structured state summary if provided (replaces full context recap)
-      const stateBlock = structuredStateSummary
-        ? `\n\nSTRUCTURED STATE:\n${structuredStateSummary}`
-        : '';
-
-      enrichedSystemPrompt = systemPrompt + outlineBlock + stateBlock;
+      enrichedSystemPrompt = systemPrompt + outlineBlock;
 
       console.log(`[PASS_TIER] Tier 2 pre-pass complete (${Date.now() - tierStart}ms)`);
     }
 
     // ── Tier 1: Single structured generation ──
     else {
-      // For Tier 1, inject structured state summary (replaces full context recap)
-      if (structuredStateSummary) {
-        enrichedSystemPrompt = systemPrompt + `\n\nSTRUCTURED STATE:\n${structuredStateSummary}`;
-      }
       console.log(`[PASS_TIER] Tier 1 — direct pass`);
     }
 
@@ -2058,7 +2050,7 @@ Tension: ${outline.tension_vector || 'N/A'}`;
 
     const result = await orchestrateStoryGeneration({
       accessTier: accessTier || 'free',
-      storyContext,
+      storyContext: effectiveContext,
       playerAction,
       playerDialogue,
       fateCard,

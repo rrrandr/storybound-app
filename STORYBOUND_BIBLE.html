@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>The Storybound Bible</title>
+<style>
+@page {
+  size: letter;
+  margin: 0.75in;
+}
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 11pt;
+  line-height: 1.5;
+  color: #1a1a1a;
+  max-width: 100%;
+  margin: 0;
+  padding: 20px;
+}
+h1 {
+  font-size: 22pt;
+  border-bottom: 3px solid #8b6914;
+  padding-bottom: 8px;
+  margin-top: 40px;
+  color: #1a1008;
+  page-break-before: always;
+}
+h1:first-of-type {
+  page-break-before: avoid;
+  font-size: 28pt;
+  text-align: center;
+  border-bottom: 4px double #8b6914;
+}
+h2 {
+  font-size: 16pt;
+  color: #3a2a0a;
+  margin-top: 28px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 4px;
+}
+h3 {
+  font-size: 13pt;
+  color: #555;
+  margin-top: 20px;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+  font-size: 10pt;
+}
+th, td {
+  border: 1px solid #999;
+  padding: 6px 10px;
+  text-align: left;
+}
+th {
+  background-color: #f0e6c8;
+  font-weight: bold;
+  color: #3a2a0a;
+}
+tr:nth-child(even) {
+  background-color: #faf7f0;
+}
+code {
+  background-color: #f4f0e8;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 10pt;
+  font-family: 'Menlo', 'Monaco', monospace;
+}
+pre {
+  background-color: #f4f0e8;
+  padding: 12px;
+  border-radius: 4px;
+  border-left: 3px solid #8b6914;
+  overflow-x: auto;
+  font-size: 9pt;
+  line-height: 1.4;
+}
+pre code {
+  background: none;
+  padding: 0;
+}
+hr {
+  border: none;
+  border-top: 2px solid #8b6914;
+  margin: 30px 0;
+}
+strong {
+  color: #3a2a0a;
+}
+ul, ol {
+  padding-left: 24px;
+}
+li {
+  margin-bottom: 4px;
+}
+blockquote {
+  border-left: 3px solid #8b6914;
+  margin-left: 0;
+  padding-left: 16px;
+  color: #555;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+<h1>THE STORYBOUND BIBLE</h1>
+<h2>Comprehensive Technical &amp; Design Document</h2>
+<hr />
+<h1>PART I: WHAT IS STORYBOUND?</h1>
+<p>Storybound is an interactive romance story engine — a single-page web application that lets players shape and experience AI-generated romance narratives through a card-based selection system. Players choose their story's world, tone, archetype, point of view, intensity, and more through a cinematic "corridor" of tarot-styled cards, then play through an AI-authored story where their actions and dialogue drive the plot.</p>
+<p>The app combines:
+- A <strong>card-based story shaping UI</strong> with 3D flip animations and gold gleam effects
+- A <strong>multi-model AI orchestration pipeline</strong> (ChatGPT, Grok, Gemini, Mistral) for story generation
+- A <strong>storyturn regime</strong> (ST1-ST6) governing narrative pacing and intimacy escalation
+- A <strong>monetization system</strong> with three tiers (Tease, Story Pass, Subscription)
+- <strong>Solo and Couple play modes</strong> with real-time synchronization</p>
+<hr />
+<h1>PART II: ARCHITECTURE</h1>
+<h2>File Structure</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Size</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>public/index.html</code></td>
+<td>~107KB</td>
+<td>Full SPA structure — all screens, modals, overlays, card grids</td>
+</tr>
+<tr>
+<td><code>public/app.js</code></td>
+<td>~1.86MB</td>
+<td>Core application logic — state, corridors, cards, story generation, validation</td>
+</tr>
+<tr>
+<td><code>public/styles.css</code></td>
+<td>~456KB</td>
+<td>Complete styling — CSS variables, card systems, themes, animations</td>
+</tr>
+<tr>
+<td><code>public/orchestration-client.js</code></td>
+<td>~62KB</td>
+<td>Multi-model AI orchestration pipeline</td>
+</tr>
+<tr>
+<td><code>public/fatecards.js</code></td>
+<td>~99KB</td>
+<td>Fate card system — resolution, petition, elevation</td>
+</tr>
+<tr>
+<td><code>public/assets/ui/</code></td>
+<td>—</td>
+<td>UI button images (Black-Gold buttons, DSP panels, icons)</td>
+</tr>
+<tr>
+<td><code>public/assets/card-art/cards/</code></td>
+<td>—</td>
+<td>Card PNG art (Tarot cards, character cards, destiny cards)</td>
+</tr>
+</tbody>
+</table>
+<h2>Technology Stack</h2>
+<ul>
+<li><strong>Frontend</strong>: Vanilla HTML/CSS/JS (no framework)</li>
+<li><strong>Auth &amp; Database</strong>: Supabase (auth, profiles, story snapshots)</li>
+<li><strong>AI Models</strong>: OpenAI (ChatGPT gpt-4o-mini), xAI (Grok), Google (Gemini), Mistral</li>
+<li><strong>Storage</strong>: IndexedDB (primary), localStorage (fallback), Supabase (cloud sync)</li>
+</ul>
+<h2>State Management</h2>
+<p>All application state lives in a single global <code>window.state</code> object, initialized at app startup and hydrated from Supabase user profiles. Key state groups:</p>
+<h3>Story Selections (<code>state.picks</code>)</h3>
+<pre><code>world, tone, genre, pressure, flavor, dynamic, era, pov
+</code></pre>
+<h3>Character State</h3>
+<pre><code>gender, loveInterest, authorGender, authorPronouns
+archetype: { primary, modifier }
+lenses: []
+withheldCoreVariant: null
+</code></pre>
+<h3>Progression State</h3>
+<pre><code>intensity: 'Steamy'           // Cosmetic label only
+intimacyTurnsInWindow: 0      // Turns spent inside intimacy window
+turnCount: 0                  // Current turn number
+storyturn: 'ST1'              // Current storyturn phase (ST1-ST6)
+storyStage: 'pre-intimacy'    // Narrative stage
+storyLength: 'tease'          // Selected story length
+</code></pre>
+<h3>Monetization State</h3>
+<pre><code>tier: 'free'                  // User's subscription tier
+access: 'free'                // Resolved access level
+subscribed: false
+imageCredits: 0
+</code></pre>
+<h3>God Mode State</h3>
+<pre><code>godMode: {
+  owned: false,
+  tempGrantedAt: null,
+  tempDurationHours: null,
+  activeStoryId: null,
+  tempExpiresAt: null
+}
+godModeActive: false          // Runtime toggle
+</code></pre>
+<h3>Fate Card State</h3>
+<pre><code>fateOptions: []
+fatePressure: 1
+awareness: 0
+stance: 'aid'
+consecutiveFate: 0
+selectedFateIndex: -1
+unlockedFateIdx: [0, 1]
+</code></pre>
+<h3>Safety State</h3>
+<pre><code>safety: {
+  darkThemes: true,
+  nonConImplied: false,
+  violence: true,
+  boundaries: [],
+  mode: 'balanced'
+}
+</code></pre>
+<hr />
+<h1>PART III: THE CORRIDOR SYSTEM</h1>
+<h2>Overview</h2>
+<p>The corridor is the story-shaping phase where players make sequential card selections. It presents one "row" of cards at a time, filling the viewport. Players select a card, tap "Proceed," and advance to the next stage. Completed rows are <strong>unmounted from the DOM</strong> (not hidden with CSS), and a breadcrumb appears in the header.</p>
+<h2>The 12 Corridor Stages</h2>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Stage Name</th>
+<th>Aliases</th>
+<th>What It Selects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>authorship</td>
+<td>—</td>
+<td>Choose Your Hand (manual) vs Guided Fate (auto)</td>
+</tr>
+<tr>
+<td>1</td>
+<td>identity</td>
+<td>—</td>
+<td>Character names, gender, pronouns (manual mode only)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>storybeau</td>
+<td>archetype</td>
+<td>Love interest archetype (7 types + Destiny's Choice)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>world</td>
+<td>—</td>
+<td>Story world (6 primary worlds)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>tone</td>
+<td>—</td>
+<td>Narrative tone (4 types)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>pressure</td>
+<td>—</td>
+<td>Story pull/tension driver (4 types)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>pov</td>
+<td>—</td>
+<td>Point of view (5 types)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>length</td>
+<td>—</td>
+<td>Story length (4 types)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>dynamic</td>
+<td>—</td>
+<td>Relationship dynamic (6 types + Destiny)</td>
+</tr>
+<tr>
+<td>9</td>
+<td>arousal</td>
+<td>intensity</td>
+<td>Intensity/arousal level (4 levels)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>safety</td>
+<td>—</td>
+<td>Content boundaries and theme toggles</td>
+</tr>
+<tr>
+<td>11</td>
+<td>beginstory</td>
+<td>—</td>
+<td>Terminal "Begin Story" button</td>
+</tr>
+</tbody>
+</table>
+<h2>Corridor Mechanics</h2>
+<ul>
+<li><strong>Single active row</strong>: <code>corridorActiveRowIndex</code> is the single source of truth</li>
+<li><strong>DOM mounting</strong>: <code>updateCorridorVisibility()</code> mounts the active row and unmounts all others via <code>removeChild</code> / <code>appendChild</code></li>
+<li><strong>Row storage</strong>: Unmounted rows stored in <code>corridorRowStore</code> map for later remounting</li>
+<li><strong>Row 0 exception</strong>: The authorship row is the only row mounted at page load</li>
+<li><strong>Body classes</strong>: <code>body.corridor-mode</code> during selection, <code>body.corridor-complete</code> when done</li>
+<li><strong>Layout</strong>: <code>#setup</code> becomes <code>flex column + height:100vh</code>; corridor sections use <code>flex: 1</code></li>
+<li><strong>Multi-element stages</strong>: Storybeau, POV, and arousal stages have multiple DOM elements sharing one corridor row. Titles get <code>flex: 0 0 auto</code>; the card grid gets <code>flex: 1</code></li>
+</ul>
+<h2>Breadcrumb System</h2>
+<p>Breadcrumbs appear in the <code>.shape-your-story-header</code> bar (which is never unmounted) as players progress.</p>
+<ul>
+<li><strong>Ghost steps</strong>: 10 Roman numeral placeholders (I-X) mapped by STAGE_INDEX value</li>
+<li><strong>Breadcrumb creation</strong>: When a stage completes, a real breadcrumb replaces its ghost step</li>
+<li><strong>Animation</strong>: Card animates from its grid position to the ghost step rectangle (600ms)</li>
+<li><strong>Insertion</strong>: Breadcrumbs insert before the first remaining ghost step</li>
+</ul>
+<h2>Control Plane</h2>
+<p>The control plane (<code>#controlPlane</code>) is <code>position: fixed; bottom: 48px</code> and contains the "Proceed" button (never "Continue"). It appears only when a card is selected in the current row. Clicking it dispatches to the appropriate stage handler.</p>
+<hr />
+<h1>PART IV: THE CARD SYSTEM</h1>
+<h2>Card Structure (HTML)</h2>
+<pre><code class="language-html">&lt;div class=&quot;sb-card&quot; data-grp=&quot;pressure&quot; data-val=&quot;PowerControl&quot;&gt;
+  &lt;div class=&quot;sb-card-inner&quot;&gt;
+    &lt;div class=&quot;sb-card-face sb-card-back&quot;&gt;
+      &lt;span class=&quot;sb-card-title&quot;&gt;Title&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;sb-card-face sb-card-front&quot;&gt;
+      &lt;span class=&quot;sb-card-title&quot;&gt;Title&lt;/span&gt;
+      &lt;span class=&quot;sb-card-desc&quot;&gt;Description&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<h2>Card Types</h2>
+<ol>
+<li><strong>Selection Cards</strong> (<code>.sb-card</code>) — Grid-based corridor cards for world, tone, pressure, POV, length, dynamic</li>
+<li><strong>Archetype Cards</strong> (<code>.archetype-card</code>) — 7 archetypes + Destiny's Choice with dedicated zoom overlay</li>
+<li><strong>Authorship Cards</strong> (<code>.authorship-card</code>) — Choose Your Hand vs Guided Fate</li>
+<li><strong>Mode Cards</strong> (<code>.mode-card</code>) — Solo, Couple, Stranger at app start</li>
+<li><strong>Character Cards</strong> (<code>.character-tarot-card</code>) — Player character and love interest input forms</li>
+<li><strong>Fate Cards</strong> — In-game narrative fate cards with resolution mechanics</li>
+</ol>
+<h2>3D Flip Mechanics</h2>
+<h3>Critical Invariants:</h3>
+<ul>
+<li><code>.sb-card-face</code> MUST be <code>position: absolute; inset: 0</code> — faces never participate in document flow</li>
+<li>Only <code>.sb-card-inner</code> has transforms (<code>rotateY</code> for flip)</li>
+<li><code>backface-visibility: hidden</code> handles face visibility — no z-index hacks needed</li>
+<li><strong>NEVER</strong> set <code>overflow: hidden</code> on <code>.sb-card-inner</code> — CSS spec forces <code>transform-style: preserve-3d</code> to be treated as <code>flat</code>, breaking backface-visibility</li>
+</ul>
+<h2>Card Gleam System</h2>
+<p>Every card has a rotating gold gleam effect — a linear gradient with 5 gold spokes and 1 dark spoke.</p>
+<ul>
+<li><strong>Layer</strong>: <code>.card-gleam-layer</code> inside each <code>.sb-card-face</code> at <code>z-index: -1</code> (above background, below text)</li>
+<li><strong>Seed</strong>: Deterministic from <code>card.dataset.val</code> via hash function</li>
+<li><strong>Synchronization</strong>: All cards share the same 10-second animation cycle</li>
+<li><strong>Animation phases</strong>:</li>
+<li>Breathe at center (5-7s)</li>
+<li>Slide left 13px (0.6-0.9s)</li>
+<li>Breathe at -13px (0-7s)</li>
+<li>Slide back to center (0.5-0.8s)</li>
+<li>Breathe at center (5-10s), repeat</li>
+<li><strong>Debossed text shadow</strong>: Gleam position (+-13px) scales to text shadow offset (+-0.8px), simulating light moving over pressed-in letters</li>
+<li><strong>API</strong>: <code>window.applyCardGleam(card)</code> for individual cards, <code>window.initAllCardGleams()</code> for all</li>
+</ul>
+<h2>Zoom Portal Architecture</h2>
+<p>Cards zoom by being <strong>moved</strong> (not cloned) into a fixed portal container (<code>.sb-zoom-portal</code>) at the document body level, breaking out of ancestor stacking contexts.</p>
+<h3>Two Zoom Paths:</h3>
+<ol>
+<li><strong>Archetype Zoom</strong> (<code>openArchetypeOverlay()</code>) — Full-screen overlay with description, navigation arrows, and "Proceed" button</li>
+<li><strong>Generic Card Zoom</strong> (<code>openSbCardZoom()</code>) — Portal zoom with navigation arrows and flavor selection for world cards</li>
+</ol>
+<h3>Key Mechanics:</h3>
+<ul>
+<li>Original DOM position tracked via <code>zoomOriginalParent</code> / <code>zoomOriginalNextSibling</code></li>
+<li><code>inlineCardFaceBackgrounds()</code> copies computed <code>background-image</code> inline before portal move (grid-scoped CSS selectors break in portal)</li>
+<li><code>removeInlinedBackgrounds()</code> cleans up on card restore</li>
+<li>Base <code>.sb-card</code> has <code>max-width: 112px</code>; <code>.sb-card.zoomed</code> overrides to <code>max-width: none</code></li>
+<li>Scale zoom invariant: <code>transform: scale(X)</code> keeps card at original size, scale enlarges uniformly — never set explicit larger width/height</li>
+</ul>
+<h3>Baked-Art Hit Zone System (World Cards):</h3>
+<ul>
+<li>World cards have baked PNG art with transparent <code>&lt;div&gt;</code> overlays for flavor selection</li>
+<li><code>BAKED_ART_BUTTONS</code> object defines hit zone positions (top, left, width, height in %)</li>
+<li><code>BAKED_ART_SCROLL_ZONE</code> defines custom text input zones</li>
+<li>Hit zones use <code>stopPropagation()</code> to prevent parent card handler interference</li>
+<li>Pressed-in bevel: asymmetric borders (dark top/left, light bottom/right) + inset box-shadows on <code>.selected</code></li>
+<li>Custom text scroll zone with marquee suggestions, Enter/blur to commit</li>
+</ul>
+<hr />
+<h1>PART V: STORY SELECTIONS IN DETAIL</h1>
+<h2>1. Authorship Mode</h2>
+<ul>
+<li><strong>Choose Your Hand</strong>: Manual story building — all stages unlocked, player picks everything</li>
+<li><strong>Guided Fate</strong>: AI-generated story from player constraints — identity stage hidden</li>
+</ul>
+<h2>2. Archetypes (7 Core Types)</h2>
+<table>
+<thead>
+<tr>
+<th>Archetype</th>
+<th>Desire Style</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HEART_WARDEN</td>
+<td>Protection is a fortress of love and fear</td>
+</tr>
+<tr>
+<td>OPEN_VEIN</td>
+<td>Love is hemorrhage, offering, surrender</td>
+</tr>
+<tr>
+<td>SPELLBINDER</td>
+<td>Charm is currency, three moves ahead</td>
+</tr>
+<tr>
+<td>ARMORED_FOX</td>
+<td>Deflection is art, evasion is affection</td>
+</tr>
+<tr>
+<td>DARK_VICE</td>
+<td>The thing you reach for knowing it will cost you</td>
+</tr>
+<tr>
+<td>BEAUTIFUL_RUIN</td>
+<td>Destroys what she loves before love disappoints</td>
+</tr>
+<tr>
+<td>ETERNAL_FLAME</td>
+<td>Remembers every detail, lifetimes later</td>
+</tr>
+</tbody>
+</table>
+<p>Plus <strong>Destiny's Choice</strong> — a special 8th card that lets fate pick the archetype.</p>
+<p>Each archetype includes:
+- Gendered expression variants (male/female)
+- Stress &amp; failure patterns (Shadow Clause)
+- Nickname emergence rules (natural shortenings only, no pet names)
+- Pairing rules for modifier compatibility</p>
+<h3>Withheld Core Lens System</h3>
+<p>Some archetypes have a "withheld core" variant (CLOISTERED, VEILED, etc.) that enforces a midpoint progression reveal. The midpoint varies by story length (tease=3, fling=6, affair=12, soulmates=20 turns).</p>
+<h2>3. Worlds (6 Primary)</h2>
+<table>
+<thead>
+<tr>
+<th>World</th>
+<th>Flavors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Modern</strong></td>
+<td>small_town, college, friends, blue_blood, office, supernatural_modern, superheroic_modern</td>
+</tr>
+<tr>
+<td><strong>Historical</strong></td>
+<td>prehistoric, bronze_age, classical, medieval, renaissance, victorian, 20th_century</td>
+</tr>
+<tr>
+<td><strong>Fantasy</strong></td>
+<td>arcane_binding, fated_blood, the_inhuman, the_beyond, cursed</td>
+</tr>
+<tr>
+<td><strong>Sci-Fi</strong></td>
+<td>galactic_civilizations, future_of_science, cyberpunk, post_human, first_contact, simulation, final_frontier</td>
+</tr>
+<tr>
+<td><strong>Dystopia</strong></td>
+<td>glass_house, the_ledger, crimson_veil, perfect_match, quieting_event, endless_edit</td>
+</tr>
+<tr>
+<td><strong>Post-Apocalyptic</strong></td>
+<td>ashfall, year_zero, dystimulation, predation, hunger</td>
+</tr>
+</tbody>
+</table>
+<h3>World Flavor Directives</h3>
+<p><code>buildWorldFlavorDirectives()</code> resolves world flavors into prompt directives:
+- <strong>Systemic flavors</strong>: "World Flavor: [label]" + "World Pressure: [pressure line]" — structural effects on the world
+- <strong>Contextual flavors</strong>: "World Context: [label]" + "Context Effect: [effect]" — behavioral modifiers
+- <strong>Custom text</strong>: Player-entered free text interpreted through the world's lens
+- Max 4 flavor lines injected into the system prompt</p>
+<h2>4. Tones (4 Types)</h2>
+<table>
+<thead>
+<tr>
+<th>Tone</th>
+<th>Character</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Earnest</strong></td>
+<td>Sincere emotion, unironic stakes</td>
+</tr>
+<tr>
+<td><strong>Wry Confession</strong></td>
+<td>Intimacy with irony, self-aware narrator</td>
+</tr>
+<tr>
+<td><strong>Dark</strong></td>
+<td>Morally complex, shadowed desire</td>
+</tr>
+<tr>
+<td><strong>Mythic</strong></td>
+<td>Archetypal weight, legendary scale</td>
+</tr>
+</tbody>
+</table>
+<p>Each tone has:
+- Enforcement prompts (specific words to use/avoid)
+- Validation patterns (regex allow/forbid)
+- Signal words for title/cover generation
+- Never-use lists
+- <strong>Tone fracture</strong>: 10% chance per story of an opposite-tone moment appearing</p>
+<h2>5. Pressure / Story Pull (4 Types)</h2>
+<table>
+<thead>
+<tr>
+<th>Pressure</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Power &amp; Control</strong></td>
+<td>"The entire city answers to him. Except for her."</td>
+</tr>
+<tr>
+<td><strong>Escape &amp; Pursuit</strong></td>
+<td>"The world hunts them. They only have each other."</td>
+</tr>
+<tr>
+<td><strong>Desire &amp; Obsession</strong></td>
+<td>"He should walk away. He never can."</td>
+</tr>
+<tr>
+<td><strong>Survival</strong></td>
+<td>"The mountain tried to freeze them; instead, they burned."</td>
+</tr>
+</tbody>
+</table>
+<h2>6. Point of View (5 Types)</h2>
+<table>
+<thead>
+<tr>
+<th>POV</th>
+<th>Pronoun</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First</td>
+<td>I</td>
+<td>Traditional first-person narration</td>
+</tr>
+<tr>
+<td>Second</td>
+<td>You</td>
+<td>Direct address, immersive</td>
+</tr>
+<tr>
+<td>Third</td>
+<td>They</td>
+<td>Omniscient/limited third-person</td>
+</tr>
+<tr>
+<td>Fourth</td>
+<td>We</td>
+<td>Collective narrator perspective</td>
+</tr>
+<tr>
+<td>Fifth</td>
+<td>The Author</td>
+<td>The Author is a participant force inside the story</td>
+</tr>
+</tbody>
+</table>
+<h3>5th Person POV (The Author)</h3>
+<p>The most complex POV — The Author is a grammatical character who influences through environmental pressure, timing, and symbolic resonance:
+- Must appear as "The Author" (capitalized, with article)
+- Participant verbs only: witness, note, observe, remark, hold breath
+- Banned controller verbs: lead, guide, push, force
+- Opening/closing sentence requirements validated per scene
+- In erotic scenes: Author reacts/comments, never causes action
+- God Mode variant adds adversarial framing (panic, desperation, cold rage)</p>
+<h2>7. Story Length (4 Types)</h2>
+<table>
+<thead>
+<tr>
+<th>Length</th>
+<th>Scenes</th>
+<th>Max Words</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tease</strong></td>
+<td>1 quick scene</td>
+<td>~8,000</td>
+<td>Single arc, fast &amp; complete. Free tier. Cliffhanger ending.</td>
+</tr>
+<tr>
+<td><strong>Fling</strong></td>
+<td>2-3 scenes</td>
+<td>~20,000</td>
+<td>Short arc with real stakes. One permitted climax.</td>
+</tr>
+<tr>
+<td><strong>Affair</strong></td>
+<td>4+ scenes</td>
+<td>Unlimited</td>
+<td>Longer arc with layered consequences</td>
+</tr>
+<tr>
+<td><strong>Soulmates</strong></td>
+<td>Persistent</td>
+<td>Unlimited</td>
+<td>Persistent story with memory. Premium only.</td>
+</tr>
+</tbody>
+</table>
+<h2>8. Dynamic / Relationship Type (6+2 Types)</h2>
+<p><strong>Circumstance Dynamics:</strong>
+- Forced Proximity
+- Secret Identity</p>
+<p><strong>Emotional Arc Dynamics:</strong>
+- Friends to Lovers
+- Enemies to Lovers
+- Second Chance
+- Forbidden Love</p>
+<p>Plus <strong>Destiny's Choice</strong> for random selection.</p>
+<h2>9. Arousal / Intensity (4 Levels)</h2>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Signal</th>
+<th>Allow Pattern</th>
+<th>Forbid Pattern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Clean</strong></td>
+<td>Restraint, distance</td>
+<td>distance, restraint, waiting, watching, almost</td>
+<td>burn, ache, want, hunger, possession</td>
+</tr>
+<tr>
+<td><strong>Naughty</strong></td>
+<td>Suggestion, withholding</td>
+<td>almost, want, tempt, tease, forbidden, risk</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Steamy</strong></td>
+<td>Intimacy, possession</td>
+<td>want, ache, burn, claim, mine, surrender</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Passionate</strong></td>
+<td>Intrusion, bluntness</td>
+<td>filth, raw, ruin, wreck, use, break, devour</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2>10. Safety &amp; Boundaries</h2>
+<p>Theme toggles and boundary chips for content filtering:
+- Dark themes on/off
+- Non-con implied on/off
+- Violence on/off
+- Custom boundary additions
+- Mode: balanced / permissive</p>
+<hr />
+<h1>PART VI: THE STORYTURN REGIME (ST1-ST6)</h1>
+<p>The Storyturn regime is the backbone of Storybound's narrative pacing. It defines six phases that every story passes through, governing what can happen at each stage.</p>
+<h2>The Six Storyturns</h2>
+<table>
+<thead>
+<tr>
+<th>ST</th>
+<th>Name</th>
+<th>Phase</th>
+<th>Sex Catalyst</th>
+<th>Sex Allowed</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ST1</td>
+<td>Attraction Acknowledged</td>
+<td>desire</td>
+<td>No</td>
+<td>No</td>
+<td>Opening: tension, flirtation, world-building</td>
+</tr>
+<tr>
+<td>ST2</td>
+<td>Resistance Defined</td>
+<td>resistance</td>
+<td>No</td>
+<td>No</td>
+<td>Obstacles, complications, emotional walls</td>
+</tr>
+<tr>
+<td>ST3</td>
+<td>Permission Granted</td>
+<td>permission</td>
+<td>Yes</td>
+<td>Yes (initiation)</td>
+<td>First sex allowed (if gate + initiated)</td>
+</tr>
+<tr>
+<td>ST4</td>
+<td>Consequence Taken</td>
+<td>consequence</td>
+<td>Yes</td>
+<td>Yes (full)</td>
+<td>Sex completion allowed, consequences unfold</td>
+</tr>
+<tr>
+<td>ST5</td>
+<td>Crisis Separation</td>
+<td>crisis</td>
+<td>No</td>
+<td>No</td>
+<td>Threat to relationship, darkest moment</td>
+</tr>
+<tr>
+<td>ST6</td>
+<td>Integration</td>
+<td>integration</td>
+<td>No</td>
+<td>No</td>
+<td>Resolution, epilogue, earned reunion</td>
+</tr>
+</tbody>
+</table>
+<h2>Key Rules:</h2>
+<ul>
+<li>Sex is only possible at <strong>ST3 and ST4</strong> (<code>isSexAllowedAtCurrentStoryturn()</code>)</li>
+<li>Sex <strong>completion</strong> requires ST3+ AND non-Tease tier (<code>isSexCompletionAllowed()</code>)</li>
+<li>Repeated sex <strong>never</strong> advances the Storyturn</li>
+<li>Non-catalyst STs (1, 2, 5, 6) cannot be advanced via sexual activity</li>
+<li><strong>Tease stories</strong>: Max ST3, cliffhanger before completion, state captured for upgrade</li>
+<li><strong>Vocabulary enforcement</strong>: ST1 forbids surrender/ruin/betrayal; before ST4 cannot name resolved states</li>
+</ul>
+<hr />
+<h1>PART VII: INTIMACY AUTHORIZATION</h1>
+<p>Intimacy authorization is a multi-layered system that determines when explicit content is permitted.</p>
+<h2>The Authorization Chain</h2>
+<h3>Layer 1: Storyturn Gate</h3>
+<pre><code>isSexAllowedAtCurrentStoryturn() → true if ST3 or ST4
+</code></pre>
+<h3>Layer 2: Scene Gate</h3>
+<pre><code>getMainPairIntimacyGateScene() →
+  tease: scene 4
+  fling: scene 6
+  affair: scene 10
+</code></pre>
+<h3>Layer 3: Player Initiation</h3>
+<pre><code>detectPlayerInitiation(action, dialogue) →
+  Regex test for: kiss, touch, undress, embrace, etc.
+  Permissive heuristic (not a filter)
+</code></pre>
+<h3>Combined Authorization</h3>
+<pre><code class="language-javascript">intimacyWindowOpen = isSexAllowedAtCurrentStoryturn() &amp;&amp;
+                     turnCount &gt;= getMainPairIntimacyGateScene()
+
+mainPairAuthorized = godMode ||
+                     (intimacyWindowOpen &amp;&amp;
+                      (playerInitiated || intimacyTurnsInWindow &gt;= 2))
+
+sceneExplicitContext = detectSceneExplicitContext(storyContext)
+  // Markers: brothel, orgy, bathhouse, dream of, fantasy of, etc.
+
+explicitEmbodimentAuthorized = mainPairAuthorized || sceneExplicitContext
+
+mainPairRestricted = sceneExplicitContext &amp;&amp; !mainPairAuthorized
+</code></pre>
+<h3>Split Authorization Model</h3>
+<ul>
+<li><strong>Main pair</strong>: Requires full ST3 + scene gate + initiation/turn count</li>
+<li><strong>Scene explicit context</strong> (NPC scenes, brothels, dreams): Allowed before ST3, but main pair restricted</li>
+<li><strong>Main pair restriction</strong>: When scene context is explicit but main pair isn't authorized, a prompt-layer guard blocks main pair escalation while allowing side character content</li>
+</ul>
+<h2>Intensity Guard (4 Branches)</h2>
+<p>Injected into the author system prompt based on authorization state:</p>
+<ol>
+<li><strong>God Mode</strong>: "IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY."</li>
+<li><strong>Main Pair Authorized</strong>: "Explicit intimacy is permitted. Maintain literary tone."</li>
+<li><strong>Scene Explicit Context</strong> (not main pair authorized): "Explicit embodiment permitted for side characters/dreams/background. MAIN PAIR RESTRICTION: Primary pair must NOT consummate."</li>
+<li><strong>Default</strong>: "Focus on tension, chemistry, emotional stakes, and near-misses. Fade to black if player escalates."</li>
+</ol>
+<hr />
+<h1>PART VIII: THE ORCHESTRATION PIPELINE</h1>
+<h2>Overview</h2>
+<p>Story generation uses a multi-model orchestration pipeline with strict separation of concerns. Each AI model has exclusive authority over its domain.</p>
+<h2>Model Roster</h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Role</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ChatGPT</strong> (gpt-4o-mini)</td>
+<td>Primary Author</td>
+<td>Plot, psychology, dialogue, consequences, monetization enforcement</td>
+</tr>
+<tr>
+<td><strong>Grok</strong> (grok-4-fast-reasoning)</td>
+<td>SD Author</td>
+<td>Sensory embodiment, anatomical explicitness, physical rhythm</td>
+</tr>
+<tr>
+<td><strong>Gemini</strong> (gemini-2.0-flash)</td>
+<td>Fallback Author</td>
+<td>Called ONLY if ChatGPT fails (no retries)</td>
+</tr>
+<tr>
+<td><strong>Mistral</strong> (mistral-medium-latest)</td>
+<td>SD Fallback</td>
+<td>Called ONLY if Grok fails (one attempt)</td>
+</tr>
+<tr>
+<td><strong>Grok</strong> (grok-4-fast-reasoning)</td>
+<td>Scene Renderer</td>
+<td>Renders intimate scenes from SD only (no plot context)</td>
+</tr>
+</tbody>
+</table>
+<h2>The Three Phases</h2>
+<h3>Phase 1: Author Pass (ALWAYS RUNS)</h3>
+<ul>
+<li><strong>Model</strong>: ChatGPT (primary) or Gemini (fallback)</li>
+<li><strong>Input</strong>: Full system prompt with all directives, story context, player action/dialogue</li>
+<li><strong>Output</strong>: Story prose + optional [CONSTRAINTS] block for Grok</li>
+<li><strong>Authority</strong>: Plot progression, character psychology, dialogue intent, monetization gates</li>
+<li>For Steamy/Passionate intensity: generates [CONSTRAINTS] block for SD authoring</li>
+<li>For Clean/Naughty: generates complete output (no SD needed)</li>
+</ul>
+<h3>Phase 1B: SD Authoring (CONDITIONAL)</h3>
+<ul>
+<li><strong>Trigger</strong>: <code>ENABLE_GROK_SD_AUTHORING</code> flag + [CONSTRAINTS] block from ChatGPT</li>
+<li><strong>Model</strong>: Grok (primary) or Mistral (fallback)</li>
+<li><strong>Output</strong>: [SD] block with:
+  <code>intimacyStage: authorized
+  completionAllowed: true/false
+  emotionalCore: &lt;feeling&gt;
+  physicalBounds: &lt;allowed actions&gt;
+  sensoryFocus: &lt;primary sensations&gt;
+  rhythm: slow/building/urgent/suspended
+  hardStops: consent_withdrawal, scene_boundary[, monetization_gate_completion_forbidden]</code></li>
+<li>If both Grok and Mistral fail: <code>fateStumbled = true</code>, forced in-story interruption</li>
+</ul>
+<h3>Phase 2: Specialist Renderer (OPTIONAL, SD-GATED)</h3>
+<ul>
+<li><strong>Trigger</strong>: Valid SD exists + <code>ENABLE_SPECIALIST_RENDERER</code> flag</li>
+<li><strong>Model</strong>: Grok (scene renderer)</li>
+<li><strong>Input</strong>: ONLY the SD content — NO plot context (isolation guard)</li>
+<li><strong>Output</strong>: Sensory embodiment prose (150-200 words)</li>
+<li><strong>Safety belt</strong>: If <code>mainPairRestricted</code>, renderer prompt includes "Do not render consummation or escalation between the primary romantic pair"</li>
+<li>If renderer fails: <code>fateStumbled = true</code>, story continues with author output only</li>
+</ul>
+<h3>Phase 3: Integration Pass (ALWAYS RUNS)</h3>
+<ul>
+<li><strong>Model</strong>: ChatGPT</li>
+<li><strong>Input</strong>: Author output + renderer output (if any) + gate enforcement</li>
+<li><strong>Output</strong>: Final integrated narrative (200-300 words)</li>
+<li><strong>Authority</strong>: Final arbiter of story state, applies consequences, enforces cliffhangers</li>
+<li><strong>Deterministic cut-away</strong>: If renderer failed, forces in-story interruption ("The moment shattered...")</li>
+</ul>
+<h2>Orchestration Router Decision</h2>
+<pre><code class="language-javascript">useFullOrchestration = ENABLE_ORCHESTRATION &amp;&amp;
+                       window.StoryboundOrchestration &amp;&amp;
+                       explicitEmbodimentAuthorized
+</code></pre>
+<p>If false, falls back to single-model <code>callChat()</code> (ChatGPT only).</p>
+<hr />
+<h1>PART IX: SYSTEM PROMPT CONSTRUCTION</h1>
+<p>The system prompt is the master instruction set sent to the AI author. It's assembled from ~20+ directive blocks.</p>
+<h2>Prompt Components (in order)</h2>
+<ol>
+<li><strong>Base identity</strong>: "You are a bestselling romance author"</li>
+<li><strong>Story configuration</strong>: World, tone, genre, power frame, POV</li>
+<li><strong>World flavor directives</strong>: From <code>buildWorldFlavorDirectives()</code></li>
+<li><strong>Character information</strong>: Names, genders, pronouns, ages, ancestry</li>
+<li><strong>Archetype directives</strong>: From <code>buildArchetypeDirectives()</code> — primary + modifier + shadow clause</li>
+<li><strong>POV contract</strong>: POV-specific writing rules (especially detailed for 5th Person)</li>
+<li><strong>Intensity guard</strong>: 4-branch authorization (God Mode / authorized / scene context / default)</li>
+<li><strong>Erotic gating directive</strong>: ST-aware escalation rules</li>
+<li><strong>Tone enforcement block</strong>: Tone-specific language requirements</li>
+<li><strong>Fate card resolution directive</strong>: If a fate card is active</li>
+<li><strong>Petition Fate directive</strong>: If a petition is pending</li>
+<li><strong>Scene length directive</strong>: Word count targets (500-600 opener, 150-200 sex, 300-500 standard)</li>
+<li><strong>Pacing directive</strong>: Story-length-aware pacing alerts</li>
+<li><strong>Premature romance directive</strong>: Anti-insta-love guardrails</li>
+<li><strong>Intent-consequence directive</strong>: Action/dialogue must have narrative consequences</li>
+<li><strong>Intimacy interruption directive</strong>: First kiss/first sex interruption mechanics</li>
+<li><strong>Squash directive</strong>: Prevents verbatim repetition of player input</li>
+<li><strong>Meta reminder</strong>: Awareness level tracking</li>
+<li><strong>Veto rules</strong>: Exclusions, corrections, ambient mods</li>
+<li><strong>Safety directives</strong>: Content boundary enforcement</li>
+<li><strong>Edge Covenant directive</strong>: Dark romance agreement terms</li>
+<li><strong>Lens enforcement</strong>: Withheld Core progression rules</li>
+<li><strong>Banned words/topics</strong>: User-specified content exclusions</li>
+</ol>
+<hr />
+<h1>PART X: POST-GENERATION VALIDATION</h1>
+<p>After every story turn, 6 silent validation checks run. If any fail, the scene is regenerated without the player knowing.</p>
+<h2>The 6 Regeneration Checks</h2>
+<h3>1. 5th Person POV Violations</h3>
+<ul>
+<li>Detects author presence in erotic scenes</li>
+<li>Validates opener/closer sentence requirements</li>
+<li>Checks voyeur verb frequency</li>
+<li><code>repair5thPersonPOV()</code> fixes minor violations; major ones trigger full regen</li>
+</ul>
+<h3>2. Fate Card Enforcement</h3>
+<ul>
+<li>Validates fate card integration (not verbatim repetition)</li>
+<li>Squash directive enforces transformation of player input</li>
+<li>Regenerates if fate card resolution is missing or copied verbatim</li>
+</ul>
+<h3>3. Intimacy Failsafe</h3>
+<ul>
+<li>Detects non-consent, violence, violations in generated content</li>
+<li>Triggers regeneration with <code>buildIntimacyFailsafePrompt()</code></li>
+<li>Consent system leak patterns block phrases like "consent to", "are you sure"</li>
+</ul>
+<h3>4. Vocabulary Ban</h3>
+<ul>
+<li>Checks against <code>state.constraints.bannedWords</code></li>
+<li>Any match triggers silent regeneration with ban reinforcement</li>
+</ul>
+<h3>5. Narrative Authority</h3>
+<ul>
+<li><strong>Taxonomy leakage</strong> (HARD FAIL): Detects meta-commentary ("This is a [genre] story"), system explanation ("The story demanded"), archetype naming</li>
+<li><strong>Excessive meta-explanation</strong>: &gt;10% explanatory sentences</li>
+<li><strong>Abstraction without consequence</strong>: Abstract terms without physical grounding</li>
+<li><strong>Authority tone</strong>: Instructional/apologetic/reverent narrator voice</li>
+<li>Enforcement: "If you name what something IS, you have failed. Show what it COSTS."</li>
+</ul>
+<h3>6. Tone Drift</h3>
+<ul>
+<li>Validates tone signal markers against selected tone</li>
+<li>Earnest requires &gt;=2 emotional markers</li>
+<li>Other tones require &gt;=config.required markers</li>
+<li>Regenerates with <code>buildToneEnforcementBlock()</code> if tone signal is insufficient</li>
+</ul>
+<hr />
+<h1>PART XI: MONETIZATION SYSTEM</h1>
+<h2>Three Tiers</h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Name</th>
+<th>Price</th>
+<th>Completion</th>
+<th>Cliffhanger</th>
+<th>Max Words</th>
+<th>Key Controls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>free</strong></td>
+<td>Tease</td>
+<td>Free</td>
+<td>No</td>
+<td>Required</td>
+<td>~8,000</td>
+<td>Teasing only, no sex completion</td>
+</tr>
+<tr>
+<td><strong>pass</strong></td>
+<td>Story Pass</td>
+<td>$3</td>
+<td>Yes</td>
+<td>No</td>
+<td>~20,000</td>
+<td>Single-story unlock</td>
+</tr>
+<tr>
+<td><strong>sub</strong></td>
+<td>Subscription</td>
+<td>$6/mo</td>
+<td>Yes</td>
+<td>No</td>
+<td>Unlimited</td>
+<td>Full library, all features</td>
+</tr>
+</tbody>
+</table>
+<h2>What Gates Control</h2>
+<ul>
+<li>Story length limits (word count ceiling)</li>
+<li>Completion permission (ST3+ cliffhanger enforcement for Tease)</li>
+<li>Renderer eligibility (entitlement check before SD render)</li>
+<li>God Mode access (subscription may grant temp access)</li>
+<li>Save slots and image credits</li>
+</ul>
+<h2>What Gates Do NOT Control</h2>
+<ul>
+<li>Intimacy authorization (handled by storyturn + scene gate + initiation)</li>
+<li>Intensity routing (cosmetic only)</li>
+<li>Sex permission (governed by ST regime)</li>
+</ul>
+<h2>Enforcement</h2>
+<p><code>enforceMonetizationGates(accessTier)</code> returns:</p>
+<pre><code class="language-javascript">{ accessTier, gateName, completionAllowed, cliffhangerRequired, storyLengthLimit }
+</code></pre>
+<p>This object is embedded in the system prompt, passed to SD authors with hardStop injection, and enforced by the integration pass.</p>
+<hr />
+<h1>PART XII: FATE CARD SYSTEM</h1>
+<h2>Overview</h2>
+<p>Fate cards are narrative intervention cards that influence story direction. They're displayed in a card grid during gameplay and processed through a dual-model pipeline.</p>
+<h2>Fate Card Processing</h2>
+<h3>Structural Pass (REQUIRED)</h3>
+<ul>
+<li><strong>Model</strong>: ChatGPT</li>
+<li><strong>Input</strong>: Card title, description, action/dialogue templates, story context</li>
+<li><strong>Output</strong>: Canonical action/dialogue/beat (frozen — cannot be modified after)</li>
+</ul>
+<h3>Elevation Pass (OPTIONAL)</h3>
+<ul>
+<li><strong>Model</strong>: ChatGPT (separate call)</li>
+<li><strong>Input</strong>: Structural action/dialogue</li>
+<li><strong>Rule</strong>: Elevate phrasing only, never change meaning or add commands</li>
+<li><strong>Validation</strong>: <code>validateFateElevation()</code> checks for forbidden patterns</li>
+<li>If violated: structural output used instead</li>
+</ul>
+<h2>Key Rules</h2>
+<ul>
+<li>Romantic implication cards MUST target the Storybeau (triangle guard prevents accidental love triangles)</li>
+<li>Fate cards influence, never permit (<code>fateCardsNeverGrantPermission = true</code>)</li>
+<li>Early play (ST1-ST2): produces partial, deflected, or unresolved effects</li>
+<li>ST1 confession cards invoke "truth_deflected" or "admission_reframed"</li>
+</ul>
+<h2>Petition Fate</h2>
+<p>A special card type where players write a petition to Fate:
+- Input via <code>#petitionFateModal</code>
+- State: <code>state.fate.pendingPetition = { text, outcome }</code>
+- Outcomes: benevolent, twist, silent, neutral
+- Injected into system prompt as <code>petitionDirective</code></p>
+<hr />
+<h1>PART XIII: SPECULATIVE SCENE GENERATION</h1>
+<h2>How Pre-Generation Works</h2>
+<p>Storybound pre-generates the next scene while the player reads the current one, enabling near-instant response.</p>
+<ol>
+<li><strong>Trigger</strong>: <code>scheduleSpeculativePreload()</code> called 2 seconds after each scene renders</li>
+<li><strong>Guards</strong>: Skip if already preloading, if valid speculation exists</li>
+<li><strong>Pipeline</strong>: Uses the EXACT same orchestration as real turns:</li>
+<li>Same system prompt construction</li>
+<li>Same intimacy authorization computation</li>
+<li>Same fate card processing</li>
+<li>Same <code>generateOrchestatedTurn()</code> call</li>
+<li><strong>Context hash</strong>: Checked before AND after generation to detect story changes</li>
+<li><strong>Storage</strong>: <code>state.speculativeNextScene</code> holds text, hash, normalized inputs, timestamp</li>
+<li><strong>Expiry</strong>: 120-second TTL</li>
+<li><strong>Commit</strong>: <code>tryCommitSpeculativeScene()</code> verifies hash match before using cached result</li>
+</ol>
+<h3>Invalidation Triggers</h3>
+<ul>
+<li>Any input change (action/dialogue text)</li>
+<li>Fate card selection change</li>
+<li>Story context change (new turn submitted)</li>
+<li>Tone/world selection change</li>
+<li>120-second expiry</li>
+</ul>
+<hr />
+<h1>PART XIV: GOD MODE</h1>
+<h2>What It Does</h2>
+<p>God Mode overrides all narrative pacing and safety guardrails:
+- Bypasses intimacy window (mainPairAuthorized = true always)
+- Bypasses scene gating
+- Bypasses safety directives
+- Bypasses intensity guards
+- Prompt: "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED."</p>
+<h2>What It Does NOT Bypass</h2>
+<ul>
+<li>Monetization gates (completion/length/saves still enforced)</li>
+<li>Story authoring model veto</li>
+<li>Consent failsafe validation</li>
+</ul>
+<h2>Activation</h2>
+<ul>
+<li><code>state.godMode.owned</code>: Permanent grant (purchased)</li>
+<li><code>state.godMode.tempGrantedAt</code> + <code>tempDurationHours</code>: Temporary grant with decay</li>
+<li><code>getGodModePowerLevel(storyId)</code>: Returns 1.0 if owned, fractional decay if temp, 0 if expired</li>
+<li><code>#gameGodModeBtn</code>: Shown only in solo mode, uses DSP-Gold-Blk background</li>
+<li><code>#godModeToggle</code>: Plaque in control plane (separate element)</li>
+</ul>
+<hr />
+<h1>PART XV: UI SYSTEMS</h1>
+<h2>Dynamic Synopsis Panel (DSP)</h2>
+<p>A floating panel showing the story synopsis, visible from the World stage onward.</p>
+<ul>
+<li><strong>Position</strong>: <code>position: fixed; bottom: 20px; left: 50%</code> — never pushes layout</li>
+<li><strong>Draggable</strong>: Via <code>.dsp-drag-handle</code> with mouse+touch JS</li>
+<li><strong>Template</strong> (locked): "In [WORLD], shaped by [GENRE], a question awaits: Will [ARCH_ADJ] desire redeem this [TONE_ADJ] affair — or ruin it?"</li>
+<li><strong>Validation</strong>: Must match exact template with locked phrases — rejects illegal words</li>
+<li><strong>z-index</strong>: 9000 (above corridors and cards)</li>
+<li><strong>Tabs</strong>: Full-width flex bar with handle flush-left, collapse X flush-right</li>
+</ul>
+<h2>Vault Menu ("The Vault Menu")</h2>
+<p>Accessed via the keyhole burger icon. Collapsible tab panels.</p>
+<h3>Tabs:</h3>
+<ol>
+<li><strong>Account</strong>: Sign in/out, Profile, Library</li>
+<li><strong>Story</strong>: Restart Story, Continue Story</li>
+<li><strong>Purchases</strong>: Change Tier</li>
+<li><strong>Appearance</strong>: Theme, Font, Font Size (scoped to <code>#storyContent</code> only)</li>
+<li><strong>Help</strong>: Support placeholder</li>
+</ol>
+<h3>Appearance Options:</h3>
+<ul>
+<li><strong>Themes</strong>: default, sepia, midnight, print, easy</li>
+<li><strong>Fonts</strong>: Lora, Grenze Gotisch, Allura, Glass Antiqua, Eagle Lake, Smooch Sans, Pinyon Script, Merriweather, Roboto</li>
+<li><strong>Font Size</strong>: 16-72px range (default 18px)</li>
+</ul>
+<p><strong>Important</strong>: Appearance settings apply ONLY to <code>#storyContent</code> (the story reader), never to the app UI.</p>
+<h2>Cover System</h2>
+<p>Story covers progress through quality stages as the story advances:
+- <strong>SKETCH</strong>: Unlocked immediately — unfinished editorial illustration
+- <strong>THUMBNAIL</strong>: Locked until scene thresholds met
+- <strong>ROUGH</strong>: Phase B max earned cover
+- <strong>V1</strong>: Currently inactive (final quality)</p>
+<h2>Reader View</h2>
+<p>The story display area:
+- <code>#bookCoverPage</code>: Physical book object with hinge animation
+- <code>#storyContent</code>: Main story text container (hidden until cover shown)
+- <code>#storyText</code>: Prose container with <code>h2#storyTitle</code>, <code>#sceneNumber</code>, <code>.story-pages-container</code>
+- <code>#cardMount</code>: Fate card display grid
+- <code>#actionWrapper</code> / <code>#dialogueWrapper</code>: Player input textareas
+- <code>#submitBtn</code>: Turn submission
+- Decision snapshots: Gold italic text, pink borders, lust-script-display font</p>
+<hr />
+<h1>PART XVI: PLAY MODES</h1>
+<h2>Solo Mode</h2>
+<ul>
+<li>Single player, full agency</li>
+<li>God Mode button visible</li>
+<li>All story selections available</li>
+<li>Standard monetization gates apply</li>
+</ul>
+<h2>Couple Mode (Supabase-backed)</h2>
+<ul>
+<li>Two players in shared room via room codes</li>
+<li>Real-time synchronization</li>
+<li><code>state.roomAccess</code>: Room-level subscription gate</li>
+<li>Nickname system (<code>getNickname()</code>)</li>
+<li>Couple consent modal before play</li>
+<li><code>coupleCleanup()</code> on exit</li>
+</ul>
+<h2>Access Resolution</h2>
+<pre><code>Priority: subscriber &gt; storyPass &gt; free
+Billing states: active, canceled, past_due, grace
+Grace period: state.billingGraceUntil timestamp
+</code></pre>
+<hr />
+<h1>PART XVII: SAVE SYSTEM</h1>
+<h2>Multi-Layered Persistence</h2>
+<h3>1. IndexedDB (Primary)</h3>
+<ul>
+<li>Full story snapshot with metadata</li>
+<li>Async operation via <code>saveToIndexedDB()</code></li>
+<li>Fallback if localStorage exceeds quota</li>
+</ul>
+<h3>2. localStorage</h3>
+<ul>
+<li><code>sb_saved_story</code>: Story JSON</li>
+<li><code>sb_story_in_idb</code>: Flag if using IndexedDB</li>
+<li><code>sb_global_word_count</code>: Cumulative word count across stories</li>
+<li><code>sb_used_names</code>: Previously used character names</li>
+<li><code>sb_nickname</code>: User's nickname for couple mode</li>
+</ul>
+<h3>3. Supabase (Cloud, Non-Blocking)</h3>
+<ul>
+<li><code>saveStorySnapshotToSupabase()</code>: Upserts to <code>story_snapshots</code> table</li>
+<li>Keyed by <code>profile_id + story_id</code></li>
+<li>Fire-and-forget, never blocks UI</li>
+</ul>
+<h2>Snapshot Contents</h2>
+<p>Story text, titles, synopsis, full state object (excluding heavy visual data), turn count, story length, storyturn phase, character info, world selections, archetype picks, intimacy milestones, fate card state, constraints, veto rules, tone picks, POV mode.</p>
+<hr />
+<h1>PART XVIII: VISUAL ASSETS</h1>
+<h2>Card Art (<code>/public/assets/card-art/cards/</code>)</h2>
+<table>
+<thead>
+<tr>
+<th>Asset Pattern</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Tarot-Gold-back.png</code></td>
+<td>Generic gold-frame card back</td>
+</tr>
+<tr>
+<td><code>Tarot-Black-back.png</code></td>
+<td>Generic black-frame card back</td>
+</tr>
+<tr>
+<td><code>Tarot-Black-back-{ARCHETYPE}.png</code></td>
+<td>7 archetype card backs</td>
+</tr>
+<tr>
+<td><code>Tarot-Gold-front-{ARCHETYPE}.png</code></td>
+<td>7 archetype card fronts</td>
+</tr>
+<tr>
+<td><code>Tarot-Gold-on-Black-{WORLD}.png</code></td>
+<td>6 world cards</td>
+</tr>
+<tr>
+<td><code>Tarot-Gold-{WORLD}zoomed.png</code></td>
+<td>Zoomed world card variants</td>
+</tr>
+<tr>
+<td><code>Tarot-Gold-Solo-face.png</code></td>
+<td>Solo mode card</td>
+</tr>
+<tr>
+<td><code>Tarot-Gold-front-{FATE}.png</code></td>
+<td>Fate cards (Boundary, Temptation, Silence, Power, Reversal, Confession)</td>
+</tr>
+<tr>
+<td><code>Gold-Tarot-Card-DESTINY-X.png</code></td>
+<td>Destiny card art</td>
+</tr>
+</tbody>
+</table>
+<h2>UI Assets (<code>/public/assets/ui/</code>)</h2>
+<table>
+<thead>
+<tr>
+<th>Asset</th>
+<th>Display Size</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Black-Gold-320x88.png</code></td>
+<td>160x44</td>
+<td>SM button</td>
+</tr>
+<tr>
+<td><code>Black-Gold-400x112.png</code></td>
+<td>200x56</td>
+<td>MD button</td>
+</tr>
+<tr>
+<td><code>Black-Gold-520x144.png</code></td>
+<td>260x72</td>
+<td>LG button</td>
+</tr>
+<tr>
+<td><code>Black-Gold-640x176.png</code></td>
+<td>320x88</td>
+<td>XL button</td>
+</tr>
+<tr>
+<td><code>DSP-Gold-Blk-720x1040.png</code></td>
+<td>—</td>
+<td>DSP panel</td>
+</tr>
+<tr>
+<td><code>DSP-Gold-Blk-1800x440.png</code></td>
+<td>—</td>
+<td>God Mode button</td>
+</tr>
+<tr>
+<td><code>burger-keyhole-ornate.png</code></td>
+<td>—</td>
+<td>Vault menu icon</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>PART XIX: CSS DESIGN SYSTEM</h1>
+<h2>Global CSS Variables</h2>
+<pre><code class="language-css">--bg1, --bg2          /* Background colors (theme-dependent) */
+--pink                /* Pink accent */
+--hot                 /* Hot accent */
+--gold                /* Gold accent (#ffd700) */
+--ink                 /* Text color */
+--panel               /* Panel background */
+--font-main           /* UI font */
+--font-story          /* Story prose font */
+--story-size          /* Story font size */
+--line-height         /* Story line height */
+--sb-header-height    /* Measured by JS from .shape-your-story-header */
+</code></pre>
+<h2>Button Design Language</h2>
+<ul>
+<li><strong>Art Deco brushed metal plaques</strong> with sharp 90-degree corners and filigree frames</li>
+<li><code>.sb-btn</code>: Base button class</li>
+<li><code>.sb-btn-png</code>: PNG asset buttons with size variants (xs, sm, md, lg, xl, flavor)</li>
+<li>Gleam animations: element-local metallic light sweep on hover (0.7s)</li>
+</ul>
+<h3>Plaque State Colors:</h3>
+<ul>
+<li><strong>Black</strong>: base #0d0d0d, outer #3a3a3a, text #ffd700</li>
+<li><strong>Gold</strong>: base #8b6914, outer #ffd700, text #1a1008</li>
+<li><strong>Locked</strong>: border #555555, text #666666</li>
+</ul>
+<h2>Z-Index Stack</h2>
+<table>
+<thead>
+<tr>
+<th>z-index</th>
+<th>Element</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10050</td>
+<td>Destructive Change Modal</td>
+</tr>
+<tr>
+<td>10020</td>
+<td>Credit Purchase Modal</td>
+</tr>
+<tr>
+<td>10015</td>
+<td>Cover Gallery Modal</td>
+</tr>
+<tr>
+<td>10006</td>
+<td>Continuation Fork Modal</td>
+</tr>
+<tr>
+<td>10005</td>
+<td>Edge Covenant Modal</td>
+</tr>
+<tr>
+<td>10004</td>
+<td>Petition Fate Modal</td>
+</tr>
+<tr>
+<td>10002</td>
+<td>Vault Menu Overlay</td>
+</tr>
+<tr>
+<td>10000</td>
+<td>Payment Modal</td>
+</tr>
+<tr>
+<td>9000</td>
+<td>DSP Panel, Visualization Modal</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>PART XX: KEY ARCHITECTURAL INVARIANTS</h1>
+<ol>
+<li><strong>Corridor single-row</strong>: Exactly one corridor row is mounted in the DOM at any time</li>
+<li><strong>Card face positioning</strong>: <code>.sb-card-face</code> is always <code>position: absolute; inset: 0</code></li>
+<li><strong>No overflow:hidden on .sb-card-inner</strong>: Breaks <code>transform-style: preserve-3d</code></li>
+<li><strong>Zoom portal movement</strong>: Cards move (not clone) to portal; original position tracked</li>
+<li><strong>Gleam synchronization</strong>: All cards move in lockstep on 10s cycle</li>
+<li><strong>Orchestration never called unauthorized</strong>: <code>useFullOrchestration</code> requires <code>explicitEmbodimentAuthorized</code></li>
+<li><strong>Renderer isolation</strong>: Specialist renderer receives ONLY SD content, never plot</li>
+<li><strong>Monetization-intimacy separation</strong>: Gates control completion/length, never authorization</li>
+<li><strong>ChatGPT plot authority</strong>: Only ChatGPT decides plot outcomes; Grok only embodies</li>
+<li><strong>Breadcrumb persistence</strong>: Breadcrumb row lives in header, never unmounted with corridor rows</li>
+</ol>
+<hr />
+<h1>PART XXI: KNOWN GOTCHAS</h1>
+<ol>
+<li><strong>CSS percentage padding</strong> resolves against parent WIDTH, not height</li>
+<li><strong>Multi-element corridor stages</strong> need <code>flex: 0 0 auto</code> on titles to prevent each filling viewport</li>
+<li><strong>Duplicate archetype handlers</strong>: <code>commitArchetypeFromZoom()</code> AND corridor Continue handler both create breadcrumbs — must update both</li>
+<li><strong>Corridor DOM unmount</strong>: JS queries on unmounted rows return null — defer init to mount handler</li>
+<li><strong><code>initRotatingPlaceholder</code></strong> is NOT idempotent — guard with <code>!ph.innerHTML.trim()</code></li>
+<li><strong>STAGE_INDEX aliases</strong> (archetype, intensity) must be excluded from ghost step creation</li>
+<li><strong><code>closeZoomedCard</code></strong> is declared inside <code>initSelectionHandlers()</code> — use <code>window.closeZoomedCard()</code> from module scope</li>
+<li><strong><code>overflow: hidden</code> on <code>.sb-card-inner</code></strong> forces <code>transform-style: flat</code> per CSS spec</li>
+<li><strong>Grid-scoped CSS selectors</strong> break in zoom portal — use <code>inlineCardFaceBackgrounds()</code> before move</li>
+<li><strong>Base <code>.sb-card</code> has <code>max-width: 112px</code></strong> — zoomed cards must override to <code>max-width: none</code></li>
+</ol>
+<hr />
+<p><em>Generated from codebase analysis on February 15, 2026</em>
+<em>Storybound App — /Users/romantsukerman/storybound-app</em></p>
+</body>
+</html>

@@ -22,22 +22,6 @@ export default async function handler(req, res) {
 
   const supabase = createClient(sbUrl, sbKey);
 
-  // God mode check (read-only, no race risk)
-  const { data: profile, error: readErr } = await supabase
-    .from('profiles')
-    .select('has_god_mode')
-    .eq('id', userId)
-    .single();
-
-  if (readErr || !profile) {
-    console.error('[consume-credit] Profile read failed:', readErr);
-    return res.status(404).json({ error: 'profile_not_found' });
-  }
-
-  if (profile.has_god_mode) {
-    return res.status(200).json({ success: true, creditsRemaining: null, godMode: true });
-  }
-
   // Atomic decrement via DB function — safe under parallel requests.
   // Deduction order: subscription_credits first → image_credits fallback.
   // See SQL migration: consume_one_credit(p_user_id uuid)

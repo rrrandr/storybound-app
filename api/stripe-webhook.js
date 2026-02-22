@@ -186,7 +186,7 @@ export default async function handler(req, res) {
       }
     }
 
-    if (priceId && priceId === process.env.STRIPE_PRICE_ID_OFFERING) {
+    if (priceId && (priceId === process.env.STRIPE_PRICE_ID_FORTUNE_PACK || priceId === process.env.STRIPE_PRICE_ID_OFFERING)) {
       const fortunesGranted = parseInt(session.metadata?.fortunes_granted, 10) || 10;
       const { data: currentProfile } = await supabase
         .from('profiles')
@@ -195,7 +195,7 @@ export default async function handler(req, res) {
         .single();
       updates.purchased_fortunes = (currentProfile?.purchased_fortunes || 0) + fortunesGranted;
       updates.free_story_consumed = false;
-      console.log(`[stripe-webhook] Granting Offering pack (${fortunesGranted} fortunes) + tease reset to ${supabaseUserId}`);
+      console.log(`[stripe-webhook] Granting Fortune pack (${fortunesGranted} fortunes) + tease reset to ${supabaseUserId}`);
     }
 
     if (!updates.has_storypass && !updates.is_subscriber && !updates.purchased_fortunes && !updates.subscription_fortunes) {
@@ -328,7 +328,7 @@ export default async function handler(req, res) {
           updates.subscription_tier = null;
           updates.subscription_fortunes = 0;
         } else if (fortunesGranted > 0) {
-          // Offering pack refund — deduct granted fortunes, prevent negative
+          // Fortune pack refund — deduct granted fortunes, prevent negative
           updates.purchased_fortunes = Math.max(0, (profile.purchased_fortunes || 0) - fortunesGranted);
         } else {
           // Unknown product or lookup failed — full revocation (safe over-revoke)

@@ -5,7 +5,7 @@ const TIER_CONFIG = {
   storypass: { envKey: 'STRIPE_PRICE_ID_STORYPASS', mode: 'payment', fortunesGranted: 20 },
   storied:   { envKey: 'STRIPE_PRICE_ID_STORIED',   mode: 'subscription', fortunesGranted: 0 },
   favored:   { envKey: 'STRIPE_PRICE_ID_FAVORED',   mode: 'subscription', fortunesGranted: 0 },
-  offering:  { envKey: 'STRIPE_PRICE_ID_OFFERING',  mode: 'payment', fortunesGranted: 10 },
+  fortune_pack: { envKey: 'STRIPE_PRICE_ID_FORTUNE_PACK', mode: 'payment', fortunesGranted: 10 },
 };
 
 export default async function handler(req, res) {

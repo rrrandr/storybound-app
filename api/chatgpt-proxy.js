@@ -204,19 +204,8 @@ Output only the mythic kernel. Prose realization is deferred.`
       finalMessages = [normalizationSystemPrompt, ...messages];
     }
 
-    // ==========================================================================
-    // PASS TIER PROMPT INJECTION (PRIMARY_AUTHOR only)
-    // ==========================================================================
-    if (tier_used !== null && structuredState) {
-      const tierPrompt = buildPassTierPrompt(tier_used, structuredState);
-      // Inject as a system message before the user messages
-      finalMessages = [
-        finalMessages[0],  // Keep original system prompt
-        { role: 'system', content: tierPrompt },
-        ...finalMessages.slice(1)
-      ];
-      console.log(`[CHATGPT-PROXY] Tier ${tier_used} prompt injected`);
-    }
+    // Pass tier prompt is handled upstream (frontend orchestration).
+    // No second system message injection — exactly ONE system message per request.
 
     // ==========================================================================
     // CALL OPENAI API

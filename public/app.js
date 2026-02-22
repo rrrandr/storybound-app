@@ -1931,7 +1931,9 @@ Introduce the name naturally within the first few paragraphs — do not announce
     'glass_house', 'the_ledger', 'crimson_veil', 'perfect_match',
     'quieting_event', 'endless_edit',
     'ashfall', 'year_zero', 'dystimulation', 'predation', 'hunger',
-    'galactic_civilizations'
+    'galactic_civilizations',
+    'modern_core',
+    'fantasy_core'
   ]);
 
   const CONTEXTUAL_FLAVORS = new Set([
@@ -2228,104 +2230,181 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
 
     },
 
-    office: {
-      core_power_asymmetry: `
-Workplace hierarchies distort romantic leverage. Power may derive from rank, ownership, reputation, knowledge control, or economic dependency. Even when peers, visibility inside institutional systems alters risk calculus.
-`,
-
-      structural_stakes_engine: `
-Career advancement, professional survival, reputation permanence, HR enforcement, and financial stability. Romantic movement threatens livelihood or accelerates status shifts.
-`,
-
-      social_pressure_mechanism: `
-Colleague surveillance, rumor propagation, compliance policy, performance review systems, and public credit/blame structures.
-`,
-
-      default_romantic_tension_pattern: `
-Proximity-driven slow ignition under constraint. Attraction builds through collaboration, conflict over control, and forced strategic cooperation.
-`,
-
-      forbidden_collapse_patterns: `
-Scandal exposure
-HR investigation
-Power abuse revelation
-Termination or forced transfer
-Public humiliation
-`,
-
-      world_artifacts: [
-        "performance review cycles",
-        "promotion ladder",
-        "compliance policy",
-        "project deadlines",
-        "corporate gossip channels",
-        "private office vs open floor"
-      ],
-
-      power_vector_levers: [
-        "promotion leverage",
-        "salary dependency",
-        "intellectual ownership",
-        "client visibility",
-        "termination authority",
-        "performance evaluation control"
-      ],
-
+    small_town: {
+      core_power_asymmetry: "Reputation visibility inside stable community.",
+      structural_stakes_engine: "Public perception + shared history.",
+      social_pressure_mechanism: "Gossip pipeline + event-based congregation.",
+      default_romantic_tension_pattern: "Private desire under communal observation.",
+      forbidden_collapse_patterns: "Town implosion, nihilistic isolation, institutional dystopia.",
+      world_artifacts: ["diner", "sheriff", "annual festival", "local newspaper", "hardware store"],
+      power_vector_levers: ["reputation shift", "family allegiance", "public endorsement", "social exile"],
       entropy_axes: {
-        hierarchy_geometry: {
-          values: [
-            "direct_superior",
-            "rival_peers",
-            "cross_department_dependency",
-            "secret_cofounders",
-            "mentor_protege"
-          ],
-          structural_effect: "Determines baseline power imbalance and exposure volatility."
-        },
+        town_expression_mode: ["cozy_haven", "nostalgic_gravity", "claustrophobic_visibility", "pastoral_secrets"],
+        smalltown_prior_connection: ["shared_past", "second_chance", "new_arrival", "hidden_connection", "rival_families"]
+      }
+    },
 
-        exposure_channel: {
-          values: [
-            "strict_hr_environment",
-            "rumor_heavy_floor",
-            "public_metrics_driven",
-            "private_family_owned",
-            "remote_digital_trace"
-          ],
-          structural_effect: "Defines how quickly romantic movement becomes visible and who weaponizes it."
-        },
+    college: {
+      core_power_asymmetry: "Status + academic leverage.",
+      structural_stakes_engine: "Reputation volatility + identity formation.",
+      social_pressure_mechanism: "Tribal affiliation + campus visibility.",
+      default_romantic_tension_pattern: "Sexual awakening + liminal instability.",
+      forbidden_collapse_patterns: "Adult office realism, dystopia bleed, static domesticity.",
+      world_artifacts: ["dorms", "lecture halls", "parties", "student organizations"],
+      power_vector_levers: ["social status", "academic rank", "visibility", "sexual confidence"],
+      entropy_axes: {
+        college_power_geometry: ["greek_dominant", "athletic_hegemony", "academic_elite", "arts_culture_scene", "decentralized_fragmentation"],
+        college_relationship_asymmetry: ["professor_student", "ta_student", "upperclassman_underclassman", "star_outsider", "equal_rivals"],
+        college_primary_arc_pressure: ["emotional_maturation", "power_imbalance_drama", "tribal_politics", "ambition_vs_attachment", "identity_reinvention"],
+        college_transition_resolution: ["pre_graduation_stability", "graduation_cliff", "stay_vs_leave", "post_college_carryover", "collapse_before_transition"]
+      }
+    },
 
-        economic_dependency_axis: {
-          values: [
-            "one_income_dependency",
-            "promotion_gatekeeper",
-            "mutual_risk",
-            "equity_entanglement"
-          ],
-          structural_effect: "Alters survival stakes if relationship collapses."
-        },
+    office: {
+      core_power_asymmetry: "Institutional hierarchy + career leverage.",
+      structural_stakes_engine: "Ambition vs attachment.",
+      social_pressure_mechanism: "HR risk + visibility + promotion politics.",
+      default_romantic_tension_pattern: "Charged proximity + secrecy.",
+      forbidden_collapse_patterns: "Sitcom trivialization, dystopian regime tone.",
+      world_artifacts: ["boardroom", "HR", "Slack threads", "performance review cycle"],
+      power_vector_levers: ["promotion", "termination risk", "influence networks", "public exposure"],
+      entropy_axes: {
+        office_power_model: ["corporate_monolith", "startup_volatility", "nonprofit_mission", "family_business", "creative_agency"],
+        office_relationship_geometry: ["direct_supervisor", "cross_department_rivals", "co_founders_or_partners", "mentor_protege", "secret_affair"],
+        office_primary_arc_pressure: ["political_chess", "ambition_collision", "burnout_healing", "moral_faultline", "secret_entanglement"],
+        office_power_reconfiguration: ["internal_realignment", "exit_for_equilibrium", "mutual_departure", "hierarchy_collapse", "status_inversion"]
+      }
+    },
 
-        escalation_style: {
-          values: [
-            "slow_burn_competence",
-            "crisis_collaboration",
-            "territorial_power_play",
-            "career_sacrifice_arc"
-          ],
-          structural_effect: "Controls how intimacy accelerates under institutional pressure."
-        },
+    friends: {
+      core_power_asymmetry: "Emotional allegiance within chosen family.",
+      structural_stakes_engine: "Group stability vs romantic entanglement.",
+      social_pressure_mechanism: "Shared history + loyalty pressure.",
+      default_romantic_tension_pattern: "Best-friend intimacy destabilized by desire.",
+      forbidden_collapse_patterns: "Serial betrayals, total group implosion.",
+      world_artifacts: ["shared apartment", "group chat", "regular hangout spot"],
+      power_vector_levers: ["loyalty shifts", "emotional access", "inclusion/exclusion"],
+      entropy_axes: {
+        friends_group_stability: ["cozy_core", "messy_affection", "romantic_overlap", "status_microhierarchy", "fragile_balance"],
+        friends_romance_origin: ["best_friends_to_lovers", "friends_exes", "new_partner_into_group", "secret_hookup", "love_triangle_within_group"],
+        friends_primary_emotional_tone: ["romantic_optimism", "emotional_realism", "bittersweet_maturity", "rotational_entanglement", "volatile_equilibrium"]
+      }
+    },
 
-        institutional_morality: {
-          values: [
-            "rigid_policy_enforced",
-            "selective_rule_bending",
-            "corrupt_power_network",
-            "image_obsessed_executive_layer"
-          ],
-          structural_effect: "Shapes consequences and collapse severity."
-        }
+    supernatural_modern: {
+      core_power_asymmetry: "Metaphysical distortion of self or society.",
+      structural_stakes_engine: "Boundary violation.",
+      social_pressure_mechanism: "Hidden power + moral tension.",
+      default_romantic_tension_pattern: "Love stabilizes or accelerates distortion.",
+      forbidden_collapse_patterns: "Superhero bleed, dystopian political tone.",
+      world_artifacts: ["ritual spaces", "concealed abilities", "hidden networks"],
+      power_vector_levers: ["essence", "contracts", "infrastructure access", "self-control"],
+      entropy_axes: {
+        transcendence_origin_model: ["deliberate_ascension", "catastrophic_exposure", "manipulated_transformation", "progressive_unraveling", "ancestral_activation"],
+        transcendence_control_instability: ["rare_cataclysm", "cyclical_threshold", "emotional_triggered", "erotic_amplification", "adaptive_mutation"]
+      }
+    },
+
+    superheroic_modern: {
+      core_power_asymmetry: "Power visibility + civic responsibility.",
+      structural_stakes_engine: "Duty vs intimacy.",
+      social_pressure_mechanism: "Media + oversight + public trust.",
+      default_romantic_tension_pattern: "Loving someone powerful.",
+      forbidden_collapse_patterns: "Grimdark dystopia, camp parody.",
+      world_artifacts: ["costume", "media presence", "mission briefings"],
+      power_vector_levers: ["public trust", "collateral impact", "oversight pressure"],
+      entropy_axes: {
+        hero_public_exposure: ["fully_public_icon", "secret_identity", "partial_disclosure", "illegal_vigilante", "team_known_individual_unknown"],
+        hero_moral_gravity: ["unwavering_idealism", "pragmatic_force", "collateral_shadow", "public_mistrust", "self_doubt"],
+        hero_relationship_dynamic: ["hero_and_civilian", "dual_heroes", "hero_and_villain_adjacent", "hero_and_handler", "former_sidekick"],
+        hero_accountability_structure: ["government_control", "corporate_sponsorship", "public_opinion_driven", "rogue_autonomy", "internal_team_governance"]
+      }
+    },
+
+    modern_core: {
+      core_power_asymmetry:
+        "Social and economic leverage within contemporary realism",
+      structural_stakes_engine:
+        "Reputation, intimacy, and material stability tradeoffs",
+      social_pressure_mechanism:
+        "Career visibility, digital exposure, and relational networks",
+      default_romantic_tension_pattern:
+        "Desire constrained by real-world consequence",
+      forbidden_collapse_patterns:
+        "Metaphysical bleed, dystopian governance, superhero escalation",
+      world_artifacts:
+        ["phones", "social media", "workplaces", "neighborhoods"],
+      power_vector_levers:
+        ["status", "income", "reputation", "family ties"],
+      entropy_axes: {
+        modern_social_pressure_model: [
+          "suburban_visibility",
+          "urban_isolation",
+          "career_precarity",
+          "blended_family_complexity",
+          "public_image_fragility"
+        ],
+        modern_romantic_start_geometry: [
+          "strangers_in_proximity",
+          "rekindled_history",
+          "power_imbalance",
+          "secret_entanglement",
+          "long_term_strain"
+        ],
+        modern_resolution_gravity: [
+          "stability_with_cost",
+          "upward_mobility",
+          "geographic_change",
+          "moral_compromise",
+          "emotional_growth_over_romance"
+        ]
       }
     }
 
+  };
+
+  const FANTASY_FLAVOR_STRUCTURAL_DATA = {
+    fantasy_core: {
+      core_power_asymmetry:
+        "Legitimacy of rule and magical access hierarchy",
+      structural_stakes_engine:
+        "Political survival, mythic threat, and oath-bound consequence",
+      social_pressure_mechanism:
+        "Court visibility, faction allegiance, and divine or arcane oversight",
+      default_romantic_tension_pattern:
+        "Love destabilizes lineage, loyalty, or magical equilibrium",
+      forbidden_collapse_patterns:
+        "Modern realism bleed, superhero civic framing, nihilistic dystopia",
+      world_artifacts: [
+        "throne rooms", "sigils", "bloodline records",
+        "war banners", "relic weapons", "mage towers"
+      ],
+      power_vector_levers: [
+        "lineage claim", "magical capacity", "faction loyalty",
+        "divine favor", "military strength"
+      ],
+      entropy_axes: {
+        fantasy_region_focus: [
+          "high_court_kingdom", "border_war_province", "arcane_city_state",
+          "wildlands_clan_territory", "divine_crater_zone", "coastal_trade_empire"
+        ],
+        fantasy_magic_cost_model: [
+          "physical_drain", "memory_loss", "lifespan_decay",
+          "emotional_severance", "no_cost_high_corruption"
+        ],
+        fantasy_power_legitimacy: [
+          "bloodline_right", "conquest_claim", "divine_marked",
+          "arcane_meritocracy", "hidden_heir"
+        ],
+        fantasy_political_pressure: [
+          "rival_kingdoms", "internal_court_intrigue", "rebellion_underclass",
+          "external_monster_threat", "divine_judgment"
+        ],
+        fantasy_favor_amplitude: [
+          "low", "stable", "rising", "surging", "fracturing"
+        ]
+      }
+    }
   };
 
   // Template collapse prevention — tracks last 3 story world+flavor combos
@@ -3526,6 +3605,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       has_received_final_vision: false,
       has_triggered_first_tempt_fate: false,
       milestone_vision_fired_this_turn: false,
+      _syzygyOccurred: false,
 
       // Fate saturation + volatility (per-story, not per-user)
       fate_saturation: 0,
@@ -14773,7 +14853,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
     };
     const fateStanceWeights = stanceWeightTables[fateStance] || stanceWeightTables.neutral;
 
-    const system = `ROLE: You are the Strategy Engine for an interactive romance story generator. You make STRUCTURAL decisions — power shifts, world artifacts, petition interpretation, tone pressure — that the downstream prose author must follow. You do NOT write prose. You output strict JSON only.
+    let system = `ROLE: You are the Strategy Engine for an interactive romance story generator. You make STRUCTURAL decisions — power shifts, world artifacts, petition interpretation, tone pressure — that the downstream prose author must follow. You do NOT write prose. You output strict JSON only.
 
 REGIME RULES:
 - The storyturn (ST) phase determines narrative arc position. ST1–ST2 = setup/tension. ST3–ST4 = escalation. ST5+ = climax/resolution.
@@ -14842,15 +14922,135 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
       instability_carryover_required: state._instabilityRequiredNextScene || false
     };
 
-    // Blue Blood entropy injection (when active)
-    if (state._blueBloodEntropy) {
-      inputContext.entropy_axes = state._blueBloodEntropy;
+    // Fantasy region metadata injection (static context, not entropy)
+    if (state.fantasyRegion) {
+      inputContext.fantasy_region = state.fantasyRegion;
+      inputContext.fantasy_region_capital = state.fantasyRegionCapital;
+      inputContext.fantasy_dominant_faction = state.fantasyDominantFaction;
+      inputContext.fantasy_magic_expression_bias = state.fantasyMagicExpressionBias;
     }
 
-    // Office entropy injection (when active, does not override Blue Blood)
-    if (state._officeEntropy && !inputContext.entropy_axes) {
-      inputContext.entropy_axes = state._officeEntropy;
+    // Entropy injection — first active source wins (Blue Blood has variant-specific structure)
+    if (state._blueBloodEntropy) {
+      inputContext.entropy_axes = state._blueBloodEntropy;
+    } else {
+      const entropyKeys = ['_fantasyCoreEntropy', '_modernCoreEntropy', '_smallTownEntropy', '_collegeEntropy', '_officeEntropy', '_friendsEntropy', '_supernaturalEntropy', '_superheroicEntropy'];
+      for (const k of entropyKeys) {
+        if (state[k]) { inputContext.entropy_axes = state[k]; break; }
+      }
     }
+
+    // Fantasy contextual flavor bias (descriptive guidance only, not stored in state)
+    if (world === 'Fantasy' && state.resolvedWorldFlavors) {
+      const flavors = state.resolvedWorldFlavors;
+      let flavorBias = '';
+      if (flavors.some(f => f.val === 'arcane_binding')) {
+        flavorBias = 'FLAVOR BIAS — ARCANE BINDING:\n- Emphasize oaths, names, contracts.\n- Favor sacrifice domains: Name, Voice, Shadow, Inheritance.\n- Law B and C outcomes common.\n- Doubt in romance manifests through broken vows or linguistic distortion.';
+      } else if (flavors.some(f => f.val === 'fated_blood')) {
+        flavorBias = 'FLAVOR BIAS — FATED BLOOD:\n- Emphasize lineage, inheritance, legitimacy.\n- Favor sacrifice domains: Years, Inheritance, Emotion, Status.\n- Surges destabilize dynasties.\n- Romantic sacrifice may alter political legitimacy.';
+      } else if (flavors.some(f => f.val === 'the_inhuman')) {
+        flavorBias = 'FLAVOR BIAS — THE INHUMAN:\n- Emphasize bodily alteration and identity erosion.\n- Favor sacrifice domains: Reflection, Flesh, Shadow, Memory.\n- Law C distortions common.\n- Doubt manifests physically.';
+      } else if (flavors.some(f => f.val === 'the_beyond')) {
+        flavorBias = 'FLAVOR BIAS — THE BEYOND:\n- Emphasize rift adjacency and cosmic ambiguity.\n- Favor sacrifice domains: Memory, Name, Emotion, Reflection.\n- Surges increase anomalies.\n- Romantic reclamation returns altered.';
+      } else if (flavors.some(f => f.val === 'cursed')) {
+        flavorBias = 'FLAVOR BIAS — CURSED:\n- Emphasize contagion, burden, inheritance of cost.\n- Favor sacrifice domains: Emotion, Years, Flesh, Status.\n- Law A and C tragic outcomes common.\n- Love intensifies curse consequences.';
+      }
+      if (flavorBias) {
+        inputContext.fantasy_flavor_bias = flavorBias;
+      }
+    }
+
+    // Fantasy Depth Engine (narrative discipline, not mechanics)
+    if (world === 'Fantasy') {
+      const favorAmp = state._fantasyCoreEntropy?.fantasy_favor_amplitude || 'stable';
+      const ampToneMap = {
+        low: 'Intimacy feels private and fragile. Vows are whispered, never declared.',
+        stable: 'Vows feel binding and stabilizing. Love anchors identity.',
+        rising: 'Passion feels volatile. Desire outpaces caution.',
+        surging: 'Desire feels dangerous and intoxicating. Restraint erodes visibly.',
+        fracturing: 'Love feels catastrophic. Doubt distorts perception severely.'
+      };
+      system += `
+
+FANTASY DEPTH DISCIPLINE (MANDATORY):
+
+SACRIFICE ESCALATION:
+- Early sacrifices are peripheral (teeth, sleep, minor memory, small status).
+- Mid-stage sacrifices threaten identity (voice, emotion, years, reflection).
+- Late-stage sacrifices threaten core identity (name, inheritance, love, lifespan).
+- At peak tension, Law A permanence, Law C distortion, or Law D temptation may surface.
+- Each sacrifice must alter self-perception, partner perception, and political perception.
+- Each sacrifice must increase risk tolerance or fear.
+- Avoid repetitive sacrifice types. Avoid flattening cost.
+
+FAVOR AMPLITUDE — INTIMACY COUPLING:
+- Current amplitude: ${favorAmp}.
+- ${ampToneMap[favorAmp] || ampToneMap.stable}
+- Do not restate amplitude mechanically. Let tone absorb it.
+
+POLITICAL CONSEQUENCE ECHO:
+- Sacrifice rarely remains private. Consider: who witnesses it, who weaponizes it, who gains leverage, who fears the precedent.
+- Public sacrifice may legitimize a claim, destabilize a regime, trigger faction reaction, or alter court dynamics.
+- Do not simulate politics procedurally. Reflect consequence narratively.
+
+BLOODLINE PRESSURE:
+- If dynastic stakes are present, love must threaten succession, legitimacy, inheritance, or alliance structures.
+- Romantic sacrifice may stabilize or destabilize lineage claims.
+
+SYZYGY AWARENESS:
+- If syzygy occurs, it must resolve or rupture accumulated sacrifice tension. It must not feel random, mechanical, or repeatable.
+- If syzygy has not occurred, its absence must still shape longing and restraint.`;
+    }
+
+    // Modern Depth Engine (escalation discipline, not mechanics)
+    if (world === 'Modern') {
+      system += `
+
+MODERN DEPTH DISCIPLINE (MANDATORY):
+
+PSYCHOLOGICAL ESCALATION:
+- Early tension tests boundaries (flirtation, minor lies, subtle control shifts).
+- Mid-stage tension threatens stability (reputation strain, emotional dependency, leverage shifts).
+- Late-stage tension threatens identity (public exposure, irreversible betrayal, power inversion).
+- Peak tension risks social collapse, relational rupture, or personal reinvention.
+- Each escalation must change how the character sees themselves, how the partner sees them, and how others interpret the relationship.
+- Each escalation must increase vulnerability or control imbalance.
+- Avoid repetitive conflict types. Avoid emotional reset between scenes.
+
+INTIMACY UNDER PRESSURE:
+- As social pressure increases: attraction becomes riskier, secrets become leverage, desire becomes destabilizing, public exposure changes private dynamics.
+- Romantic connection must intensify under threat, distort under insecurity, harden under power imbalance, collapse or transform under exposure.
+- Do not flatten emotional progression.
+
+SOCIAL CONSEQUENCE ECHO:
+- Actions rarely remain private. Consider: who saw it, who heard about it, who benefits, who weaponizes it.
+- Reputation shifts must alter future interactions, change leverage, reshape alliance dynamics, and increase stakes for future scenes.
+- Do not simulate society procedurally. Reflect consequence narratively.
+
+POWER & CONTROL DRIFT:
+- If obsession, power dynamics, social ruin, forbidden relationship, or status imbalance are present: control must transfer, tighten, slip, reverse, or expose vulnerability.
+- Avoid static dominance patterns.
+
+NO EMOTIONAL RESET:
+- After betrayal, exposure, confession, or dominance shift: trust must shift, risk tolerance must change, fear must alter behavior, desire must carry consequence.
+- Escalation must feel cumulative.`;
+    }
+
+    // Cross-world meta-arc memory pressure (universal, all worlds)
+    system += `
+
+LONG-HORIZON EMOTIONAL CONTINUITY DISCIPLINE (MANDATORY):
+- Major events permanently alter emotional atmosphere.
+- Characters must behave as if prior scenes still matter.
+- After confession, betrayal, sacrifice, exposure, dominance shift, or rupture: trust must shift, risk tolerance must change, desire must evolve, fear must reshape behavior, power balance must adjust.
+- Do not emotionally reset between scenes.
+- Earlier decisions must subtly reshape later tone.
+- Intimacy must carry history.
+- Regret, pride, guilt, longing, jealousy, devotion, and resentment accumulate over time.
+- Past sacrifices or exposures should recontextualize future choices.
+- Emotional consequences must persist even when plot circumstances change.
+- Escalation should feel cumulative, not episodic.
+- Do not simulate memory mechanically. Reflect continuity through character behavior, tone, and relational dynamics.`;
 
     return { system, user: JSON.stringify(inputContext) };
   }
@@ -14887,7 +15087,8 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
         }
       }
       // Validate entropy output when entropy was provided
-      if (state._blueBloodEntropy || state._officeEntropy) {
+      const _hasEntropy = state._blueBloodEntropy || state._fantasyCoreEntropy || state._modernCoreEntropy || state._smallTownEntropy || state._collegeEntropy || state._officeEntropy || state._friendsEntropy || state._supernaturalEntropy || state._superheroicEntropy;
+      if (_hasEntropy) {
         if (!parsed.active_entropy_axis || !parsed.entropy_manifestation_summary) {
           state._strategyPassFailed = true;
           console.warn('[STRATEGY_PASS] Missing entropy keys: active_entropy_axis or entropy_manifestation_summary');
@@ -18188,14 +18389,25 @@ The final image must look like a real published novel cover.`;
    */
   function resolveWorldFlavors(world, manualPick) {
       if (!manualPick) {
-          // Modern auto-resolution: 90% chance of picking a random contextual
+          // Modern auto-resolution: modern_core as default systemic + 90% contextual auto-pick
           if (world === 'Modern') {
+              const result = [{ val: 'modern_core', type: 'systemic' }];
               if (Math.random() < 0.90) {
                   const pool = WORLD_CONTEXTUAL_POOL.Modern;
                   const pick = pool[Math.floor(Math.random() * pool.length)];
-                  return [{ val: pick, type: 'contextual' }];
+                  result.push({ val: pick, type: 'contextual' });
               }
-              return []; // ≤10% zero-flavor
+              return result;
+          }
+          // Fantasy auto-resolution: fantasy_core always active + 90% contextual auto-pick
+          if (world === 'Fantasy') {
+              const result = [{ val: 'fantasy_core', type: 'systemic' }];
+              if (Math.random() < 0.90) {
+                  const pool = WORLD_CONTEXTUAL_POOL.Fantasy;
+                  const pick = pool[Math.floor(Math.random() * pool.length)];
+                  result.push({ val: pick, type: 'contextual' });
+              }
+              return result;
           }
           return [];
       }
@@ -18204,6 +18416,11 @@ The final image must look like a real published novel cover.`;
                  : CONTEXTUAL_FLAVORS.has(manualPick) ? 'contextual'
                  : 'unclassified';
       const result = [{ val: manualPick, type }];
+
+      // Fantasy: always prepend fantasy_core as systemic baseline
+      if (world === 'Fantasy' && manualPick !== 'fantasy_core') {
+          result.unshift({ val: 'fantasy_core', type: 'systemic' });
+      }
 
       // Dystopia / PostApocalyptic: no auto-stack
       if (world === 'Dystopia' || world === 'PostApocalyptic') return result;
@@ -18323,15 +18540,40 @@ QUIETING EVENT DIRECTIVES:
           }
       }
 
-      // Office structural contract
-      if (world === 'Modern' && sorted.some(f => f.val === 'office')) {
-          const officeData = MODERN_FLAVOR_STRUCTURAL_DATA.office;
-          if (officeData) {
-              block += `\n\nOFFICE STRUCTURAL CONTRACT (MANDATORY):`;
-              block += `\nCORE POWER ASYMMETRY: ${officeData.core_power_asymmetry}`;
-              block += `\nSTRUCTURAL STAKES ENGINE: ${officeData.structural_stakes_engine}`;
-              block += `\nSOCIAL PRESSURE MECHANISM: ${officeData.social_pressure_mechanism}`;
-              block += `\nFORBIDDEN COLLAPSE PATTERNS: ${officeData.forbidden_collapse_patterns}`;
+      // Modern flavor structural contracts (non-Blue-Blood)
+      const modernStructuralMap = [
+          { val: 'modern_core', key: 'modern_core', label: 'MODERN CORE' },
+          { val: 'small_town', key: 'small_town', label: 'SMALL TOWN' },
+          { val: 'college', key: 'college', label: 'COLLEGE' },
+          { val: 'office', key: 'office', label: 'OFFICE' },
+          { val: 'friends', key: 'friends', label: 'FRIENDS' },
+          { val: 'supernatural_modern', key: 'supernatural_modern', label: 'SUPERNATURAL' },
+          { val: 'superheroic_modern', key: 'superheroic_modern', label: 'SUPERHEROIC' }
+      ];
+      if (world === 'Modern') {
+          for (const { val, key, label } of modernStructuralMap) {
+              if (sorted.some(f => f.val === val)) {
+                  const data = MODERN_FLAVOR_STRUCTURAL_DATA[key];
+                  if (data) {
+                      block += `\n\n${label} STRUCTURAL CONTRACT (MANDATORY):`;
+                      block += `\nCORE POWER ASYMMETRY: ${data.core_power_asymmetry}`;
+                      block += `\nSTRUCTURAL STAKES ENGINE: ${data.structural_stakes_engine}`;
+                      block += `\nSOCIAL PRESSURE MECHANISM: ${data.social_pressure_mechanism}`;
+                      block += `\nFORBIDDEN COLLAPSE PATTERNS: ${data.forbidden_collapse_patterns}`;
+                  }
+              }
+          }
+      }
+
+      // Fantasy core structural contract
+      if (world === 'Fantasy' && sorted.some(f => f.val === 'fantasy_core')) {
+          const data = FANTASY_FLAVOR_STRUCTURAL_DATA.fantasy_core;
+          if (data) {
+              block += `\n\nFANTASY CORE STRUCTURAL CONTRACT (MANDATORY):`;
+              block += `\nCORE POWER ASYMMETRY: ${data.core_power_asymmetry}`;
+              block += `\nSTRUCTURAL STAKES ENGINE: ${data.structural_stakes_engine}`;
+              block += `\nSOCIAL PRESSURE MECHANISM: ${data.social_pressure_mechanism}`;
+              block += `\nFORBIDDEN COLLAPSE PATTERNS: ${data.forbidden_collapse_patterns}`;
           }
       }
 
@@ -18444,16 +18686,61 @@ QUIETING EVENT DIRECTIVES:
               }
           }
 
-          // Office entropy initialization — once per story
-          if (storyWorld === 'Modern' && resolvedFlavors1.some(f => f.val === 'office') && !state._officeEntropy) {
-              const axes = MODERN_FLAVOR_STRUCTURAL_DATA.office?.entropy_axes;
+          // Modern flavor entropy initialization — once per story, per flavor
+          if (storyWorld === 'Modern') {
+              const modernFlavorMap = [
+                  { val: 'modern_core', key: 'modern_core', stateKey: '_modernCoreEntropy' },
+                  { val: 'small_town', key: 'small_town', stateKey: '_smallTownEntropy' },
+                  { val: 'college', key: 'college', stateKey: '_collegeEntropy' },
+                  { val: 'office', key: 'office', stateKey: '_officeEntropy' },
+                  { val: 'friends', key: 'friends', stateKey: '_friendsEntropy' },
+                  { val: 'supernatural_modern', key: 'supernatural_modern', stateKey: '_supernaturalEntropy' },
+                  { val: 'superheroic_modern', key: 'superheroic_modern', stateKey: '_superheroicEntropy' }
+              ];
+              for (const { val, key, stateKey } of modernFlavorMap) {
+                  if (resolvedFlavors1.some(f => f.val === val) && !state[stateKey]) {
+                      const axes = MODERN_FLAVOR_STRUCTURAL_DATA[key]?.entropy_axes;
+                      if (axes) {
+                          state[stateKey] = {};
+                          Object.keys(axes).forEach(axis => {
+                              const arr = axes[axis];
+                              state[stateKey][axis] = arr[Math.floor(Math.random() * arr.length)];
+                          });
+                          console.log(`[${key.toUpperCase()}] Entropy initialized:`, JSON.stringify(state[stateKey]));
+                      }
+                  }
+              }
+          }
+
+          // Fantasy flavor entropy initialization — once per story
+          if (storyWorld === 'Fantasy' && resolvedFlavors1.some(f => f.val === 'fantasy_core') && !state._fantasyCoreEntropy) {
+              const axes = FANTASY_FLAVOR_STRUCTURAL_DATA.fantasy_core?.entropy_axes;
               if (axes) {
-                  state._officeEntropy = {};
+                  state._fantasyCoreEntropy = {};
                   Object.keys(axes).forEach(axis => {
-                      const values = axes[axis].values;
-                      state._officeEntropy[axis] = values[Math.floor(Math.random() * values.length)];
+                      const arr = axes[axis];
+                      state._fantasyCoreEntropy[axis] = arr[Math.floor(Math.random() * arr.length)];
                   });
-                  console.log('[OFFICE] Entropy initialized:', JSON.stringify(state._officeEntropy));
+                  console.log('[FANTASY_CORE] Entropy initialized:', JSON.stringify(state._fantasyCoreEntropy));
+
+                  // Bind region metadata (static context, not entropy)
+                  const regionMap = {
+                      high_court_kingdom:      { capital: 'Thronehold',    faction: 'Royal Court',        magicBias: 'ceremonial' },
+                      border_war_province:     { capital: 'Marchfeld',     faction: 'War Council',        magicBias: 'battle' },
+                      arcane_city_state:       { capital: 'Spirereach',    faction: 'Arcane Senate',      magicBias: 'scholarly' },
+                      wildlands_clan_territory:{ capital: 'Hearthstone',   faction: 'Clan Elders',        magicBias: 'primal' },
+                      divine_crater_zone:      { capital: 'Oraculum',      faction: 'Temple Authority',   magicBias: 'divine' },
+                      coastal_trade_empire:    { capital: 'Tidewall',      faction: 'Merchant Conclave',  magicBias: 'mercantile' }
+                  };
+                  const region = state._fantasyCoreEntropy.fantasy_region_focus;
+                  const meta = regionMap[region];
+                  if (meta) {
+                      state.fantasyRegion = region;
+                      state.fantasyRegionCapital = meta.capital;
+                      state.fantasyDominantFaction = meta.faction;
+                      state.fantasyMagicExpressionBias = meta.magicBias;
+                      console.log('[FANTASY_CORE] Region metadata bound:', region, meta);
+                  }
               }
           }
 
@@ -41772,15 +42059,43 @@ FATE CARD ADAPTATION (CRITICAL):
                   }
               }
 
-              // Office debug (entropy)
-              if (state._officeEntropy) {
-                  log('Flavor: Office');
-                  const oe = state._officeEntropy;
-                  Object.keys(oe).forEach(axis => {
-                      log('  ' + axis + ': ' + oe[axis]);
+              // Fantasy core entropy debug
+              if (state._fantasyCoreEntropy) {
+                  log('Flavor: Fantasy Core');
+                  Object.keys(state._fantasyCoreEntropy).forEach(axis => {
+                      log('  ' + axis + ': ' + state._fantasyCoreEntropy[axis]);
                   });
                   if (state._strategyPass && state._strategyPass.active_entropy_axis) {
                       log('  Active Entropy Axis (this scene): ' + state._strategyPass.active_entropy_axis);
+                  }
+                  if (state.fantasyRegion) {
+                      log('  Region: ' + state.fantasyRegion);
+                      log('  Capital: ' + state.fantasyRegionCapital);
+                      log('  Faction: ' + state.fantasyDominantFaction);
+                      log('  Magic Bias: ' + state.fantasyMagicExpressionBias);
+                  }
+                  log('  Syzygy Occurred: ' + state._syzygyOccurred);
+              }
+
+              // Modern flavor entropy debug
+              const _modernEntropyDebug = [
+                  { label: 'Modern Core', key: '_modernCoreEntropy' },
+                  { label: 'Small Town', key: '_smallTownEntropy' },
+                  { label: 'College', key: '_collegeEntropy' },
+                  { label: 'Office', key: '_officeEntropy' },
+                  { label: 'Friends', key: '_friendsEntropy' },
+                  { label: 'Supernatural', key: '_supernaturalEntropy' },
+                  { label: 'Superheroic', key: '_superheroicEntropy' }
+              ];
+              for (const { label, key } of _modernEntropyDebug) {
+                  if (state[key]) {
+                      log('Flavor: ' + label);
+                      Object.keys(state[key]).forEach(axis => {
+                          log('  ' + axis + ': ' + state[key][axis]);
+                      });
+                      if (state._strategyPass && state._strategyPass.active_entropy_axis) {
+                          log('  Active Entropy Axis (this scene): ' + state._strategyPass.active_entropy_axis);
+                      }
                   }
               }
 

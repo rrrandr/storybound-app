@@ -174,6 +174,7 @@ function stripWalletData(context) {
   delete stripped.burn_velocity;
   delete stripped.payment_status;
   delete stripped.fortune_balance;
+  delete stripped.gateName;
   return stripped;
 }
 
@@ -255,21 +256,21 @@ const DEFAULT_MODELS = {
  */
 const MONETIZATION_GATES = {
   free: {
-    name: 'Taste',
+    name: 'TASTE_CAP',
     allowedEroticism: ['Clean', 'Naughty'],
     completionAllowed: false,
     cliffhangerRequired: true,
     maxStoryLength: 'taste'
   },
   pass: {
-    name: '$3 Story Pass',
+    name: 'PASS_UNLOCKED',
     allowedEroticism: ['Clean', 'Naughty', 'Steamy'],
     completionAllowed: true,
     cliffhangerRequired: false,
     maxStoryLength: 'fling'
   },
   sub: {
-    name: '$6 Subscription',
+    name: 'SUB_UNLOCKED',
     allowedEroticism: ['Clean', 'Naughty', 'Steamy', 'Passionate'],
     completionAllowed: true,
     cliffhangerRequired: false,
@@ -453,7 +454,7 @@ function enforceMonetizationGates(accessTier, requestedEroticism) {
 
   return {
     accessTier,
-    gateName: gate.name,
+    gateCode: gate.name,
     requestedEroticism,
     effectiveEroticism,
     wasDowngraded: effectiveEroticism !== requestedEroticism,
@@ -752,7 +753,7 @@ async function orchestrateStoryGeneration({
         // Apply completion constraints from monetization gates
         if (!state.gateEnforcement.completionAllowed) {
           state.esd.completionAllowed = false;
-          state.esd.hardStops.push('monetization_gate_completion_forbidden');
+          state.esd.hardStops.push('completion_forbidden');
         }
 
         state.rendererOutput = await callSpecialist(state.esd, 'INTIMACY_SPECIALIST');
@@ -851,10 +852,9 @@ YOUR EXCLUSIVE RESPONSIBILITIES (no other model may do these):
 - Decide WHETHER intimacy occurs
 - Decide WHETHER a scene must be interrupted
 
-MONETIZATION CONSTRAINTS (NON-NEGOTIABLE):
-- Access Tier: ${gateEnforcement.gateName} (${gateEnforcement.accessTier})
-- Allowed Eroticism: ${gateEnforcement.effectiveEroticism}
-- Completion Allowed: ${gateEnforcement.completionAllowed}
+NARRATIVE CONSTRAINTS (NON-NEGOTIABLE):
+- Eroticism Level: ${gateEnforcement.effectiveEroticism}
+- Completion Permitted: ${gateEnforcement.completionAllowed}
 - Cliffhanger Required: ${gateEnforcement.cliffhangerRequired}
 
 If an intimacy scene occurs at Erotic or Dirty level, you MUST generate an Erotic Scene Directive (ESD) in your response. The ESD will be passed to a specialist renderer.
@@ -909,9 +909,9 @@ YOUR RESPONSIBILITIES:
 - Enforce cliffhanger if required by tier
 - You are the FINAL AUTHORITY on story state
 
-MONETIZATION CONSTRAINTS:
+NARRATIVE CONSTRAINTS:
 - Cliffhanger Required: ${gateEnforcement.cliffhangerRequired}
-- Completion Allowed: ${gateEnforcement.completionAllowed}
+- Completion Permitted: ${gateEnforcement.completionAllowed}
 
 ${fateStumbled ? 'FATE STUMBLED: Handle the interruption gracefully in the narrative.' : ''}
 
