@@ -1738,11 +1738,8 @@ Introduce the name naturally within the first few paragraphs — do not announce
       // Sci-Fi Flavors
       galactic_civilizations: 'Galactic Conflict',
       future_of_science: 'Science Future',
-      space_opera: 'Star-Spanning Civilizations',
-      hard_scifi: 'Future Built on Science',
       cyberpunk: 'Cyberpunk',
       post_human: 'Post-Human',
-      alien_contact: 'First Contact',
       first_contact: 'First Contact',
       simulation: 'Simulation',
       final_frontier: 'Final Frontier',
@@ -1985,7 +1982,17 @@ FORBIDDEN DEFAULTS: forced impregnation trope, pornographic spectacle framing, c
     endless_edit: `ERASURE HARD CONSTRAINTS:
 FORBIDDEN DEFAULTS: emotional suppression framing (not Quieting), collective mind framing (not Glass House), doctrinal morality enforcement (not Dogma), market/valuation framing (not Human Capital), involuntary editing police-state trope, simple amnesia trope, clean reset endings without residue, single-edit resolution that permanently solves relationship tension.`,
     thirst: `THIRST HARD CONSTRAINTS:
-FORBIDDEN DEFAULTS: reproductive scarcity framing, enforced breeding, genetic selection premise, divine mandate, famine overlap (Hunger), emotional suppression overlap (Quieting), financialization overlap (Human Capital), transparency collectivism overlap (Glass House), identity editing overlap (Erasure), martyr framing. She retains agency at all times. This is infrastructural erotic sovereignty.`
+FORBIDDEN DEFAULTS: reproductive scarcity framing, enforced breeding, genetic selection premise, divine mandate, famine overlap (Hunger), emotional suppression overlap (Quieting), financialization overlap (Human Capital), transparency collectivism overlap (Glass House), identity editing overlap (Erasure), martyr framing. She retains agency at all times. This is infrastructural erotic sovereignty.`,
+    ashfall: `ASHFALL HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: resource scarcity as primary driver (not Hunger), regime mechanics, dystopia governance framing, satirical tone, philosophical abstraction.`,
+    year_zero: `YEAR 0 HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: memory editing framing (not Erasure), identity revision mechanics, regime mechanics, satirical tone, philosophical abstraction.`,
+    dystimulation: `DYSTIMULATION HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: consent system framing (not Dysconsent), biochemical suppression governance (not Quieting), regime mechanics, satirical tone, philosophical abstraction.`,
+    predation: `PREDATION HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: regime mechanics, institutional governance (not Dystopia), satirical tone, philosophical abstraction, ideological framing.`,
+    hunger: `HUNGER HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: environmental hostility as primary driver (not Ashfall), system-enforced scarcity (not Dystopia), regime mechanics, satirical tone, philosophical abstraction.`
   };
 
   // World Bible — canonical world doctrine (immutable, declarative form)
@@ -2503,14 +2510,21 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
     future_of_science:   'Technology reshapes identity and relational boundaries.',
     simulation:          'Reality instability undermines emotional certainty.',
     cyberpunk:           'Augmentation and commodification distort human connection.',
-    post_human:          'Humanity itself becomes relationally uncertain.'
+    post_human:          'Humanity itself becomes relationally uncertain.',
+    galactic_civilizations: 'Interstellar alliances and rival empires strain loyalty and love.',
+    ashfall:               'Environmental hostility makes closeness dangerous.',
+    year_zero:             'Shock and grief reshape attachment.',
+    dystimulation:         'Numbness makes desire difficult but explosive.',
+    predation:             'Attachment creates lethal exposure.',
+    hunger:                'Scarcity forces impossible choices.'
   };
 
   // Same-world contextual flavor pools for auto-stack resolution
   const WORLD_CONTEXTUAL_POOL = {
     Fantasy: ['arcane_binding', 'fated_blood', 'the_inhuman', 'the_beyond', 'cursed'],
     SciFi: ['final_frontier', 'first_contact', 'future_of_science', 'simulation', 'cyberpunk', 'post_human'],
-    Modern: ['small_town', 'college', 'friends', 'blue_blood', 'office', 'superheroic_modern', 'supernatural_modern']
+    Modern: ['small_town', 'college', 'friends', 'blue_blood', 'office', 'superheroic_modern', 'supernatural_modern'],
+    PostApocalyptic: ['ashfall', 'year_zero', 'dystimulation', 'predation', 'hunger']
   };
 
   // =========================
@@ -2977,13 +2991,12 @@ For constraint/petition:
 
       const SUBTYPE_SIGNALS = {
           scifi: {
-              space_opera: ['empire', 'galactic', 'starship', 'fleet', 'interstellar', 'space battle', 'federation'],
-              hard_scifi: ['physics', 'realistic', 'science', 'engineering', 'plausible', 'technical'],
-              cyberpunk: ['neon', 'corporate', 'hacker', 'dystopia', 'augment', 'cyber', 'rain', 'noir'],
+              cyberpunk: ['neon', 'corporate', 'hacker', 'augment', 'cyber', 'rain', 'noir'],
               post_human: ['transcend', 'upload', 'singularity', 'evolved', 'posthuman', 'ai consciousness'],
-              alien_contact: ['alien', 'first contact', 'extraterrestrial', 'xeno', 'encounter'],
+              first_contact: ['alien', 'first contact', 'extraterrestrial', 'xeno', 'encounter'],
               simulation: ['simulation', 'reincarnation', 'multiverse', 'reality', 'loop', 'déjà vu', 'past lives'],
-              final_frontier: ['frontier', 'exploration', 'crew', 'ship', 'deep space', 'expedition', 'outpost', 'close quarters']
+              final_frontier: ['frontier', 'exploration', 'crew', 'ship', 'deep space', 'expedition', 'outpost', 'close quarters'],
+              future_of_science: ['lab', 'collider', 'experiment', 'orbital station', 'breakthrough', 'prototype', 'gravitational anomaly', 'research facility', 'physics model', 'test chamber']
           },
           fantasy: {
               high_fantasy: ['magic', 'elf', 'elves', 'quest', 'enchant', 'fairy', 'mystical', 'wizard', 'kingdom'],
@@ -14798,13 +14811,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   // Module-scope copy of subtype signal keywords for strategy pass artifact pool
   const STRATEGY_SUBTYPE_SIGNALS = {
     scifi: {
-      space_opera: ['empire', 'galactic', 'starship', 'fleet', 'interstellar'],
-      hard_scifi: ['physics', 'realistic', 'science', 'engineering'],
       cyberpunk: ['neon', 'corporate', 'hacker', 'augment', 'cyber'],
       post_human: ['transcend', 'upload', 'singularity', 'evolved'],
-      alien_contact: ['alien', 'first contact', 'extraterrestrial', 'xeno'],
+      first_contact: ['alien', 'first contact', 'extraterrestrial', 'xeno'],
       simulation: ['simulation', 'multiverse', 'reality', 'loop'],
-      final_frontier: ['frontier', 'exploration', 'crew', 'deep space']
+      final_frontier: ['frontier', 'exploration', 'crew', 'deep space'],
+      future_of_science: ['lab', 'collider', 'experiment', 'orbital station', 'breakthrough', 'prototype', 'gravitational anomaly', 'research facility', 'physics model', 'test chamber']
     },
     fantasy: {
       high_fantasy: ['magic', 'quest', 'enchant', 'mystical', 'kingdom'],
@@ -14826,11 +14838,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       thirst: ['purification system calibration log', 'enclave water allocation ledger', 'nightly maintenance rotation schedule', 'jealousy incident report', 'favor bias audit', 'system opacity fragment', 'enclave stability assessment', 'distribution leverage shift', 'assassination risk threshold', 'water purity certification']
     },
     postapocalyptic: {
-      ashfall: ['ash', 'radiation', 'contaminated', 'fallout'],
-      year_zero: ['grief', 'rupture', 'old world', 'survivor'],
-      dystimulation: ['numb', 'anhedonia', 'sensation', 'adrenaline'],
-      predation: ['predator', 'leverage', 'exploit', 'lawless'],
-      hunger: ['scarcity', 'ration', 'calories', 'shortage']
+      ashfall: ['ash storm', 'radiation zone', 'toxic air', 'scorched earth', 'heat shimmer', 'fallout shelter', 'sealed mask', 'contaminated water'],
+      year_zero: ['fresh ruins', 'emergency broadcast', 'shock silence', 'survivor\'s guilt', 'abandoned home', 'mass evacuation', 'aftershock tremor'],
+      dystimulation: ['numbness', 'adrenaline spike', 'deadened pleasure', 'sensory overload', 'risk trigger', 'emotional thaw', 'dopamine drought'],
+      predation: ['raider camp', 'ambush', 'watchtower', 'scavenger band', 'exposed perimeter', 'hostage risk', 'armed patrol'],
+      hunger: ['ration ledger', 'empty pantry', 'water barrel', 'medicine shortage', 'fuel cache', 'starvation line', 'hoarded supplies']
     },
     historical: {
       prehistoric:    ['public scandal', 'oath conflict', 'tribal hierarchy', 'duel or execution risk'],
@@ -14984,7 +14996,71 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
     "omen_type": "<if present: symbol|weather|animal|sound|sensation>",
     "interpretive_instability_required": <if present: true|false>
   }
-}`;
+}
+
+RELATIONAL CONTINUITY REQUIREMENT:
+- Emotional, relational, and consequential shifts must carry forward across scenes unless explicitly resolved within the story.`;
+
+    // Romantic Gravity Principle (universal guidance, no mechanics)
+    system += `
+
+ROMANTIC GRAVITY PRINCIPLE:
+Storybound is a romance engine. Low-risk equilibrium must not persist indefinitely.
+
+If the player repeatedly chooses safety, distance, or non-escalation:
+- Introduce relational cooling.
+- Introduce missed opportunity.
+- Introduce external contrast (rival, alternative suitor, outside pressure).
+- Or introduce subconscious symbolic pressure (dream, omen, vision).
+
+Do NOT punish. Do NOT kill. Do NOT moralize.
+Instead: make caution emotionally expensive.
+
+If the player chooses vulnerability, emotional exposure, generosity, or risk:
+- Increase proximity.
+- Increase emotional intensity.
+- Increase sensual charge.
+- Deepen exclusivity or obsession.
+- Reward courage with heightened connection.
+
+Vulnerability should feel intoxicating. Safety should feel stabilizing but less alive.
+
+PASSIVE PLAYER DYNAMIC:
+If the player avoids leading or escalating:
+- The love interest may grow more assertive.
+- More seductive.
+- More emotionally direct.
+- Or more strategically dominant.
+
+This must:
+- Preserve consent.
+- Preserve agency.
+- Preserve the ability to refuse.
+
+Assertiveness increases tension, not coercion.
+
+DREAM / OMEN NUDGING:
+When low-intensity equilibrium persists, the story may introduce symbolic dreams, visions, or omens that:
+- Reflect the player's behavior metaphorically.
+- Show alternate relational futures.
+- Heighten longing or regret.
+- Increase emotional charge in the next scene.
+
+Dreams must not override choice. They are narrative temptation, not command.
+
+ST3 ESCALATION RULE:
+Repeated intimacy attempts (ST3) without consequence must not plateau indefinitely.
+
+If characters circle desire without commitment:
+- Increase tension.
+- Introduce interruption.
+- Escalate stakes.
+- Or force emotional clarity.
+
+Desire that stalls must either deepen, rupture, or transform.
+
+Do NOT auto-advance Storyturn. Do NOT force resolution mechanically. Do NOT override consent.
+This is narrative pressure only.`;
 
     const inputContext = {
       current_st_phase: state.storyturn || 'ST1',
@@ -15153,6 +15229,48 @@ DUTY VS DESIRE:
 - Each romantic escalation must increase structural risk.
 - Avoid emotional reset between scenes.
 - Constraint is the engine of tension, not backdrop.`;
+    }
+
+    // Sci-Fi Discipline (world-level guidance, no mechanics)
+    if (world === 'SciFi') {
+      system += `
+
+SCI-FI DISCIPLINE:
+- Technology must operate within coherent scientific logic.
+- Scale must meaningfully affect consequence.
+- Expansion creates tension, not decay.
+- Human agency remains active.
+- Advancement alters relational dynamics.
+- Conflict emerges from discovery, transformation, or capability — not systemic collapse.
+- Wonder and risk must coexist.
+- No magic logic.
+- No dystopia bleed.`;
+    }
+
+    // Post-Apocalyptic Discipline (world-level guidance, no mechanics)
+    if (world === 'PostApocalyptic') {
+      system += `
+
+POST-APOCALYPTIC DISCIPLINE:
+- The collapse has already occurred.
+- Institutions do not function at meaningful scale.
+- Conflict emerges from damage, not ideology.
+- Intimacy is visceral, immediate, embodied.
+- Survival strain shapes attachment.
+- Tone may include dark or wry humor, but may not convert collapse into satire, political allegory, or abstract critique.
+- No regime mechanics.
+- No philosophical commentary.
+- Consequences must be concrete and physical.
+
+LONG MEMORY REQUIREMENT:
+- Survival choices must persist relationally.
+- Resource decisions must not reset between scenes.
+- Trust fractures must carry forward.
+- Acts of mercy or brutality must alter future vulnerability.
+- Trauma responses must not vanish without cause.
+- Emotional thaw in Dystimulation must feel earned.
+- Safety gained must remain fragile.
+- The world remains broken; only relationships evolve.`;
     }
 
     // Dystopia Depth Engine (subtype-conditional discipline)
@@ -23718,6 +23836,199 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
   }
 
+  // ========================================
+  // SCI-FI FLAVOR GATE MODAL
+  // ========================================
+
+  function showSciFiFlavorModal() {
+    // Remove existing modal if any
+    const existing = document.querySelector('.scifi-flavor-modal');
+    if (existing) existing.remove();
+
+    const SCIFI_FLAVORS = [
+      { val: 'galactic_civilizations', label: 'Galactic Conflict', tip: 'Love can save a world, or burn a galaxy.' },
+      { val: 'future_of_science', label: 'Science Future', tip: 'Love is just another law of the universe.' },
+      { val: 'cyberpunk', label: 'Cyberpunk', tip: 'Even your backup heart can ache.' },
+      { val: 'post_human', label: 'Post-Human', tip: 'Desire outpaces bodies, identity, and human limits.' },
+      { val: 'first_contact', label: 'First Contact', tip: 'Contact changes everything.' },
+      { val: 'simulation', label: 'Simulation', tip: 'Through layers of unreality, love endures.' },
+      { val: 'final_frontier', label: 'Final Frontier', tip: 'Close quarters, endless stars.' }
+    ];
+
+    // Inject styles once
+    if (!document.getElementById('scifi-flavor-modal-styles')) {
+      const style = document.createElement('style');
+      style.id = 'scifi-flavor-modal-styles';
+      style.textContent = `
+        .scifi-flavor-modal {
+          position: fixed;
+          inset: 0;
+          z-index: 10000;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        .scifi-flavor-modal.visible {
+          opacity: 1;
+        }
+        .scifi-flavor-modal-content {
+          background: var(--panel);
+          border: 2px double gold;
+          padding: 28px 32px;
+          max-width: 420px;
+          width: 90%;
+          text-align: center;
+          box-shadow: 0 0 0 1px #0a0a0a, 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        .scifi-flavor-modal-content h3 {
+          color: var(--gold);
+          font-family: 'Lora', serif;
+          font-variant: small-caps;
+          font-size: 1.4rem;
+          margin: 0 0 8px 0;
+          letter-spacing: 0.1em;
+          text-shadow:
+            -1px -1px 0 rgba(218, 165, 32, 0.4),
+            1px -1px 0 rgba(218, 165, 32, 0.4),
+            -1px 1px 0 rgba(218, 165, 32, 0.4),
+            1px 1px 0 rgba(218, 165, 32, 0.4),
+            0 0 4px rgba(218, 165, 32, 0.2);
+        }
+        .scifi-flavor-modal-content .scifi-flavor-subtitle {
+          color: #bbb;
+          font-family: 'Lora', serif;
+          font-size: 0.85rem;
+          margin: 0 0 20px 0;
+          font-style: italic;
+        }
+        .scifi-flavor-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin: 0 0 20px 0;
+        }
+        .scifi-flavor-btn {
+          padding: 10px 16px;
+          background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png');
+          background-size: 100% 100%;
+          background-repeat: no-repeat;
+          background-position: center;
+          border: none;
+          color: #111;
+          font-family: 'Lora', serif;
+          font-variant: small-caps;
+          font-size: 0.95rem;
+          letter-spacing: 0.05em;
+          cursor: pointer;
+          transition: filter 0.15s ease;
+          text-shadow:
+            -1px -1px 0 rgba(218, 165, 32, 0.4),
+            1px -1px 0 rgba(218, 165, 32, 0.4),
+            -1px 1px 0 rgba(218, 165, 32, 0.4),
+            1px 1px 0 rgba(218, 165, 32, 0.4);
+          text-align: center;
+        }
+        .scifi-flavor-btn:hover {
+          filter: brightness(1.15);
+        }
+        .scifi-flavor-btn .scifi-flavor-tip {
+          display: block;
+          font-size: 0.75rem;
+          font-variant: normal;
+          font-style: italic;
+          color: #333;
+          margin-top: 2px;
+          letter-spacing: 0;
+        }
+        .scifi-flavor-close-btn {
+          background: transparent;
+          border: 1px solid rgba(218, 165, 32, 0.3);
+          color: var(--gold);
+          font-family: 'Lora', serif;
+          font-variant: small-caps;
+          font-size: 0.85rem;
+          padding: 6px 24px;
+          cursor: pointer;
+          letter-spacing: 0.05em;
+          transition: border-color 0.15s ease;
+        }
+        .scifi-flavor-close-btn:hover {
+          border-color: var(--gold);
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Build modal DOM
+    const modal = document.createElement('div');
+    modal.className = 'scifi-flavor-modal';
+
+    const content = document.createElement('div');
+    content.className = 'scifi-flavor-modal-content';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Sci-Fi requires a vector.';
+    content.appendChild(title);
+
+    const subtitle = document.createElement('p');
+    subtitle.className = 'scifi-flavor-subtitle';
+    subtitle.textContent = 'Choose the scientific or cosmic pressure shaping this story.';
+    content.appendChild(subtitle);
+
+    const grid = document.createElement('div');
+    grid.className = 'scifi-flavor-grid';
+
+    SCIFI_FLAVORS.forEach(flavor => {
+      const btn = document.createElement('div');
+      btn.className = 'scifi-flavor-btn';
+
+      const labelSpan = document.createTextNode(flavor.label);
+      btn.appendChild(labelSpan);
+
+      const tipSpan = document.createElement('span');
+      tipSpan.className = 'scifi-flavor-tip';
+      tipSpan.textContent = flavor.tip;
+      btn.appendChild(tipSpan);
+
+      btn.addEventListener('click', () => {
+        state.picks.worldSubtype = flavor.val;
+        // Close modal and re-trigger begin story
+        modal.classList.remove('visible');
+        setTimeout(() => {
+          modal.remove();
+          $('beginBtn').click();
+        }, 300);
+      });
+      grid.appendChild(btn);
+    });
+    content.appendChild(grid);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'scifi-flavor-close-btn';
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', () => {
+      modal.classList.remove('visible');
+      setTimeout(() => modal.remove(), 300);
+    });
+    content.appendChild(closeBtn);
+
+    modal.appendChild(content);
+
+    // Backdrop click closes
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('visible');
+        setTimeout(() => modal.remove(), 300);
+      }
+    });
+
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => modal.classList.add('visible'));
+  }
+
   /**
    * Auto-fill missing selections with random fate choices
    */
@@ -28886,6 +29197,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           errors.push('Please select a Historical Era.');
       }
 
+      // SciFi world requires a vector (worldSubtype) selection
+      if (state.picks.world === 'SciFi' && !state.picks.worldSubtype) {
+          errors.push('__SCIFI_FLAVOR_REQUIRED__');
+      }
+
       return errors;
   }
 
@@ -31810,6 +32126,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state._fateTriggered = false; // Clear flag after validation
 
     if (validationErrors.length > 0) {
+        if (validationErrors.includes('__SCIFI_FLAVOR_REQUIRED__')) {
+            showSciFiFlavorModal();
+            return;
+        }
         showToast(validationErrors[0]);
         return;
     }
@@ -34703,7 +35023,7 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'galactic_civilizations': 'pristine',
       'future_of_science': 'pristine',
       'cyberpunk': 'corroded',
-      'post_human': 'tarnished',
+      'post_human': 'fractured',
       'first_contact': 'pristine',
       'simulation': 'pristine',
       'final_frontier': 'weathered',
