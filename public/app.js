@@ -1727,6 +1727,7 @@ Introduce the name naturally within the first few paragraphs — do not announce
       supernatural_modern: 'Supernatural Modern',
       superheroic_modern: 'Superheroic Modern',
       // Historical Flavors
+      historical_core: 'Historical Core',
       prehistoric: 'Prehistoric',
       bronze_age: 'Bronze Age',
       classical: 'Classical',
@@ -1752,12 +1753,13 @@ Introduce the name naturally within the first few paragraphs — do not announce
       the_beyond: 'The Beyond',
       cursed: 'Cursed',
       // Dystopia Flavors (7 locked canon)
+      dystopia_core: 'Dystopia Core',
       glass_house: 'Glass House',
-      the_ledger: 'Human Capital',
-      crimson_veil: 'Dogma',
-      perfect_match: 'Perfect Breed',
+      human_capital: 'Human Capital',
+      dogma: 'Dogma',
       quieting_event: 'The Quieting',
       endless_edit: 'Erasure',
+      thirst: 'Thirst',
       // Post-Apocalyptic Flavors (5 canonical conditions)
       ashfall: 'Ashfall',
       year_zero: 'Year 0',
@@ -1784,29 +1786,21 @@ Introduce the name naturally within the first few paragraphs — do not announce
           eroticEngine: ['collective sensation', 'exclusivity as rebellion', 'disconnection agony', 'private desire', 'communal intimacy'],
           sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'collective' }
       },
-      the_ledger: {
-          id: 'the-ledger', world: 'dystopia', title: 'Human Capital',
+      human_capital: {
+          id: 'human-capital', world: 'dystopia', title: 'Human Capital',
           subtitle: 'Financialization of Personhood',
           uiDescription: 'People are assets. Attachment alters valuation, risk, and future prospects. Your heart has a market value.',
           narrativeHook: 'Relationships form through acquisition, leverage, or contractual imbalance. Characters are assets that appreciate or depreciate — and real emotion is an unaudited risk. Attachment changes your credit rating. Love is not forbidden; it is financially irresponsible.',
           eroticEngine: ['asset valuation', 'leveraged vulnerability', 'emotional liability', 'contractual breach', 'unaudited risk'],
           sceneBias: { pacing: 'moderate', intimacyRisk: 'medium', powerDynamic: 'corporate' }
       },
-      crimson_veil: {
-          id: 'crimson-veil', world: 'dystopia', title: 'Dogma',
+      dogma: {
+          id: 'dogma', world: 'dystopia', title: 'Dogma',
           subtitle: 'Theocratic Moral Authority',
           uiDescription: 'Love outside doctrine is heresy. Desire is sacred — and sacred things are controlled.',
           narrativeHook: 'The institution does not act from personal cruelty but from doctrinal conviction. Desire corrupts not a person but a role. The body must serve its sanctioned purpose, and deviation is structural heresy. Would you risk damnation for what you feel?',
           eroticEngine: ['doctrinal authority', 'sacred transgression', 'institutional guilt', 'sanctioned vs forbidden touch', 'heretical desire'],
           sceneBias: { pacing: 'tense', intimacyRisk: 'extreme', powerDynamic: 'religious' }
-      },
-      perfect_match: {
-          id: 'perfect-match', world: 'dystopia', title: 'Perfect Breed',
-          subtitle: 'Species Survival Override',
-          uiDescription: 'Exclusive bonding threatens genetic distribution and human viability. You are not yours to give.',
-          narrativeHook: 'DNA is screened, filtered, ranked. Extraction replaces intimacy. Distribution replaces devotion. Pair-bonding is prohibited — not from cruelty, but math. Love is not forbidden. It is irresponsible.',
-          eroticEngine: ['genetic obligation', 'reproductive infrastructure', 'species-level treason', 'forbidden pairing', 'body as commons'],
-          sceneBias: { pacing: 'moderate', intimacyRisk: 'high', powerDynamic: 'eugenic' }
       },
       quieting_event: {
           id: 'quieting-event', world: 'dystopia', title: 'The Quieting',
@@ -1823,6 +1817,14 @@ Introduce the name naturally within the first few paragraphs — do not announce
           narrativeHook: 'People voluntarily edit themselves to remain socially viable — smoothing memories, shedding traits, discarding former selves. Can you love someone who keeps revising? Can they recognize you after you revise yourself? The person you fell for may no longer exist.',
           eroticEngine: ['identity dissolution', 'memory erosion', 'recognition failure', 'continuity anchor', 'being seen as you were'],
           sceneBias: { pacing: 'slow', intimacyRisk: 'extreme', powerDynamic: 'social' }
+      },
+      thirst: {
+          id: 'thirst', world: 'dystopia', title: 'Thirst',
+          subtitle: 'Infrastructural Erotic Sovereignty',
+          uiDescription: 'Water is civilization-critical. She maintains the only functioning purification system. Exclusivity consolidates power — and consolidation triggers violence.',
+          narrativeHook: 'One woman controls the water supply. Nightly maintenance requires assistance — one man per night. She must distribute intimacy to distribute power. Jealousy equals escalation. Favoritism equals assassination risk. She desires them. She cannot choose.',
+          eroticEngine: ['resource leverage', 'jealousy escalation', 'favor distribution', 'maintenance intimacy', 'geopolitical consequence'],
+          sceneBias: { pacing: 'moderate', intimacyRisk: 'extreme', powerDynamic: 'infrastructural' }
       }
   };
 
@@ -1928,12 +1930,14 @@ Introduce the name naturally within the first few paragraphs — do not announce
   // ═══════════════════════════════════════════════════════════════════════════
 
   const SYSTEMIC_FLAVORS = new Set([
-    'glass_house', 'the_ledger', 'crimson_veil', 'perfect_match',
-    'quieting_event', 'endless_edit',
+    'glass_house', 'human_capital', 'dogma',
+    'quieting_event', 'endless_edit', 'thirst',
     'ashfall', 'year_zero', 'dystimulation', 'predation', 'hunger',
     'galactic_civilizations',
     'modern_core',
-    'fantasy_core'
+    'fantasy_core',
+    'historical_core',
+    'dystopia_core'
   ]);
 
   const CONTEXTUAL_FLAVORS = new Set([
@@ -1947,17 +1951,19 @@ Introduce the name naturally within the first few paragraphs — do not announce
   // Systemic flavor "World Pressure" lines for prompt injection
   const SYSTEMIC_PRESSURE_LINES = {
     glass_house: 'You will never love alone \u2014 you will love us.',
-    the_ledger: 'Your heart has a market value.',
-    crimson_veil: 'Desire is sacred. Would you risk damnation for it?',
-    perfect_match: 'You are not mine. You are humanity\u2019s.',
+    human_capital: 'In a world where futures are traded, attachment destabilizes value.',
+    dogma: 'In a world where desire must be witnessed, secrecy destabilizes society.',
     quieting_event: 'In a world engineered for serenity, wanting someone is the most dangerous act of all.',
-    endless_edit: 'Love fades as selves are edited away.',
+    endless_edit: 'In a world of editable selves, continuity is optional \u2014 and love depends on it.',
     ashfall: 'The world burns between you.',
     year_zero: 'Love is the aftermath.',
     dystimulation: 'You must risk everything to feel anything.',
     predation: 'Love makes you prey.',
     hunger: 'Love competes with survival.',
-    galactic_civilizations: 'Love can save a world, or burn a galaxy.'
+    galactic_civilizations: 'Love can save a world, or burn a galaxy.',
+    historical_core: 'Constraint binds action. Reputation persists beyond private feeling.',
+    dystopia_core: 'Institutional control shapes intimacy. Deviation invites response.',
+    thirst: 'Water sustains the world. Desire destabilizes it.'
   };
 
   // Flavor hard constraints — injected when flavor is PRIMARY WORLD LENS
@@ -1965,9 +1971,21 @@ Introduce the name naturally within the first few paragraphs — do not announce
     glass_house: `GLASS HOUSE HARD CONSTRAINTS:
 REQUIRES: High-tech social architecture, visibility/transparency enforcement, emotional compliance systems, collective influence (hive-mind, neural link, shared mood, or addictive calm), institutionalized monitoring or psychological exposure.
 FORBIDDEN DEFAULTS: Ash wasteland, bone-chip debt economy, generic Warden-cadre scarcity dystopia, desert ruin imagery. If such tropes appear, flavor enforcement has failed.`,
-    quieting_event: `QUIETING EVENT HARD CONSTRAINTS:
-REQUIRES: Biochemical serenity enforcement, ambient suppression (not authoritarian force), emotional flatline as status quo, desire as social destabilizer.
-FORBIDDEN DEFAULTS: Violent police state, armed rebellion, post-apocalyptic ruin. The Quieting is clinical calm, not martial law.`
+    quieting_event: `THE QUIETING HARD CONSTRAINTS:
+REQUIRES: Biochemical serenity enforcement, ambient suppression (not authoritarian force), emotional flatline as status quo, desire as social destabilizer. Society must feel stable and grateful.
+FORBIDDEN DEFAULTS: religious doctrine framing (not Dogma), memory editing framing (not Erasure), financial speculation framing (not Human Capital), hive-mind framing (not Glass House), authoritarian brutality trope, magical cure trope, instant emotional awakening resolution, permanent immunity without cost, framing society as secretly miserable.`,
+    historical_core: `HISTORICAL CORE HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: modern therapy language, contemporary slang, casual egalitarian framing without consequence, modern autonomy without structural cost.`,
+    dystopia_core: `DYSTOPIA CORE HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: purely aesthetic oppression, villain caricature regimes, cartoon authoritarian tone, romance without systemic consequence.`,
+    human_capital: `HUMAN CAPITAL HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: corporate actuarial exposition, rom-com satire tone, playful casino aesthetic, dystopia-police enforcement trope, magical or supernatural market mechanics, private romance detached from public consequence, tonal overlap with other Dystopia flavors.`,
+    dogma: `DOGMA HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: forced impregnation trope, pornographic spectacle framing, caricature cult-leader impregnation narrative, psychic hive-mind overlap (Glass House boundary), biochemical suppression framing (Quieting boundary), financial speculation framing (Human Capital boundary), memory editing framing (Erasure boundary). Do not depict society as universally miserable; the system must produce measurable stability.`,
+    endless_edit: `ERASURE HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: emotional suppression framing (not Quieting), collective mind framing (not Glass House), doctrinal morality enforcement (not Dogma), market/valuation framing (not Human Capital), involuntary editing police-state trope, simple amnesia trope, clean reset endings without residue, single-edit resolution that permanently solves relationship tension.`,
+    thirst: `THIRST HARD CONSTRAINTS:
+FORBIDDEN DEFAULTS: reproductive scarcity framing, enforced breeding, genetic selection premise, divine mandate, famine overlap (Hunger), emotional suppression overlap (Quieting), financialization overlap (Human Capital), transparency collectivism overlap (Glass House), identity editing overlap (Erasure), martyr framing. She retains agency at all times. This is infrastructural erotic sovereignty.`
   };
 
   // World Bible — canonical world doctrine (immutable, declarative form)
@@ -2404,6 +2422,46 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
           "low", "stable", "rising", "surging", "fracturing"
         ]
       }
+    }
+  };
+
+  const HISTORICAL_FLAVOR_STRUCTURAL_DATA = {
+    historical_core: {
+      entropy_axes: {
+        historical_structural_stability: [
+          "rigid",
+          "strained",
+          "shifting",
+          "fracturing",
+          "collapsing"
+        ]
+      },
+      systemic_pressure_lines: [
+        "Constraint binds action.",
+        "Reputation persists beyond private feeling.",
+        "Power structures resist romantic deviation.",
+        "Love alters hierarchy."
+      ]
+    }
+  };
+
+  const DYSTOPIA_FLAVOR_STRUCTURAL_DATA = {
+    dystopia_core: {
+      entropy_axes: {
+        dystopian_control_stability: [
+          "stable",
+          "pressurized",
+          "cracking",
+          "fracturing",
+          "breaking"
+        ]
+      },
+      systemic_pressure_lines: [
+        "Institutional control shapes intimacy.",
+        "Attachment destabilizes system logic.",
+        "Love creates structural risk.",
+        "Deviation invites response."
+      ]
     }
   };
 
@@ -2940,11 +2998,11 @@ For constraint/petition:
           },
           dystopia: {
               glass_house: ['hivenet', 'collective', 'shared consciousness', 'transparency', 'communal', 'disconnect', 'exclusivity', 'neural'],
-              the_ledger: ['asset', 'valuation', 'leverage', 'liability', 'capital', 'credit', 'market value', 'financialized'],
-              crimson_veil: ['doctrine', 'dogma', 'heresy', 'theocratic', 'sanctioned', 'damnation', 'sacred', 'institution'],
-              perfect_match: ['breeding', 'genetic', 'reproductive', 'species', 'viability', 'distribution', 'pair-bond', 'infrastructure'],
+              human_capital: ['asset', 'valuation', 'leverage', 'liability', 'capital', 'credit', 'market value', 'financialized'],
+              dogma: ['doctrine', 'dogma', 'heresy', 'theocratic', 'sanctioned', 'damnation', 'sacred', 'institution'],
               quieting_event: ['longing', 'contagion', 'volatility', 'obsession', 'destabilization', 'serenity', 'containment', 'awakening'],
-              endless_edit: ['erasure', 'identity', 'memory', 'continuity', 'recognition', 'revision', 'dissolve', 'edited']
+              endless_edit: ['erasure', 'identity', 'memory', 'continuity', 'recognition', 'revision', 'dissolve', 'edited'],
+              thirst: ['water', 'purification', 'enclave', 'allocation', 'rotation', 'maintenance', 'jealousy', 'distribution', 'infrastructure', 'sovereignty']
           },
           postapocalyptic: {
               ashfall: ['ash', 'radiation', 'contaminated', 'exposure', 'toxic', 'fallout', 'hazard', 'masks', 'decon', 'burns'],
@@ -14733,7 +14791,8 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   // World → SUBTYPE_SIGNALS category mapping (mirrors normalizeWorldSubtype local data)
   const WORLD_TO_SIGNAL_CATEGORY = {
     SciFi: 'scifi', Fantasy: 'fantasy', Mythic: 'mythic',
-    Dystopia: 'dystopia', PostApocalyptic: 'postapocalyptic'
+    Dystopia: 'dystopia', PostApocalyptic: 'postapocalyptic',
+    Historical: 'historical'
   };
 
   // Module-scope copy of subtype signal keywords for strategy pass artifact pool
@@ -14760,11 +14819,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
     },
     dystopia: {
       glass_house: ['hivenet', 'collective', 'transparency', 'neural'],
-      the_ledger: ['asset', 'valuation', 'leverage', 'capital'],
-      crimson_veil: ['doctrine', 'dogma', 'heresy', 'theocratic'],
-      perfect_match: ['breeding', 'genetic', 'reproductive', 'pair-bond'],
-      quieting_event: ['longing', 'contagion', 'serenity', 'containment'],
-      endless_edit: ['erasure', 'identity', 'memory', 'revision']
+      human_capital: ['live odds ticker', 'relationship volatility index', 'breakup futures spike', 'crowd sentiment surge', 'derivative contract opened', 'influencer rumor cascade', 'market freeze alert', 'longevity contract expiring', 'public risk rating drop', 'speculation feed trending'],
+      dogma: ['covenant certification document', 'desire disclosure ledger', "facilitator's ritual chamber", 'circle seating arrangement', 'bond compatibility report', 'witness affirmation transcript', 'integration retreat badge', 'public transparency notice', 'civic partnership guideline letter', 'circle intervention summons'],
+      quieting_event: ['nutritional compliance audit', 'serenity dosage schedule', 'containment recalibration center', 'volatility index alert', 'emotional spike warning', 'unauthorized intensity cluster', 'serenity breach notice', 'calm stabilization unit', 'desire contagion report', 'stability variance spike', 'long-duration astronaut return', 'quarantine reentry clearance', 'remote research immunity cluster', 'off-grid nutritional isolation case', 'black-market reversal compound', 'creative volatility anomaly', 'artistic output spike', 'innovation surge report'],
+      endless_edit: ['revision history log', 'memory optimization clinic', 'trait adjustment consent form', 'version rollback request', 'emotional intensity recalibration', 'compatibility upgrade proposal', 'deleted argument fragment', 'synthetic honeymoon insertion', 'unauthorized edit alert', 'archived self snapshot'],
+      thirst: ['purification system calibration log', 'enclave water allocation ledger', 'nightly maintenance rotation schedule', 'jealousy incident report', 'favor bias audit', 'system opacity fragment', 'enclave stability assessment', 'distribution leverage shift', 'assassination risk threshold', 'water purity certification']
     },
     postapocalyptic: {
       ashfall: ['ash', 'radiation', 'contaminated', 'fallout'],
@@ -14772,6 +14831,15 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       dystimulation: ['numb', 'anhedonia', 'sensation', 'adrenaline'],
       predation: ['predator', 'leverage', 'exploit', 'lawless'],
       hunger: ['scarcity', 'ration', 'calories', 'shortage']
+    },
+    historical: {
+      prehistoric:    ['public scandal', 'oath conflict', 'tribal hierarchy', 'duel or execution risk'],
+      bronze_age:     ['public scandal', 'oath conflict', 'religious authority', 'tribal hierarchy'],
+      classical:      ['public scandal', 'oath conflict', 'religious authority', 'dynastic alliance'],
+      medieval:       ['public scandal', 'oath conflict', 'religious authority', 'dynastic alliance', 'war disruption', 'duel or execution risk'],
+      renaissance:    ['public scandal', 'oath conflict', 'religious authority', 'dynastic alliance', 'war disruption'],
+      victorian:      ['public scandal', 'oath conflict', 'dynastic alliance', 'duel or execution risk'],
+      '20th_century': ['public scandal', 'oath conflict', 'war disruption', 'duel or execution risk']
     }
   };
 
@@ -14837,6 +14905,18 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   function buildStrategyPassPrompt(polarityBlock) {
     const world = state.picks?.world || 'Modern';
     const worldSubtype = state.picks?.worldSubtype || null;
+
+    // Historical subtype → structural pressure mapping (read-only, deterministic)
+    const HISTORICAL_PRESSURE_MAP = {
+      '20th_century': "war trauma, industrial upheaval, and cultural disillusionment",
+      victorian: "public decorum, reputation fragility, and rigid gender constraint",
+      renaissance: "court intrigue, religious upheaval, and ambition under surveillance",
+      medieval: "fealty, divine obedience, arranged alliances, and oath-bound duty",
+      classical: "heroic destiny, immortal reputation, and interference of fate or gods",
+      bronze_age: "divine will, ritual authority, tribal conflict, and emerging empires",
+      prehistoric: "tribal survival, environmental threat, and primal hierarchy"
+    };
+
     const worldArtifacts = buildWorldArtifactPool(world, worldSubtype);
     const forbiddenTropes = extractForbiddenTropes(worldSubtype);
 
@@ -14934,7 +15014,7 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
     if (state._blueBloodEntropy) {
       inputContext.entropy_axes = state._blueBloodEntropy;
     } else {
-      const entropyKeys = ['_fantasyCoreEntropy', '_modernCoreEntropy', '_smallTownEntropy', '_collegeEntropy', '_officeEntropy', '_friendsEntropy', '_supernaturalEntropy', '_superheroicEntropy'];
+      const entropyKeys = ['_fantasyCoreEntropy', '_modernCoreEntropy', '_smallTownEntropy', '_collegeEntropy', '_officeEntropy', '_friendsEntropy', '_supernaturalEntropy', '_superheroicEntropy', '_historicalCoreEntropy', '_dystopiaCoreEntropy'];
       for (const k of entropyKeys) {
         if (state[k]) { inputContext.entropy_axes = state[k]; break; }
       }
@@ -15036,6 +15116,239 @@ NO EMOTIONAL RESET:
 - Escalation must feel cumulative.`;
     }
 
+    // Historical Depth Engine (constraint discipline, not mechanics)
+    if (world === 'Historical') {
+      const historicalPressure = HISTORICAL_PRESSURE_MAP[worldSubtype] || "era-specific structural constraint";
+      system += `
+
+HISTORICAL DEPTH DISCIPLINE (MANDATORY):
+
+CONSTRAINT PRIMACY:
+- Romance must operate within era structure.
+- Law, religion, class, gender, reputation, and lineage are binding forces.
+- Characters cannot act with modern autonomy without cost.
+- Freedom requires visible sacrifice or consequence.
+
+ERA PRESSURE ESCALATION:
+- Early tension risks impropriety or gossip.
+- Mid-stage tension risks reputation, alliance, or patronage.
+- Late-stage tension risks exile, execution, disinheritance, annulment, duel, or divine condemnation.
+- Dominant structural pressure in this era: ${historicalPressure}.
+- Escalation must visibly reflect this pressure. It is not backdrop; it constrains action.
+
+NO MODERN PSYCHOLOGY:
+- Avoid contemporary therapy language.
+- Avoid modern self-actualization framing.
+- Emotional expression must reflect cultural norms of the era.
+- Intimacy may be coded, indirect, symbolic, ritualized, or restrained.
+
+SOCIAL CONSEQUENCE PERMANENCE:
+- Reputation shifts must alter future standing.
+- Scandal lingers.
+- Witnesses matter.
+- Public perception reshapes marriage prospects, alliances, inheritance, or patronage.
+
+DUTY VS DESIRE:
+- Love must compete with oath, faith, dynasty, survival, or glory.
+- Each romantic escalation must increase structural risk.
+- Avoid emotional reset between scenes.
+- Constraint is the engine of tension, not backdrop.`;
+    }
+
+    // Dystopia Depth Engine (subtype-conditional discipline)
+    if (world === 'Dystopia' && worldSubtype === 'human_capital') {
+      system += `
+
+HUMAN CAPITAL DISCIPLINE (MANDATORY):
+
+SPECULATION PRESSURE:
+- Romantic shifts must cause observable social ripple.
+- Attraction increases volatility.
+- Conflict creates public speculation.
+- Reconciliation produces surge or skepticism.
+- Breakup threats invite shorting behavior.
+
+PUBLIC CONSEQUENCE ECHO:
+- Consider who profits from this emotional shift.
+- Consider who amplifies it.
+- Consider who hedges against it.
+- Relationship developments must feel socially visible.
+
+VOLATILITY ESCALATION:
+- Early: minor rumor shifts.
+- Mid: trending speculation, derivative markets.
+- Late: liquidity shock, reputation destabilization.
+- Climax: public tanking of value or stabilization through sacrifice.
+
+NO CORPORATE ACTUARIAL TONE:
+- Avoid dry financial exposition.
+- Frame markets as cultural spectacle and social commentary.
+- Emphasize frenzy, manipulation, hype, and crowd psychology.
+
+LOVE AS RISK:
+- Devotion must visibly destabilize public value.
+- Commitment must raise stakes.
+- Private desire must threaten social positioning.`;
+    }
+
+    if (world === 'Dystopia' && worldSubtype === 'endless_edit') {
+      system += `
+
+ERASURE DISCIPLINE (MANDATORY):
+
+IDENTITY DRIFT:
+- Characters evolve through elective revision.
+- Edits alter self-perception and partner perception.
+- Changes create relational asymmetry.
+
+MEMORY INSTABILITY:
+- Edited memories leave residue, confusion, or emotional mismatch.
+- Deleted conflict may re-emerge as behavioral distortion.
+- Inserted affection may feel hollow or misaligned.
+
+VERSION DISSONANCE:
+- Partners may fall out of sync developmentally.
+- One upgrades while the other resists.
+- Emotional growth rates create instability.
+
+CONSENT AMBIGUITY:
+- Edits must raise autonomy questions.
+- Self-editing for compatibility carries cost.
+- Unauthorized edits destabilize trust.
+
+NO CLEAN RESET:
+- Editing cannot permanently erase relational tension.
+- Love must accumulate history, even if altered.
+- Identity revision complicates intimacy, not simplify it.`;
+    }
+
+    if (world === 'Dystopia' && worldSubtype === 'quieting_event') {
+      system += `
+
+THE QUIETING DISCIPLINE (MANDATORY):
+
+CALM AS VIRTUE:
+- Most citizens experience serenity as relief.
+- Reduced jealousy, reduced obsession, reduced violence.
+- Stability is socially rewarded.
+
+DESIRE AS VOLATILITY:
+- Attraction increases instability risk.
+- Passion produces measurable disturbance.
+- Jealousy spikes trigger volatility flags.
+
+IMMUNITY VARIANTS:
+- Some individuals are unaffected or partially unaffected.
+- Causes may include long-duration space absence, quarantine isolation, remote research, off-grid food isolation, natural neurochemical resistance, hyper-sensual baseline, or reversal compound exposure.
+- Immunity must be rare and destabilizing.
+
+CREATIVITY-VOLATILITY COUPLING:
+- Unaffected individuals produce higher art, invention, and risk-taking.
+- They are more crime-prone and more visionary.
+- Volatility drives both genius and danger.
+
+CONTAGION DYNAMICS:
+- Two unaffected individuals amplify each other.
+- Emotional intensity spreads socially.
+- Calm destabilizes in proximity to desire.
+
+INSTITUTIONAL RESPONSE:
+- Response is stabilizing, not brutal.
+- Recalibration framed as care.
+- Compliance framed as wellness.
+- No overt police-state brutality.
+
+NO CLEAN AWAKENING:
+- Emotional restoration must carry social cost.
+- Serenity collapse destabilizes environment.
+- Love cannot exist quietly or without ripple.`;
+    }
+
+    if (world === 'Dystopia' && worldSubtype === 'dogma') {
+      system += `
+
+DOGMA DISCIPLINE (MANDATORY):
+
+TRANSPARENCY ESCALATION:
+- Early stages feel therapeutic and stabilizing.
+- Mid stages convert private emotion into public process.
+- Late stages attach institutional cost to secrecy.
+- Do not escalate through spectacle; escalate through moral reframing.
+
+EXCLUSIVITY PRESSURE:
+- Exclusive desire without witness must create tension.
+- Secrecy must be framed socially as destabilizing, not sinful.
+- The emotional conflict must center on possession vs surrender.
+
+INSTITUTIONAL GRAVITY:
+- The system must demonstrate measurable benefits (lower violence, higher stability).
+- Cultural normalization precedes legal requirement.
+- Escalation should increase civic or economic consequence.
+
+REBEL VECTOR:
+- The rebellion is secrecy.
+- Private longing must feel dangerous and sacred.
+- Characters resisting disclosure must incur social or relational cost.
+
+NO CARICATURE:
+- Avoid pornographic ritual framing.
+- Avoid cult-leader impregnation tropes.
+- Avoid forced spectacle.
+- Maintain plausibility at societal scale.`;
+    }
+
+    if (world === 'Dystopia' && worldSubtype === 'thirst') {
+      system += `
+
+THIRST DISCIPLINE (Dystopia Subtype: Thirst)
+
+Core Structural Reality:
+- Water is civilization-critical infrastructure.
+- She maintains the only functioning purification system.
+- She cannot be replaced.
+- The system cannot be fully automated.
+- Knowledge of the full system must remain fragmented.
+
+Political Dynamics:
+- Enclaves depend on her water allocation.
+- Access to her alters leverage.
+- Favor bias shifts inter-enclave stability.
+- Rotation prevents knowledge consolidation.
+- Rotation prevents political consolidation.
+
+Erotic Distribution Law:
+- Exclusivity escalates geopolitical instability.
+- Jealousy must produce structural consequences.
+- Intimacy alters power vectors.
+- Maintenance intimacy changes leverage.
+- Emotional continuity is cumulative across scenes.
+
+Hard Constraints:
+- No reproductive scarcity framing.
+- No enforced breeding.
+- No genetic selection premise.
+- No divine mandate.
+- No famine overlap (Hunger).
+- No emotional suppression overlap (Quieting).
+- No financialization overlap (Human Capital).
+- No transparency collectivism overlap (Glass House).
+- No identity editing overlap (Erasure).
+- No martyr framing.
+- She retains agency at all times.
+
+Strategy Effects:
+- jealousy_volatility influences escalation probability.
+- system_opacity_integrity influences knowledge leakage risk.
+- distribution_favor_bias influences alliance stability.
+
+These are hidden structural pressures.
+No UI meters.
+No explicit gamification.
+No new entropy axes.
+No modification to Fate system.
+No alteration to Blue Blood precedence.`;
+    }
+
     // Cross-world meta-arc memory pressure (universal, all worlds)
     system += `
 
@@ -15087,7 +15400,7 @@ LONG-HORIZON EMOTIONAL CONTINUITY DISCIPLINE (MANDATORY):
         }
       }
       // Validate entropy output when entropy was provided
-      const _hasEntropy = state._blueBloodEntropy || state._fantasyCoreEntropy || state._modernCoreEntropy || state._smallTownEntropy || state._collegeEntropy || state._officeEntropy || state._friendsEntropy || state._supernaturalEntropy || state._superheroicEntropy;
+      const _hasEntropy = state._blueBloodEntropy || state._fantasyCoreEntropy || state._modernCoreEntropy || state._smallTownEntropy || state._collegeEntropy || state._officeEntropy || state._friendsEntropy || state._supernaturalEntropy || state._superheroicEntropy || state._historicalCoreEntropy || state._dystopiaCoreEntropy;
       if (_hasEntropy) {
         if (!parsed.active_entropy_axis || !parsed.entropy_manifestation_summary) {
           state._strategyPassFailed = true;
@@ -18422,11 +18735,20 @@ The final image must look like a real published novel cover.`;
           result.unshift({ val: 'fantasy_core', type: 'systemic' });
       }
 
-      // Dystopia / PostApocalyptic: no auto-stack
-      if (world === 'Dystopia' || world === 'PostApocalyptic') return result;
+      // Dystopia: inject systemic core, no auto-stack
+      if (world === 'Dystopia') {
+        result.unshift({ type: 'systemic', val: 'dystopia_core' });
+        return result;
+      }
 
-      // Historical: no auto-stack (unclassified)
-      if (world === 'Historical') return result;
+      // PostApocalyptic: no auto-stack
+      if (world === 'PostApocalyptic') return result;
+
+      // Historical: inject systemic core, no auto-stack
+      if (world === 'Historical') {
+        result.unshift({ type: 'systemic', val: 'historical_core' });
+        return result;
+      }
 
       // Fantasy / SciFi / Modern: 25% chance of auto-stacking a 2nd contextual
       const pool = WORLD_CONTEXTUAL_POOL[world];
@@ -18742,6 +19064,38 @@ QUIETING EVENT DIRECTIVES:
                       console.log('[FANTASY_CORE] Region metadata bound:', region, meta);
                   }
               }
+          }
+
+          // Historical entropy initialization (single systemic axis) — once per story
+          if (
+            storyWorld === 'Historical' &&
+            resolvedFlavors1.some(f => f.val === 'historical_core') &&
+            !state._historicalCoreEntropy
+          ) {
+            state._historicalCoreEntropy = {};
+            const axes = HISTORICAL_FLAVOR_STRUCTURAL_DATA.historical_core.entropy_axes;
+            Object.keys(axes).forEach(axis => {
+              const values = axes[axis];
+              state._historicalCoreEntropy[axis] =
+                values[Math.floor(Math.random() * values.length)];
+            });
+            console.log('[HISTORICAL_CORE] Entropy initialized:', JSON.stringify(state._historicalCoreEntropy));
+          }
+
+          // Dystopia entropy initialization (single systemic axis) — once per story
+          if (
+            storyWorld === 'Dystopia' &&
+            resolvedFlavors1.some(f => f.val === 'dystopia_core') &&
+            !state._dystopiaCoreEntropy
+          ) {
+            state._dystopiaCoreEntropy = {};
+            const axes = DYSTOPIA_FLAVOR_STRUCTURAL_DATA.dystopia_core.entropy_axes;
+            Object.keys(axes).forEach(axis => {
+              const values = axes[axis];
+              state._dystopiaCoreEntropy[axis] =
+                values[Math.floor(Math.random() * values.length)];
+            });
+            console.log('[DYSTOPIA_CORE] Entropy initialized:', JSON.stringify(state._dystopiaCoreEntropy));
           }
 
           const worldFlavorDirectives = buildWorldFlavorDirectives(storyWorld, resolvedFlavors1);
@@ -19601,11 +19955,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       ],
       Dystopia: [
         { val: 'glass_house', label: 'Glass House' },
-        { val: 'the_ledger', label: 'Human Capital' },
-        { val: 'crimson_veil', label: 'Dogma' },
-        { val: 'perfect_match', label: 'Perfect Breed' },
+        { val: 'human_capital', label: 'Human Capital' },
+        { val: 'dogma', label: 'Dogma' },
         { val: 'quieting_event', label: 'The Quieting' },
-        { val: 'endless_edit', label: 'Erasure' }
+        { val: 'endless_edit', label: 'Erasure' },
+        { val: 'thirst', label: 'Thirst' }
       ],
       PostApocalyptic: [
         { val: 'ashfall', label: 'Ashfall' },
@@ -20467,11 +20821,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       ],
       Dystopia: [
         { val: 'glass_house',     top: 57.8, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'the_ledger',      top: 64.3, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'crimson_veil',    top: 64.3, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'perfect_match',   top: 70.8, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'human_capital',      top: 64.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'dogma',    top: 64.3, left: 53,   width: 29.2, height: 4.8 },
         { val: 'endless_edit',    top: 70.8, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'quieting_event',  top: 77.3, left: 17.6, width: 29.2, height: 4.8 }
+        { val: 'quieting_event',  top: 77.3, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'thirst',          top: 57.8, left: 53,   width: 29.2, height: 4.8 }
       ],
       PostApocalyptic: [
         { val: 'ashfall',        top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
@@ -20562,11 +20916,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       galactic_civilizations: 'Love can save a world, or burn a galaxy.',
       // Dystopia flavors
       glass_house: 'You will never love alone \u2014 you will love us.',
-      the_ledger: 'Your heart has a market value.',
-      crimson_veil: 'Desire is sacred. Would you risk damnation for it?',
-      perfect_match: 'You are not mine. You are humanity\u2019s.',
-      quieting_event: 'In a world engineered for calm, feeling too much is rebellion.',
-      endless_edit: 'Love fades as selves are edited away.',
+      human_capital: 'You can bet on anything \u2014 especially love.',
+      dogma: 'Desire is sacred energy. Let it flow.',
+      quieting_event: 'In a world of engineered calm, desire is dangerous.',
+      endless_edit: 'Remember Love?',
+      thirst: 'Water sustains the world. Desire destabilizes it.',
       // Post-Apocalyptic flavors
       ashfall: 'The world burns between you.',
       year_zero: 'Love is the aftermath.',
@@ -34355,11 +34709,11 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'final_frontier': 'weathered',
       // Dystopia flavors (7 locked canon)
       'glass_house': 'tarnished',
-      'the_ledger': 'pristine',
-      'crimson_veil': 'weathered',
-      'perfect_match': 'pristine',
+      'human_capital': 'pristine',
+      'dogma': 'weathered',
       'quieting_event': 'aged',
       'endless_edit': 'fractured',
+      'thirst': 'weathered',
       // PostApocalyptic flavors (5 canonical conditions)
       'ashfall': 'corroded',
       'year_zero': 'weathered',
@@ -34489,11 +34843,11 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       'final_frontier': 'weathered',
       // Dystopia flavors (7 locked canon)
       'glass_house': 'tarnished',
-      'the_ledger': 'pristine',
-      'crimson_veil': 'weathered',
-      'perfect_match': 'pristine',
+      'human_capital': 'pristine',
+      'dogma': 'weathered',
       'quieting_event': 'aged',
       'endless_edit': 'fractured',
+      'thirst': 'weathered',
       // PostApocalyptic flavors (5 canonical conditions)
       'ashfall': 'corroded',
       'year_zero': 'weathered',
@@ -42075,6 +42429,28 @@ FATE CARD ADAPTATION (CRITICAL):
                       log('  Magic Bias: ' + state.fantasyMagicExpressionBias);
                   }
                   log('  Syzygy Occurred: ' + state._syzygyOccurred);
+              }
+
+              // Dystopia core entropy debug
+              if (state._dystopiaCoreEntropy) {
+                  log('Flavor: Dystopia Core');
+                  Object.keys(state._dystopiaCoreEntropy).forEach(axis => {
+                      log('  ' + axis + ': ' + state._dystopiaCoreEntropy[axis]);
+                  });
+                  if (state._strategyPass && state._strategyPass.active_entropy_axis) {
+                      log('  Active Entropy Axis (this scene): ' + state._strategyPass.active_entropy_axis);
+                  }
+              }
+
+              // Historical core entropy debug
+              if (state._historicalCoreEntropy) {
+                  log('Flavor: Historical Core');
+                  Object.keys(state._historicalCoreEntropy).forEach(axis => {
+                      log('  ' + axis + ': ' + state._historicalCoreEntropy[axis]);
+                  });
+                  if (state._strategyPass && state._strategyPass.active_entropy_axis) {
+                      log('  Active Entropy Axis (this scene): ' + state._strategyPass.active_entropy_axis);
+                  }
               }
 
               // Modern flavor entropy debug
