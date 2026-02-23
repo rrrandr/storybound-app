@@ -2395,14 +2395,15 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
       structural_stakes_engine:
         "Political survival, mythic threat, and oath-bound consequence",
       social_pressure_mechanism:
-        "Court visibility, faction allegiance, and divine or arcane oversight",
+        "Court visibility, regional allegiance (Vaelryn monarchy, Thornwild lineage claim, Ashen Verge war council), and Favor-legitimized oversight",
       default_romantic_tension_pattern:
         "Love destabilizes lineage, loyalty, or magical equilibrium",
       forbidden_collapse_patterns:
         "Modern realism bleed, superhero civic framing, nihilistic dystopia",
       world_artifacts: [
         "throne rooms", "sigils", "bloodline records",
-        "war banners", "relic weapons", "mage towers"
+        "war banners", "relic weapons", "mage towers",
+        "Fate's Favor basin", "Thread-fed canals", "Favor-legitimacy seals"
       ],
       power_vector_levers: [
         "lineage claim", "magical capacity", "faction loyalty",
@@ -2410,8 +2411,9 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
       ],
       entropy_axes: {
         fantasy_region_focus: [
-          "high_court_kingdom", "border_war_province", "arcane_city_state",
-          "wildlands_clan_territory", "divine_crater_zone", "coastal_trade_empire"
+          "vaelryn_reach", "the_ashen_verge", "lytharyn",
+          "the_thornwild", "the_veilwood", "pulse_point",
+          "gloamwater_bay", "the_shackle_isles"
         ],
         fantasy_magic_cost_model: [
           "physical_drain", "memory_loss", "lifespan_decay",
@@ -2431,6 +2433,98 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
       }
     }
   };
+
+  const FATELANDS_CANON = {
+    realm: "The Fatelands",
+    central_feature: "Fate's Favor",
+    sovereign: "The High Court of Vaelryn Reach is the ritual sovereign authority of the central continent. Its authority is legal, ceremonial, historically entrenched, and politically contested. It is not absolute imperial control.",
+    rivers: ["The Long Thread", "The Ascendant Run", "The Drowned Vein"],
+    regions: {
+      vaelryn_reach:      { seat: "The High Court",                   governance: "Human monarchy claiming Favor-legitimacy",              status: "Ritual sovereign center",                                    reality: null,                                                        magicBias: "ceremonial" },
+      the_ashen_verge:    { seat: "War Marshal's Hold",               governance: "Militarized vassal province",                           status: "Answers to Vaelryn in law",                                  reality: "Operates with significant military autonomy",               magicBias: "battle" },
+      the_thornwild:      { seat: null,                                governance: "First Favored cultural heartland",                      status: "Recognizes High Court ritual legitimacy",                    reality: "Politically independent in practice",                       magicBias: "primal" },
+      lytharyn:           { seat: "Lytharyn",                          governance: "Arcane city-state",                                     status: "Independent",                                                reality: "Influences all regions through knowledge control",          magicBias: "scholarly" },
+      pulse_point:        { seat: "Pulse Point",                       governance: "Chartered maritime trade authority",                    status: "Recognizes High Court ceremonially",                         reality: "Economically autonomous",                                  magicBias: "mercantile" },
+      gloamwater_bay:     { seat: null,                                governance: "Tidal enclave of altered beings",                       status: "Outside conventional governance",                            reality: null,                                                        magicBias: "tidal" },
+      the_shackle_isles:  { seat: null,                                governance: "Politically fragmented",                                status: "Some swear fealty to Vaelryn, others do not",                reality: null,                                                        magicBias: "bound",   islands: ["Blackmoor", "Quiet Chain", "Cinderwake", "Sanctum Reeve"] },
+      the_veilwood:       { seat: null,                                governance: "Unknown",                                               status: "Outside political structure",                                reality: null,                                                        magicBias: "occult" }
+    },
+    demographics: {
+      rule: "All regions contain mixed populations. Humans are majority across the continent.",
+      thornwild_note: "Thornwild has highest density of First Favored.",
+      constraints: "No region is species-exclusive. No racial state structures."
+    },
+    moons: {
+      total: 13,
+      visible_uniform: 12,
+      controversial: 1,
+      invariant_rules: [
+        "The 13th moon is controversial.",
+        "The 13th may appear during surges.",
+        "No moon names are defined.",
+        "Moons do not introduce alternate magic systems."
+      ]
+    },
+    syzygy_location: "The Ascendant Run",
+    river_courses: {
+      "The Long Thread":   "Runs through the central basin, feeding Vaelryn Reach and the Thornwild",
+      "The Ascendant Run": "Descends from highland sources through the Veilwood",
+      "The Drowned Vein":  "Empties into Gloamwater Bay, carrying altered currents"
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FANTASY INVARIANT BLOCK — Authoritative, Non-Optional, Prevent Drift
+  //
+  // These invariants supersede any future refactor, optimization,
+  // modularization, or feature expansion.
+  //
+  // I. WORLD INVARIANTS
+  //    Realm: The Fatelands. Central Feature: Fate's Favor. Single sacrificial
+  //    magic engine. Geography is fixed. Regions are canonical and finite.
+  //    Magic requires loss. No alternate magic system. No free-magic species.
+  //    Syzygy occurs at most once per story. Entropy modifies pressure, not
+  //    geography. The realm name never changes.
+  //
+  // II. GEOGRAPHIC INVARIANTS
+  //    Fate's Favor remains central. River courses are fixed:
+  //      The Long Thread → into Fate's Favor
+  //      The Ascendant Run → from Fate's Favor toward Veilwood
+  //      The Drowned Vein → links to Gloamwater Bay
+  //    Canonical regions (exactly 8): vaelryn_reach, the_ashen_verge,
+  //    lytharyn, the_thornwild, the_veilwood, pulse_point, gloamwater_bay,
+  //    the_shackle_isles. No additional regions may be generated. No region
+  //    templates may replace them. No procedural capitals may override seats.
+  //
+  // III. POLITICAL INVARIANTS
+  //    Vaelryn Reach → The High Court. Ashen Verge → militarized vassal in law.
+  //    Thornwild → Favored-dense, not continental sovereign. Pulse Point →
+  //    economically autonomous, ceremonially recognizes Vaelryn. Lytharyn →
+  //    independent. Veilwood → no confirmed public seat. Gloamwater Bay →
+  //    no conventional governance. Shackle Isles → politically fragmented.
+  //    No procedural faction generator may overwrite region structure.
+  //    fantasyRegionGovernance must always reference FATELANDS_CANON.
+  //
+  // IV. MAGIC INVARIANTS
+  //    Magic requires loss (identity sacrifice). Sacrifice categories remain
+  //    canonical. No alternate mana/energy system. "Magic bias" affects tone,
+  //    not engine mechanics. No free-magic species. No second engine. Reject
+  //    any system introducing alternate cost models beyond sacrifice variants.
+  //
+  // V. ENTROPY CONSTRAINT
+  //    Entropy MAY modify: Favor amplitude, political instability, sacrifice
+  //    severity, anomaly emergence (e.g., Unmoored Isles).
+  //    Entropy MAY NOT: alter borders, replace regions, invent capitals,
+  //    change cosmology, replace the central crater.
+  //
+  // VI. NAME GENERATION CONSTRAINT
+  //    World name generator must always keep realm as "The Fatelands". Never
+  //    generate alternate continent names. Only generate sub-location names.
+  //
+  // VII. LOCK STATEMENT
+  //    Fantasy is a canonical continent engine, not a procedural template module.
+  //    Canon > modularity. Geography > abstraction. Sacrifice > power fantasy.
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const HISTORICAL_FLAVOR_STRUCTURAL_DATA = {
     historical_core: {
@@ -11777,7 +11871,7 @@ Return ONLY the title, no quotes or explanation.`;
       const WORLD_NAME_PREFIXES = {
           Modern: ['The Glass', 'The Steel', 'The Gilded', 'The Shadow'],
           Historical: ['The Veiled', 'The Crown', 'The Silver', 'The Crimson'],
-          Fantasy: ['The Arcane', 'The Sundered', 'The Moonlit', 'The Thornwood'],
+          Fantasy: ['The Fated', 'The Threaded', 'The Favored', 'The Veilbound'],
           SciFi: ['The Obsidian', 'The Nebula', 'The Quantum', 'The Orbital'],
           Noir: ['The Smoke', 'The Neon', 'The Midnight', 'The Velvet'],
           Gothic: ['The Hollow', 'The Raven', 'The Ashen', 'The Shrouded'],
@@ -11786,7 +11880,7 @@ Return ONLY the title, no quotes or explanation.`;
       const WORLD_NAME_SUFFIXES = {
           Modern: ['Towers', 'District', 'Circle', 'Heights'],
           Historical: ['Courts', 'Houses', 'Halls', 'Estates'],
-          Fantasy: ['Realm', 'Kingdom', 'Dominion', 'Throne'],
+          Fantasy: ['Reach', 'Verge', 'Basin', 'Isles'],
           SciFi: ['Station', 'Sector', 'Frontier', 'Array'],
           Noir: ['Corners', 'Streets', 'District', 'Alleys'],
           Gothic: ['Manor', 'Abbey', 'Estate', 'Grounds'],
@@ -15078,12 +15172,21 @@ This is narrative pressure only.`;
       instability_carryover_required: state._instabilityRequiredNextScene || false
     };
 
-    // Fantasy region metadata injection (static context, not entropy)
+    // Fatelands canonical metadata injection
     if (state.fantasyRegion) {
+      inputContext.fantasy_realm = FATELANDS_CANON.realm;
+      inputContext.fantasy_sovereign = FATELANDS_CANON.sovereign;
+      inputContext.fantasy_central_feature = FATELANDS_CANON.central_feature;
+      inputContext.fantasy_rivers = FATELANDS_CANON.rivers;
+      inputContext.fantasy_demographics = FATELANDS_CANON.demographics;
       inputContext.fantasy_region = state.fantasyRegion;
-      inputContext.fantasy_region_capital = state.fantasyRegionCapital;
-      inputContext.fantasy_dominant_faction = state.fantasyDominantFaction;
+      inputContext.fantasy_region_seat = state.fantasyRegionSeat;  // null for unconfirmed seats
+      inputContext.fantasy_region_governance = state.fantasyRegionGovernance;
+      inputContext.fantasy_region_status = state.fantasyRegionStatus;
+      inputContext.fantasy_region_reality = state.fantasyRegionReality;  // null if status is face value
       inputContext.fantasy_magic_expression_bias = state.fantasyMagicExpressionBias;
+      inputContext.fantasy_moons_total = FATELANDS_CANON.moons.total;
+      inputContext.fantasy_syzygy_location = FATELANDS_CANON.syzygy_location;
     }
 
     // Entropy injection — first active source wins (Blue Blood has variant-specific structure)
@@ -15154,8 +15257,40 @@ BLOODLINE PRESSURE:
 - Romantic sacrifice may stabilize or destabilize lineage claims.
 
 SYZYGY AWARENESS:
+- Syzygy is structurally bound to The Ascendant Run. It cannot occur elsewhere. Reclamation ritual requires physical presence at The Ascendant Run.
+- The Fatelands has 13 moons (12 visible, 1 controversial). The 13th may appear during surges. No moon names are defined. Moons do not introduce alternate magic systems.
 - If syzygy occurs, it must resolve or rupture accumulated sacrifice tension. It must not feel random, mechanical, or repeatable.
-- If syzygy has not occurred, its absence must still shape longing and restraint.`;
+- If syzygy has not occurred, its absence must still shape longing and restraint.
+
+FATELANDS GEOGRAPHIC AND POLITICAL CONTRACT (MANDATORY):
+- The canonical realm is The Fatelands. Do not invent alternative realm names.
+- Central feature: Fate's Favor — the metaphysical force that legitimizes power, binds oaths, and shapes sacrifice.
+- Rivers: The Long Thread (central basin, feeds Vaelryn Reach and the Thornwild), The Ascendant Run (highland descent through the Veilwood), The Drowned Vein (empties into Gloamwater Bay, carries altered currents).
+
+SOVEREIGN LEGITIMACY:
+- The High Court of Vaelryn Reach is the ritual sovereign authority of the central continent.
+- Its authority is legal, ceremonial, historically entrenched, and politically contested.
+- It is NOT absolute imperial control.
+
+CANONICAL REGIONS (8 total, fixed):
+- Vaelryn Reach: Seat — The High Court. Human monarchy claiming Favor-legitimacy. Ritual sovereign center.
+- The Ashen Verge: Seat — War Marshal's Hold. Militarized vassal province. Answers to Vaelryn in law but operates with significant military autonomy.
+- Thornwild: Seat unspecified. First Favored cultural heartland. Recognizes High Court ritual legitimacy but politically independent in practice.
+- Lytharyn: Seat — Lytharyn. Arcane city-state. Independent. Influences all regions through knowledge control.
+- Pulse Point: Seat — Pulse Point. Chartered maritime trade authority. Recognizes High Court ceremonially but economically autonomous.
+- Gloamwater Bay: Seat unconfirmed. Tidal enclave of altered beings. Outside conventional governance.
+- The Shackle Isles: Blackmoor, Quiet Chain, Cinderwake, Sanctum Reeve. Politically fragmented — some swear fealty to Vaelryn, others do not.
+- Veilwood: Seat unconfirmed. Governance unknown. Outside political structure.
+
+DEMOGRAPHICS:
+- All regions contain mixed populations. Humans are majority across the continent.
+- Thornwild has highest density of First Favored. No region is species-exclusive. No racial state structures.
+
+HARD CONSTRAINTS:
+- Geography cannot be altered, relocated, renamed, or procedurally substituted under any entropy state.
+- Do not procedurally generate regions or randomly invent capitals.
+- If a region seat is null/unconfirmed, do not invent one — reference the region by name or describe its power center obliquely.
+- Entropy modifies pressure, not borders. Canon overrides modularity.`;
     }
 
     // Modern Depth Engine (escalation discipline, not mechanics)
@@ -19163,23 +19298,17 @@ QUIETING EVENT DIRECTIVES:
                   });
                   console.log('[FANTASY_CORE] Entropy initialized:', JSON.stringify(state._fantasyCoreEntropy));
 
-                  // Bind region metadata (static context, not entropy)
-                  const regionMap = {
-                      high_court_kingdom:      { capital: 'Thronehold',    faction: 'Royal Court',        magicBias: 'ceremonial' },
-                      border_war_province:     { capital: 'Marchfeld',     faction: 'War Council',        magicBias: 'battle' },
-                      arcane_city_state:       { capital: 'Spirereach',    faction: 'Arcane Senate',      magicBias: 'scholarly' },
-                      wildlands_clan_territory:{ capital: 'Hearthstone',   faction: 'Clan Elders',        magicBias: 'primal' },
-                      divine_crater_zone:      { capital: 'Oraculum',      faction: 'Temple Authority',   magicBias: 'divine' },
-                      coastal_trade_empire:    { capital: 'Tidewall',      faction: 'Merchant Conclave',  magicBias: 'mercantile' }
-                  };
+                  // Bind canonical Fatelands region metadata
                   const region = state._fantasyCoreEntropy.fantasy_region_focus;
-                  const meta = regionMap[region];
+                  const meta = FATELANDS_CANON.regions[region];
                   if (meta) {
                       state.fantasyRegion = region;
-                      state.fantasyRegionCapital = meta.capital;
-                      state.fantasyDominantFaction = meta.faction;
+                      state.fantasyRegionSeat = meta.seat;  // null for unconfirmed seats
+                      state.fantasyRegionGovernance = meta.governance;
+                      state.fantasyRegionStatus = meta.status;
+                      state.fantasyRegionReality = meta.reality;  // null if status is face value
                       state.fantasyMagicExpressionBias = meta.magicBias;
-                      console.log('[FANTASY_CORE] Region metadata bound:', region, meta);
+                      console.log('[FANTASY_CORE] Fatelands region bound:', region, meta);
                   }
               }
           }
@@ -42743,9 +42872,11 @@ FATE CARD ADAPTATION (CRITICAL):
                       log('  Active Entropy Axis (this scene): ' + state._strategyPass.active_entropy_axis);
                   }
                   if (state.fantasyRegion) {
-                      log('  Region: ' + state.fantasyRegion);
-                      log('  Capital: ' + state.fantasyRegionCapital);
-                      log('  Faction: ' + state.fantasyDominantFaction);
+                      log('  Fatelands Region: ' + state.fantasyRegion);
+                      log('  Seat: ' + (state.fantasyRegionSeat || '(unconfirmed)'));
+                      log('  Governance: ' + (state.fantasyRegionGovernance || '(unknown)'));
+                      log('  Status: ' + (state.fantasyRegionStatus || '(none)'));
+                      if (state.fantasyRegionReality) log('  Reality: ' + state.fantasyRegionReality);
                       log('  Magic Bias: ' + state.fantasyMagicExpressionBias);
                   }
                   log('  Syzygy Occurred: ' + state._syzygyOccurred);
