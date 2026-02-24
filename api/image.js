@@ -608,7 +608,6 @@ World Grammar shapes visual atmosphere. It does NOT override focal anchor, emble
 // ============================================================
 // PHASE 3D — EROTIC MOTIF LAYER (GATED)
 // Symbolic erotic charge only. NO bodies, faces, or explicit acts.
-// Activates ONLY when arousal === 'Steamy' || arousal === 'Passionate'
 // Sits BELOW World Grammar, INSIDE the border.
 // One-line rollback: return prompt unchanged in applyEroticMotifLayer()
 // ============================================================
@@ -634,15 +633,9 @@ const EROTIC_MOTIF_REGISTRY = {
 };
 
 // Apply erotic motif layer — symbolic erotic adjacency only
-// Returns prompt unchanged if arousal is not Erotic/Dirty
 // ROLLBACK: Uncomment the next line to disable erotic motif layer entirely
 // function applyEroticMotifLayer(prompt, arousal, archetype, world) { return prompt; }
 function applyEroticMotifLayer(prompt, arousal, archetype, world) {
-  // Gate: Only activate for Erotic or Dirty arousal levels
-  if (arousal !== 'Steamy' && arousal !== 'Passionate') {
-    return prompt;
-  }
-
   // Select motif category based on context
   let motifPool;
   if (archetype === 'EMBLEM') {

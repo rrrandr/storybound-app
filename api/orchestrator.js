@@ -257,21 +257,18 @@ const DEFAULT_MODELS = {
 const MONETIZATION_GATES = {
   free: {
     name: 'TASTE_CAP',
-    allowedEroticism: ['Clean', 'Naughty'],
     completionAllowed: false,
     cliffhangerRequired: true,
     maxStoryLength: 'taste'
   },
   pass: {
     name: 'PASS_UNLOCKED',
-    allowedEroticism: ['Clean', 'Naughty', 'Steamy'],
     completionAllowed: true,
     cliffhangerRequired: false,
     maxStoryLength: 'fling'
   },
   sub: {
     name: 'SUB_UNLOCKED',
-    allowedEroticism: ['Clean', 'Naughty', 'Steamy', 'Passionate'],
     completionAllowed: true,
     cliffhangerRequired: false,
     maxStoryLength: 'soulmates'
@@ -437,27 +434,12 @@ function enforceMonetizationGates(accessTier, requestedEroticism) {
     return enforceMonetizationGates('free', requestedEroticism);
   }
 
-  // Determine effective eroticism level
-  let effectiveEroticism = requestedEroticism;
-  if (!gate.allowedEroticism.includes(requestedEroticism)) {
-    // Downgrade to highest allowed level
-    const eroticismOrder = ['Clean', 'Naughty', 'Steamy', 'Passionate'];
-    const requestedIndex = eroticismOrder.indexOf(requestedEroticism);
-
-    for (let i = requestedIndex; i >= 0; i--) {
-      if (gate.allowedEroticism.includes(eroticismOrder[i])) {
-        effectiveEroticism = eroticismOrder[i];
-        break;
-      }
-    }
-  }
-
   return {
     accessTier,
     gateCode: gate.name,
     requestedEroticism,
-    effectiveEroticism,
-    wasDowngraded: effectiveEroticism !== requestedEroticism,
+    effectiveEroticism: requestedEroticism,
+    wasDowngraded: false,
     completionAllowed: gate.completionAllowed,
     cliffhangerRequired: gate.cliffhangerRequired,
     maxStoryLength: gate.maxStoryLength
@@ -483,14 +465,6 @@ function shouldCallSexRenderer(esd, gateEnforcement) {
     return {
       shouldCall: false,
       reason: `Eroticism level ${esd.eroticismLevel} does not require specialist renderer`
-    };
-  }
-
-  // Check if tier allows this eroticism level
-  if (gateEnforcement.wasDowngraded) {
-    return {
-      shouldCall: false,
-      reason: `Eroticism downgraded from ${gateEnforcement.requestedEroticism} to ${gateEnforcement.effectiveEroticism} due to tier restrictions`
     };
   }
 

@@ -548,7 +548,6 @@ window.config = window.config || {
     const dddBoost = state.dynamicDominanceBoost || 0;
     // Safety guards: suppress boost under sensitive conditions
     const suppressDDD = (state.edgeCovenant?.active)
-        || (state.intensity === 'Tease')
         || (state.picks?.tone === 'WryConfession' && state.picks?.world === 'Modern');
     if (!suppressDDD && dddBoost > 0) {
       effectiveDominance = Math.min(1.0, effectiveDominance + dddBoost);
@@ -6336,11 +6335,6 @@ PROHIBITED:
           }
       }
 
-      // 3. Clean arousal should NEVER have explicit content
-      if (arousalLevel === 'Clean' && hasExplicit) {
-          violations.push('AROUSAL_VIOLATION:Explicit content in Clean arousal mode');
-      }
-
       const shouldRegenerate = violations.length > 0;
 
       if (violations.length > 0) {
@@ -6496,10 +6490,6 @@ DIRTY INTENSITY ADDENDUM:
    * @returns {object} { valid: boolean, violations: string[], metrics: object }
    */
   function validateEroticEscalation(text, arousalLevel) {
-      if (!['Steamy', 'Passionate'].includes(arousalLevel)) {
-          return { valid: true, violations: [], metrics: {} };
-      }
-
       const violations = [];
       const wordCount = text.split(/\s+/).length;
       const blocks = Math.ceil(wordCount / 300);
@@ -6546,15 +6536,6 @@ DIRTY INTENSITY ADDENDUM:
 
       if (hasAbstractionOnly) {
           violations.push('ABSTRACTION_ONLY: Desire framed as fate/destiny without physical grounding');
-      }
-
-      // Dirty-specific: check for inconvenient desire framing
-      if (arousalLevel === 'Passionate') {
-          const disruptionPatterns = /\b(shouldn't|wrong|bad idea|complicated|dangerous|mistake|problem|trouble|couldn't|resent|hate that|damn|cursed)\b/gi;
-          const hasDisruption = disruptionPatterns.test(text);
-          if (!hasDisruption && wordCount > 150) {
-              violations.push('DIRTY_TOO_CLEAN: Desire should feel inconvenient/disruptive at Dirty intensity');
-          }
       }
 
       const metrics = {
@@ -22896,11 +22877,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             return;
           }
 
-          // Intensity/length paywall checks using canonical eligibility
-          if (grp === 'intensity' || grp === 'length') {
-            const tempState = grp === 'intensity'
-              ? { ...state, intensity: val }
-              : { ...state, storyLength: val };
+          // Length paywall check using canonical eligibility
+          if (grp === 'length') {
+            const tempState = { ...state, storyLength: val };
             if (!isStorypassAllowed(tempState)) {
               window.showPaywall('sub_only'); return;
             }
@@ -41328,7 +41307,7 @@ Never escalate into prohibited themes.`;
         const baseDominance = v ? v.dominanceBias : 0;
         const slowBurn  = v ? v.slowBurnBias  : 0;
         // Dynamic Dominance Drift — apply runtime boost (same suppression guards as directive)
-        const _suppressDDD = (state.edgeCovenant?.active) || (state.intensity === 'Tease')
+        const _suppressDDD = (state.edgeCovenant?.active)
             || (state.picks?.tone === 'WryConfession' && state.picks?.world === 'Modern');
         const dominance = _suppressDDD ? baseDominance : Math.min(1.0, baseDominance + (state.dynamicDominanceBoost || 0));
 
@@ -42397,17 +42376,10 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               const ctdNoIntimacy = !state.fate?.earnedIntimacy;
               const ctdNotPassive = (state.passiveTurnCount || 0) === 0;
               // Safety guards: disable under sensitive conditions
-              // Culmination tiers (Dirty, Soulmates) — no drift accumulation
               const ctdSuppressed = (state.edgeCovenant?.active)
-                  || (state.intensity === 'Tease')
-                  || (state.intensity === 'Dirty')
-                  || (state.intensity === 'Soulmates')
                   || state._guidedFatePauseActive;
 
-              // Culmination tiers: zero drift entirely (not just freeze)
-              if (state.intensity === 'Dirty' || state.intensity === 'Soulmates') {
-                  state.coupleTensionDrift = 0;
-              } else if (!ctdSuppressed && ctdAtST2or3 && ctdNoTempt && ctdNoIrreversible && ctdNoIntimacy && ctdNotPassive) {
+              if (!ctdSuppressed && ctdAtST2or3 && ctdNoTempt && ctdNoIrreversible && ctdNoIntimacy && ctdNotPassive) {
                   state.coupleTensionDrift = Math.min(0.30, (state.coupleTensionDrift || 0) + 0.05);
               } else if (_ctdStIdx >= 3 || state.tempt_fate_invoked_this_turn || state.fate?.earnedIntimacy) {
                   state.coupleTensionDrift = 0;
