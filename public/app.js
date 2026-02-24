@@ -541,8 +541,26 @@ window.config = window.config || {
   function buildRomanceVectorDirective() {
     const v = state.romanceVector;
     if (!v) return '';
+
+    // Dynamic Dominance Drift — runtime boost from cautious equilibrium pull
+    // Does NOT mutate baseDominance. Applied only to emitted directive.
+    let effectiveDominance = v.dominanceBias;
+    const dddBoost = state.dynamicDominanceBoost || 0;
+    // Safety guards: suppress boost under sensitive conditions
+    const suppressDDD = (state.edgeCovenant?.active)
+        || (state.intensity === 'Tease')
+        || (state.picks?.tone === 'WryConfession' && state.picks?.world === 'Modern');
+    if (!suppressDDD && dddBoost > 0) {
+      effectiveDominance = Math.min(1.0, effectiveDominance + dddBoost);
+    }
+
+    // Vulnerability Pulse — halve dominance boost when vulnerability detected
+    if (state.vulnerabilityPulse && dddBoost > 0 && !suppressDDD) {
+      effectiveDominance = Math.min(1.0, effectiveDominance - dddBoost * 0.5);
+    }
+
     let block = `USER ROMANCE PREFERENCE VECTOR (subtle tonal bias only — do NOT override user selections, safety filters, or eroticMode classification):
-  dominanceBias: ${v.dominanceBias.toFixed(2)}
+  dominanceBias: ${effectiveDominance.toFixed(2)}
   supernaturalBias: ${v.supernaturalBias.toFixed(2)}
   slowBurnBias: ${v.slowBurnBias.toFixed(2)}
   angstBias: ${v.angstBias.toFixed(2)}
@@ -551,13 +569,19 @@ window.config = window.config || {
 Favor these tonal biases subtly in character behavior and narrative texture.`;
 
     const nudges = [];
-    if (v.dominanceBias > 0.6)   nudges.push('Increase decisive, directive phrasing in Love Interest dialogue by 10-20%.');
+    if (effectiveDominance > 0.6) nudges.push('Increase decisive, directive phrasing in Love Interest dialogue by 10-20%.');
     if (v.slowBurnBias > 0.6)    nudges.push('Increase interior monologue, restraint, and delayed gratification.');
     if (v.protectorBias > 0.6)   nudges.push('Increase protective physical framing — shielding gestures, positioning, vigilance.');
     if (v.angstBias > 0.6)       nudges.push('Increase emotional tension, vulnerability, and internal conflict.');
     if (v.eroticHeatBias > 0.6)  nudges.push('Slightly increase sensual pacing and tactile awareness (obey eroticMode limits).');
     if (nudges.length > 0) block += '\nTonal nudges:\n' + nudges.map(n => '- ' + n).join('\n');
     block += '\nDo NOT mention book titles in prose. Do NOT override archetype after user selection. Do NOT alter Fortune or Tempt Fate mechanics.';
+
+    // Vulnerability Pulse — reward emotional risk with proximity (single-player only)
+    if (state.mode !== 'couple' && state.vulnerabilityPulse === 1) {
+      block += '\nRespond to vulnerability with increased proximity and emotional intensity.\nDo not withdraw or deflect.\nAllow connection to feel rewarded.';
+    }
+
     return block;
   }
 
@@ -4439,6 +4463,17 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
         rivalKeyholeActive: false
       },
       storyStage: 'pre-intimacy',
+      // Dynamic Dominance Drift — cautious equilibrium pull (per-story)
+      cautiousStreak: 0,
+      dynamicDominanceBoost: 0,
+      // Vulnerability Pulse — turn-scoped directive reward (single-player)
+      vulnerabilityPulse: 0,
+      // Cautious Dream Injection — symbolic ceiling-pull (single-player only)
+      lastDreamInjectionTurn: 0,
+      _dreamInjectionLine: null,
+      // Selection Uncertainty — stranger-mode ceiling-pull
+      selectionTension: 0,
+      lastSelectionEchoTurn: 0,
       // STORYTURN STATE — narrative arc progression (ST1–ST6)
       storyturn: 'ST1',
       // TASTE CLIFFHANGER RESUME STATE — stores interrupted scene for upgrade continuation
@@ -4454,6 +4489,12 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       player2Joined: false,
       inviteRevoked: false,
       batedBreathActive: false,
+      // Couple Mode Gravity — tension drift, rival gating, poly consent
+      coupleTensionDrift: 0,
+      coupleStructure: 'monogamous', // 'monogamous' | 'open'
+      coupleHasReachedST4: false,
+      lastCoupleDriftEchoScene: 0,
+      _coupleDriftEchoLine: null,
       purchaseContext: null,
       edgeCovenant: { active:false, level:1, acceptedAtTurn:0, offeredBy:"" },
       pendingEdgeOffer: null,
@@ -8697,6 +8738,14 @@ TEMPT FATE IDENTITY — SUBTLE MODE (tone: "reality obeyed"):
       state.storyturn = nextSt;
       console.log(`[STORYTURN] Advanced: ${prevSt} → ${nextSt}`);
 
+      // Couple Mode Gravity — track ST4 reach for rival gating
+      if (state.mode === 'couple' && nextSt === 'ST4') {
+          state.coupleHasReachedST4 = true;
+          // ST4 reached — reset tension drift (irreversible escalation occurred)
+          state.coupleTensionDrift = 0;
+          console.log('[COUPLE:GRAVITY] ST4 reached — coupleHasReachedST4 set, tension drift reset');
+      }
+
       // Onboarding: reversal vision on ST3→ST4 or ST4→ST5
       if ((prevSt === 'ST3' && nextSt === 'ST4') || (prevSt === 'ST4' && nextSt === 'ST5')) {
           if (state.storyId === state.onboarding_story_id && !state.has_received_reversal_vision) {
@@ -10922,6 +10971,35 @@ GLOBAL INVARIANT: No tone may allow premature tension collapse.
   }
 
   /**
+   * Detect vulnerability pulse — player expressing emotional risk
+   * Turn-scoped, single-player only, no persistence
+   */
+  function detectVulnerabilityPulse(input) {
+    if (!input || input.length < 30) return false;
+
+    const markers = [
+      "i want", "i need", "i feel",
+      "i'm afraid", "im afraid",
+      "i care", "i miss",
+      "i don't want to lose", "i dont want to lose",
+      "i'm scared", "im scared",
+      "it matters to me",
+      "i shouldn't say this", "i shouldnt say this",
+      "i've never told anyone", "ive never told anyone"
+    ];
+
+    const dismissals = [
+      "whatever", "just kidding", "lol", "haha", "fine.", "sure."
+    ];
+
+    const lower = input.toLowerCase();
+    const hasMarker = markers.some(m => lower.includes(m));
+    const hasDismissal = dismissals.some(d => lower.includes(d));
+
+    return hasMarker && !hasDismissal;
+  }
+
+  /**
    * Get current escalation level based on passive turn count
    */
   function getEscalationLevel() {
@@ -11054,6 +11132,24 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
   function buildIntentConsequenceDirective(action, dialogue) {
       // Update passive turn tracking first
       updatePassiveTurnCount(action, dialogue);
+
+      // Vulnerability Pulse — turn-scoped detection
+      // Effects gated per-mode: directive+dominance = solo only, drift relief = couple only
+      const combinedInput = ((action || '') + ' ' + (dialogue || '')).trim();
+      const _diStIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+      if (state.intensity !== 'Tease'
+          && state.intensity !== 'Dirty'
+          && state.intensity !== 'Soulmates'
+          && _diStIdx < 4
+          && !state.volatility_window?.active
+          && !state.edgeCovenant?.active
+          && !state.tempt_fate_invoked_this_turn
+          && !state.fate?.earnedIntimacy
+          && detectVulnerabilityPulse(combinedInput)) {
+          state.vulnerabilityPulse = 1;
+      } else {
+          state.vulnerabilityPulse = 0;
+      }
 
       // Build all applicable directives
       const polyDirective = buildPolyIntentDirective(action, dialogue);
@@ -12868,6 +12964,20 @@ Return ONLY the title, no quotes or explanation.`;
       state._loggedPetitionSubmit = false;
       state.storyLength = 'taste';
       state.storyId = null;
+      state.cautiousStreak = 0;
+      state.dynamicDominanceBoost = 0;
+      state.vulnerabilityPulse = 0;
+      state.lastDreamInjectionTurn = 0;
+      state._dreamInjectionLine = null;
+      state.selectionTension = 0;
+      state.lastSelectionEchoTurn = 0;
+      state._selectionEchoLine = null;
+      state.coupleTensionDrift = 0;
+      state.coupleStructure = 'monogamous';
+      state.coupleHasReachedST4 = false;
+      state.lastCoupleDriftEchoScene = 0;
+      state._coupleDriftEchoLine = null;
+      _coupleStructureVotes = { player1: null, player2: null };
       clearStoryContent();
 
       // Reset DSP state for new story
@@ -14040,6 +14150,20 @@ Return ONLY the title, no quotes or explanation.`;
       // Reset Guided Fate selections
       state.picks = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', era: 'Medieval', pov: 'First' };
       state.intensity = 'Steamy';
+      state.cautiousStreak = 0;
+      state.dynamicDominanceBoost = 0;
+      state.vulnerabilityPulse = 0;
+      state.lastDreamInjectionTurn = 0;
+      state._dreamInjectionLine = null;
+      state.selectionTension = 0;
+      state.lastSelectionEchoTurn = 0;
+      state._selectionEchoLine = null;
+      state.coupleTensionDrift = 0;
+      state.coupleStructure = 'monogamous';
+      state.coupleHasReachedST4 = false;
+      state.lastCoupleDriftEchoScene = 0;
+      state._coupleDriftEchoLine = null;
+      _coupleStructureVotes = { player1: null, player2: null };
       state.storypassEligible = undefined; // Reset - will be computed at story creation
       state.lenses = [];
       state.withheldCoreVariant = null;
@@ -15799,6 +15923,16 @@ Desire that stalls must either deepen, rupture, or transform.
 
 Do NOT auto-advance Storyturn. Do NOT force resolution mechanically. Do NOT override consent.
 This is narrative pressure only.`;
+
+    // Single-player dream injection — atmospheric ceiling-pull
+    if (state.mode !== 'couple' && state._dreamInjectionLine) {
+      system += `\nSubconscious Pressure:\n- ${state._dreamInjectionLine}\n`;
+    }
+
+    // Stranger mode selection uncertainty — atmospheric tension echo
+    if (state.mode === 'stranger' && state._selectionEchoLine) {
+      system += `\nSelection Uncertainty:\n- ${state._selectionEchoLine}\n`;
+    }
 
     const inputContext = {
       current_st_phase: state.storyturn || 'ST1',
@@ -18353,6 +18487,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state._loggedPetitionSubmit = false;
     state.storyEnded = false;
     state._lastGeneratedShapeSnapshot = null;
+    state.cautiousStreak = 0;
+    state.dynamicDominanceBoost = 0;
+    state.vulnerabilityPulse = 0;
+    state.lastDreamInjectionTurn = 0;
+    state._dreamInjectionLine = null;
+    state.selectionTension = 0;
+    state.lastSelectionEchoTurn = 0;
+    state._selectionEchoLine = null;
+    state.coupleTensionDrift = 0;
+    state.coupleStructure = 'monogamous';
+    state.coupleHasReachedST4 = false;
+    state.lastCoupleDriftEchoScene = 0;
+    state._coupleDriftEchoLine = null;
+    _coupleStructureVotes = { player1: null, player2: null };
 
     // Clear story content
     if (typeof clearStoryContent === 'function') {
@@ -31333,6 +31481,20 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
     state.tempt_fate_invoked_this_turn = false;
     state.consecutive_tempt_fate_count = 0;
+    state.cautiousStreak = 0;
+    state.dynamicDominanceBoost = 0;
+    state.vulnerabilityPulse = 0;
+    state.lastDreamInjectionTurn = 0;
+    state._dreamInjectionLine = null;
+    state.selectionTension = 0;
+    state.lastSelectionEchoTurn = 0;
+    state._selectionEchoLine = null;
+    state.coupleTensionDrift = 0;
+    state.coupleStructure = 'monogamous';
+    state.coupleHasReachedST4 = false;
+    state.lastCoupleDriftEchoScene = 0;
+    state._coupleDriftEchoLine = null;
+    _coupleStructureVotes = { player1: null, player2: null };
     // Preserve scene5Granted through fortuneFavor reset (anti-farming for same storyId)
     state._fortuneFavorScene5Cache = state.fortuneFavor?.scene5Granted || false;
     state.fortuneFavor = null;
@@ -31566,6 +31728,20 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
     state.tempt_fate_invoked_this_turn = false;
     state.consecutive_tempt_fate_count = 0;
+    state.cautiousStreak = 0;
+    state.dynamicDominanceBoost = 0;
+    state.vulnerabilityPulse = 0;
+    state.lastDreamInjectionTurn = 0;
+    state._dreamInjectionLine = null;
+    state.selectionTension = 0;
+    state.lastSelectionEchoTurn = 0;
+    state._selectionEchoLine = null;
+    state.coupleTensionDrift = 0;
+    state.coupleStructure = 'monogamous';
+    state.coupleHasReachedST4 = false;
+    state.lastCoupleDriftEchoScene = 0;
+    state._coupleDriftEchoLine = null;
+    _coupleStructureVotes = { player1: null, player2: null };
     // Preserve scene5Granted through fortuneFavor reset (anti-farming for same storyId)
     state._fortuneFavorScene5Cache = state.fortuneFavor?.scene5Granted || false;
     state.fortuneFavor = null;
@@ -33401,6 +33577,134 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     let archetypeDirectives = buildArchetypeDirectives(state.archetype.primary, state.archetype.modifier, lGen);
     // (quillUnlocked removed — Petition Fate replaces quill)
 
+    // ================================================================
+    // SINGLE-PLAYER — Cautious Dream Line Pool (ceiling-pull)
+    // ================================================================
+    function getCautiousDreamLine() {
+      const lines = [
+        "That night, you dream of standing at a locked door. When you open your hands, the key is already there.",
+        "You dream they are walking away. The more you hold back, the further they drift.",
+        "In sleep, their touch is warmer than you remember — and gone when you wake.",
+        "You dream of speaking plainly. The world does not end.",
+        "You see them across a crowded room, choosing someone who did not hesitate."
+      ];
+      return lines[Math.floor(Math.random() * lines.length)];
+    }
+
+    // ================================================================
+    // STRANGER MODE — Selection Uncertainty Line Pool
+    // ================================================================
+    function getSelectionUncertaintyLine() {
+      const lines = [
+        "Someone else notices them watching you.",
+        "You sense this moment might not come again.",
+        "They hesitate — as if weighing something unseen.",
+        "The space between you feels fragile, like timing matters.",
+        "You wonder who would move first — if anyone does."
+      ];
+      return lines[Math.floor(Math.random() * lines.length)];
+    }
+
+    // ================================================================
+    // COUPLE MODE — Drift Echo Line Pool
+    // ================================================================
+    function getCoupleDriftEchoLine() {
+      const lines = [
+        "The air between you feels charged with something unspoken.",
+        "You are standing closer than you were a moment ago. Neither of you steps back.",
+        "The space for small talk is narrowing.",
+        "It feels like something is about to break — or be said.",
+        "You both know this cannot stay suspended much longer."
+      ];
+      return lines[Math.floor(Math.random() * lines.length)];
+    }
+
+    // ================================================================
+    // COUPLE MODE GRAVITY — tension drift, rival gating, poly consent
+    // ================================================================
+    function buildCoupleGravityDirective() {
+      if (state.mode !== 'couple') return '';
+
+      const drift = state.coupleTensionDrift || 0;
+      const structure = state.coupleStructure || 'monogamous';
+      const reachedST4 = state.coupleHasReachedST4 || false;
+
+      let block = '\nCOUPLE MODE GRAVITY SYSTEM (BINDING):\n';
+
+      // --- Tension Drift Strategy ---
+      if (drift > 0) {
+        block += `\nCOUPLE TENSION DRIFT: ${drift.toFixed(2)}
+If equilibrium persists, increase consequence density.
+Reduce safe conversational loops.
+Escalate stakes or vulnerability opportunities proportionally to tension drift.
+- Increase forced-choice event probability.
+- Increase vulnerability-prompt weighting.
+- Increase proximity and sensual charge weighting by ${(drift * 0.5).toFixed(2)}.
+- Increase environmental pressure by ${(drift * 0.5).toFixed(2)}.
+Do NOT auto-advance Storyturn. Do NOT force intimacy. Do NOT override player choices.\n`;
+      }
+
+      // --- Rival Gating ---
+      // COLLISION GUARD: If drift echo is active this turn, suppress rival/poly escalation
+      const echoActive = !!state._coupleDriftEchoLine;
+
+      if (!reachedST4) {
+        block += `\nRIVAL GATE (PRE-ST4): No rival characters may be introduced.
+No third-party romantic or sexual tension permitted.
+The couple's bond has not yet been tested by consequence — rivals are premature.\n`;
+      } else if (!echoActive) {
+        block += `\nRIVAL GATE (POST-ST4): Rival characters may appear to create pressure.
+Rival probability scales with tension drift (${drift.toFixed(2)}).
+`;
+        if (structure === 'monogamous') {
+          block += `STRUCTURE: MONOGAMOUS — Rivals may pressure the couple but must NOT:
+- Trigger ST3 (Permission) with any third party
+- Trigger ST4 (Consequence) with any third party
+- Resolve intimacy with any third party
+- Create secret romantic branches
+All third-party arcs MUST route back to couple resolution.
+Rivals create jealousy, urgency, or clarity — never consummation.\n`;
+        } else {
+          block += `STRUCTURE: OPEN — Third-party ST3 and ST4 are permitted.
+However:
+- No unilateral third-party irreversible action
+- If one player attempts third-party ST3 or ST4, require explicit confirmation from the other
+- Both players must have consented to open structure
+- Either player may close the relationship at any time (closing always wins)\n`;
+        }
+      }
+
+      // --- Third-Party ST Enforcement ---
+      if (!echoActive) {
+        block += `\nTHIRD-PARTY STORYTURN ENFORCEMENT:
+Before any ST3 or ST4 involving a character other than the couple's primary pair:
+`;
+        if (structure !== 'open') {
+          block += `- BLOCKED. Route to relational confrontation beat instead.
+- The couple must face the tension directly — do not resolve it through a third party.
+- If a player attempts third-party intimacy, narrate the attempt being interrupted, deflected, or redirected toward the partner.\n`;
+        } else {
+          block += `- ALLOWED under open structure.
+- Require symmetric confirmation before irreversible ST4 with third party.
+- Narrate consequences that affect the couple's primary bond.\n`;
+        }
+      }
+
+      // --- Poly Consent Fork Guidance ---
+      if (!echoActive && reachedST4 && structure === 'monogamous' && drift >= 0.20) {
+        block += `\nPOLY CONSENT FORK ELIGIBLE:
+Rival pressure is high enough to surface a relationship structure question.
+When narratively appropriate, present a symmetric decision point where both players independently choose:
+  - "Open the relationship" OR "Close ranks"
+Only if BOTH choose "Open" does the structure change.
+If either chooses "Close", monogamous structure persists.
+Do NOT force this fork. Wait for a natural narrative moment of relational strain.
+Present it as character dialogue or a shared moment of reckoning, not a UI prompt.\n`;
+      }
+
+      return block;
+    }
+
     const coupleArcRules = `
 COUPLE MODE ARC RULES (CRITICAL):
 
@@ -33466,6 +33770,32 @@ Exit conditions (must be explicit, never silent):
 No accidental betrayal. No silent exits.
 `;
 
+// ================================================================
+// COUPLE MODE — Poly Consent Vote Functions (module scope)
+// ================================================================
+let _coupleStructureVotes = { player1: null, player2: null };
+
+window.submitCoupleStructureVote = function(player, choice) {
+    if (choice !== 'open' && choice !== 'close') return;
+    if (player !== 'player1' && player !== 'player2') return;
+    _coupleStructureVotes[player] = choice;
+    // Check if both have voted
+    if (_coupleStructureVotes.player1 && _coupleStructureVotes.player2) {
+        if (_coupleStructureVotes.player1 === 'open' && _coupleStructureVotes.player2 === 'open') {
+            state.coupleStructure = 'open';
+        } else {
+            state.coupleStructure = 'monogamous';
+        }
+        // Reset votes after resolution
+        _coupleStructureVotes = { player1: null, player2: null };
+    }
+};
+
+window.closeCoupleStructure = function() {
+    state.coupleStructure = 'monogamous';
+    _coupleStructureVotes = { player1: null, player2: null };
+};
+
     // Power Role: resolve genre into world-appropriate label for story prompts
     const storyWorld = state.picks.world || 'Modern';
     const storyEra = state.picks.world === 'Historical' ? (state.picks.era || 'Medieval') : null;
@@ -33503,8 +33833,8 @@ Use instead: tribal structures, clan hierarchy, natural landmarks, oral traditio
 ${state.storyOrigin === "couple" && !state.player2Joined && !state.inviteRevoked ? batedBreathRules : ""}
 
 ${state.mode === "couple" ? coupleArcRules : ""}
-
-
+${state.mode === "couple" ? buildCoupleGravityDirective() : ""}
+${state.mode === "couple" && state._coupleDriftEchoLine ? "\nSubtle Relational Atmosphere:\n- " + state._coupleDriftEchoLine + "\n" : ""}
 
 LONG-FORM STORY ARC RULES (CRITICAL):
 
@@ -40994,8 +41324,12 @@ Never escalate into prohibited themes.`;
 
       function buildGooseDirective() {
         const v = state.romanceVector;
-        const dominance = v ? v.dominanceBias : 0;
+        const baseDominance = v ? v.dominanceBias : 0;
         const slowBurn  = v ? v.slowBurnBias  : 0;
+        // Dynamic Dominance Drift — apply runtime boost (same suppression guards as directive)
+        const _suppressDDD = (state.edgeCovenant?.active) || (state.intensity === 'Tease')
+            || (state.picks?.tone === 'WryConfession' && state.picks?.world === 'Modern');
+        const dominance = _suppressDDD ? baseDominance : Math.min(1.0, baseDominance + (state.dynamicDominanceBoost || 0));
 
         // Romance vector can unlock goosing even when base seductionEligible is false
         const vectorUnlock = state.eroticPressureScore < 0.33 && dominance > 0.5;
@@ -41972,6 +42306,132 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
                   if (state.fate.earlyGamingCount <= 1 && state.fate.stance === 'trickster') {
                       state.fate.stance = 'neutral';
                   }
+              }
+          }
+
+          // Dynamic Dominance Drift — cautious equilibrium pull
+          // Increments when player is active-but-cautious at ST2/ST3 without escalation
+          {
+              const _dddStIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+              const atST2orST3 = _dddStIdx >= 1 && _dddStIdx <= 2; // ST2=1, ST3=2
+              const noTempt = !state.tempt_fate_invoked_this_turn;
+              const noIrreversible = _dddStIdx < 3; // did NOT reach ST4 (idx 3)
+              const noIntimacy = !state.fate?.earnedIntimacy;
+              // passiveTurnCount > 0 means boredom ladder is active — don't stack
+              const notPassive = (state.passiveTurnCount || 0) === 0;
+
+              if (atST2orST3 && noTempt && noIrreversible && noIntimacy && notPassive) {
+                  state.cautiousStreak = (state.cautiousStreak || 0) + 1;
+              } else if (_dddStIdx >= 3 || state.tempt_fate_invoked_this_turn || state.fate?.earnedIntimacy) {
+                  state.cautiousStreak = 0;
+              }
+
+              state.dynamicDominanceBoost = Math.min(0.25, (state.cautiousStreak || 0) * 0.05);
+          }
+
+          // Single-Player Dream Injection — symbolic ceiling-pull under sustained caution
+          // Hard-reset at top of turn — guarantees turn-scoped lifetime
+          state._dreamInjectionLine = null;
+
+          if (state.mode !== 'couple') {
+              const _diStIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+              if ((state.cautiousStreak || 0) >= 4
+                  && _diStIdx < 3
+                  && ((state.turnCount || 0) - (state.lastDreamInjectionTurn || 0)) >= 4
+                  && state.intensity !== 'Tease'
+                  && state.intensity !== 'Dirty'
+                  && state.intensity !== 'Soulmates'
+                  && !state.volatility_window?.active
+                  && !state.tempt_fate_invoked_this_turn
+                  && !state.fate?.earnedIntimacy
+                  && !state.edgeCovenant?.active) {
+                  state._dreamInjectionLine = getCautiousDreamLine();
+                  state.lastDreamInjectionTurn = state.turnCount || 0;
+              }
+          }
+
+          // Stranger Mode Selection Uncertainty — tension + echo under circling behavior
+          // Hard-reset echo line at top of turn — guarantees turn-scoped lifetime
+          state._selectionEchoLine = null;
+
+          if (state.mode === 'stranger') {
+              const _suStIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+              const suAtST2or3 = _suStIdx >= 1 && _suStIdx <= 2;
+
+              if (suAtST2or3
+                  && !state.volatility_window?.active
+                  && !state.tempt_fate_invoked_this_turn
+                  && !state.vulnerabilityPulse
+                  && !state.fate?.earnedIntimacy
+                  && state.intensity !== 'Tease'
+                  && state.intensity !== 'Dirty'
+                  && state.intensity !== 'Soulmates'
+                  && (state.passiveTurnCount || 0) === 0) {
+                  state.selectionTension = Math.min(0.30, (state.selectionTension || 0) + 0.05);
+              } else if (_suStIdx >= 3 || state.tempt_fate_invoked_this_turn || state.vulnerabilityPulse === 1) {
+                  state.selectionTension = 0;
+              }
+
+              // Selection echo — atmospheric line injection (every 3+ scenes during plateau)
+              if ((state.selectionTension || 0) >= 0.15
+                  && ((state.turnCount || 0) - (state.lastSelectionEchoTurn || 0)) >= 3
+                  && !state.volatility_window?.active
+                  && state.intensity !== 'Tease'
+                  && state.intensity !== 'Dirty'
+                  && state.intensity !== 'Soulmates') {
+                  state._selectionEchoLine = getSelectionUncertaintyLine();
+                  state.lastSelectionEchoTurn = state.turnCount || 0;
+              }
+          }
+
+          // Couple Mode Tension Drift — escalation pressure under cautious couple play
+          // Hard-reset echo line at top of turn — guarantees turn-scoped lifetime
+          state._coupleDriftEchoLine = null;
+
+          if (state.mode === 'couple') {
+              const _ctdStIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+              const ctdAtST2or3 = _ctdStIdx >= 1 && _ctdStIdx <= 2;
+              const ctdNoTempt = !state.tempt_fate_invoked_this_turn;
+              const ctdNoIrreversible = _ctdStIdx < 3;
+              const ctdNoIntimacy = !state.fate?.earnedIntimacy;
+              const ctdNotPassive = (state.passiveTurnCount || 0) === 0;
+              // Safety guards: disable under sensitive conditions
+              // Culmination tiers (Dirty, Soulmates) — no drift accumulation
+              const ctdSuppressed = (state.edgeCovenant?.active)
+                  || (state.intensity === 'Tease')
+                  || (state.intensity === 'Dirty')
+                  || (state.intensity === 'Soulmates')
+                  || state._guidedFatePauseActive;
+
+              // Culmination tiers: zero drift entirely (not just freeze)
+              if (state.intensity === 'Dirty' || state.intensity === 'Soulmates') {
+                  state.coupleTensionDrift = 0;
+              } else if (!ctdSuppressed && ctdAtST2or3 && ctdNoTempt && ctdNoIrreversible && ctdNoIntimacy && ctdNotPassive) {
+                  state.coupleTensionDrift = Math.min(0.30, (state.coupleTensionDrift || 0) + 0.05);
+              } else if (_ctdStIdx >= 3 || state.tempt_fate_invoked_this_turn || state.fate?.earnedIntimacy) {
+                  state.coupleTensionDrift = 0;
+              }
+
+              // Vulnerability Pulse — slight drift relief when vulnerability detected in couple mode
+              if (state.vulnerabilityPulse === 1 && (state.coupleTensionDrift || 0) > 0) {
+                  state.coupleTensionDrift = Math.max(0, state.coupleTensionDrift - 0.05);
+              }
+
+              // Couple Drift Echo — atmospheric line injection (every 2-3 scenes during plateau)
+              const _driftEchoMinGap = (state.coupleTensionDrift || 0) >= 0.25 ? 3 : 2;
+              if (state.mode === 'couple'
+                  && (state.coupleTensionDrift || 0) >= 0.15
+                  && (state.turnCount || 0) - (state.lastCoupleDriftEchoScene || 0) >= _driftEchoMinGap
+                  && !state.volatility_window?.active
+                  && !state.tempt_fate_invoked_this_turn
+                  && !state.edgeCovenant?.active
+                  && state.intensity !== 'Tease'
+                  && state.intensity !== 'Dirty'
+                  && state.intensity !== 'Soulmates') {
+                  state._coupleDriftEchoLine = getCoupleDriftEchoLine();
+                  state.lastCoupleDriftEchoScene = state.turnCount || 0;
+              } else {
+                  state._coupleDriftEchoLine = null;
               }
           }
 
