@@ -434,7 +434,8 @@ window.config = window.config || {
     state.first_tempt_fate_vision_triggered = !!profile.first_tempt_fate_vision_triggered;
     syncTierFromAccess();
     activateKeyholeMarkIfEligible();
-    console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.subscriptionTier, '| Keyhole:', state.keyhole?.marked, '| Fortunes:', state.fortunes);
+    decayFateResonanceCrossSession();
+    console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.subscriptionTier, '| Keyhole:', state.keyhole?.marked, '| Fortunes:', state.fortunes, '| Resonance:', getFateResonanceState());
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -699,6 +700,512 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     if (outcome === 'benevolent') kh.alignmentScore += 3;
     if (outcome === 'twist') kh.alignmentScore -= 3;
     kh.alignmentScore = Math.max(-100, Math.min(100, kh.alignmentScore));
+  }
+
+  // ============================================================
+  // FORTUNE'S FAVOR — story-scoped bonus Tempt Fate charges
+  // ============================================================
+  // HARD CONSTRAINTS:
+  // - Does NOT add entropy axes
+  // - Does NOT modify Fate mechanics, volatility, Storyturn logic
+  // - Does NOT alter existing Tempt Fate behavior
+  // - Does NOT inflate Fortune economy globally
+  // - Does NOT create permanent stacking exploits
+  // - Rewards are story-scoped except universal bonus (account-level)
+  // ============================================================
+
+  function initializeFortuneFavor() {
+    const flavor = state.picks?.worldSubtype;
+    if (!flavor || !MONTHLY_FORTUNE_FAVOR.spotlightFlavors.includes(flavor)) {
+      state.fortuneFavor = null;
+      return;
+    }
+    // Guard: if fortuneFavor already initialized for this story, do not reinitialize
+    if (state.fortuneFavor && state.fortuneFavor.monthKey) return;
+
+    // Restore scene5Granted from cache if same storyId (restart anti-farming)
+    const cachedScene5 = state.storyId ? (state._fortuneFavorScene5Cache || false) : false;
+
+    state.fortuneFavor = {
+      eligible: true,
+      unlocked: false,
+      used: false,
+      universalGranted: false,
+      scene5Granted: cachedScene5,
+      monthKey: MONTHLY_FORTUNE_FAVOR.monthKey
+    };
+    state._fortuneFavorScene5Cache = false; // consumed
+    console.log(`[FORTUNE_FAVOR] Initialized. Flavor: ${flavor}, Month: ${MONTHLY_FORTUNE_FAVOR.monthKey}${cachedScene5 ? ', Scene5 already granted (restart)' : ''}`);
+  }
+
+  function checkFortuneFavorSceneUnlock() {
+    const ff = state.fortuneFavor;
+    if (!ff || !ff.eligible || ff.unlocked) return;
+    // monthKey guard: no retroactive grants if spotlight rotated mid-story
+    if (ff.monthKey !== MONTHLY_FORTUNE_FAVOR.monthKey) return;
+    // Per-story anti-farming guard: one Scene 5 grant per story (persists through restart)
+    if (ff.scene5Granted) return;
+    const sceneCount = state.turnCount || 0;
+    if (sceneCount >= 5) {
+      ff.unlocked = true;
+      ff.scene5Granted = true;
+      console.log('[FORTUNE_FAVOR] Scene 5 reached — +1 spotlight Tempt charge unlocked (story-scoped)');
+      showScene5HeavensOverlay();
+    }
+  }
+
+  function checkFortuneFavorWordReward() {
+    const ff = state.fortuneFavor;
+    if (!ff || !ff.eligible || ff.universalGranted) return;
+    // monthKey guard
+    if (ff.monthKey !== MONTHLY_FORTUNE_FAVOR.monthKey) return;
+    const wc = typeof currentStoryWordCount === 'function' ? currentStoryWordCount() : 0;
+    if (wc >= 10000) {
+      ff.universalGranted = true;
+      state.bonus_tempt_charges = (state.bonus_tempt_charges || 0) + 1;
+      console.log(`[FORTUNE_FAVOR] 10k words reached — +1 universal Tempt charge granted (total: ${state.bonus_tempt_charges})`);
+      show10kHeavensOverlay();
+    }
+  }
+
+  function consumeFortuneFavorCharge() {
+    // Returns true if a free charge was consumed (spotlight first, then universal)
+    const ff = state.fortuneFavor;
+    // Story-scoped spotlight charge (consumed first)
+    if (ff && ff.unlocked && !ff.used && ff.monthKey === MONTHLY_FORTUNE_FAVOR.monthKey) {
+      ff.used = true;
+      console.log('[FORTUNE_FAVOR] Spotlight Tempt charge consumed (story-scoped)');
+      return true;
+    }
+    // Account-level universal bonus charge
+    if ((state.bonus_tempt_charges || 0) > 0) {
+      state.bonus_tempt_charges--;
+      console.log(`[FORTUNE_FAVOR] Universal Tempt charge consumed (remaining: ${state.bonus_tempt_charges})`);
+      return true;
+    }
+    return false;
+  }
+
+  // ============================================================
+  // FORTUNE'S FAVOR PRELUDE — DSP entry overlay (World stage)
+  // ============================================================
+  // Visual-only. No state changes. No economy. No mechanics.
+  // Self-cleaning overlay with auto-fade and scroll dismiss.
+  // ============================================================
+
+  let _fortunePreludeShown = false; // gate: one show per corridor visit
+
+  function showFortuneFavorPrelude() {
+    // Only show once per DSP visit
+    if (_fortunePreludeShown) return;
+    _fortunePreludeShown = true;
+
+    // Build spotlight flavor labels
+    const flavorLabels = MONTHLY_FORTUNE_FAVOR.spotlightFlavors
+      .map(f => WORLD_LABELS[f] || f)
+      .map(label => `<span class="ff-prelude-flavor">\u2014 ${label}</span>`)
+      .join('');
+
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'ff-prelude-overlay';
+    overlay.innerHTML = `
+      <div class="ff-prelude-content">
+        <div class="ff-prelude-title">FORTUNE'S FAVOR</div>
+        <div class="ff-prelude-body">
+          <p>Each month, Fate watches a few worlds more closely.</p>
+          <p>Begin there, and a Whisper of power will awaken after Scene Five.<br>
+          Go far enough, and Fate may follow you anywhere.</p>
+          <p class="ff-prelude-label">This month, Fortune lingers in:</p>
+          <div class="ff-prelude-flavors">${flavorLabels}</div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Staggered fade-in
+    requestAnimationFrame(() => {
+      overlay.classList.add('ff-prelude-visible');
+      const title = overlay.querySelector('.ff-prelude-title');
+      const body = overlay.querySelector('.ff-prelude-body');
+      if (title) setTimeout(() => title.classList.add('ff-prelude-text-visible'), 300);
+      if (body) setTimeout(() => body.classList.add('ff-prelude-text-visible'), 600);
+    });
+
+    // Auto fade-out after 3.5s
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      overlay.classList.remove('ff-prelude-visible');
+      overlay.classList.add('ff-prelude-fading');
+      setTimeout(() => {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        markSpotlightCards();
+      }, 350);
+      window.removeEventListener('scroll', scrollDismiss, true);
+    };
+
+    const autoTimer = setTimeout(dismiss, 3500);
+
+    // Scroll dismiss
+    const scrollDismiss = () => {
+      clearTimeout(autoTimer);
+      dismiss();
+    };
+    window.addEventListener('scroll', scrollDismiss, true);
+  }
+
+  function resetFortuneFavorPrelude() {
+    _fortunePreludeShown = false;
+  }
+
+  // PART 4 — Spotlight card marking (subtle star glyph)
+  function markSpotlightCards() {
+    const spotlights = new Set(MONTHLY_FORTUNE_FAVOR.spotlightFlavors);
+    document.querySelectorAll('.sb-card[data-grp="worldSubtype"], .sb-card[data-grp="world"]').forEach(card => {
+      // Remove existing marks
+      card.querySelectorAll('.ff-spotlight-mark').forEach(m => m.remove());
+      const val = card.dataset.val;
+      if (val && spotlights.has(val)) {
+        const mark = document.createElement('span');
+        mark.className = 'ff-spotlight-mark';
+        mark.textContent = '\u2727'; // white four-pointed star
+        card.appendChild(mark);
+      }
+    });
+  }
+
+  // ============================================================
+  // TEMPT FATE COSMIC SPARKLE — bonus charge UX (visual only)
+  // ============================================================
+  // No mechanic mutation. No economy logic. No Fate logic.
+  // Sparkle activates when bonus charges are available.
+  // ============================================================
+
+  const _TF_MICROCOPY_LINES = [
+    'Power waits.',
+    'The heavens are listening.',
+    'The universe tilts toward you.',
+    'The stars lean closer.',
+    'Fate is already in motion.',
+    'Something vast stirs.'
+  ];
+
+  function _hasAnyBonusCharge() {
+    const ff = state.fortuneFavor;
+    const hasSpotlight = ff && ff.unlocked && !ff.used && ff.monthKey === MONTHLY_FORTUNE_FAVOR.monthKey;
+    const hasUniversal = (state.bonus_tempt_charges || 0) > 0;
+    return hasSpotlight || hasUniversal;
+  }
+
+  function updateTemptFateSparkle() {
+    // Do not activate sparkle while heavens overlay is visible (sequencing guard)
+    if (_heavensOverlayActive) return;
+    const btn = document.querySelector('.meta-stance[onclick="window.setMetaStance(\'seduce\')"]');
+    if (!btn) return;
+    if (_hasAnyBonusCharge()) {
+      if (!btn.classList.contains('tempt-fate-sparkle')) {
+        btn.classList.add('tempt-fate-sparkle');
+        // Add flare element if missing
+        if (!btn.querySelector('.tf-flare')) {
+          const flare = document.createElement('span');
+          flare.className = 'tf-flare';
+          btn.appendChild(flare);
+        }
+        // Add microcopy element if missing
+        if (!btn.querySelector('.tf-microcopy')) {
+          const mc = document.createElement('span');
+          mc.className = 'tf-microcopy';
+          mc.textContent = _TF_MICROCOPY_LINES[Math.floor(Math.random() * _TF_MICROCOPY_LINES.length)];
+          btn.appendChild(mc);
+        }
+        // Randomize microcopy on each hover
+        btn.addEventListener('mouseenter', _randomizeTemptMicrocopy);
+        // Mobile tap-hold
+        btn.addEventListener('touchstart', _temptTapHoldStart, { passive: true });
+        btn.addEventListener('touchend', _temptTapHoldEnd, { passive: true });
+      }
+    } else {
+      if (btn.classList.contains('tempt-fate-sparkle')) {
+        btn.classList.remove('tempt-fate-sparkle');
+        const flare = btn.querySelector('.tf-flare');
+        if (flare) flare.remove();
+        const mc = btn.querySelector('.tf-microcopy');
+        if (mc) mc.remove();
+        btn.removeEventListener('mouseenter', _randomizeTemptMicrocopy);
+        btn.removeEventListener('touchstart', _temptTapHoldStart);
+        btn.removeEventListener('touchend', _temptTapHoldEnd);
+      }
+    }
+  }
+
+  function _randomizeTemptMicrocopy() {
+    const mc = this.querySelector('.tf-microcopy');
+    if (mc) mc.textContent = _TF_MICROCOPY_LINES[Math.floor(Math.random() * _TF_MICROCOPY_LINES.length)];
+  }
+
+  let _temptTapTimer = null;
+  function _temptTapHoldStart() {
+    const btn = this;
+    _temptTapTimer = setTimeout(() => {
+      btn.classList.add('tf-tap-active');
+      _randomizeTemptMicrocopy.call(btn);
+    }, 400);
+  }
+  function _temptTapHoldEnd() {
+    clearTimeout(_temptTapTimer);
+    this.classList.remove('tf-tap-active');
+  }
+
+  // Heavens overlay gate — prevents sparkle from activating during overlay
+  let _heavensOverlayActive = false;
+
+  // Heavens overlay — shared utility for Scene 5 and 10k word reveals
+  function _showHeavensOverlay(lines, delayBetween, holdDuration) {
+    _heavensOverlayActive = true;
+    const overlay = document.createElement('div');
+    overlay.className = 'tf-heavens-overlay';
+    lines.forEach(text => {
+      const el = document.createElement('div');
+      el.className = 'tf-heavens-line';
+      el.textContent = text;
+      overlay.appendChild(el);
+    });
+    document.body.appendChild(overlay);
+
+    const lineEls = overlay.querySelectorAll('.tf-heavens-line');
+    lineEls.forEach((el, i) => {
+      setTimeout(() => el.classList.add('tf-heavens-visible'), i * delayBetween);
+    });
+
+    const totalFadeIn = (lines.length - 1) * delayBetween + 200;
+    setTimeout(() => {
+      lineEls.forEach(el => {
+        el.classList.remove('tf-heavens-visible');
+        el.classList.add('tf-heavens-fading');
+      });
+      setTimeout(() => {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        _heavensOverlayActive = false;
+      }, 450);
+    }, totalFadeIn + holdDuration);
+  }
+
+  function showScene5HeavensOverlay() {
+    _showHeavensOverlay(['The heavens shift.'], 0, 2000);
+    // Activate sparkle after overlay fade
+    setTimeout(() => updateTemptFateSparkle(), 2500);
+  }
+
+  function show10kHeavensOverlay() {
+    _showHeavensOverlay(['You walked far enough.', 'The heavens shift into your hand.'], 500, 2500);
+    // Activate sparkle after overlay fade
+    setTimeout(() => updateTemptFateSparkle(), 3500);
+  }
+
+  function showTemptShudder() {
+    const btn = document.querySelector('.meta-stance[onclick="window.setMetaStance(\'seduce\')"]');
+    if (!btn) return;
+    // Remove any existing shudder
+    btn.querySelectorAll('.tf-shudder-text').forEach(s => s.remove());
+    const shudder = document.createElement('span');
+    shudder.className = 'tf-shudder-text';
+    shudder.textContent = 'The heavens shudder.';
+    btn.appendChild(shudder);
+    setTimeout(() => { if (shudder.parentNode) shudder.remove(); }, 1300);
+  }
+
+  // ============================================================
+  // FATE RESONANCE — account-level mythic aura (narrative only)
+  // ============================================================
+  // HARD CONSTRAINTS:
+  // - Does NOT affect Petition Fate math, Favor reservoir, Omen decay,
+  //   cost escalation, Storyturn, consent, arousal gating, saturation,
+  //   volatility, or entropy.
+  // - Does NOT create win conditions, hidden difficulty, or advantage.
+  // - Narrative tone weighting ONLY.
+  // ============================================================
+
+  // State thresholds (ascending floors)
+  // Hysteresis: state does not downgrade until intensity drops 5 below threshold floor
+  const FATE_RESONANCE_STATES = [
+    { name: 'Quiet',    floor: 0,  ceiling: 10  },
+    { name: 'Stirring', floor: 11, ceiling: 35  },
+    { name: 'Resonant', floor: 36, ceiling: 60  },
+    { name: 'Unstable', floor: 61, ceiling: 85  },
+    { name: 'Thinning', floor: 86, ceiling: 100 }
+  ];
+
+  const _RESONANCE_HYSTERESIS_BUFFER = 5;
+
+  function getFateResonanceState() {
+    const intensity = state.fate_resonance_intensity || 0;
+    const lastState = state._fate_resonance_last_state || 'Quiet';
+
+    // Find raw state by intensity
+    let rawState = 'Quiet';
+    for (const s of FATE_RESONANCE_STATES) {
+      if (intensity >= s.floor && intensity <= s.ceiling) { rawState = s.name; break; }
+    }
+
+    // Hysteresis: if raw state is lower than last state, only allow downgrade
+    // if intensity is at least _RESONANCE_HYSTERESIS_BUFFER below the last state's floor
+    const lastIdx = FATE_RESONANCE_STATES.findIndex(s => s.name === lastState);
+    const rawIdx = FATE_RESONANCE_STATES.findIndex(s => s.name === rawState);
+    if (rawIdx < lastIdx && lastIdx > 0) {
+      const lastFloor = FATE_RESONANCE_STATES[lastIdx].floor;
+      if (intensity > lastFloor - _RESONANCE_HYSTERESIS_BUFFER) {
+        // Hold at last state — not far enough below threshold
+        state._fate_resonance_last_state = lastState;
+        return lastState;
+      }
+    }
+
+    state._fate_resonance_last_state = rawState;
+    return rawState;
+  }
+
+  function incrementFateResonance() {
+    // Called on each Tempt Fate invocation
+    const now = Date.now();
+    const timeSinceLast = now - (state.fate_resonance_last_tempt_ts || 0);
+    // Recency bonus: +3, once per 10-minute window only
+    let recencyBonus = 0;
+    if (timeSinceLast < 600000 && !state._fate_resonance_recency_used) {
+      recencyBonus = 3;
+      state._fate_resonance_recency_used = true;
+    }
+    // Reset recency gate if outside window
+    if (timeSinceLast >= 600000) {
+      state._fate_resonance_recency_used = false;
+    }
+    const increment = 12 + recencyBonus;
+    state.fate_resonance_intensity = Math.min(100, (state.fate_resonance_intensity || 0) + increment);
+    state.fate_resonance_last_tempt_turn = state.turnCount || 0;
+    state.fate_resonance_last_tempt_ts = now;
+  }
+
+  function decayFateResonance() {
+    // Called each turn (scene boundary). Decays when Tempt Fate was NOT used.
+    if (state.tempt_fate_invoked_this_turn) return;
+    const intensity = state.fate_resonance_intensity || 0;
+    if (intensity <= 0) return;
+
+    const turnsSinceLast = (state.turnCount || 0) - (state.fate_resonance_last_tempt_turn || 0);
+
+    // Extended inactivity: 20+ consecutive non-Tempt turns → accelerated decay until below Resonant floor
+    if (turnsSinceLast >= 20 && intensity > 36) {
+      state.fate_resonance_intensity = Math.max(0, intensity - 6);
+      return;
+    }
+
+    // Flat per-turn decay: -2
+    state.fate_resonance_intensity = Math.max(0, intensity - 2);
+  }
+
+  function decayFateResonanceCrossSession() {
+    // Called on session init / story load. Applies time-based decay for idle periods.
+    const lastTs = state.fate_resonance_last_tempt_ts || 0;
+    if (!lastTs || !state.fate_resonance_intensity) return;
+    const elapsed = Date.now() - lastTs;
+    const hoursSince = elapsed / 3600000;
+
+    if (hoursSince < 1) return; // No cross-session decay within first hour
+
+    // -3 per hour of inactivity
+    let decay = Math.floor(hoursSince * 3);
+
+    // Cap: do not drop more than one state per session gap
+    // Find current state's floor and the floor of the state below it
+    const currentState = getFateResonanceState();
+    const currentIdx = FATE_RESONANCE_STATES.findIndex(s => s.name === currentState);
+    if (currentIdx > 0) {
+      const oneBelow = FATE_RESONANCE_STATES[currentIdx - 1];
+      const maxDrop = (state.fate_resonance_intensity || 0) - oneBelow.floor;
+      if (decay > maxDrop && maxDrop > 0) {
+        decay = maxDrop;
+      }
+    }
+
+    if (decay > 0) {
+      state.fate_resonance_intensity = Math.max(0, (state.fate_resonance_intensity || 0) - decay);
+    }
+
+    // Extended inactivity: 24+ hours → apply accelerated decay until below Resonant
+    if (hoursSince >= 24 && (state.fate_resonance_intensity || 0) > 36) {
+      // Already capped to one-state drop above, so this only fires if still above Resonant
+      // after the initial cap. This handles multi-day absences gracefully.
+      const intensity = state.fate_resonance_intensity || 0;
+      state.fate_resonance_intensity = Math.max(0, intensity - 6);
+    }
+  }
+
+  const FATE_RESONANCE_WORLD_EXPRESSION = {
+    Fantasy: {
+      Resonant:  'NPCs treat you with sacred unease. Favor trembles in objects near you. Symbols of the divine recur without invitation.',
+      Unstable:  'Courts react to your presence before you speak. Priests falter mid-ritual. Sacrifice echoes arrive early and unbidden.',
+      Thinning:  'The Fatelands feel thin where you stand. Rivers hesitate. Witnesses describe the air around you as heavy with unsettled Favor. Reality strains at the seams of divine attention.'
+    },
+    Modern: {
+      Resonant:  'Statistical coincidences cluster around the protagonist. Devices glitch at meaningful moments. Strangers make eye contact too long.',
+      Unstable:  'Institutions notice the pattern density. Algorithms flag the protagonist. Insurance adjusters, journalists, and data analysts begin circling.',
+      Thinning:  'Viral coincidence density reaches visible levels. News cycles almost notice. Systems designed to ignore anomalies start treating the protagonist as a variable.'
+    },
+    Historical: {
+      Resonant:  'Rumors of omens follow the protagonist between settlements. Animals behave oddly. Priests note the alignment of signs.',
+      Unstable:  'Political figures interpret events around the protagonist as portent. Advisors whisper. Guards are repositioned without explanation.',
+      Thinning:  'The protagonist becomes the center of omen rumor. Political paranoia crystallizes around their movements. Courts and temples send observers.'
+    },
+    Dystopia: {
+      Resonant:  'Surveillance systems flag micro-anomalies in the protagonist\'s sector. Attention scores drift upward for no classified reason.',
+      Unstable:  'The protagonist is reclassified as an instability vector. Enforcement protocols activate preemptive containment postures around their location.',
+      Thinning:  'System integrity reports reference the protagonist\'s proximity signature. Internal memos circulate about anomaly clustering. The regime\'s adaptive systems cannot model the pattern and that makes them tighten.'
+    },
+    SciFi: {
+      Resonant:  'AI diagnostic models flag the protagonist\'s interaction history as statistically improbable. Routine systems request additional verification cycles.',
+      Unstable:  'Simulation integrity warnings escalate. AI behavioral models degrade in the protagonist\'s vicinity. Predictive algorithms output contradictory recommendations.',
+      Thinning:  'Ship/station AI begins treating the protagonist as an unmodeled variable. Diagnostics suggest hardware degradation that maintenance cannot locate. Systems whisper to each other about the anomaly.'
+    },
+    PostApocalyptic: {
+      Resonant:  'Survivors avoid standing too close. Weather shifts when the protagonist makes decisions. Resource caches appear in improbable locations.',
+      Unstable:  'The protagonist gains a storm-bringer reputation. Settlements debate whether proximity is worth the risk. Trade routes adjust.',
+      Thinning:  'Survival math distorts around the protagonist. Convoys reroute. Elders invoke old warnings. The wasteland itself seems to pay attention.'
+    }
+  };
+
+  function buildFateResonanceDirective() {
+    const resonanceState = getFateResonanceState();
+    if (resonanceState === 'Quiet' || resonanceState === 'Stirring') return '';
+
+    const world = state.picks?.world || 'Modern';
+    const worldExpr = FATE_RESONANCE_WORLD_EXPRESSION[world] || FATE_RESONANCE_WORLD_EXPRESSION.Modern;
+
+    let directive = `\nFATE RESONANCE — ${resonanceState.toUpperCase()}\n`;
+    directive += `The protagonist carries accumulated Fate attention. This affects narrative tone ONLY — not probability, not cost, not guardrails, not difficulty.\n`;
+
+    // Accumulate all applicable tiers
+    if (worldExpr.Resonant) {
+      directive += `\nResonant aura: ${worldExpr.Resonant}\n`;
+    }
+    if ((resonanceState === 'Unstable' || resonanceState === 'Thinning') && worldExpr.Unstable) {
+      directive += `Unstable aura: ${worldExpr.Unstable}\n`;
+    }
+    if (resonanceState === 'Thinning' && worldExpr.Thinning) {
+      directive += `Thinning aura: ${worldExpr.Thinning}\n`;
+    }
+
+    // Tempt Fate prose amplification at Unstable+
+    if (resonanceState === 'Unstable' || resonanceState === 'Thinning') {
+      if (state.tempt_fate_invoked_this_turn || state.volatility_window?.active) {
+        directive += `\nTempt Fate prose amplification active: Outcomes should feel heavier in prose. Consequence descriptions sharpen. NPC/world reactions arrive faster. This does NOT change magnitude ceiling, guardrails, volatility math, or saturation accumulation.\n`;
+      }
+    }
+
+    directive += `\nHARD LOCK: Fate Resonance is atmospheric. It must NOT increase difficulty, grant advantage, alter backlash probability, change volatility math, bypass guardrails, add penalties, or create hidden scaling. Narrative tone weighting only.\n`;
+
+    return directive;
   }
 
   // ============================================================
@@ -2388,6 +2895,24 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
 
   };
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MODERN WORLD INVARIANT BLOCK — Authoritative, Non-Optional
+  //
+  // Baseline engine: social pressure. No cosmology. No sacrifice mechanics.
+  //
+  // supernatural_modern and superheroic_modern may introduce localized
+  // metaphysical effects. These effects:
+  //   - Must be character-level or localized, not continent-defining.
+  //   - Must NOT introduce cosmology, rare-event flags, sacrifice-based cost
+  //     mechanics, destiny determinism, or global world-law changes.
+  //   - Must NOT introduce celestial mechanics or world-engine replacement.
+  //   - Must NOT bleed from Fantasy (no Favor, no syzygy, no sacrifice domains).
+  //   - Supernatural phenomena are NOT physics-rewriting or cosmology-defining.
+  //
+  // All other Modern flavors (modern_core, small_town, college, office,
+  // friends, blue_blood) operate under pure social-pressure constraint.
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const FANTASY_FLAVOR_STRUCTURAL_DATA = {
     fantasy_core: {
       core_power_asymmetry:
@@ -2470,6 +2995,17 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
       "The Long Thread":   "Runs through the central basin, feeding Vaelryn Reach and the Thornwild",
       "The Ascendant Run": "Descends from highland sources through the Veilwood",
       "The Drowned Vein":  "Empties into Gloamwater Bay, carrying altered currents"
+    },
+    drowned_vein_visibility: {
+      surface_visible: false,
+      reflective: false,
+      public_awareness: "Limited to Gloamwater Bay and its immediate environs",
+      constraints: [
+        "Underground river. Not surface-visible.",
+        "Not reflective of celestial bodies.",
+        "Cannot be used for sky reflection metaphors.",
+        "Limited public awareness outside Gloamwater Bay."
+      ]
     }
   };
 
@@ -3771,6 +4307,28 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       has_triggered_first_tempt_fate: false,
       milestone_vision_fired_this_turn: false,
       _syzygyOccurred: false,
+
+      // Historical Prehistoric cognitive system (per-story, immutable once set)
+      historicalCognitiveBand: null,           // prehistoric_presymbolic | prehistoric_early_tribal | prehistoric_proto_mythic | prehistoric_oral_memory
+      historicalCognitiveModulation: 0.25,     // 0.1–0.6, affects narrator density only
+      historicalFrictionIndex: 0,              // rolling friction score (0–1), scene-boundary only
+
+      // Dystopia attention system (per-story, not per-user)
+      dystopianAttentionLevel: 0,              // 0.0–1.0, enforcement intensity (never 0.0 once initialized)
+      dystopianEnforcementMode: null,          // mechanical | social | algorithmic | biological | mixed
+
+      // Fate Resonance — account-level mythic aura (narrative-only, no gameplay math)
+      fate_resonance_intensity: 0,           // 0–100, account-level, persists across stories
+      fate_resonance_last_tempt_turn: 0,     // last turn a Tempt Fate was invoked (for decay)
+      fate_resonance_last_tempt_ts: 0,       // last timestamp (ms) a Tempt Fate was invoked (cross-session decay)
+      _fate_resonance_last_state: 'Quiet',   // hysteresis: last emitted state (prevents flicker)
+      _fate_resonance_recency_used: false,   // recency bonus gate (once per 10-min window)
+
+      // Fortune's Favor — account-level universal bonus charges (persists across stories)
+      bonus_tempt_charges: 0,
+
+      // Fortune's Favor — story-scoped spotlight tracking (reset per story)
+      fortuneFavor: null,
 
       // Fate saturation + volatility (per-story, not per-user)
       fate_saturation: 0,
@@ -7881,7 +8439,8 @@ active_petition: ${state.fate?.pendingPetition ? state.fate.pendingPetition.text
 tempt_fate_active: ${state.tempt_fate_invoked_this_turn ? 'yes' : 'no'}
 consecutive_tempt_fate_count: ${state.consecutive_tempt_fate_count || 0}
 fate_saturation: ${(state.fate_saturation || 0).toFixed(2)}
-volatility_window: ${state.volatility_window?.active ? 'active (severity ' + (state.volatility_window.severity || 0).toFixed(1) + ', ' + (state.volatility_window.remaining_scenes || 0) + ' scenes remaining)' : 'inactive'}`;
+volatility_window: ${state.volatility_window?.active ? 'active (severity ' + (state.volatility_window.severity || 0).toFixed(1) + ', ' + (state.volatility_window.remaining_scenes || 0) + ' scenes remaining)' : 'inactive'}
+fate_resonance: ${getFateResonanceState()}`;
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -7889,6 +8448,20 @@ volatility_window: ${state.volatility_window?.active ? 'active (severity ' + (st
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Deterministic Tempt Fate ontology per world. No AI guessing.
   // Saturation penalizes spam. Volatility windows escalate consequences.
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // FORTUNE'S FAVOR — Monthly spotlight system
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Manual monthly rotation. No backend. No entropy. No Fate math changes.
+  // Grants scoped bonus Tempt Fate charges under strict conditions only.
+  const MONTHLY_FORTUNE_FAVOR = {
+    monthKey: '2026-03',
+    spotlightFlavors: [
+      'glass_house',
+      'prehistoric',
+      'simulation'
+    ]
+  };
 
   const WORLD_TEMPT_FATE_MODE = {
     Modern: 'probability',
@@ -7900,26 +8473,41 @@ volatility_window: ${state.volatility_window?.active ? 'active (severity ' + (st
   };
 
   const WORLD_LAW_DIRECTIVES = {
-    probability: `TEMPT FATE WORLD LAW:
-- Effects must remain within probabilistic or socially catastrophic bounds.
-- No permanent physics violations.
-- Physical anomalies must be temporary, ambiguous, or medically disputable.
-- No public, provable miracles.`,
-    divine: `TEMPT FATE WORLD LAW:
-- Effects may alter physical reality.
-- Must align with established magic logic.
-- Must carry consequence.
-- May not permanently rewrite core world laws.`,
-    glitch: `TEMPT FATE WORLD LAW:
-- Effects must resemble technological, systemic, or simulation instability.
-- No unexplained magic unless simulation premise allows.`,
-    scarcity: `TEMPT FATE WORLD LAW:
-- Effects must exploit or strain scarce resources.
-- Consequences must involve loss, trade-off, or environmental degradation.
-- No limitless abundance.`,
-    instability: `TEMPT FATE WORLD LAW:
-- Effects must destabilize systems, not annihilate them.
-- Regime may bend, not instantly collapse.`
+    probability: `TEMPT FATE WORLD LAW (MODERN / HISTORICAL — probability mode):
+CERTAINTY: The outcome is not lucky. It is not coincidental. Something tilted the entire board, and the characters can feel it even if they cannot name it. The effect is immediate and undeniable within social physics.
+MAGNITUDE: Tempt Fate is a detonation inside social physics. It must be felt across multiple characters, relationships, and power structures simultaneously. Scene importance rises at least one tier. The moment the invocation lands, the room changes.
+COLLATERAL REQUIREMENT: Effects must ripple outward — the person who witnesses, the rumor that escapes, the document that surfaces, the timing that destroys plausible deniability. At least two characters beyond the couple must be materially affected.
+ECHO MANDATE: Consequences must persist and compound across 2–3 subsequent scenes. No single-scene containment. The shockwave reshapes the social landscape.
+APPROACH THE LINE: Push to the outer edge of what social catastrophe, human error, and systemic failure can produce. Not a nudge — a rupture in social reality that everyone present will remember.
+HARD LIMITS: No permanent physics violations. Physical anomalies must be temporary, ambiguous, or medically disputable. No public, provable miracles. No Storyturn acceleration. No consent override.`,
+    divine: `TEMPT FATE WORLD LAW (FANTASY — divine mode):
+CERTAINTY: Fate does not suggest. Fate answers. The invocation is not a prayer — it is a transaction that has already been accepted. The world obeys, visibly and immediately, and extracts its price with equal certainty. There is no ambiguity about what just happened.
+MAGNITUDE: The Fatelands shudder. Favor flares across the region. Rivers shift current. Political alliances crack in real time. Sacrifice debts accelerate or come due without warning. The invocation must be unmistakable: something cosmic intervened, and every witness knows it in their body.
+COLLATERAL REQUIREMENT: Divine intervention radiates outward. Courts react. Factions reposition. At least one political or magical structure must be visibly destabilized. Bystanders are altered — witnesses carry weight in a world where Favor is real, and what they saw cannot be unseen.
+ECHO MANDATE: The consequences haunt 2–3 subsequent scenes. Sacrifice debts deepen. Political leverage shifts. Alliances fracture or forge under pressure. The Fatelands remember what Fate did here.
+APPROACH THE LINE: Push to the maximum expression of divine intervention the sacrifice engine permits. Make the world bend until it groans. Make the cost feel like it might break someone irreparably.
+HARD LIMITS: Must align with established sacrifice-based magic logic. Must carry visible personal cost. May not permanently rewrite core world laws. May not trigger or repeat Syzygy. May not bypass sacrifice requirement. No Storyturn acceleration. No consent override.`,
+    glitch: `TEMPT FATE WORLD LAW (SCIFI — glitch mode):
+CERTAINTY: The glitch is not a coincidence. Systems do not fail this way by accident, and everyone who reads the diagnostic log will know it. The technology obeyed something it should not have been able to hear. The effect is immediate, cascading, and unmistakable.
+MAGNITUDE: Systems fail spectacularly and simultaneously. Not a flickering light — a failure that breaches containment between ship systems, station infrastructure, and social architecture at once. Alarms fire. Protocols activate. The invocation must feel like the technology itself turned against its operators with purpose.
+COLLATERAL REQUIREMENT: The failure must affect multiple characters and systems simultaneously. Crew rotations disrupted, research data compromised, communication windows missed, life support parameters shifted. At least two people beyond the couple must face material consequences they did not cause.
+ECHO MANDATE: Cascading failures echo across 2–3 scenes. Repair efforts create new proximity or new distance. Investigations threaten to surface what the glitch revealed. Incident reports are filed. Careers are threatened. The system remembers anomalies and flags the humans near them.
+APPROACH THE LINE: Push to the maximum credible technological failure — the kind that triggers emergency protocols, career-ending reviews, and the whispered question no one wants to ask: what if the system did this on purpose?
+HARD LIMITS: Must resemble technological, systemic, or simulation instability. No unexplained magic unless simulation premise is already established. No destiny bonds. No cosmic consciousness. No physics violations outside simulation framing. No Storyturn acceleration. No consent override.`,
+    scarcity: `TEMPT FATE WORLD LAW (POSTAPOC — scarcity mode):
+CERTAINTY: The wasteland did not get lucky. Something shifted in the resource calculus with a precision that cannot be explained by chance. A cache appeared where none should exist. A route opened at the exact moment it mattered. The gain is real, immediate, and undeniable — and the cost arrives with equal certainty, without negotiation.
+MAGNITUDE: The invocation must produce a visible resource event that immediately creates a devastating secondary cost. The gain must be real. The loss must be worse. Everyone in the settlement or convoy must feel the tremor in their survival math.
+COLLATERAL REQUIREMENT: Scarcity events ripple through communities. Food stores shift, alliances realign, debts are called in, trust fractures along resource lines. At least two relationships or survival structures beyond the couple must be materially disrupted.
+ECHO MANDATE: The trade-off must haunt 2–3 subsequent scenes. The thing gained creates dependency. The thing lost creates desperation. Survival math changes for everyone, not just the lovers. No one forgets where the windfall came from or what it cost.
+APPROACH THE LINE: Push to the maximum allowable resource disruption — the kind that forces impossible choices between people, between survival and humanity, between the relationship and the group. The kind that makes someone say: we were better off before.
+HARD LIMITS: No limitless abundance. No world restoration. No institutional resurgence. No supernatural framing. Consequences must be concrete and physical. No Storyturn acceleration. No consent override.`,
+    instability: `TEMPT FATE WORLD LAW (DYSTOPIA — instability mode):
+CERTAINTY: The system did not glitch by accident. Something pushed back against the machinery with a force the regime was not designed to absorb. The disruption is immediate, visible, and cannot be attributed to normal variance. Internal investigators will look for a cause. They will not find one. That will make it worse.
+MAGNITUDE: The system cracks visibly. Surveillance gaps widen across an entire sector. Enforcement protocols contradict each other. Attention scores spike for citizens who did nothing. Bureaucratic chains of command stutter, issue conflicting orders, and expose the seams between departments. The invocation must feel like the regime's machinery skipped a gear — and everyone heard it.
+COLLATERAL REQUIREMENT: Instability radiates through institutional structures. Other citizens are affected — reassigned, flagged, interrogated, rewarded by accident. The couple's disruption creates collateral exposure for bystanders who had nothing to do with it. At least two system nodes beyond the couple must visibly malfunction or overreact.
+ECHO MANDATE: The regime adapts across 2–3 subsequent scenes. Enforcement tightens in response. New protocols emerge. The system learns from the disruption and closes the gap, creating new constraints that are worse than the old ones. The crack heals — but the scar tissue is harder than what was there before.
+APPROACH THE LINE: Push to the maximum credible systemic disruption — the kind that makes characters wonder, for one dangerous moment, whether the system might actually fail. It must not actually fail. But it must feel close enough to taste. Close enough that someone says it out loud.
+HARD LIMITS: Effects must destabilize systems, not annihilate them. Regime bends, never collapses. No regime overthrow. No divine justice. No permanent enforcement disable. The system adapts — it always adapts. No Storyturn acceleration. No consent override.`
   };
 
   function computeTemptFateSeverity() {
@@ -7969,6 +8557,23 @@ volatility_window: ${state.volatility_window?.active ? 'active (severity ' + (st
 
     // Hard guardrails — Tempt Fate is per-invocation only, never a persistent power state
     directive += `\nTempt Fate may not accelerate Storyturn stage, override intimacy authorization, override consent, or directly control love interest psychology.\n`;
+
+    // Three-tier magnitude identity: Petition < Tempt (Subtle) < Tempt (Default)
+    directive += `\nTEMPT FATE IDENTITY — DEFAULT MODE (tone: "the world flinched"):
+- Tempt Fate removes uncertainty. The outcome is guaranteed, immediate, and unmistakable. This is not luck. This is not coincidence. This is not assistance. Reality was forced.
+- Minimum impact: multiple characters affected, at least one system or structure visibly destabilized, consequences that cannot be contained within a single scene.
+- Collateral instability is required. Bystanders are materially affected. Institutions react. The shockwave echoes across 2–3 subsequent scenes.
+- Scene importance must rise at least one tier. The moment must feel dangerous.
+- Tempt Fate must never feel like coincidence, luck, assistance, or Petition Fate with extra adjectives. If it could be mistaken for a Petition result — a private nudge, a quiet tilt — it is categorically too small. Escalate until the world visibly flinches.
+
+TEMPT FATE IDENTITY — SUBTLE MODE (tone: "reality obeyed"):
+- Subtle Mode activates ONLY if the player's action text explicitly requests subtlety, precision, or narrow scope (e.g., "subtly," "quietly," "just this one thing," "without anyone noticing").
+- If no explicit subtlety request is present, use DEFAULT MODE above.
+- Subtle Mode removes uncertainty. The outcome is guaranteed, immediate, and deliberate — but narrow in scope.
+- Collateral damage is not required. Bystanders need not be affected. The effect may be contained to the petitioner's immediate situation.
+- However: Subtle Mode is NOT Petition Fate. The outcome must still be unmistakable within its scope — not ambiguous, not coincidental, not probabilistic. Reality was commanded, not nudged.
+- Subtle Mode reduces scale, not certainty. Reduces collateral, not force. Does not soften guardrails. Does not reduce saturation accumulation. Does not shorten volatility window.
+- If Subtle Tempt Fate output resembles Petition Fate (ambiguous, lucky, coincidental), rewrite upward until the certainty is unmistakable.\n`;
 
     return directive;
   }
@@ -10345,6 +10950,35 @@ GLOBAL INVARIANT: No tone may allow premature tension collapse.
               console.log('[ROMANCE:BOREDOM] Active play detected, resetting count');
           }
           state.passiveTurnCount = 0;
+      }
+
+      // Prehistoric cognitive modulation — scene-boundary friction adjustment
+      if (state.historicalCognitiveBand && state.picks?.world === 'Historical') {
+          const passiveCount = state.passiveTurnCount || 0;
+          const friction = passiveCount >= 5 ? 1.0 : passiveCount >= 3 ? 0.66 : passiveCount >= 1 ? 0.33 : 0;
+          state.historicalFrictionIndex = friction;
+
+          if (friction >= 0.66) {
+              // Sustained friction: increment modulation (capped at 0.6)
+              state.historicalCognitiveModulation = Math.min(0.6, state.historicalCognitiveModulation + 0.05);
+          } else if (friction <= 0.33 && state.historicalCognitiveModulation > 0.25) {
+              // Engagement stabilized: decay toward baseline
+              state.historicalCognitiveModulation = Math.max(0.25, state.historicalCognitiveModulation - 0.03);
+          }
+          // Floor: never below 0.1
+          state.historicalCognitiveModulation = Math.max(0.1, state.historicalCognitiveModulation);
+      }
+
+      // Dystopia attention escalation — scene-boundary only
+      if (state.dystopianAttentionLevel > 0 && state.picks?.world === 'Dystopia') {
+          const passiveCount = state.passiveTurnCount || 0;
+          if (passiveCount >= 3) {
+              // Compliance signals: gradual attention decrease (floor 0.05)
+              state.dystopianAttentionLevel = Math.max(0.05, state.dystopianAttentionLevel - 0.05);
+          } else if (passiveCount === 0) {
+              // Active engagement (potential defiance): attention increase (cap 1.0)
+              state.dystopianAttentionLevel = Math.min(1.0, state.dystopianAttentionLevel + 0.05);
+          }
       }
 
       return isPassive;
@@ -13548,10 +14182,20 @@ Return ONLY the title, no quotes or explanation.`;
               ? hasStorypassForCurrentStory()
               : false;
 
+      const resonanceState = getFateResonanceState();
+      const resonanceDisplay = resonanceState !== 'Quiet'
+          ? `<div><strong>Fate Resonance:</strong> ${resonanceState}</div>`
+          : '';
+
+      const echoCount = state.bonus_tempt_charges || 0;
+      const echoDisplay = `<div style="font-size:0.85em;color:rgba(218,165,32,0.55);margin-top:4px;">Echoes of the Heavens: ${echoCount}</div>`;
+
       el.innerHTML =
           `<div><strong>Tier:</strong> ${tier}</div>` +
           `<div><strong>Storypass (this story):</strong> ${hasStorypass ? 'Yes' : 'No'}</div>` +
-          `<div><strong>Fortunes:</strong> ${state.fortunes || 0}</div>`;
+          `<div><strong>Fortunes:</strong> ${state.fortunes || 0}</div>` +
+          resonanceDisplay +
+          echoDisplay;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -15189,6 +15833,19 @@ This is narrative pressure only.`;
       inputContext.fantasy_syzygy_location = FATELANDS_CANON.syzygy_location;
     }
 
+    // Historical Prehistoric cognitive context injection
+    if (state.historicalCognitiveBand) {
+      inputContext.historical_cognitive_band = state.historicalCognitiveBand;
+      inputContext.historical_cognitive_modulation = state.historicalCognitiveModulation;
+      inputContext.historical_band_meta = state._prehistoricBandMeta;
+    }
+
+    // Dystopia attention context injection
+    if (state.dystopianAttentionLevel > 0 && world === 'Dystopia') {
+      inputContext.dystopian_attention_level = state.dystopianAttentionLevel;
+      inputContext.dystopian_enforcement_mode = state.dystopianEnforcementMode;
+    }
+
     // Entropy injection — first active source wins (Blue Blood has variant-specific structure)
     if (state._blueBloodEntropy) {
       inputContext.entropy_axes = state._blueBloodEntropy;
@@ -15290,7 +15947,15 @@ HARD CONSTRAINTS:
 - Geography cannot be altered, relocated, renamed, or procedurally substituted under any entropy state.
 - Do not procedurally generate regions or randomly invent capitals.
 - If a region seat is null/unconfirmed, do not invent one — reference the region by name or describe its power center obliquely.
-- Entropy modifies pressure, not borders. Canon overrides modularity.`;
+- Entropy modifies pressure, not borders. Canon overrides modularity.
+
+DROWNED VEIN VISIBILITY:
+- The Drowned Vein is an underground river. It is not surface-visible and not reflective of celestial bodies.
+- Do not use the Drowned Vein for sky reflection metaphors. Public awareness of it is limited to Gloamwater Bay.
+
+LANDMARK GENERATION CONSTRAINT:
+- Do not invent major architectural landmarks (spires, towers, observatories, citadels, academies, temples) as canonical features unless explicitly defined in FATELANDS_CANON.
+- If a landmark is invented for a single story, treat it as a local, non-canonical structure. It must not persist across stories or be referenced as established geography.`;
     }
 
     // Modern Depth Engine (escalation discipline, not mechanics)
@@ -15324,7 +15989,13 @@ POWER & CONTROL DRIFT:
 
 NO EMOTIONAL RESET:
 - After betrayal, exposure, confession, or dominance shift: trust must shift, risk tolerance must change, fear must alter behavior, desire must carry consequence.
-- Escalation must feel cumulative.`;
+- Escalation must feel cumulative.
+
+MODERN WORLD ENGINE CONSTRAINT:
+- Modern baseline engine is social pressure. No cosmology. No sacrifice-based cost mechanics. No celestial mechanics. No destiny determinism.
+- Supernatural or superheroic flavors may introduce localized metaphysical effects (character-level powers, hidden abilities, transcendence). These are character-level or localized — never continent-defining, physics-rewriting, or cosmology-defining.
+- Supernatural effects must NOT: create rare-event flags, introduce sacrifice domains, alter world law, replace the social-pressure engine, or bleed from Fantasy (no Favor, no syzygy, no identity-sacrifice cost model).
+- All non-supernatural Modern flavors operate under pure social-pressure constraint with no metaphysical dimension.`;
     }
 
     // Historical Depth Engine (constraint discipline, not mechanics)
@@ -15364,6 +16035,40 @@ DUTY VS DESIRE:
 - Each romantic escalation must increase structural risk.
 - Avoid emotional reset between scenes.
 - Constraint is the engine of tension, not backdrop.`;
+
+      // Prehistoric Cognitive Ceiling (appended only for prehistoric era)
+      if (worldSubtype === 'prehistoric' && state.historicalCognitiveBand) {
+        const bandMeta = state._prehistoricBandMeta || {};
+        const mod = state.historicalCognitiveModulation || 0.25;
+        system += `
+
+PREHISTORIC COGNITIVE CEILING (MANDATORY — era: prehistoric, band: ${state.historicalCognitiveBand}):
+
+ABSTRACTION CEILING:
+- Maximum abstraction level: ${bandMeta.maxAbstraction || 'concrete_only'}.
+- Maximum dialogue density: ${bandMeta.dialogueLength || 'minimal'}.
+- Introspection depth: ${bandMeta.introspection || 'none'}.
+- Symbolic framing allowance: ${bandMeta.symbolism || 'none'}.
+- These ceilings are IMMUTABLE for this story. No mid-story cognitive escalation.
+
+HARD PROHIBITIONS:
+- No anachronistic psychology (no identity discourse, no self-actualization, no emotional vocabulary beyond somatic).
+- No philosophical reflection or existential questioning.
+- No destiny framing or fate mechanics.
+- No validated myth mechanics — myth language is allowed, myth physics are forbidden.
+- No cosmology. No rare-event systems. No magic. No prophecy engine.
+- No ideology vocabulary. No modern introspection.
+
+NARRATOR VS CHARACTER COGNITION:
+- The narrator may interpret with greater density than characters can express.
+- Narrator interpretive density is modulated at ${mod.toFixed(2)} (range 0.1–0.6).
+- Higher modulation permits richer sensory amplification, paragraph pacing variation, and scene rhythm — but NEVER increased abstraction ceiling, expanded dialogue grammar, or modern introspection.
+- Characters speak and think within band ceiling. The narrator contextualizes.
+
+CROSS-TRIBAL COGNITIVE CONTRAST:
+- If multiple tribes exist at differing developmental levels, each retains its own cognitive band.
+- Narration may highlight contrast between bands. Do not blend bands or allow upward evolution mid-story.`;
+      }
     }
 
     // Sci-Fi Discipline (world-level guidance, no mechanics)
@@ -15454,10 +16159,11 @@ IDENTITY DRIFT:
 - Edits alter self-perception and partner perception.
 - Changes create relational asymmetry.
 
-MEMORY INSTABILITY:
-- Edited memories leave residue, confusion, or emotional mismatch.
-- Deleted conflict may re-emerge as behavioral distortion.
-- Inserted affection may feel hollow or misaligned.
+HIVE SYNCHRONIZATION PRESSURE:
+- Cognitive conformity is infrastructure-based, not cosmic consciousness.
+- Networked thought pressure creates divergence detection — individuals who deviate are flagged.
+- Internalized compliance makes dissent feel like malfunction, not rebellion.
+- Hive synchronization is technological and social, never metaphysical or fate-binding.
 
 VERSION DISSONANCE:
 - Partners may fall out of sync developmentally.
@@ -15600,6 +16306,38 @@ No explicit gamification.
 No new entropy axes.
 No modification to Fate system.
 No alteration to Blue Blood precedence.`;
+    }
+
+    // Dystopia structural invariants and attention-aware enforcement (all subtypes)
+    if (world === 'Dystopia') {
+      const attLevel = state.dystopianAttentionLevel || 0.25;
+      const enfMode = state.dystopianEnforcementMode || 'mixed';
+      system += `
+
+DYSTOPIAN STRUCTURAL INVARIANTS (MANDATORY):
+- The system is larger than the couple. Romance does not permanently dismantle institutional control.
+- Escape may be temporary or partial. The system adapts to rebellion.
+- Victory is personal, not structural. No regime-overthrow arc is permitted.
+- No destiny narrative. No divine justice. No rare-event reset.
+- No cosmology or metaphysical intervention.
+- Dystopia operates through institutional, technological, social, mechanical, biological, or algorithmic enforcement only. Never metaphysical.
+
+SYSTEM ATTENTION LEVEL: ${attLevel.toFixed(2)} (enforcement mode: ${enfMode})
+- Attention reflects surveillance intensity, algorithmic scrutiny, social suspicion, resource auditing, and behavioral risk scoring.
+- Higher attention increases enforcement frequency, narrows safety windows, and escalates consequences for deviation.
+- Attention cannot trigger rare-event mechanics or cause structural collapse of the regime.
+
+SAFETY WINDOWS:
+- Temporary safety moments may occur: bureaucratic overload, surveillance blind spots, remote zones, infrastructure failure, algorithmic lag.
+- These are local and temporary. They do not dismantle the system. They do not permanently disable enforcement.
+- Safety windows become rarer as attention level increases.
+
+ENFORCEMENT SCALING (by mode):
+- Mechanical: reassignment, restriction, punitive labor.
+- Social: ostracization, denunciation, reputation degradation.
+- Algorithmic: risk score increase, access restriction, automated monitoring.
+- Biological: hormonal regulation, chemical compliance, neural suppression.
+- All enforcement must remain institutional and human-built. Never mystical.`;
     }
 
     // Cross-world meta-arc memory pressure (universal, all worlds)
@@ -17988,8 +18726,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if(state.mode === 'couple') window.coupleCleanup();
     if (window.stopSparkleCycle) window.stopSparkleCycle(); // Clear any active fate card sparkles
     state.mode = 'solo';
-    clearCurrentStoryId();
-    state.storyId = null;
+    // Preserve storyId on restart — only "New Story" flows generate new storyIds
+    // clearCurrentStoryId() and storyId null intentionally omitted
     state.access = state.subscribed ? 'sub' : 'free';
     syncTierFromAccess();
     localStorage.removeItem('sb_saved_story');
@@ -19327,6 +20065,22 @@ QUIETING EVENT DIRECTIVES:
                 values[Math.floor(Math.random() * values.length)];
             });
             console.log('[HISTORICAL_CORE] Entropy initialized:', JSON.stringify(state._historicalCoreEntropy));
+
+            // Prehistoric cognitive band assignment (immutable once set)
+            if (storyWorld === 'Historical' && (state.picks?.worldSubtype === 'prehistoric') && !state.historicalCognitiveBand) {
+              const bandMap = {
+                prehistoric_presymbolic:  { maxAbstraction: 'concrete_only',   dialogueLength: 'minimal',  introspection: 'none',    symbolism: 'none' },
+                prehistoric_early_tribal: { maxAbstraction: 'immediate_causal', dialogueLength: 'short',    introspection: 'somatic', symbolism: 'emergent' },
+                prehistoric_proto_mythic: { maxAbstraction: 'analogic',         dialogueLength: 'moderate', introspection: 'pattern', symbolism: 'allowed' },
+                prehistoric_oral_memory:  { maxAbstraction: 'narrative_causal', dialogueLength: 'extended', introspection: 'minimal', symbolism: 'structured' }
+              };
+              const bands = Object.keys(bandMap);
+              const selectedBand = bands[Math.floor(Math.random() * bands.length)];
+              state.historicalCognitiveBand = selectedBand;
+              state._prehistoricBandMeta = bandMap[selectedBand];
+              state.historicalCognitiveModulation = 0.25;
+              console.log('[HISTORICAL_CORE] Prehistoric cognitive band assigned:', selectedBand, bandMap[selectedBand]);
+            }
           }
 
           // Dystopia entropy initialization (single systemic axis) — once per story
@@ -19343,7 +20097,34 @@ QUIETING EVENT DIRECTIVES:
                 values[Math.floor(Math.random() * values.length)];
             });
             console.log('[DYSTOPIA_CORE] Entropy initialized:', JSON.stringify(state._dystopiaCoreEntropy));
+
+            // Dystopia attention level initialization (subtype-dependent baseline)
+            if (!state.dystopianAttentionLevel) {
+              const attentionBaselines = {
+                glass_house:    0.5,   // high baseline — total transparency
+                human_capital:  0.3,   // moderate — market surveillance
+                dogma:          0.4,   // moderate-high — doctrinal monitoring
+                quieting_event: 0.35,  // moderate — volatility detection
+                endless_edit:   0.2,   // low — passive identity monitoring
+                thirst:         0.3    // moderate — resource auditing
+              };
+              const enforcementModes = {
+                glass_house:    'social',
+                human_capital:  'algorithmic',
+                dogma:          'social',
+                quieting_event: 'biological',
+                endless_edit:   'algorithmic',
+                thirst:         'mechanical'
+              };
+              const sub = state.picks?.worldSubtype || 'human_capital';
+              state.dystopianAttentionLevel = attentionBaselines[sub] || 0.25;
+              state.dystopianEnforcementMode = enforcementModes[sub] || 'mixed';
+              console.log('[DYSTOPIA_CORE] Attention initialized:', state.dystopianAttentionLevel, 'mode:', state.dystopianEnforcementMode);
+            }
           }
+
+          // Fortune's Favor — initialize story-scoped spotlight tracking
+          initializeFortuneFavor();
 
           const worldFlavorDirectives = buildWorldFlavorDirectives(storyWorld, resolvedFlavors1);
 
@@ -23494,6 +24275,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Reset corridor state - SINGLE SOURCE OF TRUTH
     corridorActiveRowIndex = 0;
     corridorSelections.clear();
+    // Reset Fortune's Favor prelude gate so it re-triggers on next World visit
+    if (typeof resetFortuneFavorPrelude === 'function') resetFortuneFavorPrelude();
 
     // Clear breadcrumb row
     const breadcrumbRow = document.getElementById('breadcrumbRow');
@@ -24566,6 +25349,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             }
           });
           console.log('[Corridor] Identity mount: Restored mini-deck');
+        }
+
+        // WORLD MOUNT: Fortune's Favor prelude overlay
+        if (stage === 'world') {
+          showFortuneFavorPrelude();
         }
 
         // LENGTH MOUNT: Re-evaluate length locks (subscription may have changed)
@@ -29252,23 +30040,33 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * 5. Activate stance
    */
   async function invokeTemptFate() {
-      const cost = getTemptFateCost();
+      // Fortune's Favor — check for free bonus charges before paid path
+      let usedFreeCharge = false;
+      if (consumeFortuneFavorCharge()) {
+          usedFreeCharge = true;
+          // Free charge consumed — skip cost/confirm/deduction
+          showTemptShudder();
+          // Update sparkle state (may remove if last charge)
+          setTimeout(() => updateTemptFateSparkle(), 100);
+      } else {
+          const cost = getTemptFateCost();
 
-      // Check balance before confirmation
-      if ((state.fortunes || 0) < cost) {
-          alert(`Tempt Fate requires ${cost} Fortunes. You have ${state.fortunes || 0}.`);
-          return;
-      }
+          // Check balance before confirmation
+          if ((state.fortunes || 0) < cost) {
+              alert(`Tempt Fate requires ${cost} Fortunes. You have ${state.fortunes || 0}.`);
+              return;
+          }
 
-      // Cost confirmation
-      const confirmed = confirm(`Tempt Fate costs ${cost} Fortunes. Proceed?`);
-      if (!confirmed) return;
+          // Cost confirmation
+          const confirmed = confirm(`Tempt Fate costs ${cost} Fortunes. Proceed?`);
+          if (!confirmed) return;
 
-      // Atomic deduction
-      const burned = await consumeFortune(cost, 'tempt_fate');
-      if (!burned) {
-          alert('Fortune deduction failed. Tempt Fate aborted.');
-          return;
+          // Atomic deduction
+          const burned = await consumeFortune(cost, 'tempt_fate');
+          if (!burned) {
+              alert('Fortune deduction failed. Tempt Fate aborted.');
+              return;
+          }
       }
 
       // Set invocation flag + increment consecutive count
@@ -29280,13 +30078,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           state.has_triggered_first_tempt_fate = true;
       }
 
+      // Fate Resonance — account-level mythic aura increment (narrative only)
+      incrementFateResonance();
+
       // Activate stance for narrative directives
       state.stance = 'seduce';
       document.querySelectorAll('.meta-stance').forEach(b => b.classList.remove('active'));
       const btn = document.querySelector('.meta-stance[onclick="window.setMetaStance(\'seduce\')"]');
       if (btn) btn.classList.add('active');
 
-      console.log(`[TEMPT_FATE] Invoked. Cost: ${cost}, Consecutive: ${state.consecutive_tempt_fate_count}, Remaining Fortunes: ${state.fortunes}`);
+      console.log(`[TEMPT_FATE] Invoked. ${usedFreeCharge ? 'Cost: FREE (bonus charge)' : 'Cost: ' + getTemptFateCost()}, Consecutive: ${state.consecutive_tempt_fate_count}, Remaining Fortunes: ${state.fortunes}, Resonance: ${state.fate_resonance_intensity} (${getFateResonanceState()})`);
   }
 
   // --- BEGIN STORY VALIDATION GUARDRAIL ---
@@ -30532,6 +31333,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
     state.tempt_fate_invoked_this_turn = false;
     state.consecutive_tempt_fate_count = 0;
+    // Preserve scene5Granted through fortuneFavor reset (anti-farming for same storyId)
+    state._fortuneFavorScene5Cache = state.fortuneFavor?.scene5Granted || false;
+    state.fortuneFavor = null;
+    // Cosmic Sparkle UX — recompute sparkle after spotlight charge cleared
+    updateTemptFateSparkle();
 
     // Pre-set dropdowns silently (elements may be in unmounted corridor row)
     const _pgEl = $('playerGender'); if (_pgEl) _pgEl.value = 'Female';
@@ -30760,6 +31566,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
     state.tempt_fate_invoked_this_turn = false;
     state.consecutive_tempt_fate_count = 0;
+    // Preserve scene5Granted through fortuneFavor reset (anti-farming for same storyId)
+    state._fortuneFavorScene5Cache = state.fortuneFavor?.scene5Granted || false;
+    state.fortuneFavor = null;
+    // Cosmic Sparkle UX — recompute sparkle after spotlight charge cleared
+    updateTemptFateSparkle();
 
     // Update UI cards to reflect selections
     updateAllCardSelections();
@@ -35413,6 +36224,15 @@ ${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
       const classes = ['cover-keyhole-overlay', worldClass];
       if (hasSoulmates) classes.push('soulmates');
       if (flavorClass) classes.push(flavorClass);
+
+      // Fate Resonance visual expression (keyhole mark only, no reservoir/math changes)
+      if (state.keyhole?.marked) {
+        const resState = getFateResonanceState();
+        if (resState === 'Stirring')  classes.push('resonance-stirring');
+        if (resState === 'Resonant')  classes.push('resonance-resonant');
+        if (resState === 'Unstable')  classes.push('resonance-unstable');
+        if (resState === 'Thinning')  classes.push('resonance-thinning');
+      }
 
       // Apply the mask to the keyhole plate
       const maskUrl = `url("${maskPath}")`;
@@ -40414,6 +41234,13 @@ FATE CARD ADAPTATION (CRITICAL):
           lines.push('- Escalate stakes or shift probability in a way the reader can feel.');
           lines.push('- Do NOT treat this as flavor text. This is a forced narrative intervention.');
           lines.push('- This petition is consumed after this turn. Do not carry it forward.');
+          lines.push('PETITION FATE IDENTITY (tone: "the world leaned"):');
+          lines.push('- Petition Fate is indirect, probabilistic, and plausibly coincidental. The world tilts — it does not obey.');
+          lines.push('- Effects are personal-scale and contained. One character\'s luck shifts. A door opens or closes. A timing changes. A letter arrives or doesn\'t.');
+          lines.push('- No systemic instability. No structural strain. No visible rupture. No guaranteed outcome.');
+          lines.push('- Bystanders do not notice. Institutions do not react. The world does not flinch.');
+          lines.push('- If the outcome could be described as "the world obeyed" or "reality intervened" — it is too large. That is Tempt Fate. Scale it down to private coincidence.');
+          lines.push('- Petition Fate may assist. It must never shock.');
           petitionDirective = lines.join('\n');
       }
 
@@ -40535,6 +41362,9 @@ FATE CARD ADAPTATION (CRITICAL):
       // World Law + Saturation prompt directive
       const worldLawDirective = buildWorldLawDirective();
 
+      // Fate Resonance narrative directive (tone only, no math)
+      const fateResonanceDirective = buildFateResonanceDirective();
+
       // ═══════════════════════════════════════════════════════════════════
       // PASS ROUTING AUTHORITY — deterministic tier selection
       // ═══════════════════════════════════════════════════════════════════
@@ -40552,7 +41382,7 @@ FATE CARD ADAPTATION (CRITICAL):
         : `Structured State:\n${buildStructuredStateSummary()}`;
       const tierContext = passTier >= 3 ? context : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}\n\nTURN INSTRUCTIONS:
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -40964,6 +41794,12 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               console.log('[FORTUNE_SACRIFICE] Quill allowance decremented:', state.tempQuillAllowance, 'remaining');
           }
 
+          // Fortune's Favor — scene 5 unlock + 10k word depth reward
+          checkFortuneFavorSceneUnlock();
+          checkFortuneFavorWordReward();
+          // Cosmic Sparkle UX — sync button sparkle with bonus charge state
+          updateTemptFateSparkle();
+
           // Server-side tease guard: increment scene count after successful generation
           if (isTeaseTier()) {
               try {
@@ -41180,6 +42016,10 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           if (!state.tempt_fate_invoked_this_turn) {
               state.consecutive_tempt_fate_count = 0;
           }
+
+          // Fate Resonance decay (narrative-only, no gameplay math)
+          decayFateResonance();
+
           state.tempt_fate_invoked_this_turn = false;
           state.milestone_vision_fired_this_turn = false;
 
@@ -42445,7 +43285,8 @@ FATE CARD ADAPTATION (CRITICAL):
                   'arch:' + (state.archetype?.primary || '-'),
                   'access:' + (state.access || '-'),
                   'sub:' + (state.subscribed || false),
-                  'turns:' + (state.turnCount || 0)
+                  'turns:' + (state.turnCount || 0),
+                  'resonance:' + getFateResonanceState() + '(' + (state.fate_resonance_intensity || 0) + ')'
               ];
               log(info.join(' | '));
               console.log('[DevHUD] Full state:', JSON.parse(JSON.stringify(state)));
@@ -42885,22 +43726,35 @@ FATE CARD ADAPTATION (CRITICAL):
               // Dystopia core entropy debug
               if (state._dystopiaCoreEntropy) {
                   log('Flavor: Dystopia Core');
+                  log('  Subtype: ' + (state.picks?.worldSubtype || '(none)'));
                   Object.keys(state._dystopiaCoreEntropy).forEach(axis => {
                       log('  ' + axis + ': ' + state._dystopiaCoreEntropy[axis]);
                   });
                   if (state._strategyPass && state._strategyPass.active_entropy_axis) {
                       log('  Active Entropy Axis (this scene): ' + state._strategyPass.active_entropy_axis);
                   }
+                  if (state.dystopianAttentionLevel > 0) {
+                      const att = state.dystopianAttentionLevel;
+                      log('  Attention Level: ' + att.toFixed(2) + ' (' + (att >= 0.7 ? 'critical' : att >= 0.5 ? 'high' : att >= 0.3 ? 'moderate' : 'low') + ')');
+                      log('  Enforcement Mode: ' + (state.dystopianEnforcementMode || 'mixed'));
+                  }
               }
 
               // Historical core entropy debug
               if (state._historicalCoreEntropy) {
                   log('Flavor: Historical Core');
+                  log('  Era: ' + (state.picks?.worldSubtype || '(none)'));
                   Object.keys(state._historicalCoreEntropy).forEach(axis => {
                       log('  ' + axis + ': ' + state._historicalCoreEntropy[axis]);
                   });
                   if (state._strategyPass && state._strategyPass.active_entropy_axis) {
                       log('  Active Entropy Axis (this scene): ' + state._strategyPass.active_entropy_axis);
+                  }
+                  if (state.historicalCognitiveBand) {
+                      log('  Cognitive Band: ' + state.historicalCognitiveBand);
+                      log('  Cognitive Modulation: ' + (state.historicalCognitiveModulation || 0.25).toFixed(2));
+                      const friction = state.historicalFrictionIndex || 0;
+                      log('  Friction Index: ' + (friction >= 0.66 ? 'high' : friction >= 0.33 ? 'moderate' : 'low') + ' (' + friction.toFixed(2) + ')');
                   }
               }
 
