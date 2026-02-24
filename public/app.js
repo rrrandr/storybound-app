@@ -399,7 +399,7 @@ window.config = window.config || {
   }
 
   const PROFILE_COLUMNS = `
-    subscription_fortunes, purchased_fortunes, is_subscriber, subscription_tier, has_storypass,
+    tier, subscription_fortunes, purchased_fortunes, is_subscriber, subscription_tier, has_storypass,
     age_confirmed, tos_version, privacy_version, adult_ack_version,
     romance_preferences, free_story_consumed, first_tempt_fate_vision_triggered
   `;
@@ -422,10 +422,10 @@ window.config = window.config || {
   }
 
   function hydrateState(profile) {
-    state.tier = profile.tier || 'free';
-    state.subscribed = !!profile.subscribed;
+    state.tier = profile.tier || 'Taste';
+    state.subscribed = !!profile.is_subscriber;
     state.subscriptionTier = profile.subscription_tier || (state.subscribed ? 'storied' : null);
-    state.hasPass = !!profile.has_pass;
+    state.hasPass = !!profile.has_storypass;
     state.fortunes = (profile.subscription_fortunes || 0) + (profile.purchased_fortunes || 0);
     if (window.updateFortuneDisplay) window.updateFortuneDisplay();
     state.romancePreferences = Array.isArray(profile.romance_preferences) ? profile.romance_preferences : [];
@@ -435,7 +435,7 @@ window.config = window.config || {
     syncTierFromAccess();
     activateKeyholeMarkIfEligible();
     decayFateResonanceCrossSession();
-    console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.subscriptionTier, '| Keyhole:', state.keyhole?.marked, '| Fortunes:', state.fortunes, '| Resonance:', getFateResonanceState());
+    console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.tier, '| Keyhole:', state.keyhole?.marked, '| Fortunes:', state.fortunes, '| Resonance:', getFateResonanceState());
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -19364,19 +19364,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // Show fortune purchase modal
   function openFortunePurchaseModal() {
-      const modal = $('creditPurchaseModal');
+      const modal = $('fortunePurchaseModal');
       if (!modal) {
           console.error('[Fortunes] Purchase modal not found');
           return;
       }
-      const bal = $('creditModalBalance');
+      const bal = $('fortuneModalBalance');
       if (bal) bal.textContent = state.fortunes || 0;
       modal.classList.remove('hidden');
   }
 
   // Hide fortune purchase modal
   function closeFortunePurchaseModal() {
-      const modal = $('creditPurchaseModal');
+      const modal = $('fortunePurchaseModal');
       if (modal) modal.classList.add('hidden');
   }
 
@@ -40015,7 +40015,7 @@ Condensed (under ${maxLength} chars):` }
   function updateVizButtonStates() {
       const sceneKey = getSceneKey();
       const budget = getSceneBudget(sceneKey);
-      const credits = state.fortunes || 0;
+      const fortunes = state.fortunes || 0;
       const sceneVisualized = state.visual.visualizedScenes && state.visual.visualizedScenes[sceneKey];
 
       const vizBtn = document.getElementById('vizSceneBtn');
@@ -40026,7 +40026,7 @@ Condensed (under ${maxLength} chars):` }
 
       // Update Fortune display (numeric, always visible)
       if (fortuneCount) {
-          fortuneCount.textContent = credits;
+          fortuneCount.textContent = fortunes;
       }
 
       // ═══════════════════════════════════════════════════════════════════
@@ -40050,7 +40050,7 @@ Condensed (under ${maxLength} chars):` }
               vizBtn.classList.remove('is-loading');
           } else {
               // Default state — always clickable, shows Fortune count
-              const label = credits > 0 ? '✨ Summon Vision' : '✨ Summon Vision (1 Fortune)';
+              const label = fortunes > 0 ? '✨ Summon Vision' : '✨ Summon Vision (1 Fortune)';
               vizBtn.textContent = label;
               vizBtn.disabled = false;
               vizBtn.classList.remove('is-loading', 'is-finalized');
@@ -40063,7 +40063,7 @@ Condensed (under ${maxLength} chars):` }
               retryBtn.textContent = 'Finalized';
               retryBtn.disabled = true;
           } else {
-              retryBtn.textContent = credits > 0 ? 'Re-Summon' : 'Re-Summon (1 Fortune)';
+              retryBtn.textContent = fortunes > 0 ? 'Re-Summon' : 'Re-Summon (1 Fortune)';
               retryBtn.disabled = false;
               retryBtn.title = '';
           }

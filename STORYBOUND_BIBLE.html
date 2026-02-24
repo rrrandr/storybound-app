@@ -198,15 +198,15 @@ access: 'free'                // Resolved access level
 subscribed: false
 imageCredits: 0
 </code></pre>
-<h3>God Mode State</h3>
-<pre><code>godMode: {
+<h3>Tempt Fate State</h3>
+<pre><code>temptFate: {
   owned: false,
   tempGrantedAt: null,
   tempDurationHours: null,
   activeStoryId: null,
   tempExpiresAt: null
 }
-godModeActive: false          // Runtime toggle
+temptFateActive: false          // Runtime toggle
 </code></pre>
 <h3>Fate Card State</h3>
 <pre><code>fateOptions: []
@@ -605,7 +605,7 @@ unlockedFateIdx: [0, 1]
 - Banned controller verbs: lead, guide, push, force
 - Opening/closing sentence requirements validated per scene
 - In erotic scenes: Author reacts/comments, never causes action
-- God Mode variant adds adversarial framing (panic, desperation, cold rage)</p>
+- Tempt Fate variant adds adversarial framing (panic, desperation, cold rage)</p>
 <h2>7. Story Length (4 Types)</h2>
 <table>
 <thead>
@@ -794,7 +794,7 @@ unlockedFateIdx: [0, 1]
 <pre><code class="language-javascript">intimacyWindowOpen = isSexAllowedAtCurrentStoryturn() &amp;&amp;
                      turnCount &gt;= getMainPairIntimacyGateScene()
 
-mainPairAuthorized = godMode ||
+mainPairAuthorized = temptFate ||
                      (intimacyWindowOpen &amp;&amp;
                       (playerInitiated || intimacyTurnsInWindow &gt;= 2))
 
@@ -814,7 +814,7 @@ mainPairRestricted = sceneExplicitContext &amp;&amp; !mainPairAuthorized
 <h2>Intensity Guard (4 Branches)</h2>
 <p>Injected into the author system prompt based on authorization state:</p>
 <ol>
-<li><strong>God Mode</strong>: "IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY."</li>
+<li><strong>Tempt Fate</strong>: "IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY."</li>
 <li><strong>Main Pair Authorized</strong>: "Explicit intimacy is permitted. Maintain literary tone."</li>
 <li><strong>Scene Explicit Context</strong> (not main pair authorized): "Explicit embodiment permitted for side characters/dreams/background. MAIN PAIR RESTRICTION: Primary pair must NOT consummate."</li>
 <li><strong>Default</strong>: "Focus on tension, chemistry, emotional stakes, and near-misses. Fade to black if player escalates."</li>
@@ -918,7 +918,7 @@ mainPairRestricted = sceneExplicitContext &amp;&amp; !mainPairAuthorized
 <li><strong>Character information</strong>: Names, genders, pronouns, ages, ancestry</li>
 <li><strong>Archetype directives</strong>: From <code>buildArchetypeDirectives()</code> — primary + modifier + shadow clause</li>
 <li><strong>POV contract</strong>: POV-specific writing rules (especially detailed for 5th Person)</li>
-<li><strong>Intensity guard</strong>: 4-branch authorization (God Mode / authorized / scene context / default)</li>
+<li><strong>Intensity guard</strong>: 4-branch authorization (Tempt Fate / authorized / scene context / default)</li>
 <li><strong>Erotic gating directive</strong>: ST-aware escalation rules</li>
 <li><strong>Tone enforcement block</strong>: Tone-specific language requirements</li>
 <li><strong>Fate card resolution directive</strong>: If a fate card is active</li>
@@ -1029,8 +1029,8 @@ mainPairRestricted = sceneExplicitContext &amp;&amp; !mainPairAuthorized
 <li>Story length limits (word count ceiling)</li>
 <li>Completion permission (ST3+ cliffhanger enforcement for Tease)</li>
 <li>Renderer eligibility (entitlement check before SD render)</li>
-<li>God Mode access (subscription may grant temp access)</li>
-<li>Save slots and image credits</li>
+<li>Tempt Fate access (subscription may grant temp access)</li>
+<li>Save slots and Fortunes</li>
 </ul>
 <h2>What Gates Do NOT Control</h2>
 <ul>
@@ -1101,14 +1101,14 @@ mainPairRestricted = sceneExplicitContext &amp;&amp; !mainPairAuthorized
 <li>120-second expiry</li>
 </ul>
 <hr />
-<h1>PART XIV: GOD MODE</h1>
+<h1>PART XIV: TEMPT FATE</h1>
 <h2>What It Does</h2>
-<p>God Mode overrides all narrative pacing and safety guardrails:
+<p>Tempt Fate overrides all narrative pacing and safety guardrails:
 - Bypasses intimacy window (mainPairAuthorized = true always)
 - Bypasses scene gating
 - Bypasses safety directives
 - Bypasses intensity guards
-- Prompt: "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED."</p>
+- Prompt: "TEMPT FATE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED."</p>
 <h2>What It Does NOT Bypass</h2>
 <ul>
 <li>Monetization gates (completion/length/saves still enforced)</li>
@@ -1117,11 +1117,11 @@ mainPairRestricted = sceneExplicitContext &amp;&amp; !mainPairAuthorized
 </ul>
 <h2>Activation</h2>
 <ul>
-<li><code>state.godMode.owned</code>: Permanent grant (purchased)</li>
-<li><code>state.godMode.tempGrantedAt</code> + <code>tempDurationHours</code>: Temporary grant with decay</li>
-<li><code>getGodModePowerLevel(storyId)</code>: Returns 1.0 if owned, fractional decay if temp, 0 if expired</li>
-<li><code>#gameGodModeBtn</code>: Shown only in solo mode, uses DSP-Gold-Blk background</li>
-<li><code>#godModeToggle</code>: Plaque in control plane (separate element)</li>
+<li><code>state.temptFate.owned</code>: Permanent grant (purchased)</li>
+<li><code>state.temptFate.tempGrantedAt</code> + <code>tempDurationHours</code>: Temporary grant with decay</li>
+<li><code>getTemptFatePowerLevel(storyId)</code>: Returns 1.0 if owned, fractional decay if temp, 0 if expired</li>
+<li>Tempt Fate button: Shown only in solo mode, uses DSP-Gold-Blk background</li>
+<li>Tempt Fate toggle: Plaque in control plane</li>
 </ul>
 <hr />
 <h1>PART XV: UI SYSTEMS</h1>
@@ -1172,7 +1172,7 @@ mainPairRestricted = sceneExplicitContext &amp;&amp; !mainPairAuthorized
 <h2>Solo Mode</h2>
 <ul>
 <li>Single player, full agency</li>
-<li>God Mode button visible</li>
+<li>Tempt Fate button visible</li>
 <li>All story selections available</li>
 <li>Standard monetization gates apply</li>
 </ul>
@@ -1302,7 +1302,7 @@ Grace period: state.billingGraceUntil timestamp
 <tr>
 <td><code>DSP-Gold-Blk-1800x440.png</code></td>
 <td>—</td>
-<td>God Mode button</td>
+<td>Tempt Fate button</td>
 </tr>
 <tr>
 <td><code>burger-keyhole-ornate.png</code></td>

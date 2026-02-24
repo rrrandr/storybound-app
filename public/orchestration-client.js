@@ -417,7 +417,7 @@
    * Enforce monetization gates BEFORE any renderer call.
    * Returns the constraints that must be applied.
    */
-  // enforceMonetizationGates — controls ONLY completion, length, saves, credits.
+  // enforceMonetizationGates — controls ONLY completion, length, saves, fortunes.
   // Does NOT influence intimacy authorization in any way.
   function enforceMonetizationGates(accessTier) {
     const gate = MONETIZATION_GATES[accessTier];

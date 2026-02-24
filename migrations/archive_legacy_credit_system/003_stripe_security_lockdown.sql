@@ -1,3 +1,4 @@
+-- ARCHIVED: legacy credit system, superseded by fortunes migration (2026-02-20)
 -- =============================================================================
 -- STORYBOUND — STRIPE SECURITY LOCKDOWN MIGRATIONS
 -- Run in Supabase SQL Editor (Dashboard → SQL Editor → New Query)

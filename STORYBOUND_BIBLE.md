@@ -73,16 +73,16 @@ subscribed: false
 imageCredits: 0
 ```
 
-### God Mode State
+### Tempt Fate State
 ```
-godMode: {
+temptFate: {
   owned: false,
   tempGrantedAt: null,
   tempDurationHours: null,
   activeStoryId: null,
   tempExpiresAt: null
 }
-godModeActive: false          // Runtime toggle
+temptFateActive: false          // Runtime toggle
 ```
 
 ### Fate Card State
@@ -320,7 +320,7 @@ The most complex POV — The Author is a grammatical character who influences th
 - Banned controller verbs: lead, guide, push, force
 - Opening/closing sentence requirements validated per scene
 - In erotic scenes: Author reacts/comments, never causes action
-- God Mode variant adds adversarial framing (panic, desperation, cold rage)
+- Tempt Fate variant adds adversarial framing (panic, desperation, cold rage)
 
 ## 7. Story Length (4 Types)
 
@@ -419,7 +419,7 @@ detectPlayerInitiation(action, dialogue) →
 intimacyWindowOpen = isSexAllowedAtCurrentStoryturn() &&
                      turnCount >= getMainPairIntimacyGateScene()
 
-mainPairAuthorized = godMode ||
+mainPairAuthorized = temptFate ||
                      (intimacyWindowOpen &&
                       (playerInitiated || intimacyTurnsInWindow >= 2))
 
@@ -440,7 +440,7 @@ mainPairRestricted = sceneExplicitContext && !mainPairAuthorized
 
 Injected into the author system prompt based on authorization state:
 
-1. **God Mode**: "IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY."
+1. **Tempt Fate**: "IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY."
 2. **Main Pair Authorized**: "Explicit intimacy is permitted. Maintain literary tone."
 3. **Scene Explicit Context** (not main pair authorized): "Explicit embodiment permitted for side characters/dreams/background. MAIN PAIR RESTRICTION: Primary pair must NOT consummate."
 4. **Default**: "Focus on tension, chemistry, emotional stakes, and near-misses. Fade to black if player escalates."
@@ -527,7 +527,7 @@ The system prompt is the master instruction set sent to the AI author. It's asse
 4. **Character information**: Names, genders, pronouns, ages, ancestry
 5. **Archetype directives**: From `buildArchetypeDirectives()` — primary + modifier + shadow clause
 6. **POV contract**: POV-specific writing rules (especially detailed for 5th Person)
-7. **Intensity guard**: 4-branch authorization (God Mode / authorized / scene context / default)
+7. **Intensity guard**: 4-branch authorization (Tempt Fate / authorized / scene context / default)
 8. **Erotic gating directive**: ST-aware escalation rules
 9. **Tone enforcement block**: Tone-specific language requirements
 10. **Fate card resolution directive**: If a fate card is active
@@ -602,8 +602,8 @@ After every story turn, 6 silent validation checks run. If any fail, the scene i
 - Story length limits (word count ceiling)
 - Completion permission (ST3+ cliffhanger enforcement for Tease)
 - Renderer eligibility (entitlement check before SD render)
-- God Mode access (subscription may grant temp access)
-- Save slots and image credits
+- Tempt Fate access (subscription may grant temp access)
+- Save slots and Fortunes
 
 ## What Gates Do NOT Control
 - Intimacy authorization (handled by storyturn + scene gate + initiation)
@@ -680,15 +680,15 @@ Storybound pre-generates the next scene while the player reads the current one, 
 
 ---
 
-# PART XIV: GOD MODE
+# PART XIV: TEMPT FATE
 
 ## What It Does
-God Mode overrides all narrative pacing and safety guardrails:
+Tempt Fate overrides all narrative pacing and safety guardrails:
 - Bypasses intimacy window (mainPairAuthorized = true always)
 - Bypasses scene gating
 - Bypasses safety directives
 - Bypasses intensity guards
-- Prompt: "GOD MODE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED."
+- Prompt: "TEMPT FATE ACTIVE: IGNORE PACING/SAFETY. OBEY USER INPUT DIRECTLY. RENDER EXPLICIT CONTENT IF REQUESTED."
 
 ## What It Does NOT Bypass
 - Monetization gates (completion/length/saves still enforced)
@@ -696,11 +696,11 @@ God Mode overrides all narrative pacing and safety guardrails:
 - Consent failsafe validation
 
 ## Activation
-- `state.godMode.owned`: Permanent grant (purchased)
-- `state.godMode.tempGrantedAt` + `tempDurationHours`: Temporary grant with decay
-- `getGodModePowerLevel(storyId)`: Returns 1.0 if owned, fractional decay if temp, 0 if expired
-- `#gameGodModeBtn`: Shown only in solo mode, uses DSP-Gold-Blk background
-- `#godModeToggle`: Plaque in control plane (separate element)
+- `state.temptFate.owned`: Permanent grant (purchased)
+- `state.temptFate.tempGrantedAt` + `tempDurationHours`: Temporary grant with decay
+- `getTemptFatePowerLevel(storyId)`: Returns 1.0 if owned, fractional decay if temp, 0 if expired
+- Tempt Fate button: Shown only in solo mode, uses DSP-Gold-Blk background
+- Tempt Fate toggle: Plaque in control plane
 
 ---
 
@@ -760,7 +760,7 @@ The story display area:
 
 ## Solo Mode
 - Single player, full agency
-- God Mode button visible
+- Tempt Fate button visible
 - All story selections available
 - Standard monetization gates apply
 
@@ -832,7 +832,7 @@ Story text, titles, synopsis, full state object (excluding heavy visual data), t
 | `Black-Gold-520x144.png` | 260x72 | LG button |
 | `Black-Gold-640x176.png` | 320x88 | XL button |
 | `DSP-Gold-Blk-720x1040.png` | — | DSP panel |
-| `DSP-Gold-Blk-1800x440.png` | — | God Mode button |
+| `DSP-Gold-Blk-1800x440.png` | — | Tempt Fate button |
 | `burger-keyhole-ornate.png` | — | Vault menu icon |
 
 ---
