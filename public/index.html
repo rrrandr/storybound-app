@@ -58,15 +58,11 @@
   <div class="vault-panel">
     <button class="vault-x" onclick="document.getElementById('menuOverlay').classList.add('hidden')">&times;</button>
     <div class="vault-title">Your Vault</div>
-    <div class="vault-auth-row" style="display:flex; gap:8px; justify-content:center; margin-bottom:8px;">
-      <button id="vaultSignInBtn" class="sb-btn-png sm" onclick="document.getElementById('menuOverlay')?.classList.add('hidden'); document.getElementById('auth-panel')?.classList.remove('hidden');">Sign In</button>
-      <button id="vaultSignOutBtn" class="sb-btn-png sm">Sign Out</button>
-    </div>
+    <div id="vaultAuthRow" class="vault-auth-row" style="text-align:center; margin-bottom:8px;"></div>
     <div class="vault-tabs">
       <button class="vault-tab sb-btn-png md" data-vault-section="Account">Account</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Story">Story</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="Purchases">Purchases</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Appearance</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Story Appearance</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Help">Help</button>
     </div>
     <button id="vaultCloseBtn" class="sb-btn-png sm" style="margin-top:14px;">Close Vault</button>
@@ -78,7 +74,7 @@
     <div id="menuAuthSection"></div>
     <button id="menuProfileBtn" class="sb-btn-png sm">Profile</button>
     <button id="menuLibraryBtn" class="sb-btn-png sm">Library</button>
-    <button id="menuForbiddenLibraryBtn" class="sb-btn-png sm" style="opacity:0.4; cursor:not-allowed;" aria-disabled="true">Forbidden Library (Soon)</button>
+    <button class="sb-btn-png sm" onclick="window.changeTier()">Change Tier</button>
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
@@ -90,16 +86,9 @@
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
-  <!-- ── PURCHASES SUB-PANEL ── -->
-  <div id="vaultPurchases" class="vault-sub hidden">
-    <div class="vault-sub-title">Purchases</div>
-    <button class="sb-btn-png md" onclick="window.changeTier()">Change Tier</button>
-    <button class="vault-back sb-btn-png sm">Back</button>
-  </div>
-
   <!-- ── APPEARANCE SUB-PANEL ── -->
   <div id="vaultAppearance" class="vault-sub hidden">
-    <div class="vault-sub-title">Appearance</div>
+    <div class="vault-sub-title">Story Appearance</div>
 
     <label class="vault-label">Theme</label>
     <div class="vault-theme-row">
@@ -133,6 +122,13 @@
   <div id="vaultHelp" class="vault-sub hidden">
     <div class="vault-sub-title">Help</div>
     <p style="color:var(--ink); font-family:'Lora',serif; font-size:0.85em; margin:8px 0;">Support coming soon.</p>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+  <!-- ── LIBRARY SUB-PANEL ── -->
+  <div id="vaultLibrary" class="vault-sub hidden">
+    <div class="vault-sub-title">My Library</div>
+    <div id="vaultLibraryContent" style="min-height:80px; color:var(--ink,#eee); font-family:'Lora',serif; font-size:0.9em; text-align:center; margin:12px 0;"></div>
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
@@ -597,6 +593,9 @@
             </div>
             <div class="mode-card-sparkles"></div>
         </div>
+    </div>
+    <div style="text-align:center; margin-top:18px;">
+      <button id="forbiddenLibraryLanding" class="sb-btn-png sm" style="opacity:0.4; cursor:not-allowed; font-size:0.85em;" disabled title="Coming soon — public cover catalog. Reading requires login.">Forbidden Library (Coming Soon)</button>
     </div>
   </div>
 

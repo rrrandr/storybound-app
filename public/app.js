@@ -252,19 +252,6 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
     window.showScreen && window.showScreen('legalGate');
   });
 
-  // Vault Sign Out button handler
-  document.getElementById('vaultSignOutBtn')?.addEventListener('click', async () => {
-    console.log('[AUTH] Logging out');
-
-    try {
-      if (sb) await sb.auth.signOut();
-    } catch (err) {
-      console.error('[AUTH] Logout error:', err);
-    }
-
-    localStorage.clear();
-    location.reload();
-  });
 
   // Auth panel — sign in / sign up toggle
   let authMode = 'signin'; // 'signin' or 'signup'
@@ -1816,6 +1803,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     try {
       const userId = await ensureAnonSession();
       if (!userId || !sb) {
+        renderBurgerMenu();
         window.showScreen && window.showScreen('ageGate');
         return;
       }
@@ -1831,6 +1819,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
       // Forbidden Library admin gate — runs after _supabaseProfileId is set
       updateForbiddenLibraryBtn();
+      renderBurgerMenu();
 
       // DEV BYPASS — localhost only, ?devpass=storybound makes purchase buttons fake success
       const _host = window.location.hostname;
@@ -14236,23 +14225,40 @@ Return ONLY the title, no quotes or explanation.`;
       }
   }
 
-  // Render burger menu auth section — reflects Supabase session
+  // Render burger menu auth section + vault auth row — reflects Supabase session
   async function renderBurgerMenu() {
       const section = document.getElementById('menuAuthSection');
-      if (!section) return;
-      let label = 'Guest';
+      const authRow = document.getElementById('vaultAuthRow');
+      let email = null;
       if (sb) {
           try {
               const { data: { session } } = await sb.auth.getSession();
               const user = session?.user || null;
-              if (user) {
-                  label = user.email || 'Anonymous';
-              }
+              if (user) email = user.email || null;
           } catch (e) {
               console.warn('[Vault] session check failed:', e);
           }
       }
-      section.textContent = label.startsWith('Guest') ? 'Guest' : 'Signed in as ' + label;
+      const isAuthed = !!email;
+      if (section) section.textContent = isAuthed ? 'Signed in as ' + email : 'Guest';
+      if (authRow) {
+          if (isAuthed) {
+              authRow.innerHTML = `<div style="color:#ccc; font-family:'Lora',serif; font-size:0.85em; margin-bottom:6px;">Signed in as ${email}</div>`
+                  + `<button id="vaultSignOutBtn" class="sb-btn-png sm">Sign Out</button>`;
+              document.getElementById('vaultSignOutBtn')?.addEventListener('click', async () => {
+                  console.log('[AUTH] Logging out');
+                  try { if (sb) await sb.auth.signOut(); } catch (err) { console.error('[AUTH] Logout error:', err); }
+                  localStorage.clear();
+                  location.reload();
+              });
+          } else {
+              authRow.innerHTML = `<button id="vaultSignInBtn" class="sb-btn-png sm">Sign In</button>`;
+              document.getElementById('vaultSignInBtn')?.addEventListener('click', () => {
+                  document.getElementById('menuOverlay')?.classList.add('hidden');
+                  document.getElementById('auth-panel')?.classList.remove('hidden');
+              });
+          }
+      }
   }
 
   // NAV HELPER
@@ -19099,15 +19105,34 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       openProfileModal();
   });
 
-  // Library button
+  // Library button — opens library sub-panel inside Vault (no toast, no load)
   $('menuLibraryBtn')?.addEventListener('click', () => {
-      document.getElementById('menuOverlay')?.classList.add('hidden');
-      resetVaultState();
-      if (typeof window.continueStory === 'function') window.continueStory();
+      document.querySelectorAll('.vault-sub').forEach(s => s.classList.add('hidden'));
+      const lib = document.getElementById('vaultLibrary');
+      if (lib) lib.classList.remove('hidden');
+      renderVaultLibrary();
   });
 
-  // Forbidden Library — visible to all, clickable for admin only.
-  // _supabaseProfileId === session.user.id (set by ensureAnonSession → getSession).
+  function renderVaultLibrary() {
+      const el = document.getElementById('vaultLibraryContent');
+      if (!el) return;
+      if (!hasSavedStory()) {
+          el.innerHTML = '<p style="color:#999; margin-top:24px;">Saved stories will appear here.</p>';
+          return;
+      }
+      el.innerHTML = '<div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:12px;">'
+          + '<div class="vault-library-book" style="cursor:pointer; text-align:center; max-width:120px;">'
+          + '<div style="width:100px; height:150px; background:var(--gold,#c9a84c); border-radius:4px; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; font-family:\'Lora\',serif; font-size:0.75em; color:#000; padding:8px;">Saved Story</div>'
+          + '<span style="font-size:0.8em; color:var(--ink,#eee);">Continue</span>'
+          + '</div></div>';
+      el.querySelector('.vault-library-book')?.addEventListener('click', () => {
+          document.getElementById('menuOverlay')?.classList.add('hidden');
+          resetVaultState();
+          if (typeof window.continueStory === 'function') window.continueStory();
+      });
+  }
+
+  // Forbidden Library — landing page button (disabled for non-admin).
   // Admin check compares the Supabase auth user id against an allowlist.
   // Set window.__SB_ADMIN_USER_ID to your auth user UUID before app.js loads.
   const FORBIDDEN_LIBRARY_ADMIN_IDS = [
@@ -19115,41 +19140,22 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   ].filter(Boolean);
 
   function isForbiddenLibraryAdmin() {
-    // _supabaseProfileId is the auth session user.id, set in bootApp() from ensureAnonSession()
     return _supabaseProfileId && FORBIDDEN_LIBRARY_ADMIN_IDS.includes(_supabaseProfileId);
   }
 
-  // Upgrade button appearance if admin
   function updateForbiddenLibraryBtn() {
-    const btn = $('menuForbiddenLibraryBtn');
+    const btn = $('forbiddenLibraryLanding');
     if (!btn) return;
     if (isForbiddenLibraryAdmin()) {
       btn.style.opacity = '1';
       btn.style.cursor = 'pointer';
-      btn.setAttribute('aria-disabled', 'false');
-    } else {
-      btn.style.opacity = '0.4';
-      btn.style.cursor = 'not-allowed';
-      btn.setAttribute('aria-disabled', 'true');
+      btn.disabled = false;
     }
   }
 
-  $('menuForbiddenLibraryBtn')?.addEventListener('click', (e) => {
-      if (!isForbiddenLibraryAdmin()) {
-          e.preventDefault();
-          e.stopPropagation();
-          return;
-      }
-      document.getElementById('menuOverlay')?.classList.add('hidden');
-      resetVaultState();
+  $('forbiddenLibraryLanding')?.addEventListener('click', () => {
+      if (!isForbiddenLibraryAdmin()) return;
       document.getElementById('forbiddenLibraryModal')?.classList.remove('hidden');
-  });
-
-  $('menuForbiddenLibraryBtn')?.addEventListener('keydown', (e) => {
-      if (!isForbiddenLibraryAdmin() && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
-          e.stopPropagation();
-      }
   });
 
   $('forbiddenLibraryCloseBtn')?.addEventListener('click', () => {
