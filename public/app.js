@@ -19148,14 +19148,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (!btn) return;
     if (isForbiddenLibraryAdmin()) {
       btn.style.opacity = '1';
-      btn.style.cursor = 'pointer';
-      btn.disabled = false;
+      btn.setAttribute('aria-disabled', 'false');
     }
   }
 
   $('forbiddenLibraryLanding')?.addEventListener('click', () => {
-      if (!isForbiddenLibraryAdmin()) return;
-      document.getElementById('forbiddenLibraryModal')?.classList.remove('hidden');
+      if (isForbiddenLibraryAdmin()) {
+          document.getElementById('forbiddenLibraryModal')?.classList.remove('hidden');
+      } else {
+          showToast('Coming soon\u2026');
+      }
   });
 
   $('forbiddenLibraryCloseBtn')?.addEventListener('click', () => {
