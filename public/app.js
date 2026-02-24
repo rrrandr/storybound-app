@@ -422,7 +422,7 @@ window.config = window.config || {
   }
 
   function hydrateState(profile) {
-    state.tier = profile.tier || 'Taste';
+    state.tier = profile.tier || 'free';
     state.subscribed = !!profile.is_subscriber;
     state.subscriptionTier = profile.subscription_tier || (state.subscribed ? 'storied' : null);
     state.hasPass = !!profile.has_storypass;
@@ -14301,6 +14301,7 @@ Return ONLY the title, no quotes or explanation.`;
       if (!el) return;
 
       const tier = state.tier || 'free';
+      const tierDisplay = tier === 'free' ? 'Taste' : tier;
       const hasStorypass =
           typeof hasStorypassForCurrentStory === 'function'
               ? hasStorypassForCurrentStory()
@@ -14315,7 +14316,7 @@ Return ONLY the title, no quotes or explanation.`;
       const echoDisplay = `<div style="font-size:0.85em;color:rgba(218,165,32,0.55);margin-top:4px;">Echoes of the Heavens: ${echoCount}</div>`;
 
       el.innerHTML =
-          `<div><strong>Tier:</strong> ${tier}</div>` +
+          `<div><strong>Tier:</strong> ${tierDisplay}</div>` +
           `<div><strong>Storypass (this story):</strong> ${hasStorypass ? 'Yes' : 'No'}</div>` +
           `<div><strong>Fortunes:</strong> ${state.fortunes || 0}</div>` +
           resonanceDisplay +
