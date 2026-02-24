@@ -2105,6 +2105,19 @@ Introduce the name naturally within the first few paragraphs — do not announce
       }
 
       function goToNextPage() {
+          // Page-curl intercept chain: Title → Frontispiece → Setting Plate → Scene text
+          if (typeof window.dismissTitlePage === 'function' && window._titlePageActive) {
+              window.dismissTitlePage();
+              return;
+          }
+          if (typeof window.dismissFatelandsFrontispiece === 'function' && window._frontispieceActive) {
+              window.dismissFatelandsFrontispiece();
+              return;
+          }
+          if (typeof window.dismissSettingPlate === 'function' && window._settingPlateActive) {
+              window.dismissSettingPlate();
+              return;
+          }
           if (isAnimating || currentPageIndex >= pages.length - 1) return;
           currentPageIndex++;
           renderCurrentPage(true, 'forward');
@@ -2977,14 +2990,14 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
     sovereign: "The High Court of Vaelryn Reach is the ritual sovereign authority of the central continent. Its authority is legal, ceremonial, historically entrenched, and politically contested. It is not absolute imperial control.",
     rivers: ["The Long Thread", "The Ascendant Run", "The Drowned Vein"],
     regions: {
-      vaelryn_reach:      { seat: "The High Court",                   governance: "Human monarchy claiming Favor-legitimacy",              status: "Ritual sovereign center",                                    reality: null,                                                        magicBias: "ceremonial" },
-      the_ashen_verge:    { seat: "War Marshal's Hold",               governance: "Militarized vassal province",                           status: "Answers to Vaelryn in law",                                  reality: "Operates with significant military autonomy",               magicBias: "battle" },
-      the_thornwild:      { seat: null,                                governance: "First Favored cultural heartland",                      status: "Recognizes High Court ritual legitimacy",                    reality: "Politically independent in practice",                       magicBias: "primal" },
-      lytharyn:           { seat: "Lytharyn",                          governance: "Arcane city-state",                                     status: "Independent",                                                reality: "Influences all regions through knowledge control",          magicBias: "scholarly" },
-      pulse_point:        { seat: "Pulse Point",                       governance: "Chartered maritime trade authority",                    status: "Recognizes High Court ceremonially",                         reality: "Economically autonomous",                                  magicBias: "mercantile" },
-      gloamwater_bay:     { seat: null,                                governance: "Tidal enclave of altered beings",                       status: "Outside conventional governance",                            reality: null,                                                        magicBias: "tidal" },
-      the_shackle_isles:  { seat: null,                                governance: "Politically fragmented",                                status: "Some swear fealty to Vaelryn, others do not",                reality: null,                                                        magicBias: "bound",   islands: ["Blackmoor", "Quiet Chain", "Cinderwake", "Sanctum Reeve"] },
-      the_veilwood:       { seat: null,                                governance: "Unknown",                                               status: "Outside political structure",                                reality: null,                                                        magicBias: "occult" }
+      vaelryn_reach:      { seat: "The High Court",                   governance: "Human monarchy claiming Favor-legitimacy",              status: "Ritual sovereign center",                                    reality: null,                                                        magicBias: "ceremonial",  position: "Northern mountain high peaks; High Court at highest peak",                          coastal: false, borders: ["the_ashen_verge", "the_veilwood"] },
+      the_ashen_verge:    { seat: "War Marshal's Hold",               governance: "Militarized vassal province",                           status: "Answers to Vaelryn in law",                                  reality: "Operates with significant military autonomy",               magicBias: "battle",      position: "Western inland frontier, between Vaelryn Reach and the central basin",             coastal: false, borders: ["vaelryn_reach", "lytharyn"] },
+      the_thornwild:      { seat: null,                                governance: "First Favored cultural heartland",                      status: "Recognizes High Court ritual legitimacy",                    reality: "Politically independent in practice",                       magicBias: "primal",      position: "Eastern interior forest, separate from the Veilwood",                              coastal: false, borders: ["the_veilwood", "pulse_point"] },
+      lytharyn:           { seat: "Lytharyn",                          governance: "Arcane city-state",                                     status: "Independent",                                                reality: "Influences all regions through knowledge control",          magicBias: "scholarly",   position: "Western coast, opposite side of continent from Gloamwater Bay",                    coastal: true,  borders: ["the_ashen_verge"] },
+      pulse_point:        { seat: "Pulse Point",                       governance: "Chartered maritime trade authority",                    status: "Recognizes High Court ceremonially",                         reality: "Economically autonomous",                                  magicBias: "mercantile",  position: "Southern meridian coast",                                                          coastal: true,  borders: ["the_thornwild", "gloamwater_bay"] },
+      gloamwater_bay:     { seat: null,                                governance: "Tidal enclave of altered beings",                       status: "Outside conventional governance",                            reality: null,                                                        magicBias: "tidal",       position: "Eastern coast, receives the Drowned Vein",                                         coastal: true,  borders: ["the_thornwild", "pulse_point"] },
+      the_shackle_isles:  { seat: null,                                governance: "Politically fragmented",                                status: "Some swear fealty to Vaelryn, others do not",                reality: null,                                                        magicBias: "bound",       position: "Offshore archipelago south of the mainland coast",                                 coastal: true,  borders: [],  islands: ["Blackmoor", "Quiet Chain", "Cinderwake", "Sanctum Reeve"] },
+      the_veilwood:       { seat: null,                                governance: "Unknown",                                               status: "Outside political structure",                                reality: null,                                                        magicBias: "occult",      position: "Northeast of the central basin, between Vaelryn Reach and the Thornwild",          coastal: false, borders: ["vaelryn_reach", "the_thornwild"] }
     },
     demographics: {
       rule: "All regions contain mixed populations. Humans are majority across the continent.",
@@ -2997,16 +3010,16 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
       controversial: 1,
       invariant_rules: [
         "The 13th moon is controversial.",
-        "The 13th may appear during surges.",
+        "The 13th moon is only clearly visible over Fate's Favor during Syzygy; otherwise denied or obscured.",
         "No moon names are defined.",
         "Moons do not introduce alternate magic systems."
       ]
     },
     syzygy_location: "The Ascendant Run",
     river_courses: {
-      "The Long Thread":   "Runs through the central basin, feeding Vaelryn Reach and the Thornwild",
-      "The Ascendant Run": "Descends from highland sources through the Veilwood",
-      "The Drowned Vein":  "Empties into Gloamwater Bay, carrying altered currents"
+      "The Long Thread":   "Flows south from Vaelryn Reach into the central basin toward Fate's Favor, feeding the Thornwild along its eastern reach",
+      "The Ascendant Run": "Descends from the northeast (Veilwood highlands) into the central basin toward Fate's Favor; reverses outward only during Syzygy",
+      "The Drowned Vein":  "Underground river flowing east beneath the basin, surfacing only at Gloamwater Bay on the eastern coast"
     },
     drowned_vein_visibility: {
       surface_visible: false,
@@ -3035,10 +3048,19 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
   //    geography. The realm name never changes.
   //
   // II. GEOGRAPHIC INVARIANTS
-  //    Fate's Favor remains central. River courses are fixed:
-  //      The Long Thread → into Fate's Favor
-  //      The Ascendant Run → from Fate's Favor toward Veilwood
-  //      The Drowned Vein → links to Gloamwater Bay
+  //    Fate's Favor = central basin ringed by black peaks. River courses are fixed:
+  //      The Long Thread → south from Vaelryn Reach into Fate's Favor
+  //      The Ascendant Run → from Veilwood highlands (NE) into basin; reverses only during Syzygy
+  //      The Drowned Vein → underground, surfaces at Gloamwater Bay (eastern coast)
+  //    Spatial layout (fixed, matches canonical map):
+  //      Vaelryn Reach = northern mountain high peaks (High Court at highest peak)
+  //      Ashen Verge = western inland frontier (does NOT border Thornwild)
+  //      Veilwood = northeast of basin, between Vaelryn Reach and Thornwild
+  //      Thornwild = eastern interior forest (separate from Veilwood)
+  //      Lytharyn = western coast (opposite side from Gloamwater Bay)
+  //      Pulse Point = southern meridian coast
+  //      Gloamwater Bay = eastern coast (receives Drowned Vein)
+  //      Shackle Isles = offshore archipelago south of mainland
   //    Canonical regions (exactly 8): vaelryn_reach, the_ashen_verge,
   //    lytharyn, the_thornwild, the_veilwood, pulse_point, gloamwater_bay,
   //    the_shackle_isles. No additional regions may be generated. No region
@@ -4285,7 +4307,15 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       flingClimaxDone: false,
       flingConsequenceShown: false,
       storyEnded: false,
-      
+      book_complete: false,
+      book_number: 1,
+      series_id: null,
+      previous_story_id: null,
+      main_characters_locked: null,
+      book1_continuity_summary: null,
+      book_subhead: null,
+      world_cycle_label: null,
+
       fortunes: 0,
 
       billingStatus: 'active',
@@ -4319,6 +4349,9 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       has_triggered_first_tempt_fate: false,
       milestone_vision_fired_this_turn: false,
       _syzygyOccurred: false,
+      _fantasyMapInjected: false,
+      _synopsisBlurb: null,
+      _titlePageShown: false,
 
       // Historical Prehistoric cognitive system (per-story, immutable once set)
       historicalCognitiveBand: null,           // prehistoric_presymbolic | prehistoric_early_tribal | prehistoric_proto_mythic | prehistoric_oral_memory
@@ -12837,6 +12870,660 @@ Return ONLY the title, no quotes or explanation.`;
       }
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // STORY END PAGE — Shown when a book completes
+  // Hides all interactive story elements; shows "Start Book 2" CTA
+  // ════════════════════════════════════════════════════════════════════
+
+  // IDs of elements to hide when End Page is active
+  const _END_PAGE_HIDE_IDS = [
+      'fateCardHeader', 'cardMount', 'metaControls',
+      'actionWrapper', 'dialogueWrapper', 'submitBtn', 'saveBtn',
+      'gameIntensity', 'edgeCovenantBtn', 'fortuneBalanceDisplay'
+  ];
+
+  function showStoryEndPage() {
+      const endPage = document.getElementById('storyEndPage');
+      if (!endPage) return;
+
+      // Populate title
+      const titleEl = endPage.querySelector('.sb-end-page-title');
+      if (titleEl) {
+          titleEl.textContent = document.getElementById('storyTitle')?.textContent || state.story?.title || 'Untitled';
+      }
+
+      // Hide interactive elements
+      _END_PAGE_HIDE_IDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+      });
+      // Also hide the parent containers of input/submit
+      const inputGrid = document.querySelector('#storyContent > div[style*="grid-template-columns"]');
+      if (inputGrid) inputGrid.style.display = 'none';
+      // Hide submit/save row and fortune row
+      const submitRow = document.getElementById('submitBtn')?.parentElement;
+      if (submitRow) submitRow.style.display = 'none';
+      const fortuneRow = document.getElementById('edgeCovenantBtn')?.parentElement;
+      if (fortuneRow) fortuneRow.style.display = 'none';
+
+      endPage.classList.remove('hidden');
+
+      // Set book state
+      state.book_complete = true;
+      saveStorySnapshot();
+
+      console.log('[END-PAGE] Story End Page shown (Book ' + (state.book_number || 1) + ' complete)');
+  }
+
+  function hideStoryEndPage() {
+      const endPage = document.getElementById('storyEndPage');
+      if (endPage) endPage.classList.add('hidden');
+
+      // Restore interactive elements (for new story / Book 2)
+      _END_PAGE_HIDE_IDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = '';
+      });
+      const inputGrid = document.querySelector('#storyContent > div[style*="grid-template-columns"]');
+      if (inputGrid) inputGrid.style.display = '';
+      const submitRow = document.getElementById('submitBtn')?.parentElement;
+      if (submitRow) submitRow.style.display = '';
+      const fortuneRow = document.getElementById('edgeCovenantBtn')?.parentElement;
+      if (fortuneRow) fortuneRow.style.display = '';
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  // SHARED: Archive completed story + show cover interstitial
+  // ════════════════════════════════════════════════════════════════════
+
+  async function _archiveAndShowInterstitial() {
+      state.book_complete = true;
+      const book1StoryId = state.storyId;
+      const book1Title = document.getElementById('storyTitle')?.textContent || state.story?.title || 'Untitled';
+
+      // Lock main characters from current story
+      state.main_characters_locked = {
+          playerName: state.picks?.identity?.playerName || 'Protagonist',
+          partnerName: state.picks?.identity?.partnerName || 'Love Interest',
+          displayPlayerName: state.picks?.identity?.displayPlayerName || 'Protagonist',
+          displayPartnerName: state.picks?.identity?.displayPartnerName || 'Love Interest',
+          playerGender: state.gender || 'Female',
+          partnerGender: state.loveInterest || 'Male',
+          playerPronouns: state.authorPronouns || 'She/Her',
+          partnerPronouns: (state.loveInterest === 'Female' ? 'She/Her' : state.loveInterest === 'Male' ? 'He/Him' : 'They/Them')
+      };
+
+      // Generate series_id if not set
+      if (!state.series_id) {
+          state.series_id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+              ? crypto.randomUUID()
+              : 'series_' + Date.now().toString(36);
+      }
+
+      // Build continuity summary from last scenes
+      const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const endingText = allContent.slice(-2000);
+      try {
+          const summary = await callChat([{role:'user', content:`Summarize this story ending for a sequel author. Include:
+1. Where the relationship stands (emotional state of both characters)
+2. Any unresolved conflicts, secrets, or looming threats
+3. Key plot threads left dangling
+4. The emotional tone at the end
+
+Keep it under 300 words. This is internal metadata, not reader-facing text.
+
+Story ending excerpt:
+${endingText}`}]);
+          state.book1_continuity_summary = (summary || '').trim();
+      } catch (e) {
+          console.warn('[ARCHIVE] Continuity summary generation failed:', e.message);
+          state.book1_continuity_summary = 'Previous story ended. Continue in this world.';
+      }
+
+      // Generate world_cycle_label — the emotional epoch of this world (Book 1 only)
+      if ((state.book_number || 1) === 1) {
+          const _CYCLE_FORM_WORDS = ['Epic', 'Chronicle', 'Legend', 'Affair', 'Saga', 'Reckoning', 'Covenant', 'Catastrophe', 'Rebellion', 'Devotion', 'Collapse', 'Dominion'];
+          const _CYCLE_TONE_WORDS = ['Asunder', 'Reckoning', 'Devotion', 'Collapse', 'Rebellion', 'Covenant', 'Betrayal', 'Turning', 'Ascendance', 'Dominion', 'Fracture', 'Surrender', 'Awakening', 'Unraveling', 'Cataclysm', 'Eclipse'];
+          const _formSet = new Set(_CYCLE_FORM_WORDS);
+
+          // Simple non-crypto hash for stable deterministic fallback
+          function _hashString(s) {
+              let h = 0;
+              for (let i = 0; i < s.length; i++) {
+                  h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+              }
+              return Math.abs(h);
+          }
+
+          // Validate candidate label against strict format rules
+          function _validateCycleLabel(candidate, wName) {
+              if (typeof candidate !== 'string') return false;
+              const parts = candidate.split(/\s+/);
+              // "A" + WorldName (1+ tokens) + ToneWord + FormWord = at least 4 tokens
+              if (parts.length < 4 || parts[0] !== 'A') return false;
+              // Only letters, spaces, apostrophes allowed
+              if (!/^[A-Za-z\s']+$/.test(candidate)) return false;
+              const formWord = parts[parts.length - 1];
+              const toneWord = parts[parts.length - 2];
+              // FormWord must be from closed set
+              if (!_formSet.has(formWord)) return false;
+              // ToneWord must differ from FormWord
+              if (toneWord === formWord) return false;
+              // WorldName tokens must match exactly
+              const worldTokens = wName.split(/\s+/);
+              const candidateWorld = parts.slice(1, 1 + worldTokens.length).join(' ');
+              if (candidateWorld !== wName) return false;
+              return true;
+          }
+
+          const worldName = state.picks?.world || 'Unknown';
+          const tonePick = state.picks?.tone || 'Earnest';
+          const genrePick = state.picks?.genre || '';
+          const intensityPick = state.intensity || 'Steamy';
+          const continuitySnippet = (state.book1_continuity_summary || '').slice(0, 400);
+          const cycleSeed = book1StoryId || state.storyId || 'fallback';
+
+          const _cyclePrompt = `Generate a world_cycle_label for a completed romance novel.
+
+Context:
+- World name: ${worldName}
+- Tone: ${tonePick}
+- Genre: ${genrePick}
+- Intensity: ${intensityPick}
+- Emotional resolution summary: ${continuitySnippet}
+
+STRICT FORMAT: "A {WorldName} {ToneWord} {FormWord}"
+
+RULES:
+- WorldName MUST be exactly "${worldName}" — do not invent names.
+- ToneWord: single evocative word reflecting the dominant emotional outcome. Examples: Asunder, Reckoning, Devotion, Collapse, Rebellion, Covenant, Betrayal, Turning, Ascendance, Dominion, Fracture, Surrender, Awakening, Unraveling, Cataclysm, Eclipse.
+- FormWord: MUST be one of: Epic, Chronicle, Legend, Affair, Saga, Reckoning, Covenant, Catastrophe, Rebellion, Devotion, Collapse, Dominion.
+- ToneWord and FormWord must be DIFFERENT words.
+- 3–5 words after "A". No punctuation. Literary and mythic.
+- Do NOT mention characters, geography, book numbers, or mechanics.
+
+Return ONLY valid JSON:
+{"world_cycle_label": "A ${worldName} ... ..."}`;
+
+          let labelSet = false;
+          for (let attempt = 0; attempt < 2 && !labelSet; attempt++) {
+              try {
+                  const cycleRaw = await callChat([{role:'user', content: _cyclePrompt}]);
+                  const parsed = JSON.parse((cycleRaw || '').trim());
+                  if (_validateCycleLabel(parsed.world_cycle_label, worldName)) {
+                      state.world_cycle_label = parsed.world_cycle_label;
+                      labelSet = true;
+                  } else {
+                      console.warn('[ARCHIVE] world_cycle_label validation failed (attempt ' + (attempt + 1) + '):', parsed.world_cycle_label);
+                  }
+              } catch (e) {
+                  console.warn('[ARCHIVE] world_cycle_label attempt ' + (attempt + 1) + ' error:', e.message);
+              }
+          }
+
+          // Stable deterministic fallback seeded by storyId
+          if (!labelSet) {
+              const h = _hashString(cycleSeed);
+              let tIdx = h % _CYCLE_TONE_WORDS.length;
+              let fIdx = h % _CYCLE_FORM_WORDS.length;
+              // Ensure ToneWord != FormWord
+              if (_CYCLE_TONE_WORDS[tIdx] === _CYCLE_FORM_WORDS[fIdx]) {
+                  fIdx = (fIdx + 1) % _CYCLE_FORM_WORDS.length;
+              }
+              state.world_cycle_label = 'A ' + worldName + ' ' + _CYCLE_TONE_WORDS[tIdx] + ' ' + _CYCLE_FORM_WORDS[fIdx];
+              console.warn('[ARCHIVE] world_cycle_label using fallback:', state.world_cycle_label);
+          }
+      }
+      // else: Book 2+ inherits label from Book 1 (already in state)
+      console.log('[ARCHIVE] world_cycle_label:', state.world_cycle_label);
+
+      // Final save (immutable snapshot)
+      saveStorySnapshot();
+      // Archive under separate key so clearStoryContent() won't erase it
+      try {
+          const snap = localStorage.getItem('sb_saved_story');
+          if (snap) {
+              localStorage.setItem('sb_book1_archive_' + (state.series_id || book1StoryId || 'unknown'), snap);
+          }
+      } catch(e) { console.warn('[ARCHIVE] Archive save failed:', e.message); }
+
+      // Show interstitial with cover
+      hideStoryEndPage();
+      const interstitial = document.getElementById('book1CompleteInterstitial');
+      if (interstitial) {
+          const coverSrc = document.getElementById('bookCoverImg')?.src || '';
+          const interCoverImg = document.getElementById('book1CoverImg');
+          if (interCoverImg && coverSrc) interCoverImg.src = coverSrc;
+          const interTitle = interstitial.querySelector('.sb-book1-interstitial-title');
+          if (interTitle) interTitle.textContent = book1Title;
+          interstitial.classList.remove('hidden');
+      }
+      // Reset continue button state
+      const continueBtn = document.getElementById('btnBook1InterstitialContinue');
+      if (continueBtn) { continueBtn.classList.add('hidden'); continueBtn.textContent = 'Continue'; }
+      const statusEl = document.getElementById('book2PrepStatus');
+      if (statusEl) statusEl.textContent = 'Preparing your next story...';
+
+      return { book1StoryId, book1Title, interstitial, continueBtn, statusEl };
+  }
+
+  // Shared: reset story-specific state fields (preserves subscription/payment)
+  function _resetStoryState() {
+      state.storyEnded = false;
+      state.book_complete = false;
+      state.turnCount = 0;
+      state.storyId = null;
+      state._loggedStoryStart = false;
+      state._loggedScene3 = false;
+      state._loggedScene6 = false;
+      state._loggedPetitionOpen = false;
+      state._loggedPetitionSubmit = false;
+      state._fantasyMapInjected = false;
+      state._titlePageShown = false;
+      state._synopsisBlurb = null;
+      state._synopsisMetadata = null;
+      state.flingClimaxDone = false;
+      state.flingConsequenceShown = false;
+      state.cautiousStreak = 0;
+      state.dynamicDominanceBoost = 0;
+      state.vulnerabilityPulse = 0;
+      state.storyStage = null;
+      state.intimacyInterrupted = { first_kiss: false, first_intimacy: false };
+      state.intimacyTurnsInWindow = 0;
+      state.storyId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : 'sb_' + Date.now().toString(36);
+      localStorage.setItem('sb_current_story_id', state.storyId);
+  }
+
+  // Shared: mount generated scene + wire interstitial continue button
+  function _mountAndTransition(title, synopsis, body, interstitial, continueBtn, statusEl, label) {
+      StoryPagination.init();
+      StoryPagination.clear();
+      StoryPagination.addPage(formatStory(body), true);
+      state.turnCount = 1;
+      state.scenes = state.scenes || [];
+      state.scenes.push({ title, synopsis, text: body, fateCard: null });
+
+      if (statusEl) statusEl.textContent = label + ' ready';
+      if (continueBtn) {
+          continueBtn.textContent = 'Continue to ' + label;
+          continueBtn.classList.remove('hidden');
+          continueBtn.onclick = function() {
+              if (interstitial) interstitial.classList.add('hidden');
+              window.showScreen('game');
+              showReaderPage(1);
+              if (!state._titlePageShown) showTitlePage();
+              if (window.dealFateCards) window.dealFateCards();
+              if (window.initFateCards) window.initFateCards();
+              document.getElementById('submitBtn').disabled = false;
+              saveStorySnapshot();
+              console.log('[' + label.toUpperCase() + '] Mounted and Title page shown');
+          };
+      }
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  // START BOOK 2 — Sequel: same characters, same world
+  // ════════════════════════════════════════════════════════════════════
+
+  window.startBook2 = async function() {
+      console.log('[BOOK2] Starting Book 2 flow');
+      const { book1StoryId, book1Title, interstitial, continueBtn, statusEl } = await _archiveAndShowInterstitial();
+
+      // Snapshot everything we need before reset
+      const lockedChars = state.main_characters_locked;
+      const lockedPicks = { ...state.picks };
+      const lockedWorld = state.picks?.world;
+      const lockedTone = state.picks?.tone;
+      const lockedFlavor = state.picks?.flavor;
+      const lockedGenre = state.picks?.genre;
+      const lockedPov = state.picks?.pov;
+      const lockedArchetype = state.archetype ? { ...state.archetype } : { primary: 'BEAUTIFUL_RUIN', modifier: null };
+      const lockedIntensity = state.intensity;
+      const seriesId = state.series_id;
+      const bookNumber = (state.book_number || 1) + 1;
+      const previousTitle = state.immutableTitle || book1Title;
+      const continuitySummary = state.book1_continuity_summary;
+      const lockedCycleLabel = state.world_cycle_label;
+      const baseSysPrompt = state.sysPrompt || '';
+
+      // Reset + set Book 2 metadata
+      _resetStoryState();
+      state.book_number = bookNumber;
+      state.series_id = seriesId;
+      state.previous_story_id = book1StoryId;
+      state.main_characters_locked = lockedChars;
+      state.book1_continuity_summary = continuitySummary;
+      state.world_cycle_label = lockedCycleLabel;
+      state.picks = lockedPicks;
+      state.picks.identity = {
+          playerName: lockedChars.playerName,
+          partnerName: lockedChars.partnerName,
+          displayPlayerName: lockedChars.displayPlayerName,
+          displayPartnerName: lockedChars.displayPartnerName
+      };
+      state.archetype = lockedArchetype;
+      state.intensity = lockedIntensity;
+      state.gender = lockedChars.playerGender;
+      state.loveInterest = lockedChars.partnerGender;
+      state.previousTitle = previousTitle;
+      state.continuationPath = 'continue';
+      state.immutableTitle = null;
+      state.book_subhead = null;
+
+      clearStoryContent();
+
+      // Generate Book 2 title + blurb + Scene 1
+      try {
+          if (statusEl) statusEl.textContent = 'Generating Book 2 title...';
+          const titleResult = await callChat([{role:'user', content:`Generate a title for Book 2 of a romance series.
+
+Book 1 title: "${previousTitle}"
+World: ${lockedWorld}
+Tone: ${lockedTone}
+Genre/Flavor: ${lockedGenre}/${lockedFlavor}
+
+RULES:
+- Echo Book 1's title pattern/style (if "X of Y", use similar structure; if "The ___", echo that)
+- Must feel like a natural sequel — connected but distinct
+- Do NOT include "Book 2" or "Book II" in the title text
+- Keep under 8 words
+- Return ONLY the title, no quotes, no explanation`}]);
+          const book2Title = (titleResult || 'Untitled').trim().replace(/^["']|["']$/g, '');
+          state.immutableTitle = book2Title;
+          state.story = state.story || {};
+          state.story.title = book2Title;
+          document.getElementById('storyTitle').textContent = book2Title;
+
+          if (statusEl) statusEl.textContent = 'Writing Book 2 opening...';
+
+          const blurbResult = await callChat([{role:'user', content:`Write a back-cover blurb for Book 2 of a romance series.
+
+Book 1 title: "${previousTitle}"
+Book 2 title: "${book2Title}"
+World: ${lockedWorld}, Tone: ${lockedTone}
+Characters: ${lockedChars.playerName} and ${lockedChars.partnerName}
+
+Book 1 ended with:
+${(continuitySummary || '').slice(0, 500)}
+
+RULES:
+- 2-4 short paragraphs
+- Reference unresolved threads from Book 1 without exposition dumping
+- Hook + tension + promise
+- NO "In Book 1..." or "Previously..." framing
+- Tone must match: ${lockedTone}
+- Write like a bestseller's back cover
+
+Return ONLY the blurb paragraphs:`}]);
+          state._synopsisBlurb = (blurbResult || '').trim();
+
+          // Append Book 2 continuation context to system prompt
+          const book2SysAddendum = `
+
+═══════════════════════════════════════════════════
+BOOK 2 CONTINUATION CONTEXT (INTERNAL — never expose to reader)
+═══════════════════════════════════════════════════
+This is Book ${bookNumber} of an ongoing series. The same protagonists continue.
+Protagonist: ${lockedChars.playerName} (${lockedChars.playerGender}, ${lockedChars.playerPronouns})
+Love Interest: ${lockedChars.partnerName} (${lockedChars.partnerGender}, ${lockedChars.partnerPronouns})
+
+BOOK 1 ENDING SUMMARY:
+${continuitySummary || 'Book 1 ended. Continue the story.'}
+
+CONTINUATION RULES:
+- Do NOT reset relationships. Characters remember everything from Book 1.
+- Do NOT reintroduce origins or backstories as if the reader is new.
+- Start with a new inciting complication that logically follows Book 1's ending.
+- Maintain the emotional continuity — if they were together, they are still together; if strained, still strained.
+- The tone, world, and dynamic constraints remain identical.
+═══════════════════════════════════════════════════
+`;
+          state.sysPrompt = baseSysPrompt + book2SysAddendum;
+
+          let sceneText = await callChat([
+              { role: 'system', content: state.sysPrompt },
+              { role: 'user', content: `Write Scene 1 of Book ${bookNumber} — a direct continuation of Book 1.
+
+The reader already knows these characters intimately. Begin with a new situation, complication, or shift that picks up from where Book 1 left off.
+
+Include at the start of your response:
+[TITLE: "${book2Title}"]
+[SYNOPSIS: "A one-sentence hook for Book ${bookNumber}"]
+
+Then write the scene prose (800-1200 words).
+
+Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the new story.` }
+          ]);
+
+          const { synopsis, blurb: parsedBlurb, body } = parseScene1Response(sceneText);
+          if (synopsis) state._synopsisMetadata = synopsis;
+          if (parsedBlurb && !state._synopsisBlurb) state._synopsisBlurb = parsedBlurb;
+
+          _mountAndTransition(book2Title, synopsis, body, interstitial, continueBtn, statusEl, 'Book 2');
+          console.log('[BOOK2] Book 2 generation complete: "' + book2Title + '"');
+
+      } catch (err) {
+          console.error('[BOOK2] Generation failed:', err);
+          if (statusEl) statusEl.textContent = 'Generation failed. Please try again.';
+          if (continueBtn) {
+              continueBtn.textContent = 'Try Again';
+              continueBtn.classList.remove('hidden');
+              continueBtn.onclick = function() {
+                  if (interstitial) interstitial.classList.add('hidden');
+                  window.startBook2();
+              };
+          }
+      }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // NEW STORY IN THIS WORLD — New characters, same world/pov/length
+  // ════════════════════════════════════════════════════════════════════
+
+  window.startNewInWorld = async function() {
+      console.log('[NEW-WORLD] Starting new story in same world');
+      const { book1StoryId, book1Title, interstitial, continueBtn, statusEl } = await _archiveAndShowInterstitial();
+
+      // Snapshot world/pov/length/tone before reset
+      const lockedWorld = state.picks?.world;
+      const lockedPov = state.picks?.pov;
+      const lockedTone = state.picks?.tone;
+      const lockedFlavor = state.picks?.flavor;
+      const lockedGenre = state.picks?.genre;
+      const lockedEra = state.picks?.era;
+      const lockedIntensity = state.intensity;
+      const lockedStoryLength = state.storyLength;
+      const lockedWorldSubtype = state.picks?.worldSubtype;
+      const lockedWorldCustomText = state.worldCustomTexts;
+      const previousTitle = state.immutableTitle || book1Title;
+      const baseSysPrompt = state.sysPrompt || '';
+      const previousPressure = state.picks?.pressure;
+      const previousDynamic = state.picks?.dynamic;
+
+      // Auto-pick new Story Pull (different from previous if possible)
+      const ALL_PRESSURES = ['PowerControl', 'EscapePursuit', 'DesireObsession', 'Survival', 'RiskExposure', 'ObligationBurden', 'ReckoningPast', 'Transformation'];
+      const otherPressures = ALL_PRESSURES.filter(p => p !== previousPressure);
+      const newPressure = otherPressures[Math.floor(Math.random() * otherPressures.length)];
+
+      // Auto-pick new Story Polarity (different from previous if possible)
+      const ALL_DYNAMICS = ['Friends', 'Enemies', 'SecondChance', 'Forbidden', 'Proximity', 'SecretIdentity'];
+      const otherDynamics = ALL_DYNAMICS.filter(d => d !== previousDynamic);
+      const newDynamic = otherDynamics[Math.floor(Math.random() * otherDynamics.length)];
+
+      // Auto-pick new archetype (LI mask)
+      const ALL_ARCHETYPES = ['HEART_WARDEN', 'OPEN_VEIN', 'SPELLBINDER', 'ARMORED_FOX', 'DARK_VICE', 'BEAUTIFUL_RUIN', 'ETERNAL_FLAME'];
+      const newArchetype = ALL_ARCHETYPES[Math.floor(Math.random() * ALL_ARCHETYPES.length)];
+
+      // Auto-pick new character names
+      const FEMALE_NAMES = ['Elara Vance', 'Cassandra Wells', 'Mira Thornwood', 'Vivian Blake', 'Cordelia Hart', 'Aurelia Stone', 'Seraphina Cole', 'Isadora Crane', 'Helena Frost', 'Rosalind Grey', 'Celestine Moore', 'Evangeline Price', 'Lydia Sterling', 'Ophelia Dane', 'Tatiana West'];
+      const MALE_NAMES = ['Sebastian Blackwood', 'Julian Ashford', 'Marcus Thorne', 'Alexander Crane', 'Dominic Vale', 'Lucian Grey', 'Theodore Sterling', 'Maximilian Drake', 'Gabriel Frost', 'Benedict Hale', 'Damien Cross', 'Vincent Ashmore', 'Nathaniel Wolfe', 'Adrian Sinclair', 'Dorian Vance'];
+
+      // Randomize genders for new characters
+      const genders = ['Female', 'Male'];
+      const playerGender = genders[Math.floor(Math.random() * genders.length)];
+      const partnerGender = genders[Math.floor(Math.random() * genders.length)];
+
+      const playerNames = playerGender === 'Female' ? FEMALE_NAMES : MALE_NAMES;
+      const partnerNames = partnerGender === 'Female' ? FEMALE_NAMES : MALE_NAMES;
+      const newPlayerName = playerNames[Math.floor(Math.random() * playerNames.length)];
+      let newPartnerName = partnerNames[Math.floor(Math.random() * partnerNames.length)];
+      // Ensure different names
+      while (newPartnerName === newPlayerName) {
+          newPartnerName = partnerNames[Math.floor(Math.random() * partnerNames.length)];
+      }
+
+      // Derive pronouns from gender
+      const playerPronouns = playerGender === 'Female' ? 'She/Her' : playerGender === 'Male' ? 'He/Him' : 'They/Them';
+      const partnerPronouns = partnerGender === 'Female' ? 'She/Her' : partnerGender === 'Male' ? 'He/Him' : 'They/Them';
+
+      // Derive author gender/pronouns (same logic as corridor)
+      let authorGender, authorPronouns;
+      if (playerGender === 'Male' && partnerGender === 'Female') { authorGender = 'Female'; authorPronouns = 'She/Her'; }
+      else if (playerGender === 'Male' && partnerGender === 'Male') { authorGender = 'Male'; authorPronouns = 'He/Him'; }
+      else if (playerGender === 'Female' && partnerGender === 'Female') { authorGender = 'Female'; authorPronouns = 'She/Her'; }
+      else { authorGender = 'Non-Binary'; authorPronouns = 'They/Them'; }
+
+      // Reset state for new story — NO series continuity
+      _resetStoryState();
+      state.book_number = 1;
+      state.series_id = null;
+      state.previous_story_id = null;
+      state.main_characters_locked = null;
+      state.book1_continuity_summary = null;
+
+      // Restore world/pov/length
+      state.picks = state.picks || {};
+      state.picks.world = lockedWorld;
+      state.picks.pov = lockedPov;
+      state.picks.tone = lockedTone;
+      state.picks.flavor = lockedFlavor;
+      state.picks.genre = lockedGenre;
+      state.picks.era = lockedEra;
+      state.picks.worldSubtype = lockedWorldSubtype;
+      state.worldCustomTexts = lockedWorldCustomText;
+      state.intensity = lockedIntensity;
+      state.storyLength = lockedStoryLength;
+
+      // Set new auto-chosen values
+      state.picks.pressure = newPressure;
+      state.picks.dynamic = newDynamic;
+      state.archetype = { primary: newArchetype, modifier: null };
+      state.gender = playerGender;
+      state.authorGender = authorGender;
+      state.authorPronouns = authorPronouns;
+      state.loveInterest = partnerGender;
+      state.picks.identity = {
+          playerName: newPlayerName,
+          partnerName: newPartnerName,
+          displayPlayerName: newPlayerName,
+          displayPartnerName: newPartnerName
+      };
+      state.continuationPath = 'new_world';
+      state.immutableTitle = null;
+      state.previousTitle = previousTitle;
+
+      clearStoryContent();
+
+      // Generate title + blurb + Scene 1 for new story
+      try {
+          if (statusEl) statusEl.textContent = 'Generating new story title...';
+
+          const titleResult = await callChat([{role:'user', content:`Generate a title for a new romance novel set in the same world as "${previousTitle}".
+
+World: ${lockedWorld}
+Tone: ${lockedTone}
+Genre/Flavor: ${lockedGenre}/${lockedFlavor}
+Dynamic: ${newDynamic}
+
+RULES:
+- Echo the tone/style of "${previousTitle}" (if poetic, stay poetic; if punchy, stay punchy)
+- This is NOT a sequel — new characters, new story
+- Keep under 8 words
+- Return ONLY the title, no quotes, no explanation`}]);
+          const baseTitle = (titleResult || 'Untitled').trim().replace(/^["']|["']$/g, '');
+          state.immutableTitle = baseTitle;
+          state.book_subhead = 'In the world of ' + previousTitle;
+          state.story = state.story || {};
+          state.story.title = baseTitle;
+          document.getElementById('storyTitle').textContent = baseTitle;
+
+          if (statusEl) statusEl.textContent = 'Writing opening scene...';
+
+          const blurbResult = await callChat([{role:'user', content:`Write a back-cover blurb for a new romance novel.
+
+Title: "${baseTitle}"
+World: ${lockedWorld}, Tone: ${lockedTone}, Dynamic: ${newDynamic}
+Protagonist: ${newPlayerName} (${playerGender})
+Love Interest: ${newPartnerName} (${partnerGender})
+
+RULES:
+- 2-4 short paragraphs
+- Hook + tension + promise
+- This is a standalone novel, not a sequel
+- Tone must match: ${lockedTone}
+- Write like a bestseller's back cover
+
+Return ONLY the blurb paragraphs:`}]);
+          state._synopsisBlurb = (blurbResult || '').trim();
+
+          // Build system prompt for new story (reuse base but strip any Book 2 addenda)
+          const cleanSys = baseSysPrompt.replace(/═+\nBOOK 2 CONTINUATION CONTEXT[\s\S]*?═+\n?/g, '');
+          state.sysPrompt = cleanSys;
+
+          let sceneText = await callChat([
+              { role: 'system', content: state.sysPrompt },
+              { role: 'user', content: `Write Scene 1 of a new romance novel set in ${lockedWorld}.
+
+Protagonist: ${newPlayerName} (${playerGender}, ${playerPronouns})
+Love Interest: ${newPartnerName} (${partnerGender}, ${partnerPronouns}) — a ${newArchetype.replace(/_/g, ' ').toLowerCase()} archetype
+Dynamic: ${newDynamic}
+Story Pull: ${newPressure}
+
+This is a STANDALONE story — no returning characters, no sequel continuity.
+
+Include at the start of your response:
+[TITLE: "${baseTitle}"]
+[SYNOPSIS: "A one-sentence hook"]
+
+Then write the scene prose (800-1200 words). Introduce both characters and establish the central tension.` }
+          ]);
+
+          const { synopsis, blurb: parsedBlurb, body } = parseScene1Response(sceneText);
+          if (synopsis) state._synopsisMetadata = synopsis;
+          if (parsedBlurb && !state._synopsisBlurb) state._synopsisBlurb = parsedBlurb;
+
+          _mountAndTransition(baseTitle, synopsis, body, interstitial, continueBtn, statusEl, 'New Story');
+          console.log('[NEW-WORLD] New story generation complete: "' + baseTitle + '"');
+
+      } catch (err) {
+          console.error('[NEW-WORLD] Generation failed:', err);
+          if (statusEl) statusEl.textContent = 'Generation failed. Please try again.';
+          if (continueBtn) {
+              continueBtn.textContent = 'Try Again';
+              continueBtn.classList.remove('hidden');
+              continueBtn.onclick = function() {
+                  if (interstitial) interstitial.classList.add('hidden');
+                  window.startNewInWorld();
+              };
+          }
+      }
+  };
+
+  // Show cover from End Page (reuses existing cover display)
+  window.showCoverFromEndPage = function() {
+      const coverImg = document.getElementById('bookCoverImg');
+      if (coverImg && coverImg.src) {
+          const bookCoverPage = document.getElementById('bookCoverPage');
+          const bookObject = document.getElementById('bookObject');
+          const storyContent = document.getElementById('storyContent');
+          if (bookCoverPage) bookCoverPage.classList.remove('hidden');
+          if (bookObject) bookObject.classList.remove('hidden');
+          if (storyContent) storyContent.classList.add('hidden');
+      }
+  };
+
   /**
    * Handle user selection of continuation path
    * @param {string} path - 'continue' | 'same_world' | 'new_story'
@@ -12913,6 +13600,19 @@ Return ONLY the title, no quotes or explanation.`;
       }
       const storyEl = document.getElementById('storyText');
       if (storyEl) storyEl.innerHTML = '';
+      // Reset curl pages
+      const titlePage = document.getElementById('sbTitlePage');
+      if (titlePage) { titlePage.classList.add('hidden'); titlePage.classList.remove('sb-curling'); }
+      window._titlePageActive = false;
+      const frontispiece = document.getElementById('fatelandsFrontispiece');
+      if (frontispiece) { frontispiece.classList.add('hidden'); frontispiece.classList.remove('sb-curling'); }
+      window._frontispieceActive = false;
+      const settingPlate = document.getElementById('settingPlate');
+      if (settingPlate) { settingPlate.classList.remove('sb-curling'); }
+      window._settingPlateActive = false;
+      // Hide End Page if showing
+      const endPage = document.getElementById('storyEndPage');
+      if (endPage) endPage.classList.add('hidden');
   }
 
   /**
@@ -12926,6 +13626,14 @@ Return ONLY the title, no quotes or explanation.`;
           return;
       }
       state.storyEnded = false;
+      state.book_complete = false;
+      state.book_number = 1;
+      state.series_id = null;
+      state.previous_story_id = null;
+      state.main_characters_locked = null;
+      state.book1_continuity_summary = null;
+      state.book_subhead = null;
+      state.world_cycle_label = null;
       state.turnCount = 0;
       state._loggedStoryStart = false;
       state._loggedScene3 = false;
@@ -14103,8 +14811,18 @@ Return ONLY the title, no quotes or explanation.`;
       state.story = null;
       state.storyId = null;
       state._synopsisMetadata = null;
+      state._synopsisBlurb = null;
+      state._titlePageShown = false;
       state.storyHistory = [];
       state.storyEnded = false;
+      state.book_complete = false;
+      state.book_number = 1;
+      state.series_id = null;
+      state.previous_story_id = null;
+      state.main_characters_locked = null;
+      state.book1_continuity_summary = null;
+      state.book_subhead = null;
+      state.world_cycle_label = null;
       state.storyLength = 'taste';
       state.storyOrigin = null;
       state.storyStage = null;
@@ -14687,6 +15405,8 @@ Return ONLY the title, no quotes or explanation.`;
               state._backgroundStoryTitle = null;
               state._backgroundStorySynopsis = null;
               state._synopsisMetadata = null;
+              state._synopsisBlurb = null;
+              state._titlePageShown = false;
 
               // Reset cover Assembly object tracking (treat as new story)
               state._coverAssemblyObjectShown = false;
@@ -15080,11 +15800,10 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           div.style.textAlign = 'center';
           div.style.border = '1px solid var(--gold)';
           div.innerHTML = `<p style="font-style:italic; color:var(--gold)">The moment hangs, unresolved.</p>`;
-          // Append ending to current page
           StoryPagination.appendToCurrentPage(div.outerHTML);
-          // Show continuation fork after delay for user to read ending
+          // Show Story End Page after delay for user to read ending
           setTimeout(() => {
-              showContinuationFork();
+              showStoryEndPage();
           }, 3000);
           return;
       }
@@ -15100,9 +15819,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               }
               document.getElementById('submitBtn').disabled = true;
               renderFlingEnd();
-              // Show continuation fork after delay for user to read ending
+              // Show Story End Page after delay for user to read ending
               setTimeout(() => {
-                  showContinuationFork();
+                  showStoryEndPage();
               }, 3000);
           }
       }
@@ -15827,6 +16546,13 @@ ENTROPY UTILIZATION RULES (MANDATORY):
 - Do not rotate all axes in one scene. Focus on one.
 - Return "active_entropy_axis" (the axis key name) and "entropy_manifestation_summary" (how it shapes this scene).
 
+SYZYGY TRIGGER (FANTASY ONLY):
+- If fantasy_syzygy_eligible is true in the input AND the accumulated sacrifice tension, narrative arc, and character positioning make this the structurally inevitable moment for Syzygy, you may set "syzygy_triggered": true.
+- Syzygy occurs at most ONCE per story. If fantasy_syzygy_eligible is false, you MUST NOT set syzygy_triggered to true.
+- Syzygy requires: accumulated sacrifice tension at breaking point, characters at or near The Ascendant Run, and narrative arc at ST3+.
+- Do not trigger Syzygy casually. It is the single most significant cosmological event possible in a Fatelands story.
+- If fantasy_syzygy_eligible is absent or the world is not Fantasy, omit the field entirely.
+
 OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
 {
   "st_phase": "ST1"|"ST2"|...,
@@ -15835,6 +16561,7 @@ OUTPUT SCHEMA (strict JSON, no markdown, no commentary):
   "tone_pressure": "sustain"|"escalate"|"pull-back",
   "active_entropy_axis": "<if entropy_axes present: axis key name>",
   "entropy_manifestation_summary": "<if entropy_axes present: how axis shapes this scene>",
+  "syzygy_triggered": "<Fantasy only, optional: true if Syzygy occurs this scene>",
   "petition": {
     "present": true|false,
     "type": "<if present: minor|greater>",
@@ -15951,8 +16678,13 @@ This is narrative pressure only.`;
       inputContext.fantasy_region_status = state.fantasyRegionStatus;
       inputContext.fantasy_region_reality = state.fantasyRegionReality;  // null if status is face value
       inputContext.fantasy_magic_expression_bias = state.fantasyMagicExpressionBias;
+      const _regionMeta = FATELANDS_CANON.regions[state.fantasyRegion];
+      if (_regionMeta?.position) inputContext.fantasy_region_position = _regionMeta.position;
+      if (_regionMeta?.coastal !== undefined) inputContext.fantasy_region_coastal = _regionMeta.coastal;
       inputContext.fantasy_moons_total = FATELANDS_CANON.moons.total;
       inputContext.fantasy_syzygy_location = FATELANDS_CANON.syzygy_location;
+      inputContext.fantasy_syzygy_occurred = state._syzygyOccurred;
+      inputContext.fantasy_syzygy_eligible = !state._syzygyOccurred;
     }
 
     // Historical Prehistoric cognitive context injection
@@ -16037,14 +16769,29 @@ BLOODLINE PRESSURE:
 
 SYZYGY AWARENESS:
 - Syzygy is structurally bound to The Ascendant Run. It cannot occur elsewhere. Reclamation ritual requires physical presence at The Ascendant Run.
-- The Fatelands has 13 moons (12 visible, 1 controversial). The 13th may appear during surges. No moon names are defined. Moons do not introduce alternate magic systems.
+- The Fatelands has 13 moons (12 visible, 1 controversial). The 13th moon is only clearly visible over Fate's Favor during Syzygy; otherwise it is denied or obscured. No moon names are defined. Moons do not introduce alternate magic systems.
+- The Ascendant Run normally flows into the central basin toward Fate's Favor. It reverses direction (flows outward/uphill) ONLY during Syzygy. At all other times, it flows inward.
 - If syzygy occurs, it must resolve or rupture accumulated sacrifice tension. It must not feel random, mechanical, or repeatable.
-- If syzygy has not occurred, its absence must still shape longing and restraint.
+- If syzygy has not occurred, its absence must still shape longing and restraint. The Ascendant Run flows inward. The 13th moon remains obscured.
 
 FATELANDS GEOGRAPHIC AND POLITICAL CONTRACT (MANDATORY):
 - The canonical realm is The Fatelands. Do not invent alternative realm names.
-- Central feature: Fate's Favor — the metaphysical force that legitimizes power, binds oaths, and shapes sacrifice.
-- Rivers: The Long Thread (central basin, feeds Vaelryn Reach and the Thornwild), The Ascendant Run (highland descent through the Veilwood), The Drowned Vein (empties into Gloamwater Bay, carries altered currents).
+- Central feature: Fate's Favor — a central basin ringed by black peaks. The metaphysical force that legitimizes power, binds oaths, and shapes sacrifice.
+
+RIVER COURSES (fixed, directional):
+- The Long Thread: Flows south from Vaelryn Reach (northern peaks) into the central basin toward Fate's Favor, feeding the Thornwild along its eastern reach.
+- The Ascendant Run: Descends from the northeast (Veilwood highlands) into the central basin toward Fate's Favor. Reverses outward ONLY during Syzygy.
+- The Drowned Vein: Underground river flowing east beneath the basin. Surfaces only at Gloamwater Bay on the eastern coast. Not surface-visible elsewhere.
+
+SPATIAL LAYOUT (fixed, matches canonical map):
+- Vaelryn Reach: Northern mountain high peaks. The High Court sits at the highest peak. Inland.
+- The Ashen Verge: Western inland frontier, between Vaelryn Reach and the central basin. Does NOT border the Thornwild.
+- The Veilwood: Northeast of the central basin, between Vaelryn Reach and the Thornwild. Inland. A separate forest from the Thornwild.
+- The Thornwild: Eastern interior forest. Separate from the Veilwood — they are distinct regions with distinct ecologies and cultures. Inland.
+- Lytharyn: Western coast — opposite side of the continent from Gloamwater Bay. Coastal arcane city-state.
+- Pulse Point: Southern meridian coast. Coastal trade hub.
+- Gloamwater Bay: Eastern coast. Receives the Drowned Vein. Coastal tidal enclave.
+- The Shackle Isles: Offshore archipelago south of the mainland coast. Islands: Blackmoor, Quiet Chain, Cinderwake, Sanctum Reeve.
 
 SOVEREIGN LEGITIMACY:
 - The High Court of Vaelryn Reach is the ritual sovereign authority of the central continent.
@@ -16065,9 +16812,15 @@ DEMOGRAPHICS:
 - All regions contain mixed populations. Humans are majority across the continent.
 - Thornwild has highest density of First Favored. No region is species-exclusive. No racial state structures.
 
-HARD CONSTRAINTS:
-- Geography cannot be altered, relocated, renamed, or procedurally substituted under any entropy state.
-- Do not procedurally generate regions or randomly invent capitals.
+GEOGRAPHIC PROHIBITIONS (ABSOLUTE):
+- Do NOT relocate, rename, or merge any region. Geography is immutable.
+- Do NOT move rivers, change their direction, or invent new waterways.
+- Do NOT merge the Thornwild and the Veilwood — they are separate regions.
+- Do NOT place Lytharyn inland — it is a western coastal city.
+- Do NOT place Gloamwater Bay on any coast other than the east.
+- Do NOT make the Shackle Isles mobile or migratory (exception: Unmoored Isles narrative during Favor surges, per entropy).
+- Do NOT describe the Ashen Verge as bordering the Thornwild — they are not adjacent.
+- Do NOT procedurally generate regions or randomly invent capitals.
 - If a region seat is null/unconfirmed, do not invent one — reference the region by name or describe its power center obliquely.
 - Entropy modifies pressure, not borders. Canon overrides modularity.
 
@@ -16521,6 +17274,29 @@ LONG-HORIZON EMOTIONAL CONTINUITY DISCIPLINE (MANDATORY):
           return null;
         }
       }
+      // Syzygy gate: accept trigger only if Fantasy + eligible, then lock permanently
+      const _modelTriggeredSyzygy = parsed.syzygy_triggered === true;
+      const _syzygyWasEligible = !state._syzygyOccurred;
+      if (_modelTriggeredSyzygy) {
+        const world = state.picks?.world;
+        if (world === 'Fantasy' && !state._syzygyOccurred) {
+          state._syzygyOccurred = true;
+          state._syzygyActiveThisScene = true;
+          console.log('[STRATEGY_PASS] Syzygy triggered. _syzygyOccurred locked to true.');
+        } else {
+          // Reject: either not Fantasy or already occurred
+          parsed.syzygy_triggered = false;
+          state._syzygyActiveThisScene = false;
+          console.warn('[STRATEGY_PASS] Syzygy trigger rejected (world=' + (state.picks?.world) + ', already occurred=' + state._syzygyOccurred + ')');
+        }
+      } else {
+        state._syzygyActiveThisScene = false;
+      }
+      state._syzygyModelTriggeredLast = _modelTriggeredSyzygy;
+      if (state.picks?.world === 'Fantasy') {
+        console.log('[SYZYGY] eligible=' + _syzygyWasEligible + ' occurred=' + state._syzygyOccurred + ' active=' + state._syzygyActiveThisScene + ' model_triggered=' + _modelTriggeredSyzygy);
+      }
+
       state._strategyPassFailed = false;
       console.log('[STRATEGY_PASS] Result:', parsed);
       return parsed;
@@ -16568,6 +17344,29 @@ LONG-HORIZON EMOTIONAL CONTINUITY DISCIPLINE (MANDATORY):
       lines.push('ENTROPY DIRECTIVE (MANDATORY):');
       lines.push(`- Active Axis: ${strategy.active_entropy_axis}`);
       lines.push(`- Manifestation: ${strategy.entropy_manifestation_summary}`);
+    }
+    // Syzygy hard constraint block (Fantasy only)
+    if (state.picks?.world === 'Fantasy') {
+      lines.push('');
+      if (state._syzygyActiveThisScene) {
+        lines.push('SYZYGY ACTIVE THIS SCENE (MANDATORY):');
+        lines.push('- Syzygy is occurring at The Ascendant Run. This is the single most significant event in this story.');
+        lines.push('- The Ascendant Run REVERSES direction — it flows outward/uphill from Fate\'s Favor.');
+        lines.push('- The 13th moon is clearly visible over Fate\'s Favor. It is no longer obscured or denied.');
+        lines.push('- Accumulated sacrifice tension must resolve or rupture. This moment must feel irreversible.');
+        lines.push('- Syzygy will not occur again in this story.');
+      } else if (state._syzygyOccurred) {
+        lines.push('SYZYGY CONSTRAINT (MANDATORY):');
+        lines.push('- Syzygy has already occurred in this story. It CANNOT occur again.');
+        lines.push('- The Ascendant Run has returned to its normal inward flow toward Fate\'s Favor.');
+        lines.push('- The 13th moon has returned to obscurity. It is no longer clearly visible.');
+        lines.push('- Do not narrate, hint at, or build toward a second Syzygy.');
+      } else {
+        lines.push('SYZYGY CONSTRAINT (MANDATORY):');
+        lines.push('- Syzygy has not occurred. The Ascendant Run flows inward toward Fate\'s Favor (normal direction).');
+        lines.push('- The 13th moon remains obscured or denied. Do not describe it as clearly visible over Fate\'s Favor.');
+        lines.push('- The Ascendant Run does NOT reverse. Do not narrate it flowing outward or uphill.');
+      }
     }
     return lines.join('\n');
   }
@@ -18709,6 +19508,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
   }
 
+  window.saveStoryManual = saveStorySnapshot;
+
   // ═══════════════════════════════════════════════════════════════════
   // SUPABASE STORY SNAPSHOT PERSISTENCE (Phase 1)
   // Parallel write alongside localStorage. Never blocks UI.
@@ -18842,6 +19643,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // EARNED COVER SYSTEM: Update cover button for continued story
     _lastNotifiedCoverStage = getCurrentCoverStage();
     updateReaderCoverButton();
+
+    // BOOK COMPLETE: If restored story was completed, re-show End Page
+    if (state.book_complete && state.storyEnded) {
+        showStoryEndPage();
+    }
   };
 
   function updateContinueButtons(){
@@ -20326,12 +21132,13 @@ RULES:
           }
 
           // Parse and store result
-          const { title, synopsis, body } = parseScene1Response(text);
+          const { title, synopsis, blurb, body } = parseScene1Response(text);
 
           state.story = state.story || {};
           state.story.title = title;
           state.story.synopsis = synopsis;
           state._synopsisMetadata = synopsis;
+          state._synopsisBlurb = blurb || synopsis || '';
           state._backgroundStoryText = body;
           state._backgroundStoryTitle = title;
           state._backgroundStorySynopsis = synopsis;
@@ -20357,6 +21164,7 @@ RULES:
   function parseScene1Response(text) {
       let title = 'Untitled';
       let synopsis = '';
+      let blurb = '';
       let body = text;
 
       // Try to extract title from [TITLE:...] or **Title:** patterns
@@ -20376,7 +21184,14 @@ RULES:
           body = body.replace(synopsisMatch[0], '').trim();
       }
 
-      return { title, synopsis, body };
+      // Try to extract blurb block [BLURB]...[/BLURB]
+      const blurbMatch = body.match(/\[BLURB\]\s*([\s\S]*?)\s*\[\/BLURB\]/i);
+      if (blurbMatch) {
+          blurb = blurbMatch[1].trim();
+          body = body.replace(blurbMatch[0], '').trim();
+      }
+
+      return { title, synopsis, blurb, body };
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -20394,6 +21209,12 @@ Begin with a captivating opening that establishes:
 Include at the start of your response:
 [TITLE: "Your chosen title"]
 [SYNOPSIS: "A one-sentence hook for this story"]
+[BLURB]
+Write a book-jacket back-cover blurb (2-4 short paragraphs).
+Hook the reader with mood and tension. No exposition, no lore dumps, no world-building explanations.
+Keep names/places minimal. Tone must match the story's selected tone/world.
+End with a promise or question that makes the reader desperate to turn the page.
+[/BLURB]
 
 Then write the scene prose (800-1200 words).
 
@@ -33381,6 +34202,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
                 StoryPagination.clear();
                 StoryPagination.addPage(formatStory(body), true);
 
+                // Title page — universal front page before map/setting/scene
+                if (!state._titlePageShown) {
+                    showTitlePage();
+                }
+
                 // Update turn state
                 state.turnCount = 1;
                 state.scenes = state.scenes || [];
@@ -34567,6 +35393,26 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         // Scene pages = title + text only (via StoryPagination)
         state._synopsisMetadata = synopsis; // Store for inside cover + cover generation
 
+        // BOOK-JACKET BLURB — Generate once for Title page (non-blocking on failure)
+        try {
+            const blurbText = await callChat([{role:'user', content:`Write a book-jacket back-cover blurb for a story that opens with this scene.
+
+RULES:
+- 2-4 short paragraphs maximum
+- Hook + tension + promise — make the reader desperate to turn the page
+- NO exposition, NO lore dumps, NO "here's how the world works"
+- Keep names/places minimal unless essential
+- Tone must match the story: ${state.picks?.tone || 'Earnest'} tone, ${state.picks?.world || 'Modern'} world
+- Write like a bestseller's back cover, not a Wikipedia article
+
+Return ONLY the blurb paragraphs, no quotes, no labels:
+${text.slice(0, 800)}`}]);
+            state._synopsisBlurb = (blurbText || '').trim();
+        } catch (e) {
+            console.warn('[BLURB] Generation failed, falling back to synopsis:', e.message);
+            state._synopsisBlurb = synopsis || '';
+        }
+
         // ============================================================
         // FINAL ATOMIC GATE — Scene creation only if prose is valid
         // ============================================================
@@ -34582,6 +35428,11 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         StoryPagination.init();
         StoryPagination.clear();
         StoryPagination.addPage(formatStory(text), true);
+
+        // Title page — universal front page before map/setting/scene
+        if (!state._titlePageShown) {
+            showTitlePage();
+        }
 
         // ═══════════════════════════════════════════════════════════════════════
         // STORY TEXT READY — Signal that Scene 1 can be displayed
@@ -35109,6 +35960,11 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
                       }
                       sceneImg.style.display = 'block';
                       if (loadingEl) loadingEl.style.display = 'none';
+                      // PAGE-CURL: If no frontispiece active (non-Fantasy, or after map dismissed),
+                      // activate setting plate as a curl page so it curls to reveal scene text
+                      if (!window._titlePageActive && !window._frontispieceActive && !window._settingPlateActive) {
+                          showSettingPlateAsCurlPage();
+                      }
                       console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display, mountPath: 'settingPlate', mode: 'inline' });
                   } else {
                       // ABORT: Setting image mounted in wrong container
@@ -37517,6 +38373,260 @@ ${tone === 'Wry Confessional'
   // 0 = COVER, 1 = SETTING, 2+ = SCENE
   let _readerPage = 0;
 
+  // ════════════════════════════════════════════════════════════════════
+  // REUSABLE PAGE-CURL TRANSITION COMPONENT
+  // Curls a .sb-curl-page element (right edge lifts, page turns left)
+  // revealing whatever is beneath it. Blank parchment backside.
+  // ════════════════════════════════════════════════════════════════════
+
+  /**
+   * applyPageCurlTransition(curlEl, options)
+   * @param {HTMLElement} curlEl  - A .sb-curl-page element to curl away
+   * @param {Object}      options
+   * @param {Function}    options.onComplete  - Called after curl finishes & element is hidden
+   * @param {number}      options.timeout     - Safety timeout ms (default 950)
+   */
+  function applyPageCurlTransition(curlEl, options = {}) {
+      const { onComplete, timeout = 950 } = options;
+      if (!curlEl) { if (onComplete) onComplete(); return; }
+      const inner = curlEl.querySelector('.sb-curl-page-inner');
+      if (!inner) { if (onComplete) onComplete(); return; }
+
+      // Mark parent for edge-shadow visibility
+      curlEl.classList.add('sb-curling');
+      inner.classList.add('sb-page-curl');
+
+      let settled = false;
+      const settle = () => {
+          if (settled) return;
+          settled = true;
+          inner.removeEventListener('animationend', settle);
+          curlEl.classList.add('hidden');
+          curlEl.classList.remove('sb-curling');
+          inner.classList.remove('sb-page-curl');
+          if (onComplete) onComplete();
+      };
+      inner.addEventListener('animationend', settle, { once: true });
+
+      // Safety timeout
+      setTimeout(settle, timeout);
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  // TITLE PAGE — Universal book-jacket front page (all stories)
+  // Chain: Title → Map (Fantasy) / Setting (non-Fantasy) → Scene 1
+  // ════════════════════════════════════════════════════════════════════
+  window._titlePageActive = false;
+
+  function showTitlePage() {
+      const el = document.getElementById('sbTitlePage');
+      if (!el) return;
+
+      // Populate title
+      const titleEl = el.querySelector('.sb-title-page-title');
+      const storyTitle = document.getElementById('storyTitle')?.textContent || state.story?.title || 'Untitled';
+      if (titleEl) titleEl.textContent = storyTitle.replace(/"/g, '');
+
+      // Populate subhead (e.g. "In the world of ...")
+      const subheadEl = el.querySelector('.sb-title-page-subhead');
+      if (subheadEl) {
+          if (state.book_subhead) {
+              subheadEl.textContent = state.book_subhead;
+              subheadEl.classList.remove('hidden');
+          } else {
+              subheadEl.textContent = '';
+              subheadEl.classList.add('hidden');
+          }
+      }
+
+      // Populate blurb (fall back to synopsis, then empty)
+      const blurbEl = el.querySelector('.sb-title-page-blurb');
+      if (blurbEl) {
+          const raw = state._synopsisBlurb || state._synopsisMetadata || '';
+          if (raw) {
+              // Convert plain text paragraphs to <p> tags
+              blurbEl.innerHTML = raw.split(/\n\s*\n|\n/).filter(p => p.trim()).map(p =>
+                  '<p>' + p.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>'
+              ).join('');
+          } else {
+              blurbEl.innerHTML = '';
+          }
+      }
+
+      // Reset curl state and show
+      const inner = el.querySelector('.sb-curl-page-inner');
+      if (inner) inner.classList.remove('sb-page-curl');
+      el.classList.remove('hidden', 'sb-curling');
+
+      // Hide everything behind title page
+      const storyText = document.getElementById('storyText');
+      if (storyText) storyText.classList.add('hidden');
+      const settingPlate = document.getElementById('settingPlate');
+      if (settingPlate) settingPlate.classList.add('hidden');
+      const frontispiece = document.getElementById('fatelandsFrontispiece');
+      if (frontispiece) frontispiece.classList.add('hidden');
+
+      window._titlePageActive = true;
+      state._titlePageShown = true;
+
+      const indicator = document.getElementById('pageIndicator');
+      if (indicator) indicator.textContent = 'Title';
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+      if (prevBtn) prevBtn.disabled = true;
+      if (nextBtn) nextBtn.disabled = false;
+      console.log('[TITLE-PAGE] Shown');
+  }
+
+  window.dismissTitlePage = function(onComplete) {
+      const el = document.getElementById('sbTitlePage');
+      if (!el || !window._titlePageActive) { if (onComplete) onComplete(); return; }
+      window._titlePageActive = false;
+
+      applyPageCurlTransition(el, {
+          onComplete: function() {
+              const isFantasy = state.picks?.world === 'Fantasy';
+
+              if (isFantasy && !state._fantasyMapInjected) {
+                  // Fantasy → reveal map frontispiece
+                  showFatelandsFrontispiece();
+                  state._fantasyMapInjected = true;
+                  console.log('[TITLE-PAGE] Curled → map frontispiece revealed');
+              } else {
+                  // Non-Fantasy (or map already shown) → try setting plate, then scene
+                  _revealSettingOrScene();
+              }
+              if (onComplete) onComplete();
+          }
+      });
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // FATELANDS FRONTISPIECE — Canonical map page for Fantasy stories
+  // Shows after Title page, before Setting/Scene 1
+  // ════════════════════════════════════════════════════════════════════
+  window._frontispieceActive = false;
+
+  function showFatelandsFrontispiece() {
+      const el = document.getElementById('fatelandsFrontispiece');
+      if (!el) return;
+      const inner = el.querySelector('.sb-curl-page-inner');
+      if (inner) inner.classList.remove('sb-page-curl');
+      el.classList.remove('hidden', 'sb-curling');
+      // Hide scene content while frontispiece is showing
+      const storyText = document.getElementById('storyText');
+      if (storyText) storyText.classList.add('hidden');
+      const settingPlate = document.getElementById('settingPlate');
+      if (settingPlate) settingPlate.classList.add('hidden');
+      window._frontispieceActive = true;
+      const indicator = document.getElementById('pageIndicator');
+      if (indicator) indicator.textContent = 'Map';
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+      if (prevBtn) prevBtn.disabled = true;
+      if (nextBtn) nextBtn.disabled = false;
+      console.log('[FRONTISPIECE] Fatelands map shown');
+  }
+
+  window.dismissFatelandsFrontispiece = function(onComplete) {
+      const el = document.getElementById('fatelandsFrontispiece');
+      if (!el || !window._frontispieceActive) { if (onComplete) onComplete(); return; }
+      window._frontispieceActive = false;
+
+      applyPageCurlTransition(el, {
+          onComplete: function() {
+              _revealSettingOrScene();
+              if (onComplete) onComplete();
+          }
+      });
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // SETTING PLATE CURL — Curls setting image to reveal Scene 1 text
+  // Works for ALL worlds (Fantasy after map, others after title)
+  // ════════════════════════════════════════════════════════════════════
+  window._settingPlateActive = false;
+
+  window.dismissSettingPlate = function(onComplete) {
+      const el = document.getElementById('settingPlate');
+      if (!el || !window._settingPlateActive) { if (onComplete) onComplete(); return; }
+      window._settingPlateActive = false;
+
+      applyPageCurlTransition(el, {
+          onComplete: function() {
+              const storyText = document.getElementById('storyText');
+              if (storyText) storyText.classList.remove('hidden');
+              _restorePageIndicator();
+              console.log('[SETTING-CURL] Setting plate curled → scene text revealed');
+              if (onComplete) onComplete();
+          }
+      });
+  };
+
+  /**
+   * showSettingPlateAsCurlPage() — Show the setting plate as a curl page
+   * before Scene 1 (only if a setting image is loaded).
+   */
+  function showSettingPlateAsCurlPage() {
+      const settingPlate = document.getElementById('settingPlate');
+      const sceneImg = document.getElementById('bookSceneImg');
+      if (!settingPlate || !sceneImg) return false;
+      const hasImage = sceneImg.src && sceneImg.src !== '' && sceneImg.src !== window.location.href;
+      if (!hasImage) return false;
+
+      settingPlate.classList.remove('hidden');
+      const inner = settingPlate.querySelector('.sb-curl-page-inner');
+      if (inner) inner.classList.remove('sb-page-curl');
+      settingPlate.classList.remove('sb-curling');
+      window._settingPlateActive = true;
+
+      const storyText = document.getElementById('storyText');
+      if (storyText) storyText.classList.add('hidden');
+
+      const indicator = document.getElementById('pageIndicator');
+      if (indicator) indicator.textContent = 'Setting';
+      console.log('[SETTING-CURL] Setting plate shown as curl page');
+      return true;
+  }
+
+  /**
+   * _revealSettingOrScene() — After map curl (Fantasy) or title curl (non-Fantasy),
+   * show setting plate if image exists, otherwise show scene text directly.
+   */
+  function _revealSettingOrScene() {
+      const settingPlate = document.getElementById('settingPlate');
+      const sceneImg = document.getElementById('bookSceneImg');
+      const hasSettingImage = sceneImg && sceneImg.src && sceneImg.src !== '' && sceneImg.src !== window.location.href;
+
+      if (hasSettingImage) {
+          if (settingPlate) {
+              settingPlate.classList.remove('hidden');
+              const spInner = settingPlate.querySelector('.sb-curl-page-inner');
+              if (spInner) spInner.classList.remove('sb-page-curl');
+              settingPlate.classList.remove('sb-curling');
+          }
+          window._settingPlateActive = true;
+          const indicator = document.getElementById('pageIndicator');
+          if (indicator) indicator.textContent = 'Setting';
+          console.log('[CURL-CHAIN] → setting plate revealed');
+      } else {
+          const storyText = document.getElementById('storyText');
+          if (storyText) storyText.classList.remove('hidden');
+          _restorePageIndicator();
+          console.log('[CURL-CHAIN] → scene text revealed (no setting image)');
+      }
+  }
+
+  /** Restore page indicator to pagination state */
+  function _restorePageIndicator() {
+      if (typeof StoryPagination !== 'undefined') {
+          const idx = StoryPagination.getCurrentPageIndex();
+          const count = StoryPagination.getPageCount();
+          const indicator = document.getElementById('pageIndicator');
+          if (indicator) indicator.textContent = `Page ${idx + 1} of ${count}`;
+      }
+  }
+
   /**
    * SIMPLIFIED READER PAGE DISPLAY (when book disabled)
    * Linear flow with no animations, no transforms, no book state.
@@ -37547,12 +38657,16 @@ ${tone === 'Wry Confessional'
           if (storyContent) storyContent.classList.remove('hidden');
 
           // ═══════════════════════════════════════════════════════════════
-          // STEP 1: Ensure story text is visible (opacity was set to 0 during creation)
+          // STEP 1: Ensure story text opacity is set (was 0 during creation)
+          // If curl chain is active (title/map/setting pages), keep text hidden
           // ═══════════════════════════════════════════════════════════════
           const storyText = document.getElementById('storyText');
+          const curlChainActive = window._titlePageActive || window._frontispieceActive || window._settingPlateActive;
           if (storyText) {
-              storyText.classList.remove('hidden');
               storyText.style.opacity = '1';
+              if (!curlChainActive) {
+                  storyText.classList.remove('hidden');
+              }
           }
 
           // ═══════════════════════════════════════════════════════════════
@@ -37565,10 +38679,10 @@ ${tone === 'Wry Confessional'
           }
 
           // ═══════════════════════════════════════════════════════════════
-          // SETTING PLATE: Hidden (auto-generation disabled)
+          // SETTING PLATE: Hidden unless curl chain is managing it
           // Setting images only appear on explicit user request
           // ═══════════════════════════════════════════════════════════════
-          if (settingPlate) {
+          if (settingPlate && !curlChainActive) {
               settingPlate.classList.add('hidden');
           }
 
@@ -42463,6 +43577,8 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
 
           state.tempt_fate_invoked_this_turn = false;
           state.milestone_vision_fired_this_turn = false;
+          state._syzygyActiveThisScene = false;
+          state._syzygyModelTriggeredLast = false;
 
           saveStorySnapshot();
           checkStoryEndCaps();
@@ -44162,6 +45278,9 @@ FATE CARD ADAPTATION (CRITICAL):
                       log('  Magic Bias: ' + state.fantasyMagicExpressionBias);
                   }
                   log('  Syzygy Occurred: ' + state._syzygyOccurred);
+                  log('  Syzygy Eligible: ' + !state._syzygyOccurred);
+                  log('  Syzygy Active This Scene: ' + !!state._syzygyActiveThisScene);
+                  log('  Syzygy Model Triggered Last: ' + !!state._syzygyModelTriggeredLast);
               }
 
               // Dystopia core entropy debug

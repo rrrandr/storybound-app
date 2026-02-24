@@ -1288,10 +1288,44 @@
 
     <div id="billingBanner" style="display:none;"></div>
 
+    <!-- Title Page: Book-jacket style title + synopsis blurb (all stories) -->
+    <div id="sbTitlePage" class="sb-curl-page hidden">
+      <div class="sb-curl-page-inner">
+        <div class="sb-curl-page-front sb-title-page-front">
+          <div class="sb-title-page-content">
+            <div class="sb-title-page-rule"></div>
+            <h1 class="sb-title-page-title"></h1>
+            <p class="sb-title-page-subhead hidden"></p>
+            <div class="sb-title-page-rule"></div>
+            <div class="sb-title-page-blurb"></div>
+          </div>
+        </div>
+        <div class="sb-curl-page-back"></div>
+      </div>
+      <div class="sb-curl-edge-shadow"></div>
+    </div>
+
+    <!-- Fatelands Frontispiece: Map page for Fantasy stories (before setting/scene) -->
+    <div id="fatelandsFrontispiece" class="sb-curl-page hidden">
+      <div class="sb-curl-page-inner">
+        <div class="sb-curl-page-front">
+          <img src="assets/Fatelands-Map-Final.png" alt="The Fatelands" class="fatelands-map-img">
+        </div>
+        <div class="sb-curl-page-back"></div>
+      </div>
+      <div class="sb-curl-edge-shadow"></div>
+    </div>
+
     <!-- Setting Plate: Inline within Scene 1 (between synopsis and prose) -->
-    <div id="settingPlate" class="setting-plate setting-inline">
-      <img id="bookSceneImg" src="" alt="" class="book-scene-image">
-      <div id="bookSceneLoading" class="book-scene-loading hidden">Conjuring the world…</div>
+    <div id="settingPlate" class="setting-plate setting-inline sb-curl-page">
+      <div class="sb-curl-page-inner">
+        <div class="sb-curl-page-front">
+          <img id="bookSceneImg" src="" alt="" class="book-scene-image">
+          <div id="bookSceneLoading" class="book-scene-loading hidden">Conjuring the world…</div>
+        </div>
+        <div class="sb-curl-page-back"></div>
+      </div>
+      <div class="sb-curl-edge-shadow"></div>
     </div>
 
     <div id="batedBreathIndicator" class="hidden" style="text-align:center; font-size:0.8em; color:var(--gold); font-style:italic; margin-bottom:10px; opacity:0.8;">
@@ -1380,7 +1414,39 @@
 
   </div>
 
+    <!-- Story End Page: Shown when Book 1 completes. Hides all interactive elements. -->
+    <div id="storyEndPage" class="hidden">
+      <div class="sb-end-page">
+        <div class="sb-end-page-rule"></div>
+        <p class="sb-end-page-epitaph">The final page turns.</p>
+        <h2 class="sb-end-page-title"></h2>
+        <p class="sb-end-page-book-label">Book I — Complete</p>
+        <div class="sb-end-page-rule"></div>
+        <div class="sb-end-page-actions">
+          <button id="btnStartBook2" class="sb-end-page-cta" onclick="window.startBook2()">Start Book 2</button>
+          <button id="btnNewInWorld" class="sb-end-page-cta sb-end-page-cta-alt" onclick="window.startNewInWorld()">New story in this world</button>
+          <div class="sb-end-page-secondary">
+            <button id="btnEndViewCover" class="small-btn" onclick="window.showCoverFromEndPage()">View Cover</button>
+            <button id="btnEndSave" class="small-btn" onclick="window.saveStoryManual && window.saveStoryManual()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     </div><!-- END storyContent -->
+
+  <!-- Book 1 Complete Interstitial: Full-view cover display before Book 2 -->
+  <div id="book1CompleteInterstitial" class="overlay hidden" style="z-index:10007;">
+    <div class="sb-book1-interstitial">
+      <img id="book1CoverImg" src="" alt="Book 1 Cover" class="sb-book1-cover-img">
+      <h2 class="sb-book1-interstitial-title"></h2>
+      <p class="sb-book1-interstitial-label">Book I — Complete</p>
+      <div class="sb-book1-interstitial-status">
+        <span id="book2PrepStatus">Preparing your next story...</span>
+      </div>
+      <button id="btnBook1InterstitialContinue" class="sb-end-page-cta hidden">Continue to Book 2</button>
+    </div>
+  </div>
 
   <div id="toast" class="toast hidden">Boundaries redirected the scene.</div>
 
