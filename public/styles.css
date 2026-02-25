@@ -3578,6 +3578,180 @@ select:-webkit-autofill {
     width: 100%;
 }
 
+/* Crown ornament */
+.forbidden-library-crown {
+    display: flex;
+    justify-content: center;
+    padding: 18px 0 0;
+}
+.forbidden-library-crown-svg {
+    width: 80px;
+    height: 20px;
+    color: var(--gold, #c9a84c);
+    opacity: 0.45;
+}
+
+/* Loading state */
+.forbidden-library-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+
+/* Book cover cards on shelves */
+.library-book-cover {
+    width: 90px;
+    min-height: 130px;
+    border-radius: 3px 6px 6px 3px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+    box-shadow:
+        2px 2px 8px rgba(0, 0, 0, 0.5),
+        inset -2px 0 4px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 8px 6px;
+}
+.library-book-cover:hover {
+    transform: translateY(-6px);
+}
+/* Spine edge highlight */
+.library-book-cover::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.3) 100%);
+}
+.library-book-title {
+    font-family: 'Lora', serif;
+    font-size: 0.65em;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.2;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+    word-break: break-word;
+}
+.library-book-world {
+    font-family: 'Lora', serif;
+    font-size: 0.5em;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* LIBRARY READER — Read-only prose viewer                                       */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.library-reader {
+    min-height: 100vh;
+    background: #0e0906;
+    color: #d4c5a0;
+}
+.library-reader-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+    position: sticky;
+    top: 0;
+    background: rgba(14, 9, 6, 0.95);
+    z-index: 10;
+}
+.library-reader-controls {
+    display: flex;
+    gap: 10px;
+}
+.library-reader-ctrl {
+    background: none;
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    color: var(--gold, #c9a84c);
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 36px;
+    text-align: center;
+}
+.library-reader-ctrl:hover {
+    border-color: var(--gold, #c9a84c);
+    background: rgba(201, 168, 76, 0.08);
+}
+.library-reader-ctrl.active {
+    background: rgba(201, 168, 76, 0.15);
+    border-color: var(--gold, #c9a84c);
+}
+.library-reader-content {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 30px 24px 80px;
+}
+.library-reader-title {
+    font-family: 'Lora', serif;
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--gold, #c9a84c);
+    text-align: center;
+    margin: 0 0 6px;
+    letter-spacing: 0.06em;
+}
+.library-reader-author {
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    color: rgba(201, 168, 76, 0.4);
+    text-align: center;
+    margin: 0 0 30px;
+    font-style: italic;
+}
+.library-reader-prose {
+    font-family: 'Lora', serif;
+    font-size: 1.05em;
+    line-height: 1.75;
+    color: #d4c5a0;
+    white-space: pre-wrap;
+}
+/* Font size toggle states */
+.library-reader-prose.font-large {
+    font-size: 1.25em;
+    line-height: 1.8;
+}
+/* Light theme toggle */
+.library-reader.theme-light {
+    background: #f5f0e8;
+    color: #2a1a0a;
+}
+.library-reader.theme-light .library-reader-toolbar {
+    background: rgba(245, 240, 232, 0.95);
+    border-bottom-color: rgba(100, 80, 40, 0.15);
+}
+.library-reader.theme-light .library-reader-title {
+    color: #5a3e1a;
+}
+.library-reader.theme-light .library-reader-author {
+    color: rgba(90, 62, 26, 0.5);
+}
+.library-reader.theme-light .library-reader-prose {
+    color: #2a1a0a;
+}
+.library-reader.theme-light .library-reader-ctrl {
+    color: #5a3e1a;
+    border-color: rgba(90, 62, 26, 0.3);
+}
+.library-reader.theme-light .forbidden-library-back {
+    color: #5a3e1a;
+    border-color: rgba(90, 62, 26, 0.3);
+}
+
 /* Sparkle animation for mode cards */
 @keyframes modeSparkle {
     0% {

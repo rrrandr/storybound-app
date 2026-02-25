@@ -20116,6 +20116,227 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       window.showScreen('modeSelect', true);
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // FORBIDDEN LIBRARY — Shelf display, read-only mode, bookmarks
+  // ═══════════════════════════════════════════════════════════════════════════════
+  const LIBRARY_BOOKS_PER_SHELF = 8;
+  const LIBRARY_SHELF_COUNT = 4;
+  const LIBRARY_COVER_COLORS = [
+    '#6b2e3a', '#2e4a6b', '#3a5c3a', '#5c4a2e', '#4a2e5c',
+    '#2e5c5c', '#6b4a2e', '#3a2e5c', '#5c3a3a', '#2e3a5c'
+  ];
+
+  let _libraryEntries = [];
+  let _libraryLoaded = false;
+  state.libraryMode = false;
+
+  // — Load library entries from Supabase —
+  async function loadLibraryEntries() {
+    if (!sb) {
+      _showLibraryEmpty('Library unavailable');
+      return;
+    }
+    const loadingEl = $('forbiddenLibraryLoading');
+    const shelvesEl = $('forbiddenLibraryShelves');
+    const emptyEl = $('forbiddenLibraryEmpty');
+    if (loadingEl) loadingEl.style.display = '';
+    if (shelvesEl) shelvesEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    try {
+      const { data, error } = await sb
+        .from('library_entries')
+        .select('story_id, title, world, scene_count, sanitized_text, cover_url, profile_id')
+        .eq('visibility', 'public')
+        .eq('library_opt_in', true)
+        .gte('scene_count', 20)
+        .order('scene_count', { ascending: false })
+        .limit(LIBRARY_BOOKS_PER_SHELF * LIBRARY_SHELF_COUNT);
+
+      if (error) {
+        console.error('[Library] Query failed:', error.message);
+        _showLibraryEmpty('Failed to load library');
+        return;
+      }
+
+      _libraryEntries = data || [];
+      _libraryLoaded = true;
+
+      if (_libraryEntries.length === 0) {
+        _showLibraryEmpty();
+        return;
+      }
+
+      renderLibraryShelves();
+    } catch (err) {
+      console.error('[Library] Load error:', err);
+      _showLibraryEmpty('Failed to load library');
+    }
+  }
+
+  function _showLibraryEmpty(msg) {
+    const loadingEl = $('forbiddenLibraryLoading');
+    const shelvesEl = $('forbiddenLibraryShelves');
+    const emptyEl = $('forbiddenLibraryEmpty');
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (shelvesEl) shelvesEl.style.display = 'none';
+    if (emptyEl) {
+      emptyEl.style.display = '';
+      if (msg) {
+        const p = emptyEl.querySelector('.forbidden-library-empty');
+        if (p) p.textContent = msg;
+      }
+    }
+  }
+
+  // — Render book covers onto shelf rows —
+  function renderLibraryShelves() {
+    const loadingEl = $('forbiddenLibraryLoading');
+    const shelvesEl = $('forbiddenLibraryShelves');
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (shelvesEl) shelvesEl.style.display = '';
+
+    for (let row = 0; row < LIBRARY_SHELF_COUNT; row++) {
+      const rowEl = $('libraryShelfRow' + row);
+      if (!rowEl) continue;
+      rowEl.innerHTML = '';
+      const start = row * LIBRARY_BOOKS_PER_SHELF;
+      const slice = _libraryEntries.slice(start, start + LIBRARY_BOOKS_PER_SHELF);
+      slice.forEach((entry, i) => {
+        const cover = document.createElement('div');
+        cover.className = 'library-book-cover';
+        cover.style.background = LIBRARY_COVER_COLORS[(start + i) % LIBRARY_COVER_COLORS.length];
+        cover.dataset.storyId = entry.story_id;
+        cover.dataset.profileId = entry.profile_id;
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'library-book-title';
+        titleEl.textContent = entry.title || 'Untitled';
+        cover.appendChild(titleEl);
+
+        const worldEl = document.createElement('div');
+        worldEl.className = 'library-book-world';
+        worldEl.textContent = entry.world || '';
+        cover.appendChild(worldEl);
+
+        cover.addEventListener('click', () => openLibraryReader(entry));
+        rowEl.appendChild(cover);
+      });
+    }
+  }
+
+  // — Open the read-only reader for a library entry —
+  function openLibraryReader(entry) {
+    state.libraryMode = true;
+    const titleEl = $('libraryReaderTitle');
+    const proseEl = $('libraryReaderProse');
+    if (titleEl) titleEl.textContent = entry.title || 'Untitled';
+    if (proseEl) proseEl.textContent = entry.sanitized_text || '';
+
+    // Restore bookmark if available
+    restoreLibraryBookmark(entry.story_id);
+
+    window.showScreen('libraryReaderScreen');
+  }
+
+  // — Reader back button —
+  $('libraryReaderBackBtn')?.addEventListener('click', () => {
+    state.libraryMode = false;
+    window.showScreen('forbiddenLibraryScreen');
+  });
+
+  // — Font size toggle —
+  $('libraryFontToggle')?.addEventListener('click', () => {
+    const prose = $('libraryReaderProse');
+    const btn = $('libraryFontToggle');
+    if (!prose) return;
+    prose.classList.toggle('font-large');
+    if (btn) btn.classList.toggle('active', prose.classList.contains('font-large'));
+  });
+
+  // — Light/Dark theme toggle —
+  $('libraryThemeToggle')?.addEventListener('click', () => {
+    const reader = document.querySelector('.library-reader');
+    const btn = $('libraryThemeToggle');
+    if (!reader) return;
+    reader.classList.toggle('theme-light');
+    if (btn) btn.classList.toggle('active', reader.classList.contains('theme-light'));
+  });
+
+  // — Bookmark system —
+  let _libraryBookmarkTimer = null;
+  let _currentLibraryStoryId = null;
+
+  function saveLibraryBookmark() {
+    if (!sb || !_supabaseProfileId || !_currentLibraryStoryId) return;
+    const content = $('libraryReaderContent');
+    if (!content) return;
+    const scrollPos = content.scrollTop / Math.max(content.scrollHeight, 1);
+
+    clearTimeout(_libraryBookmarkTimer);
+    _libraryBookmarkTimer = setTimeout(async () => {
+      try {
+        await sb.from('library_bookmarks').upsert({
+          user_id: _supabaseProfileId,
+          story_id: _currentLibraryStoryId,
+          scroll_position: scrollPos,
+          last_scene_index: 0,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,story_id' });
+      } catch (err) {
+        console.warn('[Library] Bookmark save failed:', err);
+      }
+    }, 2000);
+  }
+
+  async function restoreLibraryBookmark(storyId) {
+    _currentLibraryStoryId = storyId;
+    if (!sb || !_supabaseProfileId) return;
+    try {
+      const { data } = await sb
+        .from('library_bookmarks')
+        .select('scroll_position')
+        .eq('user_id', _supabaseProfileId)
+        .eq('story_id', storyId)
+        .maybeSingle();
+
+      if (data && data.scroll_position > 0) {
+        const content = $('libraryReaderContent');
+        if (content) {
+          requestAnimationFrame(() => {
+            content.scrollTop = data.scroll_position * content.scrollHeight;
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[Library] Bookmark restore failed:', err);
+    }
+  }
+
+  // Bookmark button — manual save with toast
+  $('libraryBookmarkBtn')?.addEventListener('click', () => {
+    saveLibraryBookmark();
+    if (typeof showToast === 'function') showToast('Bookmark saved');
+  });
+
+  // Auto-bookmark on scroll (throttled)
+  $('libraryReaderContent')?.addEventListener('scroll', () => {
+    if (state.libraryMode) saveLibraryBookmark();
+  });
+
+  // Hook into showScreen: load library when screen opens
+  const _origShowScreen = window.showScreen;
+  window.showScreen = function(id, isBack) {
+    _origShowScreen(id, isBack);
+    if (id === 'forbiddenLibraryScreen' && !_libraryLoaded) {
+      loadLibraryEntries();
+    }
+    // Exit library mode if navigating away from reader
+    if (id !== 'libraryReaderScreen' && state.libraryMode) {
+      state.libraryMode = false;
+    }
+  };
+
   $('ageYes')?.addEventListener('click', () => window.showScreen('legalGate'));
 
   // Tier card hover-flip + click-to-proceed

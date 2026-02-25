@@ -1573,15 +1573,29 @@
 
 <div id="forbiddenLibraryScreen" class="screen hidden">
   <div class="forbidden-library">
+    <!-- Crown ornament -->
+    <div class="forbidden-library-crown">
+      <svg viewBox="0 0 120 28" class="forbidden-library-crown-svg" aria-hidden="true">
+        <path d="M10,26 L20,6 L35,18 L50,2 L60,14 L70,2 L85,18 L100,6 L110,26 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <circle cx="50" cy="2" r="2" fill="currentColor" opacity="0.6"/>
+        <circle cx="70" cy="2" r="2" fill="currentColor" opacity="0.6"/>
+        <circle cx="60" cy="14" r="1.5" fill="currentColor" opacity="0.4"/>
+      </svg>
+    </div>
     <div class="forbidden-library-header">
       <button id="forbiddenLibraryBackBtn" class="forbidden-library-back">&larr; Back</button>
       <h2 class="forbidden-library-title">The Forbidden Library</h2>
     </div>
-    <div class="forbidden-library-shelves" id="forbiddenLibraryShelves">
+    <div id="forbiddenLibraryLoading" class="forbidden-library-loading">
+      <p class="forbidden-library-empty">Opening the vault...</p>
+    </div>
+    <div class="forbidden-library-shelves" id="forbiddenLibraryShelves" style="display:none;">
       <div class="forbidden-library-shelf">
-        <div class="forbidden-library-shelf-books" id="libraryShelfRow1">
-          <p class="forbidden-library-empty">The shelves await their first volumes...</p>
-        </div>
+        <div class="forbidden-library-shelf-books" id="libraryShelfRow0"></div>
+        <div class="forbidden-library-shelf-wood"></div>
+      </div>
+      <div class="forbidden-library-shelf">
+        <div class="forbidden-library-shelf-books" id="libraryShelfRow1"></div>
         <div class="forbidden-library-shelf-wood"></div>
       </div>
       <div class="forbidden-library-shelf">
@@ -1592,6 +1606,30 @@
         <div class="forbidden-library-shelf-books" id="libraryShelfRow3"></div>
         <div class="forbidden-library-shelf-wood"></div>
       </div>
+    </div>
+    <div id="forbiddenLibraryEmpty" class="forbidden-library-empty-state" style="display:none;">
+      <p class="forbidden-library-empty">The shelves await their first volumes...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     FORBIDDEN LIBRARY — Read-only story viewer
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div id="libraryReaderScreen" class="screen hidden">
+  <div class="library-reader">
+    <div class="library-reader-toolbar">
+      <button id="libraryReaderBackBtn" class="forbidden-library-back">&larr; Library</button>
+      <div class="library-reader-controls">
+        <button id="libraryFontToggle" class="library-reader-ctrl" title="Font size">Aa</button>
+        <button id="libraryThemeToggle" class="library-reader-ctrl" title="Light/Dark">◑</button>
+        <button id="libraryBookmarkBtn" class="library-reader-ctrl" title="Bookmark">🔖</button>
+      </div>
+    </div>
+    <div class="library-reader-content" id="libraryReaderContent">
+      <h1 class="library-reader-title" id="libraryReaderTitle"></h1>
+      <p class="library-reader-author">Author: S. Tory Bound</p>
+      <div class="library-reader-prose" id="libraryReaderProse"></div>
     </div>
   </div>
 </div>
