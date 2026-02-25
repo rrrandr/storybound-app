@@ -1817,8 +1817,6 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
       hydrateState(profile);
 
-      // Forbidden Library admin gate — runs after _supabaseProfileId is set
-      updateForbiddenLibraryBtn();
       renderBurgerMenu();
 
       // DEV BYPASS — localhost only, ?devpass=storybound makes purchase buttons fake success
@@ -4290,6 +4288,12 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       consecutiveFate: 0, 
       consecutiveAid: 0,
       storyId: null,
+
+      // ──────────────────────────────────────────────────────────────
+      // LAYER 2 — EPOCH STATE (World-Cycle Conditions)
+      // Persists across Start Book 2 / New Story in This World.
+      // Resets ONLY on full new world (resetForNewStory / performAuthReset).
+      // ──────────────────────────────────────────────────────────────
       worldInstanceId: null,      // Persistent world identity for same-world continuations
       worldName: null,            // Unique world name for world-linked titles
       previousTitle: null,        // Last title for continuation mode matching
@@ -4302,8 +4306,9 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       authorGender: 'Female',
       authorPronouns: 'She/Her',
       
+      _isTransitioning: false,    // Reentrancy guard for startBook2 / startNewInWorld
       storyTargetWords: 10000,
-      storyLength: 'taste', 
+      storyLength: 'taste',
       flingClimaxDone: false,
       flingConsequenceShown: false,
       storyEnded: false,
@@ -4314,7 +4319,21 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       main_characters_locked: null,
       book1_continuity_summary: null,
       book_subhead: null,
-      world_cycle_label: null,
+      world_cycle_id: null,          // EPOCH STATE — canonical epoch/world-cycle identifier (persists across Book 2 and New story in this world)
+      world_cycle_label: null,       // EPOCH STATE — persists across same-world continuations
+      _syzygyOccurred: false,        // EPOCH STATE — at most once per world_cycle
+      // Epoch entropy objects (dynamically created, not in init):
+      //   _fantasyCoreEntropy, _modernCoreEntropy, _smallTownEntropy, _collegeEntropy,
+      //   _officeEntropy, _friendsEntropy, _supernaturalEntropy, _superheroicEntropy,
+      //   _historicalCoreEntropy, _dystopiaCoreEntropy, _blueBloodEntropy
+
+      // ──────────────────────────────────────────────────────────────
+      // LAYER 1 — REGION PHYSICS (Geographic Invariants)
+      // Persists if region unchanged. Recalculated only if region changes.
+      // Dynamically created fields (not in init):
+      //   fantasyRegion, fantasyRegionSeat, fantasyRegionGovernance,
+      //   fantasyRegionStatus, fantasyRegionReality, fantasyMagicExpressionBias
+      // ──────────────────────────────────────────────────────────────
 
       fortunes: 0,
 
@@ -4333,6 +4352,12 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
           visualizedScenes: {}
       },
 
+      // ──────────────────────────────────────────────────────────────
+      // LAYER 3 — STORY STATE (Couple Mechanics)
+      // Always reset for Start Book 2 / New Story in This World.
+      // Must NOT bleed across stories.
+      // ──────────────────────────────────────────────────────────────
+
       // Fortune burn tracking
       petitionUsedThisScene: false,
 
@@ -4348,7 +4373,6 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       has_received_final_vision: false,
       has_triggered_first_tempt_fate: false,
       milestone_vision_fired_this_turn: false,
-      _syzygyOccurred: false,
       _fantasyMapInjected: false,
       _synopsisBlurb: null,
       _titlePageShown: false,
@@ -13077,6 +13101,14 @@ Return ONLY valid JSON:
       // else: Book 2+ inherits label from Book 1 (already in state)
       console.log('[ARCHIVE] world_cycle_label:', state.world_cycle_label);
 
+      // Ensure world_cycle_id exists before archiving (fallback if title pipeline was bypassed)
+      if (!state.world_cycle_id) {
+          state.world_cycle_id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+              ? crypto.randomUUID()
+              : generateWorldInstanceId();
+          console.warn('[ARCHIVE] world_cycle_id was null at archive time — generated fallback:', state.world_cycle_id);
+      }
+
       // Final save (immutable snapshot)
       saveStorySnapshot();
       // Archive under separate key so clearStoryContent() won't erase it
@@ -13109,6 +13141,12 @@ Return ONLY valid JSON:
 
   // Shared: reset story-specific state fields (preserves subscription/payment)
   function _resetStoryState() {
+      // ── LAYER 3 — STORY STATE RESET ──
+      // Resets all per-story couple/fate/narrative mechanics.
+      // Called by startBook2 and startNewInWorld.
+      // Does NOT touch Epoch State (Layer 2) or Region Physics (Layer 1).
+
+      state._isTransitioning = false;
       state.storyEnded = false;
       state.book_complete = false;
       state.turnCount = 0;
@@ -13130,10 +13168,127 @@ Return ONLY valid JSON:
       state.storyStage = null;
       state.intimacyInterrupted = { first_kiss: false, first_intimacy: false };
       state.intimacyTurnsInWindow = 0;
+
+      // Fate / volatility / saturation — per-story, must not bleed
+      // NOTE: _syzygyOccurred is EPOCH STATE (Layer 2) — persists across same-world continuations
+      state._syzygyActiveThisScene = false;
+      state.fate_saturation = 0;
+      state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
+      state.consecutive_tempt_fate_count = 0;
+      state.tempt_fate_invoked_this_turn = false;
+      state.petitionUsedThisScene = false;
+
+      // Fate object — per-story tracking
+      state.fate = { stance: 'neutral', minorUsedThisScene: false, greaterUsedThisScene: false, lastGreaterSceneIndex: null, earnedIntimacy: false, earlyGamingCount: 0, pendingPetition: null };
+
+      // Omen + keyhole — per-story
+      state.omen = { decayStage: 0, decayAccumulator: 0, lastDecayTurn: 0, recoveryAccumulator: 0, lastGreaterPetitionCount: 0, totalWithholds: 0, temporaryWarmth: false };
+      state.keyhole = { marked: false, orientation: 'neutral', favorReservoir: 0, maxFavor: 100, regenPerTurn: 5, boonUsedThisScene: false, totalBoonsDrained: 0, alignmentScore: 0, lastOrientationShift: 0, rivalKeyholeActive: false };
+
+      // Scene importance / sceneImportance (if used)
+      state.sceneImportance = undefined;
+
+      // Cascade / adaptive / erotic — per-story runtime
+      state.cascadeMode = false;
+      state.cascadeCount = 0;
+      state.cascadeContext = null;
+      state.lastCascadeExcerpt = null;
+      state.adaptiveMetrics = { turnTimestamps: [], userInputLengths: [], sceneWordCounts: [], cascadeCountWindow: 0, eroticSignalCount: 0 };
+      state.pacingMode = 'HYBRID';
+      state.eroticPressureScore = 0;
+      state.eroticMode = 'ROMANTIC';
+      state.redirectCooldownTurns = 0;
+      state.seductionEligible = false;
+      state.gooseCooldown = 0;
+
+      // Couple drift — per-story
+      state.coupleTensionDrift = 0;
+      state.coupleStructure = 'monogamous';
+      state.coupleHasReachedST4 = false;
+      state.lastCoupleDriftEchoScene = 0;
+      state._coupleDriftEchoLine = null;
+
+      // Dream injection + selection echo — per-story
+      state.lastDreamInjectionTurn = 0;
+      state._dreamInjectionLine = null;
+      state.selectionTension = 0;
+      state.lastSelectionEchoTurn = 0;
+      state._selectionEchoLine = null;
+
+      // Edge covenant — per-story
+      state.edgeCovenant = { active: false, level: 1, acceptedAtTurn: 0, offeredBy: '' };
+      state.pendingEdgeOffer = null;
+      state.edgeCovenantOfferedThisTurn = false;
+
+      // Storyturn + milestones — per-story
+      state.storyturn = 'ST1';
+      state.milestone_vision_fired_this_turn = false;
+
+      // Historical / Dystopia per-story systems
+      state.historicalCognitiveBand = null;
+      state.historicalCognitiveModulation = 0.25;
+      state.historicalFrictionIndex = 0;
+      state.dystopianAttentionLevel = 0;
+      state.dystopianEnforcementMode = null;
+
+      // Speculative preload — per-story runtime
+      state.speculativeNextScene = null;
+      state.isPreloadingNextScene = false;
+
+      // Couple structure votes (module-scoped, not on state)
+      if (typeof _coupleStructureVotes !== 'undefined') {
+          _coupleStructureVotes = { player1: null, player2: null };
+      }
+
+      // Safety / content gating — per-story
+      state.sexPushCount = 0;
+      state.lastSexPushAt = null;
+      state.nonConPushCount = 0;
+      state.lastNonConPushAt = 0;
+      state.lastSafewordAt = 0;
+
+      // Generate new story ID
       state.storyId = (typeof crypto !== 'undefined' && crypto.randomUUID)
           ? crypto.randomUUID()
           : 'sb_' + Date.now().toString(36);
       localStorage.setItem('sb_current_story_id', state.storyId);
+  }
+
+  // ── LAYER 2 — EPOCH STATE RESET ──
+  // Clears world-cycle entropy and epoch-level flags.
+  // Called ONLY on full world change (resetForNewStory / performAuthReset).
+  function _resetEpochState() {
+      state.world_cycle_id = null;
+      state._syzygyOccurred = false;
+      state.world_cycle_label = null;
+      state.worldInstanceId = null;
+      state.worldName = null;
+      state.previousTitle = null;
+      state.previousTitleMode = null;
+      state.continuationPath = null;
+
+      // Clear all entropy axis objects
+      const entropyKeys = [
+          '_fantasyCoreEntropy', '_modernCoreEntropy', '_smallTownEntropy',
+          '_collegeEntropy', '_officeEntropy', '_friendsEntropy',
+          '_supernaturalEntropy', '_superheroicEntropy',
+          '_historicalCoreEntropy', '_dystopiaCoreEntropy', '_blueBloodEntropy'
+      ];
+      for (const k of entropyKeys) {
+          state[k] = undefined;
+      }
+  }
+
+  // ── LAYER 1 — REGION PHYSICS RESET ──
+  // Clears Fantasy region invariants (governance, seat, magic bias, etc.).
+  // Called ONLY on full world change (resetForNewStory / performAuthReset).
+  function _resetRegionPhysics() {
+      state.fantasyRegion = undefined;
+      state.fantasyRegionSeat = undefined;
+      state.fantasyRegionGovernance = undefined;
+      state.fantasyRegionStatus = undefined;
+      state.fantasyRegionReality = undefined;
+      state.fantasyMagicExpressionBias = undefined;
   }
 
   // Shared: mount generated scene + wire interstitial continue button
@@ -13168,53 +13323,46 @@ Return ONLY valid JSON:
   // ════════════════════════════════════════════════════════════════════
 
   window.startBook2 = async function() {
-      console.log('[BOOK2] Starting Book 2 flow');
-      const { book1StoryId, book1Title, interstitial, continueBtn, statusEl } = await _archiveAndShowInterstitial();
+      // Reentrancy guard — prevent double-click / concurrent execution
+      if (state._isTransitioning) return;
+      state._isTransitioning = true;
+      const btn = document.getElementById('btnStartBook2');
+      if (btn) btn.disabled = true;
 
-      // Snapshot everything we need before reset
+      console.log('[BOOK2] Starting Book 2 flow');
+
+      // Snapshot everything BEFORE any mutation or async work
       const lockedChars = state.main_characters_locked;
       const lockedPicks = { ...state.picks };
       const lockedWorld = state.picks?.world;
       const lockedTone = state.picks?.tone;
       const lockedFlavor = state.picks?.flavor;
       const lockedGenre = state.picks?.genre;
-      const lockedPov = state.picks?.pov;
       const lockedArchetype = state.archetype ? { ...state.archetype } : { primary: 'BEAUTIFUL_RUIN', modifier: null };
       const lockedIntensity = state.intensity;
       const seriesId = state.series_id;
       const bookNumber = (state.book_number || 1) + 1;
-      const previousTitle = state.immutableTitle || book1Title;
+      const previousTitle = state.immutableTitle || state.story?.title || 'Untitled';
       const continuitySummary = state.book1_continuity_summary;
       const lockedCycleLabel = state.world_cycle_label;
       const baseSysPrompt = state.sysPrompt || '';
 
-      // Reset + set Book 2 metadata
-      _resetStoryState();
-      state.book_number = bookNumber;
-      state.series_id = seriesId;
-      state.previous_story_id = book1StoryId;
-      state.main_characters_locked = lockedChars;
-      state.book1_continuity_summary = continuitySummary;
-      state.world_cycle_label = lockedCycleLabel;
-      state.picks = lockedPicks;
-      state.picks.identity = {
-          playerName: lockedChars.playerName,
-          partnerName: lockedChars.partnerName,
-          displayPlayerName: lockedChars.displayPlayerName,
-          displayPartnerName: lockedChars.displayPartnerName
-      };
-      state.archetype = lockedArchetype;
-      state.intensity = lockedIntensity;
-      state.gender = lockedChars.playerGender;
-      state.loveInterest = lockedChars.partnerGender;
-      state.previousTitle = previousTitle;
-      state.continuationPath = 'continue';
-      state.immutableTitle = null;
-      state.book_subhead = null;
+      // Archive + show interstitial (safe — does not mutate core state)
+      let interstitial, continueBtn, statusEl, book1StoryId;
+      try {
+          const archive = await _archiveAndShowInterstitial();
+          book1StoryId = archive.book1StoryId;
+          interstitial = archive.interstitial;
+          continueBtn = archive.continueBtn;
+          statusEl = archive.statusEl;
+      } catch (archiveErr) {
+          console.error('[BOOK2] Archive failed:', archiveErr);
+          state._isTransitioning = false;
+          if (btn) btn.disabled = false;
+          return;
+      }
 
-      clearStoryContent();
-
-      // Generate Book 2 title + blurb + Scene 1
+      // Generate Book 2 title + blurb + Scene 1 — NO state mutation until success
       try {
           if (statusEl) statusEl.textContent = 'Generating Book 2 title...';
           const titleResult = await callChat([{role:'user', content:`Generate a title for Book 2 of a romance series.
@@ -13231,10 +13379,6 @@ RULES:
 - Keep under 8 words
 - Return ONLY the title, no quotes, no explanation`}]);
           const book2Title = (titleResult || 'Untitled').trim().replace(/^["']|["']$/g, '');
-          state.immutableTitle = book2Title;
-          state.story = state.story || {};
-          state.story.title = book2Title;
-          document.getElementById('storyTitle').textContent = book2Title;
 
           if (statusEl) statusEl.textContent = 'Writing Book 2 opening...';
 
@@ -13257,7 +13401,7 @@ RULES:
 - Write like a bestseller's back cover
 
 Return ONLY the blurb paragraphs:`}]);
-          state._synopsisBlurb = (blurbResult || '').trim();
+          const blurbText = (blurbResult || '').trim();
 
           // Append Book 2 continuation context to system prompt
           const book2SysAddendum = `
@@ -13280,10 +13424,10 @@ CONTINUATION RULES:
 - The tone, world, and dynamic constraints remain identical.
 ═══════════════════════════════════════════════════
 `;
-          state.sysPrompt = baseSysPrompt + book2SysAddendum;
+          const newSysPrompt = baseSysPrompt + book2SysAddendum;
 
           let sceneText = await callChat([
-              { role: 'system', content: state.sysPrompt },
+              { role: 'system', content: newSysPrompt },
               { role: 'user', content: `Write Scene 1 of Book ${bookNumber} — a direct continuation of Book 1.
 
 The reader already knows these characters intimately. Begin with a new situation, complication, or shift that picks up from where Book 1 left off.
@@ -13298,14 +13442,49 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
           ]);
 
           const { synopsis, blurb: parsedBlurb, body } = parseScene1Response(sceneText);
+
+          // ── ALL ASYNC WORK COMPLETE — now commit state reset ──
+          _resetStoryState();
+          // Defensive restore of epoch state (already preserved, but safety net)
+          state.world_cycle_label = lockedCycleLabel;
+          state.book_number = bookNumber;
+          state.series_id = seriesId;
+          state.previous_story_id = book1StoryId;
+          state.main_characters_locked = lockedChars;
+          state.book1_continuity_summary = continuitySummary;
+          state.picks = lockedPicks;
+          state.picks.identity = {
+              playerName: lockedChars.playerName,
+              partnerName: lockedChars.partnerName,
+              displayPlayerName: lockedChars.displayPlayerName,
+              displayPartnerName: lockedChars.displayPartnerName
+          };
+          state.archetype = lockedArchetype;
+          state.intensity = lockedIntensity;
+          state.gender = lockedChars.playerGender;
+          state.loveInterest = lockedChars.partnerGender;
+          state.previousTitle = previousTitle;
+          state.continuationPath = 'continue';
+          state.immutableTitle = book2Title;
+          state.book_subhead = null;
+          state.sysPrompt = newSysPrompt;
+          state._synopsisBlurb = blurbText;
+          state.story = state.story || {};
+          state.story.title = book2Title;
           if (synopsis) state._synopsisMetadata = synopsis;
           if (parsedBlurb && !state._synopsisBlurb) state._synopsisBlurb = parsedBlurb;
 
+          clearStoryContent();
+          document.getElementById('storyTitle').textContent = book2Title;
+
           _mountAndTransition(book2Title, synopsis, body, interstitial, continueBtn, statusEl, 'Book 2');
+          state._isTransitioning = false;
           console.log('[BOOK2] Book 2 generation complete: "' + book2Title + '"');
 
       } catch (err) {
           console.error('[BOOK2] Generation failed:', err);
+          state._isTransitioning = false;
+          if (btn) btn.disabled = false;
           if (statusEl) statusEl.textContent = 'Generation failed. Please try again.';
           if (continueBtn) {
               continueBtn.textContent = 'Try Again';
@@ -13323,10 +13502,15 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
   // ════════════════════════════════════════════════════════════════════
 
   window.startNewInWorld = async function() {
-      console.log('[NEW-WORLD] Starting new story in same world');
-      const { book1StoryId, book1Title, interstitial, continueBtn, statusEl } = await _archiveAndShowInterstitial();
+      // Reentrancy guard — prevent double-click / concurrent execution
+      if (state._isTransitioning) return;
+      state._isTransitioning = true;
+      const btn = document.getElementById('btnNewInWorld');
+      if (btn) btn.disabled = true;
 
-      // Snapshot world/pov/length/tone before reset
+      console.log('[NEW-WORLD] Starting new story in same world');
+
+      // Snapshot everything BEFORE any mutation or async work
       const lockedWorld = state.picks?.world;
       const lockedPov = state.picks?.pov;
       const lockedTone = state.picks?.tone;
@@ -13337,7 +13521,7 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
       const lockedStoryLength = state.storyLength;
       const lockedWorldSubtype = state.picks?.worldSubtype;
       const lockedWorldCustomText = state.worldCustomTexts;
-      const previousTitle = state.immutableTitle || book1Title;
+      const previousTitle = state.immutableTitle || state.story?.title || 'Untitled';
       const baseSysPrompt = state.sysPrompt || '';
       const previousPressure = state.picks?.pressure;
       const previousDynamic = state.picks?.dynamic;
@@ -13369,7 +13553,6 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
       const partnerNames = partnerGender === 'Female' ? FEMALE_NAMES : MALE_NAMES;
       const newPlayerName = playerNames[Math.floor(Math.random() * playerNames.length)];
       let newPartnerName = partnerNames[Math.floor(Math.random() * partnerNames.length)];
-      // Ensure different names
       while (newPartnerName === newPlayerName) {
           newPartnerName = partnerNames[Math.floor(Math.random() * partnerNames.length)];
       }
@@ -13385,48 +13568,21 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
       else if (playerGender === 'Female' && partnerGender === 'Female') { authorGender = 'Female'; authorPronouns = 'She/Her'; }
       else { authorGender = 'Non-Binary'; authorPronouns = 'They/Them'; }
 
-      // Reset state for new story — NO series continuity
-      _resetStoryState();
-      state.book_number = 1;
-      state.series_id = null;
-      state.previous_story_id = null;
-      state.main_characters_locked = null;
-      state.book1_continuity_summary = null;
+      // Archive + show interstitial (safe — does not mutate core state)
+      let interstitial, continueBtn, statusEl;
+      try {
+          const archive = await _archiveAndShowInterstitial();
+          interstitial = archive.interstitial;
+          continueBtn = archive.continueBtn;
+          statusEl = archive.statusEl;
+      } catch (archiveErr) {
+          console.error('[NEW-WORLD] Archive failed:', archiveErr);
+          state._isTransitioning = false;
+          if (btn) btn.disabled = false;
+          return;
+      }
 
-      // Restore world/pov/length
-      state.picks = state.picks || {};
-      state.picks.world = lockedWorld;
-      state.picks.pov = lockedPov;
-      state.picks.tone = lockedTone;
-      state.picks.flavor = lockedFlavor;
-      state.picks.genre = lockedGenre;
-      state.picks.era = lockedEra;
-      state.picks.worldSubtype = lockedWorldSubtype;
-      state.worldCustomTexts = lockedWorldCustomText;
-      state.intensity = lockedIntensity;
-      state.storyLength = lockedStoryLength;
-
-      // Set new auto-chosen values
-      state.picks.pressure = newPressure;
-      state.picks.dynamic = newDynamic;
-      state.archetype = { primary: newArchetype, modifier: null };
-      state.gender = playerGender;
-      state.authorGender = authorGender;
-      state.authorPronouns = authorPronouns;
-      state.loveInterest = partnerGender;
-      state.picks.identity = {
-          playerName: newPlayerName,
-          partnerName: newPartnerName,
-          displayPlayerName: newPlayerName,
-          displayPartnerName: newPartnerName
-      };
-      state.continuationPath = 'new_world';
-      state.immutableTitle = null;
-      state.previousTitle = previousTitle;
-
-      clearStoryContent();
-
-      // Generate title + blurb + Scene 1 for new story
+      // Generate title + blurb + Scene 1 — NO state mutation until success
       try {
           if (statusEl) statusEl.textContent = 'Generating new story title...';
 
@@ -13443,11 +13599,6 @@ RULES:
 - Keep under 8 words
 - Return ONLY the title, no quotes, no explanation`}]);
           const baseTitle = (titleResult || 'Untitled').trim().replace(/^["']|["']$/g, '');
-          state.immutableTitle = baseTitle;
-          state.book_subhead = 'In the world of ' + previousTitle;
-          state.story = state.story || {};
-          state.story.title = baseTitle;
-          document.getElementById('storyTitle').textContent = baseTitle;
 
           if (statusEl) statusEl.textContent = 'Writing opening scene...';
 
@@ -13466,14 +13617,13 @@ RULES:
 - Write like a bestseller's back cover
 
 Return ONLY the blurb paragraphs:`}]);
-          state._synopsisBlurb = (blurbResult || '').trim();
+          const blurbText = (blurbResult || '').trim();
 
           // Build system prompt for new story (reuse base but strip any Book 2 addenda)
           const cleanSys = baseSysPrompt.replace(/═+\nBOOK 2 CONTINUATION CONTEXT[\s\S]*?═+\n?/g, '');
-          state.sysPrompt = cleanSys;
 
           let sceneText = await callChat([
-              { role: 'system', content: state.sysPrompt },
+              { role: 'system', content: cleanSys },
               { role: 'user', content: `Write Scene 1 of a new romance novel set in ${lockedWorld}.
 
 Protagonist: ${newPlayerName} (${playerGender}, ${playerPronouns})
@@ -13491,14 +13641,64 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
           ]);
 
           const { synopsis, blurb: parsedBlurb, body } = parseScene1Response(sceneText);
+
+          // ── ALL ASYNC WORK COMPLETE — now commit state reset ──
+          _resetStoryState();
+          state.book_number = 1;
+          state.series_id = null;
+          state.previous_story_id = null;
+          state.main_characters_locked = null;
+          state.book1_continuity_summary = null;
+
+          // Restore world/pov/length
+          state.picks = state.picks || {};
+          state.picks.world = lockedWorld;
+          state.picks.pov = lockedPov;
+          state.picks.tone = lockedTone;
+          state.picks.flavor = lockedFlavor;
+          state.picks.genre = lockedGenre;
+          state.picks.era = lockedEra;
+          state.picks.worldSubtype = lockedWorldSubtype;
+          state.worldCustomTexts = lockedWorldCustomText;
+          state.intensity = lockedIntensity;
+          state.storyLength = lockedStoryLength;
+
+          // Set new auto-chosen values
+          state.picks.pressure = newPressure;
+          state.picks.dynamic = newDynamic;
+          state.archetype = { primary: newArchetype, modifier: null };
+          state.gender = playerGender;
+          state.authorGender = authorGender;
+          state.authorPronouns = authorPronouns;
+          state.loveInterest = partnerGender;
+          state.picks.identity = {
+              playerName: newPlayerName,
+              partnerName: newPartnerName,
+              displayPlayerName: newPlayerName,
+              displayPartnerName: newPartnerName
+          };
+          state.continuationPath = 'new_world';
+          state.immutableTitle = baseTitle;
+          state.book_subhead = 'In the world of ' + previousTitle;
+          state.previousTitle = previousTitle;
+          state.sysPrompt = cleanSys;
+          state._synopsisBlurb = blurbText;
+          state.story = state.story || {};
+          state.story.title = baseTitle;
           if (synopsis) state._synopsisMetadata = synopsis;
           if (parsedBlurb && !state._synopsisBlurb) state._synopsisBlurb = parsedBlurb;
 
+          clearStoryContent();
+          document.getElementById('storyTitle').textContent = baseTitle;
+
           _mountAndTransition(baseTitle, synopsis, body, interstitial, continueBtn, statusEl, 'New Story');
+          state._isTransitioning = false;
           console.log('[NEW-WORLD] New story generation complete: "' + baseTitle + '"');
 
       } catch (err) {
           console.error('[NEW-WORLD] Generation failed:', err);
+          state._isTransitioning = false;
+          if (btn) btn.disabled = false;
           if (statusEl) statusEl.textContent = 'Generation failed. Please try again.';
           if (continueBtn) {
               continueBtn.textContent = 'Try Again';
@@ -13625,37 +13825,21 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
           window.showPaywall('unlock');
           return;
       }
-      state.storyEnded = false;
-      state.book_complete = false;
+
+      // ── ALL THREE LAYERS RESET (full world change) ──
+      _resetStoryState();          // Layer 3 — couple mechanics
+      _resetEpochState();          // Layer 2 — world-cycle entropy
+      _resetRegionPhysics();       // Layer 1 — geographic invariants
+
+      // Series / book metadata
       state.book_number = 1;
       state.series_id = null;
       state.previous_story_id = null;
       state.main_characters_locked = null;
       state.book1_continuity_summary = null;
       state.book_subhead = null;
-      state.world_cycle_label = null;
-      state.turnCount = 0;
-      state._loggedStoryStart = false;
-      state._loggedScene3 = false;
-      state._loggedScene6 = false;
-      state._loggedPetitionOpen = false;
-      state._loggedPetitionSubmit = false;
       state.storyLength = 'taste';
-      state.storyId = null;
-      state.cautiousStreak = 0;
-      state.dynamicDominanceBoost = 0;
-      state.vulnerabilityPulse = 0;
-      state.lastDreamInjectionTurn = 0;
-      state._dreamInjectionLine = null;
-      state.selectionTension = 0;
-      state.lastSelectionEchoTurn = 0;
-      state._selectionEchoLine = null;
-      state.coupleTensionDrift = 0;
-      state.coupleStructure = 'monogamous';
-      state.coupleHasReachedST4 = false;
-      state.lastCoupleDriftEchoScene = 0;
-      state._coupleDriftEchoLine = null;
-      _coupleStructureVotes = { player1: null, player2: null };
+
       clearStoryContent();
 
       // Reset DSP state for new story
@@ -14807,52 +14991,27 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
   function performAuthReset() {
       console.log('[AUTH:RESET] Performing full story creation state reset');
 
-      // Reset story state
+      // ── ALL THREE LAYERS RESET (auth change = fresh session) ──
+      _resetStoryState();          // Layer 3 — couple mechanics
+      _resetEpochState();          // Layer 2 — world-cycle entropy
+      _resetRegionPhysics();       // Layer 1 — geographic invariants
+
+      // Additional auth-level resets beyond the three layers
       state.story = null;
-      state.storyId = null;
-      state._synopsisMetadata = null;
-      state._synopsisBlurb = null;
-      state._titlePageShown = false;
       state.storyHistory = [];
-      state.storyEnded = false;
-      state.book_complete = false;
+      state.storyOrigin = null;
       state.book_number = 1;
       state.series_id = null;
       state.previous_story_id = null;
       state.main_characters_locked = null;
       state.book1_continuity_summary = null;
       state.book_subhead = null;
-      state.world_cycle_label = null;
       state.storyLength = 'taste';
-      state.storyOrigin = null;
-      state.storyStage = null;
-      state.intimacyInterrupted = { first_kiss: false, first_intimacy: false };
-      state.intimacyTurnsInWindow = 0;
-      state.turnCount = 0;
-      state._loggedStoryStart = false;
-      state._loggedScene3 = false;
-      state._loggedScene6 = false;
-      state._loggedPetitionOpen = false;
-      state._loggedPetitionSubmit = false;
 
       // Reset Guided Fate selections
       state.picks = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', era: 'Medieval', pov: 'First' };
       state.intensity = 'Steamy';
-      state.cautiousStreak = 0;
-      state.dynamicDominanceBoost = 0;
-      state.vulnerabilityPulse = 0;
-      state.lastDreamInjectionTurn = 0;
-      state._dreamInjectionLine = null;
-      state.selectionTension = 0;
-      state.lastSelectionEchoTurn = 0;
-      state._selectionEchoLine = null;
-      state.coupleTensionDrift = 0;
-      state.coupleStructure = 'monogamous';
-      state.coupleHasReachedST4 = false;
-      state.lastCoupleDriftEchoScene = 0;
-      state._coupleDriftEchoLine = null;
-      _coupleStructureVotes = { player1: null, player2: null };
-      state.storypassEligible = undefined; // Reset - will be computed at story creation
+      state.storypassEligible = undefined;
       state.lenses = [];
       state.withheldCoreVariant = null;
 
@@ -16011,6 +16170,13 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.style.transform = `scale(${scale})`;
       card.style.transformOrigin = 'center center';
 
+      // Swap to high-res zoomed Petition art
+      const backFace = card.querySelector('.back');
+      if (backFace) {
+          backFace._origBg = backFace.style.backgroundImage;
+          backFace.style.backgroundImage = "url('/assets/Card%20Art/Cards/Tarot-Gold-front-PetitionZOOMED.png')";
+      }
+
       if (backdrop) {
           backdrop.classList.add('active');
           // Close petition zoom on backdrop click
@@ -16155,6 +16321,13 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       // Remove overlay
       card.querySelector('.petition-zoom-overlay')?.remove();
+
+      // Restore original Petition art
+      const backFace = card.querySelector('.back');
+      if (backFace && backFace._origBg) {
+          backFace.style.backgroundImage = backFace._origBg;
+          delete backFace._origBg;
+      }
 
       // Remove zoom styles
       card.classList.remove('petition-zoomed');
@@ -19938,36 +20111,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
   }
 
-  // Forbidden Library — landing page button (disabled for non-admin).
-  // Admin check compares the Supabase auth user id against an allowlist.
-  // Set window.__SB_ADMIN_USER_ID to your auth user UUID before app.js loads.
-  const FORBIDDEN_LIBRARY_ADMIN_IDS = [
-    (typeof window !== 'undefined' && window.__SB_ADMIN_USER_ID) || ''
-  ].filter(Boolean);
-
-  function isForbiddenLibraryAdmin() {
-    return _supabaseProfileId && FORBIDDEN_LIBRARY_ADMIN_IDS.includes(_supabaseProfileId);
-  }
-
-  function updateForbiddenLibraryBtn() {
-    const btn = $('forbiddenLibraryLanding');
-    if (!btn) return;
-    if (isForbiddenLibraryAdmin()) {
-      btn.style.opacity = '1';
-      btn.setAttribute('aria-disabled', 'false');
-    }
-  }
-
-  $('forbiddenLibraryLanding')?.addEventListener('click', () => {
-      if (isForbiddenLibraryAdmin()) {
-          document.getElementById('forbiddenLibraryModal')?.classList.remove('hidden');
-      } else {
-          showToast('Coming soon\u2026');
-      }
-  });
-
-  $('forbiddenLibraryCloseBtn')?.addEventListener('click', () => {
-      document.getElementById('forbiddenLibraryModal')?.classList.add('hidden');
+  // Forbidden Library — back button returns to mode select
+  $('forbiddenLibraryBackBtn')?.addEventListener('click', () => {
+      window.showScreen('modeSelect', true);
   });
 
   $('ageYes')?.addEventListener('click', () => window.showScreen('legalGate'));
@@ -35241,6 +35387,13 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
             state.worldInstanceId = generateWorldInstanceId();
         }
 
+        // Initialize world_cycle_id (epoch anchor) if not set
+        if (!state.world_cycle_id) {
+            state.world_cycle_id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : generateWorldInstanceId();
+        }
+
         // STEP 1: Route title generation based on continuation path
         const continuationPath = state.continuationPath || CONTINUATION_PATHS.NEW_STORY;
         const titleRouting = routeTitleGeneration(continuationPath, {
@@ -44084,6 +44237,9 @@ FATE CARD ADAPTATION (CRITICAL):
     if (!isFlipped) {
       // First click: flip to show face, start sparkles
       flipModeCard(card);
+    } else if (mode === 'forbidden-library') {
+      // Forbidden Library card: open the library screen
+      window.showScreen('forbiddenLibraryScreen');
     } else {
       // Card is flipped (by hover or prior click): proceed with mode selection
       proceedWithMode(mode);

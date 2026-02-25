@@ -594,8 +594,16 @@
             <div class="mode-card-sparkles"></div>
         </div>
     </div>
-    <div style="text-align:center; margin-top:15px;">
-      <button id="forbiddenLibraryLanding" class="sb-btn-png sm" style="opacity:0.5;" aria-disabled="true" title="Coming soon — public cover catalog. Reading requires login.">Forbidden Library</button>
+    <div class="mode-card mode-card-library" data-mode="forbidden-library" id="forbiddenLibraryCard">
+        <div class="mode-card-inner">
+            <div class="mode-card-back">
+                <img src="/assets/Card%20Art/Cards/Tarot-Black-back-ForbiddenLibrary.png" alt="Forbidden Library">
+            </div>
+            <div class="mode-card-front">
+                <img src="/assets/Card%20Art/Cards/Tarot-Gold-front-ForbiddenLibrary.png" alt="Forbidden Library">
+            </div>
+        </div>
+        <div class="mode-card-sparkles"></div>
     </div>
   </div>
 
@@ -1563,12 +1571,28 @@
   </div>
 </div>
 
-<div id="forbiddenLibraryModal" class="overlay hidden" style="z-index:5002;">
-  <div class="box" style="max-width:500px; text-align:center;">
-    <h3 style="color:var(--gold,#c9a84c); font-family:'Lora',serif;">Forbidden Library</h3>
-    <p style="color:var(--ink,#eee); font-family:'Lora',serif; font-size:0.95em; margin:16px 0;">Coming Soon</p>
-    <p style="color:#999; font-family:'Lora',serif; font-size:0.8em; margin:8px 0 20px;">Catalog (covers/titles) will be public; reading requires login.</p>
-    <button id="forbiddenLibraryCloseBtn" style="margin-top:10px;">Close</button>
+<div id="forbiddenLibraryScreen" class="screen hidden">
+  <div class="forbidden-library">
+    <div class="forbidden-library-header">
+      <button id="forbiddenLibraryBackBtn" class="forbidden-library-back">&larr; Back</button>
+      <h2 class="forbidden-library-title">The Forbidden Library</h2>
+    </div>
+    <div class="forbidden-library-shelves" id="forbiddenLibraryShelves">
+      <div class="forbidden-library-shelf">
+        <div class="forbidden-library-shelf-books" id="libraryShelfRow1">
+          <p class="forbidden-library-empty">The shelves await their first volumes...</p>
+        </div>
+        <div class="forbidden-library-shelf-wood"></div>
+      </div>
+      <div class="forbidden-library-shelf">
+        <div class="forbidden-library-shelf-books" id="libraryShelfRow2"></div>
+        <div class="forbidden-library-shelf-wood"></div>
+      </div>
+      <div class="forbidden-library-shelf">
+        <div class="forbidden-library-shelf-books" id="libraryShelfRow3"></div>
+        <div class="forbidden-library-shelf-wood"></div>
+      </div>
+    </div>
   </div>
 </div>
 

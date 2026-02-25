@@ -3487,6 +3487,97 @@ select:-webkit-autofill {
 
 /* Mode cards: no dimming on selection — sparkle-only feedback */
 
+/* Forbidden Library card — centered below mode row */
+.mode-card-library {
+    width: 120px;
+    margin: -20px auto 0;
+    display: block;
+}
+@media (max-width: 500px) {
+    .mode-card-library {
+        width: 85px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* THE FORBIDDEN LIBRARY — Ornate royal library with book cover shelves          */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.forbidden-library {
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.9) 0%, transparent 60%),
+        linear-gradient(180deg, #0e0906 0%, #1a100a 30%, #0e0906 100%);
+    padding: 0 20px 40px;
+}
+.forbidden-library-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0 20px;
+    position: relative;
+}
+.forbidden-library-back {
+    position: absolute;
+    left: 0;
+    background: none;
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    color: var(--gold, #c9a84c);
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.forbidden-library-back:hover {
+    border-color: var(--gold, #c9a84c);
+    background: rgba(201, 168, 76, 0.08);
+}
+.forbidden-library-title {
+    font-family: 'Lora', serif;
+    font-size: 1.6em;
+    font-weight: 700;
+    color: var(--gold, #c9a84c);
+    letter-spacing: 0.12em;
+    text-align: center;
+    margin: 0;
+}
+.forbidden-library-shelves {
+    max-width: 900px;
+    margin: 0 auto;
+}
+.forbidden-library-shelf {
+    margin-bottom: 0;
+}
+.forbidden-library-shelf-books {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 12px;
+    min-height: 160px;
+    padding: 10px 20px 0;
+}
+.forbidden-library-shelf-wood {
+    height: 18px;
+    background:
+        linear-gradient(180deg, #6b4226 0%, #4a2c14 40%, #3a2010 70%, #2a1608 100%);
+    border-radius: 0 0 3px 3px;
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.6),
+        inset 0 2px 1px rgba(160, 120, 60, 0.2),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+    margin: 0 8px;
+}
+.forbidden-library-empty {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.9em;
+    color: rgba(201, 168, 76, 0.35);
+    text-align: center;
+    padding: 60px 0;
+    margin: 0;
+    width: 100%;
+}
+
 /* Sparkle animation for mode cards */
 @keyframes modeSparkle {
     0% {
