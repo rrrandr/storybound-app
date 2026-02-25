@@ -125,12 +125,6 @@
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
-  <!-- ── LIBRARY SUB-PANEL ── -->
-  <div id="vaultLibrary" class="vault-sub hidden">
-    <div class="vault-sub-title">My Library</div>
-    <div id="vaultLibraryContent" style="min-height:80px; color:var(--ink,#eee); font-family:'Lora',serif; font-size:0.9em; text-align:center; margin:12px 0;"></div>
-    <button class="vault-back sb-btn-png sm">Back</button>
-  </div>
 
 </div>
 
@@ -1589,27 +1583,37 @@
     <div id="forbiddenLibraryLoading" class="forbidden-library-loading">
       <p class="forbidden-library-empty">Opening the vault...</p>
     </div>
-    <div class="forbidden-library-shelves" id="forbiddenLibraryShelves" style="display:none;">
-      <div class="forbidden-library-shelf">
-        <div class="forbidden-library-shelf-books" id="libraryShelfRow0"></div>
-        <div class="forbidden-library-shelf-wood"></div>
-      </div>
-      <div class="forbidden-library-shelf">
-        <div class="forbidden-library-shelf-books" id="libraryShelfRow1"></div>
-        <div class="forbidden-library-shelf-wood"></div>
-      </div>
-      <div class="forbidden-library-shelf">
-        <div class="forbidden-library-shelf-books" id="libraryShelfRow2"></div>
-        <div class="forbidden-library-shelf-wood"></div>
-      </div>
-      <div class="forbidden-library-shelf">
-        <div class="forbidden-library-shelf-books" id="libraryShelfRow3"></div>
-        <div class="forbidden-library-shelf-wood"></div>
-      </div>
-    </div>
+    <div class="library-book-list" id="forbiddenLibraryList" style="display:none;"></div>
     <div id="forbiddenLibraryEmpty" class="forbidden-library-empty-state" style="display:none;">
       <p class="forbidden-library-empty">The shelves await their first volumes...</p>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     VAULT PERSONAL LIBRARY — 3D book shelf (full-screen, reuses 3D engine)
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div id="vaultLibraryScreen" class="screen hidden">
+  <div class="forbidden-library library-variant library-variant--vault">
+    <div class="forbidden-library-header">
+      <button id="vaultLibraryBackBtn" class="forbidden-library-back">&larr; Back</button>
+      <h2 class="forbidden-library-title">Personal Library</h2>
+    </div>
+    <div id="vaultLibraryLoading" class="forbidden-library-loading">
+      <p class="forbidden-library-empty">Gathering volumes...</p>
+    </div>
+    <div class="library-book-list vault-book-list" id="vaultLibraryList" style="display:none;"></div>
+    <div id="vaultLibraryEmpty" class="forbidden-library-empty-state" style="display:none;">
+      <p class="forbidden-library-empty">No stories yet. Completed stories will appear here.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Library zoom overlay (3D book inspection) -->
+<div id="libraryZoomOverlay">
+  <div id="zoomBookContainer"></div>
+  <div class="zoom-cta">
+    <button id="zoomReadBtn" class="sb-btn-primary">Read This Story</button>
   </div>
 </div>
 
@@ -1628,7 +1632,7 @@
     </div>
     <div class="library-reader-content" id="libraryReaderContent">
       <h1 class="library-reader-title" id="libraryReaderTitle"></h1>
-      <p class="library-reader-author">Author: S. Tory Bound</p>
+      <p class="library-reader-author" id="libraryReaderAuthor">S. Tory Bound</p>
       <div class="library-reader-prose" id="libraryReaderProse"></div>
     </div>
   </div>

@@ -3867,6 +3867,20 @@ For constraint/petition:
       'DARK_VICE', 'BEAUTIFUL_RUIN', 'ETERNAL_FLAME'
   ];
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ARCHETYPE LEXICON HINTS — lightweight imagery bias per archetype (~30 tokens each)
+  // Injected into system prompt. Does NOT override plot or pacing.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const ARCHETYPE_LEXICON = {
+      HEART_WARDEN: 'Lean toward imagery of walls, shields, locked doors, standing watch. Protection as architecture — fortress, threshold, rampart. Tenderness arrives armored.',
+      OPEN_VEIN: 'Lean toward imagery of exposed skin, open hands, offering, blood-warm honesty. Vulnerability as medium — pulse, surface, translucence. Feeling bleeds outward.',
+      SPELLBINDER: 'Lean toward imagery of magnetism, silence that pulls, rooms reshaping around presence. Attention as gravity — lure, orbit, stillness. Every glance is architecture.',
+      ARMORED_FOX: 'Lean toward imagery of masks, sleight-of-hand, smoke, exits left open. Deflection as choreography — sidestep, misdirect, crooked grin. The armor is the charm.',
+      DARK_VICE: 'Lean toward imagery of edges, gravity, the pull downward, justified transgression. Desire as descent — fall, threshold, the line already crossed. Restraint is performance.',
+      BEAUTIFUL_RUIN: 'Lean toward imagery of shattered glass, beauty in wreckage, preemptive goodbye. Self-sabotage as weather — storm, erosion, the crack that was always there.',
+      ETERNAL_FLAME: 'Lean toward imagery of ember, patience, memory held like a candle. Devotion as endurance — steady warmth, years-deep knowing, the flame that outlasts wind.'
+  };
+
   /**
    * Derive DISPLAY_NAME from full name for row titles
    * Rules:
@@ -13247,11 +13261,74 @@ Return ONLY valid JSON:
       state.lastNonConPushAt = 0;
       state.lastSafewordAt = 0;
 
+      // Literary Illusion Layer — per-story voice + motif tracking
+      state.storyVoiceProfile = { avg_sentence_length: 'medium', metaphor_density: 'low', emotional_tone: 'restrained' };
+      state.storyMotifs = [];
+
       // Generate new story ID
       state.storyId = (typeof crypto !== 'undefined' && crypto.randomUUID)
           ? crypto.randomUUID()
           : 'sb_' + Date.now().toString(36);
       localStorage.setItem('sb_current_story_id', state.storyId);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LITERARY ILLUSION LAYER — post-turn voice + motif analysis (zero API calls)
+  // ═══════════════════════════════════════════════════════════════════════════
+  function _updateLiteraryIllusion(sceneText) {
+      if (!sceneText || typeof sceneText !== 'string') return;
+      const plain = sceneText.replace(/<[^>]+>/g, '').trim();
+      if (plain.length < 40) return;
+
+      // ── Voice Profile (heuristic) ──
+      const sentences = plain.split(/[.!?]+/).filter(s => s.trim().length > 3);
+      const avgLen = sentences.length > 0 ? plain.split(/\s+/).length / sentences.length : 12;
+      const lengthBias = avgLen < 10 ? 'short' : avgLen > 20 ? 'long' : 'medium';
+
+      const metaphorSignals = (plain.match(/\b(like a|as though|as if|became a|turned to|was a kind of|felt like)\b/gi) || []).length;
+      const density = metaphorSignals >= 4 ? 'high' : metaphorSignals >= 2 ? 'med' : 'low';
+
+      const intensitySignals = (plain.match(/\b(gasp|shudder|tremble|burn|ache|seize|claw|devour|ravage)\b/gi) || []).length;
+      const tenderSignals = (plain.match(/\b(gentle|soft|tender|whisper|brush|trace|cradle|murmur)\b/gi) || []).length;
+      const dominantSignals = (plain.match(/\b(command|grip|pin|force|claim|demand|submit|kneel)\b/gi) || []).length;
+      let tone = 'restrained';
+      const maxTone = Math.max(intensitySignals, tenderSignals, dominantSignals);
+      if (maxTone >= 2) {
+          if (intensitySignals === maxTone) tone = 'intense';
+          else if (tenderSignals === maxTone) tone = 'tender';
+          else if (dominantSignals === maxTone) tone = 'dominant';
+      }
+
+      state.storyVoiceProfile = { avg_sentence_length: lengthBias, metaphor_density: density, emotional_tone: tone };
+
+      // ── Motif Echo (extract nouns, deduplicate, cap at 3) ──
+      const nouns = plain.match(/\b(shadow|flame|glass|storm|silk|iron|thorn|mirror|wound|mask|veil|smoke|honey|blade|ember|salt|ash|bone|chain|frost|throne|grave|tide|vine|velvet|serpent|cathedral|labyrinth|fortress|garden|abyss)\b/gi) || [];
+      const freq = {};
+      nouns.forEach(n => { const k = n.toLowerCase(); freq[k] = (freq[k] || 0) + 1; });
+      // Merge with existing motifs (frequency-weighted)
+      (state.storyMotifs || []).forEach(m => { freq[m] = (freq[m] || 0) + 2; });
+      const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+      state.storyMotifs = sorted.slice(0, 3);
+  }
+
+  function buildLiteraryIllusionDirective() {
+      const parts = [];
+      // Voice profile
+      const vp = state.storyVoiceProfile;
+      if (vp && state.turnCount > 1) {
+          parts.push(`Maintain established story voice:\n- Sentence rhythm: ${vp.avg_sentence_length} bias\n- Emotional tone: ${vp.emotional_tone}\n- Metaphor density: ${vp.metaphor_density}\nDo not restate these explicitly in prose.`);
+      }
+      // Motif echo
+      const motifs = state.storyMotifs;
+      if (motifs && motifs.length > 0) {
+          parts.push(`If contextually appropriate, subtly echo established motifs: ${motifs.join(', ')}.\nDo not force inclusion.`);
+      }
+      // Archetype lexicon hint
+      const archId = state.archetype?.primary;
+      if (archId && ARCHETYPE_LEXICON[archId]) {
+          parts.push(ARCHETYPE_LEXICON[archId]);
+      }
+      return parts.length > 0 ? '\n\n' + parts.join('\n\n') : '';
   }
 
   // ── LAYER 2 — EPOCH STATE RESET ──
@@ -14996,6 +15073,10 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       _resetEpochState();          // Layer 2 — world-cycle entropy
       _resetRegionPhysics();       // Layer 1 — geographic invariants
 
+      // Reset vault library guards so next login re-fetches
+      _vaultLibraryLoaded = false;
+      _vaultLibraryLoading = false;
+
       // Additional auth-level resets beyond the three layers
       state.story = null;
       state.storyHistory = [];
@@ -15125,6 +15206,8 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
               document.getElementById('vaultSignOutBtn')?.addEventListener('click', async () => {
                   console.log('[AUTH] Logging out');
                   try { if (sb) await sb.auth.signOut(); } catch (err) { console.error('[AUTH] Logout error:', err); }
+                  _vaultLibraryLoaded = false;
+                  _vaultLibraryLoading = false;
                   localStorage.clear();
                   location.reload();
               });
@@ -20084,32 +20167,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       openProfileModal();
   });
 
-  // Library button — opens library sub-panel inside Vault (no toast, no load)
+  // Library button — close Vault, navigate to full-screen Vault Library
   $('menuLibraryBtn')?.addEventListener('click', () => {
-      document.querySelectorAll('.vault-sub').forEach(s => s.classList.add('hidden'));
-      const lib = document.getElementById('vaultLibrary');
-      if (lib) lib.classList.remove('hidden');
-      renderVaultLibrary();
+      document.getElementById('menuOverlay')?.classList.add('hidden');
+      resetVaultState();
+      window.showScreen('vaultLibraryScreen');
+      loadVaultLibrary();
   });
-
-  function renderVaultLibrary() {
-      const el = document.getElementById('vaultLibraryContent');
-      if (!el) return;
-      if (!hasSavedStory()) {
-          el.innerHTML = '<p style="color:#999; margin-top:24px;">Saved stories will appear here.</p>';
-          return;
-      }
-      el.innerHTML = '<div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:12px;">'
-          + '<div class="vault-library-book" style="cursor:pointer; text-align:center; max-width:120px;">'
-          + '<div style="width:100px; height:150px; background:var(--gold,#c9a84c); border-radius:4px; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; font-family:\'Lora\',serif; font-size:0.75em; color:#000; padding:8px;">Saved Story</div>'
-          + '<span style="font-size:0.8em; color:var(--ink,#eee);">Continue</span>'
-          + '</div></div>';
-      el.querySelector('.vault-library-book')?.addEventListener('click', () => {
-          document.getElementById('menuOverlay')?.classList.add('hidden');
-          resetVaultState();
-          if (typeof window.continueStory === 'function') window.continueStory();
-      });
-  }
 
   // Forbidden Library — back button returns to mode select
   $('forbiddenLibraryBackBtn')?.addEventListener('click', () => {
@@ -20117,14 +20181,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   });
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // FORBIDDEN LIBRARY — Shelf display, read-only mode, bookmarks
+  // FORBIDDEN LIBRARY — Vertical book list, read-only mode, bookmarks
   // ═══════════════════════════════════════════════════════════════════════════════
-  const LIBRARY_BOOKS_PER_SHELF = 8;
-  const LIBRARY_SHELF_COUNT = 4;
-  const LIBRARY_COVER_COLORS = [
-    '#6b2e3a', '#2e4a6b', '#3a5c3a', '#5c4a2e', '#4a2e5c',
-    '#2e5c5c', '#6b4a2e', '#3a2e5c', '#5c3a3a', '#2e3a5c'
-  ];
 
   let _libraryEntries = [];
   let _libraryLoaded = false;
@@ -20137,21 +20195,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       return;
     }
     const loadingEl = $('forbiddenLibraryLoading');
-    const shelvesEl = $('forbiddenLibraryShelves');
+    const listEl = $('forbiddenLibraryList');
     const emptyEl = $('forbiddenLibraryEmpty');
     if (loadingEl) loadingEl.style.display = '';
-    if (shelvesEl) shelvesEl.style.display = 'none';
+    if (listEl) listEl.style.display = 'none';
     if (emptyEl) emptyEl.style.display = 'none';
 
     try {
       const { data, error } = await sb
         .from('library_entries')
-        .select('story_id, title, world, scene_count, sanitized_text, cover_url, profile_id')
-        .eq('visibility', 'public')
-        .eq('library_opt_in', true)
-        .gte('scene_count', 20)
-        .order('scene_count', { ascending: false })
-        .limit(LIBRARY_BOOKS_PER_SHELF * LIBRARY_SHELF_COUNT);
+        .select('story_id, title, author, scene_count, word_count, world')
+        .eq('eligible', true)
+        .order('updated_at', { ascending: false })
+        .limit(50);
 
       if (error) {
         console.error('[Library] Query failed:', error.message);
@@ -20167,7 +20223,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         return;
       }
 
-      renderLibraryShelves();
+      renderLibraryList();
     } catch (err) {
       console.error('[Library] Load error:', err);
       _showLibraryEmpty('Failed to load library');
@@ -20176,10 +20232,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   function _showLibraryEmpty(msg) {
     const loadingEl = $('forbiddenLibraryLoading');
-    const shelvesEl = $('forbiddenLibraryShelves');
+    const listEl = $('forbiddenLibraryList');
     const emptyEl = $('forbiddenLibraryEmpty');
     if (loadingEl) loadingEl.style.display = 'none';
-    if (shelvesEl) shelvesEl.style.display = 'none';
+    if (listEl) listEl.style.display = 'none';
     if (emptyEl) {
       emptyEl.style.display = '';
       if (msg) {
@@ -20189,60 +20245,257 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
   }
 
-  // — Render book covers onto shelf rows —
-  function renderLibraryShelves() {
+  // Collector's Edition threshold (scene count)
+  const COLLECTOR_EDITION_THRESHOLD = 40;
+
+  // — Render 3D book shelf —
+  function renderLibraryList() {
     const loadingEl = $('forbiddenLibraryLoading');
-    const shelvesEl = $('forbiddenLibraryShelves');
+    const listEl = $('forbiddenLibraryList');
     if (loadingEl) loadingEl.style.display = 'none';
-    if (shelvesEl) shelvesEl.style.display = '';
+    if (!listEl) return;
+    listEl.style.display = '';
+    listEl.innerHTML = '';
 
-    for (let row = 0; row < LIBRARY_SHELF_COUNT; row++) {
-      const rowEl = $('libraryShelfRow' + row);
-      if (!rowEl) continue;
-      rowEl.innerHTML = '';
-      const start = row * LIBRARY_BOOKS_PER_SHELF;
-      const slice = _libraryEntries.slice(start, start + LIBRARY_BOOKS_PER_SHELF);
-      slice.forEach((entry, i) => {
-        const cover = document.createElement('div');
-        cover.className = 'library-book-cover';
-        cover.style.background = LIBRARY_COVER_COLORS[(start + i) % LIBRARY_COVER_COLORS.length];
-        cover.dataset.storyId = entry.story_id;
-        cover.dataset.profileId = entry.profile_id;
+    _libraryEntries.forEach(entry => {
+      const bookTitle = entry.title || 'Untitled';
+      const bookAuthor = entry.author || 'S. Tory Bound';
+      const scenes = entry.scene_count || 0;
+      const words = entry.word_count || 0;
+      const worldKey = (entry.world || 'modern').toLowerCase();
+      const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
 
-        const titleEl = document.createElement('div');
-        titleEl.className = 'library-book-title';
-        titleEl.textContent = entry.title || 'Untitled';
-        cover.appendChild(titleEl);
+      const book = document.createElement('div');
+      book.className = 'library-book' + (isCollector ? ' collector-edition' : '');
+      book.dataset.storyId = entry.story_id;
+      book.dataset.world = worldKey;
+      book.innerHTML = `<div class="book-3d">
+  <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div></div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><p class="back-synopsis">${escapeHTML(bookAuthor)}</p><p class="back-meta">${scenes} scenes · ${words.toLocaleString()} words</p></div></div>
+  <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div></div>
+  <div class="book-pages"></div>
+  <div class="page-shimmer"></div>
+</div>`;
 
-        const worldEl = document.createElement('div');
-        worldEl.className = 'library-book-world';
-        worldEl.textContent = entry.world || '';
-        cover.appendChild(worldEl);
-
-        cover.addEventListener('click', () => openLibraryReader(entry));
-        rowEl.appendChild(cover);
+      // Hover sound (debounced, one per entry)
+      let _hoverPlayed = false;
+      book.addEventListener('mouseenter', () => {
+        if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); }
       });
-    }
+      book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
+
+      book.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _zoomSource = 'forbidden';
+        _openLibraryZoom(entry, book);
+      });
+      listEl.appendChild(book);
+    });
   }
 
+  // — Micro sound cue system (muted-safe, non-blocking) —
+  let _libraryUserInteracted = false;
+  document.addEventListener('pointerdown', () => { _libraryUserInteracted = true; }, { once: true });
+
+  function _playLibrarySound(name) {
+    if (!_libraryUserInteracted) return;
+    try {
+      const audio = new Audio(`/assets/audio/${name}.mp3`);
+      audio.volume = 0.15;
+      audio.play().catch(() => {}); // swallow autoplay errors
+    } catch (_) {}
+  }
+
+  // — Library zoom mode —
+  let _zoomEntry = null;
+  let _zoomRafId = null;
+  let _zoomSource = 'forbidden'; // 'forbidden' | 'vault' — tracks which shelf opened the zoom
+
+  function _openLibraryZoom(entry, sourceBook) {
+    _zoomEntry = entry;
+    const overlay = $('libraryZoomOverlay');
+    const container = $('zoomBookContainer');
+    const readBtn = $('zoomReadBtn');
+    if (!overlay || !container) return;
+
+    // Clone book 3D structure into zoom container
+    const book3d = sourceBook.querySelector('.book-3d');
+    if (!book3d) return;
+    container.innerHTML = '';
+    container.appendChild(book3d.cloneNode(true));
+
+    // Set CTA text — vault-aware
+    if (readBtn) {
+      if (_zoomSource === 'vault') {
+        // Check bookmark existence for progress detection
+        readBtn.textContent = entry._hasProgress ? 'Continue Reading' : 'Begin Reading';
+      } else {
+        readBtn.textContent = 'Read This Story';
+      }
+    }
+
+    // Show overlay
+    overlay.classList.add('active');
+    document.body.classList.add('library-zoom-active');
+    _playLibrarySound('book-open');
+
+    // References for animation
+    const zoomBook = container.querySelector('.book-3d');
+    const bookFront = container.querySelector('.book-front');
+    const shimmer = container.querySelector('.page-shimmer');
+
+    // Cancel any lingering RAF from a previous zoom
+    if (_zoomRafId) { cancelAnimationFrame(_zoomRafId); _zoomRafId = null; }
+
+    // Premium rotation with cubic edge resistance
+    const maxRotation = 155;
+    let targetRotation = 0;
+    let currentRotation = 0;
+
+    function onMouseMove(e) {
+      if (e.target.closest && e.target.closest('.book-back')) return;
+      const rect = container.getBoundingClientRect();
+      const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const raw = (percent - 0.5) * 2;
+      // Ease-out cubic edge resistance — feels heavier near extremes
+      const curved = raw * (1 - Math.pow(Math.abs(raw), 2));
+      targetRotation = curved * maxRotation;
+    }
+
+    function animate() {
+      currentRotation += (targetRotation - currentRotation) * 0.12;
+      if (zoomBook) zoomBook.style.transform = `rotateY(${currentRotation}deg)`;
+
+      // Dynamic front-edge shadow tied to rotation depth
+      if (bookFront) {
+        const depth = Math.abs(currentRotation) / maxRotation;
+        bookFront.style.boxShadow = `inset -14px 0 28px rgba(0,0,0,${(0.25 + depth * 0.25).toFixed(3)})`;
+      }
+
+      // Page-edge shimmer past ±90°
+      if (shimmer) {
+        shimmer.style.opacity = Math.abs(currentRotation) > 90 ? '0.25' : '0';
+      }
+
+      _zoomRafId = requestAnimationFrame(animate);
+    }
+
+    container.addEventListener('mousemove', onMouseMove);
+
+    // CTA fade-in with 250ms delay
+    if (readBtn) {
+      readBtn.style.opacity = '0';
+      setTimeout(() => { if (readBtn) readBtn.style.opacity = '1'; }, 250);
+    }
+
+    _zoomRafId = requestAnimationFrame(animate);
+
+    // Close on overlay click (but not on book/CTA)
+    overlay._closeHandler = (e) => {
+      if (e.target === overlay) _closeLibraryZoom();
+    };
+    overlay.addEventListener('click', overlay._closeHandler);
+
+    // Touch support with same premium easing
+    function onTouchMove(e) {
+      if (e.target.closest && e.target.closest('.book-back')) return;
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const rect = container.getBoundingClientRect();
+        const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+        const raw = (percent - 0.5) * 2;
+        const curved = raw * (1 - Math.pow(Math.abs(raw), 2));
+        targetRotation = curved * maxRotation;
+      }
+    }
+    container.addEventListener('touchmove', onTouchMove, { passive: true });
+
+    // Escape key
+    function onKeyDown(e) { if (e.key === 'Escape') _closeLibraryZoom(); }
+    document.addEventListener('keydown', onKeyDown);
+
+    // Store cleanup refs
+    overlay._mouseMoveHandler = onMouseMove;
+    overlay._touchMoveHandler = onTouchMove;
+    overlay._keyDownHandler = onKeyDown;
+    overlay._zoomContainer = container;
+  }
+
+  function _closeLibraryZoom() {
+    const overlay = $('libraryZoomOverlay');
+    if (!overlay) return;
+
+    overlay.classList.remove('active');
+    document.body.classList.remove('library-zoom-active');
+    _playLibrarySound('book-close');
+
+    // Cleanup animation and reset rotation state
+    if (_zoomRafId) { cancelAnimationFrame(_zoomRafId); _zoomRafId = null; }
+    const zoomBook = overlay._zoomContainer?.querySelector('.book-3d');
+    if (zoomBook) zoomBook.style.transform = 'rotateY(0deg)';
+
+    // Cleanup listeners
+    if (overlay._zoomContainer) {
+      if (overlay._mouseMoveHandler) overlay._zoomContainer.removeEventListener('mousemove', overlay._mouseMoveHandler);
+      if (overlay._touchMoveHandler) overlay._zoomContainer.removeEventListener('touchmove', overlay._touchMoveHandler);
+    }
+    if (overlay._closeHandler) overlay.removeEventListener('click', overlay._closeHandler);
+    if (overlay._keyDownHandler) document.removeEventListener('keydown', overlay._keyDownHandler);
+
+    _zoomEntry = null;
+  }
+
+  // Zoom CTA — read story (vault-aware)
+  $('zoomReadBtn')?.addEventListener('click', () => {
+    if (_zoomEntry) {
+      const entry = _zoomEntry;
+      const source = _zoomSource;
+      _closeLibraryZoom();
+      openLibraryReader(entry, source);
+    }
+  });
+
   // — Open the read-only reader for a library entry —
-  function openLibraryReader(entry) {
+  let _readerSource = 'forbidden'; // tracks which library to return to
+  async function openLibraryReader(entry, source) {
     state.libraryMode = true;
+    _readerSource = source || 'forbidden';
     const titleEl = $('libraryReaderTitle');
     const proseEl = $('libraryReaderProse');
+    const authorEl = $('libraryReaderAuthor');
     if (titleEl) titleEl.textContent = entry.title || 'Untitled';
-    if (proseEl) proseEl.textContent = entry.sanitized_text || '';
+    if (authorEl) authorEl.textContent = entry.author || 'S. Tory Bound';
+    if (proseEl) proseEl.textContent = 'Loading...';
+
+    window.showScreen('libraryReaderScreen');
+
+    // Fetch sanitized_text on demand
+    try {
+      const { data, error } = await sb
+        .from('library_entries')
+        .select('sanitized_text')
+        .eq('story_id', entry.story_id)
+        .single();
+
+      if (error || !data) {
+        if (proseEl) proseEl.textContent = 'Failed to load story.';
+        console.error('[Library] Prose fetch failed:', error?.message);
+        return;
+      }
+      if (proseEl) proseEl.textContent = data.sanitized_text || '';
+    } catch (err) {
+      if (proseEl) proseEl.textContent = 'Failed to load story.';
+      console.error('[Library] Prose fetch error:', err);
+    }
 
     // Restore bookmark if available
     restoreLibraryBookmark(entry.story_id);
-
-    window.showScreen('libraryReaderScreen');
   }
 
-  // — Reader back button —
+  // — Reader back button (vault-aware) —
   $('libraryReaderBackBtn')?.addEventListener('click', () => {
     state.libraryMode = false;
-    window.showScreen('forbiddenLibraryScreen');
+    window.showScreen(_readerSource === 'vault' ? 'vaultLibraryScreen' : 'forbiddenLibraryScreen');
   });
 
   // — Font size toggle —
@@ -20324,12 +20577,159 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (state.libraryMode) saveLibraryBookmark();
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // VAULT PERSONAL LIBRARY — 3D shelf (reuses Forbidden Library engine)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  let _vaultLibraryEntries = [];
+  let _vaultLibraryLoaded = false;
+  let _vaultLibraryLoading = false;
+
+  // — Back button —
+  $('vaultLibraryBackBtn')?.addEventListener('click', () => {
+    window.showScreen('modeSelect', true);
+  });
+
+  // — Load user's own library entries from Supabase —
+  async function loadVaultLibrary() {
+    if (_vaultLibraryLoading) return;
+    if (!sb || !_supabaseProfileId) {
+      _showVaultLibraryEmpty('Sign in to see your library');
+      return;
+    }
+    _vaultLibraryLoading = true;
+
+    const loadingEl = $('vaultLibraryLoading');
+    const listEl = $('vaultLibraryList');
+    const emptyEl = $('vaultLibraryEmpty');
+    if (loadingEl) loadingEl.style.display = '';
+    if (listEl) listEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    try {
+      // Fetch entries + bookmarks in parallel — single render pass after both resolve
+      const [entriesResult, bookmarksResult] = await Promise.all([
+        sb.from('library_entries')
+          .select('story_id, title, author, scene_count, word_count, world, updated_at')
+          .eq('profile_id', _supabaseProfileId)
+          .order('updated_at', { ascending: false })
+          .limit(50),
+        sb.from('library_bookmarks')
+          .select('story_id')
+          .eq('user_id', _supabaseProfileId)
+      ]);
+
+      if (entriesResult.error) {
+        console.error('[VaultLibrary] Query failed:', entriesResult.error.message);
+        _showVaultLibraryEmpty('Failed to load library');
+        _vaultLibraryLoading = false;
+        return;
+      }
+
+      _vaultLibraryEntries = entriesResult.data || [];
+      _vaultLibraryLoaded = true;
+
+      if (_vaultLibraryEntries.length === 0) {
+        _showVaultLibraryEmpty();
+        _vaultLibraryLoading = false;
+        return;
+      }
+
+      // Tag entries with bookmark progress (non-fatal if bookmarks query failed)
+      const progressSet = new Set((bookmarksResult.data || []).map(b => b.story_id));
+      _vaultLibraryEntries.forEach(e => { e._hasProgress = progressSet.has(e.story_id); });
+
+      renderVaultBookList();
+    } catch (err) {
+      console.error('[VaultLibrary] Load error:', err);
+      _showVaultLibraryEmpty('Failed to load library');
+    }
+    _vaultLibraryLoading = false;
+  }
+
+  function _showVaultLibraryEmpty(msg) {
+    const loadingEl = $('vaultLibraryLoading');
+    const listEl = $('vaultLibraryList');
+    const emptyEl = $('vaultLibraryEmpty');
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (listEl) listEl.style.display = 'none';
+    if (emptyEl) {
+      emptyEl.style.display = '';
+      const p = emptyEl.querySelector('.forbidden-library-empty');
+      if (p && msg) p.textContent = msg;
+    }
+  }
+
+  // — Render vault 3D book shelf (reuses same DOM structure as Forbidden Library) —
+  function renderVaultBookList() {
+    const loadingEl = $('vaultLibraryLoading');
+    const listEl = $('vaultLibraryList');
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (!listEl) return;
+    listEl.style.display = '';
+    listEl.innerHTML = '';
+
+    _vaultLibraryEntries.forEach(entry => {
+      const bookTitle = entry.title || 'Untitled';
+      const bookAuthor = entry.author || 'S. Tory Bound';
+      const scenes = entry.scene_count || 0;
+      const words = entry.word_count || 0;
+      const worldKey = (entry.world || 'modern').toLowerCase();
+      const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
+
+      // "Last opened" relative timestamp
+      let lastOpened = '';
+      if (entry.updated_at) {
+        const diff = Date.now() - new Date(entry.updated_at).getTime();
+        const days = Math.floor(diff / 86400000);
+        if (days === 0) lastOpened = 'Today';
+        else if (days === 1) lastOpened = '1 day ago';
+        else lastOpened = days + ' days ago';
+      }
+
+      const book = document.createElement('div');
+      book.className = 'library-book' + (isCollector ? ' collector-edition' : '');
+      book.dataset.storyId = entry.story_id;
+      book.dataset.world = worldKey;
+
+      // Back cover includes vault-specific meta (scenes, words, last opened)
+      const metaLines = [`Scenes: ${scenes}`, `Words: ${words.toLocaleString()}`];
+      if (lastOpened) metaLines.push(`Last opened: ${lastOpened}`);
+
+      book.innerHTML = `<div class="book-3d">
+  <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div></div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><p class="back-synopsis">${escapeHTML(bookAuthor)}</p><p class="back-meta">${scenes} scenes · ${words.toLocaleString()} words</p><p class="back-meta-vault">${metaLines.join('<br>')}</p></div></div>
+  <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div></div>
+  <div class="book-pages"></div>
+  <div class="page-shimmer"></div>
+</div>`;
+
+      // Hover sound
+      let _hoverPlayed = false;
+      book.addEventListener('mouseenter', () => {
+        if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); }
+      });
+      book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
+
+      // Click to zoom — mark source as vault
+      book.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _zoomSource = 'vault';
+        _openLibraryZoom(entry, book);
+      });
+      listEl.appendChild(book);
+    });
+  }
+
   // Hook into showScreen: load library when screen opens
   const _origShowScreen = window.showScreen;
   window.showScreen = function(id, isBack) {
     _origShowScreen(id, isBack);
     if (id === 'forbiddenLibraryScreen' && !_libraryLoaded) {
       loadLibraryEntries();
+    }
+    if (id === 'vaultLibraryScreen' && !_vaultLibraryLoaded) {
+      loadVaultLibrary();
     }
     // Exit library mode if navigating away from reader
     if (id !== 'libraryReaderScreen' && state.libraryMode) {
@@ -21483,6 +21883,37 @@ RULES:
           // Store system prompt for later use
           state.sysPrompt = sysPrompt;
 
+          // ── Title + Synopsis pre-generation (GPT-4o, before Scene 1) ──
+          let preTitle = null, preSynopsis = null;
+          if (!state.story?.title && !state.immutableTitle && window.StoryboundOrchestration?.callChatGPT) {
+              try {
+                  console.log('[BACKGROUND:TITLE] Generating title + synopsis via GPT-4o...');
+                  const tsResult = await window.StoryboundOrchestration.callChatGPT([
+                      { role: 'system', content: `You are writing the official Title and Title Page Synopsis for a romance novel. The goal is emotional magnetism, not summary.
+
+TITLE: 2–6 words. Evocative, memorable, archetype-aligned. Suggest tension or inevitability. No subtitles. No punctuation gimmicks. Avoid generic romance phrasing.
+
+SYNOPSIS: 120–170 words. Present tense. Focus on emotional stakes and relational gravity. Highlight what each character risks losing. Emphasize tension, imbalance, temptation, or restraint. Hint at escalation without revealing outcomes. Avoid plot chronology — promise, not recap. Avoid clichés, vague abstraction, explicit content. Do not reference story mechanics.
+
+Craft: Open with tension, not exposition. Center the archetype dynamic. Use specific emotional language. End on a charged unresolved note. Make the reader feel inevitability.
+
+Anti-cliché: No "unexpected love", "sparks fly", "will they risk it all", "forbidden passion", "fate brings them together", "their worlds collide", "a love like no other". No vague abstractions without concrete emotional context. No marketing-tagline language. No rhetorical questions. No interchangeable phrases.
+
+Return JSON only: { "title": "...", "synopsis": "..." }` },
+                      { role: 'user', content: `World: ${storyWorld}, Tone: ${_tone1}, Genre: ${storyPowerRole}, Archetype: ${state.archetype?.primary || 'BEAUTIFUL_RUIN'}, Protagonist: ${pKernel} (${pGen}), Love Interest: ${lKernel} (${lGen}), Length: ${state.storyLength || 'taste'}` }
+                  ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 400, jsonMode: true });
+                  const parsed = JSON.parse(tsResult);
+                  if (parsed.title && parsed.synopsis) {
+                      preTitle = parsed.title.replace(/"/g, '').trim();
+                      preSynopsis = parsed.synopsis.trim();
+                      state.immutableTitle = preTitle;
+                      console.log('[BACKGROUND:TITLE] Pre-generated:', preTitle);
+                  }
+              } catch (tsErr) {
+                  console.warn('[BACKGROUND:TITLE] Pre-generation failed, will use parsed:', tsErr.message);
+              }
+          }
+
           console.log('[BACKGROUND:STORY] Calling ChatGPT for Scene 1...');
 
           // Generate Scene 1
@@ -21498,8 +21929,10 @@ RULES:
               throw new ProseRefusalError(refusalCheck.reason, text);
           }
 
-          // Parse and store result
-          const { title, synopsis, blurb, body } = parseScene1Response(text);
+          // Parse and store result — pre-generated title/synopsis take priority
+          const { title: parsedTitle, synopsis: parsedSynopsis, blurb, body } = parseScene1Response(text);
+          const title = preTitle || parsedTitle;
+          const synopsis = preSynopsis || parsedSynopsis;
 
           state.story = state.story || {};
           state.story.title = title;
@@ -35405,6 +35838,91 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
 
     console.log('STORYBOUND VALIDATION PASSED - Proceeding to model call');
 
+    // ═══════════════════════════════════════════════════════════════════
+    // TITLE + SYNOPSIS PRE-GENERATION (GPT-4o, single call, once per story)
+    // Runs BEFORE Scene 1. Uses corridor selections only — no scene text.
+    // Skipped if already generated (immutable once set).
+    // ═══════════════════════════════════════════════════════════════════
+    if (!state.story?.title && !state.immutableTitle) {
+        try {
+            console.log('[TITLE:PRE] Generating title + synopsis via GPT-4o...');
+            const titleSynopsisResult = await window.StoryboundOrchestration.callChatGPT([
+                { role: 'system', content: `You are writing the official Title and Title Page Synopsis for a romance novel.
+
+The goal is emotional magnetism, not summary.
+
+TITLE:
+• 2–6 words.
+• Evocative, memorable, archetype-aligned.
+• Suggest tension or inevitability.
+• No subtitles. No punctuation gimmicks.
+• Avoid generic romance phrasing.
+
+SYNOPSIS:
+• 120–170 words.
+• Present tense.
+• Focus on emotional stakes and relational gravity.
+• Highlight what each character risks losing.
+• Emphasize tension, imbalance, temptation, or restraint.
+• Hint at escalation without revealing outcomes.
+• Avoid plot chronology — this is promise, not recap.
+• Avoid clichés and vague abstraction.
+• Avoid explicit content.
+• Do not reference story mechanics or systems.
+
+Craft guidance:
+• Open with tension, not exposition.
+• Center the archetype dynamic.
+• Use specific emotional language.
+• End on a charged unresolved note.
+• Make the reader feel inevitability.
+
+Anti-cliché filter — avoid generic romance phrasing such as:
+• "unexpected love", "sparks fly", "will they risk it all"
+• "forbidden passion", "fate brings them together"
+• "their worlds collide", "a love like no other"
+• No vague abstractions without concrete emotional context.
+• No marketing-tagline language. No rhetorical questions.
+• No phrases that could apply to any romance story.
+• If a sentence feels interchangeable with another book, rewrite it more specifically.
+
+Return JSON only:
+{
+  "title": "...",
+  "synopsis": "..."
+}` },
+                { role: 'user', content: `Story configuration:
+- World: ${state.picks?.world || 'Modern'}
+- Flavor: ${state.picks?.worldSubtype || 'none'}
+- Tone: ${state.picks?.tone || 'Earnest'}
+- Archetype: ${ARCHETYPES[state.archetype?.primary]?.name || 'Unknown'}${state.archetype?.modifier ? ' / ' + (ARCHETYPES[state.archetype.modifier]?.name || '') : ''}
+- Genre: ${state.picks?.genre || 'Romance'}
+- Dynamic: ${state.picks?.dynamic || 'Enemies'}
+- Story Length: ${state.storyLength || 'taste'}
+- Protagonist: ${pKernel} (${pGen})
+- Love Interest: ${lKernel} (${lGen})
+
+Generate the title and synopsis now.` }
+            ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 400, jsonMode: true });
+
+            const parsed = JSON.parse(titleSynopsisResult);
+            if (parsed.title && parsed.synopsis) {
+                state.story = state.story || {};
+                state.story.title = parsed.title.replace(/"/g, '').trim();
+                state.story.synopsis = parsed.synopsis.trim();
+                state.immutableTitle = state.story.title;
+                state._synopsisMetadata = state.story.synopsis;
+                console.log('[TITLE:PRE] Title:', state.story.title);
+                console.log('[TITLE:PRE] Synopsis:', state.story.synopsis.slice(0, 80) + '...');
+            }
+        } catch (titleErr) {
+            console.warn('[TITLE:PRE] Pre-generation failed, will fall back to post-Scene1 generation:', titleErr.message);
+            // Non-fatal — existing post-Scene1 title generation will handle it
+        }
+    } else {
+        console.log('[TITLE:PRE] Title already exists, skipping:', state.story?.title || state.immutableTitle);
+    }
+
     try {
         let text = await callChat([
             {role:'system', content: state.sysPrompt},
@@ -35615,6 +36133,23 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
                 : generateWorldInstanceId();
         }
 
+        // ═══════════════════════════════════════════════════════════
+        // TITLE + SYNOPSIS: Use pre-generated (GPT-4o) if available,
+        // otherwise fall back to post-Scene1 generation (legacy path)
+        // ═══════════════════════════════════════════════════════════
+        let title, synopsis;
+        const _titlePreGenerated = !!(state.story?.title && state.immutableTitle);
+        if (_titlePreGenerated) {
+            title = state.story.title;
+            synopsis = state._synopsisMetadata || state.story.synopsis || '';
+            console.log('[TITLE:PRE] Using pre-generated title:', title);
+            state.titleBaselineArousal = state.intensity || 'Naughty';
+            state.previousTitle = state.immutableTitle;
+            state.continuationPath = null;
+            state._priorWorldNouns = null;
+        }
+
+        if (!_titlePreGenerated) {
         // STEP 1: Route title generation based on continuation path
         const continuationPath = state.continuationPath || CONTINUATION_PATHS.NEW_STORY;
         const titleRouting = routeTitleGeneration(continuationPath, {
@@ -35630,7 +36165,7 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
         console.log('[TitlePipeline] Path:', continuationPath, '| Mode:', selectedMode);
 
         // STEP 2: Generate title with path-specific prompt
-        let title = await callChat([{role:'user', content:`Based on this opening, generate a title.
+        title = await callChat([{role:'user', content:`Based on this opening, generate a title.
 
 ${titlePrompt}
 
@@ -35710,7 +36245,7 @@ ${text.slice(0, 500)}`}]);
         state._priorWorldNouns = null;
 
         // SYNOPSIS GENERATION RULE (AUTHORITATIVE)
-        let synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
+        synopsis = await callChat([{role:'user', content:`Write a 1-2 sentence synopsis (story promise) for this opening.
 
 MANDATORY REQUIREMENTS — All three must be present:
 1. A SPECIFIC CHARACTER with agency (e.g., "a hedge-witch on the brink of exile" — not just "one woman")
@@ -35750,6 +36285,8 @@ ${negConstraint}
 Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
             }
         );
+
+        } // end if (!_titlePreGenerated)
 
         // CORRECTIVE: Set title first (synopsis lives ONLY on inside cover flyleaf)
         const titleEl = document.getElementById('storyTitle');
@@ -42625,6 +43162,7 @@ Respond in this EXACT format (no labels, just two lines):
       // COMBINED: explicit embodiment authorized if main pair OR scene context
       const explicitEmbodimentAuthorized =
           mainPairAuthorized || sceneExplicitContext;
+      state._explicitEmbodimentAuthorized = explicitEmbodimentAuthorized;
 
       let intensityGuard = "";
       if (mainPairAuthorized) {
@@ -43184,6 +43722,7 @@ FATE CARD ADAPTATION (CRITICAL):
         sceneImportance = elevateImportance(sceneImportance);
         console.log(`[TEMPT_FATE] Scene importance elevated to: ${sceneImportance}`);
       }
+      state._currentSceneImportance = sceneImportance;
 
       const passTier = resolvePassTier();
       // Tier-dependent context: Tier 3 gets full prose context; Tier 1/2 get structured state only
@@ -43192,7 +43731,23 @@ FATE CARD ADAPTATION (CRITICAL):
         : `Structured State:\n${buildStructuredStateSummary()}`;
       const tierContext = passTier >= 3 ? context : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}\n\nTURN INSTRUCTIONS:
+      const craftRhythmLayer = !explicitEmbodimentAuthorized ? `
+
+[CRAFT_RHYTHM_LAYER — SUBTLE]
+Apply lightly and sparingly. Never mechanically. Do not reference these rules in prose.
+• Once every 3–5 scenes, include a single-line emotional beat (no explanation).
+• Select one ≤3-word phrase early; reuse it 2–4 times at higher stakes. Anchor phrase reuse must feel organic; never repeat in consecutive scenes.
+• Allow at least one emotional reaction to carry into the next scene.
+• Prefer silence beats over exposition in tense moments.
+• Rotate sensory emphasis between scenes.
+• Use 1–2 archetype-aligned word choices per scene.
+• Establish one small early detail; echo it once later.
+• Compress explanatory emotion into metaphor.
+• After escalation, end with restraint rather than full release.
+• Use the story title once organically (not at the beginning).
+Prioritize natural variation over strict consistency if rules conflict.` : '';
+
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -43654,6 +44209,9 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           trackAdaptiveMetrics(rawAct + ' ' + rawDia, raw);
           updateAdaptivePacing();
 
+          // Literary Illusion Layer — update voice profile + motifs from scene output
+          _updateLiteraryIllusion(raw);
+
           // Mark Solo session as completed for subtitle upgrade
           if (typeof markSoloSessionCompleted === 'function') markSoloSessionCompleted();
 
@@ -43950,6 +44508,8 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           decayFateResonance();
 
           state.tempt_fate_invoked_this_turn = false;
+          state._currentSceneImportance = undefined;
+          state._explicitEmbodimentAuthorized = false;
           state.milestone_vision_fired_this_turn = false;
           state._syzygyActiveThisScene = false;
           state._syzygyModelTriggeredLast = false;
@@ -44234,7 +44794,7 @@ FATE CARD ADAPTATION (CRITICAL):
             : `Structured State:\n${buildStructuredStateSummary()}`;
           const specTierContext = specPassTier >= 3 ? context : '';
 
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}\n\nTURN INSTRUCTIONS:
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}\n\nTURN INSTRUCTIONS:
       ${specTierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.

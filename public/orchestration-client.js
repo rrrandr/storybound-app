@@ -458,6 +458,48 @@
   }
 
   // ===========================================================================
+  // PREMIUM RENDER TIER — Dynamic model + token selection (rendering only)
+  // Does NOT alter gameplay, ST, intimacy, volatility math, or gating.
+  // ===========================================================================
+
+  /**
+   * Resolve the render tier for the PRIMARY_AUTHOR call.
+   * Returns { model, max_tokens, reason } based on current app state.
+   * Priority: TemptFate > Apex > Scene1 > Volatility > Default
+   */
+  function resolveRenderTier() {
+    const appState = window.state;
+    if (!appState) return { model: CONFIG.PRIMARY_AUTHOR_MODEL, max_tokens: 1500, reason: 'Default' };
+
+    // When orchestration is active (explicitEmbodimentAuthorized), Grok handles
+    // rendering — stay on gpt-4o-mini for the author pass, only raise tokens.
+    const inOrchestration = appState._explicitEmbodimentAuthorized === true;
+
+    // A) Tempt Fate — initial scene (highest priority)
+    if (appState.tempt_fate_invoked_this_turn === true) {
+      return { model: inOrchestration ? 'gpt-4o-mini' : 'gpt-4o', max_tokens: 2200, reason: 'Tempt' };
+    }
+
+    // D) Major Turning Points — apex scene importance
+    if (appState._currentSceneImportance === 'apex') {
+      return { model: inOrchestration ? 'gpt-4o-mini' : 'gpt-4o', max_tokens: 2200, reason: 'Apex' };
+    }
+
+    // C) Scene 1 of any story
+    if ((appState.turnCount || 0) === 1) {
+      return { model: inOrchestration ? 'gpt-4o-mini' : 'gpt-4o', max_tokens: 2000, reason: 'Scene1' };
+    }
+
+    // B) Volatility window — subsequent scenes (not the invocation turn)
+    if (appState.volatility_window?.active === true) {
+      return { model: 'gpt-4o-mini', max_tokens: inOrchestration ? 1500 : 1800, reason: 'Volatility' };
+    }
+
+    // Default
+    return { model: 'gpt-4o-mini', max_tokens: 1500, reason: 'Default' };
+  }
+
+  // ===========================================================================
   // API CALLERS
   // ===========================================================================
 
@@ -995,7 +1037,8 @@ ${continuityBlock}`;
             { role: 'user', content: rendererPrompt.user }
           ];
 
-          let cascadeOutput = await callSpecialistRenderer(messages, cascadeEsd, { max_tokens: 300 });
+          const cascadeFastTokens = (window.state?.tempt_fate_invoked_this_turn === true) ? 1200 : 300;
+          let cascadeOutput = await callSpecialistRenderer(messages, cascadeEsd, { max_tokens: cascadeFastTokens });
 
           // Step 5: Guardrails — strip structural meta from cascade output
           if (cascadeOutput) {
@@ -1138,6 +1181,21 @@ physicalBounds: <what is explicitly allowed and forbidden>
 [/SD]
 `}
 ${buildPreferenceBiasBlock()}
+
+[CRAFT_INTENSITY_RHYTHM_LAYER — SUBTLE]
+Apply lightly and sparingly. Never mechanically. Do not reference these rules in prose.
+• Once every 3–5 scenes, include one short standalone emotional beat.
+• Choose one ≤3-word anchor phrase early; reuse 2–4 times as stakes rise. Anchor phrase reuse must feel organic; never repeat in consecutive scenes.
+• Allow emotional impact to spill across scene boundaries.
+• Use silence or physical stillness instead of explanatory reflection.
+• Rotate sensory focus (touch, breath, pressure, sound, temperature).
+• Add 1–2 archetype-biased words per scene (minimal).
+• Seed one small early detail; echo it once at heightened intensity.
+• Replace explanatory emotion with embodied metaphor.
+• After escalation, end on tension or anticipation rather than full resolution.
+• Use the story title once naturally (not early).
+Prioritize natural variation over strict consistency if rules conflict.
+
 Write the next story beat (150-250 words).`;
 
     const fateCardContext = fateCard
@@ -1159,8 +1217,15 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     let authorOutput;
     let usedFallback = false;
 
+    // Premium render tier — dynamic model + token selection
+    const renderTier = resolveRenderTier();
+    console.log(`[RENDER] Model: ${renderTier.model} | max_tokens: ${renderTier.max_tokens} | reason: ${renderTier.reason}`);
+
     try {
-      authorOutput = await callChatGPT(messages, 'PRIMARY_AUTHOR');
+      authorOutput = await callChatGPT(messages, 'PRIMARY_AUTHOR', {
+        model: renderTier.model,
+        max_tokens: renderTier.max_tokens
+      });
     } catch (chatgptErr) {
       console.error('[ORCHESTRATION] ChatGPT Author Pass failed, attempting Gemini fallback:', chatgptErr);
       state.errors.push(`ChatGPT failed: ${chatgptErr.message}`);
@@ -1347,7 +1412,19 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
             { role: 'user', content: rendererPrompt.user }
           ];
 
-          state.rendererOutput = await callSpecialistRenderer(messages, state.esd);
+          // Dynamic Grok renderer options for Tempt Fate / volatility scenes
+          const grokAppState = window.state;
+          const rendererOpts = {};
+          if (grokAppState?.tempt_fate_invoked_this_turn === true) {
+            rendererOpts.max_tokens = 1800;
+            rendererOpts.temperature = 0.85;
+            console.log('[RENDER] Grok renderer boosted: max_tokens=1800, temp=0.85 (Tempt)');
+          } else if (grokAppState?.volatility_window?.active === true) {
+            rendererOpts.max_tokens = 1400;
+            console.log('[RENDER] Grok renderer boosted: max_tokens=1400 (Volatility)');
+          }
+
+          state.rendererOutput = await callSpecialistRenderer(messages, state.esd, rendererOpts);
           state.rendererCalled = true;
           state.timing.renderPassMs = Date.now() - renderStartTime;
 
@@ -2058,6 +2135,34 @@ Tension: ${outline.tension_vector || 'N/A'}`;
       systemPrompt: enrichedSystemPrompt,
       onPhaseChange
     });
+
+    // ── First-Paragraph Polish (volatility window, non-invocation, non-orchestration only) ──
+    const appState = window.state;
+    if (appState
+        && appState.volatility_window?.active === true
+        && appState.tempt_fate_invoked_this_turn !== true
+        && appState._explicitEmbodimentAuthorized !== true
+        && result.finalOutput) {
+      try {
+        const splitIdx = result.finalOutput.indexOf('\n\n');
+        if (splitIdx > 20) {
+          const firstParagraph = result.finalOutput.slice(0, splitIdx);
+          const remainder = result.finalOutput.slice(splitIdx);
+
+          const polished = await callChatGPT([
+            { role: 'system', content: 'Rewrite this paragraph with heightened emotional precision, stronger sensory clarity, and smoother prose rhythm. Do not change events, character intent, or structure. Improve language only. Return ONLY the rewritten paragraph.' },
+            { role: 'user', content: firstParagraph }
+          ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 500 });
+
+          if (polished && polished.trim().length > 20) {
+            result.finalOutput = polished.trim() + remainder;
+            console.log(`[RENDER] First-paragraph polish applied (gpt-4o, ${polished.trim().length} chars)`);
+          }
+        }
+      } catch (polishErr) {
+        console.warn('[RENDER] First-paragraph polish failed, using original:', polishErr.message);
+      }
+    }
 
     console.log(`[PASS_TIER] Tier ${passTier} complete (${Date.now() - tierStart}ms total)`);
 
