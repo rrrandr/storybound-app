@@ -21029,6 +21029,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   };
 
   async function openTrophyWall() {
+    // Close Vault menu first (matches Profile/Library button behavior)
+    document.getElementById('menuOverlay')?.classList.add('hidden');
+    if (typeof resetVaultState === 'function') resetVaultState();
+
     const modal = $('trophyWallModal');
     if (!modal) return;
 
