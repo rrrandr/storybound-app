@@ -973,10 +973,33 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
   let _heavensOverlayActive = false;
 
   // Heavens overlay — shared utility for Scene 5 and 10k word reveals
-  function _showHeavensOverlay(lines, delayBetween, holdDuration) {
+  // Persists until user clicks the X close button.
+  function _showHeavensOverlay(lines, delayBetween) {
     _heavensOverlayActive = true;
+    state.heavensOverlayOpen = true;
     const overlay = document.createElement('div');
     overlay.className = 'tf-heavens-overlay';
+
+    // Close button
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'sb-btn-png sm tf-heavens-close-btn';
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', function () {
+      lineEls.forEach(el => {
+        el.classList.remove('tf-heavens-visible');
+        el.classList.add('tf-heavens-fading');
+      });
+      closeBtn.classList.add('tf-heavens-fading');
+      setTimeout(() => {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        _heavensOverlayActive = false;
+        state.heavensOverlayOpen = false;
+        if (typeof updateTemptFateSparkle === 'function') updateTemptFateSparkle();
+      }, 450);
+    });
+    overlay.appendChild(closeBtn);
+
     lines.forEach(text => {
       const el = document.createElement('div');
       el.className = 'tf-heavens-line';
@@ -989,30 +1012,17 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     lineEls.forEach((el, i) => {
       setTimeout(() => el.classList.add('tf-heavens-visible'), i * delayBetween);
     });
-
-    const totalFadeIn = (lines.length - 1) * delayBetween + 200;
-    setTimeout(() => {
-      lineEls.forEach(el => {
-        el.classList.remove('tf-heavens-visible');
-        el.classList.add('tf-heavens-fading');
-      });
-      setTimeout(() => {
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-        _heavensOverlayActive = false;
-      }, 450);
-    }, totalFadeIn + holdDuration);
+    // Show close button after last line fades in
+    const closeDelay = (lines.length - 1) * delayBetween + 600;
+    setTimeout(() => closeBtn.classList.add('tf-heavens-visible'), closeDelay);
   }
 
   function showScene5HeavensOverlay() {
-    _showHeavensOverlay(['The heavens shift.'], 0, 2000);
-    // Activate sparkle after overlay fade
-    setTimeout(() => updateTemptFateSparkle(), 2500);
+    _showHeavensOverlay(['The heavens shift.'], 0);
   }
 
   function show10kHeavensOverlay() {
-    _showHeavensOverlay(['You walked far enough.', 'The heavens shift into your hand.'], 500, 2500);
-    // Activate sparkle after overlay fade
-    setTimeout(() => updateTemptFateSparkle(), 3500);
+    _showHeavensOverlay(['You walked far enough.', 'The heavens shift into your hand.'], 500);
   }
 
   function showTemptShudder() {
@@ -5375,6 +5385,106 @@ The reader does not know why the story is gentler. Fate does not know either.
       contract += `\n\nBELLWETHER — STRUCTURAL REFERENCE:\n${BELLWETHERS.pov.fifth_person}\nDo not copy wording from this example. Use it only to guide structural logic.`;
 
       return contract;
+  }
+
+  // ============================================================
+  // 4TH PERSON ENVIRONMENTAL POV — CONTRACT + VALIDATOR
+  // Narrator = material environment (objects, surfaces, rooms, air, light, sound)
+  // All cognition mediated through physical interaction. No destiny. No Fate.
+  // ============================================================
+
+  const ENVIRONMENT_4TH_CONTRACT = `
+═══════════════════════════════════════════════════════════════════════════════
+4TH PERSON POV CONTRACT — ENVIRONMENTAL MATERIAL CONSCIOUSNESS
+═══════════════════════════════════════════════════════════════════════════════
+
+ONTOLOGY:
+The narrator IS the physical environment — objects, surfaces, rooms, air, light, sound.
+All perception and insight must be mediated through material interaction.
+The environment WITNESSES through sensation: pressure, heat, vibration, weight, resonance.
+"We" is the collective voice of the space itself.
+
+ALLOWED:
+- Feel pressure, heat, vibration, the weight of a body against a surface
+- Detect repetition — footsteps that return, doors reopened, rhythms in breath
+- Track gaze direction by where light falls or shadow shifts
+- Hear spoken words, tone, volume, the way sound fills or empties a room
+- Register posture shifts through the furniture, floor, air displacement
+- Remember patterns — the room has held this silence before
+- Infer emotional state ONLY through physical evidence (clenched fists on a table, warmth radiating from skin, the speed of breath against glass)
+
+PROHIBITED:
+- Destiny, inevitability, or fate language ("destined," "meant to be," "inevitable")
+- Architecting outcomes or shaping events (the environment does not steer plot)
+- Abstract interior monologue ("she thought," "he realized," "she knew that...")
+- Unmanifested thoughts stated as fact
+- ANY reference to Fate as entity or narrator
+- Narrative structure awareness ("this was the moment," "the story," "the arc")
+- Meta-awareness of being a story or having an author
+
+CRAFT RULES:
+- Rotate environmental anchors: avoid defaulting to the same object/surface repeatedly
+- Dialogue should be punctuated by environment, not tagged every line
+  (GOOD: The glass sweated where her fingers had been. "I can't do this." The door handle turned cold.)
+  (BAD: "I can't do this," she said. "Why not?" he asked. "Because," she replied.)
+- Sensory specificity over emotional labeling — SHOW the room's experience of the humans in it
+
+EXAMPLES (structural reference only — do not copy):
+A. Dialogue: The floorboards registered his weight shift — three steps closer. "You shouldn't be here." The curtain moved. Not wind. Breath. "I know."
+B. Erotic: The sheets gathered heat where their bodies pressed. The headboard measured the rhythm. The pillowcase dampened. The room held every sound they wouldn't repeat in daylight.
+C. Political tension: The conference table bore the weight of six pairs of hands. One set drummed. One set went still. The overhead light caught the pen as it was set down — not signed. The air in the room changed pressure.
+`;
+
+  function build4thPersonContract() {
+      if (window.state?.povMode !== 'environment4th') return '';
+      return ENVIRONMENT_4TH_CONTRACT;
+  }
+
+  // 4TH PERSON LIGHTWEIGHT VALIDATOR
+  // Pattern-only. No semantic AI detection. Regenerate once on fail, then allow with warning.
+  let _4thPersonRegenAttempted = false;
+
+  function validate4thPersonPOV(sceneText) {
+      if (!sceneText || typeof sceneText !== 'string') {
+          return { valid: true, violations: [] };
+      }
+
+      const violations = [];
+      const lower = sceneText.toLowerCase();
+
+      // 1. Fate as narrator entity (capitalized "Fate" as subject)
+      if (/\bFate\s+(felt|watched|smiled|tightened|anticipated|withheld|observed|sensed|knew|shaped|miscalculated)\b/.test(sceneText)) {
+          violations.push('FATE_AS_NARRATOR: "Fate" appears as narrator entity (4th Person uses environment, not Fate)');
+      }
+
+      // 2. Inevitability language
+      const inevitabilityPatterns = /\b(destined|inevitable|inevitably|always meant to|had to happen|was meant to be|fated to)\b/i;
+      if (inevitabilityPatterns.test(sceneText)) {
+          violations.push('INEVITABILITY: Destiny/inevitability language detected (4th Person environment does not predict or shape)');
+      }
+
+      // 3. Narrative structure references
+      const metaPatterns = /\b(this was the moment|the story|the chapter|the arc|the narrative|their story)\b/i;
+      if (metaPatterns.test(sceneText)) {
+          violations.push('META_NARRATIVE: Narrative structure reference detected (environment has no meta-awareness)');
+      }
+
+      // 4. Direct abstract cognition without physical mediation
+      //    Match "[Name] knew/realized/thought that..." patterns
+      //    Only flag when no sensory word appears within 80 chars
+      const cognitionPattern = /\b[A-Z][a-z]+\s+(knew that|realized that|thought about|thought that|understood that)\b/g;
+      let match;
+      while ((match = cognitionPattern.exec(sceneText)) !== null) {
+          const surroundStart = Math.max(0, match.index - 40);
+          const surroundEnd = Math.min(sceneText.length, match.index + match[0].length + 40);
+          const surrounding = sceneText.slice(surroundStart, surroundEnd).toLowerCase();
+          const hasSensory = /\b(felt|touched|heard|saw|tasted|smelled|pressed|cold|warm|heat|light|shadow|sound|weight|vibrat|trembl|floor|wall|glass|door|air|wind|breath)\b/.test(surrounding);
+          if (!hasSensory) {
+              violations.push('ABSTRACT_COGNITION: Direct mind-reading without physical mediation ("' + match[0].trim() + '")');
+          }
+      }
+
+      return { valid: violations.length === 0, violations };
   }
 
   // ============================================================
@@ -12971,11 +13081,80 @@ Return ONLY the title, no quotes or explanation.`;
   }
 
   // ════════════════════════════════════════════════════════════════════
+  // Badge engine — safe profile guard (no-op if profile not yet hydrated)
+  function withProfileId(callback) {
+    if (!_supabaseProfileId) return;
+    callback(_supabaseProfileId);
+  }
+
+  // Badge engine — world mastery flavor registry (matches existing system IDs)
+  // Keys match state.picks.world values (PascalCase, lowercased for lookup)
+  const WORLD_FLAVORS = {
+    modern:           ['small_town', 'college', 'friends', 'blue_blood', 'office', 'supernatural_modern', 'superheroic_modern'],
+    fantasy:          ['arcane_binding', 'fated_blood', 'the_inhuman', 'the_beyond', 'cursed'],
+    historical:       ['prehistoric', 'bronze_age', 'classical', 'medieval', 'renaissance', 'victorian', '20th_century'],
+    scifi:            ['galactic_civilizations', 'future_of_science', 'cyberpunk', 'post_human', 'first_contact', 'simulation', 'final_frontier'],
+    dystopia:         ['glass_house', 'human_capital', 'dogma', 'quieting_event', 'endless_edit', 'thirst'],
+    postapocalyptic:  ['ashfall', 'year_zero', 'dystimulation', 'predation', 'hunger']
+  };
+
+  // Map normalized world keys to badge IDs
+  const WORLD_BADGE_ID = {
+    modern: 'mastery_modern',
+    fantasy: 'mastery_fantasy',
+    historical: 'mastery_historical',
+    scifi: 'mastery_sci_fi',
+    dystopia: 'mastery_dystopia',
+    postapocalyptic: 'mastery_post_apocalyptic'
+  };
+
+  // Check if user has completed a story in every flavor of a given world.
+  // Queries story_snapshots once, extracts flavors client-side. Idempotent via awardBadge.
+  async function checkWorldMastery(supabase, profileId, world) {
+    const requiredFlavors = WORLD_FLAVORS[world];
+    if (!supabase || !profileId || !requiredFlavors) return;
+    try {
+      const { data } = await supabase
+        .from('story_snapshots')
+        .select('snapshot')
+        .eq('profile_id', profileId);
+      if (!data) return;
+
+      const completedFlavors = new Set();
+      data.forEach(row => {
+        const snap = row.snapshot;
+        if (!snap || !snap.stateSnapshot) return;
+        const st = snap.stateSnapshot;
+        const w = (st.picks?.world || '').toLowerCase();
+        if (w !== world) return;
+        if (!st.book_complete) return;
+        const flavor = st.picks?.worldSubtype;
+        if (flavor) completedFlavors.add(flavor);
+      });
+
+      const badgeId = WORLD_BADGE_ID[world];
+      const allPresent = requiredFlavors.every(f => completedFlavors.has(f));
+      if (allPresent && badgeId) {
+        awardBadge(supabase, profileId, badgeId);
+      }
+    } catch (_) { /* silent */ }
+  }
+
   // SHARED: Archive completed story + show cover interstitial
   // ════════════════════════════════════════════════════════════════════
 
   async function _archiveAndShowInterstitial() {
       state.book_complete = true;
+
+      // Badge engine — story completion milestones
+      withProfileId(profileId => {
+        incrementBadge(sb, profileId, 'story_1');
+        incrementBadge(sb, profileId, 'story_10');
+        incrementBadge(sb, profileId, 'story_100');
+        // World mastery check (async, fire-and-forget)
+        const completedWorld = (state.picks?.world || '').toLowerCase();
+        if (completedWorld) checkWorldMastery(sb, profileId, completedWorld);
+      });
       const book1StoryId = state.storyId;
       const book1Title = document.getElementById('storyTitle')?.textContent || state.story?.title || 'Untitled';
 
@@ -15037,10 +15216,15 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       if(!window.state) return;
       const pov = (window.state.picks?.pov || '').toLowerCase();
       const is5th = /fifth|5th|author/.test(pov) || window.state.povMode === 'author5th';
+      const is4th = /fourth|4th/.test(pov) || window.state.povMode === 'environment4th';
       if(is5th){
           window.state.povMode = 'author5th';
           window.state.authorPresence = 'frequent';
           window.state.fateCardVoice = 'authorial';
+      } else if(is4th){
+          window.state.povMode = 'environment4th';
+          window.state.authorPresence = 'environmental';
+          window.state.fateCardVoice = 'neutral';
       } else {
           window.state.povMode = 'normal';
           window.state.authorPresence = 'normal';
@@ -15260,7 +15444,7 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
           : '';
 
       const echoCount = state.bonus_tempt_charges || 0;
-      const echoDisplay = `<div style="font-size:0.85em;color:rgba(218,165,32,0.55);margin-top:4px;">Echoes of the Heavens: ${echoCount}</div>`;
+      const echoDisplay = `<div style="font-size:0.85em;color:rgba(218,165,32,0.55);margin-top:4px;">Tempt Fate (Earned): ${echoCount}</div>`;
 
       el.innerHTML =
           `<div><strong>Tier:</strong> ${tierDisplay}</div>` +
@@ -20257,16 +20441,33 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     listEl.style.display = '';
     listEl.innerHTML = '';
 
-    _libraryEntries.forEach(entry => {
+    // Determine forward-facing capacity (evaluated once per render)
+    const MAX_FORWARD = window.innerWidth > 1400 ? 8 :
+                        window.innerWidth > 1100 ? 6 :
+                        window.innerWidth > 900  ? 4 :
+                        window.innerWidth > 600  ? 3 :
+                        2;
+
+    // Priority sort: collector first, then highest scene_count, then most recent
+    const sorted = _libraryEntries.slice().sort((a, b) => {
+      const aCollector = (a.scene_count || 0) >= COLLECTOR_EDITION_THRESHOLD ? 1 : 0;
+      const bCollector = (b.scene_count || 0) >= COLLECTOR_EDITION_THRESHOLD ? 1 : 0;
+      if (bCollector !== aCollector) return bCollector - aCollector;
+      if ((b.scene_count || 0) !== (a.scene_count || 0)) return (b.scene_count || 0) - (a.scene_count || 0);
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+
+    sorted.forEach((entry, index) => {
       const bookTitle = entry.title || 'Untitled';
       const bookAuthor = entry.author || 'S. Tory Bound';
       const scenes = entry.scene_count || 0;
       const words = entry.word_count || 0;
       const worldKey = (entry.world || 'modern').toLowerCase();
       const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
+      const isForward = index < MAX_FORWARD;
 
       const book = document.createElement('div');
-      book.className = 'library-book' + (isCollector ? ' collector-edition' : '');
+      book.className = 'library-book initializing' + (isCollector ? ' collector-edition' : '') + (isForward ? ' mode-cover' : ' mode-spine');
       book.dataset.storyId = entry.story_id;
       book.dataset.world = worldKey;
       book.innerHTML = `<div class="book-3d">
@@ -20276,6 +20477,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   <div class="book-pages"></div>
   <div class="page-shimmer"></div>
 </div>`;
+
+      // Depth variance and lean (deterministic, no randomness)
+      const depthVariance = (index % 3) - 1; // -1, 0, 1
+      book.style.transform = `translateY(6px) translateZ(${depthVariance * 2}px)`;
+      const isMobile = window.innerWidth < 900;
+      if (!isMobile && (index % 7 === 0) && isForward) {
+        book.classList.add('mode-lean');
+      }
 
       // Hover sound (debounced, one per entry)
       let _hoverPlayed = false;
@@ -20290,6 +20499,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         _openLibraryZoom(entry, book);
       });
       listEl.appendChild(book);
+    });
+
+    // Remove .initializing after layout pass to enable future transitions
+    requestAnimationFrame(() => {
+      listEl.querySelectorAll('.library-book.initializing').forEach(b => b.classList.remove('initializing'));
     });
   }
 
@@ -20322,7 +20536,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const book3d = sourceBook.querySelector('.book-3d');
     if (!book3d) return;
     container.innerHTML = '';
-    container.appendChild(book3d.cloneNode(true));
+    const clonedBook = book3d.cloneNode(true);
+    // Spine/lean books must open in full cover orientation
+    clonedBook.classList.remove('mode-spine');
+    clonedBook.classList.remove('mode-lean');
+    clonedBook.classList.add('mode-cover');
+    clonedBook.style.transform = 'rotateY(0deg)';
+    clonedBook.style.width = '';
+    container.appendChild(clonedBook);
 
     // Set CTA text — vault-aware
     if (readBtn) {
@@ -20348,7 +20569,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (_zoomRafId) { cancelAnimationFrame(_zoomRafId); _zoomRafId = null; }
 
     // Premium rotation with cubic edge resistance
-    const maxRotation = 155;
+    const maxRotation = window.innerWidth < 900 ? 140 : 155;
     let targetRotation = 0;
     let currentRotation = 0;
 
@@ -20607,8 +20828,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (emptyEl) emptyEl.style.display = 'none';
 
     try {
-      // Fetch entries + bookmarks in parallel — single render pass after both resolve
-      const [entriesResult, bookmarksResult] = await Promise.all([
+      // Fetch entries + bookmarks + achievements in parallel — single render pass after all resolve
+      const [entriesResult, bookmarksResult, achievementsResult] = await Promise.all([
         sb.from('library_entries')
           .select('story_id, title, author, scene_count, word_count, world, updated_at')
           .eq('profile_id', _supabaseProfileId)
@@ -20616,7 +20837,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           .limit(50),
         sb.from('library_bookmarks')
           .select('story_id')
-          .eq('user_id', _supabaseProfileId)
+          .eq('user_id', _supabaseProfileId),
+        sb.from('profile_achievements')
+          .select('achievement_type, label, awarded_at')
+          .eq('profile_id', _supabaseProfileId)
+          .order('awarded_at', { ascending: false })
+          .limit(10)
       ]);
 
       if (entriesResult.error) {
@@ -20639,6 +20865,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const progressSet = new Set((bookmarksResult.data || []).map(b => b.story_id));
       _vaultLibraryEntries.forEach(e => { e._hasProgress = progressSet.has(e.story_id); });
 
+      // Render trophy shelf (non-fatal if achievements query failed)
+      renderVaultTrophies(achievementsResult.data || []);
+
       renderVaultBookList();
     } catch (err) {
       console.error('[VaultLibrary] Load error:', err);
@@ -20651,14 +20880,188 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const loadingEl = $('vaultLibraryLoading');
     const listEl = $('vaultLibraryList');
     const emptyEl = $('vaultLibraryEmpty');
+    const trophyShelf = $('vaultTrophyShelf');
     if (loadingEl) loadingEl.style.display = 'none';
     if (listEl) listEl.style.display = 'none';
+    if (trophyShelf) trophyShelf.style.display = 'none';
     if (emptyEl) {
       emptyEl.style.display = '';
       const p = emptyEl.querySelector('.forbidden-library-empty');
       if (p && msg) p.textContent = msg;
     }
   }
+
+  // — Vault trophy shelf (reads profile_achievements, purely visual) —
+  const TROPHY_ICONS = {
+    first_story:       '\u{1F4D6}',
+    prolific_author:   '\u{1F3C6}',
+    collector_edition: '\u{1F451}',
+    world_traveler:    '\u{1F30D}',
+    binge_reader:      '\u{1F525}',
+    fate_tempted:      '\u{2728}',
+    bookworm:          '\u{1F9E0}',
+    night_owl:         '\u{1F989}',
+    marathon:          '\u{1F3C5}',
+    default:           '\u{2B50}'
+  };
+
+  function renderVaultTrophies(achievements) {
+    const shelf = $('vaultTrophyShelf');
+    if (!shelf) return;
+    shelf.innerHTML = '';
+
+    if (!achievements || achievements.length === 0) {
+      shelf.style.display = 'none';
+      return;
+    }
+
+    const maxTrophies = window.innerWidth > 600 ? 5 : 1;
+    const visible = achievements.slice(0, maxTrophies);
+
+    visible.forEach(a => {
+      const icon = TROPHY_ICONS[a.achievement_type] || TROPHY_ICONS.default;
+      const label = a.label || a.achievement_type.replace(/_/g, ' ');
+      const trophy = document.createElement('div');
+      trophy.className = 'vault-trophy';
+      trophy.innerHTML =
+        `<div class="vault-trophy-icon">${icon}</div>` +
+        `<div class="vault-trophy-label">${escapeHTML(label)}</div>`;
+      shelf.appendChild(trophy);
+    });
+
+    // Divider between trophies and books
+    const divider = document.createElement('div');
+    divider.className = 'vault-trophy-shelf-divider';
+    shelf.after(divider);
+
+    shelf.style.display = '';
+
+    // Tap trophy shelf to open full Trophy Wall
+    shelf.style.cursor = 'pointer';
+    shelf.addEventListener('click', function () {
+      if (typeof openTrophyWall === 'function') openTrophyWall();
+    });
+  }
+
+  // — Trophy Wall modal (vitrine overlay with badge hotspots) —
+  const TROPHY_COORDS = {
+    // Row 1 — center crown
+    tempt_first:              { top: '4%',  left: '36%', width: '18%', height: '14%' },
+    // Row 2 — core trio
+    story_1:                  { top: '20%', left: '8%',  width: '18%', height: '14%' },
+    story_10:                 { top: '20%', left: '40%', width: '18%', height: '14%' },
+    story_100:                { top: '20%', left: '72%', width: '18%', height: '14%' },
+    // Row 3 — special pair
+    fifth_person:             { top: '36%', left: '22%', width: '18%', height: '14%' },
+    tempt_disturb_fate:       { top: '36%', left: '58%', width: '18%', height: '14%' },
+    // Row 4 — mastery trio (left)
+    mastery_modern:           { top: '52%', left: '8%',  width: '18%', height: '14%' },
+    mastery_fantasy:          { top: '52%', left: '40%', width: '18%', height: '14%' },
+    mastery_historical:       { top: '52%', left: '72%', width: '18%', height: '14%' },
+    // Row 5 — mastery trio (right)
+    mastery_sci_fi:           { top: '68%', left: '8%',  width: '18%', height: '14%' },
+    mastery_dystopia:         { top: '68%', left: '40%', width: '18%', height: '14%' },
+    mastery_post_apocalyptic: { top: '68%', left: '72%', width: '18%', height: '14%' }
+  };
+
+  const TROPHY_META = {
+    tempt_first:              { title: 'First Temptation',   desc: 'Invoke Tempt Fate for the first time.' },
+    story_1:                  { title: 'First Chapter',      desc: 'Complete your first story.' },
+    story_10:                 { title: 'Prolific Author',    desc: 'Complete 10 stories.' },
+    story_100:                { title: 'Literary Legend',     desc: 'Complete 100 stories.' },
+    fifth_person:             { title: 'Voice of Fate',      desc: 'Select 5th Person POV.' },
+    tempt_disturb_fate:       { title: 'Fate Disturbed',     desc: 'Tempt Fate 3 times in a single story.' },
+    mastery_modern:           { title: 'Modern Mastery',           desc: 'Completed a story in every Modern flavor.' },
+    mastery_fantasy:          { title: 'Fantasy Mastery',          desc: 'Completed a story in every Fantasy flavor.' },
+    mastery_historical:       { title: 'Historical Mastery',       desc: 'Completed a story in every Historical flavor.' },
+    mastery_sci_fi:           { title: 'Sci-Fi Mastery',           desc: 'Completed a story in every Sci-Fi flavor.' },
+    mastery_dystopia:         { title: 'Dystopia Mastery',         desc: 'Completed a story in every Dystopia flavor.' },
+    mastery_post_apocalyptic: { title: 'Post-Apocalyptic Mastery', desc: 'Completed a story in every Post-Apocalyptic flavor.' }
+  };
+
+  async function openTrophyWall() {
+    const modal = $('trophyWallModal');
+    if (!modal) return;
+
+    // Fetch earned badges once on open
+    let earnedSet = new Set();
+    if (sb && _supabaseProfileId) {
+      try {
+        const { data } = await sb
+          .from('user_badges')
+          .select('badge_id, earned')
+          .eq('profile_id', _supabaseProfileId)
+          .eq('earned', true);
+        if (data) data.forEach(r => earnedSet.add(r.badge_id));
+      } catch (_) { /* silent */ }
+    }
+
+    // Position hotspots and apply earned/locked state
+    modal.querySelectorAll('.trophy-hotspot').forEach(spot => {
+      const badge = spot.dataset.badge;
+      const coords = TROPHY_COORDS[badge];
+      if (coords) {
+        spot.style.top = coords.top;
+        spot.style.left = coords.left;
+        spot.style.width = coords.width;
+        spot.style.height = coords.height;
+      }
+      spot.classList.remove('earned', 'locked');
+      spot.classList.add(earnedSet.has(badge) ? 'earned' : 'locked');
+    });
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeTrophyWall() {
+    const modal = $('trophyWallModal');
+    if (modal) modal.classList.add('hidden');
+    const tip = $('trophyTooltip');
+    if (tip) tip.classList.add('hidden');
+  }
+
+  // Close button
+  $('trophyWallClose')?.addEventListener('click', closeTrophyWall);
+
+  // Click overlay background to close
+  $('trophyWallModal')?.addEventListener('click', function (e) {
+    if (e.target === this) closeTrophyWall();
+  });
+
+  // Escape key
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !$('trophyWallModal')?.classList.contains('hidden')) {
+      closeTrophyWall();
+    }
+  });
+
+  // Tooltip on hotspot hover
+  $('trophyWallModal')?.querySelectorAll('.trophy-hotspot').forEach(spot => {
+    spot.addEventListener('mouseenter', function () {
+      const badge = this.dataset.badge;
+      const meta = TROPHY_META[badge];
+      const tip = $('trophyTooltip');
+      if (!meta || !tip) return;
+      const isLocked = this.classList.contains('locked');
+      tip.innerHTML =
+        `<div class="trophy-tooltip-title">${escapeHTML(meta.title)}</div>` +
+        `<div class="trophy-tooltip-desc">${escapeHTML(meta.desc)}</div>` +
+        (isLocked ? `<div class="trophy-tooltip-locked">Locked \u2014 Complete requirements to earn this.</div>` : '');
+
+      // Position tooltip above hotspot
+      const spotRect = this.getBoundingClientRect();
+      const containerRect = this.parentElement.getBoundingClientRect();
+      tip.style.left = (this.offsetLeft + this.offsetWidth / 2 - 110) + 'px';
+      tip.style.top = (this.offsetTop - 70) + 'px';
+      tip.classList.remove('hidden');
+    });
+    spot.addEventListener('mouseleave', function () {
+      const tip = $('trophyTooltip');
+      if (tip) tip.classList.add('hidden');
+    });
+  });
+
+  window.openTrophyWall = openTrophyWall;
 
   // — Render vault 3D book shelf (reuses same DOM structure as Forbidden Library) —
   function renderVaultBookList() {
@@ -20669,13 +21072,30 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     listEl.style.display = '';
     listEl.innerHTML = '';
 
-    _vaultLibraryEntries.forEach(entry => {
+    // Determine forward-facing capacity (evaluated once per render)
+    const MAX_FORWARD = window.innerWidth > 1400 ? 8 :
+                        window.innerWidth > 1100 ? 6 :
+                        window.innerWidth > 900  ? 4 :
+                        window.innerWidth > 600  ? 3 :
+                        2;
+
+    // Priority sort: has bookmark first, then highest scene_count, then most recently opened
+    const sorted = _vaultLibraryEntries.slice().sort((a, b) => {
+      const aBookmark = a._hasProgress ? 1 : 0;
+      const bBookmark = b._hasProgress ? 1 : 0;
+      if (bBookmark !== aBookmark) return bBookmark - aBookmark;
+      if ((b.scene_count || 0) !== (a.scene_count || 0)) return (b.scene_count || 0) - (a.scene_count || 0);
+      return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+    });
+
+    sorted.forEach((entry, index) => {
       const bookTitle = entry.title || 'Untitled';
       const bookAuthor = entry.author || 'S. Tory Bound';
       const scenes = entry.scene_count || 0;
       const words = entry.word_count || 0;
       const worldKey = (entry.world || 'modern').toLowerCase();
       const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
+      const isForward = index < MAX_FORWARD;
 
       // "Last opened" relative timestamp
       let lastOpened = '';
@@ -20688,7 +21108,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
 
       const book = document.createElement('div');
-      book.className = 'library-book' + (isCollector ? ' collector-edition' : '');
+      book.className = 'library-book initializing' + (isCollector ? ' collector-edition' : '') + (isForward ? ' mode-cover' : ' mode-spine');
       book.dataset.storyId = entry.story_id;
       book.dataset.world = worldKey;
 
@@ -20704,6 +21124,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   <div class="page-shimmer"></div>
 </div>`;
 
+      // Depth variance and lean (deterministic, no randomness)
+      const depthVariance = (index % 3) - 1;
+      book.style.transform = `translateY(6px) translateZ(${depthVariance * 2}px)`;
+      const isMobile = window.innerWidth < 900;
+      if (!isMobile && (index % 7 === 0) && isForward) {
+        book.classList.add('mode-lean');
+      }
+
       // Hover sound
       let _hoverPlayed = false;
       book.addEventListener('mouseenter', () => {
@@ -20718,6 +21146,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         _openLibraryZoom(entry, book);
       });
       listEl.appendChild(book);
+    });
+
+    // Remove .initializing after layout pass to enable future transitions
+    requestAnimationFrame(() => {
+      listEl.querySelectorAll('.library-book.initializing').forEach(b => b.classList.remove('initializing'));
     });
   }
 
@@ -23350,7 +23783,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           sparkleContainer.className = 'zoom-card-sparkles';
           sparkleContainer.id = 'zoomCardSparkles';
           frontFace.appendChild(sparkleContainer);
-          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 20);
+          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
         }
       }
     }
@@ -23476,7 +23909,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           sparkleContainer.className = 'zoom-card-sparkles';
           sparkleContainer.id = 'zoomCardSparkles';
           frontFace.appendChild(sparkleContainer);
-          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 20);
+          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
         }
       }
     }
@@ -24013,7 +24446,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // STANDARD CARDS: Generated overlay buttons (Blank-Black-Face PNG)
       // ═══════════════════════════════════════════════════════════════════
 
-      // === FLAVOR ARC in the half-circle: ONLY the number ===
+      // === FLAVOR ARC in the half-circle: number only (label baked into art) ===
       if (flavors.length > 0) {
         var arcContainer = document.createElement('div');
         arcContainer.className = 'sb-zoom-flavor-arc';
@@ -24025,47 +24458,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         frontFace.appendChild(arcContainer);
       }
 
-      // === ZOOM CONTENT: "FLAVORS" label + flavor buttons + custom setting ===
+      // === ZOOM CONTENT: flavor buttons + custom setting ===
       const zoomContent = document.createElement('div');
       zoomContent.className = 'sb-zoom-content';
 
-      // "FLAVORS" curved text — bottom-of-circle arc, sits below the arch, above buttons
-      if (flavors.length > 0) {
-        var ns = 'http://www.w3.org/2000/svg';
-        var svg = document.createElementNS(ns, 'svg');
-        svg.setAttribute('class', 'sb-zoom-flavor-label');
-        svg.setAttribute('viewBox', '0 0 100 18');
-        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-
-        var defs = document.createElementNS(ns, 'defs');
-        var path = document.createElementNS(ns, 'path');
-        var pathId = 'zoomFlavorArc_' + (++_flavorArcUid);
-        path.setAttribute('id', pathId);
-        // Downward arc (bottom of circle) — sweep-flag=0 curves down
-        path.setAttribute('d', 'M 15,6 A 100,100 0 0,0 85,6');
-        path.setAttribute('fill', 'none');
-        defs.appendChild(path);
-        svg.appendChild(defs);
-
-        var text = document.createElementNS(ns, 'text');
-        text.setAttribute('fill', '#c9a84c');
-        text.setAttribute('font-size', '6');
-        text.setAttribute('font-family', 'Cinzel, serif');
-        text.setAttribute('font-variant', 'small-caps');
-        text.setAttribute('letter-spacing', '2');
-
-        var textPath = document.createElementNS(ns, 'textPath');
-        textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + pathId);
-        textPath.setAttribute('startOffset', '50%');
-        textPath.setAttribute('text-anchor', 'middle');
-        textPath.textContent = 'flavors';
-
-        text.appendChild(textPath);
-        svg.appendChild(text);
-        zoomContent.appendChild(svg);
-      }
-
-      // Flavor buttons directly under the FLAVORS label
+      // Flavor buttons
       if (flavors.length > 0) {
         const flavorGrid = document.createElement('div');
         flavorGrid.className = 'sb-zoom-flavors';
@@ -24191,7 +24588,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const flavors = PRESSURE_FLAVORS[pressureVal] || [];
       if (flavors.length === 0) return;
 
-      // === FLAVOR ARC: number + "FLAVORS" label in the half-circle arch ===
+      // === FLAVOR ARC: number only (label baked into art) ===
       var arcContainer = document.createElement('div');
       arcContainer.className = 'sb-zoom-flavor-arc';
 
@@ -24199,11 +24596,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       num.className = 'arc-flavor-number';
       num.textContent = flavors.length;
       arcContainer.appendChild(num);
-
-      var label = document.createElement('span');
-      label.className = 'arc-flavor-label';
-      label.textContent = 'FLAVORS';
-      arcContainer.appendChild(label);
 
       frontFace.appendChild(arcContainer);
 
@@ -24279,7 +24671,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         const frontFace = card.querySelector('.sb-card-front');
         if (!frontFace) return;
 
-        // Permanent flavor arc (number in half-circle arch)
+        // Flavor arc number in half-circle arch
         if (!frontFace.querySelector('.sb-card-arc-flavors')) {
           const arc = buildFlavorArc(flavors.length);
           arc.dataset.permanent = '1';
@@ -24568,52 +24960,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       });
     });
 
-    // Build flavor arc element: number in arch + curved "FLAVORS" text
-    var _flavorArcUid = 0;
+    // Build flavor arc element: number only (label baked into art)
     function buildFlavorArc(count) {
       var container = document.createElement('div');
       container.className = 'sb-card-arc-flavors';
 
-      // Number
       var num = document.createElement('span');
       num.className = 'arc-flavor-number';
       num.textContent = count;
       container.appendChild(num);
 
-      // SVG with curved "FLAVORS" text along underside of arch
-      var ns = 'http://www.w3.org/2000/svg';
-      var svg = document.createElementNS(ns, 'svg');
-      svg.setAttribute('class', 'arc-flavor-svg');
-      svg.setAttribute('viewBox', '0 0 100 14');
-      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-
-      var defs = document.createElementNS(ns, 'defs');
-      var path = document.createElementNS(ns, 'path');
-      var pathId = 'flavorArcPath_' + (++_flavorArcUid);
-      path.setAttribute('id', pathId);
-      // Arc curving upward — text hangs below the half-circle, following its shape
-      path.setAttribute('d', 'M 20,2 A 35,35 0 0,1 80,2');
-      path.setAttribute('fill', 'none');
-      defs.appendChild(path);
-      svg.appendChild(defs);
-
-      var text = document.createElementNS(ns, 'text');
-      text.setAttribute('fill', 'rgba(218,165,32,0.7)');
-      text.setAttribute('font-size', '6');
-      text.setAttribute('font-family', 'Cinzel, serif');
-      text.setAttribute('font-variant', 'small-caps');
-      text.setAttribute('letter-spacing', '2');
-      text.setAttribute('dominant-baseline', 'hanging');
-
-      var textPath = document.createElementNS(ns, 'textPath');
-      textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + pathId);
-      textPath.setAttribute('startOffset', '50%');
-      textPath.setAttribute('text-anchor', 'middle');
-      textPath.textContent = 'flavors';
-
-      text.appendChild(textPath);
-      svg.appendChild(text);
-      container.appendChild(svg);
       return container;
     }
 
@@ -24674,14 +25030,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           startSparkleEmitter(sparkleContainer.id, 'chooseHand', 6);
         }
 
-        // Add flavor arc indicator for World cards (number + curved "FLAVORS" in top arch)
-        // Skip for baked-art cards — the art already includes this info
         if (grp === 'world') {
-          const flavors = WORLD_SUB_OPTIONS[val] || [];
-          if (flavors.length > 0 && !BAKED_ART_BUTTONS[val]) {
+          // Add flavor arc number (skip baked-art cards — art already includes it)
+          const worldFlavors = WORLD_SUB_OPTIONS[val] || [];
+          if (worldFlavors.length > 0 && !BAKED_ART_BUTTONS[val]) {
             const frontFace = card.querySelector('.sb-card-front');
             if (frontFace && !frontFace.querySelector('.sb-card-arc-flavors')) {
-              frontFace.appendChild(buildFlavorArc(flavors.length));
+              frontFace.appendChild(buildFlavorArc(worldFlavors.length));
             }
           }
           updateWorldSubtypeVisibility(val, state.picks.tone);
@@ -24696,7 +25051,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           state.picks.flavor = null;
           // Sync to legacy genre using pressure's default
           state.picks.genre = getEffectiveGenre(val, null);
-          // Add flavor arc indicator to selected pressure card
+          // Add flavor arc number to selected pressure card
           const flavors = PRESSURE_FLAVORS[val] || [];
           if (flavors.length > 0) {
             const frontFace = card.querySelector('.sb-card-front');
@@ -31047,7 +31402,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           sparkleContainer.className = 'zoom-card-sparkles';
           sparkleContainer.id = 'zoomCardSparkles';
           frontFace.appendChild(sparkleContainer);
-          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 20);
+          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
       }
 
       // Add left/right navigation arrows to portal
@@ -31187,7 +31542,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           sparkleContainer.className = 'zoom-card-sparkles';
           sparkleContainer.id = 'zoomCardSparkles';
           frontFace.appendChild(sparkleContainer);
-          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 20);
+          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
       }
   }
 
@@ -31829,6 +32184,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Set invocation flag + increment consecutive count
       state.tempt_fate_invoked_this_turn = true;
       state.consecutive_tempt_fate_count = (state.consecutive_tempt_fate_count || 0) + 1;
+
+      // Badge engine — Tempt Fate milestones
+      withProfileId(profileId => {
+        incrementBadge(sb, profileId, 'tempt_first');
+        if (state.consecutive_tempt_fate_count >= 3) {
+          awardBadge(sb, profileId, 'tempt_disturb_fate');
+        }
+      });
 
       // Onboarding: mark first Tempt Fate invocation
       if (!state.has_triggered_first_tempt_fate) {
@@ -33456,12 +33819,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       durationMin: 4.0,
       durationMax: 6.5,
       sizeMin: 1,
-      sizeMax: 3,
-      opacityMin: 0.25,
-      opacityRange: 0.45,
-      haloOffset: 15,
+      sizeMax: 2,
+      opacityMin: 0.2,
+      opacityRange: 0.35,
+      haloOffset: 8,
       driftType: 'hover',
-      driftDistance: 10,
+      driftDistance: 8,
       curveAmp: 2,
       flickerChance: 0.15,
       outsideRatio: 1.0
@@ -35183,6 +35546,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.loveInterest = lGen;
 
     syncPovDerivedFlags();
+
+    // Badge engine — 5th Person POV (lifetime, once per user)
+    if (state.povMode === 'author5th') {
+      withProfileId(profileId => {
+        awardBadge(sb, profileId, 'fifth_person');
+      });
+    }
+
     const safetyStr = buildConsentDirectives();
 
     // Variables for later use (ancestry normalization happens later)
@@ -35539,6 +35910,17 @@ ${prehistoricForbid}
     - GOOD: "Fate felt a flicker of anticipation. This was unfolding faster than expected."
     - BAD: "Fate arranged for them to meet." (causation — FORBIDDEN)
     - Fate participates naturally as the story unfolds, not at prescribed intervals.
+    ` : ''}${state.povMode === 'environment4th' ? `
+    4TH PERSON (ENVIRONMENT) — POV REGIME:
+    - Narrator IS the physical environment: objects, surfaces, rooms, air, light, sound.
+    - All perception mediated through material interaction (pressure, heat, vibration, weight).
+    - "We" = the collective voice of the space itself.
+    - Environment may detect repetition, track gaze via light/shadow, hear words, register posture.
+    - Infer emotion ONLY through physical evidence (clenched fists on table, breath speed, skin warmth).
+    - PROHIBITED: destiny language, inevitability, Fate references, narrative structure awareness, abstract mind-reading.
+    - Rotate environmental anchors — avoid repetitive object-perception phrasing.
+    - Punctuate dialogue with environment, not speaker tags every line.
+    - 4th Person remains ACTIVE during all scene types including intimate scenes.
     ` : ''}
     `;
     
@@ -35588,6 +35970,16 @@ FATE (5TH PERSON) — POV REGIME — MANDATORY OPENER:
 - WRONG: "Fate watched as she entered..." (voyeurism — FORBIDDEN)
 - WRONG: "Fate felt sad." (passive emotion without agency — FORBIDDEN)
 - Fate is a shaping presence referred to in third person, never "I".
+` : state.povMode === 'environment4th' ? `
+ENVIRONMENT (4TH PERSON) — POV REGIME — MANDATORY OPENER:
+- The FIRST SENTENCE must ground the narrator in a physical space — a surface, object, or atmosphere.
+- The environment narrates using "we" — the collective material consciousness of the space.
+- All insight must flow through physical sensation: weight, heat, vibration, light, sound.
+- NO destiny language. NO Fate references. NO abstract mind-reading.
+- CORRECT: "We held the heat of the afternoon in our tiles long after the door opened."
+- CORRECT: "The chair remembered this weight. The glass on the counter had not been touched in hours."
+- WRONG: "Fate had plans for them." (Fate is NEVER the narrator in 4th Person)
+- WRONG: "She knew this would change everything." (abstract cognition without physical anchor)
 ` : '';
 
     // OPENING SCENE VARIATION - avoid repetitive patterns
@@ -35601,13 +35993,14 @@ FATE (5TH PERSON) — POV REGIME — MANDATORY OPENER:
     ];
     const selectedOpening = openingModes[Math.floor(Math.random() * openingModes.length)];
 
-    // 5TH PERSON POV CONTRACT INJECTION (locked, non-editable)
+    // POV CONTRACT INJECTION (locked, non-editable)
     const fifthPersonContract = build5thPersonContract();
+    const fourthPersonContract = build4thPersonContract();
 
     // TONE ENFORCEMENT BLOCK (all tones)
     const toneEnforcementBlock = buildToneEnforcementBlock(state.picks?.tone);
 
-    const introPrompt = `${fifthPersonContract}${toneEnforcementBlock}Write the opening scene (500-600 words). This is the LONGEST scene in the story — take your time establishing world and character.
+    const introPrompt = `${fifthPersonContract}${fourthPersonContract}${toneEnforcementBlock}Write the opening scene (500-600 words). This is the LONGEST scene in the story — take your time establishing world and character.
 ${authorOpeningDirective}
 OPENING MODE: ${selectedOpening.mode}
 ${selectedOpening.directive}
@@ -35707,6 +36100,14 @@ Fate influences probability, timing, stakes, meaning — not plot mechanics or o
 BANNED verbs: watched, saw, observed, arranged, orchestrated, caused, steered, forced, ensured.
 "Fate felt..." is FORBIDDEN unless tied to a shaping action or plan.
 Every Fate appearance must imply a plan in motion, a withheld intervention, or a miscalculation.`
+: state.povMode === 'environment4th' ?
+`4TH PERSON (ENVIRONMENT) — POV REGIME:
+Narrator is the material environment — objects, surfaces, rooms, air, light, sound.
+All insight must be sensory-bound: pressure, heat, vibration, weight, resonance.
+No destiny. No inevitability. No Fate references. No narrative structure awareness.
+Avoid repetitive object-tagging — rotate environmental anchors across paragraphs.
+Punctuate dialogue with environment, not speaker tags. "We" = the space itself.
+4th Person remains ACTIVE during all scenes including intimate content.`
 : 'Use the selected POV consistently throughout.'}
 
 The opening must feel intentional, textured, and strange. Not archetypal. Not templated. Specific to THIS world.`;
@@ -43601,8 +44002,8 @@ FATE CARD ADAPTATION (CRITICAL):
       // Lens: dynamic midpoint enforcement (evaluated per-turn)
       const lensEnforcement = buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength);
 
-      // 5TH PERSON POV CONTRACT INJECTION (turns)
-      const turnPOVContract = build5thPersonContract();
+      // POV CONTRACT INJECTION (turns)
+      const turnPOVContract = build5thPersonContract() + build4thPersonContract();
 
       // TONE ENFORCEMENT BLOCK (all tones)
       const turnToneEnforcement = buildToneEnforcementBlock(state.picks?.tone);
@@ -43930,6 +44331,46 @@ Regenerate the scene with ZERO Fate presence.`;
                           console.error('[5thPerson:Strict] Critical violation in continuation scene');
                       }
                   }
+              }
+          }
+
+          // ═══════════════════════════════════════════════════════════════════════
+          // 4TH PERSON ENVIRONMENTAL POV VALIDATION (lightweight)
+          // Regenerate once on fail, then allow with console warning
+          // ═══════════════════════════════════════════════════════════════════════
+          if (state.povMode === 'environment4th') {
+              const env4Check = validate4thPersonPOV(raw);
+              if (!env4Check.valid) {
+                  if (!_4thPersonRegenAttempted) {
+                      _4thPersonRegenAttempted = true;
+                      console.warn('[4thPerson] Validation failed, regenerating once:', env4Check.violations);
+                      const env4Enforcement = `CRITICAL: This story uses 4TH PERSON ENVIRONMENTAL POV.
+The narrator IS the physical environment. All insight must be sensory-bound.
+VIOLATIONS DETECTED: ${env4Check.violations.map(v => v.split(':')[0]).join(', ')}
+Regenerate with ZERO destiny language, ZERO Fate references, ZERO abstract mind-reading.
+All cognition must be mediated through physical interaction.`;
+                      if (useFullOrchestration) {
+                          raw = await generateOrchestatedTurn({
+                              systemPrompt: fullSys + '\n\n' + env4Enforcement,
+                              storyContext: tierContext,
+                              playerAction: act,
+                              playerDialogue: dia,
+                              fateCard: selectedFateCard,
+                              mainPairRestricted,
+                              onPhaseChange: () => {}
+                          });
+                      } else {
+                          raw = await callChat([
+                              { role: 'system', content: fullSys + '\n\n' + env4Enforcement },
+                              { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                          ]);
+                      }
+                  } else {
+                      // Second failure — allow but log warning
+                      console.warn('[4thPerson] Second validation failure (allowing):', env4Check.violations);
+                  }
+              } else {
+                  _4thPersonRegenAttempted = false; // Reset on success
               }
           }
 
@@ -44758,8 +45199,7 @@ FATE CARD ADAPTATION (CRITICAL):
           const lensEnforcement = buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength);
 
           // POV contract
-          const turnPOVContract = build5thPersonContract();
-
+          const turnPOVContract = build5thPersonContract() + build4thPersonContract();
 
           // Tone enforcement
           const turnToneEnforcement = buildToneEnforcementBlock(state.picks?.tone);

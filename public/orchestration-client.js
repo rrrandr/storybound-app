@@ -1703,9 +1703,20 @@ MAIN PAIR RESTRICTION: Do not render consummation or escalation between the prim
       }
     }
 
+    // 4TH PERSON ENVIRONMENTAL POV — upstream alignment for renderer
+    const env4thBlock = (appState && appState.povMode === 'environment4th') ? `
+POV ALIGNMENT:
+This scene uses 4TH PERSON ENVIRONMENTAL POV.
+Narration must be grounded in physical space and material perception.
+All emotional insight must be mediated through sensory interaction (pressure, heat, breath, vibration, repetition).
+Do NOT use direct interior cognition (e.g., "she knew", "he realized").
+Do NOT reference destiny, inevitability, or narrative structure.
+Keep narration embodied and environmental.
+` : '';
+
     return {
       system: `You are a SPECIALIST RENDERER for intimate scenes.
-
+${env4thBlock}
 YOUR CONSTRAINTS (NON-NEGOTIABLE):
 - You render SENSORY EMBODIMENT only
 - You do NOT decide plot or outcomes
@@ -1744,9 +1755,18 @@ ${esd.physicalBounds ? `Physical context: ${esd.physicalBounds}` : ''}`
       .replace(/\[CONSTRAINTS\][\s\S]*?\[\/CONSTRAINTS\]/g, '')
       .trim();
 
+    // 4TH PERSON ENVIRONMENTAL POV — continuity alignment for integration
+    const env4thContinuity = (window.state && window.state.povMode === 'environment4th') ? `
+POV CONTINUITY:
+Maintain 4TH PERSON ENVIRONMENTAL POV throughout merged output.
+Ensure narration remains materially grounded — physical space as narrator.
+Remove any abstract mind-reading unless physically mediated.
+No destiny or inevitability language.
+` : '';
+
     return {
       system: `You are performing the INTEGRATION PASS for Storybound.
-
+${env4thContinuity}
 YOUR RESPONSIBILITIES:
 - Seamlessly integrate the rendered intimate content into the narrative
 - Maintain story continuity and voice

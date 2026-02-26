@@ -61,7 +61,6 @@
     <div id="vaultAuthRow" class="vault-auth-row" style="text-align:center; margin-bottom:8px;"></div>
     <div class="vault-tabs">
       <button class="vault-tab sb-btn-png md" data-vault-section="Account">Account</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="Story">Story</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Story Appearance</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Help">Help</button>
     </div>
@@ -75,14 +74,6 @@
     <button id="menuProfileBtn" class="sb-btn-png sm">Profile</button>
     <button id="menuLibraryBtn" class="sb-btn-png sm">Library</button>
     <button class="sb-btn-png sm" onclick="window.changeTier()">Change Tier</button>
-    <button class="vault-back sb-btn-png sm">Back</button>
-  </div>
-
-  <!-- ── STORY SUB-PANEL ── -->
-  <div id="vaultStory" class="vault-sub hidden">
-    <div class="vault-sub-title">Story</div>
-    <button class="sb-btn-png md" onclick="window.restart()">Restart Story</button>
-    <button id="continueStoryBtn" class="sb-btn-png md hidden" onclick="window.continueStory()">Continue Story</button>
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
@@ -813,14 +804,14 @@
       </div>
       <div class="sb-card" data-grp="pov" data-val="Fourth">
         <div class="sb-card-inner">
-          <div class="sb-card-face sb-card-back"><span class="sb-card-title">4th Person (We)</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">4th Person (We)</span><span class="sb-card-desc">"We feel the moment tighten, as if the room itself is holding its breath."</span></div>
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">4th Person (It)</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">4th Person (It)</span><span class="sb-card-desc">"The brass knocker cooled against her trembling fingers, unsure whether it would be asked to announce her or spare her."</span></div>
         </div>
       </div>
       <div class="sb-card" data-grp="pov" data-val="Fifth">
         <div class="sb-card-inner">
-          <div class="sb-card-face sb-card-back"><span class="sb-card-title">5th Person (Author)</span></div>
-          <div class="sb-card-face sb-card-front"><span class="sb-card-title">5th Person (Author)</span><span class="sb-card-desc">"The Author has big plans for you..."</span></div>
+          <div class="sb-card-face sb-card-back"><span class="sb-card-title">5th Person (Fate)</span></div>
+          <div class="sb-card-face sb-card-front"><span class="sb-card-title">5th Person (Fate)</span><span class="sb-card-desc">"Fate lingered at her shoulder, curious whether she would dare to disturb what had already begun to unravel."</span></div>
         </div>
       </div>
     </div>
@@ -1038,7 +1029,7 @@
         <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power & Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">The entire city answers to him. Except for her.</span></div></div></div>
         <div class="sb-card" data-grp="pressure" data-val="EscapePursuit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape & Pursuit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape & Pursuit</span><span class="sb-card-desc">The world hunts them. They only have each other.</span></div></div></div>
         <div class="sb-card" data-grp="pressure" data-val="DesireObsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Desire & Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Desire & Obsession</span><span class="sb-card-desc">He should walk away. He never can.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">The mountain tried to freeze them; instead, they burned.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">The mountain tried to freeze them;<br>instead, they burned.</span></div></div></div>
       </div>
 
       <!-- FLAVOR GRID REMOVED: Flavors now selected inside zoomed Story Pull card -->
@@ -1536,6 +1527,7 @@
 
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js"></script>
+<script src="/badgeEngine.js"></script>
 <script src="/app.js"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
@@ -1602,6 +1594,7 @@
     <div id="vaultLibraryLoading" class="forbidden-library-loading">
       <p class="forbidden-library-empty">Gathering volumes...</p>
     </div>
+    <div id="vaultTrophyShelf" class="vault-trophy-shelf" style="display:none;"></div>
     <div class="library-book-list vault-book-list" id="vaultLibraryList" style="display:none;"></div>
     <div id="vaultLibraryEmpty" class="forbidden-library-empty-state" style="display:none;">
       <p class="forbidden-library-empty">No stories yet. Completed stories will appear here.</p>
@@ -1614,6 +1607,28 @@
   <div id="zoomBookContainer"></div>
   <div class="zoom-cta">
     <button id="zoomReadBtn" class="sb-btn-primary">Read This Story</button>
+  </div>
+</div>
+
+<!-- Trophy Wall modal — vitrine overlay with badge hotspots -->
+<div id="trophyWallModal" class="overlay trophy-wall-modal hidden">
+  <div class="trophy-wall-container">
+    <button id="trophyWallClose" class="trophy-wall-close">&times;</button>
+    <img src="/assets/Forbidde-Library-Art/full-vitrine.jpg"
+         class="trophy-wall-image" alt="Trophy Wall" />
+    <div class="trophy-hotspot" data-badge="tempt_first"></div>
+    <div class="trophy-hotspot" data-badge="story_1"></div>
+    <div class="trophy-hotspot" data-badge="story_10"></div>
+    <div class="trophy-hotspot" data-badge="story_100"></div>
+    <div class="trophy-hotspot" data-badge="fifth_person"></div>
+    <div class="trophy-hotspot" data-badge="tempt_disturb_fate"></div>
+    <div class="trophy-hotspot" data-badge="mastery_modern"></div>
+    <div class="trophy-hotspot" data-badge="mastery_fantasy"></div>
+    <div class="trophy-hotspot" data-badge="mastery_historical"></div>
+    <div class="trophy-hotspot" data-badge="mastery_sci_fi"></div>
+    <div class="trophy-hotspot" data-badge="mastery_dystopia"></div>
+    <div class="trophy-hotspot" data-badge="mastery_post_apocalyptic"></div>
+    <div id="trophyTooltip" class="trophy-tooltip hidden"></div>
   </div>
 </div>
 
