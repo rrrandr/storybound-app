@@ -20404,11 +20404,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   $('menuProfileBtn')?.addEventListener('click', () => {
       document.getElementById('menuOverlay')?.classList.add('hidden');
       resetVaultState();
+      if (typeof closeTrophyWall === 'function') closeTrophyWall();
       openProfileModal();
   });
 
   // Library button — close Vault, navigate to full-screen Vault Library
+  let _preVaultScreenId = null; // Track screen before Vault Library/Achievements
   $('menuLibraryBtn')?.addEventListener('click', () => {
+      _preVaultScreenId = _currentScreenId;
       document.getElementById('menuOverlay')?.classList.add('hidden');
       resetVaultState();
       window.showScreen('vaultLibraryScreen');
@@ -20879,13 +20882,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Fetch entries + bookmarks + achievements in parallel — single render pass after all resolve
       const [entriesResult, bookmarksResult, achievementsResult] = await Promise.all([
         sb.from('library_entries')
-          .select('story_id, title, author, scene_count, word_count, updated_at')
+          .select('story_id, title, world, scene_count, updated_at')
           .eq('profile_id', _supabaseProfileId)
           .order('updated_at', { ascending: false })
           .limit(50),
         sb.from('library_bookmarks')
           .select('story_id')
-          .eq('profile_id', _supabaseProfileId),
+          .eq('user_id', _supabaseProfileId),
         sb.from('profile_achievements')
           .select('achievement_type, label, awarded_at')
           .eq('profile_id', _supabaseProfileId)
@@ -21032,6 +21035,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // Close Vault menu first (matches Profile/Library button behavior)
     document.getElementById('menuOverlay')?.classList.add('hidden');
     if (typeof resetVaultState === 'function') resetVaultState();
+    _preVaultScreenId = _currentScreenId;
 
     const modal = $('trophyWallModal');
     if (!modal) return;
@@ -21086,6 +21090,23 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (e.key === 'Escape' && !$('trophyWallModal')?.classList.contains('hidden')) {
       closeTrophyWall();
     }
+  });
+
+  // Exit Achievements button — close trophy wall and return to pre-vault screen
+  $('exitAchievementsBtn')?.addEventListener('click', () => {
+    closeTrophyWall();
+    if (_preVaultScreenId && _preVaultScreenId !== 'vaultLibraryScreen') {
+      window.showScreen(_preVaultScreenId);
+    }
+    _preVaultScreenId = null;
+  });
+
+  // Exit Library button — return to pre-vault screen
+  $('exitLibraryBtn')?.addEventListener('click', () => {
+    if (_preVaultScreenId && _preVaultScreenId !== 'vaultLibraryScreen') {
+      window.showScreen(_preVaultScreenId);
+    }
+    _preVaultScreenId = null;
   });
 
   // Tooltip on hotspot hover
@@ -33499,6 +33520,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     _fateRunning = true;
     setupFateOverrideListeners();
 
+    // Mark authorship as resolved (Guided Fate path)
+    state.mode = 'guided';
+    corridorSelections.set('authorship', { grp: 'authorship', val: 'guided' });
+
     // Pre-set state values (silent, no UI)
     state.gender = 'Female';
     state.loveInterest = 'Male';
@@ -33861,20 +33886,20 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       curveAmp: 3,
       flickerChance: 0.3
     },
-    // Begin Story button: scattered cloud, NOT rectangular outline
+    // Begin Story button: tight halo hugging button edges
     beginStory: {
-      durationMin: 5.0,
-      durationMax: 9.0,
+      durationMin: 4.0,
+      durationMax: 7.0,
       sizeMin: 2,
       sizeMax: 5,
       opacityMin: 0.3,
       opacityRange: 0.5,    // 0.3-0.8
-      haloOffset: 20,
-      outsideRatio: 0.35,   // 65% inside, 35% perimeter — scattered cloud
-      driftType: 'float',
-      driftDistance: 8,
-      curveAmp: 5,
-      flickerChance: 0.4
+      haloOffset: 8,        // tight to edges
+      outsideRatio: 1.0,    // 100% perimeter — hug the button edges
+      driftType: 'hover',
+      driftDistance: 6,
+      curveAmp: 3,
+      flickerChance: 0.3
     },
     // Choose Your Hand: matches Guided Fate energy
     chooseHand: {

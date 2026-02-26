@@ -3710,6 +3710,10 @@ body.library-zoom-active .vault-book-list {
 .trophy-wall-close:hover {
     color: var(--gold, #c9a84c);
 }
+.vault-exit-row {
+    text-align: center;
+    padding: 24px 0 12px;
+}
 .trophy-hotspot {
     position: absolute;
     cursor: pointer;
@@ -11898,11 +11902,7 @@ body.corridor-mode .sb-grid.corridor-section {
 }
 
 .begin-story-flourish {
-    width: 120px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    margin-bottom: 30px;
-    opacity: 0.6;
+    display: none;
 }
 
 .begin-btn-wrapper {
@@ -11912,7 +11912,7 @@ body.corridor-mode .sb-grid.corridor-section {
 
 .begin-btn-sparkle-emitter {
     position: absolute;
-    inset: -120% -40%;
+    inset: -10px;
     pointer-events: none;
     z-index: 0;
     overflow: visible;
