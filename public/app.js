@@ -20878,7 +20878,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const [entriesResult, bookmarksResult, achievementsResult] = await Promise.all([
         sb.from('library_entries')
           .select('story_id, title, scene_count, updated_at')
-          .eq('user_id', _supabaseProfileId)
+          .eq('profile_id', _supabaseProfileId)
           .order('updated_at', { ascending: false })
           .limit(50),
         sb.from('library_bookmarks')
@@ -20886,7 +20886,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           .eq('user_id', _supabaseProfileId),
         sb.from('profile_achievements')
           .select('achievement_type, label, awarded_at')
-          .eq('user_id', _supabaseProfileId)
+          .eq('profile_id', _supabaseProfileId)
           .order('awarded_at', { ascending: false })
           .limit(10)
           .then(r => r.error ? { data: [], error: null } : r)
@@ -21026,6 +21026,131 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     mastery_post_apocalyptic: { title: 'Post-Apocalyptic Mastery', desc: 'Completed a story in every Post-Apocalyptic flavor.' }
   };
 
+  // ── Trophy Vitrine mask-reveal state ──
+  let _trophyEarnedSet = new Set();
+  let _trophyPreviousEarnedSet = new Set();
+
+  /**
+   * Build a CSS clip-path that reveals only earned trophy regions.
+   * Uses polygon() with individual rectangular cutouts merged via union.
+   * Since CSS clip-path polygon defines the VISIBLE area, we build a polygon
+   * that covers each earned region as a self-closing rectangle.
+   * For multiple rectangles we use multiple inset() in a single clip-path
+   * — but CSS only supports ONE clip-path. Solution: use an SVG <clipPath>
+   * with multiple <rect> elements, referenced via url().
+   *
+   * Approach: Dynamically update an inline SVG clipPath element.
+   */
+  function updateVitrineMask() {
+    const container = document.querySelector('.trophy-wall-container');
+    const fullImg = container?.querySelector('.vitrine-full');
+    if (!fullImg) return;
+
+    // Ensure SVG defs element exists (Safari-safe: createElementNS for all nodes)
+    let svgDefs = container.querySelector('#vitrineMaskSvg');
+    if (!svgDefs) {
+      svgDefs = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svgDefs.id = 'vitrineMaskSvg';
+      // Safari needs the SVG in the DOM with real dimensions; use 0×0 + overflow:hidden
+      svgDefs.setAttribute('width', '0');
+      svgDefs.setAttribute('height', '0');
+      svgDefs.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden;');
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const cp = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+      cp.id = 'vitrineClip';
+      cp.setAttribute('clipPathUnits', 'objectBoundingBox');
+      defs.appendChild(cp);
+      svgDefs.appendChild(defs);
+      container.appendChild(svgDefs);
+    }
+
+    const clipPath = svgDefs.querySelector('#vitrineClip');
+    // Clear existing rects (DOM removal, not innerHTML parse)
+    while (clipPath.firstChild) clipPath.removeChild(clipPath.firstChild);
+
+    // Subtle dim on greyed image when nothing is earned
+    const greyImg = container.querySelector('.vitrine-grey');
+    if (greyImg) {
+      greyImg.classList.toggle('vitrine-all-locked', _trophyEarnedSet.size === 0);
+    }
+
+    if (_trophyEarnedSet.size === 0) {
+      // Nothing earned — clip everything
+      fullImg.style.clipPath = 'inset(100% 0 0 0)';
+      fullImg.style.webkitClipPath = 'inset(100% 0 0 0)';
+      return;
+    }
+
+    // Add a rect for each earned trophy region (coordinates as fractions 0-1)
+    _trophyEarnedSet.forEach(badge => {
+      const c = TROPHY_COORDS[badge];
+      if (!c) return;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', parseFloat(c.left) / 100);
+      rect.setAttribute('y', parseFloat(c.top) / 100);
+      rect.setAttribute('width', parseFloat(c.width) / 100);
+      rect.setAttribute('height', parseFloat(c.height) / 100);
+      clipPath.appendChild(rect);
+    });
+
+    fullImg.style.clipPath = 'url(#vitrineClip)';
+    fullImg.style.webkitClipPath = 'url(#vitrineClip)';
+  }
+
+  /**
+   * Sparkle burst at trophy center (uses existing dissipation sparkle system).
+   * Short burst only — 8-12 particles scattering outward.
+   */
+  function trophyRevealBurst(spot) {
+    const rect = spot.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const count = 8 + Math.floor(Math.random() * 5);
+
+    for (let i = 0; i < count; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'dissipate-sparkle';
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+      const dist = 20 + Math.random() * 40;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - 10;
+      const size = 3 + Math.random() * 3;
+      const duration = 0.8 + Math.random() * 0.3;
+
+      sparkle.style.cssText = `
+        left: ${cx}px; top: ${cy}px;
+        --sparkle-dx: ${dx}px; --sparkle-dy: ${dy}px;
+        --sparkle-curve-x: ${(Math.random() - 0.5) * 12}px;
+        --sparkle-curve-y: ${(Math.random() - 0.5) * 12}px;
+        --sparkle-size: ${size}px;
+        --scatter-duration: ${duration}s;
+      `;
+      document.body.appendChild(sparkle);
+      setTimeout(() => sparkle.remove(), duration * 1000 + 100);
+    }
+  }
+
+  /**
+   * Animate a single trophy reveal: update mask, glow, sparkle burst.
+   */
+  function revealTrophy(badge) {
+    const modal = $('trophyWallModal');
+    if (!modal) return;
+    const spot = modal.querySelector(`.trophy-hotspot[data-badge="${badge}"]`);
+    if (!spot) return;
+
+    spot.classList.remove('locked');
+    spot.classList.add('earned', 'trophy-revealing');
+    updateVitrineMask();
+    trophyRevealBurst(spot);
+
+    // Remove animation class after it completes
+    setTimeout(() => spot.classList.remove('trophy-revealing'), 650);
+  }
+
+  // Expose for external achievement events
+  window.revealTrophy = revealTrophy;
+
   async function openTrophyWall() {
     // Close Vault menu first (matches Profile/Library button behavior)
     document.getElementById('menuOverlay')?.classList.add('hidden');
@@ -21035,8 +21160,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const modal = $('trophyWallModal');
     if (!modal) return;
 
-    // Fetch earned badges once on open
-    let earnedSet = new Set();
+    // Snapshot previous earned set for detecting new unlocks
+    _trophyPreviousEarnedSet = new Set(_trophyEarnedSet);
+
+    // Fetch earned badges
+    _trophyEarnedSet = new Set();
     if (sb && _supabaseProfileId) {
       try {
         const { data } = await sb
@@ -21044,7 +21172,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           .select('badge_id, earned')
           .eq('profile_id', _supabaseProfileId)
           .eq('earned', true);
-        if (data) data.forEach(r => earnedSet.add(r.badge_id));
+        if (data) data.forEach(r => _trophyEarnedSet.add(r.badge_id));
       } catch (_) { /* silent */ }
     }
 
@@ -21058,11 +21186,24 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         spot.style.width = coords.width;
         spot.style.height = coords.height;
       }
-      spot.classList.remove('earned', 'locked');
-      spot.classList.add(earnedSet.has(badge) ? 'earned' : 'locked');
+      spot.classList.remove('earned', 'locked', 'trophy-revealing');
+      spot.classList.add(_trophyEarnedSet.has(badge) ? 'earned' : 'locked');
     });
 
+    // Build mask for pre-earned trophies (no animation)
+    updateVitrineMask();
+
     modal.classList.remove('hidden');
+
+    // Animate newly earned trophies (earned now but not previously)
+    // Stagger multiple reveals by 60ms each for subtle cascade
+    let revealIdx = 0;
+    _trophyEarnedSet.forEach(badge => {
+      if (!_trophyPreviousEarnedSet.has(badge)) {
+        setTimeout(() => revealTrophy(badge), 400 + revealIdx * 60);
+        revealIdx++;
+      }
+    });
   }
 
   function closeTrophyWall() {
@@ -22871,11 +23012,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
 
       // Trigger the actual Begin Story flow
-      // Use cached ref — beginBtn may be unmounted from DOM when corridor is on a different row
-      const beginBtn = window._cachedBeginBtn || $('beginBtn');
-      if (beginBtn) {
-          beginBtn.click();
-      }
+      if (typeof handleBeginStory === 'function') handleBeginStory();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -25236,9 +25373,6 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     initBreadcrumbFlow();
     // Initialize Archetype System BEFORE corridor (corridor unmounts the grid from DOM)
     initArchetypeUI();
-    // Cache beginBtn BEFORE corridor init unmounts it from DOM
-    // (getElementById returns null for unmounted elements — handler at line ~35305 needs this)
-    window._cachedBeginBtn = document.getElementById('beginBtn');
     // Initialize Corridor State Machine (9-row single-screen selection)
     if (typeof initCorridor === 'function') {
       initCorridor();
@@ -27120,7 +27254,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         modal.classList.remove('visible');
         setTimeout(() => {
           modal.remove();
-          (window._cachedBeginBtn || $('beginBtn')).click();
+          if (typeof handleBeginStory === 'function') handleBeginStory();
         }, 300);
       });
       grid.appendChild(btn);
@@ -27216,8 +27350,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     console.log('[Fate Fill] Auto-filled missing selections:', unresolvedRows.map(r => r.stage).join(', '));
 
     // Trigger Begin Story again now that selections are complete
-    const beginBtn = window._cachedBeginBtn || $('beginBtn');
-    if (beginBtn) beginBtn.click();
+    if (typeof handleBeginStory === 'function') handleBeginStory();
   }
 
   // Expose validation function
@@ -28054,11 +28187,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return;
     }
 
-    // Special case: Begin Story — terminal row, dispatch to beginBtn handler
+    // Special case: Begin Story — terminal row, dispatch to handler directly
     if (stage === 'beginstory') {
-      console.log(`[Corridor] Begin Story row — dispatching to beginBtn`);
-      const beginBtn = window._cachedBeginBtn || document.getElementById('beginBtn');
-      if (beginBtn) beginBtn.click();
+      console.log(`[Corridor] Begin Story row — dispatching to handleBeginStory`);
+      if (typeof handleBeginStory === 'function') handleBeginStory();
       return;
     }
 
@@ -35334,9 +35466,15 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   };
 
   // --- BEGIN STORY (RESTORED) ---
-  // Use cached reference: corridor init unmounts beginStoryRow from DOM before this runs,
-  // so $('beginBtn') would return null. window._cachedBeginBtn was captured pre-unmount.
-  (window._cachedBeginBtn || $('beginBtn'))?.addEventListener('click', async () => {
+  // Handler extracted as named function for event delegation (no direct DOM binding needed).
+  let _beginStoryInProgress = false;
+  async function handleBeginStory() {
+    if (_beginStoryInProgress) {
+      console.warn('[BeginStory] Already in progress — ignoring duplicate call');
+      return;
+    }
+    _beginStoryInProgress = true;
+    try {
     // Reveal all remaining DSP segments on Begin Story (veto phase)
     if (typeof revealAllDSPSegments === 'function') revealAllDSPSegments();
 
@@ -37107,6 +37245,22 @@ ${text.slice(0, 800)}`}]);
         if (window.initFateCards) window.initFateCards();
         updateBatedBreathState();
     }
+    } finally {
+      _beginStoryInProgress = false;
+    }
+  }
+
+  // Expose for internal callers and event delegation
+  window.handleBeginStory = handleBeginStory;
+
+  // Delegated click handler: works regardless of corridor mount/unmount timing
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#beginBtn');
+    if (!btn) return;
+    // Guard: respect disabled state
+    if (btn.disabled || btn.classList.contains('disabled') || btn.getAttribute('aria-disabled') === 'true') return;
+    e.preventDefault();
+    handleBeginStory();
   });
 
   // --- API CALLS ---

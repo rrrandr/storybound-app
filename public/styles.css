@@ -3690,10 +3690,33 @@ body.library-zoom-active .vault-book-list {
     max-width: 900px;
     margin: 0 auto;
 }
-.trophy-wall-image {
+/* ── Trophy Vitrine: greyed base + clip-path masked full image ── */
+.trophy-vitrine {
+    position: relative;
+    width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.vitrine-grey {
     width: 100%;
     display: block;
     border-radius: 6px;
+    /* Subtle dim when no trophies earned; JS removes class when any are revealed */
+    transition: filter 0.6s ease;
+}
+.vitrine-grey.vitrine-all-locked {
+    filter: brightness(0.85) sepia(0.08);
+}
+.vitrine-full {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: block;
+    border-radius: 6px;
+    /* Default: fully clipped (nothing revealed). JS builds clip-path from earned regions. */
+    -webkit-clip-path: inset(100% 0 0 0);
+    clip-path: inset(100% 0 0 0);
 }
 .trophy-wall-close {
     position: absolute;
@@ -3720,17 +3743,19 @@ body.library-zoom-active .vault-book-list {
     transition: box-shadow 0.25s ease;
     border-radius: 10px;
 }
-.trophy-hotspot.locked::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: grayscale(1) brightness(0.6);
-    border-radius: 10px;
-    pointer-events: none;
-}
+/* Locked: no overlay needed — greyed base image shows through */
+/* Earned: subtle gold glow on hotspot */
 .trophy-hotspot.earned {
-    box-shadow: 0 0 25px rgba(212, 175, 55, 0.55);
+    box-shadow: 0 0 18px rgba(212, 175, 55, 0.45);
+}
+/* Glow pulse when a trophy is newly revealed */
+@keyframes trophyRevealGlow {
+    0%   { box-shadow: 0 0 0 rgba(212, 175, 55, 0); }
+    40%  { box-shadow: 0 0 30px rgba(255, 215, 0, 0.7); }
+    100% { box-shadow: 0 0 18px rgba(212, 175, 55, 0.45); }
+}
+.trophy-hotspot.trophy-revealing {
+    animation: trophyRevealGlow 600ms ease-out forwards;
 }
 .trophy-tooltip {
     position: absolute;
