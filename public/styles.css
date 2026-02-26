@@ -1877,87 +1877,104 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     z-index: 1;
 }
 
-/* Page Turn Animation - Forward */
+/* Page Turn Animation - Right-to-left page curl */
 .story-page.turning-out {
-    animation: pageTurnOut 500ms ease-in-out forwards;
+    animation: pageCurlOut 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    transform-origin: right center;
 }
 
 .story-page.turning-in {
-    animation: pageTurnIn 500ms ease-in-out forwards;
+    animation: pageCurlIn 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    transform-origin: left center;
 }
 
-/* Page Turn Animation - Backward */
+/* Page Turn Animation - Backward (left-to-right uncurl) */
 .story-page.turning-out-reverse {
-    animation: pageTurnOutReverse 500ms ease-in-out forwards;
+    animation: pageCurlOutReverse 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    transform-origin: left center;
 }
 
 .story-page.turning-in-reverse {
-    animation: pageTurnInReverse 500ms ease-in-out forwards;
+    animation: pageCurlInReverse 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    transform-origin: right center;
 }
 
-@keyframes pageTurnOut {
+/* Parent needs perspective for 3D curl depth */
+.story-pages-container {
+    perspective: 1200px;
+}
+
+@keyframes pageCurlOut {
     0% {
+        transform: rotateY(0deg);
         opacity: 1;
-        transform: translateX(0) rotateY(0deg);
-        transform-origin: left center;
+        box-shadow: none;
     }
-    50% {
-        box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+    30% {
+        transform: rotateY(-25deg);
+        opacity: 1;
+        box-shadow: -8px 0 20px rgba(0,0,0,0.25);
     }
     100% {
+        transform: rotateY(-90deg);
         opacity: 0;
-        transform: translateX(-50px) rotateY(-5deg);
-        transform-origin: left center;
+        box-shadow: -2px 0 8px rgba(0,0,0,0.15);
     }
 }
 
-@keyframes pageTurnIn {
+@keyframes pageCurlIn {
     0% {
+        transform: rotateY(90deg);
         opacity: 0;
-        transform: translateX(50px) rotateY(5deg);
-        transform-origin: right center;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
         visibility: visible;
     }
-    50% {
-        box-shadow: 5px 0 20px rgba(0,0,0,0.2);
+    30% {
+        transform: rotateY(25deg);
+        opacity: 1;
+        box-shadow: 8px 0 20px rgba(0,0,0,0.25);
     }
     100% {
+        transform: rotateY(0deg);
         opacity: 1;
-        transform: translateX(0) rotateY(0deg);
-        transform-origin: right center;
+        box-shadow: none;
     }
 }
 
-@keyframes pageTurnOutReverse {
+@keyframes pageCurlOutReverse {
     0% {
+        transform: rotateY(0deg);
         opacity: 1;
-        transform: translateX(0) rotateY(0deg);
-        transform-origin: right center;
+        box-shadow: none;
     }
-    50% {
-        box-shadow: 5px 0 20px rgba(0,0,0,0.3);
+    30% {
+        transform: rotateY(25deg);
+        opacity: 1;
+        box-shadow: 8px 0 20px rgba(0,0,0,0.25);
     }
     100% {
+        transform: rotateY(90deg);
         opacity: 0;
-        transform: translateX(50px) rotateY(5deg);
-        transform-origin: right center;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
     }
 }
 
-@keyframes pageTurnInReverse {
+@keyframes pageCurlInReverse {
     0% {
+        transform: rotateY(-90deg);
         opacity: 0;
-        transform: translateX(-50px) rotateY(-5deg);
-        transform-origin: left center;
+        box-shadow: -2px 0 8px rgba(0,0,0,0.15);
         visibility: visible;
     }
-    50% {
-        box-shadow: -5px 0 20px rgba(0,0,0,0.2);
+    30% {
+        transform: rotateY(-25deg);
+        opacity: 1;
+        box-shadow: -8px 0 20px rgba(0,0,0,0.25);
     }
     100% {
+        transform: rotateY(0deg);
         opacity: 1;
-        transform: translateX(0) rotateY(0deg);
-        transform-origin: left center;
+        box-shadow: none;
     }
 }
 
@@ -4348,6 +4365,8 @@ select {
     position: relative;
 }
 .locked-style { display: inline-block; }
+/* No gleam sweep on locked buttons — lock icon stays static */
+.locked-style::after { animation: none !important; opacity: 0 !important; }
 
 /* HANDCUFF OVERLAY - SVG (applies to all locked elements) */
 .locked-input::after, .locked-style::after, .card.locked::after, .fate-card.locked::after,
@@ -4619,11 +4638,11 @@ select {
     /* Z-INDEX CAP: Cards must never exceed z-index 50 (button is 1000) */
     z-index: 10;
 }
-/* Fate card — Plaque regime: no rounded corners, no glow */
+/* Fate card — Rounded corners, no glow */
 /* FLIP FIX: Explicit transform-origin center to prevent hinge artifacts */
-.fate-card .inner { position:absolute; inset:0; border-radius:0; transform-style:preserve-3d; transition:transform 0.6s; box-shadow:0 5px 15px rgba(0,0,0,0.5); transform-origin: center center; }
+.fate-card .inner { position:absolute; inset:0; border-radius:8px; transform-style:preserve-3d; transition:transform 0.6s; box-shadow:0 5px 15px rgba(0,0,0,0.5); transform-origin: center center; }
 .fate-card.flipped .inner { transform:rotateY(180deg); }
-.fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:0; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); flex-direction: column; padding: 5px; box-sizing: border-box; }
+.fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); flex-direction: column; padding: 5px; box-sizing: border-box; }
 .fate-card .front {
     background: url('/assets/card-art/cards/Romance-black-back.png') center/cover no-repeat, #111;
     z-index:2;
@@ -4636,8 +4655,7 @@ select {
 .fate-card p { font-size: 0.6em; line-height: 1.2; opacity: 0.9; }
 .fate-card.poof { animation: smokePoof 0.6s forwards; }
 @keyframes smokePoof { 0%{ opacity:1; transform:scale(1); } 100%{ opacity:0; transform:scale(0.5); } }
-/* Selected: Brightness lift only — no glow */
-.fate-card.selected .inner { border: 2px solid var(--gold); }
+/* Selected: Brightness lift only — no border change, no glow */
 .fate-card.selected .front, .fate-card.selected .back { filter: brightness(1.15); }
 .fate-card.chosen .inner { border: 2px solid var(--pink); }
 
@@ -5057,7 +5075,7 @@ select {
   font-family: 'Lora', serif; font-size: 0.8em; margin-top: 8px; transition: opacity 0.2s;
 }
 .petition-close-btn:hover { opacity: 1; }
-.petition-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; }
+.petition-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 8px !important; }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* PETITION ZOOM — Card zooms into portal with ritual overlay on face       */
@@ -5071,28 +5089,31 @@ select {
 }
 .petition-zoom-overlay {
   position: absolute;
-  inset: 0;
+  top: 42%;
+  left: 8%;
+  right: 8%;
+  bottom: 4%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: rgba(10, 5, 15, 0.88);
-  padding: 8px 6px;
+  justify-content: flex-start;
+  background: transparent;
+  padding: 4px 4px;
   box-sizing: border-box;
   overflow-y: auto;
   z-index: 2;
 }
-/* Scale-down: card is small, scale() enlarges — so use tiny font sizes */
-.petition-zoom-overlay .petition-ritual-title { font-size: 0.55em; margin: 0 0 2px; }
-.petition-zoom-overlay .petition-ritual-subtitle { font-size: 0.35em; margin: 2px 0 4px; }
-.petition-zoom-overlay .petition-ritual-field { font-size: 0.35em; padding: 3px 4px; min-height: 20px; }
-.petition-zoom-overlay .petition-ritual-btn { font-size: 0.35em; padding: 3px 8px; margin-bottom: 3px; }
-.petition-zoom-overlay .petition-cost-hint { font-size: 0.35em; margin: 3px 0; }
-.petition-zoom-overlay .petition-omen { font-size: 0.35em; margin: 3px 0; }
-.petition-zoom-overlay .petition-result { font-size: 0.35em; margin: 3px 0; }
-.petition-zoom-overlay .petition-close-btn { font-size: 0.3em; padding: 2px 6px; margin-top: 2px; }
-.petition-zoom-overlay .petition-field-wrap { width: 90%; margin-bottom: 3px; }
-.petition-zoom-overlay .rotating-placeholder { font-size: 0.35em; }
+/* Scale-down: card is small, scale() enlarges — 12pt equivalent at ~5x zoom */
+.petition-zoom-overlay .petition-ritual-title { font-size: 0.38em; margin: 0 0 2px; }
+.petition-zoom-overlay .petition-ritual-subtitle { font-size: 0.28em; margin: 2px 0 4px; }
+.petition-zoom-overlay .petition-ritual-field { font-size: 0.28em; padding: 3px 4px; min-height: 16px; }
+.petition-zoom-overlay .petition-ritual-btn { font-size: 0.28em; padding: 3px 8px; margin-bottom: 3px; }
+.petition-zoom-overlay .petition-cost-hint { font-size: 0.28em; margin: 3px 0; }
+.petition-zoom-overlay .petition-omen { font-size: 0.28em; margin: 3px 0; }
+.petition-zoom-overlay .petition-result { font-size: 0.28em; margin: 3px 0; }
+.petition-zoom-overlay .petition-close-btn { font-size: 0.24em; padding: 2px 6px; margin-top: 2px; }
+.petition-zoom-overlay .petition-field-wrap { width: 78%; margin-bottom: 3px; }
+.petition-zoom-overlay .rotating-placeholder { font-size: 0.28em; }
 
 /* AUTH PANEL */
 #auth-panel { position:fixed; top:10px; right:60px; z-index:10003; background:rgba(0,0,0,0.92); padding:14px 16px; border:1px solid gold; border-radius:0; display:flex; flex-direction:column; align-items:center; gap:6px; }
@@ -7965,6 +7986,58 @@ textarea.fate-field {
     color: #888;
     margin: 0;
     padding: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* SYNOPSIS PAGE — 5:7 book proportions, centered, Lora typography           */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.synopsis-page-active {
+    max-width: 500px;
+    margin: 0 auto;
+    aspect-ratio: 5 / 7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 30px;
+    box-sizing: border-box;
+}
+.synopsis-page-active .story-page-title {
+    font-family: 'Lora', serif;
+    letter-spacing: 0.12em;
+    text-align: center;
+    width: 100%;
+}
+.synopsis-page-active .story-page-scene {
+    font-family: 'Lora', serif;
+    letter-spacing: 0.22em;
+    color: #888;
+    font-variant: small-caps;
+    text-align: center;
+}
+.synopsis-page-active .scene-synopsis {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 1em;
+    line-height: 1.6;
+    color: rgba(245, 240, 230, 0.75);
+    text-align: center;
+    margin: 20px 0;
+    max-width: 90%;
+}
+.synopsis-setting-plate {
+    width: 100%;
+    max-width: 90%;
+    margin: 16px auto;
+    aspect-ratio: auto;
+}
+.synopsis-setting-plate .book-scene-image {
+    display: block !important;
+    width: 100%;
+    height: auto;
+    max-height: 40vh;
+    object-fit: cover;
+    border-radius: 6px;
 }
 
 /* Inside cover synopsis styling */

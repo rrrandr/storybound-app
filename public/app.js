@@ -1477,6 +1477,31 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
+  /**
+   * Sacrifice-aware omen: Uses LLM to generate an omen that reflects
+   * the sacrifice content symbolically. Falls back to generic generateOmen().
+   */
+  async function generateSacrificeAwareOmen(costHint, offeringText, category) {
+    try {
+      if (!window.StoryboundOrchestration) throw new Error('No orchestration');
+      const temperature = computeOmenTemperature();
+      const tempWord = temperature === 'warm' ? 'hopeful' : temperature === 'cold' ? 'ominous' : 'ambiguous';
+      const messages = [
+        { role: 'system', content: `You are Fate — ancient, cryptic. Generate a single atmospheric omen sentence (8-18 words). The omen must symbolically reflect the sacrifice demanded. Tone: ${tempWord}. No commands. No dialogue. No names. Just an environmental observation that echoes the sacrifice's meaning.` },
+        { role: 'user', content: `Sacrifice demanded: "${costHint}". Offering given: "${offeringText || 'nothing'}". Category: ${category}. Write one omen.` }
+      ];
+      const result = await window.StoryboundOrchestration.callChatGPT(
+        messages, 'PRIMARY_AUTHOR', { temperature: 0.85, max_tokens: 40 }
+      );
+      const omen = (result?.choices?.[0]?.message?.content || '').trim().replace(/^["']|["']$/g, '');
+      if (!omen || omen.length < 5 || omen.length > 150) throw new Error('bad omen');
+      return omen;
+    } catch (e) {
+      console.warn('[petition] LLM omen failed, using generic:', e.message);
+      return generateOmen();
+    }
+  }
+
   function routeToLegalAcceptance(isReaccept = false) {
     window.__legalReaccept = isReaccept;
 
@@ -2109,10 +2134,15 @@ Introduce the name naturally within the first few paragraphs — do not announce
               updateStoryHeaderDisplay();
               scrollToStoryTop();
               triggerPostRenderHooks();
-          }, 500);
+          }, 550);
       }
 
       function goToNextPage() {
+          // Synopsis page intercept: Next advances from synopsis to scene
+          if (typeof _readerPage !== 'undefined' && _readerPage === 1) {
+              showReaderPage(2);
+              return;
+          }
           // Page-curl intercept chain: Title → Frontispiece → Setting Plate → Scene text
           if (typeof window.dismissTitlePage === 'function' && window._titlePageActive) {
               window.dismissTitlePage();
@@ -8585,7 +8615,15 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   function resolvePassTier() {
     const st = state.storyturn || 'ST1';
     const complexity = getWorldComplexity();
-    const isEroticMicro = isMainCharacterIntimacySceneAllowed() && detectMainPairEroticContent();
+    // Inline intimacy gate check (functions are nested in continuation handler scope)
+    const sceneIndex = state.turnCount || 0;
+    const storyLength = state.storyLength || 'taste';
+    const baseGates = { taste: 4, fling: 6, affair: 10 };
+    let gateScene = baseGates[storyLength] || 4;
+    if (state.intimacyInterrupted?.first_kiss) gateScene = Math.min(gateScene, sceneIndex);
+    const intimacyAllowed = sceneIndex >= gateScene;
+    const eroticDetected = !!(state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_intimacy);
+    const isEroticMicro = intimacyAllowed && eroticDetected;
 
     // ST1 or ST6 → always Tier 3
     if (st === 'ST1' || st === 'ST6') {
@@ -13563,7 +13601,7 @@ Return ONLY valid JSON:
           continueBtn.onclick = function() {
               if (interstitial) interstitial.classList.add('hidden');
               window.showScreen('game');
-              showReaderPage(1);
+              showReaderPage(2);
               if (!state._titlePageShown) showTitlePage();
               if (window.dealFateCards) window.dealFateCards();
               if (window.initFateCards) window.initFateCards();
@@ -15687,19 +15725,18 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       // LINEAR READER NAVIGATION (book system disabled)
       if (_currentScreenId === 'game') {
           if (!USE_OPENING_BOOK) {
-              // Simplified linear navigation: SCENE → COVER GALLERY → stay in reader
-              if (_readerPage >= 1) {
-                  // From any Scene → open Cover Gallery Modal (NOT legacy cover view)
-                  // User stays in reader context with working cover gallery
-                  if (_gallerySelectedStage) {
-                      // Focus on current primary or latest generated
-                      _gallerySelectedStage = _primaryCoverStage || getCurrentCoverStage();
-                  }
-                  openCoverGalleryModal();
+              // Back in-story → step back through pages (preserve story state)
+              if (_readerPage >= 2) {
+                  // From scene → synopsis
+                  showReaderPage(1);
                   return;
               }
-              // At Cover (page 0) — open cover gallery modal instead of exiting
-              openCoverGalleryModal();
+              if (_readerPage === 1) {
+                  // From synopsis → cover
+                  showReaderPage(0);
+                  return;
+              }
+              // At Cover (page 0) — stay, no further back
               return;
           } else {
               // BOOK SYSTEM (disabled — this branch won't run when USE_OPENING_BOOK = false)
@@ -16296,7 +16333,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       fortune: 'a friendship weighed in gold',
       harm: 'your own reflection, cracked and watching',
       reversal: 'the moment you would have changed your mind',
-      general: 'something precious, unnamed and half-forgotten',
+      general: 'a certainty you will never recover',
   };
 
   async function generateFateCostHint(petitionText, category) {
@@ -16540,7 +16577,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       });
 
       // ── Offer It handler ──
-      document.getElementById('petitionZoomOfferBtn')?.addEventListener('click', () => {
+      document.getElementById('petitionZoomOfferBtn')?.addEventListener('click', async () => {
           const offeringInput = document.getElementById('petitionZoomOffering');
           const offeringText = offeringInput?.value?.trim() || '';
           const ritual = state._petitionRitual;
@@ -16554,8 +16591,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           const matched = offeringText && ritual.hint && computeOfferingMatch(ritual.hint, offeringText);
           const offerBoost = matched ? 0.05 : 0;
 
+          // Sacrifice-aware omen: reflects cost/offering symbolically
           const omenEl = document.getElementById('petitionZoomOmen');
-          const omen = generateOmen();
+          const omen = await generateSacrificeAwareOmen(ritual.hint, offeringText, ritual.classification);
           if (omenEl) {
               omenEl.textContent = omen;
               omenEl.classList.remove('hidden');
@@ -16565,6 +16603,14 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           // Stash rich data for pendingPetition
           ritual.offeringText = offeringText;
           ritual.omen = omen;
+
+          // Activate volatility window from petition
+          const severity = computeTemptFateSeverity();
+          state.volatility_window = {
+              active: true,
+              severity,
+              remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3
+          };
 
           setTimeout(() => {
               completePetitionRitual(
@@ -20359,10 +20405,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       loadVaultLibrary();
   });
 
-  // Forbidden Library — back button returns to mode select
-  $('forbiddenLibraryBackBtn')?.addEventListener('click', () => {
-      window.showScreen('modeSelect', true);
-  });
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // FORBIDDEN LIBRARY — Vertical book list, read-only mode, bookmarks
@@ -20388,7 +20430,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     try {
       const { data, error } = await sb
         .from('library_entries')
-        .select('story_id, title, author, scene_count, word_count, world')
+        .select('story_id, title, author, scene_count, word_count')
         .eq('eligible', true)
         .order('updated_at', { ascending: false })
         .limit(50);
@@ -20806,10 +20848,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   let _vaultLibraryLoaded = false;
   let _vaultLibraryLoading = false;
 
-  // — Back button —
-  $('vaultLibraryBackBtn')?.addEventListener('click', () => {
-    window.showScreen('modeSelect', true);
-  });
 
   // — Load user's own library entries from Supabase —
   async function loadVaultLibrary() {
@@ -20831,7 +20869,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Fetch entries + bookmarks + achievements in parallel — single render pass after all resolve
       const [entriesResult, bookmarksResult, achievementsResult] = await Promise.all([
         sb.from('library_entries')
-          .select('story_id, title, author, scene_count, word_count, world, updated_at')
+          .select('story_id, title, author, scene_count, word_count, updated_at')
           .eq('profile_id', _supabaseProfileId)
           .order('updated_at', { ascending: false })
           .limit(50),
@@ -22333,7 +22371,7 @@ Craft: Open with tension, not exposition. Center the archetype dynamic. Use spec
 Anti-cliché: No "unexpected love", "sparks fly", "will they risk it all", "forbidden passion", "fate brings them together", "their worlds collide", "a love like no other". No vague abstractions without concrete emotional context. No marketing-tagline language. No rhetorical questions. No interchangeable phrases.
 
 Return JSON only: { "title": "...", "synopsis": "..." }` },
-                      { role: 'user', content: `World: ${storyWorld}, Tone: ${_tone1}, Genre: ${storyPowerRole}, Archetype: ${state.archetype?.primary || 'BEAUTIFUL_RUIN'}, Protagonist: ${pKernel} (${pGen}), Love Interest: ${lKernel} (${lGen}), Length: ${state.storyLength || 'taste'}` }
+                      { role: 'user', content: `World: ${storyWorld}, Tone: ${_tone1}, Genre: ${storyPowerRole}, Archetype: ${ARCHETYPES[state.archetype?.primary]?.name || 'The Beautiful Ruin'}, Protagonist: ${pKernel} (${pGen}), Love Interest: ${lKernel} (${lGen}), Length: ${state.storyLength || 'taste'}` }
                   ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 400, jsonMode: true });
                   const parsed = JSON.parse(tsResult);
                   if (parsed.title && parsed.synopsis) {
@@ -31952,6 +31990,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Stop overlay sparkles
     stopOverlayLoadingSparkles();
+
+    // Re-enable Next button after scene generation completes
+    const _nextBtnRestore = document.getElementById('nextPageBtn');
+    if (_nextBtnRestore) _nextBtnRestore.disabled = false;
   }
 
   // ============================================================
@@ -33882,30 +33924,41 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     sparkle.className = 'authorship-sparkle';
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // AMBIENT FATE ENERGY: Spawn around card, drift naturally (NOT orbital)
+    // AMBIENT FATE ENERGY: Spawn along bounding box edges (shape-aware, NOT oval)
     // ═══════════════════════════════════════════════════════════════════════════
     const containerRect = container.getBoundingClientRect();
     const haloOffset = profile.haloOffset || 10;
 
-    // Pick a random angle around the perimeter
-    const angle = Math.random() * Math.PI * 2;
-
-    // Calculate spawn position — outsideRatio controls inside/outside split
     const outsideRatio = profile.outsideRatio ?? 1.0;
-    let radiusX, radiusY;
+    let x, y;
     if (outsideRatio < 1.0 && Math.random() > outsideRatio) {
-      // Spawn inside card boundary (radius < 50% = within card)
-      const innerScale = 0.2 + Math.random() * 0.7; // 20-90% from center
-      radiusX = 50 * innerScale;
-      radiusY = 50 * innerScale;
+      // Spawn inside container boundary
+      x = 10 + Math.random() * 80;
+      y = 10 + Math.random() * 80;
     } else {
-      // Spawn on perimeter halo (outside card)
-      radiusX = 50 + (haloOffset / containerRect.width * 100);
-      radiusY = 50 + (haloOffset / containerRect.height * 100);
+      // Spawn along perimeter edges (rectangular bounding box)
+      const haloPctX = (haloOffset / containerRect.width) * 100;
+      const haloPctY = (haloOffset / containerRect.height) * 100;
+      const perimeter = 2 * (containerRect.width + containerRect.height);
+      const p = Math.random() * perimeter;
+      if (p < containerRect.width) {
+        // Top edge
+        x = (p / containerRect.width) * 100;
+        y = -haloPctY + Math.random() * haloPctY;
+      } else if (p < containerRect.width + containerRect.height) {
+        // Right edge
+        x = 100 + Math.random() * haloPctX;
+        y = ((p - containerRect.width) / containerRect.height) * 100;
+      } else if (p < 2 * containerRect.width + containerRect.height) {
+        // Bottom edge
+        x = ((p - containerRect.width - containerRect.height) / containerRect.width) * 100;
+        y = 100 + Math.random() * haloPctY;
+      } else {
+        // Left edge
+        x = -haloPctX + Math.random() * haloPctX;
+        y = ((p - 2 * containerRect.width - containerRect.height) / containerRect.height) * 100;
+      }
     }
-
-    const x = 50 + radiusX * Math.cos(angle);
-    const y = 50 + radiusY * Math.sin(angle);
 
     sparkle.style.left = `${x}%`;
     sparkle.style.top = `${y}%`;
@@ -35194,8 +35247,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (canContinueExistingStory()) {
       console.log('[STORY:CONTINUE] Shape matches — navigating to existing story');
       window.showScreen('game');
-      // Show existing story content (sets _readerPage=1 so Back goes to Cover first)
-      showReaderPage(1);
+      // Show existing story content (skip synopsis, go directly to scene)
+      showReaderPage(2);
       // REBIND: Ensure FX handlers are attached after Continue Story navigation
       if (window.initFateCards) window.initFateCards();
       return;
@@ -36761,7 +36814,7 @@ ${text.slice(0, 800)}`}]);
             state._loggedStoryStart = true;
         }
 
-        // Go directly to Scene 1 (skip synopsis page)
+        // Show synopsis page (page 1), then Next advances to scene
         advanceReaderPage();
 
         // Pre-load visualization prompt in background while user reads
@@ -39939,10 +39992,16 @@ ${tone === 'Wry Confessional'
       }
   }
 
+  // IDs of elements hidden during synopsis page (no fate cards, no inputs)
+  const _SYNOPSIS_PAGE_HIDE_IDS = [
+      'fateCardHeader', 'cardMount', 'actionWrapper', 'dialogueWrapper',
+      'submitBtn', 'saveBtn', 'gameIntensity', 'edgeCovenantBtn',
+      'fortuneBalanceDisplay', 'vizSceneBtn', 'pageNavControls'
+  ];
+
   /**
    * SIMPLIFIED READER PAGE DISPLAY (when book disabled)
-   * Linear flow with no animations, no transforms, no book state.
-   * @param {number} page - 0=COVER, 1+=SCENE (NO separate SETTING page)
+   * Linear flow: 0=COVER, 1=SYNOPSIS, 2+=SCENE
    */
   function showReaderPage(page) {
       _readerPage = page;
@@ -39963,47 +40022,106 @@ ${tone === 'Wry Confessional'
           if (bookCoverPage) bookCoverPage.classList.remove('hidden');
           if (storyContent) storyContent.classList.add('hidden');
           console.log('[READER] Page 0: COVER (static full-screen)');
-      } else {
-          // SCENE 1+: Show story content with inline setting image
+
+      } else if (page === 1) {
+          // ═══════════════════════════════════════════════════════════════
+          // SYNOPSIS PAGE: 5x7 book page with title, synopsis, setting image
+          // No fate cards, no petition, no action inputs — only Next button
+          // ═══════════════════════════════════════════════════════════════
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
           if (storyContent) storyContent.classList.remove('hidden');
 
-          // ═══════════════════════════════════════════════════════════════
-          // STEP 1: Ensure story text opacity is set (was 0 during creation)
-          // If curl chain is active (title/map/setting pages), keep text hidden
-          // ═══════════════════════════════════════════════════════════════
+          const storyText = document.getElementById('storyText');
+          if (storyText) {
+              storyText.style.opacity = '1';
+              storyText.classList.remove('hidden');
+              storyText.classList.add('synopsis-page-active');
+          }
+
+          // Show synopsis
+          const sceneSynopsis = document.getElementById('sceneSynopsis');
+          if (sceneSynopsis) {
+              const synText = state._synopsisMetadata || state._synopsisBlurb || '';
+              if (synText) sceneSynopsis.textContent = synText;
+              sceneSynopsis.classList.remove('hidden');
+          }
+
+          // Update scene label to "Synopsis"
+          const sceneNum = document.getElementById('sceneNumber');
+          if (sceneNum) sceneNum.textContent = 'Synopsis';
+
+          // Show setting image if available
+          const sceneImg = document.getElementById('bookSceneImg');
+          if (settingPlate && sceneImg && sceneImg.src && sceneImg.src !== '' && sceneImg.src !== window.location.href) {
+              settingPlate.classList.remove('hidden');
+              settingPlate.classList.add('synopsis-setting-plate');
+          } else if (settingPlate) {
+              settingPlate.classList.add('hidden');
+          }
+
+          // Hide fate cards, inputs, buttons — only Next survives
+          _SYNOPSIS_PAGE_HIDE_IDS.forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.classList.add('hidden');
+          });
+
+          // Show page-level Next button
+          const nextBtn = document.getElementById('nextPageBtn');
+          if (nextBtn) { nextBtn.disabled = false; nextBtn.classList.remove('hidden'); }
+          const pageNav = document.getElementById('pageNavControls');
+          if (pageNav) pageNav.classList.remove('hidden');
+          const prevBtn = document.getElementById('prevPageBtn');
+          if (prevBtn) prevBtn.classList.add('hidden');
+          const indicator = document.getElementById('pageIndicator');
+          if (indicator) indicator.textContent = 'Synopsis';
+
+          // Hide story prose container
+          const pagesContainer = document.getElementById('storyPagesContainer');
+          if (pagesContainer) pagesContainer.classList.add('hidden');
+
+          console.log('[READER] Page 1: SYNOPSIS');
+
+      } else {
+          // SCENE 2+: Show story content with inline setting image
+          if (bookCoverPage) bookCoverPage.classList.add('hidden');
+          if (storyContent) storyContent.classList.remove('hidden');
+
           const storyText = document.getElementById('storyText');
           const curlChainActive = window._titlePageActive || window._frontispieceActive || window._settingPlateActive;
           if (storyText) {
               storyText.style.opacity = '1';
-              if (!curlChainActive) {
-                  storyText.classList.remove('hidden');
-              }
+              storyText.classList.remove('hidden', 'synopsis-page-active');
           }
 
-          // ═══════════════════════════════════════════════════════════════
-          // STEP 2: Synopsis HIDDEN — linear flow goes directly to prose
-          // Synopsis data remains in state for future reference if needed
-          // ═══════════════════════════════════════════════════════════════
+          // Restore scene number
+          const sceneNum = document.getElementById('sceneNumber');
+          if (sceneNum) sceneNum.textContent = `Scene ${state.turnCount || 1}`;
+
+          // Hide synopsis text, show prose
           const sceneSynopsis = document.getElementById('sceneSynopsis');
-          if (sceneSynopsis) {
-              sceneSynopsis.classList.add('hidden');
-          }
+          if (sceneSynopsis) sceneSynopsis.classList.add('hidden');
 
-          // ═══════════════════════════════════════════════════════════════
-          // SETTING PLATE: Hidden unless curl chain is managing it
-          // Setting images only appear on explicit user request
-          // ═══════════════════════════════════════════════════════════════
+          const pagesContainer = document.getElementById('storyPagesContainer');
+          if (pagesContainer) pagesContainer.classList.remove('hidden');
+
           if (settingPlate && !curlChainActive) {
               settingPlate.classList.add('hidden');
+              settingPlate.classList.remove('synopsis-setting-plate');
           }
 
-          // ═══════════════════════════════════════════════════════════════
-          // C. PRECOMPUTE VISUALIZE PROMPT — Non-blocking prefill on scene mount
-          // ═══════════════════════════════════════════════════════════════
+          // Restore fate cards, inputs, buttons
+          _SYNOPSIS_PAGE_HIDE_IDS.forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.classList.remove('hidden');
+          });
+
+          // Restore page navigation
+          const prevBtn = document.getElementById('prevPageBtn');
+          if (prevBtn) prevBtn.classList.remove('hidden');
+
           precomputeVizPrompt();
 
-          console.log('[READER] Page 1+: SCENE (Title → Prose, synopsis hidden)');
+          console.log('[READER] Page 2+: SCENE (Title + Prose)');
       }
   }
 
@@ -42748,7 +42866,7 @@ Condensed (under ${maxLength} chars):` }
       const protagonistGender = state.gender || 'Female';
       const liGender = state.loveInterest || 'Male';
       const world = state.picks?.world || 'Modern';
-      const archetype = state.archetype?.primary || 'BEAUTIFUL_RUIN';
+      const archetype = ARCHETYPES[state.archetype?.primary]?.name || 'The Beautiful Ruin';
 
       // Characters from visual bible (if available)
       const characters = state.visual?.bible?.characters || {};
@@ -43417,6 +43535,9 @@ Respond in this EXACT format (no labels, just two lines):
       if (submitBtn) {
           submitBtn.classList.add('submitting');
       }
+      // Disable Next while scene generation is pending
+      const _nextBtn = document.getElementById('nextPageBtn');
+      if (_nextBtn) _nextBtn.disabled = true;
 
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
       if (billingLock) {
@@ -44040,7 +44161,12 @@ FATE CARD ADAPTATION (CRITICAL):
       let strategyDirective = '';
       if (window.StoryboundOrchestration) {
         try {
-          const strategyResult = await runStrategyPass(_polarityBlock2);
+          // Compute polarity block in continuation scope
+          const _contTone = state.picks?.tone || 'Earnest';
+          const _contFracture = buildTonalFracture(_contTone);
+          const _contPull = buildStoryPullBlock(_contFracture);
+          const _contPolarity = buildPolarityBlock(_contFracture, _contPull);
+          const strategyResult = await runStrategyPass(_contPolarity);
           if (strategyResult) {
             state._strategyPass = strategyResult;
             state._strategyPassFailed = false;
@@ -45381,6 +45507,13 @@ FATE CARD ADAPTATION (CRITICAL):
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
           let safe = process(p);
+
+          // Sanitize leaked archetype keys from prose
+          for (const [key, arch] of Object.entries(ARCHETYPES)) {
+              if (safe.includes(key)) safe = safe.replaceAll(key, arch.name);
+              const pascal = key.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join('');
+              if (safe.includes(pascal)) safe = safe.replaceAll(pascal, arch.name);
+          }
 
           if (isCoupleMode) {
               // COUPLE MODE: Speaker-aware colorization ONLY

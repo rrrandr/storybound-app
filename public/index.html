@@ -1380,7 +1380,7 @@
         <div id="cardMount" class="fate-grid"></div>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; width:75%; margin-left:auto; margin-right:auto;">
       <div class="input-wrapper" id="actionWrapper">
           <label>What do you do?</label>
           <textarea id="actionInput" rows="3" placeholder="Action..."></textarea>
@@ -1559,25 +1559,12 @@
 
 <div id="forbiddenLibraryScreen" class="screen hidden">
   <div class="forbidden-library">
-    <!-- Crown ornament -->
-    <div class="forbidden-library-crown">
-      <svg viewBox="0 0 120 28" class="forbidden-library-crown-svg" aria-hidden="true">
-        <path d="M10,26 L20,6 L35,18 L50,2 L60,14 L70,2 L85,18 L100,6 L110,26 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>
-        <circle cx="50" cy="2" r="2" fill="currentColor" opacity="0.6"/>
-        <circle cx="70" cy="2" r="2" fill="currentColor" opacity="0.6"/>
-        <circle cx="60" cy="14" r="1.5" fill="currentColor" opacity="0.4"/>
-      </svg>
-    </div>
-    <div class="forbidden-library-header">
-      <button id="forbiddenLibraryBackBtn" class="forbidden-library-back">&larr; Back</button>
-      <h2 class="forbidden-library-title">The Forbidden Library</h2>
-    </div>
     <div id="forbiddenLibraryLoading" class="forbidden-library-loading">
       <p class="forbidden-library-empty">Opening the vault...</p>
     </div>
     <div class="library-book-list" id="forbiddenLibraryList" style="display:none;"></div>
     <div id="forbiddenLibraryEmpty" class="forbidden-library-empty-state" style="display:none;">
-      <p class="forbidden-library-empty">The shelves await their first volumes...</p>
+      <p class="forbidden-library-empty">No Stories Available Yet. Start one yourself.</p>
     </div>
   </div>
 </div>
@@ -1587,17 +1574,13 @@
      ═══════════════════════════════════════════════════════════════════════════════ -->
 <div id="vaultLibraryScreen" class="screen hidden">
   <div class="forbidden-library library-variant library-variant--vault">
-    <div class="forbidden-library-header">
-      <button id="vaultLibraryBackBtn" class="forbidden-library-back">&larr; Back</button>
-      <h2 class="forbidden-library-title">Personal Library</h2>
-    </div>
     <div id="vaultLibraryLoading" class="forbidden-library-loading">
       <p class="forbidden-library-empty">Gathering volumes...</p>
     </div>
     <div id="vaultTrophyShelf" class="vault-trophy-shelf" style="display:none;"></div>
     <div class="library-book-list vault-book-list" id="vaultLibraryList" style="display:none;"></div>
     <div id="vaultLibraryEmpty" class="forbidden-library-empty-state" style="display:none;">
-      <p class="forbidden-library-empty">No stories yet. Completed stories will appear here.</p>
+      <p class="forbidden-library-empty">No Stories Available Yet. Start one yourself.</p>
     </div>
   </div>
 </div>
