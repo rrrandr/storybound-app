@@ -7434,6 +7434,51 @@ textarea.fate-field {
     text-align: center;
     max-width: 380px;
     padding: 0 24px;
+    position: relative;
+}
+
+.ff-prelude-close {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 200ms ease;
+}
+.ff-prelude-close:hover {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.ff-prelude-proceed {
+    display: inline-block;
+    margin-top: 22px;
+    padding: 8px 32px;
+    background: transparent;
+    border: 1px solid rgba(218, 165, 32, 0.5);
+    color: #daa520;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 200ms ease, color 200ms ease, background 200ms ease;
+    opacity: 0;
+    transform: translateY(6px);
+}
+.ff-prelude-text-visible ~ .ff-prelude-proceed {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 400ms ease 200ms, transform 400ms ease 200ms, border-color 200ms ease, color 200ms ease, background 200ms ease;
+}
+.ff-prelude-proceed:hover {
+    border-color: #daa520;
+    background: rgba(218, 165, 32, 0.1);
+    color: #f0c040;
 }
 
 .ff-prelude-title {
@@ -10638,10 +10683,11 @@ textarea.fate-field {
     50% { transform: scale(1.02); opacity: 0.9; }
 }
 
-/* Dynamic sparkle emitter covering full face of zoomed card */
+/* Dynamic sparkle emitter covering full face of zoomed card.
+   Anchored to .sb-card (not .sb-card-front) so sparkles aren't clipped by overflow:hidden. */
 .zoom-card-sparkles {
     position: absolute;
-    inset: -40px;
+    inset: -8px;
     pointer-events: none;
     overflow: visible;
     z-index: 5;

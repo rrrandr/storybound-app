@@ -821,6 +821,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     overlay.className = 'ff-prelude-overlay';
     overlay.innerHTML = `
       <div class="ff-prelude-content">
+        <button class="ff-prelude-close" aria-label="Close">&times;</button>
         <div class="ff-prelude-title">FORTUNE'S FAVOR</div>
         <div class="ff-prelude-body">
           <p>Each month, Fate watches a few worlds more closely.</p>
@@ -829,6 +830,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
           <p class="ff-prelude-label">This month, Fortune lingers in:</p>
           <div class="ff-prelude-flavors">${flavorLabels}</div>
         </div>
+        <button class="ff-prelude-proceed">Proceed</button>
       </div>
     `;
 
@@ -843,7 +845,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       if (body) setTimeout(() => body.classList.add('ff-prelude-text-visible'), 600);
     });
 
-    // Auto fade-out after 3.5s
+    // Dismiss only via Proceed button or X close
     let dismissed = false;
     const dismiss = () => {
       if (dismissed) return;
@@ -854,17 +856,10 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
         if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
         markSpotlightCards();
       }, 350);
-      window.removeEventListener('scroll', scrollDismiss, true);
     };
 
-    const autoTimer = setTimeout(dismiss, 3500);
-
-    // Scroll dismiss
-    const scrollDismiss = () => {
-      clearTimeout(autoTimer);
-      dismiss();
-    };
-    window.addEventListener('scroll', scrollDismiss, true);
+    overlay.querySelector('.ff-prelude-close').addEventListener('click', dismiss);
+    overlay.querySelector('.ff-prelude-proceed').addEventListener('click', dismiss);
   }
 
   function resetFortuneFavorPrelude() {
@@ -20882,7 +20877,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Fetch entries + bookmarks + achievements in parallel — single render pass after all resolve
       const [entriesResult, bookmarksResult, achievementsResult] = await Promise.all([
         sb.from('library_entries')
-          .select('story_id, title, world, scene_count, updated_at')
+          .select('story_id, title, scene_count, updated_at')
           .eq('profile_id', _supabaseProfileId)
           .order('updated_at', { ascending: false })
           .limit(50),
@@ -22852,7 +22847,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
 
       // Trigger the actual Begin Story flow
-      const beginBtn = $('beginBtn');
+      // Use cached ref — beginBtn may be unmounted from DOM when corridor is on a different row
+      const beginBtn = window._cachedBeginBtn || $('beginBtn');
       if (beginBtn) {
           beginBtn.click();
       }
@@ -23699,6 +23695,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Flexbox handles centering, just update scale
       currentOpenCard.style.transform = `scale(${scale})`;
+      currentOpenCard.style.setProperty('--zoom-scale', scale);
     }
 
     // Add resize listener for zoomed card centering
@@ -23801,6 +23798,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       card.style.width = `${rect.width}px`;
       card.style.height = `${rect.height}px`;
       card.style.transform = `scale(${scale})`;
+      card.style.setProperty('--zoom-scale', scale);
       card.style.transformOrigin = 'center center';
       card.style.position = '';
       card.style.left = '';
@@ -23848,16 +23846,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         zoomPortal.appendChild(zoomContinueBtn);
       }
 
-      // Add sparkle emitter to world/pressure zoomed cards (single full-card container)
-      if (grp === 'world' || grp === 'pressure') {
-        const frontFace = card.querySelector('.sb-card-front');
-        if (frontFace) {
-          const sparkleContainer = document.createElement('div');
-          sparkleContainer.className = 'zoom-card-sparkles';
-          sparkleContainer.id = 'zoomCardSparkles';
-          frontFace.appendChild(sparkleContainer);
-          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
-        }
+      // Add sparkle emitter to all zoomed corridor cards (anchored to card, not front face)
+      {
+        const sparkleContainer = document.createElement('div');
+        sparkleContainer.className = 'zoom-card-sparkles';
+        sparkleContainer.id = 'zoomCardSparkles';
+        card.appendChild(sparkleContainer);
+        startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
       }
     }
 
@@ -23967,6 +23962,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       newCard.style.width = `${rect.width}px`;
       newCard.style.height = `${rect.height}px`;
       newCard.style.transform = `scale(${scale})`;
+      newCard.style.setProperty('--zoom-scale', scale);
       newCard.style.transformOrigin = 'center center';
       newCard.style.position = '';
       newCard.style.left = '';
@@ -23974,16 +23970,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       currentOpenCard = newCard;
 
-      // Add sparkle emitter to new world/pressure card
-      if (newGrp === 'world' || newGrp === 'pressure') {
-        const frontFace = newCard.querySelector('.sb-card-front');
-        if (frontFace) {
-          const sparkleContainer = document.createElement('div');
-          sparkleContainer.className = 'zoom-card-sparkles';
-          sparkleContainer.id = 'zoomCardSparkles';
-          frontFace.appendChild(sparkleContainer);
-          startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
-        }
+      // Add sparkle emitter to new card (anchored to card, not front face)
+      {
+        const sparkleContainer = document.createElement('div');
+        sparkleContainer.className = 'zoom-card-sparkles';
+        sparkleContainer.id = 'zoomCardSparkles';
+        newCard.appendChild(sparkleContainer);
+        startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
       }
     }
 
@@ -25219,6 +25212,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     initBreadcrumbFlow();
     // Initialize Archetype System BEFORE corridor (corridor unmounts the grid from DOM)
     initArchetypeUI();
+    // Cache beginBtn BEFORE corridor init unmounts it from DOM
+    // (getElementById returns null for unmounted elements — handler at line ~35305 needs this)
+    window._cachedBeginBtn = document.getElementById('beginBtn');
     // Initialize Corridor State Machine (9-row single-screen selection)
     if (typeof initCorridor === 'function') {
       initCorridor();
@@ -25654,7 +25650,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         title: val,
         subtitle: state.picks?.worldSubtype ? getWorldLabel(state.picks.worldSubtype) : (state.worldCustomTexts?.[val] || null)
       },
-      tone: { title: val === 'WryConfession' ? 'Wry<br>Confession' : val, subtitle: 'Story Tone' },
+      tone: { title: val === 'WryConfession' ? 'Wry' : val, subtitle: 'Story Tone' },
       pressure: {
         title: PRESSURE_DISPLAY[val] || val,
         subtitle: 'Story Pull'
@@ -27100,7 +27096,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         modal.classList.remove('visible');
         setTimeout(() => {
           modal.remove();
-          $('beginBtn').click();
+          (window._cachedBeginBtn || $('beginBtn')).click();
         }, 300);
       });
       grid.appendChild(btn);
@@ -27196,7 +27192,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     console.log('[Fate Fill] Auto-filled missing selections:', unresolvedRows.map(r => r.stage).join(', '));
 
     // Trigger Begin Story again now that selections are complete
-    const beginBtn = $('beginBtn');
+    const beginBtn = window._cachedBeginBtn || $('beginBtn');
     if (beginBtn) beginBtn.click();
   }
 
@@ -28037,7 +28033,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Special case: Begin Story — terminal row, dispatch to beginBtn handler
     if (stage === 'beginstory') {
       console.log(`[Corridor] Begin Story row — dispatching to beginBtn`);
-      const beginBtn = document.getElementById('beginBtn');
+      const beginBtn = window._cachedBeginBtn || document.getElementById('beginBtn');
       if (beginBtn) beginBtn.click();
       return;
     }
@@ -31475,6 +31471,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       card.style.width = `${rect.width}px`;
       card.style.height = `${rect.height}px`;
       card.style.transform = `scale(${scale})`;
+      card.style.setProperty('--zoom-scale', scale);
       card.style.transformOrigin = 'center center';
       card.style.position = '';
       card.style.left = '';
@@ -31485,13 +31482,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           zoomBackdrop.classList.add('active');
       }
 
-      // Add sparkle emitter to zoomed card
-      const frontFace = card.querySelector('.sb-card-front');
-      if (frontFace) {
+      // Add sparkle emitter to zoomed card (anchored to card, not front face)
+      {
           const sparkleContainer = document.createElement('div');
           sparkleContainer.className = 'zoom-card-sparkles';
           sparkleContainer.id = 'zoomCardSparkles';
-          frontFace.appendChild(sparkleContainer);
+          card.appendChild(sparkleContainer);
           startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
       }
 
@@ -31618,6 +31614,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       newCard.style.width = `${rect.width}px`;
       newCard.style.height = `${rect.height}px`;
       newCard.style.transform = `scale(${scale})`;
+      newCard.style.setProperty('--zoom-scale', scale);
       newCard.style.transformOrigin = 'center center';
 
       currentOpenCard = newCard;
@@ -31625,13 +31622,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Track as last-zoomed
       setLastZoomedArchetype(newArchetypeId);
 
-      // Add sparkle emitter to new card
-      const frontFace = newCard.querySelector('.sb-card-front');
-      if (frontFace) {
+      // Add sparkle emitter to new card (anchored to card, not front face)
+      {
           const sparkleContainer = document.createElement('div');
           sparkleContainer.className = 'zoom-card-sparkles';
           sparkleContainer.id = 'zoomCardSparkles';
-          frontFace.appendChild(sparkleContainer);
+          newCard.appendChild(sparkleContainer);
           startSparkleEmitter('zoomCardSparkles', 'zoomCard', 8);
       }
   }
@@ -33928,18 +33924,20 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       flickerChance: 0.15
     },
     // Zoomed card: sparkles hovering around zoomed card edges
+    // Size/drift are counter-scaled by zoomScale in spawnSparkle, so use
+    // values matching the unzoomed guidedFate/chooseHand feel.
     zoomCard: {
       durationMin: 4.0,
       durationMax: 6.5,
-      sizeMin: 1,
-      sizeMax: 2,
-      opacityMin: 0.2,
-      opacityRange: 0.35,
+      sizeMin: 3,
+      sizeMax: 7,
+      opacityMin: 0.4,
+      opacityRange: 0.5,
       haloOffset: 8,
       driftType: 'hover',
-      driftDistance: 8,
-      curveAmp: 2,
-      flickerChance: 0.15,
+      driftDistance: 12,
+      curveAmp: 3,
+      flickerChance: 0.3,
       outsideRatio: 1.0
     },
     // Fate card firefly: gold glow sparkles hovering around fate cards
@@ -33991,6 +33989,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     const profile = SPARKLE_PROFILES[profileName] || SPARKLE_PROFILES.chooseHand;
 
+    // Counter-scale for zoomed cards: card uses transform:scale(S), so px values
+    // in pre-transform space appear S× larger visually. Divide by S to compensate.
+    const zoomCard = container.closest('.sb-card.zoomed');
+    const zoomScale = zoomCard ? parseFloat(zoomCard.style.getPropertyValue('--zoom-scale')) || 1 : 1;
+
     const sparkle = document.createElement('div');
     sparkle.className = 'authorship-sparkle';
 
@@ -34041,9 +34044,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Duration with variance
     const duration = profile.durationMin + Math.random() * (profile.durationMax - profile.durationMin);
 
-    // Size variance (NOT constant)
-    const sizeMin = profile.sizeMin || 3;
-    const sizeMax = profile.sizeMax || 6;
+    // Size variance (NOT constant), counter-scaled for zoom
+    const sizeMin = (profile.sizeMin || 3) / zoomScale;
+    const sizeMax = (profile.sizeMax || 6) / zoomScale;
     const size = sizeMin + Math.random() * (sizeMax - sizeMin);
 
     // Opacity variance
@@ -34082,6 +34085,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         break;
     }
 
+    // Counter-scale drift for zoom
+    driftX /= zoomScale;
+    driftY /= zoomScale;
+
     // Flicker animation class
     const shouldFlicker = Math.random() < (profile.flickerChance || 0);
     if (shouldFlicker) {
@@ -34090,7 +34097,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     // Perpendicular curve amplitude for firefly wiggle
     const perpAngle = Math.atan2(driftY, driftX) + Math.PI / 2;
-    const maxCurve = profile.curveAmp ?? (4 + Math.random() * 10);
+    const maxCurve = (profile.curveAmp ?? (4 + Math.random() * 10)) / zoomScale;
     const curveAmp = typeof profile.curveAmp === 'number'
       ? Math.random() * maxCurve  // profile-controlled: 0 to max
       : maxCurve;                 // default: 4-14px firefly wiggle
@@ -35299,7 +35306,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   };
 
   // --- BEGIN STORY (RESTORED) ---
-  $('beginBtn')?.addEventListener('click', async () => {
+  // Use cached reference: corridor init unmounts beginStoryRow from DOM before this runs,
+  // so $('beginBtn') would return null. window._cachedBeginBtn was captured pre-unmount.
+  (window._cachedBeginBtn || $('beginBtn'))?.addEventListener('click', async () => {
     // Reveal all remaining DSP segments on Begin Story (veto phase)
     if (typeof revealAllDSPSegments === 'function') revealAllDSPSegments();
 
