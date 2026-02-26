@@ -20870,7 +20870,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const [entriesResult, bookmarksResult, achievementsResult] = await Promise.all([
         sb.from('library_entries')
           .select('story_id, title, author, scene_count, word_count, updated_at')
-          .eq('profile_id', _supabaseProfileId)
+          .eq('user_id', _supabaseProfileId)
           .order('updated_at', { ascending: false })
           .limit(50),
         sb.from('library_bookmarks')
@@ -20878,9 +20878,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           .eq('user_id', _supabaseProfileId),
         sb.from('profile_achievements')
           .select('achievement_type, label, awarded_at')
-          .eq('profile_id', _supabaseProfileId)
+          .eq('user_id', _supabaseProfileId)
           .order('awarded_at', { ascending: false })
           .limit(10)
+          .then(r => r.error ? { data: [], error: null } : r)
       ]);
 
       if (entriesResult.error) {
