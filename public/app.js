@@ -21096,6 +21096,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     _preVaultScreenId = null;
   });
 
+  // Exit Forbidden Library button — return to setup screen
+  $('exitForbiddenLibraryBtn')?.addEventListener('click', () => {
+    window.showScreen('setup');
+  });
+
   // Exit Library button — return to pre-vault screen
   $('exitLibraryBtn')?.addEventListener('click', () => {
     if (_preVaultScreenId && _preVaultScreenId !== 'vaultLibraryScreen') {
@@ -21264,8 +21269,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       state.tier = 'free';
       state.access = 'free';
       applyAccessLocks();
-      window.showScreen('modeSelect');
-      if(window.initCards) window.initCards();
+
+      // Dissipate the unselected tier card before navigating
+      const unselected = [premiumCard].filter(c => c && c !== tasteCard);
+      if (unselected.length && typeof dissipateCards === 'function') {
+        dissipateCards(unselected, () => {
+          window.showScreen('modeSelect');
+          if(window.initCards) window.initCards();
+        });
+      } else {
+        window.showScreen('modeSelect');
+        if(window.initCards) window.initCards();
+      }
     });
 
     premiumCard?.addEventListener('click', () => {
@@ -21273,7 +21288,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         premiumCard.classList.add('flipped');
         return;
       }
-      window.showPaywall('sub_only');
+
+      // Dissipate the unselected tier card before showing paywall
+      const unselected = [tasteCard].filter(c => c && c !== premiumCard);
+      if (unselected.length && typeof dissipateCards === 'function') {
+        dissipateCards(unselected, () => {
+          window.showPaywall('sub_only');
+        });
+      } else {
+        window.showPaywall('sub_only');
+      }
     });
   }
   initTierCards();
@@ -24059,7 +24083,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const stage = stageMap[grp] || grp;
       hideCorridorContinueButton(stage);
 
-      setTimeout(() => advanceCorridorRow(), 600);
+      setTimeout(() => advanceCorridorRow(), 1300);
     }
 
     // Populate World card zoom view with flavor buttons and optional custom field
@@ -25958,9 +25982,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * Mirrors the fate card triggerGoldenFlow approach for reliable travel animation.
    */
   function fireSparkleTrail(fromX, fromY, fromW, fromH, toX, toY) {
-    const particleCount = 10;
-    const streamDuration = 500;
-    const particleDuration = 550;
+    const particleCount = 14;
+    const streamDuration = 900;
+    const particleDuration = 1000;
 
     for (let i = 0; i < particleCount; i++) {
       const delay = (i / particleCount) * streamDuration;
@@ -26196,7 +26220,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       console.log(`[Breadcrumb] Created via sparkle-teleport: ${grp}=${val}${label.subtitle ? ` (${label.subtitle})` : ''}`);
       onComplete?.();
-    }, 700); // Total time for dissolution + travel
+    }, 1300); // Total time for dissolution + travel (synced with fireSparkleTrail)
   }
 
   /**
@@ -31704,7 +31728,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           // Phase 2: Sparkle travel to breadcrumb (JS-driven)
           setTimeout(() => {
               fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
-          }, 200);
+          }, 250);
 
           // Phase 3: Convergence sparkles + breadcrumb + advance
           setTimeout(() => {
@@ -31724,7 +31748,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               selectedCard.style.opacity = '';
               createArchetypeBreadcrumbWithMask(archetypeId, false);
               setTimeout(() => advanceCorridorRow(), 600);
-          }, 600);
+          }, 1300);
       } else {
           // Fallback: no animation
           createArchetypeBreadcrumbWithMask(archetypeId, false);
@@ -34636,9 +34660,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const selectedCard = state.authorship === 'manual' ? chooseCard : fateCard;
     const unselectedCard = state.authorship === 'manual' ? fateCard : chooseCard;
 
-    // Dissipate unselected card
-    unselectedCard?.classList.add('dissipating');
-    setTimeout(() => unselectedCard?.classList.add('hidden'), 400);
+    // Dissipate unselected card with sparkle particles
+    if (unselectedCard && typeof dissipateCards === 'function') {
+      dissipateCards([unselectedCard]);
+    } else if (unselectedCard) {
+      unselectedCard.classList.add('dissipating');
+      setTimeout(() => unselectedCard.classList.add('hidden'), 400);
+    }
 
     // Animate selected card to breadcrumb (600ms, above Continue button)
     // Advance AFTER breadcrumb materializes so user sees it land in position I
@@ -45822,8 +45850,16 @@ FATE CARD ADAPTATION (CRITICAL):
       modeCardSparkleInterval = null;
     }
 
-    // Call the actual setMode function
-    actualSetMode(mode);
+    // Dissipate unselected mode cards before navigating
+    const allModeCards = Array.from(document.querySelectorAll('.mode-card'));
+    const unselected = allModeCards.filter(c => c.dataset.mode !== mode);
+    if (unselected.length && typeof dissipateCards === 'function') {
+      dissipateCards(unselected, () => {
+        actualSetMode(mode);
+      });
+    } else {
+      actualSetMode(mode);
+    }
   }
 
   function resetModeCards() {

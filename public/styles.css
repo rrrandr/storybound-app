@@ -10005,7 +10005,10 @@ textarea.fate-field {
 #worldGrid .sb-card .sb-card-back .sb-card-title,
 #toneGrid .sb-card .sb-card-back .sb-card-title,
 #intensityGrid .sb-card .sb-card-back .sb-card-title,
-#lengthGrid .sb-card .sb-card-back .sb-card-title {
+#lengthGrid .sb-card .sb-card-back .sb-card-title,
+#pressureGrid .sb-card .sb-card-back .sb-card-title,
+#povGrid .sb-card .sb-card-back .sb-card-title,
+#dynamicGrid .sb-card .sb-card-back .sb-card-title {
     position: absolute;
     top: calc(24% - 5px);
     left: 12%;
@@ -10062,6 +10065,19 @@ textarea.fate-field {
 }
 #dynamicGrid .sb-card .sb-card-back .sb-card-desc {
     top: calc(28% + 15px);
+}
+
+/* Narrow screens: scale down back titles to fit smaller cards */
+@media (max-width: 500px) {
+    #worldGrid .sb-card .sb-card-back .sb-card-title,
+    #toneGrid .sb-card .sb-card-back .sb-card-title,
+    #intensityGrid .sb-card .sb-card-back .sb-card-title,
+    #lengthGrid .sb-card .sb-card-back .sb-card-title,
+    #pressureGrid .sb-card .sb-card-back .sb-card-title,
+    #povGrid .sb-card .sb-card-back .sb-card-title,
+    #dynamicGrid .sb-card .sb-card-back .sb-card-title {
+        font-size: 11px;
+    }
 }
 
 /* White title in bottom text field on black front cards */
@@ -12502,7 +12518,10 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 /* Card Dissipation Animation */
-.sb-card.dissipating {
+.sb-card.dissipating,
+.tier-card.dissipating,
+.mode-card.dissipating,
+.authorship-card.dissipating {
     animation: cardDissipate 1.2s ease-out forwards;
     pointer-events: none;
 }
@@ -12815,11 +12834,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     z-index: 10; /* Above dimmed cards */
 }
 
-.authorship-card.dissipating {
-    opacity: 0;
-    transform: scale(0.9);
-    pointer-events: none;
-}
+/* authorship-card.dissipating now handled by combined .dissipating rule above */
 
 .authorship-card-inner {
     width: 100%;
