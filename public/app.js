@@ -5443,10 +5443,12 @@ ALLOWED:
 - Remember patterns — the room has held this silence before
 - Infer emotional state ONLY through physical evidence (clenched fists on a table, warmth radiating from skin, the speed of breath against glass)
 
-PROHIBITED:
+PROHIBITED (HARD — validation will reject output containing these):
 - Destiny, inevitability, or fate language ("destined," "meant to be," "inevitable")
 - Architecting outcomes or shaping events (the environment does not steer plot)
 - Abstract interior monologue ("she thought," "he realized," "she knew that...")
+- ALL interior thought verbs with character subjects: "she felt," "he thought," "she knew," "he realized," "she wondered," "he believed," "she sensed," "he recognized," "she suspected," "he feared," "she hoped," "he decided," "she considered," "he imagined"
+- Emotional metaphors framed as cognition: "she could see," "he could tell," "she could feel," "he could sense"
 - Unmanifested thoughts stated as fact
 - ANY reference to Fate as entity or narrator
 - Narrative structure awareness ("this was the moment," "the story," "the arc")
@@ -5499,19 +5501,27 @@ C. Political tension: The conference table bore the weight of six pairs of hands
           violations.push('META_NARRATIVE: Narrative structure reference detected (environment has no meta-awareness)');
       }
 
-      // 4. Direct abstract cognition without physical mediation
-      //    Match "[Name] knew/realized/thought that..." patterns
-      //    Only flag when no sensory word appears within 80 chars
-      const cognitionPattern = /\b[A-Z][a-z]+\s+(knew that|realized that|thought about|thought that|understood that)\b/g;
+      // 4. Direct abstract cognition — "[Name] knew/realized/thought that..."
+      //    Hard violation: no sensory-proximity exemption
+      const cognitionPattern = /\b[A-Z][a-z]+\s+(knew that|realized that|thought about|thought that|understood that|knew she|knew he|knew it|realized she|realized he)\b/g;
       let match;
       while ((match = cognitionPattern.exec(sceneText)) !== null) {
-          const surroundStart = Math.max(0, match.index - 40);
-          const surroundEnd = Math.min(sceneText.length, match.index + match[0].length + 40);
-          const surrounding = sceneText.slice(surroundStart, surroundEnd).toLowerCase();
-          const hasSensory = /\b(felt|touched|heard|saw|tasted|smelled|pressed|cold|warm|heat|light|shadow|sound|weight|vibrat|trembl|floor|wall|glass|door|air|wind|breath)\b/.test(surrounding);
-          if (!hasSensory) {
-              violations.push('ABSTRACT_COGNITION: Direct mind-reading without physical mediation ("' + match[0].trim() + '")');
-          }
+          violations.push('ABSTRACT_COGNITION: Direct mind-reading ("' + match[0].trim() + '")');
+      }
+
+      // 5. Interior thought verbs — "she felt", "he thought", "she knew", "he realized"
+      //    These MUST be mediated through environment, never stated as narrator knowledge
+      const interiorPattern = /\b(she|he|they)\s+(felt|thought|knew|realized|wondered|believed|sensed|recognized|understood|decided|considered|imagined|suspected|feared|hoped)\b/gi;
+      while ((match = interiorPattern.exec(sceneText)) !== null) {
+          violations.push('INTERIOR_THOUGHT: Unmediated cognition verb ("' + match[0].trim() + '")');
+      }
+
+      // 6. Emotional metaphors framed as cognition — "she could see/tell/feel"
+      const cognitionMetaphor = /\b(she|he|they)\s+could\s+(see|tell|feel|sense|taste|hear)\b/gi;
+      while ((match = cognitionMetaphor.exec(sceneText)) !== null) {
+          // Allow literal sensory use if environment is the subject context
+          // But flag as violation — the environment should be the perceiver, not a character
+          violations.push('COGNITION_METAPHOR: Character as perceiver ("' + match[0].trim() + '")');
       }
 
       return { valid: violations.length === 0, violations };
@@ -22482,10 +22492,9 @@ Include at the start of your response:
 [TITLE: "Your chosen title"]
 [SYNOPSIS: "A one-sentence hook for this story"]
 [BLURB]
-Write a book-jacket back-cover blurb (2-4 short paragraphs).
-Hook the reader with mood and tension. No exposition, no lore dumps, no world-building explanations.
-Keep names/places minimal. Tone must match the story's selected tone/world.
-End with a promise or question that makes the reader desperate to turn the page.
+Write a title-page synopsis (40-60 words, 2-3 sentences MAX).
+Short, moody, enticing. Establish atmosphere, name the tension, end on a charged note.
+No exposition, no lore, no plot summary, no rhetorical questions, no clichés.
 [/BLURB]
 
 Then write the scene prose (800-1200 words).
@@ -25615,17 +25624,17 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         subtitle: 'Character'
       },
       archetype: { title: val, subtitle: 'Storybeau' },
-      length: { title: val, subtitle: 'Length' },
+      length: { title: val, subtitle: 'Story Length' },
       world: {
         title: val,
         subtitle: state.picks?.worldSubtype ? getWorldLabel(state.picks.worldSubtype) : (state.worldCustomTexts?.[val] || null)
       },
-      tone: { title: val === 'WryConfession' ? 'Wry<br>Confession' : val, subtitle: null },
+      tone: { title: val === 'WryConfession' ? 'Wry<br>Confession' : val, subtitle: 'Story Tone' },
       pressure: {
         title: PRESSURE_DISPLAY[val] || val,
         subtitle: 'Story Pull'
       },
-      pov: { title: val, subtitle: 'POV' },
+      pov: { title: val, subtitle: 'Story POV' },
       dynamic: { title: DYNAMIC_DISPLAY[val] || val, subtitle: 'Story Polarity' },
       intensity: { title: val, subtitle: 'Intensity' },
       safety: { title: 'Safety', subtitle: null },
@@ -26684,8 +26693,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    */
   function ensureValidRowRendered() {
     const mountedRows = document.querySelectorAll('.corridor-section.corridor-active');
-    if (mountedRows.length !== 1) {
-      console.error(`[Corridor INVARIANT] Expected 1 mounted row, found ${mountedRows.length}`);
+    const uniqueStages = new Set();
+    mountedRows.forEach(el => uniqueStages.add(el.dataset.corridorStage));
+    if (uniqueStages.size !== 1) {
+      console.error(`[Corridor INVARIANT] Expected 1 mounted stage, found ${uniqueStages.size}`);
       // Force remount of current row
       updateCorridorVisibility();
     }
@@ -27446,6 +27457,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               card.style.animation = '';
               card.style.animationFillMode = '';
             });
+            // Reset all card selections for fresh re-selection on back-navigation
+            el.querySelectorAll('.sb-card.selected, .sb-card.flipped').forEach(card => {
+              card.classList.remove('selected', 'flipped');
+            });
           }
         });
         mountedCount++;
@@ -27502,8 +27517,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           console.log('[Corridor] Identity mount: Restored mini-deck');
         }
 
-        // WORLD MOUNT: Fortune's Favor prelude overlay
-        if (stage === 'world') {
+        // WORLD MOUNT: Fortune's Favor prelude overlay (suppress during Guided Fate autoplay)
+        if (stage === 'world' && !_fateRunning) {
           showFortuneFavorPrelude();
         }
 
@@ -28477,13 +28492,19 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         // Get parent row for card dissipation
         const parentRow = selectedCard.closest('.card-flow-row, .corridor-row, .sb-grid');
 
-        // Animate selected card to breadcrumb
-        await new Promise(resolve => {
-          animateCardToBreadcrumb(selectedCard, grp, selectedVal, selectedTitle, resolve);
-        });
+        // Archetype stage: use Destiny's Choice mask breadcrumb (don't reveal LI archetype)
+        if (stage === 'storybeau') {
+          createArchetypeBreadcrumbWithMask(selectedVal, true);
+          await new Promise(r => setTimeout(r, BREADCRUMB_DELAY));
+        } else {
+          // Animate selected card to breadcrumb
+          await new Promise(resolve => {
+            animateCardToBreadcrumb(selectedCard, grp, selectedVal, selectedTitle, resolve);
+          });
 
-        // Wait for breadcrumb animation
-        await new Promise(r => setTimeout(r, BREADCRUMB_DELAY));
+          // Wait for breadcrumb animation
+          await new Promise(r => setTimeout(r, BREADCRUMB_DELAY));
+        }
 
         // Dissipate other cards
         if (parentRow) {
@@ -32014,30 +32035,29 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Random X position along the bar
       const spawnX = Math.random() * containerWidth;
-      // Slight vertical variance above/below centerline
-      const spawnY = (Math.random() - 0.5) * 20 - 8;
+      // Close to bar centerline
+      const spawnY = (Math.random() - 0.5) * 14 - 4;
 
-      // Curved arc motion — upward drift with lateral sway
-      const baseAngle = -60 - Math.random() * 60; // -60° to -120° (upward arc)
-      const angleRad = baseAngle * (Math.PI / 180);
-      const distance = 25 + Math.random() * 45;
-      const dx = Math.cos(angleRad) * distance * (Math.random() > 0.5 ? 1 : -1);
-      const dy = Math.sin(angleRad) * distance - 15 - Math.random() * 20; // Strong upward bias
+      // Gentle wandering — mostly lateral with mild upward drift
+      const angle = Math.random() * 360 * (Math.PI / 180); // Any direction
+      const distance = 8 + Math.random() * 16; // Short, gentle drift
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance * 0.5 - 5 - Math.random() * 8; // Mild upward bias
 
       // Lateral sway for organic feel
-      const sway = (Math.random() - 0.5) * 18;
+      const sway = (Math.random() - 0.5) * 12;
 
       // Rotation for visual interest
-      const rotation = (Math.random() - 0.5) * 40;
+      const rotation = (Math.random() - 0.5) * 25;
 
       // Variable size (2-5px)
       const size = 2 + Math.random() * 3;
 
-      // Randomized lifetime (1.2s - 3.5s)
-      const duration = 1200 + Math.random() * 2300;
+      // Randomized lifetime — slow, leisurely (3.5s - 6.5s)
+      const duration = 3500 + Math.random() * 3000;
 
-      // Variable opacity (0.6 - 0.95)
-      const opacity = 0.6 + Math.random() * 0.35;
+      // Variable opacity (0.5 - 0.85)
+      const opacity = 0.5 + Math.random() * 0.35;
 
       // Randomized easing
       const easings = ['ease-in-out', 'ease-out', 'cubic-bezier(0.4, 0, 0.2, 1)', 'cubic-bezier(0.25, 0.1, 0.25, 1)'];
@@ -32075,14 +32095,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       loadingBar.style.overflow = 'visible';
       loadingBar.classList.add('sparkle-active');
 
-      // Higher density: spawn at staggered intervals (8-16 concurrent)
+      // Relaxed spawn rate for gentle density
       _overlaySparkleInterval = setInterval(() => {
           spawnOverlayLoadingSparkle(loadingBar);
-      }, 140); // ~7 sparkles per second
+      }, 350); // ~3 sparkles per second
 
-      // Initial burst — staggered for natural appearance
-      for (let i = 0; i < 8; i++) {
-          setTimeout(() => spawnOverlayLoadingSparkle(loadingBar), i * 60);
+      // Initial seeds — staggered for natural appearance
+      for (let i = 0; i < 4; i++) {
+          setTimeout(() => spawnOverlayLoadingSparkle(loadingBar), i * 180);
       }
   }
 
@@ -35853,6 +35873,18 @@ The following concepts DO NOT EXIST in this world. Never reference them:
 - Feudal / medieval hierarchy (lords, knights, castles)
 Use instead: tribal structures, clan hierarchy, natural landmarks, oral tradition, primal authority, territory, hunting grounds.` : '';
 
+    // Modern world hard forbid — prevent fantasy/dystopia vocabulary bleed
+    const modernForbid = storyWorld === 'Modern' ? `
+MODERN WORLD — VOCABULARY HARD FORBIDS:
+The following terms belong to OTHER worlds and MUST NEVER appear in a Modern story:
+- "Warden," "Warden-cadre," "Thread-warden," or any compound-warden term
+- "Tribunal," "Sovereign" (as institutional title), "Glass House" (as institution)
+- "the Silence," "the Collective," "the Chorus" (as institutional names)
+- "Ash Quarter," "Lower Tithe," or any invented fantasy/dystopian place names
+- "bone-chips," "veinglass," "spark-moth," "emberfruit," or any invented materials
+- Invented currencies, fabricated authority structures, or fantasy governance terms
+Use ONLY real-world vocabulary appropriate to a contemporary Earth setting.` : '';
+
     // DEV LOGGING: story generation + world resolve snapshot
     console.log('[DEV:StoryGen] world:', storyWorld, '| tone:', state.picks.tone, '| genre:', storyGenre, '→ powerRole:', storyPowerRole, '| powerFrame:', storyPowerFrame, '| intensity:', state.intensity);
     console.log('[DEV:WorldResolve] world:', storyWorld, '| genre:', storyGenre, '→ powerFrame:', storyPowerFrame, '| prehistoricForbid:', storyWorld === 'Prehistoric');
@@ -35929,7 +35961,7 @@ You are writing a story with the following 4-axis configuration:
 ${_polarityBlock2}
 - POV: ${state.picks.pov || 'First'}
 ${worldFlavorDirectives2}
-${prehistoricForbid}
+${prehistoricForbid}${modernForbid}
 
     Protagonist: ${playerNameBlank2 ? '[TO BE INVENTED — see NAME INVENTION rules]' : pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
     Love Interest: ${partnerNameBlank2 ? '[TO BE INVENTED — see NAME INVENTION rules]' : lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
@@ -36060,10 +36092,9 @@ OPENING MODE: ${selectedOpening.mode}
 ${selectedOpening.directive}
 
 ═══════════════════════════════════════════════════════
-UNIVERSAL WORLD-SEEDING (MANDATORY — ALL STORIES)
+WORLD-SEEDING (MANDATORY)
 ═══════════════════════════════════════════════════════
-The opening scene must feel IMPOSSIBLE to relocate to another world without breaking immersion.
-This applies to ALL genres, ALL tones, ALL settings.
+The opening scene must feel rooted in its specific world. Every detail should reinforce the setting.
 
 CORE REQUIREMENT:
 Include AT LEAST 6 world-specific elements, drawn from AT LEAST 3 different categories below.
@@ -36071,27 +36102,13 @@ Introduce them CASUALLY, WITHOUT explanation — they are ordinary facts of life
 
 CATEGORIES (choose 3+ per opening):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-A. SLANG, IDIOMS, OR SHORTHAND unique to this world
-   Example: "She'd been marked riven since the Quiet Year" — never define "riven" or "Quiet Year."
-
-B. INSTITUTIONS, AUTHORITIES, FACTIONS, OR POWER STRUCTURES
-   A tax collector, a curfew, a forbidden district, a title that carries weight, a uniform that means something.
-   Show through behavior, not explanation.
-
+A. SLANG, IDIOMS, OR SHORTHAND characteristic of this world and setting
+B. INSTITUTIONS, AUTHORITIES, FACTIONS, OR POWER STRUCTURES — show through behavior, not explanation
 C. OBJECTS, TOOLS, MATERIALS, OR RESOURCES characteristic of the setting
-   Not "a knife" but "a veinglass blade." Not "lantern" but "a caged spark-moth."
-
 D. LOCATIONS OR PLACE-NAMES implying a larger system
-   Not "the city" but "the Lower Tithe." Not "downtown" but "the Ash Quarter."
-
 E. PROFESSIONS, ROLES, OR SOCIAL FUNCTIONS specific to this society
-   Not "guard" but "a Thread-warden." Not "doctor" but "a marrow-knitter."
-
-F. CUSTOMS, RITUALS, OR UNSPOKEN RULES
-   Behaviors characters perform without explaining why — greetings, gestures, taboos.
-
+F. CUSTOMS, RITUALS, OR UNSPOKEN RULES — behaviors characters perform without explaining why
 G. ECONOMIC, CLASS, OR POWER DYNAMICS taken for granted
-   Debts owed to specific entities, trade goods unique to this world, labor systems implied.
 
 NON-NEGOTIABLE RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -36101,18 +36118,42 @@ NON-NEGOTIABLE RULES:
 ✓ Treat them as ordinary facts of life to the characters
 ✓ Let meaning be inferred through context alone
 
-SUBSTITUTION RULE (CRITICAL):
+${storyWorld === 'Modern' ? `MODERN WORLD — VOCABULARY ISOLATION:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Whenever a GENERIC or EARTH-NEUTRAL noun appears (food, money, street, job, authority, weapon, transport, fruit, drink, law, crowd):
-→ REPLACE it with a world-specific equivalent unless realism explicitly requires otherwise.
+This is a MODERN / CONTEMPORARY EARTH setting. Use ONLY real-world vocabulary.
+ABSOLUTELY FORBIDDEN — do NOT use any of the following:
+- "Warden," "cadre," "Warden-cadre," "Thread-warden," or any compound-warden term
+- "Tribunal," "Sovereign," "Glass House," "the Silence," "the Collective"
+- "Ash Quarter," "Lower Tithe," or any invented district/quarter names
+- "bone-chips," "veinglass," "spark-moth," "emberfruit," or any invented materials
+- Fantasy/dystopian authority terms, invented currencies, or fabricated institutions
+- ANY vocabulary that would not exist in a real contemporary setting
+Use real institutions (university, police, hospital), real objects (phone, laptop, coffee),
+real places (campus quad, downtown, apartment), and real social structures.
+World texture comes from SPECIFICITY within realism — brand names, campus landmarks,
+local slang, class dynamics, social media, real cultural references.`
+: storyWorld === 'Dystopia' ? `SUBSTITUTION RULE (CRITICAL):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Whenever a GENERIC or EARTH-NEUTRAL noun appears (food, money, street, job, authority, weapon, transport):
+→ REPLACE it with a world-specific equivalent.
 ✗ "pomegranate" → ✓ "a heat-veined emberfruit from the Collective orchards"
 ✗ "money" → ✓ "a handful of bone-chips" or "three unmarked debts"
 ✗ "the police" → ✓ "the Silence" or "a Warden-cadre"
 
-QUALITY GATE (FAILURE CONDITION):
+QUALITY GATE: If this scene could be relocated to modern Earth with only name changes, it has FAILED.`
+: storyWorld === 'Fantasy' ? `SUBSTITUTION RULE (CRITICAL):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-If this opening scene could be relocated to modern Earth with only name changes, it has FAILED.
-If failure detected: REWRITE the opening scene entirely. Do NOT proceed. Do NOT ask for clarification.
+Whenever a GENERIC or EARTH-NEUTRAL noun appears (food, money, street, job, authority, weapon, transport):
+→ REPLACE it with a world-specific equivalent rooted in the Fatelands canon.
+Use the world's established vocabulary — Favor, Courts, regional governance, magical materials.
+
+QUALITY GATE: If this scene could be relocated to modern Earth with only name changes, it has FAILED.`
+: `SUBSTITUTION RULE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Replace generic nouns with world-appropriate equivalents wherever possible.
+Vocabulary must be consistent with the selected world — do NOT borrow terms from other worlds.
+
+QUALITY GATE: If this scene could be relocated to a different world setting with only name changes, it has FAILED.`}
 
 TEXTURE OVER SUMMARY:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -36314,32 +36355,15 @@ TITLE:
 • Avoid generic romance phrasing.
 
 SYNOPSIS:
-• 120–170 words.
-• Present tense.
-• Focus on emotional stakes and relational gravity.
-• Highlight what each character risks losing.
-• Emphasize tension, imbalance, temptation, or restraint.
-• Hint at escalation without revealing outcomes.
-• Avoid plot chronology — this is promise, not recap.
-• Avoid clichés and vague abstraction.
-• Avoid explicit content.
+• 40–60 words MAXIMUM. Two to three sentences.
+• Present tense. Short, moody, enticing.
+• Establish the emotional atmosphere in one line.
+• Name the tension between the characters — what's at stake, what's forbidden, what pulls them together.
+• End on a charged, unresolved note that makes the reader desperate to begin.
+• This is a promise, not a summary. No plot. No backstory. No exposition.
+• Avoid clichés: no "sparks fly", "worlds collide", "risk it all", "forbidden passion".
+• No rhetorical questions. No marketing taglines.
 • Do not reference story mechanics or systems.
-
-Craft guidance:
-• Open with tension, not exposition.
-• Center the archetype dynamic.
-• Use specific emotional language.
-• End on a charged unresolved note.
-• Make the reader feel inevitability.
-
-Anti-cliché filter — avoid generic romance phrasing such as:
-• "unexpected love", "sparks fly", "will they risk it all"
-• "forbidden passion", "fate brings them together"
-• "their worlds collide", "a love like no other"
-• No vague abstractions without concrete emotional context.
-• No marketing-tagline language. No rhetorical questions.
-• No phrases that could apply to any romance story.
-• If a sentence feels interchangeable with another book, rewrite it more specifically.
 
 Return JSON only:
 {
@@ -36358,7 +36382,7 @@ Return JSON only:
 - Love Interest: ${lKernel} (${lGen})
 
 Generate the title and synopsis now.` }
-            ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 400, jsonMode: true });
+            ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 200, jsonMode: true });
 
             const parsed = JSON.parse(titleSynopsisResult);
             if (parsed.title && parsed.synopsis) {
@@ -36543,6 +36567,39 @@ Generate the title and synopsis now.` }
                 throw new ProseRefusalError(narrRefusal.reason, text);
             }
             console.warn('[NarrativeAuthorityFail] Scene 1 regenerated due to:', scene1NarrCheck.errors.map(e => e.code));
+        }
+
+        // ============================================================
+        // 4TH PERSON ENVIRONMENTAL POV VALIDATION (Scene 1)
+        // Hard enforcement: regenerate once on violation
+        // ============================================================
+        if (state.povMode === 'environment4th') {
+            const env4Scene1 = validate4thPersonPOV(text);
+            if (!env4Scene1.valid) {
+                console.warn('[4thPerson:Scene1] Validation failed, regenerating:', env4Scene1.violations);
+                const env4Fix = `CRITICAL: This story uses 4TH PERSON ENVIRONMENTAL POV.
+The narrator IS the physical environment. All insight must be sensory-bound.
+VIOLATIONS DETECTED: ${env4Scene1.violations.map(v => v.split(':')[0]).join(', ')}
+
+HARD RULES:
+- ZERO interior thought verbs: no "she felt", "he thought", "she knew", "he realized"
+- ZERO emotional metaphors framed as cognition: no "she could see", "he could tell"
+- ZERO destiny/inevitability language
+- ALL perception must come through objects, surfaces, air, light, sound, temperature
+- Characters' emotions inferred ONLY through physical evidence the environment detects
+
+Regenerate the scene with STRICT environmental narration.`;
+                text = await callChat([
+                    { role: 'system', content: state.sysPrompt },
+                    { role: 'user', content: env4Fix + '\n\n' + introPrompt }
+                ]);
+                const env4Refusal = detectProseRefusal(text);
+                if (env4Refusal.isRefusal) {
+                    console.error('[ProseRefusal] 4th Person Scene 1 regeneration refused:', env4Refusal.reason);
+                    throw new ProseRefusalError(env4Refusal.reason, text);
+                }
+                console.warn('[4thPerson:Scene1] Regenerated due to:', env4Scene1.violations.map(v => v.split(':')[0]));
+            }
         }
 
         // EROTIC ESCALATION VALIDATION — removed (intensity no longer controls routing)
@@ -36761,17 +36818,17 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
         // BOOK-JACKET BLURB — Generate once for Title page (non-blocking on failure)
         try {
-            const blurbText = await callChat([{role:'user', content:`Write a book-jacket back-cover blurb for a story that opens with this scene.
+            const blurbText = await callChat([{role:'user', content:`Write a title-page synopsis for a story that opens with this scene.
 
 RULES:
-- 2-4 short paragraphs maximum
-- Hook + tension + promise — make the reader desperate to turn the page
-- NO exposition, NO lore dumps, NO "here's how the world works"
-- Keep names/places minimal unless essential
-- Tone must match the story: ${state.picks?.tone || 'Earnest'} tone, ${state.picks?.world || 'Modern'} world
-- Write like a bestseller's back cover, not a Wikipedia article
+- 40-60 words MAXIMUM. Two to three sentences.
+- Short, moody, enticing — a promise, not a summary
+- Establish the emotional atmosphere, name the tension, end on a charged note
+- NO exposition, NO lore, NO backstory, NO plot summary
+- NO rhetorical questions, NO clichés, NO marketing taglines
+- Tone must match: ${state.picks?.tone || 'Earnest'} tone, ${state.picks?.world || 'Modern'} world
 
-Return ONLY the blurb paragraphs, no quotes, no labels:
+Return ONLY the synopsis text, no quotes, no labels:
 ${text.slice(0, 800)}`}]);
             state._synopsisBlurb = (blurbText || '').trim();
         } catch (e) {
@@ -37400,21 +37457,21 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
 
       // Random spawn position along and around the bar
       const spawnX = Math.random() * containerWidth;
-      const spawnY = (Math.random() - 0.5) * 30 - 5; // Above/around bar
+      const spawnY = (Math.random() - 0.5) * 16 - 4; // Close to bar
 
-      // Randomized direction — avoid fixed diagonal
-      const angle = (Math.random() * 120 - 60) * (Math.PI / 180); // -60° to +60° (upward bias)
-      const distance = 15 + Math.random() * 25;
-      const dx = Math.cos(angle) * distance * (Math.random() > 0.5 ? 1 : -1);
-      const dy = -Math.abs(Math.sin(angle) * distance) - 5; // Always drift upward
+      // Gentle wandering — mostly lateral with mild upward drift
+      const angle = (Math.random() * 360) * (Math.PI / 180); // Any direction
+      const distance = 6 + Math.random() * 14; // Short drift
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance * 0.5 - 4 - Math.random() * 6; // Mild upward bias
 
       // Wobble for organic motion
-      const wobble = (Math.random() - 0.5) * 10;
+      const wobble = (Math.random() - 0.5) * 8;
 
-      // Size and timing variance
+      // Size and timing variance — slower, more leisurely
       const size = 2 + Math.random() * 3;
-      const duration = 2000 + Math.random() * 2000;
-      const opacity = 0.5 + Math.random() * 0.4;
+      const duration = 4000 + Math.random() * 3000;
+      const opacity = 0.4 + Math.random() * 0.35;
 
       sparkle.style.cssText = `
           left: ${spawnX}px;
@@ -37444,14 +37501,14 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
           progressBar.style.position = 'relative';
       }
 
-      // Spawn sparkles at staggered intervals for overlapping lifetimes
+      // Spawn sparkles at relaxed intervals for gentle density
       _loadingSparkleInterval = setInterval(() => {
           spawnLoadingSparkle(progressBar);
-      }, 180); // ~5-6 sparkles per second
+      }, 400); // ~2-3 sparkles per second
 
-      // Initial burst — staggered for natural appearance
-      for (let i = 0; i < 4; i++) {
-          setTimeout(() => spawnLoadingSparkle(progressBar), i * 80);
+      // Initial seeds — staggered for natural appearance
+      for (let i = 0; i < 3; i++) {
+          setTimeout(() => spawnLoadingSparkle(progressBar), i * 200);
       }
   }
 
@@ -39805,10 +39862,10 @@ ${tone === 'Wry Confessional'
           }
       }
 
-      // Populate blurb (fall back to synopsis, then empty)
+      // Populate blurb (prefer pre-gen synopsis — shorter/tighter — fall back to blurb)
       const blurbEl = el.querySelector('.sb-title-page-blurb');
       if (blurbEl) {
-          const raw = state._synopsisBlurb || state._synopsisMetadata || '';
+          const raw = state._synopsisMetadata || state._synopsisBlurb || '';
           if (raw) {
               // Convert plain text paragraphs to <p> tags
               blurbEl.innerHTML = raw.split(/\n\s*\n|\n/).filter(p => p.trim()).map(p =>
@@ -40033,10 +40090,15 @@ ${tone === 'Wry Confessional'
           if (storyContent) storyContent.classList.remove('hidden');
 
           const storyText = document.getElementById('storyText');
+          const curlChainActive = window._titlePageActive || window._frontispieceActive || window._settingPlateActive;
           if (storyText) {
-              storyText.style.opacity = '1';
-              storyText.classList.remove('hidden');
               storyText.classList.add('synopsis-page-active');
+              // Don't reveal storyText while title/frontispiece/setting curl chain is active
+              // — the curl chain's _revealSettingOrScene() will unhide it when done
+              if (!curlChainActive) {
+                  storyText.style.opacity = '1';
+                  storyText.classList.remove('hidden');
+              }
           }
 
           // Show synopsis
@@ -44474,8 +44536,15 @@ Regenerate the scene with ZERO Fate presence.`;
                       const env4Enforcement = `CRITICAL: This story uses 4TH PERSON ENVIRONMENTAL POV.
 The narrator IS the physical environment. All insight must be sensory-bound.
 VIOLATIONS DETECTED: ${env4Check.violations.map(v => v.split(':')[0]).join(', ')}
-Regenerate with ZERO destiny language, ZERO Fate references, ZERO abstract mind-reading.
-All cognition must be mediated through physical interaction.`;
+
+HARD RULES:
+- ZERO interior thought verbs: no "she felt", "he thought", "she knew", "he realized"
+- ZERO emotional metaphors framed as cognition: no "she could see", "he could tell"
+- ZERO destiny/inevitability language
+- ALL perception must come through objects, surfaces, air, light, sound, temperature
+- Characters' emotions inferred ONLY through physical evidence the environment detects
+
+Regenerate with STRICT environmental narration.`;
                       if (useFullOrchestration) {
                           raw = await generateOrchestatedTurn({
                               systemPrompt: fullSys + '\n\n' + env4Enforcement,
