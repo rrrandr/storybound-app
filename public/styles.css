@@ -11912,9 +11912,10 @@ body.corridor-mode .sb-grid.corridor-section {
 
 .begin-btn-sparkle-emitter {
     position: absolute;
-    inset: -60%;
+    inset: -120% -40%;
     pointer-events: none;
     z-index: 0;
+    overflow: visible;
 }
 
 #beginStoryRow #beginBtn {

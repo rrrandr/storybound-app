@@ -20880,15 +20880,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const [entriesResult, bookmarksResult, achievementsResult] = await Promise.all([
         sb.from('library_entries')
           .select('story_id, title, author, scene_count, word_count, updated_at')
-          .eq('user_id', _supabaseProfileId)
+          .eq('profile_id', _supabaseProfileId)
           .order('updated_at', { ascending: false })
           .limit(50),
         sb.from('library_bookmarks')
           .select('story_id')
-          .eq('user_id', _supabaseProfileId),
+          .eq('profile_id', _supabaseProfileId),
         sb.from('profile_achievements')
           .select('achievement_type, label, awarded_at')
-          .eq('user_id', _supabaseProfileId)
+          .eq('profile_id', _supabaseProfileId)
           .order('awarded_at', { ascending: false })
           .limit(10)
           .then(r => r.error ? { data: [], error: null } : r)
@@ -26381,16 +26381,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         // Clear corridor selection
         corridorSelections.delete(downstreamStage);
 
-        // Restore card visibility in stored corridor rows
+        // Restore ALL cards in stored corridor rows (dissipated + selected + dissolved)
         const stored = corridorRowStore.get(i);
         if (stored) {
           stored.elements.forEach(el => {
-            el.querySelectorAll('.sb-card.dissipating, .sb-card[style*="visibility: hidden"]').forEach(card => {
-              card.classList.remove('dissipating', 'selected', 'flipped');
+            el.querySelectorAll('.sb-card').forEach(card => {
+              card.classList.remove('dissipating', 'selected', 'flipped', 'dissolving-to-breadcrumb');
               card.style.opacity = '';
               card.style.visibility = '';
               card.style.animation = '';
               card.style.animationFillMode = '';
+              card.style.pointerEvents = '';
+              card.style.filter = '';
             });
           });
         }
@@ -27453,17 +27455,18 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
             el.style.visibility = '';
             el.style.opacity = '';
             el.style.pointerEvents = '';
-            // Clean up dissipating cards from Guided Fate autoplay
-            el.querySelectorAll('.sb-card.dissipating').forEach(card => {
-              card.classList.remove('dissipating');
+            // Clean up ALL cards from Guided Fate autoplay / breadcrumb animation:
+            // - dissipating cards (non-selected, faded via CSS animation forwards)
+            // - selected cards (visibility:hidden set by animateCardToBreadcrumb)
+            // - dissolving cards (dissolving-to-breadcrumb class with CSS animation)
+            el.querySelectorAll('.sb-card').forEach(card => {
+              card.classList.remove('dissipating', 'selected', 'flipped', 'dissolving-to-breadcrumb');
               card.style.opacity = '';
               card.style.visibility = '';
               card.style.animation = '';
               card.style.animationFillMode = '';
-            });
-            // Reset all card selections for fresh re-selection on back-navigation
-            el.querySelectorAll('.sb-card.selected, .sb-card.flipped').forEach(card => {
-              card.classList.remove('selected', 'flipped');
+              card.style.pointerEvents = '';
+              card.style.filter = '';
             });
           }
         });
@@ -27522,7 +27525,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         }
 
         // WORLD MOUNT: Fortune's Favor prelude overlay (suppress during Guided Fate autoplay)
-        if (stage === 'world' && !_fateRunning) {
+        if (stage === 'world' && !_fateAutoplayActive) {
           showFortuneFavorPrelude();
         }
 
@@ -27538,7 +27541,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         // BEGIN STORY MOUNT: Start sparkles around Begin Story button
         if (stage === 'beginstory') {
           if (typeof startSparkleEmitter === 'function') {
-            startSparkleEmitter('beginBtnSparkles', 'guidedFate', 12);
+            startSparkleEmitter('beginBtnSparkles', 'beginStory', 8);
           }
           console.log('[Corridor] Begin Story mount: Started sparkles');
         }
@@ -28377,6 +28380,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    */
   async function autoplayCorridorFromGuidedFate() {
     console.log('[Corridor] Starting row-by-row autoplay from Guided Fate');
+    _fateAutoplayActive = true;
 
     // Start from row 1 (Guided Fate is row 0, already handled)
     // Advance past row 0 first
@@ -28531,6 +28535,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // All rows complete
     corridorActiveRowIndex = CORRIDOR_STAGES.length;
     console.log('[Corridor] Autoplay complete. All rows processed.');
+    _fateAutoplayActive = false;
     onCorridorComplete();
   }
 
@@ -32483,6 +32488,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // Fate override flag - when true, all automated motion stops
   let _fateOverridden = false;
   let _fateRunning = false;
+  let _fateAutoplayActive = false; // True during corridor autoplay (suppresses Fortune's Favor)
   let _guidedFateVisualsActive = false;
 
   // DSP clause reveal tracking — non-null only during Guided Fate ceremony
@@ -33854,6 +33860,21 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       driftDistance: 12,
       curveAmp: 3,
       flickerChance: 0.3
+    },
+    // Begin Story button: scattered cloud, NOT rectangular outline
+    beginStory: {
+      durationMin: 5.0,
+      durationMax: 9.0,
+      sizeMin: 2,
+      sizeMax: 5,
+      opacityMin: 0.3,
+      opacityRange: 0.5,    // 0.3-0.8
+      haloOffset: 20,
+      outsideRatio: 0.35,   // 65% inside, 35% perimeter — scattered cloud
+      driftType: 'float',
+      driftDistance: 8,
+      curveAmp: 5,
+      flickerChance: 0.4
     },
     // Choose Your Hand: matches Guided Fate energy
     chooseHand: {
