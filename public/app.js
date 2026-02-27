@@ -1728,6 +1728,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
             await sb
               .from('profiles')
               .update({
+                age_confirmed: true,
                 tos_version: LEGAL.TOS_VERSION,
                 tos_accepted_at: new Date(),
                 privacy_version: LEGAL.PRIVACY_VERSION,
@@ -1991,15 +1992,11 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
   })();
 
   function resolveLegalGate(profile) {
-    if (profile.age_confirmed !== true) {
-      console.log('[BOOT] Age not confirmed — showing ageGate');
-      window.showScreen && window.showScreen('ageGate');
-      return;
-    }
-
+    // Age gate is now handled by the adult pact card — skip straight to legal gate
     if (!profile.tos_version ||
         !profile.privacy_version ||
-        !profile.adult_ack_version) {
+        !profile.adult_ack_version ||
+        profile.age_confirmed !== true) {
       routeToLegalAcceptance();
       return;
     }
@@ -2024,14 +2021,14 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       const userId = await ensureAnonSession();
       if (!userId || !sb) {
         renderBurgerMenu();
-        window.showScreen && window.showScreen('ageGate');
+        routeToLegalAcceptance();
         return;
       }
       _supabaseProfileId = userId;
 
       const profile = await hydrateProfile(userId);
       if (!profile) {
-        window.showScreen && window.showScreen('ageGate');
+        routeToLegalAcceptance();
         return;
       }
 
@@ -2051,7 +2048,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       resolveLegalGate(profile);
     } catch (e) {
       console.error('[BOOT] Boot sequence failed:', e);
-      window.showScreen && window.showScreen('ageGate');
+      routeToLegalAcceptance();
     } finally {
       document.body.classList.remove('booting');
       window.__initialScreenSet = false;
@@ -15907,7 +15904,7 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
 
   // --- NAVIGATION STATE ---
   let _navHistory = [];
-  let _currentScreenId = 'ageGate'; 
+  let _currentScreenId = 'legalGate';
 
   function updateNavUI() {
       const backBtn = document.getElementById('globalBackBtn');
@@ -15920,7 +15917,7 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       }
       
       if(burger) {
-          if(_currentScreenId === 'ageGate') burger.classList.add('hidden');
+          if(_currentScreenId === 'legalGate') burger.classList.add('hidden');
           else burger.classList.remove('hidden');
       }
   }
