@@ -3735,8 +3735,8 @@ select:-webkit-autofill {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 40px 20px 20px;
+    justify-content: center;
+    padding: 20px;
     overflow-y: auto;
     animation: pactFadeIn 0.3s ease;
 }
@@ -3849,7 +3849,8 @@ select:-webkit-autofill {
 
 /* ── TOS zoomed expand — white card with scrollable terms ── */
 .pact-expand-tos-card {
-    width: 280px;
+    width: 90vw;
+    max-width: 420px;
     aspect-ratio: 2.75 / 4.75;
     background: url('/assets/Card%20Art/Cards/WHITE-Trust.png') center / cover no-repeat;
     border-radius: 8px;
@@ -3859,29 +3860,23 @@ select:-webkit-autofill {
 }
 .pact-expand-tos-inner {
     position: absolute;
-    top: 8%;
-    left: 10%;
-    right: 10%;
-    bottom: 8%;
+    top: 16%;
+    left: 12%;
+    right: 12%;
+    bottom: 15%;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 .pact-expand-tos-title {
-    font-family: 'Lora', serif;
-    font-size: 1em;
-    font-weight: 700;
-    color: #1a1a1a;
-    text-align: center;
-    margin-bottom: 8px;
-    flex-shrink: 0;
+    display: none;
 }
 .pact-expand-tos-scroll {
     flex: 1;
     overflow-y: auto;
     color: #222;
     font-family: 'Lora', serif;
-    font-size: 0.72em;
+    font-size: 0.85em;
     line-height: 1.5;
     padding-right: 4px;
     scrollbar-width: thin;
@@ -3909,7 +3904,8 @@ select:-webkit-autofill {
 
 /* ── Privacy Policy zoomed expand — white card with scrollable policy ── */
 .pact-expand-privacy-card {
-    width: 280px;
+    width: 90vw;
+    max-width: 420px;
     aspect-ratio: 2.75 / 4.75;
     background: url('/assets/Card%20Art/Cards/WHITE-Discretion.png') center / cover no-repeat;
     border-radius: 8px;
@@ -3919,29 +3915,23 @@ select:-webkit-autofill {
 }
 .pact-expand-privacy-inner {
     position: absolute;
-    top: 8%;
-    left: 10%;
-    right: 10%;
-    bottom: 8%;
+    top: 16%;
+    left: 12%;
+    right: 12%;
+    bottom: 15%;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 .pact-expand-privacy-title {
-    font-family: 'Lora', serif;
-    font-size: 1em;
-    font-weight: 700;
-    color: #1a1a1a;
-    text-align: center;
-    margin-bottom: 8px;
-    flex-shrink: 0;
+    display: none;
 }
 .pact-expand-privacy-scroll {
     flex: 1;
     overflow-y: auto;
     color: #222;
     font-family: 'Lora', serif;
-    font-size: 0.72em;
+    font-size: 0.85em;
     line-height: 1.5;
     padding-right: 4px;
     scrollbar-width: thin;
@@ -3969,7 +3959,8 @@ select:-webkit-autofill {
 
 /* ── Adult Content zoomed expand — white card with scrollable acknowledgment ── */
 .pact-expand-adult-card {
-    width: 280px;
+    width: 90vw;
+    max-width: 420px;
     aspect-ratio: 2.75 / 4.75;
     background: url('/assets/Card%20Art/Cards/WHIT-Desire.png') center / cover no-repeat;
     border-radius: 8px;
@@ -3979,22 +3970,16 @@ select:-webkit-autofill {
 }
 .pact-expand-adult-inner {
     position: absolute;
-    top: 8%;
-    left: 10%;
-    right: 10%;
-    bottom: 8%;
+    top: 16%;
+    left: 12%;
+    right: 12%;
+    bottom: 15%;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 .pact-expand-adult-title {
-    font-family: 'Lora', serif;
-    font-size: 1em;
-    font-weight: 700;
-    color: #1a1a1a;
-    text-align: center;
-    margin-bottom: 8px;
-    flex-shrink: 0;
+    display: none;
 }
 .pact-expand-adult-scroll {
     flex: 1;
@@ -4034,20 +4019,11 @@ select:-webkit-autofill {
     .pact-card-sublabel {
         font-size: 0.55em;
     }
-    .pact-expand-privacy-card {
-        width: 220px;
-    }
     .pact-privacy-label {
         font-size: 0.6em;
     }
-    .pact-expand-tos-card {
-        width: 220px;
-    }
     .pact-tos-label {
         font-size: 0.6em;
-    }
-    .pact-expand-adult-card {
-        width: 220px;
     }
     .pact-adult-label {
         font-size: 0.6em;
