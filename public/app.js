@@ -20852,12 +20852,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // VAULT PERSONAL LIBRARY — 3D shelf (reuses Forbidden Library engine)
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  let _vaultLibraryEntries = [];
+  let _vaultAuthoredEntries = [];   // from sb_rooms — user's own stories
+  let _vaultBorrowedEntries = [];   // from library_bookmarks → library_entries
   let _vaultLibraryLoaded = false;
   let _vaultLibraryLoading = false;
 
+  // Backward-compat alias used by renderVaultBookList (combined list)
+  let _vaultLibraryEntries = [];
 
-  // — Load user's own library entries from Supabase —
+
+  // — Load user's authored stories, borrowed stories, and achievements from Supabase —
   async function loadVaultLibrary() {
     if (_vaultLibraryLoading) return;
     if (!sb || !_supabaseProfileId) {
@@ -20874,47 +20878,79 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (emptyEl) emptyEl.style.display = 'none';
 
     try {
-      // Fetch entries + bookmarks + achievements in parallel — single render pass after all resolve
-      const [entriesResult, bookmarksResult, achievementsResult] = await Promise.all([
-        sb.from('library_entries')
-          .select('story_id, title, scene_count, updated_at')
-          .eq('profile_id', _supabaseProfileId)
+      // ── 1. Authored stories from sb_rooms ──
+      let authoredResult;
+      try {
+        authoredResult = await sb.from('sb_rooms')
+          .select('id, title, created_at, updated_at, turn')
+          .eq('created_by', _supabaseProfileId)
           .order('updated_at', { ascending: false })
-          .limit(50),
-        sb.from('library_bookmarks')
-          .select('story_id')
-          .eq('user_id', _supabaseProfileId),
-        sb.from('profile_achievements')
-          .select('achievement_type, label, awarded_at')
-          .eq('profile_id', _supabaseProfileId)
-          .order('awarded_at', { ascending: false })
-          .limit(10)
-          .then(r => r.error ? { data: [], error: null } : r)
-      ]);
-
-      if (entriesResult.error) {
-        console.error('[VaultLibrary] Query failed:', entriesResult.error.message);
-        _showVaultLibraryEmpty('Failed to load library');
-        _vaultLibraryLoading = false;
-        return;
+          .limit(50);
+      } catch (e) {
+        console.error('[VaultLibrary] sb_rooms query error:', e);
+        authoredResult = { data: [], error: null };
       }
+      if (authoredResult.error) {
+        console.error('[VaultLibrary] sb_rooms query failed:', authoredResult.error.message);
+        authoredResult = { data: [], error: null };
+      }
+      _vaultAuthoredEntries = (authoredResult.data || []).map(r => ({
+        story_id: r.id,
+        title: r.title || 'Untitled',
+        scene_count: r.turn || 0,
+        updated_at: r.updated_at || r.created_at,
+        _authored: true
+      }));
 
-      _vaultLibraryEntries = entriesResult.data || [];
+      // ── 2. Bookmarks → borrowed library_entries ──
+      let borrowedResult = { data: [] };
+      try {
+        const bmResult = await sb.from('library_bookmarks')
+          .select('story_id')
+          .eq('user_id', _supabaseProfileId);
+        const borrowedIds = (bmResult.data || []).map(b => b.story_id).filter(Boolean);
+        if (borrowedIds.length > 0) {
+          borrowedResult = await sb.from('library_entries')
+            .select('story_id, title, scene_count')
+            .in('story_id', borrowedIds);
+        }
+      } catch (e) {
+        console.error('[VaultLibrary] bookmarks/borrowed query error:', e);
+      }
+      _vaultBorrowedEntries = (borrowedResult.data || []).map(r => ({
+        story_id: r.story_id,
+        title: r.title || 'Untitled',
+        scene_count: r.scene_count || 0,
+        _borrowed: true
+      }));
+
+      // ── 3. Achievements ──
+      let achievementsResult;
+      try {
+        achievementsResult = await sb.from('profile_achievements')
+          .select('achievement_key, unlocked_at, metadata')
+          .eq('profile_id', _supabaseProfileId)
+          .order('unlocked_at', { ascending: false })
+          .limit(10);
+      } catch (e) {
+        console.error('[VaultLibrary] achievements query error:', e);
+        achievementsResult = { data: [] };
+      }
+      if (achievementsResult.error) achievementsResult = { data: [] };
+
+      // ── Merge and render ──
+      _vaultLibraryEntries = [..._vaultAuthoredEntries, ..._vaultBorrowedEntries];
       _vaultLibraryLoaded = true;
 
       if (_vaultLibraryEntries.length === 0) {
         _showVaultLibraryEmpty();
+        // Still render trophies even with no stories
+        renderVaultTrophies(achievementsResult.data || []);
         _vaultLibraryLoading = false;
         return;
       }
 
-      // Tag entries with bookmark progress (non-fatal if bookmarks query failed)
-      const progressSet = new Set((bookmarksResult.data || []).map(b => b.story_id));
-      _vaultLibraryEntries.forEach(e => { e._hasProgress = progressSet.has(e.story_id); });
-
-      // Render trophy shelf (non-fatal if achievements query failed)
       renderVaultTrophies(achievementsResult.data || []);
-
       renderVaultBookList();
     } catch (err) {
       console.error('[VaultLibrary] Load error:', err);
@@ -20966,8 +21002,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const visible = achievements.slice(0, maxTrophies);
 
     visible.forEach(a => {
-      const icon = TROPHY_ICONS[a.achievement_type] || TROPHY_ICONS.default;
-      const label = a.label || a.achievement_type.replace(/_/g, ' ');
+      const key = a.achievement_key || '';
+      const icon = TROPHY_ICONS[key] || TROPHY_ICONS.default;
+      const meta = a.metadata || {};
+      const label = meta.label || (TROPHY_META[key] ? TROPHY_META[key].title : key.replace(/_/g, ' '));
       const trophy = document.createElement('div');
       trophy.className = 'vault-trophy';
       trophy.innerHTML =
@@ -21294,21 +21332,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
                         window.innerWidth > 600  ? 3 :
                         2;
 
-    // Priority sort: has bookmark first, then highest scene_count, then most recently opened
+    // Priority sort: authored first, then highest scene_count, then most recently updated
     const sorted = _vaultLibraryEntries.slice().sort((a, b) => {
-      const aBookmark = a._hasProgress ? 1 : 0;
-      const bBookmark = b._hasProgress ? 1 : 0;
-      if (bBookmark !== aBookmark) return bBookmark - aBookmark;
+      const aAuthored = a._authored ? 1 : 0;
+      const bAuthored = b._authored ? 1 : 0;
+      if (bAuthored !== aAuthored) return bAuthored - aAuthored;
       if ((b.scene_count || 0) !== (a.scene_count || 0)) return (b.scene_count || 0) - (a.scene_count || 0);
       return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
     });
 
     sorted.forEach((entry, index) => {
       const bookTitle = entry.title || 'Untitled';
-      const bookAuthor = entry.author || 'S. Tory Bound';
+      const bookAuthor = entry._borrowed ? '' : 'You';
       const scenes = entry.scene_count || 0;
-      const words = entry.word_count || 0;
-      const worldKey = (entry.world || 'modern').toLowerCase();
       const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
       const isForward = index < MAX_FORWARD;
 
@@ -21325,16 +21361,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const book = document.createElement('div');
       book.className = 'library-book initializing' + (isCollector ? ' collector-edition' : '') + (isForward ? ' mode-cover' : ' mode-spine');
       book.dataset.storyId = entry.story_id;
-      book.dataset.world = worldKey;
+      if (entry._borrowed) book.dataset.borrowed = 'true';
 
-      // Back cover includes vault-specific meta (scenes, words, last opened)
-      const metaLines = [`Scenes: ${scenes}`, `Words: ${words.toLocaleString()}`];
+      // Back cover includes vault-specific meta
+      const metaLines = [`Scenes: ${scenes}`];
       if (lastOpened) metaLines.push(`Last opened: ${lastOpened}`);
+      if (entry._borrowed) metaLines.push('Borrowed');
 
       book.innerHTML = `<div class="book-3d">
-  <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div></div>
-  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><p class="back-synopsis">${escapeHTML(bookAuthor)}</p><p class="back-meta">${scenes} scenes · ${words.toLocaleString()} words</p><p class="back-meta-vault">${metaLines.join('<br>')}</p></div></div>
-  <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div></div>
+  <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div>${bookAuthor ? `<div class="book-front-author">${escapeHTML(bookAuthor)}</div>` : ''}</div></div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3>${bookAuthor ? `<p class="back-synopsis">${escapeHTML(bookAuthor)}</p>` : ''}<p class="back-meta">${scenes} scenes</p><p class="back-meta-vault">${metaLines.join('<br>')}</p></div></div>
+  <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)}${bookAuthor ? ` <span class="spine-author">${escapeHTML(bookAuthor)}</span>` : ''}</div></div>
   <div class="book-pages"></div>
   <div class="page-shimmer"></div>
 </div>`;
@@ -35469,12 +35506,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // Handler extracted as named function for event delegation (no direct DOM binding needed).
   let _beginStoryInProgress = false;
   async function handleBeginStory() {
+    console.log('[BeginStory] handleBeginStory() called');
     if (_beginStoryInProgress) {
       console.warn('[BeginStory] Already in progress — ignoring duplicate call');
       return;
     }
     _beginStoryInProgress = true;
     try {
+    console.log('[BeginStory] Past _beginStoryInProgress guard, entering main flow');
     // Reveal all remaining DSP segments on Begin Story (veto phase)
     if (typeof revealAllDSPSegments === 'function') revealAllDSPSegments();
 
@@ -35483,6 +35522,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // ========================================
     if (typeof validateCorridorComplete === 'function' && !validateCorridorComplete()) {
       // validateCorridorComplete shows modal with missing selections
+      console.log('[BeginStory] EXITING — corridor validation failed');
       return;
     }
 
@@ -35513,6 +35553,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state._fateTriggered = false; // Clear flag after validation
 
     if (validationErrors.length > 0) {
+        console.log('[BeginStory] EXITING — validation errors:', validationErrors);
         if (validationErrors.includes('__SCIFI_FLAVOR_REQUIRED__')) {
             showSciFiFlavorModal();
             return;
@@ -35525,6 +35566,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // TEASE TIER GATE: Block new story creation if free story already consumed
     // ═══════════════════════════════════════════════════════════════════
     if (isTeaseStoryBlocked()) {
+        console.log('[BeginStory] EXITING — Tease story blocked');
         window.showPaywall('unlock');
         return;
     }
@@ -35582,10 +35624,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (earlyPayload.archetype.directives === '(none built)') earlyErrors.push('Archetype directives failed to build');
 
     if (earlyErrors.length > 0) {
-        console.error('STORYBOUND EARLY VALIDATION FAILED:', earlyErrors);
+        console.error('[BeginStory] EXITING — EARLY VALIDATION FAILED:', earlyErrors);
         showToast(`Story setup incomplete: ${earlyErrors[0]}`);
         return;
     }
+    console.log('[BeginStory] All validation passed — proceeding to story generation');
 
     // ═══════════════════════════════════════════════════════════════════════════
     // PARALLEL GENERATION FAST PATH
@@ -35705,7 +35748,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // PHASE 2: SHOW LOADER IMMEDIATELY (sync)
     // ========================================
     // GUARD: If book is already opening/open, do not reset cover visibility
-    if (_bookOpened) return;
+    if (_bookOpened) { console.log('[BeginStory] EXITING — _bookOpened is true'); return; }
 
     // Clear Guided Fate DSP lock — story has begun
     _dspGuidedFateActive = false;
@@ -35761,6 +35804,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       if (coverLoadingState) coverLoadingState.classList.add('hidden');
     }
 
+    console.log('[BeginStory] Phase 2 complete — starting loader and API calls');
     startLoading("Conjuring the world...", STORY_LOADING_MESSAGES);
 
     // ========================================
@@ -37257,8 +37301,12 @@ ${text.slice(0, 800)}`}]);
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('#beginBtn');
     if (!btn) return;
+    console.log('[BeginStory:Delegation] Click captured on #beginBtn');
     // Guard: respect disabled state
-    if (btn.disabled || btn.classList.contains('disabled') || btn.getAttribute('aria-disabled') === 'true') return;
+    if (btn.disabled || btn.classList.contains('disabled') || btn.getAttribute('aria-disabled') === 'true') {
+      console.warn('[BeginStory:Delegation] Button is disabled — ignoring click');
+      return;
+    }
     e.preventDefault();
     handleBeginStory();
   });
