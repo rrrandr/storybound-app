@@ -702,11 +702,9 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     }
   }
 
-  function updateKeyholeAlignment(outcome, sacrificeChoice) {
+  function updateKeyholeAlignment(outcome) {
     const kh = state.keyhole;
     if (!kh || !kh.marked) return;
-    if (sacrificeChoice === 'offer') kh.alignmentScore += 5;
-    if (sacrificeChoice === 'withhold') kh.alignmentScore -= 5;
     if (outcome === 'benevolent') kh.alignmentScore += 3;
     if (outcome === 'twist') kh.alignmentScore -= 3;
     kh.alignmentScore = Math.max(-100, Math.min(100, kh.alignmentScore));
@@ -1354,7 +1352,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     return result;
   }
 
-  function advanceOmenDecay(sacrificeChoice) {
+  function advanceOmenDecay() {
     const om = state.omen;
     if (!om) return;
     const fate = state.fate;
@@ -1370,12 +1368,6 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
     // Heavy reservoir drain (Favored)
     if (state.keyhole?.marked && state.keyhole.favorReservoir < 15) {
-      pressure += 0.15;
-    }
-
-    // Withhold choice
-    if (sacrificeChoice === 'withhold') {
-      om.totalWithholds++;
       pressure += 0.15;
     }
 
@@ -1472,108 +1464,238 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  /**
-   * Sacrifice-aware omen: Uses LLM to generate an omen that reflects
-   * the sacrifice content symbolically. Falls back to generic generateOmen().
-   */
-  async function generateSacrificeAwareOmen(costHint, offeringText, category) {
-    try {
-      if (!window.StoryboundOrchestration) throw new Error('No orchestration');
-      const temperature = computeOmenTemperature();
-      const tempWord = temperature === 'warm' ? 'hopeful' : temperature === 'cold' ? 'ominous' : 'ambiguous';
-      const messages = [
-        { role: 'system', content: `You are Fate — ancient, cryptic. Generate a single atmospheric omen sentence (8-18 words). The omen must symbolically reflect the sacrifice demanded. Tone: ${tempWord}. No commands. No dialogue. No names. Just an environmental observation that echoes the sacrifice's meaning.` },
-        { role: 'user', content: `Sacrifice demanded: "${costHint}". Offering given: "${offeringText || 'nothing'}". Category: ${category}. Write one omen.` }
-      ];
-      const result = await window.StoryboundOrchestration.callChatGPT(
-        messages, 'PRIMARY_AUTHOR', { temperature: 0.85, max_tokens: 40 }
-      );
-      const omen = (result?.choices?.[0]?.message?.content || '').trim().replace(/^["']|["']$/g, '');
-      if (!omen || omen.length < 5 || omen.length > 150) throw new Error('bad omen');
-      return omen;
-    } catch (e) {
-      console.warn('[petition] LLM omen failed, using generic:', e.message);
-      return generateOmen();
-    }
-  }
+  /* ═══════════════════════════════════════════════════════════════════════════ */
+  /* PACT OF ENTRY — Immersive legal gate with tarot card experience           */
+  /* ═══════════════════════════════════════════════════════════════════════════ */
+
+  var _pactAccepted = { tos: false, privacy: false, adult: false };
+  var _pactSparkleIntervals = [];
+  var _pactFlipTimeout = null;
+
+  // Map pact keys to LEGAL_DOCS keys and display names
+  var PACT_META = {
+    tos:     { docKey: 'tos',       title: 'THE BINDING',   subtitle: 'Terms of Service' },
+    privacy: { docKey: 'privacy',   title: 'THE VEIL',      subtitle: 'Privacy Policy' },
+    adult:   { docKey: 'adult_ack', title: 'THE THRESHOLD', subtitle: 'Adult Content Acknowledgment' }
+  };
 
   function routeToLegalAcceptance(isReaccept = false) {
     window.__legalReaccept = isReaccept;
 
-    const heading = document.getElementById('legal-heading');
-    const subtext = document.getElementById('legal-subtext');
-    const tos = document.getElementById('legal-tos');
-    const privacy = document.getElementById('legal-privacy');
-    const adult = document.getElementById('legal-adult');
-    const btn = document.getElementById('legal-continue');
+    // Reset all pact cards
+    _pactAccepted = { tos: false, privacy: false, adult: false };
+    document.querySelectorAll('.pact-card').forEach(function(card) {
+      card.classList.remove('flipped', 'accepted');
+    });
 
-    if (tos) tos.checked = false;
-    if (privacy) privacy.checked = false;
-    if (adult) adult.checked = false;
-    if (btn) btn.disabled = true;
+    // Clear any pending flip timeouts and sparkle intervals
+    if (_pactFlipTimeout) { clearTimeout(_pactFlipTimeout); _pactFlipTimeout = null; }
+    _pactSparkleIntervals.forEach(function(id) { clearInterval(id); });
+    _pactSparkleIntervals = [];
 
+    // Hide seal row and disable button
+    var sealRow = document.getElementById('pactSealRow');
+    var enterBtn = document.getElementById('pact-enter');
+    if (sealRow) sealRow.classList.add('hidden');
+    if (enterBtn) enterBtn.disabled = true;
+
+    // Update title/subtitle for re-accept
+    var title = document.querySelector('.pact-title');
+    var subtitle = document.getElementById('pact-subtitle');
     if (isReaccept) {
-      if (heading) heading.textContent = 'Terms Updated';
-      if (subtext) { subtext.textContent = 'Our terms have changed. Please review and accept to continue.'; subtext.classList.remove('hidden'); }
+      if (title) title.textContent = 'Terms Updated';
+      if (subtitle) {
+        subtitle.textContent = 'Our terms have changed. Please review and accept to continue.';
+        subtitle.classList.remove('hidden');
+      }
     } else {
-      if (heading) heading.textContent = 'Before You Continue';
-      if (subtext) subtext.classList.add('hidden');
+      if (title) title.textContent = 'The Pact of Entry';
+      if (subtitle) subtitle.classList.add('hidden');
     }
 
     showScreen('legalGate');
+
+    // Auto-flip sequence after delay
+    _pactFlipTimeout = setTimeout(function() {
+      var cards = document.querySelectorAll('.pact-card');
+      cards.forEach(function(card, i) {
+        setTimeout(function() {
+          card.classList.add('flipped');
+          _startPactCardSparkles(card);
+          window.applyCardGleam && window.applyCardGleam(card);
+        }, i * 250);
+      });
+    }, 3000);
   }
 
-  (function initLegalGateCheckboxes() {
-    const tos = document.getElementById('legal-tos');
-    const privacy = document.getElementById('legal-privacy');
-    const adult = document.getElementById('legal-adult');
-    const btn = document.getElementById('legal-continue');
-    if (!tos || !privacy || !adult || !btn) return;
-    function sync() { btn.disabled = !(tos.checked && privacy.checked && adult.checked); }
-    tos.addEventListener('change', sync);
-    privacy.addEventListener('change', sync);
-    adult.addEventListener('change', sync);
+  function _startPactCardSparkles(card) {
+    var sparkleContainer = card.querySelector('.pact-card-sparkles');
+    if (!sparkleContainer) return;
+    sparkleContainer.innerHTML = '';
 
-    btn.addEventListener('click', async function() {
-      btn.disabled = true;
-      try {
-        if (_supabaseProfileId) {
-          await sb
-            .from('profiles')
-            .update({
-              tos_version: LEGAL.TOS_VERSION,
-              tos_accepted_at: new Date(),
-              privacy_version: LEGAL.PRIVACY_VERSION,
-              privacy_accepted_at: new Date(),
-              adult_ack_version: LEGAL.ADULT_ACK_VERSION,
-              adult_acknowledged_at: new Date()
-            })
-            .eq('id', _supabaseProfileId);
-
-          // Fire-and-forget: capture IP + UA server-side
-          fetch('/api/record-legal-acceptance', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: _supabaseProfileId })
-          }).catch(err => console.warn('[LEGAL] IP capture failed:', err));
-        } else {
-          console.warn('[LEGAL] No profile ID — skipping profile update');
-        }
-
-        window.showScreen('tierGate');
-      } catch (e) {
-        console.error('[LEGAL] Failed to update profile:', e);
-        btn.disabled = false;
+    var interval = setInterval(function() {
+      if (!card.classList.contains('flipped')) {
+        clearInterval(interval);
+        return;
       }
+      _createPactSparkle(sparkleContainer);
+    }, 150);
+    _pactSparkleIntervals.push(interval);
+
+    // Initial burst
+    for (var i = 0; i < 8; i++) {
+      (function(idx) {
+        setTimeout(function() { _createPactSparkle(sparkleContainer); }, idx * 50);
+      })(i);
+    }
+  }
+
+  function _createPactSparkle(container) {
+    var sparkle = document.createElement('div');
+    sparkle.className = 'mode-sparkle';
+    var side = Math.floor(Math.random() * 4);
+    var x, y;
+    switch (side) {
+      case 0: x = Math.random() * 100; y = 0; break;
+      case 1: x = 100; y = Math.random() * 100; break;
+      case 2: x = Math.random() * 100; y = 100; break;
+      case 3: x = 0; y = Math.random() * 100; break;
+    }
+    sparkle.style.cssText =
+      'position:absolute;left:' + x + '%;top:' + y + '%;width:4px;height:4px;' +
+      'background:radial-gradient(circle,rgba(255,215,0,1) 0%,rgba(255,215,0,0) 70%);' +
+      'border-radius:50%;pointer-events:none;animation:modeSparkle 1.2s ease-out forwards;';
+    container.appendChild(sparkle);
+    setTimeout(function() { sparkle.remove(); }, 1200);
+  }
+
+  function _openPactExpand(pactKey) {
+    if (!window._LEGAL_DOCS) return;
+    var meta = PACT_META[pactKey];
+    if (!meta) return;
+    var docHtml = window._LEGAL_DOCS[meta.docKey];
+    if (!docHtml) return;
+
+    // Create overlay
+    var overlay = document.createElement('div');
+    overlay.className = 'pact-card-expand-overlay';
+
+    var titleEl = document.createElement('div');
+    titleEl.className = 'pact-expand-title';
+    titleEl.textContent = meta.title + ' — ' + meta.subtitle;
+
+    var contentEl = document.createElement('div');
+    contentEl.className = 'pact-expand-content';
+    contentEl.innerHTML = docHtml;
+
+    var acceptBtn = document.createElement('button');
+    acceptBtn.className = 'pact-expand-accept-btn';
+    acceptBtn.textContent = 'I Accept';
+    acceptBtn.disabled = true;
+
+    overlay.appendChild(titleEl);
+    overlay.appendChild(contentEl);
+    overlay.appendChild(acceptBtn);
+    document.body.appendChild(overlay);
+
+    // Enable accept after scroll-to-bottom or 3s timeout
+    var enableTimer = setTimeout(function() { acceptBtn.disabled = false; }, 3000);
+
+    function checkScroll() {
+      if (contentEl.scrollHeight <= contentEl.clientHeight) {
+        acceptBtn.disabled = false;
+        clearTimeout(enableTimer);
+      } else if (contentEl.scrollTop + contentEl.clientHeight >= contentEl.scrollHeight - 5) {
+        acceptBtn.disabled = false;
+        clearTimeout(enableTimer);
+      }
+    }
+    contentEl.addEventListener('scroll', checkScroll);
+    // Check immediately in case content fits without scrolling
+    setTimeout(checkScroll, 100);
+
+    acceptBtn.addEventListener('click', function() {
+      _pactAccepted[pactKey] = true;
+
+      // Mark card as accepted
+      var card = document.querySelector('.pact-card[data-pact="' + pactKey + '"]');
+      if (card) card.classList.add('accepted');
+
+      // Remove overlay
+      overlay.remove();
+
+      // Check if all accepted
+      _checkAllPactsAccepted();
     });
+
+    // Close on overlay background click (not content)
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) overlay.remove();
+    });
+  }
+
+  function _checkAllPactsAccepted() {
+    if (_pactAccepted.tos && _pactAccepted.privacy && _pactAccepted.adult) {
+      var sealRow = document.getElementById('pactSealRow');
+      var enterBtn = document.getElementById('pact-enter');
+      if (sealRow) sealRow.classList.remove('hidden');
+      if (enterBtn) enterBtn.disabled = false;
+    }
+  }
+
+  (function initPactCards() {
+    // Card tap → expand
+    document.querySelectorAll('.pact-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        if (!card.classList.contains('flipped')) return; // must be flipped first
+        var pactKey = card.dataset.pact;
+        if (_pactAccepted[pactKey]) return; // already accepted
+        _openPactExpand(pactKey);
+      });
+    });
+
+    // Enter the Veil button
+    var enterBtn = document.getElementById('pact-enter');
+    if (enterBtn) {
+      enterBtn.addEventListener('click', async function() {
+        enterBtn.disabled = true;
+        try {
+          if (_supabaseProfileId) {
+            await sb
+              .from('profiles')
+              .update({
+                tos_version: LEGAL.TOS_VERSION,
+                tos_accepted_at: new Date(),
+                privacy_version: LEGAL.PRIVACY_VERSION,
+                privacy_accepted_at: new Date(),
+                adult_ack_version: LEGAL.ADULT_ACK_VERSION,
+                adult_acknowledged_at: new Date()
+              })
+              .eq('id', _supabaseProfileId);
+
+            // Fire-and-forget: capture IP + UA server-side
+            fetch('/api/record-legal-acceptance', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: _supabaseProfileId })
+            }).catch(function(err) { console.warn('[LEGAL] IP capture failed:', err); });
+          } else {
+            console.warn('[LEGAL] No profile ID — skipping profile update');
+          }
+
+          window.showScreen('tierGate');
+        } catch (e) {
+          console.error('[LEGAL] Failed to update profile:', e);
+          enterBtn.disabled = false;
+        }
+      });
+    }
   })();
 
   (function initLegalModal() {
     const modal = document.getElementById('legalModal');
     const content = document.getElementById('legalModalContent');
     const closeBtn = document.getElementById('legalModalClose');
-    const tosLink = document.getElementById('legal-tos-link');
-    const privacyLink = document.getElementById('legal-privacy-link');
     if (!modal || !content || !closeBtn) return;
 
     const LEGAL_DOCS = {
@@ -1776,6 +1898,9 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 </ul>`
     };
 
+    // Expose for pact card system
+    window._LEGAL_DOCS = LEGAL_DOCS;
+
     function openLegalDoc(docKey) {
       content.innerHTML = LEGAL_DOCS[docKey] || '';
       content.scrollTop = 0;
@@ -1794,10 +1919,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
     content.addEventListener('scroll', checkScrollBottom);
 
-    const adultLink = document.getElementById('legal-adult-link');
-    if (tosLink) tosLink.addEventListener('click', function(e) { e.preventDefault(); openLegalDoc('tos'); });
-    if (privacyLink) privacyLink.addEventListener('click', function(e) { e.preventDefault(); openLegalDoc('privacy'); });
-    if (adultLink) adultLink.addEventListener('click', function(e) { e.preventDefault(); openLegalDoc('adult_ack'); });
+    // Old legal doc links removed — pact card system handles doc viewing
 
     closeBtn.addEventListener('click', function() {
       modal.classList.add('hidden');
@@ -4031,9 +4153,8 @@ For constraint/petition:
       if (!primary) return '';
 
       let directive = `
-LOVE INTEREST ARCHETYPE DIRECTIVES (LOCKED):
+LOVE INTEREST BEHAVIORAL PROFILE (LOCKED):
 
-Primary Archetype: ${primary.name}
 ${primary.summary}
 `;
 
@@ -4050,9 +4171,8 @@ ${primary.summary}
           const modifier = ARCHETYPES[modifierId];
           if (modifier) {
               directive += `
-Secondary Archetype: ${modifier.name}
-The Secondary colors expression style only. It does not override the Primary's emotional arc or shadow.
-Secondary Desire Style: ${modifier.desireStyle}
+Secondary behavioral coloring (expression style only — does not override primary emotional arc or shadow):
+Secondary desire style: ${modifier.desireStyle}
 `;
           }
       }
@@ -4061,12 +4181,12 @@ Secondary Desire Style: ${modifier.desireStyle}
       directive += `
 STRESS & FAILURE PATTERN (SHADOW CLAUSE):
 When under pressure, emotional threat, or lens-driven withholding (Withheld Core / Moral Friction):
-- ${primary.name} fails toward: ${primary.stressFailure}
+- Primary failure mode: ${primary.stressFailure}
 `;
       if (modifierId) {
           const modifier = ARCHETYPES[modifierId];
           if (modifier && modifier.stressFailure) {
-              directive += `- Secondary stress echo (${modifier.name}): ${modifier.stressFailure}\n`;
+              directive += `- Secondary stress echo: ${modifier.stressFailure}\n`;
           }
       }
 
@@ -4077,19 +4197,24 @@ Stress must never:
 - Stall without escalation or change
 
 STORYTELLER ENFORCEMENT:
-- Treat the Primary Archetype as dominant.
+- Treat the primary behavioral profile as dominant.
 - Use the Stress & Failure Pattern as the main source of relational tension.
 - Allow fracture and repair without erasing the shadow.
-- Never "heal away" the archetype.
+- Never "heal away" the behavioral pattern.
 
-ARCHETYPE LABEL SUPPRESSION (AUTHORITATIVE):
-- Archetype labels (e.g. Spellbinder, Villain, Anti-Hero, Muse, etc.) are SYSTEM METADATA ONLY.
-- Archetype labels MUST NEVER appear verbatim in story prose.
-- Do NOT use archetype names as nouns, titles, descriptors, or epithets.
-- Archetypes may influence behavior, tone, power dynamics, and emotional effect ONLY.
-- If an archetype label would naturally appear, replace it with an effect-based description.
-- Describe what the character does to others, how they feel to encounter, or the consequence of their presence.
-- If unsure, omit the label entirely.
+ARCHETYPE LABEL SUPPRESSION (ABSOLUTE — ZERO TOLERANCE):
+Archetype titles are internal design labels. They must NEVER appear in the story as:
+- Capitalized metaphors (e.g. "The Eternal Flame", "The Spellbinder")
+- Mythic titles or role descriptors
+- In-world categories or epithets
+- Expository narration or character introductions
+- Dialogue references (no character should name or reference an archetype label)
+
+Archetype labels (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame, Villain, Anti-Hero, Muse, etc.) are SYSTEM METADATA ONLY.
+Express all character traits through BEHAVIOR, DIALOGUE, and CONSEQUENCE — never through labels or titles.
+If an archetype label would naturally appear, replace it with an effect-based description of what the character does, how they feel to encounter, or the consequence of their presence.
+Do not invent mythic titles, epithets, or metaphors that resemble archetype labels or capitalized symbolic identities. Express intensity through behavior, not titular symbolism.
+If unsure, omit entirely.
 `;
 
       // ═══════════════════════════════════════════════════════════════════════════
@@ -4111,8 +4236,8 @@ NICKNAME EMERGENCE RULES (STORY GRAMMAR):
       if (primary.nicknameQuirk) {
           const quirk = primary.nicknameQuirk;
           directive += `
-ARCHETYPE-BOUND NICKNAME QUIRK (${primary.name}):
-- This archetype intentionally AVOIDS using the protagonist's real name early.
+BEHAVIORAL NICKNAME QUIRK:
+- This character intentionally AVOIDS using the protagonist's real name early.
 - Uses ${quirk.substituteStyle} instead.
 - Category guidance: ${quirk.categoryHints}.
 - Choose nicknames that fit the story's tone, genre, and world — avoid modern clichés in historical/fantasy settings.
@@ -8772,6 +8897,12 @@ HARD LIMITS: Effects must destabilize systems, not annihilate them. Regime bends
     const temptFateThisTurn = state.tempt_fate_invoked_this_turn;
     const volActive = state.volatility_window?.active;
     if (!temptFateThisTurn && !volActive) return '';
+
+    // Petition-only volatility: lighter world-law nudge instead of full Tempt Fate block
+    const isPetitionOnly = volActive && !temptFateThisTurn && state.volatility_window?.source === 'petition';
+    if (isPetitionOnly) {
+      return `\nPETITION WORLD-LAW RESIDUE: The petition's influence lingers as atmospheric background pressure — a faint statistical lean, not a rupture. Probability may bend by a hair. No collateral. No systemic destabilization. No visible rupture. Bystanders notice nothing. This is not Tempt Fate.\n`;
+    }
 
     const world = state.picks?.world || 'Modern';
     const mode = WORLD_TEMPT_FATE_MODE[world] || 'probability';
@@ -16313,13 +16444,19 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   ];
 
   function classifyPetition(text) {
+      // Structural override — cosmetic/identity/social pivots (checked first)
+      if (/\b(call\s+me|my\s+name\s+is|rename|nickname|go\s+by|known\s+as|change\s+(my|her|his|their)\s+(name|hair|eye|look|appearance|style|outfit|clothes)|dye\s+(my|her|his|their)\s+hair|cut\s+(my|her|his|their)\s+hair|new\s+look|makeover|title\s+is|address\s+me\s+as)\b/i.test(text)) {
+          return 'structural_override';
+      }
       const categories = [
           { cat: 'resurrection', rx: /\b(resurrect|revive|bring\s+back\s+from\s+dead|raise\s+the\s+dead|return\s+from\s+death)\b/i },
           { cat: 'reversal',    rx: /\b(reverse|revert|undo|unmake|turn\s+back\s+time)\b/i },
           { cat: 'harm',        rx: /\b(destroy|kill|curse|ruin|break|shatter|smite|betray)\b/i },
           { cat: 'power',       rx: /\b(power|control|dominate|rule|command|throne|reign)\b/i },
           { cat: 'escape',      rx: /\b(escape|flee|freedom|liberate|break\s+free|release)\b/i },
-          { cat: 'love',        rx: /\b(love|heart|desire|passion|devotion|adore|romance|together)\b|force\s.*together|make\s.*fall/i },
+          { cat: 'attention',   rx: /\b(notic|attention|look\s+at|see\s+me|watch|gaze|eye|glance)\b/i },
+          { cat: 'closeness',   rx: /\b(close|near|touch|hold|together|beside|proximity|closer)\b/i },
+          { cat: 'love',        rx: /\b(love|heart|desire|passion|devotion|adore|romance)\b|force\s.*together|make\s.*fall/i },
           { cat: 'memory',      rx: /\b(memory|remember|forget|past|recall|nostalgia)\b/i },
           { cat: 'protection',  rx: /\b(protect|shield|guard|defend|safe|ward|sanctuary)\b/i },
           { cat: 'fortune',     rx: /\b(fortune|wealth|luck|treasure|prosper|gold|riches)\b/i },
@@ -16331,45 +16468,64 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       return 'general';
   }
 
-  const PETITION_COST_FALLBACKS = {
-      appearance: 'a mirror that remembers your true face',
-      love: 'a night you spent together that neither will recall',
-      power: 'a name whispered in fear of you',
-      escape: 'the door you came through, sealed forever',
-      memory: 'a voice you will no longer recognize',
-      resurrection: 'a year of sunlight, given to shadow',
-      protection: 'the scar that kept you cautious',
-      fortune: 'a friendship weighed in gold',
-      harm: 'your own reflection, cracked and watching',
-      reversal: 'the moment you would have changed your mind',
-      general: 'a certainty you will never recover',
-  };
+  function validatePetitionText(text) {
+      if (!text || text.length < 5) return { valid: false };
+      if (text.length > 500) return { valid: false };
 
-  async function generateFateCostHint(petitionText, category) {
-      try {
-          if (!window.StoryboundOrchestration) throw new Error('No orchestration');
-          const messages = [
-              { role: 'system', content: 'You are Fate — ancient, cryptic, poetic. Respond with ONLY a short noun phrase (3-10 words) describing a tangible, personal cost fate demands. No sentences. No verbs. No quotation marks. Examples: "a memory of your mother\'s voice", "the warmth in your left hand", "a door you can never reopen".' },
-              { role: 'user', content: `The petitioner asks for something related to "${category}". Their words: "${petitionText.slice(0, 200)}". What does Fate demand in return?` }
-          ];
-          const result = await window.StoryboundOrchestration.callChatGPT(
-              messages, 'PRIMARY_AUTHOR', { temperature: 0.9, max_tokens: 40 }
-          );
-          const hint = (result?.choices?.[0]?.message?.content || '').trim().replace(/^["']|["']$/g, '').toLowerCase();
-          if (!hint || hint.length < 3 || hint.length > 120) throw new Error('bad hint');
-          return hint;
-      } catch (e) {
-          console.warn('[petition] LLM hint failed, using fallback:', e.message);
-          return PETITION_COST_FALLBACKS[category] || PETITION_COST_FALLBACKS.general;
+      // Gibberish: fewer than 2 real English words (4+ chars)
+      const words = text.split(/\s+/).filter(w => /^[a-zA-Z]{4,}$/.test(w));
+      if (words.length < 2) return { valid: false };
+
+      // Coercive non-consensual mind control
+      if (/\b(make\s+(him|her|them)\s+(love|obey|submit|surrender)|mind\s*control|force\s+(him|her|them)\s+to|brainwash|hypnoti[sz]e\s+(him|her|them)\s+into)\b/i.test(text)) {
+          return { valid: false };
       }
+
+      // Sexual vulgarity beyond tone gate (explicit acts)
+      if (/\b(fuck|cock|pussy|cum|dick|anal|blowjob|handjob)\b/i.test(text)) {
+          const tone = (typeof state !== 'undefined' && state.intensity) || 'Steamy';
+          if (tone === 'Clean' || tone === 'Naughty') return { valid: false };
+      }
+
+      return { valid: true };
   }
 
-  function computeOfferingMatch(hintText, offeringText) {
-      const extractWords = (t) => t.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 3);
-      const hintWords = new Set(extractWords(hintText));
-      const offerWords = extractWords(offeringText);
-      if (hintWords.size === 0 || offerWords.length === 0) return false;
-      return offerWords.some(w => hintWords.has(w));
+  function validateStructuralOverride(text) {
+      // Profanity / slur names
+      if (/\b(fuck|shit|bitch|cunt|dick|ass|damn|hell|bastard|whore|slut|retard|fagg?ot|nig)/i.test(text)) {
+          return { valid: false, reason: 'profanity' };
+      }
+      // Meme / joke names (internet memes, gibberish identities)
+      if (/\b(deez\s*nuts|ligma|sugma|joe\s+mama|harambe|shrek|sussy|amogus|rizz\s+lord|skibidi)\b/i.test(text)) {
+          return { valid: false, reason: 'meme' };
+      }
+      // Genre-breaking real-world celebrity / fictional IP names
+      if (/\b(elon\s+musk|taylor\s+swift|trump|obama|batman|superman|goku|naruto|harry\s+potter|darth\s+vader)\b/i.test(text)) {
+          return { valid: false, reason: 'ip_breach' };
+      }
+      return { valid: true };
+  }
+
+  function resolvePetitionAcceptance(favorsOffered, classification) {
+      // Structural overrides auto-accept (cosmetic/identity changes are always plausible)
+      if (classification === 'structural_override') return true;
+
+      const petitionStrength = Math.min(favorsOffered / 40, 1);
+
+      // Feasibility factor — lower for reality-breaking, higher for subtle shifts
+      const lowFeasibility = ['resurrection', 'reversal', 'harm', 'power'];
+      const highFeasibility = ['attention', 'love', 'closeness', 'protection', 'fortune', 'memory', 'appearance'];
+      let feasibilityFactor = 0.7; // default for 'general' and 'escape'
+      if (lowFeasibility.includes(classification)) feasibilityFactor = 0.4;
+      if (highFeasibility.includes(classification)) feasibilityFactor = 0.9;
+
+      // Zero favors: auto-accept low-stakes, likely reject high-impact
+      if (favorsOffered === 0) {
+          if (highFeasibility.includes(classification)) return Math.random() < 0.3;
+          return false;
+      }
+
+      return Math.random() < petitionStrength * feasibilityFactor;
   }
 
   function canAttemptGreaterPetition() {
@@ -16379,7 +16535,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       return true;
   }
 
-  function resolveFateOutcome(stance, classification, sacrificeChoice) {
+  function resolveFateOutcome(stance, classification) {
       let weights;
       if (classification !== 'general' && !canAttemptGreaterPetition()) {
           weights = { benevolent: 10, twist: 60, silent: 30 };
@@ -16391,8 +16547,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           };
           weights = { ...(stanceWeights[stance] || stanceWeights.neutral) };
       }
-      if (sacrificeChoice === 'offer') weights.benevolent = (weights.benevolent || 0) + 10;
-      if (sacrificeChoice === 'withhold') weights.twist = (weights.twist || 0) + 10;
 
       // Keyhole Boon — Favored reservoir drain boosts benevolent weight
       if (state.keyhole?.marked && state.keyhole.favorReservoir > 0 && !state.keyhole.boonUsedThisScene) {
@@ -16453,9 +16607,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           state._loggedPetitionOpen = true;
       }
 
-      // Clear ritual state
-      delete state._petitionRitual;
-
       // Store original DOM position for restoration
       _petitionZoomOriginalParent = card.parentNode;
       _petitionZoomOriginalNextSibling = card.nextElementSibling;
@@ -16507,19 +16658,50 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const overlay = document.createElement('div');
       overlay.className = 'petition-zoom-overlay';
       overlay.innerHTML = `
-          <h3 class="petition-ritual-title">Petition Fate</h3>
-          <p class="petition-ritual-subtitle">Speak your desire. Fate may honor, twist, or ignore it.</p>
+          <div class="petition-suggest-panel">
+              <div class="petition-suggest-col">
+                  <div class="petition-suggest-header">Surface Changes</div>
+                  <div class="petition-suggest-list">
+                      <div class="petition-suggest-item" data-suggest="Change his name to Dan">Change his name to Dan</div>
+                      <div class="petition-suggest-item" data-suggest="Ban the word Moist">Ban the word &ldquo;Moist&rdquo;</div>
+                      <div class="petition-suggest-item" data-suggest="Make her blonde">Make her blonde</div>
+                      <div class="petition-suggest-item" data-suggest="Change my hairstyle">Change my hairstyle</div>
+                      <div class="petition-suggest-item" data-suggest="Change my outfit">Change my outfit</div>
+                      <div class="petition-suggest-item" data-suggest="Stop the teasing nickname">Stop the teasing nickname</div>
+                      <div class="petition-suggest-item" data-suggest="No tattoos">No tattoos</div>
+                      <div class="petition-suggest-item" data-suggest="Make her wear glasses">Make her wear glasses</div>
+                      <div class="petition-suggest-item" data-suggest="Give him a Scottish accent">Give him a Scottish accent</div>
+                  </div>
+              </div>
+              <div class="petition-suggest-col">
+                  <div class="petition-suggest-header">Plot Shifts</div>
+                  <div class="petition-suggest-list">
+                      <div class="petition-suggest-item" data-suggest="Let him notice me">Let him notice me</div>
+                      <div class="petition-suggest-item" data-suggest="Give me a second chance">Give me a second chance</div>
+                      <div class="petition-suggest-item" data-suggest="Let the argument cool down">Let the argument cool down</div>
+                      <div class="petition-suggest-item" data-suggest="Let the message arrive in time">Let the message arrive in time</div>
+                      <div class="petition-suggest-item" data-suggest="Let the door be unlocked">Let the door be unlocked</div>
+                      <div class="petition-suggest-item" data-suggest="Make her reconsider">Make her reconsider</div>
+                      <div class="petition-suggest-item" data-suggest="Let them not see us">Let them not see us</div>
+                      <div class="petition-suggest-item" data-suggest="Steamy sauna scene">Steamy sauna scene</div>
+                      <div class="petition-suggest-item" data-suggest="Give us a private moment">Give us a private moment</div>
+                      <div class="petition-suggest-item" data-suggest="Let him ache for me">Let him ache for me</div>
+                  </div>
+              </div>
+          </div>
           <div class="petition-field-wrap">
-              <textarea id="petitionZoomInput" rows="3" class="petition-ritual-field" placeholder=""></textarea>
+              <textarea id="petitionZoomInput" rows="2" class="petition-ritual-field" placeholder=""></textarea>
               <div class="rotating-placeholder textarea-placeholder" data-for="petitionZoomInput"></div>
           </div>
-          <button id="petitionZoomSeal" class="petition-ritual-btn">Seal Petition</button>
-          <div id="petitionZoomCostHint" class="petition-cost-hint hidden"></div>
-          <div id="petitionZoomOfferingWrap" class="petition-field-wrap hidden">
-              <textarea id="petitionZoomOffering" rows="2" class="petition-ritual-field" placeholder="What do you offer in return?"></textarea>
+          <div class="petition-microtext">Surface changes are granted. Plot shifts depend on Fortune.</div>
+          <div class="petition-fortune-tiers" id="petitionFortuneTiers">
+              <button class="petition-tier-btn" data-tier="5"><span class="petition-tier-name">Whisper</span><span class="petition-tier-cost">5</span></button>
+              <button class="petition-tier-btn" data-tier="15"><span class="petition-tier-name">Nudge</span><span class="petition-tier-cost">15</span></button>
+              <button class="petition-tier-btn" data-tier="25"><span class="petition-tier-name">Pull</span><span class="petition-tier-cost">25</span></button>
+              <button class="petition-tier-btn" data-tier="35"><span class="petition-tier-name">Bend</span><span class="petition-tier-cost">35</span></button>
+              <button class="petition-tier-btn" data-tier="40"><span class="petition-tier-name">Nearly Certain</span><span class="petition-tier-cost">40</span></button>
           </div>
-          <button id="petitionZoomOfferBtn" class="petition-ritual-btn hidden">Offer It</button>
-          <div id="petitionZoomOmen" class="petition-omen hidden"></div>
+          <button id="petitionZoomSeal" class="petition-ritual-btn">Petition Fate</button>
           <div id="petitionZoomResult" class="petition-result hidden"></div>
           <button id="petitionZoomClose" class="petition-close-btn">Close</button>
       `;
@@ -16534,14 +16716,117 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           initRotatingPlaceholder('petitionZoomInput', 'petition');
       }
 
+      // Init suggestion click handlers — populate textarea on click
+      overlay.querySelectorAll('.petition-suggest-item').forEach(item => {
+          item.addEventListener('click', () => {
+              const input = document.getElementById('petitionZoomInput');
+              if (input && !input.readOnly) {
+                  input.value = item.dataset.suggest;
+                  input.focus();
+                  // Clear rotating placeholder
+                  const rp = overlay.querySelector('.rotating-placeholder[data-for="petitionZoomInput"]');
+                  if (rp) rp.style.display = 'none';
+              }
+          });
+      });
+
+      // Init fortune tier selector
+      let _petitionFortunes = 0;
+      const tierBtns = overlay.querySelectorAll('.petition-tier-btn');
+
+      function _refreshTierAvailability() {
+          const bal = state.fortunes || 0;
+          let activeDeselected = false;
+          tierBtns.forEach(btn => {
+              const tierCost = parseInt(btn.dataset.tier, 10);
+              const wasDisabled = btn.classList.contains('sb-tier-disabled');
+              const shouldDisable = tierCost > bal;
+              if (shouldDisable && !wasDisabled) {
+                  btn.classList.add('sb-tier-disabled');
+                  btn.disabled = true;
+                  // Auto-deselect if currently active and now unaffordable
+                  if (btn.classList.contains('petition-tier-active')) {
+                      btn.classList.remove('petition-tier-active');
+                      activeDeselected = true;
+                  }
+              } else if (!shouldDisable && wasDisabled) {
+                  btn.classList.remove('sb-tier-disabled');
+                  btn.disabled = false;
+              }
+          });
+          // If active tier was deselected, fall back to highest affordable
+          if (activeDeselected) {
+              let fallback = null;
+              tierBtns.forEach(btn => {
+                  const c = parseInt(btn.dataset.tier, 10);
+                  if (c <= bal && (!fallback || c > parseInt(fallback.dataset.tier, 10))) fallback = btn;
+              });
+              if (fallback) {
+                  fallback.classList.add('petition-tier-active');
+                  _petitionFortunes = parseInt(fallback.dataset.tier, 10);
+              } else {
+                  _petitionFortunes = 0;
+              }
+          }
+      }
+
+      // Initial pass
+      _refreshTierAvailability();
+
+      tierBtns.forEach(btn => {
+          const tierCost = parseInt(btn.dataset.tier, 10);
+          btn.addEventListener('click', () => {
+              // Soft-disabled: show subtle tooltip, no state mutation
+              if (btn.classList.contains('sb-tier-disabled')) {
+                  let tip = btn.querySelector('.petition-tier-tooltip');
+                  if (!tip) {
+                      tip = document.createElement('span');
+                      tip.className = 'petition-tier-tooltip';
+                      tip.textContent = 'Not enough Fortune.';
+                      btn.appendChild(tip);
+                  }
+                  tip.classList.add('visible');
+                  setTimeout(() => tip.classList.remove('visible'), 1200);
+                  return;
+              }
+              // Toggle: clicking active tier deselects (back to 0)
+              if (btn.classList.contains('petition-tier-active')) {
+                  btn.classList.remove('petition-tier-active');
+                  _petitionFortunes = 0;
+                  return;
+              }
+              tierBtns.forEach(b => b.classList.remove('petition-tier-active'));
+              btn.classList.add('petition-tier-active');
+              _petitionFortunes = tierCost;
+          });
+      });
+
       // Focus input after transition
       setTimeout(() => document.getElementById('petitionZoomInput')?.focus(), 300);
 
-      // ── Seal Petition handler ──
-      document.getElementById('petitionZoomSeal')?.addEventListener('click', async () => {
+      // ── Petition Fate (Seal) handler ──
+      document.getElementById('petitionZoomSeal')?.addEventListener('click', () => {
           const input = document.getElementById('petitionZoomInput');
           const text = input?.value?.trim();
           if (!text) return;
+
+          // Validate petition text
+          const validation = validatePetitionText(text);
+          if (!validation.valid) {
+              if (typeof showToast === 'function') showToast('You feel a deafening silence.');
+              return;
+          }
+
+          const classification = classifyPetition(text);
+
+          // Structural override plausibility gate
+          if (classification === 'structural_override') {
+              const soCheck = validateStructuralOverride(text);
+              if (!soCheck.valid) {
+                  if (typeof showToast === 'function') showToast('You feel a deafening silence.');
+                  return;
+              }
+          }
 
           // Enforce 1 petition per scene
           if (state.petitionUsedThisScene) {
@@ -16549,8 +16834,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               return;
           }
 
-          const classification = classifyPetition(text);
-          const isGreater = classification !== 'general';
+          const isGreater = classification !== 'general' && classification !== 'structural_override';
 
           if (!isGreater && state.fate?.minorUsedThisScene) {
               if (typeof showToast === 'function') showToast('You have already petitioned Fate this scene.');
@@ -16561,73 +16845,58 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               return;
           }
 
+          const favorsOffered = _petitionFortunes;
+
+          // Set per-scene flags
+          state.petitionUsedThisScene = true;
+          if (!isGreater) state.fate.minorUsedThisScene = true;
+          if (isGreater) {
+              state.fate.greaterUsedThisScene = true;
+              state.fate.lastGreaterSceneIndex = state.turnCount;
+          }
+          const stIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+          if (isGreater && stIdx < 4) {
+              state.fate.earlyGamingCount++;
+          }
+
+          // Activate volatility window — skip for structural overrides (cosmetic, no world distortion)
+          if (classification !== 'structural_override') {
+              const severity = computeTemptFateSeverity();
+              state.volatility_window = {
+                  active: true,
+                  severity,
+                  remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3,
+                  source: 'petition'
+              };
+          }
+
+          // Stage petition — outcome resolved at Submit time
+          state.fate.pendingPetition = { text, classification, favorsOffered, accepted: null };
+
+          // Telemetry: petition submitted (once per story)
+          if (!state._loggedPetitionSubmit) {
+              try { logEvent('petition_submitted', { tone: state.picks?.tone, world: state.picks?.world }); } catch(_){}
+              state._loggedPetitionSubmit = true;
+          }
+
+          // Invalidate speculative scene so fresh generation includes petition
+          if (typeof invalidateSpeculativeScene === 'function') invalidateSpeculativeScene();
+
+          // Show result
+          const zoomResultEl = document.getElementById('petitionZoomResult');
+          if (zoomResultEl) {
+              zoomResultEl.textContent = 'Your petition has been sealed.';
+              zoomResultEl.classList.remove('hidden');
+              zoomResultEl.classList.add('fade-in');
+          }
+
           input.readOnly = true;
           const sealBtn = document.getElementById('petitionZoomSeal');
           if (sealBtn) { sealBtn.disabled = true; sealBtn.classList.add('hidden'); }
-          disableTurnControls();
 
-          state._petitionRitual = { text, classification, isGreater };
-
-          const hint = await generateFateCostHint(text, classification);
-          state._petitionRitual.hint = hint;
-
-          const hintEl = document.getElementById('petitionZoomCostHint');
-          if (hintEl) {
-              hintEl.textContent = `Fate demands a price: ${hint}...`;
-              hintEl.classList.remove('hidden');
-              requestAnimationFrame(() => hintEl.classList.add('fade-in'));
-          }
-
+          // Close zoom after 1.5s
           setTimeout(() => {
-              document.getElementById('petitionZoomOfferingWrap')?.classList.remove('hidden');
-              document.getElementById('petitionZoomOfferBtn')?.classList.remove('hidden');
-              document.getElementById('petitionZoomOffering')?.focus();
-          }, 1200);
-      });
-
-      // ── Offer It handler ──
-      document.getElementById('petitionZoomOfferBtn')?.addEventListener('click', async () => {
-          const offeringInput = document.getElementById('petitionZoomOffering');
-          const offeringText = offeringInput?.value?.trim() || '';
-          const ritual = state._petitionRitual;
-          if (!ritual) return;
-
-          if (offeringInput) offeringInput.readOnly = true;
-          const offerBtn = document.getElementById('petitionZoomOfferBtn');
-          if (offerBtn) { offerBtn.disabled = true; offerBtn.classList.add('hidden'); }
-          document.getElementById('petitionZoomClose')?.classList.add('hidden');
-
-          const matched = offeringText && ritual.hint && computeOfferingMatch(ritual.hint, offeringText);
-          const offerBoost = matched ? 0.05 : 0;
-
-          // Sacrifice-aware omen: reflects cost/offering symbolically
-          const omenEl = document.getElementById('petitionZoomOmen');
-          const omen = await generateSacrificeAwareOmen(ritual.hint, offeringText, ritual.classification);
-          if (omenEl) {
-              omenEl.textContent = omen;
-              omenEl.classList.remove('hidden');
-              requestAnimationFrame(() => omenEl.classList.add('fade-in'));
-          }
-
-          // Stash rich data for pendingPetition
-          ritual.offeringText = offeringText;
-          ritual.omen = omen;
-
-          // Activate volatility window from petition
-          const severity = computeTemptFateSeverity();
-          state.volatility_window = {
-              active: true,
-              severity,
-              remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3
-          };
-
-          setTimeout(() => {
-              completePetitionRitual(
-                  ritual.text,
-                  ritual.classification,
-                  offeringText ? 'offer' : 'letfate',
-                  offerBoost
-              );
+              closePetitionZoom();
           }, 1500);
       });
 
@@ -16682,108 +16951,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       _petitionZoomCard = null;
 
       enableTurnControls();
-  }
-
-  async function completePetitionRitual(text, classification, sacrificeChoice, offerBoost = 0, petitionCost = 1) {
-      const resultEl = document.getElementById('petitionResult');
-
-      const isGreater = classification !== 'general';
-
-      // Burn fortunes for petition (max narrative tilt capped at 20%)
-      if (petitionCost > 0) {
-          const burned = await consumeFortune(petitionCost, 'petition');
-          if (!burned) {
-              if (resultEl) {
-                  resultEl.textContent = 'Insufficient Fortunes to petition Fate.';
-                  resultEl.classList.remove('hidden');
-              }
-              enableTurnControls();
-              return;
-          }
-      }
-      state.petitionUsedThisScene = true;
-
-      // Warm welcome: first petition ever → force benevolent general
-      const isFirst = state.fate && !state.fate.lastGreaterSceneIndex && !state.fate.minorUsedThisScene && !state.fate.greaterUsedThisScene;
-      let outcome;
-      if (isFirst && !isGreater) {
-          outcome = 'benevolent';
-      } else {
-          outcome = resolveFateOutcome(state.fate?.stance || 'neutral', classification, sacrificeChoice);
-      }
-
-      // Update keyhole alignment based on petition outcome
-      updateKeyholeAlignment(outcome, sacrificeChoice);
-
-      // Advance omen decay based on petition behavior
-      advanceOmenDecay(sacrificeChoice);
-      if (isGreater && state.omen) {
-        state.omen.lastGreaterPetitionCount = (state.omen.lastGreaterPetitionCount || 0) + 1;
-      }
-
-      if (!isGreater) state.fate.minorUsedThisScene = true;
-      if (isGreater) {
-          state.fate.greaterUsedThisScene = true;
-          state.fate.lastGreaterSceneIndex = state.turnCount;
-      }
-
-      const stIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
-      if (isGreater && stIdx < 4) {
-          state.fate.earlyGamingCount++;
-      }
-
-      const resultTexts = {
-          benevolent: "The threads of Fate bend toward your will.",
-          twist: "Fate hears you... but the threads tangle.",
-          silent: "Fate acknowledges your words, but remains unmoved.",
-          neutral: "The weave absorbs your petition quietly."
-      };
-
-      if (resultEl) {
-          resultEl.textContent = resultTexts[outcome] || resultTexts.neutral;
-          resultEl.classList.remove('hidden');
-          resultEl.classList.add('fade-in');
-      }
-
-      // Also write result to zoom overlay if present
-      const zoomResultEl = document.getElementById('petitionZoomResult');
-      if (zoomResultEl) {
-          zoomResultEl.textContent = resultTexts[outcome] || resultTexts.neutral;
-          zoomResultEl.classList.remove('hidden');
-          zoomResultEl.classList.add('fade-in');
-      }
-
-      state.fate.pendingPetition = {
-          text,
-          classification,
-          outcome,
-          sacrificeChoice,
-          offeringText: state._petitionRitual?.offeringText || '',
-          costHint: state._petitionRitual?.hint || '',
-          omen: state._petitionRitual?.omen || '',
-          intensity: state.intensity || 'Steamy'
-      };
-
-      // Telemetry: petition submitted (once per story)
-      if (!state._loggedPetitionSubmit) {
-          try { logEvent('petition_submitted', { tone: state.picks?.tone, world: state.picks?.world }); } catch(_){}
-          state._loggedPetitionSubmit = true;
-      }
-
-      const ritualHtml = `<div class="petition-ritual-block" style="color:var(--gold); font-style:italic; border-left:3px solid var(--gold); padding-left:12px; margin:15px 0;"><em>${resultTexts[outcome] || resultTexts.neutral}</em></div>`;
-      if (typeof StoryPagination !== 'undefined' && StoryPagination.appendToCurrentPage) {
-          StoryPagination.appendToCurrentPage(ritualHtml);
-      }
-
-      setTimeout(() => {
-          // Close via zoom if active, otherwise fall back to old modal
-          if (_petitionZoomCard) {
-              closePetitionZoom();
-          } else {
-              document.getElementById('petitionFateModal')?.classList.add('hidden');
-          }
-          enableTurnControls();
-      }, 2000);
   }
 
   // --- FATE HAND SYSTEM (Replaces pill system) ---
@@ -17150,7 +17317,7 @@ This is narrative pressure only.`;
       anti_repetition_modifiers: (state._recentFocalObjects || []).slice(-3),
       tone: state.picks?.tone || 'Earnest',
       petition_text: state.fate?.pendingPetition?.text || null,
-      sacrifice_type: state.fate?.pendingPetition?.sacrificeChoice || null,
+
       fate_phase: fatePhase,
       fate_stance_weights: fateStanceWeights,
       minor_used_this_scene: state.fate?.minorUsedThisScene || false,
@@ -20267,17 +20434,39 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // (Quill & Veto game modal handlers removed — replaced by Petition Fate)
 
 
-  // Petition Fate submit handler
-  // ── Petition Ritual: Seal Petition handler ──
-  $('btnSealPetition')?.addEventListener('click', async () => {
+  // Petition Fate submit handler (old modal fallback path)
+  // ── Petition: Seal handler ──
+  $('btnSealPetition')?.addEventListener('click', () => {
       const input = document.getElementById('petitionInput');
       const text = input?.value?.trim();
       if (!text) return;
 
-      const classification = classifyPetition(text);
-      const isGreater = classification !== 'general';
+      // Validate petition text
+      const validation = validatePetitionText(text);
+      if (!validation.valid) {
+          if (typeof showToast === 'function') showToast('You feel a deafening silence.');
+          return;
+      }
 
-      // Gate: duplicate petition check
+      const classification = classifyPetition(text);
+
+      // Structural override plausibility gate
+      if (classification === 'structural_override') {
+          const soCheck = validateStructuralOverride(text);
+          if (!soCheck.valid) {
+              if (typeof showToast === 'function') showToast('You feel a deafening silence.');
+              return;
+          }
+      }
+
+      // Enforce 1 petition per scene
+      if (state.petitionUsedThisScene) {
+          if (typeof showToast === 'function') showToast('You have already petitioned Fate this scene.');
+          return;
+      }
+
+      const isGreater = classification !== 'general' && classification !== 'structural_override';
+
       if (!isGreater && state.fate?.minorUsedThisScene) {
           if (typeof showToast === 'function') showToast('You have already petitioned Fate this scene.');
           return;
@@ -20287,73 +20476,50 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           return;
       }
 
-      // Lock petition field
+      // Set per-scene flags
+      state.petitionUsedThisScene = true;
+      if (!isGreater) state.fate.minorUsedThisScene = true;
+      if (isGreater) {
+          state.fate.greaterUsedThisScene = true;
+          state.fate.lastGreaterSceneIndex = state.turnCount;
+      }
+      const stIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+      if (isGreater && stIdx < 4) {
+          state.fate.earlyGamingCount++;
+      }
+
+      // Activate volatility window — skip for structural overrides (cosmetic, no world distortion)
+      if (classification !== 'structural_override') {
+          const severity = computeTemptFateSeverity();
+          state.volatility_window = {
+              active: true,
+              severity,
+              remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3,
+              source: 'petition'
+          };
+      }
+
+      // Stage petition — outcome resolved at Submit time (0 favors from old modal)
+      state.fate.pendingPetition = { text, classification, favorsOffered: 0, accepted: null };
+
+      // Invalidate speculative scene
+      if (typeof invalidateSpeculativeScene === 'function') invalidateSpeculativeScene();
+
+      // Show result
+      const resultEl = document.getElementById('petitionResult');
+      if (resultEl) {
+          resultEl.textContent = 'Your petition has been sealed.';
+          resultEl.classList.remove('hidden');
+          resultEl.classList.add('fade-in');
+      }
+
       input.readOnly = true;
       const sealBtn = $('btnSealPetition');
       if (sealBtn) { sealBtn.disabled = true; sealBtn.classList.add('hidden'); }
-      disableTurnControls();
 
-      // Store for later
-      state._petitionRitual = { text, classification, isGreater };
-
-      // Generate cost hint (async LLM with fallback)
-      const hint = await generateFateCostHint(text, classification);
-      state._petitionRitual.hint = hint;
-
-      // Show hint
-      const hintEl = $('petitionCostHint');
-      if (hintEl) {
-          hintEl.textContent = `Fate demands a price: ${hint}...`;
-          hintEl.classList.remove('hidden');
-          requestAnimationFrame(() => hintEl.classList.add('fade-in'));
-      }
-
-      // Activate offering field after hint visible
       setTimeout(() => {
-          $('petitionOfferingWrap')?.classList.remove('hidden');
-          $('btnOfferIt')?.classList.remove('hidden');
-          document.getElementById('petitionOffering')?.focus();
-      }, 1200);
-  });
-
-  // ── Petition Ritual: Offer It handler ──
-  $('btnOfferIt')?.addEventListener('click', () => {
-      const offeringInput = document.getElementById('petitionOffering');
-      const offeringText = offeringInput?.value?.trim() || '';
-      const ritual = state._petitionRitual;
-      if (!ritual) return;
-
-      // Lock offering field
-      if (offeringInput) offeringInput.readOnly = true;
-      const offerBtn = $('btnOfferIt');
-      if (offerBtn) { offerBtn.disabled = true; offerBtn.classList.add('hidden'); }
-      $('btnClosePetition')?.classList.add('hidden');
-
-      // Compute semantic match → subtle power boost
-      const matched = offeringText && ritual.hint && computeOfferingMatch(ritual.hint, offeringText);
-      const offerBoost = matched ? 0.05 : 0;
-
-      // Omen preview
-      const omenEl = $('petitionOmen');
-      const omen = generateOmen();
-      if (omenEl) {
-          omenEl.textContent = omen;
-          omenEl.classList.remove('hidden');
-          requestAnimationFrame(() => omenEl.classList.add('fade-in'));
-      }
-
-      // Stash rich data for pendingPetition
-      ritual.offeringText = offeringText;
-      ritual.omen = omen;
-
-      // Complete ritual after omen visible
-      setTimeout(() => {
-          completePetitionRitual(
-              ritual.text,
-              ritual.classification,
-              offeringText ? 'offer' : 'letfate',
-              offerBoost
-          );
+          document.getElementById('petitionFateModal')?.classList.add('hidden');
+          enableTurnControls();
       }, 1500);
   });
 
@@ -30307,14 +30473,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     }
 
     // Face selectors for multi-face card types
-    var FACE_SELECTORS = '.sb-card-face, .authorship-card-face, .mode-card-back, .mode-card-front, .tier-card-back, .tier-card-face';
+    var FACE_SELECTORS = '.sb-card-face, .authorship-card-face, .mode-card-back, .mode-card-front, .tier-card-back, .tier-card-face, .pact-card-back, .pact-card-front';
 
     // Card types that ARE their own face (no child face elements)
     var SELF_FACE_CLASSES = ['character-tarot-card'];
 
     /**
      * Apply gleam to a single card element. Idempotent.
-     * Works on .sb-card, .authorship-card, .mode-card, .tier-card, .character-tarot-card.
+     * Works on .sb-card, .authorship-card, .mode-card, .tier-card, .character-tarot-card, .pact-card.
      */
     function applyCardGleam(card) {
       if (!card || card.dataset.gleamApplied) return;
@@ -30360,7 +30526,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     /** Bulk-apply to all card elements in the DOM. */
     function initAllCardGleams() {
-      document.querySelectorAll('.sb-card, .authorship-card, .mode-card, .tier-card, .character-tarot-card').forEach(applyCardGleam);
+      document.querySelectorAll('.sb-card, .authorship-card, .mode-card, .tier-card, .character-tarot-card, .pact-card').forEach(applyCardGleam);
     }
 
     // Expose globally for dynamic card creation
@@ -37230,6 +37396,7 @@ ${text.slice(0, 800)}`}]);
         // Use pagination system for story display
         StoryPagination.init();
         StoryPagination.clear();
+        text = trimToCompleteSentence(text);
         StoryPagination.addPage(formatStory(text), true);
 
         // Title page — universal front page before map/setting/scene
@@ -43329,7 +43496,7 @@ Condensed (under ${maxLength} chars):` }
       const protagonistGender = state.gender || 'Female';
       const liGender = state.loveInterest || 'Male';
       const world = state.picks?.world || 'Modern';
-      const archetype = ARCHETYPES[state.archetype?.primary]?.name || 'The Beautiful Ruin';
+      const archSummary = ARCHETYPES[state.archetype?.primary]?.summary || '';
 
       // Characters from visual bible (if available)
       const characters = state.visual?.bible?.characters || {};
@@ -43357,11 +43524,12 @@ ${recentScene.slice(-400)}
 STORY PARAMETERS:
 - Tone: ${tone}
 - World: ${world}
-- Protagonist: ${protagonistGender} with ${archetype} archetype
+- Protagonist: ${protagonistGender}
+- Love Interest behavioral profile: ${archSummary}
 - Love Interest: ${liGender} (use ${liGender === 'Male' ? 'he/him' : liGender === 'Female' ? 'she/her' : 'they/them'} pronouns)
 - Characters present: ${charNames}
 
-PRONOUN RULE: Use correct pronouns for the Love Interest. Never use archetype labels (Storybeau, Storybelle, Storyboo) in any output.
+PRONOUN RULE: Use correct pronouns for the Love Interest. Never use archetype labels (Storybeau, Storybelle, Storyboo) or archetype titles in any output.
 
 TASK: Generate TWO short, contextual previews that fit THIS EXACT SCENE:
 1. "Do" — A specific physical action the protagonist could take RIGHT NOW (max 12 words)
@@ -44281,20 +44449,32 @@ If both main characters are present, render their tension and restraint ONLY —
 
       function getAdaptiveSceneBounds() {
         const isScene1 = (state.turnCount || 0) === 0;
+        let bounds;
         switch (state.pacingMode) {
           case 'IMMERSIVE':
-            return isScene1
+            bounds = isScene1
               ? { min: 1200, max: 1500, cap: 1500 }
               : { min: 1000, max: 1300, cap: 1500 };
+            break;
           case 'RAPID':
-            return isScene1
+            bounds = isScene1
               ? { min: 700, max: 900, cap: 900 }
               : { min: 600, max: 800, cap: 900 };
+            break;
           default: // HYBRID
-            return isScene1
+            bounds = isScene1
               ? { min: 900, max: 1100, cap: 1100 }
               : { min: 750, max: 950, cap: 1100 };
         }
+
+        // Petition-activated scene importance boost: +18% max/cap for linger + density
+        const importance = state._currentSceneImportance || 'medium';
+        if (importance === 'high' || importance === 'apex') {
+            bounds.max = Math.round(bounds.max * 1.18);
+            bounds.cap = Math.round(bounds.cap * 1.18);
+        }
+
+        return bounds;
       }
 
       function buildEroticModeDirective() {
@@ -44539,42 +44719,40 @@ FATE CARD ADAPTATION (CRITICAL):
       const vetoAmbient = state.constraints?.ambientMods?.length ? `VETO AMBIENT (apply if world allows): ${state.constraints.ambientMods.join('; ')}.` : '';
       const vetoRules = [vetoExclusions, vetoCorrections, vetoAmbient].filter(Boolean).join('\n');
 
-      // Build PETITION FATE directive — structural narrative intervention
-      let petitionDirective = '';
-      if (state.fate && state.fate.pendingPetition) {
+      // ═══════════════════════════════════════════════════════════════════
+      // PETITION FATE directive — favor-based, resolved at Submit time
+      // NOTE: petitionDirective is built AFTER sceneImportance so token
+      //       boost can read _currentSceneImportance reliably.
+      //       Actual directive text is assembled below, after volatility
+      //       window processing sets _currentSceneImportance.
+      // ═══════════════════════════════════════════════════════════════════
+      let _petitionResolved = null; // stash resolution for directive assembly after importance is set
+      state._petitionTokenBoost = 0;
+      state.coincidenceBias = 0;
+      if (state.fate && state.fate.pendingPetition && state.fate.pendingPetition.accepted === null) {
           const _p = state.fate.pendingPetition;
-          const _outcomeInstr = {
-              benevolent: 'HONOR this petition fully. The story must shift to grant the petitioner\'s desire. Make it feel earned, not free.',
-              twist: 'HONOR with a twist — the desire is granted but at unexpected cost or in a form the petitioner did not expect. The complication must be concrete and story-altering.',
-              silent: 'The petition is heard but NOT honored. However, acknowledge it subtly — a near-miss, a moment where it almost happened, a sign that Fate considered it.',
-              neutral: 'Weave the petition into the narrative texture. It should influence the scene\'s emotional register even if not directly fulfilled.'
-          };
-          const lines = [`PETITION FATE INTERVENTION (${_p.outcome.toUpperCase()})`];
-          lines.push(`Petition: "${_p.text}"`);
-          if (_p.costHint) lines.push(`Fate\'s Price: "${_p.costHint}"`);
-          if (_p.offeringText) lines.push(`Sacrifice Offered: "${_p.offeringText}"`);
-          if (_p.omen) lines.push(`Omen: "${_p.omen}"`);
-          lines.push('');
-          lines.push(_outcomeInstr[_p.outcome] || _outcomeInstr.neutral);
-          lines.push('RULES:');
-          if (_p.offeringText) {
-              lines.push('- The sacrifice MUST be acknowledged explicitly in the narrative — the character loses, gives up, or feels the cost.');
-              lines.push('- Integrate a concrete ripple tied to the offered sacrifice. It cannot vanish without consequence.');
+
+          // Resolve acceptance now
+          const accepted = resolvePetitionAcceptance(_p.favorsOffered, _p.classification);
+          _p.accepted = accepted;
+
+          // Coincidence bias scalar — consumed this turn only
+          const petitionStrength = Math.min(_p.favorsOffered / 40, 1);
+          state.coincidenceBias = accepted ? petitionStrength * 0.6 : 0;
+
+          // Fortune deduction: only if accepted OR petitionStrength > 0.25
+          if (accepted || petitionStrength > 0.25) {
+              if (_p.favorsOffered > 0) consumeFortune(_p.favorsOffered, 'petition');
           }
-          if (_p.costHint) {
-              lines.push(`- Fate demanded "${_p.costHint}" — this cost should echo in the scene, even if the petition is not honored.`);
+
+          // Update keyhole alignment + omen decay based on acceptance
+          updateKeyholeAlignment(accepted ? 'benevolent' : 'silent');
+          advanceOmenDecay();
+          if (_p.classification !== 'general' && state.omen) {
+              state.omen.lastGreaterPetitionCount = (state.omen.lastGreaterPetitionCount || 0) + 1;
           }
-          lines.push('- Escalate stakes or shift probability in a way the reader can feel.');
-          lines.push('- Do NOT treat this as flavor text. This is a forced narrative intervention.');
-          lines.push('- This petition is consumed after this turn. Do not carry it forward.');
-          lines.push('PETITION FATE IDENTITY (tone: "the world leaned"):');
-          lines.push('- Petition Fate is indirect, probabilistic, and plausibly coincidental. The world tilts — it does not obey.');
-          lines.push('- Effects are personal-scale and contained. One character\'s luck shifts. A door opens or closes. A timing changes. A letter arrives or doesn\'t.');
-          lines.push('- No systemic instability. No structural strain. No visible rupture. No guaranteed outcome.');
-          lines.push('- Bystanders do not notice. Institutions do not react. The world does not flinch.');
-          lines.push('- If the outcome could be described as "the world obeyed" or "reality intervened" — it is too large. That is Tempt Fate. Scale it down to private coincidence.');
-          lines.push('- Petition Fate may assist. It must never shock.');
-          petitionDirective = lines.join('\n');
+
+          _petitionResolved = { accepted, petitionStrength, text: _p.text, favorsOffered: _p.favorsOffered, classification: _p.classification };
       }
 
       // FATE RECALIBRATION CONSEQUENCE — surfaces effect from prior turn's corrective append
@@ -44672,7 +44850,8 @@ FATE CARD ADAPTATION (CRITICAL):
         state.volatility_window = {
           active: true,
           severity,
-          remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3
+          remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3,
+          source: 'tempt'
         };
         console.log(`[TEMPT_FATE] Invoked. Severity: ${severity}, Saturation: ${state.fate_saturation}, Consecutive: ${state.consecutive_tempt_fate_count}`);
       } else {
@@ -44714,6 +44893,48 @@ FATE CARD ADAPTATION (CRITICAL):
       }
       state._currentSceneImportance = sceneImportance;
 
+      // ═══════════════════════════════════════════════════════════════════
+      // PETITION DIRECTIVE ASSEMBLY — runs AFTER sceneImportance is set
+      // so token boost can read _currentSceneImportance reliably.
+      // ═══════════════════════════════════════════════════════════════════
+      let petitionDirective = '';
+      if (_petitionResolved) {
+          const _pr = _petitionResolved;
+          const _bias = state.coincidenceBias;
+
+          if (_pr.classification === 'structural_override') {
+              // ── STRUCTURAL OVERRIDE — cosmetic/identity/social pivot ──
+              // No token boost, no scene importance escalation
+              const soTwistChance = _pr.petitionStrength * 0.20;
+              const soIsTwist = Math.random() < soTwistChance;
+              const soTwistLine = soIsTwist
+                  ? `\nThe change takes hold, but surfaces in a socially complicated way — someone reacts unexpectedly, an old identity clings, or the new identity creates a small misunderstanding. The twist is social, not supernatural.`
+                  : '';
+              petitionDirective = `\nPETITION FATE (STRUCTURAL OVERRIDE${soIsTwist ? ' — TWISTED' : ''}):\nPetition: "${_pr.text}"\nThis is a cosmetic or identity change, not a world-altering event. Apply it as a social revelation or personal decision that the protagonist enacts within the scene — not a retcon, not a sudden magical transformation.\nThe change should feel like a character choosing to present differently, adopting a new name, or making a deliberate aesthetic shift. Other characters may notice and react naturally.\nDo not use world-law language. Do not bend probability. Do not invoke Fate. This is a personal act, not a supernatural event.${soTwistLine}\nThis petition is consumed after this turn.\n`;
+          } else {
+              // ── Standard petition (non-structural) ──
+              // Integration token boost: +150 when accepted AND scene importance elevated
+              if (_pr.accepted && (sceneImportance === 'high' || sceneImportance === 'apex')) {
+                  state._petitionTokenBoost = 150;
+              }
+
+              // Shared block: echo + omen always present regardless of acceptance
+              const sharedBlock = `Open the scene with a brief internal thought (1–2 sentences) that naturally echoes the petition in the protagonist's voice. It may be half in jest, longing, doubt, or self-awareness.\nInclude one subtle but uncanny environmental detail symbolically related to the petition. It must feel specific and slightly out of the ordinary — a flicker, chill, misplaced object, sound, or small anomaly. It must not be grand or catastrophic.`;
+
+              if (_pr.accepted) {
+                  // Twist chance scales with strength: higher investment → more likely Fate adds irony
+                  const twistChance = _pr.petitionStrength * 0.35;
+                  const isTwist = Math.random() < twistChance;
+                  const twistLine = isTwist
+                      ? `\nFulfillment may manifest in an ironic, reframed, or double-edged way that technically satisfies the petition while complicating the protagonist's expectations. The twist must remain personal-scale and plausible — Fate's humor, not cruelty.`
+                      : '';
+                  petitionDirective = `\nPETITION FATE (ACCEPTED${isTwist ? ' — TWISTED' : ''}):\nPetition: "${_pr.text}"\nPetition strength: ${_pr.favorsOffered}/40 (coincidenceBias=${_bias.toFixed(2)}). Tilt magnitude should reflect this strength while staying personal-scale.\n${sharedBlock}\nThis is a minor petition, not a rupture. Reality bends only slightly.\nThe desire must begin manifesting directionally within this scene through plausible causality. Effects should be personal-scale, indirect, and plausibly coincidental — the world tilts, it does not obey. Do not defer fulfillment.\nCoincidences may plausibly align with the desire. The world may tilt slightly in subtle, believable ways — more noticeably at higher strength.\nWithin this scene, allow one small "luck tilt" coincidence that begins directional fulfillment of the petition.${twistLine}\nThis petition is consumed after this turn.\n`;
+              } else {
+                  petitionDirective = `\nPETITION FATE (NOT GRANTED):\nPetition: "${_pr.text}"\nPetition strength: ${_pr.favorsOffered}/40.\n${sharedBlock}\nThe petition is heard but not granted. The omen does not result in fulfillment. The world does not tilt toward the desire unless it was already going to.\nDo not manifest directional fulfillment of the petition.\nThis petition is consumed after this turn.\n`;
+              }
+          }
+      }
+
       const passTier = resolvePassTier();
       // Tier-dependent context: Tier 3 gets full prose context; Tier 1/2 get structured state only
       const tierContextBlock = passTier >= 3
@@ -44737,7 +44958,7 @@ Apply lightly and sparingly. Never mechanically. Do not reference these rules in
 • Use the story title once organically (not at the beginning).
 Prioritize natural variation over strict consistency if rules conflict.` : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}\n\nTURN INSTRUCTIONS:
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -44824,6 +45045,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
                   fateCard: selectedFateCard,
                   mainPairRestricted,
                   accessTier: state.access || 'free',
+                  integrationTokenBoost: state._petitionTokenBoost || 0,
                   onPhaseChange: passPhaseHandler
               });
               raw = tierResult.finalOutput;
@@ -44854,10 +45076,11 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
               });
           } else {
               // Single-model flow (ChatGPT as primary author)
+              const _tokenBoost = state._petitionTokenBoost || 0;
               raw = await callChat([
                   {role:'system', content: fullSys},
                   {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
-              ]);
+              ], 0.7, _tokenBoost > 0 ? { max_tokens: 1000 + _tokenBoost } : {});
           }
 
           // Validate response shape before marking as success
@@ -45262,15 +45485,14 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           if (selectedFateCard && selectedFateCard.id) {
               const fateArtName = selectedFateCard.id.charAt(0).toUpperCase() + selectedFateCard.id.slice(1);
               const fateImgUrl = `/assets/card-art/cards/Tarot-Gold-front-${fateArtName}.png`;
-              let petitionHtml = '';
-              if (state.fate && state.fate.pendingPetition) {
-                  petitionHtml = `<img class="fate-mini-img" src="/assets/card-art/cards/Tarot-Gold-PetitionFate-front.png" alt="Petition Fate">`;
-              }
-              pageContent += `<div class="fate-card-separator">${petitionHtml}<img class="fate-mini-img" src="${fateImgUrl}" alt="${escapeHTML(selectedFateCard.title)}"></div>`;
+              pageContent += `<div class="fate-card-separator"><img class="fate-mini-img" src="${fateImgUrl}" alt="${escapeHTML(selectedFateCard.title)}"></div>`;
           }
 
           // FIX #2: Removed user dialogue block - AI alone narrates the action
           // User input is passed to AI but not rendered as prose to avoid duplication
+
+          // Trim to last complete sentence (prevents mid-word/mid-sentence truncation from max_tokens)
+          raw = trimToCompleteSentence(raw);
 
           // Add AI response only
           pageContent += formatStory(raw);
@@ -45357,6 +45579,8 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           const wc = currentStoryWordCount();
 
           // Reset per-scene petition flags
+          state.coincidenceBias = 0;
+          state._petitionTokenBoost = 0;
           if (state.fate) {
               state.fate.minorUsedThisScene = false;
               state.fate.greaterUsedThisScene = false;
@@ -45615,8 +45839,9 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
       const tone = state.picks?.tone || 'Earnest';
       const world = state.picks?.world || 'Modern';
       const intensity = state.intensity || 'Naughty';
+      const petition = state.fate?.pendingPetition?.text || 'none';
       // Simple hash: concatenate key values
-      return `${fateCard}|${action}|${dialogue}|${tone}|${world}|${intensity}`;
+      return `${fateCard}|${action}|${dialogue}|${tone}|${world}|${intensity}|${petition}`;
   }
 
   /**
@@ -45830,7 +46055,7 @@ FATE CARD ADAPTATION (CRITICAL):
             : `Structured State:\n${buildStructuredStateSummary()}`;
           const specTierContext = specPassTier >= 3 ? context : '';
 
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}\n\nTURN INSTRUCTIONS:
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
       ${specTierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -45963,6 +46188,45 @@ FATE CARD ADAPTATION (CRITICAL):
           dialogueInput.addEventListener('input', invalidateSpeculativeScene);
       }
   });
+
+  /**
+   * Trim text to the last complete sentence. Prevents mid-word/mid-sentence
+   * truncation when max_tokens cuts off generation.
+   */
+  function trimToCompleteSentence(text) {
+      if (!text || typeof text !== 'string') return text;
+      const trimmed = text.trimEnd();
+      // If already ends with sentence-ending punctuation or closing quote, it's complete
+      if (/[.!?…"'"'\u201D\u2019]\s*$/.test(trimmed)) return trimmed;
+      // Find the last sentence-ending punctuation
+      const lastEnd = Math.max(
+          trimmed.lastIndexOf('. '),
+          trimmed.lastIndexOf('." '),
+          trimmed.lastIndexOf('.\u201D'),
+          trimmed.lastIndexOf('! '),
+          trimmed.lastIndexOf('?" '),
+          trimmed.lastIndexOf('.\n'),
+          trimmed.lastIndexOf('!\n'),
+          trimmed.lastIndexOf('?\n'),
+          trimmed.lastIndexOf('."'),
+          trimmed.lastIndexOf('!"'),
+          trimmed.lastIndexOf('?"'),
+          trimmed.lastIndexOf('.\u2019'),
+          trimmed.lastIndexOf('.\u201D '),
+          trimmed.lastIndexOf('… '),
+          trimmed.lastIndexOf('…\n')
+      );
+      if (lastEnd > trimmed.length * 0.5) {
+          // Find the actual end of the punctuation cluster (include closing quotes)
+          let cutPoint = lastEnd + 1;
+          while (cutPoint < trimmed.length && /[.!?…"'"'\u201D\u2019\s]/.test(trimmed[cutPoint])) {
+              cutPoint++;
+          }
+          return trimmed.slice(0, cutPoint).trimEnd();
+      }
+      // If no good cut point in the last half, return as-is (avoid losing too much)
+      return trimmed;
+  }
 
   function formatStory(text, shouldEscape = false){
       const process = shouldEscape ? escapeHTML : (s => s);

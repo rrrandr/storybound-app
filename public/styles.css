@@ -1832,7 +1832,8 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     letter-spacing: var(--letter-spacing);
     font-family: var(--font-story);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+    box-sizing: border-box;
 }
 #storyText p { margin-bottom: 1.5em; }
 
@@ -1852,7 +1853,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     visibility: hidden;
     transform: translateX(30px);
     transition: none;
-    padding: 10px 5px;
+    padding: 20px 24px;
     box-sizing: border-box;
     background: transparent;
     border-radius: 8px;
@@ -2441,7 +2442,9 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 }
 
 .story-page-title.compact {
-    font-size: 1.2em;
+    font-size: 0.75em;
+    opacity: 0.5;
+    margin-bottom: 2px;
 }
 
 .story-page-scene {
@@ -3524,6 +3527,278 @@ select:-webkit-autofill {
 @media (max-width: 500px) {
     .mode-card-library {
         width: 100px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* PACT OF ENTRY — Legal gate tarot cards                                        */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+#legalGate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.pact-title {
+    color: #d4a843;
+    font-family: inherit;
+    font-size: 1.6em;
+    letter-spacing: 0.6em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 8px;
+    text-shadow: 0 0 12px rgba(212, 168, 67, 0.3);
+}
+
+.pact-subtitle {
+    color: #bbb;
+    font-size: 0.95em;
+    text-align: center;
+    margin-bottom: 16px;
+    max-width: 400px;
+}
+
+.pact-card-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin: 24px 0;
+}
+
+.pact-card {
+    width: 150px;
+    aspect-ratio: 2.75 / 4.75;
+    perspective: 1000px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.pact-card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s ease;
+}
+
+.pact-card.flipped .pact-card-inner {
+    transform: rotateY(180deg);
+}
+
+.pact-card-back,
+.pact-card-front {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.pact-card-back img,
+.pact-card-front img {
+    width: calc(100% + 2px);
+    height: calc(100% + 2px);
+    margin: -1px;
+    object-fit: cover;
+    display: block;
+}
+
+.pact-card-front {
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.pact-card-front img {
+    position: absolute;
+    inset: 0;
+    width: calc(100% + 2px);
+    height: calc(100% + 2px);
+    margin: -1px;
+}
+
+.pact-card-label {
+    position: relative;
+    z-index: 2;
+    color: #d4a843;
+    font-size: 0.85em;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-align: center;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    margin-top: 42%;
+}
+
+.pact-card-sublabel {
+    position: relative;
+    z-index: 2;
+    color: #bbb;
+    font-size: 0.65em;
+    letter-spacing: 0.1em;
+    text-align: center;
+    margin-top: 4px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* Sparkle container for pact cards — reuses modeSparkle keyframes */
+.pact-card-sparkles {
+    position: absolute;
+    inset: -10px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.pact-card.flipped .pact-card-sparkles {
+    opacity: 1;
+}
+
+/* Accepted state — gold border glow */
+.pact-card.accepted {
+    z-index: 20;
+}
+
+.pact-card.accepted .pact-card-inner {
+    box-shadow: 0 0 12px 2px rgba(212, 168, 67, 0.5);
+    border-radius: 8px;
+}
+
+/* Expanded overlay state */
+.pact-card-expand-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 20px 20px;
+    overflow-y: auto;
+    animation: pactFadeIn 0.3s ease;
+}
+
+.pact-expand-title {
+    color: #d4a843;
+    font-size: 1.3em;
+    letter-spacing: 0.15em;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.pact-expand-content {
+    background: rgba(20, 15, 10, 0.95);
+    border: 1px solid rgba(212, 168, 67, 0.3);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 60vh;
+    overflow-y: auto;
+    color: #ccc;
+    font-size: 0.9em;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.pact-expand-content h3,
+.pact-expand-content h4 {
+    color: #d4a843;
+}
+
+.pact-expand-accept-btn {
+    background: transparent;
+    border: 1px solid rgba(212, 168, 67, 0.5);
+    color: #d4a843;
+    padding: 12px 32px;
+    font-size: 1em;
+    letter-spacing: 0.1em;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pact-expand-accept-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pact-expand-accept-btn:not(:disabled):hover {
+    background: rgba(212, 168, 67, 0.15);
+    box-shadow: 0 0 10px rgba(212, 168, 67, 0.3);
+}
+
+@keyframes pactFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Seal row */
+.pact-seal-row {
+    text-align: center;
+    margin-top: 24px;
+    animation: pactFadeIn 0.5s ease;
+}
+
+.pact-enter-btn {
+    background: transparent;
+    border: 2px solid rgba(212, 168, 67, 0.6);
+    color: #d4a843;
+    padding: 14px 36px;
+    font-size: 1.1em;
+    letter-spacing: 0.15em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pact-enter-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.pact-enter-btn:not(:disabled) {
+    box-shadow: 0 0 16px rgba(212, 168, 67, 0.3);
+}
+
+.pact-enter-btn:not(:disabled):hover {
+    background: rgba(212, 168, 67, 0.15);
+    box-shadow: 0 0 24px rgba(212, 168, 67, 0.5);
+}
+
+.pact-seal-icon {
+    font-size: 1.3em;
+}
+
+/* Mobile pact cards */
+@media (max-width: 500px) {
+    .pact-card {
+        width: 100px;
+    }
+    .pact-card-row {
+        gap: 12px;
+    }
+    .pact-title {
+        font-size: 1.2em;
+        letter-spacing: 0.3em;
+    }
+    .pact-card-label {
+        font-size: 0.7em;
+    }
+    .pact-card-sublabel {
+        font-size: 0.55em;
     }
 }
 
@@ -4740,8 +5015,8 @@ select {
 }
 
 /* FATE CARD SEPARATOR IN STORY */
-.fate-card-separator { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 25px auto; padding: 15px 0; border-top: 1px solid rgba(255,215,0,0.3); border-bottom: 1px solid rgba(255,215,0,0.3); background: rgba(0,0,0,0.2); }
-.fate-card-separator .fate-mini-img { width: 60px; height: auto; border: 1px solid var(--gold); border-radius: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.fate-card-separator { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 20px auto; padding: 10px 0; background: transparent; }
+.fate-card-separator .fate-mini-img { width: 80px; height: auto; border: 1px solid rgba(218,165,32,0.4); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
 /* Legacy fate-mini (kept for backward compat) */
 .fate-card-separator .fate-mini { width: 60px; aspect-ratio: 2.75 / 4.75; background: linear-gradient(145deg, #2a0033, #400020); border: 1px solid var(--gold); border-radius: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .fate-card-separator .fate-mini h4 { font-size: 0.6em; color: var(--gold); margin: 0 0 3px; text-transform: uppercase; }
@@ -5144,30 +5419,133 @@ select {
 .petition-zoom-overlay {
   position: absolute;
   top: 42%;
-  left: 8%;
-  right: 8%;
-  bottom: 4%;
+  left: 10%;
+  right: 10%;
+  bottom: 5%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   background: transparent;
-  padding: 4px 4px;
+  padding: 2px 2px;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow: hidden;
   z-index: 2;
 }
-/* Scale-down: card is small, scale() enlarges — 12pt equivalent at ~5x zoom */
-.petition-zoom-overlay .petition-ritual-title { font-size: 0.38em; margin: 0 0 2px; }
-.petition-zoom-overlay .petition-ritual-subtitle { font-size: 0.28em; margin: 2px 0 4px; }
-.petition-zoom-overlay .petition-ritual-field { font-size: 0.28em; padding: 3px 4px; min-height: 16px; }
-.petition-zoom-overlay .petition-ritual-btn { font-size: 0.28em; padding: 3px 8px; margin-bottom: 3px; }
-.petition-zoom-overlay .petition-cost-hint { font-size: 0.28em; margin: 3px 0; }
-.petition-zoom-overlay .petition-omen { font-size: 0.28em; margin: 3px 0; }
-.petition-zoom-overlay .petition-result { font-size: 0.28em; margin: 3px 0; }
-.petition-zoom-overlay .petition-close-btn { font-size: 0.24em; padding: 2px 6px; margin-top: 2px; }
-.petition-zoom-overlay .petition-field-wrap { width: 78%; margin-bottom: 3px; }
-.petition-zoom-overlay .rotating-placeholder { font-size: 0.28em; }
+/* Scale-down: card is small, scale() enlarges — sizes tuned for ~5x zoom */
+.petition-zoom-overlay .petition-ritual-title { display: none; }
+.petition-zoom-overlay .petition-ritual-subtitle { display: none; }
+.petition-zoom-overlay .petition-ritual-field {
+  font-size: 0.22em;
+  padding: 3px 4px;
+  max-height: 28px;
+  min-height: 14px;
+  overflow-y: auto;
+  background: rgba(10,5,15,0.6);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(218,165,32,0.5) transparent;
+}
+.petition-zoom-overlay .petition-ritual-field::-webkit-scrollbar { width: 4px; }
+.petition-zoom-overlay .petition-ritual-field::-webkit-scrollbar-track { background: transparent; }
+.petition-zoom-overlay .petition-ritual-field::-webkit-scrollbar-thumb { background: rgba(218,165,32,0.5); border-radius: 2px; }
+.petition-zoom-overlay .petition-ritual-btn { font-size: 0.22em; padding: 2px 6px; margin-bottom: 2px; }
+.petition-zoom-overlay .petition-cost-hint { font-size: 0.2em; margin: 2px 0; line-height: 1.3; }
+.petition-zoom-overlay .petition-omen { font-size: 0.2em; margin: 2px 0; line-height: 1.3; }
+.petition-zoom-overlay .petition-result { font-size: 0.2em; margin: 2px 0; }
+.petition-zoom-overlay .petition-close-btn { font-size: 0.18em; padding: 1px 4px; margin-top: 1px; }
+.petition-zoom-overlay .petition-field-wrap { width: 88%; margin-bottom: 1px; }
+.petition-zoom-overlay .rotating-placeholder { font-size: 0.22em; }
+
+/* ── Petition Suggestion Panel ── */
+.petition-suggest-panel {
+  display: flex; gap: 3px; width: 92%; margin-bottom: 2px; flex: 0 1 auto; min-height: 0;
+}
+.petition-suggest-col {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
+}
+.petition-suggest-header {
+  font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.06em;
+  color: rgba(218,165,32,0.85); text-align: center; margin-bottom: 1px;
+  font-size: 0.22em; line-height: 1.2; white-space: nowrap;
+}
+.petition-suggest-list {
+  flex: 1; overflow-y: auto; min-height: 0;
+  scrollbar-width: thin; scrollbar-color: rgba(218,165,32,0.4) transparent;
+}
+.petition-suggest-list::-webkit-scrollbar { width: 3px; }
+.petition-suggest-list::-webkit-scrollbar-track { background: transparent; }
+.petition-suggest-list::-webkit-scrollbar-thumb { background: rgba(218,165,32,0.4); border-radius: 2px; }
+.petition-suggest-item {
+  font-family: 'Lora', serif; font-size: 0.18em; line-height: 1.25;
+  color: rgba(218,165,32,0.7); padding: 1px 2px; cursor: pointer;
+  border-bottom: 1px solid rgba(218,165,32,0.08); transition: color 0.15s, background 0.15s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.petition-suggest-item:last-child { border-bottom: none; }
+.petition-suggest-item:hover {
+  color: rgba(218,165,32,1); background: rgba(218,165,32,0.08);
+}
+
+/* ── Petition Microtext ── */
+.petition-microtext {
+  font-family: 'Lora', serif; font-size: 0.16em; line-height: 1.3;
+  color: rgba(218,165,32,0.45); text-align: center; margin: 1px 0;
+  font-style: italic; pointer-events: none; user-select: none;
+}
+
+/* ── Petition Fortune Tiers ── */
+.petition-fortune-tiers {
+  display: flex; gap: 2px; width: 92%; justify-content: center;
+  margin-bottom: 2px; flex-wrap: nowrap;
+}
+.petition-tier-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  background: rgba(10,5,15,0.6); border: 1px solid rgba(218,165,32,0.25);
+  padding: 1px 1px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  min-width: 0; position: relative;
+}
+.petition-tier-btn:hover:not(:disabled) {
+  border-color: rgba(218,165,32,0.5); background: rgba(218,165,32,0.08);
+}
+.petition-tier-btn.petition-tier-active {
+  border-color: rgba(218,165,32,0.8); background: rgba(218,165,32,0.15);
+  box-shadow: 0 0 4px rgba(218,165,32,0.3);
+}
+.petition-tier-btn.petition-tier-disabled,
+.petition-tier-btn.sb-tier-disabled {
+  opacity: 0.4; cursor: default;
+  filter: saturate(0.5);
+  border-color: rgba(218,165,32,0.12);
+}
+.petition-tier-btn.petition-tier-disabled:hover,
+.petition-tier-btn.sb-tier-disabled:hover {
+  border-color: rgba(218,165,32,0.12); background: rgba(10,5,15,0.6);
+  box-shadow: none;
+}
+/* Tooltip on disabled tier tap */
+.petition-tier-btn.sb-tier-disabled .petition-tier-tooltip {
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  background: rgba(10,5,15,0.92); border: 1px solid rgba(218,165,32,0.3);
+  color: rgba(218,165,32,0.65); font-family: 'Lora', serif; font-size: 0.14em;
+  padding: 1px 3px; white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity 0.3s;
+}
+.petition-tier-btn.sb-tier-disabled .petition-tier-tooltip.visible {
+  opacity: 1;
+}
+.petition-tier-name {
+  font-family: 'Lora', serif; font-variant: small-caps; font-size: 0.19em;
+  color: var(--gold); line-height: 1.2; white-space: nowrap;
+}
+.petition-tier-cost {
+  font-family: 'Lora', serif; font-size: 0.14em;
+  color: rgba(218,165,32,0.5); line-height: 1.1;
+}
+.petition-tier-active .petition-tier-name { color: #fff; }
+.petition-tier-active .petition-tier-cost { color: rgba(218,165,32,0.8); }
+
+/* ── Hide old fortune row if still present ── */
+.petition-zoom-overlay .petition-fortune-row { display: none; }
 
 /* AUTH PANEL */
 #auth-panel { position:fixed; top:10px; right:60px; z-index:10003; background:rgba(0,0,0,0.92); padding:14px 16px; border:1px solid gold; border-radius:0; display:flex; flex-direction:column; align-items:center; gap:6px; }
