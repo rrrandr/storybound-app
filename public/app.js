@@ -1708,12 +1708,26 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
   }
 
   (function initPactCards() {
-    // Card tap → expand
+    // Card tap → bottom 18% = accept directly, rest = open zoomed view
     document.querySelectorAll('.pact-card').forEach(function(card) {
-      card.addEventListener('click', function() {
+      card.addEventListener('click', function(e) {
         if (!card.classList.contains('flipped')) return; // must be flipped first
         var pactKey = card.dataset.pact;
         if (_pactAccepted[pactKey]) return; // already accepted
+
+        // Check if click is in the bottom accept zone (~18% of card height)
+        var rect = card.getBoundingClientRect();
+        var clickY = e.clientY - rect.top;
+        var threshold = rect.height * 0.82;
+
+        if (clickY >= threshold) {
+          // Direct accept from unzoomed card
+          _pactAccepted[pactKey] = true;
+          card.classList.add('accepted');
+          _checkAllPactsAccepted();
+          return;
+        }
+
         _openPactExpand(pactKey);
       });
     });
