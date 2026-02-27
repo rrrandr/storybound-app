@@ -1580,53 +1580,117 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     var overlay = document.createElement('div');
     overlay.className = 'pact-card-expand-overlay';
 
-    var titleEl = document.createElement('div');
-    titleEl.className = 'pact-expand-title';
-    titleEl.textContent = meta.title + ' — ' + meta.subtitle;
+    var scrollTarget; // element to check scroll on
+    var cardEl; // the zoomed card element
 
-    var contentEl = document.createElement('div');
-    contentEl.className = 'pact-expand-content';
-    contentEl.innerHTML = docHtml;
+    var PACT_CARD_CLASSES = {
+      tos:     { card: 'pact-expand-tos-card',     inner: 'pact-expand-tos-inner',     title: 'pact-expand-tos-title',     scroll: 'pact-expand-tos-scroll',     label: 'Terms of Service' },
+      adult:   { card: 'pact-expand-adult-card',    inner: 'pact-expand-adult-inner',   title: 'pact-expand-adult-title',   scroll: 'pact-expand-adult-scroll',   label: "I'm 18+" },
+      privacy: { card: 'pact-expand-privacy-card',  inner: 'pact-expand-privacy-inner', title: 'pact-expand-privacy-title', scroll: 'pact-expand-privacy-scroll', label: 'Privacy Policy' }
+    };
 
-    var acceptBtn = document.createElement('button');
-    acceptBtn.className = 'pact-expand-accept-btn';
-    acceptBtn.textContent = 'I Accept';
-    acceptBtn.disabled = true;
+    var cfg = PACT_CARD_CLASSES[pactKey];
+    if (cfg) {
+      // ── White card with scrollable text + accept zone at bottom ──
+      cardEl = document.createElement('div');
+      cardEl.className = cfg.card;
+      var innerEl = document.createElement('div');
+      innerEl.className = cfg.inner;
+      var titleEl = document.createElement('div');
+      titleEl.className = cfg.title;
+      titleEl.textContent = cfg.label;
+      var scrollEl = document.createElement('div');
+      scrollEl.className = cfg.scroll;
+      scrollEl.innerHTML = docHtml;
+      innerEl.appendChild(titleEl);
+      innerEl.appendChild(scrollEl);
+      cardEl.appendChild(innerEl);
 
-    overlay.appendChild(titleEl);
-    overlay.appendChild(contentEl);
-    overlay.appendChild(acceptBtn);
+      // Accepted overlay — bottom portion of WHITE-Accepted.png (gold star)
+      var acceptedOverlay = document.createElement('div');
+      acceptedOverlay.className = 'pact-accepted-overlay';
+      cardEl.appendChild(acceptedOverlay);
+
+      // Accept zone — clickable area at bottom of card
+      var acceptZone = document.createElement('div');
+      acceptZone.className = 'pact-accept-zone';
+      cardEl.appendChild(acceptZone);
+
+      overlay.appendChild(cardEl);
+      scrollTarget = scrollEl;
+    } else {
+      // ── Default: title + content box ──
+      var titleEl = document.createElement('div');
+      titleEl.className = 'pact-expand-title';
+      titleEl.textContent = meta.title + ' — ' + meta.subtitle;
+      var contentEl = document.createElement('div');
+      contentEl.className = 'pact-expand-content';
+      contentEl.innerHTML = docHtml;
+      overlay.appendChild(titleEl);
+      overlay.appendChild(contentEl);
+      scrollTarget = contentEl;
+
+      // Fallback accept button for unknown card types
+      var acceptBtn = document.createElement('button');
+      acceptBtn.className = 'pact-expand-accept-btn';
+      acceptBtn.textContent = 'I Accept';
+      overlay.appendChild(acceptBtn);
+    }
+
     document.body.appendChild(overlay);
 
+    // ── Accept logic ──
+    var acceptEnabled = false;
+
     // Enable accept after scroll-to-bottom or 3s timeout
-    var enableTimer = setTimeout(function() { acceptBtn.disabled = false; }, 3000);
+    var enableTimer = setTimeout(function() { acceptEnabled = true; }, 3000);
 
     function checkScroll() {
-      if (contentEl.scrollHeight <= contentEl.clientHeight) {
-        acceptBtn.disabled = false;
+      if (scrollTarget.scrollHeight <= scrollTarget.clientHeight) {
+        acceptEnabled = true;
         clearTimeout(enableTimer);
-      } else if (contentEl.scrollTop + contentEl.clientHeight >= contentEl.scrollHeight - 5) {
-        acceptBtn.disabled = false;
+      } else if (scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - 5) {
+        acceptEnabled = true;
         clearTimeout(enableTimer);
       }
     }
-    contentEl.addEventListener('scroll', checkScroll);
-    // Check immediately in case content fits without scrolling
+    scrollTarget.addEventListener('scroll', checkScroll);
     setTimeout(checkScroll, 100);
 
-    acceptBtn.addEventListener('click', function() {
+    function _doAccept() {
       _pactAccepted[pactKey] = true;
 
-      // Mark card as accepted
+      // Mark unzoomed card as accepted (swaps front face via CSS)
       var card = document.querySelector('.pact-card[data-pact="' + pactKey + '"]');
       if (card) card.classList.add('accepted');
 
-      // Remove overlay
-      overlay.remove();
+      // Show gold star on zoomed card
+      var starOverlay = overlay.querySelector('.pact-accepted-overlay');
+      if (starOverlay) starOverlay.classList.add('visible');
 
-      // Check if all accepted
+      // Close overlay after brief delay to show the star
+      setTimeout(function() { overlay.remove(); }, 800);
+
       _checkAllPactsAccepted();
-    });
+    }
+
+    if (cfg) {
+      // Accept zone click on zoomed card
+      var zone = overlay.querySelector('.pact-accept-zone');
+      if (zone) {
+        zone.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (!acceptEnabled) return;
+          _doAccept();
+        });
+      }
+    } else {
+      // Fallback button
+      var btn = overlay.querySelector('.pact-expand-accept-btn');
+      if (btn) {
+        btn.addEventListener('click', function() { _doAccept(); });
+      }
+    }
 
     // Close on overlay background click (not content)
     overlay.addEventListener('click', function(e) {
@@ -16658,79 +16722,104 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const overlay = document.createElement('div');
       overlay.className = 'petition-zoom-overlay';
       overlay.innerHTML = `
-          <div class="petition-suggest-panel">
-              <div class="petition-suggest-col">
-                  <div class="petition-suggest-header">Surface Changes</div>
-                  <div class="petition-suggest-list">
-                      <div class="petition-suggest-item" data-suggest="Change his name to Dan">Change his name to Dan</div>
-                      <div class="petition-suggest-item" data-suggest="Ban the word Moist">Ban the word &ldquo;Moist&rdquo;</div>
-                      <div class="petition-suggest-item" data-suggest="Make her blonde">Make her blonde</div>
-                      <div class="petition-suggest-item" data-suggest="Change my hairstyle">Change my hairstyle</div>
-                      <div class="petition-suggest-item" data-suggest="Change my outfit">Change my outfit</div>
-                      <div class="petition-suggest-item" data-suggest="Stop the teasing nickname">Stop the teasing nickname</div>
-                      <div class="petition-suggest-item" data-suggest="No tattoos">No tattoos</div>
-                      <div class="petition-suggest-item" data-suggest="Make her wear glasses">Make her wear glasses</div>
-                      <div class="petition-suggest-item" data-suggest="Give him a Scottish accent">Give him a Scottish accent</div>
+          <div class="petition-top-zone">
+              <div class="petition-suggest-panel">
+                  <div class="petition-suggest-col">
+                      <div class="petition-suggest-header">Surface Changes</div>
+                      <div class="petition-suggest-list">
+                          <div class="petition-suggest-item" data-suggest="Change his name to Dan">Change his name to Dan</div>
+                          <div class="petition-suggest-item" data-suggest="Ban the word Moist">Ban the word &ldquo;Moist&rdquo;</div>
+                          <div class="petition-suggest-item" data-suggest="Make her blonde">Make her blonde</div>
+                          <div class="petition-suggest-item" data-suggest="Change my hairstyle">Change my hairstyle</div>
+                          <div class="petition-suggest-item" data-suggest="Change my outfit">Change my outfit</div>
+                          <div class="petition-suggest-item" data-suggest="Stop the teasing nickname">Stop the teasing nickname</div>
+                          <div class="petition-suggest-item" data-suggest="No tattoos">No tattoos</div>
+                          <div class="petition-suggest-item" data-suggest="Make her wear glasses">Make her wear glasses</div>
+                          <div class="petition-suggest-item" data-suggest="Give him a Scottish accent">Give him a Scottish accent</div>
+                      </div>
+                  </div>
+                  <div class="petition-suggest-col">
+                      <div class="petition-suggest-header">Plot Shifts</div>
+                      <div class="petition-suggest-list">
+                          <div class="petition-suggest-item" data-suggest="Let him notice me">Let him notice me</div>
+                          <div class="petition-suggest-item" data-suggest="Give me a second chance">Give me a second chance</div>
+                          <div class="petition-suggest-item" data-suggest="Let the argument cool down">Let the argument cool down</div>
+                          <div class="petition-suggest-item" data-suggest="Let the message arrive in time">Let the message arrive in time</div>
+                          <div class="petition-suggest-item" data-suggest="Let the door be unlocked">Let the door be unlocked</div>
+                          <div class="petition-suggest-item" data-suggest="Make her reconsider">Make her reconsider</div>
+                          <div class="petition-suggest-item" data-suggest="Let them not see us">Let them not see us</div>
+                          <div class="petition-suggest-item" data-suggest="Steamy sauna scene">Steamy sauna scene</div>
+                          <div class="petition-suggest-item" data-suggest="Give us a private moment">Give us a private moment</div>
+                          <div class="petition-suggest-item" data-suggest="Let him ache for me">Let him ache for me</div>
+                      </div>
                   </div>
               </div>
-              <div class="petition-suggest-col">
-                  <div class="petition-suggest-header">Plot Shifts</div>
-                  <div class="petition-suggest-list">
-                      <div class="petition-suggest-item" data-suggest="Let him notice me">Let him notice me</div>
-                      <div class="petition-suggest-item" data-suggest="Give me a second chance">Give me a second chance</div>
-                      <div class="petition-suggest-item" data-suggest="Let the argument cool down">Let the argument cool down</div>
-                      <div class="petition-suggest-item" data-suggest="Let the message arrive in time">Let the message arrive in time</div>
-                      <div class="petition-suggest-item" data-suggest="Let the door be unlocked">Let the door be unlocked</div>
-                      <div class="petition-suggest-item" data-suggest="Make her reconsider">Make her reconsider</div>
-                      <div class="petition-suggest-item" data-suggest="Let them not see us">Let them not see us</div>
-                      <div class="petition-suggest-item" data-suggest="Steamy sauna scene">Steamy sauna scene</div>
-                      <div class="petition-suggest-item" data-suggest="Give us a private moment">Give us a private moment</div>
-                      <div class="petition-suggest-item" data-suggest="Let him ache for me">Let him ache for me</div>
-                  </div>
+              <div class="petition-write-toggle">write your own</div>
+              <div class="petition-custom-input">
+                  <textarea id="petitionZoomInput" placeholder="Write your petition\u2026" rows="2"></textarea>
+                  <div class="petition-custom-back">&larr; back to suggestions</div>
               </div>
           </div>
-          <div class="petition-field-wrap">
-              <textarea id="petitionZoomInput" rows="2" class="petition-ritual-field" placeholder=""></textarea>
-              <div class="rotating-placeholder textarea-placeholder" data-for="petitionZoomInput"></div>
+          <div class="petition-lower-zone">
+              <div class="petition-fortune-tiers" id="petitionFortuneTiers">
+                  <button class="petition-tier-btn" data-tier="5"><span class="petition-tier-name">Whisper</span><span class="petition-tier-cost">5</span></button>
+                  <button class="petition-tier-btn" data-tier="15"><span class="petition-tier-name">Nudge</span><span class="petition-tier-cost">15</span></button>
+                  <button class="petition-tier-btn" data-tier="25"><span class="petition-tier-name">Pull</span><span class="petition-tier-cost">25</span></button>
+                  <button class="petition-tier-btn" data-tier="35"><span class="petition-tier-name">Bend</span><span class="petition-tier-cost">35</span></button>
+                  <button class="petition-tier-btn" data-tier="40"><span class="petition-tier-name">Nearly Certain</span><span class="petition-tier-cost">40</span></button>
+              </div>
           </div>
-          <div class="petition-microtext">Surface changes are granted. Plot shifts depend on Fortune.</div>
-          <div class="petition-fortune-tiers" id="petitionFortuneTiers">
-              <button class="petition-tier-btn" data-tier="5"><span class="petition-tier-name">Whisper</span><span class="petition-tier-cost">5</span></button>
-              <button class="petition-tier-btn" data-tier="15"><span class="petition-tier-name">Nudge</span><span class="petition-tier-cost">15</span></button>
-              <button class="petition-tier-btn" data-tier="25"><span class="petition-tier-name">Pull</span><span class="petition-tier-cost">25</span></button>
-              <button class="petition-tier-btn" data-tier="35"><span class="petition-tier-name">Bend</span><span class="petition-tier-cost">35</span></button>
-              <button class="petition-tier-btn" data-tier="40"><span class="petition-tier-name">Nearly Certain</span><span class="petition-tier-cost">40</span></button>
-          </div>
-          <button id="petitionZoomSeal" class="petition-ritual-btn">Petition Fate</button>
           <div id="petitionZoomResult" class="petition-result hidden"></div>
-          <button id="petitionZoomClose" class="petition-close-btn">Close</button>
       `;
       // Stop click propagation so card handler doesn't re-fire
       overlay.addEventListener('click', e => e.stopPropagation());
       overlay.addEventListener('mousedown', e => e.stopPropagation());
       front.appendChild(overlay);
 
-      // Init rotating placeholder
-      const ph = overlay.querySelector('.rotating-placeholder[data-for="petitionZoomInput"]');
-      if (ph && !ph.innerHTML.trim() && typeof initRotatingPlaceholder === 'function') {
-          initRotatingPlaceholder('petitionZoomInput', 'petition');
-      }
+      // Track selected petition text (from suggestion or custom)
+      let _petitionText = '';
 
-      // Init suggestion click handlers — populate textarea on click
+      // ── Suggestion click handlers — select a suggestion ──
+      const suggestPanel = overlay.querySelector('.petition-suggest-panel');
+      const customInput = overlay.querySelector('.petition-custom-input');
+      const writeToggle = overlay.querySelector('.petition-write-toggle');
+      const customBack = overlay.querySelector('.petition-custom-back');
+      const customTextarea = overlay.querySelector('#petitionZoomInput');
+
       overlay.querySelectorAll('.petition-suggest-item').forEach(item => {
           item.addEventListener('click', () => {
-              const input = document.getElementById('petitionZoomInput');
-              if (input && !input.readOnly) {
-                  input.value = item.dataset.suggest;
-                  input.focus();
-                  // Clear rotating placeholder
-                  const rp = overlay.querySelector('.rotating-placeholder[data-for="petitionZoomInput"]');
-                  if (rp) rp.style.display = 'none';
-              }
+              // Deselect all, select this one
+              overlay.querySelectorAll('.petition-suggest-item').forEach(i => i.classList.remove('petition-suggest-selected'));
+              item.classList.add('petition-suggest-selected');
+              _petitionText = item.dataset.suggest;
           });
       });
 
-      // Init fortune tier selector
+      // ── Write-your-own toggle ──
+      if (writeToggle) {
+          writeToggle.addEventListener('click', () => {
+              suggestPanel.classList.add('hidden');
+              writeToggle.style.display = 'none';
+              customInput.classList.add('active');
+              if (customTextarea) {
+                  customTextarea.value = _petitionText || '';
+                  setTimeout(() => customTextarea.focus(), 100);
+              }
+          });
+      }
+
+      // ── Back to suggestions ──
+      if (customBack) {
+          customBack.addEventListener('click', () => {
+              // Save any custom text
+              if (customTextarea) _petitionText = customTextarea.value.trim();
+              customInput.classList.remove('active');
+              suggestPanel.classList.remove('hidden');
+              writeToggle.style.display = '';
+          });
+      }
+
+      // ── Fortune tier selector ──
       let _petitionFortunes = 0;
       const tierBtns = overlay.querySelectorAll('.petition-tier-btn');
 
@@ -16744,7 +16833,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               if (shouldDisable && !wasDisabled) {
                   btn.classList.add('sb-tier-disabled');
                   btn.disabled = true;
-                  // Auto-deselect if currently active and now unaffordable
                   if (btn.classList.contains('petition-tier-active')) {
                       btn.classList.remove('petition-tier-active');
                       activeDeselected = true;
@@ -16754,7 +16842,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
                   btn.disabled = false;
               }
           });
-          // If active tier was deselected, fall back to highest affordable
           if (activeDeselected) {
               let fallback = null;
               tierBtns.forEach(btn => {
@@ -16770,13 +16857,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           }
       }
 
-      // Initial pass
       _refreshTierAvailability();
 
       tierBtns.forEach(btn => {
           const tierCost = parseInt(btn.dataset.tier, 10);
           btn.addEventListener('click', () => {
-              // Soft-disabled: show subtle tooltip, no state mutation
               if (btn.classList.contains('sb-tier-disabled')) {
                   let tip = btn.querySelector('.petition-tier-tooltip');
                   if (!tip) {
@@ -16789,7 +16874,6 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
                   setTimeout(() => tip.classList.remove('visible'), 1200);
                   return;
               }
-              // Toggle: clicking active tier deselects (back to 0)
               if (btn.classList.contains('petition-tier-active')) {
                   btn.classList.remove('petition-tier-active');
                   _petitionFortunes = 0;
@@ -16801,14 +16885,23 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           });
       });
 
-      // Focus input after transition
-      setTimeout(() => document.getElementById('petitionZoomInput')?.focus(), 300);
+      // ── Create floating Proceed button (sibling of card in portal) ──
+      const proceedBtn = document.createElement('button');
+      proceedBtn.className = 'petition-proceed-btn';
+      proceedBtn.textContent = 'Proceed';
+      card.appendChild(proceedBtn);
 
-      // ── Petition Fate (Seal) handler ──
-      document.getElementById('petitionZoomSeal')?.addEventListener('click', () => {
-          const input = document.getElementById('petitionZoomInput');
-          const text = input?.value?.trim();
-          if (!text) return;
+      // ── Proceed handler (replaces old Seal) ──
+      proceedBtn.addEventListener('click', () => {
+          // Resolve petition text: custom textarea takes priority if visible
+          let text = _petitionText;
+          if (customInput.classList.contains('active') && customTextarea) {
+              text = customTextarea.value.trim();
+          }
+          if (!text) {
+              if (typeof showToast === 'function') showToast('Write or choose a petition first.');
+              return;
+          }
 
           // Validate petition text
           const validation = validatePetitionText(text);
@@ -16890,19 +16983,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               zoomResultEl.classList.add('fade-in');
           }
 
-          input.readOnly = true;
-          const sealBtn = document.getElementById('petitionZoomSeal');
-          if (sealBtn) { sealBtn.disabled = true; sealBtn.classList.add('hidden'); }
+          proceedBtn.disabled = true;
 
           // Close zoom after 1.5s
           setTimeout(() => {
               closePetitionZoom();
           }, 1500);
-      });
-
-      // ── Close handler ──
-      document.getElementById('petitionZoomClose')?.addEventListener('click', () => {
-          closePetitionZoom();
       });
   };
 
@@ -16910,8 +16996,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const card = _petitionZoomCard;
       if (!card) return;
 
-      // Remove overlay
+      // Remove overlay and floating Proceed button
       card.querySelector('.petition-zoom-overlay')?.remove();
+      card.querySelector('.petition-proceed-btn')?.remove();
 
       // Restore original Petition art
       const backFace = card.querySelector('.back');

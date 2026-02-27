@@ -1663,6 +1663,24 @@ function setSelectedState(mount, selectedCardEl){
         };
         mount.appendChild(petitionCard);
 
+        // Tempt Fate card — 7th card, always visible, flips on first click, invokes on second
+        const temptCard = document.createElement('div');
+        temptCard.className = 'fate-card tempt-fate-card';
+        temptCard.innerHTML = `
+            <div class="inner">
+                <div class="front" style="background:url('/assets/Card%20Art/Cards/Tarot-RED-back-TemptFate.png') center/cover no-repeat, #111;"></div>
+                <div class="back" style="background-image:url('/assets/Card%20Art/Cards/Tarot-RED-front-TemptFate.png');"></div>
+            </div>
+        `;
+        temptCard.onclick = () => {
+            if (!temptCard.classList.contains('flipped')) {
+                temptCard.classList.add('flipped');
+                return;
+            }
+            if (typeof window.setMetaStance === 'function') window.setMetaStance('seduce');
+        };
+        mount.appendChild(temptCard);
+
         // Bind commitment triggers once (safe no-op if elements missing)
         bindCommitHooks(mount);
         bindInputCommit(mount);
@@ -1802,6 +1820,18 @@ function setSelectedState(mount, selectedCardEl){
         if (petitionCard) {
             petitionCard.onclick = () => {
                 if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
+            };
+        }
+
+        // Rebind Tempt Fate card
+        const temptCard = mount.querySelector('.tempt-fate-card');
+        if (temptCard) {
+            temptCard.onclick = () => {
+                if (!temptCard.classList.contains('flipped')) {
+                    temptCard.classList.add('flipped');
+                    return;
+                }
+                if (typeof window.setMetaStance === 'function') window.setMetaStance('seduce');
             };
         }
 

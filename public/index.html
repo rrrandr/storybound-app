@@ -294,26 +294,55 @@
 </div>
 
 <div id="legalGate" class="screen hidden">
-  <div class="legal-box">
-    <h2 id="legal-heading">Before You Continue</h2>
-    <p id="legal-subtext" class="hidden"></p>
-
-    <label>
-      <input type="checkbox" id="legal-tos">
-      I agree to the <a href="#" id="legal-tos-link" class="legal-doc-link">Terms of Service</a>
-    </label>
-
-    <label>
-      <input type="checkbox" id="legal-privacy">
-      I agree to the <a href="#" id="legal-privacy-link" class="legal-doc-link">Privacy Policy</a>
-    </label>
-
-    <label>
-      <input type="checkbox" id="legal-adult">
-      I agree to the <a href="#" id="legal-adult-link" class="legal-doc-link">Adult Content Acknowledgment</a>
-    </label>
-
-    <button id="legal-continue" disabled>Continue</button>
+  <h2 class="pact-title">The Pact of Entry</h2>
+  <p class="pact-subtitle hidden" id="pact-subtitle"></p>
+  <div class="pact-card-row">
+    <!-- Card 1: THE BINDING (Terms of Service) -->
+    <div class="pact-card pact-card-tos" data-pact="tos">
+      <div class="pact-card-inner">
+        <div class="pact-card-back">
+          <img src="/assets/Card%20Art/Cards/WHITE-tarot-back.png" alt="Pact">
+        </div>
+        <div class="pact-card-front">
+          <img src="/assets/Card%20Art/Cards/WHITE-Trust.png" alt="Terms of Service">
+          <div class="pact-card-label pact-tos-label">Terms of Service</div>
+        </div>
+      </div>
+      <div class="pact-card-sparkles"></div>
+    </div>
+    <!-- Card 2: THE VEIL (Privacy Policy) -->
+    <div class="pact-card pact-card-privacy" data-pact="privacy">
+      <div class="pact-card-inner">
+        <div class="pact-card-back">
+          <img src="/assets/Card%20Art/Cards/WHITE-tarot-back.png" alt="Pact">
+        </div>
+        <div class="pact-card-front">
+          <img src="/assets/Card%20Art/Cards/WHITE-Discretion.png" alt="Privacy Policy">
+          <div class="pact-card-label pact-privacy-label">Privacy Policy</div>
+        </div>
+      </div>
+      <div class="pact-card-sparkles"></div>
+    </div>
+    <!-- Card 3: THE THRESHOLD (Adult Content) -->
+    <div class="pact-card pact-card-adult" data-pact="adult">
+      <div class="pact-card-inner">
+        <div class="pact-card-back">
+          <img src="/assets/Card%20Art/Cards/WHITE-tarot-back.png" alt="Pact">
+        </div>
+        <div class="pact-card-front">
+          <img src="/assets/Card%20Art/Cards/WHIT-Desire.png" alt="I'm 18+">
+          <div class="pact-card-label pact-adult-label">I'm 18+</div>
+        </div>
+      </div>
+      <div class="pact-card-sparkles"></div>
+    </div>
+  </div>
+  <!-- Wax seal + Enter button — hidden until all 3 read -->
+  <div class="pact-seal-row hidden" id="pactSealRow">
+    <button id="pact-enter" class="pact-enter-btn" disabled>
+      <span class="pact-seal-icon">🔏</span>
+      Enter the Veil
+    </button>
   </div>
 </div>
 

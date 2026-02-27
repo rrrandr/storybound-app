@@ -3662,7 +3662,7 @@ select:-webkit-autofill {
     opacity: 1;
 }
 
-/* Accepted state — gold border glow */
+/* Accepted state — swap front face to WHITE-Accepted.png */
 .pact-card.accepted {
     z-index: 20;
 }
@@ -3670,6 +3670,44 @@ select:-webkit-autofill {
 .pact-card.accepted .pact-card-inner {
     box-shadow: 0 0 12px 2px rgba(212, 168, 67, 0.5);
     border-radius: 8px;
+}
+
+.pact-card.accepted .pact-card-front img {
+    content: url('/assets/Card%20Art/Cards/WHITE-Accepted.png');
+}
+
+/* Hide the label text on accepted cards — gold star replaces it */
+.pact-card.accepted .pact-card-label {
+    display: none;
+}
+
+/* ── Accept zone at bottom of zoomed card ── */
+.pact-accept-zone {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 15%;
+    cursor: pointer;
+    z-index: 5;
+    transition: background 0.15s;
+}
+.pact-accept-zone:hover {
+    background: rgba(212, 168, 67, 0.06);
+}
+
+/* Gold-star overlay — covers bottom of card after acceptance */
+.pact-accepted-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 100%;
+    background: url('/assets/Card%20Art/Cards/WHITE-Accepted.png') center / cover no-repeat;
+    pointer-events: none;
+    z-index: 4;
+    clip-path: inset(85% 0 0 0);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+.pact-accepted-overlay.visible {
+    opacity: 1;
 }
 
 /* Expanded overlay state */
@@ -3782,6 +3820,186 @@ select:-webkit-autofill {
     font-size: 1.3em;
 }
 
+/* ── Terms of Service card — black text on white card ── */
+.pact-tos-label {
+    color: #1a1a1a;
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-shadow: none;
+    margin-top: 50%;
+}
+
+/* ── TOS zoomed expand — white card with scrollable terms ── */
+.pact-expand-tos-card {
+    width: 280px;
+    aspect-ratio: 2.75 / 4.75;
+    background: url('/assets/Card%20Art/Cards/WHITE-Trust.png') center / cover no-repeat;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.pact-expand-tos-inner {
+    position: absolute;
+    top: 8%;
+    left: 10%;
+    right: 10%;
+    bottom: 8%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.pact-expand-tos-title {
+    font-family: 'Lora', serif;
+    font-size: 1em;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+.pact-expand-tos-scroll {
+    flex: 1;
+    overflow-y: auto;
+    color: #222;
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    line-height: 1.5;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.25) transparent;
+}
+.pact-expand-tos-scroll::-webkit-scrollbar { width: 4px; }
+.pact-expand-tos-scroll::-webkit-scrollbar-track { background: transparent; }
+.pact-expand-tos-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.25); border-radius: 2px; }
+.pact-expand-tos-scroll h3,
+.pact-expand-tos-scroll h4 { color: #1a1a1a; margin: 8px 0 4px; font-size: 1.05em; }
+.pact-expand-tos-scroll p { margin: 4px 0; }
+.pact-expand-tos-scroll ul { margin: 4px 0; padding-left: 16px; }
+.pact-expand-tos-scroll li { margin: 2px 0; }
+
+/* ── Privacy Policy card — black text on white card ── */
+.pact-privacy-label {
+    color: #1a1a1a;
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-shadow: none;
+    margin-top: 50%;
+}
+
+/* ── Privacy Policy zoomed expand — white card with scrollable policy ── */
+.pact-expand-privacy-card {
+    width: 280px;
+    aspect-ratio: 2.75 / 4.75;
+    background: url('/assets/Card%20Art/Cards/WHITE-Discretion.png') center / cover no-repeat;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.pact-expand-privacy-inner {
+    position: absolute;
+    top: 8%;
+    left: 10%;
+    right: 10%;
+    bottom: 8%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.pact-expand-privacy-title {
+    font-family: 'Lora', serif;
+    font-size: 1em;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+.pact-expand-privacy-scroll {
+    flex: 1;
+    overflow-y: auto;
+    color: #222;
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    line-height: 1.5;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.25) transparent;
+}
+.pact-expand-privacy-scroll::-webkit-scrollbar { width: 4px; }
+.pact-expand-privacy-scroll::-webkit-scrollbar-track { background: transparent; }
+.pact-expand-privacy-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.25); border-radius: 2px; }
+.pact-expand-privacy-scroll h3,
+.pact-expand-privacy-scroll h4 { color: #1a1a1a; margin: 8px 0 4px; font-size: 1.05em; }
+.pact-expand-privacy-scroll p { margin: 4px 0; }
+.pact-expand-privacy-scroll ul { margin: 4px 0; padding-left: 16px; }
+.pact-expand-privacy-scroll li { margin: 2px 0; }
+
+/* ── Adult Content card — black text on white card ── */
+.pact-adult-label {
+    color: #1a1a1a;
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-shadow: none;
+    margin-top: 50%;
+}
+
+/* ── Adult Content zoomed expand — white card with scrollable acknowledgment ── */
+.pact-expand-adult-card {
+    width: 280px;
+    aspect-ratio: 2.75 / 4.75;
+    background: url('/assets/Card%20Art/Cards/WHIT-Desire.png') center / cover no-repeat;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.pact-expand-adult-inner {
+    position: absolute;
+    top: 8%;
+    left: 10%;
+    right: 10%;
+    bottom: 8%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.pact-expand-adult-title {
+    font-family: 'Lora', serif;
+    font-size: 1em;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+.pact-expand-adult-scroll {
+    flex: 1;
+    overflow-y: auto;
+    color: #222;
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    line-height: 1.5;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.25) transparent;
+}
+.pact-expand-adult-scroll::-webkit-scrollbar { width: 4px; }
+.pact-expand-adult-scroll::-webkit-scrollbar-track { background: transparent; }
+.pact-expand-adult-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.25); border-radius: 2px; }
+.pact-expand-adult-scroll h3,
+.pact-expand-adult-scroll h4 { color: #1a1a1a; margin: 8px 0 4px; font-size: 1.05em; }
+.pact-expand-adult-scroll p { margin: 4px 0; }
+.pact-expand-adult-scroll ul { margin: 4px 0; padding-left: 16px; }
+.pact-expand-adult-scroll li { margin: 2px 0; }
+
 /* Mobile pact cards */
 @media (max-width: 500px) {
     .pact-card {
@@ -3799,6 +4017,24 @@ select:-webkit-autofill {
     }
     .pact-card-sublabel {
         font-size: 0.55em;
+    }
+    .pact-expand-privacy-card {
+        width: 220px;
+    }
+    .pact-privacy-label {
+        font-size: 0.6em;
+    }
+    .pact-expand-tos-card {
+        width: 220px;
+    }
+    .pact-tos-label {
+        font-size: 0.6em;
+    }
+    .pact-expand-adult-card {
+        width: 220px;
+    }
+    .pact-adult-label {
+        font-size: 0.6em;
     }
 }
 
@@ -5406,6 +5642,10 @@ select {
 .petition-close-btn:hover { opacity: 1; }
 .petition-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 8px !important; }
 
+/* ── Tempt Fate Card ── */
+.tempt-fate-card .inner { border: 1px solid rgba(180,30,30,0.5) !important; border-radius: 8px !important; }
+.tempt-fate-card.flipped .inner { border-color: rgba(180,30,30,0.7) !important; box-shadow: 0 0 8px rgba(180,30,30,0.3); }
+
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* PETITION ZOOM — Card zooms into portal with ritual overlay on face       */
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -5416,49 +5656,30 @@ select {
   pointer-events: auto;
   transition: transform 0.3s ease;
 }
+/* ── Petition Zoom Overlay — full-card transparent layer with positioned zones ── */
 .petition-zoom-overlay {
   position: absolute;
-  top: 42%;
-  left: 10%;
-  right: 10%;
-  bottom: 5%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+  top: 0; bottom: 0; left: 0; right: 0;
   background: transparent;
-  padding: 2px 2px;
-  box-sizing: border-box;
-  overflow: hidden;
+  pointer-events: none;
   z-index: 2;
 }
-/* Scale-down: card is small, scale() enlarges — sizes tuned for ~5x zoom */
-.petition-zoom-overlay .petition-ritual-title { display: none; }
-.petition-zoom-overlay .petition-ritual-subtitle { display: none; }
-.petition-zoom-overlay .petition-ritual-field {
-  font-size: 0.22em;
-  padding: 3px 4px;
-  max-height: 28px;
-  min-height: 14px;
-  overflow-y: auto;
-  background: rgba(10,5,15,0.6);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(218,165,32,0.5) transparent;
+.petition-zoom-overlay > * {
+  pointer-events: auto;
 }
-.petition-zoom-overlay .petition-ritual-field::-webkit-scrollbar { width: 4px; }
-.petition-zoom-overlay .petition-ritual-field::-webkit-scrollbar-track { background: transparent; }
-.petition-zoom-overlay .petition-ritual-field::-webkit-scrollbar-thumb { background: rgba(218,165,32,0.5); border-radius: 2px; }
-.petition-zoom-overlay .petition-ritual-btn { font-size: 0.22em; padding: 2px 6px; margin-bottom: 2px; }
-.petition-zoom-overlay .petition-cost-hint { font-size: 0.2em; margin: 2px 0; line-height: 1.3; }
-.petition-zoom-overlay .petition-omen { font-size: 0.2em; margin: 2px 0; line-height: 1.3; }
-.petition-zoom-overlay .petition-result { font-size: 0.2em; margin: 2px 0; }
-.petition-zoom-overlay .petition-close-btn { font-size: 0.18em; padding: 1px 4px; margin-top: 1px; }
-.petition-zoom-overlay .petition-field-wrap { width: 88%; margin-bottom: 1px; }
-.petition-zoom-overlay .rotating-placeholder { font-size: 0.22em; }
 
-/* ── Petition Suggestion Panel ── */
+/* ── Top Zone: suggestion columns / custom text input (~6%–20% of card) ── */
+.petition-top-zone {
+  position: absolute;
+  top: 6%; left: 10%; right: 10%;
+  height: 14%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Suggestion Panel (two scrolling columns) ── */
 .petition-suggest-panel {
-  display: flex; gap: 3px; width: 92%; margin-bottom: 2px; flex: 0 1 auto; min-height: 0;
+  display: flex; gap: 3px; width: 100%; flex: 1; min-height: 0;
 }
 .petition-suggest-col {
   flex: 1; display: flex; flex-direction: column; min-width: 0;
@@ -5466,7 +5687,7 @@ select {
 .petition-suggest-header {
   font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.06em;
   color: rgba(218,165,32,0.85); text-align: center; margin-bottom: 1px;
-  font-size: 0.22em; line-height: 1.2; white-space: nowrap;
+  font-size: 0.18em; line-height: 1.2; white-space: nowrap;
 }
 .petition-suggest-list {
   flex: 1; overflow-y: auto; min-height: 0;
@@ -5476,7 +5697,7 @@ select {
 .petition-suggest-list::-webkit-scrollbar-track { background: transparent; }
 .petition-suggest-list::-webkit-scrollbar-thumb { background: rgba(218,165,32,0.4); border-radius: 2px; }
 .petition-suggest-item {
-  font-family: 'Lora', serif; font-size: 0.18em; line-height: 1.25;
+  font-family: 'Lora', serif; font-size: 0.16em; line-height: 1.25;
   color: rgba(218,165,32,0.7); padding: 1px 2px; cursor: pointer;
   border-bottom: 1px solid rgba(218,165,32,0.08); transition: color 0.15s, background 0.15s;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -5485,23 +5706,71 @@ select {
 .petition-suggest-item:hover {
   color: rgba(218,165,32,1); background: rgba(218,165,32,0.08);
 }
-
-/* ── Petition Microtext ── */
-.petition-microtext {
-  font-family: 'Lora', serif; font-size: 0.16em; line-height: 1.3;
-  color: rgba(218,165,32,0.45); text-align: center; margin: 1px 0;
-  font-style: italic; pointer-events: none; user-select: none;
+.petition-suggest-item.petition-suggest-selected {
+  color: #fff; background: rgba(218,165,32,0.18);
+  border-bottom-color: rgba(218,165,32,0.2);
 }
 
-/* ── Petition Fortune Tiers ── */
+/* "Write your own" toggle at bottom of suggestion panel */
+.petition-write-toggle {
+  font-family: 'Lora', serif; font-size: 0.14em; font-style: italic;
+  color: rgba(218,165,32,0.5); text-align: center; cursor: pointer;
+  padding: 1px 0; margin-top: 1px;
+  transition: color 0.15s;
+}
+.petition-write-toggle:hover { color: rgba(218,165,32,0.85); }
+
+/* ── Custom text input (replaces suggestions when toggled) ── */
+.petition-custom-input {
+  display: none;
+  width: 100%; height: 100%;
+  flex-direction: column;
+}
+.petition-custom-input.active {
+  display: flex;
+}
+.petition-suggest-panel.hidden { display: none; }
+
+.petition-custom-input textarea {
+  flex: 1; width: 100%; resize: none;
+  font-family: 'Lora', serif; font-size: 0.18em; line-height: 1.3;
+  color: rgba(218,165,32,0.9); background: rgba(10,5,15,0.5);
+  border: 1px solid rgba(218,165,32,0.25); padding: 2px 3px;
+  box-sizing: border-box;
+  scrollbar-width: thin; scrollbar-color: rgba(218,165,32,0.4) transparent;
+}
+.petition-custom-input textarea:focus {
+  outline: none; border-color: rgba(218,165,32,0.6);
+}
+.petition-custom-input textarea::placeholder {
+  color: rgba(218,165,32,0.35); font-style: italic;
+}
+.petition-custom-back {
+  font-family: 'Lora', serif; font-size: 0.13em; font-style: italic;
+  color: rgba(218,165,32,0.45); text-align: center; cursor: pointer;
+  padding: 1px 0;
+  transition: color 0.15s;
+}
+.petition-custom-back:hover { color: rgba(218,165,32,0.8); }
+
+/* ── Lower Zone: fortune tier buttons (~55%–84% of card) ── */
+.petition-lower-zone {
+  position: absolute;
+  top: 57%; left: 8%; right: 8%;
+  bottom: 16%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+
+/* ── Fortune Tiers ── */
 .petition-fortune-tiers {
-  display: flex; gap: 2px; width: 92%; justify-content: center;
-  margin-bottom: 2px; flex-wrap: nowrap;
+  display: flex; gap: 2px; width: 100%; justify-content: center;
+  flex-wrap: nowrap;
 }
 .petition-tier-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  background: rgba(10,5,15,0.6); border: 1px solid rgba(218,165,32,0.25);
-  padding: 1px 1px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  background: rgba(10,5,15,0.5); border: 1px solid rgba(218,165,32,0.25);
+  padding: 2px 1px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
   min-width: 0; position: relative;
 }
 .petition-tier-btn:hover:not(:disabled) {
@@ -5519,7 +5788,7 @@ select {
 }
 .petition-tier-btn.petition-tier-disabled:hover,
 .petition-tier-btn.sb-tier-disabled:hover {
-  border-color: rgba(218,165,32,0.12); background: rgba(10,5,15,0.6);
+  border-color: rgba(218,165,32,0.12); background: rgba(10,5,15,0.5);
   box-shadow: none;
 }
 /* Tooltip on disabled tier tap */
@@ -5543,6 +5812,35 @@ select {
 }
 .petition-tier-active .petition-tier-name { color: #fff; }
 .petition-tier-active .petition-tier-cost { color: rgba(218,165,32,0.8); }
+
+/* ── Petition Result (shown after seal) ── */
+.petition-zoom-overlay .petition-result { font-size: 0.2em; margin: 2px 0; text-align: center; color: var(--gold); }
+
+/* ── Floating Proceed button (outside card, below it) ── */
+.petition-proceed-btn {
+  position: absolute;
+  bottom: -30px; left: 50%; transform: translateX(-50%);
+  font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.08em;
+  font-size: 0.24em; padding: 3px 14px;
+  color: #fff; background: rgba(10,5,15,0.85);
+  border: 1px solid rgba(218,165,32,0.6);
+  cursor: pointer; white-space: nowrap;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 3;
+  pointer-events: auto;
+}
+.petition-proceed-btn:hover {
+  border-color: rgba(218,165,32,0.9); background: rgba(218,165,32,0.15);
+  box-shadow: 0 0 8px rgba(218,165,32,0.3);
+}
+.petition-proceed-btn:disabled {
+  opacity: 0.35; cursor: default;
+  border-color: rgba(218,165,32,0.2);
+}
+.petition-proceed-btn:disabled:hover {
+  background: rgba(10,5,15,0.85); box-shadow: none;
+  border-color: rgba(218,165,32,0.2);
+}
 
 /* ── Hide old fortune row if still present ── */
 .petition-zoom-overlay .petition-fortune-row { display: none; }
