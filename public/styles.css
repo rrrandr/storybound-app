@@ -3675,7 +3675,7 @@ select:-webkit-autofill {
     opacity: 1;
 }
 
-/* Accepted state — swap front face to WHITE-Accepted.png */
+/* Accepted state — overlay gold star at bottom, keep original card art + label */
 .pact-card.accepted {
     z-index: 20;
 }
@@ -3685,13 +3685,16 @@ select:-webkit-autofill {
     border-radius: 8px;
 }
 
-.pact-card.accepted .pact-card-front img {
-    content: url('/assets/Card%20Art/Cards/WHITE-Accepted.png');
-}
-
-/* Hide the label text on accepted cards — gold star replaces it */
-.pact-card.accepted .pact-card-label {
-    display: none;
+/* Bottom-only overlay showing the gold star from WHITE-Accepted.png */
+.pact-card.accepted .pact-card-front::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 18%;
+    background: url('/assets/Card%20Art/Cards/WHITE-Accepted.png') bottom center / 100% auto no-repeat;
+    z-index: 3;
+    pointer-events: none;
+    border-radius: 0 0 8px 8px;
 }
 
 /* ── Accept zone at bottom of zoomed card ── */
