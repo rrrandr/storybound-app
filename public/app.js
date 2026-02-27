@@ -21251,6 +21251,112 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (tip) tip.classList.add('hidden');
   }
 
+  // ── Trophy Hotspot Debug Mode ──
+  // Enables: visible red outlines, drag-to-reposition, resize handles, live coordinate labels
+  // Activate from console: window.trophyDebug(true)  |  Deactivate: window.trophyDebug(false)
+  // Dump final coords: window.trophyDumpCoords()
+  let _trophyDebugActive = false;
+
+  window.trophyDebug = function(enable) {
+    _trophyDebugActive = !!enable;
+    const vitrine = document.querySelector('.trophy-vitrine');
+    if (!vitrine) { console.warn('[TrophyDebug] No .trophy-vitrine found'); return; }
+
+    vitrine.querySelectorAll('.trophy-hotspot').forEach(spot => {
+      if (_trophyDebugActive) {
+        spot.classList.add('debug-visible');
+        _updateDebugLabel(spot, vitrine);
+        _makeDraggable(spot, vitrine);
+      } else {
+        spot.classList.remove('debug-visible');
+        spot.removeAttribute('data-debug-coords');
+      }
+    });
+    console.log('[TrophyDebug]', enable ? 'ON — drag to reposition, resize from corner' : 'OFF');
+    if (enable) console.log('[TrophyDebug] Run window.trophyDumpCoords() to copy final positions');
+  };
+
+  function _updateDebugLabel(spot, vitrine) {
+    const vw = vitrine.offsetWidth;
+    const vh = vitrine.offsetHeight;
+    if (!vw || !vh) return;
+    const top = ((spot.offsetTop / vh) * 100).toFixed(1);
+    const left = ((spot.offsetLeft / vw) * 100).toFixed(1);
+    const width = ((spot.offsetWidth / vw) * 100).toFixed(1);
+    const height = ((spot.offsetHeight / vh) * 100).toFixed(1);
+    spot.setAttribute('data-debug-coords', `${top}% ${left}% ${width}×${height}%`);
+  }
+
+  function _makeDraggable(spot, vitrine) {
+    if (spot._debugDragBound) return;
+    spot._debugDragBound = true;
+    let startX, startY, origLeft, origTop;
+
+    spot.addEventListener('mousedown', (e) => {
+      if (!_trophyDebugActive) return;
+      e.preventDefault();
+      e.stopPropagation();
+      startX = e.clientX;
+      startY = e.clientY;
+      origLeft = spot.offsetLeft;
+      origTop = spot.offsetTop;
+
+      function onMove(ev) {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        const vw = vitrine.offsetWidth;
+        const vh = vitrine.offsetHeight;
+        spot.style.left = (((origLeft + dx) / vw) * 100) + '%';
+        spot.style.top = (((origTop + dy) / vh) * 100) + '%';
+        _updateDebugLabel(spot, vitrine);
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    // Watch for CSS resize handle changes
+    const ro = new ResizeObserver(() => {
+      if (!_trophyDebugActive) return;
+      const vw = vitrine.offsetWidth;
+      const vh = vitrine.offsetHeight;
+      spot.style.width = ((spot.offsetWidth / vw) * 100) + '%';
+      spot.style.height = ((spot.offsetHeight / vh) * 100) + '%';
+      _updateDebugLabel(spot, vitrine);
+    });
+    ro.observe(spot);
+  }
+
+  window.trophyDumpCoords = function() {
+    const vitrine = document.querySelector('.trophy-vitrine');
+    if (!vitrine) return;
+    const coords = {};
+    vitrine.querySelectorAll('.trophy-hotspot').forEach(spot => {
+      const badge = spot.dataset.badge;
+      const vw = vitrine.offsetWidth;
+      const vh = vitrine.offsetHeight;
+      coords[badge] = {
+        top:    ((spot.offsetTop / vh) * 100).toFixed(1) + '%',
+        left:   ((spot.offsetLeft / vw) * 100).toFixed(1) + '%',
+        width:  ((spot.offsetWidth / vw) * 100).toFixed(1) + '%',
+        height: ((spot.offsetHeight / vh) * 100).toFixed(1) + '%'
+      };
+    });
+    console.log('[TrophyDebug] Current TROPHY_COORDS:');
+    console.log(JSON.stringify(coords, null, 2));
+    // Also copy-friendly format
+    let code = 'const TROPHY_COORDS = {\n';
+    Object.entries(coords).forEach(([k, v]) => {
+      code += `    ${(k + ':').padEnd(30)} { top: '${v.top}',${' '.repeat(Math.max(1, 6 - v.top.length))}left: '${v.left}',${' '.repeat(Math.max(1, 6 - v.left.length))}width: '${v.width}',${' '.repeat(Math.max(1, 6 - v.width.length))}height: '${v.height}' },\n`;
+    });
+    code += '};';
+    console.log(code);
+    return coords;
+  };
+
   // Close button
   $('trophyWallClose')?.addEventListener('click', closeTrophyWall);
 

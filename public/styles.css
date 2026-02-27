@@ -3683,7 +3683,8 @@ body.library-zoom-active .vault-book-list {
 .trophy-wall-modal {
     z-index: 9600;
     overflow-y: auto;
-    padding: 20px;
+    padding: 40px 20px 20px;
+    align-items: flex-start;
 }
 .trophy-wall-container {
     position: relative;
@@ -3742,6 +3743,29 @@ body.library-zoom-active .vault-book-list {
     cursor: pointer;
     transition: box-shadow 0.25s ease;
     border-radius: 10px;
+}
+/* DEBUG MODE: visible outlines + labels for positioning hit areas */
+.trophy-hotspot.debug-visible {
+    border: 2px dashed rgba(255, 0, 0, 0.7);
+    background: rgba(255, 0, 0, 0.12);
+    z-index: 15;
+}
+.trophy-hotspot.debug-visible::after {
+    content: attr(data-badge) ' | ' attr(data-debug-coords);
+    position: absolute;
+    bottom: -16px;
+    left: 0;
+    font-size: 9px;
+    color: #ff4444;
+    white-space: nowrap;
+    font-family: monospace;
+    pointer-events: none;
+    text-shadow: 0 0 3px #000, 0 0 6px #000;
+}
+/* Resize handle in bottom-right corner for debug mode */
+.trophy-hotspot.debug-visible {
+    resize: both;
+    overflow: hidden;
 }
 /* Locked: no overlay needed — greyed base image shows through */
 /* Earned: subtle gold glow on hotspot */
