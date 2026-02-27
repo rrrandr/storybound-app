@@ -1090,7 +1090,7 @@
             <div class="begin-story-flourish"></div>
             <div class="begin-btn-wrapper">
                 <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
-                <button class="sb-btn-png lg" id="beginBtn">Begin Story</button>
+                <button class="sb-btn-png lg" id="beginBtn" onclick="if(window.handleBeginStory){window.handleBeginStory()}else{alert('handleBeginStory not loaded')}">Begin Story</button>
             </div>
             <p class="story-continue-hint hidden" id="beginBtnHint">Your story will resume where you left off.</p>
         </div>
@@ -1529,7 +1529,7 @@
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260226c"></script>
+<script src="/app.js?v=20260226d"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
   <div class="box" style="max-width:450px;">
