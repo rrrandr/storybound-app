@@ -1537,24 +1537,28 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     btn.addEventListener('click', async function() {
       btn.disabled = true;
       try {
-        await sb
-          .from('profiles')
-          .update({
-            tos_version: LEGAL.TOS_VERSION,
-            tos_accepted_at: new Date(),
-            privacy_version: LEGAL.PRIVACY_VERSION,
-            privacy_accepted_at: new Date(),
-            adult_ack_version: LEGAL.ADULT_ACK_VERSION,
-            adult_acknowledged_at: new Date()
-          })
-          .eq('id', _supabaseProfileId);
+        if (_supabaseProfileId) {
+          await sb
+            .from('profiles')
+            .update({
+              tos_version: LEGAL.TOS_VERSION,
+              tos_accepted_at: new Date(),
+              privacy_version: LEGAL.PRIVACY_VERSION,
+              privacy_accepted_at: new Date(),
+              adult_ack_version: LEGAL.ADULT_ACK_VERSION,
+              adult_acknowledged_at: new Date()
+            })
+            .eq('id', _supabaseProfileId);
 
-        // Fire-and-forget: capture IP + UA server-side
-        fetch('/api/record-legal-acceptance', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: _supabaseProfileId })
-        }).catch(err => console.warn('[LEGAL] IP capture failed:', err));
+          // Fire-and-forget: capture IP + UA server-side
+          fetch('/api/record-legal-acceptance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: _supabaseProfileId })
+          }).catch(err => console.warn('[LEGAL] IP capture failed:', err));
+        } else {
+          console.warn('[LEGAL] No profile ID — skipping profile update');
+        }
 
         window.showScreen('tierGate');
       } catch (e) {
