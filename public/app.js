@@ -28814,7 +28814,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         });
 
         // Get parent row for card dissipation
-        const parentRow = selectedCard.closest('.card-flow-row, .corridor-row, .sb-grid');
+        // Use .dynamic-grouped first (dynamic row has multiple .sb-grid sub-groups)
+        const parentRow = selectedCard.closest('.dynamic-grouped, .card-flow-row, .corridor-row, .sb-grid');
 
         // Archetype stage: use Destiny's Choice mask breadcrumb (don't reveal LI archetype)
         if (stage === 'storybeau') {
