@@ -1832,7 +1832,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     letter-spacing: var(--letter-spacing);
     font-family: var(--font-story);
     position: relative;
-    overflow: visible;
+    overflow: hidden;
     box-sizing: border-box;
 }
 #storyText p { margin-bottom: 1.5em; }
@@ -1842,6 +1842,8 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     position: relative;
     width: 100%;
     min-height: 300px;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .story-page {
@@ -2684,6 +2686,24 @@ button:disabled::after, .dsp-btn:disabled::after {
     font-weight: 600;
 }
 .small-btn:hover {
+    filter: brightness(1.15);
+}
+/* Fortune balance button — uses 320x88 plaque */
+.fortune-balance-btn {
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    padding: 6px 20px;
+    background: url('/assets/ui/Black-Gold-320x88.png') center/100% 100% no-repeat, #0a0a0a;
+    border: none;
+    box-shadow: none;
+    color: #d4a843;
+    -webkit-text-fill-color: #d4a843;
+    text-shadow: 0 0 2px rgba(252, 246, 186, 0.3), 0 0 6px rgba(212, 168, 67, 0.15);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    min-width: 140px;
+}
+.fortune-balance-btn:hover {
     filter: brightness(1.15);
 }
 #vizSceneBtn {

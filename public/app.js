@@ -2216,7 +2216,9 @@ Introduce the name naturally within the first few paragraphs — do not announce
 
       function updateNavigation() {
           ensureInitialized();
-          if (prevBtn) prevBtn.disabled = currentPageIndex === 0 || isAnimating;
+          // Previous is always enabled on scene pages (goes back to synopsis from scene 1)
+          if (prevBtn) prevBtn.disabled = isAnimating;
+          // Next is greyed out at the latest (most recent) scene
           if (nextBtn) nextBtn.disabled = currentPageIndex >= pages.length - 1 || isAnimating;
           if (indicator) indicator.textContent = pages.length > 0 ? `Page ${currentPageIndex + 1} of ${pages.length}` : 'Page 1 of 1';
       }
@@ -2360,7 +2362,12 @@ Introduce the name naturally within the first few paragraphs — do not announce
       }
 
       function goToPrevPage() {
-          if (isAnimating || currentPageIndex <= 0) return;
+          if (isAnimating) return;
+          // At first scene page → go back to synopsis (reader page 1)
+          if (currentPageIndex <= 0) {
+              if (typeof showReaderPage === 'function') showReaderPage(1);
+              return;
+          }
           currentPageIndex--;
           renderCurrentPage(true, 'backward');
       }
@@ -2536,6 +2543,44 @@ Introduce the name naturally within the first few paragraphs — do not announce
   function getWorldLabel(worldCode) {
       return WORLD_LABELS[worldCode] || worldCode;
   }
+
+  /**
+   * Build tooltip text summarizing story picks for title mouseover.
+   */
+  function buildStoryTooltipText() {
+      const lines = [];
+      const p = state.picks || {};
+      if (p.world) lines.push('World: ' + (p.world || ''));
+      if (p.worldSubtype || state.worldCustomText) {
+          const flavor = p.worldSubtype ? getWorldLabel(p.worldSubtype) : state.worldCustomText;
+          lines.push('Flavor: ' + flavor);
+      }
+      if (p.tone) lines.push('Tone: ' + p.tone);
+      if (p.pressure) lines.push('Pull: ' + p.pressure);
+      if (p.pov) {
+          const povLabels = { first: '1st Person', third_limited: '3rd Limited', third_omni: '3rd Omniscient', author5th: '5th Person' };
+          lines.push('POV: ' + (povLabels[p.pov] || p.pov));
+      }
+      if (p.dynamic) lines.push('Dynamic: ' + p.dynamic);
+      if (state.storyLength) lines.push('Length: ' + state.storyLength.charAt(0).toUpperCase() + state.storyLength.slice(1));
+      if (state.archetype?.primary) lines.push('Archetype: ' + state.archetype.primary);
+      return lines.join('\n');
+  }
+
+  /**
+   * Apply tooltip to all story title elements.
+   */
+  function applyStoryTitleTooltips() {
+      const tip = buildStoryTooltipText();
+      const ids = ['storyTitle'];
+      ids.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.title = tip;
+      });
+      const titlePageTitle = document.querySelector('.sb-title-page-title');
+      if (titlePageTitle) titlePageTitle.title = tip;
+  }
+  window.applyStoryTitleTooltips = applyStoryTitleTooltips;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // DYSTOPIA FLAVORS — Canonical data model (LOCKED, do not invent or merge)
@@ -13987,6 +14032,7 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
 
           clearStoryContent();
           document.getElementById('storyTitle').textContent = book2Title;
+          applyStoryTitleTooltips();
 
           _mountAndTransition(book2Title, synopsis, body, interstitial, continueBtn, statusEl, 'Book 2');
           state._isTransitioning = false;
@@ -14201,6 +14247,7 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
 
           clearStoryContent();
           document.getElementById('storyTitle').textContent = baseTitle;
+          applyStoryTitleTooltips();
 
           _mountAndTransition(baseTitle, synopsis, body, interstitial, continueBtn, statusEl, 'New Story');
           state._isTransitioning = false;
@@ -16717,11 +16764,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.style.transform = `scale(${scale})`;
       card.style.transformOrigin = 'center center';
 
-      // Swap to high-res zoomed Petition art
-      const backFace = card.querySelector('.back');
-      if (backFace) {
-          backFace._origBg = backFace.style.backgroundImage;
-          backFace.style.backgroundImage = "url('/assets/Card%20Art/Cards/Tarot-Gold-front-PetitionZOOMED.png')";
+      // Swap to high-res zoomed Petition art on the FRONT face (the visible one — card never flips)
+      const frontFace = card.querySelector('.front');
+      if (frontFace) {
+          frontFace._origBg = frontFace.getAttribute('style');
+          frontFace.style.background = "url('/assets/Card%20Art/Cards/Tarot-Gold-front-PetitionZOOMED.png') center/cover no-repeat, #111";
       }
 
       if (backdrop) {
@@ -16882,15 +16929,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           const tierCost = parseInt(btn.dataset.tier, 10);
           btn.addEventListener('click', () => {
               if (btn.classList.contains('sb-tier-disabled')) {
-                  let tip = btn.querySelector('.petition-tier-tooltip');
-                  if (!tip) {
-                      tip = document.createElement('span');
-                      tip.className = 'petition-tier-tooltip';
-                      tip.textContent = 'Not enough Fortune.';
-                      btn.appendChild(tip);
-                  }
-                  tip.classList.add('visible');
-                  setTimeout(() => tip.classList.remove('visible'), 1200);
+                  if (typeof openFortunePurchaseModal === 'function') openFortunePurchaseModal();
                   return;
               }
               if (btn.classList.contains('petition-tier-active')) {
@@ -17019,11 +17058,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.querySelector('.petition-zoom-overlay')?.remove();
       card.querySelector('.petition-proceed-btn')?.remove();
 
-      // Restore original Petition art
-      const backFace = card.querySelector('.back');
-      if (backFace && backFace._origBg) {
-          backFace.style.backgroundImage = backFace._origBg;
-          delete backFace._origBg;
+      // Restore original Petition art on front face
+      const frontFace = card.querySelector('.front');
+      if (frontFace && frontFace._origBg) {
+          frontFace.setAttribute('style', frontFace._origBg);
+          delete frontFace._origBg;
       }
 
       // Remove zoom styles
@@ -20382,6 +20421,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     applyAccessLocks();
 
     document.getElementById('storyTitle').textContent = data.title || '';
+    applyStoryTitleTooltips();
     // BOOK FLOW SPEC: Synopsis is metadata only, never rendered
     // Inside cover = blank paper, Setting plate = visual only
     state._synopsisMetadata = data.synopsis || '';
@@ -27089,6 +27129,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     updateCorridorVisibility();
     updateCorridorContinueButtonVisibility();
 
+    // Unlock DSP from Guided Fate incremental mode — user is manually editing
+    _dspGuidedFateActive = false;
+
     // Update DSP visibility (only shows during World, Tone, Pressure, POV, Length)
     updateDSPCorridorVisibility();
 
@@ -29189,6 +29232,16 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         if (stage === 'storybeau') {
           createArchetypeBreadcrumbWithMask(selectedVal, true);
           await new Promise(r => setTimeout(r, BREADCRUMB_DELAY));
+          // Dissipate ALL archetype cards (including the chosen one — identity stays secret)
+          if (parentRow) {
+            const allArchCards = parentRow.querySelectorAll('.sb-card[data-grp="archetype"]');
+            if (allArchCards.length > 0) {
+              await new Promise(resolve => { dissipateCards(allArchCards, resolve); });
+              await new Promise(r => setTimeout(r, DISSIPATE_DELAY));
+            }
+          }
+          await new Promise(r => setTimeout(r, INTER_ROW_DELAY));
+          continue;
         } else {
           // Animate selected card to breadcrumb
           await new Promise(resolve => {
@@ -29221,6 +29274,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     corridorActiveRowIndex = CORRIDOR_STAGES.length;
     console.log('[Corridor] Autoplay complete. All rows processed.');
     _fateAutoplayActive = false;
+    _dspGuidedFateActive = false; // Unlock DSP for manual edits
     onCorridorComplete();
   }
 
@@ -32707,9 +32761,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Stop overlay sparkles
     stopOverlayLoadingSparkles();
 
-    // Re-enable Next button after scene generation completes
-    const _nextBtnRestore = document.getElementById('nextPageBtn');
-    if (_nextBtnRestore) _nextBtnRestore.disabled = false;
+    // Next button state is managed by StoryPagination.updateNavigation()
+    // — stays disabled at the latest scene (greyed out)
   }
 
   // ============================================================
@@ -32920,9 +32973,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       } else {
           const cost = getTemptFateCost();
 
-          // Check balance before confirmation
+          // Check balance — open purchase modal if insufficient
           if ((state.fortunes || 0) < cost) {
-              alert(`Tempt Fate requires ${cost} Fortunes. You have ${state.fortunes || 0}.`);
+              if (typeof openFortunePurchaseModal === 'function') openFortunePurchaseModal();
               return;
           }
 
@@ -32933,7 +32986,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           // Atomic deduction
           const burned = await consumeFortune(cost, 'tempt_fate');
           if (!burned) {
-              alert('Fortune deduction failed. Tempt Fate aborted.');
+              console.error('[TEMPT] Fortune deduction failed');
+              if (typeof openFortunePurchaseModal === 'function') openFortunePurchaseModal();
               return;
           }
       }
@@ -40613,7 +40667,10 @@ ${tone === 'Wry Confessional'
       // Populate title
       const titleEl = el.querySelector('.sb-title-page-title');
       const storyTitle = document.getElementById('storyTitle')?.textContent || state.story?.title || 'Untitled';
-      if (titleEl) titleEl.textContent = storyTitle.replace(/"/g, '');
+      if (titleEl) {
+          titleEl.textContent = storyTitle.replace(/"/g, '');
+          titleEl.title = buildStoryTooltipText();
+      }
 
       // Populate subhead (e.g. "In the world of ...")
       const subheadEl = el.querySelector('.sb-title-page-subhead');
@@ -40854,8 +40911,15 @@ ${tone === 'Wry Confessional'
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
           if (storyContent) storyContent.classList.remove('hidden');
 
+          // Hide title page if it wasn't dismissed via curl (e.g. page nav)
+          const titlePageSyn = document.getElementById('sbTitlePage');
+          if (titlePageSyn && !titlePageSyn.classList.contains('hidden')) {
+              titlePageSyn.classList.add('hidden');
+              window._titlePageActive = false;
+          }
+
           const storyText = document.getElementById('storyText');
-          const curlChainActive = window._titlePageActive || window._frontispieceActive || window._settingPlateActive;
+          const curlChainActive = window._frontispieceActive || window._settingPlateActive;
           if (storyText) {
               storyText.classList.add('synopsis-page-active');
               // Don't reveal storyText while title/frontispiece/setting curl chain is active
@@ -40913,6 +40977,10 @@ ${tone === 'Wry Confessional'
           // SCENE 2+: Show story content with inline setting image
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
           if (storyContent) storyContent.classList.remove('hidden');
+
+          // Hide title page (it should only show once at story start)
+          const titlePage = document.getElementById('sbTitlePage');
+          if (titlePage) { titlePage.classList.add('hidden'); window._titlePageActive = false; }
 
           const storyText = document.getElementById('storyText');
           const curlChainActive = window._titlePageActive || window._frontispieceActive || window._settingPlateActive;
