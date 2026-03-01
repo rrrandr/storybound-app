@@ -3836,6 +3836,26 @@ select:-webkit-autofill {
     font-size: 1.3em;
 }
 
+/* ── "Read Full Text" link under card labels ── */
+.pact-read-link {
+    position: relative;
+    z-index: 2;
+    font-family: 'Lora', serif;
+    font-size: 0.48em;
+    font-style: italic;
+    color: rgba(160, 130, 60, 0.7);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    margin-top: 4px;
+    text-align: center;
+    text-shadow: none;
+    transition: color 0.15s;
+}
+.pact-read-link:hover {
+    color: rgba(180, 150, 50, 1);
+}
+
 /* ── Terms of Service card — black text on white card ── */
 .pact-tos-label {
     color: #1a1a1a;

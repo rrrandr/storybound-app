@@ -1493,12 +1493,6 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     _pactSparkleIntervals.forEach(function(id) { clearInterval(id); });
     _pactSparkleIntervals = [];
 
-    // Hide seal row and disable button
-    var sealRow = document.getElementById('pactSealRow');
-    var enterBtn = document.getElementById('pact-enter');
-    if (sealRow) sealRow.classList.add('hidden');
-    if (enterBtn) enterBtn.disabled = true;
-
     // Update title/subtitle for re-accept
     var title = document.querySelector('.pact-title');
     var subtitle = document.getElementById('pact-subtitle');
@@ -1509,7 +1503,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
         subtitle.classList.remove('hidden');
       }
     } else {
-      if (title) title.textContent = 'The Pact of Entry';
+      if (title) title.textContent = 'The Pact of Binding';
       if (subtitle) subtitle.classList.add('hidden');
     }
 
@@ -1699,21 +1693,53 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
   }
 
   function _checkAllPactsAccepted() {
-    if (_pactAccepted.tos && _pactAccepted.privacy && _pactAccepted.adult) {
-      var sealRow = document.getElementById('pactSealRow');
-      var enterBtn = document.getElementById('pact-enter');
-      if (sealRow) sealRow.classList.remove('hidden');
-      if (enterBtn) enterBtn.disabled = false;
-    }
+    if (!_pactAccepted.tos || !_pactAccepted.privacy || !_pactAccepted.adult) return;
+
+    // All three accepted — persist to DB and advance
+    (async function() {
+      try {
+        if (_supabaseProfileId) {
+          await sb
+            .from('profiles')
+            .update({
+              age_confirmed: true,
+              tos_version: LEGAL.TOS_VERSION,
+              tos_accepted_at: new Date(),
+              privacy_version: LEGAL.PRIVACY_VERSION,
+              privacy_accepted_at: new Date(),
+              adult_ack_version: LEGAL.ADULT_ACK_VERSION,
+              adult_acknowledged_at: new Date()
+            })
+            .eq('id', _supabaseProfileId);
+
+          // Fire-and-forget: capture IP + UA server-side
+          fetch('/api/record-legal-acceptance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: _supabaseProfileId })
+          }).catch(function(err) { console.warn('[LEGAL] IP capture failed:', err); });
+        }
+      } catch (e) {
+        console.error('[LEGAL] Failed to update profile:', e);
+      }
+
+      // Brief delay so user sees the last star appear, then advance
+      setTimeout(function() {
+        window.showScreen('tierGate');
+      }, 600);
+    })();
   }
 
   (function initPactCards() {
     // Card tap → bottom 18% = accept directly, rest = open zoomed view
     document.querySelectorAll('.pact-card').forEach(function(card) {
       card.addEventListener('click', function(e) {
-        if (!card.classList.contains('flipped')) return; // must be flipped first
+        if (!card.classList.contains('flipped')) return;
         var pactKey = card.dataset.pact;
-        if (_pactAccepted[pactKey]) return; // already accepted
+        if (_pactAccepted[pactKey]) return;
+
+        // Check if click hit a "Read Full Text" link
+        if (e.target.classList.contains('pact-read-link')) return; // handled separately
 
         // Check if click is in the bottom accept zone (~18% of card height)
         var rect = card.getBoundingClientRect();
@@ -1721,7 +1747,6 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
         var threshold = rect.height * 0.82;
 
         if (clickY >= threshold) {
-          // Direct accept from unzoomed card
           _pactAccepted[pactKey] = true;
           card.classList.add('accepted');
           _checkAllPactsAccepted();
@@ -1732,43 +1757,15 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       });
     });
 
-    // Enter the Veil button
-    var enterBtn = document.getElementById('pact-enter');
-    if (enterBtn) {
-      enterBtn.addEventListener('click', async function() {
-        enterBtn.disabled = true;
-        try {
-          if (_supabaseProfileId) {
-            await sb
-              .from('profiles')
-              .update({
-                age_confirmed: true,
-                tos_version: LEGAL.TOS_VERSION,
-                tos_accepted_at: new Date(),
-                privacy_version: LEGAL.PRIVACY_VERSION,
-                privacy_accepted_at: new Date(),
-                adult_ack_version: LEGAL.ADULT_ACK_VERSION,
-                adult_acknowledged_at: new Date()
-              })
-              .eq('id', _supabaseProfileId);
-
-            // Fire-and-forget: capture IP + UA server-side
-            fetch('/api/record-legal-acceptance', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: _supabaseProfileId })
-            }).catch(function(err) { console.warn('[LEGAL] IP capture failed:', err); });
-          } else {
-            console.warn('[LEGAL] No profile ID — skipping profile update');
-          }
-
-          window.showScreen('tierGate');
-        } catch (e) {
-          console.error('[LEGAL] Failed to update profile:', e);
-          enterBtn.disabled = false;
-        }
+    // "Read Full Text" links → open zoomed view
+    document.querySelectorAll('.pact-read-link').forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var pactKey = link.dataset.pact;
+        if (!pactKey) return;
+        _openPactExpand(pactKey);
       });
-    }
+    });
   })();
 
   (function initLegalModal() {
