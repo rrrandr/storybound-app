@@ -21309,23 +21309,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // — Trophy Wall modal (vitrine overlay with badge hotspots) —
   const TROPHY_COORDS = {
-    // Row 1 — center crown
-    tempt_first:              { top: '4%',  left: '36%', width: '18%', height: '14%' },
-    // Row 2 — core trio
-    story_1:                  { top: '20%', left: '8%',  width: '18%', height: '14%' },
-    story_10:                 { top: '20%', left: '40%', width: '18%', height: '14%' },
-    story_100:                { top: '20%', left: '72%', width: '18%', height: '14%' },
-    // Row 3 — special pair
-    fifth_person:             { top: '36%', left: '22%', width: '18%', height: '14%' },
-    tempt_disturb_fate:       { top: '36%', left: '58%', width: '18%', height: '14%' },
-    // Row 4 — mastery trio (left)
-    mastery_modern:           { top: '52%', left: '8%',  width: '18%', height: '14%' },
-    mastery_fantasy:          { top: '52%', left: '40%', width: '18%', height: '14%' },
-    mastery_historical:       { top: '52%', left: '72%', width: '18%', height: '14%' },
-    // Row 5 — mastery trio (right)
-    mastery_sci_fi:           { top: '68%', left: '8%',  width: '18%', height: '14%' },
-    mastery_dystopia:         { top: '68%', left: '40%', width: '18%', height: '14%' },
-    mastery_post_apocalyptic: { top: '68%', left: '72%', width: '18%', height: '14%' }
+    tempt_first:              { top: '33.0%', left: '63.3%', width: '10.8%', height: '11.7%' },
+    story_1:                  { top: '17.5%', left: '24.3%', width: '9.8%',  height: '10.2%' },
+    story_10:                 { top: '20.0%', left: '58.9%', width: '14.8%', height: '7.5%' },
+    story_100:                { top: '17.4%', left: '41.0%', width: '14.0%', height: '10.1%' },
+    fifth_person:             { top: '37.2%', left: '20.6%', width: '17.9%', height: '7.4%' },
+    tempt_disturb_fate:       { top: '32.3%', left: '43.1%', width: '12.3%', height: '11.3%' },
+    mastery_modern:           { top: '47.6%', left: '26.5%', width: '10.8%', height: '14.9%' },
+    mastery_fantasy:          { top: '65.2%', left: '62.5%', width: '9.5%',  height: '15.0%' },
+    mastery_historical:       { top: '64.4%', left: '26.2%', width: '12.2%', height: '16.1%' },
+    mastery_sci_fi:           { top: '46.8%', left: '61.2%', width: '11.3%', height: '15.3%' },
+    mastery_dystopia:         { top: '68.5%', left: '44.2%', width: '12.2%', height: '12.0%' },
+    mastery_post_apocalyptic: { top: '50.1%', left: '42.8%', width: '13.1%', height: '12.3%' }
   };
 
   const TROPHY_META = {
