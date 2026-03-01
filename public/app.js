@@ -21297,11 +21297,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     shelf.style.display = '';
 
-    // Tap trophy shelf to open full Trophy Wall
+    // Tap trophy shelf to open full Trophy Wall (guard prevents stacking handlers)
     shelf.style.cursor = 'pointer';
-    shelf.addEventListener('click', function () {
-      if (typeof openTrophyWall === 'function') openTrophyWall();
-    });
+    if (!shelf._trophyClickBound) {
+      shelf._trophyClickBound = true;
+      shelf.addEventListener('click', function () {
+        if (typeof openTrophyWall === 'function') openTrophyWall();
+      });
+    }
   }
 
   // — Trophy Wall modal (vitrine overlay with badge hotspots) —
@@ -21466,58 +21469,63 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   window.revealTrophy = revealTrophy;
 
   async function openTrophyWall() {
-    // Close Vault menu first (matches Profile/Library button behavior)
-    document.getElementById('menuOverlay')?.classList.add('hidden');
-    if (typeof resetVaultState === 'function') resetVaultState();
-    _preVaultScreenId = _currentScreenId;
+    try {
+      // Close Vault menu first (matches Profile/Library button behavior)
+      document.getElementById('menuOverlay')?.classList.add('hidden');
+      if (typeof resetVaultState === 'function') resetVaultState();
+      _preVaultScreenId = _currentScreenId;
 
-    const modal = $('trophyWallModal');
-    if (!modal) return;
+      const modal = document.getElementById('trophyWallModal');
+      if (!modal) { console.error('[TROPHY] trophyWallModal not found in DOM'); return; }
 
-    // Snapshot previous earned set for detecting new unlocks
-    _trophyPreviousEarnedSet = new Set(_trophyEarnedSet);
+      // Snapshot previous earned set for detecting new unlocks
+      _trophyPreviousEarnedSet = new Set(_trophyEarnedSet);
 
-    // Fetch earned badges
-    _trophyEarnedSet = new Set();
-    if (sb && _supabaseProfileId) {
-      try {
-        const { data } = await sb
-          .from('user_badges')
-          .select('badge_id, earned')
-          .eq('profile_id', _supabaseProfileId)
-          .eq('earned', true);
-        if (data) data.forEach(r => _trophyEarnedSet.add(r.badge_id));
-      } catch (_) { /* silent */ }
+      // Fetch earned badges
+      _trophyEarnedSet = new Set();
+      if (sb && _supabaseProfileId) {
+        try {
+          const { data } = await sb
+            .from('user_badges')
+            .select('badge_id, earned')
+            .eq('profile_id', _supabaseProfileId)
+            .eq('earned', true);
+          if (data) data.forEach(r => _trophyEarnedSet.add(r.badge_id));
+        } catch (_) { /* silent */ }
+      }
+
+      // Position hotspots and apply earned/locked state
+      modal.querySelectorAll('.trophy-hotspot').forEach(spot => {
+        const badge = spot.dataset.badge;
+        const coords = TROPHY_COORDS[badge];
+        if (coords) {
+          spot.style.top = coords.top;
+          spot.style.left = coords.left;
+          spot.style.width = coords.width;
+          spot.style.height = coords.height;
+        }
+        spot.classList.remove('earned', 'locked', 'trophy-revealing');
+        spot.classList.add(_trophyEarnedSet.has(badge) ? 'earned' : 'locked');
+      });
+
+      // Build mask for pre-earned trophies (no animation)
+      updateVitrineMask();
+
+      modal.classList.remove('hidden');
+      console.log('[TROPHY] Trophy Wall opened');
+
+      // Animate newly earned trophies (earned now but not previously)
+      // Stagger multiple reveals by 60ms each for subtle cascade
+      let revealIdx = 0;
+      _trophyEarnedSet.forEach(badge => {
+        if (!_trophyPreviousEarnedSet.has(badge)) {
+          setTimeout(() => revealTrophy(badge), 400 + revealIdx * 60);
+          revealIdx++;
+        }
+      });
+    } catch (e) {
+      console.error('[TROPHY] openTrophyWall error:', e);
     }
-
-    // Position hotspots and apply earned/locked state
-    modal.querySelectorAll('.trophy-hotspot').forEach(spot => {
-      const badge = spot.dataset.badge;
-      const coords = TROPHY_COORDS[badge];
-      if (coords) {
-        spot.style.top = coords.top;
-        spot.style.left = coords.left;
-        spot.style.width = coords.width;
-        spot.style.height = coords.height;
-      }
-      spot.classList.remove('earned', 'locked', 'trophy-revealing');
-      spot.classList.add(_trophyEarnedSet.has(badge) ? 'earned' : 'locked');
-    });
-
-    // Build mask for pre-earned trophies (no animation)
-    updateVitrineMask();
-
-    modal.classList.remove('hidden');
-
-    // Animate newly earned trophies (earned now but not previously)
-    // Stagger multiple reveals by 60ms each for subtle cascade
-    let revealIdx = 0;
-    _trophyEarnedSet.forEach(badge => {
-      if (!_trophyPreviousEarnedSet.has(badge)) {
-        setTimeout(() => revealTrophy(badge), 400 + revealIdx * 60);
-        revealIdx++;
-      }
-    });
   }
 
   function closeTrophyWall() {
@@ -21537,20 +21545,34 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     _trophyDebugActive = !!enable;
     const vitrine = document.querySelector('.trophy-vitrine');
     if (!vitrine) { console.warn('[TrophyDebug] No .trophy-vitrine found'); return; }
+    const toggleBtn = document.getElementById('trophyDesignToggle');
+    if (toggleBtn) toggleBtn.classList.toggle('active', _trophyDebugActive);
 
     vitrine.querySelectorAll('.trophy-hotspot').forEach(spot => {
       if (_trophyDebugActive) {
         spot.classList.add('debug-visible');
         _updateDebugLabel(spot, vitrine);
-        _makeDraggable(spot, vitrine);
+        _makeInteractive(spot, vitrine);
       } else {
         spot.classList.remove('debug-visible');
         spot.removeAttribute('data-debug-coords');
       }
     });
-    console.log('[TrophyDebug]', enable ? 'ON — drag to reposition, resize from corner' : 'OFF');
+    console.log('[TrophyDebug]', enable ? 'ON — drag to reposition, drag corner handle to resize' : 'OFF');
     if (enable) console.log('[TrophyDebug] Run window.trophyDumpCoords() to copy final positions');
   };
+
+  // Wire Design Mode toggle button
+  $('trophyDesignToggle')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    window.trophyDebug(!_trophyDebugActive);
+  });
+  // Wire Dump Coords button
+  $('trophyDumpBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    window.trophyDumpCoords();
+    alert('Coordinates dumped to browser console (F12).');
+  });
 
   function _updateDebugLabel(spot, vitrine) {
     const vw = vitrine.offsetWidth;
@@ -21560,50 +21582,114 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const left = ((spot.offsetLeft / vw) * 100).toFixed(1);
     const width = ((spot.offsetWidth / vw) * 100).toFixed(1);
     const height = ((spot.offsetHeight / vh) * 100).toFixed(1);
-    spot.setAttribute('data-debug-coords', `${top}% ${left}% ${width}×${height}%`);
+    spot.setAttribute('data-debug-coords', `${top}% ${left}% ${width}x${height}%`);
   }
 
-  function _makeDraggable(spot, vitrine) {
+  function _makeInteractive(spot, vitrine) {
     if (spot._debugDragBound) return;
     spot._debugDragBound = true;
-    let startX, startY, origLeft, origTop;
 
-    spot.addEventListener('mousedown', (e) => {
-      if (!_trophyDebugActive) return;
-      e.preventDefault();
-      e.stopPropagation();
-      startX = e.clientX;
-      startY = e.clientY;
-      origLeft = spot.offsetLeft;
-      origTop = spot.offsetTop;
+    // ── Ensure resize handle element exists ──
+    let handle = spot.querySelector('.debug-resize-handle');
+    if (!handle) {
+      handle = document.createElement('div');
+      handle.className = 'debug-resize-handle';
+      spot.appendChild(handle);
+    }
 
-      function onMove(ev) {
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
+    // ── Drag (mouse + touch) ──
+    function startDrag(clientX, clientY) {
+      const startX = clientX;
+      const startY = clientY;
+      const origLeft = spot.offsetLeft;
+      const origTop = spot.offsetTop;
+
+      function onMove(cx, cy) {
+        const dx = cx - startX;
+        const dy = cy - startY;
         const vw = vitrine.offsetWidth;
         const vh = vitrine.offsetHeight;
         spot.style.left = (((origLeft + dx) / vw) * 100) + '%';
         spot.style.top = (((origTop + dy) / vh) * 100) + '%';
         _updateDebugLabel(spot, vitrine);
       }
-      function onUp() {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-      }
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    });
 
-    // Watch for CSS resize handle changes
-    const ro = new ResizeObserver(() => {
+      function onMouseMove(ev) { onMove(ev.clientX, ev.clientY); }
+      function onTouchMove(ev) { ev.preventDefault(); const t = ev.touches[0]; onMove(t.clientX, t.clientY); }
+      function cleanup() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', cleanup);
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', cleanup);
+      }
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', cleanup);
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', cleanup);
+    }
+
+    spot.addEventListener('mousedown', (e) => {
       if (!_trophyDebugActive) return;
-      const vw = vitrine.offsetWidth;
-      const vh = vitrine.offsetHeight;
-      spot.style.width = ((spot.offsetWidth / vw) * 100) + '%';
-      spot.style.height = ((spot.offsetHeight / vh) * 100) + '%';
-      _updateDebugLabel(spot, vitrine);
+      if (e.target === handle) return; // resize handle handles itself
+      e.preventDefault();
+      e.stopPropagation();
+      startDrag(e.clientX, e.clientY);
     });
-    ro.observe(spot);
+    spot.addEventListener('touchstart', (e) => {
+      if (!_trophyDebugActive) return;
+      if (e.target === handle) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const t = e.touches[0];
+      startDrag(t.clientX, t.clientY);
+    }, { passive: false });
+
+    // ── Resize via corner handle (mouse + touch) ──
+    function startResize(clientX, clientY) {
+      const startX = clientX;
+      const startY = clientY;
+      const origW = spot.offsetWidth;
+      const origH = spot.offsetHeight;
+
+      function onMove(cx, cy) {
+        const dx = cx - startX;
+        const dy = cy - startY;
+        const vw = vitrine.offsetWidth;
+        const vh = vitrine.offsetHeight;
+        const newW = Math.max(20, origW + dx);
+        const newH = Math.max(20, origH + dy);
+        spot.style.width = ((newW / vw) * 100) + '%';
+        spot.style.height = ((newH / vh) * 100) + '%';
+        _updateDebugLabel(spot, vitrine);
+      }
+
+      function onMouseMove(ev) { onMove(ev.clientX, ev.clientY); }
+      function onTouchMove(ev) { ev.preventDefault(); const t = ev.touches[0]; onMove(t.clientX, t.clientY); }
+      function cleanup() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', cleanup);
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', cleanup);
+      }
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', cleanup);
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', cleanup);
+    }
+
+    handle.addEventListener('mousedown', (e) => {
+      if (!_trophyDebugActive) return;
+      e.preventDefault();
+      e.stopPropagation();
+      startResize(e.clientX, e.clientY);
+    });
+    handle.addEventListener('touchstart', (e) => {
+      if (!_trophyDebugActive) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const t = e.touches[0];
+      startResize(t.clientX, t.clientY);
+    }, { passive: false });
   }
 
   window.trophyDumpCoords = function() {
