@@ -3661,18 +3661,47 @@ select:-webkit-autofill {
     text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
 
-/* Sparkle container for pact cards — reuses modeSparkle keyframes */
+/* Sparkle container — anchored to bottom half-circle area of pact cards */
 .pact-card-sparkles {
     position: absolute;
-    inset: -10px;
+    bottom: -8px;
+    left: 20%;
+    right: 20%;
+    height: 22%;
     pointer-events: none;
     z-index: 10;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
 }
 
 .pact-card.flipped .pact-card-sparkles {
     opacity: 1;
+}
+
+/* Hide fireflies once card is accepted */
+.pact-card.accepted .pact-card-sparkles {
+    opacity: 0;
+}
+
+/* Firefly particle */
+.pact-firefly {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,215,0,0.95) 0%, rgba(255,215,0,0) 70%);
+    pointer-events: none;
+    will-change: transform, opacity;
+    animation: pactFirefly var(--fly-dur, 3s) ease-in-out infinite alternate;
+    animation-delay: var(--fly-delay, 0s);
+}
+
+@keyframes pactFirefly {
+    0%   { transform: translate(var(--fx0, 0px), var(--fy0, 0px)); opacity: 0.2; }
+    25%  { transform: translate(var(--fx1, 5px), var(--fy1, -8px)); opacity: 0.9; }
+    50%  { transform: translate(var(--fx2, -3px), var(--fy2, -4px)); opacity: 0.4; }
+    75%  { transform: translate(var(--fx3, 8px), var(--fy3, -10px)); opacity: 1; }
+    100% { transform: translate(var(--fx4, -5px), var(--fy4, -2px)); opacity: 0.3; }
 }
 
 /* Accepted state — overlay gold star at bottom, keep original card art + label */

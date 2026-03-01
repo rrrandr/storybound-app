@@ -1525,42 +1525,47 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
   function _startPactCardSparkles(card) {
     var sparkleContainer = card.querySelector('.pact-card-sparkles');
     if (!sparkleContainer) return;
+    if (sparkleContainer.children.length > 0) return; // already populated
     sparkleContainer.innerHTML = '';
 
-    var interval = setInterval(function() {
-      if (!card.classList.contains('flipped')) {
-        clearInterval(interval);
-        return;
-      }
-      _createPactSparkle(sparkleContainer);
-    }, 150);
-    _pactSparkleIntervals.push(interval);
-
-    // Initial burst
-    for (var i = 0; i < 8; i++) {
-      (function(idx) {
-        setTimeout(function() { _createPactSparkle(sparkleContainer); }, idx * 50);
-      })(i);
+    // Create 5-7 persistent firefly particles with random flight paths
+    var count = 5 + Math.floor(Math.random() * 3);
+    for (var i = 0; i < count; i++) {
+      _createPactFirefly(sparkleContainer);
     }
   }
 
-  function _createPactSparkle(container) {
-    var sparkle = document.createElement('div');
-    sparkle.className = 'mode-sparkle';
-    var side = Math.floor(Math.random() * 4);
-    var x, y;
-    switch (side) {
-      case 0: x = Math.random() * 100; y = 0; break;
-      case 1: x = 100; y = Math.random() * 100; break;
-      case 2: x = Math.random() * 100; y = 100; break;
-      case 3: x = 0; y = Math.random() * 100; break;
-    }
-    sparkle.style.cssText =
-      'position:absolute;left:' + x + '%;top:' + y + '%;width:4px;height:4px;' +
-      'background:radial-gradient(circle,rgba(255,215,0,1) 0%,rgba(255,215,0,0) 70%);' +
-      'border-radius:50%;pointer-events:none;animation:modeSparkle 1.2s ease-out forwards;';
-    container.appendChild(sparkle);
-    setTimeout(function() { sparkle.remove(); }, 1200);
+  function _createPactFirefly(container) {
+    var fly = document.createElement('div');
+    fly.className = 'pact-firefly';
+
+    // Random starting position within the container
+    fly.style.left = (10 + Math.random() * 80) + '%';
+    fly.style.top = (10 + Math.random() * 80) + '%';
+
+    // Randomize size slightly
+    var size = 2 + Math.random() * 2.5;
+    fly.style.width = size + 'px';
+    fly.style.height = size + 'px';
+
+    // Generate 5 random waypoints for the keyframe animation
+    function rnd(range) { return (Math.random() - 0.5) * range; }
+    fly.style.setProperty('--fx0', rnd(16) + 'px');
+    fly.style.setProperty('--fy0', rnd(12) + 'px');
+    fly.style.setProperty('--fx1', rnd(20) + 'px');
+    fly.style.setProperty('--fy1', rnd(16) + 'px');
+    fly.style.setProperty('--fx2', rnd(18) + 'px');
+    fly.style.setProperty('--fy2', rnd(14) + 'px');
+    fly.style.setProperty('--fx3', rnd(22) + 'px');
+    fly.style.setProperty('--fy3', rnd(16) + 'px');
+    fly.style.setProperty('--fx4', rnd(16) + 'px');
+    fly.style.setProperty('--fy4', rnd(12) + 'px');
+
+    // Random duration and delay for desynchronization
+    fly.style.setProperty('--fly-dur', (2 + Math.random() * 3).toFixed(1) + 's');
+    fly.style.setProperty('--fly-delay', (Math.random() * -4).toFixed(1) + 's');
+
+    container.appendChild(fly);
   }
 
   function _openPactExpand(pactKey) {
