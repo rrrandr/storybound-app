@@ -24736,6 +24736,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // BAKED-ART HIT ZONES — Transparent click regions over zoomed card art
     // 2-column layout: left col ~17.6%, right col ~53%, rows spaced ~6.5%
     // ═══════════════════════════════════════════════════════════════════
+    // Label overrides — cover baked PNG text when the art hasn't been updated yet
+    const BAKED_ART_LABEL_OVERRIDES = {
+      blue_blood: 'Blue Blood'
+    };
+
     const BAKED_ART_BUTTONS = {
       Modern: [
         { val: 'small_town',          top: 56.7, left: 17.6, width: 29.1, height: 4.9 },
@@ -24772,12 +24777,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'galactic_civilizations', top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       Dystopia: [
-        { val: 'glass_house',     top: 57.8, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'human_capital',      top: 64.3, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'dogma',    top: 64.3, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'endless_edit',    top: 70.8, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'quieting_event',  top: 77.3, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'thirst',          top: 57.8, left: 53,   width: 29.2, height: 4.8 }
+        { val: 'glass_house',     top: 56.0, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'human_capital',   top: 62.5, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'dogma',           top: 62.5, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'thirst',          top: 69.0, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'endless_edit',    top: 69.0, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'quieting_event',  top: 75.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       PostApocalyptic: [
         { val: 'ashfall',        top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
@@ -24792,7 +24797,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       Historical:      { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       Fantasy:         { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       SciFi:           { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
-      Dystopia:        { top: 78.0, left: 53,   width: 29.2, height: 4.1 },
+      Dystopia:        { top: 75.5, left: 53,   width: 29.2, height: 4.1 },
       PostApocalyptic: { top: 76.5, left: 53,   width: 29.2, height: 4.1 }
     };
     // Scrolling suggestions for baked-art cards — themes NOT already in the buttons
@@ -25019,6 +25024,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           zone.style.left = btn.left + '%';
           zone.style.width = btn.width + '%';
           zone.style.height = btn.height + '%';
+
+          // Label override — cover baked PNG text with corrected label
+          if (BAKED_ART_LABEL_OVERRIDES[btn.val]) {
+            zone.classList.add('baked-hitzone-labeled');
+            zone.textContent = BAKED_ART_LABEL_OVERRIDES[btn.val];
+          }
 
           // Tooltip microtext (Fantasy flavors)
           if (BAKED_ART_TOOLTIPS[btn.val]) {
