@@ -15927,7 +15927,7 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       const burger = document.getElementById('burgerBtn');
 
       if(backBtn) {
-          const hidden = ['ageGate', 'legalGate', 'tierGate'].includes(_currentScreenId);
+          const hidden = ['ageGate', 'legalGate'].includes(_currentScreenId);
           if(hidden) backBtn.classList.add('hidden');
           else backBtn.classList.remove('hidden');
       }
@@ -15939,6 +15939,12 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
   }
 
   function goBack() {
+      // tierGate → back to legalGate (re-read bindings)
+      if (_currentScreenId === 'tierGate') {
+          routeToLegalAcceptance();
+          return;
+      }
+
       // LINEAR READER NAVIGATION (book system disabled)
       if (_currentScreenId === 'game') {
           if (!USE_OPENING_BOOK) {
