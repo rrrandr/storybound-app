@@ -5850,6 +5850,21 @@ All sensation remains sensory-bound. No cognition. No attribution.`;
       return contract;
   }
 
+  // EMOTIONAL STATE PERSISTENCE — world/flavor → memory profile resolver
+  function resolveEmotionalMemoryProfile(worldKey, flavorKey) {
+      // Mythic: worlds where emotional weight is structurally permanent
+      if (worldKey === 'PostApocalyptic' || worldKey === 'Dystopia') return 'mythic';
+      // Persistent: settings where emotional residue lingers by social/structural design
+      if (flavorKey === 'blue_blood' || flavorKey === 'victorian') return 'persistent';
+      if (worldKey === 'Dark' || window.state?.picks?.tone === 'Dark') {
+          // Dark tone with obsession/corruption pressure → persistent
+          const pressure = window.state?.picks?.pressure;
+          if (pressure === 'DesireObsession' || pressure === 'PowerControl') return 'persistent';
+      }
+      // Dynamic: default — normal decay for all other configurations
+      return 'dynamic';
+  }
+
   // EMOTIONAL STATE PERSISTENCE — flag activation helper
   let _emotionalPersistenceLogged = false;
   function enableEmotionalPersistence() {
@@ -14114,6 +14129,7 @@ Return ONLY valid JSON:
       state._enableEmotionalPersistence = false;
       state._emotionalCharge = 0;
       state._lastEmotionalPolarity = null;
+      state._emotionalMythicFloorActivated = false;
       state.petitionUsedThisScene = false;
 
       // Fate object — per-story tracking
@@ -44812,6 +44828,42 @@ Condensed (under ${maxLength} chars):` }
           return;
       }
 
+      // ═══════════════════════════════════════════════════════════════════
+      // INTIMATE CONTEXT: Route through Grok/Mistral, never ChatGPT
+      // ═══════════════════════════════════════════════════════════════════
+      if (window.isIntimateContextActive && window.isIntimateContextActive()) {
+          _fatePreviewInFlight = true;
+          actInput.value = '…';
+          actInput.classList.add('fate-preview-loading');
+          diaInput.value = '…';
+          diaInput.classList.add('fate-preview-loading');
+
+          try {
+              const intimateResult = await Promise.race([
+                  window.StoryboundOrchestration?.generateIntimateFatePreview?.(cardData),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Intimate preview timeout')), 8000))
+              ]);
+
+              if (_fatePreviewInFlight && intimateResult) {
+                  actInput.value = intimateResult.action;
+                  diaInput.value = intimateResult.dialogue;
+              } else {
+                  // Fallback to template text (never ChatGPT)
+                  actInput.value = cardData.action || '';
+                  diaInput.value = cardData.dialogue || '';
+              }
+          } catch (e) {
+              console.log('[FATE:Preview] Intimate preview failed, using template:', e.message);
+              actInput.value = cardData.action || '';
+              diaInput.value = cardData.dialogue || '';
+          } finally {
+              _fatePreviewInFlight = false;
+              actInput.classList.remove('fate-preview-loading');
+              diaInput.classList.remove('fate-preview-loading');
+          }
+          return; // Skip ChatGPT path entirely
+      }
+
       // Gather character/tone context
       const tone = state.picks?.tone || 'Earnest';
       const protagonistGender = state.gender || 'Female';
@@ -47102,11 +47154,21 @@ ABSOLUTE RULES:
 
               const _chargeIncrement = (_polarity === state._lastEmotionalPolarity) ? 0.05 : 0.02;
 
+              // Resolve memory profile for decay rate
+              const _memProfile = resolveEmotionalMemoryProfile(state.picks?.world, state.picks?.worldSubtype);
+              const _decayRate = _memProfile === 'mythic' ? 0.01 : _memProfile === 'persistent' ? 0.015 : 0.03;
+
               // Calm/neutral scenes (low signal count) → decay instead of accumulate
               if (_posSignals + _negSignals <= 2) {
-                  state._emotionalCharge = Math.max((state._emotionalCharge || 0) - 0.03, 0);
+                  // Mythic soft floor: once charge exceeds 0.6, floor at 0.25
+                  const _floor = (_memProfile === 'mythic' && state._emotionalMythicFloorActivated) ? 0.25 : 0;
+                  state._emotionalCharge = Math.max((state._emotionalCharge || 0) - _decayRate, _floor);
               } else {
                   state._emotionalCharge = Math.min((state._emotionalCharge || 0) + _chargeIncrement, 1.0);
+                  // Activate mythic floor on first crossing of 0.6
+                  if (_memProfile === 'mythic' && state._emotionalCharge > 0.6 && !state._emotionalMythicFloorActivated) {
+                      state._emotionalMythicFloorActivated = true;
+                  }
               }
               state._lastEmotionalPolarity = _polarity;
           }

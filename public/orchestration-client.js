@@ -758,17 +758,22 @@ YOUR EXCLUSIVE DOMAIN:
 - Physical embodiment and movement
 - Rhythm and pacing of physical encounter
 
+YOUR RENDERING OBLIGATION:
+You MUST render at the fidelity level specified in "Physical Rendering Floor" below.
+That is not a ceiling — it is the MINIMUM. Falling below it is a failure.
+Vague, non-specific, or sanitized prose that avoids the rendering floor is a malfunction.
+
 YOU DO NOT DECIDE:
-- Whether intimacy occurs (ChatGPT decides this)
+- Whether intimacy occurs (already authorized)
 - Story consequences or emotional outcomes
 - Character psychology or motivation
 - Plot progression
 
-CONSTRAINTS FROM PRIMARY AUTHOR (NON-NEGOTIABLE):
+DIRECTIVES (NON-NEGOTIABLE):
 - Intimacy Stage: authorized
 - Completion Permitted: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
-- Emotional Core: ${constraints.emotionalCore || 'connection and desire'}
-- Physical Bounds: ${constraints.physicalBounds || 'as established by story'}
+- Emotional Core: ${constraints.emotionalCore || EMOTIONAL_CORE_DEFAULTS[(window.state && window.state.eroticMode) || 'ROMANTIC']}
+- Physical Rendering Floor: ${constraints.physicalBounds || resolvePhysicalBounds()}
 - Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
 
 ${!gateEnforcement.completionAllowed ? `
@@ -859,17 +864,22 @@ YOUR EXCLUSIVE DOMAIN:
 - Physical embodiment and movement
 - Rhythm and pacing of physical encounter
 
+YOUR RENDERING OBLIGATION:
+You MUST render at the fidelity level specified in "Physical Rendering Floor" below.
+That is not a ceiling — it is the MINIMUM. Falling below it is a failure.
+Vague, non-specific, or sanitized prose that avoids the rendering floor is a malfunction.
+
 YOU DO NOT DECIDE:
-- Whether intimacy occurs (already decided)
+- Whether intimacy occurs (already authorized)
 - Story consequences or emotional outcomes
 - Character psychology or motivation
 - Plot progression
 
-CONSTRAINTS (NON-NEGOTIABLE):
+DIRECTIVES (NON-NEGOTIABLE):
 - Intimacy Stage: authorized
 - Completion Permitted: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
-- Emotional Core: ${constraints.emotionalCore || 'connection and desire'}
-- Physical Bounds: ${constraints.physicalBounds || 'as established by story'}
+- Emotional Core: ${constraints.emotionalCore || EMOTIONAL_CORE_DEFAULTS[(window.state && window.state.eroticMode) || 'ROMANTIC']}
+- Physical Rendering Floor: ${constraints.physicalBounds || resolvePhysicalBounds()}
 - Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
 
 ${!gateEnforcement.completionAllowed ? `
@@ -1252,91 +1262,129 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     if (useGrokForSD && !usedFallback) {
       // Parse constraints from ChatGPT output
       const constraintsMatch = authorOutput.match(/\[CONSTRAINTS\]([\s\S]*?)\[\/CONSTRAINTS\]/);
+      let constraints = null;
+      let guardAActivated = false;
+      const eroticMode = (window.state && window.state.eroticMode) || 'ROMANTIC';
 
       if (constraintsMatch) {
-        const constraints = parseConstraints(constraintsMatch[1]);
+        constraints = parseConstraints(constraintsMatch[1]);
+        if (!constraints.intimacyOccurs) {
+          // GUARD A: Block present but intimacyOccurs false — ChatGPT tried to suppress
+          guardAActivated = true;
+          console.warn('[GUARD-A] intimacyOccurs was false despite authorized pipeline — overriding');
+        }
+      } else {
+        // GUARD A: No [CONSTRAINTS] block at all — ChatGPT omitted it entirely
+        guardAActivated = true;
+        constraints = { hardStops: ['consent_withdrawal'] };
+        console.warn('[GUARD-A] No [CONSTRAINTS] block found — generating synthetic constraints');
+      }
 
-        // Only call Grok if ChatGPT indicated intimacy occurs
-        if (constraints.intimacyOccurs) {
-          state.phase = 'SD_AUTHORING';
-          if (onPhaseChange) onPhaseChange('SD_AUTHORING');
+      if (guardAActivated) {
+        constraints.intimacyOccurs = true;
+        constraints.physicalBounds = resolvePhysicalBounds();
+        constraints.emotionalCore = EMOTIONAL_CORE_DEFAULTS[eroticMode] || EMOTIONAL_CORE_DEFAULTS.ROMANTIC;
+        // Extract first 3 sentences from authorOutput as sceneSetup fallback
+        const sentences = authorOutput.replace(/\[.*?\]/g, '').trim().match(/[^.!?]+[.!?]+/g);
+        constraints.sceneSetup = sentences ? sentences.slice(0, 3).join(' ').trim() : 'Intimate scene in progress.';
+      }
 
-          let esdOutput = null;
-          let grokSucceeded = false;
+      if (constraints.intimacyOccurs) {
+        // ALWAYS override physicalBounds — even when Guard A didn't fire
+        // ChatGPT cannot water down the bounds; they are derived from eroticMode
+        constraints.physicalBounds = resolvePhysicalBounds();
 
-          // STEP 1: Attempt Grok (PRIMARY specialist author)
+        // GUARD B: emotionalCore quality floor
+        if (!constraints.emotionalCore || constraints.emotionalCore.length < 10) {
+          console.warn('[GUARD-B] emotionalCore too short or missing — replacing with default');
+          constraints.emotionalCore = EMOTIONAL_CORE_DEFAULTS[eroticMode] || EMOTIONAL_CORE_DEFAULTS.ROMANTIC;
+        }
+
+        // GUARD B: sceneSetup quality floor
+        if (!constraints.sceneSetup || constraints.sceneSetup.length < 15) {
+          console.warn('[GUARD-B] sceneSetup too short or missing — extracting from authorOutput');
+          const sentences = authorOutput.replace(/\[.*?\]/g, '').trim().match(/[^.!?]+[.!?]+/g);
+          constraints.sceneSetup = sentences ? sentences.slice(0, 3).join(' ').trim() : 'Intimate scene in progress.';
+        }
+
+        state.phase = 'SD_AUTHORING';
+        if (onPhaseChange) onPhaseChange('SD_AUTHORING');
+
+        let esdOutput = null;
+        let grokSucceeded = false;
+
+        // STEP 1: Attempt Grok (PRIMARY specialist author)
+        try {
+          const grokSDOutput = await callGrokSDAuthor(constraints, state.gateEnforcement);
+
+          // Extract SD from Grok output
+          const esdMatch = grokSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
+          if (esdMatch) {
+            esdOutput = esdMatch[1];
+            grokSucceeded = true;
+            state.esdAuthoredByGrok = true;
+            console.log('[ORCHESTRATION] Grok authored SD successfully');
+          } else {
+            console.warn('[ORCHESTRATION] Grok output did not contain valid SD block (neutered?)');
+            state.grokFailed = true;
+          }
+        } catch (grokErr) {
+          console.error('[ORCHESTRATION] Grok SD authoring failed:', grokErr);
+          state.errors.push(`Grok SD failed: ${grokErr.message}`);
+          state.grokFailed = true;
+          state.esdAuthoredByGrok = false;
+        }
+
+        // STEP 2: If Grok failed, attempt Mistral ONCE (FALLBACK specialist author)
+        // NO RETRIES. ONE ATTEMPT ONLY.
+        if (!grokSucceeded && CONFIG.ENABLE_MISTRAL_SD) {
+          console.log('[ORCHESTRATION] Grok failed — attempting Mistral fallback (ONE ATTEMPT)');
+
           try {
-            const grokSDOutput = await callGrokSDAuthor(constraints, state.gateEnforcement);
+            const mistralSDOutput = await callMistralSDFallback(constraints, state.gateEnforcement);
 
-            // Extract SD from Grok output
-            const esdMatch = grokSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
+            // Extract SD from Mistral output
+            const esdMatch = mistralSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
             if (esdMatch) {
               esdOutput = esdMatch[1];
-              grokSucceeded = true;
-              state.esdAuthoredByGrok = true;
-              console.log('[ORCHESTRATION] Grok authored SD successfully');
+              state.esdAuthoredByMistral = true;
+              console.log('[ORCHESTRATION] Mistral fallback authored SD successfully');
             } else {
-              console.warn('[ORCHESTRATION] Grok output did not contain valid SD block (neutered?)');
-              state.grokFailed = true;
-            }
-          } catch (grokErr) {
-            console.error('[ORCHESTRATION] Grok SD authoring failed:', grokErr);
-            state.errors.push(`Grok SD failed: ${grokErr.message}`);
-            state.grokFailed = true;
-            state.esdAuthoredByGrok = false;
-          }
-
-          // STEP 2: If Grok failed, attempt Mistral ONCE (FALLBACK specialist author)
-          // NO RETRIES. ONE ATTEMPT ONLY.
-          if (!grokSucceeded && CONFIG.ENABLE_MISTRAL_SD) {
-            console.log('[ORCHESTRATION] Grok failed — attempting Mistral fallback (ONE ATTEMPT)');
-
-            try {
-              const mistralSDOutput = await callMistralSDFallback(constraints, state.gateEnforcement);
-
-              // Extract SD from Mistral output
-              const esdMatch = mistralSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
-              if (esdMatch) {
-                esdOutput = esdMatch[1];
-                state.esdAuthoredByMistral = true;
-                console.log('[ORCHESTRATION] Mistral fallback authored SD successfully');
-              } else {
-                console.warn('[ORCHESTRATION] Mistral output did not contain valid SD block');
-                state.mistralFailed = true;
-              }
-            } catch (mistralErr) {
-              console.error('[ORCHESTRATION] Mistral SD fallback also failed:', mistralErr);
-              state.errors.push(`Mistral SD fallback failed: ${mistralErr.message}`);
+              console.warn('[ORCHESTRATION] Mistral output did not contain valid SD block');
               state.mistralFailed = true;
-              state.esdAuthoredByMistral = false;
             }
+          } catch (mistralErr) {
+            console.error('[ORCHESTRATION] Mistral SD fallback also failed:', mistralErr);
+            state.errors.push(`Mistral SD fallback failed: ${mistralErr.message}`);
+            state.mistralFailed = true;
+            state.esdAuthoredByMistral = false;
           }
+        }
 
-          // STEP 3: Parse SD if either author succeeded
-          if (esdOutput) {
-            state.esd = parseSD(esdOutput, state.gateEnforcement);
+        // STEP 3: Parse SD if either author succeeded
+        if (esdOutput) {
+          state.esd = parseSD(esdOutput, state.gateEnforcement);
 
-            // CASCADE ANCHOR DETECTION (Step 2):
-            // If intimacy occurs and we are NOT already in cascade mode,
-            // this is the Anchor Beat — store context for subsequent cascade beats
-            const appState = window.state;
-            if (appState && !appState.cascadeMode && constraints.intimacyOccurs) {
-              appState.cascadeMode = true;
-              appState.cascadeCount = 0;
-              appState.cascadeContext = {
-                emotionalCore: state.esd.emotionalCore,
-                physicalBounds: state.esd.physicalBounds,
-                hardStops: state.esd.hardStops,
-                completionAllowed: state.esd.completionAllowed
-              };
-              console.log('[CASCADE] Anchor beat detected — cascade context stored');
-            }
-          } else {
-            // BOTH Grok and Mistral failed — force interruption, do NOT downgrade
-            console.warn('[ORCHESTRATION] ALL scene authors failed — fateStumbled, forced interruption required');
-            state.fateStumbled = true;
-            // forcedInterruption will be set in integration pass
+          // CASCADE ANCHOR DETECTION (Step 2):
+          // If intimacy occurs and we are NOT already in cascade mode,
+          // this is the Anchor Beat — store context for subsequent cascade beats
+          const appState = window.state;
+          if (appState && !appState.cascadeMode && constraints.intimacyOccurs) {
+            appState.cascadeMode = true;
+            appState.cascadeCount = 0;
+            appState.cascadeContext = {
+              emotionalCore: state.esd.emotionalCore,
+              physicalBounds: state.esd.physicalBounds,
+              hardStops: state.esd.hardStops,
+              completionAllowed: state.esd.completionAllowed
+            };
+            console.log('[CASCADE] Anchor beat detected — cascade context stored');
           }
+        } else {
+          // BOTH Grok and Mistral failed — force interruption, do NOT downgrade
+          console.warn('[ORCHESTRATION] ALL scene authors failed — fateStumbled, forced interruption required');
+          state.fateStumbled = true;
+          // forcedInterruption will be set in integration pass
         }
       }
     } else if (!useGrokForSD) {
@@ -1609,6 +1657,29 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
   // ===========================================================================
   // PROMPT BUILDERS
   // ===========================================================================
+
+  // Deterministic emotional core defaults keyed by eroticMode
+  const EMOTIONAL_CORE_DEFAULTS = {
+    ROMANTIC: 'Longing and tender desire meeting at the threshold of surrender.',
+    VISCERAL: 'Raw physical want, need made urgent by proximity and permission.',
+    CARNAL: 'Consuming possession and the dissolution of restraint.',
+    INTENSITY_REDIRECT: 'Charged restraint; the weight of what is not yet said or done.'
+  };
+
+  /**
+   * Deterministic physicalBounds derived from window.state.eroticMode.
+   * Bypasses ChatGPT's ability to water down the directive.
+   */
+  function resolvePhysicalBounds() {
+    const mode = (window.state && window.state.eroticMode) || 'ROMANTIC';
+    const boundsMap = {
+      ROMANTIC: 'Restrained but present sensory detail; kissing, touching, undressing rendered with tactile precision. Implication over exposition, but the body is not absent.',
+      VISCERAL: 'Explicit physical detail; anatomy referenced directly. Full contact and nudity rendered without euphemism. Rhythm and friction are narrated.',
+      CARNAL: 'Full sensory saturation; power dynamics, anatomical specificity, graphic intimacy. Nothing implied — everything rendered with deliberate physicality.',
+      INTENSITY_REDIRECT: 'No explicitness increase. Redirect all energy to emotional stakes, psychological tension, charged proximity. The body is present but clothed in restraint.'
+    };
+    return boundsMap[mode] || boundsMap.ROMANTIC;
+  }
 
   /**
    * Parse constraints from ChatGPT output (for split SD authoring).
@@ -1913,6 +1984,151 @@ dialogue: <elevated dialogue>`;
     return lockedCard;
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // INTIMATE FATE CARD AUTHORING — Grok/Mistral (never ChatGPT)
+  // ═══════════════════════════════════════════════════════════════════
+
+  async function callGrokIntimateFate(messages, options = {}) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    try {
+      const resp = await fetch(CONFIG.SPECIALIST_PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          role: 'INTIMACY_SPECIALIST',
+          messages,
+          max_tokens: options.max_tokens || 200,
+          temperature: options.temperature || 0.85
+        })
+      });
+      clearTimeout(timeoutId);
+      if (!resp.ok) throw new Error(`Grok intimate fate: ${resp.status}`);
+      const data = await resp.json();
+      return data.choices?.[0]?.message?.content || data.content || null;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.warn('[FATE:INTIMATE] Grok call failed:', err.message);
+      return null;
+    }
+  }
+
+  async function callMistralIntimateFate(messages, options = {}) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    try {
+      const resp = await fetch(CONFIG.MISTRAL_PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          messages,
+          max_tokens: options.max_tokens || 200,
+          temperature: options.temperature || 0.85
+        })
+      });
+      clearTimeout(timeoutId);
+      if (!resp.ok) throw new Error(`Mistral intimate fate: ${resp.status}`);
+      const data = await resp.json();
+      return data.choices?.[0]?.message?.content || data.content || null;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.warn('[FATE:INTIMATE] Mistral call failed:', err.message);
+      return null;
+    }
+  }
+
+  function parseIntimateFateResponse(text) {
+    if (!text) return null;
+    const lines = text.trim().split('\n').filter(l => l.trim());
+    if (lines.length < 2) return null;
+    return {
+      action: lines[0].replace(/^(action|do):\s*/i, '').trim().slice(0, 120),
+      dialogue: lines[1].replace(/^(dialogue|say):\s*/i, '').trim().slice(0, 150)
+    };
+  }
+
+  async function generateIntimateFatePreview(cardData) {
+    const st = window.state || {};
+    const mode = st.eroticMode || 'ROMANTIC';
+    const effectiveMode = mode === 'INTENSITY_REDIRECT' ? 'ROMANTIC' : mode;
+    const physicalBounds = resolvePhysicalBounds();
+    const liName = st.loveInterestName || 'the love interest';
+
+    // Recent scene text
+    const allContent = window.StoryPagination?.getAllContent?.()?.replace(/<[^>]*>/g, ' ') || '';
+    const recentScene = allContent.slice(-500);
+
+    // Emotional core from ESD if available
+    const emotionalCore = st.esd?.emotionalCore || st.esd?.dominant_emotion || 'desire';
+
+    const archMeaning = {
+      temptation: 'Escalate. New act, new territory, new threshold.',
+      confession: 'Admit what you want. Mid-act, no armor.',
+      boundary: 'State your need. Demand, not refusal.',
+      reversal: 'Power changes hands. Take or yield.',
+      silence: 'No words. Teeth, nails, breath, movement.'
+    };
+
+    const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate.';
+
+    const modeInstructions = {
+      ROMANTIC: 'Tender but present. Bodies in contact, sensory detail, undressing, kissing with intention. Implication is allowed but the body is NOT absent.',
+      VISCERAL: 'Explicit physical detail. Anatomy referenced directly. Rhythm, friction, and contact narrated without euphemism.',
+      CARNAL: 'Full sensory saturation. Power dynamics, anatomical specificity, graphic intimacy. Nothing implied — everything rendered.'
+    };
+
+    const userMsg = `FATE CARD:
+- Archetype: ${cardData.title || cardData.id}
+- Theme: ${cardData.desc}
+- Seed action: ${cardData.action}
+- Seed dialogue: ${cardData.dialogue}
+- Archetype meaning: ${archMeaning[cardData.id] || cardData.desc}
+
+EROTIC MODE: ${effectiveMode}
+MODE INSTRUCTIONS: ${modeInstructions[effectiveMode] || modeInstructions.ROMANTIC}
+RENDERING FLOOR: ${physicalBounds}
+EMOTIONAL CORE: ${emotionalCore}
+LOVE INTEREST NAME: ${liName}
+
+RECENT SCENE:
+${recentScene.slice(-300)}
+
+TASK: Generate a Say/Do preview for this intimate fate card.
+1. Action — A specific physical act the protagonist takes RIGHT NOW. Max 12 words. Never vague. Never de-escalating. Must match ${effectiveMode} intensity.
+2. Dialogue — What the protagonist says or sounds like during the act. Max 15 words. In quotes or parentheses for sounds.
+
+Respond in EXACTLY two lines:
+[action on first line]
+[dialogue on second line]`;
+
+    const messages = [
+      { role: 'system', content: systemMsg },
+      { role: 'user', content: userMsg }
+    ];
+
+    // Fallback chain: Grok → Mistral → null (never ChatGPT)
+    console.log('[FATE:INTIMATE] Requesting Grok preview for', cardData.id);
+    let response = await callGrokIntimateFate(messages);
+    let parsed = parseIntimateFateResponse(response);
+    if (parsed) {
+      console.log('[FATE:INTIMATE] Grok preview success');
+      return parsed;
+    }
+
+    console.log('[FATE:INTIMATE] Grok failed, trying Mistral');
+    response = await callMistralIntimateFate(messages);
+    parsed = parseIntimateFateResponse(response);
+    if (parsed) {
+      console.log('[FATE:INTIMATE] Mistral preview success');
+      return parsed;
+    }
+
+    console.log('[FATE:INTIMATE] Both models failed, returning null (template fallback)');
+    return null;
+  }
+
   function parseStructuralOutput(text) {
     const result = { action: null, dialogue: null, beat: null };
     const lines = text.split('\n');
@@ -2214,6 +2430,7 @@ Tension: ${outline.tension_vector || 'N/A'}`;
 
     // Fate Card processing
     processFateCard,
+    generateIntimateFatePreview,  // Grok/Mistral intimate fate preview (never ChatGPT)
 
     // Reader preference adaptation (session-scoped, deterministic)
     recordPreferenceSignal,     // Record user behavior signals

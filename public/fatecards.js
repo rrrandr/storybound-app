@@ -544,6 +544,193 @@ function stopContinuousSparkles() {
         }
     };
 
+    // ═══════════════════════════════════════════════════════════════════
+    // INTIMATE CONTEXT DETECTION
+    // ═══════════════════════════════════════════════════════════════════
+
+    function isIntimateContextActive() {
+        const st = window.state || {};
+        // Active intimate scene (ESD exists this turn) OR cascade just ended (re-entry window)
+        return !!(st.esd || st.cascadeContext);
+    }
+
+    function resolveIntimateMode() {
+        const st = window.state || {};
+        const mode = st.eroticMode || 'ROMANTIC';
+        // INTENSITY_REDIRECT maps to ROMANTIC templates (no escalation)
+        return mode === 'INTENSITY_REDIRECT' ? 'ROMANTIC' : mode;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // INTIMATE DECK BASE — 5 erotic archetype reframes
+    // ═══════════════════════════════════════════════════════════════════
+
+    const INTIMATE_DECK_BASE = [
+        { id: 'temptation', title: 'Temptation', desc: 'Escalate. New act, new territory, new threshold.', actionTemplate: 'Push past what you were just doing.', dialogueTemplate: '"More."' },
+        { id: 'confession', title: 'Confession', desc: 'Admit what you want. Mid-act, no armor.', actionTemplate: 'Say it while it\'s happening.', dialogueTemplate: '"I need—"' },
+        { id: 'boundary', title: 'Boundary', desc: 'State your need. Demand, not refusal.', actionTemplate: 'Tell them exactly what you want.', dialogueTemplate: '"Right there. Don\'t stop."' },
+        { id: 'reversal', title: 'Reversal', desc: 'Power changes hands. Take or yield.', actionTemplate: 'Seize control or surrender it.', dialogueTemplate: '"Let me."' },
+        { id: 'silence', title: 'Silence', desc: 'No words. Teeth, nails, breath, movement.', actionTemplate: 'Let your body speak.', dialogueTemplate: '(A sound, not a word.)' }
+    ];
+
+    // ═══════════════════════════════════════════════════════════════════
+    // INTIMATE OPTION GENERATORS × 3 MODES
+    // ═══════════════════════════════════════════════════════════════════
+
+    function getIntimateTemptationOptions(ctx) {
+        const mode = ctx.intimateMode || 'ROMANTIC';
+        const li = ctx.liName || 'them';
+        switch (mode) {
+            case 'CARNAL':
+                return {
+                    action: `Take what you haven't claimed from ${li}. New act, now.`,
+                    dialogue: '"I\'m not done with you."',
+                    altAction: `Push ${li} into something neither of you has tried.`,
+                    altDialogue: '"You can take more than that."'
+                };
+            case 'VISCERAL':
+                return {
+                    action: `Guide ${li}'s mouth somewhere new. Change positions.`,
+                    dialogue: '"Come here."',
+                    altAction: `Pull ${li} closer and shift the angle.`,
+                    altDialogue: '"I want to feel you differently."'
+                };
+            default: // ROMANTIC
+                return {
+                    action: `Undress ${li} slowly—one more layer.`,
+                    dialogue: '"Let me see you."',
+                    altAction: `Trace a line down ${li}'s skin with your fingertips.`,
+                    altDialogue: '"I\'ve wanted to touch you here."'
+                };
+        }
+    }
+
+    function getIntimateConfessionOptions(ctx) {
+        const mode = ctx.intimateMode || 'ROMANTIC';
+        const li = ctx.liName || 'them';
+        switch (mode) {
+            case 'CARNAL':
+                return {
+                    action: `Describe what you're doing to ${li}. In detail. While doing it.`,
+                    dialogue: '"Feel what you do to me."',
+                    altAction: `Tell ${li} exactly how they taste.`,
+                    altDialogue: '"You have no idea how long I\'ve wanted this."'
+                };
+            case 'VISCERAL':
+                return {
+                    action: `Tell ${li} what their body does to you—breathless.`,
+                    dialogue: '"You feel—god—"',
+                    altAction: `Gasp against ${li}'s skin and let the truth spill.`,
+                    altDialogue: '"I can\'t think when you do that."'
+                };
+            default: // ROMANTIC
+                return {
+                    action: `Whisper to ${li} what you've been holding back.`,
+                    dialogue: '"I want you. I\'ve wanted you."',
+                    altAction: `Press your forehead to ${li}'s and confess.`,
+                    altDialogue: '"I didn\'t know it could feel like this."'
+                };
+        }
+    }
+
+    function getIntimateBoundaryOptions(ctx) {
+        const mode = ctx.intimateMode || 'ROMANTIC';
+        const li = ctx.liName || 'them';
+        switch (mode) {
+            case 'CARNAL':
+                return {
+                    action: `Command ${li}. On your knees. Don't ask—tell.`,
+                    dialogue: '"On your knees."',
+                    altAction: `Set the pace. ${li} follows your rhythm now.`,
+                    altDialogue: '"You do what I say."'
+                };
+            case 'VISCERAL':
+                return {
+                    action: `Grab ${li} and position them where you need them. Harder.`,
+                    dialogue: '"Harder."',
+                    altAction: `Pull ${li} against you and set the depth.`,
+                    altDialogue: '"Don\'t you dare stop."'
+                };
+            default: // ROMANTIC
+                return {
+                    action: `Guide ${li}'s hand exactly where you need it.`,
+                    dialogue: '"Right there. Don\'t stop."',
+                    altAction: `Arch into ${li} and show them without words.`,
+                    altDialogue: '"Stay. Just like that."'
+                };
+        }
+    }
+
+    function getIntimateReversalOptions(ctx) {
+        const mode = ctx.intimateMode || 'ROMANTIC';
+        const li = ctx.liName || 'them';
+        switch (mode) {
+            case 'CARNAL':
+                return {
+                    action: `Pin ${li}'s wrists. Full surrender or full control—choose.`,
+                    dialogue: '"You\'re mine right now."',
+                    altAction: `Flip ${li} and take what you want.`,
+                    altDialogue: '"I decide when you\'re done."'
+                };
+            case 'VISCERAL':
+                return {
+                    action: `Pin ${li} and take the rhythm. You lead now.`,
+                    dialogue: '"My turn."',
+                    altAction: `Push ${li} back and climb on top.`,
+                    altDialogue: '"I\'ve been patient enough."'
+                };
+            default: // ROMANTIC
+                return {
+                    action: `Gently take over. "Let me." Roll ${li} beneath you.`,
+                    dialogue: '"Let me take care of you."',
+                    altAction: `Cup ${li}'s face and shift the dynamic—tender control.`,
+                    altDialogue: '"Trust me."'
+                };
+        }
+    }
+
+    function getIntimateSilenceOptions(ctx) {
+        const mode = ctx.intimateMode || 'ROMANTIC';
+        const li = ctx.liName || 'them';
+        switch (mode) {
+            case 'CARNAL':
+                return {
+                    action: `A raw animal sound. Grip ${li} hard enough to bruise.`,
+                    dialogue: '(A guttural moan—nothing human about it.)',
+                    altAction: `Teeth in ${li}'s shoulder. Nails raking. No words left.`,
+                    altDialogue: '(The sound you make isn\'t voluntary.)'
+                };
+            case 'VISCERAL':
+                return {
+                    action: `Bite ${li}'s shoulder. Nails down their back. No words.`,
+                    dialogue: '(A sharp intake of breath through clenched teeth.)',
+                    altAction: `Dig your fingers into ${li}'s hips and pull them closer.`,
+                    altDialogue: '(A moan you couldn\'t stop if you tried.)'
+                };
+            default: // ROMANTIC
+                return {
+                    action: `Lips on ${li}'s pulse point. Fingertip tracing their jaw.`,
+                    dialogue: '(A soft sound against their skin.)',
+                    altAction: `Close your eyes. Press your lips to ${li}'s collarbone.`,
+                    altDialogue: '(Your breath catches—that\'s enough.)'
+                };
+        }
+    }
+
+    function generateIntimateCardOptions(cardId, ctx) {
+        switch (cardId) {
+            case 'temptation': return getIntimateTemptationOptions(ctx);
+            case 'confession': return getIntimateConfessionOptions(ctx);
+            case 'boundary':   return getIntimateBoundaryOptions(ctx);
+            case 'reversal':   return getIntimateReversalOptions(ctx);
+            case 'silence':    return getIntimateSilenceOptions(ctx);
+            default:           return getIntimateTemptationOptions(ctx);
+        }
+    }
+
+    // Export intimate context detection
+    window.isIntimateContextActive = isIntimateContextActive;
+
     // Confidence threshold for using full contextual options
     const CONFIDENCE_THRESHOLD = 0.35;
 
@@ -570,6 +757,28 @@ function stopContinuousSparkles() {
                 isStorybeau: targetResolution.isStorybeau,
                 sceneCharacters: presentCharacters
             });
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // INTIMATE CONTEXT: Route through erotic generators, skip ChatGPT
+        // ═══════════════════════════════════════════════════════════════════
+        if (isIntimateContextActive()) {
+            const intimateMode = resolveIntimateMode();
+            const intimateCtx = { intimateMode, liName: resolvedTargetName };
+            const options = generateIntimateCardOptions(baseCard.id, intimateCtx);
+
+            // Anti-repetition filter
+            const allUsed = [...usedInThisDraw, ...lastTurnPhrases];
+            let action = options.action;
+            let dialogue = options.dialogue;
+            if (isPhraseTooSimilar(action, allUsed)) {
+                action = options.altAction || action;
+            }
+            if (isPhraseTooSimilar(dialogue, allUsed)) {
+                dialogue = options.altDialogue || dialogue;
+            }
+
+            return { ...baseCard, action, dialogue, _intimate: true };
         }
 
         // Determine story phase
@@ -964,13 +1173,16 @@ function stopContinuousSparkles() {
         const allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
         const storyText = allContent.replace(/<[^>]*>/g, ' ');
 
+        // INTIMATE CONTEXT: Use erotic deck base instead of standard deck
+        const deckBase = isIntimateContextActive() ? INTIMATE_DECK_BASE : fateDeckBase;
+
         // Extract scene context once for all cards
         const sceneContext = extractSceneContext(storyText, state);
 
         // Track used phrases in this draw to prevent repetition
         const usedInThisDraw = [];
 
-        return fateDeckBase.map(baseCard => {
+        return deckBase.map(baseCard => {
             const card = generateContextualCard(baseCard, sceneContext, usedInThisDraw);
             // Track what we generated to avoid repetition in same draw
             usedInThisDraw.push(card.action);
