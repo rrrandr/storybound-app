@@ -66,14 +66,29 @@ body.booting .screen {
     --page-accent: #888;
 }
 
-/* Apply paper styles to story text container */
-#storyText, .story-pages-container {
+/* Apply paper styles to story pages container only (not the outer #storyText wrapper) */
+.story-pages-container {
     background: var(--page-bg);
     color: var(--page-text);
     border-radius: 4px;
     padding: 20px 30px;
-    margin: 10px 0;
+    margin: 10px auto;
+    max-width: 600px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+/* #storyText is a transparent wrapper on scene pages — synopsis-page-active gives it paper look */
+#storyText {
+    color: var(--page-text);
+    margin: 10px 0;
+}
+/* On scene pages (no synopsis-page-active), strip the .box chrome so title doesn't
+   create a separate beige box above the prose container */
+#storyText:not(.synopsis-page-active) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1880,105 +1895,32 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     z-index: 1;
 }
 
-/* Page Turn Animation - Right-to-left page curl */
+/* Page Turn Animation - Simple crossfade (forward) */
 .story-page.turning-out {
-    animation: pageCurlOut 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-    transform-origin: right center;
+    animation: pageFadeOut 350ms ease forwards;
 }
 
 .story-page.turning-in {
-    animation: pageCurlIn 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-    transform-origin: left center;
+    animation: pageFadeIn 350ms ease forwards;
 }
 
-/* Page Turn Animation - Backward (left-to-right uncurl) */
+/* Page Turn Animation - Simple crossfade (backward) */
 .story-page.turning-out-reverse {
-    animation: pageCurlOutReverse 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-    transform-origin: left center;
+    animation: pageFadeOut 350ms ease forwards;
 }
 
 .story-page.turning-in-reverse {
-    animation: pageCurlInReverse 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-    transform-origin: right center;
+    animation: pageFadeIn 350ms ease forwards;
 }
 
-/* Parent needs perspective for 3D curl depth */
-.story-pages-container {
-    perspective: 1200px;
+@keyframes pageFadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
 }
 
-@keyframes pageCurlOut {
-    0% {
-        transform: rotateY(0deg);
-        opacity: 1;
-        box-shadow: none;
-    }
-    30% {
-        transform: rotateY(-25deg);
-        opacity: 1;
-        box-shadow: -8px 0 20px rgba(0,0,0,0.25);
-    }
-    100% {
-        transform: rotateY(-90deg);
-        opacity: 0;
-        box-shadow: -2px 0 8px rgba(0,0,0,0.15);
-    }
-}
-
-@keyframes pageCurlIn {
-    0% {
-        transform: rotateY(90deg);
-        opacity: 0;
-        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-        visibility: visible;
-    }
-    30% {
-        transform: rotateY(25deg);
-        opacity: 1;
-        box-shadow: 8px 0 20px rgba(0,0,0,0.25);
-    }
-    100% {
-        transform: rotateY(0deg);
-        opacity: 1;
-        box-shadow: none;
-    }
-}
-
-@keyframes pageCurlOutReverse {
-    0% {
-        transform: rotateY(0deg);
-        opacity: 1;
-        box-shadow: none;
-    }
-    30% {
-        transform: rotateY(25deg);
-        opacity: 1;
-        box-shadow: 8px 0 20px rgba(0,0,0,0.25);
-    }
-    100% {
-        transform: rotateY(90deg);
-        opacity: 0;
-        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-    }
-}
-
-@keyframes pageCurlInReverse {
-    0% {
-        transform: rotateY(-90deg);
-        opacity: 0;
-        box-shadow: -2px 0 8px rgba(0,0,0,0.15);
-        visibility: visible;
-    }
-    30% {
-        transform: rotateY(-25deg);
-        opacity: 1;
-        box-shadow: -8px 0 20px rgba(0,0,0,0.25);
-    }
-    100% {
-        transform: rotateY(0deg);
-        opacity: 1;
-        box-shadow: none;
-    }
+@keyframes pageFadeIn {
+    0% { opacity: 0; visibility: visible; }
+    100% { opacity: 1; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1991,7 +1933,6 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     position: relative;
     width: 100%;
     margin-bottom: 16px;
-    perspective: 1200px;
 }
 .sb-curl-page.hidden { display: none; }
 
@@ -2060,20 +2001,17 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     border-radius: 6px;
 }
 
-/* Page-curl animation: right edge lifts and curls to the left */
+/* Page-curl animation: simple fade out */
 .sb-curl-page-inner.sb-page-curl {
-    animation: sbPageCurl 800ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    animation: sbPageFade 500ms ease forwards;
 }
 
-@keyframes sbPageCurl {
+@keyframes sbPageFade {
     0% {
-        transform: rotateY(0deg);
-    }
-    15% {
-        transform: rotateY(-8deg);
+        opacity: 1;
     }
     100% {
-        transform: rotateY(-180deg);
+        opacity: 0;
     }
 }
 
@@ -2440,7 +2378,31 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     padding: 0;
     letter-spacing: 0.6em;
     text-transform: capitalize;
+    cursor: default;
+    position: relative;
     /* No glow, no gradients, no UI decoration */
+}
+
+/* Custom tooltip for story title — shows story shape on hover */
+.story-title-tooltip {
+    display: none;
+    position: fixed;
+    background: rgba(10, 8, 4, 0.95);
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-family: 'Lora', serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: rgba(218, 165, 32, 0.85);
+    white-space: pre-line;
+    text-align: left;
+    z-index: 10000;
+    pointer-events: none;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 .story-page-title.compact {
@@ -2692,8 +2654,8 @@ button:disabled::after, .dsp-btn:disabled::after {
 .fortune-balance-btn {
     font-family: 'Lora', serif;
     font-size: 0.85em;
-    padding: 6px 20px;
-    background: url('/assets/ui/Black-Gold-320x88.png') center/100% 100% no-repeat, #0a0a0a;
+    padding: 14px 44px;
+    background: url('/assets/ui/Black-Gold-400x112.png') center/100% 100% no-repeat, #0a0a0a;
     border: none;
     box-shadow: none;
     color: #d4a843;
@@ -2704,6 +2666,46 @@ button:disabled::after, .dsp-btn:disabled::after {
     min-width: 140px;
 }
 .fortune-balance-btn:hover {
+    filter: brightness(1.15);
+}
+
+/* Fortune Purchase Modal — pack buttons (gold plaque) */
+.fortune-pack-btn {
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1em;
+    font-weight: 600;
+    padding: 12px 20px;
+    width: 100%;
+    background: url('/assets/ui/DSP-Gold-Blk-1800x440.png') center/100% 100% no-repeat;
+    background-color: transparent;
+    border: none;
+    border-radius: 3px;
+    color: #1a1408;
+    text-shadow: 0 1px 0 rgba(255, 215, 0, 0.15);
+    cursor: pointer;
+    transition: filter 0.1s ease;
+}
+.fortune-pack-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* Fortune Purchase Modal — dismiss button (black-gold text plaque) */
+.fortune-dismiss-btn {
+    font-family: 'Lora', serif;
+    font-size: 0.9em;
+    font-weight: 400;
+    padding: 10px 32px;
+    background: url('/assets/ui/Black-Gold-Text-840x128.png') center/100% 100% no-repeat;
+    background-color: transparent;
+    border: none;
+    color: #d4a843;
+    -webkit-text-fill-color: #d4a843;
+    text-shadow: 0 0 2px rgba(252, 246, 186, 0.3), 0 0 6px rgba(212, 168, 67, 0.15);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: filter 0.1s ease;
+}
+.fortune-dismiss-btn:hover {
     filter: brightness(1.15);
 }
 #vizSceneBtn {
@@ -5800,39 +5802,39 @@ select {
 }
 .petition-suggest-header {
   font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.06em;
-  color: rgba(218,165,32,0.85); text-align: center; margin-bottom: 1px;
-  font-size: 0.18em; line-height: 1.2; white-space: nowrap;
+  color: rgba(0,0,0,0.85); text-align: center; margin-bottom: 1px;
+  font-size: 0.11em; line-height: 1.2; white-space: nowrap;
 }
 .petition-suggest-list {
   flex: 1; overflow-y: auto; min-height: 0;
-  scrollbar-width: thin; scrollbar-color: rgba(218,165,32,0.4) transparent;
+  scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.3) transparent;
 }
 .petition-suggest-list::-webkit-scrollbar { width: 3px; }
 .petition-suggest-list::-webkit-scrollbar-track { background: transparent; }
-.petition-suggest-list::-webkit-scrollbar-thumb { background: rgba(218,165,32,0.4); border-radius: 2px; }
+.petition-suggest-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.3); border-radius: 2px; }
 .petition-suggest-item {
-  font-family: 'Lora', serif; font-size: 0.16em; line-height: 1.25;
-  color: rgba(218,165,32,0.7); padding: 1px 2px; cursor: pointer;
-  border-bottom: 1px solid rgba(218,165,32,0.08); transition: color 0.15s, background 0.15s;
+  font-family: 'Lora', serif; font-size: 0.09em; line-height: 1.25;
+  color: rgba(0,0,0,0.65); padding: 1px 2px; cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.08); transition: color 0.15s, background 0.15s;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .petition-suggest-item:last-child { border-bottom: none; }
 .petition-suggest-item:hover {
-  color: rgba(218,165,32,1); background: rgba(218,165,32,0.08);
+  color: rgba(0,0,0,1); background: rgba(218,165,32,0.12);
 }
 .petition-suggest-item.petition-suggest-selected {
-  color: #fff; background: rgba(218,165,32,0.18);
-  border-bottom-color: rgba(218,165,32,0.2);
+  color: #000; background: rgba(218,165,32,0.22);
+  border-bottom-color: rgba(0,0,0,0.15);
 }
 
 /* "Write your own" toggle at bottom of suggestion panel */
 .petition-write-toggle {
-  font-family: 'Lora', serif; font-size: 0.14em; font-style: italic;
-  color: rgba(218,165,32,0.5); text-align: center; cursor: pointer;
+  font-family: 'Lora', serif; font-size: 0.08em; font-style: italic;
+  color: rgba(0,0,0,0.45); text-align: center; cursor: pointer;
   padding: 1px 0; margin-top: 1px;
   transition: color 0.15s;
 }
-.petition-write-toggle:hover { color: rgba(218,165,32,0.85); }
+.petition-write-toggle:hover { color: rgba(0,0,0,0.8); }
 
 /* ── Custom text input (replaces suggestions when toggled) ── */
 .petition-custom-input {
@@ -5847,25 +5849,25 @@ select {
 
 .petition-custom-input textarea {
   flex: 1; width: 100%; resize: none;
-  font-family: 'Lora', serif; font-size: 0.18em; line-height: 1.3;
-  color: rgba(218,165,32,0.9); background: rgba(10,5,15,0.5);
-  border: 1px solid rgba(218,165,32,0.25); padding: 2px 3px;
+  font-family: 'Lora', serif; font-size: 0.09em; line-height: 1.3;
+  color: rgba(0,0,0,0.85); background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(0,0,0,0.2); padding: 2px 3px;
   box-sizing: border-box;
-  scrollbar-width: thin; scrollbar-color: rgba(218,165,32,0.4) transparent;
+  scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.3) transparent;
 }
 .petition-custom-input textarea:focus {
-  outline: none; border-color: rgba(218,165,32,0.6);
+  outline: none; border-color: rgba(0,0,0,0.5);
 }
 .petition-custom-input textarea::placeholder {
-  color: rgba(218,165,32,0.35); font-style: italic;
+  color: rgba(0,0,0,0.35); font-style: italic;
 }
 .petition-custom-back {
-  font-family: 'Lora', serif; font-size: 0.13em; font-style: italic;
-  color: rgba(218,165,32,0.45); text-align: center; cursor: pointer;
+  font-family: 'Lora', serif; font-size: 0.08em; font-style: italic;
+  color: rgba(0,0,0,0.45); text-align: center; cursor: pointer;
   padding: 1px 0;
   transition: color 0.15s;
 }
-.petition-custom-back:hover { color: rgba(218,165,32,0.8); }
+.petition-custom-back:hover { color: rgba(0,0,0,0.75); }
 
 /* ── Lower Zone: fortune tier buttons (~55%–84% of card) ── */
 .petition-lower-zone {
@@ -5883,33 +5885,33 @@ select {
 }
 .petition-tier-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  background: rgba(10,5,15,0.5); border: 1px solid rgba(218,165,32,0.25);
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(0,0,0,0.2);
   padding: 2px 1px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
   min-width: 0; position: relative;
 }
 .petition-tier-btn:hover:not(:disabled) {
-  border-color: rgba(218,165,32,0.5); background: rgba(218,165,32,0.08);
+  border-color: rgba(0,0,0,0.5); background: rgba(218,165,32,0.12);
 }
 .petition-tier-btn.petition-tier-active {
-  border-color: rgba(218,165,32,0.8); background: rgba(218,165,32,0.15);
+  border-color: rgba(218,165,32,0.8); background: rgba(218,165,32,0.18);
   box-shadow: 0 0 4px rgba(218,165,32,0.3);
 }
 .petition-tier-btn.petition-tier-disabled,
 .petition-tier-btn.sb-tier-disabled {
   opacity: 0.4; cursor: default;
   filter: saturate(0.5);
-  border-color: rgba(218,165,32,0.12);
+  border-color: rgba(0,0,0,0.12);
 }
 .petition-tier-btn.petition-tier-disabled:hover,
 .petition-tier-btn.sb-tier-disabled:hover {
-  border-color: rgba(218,165,32,0.12); background: rgba(10,5,15,0.5);
+  border-color: rgba(0,0,0,0.12); background: rgba(255,255,255,0.1);
   box-shadow: none;
 }
 /* Tooltip on disabled tier tap */
 .petition-tier-btn.sb-tier-disabled .petition-tier-tooltip {
   position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-  background: rgba(10,5,15,0.92); border: 1px solid rgba(218,165,32,0.3);
-  color: rgba(218,165,32,0.65); font-family: 'Lora', serif; font-size: 0.14em;
+  background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.2);
+  color: rgba(0,0,0,0.65); font-family: 'Lora', serif; font-size: 0.08em;
   padding: 1px 3px; white-space: nowrap; pointer-events: none;
   opacity: 0; transition: opacity 0.3s;
 }
@@ -5917,47 +5919,170 @@ select {
   opacity: 1;
 }
 .petition-tier-name {
-  font-family: 'Lora', serif; font-variant: small-caps; font-size: 0.19em;
-  color: var(--gold); line-height: 1.2; white-space: nowrap;
+  font-family: 'Lora', serif; font-variant: small-caps; font-size: 0.1em;
+  color: rgba(0,0,0,0.8); line-height: 1.2; white-space: nowrap;
 }
 .petition-tier-cost {
-  font-family: 'Lora', serif; font-size: 0.14em;
-  color: rgba(218,165,32,0.5); line-height: 1.1;
+  font-family: 'Lora', serif; font-size: 0.08em;
+  color: rgba(0,0,0,0.45); line-height: 1.1;
 }
-.petition-tier-active .petition-tier-name { color: #fff; }
-.petition-tier-active .petition-tier-cost { color: rgba(218,165,32,0.8); }
+.petition-tier-active .petition-tier-name { color: #000; }
+.petition-tier-active .petition-tier-cost { color: rgba(0,0,0,0.7); }
 
 /* ── Petition Result (shown after seal) ── */
-.petition-zoom-overlay .petition-result { font-size: 0.2em; margin: 2px 0; text-align: center; color: var(--gold); }
+.petition-zoom-overlay .petition-result { font-size: 0.1em; margin: 2px 0; text-align: center; color: rgba(0,0,0,0.8); }
 
 /* ── Floating Proceed button (outside card, below it) ── */
 .petition-proceed-btn {
   position: absolute;
   bottom: -30px; left: 50%; transform: translateX(-50%);
   font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.08em;
-  font-size: 0.24em; padding: 3px 14px;
-  color: #fff; background: rgba(10,5,15,0.85);
-  border: 1px solid rgba(218,165,32,0.6);
+  font-size: 0.13em; padding: 3px 14px;
+  color: #000; background: rgba(218,165,32,0.25);
+  border: 1px solid rgba(0,0,0,0.4);
   cursor: pointer; white-space: nowrap;
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 3;
   pointer-events: auto;
 }
 .petition-proceed-btn:hover {
-  border-color: rgba(218,165,32,0.9); background: rgba(218,165,32,0.15);
+  border-color: rgba(0,0,0,0.7); background: rgba(218,165,32,0.35);
   box-shadow: 0 0 8px rgba(218,165,32,0.3);
 }
 .petition-proceed-btn:disabled {
   opacity: 0.35; cursor: default;
-  border-color: rgba(218,165,32,0.2);
+  border-color: rgba(0,0,0,0.15);
 }
 .petition-proceed-btn:disabled:hover {
-  background: rgba(10,5,15,0.85); box-shadow: none;
-  border-color: rgba(218,165,32,0.2);
+  background: rgba(218,165,32,0.25); box-shadow: none;
+  border-color: rgba(0,0,0,0.15);
 }
 
 /* ── Hide old fortune row if still present ── */
 .petition-zoom-overlay .petition-fortune-row { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEMPT FATE — ZOOM CARD OVERLAY
+   ═══════════════════════════════════════════════════════════════════ */
+.tempt-fate-card.tempt-zoomed {
+  max-width: none;
+  z-index: 10005;
+  position: relative;
+  pointer-events: auto;
+  transition: transform 0.3s ease;
+}
+
+.tempt-zoom-overlay {
+  position: absolute;
+  top: 0; bottom: 0; left: 0; right: 0;
+  background: transparent;
+  pointer-events: none;
+  z-index: 2;
+}
+.tempt-zoom-overlay > * {
+  pointer-events: auto;
+}
+
+/* ── Wish Zone: scrolling example columns ── */
+.tempt-wish-zone {
+  position: absolute;
+  top: 22%; left: 8%; right: 8%;
+  bottom: 20%;
+  overflow: hidden;
+}
+
+.tempt-wish-columns {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.tempt-wish-columns.hidden { display: none; }
+
+.tempt-wish-col {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.tempt-wish-scroll {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.tempt-wish-item {
+  font-family: 'Lora', serif;
+  font-weight: 400;
+  font-size: 0.08em;
+  line-height: 1.35;
+  color: rgba(0, 0, 0, 0.7);
+  padding: 2px 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Custom text input (replaces columns on click) ── */
+.tempt-custom-input {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.tempt-custom-input.hidden { display: none; }
+
+.tempt-custom-input textarea {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  font-family: 'Lora', serif;
+  font-weight: 400;
+  font-size: 0.09em;
+  line-height: 1.3;
+  color: rgba(0, 0, 0, 0.85);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 3px 4px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+.tempt-custom-input textarea:focus {
+  outline: none;
+  border-color: rgba(180, 30, 30, 0.5);
+}
+.tempt-custom-input textarea::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+  font-style: italic;
+}
+
+/* ── Tempt Fate Proceed button ── */
+.tempt-proceed-btn {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Lora', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  font-size: 0.13em;
+  padding: 3px 14px;
+  color: #fff;
+  background: rgba(120, 15, 15, 0.85);
+  border: 1px solid rgba(180, 30, 30, 0.6);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 3;
+  pointer-events: auto;
+}
+.tempt-proceed-btn:hover {
+  border-color: rgba(180, 30, 30, 0.9);
+  background: rgba(180, 30, 30, 0.35);
+  box-shadow: 0 0 8px rgba(180, 30, 30, 0.3);
+}
 
 /* AUTH PANEL */
 #auth-panel { position:fixed; top:10px; right:60px; z-index:10003; background:rgba(0,0,0,0.92); padding:14px 16px; border:1px solid gold; border-radius:0; display:flex; flex-direction:column; align-items:center; gap:6px; }
@@ -10867,6 +10992,11 @@ textarea.fate-field {
     line-height: 0.9;
 }
 
+/* Blue Blood: title baked into PNG art — hide overlay text */
+.sb-card[data-val="blue_blood"] .sb-card-title {
+    display: none;
+}
+
 /* World card back titles sit 10px lower than shared default */
 #worldGrid .sb-card .sb-card-back .sb-card-title {
     top: calc(24% + 5px);
@@ -11190,10 +11320,10 @@ textarea.fate-field {
 .sb-card.zoomed[data-grp="intensity"] .sb-card-front .sb-card-title {
     position: absolute;
     top: auto;
-    bottom: 1.5%;
+    bottom: calc(1.5% + 8px);
     left: 10%;
     right: 10%;
-    font-size: 12px;
+    font-size: 12.4px;
     text-align: center;
     white-space: nowrap;
     z-index: 2;
@@ -11208,10 +11338,10 @@ textarea.fate-field {
 .sb-card.zoomed[data-grp="pressure"] .sb-card-front .sb-card-desc {
     position: absolute;
     top: 18%;
-    left: 12%;
-    right: 12%;
+    left: 8%;
+    right: 8%;
     font-family: 'Lora', serif;
-    font-size: 5px;
+    font-size: 20px;
     line-height: 1.3;
     color: #c9a84c;
     text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
@@ -11736,7 +11866,7 @@ textarea.fate-field {
 }
 .sb-zoom-flavor-arc .arc-flavor-number {
     font-size: 8px;
-    margin-top: 0;
+    margin-top: -1px;
     color: #c9a84c;
 }
 /* "FLAVORS" label directly under the number */
@@ -11769,8 +11899,8 @@ textarea.fate-field {
 
 /* Flavor button — gold plaque with black text */
 .sb-flavor-btn {
-    font-size: 10px;
-    padding: 6px 16px;
+    font-size: 20px;
+    padding: 12px 32px;
     background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png') !important;
     background-size: 100% 100% !important;
     background-position: center !important;
@@ -11782,7 +11912,7 @@ textarea.fate-field {
     font-weight: 600;
     cursor: pointer;
     font-family: 'Crimson Text', serif;
-    min-height: 18px;
+    min-height: 36px;
     position: relative;
     overflow: hidden;
     box-sizing: border-box;
@@ -11794,6 +11924,7 @@ textarea.fate-field {
 .sb-flavor-btn-text {
     position: relative;
     z-index: 1;
+    font-variant: small-caps;
 }
 
 /* Button gleam — visible and full strength (override zoomed card dimming) */
@@ -11836,12 +11967,12 @@ textarea.fate-field {
     transform: translateX(-50%);
     white-space: nowrap;
     font-family: 'Lora', serif;
-    font-size: 4.1px;
+    font-size: 8px;
     font-style: italic;
     line-height: 1.15;
     color: rgba(255, 248, 230, 0.88);
     background: rgba(0, 0, 0, 0.72);
-    padding: 1.5px 4px;
+    padding: 3px 8px;
     border-radius: 2px;
     opacity: 0;
     transition: opacity 120ms ease;
@@ -11855,6 +11986,83 @@ textarea.fate-field {
 .sb-flavor-btn[data-tooltip]:hover::after,
 .sb-flavor-btn[data-tooltip]:focus::after {
     opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PRESSURE FLAVOR DESIGN MODE — drag/resize flavor buttons on zoom
+   ═══════════════════════════════════════════════════════════════════ */
+.pressure-design-toggle {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    background: rgba(40, 30, 10, 0.85);
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: monospace;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+.pressure-design-toggle.active {
+    background: #ff4444;
+    color: #fff;
+}
+.pressure-dump-btn {
+    display: none;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 100;
+    background: rgba(40, 30, 10, 0.85);
+    color: #4a4;
+    border: 1px solid #4a4;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: monospace;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+.pressure-design-toggle.active ~ .pressure-dump-btn {
+    display: block;
+}
+
+/* Design-mode debug visuals on flavor buttons */
+.sb-flavor-btn.debug-visible {
+    border: 2px dashed rgba(255, 0, 0, 0.7) !important;
+    background-color: rgba(255, 0, 0, 0.12) !important;
+}
+.sb-flavor-btn.debug-visible::before {
+    content: attr(data-val) '\A' attr(data-debug-coords);
+    position: absolute;
+    bottom: -18px;
+    left: 0;
+    font-size: 8px;
+    color: #ff4444;
+    white-space: pre;
+    font-family: monospace;
+    pointer-events: none;
+    text-shadow: 0 0 3px #000, 0 0 6px #000;
+    z-index: 30;
+}
+.sb-flavor-btn .debug-resize-handle {
+    display: none;
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    background: #ff4444;
+    border: 1px solid #fff;
+    border-radius: 2px;
+    cursor: nwse-resize;
+    z-index: 20;
+    touch-action: none;
+}
+.sb-flavor-btn.debug-visible .debug-resize-handle {
+    display: block;
 }
 
 /* Custom setting wrapper — inset to fit inside gold Art Deco lines */

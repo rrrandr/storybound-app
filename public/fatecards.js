@@ -1649,7 +1649,8 @@ function setSelectedState(mount, selectedCardEl){
             mount.appendChild(card);
         });
 
-        // Petition Fate card — 6th card, always visible, always unlocked, never flips
+        // Petition Fate card — 6th card, always visible, always unlocked
+        // First click flips (back→front), second click opens zoom
         const petitionCard = document.createElement('div');
         petitionCard.className = 'fate-card petition-fate-card';
         petitionCard.innerHTML = `
@@ -1659,6 +1660,10 @@ function setSelectedState(mount, selectedCardEl){
             </div>
         `;
         petitionCard.onclick = () => {
+            if (!petitionCard.classList.contains('flipped')) {
+                petitionCard.classList.add('flipped');
+                return;
+            }
             if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
         };
         mount.appendChild(petitionCard);
@@ -1669,7 +1674,7 @@ function setSelectedState(mount, selectedCardEl){
         temptCard.innerHTML = `
             <div class="inner">
                 <div class="front" style="background:url('/assets/Card%20Art/Cards/Tarot-RED-back-TemptFate.png') center/cover no-repeat, #111;"></div>
-                <div class="back" style="background-image:url('/assets/Card%20Art/Cards/Tarot-RED-front-TemptFate.png');"></div>
+                <div class="back" style="background-image:url('/assets/Card%20Art/Cards/Tarot-RED-front-TemptFate.png?v=2');"></div>
             </div>
         `;
         temptCard.onclick = () => {
@@ -1677,7 +1682,7 @@ function setSelectedState(mount, selectedCardEl){
                 temptCard.classList.add('flipped');
                 return;
             }
-            if (typeof window.setMetaStance === 'function') window.setMetaStance('seduce');
+            if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
         };
         mount.appendChild(temptCard);
 
@@ -1819,6 +1824,10 @@ function setSelectedState(mount, selectedCardEl){
         const petitionCard = mount.querySelector('.petition-fate-card');
         if (petitionCard) {
             petitionCard.onclick = () => {
+                if (!petitionCard.classList.contains('flipped')) {
+                    petitionCard.classList.add('flipped');
+                    return;
+                }
                 if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
             };
         }
@@ -1831,7 +1840,7 @@ function setSelectedState(mount, selectedCardEl){
                     temptCard.classList.add('flipped');
                     return;
                 }
-                if (typeof window.setMetaStance === 'function') window.setMetaStance('seduce');
+                if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
             };
         }
 

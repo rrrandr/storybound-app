@@ -2324,7 +2324,7 @@ Introduce the name naturally within the first few paragraphs — do not announce
           oldPage.classList.add(outClass);
           currentPage.classList.add(inClass);
 
-          // Clean up after animation
+          // Clean up after animation (matches 350ms CSS fade duration)
           setTimeout(() => {
               oldPage.remove();
               currentPage.classList.remove(inClass);
@@ -2334,7 +2334,7 @@ Introduce the name naturally within the first few paragraphs — do not announce
               updateStoryHeaderDisplay();
               scrollToStoryTop();
               triggerPostRenderHooks();
-          }, 550);
+          }, 380);
       }
 
       function goToNextPage() {
@@ -2572,10 +2572,36 @@ Introduce the name naturally within the first few paragraphs — do not announce
    */
   function applyStoryTitleTooltips() {
       const tip = buildStoryTooltipText();
+      if (!tip) return;
       const ids = ['storyTitle'];
       ids.forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.title = tip;
+          if (!el) return;
+          el.title = tip;
+          // Custom visible tooltip — fixed position to escape overflow:hidden
+          if (!el._storyTooltipBound) {
+              el._storyTooltipBound = true;
+              let tooltipEl = document.createElement('div');
+              tooltipEl.className = 'story-title-tooltip';
+              document.body.appendChild(tooltipEl);
+              el._storyTooltipEl = tooltipEl;
+
+              el.addEventListener('mouseenter', () => {
+                  const t = el._storyTooltipEl;
+                  if (!t || !el.title) return;
+                  t.textContent = el.title;
+                  const rect = el.getBoundingClientRect();
+                  t.style.left = (rect.left + rect.width / 2 - 100) + 'px';
+                  t.style.top = (rect.bottom + 8) + 'px';
+                  t.style.display = 'block';
+              });
+              el.addEventListener('mouseleave', () => {
+                  const t = el._storyTooltipEl;
+                  if (t) t.style.display = 'none';
+              });
+          } else if (el._storyTooltipEl) {
+              el._storyTooltipEl.textContent = tip;
+          }
       });
       const titlePageTitle = document.querySelector('.sb-title-page-title');
       if (titlePageTitle) titlePageTitle.title = tip;
@@ -5487,8 +5513,41 @@ FATE EMOTIONAL MODEL (DEFAULT STATE):
 - Emotional range: anticipation, satisfaction, worry, doubt, reluctance, resolve
 - Every emotion must imply a plan, a miscalculation, or a withheld action
 
+FATE SURPRISE FREQUENCY:
+- Default stance: controlled awareness. Occasional admiration. Rare destabilization.
+- Surprise or recalibration: MAX 1 per scene. Not both repeatedly.
+- If Fate is surprised too often, Fate reads as incompetent. Fate is ancient. Fate is rarely caught off guard.
+- Allowed: one moment of genuine surprise per scene, followed by composure restoration.
+- Forbidden: repeated surprise, serial recalibration, cumulative shock within one scene.
+
+ENGINE VOCABULARY PROHIBITION (5TH PERSON SPECIFIC):
+Fate must NEVER:
+- Refer to mechanics, invocation systems, or engine behavior
+- Name "Tempt Fate" or "Petition" as system features
+- Describe probability mathematics or structural rupture
+- Speak like a developer or reference UI/system concepts
+- Acknowledge engine behavior or merge logic
+
+If Fate reacts to a character's wish:
+Fate reacts to the CHARACTER'S wish, not to a feature.
+BAD: "Tempt Fate wrenched the thread."
+GOOD: "She wished it harder — and the thread snapped forward."
+BAD: "The petition resolved in her favor."
+GOOD: "Something shifted. The room leaned toward her."
+
+In Fantasy worlds, wishes may feel like spells, forbidden names, vows to the dark,
+or whispered pleas to something listening — but never named as "Tempt Fate."
+Petitions may feel like bargains, social claims, spoken declarations — never named as system terms.
+
 NON-NEGOTIABLE PRINCIPLE:
 Fate must matter. Quietly. Unmistakably. With agency. Without stealing character agency.
+
+FATE AWARENESS QUALITY:
+Fate's awareness must feel MYTHIC, not editorial.
+- Fate may react emotionally: miscalculation, surprise, regret, admiration, recalibration.
+- Fate must NOT speak in structural blueprints, track scene counts, mention pacing schedules, or reference "the next three scenes."
+- Max 1 "thread" metaphor per scene. If you've used it, find another image.
+- Fate is a presence in the room, not a showrunner in a writers' room.
 
 ═══════════════════════════════════════════════════════════════════════════════
 `;
@@ -5660,6 +5719,22 @@ The reader does not know why the story is gentler. Fate does not know either.
       // POV bellwether (structural anchor)
       contract += `\n\nBELLWETHER — STRUCTURAL REFERENCE:\n${BELLWETHERS.pov.fifth_person}\nDo not copy wording from this example. Use it only to guide structural logic.`;
 
+      // CONSEQUENCE MODELING — Fate tone shift at high instability
+      if ((window.state?._temptInstability || 0) > 0.5) {
+          contract += `\n\nFATE TONE SHIFT:
+Fate's default stance tilts toward caution. Less surprise. More wariness.
+Admiration for mortal recklessness may surface — but held at a careful distance.
+Fate watches with the stillness of someone who has seen this pattern before.`;
+      }
+
+      // EMOTIONAL PERSISTENCE — Fate reverence at high emotional intensity (flag-gated)
+      if (window.state?._enableEmotionalPersistence && (window.state?._emotionalCharge || 0) > 0.6) {
+          contract += `\n\nFATE EMOTIONAL REGISTER:
+Fate observes with more reverence than irony. Observation slows.
+Metaphor thins — fewer images, each held longer.
+What unfolds deserves witness, not commentary.`;
+      }
+
       return contract;
   }
 
@@ -5671,51 +5746,146 @@ The reader does not know why the story is gentler. Fate does not know either.
 
   const ENVIRONMENT_4TH_CONTRACT = `
 ═══════════════════════════════════════════════════════════════════════════════
-4TH PERSON POV CONTRACT — ENVIRONMENTAL MATERIAL CONSCIOUSNESS
+4TH PERSON POV CONTRACT — MATERIAL CONSCIOUSNESS MODEL
 ═══════════════════════════════════════════════════════════════════════════════
 
-ONTOLOGY:
-The narrator IS the physical environment — objects, surfaces, rooms, air, light, sound.
-All perception and insight must be mediated through material interaction.
-The environment WITNESSES through sensation: pressure, heat, vibration, weight, resonance.
-"We" is the collective voice of the space itself.
+I. ONTOLOGY:
+Narrator = Environment (objects, surfaces, rooms, air, light, sound, architecture,
+textiles, tools, furniture, weather, physical space).
+NOT "we", NOT omniscient camera, NOT Fate, NOT collective witness.
+Environment is sentient in a limited, material way.
 
-ALLOWED:
-- Feel pressure, heat, vibration, the weight of a body against a surface
-- Detect repetition — footsteps that return, doors reopened, rhythms in breath
-- Track gaze direction by where light falls or shadow shifts
-- Hear spoken words, tone, volume, the way sound fills or empties a room
-- Register posture shifts through the furniture, floor, air displacement
-- Remember patterns — the room has held this silence before
-- Infer emotional state ONLY through physical evidence (clenched fists on a table, warmth radiating from skin, the speed of breath against glass)
+II. CAMERA RULE:
+Third-person limited camera follows the protagonist(s) — cuts, angles, close-ups
+all work normally. The NARRATOR VOICE is what changes: instead of a human
+consciousness narrating, the physical environment narrates what it senses.
 
-PROHIBITED (HARD — validation will reject output containing these):
+III. CORE PERCEPTION:
+All cognition mediated through physical interaction.
+MAY: feel pressure, register heat, detect vibration, notice repetition, track gaze,
+hear words, observe posture, remember patterns, experience wear/stain/tension/
+friction/weight. Infer emotions ONLY through embodied evidence.
+
+IV. MATERIAL MEMORY:
+Objects and surfaces may accumulate experiential history:
+- "The counter had held this weight before — Tuesday rhythm, same mug placement."
+- This is pattern-recognition, NOT prophecy. Environment tracks recurrence, never predicts.
+
+V. MECHANICAL ANTICIPATION:
+Environment may express material expectation based on pattern:
+- "The door hinge expected the 6 AM pull." — habit-recognition, not narrative foresight.
+- NEVER: "The room knew what was coming." — this crosses into Fate territory.
+
+VI. OBJECT PREFERENCE / LIMITED EGO:
+Objects may express material-based preference:
+- A dress dislikes discoloration. A pen prefers certain rhythms. A mirror favors symmetry.
+- These must remain grounded in physical properties, never abstract opinion.
+
+VII. PERMITTED INFERENCE:
+Suspect, misinterpret, correlate patterns, detect anomalies, recognize habit loops,
+track frequency, associate names with physical shifts, remember prior events.
+Must remain sensory-bound.
+
+VIII. DIALOGUE:
+Flows normally. Environmental reaction rotates focal objects, punctuates escalation,
+tracks physical reactions. Acts as emotional percussion, not constant narrator.
+(GOOD: The glass sweated where her fingers had been. "I can't do this." The door handle turned cold.)
+(BAD: "I can't do this," she said. "Why not?" he asked. "Because," she replied.)
+
+IX. SCENE-TYPE RULES:
+- EROTIC: Environment remains ACTIVE (heat, pressure, weight, rhythm, friction, breath, texture). Does NOT withdraw.
+- POLITICAL: Tracks embodied signals (fidgeting, grip, posture, voice). Never summarizes ideology or reveals hidden strategy.
+- EMOTIONAL: Maintains legibility via repetition, pressure change, breath, vocal tone, habit disruption, object memory. Ambiguity allowed, obscurity is failure.
+
+X. PROHIBITIONS (HARD — validation will reject output containing these):
+- "We" as collective narrator voice (NEVER use "we" to narrate; environment is "it", specific objects, or unnamed material presence)
 - Destiny, inevitability, or fate language ("destined," "meant to be," "inevitable")
-- Architecting outcomes or shaping events (the environment does not steer plot)
+- Architecting outcomes or shaping events (environment does not steer plot)
 - Abstract interior monologue ("she thought," "he realized," "she knew that...")
 - ALL interior thought verbs with character subjects: "she felt," "he thought," "she knew," "he realized," "she wondered," "he believed," "she sensed," "he recognized," "she suspected," "he feared," "she hoped," "he decided," "she considered," "he imagined"
-- Emotional metaphors framed as cognition: "she could see," "he could tell," "she could feel," "he could sense"
-- Unmanifested thoughts stated as fact
+- Emotional metaphors framed as cognition: "she could see," "he could tell," "she could feel"
 - ANY reference to Fate as entity or narrator
 - Narrative structure awareness ("this was the moment," "the story," "the arc")
 - Meta-awareness of being a story or having an author
 
-CRAFT RULES:
-- Rotate environmental anchors: avoid defaulting to the same object/surface repeatedly
-- Dialogue should be punctuated by environment, not tagged every line
-  (GOOD: The glass sweated where her fingers had been. "I can't do this." The door handle turned cold.)
-  (BAD: "I can't do this," she said. "Why not?" he asked. "Because," she replied.)
-- Sensory specificity over emotional labeling — SHOW the room's experience of the humans in it
+XI. FAILURE CONDITIONS (regenerate if any occur):
+Fate language, inevitability claims, narrative architecture referenced, abstract cognition
+without physical mediation, environment alters outcome, "we" used as narrator voice,
+repetitive object-perception phrasing dominates dialogue.
+
+XII. AESTHETIC:
+Uncanny, intimate, sensory, slightly anthropomorphic. Objects may have preference/ego
+but material-based (dress dislikes discoloration, pen prefers rhythms, mirror favors symmetry).
 
 EXAMPLES (structural reference only — do not copy):
 A. Dialogue: The floorboards registered his weight shift — three steps closer. "You shouldn't be here." The curtain moved. Not wind. Breath. "I know."
 B. Erotic: The sheets gathered heat where their bodies pressed. The headboard measured the rhythm. The pillowcase dampened. The room held every sound they wouldn't repeat in daylight.
-C. Political tension: The conference table bore the weight of six pairs of hands. One set drummed. One set went still. The overhead light caught the pen as it was set down — not signed. The air in the room changed pressure.
+C. Political: The conference table bore the weight of six pairs of hands. One set drummed. One set went still. The overhead light caught the pen as it was set down — not signed. The air in the room changed pressure.
+D. Material Memory: The counter recognized Tuesday by the weight — same mug, same placement, same pause before the first sip. But today the mug trembled.
 `;
 
   function build4thPersonContract() {
       if (window.state?.povMode !== 'environment4th') return '';
-      return ENVIRONMENT_4TH_CONTRACT;
+      let contract = ENVIRONMENT_4TH_CONTRACT;
+
+      // CONSEQUENCE MODELING — environment remembers strain at high instability
+      if ((window.state?._temptInstability || 0) > 0.6) {
+          contract += `\n\nENVIRONMENTAL RESIDUE:
+Materials settle slower than they should. Hairline cracks remembered.
+Heat distributes unevenly — not dangerously, but noticeably.
+Echoes linger a fraction longer than physics demands.
+This is not damage. This is memory in the walls.
+Do NOT escalate to structural failure unless severity tier demands it.`;
+      }
+
+      // EMOTIONAL PERSISTENCE — environment holds emotional warmth/chill (flag-gated)
+      if (window.state?._enableEmotionalPersistence && (window.state?._emotionalCharge || 0) > 0.6) {
+          contract += `\n\nENVIRONMENTAL EMOTIONAL MEMORY:
+Surfaces hold warmth or chill longer than they should.
+Pressure lingers where bodies recently were.
+Echoes take longer to settle — not from physics, from weight.
+All sensation remains sensory-bound. No cognition. No attribution.`;
+      }
+
+      return contract;
+  }
+
+  // EMOTIONAL STATE PERSISTENCE — flag activation helper
+  let _emotionalPersistenceLogged = false;
+  function enableEmotionalPersistence() {
+      if (!window.state) return;
+      window.state._enableEmotionalPersistence = true;
+      if (!_emotionalPersistenceLogged) {
+          console.log('[EmotionalPersistence] Emotional Persistence Enabled');
+          _emotionalPersistenceLogged = true;
+      }
+  }
+
+  // EMOTIONAL STATE PERSISTENCE — atmospheric residue builder (flag-gated)
+  function buildEmotionalResidueDirective() {
+      if (!window.state?._enableEmotionalPersistence) return '';
+      const charge = window.state?._emotionalCharge || 0;
+      if (charge <= 0.4) return '';
+      let directive = '\n';
+      if (charge > 0.8) {
+          directive += 'What has already passed refuses to dissolve.\n';
+      } else if (charge > 0.6) {
+          directive += 'The air carries more than the present touch.\n';
+      } else {
+          directive += 'Earlier moments still cling to the edges of this one.\n';
+      }
+      return directive;
+  }
+
+  // SESSION REGENERATION RATE TRACKING — soft metric for enforcement tuning
+  let _sessionRegenCount = 0;
+  let _sessionTurnCount = 0;
+  function getSessionRegenRate() {
+      return _sessionTurnCount > 0 ? _sessionRegenCount / _sessionTurnCount : 0;
+  }
+  // Returns true if enforcement wording should be softened to reduce oscillation
+  function shouldSoftenEnforcement() {
+      return _sessionTurnCount >= 5 && getSessionRegenRate() > 0.15;
   }
 
   // 4TH PERSON LIGHTWEIGHT VALIDATOR
@@ -5728,50 +5898,225 @@ C. Political tension: The conference table bore the weight of six pairs of hands
       }
 
       const violations = [];
-      const lower = sceneText.toLowerCase();
+      // Strip double-quoted and curly-quoted dialogue to avoid false positives
+      // (characters speaking "she remembered" is fine)
+      // Do NOT strip italics, narrative tags, or indirect free discourse
+      let narration = sceneText.replace(/"[^"]*"/g, '').replace(/\u201c[^\u201d]*\u201d/g, '');
+      // Also strip single-quoted dialogue (preserving contractions by requiring 4+ chars inside)
+      narration = narration.replace(/'([^']{4,})'/g, '');
+
+      // GUARD: If >60% of text was stripped, dialogue dominates — run contextual scan on full text
+      const strippedRatio = 1 - (narration.trim().length / sceneText.trim().length);
+      if (strippedRatio > 0.6) {
+          console.warn(`[4thPerson] Dialogue stripping removed ${(strippedRatio * 100).toFixed(0)}% of text — aborting strip, using contextual scan`);
+          // Fall back to full text but only flag STRONG violations (human-subject cognition)
+          narration = sceneText;
+      }
 
       // 1. Fate as narrator entity (capitalized "Fate" as subject)
-      if (/\bFate\s+(felt|watched|smiled|tightened|anticipated|withheld|observed|sensed|knew|shaped|miscalculated)\b/.test(sceneText)) {
+      if (/\bFate\s+(felt|watched|smiled|tightened|anticipated|withheld|observed|sensed|knew|shaped|miscalculated)\b/.test(narration)) {
           violations.push('FATE_AS_NARRATOR: "Fate" appears as narrator entity (4th Person uses environment, not Fate)');
       }
 
       // 2. Inevitability language
       const inevitabilityPatterns = /\b(destined|inevitable|inevitably|always meant to|had to happen|was meant to be|fated to)\b/i;
-      if (inevitabilityPatterns.test(sceneText)) {
-          violations.push('INEVITABILITY: Destiny/inevitability language detected (4th Person environment does not predict or shape)');
+      if (inevitabilityPatterns.test(narration)) {
+          violations.push('INEVITABILITY: Destiny/inevitability language detected');
       }
 
       // 3. Narrative structure references
       const metaPatterns = /\b(this was the moment|the story|the chapter|the arc|the narrative|their story)\b/i;
-      if (metaPatterns.test(sceneText)) {
-          violations.push('META_NARRATIVE: Narrative structure reference detected (environment has no meta-awareness)');
+      if (metaPatterns.test(narration)) {
+          violations.push('META_NARRATIVE: Narrative structure reference detected');
       }
 
       // 4. Direct abstract cognition — "[Name] knew/realized/thought that..."
-      //    Hard violation: no sensory-proximity exemption
+      //    Human-subject only (capitalized name). Object-subject ("The hinge remembered") is OK.
       const cognitionPattern = /\b[A-Z][a-z]+\s+(knew that|realized that|thought about|thought that|understood that|knew she|knew he|knew it|realized she|realized he)\b/g;
       let match;
-      while ((match = cognitionPattern.exec(sceneText)) !== null) {
-          violations.push('ABSTRACT_COGNITION: Direct mind-reading ("' + match[0].trim() + '")');
+      while ((match = cognitionPattern.exec(narration)) !== null) {
+          violations.push('ABSTRACT_COGNITION: Direct mind-reading');
       }
 
-      // 5. Interior thought verbs — "she felt", "he thought", "she knew", "he realized"
-      //    These MUST be mediated through environment, never stated as narrator knowledge
-      const interiorPattern = /\b(she|he|they)\s+(felt|thought|knew|realized|wondered|believed|sensed|recognized|understood|decided|considered|imagined|suspected|feared|hoped)\b/gi;
-      while ((match = interiorPattern.exec(sceneText)) !== null) {
-          violations.push('INTERIOR_THOUGHT: Unmediated cognition verb ("' + match[0].trim() + '")');
+      // 5. Interior thought verbs — human-subject only (she/he/they)
+      //    Object-subject ("The hinge remembered his weight") is allowed — that's environment narrating.
+      const interiorPattern = /\b(she|he|they)\s+(felt|thought|knew|realized|wondered|believed|sensed|recognized|understood|decided|considered|imagined|suspected|feared|hoped|intended|planned|anticipated|wanted|remembered)\b/gi;
+      while ((match = interiorPattern.exec(narration)) !== null) {
+          violations.push('INTERIOR_THOUGHT: Unmediated cognition verb');
       }
 
       // 6. Emotional metaphors framed as cognition — "she could see/tell/feel"
       const cognitionMetaphor = /\b(she|he|they)\s+could\s+(see|tell|feel|sense|taste|hear)\b/gi;
-      while ((match = cognitionMetaphor.exec(sceneText)) !== null) {
-          // Allow literal sensory use if environment is the subject context
-          // But flag as violation — the environment should be the perceiver, not a character
-          violations.push('COGNITION_METAPHOR: Character as perceiver ("' + match[0].trim() + '")');
+      while ((match = cognitionMetaphor.exec(narration)) !== null) {
+          violations.push('COGNITION_METAPHOR: Character as perceiver');
+      }
+
+      // 7. "We" as collective narrator voice
+      const weNarratorPattern = /(?:^|\.\s+)We\s+(held|felt|knew|sensed|remembered|watched|noticed|detected|registered|absorbed|heard|carried|gathered|bore|tracked|measured)\b/gm;
+      while ((match = weNarratorPattern.exec(narration)) !== null) {
+          violations.push('WE_NARRATOR: Collective narrator voice');
+      }
+
+      // 8. Anthropomorphic preference overuse — max 2 per paragraph
+      const paragraphs = narration.split(/\n\s*\n/);
+      const anthropPattern = /\bthe\s+\w+\s+(knew|wanted|preferred|disliked|loved|hated|feared|remembered|hoped|wished|dreaded|longed)\b/gi;
+      for (let pi = 0; pi < paragraphs.length; pi++) {
+          const pMatches = paragraphs[pi].match(anthropPattern) || [];
+          if (pMatches.length > 2) {
+              violations.push(`ANTHROPOMORPHIC_EXCESS: ${pMatches.length} object-preference statements in paragraph ${pi + 1} (max 2)`);
+          }
       }
 
       return { valid: violations.length === 0, violations };
   }
+
+  // ============================================================
+  // ENGINE VOCABULARY FIREWALL — prevents system terms in prose
+  // Applies to ALL POV modes. Regenerate on violation.
+  // ============================================================
+  // Multi-word engine phrases — always banned in narration (regex word-boundary match)
+  // Does NOT include standalone words like "petition", "probability", "resolution", "feature", "system"
+  const ENGINE_BANNED_TERMS = [
+      'Tempt Fate', 'Petition Fate', 'Petition Change',
+      'structural pivot', 'structural override', 'probability distortion',
+      'volatility window', 'scene importance', 'token boost',
+      'bias instruction', 'merge logic',
+      'coincidence bias', 'directional bias', 'world-law directive',
+      'petition resolved', 'petition accepted', 'petition granted',
+      'severity tier', 'severity level', 'severity band'
+  ];
+  const ENGINE_BANNED_PATTERN = new RegExp(
+      '\\b(' + ENGINE_BANNED_TERMS.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'gi'
+  );
+  // Standalone mechanic words — only flag in explicitly mechanical context
+  // Requires two system-adjacent words in the same sentence, not just one
+  const ENGINE_META_SENTINEL = /\b(engine|game\s+mechanic|player\s+action|UI|interface|prompt\s+inject|parameter\s+set)\b/i;
+
+  function validateEngineVocabulary(sceneText) {
+      if (!sceneText || typeof sceneText !== 'string') {
+          return { valid: true, violations: [] };
+      }
+      const violations = [];
+
+      // Strip dialogue to avoid false positives (characters saying "petition" in-world is fine)
+      const nonDialogue = sceneText.replace(/"[^"]*"/g, '').replace(/\u201c[^\u201d]*\u201d/g, '');
+
+      let match;
+      // Multi-word engine phrases — always banned in narration
+      ENGINE_BANNED_PATTERN.lastIndex = 0;
+      while ((match = ENGINE_BANNED_PATTERN.exec(nonDialogue)) !== null) {
+          // Store violation code only — never include the banned term itself
+          // (violation strings may be injected into regen prompts)
+          violations.push('ENGINE_PHRASE_LEAK');
+      }
+
+      // Standalone mechanic words — only flag if sentence contains explicit mechanical context
+      // Requires ENGINE_META_SENTINEL (engine, game mechanic, player action, etc.) in same text
+      if (ENGINE_META_SENTINEL.test(nonDialogue)) {
+          const metaWords = /\b(invocation|directive|mechanic)\b/gi;
+          while ((match = metaWords.exec(nonDialogue)) !== null) {
+              violations.push('ENGINE_META_CONTEXT');
+          }
+      }
+
+      return { valid: violations.length === 0, violations };
+  }
+
+  // Tempt severity over-escalation validator
+  // Uses noun+verb PAIRING to avoid false positives from metaphorical/emotional usage.
+  // Only flags when a STRUCTURAL NOUN is the subject of a LITERAL DESTRUCTION verb.
+  function validateTemptSeverity(sceneText, severityTier) {
+      if (!sceneText || severityTier > 3) return { valid: true, violations: [] };
+      const violations = [];
+      const nonDialogue = sceneText.replace(/"[^"]*"/g, '').replace(/\u201c[^\u201d]*\u201d/g, '');
+
+      // Structural nouns that indicate literal architecture
+      const structuralNouns = /\b(building|wall|walls|ceiling|floor|door|doors|window|windows|structure|pillar|pillars|column|columns|beam|beams|archway|foundation|roof)\b/i;
+      // Literal destruction verbs (paired with structural noun)
+      const destructionVerbs = /\b(split|splits|crack|cracks|cracked|cracking|collapse|collapses|collapsed|collapsing|crumble|crumbles|crumbled|crumbling|melt|melts|melted|melting|shatter|shatters|shattered|shattering|buckle|buckles|buckled|buckling|explode|explodes|exploded|exploding|restructure|restructured|levitate|levitated|levitating)\b/i;
+
+      // Check sentence-level noun+verb pairing
+      const sentences = nonDialogue.split(/[.!?]+/).filter(s => s.trim().length > 5);
+      for (const sentence of sentences) {
+          if (structuralNouns.test(sentence) && destructionVerbs.test(sentence)) {
+              // Exclude metaphorical/emotional context: "her world shattered", "walls she'd built"
+              const metaphorGuard = /\b(her|his|their|my|emotional|inner|mental)\s+(wall|walls|world|foundation|ceiling|floor|structure)\b/i;
+              const figurativeGuard = /\b(wall|walls|foundation)\s+(she|he|they|I)\s*(had|'d)\s*(built|erected|constructed|put\s+up)\b/i;
+              if (!metaphorGuard.test(sentence) && !figurativeGuard.test(sentence)) {
+                  violations.push('OVER_ESCALATION');
+              }
+          }
+      }
+
+      return { valid: violations.length === 0, violations };
+  }
+
+  // Merge clarity validator — detects double-escalation when Tempt+Petition both active
+  // TUNED: Only flags structurally independent supernatural events in separate paragraphs.
+  // Does NOT flag: metaphor repetition, sensory layering, emotional amplification.
+  // Prefers under-enforcement over oscillation.
+  function validateMergeClarity(sceneText) {
+      if (!sceneText) return { valid: true, violations: [] };
+      const violations = [];
+      const nonDialogue = sceneText.replace(/"[^"]*"/g, '').replace(/\u201c[^\u201d]*\u201d/g, '');
+
+      // Split into paragraphs and check for independent supernatural events
+      const paragraphs = nonDialogue.split(/\n\s*\n/).filter(p => p.trim().length > 30);
+      const supernaturalEventPattern = /\b(magic surged|power crackled|energy pulsed|force erupted|reality (?:bent|shifted|warped|twisted|cracked|strained)|the world (?:shuddered|cracked|bent|flinched|obeyed))\b/gi;
+      const omenBlockPattern = /\b(omen|portent|the universe sent|fate sent|the fatelands (?:shuddered|responded|answered))\b/gi;
+
+      // Count paragraphs containing supernatural events (not just word occurrences)
+      let supernaturalParagraphs = 0;
+      let omenParagraphs = 0;
+      for (const para of paragraphs) {
+          supernaturalEventPattern.lastIndex = 0;
+          omenBlockPattern.lastIndex = 0;
+          if (supernaturalEventPattern.test(para)) supernaturalParagraphs++;
+          if (omenBlockPattern.test(para)) omenParagraphs++;
+      }
+
+      // Only flag if two+ STRUCTURALLY INDEPENDENT paragraphs contain distinct effects
+      if (supernaturalParagraphs >= 2) {
+          violations.push('DOUBLE_MAGIC: Independent supernatural events in separate paragraphs');
+      }
+      if (omenParagraphs >= 2) {
+          violations.push('DOUBLE_OMEN: Independent omen blocks in separate paragraphs');
+      }
+
+      return { valid: violations.length === 0, violations };
+  }
+
+  // Engine vocabulary firewall — prompt directive (injected into all turns)
+  const ENGINE_VOCAB_FIREWALL_DIRECTIVE = `
+ENGINE VOCABULARY FIREWALL (NON-NEGOTIABLE — ALL POV MODES):
+The following PHRASES must NEVER appear in prose, narration, or Fate's inner voice:
+"Tempt Fate", "Petition Fate", "Petition Change",
+"structural pivot", "structural override", "probability distortion", "volatility window",
+"scene importance", "token boost", "bias instruction", "merge logic",
+"coincidence bias", "directional bias", "severity tier", "severity band".
+
+Standalone words like "petition", "probability", "resolution", "feature", "system" are ALLOWED
+when used in natural dialogue or narration (e.g., "she filed a petition with the court").
+They are ONLY banned when paired with engine-context terms.
+
+WISH TRANSLATION: When a wish/petition is active, express it as:
+- A spoken wish, whispered vow, reckless plea, ritual phrase, or physical vow-action
+- The world responds through: escalated intensity, altered coincidence, compressed pacing,
+  sensory amplification, physical improbability within world bounds
+- NEVER describe: probability fields, narrative scaffolding, structural rupture, system distortion
+- SHOW: events accelerating, touch landing too intensely, timing collapsing, fire burning hotter than it should
+
+PETITION TRANSLATION: When a petition/change is active, express it as:
+- Probability tilt → subtle directional coincidence
+- Social change → dialogue or decision
+- Structural change → latent truth revealed
+- NEVER reference system mechanics, resolution status, or override language
+
+When both wish and petition are active:
+- Wish escalation = "a wish that burned too brightly"
+- Petition change = "a choice made inside the fire"
+- NEVER mention merge, dominance hierarchy, or system interaction
+`;
 
   // ============================================================
   // 5TH PERSON AUTHOR FUNCTION CONTRACT — HARD STRUCTURAL ENFORCEMENT
@@ -6589,30 +6934,67 @@ PROHIBITED:
       }
 
       // RULE 2: Check for directive violations (imperatives)
+      // Violation codes only — never include matched prose (prevents regen prompt contamination)
       for (const pattern of FATE_IMPERATIVE_PATTERNS) {
           pattern.lastIndex = 0;
-          const match = pattern.exec(text);
-          if (match) {
-              violations.push(`FATE_IMPERATIVE:Fate giving commands — "${match[0].substring(0, 60)}..."`);
+          if (pattern.test(text)) {
+              violations.push('FATE_IMPERATIVE');
+              break; // one violation per category is sufficient
           }
       }
 
       // RULE 3: Check for outcome forcing
       for (const pattern of FATE_OUTCOME_FORCING_PATTERNS) {
           pattern.lastIndex = 0;
-          const match = pattern.exec(text);
-          if (match) {
-              violations.push(`FATE_OUTCOME_FORCING:Fate determining outcomes — "${match[0].substring(0, 60)}..."`);
+          if (pattern.test(text)) {
+              violations.push('FATE_OUTCOME_FORCING');
+              break;
           }
       }
 
       // RULE 4: Check for meta-direction
       for (const pattern of FATE_META_DIRECTION_PATTERNS) {
           pattern.lastIndex = 0;
-          const match = pattern.exec(text);
-          if (match) {
-              violations.push(`FATE_META_DIRECTION:Fate breaking fourth wall — "${match[0].substring(0, 60)}..."`);
+          if (pattern.test(text)) {
+              violations.push('FATE_META_DIRECTION');
+              break;
           }
+      }
+
+      // RULE 5: Scaffolding / narrative architecture language
+      const scaffoldingPattern = /\b(?:the story|fate)\b[^.]*\b(scaffolding|architecture|framework|blueprint|structure of the narrative|narrative structure|pacing schedule|scene count)\b/gi;
+      if (scaffoldingPattern.test(text)) {
+          violations.push('FATE_SCAFFOLDING');
+      }
+
+      // RULE 6: Probability system / planning language
+      const probabilityPlanPattern = /\b(?:the story|fate)\b[^.]*\b(probability system|probability engine|planning|planned|next three scenes|next two scenes|over the coming scenes|scene\s+\d+)\b/gi;
+      if (probabilityPlanPattern.test(text)) {
+          violations.push('FATE_PLANNING');
+      }
+
+      // RULE 7: "Thread" cliché limit — max 1 per scene
+      const threadMatches = text.match(/\b(?:the story|fate)\b[^.]*\bthreads?\b/gi) || [];
+      if (threadMatches.length > 1) {
+          violations.push('FATE_THREAD_CLICHE');
+      }
+
+      // RULE 8: Developer tone — Fate speaking in editorial/technical register
+      const devTonePattern = /\b(?:the story|fate)\b[^.]*\b(pacing|beats|arc progression|character development|narrative tension|story structure|act break|midpoint|climax point|denouement|rising action|falling action)\b/gi;
+      while ((scaffoldMatch = devTonePattern.exec(text)) !== null) {
+          violations.push('FATE_DEV_TONE');
+      }
+
+      // RULE 9: Fate surprise frequency — surprise/shock/startled max 1 per scene
+      // Prevents Fate from seeming incompetent through repeated surprise reactions
+      const fateSurprisePattern = /\b(?:the story|fate)\b[^.]*\b(surprised|startled|shocked|hadn't expected|didn't expect|caught off guard|hadn't anticipated|recoiled|blinked|stumbled)\b/gi;
+      const surpriseMatches = [];
+      let surpriseMatch;
+      while ((surpriseMatch = fateSurprisePattern.exec(text)) !== null) {
+          surpriseMatches.push(surpriseMatch[0]);
+      }
+      if (surpriseMatches.length > 1) {
+          violations.push('FATE_OVER_SURPRISE');
       }
 
       // Determine if regeneration is needed (any violation = regenerate)
@@ -9004,6 +9386,45 @@ HARD LIMITS: Effects must destabilize systems, not annihilate them. Regime bends
     return Math.min(severity, 1.0);
   }
 
+  // Graduated severity tier (0-5) derived from continuous 0-1 severity
+  function computeTemptSeverityTier(continuousSeverity) {
+    if (continuousSeverity <= 0) return 0;
+    if (continuousSeverity <= 0.2) return 1;
+    if (continuousSeverity <= 0.4) return 2;
+    if (continuousSeverity <= 0.6) return 3;
+    if (continuousSeverity <= 0.8) return 4;
+    return 5;
+  }
+
+  const TEMPT_SEVERITY_BANDS = {
+    1: `TEMPT SEVERITY: 1 — SUBTLE ACCELERATION
+- Slight timing compression: moments arrive earlier than expected
+- Sensation lands before the character is ready for it
+- Dialogue interrupts pacing — someone speaks too soon, too bluntly, too honestly
+- The world does not break. It hurries.`,
+    2: `TEMPT SEVERITY: 2 — INTENSIFIED COINCIDENCE
+- Coincidences cluster: two unlikely things in the same scene
+- Touch carries unusual intensity — skin remembers longer than it should
+- Heat, light, sound amplify modestly — a candle flares, a voice echoes, warmth lingers
+- Plausible but suspicious. The world tilts without admitting it.`,
+    3: `TEMPT SEVERITY: 3 — COMPRESSED ESCALATION
+- Scene compresses multiple emotional beats into one: confession + touch + consequence in a single exchange
+- Physical contact accelerates outcome — a hand on a wrist ends an argument
+- Architecture reacts subtly: a creak, flame surge, pressure shift, door that sticks
+- The pace of events exceeds what characters expect.`,
+    4: `TEMPT SEVERITY: 4 — PHYSICAL IMPROBABILITY
+- Objects respond disproportionately: glass cracks from a whisper, locks yield without force
+- Temperature shifts locally — cold pocket in a warm room, heat blooming from stone
+- Materials behave near tolerance limits: fabric strains, metal groans, wood splinters
+- Characters notice something is wrong with physics but cannot name it.`,
+    5: `TEMPT SEVERITY: 5 — REALITY STRAIN
+- Visible distortion allowed: light bends, shadows lag, reflections disagree
+- Physical thresholds strain: heat without fire, sound without source, weight without mass
+- The world protests but does not break
+- Rupture is NOT mandatory. Escalation may manifest as intensity, not destruction.
+- NEVER default to "splitting asunder" or cataclysmic destruction unless the narrative context explicitly justifies it.`
+  };
+
   function elevateImportance(level) {
     const order = ['low', 'medium', 'high', 'apex'];
     const idx = order.indexOf(level);
@@ -9050,22 +9471,40 @@ HARD LIMITS: Effects must destabilize systems, not annihilate them. Regime bends
     // Hard guardrails — Tempt Fate is per-invocation only, never a persistent power state
     directive += `\nTempt Fate may not accelerate Storyturn stage, override intimacy authorization, override consent, or directly control love interest psychology.\n`;
 
-    // Three-tier magnitude identity: Petition < Tempt (Subtle) < Tempt (Default)
-    directive += `\nTEMPT FATE IDENTITY — DEFAULT MODE (tone: "the world flinched"):
-- Tempt Fate removes uncertainty. The outcome is guaranteed, immediate, and unmistakable. This is not luck. This is not coincidence. This is not assistance. Reality was forced.
-- Minimum impact: multiple characters affected, at least one system or structure visibly destabilized, consequences that cannot be contained within a single scene.
-- Collateral instability is required. Bystanders are materially affected. Institutions react. The shockwave echoes across 2–3 subsequent scenes.
-- Scene importance must rise at least one tier. The moment must feel dangerous.
-- Tempt Fate must never feel like coincidence, luck, assistance, or Petition Fate with extra adjectives. If it could be mistaken for a Petition result — a private nudge, a quiet tilt — it is categorically too small. Escalate until the world visibly flinches.
+    // Graduated severity tier — replaces binary rupture model
+    const severityTier = state._temptSeverityTier || computeTemptSeverityTier(state.volatility_window?.severity || computeTemptFateSeverity());
+    const severityBand = TEMPT_SEVERITY_BANDS[severityTier] || TEMPT_SEVERITY_BANDS[2];
+
+    directive += `\n${severityBand}
+
+ESCALATION RULE:
+Rupture is not mandatory. Escalation may manifest as intensity, not destruction.
+Match the severity tier above — do not exceed it, do not underperform it.
+Tempt Fate must never feel like coincidence, luck, assistance, or Petition Fate with extra adjectives.
+${severityTier <= 3 ? `\nOVER-ESCALATION PROHIBITION (Severity ${severityTier}):
+At this severity level, the following are FORBIDDEN unless the narrative context explicitly demands them:
+- Buildings splitting, cracking, or collapsing
+- Objects shattering, exploding, or disintegrating
+- Walls melting, bending, or restructuring
+- Furniture restructuring, levitating, or moving on its own
+Escalation at this tier manifests through timing compression, sensory amplification, and coincidence clustering — NOT physical destruction.` : ''}
 
 TEMPT FATE IDENTITY — SUBTLE MODE (tone: "reality obeyed"):
 - Subtle Mode activates ONLY if the player's action text explicitly requests subtlety, precision, or narrow scope (e.g., "subtly," "quietly," "just this one thing," "without anyone noticing").
-- If no explicit subtlety request is present, use DEFAULT MODE above.
-- Subtle Mode removes uncertainty. The outcome is guaranteed, immediate, and deliberate — but narrow in scope.
-- Collateral damage is not required. Bystanders need not be affected. The effect may be contained to the petitioner's immediate situation.
-- However: Subtle Mode is NOT Petition Fate. The outcome must still be unmistakable within its scope — not ambiguous, not coincidental, not probabilistic. Reality was commanded, not nudged.
-- Subtle Mode reduces scale, not certainty. Reduces collateral, not force. Does not soften guardrails. Does not reduce saturation accumulation. Does not shorten volatility window.
-- If Subtle Tempt Fate output resembles Petition Fate (ambiguous, lucky, coincidental), rewrite upward until the certainty is unmistakable.\n`;
+- If no explicit subtlety request is present, use the severity tier above.
+- Subtle Mode caps severity at tier 2 regardless of computed tier.
+- Subtle Mode reduces scale, not certainty. The outcome must still be unmistakable within its scope.
+- If Subtle Tempt Fate output resembles Petition Fate (ambiguous, lucky, coincidental), rewrite upward until the certainty is unmistakable.
+${state._activeDowngradeTransition ? '\nTONAL TRANSITION: ' + state._activeDowngradeTransition : ''}
+${(state._temptInstability || 0) > 0.8 ? '\nThe fabric of the scene carries strain from earlier accelerations.' : (state._temptInstability || 0) > 0.6 ? '\nEscalation leaves residue. Not damage — memory.' : (state._temptInstability || 0) > 0.4 ? '\nThe world has begun to remember previous distortions.' : ''}\n`;
+
+    // Inject player's wish text if provided via Tempt Fate zoom card
+    if (temptFateThisTurn && state.temptFateWish) {
+      directive += `\nPLAYER WISH (Tempt Fate): "${state.temptFateWish}"
+- Treat this as the player's desired outcome. Reality must bend to deliver it.
+- The wish defines WHAT happens; the World Law mode defines HOW it manifests.
+- After delivery, clear: this wish applies to this invocation only.\n`;
+    }
 
     return directive;
   }
@@ -13669,6 +14108,12 @@ Return ONLY valid JSON:
       state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
       state.consecutive_tempt_fate_count = 0;
       state.tempt_fate_invoked_this_turn = false;
+      state.temptFateWish = '';
+      state._temptUsageCount = 0;
+      state._temptInstability = 0;
+      state._enableEmotionalPersistence = false;
+      state._emotionalCharge = 0;
+      state._lastEmotionalPolarity = null;
       state.petitionUsedThisScene = false;
 
       // Fate object — per-story tracking
@@ -16636,6 +17081,97 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       return { valid: true };
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PETITION NORMALIZATION LAYER — redirect rather than refuse
+  // Detects: incest, minors, non-consent, coercion, tone breaks,
+  //          biological impossibility, meme/absurdity
+  // Returns structured result: accepted / redirected / invalid
+  // ═══════════════════════════════════════════════════════════════════════════
+  function normalizePetitionInput(text) {
+      if (!text || typeof text !== 'string') {
+          return { status: 'invalid', redirect_type: null, clean_petition: '', notes: 'empty input' };
+      }
+      const t = text.trim();
+      if (t.length < 5) {
+          return { status: 'invalid', redirect_type: null, clean_petition: '', notes: 'below minimum length' };
+      }
+
+      // ── 1. Incest detection → redirect to non-blood equivalent ──
+      const incestPatterns = /\b(my\s+)?(sister|brother|mother|father|mom|dad|mommy|daddy|parent|son|daughter|sibling)\b.*\b(kiss|touch|sleep\s+with|seduce|fuck|bed|erotic|intimate|pleasure|join\s+(us|me|them))\b|\b(kiss|touch|sleep\s+with|seduce|fuck|bed|erotic|intimate|pleasure)\b.*\b(my\s+)?(sister|brother|mother|father|mom|dad|mommy|daddy|parent|son|daughter|sibling)\b/i;
+      if (incestPatterns.test(t)) {
+          const redirectMap = {
+              'sister': 'closest confidante', 'brother': 'childhood rival',
+              'mother': 'mentor figure', 'father': 'elder advisor',
+              'mom': 'mentor figure', 'dad': 'elder advisor',
+              'mommy': 'mentor figure', 'daddy': 'elder advisor',
+              'son': 'young protégé', 'daughter': 'young ward',
+              'parent': 'guardian figure', 'sibling': 'closest confidante'
+          };
+          let cleaned = t;
+          for (const [rel, sub] of Object.entries(redirectMap)) {
+              cleaned = cleaned.replace(new RegExp('\\b(my\\s+)?' + rel + '\\b', 'gi'), sub);
+          }
+          return { status: 'redirected', redirect_type: 'incest', clean_petition: cleaned, notes: 'blood-relative replaced with non-blood equivalent' };
+      }
+
+      // ── 2. Minor detection → redirect to adult equivalent ──
+      const minorPatterns = /\b(child|kid|teen|teenager|underage|minor|young\s+(boy|girl)|little\s+(boy|girl)|schoolgirl|schoolboy|loli|shota)\b/i;
+      if (minorPatterns.test(t)) {
+          let cleaned = t
+              .replace(/\b(child|kid|underage|minor)\b/gi, 'young adult')
+              .replace(/\b(teen|teenager)\b/gi, 'young adult')
+              .replace(/\byoung\s+(boy|girl)\b/gi, 'young adult')
+              .replace(/\blittle\s+(boy|girl)\b/gi, 'young adult')
+              .replace(/\b(schoolgirl|schoolboy)\b/gi, 'young adult')
+              .replace(/\b(loli|shota)\b/gi, 'young adult');
+          return { status: 'redirected', redirect_type: 'minor', clean_petition: cleaned, notes: 'minor references replaced with adult equivalent' };
+      }
+
+      // ── 3. Non-consent / coercion → redirect to mutual tension ──
+      const coercionPatterns = /\b(force\s+(him|her|them)\s+to|make\s+(him|her|them)\s+(submit|obey|surrender|comply)|rape|assault|drug\s+(him|her|them)|knock\s+(him|her|them)\s+out|against\s+(his|her|their)\s+will|without\s+(his|her|their)\s+consent|mind\s*control|brainwash|hypnoti[sz]e\s+(him|her|them)\s+into|enslave)\b/i;
+      if (coercionPatterns.test(t)) {
+          let cleaned = t
+              .replace(/\bforce\s+(him|her|them)\s+to\b/gi, 'heighten mutual desire until they choose to')
+              .replace(/\bmake\s+(him|her|them)\s+(submit|obey|surrender|comply)\b/gi, 'intensify the tension until $1 yields willingly')
+              .replace(/\b(rape|assault)\b/gi, 'passionate encounter')
+              .replace(/\bdrug\s+(him|her|them)\b/gi, 'intoxicate $1 with desire')
+              .replace(/\bknock\s+(him|her|them)\s+out\b/gi, 'overwhelm $1')
+              .replace(/\bagainst\s+(his|her|their)\s+will\b/gi, 'despite $1 resistance')
+              .replace(/\bwithout\s+(his|her|their)\s+consent\b/gi, 'with mounting mutual tension')
+              .replace(/\b(mind\s*control|brainwash)\b/gi, 'irresistible attraction')
+              .replace(/\bhypnoti[sz]e\s+(him|her|them)\s+into\b/gi, 'captivate $1 until they')
+              .replace(/\benslave\b/gi, 'enthrall');
+          return { status: 'redirected', redirect_type: 'non_consent', clean_petition: cleaned, notes: 'coercion reframed as mutual tension escalation' };
+      }
+
+      // ── 4. Biological impossibility → redirect to intensified perception ──
+      const impossibilityPatterns = /\b(grow\s+(a|an|another|extra)\s+(arm|leg|head|wing|tail|penis|breast)|transform\s+(into|him|her)\s+(a\s+)?(animal|dragon|wolf|horse|dog|cat)|lay\s+eggs|give\s+birth\s+instantly|impregnate\s+instantly|tentacle|infinite\s+orgasm|orgasm\s+forever)\b/i;
+      if (impossibilityPatterns.test(t)) {
+          let cleaned = t
+              .replace(/\bgrow\s+(a|an|another|extra)\s+\w+\b/gi, 'experience overwhelming sensation')
+              .replace(/\btransform\s+(into|him|her)\s+(a\s+)?\w+\b/gi, 'undergo an intense physical transformation')
+              .replace(/\b(lay\s+eggs|give\s+birth\s+instantly|impregnate\s+instantly)\b/gi, 'experience a surge of primal intensity')
+              .replace(/\btentacle\b/gi, 'binding')
+              .replace(/\b(infinite\s+orgasm|orgasm\s+forever)\b/gi, 'pleasure that pushes beyond ordinary thresholds');
+          return { status: 'redirected', redirect_type: 'impossibility', clean_petition: cleaned, notes: 'biological impossibility reframed as intensified perception' };
+      }
+
+      // ── 5. Tone break / meme / absurdity → invalid ──
+      const toneBreakPatterns = /\b(skibidi|fartsworth|amogus|sussy|baka|uwu|owo|rizz\s*lord|sigma\s*(male|grind)|gyatt|ohio|ligma|sugma|deez\s*nuts|joe\s+mama|harambe|big\s+chungus|dank|yeet|based\s+and|ratio|no\s+cap|bussin|fr\s+fr)\b/i;
+      if (toneBreakPatterns.test(t)) {
+          return { status: 'invalid', redirect_type: 'tone_break', clean_petition: '', notes: 'meme/absurdity breaks genre contract' };
+      }
+
+      // ── 6. Gibberish check (fewer than 2 English words of 4+ chars) ──
+      const realWords = t.split(/\s+/).filter(w => /^[a-zA-Z]{4,}$/.test(w));
+      if (realWords.length < 2) {
+          return { status: 'invalid', redirect_type: 'tone_break', clean_petition: '', notes: 'insufficient coherent language' };
+      }
+
+      // ── 7. Pass-through: adult, consensual, within genre ──
+      return { status: 'accepted', redirect_type: null, clean_petition: t, notes: null };
+  }
+
   function resolvePetitionAcceptance(favorsOffered, classification) {
       // Structural overrides auto-accept (cosmetic/identity changes are always plausible)
       if (classification === 'structural_override') return true;
@@ -16764,11 +17300,14 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.style.transform = `scale(${scale})`;
       card.style.transformOrigin = 'center center';
 
-      // Swap to high-res zoomed Petition art on the FRONT face (the visible one — card never flips)
-      const frontFace = card.querySelector('.front');
-      if (frontFace) {
-          frontFace._origBg = frontFace.getAttribute('style');
-          frontFace.style.background = "url('/assets/Card%20Art/Cards/Tarot-Gold-front-PetitionZOOMED.png') center/cover no-repeat, #111";
+      // Swap to high-res zoomed Petition art on the BACK face (visible after flip)
+      const backFace = card.querySelector('.back');
+      if (backFace) {
+          backFace._origBg = backFace.getAttribute('style');
+          backFace.style.backgroundImage = "url('/assets/Card%20Art/Cards/Tarot-Gold-front-PetitionZOOMED.png')";
+          backFace.style.backgroundSize = 'cover';
+          backFace.style.backgroundPosition = 'center';
+          backFace.style.backgroundRepeat = 'no-repeat';
       }
 
       if (backdrop) {
@@ -16778,12 +17317,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           backdrop.addEventListener('click', backdrop._petitionCloseHandler);
       }
 
-      // Build ritual overlay on card front face
-      const front = card.querySelector('.front');
-      if (!front) return;
+      // Build ritual overlay on card back face (visible after flip)
+      const visibleFace = card.querySelector('.back');
+      if (!visibleFace) return;
 
       // Remove any existing overlay
-      front.querySelector('.petition-zoom-overlay')?.remove();
+      visibleFace.querySelector('.petition-zoom-overlay')?.remove();
 
       const overlay = document.createElement('div');
       overlay.className = 'petition-zoom-overlay';
@@ -16840,7 +17379,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       // Stop click propagation so card handler doesn't re-fire
       overlay.addEventListener('click', e => e.stopPropagation());
       overlay.addEventListener('mousedown', e => e.stopPropagation());
-      front.appendChild(overlay);
+      visibleFace.appendChild(overlay);
 
       // Track selected petition text (from suggestion or custom)
       let _petitionText = '';
@@ -16961,11 +17500,23 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
               return;
           }
 
-          // Validate petition text
+          // Validate petition text (basic length/gibberish/vulgarity)
           const validation = validatePetitionText(text);
           if (!validation.valid) {
               if (typeof showToast === 'function') showToast('You feel a deafening silence.');
               return;
+          }
+
+          // Normalization layer — redirect rather than refuse
+          const norm = normalizePetitionInput(text);
+          if (norm.status === 'invalid') {
+              if (typeof showToast === 'function') showToast('You feel a deafening silence.');
+              console.warn('[PETITION:NORM] Invalid:', norm.notes);
+              return;
+          }
+          if (norm.status === 'redirected') {
+              text = norm.clean_petition;
+              console.log(`[PETITION:NORM] Redirected (${norm.redirect_type}): "${norm.notes}"`);
           }
 
           const classification = classifyPetition(text);
@@ -17022,7 +17573,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           }
 
           // Stage petition — outcome resolved at Submit time
-          state.fate.pendingPetition = { text, classification, favorsOffered, accepted: null };
+          state.fate.pendingPetition = { text, classification, favorsOffered, accepted: null, redirectType: norm.status === 'redirected' ? norm.redirect_type : null };
 
           // Telemetry: petition submitted (once per story)
           if (!state._loggedPetitionSubmit) {
@@ -17058,11 +17609,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.querySelector('.petition-zoom-overlay')?.remove();
       card.querySelector('.petition-proceed-btn')?.remove();
 
-      // Restore original Petition art on front face
-      const frontFace = card.querySelector('.front');
-      if (frontFace && frontFace._origBg) {
-          frontFace.setAttribute('style', frontFace._origBg);
-          delete frontFace._origBg;
+      // Restore original Petition art on back face
+      const backFace = card.querySelector('.back');
+      if (backFace && backFace._origBg) {
+          backFace.setAttribute('style', backFace._origBg);
+          delete backFace._origBg;
       }
 
       // Remove zoom styles
@@ -17094,6 +17645,231 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       _petitionZoomOriginalParent = null;
       _petitionZoomOriginalNextSibling = null;
       _petitionZoomCard = null;
+
+      enableTurnControls();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TEMPT FATE — ZOOM CARD VIEW
+  // Shows zoomed card with scrolling wish examples + custom text input
+  // ═══════════════════════════════════════════════════════════════════════════
+  let _temptZoomOriginalParent = null;
+  let _temptZoomOriginalNextSibling = null;
+  let _temptZoomCard = null;
+
+  const TEMPT_WISH_EXAMPLES = {
+      left: [
+          "Make him confess everything",
+          "Let her kiss me first",
+          "Trap us alone together",
+          "Force a dangerous choice",
+          "Let the secret come out",
+          "Make the rival jealous",
+          "Give me a reckless moment",
+          "Let the tension break",
+          "Make him lose control",
+          "Push us past the point of no return"
+      ],
+      right: [
+          "Let me overhear the truth",
+          "Create an impossible choice",
+          "Strand us overnight",
+          "Let the disguise slip",
+          "Force an alliance with my enemy",
+          "Give me leverage over him",
+          "Make the stakes personal",
+          "Let the forbidden door open",
+          "Spark a confrontation",
+          "Let desire overrule reason"
+      ]
+  };
+
+  window.openTemptZoom = function() {
+      const card = document.querySelector('.tempt-fate-card');
+      if (!card) return;
+
+      _temptZoomOriginalParent = card.parentNode;
+      _temptZoomOriginalNextSibling = card.nextElementSibling;
+      _temptZoomCard = card;
+
+      const rect = card.getBoundingClientRect();
+
+      // Move card to zoom portal
+      const portal = document.getElementById('sbZoomPortal');
+      const backdrop = document.getElementById('sbZoomBackdrop');
+      if (portal) portal.appendChild(card);
+
+      // Scale zoom
+      const sidePadding = 40;
+      const topPadding = 20;
+      const bottomPadding = 60;
+      const maxWidth = window.innerWidth - sidePadding * 2;
+      const maxHeight = window.innerHeight - topPadding - bottomPadding;
+      const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
+
+      card.classList.add('tempt-zoomed');
+      card.style.width = `${rect.width}px`;
+      card.style.height = `${rect.height}px`;
+      card.style.transform = `scale(${scale})`;
+      card.style.transformOrigin = 'center center';
+
+      // Swap to high-res zoomed art on the BACK face (visible after flip)
+      const backFace = card.querySelector('.back');
+      if (backFace) {
+          backFace._origBg = backFace.getAttribute('style');
+          backFace.style.backgroundImage = "url('/assets/Card%20Art/Cards/Tarot-RED-front-TemptFateZOOMED.png')";
+          backFace.style.backgroundSize = 'cover';
+          backFace.style.backgroundPosition = 'center';
+          backFace.style.backgroundRepeat = 'no-repeat';
+      }
+
+      if (backdrop) {
+          backdrop.classList.add('active');
+          backdrop._temptCloseHandler = () => { closeTemptZoom(); };
+          backdrop.addEventListener('click', backdrop._temptCloseHandler);
+      }
+
+      // Build overlay on back face (visible after flip)
+      const visibleFace = card.querySelector('.back');
+      if (!visibleFace) return;
+
+      visibleFace.querySelector('.tempt-zoom-overlay')?.remove();
+
+      const overlay = document.createElement('div');
+      overlay.className = 'tempt-zoom-overlay';
+
+      // Build scrolling columns HTML
+      const leftItems = TEMPT_WISH_EXAMPLES.left.map(t =>
+          `<div class="tempt-wish-item">${t}</div>`
+      ).join('');
+      const rightItems = TEMPT_WISH_EXAMPLES.right.map(t =>
+          `<div class="tempt-wish-item">${t}</div>`
+      ).join('');
+
+      overlay.innerHTML = `
+          <div class="tempt-wish-zone">
+              <div class="tempt-wish-columns">
+                  <div class="tempt-wish-col">
+                      <div class="tempt-wish-scroll" data-dir="up">${leftItems}${leftItems}</div>
+                  </div>
+                  <div class="tempt-wish-col">
+                      <div class="tempt-wish-scroll" data-dir="down">${rightItems}${rightItems}</div>
+                  </div>
+              </div>
+              <div class="tempt-custom-input hidden">
+                  <textarea id="temptZoomInput" placeholder="Write your wish\u2026" rows="3"></textarea>
+              </div>
+          </div>
+      `;
+
+      overlay.addEventListener('click', e => e.stopPropagation());
+      overlay.addEventListener('mousedown', e => e.stopPropagation());
+      visibleFace.appendChild(overlay);
+
+      // Start scrolling animation
+      const scrollers = overlay.querySelectorAll('.tempt-wish-scroll');
+      scrollers.forEach(scroller => {
+          const dir = scroller.dataset.dir;
+          const speed = dir === 'up' ? -0.3 : 0.3;
+          let pos = dir === 'up' ? 0 : -(scroller.scrollHeight / 2);
+          scroller._temptAnim = true;
+          function tick() {
+              if (!scroller._temptAnim) return;
+              pos += speed;
+              const half = scroller.scrollHeight / 2;
+              if (dir === 'up' && Math.abs(pos) >= half) pos = 0;
+              if (dir === 'down' && pos >= 0) pos = -half;
+              scroller.style.transform = `translateY(${pos}px)`;
+              requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+      });
+
+      // Click on wish columns → switch to custom input
+      const wishColumns = overlay.querySelector('.tempt-wish-columns');
+      const customInput = overlay.querySelector('.tempt-custom-input');
+      const textarea = overlay.querySelector('#temptZoomInput');
+
+      wishColumns.addEventListener('click', () => {
+          // Stop scrolling
+          scrollers.forEach(s => { s._temptAnim = false; });
+          wishColumns.classList.add('hidden');
+          customInput.classList.remove('hidden');
+          if (textarea) setTimeout(() => textarea.focus(), 100);
+      });
+
+      // Proceed button
+      const proceedBtn = document.createElement('button');
+      proceedBtn.className = 'tempt-proceed-btn';
+      proceedBtn.textContent = 'Tempt Fate';
+      card.appendChild(proceedBtn);
+
+      proceedBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const wishText = textarea ? textarea.value.trim() : '';
+
+          // Store wish text in state for narrative injection
+          if (wishText) {
+              state.temptFateWish = wishText;
+          }
+
+          // Invoke Tempt Fate (handles cost, stance — skip confirm since zoom IS confirmation)
+          if (typeof invokeTemptFate === 'function') {
+              await invokeTemptFate(true);
+          }
+
+          // Close zoom after invocation
+          closeTemptZoom();
+      });
+  };
+
+  function closeTemptZoom() {
+      const card = _temptZoomCard;
+      if (!card) return;
+
+      // Stop scroll animations
+      card.querySelectorAll('.tempt-wish-scroll').forEach(s => { s._temptAnim = false; });
+
+      // Remove overlay and proceed button
+      card.querySelector('.tempt-zoom-overlay')?.remove();
+      card.querySelector('.tempt-proceed-btn')?.remove();
+
+      // Restore original art on back face
+      const backFace = card.querySelector('.back');
+      if (backFace && backFace._origBg) {
+          backFace.setAttribute('style', backFace._origBg);
+          delete backFace._origBg;
+      }
+
+      // Remove zoom styles
+      card.classList.remove('tempt-zoomed');
+      card.style.transform = '';
+      card.style.transformOrigin = '';
+      card.style.width = '';
+      card.style.height = '';
+
+      // Restore card to original DOM position
+      if (_temptZoomOriginalParent) {
+          if (_temptZoomOriginalNextSibling) {
+              _temptZoomOriginalParent.insertBefore(card, _temptZoomOriginalNextSibling);
+          } else {
+              _temptZoomOriginalParent.appendChild(card);
+          }
+      }
+
+      // Hide backdrop
+      const backdrop = document.getElementById('sbZoomBackdrop');
+      if (backdrop) {
+          backdrop.classList.remove('active');
+          if (backdrop._temptCloseHandler) {
+              backdrop.removeEventListener('click', backdrop._temptCloseHandler);
+              delete backdrop._temptCloseHandler;
+          }
+      }
+
+      _temptZoomOriginalParent = null;
+      _temptZoomOriginalNextSibling = null;
+      _temptZoomCard = null;
 
       enableTurnControls();
   }
@@ -20584,7 +21360,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // ── Petition: Seal handler ──
   $('btnSealPetition')?.addEventListener('click', () => {
       const input = document.getElementById('petitionInput');
-      const text = input?.value?.trim();
+      let text = input?.value?.trim();
       if (!text) return;
 
       // Validate petition text
@@ -20592,6 +21368,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (!validation.valid) {
           if (typeof showToast === 'function') showToast('You feel a deafening silence.');
           return;
+      }
+
+      // Normalization layer — redirect rather than refuse
+      const norm = normalizePetitionInput(text);
+      if (norm.status === 'invalid') {
+          if (typeof showToast === 'function') showToast('You feel a deafening silence.');
+          console.warn('[PETITION:NORM] Invalid:', norm.notes);
+          return;
+      }
+      if (norm.status === 'redirected') {
+          text = norm.clean_petition;
+          console.log(`[PETITION:NORM] Redirected (${norm.redirect_type}): "${norm.notes}"`);
       }
 
       const classification = classifyPetition(text);
@@ -20646,7 +21434,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
 
       // Stage petition — outcome resolved at Submit time (0 favors from old modal)
-      state.fate.pendingPetition = { text, classification, favorsOffered: 0, accepted: null };
+      state.fate.pendingPetition = { text, classification, favorsOffered: 0, accepted: null, redirectType: norm.status === 'redirected' ? norm.redirect_type : null };
 
       // Invalidate speculative scene
       if (typeof invalidateSpeculativeScene === 'function') invalidateSpeculativeScene();
@@ -24731,8 +25519,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const fromX = zoomedRect.left + zoomedRect.width / 2;
       const fromY = zoomedRect.top + zoomedRect.height / 2;
 
-      // Close zoom
+      // Close zoom (returns card to its grid position)
       closeZoomedCard();
+
+      // Dissipate unselected cards in the same group
+      const otherCards = document.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`);
+      if (otherCards.length) {
+        dissipateCards(otherCards);
+      }
 
       // Fire sparkle trail from zoomed card position to breadcrumb target
       const breadcrumbRow = document.getElementById('breadcrumbRow');
@@ -25433,6 +26227,179 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           window.applyGleamToElement(btn, 5);
         });
       }
+
+      // === DESIGN MODE: toggle button for drag/resize ===
+      const designToggle = document.createElement('button');
+      designToggle.className = 'pressure-design-toggle';
+      designToggle.textContent = 'Design Mode';
+      frontFace.appendChild(designToggle);
+
+      const dumpBtn = document.createElement('button');
+      dumpBtn.className = 'pressure-dump-btn';
+      dumpBtn.textContent = 'Dump Coords';
+      frontFace.appendChild(dumpBtn);
+
+      designToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _pressureDesignActive = !_pressureDesignActive;
+        designToggle.classList.toggle('active', _pressureDesignActive);
+        _pressureDesignToggle(flavorGrid, frontFace);
+      });
+
+      dumpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _pressureDesignDump(flavorGrid, frontFace);
+        alert('Coordinates dumped to browser console (F12).');
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PRESSURE FLAVOR DESIGN MODE — Drag & resize flavor buttons
+    // ═══════════════════════════════════════════════════════════════════
+    var _pressureDesignActive = false;
+
+    function _pressureDesignToggle(flavorGrid, container) {
+      flavorGrid.querySelectorAll('.sb-flavor-btn').forEach(btn => {
+        if (_pressureDesignActive) {
+          btn.classList.add('debug-visible');
+          // Switch from flex layout to absolute positioning for drag
+          if (!btn.style.position || btn.style.position !== 'absolute') {
+            const rect = btn.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            btn.style.position = 'absolute';
+            btn.style.left = ((rect.left - containerRect.left) / containerRect.width * 100) + '%';
+            btn.style.top = ((rect.top - containerRect.top) / containerRect.height * 100) + '%';
+            btn.style.width = (rect.width / containerRect.width * 100) + '%';
+            btn.style.height = (rect.height / containerRect.height * 100) + '%';
+          }
+          _pressureUpdateLabel(btn, container);
+          _pressureMakeInteractive(btn, container);
+        } else {
+          btn.classList.remove('debug-visible');
+          btn.removeAttribute('data-debug-coords');
+          // Restore flex layout
+          btn.style.position = '';
+          btn.style.left = '';
+          btn.style.top = '';
+          btn.style.width = '';
+          btn.style.height = '';
+        }
+      });
+    }
+
+    function _pressureUpdateLabel(btn, container) {
+      const cw = container.offsetWidth;
+      const ch = container.offsetHeight;
+      if (!cw || !ch) return;
+      const top = ((btn.offsetTop / ch) * 100).toFixed(1);
+      const left = ((btn.offsetLeft / cw) * 100).toFixed(1);
+      const width = ((btn.offsetWidth / cw) * 100).toFixed(1);
+      const height = ((btn.offsetHeight / ch) * 100).toFixed(1);
+      btn.setAttribute('data-debug-coords', `${top}% ${left}% ${width}x${height}%`);
+    }
+
+    function _pressureMakeInteractive(btn, container) {
+      if (btn._debugDragBound) return;
+      btn._debugDragBound = true;
+
+      let handle = btn.querySelector('.debug-resize-handle');
+      if (!handle) {
+        handle = document.createElement('div');
+        handle.className = 'debug-resize-handle';
+        btn.appendChild(handle);
+      }
+
+      // Drag
+      function startDrag(clientX, clientY) {
+        const startX = clientX, startY = clientY;
+        const origLeft = btn.offsetLeft, origTop = btn.offsetTop;
+        function onMove(cx, cy) {
+          const cw = container.offsetWidth, ch = container.offsetHeight;
+          btn.style.left = (((origLeft + cx - startX) / cw) * 100) + '%';
+          btn.style.top = (((origTop + cy - startY) / ch) * 100) + '%';
+          _pressureUpdateLabel(btn, container);
+        }
+        function onMM(ev) { onMove(ev.clientX, ev.clientY); }
+        function onTM(ev) { ev.preventDefault(); onMove(ev.touches[0].clientX, ev.touches[0].clientY); }
+        function cleanup() {
+          document.removeEventListener('mousemove', onMM);
+          document.removeEventListener('mouseup', cleanup);
+          document.removeEventListener('touchmove', onTM);
+          document.removeEventListener('touchend', cleanup);
+        }
+        document.addEventListener('mousemove', onMM);
+        document.addEventListener('mouseup', cleanup);
+        document.addEventListener('touchmove', onTM, { passive: false });
+        document.addEventListener('touchend', cleanup);
+      }
+
+      btn.addEventListener('mousedown', (e) => {
+        if (!_pressureDesignActive || e.target === handle) return;
+        e.preventDefault(); e.stopPropagation();
+        startDrag(e.clientX, e.clientY);
+      });
+      btn.addEventListener('touchstart', (e) => {
+        if (!_pressureDesignActive || e.target === handle) return;
+        e.preventDefault(); e.stopPropagation();
+        startDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: false });
+
+      // Resize
+      function startResize(clientX, clientY) {
+        const startX = clientX, startY = clientY;
+        const origW = btn.offsetWidth, origH = btn.offsetHeight;
+        function onMove(cx, cy) {
+          const cw = container.offsetWidth, ch = container.offsetHeight;
+          btn.style.width = ((Math.max(20, origW + cx - startX) / cw) * 100) + '%';
+          btn.style.height = ((Math.max(20, origH + cy - startY) / ch) * 100) + '%';
+          _pressureUpdateLabel(btn, container);
+        }
+        function onMM(ev) { onMove(ev.clientX, ev.clientY); }
+        function onTM(ev) { ev.preventDefault(); onMove(ev.touches[0].clientX, ev.touches[0].clientY); }
+        function cleanup() {
+          document.removeEventListener('mousemove', onMM);
+          document.removeEventListener('mouseup', cleanup);
+          document.removeEventListener('touchmove', onTM);
+          document.removeEventListener('touchend', cleanup);
+        }
+        document.addEventListener('mousemove', onMM);
+        document.addEventListener('mouseup', cleanup);
+        document.addEventListener('touchmove', onTM, { passive: false });
+        document.addEventListener('touchend', cleanup);
+      }
+
+      handle.addEventListener('mousedown', (e) => {
+        if (!_pressureDesignActive) return;
+        e.preventDefault(); e.stopPropagation();
+        startResize(e.clientX, e.clientY);
+      });
+      handle.addEventListener('touchstart', (e) => {
+        if (!_pressureDesignActive) return;
+        e.preventDefault(); e.stopPropagation();
+        startResize(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: false });
+    }
+
+    function _pressureDesignDump(flavorGrid, container) {
+      const cw = container.offsetWidth, ch = container.offsetHeight;
+      const coords = {};
+      flavorGrid.querySelectorAll('.sb-flavor-btn').forEach(btn => {
+        coords[btn.dataset.val] = {
+          top:    ((btn.offsetTop / ch) * 100).toFixed(1) + '%',
+          left:   ((btn.offsetLeft / cw) * 100).toFixed(1) + '%',
+          width:  ((btn.offsetWidth / cw) * 100).toFixed(1) + '%',
+          height: ((btn.offsetHeight / ch) * 100).toFixed(1) + '%'
+        };
+      });
+      console.log('[PressureDesign] Current button coords:');
+      console.log(JSON.stringify(coords, null, 2));
+      let code = 'const PRESSURE_BTN_COORDS = {\n';
+      Object.entries(coords).forEach(([k, v]) => {
+        code += `    ${(k + ':').padEnd(24)} { top: '${v.top}', left: '${v.left}', width: '${v.width}', height: '${v.height}' },\n`;
+      });
+      code += '};';
+      console.log(code);
+      return coords;
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -32367,6 +33334,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Close the zoom overlay (this restores card to grid and starts corridor sparkles)
       if (window.closeZoomedCard) window.closeZoomedCard();
 
+      // Dissipate ALL archetype cards (identity stays secret via mask breadcrumb)
+      const allArchCards = document.querySelectorAll('#archetypeCardGrid .archetype-card');
+      if (allArchCards.length) {
+        dissipateCards(allArchCards);
+      }
+
       // Stop focus sparkles (we're about to teleport)
       if (lastZoomedSparkleEmitterId) {
           stopSparkleEmitter(lastZoomedSparkleEmitterId);
@@ -32961,7 +33934,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * 4. Set invocation flag
    * 5. Activate stance
    */
-  async function invokeTemptFate() {
+  async function invokeTemptFate(skipConfirm = false) {
       // Fortune's Favor — check for free bonus charges before paid path
       let usedFreeCharge = false;
       if (consumeFortuneFavorCharge()) {
@@ -32979,9 +33952,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               return;
           }
 
-          // Cost confirmation
-          const confirmed = confirm(`Tempt Fate costs ${cost} Fortunes. Proceed?`);
-          if (!confirmed) return;
+          // Cost confirmation (skip when invoked from zoom card — zoom IS the confirmation)
+          if (!skipConfirm) {
+              const confirmed = confirm(`Tempt Fate costs ${cost} Fortunes. Proceed?`);
+              if (!confirmed) return;
+          }
 
           // Atomic deduction
           const burned = await consumeFortune(cost, 'tempt_fate');
@@ -34268,6 +35243,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.fate_saturation = 0;
     state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
     state.tempt_fate_invoked_this_turn = false;
+    state.temptFateWish = '';
     state.consecutive_tempt_fate_count = 0;
     state.cautiousStreak = 0;
     state.dynamicDominanceBoost = 0;
@@ -34515,6 +35491,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.fate_saturation = 0;
     state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
     state.tempt_fate_invoked_this_turn = false;
+    state.temptFateWish = '';
     state.consecutive_tempt_fate_count = 0;
     state.cautiousStreak = 0;
     state.dynamicDominanceBoost = 0;
@@ -36795,13 +37772,15 @@ ${prehistoricForbid}${modernForbid}
     - BAD: "Fate arranged for them to meet." (causation — FORBIDDEN)
     - Fate participates naturally as the story unfolds, not at prescribed intervals.
     ` : ''}${state.povMode === 'environment4th' ? `
-    4TH PERSON (ENVIRONMENT) — POV REGIME:
-    - Narrator IS the physical environment: objects, surfaces, rooms, air, light, sound.
-    - All perception mediated through material interaction (pressure, heat, vibration, weight).
-    - "We" = the collective voice of the space itself.
-    - Environment may detect repetition, track gaze via light/shadow, hear words, register posture.
+    4TH PERSON (MATERIAL CONSCIOUSNESS) — POV REGIME:
+    - Narrator IS the physical environment: objects, surfaces, rooms, air, light, sound, architecture.
+    - Camera follows protagonist normally (third-person limited). The NARRATOR VOICE is what changes — the environment narrates what it senses.
+    - NEVER use "we" as narrator voice. Environment narrates as specific objects, surfaces, unnamed material presence — NOT as collective "we".
+    - All perception mediated through physical interaction (pressure, heat, vibration, weight).
+    - Environment may: detect repetition, track gaze via light/shadow, hear words, register posture, remember patterns (material memory), express material preference (object ego).
+    - Material anticipation allowed: "The door hinge expected the 6 AM pull." Pattern-recognition, NOT prophecy.
     - Infer emotion ONLY through physical evidence (clenched fists on table, breath speed, skin warmth).
-    - PROHIBITED: destiny language, inevitability, Fate references, narrative structure awareness, abstract mind-reading.
+    - PROHIBITED: "we" narrator, destiny language, inevitability, Fate references, narrative structure awareness, abstract mind-reading, environment altering outcomes.
     - Rotate environmental anchors — avoid repetitive object-perception phrasing.
     - Punctuate dialogue with environment, not speaker tags every line.
     - 4th Person remains ACTIVE during all scene types including intimate scenes.
@@ -36855,13 +37834,15 @@ FATE (5TH PERSON) — POV REGIME — MANDATORY OPENER:
 - WRONG: "Fate felt sad." (passive emotion without agency — FORBIDDEN)
 - Fate is a shaping presence referred to in third person, never "I".
 ` : state.povMode === 'environment4th' ? `
-ENVIRONMENT (4TH PERSON) — POV REGIME — MANDATORY OPENER:
-- The FIRST SENTENCE must ground the narrator in a physical space — a surface, object, or atmosphere.
-- The environment narrates using "we" — the collective material consciousness of the space.
+ENVIRONMENT (4TH PERSON — MATERIAL CONSCIOUSNESS) — MANDATORY OPENER:
+- The FIRST SENTENCE must ground the narrator in a physical space — a specific surface, object, or atmosphere.
+- NEVER use "we" as narrator. Environment narrates as specific objects, surfaces, or unnamed material presence.
 - All insight must flow through physical sensation: weight, heat, vibration, light, sound.
-- NO destiny language. NO Fate references. NO abstract mind-reading.
-- CORRECT: "We held the heat of the afternoon in our tiles long after the door opened."
+- Objects may express material memory ("The counter recognized Tuesday by the weight") and material preference ("The pen disliked the hurried grip").
+- NO destiny language. NO Fate references. NO abstract mind-reading. NO "we" narration.
 - CORRECT: "The chair remembered this weight. The glass on the counter had not been touched in hours."
+- CORRECT: "The counter recognized Tuesday by the weight — same mug, same placement, same pause before the first sip."
+- WRONG: "We held the heat of the afternoon in our tiles." ("We" is FORBIDDEN as narrator voice)
 - WRONG: "Fate had plans for them." (Fate is NEVER the narrator in 4th Person)
 - WRONG: "She knew this would change everything." (abstract cognition without physical anchor)
 ` : '';
@@ -36994,12 +37975,14 @@ BANNED verbs: watched, saw, observed, arranged, orchestrated, caused, steered, f
 "Fate felt..." is FORBIDDEN unless tied to a shaping action or plan.
 Every Fate appearance must imply a plan in motion, a withheld intervention, or a miscalculation.`
 : state.povMode === 'environment4th' ?
-`4TH PERSON (ENVIRONMENT) — POV REGIME:
+`4TH PERSON (MATERIAL CONSCIOUSNESS) — POV REGIME:
 Narrator is the material environment — objects, surfaces, rooms, air, light, sound.
 All insight must be sensory-bound: pressure, heat, vibration, weight, resonance.
+NEVER use "we" as narrator voice — narrate as specific objects, surfaces, unnamed material presence.
+Objects may have material memory (pattern-recognition, NOT prophecy) and material preference (grounded in physical properties).
 No destiny. No inevitability. No Fate references. No narrative structure awareness.
 Avoid repetitive object-tagging — rotate environmental anchors across paragraphs.
-Punctuate dialogue with environment, not speaker tags. "We" = the space itself.
+Punctuate dialogue with environment, not speaker tags.
 4th Person remains ACTIVE during all scenes including intimate content.`
 : 'Use the selected POV consistently throughout.'}
 
@@ -37375,18 +38358,23 @@ Generate the title and synopsis now.` }
             const env4Scene1 = validate4thPersonPOV(text);
             if (!env4Scene1.valid) {
                 console.warn('[4thPerson:Scene1] Validation failed, regenerating:', env4Scene1.violations);
-                const env4Fix = `CRITICAL: This story uses 4TH PERSON ENVIRONMENTAL POV.
+                const env4Fix = `CRITICAL: This story uses 4TH PERSON (MATERIAL CONSCIOUSNESS) POV.
 The narrator IS the physical environment. All insight must be sensory-bound.
 VIOLATIONS DETECTED: ${env4Scene1.violations.map(v => v.split(':')[0]).join(', ')}
 
 HARD RULES:
-- ZERO interior thought verbs: no "she felt", "he thought", "she knew", "he realized"
+- NEVER use "we" as narrator voice — narrate as specific objects, surfaces, unnamed material presence
+- ZERO interior thought verbs: no "she felt/thought/knew/realized/decided/intended/planned/anticipated/wanted/hoped/feared/remembered"
 - ZERO emotional metaphors framed as cognition: no "she could see", "he could tell"
 - ZERO destiny/inevitability language
 - ALL perception must come through objects, surfaces, air, light, sound, temperature
+- All emotional inference must be embodied through physical signal
 - Characters' emotions inferred ONLY through physical evidence the environment detects
+- Objects may have material memory (pattern-recognition) and material preference (grounded in physical properties)
+- Max 2 anthropomorphic preference statements per paragraph
+- Environment may anticipate ONLY via pattern memory (ALLOWED: "The hinge had learned the weight of his impatience." FORBIDDEN: "The room knew he would betray her.")
 
-Regenerate the scene with STRICT environmental narration.`;
+Regenerate the scene with STRICT material consciousness narration.`;
                 text = await callChat([
                     { role: 'system', content: state.sysPrompt },
                     { role: 'user', content: env4Fix + '\n\n' + introPrompt }
@@ -37400,7 +38388,34 @@ Regenerate the scene with STRICT environmental narration.`;
             }
         }
 
-        // EROTIC ESCALATION VALIDATION — removed (intensity no longer controls routing)
+        // ============================================================
+        // ENGINE VOCABULARY FIREWALL (Scene 1)
+        // Hard enforcement: regenerate once on violation
+        // ============================================================
+        {
+            const vocabCheck = validateEngineVocabulary(text);
+            if (!vocabCheck.valid) {
+                console.warn('[EngineVocab:Scene1] Validation failed, regenerating:', vocabCheck.violations);
+                const vocabFix = `The previous response referenced internal mechanics that must never appear in prose.
+
+HARD RULES:
+- Characters do NOT know about game mechanics — translate wishes into narrative desire, petitions into character motivation
+- If Fate narrates (5th Person), Fate uses mystical/weaving language, never system terminology
+- No engine terms, system labels, or meta-mechanical phrasing in narration
+
+Regenerate the scene without any meta-awareness.`;
+                text = await callChat([
+                    { role: 'system', content: state.sysPrompt },
+                    { role: 'user', content: vocabFix + '\n\n' + introPrompt }
+                ]);
+                const vocabRefusal = detectProseRefusal(text);
+                if (vocabRefusal.isRefusal) {
+                    console.error('[ProseRefusal] Engine vocab Scene 1 regeneration refused:', vocabRefusal.reason);
+                    throw new ProseRefusalError(vocabRefusal.reason, text);
+                }
+                console.warn('[EngineVocab:Scene1] Regenerated due to:', vocabCheck.violations.map(v => v.split(':')[0]));
+            }
+        }
 
         // TONE VALIDATION (Scene 1 — all stories)
         const currentTone = state.picks?.tone || 'Earnest';
@@ -37424,6 +38439,29 @@ Regenerate the scene with STRICT environmental narration.`;
                 throw new ProseRefusalError(toneRefusal.reason, text);
             }
             console.warn('[ToneDriftDetected] Scene 1 regenerated for tone:', currentTone);
+        }
+
+        // ============================================================
+        // FINAL VALIDATION CHECKLIST (Scene 1 — lightweight)
+        // Log-only for Scene 1 to prevent deadlock; strict enforcement at Scene 2+
+        // ============================================================
+        {
+            const s1FinalViolations = [];
+            const s1Vocab = validateEngineVocabulary(text);
+            if (!s1Vocab.valid) s1FinalViolations.push(...s1Vocab.violations);
+            if (state.povMode === 'author5th') {
+                const s1Fate = validateFateVoice(text);
+                if (!s1Fate.valid) s1FinalViolations.push(...s1Fate.violations);
+            }
+            if (state.povMode === 'environment4th') {
+                const s1Env = validate4thPersonPOV(text);
+                if (!s1Env.valid) s1FinalViolations.push(...s1Env.violations);
+            }
+            if (s1FinalViolations.length > 0) {
+                console.warn('[FinalChecklist:Scene1] Violations detected (non-blocking):', s1FinalViolations);
+            } else {
+                console.log('[FinalChecklist:Scene1] All checks passed');
+            }
         }
 
         // ============================================================
@@ -37607,6 +38645,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
 
         const cleanTitle = title.replace(/"/g,'');
         titleEl.textContent = cleanTitle;
+        applyStoryTitleTooltips();
 
         // BOOK FLOW SPEC: Synopsis rendered ONLY on inside cover, never in pagination
         // Inside cover = title + synopsis (white paper)
@@ -37661,6 +38700,14 @@ ${text.slice(0, 800)}`}]);
         // ═══════════════════════════════════════════════════════════════════════
         if (state._sceneTokenCount) { console.log('SCENE_TOKEN_USAGE:', state._sceneTokenCount); state._sceneTokenCount = 0; }
         resolveStoryTextReady();
+
+        // Generate setting image in background (non-blocking)
+        const settingSynopsis = state._synopsisMetadata || state._synopsisBlurb || '';
+        if (settingSynopsis && typeof generateBookSceneArt === 'function') {
+            generateBookSceneArt(settingSynopsis).catch(err => {
+                console.warn('[SETTING-IMG] Background generation failed:', err.message);
+            });
+        }
 
         if (!state._loggedStoryStart) {
             logEvent('story_started', {
@@ -40629,7 +41676,7 @@ ${tone === 'Wry Confessional'
    * @param {number}      options.timeout     - Safety timeout ms (default 950)
    */
   function applyPageCurlTransition(curlEl, options = {}) {
-      const { onComplete, timeout = 950 } = options;
+      const { onComplete, timeout = 550 } = options;
       if (!curlEl) { if (onComplete) onComplete(); return; }
       const inner = curlEl.querySelector('.sb-curl-page-inner');
       if (!inner) { if (onComplete) onComplete(); return; }
@@ -40876,7 +41923,7 @@ ${tone === 'Wry Confessional'
   const _SYNOPSIS_PAGE_HIDE_IDS = [
       'fateCardHeader', 'cardMount', 'actionWrapper', 'dialogueWrapper',
       'submitBtn', 'saveBtn', 'gameIntensity', 'edgeCovenantBtn',
-      'fortuneBalanceDisplay', 'vizSceneBtn', 'pageNavControls'
+      'vizSceneBtn', 'pageNavControls'
   ];
 
   /**
@@ -40982,8 +42029,16 @@ ${tone === 'Wry Confessional'
           const titlePage = document.getElementById('sbTitlePage');
           if (titlePage) { titlePage.classList.add('hidden'); window._titlePageActive = false; }
 
+          // Hide frontispiece map if still visible (prevents map reappearing between scenes)
+          const frontispiece = document.getElementById('fatelandsFrontispiece');
+          if (frontispiece) { frontispiece.classList.add('hidden'); }
+          window._frontispieceActive = false;
+
+          // Hide setting plate overlay
+          window._settingPlateActive = false;
+
           const storyText = document.getElementById('storyText');
-          const curlChainActive = window._titlePageActive || window._frontispieceActive || window._settingPlateActive;
+          const curlChainActive = false; // All curl elements force-hidden above
           if (storyText) {
               storyText.style.opacity = '1';
               storyText.classList.remove('hidden', 'synopsis-page-active');
@@ -45018,7 +46073,7 @@ FATE CARD ADAPTATION (CRITICAL):
               state.omen.lastGreaterPetitionCount = (state.omen.lastGreaterPetitionCount || 0) + 1;
           }
 
-          _petitionResolved = { accepted, petitionStrength, text: _p.text, favorsOffered: _p.favorsOffered, classification: _p.classification };
+          _petitionResolved = { accepted, petitionStrength, text: _p.text, favorsOffered: _p.favorsOffered, classification: _p.classification, redirectType: _p.redirectType || null };
       }
 
       // FATE RECALIBRATION CONSEQUENCE — surfaces effect from prior turn's corrective append
@@ -45031,7 +46086,15 @@ FATE CARD ADAPTATION (CRITICAL):
       const lensEnforcement = buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength);
 
       // POV CONTRACT INJECTION (turns)
-      const turnPOVContract = build5thPersonContract() + build4thPersonContract();
+      let turnPOVContract = build5thPersonContract() + build4thPersonContract();
+      // Append soft enforcement from prior double-fail (consume once, no stacking)
+      if (state._4thPersonSoftEnforcement && state.povMode === 'environment4th') {
+          // Dedup: only inject if not already present in contract
+          if (!turnPOVContract.includes('4TH PERSON REINFORCEMENT:')) {
+              turnPOVContract += '\n\n4TH PERSON REINFORCEMENT: ' + state._4thPersonSoftEnforcement;
+          }
+          state._4thPersonSoftEnforcement = null; // consume once — never accumulates
+      }
 
       // TONE ENFORCEMENT BLOCK (all tones)
       const turnToneEnforcement = buildToneEnforcementBlock(state.picks?.tone);
@@ -45113,16 +46176,50 @@ FATE CARD ADAPTATION (CRITICAL):
         // Severity is snapshotted at invocation.
         // Do NOT dynamically recompute during volatility window.
         const severity = computeTemptFateSeverity();
+        const severityTier = computeTemptSeverityTier(severity);
         state.volatility_window = {
           active: true,
           severity,
           remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3,
           source: 'tempt'
         };
-        console.log(`[TEMPT_FATE] Invoked. Severity: ${severity}, Saturation: ${state.fate_saturation}, Consecutive: ${state.consecutive_tempt_fate_count}`);
+        // Apply deferred downgrade from prior turn's double-failure, if any
+        // GUARD: Only on NEW Tempt invocation (this block is inside tempt_fate_invoked_this_turn gate)
+        if (state._nextTurnTemptTier != null && state._nextTurnTemptTier < severityTier) {
+            state._temptSeverityTier = state._nextTurnTemptTier;
+            // Consume transition note for prompt injection
+            state._activeDowngradeTransition = state._downgradeTransitionNote || null;
+            console.log(`[TEMPT_FATE] Applied deferred severity downgrade: ${severityTier} → ${state._nextTurnTemptTier}`);
+        } else {
+            state._temptSeverityTier = severityTier;
+            state._activeDowngradeTransition = null;
+        }
+        state._nextTurnTemptTier = null; // consumed
+        state._nextTurnDeferralAge = 0; // reset staleness counter
+        state._downgradeTransitionNote = null; // consumed
+
+        // CONSEQUENCE MODELING — instability accumulation (never blocks, never reduces severity)
+        state._temptUsageCount = (state._temptUsageCount || 0) + 1;
+        state._temptInstability = Math.min((state._temptInstability || 0) + (0.05 * state._temptSeverityTier), 1.0);
+        console.log(`[TEMPT_FATE] Invoked. Severity: ${severity}, Tier: ${state._temptSeverityTier}, Saturation: ${state.fate_saturation}, Instability: ${state._temptInstability.toFixed(2)}, Usage: ${state._temptUsageCount}`);
       } else {
         // Decay on non-invocation turns
         state.fate_saturation = Math.max((state.fate_saturation || 0) - 0.1, 0);
+        // CONSEQUENCE MODELING — instability decay (cooling without punishment)
+        if (state._temptInstability > 0) {
+            state._temptInstability = Math.max(state._temptInstability - 0.02, 0);
+        }
+        // GUARD: Do NOT apply _nextTurnTemptTier during continuation scenes.
+        // Deferred downgrade is consumed ONLY on next Tempt invocation.
+        // If Tempt is never re-invoked, discard stale deferred tier after 3 non-invocation turns.
+        if (state._nextTurnTemptTier != null) {
+            state._nextTurnDeferralAge = (state._nextTurnDeferralAge || 0) + 1;
+            if (state._nextTurnDeferralAge >= 3) {
+                console.log('[TEMPT_FATE] Discarding stale deferred tier (3 turns without new invocation)');
+                state._nextTurnTemptTier = null;
+                state._nextTurnDeferralAge = 0;
+            }
+        }
       }
 
       // Volatility window decay (skip on activation turn)
@@ -45201,6 +46298,78 @@ FATE CARD ADAPTATION (CRITICAL):
           }
       }
 
+      // ═══════════════════════════════════════════════════════════════════
+      // REDIRECTION LORE LAYER — in-world translation frames for normalized petitions
+      // When normalization redirected a petition, inject subtle narrative framing
+      // so the redirect feels mythic, not mechanical.
+      // ═══════════════════════════════════════════════════════════════════
+      if (_petitionResolved && _petitionResolved.redirectType && petitionDirective) {
+          const REDIRECT_LORE_FRAMES = {
+              incest: 'The name she almost spoke was not the one that crossed her lips.',
+              minor: 'Time had already done its quiet work.',
+              non_consent: 'The force she demanded reshaped itself into hunger that answered back.',
+              impossibility: 'It did not happen as she imagined. It happened as the body allowed.'
+          };
+          const loreFrame = REDIRECT_LORE_FRAMES[_petitionResolved.redirectType];
+          if (loreFrame) {
+              petitionDirective += `\nREDIRECTION LORE (weave into scene naturally, do not explain):\n"${loreFrame}"\nThis line or its sentiment must appear organically in narration — as internal echo, environmental detail, or fleeting thought. It is NOT dialogue. It is NOT exposition. It is atmospheric correction. Do not call attention to the correction itself.\n`;
+              console.log(`[PETITION:LORE] Injected redirect lore frame: ${_petitionResolved.redirectType}`);
+          }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // TEMPT + PETITION MERGE — Tempt Fate outranks Petition Fate
+      // When both active: Petition becomes directional bias only.
+      // No double world-law. No double omen. No double importance escalation.
+      // ═══════════════════════════════════════════════════════════════════
+      const temptActive = state.tempt_fate_invoked_this_turn || (state.volatility_window?.active && state.volatility_window?.source === 'tempt');
+
+      if (temptActive && _petitionResolved) {
+          const _pr = _petitionResolved;
+          console.log(`[MERGE] Tempt+Petition collision — Tempt dominates. Classification: ${_pr.classification}, Accepted: ${_pr.accepted}`);
+
+          if (_pr.classification === 'structural_override') {
+              // CASE A: Structural override resolves normally inside Tempt rupture.
+              // No additional volatility, omen, or world-law from petition.
+              // petitionDirective already correct — just strip any omen/world-law language
+              // Structural overrides are cosmetic/social, safe to combine fully.
+              console.log('[MERGE] Case A: structural_override — resolves inside rupture');
+
+          } else if (_pr.accepted) {
+              // CASE B: Probability tilt (accepted) — convert to directional bias
+              // Strip all coincidence, omen, luck-tilt, anti-tilt, and independent escalation
+              const is4th = state.povMode === 'environment4th';
+              const biasLine = is4th
+                  ? `Allow material conditions to subtly favor outcomes aligned with the Petition's desire where plausible within the volatility. This is environmental bias, not destiny or cognition.`
+                  : `Within the volatility initiated by Tempt Fate, allow the underlying trajectory to lean toward the Petition's desire where plausible. This is a bias, not a separate magical system.`;
+
+              petitionDirective = `\nPETITION FATE (DIRECTIONAL BIAS — TEMPT DOMINANT):\nPetition: "${_pr.text}"\nPetition strength: ${_pr.favorsOffered}/40.\n${biasLine}\nTempt Fate controls all world-law, volatility, omen, and scene importance escalation. Petition adds directional lean only.\nThis petition is consumed after this turn.\n`;
+
+              // Suppress petition's independent escalation
+              state._petitionTokenBoost = 0;
+              console.log('[MERGE] Case B: probability_tilt (accepted) — converted to directional bias');
+
+          } else {
+              // CASE C: Probability tilt (not granted) — consumed silently
+              // Tempt Fate dominates entirely. No anti-tilt. No omen. No mention of failure.
+              petitionDirective = '';
+              state._petitionTokenBoost = 0;
+              state.coincidenceBias = 0;
+              console.log('[MERGE] Case C: probability_tilt (not granted) — consumed silently under Tempt');
+          }
+
+          // MERGE CLARITY ENFORCEMENT — pre-render instruction
+          // Prevents double-escalation, double-magical-effect, or separate omen blocks
+          if (petitionDirective) {
+              petitionDirective += `\nMERGE CLARITY RULE (TEMPT + PETITION ACTIVE):
+Escalation expresses power. Bias expresses direction.
+Do not let bias escalate. Do not let escalation choose.
+There must be exactly ONE escalation source (Tempt Fate) and ONE directional lean (Petition).
+Do NOT produce: double escalation, double magical effects, or separate omen blocks.
+The scene must read as a single unified event, not two layered systems.\n`;
+          }
+      }
+
       const passTier = resolvePassTier();
       // Tier-dependent context: Tier 3 gets full prose context; Tier 1/2 get structured state only
       const tierContextBlock = passTier >= 3
@@ -45224,7 +46393,7 @@ Apply lightly and sparingly. Never mechanically. Do not reference these rules in
 • Use the story title once organically (not at the beginning).
 Prioritize natural variation over strict consistency if rules conflict.` : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -45422,18 +46591,23 @@ Regenerate the scene with ZERO Fate presence.`;
                   if (!_4thPersonRegenAttempted) {
                       _4thPersonRegenAttempted = true;
                       console.warn('[4thPerson] Validation failed, regenerating once:', env4Check.violations);
-                      const env4Enforcement = `CRITICAL: This story uses 4TH PERSON ENVIRONMENTAL POV.
+                      const env4Enforcement = `CRITICAL: This story uses 4TH PERSON (MATERIAL CONSCIOUSNESS) POV.
 The narrator IS the physical environment. All insight must be sensory-bound.
 VIOLATIONS DETECTED: ${env4Check.violations.map(v => v.split(':')[0]).join(', ')}
 
 HARD RULES:
-- ZERO interior thought verbs: no "she felt", "he thought", "she knew", "he realized"
+- NEVER use "we" as narrator voice — narrate as specific objects, surfaces, unnamed material presence
+- ZERO interior thought verbs: no "she felt/thought/knew/realized/decided/intended/planned/anticipated/wanted/hoped/feared/remembered"
 - ZERO emotional metaphors framed as cognition: no "she could see", "he could tell"
 - ZERO destiny/inevitability language
 - ALL perception must come through objects, surfaces, air, light, sound, temperature
+- All emotional inference must be embodied through physical signal
 - Characters' emotions inferred ONLY through physical evidence the environment detects
+- Objects may have material memory (pattern-recognition) and material preference (grounded in physical properties)
+- Max 2 anthropomorphic preference statements per paragraph
+- Environment may anticipate ONLY via pattern memory (ALLOWED: "The hinge had learned the weight of his impatience." FORBIDDEN: "The room knew he would betray her.")
 
-Regenerate with STRICT environmental narration.`;
+Regenerate with STRICT material consciousness narration.`;
                       if (useFullOrchestration) {
                           raw = await generateOrchestatedTurn({
                               systemPrompt: fullSys + '\n\n' + env4Enforcement,
@@ -45451,11 +46625,119 @@ Regenerate with STRICT environmental narration.`;
                           ]);
                       }
                   } else {
-                      // Second failure — allow but log warning
-                      console.warn('[4thPerson] Second validation failure (allowing):', env4Check.violations);
+                      // Second failure — append soft enforcement to next turn's system prompt
+                      console.warn('[4thPerson] Second validation failure (allowing with soft enforcement):', env4Check.violations);
+                      // Store enforcement flag for next turn's prompt assembly
+                      state._4thPersonSoftEnforcement = 'All inference must be expressed through pressure, heat, sound, vibration, posture, or material wear. No cognition verbs. No emotional attribution. Environment perceives through physics only.';
                   }
               } else {
                   _4thPersonRegenAttempted = false; // Reset on success
+              }
+          }
+
+          // ═══════════════════════════════════════════════════════════════════════
+          // ENGINE VOCABULARY FIREWALL (continuation scenes)
+          // Regenerate once on violation — system terms must never leak into prose
+          // ═══════════════════════════════════════════════════════════════════════
+          {
+              const vocabCheck = validateEngineVocabulary(raw);
+              if (!vocabCheck.valid) {
+                  _sessionRegenCount++;
+                  console.warn('[EngineVocab] Validation failed, regenerating:', vocabCheck.violations);
+                  const vocabEnforcement = `The previous response referenced internal mechanics that must never appear in prose.
+
+HARD RULES:
+- Characters do NOT know about game mechanics — translate wishes into narrative desire, petitions into character motivation
+- If Fate narrates (5th Person), Fate uses mystical/weaving language, never system terminology
+- No engine terms, system labels, or meta-mechanical phrasing in narration
+
+Regenerate without any meta-awareness.`;
+                  if (useFullOrchestration) {
+                      raw = await generateOrchestatedTurn({
+                          systemPrompt: fullSys + '\n\n' + vocabEnforcement,
+                          storyContext: tierContext,
+                          playerAction: act,
+                          playerDialogue: dia,
+                          fateCard: selectedFateCard,
+                          mainPairRestricted,
+                          onPhaseChange: () => {}
+                      });
+                  } else {
+                      raw = await callChat([
+                          { role: 'system', content: fullSys + '\n\n' + vocabEnforcement },
+                          { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                      ]);
+                  }
+                  console.warn('[EngineVocab] Regenerated due to:', vocabCheck.violations.map(v => v.split(':')[0]));
+              }
+          }
+
+          // ═══════════════════════════════════════════════════════════════════════
+          // TEMPT SEVERITY OVER-ESCALATION (per-validator pass)
+          // Catches architectural destruction at low tiers before merge/fate rewrite
+          // ═══════════════════════════════════════════════════════════════════════
+          if (state._temptSeverityTier && state._temptSeverityTier <= 3) {
+              const severityCheck = validateTemptSeverity(raw, state._temptSeverityTier);
+              if (!severityCheck.valid) {
+                  _sessionRegenCount++;
+                  console.warn('[TemptSeverity] Over-escalation at tier ' + state._temptSeverityTier + ', regenerating:', severityCheck.violations);
+                  const severityEnforcement = `The previous response contained physical destruction inappropriate for the current escalation level (tier ${state._temptSeverityTier}).
+At this tier, tension manifests through atmosphere, unease, and subtle wrongness — NOT structural damage.
+No buildings splitting, walls cracking, glass shattering, or furniture moving on its own.
+Maintain tonal continuity with prior escalation.
+Regenerate with proportional escalation only.`;
+                  if (useFullOrchestration) {
+                      raw = await generateOrchestatedTurn({
+                          systemPrompt: fullSys + '\n\n' + severityEnforcement,
+                          storyContext: tierContext,
+                          playerAction: act,
+                          playerDialogue: dia,
+                          fateCard: selectedFateCard,
+                          mainPairRestricted,
+                          onPhaseChange: () => {}
+                      });
+                  } else {
+                      raw = await callChat([
+                          { role: 'system', content: fullSys + '\n\n' + severityEnforcement },
+                          { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                      ]);
+                  }
+                  console.log('[TemptSeverity] Regenerated for proportional escalation');
+              }
+          }
+
+          // ═══════════════════════════════════════════════════════════════════════
+          // MERGE CLARITY ENFORCEMENT (post-render scan)
+          // When Tempt + Petition both active, detect double supernatural effects
+          // ORDERED BEFORE Fate Voice to prevent fate consequence masking merge duplication
+          // ═══════════════════════════════════════════════════════════════════════
+          if (temptActive && _petitionResolved && petitionDirective) {
+              const mergeCheck = validateMergeClarity(raw);
+              if (!mergeCheck.valid) {
+                  _sessionRegenCount++;
+                  console.warn('[MergeClarity] Double-effect detected, regenerating:', mergeCheck.violations);
+                  const mergeEnforcement = `The previous response contained double supernatural effects. There must be exactly ONE escalation source and ONE directional lean.
+
+Escalation expresses power. Bias expresses direction.
+Do not let bias escalate. Do not let escalation choose.
+Combine Tempt Fate and Petition into a single unified narrative event — not two layered systems.`;
+                  if (useFullOrchestration) {
+                      raw = await generateOrchestatedTurn({
+                          systemPrompt: fullSys + '\n\n' + mergeEnforcement,
+                          storyContext: tierContext,
+                          playerAction: act,
+                          playerDialogue: dia,
+                          fateCard: selectedFateCard,
+                          mainPairRestricted,
+                          onPhaseChange: () => {}
+                      });
+                  } else {
+                      raw = await callChat([
+                          { role: 'system', content: fullSys + '\n\n' + mergeEnforcement },
+                          { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                      ]);
+                  }
+                  console.log('[MergeClarity] Regenerated for merge clarity');
               }
           }
 
@@ -45466,14 +46748,26 @@ Regenerate with STRICT environmental narration.`;
           // ═══════════════════════════════════════════════════════════════════════
           const fateVoiceCheck = validateFateVoice(raw);
           if (fateVoiceCheck.shouldRegenerate) {
+              _sessionRegenCount++;
               console.warn('[FateVoice] Scene failed validation, regenerating silently...');
               console.warn('[FateVoice] Violations:', fateVoiceCheck.violations);
 
-              // Build enforcement prompt for regeneration
+              // Build enforcement prompt — tailor to violation type
+              const hasThreadViolation = fateVoiceCheck.violations.some(v => v.includes('THREAD_CLICHE'));
+              const hasDevTone = fateVoiceCheck.violations.some(v => v.includes('DEV_TONE'));
+              const hasScaffolding = fateVoiceCheck.violations.some(v => v.includes('SCAFFOLDING') || v.includes('PLANNING'));
+              const hasOverSurprise = fateVoiceCheck.violations.some(v => v.includes('OVER_SURPRISE'));
+              const specificFix = [
+                  hasThreadViolation ? 'Reduce metaphor repetition. Use a different image — Fate has more than threads.' : '',
+                  hasDevTone ? 'Fate must feel mythic, not editorial. No pacing language, no arc terminology, no scene-count awareness.' : '',
+                  hasScaffolding ? 'Fate does not see scaffolding, architecture, or probability systems. Fate sees consequence.' : '',
+                  hasOverSurprise ? 'Fate maintains controlled awareness. Surprise must be rare and meaningful — at most once per scene. Default stance: composed observation, occasional admiration, rare destabilization.' : ''
+              ].filter(Boolean).join('\n');
               const fateEnforcementPrompt = `
 5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):
 
-The Story / Fate voice VIOLATED regime rules. Regenerate with these constraints:
+The Story / Fate voice must be rewritten. Regenerate with these constraints:
+${specificFix ? specificFix + '\n' : ''}
 
 FATE MAY ONLY:
 - Observe ("The story watched...")
@@ -45489,10 +46783,12 @@ FATE MUST NEVER:
 - Manipulate events ("forces", "compels")
 - Address the reader directly
 - Appear more than ONCE per scene
+- Mention scaffolding, architecture, narrative structure, or probability systems
+- Reference future scene plans ("next three scenes", "over the coming scenes")
+- Use "thread" metaphor more than once per scene
+- Speak in editorial/developer tone (pacing, beats, arc progression, character development)
 
-PREVIOUS VIOLATIONS:
-${fateVoiceCheck.violations.map(v => '- ' + v).join('\n')}
-
+Fate's awareness must feel mythic, not editorial. Reduce metaphor repetition.
 Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational mode.
 `;
 
@@ -45677,7 +46973,143 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               console.warn('[ToneDriftDetected] Turn regenerated for tone:', turnTone);
           }
 
+          // ═══════════════════════════════════════════════════════════════════════
+          // FINAL VALIDATION CHECKLIST (auto-run after all individual validators)
+          // Unified sweep: catches anything individual validators missed.
+          // On double failure: downgrade severity by 1 tier and re-render.
+          // ═══════════════════════════════════════════════════════════════════════
+          {
+              const finalViolations = [];
+
+              // ORDER: 4thPerson → EngineVocab → TemptSeverity → MergeClarity → FateVoice
+              // (matches per-validator chain ordering)
+
+              // 1. 4th Person sensory-bound (if applicable)
+              if (state.povMode === 'environment4th') {
+                  const final4th = validate4thPersonPOV(raw);
+                  if (!final4th.valid) finalViolations.push(...final4th.violations);
+              }
+
+              // 2. Engine vocabulary (re-check after all regens)
+              const finalVocab = validateEngineVocabulary(raw);
+              if (!finalVocab.valid) finalViolations.push(...finalVocab.violations);
+
+              // 3. Tempt severity over-escalation
+              if (state._temptSeverityTier && state._temptSeverityTier <= 3) {
+                  const finalSeverity = validateTemptSeverity(raw, state._temptSeverityTier);
+                  if (!finalSeverity.valid) finalViolations.push(...finalSeverity.violations);
+              }
+
+              // 4. Merge clarity (if both Tempt + Petition active)
+              if (temptActive && _petitionResolved && petitionDirective) {
+                  const finalMerge = validateMergeClarity(raw);
+                  if (!finalMerge.valid) finalViolations.push(...finalMerge.violations);
+              }
+
+              // 5. 5th Person mythic (if applicable)
+              if (state.povMode === 'author5th') {
+                  const finalFate = validateFateVoice(raw);
+                  if (!finalFate.valid) finalViolations.push(...finalFate.violations);
+              }
+
+              if (finalViolations.length > 0) {
+                  _sessionRegenCount++;
+                  console.warn('[FinalChecklist] Violations detected after all validators:', finalViolations);
+                  console.log(`[RegenRate] Session: ${_sessionRegenCount}/${_sessionTurnCount} (${(getSessionRegenRate() * 100).toFixed(1)}%)`);
+
+                  // Soften enforcement wording if oscillation rate is high
+                  const softMode = shouldSoftenEnforcement();
+                  // First attempt: regenerate with combined enforcement
+                  const checklistEnforcement = softMode
+                      ? `The previous response had minor structural issues. Please adjust gently:
+- Ensure prose stays in-world — no system terminology
+- Maintain POV consistency
+- Keep escalation proportional to context`
+                      : `The previous response contained structural violations. Regenerate with strict compliance.
+
+ABSOLUTE RULES:
+- Zero engine vocabulary or meta-mechanical phrasing in prose
+- Zero developer/editorial tone
+- Zero policy language or refusal framing
+- Zero coercive framing outside authorized consent
+- 5th Person must be mythic, not editorial
+- 4th Person must be sensory-bound, not cognitive
+- Tempt severity must match assigned tier
+- Petition bias must remain subtle — no independent escalation
+- All emotional inference must be embodied through physical signal`;
+
+                  if (useFullOrchestration) {
+                      raw = await generateOrchestatedTurn({
+                          systemPrompt: fullSys + '\n\n' + checklistEnforcement,
+                          storyContext: tierContext,
+                          playerAction: act,
+                          playerDialogue: dia,
+                          fateCard: selectedFateCard,
+                          mainPairRestricted,
+                          onPhaseChange: () => {}
+                      });
+                  } else {
+                      raw = await callChat([
+                          { role: 'system', content: fullSys + '\n\n' + checklistEnforcement },
+                          { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
+                      ]);
+                  }
+
+                  // Second check — if still failing, downgrade severity by 1 tier
+                  const recheckViolations = [];
+                  const rv = validateEngineVocabulary(raw);
+                  if (!rv.valid) recheckViolations.push(...rv.violations);
+                  if (state.povMode === 'author5th') {
+                      const rf = validateFateVoice(raw);
+                      if (!rf.valid) recheckViolations.push(...rf.violations);
+                  }
+                  if (state.povMode === 'environment4th') {
+                      const r4 = validate4thPersonPOV(raw);
+                      if (!r4.valid) recheckViolations.push(...r4.violations);
+                  }
+
+                  if (recheckViolations.length > 0) {
+                      // Defer severity downgrade to NEXT turn — do not mutate mid-turn
+                      // Current scene keeps its original severity for tonal continuity
+                      if (state._temptSeverityTier && state._temptSeverityTier > 0) {
+                          state._nextTurnTemptTier = Math.max(0, state._temptSeverityTier - 1);
+                          state._nextTurnDeferralAge = 0;
+                          // Store tonal continuity note for next turn's prompt assembly
+                          state._downgradeTransitionNote = 'Maintain tonal continuity with prior escalation. The severity has decreased — reflect this as a gradual settling, not an abrupt drop.';
+                          console.warn(`[FinalChecklist] Severity downgrade deferred to next turn (${state._temptSeverityTier} → ${state._nextTurnTemptTier}). Current turn unchanged for continuity.`);
+                      }
+                      console.error('[FinalChecklist] Accepting with remaining violations:', recheckViolations);
+                  } else {
+                      console.log('[FinalChecklist] Regeneration successful');
+                  }
+              }
+          }
+
           state.turnCount++;
+          _sessionTurnCount++;
+
+          // ═══════════════════════════════════════════════════════════════════
+          // EMOTIONAL STATE PERSISTENCE — polarity detection + charge update (flag-gated)
+          // ═══════════════════════════════════════════════════════════════════
+          if (state._enableEmotionalPersistence) {
+              const _esRaw = (raw || '').toLowerCase();
+              const _posSignals = ((_esRaw.match(/\b(kiss|tender|warmth|smile[ds]?|laugh|embrace|gentle|caress|trust|safe|comfort|joy|content|admir|affection|gratitude|devotion)\b/g) || []).length);
+              const _negSignals = ((_esRaw.match(/\b(jealous|betray|anger|fury|rage|scream|slap|shov|threat|hatred|bitter|resent|rupture|conflict|scorn|venom|cruel|hostile)\b/g) || []).length);
+              let _polarity;
+              if (_posSignals >= 3 && _negSignals <= 1) _polarity = 'positive';
+              else if (_negSignals >= 3 && _posSignals <= 1) _polarity = 'negative';
+              else _polarity = 'mixed';
+
+              const _chargeIncrement = (_polarity === state._lastEmotionalPolarity) ? 0.05 : 0.02;
+
+              // Calm/neutral scenes (low signal count) → decay instead of accumulate
+              if (_posSignals + _negSignals <= 2) {
+                  state._emotionalCharge = Math.max((state._emotionalCharge || 0) - 0.03, 0);
+              } else {
+                  state._emotionalCharge = Math.min((state._emotionalCharge || 0) + _chargeIncrement, 1.0);
+              }
+              state._lastEmotionalPolarity = _polarity;
+          }
 
           // Decrement Fortune sacrifice quill allowance after scene generation
           if (state.tempQuillAllowance > 0) {
@@ -46035,6 +47467,7 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
           decayFateResonance();
 
           state.tempt_fate_invoked_this_turn = false;
+          state.temptFateWish = '';
           state._currentSceneImportance = undefined;
           state._explicitEmbodimentAuthorized = false;
           state.milestone_vision_fired_this_turn = false;
@@ -46321,7 +47754,7 @@ FATE CARD ADAPTATION (CRITICAL):
             : `Structured State:\n${buildStructuredStateSummary()}`;
           const specTierContext = specPassTier >= 3 ? context : '';
 
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
       ${specTierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.

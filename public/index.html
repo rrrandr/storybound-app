@@ -528,34 +528,31 @@
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 <div id="fortunePurchaseModal" class="overlay hidden" style="z-index:10020;">
   <div class="box" style="max-width:420px; text-align:center;">
-    <h3 style="color:var(--gold); margin-bottom:10px;">Purchase Fortunes</h3>
+    <h3 style="color:var(--gold); margin-bottom:10px;">Be Rich in Fortunes</h3>
     <p style="opacity:0.8; font-size:0.9em; margin-bottom:5px;">
-      Fortunes fuel every action: scenes, covers, visualizations, petitions
+      Fortunes fuel every action:<br>scenes, covers, visualizations, petitions
     </p>
-    <p style="opacity:0.6; font-size:0.85em; margin-bottom:12px;">
+    <p style="opacity:0.6; font-size:0.85em; margin-bottom:20px;">
       Current balance: <strong style="color:var(--gold);"><span id="fortuneModalBalance">0</span> Fortunes</strong>
-    </p>
-    <p style="opacity:0.6; font-size:0.8em; margin-bottom:20px; line-height:1.5; border-top:1px solid rgba(255,215,0,0.15); padding-top:10px;">
-      <span style="color:var(--gold);">Subscribers</span> receive 100 Fortunes/month
     </p>
 
     <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseFortunePack(20, '$5');" style="padding:12px 20px; width:100%;">
-        <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
+      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(20, '$5');">
         20 Fortunes &mdash; $5
       </button>
-      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseFortunePack(50, '$10');" style="padding:12px 20px; width:100%;">
-        <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
+      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(50, '$10');">
         50 Fortunes &mdash; $10
       </button>
-      <button class="sb-plaque-btn plaque-gold" onclick="window.purchaseFortunePack(120, '$20');" style="padding:12px 20px; width:100%;">
-        <span class="plaque-corners"></span><span class="plaque-diamonds"></span>
+      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$20');">
         120 Fortunes &mdash; $20
+      </button>
+      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(100, '$4/mo');">
+        100 Fortunes &mdash; $4/month
       </button>
     </div>
 
-    <button class="sb-btn" onclick="window.closeFortunePurchaseModal();" style="padding:10px 24px;">
-      Not Now
+    <button class="fortune-dismiss-btn" onclick="window.closeFortunePurchaseModal();">
+      Delay Gratification
     </button>
   </div>
 </div>
@@ -1052,9 +1049,9 @@
     <div class="card-flow-row" id="flowRowPressure" data-flow-stage="pressure">
       <div class="section-title">Story Pull</div>
       <div class="sb-grid sb-grid-4" id="pressureGrid">
-        <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power & Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">The entire city answers to him. Except for her.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="EscapePursuit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape & Pursuit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape & Pursuit</span><span class="sb-card-desc">The world hunts them. They only have each other.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="DesireObsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Desire & Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Desire & Obsession</span><span class="sb-card-desc">He should walk away. He never can.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power & Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">The entire city answers to him.<br>Except for her.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="EscapePursuit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape & Pursuit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape & Pursuit</span><span class="sb-card-desc">The world hunts them.<br>They only have each other.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="DesireObsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Desire & Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Desire & Obsession</span><span class="sb-card-desc">He should walk away.<br>He never can.</span></div></div></div>
         <div class="sb-card" data-grp="pressure" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">The mountain tried to freeze them;<br>instead, they burned.</span></div></div></div>
       </div>
 
@@ -1426,8 +1423,8 @@
     
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
-       <button id="fortuneBalanceBtn" class="fortune-balance-btn" onclick="window.openFortunePurchaseModal()">
-         <span id="fortuneBalanceDisplay">0</span> Fortunes
+       <button id="fortuneBalanceBtn" class="small-btn" onclick="window.openFortunePurchaseModal()">
+         <span id="fortuneBalanceDisplay">0</span> <span id="fortuneBalanceLabel">Fortunes</span>
        </button>
     </div>
 
