@@ -38880,6 +38880,7 @@ ${text.slice(0, 800)}`}]);
         else if(window.initCards) window.initCards();
         // PERMANENT FX REBIND: Ensure fate cards have handlers after story generation
         if (window.initFateCards) window.initFateCards();
+        updateSafeWordVisibility();
         updateBatedBreathState();
     }
     } finally {
@@ -45850,19 +45851,55 @@ If both main characters are present, render their tension and restraint ONLY —
         return bounds;
       }
 
+      function updateSafeWordVisibility() {
+        const btn = document.getElementById('safeWordBtn');
+        if (!btn) return;
+        const show = state._explicitEmbodimentAuthorized === true
+          && (state.eroticMode === 'VISCERAL' || state.eroticMode === 'CARNAL');
+        btn.style.display = show ? '' : 'none';
+      }
+
+      window.triggerSafeWord = function() {
+        const mode = state.eroticMode;
+        if (mode !== 'VISCERAL' && mode !== 'CARNAL') return;
+        const prev = mode;
+        if (mode === 'CARNAL') {
+          state.eroticMode = 'VISCERAL';
+          if (state.eroticPressureScore > 0.65) state.eroticPressureScore = 0.65;
+        } else {
+          state.eroticMode = 'ROMANTIC';
+          if (state.eroticPressureScore > 0.32) state.eroticPressureScore = 0.32;
+        }
+        state._safeWordCalibrationPending = true;
+        if (window.dealFateCards) window.dealFateCards();
+        if (window.initFateCards) window.initFateCards();
+        updateSafeWordVisibility();
+        console.log(`[SafeWord] ${prev} → ${state.eroticMode}, pressure clamped to ${state.eroticPressureScore}`);
+      };
+
       function buildEroticModeDirective() {
+        let calibrationPrefix = '';
+        if (state._safeWordCalibrationPending) {
+          state._safeWordCalibrationPending = false;
+          calibrationPrefix = `SAFE WORD — CALIBRATION BEAT:
+Freeze physical escalation for this segment. The protagonist pauses or shifts rhythm.
+No apology. No shame. No moral commentary. No Fate voice.
+Acknowledge naturally — "Slower? Softer? Different?" energy.
+Erotic charge remains intact. Intensity decreases, connection does not.
+Then continue under the erotic mode below.\n\n`;
+        }
         switch (state.eroticMode) {
           case 'ROMANTIC':
-            return `EROTIC MODE — ROMANTIC:
+            return calibrationPrefix + `EROTIC MODE — ROMANTIC:
 Focus on emotional connection, sensory implication, restrained explicitness.`;
           case 'VISCERAL':
-            return `EROTIC MODE — VISCERAL:
+            return calibrationPrefix + `EROTIC MODE — VISCERAL:
 Allow explicit physical detail, controlled anatomy references, faster rhythm.`;
           case 'CARNAL':
-            return `EROTIC MODE — CARNAL:
+            return calibrationPrefix + `EROTIC MODE — CARNAL:
 Increase sensory saturation and power dynamic sharpness. Still prohibit taboo escalation.`;
           case 'INTENSITY_REDIRECT':
-            return `EROTIC MODE — INTENSITY REDIRECT:
+            return calibrationPrefix + `EROTIC MODE — INTENSITY REDIRECT:
 Do NOT increase explicitness further. Instead:
 - Increase emotional stakes
 - Introduce psychological tension
@@ -45870,7 +45907,7 @@ Do NOT increase explicitness further. Instead:
 - Suggest interruption or consequence compression
 Never escalate into prohibited themes.`;
           default:
-            return '';
+            return calibrationPrefix;
         }
       }
 
@@ -47518,6 +47555,7 @@ ABSOLUTE RULES:
           } catch(fateErr) {
               console.warn('Fate card deal failed (non-critical):', fateErr);
           }
+          updateSafeWordVisibility();
 
           // PART 8 — Clear Tempt Fate invocation flag after scene completes
           // Reset consecutive count if this was NOT a Tempt Fate turn
