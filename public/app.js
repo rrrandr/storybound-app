@@ -1515,11 +1515,10 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       cards.forEach(function(card, i) {
         setTimeout(function() {
           card.classList.add('flipped');
-          _startPactCardSparkles(card);
           window.applyCardGleam && window.applyCardGleam(card);
         }, i * 250);
       });
-    }, 3000);
+    }, 1000);
   }
 
   function _startPactCardSparkles(card) {
@@ -1528,8 +1527,8 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     if (sparkleContainer.children.length > 0) return; // already populated
     sparkleContainer.innerHTML = '';
 
-    // Create 5-7 persistent firefly particles with random flight paths
-    var count = 5 + Math.floor(Math.random() * 3);
+    // Create 10-14 persistent firefly particles with random flight paths
+    var count = 10 + Math.floor(Math.random() * 5);
     for (var i = 0; i < count; i++) {
       _createPactFirefly(sparkleContainer);
     }
@@ -1544,7 +1543,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     fly.style.top = (10 + Math.random() * 80) + '%';
 
     // Randomize size slightly
-    var size = 2 + Math.random() * 2.5;
+    var size = 4 + Math.random() * 5;
     fly.style.width = size + 'px';
     fly.style.height = size + 'px';
 
@@ -1661,7 +1660,10 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
       // Mark unzoomed card as accepted (swaps front face via CSS)
       var card = document.querySelector('.pact-card[data-pact="' + pactKey + '"]');
-      if (card) card.classList.add('accepted');
+      if (card) {
+        card.classList.add('accepted');
+        _startPactCardSparkles(card);
+      }
 
       // Show gold star on zoomed card
       var starOverlay = overlay.querySelector('.pact-accepted-overlay');
@@ -1754,6 +1756,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
         if (clickY >= threshold) {
           _pactAccepted[pactKey] = true;
           card.classList.add('accepted');
+          _startPactCardSparkles(card);
           _checkAllPactsAccepted();
           return;
         }
@@ -16449,7 +16452,7 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
   function goBack() {
       // tierGate → back to legalGate (re-read bindings)
       if (_currentScreenId === 'tierGate') {
-          routeToLegalAcceptance();
+          showScreen('legalGate');
           return;
       }
 
@@ -17320,7 +17323,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const backFace = card.querySelector('.back');
       if (backFace) {
           backFace._origBg = backFace.getAttribute('style');
-          backFace.style.backgroundImage = "url('/assets/Card%20Art/Cards/Tarot-Gold-front-PetitionZOOMED.png')";
+          backFace.style.backgroundImage = "url('/assets/card-art/cards/Tarot-Gold-front-PetitionZOOMED.png')";
           backFace.style.backgroundSize = 'cover';
           backFace.style.backgroundPosition = 'center';
           backFace.style.backgroundRepeat = 'no-repeat';
@@ -17733,7 +17736,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const backFace = card.querySelector('.back');
       if (backFace) {
           backFace._origBg = backFace.getAttribute('style');
-          backFace.style.backgroundImage = "url('/assets/Card%20Art/Cards/Tarot-RED-front-TemptFateZOOMED.png')";
+          backFace.style.backgroundImage = "url('/assets/card-art/cards/Tarot-RED-front-TemptFateZOOMED.png')";
           backFace.style.backgroundSize = 'cover';
           backFace.style.backgroundPosition = 'center';
           backFace.style.backgroundRepeat = 'no-repeat';
@@ -22747,10 +22750,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
 
     tasteCard?.addEventListener('click', () => {
-      if (!tasteCard.classList.contains('flipped')) {
-        tasteCard.classList.add('flipped');
-        return;
-      }
+      if (!tasteCard.classList.contains('flipped')) tasteCard.classList.add('flipped');
       state.tier = 'free';
       state.access = 'free';
       applyAccessLocks();
@@ -22769,10 +22769,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     });
 
     premiumCard?.addEventListener('click', () => {
-      if (!premiumCard.classList.contains('flipped')) {
-        premiumCard.classList.add('flipped');
-        return;
-      }
+      if (!premiumCard.classList.contains('flipped')) premiumCard.classList.add('flipped');
 
       // Dissipate the unselected tier card before showing paywall
       const unselected = [tasteCard].filter(c => c && c !== premiumCard);
@@ -25375,7 +25372,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       // Old card is in portal, so query grid siblings + include old card
       const gridSiblings = Array.from(
         zoomOriginalParent.querySelectorAll(`.sb-card[data-grp="${grp}"]`)
-      );
+      ).filter(c => !c.classList.contains('destiny-choice-card'));
       // Add old card back in to determine index
       const allCards = [...gridSiblings];
       // Find where old card WAS by looking at zoomOriginalNextSibling
@@ -25573,6 +25570,169 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       setTimeout(() => advanceCorridorRow(), 1300);
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // WORLD FLAVOR DROPDOWNS — Floating panels beneath flipped world cards
+    // position:fixed to escape corridor overflow clipping
+    // Shows flavor names from BAKED_ART_BUTTONS after 2s flip delay
+    // ═══════════════════════════════════════════════════════════════════
+    const _worldDropdownState = { timeouts: [], observers: [], dropdowns: [], rafId: null };
+
+    /** Reposition all visible dropdowns to track their cards. */
+    function _repositionWorldDropdowns() {
+      _worldDropdownState.dropdowns.forEach(({ card, dropdown }) => {
+        if (!dropdown.classList.contains('dropdown-open')) return;
+        // Card may be in zoom portal — skip repositioning if zoomed
+        if (card.classList.contains('zoomed')) {
+          dropdown.style.display = 'none';
+          return;
+        }
+        dropdown.style.display = '';
+        const rect = card.getBoundingClientRect();
+        dropdown.style.left = (rect.left + rect.width / 2 - 60) + 'px'; // 60 = half of 120px width
+        dropdown.style.top = (rect.bottom) + 'px';
+      });
+    }
+
+    /** Start RAF loop while any dropdown is open. */
+    function _startDropdownTracking() {
+      if (_worldDropdownState.rafId) return;
+      (function tick() {
+        _repositionWorldDropdowns();
+        const anyOpen = _worldDropdownState.dropdowns.some(d => d.dropdown.classList.contains('dropdown-open'));
+        if (anyOpen) {
+          _worldDropdownState.rafId = requestAnimationFrame(tick);
+        } else {
+          _worldDropdownState.rafId = null;
+        }
+      })();
+    }
+
+    function initWorldFlavorDropdowns() {
+      // Clean up any previous state
+      _worldDropdownState.timeouts.forEach(t => clearTimeout(t));
+      _worldDropdownState.observers.forEach(o => o.disconnect());
+      _worldDropdownState.dropdowns.forEach(({ dropdown }) => dropdown.remove());
+      if (_worldDropdownState.rafId) cancelAnimationFrame(_worldDropdownState.rafId);
+      _worldDropdownState.timeouts = [];
+      _worldDropdownState.observers = [];
+      _worldDropdownState.dropdowns = [];
+      _worldDropdownState.rafId = null;
+
+      const cards = document.querySelectorAll('#worldGrid .sb-card[data-grp="world"]');
+      cards.forEach(card => {
+        const worldVal = card.dataset.val;
+        const flavors = BAKED_ART_BUTTONS[worldVal];
+        if (!flavors || !flavors.length) return;
+
+        // Build dropdown with individual clickable flavor items
+        const dropdown = document.createElement('div');
+        dropdown.className = 'world-flavor-dropdown';
+        dropdown.dataset.world = worldVal;
+
+        flavors.forEach(f => {
+          const item = document.createElement('div');
+          item.className = 'world-flavor-item';
+          item.dataset.val = f.val;
+          item.textContent = WORLD_LABELS[f.val] || f.val;
+
+          // Restore selected state if already picked
+          if (state.picks.worldSubtype === f.val) {
+            item.classList.add('selected');
+          }
+
+          item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.resolvedWorldFlavors = null; // force recomputation
+
+            if (state.picks.worldSubtype === f.val) {
+              // Deselect
+              state.picks.worldSubtype = null;
+              item.classList.remove('selected');
+            } else {
+              // Deselect all items across ALL dropdowns, then select this one
+              document.querySelectorAll('.world-flavor-item.selected').forEach(el => el.classList.remove('selected'));
+              state.picks.worldSubtype = f.val;
+              item.classList.add('selected');
+              // Clear custom text for this world
+              if (!state.worldCustomTexts) state.worldCustomTexts = {};
+              state.worldCustomTexts[worldVal] = '';
+            }
+            incrementDSPActivation();
+            updateSynopsisPanel(true);
+            if (typeof updateWorldBreadcrumbFlavor === 'function') updateWorldBreadcrumbFlavor();
+          });
+
+          dropdown.appendChild(item);
+        });
+
+        // Append to body (fixed positioning, escapes all overflow)
+        document.body.appendChild(dropdown);
+        _worldDropdownState.dropdowns.push({ card, dropdown });
+
+        // Observe flip class changes
+        let pendingTimeout = null;
+        const observer = new MutationObserver(() => {
+          const isFlipped = card.classList.contains('flipped');
+          if (isFlipped && !dropdown.classList.contains('dropdown-open')) {
+            // Position immediately (hidden via max-height:0), then open after delay
+            const rect = card.getBoundingClientRect();
+            dropdown.style.left = (rect.left + rect.width / 2 - 60) + 'px';
+            dropdown.style.top = (rect.bottom) + 'px';
+            pendingTimeout = setTimeout(() => {
+              dropdown.classList.add('dropdown-open');
+              _startDropdownTracking();
+              pendingTimeout = null;
+            }, 2000);
+            _worldDropdownState.timeouts.push(pendingTimeout);
+          } else if (!isFlipped) {
+            dropdown.classList.remove('dropdown-open');
+            if (pendingTimeout) {
+              clearTimeout(pendingTimeout);
+              pendingTimeout = null;
+            }
+          }
+        });
+        observer.observe(card, { attributes: true, attributeFilter: ['class'] });
+        _worldDropdownState.observers.push(observer);
+      });
+    }
+
+    window.initWorldFlavorDropdowns = initWorldFlavorDropdowns;
+
+    /** Sparkle-dissolve all open world flavor dropdowns, then clean up. */
+    function dissipateWorldDropdowns() {
+      // Stop tracking loop
+      if (_worldDropdownState.rafId) {
+        cancelAnimationFrame(_worldDropdownState.rafId);
+        _worldDropdownState.rafId = null;
+      }
+      // Clear pending open timeouts
+      _worldDropdownState.timeouts.forEach(t => clearTimeout(t));
+      _worldDropdownState.timeouts = [];
+      // Disconnect observers
+      _worldDropdownState.observers.forEach(o => o.disconnect());
+      _worldDropdownState.observers = [];
+
+      _worldDropdownState.dropdowns.forEach(({ dropdown }) => {
+        if (!dropdown.classList.contains('dropdown-open')) {
+          dropdown.remove();
+          return;
+        }
+        // Spawn sparkles from the dropdown rect
+        if (typeof createDissipationSparkles === 'function') {
+          createDissipationSparkles(dropdown);
+        }
+        // Shrink + fade out
+        dropdown.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        dropdown.style.opacity = '0';
+        dropdown.style.transform = 'scale(0.3)';
+        dropdown.style.pointerEvents = 'none';
+        setTimeout(() => dropdown.remove(), 600);
+      });
+      _worldDropdownState.dropdowns = [];
+    }
+    window.dissipateWorldDropdowns = dissipateWorldDropdowns;
+
     // Populate World card zoom view with flavor buttons and optional custom field
     // Baked-in button positions for world cards with custom PNG art.
     // Positions are percentages of the card face. Hit zones are transparent
@@ -25582,9 +25742,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // 2-column layout: left col ~17.6%, right col ~53%, rows spaced ~6.5%
     // ═══════════════════════════════════════════════════════════════════
     // Label overrides — cover baked PNG text when the art hasn't been updated yet
-    const BAKED_ART_LABEL_OVERRIDES = {
-      blue_blood: 'Blue Blood'
-    };
+    const BAKED_ART_LABEL_OVERRIDES = {};
 
     const BAKED_ART_BUTTONS = {
       Modern: [
@@ -25622,12 +25780,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         { val: 'galactic_civilizations', top: 76.5, left: 17.6, width: 29.2, height: 4.8 }
       ],
       Dystopia: [
-        { val: 'glass_house',     top: 56.0, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'human_capital',   top: 62.5, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'dogma',           top: 62.5, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'thirst',          top: 69.0, left: 17.6, width: 29.2, height: 4.8 },
-        { val: 'endless_edit',    top: 69.0, left: 53,   width: 29.2, height: 4.8 },
-        { val: 'quieting_event',  top: 75.5, left: 17.6, width: 29.2, height: 4.8 }
+        { val: 'glass_house',     top: 56.7, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'human_capital',   top: 63.2, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'dogma',           top: 63.2, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'thirst',          top: 69.7, left: 17.6, width: 29.2, height: 4.8 },
+        { val: 'endless_edit',    top: 69.7, left: 53,   width: 29.2, height: 4.8 },
+        { val: 'quieting_event',  top: 76.2, left: 17.6, width: 29.2, height: 4.8 }
       ],
       PostApocalyptic: [
         { val: 'ashfall',        top: 63.3, left: 17.6, width: 29.2, height: 4.8 },
@@ -25642,7 +25800,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       Historical:      { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       Fantasy:         { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
       SciFi:           { top: 76.5, left: 53,   width: 29.2, height: 4.1 },
-      Dystopia:        { top: 75.5, left: 53,   width: 29.2, height: 4.1 },
+      Dystopia:        { top: 76.2, left: 53,   width: 29.2, height: 4.1 },
       PostApocalyptic: { top: 76.5, left: 53,   width: 29.2, height: 4.1 }
     };
     // Scrolling suggestions for baked-art cards — themes NOT already in the buttons
@@ -26167,8 +26325,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const frontFace = card.querySelector('.sb-card-front');
       if (!frontFace) return;
 
-      // Remove any existing zoom content and flavor arc
+      // In design mode, preserve existing zoom content so designer changes persist
       const existing = frontFace.querySelector('.sb-zoom-content');
+      if (existing && window.__cardDesignerActive && window.__cardDesignerActive()) return;
+
+      // Remove any existing zoom content and flavor arc
       if (existing) existing.remove();
       const existingArc = frontFace.querySelector('.sb-zoom-flavor-arc');
       if (existingArc) existingArc.remove();
@@ -27498,19 +27659,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * Initialize the breadcrumb flow system
    */
   function initBreadcrumbFlow() {
-    // Bind continue buttons
-    const continueButtons = {
-      pressure: document.getElementById('continueFromPressure'),
-      world: document.getElementById('continueFromWorld'),
-      tone: document.getElementById('continueFromTone'),
-      dynamic: document.getElementById('continueFromDynamic')
-    };
-
-    Object.entries(continueButtons).forEach(([stage, btn]) => {
-      if (btn) {
-        btn.addEventListener('click', () => handleFlowContinue(stage));
-      }
-    });
+    // NOTE: Continue button bindings are handled exclusively by bindCorridorContinueButtons()
+    // which dispatches to handleCorridorContinue(). Do NOT add duplicate handlers here
+    // (was previously binding handleFlowContinue, causing double-advance + duplicate breadcrumbs).
 
     // Update continue button visibility on card selection
     document.querySelectorAll('.card-flow-row .sb-card[data-grp]').forEach(card => {
@@ -27851,15 +28002,28 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         `;
       }
       // Insert before the first ghost step (breadcrumbs accumulate on left)
-      const firstGhost = breadcrumbRow.querySelector('.ghost-step');
-      if (firstGhost) {
-        breadcrumbRow.insertBefore(breadcrumb, firstGhost);
+      // Remove existing breadcrumb for this grp (prevents duplicates on re-navigation)
+      const existingBc = breadcrumbRow.querySelector(`.breadcrumb-card[data-grp="${grp}"]`);
+      if (existingBc) existingBc.remove();
+
+      // Insert at correct position based on stage index (not just "before first ghost")
+      const stageIdxForGhost = STAGE_INDEX[grp];
+      const allSlots = breadcrumbRow.querySelectorAll('.breadcrumb-card, .ghost-step');
+      let insertBefore = null;
+      for (const slot of allSlots) {
+        const slotIdx = parseInt(slot.dataset.stageIndex ?? slot.dataset.ghostIndex, 10);
+        if (!isNaN(slotIdx) && slotIdx > (stageIdxForGhost ?? 999)) {
+          insertBefore = slot;
+          break;
+        }
+      }
+      if (insertBefore) {
+        breadcrumbRow.insertBefore(breadcrumb, insertBefore);
       } else {
         breadcrumbRow.appendChild(breadcrumb);
       }
 
       // Remove the corresponding ghost step
-      const stageIdxForGhost = STAGE_INDEX[grp];
       if (stageIdxForGhost >= 0) {
         removeGhostStep(stageIdxForGhost);
       }
@@ -29240,6 +29404,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           showFortuneFavorPrelude();
         }
 
+        // WORLD MOUNT: Flavor dropdown panels beneath flipped cards
+        if (stage === 'world') {
+          if (typeof window.initWorldFlavorDropdowns === 'function') window.initWorldFlavorDropdowns();
+        }
+
         // LENGTH MOUNT: Re-evaluate length locks (subscription may have changed)
         if (stage === 'length') {
             if (typeof applyLengthLocks === 'function') {
@@ -29733,6 +29902,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
     if (!selectedVal) {
       console.log(`[Corridor] No selection for stage: ${stage}`);
+      // Pulse the continue button to signal the user needs to make a selection
+      triggerContinueButtonFeedback('continueButton');
       return;
     }
 
@@ -29753,15 +29924,34 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
     }
 
-    // Create breadcrumb for this selection
+    // Animate selected card → sparkle dissolution → trail → breadcrumb materialization
     if (selectedCard) {
       const titleEl = selectedCard.querySelector('.sb-card-title');
       const selectedTitle = titleEl ? titleEl.textContent : selectedVal;
-      createBreadcrumbDirect(grp, selectedVal, selectedTitle);
-    }
 
-    // Advance after breadcrumb materializes so user sees it land
-    setTimeout(() => advanceCorridorRow(), 600);
+      // Find the corridor row to get sibling cards for dissipation
+      const selectors = CORRIDOR_SECTION_SELECTORS[stage];
+      const stored = corridorRowStore.get(stage);
+      const flowRow = stored?.elements?.[0] || (selectors ? document.querySelector(selectors.split(',')[0].trim()) : null);
+
+      // Sparkle-dissolve world flavor dropdowns alongside the card animation
+      if (grp === 'world' && typeof window.dissipateWorldDropdowns === 'function') {
+        window.dissipateWorldDropdowns();
+      }
+
+      animateCardToBreadcrumb(selectedCard, grp, selectedVal, selectedTitle, () => {
+        // Dissipate unselected sibling cards
+        const otherCards = flowRow
+          ? flowRow.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`)
+          : [];
+        dissipateCards(otherCards, () => {
+          advanceCorridorRow();
+        });
+      });
+    } else {
+      // Fallback: no card element, just advance
+      setTimeout(() => advanceCorridorRow(), 600);
+    }
   }
 
   /**
