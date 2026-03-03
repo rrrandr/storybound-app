@@ -37980,7 +37980,9 @@ ${prehistoricForbid}${modernForbid}
     ` : ''}${state.povMode === 'environment4th' ? `
     4TH PERSON (MATERIAL CONSCIOUSNESS) — POV REGIME:
     - Narrator IS the physical environment: objects, surfaces, rooms, air, light, sound, architecture.
-    - Camera follows protagonist normally (third-person limited). The NARRATOR VOICE is what changes — the environment narrates what it senses.
+    - Narrative focal point tracks the protagonist's physical presence, but narration is environmentally anchored.
+    - The environment leads perception. Human interiority is rare and must be supported by physical evidence.
+    - Avoid defaulting to standard third-person limited. Environmental awareness should be present in most paragraphs as material context, pressure, temperature, sound, light, weight, or surface response.
     - NEVER use "we" as narrator voice. Environment narrates as specific objects, surfaces, unnamed material presence — NOT as collective "we".
     - All perception mediated through physical interaction (pressure, heat, vibration, weight).
     - Environment may: detect repetition, track gaze via light/shadow, hear words, register posture, remember patterns (material memory), express material preference (object ego).
@@ -37990,6 +37992,7 @@ ${prehistoricForbid}${modernForbid}
     - Rotate environmental anchors — avoid repetitive object-perception phrasing.
     - Punctuate dialogue with environment, not speaker tags every line.
     - 4th Person remains ACTIVE during all scene types including intimate scenes.
+    - The scene should feel materially observed even when briefly touching interior thought.
     ` : ''}
     `;
     
