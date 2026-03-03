@@ -5499,11 +5499,17 @@ select {
     --lf-dy: -25px;
 }
 @keyframes loading-firefly {
-    0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
-    15%  { opacity: 0.8; transform: translate(calc(var(--lf-dx) * 0.1), calc(var(--lf-dy) * 0.1)) scale(1); }
-    50%  { opacity: 0.6; transform: translate(calc(var(--lf-dx) * 0.5), calc(var(--lf-dy) * 0.5)) scale(0.9); }
-    70%  { opacity: 0.4; transform: translate(calc(var(--lf-dx) * 0.7), calc(var(--lf-dy) * 0.7)) scale(0.7); }
-    100% { opacity: 0; transform: translate(var(--lf-dx), var(--lf-dy)) scale(0.3); }
+    0%   { opacity: 0;   transform: translate(0, 0) scale(0.5); }
+    8%   { opacity: 0.6; transform: translate(calc(var(--lf-dx) * 0.04 + 3px), calc(var(--lf-dy) * 0.04 - 1px)) scale(0.85); }
+    18%  { opacity: 0.8; transform: translate(calc(var(--lf-dx) * 0.12 - 2px), calc(var(--lf-dy) * 0.1 + 2px)) scale(1); }
+    28%  { opacity: 0.7; transform: translate(calc(var(--lf-dx) * 0.22 + 4px), calc(var(--lf-dy) * 0.2 - 1px)) scale(0.95); }
+    38%  { opacity: 0.65; transform: translate(calc(var(--lf-dx) * 0.32 - 3px), calc(var(--lf-dy) * 0.33 + 3px)) scale(0.92); }
+    48%  { opacity: 0.75; transform: translate(calc(var(--lf-dx) * 0.44 + 2px), calc(var(--lf-dy) * 0.46 - 2px)) scale(0.9); }
+    58%  { opacity: 0.55; transform: translate(calc(var(--lf-dx) * 0.55 - 4px), calc(var(--lf-dy) * 0.56 + 1px)) scale(0.85); }
+    68%  { opacity: 0.45; transform: translate(calc(var(--lf-dx) * 0.66 + 3px), calc(var(--lf-dy) * 0.67 - 2px)) scale(0.75); }
+    78%  { opacity: 0.35; transform: translate(calc(var(--lf-dx) * 0.76 - 2px), calc(var(--lf-dy) * 0.78 + 2px)) scale(0.6); }
+    88%  { opacity: 0.2;  transform: translate(calc(var(--lf-dx) * 0.88 + 1px), calc(var(--lf-dy) * 0.89 - 1px)) scale(0.45); }
+    100% { opacity: 0;   transform: translate(var(--lf-dx), var(--lf-dy)) scale(0.3); }
 }
 #loadingOverlayBar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; overflow: hidden; margin-top: 8px; }
 #loadingOverlayFill { width: 0%; height: 100%; background: linear-gradient(90deg, #b8860b, #d4af37, #ffd700); transition: width 0.25s; }
@@ -5774,8 +5780,8 @@ select {
 .petition-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 8px !important; }
 
 /* ── Tempt Fate Card ── */
-.tempt-fate-card .inner { border: 1px solid rgba(180,30,30,0.5) !important; border-radius: 8px !important; }
-.tempt-fate-card.flipped .inner { border-color: rgba(180,30,30,0.7) !important; box-shadow: 0 0 8px rgba(180,30,30,0.3); }
+.tempt-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 8px !important; }
+.tempt-fate-card.flipped .inner { border-color: rgba(218,165,32,0.7) !important; box-shadow: 0 0 8px rgba(218,165,32,0.3); }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* PETITION ZOOM — Card zooms into portal with ritual overlay on face       */
@@ -5786,6 +5792,11 @@ select {
   position: relative;
   pointer-events: auto;
   transition: transform 0.3s ease;
+}
+/* Remove face border when zoomed — .inner border is sufficient (face border + inner border = double outline at scale) */
+.petition-fate-card.petition-zoomed .front,
+.petition-fate-card.petition-zoomed .back {
+  border: none;
 }
 /* ── Petition Zoom Overlay — full-card transparent layer with positioned zones ── */
 .petition-zoom-overlay {
@@ -5986,6 +5997,10 @@ select {
   pointer-events: auto;
   transition: transform 0.3s ease;
 }
+.tempt-fate-card.tempt-zoomed .front,
+.tempt-fate-card.tempt-zoomed .back {
+  border: none;
+}
 
 .tempt-zoom-overlay {
   position: absolute;
@@ -6030,7 +6045,7 @@ select {
 .tempt-wish-item {
   font-family: 'Lora', serif;
   font-weight: 400;
-  font-size: 0.08em;
+  font-size: 0.04em;
   line-height: 1.35;
   color: rgba(0, 0, 0, 0.7);
   padding: 2px 3px;
@@ -7424,7 +7439,7 @@ textarea.fate-field {
     border: 1px solid rgba(212, 175, 55, 0.4);
     position: relative;
 }
-/* Loading bar sparkles — JS-driven emitter replaces static pseudo-elements */
+/* Loading bar sparkles — JS-driven firefly animation (smooth curved paths) */
 .loading-sparkle {
     position: absolute;
     pointer-events: none;
@@ -7439,49 +7454,9 @@ textarea.fate-field {
     box-shadow: 0 0 4px rgba(255, 215, 0, 0.7);
     opacity: 0;
     will-change: transform, opacity;
-    animation: loading-sparkle-drift var(--ls-duration, 3s) ease-in-out forwards;
 }
 
-@keyframes loading-sparkle-drift {
-    0% {
-        opacity: 0;
-        transform: translate(0, 0) scale(0.5);
-    }
-    20% {
-        opacity: var(--ls-opacity, 0.7);
-        transform: translate(
-            calc(var(--ls-dx, 0px) * 0.15 + var(--ls-wobble, 0px) * 0.3),
-            calc(var(--ls-dy, 0px) * 0.15)
-        ) scale(1);
-    }
-    40% {
-        opacity: calc(var(--ls-opacity, 0.7) * 0.9);
-        transform: translate(
-            calc(var(--ls-dx, 0px) * 0.35 - var(--ls-wobble, 0px) * 0.5),
-            calc(var(--ls-dy, 0px) * 0.35)
-        ) scale(0.95);
-    }
-    60% {
-        opacity: calc(var(--ls-opacity, 0.7) * 0.7);
-        transform: translate(
-            calc(var(--ls-dx, 0px) * 0.55 + var(--ls-wobble, 0px) * 0.7),
-            calc(var(--ls-dy, 0px) * 0.55)
-        ) scale(0.85);
-    }
-    80% {
-        opacity: calc(var(--ls-opacity, 0.7) * 0.35);
-        transform: translate(
-            calc(var(--ls-dx, 0px) * 0.8 - var(--ls-wobble, 0px) * 0.3),
-            calc(var(--ls-dy, 0px) * 0.8)
-        ) scale(0.65);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(var(--ls-dx, 0px), var(--ls-dy, 0px)) scale(0.4);
-    }
-}
-
-/* Story/Visualize overlay loading bar sparkles — SEPARATE from cover bar */
+/* Story/Visualize overlay loading bar sparkles — JS-driven firefly animation */
 .overlay-loading-sparkle {
     position: absolute;
     pointer-events: none;
@@ -7498,46 +7473,6 @@ textarea.fate-field {
         0 0 12px rgba(255, 200, 100, 0.4);
     opacity: 0;
     will-change: transform, opacity;
-    animation: overlay-sparkle-arc var(--ols-duration, 2.5s) var(--ols-easing, ease-in-out) forwards;
-}
-
-@keyframes overlay-sparkle-arc {
-    0% {
-        opacity: 0;
-        transform: translate(0, 0) scale(0.4) rotate(0deg);
-    }
-    18% {
-        opacity: var(--ols-opacity, 0.8);
-        transform: translate(
-            calc(var(--ols-dx, 0px) * 0.12 + var(--ols-sway, 0px) * 0.2),
-            calc(var(--ols-dy, 0px) * 0.12)
-        ) scale(1) rotate(calc(var(--ols-rot, 0deg) * 0.15));
-    }
-    38% {
-        opacity: calc(var(--ols-opacity, 0.8) * 0.9);
-        transform: translate(
-            calc(var(--ols-dx, 0px) * 0.3 - var(--ols-sway, 0px) * 0.5),
-            calc(var(--ols-dy, 0px) * 0.32)
-        ) scale(0.95) rotate(calc(var(--ols-rot, 0deg) * 0.35));
-    }
-    58% {
-        opacity: calc(var(--ols-opacity, 0.8) * 0.7);
-        transform: translate(
-            calc(var(--ols-dx, 0px) * 0.52 + var(--ols-sway, 0px) * 0.7),
-            calc(var(--ols-dy, 0px) * 0.55)
-        ) scale(0.85) rotate(calc(var(--ols-rot, 0deg) * 0.6));
-    }
-    78% {
-        opacity: calc(var(--ols-opacity, 0.8) * 0.4);
-        transform: translate(
-            calc(var(--ols-dx, 0px) * 0.75 - var(--ols-sway, 0px) * 0.4),
-            calc(var(--ols-dy, 0px) * 0.78)
-        ) scale(0.65) rotate(calc(var(--ols-rot, 0deg) * 0.8));
-    }
-    100% {
-        opacity: 0;
-        transform: translate(var(--ols-dx, 0px), var(--ols-dy, 0px)) scale(0.35) rotate(var(--ols-rot, 0deg));
-    }
 }
 
 /* Glow pulse for story/vision loading bar */
@@ -9030,24 +8965,29 @@ textarea.fate-field {
 .synopsis-page-active {
     max-width: 500px;
     margin: 0 auto;
-    aspect-ratio: 5 / 7;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
     padding: 40px 30px;
     box-sizing: border-box;
+    background: var(--page-bg) !important;
+    color: var(--page-text) !important;
+    border: 1px solid rgba(218, 165, 32, 0.3);
+    border-radius: 4px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 .synopsis-page-active .story-page-title {
     font-family: 'Lora', serif;
     letter-spacing: 0.12em;
     text-align: center;
     width: 100%;
+    color: var(--page-text);
 }
 .synopsis-page-active .story-page-scene {
     font-family: 'Lora', serif;
     letter-spacing: 0.22em;
-    color: #888;
+    color: var(--page-accent, #888);
     font-variant: small-caps;
     text-align: center;
 }
@@ -9056,7 +8996,8 @@ textarea.fate-field {
     font-style: italic;
     font-size: 1em;
     line-height: 1.6;
-    color: rgba(245, 240, 230, 0.75);
+    color: var(--page-text);
+    opacity: 0.8;
     text-align: center;
     margin: 20px 0;
     max-width: 90%;
@@ -9074,6 +9015,15 @@ textarea.fate-field {
     max-height: 40vh;
     object-fit: cover;
     border-radius: 6px;
+}
+.synopsis-setting-img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 24px auto 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
 }
 
 /* Inside cover synopsis styling */
@@ -11928,7 +11878,7 @@ textarea.fate-field {
     right: 0;
     padding: 0;
     justify-content: flex-start;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 /* Pressure zoomed: flavor grid pulled up to sit tight under desc */

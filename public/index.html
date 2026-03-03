@@ -301,10 +301,10 @@
     <div class="pact-card pact-card-tos" data-pact="tos">
       <div class="pact-card-inner">
         <div class="pact-card-back">
-          <img src="/assets/Card%20Art/Cards/WHITE-tarot-back.png" alt="Pact">
+          <img src="/assets/card-art/cards/WHITE-tarot-back.png" alt="Pact">
         </div>
         <div class="pact-card-front">
-          <img src="/assets/Card%20Art/Cards/WHITE-Trust.png" alt="Terms of Service">
+          <img src="/assets/card-art/cards/WHITE-Trust.png" alt="Terms of Service">
           <div class="pact-card-label pact-tos-label">Terms of Service</div>
           <div class="pact-read-link" data-pact="tos">Read Full Text</div>
         </div>
@@ -315,10 +315,10 @@
     <div class="pact-card pact-card-privacy" data-pact="privacy">
       <div class="pact-card-inner">
         <div class="pact-card-back">
-          <img src="/assets/Card%20Art/Cards/WHITE-tarot-back.png" alt="Pact">
+          <img src="/assets/card-art/cards/WHITE-tarot-back.png" alt="Pact">
         </div>
         <div class="pact-card-front">
-          <img src="/assets/Card%20Art/Cards/WHITE-Discretion.png" alt="Privacy Policy">
+          <img src="/assets/card-art/cards/WHITE-Discretion.png" alt="Privacy Policy">
           <div class="pact-card-label pact-privacy-label">Privacy Policy</div>
           <div class="pact-read-link" data-pact="privacy">Read Full Text</div>
         </div>
@@ -329,10 +329,10 @@
     <div class="pact-card pact-card-adult" data-pact="adult">
       <div class="pact-card-inner">
         <div class="pact-card-back">
-          <img src="/assets/Card%20Art/Cards/WHITE-tarot-back.png" alt="Pact">
+          <img src="/assets/card-art/cards/WHITE-tarot-back.png" alt="Pact">
         </div>
         <div class="pact-card-front">
-          <img src="/assets/Card%20Art/Cards/WHIT-Desire.png" alt="I'm 18+">
+          <img src="/assets/card-art/cards/WHIT-Desire.png" alt="I'm 18+">
           <div class="pact-card-label pact-adult-label">I'm 18+</div>
           <div class="pact-read-link" data-pact="adult">Read Full Text</div>
         </div>
@@ -364,7 +364,6 @@
               </div>
             </div>
           </div>
-          <p class="choice-desc">A short preview — shape your story and see where it leads.<br><br><strong>From $Free</strong></p>
         </div>
         <div style="text-align:center">
           <div class="tier-card" id="btnPremium">
@@ -377,7 +376,6 @@
               </div>
             </div>
           </div>
-          <p class="choice-desc">Full-length stories, persistent memory, complete control, saved progress.<br><br><strong>From $6/mo+</strong></p>
         </div>
       </div>
   </div>
@@ -605,10 +603,10 @@
     <div class="mode-card mode-card-library" data-mode="forbidden-library" id="forbiddenLibraryCard">
         <div class="mode-card-inner">
             <div class="mode-card-back">
-                <img src="/assets/Card%20Art/Cards/Tarot-Black-back-ForbiddenLibrary.png" alt="Forbidden Library">
+                <img src="/assets/card-art/cards/Tarot-Black-back-ForbiddenLibrary.png" alt="Forbidden Library">
             </div>
             <div class="mode-card-front">
-                <img src="/assets/Card%20Art/Cards/Tarot-Gold-front-ForbiddenLibrary.png" alt="Forbidden Library">
+                <img src="/assets/card-art/cards/Tarot-Gold-front-ForbiddenLibrary.png" alt="Forbidden Library">
             </div>
         </div>
         <div class="mode-card-sparkles"></div>
@@ -643,6 +641,7 @@
           <div class="authorship-card-face authorship-card-front">
             <span class="authorship-card-title">Choose Your Hand</span>
             <span class="authorship-card-desc">Take the lead.</span>
+            <span class="choose-hand-tagline">As You Like It</span>
           </div>
         </div>
         <!-- Continuous sparkle emitter -->
@@ -656,6 +655,7 @@
           <div class="authorship-card-face authorship-card-front">
             <span class="authorship-card-title">Guided<br>Fate</span>
             <span class="authorship-card-desc">Yield to the story.</span>
+            <span class="guided-fate-tagline">Give In To Fate</span>
           </div>
         </div>
         <!-- Continuous sparkle emitter -->
@@ -1359,6 +1359,7 @@
         <div id="sceneNumber" class="story-page-scene">Scene 1</div>
         <!-- Synopsis displays below title -->
         <p id="sceneSynopsis" class="scene-synopsis hidden"></p>
+        <img id="synopsisSettingImg" class="synopsis-setting-img hidden" src="" alt="Setting">
         <div class="story-pages-container" id="storyPagesContainer"></div>
     </div>
 
@@ -1553,6 +1554,7 @@
 <script src="/orchestration-client.js"></script>
 <script src="/badgeEngine.js"></script>
 <script src="/app.js?v=20260226d"></script>
+<script src="/card-designer.js"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
   <div class="box" style="max-width:450px;">
@@ -1649,7 +1651,7 @@
       <div id="trophyTooltip" class="trophy-tooltip hidden"></div>
     </div>
     <div class="vault-exit-row">
-      <button class="sb-btn-png sm" id="exitAchievementsBtn">Exit Achievements</button>
+      <button class="sb-btn-png sm" id="exitAchievementsBtn">Exit</button>
     </div>
   </div>
 </div>

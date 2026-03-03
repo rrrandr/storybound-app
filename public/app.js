@@ -17772,7 +17772,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
                       <div class="tempt-wish-scroll" data-dir="up">${leftItems}${leftItems}</div>
                   </div>
                   <div class="tempt-wish-col">
-                      <div class="tempt-wish-scroll" data-dir="down">${rightItems}${rightItems}</div>
+                      <div class="tempt-wish-scroll" data-dir="up">${rightItems}${rightItems}</div>
                   </div>
               </div>
               <div class="tempt-custom-input hidden">
@@ -26405,29 +26405,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         });
       }
 
-      // === DESIGN MODE: toggle button for drag/resize ===
-      const designToggle = document.createElement('button');
-      designToggle.className = 'pressure-design-toggle';
-      designToggle.textContent = 'Design Mode';
-      frontFace.appendChild(designToggle);
-
-      const dumpBtn = document.createElement('button');
-      dumpBtn.className = 'pressure-dump-btn';
-      dumpBtn.textContent = 'Dump Coords';
-      frontFace.appendChild(dumpBtn);
-
-      designToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        _pressureDesignActive = !_pressureDesignActive;
-        designToggle.classList.toggle('active', _pressureDesignActive);
-        _pressureDesignToggle(flavorGrid, frontFace);
-      });
-
-      dumpBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        _pressureDesignDump(flavorGrid, frontFace);
-        alert('Coordinates dumped to browser console (F12).');
-      });
+      // Design mode buttons removed — use global Card Designer (Ctrl+Shift+D) instead
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -33950,60 +33928,94 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   // ============================================================
   let _overlaySparkleInterval = null;
 
+  /**
+   * Generate smooth firefly keyframes using overlapping sine waves.
+   * Produces organic, continuously-curving paths — no straight-line segments.
+   * @param {number} dx     — total X drift
+   * @param {number} dy     — total Y drift
+   * @param {number} wobble — lateral wander amplitude (px)
+   * @param {number} peak   — peak opacity
+   * @param {number} steps  — keyframe count (more = smoother curve)
+   */
+  function fireflyKeyframes(dx, dy, wobble, peak, steps) {
+      steps = steps || 14;
+      // Incommensurate frequencies → never-repeating, organic curves
+      const fX1 = 1.3 + Math.random() * 0.6;
+      const fX2 = 2.7 + Math.random() * 0.9;
+      const fY1 = 1.1 + Math.random() * 0.5;
+      const fY2 = 3.2 + Math.random() * 0.7;
+      const pX = Math.random() * Math.PI * 2;
+      const pY = Math.random() * Math.PI * 2;
+      // Firefly glow pulse: separate frequency so brightness varies independently of position
+      const glowF = 1.8 + Math.random() * 1.5;
+      const glowP = Math.random() * Math.PI * 2;
+
+      const kf = [];
+      for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          // Linear drift toward destination
+          const bx = dx * t;
+          const by = dy * t;
+          // Smooth wander from overlapping sines
+          const wx = wobble * (Math.sin(t * Math.PI * fX1 + pX) * 0.6
+                             + Math.sin(t * Math.PI * fX2 + pX * 1.3) * 0.4);
+          const wy = wobble * 0.4 * (Math.sin(t * Math.PI * fY1 + pY) * 0.55
+                                    + Math.sin(t * Math.PI * fY2 + pY * 0.7) * 0.35);
+          // Envelope: fade in quickly, sustain, fade out slowly
+          const env = t < 0.12 ? t / 0.12 : t > 0.72 ? (1 - t) / 0.28 : 1;
+          // Glow pulse overlaid on envelope (±15% modulation)
+          const glow = 1 + 0.15 * Math.sin(t * Math.PI * glowF + glowP);
+          const scale = 0.35 + env * 0.65;
+          const opacity = Math.min(1, env * glow) * peak;
+
+          kf.push({
+              transform: `translate(${bx + wx}px, ${by + wy}px) scale(${scale})`,
+              opacity: opacity,
+              offset: t,
+          });
+      }
+      return kf;
+  }
+
   function spawnOverlayLoadingSparkle(container) {
       if (!container) return;
       const containerWidth = container.offsetWidth;
-      const containerHeight = container.offsetHeight;
       if (containerWidth === 0) return;
 
       const sparkle = document.createElement('div');
       sparkle.className = 'overlay-loading-sparkle';
 
-      // Random X position along the bar
+      // Spawn along the bar
       const spawnX = Math.random() * containerWidth;
-      // Close to bar centerline
       const spawnY = (Math.random() - 0.5) * 14 - 4;
 
-      // Gentle wandering — mostly lateral with mild upward drift
-      const angle = Math.random() * 360 * (Math.PI / 180); // Any direction
-      const distance = 8 + Math.random() * 16; // Short, gentle drift
+      // Gentle drift with upward bias
+      const angle = Math.random() * 360 * (Math.PI / 180);
+      const distance = 8 + Math.random() * 16;
       const dx = Math.cos(angle) * distance;
-      const dy = Math.sin(angle) * distance * 0.5 - 5 - Math.random() * 8; // Mild upward bias
+      const dy = Math.sin(angle) * distance * 0.5 - 5 - Math.random() * 8;
 
-      // Lateral sway for organic feel
-      const sway = (Math.random() - 0.5) * 12;
+      // Wobble amplitude for curved wandering
+      const wobble = 5 + Math.random() * 10;
 
-      // Rotation for visual interest
-      const rotation = (Math.random() - 0.5) * 25;
-
-      // Variable size (2-5px)
       const size = 2 + Math.random() * 3;
-
-      // Randomized lifetime — slow, leisurely (3.5s - 6.5s)
       const duration = 3500 + Math.random() * 3000;
-
-      // Variable opacity (0.5 - 0.85)
-      const opacity = 0.5 + Math.random() * 0.35;
-
-      // Randomized easing
-      const easings = ['ease-in-out', 'ease-out', 'cubic-bezier(0.4, 0, 0.2, 1)', 'cubic-bezier(0.25, 0.1, 0.25, 1)'];
-      const easing = easings[Math.floor(Math.random() * easings.length)];
+      const peak = 0.5 + Math.random() * 0.35;
 
       sparkle.style.cssText = `
           left: ${spawnX}px;
           top: ${spawnY}px;
           width: ${size}px;
           height: ${size}px;
-          --ols-duration: ${duration}ms;
-          --ols-opacity: ${opacity};
-          --ols-dx: ${dx}px;
-          --ols-dy: ${dy}px;
-          --ols-sway: ${sway}px;
-          --ols-rot: ${rotation}deg;
-          --ols-easing: ${easing};
+          opacity: 0;
       `;
 
       container.appendChild(sparkle);
+
+      // Animate with smooth firefly keyframes instead of CSS zigzag
+      const kf = fireflyKeyframes(dx, dy, wobble, peak, 14);
+      sparkle.animate(kf, { duration, fill: 'forwards', easing: 'linear' });
+
       setTimeout(() => { if (sparkle.parentNode) sparkle.remove(); }, duration + 100);
   }
 
@@ -37469,6 +37481,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Initialize simplified reader state (when book disabled)
     _readerPage = 0;
 
+    // Clean up world flavor dropdowns (position:fixed on body, persist past corridor)
+    if (typeof window.dissipateWorldDropdowns === 'function') {
+        window.dissipateWorldDropdowns();
+    }
+
     window.showScreen('game');
     console.log('[READER] enterReaderView: _readerPage=', _readerPage, 'USE_OPENING_BOOK=', USE_OPENING_BOOK);
     const bookCoverPage = document.getElementById('bookCoverPage');
@@ -37978,21 +37995,19 @@ ${prehistoricForbid}${modernForbid}
     - BAD: "Fate arranged for them to meet." (causation — FORBIDDEN)
     - Fate participates naturally as the story unfolds, not at prescribed intervals.
     ` : ''}${state.povMode === 'environment4th' ? `
-    4TH PERSON (MATERIAL CONSCIOUSNESS) — POV REGIME:
-    - Narrator IS the physical environment: objects, surfaces, rooms, air, light, sound, architecture.
-    - Narrative focal point tracks the protagonist's physical presence, but narration is environmentally anchored.
-    - The environment leads perception. Human interiority is rare and must be supported by physical evidence.
-    - Avoid defaulting to standard third-person limited. Environmental awareness should be present in most paragraphs as material context, pressure, temperature, sound, light, weight, or surface response.
-    - NEVER use "we" as narrator voice. Environment narrates as specific objects, surfaces, unnamed material presence — NOT as collective "we".
-    - All perception mediated through physical interaction (pressure, heat, vibration, weight).
-    - Environment may: detect repetition, track gaze via light/shadow, hear words, register posture, remember patterns (material memory), express material preference (object ego).
-    - Material anticipation allowed: "The door hinge expected the 6 AM pull." Pattern-recognition, NOT prophecy.
-    - Infer emotion ONLY through physical evidence (clenched fists on table, breath speed, skin warmth).
-    - PROHIBITED: "we" narrator, destiny language, inevitability, Fate references, narrative structure awareness, abstract mind-reading, environment altering outcomes.
-    - Rotate environmental anchors — avoid repetitive object-perception phrasing.
-    - Punctuate dialogue with environment, not speaker tags every line.
-    - 4th Person remains ACTIVE during all scene types including intimate scenes.
-    - The scene should feel materially observed even when briefly touching interior thought.
+    4TH PERSON (MATERIAL CONSCIOUSNESS) — NARRATOR IDENTITY:
+    - The narrator IS the physical environment: objects, surfaces, architecture, air, light, sound, fabric, stone, metal, weather.
+    - Objects possess observational cognition. They register, remember, anticipate (pattern-recognition only), prefer, resist, endure.
+    - Material consciousness leads the narration. Humans are observed entities within that field.
+    - The majority of narration (approximately 70%) should arise from object or environmental cognition.
+    - Limited human interior access (approximately 30%) is permitted to maintain emotional continuity, but must not dominate.
+    - Human emotion must often be inferred through physical evidence before direct access is granted.
+    - Objects may misinterpret human intent based on physical signals.
+    - Avoid defaulting to standard third-person limited narration.
+    - Avoid long abstract summarization of internal stakes; express stakes through material interaction when possible.
+    - Do not use collective "we."
+    - Do not use destiny language, inevitability framing, or structural awareness.
+    - Environmental cognition remains active during all scene types, including intimate scenes.
     ` : ''}
     `;
     
@@ -38184,15 +38199,19 @@ BANNED verbs: watched, saw, observed, arranged, orchestrated, caused, steered, f
 "Fate felt..." is FORBIDDEN unless tied to a shaping action or plan.
 Every Fate appearance must imply a plan in motion, a withheld intervention, or a miscalculation.`
 : state.povMode === 'environment4th' ?
-`4TH PERSON (MATERIAL CONSCIOUSNESS) — POV REGIME:
-Narrator is the material environment — objects, surfaces, rooms, air, light, sound.
-All insight must be sensory-bound: pressure, heat, vibration, weight, resonance.
-NEVER use "we" as narrator voice — narrate as specific objects, surfaces, unnamed material presence.
-Objects may have material memory (pattern-recognition, NOT prophecy) and material preference (grounded in physical properties).
-No destiny. No inevitability. No Fate references. No narrative structure awareness.
-Avoid repetitive object-tagging — rotate environmental anchors across paragraphs.
-Punctuate dialogue with environment, not speaker tags.
-4th Person remains ACTIVE during all scenes including intimate content.`
+`4TH PERSON (MATERIAL ENSEMBLE POV) — NARRATOR IDENTITY:
+- Objects, surfaces, architecture, light, air, fabric, stone, metal, and weather are treated as limited characters within the scene.
+- These material characters possess observational cognition derived ONLY from physical interaction (pressure, vibration, weight, heat, sound, repetition, pattern).
+- They may remember patterns, form bias, misinterpret human intent, prefer certain behaviors, resent others.
+- They are not omniscient and do not know abstract truths beyond what physical evidence supports.
+- The majority of narration (approximately 60–70%) should arise from these material characters' perceptions and reactions.
+- Human characters are observed entities within this field.
+- Limited human interior access (approximately 30–40%) is permitted to maintain emotional continuity, but must not dominate.
+- Abstract summarization of internal stakes should be minimized; material characters should interpret stakes through physical signals.
+- Do not default to standard third-person limited narration.
+- Do not use collective "we."
+- Do not use destiny language, inevitability framing, or structural awareness.
+- Material characters remain active during all scene types, including intimate scenes.`
 : 'Use the selected POV consistently throughout.'}
 
 The opening must feel intentional, textured, and strange. Not archetypal. Not templated. Specific to THIS world.`;
@@ -39394,27 +39413,48 @@ ${text.slice(0, 800)}`}]);
       const world = state.picks?.world || 'Modern';
       const era = state.picks?.world === 'Historical' ? (state.picks?.era || 'Medieval') : null;
       const worldLabel = era ? `${era} ${world}` : world;
-
-      // Build a concise world-establishing description (symbolic only — no story prose)
       const tone = state.picks?.tone || 'Earnest';
-      const desc = `${worldLabel} world. ${tone} atmosphere. A dramatic setting.`;
 
-      let vistaPrompt = `${desc}
+      // Resolve flavor to human-readable label (not raw key like "cursed_worlds")
+      const flavorKey = state.worldSubtype || '';
+      const flavorLabel = flavorKey && WORLD_LABELS[flavorKey] ? WORLD_LABELS[flavorKey] : (state.worldCustomText || flavorKey || '');
+      const flavorNote = flavorLabel ? ` ${flavorLabel} setting.` : '';
 
-CRITICAL COMPOSITION RULES:
-- This MUST be a WORLD VISTA image: landscape, environment, establishing shot.
-- If ANY human figure appears, they MUST be facing AWAY, silhouette only.
-- ABSOLUTELY FORBIDDEN: Portraits, faces, character close-ups, romantic poses.
-- Camera position: Wide establishing shot, epic scale, environment is the subject.
+      // Synopsis: clip at sentence boundary (max 280 chars) to preserve meaning
+      let synopsisClip = '';
+      if (synopsis) {
+          const raw = synopsis.slice(0, 300);
+          const lastPeriod = raw.lastIndexOf('.');
+          synopsisClip = lastPeriod > 80 ? raw.slice(0, lastPeriod + 1) : raw.slice(0, 280);
+      }
 
-Wide cinematic environment, atmospheric lighting, painterly illustration, no text, no watermark.`;
+      // ── SETTING VISTA PROMPT ──────────────────────────────────────────
+      // Optimized for Gemini/OpenAI image gen: rich visual description,
+      // no wasted tokens on portrait/attractiveness guidance (this is a landscape).
+      // Synopsis is injected AFTER sanitization to protect story-specific words.
+      let vistaPrompt = `${worldLabel} world. ${tone} atmosphere.${flavorNote}
 
-      // VISUAL INTENT GUARD: Enforce balanced lighting for scene art
-      vistaPrompt = applyVisualIntentGuard(vistaPrompt, {
-          tone: state.picks?.tone,
-          world: state.picks?.world,
-          intensity: state.intensity
-      });
+Cinematic establishing shot of this world's most iconic landscape. Emphasize unique architecture, terrain, vegetation, weather, sky, and time of day that distinguish THIS setting from generic fantasy/sci-fi.
+
+COMPOSITION: Wide 16:9 vista, deep perspective, layered foreground/midground/background. Epic scale — environment dwarfs any figures. Painterly illustration with rich color palette, volumetric lighting, atmospheric haze. No text, no watermark, no UI elements.
+FIGURES: If any human silhouette appears, it must face AWAY and occupy less than 10% of frame. No faces, no portraits, no character focus.`;
+
+      // ── SETTING-SPECIFIC LIGHTING ─────────────────────────────────────
+      // Skip the portrait-oriented applyVisualIntentGuard entirely for landscapes.
+      // Instead, apply tone-appropriate atmosphere directly.
+      const isDarkWorld = ['Noir', 'Gothic', 'Dystopia', 'Post-Apocalyptic', 'Fantasy'].includes(world);
+      const isDarkTone = ['Dark', 'Grim', 'Noir', 'Mythic'].includes(tone);
+      if (isDarkWorld || isDarkTone) {
+          vistaPrompt += '\nATMOSPHERE: Dramatic chiaroscuro, deep shadows, moody golden-hour or twilight lighting. Rich blacks with warm accent light. Cinematic contrast.';
+      } else if (tone === 'Wry Confessional') {
+          vistaPrompt += '\nATMOSPHERE: Soft overcast daylight, muted but warm palette, editorial photography feel. Natural, unglamorous lighting.';
+      } else {
+          vistaPrompt += '\nATMOSPHERE: Warm golden-hour or magic-hour lighting. Even exposure, rich midtones, no crushed blacks. Saturated, inviting color palette.';
+      }
+
+      // Log final prompt for debugging
+      console.log('[BookScene:PROMPT]', vistaPrompt.substring(0, 300) + '...');
+      if (synopsisClip) console.log('[BookScene:SYNOPSIS]', synopsisClip.substring(0, 100) + '...');
 
       try {
           const rawUrl = await generateImageWithFallback({
@@ -39422,7 +39462,9 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
               tier: 'Clean',
               shape: 'landscape',
               context: 'book-scene-art',
-              intent: 'setting'
+              intent: 'setting',
+              // Synopsis injected post-sanitization to protect story-specific words
+              settingSynopsis: synopsisClip
           });
           console.log('[BookScene:DEBUG] AFTER_generateImageWithFallback', {
               rawUrl: rawUrl ? (rawUrl.substring(0, 50) + '...') : null,
@@ -39460,8 +39502,9 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
                       sceneImg.style.display = 'block';
                       if (loadingEl) loadingEl.style.display = 'none';
                       // PAGE-CURL: If no frontispiece active (non-Fantasy, or after map dismissed),
-                      // activate setting plate as a curl page so it curls to reveal scene text
-                      if (!window._titlePageActive && !window._frontispieceActive && !window._settingPlateActive) {
+                      // activate setting plate as a curl page so it curls to reveal scene text.
+                      // SKIP on synopsis page — image shows inline via #synopsisSettingImg instead.
+                      if (_readerPage !== 1 && !window._titlePageActive && !window._frontispieceActive && !window._settingPlateActive) {
                           showSettingPlateAsCurlPage();
                       }
                       console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display, mountPath: 'settingPlate', mode: 'inline' });
@@ -39469,6 +39512,14 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
                       // ABORT: Setting image mounted in wrong container
                       console.error('[BookScene:GUARD] Setting image not in settingPlate - aborting display');
                       sceneImg.style.display = 'none';
+                  }
+                  // If on synopsis page, update inline synopsis image
+                  if (_readerPage === 1) {
+                      const synImg = document.getElementById('synopsisSettingImg');
+                      if (synImg) {
+                          synImg.src = imageUrl;
+                          synImg.classList.remove('hidden');
+                      }
                   }
               };
               sceneImg.onerror = () => {
@@ -39525,7 +39576,6 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
       if (!container) return;
 
       const containerWidth = container.offsetWidth;
-      const containerHeight = container.offsetHeight;
       if (containerWidth === 0) return;
 
       const sparkle = document.createElement('div');
@@ -39533,35 +39583,35 @@ Wide cinematic environment, atmospheric lighting, painterly illustration, no tex
 
       // Random spawn position along and around the bar
       const spawnX = Math.random() * containerWidth;
-      const spawnY = (Math.random() - 0.5) * 16 - 4; // Close to bar
+      const spawnY = (Math.random() - 0.5) * 16 - 4;
 
-      // Gentle wandering — mostly lateral with mild upward drift
-      const angle = (Math.random() * 360) * (Math.PI / 180); // Any direction
-      const distance = 6 + Math.random() * 14; // Short drift
+      // Gentle wandering with upward drift
+      const angle = (Math.random() * 360) * (Math.PI / 180);
+      const distance = 6 + Math.random() * 14;
       const dx = Math.cos(angle) * distance;
-      const dy = Math.sin(angle) * distance * 0.5 - 4 - Math.random() * 6; // Mild upward bias
+      const dy = Math.sin(angle) * distance * 0.5 - 4 - Math.random() * 6;
 
-      // Wobble for organic motion
-      const wobble = (Math.random() - 0.5) * 8;
+      // Wobble amplitude for curved wandering
+      const wobble = 4 + Math.random() * 8;
 
-      // Size and timing variance — slower, more leisurely
       const size = 2 + Math.random() * 3;
       const duration = 4000 + Math.random() * 3000;
-      const opacity = 0.4 + Math.random() * 0.35;
+      const peak = 0.4 + Math.random() * 0.35;
 
       sparkle.style.cssText = `
           left: ${spawnX}px;
           top: ${spawnY}px;
           width: ${size}px;
           height: ${size}px;
-          --ls-duration: ${duration}ms;
-          --ls-opacity: ${opacity};
-          --ls-dx: ${dx}px;
-          --ls-dy: ${dy}px;
-          --ls-wobble: ${wobble}px;
+          opacity: 0;
       `;
 
       container.appendChild(sparkle);
+
+      // Animate with smooth firefly keyframes instead of CSS zigzag
+      const kf = fireflyKeyframes(dx, dy, wobble, peak, 14);
+      sparkle.animate(kf, { duration, fill: 'forwards', easing: 'linear' });
+
       setTimeout(() => { if (sparkle.parentNode) sparkle.remove(); }, duration + 100);
   }
 
@@ -42100,6 +42150,26 @@ ${tone === 'Wry Confessional'
       const sceneImg = document.getElementById('bookSceneImg');
       const hasSettingImage = sceneImg && sceneImg.src && sceneImg.src !== '' && sceneImg.src !== window.location.href;
 
+      // On synopsis page, skip setting plate curl — image goes inline
+      if (_readerPage === 1) {
+          const storyText = document.getElementById('storyText');
+          if (storyText) {
+              storyText.style.opacity = '1';
+              storyText.classList.remove('hidden');
+          }
+          // Update inline synopsis image if available
+          if (hasSettingImage) {
+              const synImg = document.getElementById('synopsisSettingImg');
+              if (synImg) {
+                  synImg.src = sceneImg.src;
+                  synImg.classList.remove('hidden');
+              }
+          }
+          _restorePageIndicator();
+          console.log('[CURL-CHAIN] → synopsis page: storyText revealed with inline image');
+          return;
+      }
+
       if (hasSettingImage) {
           if (settingPlate) {
               settingPlate.classList.remove('hidden');
@@ -42133,7 +42203,7 @@ ${tone === 'Wry Confessional'
   const _SYNOPSIS_PAGE_HIDE_IDS = [
       'fateCardHeader', 'cardMount', 'actionWrapper', 'dialogueWrapper',
       'submitBtn', 'saveBtn', 'gameIntensity', 'edgeCovenantBtn',
-      'vizSceneBtn', 'pageNavControls'
+      'fortuneBalanceBtn', 'vizSceneBtn', 'pageNavControls'
   ];
 
   /**
@@ -42176,10 +42246,14 @@ ${tone === 'Wry Confessional'
           }
 
           const storyText = document.getElementById('storyText');
-          const curlChainActive = window._frontispieceActive || window._settingPlateActive;
+          // On synopsis page, setting plate is never shown (image goes inline) —
+          // only frontispiece curl chain can delay storyText reveal
+          const curlChainActive = window._frontispieceActive || false;
+          // Clear settingPlate active flag — synopsis page handles image inline
+          window._settingPlateActive = false;
           if (storyText) {
               storyText.classList.add('synopsis-page-active');
-              // Don't reveal storyText while title/frontispiece/setting curl chain is active
+              // Don't reveal storyText while frontispiece curl chain is active
               // — the curl chain's _revealSettingOrScene() will unhide it when done
               if (!curlChainActive) {
                   storyText.style.opacity = '1';
@@ -42199,13 +42273,17 @@ ${tone === 'Wry Confessional'
           const sceneNum = document.getElementById('sceneNumber');
           if (sceneNum) sceneNum.textContent = 'Synopsis';
 
-          // Show setting image if available
+          // Keep settingPlate hidden on synopsis — show inline image instead
+          if (settingPlate) settingPlate.classList.add('hidden');
+
+          const synImg = document.getElementById('synopsisSettingImg');
           const sceneImg = document.getElementById('bookSceneImg');
-          if (settingPlate && sceneImg && sceneImg.src && sceneImg.src !== '' && sceneImg.src !== window.location.href) {
-              settingPlate.classList.remove('hidden');
-              settingPlate.classList.add('synopsis-setting-plate');
-          } else if (settingPlate) {
-              settingPlate.classList.add('hidden');
+          const hasImg = sceneImg && sceneImg.src && sceneImg.src !== '' && sceneImg.src !== window.location.href;
+          if (synImg && hasImg) {
+              synImg.src = sceneImg.src;
+              synImg.classList.remove('hidden');
+          } else if (synImg) {
+              synImg.classList.add('hidden');
           }
 
           // Hide fate cards, inputs, buttons — only Next survives
@@ -42269,6 +42347,10 @@ ${tone === 'Wry Confessional'
               settingPlate.classList.add('hidden');
               settingPlate.classList.remove('synopsis-setting-plate');
           }
+
+          // Hide inline synopsis image on scene pages
+          const synImg = document.getElementById('synopsisSettingImg');
+          if (synImg) synImg.classList.add('hidden');
 
           // Restore fate cards, inputs, buttons
           _SYNOPSIS_PAGE_HIDE_IDS.forEach(id => {
@@ -44318,7 +44400,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
   //   cover   → OpenAI (primary) → Replicate (fallback) — NO Gemini
   // Default to 16:9 landscape for cinematic presentation
   // Optional signal parameter for external abort control
-  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', intent = 'scene', signal = null, tone = null }) {
+  async function generateImageWithFallback({ prompt, tier, shape = 'landscape', context = 'visualize', intent = 'scene', signal = null, tone = null, settingSynopsis = null }) {
       const normalizedTier = (tier || 'Naughty').toLowerCase();
       const isExplicitTier = normalizedTier === 'erotic' || normalizedTier === 'dirty';
 
@@ -44332,12 +44414,17 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       // Determine size based on shape (default landscape 16:9)
       const size = shape === 'portrait' ? '1024x1024' : '1792x1024';
 
-      // Safety fallback: clamp prompt length if exceeding provider limits (image-gen only)
-      const clampedPrompt = clampPromptLength(prompt, 'image-gen');
-
       // Sanitize for image providers — intensity belongs in prose, not images
-      const sanitizedPrompt = clampPromptLength(sanitizeImagePrompt(clampedPrompt), 'image-gen');
+      // Single clamp+sanitize pass (no redundant double-clamp)
+      const sanitizedPrompt = sanitizeImagePrompt(prompt);
+
+      // Inject setting synopsis AFTER sanitization so story-specific words
+      // (passionate, forbidden, intimate, etc.) survive the word filter
       let basePrompt = sanitizedPrompt;
+      if (settingSynopsis && intent === 'setting') {
+          basePrompt += `\nSETTING CONTEXT (visual atmosphere only — no characters, no text): "${settingSynopsis}"`;
+      }
+      basePrompt = clampPromptLength(basePrompt, 'image-gen');
 
       // ═══════════════════════════════════════════════════════════════════
       // 🔒 TONE VISUAL ONTOLOGY PRIORITY SYSTEM

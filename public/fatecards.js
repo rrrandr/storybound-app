@@ -1885,8 +1885,8 @@ function setSelectedState(mount, selectedCardEl){
         temptCard.className = 'fate-card tempt-fate-card';
         temptCard.innerHTML = `
             <div class="inner">
-                <div class="front" style="background:url('/assets/Card%20Art/Cards/Tarot-RED-back-TemptFate.png') center/cover no-repeat, #111;"></div>
-                <div class="back" style="background-image:url('/assets/Card%20Art/Cards/Tarot-RED-front-TemptFate.png?v=2');"></div>
+                <div class="front" style="background:url('/assets/card-art/cards/Tarot-RED-back-TemptFate.png') center/cover no-repeat, #111;"></div>
+                <div class="back" style="background-image:url('/assets/card-art/cards/Tarot-RED-front-TemptFate.png?v=2');"></div>
             </div>
         `;
         temptCard.onclick = () => {
