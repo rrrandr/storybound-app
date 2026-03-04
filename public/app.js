@@ -3474,13 +3474,14 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
 
   // Contextual flavor gravity — engine-facing prompt injection (LOCKED Bible entry)
   const CONTEXT_GRAVITY = {
-    small_town:          'Visibility, memory, and rivalry intensify romantic consequence.',
-    college:             'Overwhelming choice and unformed futures compete with desire.',
-    friends:             'Group dynamics complicate every romantic choice.',
-    blue_blood:          'Legacy and rank shape romantic eligibility.',
-    office:              'Hierarchy and professionalism constrain open attraction.',
-    superheroic_modern:  'Secret identities, public expectations, and power asymmetry strain intimacy.',
-    supernatural_modern: 'Hidden realities destabilize trust and safety.',
+    // Modern contextual flavors — canonical context effects (locked language)
+    small_town:          'Visibility, history, and gossip amplify the consequences of intimacy.',
+    college:             'Youth, proximity, and emerging identity intensify emotional discovery.',
+    friends:             'Long familiarity blurs boundaries between loyalty and desire.',
+    blue_blood:          'Legacy, lineage, and inherited status shape romantic eligibility.',
+    office:              'Professional hierarchy and proximity strain restraint and raise career risk.',
+    superheroic_modern:  'Secret identities, public expectation, and power asymmetry strain intimacy.',
+    supernatural_modern: 'Hidden realities destabilize trust and safety beneath ordinary life.',
     arcane_binding:      'Magic enforces rules love cannot easily defy.',
     fated_blood:         'Lineage dictates desire and forbidden alliances.',
     the_inhuman:         'Non-human norms rewrite how intimacy functions \u2014 regardless of who is human.',
@@ -14467,6 +14468,14 @@ Return ONLY valid JSON:
       for (const k of entropyKeys) {
           state[k] = undefined;
       }
+
+      // Blue Blood variant must be cleared alongside its entropy.
+      // BlueBlood is the only Modern flavor with a weighted variant system
+      // (royal 85% / aristocratic 15%) that gates variant-specific entropy axes
+      // and structural contract injection. If entropy is cleared but variant
+      // persists, the next story silently reuses the old variant without reroll.
+      state._blueBloodVariant = undefined;
+      state._blueBloodVariantRerolled = false; // dev diagnostic reset
   }
 
   // ── LAYER 1 — REGION PHYSICS RESET ──
@@ -17460,6 +17469,8 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const card = document.querySelector('.petition-fate-card');
       if (!card) return;
 
+      // Guard: don't re-open if already zoomed
+      if (card.classList.contains('petition-zoomed')) return;
 
       // Telemetry: petition opened (once per session)
       if (!state._loggedPetitionOpen) {
@@ -17676,11 +17687,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           });
       });
 
-      // ── Create floating Proceed button (sibling of card in portal) ──
+      // ── Create floating Proceed button (sibling of card in portal, NOT inside card) ──
+      // Placed as sibling so it doesn't inherit the card's scale() transform.
       const proceedBtn = document.createElement('button');
       proceedBtn.className = 'petition-proceed-btn flow-continue-btn sb-btn-png sm';
       proceedBtn.textContent = 'Proceed';
-      card.appendChild(proceedBtn);
+      if (portal) portal.appendChild(proceedBtn);
 
       // ── Proceed handler (replaces old Seal) ──
       proceedBtn.addEventListener('click', () => {
@@ -17799,9 +17811,10 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const card = _petitionZoomCard;
       if (!card) return;
 
-      // Remove overlay and floating Proceed button
+      // Remove overlay and floating Proceed button (button is in portal, not card)
       card.querySelector('.petition-zoom-overlay')?.remove();
-      card.querySelector('.petition-proceed-btn')?.remove();
+      const portal = document.getElementById('sbZoomPortal');
+      portal?.querySelector('.petition-proceed-btn')?.remove();
 
       // Restore original Petition art on back face
       const backFace = card.querySelector('.back');
@@ -17881,6 +17894,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   window.openTemptZoom = function() {
       const card = document.querySelector('.tempt-fate-card');
       if (!card) return;
+
+      // Guard: don't re-open if already zoomed
+      if (card.classList.contains('tempt-zoomed')) return;
 
       _temptZoomOriginalParent = card.parentNode;
       _temptZoomOriginalNextSibling = card.nextElementSibling;
@@ -17992,11 +18008,11 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           if (textarea) setTimeout(() => textarea.focus(), 100);
       });
 
-      // Proceed button
+      // Proceed button (portal sibling, NOT inside card — avoids inheriting scale transform)
       const proceedBtn = document.createElement('button');
       proceedBtn.className = 'tempt-proceed-btn flow-continue-btn sb-btn-png sm';
       proceedBtn.textContent = 'Proceed';
-      card.appendChild(proceedBtn);
+      if (portal) portal.appendChild(proceedBtn);
 
       proceedBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
@@ -18024,9 +18040,10 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       // Stop scroll animations
       card.querySelectorAll('.tempt-wish-scroll').forEach(s => { s._temptAnim = false; });
 
-      // Remove overlay and proceed button
+      // Remove overlay and proceed button (button is in portal, not card)
       card.querySelector('.tempt-zoom-overlay')?.remove();
-      card.querySelector('.tempt-proceed-btn')?.remove();
+      const portal = document.getElementById('sbZoomPortal');
+      portal?.querySelector('.tempt-proceed-btn')?.remove();
 
       // Restore original art on back face
       const backFace = card.querySelector('.back');
@@ -23648,6 +23665,500 @@ The final image must look like a real published novel cover.`;
       return result;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MODERN WORLD BLOCK — Canonical injection (locked language)
+  // Modern contains no systemic pressure by default. It must resolve at least
+  // one contextual flavor; zero-flavor Modern risks generic setting drift.
+  // Max 2 contextual flavors. Never reveal internal classification labels.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const MODERN_CONTEXTUAL_LABELS = {
+      small_town: 'Small Town',
+      college: 'College',
+      friends: 'Friends',
+      blue_blood: 'Blue Blood',
+      office: 'Office (9\u20135)',
+      supernatural_modern: 'Supernatural',
+      superheroic_modern: 'Superheroic'
+  };
+
+  function buildModernWorldBlock(resolvedFlavors) {
+      let block = `
+WORLD: Modern
+"a modern world of ambition and things left unsaid"
+
+REALITY MODEL:
+\u2022 Contemporary society
+\u2022 Real-world physics
+\u2022 Institutions, reputation, and social perception influence relationships
+\u2022 Love unfolds within existing social structures rather than mythic or systemic forces`;
+
+      // Extract contextual flavors only (skip systemic modern_core)
+      const contextuals = (resolvedFlavors || [])
+          .filter(f => f.type === 'contextual' && MODERN_CONTEXTUAL_LABELS[f.val])
+          .slice(0, 2); // Hard cap: never exceed 2
+
+      for (const flavor of contextuals) {
+          const label = MODERN_CONTEXTUAL_LABELS[flavor.val];
+          const effect = CONTEXT_GRAVITY[flavor.val] || '';
+          block += `\n\nWorld Context: ${label}`;
+          if (effect) block += `\nContext Effect: ${effect}`;
+      }
+
+      return block;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FANTASY WORLD BLOCK — Canonical injection for Fantasy world stories.
+  // Realm: The Fatelands. Single sacrificial magic engine. Cosmology, bloodlines,
+  // geography, and contextual flavor injection. Custom setting support.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FANTASY_CONTEXTUAL_LABELS = {
+      arcane_binding: 'Arcane Binding',
+      fated_blood: 'Fated Blood',
+      the_inhuman: 'The Inhuman',
+      the_beyond: 'The Beyond',
+      cursed: 'Cursed'
+  };
+
+  const FANTASY_CONTEXTUAL_EFFECTS = {
+      arcane_binding: 'Magical obligation constrains love. Geas enforced through sacrifice, spell-debts owed to sorcerers or courts, magical contracts requiring pieces of identity, lovers bound by rituals they regret. A character sacrifices their voice to bind another. Breaking a magical promise triggers additional sacrifice. Originates in Lytharyn, Vaelryn Reach, ancient covenant sites.',
+      fated_blood: 'Lineage determines destiny. Romantic attachment threatens political or magical inheritance. First Favored bloodline politics, prophecy surrounding Favorborn children, forbidden bloodline unions, heirs whose love risks dynastic collapse. A marriage would merge rival Favor bloodlines. A lover is revealed to be Part-Favored. Centers around Thornwild, Vaelryn Reach, ancient houses of the First Favored.',
+      the_inhuman: 'Biological or metaphysical incompatibility distorts intimacy. First Favored emotional erosion, Winged Ones sacrificing fundamental traits, Riftborn anomalies, Favor mutations altering humanity. A character loses emotion each time magic is used. A Winged One cannot sleep or touch ground. Appears near Fate\'s Favor, the Veilwood, regions of rising Favor amplitude.',
+      the_beyond: 'Reality boundaries divide lovers. Separation by death, immortality, or realms. Lovers separated by the Rift, spirits bound to sacrifice sites, immortals bound to the basin, time distortions during Favor surges. A sacrifice binds someone beyond death. A relationship spans mortal and timeless states. Manifests around Fate\'s Favor, Ascendant Run rituals, ancient sacrifice altars.',
+      cursed: 'External magical affliction warps intimacy. Sacrifice backlash, twisted reclamation from Syzygy, spell residues altering bodies or memory, cursed artifacts tied to sacrifice. A reclaimed sacrifice returns distorted. A character forgets their lover after a spell. Originates from failed sacrifice rituals, forbidden use of Law D, ancient artifacts.'
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // XV. FLAVOR REGIONALIZATION — Geographic centers and visual manifestations
+  // for each Fantasy contextual flavor within The Fatelands.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FANTASY_FLAVOR_REGIONALIZATION = {
+      arcane_binding: {
+          centers: ['Lytharyn', 'Vaelryn Reach', 'ancient covenant sites'],
+          emergence: 'where formal magic institutions exist',
+          manifestations: ['magical contracts', 'oath-binding spells', 'geas rituals', 'court sorcerers enforcing agreements'],
+          architecture: ['tower libraries', 'ritual chambers', 'oath halls', 'spell archives']
+      },
+      fated_blood: {
+          centers: ['Thornwild', 'Vaelryn Reach', 'First Favored noble houses'],
+          emergence: 'where lineage determines legitimacy',
+          manifestations: ['bloodline prophecy', 'succession politics', 'forbidden inheritance', 'Favorborn heirs'],
+          architecture: ['noble estates', 'ancestral courts', 'lineage temples', 'blood registries']
+      },
+      the_inhuman: {
+          centers: ['Fate\'s Favor', 'The Veilwood', 'regions of unstable Favor amplitude'],
+          emergence: 'where magic reshapes bodies or identity',
+          manifestations: ['First Favored emotional erosion', 'Winged Ones anomalies', 'Rift mutations', 'unstable magical physiology'],
+          architecture: ['warped forests', 'crystalline scars in the earth', 'altered wildlife', 'gravity distortions']
+      },
+      the_beyond: {
+          centers: ['Fate\'s Favor basin', 'Ascendant Run', 'ancient sacrifice altars'],
+          emergence: 'where the boundary between realities thins',
+          manifestations: ['spirits bound to sacrifice sites', 'Rift echoes', 'temporal distortions', 'partially disembodied beings'],
+          architecture: ['strange auroras', 'mirrored water', 'impossible shadows', 'silent winds']
+      },
+      cursed: {
+          centers: ['ruined ritual sites', 'abandoned spell laboratories', 'battlefields touched by sacrifice'],
+          emergence: 'from magical backlash',
+          manifestations: ['twisted reclamations', 'corrupted artifacts', 'memory erosion', 'irreversible spell damage'],
+          architecture: ['decayed ritual circles', 'broken wards', 'lingering magical scars', 'haunted landscapes']
+      }
+  };
+
+  // Region → naturally emphasized flavors (world consistency rule)
+  const FANTASY_REGION_FLAVOR_AFFINITY = {
+      the_thornwild:     ['fated_blood', 'the_inhuman'],
+      lytharyn:          ['arcane_binding', 'cursed'],
+      fates_favor_basin: ['the_beyond', 'the_inhuman'],
+      vaelryn_reach:     ['arcane_binding', 'fated_blood'],
+      the_veilwood:      ['the_inhuman', 'the_beyond'],
+      gloamwater_bay:    ['the_inhuman', 'cursed'],
+      the_ashen_verge:   ['arcane_binding', 'cursed'],
+      pulse_point:       ['arcane_binding', 'fated_blood'],
+      the_shackle_isles: ['cursed', 'the_beyond']
+  };
+
+  function buildFantasyWorldBlock(resolvedFlavors) {
+      const customText = state.worldCustomTexts?.['Fantasy'] || '';
+      const favorAmp = state._fantasyCoreEntropy?.fantasy_favor_amplitude || 'stable';
+      const region = state.fantasyRegion;
+      const regionMeta = region ? FATELANDS_CANON.regions[region] : null;
+
+      let block = `
+WORLD: Fantasy — The Fatelands
+"a continent shaped by sacrifice, where magic demands identity and love is never free"
+
+REALM: The Fatelands
+All Fantasy stories take place in The Fatelands unless the user explicitly provides a custom fantasy world.
+
+REALITY MODEL:
+• Magic requires sacrifice — not energy, not mana. Identity. No spell is free.
+• Possible sacrifices: flesh, memory, emotion, years of life, voice, shadow, name, status, inheritance, reflection
+• The Four Sacrifice Laws: A (permanent), B (reclaimable but rare), C (reclaimable at terrible cost — returns distorted), D (transferred from another — reviled, practitioners hunted)
+• Fate's Favor — central meteor basin — regulates magical amplitude across the continent
+• Favor Amplitude: ${favorAmp}
+• Syzygy: rare celestial alignment (at most once per story). During syzygy one may sacrifice something new to reclaim something previously lost. Only at the Ascendant Run. Only once per lifetime.
+• Thirteen moons. The thirteenth is disputed — visible only over Fate's Favor during syzygy.
+• Romantic sacrifice law: sacrifice offered sincerely for love binds cleanly; sacrifice made with doubt twists. The Favor amplifies truth.
+
+COSMOLOGY:
+• The Fatelands resembles an open palm. Rivers trace vein-like patterns.
+• Fate's Favor: central rift basin, contested and militarized. Lightning drawn toward it. Birds refuse to cross.
+• The Ascendant Run: river from the northeast, flows inward toward the basin. Reverses outward only during syzygy.
+• The Long Thread: major river feeding the basin from the north.
+• The Drowned Vein: subterranean river flowing east, surfaces at Gloamwater Bay. Exposure transforms beings into merfolk variants (obeys sacrifice law).
+• The Veilwood: forbidden forest, no confirmed survivors.
+
+BLOODLINES:
+• First Favored: long-lived, graceful. Magic erodes emotion instead of flesh. Claim closed lineage but new ones appear during surges.
+• Part-Favored: partial or dormant Favor expression. Socially ambiguous.
+• Favorborn: born during magical surges. Marked by anomalies. Feared, studied, or weaponized.
+• Winged Ones: origin unknown. Each sacrifices something fundamental for flight. Feared and hunted.
+
+THEMATIC IDENTITY:
+Fantasy in Storybound is sacrificial, politically unstable, mythically ambiguous, erotically dangerous, cosmologically tense.
+It is not whimsical. It is not grimdark. It is not derivative.
+Fantasy flavors represent mythic pressures that complicate love — not species, creatures, or aesthetic themes.
+Elves, demons, immortals, and divine beings may appear only as expressions of these pressures.
+
+MAGIC SYSTEM LOCK (MANDATORY):
+The Fatelands contains exactly one supernatural engine: Sacrifice Magic.
+No additional magic systems may be introduced.
+No race, creature, or artifact may possess supernatural abilities that do not operate through the Sacrifice Laws.
+If a phenomenon cannot be explained through sacrifice, it does not belong in The Fatelands.
+All Fantasy flavors operate through this single engine. No flavor introduces a second system.`;
+
+      // Region anchor if assigned by location engine
+      if (region && regionMeta) {
+          const regionLabel = region.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          block += `\n\nRegion: ${regionLabel}`;
+          if (regionMeta.seat) block += ` (Seat: ${regionMeta.seat})`;
+          if (regionMeta.governance) block += `\nGovernance: ${regionMeta.governance}`;
+          if (regionMeta.magicBias) block += `\nMagic Expression: ${regionMeta.magicBias}`;
+      }
+
+      // Contextual flavor (max 1 for Fantasy: fantasy_core + one contextual)
+      const contextuals = (resolvedFlavors || [])
+          .filter(f => f.type === 'contextual' && FANTASY_CONTEXTUAL_LABELS[f.val])
+          .slice(0, 1);
+
+      for (const flavor of contextuals) {
+          const label = FANTASY_CONTEXTUAL_LABELS[flavor.val];
+          const effect = FANTASY_CONTEXTUAL_EFFECTS[flavor.val] || CONTEXT_GRAVITY[flavor.val] || '';
+          const regional = FANTASY_FLAVOR_REGIONALIZATION[flavor.val];
+          block += `\n\nMythic Pressure: ${label}`;
+          if (effect) block += `\nPressure Effect: ${effect}`;
+          if (regional) {
+              block += `\nGeographic Centers: ${regional.centers.join(', ')}`;
+              block += `\nEmerges ${regional.emergence}.`;
+          }
+      }
+
+      // Custom setting override
+      if (customText) {
+          block += `\n\nCustom Setting: ${customText}`;
+          block += `\nTreat as location, culture, or thematic inspiration within The Fatelands. Ground the world in this specific context.`;
+      }
+
+      return block;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HISTORICAL WORLD BLOCK — Canonical injection for Historical world stories.
+  // Locked paraphrase, reality model, era anchor with context effects,
+  // optional custom specificity. Mirrors Modern World Block pattern.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const HISTORICAL_ERA_LABELS = {
+      prehistoric: 'Prehistoric',
+      classical: 'Classical (Greek / Roman)',
+      medieval: 'Medieval',
+      renaissance: 'Renaissance',
+      victorian: 'Victorian',
+      '20th_century': '20th Century'
+  };
+
+  const HISTORICAL_ERA_CONTEXT_EFFECTS = {
+      prehistoric: 'Survival governs all bonds. Language is action, not abstraction. Desire is expressed through proximity, protection, and offering.',
+      classical: 'Honor and civic duty shape relationships. Public reputation constrains private desire. Gods and fate are narrative-real.',
+      medieval: 'Feudal obligation defines social possibility. Marriage is alliance. Love exists in tension with duty, faith, and rank.',
+      renaissance: 'Art, ambition, and intrigue drive social life. Passion is both celebrated and dangerous. Patronage and reputation are currency.',
+      victorian: 'Propriety masks intensity. Letters, glances, and silence carry enormous weight. Class boundaries are omnipresent.',
+      '20th_century': 'Tradition collides with modernity. War, revolution, or social upheaval shapes the backdrop. Old rules fracture but do not vanish.'
+  };
+
+  function buildHistoricalWorldBlock(resolvedFlavors) {
+      const era = state.picks?.era || 'medieval';
+      const eraLabel = HISTORICAL_ERA_LABELS[era] || era;
+      const eraEffect = HISTORICAL_ERA_CONTEXT_EFFECTS[era] || '';
+      const customText = state.worldCustomTexts?.['Historical'] || '';
+
+      let block = `
+WORLD: Historical
+"an era of duty, reputation, and unyielding tradition"
+
+REALITY MODEL:
+• Historical causality — actions have social consequences that persist across scenes
+• Material constraints of the era (technology, medicine, travel, communication)
+• Social hierarchy is real and enforced — class, gender, and station shape every interaction
+
+Era Anchor: ${eraLabel}`;
+      if (eraEffect) block += `\nContext Effect: ${eraEffect}`;
+
+      if (customText) {
+          block += `\n\nHistorical Specificity: ${customText}`;
+          block += `\nTreat as location, dynasty, culture, or historical inspiration. Ground the era anchor in this specific context.`;
+      }
+
+      return block;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SCI-FI WORLD BLOCK — Canonical injection for SciFi world stories.
+  // Technological acceleration, cosmic scale, scientific plausibility.
+  // No supernatural logic. Each story contains exactly one flavor.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const SCIFI_FLAVOR_LABELS = {
+      final_frontier: 'Final Frontier',
+      first_contact: 'First Contact',
+      future_of_science: 'Science Future',
+      simulation: 'Simulation',
+      cyberpunk: 'Cyberpunk',
+      post_human: 'Post-Human',
+      galactic_civilizations: 'Galactic Conflict'
+  };
+
+  const SCIFI_FLAVOR_EFFECTS = {
+      final_frontier: 'Isolation and mission fragility in deep space. Close quarters, endless stars. There is nowhere to escape after conflict. Small crews magnify emotional consequences. Love destabilizes fragile missions. Environments: exploration vessels, remote star systems, frontier colonies, research ships.',
+      first_contact: 'Encounter with alien intelligence. Contact changes everything. Attachment carries unpredictable political and cultural consequences. A relationship may affect the fate of two civilizations. Environments: diplomatic stations, orbital research platforms, alien landscapes, quarantine zones.',
+      future_of_science: 'Scientific discovery reshaping society. Love is just another law of the universe. Emotion collides with immutable physical law. Discovery may demand sacrifice greater than love. Environments: research institutes, orbital laboratories, terraforming projects, experimental physics facilities.',
+      simulation: 'Reality itself is unstable or artificial. Through layers of unreality, love endures. Identity and memory may shift between layers. Love becomes the only stable reference point. Reality unstable ≠ identity edited — Simulation is distinct from Erasure. Environments: simulated worlds, virtual societies, layered consciousness networks, experimental cognition systems.',
+      cyberpunk: 'Augmented humanity inside corporate-dominated systems. Your back-up heart can still ache. Even engineered bodies remain emotionally fragile. High technology amplifies vulnerability. Love becomes dangerous in systems designed to commodify people. Environments: megacities, neon infrastructure, corporate arcologies, underground economies.',
+      post_human: 'Humanity has evolved, vanished, or transformed. Love outlives us. Love persists beyond the structures that once defined humanity. After humanity ends, something still remembers how to love. Environments: machine societies, post-biological habitats, long-lived digital civilizations, relic human worlds.',
+      galactic_civilizations: 'Interstellar war and political upheaval. Love can save a world, or burn a galaxy. Attachment shifts alliances. Love may ignite rebellion, topple governments, or destroy empires. Environments: battle fleets, contested star systems, imperial capitals, resistance networks.'
+  };
+
+  function buildSciFiWorldBlock(resolvedFlavors) {
+      const customText = state.worldCustomTexts?.['SciFi'] || '';
+
+      let block = `
+WORLD: Sci-Fi
+"an age of technological acceleration and alien laws"
+
+REALITY MODEL:
+• Science, technology, engineering, and cosmic phenomena govern reality
+• No supernatural logic exists — if an event appears miraculous, it must ultimately be explainable through advanced technology, physics, or alien biology
+• Alien civilizations may exist but must obey coherent biological or technological logic
+• The emotional pressure of Sci-Fi comes from scale: distance across space, civilizations evolving beyond human norms, discoveries that destabilize reality, technologies reshaping identity
+
+SCIENCE SYSTEM LOCK (MANDATORY):
+Technology replaces magic. Scientific plausibility anchors all extraordinary phenomena.
+Sci-Fi must never drift into fantasy magic, mystical prophecy, or unexplained supernatural powers.
+If a phenomenon cannot plausibly arise from science, it does not belong in Sci-Fi.
+
+THEMATIC IDENTITY:
+Sci-Fi in Storybound is expansive, technological, existential, philosophical, romantically destabilizing.
+Love exists inside systems that expand faster than society can emotionally adapt.`;
+
+      // Flavor injection (exactly one per Sci-Fi story)
+      const flavorEntry = (resolvedFlavors || [])
+          .find(f => SCIFI_FLAVOR_LABELS[f.val]);
+      if (flavorEntry) {
+          const label = SCIFI_FLAVOR_LABELS[flavorEntry.val];
+          const effect = SCIFI_FLAVOR_EFFECTS[flavorEntry.val] || CONTEXT_GRAVITY[flavorEntry.val] || '';
+          block += `\n\nScientific Pressure: ${label}`;
+          if (effect) block += `\nPressure Effect: ${effect}`;
+      }
+
+      if (customText) {
+          block += `\n\nCustom Setting: ${customText}`;
+          block += `\nTreat as location, technology, civilization, or thematic inspiration. Ground the Sci-Fi world in this specific context.`;
+      }
+
+      return block;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DYSTOPIA WORLD BLOCK — Canonical injection for Dystopia world stories.
+  // Structural pressure systems that destabilize love. Each flavor operates
+  // through a single dominant pressure. No aesthetic dystopia — only systemic.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const DYSTOPIA_FLAVOR_LABELS = {
+      glass_house: 'Glass House',
+      human_capital: 'Human Capital',
+      dogma: 'Dogma',
+      thirst: 'Thirst',
+      quieting_event: 'The Quieting',
+      endless_edit: 'Erasure'
+  };
+
+  const DYSTOPIA_FLAVOR_EFFECTS = {
+      glass_house: 'Radical transparency of consciousness. The Chorus universalizes emotional context — grief is witnessed, joy resonates, shame dissolves. Exclusivity cannot survive shared experience. True exclusivity requires going Solo, but Solo increases jealousy, volatility, erotic intensity, and social suspicion. Love becomes dangerous because privacy becomes deviance.',
+      human_capital: 'Public speculation markets on personal futures. Prediction markets trade marriages, breakups, fertility, infidelity, career arcs, emotional collapse. Entering a relationship creates tradable instruments: longevity contracts, breakup futures, scandal insurance, jealousy volatility swaps. Love becomes dangerous because someone is always betting against it.',
+      dogma: 'Sanctified transparency of desire. Desire is sacred emotional energy that must circulate. Practices: Witnessed Arousal Dialogue, Desire Processing Circles, Sacred Bond Certification, ritualized confession of attraction. Participation begins voluntary, becomes socially expected, economically incentivized, institutionally integrated. Love becomes dangerous because secrecy becomes unethical.',
+      thirst: 'Control of a life-critical resource concentrated in one woman. A single purification system sustains surrounding settlements. One woman maintains it. Maintenance requires nightly assistance from rotating men. No single man may gain full access. Favoritism creates political instability. Love becomes dangerous because choosing one man could collapse the balance of survival.',
+      quieting_event: 'Biochemical suppression of emotional volatility. A universal nutritional additive dampens extremes — anger softens, jealousy fades, attachment weakens. A containment failure leaves a small group unaffected. When two unaffected people connect, longing spreads. Love becomes dangerous because wanting someone destabilizes the engineered calm.',
+      endless_edit: 'Editable identity. Neural editing allows revision of memories, personality traits, emotional responses, appearance. Relationships become revision projects. Partners change themselves repeatedly. The person you loved may no longer exist. Love becomes dangerous because identity itself is unstable.'
+  };
+
+  function buildDystopiaWorldBlock(resolvedFlavors) {
+      const customText = state.worldCustomTexts?.['Dystopia'] || '';
+
+      let block = `
+WORLD: Dystopia
+"a world where the system itself threatens love"
+
+Dystopia in Storybound is not an aesthetic. It is a structural pressure system that destabilizes love.
+Every flavor must answer: What makes loving someone dangerous here?
+
+REALITY MODEL:
+• Dystopian pressures operate through culture, technology, economics, psychology, infrastructure, biology, or ideology
+• Each flavor operates through a single dominant pressure — flavors must not overlap
+• Dystopias reshape intimacy by destabilizing privacy, exclusivity, identity continuity, emotional autonomy, and social trust
+• The system always pressures the bond — love becomes dangerous because the world cannot tolerate its natural structure
+
+THEMATIC IDENTITY:
+Dystopia in Storybound is systemic, structural, psychological, political, intimate.
+The system does not simply restrict love — it redefines the conditions under which love can exist.`;
+
+      // Flavor injection (Dystopia selects exactly one flavor)
+      const flavorEntry = (resolvedFlavors || [])
+          .find(f => DYSTOPIA_FLAVOR_LABELS[f.val]);
+      if (flavorEntry) {
+          const label = DYSTOPIA_FLAVOR_LABELS[flavorEntry.val];
+          const effect = DYSTOPIA_FLAVOR_EFFECTS[flavorEntry.val] || '';
+          block += `\n\nDystopian Pressure: ${label}`;
+          if (effect) block += `\nPressure Effect: ${effect}`;
+      }
+
+      if (customText) {
+          block += `\n\nCustom Setting: ${customText}`;
+          block += `\nTreat as location, institution, or thematic pressure. Ground the dystopia in this specific context.`;
+      }
+
+      return block;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POST-APOCALYPTIC WORLD BLOCK — Canonical injection for PostApocalyptic stories.
+  // Survival strain, not ideology. The world has already broken. Romance fights
+  // damage, not systems. Each flavor = single dominant survival pressure.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const POSTAPOC_FLAVOR_LABELS = {
+      ashfall: 'Ashfall',
+      year_zero: 'Year 0',
+      dystimulation: 'Dystimulation',
+      predation: 'Predation',
+      hunger: 'Hunger'
+  };
+
+  const POSTAPOC_FLAVOR_EFFECTS = {
+      ashfall: 'Environmental hostility. The world burns between you. Toxic air, radiation, extreme heat, ash storms, contaminated environments. Touch may carry lethal risk. Love requires proximity. The world punishes proximity. Physical closeness itself incurs danger.',
+      year_zero: 'Psychological rupture. Love is the aftermath. The catastrophe happened recently. Survivors shaped by survivor\'s guilt, trauma bonding, before/after identity rupture, shock and instability. Relationships emerge from wreckage. Love is unstable because everyone is still breaking.',
+      dystimulation: 'Trauma-blunted reward systems. You must risk everything to feel anything. Emotional reward systems dulled by trauma. Desire exists but buried beneath numbness. Intimacy may require adrenaline, danger, emotional surrender, extreme novelty. Connection is rare — when it appears, it can be explosive.',
+      predation: 'Absence of institutional protection. Love makes you prey. No safety net. Trust can be exploited. Softness attracts violence. Communities may weaponize vulnerability. To love someone is to expose them — and yourself. Attachment creates leverage and targets.',
+      hunger: 'Chronic scarcity. Love competes with survival. Essential resources scarce: food, water, medicine, fuel. Someone may have to go without. Generosity threatens survival. Attachment forces impossible decisions. Caring for one person may doom another.'
+  };
+
+  const POSTAPOC_DISTINCTIONS = `
+CRITICAL DISTINCTIONS (prevent flavor drift):
+• Ashfall ≠ Hunger — environment pressure ≠ resource scarcity
+• Dystimulation ≠ Dysconsent — neurochemical trauma ≠ regulatory control
+• Predation ≠ Small Town — lethal exposure ≠ social scrutiny
+• Year 0 ≠ Erasure — psychological trauma ≠ identity mutation`;
+
+  function buildPostApocWorldBlock(resolvedFlavors) {
+      const customText = state.worldCustomTexts?.['PostApocalyptic'] || '';
+
+      let block = `
+WORLD: Post-Apocalyptic
+"a broken world where love fights damage, not systems"
+
+Post-Apocalyptic is not dystopia. It is not ideology. It is not governance. It is survival strain.
+The world has already broken. Romance fights damage, not systems.
+
+REALITY MODEL:
+• Civilization has fractured or collapsed. Infrastructure is unreliable. Communities are fragile.
+• The body and environment are under constant pressure — visceral, immediate, embodied
+• No abstract commentary, no satire, no theoretical framing — only consequence
+• If a world appears stable or systemically organized, it is no longer Post-Apocalyptic
+• Remaining societies are fragmented, improvised, unstable. Trust is scarce. Attachment introduces vulnerability.
+
+CORE TENSION: survival vs attachment
+Love demands loyalty. Survival demands compromise.`;
+
+      // Flavor injection (exactly one per PostApoc story)
+      const flavorEntry = (resolvedFlavors || [])
+          .find(f => POSTAPOC_FLAVOR_LABELS[f.val]);
+      if (flavorEntry) {
+          const label = POSTAPOC_FLAVOR_LABELS[flavorEntry.val];
+          const effect = POSTAPOC_FLAVOR_EFFECTS[flavorEntry.val] || '';
+          block += `\n\nSurvival Pressure: ${label}`;
+          if (effect) block += `\nPressure Effect: ${effect}`;
+      }
+
+      block += POSTAPOC_DISTINCTIONS;
+
+      block += `
+
+THEMATIC IDENTITY:
+Post-Apocalyptic stories are physical, raw, scarred, intimate, survival-driven.
+The world is broken. Love persists anyway. But every attachment carries risk.`;
+
+      if (customText) {
+          block += `\n\nCustom Setting: ${customText}`;
+          block += `\nTreat as location, catastrophe type, or survival context. Ground the post-apocalyptic world in this specific setting.`;
+      }
+
+      return block;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WORLD SEPARATION CONTRACT — Prevents world-type drift during generation.
+  // Each world has a distinct pressure model. Flavors add pressure within a
+  // world but never change the world type. Per-world forbidden drift lists.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const WORLD_FORBIDDEN_DRIFT = {
+      Fantasy: 'scientific explanations replacing magic, corporate power structures dominating conflict, dystopian ideological control, modern institutional realism',
+      SciFi: 'magic systems, mystical bloodlines, supernatural fate mechanics, dystopian ideological governance',
+      Dystopia: 'collapsed civilization, wilderness survival focus, speculative alien science, fantasy magic',
+      PostApocalyptic: 'stable governing systems, ideological social structures, advanced speculative technology, magical cosmology',
+      Modern: 'systemic authoritarian control, advanced speculative technology, magical cosmology, world-ending collapse',
+      Historical: 'modern cultural attitudes, advanced technology, speculative science, magic unless explicitly alternate-history'
+  };
+
+  const WORLD_ROMANCE_PRESSURE = {
+      Fantasy: 'love vs sacrifice',
+      SciFi: 'love vs discovery',
+      Dystopia: 'love vs system',
+      PostApocalyptic: 'love vs survival',
+      Modern: 'love vs society',
+      Historical: 'love vs tradition'
+  };
+
+  function buildWorldSeparationContract(world) {
+      if (!world) return '';
+      const forbidden = WORLD_FORBIDDEN_DRIFT[world];
+      const pressure = WORLD_ROMANCE_PRESSURE[world];
+      if (!forbidden && !pressure) return '';
+
+      let block = `
+
+WORLD SEPARATION CONTRACT (MANDATORY):
+This story operates inside one world: ${world}. Flavors add pressure within this world but do NOT change the world type.
+If a scene begins drifting into another world's pressure model, correct it back to ${world}.`;
+      if (pressure) block += `\nRomance Pressure Axis: ${pressure}.`;
+      if (forbidden) block += `\nForbidden Drift: ${forbidden}.`;
+      return block;
+  }
+
   /**
    * Build world flavor directives for LLM system prompt.
    * Accepts resolved flavor array from resolveWorldFlavors().
@@ -23866,12 +24377,16 @@ QUIETING EVENT DIRECTIVES:
           const resolvedFlavors1 = resolveWorldFlavors(storyWorld, state.picks?.worldSubtype);
           state.resolvedWorldFlavors = resolvedFlavors1; // persist for story lifetime
 
-          // Blue Blood variant selection — once per story, weighted random
+          // Blue Blood variant selection — once per story, weighted random.
+          // BlueBlood uses PascalCase key in MODERN_FLAVOR_STRUCTURAL_DATA because it
+          // carries variant-specific sub-objects (royal/aristocratic) unlike other flavors,
+          // and is excluded from modernStructuralMap to avoid double-injection.
           if (storyWorld === 'Modern' && resolvedFlavors1.some(f => f.val === 'blue_blood') && !state._blueBloodVariant) {
               const weights = MODERN_FLAVOR_STRUCTURAL_DATA.BlueBlood.variant_weights;
               const roll = Math.random();
               state._blueBloodVariant = roll < weights.royal ? 'royal' : 'aristocratic';
-              console.log(`[BLUE_BLOOD] Variant selected: ${state._blueBloodVariant} (roll=${roll.toFixed(3)})`);
+              state._blueBloodVariantRerolled = true; // dev diagnostic: variant was freshly rolled this session
+              console.log(`[BLUE_BLOOD] Variant selected: ${state._blueBloodVariant} (roll=${roll.toFixed(3)}, fresh=true)`);
           }
 
           // Blue Blood entropy initialization — once per story
@@ -24021,6 +24536,13 @@ QUIETING EVENT DIRECTIVES:
           initializeFortuneFavor();
 
           const worldFlavorDirectives = buildWorldFlavorDirectives(storyWorld, resolvedFlavors1);
+          const modernWorldBlock1 = storyWorld === 'Modern' ? buildModernWorldBlock(resolvedFlavors1) : '';
+          const historicalWorldBlock1 = storyWorld === 'Historical' ? buildHistoricalWorldBlock(resolvedFlavors1) : '';
+          const fantasyWorldBlock1 = storyWorld === 'Fantasy' ? buildFantasyWorldBlock(resolvedFlavors1) : '';
+          const scifiWorldBlock1 = storyWorld === 'SciFi' ? buildSciFiWorldBlock(resolvedFlavors1) : '';
+          const dystopiaWorldBlock1 = storyWorld === 'Dystopia' ? buildDystopiaWorldBlock(resolvedFlavors1) : '';
+          const postApocWorldBlock1 = storyWorld === 'PostApocalyptic' ? buildPostApocWorldBlock(resolvedFlavors1) : '';
+          const worldSeparation1 = buildWorldSeparationContract(storyWorld);
 
           // Pre-compute probabilistic injections so polarity can check suppression
           const _tone1 = state.picks?.tone || 'Earnest';
@@ -24043,7 +24565,7 @@ You are writing a story with the following configuration:
 ${_polarityBlock1}
 - POV: ${state.picks?.pov || 'First'}
 ${worldFlavorDirectives}
-
+${modernWorldBlock1}${historicalWorldBlock1}${fantasyWorldBlock1}${scifiWorldBlock1}${dystopiaWorldBlock1}${postApocWorldBlock1}${worldSeparation1}
 Protagonist: ${playerNameBlank ? '[TO BE INVENTED — see NAME INVENTION rules]' : pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
 Love Interest: ${partnerNameBlank ? '[TO BE INVENTED — see NAME INVENTION rules]' : lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
 ${nameInventionDirectives ? '\n' + nameInventionDirectives : ''}
@@ -27666,8 +28188,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       pov: {
         title: val === 'LoveInterest'
           ? (state.picks?.identity?.displayPartnerName && state.picks.identity.displayPartnerName !== 'Love Interest'
-              ? state.picks.identity.displayPartnerName + '\u2019s POV'
-              : 'Love Interest\u2019s POV')
+              ? state.picks.identity.displayPartnerName + '\u2019s Eyes'
+              : 'Love Interest\u2019s Eyes')
           : val,
         subtitle: 'Story Point of View'
       },
@@ -33883,7 +34405,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       if (!displayName || displayName === 'Love Interest') {
           // Default: simple text
-          if (backTitle) backTitle.textContent = "Love Interest's POV";
+          if (backTitle) backTitle.textContent = "Love Interest's Eyes";
           if (frontTitle) frontTitle.textContent = 'Love Interest';
           return;
       }
@@ -33910,7 +34432,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
           const line3 = document.createElement('span');
           line3.className = 'li-pov-line';
-          line3.textContent = 'POV';
+          line3.textContent = 'Eyes';
           backTitle.appendChild(line3);
       }
   }
@@ -34050,14 +34572,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Start loading bar sparkles
     startOverlayLoadingSparkles();
 
-    // Show/hide cancel button based on cancellable flag
-    if (cancelBtn) {
-        if (cancellable) {
-            cancelBtn.classList.add('visible');
-        } else {
-            cancelBtn.classList.remove('visible');
-        }
-    }
+    // Always show cancel X so users can abort loading
+    if (cancelBtn) cancelBtn.classList.add('visible');
 
     if(_loadingTimer) clearInterval(_loadingTimer);
     if(_loadingMsgTimer) clearInterval(_loadingMsgTimer);
@@ -34103,6 +34619,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     if (_loadingCancelCallback) {
         _loadingCancelCallback();
         _loadingCancelCallback = null;
+    } else {
+        // No explicit callback — return to setup screen
+        window.showScreen('setup');
     }
     stopLoading();
   }
@@ -34191,12 +34710,11 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const x = Math.random() * W;
       const y = (Math.random() - 0.5) * 10;
 
-      // Tight parameter ranges for visual cohesion
-      const dur   = 2800 + Math.random() * 800;            // 2.8–3.6s (±12%)
+      // Tight parameter ranges — straight upward drift, no sway
+      const dur   = 2800 + Math.random() * 800;            // 2.8–3.6s
       const dxDir = Math.random() < 0.5 ? -1 : 1;
-      const dx    = dxDir * (6 + Math.random() * 6);       // ±6–12px lateral
-      const dy    = -(14 + Math.random() * 8);              // -14 to -22px upward
-      const sx    = -dxDir * (2 + Math.random() * 3);       // gentle S-curve counter-sway
+      const dx    = dxDir * (2 + Math.random() * 4);       // ±2–6px gentle lateral
+      const dy    = -(12 + Math.random() * 8);              // -12 to -20px upward
       const peak  = bright ? 0.55 + Math.random() * 0.2    // 0.55–0.75
                            : 0.35 + Math.random() * 0.2;   // 0.35–0.55
       const size  = 2 + Math.random() * 2;                  // 2–4px
@@ -34204,7 +34722,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       sparkle.style.cssText = `
           left:${x}px; top:${y}px;
           width:${size}px; height:${size}px;
-          --dx:${dx}px; --dy:${dy}px; --sx:${sx}px;
+          --dx:${dx}px; --dy:${dy}px;
           --peak:${peak}; --dur:${dur}ms;
       `;
       container.appendChild(sparkle);
@@ -38082,6 +38600,13 @@ Use ONLY real-world vocabulary appropriate to a contemporary Earth setting.` : '
     // Resolve world flavors (use stored from story start, or recompute if missing)
     const resolvedFlavors2 = state.resolvedWorldFlavors || resolveWorldFlavors(storyWorld, state.picks?.worldSubtype);
     const worldFlavorDirectives2 = buildWorldFlavorDirectives(storyWorld, resolvedFlavors2);
+    const modernWorldBlock2 = storyWorld === 'Modern' ? buildModernWorldBlock(resolvedFlavors2) : '';
+    const historicalWorldBlock2 = storyWorld === 'Historical' ? buildHistoricalWorldBlock(resolvedFlavors2) : '';
+    const fantasyWorldBlock2 = storyWorld === 'Fantasy' ? buildFantasyWorldBlock(resolvedFlavors2) : '';
+    const scifiWorldBlock2 = storyWorld === 'SciFi' ? buildSciFiWorldBlock(resolvedFlavors2) : '';
+    const dystopiaWorldBlock2 = storyWorld === 'Dystopia' ? buildDystopiaWorldBlock(resolvedFlavors2) : '';
+    const postApocWorldBlock2 = storyWorld === 'PostApocalyptic' ? buildPostApocWorldBlock(resolvedFlavors2) : '';
+    const worldSeparation2 = buildWorldSeparationContract(storyWorld);
 
     // Pre-compute probabilistic injections so polarity can check suppression
     const _tone2 = state.picks.tone || 'Earnest';
@@ -38151,7 +38676,7 @@ You are writing a story with the following 4-axis configuration:
 ${_polarityBlock2}
 - POV: ${state.picks.pov || 'First'}
 ${worldFlavorDirectives2}
-${prehistoricForbid}${modernForbid}
+${modernWorldBlock2}${historicalWorldBlock2}${fantasyWorldBlock2}${scifiWorldBlock2}${dystopiaWorldBlock2}${postApocWorldBlock2}${worldSeparation2}${prehistoricForbid}${modernForbid}
 
     Protagonist: ${playerNameBlank2 ? '[TO BE INVENTED — see NAME INVENTION rules]' : pKernel} (${pGen}, ${pPro}${pAge ? `, age ${pAge}` : ''}).
     Love Interest: ${partnerNameBlank2 ? '[TO BE INVENTED — see NAME INVENTION rules]' : lKernel} (${lGen}, ${lPro}${lAge ? `, age ${lAge}` : ''}).
@@ -40522,6 +41047,331 @@ Return ONLY valid JSON:
       };
   }
 
+  // ============================================================
+  // WORLD VISUAL IDENTITY ENGINE — Per-World Cover Attractors
+  // Anchors each world to distinct environmental geometry,
+  // color language, and atmospheric tone so covers never
+  // collapse into generic imagery.
+  // ============================================================
+
+  const WORLD_VISUAL_IDENTITY = {
+      Fantasy: {
+          geometry: [
+              'Fate\'s Favor basin ringed by black peaks',
+              'Ascendant Run flowing against gravity',
+              'Shackle Isles offshore archipelago',
+              'Thornwild ancient forests',
+              'Lytharyn arcane towers',
+              'Vaelryn Reach mountain courts',
+              'Gloamwater Bay tidal enclave',
+              'Veilwood forbidden borders'
+          ],
+          palette: [
+              'moonlit silver',
+              'storm-blue',
+              'emerald twilight',
+              'ashen dawn'
+          ],
+          atmosphere: [
+              'mythic scale',
+              'ancient power',
+              'sacred geography',
+              'sacrifice-marked landscape'
+          ],
+          locationRule: 'Favor real locations from The Fatelands. Avoid generic fantasy castles unless they belong to a named region. The world should feel geographically coherent across images within a single story.'
+      },
+      Dystopia: {
+          geometry: [
+              'oppressive megastructures',
+              'dense surveillance architecture',
+              'crowded industrial zones'
+          ],
+          palette: [
+              'sodium-orange haze',
+              'dirty neon',
+              'concrete gray',
+              'sickly fluorescent light'
+          ],
+          atmosphere: [
+              'systemic pressure',
+              'public control',
+              'social tension'
+          ]
+      },
+      SciFi: {
+          geometry: [
+              'orbital structures',
+              'interstellar stations',
+              'alien planetary landscapes'
+          ],
+          palette: [
+              'deep vacuum black',
+              'cold stellar blue',
+              'high-energy plasma glow'
+          ],
+          atmosphere: [
+              'cosmic scale',
+              'technological awe',
+              'exploration frontier'
+          ]
+      },
+      Modern: {
+          geometry: [
+              'intimate urban or domestic spaces',
+              'streets, cafés, apartments',
+              'real-world human environments'
+          ],
+          palette: [
+              'natural daylight',
+              'warm interior lighting',
+              'rainy city reflections'
+          ],
+          atmosphere: [
+              'everyday realism',
+              'human proximity',
+              'emotional immediacy'
+          ]
+      },
+      Historical: {
+          geometry: [
+              'era-authentic settlements',
+              'period architecture',
+              'material culture landscapes'
+          ],
+          palette: [
+              'natural pigments',
+              'firelight',
+              'dusty daylight'
+          ],
+          atmosphere: [
+              'time-bound realism',
+              'lived history',
+              'cultural immersion'
+          ]
+      },
+      PostApocalyptic: {
+          geometry: [
+              'ruined infrastructure reclaimed by nature',
+              'collapsed urban sprawl',
+              'makeshift survivor settlements'
+          ],
+          palette: [
+              'ash-gray overcast',
+              'rust and oxidized metal',
+              'pale toxic green',
+              'burnt sienna dust'
+          ],
+          atmosphere: [
+              'desolate silence',
+              'precarious survival',
+              'haunted remnants'
+          ]
+      }
+  };
+
+  // Flavor micro-modifiers — lightweight environmental cues
+  // that nudge the world identity without overriding it.
+  const COVER_FLAVOR_TEXTURE = {
+      // Modern
+      small_town:           'quiet streets, familiar landmarks, communal spaces',
+      college:              'campus greens, lecture halls, dormitory corridors',
+      friends:              'shared apartments, neighborhood bars, rooftop gatherings',
+      blue_blood:           'estate grounds, ballroom interiors, private galleries',
+      office:               'corporate interiors, glass partitions, late-night workspaces',
+      supernatural_modern:  'ordinary facades hiding occult symbols, liminal thresholds',
+      superheroic_modern:   'dramatic vertical cityscapes, high-altitude vantage points, impact scenes',
+      // SciFi
+      galactic_civilizations: 'massive fleet formations, contested planetary orbits',
+      future_of_science:    'sterile laboratories, experimental chambers, data visualization',
+      cyberpunk:            'neon-drenched alleyways, augmentation clinics, data markets',
+      post_human:           'post-biological architecture, consciousness substrates',
+      first_contact:        'alien terrain, diplomatic vessels, unfamiliar skies',
+      simulation:           'glitching environments, recursive architecture, reality seams',
+      final_frontier:       'pressurized corridors, docking rings, starfields beyond glass',
+      // Fantasy
+      arcane_binding:       'ritual circles, enchanted chains, glowing sigils',
+      fated_blood:          'ancestral halls, bloodline altars, lineage tapestries',
+      the_inhuman:          'hybrid architecture, inhuman scale, alien beauty',
+      the_beyond:           'dimensional rifts, spectral boundaries, otherworldly light',
+      cursed:               'blighted ground, corrupted growth, curse-marked stone',
+      // Dystopia
+      glass_house:          'transparent walls, surveillance domes, public intimacy theaters',
+      human_capital:        'trading floors, value-display boards, commodified spaces',
+      dogma:                'cathedral-like judgment halls, confessional architecture',
+      quieting_event:       'serene public spaces masking biochemical suppression infrastructure',
+      endless_edit:         'identity clinics, memory-erasure chambers, unstable reflections',
+      thirst:               'water-rationing infrastructure, arid civic plazas, guarded reservoirs',
+      // PostApocalyptic
+      ashfall:              'volcanic ash fields, charred forests, ember-lit skies',
+      year_zero:            'blast craters, collapsed bridges, refugee camps',
+      dystimulation:        'abandoned pleasure domes, sensory-deprivation ruins',
+      predation:            'fortified shelters, hunting grounds, territorial markers',
+      hunger:               'barren fields, empty storehouses, rationing lines',
+      // Historical (eras)
+      prehistoric:          'cave shelters, megafauna landscapes, stone tool camps',
+      bronze_age:           'ziggurats, irrigated river valleys, hammered metal',
+      classical:            'marble colonnades, forum plazas, amphitheater tiers',
+      medieval:             'stone keeps, muddy village squares, torchlit corridors',
+      renaissance:          'vaulted studios, canal cities, printing houses',
+      victorian:            'gaslit streets, industrial smokestacks, ornate parlors',
+      '20th_century':       'art-deco lobbies, wartime bunkers, jazz-age nightclubs'
+  };
+
+  // Attractor suppression — soft directives injected when
+  // world-specific visual clichés are detected in recent history.
+  const COVER_ATTRACTOR_GUARDS = {
+      Fantasy:  { pattern: /\b(castle|tower|citadel|fortress|keep|battlement)\b/i,
+                  directive: 'Avoid castles, towers, or fortress silhouettes unless the setting region explicitly includes them.' },
+      Modern:   { pattern: /\b(skyline|skyscraper silhouette|city panorama)\b/i,
+                  directive: 'Avoid generic skyline silhouettes — ground the image in specific, intimate urban detail.' },
+      Dystopia: { pattern: /\b(clean|sleek|polished|gleaming)\b/i,
+                  directive: 'Architecture must feel oppressive, dense, and worn — never clean futuristic skylines.' }
+  };
+
+  /**
+   * Build world visual identity directives for cover prompt.
+   * Returns { directiveText, worldIdentityMeta } or null if world has no identity map.
+   */
+  function buildWorldVisualIdentity(world, history) {
+      const identity = WORLD_VISUAL_IDENTITY[world];
+      if (!identity) return null;
+
+      const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+      const geometry   = pick(identity.geometry);
+      const palette    = pick(identity.palette);
+      const atmosphere = pick(identity.atmosphere);
+
+      // Flavor micro-modifier
+      const flavor = state.picks?.worldSubtype || null;
+      const flavorTexture = flavor ? COVER_FLAVOR_TEXTURE[flavor] || null : null;
+
+      // Attractor suppression — check last 2 covers for cliché repetition
+      const guard = COVER_ATTRACTOR_GUARDS[world];
+      let suppressionDirective = '';
+      if (guard) {
+          const recentPrompts = (history || []).slice(0, 2);
+          const recentHits = recentPrompts.filter(m =>
+              m._coverPromptSample && guard.pattern.test(m._coverPromptSample)
+          ).length;
+          if (recentHits >= 1) {
+              suppressionDirective = '\n' + guard.directive;
+          }
+      }
+
+      const locationRule = identity.locationRule || '';
+
+      return {
+          directiveText: `
+WORLD VISUAL IDENTITY
+ENVIRONMENTAL GEOMETRY: ${geometry}
+COLOR LANGUAGE: ${palette}
+ATMOSPHERIC TONE: ${atmosphere}${flavorTexture ? `\nFLAVOR TEXTURE: ${flavorTexture}` : ''}${suppressionDirective}${locationRule ? `\n${locationRule}` : ''}`,
+          worldIdentityMeta: { geometry, palette, atmosphere, flavor: flavorTexture ? flavor : null }
+      };
+  }
+
+  // ============================================================
+  // FATELANDS LOCATION ENGINE — Fantasy Cover Diversity
+  // Canonical locations with distinct environmental geometry.
+  // Prevents repeated "castle silhouette at sunset" compositions.
+  // ============================================================
+
+  const FATELANDS_COVER_LOCATIONS = [
+      { id: 'FATES_FAVOR_BASIN',   prompt: 'immense meteor basin ringed by jagged black peaks, fractured terrain, strange luminous minerals, lightning drawn toward the basin, vast celestial scar in the earth' },
+      { id: 'ASCENDANT_RUN',       prompt: 'river flowing calmly against gravity through highland mist, water moving uphill as though gravity itself were wrong, ancient ritual stones along the banks' },
+      { id: 'SHACKLE_ISLES',       prompt: 'storm-lashed archipelago, broken black islands in violent sea, Blackmoor, Quiet Chain, Cinderwake, Sanctum Reeve silhouettes against lightning' },
+      { id: 'THORNWILD',           prompt: 'ancient thorn forest, towering twisted roots and bramble cathedrals, green twilight filtering through tangled branches, First Favored heartland' },
+      { id: 'VAELRYN_REACH',       prompt: 'high alpine kingdom carved into pale mountains, the High Court at the highest peak, sky bridges, wind-swept stone terraces above the clouds' },
+      { id: 'LYTHARYN',            prompt: 'western coastal arcane city-state, towers of scholarly magic, knowledge archives, glowing sigils etched into stone facades, sea mist and runic light' },
+      { id: 'ASHEN_VERGE',         prompt: 'western inland war province, militarized frontier landscape, fortified holds, scorched training grounds, war banners against barren hills' },
+      { id: 'PULSE_POINT',         prompt: 'southern meridian coast trade harbor, chartered maritime authority, merchant ships in harbor, bustling trade docks, warm coastal light' },
+      { id: 'GLOAMWATER_BAY',      prompt: 'eastern tidal enclave of altered sea-bound beings, bioluminescent waters, merfolk architecture half-submerged, the Drowned Vein surfacing' },
+      { id: 'VEILWOOD_BORDER',     prompt: 'forbidden forest perimeter, guarded boundary, ancient twisted canopy beyond, no confirmed path inward, mist and silence' },
+      { id: 'UNMOORED_ISLES',      prompt: 'ephemeral islands risen during Favor surge, unstable landmasses of raw magic, flickering geography, crystalline formations and strange tides' }
+  ];
+
+  const FANTASY_COMPOSITION_MODES = [
+      'environmental landscape',
+      'architectural interior',
+      'top-down geography',
+      'storm environment',
+      'ritual or gathering scene',
+      'travel path or crossing',
+      'close environmental texture'
+  ];
+
+  const FANTASY_PALETTES = [
+      'storm-blue atmosphere with lightning',
+      'moonlit silver and black',
+      'emerald twilight forest light',
+      'ashen dawn with pale sunlight',
+      'cold alpine daylight',
+      'obsidian sky with glowing runes'
+  ];
+
+  // Track castle/tower/citadel usage for saturation guard
+  let _fantasyCastleHistory = [];
+
+  function buildFantasyCoverDirectives(history) {
+      // Select location (avoid last-used)
+      const recentLocationIds = (history || []).slice(0, 2)
+          .map(m => m._fantasyLocationId).filter(Boolean);
+      const availableLocations = FATELANDS_COVER_LOCATIONS.filter(
+          loc => !recentLocationIds.includes(loc.id)
+      );
+      const location = availableLocations.length > 0
+          ? availableLocations[Math.floor(Math.random() * availableLocations.length)]
+          : FATELANDS_COVER_LOCATIONS[Math.floor(Math.random() * FATELANDS_COVER_LOCATIONS.length)];
+
+      // Select composition mode (avoid last-used)
+      const recentModes = (history || []).slice(0, 2)
+          .map(m => m._fantasyCompositionMode).filter(Boolean);
+      const availableModes = FANTASY_COMPOSITION_MODES.filter(m => !recentModes.includes(m));
+      const mode = availableModes.length > 0
+          ? availableModes[Math.floor(Math.random() * availableModes.length)]
+          : FANTASY_COMPOSITION_MODES[Math.floor(Math.random() * FANTASY_COMPOSITION_MODES.length)];
+
+      // Select palette (avoid last-used)
+      const recentPalettes = (history || []).slice(0, 2)
+          .map(m => m._fantasyPalette).filter(Boolean);
+      const availablePalettes = FANTASY_PALETTES.filter(p => !recentPalettes.includes(p));
+      const palette = availablePalettes.length > 0
+          ? availablePalettes[Math.floor(Math.random() * availablePalettes.length)]
+          : FANTASY_PALETTES[Math.floor(Math.random() * FANTASY_PALETTES.length)];
+
+      // Castle saturation guard
+      let castleSuppression = '';
+      const recentCastleCount = _fantasyCastleHistory.filter(
+          ts => Date.now() - ts < 1000 * 60 * 60 // last hour
+      ).length;
+      if (recentCastleCount >= 2) {
+          castleSuppression = '\nAvoid castles, towers, citadels, or fortress silhouettes in this composition.\n';
+      }
+
+      return {
+          locationId: location.id,
+          compositionMode: mode,
+          paletteName: palette,
+          directiveText: `
+SETTING REGION: ${location.id}
+ENVIRONMENT GEOMETRY: ${location.prompt}
+
+COMPOSITION STYLE: ${mode}
+
+COLOR PALETTE: ${palette}
+${castleSuppression}`
+      };
+  }
+
+  function recordFantasyCoverCastle(promptText) {
+      if (/\b(castle|tower|citadel|fortress|keep|battlement)\b/i.test(promptText)) {
+          _fantasyCastleHistory.push(Date.now());
+          // Keep only last 5 entries
+          if (_fantasyCastleHistory.length > 5) _fantasyCastleHistory.shift();
+      }
+  }
+
   // Build intelligent cover prompt with all guardrails (AUTHORITATIVE)
   // PROMPT STRUCTURE ORDER: Layout → Emotion → Focal → Background → Palette → Exclusions
   async function buildCoverPrompt(synopsis, genre, world, tone, dynamic, era) {
@@ -40604,6 +41454,15 @@ Return ONLY valid JSON:
           figureText = 'Only hands or partial body, no face.';
       }
 
+      // WORLD VISUAL IDENTITY ENGINE — per-world cover attractors
+      const worldIdentity = buildWorldVisualIdentity(world, history);
+
+      // FATELANDS LOCATION ENGINE — Fantasy cover diversity
+      let fantasyDirectives = null;
+      if (world === 'Fantasy') {
+          fantasyDirectives = buildFantasyCoverDirectives(history);
+      }
+
       // Save motif to history (include layout for repetition tracking)
       const wasSubstituted = repetitionCheck.details?.object;
       const newMotif = {
@@ -40613,9 +41472,15 @@ Return ONLY valid JSON:
           backgroundStyle: finalBackground,
           emotion: emotion,
           substitution: wasSubstituted ? finalObject : null,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          // Fantasy-specific tracking
+          _fantasyLocationId: fantasyDirectives?.locationId || null,
+          _fantasyCompositionMode: fantasyDirectives?.compositionMode || null,
+          _fantasyPalette: fantasyDirectives?.paletteName || null,
+          // World identity tracking (for attractor guard)
+          _worldIdentityMeta: worldIdentity?.worldIdentityMeta || null
       };
-      saveMotifToHistory(newMotif);
+      // NOTE: saveMotifToHistory deferred until after promptText is built (needs _coverPromptSample)
 
       // Build the authoritative prompt (ORDER MATTERS)
       // Semantic Declaration → Title-Safe → Layout → Emotion → Focal → Background → Palette → Restraint → Exclusions
@@ -40740,7 +41605,7 @@ Composition must leave clear space for book-cover typography overlay.`;
       // Get sketch tier enforcement if tone requires it
       const sketchTierText = getSketchTierEnforcement(tone);
 
-      return {
+      const result = {
           layoutId: selectedLayout.id,
           focalObject: finalObject,
           material: material,
@@ -40750,15 +41615,26 @@ Composition must leave clear space for book-cover typography overlay.`;
           palette: palette,
           thematicTension: thematicTension,
           promptText: `${COVER_SEMANTIC_DECLARATION}${TITLE_SAFE_CONSTRAINTS}
-${sketchTierText ? '\n' + sketchTierText + '\n' : ''}
+${worldIdentity ? worldIdentity.directiveText : ''}
+${fantasyDirectives ? fantasyDirectives.directiveText : ''}${sketchTierText ? '\n' + sketchTierText + '\n' : ''}
 LAYOUT: ${selectedLayout.description}
 EMOTIONAL GRAVITY: ${emotion} (guides all visual decisions).
 ${thematicTension ? `STORY TENSION: ${thematicTension}. (Influences imagery, not literal depiction.)\n` : ''}FOCAL ANCHOR: ${finalObject} rendered in ${material}, composed per layout.
 BACKGROUND: ${finalBackground}. (Support emotion, not decoration.)
 PALETTE: ${palette.primary}, ${palette.secondary}. Max 3 tones. ${palette.materialNote}
 COMPOSITION: ${restraintText}
-${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}`
+${figureText ? figureText + '\n' : ''}${COVER_EXCLUSIONS}
+${buildVisualContinuityDirective()}`
       };
+
+      // Store prompt sample in motif history for attractor guard checks
+      newMotif._coverPromptSample = result.promptText.slice(0, 500);
+      saveMotifToHistory(newMotif);
+
+      // Record castle usage for Fantasy saturation guard
+      if (world === 'Fantasy') recordFantasyCoverCastle(result.promptText);
+
+      return result;
   }
 
   // ============================================================
@@ -42158,7 +43034,8 @@ ${tone === 'Wry Confessional'
 
 ${tone === 'Wry Confessional'
   ? 'The final image must look like a New Yorker editorial cartoon — simple, flat, understated.'
-  : 'The final image must look like a real published novel cover — tasteful, evocative, professional.'}`;
+  : 'The final image must look like a real published novel cover — tasteful, evocative, professional.'}
+${buildVisualContinuityDirective()}`;
 
       console.log('[COVER:v1] Minimal prompt generated (', minimalPrompt.length, 'chars)');
 
@@ -44727,6 +45604,99 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
 
   // FALLBACK CHAIN: Unified image generation with provider fallbacks
   // All image generation MUST route through this function
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VISUAL CONTINUITY RULE — All images within one story share aesthetic identity
+  // Palette family, lighting logic, and texture/illustration style must remain
+  // stable across generations. Composition may vary.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const _VISUAL_CONTINUITY_PALETTES = {
+      Dark:             'deep blacks, muted jewel tones, desaturated highlights',
+      Earnest:          'warm naturals, soft earth tones, gentle golden light',
+      'Wry Confessional': 'muted pastels, overcast neutrals, washed-out warmth',
+      Tender:           'soft warm palette, blush and cream, diffused light',
+      Playful:          'bright saturated accents, clean whites, vivid contrast',
+      Intense:          'high-contrast darks and golds, dramatic chiaroscuro',
+      Gothic:           'cold desaturated tones, bruised purples, silver highlights'
+  };
+
+  const _VISUAL_CONTINUITY_LIGHTING = {
+      Modern:           'urban ambient — window light, streetlamp glow, interior warmth',
+      Fantasy:          'atmospheric diffusion — mist, god-rays, enchanted luminescence',
+      SciFi:            'technological lighting — holographic spill, cold stellar, plasma glow',
+      Historical:       'period-authentic — candlelight, firelight, natural daylight',
+      Dystopia:         'oppressive industrial — sodium-orange, fluorescent, filtered haze',
+      PostApocalyptic:  'post-collapse ambient — overcast, ash-filtered, low horizon light'
+  };
+
+  function buildVisualContinuityDirective() {
+      const tone = state.picks?.tone;
+      const world = state.picks?.world;
+      if (!tone && !world) return '';
+
+      const palette = _VISUAL_CONTINUITY_PALETTES[tone] || '';
+      const lighting = _VISUAL_CONTINUITY_LIGHTING[world] || '';
+
+      let directive = '\n\nVISUAL CONTINUITY (MANDATORY):';
+      directive += '\nAll images in this story must share a consistent aesthetic identity.';
+      if (palette) directive += `\nPALETTE FAMILY: ${palette}`;
+      if (lighting) directive += `\nLIGHTING LOGIC: ${lighting}`;
+      directive += '\nSTYLE: Maintain consistent texture and illustration approach across all images.';
+      directive += '\nComposition may vary, but palette, lighting, and rendering style must remain stable.';
+      return directive;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FANTASY ENVIRONMENT SELECTION RULE
+  // Anchors all Fantasy imagery to canonical Fatelands locations.
+  // Suppresses generic fantasy defaults (anonymous castles, unnamed bridges).
+  // Maintains geographic consistency within a single story.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function buildFantasyEnvironmentDirective() {
+      if (state.picks?.world !== 'Fantasy') return '';
+
+      const region = state.fantasyRegion;
+      const regionMeta = region ? FATELANDS_CANON.regions[region] : null;
+
+      let directive = `
+
+FANTASY ENVIRONMENT SELECTION (MANDATORY):
+Anchor visuals to specific locations within The Fatelands. Do not use generic fantasy imagery.
+SUPPRESS: isolated castles, unnamed stone bridges, generic medieval villages, anonymous fantasy towers — unless they belong to a defined region.
+PREFERRED ANCHORS: Fate's Favor basin, The Ascendant Run, Thornwild forests, Vaelryn Reach court cities, Lytharyn arcane towers, The Ashen Verge war province, Pulse Point harbor, The Shackle Isles, Gloamwater Bay, The Veilwood perimeter.`;
+
+      // Geographic consistency — if story has established a region, bias toward it
+      if (region && regionMeta) {
+          const regionLabel = region.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          directive += `\nSTORY REGION ANCHOR: ${regionLabel}`;
+          if (regionMeta.position) directive += ` — ${regionMeta.position}`;
+          directive += `\nMaintain geographic consistency with this established region. Later visuals should reflect ${regionLabel} rather than default castle landscapes.`;
+          if (regionMeta.magicBias) directive += `\nMagic expression in this region: ${regionMeta.magicBias}.`;
+
+          // Region → flavor affinity: suggest natural visual pressures for this region
+          const affinity = FANTASY_REGION_FLAVOR_AFFINITY[region];
+          if (affinity && affinity.length) {
+              const affinityLabels = affinity.map(v => FANTASY_CONTEXTUAL_LABELS[v]).filter(Boolean);
+              if (affinityLabels.length) {
+                  directive += `\n${regionLabel} naturally emphasizes: ${affinityLabels.join(', ')}.`;
+              }
+          }
+      }
+
+      // Flavor-specific visual regionalization
+      const activeFlavor = (state.resolvedWorldFlavors || [])
+          .find(f => f.type === 'contextual' && FANTASY_FLAVOR_REGIONALIZATION[f.val]);
+      if (activeFlavor) {
+          const reg = FANTASY_FLAVOR_REGIONALIZATION[activeFlavor.val];
+          if (reg.architecture && reg.architecture.length) {
+              directive += `\nFLAVOR VISUAL ELEMENTS: ${reg.architecture.join(', ')}.`;
+          }
+      }
+
+      return directive;
+  }
+
   // INTENT-BASED ROUTING (MANDATORY):
   //   setting → Gemini (primary) → OpenAI (fallback) — NO Replicate
   //   scene   → OpenAI (primary) → Replicate (fallback) — NO Gemini
@@ -44757,6 +45727,13 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       if (settingSynopsis && intent === 'setting') {
           basePrompt += `\nSETTING CONTEXT (visual atmosphere only — no characters, no text): "${settingSynopsis}"`;
       }
+
+      // VISUAL CONTINUITY RULE — all images in the same story share aesthetic identity
+      basePrompt += buildVisualContinuityDirective();
+
+      // FANTASY ENVIRONMENT SELECTION RULE — anchor to Fatelands locations, not generic fantasy
+      basePrompt += buildFantasyEnvironmentDirective();
+
       basePrompt = clampPromptLength(basePrompt, 'image-gen');
 
       // ═══════════════════════════════════════════════════════════════════
@@ -49926,9 +50903,10 @@ FATE CARD ADAPTATION (CRITICAL):
                   log('Post-Render (P4): N/A');
               }
 
-              // Blue Blood debug (variant + entropy)
+              // Blue Blood debug (variant + entropy + reroll status)
               if (state._blueBloodVariant) {
-                  log('Blue Blood Variant: ' + state._blueBloodVariant);
+                  const rerolled = state._blueBloodVariantRerolled ? 'fresh' : 'carried';
+                  log(`Blue Blood Variant: ${state._blueBloodVariant} (${rerolled})`);
                   if (state._blueBloodEntropy) {
                       const e = state._blueBloodEntropy;
                       log('  Entry State: ' + e.entry_state);

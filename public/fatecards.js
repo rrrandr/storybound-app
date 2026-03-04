@@ -1872,6 +1872,8 @@ function setSelectedState(mount, selectedCardEl){
             </div>
         `;
         petitionCard.onclick = () => {
+            // Block card interaction in design mode
+            if (document.querySelector('.design-mode-badge')) return;
             if (!petitionCard.classList.contains('flipped')) {
                 petitionCard.classList.add('flipped');
                 return;
@@ -1890,6 +1892,8 @@ function setSelectedState(mount, selectedCardEl){
             </div>
         `;
         temptCard.onclick = () => {
+            // Block card interaction in design mode
+            if (document.querySelector('.design-mode-badge')) return;
             if (!temptCard.classList.contains('flipped')) {
                 temptCard.classList.add('flipped');
                 return;
@@ -2036,6 +2040,8 @@ function setSelectedState(mount, selectedCardEl){
         const petitionCard = mount.querySelector('.petition-fate-card');
         if (petitionCard) {
             petitionCard.onclick = () => {
+                // Block card interaction in design mode
+                if (document.querySelector('.design-mode-badge')) return;
                 if (!petitionCard.classList.contains('flipped')) {
                     petitionCard.classList.add('flipped');
                     return;
@@ -2048,6 +2054,8 @@ function setSelectedState(mount, selectedCardEl){
         const temptCard = mount.querySelector('.tempt-fate-card');
         if (temptCard) {
             temptCard.onclick = () => {
+                // Block card interaction in design mode
+                if (document.querySelector('.design-mode-badge')) return;
                 if (!temptCard.classList.contains('flipped')) {
                     temptCard.classList.add('flipped');
                     return;

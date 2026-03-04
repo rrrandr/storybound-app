@@ -103,6 +103,16 @@ body.booting .screen {
 #storyContent.theme-easy { --page-bg: #fffee8; --page-text: #000; --page-accent: #333; background: var(--page-bg); color: var(--page-text); }
 #storyContent.theme-easy #storyText, #storyContent.theme-easy .story-page { background: var(--page-bg); color: var(--page-text); }
 
+/* Theme-reactive title/scene colors — override dark-bg defaults when theme gives #storyText a background */
+#storyContent.theme-sepia .story-page-title,
+#storyContent.theme-print .story-page-title,
+#storyContent.theme-easy .story-page-title { color: var(--page-text) !important; text-shadow: none !important; }
+#storyContent.theme-sepia .story-page-scene,
+#storyContent.theme-print .story-page-scene,
+#storyContent.theme-easy .story-page-scene { color: var(--page-accent) !important; }
+#storyContent.theme-midnight .story-page-title { color: var(--page-text) !important; text-shadow: none !important; }
+#storyContent.theme-midnight .story-page-scene { color: var(--page-accent) !important; }
+
 /* LEGACY: body-level theme vars kept for reference but not applied — themes scope to #storyContent only */
 body.theme-sepia { --bg1:#2c2218; --bg2:#3e2f22; --pink:#d2b48c; --hot:#8b4513; --gold:#ffa500; --ink:#f5deb3; --panel:rgba(40,30,20,0.8); --btn-bg:#5c4033; --btn-txt:#f5deb3; }
 body.theme-midnight { --bg1:#000000; --bg2:#111111; --pink:#444; --hot:#666; --gold:#888; --ink:#ccc; --panel:rgba(20,20,20,0.9); --btn-bg:#333; --btn-txt:#aaa; }
@@ -2372,11 +2382,11 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* Typography: Lora font, lower visual salience, no UI decoration             */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 .story-page-title {
-    font-family: inherit;
+    font-family: 'Lora', serif;
     font-size: 0.9em;
     font-weight: 400;
-    color: var(--page-text, #1a1a1a) !important;
-    text-shadow: none !important;
+    color: rgba(200, 190, 170, 0.85) !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5) !important;
     text-align: center;
     margin: 0 0 8px 0;
     padding: 0;
@@ -2417,10 +2427,10 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 }
 
 .story-page-scene {
-    font-family: inherit;
+    font-family: 'Lora', serif;
     font-size: 0.9em;
     font-weight: 400;
-    color: var(--page-accent, rgba(160, 160, 160, 0.7));
+    color: rgba(160, 150, 135, 0.7);
     text-align: center;
     margin: 0 0 20px 0;
     padding: 0;
@@ -5816,11 +5826,11 @@ select {
   pointer-events: auto;
 }
 
-/* ── Top Zone: suggestion columns / custom text input (~6%–20% of card) ── */
+/* ── Top Zone: suggestion columns / custom text input — inside gold text area at card bottom ── */
 .petition-top-zone {
   position: absolute;
-  top: 6%; left: 10%; right: 10%;
-  height: 14%;
+  top: 80%; left: 4%; right: 4%;
+  height: 12%;
   display: flex;
   flex-direction: column;
 }
@@ -5964,12 +5974,12 @@ select {
 /* ── Petition Result (shown after seal) ── */
 .petition-zoom-overlay .petition-result { font-size: 0.1em; margin: 2px 0; text-align: center; color: rgba(0,0,0,0.8); }
 
-/* ── Floating Proceed button (outside card, below it) ── */
+/* ── Floating Proceed button (portal sibling, below card) ── */
 .petition-proceed-btn {
-  position: absolute;
-  bottom: -30px; left: 50%; transform: translateX(-50%);
+  position: fixed;
+  bottom: 40px; left: 50%; transform: translateX(-50%);
   font-size: 14px;
-  z-index: 3;
+  z-index: 10006;
   pointer-events: auto;
   border: none; padding: 0;
 }
@@ -6078,12 +6088,12 @@ select {
   font-style: italic;
 }
 
-/* ── Tempt Fate Proceed button ── */
+/* ── Tempt Fate Proceed button (portal sibling, below card) ── */
 .tempt-proceed-btn {
-  position: absolute;
-  bottom: -30px; left: 50%; transform: translateX(-50%);
+  position: fixed;
+  bottom: 40px; left: 50%; transform: translateX(-50%);
   font-size: 14px;
-  z-index: 3;
+  z-index: 10006;
   pointer-events: auto;
   border: none; padding: 0;
 }
@@ -7431,9 +7441,9 @@ textarea.fate-field {
 
 @keyframes sparkle-rise {
     0%   { transform: translate(0, 0) scale(0.4); opacity: 0; }
-    15%  { opacity: var(--peak); }
-    50%  { transform: translate(var(--sx), calc(var(--dy) * 0.5)) scale(1); opacity: var(--peak); }
-    85%  { opacity: calc(var(--peak) * 0.5); }
+    15%  { transform: translate(calc(var(--dx) * 0.15), calc(var(--dy) * 0.15)) scale(0.8); opacity: var(--peak); }
+    50%  { transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5)) scale(1); opacity: var(--peak); }
+    85%  { transform: translate(calc(var(--dx) * 0.85), calc(var(--dy) * 0.85)) scale(0.5); opacity: calc(var(--peak) * 0.4); }
     100% { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
 }
 
@@ -8940,18 +8950,19 @@ textarea.fate-field {
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 .synopsis-page-active .story-page-title {
-    font-family: inherit;
+    font-family: 'Lora', serif;
     letter-spacing: 0.22em;
     font-variant: small-caps;
     text-transform: lowercase;
     text-align: center;
     width: 100%;
-    color: var(--page-text);
+    color: var(--page-text) !important;
+    text-shadow: none !important;
 }
 .synopsis-page-active .story-page-scene {
-    font-family: inherit;
+    font-family: 'Lora', serif;
     letter-spacing: 0.22em;
-    color: var(--page-accent, #888);
+    color: var(--page-accent, #888) !important;
     font-variant: small-caps;
     text-align: center;
 }
@@ -10731,7 +10742,27 @@ textarea.fate-field {
     text-align: center;
     line-height: 1.1;
     font-size: 15px;
+    right: auto;
+    bottom: auto;
+    top: 52px;
 }
+/* Card Designer: per-card back title positions */
+#povGrid .sb-card[data-val="First"] .sb-card-back .sb-card-title {
+    right: auto; bottom: auto; top: 69px; left: 17px;
+}
+#povGrid .sb-card[data-val="Second"] .sb-card-back .sb-card-title {
+    right: auto; bottom: auto; top: 64px;
+}
+#povGrid .sb-card[data-val="Third"] .sb-card-back .sb-card-title {
+    right: auto; bottom: auto; top: 63px; left: 17px;
+}
+#povGrid .sb-card[data-val="Fourth"] .sb-card-back .sb-card-title {
+    right: auto; bottom: auto; top: 69px;
+}
+#povGrid .sb-card[data-val="Fifth"] .sb-card-back .sb-card-title {
+    right: auto; bottom: auto; top: 64px;
+}
+
 #povGrid .sb-card[data-val="LoveInterest"] .sb-card-back .sb-card-title .li-pov-line {
     display: block;
     white-space: nowrap;
@@ -10846,6 +10877,10 @@ textarea.fate-field {
     word-spacing: normal;
     line-height: 1.15;
     margin: 0;
+}
+/* Card Designer: SecondChance back title position */
+#dynamicGrid .sb-card[data-val="SecondChance"] .sb-card-back .sb-card-title {
+    right: auto; bottom: auto; top: 55px;
 }
 
 #dynamicGrid .sb-card .sb-card-back .sb-card-desc {
