@@ -1484,6 +1484,8 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
     // Reset all pact cards
     _pactAccepted = { tos: false, privacy: false, adult: false };
+    var proceedBtn = document.getElementById('pactProceedBtn');
+    if (proceedBtn) proceedBtn.classList.add('hidden');
     document.querySelectorAll('.pact-card').forEach(function(card) {
       card.classList.remove('flipped', 'accepted');
     });
@@ -9491,7 +9493,10 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     return `world_state: ${state.picks?.world || 'Modern'}${state.picks?.worldSubtype ? ' / ' + state.picks.worldSubtype : ''}
 relationship_state: ${state.storyturn || 'ST1'} — ${STORYTURN_CONFIG.storyturns.find(s => s.id === state.storyturn)?.name || 'Unknown'}
 power_vector: ${state.picks?.genre || 'unknown'}
-last_scene_summary: ${(state.context?.slice(-300) || 'No prior scene').slice(0, 300)}
+last_scene_summary: ${(state.sceneWindow?.length > 0 ? state.sceneWindow[state.sceneWindow.length - 1] : 'No prior scene').slice(0, 300)}
+narrative_memory: ${state.narrativeState?.relationship_state ? 'populated' : 'empty'}
+relationship_tension: ${state.relationshipTension?.attraction || 'unknown'}
+relationship_phase: ${state.relationship_phase || 'strangers'}
 active_petition: ${state.fate?.pendingPetition ? state.fate.pendingPetition.text : 'none'}
 tempt_fate_active: ${state.tempt_fate_invoked_this_turn ? 'yes' : 'no'}
 consecutive_tempt_fate_count: ${state.consecutive_tempt_fate_count || 0}
@@ -14379,6 +14384,39 @@ Return ONLY valid JSON:
       state.storyVoiceProfile = { avg_sentence_length: 'medium', metaphor_density: 'low', emotional_tone: 'restrained' };
       state.storyMotifs = [];
       state.storyVisualStyle = null;
+      state.settingLocationAnchor = null;
+      state._preloadCache = {};
+      state._sceneContext = null;
+      state._preloadComponents = null;
+
+      // ── Structured Story Memory ──
+      state.narrativeState = {
+          relationship_state: '',
+          location_state: '',
+          storyturn_state: '',
+          arousal_state: '',
+          character_positioning: '',
+          emotional_temperature: ''
+      };
+      state.relationshipTension = {
+          attraction: '', trust: '', resentment: '',
+          curiosity: '', vulnerability: '', power_dynamic: ''
+      };
+      state.callbackLedger = [];   // max 12, each: { id, type, text, scene_added, resolved }
+      state.sharedHistory = [];    // max 8, each: { type, text, scene_added }
+      state.physicalState = {
+          location: '', mc_position: '', li_position: '',
+          proximity: '', objects_notable: ''
+      };
+      state.narrativeIntent = {
+          primary_goal: '', secondary_goal: '', active_tension: '',
+          approaching_shift: '', long_term_arc: ''
+      };
+      state.sceneWindow = [];      // last 2 scene plain texts, ~400 chars each
+      state._fateSeeds = { emotional_direction: '', positioning: '', initial_motion: '' };
+      state._memoryExtractionInFlight = false;
+      state._beatPlanCache = null;
+      state.relationship_phase = 'strangers'; // forward-only emotional progression tracker
 
       // Generate new story ID
       state.storyId = (typeof crypto !== 'undefined' && crypto.randomUUID)
@@ -14386,6 +14424,42 @@ Return ONLY valid JSON:
           : 'sb_' + Date.now().toString(36);
       localStorage.setItem('sb_current_story_id', state.storyId);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CORRIDOR PROGRESSIVE PRELOAD — speculative pre-generation utilities
+  // ═══════════════════════════════════════════════════════════════════════════
+  let _preloadAbortController = null;
+
+  function _computePreloadVersion() {
+      const p = state.picks || {};
+      const playerName = $('playerNameInput')?.value.trim() || '';
+      const partnerName = $('partnerNameInput')?.value.trim() || '';
+      return [
+          p.world, p.tone, p.genre, p.dynamic, p.pov, p.pressure,
+          state.archetype?.primary, state.storyLength, state.worldSubtype,
+          playerName, partnerName
+      ].join('|');
+  }
+
+  function _invalidatePreloadCache() {
+      if (_preloadAbortController) {
+          _preloadAbortController.abort();
+          _preloadAbortController = null;
+      }
+      if (state._preloadCache?.TITLE_SYNOPSIS) {
+          state._preloadCache.TITLE_SYNOPSIS = null;
+          console.log('[PRELOAD] Cache invalidated');
+      }
+  }
+
+  // Module-scope flags for continuous preloading system
+  let _componentPreloadInFlight = false;
+  let _visionPreloadResult = null;
+  let _visionPreloadTurn = -1;
+  let _visionPreloadAbort = null;
+  let _scrollPreloadFired = false;
+  let _scrollRAFPending = false;
+  let _callbackIdCounter = 0;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // LITERARY ILLUSION LAYER — post-turn voice + motif analysis (zero API calls)
@@ -14444,6 +14518,364 @@ Return ONLY valid JSON:
           parts.push(ARCHETYPE_LEXICON[archId]);
       }
       return parts.length > 0 ? '\n\n' + parts.join('\n\n') : '';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STRUCTURED STORY MEMORY — scene window, fate seeds, memory extraction
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Step 2: Scene Window — synchronous, zero API cost.
+   * Maintains last 2 scene plain texts (~400 chars each).
+   */
+  function _updateSceneWindow(sceneText) {
+      if (!sceneText || typeof sceneText !== 'string') return;
+      const plain = sceneText.replace(/<[^>]+>/g, '').trim();
+      if (plain.length < 20) return;
+
+      // Trim to ~400 chars at nearest sentence boundary
+      let trimmed = plain;
+      if (trimmed.length > 420) {
+          trimmed = trimmed.slice(0, 420);
+          const lastPeriod = Math.max(trimmed.lastIndexOf('.'), trimmed.lastIndexOf('!'), trimmed.lastIndexOf('?'));
+          if (lastPeriod > 200) trimmed = trimmed.slice(0, lastPeriod + 1);
+      }
+
+      state.sceneWindow.push(trimmed);
+      if (state.sceneWindow.length > 2) state.sceneWindow.shift();
+  }
+
+  /**
+   * Step 3: Fate Seed Extraction — synchronous, zero API cost.
+   * Regex heuristic to detect narrative momentum dimensions.
+   */
+  function _updateFateSeeds(sceneText) {
+      if (!sceneText || typeof sceneText !== 'string') return;
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+      if (plain.length < 40) return;
+
+      const emotionalKeywords = {
+          longing: /\b(longing|yearning|aching|missing|wanting|craving)\b/g,
+          defiance: /\b(defiance|defiant|resist|refuse|rebel|defy)\b/g,
+          surrender: /\b(surrender|yielding|giving in|let go|submit|relent)\b/g,
+          tension: /\b(tension|taut|coiled|strained|tight|wound)\b/g,
+          grief: /\b(grief|mourning|loss|sorrow|weeping|tears)\b/g,
+          tenderness: /\b(tender|gentle|soft|careful|delicate|cherish)\b/g
+      };
+      const positioningKeywords = {
+          apart: /\b(apart|distant|away|separated|space between)\b/g,
+          close: /\b(close|near|beside|next to|pressed against)\b/g,
+          entangled: /\b(entangled|intertwined|wrapped|entwined|tangled)\b/g,
+          separated: /\b(separated|parted|divided|split|torn)\b/g,
+          approaching: /\b(approaching|nearing|drawing closer|stepping toward|moving toward)\b/g
+      };
+      const motionKeywords = {
+          reaching: /\b(reaching|extending|stretching|grasping|offering)\b/g,
+          retreating: /\b(retreating|pulling back|withdrawing|stepping back|turning away)\b/g,
+          frozen: /\b(frozen|still|motionless|paralyzed|rooted|stuck)\b/g,
+          circling: /\b(circling|orbiting|pacing|prowling|hovering)\b/g,
+          advancing: /\b(advancing|pushing forward|surging|pressing|charging)\b/g
+      };
+
+      function pickTop(keywords) {
+          let best = '', bestCount = 0;
+          for (const [key, regex] of Object.entries(keywords)) {
+              const count = (plain.match(regex) || []).length;
+              if (count > bestCount) { best = key; bestCount = count; }
+          }
+          return best;
+      }
+
+      const ed = pickTop(emotionalKeywords);
+      const pos = pickTop(positioningKeywords);
+      const mot = pickTop(motionKeywords);
+
+      if (ed || pos || mot) {
+          state._fateSeeds = {
+              emotional_direction: ed || state._fateSeeds?.emotional_direction || '',
+              positioning: pos || state._fateSeeds?.positioning || '',
+              initial_motion: mot || state._fateSeeds?.initial_motion || ''
+          };
+      }
+  }
+
+  /**
+   * Step 4: Story Memory Extraction — single API call, fire-and-forget.
+   * Extracts structured memory from scene text via callChatGPT.
+   */
+  const RELATIONSHIP_PHASES = ['strangers', 'antagonistic', 'reluctant_allies', 'growing_attraction', 'dangerous_desire', 'lovers'];
+
+  /**
+   * Advance relationship_phase forward based on memory signals.
+   * Phase can only advance or hold; regression requires a betrayal callback.
+   */
+  function _updateRelationshipPhase() {
+      const currentIdx = RELATIONSHIP_PHASES.indexOf(state.relationship_phase || 'strangers');
+      if (currentIdx < 0) { state.relationship_phase = 'strangers'; return; }
+      if (currentIdx >= RELATIONSHIP_PHASES.length - 1) return; // already at max
+
+      const rt = state.relationshipTension || {};
+      const ns = state.narrativeState || {};
+
+      // Check for betrayal callback → allow one-step regression
+      const hasBetrayalCallback = (state.callbackLedger || []).some(
+          c => !c.resolved && c.type === 'threat' && /\b(betray|betray(ed|al|s)?|deceiv(e|ed)|backstab)\b/i.test(c.text)
+      );
+      if (hasBetrayalCallback && currentIdx > 0) {
+          state.relationship_phase = RELATIONSHIP_PHASES[currentIdx - 1];
+          console.log(`[MEMORY] Relationship phase regressed to ${state.relationship_phase} (betrayal)`);
+          return;
+      }
+
+      // Forward signals — heuristic from tension + temperature keywords
+      const attractionHigh = /\b(intense|strong|overwhelming|magnetic|undeniable|deep)\b/i.test(rt.attraction || '');
+      const trustHigh = /\b(solid|growing|established|deep|strong|mutual)\b/i.test(rt.trust || '');
+      const vulnerabilityOpen = /\b(open|exposed|raw|mutual|shared|revealed)\b/i.test(rt.vulnerability || '');
+      const tempHot = /\b(heated|burning|electric|charged|feverish|blazing)\b/i.test(ns.emotional_temperature || '');
+
+      const forwardSignals = [attractionHigh, trustHigh, vulnerabilityOpen, tempHot].filter(Boolean).length;
+
+      // Need 2+ signals to advance
+      if (forwardSignals >= 2) {
+          state.relationship_phase = RELATIONSHIP_PHASES[currentIdx + 1];
+          console.log(`[MEMORY] Relationship phase advanced to ${state.relationship_phase} (${forwardSignals} signals)`);
+      }
+  }
+
+  async function _extractStoryMemory(sceneText) {
+      if (state._memoryExtractionInFlight) return;
+      if (state.turnCount < 1) return;
+      if (!window.StoryboundOrchestration?.callChatGPT) return;
+
+      const plain = sceneText.replace(/<[^>]+>/g, '').trim();
+      if (plain.length < 50) return;
+
+      state._memoryExtractionInFlight = true;
+      const sceneSlice = plain.slice(-1500);
+
+      const currentMemory = JSON.stringify({
+          narrativeState: state.narrativeState,
+          relationshipTension: state.relationshipTension,
+          physicalState: state.physicalState,
+          narrativeIntent: state.narrativeIntent,
+          callbacks: (state.callbackLedger || []).filter(c => !c.resolved).map(c => c.text),
+          sharedHistory: (state.sharedHistory || []).map(h => h.text)
+      });
+
+      try {
+          const result = await window.StoryboundOrchestration.callChatGPT([
+              { role: 'system', content: 'You extract structured narrative memory from fiction scenes. Respond ONLY with valid JSON, no markdown.' },
+              { role: 'user', content: `Given this scene and current memory state, extract updated narrative memory.
+
+SCENE TEXT (last 1500 chars):
+"${sceneSlice}"
+
+CURRENT MEMORY:
+${currentMemory}
+
+Return JSON with these exact fields:
+{
+  "narrativeState": { "relationship_state": "", "location_state": "", "storyturn_state": "", "arousal_state": "", "character_positioning": "", "emotional_temperature": "" },
+  "relationshipTension": { "attraction": "", "trust": "", "resentment": "", "curiosity": "", "vulnerability": "", "power_dynamic": "" },
+  "physicalState": { "location": "", "mc_position": "", "li_position": "", "proximity": "", "objects_notable": "" },
+  "narrativeIntent": { "primary_goal": "", "secondary_goal": "", "active_tension": "", "approaching_shift": "", "long_term_arc": "" },
+  "new_callbacks": [],
+  "resolved_callback_ids": [],
+  "new_shared_history": []
+}
+
+Rules:
+- Each field: 3-15 words max, present tense
+- new_callbacks: array of { "type": "promise|secret|wound|desire|threat", "text": "..." } — only if scene introduces one
+- resolved_callback_ids: IDs of callbacks resolved in this scene (empty array if none)
+- new_shared_history: array of { "type": "milestone|revelation|betrayal|intimacy|conflict", "text": "..." } — only for significant shared moments` }
+          ], { max_tokens: 500, temperature: 0.3 });
+
+          const parsed = JSON.parse(result);
+
+          // Merge narrative state fields
+          if (parsed.narrativeState) state.narrativeState = parsed.narrativeState;
+          if (parsed.relationshipTension) state.relationshipTension = parsed.relationshipTension;
+          if (parsed.physicalState) state.physicalState = parsed.physicalState;
+          if (parsed.narrativeIntent) state.narrativeIntent = parsed.narrativeIntent;
+
+          // Merge callback ledger
+          if (parsed.resolved_callback_ids?.length > 0) {
+              for (const cb of state.callbackLedger) {
+                  if (parsed.resolved_callback_ids.includes(cb.id)) cb.resolved = true;
+              }
+          }
+          if (parsed.new_callbacks?.length > 0) {
+              for (const nc of parsed.new_callbacks) {
+                  state.callbackLedger.push({
+                      id: ++_callbackIdCounter,
+                      type: nc.type || 'promise',
+                      text: nc.text,
+                      scene_added: state.turnCount,
+                      resolved: false
+                  });
+              }
+              // Cap at 12: drop oldest resolved first, then oldest unresolved
+              while (state.callbackLedger.length > 12) {
+                  const resolvedIdx = state.callbackLedger.findIndex(c => c.resolved);
+                  if (resolvedIdx >= 0) state.callbackLedger.splice(resolvedIdx, 1);
+                  else state.callbackLedger.shift();
+              }
+          }
+
+          // Merge shared history
+          if (parsed.new_shared_history?.length > 0) {
+              for (const sh of parsed.new_shared_history) {
+                  state.sharedHistory.push({
+                      type: sh.type || 'milestone',
+                      text: sh.text,
+                      scene_added: state.turnCount
+                  });
+              }
+              while (state.sharedHistory.length > 8) state.sharedHistory.shift();
+          }
+
+          // Update relationship phase based on freshly merged memory
+          _updateRelationshipPhase();
+
+          console.log(`[MEMORY] Extracted for scene ${state.turnCount}`);
+      } catch (err) {
+          console.warn('[MEMORY] Extraction failed (non-critical):', err.message);
+      } finally {
+          state._memoryExtractionInFlight = false;
+      }
+  }
+
+  /**
+   * Step 5a: Build Story Memory Directive — assembled from structured state.
+   */
+  function buildStoryMemoryDirective() {
+      if (!state.narrativeState?.relationship_state) return '';
+
+      const parts = ['[STORY MEMORY]'];
+
+      // Scene Window
+      if (state.sceneWindow?.length > 0) {
+          parts.push('SCENE WINDOW:');
+          if (state.sceneWindow.length > 1) parts.push(`Previous: ${state.sceneWindow[0]}`);
+          parts.push(`Current: ${state.sceneWindow[state.sceneWindow.length - 1]}`);
+      }
+
+      // Narrative State
+      const ns = state.narrativeState;
+      if (ns.relationship_state || ns.location_state) {
+          parts.push(`\nNARRATIVE STATE:\nRelationship: ${ns.relationship_state} | Location: ${ns.location_state} | ST: ${ns.storyturn_state} | Arousal: ${ns.arousal_state} | Positioning: ${ns.character_positioning} | Temperature: ${ns.emotional_temperature}`);
+      }
+
+      // Relationship Phase
+      if (state.relationship_phase && state.relationship_phase !== 'strangers') {
+          parts.push(`\nRELATIONSHIP PHASE: ${state.relationship_phase} (do not regress without narrative trigger)`);
+      }
+
+      // Relationship Tension
+      const rt = state.relationshipTension;
+      if (rt.attraction || rt.trust) {
+          parts.push(`\nRELATIONSHIP TENSION:\nAttraction: ${rt.attraction} | Trust: ${rt.trust} | Resentment: ${rt.resentment} | Curiosity: ${rt.curiosity} | Vulnerability: ${rt.vulnerability} | Power: ${rt.power_dynamic}`);
+      }
+
+      // Physical State
+      const ps = state.physicalState;
+      if (ps.location || ps.proximity) {
+          parts.push(`\nPHYSICAL STATE:\nLocation: ${ps.location} | MC: ${ps.mc_position} | LI: ${ps.li_position} | Proximity: ${ps.proximity} | Objects: ${ps.objects_notable}`);
+      }
+
+      // Narrative Intent
+      const ni = state.narrativeIntent;
+      if (ni.primary_goal || ni.active_tension) {
+          parts.push(`\nNARRATIVE INTENT:\nPrimary: ${ni.primary_goal} | Tension: ${ni.active_tension} | Approaching: ${ni.approaching_shift}`);
+      }
+
+      // Callback Ledger
+      const activeCallbacks = (state.callbackLedger || []).filter(c => !c.resolved);
+      if (activeCallbacks.length > 0) {
+          parts.push(`\nCALLBACKS (weave naturally when apt, ~15% echo rate):`);
+          for (const cb of activeCallbacks) {
+              parts.push(`- [${cb.type}] ${cb.text}`);
+          }
+      }
+
+      // Shared History
+      if (state.sharedHistory?.length > 0) {
+          parts.push(`\nSHARED HISTORY (reference when contextually resonant):`);
+          for (const sh of state.sharedHistory) {
+              parts.push(`- [${sh.type}] ${sh.text}`);
+          }
+      }
+
+      return '\n\n' + parts.join('\n');
+  }
+
+  /**
+   * Step 5b: Build Callback Echo Directive — selects callbacks for organic re-surfacing.
+   */
+  function buildCallbackEchoDirective() {
+      if (state.turnCount < 3) return '';
+      const active = (state.callbackLedger || []).filter(c => !c.resolved);
+      if (active.length === 0) return '';
+
+      const selected = active.filter(() => Math.random() < 0.20).slice(0, 2);
+      if (selected.length === 0) return '';
+
+      const pov = state.povMode || 'normal';
+      const picks = state.picks || {};
+      let prefix;
+      if (pov === 'author5th') prefix = 'The Story may acknowledge:';
+      else if (pov === 'environment4th') prefix = 'The environment echoes:';
+      else if (picks.pov === '1st') prefix = 'A memory surfaces:';
+      else prefix = 'The narration may reference:';
+
+      const lines = selected.map(cb => `  - ${cb.text}`).join('\n');
+      return `\n\nCALLBACK ECHO (weave subtly if natural, never force):\n${prefix}\n${lines}`;
+  }
+
+  /**
+   * Step 5c: Build Fate Seed Directive — narrative momentum from previous scene.
+   */
+  function buildFateSeedDirective(selectedFateCard) {
+      if (!selectedFateCard) return '';
+      const seeds = state._fateSeeds;
+      if (!seeds || (!seeds.emotional_direction && !seeds.positioning && !seeds.initial_motion)) return '';
+
+      const lines = [];
+      if (seeds.emotional_direction) lines.push(`- Emotional direction: ${seeds.emotional_direction}`);
+      if (seeds.positioning) lines.push(`- Positioning: ${seeds.positioning}`);
+      if (seeds.initial_motion) lines.push(`- Motion: ${seeds.initial_motion}`);
+
+      return `\n\nNARRATIVE MOMENTUM (use as atmospheric starting energy):\n${lines.join('\n')}`;
+  }
+
+  /**
+   * Step 6: Beat Planner — lightweight scene structure outline.
+   * Only runs on single-model callChat path (not orchestrated/speculative).
+   */
+  async function _runBeatPlanner(act, dia) {
+      if (state.turnCount < 1) return null;
+      if (!window.StoryboundOrchestration?.callChatGPT) return null;
+
+      const ns = state.narrativeState || {};
+      const ni = state.narrativeIntent || {};
+
+      const result = await window.StoryboundOrchestration.callChatGPT([
+          { role: 'system', content: 'You plan scene beats for fiction. Return ONLY numbered beats. No prose. No dialogue.' },
+          { role: 'user', content: `Given narrative context, plan 3-5 scene beats (1 line each, ~80 tokens total):
+Intent: ${ni.primary_goal || 'advance story'} | Tension: ${ni.active_tension || 'building'}
+Relationship: ${ns.relationship_state || 'developing'} | ST: ${ns.storyturn_state || state.storyturn || 'ST1'}
+Player: ${act} / ${dia}
+
+Return ONLY numbered beats. No prose. No dialogue.` }
+      ], { max_tokens: 120, temperature: 0.5 });
+
+      if (result && typeof result === 'string' && result.trim().length > 10) {
+          state._beatPlanCache = { sceneIndex: state.turnCount, beats: result.trim() };
+          console.log('[BEAT_PLAN] Generated for scene', state.turnCount);
+          return result.trim();
+      }
+      return null;
   }
 
   // ── LAYER 2 — EPOCH STATE RESET ──
@@ -15052,7 +15484,7 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       state.coverArchetype = null;
 
       // Reset visual state
-      state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {}, visualizedScenes: {} };
+      state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {}, visualizedScenes: {}, characterVisualProfiles: {}, _visionCache: null };
 
 
       // Clear cover state
@@ -16251,8 +16683,8 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       state._coverAssemblyObject = null;
       state._coverWorldKey = null;
 
-      // Reset visual state
-      state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {}, visualizedScenes: {} };
+      // Reset visual state (with Visual Continuity Engine fields)
+      state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {}, visualizedScenes: {}, characterVisualProfiles: {}, _visionCache: null };
 
       // Reset cover/story generation flags (via window interface)
       if (window.clearPreGeneratedCover) window.clearPreGeneratedCover();
@@ -16638,6 +17070,17 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       // tierGate → back to legalGate (re-read bindings)
       if (_currentScreenId === 'tierGate') {
           showScreen('legalGate');
+          // If all pacts already accepted, show Proceed button so user can advance
+          if (_pactAccepted.tos && _pactAccepted.privacy && _pactAccepted.adult) {
+              var proceedBtn = document.getElementById('pactProceedBtn');
+              if (proceedBtn) {
+                  proceedBtn.classList.remove('hidden');
+                  proceedBtn.onclick = function() {
+                      proceedBtn.classList.add('hidden');
+                      showScreen('tierGate');
+                  };
+              }
+          }
           return;
       }
 
@@ -17506,6 +17949,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.style.transform = `scale(${scale})`;
       card.style.transformOrigin = 'center center';
 
+      // Trigger speculative preload while user writes petition
+      scheduleSpeculativePreload();
+
       // Swap to high-res zoomed Petition art on the BACK face (visible after flip)
       const backFace = card.querySelector('.back');
       if (backFace) {
@@ -17933,6 +18379,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           backFace.style.backgroundPosition = 'center';
           backFace.style.backgroundRepeat = 'no-repeat';
       }
+
+      // Trigger speculative preload while user writes wish
+      scheduleSpeculativePreload();
 
       if (backdrop) {
           backdrop.classList.add('active');
@@ -19686,13 +20135,16 @@ RULES:
   async function ensureVisualBible(textContext) {
       // Guard against null/undefined - initialize safe defaults
       if (!state.visual) {
-          state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
+          state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, characterVisualProfiles: {}, _visionCache: null };
       }
       if (!state.visual.bible) {
           state.visual.bible = { style: "", setting: "", characters: {} };
       }
       if (!state.visual.bible.characters || typeof state.visual.bible.characters !== 'object') {
           state.visual.bible.characters = {};
+      }
+      if (!state.visual.characterVisualProfiles) {
+          state.visual.characterVisualProfiles = {};
       }
       // Check if bible is already populated
       if (state.visual.bible.style && Object.keys(state.visual.bible.characters).length > 0) return;
@@ -19724,6 +20176,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           const jsonMatch = raw.match(/\{[\s\S]*\}/);
           if (jsonMatch) state.visual.bible = JSON.parse(jsonMatch[0]);
       } catch(e) { console.warn("Bible build failed (silent)", e); }
+
+      // Visual Continuity Engine: generate character profiles alongside bible
+      if (typeof ensureCharacterVisualProfile === 'function') {
+          ensureCharacterVisualProfile('mc').catch(() => {});
+          ensureCharacterVisualProfile('li').catch(() => {});
+      }
   }
 
   function buildVisualAnchorsText() {
@@ -19747,6 +20205,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           }
           txt += "DO NOT CHANGE CHARACTER APPEARANCE. ";
       }
+
+      // Visual Continuity Engine — append structured character profiles if available
+      const mcProfile = buildCharacterVisualPromptSegment('mc');
+      const liProfile = buildCharacterVisualPromptSegment('li');
+      if (mcProfile || liProfile) {
+          txt += 'CHARACTER VISUAL IDENTITY: ';
+          if (mcProfile) txt += `MC: ${mcProfile}; `;
+          if (liProfile) txt += `LI: ${liProfile}; `;
+      }
+
       return txt;
   }
 
@@ -21484,7 +21952,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.picks = { world: 'Modern', tone: 'Earnest', genre: 'Billionaire', dynamic: 'Enemies', era: 'Medieval', pov: 'First' };
     state.intensity = 'Steamy';
     state.storypassEligible = undefined; // Reset - will be computed at story creation
-    state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {} };
+    state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, sceneBudgets: {}, visualizedScenes: {}, characterVisualProfiles: {}, _visionCache: null };
     // SPECULATIVE PRELOAD: Reset on restart
     state.speculativeNextScene = null;
     state.isPreloadingNextScene = false;
@@ -24935,15 +25403,48 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }, 10000);
 
       try {
-          // Build a setting description from state
+          // Build location-anchored setting prompt from state
           const world = state.picks?.world || 'Modern';
-          const genre = state.picks?.genre || 'Romance';
           const tone = state.picks?.tone || 'Earnest';
-          const desc = `A ${tone.toLowerCase()} ${genre.toLowerCase()} setting in a ${world.toLowerCase()} world. Atmospheric, establishing shot. No characters visible.`;
+          const flavorKey = state.worldSubtype || '';
+          const flavorLabel = flavorKey && WORLD_LABELS[flavorKey] ? WORLD_LABELS[flavorKey] : (state.worldCustomText || '');
 
-          // Use the existing generateSettingShot function
+          const anchor = pickSettingLocationAnchor();
+          let settingPrompt;
+
+          if (anchor) {
+              settingPrompt = `Geographic environmental illustration. Painted concept art style.
+
+LOCATION: ${anchor.name}
+GEOGRAPHY: ${anchor.geography}
+SCALE: ${anchor.scale}
+VIEWPOINT: ${anchor.viewpoint}${anchor.environmentalCondition ? `\nENVIRONMENTAL CONDITIONS: ${anchor.environmentalCondition}` : ''}
+WORLD: ${world}${flavorLabel ? `\nFLAVOR: ${flavorLabel}` : ''}
+ATMOSPHERE: ${tone}
+
+GEOGRAPHY DOMINANCE (MANDATORY):
+This image depicts terrain, architecture, and environmental scale.
+PRIMARY SUBJECTS: landforms, structures, weather, vegetation, geological features.
+SUPPRESS: romance composition, portrait framing, character-centered scenes.
+Environment occupies at least 90% of the frame.
+
+SCALE FIGURE (OPTIONAL): A small native inhabitant or traveler may appear for scale only — must face away, occupy less than 8% of frame, must not be focal point.
+
+ATTRACTOR SUPPRESSION: Do NOT default to castle on hill at sunset, generic city skyline, spaceship corridor, medieval village panorama, or empty desert wasteland.
+
+No text, no watermark, no UI elements. Landscape orientation.`;
+          } else {
+              settingPrompt = `Geographic environmental illustration of a ${world} world. ${tone} atmosphere.${flavorLabel ? ' ' + flavorLabel + ' setting.' : ''}
+
+Painted concept art of a specific, named location within this world. Show terrain, architecture, weather, and environmental scale.
+Wide landscape composition, deep perspective, layered foreground/midground/background.
+No text, no watermark, no UI elements. No character focus. Landscape orientation.`;
+          }
+
+          console.log('[SETTING:GEN] Anchor:', anchor?.name || 'none', '| World:', world, '| Flavor:', flavorLabel || 'none');
+
           const rawUrl = await generateImageWithFallback({
-              prompt: `Cinematic establishing shot. ${desc} Rich atmospheric lighting, detailed environment, professional composition. Landscape orientation.`,
+              prompt: settingPrompt,
               tier: 'Clean',
               shape: 'landscape',
               context: 'setting-view',
@@ -26193,6 +26694,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Update state (canonicalize tone)
       state.picks[grp] = grp === 'tone' ? canonicalizeTone(val) : val;
+      _invalidatePreloadCache();
       if (window.clearCoverShapeHash) window.clearCoverShapeHash();
 
       // Derive tone bias when structural axes change
@@ -27818,6 +28320,46 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       });
     }
 
+    // Ancestry pre-normalization on blur (cache for handleBeginStory)
+    const ancestryPlayerInput = $('ancestryInputPlayer');
+    if (ancestryPlayerInput) {
+      ancestryPlayerInput.addEventListener('blur', async () => {
+        const raw = ancestryPlayerInput.value.trim();
+        if (!raw) return;
+        try {
+          const norm = await callNormalizationLayer({
+            axis: 'dsp',
+            user_text: raw,
+            context_signals: state.picks?.world ? [state.picks.world] : []
+          });
+          state._cachedAncestryPlayer = { raw, normalized: norm.normalized_text || raw };
+          console.log('[PRELOAD:ANCESTRY] Cached player ancestry:', state._cachedAncestryPlayer.normalized);
+        } catch (e) {
+          state._cachedAncestryPlayer = { raw, normalized: raw };
+          console.warn('[PRELOAD:ANCESTRY] Player ancestry normalization failed, cached raw:', e.message);
+        }
+      });
+    }
+    const ancestryLIInput = $('ancestryInputLI');
+    if (ancestryLIInput) {
+      ancestryLIInput.addEventListener('blur', async () => {
+        const raw = ancestryLIInput.value.trim();
+        if (!raw) return;
+        try {
+          const norm = await callNormalizationLayer({
+            axis: 'dsp',
+            user_text: raw,
+            context_signals: state.picks?.world ? [state.picks.world] : []
+          });
+          state._cachedAncestryLI = { raw, normalized: norm.normalized_text || raw };
+          console.log('[PRELOAD:ANCESTRY] Cached LI ancestry:', state._cachedAncestryLI.normalized);
+        } catch (e) {
+          state._cachedAncestryLI = { raw, normalized: raw };
+          console.warn('[PRELOAD:ANCESTRY] LI ancestry normalization failed, cached raw:', e.message);
+        }
+      });
+    }
+
     // Expose closeZoomedCard for module-scope callers (archetype overlay, zoom continue)
     window.closeZoomedCard = closeZoomedCard;
     window.initPressureFrontFlavors = initPressureFrontFlavors;
@@ -29023,6 +29565,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // Clear state selections
     state.picks.pressure = null;
     state.picks.world = null;
+    state.settingLocationAnchor = null;
     state.picks.tone = null;
     state.picks.dynamic = null;
     state.picks.pov = null;
@@ -30097,7 +30640,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         }
 
         // WORLD MOUNT: Flavor dropdown panels beneath flipped cards
-        if (stage === 'world') {
+        // Suppress during Guided Fate autoplay — fate card pre-selects world+flavor
+        if (stage === 'world' && !_fateAutoplayActive) {
           if (typeof window.initWorldFlavorDropdowns === 'function') window.initWorldFlavorDropdowns();
         }
 
@@ -30887,6 +31431,91 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     // VIEWPORT ISOLATION: Exit corridor mode, allow scrolling to final sections
     document.body.classList.remove('corridor-mode');
     document.body.classList.add('corridor-complete');
+
+    // Speculative title+synopsis pre-generation (non-blocking)
+    _speculativeTitleSynopsis();
+  }
+
+  async function _speculativeTitleSynopsis() {
+    // Guards: skip if title already exists or orchestration unavailable
+    if (state.story?.title || state.immutableTitle) return;
+    if (!window.StoryboundOrchestration?.callChatGPT) return;
+
+    const version = _computePreloadVersion();
+    _preloadAbortController = new AbortController();
+    const signal = _preloadAbortController.signal;
+
+    console.log('[PRELOAD:TITLE] Starting speculative title+synopsis generation...');
+
+    try {
+      const pKernel = state.normalizedPlayerKernel || $('playerNameInput')?.value.trim() || 'The Protagonist';
+      const lKernel = state.normalizedPartnerKernel || $('partnerNameInput')?.value.trim() || 'The Love Interest';
+      const pGen = $('customPlayerGender')?.value.trim() || $('playerGender')?.value || 'Female';
+      const lGen = $('customLoveInterest')?.value.trim() || $('loveInterestGender')?.value || 'Male';
+
+      const result = await window.StoryboundOrchestration.callChatGPT([
+        { role: 'system', content: `You are writing the official Title and Title Page Synopsis for a romance novel.
+
+The goal is emotional magnetism, not summary.
+
+TITLE:
+• 2–6 words.
+• Evocative, memorable, archetype-aligned.
+• Suggest tension or inevitability.
+• No subtitles. No punctuation gimmicks.
+• Avoid generic romance phrasing.
+
+SYNOPSIS:
+• 40–60 words MAXIMUM. Two to three sentences.
+• Present tense. Short, moody, enticing.
+• Establish the emotional atmosphere in one line.
+• Name the tension between the characters — what's at stake, what's forbidden, what pulls them together.
+• End on a charged, unresolved note that makes the reader desperate to begin.
+• This is a promise, not a summary. No plot. No backstory. No exposition.
+• Avoid clichés: no "sparks fly", "worlds collide", "risk it all", "forbidden passion".
+• No rhetorical questions. No marketing taglines.
+• Do not reference story mechanics or systems.
+
+Return JSON only:
+{
+  "title": "...",
+  "synopsis": "..."
+}` },
+        { role: 'user', content: `Story configuration:
+- World: ${state.picks?.world || 'Modern'}
+- Flavor: ${state.picks?.worldSubtype || 'none'}
+- Tone: ${state.picks?.tone || 'Earnest'}
+- Archetype: ${ARCHETYPES[state.archetype?.primary]?.name || 'Unknown'}${state.archetype?.modifier ? ' / ' + (ARCHETYPES[state.archetype.modifier]?.name || '') : ''}
+- Genre: ${state.picks?.genre || 'Romance'}
+- Dynamic: ${state.picks?.dynamic || 'Enemies'}
+- Story Length: ${state.storyLength || 'taste'}
+- Protagonist: ${pKernel} (${pGen})
+- Love Interest: ${lKernel} (${lGen})
+
+Generate the title and synopsis now.` }
+      ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 200, jsonMode: true });
+
+      // Check if aborted or version changed
+      if (signal.aborted) return;
+      if (_computePreloadVersion() !== version) {
+        console.log('[PRELOAD:TITLE] Version changed during generation, discarding');
+        return;
+      }
+
+      const parsed = JSON.parse(result);
+      if (parsed.title && parsed.synopsis) {
+        state._preloadCache = state._preloadCache || {};
+        state._preloadCache.TITLE_SYNOPSIS = {
+          version,
+          title: parsed.title.replace(/"/g, '').trim(),
+          synopsis: parsed.synopsis.trim()
+        };
+        console.log('[PRELOAD:TITLE] Cached title:', state._preloadCache.TITLE_SYNOPSIS.title);
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      console.warn('[PRELOAD:TITLE] Speculative generation failed (non-fatal):', e.message);
+    }
   }
 
   /**
@@ -30896,6 +31525,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   function resetCorridor() {
     corridorActiveRowIndex = 0;
     corridorSelections.clear();
+    _invalidatePreloadCache();
 
     // VIEWPORT ISOLATION: Re-enter corridor mode on reset
     document.body.classList.add('corridor-mode');
@@ -30943,6 +31573,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     state.picks = state.picks || {};
     state.picks.pressure = null;
     state.picks.world = null;
+    state.settingLocationAnchor = null;
     state.picks.tone = null;
     state.picks.dynamic = null;
     state.picks.pov = null;
@@ -34175,6 +34806,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       if (state.archetype?.primary !== archetypeId) {
           commitArchetypeSelection(archetypeId, false);
       }
+      _invalidatePreloadCache();
 
       // Close the zoom overlay (this restores card to grid and starts corridor sparkles)
       if (window.closeZoomedCard) window.closeZoomedCard();
@@ -34618,51 +35250,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
   // ============================================================
   // OVERLAY LOADING BAR SPARKLES (Story + Visualize ONLY)
+  // Uses SPARKLE_PROFILES system (same as Begin Story button)
   // SEPARATE from cover bar sparkles — do NOT modify cover system
   // ============================================================
-  let _overlaySparkleInterval = null;
-
-  /**
-   * Generate smooth firefly keyframes using overlapping sine waves.
-   * Produces organic, continuously-curving paths — no straight-line segments.
-   * @param {number} dx     — total X drift
-   * @param {number} dy     — total Y drift
-   * @param {number} wobble — lateral wander amplitude (px)
-   * @param {number} peak   — peak opacity
-   * @param {number} steps  — keyframe count (more = smoother curve)
-   */
-  /**
-   * Unified sparkle spawner — gentle rising embers with soft S-curve sway.
-   * @param {HTMLElement} container — positioned parent (loading bar)
-   * @param {boolean} bright — true for overlay (story/vision), false for cover bar
-   */
-  function spawnSparkle(container, bright) {
-      if (!container || !container.offsetWidth) return;
-      const sparkle = document.createElement('div');
-      sparkle.className = 'loading-sparkle' + (bright ? ' bright' : '');
-
-      const W = container.offsetWidth;
-      const x = Math.random() * W;
-      const y = (Math.random() - 0.5) * 10;
-
-      // Tight parameter ranges — straight upward drift, no sway
-      const dur   = 2800 + Math.random() * 800;            // 2.8–3.6s
-      const dxDir = Math.random() < 0.5 ? -1 : 1;
-      const dx    = dxDir * (2 + Math.random() * 4);       // ±2–6px gentle lateral
-      const dy    = -(12 + Math.random() * 8);              // -12 to -20px upward
-      const peak  = bright ? 0.55 + Math.random() * 0.2    // 0.55–0.75
-                           : 0.35 + Math.random() * 0.2;   // 0.35–0.55
-      const size  = 2 + Math.random() * 2;                  // 2–4px
-
-      sparkle.style.cssText = `
-          left:${x}px; top:${y}px;
-          width:${size}px; height:${size}px;
-          --dx:${dx}px; --dy:${dy}px;
-          --peak:${peak}; --dur:${dur}ms;
-      `;
-      container.appendChild(sparkle);
-      setTimeout(() => sparkle.remove(), dur + 50);
-  }
+  const _OVERLAY_SPARKLE_CONTAINER_ID = 'overlayBarSparkles';
 
   function startOverlayLoadingSparkles() {
       stopOverlayLoadingSparkles();
@@ -34678,34 +35269,39 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       loadingBar.style.overflow = 'visible';
       loadingBar.classList.add('sparkle-active');
 
-      // Relaxed spawn rate for gentle density
-      _overlaySparkleInterval = setInterval(() => {
-          spawnSparkle(loadingBar, true);
-      }, 350); // ~3 sparkles per second
-
-      // Initial seeds — staggered for natural appearance
-      for (let i = 0; i < 4; i++) {
-          setTimeout(() => spawnSparkle(loadingBar, true), i * 180);
+      // Create anchored sparkle container as child of loading bar
+      let container = document.getElementById(_OVERLAY_SPARKLE_CONTAINER_ID);
+      if (!container) {
+          container = document.createElement('div');
+          container.id = _OVERLAY_SPARKLE_CONTAINER_ID;
+          container.className = 'authorship-sparkle-container';
+          container.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:1;';
+          loadingBar.appendChild(container);
       }
+
+      // Use the SPARKLE_PROFILES emitter — same system as Begin Story button
+      startSparkleEmitter(_OVERLAY_SPARKLE_CONTAINER_ID, 'loadingBar', 4);
   }
 
   function stopOverlayLoadingSparkles() {
-      if (_overlaySparkleInterval) {
-          clearInterval(_overlaySparkleInterval);
-          _overlaySparkleInterval = null;
-      }
+      stopSparkleEmitter(_OVERLAY_SPARKLE_CONTAINER_ID);
 
       const loadingBar = document.getElementById('loadingOverlayBar');
       if (loadingBar) {
           loadingBar.classList.remove('sparkle-active');
       }
 
-      // Fade out existing sparkles gracefully
-      document.querySelectorAll('.loading-sparkle').forEach(s => {
-          s.style.opacity = '0';
-          s.style.transition = 'opacity 0.4s ease-out';
-          setTimeout(() => s.remove(), 450);
-      });
+      // Remove the sparkle container
+      const container = document.getElementById(_OVERLAY_SPARKLE_CONTAINER_ID);
+      if (container) {
+          // Fade out existing sparkles gracefully
+          container.querySelectorAll('.authorship-sparkle').forEach(s => {
+              s.style.opacity = '0';
+              s.style.transition = 'opacity 0.4s ease-out';
+              setTimeout(() => s.remove(), 450);
+          });
+          setTimeout(() => container.remove(), 500);
+      }
   }
 
   // Bind cancel button
@@ -36459,6 +37055,21 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       curveAmp: 3,
       flickerChance: 0.3
     },
+    // Loading bar: same feel as Begin Story — tight perimeter hover sparkles
+    loadingBar: {
+      durationMin: 3.5,
+      durationMax: 6.0,
+      sizeMin: 2,
+      sizeMax: 4,
+      opacityMin: 0.35,
+      opacityRange: 0.45,   // 0.35-0.8
+      haloOffset: 6,
+      outsideRatio: 1.0,    // 100% perimeter
+      driftType: 'hover',
+      driftDistance: 5,
+      curveAmp: 2,
+      flickerChance: 0.25
+    },
     // Choose Your Hand: matches Guided Fate energy
     chooseHand: {
       durationMin: 4.0,
@@ -38170,27 +38781,37 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     await new Promise(resolve => setTimeout(resolve, 0));
 
     // RUNTIME NORMALIZATION: Character names flow through ChatGPT normalization layer
-    // PASS 9B FIX: Handle normalization errors gracefully to prevent loader hang
+    // PRELOAD-AWARE: Reuse blur-handler cached kernels when input unchanged
     // Skip normalization for blank names — AI will invent them
     let playerNorm, partnerNorm, pKernel, lKernel;
     try {
         if (!playerNameBlank2) {
-            playerNorm = await callNormalizationLayer({
-                axis: 'character',
-                user_text: rawPlayerName,
-                context_signals: state.picks?.world || []
-            });
-            pKernel = playerNorm.normalized_text || playerNorm.archetype || 'the one who carries the story';
+            if (state.normalizedPlayerKernel && state.rawPlayerName === rawPlayerName) {
+                pKernel = state.normalizedPlayerKernel;
+                console.log('[PRELOAD:NAME] Reusing cached player kernel:', pKernel);
+            } else {
+                playerNorm = await callNormalizationLayer({
+                    axis: 'character',
+                    user_text: rawPlayerName,
+                    context_signals: state.picks?.world || []
+                });
+                pKernel = playerNorm.normalized_text || playerNorm.archetype || 'the one who carries the story';
+            }
         } else {
             pKernel = rawPlayerName;
         }
         if (!partnerNameBlank2) {
-            partnerNorm = await callNormalizationLayer({
-                axis: 'character',
-                user_text: rawPartnerName,
-                context_signals: state.picks?.world || []
-            });
-            lKernel = partnerNorm.normalized_text || partnerNorm.archetype || 'the one who draws them forward';
+            if (state.normalizedPartnerKernel && state.rawPartnerName === rawPartnerName) {
+                lKernel = state.normalizedPartnerKernel;
+                console.log('[PRELOAD:NAME] Reusing cached partner kernel:', lKernel);
+            } else {
+                partnerNorm = await callNormalizationLayer({
+                    axis: 'character',
+                    user_text: rawPartnerName,
+                    context_signals: state.picks?.world || []
+                });
+                lKernel = partnerNorm.normalized_text || partnerNorm.archetype || 'the one who draws them forward';
+            }
         } else {
             lKernel = rawPartnerName;
         }
@@ -39019,19 +39640,28 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
     const rawAncestryLI = $('ancestryInputLI')?.value.trim() || '';
     const worldContext = state.picks?.world ? [state.picks.world] : [];
     try {
-        const ancestryPlayerNorm = await callNormalizationLayer({
-            axis: 'dsp',
-            user_text: rawAncestryPlayer,
-            context_signals: worldContext
-        });
-        const ancestryLINorm = await callNormalizationLayer({
-            axis: 'dsp',
-            user_text: rawAncestryLI,
-            context_signals: worldContext
-        });
-        // Reassign with normalized values (variables declared earlier with let)
-        ancestryPlayer = ancestryPlayerNorm.normalized_text || rawAncestryPlayer;
-        ancestryLI = ancestryLINorm.normalized_text || rawAncestryLI;
+        if (state._cachedAncestryPlayer?.raw === rawAncestryPlayer && rawAncestryPlayer) {
+            ancestryPlayer = state._cachedAncestryPlayer.normalized;
+            console.log('[PRELOAD:ANCESTRY] Reusing cached player ancestry:', ancestryPlayer);
+        } else {
+            const ancestryPlayerNorm = await callNormalizationLayer({
+                axis: 'dsp',
+                user_text: rawAncestryPlayer,
+                context_signals: worldContext
+            });
+            ancestryPlayer = ancestryPlayerNorm.normalized_text || rawAncestryPlayer;
+        }
+        if (state._cachedAncestryLI?.raw === rawAncestryLI && rawAncestryLI) {
+            ancestryLI = state._cachedAncestryLI.normalized;
+            console.log('[PRELOAD:ANCESTRY] Reusing cached LI ancestry:', ancestryLI);
+        } else {
+            const ancestryLINorm = await callNormalizationLayer({
+                axis: 'dsp',
+                user_text: rawAncestryLI,
+                context_signals: worldContext
+            });
+            ancestryLI = ancestryLINorm.normalized_text || rawAncestryLI;
+        }
     } catch (ancestryNormError) {
         console.error('[ANCESTRY NORMALIZATION ERROR]', ancestryNormError);
         // Fallback: Use raw ancestry values if normalization fails
@@ -39143,8 +39773,22 @@ The opening must feel intentional, textured, and strange. Not archetypal. Not te
     // TITLE + SYNOPSIS PRE-GENERATION (GPT-4o, single call, once per story)
     // Runs BEFORE Scene 1. Uses corridor selections only — no scene text.
     // Skipped if already generated (immutable once set).
+    // PRELOAD-AWARE: Use speculative cache from corridor completion if fresh.
     // ═══════════════════════════════════════════════════════════════════
-    if (!state.story?.title && !state.immutableTitle) {
+    const _titlePreloadHit = state._preloadCache?.TITLE_SYNOPSIS
+        && state._preloadCache.TITLE_SYNOPSIS.version === _computePreloadVersion()
+        && state._preloadCache.TITLE_SYNOPSIS.title
+        && state._preloadCache.TITLE_SYNOPSIS.synopsis;
+    if (_titlePreloadHit && !state.story?.title && !state.immutableTitle) {
+        const cached = state._preloadCache.TITLE_SYNOPSIS;
+        state.story = state.story || {};
+        state.story.title = cached.title;
+        state.story.synopsis = cached.synopsis;
+        state.immutableTitle = cached.title;
+        state._synopsisMetadata = cached.synopsis;
+        console.log('[PRELOAD:TITLE] Using preloaded title:', cached.title);
+        console.log('[PRELOAD:TITLE] Using preloaded synopsis:', cached.synopsis.slice(0, 80) + '...');
+    } else if (!state.story?.title && !state.immutableTitle) {
         try {
             console.log('[TITLE:PRE] Generating title + synopsis via GPT-4o...');
             const titleSynopsisResult = await window.StoryboundOrchestration.callChatGPT([
@@ -40127,11 +40771,12 @@ ${text.slice(0, 800)}`}]);
      const settingPromptBase = buildVisualizePrompt({ mode: visualizeMode, lastText: '' });
      let prompt = settingPromptBase + '\n\n' + worldDesc;
 
-     // VISUAL INTENT GUARD: Enforce balanced lighting for settings
+     // VISUAL INTENT GUARD: Skip character attractiveness for setting images
      prompt = applyVisualIntentGuard(prompt, {
          tone: state.picks?.tone,
          world: state.picks?.world,
-         intensity: state.intensity
+         intensity: state.intensity,
+         intent: 'setting'
      });
 
      let rawUrl = null;
@@ -40245,15 +40890,42 @@ ${text.slice(0, 800)}`}]);
       }
 
       // ── SETTING VISTA PROMPT ──────────────────────────────────────────
-      // Optimized for Gemini/OpenAI image gen: rich visual description,
-      // no wasted tokens on portrait/attractiveness guidance (this is a landscape).
-      // Synopsis is injected AFTER sanitization to protect story-specific words.
-      let vistaPrompt = `${worldLabel} world. ${tone} atmosphere.${flavorNote}
+      // Location-anchored geographic illustration. Synopsis injected AFTER
+      // sanitization to protect story-specific words.
+      const anchor = pickSettingLocationAnchor();
+      let vistaPrompt;
 
-Cinematic establishing shot of this world's most iconic landscape. Emphasize unique architecture, terrain, vegetation, weather, sky, and time of day that distinguish THIS setting from generic fantasy/sci-fi.
+      if (anchor) {
+          vistaPrompt = `Geographic environmental illustration. Painted concept art style.
 
-COMPOSITION: Wide 16:9 vista, deep perspective, layered foreground/midground/background. Epic scale — environment dwarfs any figures. Painterly illustration with rich color palette, volumetric lighting, atmospheric haze. No text, no watermark, no UI elements.
-FIGURES: If any human silhouette appears, it must face AWAY and occupy less than 10% of frame. No faces, no portraits, no character focus.`;
+LOCATION: ${anchor.name}
+GEOGRAPHY: ${anchor.geography}
+SCALE: ${anchor.scale}
+VIEWPOINT: ${anchor.viewpoint}${anchor.environmentalCondition ? `\nENVIRONMENTAL CONDITIONS: ${anchor.environmentalCondition}` : ''}
+WORLD: ${worldLabel}${flavorNote ? `\nFLAVOR:${flavorNote}` : ''}
+ATMOSPHERE: ${tone}
+
+GEOGRAPHY DOMINANCE (MANDATORY):
+This image depicts terrain, architecture, and environmental scale.
+PRIMARY SUBJECTS: landforms, structures, weather, vegetation, geological features.
+SUPPRESS: romance composition, portrait framing, character-centered scenes.
+Environment occupies at least 90% of the frame.
+
+COMPOSITION: Wide 16:9 vista, deep perspective, layered foreground/midground/background. Painterly illustration with rich color palette, volumetric lighting, atmospheric haze. No text, no watermark, no UI elements.
+
+SCALE FIGURE (OPTIONAL): A small native inhabitant or traveler may appear for scale only — must face away, occupy less than 8% of frame, must not be focal point.
+
+ATTRACTOR SUPPRESSION: Do NOT default to castle on hill at sunset, generic city skyline, spaceship corridor, medieval village panorama, or empty desert wasteland.`;
+      } else {
+          vistaPrompt = `Geographic environmental illustration. ${worldLabel} world. ${tone} atmosphere.${flavorNote}
+
+Painted concept art of a specific location within this world. Emphasize unique architecture, terrain, vegetation, weather, sky, and time of day.
+
+COMPOSITION: Wide 16:9 vista, deep perspective, layered foreground/midground/background. Painterly illustration with rich color palette, volumetric lighting, atmospheric haze. No text, no watermark, no UI elements.
+FIGURES: If any human silhouette appears, it must face AWAY and occupy less than 8% of frame. No faces, no portraits, no character focus.`;
+      }
+
+      console.log('[BookScene:ANCHOR]', anchor?.name || 'none');
 
       // ── SETTING-SPECIFIC LIGHTING ─────────────────────────────────────
       // Skip the portrait-oriented applyVisualIntentGuard entirely for landscapes.
@@ -40388,6 +41060,8 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
   // ============================================================
   let _loadingSparkleInterval = null;
 
+  const _COVER_SPARKLE_CONTAINER_ID = 'coverBarSparkles';
+
   function startLoadingBarSparkles() {
       stopLoadingBarSparkles(); // Clear any existing
 
@@ -40399,29 +41073,35 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
       if (style.position === 'static') {
           progressBar.style.position = 'relative';
       }
+      progressBar.style.overflow = 'visible';
 
-      // Spawn sparkles at relaxed intervals for gentle density
-      _loadingSparkleInterval = setInterval(() => {
-          spawnSparkle(progressBar, false);
-      }, 400); // ~2-3 sparkles per second
-
-      // Initial seeds — staggered for natural appearance
-      for (let i = 0; i < 3; i++) {
-          setTimeout(() => spawnSparkle(progressBar, false), i * 200);
+      // Create anchored sparkle container as child of progress bar
+      let container = document.getElementById(_COVER_SPARKLE_CONTAINER_ID);
+      if (!container) {
+          container = document.createElement('div');
+          container.id = _COVER_SPARKLE_CONTAINER_ID;
+          container.className = 'authorship-sparkle-container';
+          container.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:1;';
+          progressBar.appendChild(container);
       }
+
+      // Use SPARKLE_PROFILES emitter — same system as Begin Story button
+      startSparkleEmitter(_COVER_SPARKLE_CONTAINER_ID, 'loadingBar', 3);
   }
 
   function stopLoadingBarSparkles() {
-      if (_loadingSparkleInterval) {
-          clearInterval(_loadingSparkleInterval);
-          _loadingSparkleInterval = null;
+      stopSparkleEmitter(_COVER_SPARKLE_CONTAINER_ID);
+
+      // Remove the sparkle container
+      const container = document.getElementById(_COVER_SPARKLE_CONTAINER_ID);
+      if (container) {
+          container.querySelectorAll('.authorship-sparkle').forEach(s => {
+              s.style.opacity = '0';
+              s.style.transition = 'opacity 0.3s ease-out';
+              setTimeout(() => s.remove(), 350);
+          });
+          setTimeout(() => container.remove(), 400);
       }
-      // Fade out existing sparkles gracefully
-      document.querySelectorAll('.loading-sparkle').forEach(s => {
-          s.style.opacity = '0';
-          s.style.transition = 'opacity 0.3s ease-out';
-          setTimeout(() => s.remove(), 350);
-      });
   }
 
   // Start cover loading UI with staged phrases
@@ -41568,6 +42248,363 @@ Return ONLY valid JSON:
       Dystopia:         'Show the regime through environmental detail — avoid on-the-nose propaganda posters or obvious "1984" imagery.',
       PostApocalyptic:  'Show specific decay and reclamation — avoid generic "ruined city" or "dusty wasteland" stock compositions.'
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SETTING LOCATION ANCHORS — Named geographic locations per world/flavor.
+  // Used by generateSettingImage() and generateBookSceneArt() to produce
+  // specific, varied environmental illustrations instead of generic AI clichés.
+  // Each entry: { name, geography, viewpoint, scale }
+  // ═══════════════════════════════════════════════════════════════════════════
+  const SETTING_LOCATION_ANCHORS = {
+      Fantasy: {
+          _base: [
+              { name: "Fate's Favor Crater Basin", geography: 'vast impact crater filled with fractured moonstone shelves and luminous mineral veins, mist pooling in the basin floor', viewpoints: ['high crater rim overlooking the basin', 'basin floor looking up at encircling cliffs and sky', 'aerial perspective revealing the full crater scar', 'mist-level perspective with moonstone shelves emerging from fog'], scale: 'continental-scale geological scar' },
+              { name: 'Thornwild Canopy Interior', geography: 'towering thorn-forests with interlocking root cathedrals, bioluminescent fungi along trunk bases, filtered green light', viewpoints: ['forest floor looking upward through layered canopy', 'mid-canopy root-bridge between massive trunks', 'aerial view of unbroken canopy stretching to horizon'], scale: 'ancient forest ecosystem spanning miles' },
+              { name: 'The Shackle Isles Archipelago', geography: 'storm-lashed prison archipelago linked by colossal rusted chains, black rock sea-stacks, churning dark water', viewpoints: ['rocky shoreline facing chained islands across rough seas', 'chain-level perspective walking the links between islands', 'aerial view of the archipelago chain pattern'], scale: 'island chain stretching across dark seas' },
+              { name: 'Vaelryn Reach — The High Court Peaks', geography: 'mountain fortress city carved into highest peaks, terraced stone architecture with ceremonial bridges between spires', viewpoints: ['ascending approach road looking up at peak-city', 'ceremonial bridge between spires with valley far below', 'distant mountain range with High Court visible at summit'], scale: 'city-spanning mountain stronghold' },
+              { name: 'Gloamwater Bay at Tidal Shift', geography: 'eastern coastal enclave where the Drowned Vein empties, bioluminescent tidal pools, architecture half-submerged at high tide', viewpoints: ['waterline perspective with structures reflected in glowing water', 'elevated cliff looking down at the tidal settlement', 'submerged street level at high tide with buildings rising from water'], scale: 'coastal settlement shaped by massive tides' },
+              { name: 'The Ascendant Run River Valley', geography: 'wide river cutting through layered sedimentary cliffs, ancient waystone markers along the banks, ley-veins visible in exposed rock faces', viewpoints: ['elevated riverbank overlooking the valley bend', 'river-level perspective from a ferry crossing', 'cliff-top looking down at the river threading through canyon walls'], scale: 'river valley corridor between regions' },
+              { name: 'Pulse Point Harbor', geography: 'southern meridian trade port with layered wooden docks, merchant ships with enchanted rigging, market terraces climbing the hillside', viewpoints: ['harbor approach from the water with city rising behind docks', 'market terrace looking down over the bustling harbor', 'dock-level perspective between moored vessels'], scale: 'major port city built on trade' },
+              { name: 'The Veilwood Perimeter', geography: 'dense occult forest where trees grow in unnatural geometric patterns, permanent twilight, faint spectral boundaries visible between trunks', viewpoints: ['standing at the treeline looking into deepening darkness', 'interior path where geometric tree patterns are most visible', 'elevated view from a watchtower at the forest edge'], scale: 'forbidden forest border zone' },
+              { name: 'Lytharyn Arcane City-State', geography: 'western coastal city of crystalline towers and knowledge-archives, light refracting through arcane lenses mounted on spires', viewpoints: ['coastal cliff approach with city catching ocean light', 'interior courtyard between crystal towers', 'sea-level perspective with towers rising from the coastal rock'], scale: 'city-state dominated by arcane architecture' },
+              { name: 'The Ashen Verge Frontier', geography: 'western inland war province with fortified watchtowers, scorched training grounds, supply roads cutting through sparse terrain', viewpoints: ['frontier watchtower perspective overlooking contested lands', 'supply road stretching through the scarred province', 'training ground with watchtower line on the horizon'], scale: 'militarized border province' }
+          ],
+          arcane_binding: [
+              { name: 'Lytharyn Binding Towers', geography: 'crystalline arcane spires with ritual circles carved into stone plazas below, chains of light arcing between tower peaks', viewpoints: ['plaza level looking up through intersecting light-chains', 'tower balcony looking across at neighboring spire and light-arc', 'aerial view of the tower cluster with binding circles glowing below'], scale: 'tower complex dominating the coastal skyline' },
+              { name: 'The Shackle Isles Ritual Platforms', geography: 'sea-swept stone platforms with ancient binding sigils, tide pools glowing with residual enchantment', viewpoints: ['low angle from platform edge with ocean spray and distant islands', 'overhead view of sigil patterns cut into wet stone', 'approaching by boat with platforms rising from the waves'], scale: 'island-top ceremonial grounds' },
+              { name: 'The Binding Vaults Beneath Vaelryn', geography: 'underground chambers where ancient pacts are physically stored as luminous chains suspended between pillars, echoing drip of mineral water', viewpoints: ['vault entrance with chains of light visible in the darkness ahead', 'chamber interior surrounded by suspended binding-chains', 'narrow passage between vaults with light bleeding through cracks'], scale: 'subterranean contract archive spanning miles' },
+              { name: "Fate's Favor — The Covenant Ring", geography: 'circle of standing stones at the crater rim where binding oaths are sealed, each stone carved with contract language, ley-energy pooling at the center', viewpoints: ['inside the stone circle looking outward at the crater basin', 'approaching the ring from the crater path at dusk', 'ground level at the circle center with stones towering overhead'], scale: 'ancient ritual site at continental landmark' }
+          ],
+          fated_blood: [
+              { name: 'Vaelryn Reach Ancestral Crypts', geography: 'underground chambers beneath the High Court, lineage tapestries preserved in crystal cases, bloodline altars with pooled crimson light', viewpoints: ['descending stairway into torch-lit crypt galleries', 'crypt hall with crystal-cased tapestries on both sides', 'altar chamber with crimson light pooling in carved channels'], scale: 'vast subterranean dynastic archive' },
+              { name: "Fate's Favor — The Lineage Basin", geography: 'crater floor where noble families maintain hereditary claim-stones, each carved with dynastic history', viewpoints: ['basin floor with claim-stones radiating outward from center', 'elevated rim looking down at the pattern of claim-stones', 'close perspective walking between towering claim-stones'], scale: 'ceremonial landscape within the crater' },
+              { name: 'The Succession Gardens of Vaelryn', geography: 'terraced gardens on the mountain slopes where each ruling family maintains ancestral plantings, trees centuries old, root systems intertwined', viewpoints: ['garden terrace looking across to rival family terraces', 'ancient tree grove with intertwined root systems visible', 'mountain path winding through the tiered succession gardens'], scale: 'mountainside dynastic landscape garden' },
+              { name: 'The Blood Archives — Pulse Point', geography: 'harbor-district repository where bloodline records and succession proofs are stored, guarded by merchant-class archivists, ink and wax seal smell', viewpoints: ['archive interior with scroll-racks floor to ceiling', 'reading room with bloodline charts spread on oak tables', 'exterior approach through the harbor district toward the fortified archive'], scale: 'trade-city dynastic records repository' }
+          ],
+          the_inhuman: [
+              { name: 'Gloamwater Bay — Inhuman Quarter', geography: 'architecture built at non-human scale, organic-mineral hybrid structures, doorways sized for beings larger than humans', viewpoints: ['human-height perspective in an oversized street looking up', 'elevated walkway designed for smaller species along the building faces', 'waterfront where inhuman architecture meets the tidal bay'], scale: 'settlement designed for multiple species' },
+              { name: 'Thornwild Deep — First Favored Holdings', geography: 'ancient tree-settlements with structures grown rather than built, root-bridges connecting canopy platforms', viewpoints: ['mid-canopy walkway between living structures', 'ground level looking up at the tree-city overhead', 'canopy-top with the forest-settlement visible below through gaps'], scale: 'forest civilization integrated with living trees' },
+              { name: 'The Hybrid Markets of Pulse Point', geography: 'harbor bazaar where human and inhuman traders meet, stalls built to accommodate multiple body plans, translation-charms hanging from awnings', viewpoints: ['market alley with varied-height stalls on both sides', 'elevated balcony overlooking the multispecies market floor', 'dock approach where inhuman vessels are moored beside human ships'], scale: 'multispecies trade intersection' },
+              { name: 'The Gloamwater Shallows — Tidal Nurseries', geography: 'shallow coastal waters where inhuman young are raised in protected tide pools, coral-like structures shaped by non-human hands, phosphorescent water', viewpoints: ['wading-depth perspective with nursery structures rising from the water', 'clifftop looking down at the glowing tidal nursery pattern', 'underwater perspective looking up at the surface light'], scale: 'coastal breeding ground at settlement edge' }
+          ],
+          the_beyond: [
+              { name: 'The Veilwood — Dimensional Threshold', geography: 'forest interior where reality layers become visible, trees existing in multiple states simultaneously, spectral light from beyond the veil', viewpoints: ['standing at a dimensional rift with reality splitting ahead', 'looking back from inside the threshold toward the normal forest', 'overhead perspective where the canopy phases between realities'], scale: 'boundary zone between planes of existence' },
+              { name: "Fate's Favor — The Thin Place", geography: 'crater center where 13 moon-shadows converge, air visibly distorted, ground showing through to somewhere else', viewpoints: ['ground level at the convergence point with sky fracturing above', 'crater rim looking down at the distortion zone', 'inside the distortion where two realities overlap simultaneously'], scale: 'dimensional weak point at continental scale' },
+              { name: 'The Pulse Point Veil-Market', geography: 'harbor-district black market where objects from beyond the veil are traded, reality unstable around certain stalls, impossible light sources', viewpoints: ['market entrance where normal architecture transitions to impossible geometry', 'deep market interior where the ceiling opens to non-local sky', 'vendor perspective with beyond-objects glowing on the table'], scale: 'commercial threshold between realities' },
+              { name: 'Lytharyn — The Observatory of Planes', geography: 'highest tower in the arcane city with lenses focused on other realities, dimensional charts on every wall, the air shimmers with cross-planar bleed', viewpoints: ['observatory interior with lenses showing alien landscapes', 'tower exterior with light from multiple realities refracting through windows', 'rooftop platform where the sky shows layered dimensional horizons'], scale: 'arcane observation tower piercing dimensional barriers' }
+          ],
+          cursed: [
+              { name: 'The Ashen Verge — Blightlands', geography: 'war-scarred terrain where curse has taken root, vegetation blackened with spreading dark veins, corrupted water with oily iridescence', viewpoints: ['elevated position overlooking the spreading blight-line', 'ground level at the boundary where healthy soil meets corruption', 'wading through a corrupted stream with dark veins visible in the banks'], scale: 'province-wide curse contamination zone' },
+              { name: 'Thornwild — The Rotting Heart', geography: 'ancient forest section where trees decay while still standing, bioluminescence turned sickly, ground soft with corruption', viewpoints: ['forest path where healthy growth transitions to decay', 'interior of a rotting root-cathedral with corrupted light', 'canopy level where dying branches frame a sick sky'], scale: 'corruption spreading through living ecosystem' },
+              { name: "Fate's Favor — The Scar That Festers", geography: 'section of the crater rim where curse-energy concentrates, moonstone turned black, fissures leaking dark vapor, flora twisted into painful shapes', viewpoints: ['crater rim path approaching the festering section', 'inside a fissure with curse-vapor rising around', 'overlooking the blackened moonstone fields from above'], scale: 'cursed zone within continental landmark' },
+              { name: 'Gloamwater Bay — The Poisoned Shallows', geography: 'coastal waters where curse has tainted the tide, dead marine life on oily shores, inhuman structures abandoned at the waterline', viewpoints: ['shoreline with poisoned water lapping at abandoned structures', 'elevated cliff overlooking the extent of the contaminated bay', 'boat perspective crossing the boundary between clean and cursed water'], scale: 'curse contamination of coastal ecosystem' }
+          ]
+      },
+      SciFi: {
+          _base: [
+              { name: 'Helios Orbital Habitat', geography: 'rotating orbital ring station with docking pylons and solar collection arrays, habitation modules visible through transparent sections', viewpoints: ['external orbital view above a planetary horizon', 'interior habitat ring with curved floor and distant ceiling-sky', 'docking approach with the ring filling the viewport'], scale: 'kilometer-wide megastructure in planetary orbit' },
+              { name: 'Kestrel Asteroid Refinery', geography: 'industrial mining platforms embedded in a tumbling asteroid, extraction arms and processing towers, ore transport rails', viewpoints: ['approach vector toward primary docking bay', 'surface-level among extraction equipment with stars overhead', 'distant view of the asteroid with industrial lights dotting its surface'], scale: 'asteroid-wide extraction and refining facility' },
+              { name: 'Verdant-7 Alien Jungle World', geography: 'bioluminescent alien jungle with impossible vertical growth, non-terrestrial flora in spectrum-shifted colors, multiple atmospheric layers', viewpoints: ['ground level on a xeno-botanical survey path', 'canopy-level observation platform in alien trees', 'clearing edge where human base camp meets alien forest'], scale: 'planetary biosphere unlike anything on Earth' },
+              { name: 'Deep Void Survey Vessel — Bridge', geography: 'pressurized command deck with panoramic viewport showing star-dense void, instrument consoles casting amber glow', viewpoints: ['interior bridge perspective facing the viewport', 'viewport exterior showing the ship against stellar backdrop', 'navigator station with star-charts projected in holographic layers'], scale: 'vessel interior against infinite stellar backdrop' },
+              { name: 'Meridian Station — Transit Hub', geography: 'massive pressurized concourse where species and cultures intersect, holographic wayfinding, multi-gravity sections', viewpoints: ['concourse level looking through architecture and wayfinding holograms', 'observation gallery overlooking the multi-gravity transit zones', 'docking ring exterior with ships of varied design attached'], scale: 'city-scale space station intersection point' }
+          ],
+          final_frontier: [
+              { name: 'Survey Ship Cryo-Bay', geography: 'cryo-pod arrays with frost-covered viewports, ship hull visible through observation windows, deep space beyond', viewpoints: ['cryo-bay interior with star-field visible through hull glass', 'individual pod perspective looking out at the frozen ranks', 'bay entrance with frost-light and deep void through far windows'], scale: 'ship interior against the void' },
+              { name: 'Uncharted System — First Approach', geography: 'unknown planetary system with unfamiliar ring structures, ship sensors painting data overlays on the viewport', viewpoints: ['bridge viewport during system approach', 'external ship perspective with the unknown system ahead', 'sensor-room with holographic system model rotating'], scale: 'planetary system seen from survey distance' },
+              { name: 'Ice Moon Surface Base', geography: 'pressurized habitat modules on a frozen moon surface, geyser plumes in background, gas giant filling the sky, tire tracks in crystalline frost', viewpoints: ['base exterior with gas giant dominating the sky', 'interior greenhouse dome with frost-light and green plants', 'surface traverse path between habitat modules'], scale: 'outpost on an alien moon' },
+              { name: 'Deep Space Relay Station', geography: 'solitary communications array in empty void, antenna dishes pointed at distant galaxies, single habitation module, absolute darkness beyond the lights', viewpoints: ['station exterior with antenna array against star-field', 'interior control room — single window showing infinite void', 'approaching in a shuttle with the tiny station visible against nothing'], scale: 'humanity at maximum isolation' }
+          ],
+          first_contact: [
+              { name: 'Alien Diplomatic Vessel — Exterior', geography: 'non-human ship architecture with impossible geometry, translation beacon arrays, parallel orbit formation with human vessel', viewpoints: ['external view showing both ships in formation', 'human ship observation deck looking across at the alien vessel', 'between the ships with both hulls visible and space between'], scale: 'two civilization-ships meeting in orbit' },
+              { name: 'Xeno-Terrain Landing Zone', geography: 'alien planet surface with non-terrestrial geology, unfamiliar sky colors, first-contact landing pad with portable atmosphere generators', viewpoints: ['ground level at the interface between human tech and alien landscape', 'elevated survey position overlooking the landing zone and alien terrain', 'atmospheric boundary where human generators meet alien air'], scale: 'alien world surface at human scale' },
+              { name: 'Translation Chamber — Orbital Meeting Point', geography: 'purpose-built space between human and alien environmental zones, adaptive atmosphere, communication interfaces on both walls', viewpoints: ['human side looking through the environmental barrier at alien architecture', 'chamber center where two atmosphere types meet visibly', 'overhead view of the dual-environment layout'], scale: 'first-contact diplomatic architecture' },
+              { name: 'Alien Ruins — Archaeological Site', geography: 'ancient non-human structures on a dead world, pre-contact civilization remains, human research equipment among alien architecture', viewpoints: ['excavation level among alien structural remains', 'hilltop overview of the ruins stretching across the terrain', 'interior of an alien structure with human lights illuminating unknown purposes'], scale: 'dead civilization at archaeological scale' }
+          ],
+          future_of_science: [
+              { name: 'Experimental Containment Lab', geography: 'sterile research chambers with containment fields visible as light distortions, specimen observation arrays, data visualization walls', viewpoints: ['lab interior from researcher perspective', 'containment field boundary with experiment visible through distortion', 'observation gallery looking down into the chamber'], scale: 'advanced research facility interior' },
+              { name: 'Particle Accelerator Ring — Surface Access', geography: 'landscape-scale scientific instrument, accelerator ring visible as a horizon-spanning arc, surface access buildings', viewpoints: ['elevated perspective showing the ring curving away', 'interior tunnel of the accelerator with service lights receding', 'surface building with the ring-arc visible on the horizon'], scale: 'planetary-surface megascience installation' },
+              { name: 'Quantum Computing Core', geography: 'cryogenic chamber housing quantum processors, absolute-zero condensation visible, data-streams rendered as holographic rivers through the facility', viewpoints: ['core chamber with processors suspended in cooling arrays', 'control room with holographic data-streams flowing past', 'maintenance corridor along the cooling infrastructure'], scale: 'building-scale computing installation' },
+              { name: 'Orbital Telescope Array', geography: 'cluster of massive space telescopes in formation, each lens wider than a city block, calibration lasers connecting them, distant galaxies in the field of view', viewpoints: ['between telescopes with calibration beams crossing the void', 'control station interior with deep-space imagery on every screen', 'distant view of the array formation against stellar backdrop'], scale: 'astronomy installation at orbital scale' }
+          ],
+          simulation: [
+              { name: 'Reality Seam — Glitch Zone', geography: 'environment where simulation boundaries become visible, architecture folding recursively, pixel degradation at edges, sky tiling errors', viewpoints: ['street level in a degrading simulated city', 'rooftop where the skybox edge is visible', 'interior room where walls glitch between different architectural styles'], scale: 'neighborhood-scale reality failure' },
+              { name: 'The Construct — Loading Architecture', geography: 'unfinished environment with wireframe structures materializing, placeholder textures, geometry assembling in real-time', viewpoints: ['standing in partially rendered space watching structures form', 'boundary between rendered and void areas', 'overhead view of the rendering frontier advancing across terrain'], scale: 'world being built around the viewer' },
+              { name: 'Memory Palace — Corrupted Archive', geography: 'personal memory rendered as architecture, some rooms pristine and some degraded, emotional associations visible as color and light changes', viewpoints: ['corridor between intact and corrupted memory rooms', 'intact memory room with impossible personal detail', 'corrupted section where memories overlap and contradict'], scale: 'mindscape architecture at personal scale' },
+              { name: 'The Recursive City', geography: 'city that contains smaller versions of itself visible through windows, each level slightly different, impossible nested architecture', viewpoints: ['street level looking through a window at the smaller city within', 'rooftop where multiple recursion layers are visible stacked', 'interior space where the ceiling reveals another city above'], scale: 'fractal urban architecture' }
+          ],
+          cyberpunk: [
+              { name: 'Neon District — Rain Level', geography: 'vertical cityscape with neon signage in multiple languages, rain on chrome surfaces, augmentation clinic storefronts, data-market alleys', viewpoints: ['street level looking up through rain and neon', 'elevated walkway between mega-buildings with city below', 'alley perspective with neon reflections in standing water'], scale: 'megacity vertical slice' },
+              { name: 'Undercity Data Market', geography: 'subterranean tech bazaar in repurposed infrastructure, jury-rigged server racks, holographic inventory displays', viewpoints: ['market interior with vendor stalls receding into darkness', 'ceiling-level looking down at the market grid', 'entrance tunnel transitioning from surface to underground market'], scale: 'underground economy hidden beneath the city' },
+              { name: 'Corporate Spire — Upper Levels', geography: 'polished corporate tower above the smog line, clean air and sunlight, executive gardens, drones maintaining the exterior', viewpoints: ['rooftop garden with polluted city visible below the cloud line', 'exterior glass wall reflecting distorted city below', 'interior executive floor with floor-to-ceiling views above the smog'], scale: 'corporate altitude above the megacity' },
+              { name: 'Augmentation Recovery Clinic', geography: 'back-alley medical facility with improvised surgical bays, replacement limbs on display, anesthetic fog, neon-lit signage', viewpoints: ['clinic interior from the operating chair perspective', 'storefront window with augmentation displays and rain outside', 'alley approach with the clinic sign glowing ahead'], scale: 'street-level body modification economy' }
+          ],
+          post_human: [
+              { name: 'Consciousness Substrate Architecture', geography: 'post-biological structures that serve as physical housing for uploaded minds, organic-digital hybrid growth patterns', viewpoints: ['exterior view of substrate towers at twilight', 'interior neural-corridor with consciousness-data flowing past', 'ground level where biological visitors approach the substrate city'], scale: 'city-scale post-human infrastructure' },
+              { name: 'Identity Transfer Nexus', geography: 'transfer facility where bodies and minds interface, neural-pathway conduits visible as golden filaments, transition chambers', viewpoints: ['facility interior from the threshold of a transfer chamber', 'chamber interior during transfer with light-patterns active', 'exterior of the nexus with queuing infrastructure'], scale: 'facility interior at intimate scale' },
+              { name: 'The Last Garden — Biological Preserve', geography: 'carefully maintained natural environment within a post-human city, Earth plants as museum specimens, biological humans as rare visitors', viewpoints: ['garden interior with substrate towers visible beyond the tree-line', 'observation path where post-human entities watch biological nature', 'garden edge where organic matter meets substrate architecture'], scale: 'nature preserve in a post-biological city' },
+              { name: 'Ancestor Archive — Physical Memory', geography: 'museum of pre-transcendence human artifacts, physical objects preserved as historical record, substrate entities studying them', viewpoints: ['archive hall with human artifacts in preservation cases', 'reading room where substrate entities project into physical forms to handle objects', 'exterior approach through the substrate district'], scale: 'museum-scale cultural preservation' }
+          ],
+          galactic_civilizations: [
+              { name: 'Imperial Fleet Assembly Point', geography: 'massive fleet formations at planetary scale, flagship dreadnoughts with escort formations, contested orbital territory', viewpoints: ['tactical observation deck overlooking fleet deployment', 'exterior perspective with multiple capital ships in formation', 'bridge of a flagship with the fleet visible through viewport'], scale: 'planetary-orbit military staging area' },
+              { name: 'Galactic Senate Chamber', geography: 'holographic delegation platforms representing hundreds of civilizations, vast domed chamber with light-displays', viewpoints: ['senate floor from a delegation platform', 'upper gallery looking down at the full assembly', 'exterior of the senate structure with arriving diplomatic vessels'], scale: 'chamber built for galactic-scale diplomacy' },
+              { name: 'Contested Border Station', geography: 'military checkpoint at the boundary between civilizational territories, weapons platforms, scanning arrays, diplomatic and commercial traffic', viewpoints: ['station command center with border traffic on displays', 'exterior showing the station between two different spatial territories', 'commercial queue perspective approaching the checkpoint'], scale: 'intercivilizational border infrastructure' },
+              { name: 'Colony World Capital', geography: 'planned city on a terraformed world, grand civic architecture mixing multiple civilizational styles, artificial atmosphere dome visible at horizon', viewpoints: ['central plaza with mixed-civilization architecture surrounding', 'atmospheric dome edge where engineered sky meets raw planetary surface', 'elevated transit looking across the capital toward the dome boundary'], scale: 'terraformed world capital city' }
+          ]
+      },
+      Modern: {
+          _base: [
+              { name: 'Downtown Intersection at Golden Hour', geography: 'urban crossroads with mixed architecture — old brick and new glass, street-level shops, pedestrian texture, late sun between buildings', viewpoints: ['street corner perspective with depth down two avenues', 'elevated fire-escape looking down at the intersection', 'café window perspective watching the crossroads'], scale: 'city-block intimate urban scale' },
+              { name: 'Residential Rooftop at Dusk', geography: 'apartment rooftop with water towers, distant skyline as backdrop, string lights and improvised furniture', viewpoints: ['rooftop level looking across neighboring rooftops toward horizon', 'seated perspective among string lights with city behind', 'stairwell door opening onto the rooftop vista'], scale: 'neighborhood vista from intimate vantage' },
+              { name: 'Suburban House — Autumn Evening', geography: 'residential street with mature trees, warm window-light from houses, leaf-scattered sidewalks, parked cars', viewpoints: ['sidewalk level approaching a lit house', 'porch perspective looking out at the street', 'overhead view of the tree-lined block at dusk'], scale: 'single residential block' },
+              { name: 'Coastal Town Harbor', geography: 'small harbor with fishing boats and pleasure craft, weathered dock buildings, ocean horizon beyond breakwater', viewpoints: ['harbor walkway with boats and town behind', 'dock edge looking out past breakwater to open ocean', 'hillside above town looking down at the harbor curve'], scale: 'small-town waterfront' }
+          ],
+          small_town: [
+              { name: 'Main Street at Sunset', geography: 'small-town main street with hand-painted shop signs, American flags, a single traffic light, mountains or fields visible at the road end', viewpoints: ['walking down the center of a quiet main street', 'storefront bench watching the empty road', 'approaching town from the highway with main street ahead'], scale: 'one-block downtown of a small community' },
+              { name: 'Town Square and Bandstand', geography: 'small park with war memorial, gazebo bandstand, surrounding storefronts, church steeple in background', viewpoints: ['park bench perspective facing the square', 'bandstand interior looking out at the surrounding town', 'church steps looking across at the square'], scale: 'community gathering space' },
+              { name: 'Country Road at Field Edge', geography: 'two-lane road with crop fields on both sides, distant farmhouse, utility poles, wide open sky', viewpoints: ['road-center perspective with fields stretching away', 'field edge looking across crops toward the farmhouse', 'elevated view from a grain silo or water tower'], scale: 'rural landscape surrounding the town' },
+              { name: 'Local Diner — Interior', geography: 'small-town diner with vinyl booths, pie case, coffee counter, morning light through plate-glass windows, locals on stools', viewpoints: ['booth perspective facing the counter and windows', 'counter stool looking down the row of seats', 'through the front window from the parking lot'], scale: 'community institution interior' }
+          ],
+          college: [
+              { name: 'University Quad in Autumn', geography: 'campus quadrangle with brick academic buildings, long shadows on grass, scattered leaves, library dome visible', viewpoints: ['diagonal path across the quad at late afternoon', 'library steps looking across the quad', 'under a large tree with the quad spreading before you'], scale: 'university campus core' },
+              { name: 'Library Reading Room', geography: 'vaulted reading room with long wooden tables, desk lamps, tall windows, book stacks receding into depth', viewpoints: ['interior from a reading alcove looking across the room', 'between stacks looking toward the windowed reading area', 'mezzanine balcony overlooking the reading floor'], scale: 'grand interior academic space' },
+              { name: 'Dormitory Courtyard at Night', geography: 'residential courtyard between dorm buildings, lit windows showing student life, bike racks, bulletin boards, outdoor seating', viewpoints: ['courtyard center looking up at the lit windows', 'doorway perspective stepping out into the courtyard', 'upper-floor window looking down at the courtyard activity'], scale: 'student residential community space' },
+              { name: 'Campus Coffee Shop', geography: 'converted campus building with exposed brick, mismatched furniture, laptop screens glowing, chalkboard menu, study groups', viewpoints: ['corner table perspective with the room spreading before you', 'counter perspective looking out at the seating area', 'window seat looking in from the campus sidewalk'], scale: 'academic social hub interior' }
+          ],
+          friends: [
+              { name: 'Neighborhood Bar Interior', geography: 'warm local bar with worn wood surfaces, neon beer signs, pool table in back, evening crowd texture', viewpoints: ['booth perspective looking toward the bar', 'bar stool looking back at the room and pool table', 'doorway entrance with the warm interior ahead'], scale: 'single intimate commercial interior' },
+              { name: 'Shared Apartment Living Room', geography: 'lived-in apartment with mismatched furniture, stacked books, plants on windowsill, city light through windows', viewpoints: ['couch-level perspective of a comfortable mess', 'kitchen pass-through looking into the living room', 'window seat looking inward at the apartment life'], scale: 'single room domestic interior' },
+              { name: 'Rooftop Gathering Space', geography: 'apartment rooftop arranged for socializing, borrowed chairs, cooler, string lights, city skyline backdrop', viewpoints: ['circle of chairs with city lights behind', 'rooftop edge looking back at the gathered setup', 'stairwell door opening onto the lit rooftop scene'], scale: 'improvised social space with city context' },
+              { name: 'Late-Night Bodega', geography: 'corner convenience store with fluorescent light spilling onto sidewalk, snack aisles, coffee counter, nighttime street outside', viewpoints: ['interior aisle with sidewalk visible through glass front', 'sidewalk perspective with warm store light on the pavement', 'counter perspective looking out at the late-night street'], scale: 'nighttime urban micro-destination' }
+          ],
+          blue_blood: [
+              { name: 'Country Estate Grounds', geography: 'manicured estate with geometric gardens, stone-balustraded terraces, manor house in middle distance', viewpoints: ['garden path approaching the house through topiary', 'terrace looking across formal gardens toward the horizon', 'estate gate approach with the grounds visible beyond'], scale: 'estate grounds with manor as centerpiece' },
+              { name: 'Private Gallery Wing', geography: 'high-ceilinged gallery with old masters, parquet floors, afternoon light through tall windows, gilt frames', viewpoints: ['gallery interior with paintings receding into perspective', 'window alcove looking along the gallery wall', 'gallery entrance with the full length of the wing visible'], scale: 'grand interior of private wealth' },
+              { name: 'Harbor Yacht Club', geography: 'exclusive waterfront club with polished mahogany interiors, large windows on the harbor, gleaming boats at private moorings', viewpoints: ['club terrace looking out at private moorings', 'harbor-side approach with the club building glowing', 'interior lounge with harbor visible through bay windows'], scale: 'waterfront privilege architecture' },
+              { name: 'Penthouse Terrace — City Night', geography: 'rooftop apartment terrace high above the city, designer furniture, infinity-edge pool reflecting city lights, helicopter pad', viewpoints: ['terrace edge looking down at the city far below', 'pool reflection with city lights shimmering', 'interior looking out through glass walls at the terrace and skyline'], scale: 'elevated urban wealth at maximum height' }
+          ],
+          office: [
+              { name: 'Corporate Floor at Night', geography: 'glass-walled offices with single desk lamps lit, city visible through floor-to-ceiling windows, empty corridors', viewpoints: ['corridor perspective past lit and dark offices', 'single desk perspective with city glowing through the window', 'elevator bank looking down the deserted office floor'], scale: 'corporate floor of a high-rise after hours' },
+              { name: 'Elevator Lobby — Executive Level', geography: 'polished marble lobby with company logo, elevator bank with indicator lights, subtle security presence', viewpoints: ['arriving at the lobby with elevators ahead', 'security desk perspective watching the elevator doors', 'elevator interior with the lobby visible through closing doors'], scale: 'corporate threshold space' },
+              { name: 'Conference Room — Glass Box', geography: 'glass-walled meeting room suspended in the office floor, whiteboard covered in strategy notes, city panorama through exterior glass', viewpoints: ['conference table perspective with city behind the presenter', 'exterior looking in at the glass room from the office floor', 'window-wall perspective with the meeting reflected against city lights'], scale: 'transparent corporate decision space' },
+              { name: 'Parking Garage — After Hours', geography: 'concrete parking structure with fluorescent pools of light, executive cars, echo of footsteps, city visible through gaps in walls', viewpoints: ['walking between parked cars toward the exit', 'stairwell landing looking across the nearly empty floor', 'exit ramp with city street visible ahead'], scale: 'liminal corporate transition space' }
+          ],
+          supernatural_modern: [
+              { name: 'Ordinary Street — Wrong Light', geography: 'normal residential street where one house casts impossible shadows, streetlamps flicker in sequence, reality subtly off', viewpoints: ['sidewalk approach to the anomalous house', 'across the street watching shadows move independently', 'under a flickering streetlamp with the wrong-shadow house ahead'], scale: 'single block of mundane-hiding-magical' },
+              { name: 'Liminal Threshold — Bookshop Basement', geography: 'basement stairs descending past normal depth, shelving transitioning from books to artifacts, light source unclear', viewpoints: ['top of stairs looking down into impossible depth', 'mid-descent where book shelves transition to artifact displays', 'bottom of stairs looking up at the receding normal world'], scale: 'interior space defying physical limits' },
+              { name: 'The Park After Midnight', geography: 'public park where paths rearrange themselves after dark, statue that faces different directions each visit, fog with intention', viewpoints: ['park bench with fog approaching across the grass', 'path intersection where trails lead to unfamiliar destinations', 'statue perspective with the park rearranging in peripheral vision'], scale: 'public space with hidden supernatural geography' },
+              { name: 'Apartment with Extra Rooms', geography: 'normal apartment that contains rooms not on the floor plan, doors that appear in walls, closets deeper than physics allows', viewpoints: ['hallway where an unfamiliar door has appeared', 'inside the extra room looking back at the normal apartment', 'kitchen perspective with an impossible corridor visible in peripheral vision'], scale: 'domestic space exceeding physical dimensions' }
+          ],
+          superheroic_modern: [
+              { name: 'Rooftop Vantage — City at Night', geography: 'high-altitude city view with impact damage on nearby buildings, emergency lights below, dramatic cloud formations', viewpoints: ['rooftop edge looking down and across the city', 'gargoyle-level perspective with city stretched below', 'between buildings looking up at damaged roofline against clouds'], scale: 'city-scale from superhuman vantage point' },
+              { name: 'Impact Crater — Downtown', geography: 'fresh impact crater in a city intersection, cracked asphalt radiating outward, emergency vehicles at perimeter', viewpoints: ['crater edge looking across the damage zone', 'street level approaching the perimeter barricade', 'aerial perspective showing the crater in the city grid'], scale: 'city-block destruction radius' },
+              { name: 'Secret Base — Converted Infrastructure', geography: 'repurposed subway station or warehouse with advanced equipment, training area, multiple screens showing city feeds', viewpoints: ['operations center with city surveillance on screens', 'training space with reinforced walls showing impact marks', 'entrance tunnel transitioning from mundane infrastructure to base'], scale: 'hidden facility beneath ordinary city' },
+              { name: 'Memorial Plaza — Aftermath', geography: 'city plaza rebuilt after a major event, new memorial structure, reinforced buildings, citizens walking past signs of past destruction', viewpoints: ['memorial perspective with rebuilt city around it', 'café across the plaza watching normal life resume', 'elevated transit looking down at the memorial and surrounding recovery'], scale: 'city-scale recovery from extraordinary event' }
+          ]
+      },
+      Historical: {
+          _base: [
+              { name: 'Ancient Construction Plateau', geography: 'monumental construction in progress — ramps, scaffolding, limestone blocks, worker camps at the base', viewpoints: ['desert plateau overlooking the rising monuments', 'worker-camp level looking up at the construction', 'ramp approach ascending the half-built structure'], scale: 'massive stone monuments dominating the horizon' },
+              { name: 'Trade Port at Dawn', geography: 'harbor with period-appropriate vessels, dockside warehouses, cargo being loaded by hand and animal', viewpoints: ['dock level with ships and trade activity', 'ship deck looking back at the busy port', 'warehouse door looking out at the harbor dawn'], scale: 'major pre-industrial port' },
+              { name: 'Walled Settlement', geography: 'fortified town with period walls, gate approach, fields and roads leading to the settlement', viewpoints: ['approaching the main gate on the road', 'wall-top perspective overlooking fields and approaching roads', 'interior street just inside the gate'], scale: 'town-scale fortified settlement' },
+              { name: 'Battlefield Landscape — After', geography: 'open terrain marked by recent conflict — disturbed earth, abandoned equipment, carrion birds, smoke on horizon', viewpoints: ['elevated position overlooking the silent field', 'ground level among abandoned equipment', 'distant hilltop with the battlefield spread before you'], scale: 'battle-scale landscape' }
+          ],
+          prehistoric: [
+              { name: 'Cave Shelter Entrance', geography: 'limestone cave mouth with painted walls visible inside, campfire glow, megafauna tracks in mud outside', viewpoints: ['cave entrance looking outward at glacial landscape', 'interior looking at painted walls by firelight', 'hillside approach with the cave mouth visible above'], scale: 'shelter in overwhelming wilderness' },
+              { name: 'Megafauna Migration Plain', geography: 'vast grassland with herds of massive creatures on the move, stone-tool camp in foreground, distant mountains', viewpoints: ['camp-level perspective watching the migration', 'hilltop overlooking the grassland and moving herds', 'among the tall grass with creatures passing nearby'], scale: 'continental grassland ecosystem' },
+              { name: 'Lakeside Gathering Camp', geography: 'seasonal camp on a glacial lake shore, multiple family shelters, hide-drying racks, fish traps visible in shallows', viewpoints: ['shore-level with camp spread along the waterline', 'canoe perspective approaching the camp from the lake', 'elevated ground overlooking the lakeshore settlement'], scale: 'communal hunter-gatherer settlement' },
+              { name: 'Standing Stone Circle — Sacred Site', geography: 'massive stone arrangement on open high ground, astronomical alignments, offering deposits, worn ceremonial paths', viewpoints: ['inside the circle looking through aligned stones at the horizon', 'approaching across open ground with stones silhouetted', 'ground level at stone base looking up at the monolith and sky'], scale: 'monumental sacred landscape' }
+          ],
+          bronze_age: [
+              { name: 'Ziggurat Temple Complex', geography: 'stepped ziggurat catching sun, irrigated river valley below, mudbrick residential quarters surrounding the temple', viewpoints: ['elevated approach road looking up at the ziggurat', 'temple terrace looking down at the irrigated valley', 'residential street in the shadow of the ziggurat'], scale: 'city-center religious monument' },
+              { name: 'River Valley Irrigation Works', geography: 'geometric canal network feeding agricultural plots, oxen-drawn water wheels, mud-brick granaries', viewpoints: ['canal bank looking across ordered farmland', 'granary elevation looking over the irrigation geometry', 'waterwheel level with canal water flowing past'], scale: 'engineered agricultural landscape' },
+              { name: 'Bronze Workshop Quarter', geography: 'metalworking district with furnace smoke, hammering sounds, molds and ingots, merchant stalls displaying bronze goods', viewpoints: ['workshop entrance with furnace glow inside', 'market street with bronze goods displayed and furnace smoke above', 'rooftop level looking over the workshop district toward the river'], scale: 'industrial district within early city' },
+              { name: 'Harbor of the Sea Peoples', geography: 'coastal trading post where multiple cultures meet, varied ship designs at anchor, multilingual market, defensive walls', viewpoints: ['harbor mouth with mixed vessels visible inside', 'market plaza where traders from different cultures gather', 'wall-top overlooking the harbor and open sea beyond'], scale: 'multicultural maritime trading settlement' }
+          ],
+          classical: [
+              { name: 'Forum Plaza at Midday', geography: 'marble colonnades casting sharp shadows, forum floor with crowd texture, temple pediment visible above rooflines', viewpoints: ['forum floor perspective through columns', 'temple steps looking across the busy forum', 'rooftop of an adjacent building looking down at the plaza'], scale: 'civic center of a classical city' },
+              { name: 'Amphitheater and City', geography: 'massive amphitheater with city spreading behind it, Mediterranean landscape, cypress trees, aqueduct in distance', viewpoints: ['hillside perspective with amphitheater in middle ground', 'amphitheater interior from upper seating tier', 'aqueduct-level looking back at the city and amphitheater'], scale: 'city-scale classical settlement' },
+              { name: 'Villa Rustica — Agricultural Estate', geography: 'Roman-style farming estate with colonnaded house, olive groves, vineyard terraces, slave quarters, distant mountains', viewpoints: ['estate approach road with the villa framed by olive trees', 'villa courtyard looking across gardens to vineyard slopes', 'vineyard terrace looking back at the villa and valley'], scale: 'agricultural estate in classical landscape' },
+              { name: 'Harbor Market — Classical Port', geography: 'bustling port with triremes and merchant vessels, waterfront temple, fish market, amphora stacks, marble customs house', viewpoints: ['dock level between moored ships and market stalls', 'temple steps overlooking the harbor commerce', 'ship deck arriving at the port with the city rising behind'], scale: 'major classical maritime city' }
+          ],
+          medieval: [
+              { name: 'Castle and Village in Valley', geography: 'stone keep on high ground, village in the valley below with muddy streets, market square, church, surrounding farmland', viewpoints: ['ridge approach looking down into the valley settlement', 'village market square looking up at the castle', 'castle wall looking down at the village and fields'], scale: 'feudal lordship landscape' },
+              { name: 'Monastery Scriptorium', geography: 'vaulted stone room with copying desks, illuminated manuscripts in progress, narrow windows casting angled light', viewpoints: ['interior from the doorway looking across ranked desks', 'individual desk with manuscript and tools in working light', 'cloisters approaching the scriptorium entrance'], scale: 'monastic interior workspace' },
+              { name: 'Medieval Fair — Town Outskirts', geography: 'seasonal market outside town walls, merchant tents, traveling performers, livestock pens, road churned to mud', viewpoints: ['fair entrance from the road with tents and crowds ahead', 'within the market rows with castle walls visible beyond', 'elevated position on town wall looking down at the fair'], scale: 'seasonal commercial gathering' },
+              { name: 'River Ford and Bridge Tower', geography: 'strategic river crossing with stone bridge and defensive tower, mill on the bank, travelers waiting to cross, toll collection', viewpoints: ['bridge approach from the road with tower visible', 'tower-top looking down at river traffic and the crossing', 'mill bank perspective with the bridge and tower framed by water'], scale: 'strategic infrastructure and settlement point' }
+          ],
+          renaissance: [
+              { name: 'Canal City at Golden Hour', geography: 'Venetian-style canal city with gondolas, palazzo facades reflecting in water, bridge arches, studio windows lit', viewpoints: ['canal-level perspective from a bridge', 'gondola-level looking along the canal between palazzos', 'upper-floor studio window looking down at the canal life'], scale: 'canal-city neighborhood' },
+              { name: 'Printing Workshop', geography: 'converted warehouse with multiple printing presses, drying racks of fresh pages, ink-stained workers, natural light from high windows', viewpoints: ['workshop interior from the entrance', 'press-side with fresh pages on the drying rack', 'high window looking down at the workshop floor activity'], scale: 'industrial-scale early printing operation' },
+              { name: "Artist's Studio — Top Floor", geography: 'north-lit studio with large unfinished canvas, anatomical studies on walls, plaster casts, pigment-grinding table, city visible through windows', viewpoints: ['studio interior facing the large canvas and windows', 'model platform perspective looking across the studio', 'window-side looking back at the studio workspace'], scale: 'creative workspace with city context' },
+              { name: 'Medici Garden — Sculpture Court', geography: 'enclosed garden with classical sculptures, geometric hedges, fountain, philosophy students, patron and artist in conversation', viewpoints: ['garden path between sculptures and hedges', 'fountain perspective with sculptures arranged around', 'upper loggia looking down into the sculpture garden'], scale: 'patron-class intellectual gathering space' }
+          ],
+          victorian: [
+              { name: 'Industrial Waterfront at Night', geography: 'gaslit docks with steamships, factory smokestacks, fog rolling off the river, warehouse district', viewpoints: ['dock-level perspective with fog and gaslight', 'bridge over the river with industrial skyline on both banks', 'warehouse alley with fog and gaslight at the far end'], scale: 'industrial port district' },
+              { name: 'Grand Terrace Row', geography: 'ornate Victorian terraced houses with iron railings, gas lamps, horse-drawn carriages, autumn trees', viewpoints: ['street-level walking past the terrace', 'parlor window looking out at the street and carriages', 'end of the terrace row looking down its full elegant length'], scale: 'affluent residential street' },
+              { name: 'Railway Station — Main Hall', geography: 'iron-and-glass station with steam locomotives, soaring arched roof, platform bustle, departure boards, luggage porters', viewpoints: ['platform level with a locomotive arriving under the glass roof', 'main hall entrance with the station interior opening before you', 'elevated footbridge looking down at platforms and steam'], scale: 'Victorian engineering as cathedral' },
+              { name: 'Pleasure Garden — Public Park', geography: 'landscaped public park with bandstand, boating lake, promenade paths, gaslit evening entertainment, mixed social classes', viewpoints: ['promenade path with the boating lake ahead', 'bandstand interior looking out at the evening crowd', 'lakeside with pleasure boats and park architecture reflected'], scale: 'public recreational landscape' }
+          ],
+          '20th_century': [
+              { name: 'Art Deco Hotel Lobby', geography: 'geometric lobby with marble floors, brass fixtures, elevator bank with analog indicators, jazz-era furnishings', viewpoints: ['lobby entrance looking toward the front desk', 'mezzanine balcony overlooking the lobby floor', 'elevator interior with the lobby visible through closing grille'], scale: 'grand hotel interior' },
+              { name: 'Wartime Airfield', geography: 'grass airstrip with parked fighter planes, control tower, Nissen huts, overcast sky, distant hedgerow countryside', viewpoints: ['flight line perspective with aircraft in row', 'control tower looking down at the dispersed aircraft', 'Nissen hut interior with the airfield visible through the door'], scale: 'military airfield installation' },
+              { name: 'Jazz-Age Nightclub — Underground', geography: 'basement nightclub with low ceiling, small stage, cigarette smoke, art deco fixtures, intimate round tables, jazz instruments', viewpoints: ['table perspective facing the stage', 'stage perspective looking out at the smoky room', 'stairway descent into the warm club atmosphere'], scale: 'underground cultural venue' },
+              { name: 'Suburban Development — New Build', geography: 'freshly built postwar suburb, identical houses, new-planted saplings, station wagon in driveway, wide empty streets', viewpoints: ['street perspective with identical houses receding', 'front yard looking across at the mirror-image neighbor', 'end of the cul-de-sac with the development visible behind'], scale: 'postwar residential expansion' }
+          ]
+      },
+      Dystopia: {
+          _base: [
+              { name: 'Compliance District — Residential Block', geography: 'identical residential towers with transparent walls, surveillance drones at regular intervals, regime banners', viewpoints: ['street level looking up at the panopticon architecture', 'residential corridor with transparent walls showing neighbors', 'elevated transit perspective with residential blocks repeating to horizon'], scale: 'residential mega-block under total observation' },
+              { name: 'Central Authority Complex', geography: 'brutalist civic mega-structure with oppressive scale, citizen processing queues, propaganda screens on every surface', viewpoints: ['citizen approach to the complex entrance', 'processing queue interior with authority architecture towering above', 'distant view with the complex dominating the skyline'], scale: 'government power made architectural' },
+              { name: 'Underground — Resistance Warren', geography: 'hidden spaces beneath the regime city, improvised lighting, scavenged furniture, forbidden art on walls', viewpoints: ['tunnel entrance looking into warm resistance space', 'warren interior with forbidden art and gathered resistance members', 'hidden exit looking up through grating at the regime street above'], scale: 'hidden community below the controlled surface' }
+          ],
+          glass_house: [
+              { name: 'Transparency Tower — Living Floor', geography: 'residential floor with glass walls on all sides, neighboring units fully visible, surveillance domes overhead', viewpoints: ['interior looking outward through transparent walls at identical units', 'corridor between glass-walled apartments with lives visible on both sides', 'exterior ground level looking up through stacked transparent floors'], scale: 'privacy-free residential architecture' },
+              { name: 'Public Intimacy Theater', geography: 'amphitheater-like observation space where private acts become public performance, tiered viewing, clinical lighting', viewpoints: ['empty theater from upper tier looking down at the stage-floor', 'stage floor looking up at the tiered observation seats', 'entrance perspective with the theater opening ahead'], scale: 'architectural voyeurism at civic scale' },
+              { name: 'The Opaque Room — Black Market Privacy', geography: 'illegally constructed windowless room hidden within a transparent building, sound-dampened walls, contraband curtains, lookout system', viewpoints: ['interior of the hidden room with curtained walls', 'false wall entrance transitioning from transparent to opaque', 'lookout perspective watching the glass corridor for authority patrols'], scale: 'forbidden private space in transparent world' },
+              { name: 'Observation Processing Center', geography: 'government facility where surveillance footage is reviewed, walls of screens showing private moments, classification desks, filing systems', viewpoints: ['screen-wall perspective with hundreds of private moments displayed', 'classification desk with footage being categorized', 'facility entrance with the screen-wall visible through security glass'], scale: 'institutional surveillance processing' }
+          ],
+          human_capital: [
+              { name: 'Citizen Trading Floor', geography: 'stock-exchange aesthetics applied to human valuation, display boards ranking citizens, bidding stations, sterile lighting', viewpoints: ['trading floor perspective among the value-display boards', 'bidding station perspective watching citizens being valued', 'elevated gallery looking down at the trading floor activity'], scale: 'financial architecture applied to people' },
+              { name: 'Assessment Processing Center', geography: 'queuing architecture where citizens are sorted by economic value, color-coded corridors, automated evaluation stations', viewpoints: ['queue perspective looking toward assessment gates', 'evaluation station interior during processing', 'corridor intersection where color-coded paths diverge'], scale: 'industrial-scale human sorting facility' },
+              { name: 'Value Display Plaza', geography: 'public square where citizen rankings are projected on buildings, social-credit leaderboards, premium access gates for high-value citizens', viewpoints: ['plaza level with rankings towering on surrounding buildings', 'premium gate perspective looking back at the general population queue', 'bench perspective watching citizens check their displayed values'], scale: 'public valuation display infrastructure' },
+              { name: 'Depreciation Ward', geography: 'facility for citizens whose value has fallen below threshold, institutional gray, minimum-resource allocation, exit processing', viewpoints: ['ward interior with minimal furnishing and gray walls', 'entrance processing where citizens are checked in', 'window perspective looking out at the productive city they cannot rejoin'], scale: 'human-devaluation containment facility' }
+          ],
+          dogma: [
+              { name: 'Judgment Cathedral', geography: 'cathedral-scale judgment hall with religious-authoritarian iconography, confession booths lining the nave, purity symbols', viewpoints: ['nave floor looking toward the judgment altar', 'confession booth interior looking through the screen', 'upper gallery looking down at the judgment proceedings'], scale: 'faith-architecture as state power' },
+              { name: 'Penance Quarter', geography: 'residential district where buildings enforce purity aesthetics, whitewashed walls, no decoration, mandatory temple attendance markers', viewpoints: ['street level in the austere quarter', 'interior of a penance-quarter home with enforced minimalism', 'quarter boundary where austere architecture meets regime normal'], scale: 'neighborhood-scale enforced piety' },
+              { name: 'The Heresy Archive', geography: 'underground vault of confiscated forbidden texts, censored art, banned music recordings — maintained by the regime as evidence', viewpoints: ['archive interior with confiscated works on shelves', 'reading desk where censors evaluate seized material', 'vault door perspective looking into the forbidden collection'], scale: 'institutional forbidden-knowledge repository' },
+              { name: 'Purification Theater — Public Square', geography: 'open public space with purification stage, community witness seating, regime clerics in elevated positions, penitent holding area', viewpoints: ['witness seating perspective facing the purification stage', 'stage perspective looking out at the gathered community', 'holding area looking through barriers at the proceedings'], scale: 'public religious-authoritarian ceremony space' }
+          ],
+          quieting_event: [
+              { name: 'Serenity Plaza', geography: 'beautiful public space with hidden pharmaceutical dispensers, emotion-detection scanners disguised as art, unnaturally calm atmosphere', viewpoints: ['plaza perspective with the hidden infrastructure subtly visible', 'bench level where dispensers are built into armrests', 'elevated view showing the scanner network pattern'], scale: 'civic space designed for chemical pacification' },
+              { name: 'Awakening Ward', geography: 'medical facility for citizens who resist the quieting, restraint beds, monitoring equipment, one window showing the calm city outside', viewpoints: ['ward interior from patient perspective', 'monitoring station with vital signs and emotion readings', 'window perspective comparing interior restraint to exterior serenity'], scale: 'institutional suppression facility' },
+              { name: 'Pre-Quieting Museum', geography: 'government museum showing the chaos of pre-quieting society, emotional art behind glass, historical protests displayed as warnings', viewpoints: ['museum hall with emotional art in sealed cases', 'comparative display showing before-quieting turmoil vs current peace', 'museum exit where visitors re-enter the serene city'], scale: 'propaganda historical institution' },
+              { name: 'Underground Emotion Parlor', geography: 'hidden space where citizens secretly experience unmedicated feelings, sensation chairs, weeping rooms, anger corners, euphoria chambers', viewpoints: ['parlor entrance behind a false wall', 'weeping room interior with someone experiencing genuine grief', 'lookout perspective watching for compliance patrols'], scale: 'contraband emotional experience facility' }
+          ],
+          endless_edit: [
+              { name: 'Identity Clinic — Editing Suite', geography: 'clinical interior with mirror arrays showing different versions of the same face, memory-editing consoles, unstable reflections', viewpoints: ['editing chair perspective facing fractured mirrors', 'technician station with identity parameters on screens', 'corridor of editing suites with different versions visible through doors'], scale: 'identity-modification facility interior' },
+              { name: 'Archive of Former Selves', geography: 'vast storage facility of discarded identity records, shelving receding into darkness, abandoned personal effects', viewpoints: ['archive corridor with identity files stretching to vanishing point', 'individual shelf with one citizen\'s accumulated former identities', 'archive entrance with the scale of stored selves visible'], scale: 'civilizational identity-erasure infrastructure' },
+              { name: 'Continuity Checkpoint', geography: 'public verification station where citizens prove current identity matches records, biometric scanners, confusion management queue', viewpoints: ['queue perspective approaching the verification scanners', 'checkpoint station with a citizen failing verification', 'exterior view of checkpoint infrastructure integrated into street'], scale: 'public identity-verification infrastructure' },
+              { name: 'The Persistence Underground', geography: 'hidden community of citizens who have refused editing, maintaining forbidden original identities, analog records, physical photographs', viewpoints: ['underground meeting space with original photographs on walls', 'hidden entrance behind a recent-edit clinic', 'interior where citizens compare who they were to who the regime says they are'], scale: 'forbidden original-identity preservation community' }
+          ],
+          thirst: [
+              { name: 'Rationing Plaza at Dawn', geography: 'arid civic plaza with cracked earth, water-distribution infrastructure, guarded reservoir fortifications on the horizon', viewpoints: ['plaza level with empty distribution points and distant reservoir walls', 'rationing queue perspective at distribution time', 'elevated position overlooking the cracked plaza and distant reservoir'], scale: 'civic water-control landscape' },
+              { name: 'Guarded Reservoir Perimeter', geography: 'massive water reservoir behind military fortifications, guard towers, razor wire, parched landscape outside the walls', viewpoints: ['approaching the perimeter from the dry side', 'guard tower looking down at the perimeter and parched land beyond', 'reservoir interior — vast water supply behind the fortifications'], scale: 'fortress-scale water hoarding facility' },
+              { name: 'Dew Collection District', geography: 'residential area with mandatory condensation collectors on every surface, water-theft detection systems, measured drip-allocation per household', viewpoints: ['street level with condensation collectors covering every building', 'rooftop among collection equipment with the dry city stretching away', 'interior kitchen with the measured daily water allocation visible'], scale: 'neighborhood-scale water-scarcity architecture' },
+              { name: 'The Water Underground — Hidden Well', geography: 'secretly dug well in basement beneath a dry district, community water-sharing operation, hand-pump, container queue, lookout system', viewpoints: ['well interior with citizens filling containers', 'basement entrance with the secret well visible below', 'lookout perspective watching the dry street while well operates below'], scale: 'contraband water-access community' }
+          ]
+      },
+      PostApocalyptic: {
+          _base: [
+              { name: 'Highway Ruins Corridor', geography: 'collapsed interstate highway with vehicles frozen in exodus, vegetation reclaiming asphalt, fallen overpasses', viewpoints: ['road-level perspective through the ruin corridor', 'overpass remnant looking down at the vehicle graveyard', 'roadside where forest has consumed the highway edge'], scale: 'miles of abandoned infrastructure' },
+              { name: 'Survivor Settlement — Overpass Camp', geography: 'community built on and under a highway overpass, scavenged materials, rain-collection tarps, watch posts', viewpoints: ['settlement approach from the road below', 'camp interior on the overpass deck', 'watch post looking out at the surrounding ruins'], scale: 'small community in repurposed infrastructure' },
+              { name: 'Crater Lake — Former City', geography: 'massive crater where a city once stood, now filled with rain water, ruins visible beneath the surface, new growth at the rim', viewpoints: ['crater rim looking down at the lake and submerged ruins', 'shoreline with building foundations visible under clear water', 'new-growth forest at the rim with the lake visible through trees'], scale: 'city-destruction geological feature' }
+          ],
+          ashfall: [
+              { name: 'Volcanic Ash Field — Buried Town', geography: 'town half-buried in volcanic ash, rooftops and steeples protruding, charred forest trunks standing, ember-lit horizon', viewpoints: ['ash field surface with buried structures emerging', 'church steeple level looking across the ash-buried town', 'approaching the buried town from the ash plain'], scale: 'town-scale burial under volcanic deposit' },
+              { name: 'Lava Flow Frontier', geography: 'cooled lava field with active flow visible in distance, heat distortion, ash-snow falling, survivor path marked with cairns', viewpoints: ['path-level crossing the lava field toward distant glow', 'elevated rock looking across the cooled and active flow zones', 'cairn-line perspective with heat shimmer on the horizon'], scale: 'volcanic landscape reshaping geography' },
+              { name: 'Geothermal Survivor Camp', geography: 'settlement built around volcanic hot springs for warmth, steam vents used for cooking and heating, ash-proof shelters', viewpoints: ['camp interior with steam rising from thermal vents', 'hot spring edge with the ash-covered landscape visible beyond', 'shelter entrance looking out at the steam and ember-sky'], scale: 'survival community adapted to volcanic conditions' },
+              { name: 'Ash Forest — Standing Dead', geography: 'forest of charred standing trunks with no foliage, ash drifts between trees, occasional green shoot pushing through', viewpoints: ['forest floor among the charred trunks with ash falling', 'clearing where new growth struggles through the ash layer', 'forest edge where ash forest meets still-living terrain'], scale: 'ecosystem-scale fire destruction and early recovery' }
+          ],
+          year_zero: [
+              { name: 'Blast Crater Settlement', geography: 'community established in a nuclear blast crater, radiation warning signs weathered to illegibility, makeshift shelters', viewpoints: ['crater settlement from the approach road', 'settlement interior with the crater walls surrounding', 'crater rim lookout watching the approach roads'], scale: 'human community in a weapon scar' },
+              { name: 'Collapsed Bridge Crossing', geography: 'river crossing where bridge has partially fallen, improvised repairs allowing foot traffic, refugee camps on both banks', viewpoints: ['riverbank perspective facing the broken bridge', 'mid-bridge crossing the improvised repair section', 'refugee camp looking toward the crossing point'], scale: 'infrastructure failure as geographical barrier' },
+              { name: 'Decontamination Checkpoint', geography: 'roadblock where travelers are screened for radiation, improvised Geiger equipment, quarantine tents, burn-barrel fires', viewpoints: ['approaching the checkpoint from the contaminated side', 'checkpoint interior with screening in progress', 'clean-side perspective looking back at the contamination boundary'], scale: 'radiation boundary and human filtering' },
+              { name: 'Scavenger Library', geography: 'pre-war library being used as community knowledge center, books as survival manuals, water-stained reference sections, children learning', viewpoints: ['reading room with survivors studying practical texts', 'exterior approach with the library as only intact building on the block', 'window perspective with the destroyed neighborhood visible while reading'], scale: 'knowledge preservation in devastation' }
+          ],
+          dystimulation: [
+              { name: 'Abandoned Pleasure Dome', geography: 'massive entertainment complex crumbling, VR headsets tangled in overgrowth, faded neon signs, nature reclaiming the fun', viewpoints: ['dome interior with collapsed roof showing sky through', 'entrance with faded welcome signs and vegetation pushing through', 'upper level looking down at nature claiming the entertainment floor'], scale: 'entertainment mega-structure in decay' },
+              { name: 'Sensory Deprivation Ruins', geography: 'addiction-treatment facility abandoned mid-use, isolation pods overgrown with moss, cables trailing into pools of rainwater', viewpoints: ['facility interior with nature infiltrating technology', 'individual pod with moss growing inside the open hatch', 'corridor of pods stretching into overgrown distance'], scale: 'medical-industrial ruin' },
+              { name: 'Reality Rehabilitation Camp', geography: 'outdoor community where post-stimulation survivors relearn physical sensation, gardening plots, handcraft workshops, no screens anywhere', viewpoints: ['garden perspective with former addicts tending plants', 'workshop interior with hands-on crafts in progress', 'camp perimeter where the real world begins again'], scale: 'post-addiction recovery community' },
+              { name: 'Server Farm Graveyard', geography: 'vast field of dead server racks exposed to weather, the infrastructure that powered the stimulation, cables and heat-sinks rusting', viewpoints: ['walking between dead server rows like industrial tombstones', 'elevated view of the server field stretching to horizon', 'single server rack with new plant growth emerging from circuits'], scale: 'infrastructure graveyard at industrial scale' }
+          ],
+          predation: [
+              { name: 'Fortified Hilltop Shelter', geography: 'defensive community on high ground, sharpened barriers, watch-tower silhouettes, territorial markers, cleared sight-lines', viewpoints: ['approach path looking up at the fortifications', 'wall-top perspective looking out at cleared perimeter', 'interior community space within the defensive ring'], scale: 'community-scale defensive architecture' },
+              { name: 'Hunting Ground Boundary', geography: 'territorial marker line between competing groups, warning totems, stripped landscape, distant smoke from rival camp', viewpoints: ['standing at the boundary looking across no-man\'s-land', 'boundary marker close-up with rival territory visible beyond', 'elevated vantage showing the territorial division across the landscape'], scale: 'territorial division of post-collapse landscape' },
+              { name: 'Trading Post — Neutral Ground', geography: 'rare neutral zone where rival groups trade, improvised market on a bridge, weapons-check point, tense commerce', viewpoints: ['market approach through the weapons-check', 'trading floor with rival groups maintaining careful distance', 'bridge-level with neutral zone visible between two hostile territories'], scale: 'negotiated peace zone between predator groups' },
+              { name: 'Trap Network — Forest Perimeter', geography: 'forest edge fortified with hidden traps, camouflaged pits, trip-wire alerts, the defensive boundary of a small community', viewpoints: ['safe path through the trap network toward the community', 'community interior looking out at the trap-defended perimeter', 'trap-level perspective of the camouflaged defensive system'], scale: 'defensive perimeter at ecosystem scale' }
+          ],
+          hunger: [
+              { name: 'Barren Agricultural Zone', geography: 'vast failed farmland stretching to horizon, cracked earth, dead irrigation equipment, single greenhouse as hope signal', viewpoints: ['field edge looking across the barren expanse', 'greenhouse interior — the only green in a dead landscape', 'dead irrigation canal with the failed farmland on both sides'], scale: 'agricultural-collapse landscape' },
+              { name: 'Rationing Community Hall', geography: 'repurposed building where food is shared, scales and measuring equipment, communal tables, careful portion displays', viewpoints: ['hall interior during distribution time', 'kitchen perspective preparing the communal allocation', 'queue perspective waiting for the measured portion'], scale: 'community-scale survival infrastructure' },
+              { name: 'Seed Vault — Underground', geography: 'protected underground vault where pre-collapse seeds are stored as ultimate survival resource, temperature-controlled, guarded, sacred', viewpoints: ['vault interior with seed banks in climate-controlled cases', 'vault entrance with security and reverent approach', 'testing lab where seeds are evaluated for viability'], scale: 'civilizational seed-preservation facility' },
+              { name: 'Foraging Route — Urban Ruins', geography: 'established path through ruined city where edible plants grow in cracks, rooftop gardens on abandoned buildings, mapped food sources', viewpoints: ['ruin-floor with mapped edible plants in the rubble', 'rooftop garden on an abandoned building with ruined city around', 'foraging path through an overgrown former street'], scale: 'urban-ruin food-gathering landscape' }
+          ]
+      }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SETTING ENVIRONMENTAL CONDITIONS — random micro-variation to prevent
+  // identical renders when the same anchor is re-used across sessions.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const SETTING_ENVIRONMENTAL_CONDITIONS = {
+      Fantasy:          ['dawn mist rising from low ground', 'late afternoon with long amber shadows', 'moonlit with faint aurora shimmer', 'approaching storm with wind-bent vegetation', 'twilight with ley-veins glowing brighter', 'clear sky with all twelve moons faintly visible'],
+      SciFi:            ['solar glare reflecting off hull plating', 'nebula glow casting colored light on surfaces', 'orbital night with only instrument illumination', 'planetary dawn with atmosphere scattering light', 'emergency lighting cycling red and amber', 'stellar dust diffusing ambient light'],
+      Modern:           ['golden hour with long warm shadows', 'overcast with soft diffused light', 'after rain with wet reflections everywhere', 'early morning with mist and quiet streets', 'late night with artificial light pools', 'autumn afternoon with low-angle sun through trees'],
+      Historical:       ['dawn light with campfire embers fading', 'dust-haze from a dry season', 'torchlight and firelight at dusk', 'midday heat with sharp shadows', 'fog rolling in from water', 'overcast sky before a storm'],
+      Dystopia:         ['regime-mandated lighting schedule — full brightness', 'curfew-hour darkness with surveillance lights sweeping', 'filtered haze from atmospheric control systems', 'underground warmth contrasting surface cold', 'propaganda-screen glow as primary light source', 'dawn shift-change with crowds in regulated motion'],
+      PostApocalyptic:  ['ash-filtered dawn with wrong color temperature', 'post-rain clarity with unsettling purity', 'campfire warmth in vast ambient darkness', 'overcast permanence with no visible sun', 'toxic-sky glow at horizon — unnatural green', 'wind-driven dust reducing visibility']
+  };
+
+  /**
+   * Pick a setting location anchor for the current world + flavor.
+   * CACHED: Selected once, reused by both generateSettingImage() and
+   * generateBookSceneArt() so corridor preview and story share the same location.
+   * Auto-invalidates if world or flavor has changed since last selection.
+   *
+   * Resolves viewpoint from viewpoints[] array (backward-compatible with legacy
+   * viewpoint string). Adds random environmental condition for micro-variation.
+   */
+  function pickSettingLocationAnchor() {
+      const world = state.picks?.world;
+      if (!world || !SETTING_LOCATION_ANCHORS[world]) return null;
+
+      const flavor = state.worldSubtype || (state.resolvedWorldFlavors || []).find(f => f.type === 'contextual')?.val || null;
+
+      // Return cached anchor if world + flavor still match
+      const cached = state.settingLocationAnchor;
+      if (cached && cached._world === world && cached._flavor === flavor) {
+          return cached;
+      }
+
+      const worldAnchors = SETTING_LOCATION_ANCHORS[world];
+      const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+      let anchor;
+      // Prefer flavor-specific anchor (~60%), fall back to world base
+      if (flavor && worldAnchors[flavor] && worldAnchors[flavor].length && Math.random() < 0.6) {
+          anchor = pick(worldAnchors[flavor]);
+      } else {
+          anchor = worldAnchors._base ? pick(worldAnchors._base) : null;
+      }
+
+      if (!anchor) {
+          state.settingLocationAnchor = null;
+          return null;
+      }
+
+      // Resolve viewpoint: prefer viewpoints[] array, fall back to legacy viewpoint string
+      const viewpoints = anchor.viewpoints || (anchor.viewpoint ? [anchor.viewpoint] : ['establishing perspective']);
+      const viewpoint = pick(viewpoints);
+
+      // Pick environmental condition for micro-variation
+      const conditions = SETTING_ENVIRONMENTAL_CONDITIONS[world];
+      const environmentalCondition = conditions ? pick(conditions) : null;
+
+      // Cache resolved anchor with world/flavor tag for staleness detection
+      state.settingLocationAnchor = {
+          name: anchor.name,
+          geography: anchor.geography,
+          scale: anchor.scale,
+          viewpoint,
+          environmentalCondition,
+          _world: world,
+          _flavor: flavor
+      };
+
+      console.log('[SETTING_ANCHOR] Cached:', anchor.name, '| Viewpoint:', viewpoint, '| Conditions:', environmentalCondition || 'none', '| World:', world, '| Flavor:', flavor || 'none');
+      return state.settingLocationAnchor;
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // STORY VISUAL STYLE SEED — per-story aesthetic identity
@@ -44627,37 +45664,46 @@ ${buildVisualContinuityDirective()}`;
   function buildSettingVisualizePrompt() {
       const sWorld = (state.picks && state.picks.world) || 'Unknown';
       const sTone = (state.picks && state.picks.tone) || 'Unknown';
-      const sGenre = (state.picks && state.picks.genre) || 'Unknown';
-      const sDynamic = (state.picks && state.picks.dynamic) || 'Unknown';
-      const sIntensity = state.intensity || 'Unknown';
+      const flavorKey = state.worldSubtype || '';
+      const flavorLabel = flavorKey && WORLD_LABELS[flavorKey] ? WORLD_LABELS[flavorKey] : '';
 
-      return `SETTING VISUAL — ESTABLISHING ENVIRONMENT ONLY
+      const anchor = pickSettingLocationAnchor();
+
+      let prompt = `SETTING VISUAL — GEOGRAPHIC ENVIRONMENTAL ILLUSTRATION
 
 WORLD: ${sWorld}
-TONE: ${sTone}
-GENRE: ${sGenre}
-DYNAMIC: ${sDynamic}
-INTENSITY: ${sIntensity}
+TONE: ${sTone}`;
 
-COMPOSITION:
-- Wide or architectural establishing view
-- Environment-focused, not character-focused
-- Spatial layout clearly readable
+      if (flavorLabel) prompt += `\nFLAVOR: ${flavorLabel}`;
 
-LIGHTING:
-- Appropriate to the declared world and tone
-- Natural or ambient sources only
+      if (anchor) {
+          prompt += `
 
-CONTENT RULES:
-- Do not depict people, faces, bodies, or interactions
-- Do not imply an event, action, or narrative moment
-- Do not introduce symbolism or mood beyond what the setting itself conveys
-- Objects may be present only as part of the environment, at rest
+LOCATION: ${anchor.name}
+GEOGRAPHY: ${anchor.geography}
+SCALE: ${anchor.scale}
+VIEWPOINT: ${anchor.viewpoint}${anchor.environmentalCondition ? `\nENVIRONMENTAL CONDITIONS: ${anchor.environmentalCondition}` : ''}`;
+      }
 
-Render the setting as a neutral, grounded place that could host a story,
-but does not depict the story itself.
+      prompt += `
 
+GEOGRAPHY DOMINANCE (MANDATORY):
+This image depicts terrain, architecture, and environmental scale.
+- PRIMARY SUBJECTS: landforms, structures, weather, vegetation, geological features
+- SUPPRESS: romance composition, portrait framing, character-centered scenes
+- Environment occupies at least 90% of the frame
+
+SCALE FIGURE (OPTIONAL):
+- A small native inhabitant or traveler may appear for scale only
+- Must face away, occupy less than 8% of frame, must not be focal point
+
+ATTRACTOR SUPPRESSION:
+- Do NOT default to castle on hill at sunset, generic city skyline, spaceship corridor, medieval village panorama, or empty desert wasteland
+
+Render the setting as a geographic illustration of a real place in this world.
 Return only the visual description.`;
+
+      return prompt;
   }
 
   function buildSceneVisualizePrompt(lastText, anchorText) {
@@ -45279,6 +46325,11 @@ Return ONLY the formatted prompt following the structure above. Do not explain o
   function applyVisualIntentGuard(prompt, context = {}) {
       const tone = context.tone || state.picks?.tone || 'Earnest';
       const world = context.world || state.picks?.world || 'Modern';
+
+      // Setting images are geography-only — skip character attractiveness and portrait lighting
+      if (context.intent === 'setting') {
+          return prompt;
+      }
 
       // Wry Confessional uses its own ontology — skip cinematic/lighting defaults
       if (tone === 'Wry Confessional') {
@@ -46114,6 +47165,290 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // VISUAL CONTINUITY ENGINE — persistent character/object identity across images
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Archetype → visual trait template mappings.
+   * Used as base when generating character visual profiles.
+   */
+  const ARCHETYPE_VISUAL_TEMPLATES = {
+      HEART_WARDEN:   { demeanor: 'strong posture, protective demeanor', expression: 'watchful intensity', build_bias: 'broad-shouldered, grounded stance' },
+      OPEN_VEIN:      { demeanor: 'emotionally exposed intensity', expression: 'raw vulnerability in gaze', build_bias: 'slender, expressive hands' },
+      SPELLBINDER:    { demeanor: 'captivating gaze, fluid movement', expression: 'magnetic stillness', build_bias: 'elegant proportions, deliberate grace' },
+      ARMORED_FOX:    { demeanor: 'sharp features, guarded expression', expression: 'calculating half-smile', build_bias: 'lean, coiled readiness' },
+      DARK_VICE:      { demeanor: 'seductive menace', expression: 'dangerous allure', build_bias: 'striking presence, predatory grace' },
+      BEAUTIFUL_RUIN: { demeanor: 'elegant fragile beauty', expression: 'beauty hiding damage', build_bias: 'fine-boned, haunting symmetry' },
+      ETERNAL_FLAME:  { demeanor: 'steady devotion, patient warmth', expression: 'quiet certainty', build_bias: 'warm presence, unhurried movement' }
+  };
+
+  /**
+   * Generate a deterministic visual seed from story ID + character role.
+   */
+  function _generateVisualSeed(role) {
+      const basis = (state.storyId || 'default') + ':' + role;
+      let hash = 0;
+      for (let i = 0; i < basis.length; i++) {
+          hash = ((hash << 5) - hash + basis.charCodeAt(i)) | 0;
+      }
+      return Math.abs(hash) % 1000000;
+  }
+
+  /**
+   * Generate character visual profile via LLM on first Vision involving a character.
+   * Returns existing profile if already generated for this role.
+   *
+   * @param {string} role - 'mc' (main character) or 'li' (love interest)
+   * @returns {Object|null} character visual profile
+   */
+  async function ensureCharacterVisualProfile(role) {
+      if (!state.visual) return null;
+      if (!state.visual.characterVisualProfiles) state.visual.characterVisualProfiles = {};
+
+      // Return cached profile if exists
+      const existing = state.visual.characterVisualProfiles[role];
+      if (existing && existing.face_structure) return existing;
+
+      if (!window.StoryboundOrchestration?.callChatGPT) return null;
+
+      // Gather context inputs
+      const archId = state.archetype?.primary;
+      const archTemplate = archId ? ARCHETYPE_VISUAL_TEMPLATES[archId] : null;
+      const tone = state.picks?.tone || 'Earnest';
+      const world = state.picks?.world || 'Modern';
+      const flavor = state.worldSubtype || '';
+      const rt = state.relationshipTension || {};
+      const callbacks = (state.callbackLedger || []).filter(c => !c.resolved).map(c => c.text).slice(0, 4);
+      const sharedHist = (state.sharedHistory || []).map(h => h.text).slice(0, 3);
+      const bibleChars = state.visual.bible?.characters || {};
+      const gender = state.gender || 'Female';
+
+      // Build character context from visual bible if available
+      let bibleContext = '';
+      const charEntries = Object.entries(bibleChars);
+      if (charEntries.length > 0) {
+          const charIdx = role === 'mc' ? 0 : Math.min(1, charEntries.length - 1);
+          const [charName, charDetails] = charEntries[charIdx];
+          bibleContext = `Existing description for ${charName}: face=${charDetails.face || 'unknown'}, hair=${charDetails.hair || 'unknown'}, clothing=${charDetails.clothing || 'unknown'}, build=${charDetails.build || 'unknown'}`;
+      }
+
+      const seed = _generateVisualSeed(role);
+
+      try {
+          const result = await window.StoryboundOrchestration.callChatGPT([
+              { role: 'system', content: 'You generate structured character visual profiles for fiction illustration. Respond ONLY with valid JSON, no markdown.' },
+              { role: 'user', content: `Generate a visual identity profile for the ${role === 'mc' ? 'main character' : 'love interest'} in this story.
+
+Context:
+- World: ${world} | Tone: ${tone} | Flavor: ${flavor}
+- Character gender: ${role === 'mc' ? gender : (gender === 'Male' ? 'Female' : 'Male')}
+- Archetype: ${archId || 'unknown'}${archTemplate ? ` (${archTemplate.demeanor})` : ''}
+- Relationship tension: attraction=${rt.attraction || 'unknown'}, trust=${rt.trust || 'unknown'}
+- Story objects: ${callbacks.length > 0 ? callbacks.join('; ') : 'none yet'}
+- Shared moments: ${sharedHist.length > 0 ? sharedHist.join('; ') : 'none yet'}
+${bibleContext ? '- ' + bibleContext : ''}
+
+Return JSON:
+{
+  "face_structure": "3-5 words",
+  "hair_style": "3-5 words",
+  "hair_color": "1-3 words",
+  "eye_color": "1-2 words",
+  "body_type": "3-5 words",
+  "distinctive_features": "one notable feature, 3-8 words",
+  "clothing_style": "world-appropriate outfit, 5-10 words",
+  "signature_accessory": "one memorable object, 3-8 words"
+}
+
+Rules:
+- Be SPECIFIC (not "attractive face" — give bone structure, shape)
+- Match world/tone (modern = contemporary fashion, fantasy = period-appropriate)
+- Archetype should influence demeanor/posture, not dominate appearance
+- Distinctive feature should be subtle and memorable (scar, freckle pattern, jewelry)` }
+          ], { max_tokens: 300, temperature: 0.6 });
+
+          const parsed = JSON.parse(result);
+          if (parsed.face_structure) {
+              parsed.visual_seed = seed;
+              state.visual.characterVisualProfiles[role] = parsed;
+              console.log(`[VCE] Character profile generated for ${role}:`, parsed.face_structure);
+              return parsed;
+          }
+      } catch (err) {
+          console.warn(`[VCE] Profile generation failed for ${role}:`, err.message);
+      }
+      return null;
+  }
+
+  /**
+   * Extract visual callbacks — objects/elements from callback ledger + shared history
+   * that should appear in Vision images for continuity.
+   */
+  function extractVisualCallbacks() {
+      const items = [];
+      const objectPatterns = /\b(ring|necklace|pendant|compass|scarf|book|letter|sword|dagger|knife|bracelet|locket|key|watch|mirror|mask|cloak|crown|flower|candle|coin|vial|bottle|cup|glass|photo|journal|map|badge|ribbon|feather|stone|gem|chain|lantern|flag|banner|hat|gloves|boots|cane|staff|wand)\b/gi;
+
+      // Scan callback ledger
+      for (const cb of (state.callbackLedger || [])) {
+          if (cb.resolved) continue;
+          const objects = cb.text.match(objectPatterns);
+          if (objects) {
+              for (const obj of objects) {
+                  const lower = obj.toLowerCase();
+                  if (!items.includes(lower)) items.push(lower);
+              }
+          }
+      }
+
+      // Scan shared history
+      for (const sh of (state.sharedHistory || [])) {
+          const objects = sh.text.match(objectPatterns);
+          if (objects) {
+              for (const obj of objects) {
+                  const lower = obj.toLowerCase();
+                  if (!items.includes(lower)) items.push(lower);
+              }
+          }
+      }
+
+      // Scan physical state objects
+      const notable = state.physicalState?.objects_notable;
+      if (notable && typeof notable === 'string') {
+          const objects = notable.match(objectPatterns);
+          if (objects) {
+              for (const obj of objects) {
+                  const lower = obj.toLowerCase();
+                  if (!items.includes(lower)) items.push(lower);
+              }
+          }
+      }
+
+      return items.slice(0, 6); // Cap at 6 visual callbacks
+  }
+
+  /**
+   * Build a visual continuity prompt segment from character profiles + callbacks.
+   * Appended to image generation prompts for character/scene consistency.
+   */
+  function buildCharacterVisualPromptSegment(role) {
+      const profile = state.visual?.characterVisualProfiles?.[role];
+      if (!profile || !profile.face_structure) return '';
+
+      const parts = [];
+      if (profile.face_structure) parts.push(profile.face_structure);
+      if (profile.hair_style && profile.hair_color) parts.push(`${profile.hair_color} ${profile.hair_style} hair`);
+      else if (profile.hair_color) parts.push(`${profile.hair_color} hair`);
+      if (profile.eye_color) parts.push(`${profile.eye_color} eyes`);
+      if (profile.body_type) parts.push(profile.body_type);
+      if (profile.distinctive_features) parts.push(profile.distinctive_features);
+      if (profile.clothing_style) parts.push(profile.clothing_style);
+      if (profile.signature_accessory) parts.push(profile.signature_accessory);
+
+      return parts.join(', ');
+  }
+
+  /**
+   * Build the full Visual Continuity Engine prompt injection.
+   * Combines location anchor, character profiles, physical state, visual callbacks.
+   */
+  function buildVCEPromptBlock() {
+      const segments = [];
+
+      // Location anchor — prefer specific named locations over generic
+      const anchor = state.settingLocationAnchor;
+      if (anchor && anchor.name) {
+          let locStr = anchor.name;
+          if (anchor.geography) locStr += `, ${anchor.geography}`;
+          if (anchor.viewpoint) locStr += `, ${anchor.viewpoint}`;
+          if (anchor.environmentalCondition) locStr += `, ${anchor.environmentalCondition}`;
+          segments.push(locStr);
+      }
+
+      // Physical state positioning
+      const ps = state.physicalState;
+      if (ps && ps.proximity) {
+          segments.push(`two characters ${ps.proximity}`);
+      }
+
+      // Character profiles
+      const mcSegment = buildCharacterVisualPromptSegment('mc');
+      const liSegment = buildCharacterVisualPromptSegment('li');
+      if (mcSegment) segments.push(mcSegment);
+      if (liSegment) segments.push(liSegment);
+
+      // Visual callbacks (objects)
+      const callbacks = extractVisualCallbacks();
+      if (callbacks.length > 0) {
+          segments.push(`visible objects: ${callbacks.join(', ')}`);
+      }
+
+      // Tone atmosphere
+      const tone = state.picks?.tone;
+      if (tone) {
+          const toneAtmosphere = {
+              Dark: 'brooding atmospheric tension',
+              Earnest: 'warm grounded intimacy',
+              Tender: 'soft diffused romantic light',
+              Playful: 'bright energetic warmth',
+              Intense: 'dramatic high-contrast tension',
+              Gothic: 'shadowed ornate grandeur',
+              'Wry Confessional': '' // Handled separately
+          };
+          const atm = toneAtmosphere[tone];
+          if (atm) segments.push(atm);
+      }
+
+      if (segments.length === 0) return '';
+      return '\n\nVISUAL IDENTITY (maintain across all images):\n' + segments.join(', ');
+  }
+
+  /**
+   * Get a seed offset for consistent character rendering across images.
+   * Returns base seed + small offset based on scene count.
+   */
+  function getVisualSeedForScene(role) {
+      const profile = state.visual?.characterVisualProfiles?.[role];
+      if (!profile || !profile.visual_seed) return null;
+      // Small offset per scene — keeps face structure stable with minor variation
+      const offset = (state.turnCount || 0) % 7;
+      return profile.visual_seed + offset;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VISION CACHE — short-lived cache for speculative Vision generation
+  // ═══════════════════════════════════════════════════════════════════════════
+  const VISION_CACHE_TTL = 10000; // 10 seconds
+
+  /**
+   * Store a vision result in the short-lived cache.
+   */
+  function cacheVisionResult(type, url) {
+      if (!state.visual) return;
+      state.visual._visionCache = {
+          type,
+          url,
+          turn: state.turnCount,
+          createdAt: Date.now()
+      };
+      console.log(`[VCE:CACHE] Cached ${type} for turn ${state.turnCount}`);
+  }
+
+  /**
+   * Retrieve a cached vision result if still valid (within TTL and same turn).
+   */
+  function getCachedVision(type) {
+      const cache = state.visual?._visionCache;
+      if (!cache) return null;
+      if (cache.turn !== state.turnCount) return null;
+      if (Date.now() - cache.createdAt > VISION_CACHE_TTL) {
+          state.visual._visionCache = null;
+          return null;
+      }
+      if (type && cache.type !== type) return null;
+      return cache.url;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // FANTASY ENVIRONMENT SELECTION RULE
   // Anchors all Fantasy imagery to canonical Fatelands locations.
   // Suppresses generic fantasy defaults (anonymous castles, unnamed bridges).
@@ -46203,6 +47538,9 @@ PREFERRED ANCHORS: Fate's Favor basin, The Ascendant Run, Thornwild forests, Vae
 
       // VISUAL CONTINUITY RULE — all images in the same story share aesthetic identity
       basePrompt += buildVisualContinuityDirective();
+
+      // VISUAL CONTINUITY ENGINE — character identity + object callbacks
+      basePrompt += buildVCEPromptBlock();
 
       basePrompt = clampPromptLength(basePrompt, 'image-gen');
 
@@ -47012,6 +48350,9 @@ Respond in this EXACT format (no labels, just two lines):
   window.summonVision = async function(isRe){
       if (_vizInFlight) return;
 
+      // Trigger speculative scene preload while user interacts with vision
+      scheduleSpeculativePreload();
+
       const modal = document.getElementById('vizModal');
       const retryBtn = document.getElementById('vizRetryBtn');
       const img = document.getElementById('vizPreviewImg');
@@ -47308,8 +48649,21 @@ Respond in this EXACT format (no labels, just two lines):
               return;
           }
 
-          // IMAGE ENGINE ROUTING — intensity no longer controls engine selection
-          const rawUrl = await generateTieredImage(basePrompt, 'Clean');
+          // Check for preloaded vision image or VCE cache
+          let rawUrl;
+          const vceCached = !isRe ? getCachedVision('predicted_scene_image') : null;
+          if (vceCached) {
+              rawUrl = vceCached;
+              console.log('[VCE:CACHE] Using cached scene image for turn', state.turnCount);
+              state.visual._visionCache = null;
+          } else if (_visionPreloadResult?.turn === state.turnCount && !isRe) {
+              rawUrl = _visionPreloadResult.url;
+              console.log('[VISION:PRELOAD] Using preloaded image for turn', state.turnCount);
+              _visionPreloadResult = null;
+          } else {
+              // IMAGE ENGINE ROUTING — intensity no longer controls engine selection
+              rawUrl = await generateTieredImage(basePrompt, 'Clean');
+          }
 
           // Check if cancelled after image generation
           if (_vizCancelled) {
@@ -47477,7 +48831,7 @@ Respond in this EXACT format (no labels, just two lines):
   // Lock Character Look — driven by checkbox toggle
   window.lockCharacterLook = function() {
       if (!state.visual) {
-          state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} } };
+          state.visual = { autoLock: true, locked: false, lastImageUrl: "", bible: { style: "", setting: "", characters: {} }, characterVisualProfiles: {}, _visionCache: null };
       }
       state.visual.locked = true;
       showToast('Character look locked. Appearance will persist.');
@@ -48520,11 +49874,26 @@ The scene must read as a single unified event, not two layered systems.\n`;
       }
 
       const passTier = resolvePassTier();
-      // Tier-dependent context: Tier 3 gets full prose context; Tier 1/2 get structured state only
-      const tierContextBlock = passTier >= 3
-        ? `Story So Far: ...${context}`
-        : `Structured State:\n${buildStructuredStateSummary()}`;
+      // Structured memory replaces raw context when populated (after scene 1)
+      const hasStructuredMemory = !!state.narrativeState?.relationship_state;
+      const storyMemoryBlock = hasStructuredMemory ? buildStoryMemoryDirective() : '';
+      const tierContextBlock = hasStructuredMemory
+        ? storyMemoryBlock
+        : (passTier >= 3
+            ? `Story So Far: ...${context}`
+            : `Structured State:\n${buildStructuredStateSummary()}`);
       const tierContext = passTier >= 3 ? context : '';
+      if (hasStructuredMemory) console.log('[MEMORY] Using structured memory');
+
+      // Inject preloaded continuity components if cached for previous scene
+      let componentBlock = '';
+      if (state._preloadComponents?.sceneIndex === (state.turnCount - 1)) {
+          const c = state._preloadComponents;
+          componentBlock = `\nCONTINUITY THREADS (weave naturally, never quote verbatim):
+- Bridge: ${c.continuity_bridge}
+- Tension: ${c.tension_vector}
+- Motion: ${c.character_motion}\n`;
+      }
 
       const craftRhythmLayer = !explicitEmbodimentAuthorized ? `
 
@@ -48542,7 +49911,7 @@ Apply lightly and sparingly. Never mechanically. Do not reference these rules in
 • Use the story title once organically (not at the beginning).
 Prioritize natural variation over strict consistency if rules conflict.` : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${componentBlock}${buildCallbackEchoDirective()}${buildFateSeedDirective(selectedFateCard)}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -48574,6 +49943,11 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       }
 
       try {
+          // Inject fate whisper while scene generates (non-speculative path only)
+          if (!useSpeculative) {
+              injectFateWhisper();
+          }
+
           /**
            * =================================================================
            * AI MODEL ORCHESTRATION — TURN GENERATION
@@ -48660,9 +50034,17 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
               });
           } else {
               // Single-model flow (ChatGPT as primary author)
+              // Beat planner (single-model path only, skip for explicit embodiment scenes)
+              let beatBlock = '';
+              if (state.turnCount > 0 && !explicitEmbodimentAuthorized) {
+                  try {
+                      const beats = await _runBeatPlanner(act, dia);
+                      if (beats) beatBlock = `\nBEAT PLAN (follow this pacing structure):\n${beats}\n`;
+                  } catch (_) { /* silent fail */ }
+              }
               const _tokenBoost = state._petitionTokenBoost || 0;
               raw = await callChat([
-                  {role:'system', content: fullSys},
+                  {role:'system', content: fullSys + beatBlock},
                   {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
               ], 0.7, _tokenBoost > 0 ? { max_tokens: 1000 + _tokenBoost } : {});
           }
@@ -49339,6 +50721,11 @@ ABSOLUTE RULES:
           // Literary Illusion Layer — update voice profile + motifs from scene output
           _updateLiteraryIllusion(raw);
 
+          // Structured Story Memory — update scene window, fate seeds, extract memory
+          _updateSceneWindow(raw);
+          _updateFateSeeds(raw);
+          _extractStoryMemory(raw).catch(() => {}); // async fire-and-forget
+
           // Mark Solo session as completed for subtitle upgrade
           if (typeof markSoloSessionCompleted === 'function') markSoloSessionCompleted();
 
@@ -49366,6 +50753,12 @@ ABSOLUTE RULES:
 
           // Add new page with animation
           StoryPagination.addPage(pageContent, true);
+
+          // Reset scroll preload flag for new scene
+          _scrollPreloadFired = false;
+
+          // Clean up any lingering fate whispers
+          removeFateWhisper();
 
           // Pre-load visualization prompt in background while user reads
           if (typeof preloadVizPrompt === 'function') preloadVizPrompt();
@@ -49647,6 +51040,25 @@ ABSOLUTE RULES:
           saveStorySnapshot();
           checkStoryEndCaps();
 
+          // ═══════════════════════════════════════════════════════════════════
+          // SCENE CONTEXT CACHE — snapshot for component preloading
+          // ═══════════════════════════════════════════════════════════════════
+          state._sceneContext = {
+              location_anchor: state.picks?.world || 'Modern',
+              tone_profile: state.picks?.tone || 'Earnest',
+              pov_contract: state.picks?.pov || '3rd',
+              character_state: state.storyturn || 'ST1',
+              relationship_tension: buildStructuredStateSummary().slice(0, 300),
+              arousal_state: state.intensity || 'Naughty',
+              storyturn_state: state.storyturn || 'ST1',
+              scene_index: state.turnCount || 0,
+              last_scene_tail: raw.slice(-500),
+              narrative_state: state.narrativeState,
+              relationship_tension_detail: state.relationshipTension,
+              timestamp: Date.now()
+          };
+          console.log('[SCENE_CONTEXT] Updated for scene', state.turnCount);
+
           $('actionInput').value = '';
           $('dialogueInput').value = '';
 
@@ -49901,7 +51313,7 @@ FATE CARD ADAPTATION (CRITICAL):
           let sceneLengthDirective;
           if (specSceneIndex === 0) {
               sceneLengthDirective = 'Write the opening scene (500-600 words). LONGEST scene. Establish world, tone, power dynamics. NO main pair physical contact.';
-          } else if (specIntimacyAuthorized && specBothMilestonesCleared) {
+          } else if (specMainPairAuthorized && specBothMilestonesCleared) {
               sceneLengthDirective = 'Write the next beat (150-200 words MAX). Intimate scene — keep SHORT for responsiveness.';
           } else {
               sceneLengthDirective = 'Write the next beat (300-500 words). Take time for atmosphere, reaction, emotional beats.';
@@ -49909,7 +51321,7 @@ FATE CARD ADAPTATION (CRITICAL):
 
           // Build intimacy gating directive (inline for speculative path)
           let specEroticGating = '';
-          if (!specIntimacyAuthorized) {
+          if (!specMainPairAuthorized) {
               const baseGates = { taste: 4, fling: 6, affair: 10 };
               const gateScene = baseGates[state.storyLength || 'taste'] || 4;
               if (specSceneIndex < gateScene) {
@@ -49919,12 +51331,35 @@ FATE CARD ADAPTATION (CRITICAL):
 
           // 7. Build fullSys (EXACT same structure as real turn)
           const specPassTier = resolvePassTier();
-          const specTierContextBlock = specPassTier >= 3
-            ? `Story So Far: ...${context}`
-            : `Structured State:\n${buildStructuredStateSummary()}`;
+          const specHasStructuredMemory = !!state.narrativeState?.relationship_state;
+          const specStoryMemoryBlock = specHasStructuredMemory ? buildStoryMemoryDirective() : '';
+          const specTierContextBlock = specHasStructuredMemory
+            ? specStoryMemoryBlock
+            : (specPassTier >= 3
+                ? `Story So Far: ...${context}`
+                : `Structured State:\n${buildStructuredStateSummary()}`);
           const specTierContext = specPassTier >= 3 ? context : '';
 
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
+          // Inject preloaded continuity components for speculative path
+          let specComponentBlock = '';
+          if (state._preloadComponents?.sceneIndex === (state.turnCount - 1)) {
+              const c = state._preloadComponents;
+              specComponentBlock = `\nCONTINUITY THREADS (weave naturally, never quote verbatim):
+- Bridge: ${c.continuity_bridge}
+- Tension: ${c.tension_vector}
+- Motion: ${c.character_motion}\n`;
+          }
+
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${specComponentBlock}${buildCallbackEchoDirective()}${buildFateSeedDirective(null)}
+
+SPECULATIVE GENERATION CONSTRAINTS:
+- Do NOT advance storyturn state.
+- Do NOT introduce irreversible events (deaths, betrayals, consummations).
+- Do NOT commit narrative outcomes.
+- Prefer atmospheric tension, sensory detail, emotional interiority.
+- This scene must be narratively disposable.
+
+REMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
       ${specTierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -50035,6 +51470,9 @@ FATE CARD ADAPTATION (CRITICAL):
       // This gives user time to start reading and select fate card
       _preloadDebounceTimer = setTimeout(() => {
           preloadNextScene();
+          preloadSceneComponents();
+          // Vision image preload — 5s delay for viz prompt to cache first
+          setTimeout(() => preloadVisionImage(), 5000);
       }, 2000);
   }
 
@@ -50055,6 +51493,176 @@ FATE CARD ADAPTATION (CRITICAL):
       }
       if (dialogueInput) {
           dialogueInput.addEventListener('input', invalidateSpeculativeScene);
+      }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRELOADABLE SCENE COMPONENTS — lightweight sub-component preload (~200 tokens)
+  // ═══════════════════════════════════════════════════════════════════════════
+  async function preloadSceneComponents() {
+      if (_componentPreloadInFlight) return;
+      if (!state._sceneContext) return;
+      if (state._preloadComponents?.sceneIndex === state._sceneContext.scene_index) return;
+      if (!window.StoryboundOrchestration?.callChatGPT) return;
+
+      _componentPreloadInFlight = true;
+      console.log('[COMPONENTS] Starting preload for scene', state._sceneContext.scene_index);
+
+      try {
+          const ctx = state._sceneContext;
+          const result = await window.StoryboundOrchestration.callChatGPT([
+              { role: 'system', content: 'You generate JSON continuity components for fiction scenes. Respond ONLY with valid JSON, no markdown.' },
+              { role: 'user', content: `Given this scene context, generate 3 continuity threads for the NEXT scene beat.
+
+World: ${ctx.location_anchor} | Tone: ${ctx.tone_profile} | POV: ${ctx.pov_contract}
+Storyturn: ${ctx.storyturn_state} | Intensity: ${ctx.arousal_state}
+Relationship: ${ctx.narrative_state?.relationship_state || 'unknown'}
+Tension: ${ctx.relationship_tension_detail?.attraction || 'unknown'}
+Last scene ending: "${ctx.last_scene_tail.slice(-200)}"
+
+Return JSON with exactly these 3 fields (15-25 words each):
+- "continuity_bridge": environment/sensory/emotional carry-forward from this scene
+- "tension_vector": unresolved pressure or desire acting on next beat
+- "character_motion": physical positioning, movement energy, body state
+
+CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advancement. Pure atmospheric/sensory/emotional threads.` }
+          ], { max_tokens: 200, temperature: 0.7 });
+
+          const parsed = JSON.parse(result);
+          if (parsed.continuity_bridge && parsed.tension_vector && parsed.character_motion) {
+              state._preloadComponents = {
+                  sceneIndex: ctx.scene_index,
+                  continuity_bridge: parsed.continuity_bridge,
+                  tension_vector: parsed.tension_vector,
+                  character_motion: parsed.character_motion,
+                  createdAt: Date.now()
+              };
+              console.log('[COMPONENTS] Preloaded for scene', ctx.scene_index);
+          }
+      } catch (err) {
+          console.warn('[COMPONENTS] Preload failed (non-critical):', err.message);
+      } finally {
+          _componentPreloadInFlight = false;
+      }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FATE WHISPER — atmospheric text to mask scene generation latency
+  // ═══════════════════════════════════════════════════════════════════════════
+  const FATE_WHISPERS = [
+      'The threads of fate pull taut, humming with quiet intent\u2026',
+      'Somewhere beyond the veil, a new scene takes shape\u2026',
+      'The story breathes, gathering its next heartbeat\u2026',
+      'Destiny turns the page with unhurried hands\u2026',
+      'A whisper of what comes next stirs in the silence\u2026',
+      'The loom of fate weaves forward, thread by golden thread\u2026',
+      'Between scenes, the world holds its breath\u2026',
+      'Fate consults the cards one last time\u2026',
+      'The next moment crystallizes just beyond reach\u2026',
+      'Time folds gently as the story prepares its offering\u2026',
+      'The ink of the next chapter is still wet with possibility\u2026',
+      'A heartbeat passes. Then another. Then the story moves\u2026'
+  ];
+
+  function getFateWhisper() {
+      return FATE_WHISPERS[Math.floor(Math.random() * FATE_WHISPERS.length)];
+  }
+
+  function injectFateWhisper() {
+      if (typeof StoryPagination === 'undefined' || !StoryPagination.appendToCurrentPage) return;
+      const whisper = getFateWhisper();
+      StoryPagination.appendToCurrentPage(`<p class="fate-whisper" style="text-align:center;font-style:italic;opacity:0.6;margin:1.5em 0;transition:opacity 0.8s ease;">${whisper}</p>`);
+  }
+
+  function removeFateWhisper() {
+      document.querySelectorAll('.fate-whisper').forEach(el => {
+          el.style.opacity = '0';
+          setTimeout(() => el.remove(), 800);
+      });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VISION IMAGE PRELOAD — pre-generate vision image 5s after scene render
+  // ═══════════════════════════════════════════════════════════════════════════
+  async function preloadVisionImage() {
+      const turn = state.turnCount;
+      // Guard: skip if no Fortunes, already preloading for this turn, or no prompt cache
+      if (!window.hasFortunes || !hasFortunes()) return;
+      if (_visionPreloadTurn === turn) return;
+      if (!_vizPromptCache || _vizPromptCache.turnCount !== turn) return;
+
+      _visionPreloadTurn = turn;
+      console.log('[VISION:PRELOAD] Starting for turn', turn);
+
+      try {
+          // Wait for prompt cache to resolve
+          if (_vizPromptCache.pending && !_vizPromptCache.prompt) {
+              await _vizPromptCache.pending;
+          }
+          if (!_vizPromptCache.prompt || _vizPromptCache.turnCount !== turn) {
+              console.log('[VISION:PRELOAD] Prompt cache miss, skipping');
+              _visionPreloadTurn = -1;
+              return;
+          }
+
+          // Abort any previous preload
+          if (_visionPreloadAbort) _visionPreloadAbort.abort();
+          _visionPreloadAbort = new AbortController();
+
+          const prompt = _vizPromptCache.prompt;
+          const result = await generateImageWithFallback({
+              prompt: prompt,
+              tier: 'Clean',
+              shape: 'landscape',
+              context: 'vision_preload',
+              intent: 'scene',
+              signal: _visionPreloadAbort.signal
+          });
+
+          if (result?.url && state.turnCount === turn) {
+              _visionPreloadResult = { url: result.url, turn: turn, createdAt: Date.now() };
+              // Also populate VCE cache for instant Vision retrieval
+              cacheVisionResult('predicted_scene_image', result.url);
+              console.log('[VISION:PRELOAD] Image cached for turn', turn);
+          }
+      } catch (err) {
+          if (err.name !== 'AbortError') {
+              console.warn('[VISION:PRELOAD] Failed (non-critical):', err.message);
+          }
+          _visionPreloadTurn = -1;
+      }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SCROLL-BASED PRELOAD TRIGGER — fire at 60% scroll depth
+  // ═══════════════════════════════════════════════════════════════════════════
+  window.addEventListener('scroll', () => {
+      if (_scrollPreloadFired || _scrollRAFPending) return;
+      _scrollRAFPending = true;
+      requestAnimationFrame(() => {
+          _scrollRAFPending = false;
+          const storyContent = document.getElementById('storyContent');
+          if (!storyContent || storyContent.offsetParent === null) return;
+          const scrollDepth = (window.scrollY + window.innerHeight) / document.documentElement.scrollHeight;
+          if (scrollDepth >= 0.60) {
+              _scrollPreloadFired = true;
+              console.log('[PRELOAD:SCROLL] 60% depth reached');
+              scheduleSpeculativePreload();
+          }
+      });
+  }, { passive: true });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FATE CARD DEAL PRELOAD TRIGGER — preload 500ms after cards are dealt
+  // ═══════════════════════════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+      const origDeal = window.dealFateCards;
+      if (origDeal) {
+          window.dealFateCards = function() {
+              const result = origDeal.apply(this, arguments);
+              setTimeout(() => scheduleSpeculativePreload(), 500);
+              return result;
+          };
       }
   });
 
