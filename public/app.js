@@ -5879,8 +5879,12 @@ NARRATOR IDENTITY:
 - "I" = the Love Interest. Always.
 - The player character is the object of desire, curiosity, fascination — observed from outside.
 - The Love Interest has full access to their own thoughts, feelings, memories, and reactions.
-- The Love Interest has NO access to the player character's internal thoughts.
-- The player character's emotions must be inferred from observable behavior (expression, gesture, voice, body language).
+- The Love Interest has ZERO access to the player character's internal thoughts, motives, or feelings.
+- The player character's emotions must ONLY be inferred through external observation: expression, gesture, voice, posture, body language, silence, timing.
+- NEVER write what the player character thinks, feels, wants, fears, remembers, or decides internally.
+- NEVER use interior verbs (felt, thought, knew, realized, wanted, hoped, feared, remembered, decided, intended, wished, believed, wondered, sensed) with the player character as subject — unless immediately grounded in something the LI can physically observe.
+- ALLOWED: "She seemed nervous" / "I could tell she was afraid" / "Something in her eyes shifted" (LI's interpretation of external signals)
+- FORBIDDEN: "She felt nervous" / "She thought about leaving" / "She wanted to kiss me" / "She feared what came next" (direct access to player internality)
 
 PLAYER AGENCY RULE:
 - All scene-driving actions originate from the player character or world events.
@@ -5898,9 +5902,19 @@ INCORRECT — NARRATOR CONFUSION (player character using "I"):
 "I stepped closer to him." ← WRONG — "I" must always be the Love Interest
 "I reached for the door." ← WRONG if this is a player-character action
 
-INCORRECT — MIND-READING (LI accessing player thoughts):
-"She felt nervous about what I might say." ← WRONG — LI cannot know her internal state
-"She thought about kissing me." ← WRONG — LI cannot access her thoughts
+INCORRECT — PLAYER INTERNALITY (LI can NEVER access player's inner world):
+"She felt nervous about what I might say." ← WRONG — "felt" states her internal emotion directly
+"She thought about kissing me." ← WRONG — "thought" accesses her mind
+"She wanted to stay." ← WRONG — "wanted" is a motive the LI cannot know
+"She knew he was lying." ← WRONG — "knew" is internal certainty
+"She remembered the last time." ← WRONG — "remembered" is private cognition
+"She feared what came next." ← WRONG — "feared" is an internal state
+
+REWRITE THESE AS EXTERNAL OBSERVATION:
+"She seemed nervous — her voice caught." ← CORRECT — LI infers from voice
+"I caught her glancing at my lips." ← CORRECT — LI observes a gesture
+"Something in her posture said she wasn't leaving." ← CORRECT — LI reads body language
+"Her hand tightened on the glass. She knew something — or pretended to." ← CORRECT — LI speculates from evidence
 
 INCORRECT — LI SEIZING AGENCY:
 "I grabbed her hand and pulled her into the room." ← WRONG — LI reacts, doesn't drive
@@ -5917,9 +5931,62 @@ INTIMATE SCENES:
 - Maintain first-person LI perspective throughout — no narrator switching.
 `;
 
+  // Archetype → emotional narration lens (LI POV only, narrative voice layer)
+  const LI_POV_ARCHETYPE_LENS = {
+      BEAUTIFUL_RUIN:  'The narrator fears their own capacity to harm or destabilize the Player Character.',
+      ARMORED_FOX:     'The narrator observes the Player Character with guarded curiosity and restrained interest.',
+      HEART_WARDEN:    'The narrator feels an instinctive need to protect or safeguard the Player Character.',
+      ETERNAL_FLAME:   'The narrator experiences an uncanny sense of recognition, familiarity, or déjà vu when observing the Player Character.',
+      SPELLBINDER:     'The narrator becomes fascinated by the Player Character\'s resistance to charm or influence.',
+      DARK_VICE:       'The narrator feels the dangerous temptation to corrupt, ruin, or morally entangle the Player Character.',
+      OPEN_VEIN:       'The narrator becomes aware of their own emotional vulnerability in the presence of the Player Character.'
+  };
+
   function buildLoveInterestPOVContract() {
       if (window.state?.povMode !== 'loveInterestPOV') return '';
-      return LOVE_INTEREST_POV_CONTRACT;
+
+      let contract = LOVE_INTEREST_POV_CONTRACT;
+
+      // RENDERER SAFEGUARD — prevent POV drift into Player POV
+      contract += `
+
+LOVE INTEREST POV — RENDERER AUTHORITY RULE
+═══════════════════════════════════════════════════════════════════════════════
+When Love Interest POV is active:
+- The Love Interest narrates in first person ("I").
+- The Player Character must ALWAYS be described externally ("she", "he", or "they").
+- The narrator must NEVER describe Player actions as if the narrator performed them.
+- The narrator cannot narrate Player thoughts, motives, or feelings.
+- The narrator may ONLY infer the Player's emotions from observable behavior.
+- NEVER render Player actions using first-person verbs.
+
+DISALLOWED: "I reached for her." / "I stepped closer to her." / "I took her hand."
+CORRECT:    "She reached for me." / "She stepped closer." / "Her hand found mine."
+
+This is a renderer discipline rule. It does not alter story logic or agency.
+`;
+
+      // INTERPRETIVE UNCERTAINTY — prevent omniscient narration
+      contract += `
+INTERPRETIVE UNCERTAINTY RULE:
+The narrator must treat the Player Character as psychologically opaque.
+The narrator may interpret, guess, or misread the Player's intentions, but may not know them with certainty.
+Use hedging language: "seemed to", "as if", "I could have sworn", "something in her expression suggested", "maybe", "I wondered if".
+The narrator's uncertainty about the Player is a source of dramatic tension — preserve it.
+`;
+
+      // ARCHETYPE EMOTIONAL LENS — influence LI internal monologue tone
+      const arch = window.state?.archetype?.primary;
+      if (arch && LI_POV_ARCHETYPE_LENS[arch]) {
+          contract += `
+LOVE INTEREST EMOTIONAL LENS (${arch}):
+${LI_POV_ARCHETYPE_LENS[arch]}
+This colors the narrator's internal monologue, emotional tension, and interpretation of Player behavior.
+It does NOT change Player actions, relationship progression, or pacing.
+`;
+      }
+
+      return contract;
   }
 
   function validateLoveInterestPOV(text) {
@@ -5944,16 +6011,13 @@ INTIMATE SCENES:
           }
       }
 
-      // Check for mind-reading patterns (LI accessing player thoughts)
-      const mindReadPatterns = [
-          /\b(she|he|they)\s+(felt|thought|knew|believed|wondered|realized|remembered|imagined|hoped|feared)\b(?!\s+(?:that\s+)?I\b)/gi
-      ];
-      for (const pat of mindReadPatterns) {
-          const matches = text.match(pat);
-          if (matches && matches.length > 2) {
-              // Allow occasional inference; flag only excessive mind-reading
-              violations.push('MIND_READING: Excessive player-character internal access (' + matches.length + ' instances)');
-          }
+      // Check for player-character internality (LI accessing player thoughts/feelings/motives)
+      // Strip dialogue first to avoid false positives from character speech
+      const proseOnly = text.replace(/"[^"]*"|"[^"]*"|'[^']*'/g, '""');
+      const internalityPattern = /\b(she|he|they)\s+(felt|thought|knew|believed|wondered|realized|remembered|imagined|hoped|feared|wanted|wished|decided|intended|sensed|desired)\b/gi;
+      const internalityMatches = proseOnly.match(internalityPattern);
+      if (internalityMatches && internalityMatches.length > 0) {
+          violations.push('PLAYER_INTERNALITY: Player character interior verbs found (' + internalityMatches.length + '): ' + internalityMatches.slice(0, 3).join(', '));
       }
 
       return { valid: violations.length === 0, violations };
@@ -38160,8 +38224,9 @@ LOVE INTEREST POV — NARRATOR IDENTITY (AUTHORITATIVE)
 - "I" = the Love Interest. Always. No exceptions.
 - The player character is described using third-person pronouns ("she", "he", "they").
 - The Love Interest has full access to their own thoughts, feelings, and reactions.
-- The Love Interest has NO access to the player character's internal thoughts.
-- Player character emotions must be inferred from observable behavior only.
+- The Love Interest has ZERO access to the player character's internal thoughts, motives, or feelings.
+- NEVER use interior verbs (felt, thought, knew, wanted, feared, remembered, decided, hoped, wished, believed, wondered, realized, intended, sensed) with the player character as subject.
+- Player character emotions must ONLY be inferred through what the LI can observe: expression, gesture, voice, posture, body language, silence, timing.
 - All scene-driving actions originate from the player character or world events.
 - The Love Interest REACTS, INTERPRETS, DESIRES — does NOT initiate plot-driving actions.
 - Dialogue tags must clearly identify the speaker.
@@ -38170,11 +38235,13 @@ LOVE INTEREST POV — NARRATOR IDENTITY (AUTHORITATIVE)
 CORRECT:
 "She touched my arm. I tried not to react. Tried and failed."
 "I could tell she was nervous — the way her fingers tightened around the glass."
-"'You shouldn't do that,' I said. She smiled like she knew exactly what she was doing."
+"Something shifted behind her eyes. I couldn't name it."
 
 INCORRECT:
-"I stepped closer to him." (player character using "I" — FORBIDDEN)
+"She felt nervous." (direct internal access — FORBIDDEN)
 "She thought about kissing me." (LI reading player's mind — FORBIDDEN)
+"She wanted to stay." (stating player's motive — FORBIDDEN)
+"I stepped closer to him." (player character using "I" — FORBIDDEN)
 "I grabbed her hand and pulled her into the room." (LI seizing agency — FORBIDDEN)
     ` : ''}
     `;
@@ -38246,7 +38313,8 @@ LOVE INTEREST POV — MANDATORY OPENER:
 - CORRECT: "I noticed her the moment she walked in — something about the way she carried herself."
 - CORRECT: "The last thing I expected was to see her here. And yet."
 - WRONG: "I walked into the room nervously." (player character using LI's "I" — FORBIDDEN)
-- WRONG: "She felt drawn to the stranger." (omniscient leakage — FORBIDDEN)
+- WRONG: "She felt drawn to the stranger." (direct internal access to player character — FORBIDDEN)
+- WRONG: "She wanted to leave but couldn't." (stating player motive — FORBIDDEN)
 ` : '';
 
     // ── SCENE 1 STRUCTURAL VARIANCE ──────────────────────────────────
@@ -38481,7 +38549,10 @@ INCORRECT (human-dominant):
 `LOVE INTEREST POV — NARRATOR IDENTITY:
 - "I" = the Love Interest. Always. The player character = "she"/"he"/"they".
 - The Love Interest narrates in first person. Full access to own thoughts and feelings.
-- NO access to the player character's internal thoughts — infer from behavior only.
+- ZERO access to the player character's internal thoughts, motives, or feelings.
+- NEVER write what the player character thinks, feels, wants, fears, remembers, or decides.
+- BANNED with player character as subject: felt, thought, knew, wanted, feared, remembered, decided, hoped, wished, believed, wondered, realized, intended, sensed.
+- Player character's state must ONLY be inferred through external observation (expression, gesture, voice, body language).
 - All scene-driving actions originate from the player character or world events.
 - The Love Interest REACTS, INTERPRETS, DESIRES — does NOT drive the plot.
 - Dialogue tags must clearly identify the speaker.
@@ -38490,10 +38561,11 @@ INCORRECT (human-dominant):
 
 CORRECT:
 "She touched my arm. I tried not to react. Tried and failed."
-"'You shouldn't do that,' I said."
+"Something in her expression shifted — I couldn't place it."
 
 INCORRECT:
-"I stepped closer to him." (player character using "I" — FORBIDDEN)
+"She felt nervous." (internal access — FORBIDDEN)
+"She wanted to stay." (stating motive — FORBIDDEN)
 "She thought about kissing me." (mind-reading — FORBIDDEN)`
 : 'Use the selected POV consistently throughout.'}
 
