@@ -5937,13 +5937,19 @@ select {
 .petition-zoom-overlay .petition-result { font-size: 0.1em; margin: 2px 0; text-align: center; color: rgba(0,0,0,0.8); }
 
 /* ── Floating Proceed button (portal sibling, below card) ── */
-.petition-proceed-btn {
+/* Specificity must beat .flow-continue-btn.sb-btn-png (0-2-0) which sets transform:none */
+.petition-proceed-btn.flow-continue-btn.sb-btn-png {
   position: fixed;
-  bottom: 40px; left: 50%; transform: translateX(-50%);
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 14px;
   z-index: 10006;
   pointer-events: auto;
-  border: none; padding: 0;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  margin: 0;
 }
 
 /* ── Hide old fortune row if still present ── */

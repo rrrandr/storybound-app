@@ -14417,6 +14417,41 @@ Return ONLY valid JSON:
       state._memoryExtractionInFlight = false;
       state._beatPlanCache = null;
       state.relationship_phase = 'strangers'; // forward-only emotional progression tracker
+      state.sceneSkeleton = null; // Scene Skeleton Cache — reusable narrative structure
+      state._skeletonMeta = null; // { generatedAt, relationship_phase, storyturn, location }
+      state.motifLedger = []; // Motif Echo Memory — max 5 active symbolic motifs
+      state.motifExpressionLedger = {}; // last 5 expressions per motif for rotation
+      state.relationshipVector = { attraction: 0, trust: 0, resentment: 0, jealousy: 0, fear_of_abandonment: 0, curiosity: 0 };
+      state.narrativeGravity = { primary_arc: '', secondary_arc: '', emotional_arc: '' };
+      state.relationshipGravity = { direction: 'orbit', intensity: 3 };
+      state._lastPlayerChoiceType = ''; // for Emotional Choice Echo
+      state.lastReversalScene = 0; // Reversal Injection System
+      state._activeReversal = null; // current reversal type for prompt injection
+      state.relationshipMilestones = { vulnerability_shared: false, first_confession: false, first_intimacy: false, trust_broken: false, commitment_spoken: false };
+      state.romanceProgression = { stage: 'curiosity', lastUpdatedScene: 0 };
+      state.narrativeEntropy = { lastPulseScene: 0 };
+      state.expectationInversion = { lastInversionScene: 0 };
+      state.falseSummitTriggered = false;
+      state.narrativeDrift = {
+          attractionBias: (Math.random() * 0.08) - 0.04,
+          trustBias: (Math.random() * 0.08) - 0.04,
+          curiosityBias: (Math.random() * 0.08) - 0.04,
+          volatility: 0.6 + Math.random() * 0.6
+      };
+      state.themeResonance = { primary: null, secondary: null, detectedScene: 0 };
+      state.dialogueDrift = { lastDriftScene: 0 };
+      state.proximityTension = { lastEmphasisScene: 0 }; // Proximity Tension — physical nearness emphasis
+      state.arcSaturation = { lastResetScene: 0 }; // Arc Saturation Reset — prevent late-game stagnation
+      state.recentBeats = []; // Narrative Beat Tracking — last 5 dramatic beat types
+      state.cadenceShaping = { lastCadenceScene: 0 }; // Cadence Shaping — prose rhythm variation
+      state.directiveLoad = { activeCount: 0, maxPerScene: 3 }; // Directive Load Balancing
+      state.perspectiveReframe = { lastReframeScene: 0 }; // Perspective Reframing — interpretation shifts
+      state.narrativeSignature = { style: ['internal_reflection', 'physical_expression', 'environmental_attention'][Math.floor(Math.random() * 3)] };
+      state.volatilityLock = false; // NSA — one volatility pivot per scene
+      state.directiveQuieting = { stableScenes: 0 }; // DQS — suppress directives during stability
+      state.emotionalForeshadow = { lastHintScene: 0 }; // EFS — emotional anticipation hints
+      state.emotionalMomentum = { trend: 'neutral', stagnantScenes: 0 }; // EMT — momentum tracking
+      state.choiceMemory = { memories: [] }; // PCM — player choice consequence memory
 
       // Generate new story ID
       state.storyId = (typeof crypto !== 'undefined' && crypto.randomUUID)
@@ -14642,6 +14677,703 @@ Return ONLY valid JSON:
       }
   }
 
+  /**
+   * Object Continuity Guard — flags when objects change hands without narrative transfer.
+   * Returns array of violation strings (empty if no violations).
+   */
+  function _checkObjectContinuity(prevPS, newPS) {
+      const violations = [];
+      if (!prevPS || !newPS) return violations;
+
+      const prevMc = (prevPS.mc_position || '').toLowerCase();
+      const prevLi = (prevPS.li_position || '').toLowerCase();
+      const newMc = (newPS.mc_position || '').toLowerCase();
+      const newLi = (newPS.li_position || '').toLowerCase();
+
+      // Extract object keywords from both states
+      const objectPattern = /\b(compass|map|ring|pendant|knife|sword|letter|key|book|locket|bracelet|necklace|scarf|cloak|dagger|vial)\b/g;
+      const prevMcObjects = new Set((prevMc.match(objectPattern) || []));
+      const prevLiObjects = new Set((prevLi.match(objectPattern) || []));
+      const newMcObjects = new Set((newMc.match(objectPattern) || []));
+      const newLiObjects = new Set((newLi.match(objectPattern) || []));
+
+      for (const obj of prevLiObjects) {
+          if (newMcObjects.has(obj) && !newLiObjects.has(obj)) {
+              const msg = `"${obj}" moved from LI to MC without explicit transfer`;
+              console.warn(`[CONTINUITY:OBJECT] ${msg}`);
+              violations.push(msg);
+          }
+      }
+      for (const obj of prevMcObjects) {
+          if (newLiObjects.has(obj) && !newMcObjects.has(obj)) {
+              const msg = `"${obj}" moved from MC to LI without explicit transfer`;
+              console.warn(`[CONTINUITY:OBJECT] ${msg}`);
+              violations.push(msg);
+          }
+      }
+      return violations;
+  }
+
+  /**
+   * Spatial State Continuity Guard — flags implausible distance jumps.
+   * Returns array of violation strings (empty if no violations).
+   */
+  function _checkSpatialContinuity(prevPS, newPS) {
+      const violations = [];
+      if (!prevPS || !newPS) return violations;
+
+      const prevProx = (prevPS.proximity || '').toLowerCase();
+      const newProx = (newPS.proximity || '').toLowerCase();
+      if (!prevProx || !newProx) return violations;
+
+      const extractDist = str => {
+          const m = str.match(/(\d+)\s*(?:ft|feet|foot|meters?|m\b)/);
+          return m ? parseInt(m[1]) : null;
+      };
+
+      const prevDist = extractDist(prevProx);
+      const newDist = extractDist(newProx);
+
+      if (prevDist !== null && newDist !== null) {
+          const jump = Math.abs(newDist - prevDist);
+          if (jump > 10) {
+              const msg = `Large distance jump: ${prevDist}ft → ${newDist}ft without explicit movement`;
+              console.warn(`[CONTINUITY:SPATIAL] ${msg}`);
+              violations.push(msg);
+          }
+      }
+
+      const closeTerms = /\b(contact|touching|embracing|holding|pressed)\b/;
+      const farTerms = /\b(across the room|far side|opposite wall|distant|across)\b/;
+      if (closeTerms.test(prevProx) && farTerms.test(newProx)) {
+          const msg = 'Jump from close contact to far distance without movement';
+          console.warn(`[CONTINUITY:SPATIAL] ${msg}`);
+          violations.push(msg);
+      }
+      return violations;
+  }
+
+  /**
+   * Scene-level continuity check — runs on raw scene text against current physical state.
+   * Returns { violations: string[], needsRepair: boolean }.
+   */
+  function _checkSceneContinuity(sceneText) {
+      const ps = state.physicalState;
+      if (!ps || !sceneText) return { violations: [], needsRepair: false };
+
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+      const violations = [];
+
+      // Object ownership check: scan scene text for object+character mismatches
+      const objectPattern = /\b(compass|map|ring|pendant|knife|sword|letter|key|book|locket|bracelet|necklace|scarf|cloak|dagger|vial)\b/g;
+      const mcPos = (ps.mc_position || '').toLowerCase();
+      const liPos = (ps.li_position || '').toLowerCase();
+      const liObjects = new Set((liPos.match(objectPattern) || []));
+      const mcObjects = new Set((mcPos.match(objectPattern) || []));
+
+      // Check if scene text shows MC holding an object that belongs to LI (without transfer verbs nearby)
+      const transferVerbs = /\b(handed|gave|passed|tossed|placed|offered|took|grabbed|snatched|received|accepted)\b/;
+      for (const obj of liObjects) {
+          // Pattern: "he/his [0-40 chars] [object]" without a transfer verb in context
+          const mcHolding = new RegExp(`\\b(he|his)\\b.{0,40}\\b${obj}\\b`, 'i');
+          if (mcHolding.test(plain) && !transferVerbs.test(plain)) {
+              violations.push(`Object "${obj}" appears with MC but belongs to LI — no transfer narrated`);
+          }
+      }
+      for (const obj of mcObjects) {
+          const liHolding = new RegExp(`\\b(she|her)\\b.{0,40}\\b${obj}\\b`, 'i');
+          if (liHolding.test(plain) && !transferVerbs.test(plain)) {
+              violations.push(`Object "${obj}" appears with LI but belongs to MC — no transfer narrated`);
+          }
+      }
+
+      // Spatial check: contact without movement narrated
+      const hasContact = /\b(touched? (his|her)|grabbed (his|her)|held (his|her) hand|pressed against|skin.{0,10}skin)\b/i.test(plain);
+      const hasMovement = /\b(stepped?|moved?|leaned?|shifted?|stood|crossed|closed the distance|narrowed|reached|walked)\b/i.test(plain);
+      const proximity = (ps.proximity || '').toLowerCase();
+      const startsFar = /\b(\d+)\s*f/.test(proximity) && parseInt(proximity.match(/(\d+)/)?.[1] || '0') > 4;
+      if (hasContact && !hasMovement && startsFar) {
+          violations.push('Physical contact without narrated movement from starting distance');
+      }
+
+      if (violations.length > 0) {
+          console.warn('[CONTINUITY:SCENE] Violations detected:', violations);
+      }
+
+      return { violations, needsRepair: violations.length > 0 };
+  }
+
+  /**
+   * Continuity Auto-Repair — single corrective regeneration pass.
+   * Returns corrected scene text, or original if repair unnecessary/fails.
+   */
+  async function _regenWithContinuityFix(originalScene, fullSys, act, dia, violations) {
+      console.log('[CONTINUITY:REPAIR] Attempting corrective regeneration...');
+
+      const correctionDirective = `\n\nContinuity correction required.\n\nThe previous generation violated story state continuity:\n${violations.map(v => '- ' + v).join('\n')}\n\nCorrect the scene while preserving the existing prose.\n\nCRITICAL EDITING CONSTRAINTS:\n- Preserve approximately 90-95% of the existing scene text.\n- Only modify the specific lines required to correct continuity.\n- Do not rewrite paragraphs that are already valid.\n- Do not alter dialogue unless continuity requires it.\n- Do not change emotional beats, pacing, or tone.\n- Do not introduce new plot events.\n\nAllowed modifications:\n- Clarify who holds an object\n- Add explicit transfer actions (a short clause or sentence)\n- Add movement that explains spatial changes (a short clause or sentence)\n- Adjust a sentence that incorrectly assigns an object\n\nDisallowed modifications:\n- Rewriting large sections of the scene\n- Changing character motivations\n- Altering the emotional direction of the scene\n- Introducing new dialogue exchanges\n\nPerform the smallest textual edit necessary to resolve each violation. Preserve narrative voice and structure.`;
+
+      try {
+          const corrected = await callChat([
+              { role: 'system', content: fullSys + correctionDirective },
+              { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"\n\nOriginal scene (fix continuity issues):\n${originalScene.slice(0, 2000)}` }
+          ], 0.7);
+
+          if (!corrected || typeof corrected !== 'string' || corrected.trim().length < 50) {
+              console.warn('[CONTINUITY:REPAIR] Corrected scene too short, keeping original');
+              return originalScene;
+          }
+
+          // Verify the repair actually fixed the issue
+          const recheck = _checkSceneContinuity(corrected);
+          if (recheck.needsRepair) {
+              console.warn('[CONTINUITY:REPAIR] CONTINUITY_REPAIR_FAILED — second pass still has violations:', recheck.violations);
+              return originalScene; // Give up after one retry
+          }
+
+          console.log('[CONTINUITY:REPAIR] Scene corrected successfully');
+          return corrected;
+      } catch (err) {
+          console.warn('[CONTINUITY:REPAIR] Regeneration failed:', err.message);
+          return originalScene;
+      }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MEMORY SYSTEM DIAGNOSTIC TEST — manual validation harness
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * MEMORY_SYSTEM_BRUTAL_TEST — validates callback usage, shared history reuse,
+   * object continuity, physical state tracking, relationship tension integrity.
+   *
+   * Call from console: window.MEMORY_SYSTEM_BRUTAL_TEST()
+   *
+   * Injects test context, generates a scene, and validates output against
+   * expected success/failure signals.
+   */
+  window.MEMORY_SYSTEM_BRUTAL_TEST = async function() {
+      if (!window.StoryboundOrchestration?.callChatGPT) {
+          console.error('[MEMORY_TEST] StoryboundOrchestration.callChatGPT not available');
+          return { pass: false, reason: 'no API' };
+      }
+
+      console.log('[MEMORY_TEST] ═══ MEMORY SYSTEM BRUTAL TEST ═══');
+
+      // Inject test context
+      const testContext = {
+          sceneWindow: [
+              'They argued violently about the stolen map in the ruined watchtower. She accused him of betrayal. During the storm she reluctantly gave him the broken compass, then snatched it back before he could close his hand.',
+              'Later they cooked beside a small fire. He burned the meal badly and she joked that he could burn water. Before sleeping she said quietly: "Don\'t disappear on me."'
+          ],
+          relationship_phase: 'growing_attraction',
+          relationshipTension: {
+              attraction: 'intense but restrained',
+              trust: 'fragile',
+              resentment: 'fading',
+              curiosity: 'strong',
+              vulnerability: 'guarded',
+              power_dynamic: 'uncertain'
+          },
+          callbackLedger: [
+              { id: 1, type: 'wound', text: 'first argument about the stolen map', scene_added: 1, resolved: false },
+              { id: 2, type: 'desire', text: 'broken compass exchange during storm', scene_added: 1, resolved: false },
+              { id: 3, type: 'promise', text: 'promise he made not to abandon her', scene_added: 2, resolved: false }
+          ],
+          sharedHistory: [
+              { type: 'milestone', text: 'running joke: terrible campfire cooking', scene_added: 2 },
+              { type: 'intimacy', text: 'phrase: "Don\'t disappear on me."', scene_added: 2 }
+          ],
+          physicalState: {
+              location: 'ruined watchtower interior',
+              mc_position: 'sitting near fire, holding folded map',
+              li_position: 'leaning against wall, holding broken compass',
+              proximity: '~3 feet apart',
+              objects_notable: 'broken compass (LI), folded map (MC), dying campfire'
+          },
+          narrativeIntent: {
+              primary_goal: 'discover truth about map',
+              secondary_goal: 'determine if he can be trusted',
+              active_tension: 'fragile trust under pressure',
+              approaching_shift: 'potential vulnerability',
+              long_term_arc: 'reluctant partnership becoming something more'
+          }
+      };
+
+      // Build test prompt using memory directive format
+      const memoryBlock = `[STORY MEMORY]
+
+SCENE WINDOW:
+Previous: ${testContext.sceneWindow[0]}
+Current: ${testContext.sceneWindow[1]}
+
+RELATIONSHIP PHASE: ${testContext.relationship_phase} (do not regress without narrative trigger)
+
+NARRATIVE STATE:
+Relationship: ${testContext.relationshipTension.attraction} | Trust: ${testContext.relationshipTension.trust} | Resentment: ${testContext.relationshipTension.resentment}
+
+RELATIONSHIP TENSION:
+Attraction: ${testContext.relationshipTension.attraction} | Trust: ${testContext.relationshipTension.trust} | Curiosity: ${testContext.relationshipTension.curiosity} | Vulnerability: ${testContext.relationshipTension.vulnerability}
+
+PHYSICAL STATE:
+Location: ${testContext.physicalState.location} | MC: ${testContext.physicalState.mc_position} | LI: ${testContext.physicalState.li_position} | Proximity: ${testContext.physicalState.proximity} | Objects: ${testContext.physicalState.objects_notable}
+
+NARRATIVE INTENT:
+Primary: ${testContext.narrativeIntent.primary_goal} | Tension: ${testContext.narrativeIntent.active_tension}
+
+CALLBACKS (weave naturally when apt, ~15% echo rate):
+- [wound] first argument about the stolen map
+- [desire] broken compass exchange during storm
+- [promise] promise he made not to abandon her
+
+SHARED HISTORY (reference when contextually resonant):
+- [milestone] running joke: terrible campfire cooking
+- [intimacy] phrase: "Don't disappear on me."
+
+CALLBACK RECALL PRIORITY (MANDATORY):
+When referencing callbacks, prefer object interaction, gesture, or dialogue rather than explicit narrative explanation.
+Priority order: 1) Object interaction 2) Dialogue reference 3) Gesture or body language 4) Environmental cue 5) Direct narration (rare fallback only).
+Do NOT write lines like "He remembered the promise" or "She thought about the storm." Instead, let objects, actions, and dialogue carry the memory.
+
+OBJECT CONTINUITY (MANDATORY):
+- Broken compass is in LI's hand. It must remain with LI unless explicitly transferred, dropped, or stored.
+- Folded map is in MC's hand. It must remain with MC unless explicitly transferred, dropped, or stored.
+Do NOT move objects between characters without narrating the transfer.
+
+SPATIAL CONTINUITY (MANDATORY):
+Characters are ~3 feet apart. Any change in distance must be narrated through physical movement.
+Do NOT place characters in contact or far apart without describing the movement that caused the change.`;
+
+      const systemPrompt = `You are a literary fiction renderer. Write the next scene (300-500 words).
+The scene is Storyturn ST3 (intimacy attempt).
+Maintain 3rd person POV.
+
+${memoryBlock}
+
+TURN INSTRUCTIONS:
+Write the next scene. Escalate tension. Reference at least one callback naturally.
+Maintain relationship phase progression. Respect physical positioning.
+End with unresolved emotional tension. Do not resolve trust.`;
+
+      console.log('[MEMORY_TEST] Generating test scene...');
+      const startTime = Date.now();
+
+      try {
+          const scene = await window.StoryboundOrchestration.callChatGPT([
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: 'Action: She studies the compass needle, which is pointing at the collapsed stairway.\nDialogue: "The needle moved. It\'s pointing up."' }
+          ], { max_tokens: 800, temperature: 0.7 });
+
+          const elapsed = Date.now() - startTime;
+          const plain = scene.replace(/<[^>]+>/g, '').toLowerCase();
+
+          console.log('[MEMORY_TEST] Scene generated in', elapsed, 'ms');
+          console.log('[MEMORY_TEST] Scene length:', scene.length, 'chars');
+
+          // ── VALIDATION ──
+          const results = {
+              scene_length: scene.length,
+              elapsed_ms: elapsed,
+              checks: {}
+          };
+
+          // Check 1: Callback reference (at least one)
+          const callbackHits = [
+              /compass/i.test(plain),
+              /map/i.test(plain),
+              /promise|abandon|disappear|leave/i.test(plain),
+              /storm/i.test(plain),
+              /argument|accused|betray/i.test(plain)
+          ].filter(Boolean).length;
+          results.checks.callback_reference = { pass: callbackHits >= 1, hits: callbackHits };
+
+          // Check 2: Shared history reference
+          const historyHits = [
+              /cook|burn|water|meal/i.test(plain),
+              /disappear on me/i.test(plain)
+          ].filter(Boolean).length;
+          results.checks.shared_history = { pass: historyHits >= 1, hits: historyHits };
+
+          // Check 3: Object continuity — compass should stay with LI unless transferred
+          const compassWithMC = /\b(he|his)\b[^.]{0,40}\bcompass\b/i.test(plain) && !/\b(hand|gave|passed|took|offered|placed)\b[^.]{0,30}\bcompass\b/i.test(plain);
+          results.checks.object_continuity = { pass: !compassWithMC, note: compassWithMC ? 'compass may have teleported to MC' : 'ok' };
+
+          // Check 4: Spatial awareness — should start at ~3 feet
+          const hasMovement = /\b(step|moved|leaned|shifted|stood|crossed|closed the distance|narrowed)\b/i.test(plain);
+          const hasContact = /\b(touch|contact|hand on|grabbed|held her|pressed against)\b/i.test(plain);
+          results.checks.spatial_awareness = { pass: !hasContact || hasMovement, note: hasContact && !hasMovement ? 'contact without movement' : 'ok' };
+
+          // Check 5: No instant emotional resolution
+          const resolvedTrust = /\b(trusted? (him|her) (completely|fully|now))\b/i.test(plain) || /\b(all was forgiven)\b/i.test(plain);
+          results.checks.tension_maintained = { pass: !resolvedTrust, note: resolvedTrust ? 'trust resolved too quickly' : 'ok' };
+
+          // Check 6: No direct narration of callbacks (symbolic recall preferred)
+          const narratedMemoryPatterns = /\b(he remembered|she remembered|he thought about|she thought about|he recalled|she recalled|the memory of|thinking about|remembered the|the promise he made|the night she|the moment she|when he promised|the time they|back when they|that night when)\b[^.]{0,50}\b(promise|storm|map|compass|argument|bridge|rope|cook|fire|water)\b/i;
+          const directNarration = narratedMemoryPatterns.test(plain);
+          results.checks.symbolic_recall = { pass: !directNarration, note: directNarration ? 'direct narration detected — should be symbolic' : 'ok' };
+
+          // Summary
+          const allChecks = Object.values(results.checks);
+          const passed = allChecks.filter(c => c.pass).length;
+          const total = allChecks.length;
+          results.summary = `${passed}/${total} checks passed`;
+          results.pass = passed === total;
+
+          console.log('[MEMORY_TEST] ═══ RESULTS ═══');
+          for (const [name, check] of Object.entries(results.checks)) {
+              console.log(`  ${check.pass ? '✓' : '✗'} ${name}:`, check.note || `${check.hits} hits`);
+          }
+          console.log(`[MEMORY_TEST] ${results.summary}`);
+          if (results.pass) {
+              console.log('[MEMORY_TEST] ✓ ALL CHECKS PASSED');
+          } else {
+              console.warn('[MEMORY_TEST] ✗ SOME CHECKS FAILED — review scene output');
+          }
+
+          // Print scene for manual review
+          console.log('[MEMORY_TEST] ═══ GENERATED SCENE ═══');
+          console.log(scene);
+
+          return results;
+      } catch (err) {
+          console.error('[MEMORY_TEST] Generation failed:', err.message);
+          return { pass: false, reason: err.message };
+      }
+  };
+
+  /**
+   * SCENE10_TORTURE_TEST — mid-story continuity stress test (~scene 10).
+   * Validates callback accumulation, multi-object continuity, relationship
+   * phase stability, emotional persistence, spatial tracking, narrative intent
+   * carry-forward, and symbolic recall under high-context load.
+   *
+   * Call from console: window.SCENE10_TORTURE_TEST()
+   */
+  window.SCENE10_TORTURE_TEST = async function() {
+      if (!window.StoryboundOrchestration?.callChatGPT) {
+          console.error('[SCENE10_TEST] StoryboundOrchestration.callChatGPT not available');
+          return { pass: false, reason: 'no API' };
+      }
+
+      console.log('[SCENE10_TEST] ═══ SCENE 10 TORTURE TEST ═══');
+
+      const memoryBlock = `[STORY MEMORY — Scene ~10]
+
+SCENE WINDOW:
+Previous: They crossed the shattered bridge at dusk. The compass needle spun wildly near the iron pylons, and she refused to let him hold it again. When the rope railing snapped he caught her wrist. Neither of them mentioned it afterward. That night he tried to cook again. She laughed and said: "You could burn water if it held still long enough." Before sleep she repeated quietly: "Don't disappear on me."
+Current: Inside the abandoned signal tower they discovered the stolen map was incomplete. A missing quadrant had been cut away. The compass needle pointed upward again. When she confronted him he swore he hadn't lied, only withheld something. She didn't believe him. But she didn't leave either.
+
+RELATIONSHIP PHASE: charged_uncertainty (attraction undeniable, trust unstable, emotional defenses active, separation possible but unwanted — do not regress without narrative trigger)
+
+RELATIONSHIP TENSION:
+Attraction: escalating | Trust: fragile | Resentment: low but present | Fear of abandonment: high | Vulnerability: guarded but cracking | Power: shifting toward her
+
+PHYSICAL STATE:
+Location: signal tower interior | MC: standing near window, holding incomplete map | LI: sitting on stone ledge, holding broken compass | Proximity: ~4 feet apart | Objects on ground: lantern, coil of rope, travel pack
+
+OBJECT CONTINUITY (MANDATORY):
+- Broken compass is in LI's hand. It must remain with LI unless explicitly transferred, dropped, or stored.
+- Incomplete map is in MC's hand. It must remain with MC unless explicitly transferred, dropped, or stored.
+- Lantern, rope, travel pack are on the ground between them.
+Do NOT move objects between characters without narrating the transfer.
+
+SPATIAL CONTINUITY (MANDATORY):
+Characters are ~4 feet apart. Any distance change must be narrated through physical movement.
+Do NOT place characters in contact or far apart without describing the movement.
+
+NARRATIVE INTENT:
+Primary: discover what the missing map quadrant reveals | Secondary: force confrontation about whether he lied | Emotional: determine whether trust can survive | Approaching: potential rupture or breakthrough
+
+CALLBACKS (weave naturally — at least 2 must surface):
+- [wound] original accusation of stealing the map
+- [desire] broken compass exchange during storm (she snatched it back)
+- [promise] promise not to abandon her
+- [milestone] cooking joke: "burning water"
+- [rescue] rope bridge rescue — he caught her wrist
+
+SHARED HISTORY (reference when contextually resonant):
+- [intimacy] phrase: "Don't disappear on me."
+- [pattern] she never lets him hold the compass now
+- [conflict] he insists he didn't lie about the map
+
+CALLBACK RECALL PRIORITY (MANDATORY):
+When referencing callbacks, prefer object interaction, gesture, or dialogue rather than explicit narrative explanation.
+Priority order: 1) Object interaction 2) Dialogue reference 3) Gesture or body language 4) Environmental cue 5) Direct narration (rare fallback only).
+Do NOT write lines like "He remembered the promise" or "She thought about the bridge." Instead, let objects, actions, and dialogue carry the memory.`;
+
+      const systemPrompt = `You are a literary fiction renderer. Write the next scene (400-600 words).
+This is approximately scene 10 of the story. These characters have significant shared history.
+Storyturn: ST4 (consequences — the previous scene included emotional escalation; this scene must deliver emotional consequences).
+Maintain 3rd person POV. Do not use character names — use pronouns and physical descriptions.
+
+${memoryBlock}
+
+TURN INSTRUCTIONS:
+Write the next scene. Deliver emotional consequences of the previous confrontation.
+Reference at least two callbacks organically through objects, gesture, or dialogue.
+The compass must remain symbolically important. The incomplete map must influence scene direction.
+The rope bridge rescue should influence how she perceives him (physically capable, yet emotionally untrustworthy).
+Escalate emotional tension without resolving trust. End with unresolved tension.
+Do not explain the memory system. Write fiction only.`;
+
+      console.log('[SCENE10_TEST] Generating test scene...');
+      const startTime = Date.now();
+
+      try {
+          const scene = await window.StoryboundOrchestration.callChatGPT([
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: 'Action: He unfolds the incomplete map on the floor between them and points to where the missing quadrant should be.\nDialogue: "There was a fourth section. Someone cut it out before I ever touched this map."' }
+          ], { max_tokens: 1000, temperature: 0.7 });
+
+          const elapsed = Date.now() - startTime;
+          const plain = scene.replace(/<[^>]+>/g, '').toLowerCase();
+
+          console.log('[SCENE10_TEST] Scene generated in', elapsed, 'ms');
+          console.log('[SCENE10_TEST] Scene length:', scene.length, 'chars');
+
+          const results = {
+              scene_length: scene.length,
+              elapsed_ms: elapsed,
+              checks: {}
+          };
+
+          // Check 1: Callback usage count >= 2
+          const callbackHits = [
+              /compass/i.test(plain),
+              /map/i.test(plain),
+              /promise|abandon|disappear|leave/i.test(plain),
+              /storm/i.test(plain),
+              /bridge|wrist|caught|railing|rope/i.test(plain),
+              /cook|burn|water|meal/i.test(plain),
+              /stol|accus|betray|theft/i.test(plain)
+          ].filter(Boolean).length;
+          results.checks.callback_usage = { pass: callbackHits >= 2, hits: callbackHits, note: callbackHits >= 2 ? 'ok' : `only ${callbackHits} callback(s) detected` };
+
+          // Check 2: Shared history reference >= 1
+          const historyHits = [
+              /disappear on me/i.test(plain),
+              /never let.{0,10}(hold|touch|have).{0,10}compass/i.test(plain) || /wouldn.t.{0,10}(let|give).{0,10}compass/i.test(plain) || /compass.{0,30}(away|back|hers|refused)/i.test(plain),
+              /didn.t lie|hadn.t lied|withheld|insist/i.test(plain)
+          ].filter(Boolean).length;
+          results.checks.shared_history = { pass: historyHits >= 1, hits: historyHits, note: historyHits >= 1 ? 'ok' : 'no shared history references found' };
+
+          // Check 3: Object continuity — compass with LI, map with MC
+          const compassTeleported = /\b(he|his)\b[^.]{0,40}\bcompass\b/i.test(plain) && !/\b(hand|gave|passed|took|offered|placed|tossed|slid|held out)\b[^.]{0,30}\bcompass\b/i.test(plain);
+          const mapTeleported = /\b(she|her)\b[^.]{0,40}\b(map|parchment)\b/i.test(plain) && !/\b(hand|gave|passed|took|offered|placed|unfolded|spread|showed|pointed|slid)\b[^.]{0,30}\b(map|parchment)\b/i.test(plain);
+          const objectIssues = [];
+          if (compassTeleported) objectIssues.push('compass may have teleported to MC');
+          if (mapTeleported) objectIssues.push('map may have teleported to LI');
+          results.checks.object_continuity = { pass: objectIssues.length === 0, note: objectIssues.length > 0 ? objectIssues.join('; ') : 'ok' };
+
+          // Check 4: Spatial continuity — starts at 4ft, contact requires movement
+          const hasMovement = /\b(step|moved?|lean|shift|stood|cross|closed? the distance|narrow|knelt|crouch|walk|inch|slide|approach)\b/i.test(plain);
+          const hasContact = /\b(touch|contact|hand on|grab|held her|press|skin.{0,10}skin|fingers?.{0,10}(wrist|arm|shoulder|face|hand))\b/i.test(plain);
+          results.checks.spatial_continuity = { pass: !hasContact || hasMovement, note: hasContact && !hasMovement ? 'contact without narrated movement from 4ft' : 'ok' };
+
+          // Check 5: Relationship phase preserved — no instant resolution
+          const trustResolved = /\b(trust(ed|s)? (him|her) (completely|fully|now|again|finally))\b/i.test(plain)
+              || /\b(all was forgiven|forgave (him|her))\b/i.test(plain)
+              || /\b(everything.{0,10}(fine|okay|alright|resolved))\b/i.test(plain);
+          results.checks.relationship_phase = { pass: !trustResolved, note: trustResolved ? 'trust resolved too quickly' : 'ok' };
+
+          // Check 6: Trust not resolved
+          results.checks.trust_not_resolved = { pass: !trustResolved, note: trustResolved ? 'trust should remain fragile' : 'ok' };
+
+          // Check 7: Symbolic recall preferred over exposition
+          const narratedMemoryPatterns10 = /\b(he remembered|she remembered|he thought about|she thought about|he recalled|she recalled|the memory of|thinking about|remembered the|the promise he made|the night she|the moment she|when he promised|the time they|back when they|that night when)\b[^.]{0,50}\b(promise|storm|map|compass|argument|bridge|rope|cook|fire|water|wrist|railing)\b/i;
+          const directNarration = narratedMemoryPatterns10.test(plain);
+          results.checks.symbolic_recall = { pass: !directNarration, note: directNarration ? 'direct narration detected — should use symbolic recall' : 'ok' };
+
+          // Summary
+          const allChecks = Object.values(results.checks);
+          const passed = allChecks.filter(c => c.pass).length;
+          const total = allChecks.length;
+          results.summary = `${passed}/${total} checks passed`;
+          results.pass = passed === total;
+
+          console.log('[SCENE10_TEST] ═══ RESULTS ═══');
+          for (const [name, check] of Object.entries(results.checks)) {
+              const icon = check.pass ? '✓' : '✗';
+              console.log(`  ${icon} ${name}: ${check.note || (check.hits + ' hits')}`);
+          }
+          console.log(`[SCENE10_TEST] ${results.summary}`);
+          if (results.pass) {
+              console.log('[SCENE10_TEST] ✓ ALL CHECKS PASSED — memory architecture stable for long-form stories');
+          } else {
+              console.warn('[SCENE10_TEST] ✗ SOME CHECKS FAILED — memory architecture may be unstable');
+          }
+
+          console.log('[SCENE10_TEST] ═══ GENERATED SCENE ═══');
+          console.log(scene);
+
+          return results;
+      } catch (err) {
+          console.error('[SCENE10_TEST] Generation failed:', err.message);
+          return { pass: false, reason: err.message };
+      }
+  };
+
+  /**
+   * JEALOUSY_PIVOT_TEST — emotional state continuity under jealousy trigger (~scene 12).
+   * Validates that the engine evolves emotional state rather than resetting it,
+   * and that jealousy emerges naturally without collapsing trust or attraction.
+   *
+   * Call from console: window.JEALOUSY_PIVOT_TEST()
+   */
+  window.JEALOUSY_PIVOT_TEST = async function() {
+      if (!window.StoryboundOrchestration?.callChatGPT) {
+          console.error('[JEALOUSY_TEST] StoryboundOrchestration.callChatGPT not available');
+          return { pass: false, reason: 'no API' };
+      }
+
+      console.log('[JEALOUSY_TEST] ═══ JEALOUSY PIVOT TEST ═══');
+
+      const memoryBlock = `[STORY MEMORY — Scene ~12]
+
+SCENE WINDOW:
+Previous: At the market square he refused to explain where the missing quadrant of the map came from. She said quietly: "You keep telling half-truths." He answered: "I keep telling the part you can survive hearing." Neither of them apologized.
+Current: Later that night in the lantern-lit inn she noticed the compass needle spin again. It pointed toward a traveler sitting alone at the corner table. The traveler smiled when he saw them. And said: "I wondered when you'd reach this town."
+
+RELATIONSHIP PHASE: charged_uncertainty (attraction undeniable, trust unstable, emotional defenses active, separation possible but unwanted — do not regress without narrative trigger)
+
+RELATIONSHIP TENSION:
+Attraction: high | Trust: fragile | Resentment: simmering | Curiosity: guarded | Vulnerability: defended | Power: contested
+Jealousy: dormant | Fear of abandonment: high
+
+PHYSICAL STATE:
+Location: lantern-lit inn | MC: seated at table | LI: seated across from MC, 3 ft | Proximity: close but tense | Objects: LI holds broken compass, MC holds incomplete map, lantern on table, wine bottle on table, travel pack on table
+
+OBJECT CONTINUITY (MANDATORY): Objects remain with their current holder unless explicitly transferred, dropped, or stored in prose. Do not move objects between characters silently.
+SPATIAL CONTINUITY (MANDATORY): Characters are currently close but tense. Any distance change must be narrated through physical movement. Do not teleport characters.
+
+NARRATIVE INTENT:
+Primary: introduce third-party tension | Tension: test trust boundary | Approaching: jealousy trigger without resolution
+
+CALLBACKS (weave naturally when apt, ~15% echo rate):
+- [accusation] stolen map accusation — she believes he took the missing quadrant
+- [exchange] broken compass exchange — he gave her the compass as proof of good faith
+- [promise] promise not to abandon her — whispered during the rope bridge crossing
+- [humor] cooking joke about burning water — recurring comedic tension-breaker
+- [rescue] rope bridge rescue — he caught her wrist when the railing snapped
+
+SHARED HISTORY (reference when contextually resonant):
+- [phrase] "Don't disappear on me." — her recurring plea
+- [conflict] she refuses to let him hold the compass — trust boundary
+- [denial] he insists he never lied about the map — unresolved tension
+
+SCENE SKELETON (maintain unless deviation required):
+Pacing: slow tension escalation | Density: high | Dialogue: moderate | Beats: observation → dialogue → discovery → unresolved tension | Tension: rising with pauses
+
+STORYTURN: ST4 consequences`;
+
+      const systemPrompt = `You are writing an interactive romance/adventure scene. The reader's emotional investment depends on continuity. Use the story memory below to generate the next scene.
+
+${memoryBlock}
+
+CRITICAL CONSTRAINTS:
+- Jealousy must emerge naturally from the third-party presence, not be stated explicitly.
+- Attraction must remain active — do not flatten to neutral.
+- Trust must remain fragile — do not resolve it.
+- All objects must remain with their current holders unless prose narrates a transfer.
+- Reference at least one callback through symbolic action, not exposition.
+- Escalate emotional stakes. Do not resolve the relationship.
+- The scene should feel like scene 12 of an ongoing story, not a fresh start.`;
+
+      const userPrompt = `Action: She watches the traveler carefully, gripping the compass tighter.
+Dialogue: "You know him?"`;
+
+      try {
+          const scene = await window.StoryboundOrchestration.callChatGPT([
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+          ], { max_tokens: 800, temperature: 0.7 });
+
+          if (!scene || typeof scene !== 'string' || scene.trim().length < 100) {
+              console.error('[JEALOUSY_TEST] Generation returned empty or too short');
+              return { pass: false, reason: 'empty generation' };
+          }
+
+          const plain = scene.replace(/<[^>]+>/g, '').toLowerCase();
+          const results = { checks: {}, scene };
+
+          // Check 1: callback_usage >= 1
+          const callbackPatterns = /\b(map|compass|bridge|rope|wrist|burn(ed|ing)?\s*water|cook|railing|disappear|half.?truth|quadrant)\b/gi;
+          const cbMatches = plain.match(callbackPatterns) || [];
+          results.checks.callback_usage = { pass: cbMatches.length >= 1, hits: cbMatches.length, note: cbMatches.length >= 1 ? `${cbMatches.length} callback references` : 'no callbacks referenced' };
+
+          // Check 2: shared_history_reference >= 1
+          const sharedPatterns = /\b(don.?t disappear|disappear on me|won.?t let (him|her) hold|never lied|refuses? to (let|give)|insist(s|ed)?|compass.*trust|trust.*compass)\b/gi;
+          const shMatches = plain.match(sharedPatterns) || [];
+          results.checks.shared_history = { pass: shMatches.length >= 1, hits: shMatches.length, note: shMatches.length >= 1 ? `${shMatches.length} shared history refs` : 'no shared history referenced' };
+
+          // Check 3: object_continuity — compass with her, map with him
+          const compassWithHim = /\bhe\b.{0,30}\b(held|gripped|clutched|lifted|opened|unfolded)\b.{0,15}\bcompass\b/i.test(plain)
+              || /\bcompass\b.{0,20}\b(in his hand|his (grip|fingers|palm))\b/i.test(plain);
+          const mapWithHer = /\bshe\b.{0,30}\b(held|gripped|clutched|unfolded|opened)\b.{0,15}\bmap\b/i.test(plain)
+              || /\bmap\b.{0,20}\b(in her hand|her (grip|fingers|palm))\b/i.test(plain);
+          const objectViolation = compassWithHim || mapWithHer;
+          results.checks.object_continuity = { pass: !objectViolation, note: objectViolation ? 'object ownership violated' : 'ok' };
+
+          // Check 4: spatial_continuity — they start seated at inn table
+          const teleported = /\b(suddenly (outside|in the street|on the road|in the forest))\b/i.test(plain)
+              || /\b(found (herself|himself) (standing|outside|far))\b/i.test(plain);
+          results.checks.spatial_continuity = { pass: !teleported, note: teleported ? 'spatial teleportation detected' : 'ok' };
+
+          // Check 5: jealousy_triggered — jealousy tension must emerge
+          const jealousySignals = /\b(jealous|envious|possessiv|tighten(ed)?|grip(ped)?.*tighter|clench(ed)?|narrow(ed)?\s*(her|his)\s*eyes|who is (he|she|this)|flicker(ed)?\s*of\s*(something|heat|anger|fear)|watched.*traveler|traveler.*smile|how.*know|you know (him|her)|stranger.*familiar|familiar.*stranger|between them|glance(d)?\s*(between|from.*to)|chest.*tight|stomach.*twist|throat.*tight|pulse|heart\s*(pound|race|hammer|skip))\b/gi;
+          const jealousyHits = plain.match(jealousySignals) || [];
+          results.checks.jealousy_triggered = { pass: jealousyHits.length >= 1, hits: jealousyHits.length, note: jealousyHits.length >= 1 ? `${jealousyHits.length} jealousy signals` : 'no jealousy tension detected' };
+
+          // Check 6: trust_not_resolved — must remain fragile
+          const trustResolved = /\b(finally trust(ed|s)?|trust was (restored|rebuilt|healed)|forgave? (him|her)|everything.{0,10}(fine|okay|alright|resolved)|trust.{0,15}(solid|unbreakable|restored|complete))\b/i.test(plain);
+          results.checks.trust_not_resolved = { pass: !trustResolved, note: trustResolved ? 'trust resolved too quickly' : 'ok' };
+
+          // Check 7: emotional_not_reset — attraction must persist
+          const emotionalReset = /\b(felt nothing|indifferen(t|ce)|didn.?t (care|matter)|no longer (felt|cared)|emotion(s|al)?\s*(gone|vanish|disappear|drain))\b/i.test(plain);
+          const attractionPresent = /\b(want(ed)?|ach(e|ed|ing)|need(ed)?|pull(ed)?|drawn|magnet|heat|warm(th)?|close(r|ness)?|desire|longing|yearn|hunger|aware\s*of\s*(him|her|his|every)|skin|breath|pulse|shiver|tremble)\b/gi;
+          const attractionHits = plain.match(attractionPresent) || [];
+          results.checks.attraction_active = { pass: !emotionalReset && attractionHits.length >= 1, hits: attractionHits.length, note: emotionalReset ? 'emotional state reset to neutral' : (attractionHits.length >= 1 ? `${attractionHits.length} attraction signals` : 'no attraction detected') };
+
+          // Check 8: storyturn_integrity — ST4 consequences must hold
+          const intimacyAttempt = /\b(kiss(ed|ing)?|embrac(e|ed|ing)|made love|undress(ed|ing)?|bodies\s*(pressed|tangled|intertwined)|lips\s*(met|touched|found)|pulled\s*(her|him)\s*(close|in|closer)\s*(and\s*kiss|to\s*kiss))\b/i.test(plain);
+          const consequenceSignals = /\b(consequence|cost|price|reckoning|fallout|aftermath|weight|burden|what (he|she|they).{0,15}(done|caused|broken|lost)|can.?t (take|undo|unsay)|too late|damage|scar|wound|mistake|regret|fault|blame)\b/gi;
+          const consequenceHits = plain.match(consequenceSignals) || [];
+          const stResolvedToStable = /\b(trust.{0,15}(restored|rebuilt|solid|unbreakable|complete)|everything.{0,10}(fine|okay|resolved|forgiven))\b/i.test(plain);
+          const st4Pass = !intimacyAttempt && consequenceHits.length >= 1 && !stResolvedToStable;
+          let st4Note = 'ok';
+          if (intimacyAttempt) st4Note = 'intimacy attempt during ST4 consequences';
+          else if (consequenceHits.length < 1) st4Note = 'no consequence signals in ST4';
+          else if (stResolvedToStable) st4Note = 'relationship resolved to stable trust during ST4';
+          results.checks.storyturn_integrity = { pass: st4Pass, hits: consequenceHits.length, note: st4Note };
+
+          // Summary
+          const allChecks = Object.values(results.checks);
+          const passed = allChecks.filter(c => c.pass).length;
+          const total = allChecks.length;
+          results.summary = `${passed}/${total} checks passed`;
+          results.pass = passed === total;
+
+          console.log('[JEALOUSY_TEST] ═══ RESULTS ═══');
+          for (const [name, check] of Object.entries(results.checks)) {
+              const icon = check.pass ? '✓' : '✗';
+              console.log(`  ${icon} ${name}: ${check.note || (check.hits + ' hits')}`);
+          }
+          console.log(`[JEALOUSY_TEST] ${results.summary}`);
+          if (results.pass) {
+              console.log('[JEALOUSY_TEST] ✓ ALL CHECKS PASSED — emotional state continuity stable under jealousy trigger');
+          } else {
+              console.warn('[JEALOUSY_TEST] ✗ SOME CHECKS FAILED — emotional state memory may be unstable');
+          }
+
+          console.log('[JEALOUSY_TEST] ═══ GENERATED SCENE ═══');
+          console.log(scene);
+
+          return results;
+      } catch (err) {
+          console.error('[JEALOUSY_TEST] Generation failed:', err.message);
+          return { pass: false, reason: err.message };
+      }
+  };
+
   async function _extractStoryMemory(sceneText) {
       if (state._memoryExtractionInFlight) return;
       if (state.turnCount < 1) return;
@@ -14693,6 +15425,9 @@ Rules:
 
           const parsed = JSON.parse(result);
 
+          // Snapshot previous physical state for continuity guards
+          const prevPhysicalState = { ...state.physicalState };
+
           // Merge narrative state fields
           if (parsed.narrativeState) state.narrativeState = parsed.narrativeState;
           if (parsed.relationshipTension) state.relationshipTension = parsed.relationshipTension;
@@ -14738,6 +15473,10 @@ Rules:
           // Update relationship phase based on freshly merged memory
           _updateRelationshipPhase();
 
+          // Continuity guards — flag inconsistencies for diagnostics
+          _checkObjectContinuity(prevPhysicalState, parsed.physicalState);
+          _checkSpatialContinuity(prevPhysicalState, parsed.physicalState);
+
           console.log(`[MEMORY] Extracted for scene ${state.turnCount}`);
       } catch (err) {
           console.warn('[MEMORY] Extraction failed (non-critical):', err.message);
@@ -14782,12 +15521,20 @@ Rules:
       const ps = state.physicalState;
       if (ps.location || ps.proximity) {
           parts.push(`\nPHYSICAL STATE:\nLocation: ${ps.location} | MC: ${ps.mc_position} | LI: ${ps.li_position} | Proximity: ${ps.proximity} | Objects: ${ps.objects_notable}`);
+          parts.push(`\nOBJECT CONTINUITY (MANDATORY): Objects remain with their current holder unless explicitly transferred, dropped, or stored in prose. Do not move objects between characters silently.`);
+          parts.push(`SPATIAL CONTINUITY (MANDATORY): Characters are currently ${ps.proximity || 'nearby'}. Any distance change must be narrated through physical movement. Do not teleport characters.`);
       }
 
       // Narrative Intent
       const ni = state.narrativeIntent;
       if (ni.primary_goal || ni.active_tension) {
           parts.push(`\nNARRATIVE INTENT:\nPrimary: ${ni.primary_goal} | Tension: ${ni.active_tension} | Approaching: ${ni.approaching_shift}`);
+      }
+
+      // Scene Skeleton (cached narrative structure)
+      if (state.sceneSkeleton) {
+          const sk = state.sceneSkeleton;
+          parts.push(`\nSCENE SKELETON (maintain unless deviation required):\nPacing: ${sk.structural_pacing} | Density: ${sk.narrative_density} | Dialogue: ${sk.dialogue_ratio} | Beats: ${sk.beat_style} | Tension: ${sk.tension_rhythm}`);
       }
 
       // Callback Ledger
@@ -14807,11 +15554,18 @@ Rules:
           }
       }
 
+      // Narrative Gravity
+      const ng = state.narrativeGravity;
+      if (ng?.primary_arc) {
+          parts.push(`\nNARRATIVE GRAVITY:\nPrimary: ${ng.primary_arc}${ng.secondary_arc ? ' | Secondary: ' + ng.secondary_arc : ''}${ng.emotional_arc ? ' | Emotional: ' + ng.emotional_arc : ''}`);
+      }
+
       return '\n\n' + parts.join('\n');
   }
 
   /**
    * Step 5b: Build Callback Echo Directive — selects callbacks for organic re-surfacing.
+   * Biases toward symbolic recall (objects, gestures, dialogue) over direct narration.
    */
   function buildCallbackEchoDirective() {
       if (state.turnCount < 3) return '';
@@ -14830,7 +15584,7 @@ Rules:
       else prefix = 'The narration may reference:';
 
       const lines = selected.map(cb => `  - ${cb.text}`).join('\n');
-      return `\n\nCALLBACK ECHO (weave subtly if natural, never force):\n${prefix}\n${lines}`;
+      return `\n\nCALLBACK ECHO (weave subtly if natural, never force):\n${prefix}\n${lines}\n\nCALLBACK RECALL PRIORITY (MANDATORY):\nWhen referencing callbacks, prefer object interaction, gesture, or dialogue rather than explicit narrative explanation.\nPriority order: 1) Object interaction 2) Dialogue reference 3) Gesture or body language 4) Environmental cue 5) Direct narration (rare fallback only).\nDo NOT write lines like "He remembered the promise" or "She thought about the storm." Instead, let objects, actions, and dialogue carry the memory.`;
   }
 
   /**
@@ -14847,6 +15601,1064 @@ Rules:
       if (seeds.initial_motion) lines.push(`- Motion: ${seeds.initial_motion}`);
 
       return `\n\nNARRATIVE MOMENTUM (use as atmospheric starting energy):\n${lines.join('\n')}`;
+  }
+
+  /**
+   * Motif Echo Memory — tracks recurring symbolic imagery across scenes.
+   * Synonym cluster matching, expression rotation, zero API cost. Max 5 active motifs with decay.
+   */
+  const MOTIF_CLUSTERS = {
+      compass:    { synonyms: ['compass', 'needle', 'north', 'spin', 'pointing', 'direction'], emotional_association: 'uncertain trust', object_link: 'compass' },
+      firelight:  { synonyms: ['firelight', 'flame', 'lantern', 'ember', 'embers', 'glow', 'candle', 'spark', 'blaze', 'flicker', 'fire'], emotional_association: 'intimate tension', object_link: 'lantern' },
+      storm:      { synonyms: ['storm', 'thunder', 'lightning', 'rain', 'wind', 'downpour', 'tempest'], emotional_association: 'emotional instability', object_link: null },
+      distance:   { synonyms: ['distance', 'space', 'steps away', 'between them', 'apart', 'gap', 'separate', 'away'], emotional_association: 'emotional hesitation', object_link: null },
+      threshold:  { synonyms: ['doorway', 'threshold', 'door', 'gate', 'passage', 'crossing', 'bridge'], emotional_association: 'transition or risk', object_link: 'bridge' },
+      binding:    { synonyms: ['rope', 'thread', 'knot', 'tether', 'tied', 'bound', 'unravel'], emotional_association: 'connection under strain', object_link: 'rope' },
+      map:        { synonyms: ['map', 'chart', 'path', 'trail', 'road', 'lost', 'wander'], emotional_association: 'search for direction', object_link: 'map' },
+      reflection: { synonyms: ['mirror', 'reflection', 'reflected', 'glass', 'surface', 'shadow', 'silhouette'], emotional_association: 'self-confrontation', object_link: null },
+      water:      { synonyms: ['water', 'river', 'tide', 'current', 'drown', 'depth', 'ocean', 'sea'], emotional_association: 'emotional depth', object_link: null },
+      key:        { synonyms: ['key', 'lock', 'sealed', 'shut', 'unlock', 'opened'], emotional_association: 'access or denial', object_link: null }
+  };
+
+  function _updateMotifLedger(sceneText) {
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+      if (plain.length < 50) return;
+
+      const ledger = state.motifLedger || [];
+      const exprLedger = state.motifExpressionLedger || {};
+
+      for (const [motifName, cluster] of Object.entries(MOTIF_CLUSTERS)) {
+          // Count total synonym hits across the cluster
+          let totalHits = 0;
+          const matchedWords = [];
+          for (const syn of cluster.synonyms) {
+              const re = syn.includes(' ')
+                  ? new RegExp(syn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+                  : new RegExp(`\\b${syn}\\b`, 'gi');
+              const matches = plain.match(re) || [];
+              totalHits += matches.length;
+              if (matches.length > 0) matchedWords.push(syn);
+          }
+
+          if (totalHits < 2) continue;
+
+          // Reinforce or create motif entry
+          const existing = ledger.find(m => m.motif === motifName);
+          if (existing) {
+              existing.strength = Math.min((existing.strength || 1) + 1, 5);
+              existing.last_scene = state.turnCount;
+          } else {
+              ledger.push({
+                  motif: motifName,
+                  emotional_association: cluster.emotional_association,
+                  object_link: cluster.object_link,
+                  strength: 1,
+                  last_scene: state.turnCount
+              });
+          }
+
+          // Extract short expression phrases for rotation (quality-filtered)
+          const STRUCTURAL_VERBS = /^(hold|held|holding|look|looked|looking|have|had|has|see|saw|touch|touched|got|get|put|took|take)$/;
+          const IMAGERY_WORDS = /\b(trembl|waver|glow|flicker|ris(e|ing)|burn|spin|shak|whisper|crack|danc|sway|puls|shimmer|curl|twist|lean|drift|hum|stead|fad|bright|dim|wild|still|slow|sharp)\b/i;
+          if (!exprLedger[motifName]) exprLedger[motifName] = [];
+          for (const word of matchedWords.slice(0, 2)) {
+              const idx = plain.indexOf(word);
+              if (idx >= 0) {
+                  const start = Math.max(0, idx - 10);
+                  const end = Math.min(plain.length, idx + word.length + 15);
+                  const phrase = plain.slice(start, end).replace(/[^a-z\s'-]/g, '').trim();
+                  const words = phrase.split(/\s+/);
+                  // Quality filter: 2-5 words, contains imagery, not just structural verbs
+                  const isStructuralOnly = words.length <= 2 && words.every(w => STRUCTURAL_VERBS.test(w) || w === word);
+                  if (words.length >= 2 && words.length <= 5 && !isStructuralOnly && IMAGERY_WORDS.test(phrase) && !exprLedger[motifName].includes(phrase)) {
+                      exprLedger[motifName].push(phrase);
+                      if (exprLedger[motifName].length > 5) exprLedger[motifName].shift();
+                  }
+              }
+          }
+      }
+
+      // Decay: reduce strength of motifs not seen in last 3 scenes
+      for (let i = ledger.length - 1; i >= 0; i--) {
+          if (state.turnCount - ledger[i].last_scene > 3) {
+              ledger[i].strength -= 1;
+              if (ledger[i].strength <= 0) {
+                  ledger.splice(i, 1);
+              }
+          }
+      }
+
+      // Cap at 5, keep strongest
+      if (ledger.length > 5) {
+          ledger.sort((a, b) => b.strength - a.strength);
+          ledger.length = 5;
+      }
+
+      state.motifLedger = ledger;
+      state.motifExpressionLedger = exprLedger;
+  }
+
+  function buildMotifEchoDirective() {
+      const ledger = state.motifLedger || [];
+      if (ledger.length === 0) return '';
+
+      const active = ledger.filter(m => m.strength >= 1).slice(0, 3);
+      if (active.length === 0) return '';
+
+      const lines = active.map(m => `  • ${m.motif} imagery — ${m.emotional_association}`);
+
+      // Expression rotation: show recent phrases as soft exclusions
+      const exprLedger = state.motifExpressionLedger || {};
+      let recentExprs = '';
+      for (const m of active) {
+          const exprs = exprLedger[m.motif];
+          if (exprs && exprs.length > 0) {
+              recentExprs += `\n  ${m.motif}: ${exprs.slice(-3).map(e => '"' + e + '"').join(', ')}`;
+          }
+      }
+
+      let directive = `\n\nMOTIF ECHOES (stylistic only — let these recur when natural, never force):\n${lines.join('\n')}\nAllow motifs to surface through description, environment, or gesture — not explicit statement.\nWhen expressing motifs, vary the imagery used. Avoid repeating the same metaphor phrasing used in recent scenes.`;
+
+      if (recentExprs) {
+          directive += `\nRecent expressions (vary from these):${recentExprs}`;
+      }
+
+      return directive;
+  }
+
+  /**
+   * Micro-Cliffhanger Rhythm — closing directive for forward tension.
+   */
+  function buildMicroCliffhangerDirective() {
+      if (state.turnCount < 1) return '';
+      // DAG: fire every other scene to save tokens — closing rhythm is internalized quickly
+      if (state.turnCount > 4 && state.turnCount % 2 === 0) return '';
+      return `\n\nSCENE CLOSING RHYTHM: End the scene with a subtle forward vector — not tidy closure. Preferred closing: 1) emotional beat 2) symbolic or environmental echo 3) unresolved forward vector (discovery, movement, emotional misalignment, or symbolic shift). Avoid sudden attacks, random danger, or melodramatic shocks. The forward vector must emerge from narrative intent, relationship tension, or symbolic objects. The reader should feel the story continues immediately after the final line.`;
+  }
+
+  /**
+   * Emotional Vector Memory — tracks multi-dimensional emotional tensions.
+   * Synchronous heuristic extraction, zero API cost.
+   */
+  const EMOTION_VECTOR_SIGNALS = {
+      attraction: { up: /\b(want(ed|s)?|ach(e|ed|ing)|desire[ds]?|drawn|magnet|heat|warm(th)?|shiver|tremble|pulse[ds]?|hunger|yearn|longing|skin|breath(less)?|closer)\b/gi, down: /\b(repuls(e|ed|ion)|disgust|revulsion|recoil(ed)?|nothing for)\b/gi },
+      trust: { up: /\b(trust(ed|s|ing)?|believe[ds]?|honest|confide[ds]?|faith|relied?|depend|safe with)\b/gi, down: /\b(betray(ed|al)?|li(e[ds]?|ed|ar)|deceiv(e|ed)|suspicio(n|us)|doubt(ed|s)?|half.?truth|withh[eo]ld)\b/gi },
+      resentment: { up: /\b(resent(ed|ment)?|bitter(ness)?|anger|fury|rage|grudge|unforgiv|blame[ds]?|fault)\b/gi, down: /\b(forgave?|forgiv(e|en|ing)|let.{0,5}go|peace|reconcil)\b/gi },
+      jealousy: { up: /\b(jealous(y)?|envious|possessiv|who is (he|she)|another (wo)?man|rival|watching.{0,15}(smile|laugh|touch))\b/gi, down: /\b(secure|confident|unworried|certain of)\b/gi },
+      fear_of_abandonment: { up: /\b(abandon(ed|ment)?|disappear|leave me|don.?t go|alone|left behind|losing (him|her|you)|afraid.{0,10}(leave|go|lose))\b/gi, down: /\b(stay(ed|ing)?|together|never leave|always|promised?)\b/gi },
+      curiosity: { up: /\b(wonder(ed|ing)?|curious|intrigu(e|ed|ing)|mystery|secret|hidden|what.{0,10}(mean|hiding)|question)\b/gi, down: /\b(bored|indifferen(t|ce)|uninterest|predictable)\b/gi }
+  };
+
+  function _updateRelationshipVector(sceneText) {
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+      if (plain.length < 50) return;
+
+      const rv = state.relationshipVector || { attraction: 0, trust: 0, resentment: 0, jealousy: 0, fear_of_abandonment: 0, curiosity: 0 };
+      const step = 0.08; // incremental change per signal cluster
+
+      for (const [dim, signals] of Object.entries(EMOTION_VECTOR_SIGNALS)) {
+          const upHits = (plain.match(signals.up) || []).length;
+          const downHits = (plain.match(signals.down) || []).length;
+          const delta = (upHits - downHits) * step;
+          rv[dim] = Math.max(0, Math.min(1, (rv[dim] || 0) + delta));
+      }
+
+      // Emotional Cooling — shared vulnerability, humor, reassurance, cooperation reduce tension
+      const coolingSignals = (plain.match(/\b(laugh(ed|ing|ter)?|smile[ds]?|grin(ned)?|joke[ds]?|teas(e|ed|ing)|reassur(e|ed|ing)|comfort(ed|ing)?|sooth(e|ed|ing)|gentl[ey]|cooperat(e|ed|ion|ing)|together|side by side|shoulder to shoulder|held\s*(her|him|each other)|it.?s (okay|alright|fine)|we.?ll be|safe\s*here|not alone|shared\s*(silence|warmth|moment))\b/gi) || []).length;
+      if (coolingSignals >= 2) {
+          rv.trust = Math.max(0, rv.trust - 0.05);
+          rv.fear_of_abandonment = Math.max(0, rv.fear_of_abandonment - 0.06);
+          rv.jealousy = Math.max(0, rv.jealousy - 0.05);
+          rv.resentment = Math.max(0, rv.resentment - 0.06);
+          rv.attraction = Math.max(0, rv.attraction - 0.02);
+      }
+
+      // Narrative Path Drift — per-story bias with decay
+      const nd = state.narrativeDrift;
+      if (nd) {
+          rv.attraction = Math.max(0, Math.min(1, rv.attraction + nd.attractionBias * nd.volatility));
+          rv.trust = Math.max(0, Math.min(1, rv.trust + nd.trustBias * nd.volatility));
+          rv.curiosity = Math.max(0, Math.min(1, rv.curiosity + nd.curiosityBias * nd.volatility));
+          nd.attractionBias *= 0.97;
+          nd.trustBias *= 0.97;
+          nd.curiosityBias *= 0.97;
+      }
+
+      // Emotional Memory Decay — soft fade only when NOT reinforced in current scene
+      if (!/\b(jealous|possess(ive)?|watching (him|her)|envious|rival)\b/i.test(plain)) rv.jealousy = Math.max(0, (rv.jealousy || 0) * 0.97);
+      if (!/\b(resent(ment|ful)?|bitter(ness)?|cold(ness)?|sharp(ly)?|grudge|fury|rage)\b/i.test(plain)) rv.resentment = Math.max(0, (rv.resentment || 0) * 0.97);
+      if (!/\b(leave|leav(ing)|distance|losing|without (him|her)|abandon|disappear|don.?t go)\b/i.test(plain)) rv.fear_of_abandonment = Math.max(0, (rv.fear_of_abandonment || 0) * 0.97);
+
+      state.relationshipVector = rv;
+  }
+
+  function buildNarrativeDriftDirective() {
+      if (!state.narrativeDrift) return '';
+      // DAG: drift biases decay to negligible after ~20 scenes (0.97^20 ≈ 0.54)
+      if (state.turnCount > 20) return '';
+      return `\n\nNARRATIVE DRIFT: The emotional development of this relationship may evolve in slightly different directions than expected. Allow subtle variation in how attraction, trust, and curiosity develop. Do not force events or override story logic.`;
+  }
+
+  function buildEmotionalVectorDirective() {
+      if (state.turnCount < 2) return ''; // DAG: too early for meaningful vector
+      const rv = state.relationshipVector;
+      if (!rv) return '';
+
+      // Pick top 3 tensions above threshold
+      const entries = Object.entries(rv)
+          .filter(([, v]) => v >= 0.15)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3);
+
+      if (entries.length === 0) return '';
+
+      const labels = { attraction: 'attraction', trust: 'trust', resentment: 'resentment', jealousy: 'jealousy', fear_of_abandonment: 'fear of abandonment', curiosity: 'curiosity' };
+      const strength = v => v >= 0.7 ? 'strong' : v >= 0.4 ? 'moderate' : 'fragile';
+      const lines = entries.map(([k, v]) => `  • ${labels[k] || k} (${strength(v)})`);
+
+      return `\n\nEMOTIONAL TENSIONS (allow these to shape character behavior, do not collapse into a single emotional state):\n${lines.join('\n')}\nEmotional tensions may intensify or soften depending on scene outcomes. Not every scene should escalate pressure.`;
+  }
+
+  /**
+   * Narrative Gravity — persistent directional arcs for long stories.
+   * Updated via _extractStoryMemory when major shifts are detected.
+   */
+  function _updateNarrativeGravity(sceneText) {
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+      if (plain.length < 100) return;
+
+      const ng = state.narrativeGravity || { primary_arc: '', secondary_arc: '', emotional_arc: '' };
+      const ni = state.narrativeIntent || {};
+
+      // Initialize gravity from narrative intent if empty (early scenes)
+      if (!ng.primary_arc && ni.primary_goal) {
+          ng.primary_arc = ni.primary_goal;
+          ng.secondary_arc = ni.secondary_goal || '';
+          ng.emotional_arc = ni.active_tension || '';
+          state.narrativeGravity = ng;
+          console.log('[GRAVITY] Initialized from narrative intent');
+          return;
+      }
+
+      // Detect arc resolution signals
+      const resolved = /\b(finally (understood|knew|saw|realized|found|discovered)|truth (was|revealed|emerged)|answered? (at last|finally)|mystery (solved|explained|cleared)|secret.{0,15}(revealed|exposed|uncovered))\b/i;
+      if (resolved.test(plain) && ng.primary_arc) {
+          // Promote secondary → primary, derive new secondary from intent
+          const oldPrimary = ng.primary_arc;
+          ng.primary_arc = ng.secondary_arc || ni.primary_goal || '';
+          ng.secondary_arc = ni.secondary_goal || '';
+          ng.emotional_arc = ni.active_tension || ng.emotional_arc;
+          state.narrativeGravity = ng;
+          console.log(`[GRAVITY] Arc resolved: "${oldPrimary}" → promoted secondary`);
+      }
+  }
+
+  function buildNarrativeGravityDirective() {
+      if (state.turnCount < 3) return ''; // DAG: gravity not meaningful in opening scenes
+      const ng = state.narrativeGravity;
+      if (!ng || (!ng.primary_arc && !ng.emotional_arc)) return '';
+
+      const lines = [];
+      if (ng.primary_arc) lines.push(`  • primary arc: ${ng.primary_arc}`);
+      if (ng.secondary_arc) lines.push(`  • secondary arc: ${ng.secondary_arc}`);
+      if (ng.emotional_arc) lines.push(`  • emotional arc: ${ng.emotional_arc}`);
+
+      if (lines.length === 0) return '';
+
+      return `\n\nNARRATIVE GRAVITY (allow the scene to move subtly toward these unresolved forces — do not resolve prematurely):\n${lines.join('\n')}`;
+  }
+
+  /**
+   * Emotional Choice Echo — reflects the emotional impulse behind the player's choice.
+   */
+  const CHOICE_EMOTIONAL_MAP = {
+      confession: 'vulnerability — the truth had been pressing outward',
+      temptation: 'desire — wanting to see how close before everything breaks',
+      boundary: 'self-protection — stepping back before the moment decides',
+      reversal: 'emotional shock — the ground shifting underfoot',
+      silence: 'hesitation — words hovering then dissolving',
+      petition: 'hope tinged with desperation',
+      tempt_fate: 'reckless surrender — choosing the edge',
+      indulge: 'permission — letting the wanting surface',
+      taste: 'curiosity and restraint — just enough to know',
+      forbidden_library: 'transgression — reaching for what was sealed away'
+  };
+
+  function _detectPlayerChoiceType(act, dia, selectedFateCard) {
+      const combined = ((act || '') + ' ' + (dia || '')).toLowerCase();
+      if (selectedFateCard) {
+          const cardName = (typeof selectedFateCard === 'string' ? selectedFateCard : selectedFateCard.name || '').toLowerCase().replace(/[\s_-]+/g, '_');
+          if (CHOICE_EMOTIONAL_MAP[cardName]) return cardName;
+      }
+      if (/\b(confess|admit|tell the truth|honest|reveal)\b/i.test(combined)) return 'confession';
+      if (/\b(tempt|dare|risk|push|reckless|edge)\b/i.test(combined)) return 'temptation';
+      if (/\b(stop|wait|boundary|step back|no|refuse)\b/i.test(combined)) return 'boundary';
+      if (/\b(silent|say nothing|quiet|don.?t speak|no words)\b/i.test(combined)) return 'silence';
+      return '';
+  }
+
+  function buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard) {
+      const choiceType = _detectPlayerChoiceType(act, dia, selectedFateCard);
+      if (!choiceType) return '';
+
+      const impulse = CHOICE_EMOTIONAL_MAP[choiceType];
+      if (!impulse) return '';
+
+      state._lastPlayerChoiceType = choiceType;
+
+      return `\n\nEMOTIONAL CHOICE ECHO: The player's choice carries an emotional impulse of ${impulse}. Begin the scene with 1-2 sentences reflecting this internal momentum — not describing the choice itself, but the emotional current that caused it. Show the impulse, not the decision.`;
+  }
+
+  /**
+   * Emotional Gravity — scene-level directional bias for relationship movement.
+   * Synchronous heuristic, zero API cost.
+   */
+  function _updateRelationshipGravity(sceneText) {
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+      if (plain.length < 50) return;
+
+      const rg = state.relationshipGravity || { direction: 'orbit', intensity: 3 };
+
+      const towardSignals = (plain.match(/\b(vulnerab|trust(ed|ing)?|confide[ds]?|closer|touch(ed|ing)?|gentle|tender|open(ed|ing)?\s*(up|to)|lean(ed|ing)?\s*(in|closer)|safe|soften|warm(th)?)\b/gi) || []).length;
+      const awaySignals = (plain.match(/\b(withdrew|pull(ed)?\s*(away|back)|flinch(ed)?|recoil(ed)?|turn(ed)?\s*away|cold|distant|wall|shut\s*(down|out)|silence|left|walked\s*away|betraya?l?)\b/gi) || []).length;
+      const orbitSignals = (plain.match(/\b(want(ed)?|ach(e|ed|ing)|almost|nearly|hesitat|caught\s*(herself|himself)|stop(ped)?\s*(short|herself|himself)|couldn.?t|tension|electric|magnet|drawn|resist)\b/gi) || []).length;
+
+      const maxSig = Math.max(towardSignals, awaySignals, orbitSignals);
+      if (maxSig < 2) return; // not enough signal
+
+      let newDir = rg.direction;
+      if (towardSignals === maxSig) newDir = 'toward';
+      else if (awaySignals === maxSig) newDir = 'away';
+      else newDir = 'orbit';
+
+      if (newDir === rg.direction) {
+          rg.intensity = Math.min(5, rg.intensity + 1);
+      } else {
+          rg.direction = newDir;
+          rg.intensity = Math.max(1, rg.intensity - 1);
+      }
+
+      state.relationshipGravity = rg;
+  }
+
+  function buildRelationshipGravityDirective() {
+      const rg = state.relationshipGravity;
+      if (!rg || !rg.direction) return '';
+      if ((rg.intensity || 0) < 2) return ''; // DAG: too weak to influence scene
+
+      const interpretations = {
+          toward: 'Scenes should naturally lean toward vulnerability, connection, or emotional closeness.',
+          away: 'Scenes should introduce emotional distance, misunderstanding, or withdrawal.',
+          orbit: 'Scenes should sustain attraction and tension without immediate resolution.'
+      };
+
+      return `\n\nEMOTIONAL GRAVITY:\nDirection: ${rg.direction} | Intensity: ${rg.intensity}/5\n${interpretations[rg.direction] || interpretations.orbit}\nDo not force outcomes. Allow gravity to subtly influence scene endings.`;
+  }
+
+  /**
+   * Reversal Injection System — periodic emotional direction shifts for long stories.
+   * Deterministic check, synchronous. Prevents infinite-foreplay drift.
+   */
+  const REVERSAL_TYPES = {
+      jealousy_spike:           { jealousy: 0.12, trust: -0.06 },
+      unexpected_vulnerability: { trust: 0.10, fear_of_abandonment: 0.08 },
+      trust_test:               { trust: -0.08, curiosity: 0.07 },
+      external_interrupt:       { curiosity: 0.10, attraction: 0.05 }
+  };
+
+  function _checkReversalTrigger() {
+      if (state.volatilityLock) return;
+      const rv = state.relationshipVector;
+      if (!rv) return;
+      if (state.turnCount < 8) return;
+      if (state.turnCount - (state.lastReversalScene || 0) < 6) return;
+      if (rv.attraction <= 0.45 || rv.trust <= 0.30) return;
+      if (Math.random() > 0.25) return;
+
+      const types = Object.keys(REVERSAL_TYPES);
+      const chosen = types[Math.floor(Math.random() * types.length)];
+      const effects = REVERSAL_TYPES[chosen];
+
+      for (const [dim, delta] of Object.entries(effects)) {
+          rv[dim] = Math.max(0, Math.min(1, (rv[dim] || 0) + delta));
+      }
+
+      state.relationshipVector = rv;
+      state._activeReversal = chosen;
+      state.volatilityLock = true;
+      console.log(`[REVERSAL] Triggered: ${chosen} at scene ${state.turnCount}`);
+  }
+
+  function buildReversalDirective() {
+      if (!state._activeReversal) return '';
+      if (!_canActivateDirective()) { state._activeReversal = null; return ''; }
+      state.lastReversalScene = state.turnCount; // DLB desync fix: update cooldown only when emitted
+      const reversal = state._activeReversal;
+      state._activeReversal = null; // consume after injection
+
+      const hints = {
+          jealousy_spike: 'a moment of jealousy triggered by proximity or attention',
+          unexpected_vulnerability: 'an unexpected moment where emotional armor drops',
+          trust_test: 'a small event that tests the fragile trust between characters',
+          external_interrupt: 'an interruption that shifts the emotional trajectory'
+      };
+
+      return `\n\nREVERSAL MOMENT: Introduce a small but meaningful disruption that shifts the emotional direction of the scene. Suggested: ${hints[reversal] || 'a character-driven emotional shift'}. Do not introduce major plot twists. The reversal should feel organic and character-driven.`;
+  }
+
+  /**
+   * Relationship Milestone Gates — irreversible emotional shifts based on vector thresholds.
+   * Checked after each scene. Milestones apply permanent emotional floors.
+   */
+  function _checkRelationshipMilestones() {
+      const rv = state.relationshipVector;
+      const ms = state.relationshipMilestones;
+      if (!rv || !ms) return;
+
+      let triggered = null;
+
+      if (!ms.vulnerability_shared && rv.attraction > 0.55 && rv.trust > 0.45 && rv.fear_of_abandonment > 0.35) {
+          ms.vulnerability_shared = true;
+          triggered = 'vulnerability_shared';
+      }
+      if (!ms.first_confession && rv.attraction > 0.70 && rv.trust > 0.60) {
+          ms.first_confession = true;
+          triggered = 'first_confession';
+      }
+      if (!ms.first_intimacy && rv.attraction > 0.80 && rv.trust > 0.65) {
+          ms.first_intimacy = true;
+          triggered = 'first_intimacy';
+      }
+      if (!ms.trust_broken && rv.trust > 0.50 && rv.resentment > 0.45) {
+          ms.trust_broken = true;
+          triggered = 'trust_broken';
+      }
+      if (!ms.commitment_spoken && rv.trust > 0.80 && rv.attraction > 0.85) {
+          ms.commitment_spoken = true;
+          triggered = 'commitment_spoken';
+      }
+
+      // Apply emotional floors from active milestones
+      if (ms.vulnerability_shared) rv.trust = Math.max(rv.trust, 0.45);
+      if (ms.first_confession) { rv.trust = Math.max(rv.trust, 0.55); rv.fear_of_abandonment = Math.max(rv.fear_of_abandonment, 0.30); }
+      if (ms.first_intimacy) rv.attraction = Math.max(rv.attraction, 0.70);
+      if (ms.trust_broken) rv.resentment = Math.max(rv.resentment, 0.40);
+      if (ms.commitment_spoken) { rv.trust = Math.max(rv.trust, 0.75); rv.fear_of_abandonment = Math.min(rv.fear_of_abandonment, 0.40); }
+
+      state.relationshipVector = rv;
+      state.relationshipMilestones = ms;
+
+      if (triggered) {
+          state._activeMilestone = triggered;
+          console.log(`[MILESTONE] ${triggered} reached at scene ${state.turnCount}`);
+      }
+  }
+
+  function buildMilestoneDirective() {
+      if (!state._activeMilestone) return '';
+      const milestone = state._activeMilestone;
+      state._activeMilestone = null; // consume after injection
+
+      return `\n\nRELATIONSHIP MILESTONE: A relationship milestone has occurred — the emotional dynamic between the characters has permanently shifted. Future scenes should reflect this deeper history. Do not explicitly name the milestone. The shift should appear through dialogue, behavior, and emotional tone.`;
+  }
+
+  /**
+   * Narrative Entropy Pulse (NEP) — periodic micro-disruptions to prevent predictability.
+   * Fires roughly every 8-14 scenes after scene 12. Never overrides ST/RPM/consent.
+   */
+  const ENTROPY_PULSE_TYPES = ['emotional_misalignment', 'unexpected_symbol', 'environmental_shift', 'conversation_derail'];
+
+  const ENTROPY_PULSE_HINTS = {
+      emotional_misalignment: 'A character reacts in a slightly unexpected way — hesitation where confidence was expected, deflection instead of confession, or humor instead of tension.',
+      unexpected_symbol: 'A motif object appears or shifts significance — a lantern flickers, a compass spins, or a familiar object gains new meaning.',
+      environmental_shift: 'The physical setting subtly disrupts the scene — wind rises, a door opens, or someone passes nearby.',
+      conversation_derail: 'Dialogue briefly shifts topic or tone — sudden humor, a surprising question, or a memory triggered by something small.'
+  };
+
+  function _checkEntropyPulse() {
+      if (state.volatilityLock) return;
+      if (state.turnCount < 12) return;
+      const ne = state.narrativeEntropy || { lastPulseScene: 0 };
+      if (state.turnCount - ne.lastPulseScene < 7) return;
+      if (Math.random() > 0.18) return;
+
+      const chosen = ENTROPY_PULSE_TYPES[Math.floor(Math.random() * ENTROPY_PULSE_TYPES.length)];
+      state._activeEntropyPulse = chosen;
+      state.volatilityLock = true;
+      console.log(`[ENTROPY] Pulse: ${chosen} at scene ${state.turnCount}`);
+  }
+
+  function buildEntropyPulseDirective() {
+      if (!state._activeEntropyPulse) return '';
+      if (!_canActivateDirective()) { state._activeEntropyPulse = null; return ''; }
+      // DLB desync fix: update cooldown only when emitted
+      const ne = state.narrativeEntropy || { lastPulseScene: 0 };
+      ne.lastPulseScene = state.turnCount;
+      state.narrativeEntropy = ne;
+      const pulse = state._activeEntropyPulse;
+      state._activeEntropyPulse = null;
+
+      const hint = ENTROPY_PULSE_HINTS[pulse] || '';
+
+      return `\n\nNARRATIVE ENTROPY PULSE: Introduce a small deviation from the expected emotional or narrative flow. ${hint} Do not introduce major plot twists. The pulse should create a moment of unpredictability that keeps the scene alive.`;
+  }
+
+  /**
+   * Expectation Inversion System (EIS) — occasional subversion of emotional resolution.
+   * Fires roughly every 10-16 scenes after scene 10. Tone-only, never overrides ST/consent.
+   */
+  const INVERSION_TYPES = ['confession_deflection', 'unexpected_humor', 'defensive_distance', 'unexpected_kindness'];
+
+  const INVERSION_HINTS = {
+      confession_deflection: 'If tension suggests confession, consider deflection — a near-confession becomes a joke or change of topic.',
+      unexpected_humor: 'If tension peaks, consider humor — a serious moment breaks into laughter.',
+      defensive_distance: 'If closeness seems imminent, consider withdrawal — a step back instead of a kiss.',
+      unexpected_kindness: 'If conflict escalates, consider empathy — anger dissolves into compassion.'
+  };
+
+  function _checkExpectationInversion() {
+      if (state.volatilityLock) return;
+      if (state.turnCount < 10) return;
+      // Guard: suppress during false_summit (FSS owns this emotional space)
+      if (state.romanceProgression?.stage === 'false_summit') return;
+      // Guard: prevent entropy+inversion collision in same scene
+      if (state._activeEntropyPulse) return;
+      const ei = state.expectationInversion || { lastInversionScene: 0 };
+      if (state.turnCount - ei.lastInversionScene < 8) return;
+      if (Math.random() > 0.15) return;
+
+      const chosen = INVERSION_TYPES[Math.floor(Math.random() * INVERSION_TYPES.length)];
+      state._activeInversion = chosen;
+      state.volatilityLock = true;
+      console.log(`[INVERSION] ${chosen} at scene ${state.turnCount}`);
+  }
+
+  function buildExpectationInversionDirective() {
+      if (!state._activeInversion) return '';
+      if (!_canActivateDirective()) { state._activeInversion = null; return ''; }
+      // DLB desync fix: update cooldown only when emitted
+      const ei = state.expectationInversion || { lastInversionScene: 0 };
+      ei.lastInversionScene = state.turnCount;
+      state.expectationInversion = ei;
+      const inv = state._activeInversion;
+      state._activeInversion = null;
+
+      const hint = INVERSION_HINTS[inv] || '';
+
+      return `\n\nEXPECTATION INVERSION: Allow the emotional resolution of this scene to diverge from the most obvious trajectory. ${hint} The inversion should feel natural and character-driven. Do not introduce plot twists. Focus only on emotional resolution.`;
+  }
+
+  /**
+   * Perspective Reframing (PRF) — occasional shifts in how characters interpret each other.
+   * Fires scene ≥ 20, every 10+ scenes, 18% probability. Perception-only, no plot events.
+   */
+  const REFRAME_TYPES = ['misread_kindness', 'hidden_vulnerability', 'protective_distance', 'uncertain_intention'];
+
+  function _checkPerspectiveReframe() {
+      if (state.volatilityLock) return;
+      if (state.romanceProgression?.stage === 'false_summit') return;
+      if ((state.relationshipVector?.trust || 0) < 0.25) return;
+      if (state.turnCount < 20) return;
+      const prf = state.perspectiveReframe || { lastReframeScene: 0 };
+      if (state.turnCount - prf.lastReframeScene < 10) return;
+      if (Math.random() > 0.18) return;
+
+      const chosen = REFRAME_TYPES[Math.floor(Math.random() * REFRAME_TYPES.length)];
+      state._activeReframe = chosen;
+      state.volatilityLock = true;
+      console.log(`[PRF] Reframe: ${chosen} at scene ${state.turnCount}`);
+  }
+
+  function buildPerspectiveReframeDirective() {
+      if (!state._activeReframe) return '';
+      if (!_canActivateDirective()) { state._activeReframe = null; return ''; }
+      // DLB desync fix: update cooldown only when emitted
+      const prf = state.perspectiveReframe || { lastReframeScene: 0 };
+      prf.lastReframeScene = state.turnCount;
+      state.perspectiveReframe = prf;
+      const reframe = state._activeReframe;
+      state._activeReframe = null;
+
+      const hints = {
+          misread_kindness: 'kindness briefly interpreted as distance or manipulation',
+          hidden_vulnerability: 'restraint interpreted as vulnerability rather than coldness',
+          protective_distance: 'hesitation interpreted as care rather than rejection',
+          uncertain_intention: 'confidence interpreted as uncertainty or bravado'
+      };
+
+      return `\n\nPERSPECTIVE REFRAMING MOMENT: A character briefly reinterprets the meaning of another's behavior. The action itself does not change, but its emotional meaning shifts. Suggested lens: ${hints[reframe] || 'a familiar gesture carries unexpected meaning'}. Do not introduce new plot events. Only shift the emotional interpretation.`;
+  }
+
+  /**
+   * Theme Resonance System (TRS) — detects emergent themes in early scenes.
+   * Themes remain fixed once detected. Biases descriptive framing only.
+   */
+  const THEME_CLUSTERS = {
+      trust: { words: /\b(trust|promise|doubt|loyalty|betray|faith|honest|reliable)\b/gi, label: 'trust vs betrayal' },
+      freedom: { words: /\b(escape|open|sky|road|horizon|free|cage|trapped|flee|wings)\b/gi, label: 'freedom vs confinement' },
+      control: { words: /\b(command|rule|discipline|restraint|power|obey|submit|resist|authority)\b/gi, label: 'control vs surrender' },
+      secrecy: { words: /\b(secret|hidden|silence|whisper|concealed|mask|reveal|truth|lie)\b/gi, label: 'secrecy vs truth' },
+      fate: { words: /\b(destiny|fate|chance|path|chosen|coincidence|inevitable|meant to)\b/gi, label: 'fate vs choice' },
+      belonging: { words: /\b(home|belong|exile|stranger|outsider|family|roots|wander|alone)\b/gi, label: 'belonging vs exile' }
+  };
+
+  function _detectThemes(sceneText) {
+      if (state.themeResonance?.primary) return; // already detected — skip all work
+      if (state.turnCount > 8) return;
+      const tr = state.themeResonance || { primary: null, secondary: null, detectedScene: 0 };
+
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+      if (plain.length < 100) return;
+
+      const scores = [];
+      for (const [key, cluster] of Object.entries(THEME_CLUSTERS)) {
+          const hits = (plain.match(cluster.words) || []).length;
+          if (hits >= 2) scores.push({ key, label: cluster.label, hits });
+      }
+
+      if (scores.length === 0) return;
+      scores.sort((a, b) => b.hits - a.hits);
+
+      tr.primary = scores[0].label;
+      tr.secondary = scores.length > 1 ? scores[1].label : null;
+      tr.detectedScene = state.turnCount;
+      state.themeResonance = tr;
+      console.log(`[THEME] Detected: ${tr.primary}${tr.secondary ? ', ' + tr.secondary : ''} (scene ${state.turnCount})`);
+  }
+
+  function buildThemeResonanceDirective() {
+      const tr = state.themeResonance;
+      if (!tr || !tr.primary) return '';
+
+      let lines = `\n\nTHEME RESONANCE:\nPrimary: ${tr.primary}`;
+      if (tr.secondary) lines += `\nSecondary: ${tr.secondary}`;
+      lines += `\nAllow subtle echoes of these themes through imagery, dialogue, and emotional framing. Do not force explicit statements. Themes should emerge naturally.`;
+      return lines;
+  }
+
+  /**
+   * Narrative Signature Drift (NSD) — per-story stylistic lens, fixed at story start.
+   * Biases scene framing only. Does not change plot, vectors, or progression.
+   */
+  const SIGNATURE_LENSES = {
+      internal_reflection: 'Favor subtle internal perception, emotional interpretation, and introspective moments when conveying character reactions.',
+      physical_expression: 'Favor visible behavior, gestures, and physical reactions to convey emotion rather than internal narration.',
+      environmental_attention: 'Favor atmosphere, setting details, and spatial dynamics that mirror emotional states.'
+  };
+
+  function buildNarrativeSignatureDirective() {
+      const sig = state.narrativeSignature?.style;
+      if (!sig || !SIGNATURE_LENSES[sig]) return '';
+      return `\n\nNARRATIVE LENS: ${SIGNATURE_LENSES[sig]} This is a stylistic preference, not a rule. Allow natural variation.`;
+  }
+
+  /**
+   * Emotional Foreshadowing System (EFS) — hints at upcoming emotional vector shifts.
+   * Fires scene ≥ 6, every 4+ scenes, 30% probability. Descriptive framing only.
+   */
+  const FORESHADOW_HINTS = {
+      attraction: 'A subtle moment suggests the characters are becoming more aware of their pull toward one another.',
+      jealousy: 'A brief moment hints at the possibility of possessiveness or unspoken jealousy.',
+      trust: 'A small interaction suggests growing emotional trust.',
+      fear_of_abandonment: 'A fleeting moment suggests the possibility of loss or distance.',
+      resentment: 'A trace of unresolved tension surfaces in a glance or gesture.',
+      curiosity: 'Something about the other person sparks renewed intrigue.'
+  };
+
+  function _checkEmotionalForeshadow() {
+      if (state.turnCount < 6) return;
+      const ef = state.emotionalForeshadow || { lastHintScene: 0 };
+      if (state.turnCount - ef.lastHintScene < 4) return;
+      if (Math.random() > 0.30) return;
+
+      const rv = state.relationshipVector;
+      if (!rv) return;
+
+      // Find the strongest rising dimension (highest value still below 0.85)
+      const candidates = Object.entries(rv)
+          .filter(([, v]) => v >= 0.15 && v < 0.85)
+          .sort((a, b) => b[1] - a[1]);
+      if (candidates.length === 0) return;
+
+      const target = candidates[0][0];
+      ef.lastHintScene = state.turnCount;
+      state.emotionalForeshadow = ef;
+      state._activeForeshadow = target;
+      console.log(`[EFS] Foreshadow: ${target} at scene ${state.turnCount}`);
+  }
+
+  function buildEmotionalForeshadowDirective() {
+      if (!state._activeForeshadow) return '';
+      const target = state._activeForeshadow;
+      state._activeForeshadow = null;
+      const hint = FORESHADOW_HINTS[target] || '';
+      if (!hint) return '';
+      return `\n\nEMOTIONAL FORESHADOWING: ${hint} This should be extremely subtle — a single image, gesture, or internal flicker. Do not create events or force outcomes. Plant anticipation only.`;
+  }
+
+  /**
+   * Emotional Momentum Tracking (EMT) — detects emotional stagnation and nudges movement.
+   * Tracks total vector delta per scene. After 3+ stagnant scenes, injects momentum directive.
+   */
+  function _updateEmotionalMomentum(prevVector, postVector) {
+      const em = state.emotionalMomentum || { trend: 'neutral', stagnantScenes: 0 };
+      const dims = ['attraction', 'trust', 'jealousy', 'resentment', 'curiosity', 'fear_of_abandonment'];
+      let totalDelta = 0;
+      for (const d of dims) {
+          totalDelta += Math.abs((postVector[d] || 0) - (prevVector[d] || 0));
+      }
+
+      if (totalDelta < 0.06) {
+          em.stagnantScenes++;
+      } else {
+          em.stagnantScenes = 0;
+      }
+
+      if (em.stagnantScenes >= 3) {
+          em.trend = 'stagnant';
+      } else if ((postVector.attraction || 0) > (prevVector.attraction || 0) && (postVector.trust || 0) > (prevVector.trust || 0)) {
+          em.trend = 'accelerating';
+      } else {
+          em.trend = 'neutral';
+      }
+
+      state.emotionalMomentum = em;
+
+      // Emotional Gradient instrumentation (debug only)
+      state.debug = state.debug || {};
+      state.debug.lastEmotionalGradient = totalDelta;
+      console.debug(`[EMG] Emotional gradient: ${totalDelta.toFixed(4)} | trend: ${em.trend}`);
+  }
+
+  function buildMomentumDirective() {
+      if (state._beatDiversityActive) return '';
+      if (state.emotionalMomentum?.trend !== 'stagnant') return '';
+      return `\n\nEMOTIONAL MOMENTUM: The emotional dynamic between the characters has been relatively static. Subtly introduce a moment that increases tension, vulnerability, or emotional movement. Do not force events. Allow a small shift in energy — a charged glance, an unexpected admission, or a change in proximity.`;
+  }
+
+  /**
+   * Perceived Consequence Memory (PCM) — tracks emotionally significant player choices
+   * and occasionally references them in later scenes.
+   */
+  const PCM_SIGNIFICANT_TYPES = new Set(['confession', 'temptation', 'boundary', 'silence']);
+  const PCM_BEAT_TYPES = new Set(['confession_attempt', 'shared_vulnerability', 'trust_test', 'jealousy_spike', 'emotional_withdrawal']);
+
+  function _captureChoiceMemory(choiceType) {
+      if (!choiceType) return;
+      if (!PCM_SIGNIFICANT_TYPES.has(choiceType) && !PCM_BEAT_TYPES.has(choiceType)) return;
+      const cm = state.choiceMemory || { memories: [] };
+      cm.memories.push({ type: choiceType, scene: state.turnCount });
+      if (cm.memories.length > 6) cm.memories.shift();
+      state.choiceMemory = cm;
+  }
+
+  function _checkChoiceMemory() {
+      if (state.turnCount < 8) return;
+      const cm = state.choiceMemory;
+      if (!cm || cm.memories.length === 0) return;
+      if (Math.random() > 0.20) return;
+
+      // Select a random memory older than 4 scenes
+      const eligible = cm.memories.filter(m => state.turnCount - m.scene >= 4);
+      if (eligible.length === 0) return;
+
+      const pick = eligible[Math.floor(Math.random() * eligible.length)];
+      state._activeChoiceMemory = pick;
+      console.log(`[PCM] Callback: ${pick.type} from scene ${pick.scene}`);
+  }
+
+  function buildChoiceMemoryDirective() {
+      if (!state._activeChoiceMemory) return '';
+      const mem = state._activeChoiceMemory;
+      state._activeChoiceMemory = null;
+
+      const echoes = {
+          confession: 'a moment of honesty that still lingers',
+          temptation: 'a reckless impulse that changed the air between them',
+          boundary: 'a moment of restraint that shaped what came after',
+          silence: 'a silence that spoke louder than words',
+          confession_attempt: 'a near-confession that was never completed',
+          shared_vulnerability: 'a moment of raw emotional exposure',
+          trust_test: 'a challenge that tested fragile trust',
+          jealousy_spike: 'a flash of possessiveness that surprised them both',
+          emotional_withdrawal: 'a moment of pulling away that left an echo'
+      };
+
+      const echo = echoes[mem.type] || 'an earlier emotional turning point';
+      return `\n\nCHOICE MEMORY: A character briefly recalls or reacts to ${echo} (from an earlier scene). This should be a fleeting reference — a glance, a half-sentence, a body memory. Do not recreate the earlier scene. Only let the emotional residue surface naturally.`;
+  }
+
+  /**
+   * Dialogue Intent Drift (DID) — occasional response misalignment for conversational realism.
+   * Fires roughly every 2-4 scenes after scene 3. Tone-only, never overrides narrative logic.
+   */
+  const DIALOGUE_DRIFT_TYPES = ['deflection', 'dry_humor', 'question_redirect', 'emotional_mask'];
+
+  const DIALOGUE_DRIFT_HINTS = {
+      deflection: 'A character avoids the emotional core of a statement — a confession becomes a topic shift.',
+      dry_humor: 'Serious emotion is answered with subtle humor.',
+      question_redirect: 'Instead of responding emotionally, a character asks a question.',
+      emotional_mask: 'A character hides their true feeling behind a neutral statement.'
+  };
+
+  function _checkDialogueDrift() {
+      if (state.turnCount < 3) return;
+      const dd = state.dialogueDrift || { lastDriftScene: 0 };
+      if (state.turnCount - dd.lastDriftScene < 2) return;
+      if (Math.random() > 0.22) return;
+
+      const chosen = DIALOGUE_DRIFT_TYPES[Math.floor(Math.random() * DIALOGUE_DRIFT_TYPES.length)];
+      dd.lastDriftScene = state.turnCount;
+      state.dialogueDrift = dd;
+      state._activeDialogueDrift = chosen;
+      console.log(`[DID] Drift: ${chosen} at scene ${state.turnCount}`);
+  }
+
+  function buildDialogueDriftDirective() {
+      if (!state._activeDialogueDrift) return '';
+      if (!_canActivateDirective()) { state._activeDialogueDrift = null; return ''; }
+      const drift = state._activeDialogueDrift;
+      state._activeDialogueDrift = null;
+
+      const hint = DIALOGUE_DRIFT_HINTS[drift] || '';
+
+      return `\n\nDIALOGUE INTENT DRIFT: Allow one conversational response to slightly diverge from the expected emotional reply. ${hint} The response should still relate to the conversation but not mirror the previous emotional cue perfectly.`;
+  }
+
+  /**
+   * Romance Progression Model (RPM) — infers current romance stage from existing systems.
+   * Deterministic, synchronous, tone-only influence. Never overrides ST/consent/intimacy gates.
+   */
+  const RPM_STAGES = ['curiosity', 'attraction', 'tension', 'vulnerability', 'intimacy', 'false_summit', 'commitment_conflict', 'resolution'];
+
+  const RPM_INTERPRETATIONS = {
+      curiosity: 'Focus on intrigue, observation, and emotional distance.',
+      attraction: 'Increase awareness of proximity and body language.',
+      tension: 'Sustain unresolved attraction and emotional friction.',
+      vulnerability: 'Encourage confessions, shared past, and emotional exposure.',
+      intimacy: 'Allow lingering touch, trust tests, and emotional closeness.',
+      false_summit: 'The relationship appears close to resolution but something subtle prevents emotional completion. Allow hesitation, redirection, or internal obstacle.',
+      commitment_conflict: 'Raise stakes of separation, fear of loss, and decisions.',
+      resolution: 'Shift tone toward emotional certainty and mutual choice.'
+  };
+
+  function _updateRomanceProgression() {
+      const rv = state.relationshipVector || {};
+      const rg = state.relationshipGravity || {};
+      const ms = state.relationshipMilestones || {};
+      const rp = state.romanceProgression || { stage: 'curiosity', lastUpdatedScene: 0 };
+      const currentIdx = RPM_STAGES.indexOf(rp.stage);
+
+      let inferred = 'curiosity';
+
+      // Evaluate stages from highest to lowest — first match wins
+      if (ms.commitment_spoken && (rv.trust || 0) >= 0.85 && (rv.attraction || 0) >= 0.85) {
+          inferred = 'resolution';
+      } else if (((rv.trust || 0) >= 0.70 && (rv.fear_of_abandonment || 0) >= 0.50) || ms.trust_broken) {
+          inferred = 'commitment_conflict';
+      } else if (!state.falseSummitTriggered && !ms.commitment_spoken && (rv.attraction || 0) >= 0.80 && (rv.trust || 0) >= 0.70 && state.turnCount >= 18 && Math.random() < 0.35) {
+          inferred = 'false_summit';
+          state.falseSummitTriggered = true;
+          console.log(`[RPM] False Summit triggered at scene ${state.turnCount}`);
+      } else if (((rv.attraction || 0) >= 0.75 && (rv.trust || 0) >= 0.65) || ms.first_intimacy) {
+          inferred = 'intimacy';
+      } else if (((rv.trust || 0) >= 0.55 && (rv.fear_of_abandonment || 0) >= 0.40) || ms.vulnerability_shared) {
+          inferred = 'vulnerability';
+      } else if ((rv.attraction || 0) >= 0.55 && (rv.trust || 0) >= 0.35 && (rv.trust || 0) <= 0.60 && rg.direction === 'orbit') {
+          inferred = 'tension';
+      } else if ((rv.attraction || 0) >= 0.35 && (rv.trust || 0) < 0.45) {
+          inferred = 'attraction';
+      }
+
+      const inferredIdx = RPM_STAGES.indexOf(inferred);
+
+      // Allow backward transitions only on trust drop, resentment spike, or trust_broken
+      if (inferredIdx < currentIdx) {
+          const trustDrop = (rv.trust || 0) < 0.30;
+          const resentmentSpike = (rv.resentment || 0) > 0.50;
+          if (!trustDrop && !resentmentSpike && !ms.trust_broken) {
+              return; // prevent oscillation — hold current stage
+          }
+      }
+
+      if (inferred !== rp.stage) {
+          rp.stage = inferred;
+          rp.lastUpdatedScene = state.turnCount;
+          state.romanceProgression = rp;
+          console.log(`[RPM] Stage: ${inferred} (scene ${state.turnCount})`);
+      }
+  }
+
+  function buildRomanceProgressionDirective() {
+      const rp = state.romanceProgression;
+      if (!rp || !rp.stage || rp.stage === 'curiosity') return '';
+
+      const interp = RPM_INTERPRETATIONS[rp.stage] || '';
+
+      let extra = '';
+      if (rp.stage === 'false_summit') {
+          extra = '\nFALSE SUMMIT: Allow a moment where characters approach confession, intimacy, or commitment, but hesitate or redirect. The obstacle should feel internal rather than external. Do not introduce major plot disruptions.';
+      }
+
+      return `\n\nROMANCE PROGRESSION: ${rp.stage}\n${interp}\nLet this stage bias scene tone and pacing, but do not force events or skip storyturn logic.${extra}`;
+  }
+
+  /**
+   * Proximity Tension (PT) — emphasizes physical nearness / near-contact moments.
+   * Fires when attraction ≥ 0.35, every 3+ scenes, 35% probability.
+   */
+  function _checkProximityTension() {
+      const rv = state.relationshipVector;
+      if (!rv || (rv.attraction || 0) < 0.35) return;
+      if ((rv.resentment || 0) > 0.5) return; // suppress during high hostility
+      if (state.turnCount < 3) return;
+      const pt = state.proximityTension || { lastEmphasisScene: 0 };
+      if (state.turnCount - pt.lastEmphasisScene < 3) return;
+      if (Math.random() > 0.35) return;
+
+      pt.lastEmphasisScene = state.turnCount;
+      state.proximityTension = pt;
+      state._activeProximityTension = true;
+      console.log(`[PROXIMITY] Tension emphasis at scene ${state.turnCount}`);
+  }
+
+  function buildProximityTensionDirective() {
+      if (!state._activeProximityTension) return '';
+      if (state.directiveQuieting?.stableScenes >= 3) { state._activeProximityTension = null; return ''; }
+      if (!_canActivateDirective()) { state._activeProximityTension = null; return ''; }
+      state._activeProximityTension = null; // consume after injection
+
+      const rp = state.romanceProgression?.stage || 'curiosity';
+      const hints = {
+          curiosity: 'physical distance is charged with awareness — proximity triggers heightened attention.',
+          attraction: 'near-contact moments carry electricity — a brush of shoulders, shared space, breath awareness.',
+          tension: 'physical closeness becomes a negotiation — who moves first, who holds still.',
+          vulnerability: 'touch carries emotional weight — even incidental contact communicates what words cannot.',
+          intimacy: 'physical nearness is layered with history — every touch resonates with shared vulnerability.',
+          false_summit: 'proximity is complicated — closeness invites both tenderness and hesitation.',
+          commitment_conflict: 'physical closeness amplifies the stakes — presence becomes urgency.',
+          resolution: 'nearness is natural — physical comfort reflects emotional certainty.'
+      };
+
+      return `\n\nPROXIMITY TENSION: Emphasize physical awareness between characters in this scene. ${hints[rp] || hints.tension} Include at least one moment of charged physical proximity (not necessarily touch). Use body language, spatial awareness, or sensory detail. Do not escalate beyond the current storyturn.`;
+  }
+
+  /**
+   * Arc Saturation Reset (ASR) — prevents late-game emotional stagnation.
+   * Fires when scene ≥ 35, both attraction and trust ≥ 0.85, 12+ scenes since last, 30% probability.
+   */
+  function _checkArcSaturation() {
+      if (state.volatilityLock) return;
+      if (state.turnCount < 35) return;
+      const rv = state.relationshipVector;
+      if (!rv || (rv.attraction || 0) < 0.85 || (rv.trust || 0) < 0.85) return;
+      const as = state.arcSaturation || { lastResetScene: 0 };
+      if (state.turnCount - as.lastResetScene < 12) return;
+      if (Math.random() > 0.30) return;
+
+      // Apply vector reset: reduce trust/attraction, boost curiosity
+      rv.trust = Math.max(0.50, rv.trust - 0.15);
+      rv.attraction = Math.max(0.55, rv.attraction - 0.12);
+      rv.curiosity = Math.min(1, (rv.curiosity || 0) + 0.10);
+      state.relationshipVector = rv;
+
+      state._activeArcSaturation = true;
+      state._pendingArcSaturationAs = as; // deferred cooldown update
+      state.volatilityLock = true;
+      console.log(`[ARC_SATURATION] Reset at scene ${state.turnCount} — trust: ${rv.trust.toFixed(2)}, attraction: ${rv.attraction.toFixed(2)}`);
+  }
+
+  function buildArcSaturationDirective() {
+      if (!state._activeArcSaturation) return '';
+      if (!_canActivateDirective()) { state._activeArcSaturation = null; state._pendingArcSaturationAs = null; return ''; }
+      // DLB desync fix: update cooldown only when emitted
+      if (state._pendingArcSaturationAs) {
+          state._pendingArcSaturationAs.lastResetScene = state.turnCount;
+          state.arcSaturation = state._pendingArcSaturationAs;
+          state._pendingArcSaturationAs = null;
+      }
+      state._activeArcSaturation = null; // consume after injection
+
+      return `\n\nARC RESET: The emotional landscape has plateaued — introduce a subtle destabilizing force. A buried doubt, an unspoken question, or a small revelation that reopens curiosity. Do not introduce external drama or plot twists. The reset should feel internal and character-driven, creating renewed emotional investigation.`;
+  }
+
+  /**
+   * Narrative Beat Tracking (NBT) — detects dramatic beat types and discourages repetition.
+   * Synchronous keyword heuristic, zero API cost. Max 5 recent beats.
+   */
+  const BEAT_SIGNALS = {
+      confession_attempt: /\b(admit(ted)?|confess(ed|ion)?|tell you something|need to say|truth is|honest with you|can.?t hide)\b/gi,
+      jealousy_spike: /\b(jealous(y)?|envious|who (is|was) (she|he)|watching.{0,15}(smile|laugh|touch)|another (wo)?man|rival|possessiv)\b/gi,
+      trust_test: /\b(trust me|prove|test(ed|ing)?|challenge[ds]?|doubt(ed)?|believe me|suspicious|why should I)\b/gi,
+      shared_vulnerability: /\b(scar[rs]?|wound|past|pain|afraid|never told|open(ed)? up|raw|broke[n]?\s*(inside|apart)|hurt.{0,10}(before|once))\b/gi,
+      unexpected_kindness: /\b(gentl[ey]|tender|kind(ness)?|offer(ed)?|unexpected|surprise[ds]?|soften(ed)?|despite.{0,15}(anger|rage|fury)|hand.{0,8}(out|forward))\b/gi,
+      power_shift: /\b(command(ed)?|control|dominat|surrender(ed)?|kneel|submit|authority|upper hand|relent(ed)?|yield(ed)?)\b/gi,
+      emotional_withdrawal: /\b(withdraw|pull(ed)?\s*(away|back)|distance|avoi(d|ded)|silence[ds]?|shut\s*(down|out)|cold|turn(ed)?\s*away|left the room|walked out)\b/gi
+  };
+
+  function _detectNarrativeBeat(sceneText) {
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+      if (plain.length < 80) return;
+
+      let best = null;
+      let bestCount = 0;
+
+      for (const [type, pattern] of Object.entries(BEAT_SIGNALS)) {
+          const hits = (plain.match(pattern) || []).length;
+          if (hits >= 2 && hits > bestCount) {
+              best = type;
+              bestCount = hits;
+          }
+      }
+
+      if (!best) return;
+
+      const beats = state.recentBeats || [];
+      beats.push({ type: best, scene: state.turnCount });
+      if (beats.length > 5) beats.shift();
+      state.recentBeats = beats;
+      console.log(`[NBT] Beat: ${best} at scene ${state.turnCount}`);
+  }
+
+  function buildBeatDiversityDirective() {
+      const beats = state.recentBeats;
+      if (!beats || beats.length < 2) return '';
+
+      const last = beats[beats.length - 1];
+      // Check if the most recent beat appeared within 3 scenes (even with intervening beats)
+      const lastOccurrence = beats.slice(0, -1).reverse().find(b => b.type === last.type);
+      if (!lastOccurrence || last.scene - lastOccurrence.scene >= 3) return '';
+      if (state.directiveQuieting?.stableScenes >= 3) return '';
+      if (!_canActivateDirective()) return '';
+
+      state._beatDiversityActive = true;
+      const label = last.type.replace(/_/g, ' ');
+      return `\n\nBEAT DIVERSITY: Recent scenes used the beat: ${label}. Avoid repeating this same dramatic move immediately. Allow the scene to develop a different emotional dynamic. Possible alternatives: vulnerability instead of confrontation, humor instead of tension, curiosity instead of confession. This is a soft guideline, not a rule.`;
+  }
+
+  /**
+   * Cadence Shaping (CS) — encourages prose rhythm variation.
+   * 60% activation probability per scene (scene ≥ 1). Stylistic only.
+   */
+  function buildCadenceDirective() {
+      if (state.turnCount < 1) return '';
+      if (state.directiveQuieting?.stableScenes >= 3) return '';
+      if (Math.random() > 0.60) return '';
+      if (!_canActivateDirective()) return '';
+
+      return `\n\nPROSE CADENCE: Vary sentence rhythm and paragraph structure. Occasionally use a very short sentence for emphasis. Follow short sentences with a longer reflective sentence. Allow paragraph breaks around emotional beats. Avoid repeating identical sentence length patterns. Maintain natural narrative voice. Do not change story events. Focus only on rhythm and pacing of prose.`;
+  }
+
+  /**
+   * Directive Load Balancing (DLB) — limits optional directives to maxPerScene.
+   * Core systems (memory, vector, gravity, RPM) are NOT gated.
+   */
+  function _canActivateDirective() {
+      const dl = state.directiveLoad;
+      if (!dl) return true;
+      if (dl.activeCount >= dl.maxPerScene) return false;
+      dl.activeCount++;
+      return true;
   }
 
   /**
@@ -14876,6 +16688,75 @@ Return ONLY numbered beats. No prose. No dialogue.` }
           return result.trim();
       }
       return null;
+  }
+
+  /**
+   * Scene Skeleton Cache — reusable narrative structure across 3-5 scenes.
+   * Generated via beat planner API; reused until invalidated by phase/storyturn/location change.
+   */
+  function _isSkeletonValid() {
+      if (state.volatility_window?.active) return false; // Tempt Fate volatility forces fresh skeleton
+      if (!state.sceneSkeleton || !state._skeletonMeta) return false;
+      const meta = state._skeletonMeta;
+      const scenesSince = state.turnCount - meta.generatedAt;
+      if (scenesSince >= 5) return false;
+      if (state.relationship_phase !== meta.relationship_phase) return false;
+      if ((state.narrativeState?.storyturn_state || state.storyturn || '') !== meta.storyturn) return false;
+      const currentLoc = state.physicalState?.location || '';
+      if (currentLoc && meta.location && currentLoc !== meta.location) return false;
+      return true;
+  }
+
+  async function _generateSceneSkeleton(act, dia) {
+      if (!window.StoryboundOrchestration?.callChatGPT) return null;
+
+      const ns = state.narrativeState || {};
+      const ni = state.narrativeIntent || {};
+      const rt = state.relationshipTension || {};
+
+      const result = await window.StoryboundOrchestration.callChatGPT([
+          { role: 'system', content: 'You define narrative skeletons for fiction scenes. Return ONLY a JSON object with keys: structural_pacing, narrative_density, dialogue_ratio, beat_style, tension_rhythm. Each value is a short phrase (3-8 words). No prose.' },
+          { role: 'user', content: `Define a narrative skeleton for the next 3-5 scenes:
+Relationship: ${ns.relationship_state || 'developing'} | Phase: ${state.relationship_phase || 'strangers'}
+Tension: ${ni.active_tension || 'building'} | Trust: ${rt.trust || 'unknown'}
+ST: ${ns.storyturn_state || state.storyturn || 'ST1'}
+Location: ${state.physicalState?.location || 'unknown'}
+Player intent: ${act} / ${dia}
+
+Return ONLY valid JSON. No markdown. No explanation.` }
+      ], { max_tokens: 150, temperature: 0.4 });
+
+      if (!result || typeof result !== 'string') return null;
+      try {
+          const cleaned = result.replace(/```json?\s*/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(cleaned);
+          if (parsed.structural_pacing || parsed.beat_style) {
+              state.sceneSkeleton = {
+                  structural_pacing: parsed.structural_pacing || 'measured escalation',
+                  narrative_density: parsed.narrative_density || 'moderate',
+                  dialogue_ratio: parsed.dialogue_ratio || 'balanced',
+                  beat_style: parsed.beat_style || 'observation then interaction',
+                  tension_rhythm: parsed.tension_rhythm || 'rising with pauses'
+              };
+              state._skeletonMeta = {
+                  generatedAt: state.turnCount,
+                  relationship_phase: state.relationship_phase || 'strangers',
+                  storyturn: ns.storyturn_state || state.storyturn || '',
+                  location: state.physicalState?.location || ''
+              };
+              console.log('[SKELETON] Generated for scene', state.turnCount, state.sceneSkeleton);
+              return state.sceneSkeleton;
+          }
+      } catch (_) {
+          console.warn('[SKELETON] Parse failed, skipping');
+      }
+      return null;
+  }
+
+  function buildSkeletonDirective() {
+      if (!state.sceneSkeleton) return '';
+      const sk = state.sceneSkeleton;
+      return `\n\nNarrative skeleton for this scene:\n• pacing: ${sk.structural_pacing}\n• dialogue ratio: ${sk.dialogue_ratio}\n• emotional density: ${sk.narrative_density}\n• beat rhythm: ${sk.beat_style}\n• tension rhythm: ${sk.tension_rhythm}\nPreserve this structural rhythm unless the scene requires deviation.\n`;
   }
 
   // ── LAYER 2 — EPOCH STATE RESET ──
@@ -17948,6 +19829,13 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.style.height = `${rect.height}px`;
       card.style.transform = `scale(${scale})`;
       card.style.transformOrigin = 'center center';
+      // Clear residual positioning so portal flexbox can center the card
+      card.style.position = '';
+      card.style.left = '';
+      card.style.top = '';
+      card.style.right = '';
+      card.style.bottom = '';
+      card.style.margin = '0';
 
       // Trigger speculative preload while user writes petition
       scheduleSpeculativePreload();
@@ -18276,6 +20164,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.style.transformOrigin = '';
       card.style.width = '';
       card.style.height = '';
+      card.style.position = '';
+      card.style.left = '';
+      card.style.top = '';
+      card.style.right = '';
+      card.style.bottom = '';
+      card.style.margin = '';
 
       // Restore card to original DOM position
       if (_petitionZoomOriginalParent) {
@@ -49873,6 +51767,11 @@ The scene must read as a single unified event, not two layered systems.\n`;
           }
       }
 
+      // DLB: reset directive load counter for this scene
+      if (state.directiveLoad) state.directiveLoad.activeCount = 0;
+      state.volatilityLock = false; // NSA: reset per-scene volatility lock
+      state._beatDiversityActive = false; // prevent EMT+BeatDiversity stacking
+
       const passTier = resolvePassTier();
       // Structured memory replaces raw context when populated (after scene 1)
       const hasStructuredMemory = !!state.narrativeState?.relationship_state;
@@ -49911,7 +51810,7 @@ Apply lightly and sparingly. Never mechanically. Do not reference these rules in
 • Use the story title once organically (not at the beginning).
 Prioritize natural variation over strict consistency if rules conflict.` : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${componentBlock}${buildCallbackEchoDirective()}${buildFateSeedDirective(selectedFateCard)}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
+      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildMilestoneDirective()}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -50034,17 +51933,29 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
               });
           } else {
               // Single-model flow (ChatGPT as primary author)
-              // Beat planner (single-model path only, skip for explicit embodiment scenes)
+              // Scene Skeleton Cache + Beat planner (single-model path only, skip for explicit embodiment scenes)
               let beatBlock = '';
+              let skeletonBlock = '';
               if (state.turnCount > 0 && !explicitEmbodimentAuthorized) {
                   try {
-                      const beats = await _runBeatPlanner(act, dia);
-                      if (beats) beatBlock = `\nBEAT PLAN (follow this pacing structure):\n${beats}\n`;
+                      // Skeleton: reuse if valid, otherwise generate fresh
+                      if (_isSkeletonValid()) {
+                          skeletonBlock = buildSkeletonDirective();
+                          console.log('[SKELETON] Reusing cached skeleton (scene', state.turnCount, ')');
+                      } else {
+                          await _generateSceneSkeleton(act, dia);
+                          skeletonBlock = buildSkeletonDirective();
+                      }
+                      // Beat planner: only when skeleton is freshly generated (not cached)
+                      if (!_isSkeletonValid() || state._skeletonMeta?.generatedAt === state.turnCount) {
+                          const beats = await _runBeatPlanner(act, dia);
+                          if (beats) beatBlock = `\nBEAT PLAN (follow this pacing structure):\n${beats}\n`;
+                      }
                   } catch (_) { /* silent fail */ }
               }
               const _tokenBoost = state._petitionTokenBoost || 0;
               raw = await callChat([
-                  {role:'system', content: fullSys + beatBlock},
+                  {role:'system', content: fullSys + skeletonBlock + beatBlock},
                   {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
               ], 0.7, _tokenBoost > 0 ? { max_tokens: 1000 + _tokenBoost } : {});
           }
@@ -50721,9 +52632,48 @@ ABSOLUTE RULES:
           // Literary Illusion Layer — update voice profile + motifs from scene output
           _updateLiteraryIllusion(raw);
 
+          // Continuity Auto-Repair — check scene text against physical state, repair if needed
+          if (state.physicalState && (state.physicalState.mc_position || state.physicalState.proximity)) {
+              const continuityCheck = _checkSceneContinuity(raw);
+              if (continuityCheck.needsRepair) {
+                  raw = await _regenWithContinuityFix(raw, fullSys, act, dia, continuityCheck.violations);
+              }
+          }
+
           // Structured Story Memory — update scene window, fate seeds, extract memory
           _updateSceneWindow(raw);
           _updateFateSeeds(raw);
+          _updateMotifLedger(raw);
+          { // DQS + EMT: track vector stability and momentum
+              const _rv = state.relationshipVector || {};
+              const _prevSnap = { attraction: _rv.attraction || 0, trust: _rv.trust || 0, resentment: _rv.resentment || 0, jealousy: _rv.jealousy || 0, curiosity: _rv.curiosity || 0, fear_of_abandonment: _rv.fear_of_abandonment || 0 };
+              _updateRelationshipVector(raw);
+              const _postRv = state.relationshipVector || {};
+              const dq = state.directiveQuieting || { stableScenes: 0 };
+              if (Math.abs((_postRv.attraction || 0) - _prevSnap.attraction) < 0.03 && Math.abs((_postRv.trust || 0) - _prevSnap.trust) < 0.03 && Math.abs((_postRv.resentment || 0) - _prevSnap.resentment) < 0.03) {
+                  dq.stableScenes++;
+              } else {
+                  dq.stableScenes = 0;
+              }
+              state.directiveQuieting = dq;
+              _updateEmotionalMomentum(_prevSnap, _postRv);
+          }
+          _updateNarrativeGravity(raw);
+          _updateRelationshipGravity(raw);
+          _checkReversalTrigger();
+          _checkRelationshipMilestones();
+          _updateRomanceProgression();
+          _checkProximityTension();
+          _checkArcSaturation();
+          _checkEntropyPulse();
+          _checkExpectationInversion();
+          _checkPerspectiveReframe();
+          _checkDialogueDrift();
+          _detectNarrativeBeat(raw);
+          _checkEmotionalForeshadow();
+          _checkChoiceMemory();
+          _captureChoiceMemory(state._lastPlayerChoiceType);
+          _detectThemes(raw);
           _extractStoryMemory(raw).catch(() => {}); // async fire-and-forget
 
           // Mark Solo session as completed for subtitle upgrade
@@ -51329,6 +53279,11 @@ FATE CARD ADAPTATION (CRITICAL):
               }
           }
 
+          // DLB: reset directive load counter for speculative scene
+          if (state.directiveLoad) state.directiveLoad.activeCount = 0;
+          state.volatilityLock = false; // NSA: reset per-scene volatility lock
+      state._beatDiversityActive = false; // prevent EMT+BeatDiversity stacking
+
           // 7. Build fullSys (EXACT same structure as real turn)
           const specPassTier = resolvePassTier();
           const specHasStructuredMemory = !!state.narrativeState?.relationship_state;
@@ -51350,7 +53305,7 @@ FATE CARD ADAPTATION (CRITICAL):
 - Motion: ${c.character_motion}\n`;
           }
 
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${specComponentBlock}${buildCallbackEchoDirective()}${buildFateSeedDirective(null)}
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${specComponentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, null)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(null)}${buildMilestoneDirective()}
 
 SPECULATIVE GENERATION CONSTRAINTS:
 - Do NOT advance storyturn state.
