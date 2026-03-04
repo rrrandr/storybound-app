@@ -94,20 +94,20 @@ body.booting .screen {
 /* ═══════════════════════════════════════════════════════════════════
    READER THEMES — Scoped to story content ONLY (does not affect UI)
    ═══════════════════════════════════════════════════════════════════ */
-#storyContent.theme-sepia { background: #f5e6c8; color: #3e2f22; }
-#storyContent.theme-sepia #storyText, #storyContent.theme-sepia .story-page { background: #f5e6c8; color: #3e2f22; }
-#storyContent.theme-midnight { background: #111; color: #ccc; }
-#storyContent.theme-midnight #storyText, #storyContent.theme-midnight .story-page { background: #111; color: #ccc; }
-#storyContent.theme-print { background: #f8f8f8; color: #111; }
-#storyContent.theme-print #storyText, #storyContent.theme-print .story-page { background: #f8f8f8; color: #111; }
-#storyContent.theme-easy { background: #fffdd0; color: #000; }
-#storyContent.theme-easy #storyText, #storyContent.theme-easy .story-page { background: #fffdd0; color: #000; }
+#storyContent.theme-sepia { --page-bg: #f5e6c8; --page-text: #3e2f22; --page-accent: #5a4030; background: var(--page-bg); color: var(--page-text); }
+#storyContent.theme-sepia #storyText, #storyContent.theme-sepia .story-page { background: var(--page-bg); color: var(--page-text); }
+#storyContent.theme-midnight { --page-bg: #111; --page-text: #ccc; --page-accent: #888; background: var(--page-bg); color: var(--page-text); }
+#storyContent.theme-midnight #storyText, #storyContent.theme-midnight .story-page { background: var(--page-bg); color: var(--page-text); }
+#storyContent.theme-print { --page-bg: #f8f8f8; --page-text: #111; --page-accent: #444; background: var(--page-bg); color: var(--page-text); }
+#storyContent.theme-print #storyText, #storyContent.theme-print .story-page { background: var(--page-bg); color: var(--page-text); }
+#storyContent.theme-easy { --page-bg: #fffee8; --page-text: #000; --page-accent: #333; background: var(--page-bg); color: var(--page-text); }
+#storyContent.theme-easy #storyText, #storyContent.theme-easy .story-page { background: var(--page-bg); color: var(--page-text); }
 
 /* LEGACY: body-level theme vars kept for reference but not applied — themes scope to #storyContent only */
 body.theme-sepia { --bg1:#2c2218; --bg2:#3e2f22; --pink:#d2b48c; --hot:#8b4513; --gold:#ffa500; --ink:#f5deb3; --panel:rgba(40,30,20,0.8); --btn-bg:#5c4033; --btn-txt:#f5deb3; }
 body.theme-midnight { --bg1:#000000; --bg2:#111111; --pink:#444; --hot:#666; --gold:#888; --ink:#ccc; --panel:rgba(20,20,20,0.9); --btn-bg:#333; --btn-txt:#aaa; }
 body.theme-print { --bg1:#e0e0e0; --bg2:#f0f0f0; --pink:#333; --hot:#000; --gold:#444; --ink:#111; --panel:rgba(255,255,255,0.95); --btn-bg:#ccc; --btn-txt:#000; }
-body.theme-easy { --bg1:#fffdd0; --bg2:#fff8c0; --pink:#333; --hot:#000; --gold:#555; --ink:#000; --panel:rgba(255,255,240,0.95); --btn-bg:#000; --btn-txt:#fff; }
+body.theme-easy { --bg1:#fffee8; --bg2:#fffce0; --pink:#333; --hot:#000; --gold:#555; --ink:#000; --panel:rgba(255,255,240,0.95); --btn-bg:#000; --btn-txt:#fff; }
 
 /* Print Fixes (legacy, no longer triggered) */
 body.theme-print .fate-card h3, body.theme-easy .fate-card h3 { color: #000 !important; text-shadow: none !important; font-weight: bold; }
@@ -2024,7 +2024,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
    Title Page — Book-jacket style (all stories)
    ═══════════════════════════════════════════════════════════════ */
 .sb-title-page-front {
-    background: #e8dcc8;
+    background: var(--page-bg, #e8dcc8);
     border-radius: 6px;
     min-height: 320px;
     display: flex;
@@ -2040,39 +2040,43 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 .sb-title-page-rule {
     width: 60%;
     height: 1px;
-    background: rgba(80, 60, 40, 0.35);
+    background: currentColor;
+    opacity: 0.25;
     margin: 0 auto 20px;
 }
 .sb-title-page-rule:first-child {
     margin-bottom: 16px;
 }
 .sb-title-page-title {
-    font-family: 'Lora', serif !important;
+    font-family: var(--font-story) !important;
     font-size: 1.6em;
     font-weight: 700;
-    color: #2a1f14 !important;
+    color: var(--page-text, #2a1f14) !important;
     text-shadow: none !important;
-    letter-spacing: 0.12em;
-    text-transform: capitalize;
+    letter-spacing: 0.22em;
+    font-variant: small-caps;
+    text-transform: lowercase;
     margin: 0 0 16px 0;
     line-height: 1.3;
 }
 .sb-title-page-subhead {
-    font-family: 'Lora', serif;
+    font-family: var(--font-story);
     font-size: 0.85em;
     font-style: italic;
     font-weight: 400;
-    color: #5a4632;
+    color: var(--page-text, #5a4632);
+    opacity: 0.75;
     letter-spacing: 0.06em;
     margin: -8px 0 16px 0;
     line-height: 1.4;
 }
 .sb-title-page-blurb {
-    font-family: 'Lora', serif;
+    font-family: var(--font-story);
     font-size: 0.92em;
     font-style: italic;
     font-weight: 400;
-    color: #3d2e1e;
+    color: var(--page-text, #3d2e1e);
+    opacity: 0.85;
     line-height: 1.65;
     text-align: center;
     margin: 0;
@@ -2368,7 +2372,7 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* Typography: Lora font, lower visual salience, no UI decoration             */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 .story-page-title {
-    font-family: 'Lora', serif !important;
+    font-family: inherit;
     font-size: 0.9em;
     font-weight: 400;
     color: var(--page-text, #1a1a1a) !important;
@@ -2376,8 +2380,9 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
     text-align: center;
     margin: 0 0 8px 0;
     padding: 0;
-    letter-spacing: 0.6em;
-    text-transform: capitalize;
+    letter-spacing: 0.22em;
+    font-variant: small-caps;
+    text-transform: lowercase;
     cursor: default;
     position: relative;
     /* No glow, no gradients, no UI decoration */
@@ -2412,14 +2417,14 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 }
 
 .story-page-scene {
-    font-family: 'Lora', serif;
+    font-family: inherit;
     font-size: 0.9em;
     font-weight: 400;
-    color: rgba(160, 160, 160, 0.7); /* Grey, lower salience */
+    color: var(--page-accent, rgba(160, 160, 160, 0.7));
     text-align: center;
     margin: 0 0 20px 0;
     padding: 0;
-    letter-spacing: 0.6em;
+    letter-spacing: 0.22em;
     font-variant: small-caps;
     text-transform: none;
     /* No glow, no gradients, no UI decoration */
@@ -2427,10 +2432,11 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 
 /* Synopsis inherits printed-book typography */
 #storyText .scene-synopsis {
-    font-family: 'Lora', serif;
+    font-family: inherit;
     font-style: italic;
     font-size: 0.95em;
-    color: rgba(245, 240, 230, 0.6);
+    color: var(--page-text, #1a1a1a);
+    opacity: 0.7;
     text-align: center;
     margin: 0 20px 20px;
     line-height: 1.5;
@@ -5962,26 +5968,10 @@ select {
 .petition-proceed-btn {
   position: absolute;
   bottom: -30px; left: 50%; transform: translateX(-50%);
-  font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.08em;
-  font-size: 0.13em; padding: 3px 14px;
-  color: #000; background: rgba(218,165,32,0.25);
-  border: 1px solid rgba(0,0,0,0.4);
-  cursor: pointer; white-space: nowrap;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  font-size: 14px;
   z-index: 3;
   pointer-events: auto;
-}
-.petition-proceed-btn:hover {
-  border-color: rgba(0,0,0,0.7); background: rgba(218,165,32,0.35);
-  box-shadow: 0 0 8px rgba(218,165,32,0.3);
-}
-.petition-proceed-btn:disabled {
-  opacity: 0.35; cursor: default;
-  border-color: rgba(0,0,0,0.15);
-}
-.petition-proceed-btn:disabled:hover {
-  background: rgba(218,165,32,0.25); box-shadow: none;
-  border-color: rgba(0,0,0,0.15);
+  border: none; padding: 0;
 }
 
 /* ── Hide old fortune row if still present ── */
@@ -6091,27 +6081,11 @@ select {
 /* ── Tempt Fate Proceed button ── */
 .tempt-proceed-btn {
   position: absolute;
-  bottom: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Lora', serif;
-  font-variant: small-caps;
-  letter-spacing: 0.08em;
-  font-size: 0.13em;
-  padding: 3px 14px;
-  color: #fff;
-  background: rgba(120, 15, 15, 0.85);
-  border: 1px solid rgba(180, 30, 30, 0.6);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  bottom: -30px; left: 50%; transform: translateX(-50%);
+  font-size: 14px;
   z-index: 3;
   pointer-events: auto;
-}
-.tempt-proceed-btn:hover {
-  border-color: rgba(180, 30, 30, 0.9);
-  background: rgba(180, 30, 30, 0.35);
-  box-shadow: 0 0 8px rgba(180, 30, 30, 0.3);
+  border: none; padding: 0;
 }
 
 /* AUTH PANEL */
@@ -7439,40 +7413,28 @@ textarea.fate-field {
     border: 1px solid rgba(212, 175, 55, 0.4);
     position: relative;
 }
-/* Loading bar sparkles — JS-driven firefly animation (smooth curved paths) */
+/* Loading bar sparkles — gentle rising embers via CSS custom properties */
 .loading-sparkle {
     position: absolute;
     pointer-events: none;
     border-radius: 50%;
-    background: radial-gradient(
-        circle at center,
-        rgba(255, 230, 140, 0.95) 0%,
-        rgba(255, 215, 0, 0.6) 40%,
-        rgba(212, 175, 55, 0.3) 60%,
-        transparent 80%
-    );
-    box-shadow: 0 0 4px rgba(255, 215, 0, 0.7);
+    background: radial-gradient(circle, rgba(255,230,140,0.95) 0%, rgba(255,215,0,0.6) 40%, transparent 75%);
+    box-shadow: 0 0 4px rgba(255,215,0,0.7);
     opacity: 0;
     will-change: transform, opacity;
+    animation: sparkle-rise var(--dur) ease-in-out forwards;
+}
+.loading-sparkle.bright {
+    background: radial-gradient(circle, rgba(255,240,180,0.95) 0%, rgba(255,215,0,0.7) 35%, transparent 70%);
+    box-shadow: 0 0 6px rgba(255,215,0,0.8), 0 0 12px rgba(255,200,100,0.4);
 }
 
-/* Story/Visualize overlay loading bar sparkles — JS-driven firefly animation */
-.overlay-loading-sparkle {
-    position: absolute;
-    pointer-events: none;
-    border-radius: 50%;
-    background: radial-gradient(
-        circle at center,
-        rgba(255, 240, 180, 0.95) 0%,
-        rgba(255, 215, 0, 0.7) 35%,
-        rgba(212, 175, 55, 0.4) 55%,
-        transparent 75%
-    );
-    box-shadow:
-        0 0 6px rgba(255, 215, 0, 0.8),
-        0 0 12px rgba(255, 200, 100, 0.4);
-    opacity: 0;
-    will-change: transform, opacity;
+@keyframes sparkle-rise {
+    0%   { transform: translate(0, 0) scale(0.4); opacity: 0; }
+    15%  { opacity: var(--peak); }
+    50%  { transform: translate(var(--sx), calc(var(--dy) * 0.5)) scale(1); opacity: var(--peak); }
+    85%  { opacity: calc(var(--peak) * 0.5); }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
 }
 
 /* Glow pulse for story/vision loading bar */
@@ -8978,21 +8940,23 @@ textarea.fate-field {
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 .synopsis-page-active .story-page-title {
-    font-family: 'Lora', serif;
-    letter-spacing: 0.12em;
+    font-family: inherit;
+    letter-spacing: 0.22em;
+    font-variant: small-caps;
+    text-transform: lowercase;
     text-align: center;
     width: 100%;
     color: var(--page-text);
 }
 .synopsis-page-active .story-page-scene {
-    font-family: 'Lora', serif;
+    font-family: inherit;
     letter-spacing: 0.22em;
     color: var(--page-accent, #888);
     font-variant: small-caps;
     text-align: center;
 }
 .synopsis-page-active .scene-synopsis {
-    font-family: 'Lora', serif;
+    font-family: inherit;
     font-style: italic;
     font-size: 1em;
     line-height: 1.6;
@@ -10757,6 +10721,75 @@ textarea.fate-field {
     word-spacing: normal;
     line-height: 1.15;
     margin: 0;
+}
+
+/* Love Interest POV card: dynamic name on 3 lines */
+#povGrid .sb-card[data-val="LoveInterest"] .sb-card-back .sb-card-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    line-height: 1.1;
+    font-size: 15px;
+}
+#povGrid .sb-card[data-val="LoveInterest"] .sb-card-back .sb-card-title .li-pov-line {
+    display: block;
+    white-space: nowrap;
+}
+
+/* Love Interest POV — front face (flipped/revealed) */
+#povGrid .sb-card[data-val="LoveInterest"] .sb-card-front .sb-card-title {
+    font-family: 'lust-script-display', 'lust-script', serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    /* Realistic gold: warm highlight → deep shadow with specular band */
+    background: linear-gradient(
+        180deg,
+        #b8943d 0%,
+        #d4aa4f 12%,
+        #f5e5a3 28%,
+        #ffe8a0 35%,
+        #d4a844 50%,
+        #a07c30 65%,
+        #7a5c1e 78%,
+        #c9a84c 88%,
+        #f0d080 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.6)) drop-shadow(0 0 3px rgba(180,140,50,0.25));
+}
+
+#povGrid .sb-card[data-val="LoveInterest"] .sb-card-front .sb-card-desc {
+    position: absolute;
+    top: 50%;
+    left: 12%;
+    right: 12%;
+    transform: translateY(-50%);
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 7.5px;
+    line-height: 1.35;
+    text-align: center;
+    /* Match gold pressed look */
+    color: #c9a84c;
+    background: linear-gradient(
+        180deg,
+        #b8943d 0%,
+        #d4aa4f 15%,
+        #f5e5a3 30%,
+        #d4a844 55%,
+        #a07c30 70%,
+        #c9a84c 90%,
+        #f0d080 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
 }
 
 #povGrid .sb-card .sb-card-back .sb-card-desc {

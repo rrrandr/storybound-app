@@ -165,7 +165,7 @@
   function deselectDesignEl() {
     if (!selectedEl) return;
     // Restore dashed outline
-    selectedEl.style.outline = '1px dashed rgba(212,168,68,0.6)';
+    selectedEl.style.outline = '2px solid rgba(212,168,68,0.7)';
     selectedEl.style.outlineOffset = '2px';
     // Keep transition disabled to prevent snap-back after deselect
     selectedEl = null;
@@ -190,42 +190,50 @@
   function ensureTopLeft(el) {
     const cs = getComputedStyle(el);
     const parent = el.offsetParent || el.parentElement;
+    if (!parent) return;
+
+    // Use getBoundingClientRect relative to parent for reliable pixel positions
+    const parentRect = parent.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const scale = getAncestorScale(el);
 
     // Convert bottom → top
     if (cs.top === 'auto' && cs.bottom !== 'auto') {
-      const parentH = parent.clientHeight;
-      const top = parentH - el.offsetHeight - parseFloat(cs.bottom);
+      const top = (elRect.top - parentRect.top) / scale;
       forceStyle(el, 'top', px(top));
       forceStyle(el, 'bottom', 'auto');
     }
 
     // Convert right → left
     if (cs.left === 'auto' && cs.right !== 'auto') {
-      const parentW = parent.clientWidth;
-      const left = parentW - el.offsetWidth - parseFloat(cs.right);
+      const left = (elRect.left - parentRect.left) / scale;
       forceStyle(el, 'left', px(left));
       forceStyle(el, 'right', 'auto');
     }
 
     // If BOTH left and right are set (not auto), lock width and clear right
-    // so that changing left moves the element instead of stretching it
     if (cs.left !== 'auto' && cs.right !== 'auto') {
-      const w = el.offsetWidth;
-      forceStyle(el, 'width', px(w));
       forceStyle(el, 'right', 'auto');
-      recordMod(el, 'width', px(w));
       recordMod(el, 'right', 'auto');
     }
 
     // If BOTH top and bottom are set (not auto), lock height and clear bottom
     if (cs.top !== 'auto' && cs.bottom !== 'auto') {
-      const h = el.offsetHeight;
-      forceStyle(el, 'height', px(h));
       forceStyle(el, 'bottom', 'auto');
-      recordMod(el, 'height', px(h));
       recordMod(el, 'bottom', 'auto');
     }
 
+    // Ensure top/left have pixel values (not auto/percent)
+    const computedTop = parseFloat(getComputedStyle(el).top);
+    const computedLeft = parseFloat(getComputedStyle(el).left);
+    if (isNaN(computedTop)) {
+      const top = (elRect.top - parentRect.top) / scale;
+      forceStyle(el, 'top', px(top));
+    }
+    if (isNaN(computedLeft)) {
+      const left = (elRect.left - parentRect.left) / scale;
+      forceStyle(el, 'left', px(left));
+    }
   }
 
   // ── Badge (top-right indicator) ──────────────────────────────────────
@@ -405,10 +413,12 @@
   /** Block click events on design handles so the app's card handlers don't fire */
   function onClick(e) {
     if (!active) return;
-    const el = e.target.closest('.design-handle');
+    // Block clicks on handles, corners, and any card ancestor
+    const el = e.target.closest('.design-handle') || e.target.closest('.design-corner');
     if (el) {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
     }
   }
 
@@ -638,7 +648,7 @@
 
     el.classList.add('design-handle');
     el.style.cursor = 'move';
-    el.style.outline = '1px dashed rgba(212,168,68,0.6)';
+    el.style.outline = '2px solid rgba(212,168,68,0.7)';
     el.style.outlineOffset = '2px';
     // Ensure positioned for top/left to work
     const pos = el.style.position || getComputedStyle(el).position;
@@ -647,6 +657,25 @@
     }
     // Disable transitions so designer changes are instant
     forceStyle(el, 'transition', 'none');
+
+    // Add visible corner handles (4 corners)
+    const corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+    corners.forEach(pos => {
+      const corner = document.createElement('div');
+      corner.className = 'design-corner';
+      corner.dataset.corner = pos;
+      Object.assign(corner.style, {
+        position: 'absolute', width: '8px', height: '8px',
+        background: '#d4a844', border: '1px solid #1a1408',
+        zIndex: '100000', pointerEvents: 'none', boxSizing: 'border-box',
+      });
+      if (pos.includes('top')) corner.style.top = '-5px';
+      if (pos.includes('bottom')) corner.style.bottom = '-5px';
+      if (pos.includes('left')) corner.style.left = '-5px';
+      if (pos.includes('right')) corner.style.right = '-5px';
+      el.appendChild(corner);
+    });
+
     handles.push(el);
   }
 
@@ -684,6 +713,8 @@
       el.style.outline = '';
       el.style.outlineOffset = '';
       el.style.removeProperty('transition');
+      // Remove corner handles
+      el.querySelectorAll('.design-corner').forEach(c => c.remove());
     });
     handles.length = 0;
   }

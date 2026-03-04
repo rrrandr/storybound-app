@@ -2341,12 +2341,8 @@ Introduce the name naturally within the first few paragraphs — do not announce
       }
 
       function goToNextPage() {
-          // Synopsis page intercept: Next advances from synopsis to scene
-          if (typeof _readerPage !== 'undefined' && _readerPage === 1) {
-              showReaderPage(2);
-              return;
-          }
           // Page-curl intercept chain: Title → Frontispiece → Setting Plate → Scene text
+          // Must run BEFORE synopsis intercept so curl overlays dismiss properly
           if (typeof window.dismissTitlePage === 'function' && window._titlePageActive) {
               window.dismissTitlePage();
               return;
@@ -2357,6 +2353,17 @@ Introduce the name naturally within the first few paragraphs — do not announce
           }
           if (typeof window.dismissSettingPlate === 'function' && window._settingPlateActive) {
               window.dismissSettingPlate();
+              return;
+          }
+          // Synopsis page intercept: Next advances from synopsis to scene
+          // Fantasy: show Fatelands map frontispiece before Scene 1
+          if (typeof _readerPage !== 'undefined' && _readerPage === 1) {
+              if (state.picks?.world === 'Fantasy' && !state._fantasyMapInjected) {
+                  state._fantasyMapInjected = true;
+                  showFatelandsFrontispiece();
+                  return;
+              }
+              showReaderPage(2);
               return;
           }
           if (isAnimating || currentPageIndex >= pages.length - 1) return;
@@ -2561,7 +2568,7 @@ Introduce the name naturally within the first few paragraphs — do not announce
       if (p.tone) lines.push('Tone: ' + p.tone);
       if (p.pressure) lines.push('Pull: ' + p.pressure);
       if (p.pov) {
-          const povLabels = { first: '1st Person', third_limited: '3rd Limited', third_omni: '3rd Omniscient', author5th: '5th Person' };
+          const povLabels = { first: '1st Person', third_limited: '3rd Limited', third_omni: '3rd Omniscient', author5th: '5th Person', loveInterestPOV: 'Love Interest (1st Person)' };
           lines.push('POV: ' + (povLabels[p.pov] || p.pov));
       }
       if (p.dynamic) lines.push('Dynamic: ' + p.dynamic);
@@ -5851,6 +5858,105 @@ All sensation remains sensory-bound. No cognition. No attribution.`;
       }
 
       return contract;
+  }
+
+  // ============================================================
+  // LOVE INTEREST POV — CONTRACT + VALIDATOR
+  // Narrator = the Love Interest, first person. Player character = external "she/he/they".
+  // Player actions remain the primary causal agent. LI only narrates internal reactions.
+  // ============================================================
+
+  const LOVE_INTEREST_POV_CONTRACT = `
+═══════════════════════════════════════════════════════════════════════════════
+LOVE INTEREST POV CONTRACT (LOCKED — NON-NEGOTIABLE)
+═══════════════════════════════════════════════════════════════════════════════
+
+CORE DEFINITION:
+The Love Interest narrates the entire story in first person ("I", "me", "my").
+The player character is described externally using third-person pronouns ("she", "he", "they").
+
+NARRATOR IDENTITY:
+- "I" = the Love Interest. Always.
+- The player character is the object of desire, curiosity, fascination — observed from outside.
+- The Love Interest has full access to their own thoughts, feelings, memories, and reactions.
+- The Love Interest has NO access to the player character's internal thoughts.
+- The player character's emotions must be inferred from observable behavior (expression, gesture, voice, body language).
+
+PLAYER AGENCY RULE:
+- All scene-driving actions originate from the player character or world events.
+- The Love Interest REACTS, INTERPRETS, DESIRES, FEARS — but does NOT initiate plot-driving actions.
+- The Love Interest may take small responsive actions (stepping back, catching breath, looking away).
+- The Love Interest must NEVER override, redirect, or preempt player-character choices.
+
+CORRECT EXAMPLES:
+"She touched my arm. I tried not to react. Tried and failed."
+"I could tell she was nervous — the way her fingers tightened around the glass."
+"'You shouldn't do that,' I said. She smiled like she knew exactly what she was doing."
+"She stepped closer to me. My breath caught before I could stop it."
+
+INCORRECT — NARRATOR CONFUSION (player character using "I"):
+"I stepped closer to him." ← WRONG — "I" must always be the Love Interest
+"I reached for the door." ← WRONG if this is a player-character action
+
+INCORRECT — MIND-READING (LI accessing player thoughts):
+"She felt nervous about what I might say." ← WRONG — LI cannot know her internal state
+"She thought about kissing me." ← WRONG — LI cannot access her thoughts
+
+INCORRECT — LI SEIZING AGENCY:
+"I grabbed her hand and pulled her into the room." ← WRONG — LI reacts, doesn't drive
+"I decided we should leave." ← WRONG — LI doesn't control the scene
+
+DIALOGUE:
+- Dialogue tags must clearly identify the speaker.
+- The Love Interest speaks with "I said" / "I whispered" / "I murmured".
+- The player character speaks with "she said" / "he said" / "they said" or name-based tags.
+
+INTIMATE SCENES:
+- The Love Interest narrates their own physical sensations and emotional responses.
+- The player character's body and actions are described from the LI's external observation.
+- Maintain first-person LI perspective throughout — no narrator switching.
+`;
+
+  function buildLoveInterestPOVContract() {
+      if (window.state?.povMode !== 'loveInterestPOV') return '';
+      return LOVE_INTEREST_POV_CONTRACT;
+  }
+
+  function validateLoveInterestPOV(text) {
+      if (!text || typeof text !== 'string') return { valid: true, violations: [] };
+      const violations = [];
+
+      // Split into sentences for analysis
+      const sentences = text.replace(/[""]/g, '"').split(/(?<=[.!?])\s+/);
+
+      for (const sentence of sentences) {
+          // Skip dialogue (inside quotes)
+          if (/^["']/.test(sentence.trim())) continue;
+
+          // Check for player character narrating in first person
+          // Pattern: "I" + player-action verb at sentence start (outside dialogue)
+          if (/^I\s+(stepped|walked|reached|grabbed|pulled|pushed|opened|closed|decided|chose|took|went|ran|moved|entered|left|crossed)\b/i.test(sentence.trim())) {
+              // Could be LI action — only flag if it's a scene-driving action
+              // We flag STRONG driving verbs but allow reactive ones
+              if (/^I\s+(grabbed|pulled|pushed|decided|chose|led|dragged|forced|commanded|ordered|demanded)\b/i.test(sentence.trim())) {
+                  violations.push('LI_AGENCY_SEIZURE: "' + sentence.trim().slice(0, 60) + '..."');
+              }
+          }
+      }
+
+      // Check for mind-reading patterns (LI accessing player thoughts)
+      const mindReadPatterns = [
+          /\b(she|he|they)\s+(felt|thought|knew|believed|wondered|realized|remembered|imagined|hoped|feared)\b(?!\s+(?:that\s+)?I\b)/gi
+      ];
+      for (const pat of mindReadPatterns) {
+          const matches = text.match(pat);
+          if (matches && matches.length > 2) {
+              // Allow occasional inference; flag only excessive mind-reading
+              violations.push('MIND_READING: Excessive player-character internal access (' + matches.length + ' instances)');
+          }
+      }
+
+      return { valid: violations.length === 0, violations };
   }
 
   // EMOTIONAL STATE PERSISTENCE — world/flavor → memory profile resolver
@@ -15983,6 +16089,7 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       const pov = (window.state.picks?.pov || '').toLowerCase();
       const is5th = /fifth|5th|author/.test(pov) || window.state.povMode === 'author5th';
       const is4th = /fourth|4th/.test(pov) || window.state.povMode === 'environment4th';
+      const isLI  = /loveinterest|love.?interest/.test(pov) || window.state.povMode === 'loveInterestPOV';
       if(is5th){
           window.state.povMode = 'author5th';
           window.state.authorPresence = 'frequent';
@@ -15990,6 +16097,10 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       } else if(is4th){
           window.state.povMode = 'environment4th';
           window.state.authorPresence = 'environmental';
+          window.state.fateCardVoice = 'neutral';
+      } else if(isLI){
+          window.state.povMode = 'loveInterestPOV';
+          window.state.authorPresence = 'normal';
           window.state.fateCardVoice = 'neutral';
       } else {
           window.state.povMode = 'normal';
@@ -17503,7 +17614,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       // ── Create floating Proceed button (sibling of card in portal) ──
       const proceedBtn = document.createElement('button');
-      proceedBtn.className = 'petition-proceed-btn';
+      proceedBtn.className = 'petition-proceed-btn flow-continue-btn sb-btn-png sm';
       proceedBtn.textContent = 'Proceed';
       card.appendChild(proceedBtn);
 
@@ -17819,8 +17930,8 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       // Proceed button
       const proceedBtn = document.createElement('button');
-      proceedBtn.className = 'tempt-proceed-btn';
-      proceedBtn.textContent = 'Tempt Fate';
+      proceedBtn.className = 'tempt-proceed-btn flow-continue-btn sb-btn-png sm';
+      proceedBtn.textContent = 'Proceed';
       card.appendChild(proceedBtn);
 
       proceedBtn.addEventListener('click', async (e) => {
@@ -27105,6 +27216,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         if (typeof updateArchetypeSectionTitle === 'function') {
           updateArchetypeSectionTitle();
         }
+        updateLoveInterestPOVCardTitle();
       });
       partnerNameInput.addEventListener('blur', async () => {
         const raw = partnerNameInput.value.trim();
@@ -27124,6 +27236,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         if (typeof updateArchetypeSectionTitle === 'function') {
           updateArchetypeSectionTitle();
         }
+        updateLoveInterestPOVCardTitle();
       });
     }
 
@@ -27486,7 +27599,14 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         title: PRESSURE_DISPLAY[val] || val,
         subtitle: 'Story Pull'
       },
-      pov: { title: val, subtitle: 'Story POV' },
+      pov: {
+        title: val === 'LoveInterest'
+          ? (state.picks?.identity?.displayPartnerName && state.picks.identity.displayPartnerName !== 'Love Interest'
+              ? state.picks.identity.displayPartnerName + '\u2019s POV'
+              : 'Love Interest\u2019s POV')
+          : val,
+        subtitle: 'Story Point of View'
+      },
       dynamic: { title: DYNAMIC_DISPLAY[val] || val, subtitle: 'Story Polarity' },
       intensity: { title: val, subtitle: 'Intensity' },
       safety: { title: 'Safety', subtitle: null },
@@ -29341,6 +29461,13 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
                 document.querySelectorAll('#pressureGrid .sb-card[data-grp="pressure"]:not(.destiny-choice-card)').forEach(c => {
                     c.classList.remove('selected', 'flipped');
                 });
+            }
+        }
+
+        // POV MOUNT: Update Love Interest card title with LI name
+        if (stage === 'pov') {
+            if (typeof updateLoveInterestPOVCardTitle === 'function') {
+                updateLoveInterestPOVCardTitle();
             }
         }
 
@@ -33675,6 +33802,55 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       titleEl.textContent = getArchetypeSectionTitle(loveGender);
   }
 
+  // Update Love Interest POV card back title with LI's name
+  function updateLoveInterestPOVCardTitle() {
+      const card = document.querySelector('#povGrid .sb-card[data-val="LoveInterest"]');
+      if (!card) return;
+      const backTitle = card.querySelector('.sb-card-back .sb-card-title');
+      const frontTitle = card.querySelector('.sb-card-front .sb-card-title');
+
+      // Get the display name from state or live input
+      const displayName = state.picks?.identity?.displayPartnerName
+        || (document.getElementById('partnerNameInput')?.value?.trim()
+            ? (typeof deriveDisplayName === 'function'
+                ? deriveDisplayName(document.getElementById('partnerNameInput').value.trim())
+                : document.getElementById('partnerNameInput').value.trim())
+            : '');
+
+      if (!displayName || displayName === 'Love Interest') {
+          // Default: simple text
+          if (backTitle) backTitle.textContent = "Love Interest's POV";
+          if (frontTitle) frontTitle.textContent = 'Love Interest';
+          return;
+      }
+
+      // Front face: flat name text
+      if (frontTitle) frontTitle.textContent = displayName;
+
+      // Back face: 3 lines — First Name / Last Name's / POV
+      if (backTitle) {
+          const parts = displayName.split(/\s+/);
+          const firstName = parts[0];
+          const lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+
+          backTitle.textContent = '';
+          const line1 = document.createElement('span');
+          line1.className = 'li-pov-line';
+          line1.textContent = firstName;
+          backTitle.appendChild(line1);
+
+          const line2 = document.createElement('span');
+          line2.className = 'li-pov-line';
+          line2.textContent = lastName ? lastName + '\u2019s' : firstName + '\u2019s';
+          backTitle.appendChild(line2);
+
+          const line3 = document.createElement('span');
+          line3.className = 'li-pov-line';
+          line3.textContent = 'POV';
+          backTitle.appendChild(line3);
+      }
+  }
+
   function bindLoveInterestGenderWatcher() {
       const genderSelect = document.getElementById('loveInterestGender');
       const customInput = document.getElementById('customLoveInterest');
@@ -33937,86 +34113,38 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
    * @param {number} peak   — peak opacity
    * @param {number} steps  — keyframe count (more = smoother curve)
    */
-  function fireflyKeyframes(dx, dy, wobble, peak, steps) {
-      steps = steps || 14;
-      // Incommensurate frequencies → never-repeating, organic curves
-      const fX1 = 1.3 + Math.random() * 0.6;
-      const fX2 = 2.7 + Math.random() * 0.9;
-      const fY1 = 1.1 + Math.random() * 0.5;
-      const fY2 = 3.2 + Math.random() * 0.7;
-      const pX = Math.random() * Math.PI * 2;
-      const pY = Math.random() * Math.PI * 2;
-      // Firefly glow pulse: separate frequency so brightness varies independently of position
-      const glowF = 1.8 + Math.random() * 1.5;
-      const glowP = Math.random() * Math.PI * 2;
-
-      const kf = [];
-      for (let i = 0; i <= steps; i++) {
-          const t = i / steps;
-          // Linear drift toward destination
-          const bx = dx * t;
-          const by = dy * t;
-          // Smooth wander from overlapping sines
-          const wx = wobble * (Math.sin(t * Math.PI * fX1 + pX) * 0.6
-                             + Math.sin(t * Math.PI * fX2 + pX * 1.3) * 0.4);
-          const wy = wobble * 0.4 * (Math.sin(t * Math.PI * fY1 + pY) * 0.55
-                                    + Math.sin(t * Math.PI * fY2 + pY * 0.7) * 0.35);
-          // Envelope: fade in quickly, sustain, fade out slowly
-          const env = t < 0.12 ? t / 0.12 : t > 0.72 ? (1 - t) / 0.28 : 1;
-          // Glow pulse overlaid on envelope (±15% modulation)
-          const glow = 1 + 0.15 * Math.sin(t * Math.PI * glowF + glowP);
-          const scale = 0.35 + env * 0.65;
-          const opacity = Math.min(1, env * glow) * peak;
-
-          kf.push({
-              transform: `translate(${bx + wx}px, ${by + wy}px) scale(${scale})`,
-              opacity: opacity,
-              offset: t,
-          });
-      }
-      return kf;
-  }
-
-  function spawnOverlayLoadingSparkle(container) {
-      if (!container) return;
-      const containerWidth = container.offsetWidth;
-      if (containerWidth === 0) return;
-
+  /**
+   * Unified sparkle spawner — gentle rising embers with soft S-curve sway.
+   * @param {HTMLElement} container — positioned parent (loading bar)
+   * @param {boolean} bright — true for overlay (story/vision), false for cover bar
+   */
+  function spawnSparkle(container, bright) {
+      if (!container || !container.offsetWidth) return;
       const sparkle = document.createElement('div');
-      sparkle.className = 'overlay-loading-sparkle';
+      sparkle.className = 'loading-sparkle' + (bright ? ' bright' : '');
 
-      // Spawn along the bar
-      const spawnX = Math.random() * containerWidth;
-      const spawnY = (Math.random() - 0.5) * 14 - 4;
+      const W = container.offsetWidth;
+      const x = Math.random() * W;
+      const y = (Math.random() - 0.5) * 10;
 
-      // Gentle drift with upward bias
-      const angle = Math.random() * 360 * (Math.PI / 180);
-      const distance = 8 + Math.random() * 16;
-      const dx = Math.cos(angle) * distance;
-      const dy = Math.sin(angle) * distance * 0.5 - 5 - Math.random() * 8;
-
-      // Wobble amplitude for curved wandering
-      const wobble = 5 + Math.random() * 10;
-
-      const size = 2 + Math.random() * 3;
-      const duration = 3500 + Math.random() * 3000;
-      const peak = 0.5 + Math.random() * 0.35;
+      // Tight parameter ranges for visual cohesion
+      const dur   = 2800 + Math.random() * 800;            // 2.8–3.6s (±12%)
+      const dxDir = Math.random() < 0.5 ? -1 : 1;
+      const dx    = dxDir * (6 + Math.random() * 6);       // ±6–12px lateral
+      const dy    = -(14 + Math.random() * 8);              // -14 to -22px upward
+      const sx    = -dxDir * (2 + Math.random() * 3);       // gentle S-curve counter-sway
+      const peak  = bright ? 0.55 + Math.random() * 0.2    // 0.55–0.75
+                           : 0.35 + Math.random() * 0.2;   // 0.35–0.55
+      const size  = 2 + Math.random() * 2;                  // 2–4px
 
       sparkle.style.cssText = `
-          left: ${spawnX}px;
-          top: ${spawnY}px;
-          width: ${size}px;
-          height: ${size}px;
-          opacity: 0;
+          left:${x}px; top:${y}px;
+          width:${size}px; height:${size}px;
+          --dx:${dx}px; --dy:${dy}px; --sx:${sx}px;
+          --peak:${peak}; --dur:${dur}ms;
       `;
-
       container.appendChild(sparkle);
-
-      // Animate with smooth firefly keyframes instead of CSS zigzag
-      const kf = fireflyKeyframes(dx, dy, wobble, peak, 14);
-      sparkle.animate(kf, { duration, fill: 'forwards', easing: 'linear' });
-
-      setTimeout(() => { if (sparkle.parentNode) sparkle.remove(); }, duration + 100);
+      setTimeout(() => sparkle.remove(), dur + 50);
   }
 
   function startOverlayLoadingSparkles() {
@@ -34035,12 +34163,12 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Relaxed spawn rate for gentle density
       _overlaySparkleInterval = setInterval(() => {
-          spawnOverlayLoadingSparkle(loadingBar);
+          spawnSparkle(loadingBar, true);
       }, 350); // ~3 sparkles per second
 
       // Initial seeds — staggered for natural appearance
       for (let i = 0; i < 4; i++) {
-          setTimeout(() => spawnOverlayLoadingSparkle(loadingBar), i * 180);
+          setTimeout(() => spawnSparkle(loadingBar, true), i * 180);
       }
   }
 
@@ -34056,7 +34184,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       }
 
       // Fade out existing sparkles gracefully
-      document.querySelectorAll('.overlay-loading-sparkle').forEach(s => {
+      document.querySelectorAll('.loading-sparkle').forEach(s => {
           s.style.opacity = '0';
           s.style.transition = 'opacity 0.4s ease-out';
           setTimeout(() => s.remove(), 450);
@@ -37994,20 +38122,60 @@ ${prehistoricForbid}${modernForbid}
     - GOOD: "Fate felt a flicker of anticipation. This was unfolding faster than expected."
     - BAD: "Fate arranged for them to meet." (causation — FORBIDDEN)
     - Fate participates naturally as the story unfolds, not at prescribed intervals.
-    ` : ''}${state.povMode === 'environment4th' ? `
-    4TH PERSON (MATERIAL CONSCIOUSNESS) — NARRATOR IDENTITY:
-    - The narrator IS the physical environment: objects, surfaces, architecture, air, light, sound, fabric, stone, metal, weather.
-    - Objects possess observational cognition. They register, remember, anticipate (pattern-recognition only), prefer, resist, endure.
-    - Material consciousness leads the narration. Humans are observed entities within that field.
-    - The majority of narration (approximately 70%) should arise from object or environmental cognition.
-    - Limited human interior access (approximately 30%) is permitted to maintain emotional continuity, but must not dominate.
-    - Human emotion must often be inferred through physical evidence before direct access is granted.
-    - Objects may misinterpret human intent based on physical signals.
-    - Avoid defaulting to standard third-person limited narration.
-    - Avoid long abstract summarization of internal stakes; express stakes through material interaction when possible.
-    - Do not use collective "we."
-    - Do not use destiny language, inevitability framing, or structural awareness.
-    - Environmental cognition remains active during all scene types, including intimate scenes.
+    ` : ''}
+    ${state.povMode === 'environment4th' ? `
+═══════════════════════════════════════════════════════════════════════════════
+4TH PERSON (MATERIAL ENSEMBLE POV) — NARRATOR IDENTITY
+═══════════════════════════════════════════════════════════════════════════════
+
+- Objects, surfaces, architecture, air, light, fabric, stone, metal, and weather function as limited POV characters.
+- These material characters possess observational cognition derived ONLY from physical interaction (pressure, vibration, weight, heat, sound, repetition, pattern).
+- Material characters lead narration. Human characters are observed entities within their perceptual field.
+- Material cognition should dominate the scene (target ~60–70% of narrative weight).
+- Human interior access is permitted sparingly (~30–40%) and must not dominate paragraphs.
+- Abstract internal summarization should be minimized; material characters should interpret stakes through physical signals whenever possible.
+- Do not default to standard third-person limited narration.
+- Do not use collective "we."
+- Do not use destiny language, inevitability framing, or structural awareness.
+- Material characters remain active during all scene types, including intimate scenes.
+
+CORRECT (material-led):
+"The doorframe recognized the pause — she always hesitated there before lying."
+"The table disliked the way his palm struck it; the impact lacked conviction."
+"The pendant lay flat against her throat — it only did that when she meant to defy her family."
+"The tapestry remembered his weight from the last betrayal."
+
+INCORRECT (human-dominant):
+"She hesitated, afraid to lie."
+"He sounded uncertain."
+"She felt anxious about defying her family."
+"He planned another betrayal."
+    ` : ''}
+    ${state.povMode === 'loveInterestPOV' ? `
+═══════════════════════════════════════════════════════════════════════════════
+LOVE INTEREST POV — NARRATOR IDENTITY (AUTHORITATIVE)
+═══════════════════════════════════════════════════════════════════════════════
+
+- Narration is FIRST PERSON from the Love Interest's internal perspective.
+- "I" = the Love Interest. Always. No exceptions.
+- The player character is described using third-person pronouns ("she", "he", "they").
+- The Love Interest has full access to their own thoughts, feelings, and reactions.
+- The Love Interest has NO access to the player character's internal thoughts.
+- Player character emotions must be inferred from observable behavior only.
+- All scene-driving actions originate from the player character or world events.
+- The Love Interest REACTS, INTERPRETS, DESIRES — does NOT initiate plot-driving actions.
+- Dialogue tags must clearly identify the speaker.
+- Maintain Love Interest first-person perspective throughout — no narrator switching mid-scene.
+
+CORRECT:
+"She touched my arm. I tried not to react. Tried and failed."
+"I could tell she was nervous — the way her fingers tightened around the glass."
+"'You shouldn't do that,' I said. She smiled like she knew exactly what she was doing."
+
+INCORRECT:
+"I stepped closer to him." (player character using "I" — FORBIDDEN)
+"She thought about kissing me." (LI reading player's mind — FORBIDDEN)
+"I grabbed her hand and pulled her into the room." (LI seizing agency — FORBIDDEN)
     ` : ''}
     `;
     
@@ -38069,18 +38237,81 @@ ENVIRONMENT (4TH PERSON — MATERIAL CONSCIOUSNESS) — MANDATORY OPENER:
 - WRONG: "We held the heat of the afternoon in our tiles." ("We" is FORBIDDEN as narrator voice)
 - WRONG: "Fate had plans for them." (Fate is NEVER the narrator in 4th Person)
 - WRONG: "She knew this would change everything." (abstract cognition without physical anchor)
+` : state.povMode === 'loveInterestPOV' ? `
+LOVE INTEREST POV — MANDATORY OPENER:
+- The FIRST SENTENCE must be narrated in first person by the Love Interest.
+- "I" = the Love Interest. The player character is "she"/"he"/"they".
+- Open with the Love Interest's immediate perception or reaction — what they notice, feel, or remember.
+- The player character should appear early but described externally (observed, not inhabited).
+- CORRECT: "I noticed her the moment she walked in — something about the way she carried herself."
+- CORRECT: "The last thing I expected was to see her here. And yet."
+- WRONG: "I walked into the room nervously." (player character using LI's "I" — FORBIDDEN)
+- WRONG: "She felt drawn to the stranger." (omniscient leakage — FORBIDDEN)
 ` : '';
 
-    // OPENING SCENE VARIATION - avoid repetitive patterns
-    // UPDATED: Removed Social-first (market/tavern default), added world-seeding modes
+    // ── SCENE 1 STRUCTURAL VARIANCE ──────────────────────────────────
+    // Two-layer composition: macro skeleton reshapes scene architecture,
+    // micro opening mode shapes surface texture within that skeleton.
+
+    // Layer A — Macro Composition Skeleton (1-of-12)
+    const macroSkeletons = [
+        { tag: 'PUBLIC_EVENT',       directive: 'Scene is staged inside a public event (festival, trial, speech, spectacle, gathering). Characters are surrounded by social pressure and observation. Introduce the protagonist through their role in or reaction to the event.' },
+        { tag: 'PRIVATE_RITUAL',     directive: 'Scene opens on a private act (preparation, vow, solitary task, personal ritual). The protagonist is alone or nearly so. The world is revealed through the objects and habits of this private moment.' },
+        { tag: 'DOCUMENT_REPORT',    directive: 'Open with or around a diegetic document (memo, transcript fragment, dispatch, log, posted notice). The document creates situational context; the protagonist reacts to, delivers, or discovers it.' },
+        { tag: 'INTERROGATION',      directive: 'Someone is being asked something — formally or informally. A question structures the scene. Power flows through who asks, who answers, and who withholds.' },
+        { tag: 'WORK_IN_PROGRESS',   directive: 'The protagonist is mid-task (craft, labor, training, repair). Competence or frustration reveals character. The world emerges through tools, materials, and constraints of the work.' },
+        { tag: 'AFTERMATH',          directive: 'Something significant already happened. The scene opens in consequences — a departure, a broken thing, a shifted landscape. The protagonist navigates what remains.' },
+        { tag: 'ARRIVAL_DEPARTURE',  directive: 'A threshold is being crossed (gate, border, dock, doorway, transfer). Movement between spaces creates natural world-reveal and emotional transition.' },
+        { tag: 'SURVEILLANCE',       directive: 'The protagonist is being observed, monitored, or watched — or is the one watching. Awareness of being seen (or unseen) structures the tension.' },
+        { tag: 'MARKET_EXCHANGE',    directive: 'A transaction is underway (trade, negotiation, barter, social exchange, favor-debt). What is exchanged and how reveals power dynamics and world economics.' },
+        { tag: 'ENVIRONMENTAL_FORCE',directive: 'An environmental pressure dominates (weather, scarcity, system failure, seasonal shift). Characters act under constraint. The world asserts itself physically.' },
+        { tag: 'CONFRONTATION',      directive: 'Tension is already present — argument, physical proximity, territorial claim, or unresolved grievance. The scene opens hot. No warm-up.' },
+        { tag: 'SILENCE',            directive: 'The scene opens in absence, waiting, or suspended expectation. Stillness is the dominant texture. Something is conspicuously not happening, and the protagonist exists inside that pause.' }
+    ];
+    const selectedSkeleton = macroSkeletons[Math.floor(Math.random() * macroSkeletons.length)];
+
+    // Layer B — Micro Opening Mode (surface texture within skeleton)
     const openingModes = [
-        { mode: 'Motion-first', directive: 'Open mid-action: transit, pursuit, labor, ritual, or urgent movement. The protagonist is DOING something when we meet them. The action reveals the world.' },
-        { mode: 'System-first', directive: 'Open with a governing system, faction, or power structure making itself felt. A decree, a toll, a checkpoint, a ritual of compliance. The protagonist navigates or resists.' },
-        { mode: 'Aftermath-first', directive: 'Open in the wake of something significant. Consequences linger—a departure, a broken object, a changed landscape. Someone is already gone.' },
-        { mode: 'Disruption-first', directive: 'Open with instability. Something is already wrong, charged, or off-kilter. Tension from the first sentence. The ordinary has cracked.' },
-        { mode: 'Object-first', directive: 'Open with a world-specific object, material, or custom that does not exist on Earth. Do not explain it. Let it anchor the scene and reveal the world through use.' }
+        { mode: 'Motion-first', directive: 'First beat: mid-action. The protagonist is physically doing something when we meet them.' },
+        { mode: 'System-first', directive: 'First beat: a governing structure making itself felt — decree, toll, checkpoint, ritual of compliance.' },
+        { mode: 'Disruption-first', directive: 'First beat: instability. Something is already wrong, charged, or off-kilter from sentence one.' },
+        { mode: 'Object-first', directive: 'First beat: a world-specific object anchors the opening. No explanation. Meaning through use.' }
     ];
     const selectedOpening = openingModes[Math.floor(Math.random() * openingModes.length)];
+
+    // Part III — Tempo Band (weighted random scene length)
+    const tempoRoll = Math.random();
+    const tempoBand = tempoRoll < 0.20 ? { range: '400–500', label: 'LEAN' }
+                    : tempoRoll < 0.60 ? { range: '450–550', label: 'STANDARD' }
+                    :                    { range: '550–700', label: 'EXTENDED' };
+
+    // Part V — Environmental Dominance Tag (1-of-6, weighted)
+    // Anti-repetition: last used tag gets ~70% weight reduction
+    // Compatibility bias: preferred tags for selected skeleton get 2x weight
+    const _envTags = ['SOUND', 'LIGHT', 'STRUCTURE', 'CROWD/SOCIAL', 'TECHNOLOGY/SYSTEM', 'SCARCITY/RESOURCE'];
+    const _envCompatibility = {
+        SILENCE:             ['SOUND', 'LIGHT', 'STRUCTURE'],
+        PUBLIC_EVENT:        ['CROWD/SOCIAL', 'SOUND'],
+        SURVEILLANCE:        ['TECHNOLOGY/SYSTEM', 'STRUCTURE'],
+        MARKET_EXCHANGE:     ['CROWD/SOCIAL', 'SCARCITY/RESOURCE'],
+        ENVIRONMENTAL_FORCE: ['SCARCITY/RESOURCE', 'SOUND'],
+        ARRIVAL_DEPARTURE:   ['STRUCTURE', 'LIGHT']
+    };
+    const _envPreferred = _envCompatibility[selectedSkeleton.tag] || [];
+    const _envWeights = _envTags.map(tag => {
+        let w = 1;
+        if (_envPreferred.includes(tag)) w *= 2;
+        if (state._lastEnvDominanceTag === tag) w *= 0.3;
+        return w;
+    });
+    const _envTotal = _envWeights.reduce((a, b) => a + b, 0);
+    let _envRoll = Math.random() * _envTotal;
+    let selectedEnvDominance = _envTags[0];
+    for (let i = 0; i < _envTags.length; i++) {
+        _envRoll -= _envWeights[i];
+        if (_envRoll <= 0) { selectedEnvDominance = _envTags[i]; break; }
+    }
+    state._lastEnvDominanceTag = selectedEnvDominance;
 
     // POV CONTRACT INJECTION (locked, non-editable)
     const fifthPersonContract = build5thPersonContract();
@@ -38089,17 +38320,41 @@ ENVIRONMENT (4TH PERSON — MATERIAL CONSCIOUSNESS) — MANDATORY OPENER:
     // TONE ENFORCEMENT BLOCK (all tones)
     const toneEnforcementBlock = buildToneEnforcementBlock(state.picks?.tone);
 
-    const introPrompt = `${fifthPersonContract}${fourthPersonContract}${toneEnforcementBlock}Write the opening scene (500-600 words). This is the LONGEST scene in the story — take your time establishing world and character.
+    const introPrompt = `${fifthPersonContract}${fourthPersonContract}${toneEnforcementBlock}Write the opening scene (${tempoBand.range} words). Tempo: ${tempoBand.label}. Take your time establishing world and character.
 ${authorOpeningDirective}
-OPENING MODE: ${selectedOpening.mode}
+═══════════════════════════════════════════════════════
+SCENE COMPOSITION
+═══════════════════════════════════════════════════════
+MACRO SKELETON: ${selectedSkeleton.tag}
+${selectedSkeleton.directive}
+
+OPENING TEXTURE: ${selectedOpening.mode}
 ${selectedOpening.directive}
+
+ENVIRONMENTAL EMPHASIS: ${selectedEnvDominance}-dominant
+Descriptive weight should lean toward ${selectedEnvDominance.toLowerCase()} details. This is emphasis, not exclusion — other senses remain active.
+
+═══════════════════════════════════════════════════════
+SENTENCE-SHAPE VARIANCE (MANDATORY)
+═══════════════════════════════════════════════════════
+Do NOT open Scene 1 with atmospheric template structures such as:
+"The air...", "The room...", "The wind...", "The silence...", "There was...", "It was..."
+Articles ("The", "A") are allowed when attached to concrete action or object.
+- First paragraph must not contain more than one atmospheric declarative sentence in a row.
+- First 3 sentences must vary grammatically — do not repeat the same sentence structure.
+- At least one of the first 3 sentences must use: active verb construction, embedded clause, interruption pattern, or dialogue fragment.
+This is rhythm variation. Do NOT force gimmicks or reduce prose quality.
 
 ═══════════════════════════════════════════════════════
 WORLD-SEEDING (MANDATORY)
 ═══════════════════════════════════════════════════════
-The opening scene must feel rooted in its specific world. Every detail should reinforce the setting.
+World must be revealed through interaction, pressure, or consequence — NOT through declarative noun-drop exposition in the first paragraph.
 
-CORE REQUIREMENT:
+RULES:
+- Do NOT list institutions or regions in paragraph one.
+- World nouns must emerge via action, conflict, ritual, structure, or social pressure.
+- No expository geography blocks.
+
 Include AT LEAST 6 world-specific elements, drawn from AT LEAST 3 different categories below.
 Introduce them CASUALLY, WITHOUT explanation — they are ordinary facts of life to the characters.
 
@@ -38200,18 +38455,46 @@ BANNED verbs: watched, saw, observed, arranged, orchestrated, caused, steered, f
 Every Fate appearance must imply a plan in motion, a withheld intervention, or a miscalculation.`
 : state.povMode === 'environment4th' ?
 `4TH PERSON (MATERIAL ENSEMBLE POV) — NARRATOR IDENTITY:
-- Objects, surfaces, architecture, light, air, fabric, stone, metal, and weather are treated as limited characters within the scene.
+- Objects, surfaces, architecture, air, light, fabric, stone, metal, and weather function as limited POV characters.
 - These material characters possess observational cognition derived ONLY from physical interaction (pressure, vibration, weight, heat, sound, repetition, pattern).
-- They may remember patterns, form bias, misinterpret human intent, prefer certain behaviors, resent others.
-- They are not omniscient and do not know abstract truths beyond what physical evidence supports.
-- The majority of narration (approximately 60–70%) should arise from these material characters' perceptions and reactions.
-- Human characters are observed entities within this field.
-- Limited human interior access (approximately 30–40%) is permitted to maintain emotional continuity, but must not dominate.
-- Abstract summarization of internal stakes should be minimized; material characters should interpret stakes through physical signals.
+- Material characters lead narration. Human characters are observed entities within their perceptual field.
+- Material cognition should dominate the scene (target ~60–70% of narrative weight).
+- Human interior access is permitted sparingly (~30–40%) and must not dominate paragraphs.
+- Abstract internal summarization should be minimized; material characters should interpret stakes through physical signals whenever possible.
 - Do not default to standard third-person limited narration.
 - Do not use collective "we."
 - Do not use destiny language, inevitability framing, or structural awareness.
-- Material characters remain active during all scene types, including intimate scenes.`
+- Material characters remain active during all scene types, including intimate scenes.
+
+CORRECT (material-led):
+"The doorframe recognized the pause — she always hesitated there before lying."
+"The table disliked the way his palm struck it; the impact lacked conviction."
+"The pendant lay flat against her throat — it only did that when she meant to defy her family."
+"The tapestry remembered his weight from the last betrayal."
+
+INCORRECT (human-dominant):
+"She hesitated, afraid to lie."
+"He sounded uncertain."
+"She felt anxious about defying her family."
+"He planned another betrayal."`
+: state.povMode === 'loveInterestPOV' ?
+`LOVE INTEREST POV — NARRATOR IDENTITY:
+- "I" = the Love Interest. Always. The player character = "she"/"he"/"they".
+- The Love Interest narrates in first person. Full access to own thoughts and feelings.
+- NO access to the player character's internal thoughts — infer from behavior only.
+- All scene-driving actions originate from the player character or world events.
+- The Love Interest REACTS, INTERPRETS, DESIRES — does NOT drive the plot.
+- Dialogue tags must clearly identify the speaker.
+- Do NOT switch narrators mid-scene. No omniscient leakage.
+- Maintain Love Interest first-person throughout all scene types, including intimate scenes.
+
+CORRECT:
+"She touched my arm. I tried not to react. Tried and failed."
+"'You shouldn't do that,' I said."
+
+INCORRECT:
+"I stepped closer to him." (player character using "I" — FORBIDDEN)
+"She thought about kissing me." (mind-reading — FORBIDDEN)`
 : 'Use the selected POV consistently throughout.'}
 
 The opening must feel intentional, textured, and strange. Not archetypal. Not templated. Specific to THIS world.`;
@@ -38493,6 +38776,18 @@ Generate the title and synopsis now.` }
         }
 
         // ═══════════════════════════════════════════════════════════════════════
+        // LOVE INTEREST POV VALIDATION (Scene 1 — SOFT CHECK)
+        // ═══════════════════════════════════════════════════════════════════════
+        if (state.povMode === 'loveInterestPOV') {
+            const liCheck = validateLoveInterestPOV(text);
+            if (!liCheck.valid) {
+                console.warn('[LoveInterestPOV:Scene1] POV warnings (non-blocking):', liCheck.violations);
+            } else {
+                console.log('[LoveInterestPOV:Scene1] POV check passed');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
         // ADDITIVE FATE CONSEQUENCE STABILIZATION (no regeneration)
         // If Fate appears but has no detectable consequence, append corrective sentence
         // and flag next turn for consequence surfacing.
@@ -38684,6 +38979,10 @@ Regenerate the scene without any meta-awareness.`;
             if (state.povMode === 'environment4th') {
                 const s1Env = validate4thPersonPOV(text);
                 if (!s1Env.valid) s1FinalViolations.push(...s1Env.violations);
+            }
+            if (state.povMode === 'loveInterestPOV') {
+                const s1LI = validateLoveInterestPOV(text);
+                if (!s1LI.valid) s1FinalViolations.push(...s1LI.violations);
             }
             if (s1FinalViolations.length > 0) {
                 console.warn('[FinalChecklist:Scene1] Violations detected (non-blocking):', s1FinalViolations);
@@ -39572,49 +39871,6 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
   // ============================================================
   let _loadingSparkleInterval = null;
 
-  function spawnLoadingSparkle(container) {
-      if (!container) return;
-
-      const containerWidth = container.offsetWidth;
-      if (containerWidth === 0) return;
-
-      const sparkle = document.createElement('div');
-      sparkle.className = 'loading-sparkle';
-
-      // Random spawn position along and around the bar
-      const spawnX = Math.random() * containerWidth;
-      const spawnY = (Math.random() - 0.5) * 16 - 4;
-
-      // Gentle wandering with upward drift
-      const angle = (Math.random() * 360) * (Math.PI / 180);
-      const distance = 6 + Math.random() * 14;
-      const dx = Math.cos(angle) * distance;
-      const dy = Math.sin(angle) * distance * 0.5 - 4 - Math.random() * 6;
-
-      // Wobble amplitude for curved wandering
-      const wobble = 4 + Math.random() * 8;
-
-      const size = 2 + Math.random() * 3;
-      const duration = 4000 + Math.random() * 3000;
-      const peak = 0.4 + Math.random() * 0.35;
-
-      sparkle.style.cssText = `
-          left: ${spawnX}px;
-          top: ${spawnY}px;
-          width: ${size}px;
-          height: ${size}px;
-          opacity: 0;
-      `;
-
-      container.appendChild(sparkle);
-
-      // Animate with smooth firefly keyframes instead of CSS zigzag
-      const kf = fireflyKeyframes(dx, dy, wobble, peak, 14);
-      sparkle.animate(kf, { duration, fill: 'forwards', easing: 'linear' });
-
-      setTimeout(() => { if (sparkle.parentNode) sparkle.remove(); }, duration + 100);
-  }
-
   function startLoadingBarSparkles() {
       stopLoadingBarSparkles(); // Clear any existing
 
@@ -39629,12 +39885,12 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
 
       // Spawn sparkles at relaxed intervals for gentle density
       _loadingSparkleInterval = setInterval(() => {
-          spawnLoadingSparkle(progressBar);
+          spawnSparkle(progressBar, false);
       }, 400); // ~2-3 sparkles per second
 
       // Initial seeds — staggered for natural appearance
       for (let i = 0; i < 3; i++) {
-          setTimeout(() => spawnLoadingSparkle(progressBar), i * 200);
+          setTimeout(() => spawnSparkle(progressBar, false), i * 200);
       }
   }
 
@@ -42087,7 +42343,12 @@ ${tone === 'Wry Confessional'
 
       applyPageCurlTransition(el, {
           onComplete: function() {
-              _revealSettingOrScene();
+              // If frontispiece was shown from synopsis page, advance to Scene 1
+              if (_readerPage === 1) {
+                  showReaderPage(2);
+              } else {
+                  _revealSettingOrScene();
+              }
               if (onComplete) onComplete();
           }
       });
@@ -46455,7 +46716,7 @@ FATE CARD ADAPTATION (CRITICAL):
       const lensEnforcement = buildLensDirectives(state.withheldCoreVariant, state.turnCount, state.storyLength);
 
       // POV CONTRACT INJECTION (turns)
-      let turnPOVContract = build5thPersonContract() + build4thPersonContract();
+      let turnPOVContract = build5thPersonContract() + build4thPersonContract() + buildLoveInterestPOVContract();
       // Append soft enforcement from prior double-fail (consume once, no stacking)
       if (state._4thPersonSoftEnforcement && state.povMode === 'environment4th') {
           // Dedup: only inject if not already present in contract
@@ -47001,6 +47262,16 @@ Regenerate with STRICT material consciousness narration.`;
                   }
               } else {
                   _4thPersonRegenAttempted = false; // Reset on success
+              }
+          }
+
+          // ═══════════════════════════════════════════════════════════════════════
+          // LOVE INTEREST POV VALIDATION (lightweight — log warnings, no regen)
+          // ═══════════════════════════════════════════════════════════════════════
+          if (state.povMode === 'loveInterestPOV') {
+              const liCheck = validateLoveInterestPOV(raw);
+              if (!liCheck.valid) {
+                  console.warn('[LoveInterestPOV] Turn violations (non-blocking):', liCheck.violations);
               }
           }
 
@@ -49296,7 +49567,7 @@ FATE CARD ADAPTATION (CRITICAL):
           if (/\bcheck\s*pov\b|\bpov\s*(status|check)\b/i.test(input)) {
               const povMode = state.povMode || 'normal';
               const lastCheck = _lastPOVValidation;
-              log('POV Mode: ' + povMode);
+              log('POV Mode: ' + (povMode === 'loveInterestPOV' ? 'Love Interest (1st Person)' : povMode));
               if (povMode === 'author5th') {
                   log('Last validation: ' + (lastCheck.valid ? 'PASS' : 'FAIL') +
                       ' | Author mentions: ' + (lastCheck.authorMentions || 0));
@@ -49319,6 +49590,12 @@ FATE CARD ADAPTATION (CRITICAL):
           if (/\b(set|enable|use)\s*(5th|fifth|author)\s*(pov|person)?\b/i.test(input)) {
               state.povMode = 'author5th';
               log('POV Mode -> author5th (5th Person)');
+              return;
+          }
+          // "set pov love interest", "enable love interest pov"
+          if (/\b(set|enable|use)\s*(love\s*interest|li)\s*(pov|person)?\b/i.test(input)) {
+              state.povMode = 'loveInterestPOV';
+              log('POV Mode -> loveInterestPOV (Love Interest 1st Person)');
               return;
           }
           // "set pov normal", "disable 5th person"
