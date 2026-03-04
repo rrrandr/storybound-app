@@ -14378,6 +14378,7 @@ Return ONLY valid JSON:
       // Literary Illusion Layer — per-story voice + motif tracking
       state.storyVoiceProfile = { avg_sentence_length: 'medium', metaphor_density: 'low', emotional_tone: 'restrained' };
       state.storyMotifs = [];
+      state.storyVisualStyle = null;
 
       // Generate new story ID
       state.storyId = (typeof crypto !== 'undefined' && crypto.randomUUID)
@@ -26240,19 +26241,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
 
       // Fire sparkle trail from zoomed card position to breadcrumb target
       const breadcrumbRow = document.getElementById('breadcrumbRow');
-      if (breadcrumbRow) {
-        const stageIdx = STAGE_INDEX[grp];
-        const ghostStep = breadcrumbRow.querySelector(`.ghost-step[data-ghost-index="${stageIdx}"]`);
-        let toX, toY;
-        if (ghostStep) {
-          const ghostRect = ghostStep.getBoundingClientRect();
-          toX = ghostRect.left + ghostRect.width / 2;
-          toY = ghostRect.top + ghostRect.height / 2;
-        } else {
-          const brRect = breadcrumbRow.getBoundingClientRect();
-          toX = brRect.left + brRect.width / 2;
-          toY = brRect.top + brRect.height / 2;
-        }
+      {
+        const { x: toX, y: toY } = resolveGhostTarget(grp);
         fireSparkleTrail(fromX, fromY, zoomedRect.width, zoomedRect.height, toX, toY);
       }
 
@@ -26285,7 +26275,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         }
         dropdown.style.display = '';
         const rect = card.getBoundingClientRect();
-        dropdown.style.left = (rect.left + rect.width / 2 - 60) + 'px'; // 60 = half of 120px width
+        const rawLeft = rect.left + rect.width / 2 - 60; // 60 = half of 120px width
+        dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - 124)) + 'px';
         dropdown.style.top = (rect.bottom) + 'px';
       });
     }
@@ -26373,7 +26364,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           if (isFlipped && !dropdown.classList.contains('dropdown-open')) {
             // Position immediately (hidden via max-height:0), then open after delay
             const rect = card.getBoundingClientRect();
-            dropdown.style.left = (rect.left + rect.width / 2 - 60) + 'px';
+            const rawLeft = rect.left + rect.width / 2 - 60;
+            dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - 124)) + 'px';
             dropdown.style.top = (rect.bottom) + 'px';
             pendingTimeout = setTimeout(() => {
               dropdown.classList.add('dropdown-open');
@@ -28481,6 +28473,27 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
   }
 
   /**
+   * Resolve the ghost-step target position for sparkle trail animations.
+   * Returns {x, y} — always valid (falls back to header center if ghost/row is hidden).
+   */
+  function resolveGhostTarget(grp) {
+    const breadcrumbRow = document.getElementById('breadcrumbRow');
+    if (!breadcrumbRow) return { x: window.innerWidth / 2, y: 50 };
+
+    const stageIdx = STAGE_INDEX[grp];
+    const ghostStep = breadcrumbRow.querySelector(`.ghost-step[data-ghost-index="${stageIdx}"]`);
+    if (ghostStep) {
+      const r = ghostStep.getBoundingClientRect();
+      if (r.width > 0 || r.height > 0) return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+    const br = breadcrumbRow.getBoundingClientRect();
+    if (br.width > 0 || br.height > 0) return { x: br.left + br.width / 2, y: br.top + br.height / 2 };
+
+    // Last resort: header center
+    return { x: window.innerWidth / 2, y: 50 };
+  }
+
+  /**
    * JS-driven sparkle trail from source to target (requestAnimationFrame).
    * Mirrors the fate card triggerGoldenFlow approach for reliable travel animation.
    */
@@ -28579,19 +28592,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const cardCenterY = cardRect.top + cardRect.height / 2;
 
     // Target the ghost step that this breadcrumb will replace
-    const stageIdx = STAGE_INDEX[grp];
-    const ghostStep = breadcrumbRow.querySelector(`.ghost-step[data-ghost-index="${stageIdx}"]`);
-    let targetX, targetY;
-    if (ghostStep) {
-      const ghostRect = ghostStep.getBoundingClientRect();
-      targetX = ghostRect.left + ghostRect.width / 2;
-      targetY = ghostRect.top + ghostRect.height / 2;
-    } else {
-      // Fallback: center of breadcrumb row
-      const breadcrumbRect = breadcrumbRow.getBoundingClientRect();
-      targetX = breadcrumbRect.left + breadcrumbRect.width / 2;
-      targetY = breadcrumbRect.top + breadcrumbRect.height / 2;
-    }
+    const { x: targetX, y: targetY } = resolveGhostTarget(grp);
 
     // ═══════════════════════════════════════════════════════════════════════════
     // PHASE 1: Dissolve card in place
@@ -30493,22 +30494,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const selectedCard = document.querySelector(
         `#archetypeCardGrid .archetype-card[data-archetype="${archetypeId}"]`
       );
-      const breadcrumbRow = document.getElementById('breadcrumbRow');
-      const archGhostIdx = STAGE_INDEX['storybeau'];
-      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${archGhostIdx}"]`);
+      const { x: targetX, y: targetY } = resolveGhostTarget('storybeau');
 
-      let targetX, targetY;
-      if (ghostStep) {
-        const ghostRect = ghostStep.getBoundingClientRect();
-        targetX = ghostRect.left + ghostRect.width / 2;
-        targetY = ghostRect.top + ghostRect.height / 2;
-      } else if (breadcrumbRow) {
-        const brRect = breadcrumbRow.getBoundingClientRect();
-        targetX = brRect.left + brRect.width / 2;
-        targetY = brRect.top + brRect.height / 2;
-      }
-
-      if (selectedCard && targetX !== undefined) {
+      if (selectedCard) {
         const cardRect = selectedCard.getBoundingClientRect();
         const cardCenterX = cardRect.left + cardRect.width / 2;
         const cardCenterY = cardRect.top + cardRect.height / 2;
@@ -33075,21 +33063,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       await new Promise(r => setTimeout(r, 300));
 
       // STEP 8: Slide chosen card to CENTER of corridor
-      const breadcrumbRow = document.getElementById('breadcrumbRow');
-      const archGhostIdx = STAGE_INDEX['storybeau'];
-      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${archGhostIdx}"]`);
-
-      // Compute breadcrumb target position for later sparkle travel
-      let targetX, targetY;
-      if (ghostStep) {
-          const ghostRect = ghostStep.getBoundingClientRect();
-          targetX = ghostRect.left + ghostRect.width / 2;
-          targetY = ghostRect.top + ghostRect.height / 2;
-      } else if (breadcrumbRow) {
-          const brRect = breadcrumbRow.getBoundingClientRect();
-          targetX = brRect.left + brRect.width / 2;
-          targetY = brRect.top + brRect.height / 2;
-      }
+      const { x: targetX, y: targetY } = resolveGhostTarget('storybeau');
 
       // Slide card to corridor center (viewport center)
       const corridorCenterX = window.innerWidth / 2;
@@ -33336,20 +33310,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       await new Promise(r => setTimeout(r, 300));
 
       // STEP 8: Slide chosen card to center of corridor
-      const breadcrumbRow = document.getElementById('breadcrumbRow');
-      const pressureGhostIdx = STAGE_INDEX['pressure'];
-      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${pressureGhostIdx}"]`);
-
-      let targetX, targetY;
-      if (ghostStep) {
-          const ghostRect = ghostStep.getBoundingClientRect();
-          targetX = ghostRect.left + ghostRect.width / 2;
-          targetY = ghostRect.top + ghostRect.height / 2;
-      } else if (breadcrumbRow) {
-          const brRect = breadcrumbRow.getBoundingClientRect();
-          targetX = brRect.left + brRect.width / 2;
-          targetY = brRect.top + brRect.height / 2;
-      }
+      const { x: targetX, y: targetY } = resolveGhostTarget('pressure');
 
       const corridorCenterX = window.innerWidth / 2;
       const corridorCenterY = window.innerHeight / 2;
@@ -33585,20 +33546,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       await new Promise(r => setTimeout(r, 300));
 
       // STEP 8: Slide chosen to center
-      const breadcrumbRow = document.getElementById('breadcrumbRow');
-      const dynamicGhostIdx = STAGE_INDEX['dynamic'];
-      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${dynamicGhostIdx}"]`);
-
-      let targetX, targetY;
-      if (ghostStep) {
-          const ghostRect = ghostStep.getBoundingClientRect();
-          targetX = ghostRect.left + ghostRect.width / 2;
-          targetY = ghostRect.top + ghostRect.height / 2;
-      } else if (breadcrumbRow) {
-          const brRect = breadcrumbRow.getBoundingClientRect();
-          targetX = brRect.left + brRect.width / 2;
-          targetY = brRect.top + brRect.height / 2;
-      }
+      const { x: targetX, y: targetY } = resolveGhostTarget('dynamic');
 
       const corridorCenterX = window.innerWidth / 2;
       const corridorCenterY = window.innerHeight / 2;
@@ -34258,22 +34206,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       const selectedCard = document.querySelector(
           `#archetypeCardGrid .archetype-card[data-archetype="${archetypeId}"]`
       );
-      const breadcrumbRow = document.getElementById('breadcrumbRow');
-      const archGhostIdx = STAGE_INDEX['storybeau'];
-      const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${archGhostIdx}"]`);
+      const { x: targetX, y: targetY } = resolveGhostTarget('storybeau');
 
-      let targetX, targetY;
-      if (ghostStep) {
-          const ghostRect = ghostStep.getBoundingClientRect();
-          targetX = ghostRect.left + ghostRect.width / 2;
-          targetY = ghostRect.top + ghostRect.height / 2;
-      } else if (breadcrumbRow) {
-          const brRect = breadcrumbRow.getBoundingClientRect();
-          targetX = brRect.left + brRect.width / 2;
-          targetY = brRect.top + brRect.height / 2;
-      }
-
-      if (selectedCard && targetX !== undefined) {
+      if (selectedCard) {
           const cardRect = selectedCard.getBoundingClientRect();
           const cardCenterX = cardRect.left + cardRect.width / 2;
           const cardCenterY = cardRect.top + cardRect.height / 2;
@@ -37093,18 +37028,7 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     const cardCenterY = cardRect.top + cardRect.height / 2;
 
     // Target the ghost step for authorship (stage index 0)
-    const ghostStep = breadcrumbRow.querySelector('.ghost-step[data-ghost-index="0"]');
-    let targetX, targetY;
-    if (ghostStep) {
-      const ghostRect = ghostStep.getBoundingClientRect();
-      targetX = ghostRect.left + ghostRect.width / 2;
-      targetY = ghostRect.top + ghostRect.height / 2;
-    } else {
-      // Fallback: center of breadcrumb row
-      const breadcrumbRect = breadcrumbRow.getBoundingClientRect();
-      targetX = breadcrumbRect.left + breadcrumbRect.width / 2;
-      targetY = breadcrumbRect.top + breadcrumbRect.height / 2;
-    }
+    const { x: targetX, y: targetY } = resolveGhostTarget('authorship');
 
     // ═══════════════════════════════════════════════════════════════════════════
     // PHASE 1: Dissolve card in place
@@ -37753,21 +37677,10 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
     };
 
     // Get breadcrumb target position (identity slot)
-    const identityIdx = STAGE_INDEX['identity'];
-    const ghostStep = breadcrumbRow?.querySelector(`.ghost-step[data-ghost-index="${identityIdx}"]`);
-    let targetX, targetY;
-    if (ghostStep) {
-      const ghostRect = ghostStep.getBoundingClientRect();
-      targetX = ghostRect.left + ghostRect.width / 2;
-      targetY = ghostRect.top + ghostRect.height / 2;
-    } else if (breadcrumbRow) {
-      const brRect = breadcrumbRow.getBoundingClientRect();
-      targetX = brRect.left + brRect.width / 2;
-      targetY = brRect.top + brRect.height / 2;
-    }
+    const { x: targetX, y: targetY } = resolveGhostTarget('identity');
 
     // Sparkle teleport animation (like authorship)
-    if (playerCharCard && targetX !== undefined) {
+    if (playerCharCard) {
       const cardRect = playerCharCard.getBoundingClientRect();
       const cardCenterX = cardRect.left + cardRect.width / 2;
       const cardCenterY = cardRect.top + cardRect.height / 2;
@@ -38063,6 +37976,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
         return;
     }
     console.log('[BeginStory] All validation passed — proceeding to story generation');
+
+    // Seed per-story visual identity before any image generation
+    seedStoryVisualStyle();
 
     // ═══════════════════════════════════════════════════════════════════════════
     // PARALLEL GENERATION FAST PATH
@@ -39814,24 +39730,11 @@ ${text.slice(0, 800)}`}]);
         text = trimToCompleteSentence(text);
         StoryPagination.addPage(formatStory(text), true);
 
-        // Title page — universal front page before map/setting/scene
-        if (!state._titlePageShown) {
-            showTitlePage();
-        }
-
         // ═══════════════════════════════════════════════════════════════════════
         // STORY TEXT READY — Signal that Scene 1 can be displayed
         // ═══════════════════════════════════════════════════════════════════════
         if (state._sceneTokenCount) { console.log('SCENE_TOKEN_USAGE:', state._sceneTokenCount); state._sceneTokenCount = 0; }
         resolveStoryTextReady();
-
-        // Generate setting image in background (non-blocking)
-        const settingSynopsis = state._synopsisMetadata || state._synopsisBlurb || '';
-        if (settingSynopsis && typeof generateBookSceneArt === 'function') {
-            generateBookSceneArt(settingSynopsis).catch(err => {
-                console.warn('[SETTING-IMG] Background generation failed:', err.message);
-            });
-        }
 
         if (!state._loggedStoryStart) {
             logEvent('story_started', {
@@ -39842,8 +39745,25 @@ ${text.slice(0, 800)}`}]);
             state._loggedStoryStart = true;
         }
 
-        // Show synopsis page (page 1), then Next advances to scene
-        advanceReaderPage();
+        // ═══════════════════════════════════════════════════════════════════════
+        // TITLE PAGE GATE — Wait for setting image before showing title/synopsis
+        // User must never see title/synopsis load and THEN image pop in later.
+        // Timeout after 20s so we don't hang forever on image gen failure.
+        // ═══════════════════════════════════════════════════════════════════════
+        const settingSynopsis = state._synopsisMetadata || state._synopsisBlurb || '';
+        const settingImagePromise = (settingSynopsis && typeof generateBookSceneArt === 'function')
+            ? generateBookSceneArt(settingSynopsis).catch(err => {
+                console.warn('[SETTING-IMG] Background generation failed:', err.message);
+                return null;
+            })
+            : Promise.resolve(null);
+
+        const titlePageTimeout = new Promise(resolve => setTimeout(resolve, 20000));
+
+        Promise.race([settingImagePromise, titlePageTimeout]).then(() => {
+            if (!state._titlePageShown) showTitlePage();
+            advanceReaderPage();
+        });
 
         // Pre-load visualization prompt in background while user reads
         if (typeof preloadVizPrompt === 'function') preloadVizPrompt();
@@ -41225,8 +41145,528 @@ Return ONLY valid JSON:
       Modern:   { pattern: /\b(skyline|skyscraper silhouette|city panorama)\b/i,
                   directive: 'Avoid generic skyline silhouettes — ground the image in specific, intimate urban detail.' },
       Dystopia: { pattern: /\b(clean|sleek|polished|gleaming)\b/i,
-                  directive: 'Architecture must feel oppressive, dense, and worn — never clean futuristic skylines.' }
+                  directive: 'Architecture must feel oppressive, dense, and worn — never clean futuristic skylines.' },
+      SciFi:    { pattern: /\b(generic spaceship|futuristic city|chrome corridor)\b/i,
+                  directive: 'Ground in specific ship/station architecture — avoid generic sci-fi corridor or futuristic-city defaults.' },
+      Historical: { pattern: /\b(renaissance faire|costume drama|ye olde)\b/i,
+                    directive: 'Anchor in period-specific material culture — avoid Hollywood period styling or theme-park medievalism.' },
+      PostApocalyptic: { pattern: /\b(generic ruin|dusty wasteland|barren desert)\b/i,
+                         directive: 'Show specific decay and reclamation detail — avoid stock "ruined city" compositions.' }
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VISUAL CANON — Structured visual anchors per world + flavor.
+  // Extracted from Bible data. Used by buildVisualCanonDirective() to inject
+  // world-appropriate geometry, palette, lighting, atmosphere, and motifs
+  // into every image prompt (setting, scene, cover).
+  // ═══════════════════════════════════════════════════════════════════════════
+  const VISUAL_CANON = {
+      Fantasy: {
+          geometry: [
+              'crystalline spire clusters rising from mist basins',
+              'floating stone terraces linked by luminous bridges',
+              'ancient tree-root archways over sunken ritual pools',
+              'carved mountain passes threaded with glowing ley-veins',
+              'overgrown colosseum ruins reclaimed by enchanted flora'
+          ],
+          motifs: [
+              'fate threads visible as faint golden filaments in the air',
+              'sigil-marked boundary stones',
+              'bioluminescent fungal networks along root systems',
+              'mirrored water surfaces reflecting impossible skies'
+          ],
+          palette: [
+              'deep emerald and antique gold',
+              'twilight indigo with amber accents',
+              'moss green and bone-white stone',
+              'storm-violet and copper'
+          ],
+          lighting: [
+              'god-rays piercing canopy fog',
+              'enchanted luminescence from embedded crystals',
+              'low-angle sunset through mist columns',
+              'diffused moonlight with faint aurora shimmer'
+          ],
+          atmosphere: [
+              'ancient weight — the land remembers',
+              'magical saturation — air itself feels charged',
+              'liminal tension between tamed and wild',
+              'geological patience — stone outlasts empires'
+          ],
+          flavors: {
+              arcane_binding: {
+                  motifs: ['ritual circles etched in stone floors', 'chains of light binding paired figures', 'sigil-carved manacles'],
+                  palette: ['deep violet and molten gold', 'obsidian black with arcane blue trace-lines'],
+                  atmosphere: ['power-exchange made literal through magic', 'consent inscribed in ancient contract']
+              },
+              fated_blood: {
+                  motifs: ['ancestral tapestries with glowing lineage threads', 'bloodline altars with pooled crimson light', 'heraldic crests that pulse'],
+                  palette: ['deep crimson and aged gold leaf', 'mahogany and candlelit amber'],
+                  atmosphere: ['dynastic weight — every choice echoes through generations', 'inherited destiny pressing against free will']
+              },
+              the_inhuman: {
+                  motifs: ['architecture at inhuman scale', 'hybrid organic-mineral structures', 'eyes that reflect non-human color spectra'],
+                  palette: ['silver-blue and deep forest', 'iridescent pearl over dark stone'],
+                  atmosphere: ['alien beauty that unsettles and attracts', 'bridging the gap between species']
+              },
+              the_beyond: {
+                  motifs: ['dimensional rifts showing layered realities', 'spectral boundaries made visible', 'doorways framed by impossible geometry'],
+                  palette: ['otherworldly cyan and void-black', 'prismatic edges on shadow surfaces'],
+                  atmosphere: ['reality thinning at the edges', 'the uncanny pull of what lies past the veil']
+              },
+              cursed: {
+                  motifs: ['blighted ground with withered vegetation patterns', 'curse-marked stone with spreading dark veins', 'corrupted water with oily iridescence'],
+                  palette: ['sickly chartreuse and bruised purple', 'ashen gray with toxic green highlights'],
+                  atmosphere: ['decay that carries strange beauty', 'something precious rotting from within']
+              }
+          }
+      },
+      SciFi: {
+          geometry: [
+              'orbital ring stations with docking spines',
+              'planet-scarred horizons with megastructure silhouettes',
+              'pressurized habitat domes on barren terrain',
+              'corridor networks with holographic wayfinding',
+              'zero-gravity architecture with radial symmetry'
+          ],
+          motifs: [
+              'holographic data streams as environmental texture',
+              'viewport glass showing star-dense void',
+              'bioluminescent ship corridors',
+              'augmented-reality overlay artifacts at frame edges'
+          ],
+          palette: [
+              'cold stellar blue and warm instrument amber',
+              'gunmetal and plasma-orange',
+              'clinical white with holographic prismatic spill',
+              'deep space indigo and navigation green'
+          ],
+          lighting: [
+              'holographic spill casting chromatic fringes',
+              'cold stellar illumination through viewport glass',
+              'plasma glow from reactor cores',
+              'emergency red cycling through corridor segments'
+          ],
+          atmosphere: [
+              'vast emptiness held at bay by thin walls',
+              'technological sublime — machinery as cathedral',
+              'the silence between stars',
+              'fragile human warmth inside infinite cold'
+          ],
+          flavors: {
+              final_frontier: {
+                  motifs: ['star maps with uncharted sectors highlighted', 'ship hulls scarred by micrometeorites', 'cryo-pod arrays'],
+                  palette: ['deep black with distant star pinpoints', 'instrument-panel amber on dark blue'],
+                  atmosphere: ['isolation that breeds intimacy', 'the frontier as proving ground']
+              },
+              first_contact: {
+                  motifs: ['alien terrain with unfamiliar geometry', 'diplomatic vessels in parallel orbit', 'translation interfaces glowing'],
+                  palette: ['xenobiological green-blue and human warm-gold', 'impossible alien colors at spectrum edges'],
+                  atmosphere: ['wonder mixed with primal caution', 'communication beyond language']
+              },
+              future_of_science: {
+                  motifs: ['experimental chambers with containment fields', 'data visualization as environmental art', 'laboratory glass reflecting multiple spectra'],
+                  palette: ['sterile white and observation-blue', 'specimen-amber and analytical silver'],
+                  atmosphere: ['intellectual passion made visceral', 'discovery as seduction']
+              },
+              simulation: {
+                  motifs: ['reality seams visible at glitch points', 'recursive architecture folding inward', 'pixel degradation at environmental edges'],
+                  palette: ['synthetic neon over desaturated base', 'digital corruption artifacts in warm tones'],
+                  atmosphere: ['nothing is certain — beauty in the glitch', 'constructed reality questioning itself']
+              },
+              cyberpunk: {
+                  motifs: ['neon-drenched vertical cityscapes', 'augmentation clinics with exposed tech', 'rain on chrome surfaces'],
+                  palette: ['electric magenta and toxic cyan', 'neon-on-black with rain reflection'],
+                  atmosphere: ['high technology, low humanity', 'intimacy as rebellion against the machine']
+              },
+              post_human: {
+                  motifs: ['consciousness substrates as architecture', 'post-biological growth patterns', 'identity transfer chambers'],
+                  palette: ['bioluminescent organic over dark synthetic', 'neural-pathway gold on void'],
+                  atmosphere: ['what remains human after transcendence', 'desire surviving past the body']
+              },
+              galactic_civilizations: {
+                  motifs: ['fleet formations at planetary scale', 'contested orbital territories', 'senate chambers with holographic delegations'],
+                  palette: ['imperial gold and fleet-gray', 'diplomatic white and power-vermillion'],
+                  atmosphere: ['galactic politics as intimate stakes', 'civilizations as characters']
+              }
+          }
+      },
+      Modern: {
+          geometry: [
+              'intimate interior spaces — apartments, cafés, offices',
+              'urban street-level perspectives with depth',
+              'suburban domestic architecture with personal detail',
+              'rooftop or balcony vistas over city texture',
+              'transitional spaces — hallways, stairwells, elevators'
+          ],
+          motifs: [
+              'window light defining interior mood',
+              'personal objects as character signifiers',
+              'weather as emotional texture',
+              'reflective surfaces — mirrors, glass, wet pavement'
+          ],
+          palette: [
+              'warm interior amber and cool exterior blue',
+              'earth tones with accent color pops',
+              'overcast neutrals with warm skin tones',
+              'night-city neon reflected on wet surfaces'
+          ],
+          lighting: [
+              'window light — golden hour or overcast diffusion',
+              'streetlamp glow through rain or fog',
+              'interior warmth against exterior cool',
+              'screen-glow in dim rooms'
+          ],
+          atmosphere: [
+              'recognizable reality with heightened emotional texture',
+              'the ordinary made significant through attention',
+              'urban loneliness and unexpected connection',
+              'private moments in public spaces'
+          ],
+          flavors: {
+              small_town: {
+                  motifs: ['main street storefronts with hand-painted signs', 'porch swings and screen doors', 'familiar landmarks at golden hour'],
+                  palette: ['warm sunset amber and grass green', 'faded Americana pastels'],
+                  atmosphere: ['everyone knows everyone — nowhere to hide', 'small-world intimacy']
+              },
+              college: {
+                  motifs: ['campus greens with long shadows', 'lecture-hall tiers and library stacks', 'dormitory corridor intimacy'],
+                  palette: ['institutional brick and autumn foliage', 'library-warm amber and chalkboard green'],
+                  atmosphere: ['intellectual awakening tangled with desire', 'temporary community, permanent bonds']
+              },
+              friends: {
+                  motifs: ['shared apartment clutter', 'neighborhood bar interiors', 'rooftop gatherings with city backdrop'],
+                  palette: ['warm social lighting and casual color', 'late-night warm tones against cool city'],
+                  atmosphere: ['friendship as chosen family', 'proximity breeding unexpected desire']
+              },
+              blue_blood: {
+                  motifs: ['estate grounds with manicured geometry', 'ballroom interiors with chandelier light', 'private gallery spaces'],
+                  palette: ['old-money navy and cream', 'champagne gold and marble white'],
+                  atmosphere: ['wealth as isolation', 'propriety concealing passion']
+              },
+              office: {
+                  motifs: ['glass-partition reflections', 'late-night workspaces with single desk lamps', 'elevator encounters'],
+                  palette: ['corporate blue-gray with warm accent', 'fluorescent-lit neutrals with skin-tone warmth'],
+                  atmosphere: ['professional tension hiding personal current', 'power dynamics in confined spaces']
+              },
+              supernatural_modern: {
+                  motifs: ['ordinary facades hiding occult symbols', 'liminal thresholds between mundane and magical', 'shadows moving independently'],
+                  palette: ['everyday colors with uncanny undertones', 'normal lighting with inexplicable dark patches'],
+                  atmosphere: ['the familiar made strange', 'magic bleeding through the mundane']
+              },
+              superheroic_modern: {
+                  motifs: ['dramatic vertical cityscapes', 'high-altitude vantage points', 'impact-damaged urban architecture'],
+                  palette: ['vivid primary accents on urban gray', 'heroic gold and deep shadow'],
+                  atmosphere: ['extraordinary individuals in recognizable world', 'power as burden and attraction']
+              }
+          }
+      },
+      Historical: {
+          geometry: [
+              'era-authentic settlements and dwellings',
+              'period religious or civic architecture',
+              'working landscapes — farms, quarries, harbors',
+              'trade routes and gathering places',
+              'domestic interiors with period-accurate furnishing'
+          ],
+          motifs: [
+              'material culture as storytelling — tools, textiles, vessels',
+              'firelight as primary interior illumination',
+              'handmade surfaces — rough plaster, hewn wood, hammered metal',
+              'natural landscape dominating human construction'
+          ],
+          palette: [
+              'natural pigments and undyed fabric tones',
+              'firelight amber and stone gray',
+              'dusty daylight and weathered wood',
+              'period-specific dye colors as accent'
+          ],
+          lighting: [
+              'candlelight and oil lamp — warm point sources',
+              'natural daylight through small openings',
+              'firelight casting dramatic moving shadows',
+              'outdoor scenes under period-appropriate sky'
+          ],
+          atmosphere: [
+              'time-bound realism — the past as foreign country',
+              'sensory texture of pre-modern life',
+              'social constraints shaping private desire',
+              'beauty in material scarcity'
+          ],
+          flavors: {
+              prehistoric: {
+                  motifs: ['cave shelters with painted walls', 'megafauna silhouettes on horizon', 'stone tool camps near water'],
+                  palette: ['ochre earth and charcoal', 'bone white and clay red'],
+                  atmosphere: ['primal survival bonding', 'nature as overwhelming presence']
+              },
+              bronze_age: {
+                  motifs: ['ziggurat steps catching light', 'irrigated river valley geometry', 'hammered bronze catching firelight'],
+                  palette: ['bronze-gold and river-blue', 'mudbrick ochre and lapis lazuli'],
+                  atmosphere: ['first cities, first hierarchies', 'civilization as novel experiment']
+              },
+              classical: {
+                  motifs: ['marble colonnades with shadow play', 'forum plazas with crowd texture', 'amphitheater tiers and sky'],
+                  palette: ['white marble and Mediterranean blue', 'terracotta and olive green'],
+                  atmosphere: ['civic grandeur and private passion', 'philosophy embodied in stone']
+              },
+              medieval: {
+                  motifs: ['stone keeps with torchlit corridors', 'muddy village squares with market stalls', 'monastery scriptoriums'],
+                  palette: ['stone gray and iron black', 'manuscript illumination gold and vermillion'],
+                  atmosphere: ['faith and violence intertwined', 'feudal intimacy — proximity without privacy']
+              },
+              renaissance: {
+                  motifs: ['vaulted studios with natural light', 'canal city reflections', 'printing press workshops'],
+                  palette: ['Venetian red and Renaissance gold', 'fresco blue and marble cream'],
+                  atmosphere: ['rediscovery of the body', 'art and desire as twin pursuits']
+              },
+              victorian: {
+                  motifs: ['gaslit street scenes', 'ornate parlor interiors with heavy drapery', 'industrial smokestacks on horizon'],
+                  palette: ['gaslight amber and fog gray', 'deep burgundy and dark wood'],
+                  atmosphere: ['respectability concealing obsession', 'empire as backdrop to private drama']
+              },
+              '20th_century': {
+                  motifs: ['art-deco lobbies and geometric patterns', 'wartime bunker interiors', 'jazz-age nightclub energy'],
+                  palette: ['black-and-white with selective color', 'wartime khaki and home-front red'],
+                  atmosphere: ['modernity arriving as disruption', 'century of extremes shaping intimacy']
+              }
+          }
+      },
+      Dystopia: {
+          geometry: [
+              'surveillance architecture — panopticon layouts, transparent walls',
+              'brutalist civic structures with oppressive scale',
+              'controlled residential blocks with uniform design',
+              'propaganda-laden public spaces',
+              'hidden spaces — resistance warrens, secret rooms'
+          ],
+          motifs: [
+              'cameras and monitoring devices as environmental texture',
+              'regime iconography on every surface',
+              'conformity in clothing and posture',
+              'small acts of defiance hidden in plain sight'
+          ],
+          palette: [
+              'institutional gray and compliance white',
+              'regime-branded accent color (red, gold, or blue)',
+              'fluorescent-lit desaturation',
+              'underground warmth — forbidden color'
+          ],
+          lighting: [
+              'oppressive overhead fluorescent — no shadows allowed',
+              'surveillance spotlight sweeps',
+              'underground resistance warmth — candle and improvised lamp',
+              'filtered haze through pollution or control-atmosphere'
+          ],
+          atmosphere: [
+              'freedom as contraband',
+              'intimacy as political act',
+              'the regime is always watching',
+              'beauty surviving despite systematic suppression'
+          ],
+          flavors: {
+              glass_house: {
+                  motifs: ['transparent walls denying privacy', 'surveillance domes over intimate spaces', 'public intimacy theaters'],
+                  palette: ['clinical transparent and exposure-white', 'blush as forbidden secret'],
+                  atmosphere: ['privacy as the ultimate rebellion', 'desire under total observation']
+              },
+              human_capital: {
+                  motifs: ['trading floor aesthetics for human value', 'value-display boards ranking citizens', 'commodified personal spaces'],
+                  palette: ['stock-ticker green and transaction gold', 'cold market-display blue'],
+                  atmosphere: ['people as assets', 'love disrupting the ledger']
+              },
+              dogma: {
+                  motifs: ['cathedral-like judgment halls', 'confessional architecture', 'purity symbols imposed on bodies'],
+                  palette: ['ecclesiastical purple and penance gray', 'forbidden scarlet hidden under white'],
+                  atmosphere: ['faith weaponized as control', 'heresy as authentic feeling']
+              },
+              quieting_event: {
+                  motifs: ['serene public spaces masking chemical dispensers', 'emotion-detection scanners', 'pharmaceutical distribution points'],
+                  palette: ['sedation-blue and compliance-beige', 'awakening-red bleeding through'],
+                  atmosphere: ['enforced calm hiding genuine feeling', 'desire as dangerous awakening']
+              },
+              endless_edit: {
+                  motifs: ['identity clinics with mirror arrays', 'memory-erasure chamber aesthetics', 'unstable reflections'],
+                  palette: ['shifting uncertain tones', 'identity-flux iridescence on clinical white'],
+                  atmosphere: ['self as unreliable narrator', 'desire anchoring fractured identity']
+              },
+              thirst: {
+                  motifs: ['water-rationing infrastructure', 'arid civic plazas with cracked earth', 'guarded reservoir fortifications'],
+                  palette: ['parched yellow-brown and precious water-blue', 'rust and dried-blood red'],
+                  atmosphere: ['scarcity making every resource precious', 'thirst as metaphor for all desire']
+              }
+          }
+      },
+      PostApocalyptic: {
+          geometry: [
+              'ruined infrastructure reclaimed by nature',
+              'collapsed urban sprawl with new growth',
+              'makeshift survivor settlements from salvage',
+              'crater landscapes with exposed geological strata',
+              'highway ruins stretching to empty horizons'
+          ],
+          motifs: [
+              'nature reclaiming human construction',
+              'salvaged technology repurposed',
+              'boundary markers between safe and hazard zones',
+              'remnants of the old world as sacred objects'
+          ],
+          palette: [
+              'ash-gray overcast and rust-orange',
+              'toxic green and industrial decay brown',
+              'pale dust and survivor-fire amber',
+              'post-rain clarity with unsettling purity'
+          ],
+          lighting: [
+              'overcast diffusion through permanent haze',
+              'ash-filtered low-angle sun',
+              'campfire warmth in vast darkness',
+              'toxic-sky glow — wrong-colored dawns'
+          ],
+          atmosphere: [
+              'desolate silence broken by small human sounds',
+              'precarious survival breeding fierce bonds',
+              'beauty in the ruins — flowers through concrete',
+              'the old world as ghost and warning'
+          ],
+          flavors: {
+              ashfall: {
+                  motifs: ['volcanic ash fields with buried structures', 'charred forests with standing trunks', 'ember-lit skies'],
+                  palette: ['ash white and magma orange', 'charcoal black with heat-glow red'],
+                  atmosphere: ['fire as world-ender and warmth-giver', 'survival in the shadow of eruption']
+              },
+              year_zero: {
+                  motifs: ['blast craters as new geography', 'collapsed bridges and refugee camps', 'radiation warning symbols weathered'],
+                  palette: ['fallout gray and warning yellow', 'concrete dust and blood red'],
+                  atmosphere: ['civilization reset to zero', 'building from absolute nothing']
+              },
+              dystimulation: {
+                  motifs: ['abandoned pleasure domes crumbling', 'sensory-deprivation ruins', 'VR headsets tangled in overgrowth'],
+                  palette: ['faded neon and organic green reclamation', 'dead-screen gray and living moss'],
+                  atmosphere: ['addiction withdrawal on civilizational scale', 'reality as harsh sobriety']
+              },
+              predation: {
+                  motifs: ['fortified shelters with defensive architecture', 'hunting grounds with territorial markers', 'watch-tower silhouettes'],
+                  palette: ['predator-dark and prey-alert amber', 'camouflage earth tones and warning red'],
+                  atmosphere: ['humanity regressed to food chain', 'protection as love language']
+              },
+              hunger: {
+                  motifs: ['barren fields stretching to horizon', 'empty storehouses with dust motes', 'rationing lines and share-out rituals'],
+                  palette: ['famine-yellow and drought-brown', 'precious green as hope signal'],
+                  atmosphere: ['scarcity as daily reality', 'sharing food as ultimate intimacy']
+              }
+          }
+      }
+  };
+
+  // Soft attractor suppression — injected ~30% of the time to
+  // nudge away from world-generic visual clichés in scene images.
+  const VISUAL_CANON_SOFT_SUPPRESSION = {
+      Fantasy:          'Prefer Fatelands geography — mist basins, ley-vein mountains, enchanted flora — over generic castles and towers.',
+      SciFi:            'Ground in specific ship/station architecture — avoid generic "spaceship corridor" or "futuristic city" defaults.',
+      Modern:           'Use specific, intimate spaces — avoid aerial skyline shots or generic "city at night" establishing shots.',
+      Historical:       'Anchor in period-specific material culture — avoid Renaissance Faire costuming or Hollywood period styling.',
+      Dystopia:         'Show the regime through environmental detail — avoid on-the-nose propaganda posters or obvious "1984" imagery.',
+      PostApocalyptic:  'Show specific decay and reclamation — avoid generic "ruined city" or "dusty wasteland" stock compositions.'
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STORY VISUAL STYLE SEED — per-story aesthetic identity
+  // Seeded once at story start from tone + world. Ensures all images in one
+  // story share a consistent rendering approach.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const VISUAL_STYLE_PALETTE_FAMILIES = {
+      Dark:               ['deep blacks with muted jewel-tone accents', 'desaturated cool palette with warm blood-red punctuation', 'charcoal and tarnished silver'],
+      Earnest:            ['warm earth tones with golden-hour highlights', 'soft naturals — honey, sage, wheat, warm stone', 'autumnal amber and forest depth'],
+      'Wry Confessional': ['muted pastels under overcast light', 'washed-out warmth with ironic cool undertones', 'faded polaroid palette'],
+      Tender:             ['blush and cream with diffused rose-gold', 'soft warm spectrum — peach, lavender, pale gold', 'watercolor warmth with gentle contrast'],
+      Playful:            ['bright saturated primaries on clean white', 'vivid contrast with pop-art energy', 'candy-bright accents on warm neutral base'],
+      Intense:            ['high-contrast chiaroscuro — deep black and molten gold', 'dramatic value range with minimal mid-tones', 'volcanic palette — obsidian, ember, mercury'],
+      Gothic:             ['cold desaturated tones with bruised purple accents', 'silver and ash over deep shadow', 'moonlit monochrome with spectral color bleed']
+  };
+
+  const VISUAL_STYLE_LIGHTING_LANGUAGES = {
+      Fantasy:          ['enchanted bioluminescence as ambient fill', 'god-ray shafts through atmospheric fog', 'double-source: warm firelight vs cool moonlight'],
+      SciFi:            ['holographic chromatic spill on dark surfaces', 'cold stellar key with warm instrument fill', 'emergency red as dramatic accent source'],
+      Modern:           ['natural window light with urban ambient fill', 'mixed practical sources — streetlamp, neon, screen-glow', 'golden-hour warmth through interior glass'],
+      Historical:       ['single flame source with deep falloff', 'natural daylight through period-appropriate openings', 'firelight key with ambient bounce from stone/plaster'],
+      Dystopia:         ['harsh overhead fluorescent with no shadow refuge', 'surveillance spot with resistance-candle counter', 'haze-filtered institutional strip-lighting'],
+      PostApocalyptic:  ['ash-filtered natural light with wrong color temperature', 'campfire warmth in vast ambient darkness', 'overcast diffusion through permanent atmospheric haze']
+  };
+
+  const VISUAL_STYLE_TEXTURES = [
+      'painterly — visible brushwork, soft edges, atmospheric blending',
+      'photorealistic — sharp detail, natural grain, lens-accurate depth of field',
+      'cinematic — film-grain texture, anamorphic light behavior, letterbox composition instinct',
+      'graphic — bold linework, limited palette, strong silhouette',
+      'ethereal — soft focus, light bloom, dreamy atmospheric diffusion',
+      'gritty — high grain, desaturated midtones, tactile surface detail'
+  ];
+
+  const VISUAL_STYLE_COMPOSITIONS = [
+      'intimate framing — close perspectives, shallow depth, personal space',
+      'environmental storytelling — wide establishing shots, character small in landscape',
+      'dramatic angles — low or high camera, forced perspective, dynamic diagonals',
+      'balanced classical — rule of thirds, stable horizon, deliberate negative space',
+      'voyeuristic — framed through doorways, windows, or obstructions',
+      'immersive first-person — environmental POV, no visible protagonist'
+  ];
+
+  function seedStoryVisualStyle() {
+      const tone = state.picks?.tone;
+      const world = state.picks?.world;
+
+      const pick = arr => arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : null;
+
+      const paletteFamilies = VISUAL_STYLE_PALETTE_FAMILIES[tone];
+      const lightingLanguages = VISUAL_STYLE_LIGHTING_LANGUAGES[world];
+
+      state.storyVisualStyle = {
+          paletteFamily: pick(paletteFamilies) || 'warm naturals with balanced contrast',
+          lightingLanguage: pick(lightingLanguages) || 'natural ambient with atmospheric diffusion',
+          textureStyle: pick(VISUAL_STYLE_TEXTURES),
+          compositionBias: pick(VISUAL_STYLE_COMPOSITIONS)
+      };
+
+      console.log('[VISUAL_CANON] Story visual style seeded:', state.storyVisualStyle);
+  }
+
+  function buildVisualCanonDirective() {
+      const world = state.picks?.world;
+      if (!world || !VISUAL_CANON[world]) return '';
+
+      const canon = VISUAL_CANON[world];
+      const pick = arr => arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : null;
+
+      let directive = '\n\nVISUAL CANON:';
+      directive += `\nENVIRONMENT GEOMETRY: ${pick(canon.geometry)}`;
+      directive += `\nCOLOR LANGUAGE: ${pick(canon.palette)}`;
+      directive += `\nLIGHTING: ${pick(canon.lighting)}`;
+      directive += `\nATMOSPHERIC TONE: ${pick(canon.atmosphere)}`;
+
+      // Flavor-specific visual anchors
+      const flavor = state.worldSubtype || (state.resolvedWorldFlavors || []).find(f => f.type === 'contextual')?.val;
+      if (flavor && canon.flavors && canon.flavors[flavor]) {
+          const fl = canon.flavors[flavor];
+          const motif = pick(fl.motifs);
+          const pal = pick(fl.palette);
+          if (motif) directive += `\nFLAVOR MOTIF: ${motif}`;
+          if (pal) directive += `\nFLAVOR PALETTE ACCENT: ${pal}`;
+      }
+
+      // World motif — ~40% chance
+      if (Math.random() < 0.4) {
+          const motif = pick(canon.motifs);
+          if (motif) directive += `\nSUBTLE MOTIF: ${motif}`;
+      }
+
+      // Soft suppression — ~30% chance
+      if (Math.random() < 0.3 && VISUAL_CANON_SOFT_SUPPRESSION[world]) {
+          directive += `\nSOFT SUPPRESSION: ${VISUAL_CANON_SOFT_SUPPRESSION[world]}`;
+      }
+
+      return directive;
+  }
 
   /**
    * Build world visual identity directives for cover prompt.
@@ -43226,6 +43666,9 @@ ${buildVisualContinuityDirective()}`;
       window._titlePageActive = true;
       state._titlePageShown = true;
 
+      // Scroll to top when title page appears
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       const indicator = document.getElementById('pageIndicator');
       if (indicator) indicator.textContent = 'Title';
       const prevBtn = document.getElementById('prevPageBtn');
@@ -43276,6 +43719,10 @@ ${buildVisualContinuityDirective()}`;
       const settingPlate = document.getElementById('settingPlate');
       if (settingPlate) settingPlate.classList.add('hidden');
       window._frontispieceActive = true;
+
+      // Scroll to top when map page appears
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       const indicator = document.getElementById('pageIndicator');
       if (indicator) indicator.textContent = 'Map';
       const prevBtn = document.getElementById('prevPageBtn');
@@ -43356,6 +43803,9 @@ ${buildVisualContinuityDirective()}`;
    * show setting plate if image exists, otherwise show scene text directly.
    */
   function _revealSettingOrScene() {
+      // Scroll to top when revealing setting or scene after curl
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       const settingPlate = document.getElementById('settingPlate');
       const sceneImg = document.getElementById('bookSceneImg');
       const hasSettingImage = sceneImg && sceneImg.src && sceneImg.src !== '' && sceneImg.src !== window.location.href;
@@ -43423,6 +43873,9 @@ ${buildVisualContinuityDirective()}`;
   function showReaderPage(page) {
       _readerPage = page;
       console.log('[READER] showReaderPage:', page);
+
+      // Always scroll to top when transitioning between pages
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       const bookCoverPage = document.getElementById('bookCoverPage');
       const settingPlate = document.getElementById('settingPlate');
@@ -45634,6 +46087,20 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       const world = state.picks?.world;
       if (!tone && !world) return '';
 
+      // When story visual style has been seeded, use the richer per-story identity
+      const vs = state.storyVisualStyle;
+      if (vs) {
+          let directive = '\n\nVISUAL CONTINUITY (MANDATORY):';
+          directive += '\nAll images in this story must share a consistent aesthetic identity.';
+          directive += `\nPALETTE FAMILY: ${vs.paletteFamily}`;
+          directive += `\nLIGHTING LOGIC: ${vs.lightingLanguage}`;
+          directive += `\nRENDERING STYLE: ${vs.textureStyle}`;
+          directive += `\nCOMPOSITION BIAS: ${vs.compositionBias}`;
+          directive += '\nThese visual parameters are LOCKED for this story — maintain them across all images.';
+          return directive;
+      }
+
+      // Fallback: pre-story (covers before story start) uses static maps
       const palette = _VISUAL_CONTINUITY_PALETTES[tone] || '';
       const lighting = _VISUAL_CONTINUITY_LIGHTING[world] || '';
 
@@ -45728,11 +46195,14 @@ PREFERRED ANCHORS: Fate's Favor basin, The Ascendant Run, Thornwild forests, Vae
           basePrompt += `\nSETTING CONTEXT (visual atmosphere only — no characters, no text): "${settingSynopsis}"`;
       }
 
-      // VISUAL CONTINUITY RULE — all images in the same story share aesthetic identity
-      basePrompt += buildVisualContinuityDirective();
+      // VISUAL CANON — world + flavor-specific visual anchors
+      basePrompt += buildVisualCanonDirective();
 
       // FANTASY ENVIRONMENT SELECTION RULE — anchor to Fatelands locations, not generic fantasy
       basePrompt += buildFantasyEnvironmentDirective();
+
+      // VISUAL CONTINUITY RULE — all images in the same story share aesthetic identity
+      basePrompt += buildVisualContinuityDirective();
 
       basePrompt = clampPromptLength(basePrompt, 'image-gen');
 
