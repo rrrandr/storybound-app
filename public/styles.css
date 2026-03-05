@@ -5338,7 +5338,7 @@ select {
 }
 
 .fate-card {
-    width: 100px;
+    width: 120px; /* 100 × 1.2 = 120 (20% larger) */
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     position: relative;
     cursor: pointer;
@@ -5349,6 +5349,12 @@ select {
     transition: transform 0.6s;
     /* Z-INDEX CAP: Cards must never exceed z-index 50 (button is 1000) */
     z-index: 10;
+}
+/* Responsive: fate cards scale down fluidly on narrow screens */
+@media (max-width: 768px) {
+    .fate-card {
+        width: clamp(84px, calc(84px + (120 - 84) * ((100vw - 360px) / (768 - 360))), 120px);
+    }
 }
 /* Fate card — Rounded corners, no glow */
 /* FLIP FIX: Explicit transform-origin center to prevent hinge artifacts */
@@ -5763,6 +5769,8 @@ select {
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* PETITION ZOOM — Card zooms into portal with ritual overlay on face       */
+/* All text uses calc(Xpx / var(--petition-scale, 1)) to counteract the     */
+/* card's transform:scale() — renders at true screen px regardless of zoom. */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 .petition-fate-card.petition-zoomed {
   max-width: none;
@@ -5771,11 +5779,39 @@ select {
   pointer-events: auto;
   transition: transform 0.3s ease;
 }
-/* Remove face border when zoomed — .inner border is sufficient (face border + inner border = double outline at scale) */
+/* Remove face border when zoomed — .inner border is sufficient */
 .petition-fate-card.petition-zoomed .front,
 .petition-fate-card.petition-zoomed .back {
   border: none;
 }
+/* Gold outline: counteract scale so it stays 1px visual */
+.petition-fate-card.petition-zoomed .inner {
+  border-width: calc(1px / var(--petition-scale, 1)) !important;
+  border-style: solid !important;
+  border-color: rgba(218,165,32,0.6) !important;
+  border-radius: 8px !important;
+}
+
+/* ── Petition Sparkles — orbiting dots around card perimeter ── */
+.petition-sparkle {
+  position: absolute;
+  width: calc(3px / var(--petition-scale, 1));
+  height: calc(3px / var(--petition-scale, 1));
+  background: radial-gradient(circle, rgba(255,223,100,1) 0%, rgba(218,165,32,0.6) 50%, transparent 100%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+  animation: petition-sparkle-twinkle var(--sparkle-dur, 2s) ease-in-out infinite;
+  animation-delay: var(--sparkle-delay, 0s);
+  box-shadow: 0 0 calc(3px / var(--petition-scale, 1)) rgba(255,223,100,0.8);
+}
+@keyframes petition-sparkle-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.5); }
+  30% { opacity: 1; transform: scale(1.3); }
+  60% { opacity: 0.4; transform: scale(0.8); }
+  85% { opacity: 0.9; transform: scale(1.1); }
+}
+
 /* ── Petition Zoom Overlay — full-card transparent layer with positioned zones ── */
 .petition-zoom-overlay {
   position: absolute;
@@ -5788,26 +5824,29 @@ select {
   pointer-events: auto;
 }
 
-/* ── Top Zone: suggestion columns / custom text input — inside gold text area at card bottom ── */
+/* ── Top Zone: suggestion columns / custom text — positioned above "What would you change?" ── */
 .petition-top-zone {
   position: absolute;
-  top: 80%; left: 4%; right: 4%;
-  height: 12%;
+  top: 7%; left: 5%; right: 5%;
+  height: 38%;
   display: flex;
   flex-direction: column;
 }
 
 /* ── Suggestion Panel (two scrolling columns) ── */
 .petition-suggest-panel {
-  display: flex; gap: 3px; width: 100%; flex: 1; min-height: 0;
+  display: flex;
+  gap: calc(4px / var(--petition-scale, 1));
+  width: 100%; flex: 1; min-height: 0;
 }
 .petition-suggest-col {
   flex: 1; display: flex; flex-direction: column; min-width: 0;
 }
 .petition-suggest-header {
   font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.06em;
-  color: rgba(0,0,0,0.85); text-align: center; margin-bottom: 1px;
-  font-size: 0.11em; line-height: 1.2; white-space: nowrap;
+  color: rgba(0,0,0,0.85); text-align: center;
+  margin-bottom: calc(2px / var(--petition-scale, 1));
+  font-size: calc(11px / var(--petition-scale, 1)); line-height: 1.2; white-space: nowrap;
 }
 .petition-suggest-list {
   flex: 1; overflow-y: auto; min-height: 0;
@@ -5817,8 +5856,11 @@ select {
 .petition-suggest-list::-webkit-scrollbar-track { background: transparent; }
 .petition-suggest-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.3); border-radius: 2px; }
 .petition-suggest-item {
-  font-family: 'Lora', serif; font-size: 0.09em; line-height: 1.25;
-  color: rgba(0,0,0,0.65); padding: 1px 2px; cursor: pointer;
+  font-family: 'Lora', serif;
+  font-size: calc(10px / var(--petition-scale, 1)); line-height: 1.3;
+  color: rgba(0,0,0,0.65);
+  padding: calc(2px / var(--petition-scale, 1)) calc(3px / var(--petition-scale, 1));
+  cursor: pointer;
   border-bottom: 1px solid rgba(0,0,0,0.08); transition: color 0.15s, background 0.15s;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -5833,9 +5875,11 @@ select {
 
 /* "Write your own" toggle at bottom of suggestion panel */
 .petition-write-toggle {
-  font-family: 'Lora', serif; font-size: 0.08em; font-style: italic;
+  font-family: 'Lora', serif;
+  font-size: calc(9px / var(--petition-scale, 1)); font-style: italic;
   color: rgba(0,0,0,0.45); text-align: center; cursor: pointer;
-  padding: 1px 0; margin-top: 1px;
+  padding: calc(2px / var(--petition-scale, 1)) 0;
+  margin-top: calc(2px / var(--petition-scale, 1));
   transition: color 0.15s;
 }
 .petition-write-toggle:hover { color: rgba(0,0,0,0.8); }
@@ -5853,9 +5897,11 @@ select {
 
 .petition-custom-input textarea {
   flex: 1; width: 100%; resize: none;
-  font-family: 'Lora', serif; font-size: 0.09em; line-height: 1.3;
+  font-family: 'Lora', serif;
+  font-size: calc(10px / var(--petition-scale, 1)); line-height: 1.3;
   color: rgba(0,0,0,0.85); background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(0,0,0,0.2); padding: 2px 3px;
+  border: 1px solid rgba(0,0,0,0.2);
+  padding: calc(3px / var(--petition-scale, 1)) calc(4px / var(--petition-scale, 1));
   box-sizing: border-box;
   scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.3) transparent;
 }
@@ -5866,39 +5912,45 @@ select {
   color: rgba(0,0,0,0.35); font-style: italic;
 }
 .petition-custom-back {
-  font-family: 'Lora', serif; font-size: 0.08em; font-style: italic;
+  font-family: 'Lora', serif;
+  font-size: calc(9px / var(--petition-scale, 1)); font-style: italic;
   color: rgba(0,0,0,0.45); text-align: center; cursor: pointer;
-  padding: 1px 0;
+  padding: calc(2px / var(--petition-scale, 1)) 0;
   transition: color 0.15s;
 }
 .petition-custom-back:hover { color: rgba(0,0,0,0.75); }
 
-/* ── Lower Zone: fortune tier buttons (~55%–84% of card) ── */
+/* ── Lower Zone: fortune tier buttons — fits inside area below "Use Fortunes" ── */
 .petition-lower-zone {
   position: absolute;
-  top: 57%; left: 8%; right: 8%;
-  bottom: 16%;
+  top: 60%; left: 6%; right: 6%;
+  bottom: 18%;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
 }
 
 /* ── Fortune Tiers ── */
 .petition-fortune-tiers {
-  display: flex; gap: 2px; width: 100%; justify-content: center;
+  display: flex;
+  gap: calc(3px / var(--petition-scale, 1));
+  width: 100%; justify-content: center;
   flex-wrap: nowrap;
 }
 .petition-tier-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  background: rgba(255,255,255,0.1); border: 1px solid rgba(0,0,0,0.2);
-  padding: 2px 1px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(0,0,0,0.2);
+  padding: calc(3px / var(--petition-scale, 1)) calc(2px / var(--petition-scale, 1));
+  cursor: pointer; transition: border-color 0.2s, background 0.2s;
   min-width: 0; position: relative;
+  border-radius: calc(3px / var(--petition-scale, 1));
 }
 .petition-tier-btn:hover:not(:disabled) {
   border-color: rgba(0,0,0,0.5); background: rgba(218,165,32,0.12);
 }
 .petition-tier-btn.petition-tier-active {
   border-color: rgba(218,165,32,0.8); background: rgba(218,165,32,0.18);
-  box-shadow: 0 0 4px rgba(218,165,32,0.3);
+  box-shadow: 0 0 calc(4px / var(--petition-scale, 1)) rgba(218,165,32,0.3);
 }
 .petition-tier-btn.petition-tier-disabled,
 .petition-tier-btn.sb-tier-disabled {
@@ -5915,26 +5967,34 @@ select {
 .petition-tier-btn.sb-tier-disabled .petition-tier-tooltip {
   position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
   background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.2);
-  color: rgba(0,0,0,0.65); font-family: 'Lora', serif; font-size: 0.08em;
-  padding: 1px 3px; white-space: nowrap; pointer-events: none;
+  color: rgba(0,0,0,0.65); font-family: 'Lora', serif;
+  font-size: calc(9px / var(--petition-scale, 1));
+  padding: calc(2px / var(--petition-scale, 1)) calc(4px / var(--petition-scale, 1));
+  white-space: nowrap; pointer-events: none;
   opacity: 0; transition: opacity 0.3s;
 }
 .petition-tier-btn.sb-tier-disabled .petition-tier-tooltip.visible {
   opacity: 1;
 }
 .petition-tier-name {
-  font-family: 'Lora', serif; font-variant: small-caps; font-size: 0.1em;
+  font-family: 'Lora', serif; font-variant: small-caps;
+  font-size: calc(11px / var(--petition-scale, 1));
   color: rgba(0,0,0,0.8); line-height: 1.2; white-space: nowrap;
 }
 .petition-tier-cost {
-  font-family: 'Lora', serif; font-size: 0.08em;
+  font-family: 'Lora', serif;
+  font-size: calc(9px / var(--petition-scale, 1));
   color: rgba(0,0,0,0.45); line-height: 1.1;
 }
 .petition-tier-active .petition-tier-name { color: #000; }
 .petition-tier-active .petition-tier-cost { color: rgba(0,0,0,0.7); }
 
 /* ── Petition Result (shown after seal) ── */
-.petition-zoom-overlay .petition-result { font-size: 0.1em; margin: 2px 0; text-align: center; color: rgba(0,0,0,0.8); }
+.petition-zoom-overlay .petition-result {
+  font-size: calc(11px / var(--petition-scale, 1));
+  margin: calc(3px / var(--petition-scale, 1)) 0;
+  text-align: center; color: rgba(0,0,0,0.8);
+}
 
 /* ── Floating Proceed button (portal sibling, below card) ── */
 /* Specificity must beat .flow-continue-btn.sb-btn-png (0-2-0) which sets transform:none */
@@ -5957,6 +6017,8 @@ select {
 
 /* ═══════════════════════════════════════════════════════════════════
    TEMPT FATE — ZOOM CARD OVERLAY
+   All text uses calc(Xpx / var(--tempt-scale, 1)) to counteract
+   the card's transform:scale() — renders at true screen px.
    ═══════════════════════════════════════════════════════════════════ */
 .tempt-fate-card.tempt-zoomed {
   max-width: none;
@@ -5968,6 +6030,13 @@ select {
 .tempt-fate-card.tempt-zoomed .front,
 .tempt-fate-card.tempt-zoomed .back {
   border: none;
+}
+/* Gold outline: counteract scale so it stays 1px visual */
+.tempt-fate-card.tempt-zoomed .inner {
+  border-width: calc(1px / var(--tempt-scale, 1)) !important;
+  border-style: solid !important;
+  border-color: rgba(218,165,32,0.6) !important;
+  border-radius: 8px !important;
 }
 
 .tempt-zoom-overlay {
@@ -5981,17 +6050,17 @@ select {
   pointer-events: auto;
 }
 
-/* ── Wish Zone: scrolling example columns ── */
+/* ── Wish Zone: fits inside the gold area below "Write Your Wish Into Being" ── */
 .tempt-wish-zone {
   position: absolute;
-  top: 22%; left: 8%; right: 8%;
-  bottom: 20%;
+  top: 84%; left: 6%; right: 6%;
+  bottom: 2%;
   overflow: hidden;
 }
 
 .tempt-wish-columns {
   display: flex;
-  gap: 4px;
+  gap: calc(4px / var(--tempt-scale, 1));
   width: 100%;
   height: 100%;
   cursor: pointer;
@@ -6013,10 +6082,10 @@ select {
 .tempt-wish-item {
   font-family: 'Lora', serif;
   font-weight: 400;
-  font-size: 0.04em;
+  font-size: calc(12px / var(--tempt-scale, 1));
   line-height: 1.35;
   color: rgba(0, 0, 0, 0.7);
-  padding: 2px 3px;
+  padding: calc(1px / var(--tempt-scale, 1)) calc(3px / var(--tempt-scale, 1));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -6037,12 +6106,12 @@ select {
   resize: none;
   font-family: 'Lora', serif;
   font-weight: 400;
-  font-size: 0.09em;
+  font-size: calc(12px / var(--tempt-scale, 1));
   line-height: 1.3;
   color: rgba(0, 0, 0, 0.85);
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.2);
-  padding: 3px 4px;
+  padding: calc(3px / var(--tempt-scale, 1)) calc(4px / var(--tempt-scale, 1));
   box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
@@ -6057,13 +6126,18 @@ select {
 }
 
 /* ── Tempt Fate Proceed button (portal sibling, below card) ── */
-.tempt-proceed-btn {
+.tempt-proceed-btn.flow-continue-btn.sb-btn-png {
   position: fixed;
-  bottom: 40px; left: 50%; transform: translateX(-50%);
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 14px;
   z-index: 10006;
   pointer-events: auto;
-  border: none; padding: 0;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  margin: 0;
 }
 
 /* AUTH PANEL */
@@ -7584,6 +7658,28 @@ textarea.fate-field {
     filter: contrast(1.02) saturate(0.97);
 }
 
+/* Blank white placeholder when no cover exists yet */
+.cover-blank-placeholder {
+    position: absolute;
+    inset: 0;
+    background: #fffdf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    border-radius: 2px 8px 8px 2px;
+    padding: 24px;
+}
+.cover-blank-message {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #9a8a6f;
+    text-align: center;
+    margin: 0;
+}
+
 /* Container provides jacket-like background when contain leaves letterbox space */
 .book-cover {
     background:
@@ -8828,11 +8924,12 @@ textarea.fate-field {
     left: 10px;
     right: 10px;
     z-index: 2;
-    font-family: var(--font-story, Georgia, serif);
+    font-family: 'Lora', serif;
     font-size: 0.7em;
     font-weight: 400;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-variant: small-caps;
+    text-transform: lowercase;
     text-align: center;
     color: rgba(60, 50, 40, 0.7);
     text-shadow: 0 1px 2px rgba(255,255,255,0.5);
@@ -9694,14 +9791,14 @@ textarea.fate-field {
     align-content: center; /* Center rows vertically within available space */
     align-items: center;
     width: 95%;
-    max-width: 748px; /* 5 cards max: 5×140 + 4×12 */
+    max-width: 888px; /* 5 cards max: 5×168 + 4×12 */
     margin: 0 auto; /* Horizontal center only, vertical handled by parent */
 }
 
 /* Explicit flex sizing: width:100% on .sb-card resolves to container-wide
    flex-basis, which can cause wrapping at tight margins. Fix the basis. */
 .sb-grid .sb-card {
-    flex: 0 0 140px;
+    flex: 0 0 168px;
 }
 
 /* Size-specific grids inherit max-width cap */
@@ -9711,20 +9808,20 @@ textarea.fate-field {
 
 /* 2-card grid: cap width to keep cards visually grouped */
 .sb-grid-2 {
-    max-width: 292px; /* 2×140 + 1×12 */
+    max-width: 348px; /* 2×168 + 1×12 */
 }
 
-/* 6-card grid: wider to fit all 6 on one row (6×140 + 5×12 = 900px) */
+/* 6-card grid: wider to fit all 6 on one row (6×168 + 5×12 = 1068px) */
 .sb-grid-6 {
     width: 95%;
-    max-width: 900px;
+    max-width: 1068px;
 }
 
 /* Medium screens */
 @media (max-width: 800px) {
     /* 6-card grid: force 3+3 wrapping when 6 won't fit in one row */
     .sb-grid-6 {
-        max-width: 432px; /* 3×140 + 2×12 = 444px, slightly under */
+        max-width: 528px; /* 3×168 + 2×12 */
     }
 }
 
@@ -9738,6 +9835,17 @@ textarea.fate-field {
     }
 }
 
+/* Responsive grids: fluid card sizing from 768px down to 360px */
+@media (max-width: 768px) {
+    .sb-grid .sb-card {
+        /* Match clamp from .sb-card responsive rule */
+        flex-basis: clamp(118px, calc(118px + (168 - 118) * ((100vw - 360px) / (768 - 360))), 168px);
+    }
+    .sb-grid-2 { max-width: 95%; }
+    .sb-grid-6 { max-width: 95%; }
+    .sb-grid { max-width: 95%; }
+}
+
 /* Narrow screens: tighter gap */
 @media (max-width: 400px) {
     .sb-grid,
@@ -9745,11 +9853,7 @@ textarea.fate-field {
     .sb-grid-5,
     .sb-grid-6,
     .sb-grid-9 {
-        width: 95%;
         gap: 6px;
-    }
-    .sb-grid .sb-card {
-        flex-basis: 100px;
     }
 }
 
@@ -9760,7 +9864,7 @@ textarea.fate-field {
 .archetype-grid-8 {
     display: grid !important; /* Override corridor-section flex */
     flex-direction: unset !important;
-    grid-template-columns: repeat(4, minmax(85px, 140px));
+    grid-template-columns: repeat(4, minmax(85px, 168px));
     gap: 10px;
     justify-content: center;
     align-content: center;
@@ -9778,21 +9882,21 @@ textarea.fate-field {
 
 @media (max-width: 700px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(4, minmax(75px, 122px));
+        grid-template-columns: repeat(4, minmax(75px, 155px));
         gap: 8px;
     }
 }
 
 @media (max-width: 560px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(2, minmax(85px, 140px));
+        grid-template-columns: repeat(2, minmax(85px, 155px));
         gap: 8px;
     }
 }
 
 @media (max-width: 400px) {
     .archetype-grid-8 {
-        grid-template-columns: repeat(2, minmax(75px, 112px));
+        grid-template-columns: repeat(2, minmax(75px, 130px));
         gap: 6px;
     }
 }
@@ -10383,7 +10487,7 @@ textarea.fate-field {
 /* Cards are dumb rectangles that fill their grid cell */
 .sb-card {
     width: 100%;
-    max-width: 140px;
+    max-width: 168px; /* 140 × 1.2 = 168 (20% larger) */
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     perspective: 1000px;
     cursor: pointer;
@@ -10393,9 +10497,13 @@ textarea.fate-field {
     overflow: visible; /* Allow sparkles to show outside card bounds */
 }
 
-/* Responsive: smaller max on narrow screens */
-@media (max-width: 400px) {
-    .sb-card { max-width: 100px; }
+/* Responsive: scale down up to 30% on narrow screens.
+   Use clamp() so cards fluidly resize between breakpoints. */
+@media (max-width: 768px) {
+    .sb-card {
+        /* Fluid: 168px at 768px → 118px at 360px (30% smaller) */
+        max-width: clamp(118px, calc(118px + (168 - 118) * ((100vw - 360px) / (768 - 360))), 168px);
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -12928,6 +13036,15 @@ body.corridor-mode .sb-grid.corridor-section {
     justify-content: center !important;
 }
 
+/* Grid corridors: allow vertical scrolling when cards overflow (e.g. narrow screens) */
+.sb-grid.corridor-section {
+    overflow-y: auto !important;
+    scrollbar-width: none;
+}
+.sb-grid.corridor-section::-webkit-scrollbar {
+    display: none;
+}
+
 /* Section titles inside corridors - SHOW for card-flow-rows, smaller size */
 /* Match "Shape Your Story" header styling for visual consistency */
 .corridor-section > .section-title,
@@ -12987,7 +13104,13 @@ body.corridor-mode .sb-grid.corridor-section {
     min-height: auto !important;
     max-height: none !important;
     flex: 1 1 auto !important;
-    align-content: center !important;
+    overflow-y: auto !important;
+    align-content: start !important;
+    padding-bottom: 90px !important; /* Space for fixed control plane */
+    scrollbar-width: none;
+}
+#povGrid.corridor-section::-webkit-scrollbar {
+    display: none;
 }
 
 

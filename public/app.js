@@ -13033,9 +13033,11 @@ The goal: Make passivity IMPOSSIBLE without making the player feel punished.
       if (readerPreviewImg) readerPreviewImg.src = coverUrl;
       if (readerPreview) readerPreview.classList.remove('hidden');
 
-      // Hide fallback
+      // Hide fallback and blank placeholder
       const fallback = document.getElementById('coverFallback');
       if (fallback) fallback.classList.add('hidden');
+      const blankPlaceholder = document.getElementById('coverBlankPlaceholder');
+      if (blankPlaceholder) blankPlaceholder.classList.add('hidden');
 
       // Update legacy global
       _preGeneratedCoverUrl = coverUrl;
@@ -19825,6 +19827,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
 
       card.classList.add('petition-zoomed');
+      card.style.setProperty('--petition-scale', scale);
       card.style.width = `${rect.width}px`;
       card.style.height = `${rect.height}px`;
       card.style.transform = `scale(${scale})`;
@@ -19855,6 +19858,26 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           // Close petition zoom on backdrop click
           backdrop._petitionCloseHandler = () => { closePetitionZoom(); };
           backdrop.addEventListener('click', backdrop._petitionCloseHandler);
+      }
+
+      // ── Sparkles around card perimeter ──
+      card.querySelectorAll('.petition-sparkle').forEach(s => s.remove());
+      const cW = rect.width, cH = rect.height;
+      const sparkleCount = 24;
+      const perim = 2 * (cW + cH);
+      for (let i = 0; i < sparkleCount; i++) {
+          const d = (perim / sparkleCount) * i;
+          let sx, sy;
+          if (d < cW) { sx = d; sy = -1; }                             // top edge
+          else if (d < cW + cH) { sx = cW + 1; sy = d - cW; }          // right edge
+          else if (d < 2 * cW + cH) { sx = cW - (d - cW - cH); sy = cH + 1; } // bottom edge
+          else { sx = -1; sy = cH - (d - 2 * cW - cH); }               // left edge
+          const sp = document.createElement('div');
+          sp.className = 'petition-sparkle';
+          const dur = 1.5 + Math.random() * 2;
+          const delay = Math.random() * 3;
+          sp.style.cssText = `left:${sx}px;top:${sy}px;--sparkle-dur:${dur.toFixed(1)}s;--sparkle-delay:${delay.toFixed(1)}s;`;
+          card.appendChild(sp);
       }
 
       // Build ritual overlay on card back face (visible after flip)
@@ -20146,8 +20169,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const card = _petitionZoomCard;
       if (!card) return;
 
-      // Remove overlay and floating Proceed button (button is in portal, not card)
+      // Remove overlay, sparkles, and floating Proceed button
       card.querySelector('.petition-zoom-overlay')?.remove();
+      card.querySelectorAll('.petition-sparkle').forEach(s => s.remove());
       const portal = document.getElementById('sbZoomPortal');
       portal?.querySelector('.petition-proceed-btn')?.remove();
 
@@ -20160,6 +20184,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       // Remove zoom styles
       card.classList.remove('petition-zoomed');
+      card.style.removeProperty('--petition-scale');
       card.style.transform = '';
       card.style.transformOrigin = '';
       card.style.width = '';
@@ -20259,10 +20284,18 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
 
       card.classList.add('tempt-zoomed');
+      card.style.setProperty('--tempt-scale', scale);
       card.style.width = `${rect.width}px`;
       card.style.height = `${rect.height}px`;
       card.style.transform = `scale(${scale})`;
       card.style.transformOrigin = 'center center';
+      // Clear residual positioning so portal flexbox can center the card
+      card.style.position = '';
+      card.style.left = '';
+      card.style.top = '';
+      card.style.right = '';
+      card.style.bottom = '';
+      card.style.margin = '0';
 
       // Swap to high-res zoomed art on the BACK face (visible after flip)
       const backFace = card.querySelector('.back');
@@ -20398,10 +20431,17 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       // Remove zoom styles
       card.classList.remove('tempt-zoomed');
+      card.style.removeProperty('--tempt-scale');
       card.style.transform = '';
       card.style.transformOrigin = '';
       card.style.width = '';
       card.style.height = '';
+      card.style.position = '';
+      card.style.left = '';
+      card.style.top = '';
+      card.style.right = '';
+      card.style.bottom = '';
+      card.style.margin = '';
 
       // Restore card to original DOM position
       if (_temptZoomOriginalParent) {
@@ -34700,6 +34740,16 @@ Generate the title and synopsis now.` }
         }, 5000);
       }
       synopsisPanel.classList.add('visible');
+      // Start collapsed — user expands when ready
+      if (!synopsisPanel._dspEverShown) {
+        synopsisPanel._dspEverShown = true;
+        synopsisPanel.classList.add('dsp-collapsed');
+        const collapseBtn = document.getElementById('dspCollapseBtn');
+        if (collapseBtn) {
+          collapseBtn.innerHTML = '&#9675;';
+          collapseBtn.setAttribute('aria-label', 'Expand panel');
+        }
+      }
     }
   }
 
@@ -40650,18 +40700,24 @@ Generate the title and synopsis now.` }
       const coverImg = document.getElementById('bookCoverImg');
       const bookObject = document.getElementById('bookObject');
       const coverLoadingState = document.getElementById('coverLoadingState');
-      if (coverImg) coverImg.src = preGeneratedCover;
+      if (coverImg) { coverImg.src = preGeneratedCover; coverImg.style.display = ''; }
       if (bookObject) bookObject.classList.remove('hidden');
       if (coverLoadingState) coverLoadingState.classList.add('hidden');
+      const blankPh0 = document.getElementById('coverBlankPlaceholder');
+      if (blankPh0) blankPh0.classList.add('hidden');
       if (window.clearPreGeneratedCover) window.clearPreGeneratedCover();
     } else {
-      // No pre-generated cover — use fallback, do NOT auto-generate
+      // No pre-generated cover — show blank white placeholder
       // Cover generation is explicit user action only (via "Generate Your Cover" button)
-      console.log('[COVER:BEGIN] No pre-generated cover — using fallback (no auto-generation)');
+      console.log('[COVER:BEGIN] No pre-generated cover — showing blank placeholder');
       const bookObject = document.getElementById('bookObject');
       const coverLoadingState = document.getElementById('coverLoadingState');
+      const coverImg = document.getElementById('bookCoverImg');
+      const blankPh = document.getElementById('coverBlankPlaceholder');
       if (bookObject) bookObject.classList.remove('hidden');
       if (coverLoadingState) coverLoadingState.classList.add('hidden');
+      if (coverImg) coverImg.style.display = 'none';
+      if (blankPh) blankPh.classList.remove('hidden');
     }
 
     console.log('[BeginStory] Phase 2 complete — starting loader and API calls');
@@ -41152,24 +41208,40 @@ ${modernWorldBlock2}${historicalWorldBlock2}${fantasyWorldBlock2}${scifiWorldBlo
 - These material characters possess observational cognition derived ONLY from physical interaction (pressure, vibration, weight, heat, sound, repetition, pattern).
 - Material characters lead narration. Human characters are observed entities within their perceptual field.
 - Material cognition should dominate the scene (target ~60–70% of narrative weight).
-- Human interior access is permitted sparingly (~30–40%) and must not dominate paragraphs.
-- Abstract internal summarization should be minimized; material characters should interpret stakes through physical signals whenever possible.
 - Do not default to standard third-person limited narration.
 - Do not use collective "we."
 - Do not use destiny language, inevitability framing, or structural awareness.
 - Material characters remain active during all scene types, including intimate scenes.
+
+MATERIAL POV — OPENING SENTENCE RULE:
+- The opening sentence of every scene MUST originate from the perception of a material character (object, surface, architecture, air, fabric, light, etc).
+- The narrator identity is established in this first sentence and should remain primarily material thereafter.
+- Do not begin scenes with human interior thought.
+
+MATERIAL ANCHOR ROTATION:
+- Do not narrate repeatedly through the same object.
+- Rotate material POV anchors naturally across the scene (stone, table, doorframe, air, light, fabric, floor, window, etc).
+- Each anchor observes through its physical interaction with the scene.
+
+HUMAN ACCESS CONSTRAINT:
+- Human interior access is limited and brief.
+- Human thoughts may appear only after material perception establishes the moment.
+- Human narration must never dominate consecutive paragraphs.
 
 CORRECT (material-led):
 "The doorframe recognized the pause — she always hesitated there before lying."
 "The table disliked the way his palm struck it; the impact lacked conviction."
 "The pendant lay flat against her throat — it only did that when she meant to defy her family."
 "The tapestry remembered his weight from the last betrayal."
+"The cobblestones noticed her before anyone else did. She stepped lighter than the merchants."
+"The table disliked the way his palm struck it. He only hit that hard when lying."
 
 INCORRECT (human-dominant):
 "She hesitated, afraid to lie."
 "He sounded uncertain."
 "She felt anxious about defying her family."
 "He planned another betrayal."
+"She walked nervously through the square."
     ` : ''}
     ${state.povMode === 'loveInterestPOV' ? `
 ═══════════════════════════════════════════════════════════════════════════════
@@ -41483,24 +41555,35 @@ Every Fate appearance must imply a plan in motion, a withheld intervention, or a
 - These material characters possess observational cognition derived ONLY from physical interaction (pressure, vibration, weight, heat, sound, repetition, pattern).
 - Material characters lead narration. Human characters are observed entities within their perceptual field.
 - Material cognition should dominate the scene (target ~60–70% of narrative weight).
-- Human interior access is permitted sparingly (~30–40%) and must not dominate paragraphs.
-- Abstract internal summarization should be minimized; material characters should interpret stakes through physical signals whenever possible.
 - Do not default to standard third-person limited narration.
 - Do not use collective "we."
 - Do not use destiny language, inevitability framing, or structural awareness.
 - Material characters remain active during all scene types, including intimate scenes.
 
+MATERIAL POV — OPENING SENTENCE RULE:
+- The opening sentence of every scene MUST originate from the perception of a material character.
+- The narrator identity is established in this first sentence and should remain primarily material thereafter.
+- Do not begin scenes with human interior thought.
+
+MATERIAL ANCHOR ROTATION:
+- Do not narrate repeatedly through the same object.
+- Rotate material POV anchors naturally across the scene.
+- Each anchor observes through its physical interaction with the scene.
+
+HUMAN ACCESS CONSTRAINT:
+- Human interior access is limited and brief.
+- Human thoughts may appear only after material perception establishes the moment.
+- Human narration must never dominate consecutive paragraphs.
+
 CORRECT (material-led):
 "The doorframe recognized the pause — she always hesitated there before lying."
 "The table disliked the way his palm struck it; the impact lacked conviction."
-"The pendant lay flat against her throat — it only did that when she meant to defy her family."
-"The tapestry remembered his weight from the last betrayal."
+"The cobblestones noticed her before anyone else did. She stepped lighter than the merchants."
 
 INCORRECT (human-dominant):
 "She hesitated, afraid to lie."
 "He sounded uncertain."
-"She felt anxious about defying her family."
-"He planned another betrayal."`
+"She walked nervously through the square."`
 : state.povMode === 'loveInterestPOV' ?
 `LOVE INTEREST POV — NARRATOR IDENTITY:
 - "I" = the Love Interest. Always. The player character = "she"/"he"/"they".
@@ -43095,8 +43178,14 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
       setTimeout(() => {
           if (loadingState) loadingState.classList.add('hidden');
           if (bookObject) bookObject.classList.remove('hidden');
+          const blankPh2 = document.getElementById('coverBlankPlaceholder');
           if (coverImg && coverUrl) {
               coverImg.src = coverUrl;
+              coverImg.style.display = '';
+              if (blankPh2) blankPh2.classList.add('hidden');
+          } else if (!coverUrl) {
+              if (coverImg) coverImg.style.display = 'none';
+              if (blankPh2) blankPh2.classList.remove('hidden');
           }
 
           // Show bookmark if returning reader
@@ -45155,9 +45244,11 @@ ${buildVisualContinuityDirective()}`
           '</div>';
       fallbackEl.innerHTML = html;
 
-      // Show fallback, hide AI image
+      // Show fallback, hide AI image and blank placeholder
       fallbackEl.classList.remove('hidden');
       if (coverImg) coverImg.style.display = 'none';
+      const blankPh3 = document.getElementById('coverBlankPlaceholder');
+      if (blankPh3) blankPh3.classList.add('hidden');
   }
 
   /**
