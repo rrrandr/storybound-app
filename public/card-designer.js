@@ -46,6 +46,7 @@
   const FATE_ELEMENT_SELECTORS = [
     '.petition-zoom-overlay .petition-top-zone',
     '.petition-zoom-overlay .petition-suggest-header',
+    '.petition-zoom-overlay .petition-suggest-list',
     '.petition-zoom-overlay .petition-write-toggle',
     '.petition-zoom-overlay .petition-lower-zone',
     '.petition-zoom-overlay .petition-fortune-tiers',
@@ -258,8 +259,8 @@
     Object.assign(panel.style, {
       position: 'fixed', bottom: '12px', left: '12px', zIndex: '99999',
       background: 'rgba(20,16,10,0.95)', border: '1px solid #d4a844',
-      borderRadius: '6px', padding: '10px 14px', maxWidth: '480px',
-      maxHeight: '300px', overflowY: 'auto', fontFamily: 'monospace',
+      borderRadius: '6px', padding: '8px 10px', maxWidth: '260px',
+      maxHeight: '160px', overflowY: 'auto', fontFamily: 'monospace',
       fontSize: '11px', color: '#d4a844', lineHeight: '1.5',
       boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
     });

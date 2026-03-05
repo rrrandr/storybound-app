@@ -73,7 +73,7 @@ body.booting .screen {
     border-radius: 4px;
     padding: 20px 30px;
     margin: 10px auto;
-    max-width: 600px;
+    max-width: 860px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
     box-sizing: border-box;
 }
@@ -2381,8 +2381,9 @@ h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !
 /* TITLE + SCENE — Printed-book elements inside page (AUTHORITATIVE)          */
 /* Typography: Lora font, lower visual salience, no UI decoration             */
 /* ═══════════════════════════════════════════════════════════════════════════ */
+h2.story-page-title,
 .story-page-title {
-    font-family: 'Lora', serif;
+    font-family: 'Lora', serif !important;
     font-size: 0.9em;
     font-weight: 400;
     color: rgba(200, 190, 170, 0.85) !important;
@@ -3730,6 +3731,7 @@ select:-webkit-autofill {
     height: 3px;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(255,215,0,0.95) 0%, rgba(255,215,0,0) 70%);
+    box-shadow: 0 0 6px 2px rgba(255, 215, 0, 0.5), 0 0 12px 4px rgba(255, 215, 0, 0.2);
     pointer-events: none;
     will-change: transform, opacity;
     animation: pactFirefly var(--fly-dur, 3s) ease-in-out infinite alternate;
@@ -4607,6 +4609,7 @@ body.library-zoom-active .vault-book-list {
 
 /* Spine */
 .book-spine {
+    display: none; /* Hidden — 3D mockup provides spine */
     position: absolute;
     width: 20px;
     height: 100%;
@@ -5347,7 +5350,7 @@ select {
 }
 
 .fate-card {
-    width: 120px; /* 100 × 1.2 = 120 (20% larger) */
+    width: 144px; /* 120 × 1.2 = 144 (20% larger) */
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     position: relative;
     cursor: pointer;
@@ -5362,14 +5365,14 @@ select {
 /* Responsive: fate cards scale down fluidly on narrow screens */
 @media (max-width: 768px) {
     .fate-card {
-        width: clamp(84px, calc(84px + (120 - 84) * ((100vw - 360px) / (768 - 360))), 120px);
+        width: clamp(101px, calc(101px + (144 - 101) * ((100vw - 360px) / (768 - 360))), 144px);
     }
 }
 /* Fate card — Rounded corners, no glow */
 /* FLIP FIX: Explicit transform-origin center to prevent hinge artifacts */
 .fate-card .inner { position:absolute; inset:0; border-radius:8px; transform-style:preserve-3d; transition:transform 0.6s; box-shadow:0 5px 15px rgba(0,0,0,0.5); transform-origin: center center; }
 .fate-card.flipped .inner { transform:rotateY(180deg); }
-.fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); flex-direction: column; padding: 5px; box-sizing: border-box; }
+.fate-card .front, .fate-card .back { position:absolute; inset:1px; backface-visibility:hidden; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); flex-direction: column; padding: 5px; box-sizing: border-box; overflow: hidden; }
 .fate-card .front {
     background: url('/assets/card-art/cards/Romance-black-back.png') center/cover no-repeat, #111;
     z-index:2;
@@ -5388,12 +5391,12 @@ select {
 
 /* Responsive */
 @media (max-width: 700px) {
-    .fate-grid { gap: 10px; max-width: 400px; }
-    .fate-card { width: 85px; }
+    .fate-grid { gap: 10px; max-width: 480px; }
+    .fate-card { width: 102px; }
 }
 @media (max-width: 500px) {
-    .fate-grid { gap: 8px; max-width: 320px; }
-    .fate-card { width: 75px; }
+    .fate-grid { gap: 8px; max-width: 380px; }
+    .fate-card { width: 90px; }
 }
 
 /* GOLDEN FLOW - continuous gentle stream from Fate Card to inputs */
@@ -5836,10 +5839,11 @@ select {
 /* ── Top Zone: suggestion columns / custom text — positioned above "What would you change?" ── */
 .petition-top-zone {
   position: absolute;
-  top: 7%; left: 5%; right: 5%;
+  top: 15px; left: 13px; right: 5%;
   height: 38%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* ── Suggestion Panel (two scrolling columns) ── */
@@ -5847,6 +5851,7 @@ select {
   display: flex;
   gap: calc(4px / var(--petition-scale, 1));
   width: 100%; flex: 1; min-height: 0;
+  overflow: hidden;
 }
 .petition-suggest-col {
   flex: 1; display: flex; flex-direction: column; min-width: 0;
@@ -5890,6 +5895,7 @@ select {
   padding: calc(2px / var(--petition-scale, 1)) 0;
   margin-top: calc(2px / var(--petition-scale, 1));
   transition: color 0.15s;
+  flex-shrink: 0;
 }
 .petition-write-toggle:hover { color: rgba(0,0,0,0.8); }
 
@@ -5932,7 +5938,7 @@ select {
 /* ── Lower Zone: fortune tier buttons — fits inside area below "Use Fortunes" ── */
 .petition-lower-zone {
   position: absolute;
-  top: 60%; left: 6%; right: 6%;
+  top: 154.5px; left: 24px; right: 6%;
   bottom: 18%;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -5947,19 +5953,19 @@ select {
 }
 .petition-tier-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(0,0,0,0.2);
+  background: rgba(45, 32, 18, 0.85);
+  border: 1px solid rgba(160, 120, 50, 0.4);
   padding: calc(3px / var(--petition-scale, 1)) calc(2px / var(--petition-scale, 1));
   cursor: pointer; transition: border-color 0.2s, background 0.2s;
   min-width: 0; position: relative;
   border-radius: calc(3px / var(--petition-scale, 1));
 }
 .petition-tier-btn:hover:not(:disabled) {
-  border-color: rgba(0,0,0,0.5); background: rgba(218,165,32,0.12);
+  border-color: rgba(218, 165, 32, 0.7); background: rgba(55, 40, 20, 0.9);
 }
 .petition-tier-btn.petition-tier-active {
-  border-color: rgba(218,165,32,0.8); background: rgba(218,165,32,0.18);
-  box-shadow: 0 0 calc(4px / var(--petition-scale, 1)) rgba(218,165,32,0.3);
+  border-color: rgba(218,165,32,0.9); background: rgba(60, 42, 15, 0.95);
+  box-shadow: 0 0 calc(4px / var(--petition-scale, 1)) rgba(218,165,32,0.4);
 }
 .petition-tier-btn.petition-tier-disabled,
 .petition-tier-btn.sb-tier-disabled {
@@ -5969,7 +5975,7 @@ select {
 }
 .petition-tier-btn.petition-tier-disabled:hover,
 .petition-tier-btn.sb-tier-disabled:hover {
-  border-color: rgba(0,0,0,0.12); background: rgba(255,255,255,0.1);
+  border-color: rgba(160, 120, 50, 0.2); background: rgba(45, 32, 18, 0.85);
   box-shadow: none;
 }
 /* Tooltip on disabled tier tap */
@@ -5988,15 +5994,15 @@ select {
 .petition-tier-name {
   font-family: 'Lora', serif; font-variant: small-caps;
   font-size: calc(11px / var(--petition-scale, 1));
-  color: rgba(0,0,0,0.8); line-height: 1.2; white-space: nowrap;
+  color: rgba(218, 165, 32, 0.85); line-height: 1.2; white-space: nowrap;
 }
 .petition-tier-cost {
   font-family: 'Lora', serif;
   font-size: calc(9px / var(--petition-scale, 1));
-  color: rgba(0,0,0,0.45); line-height: 1.1;
+  color: rgba(218, 165, 32, 0.5); line-height: 1.1;
 }
-.petition-tier-active .petition-tier-name { color: #000; }
-.petition-tier-active .petition-tier-cost { color: rgba(0,0,0,0.7); }
+.petition-tier-active .petition-tier-name { color: rgba(218, 165, 32, 1); }
+.petition-tier-active .petition-tier-cost { color: rgba(218, 165, 32, 0.8); }
 
 /* ── Petition Result (shown after seal) ── */
 .petition-zoom-overlay .petition-result {
@@ -6023,6 +6029,25 @@ select {
 
 /* ── Hide old fortune row if still present ── */
 .petition-zoom-overlay .petition-fortune-row { display: none; }
+
+/* ── Petition zoom — Card Designer position overrides ── */
+#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-lower-zone {
+    right: auto; bottom: auto;
+    top: 154.5px; left: 18px;
+}
+#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-write-toggle {
+    right: auto; bottom: auto;
+    top: 29.5px; left: 0.5px;
+}
+#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-suggest-panel {
+    right: auto; bottom: auto;
+    top: 1px; left: 7px;
+    height: 70.5px; width: 91px;
+}
+#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone {
+    right: auto; bottom: auto;
+    top: 15px; left: 8px;
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    TEMPT FATE — ZOOM CARD OVERLAY
@@ -7607,13 +7632,24 @@ textarea.fate-field {
     position: relative;
     /* Height-first: maximize vertical presence, minimal nav clearance only */
     height: min(90vh, calc(100dvh - 60px));
-    /* Width derived from height to maintain 5:7 aspect ratio */
-    aspect-ratio: 5 / 7;
+    /* 3D mockup PNG is square (626×626) */
+    aspect-ratio: 1 / 1;
     /* Allow book to be large — constrain only on ultra-wide screens */
     max-width: min(92vw, 560px);
     transform-style: preserve-3d;
     cursor: pointer;
     animation: bookAppear 0.8s ease forwards;
+}
+
+/* 3D book mockup base layer */
+.book-3d-base {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .book-object.hidden {
@@ -7625,45 +7661,30 @@ textarea.fate-field {
     to { opacity: 1; transform: scale(1) rotateY(0deg); }
 }
 
-/* Book cover - the front face that hinges open */
+/* Book cover - overlay mapped onto the 3D mockup's front face */
 .book-cover {
     position: absolute;
-    inset: 0;
-    transform-origin: left center;
-    transform-style: preserve-3d;
-    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    z-index: 10;
-    border-radius: 2px 8px 8px 2px;
+    /* Position over the front face of the 3D book mockup */
+    top: 9%;
+    left: 18%;
+    width: 59%;
+    height: 60%;
+    /* Perspective warp to match the mockup's angle */
+    transform: perspective(900px) rotateX(5deg) rotateY(-8deg) skewY(1deg);
+    transform-origin: center center;
+    z-index: 2;
     overflow: hidden;
-    /* Right and bottom edge shadows for depth */
-    box-shadow:
-        4px 4px 8px rgba(0, 0, 0, 0.4),
-        8px 8px 20px rgba(0, 0, 0, 0.3),
-        inset -3px 0 8px rgba(0, 0, 0, 0.2);
-}
-
-.book-cover::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    border-radius: 2px 8px 8px 2px;
-    /* Book-jacket illusion: vignette + right-edge depth */
-    background: linear-gradient(to left, rgba(0,0,0,0.12) 0%, transparent 8%);
-    box-shadow:
-        inset 0 0 50px rgba(0, 0, 0, 0.12),
-        inset 0 0 100px rgba(0, 0, 0, 0.06);
+    border-radius: 3px;
 }
 
 .book-cover-image {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Preserve full cover — no cropping */
+    object-fit: cover; /* Fill the face area */
     object-position: center;
-    border-radius: 2px 8px 8px 2px;
+    border-radius: 3px;
     display: block;
     backface-visibility: hidden;
-    /* Book-jacket illusion: subtle inner shadow for pressed-in feel */
     filter: contrast(1.02) saturate(0.97);
 }
 
@@ -7676,7 +7697,7 @@ textarea.fate-field {
     align-items: center;
     justify-content: center;
     z-index: 1;
-    border-radius: 2px 8px 8px 2px;
+    border-radius: 3px;
     padding: 24px;
 }
 .cover-blank-message {
@@ -7689,27 +7710,9 @@ textarea.fate-field {
     margin: 0;
 }
 
-/* Container provides jacket-like background when contain leaves letterbox space */
+/* Book cover background — dark backing visible when image doesn't fill */
 .book-cover {
-    background:
-        /* Paper texture grain */
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
-        /* Subtle warm-black jacket backing */
-        linear-gradient(180deg, #1a1816 0%, #0f0e0c 100%);
-}
-
-/* Neutral parchment backface — shown when cover hinges open */
-.book-cover::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(135deg, rgba(210,180,140,0.10) 0%, transparent 60%),
-        linear-gradient(180deg, #e8dcc8 0%, #d9c9a8 40%, #c8b896 100%);
-    border-radius: 2px 8px 8px 2px;
-    backface-visibility: hidden;
-    transform: rotateY(180deg);
-    z-index: 1;
+    background: linear-gradient(180deg, #1a1816 0%, #0f0e0c 100%);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -7731,7 +7734,7 @@ textarea.fate-field {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 2px 8px 8px 2px;
+    border-radius: 3px;
     /* Rich textured background — dark with subtle warmth */
     background:
         /* Paper texture grain (inline SVG noise) */
@@ -7881,7 +7884,7 @@ textarea.fate-field {
     inset: 0;
     z-index: 12;
     pointer-events: none;
-    border-radius: 2px 8px 8px 2px;
+    border-radius: 3px;
     overflow: hidden;
     backface-visibility: hidden;
 }
@@ -8746,8 +8749,9 @@ textarea.fate-field {
     border-radius: 1px;
 }
 
-/* Book thickness - enhanced bottom/side depth for hardcover */
+/* Book thickness - hidden (3D mockup provides depth) */
 .book-thickness {
+    display: none;
     position: absolute;
     left: 0;
     right: 0;
@@ -8772,9 +8776,10 @@ textarea.fate-field {
     right: 4px;
     background: #ffffff;
     border-radius: 0 6px 6px 0;
-    z-index: 5;
+    z-index: 0; /* Below 3D base (z:1) and cover (z:2) — only visible during hinge-open */
     overflow: hidden;
     box-shadow: inset -2px 0 8px rgba(0,0,0,0.05);
+    display: none; /* Hinge system disabled (USE_OPENING_BOOK=false) — hide entirely */
     display: flex;
     flex-direction: row;
 }
@@ -9725,11 +9730,11 @@ textarea.fate-field {
    11 cards: 6+5 on wide screens, 4+4+3 on medium, 3-col on narrow. */
 .dynamic-grouped {
     display: grid;
-    grid-template-columns: repeat(6, minmax(82px, 134px));
+    grid-template-columns: repeat(6, minmax(82px, 168px));
     gap: 12px;
     justify-content: center;
     width: 95%;
-    max-width: 864px; /* 6×134 + 5×12 = 864 */
+    max-width: 1068px; /* 6×168 + 5×12 = 1068 */
     margin: 0 auto;
     padding: 0;
     box-sizing: border-box;
@@ -9749,14 +9754,14 @@ textarea.fate-field {
 
 @media (max-width: 800px) {
     .dynamic-grouped {
-        grid-template-columns: repeat(4, minmax(82px, 134px));
-        max-width: 584px; /* 4×134 + 3×12 */
+        grid-template-columns: repeat(4, minmax(82px, 168px));
+        max-width: 720px; /* 4×168 + 3×12 */
     }
 }
 @media (max-width: 500px) {
     .dynamic-grouped {
-        grid-template-columns: repeat(3, minmax(72px, 108px));
-        max-width: 356px;
+        grid-template-columns: repeat(3, minmax(72px, 134px));
+        max-width: 438px; /* 3×134 + 2×8 */
         gap: 8px;
     }
 }
@@ -10012,17 +10017,19 @@ textarea.fate-field {
 /* Show description only when card is zoomed — scaled for larger card */
 .archetype-card.zoomed .archetype-printed-desc {
     display: block;
-    font-size: 5px;
+    font-size: 6px;
     line-height: 1.15;
     top: auto;
     bottom: calc(22% - 15px); /* positioned in gold zone */
-    left: 12px;
-    right: 12px;
-    padding: 3px 5px;
-    max-height: 10%;
+    left: 14px;
+    right: 14px;
+    padding: 3px 6px;
+    max-height: 12%;
     background: transparent;
     color: rgba(15, 12, 8, 0.625); /* 25% darker */
     text-shadow: 0 0.5px 0 rgba(255, 235, 180, 0.35);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Per-archetype description nudges (+5px = up from default 22% - 15px) */
@@ -10630,20 +10637,21 @@ textarea.fate-field {
        Inscribed circle radius > parent half-diagonal for any card aspect ratio. */
     inset: -75%;
     pointer-events: none;
-    z-index: -1;
+    z-index: auto;
     mix-blend-mode: screen;
     opacity: var(--gleam-opacity-multiplier, 0.8);
     /* Animation driven by JS — organic sway with random pauses at edges */
     will-change: transform;
 }
 
-/* Clip wrapper — non-rotating parent clips the rotating gleam layer */
+/* Clip wrapper — non-rotating parent clips the rotating gleam layer
+   z-index: 10 puts gleam OVER text/buttons; pointer-events:none keeps them clickable */
 .card-gleam-clip {
     position: absolute;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
-    z-index: -1;
+    z-index: 10;
     border-radius: inherit;
 }
 .card-gleam-clip > .card-gleam-layer {
@@ -10678,11 +10686,14 @@ textarea.fate-field {
 }
 .tier-card-back .card-gleam-clip,
 .tier-card-face .card-gleam-clip,
-.character-tarot-card .card-gleam-clip,
+.character-tarot-card .card-gleam-clip {
+    z-index: 10; /* Gleam plays over text/buttons */
+    left: 3px; /* Offset gleam horizontally across text fields */
+}
 .tier-card-back .card-gleam-layer,
 .tier-card-face .card-gleam-layer,
 .character-tarot-card .card-gleam-layer {
-    z-index: 0; /* Above background, below all fields/inputs */
+    z-index: auto;
 }
 
 /* Pact cards: gleam z-index must be auto to avoid breaking backface-visibility */
@@ -10690,6 +10701,14 @@ textarea.fate-field {
     z-index: auto;
 }
 .pact-card .card-gleam-clip > .card-gleam-layer {
+    z-index: auto;
+}
+
+/* Fate cards: gleam z-index must be auto to avoid breaking backface-visibility */
+.fate-card .card-gleam-clip {
+    z-index: auto;
+}
+.fate-card .card-gleam-clip > .card-gleam-layer {
     z-index: auto;
 }
 
@@ -10919,6 +10938,24 @@ textarea.fate-field {
     line-height: 1.3;
     text-shadow: 0 1px 0 rgba(255, 215, 0, 0.06);
     margin: 0;
+}
+
+/* POV front desc on flipped unzoomed cards — keep text off gold border lines */
+#povGrid .sb-card:not(.zoomed) .sb-card-front .sb-card-desc {
+    padding: 0 6px;
+    font-size: 10px;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Length front desc on flipped unzoomed cards — keep text off gold border lines */
+#lengthGrid .sb-card:not(.zoomed) .sb-card-front .sb-card-desc {
+    padding: 0 6px;
+    font-size: 10px;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Selected state for POV cards - sparkles only, no glow */
@@ -12095,7 +12132,7 @@ textarea.fate-field {
 
 /* Button gleam — visible and full strength (override zoomed card dimming) */
 .sb-flavor-btn .card-gleam-clip {
-    z-index: 0;
+    z-index: 10;
     border-radius: 0;
 }
 .sb-card.zoomed .sb-flavor-btn .card-gleam-layer,
@@ -14170,12 +14207,13 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 
 .authorship-card-title {
     font-family: 'lust-script-display', 'lust-script', serif;
-    font-size: 1.1em;
+    font-size: 1.32em;
     font-weight: 400;
     color: #1a1612; /* Black text */
     text-shadow: none;
-    margin-bottom: 4px;
-    margin-top: 15px;
+    line-height: 1.05;
+    margin-bottom: 2px;
+    margin-top: 0;
 }
 
 .authorship-card-desc {
@@ -15935,40 +15973,154 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    CARD DESIGNER OUTPUT — Per-card title/desc positioning (pixel-precise)
    ═══════════════════════════════════════════════════════════════════════════════ */
 
+/* ── World — Back titles ── */
+#worldGrid > div.sb-card[data-grp="world"][data-val="Dystopia"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 75.5px; left: 50px; font-size: 16px;
+}
+#worldGrid > div.sb-card[data-grp="world"][data-val="PostApocalyptic"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 75.5px; left: 13px; font-size: 16px;
+}
+#worldGrid > div.sb-card[data-grp="world"][data-val="SciFi"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 76.5px; left: 61px; font-size: 16px;
+}
+#worldGrid > div.sb-card[data-grp="world"][data-val="Fantasy"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 75.5px; left: 53px; font-size: 16px;
+}
+#worldGrid > div.sb-card.selected.flipped[data-grp="world"][data-val="Fantasy"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    font-size: 16px;
+}
+#worldGrid > div.sb-card[data-grp="world"][data-val="Historical"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 77.5px; left: 45px; font-size: 16px;
+}
+#worldGrid > div.sb-card[data-grp="world"][data-val="Modern"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 76.5px; left: 53px; font-size: 16px;
+}
+
 /* ── Story Pull (Pressure) — Back titles ── */
-#pressureGrid > div.sb-card[data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+#pressureGrid > div.sb-card[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 73px; left: 30px;
+    top: 82.5px; left: 16px;
 }
-#pressureGrid > div.sb-card[data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+#pressureGrid > div.sb-card[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 74px; left: 31px;
+    top: 84.5px; left: 25px;
 }
-#pressureGrid > div.sb-card[data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+#pressureGrid > div.sb-card[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 74px; left: 32px;
+    top: 82px; left: 24px;
 }
-#pressureGrid > div.sb-card[data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+#pressureGrid > div.sb-card[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 81px; left: 53px;
+    top: 83.5px; left: 55px;
+}
+
+/* ── Story Pull (Pressure) — Flipped front content ── */
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 53.5px; left: 33px;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 45.5px; left: 36px;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+    right: auto; bottom: auto;
+    top: 124.5px; left: 36.5px;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 45.5px; left: 38.5px;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+    right: auto; bottom: auto;
+    top: 127.5px; left: 41.5px;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 43px; left: 33px;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 255px; left: 63px;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+    right: auto; bottom: auto;
+    top: 123.5px; left: 55px;
 }
 
 /* ── Story Pull (Pressure) — Zoomed front content ── */
-#sbZoomPortal > div.sb-card.zoomed[data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
     right: auto; bottom: auto;
-    top: 41px; left: 25px;
+    top: 84.5px; left: 5.5px;
 }
-#sbZoomPortal > div.sb-card.zoomed[data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 0px; left: 5px;
+    top: 258.5px; left: 55.5px;
 }
-#sbZoomPortal > div.sb-card.zoomed[data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#sbZoomPortal > div.sb-card.zoomed.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 57.5px; left: 35.5px;
+    top: 256.5px; left: 53.5px; font-size: 13.5px;
 }
-#sbZoomPortal > div.sb-card.zoomed[data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
+#sbZoomPortal > div.sb-card.zoomed.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 108.5px; left: -4px;
+    top: 43px; left: 26px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 45.5px; left: 34.5px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 258.5px; left: 34.5px; font-size: 11px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
+    right: auto; bottom: auto;
+    top: 5px; left: 2px; height: 130px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
+    right: auto; bottom: auto;
+    top: 90px; left: -1px;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 258px; left: 34.5px; font-size: 11.5px;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 61.5px; left: 23.5px; font-size: 8.5px;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
+    right: auto; bottom: auto;
+    top: 9.5px; left: 1px; height: 134px;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
+    right: auto; bottom: auto;
+    top: 98px; left: 1px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 258px; left: 30px; font-size: 11px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
+    right: auto; bottom: auto;
+    top: 7px; left: 4.5px; height: 130px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
+    right: auto; bottom: auto;
+    top: 99.5px; left: -4.5px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 56.5px; left: 40.5px;
 }
 
 /* ── POV — Back titles ── */
@@ -16002,19 +16154,46 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     right: auto; bottom: auto;
     top: 76.5px; left: 57px; font-size: 16px;
 }
-#toneGrid > div.sb-card[data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+#toneGrid > div.sb-card[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 76.5px; left: 66px; font-size: 16px;
+    top: 76.5px; left: 63px; font-size: 16px;
 }
 #toneGrid > div.sb-card[data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
     top: 76.5px; left: 57px; font-size: 16px;
 }
-#toneGrid > div.sb-card[data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
-    right: auto; bottom: auto; font-size: 16px;
+#toneGrid > div.sb-card[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 75.5px; left: 65px; font-size: 16px;
 }
 #toneGrid > div.sb-card.selected.flipped[data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto; font-size: 13px;
+}
+
+/* ── Dynamic — Back titles ── */
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 85.5px; left: 20px;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 85.5px; left: 33px;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 86.5px; left: 25px;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 85.5px; left: 25px;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 82px; left: 44px;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 85.5px; left: 33px;
 }
 
 /* ── Length — Taste front desc ── */

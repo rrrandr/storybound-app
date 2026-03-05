@@ -1717,6 +1717,7 @@ function setSelectedState(mount, selectedCardEl){
                 </div>
             `;
             mount.appendChild(card);
+            if (window.applyCardGleam) window.applyCardGleam(card);
         }
     };
 
@@ -1905,6 +1906,11 @@ function setSelectedState(mount, selectedCardEl){
         // Bind commitment triggers once (safe no-op if elements missing)
         bindCommitHooks(mount);
         bindInputCommit(mount);
+
+        // Apply gleam effect to all fate cards
+        if (window.applyCardGleam) {
+            mount.querySelectorAll('.fate-card').forEach(window.applyCardGleam);
+        }
 
         console.log('[FATE] dealFateCards complete — cards bound');
     };

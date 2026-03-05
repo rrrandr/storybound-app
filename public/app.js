@@ -3328,10 +3328,11 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
       visible_uniform: 12,
       controversial: 1,
       invariant_rules: [
-        "The 13th moon is controversial.",
-        "The 13th moon is only clearly visible over Fate's Favor during Syzygy; otherwise denied or obscured.",
-        "No moon names are defined.",
-        "Moons do not introduce alternate magic systems."
+        "The 13th moon (The Hungry Eye) is controversial — charcoal void sphere, believed to consume sacrifices.",
+        "The Hungry Eye is only clearly visible over Fate's Favor during Syzygy; otherwise denied or obscured.",
+        "Moon names are canonical (see FATELANDS_MOONS). No additional moons may be invented.",
+        "Moons do not introduce alternate magic systems.",
+        "The moons follow a predictable orbital pattern called the Favor Path."
       ]
     },
     syzygy_location: "The Ascendant Run",
@@ -3413,7 +3414,199 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
   // VII. LOCK STATEMENT
   //    Fantasy is a canonical continent engine, not a procedural template module.
   //    Canon > modularity. Geography > abstraction. Sacrifice > power fantasy.
+  //
+  // VIII. LUNAR INVARIANTS
+  //    Exactly 13 canonical moons. Names are fixed (FATELANDS_MOONS array).
+  //    Inner: Velorin, Tessryn, Khalyra, Serapha. Outer: Astrael, Dathriel,
+  //    Mournfall, Tharos. Anomalous: The Chain, Ithralis, Vorath, Elarion.
+  //    Final: The Hungry Eye. No additional moons. Moons follow the Favor Path.
+  //    The Hungry Eye is visible only during Syzygy. Syzygy = 11+ moons aligned.
+  //    Moon festivals are canonical (Night of Vows, Serapha's Zenith, etc.).
+  //    getFatelandsSky(sceneDay) is the SOLE authority for sky state.
   // ═══════════════════════════════════════════════════════════════════════════
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FATELANDS MOON SYSTEM — Deterministic 13-Moon Orbital Engine
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FATELANDS_MOONS = [
+    // Inner Moons — fast orbits, frequently visible (offset staggers visibility)
+    { name: 'Velorin',     orbit: 3,  offset: 0,  type: 'inner',     descriptor: 'quicksilver crescent, first to rise' },
+    { name: 'Tessryn',     orbit: 5,  offset: 2,  type: 'inner',     descriptor: 'pale amber, steady and reliable' },
+    { name: 'Khalyra',     orbit: 7,  offset: 4,  type: 'inner',     descriptor: 'blue-white, associated with clarity' },
+    { name: 'Serapha',     orbit: 11, offset: 6,  type: 'inner',     descriptor: 'high radiance, sacred ceremonies' },
+    // Outer Moons — slower orbits, less frequently visible
+    { name: 'Astrael',     orbit: 13, offset: 3,  type: 'outer',     descriptor: 'copper glow, travelers\' moon' },
+    { name: 'Dathriel',    orbit: 17, offset: 9,  type: 'outer',     descriptor: 'deep violet, associated with secrets' },
+    { name: 'Mournfall',   orbit: 19, offset: 11, type: 'outer',     descriptor: 'dim red, omen moon — mourning and remembrance' },
+    { name: 'Tharos',      orbit: 23, offset: 15, type: 'outer',     descriptor: 'silver-green, associated with tides and trade' },
+    // Anomalous Moons — irregular, thematically charged
+    { name: 'The Chain',   orbit: 29, offset: 7,  type: 'anomalous', descriptor: 'asteroid swarm — upheaval and broken bonds' },
+    { name: 'Ithralis',    orbit: 31, offset: 14, type: 'anomalous', descriptor: 'warm gold, lovers\' moon — vows and confessions' },
+    { name: 'Vorath',      orbit: 37, offset: 20, type: 'anomalous', descriptor: 'bone-white, associated with sacrifice debts' },
+    { name: 'Elarion',     orbit: 41, offset: 25, type: 'anomalous', descriptor: 'pale green shimmer, associated with transformation' },
+    // Final Moon — rarely visible, feared
+    { name: 'The Hungry Eye', orbit: 97, offset: 0, type: 'final',  descriptor: 'charcoal void sphere — cosmic judgment, consumes sacrifices' }
+  ];
+
+  /**
+   * Deterministic sky state for a given scene day.
+   * A moon is "visible" when it's in the first half of its orbital cycle.
+   * @param {number} sceneDay - The story day (1-based, derived from turnCount)
+   * @returns {{ visible: Array, hidden: Array, syzygy: boolean }}
+   */
+  function getFatelandsSky(sceneDay) {
+    const day = Math.max(1, Math.floor(sceneDay));
+    const visible = [];
+    const hidden = [];
+    for (const moon of FATELANDS_MOONS) {
+      // The Hungry Eye is only visible during syzygy (computed below)
+      if (moon.type === 'final') continue;
+      const phase = (day + moon.offset) % moon.orbit;
+      if (phase < moon.orbit / 2) {
+        visible.push(moon);
+      } else {
+        hidden.push(moon);
+      }
+    }
+    // Syzygy: 11+ of the 12 regular moons visible simultaneously (very rare — ~0.6% of days)
+    const syzygy = visible.length >= 11;
+    // The Hungry Eye appears only during syzygy
+    const hungryEye = FATELANDS_MOONS.find(m => m.type === 'final');
+    if (syzygy) {
+      visible.push(hungryEye);
+    } else {
+      hidden.push(hungryEye);
+    }
+    return { visible, hidden, syzygy };
+  }
+
+  /**
+   * Check if a given scene day triggers syzygy (≥11 regular moons visible).
+   * @param {number} sceneDay
+   * @returns {boolean}
+   */
+  function checkSyzygy(sceneDay) {
+    return getFatelandsSky(sceneDay).syzygy;
+  }
+
+  /**
+   * Return a festival descriptor if a thematically significant moon
+   * is at peak visibility (phase === 0) on this scene day.
+   * @param {number} sceneDay
+   * @returns {string|null}
+   */
+  function getMoonFestival(sceneDay) {
+    const day = Math.max(1, Math.floor(sceneDay));
+    const festivals = {
+      Ithralis:  'Night of Vows — lovers\' confessions carry binding weight under Ithralis',
+      Serapha:   'Serapha\'s Zenith — sacred ceremonies and public sacrifices',
+      Mournfall: 'The Mourning Tide — remembrance of the lost, debts of grief honored',
+      'The Chain': 'Chain-break Eve — upheaval feared, bonds tested, old oaths shatter',
+      'The Hungry Eye': 'The Swallowing — cosmic judgment feared; no sacrifices attempted'
+    };
+    for (const [moonName, desc] of Object.entries(festivals)) {
+      const moon = FATELANDS_MOONS.find(m => m.name === moonName);
+      if (moon && day % moon.orbit === 0) return desc;
+    }
+    return null;
+  }
+
+  /**
+   * Build a compact moon/sky directive for scene prompts.
+   * Injects only visible moon names + any festival. < 100 tokens.
+   * @param {number} sceneDay
+   * @returns {string}
+   */
+  function buildMoonDirective(sceneDay) {
+    const sky = getFatelandsSky(sceneDay);
+    const moonNames = sky.visible.map(m => m.name).join(', ');
+    let directive = `\nFATELANDS SKY (Night ${sceneDay}): ${moonNames}`;
+    if (sky.syzygy) {
+      directive += `\nSYZYGY ACTIVE — ${sky.visible.length} moons aligned along the Favor Path. The Hungry Eye is visible. The Ascendant Run flows visibly uphill. Favor amplitude peaks. One sacrificed thing may be reclaimed.`;
+    }
+    const festival = getMoonFestival(sceneDay);
+    if (festival) {
+      directive += `\nFESTIVAL: ${festival}`;
+    }
+    directive += `\nSKY RULE: Mention visible moons by name only when the scene occurs outdoors at night or during celestial events. Do not list moons. Weave 1-2 naturally into atmosphere.`;
+    return directive;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FIVE GREAT HOUSES OF VAELRYN REACH — Political Flavor (not mechanics)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const VAELRYN_HOUSES = [
+    { name: 'House Aurelion',  symbol: 'golden crown split by lightning', domain: 'royal authority',     reputation: 'keepers of the Crown Citadel' },
+    { name: 'House Thornmere', symbol: 'black rose with thorns',          domain: 'Thornwild frontier',  reputation: 'masters of forest diplomacy' },
+    { name: 'House Velar',     symbol: 'silver tower',                    domain: 'arcane scholarship',  reputation: 'allies of Lytharyn mages' },
+    { name: 'House Dathros',   symbol: 'bronze war spear',                domain: 'military command',    reputation: 'defenders of the Ashen Verge' },
+    { name: 'House Merrowyn',  symbol: 'sea chain encircling a star',     domain: 'maritime trade',      reputation: 'ties to the Shackle Isles' }
+  ];
+
+  /**
+   * Returns a house presence flavor line rotated by story day.
+   * Empty string if not Fantasy.
+   */
+  function getVaelrynHousePresence(st) {
+    if (st.picks?.world !== 'Fantasy') return '';
+    const index = ((st.turnCount || 0) + 1) % VAELRYN_HOUSES.length;
+    return `Agents of ${VAELRYN_HOUSES[index].name} may influence events nearby.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FIVE LEGENDARY SACRIFICES — Mythic History (not mechanics)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FATELANDS_LEGENDARY_SACRIFICES = [
+    { name: 'The Crown of Teeth',       figure: 'King Aravel the First',            sacrifice: 'his own teeth and royal blood',     result: 'bound the Shackle Isles chains and ended the pirate kings' },
+    { name: 'The Memory of Lytharyn',    figure: 'Archmage Selvarin',                sacrifice: 'all memory of his own life',        result: 'sealed a rift surge that threatened the arcane city' },
+    { name: 'The Thornwild Covenant',    figure: 'Lady Caeryn of the First Favored', sacrifice: 'her ability to feel love',          result: 'ended a century war between humans and the First Favored' },
+    { name: 'The Shadow of the Veilwood', figure: 'the nameless pilgrim',             sacrifice: 'their shadow',                      result: 'entered the Veilwood and returned alive' },
+    { name: 'The Hunger Offering',       figure: 'unknown',                           sacrifice: 'an entire noble bloodline',         result: 'the Hungry Eye consumed a falling moon fragment' }
+  ];
+
+  /**
+   * Returns a legendary sacrifice rumor rotated by story day.
+   * Empty string if not Fantasy.
+   */
+  function getLegendarySacrificeRumor(st) {
+    if (st.picks?.world !== 'Fantasy') return '';
+    const index = ((st.turnCount || 0) + 1) % FATELANDS_LEGENDARY_SACRIFICES.length;
+    const legend = FATELANDS_LEGENDARY_SACRIFICES[index];
+    return `People still whisper of ${legend.name}, when ${legend.figure} sacrificed ${legend.sacrifice}.`;
+  }
+
+  // Compact canon engine — authoritative reference for Fantasy world integrity (<350 tokens)
+  const FATELANDS_CANON_ENGINE = `FATELANDS CANON ENGINE (AUTHORITATIVE):
+The Fatelands — a continent shaped by sacrifice. Magic requires identity loss (flesh, memory, emotion, years, voice, shadow, name, status, inheritance, reflection). Four Sacrifice Laws: A (permanent), B (reclaimable/rare), C (reclaimable at terrible cost/returns distorted), D (transferred/reviled/hunted).
+Fate's Favor: central meteor basin ringed by black peaks. Lightning drawn toward it. Birds avoid it. The 13 moons never pass directly overhead.
+The Ascendant Run flows calmly against gravity; reverses outward only during Syzygy.
+Favor Amplitude states: low / stable / rising / surging / fracturing.
+Bloodlines: First Favored (long-lived, emotion erodes), Part-Favored (ambiguous), Favorborn (surge-born anomalies), Winged Ones (sacrifice flight).
+Romantic Sacrifice Law: sincere love-sacrifice binds cleanly; doubt twists it. Favor amplifies truth.
+Religious factions: Riftwardens (basin seals something), Ascendants (enlightenment through sacrifice), Veilwood Silence (forest hides Favor's origin), Hungry Eye Faith (sacrifices consumed by final moon).
+Shackle Isles: chain-connected archipelago. Chains raised/lowered to control shipping. Walking the taut chains = daring tradition.
+INTEGRITY: No free magic. No second engine. No generic fantasy tropes. Canon > invention.`;
+
+  /**
+   * Get the Fantasy canon block for the current scene.
+   * Scene 1: full canon engine. Subsequent: compressed anchor.
+   * @param {object} st - app state
+   * @returns {string}
+   */
+  function getFantasyCanonBlock(st) {
+    const isScene1 = !st.turnCount || st.turnCount === 0;
+    if (isScene1) return `\n\n${FATELANDS_CANON_ENGINE}`;
+    // Compressed anchor for subsequent scenes
+    return `\nFATELANDS CANON REMINDER:
+- Magic requires identity sacrifice. Four Laws (A-D). No free magic.
+- Fate's Favor: central basin. Ascendant Run flows against gravity.
+- Favor Amplitude: ${st._fantasyCoreEntropy?.fantasy_favor_amplitude || 'stable'}
+- Romantic sacrifice: sincere = clean binding, doubt = twisted.
+- Canon > invention. No second magic engine. No generic fantasy.`;
+  }
 
   const HISTORICAL_FLAVOR_STRUCTURAL_DATA = {
     historical_core: {
@@ -20357,7 +20550,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const scrollers = overlay.querySelectorAll('.tempt-wish-scroll');
       scrollers.forEach(scroller => {
           const dir = scroller.dataset.dir;
-          const speed = dir === 'up' ? -0.3 : 0.3;
+          const speed = dir === 'up' ? -0.15 : 0.15;
           let pos = dir === 'up' ? 0 : -(scroller.scrollHeight / 2);
           scroller._temptAnim = true;
           function tick() {
@@ -26204,7 +26397,7 @@ REALITY MODEL:
 • Fate's Favor — central meteor basin — regulates magical amplitude across the continent
 • Favor Amplitude: ${favorAmp}
 • Syzygy: rare celestial alignment (at most once per story). During syzygy one may sacrifice something new to reclaim something previously lost. Only at the Ascendant Run. Only once per lifetime.
-• Thirteen moons. The thirteenth is disputed — visible only over Fate's Favor during syzygy.
+• Thirteen canonical moons (4 inner, 4 outer, 4 anomalous, 1 final). The Hungry Eye (13th) is disputed — visible only over Fate's Favor during syzygy.
 • Romantic sacrifice law: sacrifice offered sincerely for love binds cleanly; sacrifice made with doubt twists. The Favor amplifies truth.
 
 COSMOLOGY:
@@ -26233,6 +26426,52 @@ No additional magic systems may be introduced.
 No race, creature, or artifact may possess supernatural abilities that do not operate through the Sacrifice Laws.
 If a phenomenon cannot be explained through sacrifice, it does not belong in The Fatelands.
 All Fantasy flavors operate through this single engine. No flavor introduces a second system.`;
+
+      // Fatelands Canon Engine — full on Scene 1, compressed anchor on subsequent
+      block += getFantasyCanonBlock(state);
+
+      // Deterministic moon sky directive
+      const sceneDay = (state.turnCount || 0) + 1; // turnCount 0 = Scene 1 = Day 1
+      block += buildMoonDirective(sceneDay);
+
+      // Deep lore reference — not every scene, occasional flavor
+      if (sceneDay > 1 && sceneDay % 3 === 0) {
+          block += `\nDEEP LORE ACCESS: You may reference one piece of Fatelands deep lore this scene (a cult belief, a regional tradition, a river legend, a moon myth). Weave it into dialogue or setting — never as exposition. Max 1 sentence.`;
+      }
+
+      // Fantasy World Integrity validator
+      block += `\nFANTASY WORLD INTEGRITY:
+- If a scene introduces any supernatural element, verify it operates through the Sacrifice Laws.
+- If a location is named, verify it exists in Fatelands canon or is a sub-location within a canonical region.
+- If a moon is named, it must be one of the 13 canonical moons.
+- Generic fantasy tropes (chosen one prophecy, mana pools, elemental magic, dragon riders) are FORBIDDEN unless filtered through sacrifice mechanics.`;
+
+      // Vaelryn Houses — political flavor when scene is in or near Vaelryn Reach
+      if (!region || region === 'vaelryn_reach' || region === 'the_ashen_verge') {
+          block += `\n\nVAELRYN POLITICS:
+The five great houses compete for influence over the Crown Citadel: Aurelion (royal authority), Thornmere (Thornwild frontier), Velar (arcane scholarship), Dathros (military command), Merrowyn (maritime trade).
+Alliances shift constantly. Marriage, sacrifice, and military victories all affect prestige.
+${getVaelrynHousePresence(state)}`;
+          // Succession pressure — rare intrigue seed
+          if (sceneDay > 3 && sceneDay % 7 === 0) {
+              block += `\nRumors circulate that the balance of power among the houses may soon change.`;
+          }
+      }
+
+      // Nobility integrity rule
+      block += `\nFATELANDS NOBILITY: If Vaelryn Reach is referenced, the ruling elite must come from one of the five great houses (Aurelion, Thornmere, Velar, Dathros, Merrowyn). Do not invent additional ruling houses unless a story explicitly introduces a minor noble family.`;
+
+      // Legendary Sacrifices — mythic history flavor
+      block += `\n\nFATELANDS RELIC CULTURE:
+Objects connected to legendary sacrifices are revered — preserved teeth of kings, journals of forgotten mages, chain fragments from the Shackle Isles, shadow mirrors, Hungry Eye meteor shards. Pilgrims travel the continent seeking them.
+Rulers often claim descent from or spiritual connection to one of the Five Legendary Sacrifices.`;
+      // Rotate a legend rumor into the scene
+      const legendRumor = getLegendarySacrificeRumor(state);
+      if (legendRumor) block += `\n${legendRumor}`;
+      // Prophecy hook — very rare
+      if (sceneDay > 5 && sceneDay % 11 === 0) {
+          block += `\nSome believe a Sixth Legendary Sacrifice has yet to occur.`;
+      }
 
       // Region anchor if assigned by location engine
       if (region && regionMeta) {
@@ -26612,12 +26851,21 @@ INTERPRETATION RULES:
               } else {
                   block += `\n\n${GLASS_HOUSE_CANON_ANCHOR}`;
               }
+              // Glass House specific: Chorus as material narrator
+              block += `\nGLASS HOUSE — CHORUS AS MATERIAL NARRATOR:
+- The Chorus resonance field behaves like an emotional atmosphere and may act as a material narrator.
+- Example: "The Chorus brushed the square like warm rain, tasting hesitation."
+- Do NOT substitute generic dystopian tropes (riot square, authoritarian enforcers, rebellion crowds) unless they explicitly exist in Glass House canon.`;
           }
           // World bellwether (structural anchor for drift-prone flavors)
           const worldBellwether = BELLWETHERS.world[primaryFlavor.val];
           if (worldBellwether) {
               block += `\n\nBELLWETHER — STRUCTURAL REFERENCE:\n${worldBellwether}\nDo not copy wording from this example. Use it only to guide structural logic.`;
           }
+          // World Physics Lock — prevent genre-default drift
+          block += `\n\nWORLD PHYSICS LOCK:
+- When a world flavor is active, its defining physical or social system must appear within the first paragraph of the scene.
+- Do NOT substitute generic genre tropes unless they explicitly exist in the world canon.`;
       }
       for (const flavor of sorted) {
           if (flavor === primaryFlavor) continue; // Already emitted as primary lens
@@ -27355,7 +27603,7 @@ SCALE: ${anchor.scale}
 VIEWPOINT: ${anchor.viewpoint}${anchor.environmentalCondition ? `\nENVIRONMENTAL CONDITIONS: ${anchor.environmentalCondition}` : ''}
 WORLD: ${world}${flavorLabel ? `\nFLAVOR: ${flavorLabel}` : ''}
 ATMOSPHERE: ${tone}
-
+${world === 'Fantasy' ? (() => { const sd = (state.turnCount || 0) + 1; const sky = getFatelandsSky(sd); const names = sky.visible.slice(0, 4).map(m => m.name).join(', '); return sky.syzygy ? `\nSKY: SYZYGY — all 13 moons visible along the Favor Path. The Hungry Eye dominates. Unearthly light.` : `\nSKY: Multiple moons visible — ${names}. Painted lunar light, distinct colors per moon.`; })() : ''}
 GEOGRAPHY DOMINANCE (MANDATORY):
 This image depicts terrain, architecture, and environmental scale.
 PRIMARY SUBJECTS: landforms, structures, weather, vegetation, geological features.
@@ -27369,7 +27617,7 @@ ATTRACTOR SUPPRESSION: Do NOT default to castle on hill at sunset, generic city 
 No text, no watermark, no UI elements. Landscape orientation.`;
           } else {
               settingPrompt = `Geographic environmental illustration of a ${world} world. ${tone} atmosphere.${flavorLabel ? ' ' + flavorLabel + ' setting.' : ''}
-
+${world === 'Fantasy' ? (() => { const sd = (state.turnCount || 0) + 1; const sky = getFatelandsSky(sd); const names = sky.visible.slice(0, 3).map(m => m.name).join(', '); return sky.syzygy ? 'Sky: SYZYGY — all moons visible, unearthly multi-lunar light.' : `Sky: Multiple moons (${names}), distinct colored lunar light.`; })() : ''}
 Painted concept art of a specific, named location within this world. Show terrain, architecture, weather, and environmental scale.
 Wide landscape composition, deep perspective, layered foreground/midground/background.
 No text, no watermark, no UI elements. No character focus. Landscape orientation.`;
@@ -35152,7 +35400,7 @@ Generate the title and synopsis now.` }
     }
 
     // Face selectors for multi-face card types
-    var FACE_SELECTORS = '.sb-card-face, .authorship-card-face, .mode-card-back, .mode-card-front, .tier-card-back, .tier-card-face, .pact-card-back, .pact-card-front';
+    var FACE_SELECTORS = '.sb-card-face, .authorship-card-face, .mode-card-back, .mode-card-front, .tier-card-back, .tier-card-face, .pact-card-back, .pact-card-front, .fate-card > .inner > .front, .fate-card > .inner > .back';
 
     // Card types that ARE their own face (no child face elements)
     var SELF_FACE_CLASSES = ['character-tarot-card'];
@@ -35205,7 +35453,7 @@ Generate the title and synopsis now.` }
 
     /** Bulk-apply to all card elements in the DOM. */
     function initAllCardGleams() {
-      document.querySelectorAll('.sb-card, .authorship-card, .mode-card, .tier-card, .character-tarot-card, .pact-card').forEach(applyCardGleam);
+      document.querySelectorAll('.sb-card, .authorship-card, .mode-card, .tier-card, .character-tarot-card, .pact-card, .fate-card').forEach(applyCardGleam);
     }
 
     // Expose globally for dynamic card creation
@@ -35246,6 +35494,21 @@ Generate the title and synopsis now.` }
     }
   })();
 
+  // Insert <wbr> after em dashes, semicolons, commas, periods in POV/Length desc text
+  // so lines break at natural punctuation instead of touching card gold lines
+  (function initPovDescBreaks() {
+    function applyBreaks() {
+      document.querySelectorAll('#povGrid .sb-card-front .sb-card-desc, #lengthGrid .sb-card-front .sb-card-desc').forEach(function(desc) {
+        desc.innerHTML = desc.innerHTML.replace(/(—|;|,|\.)\s*/g, '$1<wbr> ');
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', applyBreaks);
+    } else {
+      applyBreaks();
+    }
+  })();
+
   function renderArchetypeCards() {
       const grid = document.getElementById('archetypeCardGrid');
       if (!grid) return;
@@ -35282,12 +35545,15 @@ Generate the title and synopsis now.` }
 
           // Card structure: BACK = Black PNG art, FRONT = Gold PNG art + description (visible when zoomed)
           const resolvedDesireStyle = resolveLIPronouns(arch.desireStyle);
+          // Insert <wbr> after em dashes, semicolons, commas, periods to allow line breaks
+          // that keep text from touching card black lines
+          const breakableDesc = resolvedDesireStyle.replace(/(—|;|,|\.)\s*/g, '$1<wbr> ');
 
           card.innerHTML = `
               <div class="sb-card-inner">
                   <div class="sb-card-face sb-card-back" data-archetype="${id}"></div>
                   <div class="sb-card-face sb-card-front" data-archetype="${id}">
-                      <span class="archetype-printed-desc">${resolvedDesireStyle}</span>
+                      <span class="archetype-printed-desc">${breakableDesc}</span>
                   </div>
               </div>
           `;
@@ -41213,35 +41479,41 @@ ${modernWorldBlock2}${historicalWorldBlock2}${fantasyWorldBlock2}${scifiWorldBlo
 - Do not use destiny language, inevitability framing, or structural awareness.
 - Material characters remain active during all scene types, including intimate scenes.
 
-MATERIAL POV — OPENING SENTENCE RULE:
-- The opening sentence of every scene MUST originate from the perception of a material character (object, surface, architecture, air, fabric, light, etc).
+MATERIAL POV — OPENING SENTENCE LOCK:
+- The opening sentence of every scene MUST originate from a material character's perception.
+- Do not begin scenes with human interior narration.
 - The narrator identity is established in this first sentence and should remain primarily material thereafter.
-- Do not begin scenes with human interior thought.
 
 MATERIAL ANCHOR ROTATION:
-- Do not narrate repeatedly through the same object.
-- Rotate material POV anchors naturally across the scene (stone, table, doorframe, air, light, fabric, floor, window, etc).
+- Rotate material POV anchors throughout the scene (stone, fabric, air, wood, light, water, metal, etc).
+- Avoid narrating through the same object repeatedly unless the scene physically centers on that object.
 - Each anchor observes through its physical interaction with the scene.
 
-HUMAN ACCESS CONSTRAINT:
-- Human interior access is limited and brief.
-- Human thoughts may appear only after material perception establishes the moment.
+MATERIAL EVIDENCE RULE (POV STABILIZER):
+- When a material character interprets human behavior, the interpretation must be justified by a physical signal (pressure, movement, vibration, sound, heat, repetition, or pattern memory).
+- Material characters should frequently interpret human behavior using pattern memory derived from physical interaction.
+- Objects do not merely observe actions; they form biased interpretations about what those actions mean based on past encounters.
+
+CORRECT (material interpretation with physical evidence):
+"The doorway recognized the pause — people only hesitated there when they intended to lie."
+"The lantern disliked how tightly he held the room; flame always pulled toward fear."
+"The floorboards remembered this argument. The last one ended with a broken oath."
+"The wind caught the lie before anyone else did."
+"The cloak tightened against her shoulders — she always pulled it close before refusing."
+
+INCORRECT (abstract omniscience or human-dominant):
+"The table knew he was lying."
+"She hesitated, unsure what to say."
+"He sounded nervous."
+
+HUMAN INTERIOR BLEED CONTROL:
+- Human interior thoughts may appear briefly but must follow a material observation.
 - Human narration must never dominate consecutive paragraphs.
+- Human thoughts should feel like access points inside a material perceptual field.
 
-CORRECT (material-led):
-"The doorframe recognized the pause — she always hesitated there before lying."
-"The table disliked the way his palm struck it; the impact lacked conviction."
-"The pendant lay flat against her throat — it only did that when she meant to defy her family."
-"The tapestry remembered his weight from the last betrayal."
-"The cobblestones noticed her before anyone else did. She stepped lighter than the merchants."
-"The table disliked the way his palm struck it. He only hit that hard when lying."
-
-INCORRECT (human-dominant):
-"She hesitated, afraid to lie."
-"He sounded uncertain."
-"She felt anxious about defying her family."
-"He planned another betrayal."
-"She walked nervously through the square."
+Example of correct bleed:
+"The doorway noticed her hesitation.
+She knew this would cost her."
     ` : ''}
     ${state.povMode === 'loveInterestPOV' ? `
 ═══════════════════════════════════════════════════════════════════════════════
@@ -41560,30 +41832,33 @@ Every Fate appearance must imply a plan in motion, a withheld intervention, or a
 - Do not use destiny language, inevitability framing, or structural awareness.
 - Material characters remain active during all scene types, including intimate scenes.
 
-MATERIAL POV — OPENING SENTENCE RULE:
-- The opening sentence of every scene MUST originate from the perception of a material character.
-- The narrator identity is established in this first sentence and should remain primarily material thereafter.
-- Do not begin scenes with human interior thought.
+MATERIAL POV — OPENING SENTENCE LOCK:
+- The opening sentence of every scene MUST originate from a material character's perception.
+- Do not begin scenes with human interior narration.
 
 MATERIAL ANCHOR ROTATION:
-- Do not narrate repeatedly through the same object.
-- Rotate material POV anchors naturally across the scene.
-- Each anchor observes through its physical interaction with the scene.
+- Rotate material POV anchors throughout the scene (stone, fabric, air, wood, light, water, metal, etc).
+- Avoid narrating through the same object repeatedly unless the scene physically centers on that object.
 
-HUMAN ACCESS CONSTRAINT:
-- Human interior access is limited and brief.
-- Human thoughts may appear only after material perception establishes the moment.
+MATERIAL EVIDENCE RULE (POV STABILIZER):
+- When a material character interprets human behavior, the interpretation must be justified by a physical signal (pressure, movement, vibration, sound, heat, repetition, or pattern memory).
+- Objects form biased interpretations about what actions mean based on past encounters.
+
+CORRECT (material interpretation with physical evidence):
+"The doorway recognized the pause — people only hesitated there when they intended to lie."
+"The lantern disliked how tightly he held the room; flame always pulled toward fear."
+"The floorboards remembered this argument. The last one ended with a broken oath."
+"The wind caught the lie before anyone else did."
+
+INCORRECT (abstract omniscience or human-dominant):
+"The table knew he was lying."
+"She hesitated, unsure what to say."
+"He sounded nervous."
+
+HUMAN INTERIOR BLEED CONTROL:
+- Human interior thoughts may appear briefly but must follow a material observation.
 - Human narration must never dominate consecutive paragraphs.
-
-CORRECT (material-led):
-"The doorframe recognized the pause — she always hesitated there before lying."
-"The table disliked the way his palm struck it; the impact lacked conviction."
-"The cobblestones noticed her before anyone else did. She stepped lighter than the merchants."
-
-INCORRECT (human-dominant):
-"She hesitated, afraid to lie."
-"He sounded uncertain."
-"She walked nervously through the square."`
+- Human thoughts should feel like access points inside a material perceptual field.`
 : state.povMode === 'loveInterestPOV' ?
 `LOVE INTEREST POV — NARRATOR IDENTITY:
 - "I" = the Love Interest. Always. The player character = "she"/"he"/"they".
@@ -42984,6 +43259,15 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
                       if (synImg) {
                           synImg.src = imageUrl;
                           synImg.classList.remove('hidden');
+                      }
+                      // If synopsis was waiting for this image, reveal it now
+                      if (window._synopsisWaitingForImage) {
+                          window._synopsisWaitingForImage = false;
+                          const storyText = document.getElementById('storyText');
+                          if (storyText) {
+                              storyText.classList.remove('hidden');
+                              storyText.style.opacity = '1';
+                          }
                       }
                   }
               };
@@ -46835,20 +47119,38 @@ ${buildVisualContinuityDirective()}`;
       // On synopsis page, skip setting plate curl — image goes inline
       if (_readerPage === 1) {
           const storyText = document.getElementById('storyText');
-          if (storyText) {
-              storyText.style.opacity = '1';
-              storyText.classList.remove('hidden');
-          }
-          // Update inline synopsis image if available
           if (hasSettingImage) {
+              // Image ready — show synopsis with image
+              if (storyText) {
+                  storyText.style.opacity = '1';
+                  storyText.classList.remove('hidden');
+              }
               const synImg = document.getElementById('synopsisSettingImg');
               if (synImg) {
                   synImg.src = sceneImg.src;
                   synImg.classList.remove('hidden');
               }
+              window._synopsisWaitingForImage = false;
+              console.log('[CURL-CHAIN] → synopsis page: storyText revealed with inline image');
+          } else {
+              // No image yet — keep synopsis hidden, wait for image onload
+              if (storyText) {
+                  storyText.classList.add('hidden');
+                  storyText.style.opacity = '0';
+                  storyText.classList.add('synopsis-page-active');
+              }
+              window._synopsisWaitingForImage = true;
+              setTimeout(function() {
+                  if (window._synopsisWaitingForImage) {
+                      window._synopsisWaitingForImage = false;
+                      const st = document.getElementById('storyText');
+                      if (st) { st.classList.remove('hidden'); st.style.opacity = '1'; }
+                      console.log('[CURL-CHAIN] Safety timeout — revealing synopsis without image');
+                  }
+              }, 20000);
+              console.log('[CURL-CHAIN] → synopsis page: waiting for setting image');
           }
           _restorePageIndicator();
-          console.log('[CURL-CHAIN] → synopsis page: storyText revealed with inline image');
           return;
       }
 
@@ -46969,6 +47271,22 @@ ${buildVisualContinuityDirective()}`;
               synImg.classList.remove('hidden');
           } else if (synImg) {
               synImg.classList.add('hidden');
+              // Image not loaded yet — hide synopsis until image arrives
+              // The image onload at line ~43000 will reveal it
+              if (storyText && !curlChainActive) {
+                  storyText.classList.add('hidden');
+                  storyText.style.opacity = '0';
+                  window._synopsisWaitingForImage = true;
+                  // Safety timeout: reveal synopsis after 20s even if image never arrives
+                  setTimeout(function() {
+                      if (window._synopsisWaitingForImage) {
+                          window._synopsisWaitingForImage = false;
+                          const st = document.getElementById('storyText');
+                          if (st) { st.classList.remove('hidden'); st.style.opacity = '1'; }
+                          console.log('[SYNOPSIS] Safety timeout — revealing without image');
+                      }
+                  }, 20000);
+              }
           }
 
           // Hide fate cards, inputs, buttons — only Next survives
