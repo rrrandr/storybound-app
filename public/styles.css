@@ -3626,12 +3626,17 @@ select:-webkit-autofill {
 }
 
 .pact-card {
-    width: 150px;
+    width: 180px; /* 150 × 1.2 = 180 (20% larger) */
     aspect-ratio: 2.75 / 4.75;
     perspective: 1000px;
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
+}
+@media (max-width: 768px) {
+    .pact-card {
+        width: clamp(126px, calc(126px + (180 - 126) * ((100vw - 360px) / (768 - 360))), 180px);
+    }
 }
 
 .pact-card-inner {
@@ -4099,7 +4104,7 @@ select:-webkit-autofill {
 /* Mobile pact cards */
 @media (max-width: 500px) {
     .pact-card {
-        width: 100px;
+        width: 126px; /* 180 × 0.7 */
     }
     .pact-card-row {
         gap: 12px;
@@ -4932,11 +4937,16 @@ body.library-zoom-active .vault-book-list {
 }
 
 .tier-card {
-    width: 160px;
+    width: 192px; /* 160 × 1.2 = 192 (20% larger) */
     aspect-ratio: 2.75 / 4.75;
     perspective: 1000px;
     cursor: pointer;
     display: inline-block;
+}
+@media (max-width: 768px) {
+    .tier-card {
+        width: clamp(134px, calc(134px + (192 - 134) * ((100vw - 360px) / (768 - 360))), 192px);
+    }
 }
 
 .tier-card-inner {
@@ -9716,11 +9726,11 @@ textarea.fate-field {
    11 cards: 6+5 on wide screens, 4+4+3 on medium, 3-col on narrow. */
 .dynamic-grouped {
     display: grid;
-    grid-template-columns: repeat(6, minmax(68px, 112px));
+    grid-template-columns: repeat(6, minmax(82px, 134px));
     gap: 12px;
     justify-content: center;
     width: 95%;
-    max-width: 760px; /* 6×112 + 5×12 = 732, + breathing room */
+    max-width: 864px; /* 6×134 + 5×12 = 864 */
     margin: 0 auto;
     padding: 0;
     box-sizing: border-box;
@@ -9740,14 +9750,14 @@ textarea.fate-field {
 
 @media (max-width: 800px) {
     .dynamic-grouped {
-        grid-template-columns: repeat(4, minmax(68px, 112px));
-        max-width: 496px; /* 4×112 + 3×12 */
+        grid-template-columns: repeat(4, minmax(82px, 134px));
+        max-width: 584px; /* 4×134 + 3×12 */
     }
 }
 @media (max-width: 500px) {
     .dynamic-grouped {
-        grid-template-columns: repeat(3, minmax(60px, 90px));
-        max-width: 302px;
+        grid-template-columns: repeat(3, minmax(72px, 108px));
+        max-width: 356px;
         gap: 8px;
     }
 }
@@ -10583,7 +10593,7 @@ textarea.fate-field {
 
 .sb-card-back .sb-card-title {
     font-family: 'lust-script-display', serif;
-    font-size: 18px;
+    font-size: 22px;
     color: var(--gold);
     line-height: 1.2;
     word-wrap: break-word;
@@ -14051,9 +14061,9 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 .authorship-card {
-    width: 140px;
-    /* Explicit height from tarot ratio: 140 * (4.75/2.75) = 241.8px */
-    height: 242px;
+    width: 168px; /* 140 × 1.2 = 168 (20% larger) */
+    /* Explicit height from tarot ratio: 168 * (4.75/2.75) = 290.2px */
+    height: 290px;
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions (fallback) */
     /* Prevent flex stretching */
     flex-shrink: 0;
@@ -14062,6 +14072,12 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     perspective: 800px;
     cursor: pointer;
     transition: transform 0.3s ease, opacity 0.4s ease;
+}
+@media (max-width: 768px) {
+    .authorship-card {
+        width: clamp(118px, calc(118px + (168 - 118) * ((100vw - 360px) / (768 - 360))), 168px);
+        height: auto; /* Let aspect-ratio control height when fluid */
+    }
 }
 
 .authorship-card:hover:not(.selected):not(.dissipating) {
@@ -15917,33 +15933,92 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   STORY PULL — Back-of-card title positioning per card
+   CARD DESIGNER OUTPUT — Per-card title/desc positioning (pixel-precise)
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-#pressureGrid .sb-card[data-val="Survival"] .sb-card-back .sb-card-title {
-    top: 67px;
-    left: 35px;
-    right: auto;
-    font-size: 18px;
+/* ── Story Pull (Pressure) — Back titles ── */
+#pressureGrid > div.sb-card[data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 73px; left: 30px;
 }
-#pressureGrid .sb-card[data-val="DesireObsession"] .sb-card-back .sb-card-title {
-    top: 60px;
-    left: 17px;
-    right: auto;
-    font-size: 18px;
-    width: 106px;
+#pressureGrid > div.sb-card[data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 74px; left: 31px;
 }
-#pressureGrid .sb-card[data-val="EscapePursuit"] .sb-card-back .sb-card-title {
-    top: 60px;
-    left: 17px;
-    right: auto;
-    font-size: 18px;
-    width: 106px;
+#pressureGrid > div.sb-card[data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 74px; left: 32px;
 }
-#pressureGrid .sb-card[data-val="PowerControl"] .sb-card-back .sb-card-title {
-    top: 61px;
-    left: 17px;
-    right: auto;
-    font-size: 18px;
-    width: 106px;
+#pressureGrid > div.sb-card[data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 81px; left: 53px;
+}
+
+/* ── Story Pull (Pressure) — Zoomed front content ── */
+#sbZoomPortal > div.sb-card.zoomed[data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 41px; left: 25px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
+    right: auto; bottom: auto;
+    top: 0px; left: 5px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 57.5px; left: 35.5px;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
+    right: auto; bottom: auto;
+    top: 108.5px; left: -4px;
+}
+
+/* ── POV — Back titles ── */
+#povGrid > div.sb-card[data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 77px; left: 32px; font-size: 16px;
+}
+#povGrid > div.sb-card[data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 77px; left: 36px; font-size: 16px;
+}
+#povGrid > div.sb-card[data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 78px; left: 35px; font-size: 16px;
+}
+#povGrid > div.sb-card[data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 65px; left: 31px; font-size: 16px;
+}
+#povGrid > div.sb-card[data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 77px; left: 35px; font-size: 16px;
+}
+#povGrid > div.sb-card[data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 77px; left: 35px; font-size: 16px;
+}
+
+/* ── Tone — Back titles ── */
+#toneGrid > div.sb-card[data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 76.5px; left: 57px; font-size: 16px;
+}
+#toneGrid > div.sb-card[data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 76.5px; left: 66px; font-size: 16px;
+}
+#toneGrid > div.sb-card[data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 76.5px; left: 57px; font-size: 16px;
+}
+#toneGrid > div.sb-card[data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
+    right: auto; bottom: auto; font-size: 16px;
+}
+#toneGrid > div.sb-card.selected.flipped[data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto; font-size: 13px;
+}
+
+/* ── Length — Taste front desc ── */
+#lengthGrid > div.sb-card.selected.flipped[data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
 }
