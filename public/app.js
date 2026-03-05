@@ -3917,15 +3917,24 @@ For constraint/petition:
           }
 
           const data = await res.json();
-          const content = data.choices?.[0]?.message?.content;
+
+          // Normalized response: proxy now returns flat shape with content + spread parsed fields
+          // Use spread fields directly (canonical_instruction, normalized_text, etc.)
+          if (data.ok && (data.canonical_instruction || data.normalized_text || data.primary_subtype !== undefined)) {
+              return data;
+          }
+
+          // Fallback: extract from data.content (string) if spread fields not present
+          const content = data.content ?? data.choices?.[0]?.message?.content ?? null;
 
           if (!content) {
-              const errorMsg = '[NORMALIZATION FAILED] No content in API response';
+              const receivedKeys = Object.keys(data);
+              const errorMsg = `[NORMALIZATION FAILED] Proxy returned 200 but payload missing content. Keys: [${receivedKeys.join(', ')}]`;
               console.error(errorMsg);
               throw new Error(errorMsg);
           }
 
-          // Parse JSON response
+          // Parse JSON response from content string
           try {
               const parsed = JSON.parse(content.trim());
               return parsed;
@@ -14613,10 +14622,17 @@ Return ONLY valid JSON:
       state._beatPlanCache = null;
       state.relationship_phase = 'strangers'; // forward-only emotional progression tracker
       state.sceneSkeleton = null; // Scene Skeleton Cache — reusable narrative structure
-      state._skeletonMeta = null; // { generatedAt, relationship_phase, storyturn, location }
+      state._skeletonMeta = null; // { generatedAt, relationship_phase, storyturn, location, explicitAuth }
+      state.recentEnvironmentAnchors = []; // Sliding window of last 3 environment anchors
+      state.recentPhraseFragments = []; // Phrase Entropy Guard — sliding window of recent fragments
+      state.sceneIntent = null; // Scene Intent — compact narrative goal for the renderer
+      state._persistentDirectiveCache = null; // Cached persistent directives (POV, tone, safety, etc.)
+      state._persistentDirectiveKey = null; // Change detection key
+      state.forceDirectiveRefresh = false; // Force full directive resend on next scene
       state.motifLedger = []; // Motif Echo Memory — max 5 active symbolic motifs
       state.motifExpressionLedger = {}; // last 5 expressions per motif for rotation
       state.relationshipVector = { attraction: 0, trust: 0, resentment: 0, jealousy: 0, fear_of_abandonment: 0, curiosity: 0 };
+      state.desireVector = { approach: 0, withdrawal: 0 }; // Push-pull romantic tension tracker
       state.narrativeGravity = { primary_arc: '', secondary_arc: '', emotional_arc: '' };
       state.relationshipGravity = { direction: 'orbit', intensity: 3 };
       state._lastPlayerChoiceType = ''; // for Emotional Choice Echo
@@ -16014,6 +16030,42 @@ Rules:
       return `\n\nEMOTIONAL TENSIONS (allow these to shape character behavior, do not collapse into a single emotional state):\n${lines.join('\n')}\nEmotional tensions may intensify or soften depending on scene outcomes. Not every scene should escalate pressure.`;
   }
 
+  // ── DESIRE VECTOR — Push-Pull Romantic Tension ──
+  function _updateDesireVector(sceneText) {
+      const plain = (sceneText || '').replace(/<[^>]+>/g, '').toLowerCase();
+      if (plain.length < 50) return;
+      const dv = state.desireVector || { approach: 0, withdrawal: 0 };
+
+      // Approach signals: closeness, touch, care, vulnerability, desire
+      const approachHits = (plain.match(/\b(touch(ed|ing)?|kiss(ed)?|held|lean(ed|ing)?\s*(closer|in|toward)|brush(ed)?\s*(against|fingers|hand|arm|hair)|reach(ed)?\s*(for|out|toward)|step(ped)?\s*closer|hand\s*(on|over)|caught\s*(her|his)\s*(eye|gaze|hand)|smiled?\s*(at|softly)|whisper(ed)?|gentle|tender|warm(th)?|care(d|ful)?|protect(ed|ing)?|safe|vulnerable|trust(ed|ing)?|confess(ed)?|admit(ted)?)\b/gi) || []).length;
+
+      // Withdrawal signals: distance, fear, conflict, hesitation, rejection
+      const withdrawalHits = (plain.match(/\b(pull(ed)?\s*(away|back)|step(ped)?\s*(back|away)|flinch(ed)?|turn(ed)?\s*away|avoid(ed|ing)?|silence[ds]?|cold(ness|ly)?|shut\s*(down|out)|wall(s)?|guard(ed)?|distance[ds]?|reject(ed|ion)?|betray(ed|al)?|doubt(ed|s)?|hesitat(e|ed|ion)|afraid|scar(ed|s)?|regret(ted)?|mistrust|suspicious|wary|bitter|sting|wound(ed)?)\b/gi) || []).length;
+
+      dv.approach = Math.min(5, Math.max(0, dv.approach + (approachHits >= 2 ? 1 : 0) - (withdrawalHits >= 3 ? 0.5 : 0)));
+      dv.withdrawal = Math.min(5, Math.max(0, dv.withdrawal + (withdrawalHits >= 2 ? 1 : 0) - (approachHits >= 3 ? 0.5 : 0)));
+
+      // Natural decay toward center
+      dv.approach = Math.max(0, dv.approach * 0.9);
+      dv.withdrawal = Math.max(0, dv.withdrawal * 0.9);
+
+      state.desireVector = dv;
+  }
+
+  function buildDesireVectorDirective() {
+      if (state.turnCount < 2) return '';
+      const dv = state.desireVector;
+      if (!dv || (dv.approach < 0.5 && dv.withdrawal < 0.5)) return '';
+
+      const approachLabel = dv.approach >= 3 ? 'strong' : dv.approach >= 1.5 ? 'moderate' : 'fragile';
+      const withdrawalLabel = dv.withdrawal >= 3 ? 'strong' : dv.withdrawal >= 1.5 ? 'moderate' : 'fragile';
+
+      return `\nDESIRE VECTOR:
+Approach: ${approachLabel} | Withdrawal: ${withdrawalLabel}
+Express the tension between these forces through: hesitation, interrupted gestures, glances, silence, misinterpretation, small acts of care.
+Attraction should not move in a straight line. Closeness creates vulnerability or hesitation. Avoid immediate emotional clarity.\n`;
+  }
+
   /**
    * Narrative Gravity — persistent directional arcs for long stories.
    * Updated via _extractStoryMemory when major shifts are detected.
@@ -16867,15 +16919,16 @@ Rules:
       const ns = state.narrativeState || {};
       const ni = state.narrativeIntent || {};
 
+      const envAnchor = state.sceneSkeleton?.environment_anchor || '';
       const result = await window.StoryboundOrchestration.callChatGPT([
           { role: 'system', content: 'You plan scene beats for fiction. Return ONLY numbered beats. No prose. No dialogue.' },
           { role: 'user', content: `Given narrative context, plan 3-5 scene beats (1 line each, ~80 tokens total):
 Intent: ${ni.primary_goal || 'advance story'} | Tension: ${ni.active_tension || 'building'}
 Relationship: ${ns.relationship_state || 'developing'} | ST: ${ns.storyturn_state || state.storyturn || 'ST1'}
 Player: ${act} / ${dia}
-
+${envAnchor ? `Environment anchor: ${envAnchor}\nReference this anchor when appropriate. At least one beat should interact with it.` : ''}
 Return ONLY numbered beats. No prose. No dialogue.` }
-      ], { max_tokens: 120, temperature: 0.5 });
+      ], 'PRIMARY_AUTHOR', { max_tokens: 120, temperature: 0.5 });
 
       if (result && typeof result === 'string' && result.trim().length > 10) {
           state._beatPlanCache = { sceneIndex: state.turnCount, beats: result.trim() };
@@ -16886,19 +16939,21 @@ Return ONLY numbered beats. No prose. No dialogue.` }
   }
 
   /**
-   * Scene Skeleton Cache — reusable narrative structure across 3-5 scenes.
-   * Generated via beat planner API; reused until invalidated by phase/storyturn/location change.
+   * Scene Skeleton Cache — reusable narrative structure across 2 scenes max.
+   * Generated via beat planner API; reused until invalidated by phase/storyturn/location/explicitAuth change.
+   * Includes environment_anchor for physical scene grounding.
    */
   function _isSkeletonValid() {
       if (state.volatility_window?.active) return false; // Tempt Fate volatility forces fresh skeleton
       if (!state.sceneSkeleton || !state._skeletonMeta) return false;
       const meta = state._skeletonMeta;
       const scenesSince = state.turnCount - meta.generatedAt;
-      if (scenesSince >= 5) return false;
+      if (scenesSince >= 2) return false; // Tightened from 5 → 2 to prevent prose drift
       if (state.relationship_phase !== meta.relationship_phase) return false;
       if ((state.narrativeState?.storyturn_state || state.storyturn || '') !== meta.storyturn) return false;
       const currentLoc = state.physicalState?.location || '';
       if (currentLoc && meta.location && currentLoc !== meta.location) return false;
+      if (!!state.explicitEmbodimentAuthorized !== !!meta.explicitAuth) return false;
       return true;
   }
 
@@ -16910,34 +16965,47 @@ Return ONLY numbered beats. No prose. No dialogue.` }
       const rt = state.relationshipTension || {};
 
       const result = await window.StoryboundOrchestration.callChatGPT([
-          { role: 'system', content: 'You define narrative skeletons for fiction scenes. Return ONLY a JSON object with keys: structural_pacing, narrative_density, dialogue_ratio, beat_style, tension_rhythm. Each value is a short phrase (3-8 words). No prose.' },
-          { role: 'user', content: `Define a narrative skeleton for the next 3-5 scenes:
+          { role: 'system', content: 'You define narrative skeletons for fiction scenes. Return ONLY a JSON object with keys: environment_anchor, structural_pacing, narrative_density, dialogue_ratio, beat_style, tension_rhythm. environment_anchor = a physical object, surface, sound, or environmental phenomenon that the scene should begin from (4-12 words, specific to the world). Other values are short phrases (3-8 words). No prose.' },
+          { role: 'user', content: `Define a narrative skeleton for the next scene:
 Relationship: ${ns.relationship_state || 'developing'} | Phase: ${state.relationship_phase || 'strangers'}
 Tension: ${ni.active_tension || 'building'} | Trust: ${rt.trust || 'unknown'}
 ST: ${ns.storyturn_state || state.storyturn || 'ST1'}
 Location: ${state.physicalState?.location || 'unknown'}
+World: ${state.picks?.world || 'unknown'}
 Player intent: ${act} / ${dia}
-
+${state.recentEnvironmentAnchors?.length ? `AVOID these recent anchors: ${state.recentEnvironmentAnchors.join('; ')}` : ''}
 Return ONLY valid JSON. No markdown. No explanation.` }
-      ], { max_tokens: 150, temperature: 0.4 });
+      ], 'PRIMARY_AUTHOR', { max_tokens: 150, temperature: 0.4 });
 
       if (!result || typeof result !== 'string') return null;
       try {
           const cleaned = result.replace(/```json?\s*/g, '').replace(/```/g, '').trim();
           const parsed = JSON.parse(cleaned);
           if (parsed.structural_pacing || parsed.beat_style) {
+              const anchor = parsed.environment_anchor || '';
+              // Anchor rotation: reject if repeated in last 3 scenes (silent fallback)
+              const recentAnchors = state.recentEnvironmentAnchors || [];
+              const anchorRepeated = anchor && recentAnchors.some(a => a.toLowerCase() === anchor.toLowerCase());
               state.sceneSkeleton = {
+                  environment_anchor: anchorRepeated ? '' : anchor,
                   structural_pacing: parsed.structural_pacing || 'measured escalation',
                   narrative_density: parsed.narrative_density || 'moderate',
                   dialogue_ratio: parsed.dialogue_ratio || 'balanced',
                   beat_style: parsed.beat_style || 'observation then interaction',
                   tension_rhythm: parsed.tension_rhythm || 'rising with pauses'
               };
+              // Track anchor for rotation (sliding window of 3)
+              if (anchor && !anchorRepeated) {
+                  if (!state.recentEnvironmentAnchors) state.recentEnvironmentAnchors = [];
+                  state.recentEnvironmentAnchors.push(anchor);
+                  state.recentEnvironmentAnchors = state.recentEnvironmentAnchors.slice(-3);
+              }
               state._skeletonMeta = {
                   generatedAt: state.turnCount,
                   relationship_phase: state.relationship_phase || 'strangers',
                   storyturn: ns.storyturn_state || state.storyturn || '',
-                  location: state.physicalState?.location || ''
+                  location: state.physicalState?.location || '',
+                  explicitAuth: !!state.explicitEmbodimentAuthorized
               };
               console.log('[SKELETON] Generated for scene', state.turnCount, state.sceneSkeleton);
               return state.sceneSkeleton;
@@ -16951,7 +17019,94 @@ Return ONLY valid JSON. No markdown. No explanation.` }
   function buildSkeletonDirective() {
       if (!state.sceneSkeleton) return '';
       const sk = state.sceneSkeleton;
-      return `\n\nNarrative skeleton for this scene:\n• pacing: ${sk.structural_pacing}\n• dialogue ratio: ${sk.dialogue_ratio}\n• emotional density: ${sk.narrative_density}\n• beat rhythm: ${sk.beat_style}\n• tension rhythm: ${sk.tension_rhythm}\nPreserve this structural rhythm unless the scene requires deviation.\n`;
+      let directive = `\n\nNarrative skeleton for this scene:`;
+      if (sk.environment_anchor) {
+          directive += `\n\nSCENE ENVIRONMENT ANCHOR:\nThe scene must begin from this physical object or phenomenon: ${sk.environment_anchor}\nThe first sentence must originate from this anchor before introducing character movement or dialogue.`;
+      }
+      directive += `\n• pacing: ${sk.structural_pacing}\n• dialogue ratio: ${sk.dialogue_ratio}\n• emotional density: ${sk.narrative_density}\n• beat rhythm: ${sk.beat_style}\n• tension rhythm: ${sk.tension_rhythm}\nPreserve this structural rhythm unless the scene requires deviation.\n`;
+      return directive;
+  }
+
+  // ── SCENE INTENT ──
+  // Compact narrative goal derived from skeleton + beats + storyturn. No API call.
+
+  const _SCENE_PURPOSE_BY_ST = {
+    ST1: 'establish world and character presence',
+    ST2: 'deepen attraction through proximity and tension',
+    ST3: 'test the relationship through external pressure',
+    ST4: 'force a choice that reveals character',
+    ST5: 'escalate stakes toward emotional climax',
+    ST6: 'resolve or transform the central tension'
+  };
+
+  const _READER_EFFECT_BY_TENSION = {
+    'rising with pauses': 'anticipation building through restraint',
+    'steady escalation': 'mounting unease',
+    'measured escalation': 'controlled suspense',
+    'volatile': 'unpredictability and urgency',
+    'descending': 'melancholy settling in'
+  };
+
+  function _buildSceneIntent(skeleton, beats) {
+    const st = state.narrativeState?.storyturn_state || state.storyturn || 'ST1';
+    const sk = skeleton || state.sceneSkeleton || {};
+    const dv = state.desireVector || { approach: 0, withdrawal: 0 };
+
+    const intent = {
+      scene_purpose: _SCENE_PURPOSE_BY_ST[st] || 'advance the story',
+      emotional_shift: dv.approach > dv.withdrawal ? 'toward closeness' : dv.withdrawal > dv.approach ? 'toward distance' : 'ambivalent tension',
+      character_pressure: sk.structural_pacing || 'measured',
+      environment_focus: sk.environment_anchor || 'world-specific physical detail',
+      desired_reader_effect: _READER_EFFECT_BY_TENSION[sk.tension_rhythm] || 'immersion and curiosity'
+    };
+
+    state.sceneIntent = intent;
+    return intent;
+  }
+
+  function buildSceneIntentDirective() {
+    const si = state.sceneIntent;
+    if (!si) return '';
+    return `\nSCENE INTENT:\nPurpose: ${si.scene_purpose}\nEmotional movement: ${si.emotional_shift}\nEnvironment focus: ${si.environment_focus}\nCharacter pressure: ${si.character_pressure}\nDesired reader effect: ${si.desired_reader_effect}\nWrite the scene to fulfill this narrative intent.\n`;
+  }
+
+  // ── PHRASE ENTROPY GUARD ──
+  // Extracts short verb/sensory fragments from scene text to prevent repetition.
+  const _PHRASE_STOPWORDS = new Set(['the','a','an','and','but','or','in','on','at','to','for','of','is','was','were','are','be','been','has','had','have','with','that','this','from','they','them','their','she','her','he','him','his','it','its']);
+
+  function extractPhraseFragments(sceneText) {
+      if (!sceneText || typeof sceneText !== 'string') return;
+      const sentences = sceneText.replace(/["""]/g, '').split(/[.!?]+/).filter(s => s.trim().length > 10);
+      const fragments = [];
+      for (const sentence of sentences) {
+          const words = sentence.trim().split(/\s+/).filter(w => w.length > 2);
+          // Sliding window: 3-6 word fragments containing a verb-like word
+          for (let len = 3; len <= Math.min(6, words.length); len++) {
+              for (let i = 0; i <= words.length - len; i++) {
+                  const frag = words.slice(i, i + len);
+                  const meaningful = frag.filter(w => !_PHRASE_STOPWORDS.has(w.toLowerCase()));
+                  if (meaningful.length >= 2) {
+                      fragments.push(frag.join(' ').toLowerCase());
+                  }
+              }
+          }
+      }
+      // Deduplicate, pick up to 10 most distinctive (longest first)
+      const unique = [...new Set(fragments)].sort((a, b) => b.length - a.length).slice(0, 10);
+      if (!state.recentPhraseFragments) state.recentPhraseFragments = [];
+      state.recentPhraseFragments.push(...unique);
+      state.recentPhraseFragments = state.recentPhraseFragments.slice(-20);
+  }
+
+  function buildPhraseEntropyDirective() {
+      const frags = state.recentPhraseFragments;
+      if (!frags || frags.length < 3) return '';
+      const sample = frags.slice(-8).map(f => `"${f}"`).join(', ');
+      return `\nPHRASE VARIETY CONSTRAINT:\nAvoid repeating recent phrase fragments such as: ${sample}\nUse fresh sentence structures and sensory descriptions.\n`;
+  }
+
+  function buildEmotionEmbodimentDirective() {
+      return `\nEMOTION EMBODIMENT:\nWhen describing emotion, prefer physical expression over abstract summary. Express through: body movement, breath, posture, hand/eye movement, object interaction, environmental reaction.\nAvoid opening sentences with: "she felt", "he felt", "tension filled", "emotion surged", "something shifted between them".\nIf an emotional concept appears, precede it with a physical signal. Max 1 abstract emotional sentence per scene.\nAllow emotion through dialogue: "You knew," she said quietly > "She felt betrayed."\n`;
   }
 
   // ── LAYER 2 — EPOCH STATE RESET ──
@@ -19210,6 +19365,15 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       if (_currentScreenId === 'modeSelect') {
           window.showScreen('tierGate', true);
           return;
+      }
+
+      // CORRIDOR BACK: Step back one corridor row instead of exiting to modeSelect
+      if (_currentScreenId === 'setup' && document.body.classList.contains('corridor-mode')) {
+          if (corridorActiveRowIndex > 0) {
+              navigatePrevRow();
+              return;
+          }
+          // At row 0 — fall through to exit corridor → modeSelect
       }
 
       if (_navHistory.length === 0) {
@@ -27568,6 +27732,40 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
       return msg.includes('abort') || msg.includes('signal is aborted');
   }
 
+  const SETTING_COMPOSITION_MODES = [
+    { name: 'aerial_geography',      directive: 'High aerial geographic perspective showing the full landscape layout' },
+    { name: 'ground_traveler_view',   directive: 'Ground-level perspective as if a traveler has arrived at the location' },
+    { name: 'vertical_environment',   directive: 'Vertical composition emphasizing towering structures or cliffs' },
+    { name: 'environmental_interior', directive: 'Environment-focused interior view of the location\'s architecture or terrain structures' },
+    { name: 'edge_framed_landscape',  directive: 'Environment framed partially by foreground terrain, roots, rock, or architecture' },
+    { name: 'panoramic_geography',    directive: 'Wide panoramic geographic view emphasizing terrain and scale' }
+  ];
+
+  const SETTING_LIGHTING_MODES = {
+    _default: [
+      { name: 'dawn',       directive: 'Soft dawn light illuminating the landscape' },
+      { name: 'midday',     directive: 'Clear daylight revealing terrain and environmental detail' },
+      { name: 'overcast',   directive: 'Overcast sky with diffused natural light' },
+      { name: 'stormlight', directive: 'Storm clouds with dramatic light breaking through' },
+      { name: 'moonlit',    directive: 'Cool moonlight illuminating the environment' },
+      { name: 'mist',       directive: 'Mist-filled atmosphere softening distant terrain' }
+    ],
+    SciFi: [
+      { name: 'orbital_sun',     directive: 'Harsh orbital sunlight casting sharp shadows across the environment' },
+      { name: 'nebula_glow',     directive: 'Diffused nebula glow painting the environment in alien color' },
+      { name: 'planetary_shadow', directive: 'Planetary shadow creating deep twilight across the terrain' },
+      { name: 'dawn',            directive: 'Soft dawn light illuminating the landscape' },
+      { name: 'overcast',        directive: 'Overcast sky with diffused natural light' }
+    ],
+    Dystopia: [
+      { name: 'smog_filtered',   directive: 'Smog-filtered daylight with muted colors and haze' },
+      { name: 'harsh_artificial', directive: 'Harsh artificial lighting casting stark institutional shadows' },
+      { name: 'overcast',        directive: 'Overcast sky with diffused natural light' },
+      { name: 'stormlight',      directive: 'Storm clouds with dramatic light breaking through' },
+      { name: 'dawn',            directive: 'Soft dawn light illuminating the landscape' }
+    ]
+  };
+
   async function generateSettingImage() {
       console.log('[SETTING:GEN] Starting setting image generation');
 
@@ -27592,6 +27790,9 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
           const flavorLabel = flavorKey && WORLD_LABELS[flavorKey] ? WORLD_LABELS[flavorKey] : (state.worldCustomText || '');
 
           const anchor = pickSettingLocationAnchor();
+          const composition = SETTING_COMPOSITION_MODES[Math.floor(Math.random() * SETTING_COMPOSITION_MODES.length)];
+          const lightingPool = SETTING_LIGHTING_MODES[world] || SETTING_LIGHTING_MODES._default;
+          const lighting = lightingPool[Math.floor(Math.random() * lightingPool.length)];
           let settingPrompt;
 
           if (anchor) {
@@ -27601,6 +27802,8 @@ LOCATION: ${anchor.name}
 GEOGRAPHY: ${anchor.geography}
 SCALE: ${anchor.scale}
 VIEWPOINT: ${anchor.viewpoint}${anchor.environmentalCondition ? `\nENVIRONMENTAL CONDITIONS: ${anchor.environmentalCondition}` : ''}
+COMPOSITION STYLE: ${composition.directive}
+LIGHTING CONDITIONS: ${lighting.directive}
 WORLD: ${world}${flavorLabel ? `\nFLAVOR: ${flavorLabel}` : ''}
 ATMOSPHERE: ${tone}
 ${world === 'Fantasy' ? (() => { const sd = (state.turnCount || 0) + 1; const sky = getFatelandsSky(sd); const names = sky.visible.slice(0, 4).map(m => m.name).join(', '); return sky.syzygy ? `\nSKY: SYZYGY — all 13 moons visible along the Favor Path. The Hungry Eye dominates. Unearthly light.` : `\nSKY: Multiple moons visible — ${names}. Painted lunar light, distinct colors per moon.`; })() : ''}
@@ -27610,6 +27813,8 @@ PRIMARY SUBJECTS: landforms, structures, weather, vegetation, geological feature
 SUPPRESS: romance composition, portrait framing, character-centered scenes.
 Environment occupies at least 90% of the frame.
 
+SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait framing.
+
 SCALE FIGURE (OPTIONAL): A small native inhabitant or traveler may appear for scale only — must face away, occupy less than 8% of frame, must not be focal point.
 
 ATTRACTOR SUPPRESSION: Do NOT default to castle on hill at sunset, generic city skyline, spaceship corridor, medieval village panorama, or empty desert wasteland.
@@ -27618,9 +27823,12 @@ No text, no watermark, no UI elements. Landscape orientation.`;
           } else {
               settingPrompt = `Geographic environmental illustration of a ${world} world. ${tone} atmosphere.${flavorLabel ? ' ' + flavorLabel + ' setting.' : ''}
 ${world === 'Fantasy' ? (() => { const sd = (state.turnCount || 0) + 1; const sky = getFatelandsSky(sd); const names = sky.visible.slice(0, 3).map(m => m.name).join(', '); return sky.syzygy ? 'Sky: SYZYGY — all moons visible, unearthly multi-lunar light.' : `Sky: Multiple moons (${names}), distinct colored lunar light.`; })() : ''}
+COMPOSITION STYLE: ${composition.directive}
+LIGHTING CONDITIONS: ${lighting.directive}
 Painted concept art of a specific, named location within this world. Show terrain, architecture, weather, and environmental scale.
 Wide landscape composition, deep perspective, layered foreground/midground/background.
-No text, no watermark, no UI elements. No character focus. Landscape orientation.`;
+No text, no watermark, no UI elements. No character focus. Landscape orientation.
+SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait framing.`;
           }
 
           console.log('[SETTING:GEN] Anchor:', anchor?.name || 'none', '| World:', world, '| Flavor:', flavorLabel || 'none');
@@ -41514,6 +41722,30 @@ HUMAN INTERIOR BLEED CONTROL:
 Example of correct bleed:
 "The doorway noticed her hesitation.
 She knew this would cost her."
+
+SCENE MATERIALITY RULE:
+Scenes must anchor perception through physical objects specific to the world environment.
+Avoid abstract description.
+Rotate anchors between: landscape, tools, scars, relics, weather, animals, architecture.
+
+MATERIAL POV ROTATION:
+- Consecutive paragraphs should normally shift to a different material narrator.
+- Material narrators may repeat only when the scene is physically centered on that object.
+- Otherwise rotate across the environment (stone, wood, air, fabric, metal, light, water, architecture, tools, etc.).
+- This creates a MATERIAL ENSEMBLE — a chorus of physical observers rather than a single talking object.
+
+CORRECT ROTATION:
+"The doorway recognized her hesitation."
+"The lantern watched her step into the room."
+"The table distrusted the way her hand rested on the contract."
+"She knew she was about to break her promise."
+
+INCORRECT ROTATION:
+"The cobblestones noticed her."
+"The cobblestones waited."
+"The cobblestones remembered."
+"The cobblestones feared."
+Avoid single-object dominance unless the narrative is intentionally anchored to that object.
     ` : ''}
     ${state.povMode === 'loveInterestPOV' ? `
 ═══════════════════════════════════════════════════════════════════════════════
@@ -41638,6 +41870,20 @@ LOVE INTEREST POV — MANDATORY OPENER:
     ];
     const selectedSkeleton = macroSkeletons[Math.floor(Math.random() * macroSkeletons.length)];
 
+    // Layer A.5 — Opening Environment Type (flavor dominance pressure)
+    const OPENING_ENVIRONMENT_TYPES = [
+      'private interior',
+      'travel movement',
+      'ritual or ceremony',
+      'environmental anomaly',
+      'work or craft',
+      'edge of danger',
+      'aftermath of an event',
+      'unexpected discovery'
+    ];
+    const openingEnvIndex = (state.storyId ? state.storyId.charCodeAt(0) : 1) % OPENING_ENVIRONMENT_TYPES.length;
+    const selectedOpeningEnv = OPENING_ENVIRONMENT_TYPES[openingEnvIndex];
+
     // Layer B — Micro Opening Mode (surface texture within skeleton)
     const openingModes = [
         { mode: 'Motion-first', directive: 'First beat: mid-action. The protagonist is physically doing something when we meet them.' },
@@ -41701,6 +41947,20 @@ ${selectedOpening.directive}
 
 ENVIRONMENTAL EMPHASIS: ${selectedEnvDominance}-dominant
 Descriptive weight should lean toward ${selectedEnvDominance.toLowerCase()} details. This is emphasis, not exclusion — other senses remain active.
+
+═══════════════════════════════════════════════════════
+COLD MATERIAL OPEN (MANDATORY)
+═══════════════════════════════════════════════════════
+The first sentence of the story must originate from a physical object, surface, sound, or environmental phenomenon.
+Do NOT begin with: character movement, exposition, marketplace activity, dialogue, or narrative summary.
+
+Acceptable material anchors: stone, water, weather, tools, fabric, scars, animal sounds, light, shadows, moonlight, smoke, dust, chains, metal.
+${storyWorld === 'Fantasy' ? `FATELANDS MATERIAL ANCHORS (prefer when relevant):
+• the Ascendant Run flowing uphill • chain links of the Shackle Isles • relic blades or sacrificial tools • scars from sacrifice • moonlight from Ithralis • meteor glass near Fate's Favor` : ''}
+The character appears AFTER the material anchor establishes the world. Build the scene outward from the object.
+
+CORRECT: "The chain groaned in the wind as the tide pulled against the Shackle Isles."
+INCORRECT: "She hurried through the crowded market square."
 
 ═══════════════════════════════════════════════════════
 SENTENCE-SHAPE VARIANCE (MANDATORY)
@@ -41812,6 +42072,19 @@ These are ALWAYS banned regardless of world:
 - Flashback or memory before the present scene is established
 
 ═══════════════════════════════════════════════════════
+OPENING SCENE CONSTRAINT
+═══════════════════════════════════════════════════════
+Do not begin the story in a generic public space.
+Avoid: marketplaces, taverns as first location, city squares, public authority confrontations, debt enforcement scenes.
+Opening environment type: ${selectedOpeningEnv}
+Focus on atmosphere, physical surroundings, and character state before introducing external conflict.
+
+FLAVOR DOMINANCE:
+The opening scene must visibly reflect the world's pressure.
+${storyWorld === 'Fantasy' ? '• ritual preparation, relic handling, sacrifice scars, unusual moonlight' : storyWorld === 'PostApocalyptic' ? '• environmental hazard, scarcity tension, damaged infrastructure' : storyWorld === 'Dystopia' ? '• surveillance presence, ideological pressure, mandated behavior' : storyWorld === 'SciFi' ? '• technological immersion, system dependency, alien environment' : storyWorld === 'Historical' ? '• period-specific material culture, social hierarchy in action, era-locked objects' : '• social pressure specific to this world, environmental texture, power dynamics in motion'}
+Do not open with neutral scenery.
+
+═══════════════════════════════════════════════════════
 POV REMINDER
 ═══════════════════════════════════════════════════════
 ${state.povMode === 'author5th' ?
@@ -41858,7 +42131,31 @@ INCORRECT (abstract omniscience or human-dominant):
 HUMAN INTERIOR BLEED CONTROL:
 - Human interior thoughts may appear briefly but must follow a material observation.
 - Human narration must never dominate consecutive paragraphs.
-- Human thoughts should feel like access points inside a material perceptual field.`
+- Human thoughts should feel like access points inside a material perceptual field.
+
+SCENE MATERIALITY RULE:
+Scenes must anchor perception through physical objects specific to the world environment.
+Avoid abstract description.
+Rotate anchors between: landscape, tools, scars, relics, weather, animals, architecture.
+
+MATERIAL POV ROTATION:
+- Consecutive paragraphs should normally shift to a different material narrator.
+- Material narrators may repeat only when the scene is physically centered on that object.
+- Otherwise rotate across the environment (stone, wood, air, fabric, metal, light, water, architecture, tools, etc.).
+- This creates a MATERIAL ENSEMBLE — a chorus of physical observers rather than a single talking object.
+
+CORRECT ROTATION:
+"The doorway recognized her hesitation."
+"The lantern watched her step into the room."
+"The table distrusted the way her hand rested on the contract."
+"She knew she was about to break her promise."
+
+INCORRECT ROTATION:
+"The cobblestones noticed her."
+"The cobblestones waited."
+"The cobblestones remembered."
+"The cobblestones feared."
+Avoid single-object dominance unless the narrative is intentionally anchored to that object.`
 : state.povMode === 'loveInterestPOV' ?
 `LOVE INTEREST POV — NARRATOR IDENTITY:
 - "I" = the Love Interest. Always. The player character = "she"/"he"/"they".
@@ -51252,10 +51549,18 @@ Respond in this EXACT format (no labels, just two lines):
 
   // --- GAME LOOP ---
   $('submitBtn')?.addEventListener('click', async () => {
+      // IN-FLIGHT LOCK: Prevent double scene-advance from rapid clicks
+      if (state._isAdvancingScene) {
+          console.warn('[SUBMIT] Blocked — scene advance already in flight');
+          return;
+      }
+      state._isAdvancingScene = true;
+
       // TASK F: Immediate visual feedback on click
       const submitBtn = $('submitBtn');
       if (submitBtn) {
           submitBtn.classList.add('submitting');
+          submitBtn.disabled = true;
       }
       // Disable Next while scene generation is pending
       const _nextBtn = document.getElementById('nextPageBtn');
@@ -51263,8 +51568,8 @@ Respond in this EXACT format (no labels, just two lines):
 
       const billingLock = (state.mode === 'solo') && ['affair','soulmates'].includes(state.storyLength) && !state.subscribed;
       if (billingLock) {
-          if (submitBtn) submitBtn.classList.remove('submitting');
-          // Affair/Soulmates story lengths ALWAYS require Subscribe ($6)
+          state._isAdvancingScene = false;
+          if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
           window.showPaywall('sub_only');
           return;
       }
@@ -51273,7 +51578,8 @@ Respond in this EXACT format (no labels, just two lines):
       // TEASE TIER CLIFFHANGER GATE: Diegetic omen + ritual overlay
       // ═══════════════════════════════════════════════════════════════════
       if (isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP && state.tempQuillAllowance <= 0) {
-          if (submitBtn) submitBtn.classList.remove('submitting');
+          state._isAdvancingScene = false;
+          if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
           console.log('[TEASE] Scene cap reached:', state.turnCount, '>=', state.TEASE_SCENE_CAP);
           // Diegetic omen: subtle shake + fade
           const storyContent = document.getElementById('storyContent');
@@ -51302,7 +51608,8 @@ Respond in this EXACT format (no labels, just two lines):
                       body: JSON.stringify({ userId: user.id, action: 'check' })
                   });
                   if (guardRes.status === 403) {
-                      if (submitBtn) submitBtn.classList.remove('submitting');
+                      state._isAdvancingScene = false;
+                      if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
                       console.warn('[TEASE] Server-side cap reached');
                       window.showPaywall('unlock');
                       return;
@@ -51321,13 +51628,15 @@ Respond in this EXACT format (no labels, just two lines):
       const inFreeTease = isTeaseTier() && (state.turnCount || 0) < state.TEASE_SCENE_CAP;
       if (!inFreeTease) {
           if (!hasFortunes()) {
-              if (submitBtn) submitBtn.classList.remove('submitting');
+              state._isAdvancingScene = false;
+              if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
               openFortunePurchaseModal();
               return;
           }
           const burned = await consumeFortune(1, 'scene');
           if (!burned) {
-              if (submitBtn) submitBtn.classList.remove('submitting');
+              state._isAdvancingScene = false;
+              if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
               openFortunePurchaseModal();
               return;
           }
@@ -51338,7 +51647,8 @@ Respond in this EXACT format (no labels, just two lines):
       const rawAct = $('actionInput').value.trim();
       const rawDia = $('dialogueInput').value.trim();
       if(!rawAct && !rawDia) {
-          if (submitBtn) submitBtn.classList.remove('submitting');
+          state._isAdvancingScene = false;
+          if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
           return alert("Input required.");
       }
 
@@ -51370,7 +51680,8 @@ Respond in this EXACT format (no labels, just two lines):
       const { safeAction, safeDialogue, flags } = sanitizeUserIntent(act, dia);
       if (flags.includes("redirect_nonconsent")) {
           stopLoading();
-          if (submitBtn) submitBtn.classList.remove('submitting');
+          state._isAdvancingScene = false;
+          if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
           showToast("Boundary Redirect Active");
           if(safeAction) $('actionInput').value = safeAction;
           if(safeDialogue) $('dialogueInput').value = safeDialogue;
@@ -52219,7 +52530,26 @@ Apply lightly and sparingly. Never mechanically. Do not reference these rules in
 • Use the story title once organically (not at the beginning).
 Prioritize natural variation over strict consistency if rules conflict.` : '';
 
-      const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${strategyDirective}\n${eroticModeBlock}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildMilestoneDirective()}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nTURN INSTRUCTIONS:
+      // ── PERSISTENT DIRECTIVE CACHE ──
+      // Large static blocks (POV, tone, safety, gating, world law, literary craft) are cached
+      // after Scene 1 and reused on subsequent scenes to reduce prompt token cost.
+      // Refresh is forced when POV, explicitAuth, or intensity changes.
+      const _persistentKey = `${state.povMode}|${explicitEmbodimentAuthorized}|${state.picks?.intensity}`;
+      const needPersistentRefresh = !state._persistentDirectiveCache
+          || state.forceDirectiveRefresh
+          || state._persistentDirectiveKey !== _persistentKey;
+
+      if (needPersistentRefresh) {
+          state._persistentDirectiveCache = `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${safetyDirective}\n${vetoRules}\n${lensEnforcement}\n${eroticModeBlock}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${buildEmotionEmbodimentDirective()}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.`;
+          state._persistentDirectiveKey = _persistentKey;
+          state.forceDirectiveRefresh = false;
+          console.log('[DIRECTIVES] Persistent directive cache refreshed (scene', state.turnCount, ')');
+      }
+
+      // Scene-specific directives — rebuilt every turn
+      const sceneDirectives = `\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${strategyDirective}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}`;
+
+      const fullSys = state.sysPrompt + state._persistentDirectiveCache + sceneDirectives + `\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -52343,6 +52673,8 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
           } else {
               // Single-model flow (ChatGPT as primary author)
               // Scene Skeleton Cache + Beat planner (single-model path only, skip for explicit embodiment scenes)
+              // NOTE: Orchestrated path uses its own pass-tier planners (runBeatOutlinePass/runThematicCalibrationPass).
+              // Only ONE planner runs per scene — this branch is mutually exclusive with the orchestrated branches above.
               let beatBlock = '';
               let skeletonBlock = '';
               if (state.turnCount > 0 && !explicitEmbodimentAuthorized) {
@@ -52360,17 +52692,22 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
                           const beats = await _runBeatPlanner(act, dia);
                           if (beats) beatBlock = `\nBEAT PLAN (follow this pacing structure):\n${beats}\n`;
                       }
+                      // Scene Intent: derive from skeleton + beats (no API call)
+                      _buildSceneIntent(state.sceneSkeleton, beatBlock);
                   } catch (_) { /* silent fail */ }
               }
+              const sceneIntentBlock = buildSceneIntentDirective();
               const _tokenBoost = state._petitionTokenBoost || 0;
               raw = await callChat([
-                  {role:'system', content: fullSys + skeletonBlock + beatBlock},
+                  {role:'system', content: fullSys + skeletonBlock + beatBlock + sceneIntentBlock},
                   {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
               ], 0.7, _tokenBoost > 0 ? { max_tokens: 1000 + _tokenBoost } : {});
           }
 
           // Validate response shape before marking as success
           if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {
+              console.error('[SCENE] Proxy returned 200 but scene text missing/empty. raw type:', typeof raw, '| raw:', String(raw).slice(0, 200));
+              showToast('Proxy returned 200 but scene text is empty — scene not advanced.');
               throw new Error('Invalid response: empty or malformed story text');
           }
 
@@ -52949,6 +53286,12 @@ ABSOLUTE RULES:
           state.turnCount++;
           _sessionTurnCount++;
 
+          // Phrase Entropy Guard — extract fragments for next-turn variety constraint
+          try { extractPhraseFragments(raw); } catch (_) { /* silent */ }
+
+          // Desire Vector — update push-pull romantic tension
+          try { _updateDesireVector(raw); } catch (_) { /* silent */ }
+
           // ═══════════════════════════════════════════════════════════════════
           // EMOTIONAL STATE PERSISTENCE — polarity detection + charge update (flag-gated)
           // ═══════════════════════════════════════════════════════════════════
@@ -53446,15 +53789,27 @@ ABSOLUTE RULES:
           }
 
           console.error('Turn submission error:', e);
-          // Only show error alert if story was NOT successfully displayed
+          // Only show error if story was NOT successfully displayed
           if (!storyDisplayed) {
-              alert("Fate was silent. Try again.");
+              const errMsg = e?.message || '';
+              if (errMsg.includes('400')) {
+                  showToast('Story generation failed (bad request). Please try again.');
+                  console.error('[TURN] 400 error detail:', errMsg);
+              } else if (errMsg.includes('timeout') || errMsg.includes('Timeout') || errMsg.includes('AbortError')) {
+                  showToast('Story generation timed out. Please try again.');
+              } else {
+                  showToast('Fate was silent. Please try again.');
+              }
           }
       } finally {
           stopLoading();
-          // TASK F: Remove submitting state
+          // RELEASE IN-FLIGHT LOCK + re-enable submit button
+          state._isAdvancingScene = false;
           const submitBtn = $('submitBtn');
-          if (submitBtn) submitBtn.classList.remove('submitting');
+          if (submitBtn) {
+              submitBtn.classList.remove('submitting');
+              submitBtn.disabled = false;
+          }
           // Guaranteed per-turn flag cleanup (prevents sticky flags on error/refresh)
           state.milestone_vision_fired_this_turn = false;
           state._pendingReversalVision = false;

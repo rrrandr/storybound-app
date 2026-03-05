@@ -509,6 +509,18 @@
    * and generate SDs.
    */
   async function callChatGPT(messages, role = 'PRIMARY_AUTHOR', options = {}) {
+    // Guard: if role is not a string, caller passed (messages, options) — fix arg order
+    if (typeof role === 'object' && role !== null) {
+      console.warn('[ORCHESTRATION] callChatGPT called with object as role — treating as options. Fix call site to use (messages, role, options).');
+      options = role;
+      role = 'PRIMARY_AUTHOR';
+    }
+
+    // Guard: validate messages before fetch
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      throw new Error('[ORCHESTRATION] callChatGPT: messages must be a non-empty array');
+    }
+
     // Resolve model: explicit option > role-specific config > default
     const roleModelMap = {
       STRATEGY_PASS: CONFIG.STRATEGY_PASS_MODEL,
@@ -550,11 +562,17 @@
       const data = await res.json();
       _accumulateTokens(data);
 
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('ChatGPT returned malformed response (no choices)');
+      // Normalized response shape: use data.content (string from proxy)
+      // Fallback to legacy choices[0].message.content for backward compat
+      const text = data.content ?? data.choices?.[0]?.message?.content ?? null;
+
+      if (!text && text !== '') {
+        const receivedKeys = Object.keys(data);
+        console.error('[ORCHESTRATION] Proxy returned 200 but no content field. Keys:', receivedKeys);
+        throw new Error(`ChatGPT returned 200 but payload missing content field. Received keys: [${receivedKeys.join(', ')}]`);
       }
 
-      return data.choices[0].message.content;
+      return text;
 
     } catch (err) {
       clearTimeout(timeoutId);

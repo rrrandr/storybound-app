@@ -121,7 +121,7 @@ body.theme-easy { --bg1:#fffee8; --bg2:#fffce0; --pink:#333; --hot:#000; --gold:
 
 /* Print Fixes (legacy, no longer triggered) */
 body.theme-print .fate-card h3, body.theme-easy .fate-card h3 { color: #000 !important; text-shadow: none !important; font-weight: bold; }
-body.theme-print .section-title, body.theme-easy .section-title { text-shadow: none; color: var(--hot); }
+body.theme-print .section-title, body.theme-easy .section-title { text-shadow: none; }
 
 html, body { margin:0; padding:0; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--ink); font-family:var(--font-main); overflow-x:hidden; min-height:100vh; }
 body { text-align:center; padding:0; transition: background 0.3s, color 0.3s; }
@@ -1379,8 +1379,21 @@ button.is-finalized,
 }
 
 /* TYPOGRAPHY */
-h1, h2, .section-title { font-family:'lust-script-display','lust-script',serif !important; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
-.section-title { font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
+h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
+.section-title { font-family: 'Lora', serif !important; font-variant: small-caps !important; color: #ffffff !important; text-shadow: none !important; font-weight: 400; font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
+/* Fate header — immutable UI typography (never inherits tone/theme) */
+#fateCardHeader {
+    font-family: 'Lora', serif !important;
+    font-variant: small-caps !important;
+    color: #ffffff !important;
+    text-shadow: none !important;
+    letter-spacing: 0.6em;
+    /* Layout (moved from inline style) */
+    font-size: 1.8em;
+    margin-top: 0;
+    display: flex;
+    justify-content: center;
+}
 .section-title .optional-label { font-family: 'Lora', serif; font-size: 0.45em; color: var(--ink); opacity: 0.6; font-style: italic; text-shadow: none; font-weight: normal; margin-left: 8px; }
 .flavor-title { margin-top: 15px; border-top: none; padding-top: 0; }
 .instruction-text { font-family: 'Lora', serif; font-size: 0.65em; color: var(--ink); opacity: 0.7; vertical-align: middle; margin-left: 8px; letter-spacing: 0; text-shadow: none; font-weight: normal; display:inline-block; }
@@ -12600,7 +12613,7 @@ textarea.fate-field {
     padding: 4px 0;
     text-align: center;
     font-family: 'Lora', serif !important;
-    font-variant: small-caps;
+    font-variant: small-caps !important;
     font-size: 1em;
     line-height: 1;
     letter-spacing: 0.6em;
@@ -13391,7 +13404,7 @@ body.corridor-mode .card-flow-row.corridor-section {
 /* Corridor section titles — Lora small caps, white with gold outline */
 body.corridor-mode .section-title {
     font-family: 'Lora', serif !important;
-    font-variant: small-caps;
+    font-variant: small-caps !important;
     font-size: 1em;
     margin: 0;
     padding: 6px 0;
@@ -14542,11 +14555,13 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     100% { filter: hue-rotate(360deg); }
 }
 
-/* Section highlight during reveal */
+/* Section highlight during reveal — hardcoded gold, immune to theme variable changes */
 .section-title.fate-active {
-    color: var(--gold);
-    text-shadow: 0 0 10px var(--gold);
+    color: #ffd700 !important;
+    text-shadow: 0 0 10px #ffd700;
     transition: color 0.3s ease, text-shadow 0.3s ease;
+    font-family: 'Lora', serif !important;
+    font-variant: small-caps !important;
 }
 
 /* Character field highlight during reveal */

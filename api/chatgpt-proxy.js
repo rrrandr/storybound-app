@@ -86,8 +86,27 @@ module.exports = async function handler(req, res) {
     // VALIDATE REQUEST
     // ==========================================================================
 
+    // Log request body keys for debugging (never log full message content)
+    const bodyKeys = Object.keys(req.body || {});
+    console.log(`[CHATGPT-PROXY] Request body keys: [${bodyKeys.join(', ')}], role: ${typeof role === 'string' ? role : typeof role}, model: ${model || '(default)'}`);
+
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: 'Messages array is required' });
+      console.error('[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys:', bodyKeys);
+      return res.status(400).json({
+        error: 'Messages array is required',
+        code: 'MISSING_MESSAGES',
+        receivedKeys: bodyKeys
+      });
+    }
+
+    if (typeof role !== 'string') {
+      console.error('[CHATGPT-PROXY] Validation failed: role is not a string, got:', typeof role);
+      return res.status(400).json({
+        error: 'Role must be a string',
+        code: 'INVALID_ROLE_TYPE',
+        receivedType: typeof role,
+        hint: 'Check callChatGPT() argument order: (messages, role, options)'
+      });
     }
 
     // ==========================================================================
@@ -106,10 +125,13 @@ module.exports = async function handler(req, res) {
     try {
       validateModelForRole(requestedModel, role);
     } catch (validationError) {
-      console.error('[CHATGPT-PROXY] Model validation failed:', validationError.message);
+      console.error('[CHATGPT-PROXY] Model validation failed:', validationError.message, '| role:', role, '| model:', requestedModel);
       return res.status(400).json({
         error: 'Model not allowed',
+        code: 'MODEL_VALIDATION_FAILED',
         details: validationError.message,
+        role: role,
+        requestedModel: requestedModel,
         allowedModels: ALLOWED_MODELS[role] || []
       });
     }
@@ -296,18 +318,30 @@ Output only the mythic kernel. Prose realization is deferred.`
       }
     }
 
-    // Add metadata about the orchestration role
-    const enrichedResponse = {
-      ...data,
+    // ==========================================================================
+    // NORMALIZE RESPONSE — stable app-level shape
+    // ==========================================================================
+    // Extract content from ChatCompletion so clients never index into choices[0]
+    const content = data.choices[0].message.content || '';
+    let parsedContent = null;
+    try { parsedContent = JSON.parse(content); } catch (_) { /* not JSON, that's fine */ }
+
+    const normalizedResponse = {
+      ok: true,
+      content: content,                              // raw string from model
+      ...(parsedContent || {}),                       // spread parsed fields if JSON
+      canonical_instruction: parsedContent?.canonical_instruction ?? content,
       _orchestration: {
         role: role,
         model: requestedModel,
         tier_used: tier_used,
         timestamp: new Date().toISOString()
-      }
+      },
+      // Preserve usage metadata for token accounting
+      usage: data.usage || null
     };
 
-    return res.status(200).json(enrichedResponse);
+    return res.status(200).json(normalizedResponse);
 
   } catch (err) {
     console.error('[CHATGPT-PROXY] Request failed:', err.message);
