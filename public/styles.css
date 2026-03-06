@@ -2365,6 +2365,148 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     box-shadow: 0 0 18px rgba(0,0,0,0.35);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   FLOATING VISION ORB — paragraph-anchored image generation
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Active paragraph subtle highlight */
+p.vision-active-paragraph {
+    background: rgba(255, 215, 0, 0.04);
+    border-left: 2px solid rgba(255, 215, 0, 0.15);
+    padding-left: 8px;
+    transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+/* Vision orb — floating right edge */
+.vision-orb {
+    position: fixed;
+    right: 20px; /* JS overrides via positionVisionOrb() */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(20, 10, 30, 0.7);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1500;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+    opacity: 0.5;
+}
+.vision-orb.hidden { display: none !important; }
+.vision-orb:hover {
+    opacity: 1;
+    border-color: rgba(255, 215, 0, 0.6);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+}
+.vision-orb-icon {
+    color: var(--gold);
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* Vision orb expand panel */
+.vision-orb-panel {
+    position: fixed;
+    right: 20px; /* JS overrides via positionVisionOrb() */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 260px;
+    background: rgba(15, 8, 25, 0.95);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    padding: 14px;
+    z-index: 1501;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+.vision-orb-panel.hidden { display: none; }
+.vision-orb-panel-title {
+    color: var(--gold);
+    font-size: 0.95em;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+.vision-orb-panel-label {
+    font-size: 0.75em;
+    color: #888;
+    margin-bottom: 4px;
+}
+.vision-orb-panel-preview {
+    font-size: 0.8em;
+    color: #ccc;
+    font-style: italic;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 4px;
+    padding: 8px;
+    margin-bottom: 10px;
+    max-height: 80px;
+    overflow-y: auto;
+    line-height: 1.4;
+}
+
+/* Inline Vision block (inserted after paragraph) */
+.inline-vision-block {
+    margin: 12px 0;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.15);
+}
+.inline-vision-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 10px;
+    background: rgba(255, 215, 0, 0.06);
+}
+.inline-vision-label {
+    font-size: 0.7em;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.inline-vision-actions {
+    display: flex;
+    gap: 6px;
+}
+.inline-vision-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 0.8em;
+    padding: 2px 4px;
+    transition: color 0.2s;
+}
+.inline-vision-btn:hover { color: var(--gold); }
+.inline-vision-img-wrap {
+    padding: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+.inline-vision-img {
+    width: 100%;
+    display: block;
+    border-radius: 0 0 7px 7px;
+}
+.inline-vision-block.collapsed .inline-vision-img-wrap {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+/* Mobile: hide orb, show bottom button */
+.vision-mobile-only { display: none; }
+@media (max-width: 800px) {
+    .vision-orb, .vision-orb-panel { display: none !important; }
+    .vision-mobile-only { display: flex !important; }
+}
+@media (min-width: 801px) {
+    .vision-mobile-only { display: none !important; }
+}
+
 /* DECISION SNAPSHOTS */
 .decision-snapshot {
     text-align: center;
@@ -4622,7 +4764,6 @@ body.library-zoom-active .vault-book-list {
 
 /* Spine */
 .book-spine {
-    display: none; /* Hidden — 3D mockup provides spine */
     position: absolute;
     width: 20px;
     height: 100%;
@@ -4635,20 +4776,29 @@ body.library-zoom-active .vault-book-list {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    /* Hidden in front-view; visible only on shelf/rotation */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+/* Show spine on shelf or when book is rotated */
+.shelf-view .book-spine,
+.book-object.rotated .book-spine {
+    opacity: 1;
 }
 .spine-text {
     writing-mode: vertical-rl;
     text-orientation: mixed;
     font-family: 'Lora', serif;
-    font-size: 0.55em;
+    font-size: 0.5em;
     font-weight: 600;
+    font-variant: small-caps;
     color: var(--gold, #c9a84c);
-    opacity: 0.7;
+    opacity: 0.6;
     white-space: nowrap;
     letter-spacing: 0.08em;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 85%;
 }
 .spine-author {
     font-size: 0.85em;
@@ -5354,10 +5504,10 @@ select {
 /* FATE CARDS - Grid layout with centered rows */
 .fate-grid {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 12px;
     margin: 20px auto;
-    max-width: 650px;
+    max-width: 100%;
     justify-content: center;
     perspective: 1000px;
 }
@@ -5372,6 +5522,8 @@ select {
     padding: 0;
     transform-style: preserve-3d;
     transition: transform 0.6s;
+    flex-shrink: 1;
+    min-width: 0;
     /* Z-INDEX CAP: Cards must never exceed z-index 50 (button is 1000) */
     z-index: 10;
 }
@@ -5404,12 +5556,36 @@ select {
 
 /* Responsive */
 @media (max-width: 700px) {
-    .fate-grid { gap: 10px; max-width: 480px; }
+    .fate-grid { gap: 10px; }
     .fate-card { width: 102px; }
 }
 @media (max-width: 500px) {
-    .fate-grid { gap: 8px; max-width: 380px; }
+    .fate-grid { gap: 8px; }
     .fate-card { width: 90px; }
+}
+
+/* Regular fate card zoom — card in portal at scale */
+.fate-card.fate-card-zoomed {
+    z-index: 9999;
+    max-width: none;
+    cursor: default;
+}
+
+/* "Take Fate In Your Own Hands" label + special cards row */
+.fate-own-hands-label {
+    font-family: 'Lora', serif !important;
+    font-variant: small-caps !important;
+    color: #ffffff !important;
+    text-shadow: none !important;
+    font-size: 1.2em;
+    text-align: center;
+    margin: 15px 0 10px;
+}
+.fate-special-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 0 auto 15px;
 }
 
 /* GOLDEN FLOW - continuous gentle stream from Fate Card to inputs */
@@ -7705,13 +7881,19 @@ textarea.fate-field {
 .cover-blank-placeholder {
     position: absolute;
     inset: 0;
-    background: #fffdf8;
+    background:
+        /* Linen cloth texture (inline SVG noise) */
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+        #f5f0e8;
+    background-blend-mode: soft-light, normal;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1;
     border-radius: 3px;
     padding: 24px;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.06);
 }
 .cover-blank-message {
     font-family: 'Georgia', 'Times New Roman', serif;
@@ -7790,23 +7972,24 @@ textarea.fate-field {
     filter: none;
 }
 
-/* Title text — elegant embossed gold, scales with full-height cover */
+/* Title text — Lust Script, embossed gold, scales with full-height cover */
 .cover-fallback .fallback-title {
     position: absolute;
     /* Positioned to allow 2-line titles without clipping */
     bottom: 18%;
     left: 8%;
     right: 8%;
+    max-width: 85%;
+    margin: 0 auto;
     /* Explicit height constraint to prevent overflow from parent's hidden */
     max-height: 25%;
-    font-family: var(--font-story, Georgia, serif);
+    font-family: 'lust-script-display', 'lust-script', serif;
     /* Responsive font size based on container height */
     font-size: clamp(0.85em, 2.2cqh, 1.3em);
     font-weight: 400;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: 0.04em;
     text-align: center;
-    line-height: 1.4;
+    line-height: 1.2;
     color: #d4af37;
     text-shadow:
         0 1px 0 rgba(0, 0, 0, 0.9),
@@ -7816,28 +7999,40 @@ textarea.fate-field {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    /* Allow wrapping, prevent overflow */
+    /* Allow wrapping, prevent overflow, clamp to 3 lines */
     overflow: hidden;
     word-wrap: break-word;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    /* Subtle reveal animation */
+    opacity: 0;
+    transform: translateY(6px);
+    animation: titleReveal 0.6s ease forwards;
 }
 
-/* Author line — subtle, elegant */
+@keyframes titleReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Author line — Lora, publisher-style */
 .cover-fallback .fallback-author {
     position: absolute;
     bottom: 14%;
     left: 14%;
     right: 14%;
-    font-family: var(--font-story, Georgia, serif);
+    font-family: 'Lora', serif;
+    font-weight: 400;
     font-size: 0.65em;
     font-style: italic;
-    font-variant: small-caps;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.04em;
     text-align: center;
     color: #8a7a5a;
-    opacity: 0.75;
+    opacity: 0;
+    animation: titleReveal 0.6s 0.15s ease forwards;
 }
 
 /* Subtle inner glow and vignette overlay */
@@ -10597,6 +10792,7 @@ textarea.fate-field {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    container-type: inline-size; /* Enable cqi units for proportional text scaling */
     padding: 8px;
     box-sizing: border-box;
 }
@@ -10612,7 +10808,7 @@ textarea.fate-field {
 
 .sb-card-back .sb-card-title {
     font-family: 'lust-script-display', serif;
-    font-size: 22px;
+    font-size: 13.10cqi;
     color: var(--gold);
     line-height: 1.2;
     word-wrap: break-word;
@@ -10784,11 +10980,11 @@ textarea.fate-field {
 
 #pressureGrid .sb-card .sb-card-back .sb-card-title {
     position: absolute;
-    top: calc(17% + 5px);
+    top: calc(17% + 2.98cqi);
     left: 12%;
     right: 12%;
     font-family: 'lust-script-display', 'lust-script', serif;
-    font-size: 0.9em;
+    font-size: 9.52cqi;
     font-weight: 400;
     color: #1a1612;
     text-shadow: none;
@@ -10799,11 +10995,11 @@ textarea.fate-field {
 
 #pressureGrid .sb-card .sb-card-back .sb-card-desc {
     position: absolute;
-    top: calc(28% + 5px);
+    top: calc(28% + 2.98cqi);
     left: 12%;
     right: 12%;
     font-family: 'Lora', serif;
-    font-size: 0.65em;
+    font-size: 6.55cqi;
     color: rgba(30, 25, 20, 0.5);
     line-height: 1.3;
     text-shadow: 0 1px 0 rgba(255, 215, 0, 0.06);
@@ -10837,12 +11033,12 @@ textarea.fate-field {
 
 #povGrid .sb-card .sb-card-back .sb-card-title {
     position: absolute;
-    top: 61px;
-    left: 17px;
+    top: 36.31cqi;
+    left: 10.12cqi;
     right: auto;
-    width: 106px;
+    width: 63.10cqi;
     font-family: 'lust-script-display', 'lust-script', serif;
-    font-size: 16px;
+    font-size: 9.52cqi;
     font-weight: 400;
     color: #1a1612;
     text-shadow: none;
@@ -10858,26 +11054,26 @@ textarea.fate-field {
     align-items: center;
     text-align: center;
     line-height: 1.1;
-    font-size: 15px;
+    font-size: 8.93cqi;
     right: auto;
     bottom: auto;
-    top: 52px;
+    top: 30.95cqi;
 }
 /* Card Designer: per-card back title positions */
 #povGrid .sb-card[data-val="First"] .sb-card-back .sb-card-title {
-    right: auto; bottom: auto; top: 69px; left: 17px;
+    right: auto; bottom: auto; top: 41.07cqi; left: 10.12cqi;
 }
 #povGrid .sb-card[data-val="Second"] .sb-card-back .sb-card-title {
-    right: auto; bottom: auto; top: 64px;
+    right: auto; bottom: auto; top: 38.10cqi;
 }
 #povGrid .sb-card[data-val="Third"] .sb-card-back .sb-card-title {
-    right: auto; bottom: auto; top: 63px; left: 17px;
+    right: auto; bottom: auto; top: 37.50cqi; left: 10.12cqi;
 }
 #povGrid .sb-card[data-val="Fourth"] .sb-card-back .sb-card-title {
-    right: auto; bottom: auto; top: 69px;
+    right: auto; bottom: auto; top: 41.07cqi;
 }
 #povGrid .sb-card[data-val="Fifth"] .sb-card-back .sb-card-title {
-    right: auto; bottom: auto; top: 64px;
+    right: auto; bottom: auto; top: 38.10cqi;
 }
 
 #povGrid .sb-card[data-val="LoveInterest"] .sb-card-back .sb-card-title .li-pov-line {
@@ -10888,7 +11084,7 @@ textarea.fate-field {
 /* Love Interest POV — front face (flipped/revealed) */
 #povGrid .sb-card[data-val="LoveInterest"] .sb-card-front .sb-card-title {
     font-family: 'lust-script-display', 'lust-script', serif;
-    font-size: 11px;
+    font-size: 6.55cqi;
     font-weight: 400;
     letter-spacing: 0.04em;
     white-space: nowrap;
@@ -11259,7 +11455,7 @@ textarea.fate-field {
 #pressureGrid .sb-card .sb-card-front .sb-card-title,
 #dynamicGrid .sb-card .sb-card-front .sb-card-title {
     white-space: normal;
-    font-size: 8px;
+    font-size: 4.76cqi;
 }
 
 /* Pressure front desc visible (descriptions live on front/black face) */
@@ -11271,7 +11467,7 @@ textarea.fate-field {
     left: 10%;
     right: 10%;
     z-index: 3;
-    font-size: 5px;
+    font-size: 2.98cqi;
     line-height: 1.25;
     flex: none;
 }
@@ -11290,7 +11486,7 @@ textarea.fate-field {
 
 /* World desc slightly smaller */
 #worldGrid .sb-card:not(.zoomed) .sb-card-front .sb-card-desc {
-    font-size: 8px;
+    font-size: 4.76cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -11307,19 +11503,19 @@ textarea.fate-field {
 }
 /* Smaller number for unzoomed card scale */
 #pressureGrid .sb-card:not(.zoomed) .arc-flavor-number {
-    font-size: 11px;
+    font-size: 6.55cqi;
 }
 
 /* Container for miniature flavor buttons on the front face */
 .pressure-front-flavors {
     position: absolute;
-    top: calc(28% + 20px);
+    top: 60.27cqi;
     left: 8%;
     right: 8%;
     bottom: 14%;
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 0.60cqi;
     align-items: center;
     justify-content: center;
     z-index: 2;
@@ -11327,11 +11523,11 @@ textarea.fate-field {
 }
 /* Smaller flavor buttons for unzoomed card face */
 .pressure-front-flavors .sb-flavor-btn {
-    font-size: 4.5px;
+    font-size: 2.68cqi;
     font-family: 'Crimson Text', serif;
     font-variant: normal;
-    padding: 2px 4px;
-    min-height: 8px;
+    padding: 1.19cqi 2.38cqi;
+    min-height: 4.76cqi;
     height: auto;
     width: auto;
     line-height: normal;
@@ -14900,6 +15096,14 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* COVER VIEW BUTTONS                                                          */
 /* ═══════════════════════════════════════════════════════════════════════════ */
+/* Cover Next button (below book, before full button row) */
+.cover-next-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+.cover-next-container.hidden { display: none; }
+
 .cover-view-buttons {
     display: flex;
     flex-direction: row;
@@ -15809,62 +16013,62 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 
 /* Survival unzoomed: title, desc, flavor container */
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="Survival"] .sb-card-front .sb-card-title {
-    font-size: 13px;
-    top: 213px;
+    font-size: 7.74cqi;
+    top: 126.79cqi;
 }
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="Survival"] .sb-card-front .sb-card-desc {
-    font-size: 8.5px;
-    width: 102px;
-    left: 19px;
-    top: 28px;
+    font-size: 5.06cqi;
+    width: 60.71cqi;
+    left: 11.31cqi;
+    top: 16.67cqi;
 }
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="Survival"] .pressure-front-flavors {
-    top: 102.5px;
-    left: 12px;
+    top: 61.01cqi;
+    left: 7.14cqi;
     bottom: auto;
 }
 
 /* Survival unzoomed: per-button positioning */
 #pressureGrid .sb-card.flipped[data-val="Survival"] .sb-flavor-btn[data-val="WarZone"] {
-    top: -31px;
+    top: -18.45cqi;
     left: 0;
     bottom: auto;
-    font-size: 11px;
+    font-size: 6.55cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="Survival"] .sb-flavor-btn[data-val="Castaway"] {
-    top: -28px;
+    top: -16.67cqi;
     left: 0;
     bottom: auto;
-    font-size: 11px;
-    width: 65.5px;
+    font-size: 6.55cqi;
+    width: 38.99cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="Survival"] .sb-flavor-btn[data-val="Lost"] {
-    top: -24px;
+    top: -14.29cqi;
     left: 0;
     bottom: auto;
-    font-size: 11px;
-    width: 41.5px;
+    font-size: 6.55cqi;
+    width: 24.70cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="Survival"] .sb-flavor-btn[data-val="Trapped"] {
-    top: -20px;
+    top: -11.90cqi;
     left: 0;
     bottom: auto;
-    font-size: 11px;
-    width: 61.5px;
+    font-size: 6.55cqi;
+    width: 36.61cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="Survival"] .sb-flavor-btn[data-val="Afflicted"] {
-    top: -15px;
+    top: -8.93cqi;
     left: 0;
     bottom: auto;
-    font-size: 11px;
-    width: 63px;
+    font-size: 6.55cqi;
+    width: 37.50cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="Survival"] .sb-flavor-btn[data-val="Scarcity"] {
-    top: -10px;
-    left: -1px;
+    top: -5.95cqi;
+    left: -0.60cqi;
     bottom: auto;
-    font-size: 11px;
-    width: 62px;
+    font-size: 6.55cqi;
+    width: 36.90cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -15872,36 +16076,36 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="PowerControl"] .sb-card-front .sb-card-desc {
-    width: 94px;
-    left: 23px;
-    font-size: 11px;
-    top: 30px;
+    width: 55.95cqi;
+    left: 13.69cqi;
+    font-size: 6.55cqi;
+    top: 17.86cqi;
 }
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="PowerControl"] .sb-card-front .sb-card-title {
-    font-size: 12px;
-    top: 213.5px;
+    font-size: 7.14cqi;
+    top: 127.08cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="PowerControl"] .sb-flavor-btn[data-val="Billionaire"] {
-    top: -21px;
-    font-size: 11px;
+    top: -12.50cqi;
+    font-size: 6.55cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="PowerControl"] .sb-flavor-btn[data-val="CrimeSyndicate"] {
-    top: -12px;
-    font-size: 11px;
-    left: 0px;
+    top: -7.14cqi;
+    font-size: 6.55cqi;
+    left: 0;
     bottom: auto;
 }
 #pressureGrid .sb-card.flipped[data-val="PowerControl"] .sb-flavor-btn[data-val="Political"] {
-    top: -4px;
-    font-size: 11px;
+    top: -2.38cqi;
+    font-size: 6.55cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="PowerControl"] .sb-flavor-btn[data-val="Espionage"] {
-    font-size: 11px;
-    top: 2px;
+    font-size: 6.55cqi;
+    top: 1.19cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="PowerControl"] .sb-flavor-btn[data-val="CultOrder"] {
-    top: 8px;
-    font-size: 11px;
+    top: 4.76cqi;
+    font-size: 6.55cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -15909,38 +16113,38 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="EscapePursuit"] .sb-card-front .sb-card-desc {
-    font-size: 11px;
-    width: 99px;
-    top: 27.5px;
-    left: 20px;
+    font-size: 6.55cqi;
+    width: 58.93cqi;
+    top: 16.37cqi;
+    left: 11.90cqi;
     bottom: auto;
 }
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="EscapePursuit"] .sb-card-front .sb-card-title {
-    top: 214.5px;
-    left: 19px;
+    top: 127.68cqi;
+    left: 11.31cqi;
     bottom: auto;
-    font-size: 11.5px;
+    font-size: 6.85cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="EscapePursuit"] .sb-flavor-btn[data-val="Heist"] {
-    top: -11px;
-    font-size: 11px;
+    top: -6.55cqi;
+    font-size: 6.55cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="EscapePursuit"] .sb-flavor-btn[data-val="Rescue"] {
-    top: -8px;
-    left: 0px;
+    top: -4.76cqi;
+    left: 0;
     bottom: auto;
-    font-size: 11px;
+    font-size: 6.55cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="EscapePursuit"] .sb-flavor-btn[data-val="OnTheRun"] {
-    font-size: 11px;
-    top: -4px;
+    font-size: 6.55cqi;
+    top: -2.38cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="EscapePursuit"] .sb-flavor-btn[data-val="Captivity"] {
-    font-size: 11px;
+    font-size: 6.55cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="EscapePursuit"] .sb-flavor-btn[data-val="BorderCrossing"] {
-    top: 4px;
-    font-size: 11px;
+    top: 2.38cqi;
+    font-size: 6.55cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -15948,40 +16152,40 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="DesireObsession"] .sb-card-front .sb-card-desc {
-    font-size: 10px;
-    width: 100px;
-    left: 20px;
+    font-size: 5.95cqi;
+    width: 59.52cqi;
+    left: 11.90cqi;
 }
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="DesireObsession"] .sb-card-front .sb-card-title {
-    font-size: 10.5px;
+    font-size: 6.25cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="DesireObsession"] .sb-flavor-btn[data-val="Obsession"] {
-    top: -19px;
-    left: 0px;
+    top: -11.31cqi;
+    left: 0;
     bottom: auto;
-    font-size: 11px;
+    font-size: 6.55cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="DesireObsession"] .sb-flavor-btn[data-val="ForbiddenRomance"] {
-    top: -13px;
-    left: 0px;
+    top: -7.74cqi;
+    left: 0;
     bottom: auto;
-    font-size: 11px;
+    font-size: 6.55cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="DesireObsession"] .sb-flavor-btn[data-val="Rivalry"] {
-    top: -7px;
-    left: 0px;
+    top: -4.17cqi;
+    left: 0;
     bottom: auto;
-    font-size: 11px;
+    font-size: 6.55cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="DesireObsession"] .sb-flavor-btn[data-val="Addiction"] {
-    font-size: 11px;
-    top: -1px;
+    font-size: 6.55cqi;
+    top: -0.60cqi;
 }
 #pressureGrid .sb-card.flipped[data-val="DesireObsession"] .sb-flavor-btn[data-val="Jealousy"] {
-    top: 4px;
-    left: 1px;
+    top: 2.38cqi;
+    left: 0.60cqi;
     bottom: auto;
-    font-size: 11px;
+    font-size: 6.55cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -15991,224 +16195,241 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── World — Back titles ── */
 #worldGrid > div.sb-card[data-grp="world"][data-val="Dystopia"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 75.5px; left: 50px; font-size: 16px;
+    top: 44.94cqi; left: 29.76cqi; font-size: 9.52cqi;
 }
 #worldGrid > div.sb-card[data-grp="world"][data-val="PostApocalyptic"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 75.5px; left: 13px; font-size: 16px;
+    top: 44.94cqi; left: 7.74cqi; font-size: 9.52cqi;
 }
 #worldGrid > div.sb-card[data-grp="world"][data-val="SciFi"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 76.5px; left: 61px; font-size: 16px;
+    top: 45.54cqi; left: 36.31cqi; font-size: 9.52cqi;
 }
 #worldGrid > div.sb-card[data-grp="world"][data-val="Fantasy"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 75.5px; left: 53px; font-size: 16px;
+    top: 44.94cqi; left: 31.55cqi; font-size: 9.52cqi;
 }
 #worldGrid > div.sb-card.selected.flipped[data-grp="world"][data-val="Fantasy"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
-    font-size: 16px;
+    font-size: 9.52cqi;
 }
 #worldGrid > div.sb-card[data-grp="world"][data-val="Historical"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 77.5px; left: 45px; font-size: 16px;
+    top: 46.13cqi; left: 26.79cqi; font-size: 9.52cqi;
 }
 #worldGrid > div.sb-card[data-grp="world"][data-val="Modern"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 76.5px; left: 53px; font-size: 16px;
+    top: 45.54cqi; left: 31.55cqi; font-size: 9.52cqi;
 }
 
 /* ── Story Pull (Pressure) — Back titles ── */
 #pressureGrid > div.sb-card[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 82.5px; left: 16px;
+    top: 49.11cqi; left: 9.52cqi;
 }
 #pressureGrid > div.sb-card[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 84.5px; left: 25px;
+    top: 50.30cqi; left: 14.88cqi;
 }
 #pressureGrid > div.sb-card[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 82px; left: 24px;
+    top: 48.81cqi; left: 14.29cqi;
 }
 #pressureGrid > div.sb-card[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 83.5px; left: 55px;
+    top: 49.70cqi; left: 32.74cqi;
 }
 
 /* ── Story Pull (Pressure) — Flipped front content ── */
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 53.5px; left: 33px;
+    top: 31.85cqi; left: 19.64cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 45.5px; left: 36px;
+    top: 27.08cqi; left: 21.43cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
     right: auto; bottom: auto;
-    top: 124.5px; left: 36.5px;
+    top: 74.11cqi; left: 21.73cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 45.5px; left: 38.5px;
+    top: 27.08cqi; left: 22.92cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
+    top: 154.46cqi; left: 23.21cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 154.46cqi; left: 25.00cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 154.17cqi; left: 25.60cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+    right: auto; bottom: auto;
+    top: 75.89cqi; left: 17.56cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="ForbiddenRomance"] {
+    right: auto; bottom: auto;
+    top: -5.95cqi; left: 0;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
     right: auto; bottom: auto;
-    top: 127.5px; left: 41.5px;
+    top: 75.89cqi; left: 24.70cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 43px; left: 33px;
+    top: 25.60cqi; left: 19.64cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 255px; left: 63px;
+    top: 151.79cqi; left: 37.50cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
     right: auto; bottom: auto;
-    top: 123.5px; left: 55px;
+    top: 73.51cqi; left: 32.74cqi;
 }
 
 /* ── Story Pull (Pressure) — Zoomed front content ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
     right: auto; bottom: auto;
-    top: 84.5px; left: 5.5px;
+    top: 50.30cqi; left: 3.27cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 258.5px; left: 55.5px;
+    top: 153.87cqi; left: 33.04cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 256.5px; left: 53.5px; font-size: 13.5px;
+    top: 152.68cqi; left: 31.85cqi; font-size: 8.04cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 43px; left: 26px;
+    top: 25.60cqi; left: 15.48cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 45.5px; left: 34.5px;
+    top: 27.08cqi; left: 20.54cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 258.5px; left: 34.5px; font-size: 11px;
+    top: 153.87cqi; left: 20.54cqi; font-size: 6.55cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
     right: auto; bottom: auto;
-    top: 5px; left: 2px; height: 130px;
+    top: 2.98cqi; left: 1.19cqi; height: 77.38cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
     right: auto; bottom: auto;
-    top: 90px; left: -1px;
+    top: 53.57cqi; left: -0.60cqi;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 258px; left: 34.5px; font-size: 11.5px;
+    top: 153.57cqi; left: 20.54cqi; font-size: 6.85cqi;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 61.5px; left: 23.5px; font-size: 8.5px;
+    top: 36.61cqi; left: 13.99cqi; font-size: 5.06cqi;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
     right: auto; bottom: auto;
-    top: 9.5px; left: 1px; height: 134px;
+    top: 5.65cqi; left: 0.60cqi; height: 79.76cqi;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
     right: auto; bottom: auto;
-    top: 98px; left: 1px;
+    top: 58.33cqi; left: 0.60cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 258px; left: 30px; font-size: 11px;
+    top: 153.57cqi; left: 17.86cqi; font-size: 6.55cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
     right: auto; bottom: auto;
-    top: 7px; left: 4.5px; height: 130px;
+    top: 4.17cqi; left: 2.68cqi; height: 77.38cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
     right: auto; bottom: auto;
-    top: 99.5px; left: -4.5px;
+    top: 59.23cqi; left: -2.68cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 56.5px; left: 40.5px;
+    top: 33.63cqi; left: 24.11cqi;
 }
 
 /* ── POV — Back titles ── */
 #povGrid > div.sb-card[data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 77px; left: 32px; font-size: 16px;
+    top: 45.83cqi; left: 19.05cqi; font-size: 9.52cqi;
 }
 #povGrid > div.sb-card[data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 77px; left: 36px; font-size: 16px;
+    top: 45.83cqi; left: 21.43cqi; font-size: 9.52cqi;
 }
 #povGrid > div.sb-card[data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 78px; left: 35px; font-size: 16px;
+    top: 46.43cqi; left: 20.83cqi; font-size: 9.52cqi;
 }
 #povGrid > div.sb-card[data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 65px; left: 31px; font-size: 16px;
+    top: 38.69cqi; left: 18.45cqi; font-size: 9.52cqi;
 }
 #povGrid > div.sb-card[data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 77px; left: 35px; font-size: 16px;
+    top: 45.83cqi; left: 20.83cqi; font-size: 9.52cqi;
 }
 #povGrid > div.sb-card[data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 77px; left: 35px; font-size: 16px;
+    top: 45.83cqi; left: 20.83cqi; font-size: 9.52cqi;
 }
 
 /* ── Tone — Back titles ── */
 #toneGrid > div.sb-card[data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 76.5px; left: 57px; font-size: 16px;
+    top: 45.54cqi; left: 33.93cqi; font-size: 9.52cqi;
 }
 #toneGrid > div.sb-card[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 76.5px; left: 63px; font-size: 16px;
+    top: 45.54cqi; left: 37.50cqi; font-size: 9.52cqi;
 }
 #toneGrid > div.sb-card[data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 76.5px; left: 57px; font-size: 16px;
+    top: 45.54cqi; left: 33.93cqi; font-size: 9.52cqi;
 }
 #toneGrid > div.sb-card[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 75.5px; left: 65px; font-size: 16px;
+    top: 44.94cqi; left: 38.69cqi; font-size: 9.52cqi;
 }
 #toneGrid > div.sb-card.selected.flipped[data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto; font-size: 13px;
+    right: auto; bottom: auto; font-size: 7.74cqi;
 }
 
 /* ── Dynamic — Back titles ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 85.5px; left: 20px;
+    top: 50.89cqi; left: 11.90cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 85.5px; left: 33px;
+    top: 50.89cqi; left: 19.64cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 86.5px; left: 25px;
+    top: 51.49cqi; left: 14.88cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 85.5px; left: 25px;
+    top: 50.89cqi; left: 14.88cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 82px; left: 44px;
+    top: 48.81cqi; left: 26.19cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 85.5px; left: 33px;
+    top: 50.89cqi; left: 19.64cqi;
 }
 
 /* ── Length — Taste front desc ── */

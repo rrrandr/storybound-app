@@ -1275,8 +1275,15 @@
         </div>
 
         <!-- Book spine/thickness -->
-        <div class="book-spine"></div>
+        <div class="book-spine">
+            <span id="spineTitle" class="spine-text"></span>
+        </div>
         <div class="book-thickness"></div>
+      </div>
+
+      <!-- Cover Next button (below book, before full button row) -->
+      <div id="coverNextContainer" class="cover-next-container hidden">
+          <button id="coverNextBtn" class="cover-view-btn begin-btn">Next →</button>
       </div>
 
       <!-- Cover View Buttons (below the book) -->
@@ -1394,7 +1401,7 @@
         </button>
     </div>
 
-    <div style="text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <div id="vizSceneBtnWrap" class="vision-mobile-only" style="text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button id="vizSceneBtn" onclick="window.summonVision()" class="small-btn">✨ Summon Vision</button>
     </div>
 
@@ -1412,12 +1419,6 @@
       </div>
     </div>
 
-    <div id="fateCardHeader" class="section-title">Let Fate Guide You</div>
-
-    <div style="display:flex; align-items:flex-start; justify-content:center;">
-        <div id="cardMount" class="fate-grid"></div>
-    </div>
-
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; width:75%; margin-left:auto; margin-right:auto;">
       <div class="input-wrapper" id="actionWrapper">
           <label>What do you do?</label>
@@ -1429,14 +1430,23 @@
       </div>
     </div>
 
-    <!-- In-reader intensity selector removed (intensity set internally) -->
-    <div class="intensity-mini" id="gameIntensity" style="display:none;"></div>
-
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="saveBtn" class="small-btn locked-style">Save</button>
        <button id="submitBtn" style="font-size:1.3em;">Submit</button>
     </div>
-    
+
+    <div id="fateCardHeader" class="section-title">Let Fate Guide You</div>
+
+    <div style="display:flex; align-items:flex-start; justify-content:center;">
+        <div id="cardMount" class="fate-grid"></div>
+    </div>
+
+    <div id="fateOwnHandsLabel" class="section-title fate-own-hands-label">Take Fate In Your Own Hands</div>
+    <div id="fateSpecialCards" class="fate-special-row"></div>
+
+    <!-- In-reader intensity selector removed (intensity set internally) -->
+    <div class="intensity-mini" id="gameIntensity" style="display:none;"></div>
+
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
        <button id="fortuneBalanceBtn" class="small-btn" onclick="window.openFortunePurchaseModal()">
@@ -1467,6 +1477,17 @@
     </div>
 
     </div><!-- END storyContent -->
+
+  <!-- Floating Vision Orb — anchored to right edge of reading column -->
+  <div id="visionOrb" class="vision-orb hidden" onclick="window.toggleVisionOrbPanel()">
+      <span class="vision-orb-icon">✦</span>
+  </div>
+  <div id="visionOrbPanel" class="vision-orb-panel hidden">
+      <div class="vision-orb-panel-title">✨ Summon Vision</div>
+      <div class="vision-orb-panel-label">Moment selected:</div>
+      <div id="visionOrbPreview" class="vision-orb-panel-preview">(no paragraph selected)</div>
+      <button class="sb-btn sb-btn--sm sb-btn--gold" onclick="window.generateVisionFromOrb()">Generate Vision</button>
+  </div>
 
   <!-- Book 1 Complete Interstitial: Full-view cover display before Book 2 -->
   <div id="book1CompleteInterstitial" class="overlay hidden" style="z-index:10007;">
@@ -1627,6 +1648,7 @@
       <p class="forbidden-library-empty">No Stories Available Yet. Start one yourself.</p>
     </div>
     <div class="vault-exit-row">
+      <button class="sb-btn-png sm" id="startNewStoryBtn" style="display:none;">Start New Story</button>
       <button class="sb-btn-png sm" id="exitLibraryBtn">Exit Library</button>
     </div>
   </div>

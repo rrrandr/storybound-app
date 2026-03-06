@@ -1734,7 +1734,15 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
       // Brief delay so user sees the last star appear, then advance
       setTimeout(function() {
-        window.showScreen('tierGate');
+        if (window.state?.flags?.libraryFirstOnboarding) {
+          // LIBRARY-FIRST: Skip tier gate → go straight to vault library
+          window.state.tier = 'free';
+          window.state.access = 'free';
+          if (typeof applyAccessLocks === 'function') applyAccessLocks();
+          _navigateToVaultWithStarter();
+        } else {
+          window.showScreen('tierGate');
+        }
       }, 600);
     })();
   }
@@ -2030,8 +2038,16 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       return;
     }
 
-    console.log('[BOOT] All legal gates satisfied — skipping to tierGate');
-    window.showScreen && window.showScreen('tierGate');
+    if (window.state?.flags?.libraryFirstOnboarding) {
+      console.log('[BOOT] All legal gates satisfied — library-first onboarding');
+      window.state.tier = 'free';
+      window.state.access = 'free';
+      if (typeof applyAccessLocks === 'function') applyAccessLocks();
+      _navigateToVaultWithStarter();
+    } else {
+      console.log('[BOOT] All legal gates satisfied — skipping to tierGate');
+      window.showScreen && window.showScreen('tierGate');
+    }
   }
 
   async function bootApp() {
@@ -2223,8 +2239,13 @@ Introduce the name naturally within the first few paragraphs — do not announce
           ensureInitialized();
           // Previous is always enabled on scene pages (goes back to synopsis from scene 1)
           if (prevBtn) prevBtn.disabled = isAnimating;
-          // Next is greyed out at the latest (most recent) scene
-          if (nextBtn) nextBtn.disabled = currentPageIndex >= pages.length - 1 || isAnimating;
+          // Next is invisible (not display:none) when no next page — preserves layout
+          if (nextBtn) {
+              const hasNext = currentPageIndex < pages.length - 1 && !isAnimating;
+              nextBtn.disabled = !hasNext;
+              nextBtn.style.visibility = hasNext ? '' : 'hidden';
+              nextBtn.style.pointerEvents = hasNext ? '' : 'none';
+          }
           if (indicator) indicator.textContent = pages.length > 0 ? `Page ${currentPageIndex + 1} of ${pages.length}` : 'Page 1 of 1';
       }
 
@@ -2238,6 +2259,14 @@ Introduce the name naturally within the first few paragraphs — do not announce
           }
           if (typeof window.applyPriorSceneLock === 'function') {
               window.applyPriorSceneLock();
+          }
+          // Set up paragraph focus tracking for Vision orb
+          if (typeof window.initParagraphObserver === 'function') {
+              window.initParagraphObserver();
+          }
+          // Re-inject any persisted inline visions for this page
+          if (typeof window.reinjectInlineVisions === 'function') {
+              window.reinjectInlineVisions();
           }
       }
 
@@ -4793,6 +4822,10 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
 
   // --- GLOBAL STATE INITIALIZATION ---
   window.state = {
+      // ── FEATURE FLAGS ──
+      flags: {
+          libraryFirstOnboarding: true  // true = Pact → Library; false = Pact → Taste/Indulge → Mode
+      },
       tier:'free',
       picks:{
         world: 'Modern',      // 4-axis: Story World (single-select)
@@ -4829,6 +4862,8 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       consecutiveFate: 0, 
       consecutiveAid: 0,
       storyId: null,
+      is_starter_story: false,      // true = "The First Taste" starter book
+      _starterStoryFreeInput: false, // true = allow one free custom input in Scene 1
 
       // ──────────────────────────────────────────────────────────────
       // LAYER 2 — EPOCH STATE (World-Cycle Conditions)
@@ -20143,6 +20178,99 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // REGULAR FATE CARD ZOOM — Selected card zooms to show face art
+  // ═══════════════════════════════════════════════════════════════════════════
+  let _fateZoomParent = null;
+  let _fateZoomSibling = null;
+  let _fateZoomCard = null;
+
+  function closeFateCardZoom() {
+      const card = _fateZoomCard;
+      if (!card) return;
+
+      const backdrop = document.getElementById('sbZoomBackdrop');
+      if (backdrop) {
+          backdrop.classList.remove('active');
+          if (backdrop._fateCloseHandler) {
+              backdrop.removeEventListener('click', backdrop._fateCloseHandler);
+              backdrop._fateCloseHandler = null;
+          }
+      }
+
+      // Restore card to original DOM position
+      card.classList.remove('fate-card-zoomed');
+      card.style.transform = '';
+      card.style.transformOrigin = '';
+      card.style.width = '';
+      card.style.height = '';
+      card.style.position = '';
+      card.style.margin = '';
+
+      if (_fateZoomParent) {
+          if (_fateZoomSibling) {
+              _fateZoomParent.insertBefore(card, _fateZoomSibling);
+          } else {
+              _fateZoomParent.appendChild(card);
+          }
+      }
+
+      _fateZoomCard = null;
+      _fateZoomParent = null;
+      _fateZoomSibling = null;
+  }
+
+  window.openFateCardZoom = function(card) {
+      if (!card) return;
+      // Guard: skip if committed or already zoomed
+      if (window.state && window.state.fateCommitted) return;
+      if (card.classList.contains('fate-card-zoomed')) return;
+
+      // Close any existing fate zoom first
+      if (_fateZoomCard) closeFateCardZoom();
+
+      // Store original DOM position
+      _fateZoomParent = card.parentNode;
+      _fateZoomSibling = card.nextElementSibling;
+      _fateZoomCard = card;
+
+      // Get card rect BEFORE moving
+      const rect = card.getBoundingClientRect();
+
+      // Move to portal
+      const portal = document.getElementById('sbZoomPortal');
+      const backdrop = document.getElementById('sbZoomBackdrop');
+      if (portal) portal.appendChild(card);
+
+      // Scale zoom
+      const sidePadding = 40;
+      const topPadding = 20;
+      const bottomPadding = 60;
+      const maxWidth = window.innerWidth - sidePadding * 2;
+      const maxHeight = window.innerHeight - topPadding - bottomPadding;
+      const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
+
+      card.classList.add('fate-card-zoomed');
+      // Ensure card shows front face (flipped = back visible in fate card CSS)
+      if (!card.classList.contains('flipped')) {
+          card.classList.add('flipped');
+      }
+      card.style.width = `${rect.width}px`;
+      card.style.height = `${rect.height}px`;
+      card.style.transform = `scale(${scale})`;
+      card.style.transformOrigin = 'center center';
+      card.style.position = '';
+      card.style.margin = '0';
+
+      if (backdrop) {
+          backdrop.classList.add('active');
+          backdrop._fateCloseHandler = () => { closeFateCardZoom(); };
+          backdrop.addEventListener('click', backdrop._fateCloseHandler);
+      }
+  };
+
+  window.closeFateCardZoom = closeFateCardZoom;
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // PETITION ZOOM — Card zooms into portal with ritual overlay on face
   // ═══════════════════════════════════════════════════════════════════════════
   let _petitionZoomOriginalParent = null;
@@ -24017,6 +24145,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
     // CORRECTIVE: Remove sysPrompt from state snapshot (it's stored separately)
     delete cleanState.sysPrompt;
+    // Remove DOM references that can't be serialized
+    delete cleanState.activeParagraphElement;
 
     const snapshot = {
       storyId: state.storyId,
@@ -25034,14 +25164,165 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     _vaultLibraryLoading = false;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LIBRARY-FIRST ONBOARDING — Starter Story System
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const STARTER_STORY = {
+    title: 'The First Taste',
+    author: 'S. Tory Bound',
+    world: 'Modern',
+    worldSubtype: 'small_town',
+    pressure: 'PowerControl',
+    flavor: 'Billionaire',
+    tone: 'Earnest',
+    pov: 'First',
+    length: 'taste',
+    dynamic: 'Enemies',
+    mode: 'solo',
+    archetype: 'BEAUTIFUL_RUIN'
+  };
+
+  /**
+   * Navigate to vault library screen and inject starter story for new users.
+   * Called after pact acceptance or on boot when libraryFirstOnboarding is true.
+   */
+  function _navigateToVaultWithStarter() {
+    console.log('[LIBRARY-FIRST] Navigating to vault with starter story');
+    window.showScreen('vaultLibraryScreen');
+
+    // Show "Start New Story" button for library-first users
+    const newStoryBtn = $('startNewStoryBtn');
+    if (newStoryBtn) newStoryBtn.style.display = '';
+
+    // Force-load vault library (will include starter story injection)
+    _vaultLibraryLoaded = false;
+    _vaultLibraryLoading = false;
+    loadVaultLibrary();
+  }
+
+  /**
+   * Inject the starter story book into the vault library render.
+   * Called from renderVaultBookList when libraryFirstOnboarding is active
+   * and user has no authored stories.
+   */
+  function _injectStarterStoryBook(listEl) {
+    // Check if starter already injected
+    if (listEl.querySelector('[data-starter-story]')) return;
+
+    const book = document.createElement('div');
+    book.className = 'library-book mode-cover';
+    book.dataset.starterStory = 'true';
+    book.dataset.storyId = 'starter_the_first_taste';
+
+    book.innerHTML = `<div class="book-3d">
+  <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(STARTER_STORY.title)}</div><div class="book-front-author">${escapeHTML(STARTER_STORY.author)}</div></div></div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(STARTER_STORY.title)}</h3><p class="back-synopsis">${escapeHTML(STARTER_STORY.author)}</p><p class="back-meta">Your first story awaits</p></div></div>
+  <div class="book-spine"><div class="spine-text">${escapeHTML(STARTER_STORY.title)} <span class="spine-author">${escapeHTML(STARTER_STORY.author)}</span></div></div>
+  <div class="book-pages"></div>
+  <div class="page-shimmer"></div>
+</div>`;
+
+    // Hover sound
+    let _hoverPlayed = false;
+    book.addEventListener('mouseenter', () => {
+      if (!_hoverPlayed) { _hoverPlayed = true; if (typeof _playLibrarySound === 'function') _playLibrarySound('book-hover'); }
+    });
+    book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
+
+    // Click to launch starter story
+    book.addEventListener('click', (e) => {
+      e.stopPropagation();
+      _launchStarterStory();
+    });
+
+    // Insert at beginning of list
+    listEl.insertBefore(book, listEl.firstChild);
+
+    // Trigger initialization animation
+    requestAnimationFrame(() => book.classList.remove('initializing'));
+  }
+
+  /**
+   * Launch the starter story — sets up picks, generates Scene 1, transitions to game.
+   */
+  let _starterStoryLaunching = false;
+  async function _launchStarterStory() {
+    if (_starterStoryLaunching) return;
+    _starterStoryLaunching = true;
+    console.log('[STARTER] Launching "The First Taste"');
+
+    try {
+      startLoading('Opening your first story...');
+
+      // Set mode
+      state.mode = 'solo';
+      if (!state.storyOrigin) state.storyOrigin = 'solo';
+
+      // Reset state for fresh story
+      if (typeof resetForNewStory === 'function') resetForNewStory();
+
+      // Apply starter story picks
+      state.picks.world = STARTER_STORY.world;
+      state.picks.worldSubtype = STARTER_STORY.worldSubtype;
+      state.picks.pressure = STARTER_STORY.pressure;
+      state.picks.flavor = STARTER_STORY.flavor;
+      state.picks.tone = STARTER_STORY.tone;
+      state.picks.pov = STARTER_STORY.pov;
+      state.picks.length = STARTER_STORY.length;
+      state.picks.dynamic = STARTER_STORY.dynamic;
+      state.picks.authorship = 'fate'; // Guided Fate for starter
+      state.storyLength = 'taste';
+      state.intensity = 'Steamy';
+      state.archetype = { primary: STARTER_STORY.archetype, modifier: null };
+      state.is_starter_story = true;
+      state._starterStoryFreeInput = true;
+
+      // Mark as Taste tier story
+      state.tier = 'free';
+      state.access = 'free';
+
+      // Generate story ID
+      state.storyId = (typeof makeStoryId === 'function') ? makeStoryId() : 'starter_' + Date.now();
+
+      // Build system prompt — reuse existing buildSystemPrompt path
+      // The system prompt builder reads from state.picks
+      // Trigger the full handleBeginStory flow but skip corridor validation
+      state._skipCorridorValidation = true;
+
+      if (typeof handleBeginStory === 'function') {
+        await handleBeginStory();
+      }
+    } catch (err) {
+      console.error('[STARTER] Launch failed:', err);
+      if (typeof showToast === 'function') showToast('Failed to start story. Please try again.');
+    } finally {
+      _starterStoryLaunching = false;
+      state._skipCorridorValidation = false;
+      stopLoading();
+    }
+  }
+
   function _showVaultLibraryEmpty(msg) {
     const loadingEl = $('vaultLibraryLoading');
     const listEl = $('vaultLibraryList');
     const emptyEl = $('vaultLibraryEmpty');
     const trophyShelf = $('vaultTrophyShelf');
     if (loadingEl) loadingEl.style.display = 'none';
-    if (listEl) listEl.style.display = 'none';
     if (trophyShelf) trophyShelf.style.display = 'none';
+
+    // LIBRARY-FIRST: Show starter story book instead of empty message
+    if (state.flags?.libraryFirstOnboarding) {
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (listEl) {
+        listEl.style.display = '';
+        listEl.innerHTML = '';
+        _injectStarterStoryBook(listEl);
+      }
+      return;
+    }
+
+    if (listEl) listEl.style.display = 'none';
     if (emptyEl) {
       emptyEl.style.display = '';
       const p = emptyEl.querySelector('.forbidden-library-empty');
@@ -25550,6 +25831,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     _preVaultScreenId = null;
   });
 
+  // Start New Story button — opens mode selection (library-first onboarding)
+  $('startNewStoryBtn')?.addEventListener('click', () => {
+    window.showScreen('modeSelect');
+  });
+
   // Tooltip on hotspot hover
   $('trophyWallModal')?.querySelectorAll('.trophy-hotspot').forEach(spot => {
     spot.addEventListener('mouseenter', function () {
@@ -25662,6 +25948,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       listEl.appendChild(book);
     });
 
+    // LIBRARY-FIRST: Inject starter story book for new users
+    if (state.flags?.libraryFirstOnboarding && _vaultAuthoredEntries.length === 0) {
+      _injectStarterStoryBook(listEl);
+    }
+
     // Remove .initializing after layout pass to enable future transitions
     requestAnimationFrame(() => {
       listEl.querySelectorAll('.library-book.initializing').forEach(b => b.classList.remove('initializing'));
@@ -25675,8 +25966,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (id === 'forbiddenLibraryScreen' && !_libraryLoaded) {
       loadLibraryEntries();
     }
-    if (id === 'vaultLibraryScreen' && !_vaultLibraryLoaded) {
-      loadVaultLibrary();
+    if (id === 'vaultLibraryScreen') {
+      if (!_vaultLibraryLoaded) loadVaultLibrary();
+      // Show "Start New Story" button for library-first users
+      const newStoryBtn = $('startNewStoryBtn');
+      if (newStoryBtn) newStoryBtn.style.display = state.flags?.libraryFirstOnboarding ? '' : 'none';
     }
     // Exit library mode if navigating away from reader
     if (id !== 'libraryReaderScreen' && state.libraryMode) {
@@ -27632,6 +27926,8 @@ Remember: This is the beginning of a longer story. Plant seeds, don't harvest.`;
               || 'Your Story';
           fallbackTitle.textContent = resolvedTitle.replace(/^["']|["']$/g, '');
       }
+      // Update spine title text
+      if (typeof window.updateSpineText === 'function') window.updateSpineText();
 
       if (_preGeneratedCoverUrl) {
           // Show generated cover, hide fallback
@@ -40896,7 +41192,7 @@ Generate the title and synopsis now.` }
     // ========================================
     // CORRIDOR COMPLETION CHECK — Ensure all required rows are resolved
     // ========================================
-    if (typeof validateCorridorComplete === 'function' && !validateCorridorComplete()) {
+    if (!state._skipCorridorValidation && typeof validateCorridorComplete === 'function' && !validateCorridorComplete()) {
       // validateCorridorComplete shows modal with missing selections
       console.log('[BeginStory] EXITING — corridor validation failed');
       return;
@@ -41180,18 +41476,37 @@ Generate the title and synopsis now.` }
       const blankPh0 = document.getElementById('coverBlankPlaceholder');
       if (blankPh0) blankPh0.classList.add('hidden');
       if (window.clearPreGeneratedCover) window.clearPreGeneratedCover();
+      const coverNextC0 = document.getElementById('coverNextContainer');
+      if (coverNextC0) coverNextC0.classList.remove('hidden');
     } else {
-      // No pre-generated cover — show blank white placeholder
+      // No pre-generated cover — show fallback design with title/author
       // Cover generation is explicit user action only (via "Generate Your Cover" button)
-      console.log('[COVER:BEGIN] No pre-generated cover — showing blank placeholder');
+      console.log('[COVER:BEGIN] No pre-generated cover — showing fallback cover');
       const bookObject = document.getElementById('bookObject');
       const coverLoadingState = document.getElementById('coverLoadingState');
       const coverImg = document.getElementById('bookCoverImg');
       const blankPh = document.getElementById('coverBlankPlaceholder');
+      const fallbackCover = document.getElementById('coverFallback');
+      const fallbackTitleEl = document.getElementById('fallbackTitle');
       if (bookObject) bookObject.classList.remove('hidden');
       if (coverLoadingState) coverLoadingState.classList.add('hidden');
       if (coverImg) coverImg.style.display = 'none';
-      if (blankPh) blankPh.classList.remove('hidden');
+      if (blankPh) blankPh.classList.add('hidden');
+      if (fallbackCover) fallbackCover.classList.remove('hidden');
+      // Populate title immediately if available
+      if (fallbackTitleEl) {
+          const earlyTitle = state.story?.title
+              || state._backgroundStoryTitle
+              || document.getElementById('storyTitle')?.textContent
+              || state.title
+              || 'Your Story';
+          fallbackTitleEl.textContent = earlyTitle.replace(/^["']|["']$/g, '');
+      }
+      // Populate spine text
+      if (typeof window.updateSpineText === 'function') window.updateSpineText();
+      // Show Next button below book
+      const coverNextC = document.getElementById('coverNextContainer');
+      if (coverNextC) coverNextC.classList.remove('hidden');
     }
 
     console.log('[BeginStory] Phase 2 complete — starting loader and API calls');
@@ -48076,6 +48391,15 @@ ${buildVisualContinuityDirective()}`;
           });
       }
 
+      // Cover Next button — same as clicking the book
+      const coverNextBtn = document.getElementById('coverNextBtn');
+      if (coverNextBtn) {
+          coverNextBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openBook();
+          });
+      }
+
       // NOTE: Setting plate is now INLINE within Scene 1 (no separate page)
       // No click handler needed — setting image is decorative, not navigational
   }
@@ -51038,7 +51362,18 @@ Respond in this EXACT format (no labels, just two lines):
       });
 
       const allStoryContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
-      const lastText = allStoryContent.slice(-600) || "";
+      // FOCAL PARAGRAPH: Use active paragraph as primary scene weight when available
+      const focalScene = state.activeParagraphText || '';
+      const sceneContext = allStoryContent.slice(-600) || "";
+      let lastText;
+      if (focalScene) {
+          // Compact context: first 2 full sentences from recent scene (avoids mid-sentence cuts)
+          const sentences = sceneContext.match(/[^.!?]+[.!?]+/g) || [];
+          const briefContext = sentences.slice(0, 2).join(' ').trim() || sceneContext.slice(0, 150);
+          lastText = focalScene + '\n\n[Scene context:] ' + briefContext;
+      } else {
+          lastText = sceneContext;
+      }
 
       // ═══════════════════════════════════════════════════════════════════
       // WRY CONFESSIONAL — SYNCHRONOUS PROMPT ASSEMBLY (BEFORE async work)
@@ -51405,6 +51740,236 @@ Respond in this EXACT format (no labels, just two lines):
       }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FLOATING VISION ORB — Paragraph-anchored image generation
+  // ═══════════════════════════════════════════════════════════════════════════
+  let _paragraphObserver = null;
+  let _paraDebounceTimer = null;
+  let _paraPendingId = null;
+
+  window.initParagraphObserver = function() {
+      // Disconnect previous observer
+      if (_paragraphObserver) _paragraphObserver.disconnect();
+
+      // Guard: only init when scene reader is actually visible
+      const sc = document.getElementById('storyContent');
+      if (!sc || sc.classList.contains('hidden') || !sc.offsetParent) return;
+
+      const container = document.getElementById('storyPagesContainer');
+      if (!container) return;
+      const paragraphs = container.querySelectorAll('.story-page.active p[data-paragraph-id]');
+      if (!paragraphs.length) return;
+
+      // Clear previous active state
+      container.querySelectorAll('p.vision-active-paragraph').forEach(p => p.classList.remove('vision-active-paragraph'));
+
+      _paragraphObserver = new IntersectionObserver((entries) => {
+          let bestEntry = null;
+          let bestRatio = 0;
+          entries.forEach(entry => {
+              if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+                  bestRatio = entry.intersectionRatio;
+                  bestEntry = entry;
+              }
+          });
+          if (bestEntry) {
+              const candidateId = bestEntry.target.dataset.paragraphId;
+              // Debounce: only commit if same candidate holds for 200ms
+              if (candidateId === state.activeParagraphId) return; // already active
+              if (candidateId === _paraPendingId) return; // already pending
+              _paraPendingId = candidateId;
+              clearTimeout(_paraDebounceTimer);
+              _paraDebounceTimer = setTimeout(() => {
+                  if (_paraPendingId !== candidateId) return; // superseded
+                  container.querySelectorAll('p.vision-active-paragraph').forEach(p => p.classList.remove('vision-active-paragraph'));
+                  const el = container.querySelector(`p[data-paragraph-id="${candidateId}"]`);
+                  if (!el) return;
+                  el.classList.add('vision-active-paragraph');
+                  state.activeParagraphElement = el;
+                  state.activeParagraphId = candidateId;
+                  state.activeParagraphText = el.textContent;
+                  // Update orb panel preview if open
+                  const preview = document.getElementById('visionOrbPreview');
+                  if (preview) {
+                      const txt = state.activeParagraphText || '';
+                      preview.textContent = txt.length > 120 ? txt.slice(0, 120) + '…' : txt;
+                  }
+              }, 200);
+          }
+      }, {
+          root: null,
+          rootMargin: '-40% 0px -40% 0px', // Center 20% band of viewport
+          threshold: [0, 0.25, 0.5, 0.75, 1.0]
+      });
+
+      paragraphs.forEach(p => _paragraphObserver.observe(p));
+
+      // Default: activate first paragraph
+      if (paragraphs.length > 0 && !state.activeParagraphElement) {
+          paragraphs[0].classList.add('vision-active-paragraph');
+          state.activeParagraphElement = paragraphs[0];
+          state.activeParagraphId = paragraphs[0].dataset.paragraphId;
+          state.activeParagraphText = paragraphs[0].textContent;
+      }
+  };
+
+  // ── Inline Visions persistence ──
+  if (!state.inlineVisions) state.inlineVisions = {};
+
+  window.reinjectInlineVisions = function() {
+      const container = document.getElementById('storyPagesContainer');
+      if (!container) return;
+      const visions = state.inlineVisions || {};
+      Object.keys(visions).forEach(paraId => {
+          const p = container.querySelector(`p[data-paragraph-id="${paraId}"]`);
+          if (!p) return;
+          // Skip if already injected
+          if (p.nextElementSibling && p.nextElementSibling.classList.contains('inline-vision-block')) return;
+          const v = visions[paraId];
+          const block = buildInlineVisionBlock(v.imageUrl, paraId, v.collapsed);
+          p.insertAdjacentElement('afterend', block);
+      });
+  };
+
+  function buildInlineVisionBlock(imageUrl, paragraphId, collapsed = false) {
+      const block = document.createElement('div');
+      block.className = 'inline-vision-block' + (collapsed ? ' collapsed' : '');
+      block.dataset.forParagraph = paragraphId;
+      block.innerHTML = `
+          <div class="inline-vision-header">
+              <span class="inline-vision-label">Vision</span>
+              <div class="inline-vision-actions">
+                  <button class="inline-vision-btn inline-vision-toggle" title="Collapse">${collapsed ? '▶' : '▼'}</button>
+                  <button class="inline-vision-btn inline-vision-resummon" title="Re-summon">↻</button>
+                  <button class="inline-vision-btn inline-vision-remove" title="Remove">✕</button>
+              </div>
+          </div>
+          <div class="inline-vision-img-wrap">
+              <img src="${imageUrl}" class="inline-vision-img" alt="Vision">
+          </div>
+      `;
+      // Collapse toggle
+      block.querySelector('.inline-vision-toggle').onclick = () => {
+          block.classList.toggle('collapsed');
+          const btn = block.querySelector('.inline-vision-toggle');
+          btn.textContent = block.classList.contains('collapsed') ? '▶' : '▼';
+          if (state.inlineVisions[paragraphId]) {
+              state.inlineVisions[paragraphId].collapsed = block.classList.contains('collapsed');
+          }
+      };
+      // Re-summon
+      block.querySelector('.inline-vision-resummon').onclick = () => {
+          // Target this paragraph for re-generation
+          const p = document.querySelector(`p[data-paragraph-id="${paragraphId}"]`);
+          if (p) {
+              state.activeParagraphElement = p;
+              state.activeParagraphId = paragraphId;
+              state.activeParagraphText = p.textContent;
+          }
+          window.summonVision(true);
+      };
+      // Remove
+      block.querySelector('.inline-vision-remove').onclick = () => {
+          block.remove();
+          delete state.inlineVisions[paragraphId];
+          saveStorySnapshot();
+      };
+      return block;
+  }
+
+  // ── Vision Orb panel ──
+  function toggleVisionOrbPanel() {
+      const panel = document.getElementById('visionOrbPanel');
+      if (!panel) return;
+      const isOpen = !panel.classList.contains('hidden');
+      if (isOpen) {
+          panel.classList.add('hidden');
+          return;
+      }
+      // Populate preview
+      const preview = document.getElementById('visionOrbPreview');
+      if (preview) {
+          const txt = state.activeParagraphText || '(no paragraph selected)';
+          preview.textContent = txt.length > 120 ? txt.slice(0, 120) + '…' : txt;
+      }
+      panel.classList.remove('hidden');
+  }
+  window.toggleVisionOrbPanel = toggleVisionOrbPanel;
+
+  window.generateVisionFromOrb = async function() {
+      const panel = document.getElementById('visionOrbPanel');
+      if (panel) panel.classList.add('hidden');
+      // summonVision will use state.activeParagraphText for focal scene
+      await window.summonVision();
+  };
+
+  // ── Spine text updater ──
+  window.updateSpineText = function() {
+      const spineEl = document.getElementById('spineTitle');
+      if (!spineEl) return;
+      const title = state.story?.title
+          || state._backgroundStoryTitle
+          || document.getElementById('storyTitle')?.textContent
+          || state.title
+          || '';
+      spineEl.textContent = title.replace(/^["']|["']$/g, '');
+  };
+
+  // Show/hide Vision orb based on storyContent visibility
+  function updateVisionOrbVisibility() {
+      const orb = document.getElementById('visionOrb');
+      if (!orb) return;
+      // Never show during cover page
+      const coverPage = document.getElementById('bookCoverPage');
+      if (coverPage && !coverPage.classList.contains('hidden')) {
+          orb.classList.add('hidden');
+          const panel = document.getElementById('visionOrbPanel');
+          if (panel) panel.classList.add('hidden');
+          return;
+      }
+      const sc = document.getElementById('storyContent');
+      const hasContent = sc && !sc.classList.contains('hidden') && sc.offsetParent;
+      const hasPages = hasContent && document.querySelector('#storyPagesContainer .story-page.active p[data-paragraph-id]');
+      if (hasPages) {
+          orb.classList.remove('hidden');
+      } else {
+          orb.classList.add('hidden');
+          const panel = document.getElementById('visionOrbPanel');
+          if (panel) panel.classList.add('hidden');
+      }
+  }
+  // Position orb + panel relative to story column right edge
+  function positionVisionOrb() {
+      const orb = document.getElementById('visionOrb');
+      const panel = document.getElementById('visionOrbPanel');
+      const col = document.getElementById('storyText') || document.getElementById('storyContent');
+      if (!orb || !col) return;
+      const rect = col.getBoundingClientRect();
+      const orbRight = window.innerWidth - rect.right - 8; // 8px offset outside column
+      orb.style.right = Math.max(8, orbRight) + 'px';
+      if (panel) panel.style.right = Math.max(8, orbRight - 10) + 'px';
+  }
+
+  // Check on each post-render hook via paragraph observer
+  const _origInitParagraphObserver = window.initParagraphObserver;
+  window.initParagraphObserver = function() {
+      _origInitParagraphObserver();
+      updateVisionOrbVisibility();
+      positionVisionOrb();
+  };
+
+  window.addEventListener('resize', positionVisionOrb);
+
+  // Close panel when clicking outside
+  document.addEventListener('click', (e) => {
+      const panel = document.getElementById('visionOrbPanel');
+      const orb = document.getElementById('visionOrb');
+      if (!panel || panel.classList.contains('hidden')) return;
+      if (!panel.contains(e.target) && !orb.contains(e.target)) {
+          panel.classList.add('hidden');
+      }
+  });
+
   window.closeViz = function(){
       $('vizModal').classList.add('hidden');
       _vizInFlight = false;
@@ -51532,13 +52097,35 @@ Respond in this EXACT format (no labels, just two lines):
       const img = document.getElementById('vizPreviewImg');
       if(!img.src) return;
 
+      const paraId = state.activeParagraphId;
+      const targetPara = paraId ? document.querySelector(`p[data-paragraph-id="${paraId}"]`) : null;
+
+      if (targetPara) {
+          // Insert inline Vision block after the active paragraph
+          const block = buildInlineVisionBlock(img.src, paraId);
+          // Remove any existing vision at this paragraph
+          const existing = targetPara.nextElementSibling;
+          if (existing && existing.classList.contains('inline-vision-block')) existing.remove();
+          targetPara.insertAdjacentElement('afterend', block);
+          // Persist
+          if (!state.inlineVisions) state.inlineVisions = {};
+          state.inlineVisions[paraId] = {
+              imageUrl: img.src.startsWith('data:') ? '' : img.src, // Don't persist base64
+              prompt: document.getElementById('vizPromptInput')?.value || '',
+              createdAt: new Date().toISOString(),
+              collapsed: false
+          };
+          // Smooth scroll to reveal the new vision
+          setTimeout(() => block.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+      } else {
+          // Fallback: append to page (legacy behavior)
+          const imgHtml = `<img src="${img.src}" class="story-image" alt="Vision">`;
+          StoryPagination.appendToCurrentPage(imgHtml);
+      }
+
       // Finalize scene on insert - no more visualizations allowed
       const sceneKey = getSceneKey();
       finalizeScene(sceneKey);
-
-      // Append visualized image to current page
-      const imgHtml = `<img src="${img.src}" class="story-image" alt="Vision">`;
-      StoryPagination.appendToCurrentPage(imgHtml);
 
       // Update button states to reflect finalized status
       updateVizButtonStates();
@@ -54427,6 +55014,7 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   function formatStory(text, shouldEscape = false){
       const process = shouldEscape ? escapeHTML : (s => s);
       const mode = window.state?.mode || 'solo';
+      const sceneId = window.state?.turnCount || 0;
 
       // ═══════════════════════════════════════════════════════════════════════════
       // DIALOGUE COLORIZATION — STRICT MODE GATE (AUTHORITATIVE)
@@ -54434,6 +55022,7 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
       // ═══════════════════════════════════════════════════════════════════════════
       const isCoupleMode = (mode === 'couple');
 
+      let pIdx = 0;
       return text.split('\n').map(p => {
           if(!p.trim()) return '';
           let safe = process(p);
@@ -54444,6 +55033,8 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
               const pascal = key.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join('');
               if (safe.includes(pascal)) safe = safe.replaceAll(pascal, arch.name);
           }
+
+          const paraId = `${sceneId}:${pIdx++}`;
 
           if (isCoupleMode) {
               // COUPLE MODE: Speaker-aware colorization ONLY
@@ -54456,14 +55047,14 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
                   return `<span class="p2-dia">${content}</span>`;
               });
               // NPC dialogue and untagged quotes remain unstyled (no guessing)
-              return `<p>${safe}</p>`;
+              return `<p data-paragraph-id="${paraId}">${safe}</p>`;
           } else {
               // SOLO MODE: Dialogue rendered as PLAIN TEXT (AUTHORITATIVE)
               // - Same color as body text
               // - No spans, no classes, no emphasis
               // - Quotation marks are the only indicator
               safe = safe.replace(/<\/?p[12]>/g, ''); // Strip any player tags (safety)
-              return `<p>${safe}</p>`;
+              return `<p data-paragraph-id="${paraId}">${safe}</p>`;
           }
       }).join('');
   }

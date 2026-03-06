@@ -1857,12 +1857,21 @@ function setSelectedState(mount, selectedCardEl){
                         if(diaInput) diaInput.value = data.dialogue;
                     }
                 }, 600);
+
+                // Zoom the selected card face into view
+                if (typeof window.openFateCardZoom === 'function') {
+                    window.openFateCardZoom(card);
+                }
             };
 
             mount.appendChild(card);
         });
 
-        // Petition Fate card — 6th card, always visible, always unlocked
+        // ── Petition & Tempt cards → separate "Take Fate In Your Own Hands" container ──
+        const specialMount = document.getElementById('fateSpecialCards') || mount;
+        specialMount.innerHTML = '';
+
+        // Petition Fate card — always visible, always unlocked
         // First click flips (back→front), second click opens zoom
         const petitionCard = document.createElement('div');
         petitionCard.className = 'fate-card petition-fate-card';
@@ -1881,9 +1890,9 @@ function setSelectedState(mount, selectedCardEl){
             }
             if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
         };
-        mount.appendChild(petitionCard);
+        specialMount.appendChild(petitionCard);
 
-        // Tempt Fate card — 7th card, always visible, flips on first click, invokes on second
+        // Tempt Fate card — always visible, flips on first click, invokes on second
         const temptCard = document.createElement('div');
         temptCard.className = 'fate-card tempt-fate-card';
         temptCard.innerHTML = `
@@ -1901,15 +1910,16 @@ function setSelectedState(mount, selectedCardEl){
             }
             if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
         };
-        mount.appendChild(temptCard);
+        specialMount.appendChild(temptCard);
 
         // Bind commitment triggers once (safe no-op if elements missing)
         bindCommitHooks(mount);
         bindInputCommit(mount);
 
-        // Apply gleam effect to all fate cards
+        // Apply gleam effect to all fate cards (both main grid and special row)
         if (window.applyCardGleam) {
             mount.querySelectorAll('.fate-card').forEach(window.applyCardGleam);
+            specialMount.querySelectorAll('.fate-card').forEach(window.applyCardGleam);
         }
 
         console.log('[FATE] dealFateCards complete — cards bound');
@@ -2039,11 +2049,17 @@ function setSelectedState(mount, selectedCardEl){
                         if (diaInput) diaInput.value = data.dialogue;
                     }
                 }, 600);
+
+                // Zoom the selected card face into view
+                if (typeof window.openFateCardZoom === 'function') {
+                    window.openFateCardZoom(card);
+                }
             };
         });
 
-        // Rebind Petition Fate card (has no fateOptions entry, skipped by forEach above)
-        const petitionCard = mount.querySelector('.petition-fate-card');
+        // Rebind Petition Fate card (now in #fateSpecialCards, not in mount)
+        const specialMount = document.getElementById('fateSpecialCards');
+        const petitionCard = (specialMount || mount).querySelector('.petition-fate-card');
         if (petitionCard) {
             petitionCard.onclick = () => {
                 // Block card interaction in design mode
@@ -2056,8 +2072,8 @@ function setSelectedState(mount, selectedCardEl){
             };
         }
 
-        // Rebind Tempt Fate card
-        const temptCard = mount.querySelector('.tempt-fate-card');
+        // Rebind Tempt Fate card (now in #fateSpecialCards)
+        const temptCard = (specialMount || mount).querySelector('.tempt-fate-card');
         if (temptCard) {
             temptCard.onclick = () => {
                 // Block card interaction in design mode
