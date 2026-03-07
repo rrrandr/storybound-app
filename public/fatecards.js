@@ -1245,6 +1245,7 @@ function stopContinuousSparkles() {
         _allFlipped = true;
         const cards = mount.querySelectorAll('.fate-card:not(.petition-fate-card)');
         cards.forEach(c => c.classList.add('flipped'));
+        if (window.playUISound) window.playUISound('card_flip');
     }
 
     function clearPendingTimer(){
@@ -1886,6 +1887,7 @@ function setSelectedState(mount, selectedCardEl){
             if (document.querySelector('.design-mode-badge')) return;
             if (!petitionCard.classList.contains('flipped')) {
                 petitionCard.classList.add('flipped');
+                if (window.playUISound) window.playUISound('card_flip');
                 return;
             }
             if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
@@ -1906,6 +1908,7 @@ function setSelectedState(mount, selectedCardEl){
             if (document.querySelector('.design-mode-badge')) return;
             if (!temptCard.classList.contains('flipped')) {
                 temptCard.classList.add('flipped');
+                if (window.playUISound) window.playUISound('card_flip');
                 return;
             }
             if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
@@ -2066,6 +2069,7 @@ function setSelectedState(mount, selectedCardEl){
                 if (document.querySelector('.design-mode-badge')) return;
                 if (!petitionCard.classList.contains('flipped')) {
                     petitionCard.classList.add('flipped');
+                    if (window.playUISound) window.playUISound('card_flip');
                     return;
                 }
                 if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
@@ -2080,6 +2084,7 @@ function setSelectedState(mount, selectedCardEl){
                 if (document.querySelector('.design-mode-badge')) return;
                 if (!temptCard.classList.contains('flipped')) {
                     temptCard.classList.add('flipped');
+                    if (window.playUISound) window.playUISound('card_flip');
                     return;
                 }
                 if (typeof window.openTemptZoom === 'function') window.openTemptZoom();

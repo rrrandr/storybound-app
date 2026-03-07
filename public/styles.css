@@ -4296,13 +4296,31 @@ select:-webkit-autofill {
         linear-gradient(180deg, rgba(14,9,6,0.85) 0%, rgba(26,16,10,0.8) 30%, rgba(14,9,6,0.85) 100%),
         url('/assets/Forbidde-Library-Art/Forbidden-Library-v2.png') center top / cover no-repeat;
     padding: 0 20px 40px;
+    --shelf-parallax-x: 0px;
+    position: relative;
+}
+/* Light falloff — overhead lighting fades toward bottom shelves */
+.forbidden-library::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,245,220,0.015) 0%, transparent 30%, rgba(0,0,0,0.12) 100%);
+    pointer-events: none;
+    z-index: 0;
 }
 /* Vault / Private Library — distinct backdrop */
 .forbidden-library.library-variant--vault {
+    display: flex;
+    flex-direction: column;
     background:
         radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.9) 0%, transparent 60%),
         linear-gradient(180deg, rgba(14,9,6,0.85) 0%, rgba(26,16,10,0.8) 30%, rgba(14,9,6,0.85) 100%),
         url('/assets/Forbidde-Library-Art/Private-Library-closer.png') center top / cover no-repeat;
+}
+
+/* Shelf back-wall parallax layer */
+.library-book-list > .library-book {
+    z-index: 1;
 }
 .forbidden-library-header {
     display: flex;
@@ -4310,6 +4328,7 @@ select:-webkit-autofill {
     justify-content: center;
     padding: 24px 0 20px;
     position: relative;
+    z-index: 1;
 }
 .forbidden-library-back {
     position: absolute;
@@ -4338,6 +4357,7 @@ select:-webkit-autofill {
 }
 /* Library shelf grid — 3D book objects */
 .library-book-list {
+    --book-rest-offset: 6px;
     max-width: 720px;
     margin: 0 auto;
     padding: 20px 16px;
@@ -4345,17 +4365,49 @@ select:-webkit-autofill {
     flex-wrap: wrap;
     gap: 32px 24px;
     justify-content: center;
+    position: relative;
+    z-index: 1;
 }
 
-/* Micro shelf shadow — overhead illusion per book slot */
+/* Shelf cavity — back wall depth illusion */
+.library-book-list::before {
+    content: '';
+    position: absolute;
+    inset: -4px -8px;
+    background:
+        radial-gradient(ellipse at 50% 20%, rgba(0,0,0,0.08) 0%, transparent 70%),
+        linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 35%, transparent 100%),
+        linear-gradient(to bottom, rgba(18,10,5,0.28) 0%, rgba(18,10,5,0.12) 50%, transparent 100%);
+    border-radius: 6px;
+    pointer-events: none;
+    z-index: 0;
+    transform: translateX(var(--shelf-parallax-x, 0px));
+    transition: transform 0.15s ease-out;
+}
+
+/* Shelf lip highlight — polished wood front edge */
+.library-book-list::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 3%;
+    width: 94%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.12) 15%, rgba(255,235,180,0.10) 50%, rgba(201,168,76,0.12) 85%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Top shelf shadow — overhead shadow onto books */
 .library-book-list > *::before {
     content: '';
     position: absolute;
-    top: -6px;
-    left: 0;
-    right: 0;
-    height: 10px;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.05), transparent);
+    top: -10px;
+    left: -6px;
+    right: -6px;
+    height: 14px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.16), rgba(0,0,0,0.05), transparent);
+    filter: blur(3px);
     pointer-events: none;
 }
 
@@ -4364,7 +4416,7 @@ select:-webkit-autofill {
     perspective: 1200px;
     cursor: pointer;
     flex: 0 0 auto;
-    transform: translateY(6px);
+    transform: translateY(var(--book-rest-offset, 6px));
     position: relative;
 }
 /* Bottom embed contact shadow */
@@ -4375,7 +4427,8 @@ select:-webkit-autofill {
     left: 10%;
     width: 80%;
     height: 12px;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.25), transparent);
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.08) 60%, transparent 100%);
+    filter: blur(2px);
     pointer-events: none;
 }
 .book-3d {
@@ -4396,11 +4449,15 @@ select:-webkit-autofill {
     }
 }
 .library-book.mode-cover .book-3d {
-    transform: rotateY(0deg);
+    transform: rotateY(-6deg);
+    box-shadow:
+        0 2px 4px rgba(0,0,0,0.22),
+        0 6px 18px rgba(0,0,0,0.18),
+        0 14px 36px rgba(0,0,0,0.10);
 }
 /* Occasional leaned book — cover mode only, never spine */
 .library-book.mode-cover.mode-lean .book-3d {
-    transform: rotateY(0deg) rotateZ(-1.5deg);
+    transform: rotateY(-6deg) rotateZ(-1.5deg);
 }
 /* Suppress transition during initial layout */
 .library-book.initializing .book-3d {
@@ -4408,7 +4465,10 @@ select:-webkit-autofill {
 }
 .library-book.mode-cover:hover .book-3d,
 .library-book.mode-cover.mode-lean:hover .book-3d {
-    transform: rotateY(8deg) translateY(-6px);
+    transform: rotateY(-7deg) translateY(-2px);
+    box-shadow:
+        0 10px 24px rgba(0,0,0,0.3),
+        0 20px 44px rgba(0,0,0,0.16);
 }
 .library-book.mode-spine:hover .book-3d {
     transform: rotateY(80deg) translateY(-4px);
@@ -4438,6 +4498,71 @@ body.library-zoom-active .vault-book-list {
         filter: blur(3px) brightness(0.8);
     }
 }
+/* ── Starter Book Summon Sequence ── */
+.summon-text {
+    text-align: center;
+    font-family: 'Lora', serif;
+    color: var(--gold, #c9a84c);
+    font-size: 1.3em;
+    font-style: italic;
+    opacity: 0;
+    transition: opacity 700ms ease;
+    text-shadow: 0 0 12px rgba(201, 168, 76, 0.4);
+    margin: 20px 0 10px;
+    width: 100%;
+}
+.summon-text.visible { opacity: 1; }
+
+.summon-slot {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+}
+
+.summon-light-beam {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 320px;
+    background: radial-gradient(ellipse at center, rgba(255, 215, 100, 0.18) 0%, transparent 70%);
+    filter: blur(8px);
+    opacity: 0;
+    transition: opacity 400ms ease;
+    pointer-events: none;
+    z-index: 0;
+}
+.summon-light-beam.visible { opacity: 1; }
+.summon-light-beam.fading { opacity: 0; transition: opacity 300ms ease; }
+
+.library-book.summon-hidden {
+    opacity: 0;
+    transform: scale(0.7) translateY(10px);
+    pointer-events: none;
+}
+
+.library-book.summon-materializing {
+    opacity: 0.3;
+    transform: scale(0.85) translateY(5px);
+    transition: opacity 500ms ease, transform 500ms ease;
+    pointer-events: none;
+}
+
+.library-book.summon-solid {
+    opacity: 1;
+    transform: translateY(var(--book-rest-offset, 6px));
+    transition: opacity 500ms ease, transform 500ms ease;
+    animation: summon-land 240ms 500ms ease-out both;
+}
+
+@keyframes summon-land {
+    0%   { transform: translateY(calc(var(--book-rest-offset, 6px) - 6px)); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.18)); }
+    40%  { transform: translateY(var(--book-rest-offset, 6px)); filter: drop-shadow(0 8px 12px rgba(0,0,0,0.32)); }
+    70%  { transform: translateY(calc(var(--book-rest-offset, 6px) - 2px)); filter: drop-shadow(0 5px 8px rgba(0,0,0,0.22)); }
+    100% { transform: translateY(var(--book-rest-offset, 6px)); filter: drop-shadow(0 6px 8px rgba(0,0,0,0.20)); }
+}
+
 /* ── Trophy Wall Modal ── */
 .trophy-wall-modal {
     z-index: 9600;
@@ -4496,8 +4621,17 @@ body.library-zoom-active .vault-book-list {
     color: var(--gold, #c9a84c);
 }
 .vault-exit-row {
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+    position: relative;
+    z-index: 1;
     padding: 24px 0 12px;
+}
+.vault-exit-row .sb-btn-png.sm {
+    font-size: 0.72em;
 }
 .trophy-hotspot {
     position: absolute;
@@ -4697,6 +4831,38 @@ body.library-zoom-active .vault-book-list {
     padding: 18px 12px;
     transform: translateZ(12px);
     z-index: 2;
+    box-shadow: inset -1px 0 6px rgba(0, 0, 0, 0.35);
+}
+/* Top-edge specular highlight — hardcover laminate catching light */
+.book-front::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 5%, rgba(201, 168, 76, 0.15) 30%, rgba(255, 235, 180, 0.12) 50%, rgba(201, 168, 76, 0.15) 70%, transparent 95%);
+    border-radius: 2px 2px 0 0;
+    pointer-events: none;
+    z-index: 3;
+}
+/* Cover curvature — very subtle horizontal light variation */
+.book-front::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.12) 44%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.12) 56%, transparent 70%) -200% 0 / 200% 100% no-repeat,
+        linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 15%, transparent 40%, rgba(0,0,0,0.04) 85%, rgba(0,0,0,0.08) 100%);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 3;
+    transition: none;
+}
+.library-book:hover .book-front::after {
+    animation: specular-sweep 500ms ease-out forwards;
+}
+@keyframes specular-sweep {
+    0%   { background-position: -200% 0, 0 0; }
+    100% { background-position: 200% 0, 0 0; }
 }
 .book-front img {
     width: 100%;
@@ -4723,6 +4889,14 @@ body.library-zoom-active .vault-book-list {
     line-height: 1.3;
     letter-spacing: 0.04em;
 }
+.book-front-subtitle {
+    font-family: 'Lora', serif;
+    font-size: 0.55em;
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.5);
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+}
 .book-front-author {
     font-family: 'Lora', serif;
     font-size: 0.6em;
@@ -4745,21 +4919,25 @@ body.library-zoom-active .vault-book-list {
     font-size: 0.8em;
     font-weight: 700;
     color: var(--gold, #c9a84c);
-    margin: 0;
+    text-shadow: 0 0 6px rgba(201, 168, 76, 0.15);
+    margin: 0 0 4px;
     line-height: 1.3;
+    text-align: center;
 }
 .back-synopsis {
     font-family: 'Lora', serif;
     font-size: 0.65em;
     color: rgba(201, 168, 76, 0.55);
-    line-height: 1.55;
+    line-height: 1.6;
     margin: 0;
+    font-style: italic;
 }
 .back-meta {
     font-family: 'Lora', serif;
     font-size: 0.6em;
     color: rgba(201, 168, 76, 0.25);
     margin-top: auto;
+    text-align: center;
 }
 
 /* Spine */
@@ -4779,6 +4957,8 @@ body.library-zoom-active .vault-book-list {
     /* Hidden in front-view; visible only on shelf/rotation */
     opacity: 0;
     transition: opacity 0.3s ease;
+    /* Spine-cover crease shadow */
+    box-shadow: inset -3px 0 5px rgba(0, 0, 0, 0.4);
 }
 /* Show spine on shelf or when book is rotated */
 .shelf-view .book-spine,
@@ -4809,16 +4989,19 @@ body.library-zoom-active .vault-book-list {
 /* Page edge — multi-layer paper illusion */
 .book-pages {
     position: absolute;
-    width: 14px;
+    width: 8px;
     height: calc(100% - 4px);
     top: 2px;
-    right: -7px;
+    right: -4px;
     transform: rotateY(90deg);
     transform-origin: left;
-    background: linear-gradient(to right, #f4ede0 0%, #e2d8c6 40%, #cfc3af 100%);
+    background:
+        repeating-linear-gradient(to bottom, rgba(0,0,0,0.03) 0px, transparent 1px, transparent 3px) 0 0 / 100% 100%,
+        linear-gradient(to right, #f3f1ea 0%, #ece8de 50%, #e5dfd3 100%);
     box-shadow:
-        inset 0 0 4px rgba(0, 0, 0, 0.15),
-        0 0 6px rgba(0, 0, 0, 0.25);
+        inset 0 1px 2px rgba(0, 0, 0, 0.10),
+        inset -1px 0 2px rgba(0, 0, 0, 0.08),
+        0 0 4px rgba(0, 0, 0, 0.20);
     border-radius: 0 1px 1px 0;
     pointer-events: none;
     z-index: 0;
@@ -4827,9 +5010,9 @@ body.library-zoom-active .vault-book-list {
 /* Page-edge shimmer — visible only past ±90° rotation */
 .page-shimmer {
     position: absolute;
-    right: -7px;
+    right: -4px;
     top: 2px;
-    width: 14px;
+    width: 8px;
     height: calc(100% - 4px);
     transform: rotateY(90deg);
     transform-origin: left;
@@ -4921,6 +5104,42 @@ body.library-zoom-active .vault-book-list {
 }
 #zoomBookContainer .book-front img {
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+/* Spine visible during zoom rotation */
+#zoomBookContainer .book-spine {
+    opacity: 1;
+}
+/* Back cover — parchment texture in zoom */
+#zoomBookContainer .book-back {
+    background:
+        linear-gradient(160deg, rgba(30,22,14,0.9) 0%, rgba(18,12,6,0.95) 100%),
+        repeating-linear-gradient(0deg, transparent 0px, rgba(201,168,76,0.02) 1px, transparent 2px, transparent 6px);
+    border: 1px solid rgba(201, 168, 76, 0.22);
+    padding: 20px 14px;
+}
+#zoomBookContainer .back-title {
+    font-size: 1.05em;
+    font-weight: 700;
+    color: var(--gold, #c9a84c);
+    text-shadow: 0 0 10px rgba(201, 168, 76, 0.25);
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 0.03em;
+}
+#zoomBookContainer .back-synopsis {
+    font-size: 0.82em;
+    color: rgba(201, 168, 76, 0.72);
+    line-height: 1.75;
+    font-style: italic;
+    max-width: 95%;
+    margin: 0 auto;
+}
+#zoomBookContainer .back-meta {
+    font-size: 0.7em;
+    color: rgba(201, 168, 76, 0.35);
+    margin-top: auto;
+    text-align: center;
+    padding-top: 6px;
 }
 .zoom-cta {
     display: flex;
@@ -7877,6 +8096,58 @@ textarea.fate-field {
     filter: contrast(1.02) saturate(0.97);
 }
 
+/* Page edge thickness — stacked pages visible on right side */
+.book-cover::after {
+    content: "";
+    position: absolute;
+    right: -6px;
+    top: 6px;
+    width: 6px;
+    height: calc(100% - 12px);
+    background: linear-gradient(to right, #f6f1e8, #efe7db, #e6dccd);
+    border-radius: 0 2px 2px 0;
+    opacity: 0.75;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Deeper cinematic shadow on book object */
+.book-object {
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.25))
+            drop-shadow(0 18px 48px rgba(0,0,0,0.12));
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+.book-object:hover {
+    filter: drop-shadow(0 12px 28px rgba(0,0,0,0.3))
+            drop-shadow(0 24px 56px rgba(0,0,0,0.18));
+}
+
+/* Cover shimmer — light sweep when artwork appears */
+.cover-shimmer {
+    overflow: hidden;
+}
+.cover-shimmer::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.22) 50%,
+        rgba(255,255,255,0) 100%
+    );
+    transform: skewX(-20deg);
+    animation: coverShimmer 1.2s ease forwards;
+    z-index: 10;
+    pointer-events: none;
+}
+@keyframes coverShimmer {
+    to { left: 140%; }
+}
+
 /* Blank white placeholder when no cover exists yet */
 .cover-blank-placeholder {
     position: absolute;
@@ -10824,6 +11095,31 @@ textarea.fate-field {
     transform: rotateY(180deg);
     justify-content: flex-start;
     padding-top: 10px;
+}
+
+/* Specular sweep — light glide on hover */
+.sb-card-front::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.10) 44%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.10) 56%, transparent 70%) -200% 0 / 200% 100% no-repeat;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: inherit;
+}
+.sb-card:hover .sb-card-front::after,
+.sb-card.zoomed .sb-card-front::after {
+    animation: specular-sweep-single 500ms ease-out forwards;
+}
+@keyframes specular-sweep-single {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+/* Suppress sweep on unflipped cards, breadcrumbs, locked cards */
+.sb-card:not(.flipped):not(.zoomed) .sb-card-front::after,
+.breadcrumb-card .sb-card-front::after,
+.sb-card.locked .sb-card-front::after {
+    display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════

@@ -388,7 +388,8 @@ window.config = window.config || {
   const PROFILE_COLUMNS = `
     tier, subscription_fortunes, purchased_fortunes, is_subscriber, subscription_tier, has_storypass,
     age_confirmed, tos_version, privacy_version, adult_ack_version,
-    romance_preferences, free_story_consumed, first_tempt_fate_vision_triggered
+    romance_preferences, free_story_consumed, first_tempt_fate_vision_triggered,
+    has_seen_library_summon
   `;
 
   async function hydrateProfile(userId) {
@@ -418,7 +419,10 @@ window.config = window.config || {
     state.romancePreferences = Array.isArray(profile.romance_preferences) ? profile.romance_preferences : [];
     state.romanceVector = computeRomanceVector(state.romancePreferences);
     state.freeStoryConsumed = !!profile.free_story_consumed;
+    // Migrate legacy freeStoryConsumed → freeCustomStoryCredits
+    _migrateFreeStoryCredits();
     state.first_tempt_fate_vision_triggered = !!profile.first_tempt_fate_vision_triggered;
+    state.hasSeenLibrarySummon = !!profile.has_seen_library_summon;
     syncTierFromAccess();
     activateKeyholeMarkIfEligible();
     decayFateResonanceCrossSession();
@@ -1517,6 +1521,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       cards.forEach(function(card, i) {
         setTimeout(function() {
           card.classList.add('flipped');
+          if (window.playUISound) window.playUISound('card_flip');
           window.applyCardGleam && window.applyCardGleam(card);
         }, i * 250);
       });
@@ -2846,8 +2851,8 @@ Introduce the name naturally within the first few paragraphs — do not announce
   // Flavor hard constraints — injected when flavor is PRIMARY WORLD LENS
   const FLAVOR_HARD_CONSTRAINTS = {
     glass_house: `GLASS HOUSE HARD CONSTRAINTS:
-REQUIRES: High-tech social architecture, visibility/transparency enforcement, emotional compliance systems, collective influence (hive-mind, neural link, shared mood, or addictive calm), institutionalized monitoring or psychological exposure.
-FORBIDDEN DEFAULTS: Ash wasteland, bone-chip debt economy, generic Warden-cadre scarcity dystopia, desert ruin imagery. If such tropes appear, flavor enforcement has failed.`,
+REQUIRES: Near-future society structurally similar to the present, The Chorus empathic resonance field as primary social infrastructure, emotional transparency as cultural norm, Solo vs Chorus tension, aperture consent negotiation.
+FORBIDDEN DEFAULTS: Authoritarian surveillance states, collapsed economies, police castes, dystopian enforcement regimes, implanted empathy chips, ash wastelands, bone-chip debt economies, generic Warden-cadre scarcity dystopia, desert ruin imagery, cyberpunk implants, currency collapse. Glass House conflicts arise from emotional transparency, intimacy negotiation, Solo vs Chorus tension, and aperture consent — NOT from regime oppression. If dystopian ruin tropes appear, flavor enforcement has failed.`,
     quieting_event: `THE QUIETING HARD CONSTRAINTS:
 REQUIRES: Biochemical serenity enforcement, ambient suppression (not authoritarian force), emotional flatline as status quo, desire as social destabilizer. Society must feel stable and grateful.
 FORBIDDEN DEFAULTS: religious doctrine framing (not Dogma), memory editing framing (not Erasure), financial speculation framing (not Human Capital), hive-mind framing (not Glass House), authoritarian brutality trope, magical cure trope, instant emotional awakening resolution, permanent immunity without cost, framing society as secretly miserable.`,
@@ -2879,24 +2884,34 @@ FORBIDDEN DEFAULTS: environmental hostility as primary driver (not Ashfall), sys
   const WORLD_BIBLE = {
     glass_house: `CANONICAL WORLD LAW — GLASS HOUSE
 
-The Chorus is a frequency field, not an implant. No surgery or hardware. Opt-in but socially magnetic.
+SETTING: Near-future Earth analogue. Society is modern and functioning — cities resemble present-day cities. No dystopian ruins, no collapsed economies, no authoritarian enforcer castes, no cyberpunk implants, no surveillance state. The only major difference from the present is the existence of The Chorus.
+
+THE CHORUS:
+The Chorus is a distributed empathic resonance field — not an implant, not a chip, not hardware. No surgery required. Opt-in but socially magnetic. Characters casually refer to field access as "WiHi."
 The Chorus universalizes emotion; it does not suppress, numb, or desensitize.
-Grief is witnessed, not erased. Joy resonates outward. Anger is possible but effortful to sustain.
+Grief is witnessed, not erased. Joy resonates outward. Anger is possible but effortful to sustain. Miscommunication is reduced but not eliminated.
 Reconnection produces softness, emotional stabilization, and relief from isolation — not spectacle.
 The Chorus is deeply addictive: total contextual understanding, immediate forgiveness, felt sense of being seen.
+The Chorus does NOT: expose secrets automatically, control behavior, or erase emotions. It amplifies shared emotional understanding.
 
+SOLO STATE:
 Solo = remaining disconnected within Field range.
 Solos produce higher rates of crime AND higher rates of artistic/inventive breakthrough.
 Solo state increases: emotional sharpness, jealousy, misinterpretation, erotic voltage, creative and destructive volatility.
 Remaining Solo inside Field density feels effortful — like holding anger underwater.
+Solo vs Chorus tension drives many Glass House conflicts.
 
+APERTURE & INTIMACY:
 Secrets are possible but heavy. Withholding creates leakage risk. Secrecy is difficult to sustain long-term.
 Aperture = who is allowed into shared experience. Reconnecting mid-intimacy without consent = emotional infidelity.
 Sleep detunes the brain. Dreams remain private. Night is a natural Solo frontier.
+Partners negotiate exclusivity vs shared experience — this is the key dynamic.
 
+SOCIETY:
 Dead zones are stigmatized but common. Remote regions, ships, shielded spaces weaken or block signal.
 Children do not harmonize cleanly. Adolescents begin natural alignment. Cultural debate over early exposure.
 The Chorus is relatively new. Social enforcement precedes legal enforcement. Not yet universally mandated.
+Typical environments: apartments, cafés, trains, universities, offices, public parks, ride shares, concerts, co-working spaces. Do NOT default to dystopian streets or ruined markets.
 
 Central tension: Universal communion vs exclusive intensity.
 Can exclusive love survive universal understanding? Does harmony reduce greatness?
@@ -2909,18 +2924,19 @@ Psychological, genetic, moral, and environmental explanations may coexist.
 Public interpretation varies by faction and era.
 The Chorus does not provide explanation.
 
-Do not substitute generic dystopian tropes (ash wasteland, authoritarian cadres, scarcity economy).`
+SCENE VALIDATION: Reject scene plans containing authoritarian surveillance states, collapsed economies, police castes, dystopian enforcement regimes, or implanted empathy chips. Glass House conflicts must arise from emotional transparency, intimacy negotiation, Solo vs Chorus tension, or aperture consent.`
   };
 
   // Compressed anchor for Glass House on subsequent turns (not Scene 1)
   const GLASS_HOUSE_CANON_ANCHOR = `GLASS HOUSE CANON REMINDER:
-- The Chorus universalizes emotion; it does not numb.
-- Secrets are possible but heavy.
-- Sleep detunes. Dreams remain private.
-- Dead zones exist and are stigmatized but common.
-- Solos increase volatility AND creativity.
-- Aperture consent governs shared intimacy.
-- Do not default to generic dystopian tropes.`;
+- Near-future society, modern and functioning. No dystopian ruins, no authoritarian enforcers, no collapsed economies.
+- The Chorus is a distributed empathic resonance field (WiHi), not an implant. Opt-in, non-coercive.
+- The Chorus universalizes emotion; it does not numb, control, or expose secrets automatically.
+- Secrets are possible but heavy. Aperture consent governs shared intimacy.
+- Sleep detunes. Dreams remain private. Night is a natural Solo frontier.
+- Solo state increases: jealousy, erotic intensity, misinterpretation, creative volatility.
+- Typical environments: apartments, cafés, trains, universities, offices, parks. NOT dystopian streets or ruined markets.
+- Conflicts arise from emotional transparency, Solo vs Chorus tension, and aperture consent.`;
 
   // Controlled surface strategy — Glass House doctrine surfacing rules
   function buildGlassHouseSurfaceDirective() {
@@ -2942,7 +2958,7 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
   // Structural bellwethers — drift-prone structures only, not exhaustive
   const BELLWETHERS = {
     world: {
-      glass_house: `Structural example: A high-tech society of enforced transparency, emotional visibility, and addictive collective calm. Surveillance is normalized as intimacy. Compliance is aesthetic, not violent. Do not copy phrasing. Absorb structural logic only.`,
+      glass_house: `Structural example: A near-future society nearly identical to the present, where an empathic resonance field (the Chorus) replaces WiFi as dominant social infrastructure. Conflicts arise from emotional transparency, Solo vs Chorus tension, and aperture consent — not from regime oppression or dystopian ruin. Do not copy phrasing. Absorb structural logic only.`,
       quieting_event: `Structural example: A society stabilized through biochemical emotional suppression. Longing destabilizes systems designed for serenity. Institutions react subtly before violently. Do not copy phrasing. Absorb structural logic only.`
     },
     pov: {
@@ -3559,7 +3575,142 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
       directive += `\nFESTIVAL: ${festival}`;
     }
     directive += `\nSKY RULE: Mention visible moons by name only when the scene occurs outdoors at night or during celestial events. Do not list moons. Weave 1-2 naturally into atmosphere.`;
+
+    directive += `\n\nFATELANDS COSMOLOGY:
+The thirteen moons are real and widely recognized celestial bodies. Their names, appearances, and orbits are known and charted. Characters do not debate the existence or nature of these moons. They may interpret their symbolism poetically, but their astronomical reality is not questioned.
+THE HUNGRY EYE EXCEPTION: The Hungry Eye is unique — a perfect black disc with no reflected light that occasionally appears to consume meteors. Its appearance is irregular and its nature is culturally debated. Different cultures hold different explanations: divine eye, cosmic wound, gate to the void, living entity. No surface culture possesses confirmed answers. Merfolk traditions may preserve secret knowledge about its origin, but this knowledge remains rare and mysterious.
+Do not introduce new celestial mysteries beyond the Hungry Eye. The other twelve moons remain stable and culturally integrated.`;
+
+    // 13th Moon canonical names and folklore — always injected so characters use correct terminology
+    directive += `\n\n${FATELANDS_EYE_LANGUAGE}`;
+
+    // Lunar Pressure — emotional/atmospheric influence from visible moons
+    const pressures = getLunarPressure(sceneDay);
+    if (pressures.length > 0) {
+        directive += `\n\nLUNAR PRESSURE: ${pressures.join(', ')}.
+These pressures should subtly shape the emotional tone or atmosphere of the scene.
+They should not override storyturn events, intimacy gating, or plot direction.
+
+FATELANDS LUNAR CULTURE:
+People of the Fatelands are aware of the moons and often interpret emotions or events through them.
+Characters may: blame a moon for their mood, interpret another's behavior through a moon, speak metaphorically about lunar influence, or feel as though a moon is "pulling" on them emotionally.
+These interpretations may be sincere, skeptical, or poetic. The moons influence perception and culture, not direct mind control.
+Characters may consciously connect their emotions or decisions to the current lunar pressures via metaphor, internal thought, cultural proverb, or dialogue.
+Examples: "People said Ithralis made fools of lovers." / "He blamed Vorath for the unease in his chest." / "The broken light of Tharos hung over the harbor."
+RESTRAINT: At most one explicit lunar attribution per scene. The moons should feel like a shared cultural language, not constant exposition.${sky.syzygy ? `
+SYZYGY INTENSIFICATION: During Syzygy, characters may believe the moons' influence is stronger and interpret events more intensely. Cultural fear, awe, or fervor is appropriate.` : ''}`;
+    }
+
     return directive;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FATELANDS LUNAR PRESSURE — Moon-driven atmospheric influence
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FATELANDS_LUNAR_PRESSURE = {
+      Velorin:          'quiet reflection',
+      Tessryn:          'uncertainty',
+      Khalyra:          'heat and impatience',
+      Serapha:          'ritual gravity',
+      Astrael:          'cold clarity',
+      Dathriel:         'ambition',
+      Mournfall:        'mourning and memory',
+      Tharos:           'fracture and tension',
+      'The Chain':      'constraint',
+      Ithralis:         'attraction and longing',
+      Vorath:           'dread',
+      Elarion:          'revelation',
+      'The Hungry Eye': 'sacrifice and danger'
+  };
+
+  /**
+   * Extract lunar pressure from visible moons, capped at 2-3 strongest.
+   * Anomalous and final moons are prioritized as "strongest" pressure sources.
+   * @param {number} sceneDay
+   * @returns {string[]}
+   */
+  function getLunarPressure(sceneDay) {
+      const sky = getFatelandsSky(sceneDay);
+      const visible = sky.visible;
+      if (!visible.length) return [];
+
+      // Prioritize: final > anomalous > outer > inner
+      const priority = { final: 0, anomalous: 1, outer: 2, inner: 3 };
+      const sorted = [...visible].sort((a, b) => (priority[a.type] ?? 9) - (priority[b.type] ?? 9));
+
+      // Cap at 3 moons max for token safety
+      const selected = sorted.slice(0, 3);
+      return selected.map(m => FATELANDS_LUNAR_PRESSURE[m.name]).filter(Boolean);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // THE PIERCING — Hidden Cosmology of the Hungry Eye
+  // TAG: storybound/fatelands-piercing-cosmology-v1
+  // ═══════════════════════════════════════════════════════════════════════════
+  // This lore is HIDDEN. Most characters do not know it. It surfaces only
+  // through ancient texts, cult doctrine, forbidden archives, or whispered rumor.
+  // Treat as mythic cosmic horror, not scientific exposition.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FATELANDS_PIERCING_LORE = `THE PIERCING — HIDDEN COSMOLOGY (SECRET LORE):
+Public belief holds that Fate's Favor is a meteor impact crater. This is wrong.
+
+THE TRUTH (known only to secret orders and forbidden texts):
+Fate's Favor is an exit wound. A tiny singularity — now called the Hungry Eye — passed through the world in an event called "the Piercing." The passage warped gravity and identity along its path, creating the fractures in reality that allow sacrifice magic to function.
+
+SACRIFICE MAGIC ORIGIN:
+Near the wound, reality is unstable. Sacrifice works because giving up part of one's identity anchors the fracture — memory, flesh, voice, name, shadow, years of life. These identity anchors stabilize the wound temporarily. Without ongoing sacrifice, the fracture widens.
+
+THE THIRTEEN MOONS:
+Twelve moons are normal celestial bodies. The thirteenth — the Hungry Eye — is the singularity itself, trapped in orbit. The twelve moons form a gravitational lattice that keeps the Hungry Eye from falling back into the world. If the lattice fails, the Piercing repeats.
+
+SECRET ORDERS:
+THE WITNESSES OF THE WOUND — Astronomer-priests who believe the Eye must remain trapped. They secretly study the moons and calculate orbital shifts, watching for lattice degradation.
+THE CULT OF THE OPEN EYE — A doomsday cult that believes the wound should be healed. They believe a massive sacrifice during Syzygy could close the wound and free the Hungry Eye into deep space. Their plan requires sacrificing tens of thousands of souls.
+
+STORY USAGE RULES:
+This cosmology may ONLY appear through: ancient texts, cult doctrine, secret astronomical calculations, whispered rumors, forbidden archives, or merfolk oral tradition.
+Most characters do not know this truth. Even scholars treat it as heresy.
+Use poetic language: "the Wound," "the Piercing," "the Eye that Passed Through." Avoid modern astrophysics terminology (no "singularity," "gravity well," "event horizon" in character speech).
+Do NOT expose this lore through narrator exposition or casual dialogue. It must feel earned and dangerous to know.`;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CANONICAL NAMES & FOLKLORE — The 13th Moon
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FATELANDS_EYE_NAMES = {
+      formal: 'Devouring Eye',   // priests, scholars, astronomers
+      common: 'Noiria',          // everyday speech
+      folk:   'The Patch',       // farmers, sailors, casual observation
+      curse:  'The Hole'         // curses or epitaphs
+  };
+
+  const FATELANDS_EYE_LANGUAGE = `THE 13TH MOON — CANONICAL NAMES:
+Characters refer to the Hungry Eye using culture-appropriate names:
+- "The Devouring Eye" — formal (priests, scholars, astronomers): "The Devouring Eye rises early tonight."
+- "Noiria" — common speech: "Noiria is visible above the harbor."
+- "The Patch" — folk (farmers, sailors): "See the Patch there?"
+- "The Hole" — curse/epitaph: "May the Hole take you."
+The internal engine name "The Hungry Eye" should NOT appear in dialogue or narration. Use the above names instead.
+
+FORBIDDEN TERMINOLOGY:
+Characters must NEVER use modern astrophysical terms for the 13th moon: black hole, singularity, event horizon, wormhole, Einstein-Rosen bridge, gravitational distortion. Describe the phenomenon using mythic language only.
+
+CULTURAL SUPERSTITION — VALUABLES UNDER THE EYE:
+Many people believe that displaying valuables beneath the Devouring Eye tempts fate. Common behaviors: turning rings inward, hiding necklaces beneath clothing, covering jewelry with cloth or hand. This is casual superstition, not enforced law.`;
+
+  /**
+   * Inject Piercing lore into Fantasy scene prompts when deep lore access is appropriate.
+   * Only injected for Fantasy world at higher scene counts where lore discovery is plausible.
+   * Returns empty string for non-Fantasy or early scenes.
+   */
+  function buildPiercingLoreDirective() {
+      if (state.picks?.world !== 'Fantasy') return '';
+      const scenes = state.turnCount || 0;
+      // Deep lore only available after scene 10 — early scenes focus on surface world
+      if (scenes < 10) return '';
+      return `\n\n${FATELANDS_PIERCING_LORE}`;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -4862,6 +5013,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       consecutiveFate: 0, 
       consecutiveAid: 0,
       storyId: null,
+      storypassFortunes: 0,         // Story-locked fortunes granted by StoryPass (scene-only, non-transferable)
       is_starter_story: false,      // true = "The First Taste" starter book
       _starterStoryFreeInput: false, // true = allow one free custom input in Scene 1
 
@@ -4887,6 +5039,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       storyLength: 'taste',
       flingClimaxDone: false,
       flingConsequenceShown: false,
+      flingCheckpointShown: false,  // True after Fling completion checkpoint displayed
       storyEnded: false,
       book_complete: false,
       book_number: 1,
@@ -5011,7 +5164,8 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       gooseCooldown: 0,
       romancePreferences: [],
       romanceVector: null,
-      freeStoryConsumed: false,
+      freeStoryConsumed: false,       // LEGACY — migrated to freeCustomStoryCredits
+      freeCustomStoryCredits: 1,      // Explicit credit counter: free users start with 1 custom story slot
 
       // ============================================================
       // TEASE TIER — Scene cap enforcement (runtime only)
@@ -5104,6 +5258,7 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
           first_kiss: false,
           first_intimacy: false
       },
+      lastIntimacyAttemptTurn: -99,  // Turn of last ST3 intimacy attempt (cooldown pacing)
       sandbox: false,
       lastSavedWordCount: 0,
       storyOrigin: 'solo',
@@ -6042,6 +6197,28 @@ tracks physical reactions. Acts as emotional percussion, not constant narrator.
 (GOOD: The glass sweated where her fingers had been. "I can't do this." The door handle turned cold.)
 (BAD: "I can't do this," she said. "Why not?" he asked. "Because," she replied.)
 
+VIII-A. DIALOGUE ANCHOR RULE:
+Dialogue must still be perceived through a material or distributed observer.
+Spoken lines should be framed through a physical interaction or Chorus perception.
+Every dialogue exchange must include at least one material or Chorus anchor between lines.
+CORRECT:
+  The table felt the tremor in his hand before the words arrived.
+  "Leave," he said.
+  The lantern noticed the silence that followed.
+CORRECT (Glass House):
+  Several minds in the Chorus felt the hesitation before she spoke.
+  "I didn't mean for this to happen."
+  A pocket of the Chorus recoiled from the memory behind those words.
+INCORRECT:
+  "I didn't mean for this to happen," she said nervously.
+  He looked away.
+  She wondered if he believed her.
+
+VIII-B. HUMAN INTERIOR LIMIT:
+During dialogue exchanges, human interior thoughts must remain brief and secondary to material observation.
+The environment or Chorus is the primary narrator — human interiority must not dominate dialogue scenes.
+If a character's internal state is conveyed, it must be mediated through physical evidence or Chorus perception, not direct interior access.
+
 IX. SCENE-TYPE RULES:
 - EROTIC: Environment remains ACTIVE (heat, pressure, weight, rhythm, friction, breath, texture). Does NOT withdraw.
 - POLITICAL: Tracks embodied signals (fidgeting, grip, posture, voice). Never summarizes ideology or reveals hidden strategy.
@@ -6063,7 +6240,20 @@ Fate language, inevitability claims, narrative architecture referenced, abstract
 without physical mediation, environment alters outcome, "we" used as narrator voice,
 repetitive object-perception phrasing dominates dialogue.
 
-XII. AESTHETIC:
+XII. OPENING ANCHOR VARIETY:
+The opening material narrator should vary naturally across scenes.
+Do not repeatedly begin scenes with the same object (e.g., cobblestones, floor, doorway) unless that object is central to the scene.
+Prefer anchors that reflect the environment, situation, or world physics of the moment.
+CORRECT VARIETY:
+  "The lantern noticed her hesitation."
+  "The wind caught the lie before anyone else did."
+  "The table distrusted the way his hand hovered over the contract."
+  "A dozen hearts throughout the Chorus tightened at once."
+INCORRECT REPETITION:
+  "The cobblestones felt her footsteps." / "The cobblestones noticed her hesitation." / "The cobblestones remembered."
+Avoid repetitive opening anchors that make scenes feel templated.
+
+XIII. AESTHETIC:
 Uncanny, intimate, sensory, slightly anthropomorphic. Objects may have preference/ego
 but material-based (dress dislikes discoloration, pen prefers rhythms, mirror favors symmetry).
 
@@ -6095,6 +6285,81 @@ Surfaces hold warmth or chill longer than they should.
 Pressure lingers where bodies recently were.
 Echoes take longer to settle — not from physics, from weight.
 All sensation remains sensory-bound. No cognition. No attribution.`;
+      }
+
+      // GLASS HOUSE — Chorus as distributed cognition narrator (replaces atmospheric reading)
+      if (window.state?.picks?.worldSubtype === 'glass_house') {
+          contract += `\n\n═══════════════════════════════════════════════════════════════════════════════
+GLASS HOUSE — CHORUS COGNITION MODEL (4TH PERSON OVERRIDE)
+═══════════════════════════════════════════════════════════════════════════════
+
+CHORUS COGNITION:
+The Chorus is the collective mind of all individuals currently aligned with the resonance field.
+It perceives through the sensory input, emotions, and thoughts of its participants.
+The Chorus may interpret events using shared memory and collective emotional context.
+It may recognize individuals, relationships, and histories if those memories exist within the field.
+The Chorus is NOT an emotional atmosphere. It is distributed cognition — a mind made of minds.
+
+KNOWLEDGE BOUNDARY:
+The Chorus knows only what its connected participants know.
+It cannot perceive events outside the field.
+It cannot know information that no participant mind possesses.
+It cannot predict, prophesy, or access future knowledge.
+
+NARRATIVE STYLE:
+The Chorus narrates using plural cognition — collective awareness, not omniscience.
+CORRECT: "The Chorus recognized the hesitation before the words formed."
+CORRECT: "The Chorus remembered when these two minds first brushed against one another."
+CORRECT: "The Chorus felt the shape of the lie — three participants knew the truth, and their knowing bled."
+INCORRECT: "The Chorus knew the future."
+INCORRECT: "The Chorus knew secrets no one present remembered."
+INCORRECT: "The Chorus understood what no human could."
+
+DISTRIBUTED PERCEPTION STYLE:
+Chorus narration should frequently emphasize distributed perception across many participants.
+Preferred constructions: "Several minds in the Chorus noticed…", "A dozen hearts throughout the Chorus tightened…", "A pocket of the Chorus remembered…"
+Direct statements such as "The Chorus recognized…" may be used when perception clearly emerges from shared consensus.
+Avoid phrasing that implies centralized agency: "The Chorus decided", "The Chorus wanted", "The Chorus chose", "The Chorus commanded".
+
+COLLECTIVE PERCEPTION:
+The Chorus may express perception as multiple simultaneous perspectives within the collective mind.
+Different participants may notice or interpret events at slightly different moments.
+Narration may briefly reference these layered perceptions to convey the distributed nature of the Chorus.
+CORRECT: "One edge of the Chorus felt her hesitation first."
+CORRECT: "Another part of the Chorus remembered when she and Merek first joined hands."
+CORRECT: "Several minds in the field were already turning toward him."
+INCORRECT: "The Chorus unanimously decided she was lying."
+INCORRECT: "The Chorus spoke with a single unquestioned voice."
+
+CONVERGENCE RULE:
+When multiple Chorus perceptions appear, they should typically converge into a shared understanding within a few sentences.
+Layered perception creates texture, not fragmentation. The Chorus drifts apart briefly, then resolves.
+
+SHARED SENSORY PERCEPTION:
+Because the Chorus links the sensory experience of connected minds, it may narrate sensations that propagate through the field.
+These sensations may include: touch, breath, heartbeat, emotional surges, shifts in attention, collective stillness or anticipation.
+Shared sensations must originate from participating bodies within the field.
+CORRECT: "The Chorus felt the hesitation ripple through a dozen hearts."
+CORRECT: "The field tasted the moment their hands touched."
+CORRECT: "A quiet breath moved through the Chorus as several minds turned toward the same thought."
+INCORRECT: "The Chorus invented a sensation that no participant experienced."
+INCORRECT: "The Chorus created emotions out of nothing."
+
+INTIMACY APPLICATION:
+In intimate scenes, the Chorus may briefly narrate shared sensory echoes between participants.
+Example: "The Chorus felt the warmth of that touch twice — once in her palm, once in his."
+Shared sensory echoes must remain grounded in what participants physically feel. No fabricated sensation.
+
+SENSORY ROTATION:
+Shared sensory narration should rotate with material POV anchors and not replace them entirely.
+Alternate Chorus sensory beats with environmental narration (surfaces, air, architecture, objects).
+
+POV ROTATION:
+When the Chorus narrates, it must rotate with material narrators (stone, air, fabric, architecture).
+The Chorus should not dominate every paragraph. Alternate between:
+- Chorus cognition (collective awareness, shared memory, emotional bleed)
+- Material environment (objects, surfaces, temperature, pressure, sound)
+The interplay between distributed mind and inert material creates the Glass House aesthetic.`;
       }
 
       return contract;
@@ -9467,6 +9732,41 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     },
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // STORY LENGTH PROFILES — Per-length pacing targets and ending windows
+    // TAG: storybound/story-length-profiles-v1
+    // ═══════════════════════════════════════════════════════════════════════════
+    storyLengthProfiles: {
+      taste: {
+        targetScenes: [12, 15],       // 12-15 scenes
+        targetWords: [3500, 5500],     // 3500-5500 words
+        endingWindow: [10, 15],        // Scenes 10-15: start steering toward cliffhanger
+        hardStop: { scenes: 28, words: 7000 },
+        endingType: 'cliffhanger'      // Taste always ends on cliffhanger
+      },
+      fling: {
+        targetScenes: [20, 30],        // 20-30 total scenes
+        targetWords: [8000, 15000],    // 8000-15000 words
+        endingWindow: [18, 30],        // Scenes 18-30: steer toward mini-arc resolution
+        hardStop: { scenes: 60, words: 15000 },
+        endingType: 'mini_arc'         // Fling ends with mini-arc resolution (checkpoint)
+      },
+      affair: {
+        targetScenes: [30, 45],        // 30-45 scenes
+        targetWords: [10000, 18000],   // 10000-18000 words
+        endingWindow: [28, 45],        // Scenes 28-45: steer toward book ending
+        hardStop: null,                // No hard stop — prompt-driven
+        endingType: 'book_ending'      // Full narrative conclusion
+      },
+      soulmates: {
+        targetScenes: [60, 90],        // 60-90 scenes
+        targetWords: [20000, 40000],   // 20000-40000 words
+        endingWindow: [55, 90],        // Scenes 55-90: steer toward sequel handoff
+        hardStop: null,                // No hard stop — prompt-driven
+        endingType: 'sequel_handoff'   // Ends with sequel hook
+      }
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // CANONICAL STORYTURN SEMANTICS — ATTEMPT vs CONSEQUENCE (AUTHORITATIVE)
     // TAG: storybound/storyturn-attempt-consequence-semantics-v1
     // ═══════════════════════════════════════════════════════════════════════════
@@ -9733,13 +10033,172 @@ power_vector: ${state.picks?.genre || 'unknown'}
 last_scene_summary: ${(state.sceneWindow?.length > 0 ? state.sceneWindow[state.sceneWindow.length - 1] : 'No prior scene').slice(0, 300)}
 narrative_memory: ${state.narrativeState?.relationship_state ? 'populated' : 'empty'}
 relationship_tension: ${state.relationshipTension?.attraction || 'unknown'}
-relationship_phase: ${state.relationship_phase || 'strangers'}
+relationship_phase: ${state.relationship_phase || 'strangers'} (${(RELATIONSHIP_PHASE_GATING[state.relationship_phase || 'strangers'] || {}).tier || 'ATTRACTION'})
 active_petition: ${state.fate?.pendingPetition ? state.fate.pendingPetition.text : 'none'}
 tempt_fate_active: ${state.tempt_fate_invoked_this_turn ? 'yes' : 'no'}
 consecutive_tempt_fate_count: ${state.consecutive_tempt_fate_count || 0}
 fate_saturation: ${(state.fate_saturation || 0).toFixed(2)}
 volatility_window: ${state.volatility_window?.active ? 'active (severity ' + (state.volatility_window.severity || 0).toFixed(1) + ', ' + (state.volatility_window.remaining_scenes || 0) + ' scenes remaining)' : 'inactive'}
-fate_resonance: ${getFateResonanceState()}`;
+fate_resonance: ${getFateResonanceState()}
+story_pacing: ${getStoryEndingPhase()}`;
+  }
+
+  /**
+   * Determine current story ending phase based on STORY_LENGTH_PROFILES.
+   * Returns one of: 'early', 'midstory', 'approaching_ending', 'ending_window', 'hard_stop', 'past_target'
+   */
+  function getStoryEndingPhase() {
+      const len = (state.storyLength || 'taste').toLowerCase();
+      const profile = STORYTURN_CONFIG.storyLengthProfiles[len];
+      if (!profile) return 'early (no profile)';
+
+      const scenes = state.turnCount || 0;
+      const words = currentStoryWordCount();
+
+      // Hard stop check (if defined)
+      if (profile.hardStop) {
+          if (scenes >= profile.hardStop.scenes || words >= profile.hardStop.words) {
+              return `hard_stop (${scenes} scenes, ${words} words — limit: ${profile.hardStop.scenes}s/${profile.hardStop.words}w)`;
+          }
+      }
+
+      // Past target range (no hard stop but exceeded target)
+      if (scenes > profile.targetScenes[1] || words > profile.targetWords[1]) {
+          return `past_target (${scenes}/${profile.targetScenes[1]} scenes, ${words}/${profile.targetWords[1]} words — steer toward ${profile.endingType})`;
+      }
+
+      // Inside ending window
+      if (scenes >= profile.endingWindow[0]) {
+          return `ending_window (${scenes}/${profile.endingWindow[0]}-${profile.endingWindow[1]} scenes — ${profile.endingType})`;
+      }
+
+      // Approaching ending window (within 3 scenes)
+      if (scenes >= profile.endingWindow[0] - 3) {
+          return `approaching_ending (${profile.endingWindow[0] - scenes} scenes to window)`;
+      }
+
+      // Midstory (past halfway to ending window)
+      if (scenes >= Math.floor(profile.endingWindow[0] / 2)) {
+          return `midstory (${scenes} scenes)`;
+      }
+
+      return `early (${scenes} scenes)`;
+  }
+
+  /**
+   * Build ending-window pacing directive for prompt injection.
+   * Returns empty string if story is not near ending window.
+   */
+  function buildEndingWindowDirective() {
+      const len = (state.storyLength || 'taste').toLowerCase();
+      const profile = STORYTURN_CONFIG.storyLengthProfiles[len];
+      if (!profile) return '';
+
+      const scenes = state.turnCount || 0;
+      const words = currentStoryWordCount();
+
+      // Not near ending window yet — no directive needed
+      if (scenes < profile.endingWindow[0] - 3) return '';
+
+      const endingLabels = {
+          cliffhanger: 'an unresolved cliffhanger moment — the story must end mid-tension, with the central question dangling',
+          mini_arc: 'a mini-arc resolution — resolve the immediate romantic tension while leaving the larger story open',
+          book_ending: 'a full narrative conclusion — resolve the central romantic conflict with emotional satisfaction',
+          sequel_handoff: 'a sequel handoff — resolve this arc but plant a clear hook for continuation'
+      };
+
+      const endingDesc = endingLabels[profile.endingType] || profile.endingType;
+
+      // Relationship-aware ending guidance — adjusts HOW the ending unfolds,
+      // not WHEN it begins. Length profiles remain the primary ending trigger.
+      const phaseGuidance = _buildRelationshipEndingGuidance(len, state.relationship_phase || 'strangers');
+
+      // Approaching ending window (within 3 scenes)
+      if (scenes < profile.endingWindow[0]) {
+          return `\nSTORY PACING (approaching ending window in ${profile.endingWindow[0] - scenes} scenes):
+Begin planting seeds for ${endingDesc}.
+Do NOT rush — but start tightening threads and raising stakes toward the narrative close.${phaseGuidance}`;
+      }
+
+      // Inside ending window
+      if (scenes <= profile.endingWindow[1]) {
+          const remaining = profile.endingWindow[1] - scenes;
+          return `\nSTORY PACING (ending window ACTIVE — ~${remaining} scenes remaining):
+Story target: ${profile.targetScenes[0]}-${profile.targetScenes[1]} scenes, ${profile.targetWords[0]}-${profile.targetWords[1]} words.
+Current: ${scenes} scenes, ${words} words.
+Actively steer toward ${endingDesc}.
+Each scene should advance the story toward its conclusion. Avoid introducing new subplots or complications.${phaseGuidance}`;
+      }
+
+      // Past target — IMMEDIATE CONVERGENCE STATE
+      // The story has overshot its intended arc. Normal narrative generation is suspended.
+      // The model must resolve, not expand. No new threads, no new characters, no new complications.
+      return `\nSTORY PACING — IMMEDIATE CONVERGENCE (PAST TARGET):
+The story has exceeded its intended arc length (target: ${profile.targetScenes[1]} scenes / ${profile.targetWords[1]} words — current: ${scenes} scenes, ${words} words).
+
+MANDATORY CONVERGENCE RULES:
+1. Do NOT introduce new characters, subplots, conflicts, mysteries, or narrative branches.
+2. Do NOT expand existing tensions — resolve them. Convert unresolved dynamics into decisive action or revelation.
+3. Resolve the primary relationship tension IMMEDIATELY. Every beat must move toward closure.
+4. Close any remaining stakes within this scene. No dangling threads unless the ending type requires one.
+5. Move decisively toward the story's ending. This scene MUST function as a final or penultimate scene.
+
+ENDING TYPE: ${endingDesc}.
+Deliver this ending type NOW. Do not delay, hedge, or set up further complications.${phaseGuidance}
+
+BYPASS: Normal scene pacing directives (atmosphere, slow burn, tension building) are SUSPENDED. Prioritize resolution density over narrative texture. Every paragraph must advance toward the ending.`;
+  }
+
+  /**
+   * Build relationship-phase-aware ending guidance.
+   * Adjusts HOW the ending unfolds based on relationship state.
+   * Does NOT change WHEN the ending window begins — length profiles remain authoritative.
+   */
+  function _buildRelationshipEndingGuidance(storyLength, phase) {
+      // Phase-specific ending guidance per story length
+      const guidance = {
+          taste: {
+              strangers:          'End on unresolved tension — the characters sense something powerful but unnamed between them.',
+              antagonistic:       'End on unresolved tension — hostility masks an attraction neither will admit.',
+              reluctant_allies:   'End on unresolved tension — alliance has revealed something neither expected to feel.',
+              growing_attraction: 'End on a first emotional breakthrough — the moment one character admits (to themselves or aloud) what they feel.',
+              dangerous_desire:   'End on the edge of crossing a dangerous line — desire acknowledged, consequences looming, the choice unmade.',
+              lovers:             'End at a moment of vulnerability — intimacy has arrived but its cost is not yet clear.'
+          },
+          fling: {
+              strangers:          'Resolve initial tension with a significant moment of connection, but leave the relationship uncertain.',
+              antagonistic:       'Resolve hostility into reluctant acknowledgment — the wall cracks but does not fall.',
+              reluctant_allies:   'Resolve the alliance into something personal — the relationship has changed, but where it goes is unknown.',
+              growing_attraction: 'Resolve emotional tension with a defining moment, but leave the relationship uncertain — attraction is real, commitment is not.',
+              dangerous_desire:   'Resolve the immediate romantic escalation — the line has been crossed, and both characters must reckon with it.',
+              lovers:             'Deepen emotional stakes rather than introducing commitment — the moment that began in attraction has reached its peak, but the future is unwritten.'
+          },
+          affair: {
+              strangers:          'Guide toward a significant emotional shift before ending — the characters must have meaningfully changed each other.',
+              antagonistic:       'Guide toward a significant emotional shift — enmity transformed into something the characters cannot deny.',
+              reluctant_allies:   'Build toward a major relationship milestone — the alliance has become something deeper and more dangerous.',
+              growing_attraction: 'Build toward a major relationship milestone — attraction has matured into something that demands a decision.',
+              dangerous_desire:   'Deliver a major relationship turning point — the consequences of desire have reshaped both characters.',
+              lovers:             'Deliver a major relationship milestone — commitment, sacrifice, or transformation that marks this as a complete arc.'
+          },
+          soulmates: {
+              strangers:          'Build toward a transformative relationship resolution — the journey from strangers to something irreversible.',
+              antagonistic:       'Build toward a transformative resolution — the full arc from enmity to devotion must land with earned weight.',
+              reluctant_allies:   'Build toward commitment and transformation — the alliance has become the defining relationship of both lives.',
+              growing_attraction: 'Build toward commitment and transformation — attraction has deepened into something permanent.',
+              dangerous_desire:   'Deliver resolution with irreversible change — desire has become devotion, and the cost has been paid.',
+              lovers:             'Deliver a full relationship resolution — commitment, transformation, or irreversible change — while leaving room for Book II continuation.'
+          }
+      };
+
+      const lengthGuidance = guidance[storyLength];
+      if (!lengthGuidance) return '';
+
+      const phaseText = lengthGuidance[phase] || lengthGuidance.strangers;
+
+      return `\n\nRELATIONSHIP STATE: ${phase}
+Ending guidance: ${phaseText}
+Do not force relationship progression beyond what the story has earned. The ending must reflect the emotional stage the characters have actually reached.`;
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -10148,6 +10607,23 @@ ${(state._temptInstability || 0) > 0.8 ? '\nThe fabric of the scene carries stra
 
   // Expose globally for speculative scene path
   window.detectPlayerInitiation = detectPlayerInitiation;
+
+  /**
+   * Narrow physical escalation detector for ST3 cooldown ONLY.
+   * Only triggers on genuine physical moves: kiss, sexual touch, undressing, bed invitation,
+   * explicit physical escalation. Does NOT trigger on: teasing, attraction language alone,
+   * vague desire, emotional confession without physical move, atmospheric words like
+   * "whisper", "breath", "neck", "skin", "bed" (which can be non-escalatory).
+   */
+  function detectPhysicalEscalation(sayText, doText) {
+      const combined = ((sayText || '') + ' ' + (doText || '')).toLowerCase();
+      if (!combined.trim()) return false;
+
+      // Strict: only unambiguous physical escalation verbs/phrases
+      const escalationPatterns = /\b(kiss|kisses|kissing|undress|undressing|unbutton|unzip|take\s*(off|her|him|my)\s*(clothes|shirt|dress|pants|bra|underwear)|strip|straddle|mount|climb\s*on|push\s*(down|onto)\s*(the\s+)?(bed|couch|wall)|pin\s*(against|down|to)|pull\s*(down|off)\s*(her|his|my|their|the)|slip\s*(off|inside)|hands?\s*(under|beneath|inside)\s*(her|his|my|their|the)|fingers?\s*(inside|between)|enter|enters|make\s*love|have\s*sex|take\s*me|take\s*(her|him|them)\s*to\s*bed|go\s*to\s*bed|lead\s*(her|him|them)\s*to\s*(the\s+)?(bed|bedroom)|lick|suck|bite\s*(her|his|my|their)\s*(lip|neck|ear|thigh))\b/;
+
+      return escalationPatterns.test(combined);
+  }
 
   /**
    * Detect if recent story context contains an explicit scene that does NOT involve the main pair.
@@ -14075,9 +14551,9 @@ Return ONLY the title, no quotes or explanation.`;
    * @param {string} path - Selected continuation path
    */
   function initializeContinuationPath(path) {
-      // TEASE TIER: Block SAME_WORLD and NEW_STORY if free story consumed
-      if (path !== CONTINUATION_PATHS.CONTINUE && isTeaseTier() && state.freeStoryConsumed && !hasTeaseUnlockCondition()) {
-          console.warn('[TEASE] Continuation path blocked — free story consumed');
+      // TEASE TIER: Block SAME_WORLD and NEW_STORY if no custom story credits remain
+      if (path !== CONTINUATION_PATHS.CONTINUE && isTeaseTier() && !canStartCustomTeaseStory()) {
+          console.warn('[CREDITS] Continuation path blocked — no custom story credits');
           window.showPaywall('unlock');
           return;
       }
@@ -14516,6 +14992,7 @@ Return ONLY valid JSON:
       state.book_complete = false;
       state.turnCount = 0;
       state.storyId = null;
+      state.storypassFortunes = 0; // Story-locked fortunes expire on story change
       state._loggedStoryStart = false;
       state._loggedScene3 = false;
       state._loggedScene6 = false;
@@ -14527,11 +15004,13 @@ Return ONLY valid JSON:
       state._synopsisMetadata = null;
       state.flingClimaxDone = false;
       state.flingConsequenceShown = false;
+      state.flingCheckpointShown = false;
       state.cautiousStreak = 0;
       state.dynamicDominanceBoost = 0;
       state.vulnerabilityPulse = 0;
       state.storyStage = null;
       state.intimacyInterrupted = { first_kiss: false, first_intimacy: false };
+      state.lastIntimacyAttemptTurn = -99;
       state.intimacyTurnsInWindow = 0;
 
       // Fate / volatility / saturation — per-story, must not bleed
@@ -14704,6 +15183,20 @@ Return ONLY valid JSON:
           ? crypto.randomUUID()
           : 'sb_' + Date.now().toString(36);
       localStorage.setItem('sb_current_story_id', state.storyId);
+  }
+
+  /**
+   * Sync legacy romantic-target fields from canonical normalizedPartnerKernel.
+   * Canonical source: state.normalizedPartnerKernel (set by name normalization)
+   * Compatibility mirrors: state.playerName, state.loveInterestName, state.storybeau
+   * These mirrors are read by fatecards.js and romance-integrity checks.
+   */
+  function _syncRomanticTargetState() {
+    const pName = state.normalizedPlayerKernel || null;
+    const lName = state.normalizedPartnerKernel || null;
+    state.playerName = pName;
+    state.loveInterestName = lName;
+    state.storybeau = lName ? { name: lName, role: 'primary romantic interest' } : null;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -14886,6 +15379,57 @@ Return ONLY valid JSON:
    */
   const RELATIONSHIP_PHASES = ['strangers', 'antagonistic', 'reluctant_allies', 'growing_attraction', 'dangerous_desire', 'lovers'];
 
+  // ── RELATIONSHIP PHASE GATING — Macro-level intimacy authorization ──
+  // Maps each relationship_phase to what ST3 intimacy attempts may express.
+  // Works WITH the Storyturn system: ST3 authorizes attempts, phase gates content.
+  const RELATIONSHIP_PHASE_GATING = {
+      strangers: {
+          tier: 'ATTRACTION',
+          st3Allows: 'charged proximity, lingering touch, accidental contact, electric glances',
+          st3Blocks: 'kissing, sexual contact, emotional confession of desire',
+          directive: 'Characters are strangers. ST3 intimacy attempts are limited to charged proximity, accidental touch, and unspoken awareness. No kissing, no confession, no sexual contact.'
+      },
+      antagonistic: {
+          tier: 'ATTRACTION',
+          st3Allows: 'hostile proximity, combative touch, grudging physical awareness',
+          st3Blocks: 'kissing, sexual contact, emotional confession',
+          directive: 'Characters are antagonistic. ST3 intimacy attempts manifest as hostile proximity, grudging physical awareness, or combative contact. No kissing, no confession, no sexual contact.'
+      },
+      reluctant_allies: {
+          tier: 'TENSION',
+          st3Allows: 'near-kiss, emotional confession, protective touch, intimate eye contact',
+          st3Blocks: 'sexual contact, full intimacy, consummation',
+          directive: 'Characters are reluctant allies with acknowledged tension. ST3 may attempt a near-kiss, emotional confession, or protective touch. No sexual contact or consummation.'
+      },
+      growing_attraction: {
+          tier: 'TENSION',
+          st3Allows: 'first kiss attempt, direct confession of desire, intimate touch',
+          st3Blocks: 'sexual escalation, full intimacy, consummation',
+          directive: 'Characters have growing attraction. ST3 may attempt a first kiss or direct confession of desire. No sexual escalation or full intimacy.'
+      },
+      dangerous_desire: {
+          tier: 'CROSSING_LINE',
+          st3Allows: 'kissing, sexual tension, physical intimacy initiation, boundary crossing',
+          st3Blocks: 'none at relationship-phase level — story-length gating and arousal limits still apply',
+          directive: '' // No additional relationship-phase restriction; story-length and arousal gates remain authoritative
+      },
+      lovers: {
+          tier: 'BONDING',
+          st3Allows: 'emotionally meaningful intimacy, deepening connection, vulnerability',
+          st3Blocks: 'none at relationship-phase level — story-length gating and arousal limits still apply',
+          directive: '' // No additional relationship-phase restriction; story-length and arousal gates remain authoritative
+      }
+  };
+
+  /**
+   * Get the current relationship phase gating config.
+   * Returns the RELATIONSHIP_PHASE_GATING entry for the current phase.
+   */
+  function getRelationshipPhaseGating() {
+      const phase = state.relationship_phase || 'strangers';
+      return RELATIONSHIP_PHASE_GATING[phase] || RELATIONSHIP_PHASE_GATING.strangers;
+  }
+
   /**
    * Advance relationship_phase forward based on memory signals.
    * Phase can only advance or hold; regression requires a betrayal callback.
@@ -14918,7 +15462,29 @@ Return ONLY valid JSON:
 
       // Need 2+ signals to advance
       if (forwardSignals >= 2) {
-          state.relationship_phase = RELATIONSHIP_PHASES[currentIdx + 1];
+          const nextIdx = currentIdx + 1;
+          const nextPhase = RELATIONSHIP_PHASES[nextIdx];
+
+          // Length-based ceiling — short stories cannot progress unrealistically far
+          const PHASE_CEILING_BY_LENGTH = {
+              taste:     'growing_attraction',  // Taste → max: unresolved attraction
+              fling:     'dangerous_desire',    // Fling → max: crossing the line
+              affair:    'lovers',              // Affair → max: full relationship
+              soulmates: null                   // Soulmates → no ceiling
+          };
+
+          const len = (state.storyLength || 'taste').toLowerCase();
+          const ceilingPhase = PHASE_CEILING_BY_LENGTH[len];
+
+          if (ceilingPhase) {
+              const ceilingIdx = RELATIONSHIP_PHASES.indexOf(ceilingPhase);
+              if (ceilingIdx >= 0 && nextIdx > ceilingIdx) {
+                  console.log(`[MEMORY] Relationship phase clamped: ${nextPhase} exceeds ${len} ceiling (${ceilingPhase}). Staying at ${state.relationship_phase}.`);
+                  return;
+              }
+          }
+
+          state.relationship_phase = nextPhase;
           console.log(`[MEMORY] Relationship phase advanced to ${state.relationship_phase} (${forwardSignals} signals)`);
       }
   }
@@ -17719,9 +18285,9 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
    * Reset state for a new story (preserves subscription/payment state)
    */
   function resetForNewStory() {
-      // TEASE TIER: Prevent reset unless user has upgraded
-      if (isTeaseTier() && state.freeStoryConsumed && !hasTeaseUnlockCondition()) {
-          console.warn('[TEASE] New story blocked — free story consumed, no unlock condition');
+      // TEASE TIER: Prevent reset unless user has credits or entitlement
+      if (isTeaseTier() && !canStartCustomTeaseStory()) {
+          console.warn('[CREDITS] New story blocked — no custom story credits');
           window.showPaywall('unlock');
           return;
       }
@@ -18934,6 +19500,9 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       state.normalizedPartnerKernel = null;
       state.rawPlayerName = null;
       state.rawPartnerName = null;
+      state.playerName = null;
+      state.loveInterestName = null;
+      state.storybeau = null;
 
       // Reset background story state
       state._backgroundStoryText = null;
@@ -19342,6 +19911,7 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
               if (proceedBtn) {
                   proceedBtn.classList.remove('hidden');
                   proceedBtn.onclick = function() {
+                      if (window.playUISound) window.playUISound('button_click');
                       proceedBtn.classList.add('hidden');
                       showScreen('tierGate');
                   };
@@ -19887,6 +20457,8 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const turns = state.turnCount || 0;
       const len = state.storyLength || 'taste';
 
+      // ── TASTE TERMINAL END ──
+      // Only applies to actual Taste stories (not upgraded to Fling via StoryPass)
       if (len === 'taste' && (wc > 7000 || turns > 28) && !state.storyEnded) {
           state.storyEnded = true;
           // Onboarding: final vision
@@ -19908,21 +20480,21 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           return;
       }
 
-      if (len === 'fling' && !state.storyEnded) {
+      // ── FLING COMPLETION CHECKPOINT ──
+      // When the Fling mini-arc is narratively complete, show a continuation
+      // checkpoint — NOT a terminal end. The story remains continuable.
+      if (len === 'fling' && !state.storyEnded && !state.flingCheckpointShown) {
           const overCap = (wc > 15000 || turns > 60);
           if (state.flingClimaxDone && state.flingConsequenceShown && overCap) {
-              state.storyEnded = true;
+              state.flingCheckpointShown = true;
               // Onboarding: final vision
               if (state.storyId === state.onboarding_story_id && !state.has_received_final_vision) {
                   state.has_received_final_vision = true;
                   triggerVision({ reason: 'final', tone: state.picks?.tone, world: state.picks?.world, storyturn: state.storyturn });
               }
               document.getElementById('submitBtn').disabled = true;
-              renderFlingEnd();
-              // Show Story End Page after delay for user to read ending
-              setTimeout(() => {
-                  showStoryEndPage();
-              }, 3000);
+              renderFlingCheckpoint();
+              saveStorySnapshot();
           }
       }
   }
@@ -20539,6 +21111,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       // ── Proceed handler (replaces old Seal) ──
       proceedBtn.addEventListener('click', () => {
+          if (window.playUISound) window.playUISound('button_click');
           // Resolve petition text: custom textarea takes priority if visible
           let text = _petitionText;
           if (customInput.classList.contains('active') && customTextarea) {
@@ -20878,6 +21451,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       proceedBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
+          if (window.playUISound) window.playUISound('button_click');
           const wishText = textarea ? textarea.value.trim() : '';
 
           // Store wish text in state for narrative injection
@@ -22175,24 +22749,89 @@ RULES:
       return isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP;
   }
 
+  // ── Free Custom Story Credit System ──
+  // Free users get 1 initial credit. Starter stories never consume credits.
+  // Qualifying purchases grant +1 credit. Subscriptions bypass credits entirely.
+
+  function getFreeCustomStoryCredits() {
+      return state.freeCustomStoryCredits || 0;
+  }
+
+  function canStartCustomTeaseStory() {
+      // Starter stories are always allowed
+      if (state.is_starter_story) return true;
+      // Subscribed / pass holders bypass credit system
+      if (state.subscribed || !!state.hasPass || (state.storyId && hasStoryPass(state.storyId))) return true;
+      // Free tier: check credits
+      return getFreeCustomStoryCredits() > 0;
+  }
+
+  function consumeFreeCustomStoryCredit() {
+      // Never consume for starter stories
+      if (state.is_starter_story) return;
+      // No-op for entitled users
+      if (state.subscribed || !!state.hasPass) return;
+      if (state.freeCustomStoryCredits > 0) {
+          state.freeCustomStoryCredits--;
+          console.log('[CREDITS] Consumed 1 custom story credit. Remaining:', state.freeCustomStoryCredits);
+      }
+      // Persist to localStorage
+      _persistFreeStoryCredits();
+      // Sync legacy flag for server-side compat
+      _syncLegacyFreeStoryConsumed();
+  }
+
+  function grantFreeCustomStoryCredit(reason) {
+      state.freeCustomStoryCredits = (state.freeCustomStoryCredits || 0) + 1;
+      console.log('[CREDITS] +1 custom story credit (' + reason + '). Total:', state.freeCustomStoryCredits);
+      _persistFreeStoryCredits();
+  }
+
   function isTeaseStoryBlocked() {
-      return isTeaseTier() && state.freeStoryConsumed;
+      if (!isTeaseTier()) return false;
+      return !canStartCustomTeaseStory();
   }
 
   function hasTeaseUnlockCondition() {
       return state.subscribed || !!state.hasPass || (state.storyId && hasStoryPass(state.storyId));
   }
 
-  async function markFreeStoryConsumed() {
-      if (state.freeStoryConsumed) return;
-      state.freeStoryConsumed = true;
+  /** Migrate legacy freeStoryConsumed boolean → credit counter (runs once) */
+  function _migrateFreeStoryCredits() {
+      const stored = localStorage.getItem('sb_free_story_credits');
+      if (stored !== null) {
+          // Already migrated — use persisted value
+          state.freeCustomStoryCredits = Math.max(0, parseInt(stored, 10) || 0);
+          return;
+      }
+      // First-time migration from legacy boolean
+      if (state.freeStoryConsumed) {
+          state.freeCustomStoryCredits = 0;
+      } else {
+          state.freeCustomStoryCredits = 1;
+      }
+      _persistFreeStoryCredits();
+      console.log('[CREDITS] Migrated from freeStoryConsumed=' + state.freeStoryConsumed +
+          ' → freeCustomStoryCredits=' + state.freeCustomStoryCredits);
+  }
+
+  function _persistFreeStoryCredits() {
       try {
-          const user = sb.auth.getUser ? (await sb.auth.getUser()).data?.user : null;
+          localStorage.setItem('sb_free_story_credits', String(state.freeCustomStoryCredits));
+      } catch (e) { /* quota — non-critical */ }
+  }
+
+  /** Keep legacy server flag in sync for backward compat */
+  async function _syncLegacyFreeStoryConsumed() {
+      const consumed = state.freeCustomStoryCredits <= 0;
+      state.freeStoryConsumed = consumed;
+      try {
+          const user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null;
           if (user) {
-              await sb.from('profiles').update({ free_story_consumed: true }).eq('id', user.id);
+              await sb.from('profiles').update({ free_story_consumed: consumed }).eq('id', user.id);
           }
       } catch (err) {
-          console.error('[TEASE] Failed to persist free_story_consumed:', err);
+          console.error('[CREDITS] Failed to sync legacy free_story_consumed:', err);
       }
   }
 
@@ -23105,9 +23744,27 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // TEASE CAP VARIANT: Show ritual invitation copy instead of generic heading
     const teaseCliffCopy = document.getElementById('teaseCliffhangerCopy');
     const payHeading = document.getElementById('payModalHeading');
-    const isTeaseCap = (isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP) || isTeaseStoryBlocked();
+    const isSceneCap = isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP;
+    const isStoryBlocked = isTeaseStoryBlocked();
+    const isTeaseCap = isSceneCap || isStoryBlocked;
     if (teaseCliffCopy) teaseCliffCopy.classList.toggle('hidden', !isTeaseCap);
-    if (payHeading) payHeading.classList.toggle('hidden', isTeaseCap);
+    if (payHeading) {
+        payHeading.classList.toggle('hidden', isTeaseCap);
+        // When story-blocked (not scene-capped), update heading to credit-specific copy
+        if (isStoryBlocked && !isSceneCap) {
+            payHeading.textContent = 'Start Another Story';
+            payHeading.classList.remove('hidden');
+            if (teaseCliffCopy) teaseCliffCopy.classList.add('hidden');
+        } else if (!isTeaseCap) {
+            payHeading.textContent = 'Upgrade Your Story';
+        }
+    }
+
+    // CREDIT HINT: Show when story-blocked (0 credits), not scene-capped
+    const creditHintEl = document.getElementById('storySlotCreditHint');
+    if (creditHintEl) {
+        creditHintEl.classList.toggle('hidden', !isStoryBlocked || isSceneCap);
+    }
 
     // Show/hide Fortune sacrifice option for tease cap
     const teaseOfferingEl = document.getElementById('teaseOfferingOption');
@@ -23118,6 +23775,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (balanceHint && isTeaseCap) {
         const fortunes = state.fortunes || 0;
         balanceHint.textContent = `(${fortunes} Fortune${fortunes !== 1 ? 's' : ''} remaining)`;
+    }
+
+    // Fortune upsell hint — visible for free users at cliffhanger, never for subscribers
+    const fortuneUpsellHint = document.getElementById('fortuneUpsellHint');
+    if (fortuneUpsellHint) {
+        fortuneUpsellHint.classList.toggle('hidden', !isTeaseCap || state.subscribed || !!state.hasPass);
     }
 
     pm.classList.remove('hidden');
@@ -23336,13 +23999,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               state.storyLength = 'fling';
               console.log('[ENTITLEMENT] Downgraded story length to Fling (pass cannot access affair/soulmates)');
           }
+          // StoryPass grants story-locked Fortunes for scene generation only
+          state.storypassFortunes = 15;
+          console.log('[ENTITLEMENT] StoryPass granted 15 story-locked Fortunes');
+          // StoryPass grants +1 custom story credit (engagement reward)
+          grantFreeCustomStoryCredit('storypass');
       }
 
-      // RULE: Fortune pack purchase resets tease lock (allows new story)
+      // RULE: Fortune pack purchase grants +1 custom story credit
       if (purchaseType === 'fortune_pack') {
-          state.freeStoryConsumed = false;
+          grantFreeCustomStoryCredit('fortune_pack');
           toastMessage = "Fortunes received. A new story awaits.";
-          console.log('[ENTITLEMENT] Fortune pack purchased — tease lock reset');
       }
 
       // RULE: Subscription can upgrade to Affair
@@ -23352,6 +24019,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               upgraded = true;
               toastMessage = "You have shed your limitations.";
           }
+          // Subscription bypasses credit system entirely via canStartCustomTeaseStory()
+          // No credit grant needed — subscribers are never gated
       }
 
       // STORYTURN: Handle Taste cliffhanger resume on upgrade
@@ -23361,14 +24030,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       if (upgraded) {
           state.storyEnded = false;
+          // Resume from Fling checkpoint if story was paused there
+          if (state.flingCheckpointShown && typeof window.resumeFromFlingCheckpoint === 'function') {
+              window.resumeFromFlingCheckpoint();
+          }
       }
 
       // Clear purchase state
       state.lastPurchaseType = null;
       state.pendingUpgradeToAffair = false;
-
-      // TEASE TIER: Purchase clears free story consumption lock
-      state.freeStoryConsumed = false;
 
       // CRITICAL: Apply all lock states AFTER access is resolved
       console.log('[ENTITLEMENT] Applying UI locks with access:', state.access);
@@ -23434,13 +24104,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
   }
 
-  function renderFlingEnd() {
+  function renderFlingCheckpoint() {
       const div = document.createElement('div');
       div.className = 'box';
-      div.style.textAlign = 'center';
-      div.style.border = '1px solid var(--pink)';
-      div.innerHTML = `<h3 style="color:var(--pink)">The story isn't over.</h3><p>This arc was short — but there's more to tell. Upgrade to continue the full narrative.</p><button onclick="window.upgradeFlingToAffair()" style="background:var(--pink); color:black; font-weight:bold; margin-top:10px;">Continue the Story</button>`;
-      // Append fling ending to current page
+      div.id = 'flingCheckpointBox';
+      div.style.cssText = 'text-align:center; border:1px solid var(--pink); padding:20px; margin:20px 0;';
+      div.innerHTML = `
+        <h3 style="color:var(--pink); margin:0 0 8px;">This arc is complete.</h3>
+        <p style="color:var(--ink); opacity:0.85; margin:0 0 16px; line-height:1.6;">The story doesn't have to end here. The world remains, the characters remember.</p>
+        <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
+          <button onclick="window.upgradeFlingToAffair()" style="background:var(--pink); color:black; font-weight:bold; padding:10px 24px; border:none; border-radius:4px; cursor:pointer; font-family:'Lora',serif;">Continue This Story</button>
+          <button onclick="window.startBook2()" style="background:transparent; border:1px solid var(--gold); color:var(--gold); padding:8px 20px; border-radius:4px; cursor:pointer; font-family:'Lora',serif;">Start Book II</button>
+          <button onclick="window.returnToLibraryFromCheckpoint()" style="background:transparent; border:none; color:var(--ink); opacity:0.6; padding:6px 16px; cursor:pointer; font-family:'Lora',serif; font-size:0.85em;">Return to Library</button>
+        </div>`;
       StoryPagination.appendToCurrentPage(div.outerHTML);
   }
 
@@ -23452,6 +24128,21 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       } else {
           window.showPaywall('sub_only'); // Affair requires subscription
       }
+  };
+
+  /** Resume story from Fling checkpoint after upgrade */
+  window.resumeFromFlingCheckpoint = function() {
+      state.flingCheckpointShown = false; // Allow story to continue
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) submitBtn.disabled = false;
+      // Remove the checkpoint box from DOM
+      document.querySelectorAll('#flingCheckpointBox').forEach(el => el.remove());
+      saveStorySnapshot();
+      console.log('[FLING] Story resumed from checkpoint');
+  };
+
+  window.returnToLibraryFromCheckpoint = function() {
+      window.showScreen('vaultLibraryScreen');
   };
 
 
@@ -23940,9 +24631,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
    * Clear all story state for a fresh start
    */
   function clearStoryForNewStart() {
-    // TEASE TIER: Prevent story reset unless user has upgraded
-    if (isTeaseTier() && state.freeStoryConsumed && !hasTeaseUnlockCondition()) {
-        console.warn('[TEASE] Story reset blocked — free story consumed, no unlock condition');
+    // TEASE TIER: Prevent story reset unless user has credits or entitlement
+    if (isTeaseTier() && !canStartCustomTeaseStory()) {
+        console.warn('[CREDITS] Story reset blocked — no custom story credits');
         window.showPaywall('unlock');
         return;
     }
@@ -24287,6 +24978,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     localStorage.setItem('sb_current_story_id', state.storyId);
 
     if(data.stateSnapshot) Object.assign(state, data.stateSnapshot);
+    // Backfill romantic-target bridge for old snapshots missing storybeau
+    if (state.normalizedPartnerKernel && !state.storybeau) _syncRomanticTargetState();
     // Canonicalize legacy tone values from saved state
     if (state.picks?.tone) state.picks.tone = canonicalizeTone(state.picks.tone);
     deriveToneBias();
@@ -24344,9 +25037,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   window.restart = function(){
-    // TEASE TIER: Prevent restart unless user has upgraded
-    if (isTeaseTier() && state.freeStoryConsumed && !hasTeaseUnlockCondition()) {
-        console.warn('[TEASE] Restart blocked — free story consumed, no unlock condition');
+    // TEASE TIER: Prevent restart unless user has credits or entitlement
+    if (isTeaseTier() && !canStartCustomTeaseStory()) {
+        console.warn('[CREDITS] Restart blocked — no custom story credits');
         window.showPaywall('unlock');
         return;
     }
@@ -24384,6 +25077,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     state.normalizedPartnerKernel = null;
     state.rawPlayerName = null;
     state.rawPartnerName = null;
+    state.playerName = null;
+    state.loveInterestName = null;
+    state.storybeau = null;
     // Reset story shape snapshot (forces "Begin Story" on new session)
     state._lastGeneratedShapeSnapshot = null;
 
@@ -24600,6 +25296,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       resetVaultState();
   });
 
+  // Sync UI sound toggle with saved preference
+  const _uiSoundToggle = $('uiSoundToggle');
+  if (_uiSoundToggle && typeof window.isUISoundEnabled === 'function') {
+    _uiSoundToggle.checked = window.isUISoundEnabled();
+  }
+
   // Profile button
   $('menuProfileBtn')?.addEventListener('click', () => {
       document.getElementById('menuOverlay')?.classList.add('hidden');
@@ -24654,7 +25356,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         return;
       }
 
-      _libraryEntries = data || [];
+      // Filter out starter stories — they must never appear in the Forbidden Library
+      const starterIds = new Set(STARTER_STORIES.map(s => s.id));
+      _libraryEntries = (data || []).filter(e => !starterIds.has(e.story_id));
       _libraryLoaded = true;
 
       if (_libraryEntries.length === 0) {
@@ -24727,7 +25431,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       book.dataset.world = worldKey;
       book.innerHTML = `<div class="book-3d">
   <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div></div>
-  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><p class="back-synopsis">${escapeHTML(bookAuthor)}</p><p class="back-meta">${scenes} scenes · ${words.toLocaleString()} words</p></div></div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><p class="back-synopsis">${scenes} scenes · ${words.toLocaleString()} words</p><p class="back-meta">${escapeHTML(bookAuthor)}</p></div></div>
   <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div></div>
   <div class="book-pages"></div>
   <div class="page-shimmer"></div>
@@ -24735,7 +25439,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Depth variance and lean (deterministic, no randomness)
       const depthVariance = (index % 3) - 1; // -1, 0, 1
-      book.style.transform = `translateY(6px) translateZ(${depthVariance * 2}px)`;
+      book.style.transform = `translateY(var(--book-rest-offset, 6px)) translateZ(${depthVariance * 2}px)`;
       const isMobile = window.innerWidth < 900;
       if (!isMobile && (index % 7 === 0) && isForward) {
         book.classList.add('mode-lean');
@@ -24744,7 +25448,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Hover sound (debounced, one per entry)
       let _hoverPlayed = false;
       book.addEventListener('mouseenter', () => {
-        if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); }
+        if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
       });
       book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
 
@@ -24761,6 +25465,22 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       listEl.querySelectorAll('.library-book.initializing').forEach(b => b.classList.remove('initializing'));
     });
   }
+
+  // — Shelf depth parallax (subtle back-wall shift on mouse move) —
+  (function initShelfParallax() {
+    let _parallaxRaf = 0;
+    document.addEventListener('mousemove', (e) => {
+      if (_parallaxRaf) return;
+      _parallaxRaf = requestAnimationFrame(() => {
+        _parallaxRaf = 0;
+        const libs = document.querySelectorAll('.forbidden-library');
+        if (!libs.length) return;
+        const nx = (e.clientX / window.innerWidth - 0.5) * 2; // -1 to 1
+        const shift = nx * 1.5; // max ±1.5px
+        libs.forEach(lib => lib.style.setProperty('--shelf-parallax-x', shift + 'px'));
+      });
+    }, { passive: true });
+  })();
 
   // — Micro sound cue system (muted-safe, non-blocking) —
   let _libraryUserInteracted = false;
@@ -24779,6 +25499,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   let _zoomEntry = null;
   let _zoomRafId = null;
   let _zoomSource = 'forbidden'; // 'forbidden' | 'vault' — tracks which shelf opened the zoom
+  let _zoomStarterDef = null;    // set when zooming a starter book
 
   function _openLibraryZoom(entry, sourceBook) {
     _zoomEntry = entry;
@@ -24800,10 +25521,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     clonedBook.style.width = '';
     container.appendChild(clonedBook);
 
-    // Set CTA text — vault-aware
+    // Set CTA text — context-aware
     if (readBtn) {
-      if (_zoomSource === 'vault') {
-        // Check bookmark existence for progress detection
+      if (entry._isStarter) {
+        readBtn.textContent = 'Begin Story';
+      } else if (_zoomSource === 'vault') {
         readBtn.textContent = entry._hasProgress ? 'Continue Reading' : 'Begin Reading';
       } else {
         readBtn.textContent = 'Read This Story';
@@ -24814,6 +25536,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     overlay.classList.add('active');
     document.body.classList.add('library-zoom-active');
     _playLibrarySound('book-open');
+    if (window.playUISound) window.playUISound('book_open');
 
     // References for animation
     const zoomBook = container.querySelector('.book-3d');
@@ -24919,6 +25642,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (overlay._keyDownHandler) document.removeEventListener('keydown', overlay._keyDownHandler);
 
     _zoomEntry = null;
+    _zoomStarterDef = null;
   }
 
   // Zoom CTA — read story (vault-aware)
@@ -24926,8 +25650,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (_zoomEntry) {
       const entry = _zoomEntry;
       const source = _zoomSource;
+      const starterDef = _zoomStarterDef;
       _closeLibraryZoom();
-      openLibraryReader(entry, source);
+      if (entry._isStarter && starterDef) {
+        _launchStarterStory(starterDef);
+      } else {
+        openLibraryReader(entry, source);
+      }
     }
   });
 
@@ -25168,20 +25897,46 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // LIBRARY-FIRST ONBOARDING — Starter Story System
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const STARTER_STORY = {
-    title: 'The First Taste',
-    author: 'S. Tory Bound',
-    world: 'Modern',
-    worldSubtype: 'small_town',
-    pressure: 'PowerControl',
-    flavor: 'Billionaire',
-    tone: 'Earnest',
-    pov: 'First',
-    length: 'taste',
-    dynamic: 'Enemies',
-    mode: 'solo',
-    archetype: 'BEAUTIFUL_RUIN'
-  };
+  const STARTER_STORIES = [
+    {
+      id: 'starter_the_first_taste',
+      title: 'The First Taste',
+      subtitle: 'Starring You',
+      author: 'S. Tory Bound',
+      world: 'Modern',
+      worldSubtype: 'small_town',
+      pressure: 'PowerControl',
+      flavor: 'Billionaire',
+      tone: 'Earnest',
+      pov: 'First',
+      length: 'taste',
+      dynamic: 'Enemies',
+      mode: 'solo',
+      archetype: 'BEAUTIFUL_RUIN',
+      coverImage: '/assets/Forbidde-Library-Art/Storybound-MaskedGala-Cover5x7-type.jpg',
+      synopsis: 'A masked gala. A stranger whose voice you almost recognize. One night to decide whether power is something you take — or something you surrender.'
+    },
+    {
+      id: 'starter_first_sacrifice',
+      title: 'First Sacrifice',
+      subtitle: 'A Romantic Fantasy',
+      author: 'S. Tory Bound',
+      world: 'Fantasy',
+      worldSubtype: 'arcane_binding',
+      pressure: 'PowerControl',
+      flavor: 'Arcane Binding',
+      tone: 'Earnest',
+      pov: 'First',
+      length: 'taste',
+      dynamic: 'Enemies',
+      mode: 'solo',
+      archetype: 'BEAUTIFUL_RUIN',
+      coverImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Cover5x7-text.jpg',
+      synopsis: 'The binding ritual demands a sacrifice neither of you expected. Ancient magic pulls you closer to someone who should be your enemy — and the cost of resisting may be greater than the cost of giving in.'
+    }
+  ];
+  // Legacy alias
+  const STARTER_STORY = STARTER_STORIES[0];
 
   /**
    * Navigate to vault library screen and inject starter story for new users.
@@ -25206,51 +25961,205 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
    * Called from renderVaultBookList when libraryFirstOnboarding is active
    * and user has no authored stories.
    */
+  function _hasSeenLibrarySummon() {
+    return !!state.hasSeenLibrarySummon;
+  }
+
   function _injectStarterStoryBook(listEl) {
-    // Check if starter already injected
+    // Check if starters already injected
     if (listEl.querySelector('[data-starter-story]')) return;
 
-    const book = document.createElement('div');
-    book.className = 'library-book mode-cover';
-    book.dataset.starterStory = 'true';
-    book.dataset.storyId = 'starter_the_first_taste';
+    STARTER_STORIES.forEach((starterDef) => {
+      const book = document.createElement('div');
+      book.className = 'library-book mode-cover';
+      book.dataset.starterStory = 'true';
+      book.dataset.storyId = starterDef.id;
+      book.dataset.world = (starterDef.world || '').toLowerCase();
 
-    book.innerHTML = `<div class="book-3d">
-  <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(STARTER_STORY.title)}</div><div class="book-front-author">${escapeHTML(STARTER_STORY.author)}</div></div></div>
-  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(STARTER_STORY.title)}</h3><p class="back-synopsis">${escapeHTML(STARTER_STORY.author)}</p><p class="back-meta">Your first story awaits</p></div></div>
-  <div class="book-spine"><div class="spine-text">${escapeHTML(STARTER_STORY.title)} <span class="spine-author">${escapeHTML(STARTER_STORY.author)}</span></div></div>
+      const subtitle = starterDef.subtitle ? `<div class="book-front-subtitle">${escapeHTML(starterDef.subtitle)}</div>` : '';
+      const frontContent = starterDef.coverImage
+        ? `<img src="${starterDef.coverImage}" alt="${escapeHTML(starterDef.title)}">`
+        : `<div class="book-front-text"><div class="book-front-title">${escapeHTML(starterDef.title)}</div>${subtitle}<div class="book-front-author">${escapeHTML(starterDef.author)}</div></div>`;
+
+      const synopsisText = starterDef.synopsis ? escapeHTML(starterDef.synopsis) : escapeHTML(starterDef.author);
+
+      book.innerHTML = `<div class="book-3d">
+  <div class="book-front">${frontContent}</div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(starterDef.title)}</h3><p class="back-synopsis">${synopsisText}</p><p class="back-meta">${escapeHTML(starterDef.author)}</p></div></div>
+  <div class="book-spine"><div class="spine-text">${escapeHTML(starterDef.title)} <span class="spine-author">${escapeHTML(starterDef.author)}</span></div></div>
   <div class="book-pages"></div>
   <div class="page-shimmer"></div>
 </div>`;
 
-    // Hover sound
-    let _hoverPlayed = false;
-    book.addEventListener('mouseenter', () => {
-      if (!_hoverPlayed) { _hoverPlayed = true; if (typeof _playLibrarySound === 'function') _playLibrarySound('book-hover'); }
+      // Hover sound
+      let _hoverPlayed = false;
+      book.addEventListener('mouseenter', () => {
+        if (!_hoverPlayed) { _hoverPlayed = true; if (typeof _playLibrarySound === 'function') _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
+      });
+      book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
+
+      // Click to open book inspection zoom
+      book.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _zoomSource = 'vault';
+        _zoomStarterDef = starterDef;
+        _openLibraryZoom({ story_id: starterDef.id, title: starterDef.title, author: starterDef.author, _isStarter: true }, book);
+      });
+
+      listEl.appendChild(book);
+
+      // Trigger initialization animation
+      requestAnimationFrame(() => book.classList.remove('initializing'));
     });
-    book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
+  }
 
-    // Click to launch starter story
-    book.addEventListener('click', (e) => {
-      e.stopPropagation();
-      _launchStarterStory();
+  /**
+   * Animated summon sequence: empty shelf → sparkles → books materialize.
+   * Runs once per user; sets sb_library_summon_seen afterwards.
+   */
+  function _runStarterBookSummonSequence(listEl) {
+    // Guard against double-injection
+    if (listEl.querySelector('[data-starter-story]')) return;
+
+    let _summonBooksReady = false;
+
+    // --- Step 0: Insert summon text + hidden books in summon-slot wrappers ---
+    const summonText = document.createElement('div');
+    summonText.className = 'summon-text';
+    summonText.textContent = 'Two beginnings await you.';
+    listEl.appendChild(summonText);
+
+    const slots = [];
+    STARTER_STORIES.forEach((starterDef) => {
+      const slot = document.createElement('div');
+      slot.className = 'summon-slot';
+      slot.id = 'summonSlot_' + starterDef.id;
+
+      // Light beam (behind book)
+      const beam = document.createElement('div');
+      beam.className = 'summon-light-beam';
+      slot.appendChild(beam);
+
+      // Book element (same as _injectStarterStoryBook)
+      const book = document.createElement('div');
+      book.className = 'library-book mode-cover summon-hidden';
+      book.dataset.starterStory = 'true';
+      book.dataset.storyId = starterDef.id;
+      book.dataset.world = (starterDef.world || '').toLowerCase();
+
+      const subtitle = starterDef.subtitle ? `<div class="book-front-subtitle">${escapeHTML(starterDef.subtitle)}</div>` : '';
+      const frontContent = starterDef.coverImage
+        ? `<img src="${starterDef.coverImage}" alt="${escapeHTML(starterDef.title)}">`
+        : `<div class="book-front-text"><div class="book-front-title">${escapeHTML(starterDef.title)}</div>${subtitle}<div class="book-front-author">${escapeHTML(starterDef.author)}</div></div>`;
+      const synopsisText = starterDef.synopsis ? escapeHTML(starterDef.synopsis) : escapeHTML(starterDef.author);
+      book.innerHTML = `<div class="book-3d">
+  <div class="book-front">${frontContent}</div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(starterDef.title)}</h3><p class="back-synopsis">${synopsisText}</p><p class="back-meta">${escapeHTML(starterDef.author)}</p></div></div>
+  <div class="book-spine"><div class="spine-text">${escapeHTML(starterDef.title)} <span class="spine-author">${escapeHTML(starterDef.author)}</span></div></div>
+  <div class="book-pages"></div>
+  <div class="page-shimmer"></div>
+</div>`;
+
+      // Hover sound
+      let _hoverPlayed = false;
+      book.addEventListener('mouseenter', () => {
+        if (!_hoverPlayed) { _hoverPlayed = true; if (typeof _playLibrarySound === 'function') _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
+      });
+      book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
+
+      // Click handler — gated until materialization completes
+      book.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!_summonBooksReady) return;
+        _zoomSource = 'vault';
+        _zoomStarterDef = starterDef;
+        _openLibraryZoom({ story_id: starterDef.id, title: starterDef.title, author: starterDef.author, _isStarter: true }, book);
+      });
+
+      slot.appendChild(book);
+      listEl.appendChild(slot);
+      slots.push({ slot, beam, book, starterDef });
     });
 
-    // Insert at beginning of list
-    listEl.insertBefore(book, listEl.firstChild);
+    // --- Step 50ms: Fade in summon text ---
+    setTimeout(() => { summonText.classList.add('visible'); }, 50);
 
-    // Trigger initialization animation
-    requestAnimationFrame(() => book.classList.remove('initializing'));
+    // --- Step 800ms: Show light beams + start sparkles ---
+    setTimeout(() => {
+      slots.forEach(({ slot, beam }) => {
+        beam.classList.add('visible');
+        if (typeof startSparkleEmitter === 'function') {
+          startSparkleEmitter(slot.id, 'librarySummon', 6, { initialBurst: 4 });
+        }
+      });
+    }, 800);
+
+    // --- Step 1500ms: Silhouette phase ---
+    setTimeout(() => {
+      slots.forEach(({ book }) => {
+        book.classList.remove('summon-hidden');
+        book.classList.add('summon-materializing');
+      });
+    }, 1500);
+
+    // --- Step 1700ms: Solid phase ---
+    setTimeout(() => {
+      slots.forEach(({ book }) => {
+        book.classList.remove('summon-materializing');
+        book.classList.add('summon-solid');
+      });
+    }, 1700);
+
+    // --- Step 2000ms: Enable clicks after materialization settles ---
+    setTimeout(() => {
+      _summonBooksReady = true;
+      if (window.playUISound) window.playUISound('book_land');
+    }, 2000);
+
+    // --- Step 2500ms: Cleanup sparkles, fade beams + text ---
+    setTimeout(() => {
+      slots.forEach(({ slot, beam }) => {
+        if (typeof stopSparkleEmitter === 'function') stopSparkleEmitter(slot.id);
+        beam.classList.add('fading');
+      });
+      summonText.classList.remove('visible');
+    }, 2500);
+
+    // --- Step 2800ms: Final cleanup, unwrap books into listEl ---
+    setTimeout(() => {
+      // Remove summon text
+      if (summonText.parentNode) summonText.parentNode.removeChild(summonText);
+
+      // Unwrap books from slots into listEl directly
+      slots.forEach(({ slot, beam, book }) => {
+        // Remove beam
+        if (beam.parentNode) beam.parentNode.removeChild(beam);
+        // Remove summon class
+        book.classList.remove('summon-solid');
+        // Move book out of slot into listEl
+        listEl.appendChild(book);
+        // Remove empty slot
+        if (slot.parentNode) slot.parentNode.removeChild(slot);
+      });
+
+      // Set flag so animation doesn't replay
+      state.hasSeenLibrarySummon = true;
+      if (sb && _supabaseProfileId) {
+        sb.from('profiles').update({ has_seen_library_summon: true }).eq('id', _supabaseProfileId)
+          .then(({ error }) => { if (error) console.warn('[SUMMON] Profile update failed:', error); });
+      }
+    }, 2800);
   }
 
   /**
    * Launch the starter story — sets up picks, generates Scene 1, transitions to game.
    */
   let _starterStoryLaunching = false;
-  async function _launchStarterStory() {
+  async function _launchStarterStory(starterDef) {
     if (_starterStoryLaunching) return;
     _starterStoryLaunching = true;
-    console.log('[STARTER] Launching "The First Taste"');
+    const def = starterDef || STARTER_STORY;
+    console.log('[STARTER] Launching "' + def.title + '"');
 
     try {
       startLoading('Opening your first story...');
@@ -25259,22 +26168,26 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       state.mode = 'solo';
       if (!state.storyOrigin) state.storyOrigin = 'solo';
 
+      // Mark as starter BEFORE reset so tease gates allow it through
+      state.is_starter_story = true;
+      state._starterStoryFreeInput = true;
+
       // Reset state for fresh story
       if (typeof resetForNewStory === 'function') resetForNewStory();
 
       // Apply starter story picks
-      state.picks.world = STARTER_STORY.world;
-      state.picks.worldSubtype = STARTER_STORY.worldSubtype;
-      state.picks.pressure = STARTER_STORY.pressure;
-      state.picks.flavor = STARTER_STORY.flavor;
-      state.picks.tone = STARTER_STORY.tone;
-      state.picks.pov = STARTER_STORY.pov;
-      state.picks.length = STARTER_STORY.length;
-      state.picks.dynamic = STARTER_STORY.dynamic;
+      state.picks.world = def.world;
+      state.picks.worldSubtype = def.worldSubtype;
+      state.picks.pressure = def.pressure;
+      state.picks.flavor = def.flavor;
+      state.picks.tone = def.tone;
+      state.picks.pov = def.pov;
+      state.picks.length = def.length;
+      state.picks.dynamic = def.dynamic;
       state.picks.authorship = 'fate'; // Guided Fate for starter
       state.storyLength = 'taste';
       state.intensity = 'Steamy';
-      state.archetype = { primary: STARTER_STORY.archetype, modifier: null };
+      state.archetype = { primary: def.archetype, modifier: null };
       state.is_starter_story = true;
       state._starterStoryFreeInput = true;
 
@@ -25317,7 +26230,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (listEl) {
         listEl.style.display = '';
         listEl.innerHTML = '';
-        _injectStarterStoryBook(listEl);
+        if (!_hasSeenLibrarySummon()) {
+          _runStarterBookSummonSequence(listEl);
+        } else {
+          _injectStarterStoryBook(listEl);
+        }
       }
       return;
     }
@@ -25926,7 +26843,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Depth variance and lean (deterministic, no randomness)
       const depthVariance = (index % 3) - 1;
-      book.style.transform = `translateY(6px) translateZ(${depthVariance * 2}px)`;
+      book.style.transform = `translateY(var(--book-rest-offset, 6px)) translateZ(${depthVariance * 2}px)`;
       const isMobile = window.innerWidth < 900;
       if (!isMobile && (index % 7 === 0) && isForward) {
         book.classList.add('mode-lean');
@@ -25935,7 +26852,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Hover sound
       let _hoverPlayed = false;
       book.addEventListener('mouseenter', () => {
-        if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); }
+        if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
       });
       book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
 
@@ -25950,7 +26867,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // LIBRARY-FIRST: Inject starter story book for new users
     if (state.flags?.libraryFirstOnboarding && _vaultAuthoredEntries.length === 0) {
-      _injectStarterStoryBook(listEl);
+      if (!_hasSeenLibrarySummon()) {
+        _runStarterBookSummonSequence(listEl);
+      } else {
+        _injectStarterStoryBook(listEl);
+      }
     }
 
     // Remove .initializing after layout pass to enable future transitions
@@ -25988,7 +26909,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     tierCards.forEach(card => {
       card.addEventListener('mouseenter', () => {
-        if (!card.classList.contains('flipped')) card.classList.add('flipped');
+        if (!card.classList.contains('flipped')) {
+          card.classList.add('flipped');
+          if (window.playUISound) window.playUISound('card_flip');
+        }
       });
       card.addEventListener('mouseleave', () => {
         card.classList.remove('flipped');
@@ -25997,6 +26921,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     tasteCard?.addEventListener('click', () => {
       if (!tasteCard.classList.contains('flipped')) tasteCard.classList.add('flipped');
+      if (window.playUISound) window.playUISound('button_click');
       state.tier = 'free';
       state.access = 'free';
       applyAccessLocks();
@@ -26016,6 +26941,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     premiumCard?.addEventListener('click', () => {
       if (!premiumCard.classList.contains('flipped')) premiumCard.classList.add('flipped');
+      if (window.playUISound) window.playUISound('button_click');
 
       // Dissipate the unselected tier card before showing paywall
       const unselected = [tasteCard].filter(c => c && c !== premiumCard);
@@ -26892,6 +27818,9 @@ All Fantasy flavors operate through this single engine. No flavor introduces a s
       const sceneDay = (state.turnCount || 0) + 1; // turnCount 0 = Scene 1 = Day 1
       block += buildMoonDirective(sceneDay);
 
+      // Hidden cosmology — available after scene 10 for deep lore discovery
+      block += buildPiercingLoreDirective();
+
       // Deep lore reference — not every scene, occasional flavor
       if (sceneDay > 1 && sceneDay % 3 === 0) {
           block += `\nDEEP LORE ACCESS: You may reference one piece of Fatelands deep lore this scene (a cult belief, a regional tradition, a river legend, a moon myth). Weave it into dialogue or setting — never as exposition. Max 1 sentence.`;
@@ -27309,11 +28238,12 @@ INTERPRETATION RULES:
               } else {
                   block += `\n\n${GLASS_HOUSE_CANON_ANCHOR}`;
               }
-              // Glass House specific: Chorus as material narrator
-              block += `\nGLASS HOUSE — CHORUS AS MATERIAL NARRATOR:
-- The Chorus resonance field behaves like an emotional atmosphere and may act as a material narrator.
-- Example: "The Chorus brushed the square like warm rain, tasting hesitation."
-- Do NOT substitute generic dystopian tropes (riot square, authoritarian enforcers, rebellion crowds) unless they explicitly exist in Glass House canon.`;
+              // Glass House specific: Chorus as distributed cognition narrator
+              block += `\nGLASS HOUSE — CHORUS AS NARRATOR:
+- The Chorus is a distributed cognition system — a collective mind made of connected participants, NOT an emotional atmosphere.
+- It perceives through participants' sensory input, emotions, and thoughts.
+- Example: "Several minds in the Chorus felt her hesitation before the words formed."
+- Do NOT substitute generic dystopian tropes (riot square, authoritarian enforcers, rebellion crowds, ruined markets). Glass House society is modern and functioning.`;
           }
           // World bellwether (structural anchor for drift-prone flavors)
           const worldBellwether = BELLWETHERS.world[primaryFlavor.val];
@@ -27471,6 +28401,7 @@ QUIETING EVENT DIRECTIVES:
           state.normalizedPartnerKernel = lKernel;
           state.rawPlayerName = rawPlayerName;
           state.rawPartnerName = rawPartnerName;
+          _syncRomanticTargetState();
           state.gender = pGen;
           state.loveInterest = lGen;
 
@@ -30997,6 +31928,7 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
         const kernel = norm.normalized_text || norm.archetype || 'the one who draws them forward';
         state.normalizedPartnerKernel = kernel;
         state.rawPartnerName = raw;
+        _syncRomanticTargetState();
         partnerNameInput.value = kernel;
         // Update archetype row title with normalized name
         if (typeof updateArchetypeSectionTitle === 'function') {
@@ -33548,6 +34480,7 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
     const controlPlaneBtn = document.getElementById('continueButton');
     if (controlPlaneBtn) {
       controlPlaneBtn.addEventListener('click', () => {
+        if (window.playUISound) window.playUISound('button_click');
         const stage = CORRIDOR_STAGES[corridorActiveRowIndex];
         if (stage) {
           console.log(`[Control Plane] Continue clicked for stage: ${stage}`);
@@ -36190,6 +37123,7 @@ Generate the title and synopsis now.` }
       cards.forEach(card => {
           card.classList.add('flipped');
       });
+      if (window.playUISound) window.playUISound('card_flip');
 
       console.log('[Archetype] All cards revealed TOGETHER');
   }
@@ -39510,6 +40444,7 @@ Generate the title and synopsis now.` }
       liInput.classList.add('fate-typed');
       setTimeout(() => liInput.classList.remove('fate-typed'), 800);
     }
+    _syncRomanticTargetState();
 
     // ENFORCE MINIMUM CEREMONY DURATION (≥5 seconds)
     const ceremonyElapsed = Date.now() - ceremonyStartTime;
@@ -39861,6 +40796,21 @@ Generate the title and synopsis now.` }
         { core: 'rgba(255,210,80,0.95)',  mid: 'rgba(230,180,30,0.8)',  glow: 'rgba(180,130,20,0.5)' },
         { core: 'rgba(255,240,180,0.96)', mid: 'rgba(255,210,100,0.82)',glow: 'rgba(200,160,40,0.5)' }
       ]
+    },
+    // Library summon: gold gathering sparkles for book materialization
+    librarySummon: {
+      durationMin: 0.6,
+      durationMax: 1.2,
+      sizeMin: 2,
+      sizeMax: 5,
+      opacityMin: 0.5,
+      opacityRange: 0.45,   // 0.5-0.95
+      haloOffset: 30,
+      outsideRatio: 0.3,
+      driftType: 'hover',
+      driftDistance: 8,
+      curveAmp: 2,
+      flickerChance: 0.2
     }
   };
 
@@ -40026,6 +40976,8 @@ Generate the title and synopsis now.` }
 
     // Don't start if already running
     if (sparkleEmitterIntervals.has(containerId)) return;
+
+    if (window.playUISound) window.playUISound('sparkle');
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CONTINUOUS LOW-RATE EMISSION with optional initial burst
@@ -41572,6 +42524,7 @@ Generate the title and synopsis now.` }
     state.normalizedPartnerKernel = lKernel;
     state.rawPlayerName = rawPlayerName;
     state.rawPartnerName = rawPartnerName;
+    _syncRomanticTargetState();
     if ($('playerNameInput')) $('playerNameInput').value = pKernel;
     if ($('partnerNameInput')) $('partnerNameInput').value = lKernel;
 
@@ -42102,8 +43055,8 @@ INCORRECT:
         localStorage.setItem('sb_onboarding_story_id', state.storyId);
     }
 
-    // TEASE TIER: Mark free story as consumed on first story creation
-    if (isTeaseTier()) markFreeStoryConsumed();
+    // TEASE TIER: Consume one custom story credit (starter stories exempt)
+    if (isTeaseTier()) consumeFreeCustomStoryCredit();
 
     // STORYPASS ELIGIBILITY: Compute ONCE at story creation, persist with story
     // Based on ORIGINAL picks before any downgrade. This value NEVER changes for this story.
@@ -43192,7 +44145,7 @@ Return ONLY the synopsis sentence(s), no quotes:\n${text}`}]);
         if (storyTextEl) storyTextEl.style.opacity = '0';
 
         const cleanTitle = title.replace(/"/g,'');
-        titleEl.textContent = cleanTitle;
+        if (titleEl) titleEl.textContent = cleanTitle;
         applyStoryTitleTooltips();
 
         // BOOK FLOW SPEC: Synopsis rendered ONLY on inside cover, never in pagination
@@ -43416,7 +44369,7 @@ ${text.slice(0, 800)}`}]);
         else if(window.initCards) window.initCards();
         // PERMANENT FX REBIND: Ensure fate cards have handlers after story generation
         if (window.initFateCards) window.initFateCards();
-        updateSafeWordVisibility();
+        if (window.updateSafeWordVisibility) window.updateSafeWordVisibility();
         updateBatedBreathState();
     }
     } finally {
@@ -48034,6 +48987,7 @@ ${buildVisualContinuityDirective()}`;
    * Called when user clicks to continue.
    */
   function advanceReaderPage() {
+      if (window.playUISound) window.playUISound('page_turn');
       const nextPage = _readerPage + 1;
       showReaderPage(nextPage);
   }
@@ -48397,6 +49351,19 @@ ${buildVisualContinuityDirective()}`;
           coverNextBtn.addEventListener('click', (e) => {
               e.stopPropagation();
               openBook();
+          });
+      }
+
+      // Cover shimmer: sweep effect when cover art loads
+      const coverImg = document.getElementById('bookCoverImg');
+      if (coverImg) {
+          coverImg.addEventListener('load', () => {
+              const cover = document.getElementById('bookCover');
+              if (!cover) return;
+              cover.classList.remove('cover-shimmer');
+              void cover.offsetWidth; // force reflow to restart animation
+              cover.classList.add('cover-shimmer');
+              setTimeout(() => cover.classList.remove('cover-shimmer'), 1300);
           });
       }
 
@@ -52209,23 +53176,30 @@ Respond in this EXACT format (no labels, just two lines):
 
       // ═══════════════════════════════════════════════════════════════════
       // FORTUNE BURN: Every scene costs 1 fortune (unless free tease range)
-      // Tease tier users get free scenes up to TEASE_SCENE_CAP
-      // StoryPass/subscriber holders burn 1 fortune per scene
+      // Consumption order: storypassFortunes → global fortunes
+      // StoryPass fortunes are story-locked, scene-only, non-transferable
       // ═══════════════════════════════════════════════════════════════════
       const inFreeTease = isTeaseTier() && (state.turnCount || 0) < state.TEASE_SCENE_CAP;
       if (!inFreeTease) {
-          if (!hasFortunes()) {
-              state._isAdvancingScene = false;
-              if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
-              openFortunePurchaseModal();
-              return;
-          }
-          const burned = await consumeFortune(1, 'scene');
-          if (!burned) {
-              state._isAdvancingScene = false;
-              if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
-              openFortunePurchaseModal();
-              return;
+          // 1. Try story-locked StoryPass fortunes first
+          if ((state.storypassFortunes || 0) > 0) {
+              state.storypassFortunes--;
+              console.log('[Fortunes] StoryPass fortune consumed for scene. Remaining:', state.storypassFortunes);
+          } else {
+              // 2. Fall back to global fortune balance
+              if (!hasFortunes()) {
+                  state._isAdvancingScene = false;
+                  if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
+                  openFortunePurchaseModal();
+                  return;
+              }
+              const burned = await consumeFortune(1, 'scene');
+              if (!burned) {
+                  state._isAdvancingScene = false;
+                  if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
+                  openFortunePurchaseModal();
+                  return;
+              }
           }
       }
       // Reset petition flag for new scene
@@ -52473,6 +53447,7 @@ If both main characters are present, render their tension and restraint ONLY —
           && (state.eroticMode === 'VISCERAL' || state.eroticMode === 'CARNAL');
         btn.style.display = show ? '' : 'none';
       }
+      window.updateSafeWordVisibility = updateSafeWordVisibility;
 
       window.triggerSafeWord = function() {
         const mode = state.eroticMode;
@@ -52567,6 +53542,71 @@ May NOT: jump to explicit anatomy, override consent, force non-consensual dynami
       // Scenes 2+ (Non-intimate): 300-500 words — standard narrative pacing
       // Intimate/Erotic scenes: 150-200 words MAX — fast, reactive, speculative-friendly
       // ═══════════════════════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════════════════════════
+      // WORLD PHYSICS PRIORITY — Flavor governs scene physics, not background lore
+      // TAG: storybound/world-physics-priority-v1
+      // ═══════════════════════════════════════════════════════════════════════════
+      function buildWorldPhysicsDirective() {
+          const world = state.picks?.world;
+          const flavor = state.picks?.worldSubtype || state.worldCustomText;
+          if (!world && !flavor) return '';
+
+          const flavorLabel = flavor && WORLD_LABELS[flavor] ? WORLD_LABELS[flavor] : (state.worldCustomText || flavor || '');
+          const worldLabel = world || 'Unknown';
+
+          // World-specific defining mechanisms — what MUST appear in paragraph 1
+          const WORLD_PHYSICS = {
+              // Dystopia flavors
+              glass_house: 'The Chorus distributed empathic resonance field (WiHi) must shape emotion, perception, or communication. Society is near-future and modern — no dystopian ruins, no authoritarian enforcers.',
+              human_capital: 'The valuation system must visibly constrain or shape character behavior.',
+              dogma: 'Doctrinal law must create pressure, restrict choice, or define social reality.',
+              quieting_event: 'The absence of sound, communication, or expression must shape the scene.',
+              endless_edit: 'Erasure of memory, identity, or record must be present or threatened.',
+              thirst: 'Scarcity of water or essential resource must drive behavior and stakes.',
+              dystopia_core: 'Surveillance, control, or systemic oppression must shape the environment.',
+              // Fantasy flavors
+              arcane_binding: 'Magical binding, contract, or compulsion must constrain or pressure characters.',
+              fated_blood: 'Blood destiny, inherited obligation, or prophetic pressure must shape events.',
+              the_inhuman: 'Non-human nature, transformation, or species tension must be felt.',
+              the_beyond: 'Otherworldly presence, veil-thinning, or liminal space must affect the scene.',
+              cursed: 'A curse or dark enchantment must actively constrain, threaten, or distort.',
+              // Sci-Fi flavors
+              simulation: 'Simulation boundaries, glitch artifacts, or reality-layer uncertainty must be present.',
+              cyberpunk: 'Corporate control, augmentation, or digital/physical boundary collapse must shape the scene.',
+              post_human: 'Posthuman transformation, consciousness alteration, or species boundary must be felt.',
+              first_contact: 'Alien otherness, communication barrier, or xenological tension must be present.',
+              galactic_civilizations: 'Interstellar political tension, faction conflict, or scale of civilization must shape events.',
+              future_of_science: 'Scientific discovery, ethical boundary, or technological consequence must drive the scene.',
+              final_frontier: 'Isolation, frontier danger, or the vastness of unexplored space must be felt.',
+              // Post-Apocalyptic flavors
+              ashfall: 'Radiation, fallout, or nuclear consequence must affect environment and behavior.',
+              year_zero: 'Civilizational collapse and survival without infrastructure must shape events.',
+              dystimulation: 'Digital ruins, corrupted systems, or technological ghosts must be present.',
+              predation: 'Predatory threat — human or otherwise — must create immediate danger.',
+              hunger: 'Scarcity, starvation, or resource desperation must drive behavior.',
+              // Historical
+              prehistoric: 'Survival instinct, tribal law, or primal landscape must govern the scene.',
+              bronze_age: 'Bronze-age power structures, early empire, or mythic belief must shape events.',
+              classical: 'Classical civilization, philosophical tension, or civic duty must be present.',
+              medieval: 'Feudal obligation, religious authority, or medieval social structure must shape the scene.',
+              renaissance: 'Renaissance ambition, patronage politics, or artistic/scientific tension must be felt.',
+              victorian: 'Victorian propriety, class constraint, or repression must pressure characters.',
+              // Modern
+              supernatural_modern: 'Supernatural phenomena must intrude on modern reality.',
+              superheroic_modern: 'Superhuman ability and its social consequences must shape the scene.'
+          };
+
+          const specificPhysics = WORLD_PHYSICS[flavor] || '';
+
+          return `\nWORLD PHYSICS PRIORITY (${worldLabel}${flavorLabel ? ' / ' + flavorLabel : ''}):
+The selected World and Flavor define the operating physics of this scene.
+Narrative elements must emerge from these world rules rather than default genre patterns.
+Do NOT substitute generic genre tropes when the world flavor specifies a different structure.${specificPhysics ? `
+${specificPhysics}` : `
+The defining system of the world flavor must appear in the first paragraph of the scene.`}
+If the generated scene does not visibly express the world's defining mechanism in paragraph one, the scene is incorrect.\n`;
+      }
+
       function buildSceneLengthDirective() {
           const sceneIndex = state.turnCount || 0;
           const isMainPairIntimacyScene = isMainCharacterIntimacySceneAllowed() && detectMainPairEroticContent();
@@ -52667,13 +53707,39 @@ Take time for atmosphere, reaction, emotional beats, and tension building.`;
           const intimacyAllowedAtStoryturn = isIntimacyAllowedAtCurrentStoryturn();
           const completionAllowed = isIntimacyCompletionAllowed();
 
+          // ST3 PACING COOLDOWN: After an intimacy attempt, enforce 2-turn breathing room
+          const turnsSinceAttempt = (state.turnCount || 0) - (state.lastIntimacyAttemptTurn ?? -99);
+          const st3OnCooldown = currentSt === 'ST3' && turnsSinceAttempt < 2 && turnsSinceAttempt >= 0;
+
+          // RELATIONSHIP PHASE GATING: Macro pacing limits what ST3 attempts may express
+          const phaseGating = getRelationshipPhaseGating();
+          const phaseDirective = (currentSt === 'ST3' && phaseGating.directive)
+              ? `\nRELATIONSHIP PHASE GATING (${state.relationship_phase || 'strangers'} → ${phaseGating.tier}):\n${phaseGating.directive}\nAllowed: ${phaseGating.st3Allows}\nBlocked: ${phaseGating.st3Blocks}`
+              : '';
+
           // Full gate open: both scene gate AND storyturn allow intimacy
           if (isSceneGateOpen && intimacyAllowedAtStoryturn && completionAllowed) {
-              return '';  // Gate is fully open: main pair contact allowed
+              if (st3OnCooldown) {
+                  return `
+ST3 PACING (cooldown — ${2 - turnsSinceAttempt} scene${2 - turnsSinceAttempt !== 1 ? 's' : ''} remaining):
+An intimacy attempt occurred recently. This scene must NOT contain another attempt.
+Focus instead on: emotional consequence, longing, tension, world interaction, character depth, or plot advancement.
+Physical proximity and awareness are fine — but do NOT initiate, escalate, or attempt intimacy this scene.
+The desire must breathe before it moves again.`;
+              }
+              return phaseDirective;  // Phase gating (empty string if phase is advanced enough)
           }
 
           // Taste at ST3: intimacy INITIATION allowed, but COMPLETION blocked
           if (storyLength === 'taste' && currentSt === 'ST3' && intimacyAllowedAtStoryturn && !completionAllowed) {
+              if (st3OnCooldown) {
+                  return `
+ST3 PACING (cooldown — ${2 - turnsSinceAttempt} scene${2 - turnsSinceAttempt !== 1 ? 's' : ''} remaining):
+An intimacy attempt occurred recently. This scene must NOT contain another attempt.
+Focus instead on: emotional consequence, longing, tension, world interaction, character depth, or plot advancement.
+Physical proximity and awareness are fine — but do NOT initiate, escalate, or attempt intimacy this scene.
+The desire must breathe before it moves again.`;
+              }
               return `
 STORYTURN GATING (${currentSt} — Initiation Only):
 Intimate scenes may BEGIN but must NOT COMPLETE.
@@ -52682,7 +53748,7 @@ Intimate scenes may BEGIN but must NOT COMPLETE.
 - Intimacy initiation: ALLOWED
 - Intimacy COMPLETION: BLOCKED — interrupt before climax
 
-Scene must end on a charged, unresolved moment before completion.`;
+Scene must end on a charged, unresolved moment before completion.${phaseDirective}`;
           }
 
           // Gate is CLOSED: block main pair contact
@@ -53142,7 +54208,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       Player Dialogue: ${dia}.
       ${metaMsg}
 
-      ${buildSceneLengthDirective()}`;
+      ${buildWorldPhysicsDirective()}${buildSceneLengthDirective()}${buildEndingWindowDirective()}`;
 
       // STORY PROMPT GUARD: Validate size (debug only, never truncate)
       validateStoryPromptSize(fullSys, 'turn-generation-fullSys');
@@ -54117,6 +55183,15 @@ ABSOLUTE RULES:
               latchIntimacyMilestone(intimacyInterrupt.milestone);
           }
 
+          // ST3 PACING COOLDOWN: Mark this turn as an intimacy attempt
+          // Uses narrow detectPhysicalEscalation() — only genuine physical moves trigger cooldown.
+          // Atmospheric words (whisper, breath, neck, skin) do NOT trigger cooldown.
+          if ((state.storyturn || 'ST1') === 'ST3' &&
+              (intimacyInterrupt.milestone || detectPhysicalEscalation(safeAction, safeDialogue))) {
+              state.lastIntimacyAttemptTurn = state.turnCount || 0;
+              console.log('[ST3-PACING] Physical escalation at turn', state.lastIntimacyAttemptTurn);
+          }
+
           // Manage Fling Latch
           if (state.storyStage === 'post-consummation') {
               if (state.flingClimaxDone) {
@@ -54671,7 +55746,7 @@ REMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, D
       Player Dialogue: ${dia}.
       ${metaMsg}
 
-      ${sceneLengthDirective}`;
+      ${buildWorldPhysicsDirective()}${sceneLengthDirective}${buildEndingWindowDirective()}`;
 
           // Check context again before generation
           if (getFateContextHash() !== fateContextHash) {
@@ -55137,6 +56212,7 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
 
     // Flip and select this card
     card.classList.add('flipped', 'selected');
+    if (window.playUISound) window.playUISound('card_flip');
     selectedModeCard = card;
 
     // Start sparkles on this card
