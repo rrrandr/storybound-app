@@ -1669,7 +1669,6 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       var card = document.querySelector('.pact-card[data-pact="' + pactKey + '"]');
       if (card) {
         card.classList.add('accepted');
-        _startPactCardSparkles(card);
       }
 
       // Show gold star on zoomed card
@@ -1771,7 +1770,6 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
         if (clickY >= threshold) {
           _pactAccepted[pactKey] = true;
           card.classList.add('accepted');
-          _startPactCardSparkles(card);
           _checkAllPactsAccepted();
           return;
         }
@@ -25431,7 +25429,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       book.dataset.world = worldKey;
       book.innerHTML = `<div class="book-3d">
   <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div></div>
-  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><p class="back-synopsis">${scenes} scenes · ${words.toLocaleString()} words</p><p class="back-meta">${escapeHTML(bookAuthor)}</p></div></div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${scenes} scenes · ${words.toLocaleString()} words</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div></div>
   <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div></div>
   <div class="book-pages"></div>
   <div class="page-shimmer"></div>
@@ -25439,7 +25437,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Depth variance and lean (deterministic, no randomness)
       const depthVariance = (index % 3) - 1; // -1, 0, 1
-      book.style.transform = `translateY(var(--book-rest-offset, 6px)) translateZ(${depthVariance * 2}px)`;
+      // Depth variance applied to inner .book-3d, not the wrapper
+      const book3dEl = book.querySelector('.book-3d');
+      if (book3dEl) book3dEl.style.transform = `rotateX(6deg) translateZ(${depthVariance * 2}px)`;
       const isMobile = window.innerWidth < 900;
       if (!isMobile && (index % 7 === 0) && isForward) {
         book.classList.add('mode-lean');
@@ -25547,18 +25547,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (_zoomRafId) { cancelAnimationFrame(_zoomRafId); _zoomRafId = null; }
 
     // Premium rotation with cubic edge resistance
-    const maxRotation = window.innerWidth < 900 ? 140 : 155;
+    const maxRotation = 60;
     let targetRotation = 0;
     let currentRotation = 0;
 
     function onMouseMove(e) {
       if (e.target.closest && e.target.closest('.book-back')) return;
       const rect = container.getBoundingClientRect();
-      const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      const raw = (percent - 0.5) * 2;
-      // Ease-out cubic edge resistance — feels heavier near extremes
-      const curved = raw * (1 - Math.pow(Math.abs(raw), 2));
-      targetRotation = curved * maxRotation;
+      const normalized = (e.clientX - rect.left) / rect.width;
+      targetRotation = (Math.max(0, Math.min(1, normalized)) - 0.5) * 2 * maxRotation;
     }
 
     function animate() {
@@ -25571,9 +25568,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         bookFront.style.boxShadow = `inset -14px 0 28px rgba(0,0,0,${(0.25 + depth * 0.25).toFixed(3)})`;
       }
 
-      // Page-edge shimmer past ±90°
+      // Page-edge shimmer — fades in with rotation
       if (shimmer) {
-        shimmer.style.opacity = Math.abs(currentRotation) > 90 ? '0.25' : '0';
+        shimmer.style.opacity = Math.abs(currentRotation) > 20 ? (Math.min(Math.abs(currentRotation) / maxRotation, 1) * 0.25).toFixed(3) : '0';
       }
 
       _zoomRafId = requestAnimationFrame(animate);
@@ -25601,10 +25598,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         const rect = container.getBoundingClientRect();
-        const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-        const raw = (percent - 0.5) * 2;
-        const curved = raw * (1 - Math.pow(Math.abs(raw), 2));
-        targetRotation = curved * maxRotation;
+        const normalized = (touch.clientX - rect.left) / rect.width;
+        targetRotation = (Math.max(0, Math.min(1, normalized)) - 0.5) * 2 * maxRotation;
       }
     }
     container.addEventListener('touchmove', onTouchMove, { passive: true });
@@ -25914,6 +25909,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       mode: 'solo',
       archetype: 'BEAUTIFUL_RUIN',
       coverImage: '/assets/Forbidde-Library-Art/Storybound-MaskedGala-Cover5x7-type.jpg',
+      backCoverImage: '/assets/Forbidde-Library-Art/Storybound-MaskedGala-Cover5x7-back.jpg',
+      spineImage: '/assets/Forbidde-Library-Art/Storybound-MaskedGala-Spine2x7.jpg',
       synopsis: 'A masked gala. A stranger whose voice you almost recognize. One night to decide whether power is something you take — or something you surrender.'
     },
     {
@@ -25932,6 +25929,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       mode: 'solo',
       archetype: 'BEAUTIFUL_RUIN',
       coverImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Cover5x7-text.jpg',
+      backCoverImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Cover5x7-back.jpg',
+      spineImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Spine2x7.jpg',
       synopsis: 'The binding ritual demands a sacrifice neither of you expected. Ancient magic pulls you closer to someone who should be your enemy — and the cost of resisting may be greater than the cost of giving in.'
     }
   ];
@@ -25982,11 +25981,18 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         : `<div class="book-front-text"><div class="book-front-title">${escapeHTML(starterDef.title)}</div>${subtitle}<div class="book-front-author">${escapeHTML(starterDef.author)}</div></div>`;
 
       const synopsisText = starterDef.synopsis ? escapeHTML(starterDef.synopsis) : escapeHTML(starterDef.author);
+      const backContent = starterDef.backCoverImage
+        ? `<img src="${starterDef.backCoverImage}" alt="Back cover"><div class="back-content back-content-overlay"><div class="back-synopsis-box"><p class="back-synopsis">${synopsisText}</p></div></div>`
+        : `<div class="back-content"><h3 class="back-title">${escapeHTML(starterDef.title)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${synopsisText}</p></div><p class="back-meta">${escapeHTML(starterDef.author)}</p></div>`;
+
+      const spineContent = starterDef.spineImage
+        ? `<img src="${starterDef.spineImage}" alt="Spine">`
+        : `<div class="spine-text">${escapeHTML(starterDef.title)} <span class="spine-author">${escapeHTML(starterDef.author)}</span></div>`;
 
       book.innerHTML = `<div class="book-3d">
   <div class="book-front">${frontContent}</div>
-  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(starterDef.title)}</h3><p class="back-synopsis">${synopsisText}</p><p class="back-meta">${escapeHTML(starterDef.author)}</p></div></div>
-  <div class="book-spine"><div class="spine-text">${escapeHTML(starterDef.title)} <span class="spine-author">${escapeHTML(starterDef.author)}</span></div></div>
+  <div class="book-back">${backContent}</div>
+  <div class="book-spine">${spineContent}</div>
   <div class="book-pages"></div>
   <div class="page-shimmer"></div>
 </div>`;
@@ -26052,10 +26058,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         ? `<img src="${starterDef.coverImage}" alt="${escapeHTML(starterDef.title)}">`
         : `<div class="book-front-text"><div class="book-front-title">${escapeHTML(starterDef.title)}</div>${subtitle}<div class="book-front-author">${escapeHTML(starterDef.author)}</div></div>`;
       const synopsisText = starterDef.synopsis ? escapeHTML(starterDef.synopsis) : escapeHTML(starterDef.author);
+      const backContent2 = starterDef.backCoverImage
+        ? `<img src="${starterDef.backCoverImage}" alt="Back cover"><div class="back-content back-content-overlay"><div class="back-synopsis-box"><p class="back-synopsis">${synopsisText}</p></div></div>`
+        : `<div class="back-content"><h3 class="back-title">${escapeHTML(starterDef.title)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${synopsisText}</p></div><p class="back-meta">${escapeHTML(starterDef.author)}</p></div>`;
+      const spineContent2 = starterDef.spineImage
+        ? `<img src="${starterDef.spineImage}" alt="Spine">`
+        : `<div class="spine-text">${escapeHTML(starterDef.title)} <span class="spine-author">${escapeHTML(starterDef.author)}</span></div>`;
       book.innerHTML = `<div class="book-3d">
   <div class="book-front">${frontContent}</div>
-  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(starterDef.title)}</h3><p class="back-synopsis">${synopsisText}</p><p class="back-meta">${escapeHTML(starterDef.author)}</p></div></div>
-  <div class="book-spine"><div class="spine-text">${escapeHTML(starterDef.title)} <span class="spine-author">${escapeHTML(starterDef.author)}</span></div></div>
+  <div class="book-back">${backContent2}</div>
+  <div class="book-spine">${spineContent2}</div>
   <div class="book-pages"></div>
   <div class="page-shimmer"></div>
 </div>`;
@@ -26229,11 +26241,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (emptyEl) emptyEl.style.display = 'none';
       if (listEl) {
         listEl.style.display = '';
-        listEl.innerHTML = '';
-        if (!_hasSeenLibrarySummon()) {
-          _runStarterBookSummonSequence(listEl);
-        } else {
-          _injectStarterStoryBook(listEl);
+        // Only clear and inject if starters not already present
+        if (!listEl.querySelector('[data-starter-story]')) {
+          listEl.innerHTML = '';
+          if (!_hasSeenLibrarySummon()) {
+            _runStarterBookSummonSequence(listEl);
+          } else {
+            _injectStarterStoryBook(listEl);
+          }
         }
       }
       return;
@@ -26835,7 +26850,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       book.innerHTML = `<div class="book-3d">
   <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div>${bookAuthor ? `<div class="book-front-author">${escapeHTML(bookAuthor)}</div>` : ''}</div></div>
-  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3>${bookAuthor ? `<p class="back-synopsis">${escapeHTML(bookAuthor)}</p>` : ''}<p class="back-meta">${scenes} scenes</p><p class="back-meta-vault">${metaLines.join('<br>')}</p></div></div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box">${bookAuthor ? `<p class="back-synopsis">${escapeHTML(bookAuthor)}</p>` : ''}</div><p class="back-meta">${scenes} scenes</p><p class="back-meta-vault">${metaLines.join('<br>')}</p></div></div>
   <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)}${bookAuthor ? ` <span class="spine-author">${escapeHTML(bookAuthor)}</span>` : ''}</div></div>
   <div class="book-pages"></div>
   <div class="page-shimmer"></div>
@@ -26843,7 +26858,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // Depth variance and lean (deterministic, no randomness)
       const depthVariance = (index % 3) - 1;
-      book.style.transform = `translateY(var(--book-rest-offset, 6px)) translateZ(${depthVariance * 2}px)`;
+      // Depth variance applied to inner .book-3d, not the wrapper
+      const book3dEl = book.querySelector('.book-3d');
+      if (book3dEl) book3dEl.style.transform = `rotateX(6deg) translateZ(${depthVariance * 2}px)`;
       const isMobile = window.innerWidth < 900;
       if (!isMobile && (index % 7 === 0) && isForward) {
         book.classList.add('mode-lean');
@@ -26865,8 +26882,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       listEl.appendChild(book);
     });
 
-    // LIBRARY-FIRST: Inject starter story book for new users
-    if (state.flags?.libraryFirstOnboarding && _vaultAuthoredEntries.length === 0) {
+    // LIBRARY-FIRST: Inject starter story book for new users (skip if already present)
+    if (state.flags?.libraryFirstOnboarding && _vaultAuthoredEntries.length === 0 && !listEl.querySelector('[data-starter-story]')) {
       if (!_hasSeenLibrarySummon()) {
         _runStarterBookSummonSequence(listEl);
       } else {
